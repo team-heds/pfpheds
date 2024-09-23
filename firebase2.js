@@ -6,7 +6,7 @@ import { getStorage } from "firebase/storage";
 // Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "xyz",
-  authDomain: "",
+  authDomain: "aq",
   databaseURL: "",
   projectId: "",
   storageBucket: "",
