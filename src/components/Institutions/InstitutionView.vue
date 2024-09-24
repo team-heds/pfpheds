@@ -7,12 +7,12 @@
           {{ institutionDetails ? institutionDetails.Name : 'Chargement...' }}
         </div>
         <span class="text-900 font-bold text-3xl mb-4 mt-2 pl-8 pr-8">
-          <strong> {{ institutionDetails ? institutionDetails.Lieu : '' }} </strong> - {{ institutionDetails ? institutionDetails.Street : '' }}
+          <strong> {{ institutionDetails ? institutionDetails.Locality : '' }} </strong> - {{ institutionDetails ? institutionDetails.Address : '' }}
         </span>
         <div class="flex flex-wrap justify-content-center md:justify-content-start gap-3 mt-2 pl-8 pr-8">
           <span class="inline-flex align-items-center py-2 px-3 font-medium border-1 surface-border border-round">
             <i class="pi pi-comments text-primary mr-2"></i>
-            <span class="text-900"> Langue : {{ institutionDetails ? institutionDetails.Langue : '' }}</span>
+            <span class="text-900"> Langue : {{ institutionDetails ? institutionDetails.Language : '' }}</span>
           </span>
           <span class="inline-flex align-items-center py-2 px-3 font-medium border-1 surface-border border-round">
             <i class="pi pi-comments text-primary mr-2"></i>
@@ -37,10 +37,10 @@
               <div class="col-12 lg:col-12">
                 <span class="text-900 block mb-3 font-bold">Informations générales de l'institution :</span>
                 <div class="py-0 p-0 m-0 text-600 mb-3">
-                  <p class="card-text"><i class="bi bi-globe"></i> <strong>Langue:</strong> {{ institutionDetails ? institutionDetails.Langue : '' }}</p>
+                  <p class="card-text"><i class="bi bi-globe"></i> <strong>Langue:</strong> {{ institutionDetails ? institutionDetails.Language : '' }}</p>
                   <p class="card-text"><i class="bi bi-globe"></i> <strong>Canton:</strong> {{ institutionDetails ? institutionDetails.Canton : '' }}</p>
-                  <p class="card-text"><i class="bi bi-geo-alt-fill"></i> <strong>Adresse:</strong> {{ institutionDetails ? institutionDetails.Street : '' }}</p>
-                  <p class="card-text"><i class="bi bi-geo-alt-fill"></i> <strong>Lieu:</strong> {{ institutionDetails ? institutionDetails.Lieu : '' }}</p>
+                  <p class="card-text"><i class="bi bi-geo-alt-fill"></i> <strong>Adresse:</strong> {{ institutionDetails ? institutionDetails.Address : '' }}</p>
+                  <p class="card-text"><i class="bi bi-geo-alt-fill"></i> <strong>Lieu:</strong> {{ institutionDetails ? institutionDetails.Locality : '' }}</p>
                   <p class="card-text"><i class="bi bi-geo-alt-fill"></i> <strong>Site Web:</strong> {{ institutionDetails ? institutionDetails.URL : '' }}</p>
                 </div>
               </div>
@@ -127,7 +127,7 @@ export default {
     },
     fetchInstitutionDetailsFromFirebase() {
       const institutionId = this.$route.params.id; // Assuming this is how you get the ID
-      const institutionRef = firebaseRef(db, `institutions/${institutionId}`);
+      const institutionRef = firebaseRef(db, `Institutions/${institutionId}`);
 
       onValue(institutionRef, (snapshot) => {
         if (snapshot.exists()) {

@@ -72,7 +72,7 @@ const routes = [
   { path: '/institution', component: Institution, name: 'Institution' },
   { path: '/place', component: Place, name: 'Place' },
   { path: '/profile', component: Profile, name: 'Profile' },
-  { path: '/admin', component: DashbordAdmin, name: 'DashbordAdmin' , meta: { requiresAuth: true, requiredRole: 'admin' }},
+  { path: '/admin', component: DashbordAdmin, name: 'DashbordAdmin' , meta: { requiresAuth: false, requiredRole: 'admin' }}, // à remodifier
   { path: '/institution_list', component: InstitutionList, name: 'InstitutionList' },
   { path: '/etudiant_list', component: EtudiantList, name: 'EtudiantList' },
   { path: '/institution_form', component: InstitutionForm, name: 'InstitutionForm', props: true },

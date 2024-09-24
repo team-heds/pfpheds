@@ -75,25 +75,23 @@ const selectedAvatarFile = ref(null);
 // Méthode pour récupérer le profil utilisateur depuis Firebase
 const fetchUserProfile = async (email) => {
   const db = getDatabase();
-  const studentsRef = dbRef(db, 'students');
-  const snapshot = await get(studentsRef);
+  const usersRef = dbRef(db, 'Users');
+  const snapshot = await get(usersRef);
   if (snapshot.exists()) {
-    const studentsData = snapshot.val();
-    for (const classKey in studentsData) {
-      for (const studentKey in studentsData[classKey]) {
-        const student = studentsData[classKey][studentKey];
-        if (student.Mail && student.Mail.toLowerCase() === email.toLowerCase()) {
-          user.value = {
-            uid: studentKey,
-            prenom: student.Prenom,
-            nom: student.Nom,
-            email: student.Mail,
-            ville: student.Ville,
-            bio: student.Bio || '',
-            photoURL: student.photoURL || defaultAvatar
-          };
-          return;
-        }
+    const usersData = snapshot.val();
+    for (const userId in usersData) {
+      const userData = usersData[userId];
+      if (userData.Mail && userData.Mail.toLowerCase() === email.toLowerCase()) {
+        user.value = {
+          uid: userId,
+          prenom: userData.Forname || '',
+          nom: userData.Name || '',
+          email: userData.Mail || '',
+          ville: userData.Ville || '',
+          bio: userData.Biography || '',
+          photoURL: userData.photoURL || defaultAvatar
+        };
+        return;
       }
     }
   }
@@ -102,18 +100,32 @@ const fetchUserProfile = async (email) => {
 // Méthode pour sauvegarder le profil utilisateur dans Firebase
 const saveProfile = async () => {
   const db = getDatabase();
-  const userRef = dbRef(db, `students/${user.value.uid}`);
+  const userRef = dbRef(db, `Users/${user.value.uid}`);
 
   if (selectedAvatarFile.value) {
-    // Si un nouveau fichier avatar est sélectionné, l'uploader dans Firebase Storage
+    // Vérification de l'authentification avant l'upload
+    const auth = getAuth();
+    const authUser = auth.currentUser;
+    if (!authUser) {
+      alert('Veuillez vous authentifier avant de changer l\'avatar');
+      return;
+    }
+
     const storage = getStorage();
-    const avatarRef = storageRef(storage, `users/${user.value.uid}/profile-picture.jpg`);
+    const avatarRef = storageRef(storage, `Users/${authUser.uid}/profile-picture.jpg`);
 
-    await uploadBytes(avatarRef, selectedAvatarFile.value);
-    const photoURL = await getDownloadURL(avatarRef);
+    try {
+      // Upload de l'avatar dans Firebase Storage
+      await uploadBytes(avatarRef, selectedAvatarFile.value);
+      const photoURL = await getDownloadURL(avatarRef);
 
-    // Mettre à jour l'URL de l'avatar dans le profil utilisateur
-    user.value.photoURL = photoURL;
+      // Mettre à jour l'URL de l'avatar dans le profil utilisateur
+      user.value.photoURL = photoURL;
+    } catch (error) {
+      console.error('Erreur lors de l\'upload de l\'avatar :', error);
+      alert('Erreur lors de l\'upload de l\'avatar');
+      return;
+    }
   }
 
   await set(userRef, {
@@ -127,6 +139,7 @@ const saveProfile = async () => {
 
   alert('Profil mis à jour avec succès');
 };
+
 
 // Gérer le changement d'avatar
 const onAvatarChange = (event) => {
@@ -148,7 +161,6 @@ onMounted(() => {
   });
 });
 </script>
-
 
 <style scoped>
 .p-fluid {

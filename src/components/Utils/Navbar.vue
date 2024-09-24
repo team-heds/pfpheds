@@ -58,7 +58,7 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
+import { getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "firebase/auth";
 import { ref as dbRef, get as dbGet } from "firebase/database"; // Import necessary functions from Firebase
 import { db } from '../../../firebase.js'; // Adjust the import path based on your project structure
 
@@ -73,27 +73,46 @@ const navigateTo = (path) => {
 };
 
 const auth = getAuth();
-onAuthStateChanged(auth, async (u) => {
-  user.value = u;
-  isHidden.value = !u; // Masquer le menu si l'utilisateur n'est pas connecté
+setPersistence(auth, browserLocalPersistence)
+  .then(() => {
+    // Maintenant la persistance de la session est assurée entre les rafraîchissements de page
+    onAuthStateChanged(auth, async (u) => {
+      user.value = u;
+      isHidden.value = !u;
 
-  if (u) {
-    const userId = u.uid;
-    try {
-      // Fetch user roles from Firebase Realtime Database
-      const rolesRef = dbRef(db, `users/${userId}/roles`);
-      const snapshot = await dbGet(rolesRef);
-      userRoles.value = snapshot.val();
+      if (u) {
+        const userId = u.uid;
+        try {
+          // Fetch user roles from Firebase Realtime Database
+          const userRef = dbRef(db, `Users/${userId}`);
+          const snapshot = await dbGet(userRef);
 
-      // Check if the user has 'admin', 'editor', or 'viewer' role
-      if (userRoles.value) {
-        hasAdminAccess.value = userRoles.value.admin || userRoles.value.editor || userRoles.value.viewer;
+          if (snapshot.exists()) {
+            const userData = snapshot.val();
+            console.log('Données utilisateur récupérées:', userData);
+
+            if (userData.Roles) {
+              userRoles.value = userData.Roles;
+              console.log('Rôles récupérés:', userRoles.value);
+
+              // Check if the user has 'admin', 'editor', or 'viewer' role
+              hasAdminAccess.value = !!userRoles.value.admin || !!userRoles.value.editor || !!userRoles.value.viewer;
+            } else {
+              console.log('Aucun rôle trouvé pour cet utilisateur.');
+            }
+          } else {
+            console.log('Aucun utilisateur trouvé avec cet ID.');
+          }
+        } catch (error) {
+          console.error('Erreur lors de la récupération des rôles utilisateur:', error);
+        }
       }
-    } catch (error) {
-      console.error('Error fetching user roles:', error);
-    }
-  }
-});
+    });
+  })
+  .catch((error) => {
+    console.error('Erreur lors de la configuration de la persistance :', error);
+  });
+
 
 const logout = async () => {
   try {
@@ -104,6 +123,8 @@ const logout = async () => {
   }
 };
 </script>
+
+
 
 
 <style scoped>

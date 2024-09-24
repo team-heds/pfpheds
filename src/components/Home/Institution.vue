@@ -18,7 +18,7 @@
               </template>
               <template #subtitle>
                 <div class="text-center">
-                  <p>{{ institution.Lieu }} <Tag>{{ institution.Langue }}</Tag></p>
+                  <p>{{ institution.Locality }} <Tag>{{ institution.Language }}</Tag></p>
                   <!-- Tronquer la description ici -->
                   <p :class="descriptionClass" class="m-0">{{ truncateText(institution.Description, 100) }}</p>
                 </div>
@@ -46,19 +46,17 @@
 
 
 <script>
-import { ref, onMounted } from 'vue';
 import { db } from '../../../firebase.js';
 import { ref as dbRef, onValue } from "firebase/database";
 import AppDarkAndLightMode from '@/layout/AppDarkAndLightMode.vue';
 import Navbar from '@/components/Utils/Navbar.vue';
-import Footer from '@/components/Utils/Footer.vue';
 
 export default {
-  components: { Navbar, Footer, AppDarkAndLightMode },
+  components: { Navbar, AppDarkAndLightMode },
   data() {
     return {
       allInstitutions: [],
-      institutionDetailsPath: '/institution/',
+      institutionDetailsPath: '/Institution/',
       currentPage: 1,
       itemsPerPage: 12,
       totalInstitutions: 0,
@@ -83,7 +81,7 @@ export default {
       return text;
     },
     fetchInstitutionsFromFirebase() {
-      const institutionsRef = dbRef(db, 'institutions/');
+      const institutionsRef = dbRef(db, 'Institutions/');
       onValue(institutionsRef, (snapshot) => {
         const data = snapshot.val();
         if (data) {

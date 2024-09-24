@@ -95,7 +95,7 @@
                 <div class="col-12 md:col-4">
                   <div class="p-field">
                     <label for="canton">Langue</label>
-                    <Dropdown id="langue" v-model="institution.Langue" :options="langues" optionLabel="name" optionValue="name" class="w-full" />
+                    <Dropdown id="langue" v-model="institution.Language" :options="langues" optionLabel="name" optionValue="name" class="w-full" />
                   </div>
                 </div>
                 <div class="col-12 md:col-6">
@@ -270,7 +270,7 @@ export default {
 
         // Si une image a été sélectionnée, on l'upload d'abord
         if (this.imageFile) {
-          const imageRef = storageRef(storage, `institutions/${newInstKey}/image`);
+          const imageRef = storageRef(storage, `Institutions/${newInstKey}/image`);
           await uploadBytes(imageRef, this.imageFile);
           const imageURL = await getDownloadURL(imageRef);
           this.institution.ImageURL = imageURL;
@@ -278,7 +278,7 @@ export default {
 
         // Si un document a été sélectionné, on l'upload d'abord
         if (this.documentFile) {
-          const documentRef = storageRef(storage, `institutions/${newInstKey}/document`);
+          const documentRef = storageRef(storage, `Institutions/${newInstKey}/document`);
           await uploadBytes(documentRef, this.documentFile);
           const documentURL = await getDownloadURL(documentRef);
           this.institution.DocumentURL = documentURL;
