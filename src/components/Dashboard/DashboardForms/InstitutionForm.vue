@@ -150,6 +150,7 @@
     </section>
   </div>
 </template>
+
 <script>
 import { db } from '../../../../firebase.js';
 import { ref, set, push } from "firebase/database";
@@ -171,11 +172,11 @@ export default {
     Dropdown,
     Button,
     Divider,
-    Calendar
+    Calendar,
   },
   data() {
     return {
-      activeIndex: 0,
+      activeIndex: 0, // Index de l'étape actuelle du formulaire
       institution: {
         Cyberlearn: '',
         Name: '',
@@ -197,72 +198,52 @@ export default {
         PhoneResponsablePhysio: '',
         EmailResponsablePhysio: '',
       },
-      imageFile: null, // Pour stocker l'image sélectionnée
-      documentFile: null, // Pour stocker le document sélectionné
+      imageFile: null, // Fichier image sélectionné
       cantons: [
-        { code: 'Argovie', name: 'AG' },
-        { code: 'Appenzell Rhodes-Intérieures', name: 'AI' },
-        { code: 'Appenzell Rhodes-Extérieures', name: 'AR' },
-        { code: 'Bâle-Campagne', name: 'BL' },
-        { code: 'Bâle-Ville', name: 'BS' },
-        { code: 'Berne', name: 'BE' },
-        { code: 'Fribourg', name: 'FR' },
-        { code: 'Genève', name: 'GE' },
-        { code: 'Glaris', name: 'GL' },
-        { code: 'Grisons', name: 'GR' },
-        { code: 'Jura', name: 'JU' },
-        { code: 'Lucerne', name: 'LU' },
-        { code: 'Neuchâtel', name: 'NE' },
-        { code: 'Nidwald', name: 'NW' },
-        { code: 'Obwald', name: 'OW' },
-        { code: 'Saint-Gall', name: 'SG' },
-        { code: 'Schaffhouse', name: 'SH' },
-        { code: 'Schwytz', name: 'SZ' },
-        { code: 'Soleure', name: 'SO' },
-        { code: 'Tessin', name: 'TI' },
-        { code: 'Thurgovie', name: 'TG' },
-        { code: 'Uri', name: 'UR' },
-        { code: 'Valais', name: 'VS' },
-        { code: 'Vaud', name: 'VD' },
-        { code: 'Zoug', name: 'ZG' },
-        { code: 'Zurich', name: 'ZH' },
-        { code: 'Etranger', name: 'Etranger' }
+        { code: 'AG', name: 'Argovie' },
+        { code: 'AI', name: 'Appenzell Rhodes-Intérieures' },
+        { code: 'AR', name: 'Appenzell Rhodes-Extérieures' },
+        { code: 'BE', name: 'Berne' },
+        { code: 'FR', name: 'Fribourg' },
+        { code: 'VS', name: 'Valais' },
+        // Ajouter d'autres cantons si nécessaire
       ],
       categories: [
         { label: 'Institution valaisanne', value: 'Institution valaisanne' },
         { label: 'Cabinet privé valaisan', value: 'Cabinet privé valaisan' },
         { label: 'Institution hors canton', value: 'Institution hors canton' },
         { label: 'Cabinet privé hors canton', value: 'Cabinet privé hors canton' },
-        { label: 'Institution étrangère', value: 'Institution étrangère' }
       ],
       langues: [
-        { code: 'Français', name: 'FR' },
-        { code: 'Allemand', name: 'ALL' },
-        { code: 'Billingue', name: 'BIL' },
-        { code: 'Italien', name: 'IT' },
+        { code: 'FR', name: 'Français' },
+        { code: 'ALL', name: 'Allemand' },
+        { code: 'IT', name: 'Italien' },
       ],
       steps: [
-        { label: 'Détail de l\'institution' },
+        { label: "Détail de l'institution" },
         { label: 'Informations supplémentaires' },
-        { label: 'Médias de l\'institution' },
-        { label: 'Description' }
-      ]
+        { label: "Médias de l'institution" },
+        { label: 'Description' },
+      ],
     };
   },
   methods: {
+    // Passe à l'étape suivante
     goToNextStep() {
       if (this.activeIndex < this.steps.length - 1) {
         this.activeIndex++;
       }
     },
+    // Retourne à l'étape précédente
     goToPrevStep() {
       if (this.activeIndex > 0) {
         this.activeIndex--;
       }
     },
+    // Fonction d'envoi des données à Firebase
     async envoyerDonnees() {
       try {
-        const newInstRef = push(ref(db, 'institutions'));
+        const newInstRef = push(ref(db, 'institutions')); // Crée un nouvel ID unique pour l'institution
         const newInstKey = newInstRef.key;
         this.institution.key = newInstKey;
 
@@ -276,46 +257,29 @@ export default {
           this.institution.ImageURL = imageURL;
         }
 
-        // Si un document a été sélectionné, on l'upload d'abord
-        if (this.documentFile) {
-          const documentRef = storageRef(storage, `Institutions/${newInstKey}/document`);
-          await uploadBytes(documentRef, this.documentFile);
-          const documentURL = await getDownloadURL(documentRef);
-          this.institution.DocumentURL = documentURL;
-        }
-
-        // Ensuite, on sauvegarde les informations de l'institution
+        // Ensuite, on sauvegarde les informations de l'institution dans la base de données Firebase
         await set(newInstRef, this.institution);
-        this.$router.push({ name: 'InstitutionList' });
+        this.$router.push({ name: 'InstitutionList' }); // Redirige vers la liste des institutions après l'envoi
       } catch (error) {
         console.error('Erreur lors de l’envoi des données:', error);
       }
     },
+    // Gestion de la sélection d'un fichier image
     onFileChange(event) {
       const file = event.target.files[0];
       if (file) {
         this.imageFile = file;
-        this.institution.ImageURL = URL.createObjectURL(file); // Afficher l'image localement
+        this.institution.ImageURL = URL.createObjectURL(file); // Afficher l'image sélectionnée localement
       }
     },
-    onDocumentChange(event) {
-      const file = event.target.files[0];
-      if (file) {
-        this.documentFile = file;
-      }
-    },
+    // Supprime l'image sélectionnée
     removeImage() {
       this.imageFile = null;
-      this.institution.ImageURL = '';
+      this.institution.ImageURL = ''; // Réinitialise l'URL de l'image
     },
-    removeDocument() {
-      this.documentFile = null;
-      this.institution.DocumentURL = '';
-    }
-  }
+  },
 };
 </script>
-
 
 <style scoped>
 .hidden {

@@ -7,26 +7,33 @@
         <h1 class="text-900 font-bold text-5xl text-center">Institutions</h1>
         <p class="text-600 font-normal text-xl text-center">Découvrez les institutions partenaires de notre réseau</p>
         <div class="grid flex justify-center">
-          <div class="col-12 md:col-6 xl:col-3 p-3 flex justify-center" v-for="institution in paginatedInstitutions" :key="institution.id">
+          <!-- Boucle sur les institutions paginées -->
+          <div class="col-12 md:col-6 xl:col-3 p-3 flex justify-center" v-for="(institution, index) in paginatedInstitutions" :key="institution.InstitutionId">
             <Card class="institution-card" style="width: 20rem; height: 100%;">
               <template #header>
                 <div style="position: relative;">
+                  <!-- Image de l'institution avec URL par défaut si absente -->
                   <img :src="institution.ImageURL || '/default-image.jpg'" alt="institution" class="card-image" />
+                  <!-- Affichage du canton sous forme de tag -->
                   <Tag style="position: absolute; top: 20px; left: 20px;">{{ institution.Canton }}</Tag>
                 </div>
-                <p ref="institutionName" class="text-center text-xl text-900 font-bold m-1 mt-1">{{ institution.Name }}</p> <!-- Ajout de ref -->
+                <!-- Nom de l'institution -->
+                <p ref="institutionName" class="text-center text-xl text-900 font-bold m-1 mt-1">{{ institution.Name }}</p>
               </template>
               <template #subtitle>
                 <div class="text-center">
+                  <!-- Localité et langue -->
                   <p>{{ institution.Locality }} <Tag>{{ institution.Language }}</Tag></p>
-                  <!-- Tronquer la description ici -->
+                  <!-- Description avec une limite de caractères -->
                   <p :class="descriptionClass" class="m-0">{{ truncateText(institution.Description, 100) }}</p>
                 </div>
               </template>
               <template #content>
                 <div class="button-container">
-                  <Button @click="goToDetails(institution.id)" label="Détails" icon="pi pi-info-circle" class="p-button-text" />
-                  <a :href="institution.URL" target="_blank" class="p-button p-component" rel="noopener noreferrer">
+                  <!-- Bouton vers les détails de l'institution -->
+                  <Button @click="goToDetails(institution.InstitutionId)" label="Détails" icon="pi pi-info-circle" class="p-button-text" />
+                  <!-- Lien vers le site web de l'institution -->
+                  <a :href="institution.URL || '#'" target="_blank" class="p-button p-component" rel="noopener noreferrer">
                     <span class="p-button-icon pi pi-external-link"></span>
                     <span class="p-button-label ml-2">Site web</span>
                   </a>
@@ -35,6 +42,7 @@
             </Card>
           </div>
         </div>
+        <!-- Pagination des institutions -->
         <Paginator :rows="itemsPerPage" :totalRecords="totalInstitutions" :rowsPerPageOptions="[12, 24, 36, 48, 60, 72, 84]" @page="onPageChange"></Paginator>
       </div>
     </div>
@@ -43,7 +51,6 @@
   <AppDarkAndLightMode />
   <Footer />
 </template>
-
 
 <script>
 import { db } from '../../../firebase.js';
@@ -55,80 +62,79 @@ export default {
   components: { Navbar, AppDarkAndLightMode },
   data() {
     return {
-      allInstitutions: [],
+      allInstitutions: [],  // Toutes les institutions récupérées depuis Firebase
       institutionDetailsPath: '/Institution/',
-      currentPage: 1,
-      itemsPerPage: 12,
-      totalInstitutions: 0,
-      descriptionClass: 'description', // Classe CSS par défaut
+      currentPage: 1,  // Page courante pour la pagination
+      itemsPerPage: 12,  // Nombre d'institutions par page
+      totalInstitutions: 0,  // Total des institutions récupérées
+      descriptionClass: 'description',  // Classe par défaut pour la description
     };
   },
   computed: {
+    // Institutions affichées sur la page courante
     paginatedInstitutions() {
       const start = (this.currentPage - 1) * this.itemsPerPage;
       const end = start + this.itemsPerPage;
       return this.allInstitutions.slice(start, end);
     },
+    // Calcul du nombre total de pages
     totalPages() {
       return Math.ceil(this.totalInstitutions / this.itemsPerPage);
     },
   },
   methods: {
+    // Fonction pour tronquer un texte à une certaine longueur
     truncateText(text, length) {
       if (text && text.length > length) {
         return text.substring(0, length) + '...';
       }
       return text;
     },
+    // Récupération des institutions depuis Firebase
     fetchInstitutionsFromFirebase() {
       const institutionsRef = dbRef(db, 'Institutions/');
       onValue(institutionsRef, (snapshot) => {
         const data = snapshot.val();
         if (data) {
+          // Transformation des données en tableau avec clé et valeurs
           this.allInstitutions = Object.keys(data).map(key => ({
-            id: key,
-            ...data[key],
-            ImageURL: data[key].ImageURL || '/default-image.jpg',
+            InstitutionId: key,  // Clé de chaque institution
+            ...data[key],  // Fusionne les données de l'institution
+            ImageURL: data[key].ImageURL || '/default-image.jpg',  // Image par défaut si absente
+            Description: data[key].Description || 'Pas de description disponible',  // Description par défaut si absente
           }));
-          this.totalInstitutions = this.allInstitutions.length;
+          this.totalInstitutions = this.allInstitutions.length;  // Met à jour le nombre total d'institutions
           this.$nextTick(() => {
             this.adjustDescriptionHeight();
           });
         } else {
-          this.allInstitutions = [];
-          this.totalInstitutions = 0;
+          this.allInstitutions = [];  // Aucun résultat trouvé
+          this.totalInstitutions = 0;  // Réinitialise le nombre total d'institutions
         }
       });
     },
+    // Ajustement de la hauteur de la description pour une apparence cohérente
     adjustDescriptionHeight() {
-      const nameElement = this.$refs.institutionName;
-      if (nameElement) {
-        const lineHeight = parseInt(getComputedStyle(nameElement).lineHeight, 10);
-        const nameHeight = nameElement.clientHeight;
+      const nameElements = this.$refs.institutionName;
+      if (nameElements && Array.isArray(nameElements)) {
+        nameElements.forEach((nameElement) => {
+          const lineHeight = parseInt(getComputedStyle(nameElement).lineHeight, 10);
+          const nameHeight = nameElement.clientHeight;
 
-        // Check if the name takes up more than two lines (assume 3 lines if the height is 3 times the line height)
-        if (nameHeight > lineHeight * 2) {
-          this.descriptionClass = 'description-two-lines'; // Change the class if the name takes up three lines
-        } else {
-          this.descriptionClass = 'description'; // Default class if the name is within two lines
-        }
+          if (nameHeight > lineHeight * 2) {
+            this.descriptionClass = 'description-two-lines';
+          } else {
+            this.descriptionClass = 'description';
+          }
+        });
       }
     },
-    updatePageData() {
-      if (this.currentPage > this.totalPages) {
-        this.currentPage = Math.max(1, this.totalPages);
-      }
-      if (this.currentPage === 0 && this.totalInstitutions > 0) {
-        this.currentPage = 1;
-      }
-    },
+    // Changement de page dans la pagination
     onPageChange(event) {
-      this.currentPage = event.page + 1;
-      this.itemsPerPage = event.rows;
-      this.$nextTick(() => {
-        this.updatePageData();
-      });
+      this.currentPage = event.page + 1;  // Met à jour la page courante
+      this.itemsPerPage = event.rows;  // Met à jour le nombre d'éléments par page
     },
+    // Redirection vers la page de détails d'une institution
     goToDetails(id) {
       if (id) {
         this.$router.push({ name: 'InstitutionView', params: { id: id } });
@@ -138,11 +144,11 @@ export default {
     },
   },
   mounted() {
+    // Appel de la fonction pour récupérer les données lors du montage du composant
     this.fetchInstitutionsFromFirebase();
   }
 }
 </script>
-
 
 <style scoped>
 .card-image {
@@ -155,20 +161,20 @@ export default {
 
 .description {
   display: -webkit-box;
-  -webkit-line-clamp: 3; /* Show only three lines */
+  -webkit-line-clamp: 3; /* Afficher seulement trois lignes */
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
-  height: calc(3 * 1.5em); /* Adjust based on font size to fit three lines */
+  height: calc(3 * 1.5em); /* Ajuster la hauteur pour trois lignes */
 }
 
 .description-two-lines {
   display: -webkit-box;
-  -webkit-line-clamp: 2; /* Show only two lines */
+  -webkit-line-clamp: 2; /* Afficher seulement deux lignes */
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
-  height: calc(2 * 1.5em); /* Adjust based on font size to fit two lines */
+  height: calc(2 * 1.5em); /* Ajuster la hauteur pour deux lignes */
 }
 
 .institution-card {
@@ -179,7 +185,7 @@ export default {
 }
 
 .button-container {
-  margin-top: auto; /* Push buttons to the bottom */
+  margin-top: auto; /* Pousser les boutons en bas */
   display: flex;
   gap: 1rem;
   justify-content: space-between;
@@ -196,4 +202,3 @@ export default {
   }
 }
 </style>
-

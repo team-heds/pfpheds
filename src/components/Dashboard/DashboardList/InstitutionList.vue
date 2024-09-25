@@ -20,7 +20,7 @@
             <Button label="Ajouter une institution" icon="pi pi-plus" class="mb-2 mr-2" @click="goToInstitutionForm" />
             <IconField iconPosition="left">
               <InputIcon class="pi pi-search" />
-              <InputText v-model="globalFilter" placeholder="Recherches" style="width: 100%" />
+              <InputText v-model="globalFilter" placeholder="Rechercher" style="width: 100%" />
             </IconField>
           </div>
         </template>
@@ -92,7 +92,8 @@ export default {
   },
   computed: {
     filteredInstitutions() {
-      return this.institutions; // Retournez simplement les institutions pour tester
+      // Si nécessaire, applique des filtres ici, pour l'instant, on retourne les institutions telles quelles.
+      return this.institutions;
     }
   },
   async mounted() {
@@ -100,8 +101,15 @@ export default {
       const institutionsRef = ref(db, 'Institutions/');
       onValue(institutionsRef, (snapshot) => {
         const data = snapshot.val();
-        console.log(data); // Ajoutez ceci pour vérifier les données
-        this.institutions = data ? Object.keys(data).map(key => ({ InstitutionId: key, ...data[key] })) : [];
+        if (data) {
+          this.institutions = Object.keys(data).map(key => ({
+            InstitutionId: key,
+            ...data[key]
+          }));
+          console.log(this.institutions); // <-- Debugging ici pour vérifier les données récupérées
+        } else {
+          this.institutions = [];
+        }
         this.loading = false;
       });
     } catch (error) {
@@ -145,3 +153,9 @@ export default {
   }
 };
 </script>
+
+<style scoped>
+.filter-menu {
+  margin: 1rem;
+}
+</style>
