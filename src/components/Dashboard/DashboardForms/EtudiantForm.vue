@@ -24,6 +24,13 @@
         <label for="responsable" class="block text-xl mb-2">Responsable de stage</label>
         <Dropdown id="responsable" v-model="responsable" :options="enseignants" optionLabel="Nom" placeholder="Sélectionner un responsable" class="w-full" />
       </div>
+
+      <!-- Ajout d'une case pour SAE -->
+      <div class="field mb-4 col-6">
+        <label for="sae" class="block text-xl mb-2">SAE (Cas Particulier)</label>
+        <input id="sae" type="checkbox" v-model="isSAE" class="w-full" />
+      </div>
+
       <div class="text-center mt-5 col-12">
         <Button type="submit" label="Ajouter" class="p-button-primary w-full lg:w-auto" />
       </div>
@@ -33,7 +40,8 @@
 
 <script>
 import { db } from '../../../../firebase.js';
-import { ref, get, set } from "firebase/database";
+import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import { ref as dbRef, get, set } from "firebase/database";
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
@@ -52,7 +60,9 @@ export default {
       classe: '',
       email: '',
       responsable: null,
-      enseignants: []
+      isSAE: false, // Ajout du champ pour SAE (Cas particulier)
+      enseignants: [],
+      password: 'defaultPassword123' // Mot de passe par défaut
     };
   },
   async mounted() {
@@ -61,7 +71,7 @@ export default {
   methods: {
     async fetchEnseignants() {
       try {
-        const enseignantsRef = ref(db, 'enseignants/');
+        const enseignantsRef = dbRef(db, 'enseignants/');
         const snapshot = await get(enseignantsRef);
         if (snapshot.exists()) {
           const data = snapshot.val();
@@ -76,29 +86,38 @@ export default {
     },
     async addStudent() {
       try {
-        const studentsRef = ref(db, 'etudiants/');
+        const auth = getAuth();
+        const { email, password, prenom, nom, classe, responsable, isSAE } = this;
 
-        const snapshot = await get(studentsRef);
-        const studentsData = snapshot.val();
+        // Créer un utilisateur avec son email et un mot de passe par défaut
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const userId = userCredential.user.uid; // ID d'authentification généré
 
-        const studentCount = studentsData ? Object.keys(studentsData).length : 0;
-        const newStudentId = 'student' + (studentCount + 1);
-
-        const newStudentRef = ref(db, 'etudiants/' + newStudentId);
+        // Enregistrer les informations dans la base Students
+        const newStudentRef = dbRef(db, 'Students/' + userId);
         await set(newStudentRef, {
-          Prenom: this.prenom,
-          Nom: this.nom,
-          Classe: this.classe,
-          Email: this.email,
-          Responsable: this.responsable
+          Classe: classe,
+          Responsable: responsable,
+          Cas_Particulier: isSAE ? 'true' : 'false' // Sauvegarde du SAE
         });
 
+        // Enregistrer les informations dans la base Users
+        const newUserRef = dbRef(db, 'Users/' + userId);
+        await set(newUserRef, {
+          Nom: nom,
+          Prenom: prenom,
+          Mail: email,
+        });
+
+        // Réinitialiser les champs
         this.prenom = '';
         this.nom = '';
         this.classe = '';
         this.email = '';
         this.responsable = null;
+        this.isSAE = false;
 
+        // Rediriger vers la liste des étudiants
         this.$router.push({ name: 'EtudiantList' });
       } catch (error) {
         console.error('Erreur d’ajout de l’étudiant', error);
@@ -109,5 +128,5 @@ export default {
 </script>
 
 <style scoped>
-/* Add your custom styles here */
+/* Ajoutez vos styles personnalisés ici */
 </style>

@@ -21,7 +21,13 @@
         <InputText id="email" v-model="etudiant.Mail" required type="email" class="w-full" />
       </div>
 
-      <!-- Dropdown for PFP1 -->
+      <!-- Case à cocher pour SAE (Cas Particulier) -->
+      <div class="field mb-4 col-6">
+        <label for="sae" class="block text-xl mb-2">SAE (Cas Particulier)</label>
+        <input id="sae" type="checkbox" v-model="etudiant.Cas_Particulier" class="w-full" />
+      </div>
+
+      <!-- Dropdown pour PFP1 (institution de stage) -->
       <div class="field mb-4 col-6">
         <label for="pfp1" class="block text-xl mb-2">PFP1 - Institution</label>
         <Dropdown
@@ -44,7 +50,6 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue';
 import { getDatabase, ref as dbRef, get, set } from "firebase/database";
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
@@ -70,25 +75,25 @@ export default {
         Nom: '',
         Classe: '',
         Mail: '',
+        Cas_Particulier: false, // Ajout de la case SAE (Cas particulier)
         PFP1_info: { institutionId: '', institutionName: '' }, // Stocke la clé de l'institution et son nom
       },
       selectedPFP1: '', // Contient la clé de l'institution sélectionnée
       institutionOptions: [],
     };
   },
-  mounted() {
-    this.fetchEtudiantDetails();
-    this.fetchInstitutionOptions();
+  async mounted() {
+    await this.fetchEtudiantDetails();
+    await this.fetchInstitutionOptions();
   },
   methods: {
     async fetchEtudiantDetails() {
       try {
         const db = getDatabase();
-        const studentsRef = dbRef(db, 'students');
+        const studentsRef = dbRef(db, 'Students');
         const snapshot = await get(studentsRef);
         if (snapshot.exists()) {
           const studentsData = snapshot.val();
-          // Parcourir chaque classe et rechercher l'étudiant par ID
           for (const classKey in studentsData) {
             if (studentsData[classKey][this.etuId]) {
               const studentData = studentsData[classKey][this.etuId];
@@ -155,9 +160,9 @@ export default {
       if (confirm('Êtes-vous sûr de vouloir mettre à jour cet étudiant ?')) {
         try {
           const db = getDatabase();
-          const etudiantRef = dbRef(db, `students/${this.etudiant.Classe}/${this.etuId}`);
+          const etudiantRef = dbRef(db, `Students/${this.etudiant.Classe}/${this.etuId}`);
 
-          // Mettre à jour les informations PFP1 dans l'enregistrement de l'étudiant
+          // Mettre à jour les informations de l'étudiant
           await set(etudiantRef, this.etudiant);
 
           alert('Données mises à jour avec succès');

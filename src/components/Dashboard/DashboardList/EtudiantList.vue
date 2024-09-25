@@ -25,28 +25,36 @@
         <template #empty> Aucun étudiant trouvé. </template>
         <template #loading> Chargement des données des étudiants. Veuillez patienter. </template>
 
+        <!-- Colonne pour le nom -->
         <Column field="Nom" header="Nom" style="min-width: 12rem" class="text-center" />
+
+        <!-- Colonne pour le prénom -->
         <Column field="Prenom" header="Prénom" style="min-width: 12rem" class="text-center" />
+
+        <!-- Colonne pour la classe -->
         <Column field="Classe" header="Classe" style="min-width: 8rem" class="text-center">
           <template #filter="{ filterModel }">
             <Dropdown :options="classeOptions" v-model="filterModel.value" class="p-column-filter" placeholder="Rechercher par classe" />
           </template>
         </Column>
+
+        <!-- Colonne pour l'email -->
         <Column field="Mail" header="Email" style="min-width: 16rem" class="text-center" />
 
         <!-- Colonne pour indiquer si l'étudiant est un SAE -->
-        <Column field="Cas_Particulier" header="SAE" style="min-width: 8rem" class="text-center">
+        <Column field="SAE" header="SAE" style="min-width: 8rem" class="text-center">
           <template #body="{ data }">
-            <input type="checkbox" :checked="data.Cas_Particulier" disabled />
+            <input type="checkbox" :checked="data.SAE" disabled />
           </template>
           <template #filter="{ filterModel }">
             <TriStateCheckbox v-model="filterModel.value" />
           </template>
         </Column>
 
+        <!-- Colonne des actions -->
         <Column header="Actions" style="min-width: 12rem" class="text-center">
           <template #body="{ data }">
-            <Button label="Détails" class="mb-2 mr-2" @click="goToEtudiantDetails(data.id)" />
+            <Button label="Profil" class="mb-2 mr-2" @click="goToEtudiantDetails(data.id)" />
             <Button label="Modifier" class="mb-2 mr-2" @click="goToEtudiantFormModif(data.id)" />
             <Button label="Supprimer" class="mb-2 mr-2" @click="deleteStudent(data.id)" />
           </template>
@@ -81,11 +89,11 @@ export default {
     return {
       etudiants: [],
       filters: {
-        'Classe': { value: '', matchMode: 'equals' }, // Priorité à ba23
+        'Classe': { value: '', matchMode: 'equals' },
       },
       loading: true,
       globalFilter: '',
-      classeOptions: ['ba21', 'ba22', 'ba23']  // Ajout des options de classe
+      classeOptions: ['BA22', 'BA23', 'BA24']
     };
   },
   computed: {
@@ -105,45 +113,64 @@ export default {
     }
   },
   async mounted() {
-    await this.fetchEtudiants();
+    await this.fetchEtudiantsAndUsers();
   },
   methods: {
-    async fetchEtudiants() {
+    async fetchEtudiantsAndUsers() {
       try {
         const db = getDatabase();
-        const classes = ['ba23', 'ba22', 'ba21']; // Priorité aux ba23
         const studentsData = [];
+        const usersData = {};
 
-        for (const classKey of classes) {
-          const classRef = dbRef(db, `students/${classKey}`);
-          const snapshot = await get(classRef);
-          if (snapshot.exists()) {
-            const classData = snapshot.val();
-            for (const studentKey in classData) {
-              const student = {
-                id: studentKey,
-                Classe: classKey,
-                ...classData[studentKey]
-              };
-              studentsData.push(student);
-            }
+        // Récupérer les étudiants de la base `Students`
+        const studentsRef = dbRef(db, `Students`);
+        const snapshotStudents = await get(studentsRef);
+        if (snapshotStudents.exists()) {
+          const dataStudents = snapshotStudents.val();
+          for (const key in dataStudents) {
+            const student = {
+              id: key, // Utilisation de la clé comme identifiant
+              ...dataStudents[key],
+              SAE: dataStudents[key].CasParticulier === 'true', // Ajout du champ SAE
+            };
+            studentsData.push(student);
           }
         }
-        this.etudiants = studentsData;
+
+        // Récupérer les informations personnelles des étudiants depuis la base `Users`
+        const usersRef = dbRef(db, `Users`);
+        const snapshotUsers = await get(usersRef);
+        if (snapshotUsers.exists()) {
+          Object.assign(usersData, snapshotUsers.val());
+        }
+
+        // Fusionner les données des étudiants avec celles des utilisateurs en utilisant la clé comme identifiant
+        this.etudiants = studentsData.map(student => {
+          const user = usersData[student.id] || {}; // Utiliser la clé pour récupérer les données correspondantes dans Users
+          return {
+            ...student,
+            Nom: user.Name || 'Nom non disponible',
+            Prenom: user.Forname || 'Prénom non disponible',
+            Mail: user.Mail || 'Email non disponible',
+            Classe: student.Class || 'Classe non disponible',
+            SAE: student.SAE || false,
+          };
+        });
+
         this.loading = false;
       } catch (error) {
-        console.error('Erreur de récupération des données', error);
+        console.error('Erreur lors de la récupération des données :', error);
       }
     },
     async deleteStudent(etuId) {
       if (confirm('Êtes-vous sûr de vouloir supprimer cet étudiant ?')) {
         try {
           const db = getDatabase();
-          const studentRef = dbRef(db, `students/${etuId}`);
+          const studentRef = dbRef(db, `Students/${etuId}`);
           await set(studentRef, null);
-          await this.fetchEtudiants(); // Re-fetch students after deletion
+          await this.fetchEtudiantsAndUsers(); // Re-fetch students after deletion
         } catch (error) {
-          console.error('Erreur de suppression de l’étudiant', error);
+          console.error('Erreur de suppression de l’étudiant :', error);
         }
       }
     },
@@ -151,7 +178,7 @@ export default {
       this.$router.push({ name: 'EtudiantForm' });
     },
     goToEtudiantDetails(etuId) {
-      this.$router.push({ name: 'EtudiantDetails', params: { id: etuId } });
+      this.$router.push({ name: 'Profile', params: { id: etuId } });
     },
     goToEtudiantFormModif(etuId) {
       this.$router.push({ name: 'EtudiantFormModif', params: { etuId } });

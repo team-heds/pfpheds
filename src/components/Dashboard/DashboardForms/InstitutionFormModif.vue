@@ -132,7 +132,7 @@
             <div class="col-12 md:col-12">
               <div class="p-field">
                 <label for="remarque">Remarque convention / accord cadre</label>
-                <Textarea id="remarque" v-model="institution.Remarque" />
+                <Textarea id="remarque" v-model="institution.Note" />
               </div>
             </div>
 
@@ -252,7 +252,7 @@ export default {
         Categorie: '',
         Convention: null,
         AccordCadre: null,
-        Remarque: '',
+        Note: '',
         Langue: '',
         ImageURL: '',
         stages: [],
