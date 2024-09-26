@@ -27,16 +27,16 @@
     <div v-if="post.replies && post.replies.length > 0" class="replies">
       <div v-for="(reply, index) in post.replies" :key="index" class="reply">
         <div class="reply-header">
-          <img :src="replyAuthorAvatarUrls[reply.authorId] || defaultAvatar" alt="Avatar" class="avatar" />
+          <img :src="replyAuthorAvatarUrls[reply.IdUser] || defaultAvatar" alt="Avatar" class="avatar" />
           <div class="reply-author">
             <!-- Link to the reply author's profile using authorId -->
-            <router-link :to="{ name: 'UserProfile', params: { id: reply.authorId } }">
-              <strong>{{ getReplyAuthorName(reply.authorId) }}</strong>
+            <router-link :to="{ name: 'UserProfile', params: { id: reply.IdUser } }">
+              <strong>{{ getReplyAuthorName(reply.IdUser) }}</strong>
             </router-link>
-            <span class="reply-date">{{ formatTimestamp(reply.timestamp) }}</span>
+            <span class="reply-date">{{ formatTimestamp(replyTtimestamp) }}</span>
           </div>
         </div>
-        <div class="reply-content">{{ reply.content }}</div>
+        <div class="reply-content">{{ reply.Content }}</div>
       </div>
     </div>
   </div>
@@ -74,23 +74,30 @@ export default {
   },
   methods: {
     fetchAuthorDetails() {
-      const userRef = dbRef(db, `users/${this.post.authorId}`);
+      const userRef = dbRef(db, `users/${this.post.IdUser}`);
       onValue(userRef, (snapshot) => {
         const userData = snapshot.val();
+        console.log("ok1");
         if (userData) {
-          this.authorName = userData.username || this.post.author.split('@')[0]; // Fallback to email prefix if username is not available
-          this.authorAvatarUrl = userData.profileImageUrl || this.defaultAvatar; // Fallback to default avatar if profile image URL is not available
+          console.log("ok2");
+
+          this.authorName = userData.username || this.post.Author.split('@')[0]; // Fallback to email prefix if username is not available
+          this.authorAvatarUrl = userData.profileImageUrl || "this.defaultAvatar"; // Fallback to default avatar if profile image URL is not available
         } else {
-          this.authorName = this.post.author.split('@')[0]; // Fallback to email prefix
-          this.authorAvatarUrl = this.defaultAvatar; // Fallback to default avatar
+          console.log("ok3");
+
+      //    this.authorName = this.post.Author.split('@')[0]; // Fallback to email prefix
+     //     this.authorAvatarUrl = "this.defaultAvatar"; // Fallback to default avatar
         }
       });
     },
+
+
     fetchReplyAuthorsDetails() {
       if (!this.post.replies || !Array.isArray(this.post.replies)) return; // Check if replies exist and are an array
 
       this.post.replies.forEach(reply => {
-        const userRef = dbRef(db, `users/${reply.authorId}`);
+        const userRef = dbRef(db, `Users/${reply.IdUser}`);
         onValue(userRef, (snapshot) => {
           const userData = snapshot.val();
           if (userData) {
@@ -130,7 +137,7 @@ export default {
         }
       };
 
-      const postRef = dbRef(db, `posts/${this.post.id}/replies`);
+      const postRef = dbRef(db, `Posts/${this.post.id}/replies`);
       push(postRef, newReply);
 
       this.replyContent = '';

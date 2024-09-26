@@ -9,20 +9,13 @@
 
       <!-- Post Creation Form -->
       <div class="post-form">
-        <textarea
-          v-model="newPost"
-          placeholder="Écrivez quelque chose... (#BA23, #BA24, @BA23, @BA24, etc.)"
-          class="form-control mb-2"
-        ></textarea>
+        <textarea v-model="newPost" placeholder="Écrivez quelque chose... (#BA23, #BA24, @BA23, @BA24, etc.)"
+          class="form-control mb-2"></textarea>
 
         <!-- Display detected hashtags or mentions -->
         <div v-if="detectedTags.length > 0" class="tags-container">
-          <span
-            v-for="(tag, index) in detectedTags"
-            :key="index"
-            class="badge"
-            :class="tag.startsWith('#') ? 'bg-primary' : 'bg-secondary'"
-          >
+          <span v-for="(tag, index) in detectedTags" :key="index" class="badge"
+            :class="tag.startsWith('#') ? 'bg-primary' : 'bg-secondary'">
             {{ tag }}
           </span>
         </div>
@@ -33,12 +26,7 @@
 
       <!-- Displaying Posts with InfiniteScroll -->
       <InfiniteScroll :loading="loading" @load-more="loadMorePosts">
-        <PostItem
-          v-for="(post, index) in shuffledPosts"
-          :key="post.id"
-          :post="post"
-          :currentUser="currentUser"
-        />
+        <PostItem v-for="(post, index) in shuffledPosts" :key="post.id" :post="post" :currentUser="currentUser" />
       </InfiniteScroll>
     </div>
   </div>
@@ -100,20 +88,20 @@ export default {
 
       if (this.detectedTags.length === 0) {
         this.showMessage("Veuillez inclure au moins un hashtag ou une mention dans votre message.");
-        return;
+       // return;
       }
 
       const authorName = this.currentUser.displayName || this.currentUser.email.split('@')[0];
-
-      const newPostRef = push(dbRef(db, 'posts'));
+      console.log("okka");
+      const newPostRef = push(dbRef(db, 'Posts'));
       const postData = {
-        author: authorName,
-        authorId: this.currentUser.uid,
-        content: this.newPost,
-        timestamp: serverTimestamp(),
-        hashtags: this.detectedTags.filter(tag => tag.startsWith('#')),
-        mentionGroups: this.detectedTags.filter(tag => tag.startsWith('@')),
-        replies: []
+        Author: authorName,
+        IdUser: this.currentUser.uid,
+        Content: this.newPost,
+        Timestamp: serverTimestamp(),
+        Hashtags: this.detectedTags.filter(tag => tag.startsWith('#')),
+        MentionGroups: this.detectedTags.filter(tag => tag.startsWith('@')),
+        Answers: []
       };
 
       set(newPostRef, postData)
@@ -130,12 +118,12 @@ export default {
       let postsRef;
       if (this.lastPostKey) {
         postsRef = query(
-          dbRef(db, 'posts'),
+          dbRef(db, 'Posts'),
           limitToLast(this.postsPerPage + 1)
         );
       } else {
         postsRef = query(
-          dbRef(db, 'posts'),
+          dbRef(db, 'Posts'),
           limitToLast(this.postsPerPage)
         );
       }
@@ -180,9 +168,9 @@ export default {
 
       if (this.filterType !== 'all') {
         if (this.filterType === 'hashtag') {
-          filtered = filtered.filter(post => post.hashtags && post.hashtags.includes(`#${this.filterValue}`));
+          filtered = filtered.filter(post => post.Hashtags && post.Hashtags.includes(`#${this.filterValue}`));
         } else if (this.filterType === 'mention') {
-          filtered = filtered.filter(post => post.mentionGroups && post.mentionGroups.includes(`@${this.filterValue}`));
+          filtered = filtered.filter(post => post.MentionGroups && post.MentionGroups.includes(`@${this.filterValue}`));
         }
       }
 
@@ -192,8 +180,10 @@ export default {
         filtered.sort((a, b) => a.timestamp - b.timestamp);
       }
 
-      this.filteredPosts = filtered;
+   //   this.filteredPosts = filtered;
     },
+
+
     shufflePosts(posts) {
       for (let i = posts.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -232,7 +222,7 @@ export default {
         this.currentUser = user;
         this.fetchPosts();
 
-        const userRef = dbRef(db, `users/${user.uid}`);
+        const userRef = dbRef(db, `Users/${user.uid}`);
         onValue(userRef, (snapshot) => {
           const userData = snapshot.val();
           if (userData && userData.roles) {
