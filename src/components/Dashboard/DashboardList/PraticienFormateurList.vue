@@ -17,7 +17,7 @@
       >
         <template #header>
           <div class="flex justify-content-between flex-column sm:flex-row">
-            <Button label="Ajouter un praticien formateur" icon="pi pi-plus" class="mb-2 mr-2" @click="goToPraticienFormateurForm" />
+            <Button label="Ajouter un praticien formateur" icon="pi pi-plus" class="mb-2 mr-2" outlined @click="goToPraticienFormateurForm" />
             <IconField iconPosition="left">
               <InputIcon class="pi pi-search" />
               <InputText v-model="globalFilter" placeholder="Recherche" style="width: 100%" />
@@ -30,9 +30,7 @@
           <template #body="{ data }">
             {{ data.Nom }}
           </template>
-          <template #filter="{ filterModel }">
-            <InputText type="text" v-model="filterModel.value" class="p-column-filter" placeholder="Rechercher par nom" />
-          </template>
+
         </Column>
         <Column field="Prenom" header="Prénom" style="min-width: 12rem" class="text-center">
           <template #body="{ data }">
@@ -52,8 +50,8 @@
         </Column>
         <Column header="Action" style="min-width: 12rem" class="text-center">
           <template #body="{ data }">
-            <Button label="Modifier" class="mb-2 mr-2" @click="goToPraticienFormateurFormModif(data.id)" />
-            <Button label="Supprimer" class="mb-2 mr-2" @click="deletePraticienFormateur(data.id)" />
+            <Button label="Modifier" class="mb-2 mr-2" size="small" outlined severity="success" @click="goToPraticienFormateurFormModif(data.id)" />
+            <Button label="Supprimer" class="mb-2 mr-2"  size="small" outlined severity="danger" @click="deletePraticienFormateur(data.id)" />
           </template>
         </Column>
       </DataTable>
@@ -105,7 +103,7 @@ export default {
   },
   async mounted() {
     try {
-      const praticiensFormateursRef = ref(db, 'praticiensFormateurs/');
+      const praticiensFormateursRef = ref(db, 'PraticienFormateurs/');
       onValue(praticiensFormateursRef, (snapshot) => {
         const praticiensFormateursData = snapshot.val();
         if (praticiensFormateursData) {
@@ -125,7 +123,7 @@ export default {
     async deletePraticienFormateur(praticienFormateurId) {
       if (confirm('Êtes-vous sûr de vouloir supprimer ce praticien formateur ?')) {
         try {
-          const praticienFormateurRef = ref(db, 'praticiensFormateurs/' + praticienFormateurId);
+          const praticienFormateurRef = ref(db, 'PraticienFormateurs/' + praticienFormateurId);
           await remove(praticienFormateurRef);
           // Rafraîchir la liste des praticiens formateurs
           this.praticiensFormateurs = this.praticiensFormateurs.filter(p => p.id !== praticienFormateurId);

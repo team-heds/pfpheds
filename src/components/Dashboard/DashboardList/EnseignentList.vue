@@ -11,48 +11,34 @@
         v-model:filters="filters"
         filterDisplay="menu"
         :loading="loading"
-        :globalFilterFields="['Nom', 'Prenom', 'Email']"
+        :globalFilterFields="['Name', 'Forname', 'Mail']"
         showGridlines
       >
         <template #header>
           <div class="flex justify-content-between flex-column sm:flex-row">
-            <Button label="Ajouter un enseignant" icon="pi pi-plus" class="mb-2 mr-2" @click="goToEnseignantForm" />
-            <IconField iconPosition="left">
-              <InputIcon class="pi pi-search" />
+            <Button label="Ajouter un enseignant" icon="pi pi-plus" class="mb-2 mr-2" outlined @click="goToEnseignantForm" />
+            <span class="p-input-icon-left">
               <InputText v-model="globalFilter" placeholder="Recherche" style="width: 100%" />
-            </IconField>
+            </span>
           </div>
         </template>
         <template #empty> Aucun enseignant trouvé. </template>
         <template #loading> Chargement des données des enseignants. Veuillez patienter. </template>
-        <Column field="Nom" header="Nom" style="min-width: 12rem" class="text-center">
-          <template #body="{ data }">
-            {{ data.Nom }}
-          </template>
-          <template #filter="{ filterModel }">
-            <InputText type="text" v-model="filterModel.value" class="p-column-filter" placeholder="Rechercher par nom" />
-          </template>
+
+        <Column field="Name" header="Nom" style="min-width: 12rem" class="text-center">
+          <template #body="{ data }">{{ data.Name }}</template>
         </Column>
-        <Column field="Prenom" header="Prénom" style="min-width: 12rem" class="text-center">
-          <template #body="{ data }">
-            {{ data.Prenom }}
-          </template>
-          <template #filter="{ filterModel }">
-            <InputText type="text" v-model="filterModel.value" class="p-column-filter" placeholder="Rechercher par prénom" />
-          </template>
+        <Column field="Forname" header="Prénom" style="min-width: 12rem" class="text-center">
+          <template #body="{ data }">{{ data.Forname }}</template>
         </Column>
-        <Column field="Email" header="Email" style="min-width: 12rem" class="text-center">
-          <template #body="{ data }">
-            {{ data.Email }}
-          </template>
-          <template #filter="{ filterModel }">
-            <InputText type="text" v-model="filterModel.value" class="p-column-filter" placeholder="Rechercher par email" />
-          </template>
+        <Column field="Mail" header="Email" style="min-width: 12rem" class="text-center">
+          <template #body="{ data }">{{ data.Mail }}</template>
         </Column>
+
         <Column header="Action" style="min-width: 12rem" class="text-center">
           <template #body="{ data }">
-            <Button label="Modifier" class="mb-2 mr-2" @click="goToEnseignantFormModif(data.id)" />
-            <Button label="Supprimer" class="mb-2 mr-2" @click="deleteEnseignant(data.id)" />
+            <Button label="Modifier" class="mb-2 mr-2" size="small" outlined severity="success" @click="goToEnseignantFormModif(data.id)" />
+            <Button label="Supprimer" class="mb-2 mr-2" size="small" outlined severity="danger" @click="deleteEnseignant(data.id)" />
           </template>
         </Column>
       </DataTable>
@@ -61,15 +47,13 @@
 </template>
 
 <script>
-import { db } from '../../../../firebase.js';
 import { ref, onValue, set } from "firebase/database";
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
-import IconField from 'primevue/iconfield';
-import InputIcon from 'primevue/inputicon';
 import Navbar from '@/components/Utils/Navbar.vue';
+import { getDatabase, ref as dbRef } from 'firebase/database';
 
 export default {
   name: "EnseignantList",
@@ -78,8 +62,6 @@ export default {
     Column,
     InputText,
     Button,
-    IconField,
-    InputIcon,
     Navbar
   },
   data() {
@@ -95,15 +77,16 @@ export default {
     filteredEnseignants() {
       const searchLower = this.globalFilter.toLowerCase();
       return this.enseignants.filter(enseignant => {
-        return enseignant.Nom.toLowerCase().includes(searchLower)
-          || enseignant.Prenom.toLowerCase().includes(searchLower)
-          || enseignant.Email.toLowerCase().includes(searchLower);
+        return enseignant.Name.toLowerCase().includes(searchLower)
+          || enseignant.Forname.toLowerCase().includes(searchLower)
+          || enseignant.Mail.toLowerCase().includes(searchLower);
       });
     }
   },
   async mounted() {
     try {
-      const enseignantsRef = ref(db, 'enseignants/');
+      const db = getDatabase();
+      const enseignantsRef = dbRef(db, 'Enseignants/');
       onValue(enseignantsRef, (snapshot) => {
         const enseignantsData = snapshot.val();
         if (enseignantsData) {
@@ -122,7 +105,8 @@ export default {
     async deleteEnseignant(enseignantId) {
       if (confirm('Êtes-vous sûr de vouloir supprimer cet enseignant ?')) {
         try {
-          const enseignantRef = ref(db, 'enseignants/' + enseignantId);
+          const db = getDatabase();
+          const enseignantRef = dbRef(db, 'Enseignants/' + enseignantId);
           await set(enseignantRef, null);
         } catch (error) {
           console.error('Erreur de suppression de l’enseignant', error);
@@ -134,13 +118,6 @@ export default {
     },
     goToEnseignantForm() {
       this.$router.push({ name: 'EnseignentForm' });
-    },
-    goToAdminDashboard() {
-      this.$router.push({ name: 'AdminDashboard' });
-    },
-    clearFilter() {
-      this.filters = {};
-      this.globalFilter = '';
     }
   }
 };

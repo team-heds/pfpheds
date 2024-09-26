@@ -15,7 +15,7 @@
                   <!-- Image de l'institution avec URL par défaut si absente -->
                   <img :src="institution.ImageURL || '/default-image.jpg'" alt="institution" class="card-image" />
                   <!-- Affichage du canton sous forme de tag -->
-                  <Tag style="position: absolute; top: 20px; left: 20px;">{{ institution.Canton }}</Tag>
+                  <Tag style="position: absolute; top: 20px; left: 20px;" >{{ institution.Canton }}</Tag>
                 </div>
                 <!-- Nom de l'institution -->
                 <p ref="institutionName" class="text-center text-xl text-900 font-bold m-1 mt-1">{{ institution.Name }}</p>
@@ -23,7 +23,7 @@
               <template #subtitle>
                 <div class="text-center">
                   <!-- Localité et langue -->
-                  <p>{{ institution.Locality }} <Tag>{{ institution.Language }}</Tag></p>
+                  <p>{{ institution.Locality }} <Tag severity="secondary">{{ institution.Language }}</Tag></p>
                   <!-- Description avec une limite de caractères -->
                   <p :class="descriptionClass" class="m-0">{{ truncateText(institution.Description, 100) }}</p>
                 </div>
@@ -31,7 +31,7 @@
               <template #content>
                 <div class="button-container">
                   <!-- Bouton vers les détails de l'institution -->
-                  <Button @click="goToDetails(institution.InstitutionId)" label="Détails" icon="pi pi-info-circle" class="p-button-text" />
+                  <Button @click="goToDetails(institution.InstitutionId)" label="Détails" icon="pi pi-info-circle" outlined  />
                   <!-- Lien vers le site web de l'institution -->
                   <a :href="institution.URL || '#'" target="_blank" class="p-button p-component" rel="noopener noreferrer">
                     <span class="p-button-icon pi pi-external-link"></span>

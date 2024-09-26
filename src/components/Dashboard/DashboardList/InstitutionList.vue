@@ -17,7 +17,7 @@
         <!-- Table Header -->
         <template #header>
           <div class="flex justify-content-between flex-column sm:flex-row">
-            <Button label="Ajouter une institution" icon="pi pi-plus" class="mb-2 mr-2" @click="goToInstitutionForm" />
+            <Button label="Ajouter une institution" icon="pi pi-plus" class="mb-2 mr-2" outlined @click="goToInstitutionForm" />
             <IconField iconPosition="left">
               <InputIcon class="pi pi-search" />
               <InputText v-model="globalFilter" placeholder="Rechercher" style="width: 100%" />
@@ -39,20 +39,20 @@
         <Column field="Address" header="Adresse" style="min-width: 12rem" class="text-center">
           <template #body="{ data }">{{ data.Address }}</template>
         </Column>
-        <Column field="Locality" header="Localité" style="min-width: 12rem" class="text-center">
+        <Column field="Locality" header="Localité" style="min-width: 6rem" class="text-center">
           <template #body="{ data }">{{ data.Locality }}</template>
         </Column>
-        <Column field="Canton" header="Canton" style="min-width: 12rem" class="text-center">
+        <Column field="Canton" header="Canton" style="min-width: 6rem" class="text-center">
           <template #body="{ data }">{{ data.Canton }}</template>
         </Column>
         <Column field="AccordCadreDate" header="Accord Cadre" style="min-width: 12rem" class="text-center">
           <template #body="{ data }">{{ data.AccordCadreDate }}</template>
         </Column>
-        <Column header="Action" style="min-width: 12rem" class="text-center">
+        <Column header="Action" style="min-width: 22rem" class="text-center">
           <template #body="{ data }">
-            <Button label="Détails" class="mb-2 mr-2" @click="goToDetails(data.InstitutionId)" />
-            <Button label="Modifier" class="mb-2 mr-2" @click="goToInstitutionFormModif(data.InstitutionId)" />
-            <Button label="Supprimer" class="mb-2 mr-2" @click="supprimerInstitution(data.InstitutionId)" />
+            <Button label="Détails" class="mb-2 mr-2" size="small" outlined @click="goToDetails(data.InstitutionId)" />
+            <Button label="Modifier" class="mb-2 mr-2" size="small" outlined severity="success" @click="goToInstitutionFormModif(data.InstitutionId)" />
+            <Button label="Supprimer" class="mb-2 mr-2" size="small" outlined severity="danger" @click="supprimerInstitution(data.InstitutionId)" />
           </template>
         </Column>
       </DataTable>

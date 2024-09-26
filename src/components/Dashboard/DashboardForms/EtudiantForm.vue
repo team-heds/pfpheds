@@ -1,4 +1,5 @@
 <template>
+  <Navbar />
   <div class="surface-section px-4 py-8 md:px-6 lg:px-8">
     <div class="text-center">
       <h1 class="text-5xl font-bold mb-4">Nouvel étudiant</h1>
@@ -33,6 +34,7 @@
 
       <div class="text-center mt-5 col-12">
         <Button type="submit" label="Ajouter" class="p-button-primary w-full lg:w-auto" />
+        <Button label="Retour" class="w-full lg:w-auto ml-4" outlined @click="$router.push({ name: 'EtudiantList' })" />
       </div>
     </form>
   </div>
@@ -45,12 +47,14 @@ import { ref as dbRef, get, set } from "firebase/database";
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
+import Navbar from '@/components/Utils/Navbar.vue'
 
 export default {
   name: 'EtudiantForm',
   components: {
     InputText,
     Button,
+    Navbar,
     Dropdown
   },
   data() {

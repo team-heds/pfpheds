@@ -9,7 +9,7 @@
             <p><strong>Prénom :</strong> {{ userProfile.Prenom }}</p>
             <p><strong>Classe :</strong> {{ userProfile.Classe }}</p>
             <p><strong>E-Mail :</strong> {{ userProfile.Mail }}</p>
-            <p><strong>Répondant.e HES :</strong> {{ userProfile.ReponsantHES }}</p>
+            <p><strong>Répondant.e HES :</strong> {{ userProfile.RepondantHES }}</p>
             <p><strong>Remarque :</strong> {{ userProfile.Remarque }}</p>
             <h5>Détails</h5>
             <DataTable :value="[userProfile]" tableStyle="min-width: 50rem">
@@ -24,7 +24,7 @@
             </DataTable>
           </div>
           <div v-else>
-            <p>Chargement des données du profil...</p>
+            <p>Chargement des données du profil... ou Profil introuvable.</p>
           </div>
         </div>
 
@@ -58,99 +58,95 @@
 import { ref, onMounted } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import InputText from 'primevue/inputtext';
 import { getDatabase, ref as dbRef, get } from "firebase/database";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 const stages = ref([]);
 const userProfile = ref(null);
 const loading = ref(true);
-const globalFilter = ref('');
 
-// Fonction pour récupérer les données du profil utilisateur
-const fetchUserProfile = async (email) => {
+// Function to fetch user profile
+const fetchUserProfile = async (userId) => {
   const db = getDatabase();
-  const studentsRef = dbRef(db, 'students');
-  const snapshot = await get(studentsRef);
-  if (snapshot.exists()) {
-    const studentsData = snapshot.val();
-    for (const classKey in studentsData) {
-      for (const studentKey in studentsData[classKey]) {
-        const student = studentsData[classKey][studentKey];
-        if (student.Mail && student.Mail.toLowerCase() === email.toLowerCase()) {
-          userProfile.value = {
-            id: studentKey,
-            Classe: classKey,
-            ...student
-          };
-          console.log('Profil utilisateur récupéré :', userProfile.value);
-          addAllPFPInfoToStages(student, studentKey);
-          return;
-        }
+
+  try {
+    // Fetch from Users database
+    const userRef = dbRef(db, `Users/${userId}`);
+    const snapshotUser = await get(userRef);
+
+    if (snapshotUser.exists()) {
+      const user = snapshotUser.val();
+      userProfile.value = {
+        id: userId,
+        Nom: user.Nom || 'Non spécifié',
+        Prenom: user.Prenom || 'Non spécifié',
+        Mail: user.Mail || 'Non spécifié',
+        Classe: '', // Will be filled from Students database
+        RepondantHES: user.RepondantHES || 'Non spécifié',
+        Remarque: user.Remarque || 'Non spécifié',
+      };
+
+      // Fetch from Students database
+      const studentsRef = dbRef(db, `Students/${userId}`);
+      const snapshotStudent = await get(studentsRef);
+
+      if (snapshotStudent.exists()) {
+        const student = snapshotStudent.val();
+        userProfile.value.Classe = student.Class || 'Non spécifié';
+        addAllPFPInfoToStages(student, userId);
+      } else {
+        console.error(`Student data not found for ID: ${userId}`);
       }
+
+      console.log('User profile:', userProfile.value);
+    } else {
+      userProfile.value = null;
+      console.log('User profile not found in Users table');
     }
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
   }
-  userProfile.value = null;
-  console.log('Profil utilisateur non trouvé');
 };
 
-// Fonction pour ajouter les infos des stages à la liste des stages
+// Function to add PFP stages to list
 const addAllPFPInfoToStages = (student, studentKey) => {
   const pfpInfos = ['PFP1_info', 'PFP2_info', 'PFP3_info', 'PFP4_info'];
   pfpInfos.forEach((pfp) => {
     if (student[pfp]) {
       stages.value.push({
         id: `${pfp}-${studentKey}`,
-        NomPlace: pfp + ": " + (student[pfp].NomPlace || 'N/A'),  // Associer le nom du PFP au nom de l'institution
+        NomPlace: student[pfp].NomPlace || 'N/A',
         Lieu: student[pfp].Lieu || 'N/A',
         Langue: student[pfp].Langue || 'N/A',
-        Secteur: getSecteurs(student[pfp])
+        Secteur: getSecteurs(student[pfp]),
       });
     }
   });
-  console.log('Stages après ajout des infos PFP :', stages.value);
+  console.log('Stages:', stages.value);
 };
 
-// Fonction pour extraire les secteurs (détails des stages)
+// Function to extract sectors (stage details)
 const getSecteurs = (info) => {
   const secteurs = [];
-  if (info.NEUROGER === 1) secteurs.push('NEUROGER');
-  if (info.REHAB === 1) secteurs.push('REHAB');
-  if (info.AIGU === 1) secteurs.push('AIGU');
-  if (info.MSQ === 1) secteurs.push('MSQ');
-  if (info.SYSINT === 1) secteurs.push('SYSINT');
-  if (info.AMBU === 1) secteurs.push('AMBU');
+  if (info.NEUROGER) secteurs.push('NEUROGER');
+  if (info.REHAB) secteurs.push('REHAB');
+  if (info.AIGU) secteurs.push('AIGU');
+  if (info.MSQ) secteurs.push('MSQ');
+  if (info.SYSINT) secteurs.push('SYSINT');
+  if (info.AMBU) secteurs.push('AMBU');
   return secteurs.join(', ');
 };
 
-// Template pour l'affichage des secteurs dans la table
-const secteurTemplate = (rowData) => {
-  return rowData.Secteur;
-};
+// Template for displaying sectors in the table
+const secteurTemplate = (rowData) => rowData.Secteur;
 
-// Gestion des icônes pour les champs de validation
-const getClass = (value) => {
-  return value >= 1 ? 'text-green-500' : 'text-red-500';
-};
-
-// Formatage des colonnes (icônes ✔️/❌)
-const formatColumn = (field) => {
-  return (rowData) => {
-    const value = rowData[field];
-    return `<span class="${getClass(value)}">${formatValue(value)}</span>`;
-  };
-};
-
-const formatValue = (value) => {
-  return value >= 1 ? `✔️ ${value}` : `❌ ${value}`;
-};
-
-// Montée en charge des données du profil et des stages
+// Mounted lifecycle to load profile and stages data
 onMounted(async () => {
   const auth = getAuth();
   onAuthStateChanged(auth, async (user) => {
     if (user) {
-      await fetchUserProfile(user.email);
+      console.log('User ID:', user.uid); // Log the user ID
+      await fetchUserProfile(user.uid);
       loading.value = false;
     } else {
       userProfile.value = null;

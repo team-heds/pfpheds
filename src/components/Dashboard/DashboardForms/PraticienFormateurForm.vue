@@ -46,7 +46,7 @@ export default {
   methods: {
     async addNewPraticienFormateur() {
       try {
-        const praticiensFormateursRef = ref(db, 'praticiensFormateurs');
+        const praticiensFormateursRef = ref(db, 'PraticienFormateurs');
 
         // Utilisation de push pour générer une nouvelle clé unique
         const newPraticienFormateurRef = push(praticiensFormateursRef);

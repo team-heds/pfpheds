@@ -16,7 +16,7 @@
       >
         <template #header>
           <div class="flex justify-content-between flex-column sm:flex-row">
-            <Button label="Ajouter un étudiant" icon="pi pi-plus" class="mb-2 mr-2" @click="goToEtudiantForm" />
+            <Button label="Ajouter un étudiant" icon="pi pi-plus" class="mb-2 mr-2" outlined @click="goToEtudiantForm" />
             <span class="p-input-icon-left">
               <InputText v-model="globalFilter" placeholder="Recherche" style="width: 100%" />
             </span>
@@ -46,17 +46,14 @@
           <template #body="{ data }">
             <input type="checkbox" :checked="data.SAE" disabled />
           </template>
-          <template #filter="{ filterModel }">
-            <TriStateCheckbox v-model="filterModel.value" />
-          </template>
         </Column>
 
         <!-- Colonne des actions -->
         <Column header="Actions" style="min-width: 12rem" class="text-center">
           <template #body="{ data }">
-            <Button label="Profil" class="mb-2 mr-2" @click="goToEtudiantDetails(data.id)" />
-            <Button label="Modifier" class="mb-2 mr-2" @click="goToEtudiantFormModif(data.id)" />
-            <Button label="Supprimer" class="mb-2 mr-2" @click="deleteStudent(data.id)" />
+            <Button label="Profil" class="mb-2 mr-2" size="small"  outlined @click="goToEtudiantDetails(data.id)" />
+            <Button label="Modifier" class="mb-2 mr-2" size="small" outlined severity="success" @click="goToEtudiantFormModif(data.id)" />
+            <Button label="Supprimer" class="mb-2 mr-2" size="small" outlined severity="danger" @click="deleteStudent(data.id)" />
           </template>
         </Column>
       </DataTable>

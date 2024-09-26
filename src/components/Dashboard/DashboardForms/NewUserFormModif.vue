@@ -66,7 +66,7 @@ export default {
   async mounted() {
     if (this.userId) {
       try {
-        const userRef = ref(db, 'users/' + this.userId);
+        const userRef = ref(db, 'Users/' + this.userId);
         const snapshot = await get(userRef);
         if (snapshot.exists()) {
           const userData = snapshot.val();
@@ -92,12 +92,12 @@ export default {
     async updateUser() {
       if (confirm('Êtes-vous sûr de vouloir mettre à jour cet utilisateur ?')) {
         try {
-          const userRef = ref(db, 'users/' + this.userId);
+          const userRef = ref(db, 'Users/' + this.userId);
           await set(userRef, {
-            Prenom: this.prenom,
-            Nom: this.nom,
-            Role: this.role,
-            Email: this.email,
+            Forname: this.prenom,
+            Name: this.nom,
+            Roles: this.role,
+            Mail: this.email,
             Institution: this.institution,
           });
 

@@ -54,7 +54,7 @@ import { getDatabase, ref as dbRef, get, set } from "firebase/database";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
-import Textarea from 'primevue/textarea';
+
 
 // Définir l'URL de l'avatar par défaut
 const defaultAvatar = '../../../public/assets/images/avatar/01.jpg';
@@ -134,7 +134,7 @@ const saveProfile = async () => {
     Mail: user.value.email,
     Ville: user.value.ville,
     Bio: user.value.bio,
-    photoURL: user.value.photoURL
+    PhotoURL: user.value.photoURL
   });
 
   alert('Profil mis à jour avec succès');

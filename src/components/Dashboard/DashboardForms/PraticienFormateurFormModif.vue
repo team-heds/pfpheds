@@ -48,7 +48,7 @@ export default {
   },
   async mounted() {
     if (this.praticienFormateurId) {
-      const praticienFormateurRef = ref(db, 'praticiensFormateurs/' + this.praticienFormateurId);
+      const praticienFormateurRef = ref(db, 'PraticienFormateurs/' + this.praticienFormateurId);
       try {
         const snapshot = await get(praticienFormateurRef);
         if (snapshot.exists()) {
@@ -70,7 +70,7 @@ export default {
     async updatePraticienFormateur() {
       if (confirm('Êtes-vous sûr de vouloir mettre à jour ce praticien formateur ?')) {
         try {
-          const praticienFormateurRef = ref(db, 'praticiensFormateurs/' + this.praticienFormateurId);
+          const praticienFormateurRef = ref(db, 'PraticienFormateurs/' + this.praticienFormateurId);
           await set(praticienFormateurRef, {
             Prenom: this.prenom,
             Nom: this.nom,

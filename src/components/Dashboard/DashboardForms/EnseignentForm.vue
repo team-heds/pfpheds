@@ -3,7 +3,7 @@
     <div class="text-center">
       <h1 class="text-5xl font-bold mb-4">Nouvel enseignant</h1>
     </div>
-    <form @submit.prevent="addNewEnseignant" class="p-fluid grid" >
+    <form @submit.prevent="addNewEnseignant" class="p-fluid grid">
       <div class="field mb-4 col-6">
         <label for="prenom" class="block text-xl mb-2">Prénom</label>
         <InputText id="prenom" v-model="prenom" required class="w-full" />
@@ -24,8 +24,7 @@
 </template>
 
 <script>
-import { db } from '../../../../firebase.js';
-import { ref, get, set } from "firebase/database";
+import { getDatabase, ref as dbRef, get, set } from "firebase/database";
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 
@@ -39,25 +38,26 @@ export default {
     return {
       prenom: '',
       nom: '',
-      email: '',
+      email: ''
     };
   },
   methods: {
     async addNewEnseignant() {
       try {
-        const enseignantsRef = ref(db, 'enseignants');
+        const db = getDatabase();
+        const enseignantsRef = dbRef(db, 'Enseignants');
 
-        // Obtenir les données actuelles pour compter le nombre d'enseignants
+        // Obtenir les données actuelles pour obtenir le nombre d'enseignants
         const snapshot = await get(enseignantsRef);
         const enseignantsData = snapshot.val();
         const nextEnseignantId = enseignantsData ? Object.keys(enseignantsData).length + 1 : 1;
 
         // Création d'un nouvel enseignant avec un identifiant séquentiel
-        const newEnseignantRef = ref(db, 'enseignants/' + nextEnseignantId);
+        const newEnseignantRef = dbRef(db, 'Enseignants/' + nextEnseignantId);
         await set(newEnseignantRef, {
-          Prenom: this.prenom,
-          Nom: this.nom,
-          Email: this.email,
+          Forname: this.prenom,
+          Name: this.nom,
+          Mail: this.email
         });
 
         // Réinitialiser les champs du formulaire
@@ -66,7 +66,6 @@ export default {
         this.email = '';
 
         // Rediriger vers la liste des enseignants
-        // Assurez-vous que la route 'EnseignantList' est correctement définie dans votre routeur
         this.$router.push({ name: 'EnseignantList' });
       } catch (error) {
         console.error('Erreur d’ajout du nouvel enseignant', error);
