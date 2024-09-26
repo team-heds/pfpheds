@@ -21,12 +21,12 @@
         </div>
 
         <!-- Submit Button -->
-        <button class="btn btn-primary" @click="postMessage">Poster</button>
+        <button class="btn btn-primary  " @click="postMessage">Poster</button>
       </div>
 
       <!-- Displaying Posts with InfiniteScroll -->
       <InfiniteScroll :loading="loading" @load-more="loadMorePosts">
-        <PostItem v-for="(post, index) in shuffledPosts" :key="post.id" :post="post" :currentUser="currentUser" />
+  //      <PostItem v-for="(post,index) in shuffledPosts" :key="post.id" :post="post" :currentUser="currentUser" />
       </InfiniteScroll>
     </div>
   </div>
@@ -95,6 +95,7 @@ export default {
       console.log("okka");
       const newPostRef = push(dbRef(db, 'Posts'));
       const postData = {
+   //     id : this.key,
         Author: authorName,
         IdUser: this.currentUser.uid,
         Content: this.newPost,
@@ -149,7 +150,11 @@ export default {
       }, {
         onlyOnce: true
       });
+
     },
+
+
+
     applyFilters(filterOptions = null) {
       if (filterOptions) {
         this.searchQuery = filterOptions.query;
@@ -175,12 +180,14 @@ export default {
       }
 
       if (this.sortOrder === 'newest') {
+
         filtered.sort((a, b) => b.timestamp - a.timestamp);
       } else {
         filtered.sort((a, b) => a.timestamp - b.timestamp);
       }
 
-   //   this.filteredPosts = filtered;
+      console.log("eerrr");
+     this.filteredPosts = filtered;
     },
 
 

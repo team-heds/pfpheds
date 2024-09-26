@@ -53,7 +53,7 @@ import MentionGroupPage from '@/components/Social/MentionGroupPage.vue';
 
 // Define your routes
 const routes = [
-  { path: '/newsfeed', component: NewsFeed, name: 'NewsFeed' }, // Fil d'actualité
+  { path: '/newsfeed', component: NewsFeed, name: 'NewsFeed',   props: true   }, // Fil d'actualité
   { path: '/profile/:id', component: UserProfile, name: 'UserProfile', props: true }, // Profil de l'utilisateur
   { path: '/mention/:group', component: MentionGroupPage, name: 'MentionGroupPage', props: true, meta: { requiresAuth: true, requiredRole: true }},
 
@@ -122,7 +122,7 @@ router.beforeEach(async (to, from, next) => {
   if (to.matched.some(record => record.meta.requiresAuth)) {
     if (user) {
       const userId = user.uid;
-      const rolesRef = dbRef(db, `users/${userId}/roles`);
+      const rolesRef = dbRef(db, `Users/${userId}/Roles`);
       const snapshot = await dbGet(rolesRef);
       const roles = snapshot.val();
 

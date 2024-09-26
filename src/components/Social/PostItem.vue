@@ -4,14 +4,16 @@
       <img :src="authorAvatarUrl || defaultAvatar" alt="Avatar" class="avatar" />
       <div class="post-author">
         <!-- Link to the user's profile using authorId -->
-        <router-link :to="{ name: 'UserProfile', params: { id: post.authorId } }">
+        <router-link v-if="post.authorId" :to="{ name: 'UserProfile', params: { id: post.authorId } }">
           <strong>{{ authorName }}</strong>
-        </router-link> &nbsp;
+        </router-link>
+        <span v-else>{{ authorName }}</span>
+
         <span class="post-date">{{ formatTimestamp(post.timestamp) }}</span>
       </div>
     </div>
     <div class="post-content">
-      {{ post.content }}
+      {{ post.Content }}
     </div>
     <div class="post-actions">
       <button @click="toggleReplyForm" class="btn btn-link">Répondre</button>
@@ -30,9 +32,12 @@
           <img :src="replyAuthorAvatarUrls[reply.IdUser] || defaultAvatar" alt="Avatar" class="avatar" />
           <div class="reply-author">
             <!-- Link to the reply author's profile using authorId -->
-            <router-link :to="{ name: 'UserProfile', params: { id: reply.IdUser } }">
+            <router-link v-if="reply.IdUser" :to="{ name: 'UserProfile', params: { id: reply.IdUser } }">
               <strong>{{ getReplyAuthorName(reply.IdUser) }}</strong>
             </router-link>
+            <span v-else>{{ getReplyAuthorName(reply.IdUser) }}</span>
+
+
             <span class="reply-date">{{ formatTimestamp(replyTtimestamp) }}</span>
           </div>
         </div>
@@ -51,6 +56,7 @@ export default {
   props: {
     post: Object,
     currentUser: Object,
+    id: Object,
   },
   data() {
     return {
@@ -74,7 +80,7 @@ export default {
   },
   methods: {
     fetchAuthorDetails() {
-      const userRef = dbRef(db, `users/${this.post.IdUser}`);
+      const userRef = dbRef(db, `Users/${this.post.IdUser}`);
       onValue(userRef, (snapshot) => {
         const userData = snapshot.val();
         console.log("ok1");
@@ -86,8 +92,8 @@ export default {
         } else {
           console.log("ok3");
 
-      //    this.authorName = this.post.Author.split('@')[0]; // Fallback to email prefix
-     //     this.authorAvatarUrl = "this.defaultAvatar"; // Fallback to default avatar
+          this.authorName = this.post.Author.split('@')[0]; // Fallback to email prefix
+          this.authorAvatarUrl = "this.defaultAvatar"; // Fallback to default avatar
         }
       });
     },
@@ -136,6 +142,7 @@ export default {
           content: this.post.content
         }
       };
+
 
       const postRef = dbRef(db, `Posts/${this.post.id}/replies`);
       push(postRef, newReply);
