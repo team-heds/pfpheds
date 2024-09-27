@@ -1,18 +1,16 @@
 <template>
-
+<Navbar />
   <div class="newsfeed-grid">
     <!-- Première section : Menu de gauche -->
     <div class="sidebar card">
-      <h3>Options</h3>
+      <AdvancedSearchFilter @filter-posts="applyFilters" />
+      <h3>Groupes</h3>
       <!-- Exemple d'éléments dans le menu -->
       <ul class="menu-options">
-        <li><a href="#">Accueil</a></li>
         <li><a href="#">Groupes</a></li>
-        <li><a href="#">Paramètres</a></li>
       </ul>
 
       <!-- Filtres de recherche avancés -->
-      <AdvancedSearchFilter @filter-posts="applyFilters" />
     </div>
 
     <!-- Deuxième section : Fil d'actualité -->
@@ -62,7 +60,8 @@ export default {
     UserProfile,
     InfiniteScroll,
     PostItem,
-    AdvancedSearchFilter
+    AdvancedSearchFilter,
+    Navbar
   },
   data() {
     return {

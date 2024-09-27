@@ -5,7 +5,7 @@
 
       <div v-if="user">
         <div v-if="isCurrentUser">
-          <!-- Form to edit profile if the user is viewing their own profile -->
+          <!-- Formulaire pour modifier le profil si l'utilisateur consulte son propre profil -->
           <div class="form-group">
             <label for="fullName"><strong>Nom complet:</strong></label>
             <input v-model="editableUser.fullName" type="text" id="fullName" class="form-control" />
@@ -26,11 +26,11 @@
           <button class="btn btn-primary mt-3" @click="saveProfile">Enregistrer</button>
         </div>
         <div v-else>
-          <!-- Display profile information for other users -->
+          <!-- Affichage des informations du profil pour les autres utilisateurs -->
           <p><strong>Nom complet:</strong> {{ user.fullName }}</p>
+          <p><strong>Email:</strong> {{ user.email }}</p>
+          <p><strong>Nom d'utilisateur:</strong> {{ user.username }}</p>
           <p><strong>Bio:</strong> {{ user.bio }}</p>
-          <p><strong>ID:</strong> {{ userId }}</p>
-          <p v-if="user.roles"><strong>Rôles:</strong> {{ user.roles.join(', ') }}</p>
           <img v-if="user.profileImageUrl" :src="user.profileImageUrl" alt="Profile Image" class="profile-image-preview mt-2" />
         </div>
       </div>
@@ -55,7 +55,6 @@
 </template>
 
 <script>
-import Navbar from '@/components/Utils/Navbar.vue';
 import { ref as dbRef, onValue, update } from "firebase/database";
 import { db, storage, auth } from '../../../firebase.js';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -63,29 +62,26 @@ import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage
 
 export default {
   name: 'UserProfile',
-  components: {
-    Navbar
-  },
   props: {
-    id: String  // Receive Firebase ID as a prop from the route
+    id: String  // Reçoit l'ID Firebase via la route
   },
   data() {
     return {
       user: null,
       userPosts: [],
-      userId: null, // Store the Firebase ID
+      userId: null, // Stocker l'ID Firebase
       editableUser: {
         fullName: '',
         bio: '',
         username: '',
         profileImageUrl: ''
-      }, // Data for editing user profile
-      isCurrentUser: false, // Flag to check if logged-in user is viewing their own profile
-      selectedFile: null, // Store the selected file for profile image upload
+      },
+      isCurrentUser: false,
+      selectedFile: null, // Image de profil sélectionnée
     };
   },
   created() {
-    this.userId = this.id;  // Assign the route param ID to userId
+    this.userId = this.id;  // Assigner l'ID de la route
     this.getCurrentUser();
     this.fetchUserProfile();
     this.fetchUserPosts();
@@ -94,27 +90,25 @@ export default {
     getCurrentUser() {
       onAuthStateChanged(auth, (user) => {
         if (user && user.uid === this.userId) {
-          this.isCurrentUser = true; // Set flag if viewing own profile
+          this.isCurrentUser = true;
         }
       });
     },
     fetchUserProfile() {
       if (!this.userId) return;
 
-      const userRef = dbRef(db, `users/${this.userId}`);
+      const userRef = dbRef(db, `Users/${this.userId}`);
       onValue(userRef, (snapshot) => {
         const userData = snapshot.val();
         if (userData) {
           this.user = {
-            fullName: userData.fullName || 'Nom inconnu',
-            idkey: this.userId || 'ID inconnu',
-            bio: userData.bio || 'Pas de bio disponible',
-            roles: userData.roles ? Object.keys(userData.roles) : [],
-            profileImageUrl: userData.profileImageUrl || '',
-            username: userData.username || ''
+            fullName: `${userData.Forname} ${userData.Name}`,
+            email: userData.Mail,
+            username: userData.Username || '',
+            bio: userData.Biography || '',
+            profileImageUrl: userData.ProfilePictureURL || ''
           };
 
-          // If current user, populate editable fields
           if (this.isCurrentUser) {
             this.editableUser = {
               fullName: this.user.fullName,
@@ -131,7 +125,7 @@ export default {
     fetchUserPosts() {
       if (!this.userId) return;
 
-      const postsRef = dbRef(db, 'posts');
+      const postsRef = dbRef(db, 'Posts');
       onValue(postsRef, (snapshot) => {
         const postsData = snapshot.val();
         if (postsData) {
@@ -145,7 +139,7 @@ export default {
     uploadProfileImage() {
       return new Promise((resolve, reject) => {
         if (!this.selectedFile) {
-          resolve(null);  // No file selected, resolve with null
+          resolve(null);
           return;
         }
 
@@ -153,8 +147,8 @@ export default {
         uploadBytes(storageReference, this.selectedFile)
           .then(snapshot => getDownloadURL(snapshot.ref))
           .then(downloadURL => {
-            this.editableUser.profileImageUrl = downloadURL;  // Update local state
-            resolve(downloadURL);  // Resolve with the download URL
+            this.editableUser.profileImageUrl = downloadURL;
+            resolve(downloadURL);
           })
           .catch(reject);
       });
@@ -163,10 +157,9 @@ export default {
       if (!this.userId) return;
 
       try {
-        const downloadURL = await this.uploadProfileImage();  // Upload image and get URL
-        const userRef = dbRef(db, `users/${this.userId}`);
+        const downloadURL = await this.uploadProfileImage();
+        const userRef = dbRef(db, `Users/${this.userId}`);
 
-        // Include the profileImageUrl if a new image was uploaded
         const updateData = {
           fullName: this.editableUser.fullName,
           bio: this.editableUser.bio,
@@ -176,7 +169,7 @@ export default {
 
         await update(userRef, updateData);
         alert('Profil mis à jour avec succès.');
-        this.fetchUserProfile(); // Refresh user profile data
+        this.fetchUserProfile();
       } catch (error) {
         console.error("Erreur lors de la mise à jour du profil:", error);
       }
