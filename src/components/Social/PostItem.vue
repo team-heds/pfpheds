@@ -7,7 +7,7 @@
         <router-link v-if="post.authorId" :to="{ name: 'UserProfile', params: { id: post.authorId } }">
           <strong>{{ authorName }}</strong>
         </router-link>
-        <span v-else>{{ authorName }}</span>
+        <h5 v-else>{{ authorName }}</h5>
 
         <span class="post-date">{{ formatTimestamp(post.timestamp) }}</span>
       </div>
@@ -16,13 +16,15 @@
       {{ post.Content }}
     </div>
     <div class="post-actions">
-      <button @click="toggleReplyForm" class="btn btn-link">Répondre</button>
+      <Button @click="toggleReplyForm" size="small" >Répondre</Button>
     </div>
 
     <!-- Formulaire de réponse -->
     <div v-if="showReplyForm" class="reply-form">
-      <textarea v-model="replyContent" placeholder="Écrire une réponse..." class="form-control mb-2"></textarea>
-      <button @click="submitReply" class="btn btn-secondary">Envoyer</button>
+      <Textarea v-model="replyContent" placeholder="Écrire une réponse..."></Textarea>
+      <div>
+        <Button @click="submitReply" size="small">Envoyer</Button>
+      </div>
     </div>
 
     <!-- Affichage des réponses -->

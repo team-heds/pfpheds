@@ -1,6 +1,5 @@
 <template>
   <div>
-    <Navbar />
     <div class="container mt-4">
       <h2>Profil de {{ user ? user.fullName : 'Utilisateur' }}</h2>
 

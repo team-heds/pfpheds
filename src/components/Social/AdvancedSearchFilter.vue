@@ -1,67 +1,68 @@
 <template>
   <div class="advanced-search-filter">
     <!-- Search input for general query -->
-    <input 
-      v-model="searchQuery" 
-      placeholder="Rechercher..." 
-      @input="applyFilters" 
-      class="form-control mb-2"
-    />
+
+    <IconField class="mb-2">
+      <InputIcon class="pi pi-search" />
+      <InputText v-model="searchQuery" placeholder="Rechercher ..." @input="applyFilters" />
+    </IconField>
 
     <!-- Buttons for filtering by hashtag -->
     <div class="filter-buttons mb-2">
       <!-- "ALL" button to reset all filters -->
-      <button 
-        class="btn btn-outline-dark" 
+      <Button
+        size="small"
         @click="clearFilters"
         :class="{ active: isActive('all', '') }"
       >
         ALL
-      </button>
+      </Button>
 
-      <button 
-        class="btn btn-outline-primary" 
+      <Button
+        size="small"
         @click="setFilter('hashtag', 'BA23')"
         :class="{ active: isActive('hashtag', 'BA23') }"
       >
         #BA23
-      </button>
+      </Button>
 
-      <button 
-        class="btn btn-outline-primary" 
+      <Button
+        size="small"
         @click="setFilter('hashtag', 'BA24')"
         :class="{ active: isActive('hashtag', 'BA24') }"
       >
         #BA24
-      </button>
+      </Button>
       
       <!-- Buttons for filtering by mention group -->
-      <button 
-        class="btn btn-outline-secondary" 
+      <Button
+        size="small"
         @click="setFilter('mention', 'BA23')"
         :class="{ active: isActive('mention', 'BA23') }"
       >
         @BA23
-      </button>
+      </Button>
 
-      <button 
-        class="btn btn-outline-secondary" 
+      <Button
+        size="small"
         @click="setFilter('mention', 'BA24')"
         :class="{ active: isActive('mention', 'BA24') }"
       >
         @BA24
-      </button>
+      </Button>
     </div>
 
     <!-- Sorting option dropdown -->
-    <select 
+    <Select
       v-model="sortOrder" 
       @change="applyFilters" 
       class="form-select mb-2"
     >
       <option value="newest">Les plus récents</option>
       <option value="oldest">Les plus anciens</option>
-    </select>
+    </Select>
+
+
   </div>
 </template>
 
