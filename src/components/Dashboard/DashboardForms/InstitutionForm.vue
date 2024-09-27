@@ -23,30 +23,24 @@
                   <InputText id="name" v-model="institution.Name" class="w-full" />
                 </div>
                 <div class="field col-6">
-                  <label for="cyberlearn">Cyberlearn</label>
-                  <InputGroup>
-                    <InputGroupAddon>www</InputGroupAddon>
-                    <InputText id="cyberlearn" v-model="institution.Cyberlearn" class="w-full" />
-                  </InputGroup>
+                  <label for="cyberlearn">Cyberlean URL</label>
+                  <InputText id="cyberlearn" v-model="institution.CyberleanURL" class="w-full" />
                 </div>
                 <div class="field col-6">
                   <label for="url">URL</label>
-                  <InputGroup>
-                    <InputGroupAddon>www</InputGroupAddon>
-                    <InputText id="url" v-model="institution.URL" class="w-full" />
-                  </InputGroup>
+                  <InputText id="url" v-model="institution.URL" class="w-full" />
                 </div>
                 <div class="field col-6">
-                  <label for="lieu">Lieu</label>
-                  <InputText id="lieu" v-model="institution.Lieu" class="w-full" />
+                  <label for="locality">Localité</label>
+                  <InputText id="locality" v-model="institution.Locality" class="w-full" />
                 </div>
                 <div class="field col-6">
                   <label for="canton">Canton</label>
                   <Dropdown id="canton" v-model="institution.Canton" :options="cantons" optionLabel="name" optionValue="name" class="w-full" />
                 </div>
                 <div class="field col-6">
-                  <label for="street">Rue</label>
-                  <InputText id="street" v-model="institution.Street" class="w-full" />
+                  <label for="address">Adresse</label>
+                  <InputText id="address" v-model="institution.Address" class="w-full" />
                 </div>
                 <div class="field col-3">
                   <label for="latitude">Latitude</label>
@@ -69,42 +63,32 @@
               <Divider />
               <div class="grid formgrid">
                 <div class="col-12 md:col-6">
-                  <label for="key">ID</label>
-                  <InputText id="key" v-model="institution.key" />
+                  <label for="institutionId">ID Institution</label>
+                  <InputText id="institutionId" v-model="institution.InstitutionId" />
                 </div>
                 <div class="col-12 md:col-6">
-                  <label for="categorie">Catégorie</label>
-                  <Dropdown id="categorie" v-model="institution.Categorie" :options="categories" optionLabel="label" optionValue="value" class="w-full" />
+                  <label for="category">Catégorie</label>
+                  <Dropdown id="category" v-model="institution.Category" :options="categories" optionLabel="label" optionValue="value" class="w-full" />
                 </div>
                 <div class="col-12 md:col-6">
-                  <label for="convention">Convention</label>
-                  <Calendar id="convention" v-model="institution.Convention" dateFormat="yy-mm-dd" />
+                  <label for="conventionDate">Date de Convention</label>
+                  <Calendar id="conventionDate" v-model="institution.ConventionDate" dateFormat="yy-mm-dd" />
                 </div>
                 <div class="col-12 md:col-6">
-                  <label for="accordCadre">Accord Cadre</label>
-                  <Calendar id="accordCadre" v-model="institution.AccordCadre" dateFormat="yy-mm-dd" />
+                  <label for="accordCadreDate">Date de l'Accord Cadre</label>
+                  <Calendar id="accordCadreDate" v-model="institution.AccordCadreDate" dateFormat="yy-mm-dd" />
                 </div>
                 <div class="col-12">
-                  <label for="remarque">Remarque convention / accord cadre</label>
-                  <Textarea id="remarque" v-model="institution.Remarque" />
+                  <label for="note">Remarques</label>
+                  <Textarea id="note" v-model="institution.Note" />
                 </div>
                 <div class="col-12 md:col-8">
-                  <label for="nomResponsablePhysio">Nom Responsable Physio</label>
-                  <InputText id="nomResponsablePhysio" v-model="institution.NomResponsablePhysio" class="w-full" />
+                  <label for="idResponsablePhysio">ID Responsable Physio</label>
+                  <InputText id="idResponsablePhysio" v-model="institution.IdResponsablePhysio" class="w-full" />
                 </div>
                 <div class="col-12 md:col-4">
-                  <div class="p-field">
-                    <label for="canton">Langue</label>
-                    <Dropdown id="langue" v-model="institution.Language" :options="langues" optionLabel="name" optionValue="name" class="w-full" />
-                  </div>
-                </div>
-                <div class="col-12 md:col-6">
-                  <label for="phoneResponsablePhysio">Téléphone Responsable Physio</label>
-                  <InputText id="phoneResponsablePhysio" v-model="institution.PhoneResponsablePhysio" class="w-full" />
-                </div>
-                <div class="col-12 md:col-6">
-                  <label for="emailResponsablePhysio">Email Responsable Physio</label>
-                  <InputText id="emailResponsablePhysio" v-model="institution.EmailResponsablePhysio" type="email" class="w-full" />
+                  <label for="language">Langue</label>
+                  <Dropdown id="language" v-model="institution.Language" :options="langues" optionLabel="name" optionValue="name" class="w-full" />
                 </div>
               </div>
             </div>
@@ -151,6 +135,7 @@
   </div>
 </template>
 
+
 <script>
 import { db } from '../../../../firebase.js';
 import { ref, set, push } from "firebase/database";
@@ -178,22 +163,22 @@ export default {
     return {
       activeIndex: 0, // Index de l'étape actuelle du formulaire
       institution: {
-        Cyberlearn: '',
+        CyberlearnURL: '',
         Name: '',
-        Lieu: '',
+        Locality: '',
         Canton: '',
         Description: '',
-        Street: '',
         URL: '',
-        Categorie: '',
+        Category: '',
         Latitude: '',
         Longitude: '',
-        Langue: '',
+        Language: '',
         ImageURL: '',
-        Convention: null,
-        AccordCadre: null,
-        Remarque: '',
+        ConventionDate: null,
+        AccordCadreDate: null,
+        Note: '',
         key: '',
+        NPA: '',
         NomResponsablePhysio: '',
         PhoneResponsablePhysio: '',
         EmailResponsablePhysio: '',
@@ -206,6 +191,12 @@ export default {
         { code: 'BE', name: 'Berne' },
         { code: 'FR', name: 'Fribourg' },
         { code: 'VS', name: 'Valais' },
+        { code: 'VD', name: 'Vaud' },
+        { code: 'GE', name: 'Genève' },
+        { code: 'ZH', name: 'Zurich' },
+        { code: 'NE', name: 'Neuchâtel' },
+        { code: 'JU', name: 'Jura' },
+        { code: 'LU', name: 'Lucerne'}
         // Ajouter d'autres cantons si nécessaire
       ],
       categories: [
@@ -215,15 +206,10 @@ export default {
         { label: 'Cabinet privé hors canton', value: 'Cabinet privé hors canton' },
       ],
       langues: [
-        { code: 'FR', name: 'Français' },
-        { code: 'ALL', name: 'Allemand' },
-        { code: 'IT', name: 'Italien' },
-      ],
-      steps: [
-        { label: "Détail de l'institution" },
-        { label: 'Informations supplémentaires' },
-        { label: "Médias de l'institution" },
-        { label: 'Description' },
+        { code: 'FR', name: 'FR' },
+        { code: 'ALL', name: 'ALL' },
+        { code: 'IT', name: 'IT' },
+        { code: 'ANG', name: 'ANG' }
       ],
     };
   },
@@ -243,7 +229,7 @@ export default {
     // Fonction d'envoi des données à Firebase
     async envoyerDonnees() {
       try {
-        const newInstRef = push(ref(db, 'institutions')); // Crée un nouvel ID unique pour l'institution
+        const newInstRef = push(ref(db, 'Institutions')); // Crée un nouvel ID unique pour l'institution
         const newInstKey = newInstRef.key;
         this.institution.key = newInstKey;
 

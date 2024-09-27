@@ -27,8 +27,8 @@
               <div class="p-field">
                 <label for="cyberlearn">Descriptif FP (PDF)</label>
                 <input type="file" accept="application/pdf" @change="onPdfChange" class="p-button-outlined p-mt-2" />
-                <p v-if="institution.CyberlearnURL" class="mt-2">
-                  PDF actuel : <a :href="institution.CyberlearnURL" target="_blank">Voir le PDF</a>
+                <p v-if="institution.CyberleanURL" class="mt-2">
+                  PDF actuel : <a :href="institution.CyberleanURL" target="_blank">Voir le PDF</a>
                 </p>
               </div>
             </div>
@@ -36,7 +36,7 @@
             <!-- Lieu -->
             <div class="col-12 md:col-4">
               <div class="p-field">
-                <label for="lieu">Lieu</label>
+                <label for="locality">Lieu</label>
                 <InputText id="locality" v-model="institution.Locality" />
               </div>
             </div>
@@ -53,15 +53,15 @@
             <div class="col-12 md:col-4">
               <div class="p-field">
                 <label for="langue">Langue</label>
-                <InputText id="language" v-model="institution.Language" />
+                <InputText id="langue" v-model="institution.Language" />
               </div>
             </div>
 
             <!-- Rue -->
             <div class="col-12 md:col-6">
               <div class="p-field">
-                <label for="street">Rue</label>
-                <InputText id="street" v-model="institution.Address" />
+                <label for="address">Adresse</label>
+                <InputText id="address" v-model="institution.Address" />
               </div>
             </div>
 
@@ -79,8 +79,8 @@
             <!-- Catégorie -->
             <div class="col-12 md:col-6">
               <div class="p-field">
-                <label for="categorie">Catégorie</label>
-                <InputText id="categorie" v-model="institution.Category" :options="categories" optionLabel="label" optionValue="value" class="w-full" />
+                <label for="category">Catégorie</label>
+                <InputText id="category" v-model="institution.Category" class="w-full" />
               </div>
             </div>
 
@@ -107,15 +107,15 @@
             <!-- Description -->
             <div class="col-12 md:col-12">
               <div class="p-field">
-                <label for="remarque">Description</label>
-                <Textarea id="remarque" v-model="institution.Description" />
+                <label for="description">Description</label>
+                <Textarea id="description" v-model="institution.Description" />
               </div>
             </div>
 
             <!-- Convention -->
             <div class="col-12 md:col-6">
               <div class="p-field">
-                <label for="convention">Convention</label>
+                <label for="convention">Date de Convention</label>
                 <Calendar id="convention" v-model="institution.ConventionDate" dateFormat="yy-mm-dd" />
               </div>
             </div>
@@ -123,7 +123,7 @@
             <!-- Accord Cadre -->
             <div class="col-12 md:col-6">
               <div class="p-field">
-                <label for="accordCadre">Accord Cadre</label>
+                <label for="accordCadre">Date de l'Accord Cadre</label>
                 <Calendar id="accordCadre" v-model="institution.AccordCadreDate" dateFormat="yy-mm-dd" />
               </div>
             </div>
@@ -131,76 +131,8 @@
             <!-- Remarque sur la convention / accord cadre -->
             <div class="col-12 md:col-12">
               <div class="p-field">
-                <label for="remarque">Remarque convention / accord cadre</label>
-                <Textarea id="remarque" v-model="institution.Note" />
-              </div>
-            </div>
-
-            <!-- Section des stages -->
-            <div class="col-12">
-              <div v-for="(stage, index) in institution.stages" :key="stage.id" class="p-mb-4 stage-form">
-                <h2>Place de stage</h2>
-                <div class="grid">
-                  <div class="col-12 md:col-6">
-                    <div class="p-field">
-                      <label>Nom de la place</label>
-                      <InputText v-model="stage.Sector" />
-                    </div>
-                  </div>
-                  <div class="col-12 md:col-6">
-                    <div class="p-field">
-                      <label>Praticien.ne Formateur.trice</label>
-                      <Dropdown v-model="stage.NpmPractitionerTrainers" :options="availablePractitioners" optionLabel="fullName" optionValue="fullName" multiple placeholder="Sélectionner des praticiens" class="w-full" />
-                    </div>
-                  </div>
-                  <!-- Checkbox pour les stages -->
-                  <div class="col-12 md:col-4">
-                    <div class="p-field-checkbox">
-                      <Checkbox v-model="stage.AIGU" />
-                      <label>AIGU</label>
-                    </div>
-                  </div>
-                  <div class="col-12 md:col-4">
-                    <div class="p-field-checkbox">
-                      <Checkbox v-model="stage.AMBU" />
-                      <label>AMBU</label>
-                    </div>
-                  </div>
-                  <div class="col-12 md:col-4">
-                    <div class="p-field-checkbox">
-                      <Checkbox v-model="stage.MSQ" />
-                      <label>MSQ</label>
-                    </div>
-                  </div>
-                </div>
-                <Button label="Supprimer" class="p-button-danger mt-3 btn-small" @click="supprimerStage(stage.id)" />
-              </div>
-            </div>
-
-            <!-- Bouton pour ajouter un nouveau stage -->
-            <div class="col-12">
-              <Button label="Ajouter une place de stage" class="p-button-primary mt-3 btn-small" @click="toggleStageForm" />
-            </div>
-
-            <!-- Formulaire pour un nouveau stage -->
-            <div class="col-12" v-if="showStageForm">
-              <div class="p-mb-4 stage-form">
-                <h2>Nouvelle place de stage</h2>
-                <div class="grid">
-                  <div class="col-12 md:col-6">
-                    <div class="p-field">
-                      <label>Nom de la place</label>
-                      <InputText v-model="newStage.Sector" />
-                    </div>
-                  </div>
-                  <div class="col-12 md:col-6">
-                    <div class="p-field">
-                      <label>Praticien.ne Formateur.trice</label>
-                      <MultiSelect v-model="newStage.NpmPractitionerTrainers" :options="availablePractitioners" optionLabel="fullName" optionValue="fullName" multiple placeholder="Sélectionner des praticiens" class="w-full" />
-                    </div>
-                  </div>
-                </div>
-                <Button label="Ajouter" class="p-button-primary mt-3 btn-small" @click="ajouterPlaceDeStage" />
+                <label for="note">Remarque convention / accord cadre</label>
+                <Textarea id="note" v-model="institution.Note" />
               </div>
             </div>
 
@@ -218,124 +150,112 @@
 
 <script>
 import { db } from '../../../../firebase.js';
-import { ref, onValue, set, remove } from "firebase/database";
+import { ref, onValue, update } from "firebase/database";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
-import Checkbox from 'primevue/checkbox';
 import Button from 'primevue/button';
 import Badge from 'primevue/badge';
 import Calendar from 'primevue/calendar';
 import Textarea from 'primevue/textarea';
+import InputGroup from 'primevue/inputgroup';
+import InputGroupAddon from 'primevue/inputgroupaddon';
 
 export default {
   name: 'InstitutionFormModif',
   components: {
     InputText,
     Dropdown,
-    Checkbox,
     Button,
     Badge,
     Calendar,
     Textarea,
+    InputGroup,
+    InputGroupAddon,
   },
   data() {
     return {
       institution: {
-        CyberlearnURL: '',
+        CyberleanURL: '',
         Name: '',
-        Lieu: '',
+        Locality: '',
         Canton: '',
-        Description: '',
-        Street: '',
+        Address: '',
         URL: '',
-        Categorie: '',
-        Convention: null,
-        AccordCadre: null,
-        Note: '',
-        Langue: '',
+        Category: '',
+        Language: '',
         ImageURL: '',
-        stages: [],
-        key: '',
-      },
-      newStage: {
-        Sector: '',
-        NpmPractitionerTrainers: [],
-        AIGU: false,
-        AMBU: false,
-        MSQ: false,
+        Description: '',
+        ConventionDate: '',
+        AccordCadreDate: '',
+        Note: '',
       },
       pdfFile: null, // Pour stocker le fichier PDF sélectionné
       imageFile: null, // Pour stocker l'image sélectionnée
-      showStageForm: false,
-      cantons: [
-        { name: 'Argovie', code: 'AG' },
-        { name: 'Valais', code: 'VS' },
-        { name: 'Genève', code: 'GE' },
-        // Ajouter d'autres cantons
-      ],
-      langues: [
-        { name: 'Français', code: 'FR' },
-        { name: 'Allemand', code: 'ALL' },
-      ],
-      categories: [
-        { label: 'Institution valaisanne', value: 'valaisanne' },
-        { label: 'Cabinet privé', value: 'prive' },
-      ],
-      availablePractitioners: [],
     };
   },
   methods: {
     async updateInstitution() {
       try {
+        console.log('Starting institution update...');
         const instRef = ref(db, 'Institutions/' + this.$route.params.id);
 
+        const storage = getStorage();
+
+        // Handle PDF upload (if a new PDF is selected)
         if (this.pdfFile) {
-          const storage = getStorage();
+          console.log('Uploading PDF...');
           const pdfRef = storageRef(storage, `Institutions/${this.$route.params.id}/cyberlearn.pdf`);
-          await uploadBytes(pdfRef, this.pdfFile);
-          const pdfURL = await getDownloadURL(pdfRef);
-          this.institution.CyberlearnURL = pdfURL;
+          const pdfSnapshot = await uploadBytes(pdfRef, this.pdfFile);
+          const pdfURL = await getDownloadURL(pdfSnapshot.ref);
+          this.institution.CyberleanURL = pdfURL;
+          console.log('PDF uploaded:', pdfURL);
         }
 
+        // Handle Image upload (if a new image is selected)
         if (this.imageFile) {
-          const storage = getStorage();
+          console.log('Uploading image...');
           const imageRef = storageRef(storage, `Institutions/${this.$route.params.id}/image`);
-          await uploadBytes(imageRef, this.imageFile);
-          const imageURL = await getDownloadURL(imageRef);
+          const imageSnapshot = await uploadBytes(imageRef, this.imageFile);
+          const imageURL = await getDownloadURL(imageSnapshot.ref);
           this.institution.ImageURL = imageURL;
+          console.log('Image uploaded:', imageURL);
         }
 
-        await set(instRef, this.institution);
+        // Update the institution details in Firebase
+        console.log('Updating institution details in Firebase...');
+        await update(instRef, {
+          Name: this.institution.Name,
+          Locality: this.institution.Locality,
+          Canton: this.institution.Canton,
+          Address: this.institution.Address,
+          URL: this.institution.URL,
+          Category: this.institution.Category,
+          Language: this.institution.Language,
+          Description: this.institution.Description,
+          ConventionDate: this.institution.ConventionDate,
+          AccordCadreDate: this.institution.AccordCadreDate,
+          Note: this.institution.Note,
+          CyberleanURL: this.institution.CyberleanURL || '',
+          ImageURL: this.institution.ImageURL || '',
+        });
+        console.log('Institution updated successfully!');
         alert('Institution mise à jour avec succès.');
       } catch (error) {
         console.error('Erreur lors de la mise à jour:', error);
+        alert('Erreur lors de la mise à jour de l’institution.');
       }
     },
-    async onPdfChange(event) {
+    onPdfChange(event) {
       this.pdfFile = event.target.files[0];
     },
-    async onImageChange(event) {
+    onImageChange(event) {
       this.imageFile = event.target.files[0];
       this.institution.ImageURL = URL.createObjectURL(this.imageFile); // Prévisualisation de l'image localement
     },
-    async removeImage() {
+    removeImage() {
       this.imageFile = null;
       this.institution.ImageURL = '';
-    },
-    ajouterPlaceDeStage() {
-      this.institution.stages.push({ ...this.newStage });
-      this.newStage = {
-        Sector: '',
-        NpmPractitionerTrainers: [],
-        AIGU: false,
-        AMBU: false,
-        MSQ: false,
-      };
-      this.showStageForm = false;
-    },
-    supprimerStage(stageId) {
-      this.institution.stages = this.institution.stages.filter((stage) => stage.id !== stageId);
     },
     goBack() {
       this.$router.go(-1);
@@ -348,30 +268,14 @@ export default {
         }
       });
     },
-    loadAvailablePractitioners() {
-      const practitionersRef = ref(db, 'practitioners');
-      onValue(practitionersRef, (snapshot) => {
-        if (snapshot.exists()) {
-          this.availablePractitioners = Object.values(snapshot.val());
-        }
-      });
-    },
   },
   mounted() {
     this.loadInstitutionData();
-    this.loadAvailablePractitioners();
   },
 };
 </script>
 
 <style scoped>
-.stage-form {
-  border: 1px solid #e0e0e0;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  border-radius: 0.5rem;
-}
-
 .hidden {
   display: none;
 }

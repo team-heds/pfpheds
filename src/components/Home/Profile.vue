@@ -46,7 +46,7 @@
         <ProfileInfo v-if="activeTab === 0" :user="user" />
         <DocumentsUserProfile v-if="activeTab === 1" />
         <ResumStageUserProfile v-if="activeTab === 2" />
-        <ChatProfil v-if="activeTab === 3" />
+      <!--  <ChatProfil v-if="activeTab === 3" /> -->
       </div>
     </div>
   </div>
@@ -77,8 +77,7 @@ export default {
     ResumStageUserProfile,
     DocumentsUserProfile,
     ChatProfil,
-    Calendar
-  },
+},
   setup() {
     const activeTab = ref(0);
     const checked = ref(false);
