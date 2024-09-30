@@ -60,10 +60,10 @@
               <td><input type="text" v-model="place.PFP1B" @change="updatePlace(place, 'PFP1B', place.PFP1B)" class="form-control small-input"></td>
               <td><input type="text" v-model="place.PFP4" @change="updatePlace(place, 'PFP4', place.PFP4)" class="form-control small-input"></td>
               <td><input type="text" v-model="place.PFP3" @change="updatePlace(place, 'PFP3', place.PFP3)" class="form-control small-input"></td>
-              <td>{{ place.AccordCadre }}</td>
+              <td>{{ place.AccordCadreDate }}</td>
               <td>{{ place.Canton }}</td>
               <td>{{ place.Categorie }}</td>
-              <td>{{ place.Convention }}</td>
+              <td>{{ place.ConventionDate }}</td>
               <td>{{ place.Lieu }}</td>
               <td>
                 <select multiple v-model="place.selectedPraticiensFormateurs" @change="updatePraticiensFormateurs(place, place.selectedPraticiensFormateurs)" class="form-control">
@@ -120,7 +120,7 @@ export default {
   },
   methods: {
     async fetchPlacesData() {
-      const placesRef = ref(db, 'places');
+      const placesRef = ref(db, 'Places');
       onValue(placesRef, async (snapshot) => {
         const placesData = snapshot.val();
         if (placesData) {
@@ -145,13 +145,13 @@ export default {
               PFP1B: place.PFP1B || '',
               PFP4: place.PFP4 || '',
               PFP3: place.PFP3 || '',
-              Name: institutionData.Name || '',
-              AccordCadre: institutionData.AccordCadre || '',
+              Name: institutionData.Name || 'x',
+              AccordCadreDate: institutionData.AccordCadreDate || '',
               Canton: institutionData.Canton || '',
-              Categorie: institutionData.Categorie || '',
-              Convention: institutionData.Convention || '',
+              Categorie: institutionData.Category || '',
+              ConventionDate: institutionData.ConventionDate || '',
               Lieu: institutionData.Lieu || '',
-              Remarques: place.Remarques || '',
+              Remarques: place.Note || '',
               selectedPraticiensFormateurs: place.praticiensFormateurs || [] // Store selected praticien formateurs IDs as an array
             };
           });
@@ -162,7 +162,7 @@ export default {
     },
 
     async fetchPraticiensFormateursData() {
-      const praticiensRef = ref(db, 'praticiensFormateurs');
+      const praticiensRef = ref(db, 'PraticienFormateurs');
       onValue(praticiensRef, (snapshot) => {
         const praticiensData = snapshot.val() || {};
         this.praticiensFormateurs = Object.keys(praticiensData).reduce((acc, key) => {
@@ -173,7 +173,7 @@ export default {
     },
 
     async fetchInstitutionData(idPlace) {
-      const institutionRef = ref(db, `institutions/${idPlace}`);
+      const institutionRef = ref(db, `Institutions/${idPlace}`);
       return new Promise((resolve) => {
         onValue(institutionRef, (snapshot) => {
           resolve(snapshot.val() || {});
@@ -182,12 +182,12 @@ export default {
     },
 
     async updatePlace(place, field, value) {
-      const placeRef = ref(db, `places/${place.IdPlace}`);
+      const placeRef = ref(db, `Places/${place.IdPlace}`);
       await update(placeRef, { [field]: value });
     },
 
     async updatePraticiensFormateurs(place, praticiensIds) {
-      const placeRef = ref(db, `places/${place.IdPlace}`);
+      const placeRef = ref(db, `Places/${place.IdPlace}`);
       await update(placeRef, { praticiensFormateurs: praticiensIds });
     },
 
@@ -199,7 +199,7 @@ export default {
     async deletePlace(placeId) {
       if (confirm('Êtes-vous sûr de vouloir supprimer cette place ?')) {
         try {
-          const placeRef = ref(db, `places/${placeId}`);
+          const placeRef = ref(db, `Places/${placeId}`);
           await set(placeRef, null);
           this.places = this.places.filter(place => place.IdPlace !== placeId);
         } catch (error) {
