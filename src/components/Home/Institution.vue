@@ -6,16 +6,25 @@
       <div class="flex-grow">
         <h1 class="text-900 font-bold text-5xl text-center">Institutions</h1>
         <p class="text-600 font-normal text-xl text-center">Découvrez les institutions partenaires de notre réseau</p>
+
+        <!-- Barre de recherche, alignée à droite -->
+        <div class="flex justify-end my-4">
+          <span class="p-input-icon-left">
+            <i class="pi pi-search"></i>
+            <InputText v-model="searchTerm" placeholder="Rechercher par nom" style="width: 300px;" />
+          </span>
+        </div>
+
         <div class="grid flex justify-center">
-          <!-- Boucle sur les institutions paginées -->
-          <div class="col-12 md:col-6 xl:col-3 p-3 flex justify-center" v-for="(institution, index) in paginatedInstitutions" :key="institution.InstitutionId">
+          <!-- Boucle sur les institutions filtrées et paginées -->
+          <div class="col-12 md:col-6 xl:col-3 p-3 flex justify-center" v-for="(institution, index) in paginatedFilteredInstitutions" :key="institution.InstitutionId">
             <Card class="institution-card" style="width: 20rem; height: 100%;">
               <template #header>
                 <div style="position: relative;">
                   <!-- Image de l'institution avec URL par défaut si absente -->
                   <img :src="institution.ImageURL || '/default-image.jpg'" alt="institution" class="card-image" />
                   <!-- Affichage du canton sous forme de tag -->
-                  <Tag style="position: absolute; top: 20px; left: 20px;" >{{ institution.Canton }}</Tag>
+                  <Tag style="position: absolute; top: 20px; left: 20px;">{{ institution.Canton }}</Tag>
                 </div>
                 <!-- Nom de l'institution -->
                 <p ref="institutionName" class="text-center text-xl text-900 font-bold m-1 mt-1">{{ institution.Name }}</p>
@@ -31,7 +40,7 @@
               <template #content>
                 <div class="button-container">
                   <!-- Bouton vers les détails de l'institution -->
-                  <Button @click="goToDetails(institution.InstitutionId)" label="Détails" icon="pi pi-info-circle" outlined  />
+                  <Button @click="goToDetails(institution.InstitutionId)" label="Détails" icon="pi pi-info-circle" outlined />
                   <!-- Lien vers le site web de l'institution -->
                   <a :href="institution.URL || '#'" target="_blank" class="p-button p-component" rel="noopener noreferrer">
                     <span class="p-button-icon pi pi-external-link"></span>
@@ -42,8 +51,9 @@
             </Card>
           </div>
         </div>
+
         <!-- Pagination des institutions -->
-        <Paginator :rows="itemsPerPage" :totalRecords="totalInstitutions" :rowsPerPageOptions="[12, 24, 36, 48, 60, 72, 84]" @page="onPageChange"></Paginator>
+        <Paginator :rows="itemsPerPage" :totalRecords="totalFilteredInstitutions" :rowsPerPageOptions="[12, 24, 36, 48, 60, 72, 84]" @page="onPageChange"></Paginator>
       </div>
     </div>
   </section>
@@ -57,9 +67,10 @@ import { db } from '../../../firebase.js';
 import { ref as dbRef, onValue } from "firebase/database";
 import AppDarkAndLightMode from '@/layout/AppDarkAndLightMode.vue';
 import Navbar from '@/components/Utils/Navbar.vue';
+import InputText from 'primevue/inputtext'; // Assurez-vous d'importer InputText pour la barre de recherche
 
 export default {
-  components: { Navbar, AppDarkAndLightMode },
+  components: { Navbar, AppDarkAndLightMode, InputText },
   data() {
     return {
       allInstitutions: [],  // Toutes les institutions récupérées depuis Firebase
@@ -68,18 +79,28 @@ export default {
       itemsPerPage: 12,  // Nombre d'institutions par page
       totalInstitutions: 0,  // Total des institutions récupérées
       descriptionClass: 'description',  // Classe par défaut pour la description
+      searchTerm: '',  // Terme de recherche pour filtrer par nom
     };
   },
   computed: {
-    // Institutions affichées sur la page courante
-    paginatedInstitutions() {
+    // Filtrer les institutions en fonction de la recherche
+    filteredInstitutions() {
+      if (!this.searchTerm) {
+        return this.allInstitutions;  // Pas de filtre si la barre de recherche est vide
+      }
+      return this.allInstitutions.filter(institution =>
+        institution.Name && institution.Name.toLowerCase().includes(this.searchTerm.toLowerCase())  // Filtrer par nom de l'institution
+      );
+    },
+    // Institutions affichées sur la page courante après filtrage
+    paginatedFilteredInstitutions() {
       const start = (this.currentPage - 1) * this.itemsPerPage;
       const end = start + this.itemsPerPage;
-      return this.allInstitutions.slice(start, end);
+      return this.filteredInstitutions.slice(start, end);
     },
-    // Calcul du nombre total de pages
-    totalPages() {
-      return Math.ceil(this.totalInstitutions / this.itemsPerPage);
+    // Nombre total d'institutions filtrées
+    totalFilteredInstitutions() {
+      return this.filteredInstitutions.length;
     },
   },
   methods: {
@@ -96,7 +117,6 @@ export default {
       onValue(institutionsRef, (snapshot) => {
         const data = snapshot.val();
         if (data) {
-          // Transformation des données en tableau avec clé et valeurs
           this.allInstitutions = Object.keys(data).map(key => ({
             InstitutionId: key,  // Clé de chaque institution
             ...data[key],  // Fusionne les données de l'institution
