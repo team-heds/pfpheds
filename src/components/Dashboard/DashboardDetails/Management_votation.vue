@@ -51,7 +51,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="etudiant in filteredEtudiants" :key="etudiant.IDStudent">
+            <tr v-for="etudiant in etudiants" :key="etudiant.IDStudent">
               <td>{{ etudiant.Nom }}</td>
               <td>{{ etudiant.Prenom }}</td>
               <td><input type="checkbox" v-model="etudiant.SAE" @change="updateStudent(etudiant, 'SAE', etudiant.SAE)"
@@ -112,7 +112,7 @@
 <script>
 import Navbar from '@/components/Utils/Navbar.vue';
 import { db } from '../../../../firebase.js';
-import { ref, onValue, set, update, remove } from "firebase/database";
+import { ref, onValue, set, update, remove, get } from "firebase/database";
 
 export default {
   name: "VotationManagement",
@@ -155,6 +155,8 @@ export default {
       return this.filteredEtudiants.filter(etudiant => etudiant.CasParticulier).length;
     }
   },
+
+
   watch: {
     selectedClasses(newClasses) {
       this.fetchStudentsData();
@@ -171,18 +173,30 @@ export default {
       this.loading = true;
 
       for (const classe of this.selectedClasses) {
-        const starCountRef = ref(db, `students/${classe}`);
-        onValue(starCountRef, (snapshot) => {
+        const starCountRef = ref(db, `Students`);
+        onValue(starCountRef, async (snapshot) => {
           const studentsData = snapshot.val();
           if (studentsData) {
-            const transformedData = Object.keys(studentsData).map(key => {
+            // Tableau pour stocker les étudiants modifiés
+            let studentsWithUserInfo = [];
+
+            // Boucle à travers chaque étudiant pour récupérer les informations supplémentaires
+            for (const key of Object.keys(studentsData)) {
               let etudiant = studentsData[key];
               let pfpInfo = etudiant.PFPinfo ? etudiant.PFPinfo[this.selectedPFP] : {};
-              return {
+
+              // Requête pour récupérer les informations de l'utilisateur depuis "Users"
+              const userRef = ref(db, `Users/${key}`);
+              const userSnapshot = await get(userRef);
+              let userInfo = userSnapshot.exists() ? userSnapshot.val() : {};
+
+              // Ajout des données de l'étudiant et des informations utilisateur
+              let transformedData = {
                 IDStudent: key,
                 Classe: classe,
-                Nom: etudiant.Nom || '',
-                Prenom: etudiant.Prenom || '',
+                Nom: userInfo.Name || etudiant.Nom || '',  // Utiliser Nom depuis "Users" si disponible
+                Prenom: userInfo.Forname || etudiant.Prenom || '',  // Utiliser Forname depuis "Users"
+                Email: userInfo.Mail || '',  // Ajout du champ Email depuis "Users"
                 MSQ: etudiant.MSQ || '',
                 SYSINT: etudiant.SYSINT || '',
                 NEUROGER: etudiant.NEUROGER || '',
@@ -202,16 +216,22 @@ export default {
                   }
                 }
               };
-            });
-            this.etudiants = [...this.etudiants.filter(etudiant => etudiant.Classe !== classe), ...transformedData];
+
+              // Ajout de l'étudiant modifié avec les informations utilisateur
+              studentsWithUserInfo.push(transformedData);
+            }
+
+            // Mise à jour de la liste des étudiants
+            this.etudiants = [...this.etudiants.filter(etudiant => etudiant.Classe !== classe), ...studentsWithUserInfo];
           }
         });
       }
       this.loading = false;
     },
 
+
     async fetchPlacesData() {
-      const placesRef = ref(db, 'places');
+      const placesRef = ref(db, 'Places');
       onValue(placesRef, (snapshot) => {
         const placesData = snapshot.val();
         if (placesData) {
@@ -219,8 +239,8 @@ export default {
           const filteredPlaces = Object.keys(placesData)
             .map(key => placesData[key])
             .filter(place => place.PFP2 >= 1);
-          
-          const institutionsRef = ref(db, 'institutions');
+
+          const institutionsRef = ref(db, 'Institutions');
           onValue(institutionsRef, (institutionsSnapshot) => {
             const institutionsData = institutionsSnapshot.val();
             if (institutionsData) {
@@ -235,7 +255,7 @@ export default {
                     IDENTIFIANT: place.IDPlace + '_' + i,
                     Nom: institution.Name || place.NomPlace,
                     Domaine: place.Domaine,
-                    NomP: (institution.Name) + " - " + place.NomPlace + " - "  + institution.Lieu + " (" + i + ")",
+                    NomP: (institution.Name) + " - " + place.NomPlace + " - " + institution.Locality + " (" + i + ")",
                     takenBy: place.takenBy || null,
                     index: i
                   });
@@ -256,7 +276,7 @@ export default {
         etudiant.PFPinfo[this.selectedPFP][key] = value;
       }
 
-      const studentRef = ref(db, `students/${etudiant.Classe}/${etudiant.IDStudent}`);
+      const studentRef = ref(db, `Students/${etudiant.Classe}/${etudiant.IDStudent}`);
       if (['SAE', 'Lese', 'CasParticulier', 'Remarque', 'validated'].includes(key)) {
         update(studentRef, { [key]: value });
       } else {
@@ -278,7 +298,7 @@ export default {
         this.clearPFP2B23(etudiant);
 
         // Update Firebase to reflect the cleared data in PFPinfo
-        const studentRef = ref(db, `students/${etudiant.Classe}/${etudiant.IDStudent}/PFPinfo/${this.selectedPFP}`);
+        const studentRef = ref(db, `Students/${etudiant.Classe}/${etudiant.IDStudent}/PFPinfo/${this.selectedPFP}`);
         remove(studentRef); // Removes the entire PFPinfo for the selected PFP
 
         return;
@@ -298,7 +318,7 @@ export default {
 
         // Update Firebase with the new place assignment in PFPinfo
         etudiant.PFPinfo[this.selectedPFP].PlaceDeStage = placeDeStage;
-        const studentRef = ref(db, `students/${etudiant.Classe}/${etudiant.IDStudent}/PFPinfo/${this.selectedPFP}`);
+        const studentRef = ref(db, `Students/${etudiant.Classe}/${etudiant.IDStudent}/PFPinfo/${this.selectedPFP}`);
         update(studentRef, etudiant.PFPinfo[this.selectedPFP]);
       }
     },
@@ -330,7 +350,7 @@ export default {
     async deleteStudent(studentId, classe) {
       if (confirm('Êtes-vous sûr de vouloir supprimer cet étudiant ?')) {
         try {
-          const studentRef = ref(db, `students/${classe}/${studentId}`);
+          const studentRef = ref(db, `Students/${classe}/${studentId}`);
           await set(studentRef, null);
           this.etudiants = this.etudiants.filter(student => student.IDStudent !== studentId);
         } catch (error) {

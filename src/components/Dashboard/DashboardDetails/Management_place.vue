@@ -83,6 +83,18 @@
       <div v-else class="text-center mt-3">
         <p>Aucune place trouvée.</p>
       </div>
+
+      <div class="recap mt-4">
+  <h3>Récapitulatif des places par PFP :</h3>
+  <ul>
+    <li>PFP2 : {{ countPlacesByPFP().PFP2 }} places</li>
+    <li>PFP1A : {{ countPlacesByPFP().PFP1A }} places</li>
+    <li>PFP1B : {{ countPlacesByPFP().PFP1B }} places</li>
+    <li>PFP4 : {{ countPlacesByPFP().PFP4 }} places</li>
+    <li>PFP3 : {{ countPlacesByPFP().PFP3 }} places</li>
+  </ul>
+</div>
+
     </div>
   </div>
 </template>
@@ -119,6 +131,46 @@ export default {
     }
   },
   methods: {
+    countPlacesByPFP() {
+    const pfpCounts = {
+      PFP2: 0,
+      PFP1A: 0,
+      PFP1B: 0,
+      PFP4: 0,
+      PFP3: 0
+    };
+
+    this.places.forEach(place => {
+      pfpCounts.PFP2 += this.getPFPIncrement(place.PFP2);
+      pfpCounts.PFP1A += this.getPFPIncrement(place.PFP1A);
+      pfpCounts.PFP1B += this.getPFPIncrement(place.PFP1B);
+      pfpCounts.PFP4 += this.getPFPIncrement(place.PFP4);
+      pfpCounts.PFP3 += this.getPFPIncrement(place.PFP3);
+    });
+
+    return pfpCounts;
+  },
+
+  // Fonction pour déterminer l'incrément basé sur la valeur de PFP
+  getPFPIncrement(value) {
+    console.log(value);
+    switch (value) {
+      case "1":
+
+      return 1  ;
+      case "2":
+        return 2;
+      case "3":
+        return 3;
+      case "4":
+        return 4;
+      case "5":
+        return "5";
+      default:
+        return 0; // Si la valeur n'est pas 1, 2, 3, 4 ou 6, l'incrément est de 0
+    }
+  },
+
     async fetchPlacesData() {
       const placesRef = ref(db, 'Places');
       onValue(placesRef, async (snapshot) => {
@@ -243,4 +295,24 @@ export default {
 .btn-danger {
   color: white;
 }
+
+.recap {
+  background-color: #f9f9f9;
+  padding: 20px;
+  border-radius: 5px;
+}
+
+.recap h3 {
+  margin-bottom: 15px;
+}
+
+.recap ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.recap li {
+  margin-bottom: 5px;
+}
+
 </style>

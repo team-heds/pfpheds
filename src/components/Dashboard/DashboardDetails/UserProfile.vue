@@ -4,40 +4,75 @@
       <div class="col-12">
         <div class="card">
           <h5>Profil de l'utilisateur</h5>
-          <div v-if="userProfile">
-            <p><strong>Nom :</strong> {{ userProfile.Nom }}</p>
-            <p><strong>Prénom :</strong> {{ userProfile.Prenom }}</p>
-            <p><strong>Classe :</strong> {{ userProfile.Classe }}</p>
-            <p><strong>E-Mail :</strong> {{ userProfile.Mail }}</p>
-            <p><strong>Répondant.e HES :</strong> {{ userProfile.ReponsantHES }}</p>
-            <p><strong>Remarque :</strong> {{ userProfile.Remarque }}</p>
-            <h5>Détails</h5>
+          <div v-if="userProfile && userInfo">
+            <p><strong>Nom :</strong> {{ userInfo.Name }}</p>
+            <p><strong>Prénom :</strong> {{ userInfo.Forname }}</p>
+            <p><strong>Email :</strong> {{ userInfo.Mail }}</p>
+            <h5>Critères validés</h5>
             <DataTable :value="[userProfile]" tableStyle="min-width: 50rem">
-              <Column field="fr" header="FR" :body="formatColumn('FR')"></Column>
-              <Column field="all" header="ALL" :body="formatColumn('ALL')"></Column>
-              <Column field="AMBU" header="AMBU" :body="formatColumn('AMBU')"></Column>
-              <Column field="AIGU" header="AIGU" :body="formatColumn('AIGU')"></Column>
-              <Column field="MSQ" header="MSQ" :body="formatColumn('MSQ')"></Column>
-              <Column field="SYSINT" header="SYSINT" :body="formatColumn('SYSINT')"></Column>
-              <Column field="NEUROGER" header="NEUROGER" :body="formatColumn('NEUROGER')"></Column>
-              <Column field="REHAB" header="REHAB" :body="formatColumn('REHAB')"></Column>
+              <Column field="MSQ" header="MSQ">
+                <template #body="slotProps">
+                  <i
+                    :class="{ 'pi pi-check text-green-500': slotProps.data.MSQ > 0, 'pi pi-times text-red-500': slotProps.data.MSQ === 0 }"></i>
+                </template>
+              </Column>
+              <Column field="SYSINT" header="SYSINT">
+                <template #body="slotProps">
+                  <i
+                    :class="{ 'pi pi-check text-green-500': slotProps.data.SYSINT > 0, 'pi pi-times text-red-500': slotProps.data.SYSINT < 1  }"></i>
+                </template>
+              </Column>
+              <Column field="NEUROGER" header="NEUROGER">
+                <template #body="slotProps">
+                  <i
+                    :class="{ 'pi pi-check text-green-500': slotProps.data.NEUROGER > 0, 'pi pi-times text-red-500': slotProps.data.NEUROGER < 1  }"></i>
+                </template>
+              </Column>
+              <Column field="AIGU" header="AIGU">
+                <template #body="slotProps">
+                  <i
+                    :class="{ 'pi pi-check text-green-500': slotProps.data.AIGU > 0, 'pi pi-times text-red-500': slotProps.data.AIGU < 1 }"></i>
+                </template>
+              </Column>
+              <Column field="REHAB" header="REHAB">
+                <template #body="slotProps">
+                  <i
+                    :class="{ 'pi pi-check text-green-500': slotProps.data.REHAB > 0, 'pi pi-times text-red-500': slotProps.data.REHAB < 1  }"></i>
+                </template>
+              </Column>
+              <Column field="AMBU" header="AMBU">
+                <template #body="slotProps">
+                  <i
+                    :class="{ 'pi pi-check text-green-500': slotProps.data.AMBU > 0, 'pi pi-times text-red-500': slotProps.data.AMBU < 1  }"></i>
+                </template>
+              </Column>
+              <Column field="FR" header="FR">
+                <template #body="slotProps">
+                  <i
+                    :class="{ 'pi pi-check text-green-500': slotProps.data.FR > 0, 'pi pi-times text-red-500': slotProps.data.FR < 1  }"></i>
+                </template>
+              </Column>
+              <Column field="ALL" header="ALL">
+                <template #body="slotProps">
+                  <i
+                    :class="{ 'pi pi-check text-green-500': slotProps.data.ALL > 0, 'pi pi-times text-red-500': slotProps.data.ALL < 1  }"></i>
+                </template>
+              </Column>
             </DataTable>
+
           </div>
           <div v-else>
-            <p>Chargement des données du profil...</p>
+            <p>Chargement des données du profil... ou Profil introuvable.</p>
           </div>
         </div>
 
-        <!-- Tableau unique pour les stages -->
         <div class="card mt-4">
-          <h5>Stages Précédents</h5>
-          <DataTable :value="stages" :rows="10" dataKey="id" :rowHover="true" :loading="loading"
-            showGridlines tableStyle="min-width: 50rem">
-            <template #empty> Pas de stages disponibles. </template>
-            <template #loading> Chargement des données des stages. Veuillez patienter. </template>
-            <Column field="NomPlace" header="Institution" style="min-width: 12rem"></Column>
-            <Column field="Lieu" header="Lieu" style="min-width: 12rem"></Column>
-            <Column field="Langue" header="Langue" style="min-width: 12rem"></Column>
+          <h5>Anciennes places (PFP)</h5>
+          <DataTable :value="[institution]" :rows="1" dataKey="id" :rowHover="true" :loading="loading" showGridlines
+            tableStyle="min-width: 50rem">
+            <template #empty> Aucune institution disponible. </template>
+            <template #loading> Chargement des données de l'institution. Veuillez patienter. </template>
+            <Column field="NomInstitution" header="Nom de l'institution" style="min-width: 12rem"></Column>
           </DataTable>
         </div>
       </div>
@@ -49,120 +84,87 @@
 import { ref, onMounted } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import InputText from 'primevue/inputtext';
-import {ref as dbRef, get } from "firebase/database";
-import {  onAuthStateChanged } from "firebase/auth";
-import { db, auth } from '../../../../firebase.js';
+import { getDatabase, ref as dbRef, get } from "firebase/database";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 
-const stages = ref([]);
+// Variables réactives
 const userProfile = ref(null);
+const userInfo = ref(null); // Stocker les informations depuis Users
+const institution = ref(null); // Variable pour stocker les données de PFP_1
 const loading = ref(true);
-const globalFilter = ref('');
 
-const fetchUserProfile = async (email) => {
-  const studentsRef = dbRef(db, 'students');
-  const snapshot = await get(studentsRef);
-  if (snapshot.exists()) {
-    const studentsData = snapshot.val();
-    for (const classKey in studentsData) {
-      for (const studentKey in studentsData[classKey]) {
-        const student = studentsData[classKey][studentKey];
-        if (student.Mail && student.Mail.toLowerCase() === email.toLowerCase()) {
-          userProfile.value = {
-            id: studentKey,
-            Classe: classKey,
-            ...student
-          };
-          console.log('Profil utilisateur récupéré :', userProfile.value);
-          addAllPFPInfoToStages(student, studentKey);
-          return;
-        }
+// Fonction pour récupérer le profil utilisateur depuis Students et Users
+const fetchUserProfileByKey = async (key) => {
+  const db = getDatabase();
+  try {
+    console.log('Fetching student profile with key:', key);
+    const studentRef = dbRef(db, `Students/${key}`);
+    const userRef = dbRef(db, `Users/${key}`);
+
+    // Récupération des informations depuis Students
+    const snapshotStudent = await get(studentRef);
+    // Récupération des informations depuis Users
+    const snapshotUser = await get(userRef);
+
+    if (snapshotStudent.exists() && snapshotUser.exists()) {
+      const studentData = snapshotStudent.val();
+      const userData = snapshotUser.val();
+
+      userProfile.value = {
+        ...studentData,
+        id: key
+      };
+
+      userInfo.value = {
+        Name: userData.Name,
+        Forname: userData.Forname,
+        Mail: userData.Mail
+      };
+
+      console.log('User profile data:', userProfile.value);
+      console.log('User info data:', userInfo.value);
+
+      // Récupérer uniquement l'institution liée à PFP_1
+      if (studentData.PFP_1) {
+        institution.value = {
+          NomInstitution: studentData.PFP_1 || 'Nom non disponible',
+        };
+      } else {
+        institution.value = null;
       }
+      console.log('Institution PFP_1:', institution.value);
+    } else {
+      console.error(`User profile not found for key: ${key}`);
     }
+  } catch (error) {
+    console.error('Error fetching data:', error);
   }
-  userProfile.value = null;
-  console.log('Profil utilisateur non trouvé');
 };
 
-
-
-
-
-const addAllPFPInfoToStages = async (student, studentKey) => {
-  const pfpInfos = ['PFP1_info', 'PFP2_info', 'PFP3_info', 'PFP4_info'];
-
-  for (const pfp of pfpInfos) {
-    if (student[pfp]) {
-      let idPlace = student[pfp].institutionId;
-
-      if (!idPlace) {
-        console.error("IDPlace est manquant pour", pfp);
-        continue;
-      }
-
-      // Référence de l'institution
-      const institutionRef = dbRef(db, `institutions/${idPlace}`);
-      console.log("Okkko");
-
-      try {
-        const snapshot = await get(institutionRef);
-        if (snapshot.exists()) {
-          const institutionData = snapshot.val();
-          console.log("Okkk1");
-          stages.value.push({
-            id: `${pfp}-${studentKey}`,
-            NomPlace:  (institutionData.Name || 'N/A'),
-            Lieu: institutionData.Lieu || 'N/A',
-            Langue: institutionData.Langue || 'N/A',
-          });
-        } else {
-          console.log("Pas de données disponibles pour l'IDPlace:", idPlace);
-        }
-      } catch (error) {
-        console.error("Erreur lors de la récupération de l'institution:", error);
-      }
-    }
-  }
-
-  console.log('Stages après ajout des infos PFP :', stages.value);
+// Formater les colonnes (montrer une coche pour 1+ et une croix pour 0)
+const formatColumn = (field) => (rowData) => {
+  return rowData[field] && rowData[field] > 0
+    ? '<i class="pi pi-check text-green-500"></i>'  // coche verte pour 1+
+    : '<i class="pi pi-times text-red-500"></i>';  // croix rouge pour 0
 };
 
-const getSecteurs = (info) => {
-  const secteurs = [];
-  if (info.NEUROGER === 1) secteurs.push('NEUROGER');
-  if (info.REHAB === 1) secteurs.push('REHAB');
-  if (info.AIGU === 1) secteurs.push('AIGU');
-  if (info.MSQ === 1) secteurs.push('MSQ');
-  if (info.SYSINT === 1) secteurs.push('SYSINT');
-  if (info.AMBU === 1) secteurs.push('AMBU');
-  return secteurs.join(', ');
-};
-
-const secteurTemplate = (rowData) => {
-  return rowData.Secteur;
-};
-
-const getClass = (value) => {
-  return value >= 1 ? 'text-green-500' : 'text-red-500';
-};
-
-const formatColumn = (field) => {
-  return (rowData) => {
-    const value = rowData[field];
-    return `<span class="${getClass(value)}">${formatValue(value)}</span>`;
-  };
-};
-
-const formatValue = (value) => {
-  return value >= 1 ? `✔️ ${value}` : `❌ ${value}`;
-};
-
+// Lors de la montée du composant, récupère les données utilisateur et l'institution PFP_1
 onMounted(async () => {
+  const auth = getAuth();
   onAuthStateChanged(auth, async (user) => {
     if (user) {
-      await fetchUserProfile(user.email);
-      loading.value = false;
+      const userKey = user.uid;
+      console.log('Fetching profile and institution for user key:', userKey);
+
+      if (userKey) {
+        await fetchUserProfileByKey(userKey);
+        loading.value = false;
+      } else {
+        console.error('Aucune clé utilisateur disponible.');
+        loading.value = false;
+      }
     } else {
+      console.log('No user authenticated');
       userProfile.value = null;
       loading.value = false;
     }

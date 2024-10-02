@@ -10,15 +10,56 @@
             <p><strong>Email :</strong> {{ userInfo.Mail }}</p>
             <h5>Critères validés</h5>
             <DataTable :value="[userProfile]" tableStyle="min-width: 50rem">
-              <Column field="MSQ" header="MSQ" v-html="formatColumn('MSQ')(userProfile)"></Column>
-              <Column field="SYSINT" header="SYSINT" v-html="formatColumn('SYSINT')(userProfile)"></Column>
-              <Column field="NEUROGER" header="NEUROGER" v-html="formatColumn('NEUROGER')(userProfile)"></Column>
-              <Column field="AIGU" header="AIGU" v-html="formatColumn('AIGU')(userProfile)"></Column>
-              <Column field="REHAB" header="REHAB" v-html="formatColumn('REHAB')(userProfile)"></Column>
-              <Column field="AMBU" header="AMBU" v-html="formatColumn('AMBU')(userProfile)"></Column>
-              <Column field="FR" header="FR" v-html="formatColumn('FR')(userProfile)"></Column>
-              <Column field="ALL" header="ALL" v-html="formatColumn('ALL')(userProfile)"></Column>
+              <Column field="MSQ" header="MSQ">
+                <template #body="slotProps">
+                  <i
+                    :class="{ 'pi pi-check text-green-500': slotProps.data.MSQ > 0, 'pi pi-times text-red-500': slotProps.data.MSQ === 0 }"></i>
+                </template>
+              </Column>
+              <Column field="SYSINT" header="SYSINT">
+                <template #body="slotProps">
+                  <i
+                    :class="{ 'pi pi-check text-green-500': slotProps.data.SYSINT > 0, 'pi pi-times text-red-500': slotProps.data.SYSINT < 1  }"></i>
+                </template>
+              </Column>
+              <Column field="NEUROGER" header="NEUROGER">
+                <template #body="slotProps">
+                  <i
+                    :class="{ 'pi pi-check text-green-500': slotProps.data.NEUROGER > 0, 'pi pi-times text-red-500': slotProps.data.NEUROGER < 1  }"></i>
+                </template>
+              </Column>
+              <Column field="AIGU" header="AIGU">
+                <template #body="slotProps">
+                  <i
+                    :class="{ 'pi pi-check text-green-500': slotProps.data.AIGU > 0, 'pi pi-times text-red-500': slotProps.data.AIGU < 1 }"></i>
+                </template>
+              </Column>
+              <Column field="REHAB" header="REHAB">
+                <template #body="slotProps">
+                  <i
+                    :class="{ 'pi pi-check text-green-500': slotProps.data.REHAB > 0, 'pi pi-times text-red-500': slotProps.data.REHAB < 1  }"></i>
+                </template>
+              </Column>
+              <Column field="AMBU" header="AMBU">
+                <template #body="slotProps">
+                  <i
+                    :class="{ 'pi pi-check text-green-500': slotProps.data.AMBU > 0, 'pi pi-times text-red-500': slotProps.data.AMBU < 1  }"></i>
+                </template>
+              </Column>
+              <Column field="FR" header="FR">
+                <template #body="slotProps">
+                  <i
+                    :class="{ 'pi pi-check text-green-500': slotProps.data.FR > 0, 'pi pi-times text-red-500': slotProps.data.FR < 1  }"></i>
+                </template>
+              </Column>
+              <Column field="ALL" header="ALL">
+                <template #body="slotProps">
+                  <i
+                    :class="{ 'pi pi-check text-green-500': slotProps.data.ALL > 0, 'pi pi-times text-red-500': slotProps.data.ALL < 1  }"></i>
+                </template>
+              </Column>
             </DataTable>
+
           </div>
           <div v-else>
             <p>Chargement des données du profil... ou Profil introuvable.</p>
@@ -27,15 +68,8 @@
 
         <div class="card mt-4">
           <h5>Anciennes places (PFP)</h5>
-          <DataTable
-            :value="[institution]"
-            :rows="1"
-            dataKey="id"
-            :rowHover="true"
-            :loading="loading"
-            showGridlines
-            tableStyle="min-width: 50rem"
-          >
+          <DataTable :value="[institution]" :rows="1" dataKey="id" :rowHover="true" :loading="loading" showGridlines
+            tableStyle="min-width: 50rem">
             <template #empty> Aucune institution disponible. </template>
             <template #loading> Chargement des données de l'institution. Veuillez patienter. </template>
             <Column field="NomInstitution" header="Nom de l'institution" style="min-width: 12rem"></Column>

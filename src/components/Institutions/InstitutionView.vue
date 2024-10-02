@@ -4,10 +4,11 @@
     <div class="flex justify-content-between flex-column-reverse md:flex-row align-items-center ml-8">
       <div>
         <div class="flex align-items-center text-900 font-medium text-6xl mb-2 pl-8 pr-8">
-          {{ institutionDetails ? institutionDetails.Name : 'Chargement...' }}
+          {{ institutionDetails ? institutionDetails.Name : 'Chargemesnt...' }}
         </div>
         <span class="text-900 font-bold text-3xl mb-4 mt-2 pl-8 pr-8">
-          <strong>{{ institutionDetails ? institutionDetails.Locality : '' }}</strong> - {{ institutionDetails ? institutionDetails.Address : '' }}
+          <strong>{{ institutionDetails ? institutionDetails.Locality : '' }}</strong> - {{ institutionDetails ?
+            institutionDetails.Address : '' }}
         </span>
         <div class="flex flex-wrap justify-content-center md:justify-content-start gap-3 mt-2 pl-8 pr-8">
           <span class="inline-flex align-items-center py-2 px-3 font-medium border-1 surface-border border-round">
@@ -22,7 +23,9 @@
       </div>
     </div>
     <div class="text-center my-4">
-      <img :src="institutionDetails ? institutionDetails.ImageURL : 'https://eduport.webestica.com/assets/images/courses/4by3/21.jpg'" alt="Institution Image" class="w-100px institution-image shadow">
+      <img
+        :src="institutionDetails ? institutionDetails.ImageURL : 'https://eduport.webestica.com/assets/images/courses/4by3/21.jpg'"
+        alt="Institution Image" class="w-100px institution-image shadow">
     </div>
     <div class="grid mb-4 justify-content-center">
       <div class="col-8 lg:col-5">
@@ -37,39 +40,78 @@
               <div class="col-12 lg:col-12">
                 <span class="text-900 block mb-3 font-bold">Informations générales de l'institution :</span>
                 <div class="py-0 p-0 m-0 text-600 mb-3">
-                  <p class="card-text"><i class="bi bi-globe"></i> <strong>Langue:</strong> {{ institutionDetails ? institutionDetails.Language : '' }}</p>
-                  <p class="card-text"><i class="bi bi-globe"></i> <strong>Canton:</strong> {{ institutionDetails ? institutionDetails.Canton : '' }}</p>
-                  <p class="card-text"><i class="bi bi-geo-alt-fill"></i> <strong>Adresse:</strong> {{ institutionDetails ? institutionDetails.Address : '' }}</p>
-                  <p class="card-text"><i class="bi bi-geo-alt-fill"></i> <strong>Lieu:</strong> {{ institutionDetails ? institutionDetails.Locality : '' }}</p>
-                  <p class="card-text"><i class="bi bi-geo-alt-fill"></i> <strong>Site Web:</strong> {{ institutionDetails ? institutionDetails.URL : '' }}</p>
+                  <p class="card-text"><i class="bi bi-globe"></i> <strong>Langue:</strong> {{ institutionDetails ?
+                    institutionDetails.Language : '' }}</p>
+                  <p class="card-text"><i class="bi bi-globe"></i> <strong>Canton:</strong> {{ institutionDetails ?
+                    institutionDetails.Canton : '' }}</p>
+                  <p class="card-text"><i class="bi bi-geo-alt-fill"></i> <strong>Adresse:</strong> {{
+                    institutionDetails ? institutionDetails.Address : '' }}</p>
+                  <p class="card-text"><i class="bi bi-geo-alt-fill"></i> <strong>Lieu:</strong> {{ institutionDetails ?
+                    institutionDetails.Locality : '' }}</p>
+                  <p class="card-text"><i class="bi bi-geo-alt-fill"></i> <strong>Site Web:</strong> {{
+                    institutionDetails ? institutionDetails.URL : '' }}</p>
                 </div>
               </div>
             </div>
           </TabPanel>
-          <TabPanel header="Encadrement étudiant.e.s">
+          <TabPanel v-if="userRole === 'BA23'" header="Encadrement étudiant.e.s">
             <div class="grid">
               <div class="col-12 lg:col-12">
-                <div class="text-900 font-bold text-3xl mb-4 mt-2">Encadrement étudiant.e.s</div>
+                <div class="text-900 font-bold text-3xl mb-4 mt-2">Encadrement étudiant.e.s {{ this.praticiensFormateur
+                  }}</div>
                 <div class="list-none p-0 m-0 text-600 mb-4 text-600">
-                  <div v-if="institutionDetails && institutionDetails.PraticiensFormateurs && institutionDetails.PraticiensFormateurs.length">
-                    <div v-for="(praticien, index) in institutionDetails.PraticiensFormateurs" :key="index">
-                      <p class="card-text"><i class="bi bi-person-badge-fill"></i> <strong>Nom Praticien.ne.s Formateur.trice.s:</strong> {{ praticien.Prenom }} {{ praticien.Nom }}</p>
-                      <p class="card-text"><i class="bi bi-envelope-fill"></i> <strong>Email Praticien Formateur:</strong> {{ praticien.Mail }}</p>
-                    </div>
+                  <div v-if="institutionDetails">
+                    <!-- Détails de l'institution (Chef) -->
+                    <p class="card-text">
+                      <i class="bi bi-person-badge-fill"></i>
+                      <strong>Nom Responsable Physio: </strong>
+                      {{ institutionDetails?.NomChef }}
+                    </p>
+
+                    <!-- Lien pour envoyer un email au chef -->
+                    <p class="card-text">
+                      <i class="bi bi-envelope-fill"></i>
+                      <strong>Email Responsable Physio: </strong>
+                      <a :href="`mailto:${institutionDetails?.MailChef}`">
+                        {{ institutionDetails?.MailChef }}
+                      </a>
+                    </p>
+
+                    <!-- Lien pour appeler le chef -->
+                    <p class="card-text">
+                      <i class="bi bi-telephone-fill"></i>
+                      <strong>TéléphoneResponsable Physio: </strong>
+                      <a :href="`tel:${institutionDetails?.PhoneChef}`">
+                        {{ institutionDetails?.PhoneChef }}
+                      </a>
+                    </p>
+
+                    <br> <br>
+                    <h2>Praticien.ne.s Formateur.ice.s</h2>
+                    <div>
+
+                
+
+                    </div> <!-- Détails des praticiens formateurs associés -->
+         
                   </div>
+
                   <div v-else>
                     <p class="card-text">Aucun praticien.ne formateur.trice.s disponible.</p>
                   </div>
 
                   <!-- Bouton pour ouvrir le PDF -->
                   <div class="mt-4">
-                    <Button v-if="institutionDetails?.CyberleanURL" label="Ouvrir le PDF" icon="pi pi-file-pdf" @click="openPDF" class="p-button-raised p-button-danger" />
+                    <Button v-if="institutionDetails?.CyberleanURL" label="Ouvrir le PDF" icon="pi pi-file-pdf"
+                      @click="openPDF" class="p-button-raised p-button-danger" />
                     <p v-else>Aucun PDF disponible pour cette institution.</p>
                   </div>
                 </div>
               </div>
             </div>
           </TabPanel>
+
+
         </TabView>
       </div>
 
@@ -83,13 +125,18 @@
 </template>
 
 <script>
-import { db } from '../../../firebase.js';
-import { ref as firebaseRef, onValue } from "firebase/database";
+import {
+  db, auth
+} from '../../../firebase.js';
+import { ref as firebaseRef, onValue, get } from "firebase/database";
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import Navbar from '@/components/Utils/Navbar.vue';
 import Footer from '@/components/Utils/Footer.vue';
 import Button from '@/views/uikit/Button.vue';
+
+import { onAuthStateChanged } from "firebase/auth";
+
 
 export default {
   name: 'InstitutionView',
@@ -102,10 +149,18 @@ export default {
       institutionDetails: null, // Contient les détails de l'institution
       map: null, // Carte Leaflet
       marker: null, // Marqueur sur la carte
+      userRole: null, // Contient le rôle de l'utilisateur connecté
+    
+
+
     };
   },
   mounted() {
     this.fetchInstitutionDetailsFromFirebase(); // Charger les détails de l'institution
+    this.checkUserRole(); // Vérifier le rôle de l'utilisateur connecté
+
+
+
   },
   methods: {
     // Initialiser la carte avec les coordonnées latitude et longitude
@@ -122,6 +177,7 @@ export default {
       }).addTo(this.map);
       this.marker = L.marker([lat, lng]).addTo(this.map);
     },
+
 
     // Récupérer les détails de l'institution depuis Firebase
     fetchInstitutionDetailsFromFirebase() {
@@ -140,6 +196,26 @@ export default {
         }
       });
     },
+
+    // Vérifier le rôle de l'utilisateur connecté
+    checkUserRole() {
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          const userRef = firebaseRef(db, `Users/${user.uid}/Roles`);
+          console.log("fs");
+          onValue(userRef, (snapshot) => {
+            if (snapshot.exists()) {
+              if (snapshot.val().BA23) {
+                this.userRole = "BA23";
+              }
+            }
+          });
+        } else {
+          this.userRole = null;
+        }
+      });
+    },
+
 
     // Ouvrir le PDF dans un nouvel onglet
     openPDF() {

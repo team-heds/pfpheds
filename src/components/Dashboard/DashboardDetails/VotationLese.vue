@@ -21,6 +21,7 @@
                 <th>Institutions</th>
                 <th>Lieux</th>
                 <th>Domaine</th>
+                <th>PFP2</th>
                 <th>FR</th>
                 <th>ALL</th>
                 <th>AIGU</th>
@@ -37,6 +38,7 @@
                 <td>{{ stage.NomPlace }}</td>
                 <td>{{ stage.Lieu }}</td>
                 <td>{{ stage.Domaine }}</td>
+                <td>{{ stage.numberPlace }}</td>
                 <td v-if="Boolean(stage.FR) == true">&#9989;</td>
                 <td v-else>&#10060;</td>
                 <td v-if="Boolean(stage.ALL) == true">&#9989;</td>
@@ -85,6 +87,8 @@ import { onAuthStateChanged } from "firebase/auth";
 import Navbar from '@/components/Utils/Navbar.vue';
 import UserProfile from './UserProfile.vue';
 
+
+
 export default {
   name: "VotationLese",
   components: {
@@ -94,8 +98,8 @@ export default {
   data() {
     return {
       etudiants: [],
-      selectedClass: 'BA22',
-      selectedPFP: 'PFP4',
+      selectedClass: 'BA23',
+      selectedPFP: 'PFP2',
       stages: [],
       selectedStage: null,
       currentStudent: null,
@@ -117,10 +121,18 @@ export default {
   },
   methods: {
     async submitVotes() {
+
+      console.log("oka1");
+
+      console.log("oka12 _ " + this.selectedStage);
+
+      console.log("oka221" + this.currentStudent);
+
       if (this.selectedStage && this.currentStudent) {
+        console.log("oka1");
         const { id } = this.currentStudent;
         if (id) {
-          const votationRef = ref(db, `votation_lese/${id}`);
+          const votationRef = ref(db, `Votation_lese/${id}`);
           const votationData = {
             studentId: id,
             studentName: this.currentStudent.Nom,
@@ -128,6 +140,7 @@ export default {
             selectedStageName: this.selectedStage.NomPlace,
             selectedStageLieu: this.selectedStage.Lieu,
             selectedStageDomaine: this.selectedStage.Domaine,
+            numberPlace: this.selectedStage.PFP2,
             selectedStageDetails: {
               FR: this.selectedStage.FR,
               ALL: this.selectedStage.ALL,
@@ -154,7 +167,7 @@ export default {
       if (!this.selectedPFP || !this.selectedClass) return;
 
       this.etudiants = [];
-      const starCountRef = ref(db, `students/${this.selectedClass}`);
+      const starCountRef = ref(db, `Students/`);
       onValue(starCountRef, (snapshot) => {
         const studentsData = snapshot.val();
         if (studentsData) {
@@ -171,15 +184,15 @@ export default {
     },
 
     async fetchStagesData() {
-      const placesRef = ref(db, 'places');
+      const placesRef = ref(db, 'Places');
       onValue(placesRef, (snapshot) => {
         const placesData = snapshot.val();
         if (placesData) {
           const filteredPlaces = Object.keys(placesData)
             .map(key => placesData[key])
             .filter(place => place.PFP2 >= 1);
-          
-          const institutionsRef = ref(db, 'institutions');
+
+          const institutionsRef = ref(db, 'Institutions');
           onValue(institutionsRef, (institutionsSnapshot) => {
             const institutionsData = institutionsSnapshot.val();
             if (institutionsData) {
@@ -192,7 +205,8 @@ export default {
                 this.stages.push({
                   Identifiant: place.IDPlace,
                   NomPlace: institution.Name || place.NomPlace,
-                  Lieu: institution.Lieu || '',
+                  Lieu: institution.Locality || '',
+                  numberPlace: place.PFP2 || '',
                   Domaine: place.NomPlace,
                   FR: place.FR,
                   ALL: place.DE,
@@ -218,7 +232,7 @@ export default {
     },
 
     async fetchTakenStages() {
-      const votationRef = ref(db, 'votation_lese');
+      const votationRef = ref(db, 'Votation_lese');
       onValue(votationRef, (snapshot) => {
         if (snapshot.exists()) {
           const takenData = snapshot.val();
@@ -233,7 +247,7 @@ export default {
     },
 
     updateStudent(etudiant) {
-      const studentRef = ref(db, `students/${etudiant.Classe}/${etudiant.id}`);
+      const studentRef = ref(db, `Students/${etudiant.Classe}/${etudiant.id}`);
       set(studentRef, etudiant);
     },
 
@@ -249,30 +263,28 @@ export default {
       }
     },
 
-    async findCurrentStudent() {
-      if (this.currentUserEmail) {
-        const dbRef = ref(db, 'students');
-        const snapshot = await get(dbRef);
+    async findCurrentStudent(uid) {
+      console.log("0011");
+
+      if (uid) { // Remplacer par l'UID de l'utilisateur
+      console.log("0011" + uid);
+
+        const studentRef = ref(db, `Students/${uid}`);
+        const snapshot = await get(studentRef);
         if (snapshot.exists()) {
-          const studentsData = snapshot.val();
-          for (const classKey in studentsData) {
-            for (const studentKey in studentsData[classKey]) {
-              const student = studentsData[classKey][studentKey];
-              if (student.Mail && student.Mail.toLowerCase() === this.currentUserEmail.toLowerCase()) {
-                this.currentStudent = {
-                  id: studentKey,
-                  Classe: classKey,
-                  ...student
-                };
-                this.checkValidation();
-                this.pfp1 = this.currentStudent.PFP1_info.IDA;
-                this.pfp2 = this.currentStudent.PFP2_info.IDA;
-                await this.fetchVoteResult(this.currentStudent.id); // Fetch the vote result when the student is found
-                return;
-              }
-            }
-          }
+          const studentData = snapshot.val();
+          this.currentStudent = studentData;
+
+          this.checkValidation();
+//this.pfp1 = this.currentStudent.PFP1_info?.IDA || 'PFP1 non disponible';
+
+          await this.fetchVoteResult(this.currentStudent.id); // Fetch the vote result when the student is found
+
+        } else {
+          console.log('Étudiant introuvable pour cet UID:', this.currentUserUID);
         }
+      } else {
+        console.log('Aucun UID utilisateur disponible.');
       }
     },
 
@@ -320,31 +332,14 @@ export default {
     },
 
     isStageVisible(stage) {
-      console.log(stage.ALL);
       // Check if the stage is already taken by another student
       if (this.takenStages.has(stage.Identifiant)) {
         return false;
       }
 
-      if (this.pfp1 == stage.Identifiant || this.pfp2 == stage.Identifiant) {
-        return false;
-      }
+    
 
-      if (this.languageIssue) {
-     
-        if (this.languageIssue === 'FR' && stage.FR === "true") {
-          return true;
-
-        }
-        if (this.languageIssue === 'ALL' && stage.ALL === "true") {
-          return true;
-        }
-        return false;
-      }
-
-      if (this.missingFields.length > 0) {
-        return this.missingFields.some(field => stage[field] === '1');
-      }
+    
 
       return true;
     }
@@ -355,8 +350,7 @@ export default {
     this.fetchStagesData();
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        this.currentUserEmail = user.email;
-        this.findCurrentStudent();
+        this.currentStudent = this.findCurrentStudent(user.uid);
       } else {
         this.currentUserEmail = null;
         this.currentStudent = null;
@@ -372,6 +366,7 @@ export default {
   width: 80%;
   margin: 0 auto;
 }
+
 .text-center {
   text-align: center;
 }
