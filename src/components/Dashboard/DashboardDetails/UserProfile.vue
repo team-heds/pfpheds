@@ -13,7 +13,7 @@
               <Column field="MSQ" header="MSQ">
                 <template #body="slotProps">
                   <i
-                    :class="{ 'pi pi-check text-green-500': slotProps.data.MSQ > 0, 'pi pi-times text-red-500': slotProps.data.MSQ === 0 }"></i>
+                    :class="{ 'pi pi-check text-green-500': slotProps.data.MSQ > 0, 'pi pi-times text-red-500': slotProps.data.MSQ <1  }"></i>
                 </template>
               </Column>
               <Column field="SYSINT" header="SYSINT">

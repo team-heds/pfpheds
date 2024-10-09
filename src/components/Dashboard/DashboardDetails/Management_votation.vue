@@ -68,12 +68,12 @@
                 <select v-model="etudiant.PFPinfo[selectedPFP].PlaceDeStage" @change="handlePlaceChange(etudiant)"
                   :disabled="etudiant.validated">
                   <option value="empty">empty</option>
-                  <!-- Only show places with PFP2 >= 1 -->
                   <option v-for="place in places" :key="place.IDENTIFIANT" :value="place.NomP"
-                    :disabled="isPlaceTaken(place)">
+                    :disabled="isPlaceTaken(place, etudiant)">
                     {{ place.NomP }}
                   </option>
                 </select>
+
               </td>
 
               <td :class="getClass(etudiant.MSQ)">{{ etudiant.MSQ }}</td>
@@ -172,102 +172,150 @@ export default {
       this.etudiants = [];
       this.loading = true;
 
+      // Wait for 'this.places' to be loaded
+      await this.fetchPlacesData();
+
+      // Fetch PFP2-B23 data
+      const pfp2Snapshot = await get(ref(db, 'PFP2-B23'));
+      const pfp2Data = pfp2Snapshot.val() || {};
+      const studentPlaceMap = {};
+      Object.keys(pfp2Data).forEach(placeId => {
+        const placeData = pfp2Data[placeId];
+        if (placeData && placeData.takenBy) {
+          studentPlaceMap[placeData.takenBy] = placeId;
+        }
+      });
+
       for (const classe of this.selectedClasses) {
         const starCountRef = ref(db, `Students`);
-        onValue(starCountRef, async (snapshot) => {
-          const studentsData = snapshot.val();
-          if (studentsData) {
-            // Tableau pour stocker les étudiants modifiés
-            let studentsWithUserInfo = [];
+        const studentsSnapshot = await get(starCountRef);
+        const studentsData = studentsSnapshot.val();
+        if (studentsData) {
+          let studentsWithUserInfo = [];
 
-            // Boucle à travers chaque étudiant pour récupérer les informations supplémentaires
-            for (const key of Object.keys(studentsData)) {
-              let etudiant = studentsData[key];
-              let pfpInfo = etudiant.PFPinfo ? etudiant.PFPinfo[this.selectedPFP] : {};
+          for (const key of Object.keys(studentsData)) {
+            let etudiant = studentsData[key];
+            let pfpInfo = etudiant.PFPinfo ? etudiant.PFPinfo[this.selectedPFP] : {};
 
-              // Requête pour récupérer les informations de l'utilisateur depuis "Users"
-              const userRef = ref(db, `Users/${key}`);
-              const userSnapshot = await get(userRef);
-              let userInfo = userSnapshot.exists() ? userSnapshot.val() : {};
+            // Fetch user info from 'Users'
+            const userRef = ref(db, `Users/${key}`);
+            const userSnapshot = await get(userRef);
+            let userInfo = userSnapshot.exists() ? userSnapshot.val() : {};
 
-              // Ajout des données de l'étudiant et des informations utilisateur
-              let transformedData = {
-                IDStudent: key,
-                Classe: classe,
-                Nom: userInfo.Name || etudiant.Nom || '',  // Utiliser Nom depuis "Users" si disponible
-                Prenom: userInfo.Forname || etudiant.Prenom || '',  // Utiliser Forname depuis "Users"
-                Email: userInfo.Mail || '',  // Ajout du champ Email depuis "Users"
-                MSQ: etudiant.MSQ || '',
-                SYSINT: etudiant.SYSINT || '',
-                NEUROGER: etudiant.NEUROGER || '',
-                AIGU: etudiant.AIGU || '',
-                AMBU: etudiant.AMBU || '',
-                REHAB: etudiant.REHAB || '',
-                FR: etudiant.fr || '',
-                ALL: etudiant.all || '',
-                SAE: etudiant.SAE || false,
-                Lese: etudiant.Lese || false,
-                CasParticulier: etudiant.CasParticulier || false,
-                Remarque: etudiant.Remarque || '',
-                validated: etudiant.validated || false,
-                PFPinfo: {
-                  [this.selectedPFP]: {
-                    PlaceDeStage: pfpInfo.PlaceDeStage || 'empty',
-                  }
-                }
-              };
-
-              // Ajout de l'étudiant modifié avec les informations utilisateur
-              studentsWithUserInfo.push(transformedData);
+            // Check if student has an assigned place
+            let placeId = studentPlaceMap[key];
+            let placeName = '';
+            if (placeId) {
+              const place = this.places.find(p => p.IDENTIFIANT === placeId);
+              if (place) {
+                placeName = place.NomP;
+              }
             }
 
-            // Mise à jour de la liste des étudiants
-            this.etudiants = [...this.etudiants.filter(etudiant => etudiant.Classe !== classe), ...studentsWithUserInfo];
+            // Update student data
+            let transformedData = {
+              IDStudent: key,
+              Classe: classe,
+              Nom: userInfo.Name || etudiant.Nom || '',
+              Prenom: userInfo.Forname || etudiant.Prenom || '',
+              Email: userInfo.Mail || '',
+              MSQ: etudiant.MSQ || '',
+              SYSINT: etudiant.SYSINT || '',
+              NEUROGER: etudiant.NEUROGER || '',
+              AIGU: etudiant.AIGU || '',
+              AMBU: etudiant.AMBU || '',
+              REHAB: etudiant.REHAB || '',
+              FR: etudiant.fr || '',
+              ALL: etudiant.all || '',
+              SAE: etudiant.SAE || false,
+              Lese: etudiant.Lese || false,
+              CasParticulier: etudiant.CasParticulier || false,
+              Remarque: etudiant.Remarque || '',
+              validated: etudiant.validated || false,
+              PFPinfo: {
+                [this.selectedPFP]: {
+                  PlaceDeStage: placeName || pfpInfo.PlaceDeStage || 'empty',
+                }
+              }
+            };
+
+            // If student has an assigned place, mark as validated
+            if (placeName) {
+              transformedData.validated = true;
+            }
+
+            studentsWithUserInfo.push(transformedData);
           }
-        });
+
+          this.etudiants = [...this.etudiants.filter(etudiant => etudiant.Classe !== classe), ...studentsWithUserInfo];
+        }
       }
+
       this.loading = false;
     },
 
 
     async fetchPlacesData() {
-      const placesRef = ref(db, 'Places');
-      onValue(placesRef, (snapshot) => {
-        const placesData = snapshot.val();
-        if (placesData) {
-          console.log("placesData", placesData);
-          const filteredPlaces = Object.keys(placesData)
-            .map(key => placesData[key])
-            .filter(place => place.PFP2 >= 1);
+  return new Promise((resolve) => {
+    const placesRef = ref(db, 'Places');
+    onValue(placesRef, (snapshot) => {
+      const placesData = snapshot.val();
+      if (placesData) {
+        // Map over the keys of placesData to include IDPlace as a property
+        const filteredPlaces = Object.keys(placesData)
+          .map(key => ({ ...placesData[key], IDPlace: key }))
+          .filter(place => place.PFP2 >= 1);
 
-          const institutionsRef = ref(db, 'Institutions');
-          onValue(institutionsRef, (institutionsSnapshot) => {
-            const institutionsData = institutionsSnapshot.val();
-            if (institutionsData) {
+        const institutionsRef = ref(db, 'Institutions');
+        onValue(institutionsRef, (institutionsSnapshot) => {
+          const institutionsData = institutionsSnapshot.val();
+
+          if (institutionsData) {
+            const pfp2Ref = ref(db, 'PFP2-B23');
+            onValue(pfp2Ref, (pfp2Snapshot) => {
+              const pfp2Data = pfp2Snapshot.val();
+
               this.places = [];
 
               filteredPlaces.forEach(place => {
-                const institution = institutionsData[place.IDPlace] || {};
+                // Fetch from place.IDPlace to get the IDPlace from the Places table
+                const placeData = placesData[place.IDPlace];
+
+                // Output and console.log IDPlace from Places
+                if (placeData && placeData.IDPlace) {
+                  console.log('IDPlace from Places:', placeData.IDPlace);
+                } else {
+                  // If IDPlace is not a property, use the key
+                  console.log('IDPlace from Places (using key):', place.IDPlace);
+                }
+
+                const institution = institutionsData[placeData.IDPlace] || {};
                 const repeatCount = parseInt(place.PFP2, 10);
 
                 for (let i = 1; i <= repeatCount; i++) {
+                  const identifiant = place.IDPlace + '_' + i;
+                  const takenBy = pfp2Data && pfp2Data[identifiant] ? pfp2Data[identifiant].takenBy : null;
+
                   this.places.push({
-                    IDENTIFIANT: place.IDPlace + '_' + i,
+                    IDENTIFIANT: identifiant,
                     Nom: institution.Name || place.NomPlace,
                     Domaine: place.Domaine,
-                    NomP: (institution.Name) + " - " + place.NomPlace + " - " + institution.Locality + " (" + i + ")",
-                    takenBy: place.takenBy || null,
+                    NomP: (institution.Name || '') + " - " + (place.NomPlace || '') + " - " + (institution.Locality || '') + " (" + i + ")",
+                    takenBy: takenBy,
                     index: i
                   });
                 }
               });
 
-              console.log("Populated places:", this.places);
-            }
-          });
-        }
-      });
-    },
+              resolve();
+            });
+          }
+        });
+      }
+    });
+  });
+},
+
 
     updateStudent(etudiant, key, value) {
       if (['SAE', 'Lese', 'CasParticulier', 'Remarque', 'validated'].includes(key)) {
@@ -285,43 +333,42 @@ export default {
     },
 
     async handlePlaceChange(etudiant) {
-      const placeDeStage = etudiant.PFPinfo[this.selectedPFP].PlaceDeStage;
+  const placeDeStage = etudiant.PFPinfo[this.selectedPFP].PlaceDeStage;
 
-      // If "empty" is selected, remove all related information
-      if (placeDeStage === "empty") {
-        // Clear the related PFPinfo for the selected PFP
-        etudiant.PFPinfo[this.selectedPFP] = {
-          PlaceDeStage: 'empty'
-        };
+  if (placeDeStage === "empty") {
+    // Clear the assignment
+    etudiant.PFPinfo[this.selectedPFP] = {
+      PlaceDeStage: 'empty'
+    };
 
-        // Remove the student assignment from PFP2-B23 in Firebase
-        this.clearPFP2B23(etudiant);
+    // Remove the student assignment from PFP2-B23
+    this.clearPFP2B23(etudiant);
 
-        // Update Firebase to reflect the cleared data in PFPinfo
-        const studentRef = ref(db, `Students/${etudiant.Classe}/${etudiant.IDStudent}/PFPinfo/${this.selectedPFP}`);
-        remove(studentRef); // Removes the entire PFPinfo for the selected PFP
+    // Update Firebase
+    const studentRef = ref(db, `Students/${etudiant.Classe}/${etudiant.IDStudent}/PFPinfo/${this.selectedPFP}`);
+    remove(studentRef);
 
-        return;
-      }
+    return;
+  }
 
-      // If a valid place is selected, update the assignment
-      const oldPlace = this.places.find(place => place.takenBy === etudiant.IDStudent);
-      if (oldPlace) {
-        oldPlace.takenBy = null;
-        update(ref(db, `PFP2-B23/${oldPlace.IDENTIFIANT}`), { takenBy: null });
-      }
+  // Handle assignment
+  const oldPlace = this.places.find(place => place.takenBy === etudiant.IDStudent);
+  if (oldPlace) {
+    oldPlace.takenBy = null;
+    update(ref(db, `PFP2-B23/${oldPlace.IDENTIFIANT}`), { takenBy: null });
+  }
 
-      const newPlace = this.places.find(place => place.NomP === placeDeStage);
-      if (newPlace) {
-        newPlace.takenBy = etudiant.IDStudent;
-        update(ref(db, `PFP2-B23/${newPlace.IDENTIFIANT}`), { takenBy: etudiant.IDStudent });
+  const newPlace = this.places.find(place => place.NomP === placeDeStage);
+  if (newPlace) {
+    newPlace.takenBy = etudiant.IDStudent;
+    update(ref(db, `PFP2-B23/${newPlace.IDENTIFIANT}`), { takenBy: etudiant.IDStudent });
 
-        // Update Firebase with the new place assignment in PFPinfo
-        etudiant.PFPinfo[this.selectedPFP].PlaceDeStage = placeDeStage;
-        const studentRef = ref(db, `Students/${etudiant.Classe}/${etudiant.IDStudent}/PFPinfo/${this.selectedPFP}`);
-        update(studentRef, etudiant.PFPinfo[this.selectedPFP]);
-      }
-    },
+    // Update Firebase
+    etudiant.PFPinfo[this.selectedPFP].PlaceDeStage = placeDeStage;
+    const studentRef = ref(db, `Students/${etudiant.Classe}/${etudiant.IDStudent}/PFPinfo/${this.selectedPFP}`);
+    update(studentRef, etudiant.PFPinfo[this.selectedPFP]);
+  }
+},
 
     clearPFP2B23(etudiant) {
       // Find the current place assigned to the student
@@ -367,8 +414,8 @@ export default {
       }
     },
 
-    isPlaceTaken(place) {
-      return this.etudiants.some(etudiant => etudiant.PFPinfo[this.selectedPFP] && etudiant.PFPinfo[this.selectedPFP].PlaceDeStage === place.NomP);
+    isPlaceTaken(place, etudiant) {
+      return place.takenBy && place.takenBy !== etudiant.IDStudent;
     },
 
     getClass(value) {
