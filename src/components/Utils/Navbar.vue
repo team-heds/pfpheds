@@ -18,7 +18,7 @@
               </a>
             </li>
 
-            <li v-if="user" class="mx-2">
+            <li  v-if="user && hasAdminAccess"  class="mx-2">
               <a @click="navigateTo('/newsfeed')" class="flex m-0 px-0 py-3 text-900 font-medium line-height-3">Feed</a>
             </li>
 
@@ -26,16 +26,16 @@
               <a @click="navigateTo('/institution')" class="flex m-0 px-0 py-3 text-900 font-medium line-height-3">Institutions</a>
             </li>
 
-            <li v-if="user" class="mx-2">
+            <li  v-if="user && hasAdminAccess"  class="mx-2">
               <a @click="navigateTo('/votation')" class="flex m-0 px-0 py-3 text-900 font-medium line-height-3">Votation</a>
             </li>
 
             <li v-if="user" class="mx-2">
-              <a @click="navigateTo('/votation_lese')" class="flex m-0 px-0 py-3 text-900 font-medium line-height-3">Votation Lese</a>
+              <a @click="navigateTo('/votation_lese')" class="flex m-0 px-0 py-3 text-900 font-medium line-height-3">Votation Lésé</a>
             </li>
 
 
-            <li v-if="user" class="mx-2">
+            <li   v-if="user && hasAdminAccess" class="mx-2">
               <a @click="navigateTo('/profile')" class="flex m-0 px-0 py-3 text-900 font-medium line-height-3">Profil</a>
             </li>
             <!-- Update: Show 'Admin' link only if the user has the required role -->

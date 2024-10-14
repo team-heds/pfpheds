@@ -256,65 +256,67 @@ export default {
 
 
     async fetchPlacesData() {
-  return new Promise((resolve) => {
+  try {
     const placesRef = ref(db, 'Places');
-    onValue(placesRef, (snapshot) => {
-      const placesData = snapshot.val();
-      if (placesData) {
-        // Map over the keys of placesData to include IDPlace as a property
-        const filteredPlaces = Object.keys(placesData)
-          .map(key => ({ ...placesData[key], IDPlace: key }))
-          .filter(place => place.PFP2 >= 1);
+    const institutionsRef = ref(db, 'Institutions');
+    const pfp2Ref = ref(db, 'PFP2-B23');
 
-        const institutionsRef = ref(db, 'Institutions');
-        onValue(institutionsRef, (institutionsSnapshot) => {
-          const institutionsData = institutionsSnapshot.val();
+    // Utilisation de Promise.all pour récupérer les données en parallèle
+    const [placesSnapshot, institutionsSnapshot, pfp2Snapshot] = await Promise.all([
+      get(placesRef),
+      get(institutionsRef),
+      get(pfp2Ref)
+    ]);
 
-          if (institutionsData) {
-            const pfp2Ref = ref(db, 'PFP2-B23');
-            onValue(pfp2Ref, (pfp2Snapshot) => {
-              const pfp2Data = pfp2Snapshot.val();
+    const placesData = placesSnapshot.val();
+    const institutionsData = institutionsSnapshot.val();
+    const pfp2Data = pfp2Snapshot.val();
 
-              this.places = [];
+    if (placesData && institutionsData) {
+      // Map over the keys of placesData to include IDPlace as a property
+      const filteredPlaces = Object.keys(placesData)
+        .map(key => ({ ...placesData[key], IDPlace: key }))
+        .filter(place => place.PFP2 >= 1);
 
-              filteredPlaces.forEach(place => {
-                // Fetch from place.IDPlace to get the IDPlace from the Places table
-                const placeData = placesData[place.IDPlace];
+      this.places = [];
+      const idPlacesArray = []; // Nouveau tableau pour stocker les id_place
 
-                // Output and console.log IDPlace from Places
-                if (placeData && placeData.IDPlace) {
-                  console.log('IDPlace from Places:', placeData.IDPlace);
-                } else {
-                  // If IDPlace is not a property, use the key
-                  console.log('IDPlace from Places (using key):', place.IDPlace);
-                }
+      filteredPlaces.forEach(place => {
+        // On a déjà 'place', pas besoin de récupérer 'placeData' à nouveau
+        const institution = institutionsData[place.IDInstitution] || {};
 
-                const institution = institutionsData[placeData.IDPlace] || {};
-                const repeatCount = parseInt(place.PFP2, 10);
+        const repeatCount = parseInt(place.PFP2, 10);
 
-                for (let i = 1; i <= repeatCount; i++) {
-                  const identifiant = place.IDPlace + '_' + i;
-                  const takenBy = pfp2Data && pfp2Data[identifiant] ? pfp2Data[identifiant].takenBy : null;
+        for (let i = 1; i <= repeatCount; i++) {
+          const identifiant = place.IDPlace + '_' + i;
+          const takenBy = pfp2Data && pfp2Data[identifiant] ? pfp2Data[identifiant].takenBy : null;
 
-                  this.places.push({
-                    IDENTIFIANT: identifiant,
-                    Nom: institution.Name || place.NomPlace,
-                    Domaine: place.Domaine,
-                    NomP: (institution.Name || '') + " - " + (place.NomPlace || '') + " - " + (institution.Locality || '') + " (" + i + ")",
-                    takenBy: takenBy,
-                    index: i
-                  });
-                }
-              });
+          console.log(place.IDPlace + "_" + i);
 
-              resolve();
-            });
-          }
-        });
-      }
-    });
-  });
+          const id_place = place.IDPlace + "_" + i;
+
+          // Pousser id_place dans le tableau
+          idPlacesArray.push(id_place);
+
+          this.places.push({
+            IDENTIFIANT: identifiant,
+            Nom: institution.Name || place.NomPlace,
+            Domaine: place.Domaine,
+            NomP: `${institution.Name || ''} - ${place.NomPlace || ''} - ${institution.Locality || ''} (${i})`,
+            takenBy: takenBy,
+            index: i
+          });
+        }
+      });
+
+      // Imprimer le tableau des id_place
+      console.log('Tableau des id_place :', idPlacesArray);
+    }
+  } catch (error) {
+    console.error('Erreur lors de la récupération des données :', error);
+  }
 },
+
 
 
     updateStudent(etudiant, key, value) {
@@ -333,42 +335,42 @@ export default {
     },
 
     async handlePlaceChange(etudiant) {
-  const placeDeStage = etudiant.PFPinfo[this.selectedPFP].PlaceDeStage;
+      const placeDeStage = etudiant.PFPinfo[this.selectedPFP].PlaceDeStage;
 
-  if (placeDeStage === "empty") {
-    // Clear the assignment
-    etudiant.PFPinfo[this.selectedPFP] = {
-      PlaceDeStage: 'empty'
-    };
+      if (placeDeStage === "empty") {
+        // Clear the assignment
+        etudiant.PFPinfo[this.selectedPFP] = {
+          PlaceDeStage: 'empty'
+        };
 
-    // Remove the student assignment from PFP2-B23
-    this.clearPFP2B23(etudiant);
+        // Remove the student assignment from PFP2-B23
+        this.clearPFP2B23(etudiant);
 
-    // Update Firebase
-    const studentRef = ref(db, `Students/${etudiant.Classe}/${etudiant.IDStudent}/PFPinfo/${this.selectedPFP}`);
-    remove(studentRef);
+        // Update Firebase
+        const studentRef = ref(db, `Students/${etudiant.Classe}/${etudiant.IDStudent}/PFPinfo/${this.selectedPFP}`);
+        remove(studentRef);
 
-    return;
-  }
+        return;
+      }
 
-  // Handle assignment
-  const oldPlace = this.places.find(place => place.takenBy === etudiant.IDStudent);
-  if (oldPlace) {
-    oldPlace.takenBy = null;
-    update(ref(db, `PFP2-B23/${oldPlace.IDENTIFIANT}`), { takenBy: null });
-  }
+      // Handle assignment
+      const oldPlace = this.places.find(place => place.takenBy === etudiant.IDStudent);
+      if (oldPlace) {
+        oldPlace.takenBy = null;
+        update(ref(db, `PFP2-B23/${oldPlace.IDENTIFIANT}`), { takenBy: null });
+      }
 
-  const newPlace = this.places.find(place => place.NomP === placeDeStage);
-  if (newPlace) {
-    newPlace.takenBy = etudiant.IDStudent;
-    update(ref(db, `PFP2-B23/${newPlace.IDENTIFIANT}`), { takenBy: etudiant.IDStudent });
+      const newPlace = this.places.find(place => place.NomP === placeDeStage);
+      if (newPlace) {
+        newPlace.takenBy = etudiant.IDStudent;
+        update(ref(db, `PFP2-B23/${newPlace.IDENTIFIANT}`), { takenBy: etudiant.IDStudent });
 
-    // Update Firebase
-    etudiant.PFPinfo[this.selectedPFP].PlaceDeStage = placeDeStage;
-    const studentRef = ref(db, `Students/${etudiant.Classe}/${etudiant.IDStudent}/PFPinfo/${this.selectedPFP}`);
-    update(studentRef, etudiant.PFPinfo[this.selectedPFP]);
-  }
-},
+        // Update Firebase
+        etudiant.PFPinfo[this.selectedPFP].PlaceDeStage = placeDeStage;
+        const studentRef = ref(db, `Students/${etudiant.Classe}/${etudiant.IDStudent}/PFPinfo/${this.selectedPFP}`);
+        update(studentRef, etudiant.PFPinfo[this.selectedPFP]);
+      }
+    },
 
     clearPFP2B23(etudiant) {
       // Find the current place assigned to the student
