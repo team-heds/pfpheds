@@ -131,7 +131,7 @@ import { onAuthStateChanged } from "firebase/auth";
 
 export default {
   name: 'InstitutionView',
-  components: { Navbar, Footer, },
+  components: { Navbar, Footer },
   data() {
     return {
       institutionDetails: null,
@@ -223,5 +223,10 @@ export default {
 
 .shadow {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+#map {
+  height: 400px;
+  width: 100%;
 }
 </style>
