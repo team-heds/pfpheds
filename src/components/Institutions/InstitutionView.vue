@@ -67,7 +67,7 @@
                       <a :href="`tel:${institutionDetails?.PhoneChef}`">{{ institutionDetails?.PhoneChef }}</a>
                     </p>
                     <br> <br>
-                    <h2>Praticien.ne.s Formateur.ice.s</h2>
+                    <h2>Liste praticien.ne.s Formateur.ice.s après résultat de votation</h2>
                   </div>
 
                   <div v-else>
@@ -83,30 +83,7 @@
               </div>
             </div>
           </TabPanel>
-          <TabPanel header="Encadrement étudiant.e.s">
-            <div class="grid">
-              <div class="col-12 lg:col-12">
-                <div class="text-900 font-bold text-3xl mb-4 mt-2">Encadrement étudiant.e.s</div>
-                <div class="list-none p-0 m-0 text-600 mb-4 text-600">
-                  <div v-if="institutionDetails && institutionDetails.PraticiensFormateurs && institutionDetails.PraticiensFormateurs.length">
-                    <div v-for="(praticien, index) in institutionDetails.PraticiensFormateurs" :key="index">
-                      <p class="card-text"><i class="bi bi-person-badge-fill"></i> <strong>Nom Praticien.ne.s Formateur.trice.s:</strong> {{ praticien.Prenom }} {{ praticien.Nom }}</p>
-                      <p class="card-text"><i class="bi bi-envelope-fill"></i> <strong>Email Praticien Formateur:</strong> {{ praticien.Mail }}</p>
-                    </div>
-                  </div>
-                  <div v-else>
-                    <p class="card-text">Aucun praticien.ne formateur.trice.s disponible.</p>
-                  </div>
-
-                  <!-- Bouton pour ouvrir le PDF -->
-                  <div class="mt-4">
-                    <Button v-if="institutionDetails?.CyberleanURL" label="Ouvrir le PDF" icon="pi pi-file-pdf" @click="openPDF" />
-                    <p v-else>Aucun PDF disponible pour cette institution.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </TabPanel>
+ 
         </TabView>
       </div>
 
