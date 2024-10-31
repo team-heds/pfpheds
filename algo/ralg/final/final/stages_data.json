@@ -1,0 +1,656 @@
+[
+  {
+    "IDPlace": "0_1",
+    "NomPlace": "Actifisio",
+    "Lieu": "Fribourg",
+    "Domaine": "Ambu",
+    "FR": "true",
+    "REHAB": "true",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "AMBU": "true"
+  },
+  {
+    "IDPlace": "2_1",
+    "NomPlace": "Berner Klinik Montana",
+    "Lieu": "Crans-Montana",
+    "Domaine": "Ortho - Med",
+    "FR": "true",
+    "ALL": "true",
+    "REHAB": "true",
+    "MSQ": "true",
+    "SYSINT": "true"
+  },
+  {
+    "IDPlace": "3_1",
+    "NomPlace": "Berner Klinik Montana",
+    "Lieu": "Crans-Montana",
+    "Domaine": "Neuro",
+    "FR": "true",
+    "ALL": "true",
+    "REHAB": "true",
+    "NEUROGER": "true"
+  },
+  {
+    "IDPlace": "4_1",
+    "NomPlace": "Cabinet de la Cour ",
+    "Lieu": "Sierre",
+    "Domaine": "Ambu",
+    "FR": "true",
+    "REHAB": "true",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "AMBU": "true"
+  },
+  {
+    "IDPlace": "6_1",
+    "NomPlace": "Cabinet Dynaphyz",
+    "Lieu": "Bulle",
+    "Domaine": "Ambu",
+    "FR": "true",
+    "REHAB": "true",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "AMBU": "true"
+  },
+  {
+    "IDPlace": "9_1",
+    "NomPlace": "CareConnex Sàrl",
+    "Lieu": "Sierre",
+    "Domaine": "Ambu",
+    "FR": "true",
+    "REHAB": "true",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "AMBU": "true"
+  },
+  {
+    "IDPlace": "13_1",
+    "NomPlace": "Clinique romande de réadaptation (CRR) - SUVA ",
+    "Lieu": "Sion",
+    "Domaine": "Ortho",
+    "FR": "true",
+    "REHAB": "true",
+    "MSQ": "true"
+  },
+  {
+    "IDPlace": "13_2",
+    "NomPlace": "Clinique romande de réadaptation (CRR) - SUVA ",
+    "Lieu": "Sion",
+    "Domaine": "Ortho",
+    "FR": "true",
+    "REHAB": "true",
+    "MSQ": "true"
+  },
+  {
+    "IDPlace": "13_3",
+    "NomPlace": "Clinique romande de réadaptation (CRR) - SUVA ",
+    "Lieu": "Sion",
+    "Domaine": "Ortho",
+    "FR": "true",
+    "REHAB": "true",
+    "MSQ": "true"
+  },
+  {
+    "IDPlace": "14_1",
+    "NomPlace": "Clinique romande de réadaptation (CRR) - SUVA ",
+    "Lieu": "Sion",
+    "Domaine": "Para - Tetra",
+    "FR": "true",
+    "REHAB": "true",
+    "NEUROGER": "true"
+  },
+  {
+    "IDPlace": "15_1",
+    "NomPlace": "FC Sion",
+    "Lieu": "Martigny",
+    "Domaine": "Ambu",
+    "FR": "true",
+    "AIGU": "true",
+    "MSQ": "true",
+    "AMBU": "true"
+  },
+  {
+    "IDPlace": "16_1",
+    "NomPlace": "Gesundheitszentrum Physiotherapie Saastal GmbH",
+    "Lieu": "Saas-Grund",
+    "Domaine": "Ambu",
+    "ALL": "true",
+    "REHAB": "true",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "AMBU": "true"
+  },
+  {
+    "IDPlace": "17_1",
+    "NomPlace": "Clinique de Crans-Montana - HCUGE",
+    "Lieu": "Montana",
+    "Domaine": "Ortho - Psychosomatique",
+    "FR": "true",
+    "REHAB": "true",
+    "MSQ": "true"
+  },
+  {
+    "IDPlace": "18_1",
+    "NomPlace": "Hôpital Fribourgeois (HFR) - site de Fribourg ",
+    "Lieu": "Fribourg",
+    "Domaine": "Med",
+    "FR": "true",
+    "AIGU": "true",
+    "SYSINT": "true"
+  },
+  {
+    "IDPlace": "20_1",
+    "NomPlace": "Hôpital Fribourgeois (HFR) - site de Meyriez",
+    "Lieu": "Meyriez",
+    "Domaine": "Neuro",
+    "FR": "true",
+    "ALL": "true",
+    "REHAB": "true",
+    "NEUROGER": "true"
+  },
+  {
+    "IDPlace": "22_1",
+    "NomPlace": "Hôpital Fribourgeois (HFR) - site de Riaz ",
+    "Lieu": "Riaz",
+    "Domaine": "Ger",
+    "FR": "true",
+    "AIGU": "true",
+    "NEUROGER": "true"
+  },
+  {
+    "IDPlace": "26_1",
+    "NomPlace": "Hôpital de Saint-Imier ",
+    "Lieu": "Saint-Imier",
+    "Domaine": "Ortho - Med - Ger",
+    "FR": "true",
+    "AIGU": "true",
+    "MSQ": "true",
+    "SYSINT": "true",
+    "NEUROGER": "true",
+    "AMBU": "true"
+  },
+  {
+    "IDPlace": "28_1",
+    "NomPlace": "Hôpital du Jura - site de Porrentruy",
+    "Lieu": "Porrentruy",
+    "Domaine": "Ortho - Ger",
+    "FR": "true",
+    "REHAB": "true",
+    "MSQ": "true",
+    "NEUROGER": "true"
+  },
+  {
+    "IDPlace": "32_1",
+    "NomPlace": "Hôpital Riviera-Chablais (HRC) - site de Rennaz",
+    "Lieu": "Rennaz",
+    "Domaine": "Med",
+    "FR": "true",
+    "AIGU": "true",
+    "REHAB": "true",
+    "SYSINT": "true"
+  },
+  {
+    "IDPlace": "32_2",
+    "NomPlace": "Hôpital Riviera-Chablais (HRC) - site de Rennaz",
+    "Lieu": "Rennaz",
+    "Domaine": "Med",
+    "FR": "true",
+    "AIGU": "true",
+    "REHAB": "true",
+    "SYSINT": "true"
+  },
+  {
+    "IDPlace": "34_1",
+    "NomPlace": "Hôpital Riviera-Chablais - CGR Monthey",
+    "Lieu": "Monthey",
+    "Domaine": "Ger",
+    "FR": "true",
+    "AIGU": "true",
+    "REHAB": "true",
+    "NEUROGER": "true"
+  },
+  {
+    "IDPlace": "35_1",
+    "NomPlace": "Hôpital du Valais (HVS) - site de Martigny ",
+    "Lieu": "Martigny",
+    "Domaine": "Med",
+    "FR": "true",
+    "AIGU": "true",
+    "REHAB": "true",
+    "SYSINT": "true"
+  },
+  {
+    "IDPlace": "36_1",
+    "NomPlace": "Hôpital du Valais (HVS) - site de Martigny ",
+    "Lieu": "Martigny",
+    "Domaine": "Ortho",
+    "FR": "true",
+    "AIGU": "true",
+    "REHAB": "true",
+    "MSQ": "true"
+  },
+  {
+    "IDPlace": "36_2",
+    "NomPlace": "Hôpital du Valais (HVS) - site de Martigny ",
+    "Lieu": "Martigny",
+    "Domaine": "Ortho",
+    "FR": "true",
+    "AIGU": "true",
+    "REHAB": "true",
+    "MSQ": "true"
+  },
+  {
+    "IDPlace": "37_1",
+    "NomPlace": "Hôpital du Valais (HVS) - site de Martigny ",
+    "Lieu": "Martigny",
+    "Domaine": "Ger",
+    "FR": "true",
+    "REHAB": "true",
+    "NEUROGER": "true"
+  },
+  {
+    "IDPlace": "38_1",
+    "NomPlace": "Hôpital du Valais (HVS) - site de Sierre",
+    "Lieu": "Sierre",
+    "Domaine": "Ger",
+    "FR": "true",
+    "REHAB": "true",
+    "NEUROGER": "true"
+  },
+  {
+    "IDPlace": "39_1",
+    "NomPlace": "Hôpital du Valais (HVS) - site de Sierre",
+    "Lieu": "Sierre",
+    "Domaine": "Ortho",
+    "FR": "true",
+    "REHAB": "true",
+    "MSQ": "true"
+  },
+  {
+    "IDPlace": "40_1",
+    "NomPlace": "Hôpital du Valais (HVS) - site de Sion",
+    "Lieu": "Sion",
+    "Domaine": "Neuro - ped",
+    "FR": "true",
+    "AIGU": "true",
+    "NEUROGER": "true"
+  },
+  {
+    "IDPlace": "41_1",
+    "NomPlace": "Hôpital du Valais (HVS) - site de Sion",
+    "Lieu": "Sion",
+    "Domaine": "Tournus SC med-chir - Cardio",
+    "FR": "true",
+    "AIGU": "true",
+    "SYSINT": "true"
+  },
+  {
+    "IDPlace": "41_2",
+    "NomPlace": "Hôpital du Valais (HVS) - site de Sion",
+    "Lieu": "Sion",
+    "Domaine": "Tournus SC med-chir - Cardio",
+    "FR": "true",
+    "AIGU": "true",
+    "SYSINT": "true"
+  },
+  {
+    "IDPlace": "42_1",
+    "NomPlace": "Hôpital du Valais (HVS) - site de Sion",
+    "Lieu": "Sion",
+    "Domaine": "Soins intensifs",
+    "FR": "true",
+    "AIGU": "true",
+    "SYSINT": "true"
+  },
+  {
+    "IDPlace": "43_1",
+    "NomPlace": "Hôpital du Valais (HVS) - site de Sion",
+    "Lieu": "Sion",
+    "Domaine": "Chir viscerale, ORL et thoracique - Pneumo",
+    "AIGU": "true",
+    "MSQ": "true",
+    "SYSINT": "true"
+  },
+  {
+    "IDPlace": "44_1",
+    "NomPlace": "Spital Zentrum Oberwallis (SZO) - site de Brig",
+    "Lieu": "Brigue-Glis",
+    "Domaine": "Ortho",
+    "ALL": "true",
+    "AIGU": "true",
+    "REHAB": "true",
+    "MSQ": "true",
+    "NEUROGER": "true"
+  },
+  {
+    "IDPlace": "44_2",
+    "NomPlace": "Spital Zentrum Oberwallis (SZO) - site de Brig",
+    "Lieu": "Brigue-Glis",
+    "Domaine": "Ortho",
+    "ALL": "true",
+    "AIGU": "true",
+    "REHAB": "true",
+    "MSQ": "true",
+    "NEUROGER": "true"
+  },
+  {
+    "IDPlace": "45_1",
+    "NomPlace": "Hôpital du Valais - St-Amé",
+    "Lieu": "Saint-Maurice",
+    "Domaine": "Ger",
+    "FR": "true",
+    "REHAB": "true",
+    "NEUROGER": "true"
+  },
+  {
+    "IDPlace": "45_2",
+    "NomPlace": "Hôpital du Valais - St-Amé",
+    "Lieu": "Saint-Maurice",
+    "Domaine": "Ger",
+    "FR": "true",
+    "REHAB": "true",
+    "NEUROGER": "true"
+  },
+  {
+    "IDPlace": "49_1",
+    "NomPlace": "Leukerbad Clinic",
+    "Lieu": "Loèche-les-Bains",
+    "Domaine": "Ortho",
+    "FR": "true",
+    "ALL": "true",
+    "REHAB": "true",
+    "MSQ": "true"
+  },
+  {
+    "IDPlace": "49_2",
+    "NomPlace": "Leukerbad Clinic",
+    "Lieu": "Loèche-les-Bains",
+    "Domaine": "Ortho",
+    "FR": "true",
+    "ALL": "true",
+    "REHAB": "true",
+    "MSQ": "true"
+  },
+  {
+    "IDPlace": "49_3",
+    "NomPlace": "Leukerbad Clinic",
+    "Lieu": "Loèche-les-Bains",
+    "Domaine": "Ortho",
+    "FR": "true",
+    "ALL": "true",
+    "REHAB": "true",
+    "MSQ": "true"
+  },
+  {
+    "IDPlace": "50_1",
+    "NomPlace": "Luzerner Hohenklinik Montana",
+    "Lieu": "Crans-Montana",
+    "Domaine": "Ortho - Med",
+    "FR": "true",
+    "ALL": "true",
+    "REHAB": "true",
+    "MSQ": "true",
+    "SYSINT": "true"
+  },
+  {
+    "IDPlace": "50_2",
+    "NomPlace": "Luzerner Hohenklinik Montana",
+    "Lieu": "Crans-Montana",
+    "Domaine": "Ortho - Med",
+    "FR": "true",
+    "ALL": "true",
+    "REHAB": "true",
+    "MSQ": "true",
+    "SYSINT": "true"
+  },
+  {
+    "IDPlace": "51_1",
+    "NomPlace": "Medsport - Sion",
+    "Lieu": "Sion",
+    "Domaine": "Ambu",
+    "FR": "true",
+    "AIGU": true,
+    "REHAB": false,
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "AMBU": "true"
+  },
+  {
+    "IDPlace": "52_1",
+    "NomPlace": "Medsport - Sierre",
+    "Lieu": "Sierre",
+    "Domaine": "Ambu",
+    "FR": "true",
+    "AIGU": "true",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "AMBU": "true"
+  },
+  {
+    "IDPlace": "53_1",
+    "NomPlace": "Nextherapy",
+    "Lieu": "Zurich",
+    "Domaine": "Ambu",
+    "ALL": "true",
+    "REHAB": "true",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "AMBU": "true"
+  },
+  {
+    "IDPlace": "53_2",
+    "NomPlace": "Nextherapy",
+    "Lieu": "Zurich",
+    "Domaine": "Ambu",
+    "ALL": "true",
+    "REHAB": "true",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "AMBU": "true"
+  },
+  {
+    "IDPlace": "55_1",
+    "NomPlace": "Physio Clinics - site de Collombey",
+    "Lieu": "Collombey-Muraz",
+    "Domaine": "Ambu",
+    "FR": "true",
+    "REHAB": "true",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "AMBU": "true"
+  },
+  {
+    "IDPlace": "56_1",
+    "NomPlace": "Physio Life",
+    "Lieu": "Brigue-Glis",
+    "Domaine": "Ambu",
+    "ALL": "true",
+    "REHAB": "true",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "AMBU": "true"
+  },
+  {
+    "IDPlace": "57_1",
+    "NomPlace": "Physio Watt ",
+    "Lieu": "Watt",
+    "Domaine": "Ambu",
+    "ALL": "true",
+    "REHAB": "true",
+    "MSQ": "true",
+    "SYSINT": false,
+    "NEUROGER": "true",
+    "AMBU": "true"
+  },
+  {
+    "IDPlace": "59_1",
+    "NomPlace": "PhysioAbbet SA",
+    "Lieu": "Martigny",
+    "Domaine": "Ambu",
+    "FR": "true",
+    "REHAB": "true",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "AMBU": "true"
+  },
+  {
+    "IDPlace": "62_1",
+    "NomPlace": "Physiothérapie Amacker-Etter Sàrl",
+    "Lieu": "Sion",
+    "Domaine": "Ambu",
+    "FR": "true",
+    "REHAB": "true",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "AMBU": "true"
+  },
+  {
+    "IDPlace": "63_1",
+    "NomPlace": "Physiotherapie & Trainingscenter Koch",
+    "Lieu": "Egerkingen",
+    "Domaine": "Ambu",
+    "ALL": "true",
+    "REHAB": "true",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "AMBU": "true"
+  },
+  {
+    "IDPlace": "64_1",
+    "NomPlace": "Physiotherapie Sascha Veil",
+    "Lieu": "Wangen an der Aare",
+    "Domaine": "Ambu",
+    "ALL": "true",
+    "REHAB": "true",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "AMBU": "true"
+  },
+  {
+    "IDPlace": "65_1",
+    "NomPlace": "Physio van den Nobelen GmbH - Physiotherapie im Bahnhof",
+    "Lieu": "Thoune",
+    "Domaine": "Ambu",
+    "ALL": "true",
+    "REHAB": "true",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "AMBU": "true"
+  },
+  {
+    "IDPlace": "74_1",
+    "NomPlace": "CHUV",
+    "Lieu": "Lausanne",
+    "Domaine": "Soins intensifs (DCILM-SMIA)",
+    "FR": "true",
+    "AIGU": "true",
+    "SYSINT": "true"
+  },
+  {
+    "IDPlace": "78_1",
+    "NomPlace": "Centre Rencontres",
+    "Lieu": "Courfaivre",
+    "Domaine": "Neuro",
+    "FR": "true",
+    "REHAB": "true",
+    "NEUROGER": "true"
+  },
+  {
+    "IDPlace": "83_1",
+    "NomPlace": "Movea ",
+    "Lieu": "Sion",
+    "Domaine": "Ambu",
+    "FR": "true",
+    "REHAB": "true",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "AMBU": "true"
+  },
+  {
+    "IDPlace": "85_1",
+    "NomPlace": "Therapiezentrum Stalden",
+    "Lieu": "Stalden",
+    "Domaine": "Ambu",
+    "ALL": "true",
+    "REHAB": "true",
+    "MSQ": "true",
+    "AMBU": "true"
+  },
+  {
+    "IDPlace": "87_1",
+    "NomPlace": "Physio Optima Sàrl",
+    "Lieu": "Bulle",
+    "Domaine": "Ambu",
+    "FR": "true",
+    "REHAB": "true",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "AMBU": "true"
+  },
+  {
+    "IDPlace": "89_1",
+    "NomPlace": "Phoenix Physio ",
+    "Lieu": "Sierre",
+    "Domaine": "Ambu",
+    "FR": "true",
+    "REHAB": "true",
+    "MSQ": "true",
+    "SYSINT": "true",
+    "NEUROGER": "true",
+    "AMBU": "true"
+  },
+  {
+    "IDPlace": "91_1",
+    "NomPlace": "Movare Sàrl",
+    "Lieu": "Bulle",
+    "Domaine": "Ambu",
+    "FR": "true",
+    "REHAB": "true",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "AMBU": "true"
+  },
+  {
+    "IDPlace": "92_1",
+    "NomPlace": "Alp'Sports Thérapies SA",
+    "Lieu": "Le Châble",
+    "Domaine": "Ambu",
+    "FR": "true",
+    "REHAB": "true",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "AMBU": "true"
+  },
+  {
+    "IDPlace": "94_1",
+    "NomPlace": "Cabinet des Arcades",
+    "Lieu": "Bramois",
+    "Domaine": "Ambu",
+    "FR": "true",
+    "REHAB": "true",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "AMBU": "true"
+  },
+  {
+    "IDPlace": "95_1",
+    "NomPlace": "PhysioPlusAqua GmbH",
+    "Lieu": "Brig",
+    "Domaine": "Ambu",
+    "ALL": "true",
+    "REHAB": "true",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "AMBU": "true"
+  },
+  {
+    "IDPlace": "101_1",
+    "NomPlace": "CHUV",
+    "Lieu": "Lausanne",
+    "Domaine": "Cardio-respiratoire (DFME-BH + NHE)",
+    "FR": "true",
+    "AIGU": "true",
+    "SYSINT": "true"
+  }
+]

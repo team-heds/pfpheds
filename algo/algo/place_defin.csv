@@ -1,0 +1,56 @@
+"place","NomPlace","Lieu","Domaine","AIGU","ALL","AMBU","FR","MSQ","NEUROGER","REHAB","SYSINT","studentId","studentFirstName","studentName","studentSelections","taken","studentNoAvailable"
+"3_1","Berner Klinik Montana","Crans-Montana","Neuro",false,"true",false,"true",false,"true","true",false,"4XpuWt6oUEgmQ9IjEloUtqyd4c43","Aude","Maret",4,4,0
+"3_1","Berner Klinik Montana","Crans-Montana","Neuro",false,"true",false,"true",false,"true","true",false,"4qoWztDujictoqTEJvJK6xF1Zcr1","Fanny","Mathieu",4,4,0
+"3_1","Berner Klinik Montana","Crans-Montana","Neuro",false,"true",false,"true",false,"true","true",false,"AXP0X3rUqzbpG3thTZcuZ6Ax1no1","Gauthier","Martig",4,4,0
+"3_1","Berner Klinik Montana","Crans-Montana","Neuro",false,"true",false,"true",false,"true","true",false,"Jg1Ejqc46rbcTHBwOMRYZZRwbTE2","Fiona","Nanchen",4,4,0
+"4_1","Cabinet de la Cour ","Sierre","Ambu",false,false,"true","true","true","true","true",false,"8YkNXMIQd4OiFHX0Ljm4LKsbZ2A2","Rebecca","Fryand",1,1,0
+"9_1","CareConnex Sàrl","Sierre","Ambu",false,false,"true","true","true","true","true",false,"A5gF87EUo6NdCaKoemDLN5V4gkF2","Sarah","Robyr",1,1,0
+"13_1","Clinique romande de réadaptation (CRR) - SUVA ","Sion","Ortho",false,false,false,"true","true",false,"true",false,"sJ0z0k4idEg6PMCnMrjW3lho9cs1","Leanne","Murith",1,1,0
+"14_1","Clinique romande de réadaptation (CRR) - SUVA ","Sion","Para - Tetra",false,false,false,"true",false,"true","true",false,"db0aQCgPMGgusm21XWqJ6RkXRvU2","Diane","Doyen",1,1,0
+"18_1","Hôpital Fribourgeois (HFR) - site de Fribourg ","Fribourg","Med","true",false,false,"true",false,false,false,"true","hZTRrS8UMrfybYXKulfk1pI03jw2","Alexandre","Lavanchy",2,2,0
+"18_1","Hôpital Fribourgeois (HFR) - site de Fribourg ","Fribourg","Med","true",false,false,"true",false,false,false,"true","qMjlyqwW8wN9IsVapiUoCXrJjOG2","Zoé","Duvoisin",2,2,0
+"20_1","Hôpital Fribourgeois (HFR) - site de Meyriez","Meyriez","Neuro",false,"true",false,"true",false,"true","true",false,"3XdluvWkn4NM3gFsvPNCtUDM5Oi1","Kristie","Morard",2,2,0
+"20_1","Hôpital Fribourgeois (HFR) - site de Meyriez","Meyriez","Neuro",false,"true",false,"true",false,"true","true",false,"djz1MyC7JsYen1wobYSUQC4aeF92","Chenoa","Peris",2,2,0
+"22_1","Hôpital Fribourgeois (HFR) - site de Riaz ","Riaz","Ger","true",false,false,"true",false,"true",false,false,"M8ySAiobcuStMPVUKB1SUjfZO2D2","Arthur","Python",1,1,0
+"26_1","Hôpital de Saint-Imier ","Saint-Imier","Ortho - Med - Ger","true",false,"true","true","true","true",false,"true","uwUTp2rxDHhytEej6vKfcVlOCY73","Laura","Behrens",2,2,0
+"26_1","Hôpital de Saint-Imier ","Saint-Imier","Ortho - Med - Ger","true",false,"true","true","true","true",false,"true","wb6ciGEN2tVpmU0Ld5ftdVCy1Qi1","Méline","Brix",2,2,0
+"32_1","Hôpital Riviera-Chablais (HRC) - site de Rennaz","Rennaz","Med","true",false,false,"true",false,false,"true","true","zss86bdGCVgvYgWzkc8dK7qLNi92","Gregory","Wahl",1,1,0
+"35_1","Hôpital du Valais (HVS) - site de Martigny ","Martigny","Med","true",false,false,"true",false,false,"true","true","Na44fbbTNZUjn7JIw6bBgLmTGmB2","Alexandre","Arrobas da Silva",3,3,0
+"35_1","Hôpital du Valais (HVS) - site de Martigny ","Martigny","Med","true",false,false,"true",false,false,"true","true","fgw7KyTqr4WAoThi0KjJtDRY7Ri2","Nadine","Corminboeuf",3,3,0
+"35_1","Hôpital du Valais (HVS) - site de Martigny ","Martigny","Med","true",false,false,"true",false,false,"true","true","h21ZyIpknGUksWjxUDLo2Mthwy92","Maxime","Schaer",3,3,0
+"40_1","Hôpital du Valais (HVS) - site de Sion","Sion","Neuro - ped","true",false,false,"true",false,"true",false,false,"yn7VMvQNy8gz9G2SrHjsYIuCfxA2","Lou","Pugin",1,1,0
+"43_1","Hôpital du Valais (HVS) - site de Sion","Sion","Chir viscerale, ORL et thoracique - Pneumo","true",false,false,false,"true",false,false,"true","NKzeoLK9hlSWLKHy858f84dZ7jz1","Emma","Sebastian",1,1,0
+"44_1","Spital Zentrum Oberwallis (SZO) - site de Brig","Brigue-Glis","Ortho","true","true",false,false,"true","true","true",false,"T70EwGWJMtZ22rcprSkqiOcPzTf1","Clémence","Masserey",3,3,0
+"44_1","Spital Zentrum Oberwallis (SZO) - site de Brig","Brigue-Glis","Ortho","true","true",false,false,"true","true","true",false,"i3VYPIfwLqTWfAL1E5HeHRRM5TE3","Hannah","Theler",3,3,0
+"44_1","Spital Zentrum Oberwallis (SZO) - site de Brig","Brigue-Glis","Ortho","true","true",false,false,"true","true","true",false,"lQVKbNduW7gdmCOBxC5KYnaIvGG3","Noah","Imboden",3,3,0
+"49_1","Leukerbad Clinic","Loèche-les-Bains","Ortho",false,"true",false,"true","true",false,"true",false,"Hnqd1QWfsafGdmWBECGv7owgJFt2","Sarah","Leal Castanheira",6,6,0
+"49_1","Leukerbad Clinic","Loèche-les-Bains","Ortho",false,"true",false,"true","true",false,"true",false,"R5PCIOnQeUhRSyFRTI9fg0Wp8p23","Cynthia","Peronetti",6,6,0
+"49_1","Leukerbad Clinic","Loèche-les-Bains","Ortho",false,"true",false,"true","true",false,"true",false,"SodSajGZ6lhfjjwB8YB4pMYT3hZ2","Alexis","Coty",6,6,0
+"49_1","Leukerbad Clinic","Loèche-les-Bains","Ortho",false,"true",false,"true","true",false,"true",false,"XK3sK3I48cMs89evbLhJZwBNlS92","Amandine","Michellod",6,6,0
+"49_1","Leukerbad Clinic","Loèche-les-Bains","Ortho",false,"true",false,"true","true",false,"true",false,"XQtDBAPWalffkax0p7ml1k0yOtr2","Quentin","Egger",6,6,0
+"49_1","Leukerbad Clinic","Loèche-les-Bains","Ortho",false,"true",false,"true","true",false,"true",false,"fE3EIKzXzKd3e7k8xoye5uc3PPd2","Léane","Métroz",6,6,0
+"50_1","Luzerner Hohenklinik Montana","Crans-Montana","Ortho - Med",false,"true",false,"true","true",false,"true","true","AaVsgnDJcfc4ZG8BwfCezt1VSZA3","Andrei Eric","Dubois",4,4,0
+"50_1","Luzerner Hohenklinik Montana","Crans-Montana","Ortho - Med",false,"true",false,"true","true",false,"true","true","RY3eRRvuMhcM10siGR3QdhIHBI42","Mandy","Narbel",4,4,0
+"50_1","Luzerner Hohenklinik Montana","Crans-Montana","Ortho - Med",false,"true",false,"true","true",false,"true","true","atQ2mk9k2lUYzt9nrJgwsjyzz702","Quentin","Sarrasin",4,4,0
+"50_1","Luzerner Hohenklinik Montana","Crans-Montana","Ortho - Med",false,"true",false,"true","true",false,"true","true","kBlGnRSNhgaQSTPumpAz4jZ7pgq2","Steve","Bagnoud",4,4,0
+"51_1","Medsport - Sion","Sion","Ambu",true,false,"true","true","true","true",false,false,"WwfAPnGOElWCCprK8J9QpARedqV2","Rosalie","Menoud",3,3,0
+"51_1","Medsport - Sion","Sion","Ambu",true,false,"true","true","true","true",false,false,"YiI50LxSiZYDXMtiCNf6kwEWSQ42","Théo","Filippini",3,3,0
+"51_1","Medsport - Sion","Sion","Ambu",true,false,"true","true","true","true",false,false,"lRjmWjDaAUcsqHli7A3rfvAazgl2","Stella","Bonvin",3,3,0
+"52_1","Medsport - Sierre","Sierre","Ambu","true",false,"true","true","true","true",false,false,"H4RtKMKXpYhJkTOTOOm62ANGNAo2","Baptiste","Neuhaus",2,2,0
+"52_1","Medsport - Sierre","Sierre","Ambu","true",false,"true","true","true","true",false,false,"ta5fEsMcBHV64fLfjy7knGlQVd93","Leonie","Dennda",2,2,0
+"56_1","Physio Life","Brigue-Glis","Ambu",false,"true","true",false,"true","true","true",false,"yWShM6jbuNcck2CfI0ihEtckesW2","Lucie","Rey",1,1,0
+"63_1","Physiotherapie & Trainingscenter Koch","Egerkingen","Ambu",false,"true","true",false,"true","true","true",false,"v0Bv2oLhCkhDJvVvXktZsmnj16U2","Léane","Wagner",1,1,0
+"87_1","Physio Optima Sàrl","Bulle","Ambu",false,false,"true","true","true","true","true",false,"QzBEdtlEIsfsg3pD6B1adFBmZSG2","Barbara","Palthey",1,1,0
+"89_1","Phoenix Physio ","Sierre","Ambu",false,false,"true","true","true","true","true","true","4Bf1mBR9HjcLeFcDeuEVRrGDaU63","Alexis","Markianos",5,5,0
+"89_1","Phoenix Physio ","Sierre","Ambu",false,false,"true","true","true","true","true","true","6Kza76qZHxOb8TlrP068rdr93br1","Mickael","Paciotti",5,5,0
+"89_1","Phoenix Physio ","Sierre","Ambu",false,false,"true","true","true","true","true","true","Vnf1L8xxhFheK6RE3P18MGzMDkc2","Théo","Mayoraz",5,5,0
+"89_1","Phoenix Physio ","Sierre","Ambu",false,false,"true","true","true","true","true","true","mGwDQ6cu9BfI9d0sLUVdZBnoooB2","José Luis","Espincho Carneiro",5,5,0
+"89_1","Phoenix Physio ","Sierre","Ambu",false,false,"true","true","true","true","true","true","nqvttcCyf3SL6YT1DJJ8GGM3MKz2","Maëlle","Ruf",5,5,0
+"92_1","Alp'Sports Thérapies SA","Le Châble","Ambu",false,false,"true","true","true","true","true",false,"PQKKiABo9oWhgcOKlmD5f1kKPoF3","Isaline","Baechler",3,3,0
+"92_1","Alp'Sports Thérapies SA","Le Châble","Ambu",false,false,"true","true","true","true","true",false,"aMpDSmIIsjZHIHJrVFGyKiLF94j2","Céline","Claivaz",3,3,0
+"92_1","Alp'Sports Thérapies SA","Le Châble","Ambu",false,false,"true","true","true","true","true",false,"ugBbi96TQGRuQLKFwT43qJHa4za2","Céline","Frossard",3,3,0
+"95_1","PhysioPlusAqua GmbH","Brig","Ambu",false,"true","true",false,"true","true","true",false,"KplEdkaz5na6IzzQUFxy8ldozMA2","Michelle","Schär",1,1,0
+"101_1","CHUV","Lausanne","Cardio-respiratoire (DFME-BH + NHE)","true",false,false,"true",false,false,false,"true","VO9wOi3JGvVchoaQvtNTidOABe03","Romain","de Pury",2,2,0
+"101_1","CHUV","Lausanne","Cardio-respiratoire (DFME-BH + NHE)","true",false,false,"true",false,false,false,"true","tc2VPj6NxHQyXqO9cxgs1VvCH9A2","Camille","Monnier",2,2,0
+"38_1","Hôpital du Valais (HVS) - site de Sierre","Sierre","Ger",false,false,false,"true",false,"true","true",false,"AXP0X3rUqzbpG3thTZcuZ6Ax1no1","Gauthier","Martig",1,1,0
+"28_1","Hôpital du Jura - site de Porrentruy","Porrentruy","Ortho - Ger",false,false,false,"true","true","true","true",false,"NKzeoLK9hlSWLKHy858f84dZ7jz1","Emma","Sebastian",1,1,0

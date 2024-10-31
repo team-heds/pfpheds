@@ -1,0 +1,54 @@
+Place ID,Student ID,Student Name,Student First Name,Place Name,Domain,Location,Total Places
+0_1_1,null,null,null,Actifisio,Ambu,Fribourg,8
+3_1_1,null,null,null,Berner Klinik Montana,Neuro,Crans-Montana,14
+4_1_1,null,null,null,Cabinet de la Cour ,Ambu,Sierre,7
+6_1_1,null,null,null,Cabinet Dynaphyz,Ambu,Bulle,5
+9_1_1,null,null,null,CareConnex Sàrl,Ambu,Sierre,6
+13_1_1,sJ0z0k4idEg6PMCnMrjW3lho9cs1,Murith,Leanne,Clinique romande de réadaptation (CRR) - SUVA ,Ortho,Sion,null
+13_1_2,4qoWztDujictoqTEJvJK6xF1Zcr1,,,Clinique romande de réadaptation (CRR) - SUVA ,Ortho,Sion,null
+13_1_3,bTZVtsHKMuUL7MH05G4HxVdGvxt2,,,Clinique romande de réadaptation (CRR) - SUVA ,Ortho,Sion,null
+14_1_1,null,null,null,Clinique romande de réadaptation (CRR) - SUVA ,Para - Tetra,Sion,2
+15_1_1,null,null,null,FC Sion,Ambu,Martigny,3
+16_1_1,null,null,null,Gesundheitszentrum Physiotherapie Saastal GmbH,Ambu,Saas-Grund,2
+17_1_1,AXP0X3rUqzbpG3thTZcuZ6Ax1no1,,,Clinique de Crans-Montana - HCUGE,Ortho - Psychosomatique,Montana,null
+18_1_1,null,null,null,Hôpital Fribourgeois (HFR) - site de Fribourg ,Med,Fribourg,9
+20_1_1,null,null,null,Hôpital Fribourgeois (HFR) - site de Meyriez,Neuro,Meyriez,8
+22_1_1,null,null,null,Hôpital Fribourgeois (HFR) - site de Riaz ,Ger,Riaz,2
+26_1_1,null,null,null,Hôpital de Saint-Imier ,Ortho - Med - Ger,Saint-Imier,5
+28_1_1,NKzeoLK9hlSWLKHy858f84dZ7jz1,Sebastian,Emma,Hôpital du Jura - site de Porrentruy,Ortho - Ger,Porrentruy,null
+32_1_1,null,null,null,Hôpital Riviera-Chablais (HRC) - site de Rennaz,Med,Rennaz,6
+32_1_2,zss86bdGCVgvYgWzkc8dK7qLNi92,Wahl,Gregory,Hôpital Riviera-Chablais (HRC) - site de Rennaz,Med,Rennaz,6
+34_1_1,hZTRrS8UMrfybYXKulfk1pI03jw2,,,Hôpital Riviera-Chablais - CGR Monthey,Ger,Monthey,null
+35_1_1,null,null,null,Hôpital du Valais (HVS) - site de Martigny ,Med,Martigny,9
+36_1_1,kBlGnRSNhgaQSTPumpAz4jZ7pgq2,Bagnoud,Steve,Hôpital du Valais (HVS) - site de Martigny ,Ortho,Martigny,null
+36_1_2,8YkNXMIQd4OiFHX0Ljm4LKsbZ2A2,,,Hôpital du Valais (HVS) - site de Martigny ,Ortho,Martigny,null
+37_1_1,IBhyDws6lPNCFbIz9ZjfNf3WgGm2,,,Hôpital du Valais (HVS) - site de Martigny ,Ger,Martigny,null
+38_1_1,AXP0X3rUqzbpG3thTZcuZ6Ax1no1,Martig,Gauthier,Hôpital du Valais (HVS) - site de Sierre,Ger,Sierre,null
+39_1_1,QzBEdtlEIsfsg3pD6B1adFBmZSG2,,,Hôpital du Valais (HVS) - site de Sierre,Ortho,Sierre,null
+40_1_1,null,null,null,Hôpital du Valais (HVS) - site de Sion,Neuro - ped,Sion,8
+41_1_1,null,null,null,Hôpital du Valais (HVS) - site de Sion,Tournus SC med-chir - Cardio,Sion,5
+41_1_2,yn7VMvQNy8gz9G2SrHjsYIuCfxA2,Pugin,Lou,Hôpital du Valais (HVS) - site de Sion,Tournus SC med-chir - Cardio,Sion,5
+42_1_1,4XpuWt6oUEgmQ9IjEloUtqyd4c43,,,Hôpital du Valais (HVS) - site de Sion,Soins intensifs,Sion,null
+43_1_1,null,null,null,Hôpital du Valais (HVS) - site de Sion,"Chir viscerale, ORL et thoracique - Pneumo",Sion,6
+44_1_1,null,null,null,Spital Zentrum Oberwallis (SZO) - site de Brig,Ortho,Brigue-Glis,6
+45_1_1,qhCrypuoDXc5zIWJAD9dOL8Ljv63,,,Hôpital du Valais - St-Amé,Ger,Saint-Maurice,null
+45_1_2,v0Bv2oLhCkhDJvVvXktZsmnj16U2,,,Hôpital du Valais - St-Amé,Ger,Saint-Maurice,null
+49_1_1,null,null,null,Leukerbad Clinic,Ortho,Loèche-les-Bains,15
+49_1_2,zss86bdGCVgvYgWzkc8dK7qLNi92,Wahl,Gregory,Leukerbad Clinic,Ortho,Loèche-les-Bains,15
+49_1_3,null,null,null,Leukerbad Clinic,Ortho,Loèche-les-Bains,15
+50_1_1,zss86bdGCVgvYgWzkc8dK7qLNi92,Wahl,Gregory,Luzerner Hohenklinik Montana,Ortho - Med,Crans-Montana,16
+51_1_1,yWShM6jbuNcck2CfI0ihEtckesW2,Rey,Lucie,Medsport - Sion,Ambu,Sion,20
+52_1_1,null,null,null,Medsport - Sierre,Ambu,Sierre,17
+55_1_1,null,null,null,Physio Clinics - site de Collombey,Ambu,Collombey-Muraz,4
+56_1_1,yWShM6jbuNcck2CfI0ihEtckesW2,Rey,Lucie,Physio Life,Ambu,Brigue-Glis,4
+59_1_1,null,null,null,PhysioAbbet SA,Ambu,Martigny,5
+62_1_1,null,null,null,Physiothérapie Amacker-Etter Sàrl,Ambu,Sion,6
+63_1_1,null,null,null,Physiotherapie & Trainingscenter Koch,Ambu,Egerkingen,2
+78_1_1,3XdluvWkn4NM3gFsvPNCtUDM5Oi1,,,Centre Rencontres,Neuro,Courfaivre,null
+85_1_1,null,null,null,Therapiezentrum Stalden,Ambu,Stalden,2
+87_1_1,null,null,null,Physio Optima Sàrl,Ambu,Bulle,3
+89_1_1,zss86bdGCVgvYgWzkc8dK7qLNi92,Wahl,Gregory,Phoenix Physio ,Ambu,Sierre,20
+92_1_1,null,null,null,Alp'Sports Thérapies SA,Ambu,Le Châble,4
+94_1_1,null,null,null,Cabinet des Arcades,Ambu,Bramois,2
+95_1_1,ta5fEsMcBHV64fLfjy7knGlQVd93,Dennda,Leonie,PhysioPlusAqua GmbH,Ambu,Brig,6
+101_1_1,uwUTp2rxDHhytEej6vKfcVlOCY73,Behrens,Laura,CHUV,Cardio-respiratoire (DFME-BH + NHE),Lausanne,8

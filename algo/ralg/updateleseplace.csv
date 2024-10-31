@@ -1,0 +1,54 @@
+placeId,studentId,studentName,studentFirstName,NomPlace,Lieu,Domaine,FR,ALL,AIGU,AMBU,MSQ,REHAB,NEUROGER,SYSINT,totalPlaces
+0_1_1,null,null,null,Actifisio,Fribourg,Ambu,true,false,false,true,true,true,true,false,8
+3_1_1,null,null,null,Berner Klinik Montana,Crans-Montana,Neuro,true,true,false,false,false,true,true,false,14
+4_1_1,null,null,null,Cabinet de la Cour ,Sierre,Ambu,true,false,false,true,true,true,true,false,7
+6_1_1,null,null,null,Cabinet Dynaphyz,Bulle,Ambu,true,false,false,true,true,true,true,false,5
+9_1_1,null,null,null,CareConnex Sàrl,Sierre,Ambu,true,false,false,true,true,true,true,false,6
+13_1_1,sJ0z0k4idEg6PMCnMrjW3lho9cs1,Murith,Leanne,Clinique romande de réadaptation (CRR) - SUVA ,Sion,Ortho,true,false,false,false,true,true,false,false,null
+13_1_2,4qoWztDujictoqTEJvJK6xF1Zcr1,null,null,Clinique romande de réadaptation (CRR) - SUVA ,Sion,Ortho,true,false,false,false,true,true,false,false,null
+13_1_3,bTZVtsHKMuUL7MH05G4HxVdGvxt2,null,null,Clinique romande de réadaptation (CRR) - SUVA ,Sion,Ortho,true,false,false,false,true,true,false,false,null
+14_1_1,null,null,null,Clinique romande de réadaptation (CRR) - SUVA ,Sion,Para - Tetra,true,false,false,false,false,true,true,false,2
+15_1_1,null,null,null,FC Sion,Martigny,Ambu,true,false,true,true,true,false,false,false,3
+16_1_1,null,null,null,Gesundheitszentrum Physiotherapie Saastal GmbH,Saas-Grund,Ambu,false,true,false,true,true,true,true,false,2
+17_1_1,AXP0X3rUqzbpG3thTZcuZ6Ax1no1,null,null,Clinique de Crans-Montana - HCUGE,Montana,Ortho - Psychosomatique,true,false,false,false,true,true,false,false,null
+18_1_1,null,null,null,Hôpital Fribourgeois (HFR) - site de Fribourg ,Fribourg,Med,true,false,true,false,false,false,false,true,9
+20_1_1,null,null,null,Hôpital Fribourgeois (HFR) - site de Meyriez,Meyriez,Neuro,true,true,false,false,false,true,true,false,8
+22_1_1,null,null,null,Hôpital Fribourgeois (HFR) - site de Riaz ,Riaz,Ger,true,false,true,false,false,false,true,false,2
+26_1_1,null,null,null,Hôpital de Saint-Imier ,Saint-Imier,Ortho - Med - Ger,true,false,true,true,true,false,true,true,5
+28_1_1,NKzeoLK9hlSWLKHy858f84dZ7jz1,Sebastian,Emma,Hôpital du Jura - site de Porrentruy,Porrentruy,Ortho - Ger,true,false,false,false,true,true,true,false,null
+32_1_1,null,null,null,Hôpital Riviera-Chablais (HRC) - site de Rennaz,Rennaz,Med,true,false,true,false,false,true,false,true,6
+32_1_2,null,null,null,Hôpital Riviera-Chablais (HRC) - site de Rennaz,Rennaz,Med,true,false,true,false,false,true,false,true,6
+34_1_1,hZTRrS8UMrfybYXKulfk1pI03jw2,null,null,Hôpital Riviera-Chablais - CGR Monthey,Monthey,Ger,true,false,true,false,false,true,true,false,null
+35_1_1,null,null,null,Hôpital du Valais (HVS) - site de Martigny ,Martigny,Med,true,false,true,false,false,true,false,true,9
+36_1_1,kBlGnRSNhgaQSTPumpAz4jZ7pgq2,Bagnoud,Steve,Hôpital du Valais (HVS) - site de Martigny ,Martigny,Ortho,true,false,true,false,true,true,false,false,null
+36_1_2,8YkNXMIQd4OiFHX0Ljm4LKsbZ2A2,null,null,Hôpital du Valais (HVS) - site de Martigny ,Martigny,Ortho,true,false,true,false,true,true,false,false,null
+37_1_1,IBhyDws6lPNCFbIz9ZjfNf3WgGm2,null,null,Hôpital du Valais (HVS) - site de Martigny ,Martigny,Ger,true,false,false,false,false,true,true,false,null
+38_1_1,AXP0X3rUqzbpG3thTZcuZ6Ax1no1,Martig,Gauthier,Hôpital du Valais (HVS) - site de Sierre,Sierre,Ger,true,false,false,false,false,true,true,false,null
+39_1_1,QzBEdtlEIsfsg3pD6B1adFBmZSG2,null,null,Hôpital du Valais (HVS) - site de Sierre,Sierre,Ortho,true,false,false,false,true,true,false,false,null
+40_1_1,null,null,null,Hôpital du Valais (HVS) - site de Sion,Sion,Neuro - ped,true,false,true,false,false,false,true,false,8
+41_1_1,null,null,null,Hôpital du Valais (HVS) - site de Sion,Sion,Tournus SC med-chir - Cardio,true,false,true,false,false,false,false,true,5
+41_1_2,null,null,null,Hôpital du Valais (HVS) - site de Sion,Sion,Tournus SC med-chir - Cardio,true,false,true,false,false,false,false,true,5
+42_1_1,4XpuWt6oUEgmQ9IjEloUtqyd4c43,null,null,Hôpital du Valais (HVS) - site de Sion,Sion,Soins intensifs,true,false,true,false,false,false,false,true,null
+43_1_1,null,null,null,Hôpital du Valais (HVS) - site de Sion,Sion,Chir viscerale, ORL et thoracique - Pneumo,false,false,true,false,true,false,false,true,6
+44_1_1,null,null,null,Spital Zentrum Oberwallis (SZO) - site de Brig,Brigue-Glis,Ortho,false,true,true,false,true,true,true,false,6
+45_1_1,qhCrypuoDXc5zIWJAD9dOL8Ljv63,null,null,Hôpital du Valais - St-Amé,Saint-Maurice,Ger,true,false,false,false,false,true,true,false,null
+45_1_2,v0Bv2oLhCkhDJvVvXktZsmnj16U2,null,null,Hôpital du Valais - St-Amé,Saint-Maurice,Ger,true,false,false,false,false,true,true,false,null
+49_1_1,null,null,null,Leukerbad Clinic,Loèche-les-Bains,Ortho,true,true,false,false,true,true,false,false,15
+49_1_2,null,null,null,Leukerbad Clinic,Loèche-les-Bains,Ortho,true,true,false,false,true,true,false,false,15
+49_1_3,null,null,null,Leukerbad Clinic,Loèche-les-Bains,Ortho,true,true,false,false,true,true,false,false,15
+50_1_1,null,null,null,Luzerner Hohenklinik Montana,Crans-Montana,Ortho - Med,true,true,false,false,true,true,false,true,16
+51_1_1,null,null,null,Medsport - Sion,Sion,Ambu,true,false,true,true,true,false,true,false,20
+52_1_1,null,null,null,Medsport - Sierre,Sierre,Ambu,true,false,true,true,true,false,true,false,17
+55_1_1,null,null,null,Physio Clinics - site de Collombey,Collombey-Muraz,Ambu,true,false,false,true,true,true,true,false,4
+56_1_1,null,null,null,Physio Life,Brigue-Glis,Ambu,false,true,false,true,true,true,true,false,4
+59_1_1,null,null,null,PhysioAbbet SA,Martigny,Ambu,true,false,false,true,true,true,true,false,5
+62_1_1,null,null,null,Physiothérapie Amacker-Etter Sàrl,Sion,Ambu,true,false,false,true,true,true,true,false,6
+63_1_1,null,null,null,Physiotherapie & Trainingscenter Koch,Egerkingen,Ambu,false,true,false,true,true,true,true,false,2
+78_1_1,3XdluvWkn4NM3gFsvPNCtUDM5Oi1,null,null,Centre Rencontres,Courfaivre,Neuro,true,false,false,false,false,true,true,false,null
+85_1_1,null,null,null,Therapiezentrum Stalden,Stalden,Ambu,false,true,false,true,true,true,false,false,2
+87_1_1,null,null,null,Physio Optima Sàrl,Bulle,Ambu,true,false,false,true,true,true,true,false,3
+89_1_1,null,null,null,Phoenix Physio ,Sierre,Ambu,true,false,false,true,true,true,true,true,20
+92_1_1,null,null,null,Alp'Sports Thérapies SA,Le Châble,Ambu,true,false,false,true,true,true,true,false,4
+94_1_1,null,null,null,Cabinet des Arcades,Bramois,Ambu,true,false,false,true,true,true,true,false,2
+95_1_1,null,null,null,PhysioPlusAqua GmbH,Brig,Ambu,false,true,false,true,true,true,true,false,6
+101_1_1,null,null,null,CHUV,Lausanne,Cardio-respiratoire (DFME-BH + NHE),true,false,true,false,false,false,false,true,8

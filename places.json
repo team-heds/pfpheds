@@ -1,0 +1,1539 @@
+{
+  "0": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-O3k_m7cRctNx0MEzaU-",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "1",
+    "PFP1B": "1",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "94"
+    ]
+  },
+  "1": {
+    "DE": "true",
+    "IDPlace": "-Neh_Ttzz1yliQ8-FCwd",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ortho",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "59"
+    ]
+  },
+  "2": {
+    "DE": "true",
+    "FR": "true",
+    "IDPlace": "-O3kbfe81TTvVKEinjxO",
+    "MSQ": "true",
+    "NomPlace": "Ortho - Med",
+    "PFP1A": "1",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "SYSINT": "true",
+    "praticiensFormateurs": [
+      "6"
+    ]
+  },
+  "3": {
+    "DE": "true",
+    "FR": "true",
+    "IDPlace": "-O3kbfe81TTvVKEinjxO",
+    "NEURO-GER": "true",
+    "NomPlace": "Neuro",
+    "PFP1A": "1",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "6"
+    ]
+  },
+  "4": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_TtqlkfsEXOpJuZ6",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "0",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "39"
+    ]
+  },
+  "5": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttrz8anl_WDKqed",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "1",
+    "PFP1B": "1",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "38"
+    ]
+  },
+  "6": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttrz8anl_WDKqee",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "1",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "0",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "90"
+    ]
+  },
+  "7": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttrz8anl_WDKqef",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu",
+    "PFP2": "0",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "92"
+    ]
+  },
+  "8": {
+    "AIGU": "true",
+    "IDPlace": "-Neh_Ttrz8anl_WDKqeg",
+    "IT": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "1",
+    "PFP4": "0",
+    "REHAB": "true",
+    "SYSINT": "true",
+    "praticiensFormateurs": [
+      "-O3qTX4SvkksuQsiZjTD"
+    ]
+  },
+  "9": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Tts5U9CHo9_p95u",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "0",
+    "PFP4": "1",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "36",
+      "-O3gE_FtS_t08gFUfpS3"
+    ]
+  },
+  "10": {
+    "AIGU": "true",
+    "DE": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Tts5U9CHo9_p95v",
+    "MSQ": "true",
+    "NomPlace": "Ortho - Med",
+    "PFP2": "0",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "SYSINT": "true",
+    "praticiensFormateurs": [
+      "79"
+    ]
+  },
+  "11": {
+    "FR": "true",
+    "IDPlace": "-Neh_Tts5U9CHo9_p95x",
+    "MSQ": "true",
+    "NomPlace": "Rehab - Sport",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "2",
+    "PFP4": "3",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "112"
+    ]
+  },
+  "12": {
+    "AMBU": "true",
+    "DE": "true",
+    "IDPlace": "-Neh_Tts5U9CHo9_p95y",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "1",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "95"
+    ]
+  },
+  "13": {
+    "FR": "true",
+    "IDPlace": "-Neh_TttD0thS5tY-yyR",
+    "MSQ": "true",
+    "NomPlace": "Ortho",
+    "PFP1A": "3",
+    "PFP1B": "3",
+    "PFP2": "3",
+    "PFP3": "3",
+    "PFP4": "3",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "22",
+      "23",
+      "24"
+    ]
+  },
+  "14": {
+    "FR": "true",
+    "IDPlace": "-Neh_TttD0thS5tY-yyR",
+    "NEURO-GER": "true",
+    "NomPlace": "Para - Tetra",
+    "PFP1A": "1",
+    "PFP1B": "1",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "25"
+    ]
+  },
+  "15": {
+    "AIGU": "true",
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttu3CYo8WbkqIJn",
+    "MSQ": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "praticiensFormateurs": [
+      "44"
+    ]
+  },
+  "16": {
+    "AMBU": "true",
+    "DE": "true",
+    "IDPlace": "-Neh_Ttu3CYo8WbkqIJo",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "1",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "46"
+    ]
+  },
+  "17": {
+    "FR": "true",
+    "IDPlace": "-Neh_Ttu3CYo8WbkqIJp",
+    "MSQ": "true",
+    "NomPlace": "Ortho - Psychosomatique",
+    "PFP1A": "0",
+    "PFP1B": "1",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "8"
+    ]
+  },
+  "18": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttu3CYo8WbkqIJq",
+    "NomPlace": "Med",
+    "PFP2": "1",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "SYSINT": "true",
+    "praticiensFormateurs": [
+      "78"
+    ]
+  },
+  "19": {
+    "FR": "true",
+    "IDPlace": "-Neh_Ttu3CYo8WbkqIJq",
+    "MSQ": "true",
+    "NomPlace": "Ortho",
+    "PFP2": "0",
+    "REHAB": "true",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "praticiensFormateurs": [
+      "77"
+    ]
+  },
+  "20": {
+    "DE": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_TtvxPdffqwTHccH",
+    "NEURO-GER": "true",
+    "NomPlace": "Neuro",
+    "PFP2": "1",
+    "REHAB": "true",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "praticiensFormateurs": [
+      "75"
+    ]
+  },
+  "21": {
+    "FR": "true",
+    "IDPlace": "-Neh_TtvxPdffqwTHccH",
+    "MSQ": "true",
+    "NomPlace": "Ortho",
+    "PFP2": "0",
+    "REHAB": "true",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "praticiensFormateurs": [
+      "76"
+    ]
+  },
+  "22": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_TtvxPdffqwTHccI",
+    "NEURO-GER": "true",
+    "NomPlace": "Ger",
+    "PFP2": "1",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "praticiensFormateurs": [
+      "74"
+    ]
+  },
+  "23": {
+    "FR": "true",
+    "IDPlace": "-Neh_TtvxPdffqwTHccJ",
+    "NEURO-GER": "true",
+    "NomPlace": "Ger",
+    "PFP2": "0",
+    "REHAB": "true",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "praticiensFormateurs": [
+      "80"
+    ]
+  },
+  "24": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_TtvxPdffqwTHccK",
+    "MSQ": "true",
+    "NomPlace": "Ortho - Med",
+    "PFP2": "0",
+    "REHAB": "true",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "SYSINT": "true",
+    "praticiensFormateurs": [
+      "81"
+    ]
+  },
+  "25": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_TtvxPdffqwTHccL",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ortho - Med - Ger",
+    "PFP2": "0",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "SYSINT": "true",
+    "praticiensFormateurs": [
+      "65"
+    ]
+  },
+  "26": {
+    "AIGU": "true",
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_TtvxPdffqwTHccM",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ortho - Med - Ger",
+    "PFP2": "1",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "SYSINT": "true",
+    "praticiensFormateurs": [
+      "66"
+    ]
+  },
+  "27": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_TtwPcuW60cfmbyV",
+    "MSQ": "true",
+    "NomPlace": "Ortho - Med",
+    "PFP2": "0",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "SYSINT": "true",
+    "praticiensFormateurs": [
+      "68"
+    ]
+  },
+  "28": {
+    "FR": "true",
+    "IDPlace": "-Neh_TtwPcuW60cfmbyW",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ortho - Ger",
+    "PFP2": "1",
+    "REHAB": "true",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "praticiensFormateurs": [
+      "67"
+    ]
+  },
+  "29": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_TtwPcuW60cfmbyX",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "45"
+    ]
+  },
+  "30": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_TtwPcuW60cfmbyY",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "praticiensFormateurs": [
+      "95"
+    ]
+  },
+  "31": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_TtwPcuW60cfmbyZ",
+    "MSQ": "true",
+    "NomPlace": "Ortho",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "praticiensFormateurs": [
+      "27"
+    ]
+  },
+  "32": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_TtwPcuW60cfmbyZ",
+    "NomPlace": "Med",
+    "PFP1A": "1",
+    "PFP1B": "1",
+    "PFP2": "2",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "SYSINT": "true",
+    "praticiensFormateurs": [
+      "28"
+    ]
+  },
+  "33": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Tu-HYARvsZv31DS",
+    "NomPlace": "Ger",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "SYSINT": "true",
+    "praticiensFormateurs": [
+      "26"
+    ]
+  },
+  "34": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Tu0ifoZo_RPDyHx",
+    "NEURO-GER": "true",
+    "NomPlace": "Ger",
+    "PFP1A": "1",
+    "PFP1B": "1",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "29"
+    ]
+  },
+  "35": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_TtwPcuW60cfmby_",
+    "NomPlace": "Med",
+    "PFP1A": "1",
+    "PFP1B": "1",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "SYSINT": "true",
+    "praticiensFormateurs": [
+      "15"
+    ]
+  },
+  "36": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_TtwPcuW60cfmby_",
+    "MSQ": "true",
+    "NomPlace": "Ortho",
+    "PFP1A": "2",
+    "PFP1B": "2",
+    "PFP2": "2",
+    "PFP3": "2",
+    "PFP4": "2",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "16",
+      "17"
+    ]
+  },
+  "37": {
+    "FR": "true",
+    "IDPlace": "-Neh_TtwPcuW60cfmby_",
+    "NEURO-GER": "true",
+    "NomPlace": "Ger",
+    "PFP1A": "1",
+    "PFP1B": "1",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "14"
+    ]
+  },
+  "38": {
+    "FR": "true",
+    "IDPlace": "-Neh_TtwPcuW60cfmbya",
+    "NEURO-GER": "true",
+    "NomPlace": "Ger",
+    "PFP1A": "1",
+    "PFP1B": "1",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "19"
+    ]
+  },
+  "39": {
+    "FR": "true",
+    "IDPlace": "-Neh_TtwPcuW60cfmbya",
+    "MSQ": "true",
+    "NomPlace": "Ortho",
+    "PFP1A": "1",
+    "PFP1B": "1",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "18"
+    ]
+  },
+  "40": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_TtwPcuW60cfmbyb",
+    "NEURO-GER": "true",
+    "NomPlace": "Neuro - ped",
+    "PFP1A": "1",
+    "PFP1B": "1",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "praticiensFormateurs": [
+      "9"
+    ]
+  },
+  "41": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_TtwPcuW60cfmbyb",
+    "NomPlace": "Tournus SC med-chir - Cardio",
+    "PFP1A": "2",
+    "PFP1B": "2",
+    "PFP2": "2",
+    "PFP3": "2",
+    "PFP4": "2",
+    "SYSINT": "true",
+    "praticiensFormateurs": [
+      "-O3gEis0u3yLywZaLV1O"
+    ]
+  },
+  "42": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_TtwPcuW60cfmbyb",
+    "NomPlace": "Soins intensifs",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "SYSINT": "true",
+    "praticiensFormateurs": [
+      "12"
+    ]
+  },
+  "43": {
+    "AIGU": "true",
+    "IDPlace": "-Neh_TtwPcuW60cfmbyb",
+    "MSQ": "true",
+    "NomPlace": "Chir viscerale, ORL et thoracique - Pneumo",
+    "PFP1A": "1",
+    "PFP1B": "1",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "SYSINT": "true",
+    "praticiensFormateurs": [
+      "13"
+    ]
+  },
+  "44": {
+    "AIGU": "true",
+    "DE": "true",
+    "IDPlace": "-Neh_TtwPcuW60cfmbyc",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ortho",
+    "PFP1A": "2",
+    "PFP1B": "2",
+    "PFP2": "2",
+    "PFP3": "2",
+    "PFP4": "2",
+    "REHAB": "true",
+    "praticienFormateur": "",
+    "praticiensFormateurs": [
+      "1",
+      "114"
+    ]
+  },
+  "45": {
+    "FR": "true",
+    "IDPlace": "-Neh_TtwPcuW60cfmbyd",
+    "NEURO-GER": "true",
+    "NomPlace": "Ger",
+    "PFP1A": "2",
+    "PFP1B": "2",
+    "PFP2": "2",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "20",
+      "21"
+    ]
+  },
+  "46": {
+    "FR": "true",
+    "IDPlace": "-Neh_Ttxx1ljaMN6U_6j",
+    "NEURO-GER": "true",
+    "NomPlace": "Neuro - Ped",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "1",
+    "PFP4": "0",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "30"
+    ]
+  },
+  "47": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttxx1ljaMN6U_6k",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "1",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "93"
+    ]
+  },
+  "48": {
+    "AIGU": "true",
+    "DE": "true",
+    "IDPlace": "-Neh_Ttxx1ljaMN6U_6l",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ortho",
+    "PFP1A": "0",
+    "PFP1B": "1",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "86"
+    ]
+  },
+  "49": {
+    "DE": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttxx1ljaMN6U_6m",
+    "MSQ": "true",
+    "NomPlace": "Ortho",
+    "PFP1A": "3",
+    "PFP1B": "3",
+    "PFP2": "3",
+    "PFP3": "3",
+    "PFP4": "3",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "3"
+    ]
+  },
+  "50": {
+    "DE": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttxx1ljaMN6U_6n",
+    "MSQ": "true",
+    "NomPlace": "Ortho - Med",
+    "PFP1A": "2",
+    "PFP1B": "2",
+    "PFP2": "2",
+    "PFP3": "2",
+    "PFP4": "2",
+    "REHAB": "true",
+    "SYSINT": "true",
+    "praticiensFormateurs": [
+      "4",
+      "5"
+    ]
+  },
+  "51": {
+    "AIGU": true,
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttxx1ljaMN6U_6p",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "1",
+    "PFP1B": "1",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": false,
+    "praticiensFormateurs": [
+      "34"
+    ]
+  },
+  "52": {
+    "AIGU": "true",
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttxx1ljaMN6U_6o",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "1",
+    "PFP1B": "1",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "praticiensFormateurs": [
+      "33"
+    ]
+  },
+  "53": {
+    "AMBU": "true",
+    "DE": "true",
+    "IDPlace": "-Neh_Ttxx1ljaMN6U_6q",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "2",
+    "PFP3": "3",
+    "PFP4": "3",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "-O3qTTQyZYW2c6BD2aMY"
+    ]
+  },
+  "54": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttyk116hb9GIKGv",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "1",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "praticienFormateur": "",
+    "praticiensFormateurs": [
+      "41"
+    ]
+  },
+  "55": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttyk116hb9GIKGw",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "1",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "42"
+    ]
+  },
+  "56": {
+    "AMBU": "true",
+    "DE": "true",
+    "IDPlace": "-Neh_Ttyk116hb9GIKGx",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "1",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "53"
+    ]
+  },
+  "57": {
+    "AMBU": "true",
+    "DE": "true",
+    "IDPlace": "-Neh_Ttyk116hb9GIKGy",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "0",
+    "PFP4": "1",
+    "REHAB": "true",
+    "Remarques": "Revoir si besoin pour PFP3 et demander",
+    "SYSINT": false,
+    "praticiensFormateurs": [
+      "105"
+    ]
+  },
+  "58": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttyk116hb9GIKGz",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "91"
+    ]
+  },
+  "59": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttyk116hb9GIKH-",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "1",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "40"
+    ]
+  },
+  "60": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttyk116hb9GIKH0",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "107"
+    ]
+  },
+  "61": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttyk116hb9GIKH2",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "1",
+    "REHAB": "true",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "praticiensFormateurs": [
+      "96"
+    ]
+  },
+  "62": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttyk116hb9GIKH4",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "1",
+    "PFP1B": "1",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "praticienFormateur": "",
+    "praticiensFormateurs": [
+      "37"
+    ]
+  },
+  "63": {
+    "AMBU": "true",
+    "DE": "true",
+    "IDPlace": "-Neh_Ttyk116hb9GIKH5",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "104"
+    ]
+  },
+  "64": {
+    "AMBU": "true",
+    "DE": "true",
+    "IDPlace": "-Neh_Ttyk116hb9GIKH6",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "1",
+    "PFP1B": "1",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "61",
+      "62"
+    ]
+  },
+  "65": {
+    "AMBU": "true",
+    "DE": "true",
+    "IDPlace": "-Neh_Ttyk116hb9GIKH7",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "60"
+    ]
+  },
+  "66": {
+    "AMBU": "true",
+    "DE": "true",
+    "IDPlace": "-Neh_Ttzz1yliQ8-FCwT",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "101"
+    ]
+  },
+  "67": {
+    "AMBU": "true",
+    "DE": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttzz1yliQ8-FCwU",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "99"
+    ]
+  },
+  "68": {
+    "DE": "true",
+    "IDPlace": "-Neh_Ttzz1yliQ8-FCwV",
+    "NEURO-GER": "true",
+    "NomPlace": "Neuro",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "1",
+    "REHAB": "true",
+    "Remarques": "PFP de 18 semaines durant PFP4 (etudiant.e suivra PFP3 et PFP4 ensemble)",
+    "praticiensFormateurs": [
+      "55"
+    ]
+  },
+  "69": {
+    "DE": "true",
+    "IDPlace": "-Neh_Ttzz1yliQ8-FCwW",
+    "NEURO-GER": "true",
+    "NomPlace": "Neuro",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "1",
+    "REHAB": "true",
+    "Remarques": "PFP de 18 semaines durant PFP4 (etudiant.e suivra PFP3 et PFP4 ensemble)",
+    "praticiensFormateurs": [
+      "57"
+    ]
+  },
+  "70": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttzz1yliQ8-FCwY",
+    "NomPlace": "Med",
+    "PFP2": "0",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "SYSINT": "true",
+    "praticiensFormateurs": [
+      "71"
+    ]
+  },
+  "71": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttzz1yliQ8-FCwY",
+    "MSQ": "true",
+    "NomPlace": "Ortho",
+    "PFP2": "0",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "praticiensFormateurs": [
+      "72"
+    ]
+  },
+  "72": {
+    "DE": "true",
+    "IDPlace": "-O7mmEOrnhY_WC29m23j",
+    "NEURO-GER": "true",
+    "NomPlace": "Neuro",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "1",
+    "REHAB": "true",
+    "Remarques": "PFP de 18 semaines durant PFP4 (etudiant.e suivra PFP3 et PFP4 ensemble)",
+    "praticiensFormateurs": [
+      "56"
+    ]
+  },
+  "73": {
+    "DE": "true",
+    "IDPlace": "-Neh_Ttzz1yliQ8-FCw_",
+    "NEURO-GER": "true",
+    "NomPlace": "Neuro",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "88"
+    ]
+  },
+  "74": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttzz1yliQ8-FCwa",
+    "NomPlace": "Soins intensifs (DCILM-SMIA)",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "0",
+    "PFP4": "0",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "SYSINT": "true",
+    "praticiensFormateurs": [
+      "82",
+      "117"
+    ]
+  },
+  "75": {
+    "AIGU": "true",
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttzz1yliQ8-FCwa",
+    "MSQ": "true",
+    "NomPlace": "Pediatrie (DFME-HEL6 - Site HEL)",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "1",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "praticiensFormateurs": [
+      "83"
+    ]
+  },
+  "76": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttzz1yliQ8-FCwa",
+    "NomPlace": "Pediatrie (DFME-ENF6 - Site BH)",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "1",
+    "PFP4": "0",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "SYSINT": "true",
+    "praticiensFormateurs": [
+      "84"
+    ]
+  },
+  "77": {
+    "FR": "true",
+    "IDPlace": "-Neh_Ttzz1yliQ8-FCwb",
+    "NEURO-GER": "true",
+    "NomPlace": "Ger",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "praticiensFormateurs": [
+      "85"
+    ]
+  },
+  "78": {
+    "FR": "true",
+    "IDPlace": "-Neh_Ttzz1yliQ8-FCwc",
+    "NEURO-GER": "true",
+    "NomPlace": "Neuro",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "praticiensFormateurs": [
+      "89"
+    ]
+  },
+  "79": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Tu-HYARvsZv31DN",
+    "NomPlace": "Medecine interne",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "SYSINT": "true"
+  },
+  "80": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Tu-HYARvsZv31DN",
+    "MSQ": "true",
+    "NomPlace": "Ortho",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "praticiensFormateurs": [
+      "70"
+    ]
+  },
+  "82": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Tu-HYARvsZv31DP",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "50"
+    ]
+  },
+  "83": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Tu-HYARvsZv31DQ",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "1",
+    "PFP1B": "1",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "52"
+    ]
+  },
+  "84": {
+    "AMBU": "true",
+    "DE": "true",
+    "IDPlace": "-Neh_Tu-HYARvsZv31DR",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "110"
+    ]
+  },
+  "85": {
+    "AMBU": "true",
+    "DE": "true",
+    "IDPlace": "-Neh_Tu-HYARvsZv31DU",
+    "MSQ": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "0",
+    "PFP4": "1",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "53"
+    ]
+  },
+  "86": {
+    "FR": "true",
+    "IDPlace": "-Neh_Tu0ifoZo_RPDyHw",
+    "NEURO-GER": "true",
+    "NomPlace": "Neuro - ped - adultes a besoin particuliers",
+    "PFP1A": "1",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "1",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "32"
+    ]
+  },
+  "87": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Tu0ifoZo_RPDyHy",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "98"
+    ]
+  },
+  "88": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Tu0ifoZo_RPDyHz",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu - Ger",
+    "PFP1A": "0",
+    "PFP1B": "1",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "31"
+    ]
+  },
+  "89": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Tu0ifoZo_RPDyI-",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "1",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "SYSINT": "true",
+    "praticiensFormateurs": [
+      "51"
+    ]
+  },
+  "90": {
+    "AMBU": "true",
+    "DE": "true",
+    "FR": "true",
+    "IDPlace": "-O3kdUkVgFHB-W67PGLP",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "1",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "108"
+    ]
+  },
+  "91": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-O3kepWKa225tBUSxTCl",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "109"
+    ]
+  },
+  "92": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-O3knneiST1PVo8C-Lsw",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "0",
+    "PFP4": "1",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "49"
+    ]
+  },
+  "93": {
+    "AIGU": "true",
+    "AMBU": "true",
+    "DE": "true",
+    "IDPlace": "-O3kooIChpHG3drVGiFR",
+    "MSQ": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0"
+  },
+  "94": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-O3krL2VJzl4ioQMbG1j",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "0",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "115"
+    ]
+  },
+  "95": {
+    "AMBU": "true",
+    "DE": "true",
+    "IDPlace": "-O3ksAua4hQ2dEaDzCJv",
+    "MSQ": "true",
+    "NEURO-GER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "-O3qTNursXwwqNTXs5wc"
+    ]
+  },
+  "101": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttzz1yliQ8-FCwa",
+    "NomPlace": "Cardio-respiratoire (DFME-BH + NHE)",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "0",
+    "PFP4": "0",
+    "SYSINT": "true",
+    "praticiensFormateurs": [
+      "84"
+    ]
+  },
+  "-O3k_m7cRctNx0MEzaU-": {
+    "PFP2": "",
+    "praticiensFormateurs": [
+      "3"
+    ]
+  }
+}
