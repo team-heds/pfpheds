@@ -29,18 +29,18 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // Limite augmentée à 5 Mo
       },
       manifest: {
-        name: 'PFPHEDS',
-        short_name: 'PFP',
+        name: 'HEdS',
+        short_name: 'HEdS',
         description: 'Progressive Web App pour PFPHEDS',
         theme_color: '#ffffff',
         icons: [
           {
-            src: '/assets/hespicto.png',
+            src: '/assets/images/hespicto.png',
             sizes: '192x192',
             type: 'image/png',
           },
           {
-            src: '/assets/hespicto.png',
+            src: '/assets/images/hespicto.png',
             sizes: '512x512',
             type: 'image/png',
           },
