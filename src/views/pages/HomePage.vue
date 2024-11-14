@@ -232,7 +232,6 @@ const darkMode = computed(() => {
           </div>
         </div>
 
-
         <faq />
 
       </div>

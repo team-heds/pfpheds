@@ -46,8 +46,8 @@
               <a @click="navigateTo('/management_votation')" class="flex m-0 px-0 py-3 text-900 font-medium line-height-3">Management votation</a>
             </li>
             <li v-if="user && hasAdminAccess" class="mx-2">
-            <a @click="navigateTo('/admin')" class="flex m-0 px-0 py-3 text-900 font-medium line-height-3">Admin</a>
-          </li>
+              <a @click="navigateTo('/admin')" class="flex m-0 px-0 py-3 text-900 font-medium line-height-3">Admin</a>
+            </li>
 
             <li v-if="user" class="mx-2">
               <a @click="logout">
@@ -66,7 +66,7 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "firebase/auth";
 import { ref as dbRef, get as dbGet } from "firebase/database"; // Import necessary functions from Firebase
-import { db } from '../../../firebase.js'; // Adjust the import path based on your project structure
+import { db } from '../../../firebase.js';
 
 const router = useRouter();
 const user = ref(null);

@@ -40,7 +40,7 @@
             <a class="text-600 cursor-pointer hover:text-primary cursor-pointer ml-auto transition-colors transition-duration-300" @click="resetPassword">Reset password</a>
           </div>
 
-          <Button label="Se connecter" class="w-full" @click="submitForm" />
+          <Button label="Se connecter" class="w-full" @click="submitForm" @keydown.enter="submitForm" />
         </div>
       </div>
     </div>

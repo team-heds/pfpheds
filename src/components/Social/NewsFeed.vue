@@ -19,7 +19,7 @@
 
       <!-- Formulaire de création de post -->
       <div class="post-form">
-        <Textarea  v-model="newPost" placeholder="Exprimez-vous..." class="form-control"></Textarea>
+      <Textarea  v-model="newPost" placeholder="Exprimez-vous..." class="form-control"></Textarea>
         <!-- Affichage des hashtags ou mentions détectés -->
         <div v-if="detectedTags.length > 0" class="tags-container">
           <Tag v-for="(tag, index) in detectedTags" :key="index" class="badge"
@@ -61,7 +61,7 @@ export default {
     InfiniteScroll,
     PostItem,
     AdvancedSearchFilter,
-    Navbar
+    Navbar,
   },
   data() {
     return {
