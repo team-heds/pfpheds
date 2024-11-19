@@ -54,6 +54,10 @@
               </a>
             </li>
 
+            <li>
+              <SwitchColor/>
+            </li>
+
           </ul>
         </div>
       </div>
@@ -68,6 +72,7 @@ import { useRouter } from 'vue-router';
 import { getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "firebase/auth";
 import { ref as dbRef, get as dbGet } from "firebase/database"; // Import necessary functions from Firebase
 import { db } from '../../../firebase.js';
+import SwitchColor from '@/views/uikit/SwitchColor.vue'
 
 const router = useRouter();
 const user = ref(null);
