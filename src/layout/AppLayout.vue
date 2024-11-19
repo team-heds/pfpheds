@@ -30,7 +30,6 @@ const containerClass = computed(() => {
     return {
         'layout-light': layoutConfig.colorScheme.value === 'light',
         'layout-dim': layoutConfig.colorScheme.value === 'dim',
-        'layout-dark': layoutConfig.colorScheme.value === 'dark',
         'layout-colorscheme-menu': layoutConfig.menuTheme.value === 'colorScheme',
         'layout-primarycolor-menu': layoutConfig.menuTheme.value === 'primaryColor',
         'layout-transparent-menu': layoutConfig.menuTheme.value === 'transparent',
