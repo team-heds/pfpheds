@@ -10,54 +10,102 @@
 
         <i class="pi pi-bars text-4xl cursor-pointer block md:hidden text-700"></i>
         <div class="align-items-center flex-grow-1 hidden md:flex absolute md:static w-full md:px-0 z-3 shadow-2 md:shadow-none fadein" :class="{ hidden: isHidden }" :style="{ top: '80px', right: '0%' }">
+
+
           <ul class="list-none p-3 md:p-0 m-0 ml-auto flex md:align-items-center select-none flex-row md:flex-row cursor-pointer surface-card md:surface-ground">
-            <li class="mx-2"><a @click="navigateTo('/')" class="flex m-0 px-0 py-3 text-900 font-medium line-height-3">Accueil</a></li>
-            <li v-if="!user" class="mx-2">
+            <li class="mx-5">
+              <ButtonNavbar
+                icon="pi pi-home"
+                :bgColor="'var(--surface-overlay)'"
+                :hoverBgColor="'var(--surface-hover)'"
+                :iconColor="'var(--primary-color)'"
+                @click="navigateTo('/')"
+              />
+            </li>
+
+            <li v-if="!user" class="mx-5">
               <a @click="navigateTo('/sign_in')">
                 <Button type="button" label="Se Connecter" class="m-0"></Button>
               </a>
             </li>
 
-            <li v-if="user && hasAdminAccess" class="mx-2">
+          <!--  <li v-if="user && hasAdminAccess" class="mx-2">
               <a @click="navigateTo('/newsfeed')" class="flex m-0 px-0 py-3 text-900 font-medium line-height-3">Feed</a>
             </li>
+            -->
 
-            <li v-if="user" class="mx-2">
-              <a @click="navigateTo('/institution')" class="flex m-0 px-0 py-3 text-900 font-medium line-height-3">Institutions</a>
-            </li>
-
-            <li v-if="user && hasAdminAccess" class="mx-2">
-              <a @click="navigateTo('/votation')" class="flex m-0 px-0 py-3 text-900 font-medium line-height-3">Votation</a>
-            </li>
-
-            <li v-if="user" class="mx-2">
-              <a @click="navigateTo('/votation_lese')" class="flex m-0 px-0 py-3 text-900 font-medium line-height-3">Votation Lésé</a>
-            </li>
-
-            <li v-if="user && hasAdminAccess" class="mx-2">
-              <a @click="navigateTo('/profile')" class="flex m-0 px-0 py-3 text-900 font-medium line-height-3">Profil</a>
+            <li v-if="user" class="mx-5">
+              <ButtonNavbar
+                icon="pi pi-bookmark"
+                :bgColor="'var(--surface-overlay)'"
+                :hoverBgColor="'var(--surface-hover)'"
+                :iconColor="'var(--primary-color)'"
+                @click="navigateTo('/institution')"
+              />
             </li>
 
-            <li v-if="user && hasAdminAccess" class="mx-2">
-              <a @click="navigateTo('/management_places')" class="flex m-0 px-0 py-3 text-900 font-medium line-height-3">Management places</a>
-            </li>
-            <li v-if="user && hasAdminAccess" class="mx-2">
-              <a @click="navigateTo('/management_votation')" class="flex m-0 px-0 py-3 text-900 font-medium line-height-3">Management votation</a>
-            </li>
-            <li v-if="user && hasAdminAccess" class="mx-2">
-              <a @click="navigateTo('/admin')" class="flex m-0 px-0 py-3 text-900 font-medium line-height-3">Admin</a>
+            <li v-if="user && hasAdminAccess" class="mx-5">
+              <ButtonNavbar
+                icon="pi pi-file-edit"
+                :bgColor="'var(--surface-overlay)'"
+                :hoverBgColor="'var(--surface-hover)'"
+                :iconColor="'var(--primary-color)'"
+                @click="navigateTo('/votation')"
+              />
             </li>
 
-            <li v-if="user" class="mx-2">
+            <li v-if="user" class="mx-5">
+              <ButtonNavbar
+                icon="pi pi-map-marker"
+                :bgColor="'var(--surface-overlay)'"
+                :hoverBgColor="'var(--surface-hover)'"
+                :iconColor="'var(--primary-color)'"
+                @click="navigateTo('/map')"
+              />
+            </li>
+
+            <li v-if="user && hasAdminAccess" class="mx-5">
+              <ButtonNavbar
+                icon="pi pi-user"
+                :bgColor="'var(--surface-overlay)'"
+                :hoverBgColor="'var(--surface-hover)'"
+                :iconColor="'var(--primary-color)'"
+                @click="navigateTo('/profile')"
+              />
+            </li>
+
+            <li v-if="user && hasAdminAccess" class="mx-5">
+              <ButtonNavbar
+                icon="pi pi-user-plus"
+                :bgColor="'var(--surface-overlay)'"
+                :hoverBgColor="'var(--surface-hover)'"
+                :iconColor="'var(--primary-color)'"
+                @click="navigateTo('/admin')"
+              />
+            </li>
+
+
+            <!-- Ajout du composant SwitchColor -->
+            <li class="mx-5">
+              <SwitchColor />
+            </li>
+
+            <li v-if="user" class="mx-5">
+              <ButtonNavbar
+                icon="pi pi-cog"
+                :bgColor="'var(--surface-overlay)'"
+                :hoverBgColor="'var(--surface-hover)'"
+                :iconColor="'var(--primary-color)'"
+                @click="navigateTo('/settings')"
+              />
+            </li>
+
+            <li v-if="user" class="mx-5">
               <a @click="logout">
                 <Button type="button" label="Déconnexion" class="m-0"></Button>
               </a>
             </li>
 
-            <!-- Ajout du composant SwitchColor -->
-            <li class="mx-2">
-              <SwitchColor />
-            </li>
 
 
           </ul>
@@ -74,7 +122,8 @@ import { useRouter } from 'vue-router';
 import { getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "firebase/auth";
 import { ref as dbRef, get as dbGet } from "firebase/database"; // Import necessary functions from Firebase
 import { db } from '../../../firebase.js';
-import SwitchColor from '@/views/uikit/SwitchColor.vue'
+import SwitchColor from '@/components/Bibliotheque/Buttons/SwitchColor.vue'
+import ButtonNavbar from '@/components/Bibliotheque/Buttons/ButtonNavbar.vue'
 
 
 const router = useRouter();

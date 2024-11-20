@@ -1,58 +1,84 @@
 <template>
-<Navbar />
-  <div class="newsfeed-grid">
-    <!-- Première section : Menu de gauche -->
+  <Navbar />
+  <div class="newsfeed-container">
+    <!-- Sidebar Gauche -->
     <div class="sidebar card">
-      <AdvancedSearchFilter @filter-posts="applyFilters" />
-      <h3>Groupes</h3>
-      <!-- Exemple d'éléments dans le menu -->
+      <h3>Communautés</h3>
       <ul class="menu-options">
-        <li><a href="#">Groupes</a></li>
+        <li><a href="#">Mes Groupes</a></li>
+        <li><a href="#">Créer une Communauté</a></li>
       </ul>
-
-      <!-- Filtres de recherche avancés -->
+      <h3>Messagerie</h3>
+      <ul class="messaging-list">
+        <li><a href="#">Antoine Quarroz</a></li>
+        <li><a href="#">Luc Berthod</a></li>
+      </ul>
     </div>
 
-    <!-- Deuxième section : Fil d'actualité -->
+    <!-- Section principale : Fil d'actualité -->
     <div class="main-feed card">
-      <h1>Fil d'actualité</h1>
-
-      <!-- Formulaire de création de post -->
       <div class="post-form">
-      <Textarea  v-model="newPost" placeholder="Exprimez-vous..." class="form-control"></Textarea>
-        <!-- Affichage des hashtags ou mentions détectés -->
+        <Textarea
+          v-model="newPost"
+          placeholder="Exprimez-vous..."
+          class="form-control"
+        />
         <div v-if="detectedTags.length > 0" class="tags-container">
-          <Tag v-for="(tag, index) in detectedTags" :key="index" class="badge"
-                :class="tag.startsWith('#') ? 'bg-primary' : 'bg-secondary'">
+          <Tag
+            v-for="(tag, index) in detectedTags"
+            :key="index"
+            :class="tag.startsWith('#') ? 'bg-primary' : 'bg-secondary'"
+          >
             {{ tag }}
           </Tag>
         </div>
-        <!-- Bouton pour poster -->
-        <Button label="Primary" @click="postMessage">Publier</Button>
+        <Button label="Publier" class="publish-button" @click="postMessage" />
       </div>
 
-      <!-- Liste des posts avec un scroll infini -->
-      <InfiniteScroll :loading="loading" @load-more="loadMorePosts">
-        <PostItem v-for="(post, index) in shuffledPosts" :key="post.id" :post="post" :currentUser="currentUser" />
-      </InfiniteScroll>
+      <!-- Liste des posts -->
+      <div class="posts-container">
+        <InfiniteScroll :loading="loading" @load-more="loadMorePosts">
+          <PostItem
+            v-for="(post, index) in shuffledPosts"
+            :key="post.id"
+            :post="post"
+            :currentUser="currentUser"
+          />
+        </InfiniteScroll>
+      </div>
     </div>
 
-    <!-- Troisième section : Profil utilisateur à droite -->
+    <!-- Sidebar Droite -->
     <div class="profile-section card">
       <UserProfile :user="currentUser" />
+      <div class="hashtags">
+        <h3># Hashtags Populaires</h3>
+        <ul>
+          <li>#Innovation</li>
+          <li>#Technologie</li>
+          <li>#Formation</li>
+        </ul>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import { ref as dbRef, push, set, onValue, serverTimestamp, limitToLast, query } from "firebase/database";
-import { db, auth } from '../../../firebase.js';
-import { onAuthStateChanged } from 'firebase/auth';
-import UserProfile from '@/components/Social/UserProfile.vue';
-import InfiniteScroll from '@/components/Social/InfiniteScroll.vue';
-import PostItem from '@/components/Social/PostItem.vue';
-import AdvancedSearchFilter from '@/components/Social/AdvancedSearchFilter.vue';
-import Navbar from '@/components/Utils/Navbar.vue'
+import {
+  ref as dbRef,
+  push,
+  set,
+  onValue,
+  serverTimestamp,
+  limitToLast,
+  query,
+} from "firebase/database";
+import { db, auth } from "../../../firebase.js";
+import { onAuthStateChanged } from "firebase/auth";
+import UserProfile from "@/components/Social/UserProfile.vue";
+import InfiniteScroll from "@/components/Social/InfiniteScroll.vue";
+import PostItem from "@/components/Social/PostItem.vue";
+import Navbar from "@/components/Utils/Navbar.vue";
 
 export default {
   name: "NewsFeed",
@@ -60,7 +86,6 @@ export default {
     UserProfile,
     InfiniteScroll,
     PostItem,
-    AdvancedSearchFilter,
     Navbar,
   },
   data() {
@@ -68,15 +93,11 @@ export default {
       posts: [],
       filteredPosts: [],
       shuffledPosts: [],
-      newPost: '',
+      newPost: "",
       detectedTags: [],
       currentUser: null,
       userRoles: [],
       loading: false,
-      searchQuery: '',
-      filterType: 'all',
-      filterValue: '',
-      sortOrder: 'newest',
       postsPerPage: 10,
       lastPostKey: null,
     };
@@ -87,7 +108,7 @@ export default {
     },
     filteredPosts(newFilteredPosts) {
       this.shuffledPosts = this.shufflePosts(newFilteredPosts);
-    }
+    },
   },
   methods: {
     extractTags(text) {
@@ -95,104 +116,49 @@ export default {
       return text.match(regex) || [];
     },
     postMessage() {
-      if (this.newPost.trim() === '') {
-        this.showMessage("Veuillez écrire quelque chose avant de poster.");
-        return;
-      }
+      if (this.newPost.trim() === "") return;
 
-      if (this.detectedTags.length === 0) {
-        this.showMessage("Veuillez inclure au moins un hashtag ou une mention dans votre message.");
-      }
-
-      const authorName = this.currentUser.displayName || this.currentUser.email.split('@')[0];
-      const newPostRef = push(dbRef(db, 'Posts'));
+      const authorName =
+        this.currentUser.displayName || this.currentUser.email.split("@")[0];
+      const newPostRef = push(dbRef(db, "Posts"));
       const postData = {
         Author: authorName,
         IdUser: this.currentUser.uid,
         Content: this.newPost,
         Timestamp: serverTimestamp(),
-        Hashtags: this.detectedTags.filter(tag => tag.startsWith('#')),
-        MentionGroups: this.detectedTags.filter(tag => tag.startsWith('@')),
-        Answers: []
+        Hashtags: this.detectedTags.filter((tag) => tag.startsWith("#")),
+        MentionGroups: this.detectedTags.filter((tag) => tag.startsWith("@")),
+        Answers: [],
       };
 
-      set(newPostRef, postData)
-        .then(() => {
-          this.newPost = '';
-        })
-        .catch(error => {
-          console.error("Erreur lors de la publication du message:", error);
-        });
+      set(newPostRef, postData).then(() => {
+        this.newPost = "";
+      });
     },
     fetchPosts() {
       this.loading = true;
 
-      let postsRef;
-      if (this.lastPostKey) {
-        postsRef = query(
-          dbRef(db, 'Posts'),
-          limitToLast(this.postsPerPage + 1)
-        );
-      } else {
-        postsRef = query(
-          dbRef(db, 'Posts'),
-          limitToLast(this.postsPerPage)
-        );
-      }
+      let postsRef = query(
+        dbRef(db, "Posts"),
+        limitToLast(this.postsPerPage)
+      );
 
       onValue(postsRef, (snapshot) => {
         const data = snapshot.val();
         if (data) {
           const postsArray = Object.entries(data).map(([key, post]) => ({
             ...post,
-            id: key
+            id: key,
           }));
 
-          if (this.lastPostKey) {
-            postsArray.shift();
-          }
-
           this.posts = [...this.posts, ...postsArray];
-          this.lastPostKey = postsArray.length > 0 ? postsArray[postsArray.length - 1].id : null;
-
           this.applyFilters();
         }
         this.loading = false;
-      }, {
-        onlyOnce: true
       });
     },
-    applyFilters(filterOptions = null) {
-      if (filterOptions) {
-        this.searchQuery = filterOptions.query;
-        this.filterType = filterOptions.type;
-        this.filterValue = filterOptions.value;
-        this.sortOrder = filterOptions.order;
-      }
-
-      let filtered = this.posts;
-
-      if (this.searchQuery) {
-        filtered = filtered.filter(post => post.content.toLowerCase().includes(this.searchQuery.toLowerCase()));
-      }
-
-      filtered = filtered.filter(post => this.isAccessible(post));
-
-      if (this.filterType !== 'all') {
-        if (this.filterType === 'hashtag') {
-          filtered = filtered.filter(post => post.Hashtags && post.Hashtags.includes(`#${this.filterValue}`));
-        } else if (this.filterType === 'mention') {
-          filtered = filtered.filter(post => post.MentionGroups && post.MentionGroups.includes(`@${this.filterValue}`));
-        }
-      }
-
-      if (this.sortOrder === 'newest') {
-        filtered.sort((a, b) => b.timestamp - a.timestamp);
-      } else {
-        filtered.sort((a, b) => a.timestamp - b.timestamp);
-      }
-
-      this.filteredPosts = filtered;
+    applyFilters() {
+      this.filteredPosts = this.posts.filter((post) => true); // Example
     },
     shufflePosts(posts) {
       for (let i = posts.length - 1; i > 0; i--) {
@@ -201,105 +167,80 @@ export default {
       }
       return posts;
     },
-    isAccessible(post) {
-      if (post.mentionGroups && post.mentionGroups.length > 0) {
-        return post.mentionGroups.some(group => this.hasRole(group.replace('@', '')));
-      }
-      return true;
-    },
-    hasRole(role) {
-      return this.userRoles.includes(role);
-    },
     loadMorePosts() {
-      if (!this.loading) {
-        this.fetchPosts();
-      }
+      if (!this.loading) this.fetchPosts();
     },
-    showMessage(message) {
-      const messageDiv = document.createElement('div');
-      messageDiv.textContent = message;
-      messageDiv.className = 'alert alert-warning mt-2';
-      this.$el.querySelector('.post-form').appendChild(messageDiv);
-
-      setTimeout(() => {
-        messageDiv.remove();
-      }, 3000);
-    }
   },
   mounted() {
     onAuthStateChanged(auth, (user) => {
       if (user) {
         this.currentUser = user;
         this.fetchPosts();
-
-        const userRef = dbRef(db, `Users/${user.uid}`);
-        onValue(userRef, (snapshot) => {
-          const userData = snapshot.val();
-          if (userData && userData.roles) {
-            this.userRoles = Object.keys(userData.roles);
-          }
-        });
       } else {
         this.currentUser = null;
-        this.userRoles = [];
       }
     });
-  }
+  },
 };
 </script>
 
 <style scoped>
-.newsfeed-grid {
+.newsfeed-container {
   display: grid;
-  grid-template-columns: 1fr 2fr 1fr;
+  grid-template-columns: 1fr 3fr 1fr;
   gap: 1.5rem;
-  padding: 1rem;
+  padding: 1.5rem;
+  background-color: var(--surface-ground);
 }
 
 .card {
-  background-color: white;
-  padding: 1.5rem;
+  background-color: var(--surface-card);
+  padding: 1rem;
   border-radius: 0.75rem;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.sidebar {
-  background-color: #f9f9f9;
-}
-
-.main-feed {
-  background-color: #fff;
-}
-
+.sidebar,
 .profile-section {
-  background-color: #f1f1f1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.menu-options {
+.menu-options,
+.messaging-list {
   list-style: none;
   padding: 0;
 }
 
-.menu-options li {
-  margin: 1rem 0;
+.menu-options li,
+.messaging-list li {
+  margin: 0.5rem 0;
 }
 
-.menu-options a {
+.menu-options a,
+.messaging-list a {
   text-decoration: none;
-  color: #333;
-  font-weight: 500;
+  color: var(--text-color);
 }
 
 .post-form {
-  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .form-control {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #ccc;
+  border: 1px solid var(--surface-border);
   border-radius: 0.5rem;
-  margin-bottom: 1rem;
+  background-color: var(--surface-card);
+  color: var(--text-color);
+}
+
+.publish-button {
+  align-self: flex-end;
 }
 
 .tags-container {
@@ -308,20 +249,16 @@ export default {
   flex-wrap: wrap;
 }
 
-.btn {
-  padding: 0.5rem 1rem;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 0.5rem;
-  cursor: pointer;
+.posts-container {
+  margin-top: 2rem;
 }
 
-.btn:hover {
-  background-color: #0056b3;
+.hashtags ul {
+  list-style: none;
+  padding: 0;
 }
 
-.alert {
-  margin-top: 1rem;
+.hashtags li {
+  margin: 0.5rem 0;
 }
 </style>
