@@ -20,13 +20,6 @@ const router = useRouter();
 const isHidden = ref(false);
 
 
-const { layoutConfig } = useLayout();
-
-const darkMode = computed(() => {
-  return layoutConfig.colorScheme.value !== 'light';
-});
-
-
 
 </script>
 
@@ -48,7 +41,7 @@ const darkMode = computed(() => {
           </div>
 
           <div class="col-12 md:col-5 flex-order-0 md:flex-order-1 mb-6 md:mb-0 border-round">
-            <img :src="`/demo/images/landing/${darkMode ? 'LBB_batiment-dark' : 'LBB_batiment-light'}.jpg`" alt=""
+            <img :src="`/demo/images/landing/${dimMode ? 'LBB_batiment-dark' : 'LBB_batiment-light'}.jpg`" alt=""
                  class="h-30rem border-round shadow-2 animation-duration-1000 fadeinright shadow" />
           </div>
         </div>
@@ -237,7 +230,6 @@ const darkMode = computed(() => {
       </div>
     </div>
   </div>
-  <AppDarkAndLightMode simple />
   <Footer />
 </template>
 

@@ -5,7 +5,7 @@
     <div class="landing-wrapper">
       <div class="flex align-items-center justify-content-between relative lg:static py-6 px-4 mx-0 md:px-7 lg:px-8 lg:py-6 lg:mx-8">
         <a class="cursor-pointer" @click="navigateTo('/')">
-          <img src="/public/assets/images/FR-DE_HEdS.png" alt="Logo" class="h-3 w-2" />
+          <img src="/public/pictoHEdS.png" alt="Logo" style="height: 50px" />
         </a>
 
         <i class="pi pi-bars text-4xl cursor-pointer block md:hidden text-700"></i>
@@ -54,9 +54,11 @@
               </a>
             </li>
 
-            <li>
-              <SwitchColor/>
+            <!-- Ajout du composant SwitchColor -->
+            <li class="mx-2">
+              <SwitchColor />
             </li>
+
 
           </ul>
         </div>
@@ -73,6 +75,7 @@ import { getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersi
 import { ref as dbRef, get as dbGet } from "firebase/database"; // Import necessary functions from Firebase
 import { db } from '../../../firebase.js';
 import SwitchColor from '@/views/uikit/SwitchColor.vue'
+
 
 const router = useRouter();
 const user = ref(null);

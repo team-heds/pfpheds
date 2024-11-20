@@ -10,7 +10,7 @@ $colors: (
     "bluegray": #64748B,
     "purple": #A855F7,
     "red": #FF3D32,
-    "primary": $primary500
+    "primary": $primary500,
 );
 
 //reused color variables
@@ -903,7 +903,7 @@ $fullCalendarEventTextColor:$primaryTextColor !default;
     --content-padding:#{$panelContentPadding};
     --inline-spacing:#{$inlineSpacing};
     --border-radius:#{$borderRadius};
-    --surface-ground:#f9fafb;
+    --surface-ground:#EFF3F8;
     --surface-section:#ffffff;
     --surface-card:#ffffff;
     --surface-overlay:#ffffff;
