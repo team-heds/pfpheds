@@ -1,6 +1,6 @@
 <template>
   <Navbar />
-  <section class="surface-section px-4 py-8 md:px-6 lg:px-8">
+  <section class=" px-4 py-8 md:px-6 lg:px-8">
     <div class="container flex">
       <!-- Colonne pour les cartes -->
       <div class="flex-grow">
@@ -18,7 +18,7 @@
         <div class="grid flex justify-center">
           <!-- Boucle sur les institutions filtrées et paginées -->
           <div class="col-12 md:col-6 xl:col-3 p-3 flex justify-center" v-for="(institution, index) in paginatedFilteredInstitutions" :key="institution.InstitutionId">
-            <Card class="institution-card" style="width: 20rem; height: 100%;">
+            <Card class="institution-card surface-card " style="width: 20rem; height: 100%;">
               <template #header>
                 <div style="position: relative;">
                   <!-- Image de l'institution avec URL par défaut si absente -->
@@ -58,7 +58,6 @@
     </div>
   </section>
 
-  <AppDarkAndLightMode />
   <Footer />
 </template>
 

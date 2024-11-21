@@ -1,5 +1,5 @@
 <template>
-  <div class="surface-section px-4 py-8 md:px-6 lg:px-8">
+  <div class="px-4 py-8 md:px-6 lg:px-8">
     <div class="text-900 font-bold text-5xl text-center">Carte interactive</div>
     <p class="text-600 font-normal text-xl text-center">Liste des différentes places de formation pratique de la filière physiothérapie de la HES-SO Valais-Wallis</p>
     <Divider class="w-full"/>
@@ -83,7 +83,7 @@
       </template>
     </Dialog>
   </div>
-  <AppDarkAndLightMode />
+
 </template>
 
 <script setup>
@@ -92,7 +92,7 @@ import { useRouter } from 'vue-router';
 import { db } from '../../../firebase.js';
 import { ref as firebaseRef, onValue } from 'firebase/database';
 import L from 'leaflet';
-import AppDarkAndLightMode from '@/layout/AppDarkAndLightMode.vue';
+
 
 const router = useRouter();
 const categories = ref([

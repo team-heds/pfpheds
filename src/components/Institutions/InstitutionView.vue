@@ -1,6 +1,6 @@
 <template>
   <Navbar />
-  <div class="surface-card p-4 shadow-2 border-round">
+  <div class=" p-4 shadow-2 border-round">
     <div class="flex justify-content-between flex-column-reverse md:flex-row align-items-center ml-8">
       <div>
         <div class="flex align-items-center text-900 font-medium text-6xl mb-2 pl-8 pr-8">
