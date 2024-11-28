@@ -12,7 +12,6 @@
         filterDisplay="menu"
         :loading="loading"
         :globalFilterFields="['Name', 'Address', 'Locality', 'Canton', 'InstitutionId']"
-        showGridlines
       >
         <!-- Table Header -->
         <template #header>

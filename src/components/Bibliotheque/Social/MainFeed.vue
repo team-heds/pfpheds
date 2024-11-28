@@ -1,26 +1,31 @@
 <template>
-  <div class="main-feed card">
-    <!-- Formulaire de création de post -->
-    <div class="post-form">
-      <Textarea
-        v-model="newPost"
-        placeholder="Exprimez-vous..."
-        class="form-control"
-      />
-      <div v-if="detectedTags.length > 0" class="tags-container">
-        <Tag
-          v-for="(tag, index) in detectedTags"
-          :key="index"
-          :class="tag.startsWith('#') ? 'bg-primary' : 'bg-secondary'"
-        >
-          {{ tag }}
-        </Tag>
+  <div class="main-feed">
+    <!-- Carte pour la zone de texte et le bouton "Publier" -->
+    <transition name="fade">
+      <div v-show="showTextareaCard" class="post-textarea-card ">
+        <div class="post-form">
+          <Textarea
+            v-model="newPost"
+            placeholder="Exprimez-vous..."
+            class="form-control"
+            @input="detectTags"
+          />
+          <div v-if="detectedTags.length > 0" class="tags-container">
+            <Tag
+              v-for="(tag, index) in detectedTags"
+              :key="index"
+              :class="tag.startsWith('#') ? 'bg-primary' : 'bg-secondary'"
+            >
+              {{ tag }}
+            </Tag>
+          </div>
+          <Button label="Publier" class="publish-button" @click="postMessage" />
+        </div>
       </div>
-      <Button label="Publier" class="publish-button" @click="postMessage" />
-    </div>
+    </transition>
 
     <!-- Liste des posts -->
-    <div class="posts-container">
+    <div class="posts-container " @scroll="handleScroll">
       <InfiniteScroll :loading="loading" @load-more="loadMorePosts">
         <PostItem
           v-for="(post, index) in shuffledPosts"
@@ -47,12 +52,18 @@ import { db, auth } from "../../../../firebase.js";
 import { onAuthStateChanged } from "firebase/auth";
 import InfiniteScroll from "@/components/Social/InfiniteScroll.vue";
 import PostItem from "@/components/Social/PostItem.vue";
+import Textarea from "primevue/textarea";
+import Tag from "primevue/tag";
+import Button from "primevue/button";
 
 export default {
   name: "MainFeed",
   components: {
     InfiniteScroll,
     PostItem,
+    Textarea,
+    Tag,
+    Button,
   },
   props: {
     currentUser: Object, // Reçoit l'utilisateur actuel en tant que prop
@@ -68,6 +79,8 @@ export default {
       postsPerPage: 10,
       lastPostKey: null,
       localCurrentUser: null, // Crée une copie locale de la prop
+      showTextareaCard: true, // Contrôle l'affichage de la carte
+      lastScrollTop: 0, // Position précédente du scroll
     };
   },
   watch: {
@@ -142,13 +155,22 @@ export default {
     loadMorePosts() {
       if (!this.loading) this.fetchPosts();
     },
+    handleScroll(event) {
+      const scrollTop = event.target.scrollTop;
+      if (scrollTop > this.lastScrollTop) {
+        // Scroll vers le bas, cacher la carte
+        this.showTextareaCard = false;
+      } else {
+        // Scroll vers le haut, afficher la carte
+        this.showTextareaCard = true;
+      }
+      this.lastScrollTop = scrollTop;
+    },
   },
   mounted() {
     if (this.currentUser) {
-      // Si un utilisateur est fourni en prop, créez une copie locale
       this.localCurrentUser = { ...this.currentUser };
     } else {
-      // Si aucun utilisateur n'est fourni, écoutez l'état de l'authentification
       onAuthStateChanged(auth, (user) => {
         if (user) {
           this.localCurrentUser = user;
@@ -164,22 +186,43 @@ export default {
 .main-feed {
   display: flex;
   flex-direction: column;
+  gap: 1.5rem; /* Espace entre la carte de textarea et la liste des posts */
 }
+
+.post-textarea-card {
+  padding: 1rem;
+  border-radius: 0.75rem;
+
+}
+
+.posts-container {
+  overflow-y: scroll; /* Activer le défilement pour les posts */
+  scrollbar-width: none; /* Cacher la barre de défilement dans Firefox */
+}
+
+.posts-container::-webkit-scrollbar {
+  display: none; /* Cacher la barre de défilement pour Webkit */
+}
+
 .form-control {
   width: 100%;
-  padding: 0.75rem;
+  padding: 1rem;
   border: 1px solid var(--surface-border);
-  border-radius: 0.5rem;
+  border-radius: 1.5rem;
+  background-color: var(--surface-card);
+  color: var(--text-color);
+  font-size: 1rem;
 }
+
 .publish-button {
-  align-self: flex-end;
+  margin-top: 1rem;
 }
+
 .tags-container {
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
+  margin-top: 0.5rem;
 }
-.posts-container {
-  margin-top: 2rem;
-}
+
 </style>

@@ -2,6 +2,7 @@
 import AppMenu from './AppMenu.vue';
 import { useLayout } from '@/layout/composables/layout';
 
+
 const { layoutState } = useLayout();
 
 let timeout = null;
@@ -30,7 +31,7 @@ const anchor = () => {
 </script>
 
 <template>
-  <div class="layout-sidebar" @mouseenter="onMouseEnter" @mouseleave="onMouseLeave">
+  <div @mouseenter="onMouseEnter" @mouseleave="onMouseLeave">
     <div class="sidebar-header">
       <router-link :to="{ name: 'DashbordAdmin' }" class="app-logo">
         <a href="/">
@@ -44,7 +45,6 @@ const anchor = () => {
     </div>
   </div>
 </template>
-
 <style lang="scss" scoped>
 
 .img-heds {

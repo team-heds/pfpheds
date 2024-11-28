@@ -3,18 +3,18 @@
     <div class="bg-circle opacity-50" :style="{ top: '-200px', left: '-700px' }"></div>
     <div class="bg-circle hidden lg:flex" :style="{ top: '50px', right: '-800px', transform: 'rotate(60deg)' }"></div>
     <div class="landing-wrapper">
-      <div class="flex align-items-center justify-content-between relative lg:static py-6 px-4 mx-0 md:px-7 lg:px-8 lg:py-6 lg:mx-8">
+      <div class="flex align-items-center justify-content-between relative lg:static py-4 px-1">
         <!-- Logo (à gauche) -->
-        <div class="flex-shrink-0">
+        <div class="flex-shrink-0 px-8 mx-8">
           <a class="cursor-pointer" @click="navigateTo('/')">
             <img src="/public/pictoHEdS.png" alt="Logo" style="height: 50px" />
           </a>
         </div>
 
         <!-- Menu principal (au centre) -->
-        <div class="flex-grow-1 flex justify-content-center">
+        <div class="flex-grow-1 flex justify-content-center ">
           <ul class="list-none p-3 md:p-0 m-0 flex md:align-items-center select-none flex-row md:flex-row cursor-pointer ">
-            <li class="mx-5">
+            <li class="mx-3">
               <ButtonNavbar
                 icon="pi pi-home"
                 :bgColor="'var(--surface-overlay)'"
@@ -24,13 +24,13 @@
               />
             </li>
 
-            <li v-if="!user" class="mx-5">
+            <li v-if="!user" class="mx-3">
               <a @click="navigateTo('/login')">
                 <Button type="button" label="Se Connecter" class="m-0"></Button>
               </a>
             </li>
 
-            <li v-if="user" class="mx-5">
+            <li v-if="user" class="mx-3">
               <ButtonNavbar
                 icon="pi pi-bookmark"
                 :bgColor="'var(--surface-overlay)'"
@@ -40,7 +40,7 @@
               />
             </li>
 
-            <li v-if="user && hasAdminAccess" class="mx-5">
+            <li v-if="user && hasAdminAccess" class="mx-3">
               <ButtonNavbar
                 icon="pi pi-file-edit"
                 :bgColor="'var(--surface-overlay)'"
@@ -50,7 +50,7 @@
               />
             </li>
 
-            <li v-if="user" class="mx-5">
+            <li v-if="user" class="mx-3">
               <ButtonNavbar
                 icon="pi pi-map-marker"
                 :bgColor="'var(--surface-overlay)'"
@@ -60,7 +60,7 @@
               />
             </li>
 
-            <li v-if="user && hasAdminAccess" class="mx-5">
+            <li v-if="user && hasAdminAccess" class="mx-3">
               <ButtonNavbar
                 icon="pi pi-user"
                 :bgColor="'var(--surface-overlay)'"
@@ -70,7 +70,7 @@
               />
             </li>
 
-            <li v-if="user && hasAdminAccess" class="mx-5">
+            <li v-if="user && hasAdminAccess" class="mx-3">
               <ButtonNavbar
                 icon="pi pi-user-plus"
                 :bgColor="'var(--surface-overlay)'"
