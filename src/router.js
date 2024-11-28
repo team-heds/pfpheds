@@ -45,7 +45,7 @@ import InstitutionView from '@/components/Institutions/InstitutionView.vue';
 import Management_votation from '@/components/Dashboard/DashboardDetails/Management_votation.vue';
 import ManagementPlace from '@/components/Dashboard/DashboardDetails/Management_place.vue';
 import VotationLese from '@/components/Dashboard/DashboardDetails/VotationLese.vue';
-
+import LoginHome from '@/components/Utils/LoginHome.vue';
 import NewsFeed from '@/components/Social/NewsFeed.vue';
 import UserProfile from '@/components/Social/UserProfile.vue';
 import HashtagPage from '@/components/Social/HashtagPage.vue';
@@ -56,13 +56,9 @@ const routes = [
   { path: '/', component: NewsFeed, name: 'NewsFeed',   props: true   }, // Fil d'actualité
   { path: '/profile/:id', component: UserProfile, name: 'UserProfile', props: true }, // Profil de l'utilisateur
   { path: '/mention/:group', component: MentionGroupPage, name: 'MentionGroupPage', props: true, meta: { requiresAuth: true, requiredRole: true }},
-
-  {
-    path: '/hashtag/:hashtag',
-    component: HashtagPage,
-    name: 'HashtagPage',
-    props: true
-  },  { path: '/home', component: HomePage, name: 'HomePage' },
+  { path: '/login', component: LoginHome, name: 'LoginHome' },
+  { path: '/hashtag/:hashtag', component: HashtagPage, name: 'HashtagPage', props: true },
+  { path: '/home', component: HomePage, name: 'HomePage' },
   { path: '/sign_up', component: SignUp, name: 'sign_up' },
   { path: '/register', component: Register, name: 'register' },
   { path: '/sign_in', component: Login, name: 'login' },

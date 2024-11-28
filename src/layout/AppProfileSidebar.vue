@@ -8,7 +8,7 @@ const { layoutState } = useLayout();
     <Sidebar v-model:visible="layoutState.profileSidebarVisible.value" position="right" class="layout-profile-sidebar w-full sm:w-25rem">
         <div class="flex flex-column mx-auto md:mx-0">
             <span class="mb-2 font-semibold">Welcome</span>
-            <span class="text-color-secondary font-medium mb-5">Isabella Andolini</span>
+            <span class="text-color-secondary font-medium mb-5">Antoine Quarroz</span>
 
             <ul class="list-none m-0 p-0">
                 <li>
