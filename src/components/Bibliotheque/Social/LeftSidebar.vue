@@ -3,15 +3,20 @@
     <!-- Profil utilisateur -->
     <div class="user-profile">
       <h4>
-        <Avatar label="A" class="mr-2" size="large" shape="circle" />
-        <a @click="goToProfile" class="profile-link">Antoine Quarroz</a>
+        <Avatar
+          :label="userInitials"
+          class="mr-2"
+          size="large"
+          shape="circle"
+        />
+        <a @click="goToProfile" class="profile-link">{{ userFullName }}</a>
       </h4>
     </div>
 
     <!-- Liens supplémentaires -->
     <div class="profile-links">
-      <ul class="">
-        <li >
+      <ul>
+        <li @click="goToPfpHistory">
           <i class="pi pi-images link-icon"></i>
           <span>Historique des PFP</span>
         </li>
@@ -35,8 +40,18 @@
     <!-- Messagerie -->
     <h4>Messagerie</h4>
     <ul class="messaging-list">
-      <li v-for="(contact, index) in contacts" :key="index" class="message-item" @click="openChat(contact.name)">
-        <Avatar :label="contact.initials" class="mr-2" size="large" shape="circle" />
+      <li
+        v-for="(contact, index) in contacts"
+        :key="index"
+        class="message-item"
+        @click="openChat(contact.name)"
+      >
+        <Avatar
+          :label="contact.initials"
+          class="mr-2"
+          size="large"
+          shape="circle"
+        />
         <div class="contact-info">
           <span class="contact-name">{{ contact.name }}</span>
           <p class="last-message">{{ contact.lastMessage }}</p>
@@ -48,12 +63,19 @@
 
 <script>
 import Avatar from "primevue/avatar";
+import { ref, onMounted } from "vue";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { getDatabase, ref as dbRef, get } from "firebase/database";
 
 export default {
   name: "LeftSidebar",
   components: { Avatar },
   data() {
     return {
+      user: {
+        Forname: "",
+        Name: "",
+      },
       contacts: [
         {
           name: "Antoine Quarroz",
@@ -73,12 +95,39 @@ export default {
       ],
     };
   },
+  computed: {
+    userFullName() {
+      return `${this.user.Forname} ${this.user.Name}`.trim() || "Utilisateur";
+    },
+    userInitials() {
+      const { Forname, Name } = this.user;
+      return (
+        (Forname ? Forname[0].toUpperCase() : "") +
+        (Name ? Name[0].toUpperCase() : "")
+      );
+    },
+  },
   methods: {
+    async fetchUserProfile(uid) {
+      const db = getDatabase();
+      const userRef = dbRef(db, `Users/${uid}`);
+      const snapshot = await get(userRef);
+      if (snapshot.exists()) {
+        const userData = snapshot.val();
+        console.log("Utilisateur trouvé :", userData); // Debugging
+        this.user = {
+          Forname: userData.Forname || "",
+          Name: userData.Name || "",
+        };
+      } else {
+        console.log("Aucun utilisateur trouvé avec l'UID :", uid);
+      }
+    },
     goToProfile() {
       this.$router.push("/profile");
     },
     goToPfpHistory() {
-      this.$router.push("/pfp-history");
+      this.$router.push("/profile");
     },
     goToSettings() {
       this.$router.push("/settings");
@@ -93,6 +142,17 @@ export default {
     openChat(name) {
       this.$router.push(`/chat?user=${encodeURIComponent(name)}`);
     },
+  },
+  mounted() {
+    const auth = getAuth();
+    onAuthStateChanged(auth, (authUser) => {
+      if (authUser) {
+        console.log("Utilisateur connecté :", authUser); // Debugging
+        this.fetchUserProfile(authUser.uid);
+      } else {
+        console.log("Aucun utilisateur connecté."); // Debugging
+      }
+    });
   },
 };
 </script>

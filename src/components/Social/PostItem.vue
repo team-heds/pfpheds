@@ -1,74 +1,158 @@
 <template>
   <div class="post-item">
+    <!-- En-tête du post -->
     <div class="post-header">
       <img :src="authorAvatarUrl || defaultAvatar" alt="Avatar" class="avatar" />
       <div class="post-author">
-        <!-- Link to the user's profile using authorId -->
-        <router-link v-if="post.authorId" :to="{ name: 'UserProfile', params: { id: post.authorId } }">
+        <router-link
+          v-if="post.IdUser"
+          :to="{ name: 'UserProfile', params: { id: post.IdUser } }"
+        >
           <strong>{{ authorName }}</strong>
         </router-link>
         <h5 v-else>{{ authorName }}</h5>
+        <div>
+          <span class="post-date">{{ formatTimestamp(post.Timestamp) }}</span>
+        </div>
 
-        <span class="post-date">{{ formatTimestamp(post.timestamp) }}</span>
       </div>
     </div>
-    <div class="post-content">
-      {{ post.Content }}
+
+    <!-- Contenu du post -->
+    <div class="post-content p-3">
+      <div v-if="post.Content" class="post-text">{{ post.Content }}</div>
+
+      <!-- Si une seule image -->
+      <img
+        v-if="post.images && post.images.length === 1"
+        :src="post.images[0]"
+        alt="Post Image"
+        class="post-image"
+      />
+
+      <!-- Si plusieurs images -->
+      <div v-if="post.images && post.images.length > 1" class="post-images">
+        <img
+          v-for="(image, index) in post.images"
+          :key="index"
+          :src="image"
+          alt="Post Image"
+          class="post-image-multiple"
+        />
+      </div>
+
+      <!-- Si une seule vidéo -->
+      <video
+        v-if="post.videos && post.videos.length === 1"
+        :src="post.videos[0]"
+        controls
+        class="post-video"
+      ></video>
+
+      <!-- Si plusieurs vidéos -->
+      <div v-if="post.videos && post.videos.length > 1" class="post-videos">
+        <video
+          v-for="(video, index) in post.videos"
+          :key="index"
+          :src="video"
+          controls
+          class="post-video-multiple"
+        ></video>
+      </div>
+
+      <!-- Texte + image(s) -->
+      <div v-if="post.Content && post.images && post.images.length > 0">
+        <img
+          v-for="(image, index) in post.images"
+          :key="index"
+          :src="image"
+          alt="Post Image"
+          class="post-image-multiple"
+        />
+      </div>
+
+      <!-- Texte + vidéo(s) -->
+      <div v-if="post.Content && post.videos && post.videos.length > 0">
+        <video
+          v-for="(video, index) in post.videos"
+          :key="index"
+          :src="video"
+          controls
+          class="post-video-multiple"
+        ></video>
+      </div>
     </div>
+
+    <!-- Actions du post -->
     <div class="post-actions">
-      <Button @click="toggleReplyForm" size="small" >Répondre</Button>
+      <Button @click="toggleReplyForm" size="small">Répondre</Button>
     </div>
 
     <!-- Formulaire de réponse -->
-    <div v-if="showReplyForm" class="reply-form">
-      <Textarea v-model="replyContent" placeholder="Écrire une réponse..."></Textarea>
-      <div>
+    <div v-if="showReplyForm" class="reply-form w-full p-3">
+      <Textarea
+        v-model="replyContent"
+        placeholder="Écrire une réponse..."
+        class="reply-textarea"
+      />
+      <div class="pt-3">
         <Button @click="submitReply" size="small">Envoyer</Button>
       </div>
     </div>
 
-    <!-- Affichage des réponses -->
-    <div v-if="post.replies && post.replies.length > 0" class="replies">
-      <div v-for="(reply, index) in post.replies" :key="index" class="reply">
+    <!-- Réponses -->
+    <div v-if="post.replies && Object.keys(post.replies).length > 0" class="replies">
+      <div
+        v-for="(reply, key) in post.replies"
+        :key="key"
+        class="reply"
+      >
         <div class="reply-header">
-          <img :src="replyAuthorAvatarUrls[reply.IdUser] || defaultAvatar" alt="Avatar" class="avatar" />
+          <img
+            :src="replyAuthorAvatarUrls[reply.IdUser] || defaultAvatar"
+            alt="Avatar"
+            class="avatar"
+          />
           <div class="reply-author">
-            <!-- Link to the reply author's profile using authorId -->
-            <router-link v-if="reply.IdUser" :to="{ name: 'UserProfile', params: { id: reply.IdUser } }">
+            <router-link
+              v-if="reply.IdUser"
+              :to="{ name: 'UserProfile', params: { id: reply.IdUser } }"
+            >
               <strong>{{ getReplyAuthorName(reply.IdUser) }}</strong>
             </router-link>
             <span v-else>{{ getReplyAuthorName(reply.IdUser) }}</span>
-
-
-            <span class="reply-date">{{ formatTimestamp(replyTtimestamp) }}</span>
+            <span class="reply-date">{{ formatTimestamp(reply.timestamp) }}</span>
           </div>
         </div>
-        <div class="reply-content">{{ reply.Content }}</div>
+        <div class="reply-content">{{ reply.content }}</div>
       </div>
     </div>
   </div>
 </template>
 
+
 <script>
 import { ref as dbRef, onValue, push, serverTimestamp } from "firebase/database";
-import { db } from '../../../firebase.js';
+import { db } from "../../../firebase.js";
+import Textarea from "primevue/textarea";
+import Button from "primevue/button";
 
 export default {
   name: "PostItem",
+  components: { Textarea, Button },
   props: {
     post: Object,
     currentUser: Object,
-    id: Object,
   },
   data() {
     return {
       showReplyForm: false,
-      replyContent: '',
-      defaultAvatar: new URL('@/assets/avatar/avatar99.png', import.meta.url).href,
-      authorName: '', // To store the author's display name
-      authorAvatarUrl: '', // To store the author's avatar URL
-      replyAuthorNames: {}, // To store display names for reply authors
-      replyAuthorAvatarUrls: {}, // To store avatar URLs for reply authors
+      replyContent: "",
+      defaultAvatar: new URL("@/assets/avatar/avatar99.png", import.meta.url).href,
+      authorName: "",
+      authorAvatarUrl: "",
+      replyAuthorNames: {},
+      replyAuthorAvatarUrls: {},
     };
   },
   watch: {
@@ -85,46 +169,40 @@ export default {
       const userRef = dbRef(db, `Users/${this.post.IdUser}`);
       onValue(userRef, (snapshot) => {
         const userData = snapshot.val();
-        console.log("ok1");
         if (userData) {
-          console.log("ok2");
-
-          this.authorName = userData.username || this.post.Author.split('@')[0]; // Fallback to email prefix if username is not available
-          this.authorAvatarUrl = userData.profileImageUrl || "this.defaultAvatar"; // Fallback to default avatar if profile image URL is not available
+          this.authorName = userData.username || this.post.Author.split("@")[0];
+          this.authorAvatarUrl = userData.profileImageUrl || this.defaultAvatar;
         } else {
-          console.log("ok3");
-
-          this.authorName = this.post.Author.split('@')[0]; // Fallback to email prefix
-          this.authorAvatarUrl = "this.defaultAvatar"; // Fallback to default avatar
+          this.authorName = this.post.Author.split("@")[0];
+          this.authorAvatarUrl = this.defaultAvatar;
         }
       });
     },
-
-
     fetchReplyAuthorsDetails() {
-      if (!this.post.replies || !Array.isArray(this.post.replies)) return; // Check if replies exist and are an array
+      if (!this.post.replies) return;
 
-      this.post.replies.forEach(reply => {
+      Object.keys(this.post.replies).forEach((key) => {
+        const reply = this.post.replies[key];
         const userRef = dbRef(db, `Users/${reply.IdUser}`);
         onValue(userRef, (snapshot) => {
           const userData = snapshot.val();
           if (userData) {
-            this.$set(this.replyAuthorNames, reply.authorId, userData.username || reply.author.split('@')[0]);
-            this.$set(this.replyAuthorAvatarUrls, reply.authorId, userData.profileImageUrl || this.defaultAvatar);
+            this.$set(this.replyAuthorNames, reply.IdUser, userData.username || reply.author.split("@")[0]);
+            this.$set(this.replyAuthorAvatarUrls, reply.IdUser, userData.profileImageUrl || this.defaultAvatar);
           } else {
-            this.$set(this.replyAuthorNames, reply.authorId, reply.author.split('@')[0]);
-            this.$set(this.replyAuthorAvatarUrls, reply.authorId, this.defaultAvatar);
+            this.$set(this.replyAuthorNames, reply.IdUser, reply.author.split("@")[0]);
+            this.$set(this.replyAuthorAvatarUrls, reply.IdUser, this.defaultAvatar);
           }
         });
       });
     },
     getReplyAuthorName(authorId) {
-      return this.replyAuthorNames[authorId] || 'Utilisateur inconnu';
+      return this.replyAuthorNames[authorId] || "Utilisateur inconnu";
     },
     toggleReplyForm() {
       this.showReplyForm = !this.showReplyForm;
       if (!this.showReplyForm) {
-        this.replyContent = '';
+        this.replyContent = "";
       }
     },
     submitReply() {
@@ -134,44 +212,37 @@ export default {
       }
 
       const newReply = {
-        author: this.currentUser.email.split('@')[0], // Use the part of the email before '@' if displayName is not available
-        authorId: this.currentUser.uid, // Include the user ID for profile linking
+        IdUser: this.currentUser.uid,
+        author: this.currentUser.email.split("@")[0],
         content: this.replyContent,
         timestamp: serverTimestamp(),
-        responseTo: {
-          id: this.post.id,
-          author: this.post.author,
-          content: this.post.content
-        }
       };
-
 
       const postRef = dbRef(db, `Posts/${this.post.id}/replies`);
       push(postRef, newReply);
 
-      this.replyContent = '';
+      this.replyContent = "";
       this.showReplyForm = false;
     },
     formatTimestamp(timestamp) {
-      if (!timestamp) return '';
-      return new Date(timestamp).toLocaleString();
-    }
-  }
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      return `${date.toLocaleDateString()} à ${date.toLocaleTimeString()}`;
+    },
+  },
 };
 </script>
+
+
 
 <style scoped>
 .post-item {
   padding: 15px;
   margin-bottom: 10px;
-  background-color: #fff;
+  background-color: var(--surface-card);
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
-}
-
-.post-item:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
 .post-header {
@@ -189,53 +260,35 @@ export default {
 
 .post-author {
   font-weight: bold;
-  color: #333;
+  color: var(--text-color);
 }
 
 .post-content {
-  margin-top: 10px;
-  margin-bottom: 10px;
-  font-size: 1.1em;
-  color: #555;
+  margin: 10px 0;
 }
 
-.post-actions {
-  display: flex;
-  align-items: center;
+.post-image {
+  max-width: 100%;
+  margin-top: 10px;
+  border-radius: 8px;
+}
+
+.post-images {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   gap: 10px;
 }
 
-.reply-form {
+.post-video {
+  max-width: 100%;
   margin-top: 10px;
-  margin-bottom: 20px;
+  border-radius: 8px;
 }
 
-.replies {
+.post-video-multiple {
+  max-width: 100%;
   margin-top: 10px;
-  padding-left: 20px;
-  border-left: 2px solid #f0f0f0;
-}
-
-.reply {
-  padding: 10px;
-  background-color: #f9f9f9;
-  border-radius: 6px;
-  margin-bottom: 5px;
-  position: relative;
-  transition: background-color 0.3s ease;
-}
-
-.reply:hover {
-  background-color: #f0f0f0;
-}
-
-.reply-header {
-  display: flex;
-  align-items: center;
-}
-
-.reply-author {
-  font-weight: bold;
-  margin-right: 10px;
+  border-radius: 8px;
 }
 </style>
+
