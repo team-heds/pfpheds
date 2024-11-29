@@ -252,6 +252,7 @@ const supprimerInstitution = (institutionId) => {
 </script>
 
 <template>
+  <Navbar />
   <div class="layout-container">
     <AppSidebar class="layout-sidebar" />
     <div class="layout-content-wrapper">

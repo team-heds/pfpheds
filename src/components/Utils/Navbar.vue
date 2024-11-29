@@ -54,6 +54,7 @@
               />
             </li>
 
+            <!--
             <li v-if="user && hasAdminAccess" class="mx-3">
               <ButtonNavbar
                 icon="pi pi-user"
@@ -63,7 +64,7 @@
                 @click="navigateTo('/profile')"
               />
             </li>
-
+-->
             <li v-if="user && hasAdminAccess" class="mx-3">
               <ButtonNavbar
                 icon="pi pi-user-plus"
@@ -86,7 +87,7 @@
             :bgColor="'var(--surface-overlay)'"
             :hoverBgColor="'var(--surface-hover)'"
             :iconColor="'var(--primary-color)'"
-            @click="navigateTo('/')"
+            @click="navigateTo('/feed')"
           />
 
           <!-- Notifications -->
@@ -96,7 +97,7 @@
             :bgColor="'var(--surface-overlay)'"
             :hoverBgColor="'var(--surface-hover)'"
             :iconColor="'var(--primary-color)'"
-            @click="navigateTo('/settings')"
+            @click="navigateTo('/feed')"
           />
 
           <!-- Notifications -->

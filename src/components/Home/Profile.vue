@@ -1,56 +1,16 @@
 <template>
-  <div class="min-h-screen flex relative lg:static surface-ground">
-    <div id="app-sidebar" class="h-full lg:h-auto hidden lg:block flex-shrink-0 absolute lg:static left-0 top-0 z-1 border-right-1 surface-border w-full md:w-auto">
-      <div class="flex h-full">
-        <div class="flex flex-column h-full bg-primary-500 flex-shrink-0 select-none">
-          <div class="flex align-items-center justify-content-center flex-shrink-0 bg-primary-500" style="height:60px">
-            <a href="/">
-              <img :src="logo" alt="Image" height="30"/>
-            </a>
-          </div>
-          <div class="overflow-y-auto mt-3">
-            <ul class="list-none py-3 px-2 m-0">
-              <li class="mb-2" v-for="(icon, index) in sidebarIcons" :key="index">
-                <a class="flex align-items-center cursor-pointer p-3 lg:justify-content-center hover:bg-primary-400 border-round text-indigo-100 hover:text-primary-50 transition-duration-150 transition-colors" @click="activeTab = index" :class="{'bg-primary-400': activeTab === index}">
-                  <i :class="`pi ${icon} text-lg`"></i>
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </div>
+  <Navbar />
+  <div class="min-h-screen flex relative lg:static ">
     <div class="min-h-screen flex flex-column relative flex-auto">
-      <div class="flex justify-content-between align-items-center px-5 surface-section border-bottom-1 surface-border relative lg:static" style="height:60px">
-        <div class="flex align-items-center">
-          <a class="cursor-pointer block lg:hidden text-700 mr-3 mt-1" @click="toggleSidebar">
-            <i class="pi pi-bars text-4xl"></i>
-          </a>
-        </div>
-        <a class="cursor-pointer block lg:hidden text-700" @click="toggleTopMenu">
-          <i class="pi pi-ellipsis-v text-2xl"></i>
-        </a>
-        <ul class="list-none p-0 m-0 hidden lg:flex lg:align-items-center select-none lg:flex-row surface-section border-1 lg:border-none surface-border right-0 top-100 z-1 shadow-2 lg:shadow-none absolute lg:static">
-          <li class="border-top-1 surface-border lg:border-top-none">
-            <a class="flex p-3 lg:px-3 lg:py-2 align-items-center hover:surface-100 font-medium border-round cursor-pointer transition-duration-150 transition-colors">
-              <img :src="userAvatar" class="border-circle" style="width: 32px; height: 32px;" />
-              <div class="block lg:hidden">
-                <div class="text-900 font-medium">{{ user.nom || 'User' }}</div>
-                <span class="text-600 font-medium text-sm">{{ user.email }}</span>
-              </div>
-            </a>
-          </li>
-        </ul>
-      </div>
+
       <div class="p-5 flex flex-column flex-auto">
         <ProfileInfo v-if="activeTab === 0" :user="user" />
         <DocumentsUserProfile v-if="activeTab === 1" />
         <ResumStageUserProfile v-if="activeTab === 2" />
-      <!--  <ChatProfil v-if="activeTab === 3" /> -->
+      <ChatProfil v-if="activeTab === 3" />
       </div>
     </div>
   </div>
-  <AppDarkAndLightMode />
 </template>
 
 
@@ -66,10 +26,12 @@ import DocumentsUserProfile from '@/components/UserProfile/DocumentsUserProfile.
 import ChatProfil from '@/components/UserProfile/ChatProfil.vue'
 import Calendar from '@/views/apps/Calendar.vue'
 import AppDarkAndLightMode from '@/layout/AppDarkAndLightMode.vue'
+import Navbar from '@/components/Utils/Navbar.vue'
 
 export default {
   name: 'Profile',
   components: {
+    Navbar,
     AppDarkAndLightMode,
     InputText,
     Button,
