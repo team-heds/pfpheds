@@ -20,14 +20,8 @@
                 :bgColor="'var(--surface-overlay)'"
                 :hoverBgColor="'var(--surface-hover)'"
                 :iconColor="'var(--primary-color)'"
-                @click="navigateTo('/')"
+                @click="navigateTo('/feed')"
               />
-            </li>
-
-            <li v-if="!user" class="mx-3">
-              <a @click="navigateTo('/login')">
-                <Button type="button" label="Se Connecter" class="m-0"></Button>
-              </a>
             </li>
 
             <li v-if="user" class="mx-3">

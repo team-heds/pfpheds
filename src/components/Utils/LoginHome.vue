@@ -112,7 +112,7 @@ const submitForm = async () => {
 
     // Redirection après un délai
     setTimeout(() => {
-      router.push("/");
+      router.push("/feed");
     }, 1500);
   } catch (error) {
     // Gestion des erreurs Firebase

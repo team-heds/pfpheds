@@ -63,8 +63,7 @@
 
 <script>
 import Avatar from "primevue/avatar";
-import { ref, onMounted } from "vue";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 import { getDatabase, ref as dbRef, get } from "firebase/database";
 
 export default {
@@ -135,9 +134,15 @@ export default {
     goToPrivacy() {
       this.$router.push("/privacy");
     },
-    goToLogout() {
-      console.log("Déconnexion effectuée");
-      this.$router.push("/logout");
+    async goToLogout() {
+      const auth = getAuth();
+      try {
+        await signOut(auth);
+        console.log("Utilisateur déconnecté");
+        this.$router.push("/"); // Redirection à la page d'accueil
+      } catch (error) {
+        console.error("Erreur de déconnexion:", error);
+      }
     },
     openChat(name) {
       this.$router.push(`/chat?user=${encodeURIComponent(name)}`);

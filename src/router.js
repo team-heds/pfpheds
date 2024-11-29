@@ -53,16 +53,15 @@ import MentionGroupPage from '@/components/Social/MentionGroupPage.vue';
 
 // Define your routes
 const routes = [
-  { path: '/', component: NewsFeed, name: 'NewsFeed',   props: true   }, // Fil d'actualité
+  { path: '/', component: LoginHome, name: 'LoginHome',   props: true   }, // Fil d'actualité
+  { path: '/feed', component: NewsFeed, name: 'NewsFeed',   props: true   }, // Fil d'actualité
   { path: '/profile/:id', component: UserProfile, name: 'UserProfile', props: true }, // Profil de l'utilisateur
   { path: '/mention/:group', component: MentionGroupPage, name: 'MentionGroupPage', props: true, meta: { requiresAuth: true, requiredRole: true }},
-  { path: '/login', component: LoginHome, name: 'LoginHome' },
   { path: '/hashtag/:hashtag', component: HashtagPage, name: 'HashtagPage', props: true },
   { path: '/home', component: HomePage, name: 'HomePage' },
   { path: '/sign_up', component: SignUp, name: 'sign_up' },
   { path: '/register', component: Register, name: 'register' },
   { path: '/sign_in', component: Login, name: 'login' },
-  { path: '/login', component: SignIn, name: 'sign_in' },
   { path: '/terms_of_use', component: TermsOfUse, name: 'TermsOfUse' },
   { path: '/map', component: Map, name: 'Map' },
   { path: '/institution', component: Institution, name: 'Institution' },
