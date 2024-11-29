@@ -6,7 +6,7 @@
       <div class="flex align-items-center justify-content-between relative lg:static py-4 px-1">
         <!-- Logo (à gauche) -->
         <div class="flex-shrink-0 px-8 mx-8">
-          <a class="cursor-pointer" @click="navigateTo('/')">
+          <a class="cursor-pointer" @click="navigateTo('/feed')">
             <img src="/public/pictoHEdS.png" alt="Logo" style="height: 50px" />
           </a>
         </div>

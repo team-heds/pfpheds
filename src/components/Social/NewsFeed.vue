@@ -30,7 +30,7 @@ export default {
     LeftSidebar,
     MainFeed,
     RightSidebar
-}
+  }
 };
 </script>
 
@@ -71,5 +71,40 @@ export default {
 .sidebar-right {
   overflow-y: auto; /* Permet de scroller si nécessaire */
 }
-</style>
 
+/* Responsiveness */
+@media (max-width: 1024px) {
+  .newsfeed-layout {
+    grid-template-columns: 1fr 2fr; /* Sidebar gauche et MainFeed */
+  }
+
+  .sidebar-right {
+    display: none; /* Masquer la Sidebar droite */
+  }
+}
+
+@media (max-width: 768px) {
+  .newsfeed-layout {
+    grid-template-columns: 1fr; /* Une seule colonne */
+    gap: 1rem; /* Réduire l'espacement entre les éléments */
+  }
+
+  .sidebar-left {
+    display: none; /* Masquer la Sidebar gauche */
+  }
+
+  .main-feed {
+    overflow-y: auto; /* Permettre le scroll pour le contenu principal */
+  }
+}
+
+@media (max-width: 480px) {
+  .newsfeed-layout {
+    padding: 0 1rem; /* Ajouter un léger padding sur les très petits écrans */
+  }
+
+  .main-feed {
+    gap: 0.5rem; /* Réduire les espaces entre les éléments pour les écrans très petits */
+  }
+}
+</style>
