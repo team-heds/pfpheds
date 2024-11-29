@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="container mt-4">
-      <h2>Profil de {{ user ? user.fullName : 'Utilisateur' }}</h2>
+      <h4>Profil de {{ user ? user.fullName : 'Utilisateur' }}</h4>
 
       <div v-if="user">
         <div v-if="isCurrentUser">

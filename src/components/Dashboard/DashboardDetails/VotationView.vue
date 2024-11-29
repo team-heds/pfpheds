@@ -1,22 +1,23 @@
 <template>
   <div>
     <Navbar />
-    <UserProfile />
-    <div class="container-fluid mt-4">
-      <!-- Section pour la validation -->
-      <div v-if="currentStudent && selectedPFP && selectedClass" class="table-responsive mt-4">
-        <div v-if="validationMessage" class="mt-4 text-center">
-          <h4>Validation</h4>
-          <p>A besoin de : {{ validationMessage }}</p>
+    <div class="flex w-full">
+      <UserProfile class="w-5" />
+      <div class="container-fluid mt-4 w-8">
+        <!-- Section pour la validation -->
+        <div v-if="currentStudent && selectedPFP && selectedClass" class="table-responsive mt-4">
+          <div v-if="validationMessage" class="mt-4 text-center">
+            <h4>Validation</h4>
+            <p>A besoin de : {{ validationMessage }}</p>
+          </div>
         </div>
-      </div>
 
-      <!-- Table affichant toutes les places de stages disponibles -->
-      <div v-if="selectedPFP && selectedClass" class="table-responsive mt-4">
-        <div class="d-flex justify-content-center">
-          <h3 class="mb-3 text-center">Toutes les places de stages</h3>
-          <table class="table table-striped align-middle mb-0 table-hover w-100 text-center">
-            <thead>
+        <!-- Table affichant toutes les places de stages disponibles -->
+        <div v-if="selectedPFP && selectedClass" class="table-responsive mt-4">
+          <div class="d-flex justify-content-center">
+            <h3 class="mb-3 text-center">Toutes les places de stages</h3>
+            <table class="table table-striped align-middle mb-0 table-hover w-100 text-center">
+              <thead>
               <tr>
                 <th>Institutions</th>
                 <th>Lieux</th>
@@ -32,8 +33,8 @@
                 <th>AMBU</th>
                 <th>Choisir</th>
               </tr>
-            </thead>
-            <tbody>
+              </thead>
+              <tbody>
               <template v-for="(group, groupIndex) in groupedStages" :key="groupIndex">
                 <!-- En-tête de groupe -->
                 <tr class="group-header">
@@ -68,21 +69,23 @@
                 <!-- Interligne entre les groupes -->
                 <tr><td colspan="13">&nbsp;</td></tr>
               </template>
-            </tbody>
-          </table>
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
 
-      <!-- Section pour afficher le résultat du vote -->
-      <div v-if="voteResult" class="mt-4 text-center">
-        <h4>Choix du Vote</h4>
-        <p>Stage Sélectionné : {{ voteResult.selectedStageName }}</p>
-        <p>Lieu : {{ voteResult.selectedStageLieu }}</p>
-        <p>Domaine : {{ voteResult.selectedStageDomaine }}</p>
-      </div>
+        <!-- Section pour afficher le résultat du vote -->
+        <div v-if="voteResult" class="mt-4 text-center">
+          <h4>Choix du Vote</h4>
+          <p>Stage Sélectionné : {{ voteResult.selectedStageName }}</p>
+          <p>Lieu : {{ voteResult.selectedStageLieu }}</p>
+          <p>Domaine : {{ voteResult.selectedStageDomaine }}</p>
+        </div>
 
-      <div class="mt-4 text-center">
-        <button class="btn btn-primary" @click="submitVotes">Voter</button>
+        <div class="mt-4 text-center">
+          <button class="btn btn-primary" @click="submitVotes">Voter</button>
+        </div>
+        <br><br><br><br>
       </div>
 
       <div class="mt-4 text-center">

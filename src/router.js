@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { ref as dbRef, get as dbGet } from 'firebase/database';
+import { onAuthStateChanged } from 'firebase/auth';
 import { db, auth } from '../firebase'; // Import your Firebase configuration
 
 // Import your components
@@ -45,7 +46,7 @@ import InstitutionView from '@/components/Institutions/InstitutionView.vue';
 import Management_votation from '@/components/Dashboard/DashboardDetails/Management_votation.vue';
 import ManagementPlace from '@/components/Dashboard/DashboardDetails/Management_place.vue';
 import VotationLese from '@/components/Dashboard/DashboardDetails/VotationLese.vue';
-
+import LoginHome from '@/components/Utils/LoginHome.vue';
 import NewsFeed from '@/components/Social/NewsFeed.vue';
 import UserProfile from '@/components/Social/UserProfile.vue';
 import HashtagPage from '@/components/Social/HashtagPage.vue';
@@ -53,20 +54,15 @@ import MentionGroupPage from '@/components/Social/MentionGroupPage.vue';
 
 // Define your routes
 const routes = [
-  { path: '/newsfeed', component: NewsFeed, name: 'NewsFeed',   props: true   }, // Fil d'actualité
+  { path: '/', component: LoginHome, name: 'LoginHome',   props: true   }, // Fil d'actualité
+  { path: '/feed', component: NewsFeed, name: 'NewsFeed',   props: true   }, // Fil d'actualité
   { path: '/profile/:id', component: UserProfile, name: 'UserProfile', props: true }, // Profil de l'utilisateur
   { path: '/mention/:group', component: MentionGroupPage, name: 'MentionGroupPage', props: true, meta: { requiresAuth: true, requiredRole: true }},
-
-  {
-    path: '/hashtag/:hashtag',
-    component: HashtagPage,
-    name: 'HashtagPage',
-    props: true
-  },  { path: '/', component: HomePage, name: 'HomePage' },
+  { path: '/hashtag/:hashtag', component: HashtagPage, name: 'HashtagPage', props: true },
+  { path: '/home', component: HomePage, name: 'HomePage' },
   { path: '/sign_up', component: SignUp, name: 'sign_up' },
   { path: '/register', component: Register, name: 'register' },
   { path: '/sign_in', component: Login, name: 'login' },
-  { path: '/login', component: SignIn, name: 'sign_in' },
   { path: '/terms_of_use', component: TermsOfUse, name: 'TermsOfUse' },
   { path: '/map', component: Map, name: 'Map' },
   { path: '/institution', component: Institution, name: 'Institution' },
@@ -112,11 +108,22 @@ const router = createRouter({
   routes
 });
 
-// Add navigation guard
 
 
-// Add navigation guard
+// Ajouter un guard de navigation
+let isAuthStateChecked = false;
+
 router.beforeEach(async (to, from, next) => {
+  // Vérifiez si l'état d'authentification est déjà récupéré
+  if (!isAuthStateChecked) {
+    await new Promise((resolve) => {
+      onAuthStateChanged(auth, (user) => {
+        isAuthStateChecked = true;
+        resolve(user); // Continue une fois que l'état est chargé
+      });
+    });
+  }
+
   const user = auth.currentUser;
 
   if (to.matched.some(record => record.meta.requiresAuth)) {
@@ -129,31 +136,32 @@ router.beforeEach(async (to, from, next) => {
       if (roles) {
         const userRoles = Object.keys(roles).filter(role => roles[role]);
 
-        if (to.name === 'MentionGroupPage') {
-          const requiredGroup = to.params.group;
+        if (to.meta.requiredRole) {
+          const requiredRole = to.meta.requiredRole;
 
-          // Check if the user has a role that matches the required group
-          if (userRoles.includes(requiredGroup)) {
-            next();  // User has the required role, allow access
+          // Vérifiez si l'utilisateur a le rôle requis
+          if (userRoles.includes(requiredRole)) {
+            next(); // Autoriser l'accès
           } else {
-            alert('Access denied: You do not have the required permissions to view this page.');
-            next(false); // Prevent navigation
+            alert('Accès refusé : Vous n\'avez pas les permissions requises.');
+            next('/'); // Redirigez vers une page par défaut
           }
         } else {
-          next();  // If no specific role is required, allow access
+          next(); // Aucune vérification de rôle requise, autorisez l'accès
         }
       } else {
-        alert('Access denied: No roles found.');
-        next(false); // Prevent navigation
+        alert('Accès refusé : Aucun rôle trouvé.');
+        next('/'); // Redirigez vers une page par défaut
       }
     } else {
-      alert('You must be logged in to access this page.');
-      next('/sign_in'); // Redirect to login page
+      alert('Vous devez être connecté pour accéder à cette page.');
+      next('/'); // Redirigez vers la page de connexion
     }
   } else {
-    next();  // If no authentication is required, proceed
+    next(); // Aucune authentification requise, autorisez l'accès
   }
 });
+
 
 
 export default router;

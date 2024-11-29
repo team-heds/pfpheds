@@ -1,43 +1,39 @@
 <template>
   <div class="filter-menu">
     <div class="p-fluid p-pt-4 p-pb-4">
-      <div class="surface-card p-4 shadow-2 border-round">
+      <div class="surface-card p-4 shadow-2 border-round w-6">
         <div class="row">
           <div class="text-900 font-medium text-xl mb-3 col-4">Profile</div>
         </div>
-        <div class="grid formgrid p-fluid">
+
+        <!-- Section Avatar (Image de profil) -->
+        <div class="field mb-4 col-12 md:col-6">
+          <div class="flex align-items-center">
+            <img :src="user.photoURL || defaultAvatar" alt="Avatar" class="mr-4" style="width: 100px; height: 100px; border-radius: 50%;" />
+            <input type="file" @change="onAvatarChange" accept="image/*" class="p-button-outlined p-button-plain" />
+          </div>
+        </div>
+        <div class="grid form-grid p-fluid">
           <!-- Information de l'utilisateur -->
-          <div class="field mb-4 col-4">
+          <div class="field mb-4 w-6 p-2">
             <label for="prenom" class="font-medium">Prénom</label>
             <InputText id="prenom" v-model="user.prenom" type="text" readonly />
           </div>
-          <div class="field mb-4 col-4">
+          <div class="field mb-4 w-6 p-2">
             <label for="nom" class="font-medium">Nom</label>
             <InputText id="nom" v-model="user.nom" type="text" readonly />
           </div>
-          <div class="surface-100 mb-3 col-12" style="height:2px"></div>
-
-          <!-- Section Avatar (Image de profil) -->
-          <div class="field mb-4 col-12 md:col-6">
-            <label for="avatar" class="font-medium">Avatar</label>
-            <div class="flex align-items-center">
-              <img :src="user.photoURL || defaultAvatar" alt="Avatar" class="mr-4" style="width: 100px; height: 100px; border-radius: 50%;" />
-              <input type="file" @change="onAvatarChange" accept="image/*" class="p-button-outlined p-button-plain" />
-            </div>
-          </div>
 
           <!-- Autres informations -->
-          <div class="surface-100 mb-3 col-12" style="height:2px"></div>
-          <div class="field mb-4 col-12 md:col-6">
+          <div class="field mb-4 col-12 md:col-6 w-6 p-2">
             <label for="email" class="font-medium">Email</label>
             <InputText id="email" v-model="user.email" readonly />
           </div>
-          <div class="field mb-4 col-12 md:col-6">
+          <div class="field mb-4 col-12 md:col-6 w-6 p-2">
             <label for="city" class="font-medium">Ville</label>
             <InputText id="city" v-model="user.ville" type="text" />
           </div>
 
-          <div class="surface-100 mb-3 col-12" style="height:2px"></div>
           <div class="col-12">
             <Button label="Sauvegarder" class="w-auto mt-3" @click="saveProfile"></Button>
           </div>

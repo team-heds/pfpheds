@@ -1,6 +1,6 @@
 <template>
   <Navbar />
-  <div class="surface-card p-4 shadow-2 border-round">
+  <div class=" p-4 shadow-2 border-round">
     <div class="flex justify-content-between flex-column-reverse md:flex-row align-items-center ml-8">
       <div>
         <div class="flex align-items-center text-900 font-medium text-6xl mb-2 pl-8 pr-8">
@@ -46,7 +46,7 @@
               </div>
             </div>
           </TabPanel>
-          <TabPanel v-if="userRole === 'BA23'" header="Encadrement étudiant.e.s">
+          <TabPanel>
             <div class="grid">
               <div class="col-12 lg:col-12">
                 <div class="text-900 font-bold text-3xl mb-4 mt-2">Encadrement étudiant.e.s</div>
@@ -76,7 +76,7 @@
 
                   <!-- Bouton pour ouvrir le PDF -->
                   <div class="mt-4">
-                    <Button v-if="institutionDetails?.CyberleanURL" label="Ouvrir le PDF" icon="pi pi-file-pdf" @click="openPDF" class="p-button-raised p-button-danger" />
+                    <Button v-if="institutionDetails?.CyberleanURL" label="Ouvrir le PDF" icon="pi pi-file-pdf" @click="openPDF" class="p-button-raised p-button-primary" />
                     <p v-else>Aucun PDF disponible pour cette institution.</p>
                   </div>
                 </div>
@@ -108,7 +108,7 @@ import { onAuthStateChanged } from "firebase/auth";
 
 export default {
   name: 'InstitutionView',
-  components: { Navbar, Footer, },
+  components: { Navbar, Footer },
   data() {
     return {
       institutionDetails: null,
@@ -200,5 +200,10 @@ export default {
 
 .shadow {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+#map {
+  height: 400px;
+  width: 100%;
 }
 </style>

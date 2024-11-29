@@ -3,20 +3,20 @@ import { toRefs, reactive, computed } from 'vue';
 const layoutConfig = reactive({
     menuMode: 'static',
     menuTheme: 'colorScheme',
-    colorScheme: 'light',
-    theme: 'orange',
+    colorScheme: 'dim',
+    theme: 'heds',
     scale: 14
 });
 
 const layoutState = reactive({
-    staticMenuDesktopInactive: false,
+    staticMenuDesktopInactive: true,
     overlayMenuActive: false,
     sidebarActive: false,
     anchored: false,
     overlaySubmenuActive: false,
     profileSidebarVisible: false,
     configSidebarVisible: false,
-    staticMenuMobileActive: false,
+    staticMenuMobileActive: true,
     menuHoverActive: false,
     activeMenuItem: null
 });
