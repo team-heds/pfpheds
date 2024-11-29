@@ -6,16 +6,23 @@
 
     <section class="mt-5">
       <div class="text-center mb-5">
-        <p>Utilisez cette interface pour ajouter une nouvelle institution au portail. Une fois que vous avez terminé, l'institution sera examinée pour la qualité. Si approuvée, elle apparaîtra dans la liste et vous serez informé par e-mail.</p>
+        <p>
+          Utilisez cette interface pour ajouter une nouvelle institution au
+          portail. Une fois que vous avez terminé, l'institution sera examinée
+          pour la qualité. Si approuvée, elle apparaîtra dans la liste et vous
+          serez informé par e-mail.
+        </p>
       </div>
 
       <div class="card p-4">
+        <!-- Étapes -->
         <Steps :model="steps" :activeIndex="activeIndex" class="mb-5" />
+
         <div class="p-fluid">
           <form @submit.prevent="envoyerDonnees">
-            <!-- Détails de l'institution -->
+            <!-- Étape 1 : Détails de l'institution -->
             <div v-if="activeIndex === 0">
-              <h4>Détail de l'institution</h4>
+              <h4>Détails de l'institution</h4>
               <Divider />
               <div class="grid formgrid">
                 <div class="field col-12">
@@ -57,50 +64,44 @@
               </div>
             </div>
 
-            <!-- Informations supplémentaires -->
+            <!-- Étape 2 : Informations supplémentaires -->
             <div v-if="activeIndex === 1">
               <h4>Informations supplémentaires</h4>
               <Divider />
               <div class="grid formgrid">
-                <div class="col-12 md:col-6">
+                <div class="field col-12 md:col-6">
                   <label for="institutionId">ID Institution</label>
                   <InputText id="institutionId" v-model="institution.InstitutionId" />
                 </div>
-                <div class="col-12 md:col-6">
+                <div class="field col-12 md:col-6">
                   <label for="category">Catégorie</label>
                   <Dropdown id="category" v-model="institution.Category" :options="categories" optionLabel="label" optionValue="value" class="w-full" />
                 </div>
-                <div class="col-12 md:col-6">
+                <div class="field col-12 md:col-6">
                   <label for="conventionDate">Date de Convention</label>
                   <Calendar id="conventionDate" v-model="institution.ConventionDate" dateFormat="yy-mm-dd" />
                 </div>
-                <div class="col-12 md:col-6">
+                <div class="field col-12 md:col-6">
                   <label for="accordCadreDate">Date de l'Accord Cadre</label>
                   <Calendar id="accordCadreDate" v-model="institution.AccordCadreDate" dateFormat="yy-mm-dd" />
                 </div>
-                <div class="col-12">
+                <div class="field col-12">
                   <label for="note">Remarques</label>
                   <Textarea id="note" v-model="institution.Note" />
-                </div>
-                <div class="col-12 md:col-8">
-                  <label for="idResponsablePhysio">ID Responsable Physio</label>
-                  <InputText id="idResponsablePhysio" v-model="institution.IdResponsablePhysio" class="w-full" />
-                </div>
-                <div class="col-12 md:col-4">
-                  <label for="language">Langue</label>
-                  <Dropdown id="language" v-model="institution.Language" :options="langues" optionLabel="name" optionValue="name" class="w-full" />
                 </div>
               </div>
             </div>
 
-            <!-- Médias de l'institution -->
+            <!-- Étape 3 : Médias -->
             <div v-if="activeIndex === 2">
               <h4>Médias de l'institution</h4>
               <Divider />
               <div class="text-center">
                 <div class="border-2 border-dashed surface-border rounded-lg p-5 mb-3">
                   <i class="pi pi-image text-5xl"></i>
-                  <h6 class="mt-2">Téléchargez l'image de l'institution ici, ou <a href="#!" class="text-primary" @click.prevent="$refs.fileInput.click()">Parcourir</a></h6>
+                  <h6 class="mt-2">
+                    Téléchargez l'image de l'institution ici, ou <a href="#!" class="text-primary" @click.prevent="$refs.fileInput.click()">Parcourir</a>
+                  </h6>
                   <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFileChange" />
                   <p class="mt-2">Seulement JPG, JPEG et PNG. Dimensions suggérées: 600px * 450px.</p>
                 </div>
@@ -112,7 +113,7 @@
               </div>
             </div>
 
-            <!-- Description de l'institution -->
+            <!-- Étape 4 : Description -->
             <div v-if="activeIndex === 3">
               <h4>Description</h4>
               <Divider />
@@ -134,7 +135,6 @@
     </section>
   </div>
 </template>
-
 
 <script>
 import { db , storage } from '../../../../firebase.js';
@@ -161,7 +161,13 @@ export default {
   },
   data() {
     return {
-      activeIndex: 0, // Index de l'étape actuelle du formulaire
+      activeIndex: 0,
+      steps: [
+        { label: 'Détails de l\'institution' },
+        { label: 'Informations supplémentaires' },
+        { label: 'Médias' },
+        { label: 'Description' },
+      ],
       institution: {
         CyberlearnURL: '',
         Name: '',
@@ -177,13 +183,8 @@ export default {
         ConventionDate: null,
         AccordCadreDate: null,
         Note: '',
-        key: '',
-        NPA: '',
-        NomResponsablePhysio: '',
-        PhoneResponsablePhysio: '',
-        EmailResponsablePhysio: '',
       },
-      imageFile: null, // Fichier image sélectionné
+      imageFile: null,
       cantons: [
         { code: 'AG', name: 'Argovie' },
         { code: 'AI', name: 'Appenzell Rhodes-Intérieures' },
@@ -214,53 +215,52 @@ export default {
     };
   },
   methods: {
-    // Passe à l'étape suivante
     goToNextStep() {
       if (this.activeIndex < this.steps.length - 1) {
         this.activeIndex++;
       }
     },
-    // Retourne à l'étape précédente
     goToPrevStep() {
       if (this.activeIndex > 0) {
         this.activeIndex--;
       }
     },
-    // Fonction d'envoi des données à Firebase
     async envoyerDonnees() {
       try {
-        const newInstRef = push(ref(db, 'Institutions')); // Crée un nouvel ID unique pour l'institution
+        const newInstRef = push(ref(db, 'Institutions'));
         const newInstKey = newInstRef.key;
         this.institution.key = newInstKey;
 
 
+
         // Si une image a été sélectionnée, on l'upload d'abord
+
         if (this.imageFile) {
+          const storage = getStorage();
           const imageRef = storageRef(storage, `Institutions/${newInstKey}/image`);
           await uploadBytes(imageRef, this.imageFile);
           const imageURL = await getDownloadURL(imageRef);
           this.institution.ImageURL = imageURL;
         }
 
-        // Ensuite, on sauvegarde les informations de l'institution dans la base de données Firebase
         await set(newInstRef, this.institution);
-        this.$router.push({ name: 'InstitutionList' }); // Redirige vers la liste des institutions après l'envoi
+
+        // Redirection vers le tableau de bord après succès
+        this.$router.push('/institution_list');
       } catch (error) {
-        console.error('Erreur lors de l’envoi des données:', error);
+        console.error("Erreur lors de l'envoi des données :", error);
       }
     },
-    // Gestion de la sélection d'un fichier image
     onFileChange(event) {
       const file = event.target.files[0];
       if (file) {
         this.imageFile = file;
-        this.institution.ImageURL = URL.createObjectURL(file); // Afficher l'image sélectionnée localement
+        this.institution.ImageURL = URL.createObjectURL(file);
       }
     },
-    // Supprime l'image sélectionnée
     removeImage() {
       this.imageFile = null;
-      this.institution.ImageURL = ''; // Réinitialise l'URL de l'image
+      this.institution.ImageURL = '';
     },
   },
 };

@@ -67,7 +67,6 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
-import TriStateCheckbox from 'primevue/tristatecheckbox';
 import Dropdown from 'primevue/dropdown';
 import Navbar from '@/components/Utils/Navbar.vue';
 
@@ -78,7 +77,6 @@ export default {
     Column,
     InputText,
     Button,
-    TriStateCheckbox,
     Dropdown,
     Navbar
   },
