@@ -65,10 +65,10 @@
               <td><input type="text" v-model="place.PFP1B" @change="updatePlace(place, 'PFP1B', place.PFP1B)" class="form-control small-input"></td>
               <td><input type="text" v-model="place.PFP4" @change="updatePlace(place, 'PFP4', place.PFP4)" class="form-control small-input"></td>
               <td><input type="text" v-model="place.PFP3" @change="updatePlace(place, 'PFP3', place.PFP3)" class="form-control small-input"></td>
-              <td>{{ formatDate(place.AccordCadreDate) }}</td>
+              <td>{{ place.AccordCadreDate }}</td>
               <td>{{ place.Canton }}</td>
               <td>{{ place.Categorie }}</td>
-              <td>{{ formatDate(place.ConventionDate) }}</td>
+              <td>{{ place.ConventionDate }}</td>
               <td>{{ place.Lieu }}</td>
               <td>
                 <select multiple v-model="place.selectedPraticiensFormateurs" @change="updatePraticiensFormateurs(place, place.selectedPraticiensFormateurs)" class="form-control">
@@ -160,10 +160,10 @@
             <label>PFP3</label>
             <input v-model="newPlace.PFP3" type="text" class="form-control">
           </div>
-          <!-- Champs automatiquement remplis depuis l'institution -->
+          <!-- Dates et autres champs -->
           <div class="form-group">
             <label>Accord Cadre</label>
-            <input v-model="formattedAccordCadreDate" type="text" class="form-control" readonly>
+            <input v-model="newPlace.AccordCadreDate" type="date" class="form-control" readonly>
           </div>
           <div class="form-group">
             <label>Canton</label>
@@ -175,7 +175,7 @@
           </div>
           <div class="form-group">
             <label>Convention</label>
-            <input v-model="formattedConventionDate" type="text" class="form-control" readonly>
+            <input v-model="newPlace.ConventionDate" type="date" class="form-control" readonly>
           </div>
           <div class="form-group">
             <label>Lieu</label>
@@ -263,23 +263,9 @@ export default {
         place.Name.toLowerCase().includes(searchLower) ||
         (place.Remarques && place.Remarques.toLowerCase().includes(searchLower))
       );
-    },
-    formattedAccordCadreDate() {
-      return this.formatDate(this.newPlace.AccordCadreDate);
-    },
-    formattedConventionDate() {
-      return this.formatDate(this.newPlace.ConventionDate);
     }
   },
   methods: {
-    formatDate(dateString) {
-      if (!dateString) return '';
-      const date = new Date(dateString);
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const year = date.getFullYear();
-      return `${day}/${month}/${year}`;
-    },
     countPlacesByPFP() {
       const pfpCounts = {
         PFP2: 0,
@@ -312,7 +298,7 @@ export default {
         if (placesData) {
           const placePromises = Object.keys(placesData).map(async key => {
             const place = placesData[key];
-            const institutionData = await this.fetchInstitutionData(place.InstitutionId);
+            const institutionData = await this.fetchInstitutionData(place.IDPlace || place.InstitutionId);
             return {
               IdPlace: key,
               NomPlace: place.NomPlace || '',
@@ -339,7 +325,7 @@ export default {
               Lieu: institutionData.Locality || '',
               Remarques: place.Note || '',
               selectedPraticiensFormateurs: place.praticiensFormateurs || [],
-              InstitutionId: place.InstitutionId || ''
+              InstitutionId: place.IDPlace || place.InstitutionId || ''
             };
           });
 
