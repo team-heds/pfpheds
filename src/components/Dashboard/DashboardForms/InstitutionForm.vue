@@ -137,9 +137,9 @@
 </template>
 
 <script>
-import { db } from '../../../../firebase.js';
+import { db , storage } from '../../../../firebase.js';
 import { ref, set, push } from "firebase/database";
-import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import {  ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import Steps from 'primevue/steps';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
@@ -230,6 +230,10 @@ export default {
         const newInstRef = push(ref(db, 'Institutions'));
         const newInstKey = newInstRef.key;
         this.institution.key = newInstKey;
+
+
+
+        // Si une image a été sélectionnée, on l'upload d'abord
 
         if (this.imageFile) {
           const storage = getStorage();
