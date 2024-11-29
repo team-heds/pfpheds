@@ -384,7 +384,7 @@ export default {
         // Utilisation de Promise.all pour récupérer les données en parallèle
         const [placesSnapshot, institutionsSnapshot, pfpSnapshot] = await Promise.all([
           get(placesRef),
-          get(institutionsRef),
+          get(institutionsRef), // Correction ici : utiliser institutionsRef au lieu de institutionsSnapshot
           get(pfpRef)
         ]);
 
@@ -403,7 +403,7 @@ export default {
           for (const placeKey in placesData) {
             if (Object.hasOwnProperty.call(placesData, placeKey)) {
               const place = placesData[placeKey];
-              const institution = institutionsData[place.InstitutionId] || {};
+              const institution = institutionsData[place.InstitutionId] || institutionsData[place.IDPlace] ||{};
               const repeatCount = parseInt(place[this.selectedPFP], 10);
 
               console.log(`Place ${placeKey} has ${repeatCount} place(s) for PFP ${this.selectedPFP}`);
