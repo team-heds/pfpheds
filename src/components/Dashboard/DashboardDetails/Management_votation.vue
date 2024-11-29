@@ -159,7 +159,8 @@ export default {
         .filter(etudiant => {
           const matchesClass = this.selectedClasses.includes(etudiant.Classe);
           const searchLower = this.search.toLowerCase();
-          const matchesSearch = (etudiant.Nom ? etudiant.Nom.toLowerCase().includes(searchLower) : false) || (etudiant.Prenom ? etudiant.Prenom.toLowerCase().includes(searchLower) : false);
+          const matchesSearch = (etudiant.Nom ? etudiant.Nom.toLowerCase().includes(searchLower) : false) || 
+                                (etudiant.Prenom ? etudiant.Prenom.toLowerCase().includes(searchLower) : false);
           return matchesClass && matchesSearch;
         })
         .sort((a, b) => a.Nom.localeCompare(b.Nom));
@@ -174,7 +175,6 @@ export default {
       return this.filteredEtudiants.filter(etudiant => etudiant.CasParticulier).length;
     }
   },
-
 
   watch: {
     selectedClasses(newClasses) {
@@ -282,6 +282,12 @@ export default {
             continue; // Ignorer cet étudiant si sa classe n'est pas sélectionnée
           }
 
+          // Vérifier si le selectedPFP est "true"
+          if (etudiant[this.selectedPFP] !== "true") {
+            console.log(`Student ${key} is not part of ${this.selectedPFP}.`);
+            continue; // Ignorer cet étudiant si selectedPFP n'est pas "true"
+          }
+
           // Initialisation de PFPinfo
           if (!etudiant.PFPinfo) {
             etudiant.PFPinfo = {};
@@ -384,7 +390,7 @@ export default {
         // Utilisation de Promise.all pour récupérer les données en parallèle
         const [placesSnapshot, institutionsSnapshot, pfpSnapshot] = await Promise.all([
           get(placesRef),
-          get(institutionsRef), // Correction ici : utiliser institutionsRef au lieu de institutionsSnapshot
+          get(institutionsRef), // Correction : utiliser institutionsRef au lieu de institutionsSnapshot
           get(pfpRef)
         ]);
 
@@ -403,8 +409,8 @@ export default {
           for (const placeKey in placesData) {
             if (Object.hasOwnProperty.call(placesData, placeKey)) {
               const place = placesData[placeKey];
-              const institution = institutionsData[place.InstitutionId] || institutionsData[place.IDPlace] ||{};
-              const repeatCount = parseInt(place[this.selectedPFP], 10);
+              const institution = institutionsData[place.InstitutionId] || {}; // Correction : utiliser InstitutionId
+              const repeatCount = parseInt(place[this.selectedPFP], 10) || 0;
 
               console.log(`Place ${placeKey} has ${repeatCount} place(s) for PFP ${this.selectedPFP}`);
 
