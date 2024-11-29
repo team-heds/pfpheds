@@ -16,7 +16,7 @@ jobs:
 
       # Étape 2 : Déployer via FTP
       - name: Deploy to FTP Server
-        uses: SamKirkland/FTP-Deploy-Action@4.5.0
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.0
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
