@@ -57,7 +57,7 @@
 <script>
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { ref, reactive, onMounted } from 'vue';
-import { getStorage, ref as storageRef, getDownloadURL } from "firebase/storage";
+import { ref as storageRef, getDownloadURL } from "firebase/storage";
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import ProfileInfo from '@/components/UserProfile/ProfileInfo.vue'
@@ -66,6 +66,7 @@ import DocumentsUserProfile from '@/components/UserProfile/DocumentsUserProfile.
 import ChatProfil from '@/components/UserProfile/ChatProfil.vue'
 import Calendar from '@/views/apps/Calendar.vue'
 import AppDarkAndLightMode from '@/layout/AppDarkAndLightMode.vue'
+import { storage} from '../../../../firebase.js';
 
 export default {
   name: 'Profile',
@@ -120,7 +121,6 @@ export default {
 
     // Méthode pour récupérer l'URL de la photo de profil depuis Firebase Storage
     const fetchProfilePhotoURL = async (uid) => {
-      const storage = getStorage();
       const avatarRef = storageRef(storage, `users/${uid}/profile-picture.jpg`); // Chemin où la photo de profil est stockée
 
       try {

@@ -51,9 +51,10 @@
 import { ref, onMounted } from 'vue';
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { getDatabase, ref as dbRef, get, set } from "firebase/database";
-import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import {  ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
+import {  storage} from '../../../../firebase.js';
 
 
 // Définir l'URL de l'avatar par défaut
@@ -111,7 +112,6 @@ const saveProfile = async () => {
       return;
     }
 
-    const storage = getStorage();
     const avatarRef = storageRef(storage, `Users/${authUser.uid}/profile-picture.jpg`);
 
     try {
