@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { ref as storageRef, listAll, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { storage} from '../../../../firebase.js';
+import { storage} from '../../../firebase.js';
 
 // Initialisation des données
 const folders = ref([

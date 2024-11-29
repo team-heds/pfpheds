@@ -54,7 +54,7 @@ import { getDatabase, ref as dbRef, get, set } from "firebase/database";
 import {  ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
-import {  storage} from '../../../../firebase.js';
+import {  storage} from '../../../firebase.js';
 
 
 // Définir l'URL de l'avatar par défaut

@@ -66,7 +66,7 @@ import DocumentsUserProfile from '@/components/UserProfile/DocumentsUserProfile.
 import ChatProfil from '@/components/UserProfile/ChatProfil.vue'
 import Calendar from '@/views/apps/Calendar.vue'
 import AppDarkAndLightMode from '@/layout/AppDarkAndLightMode.vue'
-import { storage} from '../../../../firebase.js';
+import { storage} from '../../../firebase.js';
 
 export default {
   name: 'Profile',
