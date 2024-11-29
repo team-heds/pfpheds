@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { ref as dbRef, get as dbGet } from 'firebase/database';
+import { onAuthStateChanged } from 'firebase/auth';
 import { db, auth } from '../firebase'; // Import your Firebase configuration
 
 // Import your components
@@ -107,11 +108,22 @@ const router = createRouter({
   routes
 });
 
-// Add navigation guard
 
 
-// Add navigation guard
+// Ajouter un guard de navigation
+let isAuthStateChecked = false;
+
 router.beforeEach(async (to, from, next) => {
+  // Vérifiez si l'état d'authentification est déjà récupéré
+  if (!isAuthStateChecked) {
+    await new Promise((resolve) => {
+      onAuthStateChanged(auth, (user) => {
+        isAuthStateChecked = true;
+        resolve(user); // Continue une fois que l'état est chargé
+      });
+    });
+  }
+
   const user = auth.currentUser;
 
   if (to.matched.some(record => record.meta.requiresAuth)) {
@@ -124,31 +136,32 @@ router.beforeEach(async (to, from, next) => {
       if (roles) {
         const userRoles = Object.keys(roles).filter(role => roles[role]);
 
-        if (to.name === 'MentionGroupPage') {
-          const requiredGroup = to.params.group;
+        if (to.meta.requiredRole) {
+          const requiredRole = to.meta.requiredRole;
 
-          // Check if the user has a role that matches the required group
-          if (userRoles.includes(requiredGroup)) {
-            next();  // User has the required role, allow access
+          // Vérifiez si l'utilisateur a le rôle requis
+          if (userRoles.includes(requiredRole)) {
+            next(); // Autoriser l'accès
           } else {
-            alert('Access denied: You do not have the required permissions to view this page.');
-            next(false); // Prevent navigation
+            alert('Accès refusé : Vous n\'avez pas les permissions requises.');
+            next('/'); // Redirigez vers une page par défaut
           }
         } else {
-          next();  // If no specific role is required, allow access
+          next(); // Aucune vérification de rôle requise, autorisez l'accès
         }
       } else {
-        alert('Access denied: No roles found.');
-        next(false); // Prevent navigation
+        alert('Accès refusé : Aucun rôle trouvé.');
+        next('/'); // Redirigez vers une page par défaut
       }
     } else {
-      alert('You must be logged in to access this page.');
-      next('/sign_in'); // Redirect to login page
+      alert('Vous devez être connecté pour accéder à cette page.');
+      next('/'); // Redirigez vers la page de connexion
     }
   } else {
-    next();  // If no authentication is required, proceed
+    next(); // Aucune authentification requise, autorisez l'accès
   }
 });
+
 
 
 export default router;

@@ -1,8 +1,8 @@
 <template>
   <div>
     <div class="grid">
-      <div class="col-12">
-        <div class="card">
+      <div class="col-12 w-full">
+        <div class="card w-full">
           <h5>Profil de l'utilisateur</h5>
           <div v-if="userProfile && userInfo">
             <p><strong>Nom :</strong> {{ userInfo.Name }}</p>
@@ -66,9 +66,9 @@
           </div>
         </div>
 
-        <div class="card mt-4">
+        <div class="card mt-4 w-full">
           <h5>Anciennes places (PFP)</h5>
-          <DataTable :value="[institution]" :rows="1" dataKey="id" :rowHover="true" :loading="loading" showGridlines
+          <DataTable :value="[institution]" :rows="1" dataKey="id" :rowHover="true" :loading="loading"
             tableStyle="min-width: 50rem">
             <template #empty> Aucune institution disponible. </template>
             <template #loading> Chargement des données de l'institution. Veuillez patienter. </template>
