@@ -106,6 +106,10 @@
       </div>
     </div>
   </div>
+  <div class="mt-4 text-center">
+  <button class="btn btn-secondary" @click="downloadAllStagesJSON">Télécharger le JSON</button>
+</div>
+
 </template>
 
 
@@ -166,6 +170,41 @@ export default {
     }
   },
   methods: {
+
+   // Méthode pour télécharger toutes les données de stages en un fichier JSON
+   downloadAllStagesJSON() {
+      // Crée un objet JSON avec les données des stages
+      const allStagesData = this.places.map(stage => ({
+        NomPlace: stage.NomP,
+        Domaine: stage.Domaine,
+        Lieu: stage.Lieu,
+        FR: stage.details?.FR || '',
+        ALL: stage.details?.ALL || '',
+        AIGU: stage.details?.AIGU || '',
+        REHAB: stage.details?.REHAB || '',
+        MSQ: stage.details?.MSQ || '',
+        SYSINT: stage.details?.SYSINT || '',
+        NEUROGER: stage.details?.NEUROGER || '',
+        AMBU: stage.details?.AMBU || ''
+      }));
+
+      // Convertir l'objet en une chaîne JSON
+      const jsonContent = JSON.stringify(allStagesData, null, 2);
+
+      // Créer un fichier Blob à partir de la chaîne JSON
+      const blob = new Blob([jsonContent], { type: "application/json" });
+
+      // Créer un lien pour télécharger le fichier
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "all_stages_data.json"; // Nom du fichier
+
+      // Simuler le clic sur le lien pour télécharger le fichier
+      link.click();
+
+      // Nettoyer l'URL pour éviter les fuites de mémoire
+      URL.revokeObjectURL(link.href);
+    },
     async fetchStudentsData() {
       if (!this.selectedPFP || this.selectedClasses.length === 0) return;
 
@@ -271,12 +310,15 @@ export default {
     const placesData = placesSnapshot.val();
     const institutionsData = institutionsSnapshot.val();
     const pfp2Data = pfp2Snapshot.val();
+    console.log(pfp2Data);
 
     if (placesData && institutionsData) {
       // Map over the keys of placesData to include IDPlace as a property
       const filteredPlaces = Object.keys(placesData)
         .map(key => ({ ...placesData[key], IDPlace: key }))
         .filter(place => place.PFP2 >= 1);
+
+
 
       this.places = [];
       const idPlacesArray = []; // Nouveau tableau pour stocker les id_place
@@ -289,9 +331,10 @@ export default {
 
         for (let i = 1; i <= repeatCount; i++) {
           const identifiant = place.IDPlace + '_' + i;
+          console.log(identifiant+ " - X");
           const takenBy = pfp2Data && pfp2Data[identifiant] ? pfp2Data[identifiant].takenBy : null;
 
-          console.log(place.IDPlace + "_" + i);
+          console.log(place.IDPlace + "_" + i +  institution.Name);
 
           const id_place = place.IDPlace + "_" + i;
 
@@ -307,7 +350,9 @@ export default {
             index: i
           });
         }
+
       });
+      console.log(filteredPlaces);
 
       // Imprimer le tableau des id_place
       console.log('Tableau des id_place :', idPlacesArray);

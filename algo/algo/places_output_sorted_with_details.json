@@ -1,0 +1,1199 @@
+{
+  "0_1": {
+    "place": "0_1",
+    "iteration": 1,
+    "studentSelections": 0,
+    "details": {
+      "NomPlace": "Actifisio",
+      "Lieu": "Fribourg",
+      "Domaine": "Ambu",
+      "FR": "true",
+      "REHAB": "true",
+      "MSQ": "true",
+      "NEUROGER": "true",
+      "AMBU": "true"
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [],
+    "studentMarge": -1
+  },
+  "3_1": {
+    "place": "3_1",
+    "iteration": 1,
+    "studentSelections": 4,
+    "details": {
+      "AIGU": false,
+      "ALL": "true",
+      "AMBU": false,
+      "Domaine": "Neuro",
+      "FR": "true",
+      "Lieu": "Crans-Montana",
+      "MSQ": false,
+      "NEUROGER": "true",
+      "NomPlace": "Berner Klinik Montana",
+      "REHAB": "true",
+      "SYSINT": false
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [
+      {
+        "studentId": "4XpuWt6oUEgmQ9IjEloUtqyd4c43",
+        "studentFirstName": "Aude",
+        "studentName": "Maret"
+      },
+      {
+        "studentId": "4qoWztDujictoqTEJvJK6xF1Zcr1",
+        "studentFirstName": "Fanny",
+        "studentName": "Mathieu"
+      },
+      {
+        "studentId": "AXP0X3rUqzbpG3thTZcuZ6Ax1no1",
+        "studentFirstName": "Gauthier",
+        "studentName": "Martig"
+      },
+      {
+        "studentId": "Jg1Ejqc46rbcTHBwOMRYZZRwbTE2",
+        "studentFirstName": "Fiona",
+        "studentName": "Nanchen"
+      }
+    ],
+    "taken": 4,
+    "studentMarge": 3
+  },
+  "4_1": {
+    "place": "4_1",
+    "iteration": 1,
+    "studentSelections": 1,
+    "details": {
+      "AIGU": false,
+      "ALL": false,
+      "AMBU": "true",
+      "Domaine": "Ambu",
+      "FR": "true",
+      "Lieu": "Sierre",
+      "MSQ": "true",
+      "NEUROGER": "true",
+      "NomPlace": "Cabinet de la Cour ",
+      "REHAB": "true",
+      "SYSINT": false
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [
+      {
+        "studentId": "8YkNXMIQd4OiFHX0Ljm4LKsbZ2A2",
+        "studentFirstName": "Rebecca",
+        "studentName": "Fryand"
+      }
+    ],
+    "taken": 1,
+    "studentMarge": 0
+  },
+  "6_1": {
+    "place": "6_1",
+    "iteration": 1,
+    "studentSelections": 0,
+    "details": {
+      "NomPlace": "Cabinet Dynaphyz",
+      "Lieu": "Bulle",
+      "Domaine": "Ambu",
+      "FR": "true",
+      "REHAB": "true",
+      "MSQ": "true",
+      "NEUROGER": "true",
+      "AMBU": "true"
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [],
+    "studentMarge": -1
+  },
+  "9_1": {
+    "place": "9_1",
+    "iteration": 1,
+    "studentSelections": 1,
+    "details": {
+      "AIGU": false,
+      "ALL": false,
+      "AMBU": "true",
+      "Domaine": "Ambu",
+      "FR": "true",
+      "Lieu": "Sierre",
+      "MSQ": "true",
+      "NEUROGER": "true",
+      "NomPlace": "CareConnex Sàrl",
+      "REHAB": "true",
+      "SYSINT": false
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [
+      {
+        "studentId": "A5gF87EUo6NdCaKoemDLN5V4gkF2",
+        "studentFirstName": "Sarah",
+        "studentName": "Robyr"
+      }
+    ],
+    "taken": 1,
+    "studentMarge": 0
+  },
+  "13_1": {
+    "place": "13_1",
+    "iteration": 2,
+    "studentSelections": 1,
+    "details": {
+      "AIGU": false,
+      "ALL": false,
+      "AMBU": false,
+      "Domaine": "Ortho",
+      "FR": "true",
+      "Lieu": "Sion",
+      "MSQ": "true",
+      "NEUROGER": false,
+      "NomPlace": "Clinique romande de réadaptation (CRR) - SUVA ",
+      "REHAB": "true",
+      "SYSINT": false
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [
+      {
+        "studentId": "sJ0z0k4idEg6PMCnMrjW3lho9cs1",
+        "studentFirstName": "Leanne",
+        "studentName": "Murith"
+      }
+    ],
+    "taken": 1,
+    "studentMarge": -1
+  },
+  "14_1": {
+    "place": "14_1",
+    "iteration": 1,
+    "studentSelections": 1,
+    "details": {
+      "AIGU": false,
+      "ALL": false,
+      "AMBU": false,
+      "Domaine": "Para - Tetra",
+      "FR": "true",
+      "Lieu": "Sion",
+      "MSQ": false,
+      "NEUROGER": "true",
+      "NomPlace": "Clinique romande de réadaptation (CRR) - SUVA ",
+      "REHAB": "true",
+      "SYSINT": false
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [
+      {
+        "studentId": "db0aQCgPMGgusm21XWqJ6RkXRvU2",
+        "studentFirstName": "Diane",
+        "studentName": "Doyen"
+      }
+    ],
+    "taken": 1,
+    "studentMarge": 0
+  },
+  "15_1": {
+    "place": "15_1",
+    "iteration": 1,
+    "studentSelections": 0,
+    "details": {
+      "NomPlace": "FC Sion",
+      "Lieu": "Martigny",
+      "Domaine": "Ambu",
+      "FR": "true",
+      "MSQ": "true",
+      "AMBU": "true"
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [],
+    "studentMarge": -1
+  },
+  "16_1": {
+    "place": "16_1",
+    "iteration": 1,
+    "studentSelections": 0,
+    "details": {
+      "NomPlace": "Gesundheitszentrum Physiotherapie Saastal GmbH",
+      "Lieu": "Saas-Grund",
+      "Domaine": "Ambu",
+      "REHAB": "true",
+      "MSQ": "true",
+      "NEUROGER": "true",
+      "AMBU": "true",
+      "ALL": "true"
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [],
+    "studentMarge": -1
+  },
+  "17_1": {
+    "place": "17_1",
+    "iteration": 1,
+    "studentSelections": 0,
+    "details": {
+      "NomPlace": "Clinique de Crans-Montana - HCUGE",
+      "Lieu": "Montana",
+      "Domaine": "Ortho - Psychosomatique",
+      "FR": "true",
+      "REHAB": "true",
+      "MSQ": "true"
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [],
+    "studentMarge": -1
+  },
+  "18_1": {
+    "place": "18_1",
+    "iteration": 1,
+    "studentSelections": 2,
+    "details": {
+      "AIGU": "true",
+      "ALL": false,
+      "AMBU": false,
+      "Domaine": "Med",
+      "FR": "true",
+      "Lieu": "Fribourg",
+      "MSQ": false,
+      "NEUROGER": false,
+      "NomPlace": "Hôpital Fribourgeois (HFR) - site de Fribourg ",
+      "REHAB": false,
+      "SYSINT": "true"
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [
+      {
+        "studentId": "hZTRrS8UMrfybYXKulfk1pI03jw2",
+        "studentFirstName": "Alexandre",
+        "studentName": "Lavanchy"
+      },
+      {
+        "studentId": "qMjlyqwW8wN9IsVapiUoCXrJjOG2",
+        "studentFirstName": "Zoé",
+        "studentName": "Duvoisin"
+      }
+    ],
+    "taken": 2,
+    "studentMarge": 1
+  },
+  "20_1": {
+    "place": "20_1",
+    "iteration": 1,
+    "studentSelections": 2,
+    "details": {
+      "AIGU": false,
+      "ALL": "true",
+      "AMBU": false,
+      "Domaine": "Neuro",
+      "FR": "true",
+      "Lieu": "Meyriez",
+      "MSQ": false,
+      "NEUROGER": "true",
+      "NomPlace": "Hôpital Fribourgeois (HFR) - site de Meyriez",
+      "REHAB": "true",
+      "SYSINT": false
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [
+      {
+        "studentId": "3XdluvWkn4NM3gFsvPNCtUDM5Oi1",
+        "studentFirstName": "Kristie",
+        "studentName": "Morard"
+      },
+      {
+        "studentId": "djz1MyC7JsYen1wobYSUQC4aeF92",
+        "studentFirstName": "Chenoa",
+        "studentName": "Peris"
+      }
+    ],
+    "taken": 2,
+    "studentMarge": 1
+  },
+  "22_1": {
+    "place": "22_1",
+    "iteration": 1,
+    "studentSelections": 1,
+    "details": {
+      "AIGU": "true",
+      "ALL": false,
+      "AMBU": false,
+      "Domaine": "Ger",
+      "FR": "true",
+      "Lieu": "Riaz",
+      "MSQ": false,
+      "NEUROGER": "true",
+      "NomPlace": "Hôpital Fribourgeois (HFR) - site de Riaz ",
+      "REHAB": false,
+      "SYSINT": false
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [
+      {
+        "studentId": "M8ySAiobcuStMPVUKB1SUjfZO2D2",
+        "studentFirstName": "Arthur",
+        "studentName": "Python"
+      }
+    ],
+    "taken": 1,
+    "studentMarge": 0
+  },
+  "26_1": {
+    "place": "26_1",
+    "iteration": 1,
+    "studentSelections": 2,
+    "details": {
+      "AIGU": "true",
+      "ALL": false,
+      "AMBU": "true",
+      "Domaine": "Ortho - Med - Ger",
+      "FR": "true",
+      "Lieu": "Saint-Imier",
+      "MSQ": "true",
+      "NEUROGER": "true",
+      "NomPlace": "Hôpital de Saint-Imier ",
+      "REHAB": false,
+      "SYSINT": "true"
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [
+      {
+        "studentId": "uwUTp2rxDHhytEej6vKfcVlOCY73",
+        "studentFirstName": "Laura",
+        "studentName": "Behrens"
+      },
+      {
+        "studentId": "wb6ciGEN2tVpmU0Ld5ftdVCy1Qi1",
+        "studentFirstName": "Méline",
+        "studentName": "Brix"
+      }
+    ],
+    "taken": 2,
+    "studentMarge": 1
+  },
+  "32_1": {
+    "place": "32_1",
+    "iteration": 2,
+    "studentSelections": 1,
+    "details": {
+      "AIGU": "true",
+      "ALL": false,
+      "AMBU": false,
+      "Domaine": "Med",
+      "FR": "true",
+      "Lieu": "Rennaz",
+      "MSQ": false,
+      "NEUROGER": false,
+      "NomPlace": "Hôpital Riviera-Chablais (HRC) - site de Rennaz",
+      "REHAB": "true",
+      "SYSINT": "true"
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [
+      {
+        "studentId": "zss86bdGCVgvYgWzkc8dK7qLNi92",
+        "studentFirstName": "Gregory",
+        "studentName": "Wahl"
+      }
+    ],
+    "taken": 1,
+    "studentMarge": -1
+  },
+  "34_1": {
+    "place": "34_1",
+    "iteration": 1,
+    "studentSelections": 0,
+    "details": {
+      "NomPlace": "Hôpital Riviera-Chablais - CGR Monthey",
+      "Lieu": "Monthey",
+      "Domaine": "Ger",
+      "FR": "true",
+      "REHAB": "true",
+      "NEUROGER": "true"
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [],
+    "studentMarge": -1
+  },
+  "35_1": {
+    "place": "35_1",
+    "iteration": 1,
+    "studentSelections": 3,
+    "details": {
+      "AIGU": "true",
+      "ALL": false,
+      "AMBU": false,
+      "Domaine": "Med",
+      "FR": "true",
+      "Lieu": "Martigny",
+      "MSQ": false,
+      "NEUROGER": false,
+      "NomPlace": "Hôpital du Valais (HVS) - site de Martigny ",
+      "REHAB": "true",
+      "SYSINT": "true"
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [
+      {
+        "studentId": "Na44fbbTNZUjn7JIw6bBgLmTGmB2",
+        "studentFirstName": "Alexandre",
+        "studentName": "Arrobas da Silva"
+      },
+      {
+        "studentId": "fgw7KyTqr4WAoThi0KjJtDRY7Ri2",
+        "studentFirstName": "Nadine",
+        "studentName": "Corminboeuf"
+      },
+      {
+        "studentId": "h21ZyIpknGUksWjxUDLo2Mthwy92",
+        "studentFirstName": "Maxime",
+        "studentName": "Schaer"
+      }
+    ],
+    "taken": 3,
+    "studentMarge": 2
+  },
+  "36_1": {
+    "place": "36_1",
+    "iteration": 1,
+    "studentSelections": 0,
+    "details": {
+      "NomPlace": "Hôpital du Valais (HVS) - site de Martigny ",
+      "Lieu": "Martigny",
+      "Domaine": "Ortho",
+      "FR": "true",
+      "REHAB": "true",
+      "MSQ": "true"
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [],
+    "studentMarge": -1
+  },
+  "37_1": {
+    "place": "37_1",
+    "iteration": 1,
+    "studentSelections": 0,
+    "details": {
+      "NomPlace": "Hôpital du Valais (HVS) - site de Martigny ",
+      "Lieu": "Martigny",
+      "Domaine": "Ger",
+      "FR": "true",
+      "REHAB": "true",
+      "NEUROGER": "true"
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [],
+    "studentMarge": -1
+  },
+  "39_1": {
+    "place": "39_1",
+    "iteration": 1,
+    "studentSelections": 0,
+    "details": {
+      "NomPlace": "Hôpital du Valais (HVS) - site de Sierre",
+      "Lieu": "Sierre",
+      "Domaine": "Ortho",
+      "FR": "true",
+      "REHAB": "true",
+      "MSQ": "true"
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [],
+    "studentMarge": -1
+  },
+  "40_1": {
+    "place": "40_1",
+    "iteration": 1,
+    "studentSelections": 1,
+    "details": {
+      "AIGU": "true",
+      "ALL": false,
+      "AMBU": false,
+      "Domaine": "Neuro - ped",
+      "FR": "true",
+      "Lieu": "Sion",
+      "MSQ": false,
+      "NEUROGER": "true",
+      "NomPlace": "Hôpital du Valais (HVS) - site de Sion",
+      "REHAB": false,
+      "SYSINT": false
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [
+      {
+        "studentId": "yn7VMvQNy8gz9G2SrHjsYIuCfxA2",
+        "studentFirstName": "Lou",
+        "studentName": "Pugin"
+      }
+    ],
+    "taken": 1,
+    "studentMarge": 0
+  },
+  "41_1": {
+    "place": "41_1",
+    "iteration": 2,
+    "studentSelections": 0,
+    "details": {
+      "NomPlace": "Hôpital du Valais (HVS) - site de Sion",
+      "Lieu": "Sion",
+      "Domaine": "Tournus SC med-chir - Cardio",
+      "FR": "true",
+      "SYSINT": "true"
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [],
+    "studentMarge": -2
+  },
+  "42_1": {
+    "place": "42_1",
+    "iteration": 1,
+    "studentSelections": 0,
+    "details": {
+      "NomPlace": "Hôpital du Valais (HVS) - site de Sion",
+      "Lieu": "Sion",
+      "Domaine": "Soins intensifs",
+      "FR": "true",
+      "SYSINT": "true"
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [],
+    "studentMarge": -1
+  },
+  "43_1": {
+    "place": "43_1",
+    "iteration": 1,
+    "studentSelections": 1,
+    "details": {
+      "AIGU": "true",
+      "ALL": false,
+      "AMBU": false,
+      "Domaine": "Chir viscerale, ORL et thoracique - Pneumo",
+      "FR": false,
+      "Lieu": "Sion",
+      "MSQ": "true",
+      "NEUROGER": false,
+      "NomPlace": "Hôpital du Valais (HVS) - site de Sion",
+      "REHAB": false,
+      "SYSINT": "true"
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [
+      {
+        "studentId": "NKzeoLK9hlSWLKHy858f84dZ7jz1",
+        "studentFirstName": "Emma",
+        "studentName": "Sebastian"
+      }
+    ],
+    "taken": 1,
+    "studentMarge": 0
+  },
+  "44_1": {
+    "place": "44_1",
+    "iteration": 1,
+    "studentSelections": 3,
+    "details": {
+      "AIGU": "true",
+      "ALL": "true",
+      "AMBU": false,
+      "Domaine": "Ortho",
+      "FR": false,
+      "Lieu": "Brigue-Glis",
+      "MSQ": "true",
+      "NEUROGER": "true",
+      "NomPlace": "Spital Zentrum Oberwallis (SZO) - site de Brig",
+      "REHAB": "true",
+      "SYSINT": false
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [
+      {
+        "studentId": "T70EwGWJMtZ22rcprSkqiOcPzTf1",
+        "studentFirstName": "Clémence",
+        "studentName": "Masserey"
+      },
+      {
+        "studentId": "i3VYPIfwLqTWfAL1E5HeHRRM5TE3",
+        "studentFirstName": "Hannah",
+        "studentName": "Theler"
+      },
+      {
+        "studentId": "lQVKbNduW7gdmCOBxC5KYnaIvGG3",
+        "studentFirstName": "Noah",
+        "studentName": "Imboden"
+      }
+    ],
+    "taken": 3,
+    "studentMarge": 2
+  },
+  "45_1": {
+    "place": "45_1",
+    "iteration": 2,
+    "studentSelections": 0,
+    "details": {
+      "NomPlace": "Hôpital du Valais - St-Amé",
+      "Lieu": "Saint-Maurice",
+      "Domaine": "Ger",
+      "FR": "true",
+      "REHAB": "true",
+      "NEUROGER": "true"
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [],
+    "studentMarge": -2
+  },
+  "49_1": {
+    "place": "49_1",
+    "iteration": 3,
+    "studentSelections": 6,
+    "details": {
+      "AIGU": false,
+      "ALL": "true",
+      "AMBU": false,
+      "Domaine": "Ortho",
+      "FR": "true",
+      "Lieu": "Loèche-les-Bains",
+      "MSQ": "true",
+      "NEUROGER": false,
+      "NomPlace": "Leukerbad Clinic",
+      "REHAB": "true",
+      "SYSINT": false
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [
+      {
+        "studentId": "Hnqd1QWfsafGdmWBECGv7owgJFt2",
+        "studentFirstName": "Sarah",
+        "studentName": "Leal Castanheira"
+      },
+      {
+        "studentId": "R5PCIOnQeUhRSyFRTI9fg0Wp8p23",
+        "studentFirstName": "Cynthia",
+        "studentName": "Peronetti"
+      },
+      {
+        "studentId": "SodSajGZ6lhfjjwB8YB4pMYT3hZ2",
+        "studentFirstName": "Alexis",
+        "studentName": "Coty"
+      },
+      {
+        "studentId": "XK3sK3I48cMs89evbLhJZwBNlS92",
+        "studentFirstName": "Amandine",
+        "studentName": "Michellod"
+      },
+      {
+        "studentId": "XQtDBAPWalffkax0p7ml1k0yOtr2",
+        "studentFirstName": "Quentin",
+        "studentName": "Egger"
+      },
+      {
+        "studentId": "fE3EIKzXzKd3e7k8xoye5uc3PPd2",
+        "studentFirstName": "Léane",
+        "studentName": "Métroz"
+      }
+    ],
+    "taken": 6,
+    "studentMarge": 3
+  },
+  "50_1": {
+    "place": "50_1",
+    "iteration": 1,
+    "studentSelections": 4,
+    "details": {
+      "AIGU": false,
+      "ALL": "true",
+      "AMBU": false,
+      "Domaine": "Ortho - Med",
+      "FR": "true",
+      "Lieu": "Crans-Montana",
+      "MSQ": "true",
+      "NEUROGER": false,
+      "NomPlace": "Luzerner Hohenklinik Montana",
+      "REHAB": "true",
+      "SYSINT": "true"
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [
+      {
+        "studentId": "AaVsgnDJcfc4ZG8BwfCezt1VSZA3",
+        "studentFirstName": "Andrei Eric",
+        "studentName": "Dubois"
+      },
+      {
+        "studentId": "RY3eRRvuMhcM10siGR3QdhIHBI42",
+        "studentFirstName": "Mandy",
+        "studentName": "Narbel"
+      },
+      {
+        "studentId": "atQ2mk9k2lUYzt9nrJgwsjyzz702",
+        "studentFirstName": "Quentin",
+        "studentName": "Sarrasin"
+      },
+      {
+        "studentId": "kBlGnRSNhgaQSTPumpAz4jZ7pgq2",
+        "studentFirstName": "Steve",
+        "studentName": "Bagnoud"
+      }
+    ],
+    "taken": 4,
+    "studentMarge": 3
+  },
+  "51_1": {
+    "place": "51_1",
+    "iteration": 1,
+    "studentSelections": 3,
+    "details": {
+      "AIGU": true,
+      "ALL": false,
+      "AMBU": "true",
+      "Domaine": "Ambu",
+      "FR": "true",
+      "Lieu": "Sion",
+      "MSQ": "true",
+      "NEUROGER": "true",
+      "NomPlace": "Medsport - Sion",
+      "REHAB": false,
+      "SYSINT": false
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [
+      {
+        "studentId": "WwfAPnGOElWCCprK8J9QpARedqV2",
+        "studentFirstName": "Rosalie",
+        "studentName": "Menoud"
+      },
+      {
+        "studentId": "YiI50LxSiZYDXMtiCNf6kwEWSQ42",
+        "studentFirstName": "Théo",
+        "studentName": "Filippini"
+      },
+      {
+        "studentId": "lRjmWjDaAUcsqHli7A3rfvAazgl2",
+        "studentFirstName": "Stella",
+        "studentName": "Bonvin"
+      }
+    ],
+    "taken": 3,
+    "studentMarge": 2
+  },
+  "52_1": {
+    "place": "52_1",
+    "iteration": 1,
+    "studentSelections": 2,
+    "details": {
+      "AIGU": "true",
+      "ALL": false,
+      "AMBU": "true",
+      "Domaine": "Ambu",
+      "FR": "true",
+      "Lieu": "Sierre",
+      "MSQ": "true",
+      "NEUROGER": "true",
+      "NomPlace": "Medsport - Sierre",
+      "REHAB": false,
+      "SYSINT": false
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [
+      {
+        "studentId": "H4RtKMKXpYhJkTOTOOm62ANGNAo2",
+        "studentFirstName": "Baptiste",
+        "studentName": "Neuhaus"
+      },
+      {
+        "studentId": "ta5fEsMcBHV64fLfjy7knGlQVd93",
+        "studentFirstName": "Leonie",
+        "studentName": "Dennda"
+      }
+    ],
+    "taken": 2,
+    "studentMarge": 1
+  },
+  "55_1": {
+    "place": "55_1",
+    "iteration": 1,
+    "studentSelections": 0,
+    "details": {
+      "NomPlace": "Physio Clinics - site de Collombey",
+      "Lieu": "Collombey-Muraz",
+      "Domaine": "Ambu",
+      "FR": "true",
+      "REHAB": "true",
+      "MSQ": "true",
+      "NEUROGER": "true",
+      "AMBU": "true"
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [],
+    "studentMarge": -1
+  },
+  "56_1": {
+    "place": "56_1",
+    "iteration": 1,
+    "studentSelections": 1,
+    "details": {
+      "AIGU": false,
+      "ALL": "true",
+      "AMBU": "true",
+      "Domaine": "Ambu",
+      "FR": false,
+      "Lieu": "Brigue-Glis",
+      "MSQ": "true",
+      "NEUROGER": "true",
+      "NomPlace": "Physio Life",
+      "REHAB": "true",
+      "SYSINT": false
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [
+      {
+        "studentId": "yWShM6jbuNcck2CfI0ihEtckesW2",
+        "studentFirstName": "Lucie",
+        "studentName": "Rey"
+      }
+    ],
+    "taken": 1,
+    "studentMarge": 0
+  },
+  "59_1": {
+    "place": "59_1",
+    "iteration": 1,
+    "studentSelections": 0,
+    "details": {
+      "NomPlace": "PhysioAbbet SA",
+      "Lieu": "Martigny",
+      "Domaine": "Ambu",
+      "FR": "true",
+      "REHAB": "true",
+      "MSQ": "true",
+      "NEUROGER": "true",
+      "AMBU": "true"
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [],
+    "studentMarge": -1
+  },
+  "62_1": {
+    "place": "62_1",
+    "iteration": 1,
+    "studentSelections": 0,
+    "details": {
+      "NomPlace": "Physiothérapie Amacker-Etter Sàrl",
+      "Lieu": "Sion",
+      "Domaine": "Ambu",
+      "FR": "true",
+      "REHAB": "true",
+      "MSQ": "true",
+      "NEUROGER": "true",
+      "AMBU": "true"
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [],
+    "studentMarge": -1
+  },
+  "63_1": {
+    "place": "63_1",
+    "iteration": 1,
+    "studentSelections": 1,
+    "details": {
+      "AIGU": false,
+      "ALL": "true",
+      "AMBU": "true",
+      "Domaine": "Ambu",
+      "FR": false,
+      "Lieu": "Egerkingen",
+      "MSQ": "true",
+      "NEUROGER": "true",
+      "NomPlace": "Physiotherapie & Trainingscenter Koch",
+      "REHAB": "true",
+      "SYSINT": false
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [
+      {
+        "studentId": "v0Bv2oLhCkhDJvVvXktZsmnj16U2",
+        "studentFirstName": "Léane",
+        "studentName": "Wagner"
+      }
+    ],
+    "taken": 1,
+    "studentMarge": 0
+  },
+  "78_1": {
+    "place": "78_1",
+    "iteration": 1,
+    "studentSelections": 0,
+    "details": {
+      "NomPlace": "Centre Rencontres",
+      "Lieu": "Courfaivre",
+      "Domaine": "Neuro",
+      "FR": "true",
+      "REHAB": "true",
+      "NEUROGER": "true"
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [],
+    "studentMarge": -1
+  },
+  "85_1": {
+    "place": "85_1",
+    "iteration": 1,
+    "studentSelections": 0,
+    "details": {
+      "NomPlace": "Therapiezentrum Stalden",
+      "Lieu": "Stalden",
+      "Domaine": "Ambu",
+      "REHAB": "true",
+      "MSQ": "true",
+      "AMBU": "true",
+      "ALL": "true"
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [],
+    "studentMarge": -1
+  },
+  "87_1": {
+    "place": "87_1",
+    "iteration": 1,
+    "studentSelections": 1,
+    "details": {
+      "AIGU": false,
+      "ALL": false,
+      "AMBU": "true",
+      "Domaine": "Ambu",
+      "FR": "true",
+      "Lieu": "Bulle",
+      "MSQ": "true",
+      "NEUROGER": "true",
+      "NomPlace": "Physio Optima Sàrl",
+      "REHAB": "true",
+      "SYSINT": false
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [
+      {
+        "studentId": "QzBEdtlEIsfsg3pD6B1adFBmZSG2",
+        "studentFirstName": "Barbara",
+        "studentName": "Palthey"
+      }
+    ],
+    "taken": 1,
+    "studentMarge": 0
+  },
+  "89_1": {
+    "place": "89_1",
+    "iteration": 1,
+    "studentSelections": 5,
+    "details": {
+      "AIGU": false,
+      "ALL": false,
+      "AMBU": "true",
+      "Domaine": "Ambu",
+      "FR": "true",
+      "Lieu": "Sierre",
+      "MSQ": "true",
+      "NEUROGER": "true",
+      "NomPlace": "Phoenix Physio ",
+      "REHAB": "true",
+      "SYSINT": "true"
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [
+      {
+        "studentId": "4Bf1mBR9HjcLeFcDeuEVRrGDaU63",
+        "studentFirstName": "Alexis",
+        "studentName": "Markianos"
+      },
+      {
+        "studentId": "6Kza76qZHxOb8TlrP068rdr93br1",
+        "studentFirstName": "Mickael",
+        "studentName": "Paciotti"
+      },
+      {
+        "studentId": "Vnf1L8xxhFheK6RE3P18MGzMDkc2",
+        "studentFirstName": "Théo",
+        "studentName": "Mayoraz"
+      },
+      {
+        "studentId": "mGwDQ6cu9BfI9d0sLUVdZBnoooB2",
+        "studentFirstName": "José Luis",
+        "studentName": "Espincho Carneiro"
+      },
+      {
+        "studentId": "nqvttcCyf3SL6YT1DJJ8GGM3MKz2",
+        "studentFirstName": "Maëlle",
+        "studentName": "Ruf"
+      }
+    ],
+    "taken": 5,
+    "studentMarge": 4
+  },
+  "92_1": {
+    "place": "92_1",
+    "iteration": 1,
+    "studentSelections": 3,
+    "details": {
+      "AIGU": false,
+      "ALL": false,
+      "AMBU": "true",
+      "Domaine": "Ambu",
+      "FR": "true",
+      "Lieu": "Le Châble",
+      "MSQ": "true",
+      "NEUROGER": "true",
+      "NomPlace": "Alp'Sports Thérapies SA",
+      "REHAB": "true",
+      "SYSINT": false
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [
+      {
+        "studentId": "PQKKiABo9oWhgcOKlmD5f1kKPoF3",
+        "studentFirstName": "Isaline",
+        "studentName": "Baechler"
+      },
+      {
+        "studentId": "aMpDSmIIsjZHIHJrVFGyKiLF94j2",
+        "studentFirstName": "Céline",
+        "studentName": "Claivaz"
+      },
+      {
+        "studentId": "ugBbi96TQGRuQLKFwT43qJHa4za2",
+        "studentFirstName": "Céline",
+        "studentName": "Frossard"
+      }
+    ],
+    "taken": 3,
+    "studentMarge": 2
+  },
+  "94_1": {
+    "place": "94_1",
+    "iteration": 1,
+    "studentSelections": 0,
+    "details": {
+      "NomPlace": "Cabinet des Arcades",
+      "Lieu": "Bramois",
+      "Domaine": "Ambu",
+      "FR": "true",
+      "REHAB": "true",
+      "MSQ": "true",
+      "NEUROGER": "true",
+      "AMBU": "true"
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [],
+    "studentMarge": -1
+  },
+  "95_1": {
+    "place": "95_1",
+    "iteration": 1,
+    "studentSelections": 1,
+    "details": {
+      "AIGU": false,
+      "ALL": "true",
+      "AMBU": "true",
+      "Domaine": "Ambu",
+      "FR": false,
+      "Lieu": "Brig",
+      "MSQ": "true",
+      "NEUROGER": "true",
+      "NomPlace": "PhysioPlusAqua GmbH",
+      "REHAB": "true",
+      "SYSINT": false
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [
+      {
+        "studentId": "KplEdkaz5na6IzzQUFxy8ldozMA2",
+        "studentFirstName": "Michelle",
+        "studentName": "Schär"
+      }
+    ],
+    "taken": 1,
+    "studentMarge": 0
+  },
+  "101_1": {
+    "place": "101_1",
+    "iteration": 1,
+    "studentSelections": 2,
+    "details": {
+      "AIGU": "true",
+      "ALL": false,
+      "AMBU": false,
+      "Domaine": "Cardio-respiratoire (DFME-BH + NHE)",
+      "FR": "true",
+      "Lieu": "Lausanne",
+      "MSQ": false,
+      "NEUROGER": false,
+      "NomPlace": "CHUV",
+      "REHAB": false,
+      "SYSINT": "true"
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [
+      {
+        "studentId": "VO9wOi3JGvVchoaQvtNTidOABe03",
+        "studentFirstName": "Romain",
+        "studentName": "de Pury"
+      },
+      {
+        "studentId": "tc2VPj6NxHQyXqO9cxgs1VvCH9A2",
+        "studentFirstName": "Camille",
+        "studentName": "Monnier"
+      }
+    ],
+    "taken": 2,
+    "studentMarge": 1
+  },
+  "38_1": {
+    "place": "38_1",
+    "iteration": 0,
+    "studentSelections": 1,
+    "taken": 1,
+    "details": {
+      "AIGU": false,
+      "ALL": false,
+      "AMBU": false,
+      "Domaine": "Ger",
+      "FR": "true",
+      "Lieu": "Sierre",
+      "MSQ": false,
+      "NEUROGER": "true",
+      "NomPlace": "Hôpital du Valais (HVS) - site de Sierre",
+      "REHAB": "true",
+      "SYSINT": false
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [
+      {
+        "studentId": "AXP0X3rUqzbpG3thTZcuZ6Ax1no1",
+        "studentFirstName": "Gauthier",
+        "studentName": "Martig"
+      }
+    ],
+    "studentMarge": 1
+  },
+  "28_1": {
+    "place": "28_1",
+    "iteration": 0,
+    "studentSelections": 1,
+    "taken": 1,
+    "details": {
+      "AIGU": false,
+      "ALL": false,
+      "AMBU": false,
+      "Domaine": "Ortho - Ger",
+      "FR": "true",
+      "Lieu": "Porrentruy",
+      "MSQ": "true",
+      "NEUROGER": "true",
+      "NomPlace": "Hôpital du Jura - site de Porrentruy",
+      "REHAB": "true",
+      "SYSINT": false
+    },
+    "studentNoAvailable": 0,
+    "assignedStudents": [
+      {
+        "studentId": "NKzeoLK9hlSWLKHy858f84dZ7jz1",
+        "studentFirstName": "Emma",
+        "studentName": "Sebastian"
+      }
+    ],
+    "studentMarge": 1
+  }
+}

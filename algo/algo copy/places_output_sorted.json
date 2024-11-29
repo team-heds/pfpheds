@@ -1,0 +1,284 @@
+[
+  {
+    "place": "51_1",
+    "iteration": 1,
+    "studentSelections": 20,
+    "studentMarge": 19
+  },
+  {
+    "place": "89_1",
+    "iteration": 1,
+    "studentSelections": 20,
+    "studentMarge": 19
+  },
+  {
+    "place": "50_1",
+    "iteration": 1,
+    "studentSelections": 19,
+    "studentMarge": 18
+  },
+  {
+    "place": "52_1",
+    "iteration": 1,
+    "studentSelections": 17,
+    "studentMarge": 16
+  },
+  {
+    "place": "3_1",
+    "iteration": 1,
+    "studentSelections": 15,
+    "studentMarge": 14
+  },
+  {
+    "place": "49_1",
+    "iteration": 3,
+    "studentSelections": 16,
+    "studentMarge": 13
+  },
+  {
+    "place": "18_1",
+    "iteration": 1,
+    "studentSelections": 9,
+    "studentMarge": 8
+  },
+  {
+    "place": "35_1",
+    "iteration": 1,
+    "studentSelections": 9,
+    "studentMarge": 8
+  },
+  {
+    "place": "0_1",
+    "iteration": 1,
+    "studentSelections": 8,
+    "studentMarge": 7
+  },
+  {
+    "place": "4_1",
+    "iteration": 1,
+    "studentSelections": 8,
+    "studentMarge": 7
+  },
+  {
+    "place": "20_1",
+    "iteration": 1,
+    "studentSelections": 8,
+    "studentMarge": 7
+  },
+  {
+    "place": "40_1",
+    "iteration": 1,
+    "studentSelections": 8,
+    "studentMarge": 7
+  },
+  {
+    "place": "43_1",
+    "iteration": 1,
+    "studentSelections": 8,
+    "studentMarge": 7
+  },
+  {
+    "place": "101_1",
+    "iteration": 1,
+    "studentSelections": 8,
+    "studentMarge": 7
+  },
+  {
+    "place": "44_1",
+    "iteration": 1,
+    "studentSelections": 7,
+    "studentMarge": 6
+  },
+  {
+    "place": "6_1",
+    "iteration": 1,
+    "studentSelections": 6,
+    "studentMarge": 5
+  },
+  {
+    "place": "9_1",
+    "iteration": 1,
+    "studentSelections": 6,
+    "studentMarge": 5
+  },
+  {
+    "place": "41_1",
+    "iteration": 2,
+    "studentSelections": 7,
+    "studentMarge": 5
+  },
+  {
+    "place": "62_1",
+    "iteration": 1,
+    "studentSelections": 6,
+    "studentMarge": 5
+  },
+  {
+    "place": "95_1",
+    "iteration": 1,
+    "studentSelections": 6,
+    "studentMarge": 5
+  },
+  {
+    "place": "26_1",
+    "iteration": 1,
+    "studentSelections": 5,
+    "studentMarge": 4
+  },
+  {
+    "place": "32_1",
+    "iteration": 2,
+    "studentSelections": 6,
+    "studentMarge": 4
+  },
+  {
+    "place": "56_1",
+    "iteration": 1,
+    "studentSelections": 5,
+    "studentMarge": 4
+  },
+  {
+    "place": "59_1",
+    "iteration": 1,
+    "studentSelections": 5,
+    "studentMarge": 4
+  },
+  {
+    "place": "15_1",
+    "iteration": 1,
+    "studentSelections": 4,
+    "studentMarge": 3
+  },
+  {
+    "place": "55_1",
+    "iteration": 1,
+    "studentSelections": 4,
+    "studentMarge": 3
+  },
+  {
+    "place": "87_1",
+    "iteration": 1,
+    "studentSelections": 4,
+    "studentMarge": 3
+  },
+  {
+    "place": "92_1",
+    "iteration": 1,
+    "studentSelections": 4,
+    "studentMarge": 3
+  },
+  {
+    "place": "94_1",
+    "iteration": 1,
+    "studentSelections": 3,
+    "studentMarge": 2
+  },
+  {
+    "place": "14_1",
+    "iteration": 1,
+    "studentSelections": 2,
+    "studentMarge": 1
+  },
+  {
+    "place": "16_1",
+    "iteration": 1,
+    "studentSelections": 2,
+    "studentMarge": 1
+  },
+  {
+    "place": "22_1",
+    "iteration": 1,
+    "studentSelections": 2,
+    "studentMarge": 1
+  },
+  {
+    "place": "63_1",
+    "iteration": 1,
+    "studentSelections": 2,
+    "studentMarge": 1
+  },
+  {
+    "place": "85_1",
+    "iteration": 1,
+    "studentSelections": 2,
+    "studentMarge": 1
+  },
+  {
+    "place": "28_1",
+    "iteration": 1,
+    "studentSelections": 1,
+    "studentMarge": 0
+  },
+  {
+    "place": "38_1",
+    "iteration": 1,
+    "studentSelections": 1,
+    "studentMarge": 0
+  },
+  {
+    "place": "17_1",
+    "iteration": 1,
+    "studentSelections": 0,
+    "studentMarge": -1
+  },
+  {
+    "place": "34_1",
+    "iteration": 1,
+    "studentSelections": 0,
+    "studentMarge": -1
+  },
+  {
+    "place": "36_1",
+    "iteration": 2,
+    "studentSelections": 1,
+    "studentMarge": -1
+  },
+  {
+    "place": "37_1",
+    "iteration": 1,
+    "studentSelections": 0,
+    "studentMarge": -1
+  },
+  {
+    "place": "39_1",
+    "iteration": 1,
+    "studentSelections": 0,
+    "studentMarge": -1
+  },
+  {
+    "place": "42_1",
+    "iteration": 1,
+    "studentSelections": 0,
+    "studentMarge": -1
+  },
+  {
+    "place": "57_1",
+    "iteration": 1,
+    "studentSelections": 0,
+    "studentMarge": -1
+  },
+  {
+    "place": "78_1",
+    "iteration": 1,
+    "studentSelections": 0,
+    "studentMarge": -1
+  },
+  {
+    "place": "13_1",
+    "iteration": 3,
+    "studentSelections": 1,
+    "studentMarge": -2
+  },
+  {
+    "place": "45_1",
+    "iteration": 2,
+    "studentSelections": 0,
+    "studentMarge": -2
+  },
+  {
+    "place": "53_1",
+    "iteration": 2,
+    "studentSelections": 0,
+    "studentMarge": -2
+  }
+]

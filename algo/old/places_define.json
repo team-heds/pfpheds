@@ -1,0 +1,290 @@
+{
+  "20_1": {
+    "choice1": 2,
+    "choice2": 1,
+    "choice3": 3,
+    "choice4": 1,
+    "choice5": 1,
+    "total": 8
+  },
+  "55_1": {
+    "choice1": 0,
+    "choice2": 2,
+    "choice3": 0,
+    "choice4": 1,
+    "choice5": 1,
+    "total": 4
+  },
+  "9_1": {
+    "choice1": 1,
+    "choice2": 1,
+    "choice3": 2,
+    "choice4": 0,
+    "choice5": 2,
+    "total": 6
+  },
+  "6_1": {
+    "choice1": 0,
+    "choice2": 2,
+    "choice3": 0,
+    "choice4": 3,
+    "choice5": 1,
+    "total": 6
+  },
+  "92_1": {
+    "choice1": 3,
+    "choice2": 0,
+    "choice3": 0,
+    "choice4": 0,
+    "choice5": 1,
+    "total": 4
+  },
+  "89_1": {
+    "choice1": 5,
+    "choice2": 5,
+    "choice3": 2,
+    "choice4": 5,
+    "choice5": 3,
+    "total": 20
+  },
+  "50_1": {
+    "choice1": 4,
+    "choice2": 5,
+    "choice3": 7,
+    "choice4": 2,
+    "choice5": 2,
+    "total": 20
+  },
+  "3_1": {
+    "choice1": 4,
+    "choice2": 2,
+    "choice3": 6,
+    "choice4": 3,
+    "choice5": 1,
+    "total": 16
+  },
+  "51_1": {
+    "choice1": 4,
+    "choice2": 1,
+    "choice3": 4,
+    "choice4": 3,
+    "choice5": 8,
+    "total": 20
+  },
+  "59_1": {
+    "choice1": 0,
+    "choice2": 2,
+    "choice3": 1,
+    "choice4": 0,
+    "choice5": 2,
+    "total": 5
+  },
+  "41_1": {
+    "choice1": 0,
+    "choice2": 3,
+    "choice3": 2,
+    "choice4": 1,
+    "choice5": 1,
+    "total": 7
+  },
+  "35_1": {
+    "choice1": 3,
+    "choice2": 0,
+    "choice3": 1,
+    "choice4": 2,
+    "choice5": 3,
+    "total": 9
+  },
+  "49_1": {
+    "choice1": 6,
+    "choice2": 6,
+    "choice3": 2,
+    "choice4": 1,
+    "choice5": 1,
+    "total": 16
+  },
+  "62_1": {
+    "choice1": 0,
+    "choice2": 0,
+    "choice3": 1,
+    "choice4": 3,
+    "choice5": 3,
+    "total": 7
+  },
+  "4_1": {
+    "choice1": 1,
+    "choice2": 1,
+    "choice3": 0,
+    "choice4": 2,
+    "choice5": 4,
+    "total": 8
+  },
+  "44_1": {
+    "choice1": 3,
+    "choice2": 2,
+    "choice3": 1,
+    "choice4": 1,
+    "choice5": 0,
+    "total": 7
+  },
+  "52_1": {
+    "choice1": 2,
+    "choice2": 4,
+    "choice3": 3,
+    "choice4": 6,
+    "choice5": 2,
+    "total": 17
+  },
+  "94_1": {
+    "choice1": 0,
+    "choice2": 0,
+    "choice3": 2,
+    "choice4": 0,
+    "choice5": 1,
+    "total": 3
+  },
+  "101_1": {
+    "choice1": 2,
+    "choice2": 0,
+    "choice3": 2,
+    "choice4": 2,
+    "choice5": 2,
+    "total": 8
+  },
+  "18_1": {
+    "choice1": 2,
+    "choice2": 3,
+    "choice3": 1,
+    "choice4": 0,
+    "choice5": 3,
+    "total": 9
+  },
+  "14_1": {
+    "choice1": 1,
+    "choice2": 0,
+    "choice3": 1,
+    "choice4": 0,
+    "choice5": 0,
+    "total": 2
+  },
+  "87_1": {
+    "choice1": 1,
+    "choice2": 0,
+    "choice3": 1,
+    "choice4": 1,
+    "choice5": 1,
+    "total": 4
+  },
+  "43_1": {
+    "choice1": 1,
+    "choice2": 1,
+    "choice3": 0,
+    "choice4": 4,
+    "choice5": 2,
+    "total": 8
+  },
+  "95_1": {
+    "choice1": 0,
+    "choice2": 3,
+    "choice3": 2,
+    "choice4": 0,
+    "choice5": 0,
+    "total": 5
+  },
+  "56_1": {
+    "choice1": 1,
+    "choice2": 1,
+    "choice3": 1,
+    "choice4": 2,
+    "choice5": 0,
+    "total": 5
+  },
+  "63_1": {
+    "choice1": 2,
+    "choice2": 0,
+    "choice3": 0,
+    "choice4": 0,
+    "choice5": 0,
+    "total": 2
+  },
+  "22_1": {
+    "choice1": 0,
+    "choice2": 1,
+    "choice3": 0,
+    "choice4": 0,
+    "choice5": 1,
+    "total": 2
+  },
+  "28_1": {
+    "choice1": 0,
+    "choice2": 0,
+    "choice3": 1,
+    "choice4": 0,
+    "choice5": 0,
+    "total": 1
+  },
+  "15_1": {
+    "choice1": 0,
+    "choice2": 0,
+    "choice3": 1,
+    "choice4": 2,
+    "choice5": 1,
+    "total": 4
+  },
+  "32_1": {
+    "choice1": 1,
+    "choice2": 0,
+    "choice3": 2,
+    "choice4": 2,
+    "choice5": 1,
+    "total": 6
+  },
+  "0_1": {
+    "choice1": 0,
+    "choice2": 0,
+    "choice3": 3,
+    "choice4": 2,
+    "choice5": 3,
+    "total": 8
+  },
+  "85_1": {
+    "choice1": 0,
+    "choice2": 0,
+    "choice3": 0,
+    "choice4": 1,
+    "choice5": 1,
+    "total": 2
+  },
+  "40_1": {
+    "choice1": 1,
+    "choice2": 3,
+    "choice3": 1,
+    "choice4": 3,
+    "choice5": 0,
+    "total": 8
+  },
+  "26_1": {
+    "choice1": 2,
+    "choice2": 3,
+    "choice3": 0,
+    "choice4": 0,
+    "choice5": 0,
+    "total": 5
+  },
+  "16_1": {
+    "choice1": 0,
+    "choice2": 1,
+    "choice3": 0,
+    "choice4": 0,
+    "choice5": 1,
+    "total": 2
+  },
+  "13_1": {
+    "choice1": 1,
+    "choice2": 0,
+    "choice3": 0,
+    "choice4": 0,
+    "choice5": 0,
+    "total": 1
+  }
+}

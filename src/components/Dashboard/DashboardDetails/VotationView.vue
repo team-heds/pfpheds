@@ -87,6 +87,11 @@
         </div>
         <br><br><br><br>
       </div>
+
+      <div class="mt-4 text-center">
+</div>
+
+      <br><br><br><br>
     </div>
   </div>
 </template>
@@ -276,6 +281,9 @@ export default {
                 // Récupérer les résultats de votation pour déterminer les stages pris
                 this.fetchTakenStages();
               });
+              console.log("ds");
+              console.log(this.stages);
+
             }
           });
         }
@@ -375,6 +383,42 @@ export default {
   }
 },
 
+
+ // Méthode pour télécharger les données en fichier JSON
+ downloadJSON() {
+    // Crée un objet JSON avec les données de stages, y compris l'ID du stage
+    const stagesData = this.stages.map(stage => ({
+      IDPlace: stage.IDENTIFIANT, // Ajoute l'ID du stage
+      NomPlace: stage.NomPlace,
+      Lieu: stage.Lieu,
+      Domaine: stage.Domaine,
+      FR: stage.FR,
+      ALL: stage.ALL,
+      AIGU: stage.AIGU,
+      REHAB: stage.REHAB,
+      MSQ: stage.MSQ,
+      SYSINT: stage.SYSINT,
+      NEUROGER: stage.NEUROGER,
+      AMBU: stage.AMBU,
+    }));
+
+    // Convertir l'objet en une chaîne JSON
+    const jsonContent = JSON.stringify(stagesData, null, 2);
+
+    // Créer un fichier Blob à partir de la chaîne JSON
+    const blob = new Blob([jsonContent], { type: "application/json" });
+
+    // Créer un lien pour télécharger le fichier
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "stages_data.json"; // Nom du fichier
+
+    // Simuler le clic sur le lien pour télécharger le fichier
+    link.click();
+
+    // Nettoyer l'URL pour éviter les fuites de mémoire
+    URL.revokeObjectURL(link.href);
+  },
     async fetchVoteResult(studentId) {
       const votationRef = ref(db, `VotationPFP2/${studentId}`); // Adjust the path as needed
       const snapshot = await get(votationRef);
@@ -403,13 +447,13 @@ export default {
 
         return;
       }
-      console.log("avis 11");
+    //  console.log("avis 11");
     //   if (FR == "0") this.languageIssue = "FR";
      //  if (ALL == "0") this.languageIssue = "ALL";
 
       if (FR == "0") this.missingFields.push("FR");
       if (ALL == "0") this.missingFields.push("ALL");
-      console.log("avis b" + AMBU)
+  //    console.log("avis b" + AMBU)
       if (parseInt(AMBU) < 1 ) console.log("avis bug");
       if (AMBU === 0) this.missingFields.push("AMBU");
       if (MSQ === "0") this.missingFields.push("MSQ");
@@ -419,10 +463,10 @@ export default {
       if (REHAB == "0") this.missingFields.push("REHAB");
 
       if (this.languageIssue) {
-        console.log("avis lan uss");
+   //     console.log("avis lan uss");
         this.validationMessage = this.languageIssue;
       } else if (this.missingFields.length > 0) {
-        console.log("avis lan uss22");
+  //      console.log("avis lan uss22");
 
         this.validationMessage = `manque ${this.missingFields.join(", ")}`;
       } else {

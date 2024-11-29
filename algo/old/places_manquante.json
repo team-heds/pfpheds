@@ -1,0 +1,124 @@
+{
+  "13_1": {
+    "count": 1,
+    "occurrencesInAvailable": 3,
+    "NomPlace": "Clinique romande de réadaptation (CRR) - SUVA ",
+    "Lieu": "Sion",
+    "Domaine": "Ortho",
+    "Criteria": {
+      "FR": "true",
+      "REHAB": "true",
+      "MSQ": "true"
+    }
+  },
+  "17_1": {
+    "count": 0,
+    "occurrencesInAvailable": 1,
+    "NomPlace": "Clinique de Crans-Montana - HCUGE",
+    "Lieu": "Montana",
+    "Domaine": "Ortho - Psychosomatique",
+    "Criteria": {
+      "FR": "true",
+      "REHAB": "true",
+      "MSQ": "true"
+    }
+  },
+  "34_1": {
+    "count": 0,
+    "occurrencesInAvailable": 1,
+    "NomPlace": "Hôpital Riviera-Chablais - CGR Monthey",
+    "Lieu": "Monthey",
+    "Domaine": "Ger",
+    "Criteria": {
+      "FR": "true",
+      "AIGU": "true",
+      "NEUROGER": "true",
+      "REHAB": "true"
+    }
+  },
+  "36_1": {
+    "count": 0,
+    "occurrencesInAvailable": 2,
+    "NomPlace": "Hôpital du Valais (HVS) - site de Martigny ",
+    "Lieu": "Martigny",
+    "Domaine": "Ortho",
+    "Criteria": {
+      "FR": "true",
+      "AIGU": "true",
+      "REHAB": "true",
+      "MSQ": "true"
+    }
+  },
+  "37_1": {
+    "count": 0,
+    "occurrencesInAvailable": 1,
+    "NomPlace": "Hôpital du Valais (HVS) - site de Martigny ",
+    "Lieu": "Martigny",
+    "Domaine": "Ger",
+    "Criteria": {
+      "FR": "true",
+      "NEUROGER": "true",
+      "REHAB": "true"
+    }
+  },
+  "38_1": {
+    "count": 0,
+    "occurrencesInAvailable": 1,
+    "NomPlace": "Hôpital du Valais (HVS) - site de Sierre",
+    "Lieu": "Sierre",
+    "Domaine": "Ger",
+    "Criteria": {
+      "FR": "true",
+      "NEUROGER": "true",
+      "REHAB": "true"
+    }
+  },
+  "39_1": {
+    "count": 0,
+    "occurrencesInAvailable": 1,
+    "NomPlace": "Hôpital du Valais (HVS) - site de Sierre",
+    "Lieu": "Sierre",
+    "Domaine": "Ortho",
+    "Criteria": {
+      "FR": "true",
+      "REHAB": "true",
+      "MSQ": "true"
+    }
+  },
+  "42_1": {
+    "count": 0,
+    "occurrencesInAvailable": 1,
+    "NomPlace": "Hôpital du Valais (HVS) - site de Sion",
+    "Lieu": "Sion",
+    "Domaine": "Soins intensifs",
+    "Criteria": {
+      "FR": "true",
+      "AIGU": "true",
+      "SYSINT": "true"
+    }
+  },
+  "45_1": {
+    "count": 0,
+    "occurrencesInAvailable": 2,
+    "NomPlace": "Hôpital du Valais - St-Amé",
+    "Lieu": "Saint-Maurice",
+    "Domaine": "Ger",
+    "Criteria": {
+      "FR": "true",
+      "NEUROGER": "true",
+      "REHAB": "true"
+    }
+  },
+  "78_1": {
+    "count": 0,
+    "occurrencesInAvailable": 1,
+    "NomPlace": "Centre Rencontres",
+    "Lieu": "Courfaivre",
+    "Domaine": "Neuro",
+    "Criteria": {
+      "FR": "true",
+      "NEUROGER": "true",
+      "REHAB": "true"
+    }
+  }
+}

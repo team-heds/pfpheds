@@ -1,0 +1,58 @@
+{
+  "AXP0X3rUqzbpG3thTZcuZ6Ax1no1": {
+    "id": "AXP0X3rUqzbpG3thTZcuZ6Ax1no1",
+    "name": "Martig",
+    "firstName": "Gauthier",
+    "uniqueChoices": [
+      {
+        "choiceNumber": "choice5",
+        "Domaine": "Ger",
+        "Lieu": "Sierre",
+        "IDENTIFIANT": "38_1",
+        "NomP": "Hôpital du Valais (HVS) - site de Sierre - Ger - Sierre (1)"
+      }
+    ]
+  },
+  "NKzeoLK9hlSWLKHy858f84dZ7jz1": {
+    "id": "NKzeoLK9hlSWLKHy858f84dZ7jz1",
+    "name": "Sebastian",
+    "firstName": "Emma",
+    "uniqueChoices": [
+      {
+        "choiceNumber": "choice3",
+        "Domaine": "Ortho - Ger",
+        "Lieu": "Porrentruy",
+        "IDENTIFIANT": "28_1",
+        "NomP": "Hôpital du Jura - site de Porrentruy - Ortho - Ger - Porrentruy (1)"
+      }
+    ]
+  },
+  "kBlGnRSNhgaQSTPumpAz4jZ7pgq2": {
+    "id": "kBlGnRSNhgaQSTPumpAz4jZ7pgq2",
+    "name": "Bagnoud",
+    "firstName": "Steve",
+    "uniqueChoices": [
+      {
+        "choiceNumber": "choice4",
+        "Domaine": "Ortho",
+        "Lieu": "Martigny",
+        "IDENTIFIANT": "36_1",
+        "NomP": "Hôpital du Valais (HVS) - site de Martigny  - Ortho - Martigny (1)"
+      }
+    ]
+  },
+  "sJ0z0k4idEg6PMCnMrjW3lho9cs1": {
+    "id": "sJ0z0k4idEg6PMCnMrjW3lho9cs1",
+    "name": "Murith",
+    "firstName": "Leanne",
+    "uniqueChoices": [
+      {
+        "choiceNumber": "choice1",
+        "Domaine": "Ortho",
+        "Lieu": "Sion",
+        "IDENTIFIANT": "13_1",
+        "NomP": "Clinique romande de réadaptation (CRR) - SUVA  - Ortho - Sion (1)"
+      }
+    ]
+  }
+}
