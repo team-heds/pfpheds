@@ -1,9 +1,9 @@
 <template>
   <div>
     <Navbar />
+    <ResumStageUserProfile class="" />
     <div class="flex w-full">
-      <UserProfile class="w-5" />
-      <div class="container-fluid mt-4 w-8">
+      <div class="container-fluid mt-4 w-full">
         <!-- Section pour la validation -->
         <div v-if="currentStudent && selectedPFP && selectedClass" class="table-responsive mt-4">
           <div v-if="validationMessage" class="mt-4 text-center">
@@ -103,10 +103,12 @@ import { ref, onValue, set, get, update } from "firebase/database";
 import { onAuthStateChanged } from "firebase/auth";
 import Navbar from '@/components/Utils/Navbar.vue';
 import UserProfile from './UserProfile.vue';
+import ResumStageUserProfile from '@/components/UserProfile/ResumStageUserProfile.vue'
 
 export default {
   name: "VotationView",
   components: {
+    ResumStageUserProfile,
     Navbar,
     UserProfile
   },
