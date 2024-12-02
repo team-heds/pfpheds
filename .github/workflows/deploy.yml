@@ -1,0 +1,30 @@
+name: Deploy to FTP
+
+on:
+  push:
+    branches:
+      - main # Déclencher l'action sur la branche "main"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Étape 1 : Vérification du code
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Étape 2 : Installation des dépendances et build (si nécessaire)
+      - name: Install and Build
+        run: |
+          npm install
+          npm run build
+
+      # Étape 3 : Déployer vers le serveur FTP
+      - name: Deploy to FTP Server
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.0
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./dist/
