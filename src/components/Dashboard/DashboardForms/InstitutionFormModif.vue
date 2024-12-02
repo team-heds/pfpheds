@@ -149,9 +149,9 @@
 </template>
 
 <script>
-import { db } from '../../../../firebase.js';
+import { db ,storage} from '../../../../firebase.js';
 import { ref, onValue, update } from "firebase/database";
-import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import {  ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
@@ -200,7 +200,6 @@ export default {
         console.log('Starting institution update...');
         const instRef = ref(db, 'Institutions/' + this.$route.params.id);
 
-        const storage = getStorage();
 
         // Handle PDF upload (if a new PDF is selected)
         if (this.pdfFile) {

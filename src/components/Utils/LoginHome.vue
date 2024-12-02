@@ -1,18 +1,21 @@
 <template>
-  <div class="flex justify-content-center align-items-center h-screen bg-surface-ground">
+  <div class="flex flex-column lg:flex-row justify-content-center align-items-center h-screen bg-surface-ground px-2 lg:px-0">
     <!-- Conteneur principal -->
-    <div class="flex w-full max-w-7xl rounded-md overflow-hidden">
+    <div class="flex flex-column lg:flex-row w-full max-w-7xl rounded-md overflow-hidden">
       <!-- Section gauche -->
-      <div class="flex flex-column justify-content-center align-items-center w-6 text-white p-5">
-        <img src="/public/assets/images/FR-DE_HEdS_rvb_neg.png" alt="Logo" class="mb-3 h-15rem" />
+      <div class="flex flex-column justify-content-center align-items-center w-full lg:w-6 text-white p-5">
+        <img
+          src="/public/assets/images/FR-DE_HEdS_rvb_neg.png"
+          alt="Logo"
+          class="mb-3 h-8rem lg:h-15rem" />
       </div>
 
       <!-- Section droite -->
-      <div class="flex flex-column justify-content-center align-items-center w-3 p-7">
-        <h1 class="text-6xl ">La formation pratique, c’est par ici</h1>
+      <div class="flex flex-column justify-content-center align-items-center w-full lg:w-3 p-4 lg:p-7">
+        <h1 class="text-4xl lg:text-6xl text-left mb-4">La formation pratique, clé de votre avenir ou pas</h1>
 
         <!-- Formulaire de connexion -->
-        <form @submit.prevent="submitForm" class="w-full md:w-25rem">
+        <form @submit.prevent="submitForm" class="w-full max-w-25rem">
           <div class="mb-4">
             <InputText
               id="email"
@@ -23,13 +26,13 @@
             />
             <small v-if="emailError" class="p-error">Veuillez entrer une adresse e-mail valide.</small>
           </div>
-          <div class="flex align-items-center mb-4">
+          <div class="flex flex-column lg:flex-row align-items-center mb-4">
             <Password
               id="password"
               placeholder="Mot de passe"
               v-model="password"
               class="w-full"
-              inputClass="w-full md:w-25rem"
+              inputClass="w-full"
               :feedback="false"
               :class="{ 'p-invalid': passwordError }"
               toggleMask
@@ -44,7 +47,7 @@
         </form>
 
         <!-- Lien d'inscription -->
-        <p class="mt-4 text-sm">
+        <p class="mt-4 text-sm text-center">
           Vous n'avez pas de compte ?
           <a href="/" class="text-primary font-bold hover:underline">Inscrivez-vous</a>
         </p>
@@ -76,17 +79,8 @@ const toast = useToast();
 
 // Méthode pour gérer la soumission du formulaire
 const submitForm = async () => {
-  // Réinitialisation des erreurs
-  emailError.value = false;
-  passwordError.value = false;
-
-  // Validation des champs
-  if (!email.value || !email.value.includes("@")) {
-    emailError.value = true;
-  }
-  if (!password.value) {
-    passwordError.value = true;
-  }
+  emailError.value = !email.value || !email.value.includes("@");
+  passwordError.value = !password.value;
 
   if (emailError.value || passwordError.value) {
     toast.add({
@@ -99,37 +93,24 @@ const submitForm = async () => {
   }
 
   try {
-    // Authentification avec Firebase
     await signInWithEmailAndPassword(auth, email.value, password.value);
-
-    // Notification de succès
     toast.add({
       severity: "success",
       summary: "Connexion réussie",
       detail: "Vous êtes connecté ! Redirection en cours...",
       life: 3000,
     });
-
-    // Redirection après un délai
-    setTimeout(() => {
-      router.push("/feed");
-    }, 1500);
+    setTimeout(() => router.push("/feed"), 1500);
   } catch (error) {
-    // Gestion des erreurs Firebase
-    let errorMessage = "Une erreur est survenue.";
-    if (error.code === "auth/user-not-found") {
-      errorMessage = "Utilisateur introuvable.";
-    } else if (error.code === "auth/wrong-password") {
-      errorMessage = "Mot de passe incorrect.";
-    } else if (error.code === "auth/invalid-email") {
-      errorMessage = "Adresse e-mail invalide.";
-    }
-
-    // Notification d'erreur
+    const messages = {
+      "auth/user-not-found": "Utilisateur introuvable.",
+      "auth/wrong-password": "Mot de passe incorrect.",
+      "auth/invalid-email": "Adresse e-mail invalide.",
+    };
     toast.add({
       severity: "error",
       summary: "Erreur de connexion",
-      detail: errorMessage,
+      detail: messages[error.code] || "Une erreur est survenue.",
       life: 5000,
     });
   }
@@ -137,17 +118,28 @@ const submitForm = async () => {
 </script>
 
 <style scoped>
+/* Adaptations pour mobile */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 1.75rem;
+  }
+
+  img {
+    max-height: 8rem;
+  }
+}
+
 .p-password .p-password-icon {
   display: flex;
   align-items: center;
   justify-content: center;
   height: 100%;
   position: absolute;
-  right: 1rem; /* Ajuster l'espace par rapport au bord droit */
+  right: 1rem;
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-color);
-  font-size: 1.25rem; /* Ajustez la taille pour correspondre au champ */
+  font-size: 1.25rem;
   cursor: pointer;
 }
 

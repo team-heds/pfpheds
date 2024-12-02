@@ -1,7 +1,8 @@
 <script setup>
 import { ref, onMounted } from 'vue';
-import { getStorage, ref as storageRef, listAll, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref as storageRef, listAll, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { storage} from '../../../firebase.js';
 
 // Initialisation des données
 const folders = ref([
@@ -14,7 +15,6 @@ const selectedFolder = ref(null);  // Dossier sélectionné
 const files = ref([]);  // Fichiers dans le dossier sélectionné
 const subFolders = ref([]);  // Sous-dossiers dans le dossier sélectionné
 const uploadFiles = ref([]);  // Fichiers à uploader
-const storage = getStorage();  // Firebase Storage
 const currentUser = ref(null);  // Utilisateur courant
 const userFolderPath = ref('');  // Chemin de stockage spécifique à l'utilisateur
 
