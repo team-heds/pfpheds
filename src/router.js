@@ -51,6 +51,8 @@ import NewsFeed from '@/components/Social/NewsFeed.vue';
 import UserProfile from '@/components/Social/UserProfile.vue';
 import HashtagPage from '@/components/Social/HashtagPage.vue';
 import MentionGroupPage from '@/components/Social/MentionGroupPage.vue';
+import HistoriquePFP from '@/components/Home/HistoriquePFP.vue'
+import DocumentsPFP from '@/components/Home/DocumentsPFP.vue'
 
 // Define your routes
 const routes = [
@@ -100,6 +102,8 @@ const routes = [
   { path: '/:pathMatch(.*)*', component: Error404, name: 'Error404' },
   { path: '/listUser', component: ListUser, name: 'ListUser' },
   { path: '/votation_lese', component: VotationLese, name: 'VotationLese' },
+  { path: '/historique_pfp', component: HistoriquePFP, name: 'HistoriquePFP' },
+  { path: '/documents_pfp', component: DocumentsPFP, name: 'DocumentsPFP' },
 ];
 
 // Create router instance

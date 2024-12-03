@@ -14,14 +14,12 @@
         <div>
           <span class="post-date">{{ formatTimestamp(post.Timestamp) }}</span>
         </div>
-
       </div>
     </div>
 
     <!-- Contenu du post -->
     <div class="post-content p-3">
       <div v-if="post.Content" class="post-text">{{ post.Content }}</div>
-
       <!-- Si une seule image -->
       <img
         v-if="post.images && post.images.length === 1"

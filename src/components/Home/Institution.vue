@@ -52,7 +52,7 @@
         </div>
 
         <!-- Pagination des institutions -->
-        <Paginator :rows="itemsPerPage" :totalRecords="totalFilteredInstitutions" :rowsPerPageOptions="[12, 24, 36, 48, 60, 72, 84]" @page="onPageChange"></Paginator>
+        <Paginator :rows="itemsPerPage" :totalRecords="totalFilteredInstitutions" :rowsPerPageOptions="[12, 24, 36, 48, 60, 72, 84]" @page="onPageChange" class="justify-content-center" ></Paginator>
       </div>
     </div>
   </section>
@@ -63,12 +63,11 @@
 <script>
 import { db } from '../../../firebase.js';
 import { ref as dbRef, onValue } from "firebase/database";
-import AppDarkAndLightMode from '@/layout/AppDarkAndLightMode.vue';
 import Navbar from '@/components/Utils/Navbar.vue';
 import InputText from 'primevue/inputtext'; // Assurez-vous d'importer InputText pour la barre de recherche
 
 export default {
-  components: { Navbar, AppDarkAndLightMode, InputText },
+  components: { Navbar, InputText },
   data() {
     return {
       allInstitutions: [],  // Toutes les institutions récupérées depuis Firebase

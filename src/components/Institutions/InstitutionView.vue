@@ -1,6 +1,6 @@
 <template>
   <Navbar />
-  <div class=" p-4 shadow-2 border-round">
+  <div class=" p-4 border-round">
     <div class="flex justify-content-between flex-column-reverse md:flex-row align-items-center ml-8">
       <div>
         <div class="flex align-items-center text-900 font-medium text-6xl mb-2 pl-8 pr-8">
@@ -22,7 +22,7 @@
       </div>
     </div>
     <div class="text-center my-4">
-      <img :src="institutionDetails ? institutionDetails.ImageURL : 'https://eduport.webestica.com/assets/images/courses/4by3/21.jpg'" alt="Institution Image" class="w-100px institution-image shadow">
+      <img :src="institutionDetails ? institutionDetails.ImageURL : 'https://eduport.webestica.com/assets/images/courses/4by3/21.jpg'" alt="Institution Image" class="w-100px institution-image">
     </div>
     <div class="grid mb-4 justify-content-center">
       <div class="col-8 lg:col-5">

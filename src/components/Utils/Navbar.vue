@@ -21,6 +21,7 @@
                 :hoverBgColor="'var(--surface-hover)'"
                 :iconColor="'var(--primary-color)'"
                 @click="navigateTo('/feed')"
+
               />
             </li>
 

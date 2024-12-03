@@ -20,9 +20,9 @@
           <i class="pi pi-images link-icon"></i>
           <span>Historique des PFP</span>
         </li>
-        <li @click="goToSettings">
-          <i class="pi pi-cog link-icon"></i>
-          <span>Paramètres</span>
+        <li @click="goToDocumentPFP">
+          <i class="pi pi-file link-icon"></i>
+          <span>Documents PFP</span>
         </li>
         <li @click="goToPrivacy">
           <i class="pi pi-lock link-icon"></i>
@@ -126,10 +126,10 @@ export default {
       this.$router.push("/profile");
     },
     goToPfpHistory() {
-      this.$router.push("/profile");
+      this.$router.push("/historique_pfp");
     },
-    goToSettings() {
-      this.$router.push("/settings");
+    goToDocumentPFP() {
+      this.$router.push("/documents_pfp");
     },
     goToPrivacy() {
       this.$router.push("/privacy");
