@@ -3,11 +3,11 @@
     <!-- Profil utilisateur -->
     <div class="user-profile">
       <h4>
-        <Avatar
-          :label="userInitials"
-          class="mr-2"
-          size="large"
-          shape="circle"
+        <img
+          :src="userPhotoURL"
+          alt="Avatar"
+          class="p-mr-2"
+          style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;"
         />
         <a @click="goToProfile" class="profile-link">{{ userFullName }}</a>
       </h4>
@@ -23,10 +23,6 @@
         <li @click="goToDocumentPFP">
           <i class="pi pi-file link-icon"></i>
           <span>Documents PFP</span>
-        </li>
-        <li @click="goToPrivacy">
-          <i class="pi pi-lock link-icon"></i>
-          <span>Confidentialité</span>
         </li>
         <li @click="goToLogout">
           <i class="pi pi-sign-out link-icon"></i>
@@ -66,14 +62,17 @@ import Avatar from "primevue/avatar";
 import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 import { getDatabase, ref as dbRef, get } from "firebase/database";
 
+const defaultAvatar = '../../../public/assets/images/avatar/01.jpg';
+
 export default {
   name: "LeftSidebar",
   components: { Avatar },
   data() {
     return {
       user: {
-        Forname: "",
-        Name: "",
+        Prenom: "",
+        Nom: "",
+        PhotoURL: "" || defaultAvatar,
       },
       contacts: [
         {
@@ -96,7 +95,10 @@ export default {
   },
   computed: {
     userFullName() {
-      return `${this.user.Forname} ${this.user.Name}`.trim() || "Utilisateur";
+      return `${this.user.prenom} ${this.user.nom}`.trim() || "Utilisateur";
+    },
+    userPhotoURL() {
+      return this.user.PhotoURL;
     },
     userInitials() {
       const { Forname, Name } = this.user;
@@ -115,8 +117,9 @@ export default {
         const userData = snapshot.val();
         console.log("Utilisateur trouvé :", userData); // Debugging
         this.user = {
-          Forname: userData.Forname || "",
-          Name: userData.Name || "",
+          prenom: userData.Prenom || "",
+          nom: userData.Nom || "",
+          PhotoURL: userData.PhotoURL || defaultAvatar,
         };
       } else {
         console.log("Aucun utilisateur trouvé avec l'UID :", uid);
@@ -130,9 +133,6 @@ export default {
     },
     goToDocumentPFP() {
       this.$router.push("/documents_pfp");
-    },
-    goToPrivacy() {
-      this.$router.push("/privacy");
     },
     async goToLogout() {
       const auth = getAuth();

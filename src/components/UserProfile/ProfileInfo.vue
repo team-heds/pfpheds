@@ -1,13 +1,39 @@
 <template>
   <div class="filter-menu">
     <div class="p-fluid p-pt-4 p-pb-4">
-
       <div class="">
+        <!-- Affichage du composant CardNameProfile -->
         <CardNameProfile class="" />
 
+        <!-- Résumé du stage utilisateur -->
         <ResumStageUserProfile class="w-4" />
-      </div>
 
+        <!-- Section pour changer la photo de profil -->
+        <div class="p-field m-4 card w-4">
+          <label for="avatar-upload">Photo de profil actuelle :</label>
+          <div class="p-d-flex p-ai-center">
+            <img
+              :src="user.photoURL"
+              alt="Avatar"
+              class="p-mr-2"
+              style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover;"
+            />
+            <input
+              id="avatar-upload"
+              type="file"
+              accept="image/*"
+              @change="onAvatarChange"
+              class="p-ml-2"
+            />
+          </div>
+          <Button
+            label="Enregistrer"
+            class="p-mt-2 w-4"
+            @click="saveProfile"
+            icon="pi pi-save"
+          />
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -15,14 +41,12 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { getAuth, onAuthStateChanged } from "firebase/auth";
-import { getDatabase, ref as dbRef, get, set } from "firebase/database";
-import {  ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
-import InputText from 'primevue/inputtext';
+import { getDatabase, ref as dbRef, get, update } from "firebase/database";
+import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import Button from 'primevue/button';
-import {  storage} from '../../../firebase.js';
-import CardNameProfile from '@/components/Bibliotheque/Profile/CardNameProfile.vue'
-import ResumStageUserProfile from '@/components/UserProfile/ResumStageUserProfile.vue'
-
+import { storage } from '../../../firebase.js';
+import CardNameProfile from '@/components/Bibliotheque/Profile/CardNameProfile.vue';
+import ResumStageUserProfile from '@/components/UserProfile/ResumStageUserProfile.vue';
 
 // Définir l'URL de l'avatar par défaut
 const defaultAvatar = '../../../public/assets/images/avatar/01.jpg';
@@ -33,7 +57,7 @@ const user = ref({
   prenom: '',
   nom: '',
   bio: '',
-  photoURL: '',
+  photoURL: defaultAvatar,
   email: '',
   ville: ''
 });
@@ -57,7 +81,7 @@ const fetchUserProfile = async (email) => {
           email: userData.Mail || '',
           ville: userData.Ville || '',
           bio: userData.Biography || '',
-          photoURL: userData.photoURL || defaultAvatar
+          photoURL: userData.PhotoURL || defaultAvatar
         };
         return;
       }
@@ -65,13 +89,9 @@ const fetchUserProfile = async (email) => {
   }
 };
 
-// Méthode pour sauvegarder le profil utilisateur dans Firebase
+// Méthode pour sauvegarder uniquement la photo de profil dans Firebase
 const saveProfile = async () => {
-  const db = getDatabase();
-  const userRef = dbRef(db, `Users/${user.value.uid}`);
-
   if (selectedAvatarFile.value) {
-    // Vérification de l'authentification avant l'upload
     const auth = getAuth();
     const authUser = auth.currentUser;
     if (!authUser) {
@@ -79,34 +99,32 @@ const saveProfile = async () => {
       return;
     }
 
-    const avatarRef = storageRef(storage, `Users/${authUser.uid}/profile-picture.jpg`);
+    const avatarRef = storageRef(storage, `users/${authUser.uid}/profile-picture.jpg`);
 
     try {
       // Upload de l'avatar dans Firebase Storage
       await uploadBytes(avatarRef, selectedAvatarFile.value);
       const photoURL = await getDownloadURL(avatarRef);
 
-      // Mettre à jour l'URL de l'avatar dans le profil utilisateur
+      // Mettre à jour uniquement le champ `PhotoURL` dans la base Firebase
+      const db = getDatabase();
+      const userRef = dbRef(db, `Users/${user.value.uid}`);
+      await update(userRef, {
+        PhotoURL: photoURL
+      });
+
+      // Mettre à jour la photo affichée localement
       user.value.photoURL = photoURL;
+
+      alert('Photo de profil mise à jour avec succès');
     } catch (error) {
       console.error('Erreur lors de l\'upload de l\'avatar :', error);
       alert('Erreur lors de l\'upload de l\'avatar');
-      return;
     }
+  } else {
+    alert('Veuillez sélectionner une photo avant de sauvegarder.');
   }
-
-  await set(userRef, {
-    Prenom: user.value.prenom,
-    Nom: user.value.nom,
-    Mail: user.value.email,
-    Ville: user.value.ville,
-    Bio: user.value.bio,
-    PhotoURL: user.value.photoURL
-  });
-
-  alert('Profil mis à jour avec succès');
 };
-
 
 // Gérer le changement d'avatar
 const onAvatarChange = (event) => {
@@ -134,48 +152,19 @@ onMounted(() => {
   padding: 20px;
 }
 
-.table-dark-gray {
-  background-color: #343a40;
-  color: #fff;
+img {
+  border: 2px solid #ccc;
 }
 
-.table-dark-gray th,
-.table-dark-gray td {
-  border-color: #454d55;
+.p-mt-4 {
+  margin-top: 1rem;
 }
 
-.text-danger {
-  color: red !important;
+.p-mr-2 {
+  margin-right: 0.5rem;
 }
 
-.text-green-500 {
-  color: green !important;
-}
-
-.text-red-500 {
-  color: red !important;
-}
-
-.p-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.p-table th,
-.p-table td {
-  border: 1px solid #ccc;
-  padding: 8px;
-}
-
-.p-table th {
-  background-color: #f4f4f4;
-}
-
-.pi-check-circle {
-  color: green;
-}
-
-.pi-times-circle {
-  color: red;
+.p-ml-2 {
+  margin-left: 0.5rem;
 }
 </style>

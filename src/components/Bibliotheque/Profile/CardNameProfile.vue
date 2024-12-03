@@ -6,7 +6,7 @@
         <!-- Section Avatar (Image de profil) -->
         <div class="field m-2 col-12 md:col-6">
           <div class="flex align-items-center">
-            <img :src="user.photoURL || defaultAvatar" alt="Avatar" class="p-2" style="width: 150px; height: 150px; border-radius: 50%;" />
+            <img :src="user.photoURL || defaultAvatar" alt="Avatar" class="p-2" style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover;" />
             <h1 class="pl-4">{{user.prenom }} {{ user.nom }}</h1>
           </div>
         </div>
@@ -40,8 +40,6 @@ import { ref, onMounted } from 'vue';
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { getDatabase, ref as dbRef, get, set } from "firebase/database";
 import {  ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
-import InputText from 'primevue/inputtext';
-import Button from 'primevue/button';
 import {  storage} from '../../../../firebase.js';
 
 
@@ -73,12 +71,12 @@ const fetchUserProfile = async (email) => {
       if (userData.Mail && userData.Mail.toLowerCase() === email.toLowerCase()) {
         user.value = {
           uid: userId,
-          prenom: userData.Forname || '',
-          nom: userData.Name || '',
+          prenom: userData.Prenom || '',
+          nom: userData.Nom || '',
           email: userData.Mail || '',
           ville: userData.Ville || '',
           bio: userData.Biography || '',
-          photoURL: userData.photoURL || defaultAvatar
+          photoURL: userData.PhotoURL || defaultAvatar
         };
         return;
       }
