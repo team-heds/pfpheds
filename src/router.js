@@ -33,7 +33,6 @@ import PraticienFormateurForm from "@/components/Dashboard/DashboardForms/Pratic
 import PraticienFormateurFormModif from "@/components/Dashboard/DashboardForms/PraticienFormateurFormModif.vue";
 import PraticienFormateurList from "@/components/Dashboard/DashboardList/PraticienFormateurList.vue";
 import Faq from "@/components/Home/Faq.vue";
-import SignIn from "@/components/Utils/SignIn.vue";
 import SignUp from "@/components/Utils/SignUp.vue";
 import TermsOfUse from "@/components/Utils/TermsOfUse.vue";
 import InfoExterne from "@/components/Utils/InfoExterne.vue";
@@ -48,17 +47,17 @@ import ManagementPlace from '@/components/Dashboard/DashboardDetails/Management_
 import VotationLese from '@/components/Dashboard/DashboardDetails/VotationLese.vue';
 import LoginHome from '@/components/Utils/LoginHome.vue';
 import NewsFeed from '@/components/Social/NewsFeed.vue';
-import UserProfile from '@/components/Social/UserProfile.vue';
 import HashtagPage from '@/components/Social/HashtagPage.vue';
 import MentionGroupPage from '@/components/Social/MentionGroupPage.vue';
 import HistoriquePFP from '@/components/Home/HistoriquePFP.vue'
 import DocumentsPFP from '@/components/Home/DocumentsPFP.vue'
+import Index from '@/views/apps/tasklist/Index.vue'
+import IndexChat from '@/views/apps/chat/IndexChat.vue'
 
 // Define your routes
 const routes = [
   { path: '/', component: LoginHome, name: 'LoginHome',   props: true   }, // Fil d'actualité
   { path: '/feed', component: NewsFeed, name: 'NewsFeed',   props: true   }, // Fil d'actualité
-  { path: '/profile/:id', component: UserProfile, name: 'UserProfile', props: true }, // Profil de l'utilisateur
   { path: '/mention/:group', component: MentionGroupPage, name: 'MentionGroupPage', props: true, meta: { requiresAuth: true, requiredRole: true }},
   { path: '/hashtag/:hashtag', component: HashtagPage, name: 'HashtagPage', props: true },
   { path: '/home', component: HomePage, name: 'HomePage' },
@@ -69,7 +68,7 @@ const routes = [
   { path: '/map', component: Map, name: 'Map' },
   { path: '/institution', component: Institution, name: 'Institution' },
   { path: '/place', component: Place, name: 'Place' },
-  { path: '/profile', component: Profile, name: 'Profile' },
+  { path: '/profile/:id', component: Profile, name: 'Profile' },
   { path: '/admin', component: DashbordAdmin, name: 'DashbordAdmin' , meta: { requiresAuth: false, requiredRole: 'admin' }}, // à remodifier
   { path: '/institution_list', component: InstitutionList, name: 'InstitutionList' },
   { path: '/etudiant_list', component: EtudiantList, name: 'EtudiantList' },
@@ -104,6 +103,8 @@ const routes = [
   { path: '/votation_lese', component: VotationLese, name: 'VotationLese' },
   { path: '/historique_pfp', component: HistoriquePFP, name: 'HistoriquePFP' },
   { path: '/documents_pfp', component: DocumentsPFP, name: 'DocumentsPFP' },
+  { path: '/tasklist', component: Index, name: 'Index' },
+  { path: '/chat', component: IndexChat, name: 'IndexChat' },
 ];
 
 // Create router instance

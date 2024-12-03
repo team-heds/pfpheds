@@ -1,14 +1,14 @@
 <template>
   <div class="sidebar card">
     <!-- Profil utilisateur -->
-    <div class="user-profile">
-      <h4>
-        <img
-          :src="userPhotoURL"
-          alt="Avatar"
-          class="p-mr-2"
-          style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;"
-        />
+    <div class="user-profile flex">
+      <img
+        :src="userPhotoURL"
+        alt="Avatar"
+        class="m-2 col-6"
+        style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;"
+      />
+      <h4 class="m-2 mt-5">
         <a @click="goToProfile" class="profile-link">{{ userFullName }}</a>
       </h4>
     </div>
@@ -61,6 +61,7 @@
 import Avatar from "primevue/avatar";
 import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 import { getDatabase, ref as dbRef, get } from "firebase/database";
+import Profile from '@/components/Home/Profile.vue'
 
 const defaultAvatar = '../../../public/assets/images/avatar/01.jpg';
 
@@ -126,7 +127,7 @@ export default {
       }
     },
     goToProfile() {
-      this.$router.push("/profile");
+      this.$router.push("/profile/" + this.user.uid);
     },
     goToPfpHistory() {
       this.$router.push("/historique_pfp");

@@ -6,7 +6,7 @@
       <div class="post-author">
         <router-link
           v-if="post.IdUser"
-          :to="{ name: 'UserProfile', params: { id: post.IdUser } }"
+          :to="{ name: 'Profile', params: { id: post.IdUser } }"
         >
           <strong>{{ authorName }}</strong>
         </router-link>

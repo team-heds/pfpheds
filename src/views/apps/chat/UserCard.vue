@@ -1,34 +1,66 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, onMounted } from 'vue';
+import { getFirestore, collection, query, where, onSnapshot } from 'firebase/firestore';
 
+// Firebase Firestore
+const db = getFirestore();
+
+// Props
 const props = defineProps({
-    user: {
-        type: Object,
-        required: true
-    }
+  user: {
+    type: Object,
+    required: true
+  }
 });
 
-const lastmessage = computed(() => {
-    return props.user.messages[props.user.messages.length - 1].text;
+// Références réactives
+const messages = ref([]);
+
+// Charger les messages en temps réel pour l'utilisateur
+const loadMessages = async () => {
+  if (!props.user || !props.user.id) return;
+
+  const messagesCollection = collection(db, 'Messages');
+  const q = query(messagesCollection, where('conversationId', '==', props.user.id));
+
+  onSnapshot(q, (snapshot) => {
+    messages.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  });
+};
+
+// Calculer le dernier message
+const lastMessage = computed(() => {
+  if (messages.value.length > 0) {
+    return messages.value[messages.value.length - 1].text;
+  }
+  return 'No messages yet';
+});
+
+// Charger les messages lors du montage
+onMounted(() => {
+  loadMessages();
 });
 </script>
 
 <template>
-    <div class="flex flex-nowrap justify-content-between align-items-center border-1 surface-border border-round p-3 cursor-pointer select-none hover:surface-hover transition-colors transition-duration-150" tabindex="0">
-        <div class="flex align-items-center">
-            <div class="relative md:mr-3">
-                <img :src="'/demo/images/avatar/' + user.image" alt="user" class="w-3rem h-3rem border-circle shadow-4" />
-                <span
-                    class="w-1rem h-1rem border-circle border-2 surface-border absolute"
-                    :class="{ 'bg-green-400': user.status === 'active', 'bg-red-400': user.status === 'busy', 'bg-yellow-400': user.status === 'away' }"
-                    style="bottom: 2px; right: 2px"
-                ></span>
-            </div>
-            <div class="flex-column hidden md:flex">
-                <span class="text-900 font-semibold block">{{ user.name }}</span>
-                <span class="block text-600 text-overflow-ellipsis overflow-hidden white-space-nowrap w-10rem text-sm">{{ lastmessage }}</span>
-            </div>
-        </div>
-        <span class="text-700 font-semibold ml-auto hidden md:inline">{{ user.lastSeen }}</span>
+  <div class="flex flex-nowrap justify-content-between align-items-center border-1 surface-border border-round p-3 cursor-pointer select-none hover:surface-hover transition-colors transition-duration-150" tabindex="0">
+    <!-- Avatar utilisateur -->
+    <div class="flex align-items-center">
+      <div class="relative md:mr-3">
+        <img :src="'/demo/images/avatar/' + user.image" alt="user" class="w-3rem h-3rem border-circle shadow-4" />
+        <span
+          class="w-1rem h-1rem border-circle border-2 surface-border absolute"
+          :class="{ 'bg-green-400': user.status === 'active', 'bg-red-400': user.status === 'busy', 'bg-yellow-400': user.status === 'away' }"
+          style="bottom: 2px; right: 2px"
+        ></span>
+      </div>
+      <!-- Informations utilisateur -->
+      <div class="flex-column hidden md:flex">
+        <span class="text-900 font-semibold block">{{ user.name }}</span>
+        <span class="block text-600 text-overflow-ellipsis overflow-hidden white-space-nowrap w-10rem text-sm">{{ lastMessage }}</span>
+      </div>
     </div>
+    <!-- Dernière activité -->
+    <span class="text-700 font-semibold ml-auto hidden md:inline">{{ user.lastSeen }}</span>
+  </div>
 </template>

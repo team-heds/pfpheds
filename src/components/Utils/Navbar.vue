@@ -122,6 +122,9 @@
               :iconColor="'var(--primary-color)'"
               @click="toggleSidebar"
             />
+
+
+
             <!-- SwitchColor -->
             <SwitchColor />
           </div>
