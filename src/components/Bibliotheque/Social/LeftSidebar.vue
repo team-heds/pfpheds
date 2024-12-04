@@ -127,7 +127,7 @@ export default {
       }
     },
     goToProfile() {
-      this.$router.push("/profile/" + this.user.uid);
+      this.$router.push("/profile/' + user.uid");
     },
     goToPfpHistory() {
       this.$router.push("/historique_pfp");
