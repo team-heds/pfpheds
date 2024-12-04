@@ -24,10 +24,6 @@
           <i class="pi pi-file link-icon"></i>
           <span>Documents PFP</span>
         </li>
-        <li @click="goToLogout">
-          <i class="pi pi-sign-out link-icon"></i>
-          <span>Déconnexion</span>
-        </li>
       </ul>
     </div>
 
@@ -46,7 +42,6 @@
           :label="contact.initials"
           class="mr-2"
           size="large"
-          shape="circle"
         />
         <div class="contact-info">
           <span class="contact-name">{{ contact.name }}</span>

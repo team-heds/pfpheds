@@ -19,41 +19,45 @@
 
     <!-- Contenu du post -->
     <div class="post-content p-3">
-      <div v-if="post.Content" class="post-text">{{ post.Content }}</div>
-      <!-- Si une seule image -->
-      <img
-        v-if="post.images && post.images.length === 1"
-        :src="post.images[0]"
-        alt="Post Image"
-        class="post-image"
-      />
+      <!-- Texte -->
+      <div v-if="post.Content" class="post-text" v-html="post.Content"></div>
 
-      <!-- Si plusieurs images -->
-      <div v-if="post.images && post.images.length > 1" class="post-images">
+      <!-- Images -->
+      <div v-if="post.media && post.media.length > 0" class="post-media">
+        <!-- Une seule image -->
         <img
-          v-for="(image, index) in post.images"
-          :key="index"
-          :src="image"
-          alt="Post Image"
-          class="post-image-multiple"
+          v-if="post.media.length === 1"
+          :src="post.media[0]"
+          alt="Image du Post"
+          class="post-image"
         />
-      </div>
-
-      <!-- Texte + image(s) -->
-      <div v-if="post.Content && post.images && post.images.length > 0">
-        <img
-          v-for="(image, index) in post.images"
-          :key="index"
-          :src="image"
-          alt="Post Image"
-          class="post-image-multiple"
-        />
+        <!-- Plusieurs images -->
+        <div v-else class="post-images-grid">
+          <img
+            v-for="(image, index) in post.media"
+            :key="index"
+            :src="image"
+            alt="Image du Post"
+            class="post-image-grid-item"
+          />
+        </div>
       </div>
     </div>
 
-    <!-- Actions du post -->
-    <div class="post-actions">
-      <Button @click="toggleReplyForm" size="small">Répondre</Button>
+    <!-- Boutons d'action -->
+    <div class="post-actions p-3 flex align-items-center justify-content-between">
+      <div class="action-button" @click="toggleLike">
+        <i :class="isLiked ? 'pi pi-heart-fill' : 'pi pi-heart'" class="action-icon"></i>
+        <span>{{ likeCount }}</span>
+      </div>
+      <div class="action-button" @click="toggleReplyForm">
+        <i class="pi pi-comment action-icon"></i>
+        <span>{{ commentCount }}</span>
+      </div>
+      <div class="action-button" @click="sharePost">
+        <i class="pi pi-share-alt action-icon"></i>
+        <span>Partager</span>
+      </div>
     </div>
 
     <!-- Formulaire de réponse -->
@@ -71,7 +75,7 @@
 </template>
 
 <script>
-import { ref as dbRef, onValue, push, serverTimestamp } from "firebase/database";
+import { ref as dbRef, onValue, push, serverTimestamp, update } from "firebase/database";
 import { db } from "../../../firebase.js";
 import Textarea from "primevue/textarea";
 import Button from "primevue/button";
@@ -80,8 +84,14 @@ export default {
   name: "PostItem",
   components: { Textarea, Button },
   props: {
-    post: Object,
-    currentUser: Object,
+    post: {
+      type: Object,
+      required: true,
+    },
+    currentUser: {
+      type: Object,
+      required: true,
+    },
   },
   data() {
     return {
@@ -90,12 +100,17 @@ export default {
       defaultAvatar: new URL("@/assets/avatar/avatar99.png", import.meta.url).href,
       authorName: "",
       authorAvatarUrl: "",
+      isLiked: false,
+      likeCount: 0,
+      commentCount: 0,
     };
   },
   watch: {
     post: {
       handler() {
         this.fetchAuthorDetails();
+        this.checkLikeStatus();
+        this.loadCommentCount();
       },
       immediate: true,
     },
@@ -108,10 +123,10 @@ export default {
       onValue(userRef, (snapshot) => {
         const userData = snapshot.val();
         if (userData) {
-          this.authorName = userData.username || this.post.Author.split("@")[0];
-          this.authorAvatarUrl = userData.PhotoURL || this.defaultAvatar; // Utilisation de PhotoURL
+          this.authorName = userData.username || this.post.Author || "Utilisateur inconnu";
+          this.authorAvatarUrl = userData.PhotoURL || this.defaultAvatar;
         } else {
-          this.authorName = this.post.Author.split("@")[0];
+          this.authorName = this.post.Author || "Utilisateur inconnu";
           this.authorAvatarUrl = this.defaultAvatar;
         }
       });
@@ -130,9 +145,9 @@ export default {
 
       const newReply = {
         IdUser: this.currentUser.uid,
-        author: this.currentUser.email.split("@")[0],
-        content: this.replyContent,
-        timestamp: serverTimestamp(),
+        Author: this.currentUser.email.split("@")[0],
+        Content: this.replyContent,
+        Timestamp: serverTimestamp(),
       };
 
       const postRef = dbRef(db, `Posts/${this.post.id}/replies`);
@@ -145,6 +160,44 @@ export default {
       if (!timestamp) return "";
       const date = new Date(timestamp);
       return `${date.toLocaleDateString()} à ${date.toLocaleTimeString()}`;
+    },
+    checkLikeStatus() {
+      if (this.post.likes && this.currentUser) {
+        this.isLiked = !!this.post.likes[this.currentUser.uid];
+        this.likeCount = Object.keys(this.post.likes).length;
+      } else {
+        this.likeCount = 0;
+      }
+    },
+    toggleLike() {
+      if (!this.currentUser) return alert("Vous devez être connecté pour liker.");
+
+      const postLikesRef = dbRef(db, `Posts/${this.post.id}/likes`);
+      if (this.isLiked) {
+        const updates = {};
+        updates[this.currentUser.uid] = null;
+        update(postLikesRef, updates);
+      } else {
+        const updates = {};
+        updates[this.currentUser.uid] = true;
+        update(postLikesRef, updates);
+      }
+
+      this.isLiked = !this.isLiked;
+      this.likeCount += this.isLiked ? 1 : -1;
+    },
+    loadCommentCount() {
+      if (this.post.replies) {
+        this.commentCount = Object.keys(this.post.replies).length;
+      } else {
+        this.commentCount = 0;
+      }
+    },
+    sharePost() {
+      const postUrl = `${window.location.origin}/posts/${this.post.id}`;
+      navigator.clipboard.writeText(postUrl).then(() => {
+        alert("Lien du post copié dans le presse-papiers !");
+      });
     },
   },
 };
@@ -171,6 +224,60 @@ export default {
   height: 40px;
   border-radius: 50%;
   margin-right: 10px;
-  object-fit: cover; /* Assure que l'image reste bien cadrée dans le cercle */
+  object-fit: cover;
+}
+
+.post-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.post-media {
+  margin-top: 10px;
+}
+
+.post-image {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.post-images-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 10px;
+}
+
+.post-image-grid-item {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.post-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-top: 1px solid var(--surface-border);
+}
+
+.action-button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  color: var(--text-color);
+  transition: color 0.3s;
+}
+
+.action-button:hover {
+  color: var(--primary-color);
+}
+
+.action-icon {
+  font-size: 20px;
 }
 </style>
