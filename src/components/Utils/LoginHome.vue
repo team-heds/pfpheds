@@ -40,7 +40,7 @@
             <small v-if="passwordError" class="p-error">Le mot de passe est requis.</small>
           </div>
           <div class="flex align-items-center mb-4">
-            <Checkbox v-model="rememberMe" inputId="remember-me" class="mr-2" />
+            <Checkbox v-model="rememberMe" inputId="remember-me" binary class="mr-2" />
             <label for="remember-me" class="text-sm">Se souvenir de moi</label>
           </div>
           <Button label="Se connecter" type="submit" class="w-full p-button-raised p-button-primary" />

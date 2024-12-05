@@ -5,12 +5,15 @@
       <div v-show="showTextareaCard" class="post-textarea-card">
         <div class="post-form">
           <!-- Zone de texte -->
-          <Textarea
-            v-model="newPost"
-            placeholder="Exprimez-vous..."
-            class="form-control"
-            @input="detectTags"
-          />
+          <Editor v-model="newPost" @input="detectTags" editorStyle="height: 120px">
+            <template v-slot:toolbar>
+              <span class="ql-formats">
+                  <button v-tooltip.bottom="'Bold'" class="ql-bold"></button>
+                  <button v-tooltip.bottom="'Italic'" class="ql-italic"></button>
+                  <button v-tooltip.bottom="'Underline'" class="ql-underline"></button>
+              </span>
+            </template>
+          </Editor>
 
           <!-- Tags -->
           <div v-if="detectedTags.length > 0" class="tags-container p-3">
@@ -29,7 +32,7 @@
               ref="fileupload"
               mode="basic"
               name="media[]"
-              accept="image/*,video/*"
+              accept=".jpg,.png,.mp3,.mp4,.pdf"
               :maxFileSize="10000000"
               customUpload
               @select="handleFileSelection"

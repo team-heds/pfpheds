@@ -144,8 +144,8 @@ export default {
           const user = usersData[student.id] || {}; // Utiliser la clé pour récupérer les données correspondantes dans Users
           return {
             ...student,
-            Nom: user.Name || 'Nom non disponible',
-            Prenom: user.Forname || 'Prénom non disponible',
+            Nom: user.Nom || 'Nom non disponible',
+            Prenom: user.Prenom || 'Prénom non disponible',
             Mail: user.Mail || 'Email non disponible',
             Classe: student.Class || 'Classe non disponible',
             SAE: student.SAE || false,
