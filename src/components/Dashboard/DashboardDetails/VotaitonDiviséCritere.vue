@@ -2,8 +2,8 @@
   <div>
     <Navbar />
     <div class="flex w-full">
-
-      <div class="container-fluid mt-4 w-12">
+      <UserProfile class="w-5" />
+      <div class="container-fluid mt-4 w-8">
         <!-- Section pour la validation -->
         <div v-if="currentStudent && selectedPFP && selectedClass" class="table-responsive mt-4">
           <div v-if="validationMessage" class="mt-4 text-center">
@@ -19,8 +19,8 @@
             <table class="table table-striped align-middle mb-0 table-hover w-100 text-center">
               <thead>
                 <tr>
-                  <th>Institution</th>
-                  <th>Lieu</th>
+                  <th>Institutions</th>
+                  <th>Lieux</th>
                   <th>Domaine</th>
                   <th>FR</th>
                   <th>ALL</th>
@@ -30,89 +30,48 @@
                   <th>SYSINT</th>
                   <th>NEUROGER</th>
                   <th>AMBU</th>
-                  <th>Choix 1</th>
-                  <th>Choix 2</th>
-                  <th>Choix 3</th>
-                  <th>Choix 4</th>
-                  <th>Choix 5</th>
-                  <th>Votation1</th>
-                  <th>Votation2</th>
-                  <th>Votation3</th>
-                  <th>Votation4</th>
-                  <th>Votation5</th>
-                  <th>VotationTotal</th>
+                  <th>Choisir</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="stage in filteredStages" :key="stage.IDENTIFIANT">
-                  <td>{{ stage.NomPlace }}</td>
-                  <td>{{ stage.Lieu }}</td>
-                  <td>{{ stage.Domaine }}</td>
-                  <td v-if="Boolean(stage.FR)">&#9989;</td>
-                  <td v-else>&#10060;</td>
-                  <td v-if="Boolean(stage.ALL)">&#9989;</td>
-                  <td v-else>&#10060;</td>
-                  <td v-if="Boolean(stage.AIGU)">&#9989;</td>
-                  <td v-else>&#10060;</td>
-                  <td v-if="Boolean(stage.REHAB)">&#9989;</td>
-                  <td v-else>&#10060;</td>
-                  <td v-if="Boolean(stage.MSQ)">&#9989;</td>
-                  <td v-else>&#10060;</td>
-                  <td v-if="Boolean(stage.SYSINT)">&#9989;</td>
-                  <td v-else>&#10060;</td>
-                  <td v-if="Boolean(stage.NEUROGER)">&#9989;</td>
-                  <td v-else>&#10060;</td>
-                  <td v-if="Boolean(stage.AMBU)">&#9989;</td>
-                  <td v-else>&#10060;</td>
-                  <!-- Cases à cocher pour les 5 choix -->
-                  <td>
-                    <input
-                      type="checkbox"
-                      :disabled="isChoiceDisabled(stage, 'choice1')"
-                      :checked="selectedChoices.choice1 === stage.IDENTIFIANT"
-                      @change="handleChoiceChange(stage.IDENTIFIANT, 'choice1')"
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="checkbox"
-                      :disabled="isChoiceDisabled(stage, 'choice2')"
-                      :checked="selectedChoices.choice2 === stage.IDENTIFIANT"
-                      @change="handleChoiceChange(stage.IDENTIFIANT, 'choice2')"
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="checkbox"
-                      :disabled="isChoiceDisabled(stage, 'choice3')"
-                      :checked="selectedChoices.choice3 === stage.IDENTIFIANT"
-                      @change="handleChoiceChange(stage.IDENTIFIANT, 'choice3')"
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="checkbox"
-                      :disabled="isChoiceDisabled(stage, 'choice4')"
-                      :checked="selectedChoices.choice4 === stage.IDENTIFIANT"
-                      @change="handleChoiceChange(stage.IDENTIFIANT, 'choice4')"
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="checkbox"
-                      :disabled="isChoiceDisabled(stage, 'choice5')"
-                      :checked="selectedChoices.choice5 === stage.IDENTIFIANT"
-                      @change="handleChoiceChange(stage.IDENTIFIANT, 'choice5')"
-                    />
-                  </td>
-                  <!-- Colonnes supplémentaires avec des chiffres initialisés à 0 -->
-                  <td>{{ voteCounts[stage.IDENTIFIANT]?.Votation1 || 0 }}</td>
-                  <td>{{ voteCounts[stage.IDENTIFIANT]?.Votation2 || 0 }}</td>
-                  <td>{{ voteCounts[stage.IDENTIFIANT]?.Votation3 || 0 }}</td>
-                  <td>{{ voteCounts[stage.IDENTIFIANT]?.Votation4 || 0 }}</td>
-                  <td>{{ voteCounts[stage.IDENTIFIANT]?.Votation5 || 0 }}</td>
-                  <td>{{ voteCounts[stage.IDENTIFIANT]?.VotationTotal || 0 }}</td>
-                </tr>
+                <template v-for="(group, groupIndex) in groupedStages" :key="groupIndex">
+                  <!-- En-tête de groupe -->
+                  <tr class="group-header">
+                    <td colspan="12">Places validant {{ group.numberPlace }} critères manquants</td>
+                  </tr>
+                  <!-- Lignes de stage -->
+                  <tr v-for="(stage, index) in group.stages" :key="index">
+                    <td>{{ stage.NomPlace }}</td>
+                    <td>{{ stage.Lieu }}</td>
+                    <td>{{ stage.Domaine }}</td>
+                    <td v-if="Boolean(stage.FR)">&#9989;</td>
+                    <td v-else>&#10060;</td>
+                    <td v-if="Boolean(stage.ALL)">&#9989;</td>
+                    <td v-else>&#10060;</td>
+                    <td v-if="Boolean(stage.AIGU)">&#9989;</td>
+                    <td v-else>&#10060;</td>
+                    <td v-if="Boolean(stage.REHAB)">&#9989;</td>
+                    <td v-else>&#10060;</td>
+                    <td v-if="Boolean(stage.MSQ)">&#9989;</td>
+                    <td v-else>&#10060;</td>
+                    <td v-if="Boolean(stage.SYSINT)">&#9989;</td>
+                    <td v-else>&#10060;</td>
+                    <td v-if="Boolean(stage.NEUROGER)">&#9989;</td>
+                    <td v-else>&#10060;</td>
+                    <td v-if="Boolean(stage.AMBU)">&#9989;</td>
+                    <td v-else>&#10060;</td>
+                    <td>
+                      <input
+                        type="radio"
+                        :name="'stage-selection'"
+                        @change="selectStage(stage)"
+                        :disabled="!isStageSelectable(stage)"
+                      />
+                    </td>
+                  </tr>
+                  <!-- Interligne entre les groupes -->
+                  <tr><td colspan="12">&nbsp;</td></tr>
+                </template>
               </tbody>
             </table>
           </div>
@@ -121,12 +80,9 @@
         <!-- Section pour afficher le résultat du vote -->
         <div v-if="voteResult" class="mt-4 text-center">
           <h4>Choix du Vote</h4>
-          <div v-for="(choice, index) in voteResult" :key="index">
-            <p>Choix {{ index + 1 }} :</p>
-            <p>Stage Sélectionné : {{ choice.selectedStageName }}</p>
-            <p>Lieu : {{ choice.selectedStageLieu }}</p>
-            <p>Domaine : {{ choice.selectedStageDomaine }}</p>
-          </div>
+          <p>Stage Sélectionné : {{ voteResult.selectedStageName }}</p>
+          <p>Lieu : {{ voteResult.selectedStageLieu }}</p>
+          <p>Domaine : {{ voteResult.selectedStageDomaine }}</p>
         </div>
 
         <div class="mt-4 text-center">
@@ -135,8 +91,8 @@
         <br><br><br><br>
       </div>
 
-      <UserProfile class="w-5" />
-
+      <div class="mt-4 text-center">
+      </div>
 
       <br><br><br><br>
     </div>
@@ -171,17 +127,30 @@ export default {
       voteResult: null,
       takenStages: new Set(),
       criteriaKeys: ['FR', 'ALL', 'AIGU', 'REHAB', 'MSQ', 'SYSINT', 'NEUROGER', 'AMBU'],
-      selectedChoices: {
-        choice1: null,
-        choice2: null,
-        choice3: null,
-        choice4: null,
-        choice5: null,
-      },
-      voteCounts: {}, // Object to hold vote counts per stage
+      // Track stages already selected by other students
     };
   },
   computed: {
+    groupedStages() {
+      const groups = {};
+
+      this.filteredStages.forEach(stage => {
+        const missing = this.getMissingCriteria(stage);
+        const key = missing.length;
+
+        if (!groups[key]) {
+          groups[key] = { numberPlace: key, stages: [] };
+        }
+        groups[key].stages.push(stage);
+      });
+
+      // Trier les groupes par nombre de critères manquants décroissant
+      const sortedGroups = Object.keys(groups)
+        .sort((a, b) => b - a)
+        .map(numberPlace => groups[numberPlace]);
+
+      return sortedGroups;
+    },
     filteredStages() {
       return this.stages.filter(stage => this.isStageVisible(stage));
     }
@@ -191,14 +160,12 @@ export default {
       console.log("selectedPFP changed:", newPFP);
       this.fetchStagesData();
       this.fetchTakenStages();
-      this.fetchVoteCounts();
     },
     selectedClass(newClass) {
       console.log("selectedClass changed:", newClass);
       this.fetchStudentsData();
       this.fetchStagesData();
       this.fetchTakenStages();
-      this.fetchVoteCounts();
     }
   },
   methods: {
@@ -243,154 +210,55 @@ export default {
      * @returns {boolean} True si sélectionnable, sinon false.
      */
     isStageSelectable(stage) {
-      // Ajoutez des conditions supplémentaires si nécessaire
+      // Vous pouvez ajouter des conditions supplémentaires ici si nécessaire
       return true;
     },
     /**
-     * Gère le changement de sélection des choix.
-     * @param {string} stageId - L'ID du stage sélectionné.
-     * @param {string} choice - Le choix (choice1, choice2, etc.).
-     */
-    handleChoiceChange(stageId, choice) {
-      if (this.selectedChoices[choice] === stageId) {
-        // Si déjà sélectionné, désélectionner
-        this.selectedChoices[choice] = null;
-      } else {
-        // Sélectionner le nouveau stage pour ce choix
-        this.selectedChoices[choice] = stageId;
-      }
-    },
-    /**
-     * Vérifie si une case à cocher doit être désactivée.
-     * @param {Object} stage - Le stage en question.
-     * @param {string} choice - Le choix (choice1, choice2, etc.).
-     * @returns {boolean} True si la case doit être désactivée, sinon false.
-     */
-    isChoiceDisabled(stage, choice) {
-      // Désactiver si le stage est déjà sélectionné pour un autre choix
-      for (const [key, value] of Object.entries(this.selectedChoices)) {
-        if (key !== choice && value === stage.IDENTIFIANT) {
-          return true;
-        }
-      }
-
-      // Désactiver si un autre stage est déjà sélectionné pour ce choix
-      if (this.selectedChoices[choice] && this.selectedChoices[choice] !== stage.IDENTIFIANT) {
-        return true;
-      }
-
-      // Désactiver si une autre case dans la même ligne est déjà sélectionnée
-      const isAnotherChoiceInRowSelected = Object.keys(this.selectedChoices).some(
-        key => key !== choice && this.selectedChoices[key] === stage.IDENTIFIANT
-      );
-      if (isAnotherChoiceInRowSelected) {
-        return true;
-      }
-
-      return false;
-    },
-    /**
-     * Soumet le vote de l'étudiant pour les places de stage sélectionnées.
+     * Soumet le vote de l'étudiant pour une place de stage sélectionnée.
      */
     async submitVotes() {
-      if (this.currentStudent) {
+      if (this.selectedStage && this.currentStudent) {
         const { id } = this.currentStudent;
         if (id) {
-          const votationPromises = Object.keys(this.selectedChoices).map(async (choiceKey, index) => {
-            const stageId = this.selectedChoices[choiceKey];
-            if (stageId) {
-              const stage = this.stages.find(s => s.IDENTIFIANT === stageId);
-              if (stage) {
-                const votationRef = ref(db, `VotationPFP1A/${id}/choices/${choiceKey}`);
-                const votationData = {
-                  choice: index + 1,
-                  studentId: id,
-                  studentName: this.currentStudent.Nom,
-                  studentFirstName: this.currentStudent.Prenom,
-                  selectedStageName: stage.NomPlace,
-                  selectedStageLieu: stage.Lieu,
-                  selectedStageDomaine: stage.Domaine,
-                  numberPlace: stage.PFP1A, // Utilisation de PFP1A
-                  selectedStageDetails: {
-                    FR: stage.FR,
-                    ALL: stage.ALL,
-                    AIGU: stage.AIGU,
-                    REHAB: stage.REHAB,
-                    MSQ: stage.MSQ,
-                    SYSINT: stage.SYSINT,
-                    NEUROGER: stage.NEUROGER,
-                    AMBU: stage.AMBU
-                  }
-                };
-
-                // Enregistrer le choix dans Firebase
-                await set(votationRef, votationData);
-
-                // Marquer la place comme prise
-                const stageRef = ref(db, `PFP1A-B23/${stage.IDENTIFIANT}`);
-                await update(stageRef, { takenBy: id });
-
-                // Mettre à jour les comptes de votes
-                this.incrementVoteCount(stage.IDENTIFIANT, index + 1);
-
-                return votationData;
-              }
+          const votationRef = ref(db, `VotationPFP1A/${id}`); // Chemin ajusté pour PFP1A
+          const votationData = {
+            studentId: id,
+            studentName: this.currentStudent.Nom,
+            studentFirstName: this.currentStudent.Prenom,
+            selectedStageName: this.selectedStage.NomPlace,
+            selectedStageLieu: this.selectedStage.Lieu,
+            selectedStageDomaine: this.selectedStage.Domaine,
+            numberPlace: this.selectedStage.PFP1A, // Utilisation de PFP1A
+            selectedStageDetails: {
+              FR: this.selectedStage.FR,
+              ALL: this.selectedStage.ALL,
+              AIGU: this.selectedStage.AIGU,
+              REHAB: this.selectedStage.REHAB,
+              MSQ: this.selectedStage.MSQ,
+              SYSINT: this.selectedStage.SYSINT,
+              NEUROGER: this.selectedStage.NEUROGER,
+              AMBU: this.selectedStage.AMBU
             }
-            return null;
-          });
+          };
 
           try {
-            const results = await Promise.all(votationPromises);
-            this.voteResult = results.filter(result => result !== null);
-            alert("Vos votes ont été soumis avec succès !");
-            // Optionnel: Réinitialiser les choix après soumission
-            this.resetChoices();
-            // Re-fetch vote counts pour mettre à jour l'affichage
-            this.fetchVoteCounts();
+            await set(votationRef, votationData);
+            this.voteResult = votationData; // Mettre à jour la propriété data voteResult
+
+            // Marquer la place comme prise
+            const stageRef = ref(db, `PFP1A-B23/${this.selectedStage.IDENTIFIANT}`); // Chemin ajusté pour PFP1A
+            await update(stageRef, { takenBy: id });
+
+            alert("Votre vote a été soumis avec succès !");
           } catch (error) {
-            console.error("Erreur lors de la soumission des votes:", error);
-            alert("Une erreur est survenue lors de la soumission de vos votes. Veuillez réessayer.");
+            console.error("Erreur lors de la soumission du vote:", error);
+            alert("Une erreur est survenue lors de la soumission de votre vote. Veuillez réessayer.");
           }
         } else {
           alert("Erreur: Informations de l'étudiant manquantes.");
         }
       } else {
-        alert("Veuillez sélectionner au moins un choix de stage.");
-      }
-    },
-    /**
-     * Réinitialise les choix sélectionnés.
-     */
-    resetChoices() {
-      this.selectedChoices = {
-        choice1: null,
-        choice2: null,
-        choice3: null,
-        choice4: null,
-        choice5: null,
-      };
-    },
-    /**
-     * Incrémente les comptes de votes pour un stage donné.
-     * @param {string} stageId - L'ID du stage.
-     * @param {number} choiceNumber - Le numéro du choix (1 à 5).
-     */
-    incrementVoteCount(stageId, choiceNumber) {
-      if (!this.voteCounts[stageId]) {
-        this.$set(this.voteCounts, stageId, {
-          Votation1: 0,
-          Votation2: 0,
-          Votation3: 0,
-          Votation4: 0,
-          Votation5: 0,
-          VotationTotal: 0,
-        });
-      }
-
-      const choiceKey = `Votation${choiceNumber}`;
-      if (this.voteCounts[stageId][choiceKey] !== undefined) {
-        this.voteCounts[stageId][choiceKey] += 1;
-        this.voteCounts[stageId]['VotationTotal'] += 1;
+        alert("Veuillez sélectionner une place de stage.");
       }
     },
     /**
@@ -411,7 +279,8 @@ export default {
             ...studentsData[key]
           })).filter(student => 
             student.Classe === this.selectedClass && 
-            Boolean(student.PFPinfo[this.selectedPFP])
+            Boolean(student.PFPinfo[this.selectedPFP]) &&
+            Number(student.PFPinfo[this.selectedPFP].selectedStageId) !== 0 // Optionnel: vérifier si un stage est déjà sélectionné
           );
 
           this.etudiants = transformedData;
@@ -438,7 +307,7 @@ export default {
               return null;
             }
 
-            const institutionId = place.InstitutionId || place.IDPlace; // Prendre en compte InstitutionId ou IDPlace
+            const institutionId = place.InstitutionId; // Assume que chaque place a un InstitutionId
             const institutionData = await this.fetchInstitutionData(institutionId);
             return {
               IDENTIFIANT: key,
@@ -468,8 +337,6 @@ export default {
           this.stages = fetchedStages.filter(stage => stage !== null);
 
           console.log("Stages chargés:", this.stages);
-          // Re-fetch vote counts après avoir chargé les stages
-          this.fetchVoteCounts();
         }
       });
     },
@@ -492,56 +359,19 @@ export default {
       });
     },
     /**
-     * Récupère les comptes de votes pour chaque stage.
-     */
-    async fetchVoteCounts() {
-      const votationRef = ref(db, `VotationPFP1A`);
-      onValue(votationRef, (snapshot) => {
-        if (snapshot.exists()) {
-          const votations = snapshot.val();
-          const counts = {};
-
-          for (const studentId in votations) {
-            const studentVotations = votations[studentId].choices;
-            if (studentVotations) {
-              for (const choiceKey in studentVotations) {
-                const vote = studentVotations[choiceKey];
-                if (vote && vote.selectedStageName) {
-                  const stageId = Object.keys(this.stages).find(key => this.stages[key].NomPlace === vote.selectedStageName);
-                  const stage = this.stages.find(s => s.NomPlace === vote.selectedStageName);
-                  if (stage) {
-                    const identifiant = stage.IDENTIFIANT;
-                    const votNum = vote.choice;
-                    if (!counts[identifiant]) {
-                      counts[identifiant] = {
-                        Votation1: 0,
-                        Votation2: 0,
-                        Votation3: 0,
-                        Votation4: 0,
-                        Votation5: 0,
-                        VotationTotal: 0,
-                      };
-                    }
-                    const votKey = `Votation${votNum}`;
-                    counts[identifiant][votKey] += 1;
-                    counts[identifiant]['VotationTotal'] += 1;
-                  }
-                }
-              }
-            }
-          }
-
-          this.voteCounts = counts;
-        }
-      });
-    },
-    /**
      * Met à jour les données de l'étudiant dans Firebase.
      * @param {Object} etudiant - L'étudiant à mettre à jour.
      */
     updateStudent(etudiant) {
       const studentRef = ref(db, `Students/${etudiant.id}`);
       set(studentRef, etudiant);
+    },
+    /**
+     * Sélectionne un stage.
+     * @param {Object} stage - Le stage sélectionné.
+     */
+    selectStage(stage) {
+      this.selectedStage = stage;
     },
     /**
      * Recherche et définit l'étudiant actuel basé sur l'email de l'utilisateur connecté.
@@ -658,7 +488,7 @@ export default {
      * @param {string} studentId - L'ID de l'étudiant.
      */
     async fetchVoteResult(studentId) {
-      const votationRef = ref(db, `VotationPFP1A/${studentId}/choices`); // Chemin ajusté pour PFP1A
+      const votationRef = ref(db, `VotationPFP1A/${studentId}`); // Chemin ajusté pour PFP1A
       try {
         const snapshot = await get(votationRef);
         if (snapshot.exists()) {
@@ -679,16 +509,7 @@ export default {
       this.languageIssue = null;
 
       // Vérifier si toutes les cases sont décochées
-      if (
-        FR == "0" &&
-        ALL == "0" &&
-        AMBU == "0" &&
-        MSQ == "0" &&
-        SYSINT == "0" &&
-        NEUROGER == "0" &&
-        REHAB == "0" &&
-        AIGU == "0"
-      ) {
+      if (FR == "0" && ALL == "0" && AMBU == "0" && MSQ == "0" && SYSINT == "0" && NEUROGER == "0" && REHAB == "0" && AIGU == "0") {
         this.validationMessage = "Toutes les options sont disponibles";
         return;
       }

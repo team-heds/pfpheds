@@ -19,6 +19,7 @@
         <div class="pfp-selection text-center mb-3">
           <select v-model="selectedPFP" class="form-select w-50 mx-auto" @change="fetchStudentsData">
             <option disabled value="">Sélectionnez un PFP</option>
+            <!-- Assurez-vous que ces valeurs correspondent exactement aux champs dans vos données -->
             <option value="PFP1A">PFP1A</option>
             <option value="PFP1B">PFP1B</option>
             <option value="PFP2">PFP2</option>
@@ -29,8 +30,7 @@
 
         <!-- Barre de Recherche -->
         <div class="text-center mb-3">
-          <input v-model="search" placeholder="Recherche par nom ou prénom"
-            class="form-control search-input w-50 mx-auto">
+          <input v-model="search" placeholder="Recherche par nom ou prénom" class="form-control search-input w-50 mx-auto">
         </div>
       </div>
 
@@ -58,7 +58,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="etudiant in filteredEtudiants" :key="etudiant.IDStudent">
+            <tr v-for="etudiant in studentsVisible" :key="etudiant.IDStudent">
               <td>{{ etudiant.Nom }}</td>
               <td>{{ etudiant.Prenom }}</td>
               <td>
@@ -81,15 +81,24 @@
               </td>
               <td>
                 <!-- Sélection de la Place de Stage -->
-                <select v-model="etudiant.PFPinfo[selectedPFP].selectedStageName" @change="handlePlaceChange(etudiant)"
-                  :disabled="etudiant.validated">
+                <select
+                  v-if="etudiant.PFPinfo && etudiant.PFPinfo[selectedPFP]"
+                  v-model="etudiant.PFPinfo[selectedPFP].selectedStageName"
+                  @change="handlePlaceChange(etudiant)"
+                  :disabled="etudiant.validated"
+                >
                   <option value="" disabled>Sélectionnez une place</option>
                   <option value="empty">Aucune</option>
-                  <option v-for="place in places" :key="place.IDENTIFIANT" :value="place.NomP"
-                    :disabled="isPlaceTaken(place, etudiant)">
+                  <option
+                    v-for="place in places"
+                    :key="place.IDENTIFIANT"
+                    :value="place.NomP"
+                    :disabled="isPlaceTaken(place, etudiant)"
+                  >
                     {{ place.NomP }}
                   </option>
                 </select>
+                <span v-else>Aucune place disponible</span>
               </td>
               <td :class="getClass(etudiant.MSQ)">{{ etudiant.MSQ }}</td>
               <td :class="getClass(etudiant.SYSINT)">{{ etudiant.SYSINT }}</td>
@@ -103,9 +112,7 @@
                 <button class="btn btn-sm btn-success me-1 mb-1 mb-md-0" @click="validateStudent(etudiant)">
                   {{ etudiant.validated ? 'Dévalider' : 'Valider' }}
                 </button>
-                <button class="btn btn-sm btn-danger" @click="deleteStudent(etudiant.IDStudent)">
-                  Supprimer
-                </button>
+                <!-- Bouton Supprimer Retiré -->
               </td>
             </tr>
           </tbody>
@@ -120,7 +127,7 @@
 
       <!-- Récapitulatif des Étudiants -->
       <div class="mt-4 text-center">
-        <h4>Total des étudiants: {{ filteredEtudiants.length }}</h4>
+        <h4>Total des étudiants: {{ filteredStudentsVisible.length }}</h4>
         <h4>Total SAE: {{ totalSAE }}</h4>
         <h4>Total Lesé: {{ totalLese }}</h4>
         <h4>Total Cas Particulier: {{ totalCasParticulier }}</h4>
@@ -132,7 +139,7 @@
 <script>
 import Navbar from '@/components/Utils/Navbar.vue';
 import { db } from '../../../../firebase.js';
-import { ref, get, update, remove, set } from "firebase/database";
+import { ref, get, update } from "firebase/database";
 
 export default {
   name: "VotationManagement",
@@ -142,6 +149,7 @@ export default {
   data() {
     return {
       etudiants: [],
+      studentsVisible: [], // Nouveau tableau pour les étudiants visibles
       selectedClasses: [],
       search: '',
       selectedPFP: '',
@@ -150,29 +158,41 @@ export default {
     };
   },
   computed: {
-    filteredEtudiants() {
-      if (!Array.isArray(this.etudiants)) {
+    filteredStudentsVisible() {
+      if (!Array.isArray(this.studentsVisible)) {
         return [];
       }
 
-      return this.etudiants
+      const searchLower = this.search.toLowerCase();
+
+      return this.studentsVisible
         .filter(etudiant => {
+          // Filtrer par classe
           const matchesClass = this.selectedClasses.includes(etudiant.Classe);
-          const searchLower = this.search.toLowerCase();
-          const matchesSearch = (etudiant.Nom ? etudiant.Nom.toLowerCase().includes(searchLower) : false) || 
-                                (etudiant.Prenom ? etudiant.Prenom.toLowerCase().includes(searchLower) : false);
-          return matchesClass && matchesSearch;
+          if (!matchesClass) return false;
+
+          // Filtrer par recherche
+          const matchesSearch = (etudiant.Nom && etudiant.Nom.toLowerCase().includes(searchLower)) ||
+                                (etudiant.Prenom && etudiant.Prenom.toLowerCase().includes(searchLower));
+          if (!matchesSearch) return false;
+
+          // Filtrer par PFP
+          if (this.selectedPFP.startsWith('PFP1')) {
+            return etudiant[this.selectedPFP] === "true";
+          } else {
+            return etudiant.PFPinfo && etudiant.PFPinfo[this.selectedPFP] && etudiant.PFPinfo[this.selectedPFP].selectedStageName;
+          }
         })
         .sort((a, b) => a.Nom.localeCompare(b.Nom));
     },
     totalSAE() {
-      return this.filteredEtudiants.filter(etudiant => etudiant.SAE).length;
+      return this.filteredStudentsVisible.filter(etudiant => etudiant.SAE === "true").length;
     },
     totalLese() {
-      return this.filteredEtudiants.filter(etudiant => etudiant.Lese).length;
+      return this.filteredStudentsVisible.filter(etudiant => etudiant.Lese === "true").length;
     },
     totalCasParticulier() {
-      return this.filteredEtudiants.filter(etudiant => etudiant.CasParticulier).length;
+      return this.filteredStudentsVisible.filter(etudiant => etudiant.CasParticulier === "true").length;
     }
   },
 
@@ -203,7 +223,7 @@ export default {
       const allStagesData = this.places.map(stage => ({
         NomPlace: stage.NomP,
         Domaine: stage.Domaine,
-        Lieu: stage.Lieu,
+        Lieu: stage.IDPlace,
         FR: stage.FR || '',
         ALL: stage.ALL || '',
         AIGU: stage.AIGU || '',
@@ -237,11 +257,13 @@ export default {
       if (!this.selectedPFP || this.selectedClasses.length === 0) {
         console.log("selectedPFP is not set or selectedClasses is empty.");
         this.etudiants = [];
+        this.studentsVisible = [];
         return;
       }
 
       console.log("Fetching students data for PFP:", this.selectedPFP, "and classes:", this.selectedClasses);
       this.etudiants = [];
+      this.studentsVisible = [];
       this.loading = true;
 
       // Attendre que 'this.places' soit chargé
@@ -251,7 +273,7 @@ export default {
       const studentPlaceMap = {};
 
       // Fetch des données pour le PFP sélectionné
-      console.log("Fetching PFP data from path:", this.selectedPFP);
+      console.log("Fetching PFP data from path:", `${this.selectedPFP}`);
       const pfpDataRef = ref(db, `${this.selectedPFP}`);
       const pfpDataSnapshot = await get(pfpDataRef);
       const pfpData = pfpDataSnapshot.val() || {};
@@ -265,7 +287,7 @@ export default {
         }
       });
 
-      // Fetch tous les étudiants sans distinction de classe
+      // Fetch tous les étudiants
       console.log("Fetching all students data.");
       const allStudentsRef = ref(db, `Students`);
       const allStudentsSnapshot = await get(allStudentsRef);
@@ -279,26 +301,42 @@ export default {
           let etudiant = allStudentsData[key];
           // Vérifier si la classe de l'étudiant est dans les classes sélectionnées
           if (!this.selectedClasses.includes(etudiant.Classe)) {
+            console.log(`Student ${key} is part of class ${etudiant.Classe}, which is not selected.`);
             continue; // Ignorer cet étudiant si sa classe n'est pas sélectionnée
           }
 
-          // Vérifier si le selectedPFP est "true"
-          if (etudiant[this.selectedPFP] !== "true") {
-            console.log(`Student ${key} is not part of ${this.selectedPFP}.`);
-            continue; // Ignorer cet étudiant si selectedPFP n'est pas "true"
+          if (this.selectedPFP.startsWith('PFP1')) {
+            console.log("ya: " + etudiant[this.selectedPFP]);
+            if (etudiant[this.selectedPFP] !== "true") {
+              console.log(`Student ${key} is not part of ${this.selectedPFP}.`);
+              continue; // Ignorer cet étudiant s'il ne participe pas au PFP sélectionné
+            }
+            console.log("yea");
+
+            // Initialisation pour PFP1A, PFP1B, etc.
+            if (!etudiant.PFPinfo) {
+              etudiant.PFPinfo = {};
+              console.log(`Initialized PFPinfo for student ${key}`);
+            }
+            if (!etudiant.PFPinfo[this.selectedPFP]) {
+              etudiant.PFPinfo[this.selectedPFP] = {
+                selectedStageId: '',
+                selectedStageName: ''
+              };
+              console.log(`Initialized PFPinfo[${this.selectedPFP}] for student ${key}`);
+            }
+          } else {
+            // Vérifier si l'étudiant participe au PFP sélectionné
+            if (!etudiant.PFPinfo || !etudiant.PFPinfo[this.selectedPFP]) {
+              console.log(`Student ${key} is not part of ${this.selectedPFP}.`);
+              continue; // Ignorer cet étudiant si selectedPFP n'est pas défini
+            }
           }
 
-          // Initialisation de PFPinfo
-          if (!etudiant.PFPinfo) {
-            etudiant.PFPinfo = {};
-            console.log(`Initialized PFPinfo for student ${key}`);
-          }
-          if (!etudiant.PFPinfo[this.selectedPFP]) {
-            etudiant.PFPinfo[this.selectedPFP] = {
-              selectedStageId: '',
-              selectedStageName: ''
-            };
-            console.log(`Initialized PFPinfo[${this.selectedPFP}] for student ${key}`);
+          // Initialiser selectedStageName si nécessaire
+          if (!etudiant.PFPinfo[this.selectedPFP].selectedStageName) {
+            etudiant.PFPinfo[this.selectedPFP].selectedStageName = '';
+            console.log(`Initialized selectedStageName for student ${key}`);
           }
 
           // Fetch user info from 'Users'
@@ -326,20 +364,20 @@ export default {
           let transformedData = {
             IDStudent: key,
             Classe: etudiant.Classe,
-            Nom: userInfo.Name || etudiant.Nom || '',
-            Prenom: userInfo.Forname || etudiant.Prenom || '',
+            Nom: userInfo.Name || userInfo.Nom || etudiant.Nom || '',
+            Prenom: userInfo.Forname || userInfo.Prenom || etudiant.Prenom || '',
             Email: userInfo.Mail || '',
-            MSQ: etudiant.MSQ || '',
-            SYSINT: etudiant.SYSINT || '',
-            NEUROGER: etudiant.NEUROGER || '',
-            AIGU: etudiant.AIGU || '',
-            AMBU: etudiant.AMBU || '',
-            REHAB: etudiant.REHAB || '',
-            FR: etudiant.FR || '',
-            ALL: etudiant.ALL || '',
-            SAE: this.parseBoolean(etudiant.SAE),
-            Lese: this.parseBoolean(etudiant.Lese),
-            CasParticulier: this.parseBoolean(etudiant.CasParticulier),
+            MSQ: etudiant.MSQ || '0',
+            SYSINT: etudiant.SYSINT || '0',
+            NEUROGER: etudiant.NEUROGER || '0',
+            AIGU: etudiant.AIGU || '0',
+            AMBU: etudiant.AMBU || '0',
+            REHAB: etudiant.REHAB || '0',
+            FR: etudiant.FR || '0',
+            ALL: etudiant.ALL || '0',
+            SAE: etudiant.SAE || "0",
+            Lese: etudiant.Lese || "0",
+            CasParticulier: etudiant.CasParticulier || "0",
             Remarque: etudiant.Remarque || '',
             validated: this.parseBoolean(etudiant.validated),
             PFPinfo: etudiant.PFPinfo
@@ -354,9 +392,10 @@ export default {
           console.log(`Added student ${key}:`, transformedData);
         }
 
-        // Mettre à jour la liste des étudiants
+        // Mettre à jour les listes d'étudiants
         this.etudiants = studentsWithUserInfo;
-        console.log(`Updated etudiants list:`, studentsWithUserInfo);
+        this.studentsVisible = studentsWithUserInfo;
+        console.log("Updated etudiants list:", studentsWithUserInfo);
       }
 
       this.loading = false;
@@ -390,7 +429,7 @@ export default {
         // Utilisation de Promise.all pour récupérer les données en parallèle
         const [placesSnapshot, institutionsSnapshot, pfpSnapshot] = await Promise.all([
           get(placesRef),
-          get(institutionsRef), // Correction : utiliser institutionsRef au lieu de institutionsSnapshot
+          get(institutionsRef), // Correction ici: utiliser institutionsRef au lieu de institutionsSnapshot
           get(pfpRef)
         ]);
 
@@ -409,7 +448,7 @@ export default {
           for (const placeKey in placesData) {
             if (Object.hasOwnProperty.call(placesData, placeKey)) {
               const place = placesData[placeKey];
-              const institution = institutionsData[place.InstitutionId] || {}; // Correction : utiliser InstitutionId
+              const institution = institutionsData[place.InstitutionId] ||  institutionsData[place.IDPlace] ||{};
               const repeatCount = parseInt(place[this.selectedPFP], 10) || 0;
 
               console.log(`Place ${placeKey} has ${repeatCount} place(s) for PFP ${this.selectedPFP}`);
@@ -418,7 +457,8 @@ export default {
                 const identifiant = `${placeKey}_${i}`;
                 const takenBy = pfpData && pfpData[identifiant] ? pfpData[identifiant].takenBy : null;
 
-                console.log(`Processing place identifier: ${identifiant}, takenBy: ${takenBy}`);
+                console.log(`Processing place identifier: ${identifiant}, takenBy: ${institution.Name}`);
+                console.log(institution);
 
                 transformedPlaces.push({
                   IDENTIFIANT: identifiant,
@@ -429,7 +469,7 @@ export default {
                   index: i
                 });
 
-                console.log(`Added place:`, {
+                console.log("Added place:", {
                   IDENTIFIANT: identifiant,
                   Nom: institution.Name || place.NomPlace || '',
                   Domaine: place.Domaine || '',
@@ -503,7 +543,7 @@ export default {
 
     async handlePlaceChange(etudiant) {
       console.log(`Handling place change for student ${etudiant.IDStudent}`);
-      
+
       // Assurer que PFPinfo[selectedPFP] existe
       if (!etudiant.PFPinfo) {
         etudiant.PFPinfo = {};
@@ -584,7 +624,7 @@ export default {
 
     async validateStudent(etudiant) {
       console.log(`Validating student ${etudiant.IDStudent}`);
-      
+
       // Assurer que PFPinfo[selectedPFP] existe
       if (!etudiant.PFPinfo) {
         etudiant.PFPinfo = {};
@@ -598,38 +638,33 @@ export default {
         console.log(`Initialized PFPinfo[${this.selectedPFP}] for student ${etudiant.IDStudent}`);
       }
 
+      // Toggle la validation
       etudiant.validated = !etudiant.validated;
       this.updateStudent(etudiant, 'validated', etudiant.validated);
 
-      if (etudiant.validated && etudiant.PFPinfo[this.selectedPFP].selectedStageName && etudiant.PFPinfo[this.selectedPFP].selectedStageName !== '') {
-        const newPlace = this.places.find(place => place.NomP === etudiant.PFPinfo[this.selectedPFP].selectedStageName);
-        if (newPlace) {
-          newPlace.takenBy = etudiant.IDStudent;
-          console.log(`Assigning place ${newPlace.IDENTIFIANT} to validated student ${etudiant.IDStudent}`);
-          update(ref(db, `${this.selectedPFP}/${newPlace.IDENTIFIANT}`), { takenBy: etudiant.IDStudent })
-            .then(() => console.log(`Assigned place ${newPlace.IDENTIFIANT} to student ${etudiant.IDStudent} in Firebase.`))
-            .catch(error => console.error(`Erreur de mise à jour de la place ${newPlace.IDENTIFIANT} :`, error));
+      if (this.selectedPFP.startsWith('PFP1')) {
+        // Pour les PFPs spécifiques, aucune gestion supplémentaire n'est nécessaire
+        if (!etudiant.validated) {
+          // Si l'étudiant est dévalidé, vous pourriez vouloir effectuer des actions spécifiques
+          console.log(`Student ${etudiant.IDStudent} has been dévalidé for ${this.selectedPFP}.`);
         }
       } else {
-        this.clearPFPData(etudiant);
-      }
-    },
-
-    async deleteStudent(studentId) {
-      if (confirm('Êtes-vous sûr de vouloir supprimer cet étudiant ?')) {
-        console.log(`Deleting student ${studentId}`);
-        try {
-          const studentRef = ref(db, `Students/${studentId}`);
-          await set(studentRef, null);
-          this.etudiants = this.etudiants.filter(student => student.IDStudent !== studentId);
-          console.log(`Deleted student ${studentId}`);
-        } catch (error) {
-          console.error('Erreur de suppression de l’étudiant', error);
+        if (etudiant.validated && etudiant.PFPinfo[this.selectedPFP].selectedStageName && etudiant.PFPinfo[this.selectedPFP].selectedStageName !== '') {
+          const newPlace = this.places.find(place => place.NomP === etudiant.PFPinfo[this.selectedPFP].selectedStageName);
+          if (newPlace) {
+            newPlace.takenBy = etudiant.IDStudent;
+            console.log(`Assigning place ${newPlace.IDENTIFIANT} to validated student ${etudiant.IDStudent}`);
+            update(ref(db, `${this.selectedPFP}/${newPlace.IDENTIFIANT}`), { takenBy: etudiant.IDStudent })
+              .then(() => console.log(`Assigned place ${newPlace.IDENTIFIANT} to student ${etudiant.IDStudent} in Firebase.`))
+              .catch(error => console.error(`Erreur de mise à jour de la place ${newPlace.IDENTIFIANT} :`, error));
+          }
+        } else {
+          this.clearPFPData(etudiant);
         }
       }
     },
 
-    createVotation(type) {
+    async createVotation(type) {
       console.log(`Creating votation of type: ${type}`);
       if (type === 'lese') {
         this.$router.push({ name: 'VotationLese', params: { selectedClass: this.selectedClasses, selectedPFP: this.selectedPFP } });
