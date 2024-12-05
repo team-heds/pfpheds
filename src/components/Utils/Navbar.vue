@@ -41,15 +41,6 @@
                 @click="navigateTo('/votation')"
               />
             </li>
-            <li v-if="user && hasAdminAccess" class="mx-3">
-              <ButtonNavbar
-                icon="pi pi-file-edit"
-                :bgColor="'var(--surface-overlay)'"
-                :hoverBgColor="'var(--surface-hover)'"
-                :iconColor="'var(--primary-color)'"
-                @click="navigateTo('/votation')"
-              />
-            </li>
             <li v-if="user" class="mx-3">
               <ButtonNavbar
                 icon="pi pi-map-marker"
