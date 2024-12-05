@@ -9,7 +9,8 @@
         <!-- Section pour la validation -->
         <div v-if="currentStudent && selectedPFP && selectedClass" class="table-responsive mt-4">
           <div v-if="validationMessage" class="mt-4 text-center">
-            <h4>Votation  {{ selectedPFP }}</h4>
+            <h4>Validations</h4>
+            <p>A besoin de : {{ validationMessage }}</p>
           </div>
         </div>
 
@@ -124,8 +125,12 @@
 
         <!-- Bouton Voter / Revoter -->
         <div class="mt-4 text-center">
-          <button class="btn btn-primary" @click="submitVotes" :disabled="!allChoicesSelected"
-            :class="{ 'opacity-50 cursor-not-allowed': !allChoicesSelected }">
+          <button 
+            class="btn btn-primary" 
+            @click="submitVotes" 
+            :disabled="!allChoicesSelected"
+            :class="{'opacity-50 cursor-not-allowed': !allChoicesSelected}"
+          >
             {{ hasVoted ? 'Revoter' : 'Voter' }}
           </button>
           <p v-if="!allChoicesSelected" class="text-red-500 mt-2">
@@ -167,8 +172,8 @@ export default {
   data() {
     return {
       etudiants: [],
-      selectedClass: null, // À définir dynamiquement
-      selectedPFP: null,   // À définir dynamiquement
+      selectedClass: 'BA24', // Ajustez cette valeur si nécessaire
+      selectedPFP: 'PFP1A', // Ajustez cette valeur si nécessaire
       stages: [],
       selectedStage: null,
       currentStudent: null,
@@ -320,15 +325,7 @@ export default {
             if (stageId) {
               const stage = this.stages.find(s => s.IDENTIFIANT === stageId);
               if (stage) {
-
-                let votationRef = "";
-                if (this.selectedPFP === "PFP1A") {
-                  votationRef = ref(db, `VotationPFP1A/${id}/choices/${choiceKey}`);
-
-                } else if (this.electedPFP === "PFP1B") {
-                  votationRef = ref(db, `VotationPFP1B/${id}/choices/${choiceKey}`);
-
-                }
+                const votationRef = ref(db, `VotationPFP1A/${id}/choices/${choiceKey}`);
                 const votationData = {
                   choice: index + 1,
                   studentId: id,
@@ -355,7 +352,7 @@ export default {
 
                 // Marquer la place comme prise
                 const stageRef = ref(db, `PFP1A-B23/${stage.IDENTIFIANT}`);
-                // await update(stageRef, { takenBy: id });
+                await update(stageRef, { takenBy: id });
 
                 // Mettre à jour les comptes de votes
                 this.incrementVoteCount(stage.IDENTIFIANT, index + 1);
@@ -455,13 +452,10 @@ export default {
      * Récupère les données des places de stages disponibles avec PFP1A > 0.
      */
     async fetchStagesData() {
-
-
       if (!this.selectedPFP || !this.selectedClass) return;
 
       // Récupérer les places depuis Places où selectedPFP >=1
       const placesRef = ref(db, 'Places');
-
       onValue(placesRef, async (snapshot) => {
         const placesData = snapshot.val();
         if (placesData) {
@@ -531,15 +525,7 @@ export default {
      * Récupère les comptes de votes pour chaque stage.
      */
     async fetchVoteCounts() {
-
-      let votationRef = "";
-      if (this.selectedPFP === "PFP1A") {
-        votationRef = ref(db, `VotationPFP1A`);
-
-      } else if (this.electedPFP === "PFP1B") {
-        votationRef = ref(db, `VotationPFP1B`);
-
-      }
+      const votationRef = ref(db, `VotationPFP1A`);
       onValue(votationRef, (snapshot) => {
         if (snapshot.exists()) {
           const votations = snapshot.val();
@@ -619,8 +605,6 @@ export default {
                 let sysint = null;
                 let fr = null;
                 let all = null;
-                let pfp1a = false;
-                let pfp1b = false;
                 if (studentSnapshot.exists()) {
                   const studentData = studentSnapshot.val();
                   classe = studentData.Classe || null;
@@ -631,32 +615,7 @@ export default {
                   sysint = studentData.SYSINT || null;
                   fr = studentData.FR || null;
                   all = studentData.ALL || null; // Assure que 'ALL' correspond à 'ALL'
-                  pfp1a = studentData.PFP1A;
-                  pfp1b = studentData.PFP1B;
                 }
-                console.log("yaaa1a " + pfp1a);
-                console.log("yaa1aab " + pfp1b);
-                // Déterminer le PFP sélectionné
-                let selectedPFP = null;
-                if (pfp1a === "true") {
-                  selectedPFP = 'PFP1A';
-                  console.log("yaaa " + pfp1a);
-                } else if (pfp1b === "true") {
-                  selectedPFP = 'PFP1B';
-                  console.log("yaabii " + pfp1b);
-
-                } else if (pfp1a && pfp1b) {
-                  // Si les deux sont vrais, choisir en priorité PFP1A ou gérer selon votre logique
-                  selectedPFP = 'PFP1A'; // Priorité à PFP1A
-                  console.log("yaab bug");
-
-                  // Alternativement, vous pouvez demander à l'utilisateur de choisir
-                } else {
-                  // Aucun PFP sélectionné, gérer le cas (par exemple, afficher un message d'erreur)
-                  alert("Aucun PFP n'est sélectionné pour cet utilisateur.");
-                  return;
-                }
-                console.log("yaaaam " + selectedPFP);
 
                 this.currentStudent = {
                   id: userKey,
@@ -668,17 +627,10 @@ export default {
                   AIGU: aigu,
                   FR: fr,
                   ALL: all,
-                  PFP1A: pfp1a,
-                  PFP1B: pfp1b,
                   ...user
                 };
 
-                this.selectedClass = classe;
-                this.selectedPFP = selectedPFP;
-
                 console.log("Étudiant actuel:", this.currentStudent);
-                console.log("selectedClass:", this.selectedClass);
-                console.log("selectedPFP:", this.selectedPFP);
 
                 this.checkValidation();
                 await this.fetchVoteResult(this.currentStudent.id);
@@ -735,15 +687,7 @@ export default {
      * @param {string} studentId - L'ID de l'étudiant.
      */
     async fetchVoteResult(studentId) {
-
-      let votationRef = "";
-      if (this.selectedPFP === "PFP1A") {
-        votationRef = ref(db, `VotationPFP1A/${studentId}/choices`); // Chemin ajusté pour PFP1A
-
-      } else if (this.electedPFP === "PFP1B") {
-        votationRef = ref(db, `VotationPFP1B/${studentId}/choices`); // Chemin ajusté pour PFP1A
-
-      }
+      const votationRef = ref(db, `VotationPFP1A/${studentId}/choices`); // Chemin ajusté pour PFP1A
       try {
         const snapshot = await get(votationRef);
         if (snapshot.exists()) {
@@ -824,7 +768,9 @@ export default {
         this.currentStudent = null;
       }
     });
-    // Les données seront chargées après avoir défini selectedClass et selectedPFP dans findCurrentStudent
+    this.fetchStudentsData();
+    this.fetchStagesData();
+    // this.fetchTakenStages();
   }
 };
 </script>
