@@ -1,5 +1,6 @@
 <template>
-  <div class="surface-section px-4 py-8 md:px-6 lg:px-8">
+  <Navbar />
+  <div class=" px-4 py-8 md:px-6 lg:px-8">
     <section class="text-center py-5 rounded-lg mb-5 text-white">
       <h1 class="text-5xl font-bold">Modifier l'institution</h1>
     </section>
@@ -45,7 +46,7 @@
             <div class="col-12 md:col-4">
               <div class="p-field">
                 <label for="canton">Canton</label>
-                <InputText id="canton" v-model="institution.Canton" />
+                <Dropdown id="canton" v-model="institution.Canton" :options="cantons" optionLabel="name" optionValue="code" class="w-full" />
               </div>
             </div>
 
@@ -53,7 +54,7 @@
             <div class="col-12 md:col-4">
               <div class="p-field">
                 <label for="langue">Langue</label>
-                <InputText id="langue" v-model="institution.Language" />
+                <Dropdown id="langue" v-model="institution.Language" :options="langues" optionLabel="name" optionValue="code" class="w-full" />
               </div>
             </div>
 
@@ -136,6 +137,19 @@
               </div>
             </div>
 
+            <div class="field col-4">
+              <label for="name">Nom du chef</label>
+              <InputText id="name" v-model="institution.NomChef" class="w-full" />
+            </div>
+            <div class="field col-4">
+              <label for="name">Téléphone du chef</label>
+              <InputText id="name" v-model="institution.PhoneChef" class="w-full" />
+            </div>
+            <div class="field col-4">
+              <label for="name">Mail du chef</label>
+              <InputText id="name" v-model="institution.MailChef" class="w-full" />
+            </div>
+
             <!-- Boutons de soumission -->
             <div class="col-12">
               <Button label="Mettre à jour l'institution" class="p-button-warning mt-3 btn-small" @click="updateInstitution" />
@@ -160,10 +174,12 @@ import Calendar from 'primevue/calendar';
 import Textarea from 'primevue/textarea';
 import InputGroup from 'primevue/inputgroup';
 import InputGroupAddon from 'primevue/inputgroupaddon';
+import Navbar from '@/components/Utils/Navbar.vue'
 
 export default {
   name: 'InstitutionFormModif',
   components: {
+    Navbar,
     InputText,
     Dropdown,
     Button,
@@ -189,9 +205,41 @@ export default {
         ConventionDate: '',
         AccordCadreDate: '',
         Note: '',
+        MailChef: '',
+        PhoneChef: '',
+        NomChef: '',
       },
       pdfFile: null, // Pour stocker le fichier PDF sélectionné
       imageFile: null, // Pour stocker l'image sélectionnée
+
+      cantons: [
+        { code: 'AG', name: 'Argovie' },
+        { code: 'AI', name: 'Appenzell Rhodes-Intérieures' },
+        { code: 'AR', name: 'Appenzell Rhodes-Extérieures' },
+        { code: 'BE', name: 'Berne' },
+        { code: 'FR', name: 'Fribourg' },
+        { code: 'VS', name: 'Valais' },
+        { code: 'VD', name: 'Vaud' },
+        { code: 'GE', name: 'Genève' },
+        { code: 'ZH', name: 'Zurich' },
+        { code: 'NE', name: 'Neuchâtel' },
+        { code: 'JU', name: 'Jura' },
+        { code: 'LU', name: 'Lucerne'}
+        // Ajouter d'autres cantons si nécessaire
+      ],
+      categories: [
+        { label: 'Institution valaisanne', value: 'Institution valaisanne' },
+        { label: 'Cabinet privé valaisan', value: 'Cabinet privé valaisan' },
+        { label: 'Institution hors canton', value: 'Institution hors canton' },
+        { label: 'Cabinet privé hors canton', value: 'Cabinet privé hors canton' },
+      ],
+      langues: [
+        { code: 'FR', name: 'Français' },
+        { code: 'ALL', name: 'Allemand' },
+        { code: 'IT', name: 'Italien' },
+        { code: 'ANG', name: 'Anglais' },
+        { code: 'BIL', name: 'Bilingue' }
+      ],
     };
   },
   methods: {
@@ -224,17 +272,17 @@ export default {
         // Update the institution details in Firebase
         console.log('Updating institution details in Firebase...');
         await update(instRef, {
-          Name: this.institution.Name,
-          Locality: this.institution.Locality,
-          Canton: this.institution.Canton,
-          Address: this.institution.Address,
-          URL: this.institution.URL,
-          Category: this.institution.Category,
-          Language: this.institution.Language,
-          Description: this.institution.Description,
-          ConventionDate: this.institution.ConventionDate,
-          AccordCadreDate: this.institution.AccordCadreDate,
-          Note: this.institution.Note,
+          Name: this.institution.Name || '',
+          Locality: this.institution.Locality || '',
+          Canton: this.institution.Canton || '',
+          Address: this.institution.Address || '',
+          URL: this.institution.URL || '',
+          Category: this.institution.Category || '',
+          Language: this.institution.Language || '',
+          Description: this.institution.Description || '',
+          ConventionDate: this.institution.ConventionDate || '',
+          AccordCadreDate: this.institution.AccordCadreDate || '',
+          Note: this.institution.Note || '',
           CyberleanURL: this.institution.CyberleanURL || '',
           ImageURL: this.institution.ImageURL || '',
         });

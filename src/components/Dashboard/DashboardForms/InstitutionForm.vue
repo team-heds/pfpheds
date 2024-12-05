@@ -1,4 +1,5 @@
 <template>
+  <Navbar />
   <div class="surface-section px-4 py-8 md:px-6 lg:px-8">
     <section class="text-white text-center py-5 rounded-lg">
       <h1 class="text-5xl font-bold">Soumettre une nouvelle institution</h1>
@@ -25,9 +26,13 @@
               <h4>Détails de l'institution</h4>
               <Divider />
               <div class="grid formgrid">
-                <div class="field col-12">
+                <div class="field col-6">
                   <label for="name">Nom</label>
                   <InputText id="name" v-model="institution.Name" class="w-full" />
+                </div>
+                <div class="field col-6">
+                  <label for="name">Langue</label>
+                  <Dropdown id="langue" v-model="institution.Language" :options="langues" optionLabel="name" optionValue="code" class="w-full" />
                 </div>
                 <div class="field col-6">
                   <label for="cyberlearn">Cyberlean URL</label>
@@ -43,7 +48,7 @@
                 </div>
                 <div class="field col-6">
                   <label for="canton">Canton</label>
-                  <Dropdown id="canton" v-model="institution.Canton" :options="cantons" optionLabel="name" optionValue="name" class="w-full" />
+                  <Dropdown id="canton" v-model="institution.Canton" :options="cantons" optionLabel="name" optionValue="code" class="w-full" />
                 </div>
                 <div class="field col-6">
                   <label for="address">Adresse</label>
@@ -61,6 +66,18 @@
                   <label for="description">Description</label>
                   <Textarea id="description" v-model="institution.Description" rows="3" class="w-full" />
                 </div>
+                <div class="field col-4">
+                  <label for="name">Nom du chef</label>
+                  <InputText id="name" v-model="institution.NomChef" class="w-full" />
+                </div>
+                <div class="field col-4">
+                  <label for="name">Téléphone du chef</label>
+                  <InputText id="name" v-model="institution.PhoneChef" class="w-full" />
+                </div>
+                <div class="field col-4">
+                  <label for="name">Mail du chef</label>
+                  <InputText id="name" v-model="institution.MailChef" class="w-full" />
+              </div>
               </div>
             </div>
 
@@ -147,10 +164,12 @@ import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import Divider from 'primevue/divider';
 import Calendar from 'primevue/calendar';
+import Navbar from '@/components/Utils/Navbar.vue'
 
 export default {
   name: 'InstitutionForm',
   components: {
+    Navbar,
     Steps,
     InputText,
     Textarea,
@@ -183,6 +202,9 @@ export default {
         ConventionDate: null,
         AccordCadreDate: null,
         Note: '',
+        MailChef: '',
+        NomChef: '',
+        PhoneChef: '',
       },
       imageFile: null,
       cantons: [
@@ -207,10 +229,11 @@ export default {
         { label: 'Cabinet privé hors canton', value: 'Cabinet privé hors canton' },
       ],
       langues: [
-        { code: 'FR', name: 'FR' },
-        { code: 'ALL', name: 'ALL' },
-        { code: 'IT', name: 'IT' },
-        { code: 'ANG', name: 'ANG' }
+        { code: 'FR', name: 'Français' },
+        { code: 'ALL', name: 'Allemand' },
+        { code: 'IT', name: 'Italien' },
+        { code: 'ANG', name: 'Anglais' },
+        { code: 'BIL', name: 'Bilingue' }
       ],
     };
   },
