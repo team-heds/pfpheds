@@ -1,6 +1,7 @@
 <template>
   <div>
     <Navbar />
+
     <div class="flex w-full">
 
       <div class="container-fluid mt-4 w-12">
@@ -131,17 +132,110 @@
 
         <div class="mt-4 text-center">
           <button class="btn btn-primary" @click="submitVotes">Voter</button>
-        </div>
-        <br><br><br><br>
+
+    <ResumStageUserProfile class="mb-5" />
+    <div class="main-container flex flex-wrap w-full p-4 gap-6">
+      <!-- Section de validation -->
+      <div v-if="validationMessage" class="card validation-section">
+        <h4 class="text-center font-bold text-lg">Validation</h4>
+        <p class="text-center text-secondary">A besoin de : {{ validationMessage }}</p>
       </div>
+
+      <!-- Table des places de stages -->
+      <div v-if="selectedPFP && selectedClass" class="card table-section">
+        <h3 class="text-center font-bold text-xl mb-4">Toutes les places de stages</h3>
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+            <tr>
+              <th>Institutions</th>
+              <th>Lieux</th>
+              <th>Domaine</th>
+              <th>PFP2</th>
+              <th>FR</th>
+              <th>ALL</th>
+              <th>AIGU</th>
+              <th>REHAB</th>
+              <th>MSQ</th>
+              <th>SYSINT</th>
+              <th>NEUROGER</th>
+              <th>AMBU</th>
+              <th>Choix</th>
+            </tr>
+            </thead>
+            <tbody>
+            <template v-for="(group, groupIndex) in groupedStages" :key="groupIndex">
+              <!-- En-tête du groupe -->
+              <tr class="group-header">
+                <td colspan="13">Places validant {{ group.numberPlace }} critères manquants</td>
+              </tr>
+              <!-- Lignes des stages -->
+              <tr
+                v-for="(stage, index) in group.stages"
+                :key="index"
+                class="hover-row"
+              >
+                <td>{{ stage.NomPlace }}</td>
+                <td>{{ stage.Lieu }}</td>
+                <td>{{ stage.Domaine }}</td>
+                <td>{{ stage.numberPlace }}</td>
+                <td>
+                  <i :class="stage.FR ? 'pi pi-check text-green-500' : 'pi pi-times text-red-500'"></i>
+                </td>
+                <td>
+                  <i :class="stage.ALL ? 'pi pi-check text-green-500' : 'pi pi-times text-red-500'"></i>
+                </td>
+                <td>
+                  <i :class="stage.AIGU ? 'pi pi-check text-green-500' : 'pi pi-times text-red-500'"></i>
+                </td>
+                <td>
+                  <i :class="stage.REHAB ? 'pi pi-check text-green-500' : 'pi pi-times text-red-500'"></i>
+                </td>
+                <td>
+                  <i :class="stage.MSQ ? 'pi pi-check text-green-500' : 'pi pi-times text-red-500'"></i>
+                </td>
+                <td>
+                  <i :class="stage.SYSINT ? 'pi pi-check text-green-500' : 'pi pi-times text-red-500'"></i>
+                </td>
+                <td>
+                  <i :class="stage.NEUROGER ? 'pi pi-check text-green-500' : 'pi pi-times text-red-500'"></i>
+                </td>
+                <td>
+                  <i :class="stage.AMBU ? 'pi pi-check text-green-500' : 'pi pi-times text-red-500'"></i>
+                </td>
+                <td>
+                  <input type="radio" :name="'stage-selection'" @change="selectStage(stage)" />
+                </td>
+              </tr>
+              <!-- Ligne vide entre groupes -->
+              <tr class="empty-row"><td colspan="13"></td></tr>
+            </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
 
       <UserProfile class="w-5" />
 
 
-      <br><br><br><br>
+      <!-- Résultats du vote -->
+      <div v-if="voteResult" class="card result-section">
+        <h4 class="font-bold text-lg text-center">Choix du Vote</h4>
+        <p>Stage Sélectionné : {{ voteResult.selectedStageName }}</p>
+        <p>Lieu : {{ voteResult.selectedStageLieu }}</p>
+        <p>Domaine : {{ voteResult.selectedStageDomaine }}</p>
+      </div>
+
+
+      <!-- Bouton Voter -->
+      <div class="w-full flex justify-content-center">
+        <Button class="btn btn-primary" @click="submitVotes">Voter</Button>
+      </div>
     </div>
   </div>
 </template>
+
 
 <script>
 import { db, auth } from '../../../../firebase.js';
@@ -149,10 +243,12 @@ import { ref, onValue, set, get, update } from "firebase/database";
 import { onAuthStateChanged } from "firebase/auth";
 import Navbar from '@/components/Utils/Navbar.vue';
 import UserProfile from './UserProfile.vue';
+import ResumStageUserProfile from '@/components/UserProfile/ResumStageUserProfile.vue'
 
 export default {
   name: "VotationView",
   components: {
+    ResumStageUserProfile,
     Navbar,
     UserProfile
   },
@@ -747,13 +843,85 @@ export default {
 </script>
 
 <style scoped>
+
 /* Styles existants */
 .table-striped tbody tr:nth-of-type(odd) {
   background-color: rgba(0, 0, 0, 0.05);
+
+.main-container {
+  gap: 2rem;
+  display: flex;
+  flex-wrap: wrap;
 }
 
-.text-center {
+.card {
+  background-color: var(--surface-card);
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  flex: 1 1 calc(100% - 1rem);
+}
+
+.card h3,
+.card h4 {
+  color: var(--text-color);
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+
+}
+
+.table th,
+.table td {
+  padding: 0.75rem;
   text-align: center;
+  border: 1px solid var(--surface-border);
+}
+
+.table th {
+  background-color: var(--surface-200);
+  font-weight: bold;
+}
+
+.table .hover-row:hover {
+  background-color: var(--surface-hover);
+}
+
+.table .group-header {
+  background-color: var(--surface-card);
+  font-weight: bold;
+  text-align: center;
+}
+
+.text-green-500 {
+  color: green;
+}
+
+.text-red-500 {
+  color: red;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-color-hover);
+}
+
+.empty-row {
+  height: 1rem;
 }
 
 .flex {

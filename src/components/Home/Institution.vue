@@ -8,9 +8,8 @@
         <p class="text-600 font-normal text-xl text-center">Découvrez les institutions partenaires de notre réseau</p>
 
         <!-- Barre de recherche, alignée à droite -->
-        <div class="flex justify-end my-4">
+        <div class="flex justify-content-center my-4">
           <span class="p-input-icon-left">
-            <i class="pi pi-search"></i>
             <InputText v-model="searchTerm" placeholder="Rechercher par nom" style="width: 300px;" />
           </span>
         </div>
@@ -32,7 +31,7 @@
               <template #subtitle>
                 <div class="text-center">
                   <!-- Localité et langue -->
-                  <p>{{ institution.Locality }} <Tag severity="secondary">{{ institution.Language }}</Tag></p>
+                  <p>{{ institution.Locality }} <Tag severity="primary">{{ institution.Language }}</Tag></p>
                   <!-- Description avec une limite de caractères -->
                   <p :class="descriptionClass" class="m-0">{{ truncateText(institution.Description, 100) }}</p>
                 </div>
@@ -53,7 +52,7 @@
         </div>
 
         <!-- Pagination des institutions -->
-        <Paginator :rows="itemsPerPage" :totalRecords="totalFilteredInstitutions" :rowsPerPageOptions="[12, 24, 36, 48, 60, 72, 84]" @page="onPageChange"></Paginator>
+        <Paginator :rows="itemsPerPage" :totalRecords="totalFilteredInstitutions" :rowsPerPageOptions="[12, 24, 36, 48, 60, 72, 84]" @page="onPageChange" class="justify-content-center" ></Paginator>
       </div>
     </div>
   </section>
@@ -64,12 +63,11 @@
 <script>
 import { db } from '../../../firebase.js';
 import { ref as dbRef, onValue } from "firebase/database";
-import AppDarkAndLightMode from '@/layout/AppDarkAndLightMode.vue';
 import Navbar from '@/components/Utils/Navbar.vue';
 import InputText from 'primevue/inputtext'; // Assurez-vous d'importer InputText pour la barre de recherche
 
 export default {
-  components: { Navbar, AppDarkAndLightMode, InputText },
+  components: { Navbar, InputText },
   data() {
     return {
       allInstitutions: [],  // Toutes les institutions récupérées depuis Firebase
@@ -172,7 +170,7 @@ export default {
 <style scoped>
 .card-image {
   width: 100%;
-  height: 15rem;
+  height: 13rem;
   object-fit: cover;
   margin-bottom: 1rem;
   border-radius: 0.5rem;

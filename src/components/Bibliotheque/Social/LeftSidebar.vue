@@ -1,14 +1,14 @@
 <template>
   <div class="sidebar card">
     <!-- Profil utilisateur -->
-    <div class="user-profile">
-      <h4>
-        <Avatar
-          :label="userInitials"
-          class="mr-2"
-          size="large"
-          shape="circle"
-        />
+    <div class="user-profile flex">
+      <img
+        :src="userPhotoURL"
+        alt="Avatar"
+        class="m-2 col-6"
+        style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;"
+      />
+      <h4 class="m-2 mt-5">
         <a @click="goToProfile" class="profile-link">{{ userFullName }}</a>
       </h4>
     </div>
@@ -20,17 +20,9 @@
           <i class="pi pi-images link-icon"></i>
           <span>Historique des PFP</span>
         </li>
-        <li @click="goToSettings">
-          <i class="pi pi-cog link-icon"></i>
-          <span>Paramètres</span>
-        </li>
-        <li @click="goToPrivacy">
-          <i class="pi pi-lock link-icon"></i>
-          <span>Confidentialité</span>
-        </li>
-        <li @click="goToLogout">
-          <i class="pi pi-sign-out link-icon"></i>
-          <span>Déconnexion</span>
+        <li @click="goToDocumentPFP">
+          <i class="pi pi-file link-icon"></i>
+          <span>Documents PFP</span>
         </li>
       </ul>
     </div>
@@ -50,7 +42,6 @@
           :label="contact.initials"
           class="mr-2"
           size="large"
-          shape="circle"
         />
         <div class="contact-info">
           <span class="contact-name">{{ contact.name }}</span>
@@ -65,6 +56,9 @@
 import Avatar from "primevue/avatar";
 import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 import { getDatabase, ref as dbRef, get } from "firebase/database";
+import Profile from '@/components/Home/Profile.vue'
+
+const defaultAvatar = '../../../public/assets/images/avatar/01.jpg';
 
 export default {
   name: "LeftSidebar",
@@ -72,8 +66,9 @@ export default {
   data() {
     return {
       user: {
-        Forname: "",
-        Name: "",
+        Prenom: "",
+        Nom: "",
+        PhotoURL: "" || defaultAvatar,
       },
       contacts: [
         {
@@ -96,13 +91,16 @@ export default {
   },
   computed: {
     userFullName() {
-      return `${this.user.Forname} ${this.user.Name}`.trim() || "Utilisateur";
+      return `${this.user.prenom} ${this.user.nom}`.trim() || "Utilisateur";
+    },
+    userPhotoURL() {
+      return this.user.PhotoURL;
     },
     userInitials() {
-      const { Forname, Name } = this.user;
+      const { prenom, nom } = this.user;
       return (
-        (Forname ? Forname[0].toUpperCase() : "") +
-        (Name ? Name[0].toUpperCase() : "")
+        (prenom ? prenom[0].toUpperCase() : "") +
+        (nom ? nom[0].toUpperCase() : "")
       );
     },
   },
@@ -115,24 +113,22 @@ export default {
         const userData = snapshot.val();
         console.log("Utilisateur trouvé :", userData); // Debugging
         this.user = {
-          Forname: userData.Forname || "",
-          Name: userData.Name || "",
+          prenom: userData.Prenom || "",
+          nom: userData.Nom || "",
+          PhotoURL: userData.PhotoURL || defaultAvatar,
         };
       } else {
         console.log("Aucun utilisateur trouvé avec l'UID :", uid);
       }
     },
     goToProfile() {
-      this.$router.push("/profile");
+      this.$router.push("/profile/' + user.uid");
     },
     goToPfpHistory() {
-      this.$router.push("/profile");
+      this.$router.push("/historique_pfp");
     },
-    goToSettings() {
-      this.$router.push("/settings");
-    },
-    goToPrivacy() {
-      this.$router.push("/privacy");
+    goToDocumentPFP() {
+      this.$router.push("/documents_pfp");
     },
     async goToLogout() {
       const auth = getAuth();

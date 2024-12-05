@@ -5,16 +5,17 @@
     @click="onClick"
   >
     <i :class="icon" :style="iconStyle"></i>
+
   </Button>
 </template>
 
 <script>
 import { defineComponent } from "vue";
-import Button from "primevue/button";
+
 
 export default defineComponent({
   name: "ButtonNavbar",
-  components: { Button },
+  components: {  },
   props: {
     icon: {
       type: String,
