@@ -34,7 +34,7 @@
             </li>
             <li v-if="user" class="mx-3">
               <ButtonNavbar
-                icon="pi pi-bookmark"
+                icon="pi pi-check"
                 :bgColor="'var(--surface-overlay)'"
                 :hoverBgColor="'var(--surface-hover)'"
                 :iconColor="'var(--primary-color)'"

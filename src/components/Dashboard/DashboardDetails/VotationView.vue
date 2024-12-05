@@ -634,21 +634,17 @@ export default {
                   pfp1a = studentData.PFP1A;
                   pfp1b = studentData.PFP1B;
                 }
-                console.log("yaaa1a " + pfp1a);
-                console.log("yaa1aab " + pfp1b);
+              
                 // Déterminer le PFP sélectionné
                 let selectedPFP = null;
                 if (pfp1a === "true") {
                   selectedPFP = 'PFP1A';
-                  console.log("yaaa " + pfp1a);
                 } else if (pfp1b === "true") {
                   selectedPFP = 'PFP1B';
-                  console.log("yaabii " + pfp1b);
 
                 } else if (pfp1a && pfp1b) {
                   // Si les deux sont vrais, choisir en priorité PFP1A ou gérer selon votre logique
                   selectedPFP = 'PFP1A'; // Priorité à PFP1A
-                  console.log("yaab bug");
 
                   // Alternativement, vous pouvez demander à l'utilisateur de choisir
                 } else {
