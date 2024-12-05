@@ -19,27 +19,40 @@
 
     <!-- Contenu du post -->
     <div class="post-content p-3">
-      <!-- Texte -->
+      <!-- Texte du post -->
       <div v-if="post.Content" class="post-text" v-html="post.Content"></div>
 
-      <!-- Images -->
+      <!-- Médias du post -->
       <div v-if="post.media && post.media.length > 0" class="post-media">
-        <!-- Une seule image -->
-        <img
-          v-if="post.media.length === 1"
-          :src="post.media[0]"
-          alt="Image du Post"
-          class="post-image"
-        />
-        <!-- Plusieurs images -->
-        <div v-else class="post-images-grid">
-          <img
-            v-for="(image, index) in post.media"
+        <div class="media-container">
+          <div
+            v-for="(mediaUrl, index) in post.media"
             :key="index"
-            :src="image"
-            alt="Image du Post"
-            class="post-image-grid-item"
-          />
+            class="media-item-wrapper"
+          >
+            <template v-if="isImage(mediaUrl)">
+              <img :src="mediaUrl" alt="media" class="media-item" />
+            </template>
+            <template v-else-if="isVideo(mediaUrl)">
+              <video
+                ref="videos"
+                :key="'video-' + index"
+                :src="mediaUrl"
+                class="media-item"
+                controls
+                muted
+                playsinline
+              ></video>
+            </template>
+            <template v-else-if="isPDF(mediaUrl)">
+              <embed :src="mediaUrl" type="application/pdf" class="media-item pdf-embed" />
+            </template>
+            <template v-else>
+              <a :href="mediaUrl" target="_blank" rel="noopener noreferrer" class="media-item media-link">
+                Ouvrir le fichier
+              </a>
+            </template>
+          </div>
         </div>
       </div>
     </div>
@@ -60,6 +73,14 @@
       </div>
     </div>
 
+    <!-- Liste des personnes ayant liké -->
+    <div v-if="likedUsers.length > 0" class="liked-users p-3">
+      <strong>Personnes qui ont aimé :</strong>
+      <ul>
+        <li v-for="(user, index) in likedUsers" :key="index">{{ user }}</li>
+      </ul>
+    </div>
+
     <!-- Formulaire de réponse -->
     <div v-if="showReplyForm" class="reply-form w-full p-3">
       <Textarea
@@ -71,11 +92,29 @@
         <Button @click="submitReply" size="small">Envoyer</Button>
       </div>
     </div>
+
+    <!-- Bouton pour afficher/masquer les commentaires sur mobile si des commentaires existent -->
+    <div v-if="post.replies && Object.keys(post.replies).length > 0" class="comments-toggle p-3">
+      <Button @click="toggleComments" size="small">
+        {{ showComments ? 'Masquer les commentaires' : 'Afficher les commentaires' }}
+      </Button>
+    </div>
+
+    <!-- Liste des commentaires (affichés seulement si showComments est true) -->
+    <div v-if="showComments && post.replies" class="comments-section p-3">
+      <h4>Commentaires :</h4>
+      <div v-for="(reply, replyId) in post.replies" :key="replyId" class="comment-item">
+        <div class="comment-author">
+          <strong>{{ reply.Author }}</strong> - <span class="comment-date">{{ formatTimestamp(reply.Timestamp) }}</span>
+        </div>
+        <div class="comment-content">{{ reply.Content }}</div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-import { ref as dbRef, onValue, push, serverTimestamp, update } from "firebase/database";
+import { ref as dbRef, onValue, push, serverTimestamp, update, get } from "firebase/database";
 import { db } from "../../../firebase.js";
 import Textarea from "primevue/textarea";
 import Button from "primevue/button";
@@ -103,6 +142,8 @@ export default {
       isLiked: false,
       likeCount: 0,
       commentCount: 0,
+      likedUsers: [],
+      showComments: false // Par défaut les commentaires sont cachés, surtout utile sur mobile
     };
   },
   watch: {
@@ -111,14 +152,17 @@ export default {
         this.fetchAuthorDetails();
         this.checkLikeStatus();
         this.loadCommentCount();
+        this.loadLikedUsers();
       },
       immediate: true,
     },
   },
+  mounted() {
+    this.initVideoObserver();
+  },
   methods: {
     fetchAuthorDetails() {
       if (!this.post.IdUser) return;
-
       const userRef = dbRef(db, `Users/${this.post.IdUser}`);
       onValue(userRef, (snapshot) => {
         const userData = snapshot.val();
@@ -171,7 +215,6 @@ export default {
     },
     toggleLike() {
       if (!this.currentUser) return alert("Vous devez être connecté pour liker.");
-
       const postLikesRef = dbRef(db, `Posts/${this.post.id}/likes`);
       if (this.isLiked) {
         const updates = {};
@@ -185,6 +228,7 @@ export default {
 
       this.isLiked = !this.isLiked;
       this.likeCount += this.isLiked ? 1 : -1;
+      this.loadLikedUsers();
     },
     loadCommentCount() {
       if (this.post.replies) {
@@ -199,6 +243,69 @@ export default {
         alert("Lien du post copié dans le presse-papiers !");
       });
     },
+    async loadLikedUsers() {
+      this.likedUsers = [];
+      if (this.post.likes) {
+        const likeUserIds = Object.keys(this.post.likes);
+        for (const uid of likeUserIds) {
+          const userRef = dbRef(db, `Users/${uid}`);
+          const snapshot = await get(userRef);
+          const userData = snapshot.val();
+          if (userData) {
+            this.likedUsers.push(userData.username || userData.email.split('@')[0] || "Utilisateur");
+          } else {
+            this.likedUsers.push("Utilisateur inconnu");
+          }
+        }
+      }
+    },
+    isImage(url) {
+      const extension = this.getExtension(url);
+      return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension);
+    },
+    isVideo(url) {
+      const extension = this.getExtension(url);
+      return ['mp4', 'webm', 'ogg'].includes(extension);
+    },
+    isPDF(url) {
+      const extension = this.getExtension(url);
+      return extension === 'pdf';
+    },
+    getExtension(url) {
+      return url.split('?')[0].split('.').pop().toLowerCase();
+    },
+    toggleComments() {
+      this.showComments = !this.showComments;
+    },
+    initVideoObserver() {
+      const options = {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.5
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          const video = entry.target;
+          if (entry.isIntersecting) {
+            video.play().catch(() => {});
+          } else {
+            video.pause();
+          }
+        });
+      }, options);
+
+      this.$nextTick(() => {
+        const videos = this.$refs.videos;
+        if (videos) {
+          if (Array.isArray(videos)) {
+            videos.forEach(video => observer.observe(video));
+          } else {
+            observer.observe(videos);
+          }
+        }
+      });
+    }
   },
 };
 </script>
@@ -213,69 +320,58 @@ export default {
   transition: all 0.3s ease;
 }
 
-.post-media {
-  text-align: center;
-}
-
-.post-image-wrapper {
-  margin: 10px 0;
-}
-
 .post-header {
   display: flex;
   align-items: center;
   margin-bottom: 10px;
 }
 
-.post-image {
-  display: inline-block;
-  border-radius: 8px;
-}
-
-.horizontal-image {
-  width: 90%;
-}
-
-.vertical-image {
-  width: 50%;
-  max-height: 500px;
-}
-
-.avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  margin-right: 10px;
-  object-fit: cover;
+.post-author {
+  display: flex;
+  flex-direction: column;
 }
 
 .post-content {
   display: flex;
   flex-direction: column;
-}
-
-.post-media {
   margin-top: 10px;
 }
 
-.post-image {
+.post-media {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   width: 100%;
-  height: auto;
-  border-radius: 8px;
-  margin-bottom: 10px;
+  margin-top: 20px;
 }
 
-.post-images-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 10px;
+.media-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
 }
 
-.post-image-grid-item {
-  width: 100%;
+.media-item {
+  max-width: 80%;
   height: auto;
   border-radius: 8px;
   object-fit: cover;
+  display: block;
+  margin: 0 auto;
+}
+
+.pdf-embed {
+  width: 70vw;
+  height: 80vh;
+  border: none;
+  margin: 0 auto;
+}
+
+.media-link {
+  word-break: break-all;
+  color: var(--primary-color);
+  text-decoration: underline;
 }
 
 .post-actions {
@@ -301,5 +397,86 @@ export default {
 
 .action-icon {
   font-size: 20px;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 10px;
+  object-fit: cover;
+}
+
+.liked-users {
+  margin-top: 10px;
+}
+
+.liked-users ul {
+  list-style-type: disc;
+  margin: 5px 0 0 20px;
+  padding: 0;
+}
+
+.comments-section {
+  margin-top: 20px;
+}
+
+.comment-item {
+  background: var(--surface-50);
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.comment-author {
+  font-size: 0.9em;
+  margin-bottom: 5px;
+  color: var(--text-secondary-color);
+}
+
+.comment-content {
+  font-size: 1em;
+  color: var(--text-color);
+}
+
+/* Responsive mobile */
+@media (max-width: 600px) {
+  .post-item {
+    padding: 10px;
+  }
+
+  .media-item {
+    max-width: 100%;
+  }
+
+  .pdf-embed {
+    width: 90vw;
+    height: 60vh;
+  }
+
+  .avatar {
+    width: 30px;
+    height: 30px;
+    margin-right: 8px;
+  }
+
+  /* Les boutons d'action en colonne sur mobile */
+  .post-actions {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .action-button {
+    font-size: 0.9em;
+  }
+
+  .comment-author {
+    font-size: 0.8em;
+  }
+
+  .comment-content {
+    font-size: 0.9em;
+  }
 }
 </style>

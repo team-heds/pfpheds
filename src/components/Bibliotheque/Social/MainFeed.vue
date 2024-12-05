@@ -4,7 +4,6 @@
     <transition name="fade">
       <div v-show="showTextareaCard" class="post-textarea-card">
         <div class="post-form">
-          <!-- Zone de texte -->
           <Editor v-model="newPost" @input="detectTags" editorStyle="height: 120px">
             <template v-slot:toolbar>
               <span class="ql-formats">
@@ -15,7 +14,6 @@
             </template>
           </Editor>
 
-          <!-- Tags -->
           <div v-if="detectedTags.length > 0" class="tags-container p-3">
             <Tag
               v-for="(tag, index) in detectedTags"
@@ -26,7 +24,6 @@
             </Tag>
           </div>
 
-          <!-- Upload des fichiers -->
           <div class="pt-2">
             <FileUpload
               ref="fileupload"
@@ -39,7 +36,6 @@
               chooseLabel="Ajouter des médias"
             />
 
-            <!-- Aperçu des médias sélectionnés -->
             <div class="media-preview" v-if="selectedMedia.length > 0">
               <div
                 v-for="(media, index) in selectedMedia"
@@ -57,17 +53,15 @@
             </div>
           </div>
 
-          <!-- Bouton publier -->
           <Button label="Publier" class="publish-button" @click="postMessage" />
         </div>
       </div>
     </transition>
 
-    <!-- Liste des posts -->
     <div class="posts-container" @scroll="handleScroll">
       <InfiniteScroll :loading="loading" @load-more="loadMorePosts">
         <PostItem
-          v-for="(post, index) in shuffledPosts"
+          v-for="post in filteredPosts"
           :key="post.id"
           :post="post"
           :currentUser="localCurrentUser"
@@ -77,16 +71,17 @@
   </div>
 </template>
 
-
 <script>
 import {
   ref as dbRef,
   push,
   set,
-  onValue,
   serverTimestamp,
+  orderByChild,
   limitToLast,
-  query,
+  endAt,
+  get,
+  query
 } from "firebase/database";
 import {
   getStorage,
@@ -102,6 +97,7 @@ import Textarea from "primevue/textarea";
 import Tag from "primevue/tag";
 import Button from "primevue/button";
 import FileUpload from "primevue/fileupload";
+import Editor from "primevue/editor"; // Assurez-vous d'importer l'Editor si ce n'est pas déjà fait
 
 export default {
   name: "MainFeed",
@@ -112,33 +108,30 @@ export default {
     Tag,
     Button,
     FileUpload,
+    Editor
   },
   props: {
-    currentUser: Object, // Reçoit l'utilisateur actuel en tant que prop
+    currentUser: Object,
   },
   data() {
     return {
       posts: [],
       filteredPosts: [],
-      shuffledPosts: [],
       newPost: "",
       detectedTags: [],
       loading: false,
       postsPerPage: 10,
-      lastPostKey: null,
-      localCurrentUser: null, // Crée une copie locale de la prop
-      showTextareaCard: true, // Contrôle l'affichage de la carte
-      lastScrollTop: 0, // Position précédente du scroll
-      selectedMedia: [], // Liste des médias sélectionnés
+      localCurrentUser: null,
+      showTextareaCard: true,
+      lastScrollTop: 0,
+      selectedMedia: [],
+      oldestTimestamp: null // Le timestamp du post le plus ancien chargé
     };
   },
   watch: {
     newPost(value) {
       this.detectedTags = this.extractTags(value);
-    },
-    filteredPosts(newFilteredPosts) {
-      this.shuffledPosts = this.shufflePosts(newFilteredPosts);
-    },
+    }
   },
   methods: {
     extractTags(text) {
@@ -162,23 +155,23 @@ export default {
           Timestamp: serverTimestamp(),
           Hashtags: this.detectedTags.filter((tag) => tag.startsWith("#")),
           MentionGroups: this.detectedTags.filter((tag) => tag.startsWith("@")),
-          media: [], // Stocker les URLs des médias
+          media: []
         };
 
-        // Upload des médias
         const mediaUrls = await this.uploadMedia();
         postData.media = mediaUrls;
 
-        // Sauvegarder dans la base de données
         const newPostRef = push(dbRef(db, "Posts"));
         await set(newPostRef, postData);
 
         console.log("Publication réussie :", postData);
 
-        // Réinitialiser les champs après publication
         this.newPost = "";
         this.selectedMedia = [];
         this.detectedTags = [];
+
+        // Après la publication, on peut recharger les posts pour s'assurer que le nouveau est pris en compte
+        this.reloadPosts();
       } catch (error) {
         console.error("Erreur lors de la publication :", error);
       }
@@ -221,40 +214,66 @@ export default {
     removeMedia(index) {
       this.selectedMedia.splice(index, 1);
     },
-    fetchPosts() {
+    async reloadPosts() {
+      // Recharge complètement les derniers posts
+      this.posts = [];
+      this.oldestTimestamp = null;
+      await this.fetchPosts();
+    },
+    async fetchPosts() {
       this.loading = true;
 
-      const postsRef = query(
+      // Première requête : on récupère les posts les plus récents
+      // On utilise limitToLast pour choper les posts les plus récents, puis on les inverse.
+      let q = query(
         dbRef(db, "Posts"),
+        orderByChild("Timestamp"),
         limitToLast(this.postsPerPage)
       );
 
-      onValue(postsRef, (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-          const postsArray = Object.entries(data).map(([key, post]) => ({
-            ...post,
-            id: key,
-          }));
+      // Si on a déjà un oldestTimestamp, on récupère les posts plus anciens que celui-ci.
+      if (this.oldestTimestamp) {
+        // On récupère les posts antérieurs à oldestTimestamp
+        q = query(
+          dbRef(db, "Posts"),
+          orderByChild("Timestamp"),
+          endAt(this.oldestTimestamp - 1),
+          limitToLast(this.postsPerPage)
+        );
+      }
 
-          this.posts = [...this.posts, ...postsArray];
-          this.applyFilters();
+      const snapshot = await get(q);
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        let postsArray = Object.entries(data).map(([key, post]) => ({
+          ...post,
+          id: key,
+        }));
+
+        // postsArray est dans l'ordre ascendant par Timestamp, on l'inverse pour afficher du plus récent au plus ancien
+        postsArray.sort((a, b) => b.Timestamp - a.Timestamp);
+
+        // Mise à jour des posts
+        this.posts = [...this.posts, ...postsArray];
+
+        // Mettre à jour oldestTimestamp avec le plus ancien (dernier dans le tableau après tri)
+        if (this.posts.length > 0) {
+          const oldestPost = this.posts[this.posts.length - 1];
+          this.oldestTimestamp = oldestPost.Timestamp;
         }
-        this.loading = false;
-      });
+
+        this.applyFilters();
+      }
+
+      this.loading = false;
     },
     applyFilters() {
-      this.filteredPosts = this.posts.filter((post) => true);
+      this.filteredPosts = this.posts; // À ce stade, aucun filtre particulier
     },
-    shufflePosts(posts) {
-      for (let i = posts.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [posts[i], posts[j]] = [posts[j], posts[i]];
+    async loadMorePosts() {
+      if (!this.loading) {
+        await this.fetchPosts();
       }
-      return posts;
-    },
-    loadMorePosts() {
-      if (!this.loading) this.fetchPosts();
     },
     handleScroll(event) {
       const scrollTop = event.target.scrollTop;
@@ -265,6 +284,7 @@ export default {
   mounted() {
     if (this.currentUser) {
       this.localCurrentUser = { ...this.currentUser };
+      this.fetchPosts();
     } else {
       onAuthStateChanged(auth, (user) => {
         if (user) {
@@ -277,12 +297,13 @@ export default {
 };
 </script>
 
-
 <style scoped>
 .main-feed {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  height: 100vh; /* Assurez-vous que le container est scrollable */
+  overflow-y: auto;
 }
 
 .post-textarea-card {
