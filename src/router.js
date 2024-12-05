@@ -65,7 +65,12 @@ const routes = [
   { path: '/map', component: Map, name: 'Map', meta: { requiresAuth: true } },
   { path: '/institution', component: Institution, name: 'Institution', meta: { requiresAuth: true } },
   { path: '/place', component: Place, name: 'Place', meta: { requiresAuth: true } },
-  { path: '/profile/:id', component: Profile, name: 'Profile', meta: { requiresAuth: true } },
+  {
+    path: '/profile/:id',
+    name: 'Profile',
+    component: Profile,
+    meta: { requiresAuth: true }// Le composant qui gère l'affichage d'un profil utilisateur
+  },
   { path: '/admin', component: DashbordAdmin, name: 'DashbordAdmin' , meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] }}, // à remodifier
   { path: '/institution_list', component: InstitutionList, name: 'InstitutionList', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
   { path: '/etudiant_list', component: EtudiantList, name: 'EtudiantList',  meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },

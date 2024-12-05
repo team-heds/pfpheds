@@ -6,7 +6,7 @@
       <div
         v-for="(value, key) in userProfile"
         :key="key"
-        class="col-2 sm:col-4 lg:col-2 flex flex-column align-items-center justify-content-center card w-12 criteria-card "
+        class="col-2 sm:col-4 lg:col-2 flex flex-column align-items-center justify-content-center card w-12 criteria-card"
       >
         <span class="font-bold text-center">{{ key }}</span>
         <i
@@ -43,17 +43,25 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { getDatabase, ref as dbRef, get } from "firebase/database";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
 import Button from "primevue/button";
 
+// Références pour les données
 const userProfile = ref(null);
 const institution = ref(null);
 
-const fetchUserProfileByKey = async (key) => {
+// Référence au routeur pour la navigation
+const router = useRouter();
+
+// Définir une image d'avatar par défaut si nécessaire
+const defaultAvatar = '../../../public/assets/images/avatar/01.jpg';
+
+// Fonction pour récupérer le profil utilisateur via son ID
+const fetchUserProfileById = async (userId) => {
   const db = getDatabase();
   try {
-    const studentRef = dbRef(db, `Students/${key}`);
+    const studentRef = dbRef(db, `Students/${userId}`);
     const snapshotStudent = await get(studentRef);
 
     if (snapshotStudent.exists()) {
@@ -73,24 +81,40 @@ const fetchUserProfileByKey = async (key) => {
       institution.value = studentData.PFP_1
         ? { NomInstitution: studentData.PFP_1 || "Nom non disponible" }
         : null;
+    } else {
+      console.error("Aucun profil trouvé pour l'ID :", userId);
+      // Optionnel : Rediriger vers une page d'erreur ou afficher un message utilisateur
     }
   } catch (error) {
-    console.error("Error fetching data:", error);
+    console.error("Erreur lors de la récupération des données :", error);
   }
 };
 
+// Fonction pour naviguer vers la page de l'institution
 const navigateToInstitution = () => {
-  // Naviguer vers la page de l'institution
-  console.log("Navigating to institution page...");
+  if (institution.value && institution.value.NomInstitution) {
+    // Supposons que chaque institution a un ID unique, stocké quelque part
+    // Ici, nous utilisons NomInstitution pour l'exemple, mais idéalement, utilisez un ID unique
+
+    // Exemple de navigation (à adapter selon votre configuration de routes) :
+    // router.push({ name: 'InstitutionProfile', params: { id: institutionId } });
+
+    console.log("Navigating to institution page...");
+    // Implémentez la navigation réelle ici si vous avez un ID d'institution
+  }
 };
 
+// Accéder aux paramètres de la route
+const route = useRoute();
+
 onMounted(() => {
-  const auth = getAuth();
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      fetchUserProfileByKey(user.uid);
-    }
-  });
+  const userId = route.params.id; // Récupère l'ID depuis l'URL
+  if (userId) {
+    fetchUserProfileById(userId); // Charge le profil correspondant à l'ID
+  } else {
+    console.error("Aucun ID d'utilisateur fourni dans l'URL");
+    // Optionnel : Rediriger vers une page d'erreur ou afficher un message utilisateur
+  }
 });
 </script>
 
@@ -137,6 +161,8 @@ onMounted(() => {
 
 .action-button {
   flex-shrink: 0;
+  display: flex;
+  gap: 1rem; /* Ajoute un espace de 1rem entre les boutons */
 }
 
 /* Colors */
@@ -160,6 +186,28 @@ onMounted(() => {
 @media (max-width: 768px) {
   .text-3xl {
     font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 600px) {
+  /* Sur mobile, ajuster la largeur des cartes */
+  .w-12 {
+    width: 100% !important;
+  }
+
+  /* Ajustements supplémentaires si nécessaire */
+  .criteria-card {
+    height: auto; /* Permet aux cartes de s'adapter à leur contenu sur mobile */
+  }
+
+  .institution-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .action-button {
+    width: 100%;
+    justify-content: flex-start;
   }
 }
 </style>

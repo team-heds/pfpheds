@@ -40,7 +40,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { useRoute } from 'vue-router';
 import { getDatabase, ref as dbRef, get, update } from "firebase/database";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import Button from 'primevue/button';
@@ -48,10 +48,8 @@ import { storage } from '../../../firebase.js';
 import CardNameProfile from '@/components/Bibliotheque/Profile/CardNameProfile.vue';
 import ResumStageUserProfile from '@/components/UserProfile/ResumStageUserProfile.vue';
 
-// Définir l'URL de l'avatar par défaut
 const defaultAvatar = '../../../public/assets/images/avatar/01.jpg';
 
-// Données utilisateur
 const user = ref({
   uid: '',
   prenom: '',
@@ -64,58 +62,53 @@ const user = ref({
 
 const selectedAvatarFile = ref(null);
 
-// Méthode pour récupérer le profil utilisateur depuis Firebase
-const fetchUserProfile = async (email) => {
+// Fonction pour charger un profil utilisateur via son ID
+const fetchUserProfileById = async (userId) => {
   const db = getDatabase();
-  const usersRef = dbRef(db, 'Users');
-  const snapshot = await get(usersRef);
+  const userRef = dbRef(db, `Users/${userId}`);
+  const snapshot = await get(userRef);
   if (snapshot.exists()) {
-    const usersData = snapshot.val();
-    for (const userId in usersData) {
-      const userData = usersData[userId];
-      if (userData.Mail && userData.Mail.toLowerCase() === email.toLowerCase()) {
-        user.value = {
-          uid: userId,
-          prenom: userData.Forname || '',
-          nom: userData.Name || '',
-          email: userData.Mail || '',
-          ville: userData.Ville || '',
-          bio: userData.Biography || '',
-          photoURL: userData.PhotoURL || defaultAvatar
-        };
-        return;
-      }
-    }
+    const userData = snapshot.val();
+    user.value = {
+      uid: userId,
+      prenom: userData.Prenom || '',
+      nom: userData.Nom || '',
+      email: userData.Mail || '',
+      ville: userData.Ville || '',
+      bio: userData.Biography || '',
+      photoURL: userData.PhotoURL || defaultAvatar
+    };
+  } else {
+    console.error("Aucun profil trouvé pour l'ID :", userId);
   }
 };
 
-// Méthode pour sauvegarder uniquement la photo de profil dans Firebase
 const saveProfile = async () => {
   if (selectedAvatarFile.value) {
-    const auth = getAuth();
-    const authUser = auth.currentUser;
-    if (!authUser) {
-      alert('Veuillez vous authentifier avant de changer l\'avatar');
+    // Nécessite un utilisateur authentifié pour l'upload,
+    // mais cela ne sert qu'à vérifier que vous avez l'accès.
+    // Cependant, si vous souhaitez rester neutre, retirez l'obligation.
+    // Ici on suppose que vous avez accès :
+
+    const userId = user.value.uid;
+    if (!userId) {
+      alert('Aucun utilisateur chargé, impossible de sauvegarder.');
       return;
     }
 
-    const avatarRef = storageRef(storage, `users/${authUser.uid}/profile-picture.jpg`);
+    const avatarRef = storageRef(storage, `users/${userId}/profile-picture.jpg`);
 
     try {
-      // Upload de l'avatar dans Firebase Storage
       await uploadBytes(avatarRef, selectedAvatarFile.value);
       const photoURL = await getDownloadURL(avatarRef);
 
-      // Mettre à jour uniquement le champ `PhotoURL` dans la base Firebase
       const db = getDatabase();
-      const userRef = dbRef(db, `Users/${user.value.uid}`);
+      const userRef = dbRef(db, `Users/${userId}`);
       await update(userRef, {
         PhotoURL: photoURL
       });
 
-      // Mettre à jour la photo affichée localement
       user.value.photoURL = photoURL;
-
       alert('Photo de profil mise à jour avec succès');
     } catch (error) {
       console.error('Erreur lors de l\'upload de l\'avatar :', error);
@@ -126,7 +119,6 @@ const saveProfile = async () => {
   }
 };
 
-// Gérer le changement d'avatar
 const onAvatarChange = (event) => {
   const file = event.target.files[0];
   if (file) {
@@ -134,16 +126,15 @@ const onAvatarChange = (event) => {
   }
 };
 
-// Méthode pour observer les changements d'état de l'authentification
-onMounted(() => {
-  const auth = getAuth();
-  onAuthStateChanged(auth, async (authUser) => {
-    if (authUser) {
-      await fetchUserProfile(authUser.email);
-    } else {
-      user.value = {};
-    }
-  });
+const route = useRoute();
+
+onMounted(async () => {
+  const userId = route.params.id; // Récupère l'ID depuis l'URL
+  if (userId) {
+    await fetchUserProfileById(userId); // Charge le profil correspondant à l'ID
+  } else {
+    console.error("Aucun ID d'utilisateur fourni dans l'URL");
+  }
 });
 </script>
 
@@ -166,5 +157,11 @@ img {
 
 .p-ml-2 {
   margin-left: 0.5rem;
+}
+
+@media (max-width: 600px) {
+  .w-4 {
+    width: 100% !important;
+  }
 }
 </style>
