@@ -12,8 +12,8 @@
         <span class="font-bold text-center">{{ key }}</span>
         <i
           :class="{
-            'pi pi-check-circle text-green-500': value > 0,
-            'pi pi-times-circle text-red-500': value === 0
+            'pi pi-check-circle text-green-500': parseInt(value) >= 1,
+            'pi pi-times-circle text-red-500': !value || parseInt(value) === 0
           }"
           class="text-3xl mt-2"
         ></i>

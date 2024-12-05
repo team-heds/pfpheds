@@ -9,7 +9,7 @@
         <!-- Section pour la validation -->
         <div v-if="currentStudent && selectedPFP && selectedClass" class="table-responsive mt-4">
           <div v-if="validationMessage" class="mt-4 text-center">
-            <h4>Votation  {{ selectedPFP }}</h4>
+            <h4>Votation {{ selectedPFP }}</h4>
           </div>
         </div>
 
@@ -31,17 +31,18 @@
                 <th>SYSINT</th>
                 <th>NEUROGER</th>
                 <th>AMBU</th>
+                <th>NbPlaces</th>
                 <th>Choix 1</th>
                 <th>Choix 2</th>
                 <th>Choix 3</th>
                 <th>Choix 4</th>
                 <th>Choix 5</th>
-                <th>Votation1</th>
-                <th>Votation2</th>
-                <th>Votation3</th>
-                <th>Votation4</th>
-                <th>Votation5</th>
-                <th>VotationTotal</th>
+                <th class="hover-highlight" title="résultat étudiant 1">R1</th>
+                <th class="hover-highlight" title="résultat étudiant 2">R2</th>
+                <th class="hover-highlight" title="résultat étudiant 3">R3</th>
+                <th class="hover-highlight" title="résultat étudiant 4">R4</th>
+                <th class="hover-highlight" title="résultat étudiant 5">R5</th>
+                <th class="hover-highlight" title="résultat total">RT</th>
               </tr>
               </thead>
               <tbody>
@@ -70,6 +71,11 @@
                 <td v-else>&#10060;</td>
                 <td v-if="Boolean(stage.AMBU)">&#9989;</td>
                 <td v-else>&#10060;</td>
+
+                <td v-if="this.selectedPFP === 'PFP1A'"> {{ stage.NbPlace1A }}
+                </td>
+                <td v-else> {{ stage.NbPlace1B }}
+                </td>
                 <!-- Cases à cocher pour les 5 choix -->
                 <td>
                   <input type="checkbox" :disabled="isChoiceDisabled(stage, 'choice1')"
@@ -325,7 +331,7 @@ export default {
                 if (this.selectedPFP === "PFP1A") {
                   votationRef = ref(db, `VotationPFP1A/${id}/choices/${choiceKey}`);
 
-                } else if (this.electedPFP === "PFP1B") {
+                } else if (this.selectedPFP === "PFP1B") {
                   votationRef = ref(db, `VotationPFP1B/${id}/choices/${choiceKey}`);
 
                 }
@@ -353,8 +359,17 @@ export default {
                 // Enregistrer le choix dans Firebase
                 await set(votationRef, votationData);
 
+
+                let stageRef = "";
+                if (this.selectedPFP === "PFP1A") {
+                  stageRef = ref(db, `PFP1A-B23/${stage.IDENTIFIANT}`);
+
+                } else if (this.selectedPFP === "PFP1B") {
+                  // eslint-disable-next-line no-unused-vars
+                  stageRef = ref(db, `PFP1B-B23/${stage.IDENTIFIANT}`);
+
+                }
                 // Marquer la place comme prise
-                const stageRef = ref(db, `PFP1A-B23/${stage.IDENTIFIANT}`);
                 // await update(stageRef, { takenBy: id });
 
                 // Mettre à jour les comptes de votes
@@ -483,13 +498,15 @@ export default {
               Domaine: place.NomPlace || '',
               PFP1A: pfpValue, // Utilisation de PFP1A
               FR: place.FR || false,
-              ALL: place.ALL || false, // Vérifiez si 'ALL' correspond à 'ALL' dans vos données
+              ALL: place.ALL || place.DE ||false, // Vérifiez si 'ALL' correspond à 'ALL' dans vos données
               AIGU: place.AIGU || false,
               REHAB: place.REHAB || false,
               MSQ: place.MSQ || false,
               SYSINT: place.SYSINT || false,
               NEUROGER: place['NEURO-GER'] || false,
               AMBU: place.AMBU || false,
+              NbPlace1A: place.PFP1A || false,
+              NbPlace1B: place.PFP1B || false,
               Name: institutionData.Name || '',
               AccordCadreDate: institutionData.AccordCadreDate || '',
               Canton: institutionData.Canton || '',
@@ -536,7 +553,7 @@ export default {
       if (this.selectedPFP === "PFP1A") {
         votationRef = ref(db, `VotationPFP1A`);
 
-      } else if (this.electedPFP === "PFP1B") {
+      } else if (this.selectedPFP === "PFP1B") {
         votationRef = ref(db, `VotationPFP1B`);
 
       }
@@ -736,7 +753,7 @@ export default {
       if (this.selectedPFP === "PFP1A") {
         votationRef = ref(db, `VotationPFP1A/${studentId}/choices`); // Chemin ajusté pour PFP1A
 
-      } else if (this.electedPFP === "PFP1B") {
+      } else if (this.selectedPFP === "PFP1B") {
         votationRef = ref(db, `VotationPFP1B/${studentId}/choices`); // Chemin ajusté pour PFP1A
 
       }
@@ -1129,5 +1146,17 @@ input[type="checkbox"] {
     /* 1 élément par ligne */
   }
 }
+
+.hover-highlight {
+  position: relative;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.hover-highlight:hover {
+  background-color: #f0f8ff; /* Couleur de surlignement */
+  color: #007bff; /* Couleur du texte surligné */
+}
+
 </style>
 

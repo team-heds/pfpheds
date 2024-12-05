@@ -136,7 +136,7 @@ export default {
     return {
       showReplyForm: false,
       replyContent: "",
-      defaultAvatar: new URL("@/assets/avatar/avatar99.png", import.meta.url).href,
+      defaultAvatar: new URL("@/assets/avatar/avatar1.jpg", import.meta.url).href,
       authorName: "",
       authorAvatarUrl: "",
       isLiked: false,
