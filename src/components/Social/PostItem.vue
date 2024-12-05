@@ -213,10 +213,32 @@ export default {
   transition: all 0.3s ease;
 }
 
+.post-media {
+  text-align: center;
+}
+
+.post-image-wrapper {
+  margin: 10px 0;
+}
+
 .post-header {
   display: flex;
   align-items: center;
   margin-bottom: 10px;
+}
+
+.post-image {
+  display: inline-block;
+  border-radius: 8px;
+}
+
+.horizontal-image {
+  width: 90%;
+}
+
+.vertical-image {
+  width: 50%;
+  max-height: 500px;
 }
 
 .avatar {

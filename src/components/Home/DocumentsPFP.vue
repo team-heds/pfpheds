@@ -7,9 +7,10 @@ import Navbar from '@/components/Utils/Navbar.vue'
 
 // Initialisation des données
 const folders = ref([
-  { name: 'Documents de stage', path: 'documents-stage/', icon: 'pi pi-folder' },
-  { name: 'Certificats', path: 'certificats/', icon: 'pi pi-folder' },
-  { name: 'Contrats', path: 'contrats/', icon: 'pi pi-folder' }
+  { name: 'Documents généraux FP', path: 'documents-généraux/', icon: 'pi pi-folder' },
+  { name: 'CPT', path: 'cpt/', icon: 'pi pi-folder' },
+  { name: 'Évaluation PFP', path: 'evaluation/', icon: 'pi pi-folder' },
+  { name: 'Débrief post PFP', path: 'débriefPostPFP/', icon: 'pi pi-folder' },
 ]);
 
 const selectedFolder = ref(null);  // Dossier sélectionné

@@ -32,7 +32,7 @@
               ref="fileupload"
               mode="basic"
               name="media[]"
-              accept="image/*,video/*"
+              accept=".jpg,.png,.mp3,.mp4,.pdf"
               :maxFileSize="10000000"
               customUpload
               @select="handleFileSelection"

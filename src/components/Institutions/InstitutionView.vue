@@ -46,7 +46,7 @@
               </div>
             </div>
           </TabPanel>
-          <TabPanel>
+          <TabPanel header="Encadrement étudiant.e.s">
             <div class="grid">
               <div class="col-12 lg:col-12">
                 <div class="text-900 font-bold text-3xl mb-4 mt-2">Encadrement étudiant.e.s</div>

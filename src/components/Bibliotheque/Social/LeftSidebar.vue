@@ -97,10 +97,10 @@ export default {
       return this.user.PhotoURL;
     },
     userInitials() {
-      const { Forname, Name } = this.user;
+      const { prenom, nom } = this.user;
       return (
-        (Forname ? Forname[0].toUpperCase() : "") +
-        (Name ? Name[0].toUpperCase() : "")
+        (prenom ? prenom[0].toUpperCase() : "") +
+        (nom ? nom[0].toUpperCase() : "")
       );
     },
   },
