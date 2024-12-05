@@ -16,10 +16,9 @@
           <table class="table">
             <thead>
             <tr>
-              <th>Institutions</th>
-              <th>Lieux</th>
+              <th>Institution</th>
+              <th>Lieu</th>
               <th>Domaine</th>
-              <th>PFP2</th>
               <th>FR</th>
               <th>ALL</th>
               <th>AIGU</th>
@@ -28,55 +27,96 @@
               <th>SYSINT</th>
               <th>NEUROGER</th>
               <th>AMBU</th>
-              <th>Choix</th>
+              <th>Choix 1</th>
+              <th>Choix 2</th>
+              <th>Choix 3</th>
+              <th>Choix 4</th>
+              <th>Choix 5</th>
+              <th>Votation 1</th>
+              <th>Votation 2</th>
+              <th>Votation 3</th>
+              <th>Votation 4</th>
+              <th>Votation 5</th>
+              <th>Votation Total</th>
             </tr>
             </thead>
             <tbody>
             <template v-for="(group, groupIndex) in groupedStages" :key="groupIndex">
               <!-- En-tête du groupe -->
               <tr class="group-header">
-                <td colspan="13">Places validant {{ group.numberPlace }} critères manquants</td>
+                <td colspan="22">Places validant {{ group.numberPlace }} critères manquants</td>
               </tr>
               <!-- Lignes des stages -->
-              <tr
-                v-for="(stage, index) in group.stages"
-                :key="index"
-                class="hover-row"
-              >
+              <tr v-for="(stage, index) in group.stages" :key="index" class="hover-row">
                 <td>{{ stage.NomPlace }}</td>
                 <td>{{ stage.Lieu }}</td>
                 <td>{{ stage.Domaine }}</td>
-                <td>{{ stage.numberPlace }}</td>
+                <td v-if="Boolean(stage.FR)">&#9989;</td>
+                <td v-else>&#10060;</td>
+                <td v-if="Boolean(stage.ALL)">&#9989;</td>
+                <td v-else>&#10060;</td>
+                <td v-if="Boolean(stage.AIGU)">&#9989;</td>
+                <td v-else>&#10060;</td>
+                <td v-if="Boolean(stage.REHAB)">&#9989;</td>
+                <td v-else>&#10060;</td>
+                <td v-if="Boolean(stage.MSQ)">&#9989;</td>
+                <td v-else>&#10060;</td>
+                <td v-if="Boolean(stage.SYSINT)">&#9989;</td>
+                <td v-else>&#10060;</td>
+                <td v-if="Boolean(stage.NEUROGER)">&#9989;</td>
+                <td v-else>&#10060;</td>
+                <td v-if="Boolean(stage.AMBU)">&#9989;</td>
+                <td v-else>&#10060;</td>
+                <!-- Cases à cocher pour les 5 choix -->
                 <td>
-                  <i :class="stage.FR ? 'pi pi-check text-green-500' : 'pi pi-times text-red-500'"></i>
+                  <input
+                    type="checkbox"
+                    :disabled="isChoiceDisabled(stage, 'choice1')"
+                    :checked="selectedChoices.choice1 === stage.IDENTIFIANT"
+                    @change="handleChoiceChange(stage.IDENTIFIANT, 'choice1')"
+                  />
                 </td>
                 <td>
-                  <i :class="stage.ALL ? 'pi pi-check text-green-500' : 'pi pi-times text-red-500'"></i>
+                  <input
+                    type="checkbox"
+                    :disabled="isChoiceDisabled(stage, 'choice2')"
+                    :checked="selectedChoices.choice2 === stage.IDENTIFIANT"
+                    @change="handleChoiceChange(stage.IDENTIFIANT, 'choice2')"
+                  />
                 </td>
                 <td>
-                  <i :class="stage.AIGU ? 'pi pi-check text-green-500' : 'pi pi-times text-red-500'"></i>
+                  <input
+                    type="checkbox"
+                    :disabled="isChoiceDisabled(stage, 'choice3')"
+                    :checked="selectedChoices.choice3 === stage.IDENTIFIANT"
+                    @change="handleChoiceChange(stage.IDENTIFIANT, 'choice3')"
+                  />
                 </td>
                 <td>
-                  <i :class="stage.REHAB ? 'pi pi-check text-green-500' : 'pi pi-times text-red-500'"></i>
+                  <input
+                    type="checkbox"
+                    :disabled="isChoiceDisabled(stage, 'choice4')"
+                    :checked="selectedChoices.choice4 === stage.IDENTIFIANT"
+                    @change="handleChoiceChange(stage.IDENTIFIANT, 'choice4')"
+                  />
                 </td>
                 <td>
-                  <i :class="stage.MSQ ? 'pi pi-check text-green-500' : 'pi pi-times text-red-500'"></i>
+                  <input
+                    type="checkbox"
+                    :disabled="isChoiceDisabled(stage, 'choice5')"
+                    :checked="selectedChoices.choice5 === stage.IDENTIFIANT"
+                    @change="handleChoiceChange(stage.IDENTIFIANT, 'choice5')"
+                  />
                 </td>
-                <td>
-                  <i :class="stage.SYSINT ? 'pi pi-check text-green-500' : 'pi pi-times text-red-500'"></i>
-                </td>
-                <td>
-                  <i :class="stage.NEUROGER ? 'pi pi-check text-green-500' : 'pi pi-times text-red-500'"></i>
-                </td>
-                <td>
-                  <i :class="stage.AMBU ? 'pi pi-check text-green-500' : 'pi pi-times text-red-500'"></i>
-                </td>
-                <td>
-                  <input type="radio" :name="'stage-selection'" @change="selectStage(stage)" />
-                </td>
+                <td>{{ voteCounts[stage.IDENTIFIANT]?.Votation1 || 0 }}</td>
+                <td>{{ voteCounts[stage.IDENTIFIANT]?.Votation2 || 0 }}</td>
+                <td>{{ voteCounts[stage.IDENTIFIANT]?.Votation3 || 0 }}</td>
+                <td>{{ voteCounts[stage.IDENTIFIANT]?.Votation4 || 0 }}</td>
+                <td>{{ voteCounts[stage.IDENTIFIANT]?.Votation5 || 0 }}</td>
+                <td>{{ voteCounts[stage.IDENTIFIANT]?.VotationTotal || 0 }}</td>
               </tr>
               <!-- Ligne vide entre groupes -->
-              <tr class="empty-row"><td colspan="13"></td></tr>
+              <tr class="empty-row"><td colspan="22"></td></tr>
             </template>
             </tbody>
           </table>
@@ -86,9 +126,12 @@
       <!-- Résultats du vote -->
       <div v-if="voteResult" class="card result-section">
         <h4 class="font-bold text-lg text-center">Choix du Vote</h4>
-        <p>Stage Sélectionné : {{ voteResult.selectedStageName }}</p>
-        <p>Lieu : {{ voteResult.selectedStageLieu }}</p>
-        <p>Domaine : {{ voteResult.selectedStageDomaine }}</p>
+        <div v-for="(choice, index) in voteResult" :key="index">
+          <p>Choix {{ index + 1 }} :</p>
+          <p>Stage Sélectionné : {{ choice.selectedStageName }}</p>
+          <p>Lieu : {{ choice.selectedStageLieu }}</p>
+          <p>Domaine : {{ choice.selectedStageDomaine }}</p>
+        </div>
       </div>
 
       <!-- Bouton Voter -->
@@ -100,27 +143,24 @@
 </template>
 
 
-
 <script>
 import { db, auth } from '../../../../firebase.js';
-import { ref, onValue, set, get, update } from "firebase/database";
+import { ref, onValue, get, set, update } from "firebase/database";
 import { onAuthStateChanged } from "firebase/auth";
 import Navbar from '@/components/Utils/Navbar.vue';
-import UserProfile from './UserProfile.vue';
-import ResumStageUserProfile from '@/components/UserProfile/ResumStageUserProfile.vue'
+import ResumStageUserProfile from '@/components/UserProfile/ResumStageUserProfile.vue';
 
 export default {
   name: "VotationView",
   components: {
-    ResumStageUserProfile,
     Navbar,
-    UserProfile
+    ResumStageUserProfile,
   },
   data() {
     return {
       etudiants: [],
-      selectedClass: 'BA23', // Adjust this as needed
-      selectedPFP: 'PFP2', // Adjust this as needed
+      selectedClass: 'BA24',
+      selectedPFP: 'PFP1A',
       stages: [],
       selectedStage: null,
       currentStudent: null,
@@ -130,404 +170,301 @@ export default {
       languageIssue: null,
       voteResult: null,
       takenStages: new Set(),
+      selectedChoices: {
+        choice1: null,
+        choice2: null,
+        choice3: null,
+        choice4: null,
+        choice5: null,
+      },
+      voteCounts: {}, // Comptes de votes pour chaque stage
       criteriaKeys: ['FR', 'ALL', 'AIGU', 'REHAB', 'MSQ', 'SYSINT', 'NEUROGER', 'AMBU'],
-      // Track stages already selected by other students
     };
   },
   computed: {
     filteredStages() {
-      // Filtre pour afficher uniquement les stages disponibles non pris par d'autres étudiants
       return this.stages.filter(stage => this.isStageVisible(stage));
     },
     groupedStages() {
       const groups = {};
       this.filteredStages.forEach(stage => {
-        const key = stage.numberPlace; // Regroupement par numberPlace
+        const key = stage.numberPlace;
         if (!groups[key]) {
           groups[key] = [];
         }
         groups[key].push(stage);
       });
-      // Vous pouvez trier les groupes par numberPlace si nécessaire
-      const sortedGroups = Object.keys(groups)
+
+      return Object.keys(groups)
         .sort((a, b) => b - a)
         .map(numberPlace => ({
           numberPlace: numberPlace,
-          stages: groups[numberPlace]
+          stages: groups[numberPlace],
         }));
-      return sortedGroups;
+    },
+  },
+  watch: {
+    selectedPFP(newPFP) {
+      this.fetchStagesData();
+      this.fetchTakenStages();
+      this.fetchVoteCounts();
+    },
+    selectedClass(newClass) {
+      this.fetchStudentsData();
+      this.fetchStagesData();
+      this.fetchTakenStages();
+      this.fetchVoteCounts();
     },
   },
   methods: {
-    countCriteriaValidated(stage) {
-      let count = 0;
-      this.criteriaKeys.forEach(key => {
-        if (stage[key]) count++;
-      });
-      return count;
+    handleChoiceChange(stageId, choice) {
+      if (this.selectedChoices[choice] === stageId) {
+        this.selectedChoices[choice] = null;
+      } else {
+        this.selectedChoices[choice] = stageId;
+      }
     },
-
+    isChoiceDisabled(stage, choice) {
+      for (const [key, value] of Object.entries(this.selectedChoices)) {
+        if (key !== choice && value === stage.IDENTIFIANT) {
+          return true;
+        }
+      }
+      if (this.selectedChoices[choice] && this.selectedChoices[choice] !== stage.IDENTIFIANT) {
+        return true;
+      }
+      return false;
+    },
     async submitVotes() {
-      if (this.selectedStage && this.currentStudent) {
+      if (this.currentStudent) {
         const { id } = this.currentStudent;
         if (id) {
-          const votationRef = ref(db, `VotationPFP2/${id}`); // Adjust the path as needed
-          const votationData = {
-            studentId: id,
-            studentName: this.currentStudent.Nom,
-            studentFirstName: this.currentStudent.Prenom,
-            selectedStageName: this.selectedStage.NomPlace,
-            selectedStageLieu: this.selectedStage.Lieu,
-            selectedStageDomaine: this.selectedStage.Domaine,
-            numberPlace: this.selectedStage.PFP2,
-            selectedStageDetails: {
-              FR: this.selectedStage.FR,
-              ALL: this.selectedStage.ALL,
-              AIGU: this.selectedStage.AIGU,
-              REHAB: this.selectedStage.REHAB,
-              MSQ: this.selectedStage.MSQ,
-              SYSINT: this.selectedStage.SYSINT,
-              NEUROGER: this.selectedStage.NEUROGER,
-              AMBU: this.selectedStage.AMBU
+          const votationPromises = Object.keys(this.selectedChoices).map(async (choiceKey, index) => {
+            const stageId = this.selectedChoices[choiceKey];
+            if (stageId) {
+              const stage = this.stages.find(s => s.IDENTIFIANT === stageId);
+              if (stage) {
+                const votationRef = ref(db, `VotationPFP1A/${id}/choices/${choiceKey}`);
+                const votationData = {
+                  choice: index + 1,
+                  studentId: id,
+                  selectedStageName: stage.NomPlace,
+                  selectedStageLieu: stage.Lieu,
+                  selectedStageDomaine: stage.Domaine,
+                  selectedStageDetails: {
+                    FR: stage.FR,
+                    ALL: stage.ALL,
+                    AIGU: stage.AIGU,
+                    REHAB: stage.REHAB,
+                    MSQ: stage.MSQ,
+                    SYSINT: stage.SYSINT,
+                    NEUROGER: stage.NEUROGER,
+                    AMBU: stage.AMBU,
+                  },
+                };
+                await set(votationRef, votationData);
+
+                const stageRef = ref(db, `PFP1A-B23/${stage.IDENTIFIANT}`);
+                await update(stageRef, { takenBy: id });
+
+                this.incrementVoteCount(stage.IDENTIFIANT, index + 1);
+                return votationData;
+              }
             }
-          };
+            return null;
+          });
 
-          await set(votationRef, votationData);
-          this.voteResult = votationData; // Update voteResult data property
-
-          // Update PFP2-B23 to mark the stage as taken
-          const stageRef = ref(db, `PFP2-B23/${this.selectedStage.IDENTIFIANT}`);
-          await update(stageRef, { takenBy: id });
+          try {
+            const results = await Promise.all(votationPromises);
+            this.voteResult = results.filter(result => result !== null);
+            alert("Vos votes ont été soumis avec succès !");
+            this.resetChoices();
+            this.fetchVoteCounts();
+          } catch (error) {
+            console.error("Erreur lors de la soumission des votes:", error);
+            alert("Une erreur est survenue lors de la soumission de vos votes. Veuillez réessayer.");
+          }
         } else {
           alert("Erreur: Informations de l'étudiant manquantes.");
         }
       } else {
-        alert("Veuillez sélectionner une place de stage.");
+        alert("Veuillez sélectionner au moins un choix de stage.");
       }
     },
-
+    resetChoices() {
+      this.selectedChoices = {
+        choice1: null,
+        choice2: null,
+        choice3: null,
+        choice4: null,
+        choice5: null,
+      };
+    },
+    incrementVoteCount(stageId, choiceNumber) {
+      if (!this.voteCounts[stageId]) {
+        this.$set(this.voteCounts, stageId, {
+          Votation1: 0,
+          Votation2: 0,
+          Votation3: 0,
+          Votation4: 0,
+          Votation5: 0,
+          VotationTotal: 0,
+        });
+      }
+      const choiceKey = `Votation${choiceNumber}`;
+      if (this.voteCounts[stageId][choiceKey] !== undefined) {
+        this.voteCounts[stageId][choiceKey] += 1;
+        this.voteCounts[stageId]['VotationTotal'] += 1;
+      }
+    },
     async fetchStudentsData() {
-      if (!this.selectedPFP || !this.selectedClass) return;
-
-      this.etudiants = [];
-      const starCountRef = ref(db, `Students/`);
-      onValue(starCountRef, (snapshot) => {
+      const studentsRef = ref(db, `Students/`);
+      onValue(studentsRef, (snapshot) => {
         const studentsData = snapshot.val();
         if (studentsData) {
           const transformedData = Object.keys(studentsData).map(key => ({
             id: key,
-            Classe: this.selectedClass,
-            PFPinfo: {},
-            ...studentsData[key]
-          }));
+            ...studentsData[key],
+          })).filter(student => student.Classe === this.selectedClass);
           this.etudiants = transformedData;
           this.findCurrentStudent();
         }
       });
     },
-
     async fetchStagesData() {
-      // Récupérer les places depuis Places
       const placesRef = ref(db, 'Places');
-      onValue(placesRef, (snapshot) => {
+      onValue(placesRef, async (snapshot) => {
         const placesData = snapshot.val();
         if (placesData) {
-          const filteredPlaces = Object.keys(placesData)
-            .map(key => ({ ...placesData[key], IDPlace: key }))
-            .filter(place => place.PFP2 >= 1);
-
-          // Récupérer les institutions
-          const institutionsRef = ref(db, 'Institutions');
-          onValue(institutionsRef, (institutionsSnapshot) => {
-            const institutionsData = institutionsSnapshot.val();
-
-            if (institutionsData) {
-              // Récupérer PFP2-B23 pour obtenir les places prises
-              const pfp2Ref = ref(db, 'PFP2-B23');
-              onValue(pfp2Ref, (pfp2Snapshot) => {
-                const pfp2Data = pfp2Snapshot.val();
-
-                this.stages = [];
-
-                filteredPlaces.forEach(place => {
-                  // Obtenir les données de l'institution
-                  const institutionId = placesData[place.IDPlace].IDPlace; // Ensure this field exists in your data
-                  const institution = institutionsData[institutionId] || {};
-
-                  // Pour chaque place disponible
-                  const repeatCount = parseInt(place.PFP2, 10);
-                  for (let i = 1; i <= repeatCount; i++) {
-                    const identifiant = place.IDPlace + '_' + i;
-                    const takenBy = pfp2Data && pfp2Data[identifiant] ? pfp2Data[identifiant].takenBy : null;
-
-                    // Construire l'objet stage
-                    const stage = {
-                      IDENTIFIANT: identifiant,
-                      NomPlace: institution.Name || place.NomPlace,
-                      Lieu: institution.Locality || '',
-                      numberPlace: place.PFP2 || '',
-                      Domaine: place.NomPlace,
-                      FR: place.FR,
-                      ALL: place.DE,
-                      AIGU: place.AIGU,
-                      REHAB: place.REHAB,
-                      MSQ: place.MSQ,
-                      SYSINT: place.SYSINT,
-                      NEUROGER: place['NEURO-GER'],
-                      AMBU: place.AMBU,
-                      takenBy: takenBy,
-                      NomP: `${institution.Name} - ${place.NomPlace} - ${institution.Locality} (${i})`
-                    };
-
-                    // Ajouter le stage au tableau des stages
-                    this.stages.push(stage);
-                  }
-                });
-
-                // Récupérer les résultats de votation pour déterminer les stages pris
-                this.fetchTakenStages();
-              });
-              console.log("ds");
-              console.log(this.stages);
-
-            }
+          const fetchedStages = Object.keys(placesData).map(key => {
+            const place = placesData[key];
+            return {
+              IDENTIFIANT: key,
+              ...place,
+            };
           });
+          this.stages = fetchedStages.filter(stage => stage[this.selectedPFP] >= 1);
         }
       });
     },
-
     async fetchTakenStages() {
-      const pfp2Ref = ref(db, 'PFP2-B23');
-      onValue(pfp2Ref, (snapshot) => {
+      const pfp1aRef = ref(db, 'PFP1A-B23');
+      onValue(pfp1aRef, (snapshot) => {
         if (snapshot.exists()) {
           const takenData = snapshot.val();
+          this.takenStages.clear();
           for (const key in takenData) {
             const takenBy = takenData[key].takenBy;
             if (takenBy) {
-              this.takenStages.add(key); // Add IDENTIFIANT of taken stages
+              this.takenStages.add(key);
             }
           }
         }
       });
     },
-
-    updateStudent(etudiant) {
-      const studentRef = ref(db, `Students/${etudiant.Classe}/${etudiant.id}`);
-      set(studentRef, etudiant);
+    async fetchVoteCounts() {
+      const votationRef = ref(db, `VotationPFP1A`);
+      onValue(votationRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const votations = snapshot.val();
+          const counts = {};
+          Object.keys(votations).forEach(studentId => {
+            const studentVotes = votations[studentId]?.choices || {};
+            Object.values(studentVotes).forEach(vote => {
+              if (vote.selectedStageName) {
+                const stageId = vote.selectedStageName;
+                const votKey = `Votation${vote.choice}`;
+                if (!counts[stageId]) {
+                  counts[stageId] = {
+                    Votation1: 0,
+                    Votation2: 0,
+                    Votation3: 0,
+                    Votation4: 0,
+                    Votation5: 0,
+                    VotationTotal: 0,
+                  };
+                }
+                counts[stageId][votKey] += 1;
+                counts[stageId]['VotationTotal'] += 1;
+              }
+            });
+          });
+          this.voteCounts = counts;
+        }
+      });
     },
-
-    selectStage(stage) {
-      this.selectedStage = stage;
+    isStageVisible(stage) {
+      return !this.takenStages.has(stage.IDENTIFIANT);
     },
-
     async findCurrentStudent() {
-  console.log("AVIS 33");
-
-  if (this.currentUserEmail) {
-    console.log("AVIS 34");
-
-    // Fetch data from the 'Users' table
-    const dbRef = ref(db, 'Users');
-    const snapshot = await get(dbRef);
-
-    if (snapshot.exists()) {
-      const usersData = snapshot.val();
-
-      for (const userKey in usersData) {
-        const user = usersData[userKey];
-
-        // Check if the email matches the current user's email
-        if (user.Mail && user.Mail.toLowerCase() === this.currentUserEmail.toLowerCase()) {
-          // Fetch the student's class from the 'Students' table
-          const studentRef = ref(db, `Students/${userKey}`);
-          const studentSnapshot = await get(studentRef);
-
-          let classe = null;
-          let msq = null;
-          let aigu = null;
-          let fr = null;
-          let all = null;
-          let neuroger = null;
-          let rehab = null;
-          let sysint = null;
-          if (studentSnapshot.exists()) {
-            const studentData = studentSnapshot.val();
-            classe = studentData.Classe || null;
-            msq = studentData.MSQ || null;
-            aigu = studentData.MSQ || null;
-            neuroger = studentData.MSQ || null;
-            rehab = studentData.MSQ || null;
-            sysint = studentData.DSYSINT || null;
-            fr = studentData.FR || null;
-            all = studentData.ALL || null;
+      if (this.currentUserEmail) {
+        const usersRef = ref(db, 'Users');
+        const usersSnapshot = await get(usersRef);
+        if (usersSnapshot.exists()) {
+          const usersData = usersSnapshot.val();
+          for (const userKey in usersData) {
+            const user = usersData[userKey];
+            if (user.Mail?.toLowerCase() === this.currentUserEmail.toLowerCase()) {
+              const studentRef = ref(db, `Students/${userKey}`);
+              const studentSnapshot = await get(studentRef);
+              if (studentSnapshot.exists()) {
+                const studentData = studentSnapshot.val();
+                this.currentStudent = { id: userKey, ...studentData };
+                this.checkValidation();
+                return;
+              }
+            }
           }
-
-          this.currentStudent = {
-            id: userKey,
-            Classe: classe,
-            MSQ: msq,
-            SYSINT: sysint,
-            NEUROGER: neuroger,
-            REHAB: rehab,
-            AIGU: aigu,
-            FR: fr,
-            ALL: all,
-            ...user
-          };
-
-          console.log(this.currentStudent);
-          console.log("AVIS 35");
-
-          this.checkValidation();
-          await this.fetchVoteResult(this.currentStudent.id);
-          return;
         }
       }
-    }
-  } else {
-    this.checkValidation();
-  }
-},
-
-
- // Méthode pour télécharger les données en fichier JSON
- downloadJSON() {
-    // Crée un objet JSON avec les données de stages, y compris l'ID du stage
-    const stagesData = this.stages.map(stage => ({
-      IDPlace: stage.IDENTIFIANT, // Ajoute l'ID du stage
-      NomPlace: stage.NomPlace,
-      Lieu: stage.Lieu,
-      Domaine: stage.Domaine,
-      FR: stage.FR,
-      ALL: stage.ALL,
-      AIGU: stage.AIGU,
-      REHAB: stage.REHAB,
-      MSQ: stage.MSQ,
-      SYSINT: stage.SYSINT,
-      NEUROGER: stage.NEUROGER,
-      AMBU: stage.AMBU,
-    }));
-
-    // Convertir l'objet en une chaîne JSON
-    const jsonContent = JSON.stringify(stagesData, null, 2);
-
-    // Créer un fichier Blob à partir de la chaîne JSON
-    const blob = new Blob([jsonContent], { type: "application/json" });
-
-    // Créer un lien pour télécharger le fichier
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "stages_data.json"; // Nom du fichier
-
-    // Simuler le clic sur le lien pour télécharger le fichier
-    link.click();
-
-    // Nettoyer l'URL pour éviter les fuites de mémoire
-    URL.revokeObjectURL(link.href);
-  },
-    async fetchVoteResult(studentId) {
-      const votationRef = ref(db, `VotationPFP2/${studentId}`); // Adjust the path as needed
-      const snapshot = await get(votationRef);
-      if (snapshot.exists()) {
-        this.voteResult = snapshot.val();
-      }
     },
-
     checkValidation() {
-      console.log( "avis : ");
-      console.log( "avis 21: ");
-
       if (!this.currentStudent) return;
-      console.log( "avis 22: ");
-
-      const { FR, ALL, AMBU, MSQ, SYSINT, NEUROGER, REHAB, AIGU } = this.currentStudent;
-      console.log(this.currentStudent);
-      console.log(this.currentStudent.MSQ);
-      this.missingFields = [];
-      this.languageIssue = null;
-
-      if (FR == "0" && ALL == "0" && AMBU == "0" && MSQ == "0" && SYSINT == "0" && NEUROGER == "0" && REHAB == "0" && AIGU == "0") {
-        // All fields are 0, all checkboxes usable
-        this.validationMessage = "Toutes les options sont disponibles";
-        console.log( "avis 21: " + this.validationMessage);
-
-        return;
-      }
-    //  console.log("avis 11");
-    //   if (FR == "0") this.languageIssue = "FR";
-     //  if (ALL == "0") this.languageIssue = "ALL";
-
-      if (FR == "0") this.missingFields.push("FR");
-      if (ALL == "0") this.missingFields.push("ALL");
-  //    console.log("avis b" + AMBU)
-      if (parseInt(AMBU) < 1 ) console.log("avis bug");
-      if (AMBU === 0) this.missingFields.push("AMBU");
-      if (MSQ === "0") this.missingFields.push("MSQ");
-      if (AIGU === "0") this.missingFields.push("AIGU");
-      if (SYSINT === "0") this.missingFields.push("SYSINT");
-      if (NEUROGER === "0") this.missingFields.push("NEUROGER");
-      if (REHAB == "0") this.missingFields.push("REHAB");
-
-      if (this.languageIssue) {
-   //     console.log("avis lan uss");
-        this.validationMessage = this.languageIssue;
-      } else if (this.missingFields.length > 0) {
-  //      console.log("avis lan uss22");
-
-        this.validationMessage = `manque ${this.missingFields.join(", ")}`;
-      } else {
-        this.validationMessage = "Tout validé";
-      }
-      console.log( "avis 2: " + this.validationMessage);
+      this.missingFields = this.criteriaKeys.filter(key => !Boolean(this.currentStudent[key]));
+      this.validationMessage = this.missingFields.length
+        ? `Manque : ${this.missingFields.join(", ")}`
+        : "Tout validé";
     },
-
-    isStageVisible(stage) {
-      // Check if the stage is already taken by another student
-      if (this.takenStages.has(stage.IDENTIFIANT)) {
-        return false;
-      }
-
-      // Additional filtering based on student's missing fields or validation criteria can be added here
-
-      return true;
-    }
   },
-
   async mounted() {
     onAuthStateChanged(auth, (user) => {
       if (user) {
         this.currentUserEmail = user.email;
         this.findCurrentStudent();
-      } else {
-        this.currentUserEmail = null;
-        this.currentStudent = null;
       }
     });
     this.fetchStudentsData();
     this.fetchStagesData();
-  }
+    this.fetchTakenStages();
+    this.fetchVoteCounts();
+  },
 };
 </script>
-
 <style scoped>
+/* Conteneur principal */
 .main-container {
   gap: 2rem;
   display: flex;
   flex-wrap: wrap;
 }
 
+/* Carte (section de validation, tableau, résultats, etc.) */
 .card {
   background-color: var(--surface-card);
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  flex: 1 1 calc(100% - 1rem);
+  padding: 1.5rem;
+  flex: 1 1 100%;
+  margin-bottom: 1rem;
 }
 
 .card h3,
 .card h4 {
   color: var(--text-color);
+  margin-bottom: 1rem;
 }
 
+/* Table */
 .table-wrapper {
   overflow-x: auto;
 }
@@ -554,12 +491,26 @@ export default {
   background-color: var(--surface-hover);
 }
 
-.table .group-header {
-  background-color: var(--surface-card);
+/* Ligne d'en-tête du groupe */
+.group-header {
+  background-color: var(--surface-300);
   font-weight: bold;
   text-align: center;
+  color: var(--text-secondary);
 }
 
+.group-header td {
+  text-align: left;
+}
+
+/* Ligne vide entre les groupes */
+.empty-row td {
+  height: 1rem;
+  background-color: transparent;
+  border: none;
+}
+
+/* Indicateurs de validation (✔️ / ❌) */
 .text-green-500 {
   color: green;
 }
@@ -568,6 +519,7 @@ export default {
   color: red;
 }
 
+/* Boutons */
 .btn-primary {
   background-color: var(--primary-color);
   color: white;
@@ -575,13 +527,36 @@ export default {
   border-radius: 4px;
   border: none;
   cursor: pointer;
+  font-size: 1rem;
 }
 
 .btn-primary:hover {
   background-color: var(--primary-color-hover);
 }
 
-.empty-row {
-  height: 1rem;
+/* Résultats du vote */
+.result-section p {
+  margin: 0.5rem 0;
+}
+
+/* Style pour les cases à cocher */
+input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+/* Responsiveness */
+@media (max-width: 768px) {
+  .main-container {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .card {
+    flex: 1 1 100%;
+  }
 }
 </style>
+
+
