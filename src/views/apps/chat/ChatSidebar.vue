@@ -1,6 +1,5 @@
 <!-- src/views/apps/chat/ChatSidebar.vue -->
 <template>
-  <div class="flex flex-col h-full">
     <!-- Informations de l'utilisateur actuel -->
     <div class="flex flex-col items-center border-b border-gray-300 p-6">
       <img 
@@ -12,7 +11,7 @@
     </div>
 
     <!-- Barre de recherche -->
-    <div class="p-4">
+    <div class="p-12">
       <div class="relative">
         <input
           type="text"
@@ -34,7 +33,6 @@
         @click="onChangeActiveUser(user)"
       />
     </div>
-  </div>
 </template>
 
 <script setup>

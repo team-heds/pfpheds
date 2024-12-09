@@ -6,7 +6,7 @@
   >
     <img 
       :src="user.PhotoURL || '/demo/images/avatar/default.png'" 
-      class="w-12 h-12 rounded-full object-cover shadow-md mr-3"
+      style="width: 105px; height:105px;"
       :alt="userDisplayName"
     />
     <div>
