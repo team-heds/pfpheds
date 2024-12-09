@@ -5,7 +5,7 @@
     <div v-if="user" class="flex items-center border-b border-gray-300 p-4">
       <img 
         :src="user.PhotoURL || '/demo/images/avatar/default.png'" 
-        class="w-16 h-16 rounded-full object-cover shadow-md mr-4" 
+        style="width: 105px; height:105px;"
         :alt="userDisplayName"
       />
       <div>
@@ -29,7 +29,7 @@
         <div v-if="message.ownerId !== defaultUserId" class="flex items-start">
           <img 
             :src="user.PhotoURL || '/demo/images/avatar/default.png'" 
-            class="w-10 h-10 rounded-full object-cover shadow-md mr-3" 
+            style="width: 25px; height:25px;"
             :alt="userDisplayName"
           />
           <div>
@@ -94,6 +94,7 @@
     </div>
   </div>
 </template>
+
 
 <script setup>
 import { ref, watch, computed } from 'vue';
