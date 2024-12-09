@@ -33,7 +33,7 @@ import { ref, onMounted } from 'vue';
 import ChatBox from './ChatBox.vue';
 import ChatSidebar from './ChatSidebar.vue';
 import Navbar from '@/components/Utils/Navbar.vue';
-import { db, auth } from '@/firebase'; // Importer seulement db et auth
+import { db, auth } from '../../../../firebase'; // Importer seulement db et auth
 import { ref as dbRef, onValue, push } from 'firebase/database';
 import { onAuthStateChanged } from 'firebase/auth';
 

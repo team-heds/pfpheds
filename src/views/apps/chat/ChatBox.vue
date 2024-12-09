@@ -95,7 +95,7 @@
 
 <script setup>
 import { ref, watch, computed } from 'vue';
-import { db, auth } from '@/firebase'; // Import auth along with db and storage
+import { db, auth } from '../../../../firebase'; // Import auth along with db and storage
 import { ref as dbRef, push, onValue } from 'firebase/database';
 import { onAuthStateChanged } from 'firebase/auth'; // Import the auth state observer
 
