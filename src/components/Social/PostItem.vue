@@ -1,3 +1,5 @@
+
+// ---------------------------
 <template>
   <div class="post-item">
     <!-- En-tête du post -->
@@ -481,3 +483,4 @@ export default {
   }
 }
 </style>
+
