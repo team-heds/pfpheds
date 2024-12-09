@@ -15,6 +15,7 @@ const textContent = ref('');
 
 const emojis = [
   '😀',
+  '😀',
   '😃',
   '😄',
   '😁',
