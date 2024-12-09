@@ -121,6 +121,7 @@ import Button from "primevue/button";
 
 export default {
   name: "PostItem",
+  // eslint-disable-next-line vue/no-reserved-component-names
   components: { Textarea, Button },
   props: {
     post: {

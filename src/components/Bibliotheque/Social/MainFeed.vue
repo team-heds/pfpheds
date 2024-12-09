@@ -1,5 +1,39 @@
 <template>
   <div class="main-feed">
+    <!-- Section des filtres -->
+    <div class="filters-container p-3">
+      <Dropdown
+        v-model="selectedFilterType"
+        :options="filterTypes"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Sélectionner un type de filtre"
+        @change="onFilterTypeChange"
+      />
+
+      <Dropdown
+        v-if="selectedFilterType"
+        v-model="selectedFilterValue"
+        :options="filterOptions" 
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Sélectionner une option"
+      />
+      
+      <Button
+        v-if="selectedFilterType"
+        label="Appliquer le filtre"
+        @click="applyFilter"
+        class="ml-2"
+      />
+      <Button
+        v-if="selectedFilterType"
+        label="Réinitialiser"
+        @click="resetFilter"
+        class="ml-2 p-button-secondary"
+      />
+    </div>
+
     <!-- Carte pour la zone de texte et le bouton "Publier" -->
     <transition name="fade">
       <div v-show="showTextareaCard" class="post-textarea-card">
@@ -72,6 +106,16 @@
 </template>
 
 <script>
+import { ref, onMounted, watch } from "vue";
+import { db, auth } from "../../../../firebase.js";
+import { onAuthStateChanged } from "firebase/auth";
+import InfiniteScroll from "@/components/Social/InfiniteScroll.vue";
+import PostItem from "@/components/Social/PostItem.vue";
+import Tag from "primevue/tag";
+import Button from "primevue/button";
+import FileUpload from "primevue/fileupload";
+import Editor from "primevue/editor";
+import Dropdown from "primevue/dropdown";
 import {
   ref as dbRef,
   push,
@@ -81,7 +125,8 @@ import {
   limitToLast,
   endAt,
   get,
-  query
+  query,
+  equalTo
 } from "firebase/database";
 import {
   getStorage,
@@ -89,76 +134,103 @@ import {
   uploadBytes,
   getDownloadURL,
 } from "firebase/storage";
-import { db, auth } from "../../../../firebase.js";
-import { onAuthStateChanged } from "firebase/auth";
-import InfiniteScroll from "@/components/Social/InfiniteScroll.vue";
-import PostItem from "@/components/Social/PostItem.vue";
-import Textarea from "primevue/textarea";
-import Tag from "primevue/tag";
-import Button from "primevue/button";
-import FileUpload from "primevue/fileupload";
-import Editor from "primevue/editor"; // Assurez-vous d'importer l'Editor si ce n'est pas déjà fait
 
 export default {
   name: "MainFeed",
   components: {
     InfiniteScroll,
     PostItem,
-    Textarea,
     Tag,
     Button,
     FileUpload,
-    Editor
+    Editor,
+    Dropdown
   },
   props: {
     currentUser: Object,
   },
-  data() {
-    return {
-      posts: [],
-      filteredPosts: [],
-      newPost: "",
-      detectedTags: [],
-      loading: false,
-      postsPerPage: 10,
-      localCurrentUser: null,
-      showTextareaCard: true,
-      lastScrollTop: 0,
-      selectedMedia: [],
-      oldestTimestamp: null // Le timestamp du post le plus ancien chargé
-    };
-  },
-  watch: {
-    newPost(value) {
-      this.detectedTags = this.extractTags(value);
-    }
-  },
-  methods: {
-    extractTags(text) {
+  setup(props) {
+    // Références réactives
+    const posts = ref([]);
+    const filteredPosts = ref([]);
+    const newPost = ref("");
+    const detectedTags = ref([]);
+    const loading = ref(false);
+    const postsPerPage = ref(10);
+    const localCurrentUser = ref(null);
+    const showTextareaCard = ref(true);
+    const lastScrollTop = ref(0);
+    const selectedMedia = ref([]);
+    const oldestTimestamp = ref(null);
+    
+    // Filtres
+    const filterTypes = ref([
+      { label: "Tous", value: null },
+      { label: "Hashtag", value: "hashtag" },
+      { label: "Communauté", value: "community" }
+    ]);
+    const selectedFilterType = ref(null);
+    const filterOptions = ref([]);
+    const selectedFilterValue = ref(null);
+    const availableHashtags = ref([]);
+    const availableCommunities = ref([]);
+    const appliedFilter = ref({
+      type: null,
+      value: null
+    });
+
+    // Watcher pour détecter les tags dans le nouveau post
+    watch(newPost, (value) => {
+      detectedTags.value = extractTags(value);
+    });
+
+    // Fonction pour extraire les hashtags et mentions
+    const extractTags = (text) => {
       const regex = /[#@][\w-]+/g;
       return text.match(regex) || [];
-    },
-    async postMessage() {
-      if (this.newPost.trim() === "" && this.selectedMedia.length === 0) {
+    };
+
+    // Fonction pour publier un message
+    const postMessage = async () => {
+      if (newPost.value.trim() === "" && selectedMedia.value.length === 0) {
         console.error("Aucun contenu à publier.");
         return;
       }
 
       try {
         const authorName =
-          this.localCurrentUser.displayName ||
-          this.localCurrentUser.email.split("@")[0];
+          localCurrentUser.value.displayName ||
+          localCurrentUser.value.email.split("@")[0];
+        
+        // Transformation des hashtags en objet
+        const hashtagsObject = detectedTags.value
+          .filter((tag) => tag.startsWith("#"))
+          .reduce((acc, tag) => {
+            const cleanTag = tag.substring(1); // Supprime le '#' du tag
+            acc[cleanTag] = true;
+            return acc;
+          }, {});
+
+        const mentionsObject = detectedTags.value
+          .filter((tag) => tag.startsWith("@"))
+          .reduce((acc, tag) => {
+            const cleanMention = tag.substring(1); // Supprime le '@' de la mention
+            acc[cleanMention] = true;
+            return acc;
+          }, {});
+
         const postData = {
           Author: authorName,
-          IdUser: this.localCurrentUser.uid,
-          Content: this.newPost,
+          IdUser: localCurrentUser.value.uid,
+          Content: newPost.value,
           Timestamp: serverTimestamp(),
-          Hashtags: this.detectedTags.filter((tag) => tag.startsWith("#")),
-          MentionGroups: this.detectedTags.filter((tag) => tag.startsWith("@")),
+          Hashtags: hashtagsObject,
+          MentionGroups: mentionsObject,
           media: []
+          // Assurez-vous d'ajouter un champ 'Community' si nécessaire
         };
 
-        const mediaUrls = await this.uploadMedia();
+        const mediaUrls = await uploadMedia();
         postData.media = mediaUrls;
 
         const newPostRef = push(dbRef(db, "Posts"));
@@ -166,25 +238,28 @@ export default {
 
         console.log("Publication réussie :", postData);
 
-        this.newPost = "";
-        this.selectedMedia = [];
-        this.detectedTags = [];
+        // Réinitialiser les champs après publication
+        newPost.value = "";
+        selectedMedia.value = [];
+        detectedTags.value = [];
 
-        // Après la publication, on peut recharger les posts pour s'assurer que le nouveau est pris en compte
-        this.reloadPosts();
+        // Recharger les posts pour inclure le nouveau post
+        reloadPosts();
       } catch (error) {
         console.error("Erreur lors de la publication :", error);
       }
-    },
-    async uploadMedia() {
+    };
+
+    // Fonction pour uploader les médias
+    const uploadMedia = async () => {
       const storage = getStorage();
       const uploadedMediaUrls = [];
 
-      for (const media of this.selectedMedia) {
+      for (const media of selectedMedia.value) {
         try {
           const mediaRef = storageRef(
             storage,
-            `posts/${this.localCurrentUser.uid}/${Date.now()}_${media.file.name}`
+            `posts/${localCurrentUser.value.uid}/${Date.now()}_${media.file.name}`
           );
 
           const uploadResult = await uploadBytes(mediaRef, media.file);
@@ -196,104 +271,246 @@ export default {
       }
 
       return uploadedMediaUrls;
-    },
-    handleFileSelection(event) {
+    };
+
+    // Fonction pour gérer la sélection de fichiers
+    const handleFileSelection = (event) => {
       const files = event.files;
 
       for (const file of files) {
         const fileType = file.type;
         const previewUrl = URL.createObjectURL(file);
 
-        this.selectedMedia.push({
+        selectedMedia.value.push({
           file,
           type: fileType,
           preview: previewUrl,
         });
       }
-    },
-    removeMedia(index) {
-      this.selectedMedia.splice(index, 1);
-    },
-    async reloadPosts() {
-      // Recharge complètement les derniers posts
-      this.posts = [];
-      this.oldestTimestamp = null;
-      await this.fetchPosts();
-    },
-    async fetchPosts() {
-      this.loading = true;
+    };
 
-      // Première requête : on récupère les posts les plus récents
-      // On utilise limitToLast pour choper les posts les plus récents, puis on les inverse.
-      let q = query(
-        dbRef(db, "Posts"),
-        orderByChild("Timestamp"),
-        limitToLast(this.postsPerPage)
-      );
+    // Fonction pour supprimer un média sélectionné
+    const removeMedia = (index) => {
+      selectedMedia.value.splice(index, 1);
+    };
 
-      // Si on a déjà un oldestTimestamp, on récupère les posts plus anciens que celui-ci.
-      if (this.oldestTimestamp) {
-        // On récupère les posts antérieurs à oldestTimestamp
+    // Fonction pour recharger les posts
+    const reloadPosts = async () => {
+      posts.value = [];
+      filteredPosts.value = [];
+      oldestTimestamp.value = null;
+      await fetchPosts();
+    };
+
+    // Fonction pour récupérer les filtres disponibles
+    const fetchAvailableFilters = async () => {
+      // Récupérer les hashtags
+      const hashtagsSnapshot = await get(dbRef(db, "Hashtags"));
+      if (hashtagsSnapshot.exists()) {
+        const hashtagsData = hashtagsSnapshot.val();
+        availableHashtags.value = Object.keys(hashtagsData).map(tag => ({ label: tag, value: tag }));
+      }
+
+      // Récupérer les communautés
+      const communitiesSnapshot = await get(dbRef(db, "Communities"));
+      if (communitiesSnapshot.exists()) {
+        const communitiesData = communitiesSnapshot.val();
+        availableCommunities.value = Object.keys(communitiesData).map(comm => ({ label: comm, value: comm }));
+      }
+    };
+
+    // Fonction appelée lors du changement de type de filtre
+    const onFilterTypeChange = () => {
+      if (selectedFilterType.value === "hashtag") {
+        filterOptions.value = availableHashtags.value;
+      } else if (selectedFilterType.value === "community") {
+        filterOptions.value = availableCommunities.value;
+      } else {
+        filterOptions.value = [];
+        selectedFilterValue.value = null;
+      }
+    };
+
+    // Fonction pour appliquer le filtre
+    const applyFilter = () => {
+      appliedFilter.value.type = selectedFilterType.value;
+      appliedFilter.value.value = selectedFilterValue.value;
+      reloadPosts();
+    };
+
+    // Fonction pour réinitialiser le filtre
+    const resetFilter = () => {
+      selectedFilterType.value = null;
+      selectedFilterValue.value = null;
+      appliedFilter.value = { type: null, value: null };
+      filterOptions.value = [];
+      reloadPosts();
+    };
+
+    // Fonction pour récupérer les posts
+    const fetchPosts = async () => {
+      loading.value = true;
+      let q;
+
+      // Référence de base pour les posts
+      let postsRefQuery = dbRef(db, "Posts");
+
+      // Appliquer le filtre si nécessaire
+      if (appliedFilter.value.type === "hashtag" && appliedFilter.value.value) {
+        // Filtrer par Hashtag
         q = query(
-          dbRef(db, "Posts"),
+          postsRefQuery,
+          orderByChild(`Hashtags/${appliedFilter.value.value}`),
+          equalTo(true),
+          limitToLast(postsPerPage.value)
+        );
+      } else if (appliedFilter.value.type === "community" && appliedFilter.value.value) {
+        // Filtrer par Communauté
+        q = query(
+          postsRefQuery,
+          orderByChild("Community"), // Assurez-vous que chaque post a un champ 'Community'
+          equalTo(appliedFilter.value.value),
+          limitToLast(postsPerPage.value)
+        );
+      } else {
+        // Pas de filtre, récupérer les posts les plus récents
+        q = query(
+          postsRefQuery,
           orderByChild("Timestamp"),
-          endAt(this.oldestTimestamp - 1),
-          limitToLast(this.postsPerPage)
+          limitToLast(postsPerPage.value)
         );
       }
 
-      const snapshot = await get(q);
-      if (snapshot.exists()) {
-        const data = snapshot.val();
-        let postsArray = Object.entries(data).map(([key, post]) => ({
-          ...post,
-          id: key,
-        }));
-
-        // postsArray est dans l'ordre ascendant par Timestamp, on l'inverse pour afficher du plus récent au plus ancien
-        postsArray.sort((a, b) => b.Timestamp - a.Timestamp);
-
-        // Mise à jour des posts
-        this.posts = [...this.posts, ...postsArray];
-
-        // Mettre à jour oldestTimestamp avec le plus ancien (dernier dans le tableau après tri)
-        if (this.posts.length > 0) {
-          const oldestPost = this.posts[this.posts.length - 1];
-          this.oldestTimestamp = oldestPost.Timestamp;
+      // Appliquer le timestamp pour la pagination si nécessaire
+      if (oldestTimestamp.value) {
+        if (appliedFilter.value.type === "hashtag" || appliedFilter.value.type === "community") {
+          q = query(
+            postsRefQuery,
+            orderByChild(appliedFilter.value.type === "hashtag" ? `Hashtags/${appliedFilter.value.value}` : "Community"),
+            endAt(appliedFilter.value.type === "hashtag" ? true : appliedFilter.value.value, oldestTimestamp.value - 1),
+            limitToLast(postsPerPage.value)
+          );
+        } else {
+          q = query(
+            postsRefQuery,
+            orderByChild("Timestamp"),
+            endAt(oldestTimestamp.value - 1),
+            limitToLast(postsPerPage.value)
+          );
         }
-
-        this.applyFilters();
       }
 
-      this.loading = false;
-    },
-    applyFilters() {
-      this.filteredPosts = this.posts; // À ce stade, aucun filtre particulier
-    },
-    async loadMorePosts() {
-      if (!this.loading) {
-        await this.fetchPosts();
+      try {
+        const snapshot = await get(q);
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          let postsArray = Object.entries(data).map(([key, post]) => ({
+            ...post,
+            id: key,
+          }));
+
+          // Trier les posts du plus récent au plus ancien
+          postsArray.sort((a, b) => {
+            const timeA = a.Timestamp ? a.Timestamp : 0;
+            const timeB = b.Timestamp ? b.Timestamp : 0;
+            return timeB - timeA;
+          });
+
+          // Mise à jour des posts
+          posts.value = [...posts.value, ...postsArray];
+
+          // Mettre à jour oldestTimestamp
+          if (posts.value.length > 0) {
+            const oldestPost = posts.value[posts.value.length - 1];
+            oldestTimestamp.value = oldestPost.Timestamp;
+          }
+
+          applyFilters();
+        }
+      } catch (error) {
+        console.error("Erreur lors de la récupération des posts :", error);
       }
-    },
-    handleScroll(event) {
+
+      loading.value = false;
+    };
+
+    // Fonction pour appliquer les filtres aux posts
+    const applyFilters = () => {
+      if (appliedFilter.value.type === "hashtag" && appliedFilter.value.value) {
+        filteredPosts.value = posts.value.filter(post => post.Hashtags && post.Hashtags[appliedFilter.value.value]);
+      } else if (appliedFilter.value.type === "community" && appliedFilter.value.value) {
+        filteredPosts.value = posts.value.filter(post => post.Community === appliedFilter.value.value);
+      } else {
+        filteredPosts.value = posts.value;
+      }
+    };
+
+    // Fonction pour charger plus de posts (infinite scroll)
+    const loadMorePosts = async () => {
+      if (!loading.value) {
+        await fetchPosts();
+      }
+    };
+
+    // Fonction pour gérer le scroll (pour afficher/masquer la zone de texte)
+    const handleScroll = (event) => {
       const scrollTop = event.target.scrollTop;
-      this.showTextareaCard = scrollTop <= this.lastScrollTop;
-      this.lastScrollTop = scrollTop;
-    },
-  },
-  mounted() {
-    if (this.currentUser) {
-      this.localCurrentUser = { ...this.currentUser };
-      this.fetchPosts();
-    } else {
-      onAuthStateChanged(auth, (user) => {
-        if (user) {
-          this.localCurrentUser = user;
-          this.fetchPosts();
-        }
-      });
-    }
-  },
+      showTextareaCard.value = scrollTop <= lastScrollTop.value;
+      lastScrollTop.value = scrollTop;
+    };
+
+    // Hook de cycle de vie onMounted
+    onMounted(() => {
+      if (props.currentUser) {
+        localCurrentUser.value = { ...props.currentUser };
+        fetchAvailableFilters();
+        fetchPosts();
+      } else {
+        onAuthStateChanged(auth, (user) => {
+          if (user) {
+            localCurrentUser.value = user;
+            fetchAvailableFilters();
+            fetchPosts();
+          }
+        });
+      }
+    });
+
+    return {
+      posts,
+      filteredPosts,
+      newPost,
+      detectedTags,
+      loading,
+      postsPerPage,
+      localCurrentUser,
+      showTextareaCard,
+      lastScrollTop,
+      selectedMedia,
+      oldestTimestamp,
+      filterTypes,
+      selectedFilterType,
+      filterOptions,
+      selectedFilterValue,
+      availableHashtags,
+      availableCommunities,
+      appliedFilter,
+      extractTags,
+      postMessage,
+      uploadMedia,
+      handleFileSelection,
+      removeMedia,
+      reloadPosts,
+      fetchAvailableFilters,
+      onFilterTypeChange,
+      applyFilter,
+      resetFilter,
+      fetchPosts,
+      applyFilters,
+      loadMorePosts,
+      handleScroll
+    };
+  }
 };
 </script>
 
@@ -304,6 +521,12 @@ export default {
   gap: 1.5rem;
   height: 100vh; /* Assurez-vous que le container est scrollable */
   overflow-y: auto;
+}
+
+.filters-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 .post-textarea-card {
@@ -351,5 +574,9 @@ export default {
 
 .publish-button {
   margin-top: 1rem;
+}
+
+.ml-2 {
+  margin-left: 0.5rem;
 }
 </style>
