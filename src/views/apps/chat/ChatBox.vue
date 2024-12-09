@@ -1,12 +1,18 @@
 <!-- src/views/apps/chat/ChatBox.vue -->
 <template>
   <!-- En-tête du Chat -->
-  <div v-if="user" class="flex items-center border-b border-gray-300 p-4">
-    <img 
-      :src="user.PhotoURL || '/demo/images/avatar/default.png'" 
+  <div class="flex flex-column h-full">
+    <div class="flex align-items-center border-bottom-1 surface-border p-3 lg:p-6">
+
+  <div v-if="user" class="user-message-container p-3 md:px-4 lg:px-6 lg:py-4 mt-2 overflow-y-auto" style="max-height: 53vh">
+
+    <div class="mr-3 mt-1">
+    <img
+      :src="user.PhotoURL || 'src/assets/avatar/avatar1.jpg'"
       style="width: 105px; height:105px;"
       :alt="userDisplayName"
     />
+    </div>
     <div>
       <h2 class="text-xl font-semibold text-gray-800">{{ userDisplayName }}</h2>
       <p class="text-gray-600">Dernière activité {{ user.lastSeen }}</p>
@@ -20,14 +26,15 @@
   <div v-else class="flex items-center justify-center h-32">
     <p>Chargement du chat...</p>
   </div>
+    </div>
 
   <!-- Conteneur des Messages -->
   <div v-if="user" class="flex-1 p-4 overflow-y-auto user-message-container" ref="messageContainer">
     <div v-for="message in messages" :key="message.id" class="mb-4">
       <!-- Message Reçu -->
       <div v-if="message.ownerId !== defaultUserId" class="flex items-start">
-        <img 
-          :src="user.PhotoURL || '/demo/images/avatar/default.png'" 
+        <img
+          :src="user.PhotoURL || '/demo/images/avatar/default.png'"
           style="width: 25px; height:25px;"
           :alt="userDisplayName"
         />
@@ -53,8 +60,8 @@
 
   <!-- Zone d'Entrée des Messages et Sélecteur d'Emojis -->
   <div v-if="user && defaultUserId" class="relative flex items-center p-4 border-t border-gray-300">
-    <button 
-      class="p-button p-button-text p-button-icon-only mr-3" 
+    <button
+      class="p-button p-button-text p-button-icon-only mr-3"
       @click="toggleEmojiPicker"
       title="Ajouter un emoji"
     >
@@ -67,8 +74,8 @@
       placeholder="Tapez un message..."
       class="flex-1 p-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
     />
-    <button 
-      class="p-button p-button-primary ml-3" 
+    <button
+      class="p-button p-button-primary ml-3"
       @click="sendMessage"
       :disabled="!textContent.trim() || !defaultUserId"
     >
@@ -91,15 +98,13 @@
   <div v-else class="flex items-center justify-center p-4 border-t border-gray-300">
     <p>Veuillez vous connecter pour envoyer des messages.</p>
   </div>
+    </div>
 </template>
 
 <script setup>
 import { ref, watch, computed } from 'vue';
-import { db, auth } from '@/firebase'; // Import auth along with db and storage
 import { ref as dbRef, push, onValue ,update , get } from 'firebase/database';
-
 import { db, auth } from '../../../../firebase'; // Import auth along with db and storage
-import { ref as dbRef, push, onValue } from 'firebase/database';
 
 import { onAuthStateChanged } from 'firebase/auth'; // Import the auth state observer
 

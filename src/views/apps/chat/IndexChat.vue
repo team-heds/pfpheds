@@ -4,10 +4,10 @@
   <div class="flex flex-col md:flex-row gap-5 p-4" style="min-height: 81vh">
     <!-- Sidebar avec la liste des utilisateurs -->
     <div class="md:w-80rem card p-0">
-      <ChatSidebar 
-        v-if="currentUser" 
-        @change:active:user="changeActiveUser" 
-        :users="users" 
+      <ChatSidebar
+        v-if="currentUser"
+        @change:active:user="changeActiveUser"
+        :users="users"
         :currentUser="currentUser"
       />
       <div v-else class="flex items-center justify-center h-full">
@@ -16,9 +16,9 @@
     </div>
     <!-- Zone de chat avec l'utilisateur actif -->
     <div class="flex-1 card p-0">
-      <ChatBox 
-        v-if="activeUser" 
-        @send:message="sendMessage" 
+      <ChatBox
+        v-if="activeUser"
+        @send:message="sendMessage"
         :user="activeUser"
       />
       <div v-else class="flex items-center justify-center h-full">

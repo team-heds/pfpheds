@@ -1,33 +1,32 @@
 <!-- src/views/apps/chat/ChatSidebar.vue -->
 <template>
   <!-- Informations de l'utilisateur actuel -->
-  <div class="flex flex-col items-center border-b border-gray-300 p-6">
-    <img 
-      :src="currentUser.PhotoURL || '/demo/images/avatar/default.png'" 
-      class="w-24 h-24 rounded-full object-cover shadow-md"
+  <div class="flex flex-column align-items-center border-bottom-1 surface-border p-6">
+    <img
+      :src="currentUser.PhotoURL || '/demo/images/avatar/default.png'"
+      class="w-6rem h-6rem border-circle shadow-4"
       :alt="currentUser.UserName"
     />
-    <span class="text-xl font-semibold mt-4 text-gray-800">{{ currentUser.UserName }}</span>
+    <span class="text-900 text-xl font-semibold mt-4">{{ currentUser.UserName }}</span>
   </div>
 
   <!-- Barre de recherche -->
-  <div class="p-4">
-    <div class="relative">
-      <input
+  <div class="w-full flex row-gap-4 flex-column surface-border p-4">
+    <IconField iconPosition="left" class="w-full">
+      <InputIcon class="pi pi-search" />
+      <InputText
         type="text"
         placeholder="Rechercher des utilisateurs..."
         v-model="searchedUser"
         @input="filter"
-        class="w-full p-2 pl-10 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
-      <i class="pi pi-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
-    </div>
-  </div>
+        class="w-full"/>
+
+    </IconField>
 
   <!-- Liste des utilisateurs historiques -->
-  <div v-if="HistoryUsers.length" class="p-4">
+  <div v-if="HistoryUsers.length" class="flex flex-row gap-4 md:flex-column overflow-auto">
     <h2 class="text-lg font-semibold mb-2">Historique</h2>
-    <div class="overflow-auto" style="max-height: calc(100vh - 200px);">
+
       <UserCard
         v-for="user in HistoryUsers"
         :key="user.id"
@@ -35,11 +34,7 @@
         :lastReceivedMessageAt="lastReceivedMessageDates[user.id]"
         @click="onChangeActiveUser(user)"
       />
-    </div>
-  </div>
-
-  <!-- Liste des utilisateurs filtrés et triés -->
-  <div class="p-4 overflow-auto" style="max-height: calc(100vh - 200px);">
+    <h2 class="text-lg font-semibold mb-2">Utilisateurs</h2>
     <UserCard
       v-for="user in filteredAndSortedUsers"
       :key="user.id"
@@ -48,18 +43,19 @@
       @click="onChangeActiveUser(user)"
     />
   </div>
+ </div>
 </template>
 
 <script setup>
 import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import UserCard from './UserCard.vue';
-import { db } from '@/firebase';
+import { db } from '../../../../firebase';
 import { ref as dbRef, onValue, off } from 'firebase/database';
 
 /**
  * Fonction utilitaire pour générer un ID de conversation unique
- * @param {string} userId1 
- * @param {string} userId2 
+ * @param {string} userId1
+ * @param {string} userId2
  * @returns {string}
  */
 const generateConversationId = (userId1, userId2) => {
@@ -90,8 +86,8 @@ const unsubscribeFunctions = ref([]);
 /**
  * Fonction pour récupérer la date du dernier message reçu d'une conversation.
  * On lit directement la propriété lastReceivedMessageAt dans le nœud de la conversation.
- * @param {string} conversationId 
- * @param {string} userId 
+ * @param {string} conversationId
+ * @param {string} userId
  */
 const fetchLastReceivedMessageDate = (conversationId, userId) => {
   const conversationRef = dbRef(db, 'conversations');
@@ -184,7 +180,7 @@ watch(
 const filteredAndSortedUsers = computed(() => {
   const query = searchedUser.value.trim().toLowerCase();
   let filtered = props.users.filter(user => {
-    if (user.id === props.currentUser.uid) return false; 
+    if (user.id === props.currentUser.uid) return false;
     if (!query) return true;
     const userName = (user.UserName || '').toLowerCase();
     const userMail = (user.Mail || '').toLowerCase();
