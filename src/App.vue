@@ -8,14 +8,19 @@
 
     <!-- Contenu de l'application -->
     <div class="content">
+      <Toast />
       <router-view />
     </div>
   </div>
 </template>
 
 <script>
+import Toast from 'primevue/toast';
 export default {
   name: "App",
+  components: {
+    Toast,
+  },
 };
 </script>
 
