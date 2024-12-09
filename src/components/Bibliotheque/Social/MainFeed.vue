@@ -39,17 +39,16 @@
     <transition name="fade">
       <div v-show="showTextareaCard" class="post-textarea-card">
         <div class="post-form">
-          <Editor v-model="newPost" @input="detectTags" editorStyle="height: 120px">
-            <template v-slot:toolbar>
-              <span class="ql-formats">
-                  <button v-tooltip.bottom="'Bold'" class="ql-bold"></button>
-                  <button v-tooltip.bottom="'Italic'" class="ql-italic"></button>
-                  <button v-tooltip.bottom="'Underline'" class="ql-underline"></button>
-              </span>
-            </template>
-          </Editor>
+          <!-- Zone de texte -->
+          <textarea
+            v-model="newPost"
+            @input="detectTags"
+            class="simple-textarea"
+            placeholder="Commencer un post"
+          ></textarea>
 
-          <div v-if="detectedTags.length > 0" class="tags-container p-3">
+          <!-- Affichage des tags détectés -->
+          <div v-if="detectedTags.length > 0" class="tags-container p-1">
             <Tag
               v-for="(tag, index) in detectedTags"
               :key="index"
@@ -59,7 +58,9 @@
             </Tag>
           </div>
 
-          <div class="pt-2">
+          <!-- Conteneur pour les boutons d'upload et de publication -->
+          <div class="actions-container w-3 pb-2">
+            <!-- Upload de fichiers avec un pictogramme d'image et le label "Médias" -->
             <FileUpload
               ref="fileupload"
               mode="basic"
@@ -68,27 +69,43 @@
               :maxFileSize="10000000"
               customUpload
               @select="handleFileSelection"
-              chooseLabel="Ajouter des médias"
-            />
+              class="file-upload"
+            >
+              <template #choose>
+                <Button
+                  label="Médias"
+                  icon="pi pi-image"
+                  class="upload-button"
+                  @click="$refs.fileupload.choose()"
+                />
+              </template>
+            </FileUpload>
 
-            <div class="media-preview" v-if="selectedMedia.length > 0">
-              <div
-                v-for="(media, index) in selectedMedia"
-                :key="index"
-                class="media-item"
-              >
-                <img v-if="media.type.startsWith('image/')" :src="media.preview" alt="Preview" />
-                <video
-                  v-if="media.type.startsWith('video/')"
-                  :src="media.preview"
-                  controls
-                ></video>
-                <button @click="removeMedia(index)" class="remove-media-btn">✖</button>
-              </div>
-            </div>
+            <!-- Bouton de publication -->
+            <Button
+              label="Publier"
+              class="publish-button"
+              @click="postMessage"
+            />
           </div>
 
-          <Button label="Publier" class="publish-button" @click="postMessage" />
+          <!-- Prévisualisation des médias sélectionnés -->
+          <div class="media-preview" v-if="selectedMedia.length > 0">
+            <div
+              v-for="(media, index) in selectedMedia"
+              :key="index"
+              class="media-item-wrapper"
+            >
+              <img v-if="media.type.startsWith('image/')" :src="media.preview" alt="Preview" class="media-item" />
+              <video
+                v-if="media.type.startsWith('video/')"
+                :src="media.preview"
+                controls
+                class="media-item"
+              ></video>
+              <button @click="removeMedia(index)" class="remove-media-btn">✖</button>
+            </div>
+          </div>
         </div>
       </div>
     </transition>
@@ -143,9 +160,7 @@ export default {
     PostItem,
     Tag,
     Button,
-    FileUpload,
-    Editor,
-    Dropdown
+    FileUpload
   },
   props: {
     currentUser: Object,
@@ -524,29 +539,93 @@ export default {
   overflow-y: auto;
 }
 
-.filters-container {
+.post-textarea-card {
+  border-radius: 0.75rem;
+}
+
+.post-form {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 1rem;
 }
 
-.post-textarea-card {
-  padding: 1rem;
-  border-radius: 0.75rem;
+/* Conteneur pour les boutons d'upload et de publication */
+.actions-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem; /* Espace entre les deux boutons */
+  margin-top: 1rem;
+}
+
+/* Personnalisation du bouton d'upload */
+.upload-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--surface-border);
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem; /* Augmenter le padding pour inclure le label */
+  cursor: pointer;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.upload-button:hover {
+  background-color: var(--primary-color-light);
+  color: var(--primary-color);
+}
+
+.upload-button .pi {
+  font-size: 1.2rem; /* Ajuster la taille de l'icône si nécessaire */
+  margin-right: 0.5rem; /* Espace entre l'icône et le label */
+}
+
+/* Bouton de publication */
+.publish-button {
+  flex-grow: 1; /* Prend le reste de l'espace disponible */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Zone de texte */
+.simple-textarea {
+  width: 100%;
+  min-height: 120px;
+  max-height: 300px;
+  resize: vertical;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--surface-border);
+  background-color: var(--surface-card);
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-family: inherit;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.simple-textarea:focus {
+  border-color: var(--primary-color);
+}
+
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .media-preview {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+  margin-top: 1rem;
 }
 
-.media-item {
+.media-item-wrapper {
   position: relative;
 }
 
-.media-item img,
-.media-item video {
+.media-item {
   max-width: 100px;
   max-height: 100px;
   border-radius: 8px;
@@ -561,23 +640,34 @@ export default {
   border: none;
   border-radius: 50%;
   cursor: pointer;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.form-control {
-  width: 100%;
-  padding: 1rem;
-  border: 1px solid var(--surface-border);
-  border-radius: 1.5rem;
-  background-color: var(--surface-card);
-  color: var(--text-color);
-  font-size: 1rem;
-}
-
+/* Styles pour le bouton "Publier" */
 .publish-button {
-  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.ml-2 {
-  margin-left: 0.5rem;
+/* Responsive mobile */
+@media (max-width: 768px) {
+  .simple-textarea {
+    max-height: 200px;
+  }
+
+  .actions-container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .publish-button {
+    width: 100%;
+  }
 }
 </style>
