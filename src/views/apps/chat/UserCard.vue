@@ -1,11 +1,6 @@
 <script setup>
-import { computed, ref, onMounted } from 'vue';
-import { getFirestore, collection, query, where, onSnapshot } from 'firebase/firestore';
+import { computed } from 'vue';
 
-// Firebase Firestore
-const db = getFirestore();
-
-// Props
 const props = defineProps({
   user: {
     type: Object,
@@ -13,38 +8,13 @@ const props = defineProps({
   }
 });
 
-// Références réactives
-const messages = ref([]);
-
-// Charger les messages en temps réel pour l'utilisateur
-const loadMessages = async () => {
-  if (!props.user || !props.user.id) return;
-
-  const messagesCollection = collection(db, 'Messages');
-  const q = query(messagesCollection, where('conversationId', '==', props.user.id));
-
-  onSnapshot(q, (snapshot) => {
-    messages.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  });
-};
-
-// Calculer le dernier message
-const lastMessage = computed(() => {
-  if (messages.value.length > 0) {
-    return messages.value[messages.value.length - 1].text;
-  }
-  return 'No messages yet';
-});
-
-// Charger les messages lors du montage
-onMounted(() => {
-  loadMessages();
+const lastmessage = computed(() => {
+  return props.user.messages[props.user.messages.length - 1].text;
 });
 </script>
 
 <template>
   <div class="flex flex-nowrap justify-content-between align-items-center border-1 surface-border border-round p-3 cursor-pointer select-none hover:surface-hover transition-colors transition-duration-150" tabindex="0">
-    <!-- Avatar utilisateur -->
     <div class="flex align-items-center">
       <div class="relative md:mr-3">
         <img :src="'/demo/images/avatar/' + user.image" alt="user" class="w-3rem h-3rem border-circle shadow-4" />
@@ -54,13 +24,11 @@ onMounted(() => {
           style="bottom: 2px; right: 2px"
         ></span>
       </div>
-      <!-- Informations utilisateur -->
       <div class="flex-column hidden md:flex">
         <span class="text-900 font-semibold block">{{ user.name }}</span>
-        <span class="block text-600 text-overflow-ellipsis overflow-hidden white-space-nowrap w-10rem text-sm">{{ lastMessage }}</span>
+        <span class="block text-600 text-overflow-ellipsis overflow-hidden white-space-nowrap w-10rem text-sm">{{ lastmessage }}</span>
       </div>
     </div>
-    <!-- Dernière activité -->
     <span class="text-700 font-semibold ml-auto hidden md:inline">{{ user.lastSeen }}</span>
   </div>
 </template>

@@ -12,7 +12,7 @@
 
       <!-- Section droite -->
       <div class="flex flex-column justify-content-center align-items-center w-full lg:w-3 p-4 lg:p-7">
-        <h1 class="text-4xl lg:text-6xl text-left mb-4">La formation pratique, clé de votre avenir ou pas</h1>
+        <h1 class="text-4xl lg:text-6xl text-left mb-4">La formation pratique, clé de votre avenir.</h1>
 
         <!-- Formulaire de connexion -->
         <form @submit.prevent="submitForm" class="w-full max-w-25rem">
