@@ -95,8 +95,12 @@
 
 <script setup>
 import { ref, watch, computed } from 'vue';
+import { db, auth } from '@/firebase'; // Import auth along with db and storage
+import { ref as dbRef, push, onValue ,update , get } from 'firebase/database';
+
 import { db, auth } from '../../../../firebase'; // Import auth along with db and storage
 import { ref as dbRef, push, onValue } from 'firebase/database';
+
 import { onAuthStateChanged } from 'firebase/auth'; // Import the auth state observer
 
 // Utilitaire pour générer l'ID de conversation unique
@@ -184,19 +188,36 @@ return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-
 * @param {Object} message - Le message à ajouter.
 * @returns {Promise<void>}
 */
-const addMessageToConversation = (conversationId, message) => {
-return new Promise((resolve, reject) => {
+const addMessageToConversation = async (conversationId, message) => {
+  const conversationRef = dbRef(db, `conversations/${conversationId}`);
   const messagesRef = dbRef(db, `conversations/${conversationId}/messages`);
-  push(messagesRef, message)
-    .then(() => {
-      console.log(`Message ajouté à la conversation ${conversationId} :`, message);
-      resolve();
-    })
-    .catch((error) => {
-      console.error("Erreur lors de l'ajout du message à Firebase :", error);
-      reject(error);
-    });
-});
+
+  try {
+    // Vérifie si la conversation existe déjà
+    const conversationSnapshot = await get(conversationRef);
+
+    if (!conversationSnapshot.exists()) {
+      console.log(`Création d'une nouvelle conversation avec ID : ${conversationId}`);
+      const newConversation = {
+        member1: defaultUserId.value,
+        member2: otherUserId.value,
+        lastReceivedMessageAt: message.createdAt,
+      };
+      await update(conversationRef, newConversation);
+      console.log("Nouvelle conversation créée :", newConversation);
+    }
+
+    // Ajoute le message à la conversation
+    await push(messagesRef, message);
+    console.log(`Message ajouté à la conversation ${conversationId} :`, message);
+
+    // Mettre à jour lastReceivedMessageAt
+    await update(conversationRef, { lastReceivedMessageAt: message.createdAt });
+    console.log(`lastReceivedMessageAt mis à jour pour la conversation ${conversationId}.`);
+  } catch (error) {
+    console.error("Erreur lors de l'ajout du message à Firebase :", error);
+    throw error;
+  }
 };
 
 /**
@@ -256,12 +277,15 @@ emit('send:message', message);
 
 // Ajouter le message à Firebase
 try {
-  await addMessageToConversation(conversationId.value, message);
-  console.log("Message envoyé et sauvegardé dans Firebase :", message);
-} catch (error) {
-  console.error("Erreur lors de l'envoi du message à Firebase :", error);
-}
-
+    await addMessageToConversation(conversationId.value, message);
+    console.log("Message envoyé et sauvegardé dans Firebase :", message);
+    // Mettre à jour lastReceivedMessageAt uniquement si le message est reçu par l'autre utilisateur
+    const conversationRef = dbRef(db, `conversations/${conversationId.value}`);
+    await update(conversationRef, { lastReceivedMessageAt: message.createdAt });
+    console.log(`lastReceivedMessageAt mis à jour pour la conversation ${conversationId.value}.`);
+  } catch (error) {
+    console.error("Erreur lors de l'envoi du message à Firebase :", error);
+  }
 textContent.value = '';
 showEmojiPicker.value = false;
 };
