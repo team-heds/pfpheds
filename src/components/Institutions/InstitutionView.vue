@@ -77,8 +77,6 @@
                       <strong>Téléphone Responsable Physio: </strong>
                       <a :href="`tel:${institutionDetails?.PhoneChef}`">{{ institutionDetails?.PhoneChef }}</a>
                     </p>
-                    <br><br>
-                    <h2>Liste praticien.ne.s Formateur.ice.s après résultat de votation</h2>
                   </div>
                   <div v-else>
                     <p class="card-text">Aucun praticien.ne formateur.trice.s disponible.</p>

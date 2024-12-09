@@ -1,3 +1,4 @@
+<!-- src/components/Social/PostItem.vue -->
 <template>
   <div class="post-item">
     <!-- En-tête du post -->
@@ -86,7 +87,7 @@
       <Textarea
         v-model="replyContent"
         placeholder="Écrire une réponse..."
-        class="reply-textarea"
+        class="reply-textarea fixed-textarea"
       />
       <div class="pt-3">
         <Button @click="submitReply" size="small">Envoyer</Button>
@@ -431,7 +432,7 @@ export default {
 .comment-author {
   font-size: 0.9em;
   margin-bottom: 5px;
-  color: var(--text-secondary-color);
+  color: var(--text-color);
 }
 
 .comment-content {
@@ -439,7 +440,62 @@ export default {
   color: var(--text-color);
 }
 
-/* Responsive mobile */
+/* Styles pour la zone de texte de réponse */
+.reply-textarea.fixed-textarea {
+  width: 100%;
+  height: 100px; /* Hauteur fixe */
+  resize: none; /* Désactiver le redimensionnement */
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--surface-border);
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-family: inherit;
+  outline: none;
+  box-sizing: border-box;
+  overflow-y: auto; /* Ajouter une barre de défilement si le contenu dépasse */
+}
+
+.reply-textarea.fixed-textarea:focus {
+  border-color: var(--primary-color);
+}
+
+.media-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.media-item-wrapper {
+  position: relative;
+}
+
+.media-item img,
+.media-item video {
+  max-width: 100px;
+  max-height: 100px;
+  border-radius: 8px;
+}
+
+.remove-media-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: red;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.publish-button {
+  align-self: flex-end;
+}
+
 @media (max-width: 600px) {
   .post-item {
     padding: 10px;
@@ -477,6 +533,11 @@ export default {
 
   .comment-content {
     font-size: 0.9em;
+  }
+
+  /* Ajustement de la zone de texte de réponse pour mobile */
+  .reply-textarea.fixed-textarea {
+    height: 80px; /* Hauteur ajustée pour les petits écrans */
   }
 }
 </style>

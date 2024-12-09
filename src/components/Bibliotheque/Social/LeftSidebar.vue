@@ -56,7 +56,6 @@
 import Avatar from "primevue/avatar";
 import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 import { getDatabase, ref as dbRef, get } from "firebase/database";
-import Profile from '@/components/Home/Profile.vue'
 
 const defaultAvatar = '../../../public/assets/images/avatar/01.jpg';
 

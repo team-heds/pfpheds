@@ -1,11 +1,11 @@
 <template>
-  <div>
+  <div class="">
     <Navbar />
     <ResumStageUserProfile class="mb-5" />
 
-    <div class="flex w-full">
+    <div class="container flex justify-content-center">
 
-      <div class="container-fluid mt-4 w-12">
+      <div class="container-fluid mt-4 justify-content-center">
         <!-- Section pour la validation -->
         <div v-if="currentStudent && selectedPFP && selectedClass" class="table-responsive mt-4">
           <div v-if="validationMessage" class="mt-4 text-center">
@@ -174,7 +174,7 @@ export default {
     return {
       etudiants: [],
       selectedClass: null, // À définir dynamiquement
-      selectedPFP: null,   // À définir dynamiquement
+      selectedPFP: 'PFP1A',   // À définir dynamiquement
       stages: [],
       selectedStage: null,
       currentStudent: null,
