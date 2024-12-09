@@ -31,6 +31,10 @@
 
     <!-- Messagerie -->
     <h4>Messagerie</h4>
+    <UserCard user="user" />
+
+    <!-- Messagerie
+
     <ul class="messaging-list">
       <li
         v-for="(contact, index) in contacts"
@@ -49,6 +53,7 @@
         </div>
       </li>
     </ul>
+    -->
   </div>
 </template>
 
@@ -56,12 +61,14 @@
 import Avatar from "primevue/avatar";
 import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 import { getDatabase, ref as dbRef, get } from "firebase/database";
+import ChatSidebar from '@/views/apps/chat/ChatSidebar.vue'
+import UserCard from '@/views/apps/chat/UserCard.vue'
 
 const defaultAvatar = '../../../public/assets/images/avatar/01.jpg';
 
 export default {
   name: "LeftSidebar",
-  components: { Avatar },
+  components: { UserCard, ChatSidebar, Avatar },
   data() {
     return {
       user: {

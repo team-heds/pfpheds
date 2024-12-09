@@ -2,8 +2,9 @@
 <template>
   <div class="main-feed">
     <!-- Section des filtres -->
-    <div class="filters-container p-3">
+    <div class="filters-container ">
       <Dropdown
+        class="surface-card"
         v-model="selectedFilterType"
         :options="filterTypes"
         optionLabel="label"
@@ -13,6 +14,7 @@
       />
 
       <Dropdown
+        class="surface-card"
         v-if="selectedFilterType"
         v-model="selectedFilterValue"
         :options="filterOptions" 
