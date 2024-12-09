@@ -20,7 +20,7 @@
         </span>
       </div>
 
-  </div>
+    </div>
   </div>
 
 
@@ -47,7 +47,7 @@ const userDisplayName = computed(() => {
 
 /**
  * Formate l'horodatage en une chaîne de temps lisible.
- * @param {number} timestamp 
+ * @param {number} timestamp
  * @returns {string}
  */
 const formatDate = (timestamp) => {

@@ -23,9 +23,9 @@
 
     </IconField>
 
-  <!-- Liste des utilisateurs historiques -->
-  <div v-if="HistoryUsers.length" class="flex flex-row gap-4 md:flex-column overflow-auto">
-    <h2 class="text-lg font-semibold mb-2">Historique</h2>
+    <!-- Liste des utilisateurs historiques -->
+    <div v-if="HistoryUsers.length" class="flex flex-row gap-4 md:flex-column overflow-auto">
+      <h2 class="text-lg font-semibold mb-2">Historique</h2>
 
       <UserCard
         v-for="user in HistoryUsers"
@@ -34,16 +34,16 @@
         :lastReceivedMessageAt="lastReceivedMessageDates[user.id]"
         @click="onChangeActiveUser(user)"
       />
-    <h2 class="text-lg font-semibold mb-2">Utilisateurs</h2>
-    <UserCard
-      v-for="user in filteredAndSortedUsers"
-      :key="user.id"
-      :user="user"
-      :lastReceivedMessageAt="lastReceivedMessageDates[user.id]"
-      @click="onChangeActiveUser(user)"
-    />
+      <h2 class="text-lg font-semibold mb-2">Utilisateurs</h2>
+      <UserCard
+        v-for="user in filteredAndSortedUsers"
+        :key="user.id"
+        :user="user"
+        :lastReceivedMessageAt="lastReceivedMessageDates[user.id]"
+        @click="onChangeActiveUser(user)"
+      />
+    </div>
   </div>
- </div>
 </template>
 
 <script setup>
