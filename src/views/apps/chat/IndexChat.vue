@@ -1,9 +1,9 @@
 <!-- src/views/apps/chat/IndexChat.vue -->
 <template>
   <Navbar title="Chat"></Navbar>
-  <div class="flex flex-col md:flex-row gap-5 p-4" style="min-height: 81vh">
+  <div class="flex flex-column md:flex-row gap-5" style="min-height: 53vh">
     <!-- Sidebar avec la liste des utilisateurs -->
-    <div class="md:w-80rem card p-0">
+    <div class="md:w-25rem card h-full p-0">
       <ChatSidebar
         v-if="currentUser"
         @change:active:user="changeActiveUser"
@@ -15,7 +15,7 @@
       </div>
     </div>
     <!-- Zone de chat avec l'utilisateur actif -->
-    <div class="flex-1 card p-0">
+    <div class="flex-1 card h-full p-0">
       <ChatBox
         v-if="activeUser"
         @send:message="sendMessage"
