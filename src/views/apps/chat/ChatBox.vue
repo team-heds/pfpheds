@@ -1,168 +1,337 @@
-<script setup>
-import { ref } from 'vue';
-
-defineProps({
-  user: {
-    type: Object,
-    required: true
-  }
-});
-
-const defaultUserId = ref(123);
-const emit = defineEmits(['send:message']);
-const op = ref(null);
-const textContent = ref('');
-
-const emojis = [
-  '😀',
-  '😃',
-  '😄',
-  '😁',
-  '😆',
-  '😅',
-  '😂',
-  '🤣',
-  '😇',
-  '😉',
-  '😊',
-  '🙂',
-  '🙃',
-  '😋',
-  '😌',
-  '😍',
-  '🥰',
-  '😘',
-  '😗',
-  '😙',
-  '😚',
-  '🤪',
-  '😜',
-  '😝',
-  '😛',
-  '🤑',
-  '😎',
-  '🤓',
-  '🧐',
-  '🤠',
-  '🥳',
-  '🤗',
-  '🤡',
-  '😏',
-  '😶',
-  '😐',
-  '😑',
-  '😒',
-  '🙄',
-  '🤨',
-  '🤔',
-  '🤫',
-  '🤭',
-  '🤥',
-  '😳',
-  '😞',
-  '😟',
-  '😠',
-  '😡',
-  '🤬',
-  '😔',
-  '😟',
-  '😠',
-  '😡',
-  '🤬',
-  '😔',
-  '😕',
-  '🙁',
-  '😬',
-  '🥺',
-  '😣',
-  '😖',
-  '😫',
-  '😩',
-  '🥱',
-  '😤',
-  '😮',
-  '😱',
-  '😨',
-  '😰',
-  '😯',
-  '😦',
-  '😧',
-  '😢',
-  '😥',
-  '😪',
-  '🤤'
-];
-
-const parseDate = (timestamp) => {
-  return new Date(timestamp).toTimeString().split(':').slice(0, 2).join(':');
-};
-
-const sendMessage = () => {
-  if (textContent.value == '' || textContent.value === ' ') {
-    return;
-  }
-  let message = {
-    text: textContent.value,
-    ownerId: 123,
-    createdAt: new Date().getTime()
-  };
-
-  emit('send:message', message);
-  textContent.value = '';
-};
-
-const addEmoji = (emoji) => {
-  textContent.value = textContent.value + emoji;
-  op.value.hide();
-};
-</script>
-
+<!-- src/views/apps/chat/ChatBox.vue -->
 <template>
-  <div class="flex flex-column h-full">
-    <div class="flex align-items-center border-bottom-1 surface-border p-3 lg:p-6">
-      <div class="relative flex align-items-center mr-3">
-        <img :src="'/demo/images/avatar/' + user.image" :alt="user.name" class="w-4rem h-4rem border-circle shadow-4" />
-        <span class="w-1rem h-1rem border-circle border-2 surface-border absolute bottom-0 right-0" :class="{ 'bg-green-400': user.status === 'active', 'bg-red-400': user.status === 'busy', 'bg-yellow-400': user.status === 'away' }"></span>
-      </div>
-      <div class="mr-2">
-        <span class="text-900 font-semibold block">{{ user.name }}</span>
-        <span class="text-700">Last active 1 hour ago</span>
-      </div>
-      <div class="flex align-items-center ml-auto">
-        <Button type="button" icon="pi pi-ellipsis-v" outlined severity="secondary" rounded></Button>
-      </div>
+  <!-- En-tête du Chat -->
+  <div v-if="user" class="flex items-center border-b border-gray-300 p-4">
+    <img 
+      :src="user.PhotoURL || '/demo/images/avatar/default.png'" 
+      style="width: 105px; height:105px;"
+      :alt="userDisplayName"
+    />
+    <div>
+      <h2 class="text-xl font-semibold text-gray-800">{{ userDisplayName }}</h2>
+      <p class="text-gray-600">Dernière activité {{ user.lastSeen }}</p>
     </div>
-    <div class="user-message-container p-3 md:px-4 lg:px-6 lg:py-4 mt-2 overflow-y-auto" style="max-height: 53vh">
-      <div v-for="message in user.messages" :key="message">
-        <div v-if="message.ownerId !== 123" class="grid grid-nogutter mb-4">
-          <div class="mr-3 mt-1">
-            <img :src="'/demo/images/avatar/' + user.image" :alt="user.name" class="w-3rem h-3rem border-circle shadow-4" />
-          </div>
-          <div class="col mt-3">
-            <p class="text-900 font-semibold mb-3">{{ user.name }}</p>
-            <span class="text-700 inline-block font-medium border-1 surface-border p-3 white-space-normal border-round" style="word-break: break-word; max-width: 80%">{{ message.text }}</span>
-            <p class="text-700 mt-3">{{ parseDate(message.createdAt) }}<i class="pi pi-check ml-2 text-green-400"></i></p>
-          </div>
-        </div>
+    <div class="ml-auto">
+      <button class="p-button p-button-text p-button-icon-only">
+        <i class="pi pi-ellipsis-v"></i>
+      </button>
+    </div>
+  </div>
+  <div v-else class="flex items-center justify-center h-32">
+    <p>Chargement du chat...</p>
+  </div>
 
-        <div v-if="message.ownerId === defaultUserId" class="grid grid-nogutter mb-4">
-          <div class="col mt-3 text-right">
-            <span class="inline-block text-left font-medium border-1 surface-border bg-primary-100 text-primary-900 p-3 white-space-normal border-round" style="word-break: break-word; max-width: 80%">{{ message.text }}</span>
-            <p class="text-700 mt-3">{{ parseDate(message.createdAt) }} <i class="pi pi-check ml-2 text-green-400"></i></p>
-          </div>
+  <!-- Conteneur des Messages -->
+  <div v-if="user" class="flex-1 p-4 overflow-y-auto user-message-container" ref="messageContainer">
+    <div v-for="message in messages" :key="message.id" class="mb-4">
+      <!-- Message Reçu -->
+      <div v-if="message.ownerId !== defaultUserId" class="flex items-start">
+        <img 
+          :src="user.PhotoURL || '/demo/images/avatar/default.png'" 
+          style="width: 25px; height:25px;"
+          :alt="userDisplayName"
+        />
+        <div>
+          <p class="font-semibold text-gray-800">{{ userDisplayName }}</p>
+          <span class="inline-block bg-gray-200 p-2 rounded-lg max-w-xs break-words">{{ message.text }}</span>
+          <p class="text-gray-500 text-sm">{{ formatTime(message.createdAt) }} <i class="pi pi-check text-green-500 ml-2"></i></p>
         </div>
       </div>
-    </div>
-    <div class="p-3 md:p-4 lg:p-6 flex flex-column sm:flex-row align-items-center mt-auto border-top-1 surface-border gap-3">
-      <InputText id="message" type="text" placeholder="Type a message" class="flex-1 w-full sm:w-auto border-round" v-model="textContent" @keydown.enter="sendMessage()" />
-      <div class="flex w-full sm:w-auto gap-3">
-        <Button class="p-button w-full sm:w-auto justify-content-center text-xl" severity="secondary" @click="(event) => $refs.op.toggle(event)">😀</Button>
-        <Button label="Send" icon="pi pi-send" class="w-full sm:w-auto" @click="sendMessage()"></Button>
+
+      <!-- Message Envoyé -->
+      <div v-else class="flex justify-end">
+        <div class="text-right">
+          <span class="inline-block bg-blue-200 text-blue-800 p-2 rounded-lg max-w-xs break-words">{{ message.text }}</span>
+          <p class="text-gray-500 text-sm">{{ formatTime(message.createdAt) }} <i class="pi pi-check text-green-500 ml-2"></i></p>
+        </div>
       </div>
     </div>
   </div>
+  <div v-else class="flex items-center justify-center h-32">
+    <p>Chargement des messages...</p>
+  </div>
 
-  <OverlayPanel ref="op" class="w-full sm:w-30rem">
-    <Button v-for="emoji in emojis" :key="emoji" @click="addEmoji(emoji)" type="button" :label="emoji" class="p-2 text-2xl" text></Button>
-  </OverlayPanel>
+  <!-- Zone d'Entrée des Messages et Sélecteur d'Emojis -->
+  <div v-if="user && defaultUserId" class="relative flex items-center p-4 border-t border-gray-300">
+    <button 
+      class="p-button p-button-text p-button-icon-only mr-3" 
+      @click="toggleEmojiPicker"
+      title="Ajouter un emoji"
+    >
+      😀
+    </button>
+    <input
+      type="text"
+      v-model="textContent"
+      @keydown.enter="sendMessage"
+      placeholder="Tapez un message..."
+      class="flex-1 p-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+    />
+    <button 
+      class="p-button p-button-primary ml-3" 
+      @click="sendMessage"
+      :disabled="!textContent.trim() || !defaultUserId"
+    >
+      Envoyer
+    </button>
+
+    <!-- Sélecteur d'Emojis -->
+    <div v-if="showEmojiPicker" class="absolute bottom-full mb-2 right-0 bg-white border rounded-lg p-2 shadow-lg z-10 flex flex-wrap w-48">
+      <button
+        v-for="emoji in emojis"
+        :key="emoji"
+        @click="addEmoji(emoji)"
+        class="text-xl m-1 focus:outline-none"
+        title="Ajouter cet emoji"
+      >
+        {{ emoji }}
+      </button>
+    </div>
+  </div>
+  <div v-else class="flex items-center justify-center p-4 border-t border-gray-300">
+    <p>Veuillez vous connecter pour envoyer des messages.</p>
+  </div>
 </template>
+
+<script setup>
+import { ref, watch, computed } from 'vue';
+import { db, auth } from '@/firebase'; // Import auth along with db and storage
+import { ref as dbRef, push, onValue } from 'firebase/database';
+import { onAuthStateChanged } from 'firebase/auth'; // Import the auth state observer
+
+// Utilitaire pour générer l'ID de conversation unique
+const generateConversationId = (userId1, userId2) => {
+return [userId1, userId2].sort().join('-');
+};
+
+const props = defineProps({
+user: {
+  type: Object,
+  required: true
+}
+});
+
+const emit = defineEmits(['send:message']);
+
+// Réactifs
+const currentUser = ref(null);
+
+// Observateur d'état d'authentification
+onAuthStateChanged(auth, (user) => {
+if (user) {
+  currentUser.value = user;
+  console.log('Utilisateur connecté:', user.uid);
+} else {
+  currentUser.value = null;
+  console.log('Aucun utilisateur connecté.');
+}
+});
+
+// Vérification de l'ID utilisateur dans props.user
+const otherUserId = computed(() => {
+// Supposons que l'ID de l'utilisateur passé en prop est 'uid'
+const uid = props.user.uid || props.user.id;
+if (!uid) {
+  console.warn('L\'ID de l\'utilisateur cible n\'est pas défini dans les props.');
+}
+return uid;
+});
+
+const defaultUserId = computed(() => currentUser.value ? currentUser.value.uid : null);
+const conversationId = computed(() => {
+if (defaultUserId.value && otherUserId.value) {
+  const id = generateConversationId(defaultUserId.value, otherUserId.value);
+  console.log('Conversation ID généré:', id);
+  return id;
+}
+console.warn('Impossible de générer l\'ID de conversation: defaultUserId ou otherUserId est manquant.');
+return null;
+});
+
+const messages = ref([]);
+const textContent = ref('');
+const showEmojiPicker = ref(false);
+
+// Liste des emojis
+const emojis = [
+'😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😇', '😉',
+'😊', '🙂', '🙃', '😋', '😌', '😍', '🥰', '😘', '😗', '😙',
+'😚', '🤪', '😜', '😝', '😛', '🤑', '😎', '🤓', '🧐', '🤠',
+'🥳', '🤗', '🤡', '😏', '😶', '😐', '😑', '😒', '🙄', '🤨',
+'🤔', '🤫', '🤭', '🤥', '😳', '😞', '😟', '😠', '😡', '🤬',
+'😔', '😕', '🙁', '😬', '🥺', '😣', '😖', '😫', '😩', '🥱',
+'😤', '😮', '😱', '😨', '😰', '😯', '😦', '😧', '😢', '😥',
+'😪', '🤤'
+];
+
+// Computed property pour afficher le nom de l'utilisateur
+const userDisplayName = computed(() => {
+return `${props.user.UserName || 'Utilisateur'}`;
+});
+
+/**
+* Formate l'horodatage en une chaîne de temps lisible.
+* @param {number} timestamp - L'horodatage en millisecondes.
+* @returns {string} - Heure et minute formatées.
+*/
+const formatTime = (timestamp) => {
+return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
+
+/**
+* Fonction pour ajouter un message à une conversation spécifique dans Firebase Realtime Database.
+* @param {string} conversationId - L'ID unique de la conversation.
+* @param {Object} message - Le message à ajouter.
+* @returns {Promise<void>}
+*/
+const addMessageToConversation = (conversationId, message) => {
+return new Promise((resolve, reject) => {
+  const messagesRef = dbRef(db, `conversations/${conversationId}/messages`);
+  push(messagesRef, message)
+    .then(() => {
+      console.log(`Message ajouté à la conversation ${conversationId} :`, message);
+      resolve();
+    })
+    .catch((error) => {
+      console.error("Erreur lors de l'ajout du message à Firebase :", error);
+      reject(error);
+    });
+});
+};
+
+/**
+* Fonction pour écouter les messages d'une conversation spécifique en temps réel dans Firebase Realtime Database.
+* @param {string} conversationId - L'ID unique de la conversation.
+* @param {Function} callback - Fonction à appeler avec les messages mis à jour.
+*/
+const listenToConversationMessages = (conversationId, callback) => {
+const messagesRef = dbRef(db, `conversations/${conversationId}/messages`);
+onValue(messagesRef, (snapshot) => {
+  const data = snapshot.val();
+  if (data) {
+    const fetchedMessages = Object.keys(data).map(key => ({
+      id: key,
+      ...data[key]
+    }));
+    // Trier les messages par date croissante
+    fetchedMessages.sort((a, b) => a.createdAt - b.createdAt);
+    callback(fetchedMessages);
+    console.log(`Messages mis à jour pour la conversation ${conversationId} :`, fetchedMessages);
+  } else {
+    callback([]);
+    console.log(`Aucun message trouvé pour la conversation ${conversationId}.`);
+  }
+}, (error) => {
+  console.error("Erreur lors de l'écoute des messages :", error);
+});
+};
+
+/**
+* Envoie un message.
+*/
+const sendMessage = async () => {
+if (!defaultUserId.value) {
+  console.error("Utilisateur non authentifié. Impossible d'envoyer le message.");
+  return;
+}
+
+if (!conversationId.value) {
+  console.error("ID de conversation invalide.");
+  return;
+}
+
+const trimmedText = textContent.value.trim();
+if (!trimmedText) return;
+
+const message = {
+  text: trimmedText,
+  ownerId: defaultUserId.value,
+  createdAt: Date.now()
+};
+
+console.log('Envoi du message:', message);
+
+// Émettre le message au parent
+emit('send:message', message);
+
+// Ajouter le message à Firebase
+try {
+  await addMessageToConversation(conversationId.value, message);
+  console.log("Message envoyé et sauvegardé dans Firebase :", message);
+} catch (error) {
+  console.error("Erreur lors de l'envoi du message à Firebase :", error);
+}
+
+textContent.value = '';
+showEmojiPicker.value = false;
+};
+
+/**
+* Ajoute un emoji au contenu du message.
+* @param {string} emoji - L'emoji à ajouter.
+*/
+const addEmoji = (emoji) => {
+textContent.value += emoji;
+showEmojiPicker.value = false;
+};
+
+/**
+* Affiche ou cache le sélecteur d'emojis.
+*/
+const toggleEmojiPicker = () => {
+showEmojiPicker.value = !showEmojiPicker.value;
+};
+
+/**
+* Écoute les messages de la conversation active en temps réel.
+*/
+watch(conversationId, (newId) => {
+if (newId) {
+  console.log('Écoute des messages pour la conversation:', newId);
+  listenToConversationMessages(newId, (fetchedMessages) => {
+    messages.value = fetchedMessages;
+    scrollToLastMessage();
+  });
+} else {
+  console.warn('Conversation ID non défini.');
+}
+});
+
+/**
+* Fonction pour défiler jusqu'au dernier message.
+*/
+const scrollToLastMessage = () => {
+const container = document.querySelector('.user-message-container');
+if (container) {
+  container.scrollTop = container.scrollHeight;
+  console.log('Défilement jusqu\'au dernier message.');
+} else {
+  console.warn('Conteneur de messages introuvable.');
+}
+};
+
+/**
+* Défilement automatique lorsque les messages changent.
+*/
+watch(messages, () => {
+scrollToLastMessage();
+});
+</script>
+
+<style scoped>
+.user-message-container {
+/* Ajoute un défilement fluide */
+scroll-behavior: smooth;
+}
+
+/* Styles pour les messages */
+.message-received img {
+width: 40px;
+height: 40px;
+}
+
+.message-sent span {
+background-color: #dcf8c6;
+color: #000;
+}
+</style>
