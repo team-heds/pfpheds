@@ -5,7 +5,7 @@
     <div class="flex align-items-center border-bottom-1 surface-border p-3 lg:p-6">
         <div v-if="user" class="relative flex align-items-center mr-3">
           <img
-            :src="user.PhotoURL || 'src/assets/avatar/avatar1.jpg'"
+            :src="user.PhotoURL || 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/avatar1.jpg?alt=media&token=4015f4c6-4abe-446d-8cef-9e54b8257522'"
             class="w-4rem h-4rem border-circle shadow-4"
             :alt="userDisplayName"
           />
