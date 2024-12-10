@@ -31,7 +31,7 @@
 
     <!-- Messagerie -->
     <h4>Messagerie</h4>
-    <UserCard user="user" />
+    <UserCard :user="user" :lastReceivedMessageAt="lastReceivedMessageAt" @click="openChat(userFullName)" />
 
     <!-- Messagerie
 

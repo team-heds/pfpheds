@@ -3,9 +3,9 @@
     <Navbar />
     <ResumStageUserProfile class="mb-5" />
 
-    <div class="container flex justify-content-center">
+    <div class="w-full ">
 
-      <div class="container-fluid mt-4 justify-content-center">
+      <div class="container-fluid mt-4 justify-items-center">
         <!-- Section pour la validation -->
         <div v-if="currentStudent && selectedPFP && selectedClass" class="table-responsive mt-4">
           <div v-if="validationMessage" class="mt-4 text-center">
@@ -48,7 +48,7 @@
               <tbody>
               <tr v-for="stage in filteredStages" :key="stage.IDENTIFIANT">
                 <td>
-                  <a :href="`/institution/${stage.IDPlace}`">
+                  <a :href="`/institution/${stage.IDPlace}`" class="text-white2">
                     {{ stage.NomPlace }}
                   </a>
                 </td>
@@ -119,8 +119,8 @@
         <div v-if="voteResult" class="vote-result-container mt-4">
           <h4 class="text-center mb-4">Choix du Vote</h4>
           <div class="vote-choices">
-            <div v-for="(choice, index) in voteResult" :key="index" class="vote-choice">
-              <p><strong> {{ index }} : </strong></p>
+            <div v-for="(choice, index) in voteResult" :key="index" class="vote-choice text-center">
+              <h6 class="text-white2"> {{ index }} : </h6>
               <p>Stage Sélectionné : {{ choice.selectedStageName }}</p>
               <p>Lieu : {{ choice.selectedStageLieu }}</p>
               <p>Domaine : {{ choice.selectedStageDomaine }}</p>
@@ -336,7 +336,7 @@ export default {
 
                 }
                 const votationData = {
-                  choice: index + 1,
+                  choice: index + " " + 1,
                   studentId: id,
                   studentName: this.currentStudent.Nom,
                   studentFirstName: this.currentStudent.Prenom,
@@ -869,7 +869,7 @@ export default {
 }
 
 .group-header {
-  background-color: #f1f1f1;
+  background-color: var(--surface-card);
   font-weight: bold;
 }
 
@@ -890,11 +890,11 @@ export default {
 }
 
 .btn-danger {
-  color: white;
+  color: red;
 }
 
 .recoupe {
-  background-color: #f9f9f9;
+  background-color: var(--surface-card);
   padding: 20px;
   border-radius: 5px;
 }
@@ -927,7 +927,7 @@ export default {
 }
 
 .modal-content {
-  background-color: white;
+  background-color: var(--surface-card);
   padding: 30px;
   border-radius: 8px;
   width: 600px;
@@ -1094,7 +1094,7 @@ input[type="checkbox"] {
 /* Styles pour la section des résultats du vote */
 .vote-result-container {
   padding: 20px;
-  background-color: #f9f9f9;
+ /* background-color: var(--surface-card);*/
   border-radius: 8px;
 }
 
@@ -1108,9 +1108,9 @@ input[type="checkbox"] {
 .vote-choice {
   flex: 1 1 calc(20% - 20px);
   /* 5 éléments par ligne avec un espace de 20px */
-  background-color: #ffffff;
-  border: 1px solid #e0e0e0;
-  color: black;
+  background-color: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  color: var(--text-color);
   border-radius: 8px;
   padding: 15px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -1123,6 +1123,13 @@ input[type="checkbox"] {
 
 .vote-choice p strong {
   color: #333333;
+}
+.text-white2 {
+  color: var(--text-color);
+}
+
+.text-white2 :hover {
+  color: var();
 }
 
 /* Responsiveness */
@@ -1154,8 +1161,8 @@ input[type="checkbox"] {
 }
 
 .hover-highlight:hover {
-  background-color: #f0f8ff; /* Couleur de surlignement */
-  color: #007bff; /* Couleur du texte surligné */
+  background-color: var(--surface-hover); /* Couleur de surlignement */
+  color: var(--text-color-secondary); /* Couleur du texte surligné */
 }
 
 </style>
