@@ -55,6 +55,7 @@ import HistoriquePFP from '@/components/Home/HistoriquePFP.vue'
 import DocumentsPFP from '@/components/Home/DocumentsPFP.vue'
 import Index from '@/views/apps/tasklist/Index.vue'
 import IndexChat from '@/views/apps/chat/IndexChat.vue'
+import CommunityInfo from '@/components/Social/CommunityInfo.vue'; // Import du composant Infos
 
 // Define your routes
 const routes = [
@@ -115,6 +116,12 @@ const routes = [
     name: 'ManageOneCommunity',
     component: ManageOneCommunity,
     props: true
+  },
+
+  {
+    path: '/communities/info/:id',
+    name: 'CommunityInfo',
+    component: CommunityInfo // Définition de la route Infos
   },
 ];
 

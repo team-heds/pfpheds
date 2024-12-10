@@ -43,6 +43,7 @@
     </div>
   </template>
   
+
   <script>
   import { ref } from "vue";
   import { db, auth } from "@/firebase.js";
@@ -50,27 +51,13 @@
   
   export default {
     name: "CreateNewCommunity",
-    emits: ["communityCreated"],
+    emits: ["communityCreated", "showToast"], // Ajout de l'émission de 'showToast'
     setup(props, { emit }) {
       const newCommunity = ref({
         name: "",
         description: "",
         type: ""
       });
-  
-      const toasts = ref([]);
-  
-      const addToast = (severity, summary, detail) => {
-        toasts.value.push({ severity, summary, detail });
-        // Supprimer le toast après 3 secondes
-        setTimeout(() => {
-          removeToast(0);
-        }, 3000);
-      };
-  
-      const removeToast = (index) => {
-        toasts.value.splice(index, 1);
-      };
   
       const capitalize = (str) => {
         if (!str) return '';
@@ -79,14 +66,14 @@
   
       const createCommunity = async () => {
         if (!newCommunity.value.name || !newCommunity.value.description || !newCommunity.value.type) {
-          addToast('error', 'Erreur', 'Veuillez remplir tous les champs.');
+          emit('showToast', { severity: 'error', summary: 'Erreur', detail: 'Veuillez remplir tous les champs.' });
           return;
         }
   
         try {
           const currentUser = auth.currentUser;
           if (!currentUser) {
-            addToast('error', 'Erreur', 'Utilisateur non authentifié.');
+            emit('showToast', { severity: 'error', summary: 'Erreur', detail: 'Utilisateur non authentifié.' });
             return;
           }
   
@@ -100,7 +87,7 @@
               [currentUser.uid]: { role: 'manager' }
             }
           });
-          addToast('success', 'Succès', 'Communauté créée avec succès.');
+          emit('showToast', { severity: 'success', summary: 'Succès', detail: 'Communauté créée avec succès.' });
           emit('communityCreated'); // Émettre l'événement au parent
           // Réinitialiser le formulaire
           newCommunity.value.name = "";
@@ -108,16 +95,13 @@
           newCommunity.value.type = "";
         } catch (error) {
           console.error("Erreur lors de la création de la communauté :", error);
-          addToast('error', 'Erreur', 'Impossible de créer la communauté.');
+          emit('showToast', { severity: 'error', summary: 'Erreur', detail: 'Impossible de créer la communauté.' });
         }
       };
   
       return {
         newCommunity,
         createCommunity,
-        addToast,
-        removeToast,
-        toasts,
         capitalize
       };
     }

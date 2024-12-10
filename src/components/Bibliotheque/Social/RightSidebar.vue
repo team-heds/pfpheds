@@ -1,3 +1,4 @@
+<!-- src/components/RightSidebar.vue -->
 <template>
   <div class="right-sidebar">
     <!-- Section Communautés -->
@@ -15,18 +16,21 @@
       </div>
       <ul class="communities-list">
         <li
-          v-for="(community, index) in communities"
-          :key="index"
+          v-for="(community, index) in userCommunities"
+          :key="community.id"
           class="community-item"
           @click="goToCommunity(community.id)"
         >
           <Avatar
-            :label="community.initial"
+            :label="getInitial(community.name)"
             class="mr-2"
             size="large"
             shape="circle"
           />
           <span class="community-name">{{ community.name }}</span>
+        </li>
+        <li v-if="userCommunities.length === 0" class="text-center">
+          Aucune communauté jointe.
         </li>
       </ul>
     </div>
@@ -49,6 +53,9 @@
 import Avatar from "primevue/avatar";
 import Button from "primevue/button";
 import Chip from "primevue/chip";
+import { ref, onMounted, onUnmounted } from "vue";
+import { auth, db } from "@/firebase.js";
+import { onValue, ref as dbRef, get } from "firebase/database";
 
 export default {
   name: "RightSidebar",
@@ -57,23 +64,19 @@ export default {
     Button,
     Chip,
   },
-  props: {
-    currentUser: Object,
-  },
   data() {
     return {
-      communities: [
-        { id: 1, name: "Projet Alpha", initial: "A" },
-        { id: 2, name: "Beta Team", initial: "B" },
-        { id: 3, name: "Gamma Group", initial: "G" },
-      ],
+      userCommunities: [], // Communautés de l'utilisateur
       hashtags: ["#BA22", "#BA23", "#BA24", "#ALL"],
+      unsubscribeUserCommunities: null, // Fonction de désabonnement
     };
   },
   methods: {
     addCommunity() {
       // Logique pour ajouter une nouvelle communauté
       console.log("Ajout d'une nouvelle communauté");
+      // Vous pouvez rediriger vers une page de création de communauté ou ouvrir un modal
+      this.$router.push("/create-community");
     },
     goToCommunity(communityId) {
       // Logique pour naviguer vers une communauté spécifique
@@ -85,6 +88,59 @@ export default {
       console.log("Naviguer vers la page des communautés");
       this.$router.push("/communities");
     },
+    getInitial(name) {
+      return name.charAt(0).toUpperCase();
+    },
+    async fetchCommunityDetails(communityId) {
+      try {
+        const communitySnapshot = await get(dbRef(db, `Communities/${communityId}`));
+        if (communitySnapshot.exists()) {
+          const communityData = communitySnapshot.val();
+          return { id: communityId, name: communityData.name, initial: communityData.name.charAt(0).toUpperCase() };
+        } else {
+          console.warn(`Communauté avec l'ID ${communityId} non trouvée.`);
+          return null;
+        }
+      } catch (error) {
+        console.error(`Erreur lors de la récupération de la communauté ${communityId}:`, error);
+        return null;
+      }
+    },
+    async updateUserCommunities(communitiesObj) {
+      const communityIds = Object.keys(communitiesObj || {});
+      const promises = communityIds.map(id => this.fetchCommunityDetails(id));
+      const communities = await Promise.all(promises);
+      this.userCommunities = communities.filter(community => community !== null);
+    },
+  },
+  async mounted() {
+    const user = auth.currentUser;
+    if (user) {
+      // Référence à la liste des communautés de l'utilisateur
+      const userCommunitiesRef = dbRef(db, `Users/${user.uid}/communities`);
+
+      // Écouter les changements en temps réel
+      this.unsubscribeUserCommunities = onValue(userCommunitiesRef, (snapshot) => {
+        const communitiesObj = snapshot.val();
+        this.updateUserCommunities(communitiesObj);
+      }, (error) => {
+        console.error("Erreur lors de l'écoute des communautés de l'utilisateur:", error);
+      });
+
+      // Initialiser les communautés de l'utilisateur
+      const snapshot = await get(userCommunitiesRef);
+      const communitiesObj = snapshot.val();
+      await this.updateUserCommunities(communitiesObj);
+    } else {
+      // Gérer l'utilisateur non authentifié
+      console.error("Utilisateur non authentifié.");
+    }
+  },
+  beforeUnmount() {
+    // Désabonner les écouteurs Firebase pour éviter les fuites de mémoire
+    if (this.unsubscribeUserCommunities) {
+      this.unsubscribeUserCommunities();
+    }
   },
 };
 </script>
