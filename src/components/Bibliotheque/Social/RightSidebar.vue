@@ -3,7 +3,7 @@
     <!-- Section Communautés -->
     <div class="profile-section card">
       <div class="communities-header">
-        <h4>Communautés</h4>
+        <h4 @click="goToCommunities" class="clickable">Communautés</h4>
         <!-- Bouton pour ajouter une nouvelle communauté -->
         <Button
           icon="pi pi-plus"
@@ -78,8 +78,12 @@ export default {
     goToCommunity(communityId) {
       // Logique pour naviguer vers une communauté spécifique
       console.log(`Naviguer vers la communauté avec l'ID: ${communityId}`);
-      // Exemple : redirection vers une route
       this.$router.push(`/community/${communityId}`);
+    },
+    goToCommunities() {
+      // Redirection vers la page des communautés
+      console.log("Naviguer vers la page des communautés");
+      this.$router.push("/communities");
     },
   },
 };
@@ -97,6 +101,16 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.communities-header h4.clickable {
+  cursor: pointer;
+  color: var(--primary-color);
+  transition: color 0.2s ease;
+}
+
+.communities-header h4.clickable:hover {
+  color: var(--primary-color-hover);
 }
 
 .communities-list {
