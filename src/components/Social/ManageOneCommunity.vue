@@ -117,7 +117,7 @@
       <form @submit.prevent="addMember" class="add-member-form card shadow-sm mb-4">
         <div class="card-body">
           <div class="form-row">
-     <h2>Ajouter Utilisateur</h2>
+            <h2>Ajouter Utilisateur</h2>
             <div class="form-group col-md-3">
               <label for="selectedUser"><i class="fas fa-user-plus mr-2"></i>Utilisateur</label>
               <select id="selectedUser" v-model="selectedUserId" class="form-control" required>
@@ -240,10 +240,14 @@ export default {
 
     // Fonctions pour gérer les toasts
     const addToast = (severity, summary, detail) => {
-      toasts.value.push({ severity, summary, detail });
+      const toast = { severity, summary, detail };
+      toasts.value.push(toast);
       // Supprimer le toast après 3 secondes
       setTimeout(() => {
-        removeToast(0);
+        const index = toasts.value.indexOf(toast);
+        if (index !== -1) {
+          removeToast(index);
+        }
       }, 3000);
     };
 
@@ -291,10 +295,12 @@ export default {
           const creatorSnapshot = await get(dbRef(db, `Users/${creatorId}`));
           if (creatorSnapshot.exists()) {
             const creatorData = creatorSnapshot.val();
-            if (creatorData.email && typeof creatorData.email === 'string') {
-              creatorName.value = creatorData.displayName || creatorData.email.split("@")[0];
+            if (creatorData.displayName) {
+              creatorName.value = creatorData.displayName;
+            } else if (creatorData.email) {
+              creatorName.value = creatorData.email.split("@")[0];
             } else {
-              creatorName.value = creatorData.displayName || "Inconnu";
+              creatorName.value = "Inconnu";
             }
           } else {
             creatorName.value = "Inconnu";
@@ -316,8 +322,8 @@ export default {
           const usersData = usersSnapshot.val();
           allUsers.value = Object.entries(usersData).map(([key, user]) => ({
             id: key,
-            displayName: user.UserName || "",
-            email: user.Mail || ""
+            displayName: user.displayName || user.UserName || "",
+            email: user.email || user.Mail || ""
           }));
           filteredUsers.value = allUsers.value;
         } else {
@@ -379,7 +385,11 @@ export default {
       try {
         const updates = {};
         updates[`Communities/${community.value.id}/members/${selectedUserId.value}`] = { role: selectedUserRole.value };
-        await update(dbRef(db, "/"), updates);
+        updates[`Users/${selectedUserId.value}/communities/${community.value.id}`] = true;
+
+        // Mettre à jour les deux tables de manière atomique
+        await update(dbRef(db), updates);
+
         addToast('success', 'Succès', 'Membre ajouté avec succès.');
         // Réinitialiser les champs
         searchQuery.value = "";
@@ -387,6 +397,7 @@ export default {
         selectedUserRole.value = "";
         // Rafraîchir les données
         await fetchCommunity();
+        await fetchAllUsers();
       } catch (error) {
         console.error("Erreur lors de l'ajout du membre :", error);
         addToast('error', 'Erreur', 'Impossible d\'ajouter le membre.');
@@ -409,9 +420,14 @@ export default {
       try {
         const updates = {};
         updates[`Communities/${community.value.id}/members/${memberId}`] = null;
-        await update(dbRef(db, "/"), updates);
+        updates[`Users/${memberId}/communities/${community.value.id}`] = null;
+
+        // Supprimer les deux entrées de manière atomique
+        await update(dbRef(db), updates);
+
         addToast('success', 'Succès', 'Membre supprimé avec succès.');
         await fetchCommunity();
+        await fetchAllUsers();
       } catch (error) {
         console.error("Erreur lors de la suppression du membre :", error);
         addToast('error', 'Erreur', 'Impossible de supprimer le membre.');
@@ -458,7 +474,8 @@ export default {
       try {
         const updates = {};
         updates[`Communities/${community.value.id}/type`] = newCommunityType.value;
-        await update(dbRef(db, "/"), updates);
+
+        await update(dbRef(db), updates);
         addToast('success', 'Succès', 'Type de communauté mis à jour avec succès.');
         editType.value = false;
         await fetchCommunity();
@@ -478,7 +495,8 @@ export default {
       try {
         const updates = {};
         updates[`Communities/${community.value.id}/name`] = newCommunityName.value.trim();
-        await update(dbRef(db, "/"), updates);
+
+        await update(dbRef(db), updates);
         addToast('success', 'Succès', 'Nom de la communauté mis à jour avec succès.');
         editName.value = false;
         await fetchCommunity();
@@ -498,7 +516,8 @@ export default {
       try {
         const updates = {};
         updates[`Communities/${community.value.id}/description`] = newCommunityDescription.value.trim();
-        await update(dbRef(db, "/"), updates);
+
+        await update(dbRef(db), updates);
         addToast('success', 'Succès', 'Description de la communauté mise à jour avec succès.');
         editDescription.value = false;
         await fetchCommunity();

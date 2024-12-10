@@ -10,23 +10,20 @@
       @showToast="handleShowToast" 
     />
 
-    <!-- Liste des Communautés -->
+    <!-- Liste des Communautés de l'utilisateur -->
     <CommunitiesList 
-      :communities="communities" 
+      :communities="userCommunities" 
       @manageCommunity="handleManageCommunity" 
-      @joinCommunity="handleJoinCommunity"
       @leaveCommunity="handleLeaveCommunity"
-      @viewInfo="handleViewInfo"
       @showToast="handleShowToast" 
     />
 
     <!-- Liste des Communautés Publiques -->
     <PublicCommunitiesList 
-      :communities="communities" 
+      :communities="publicCommunitiesComputed" 
       @manageCommunity="handleManageCommunityPublic"
       @joinCommunity="handleJoinCommunityPublic"
       @leaveCommunity="handleLeaveCommunityPublic"
-      @viewInfo="handleViewInfoPublic"
       @showToast="handleShowToast" 
     />
 
@@ -52,7 +49,7 @@ import CreateNewCommunity from './CreateNewCommunity.vue';
 import CommunitiesList from './CommunitiesList.vue';
 import PublicCommunitiesList from './PublicCommunitiesList.vue';
 import { db, auth } from "@/firebase.js";
-import { ref as dbRef, get, set, update, remove } from "firebase/database";
+import { ref as dbRef, get, update } from "firebase/database";
 import { useRouter } from "vue-router";
 
 export default {
@@ -68,15 +65,20 @@ export default {
 
     // Références réactives
     const communities = ref([]);
+    const publicCommunities = ref([]);
     const toasts = ref([]);
     const localCurrentUser = ref(null);
 
     // Fonctions pour gérer les toasts
     const addToast = (severity, summary, detail) => {
-      toasts.value.push({ severity, summary, detail });
+      const toast = { severity, summary, detail };
+      toasts.value.push(toast);
       // Supprimer le toast après 3 secondes
       setTimeout(() => {
-        removeToast(0);
+        const index = toasts.value.indexOf(toast);
+        if (index !== -1) {
+          removeToast(index);
+        }
       }, 3000);
     };
 
@@ -103,13 +105,24 @@ export default {
         const communitiesSnapshot = await get(dbRef(db, "Communities"));
         if (communitiesSnapshot.exists()) {
           const data = communitiesSnapshot.val();
-          communities.value = Object.entries(data).map(([key, community]) => ({
+          const allCommunities = Object.entries(data).map(([key, community]) => ({
             id: key,
             ...community,
             isMember: community.members && community.members[localCurrentUser.value.uid] ? true : false
           }));
+
+          // Filtrer les communautés de l'utilisateur
+          const userComms = allCommunities.filter(community => community.isMember);
+          // Filtrer les communautés publiques que l'utilisateur n'a pas encore rejoint
+          const publicComms = allCommunities.filter(community => 
+            community.type === 'public' && !community.isMember
+          );
+
+          communities.value = userComms;
+          publicCommunities.value = publicComms;
         } else {
           communities.value = [];
+          publicCommunities.value = [];
         }
       } catch (error) {
         console.error("Erreur lors de la récupération des communautés :", error);
@@ -212,8 +225,16 @@ export default {
       return communities.value.filter(community => community.isMember);
     });
 
+    // Computed property pour les communautés publiques non rejointes
+    const publicCommunitiesComputed = computed(() => {
+      return publicCommunities.value;
+    });
+
     return {
       communities,
+      publicCommunities,
+      userCommunities,
+      publicCommunitiesComputed,
       fetchCommunities,
       handleManageCommunity,
       handleManageCommunityPublic,
@@ -228,7 +249,6 @@ export default {
       toasts,
       removeToast,
       addToast,
-      userCommunities,
       localCurrentUser
     };
   }
