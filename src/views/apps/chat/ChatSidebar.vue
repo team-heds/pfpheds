@@ -30,6 +30,16 @@
       v-if="filteredAndSortedUsers.length"
       class="flex flex-row gap-4 md:flex-column overflow-auto h-32rem mt-4 no-scrollbar"
     >
+      <!--
+      <h2 class="text-lg font-semibold mb-2">Historique</h2>
+        <UserCard
+          v-for="user in HistoryUsers"
+          :key="user.id"
+          :user="user"
+          :lastReceivedMessageAt="lastReceivedMessageDates[user.id]"
+          @click="onChangeActiveUser(user)"
+        />
+-->
       <h2 class="text-lg font-semibold mb-2">Utilisateurs</h2>
 
       <UserCard
@@ -98,21 +108,14 @@ const fetchLastReceivedMessageDate = (conversationId, userId) => {
       for (const convId in data) {
         const conv = data[convId];
         // Vérifier si l'utilisateur fait partie des membres de la conversation
-        if (
-          (conv.member1 === userId || conv.member2 === userId) &&
-          conv.lastReceivedMessageAt
-        ) {
+        if ((conv.member1 === userId || conv.member2 === userId) && conv.lastReceivedMessageAt) {
           lastReceivedMessageDates.value[userId] = conv.lastReceivedMessageAt;
           found = true;
 
           // Ajout à HistoryUsers
-          const otherMemberId =
-            conv.member1 === userId ? conv.member2 : conv.member1;
-          const otherUser = props.users.find((u) => u.id === otherMemberId);
-          if (
-            otherUser &&
-            !HistoryUsers.value.some((u) => u.id === otherUser.id)
-          ) {
+          const otherMemberId = conv.member1 === userId ? conv.member2 : conv.member1;
+          const otherUser = props.users.find(u => u.id === otherMemberId);
+          if (otherUser && !HistoryUsers.value.some(u => u.id === otherUser.id)) {
             HistoryUsers.value.push(otherUser);
           }
 
@@ -142,14 +145,11 @@ const fetchLastReceivedMessageDate = (conversationId, userId) => {
  * Initialiser les écouteurs Firebase pour chaque utilisateur.
  */
 const initializeLastReceivedMessageListeners = () => {
-  props.users.forEach((user) => {
+  props.users.forEach(user => {
     // Ne pas écouter pour l'utilisateur actuel
     if (user.id === props.currentUser.uid) return;
 
-    const conversationId = generateConversationId(
-      props.currentUser.uid,
-      user.id
-    );
+    const conversationId = generateConversationId(props.currentUser.uid, user.id);
     fetchLastReceivedMessageDate(conversationId, user.id);
   });
 };
@@ -195,7 +195,7 @@ watch(
  */
 const filteredAndSortedUsers = computed(() => {
   const query = searchedUser.value.trim().toLowerCase();
-  let filtered = props.users.filter((user) => {
+  let filtered = props.users.filter(user => {
     if (user.id === props.currentUser.uid) return false;
     if (!query) return true;
     const userName = (user.UserName || '').toLowerCase();
@@ -212,10 +212,7 @@ const filteredAndSortedUsers = computed(() => {
 
   return filtered;
 });
-// Computed property pour afficher le nom de l'utilisateur
-const userDisplayName = computed(() => {
-  return `${props.users.UserName || 'Utilisateur'}`;
-});
+
 /**
  * Fonction pour changer l'utilisateur actif
  */
