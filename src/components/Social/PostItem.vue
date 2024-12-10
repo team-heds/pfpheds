@@ -10,7 +10,7 @@
           v-if="post.IdUser"
           :to="{ name: 'Profile', params: { id: post.IdUser } }"
         >
-          <strong>{{ authorName }}</strong>
+      <strong>  <p class="text-primary strong">{{ authorName }}</p></strong>
         </router-link>
         <h5 v-else>{{ authorName }}</h5>
         <div>

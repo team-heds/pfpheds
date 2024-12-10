@@ -52,7 +52,9 @@
                   <p class="card-text"><i class="bi bi-globe"></i> <strong>Canton:</strong> {{ institutionDetails ? institutionDetails.Canton : '' }}</p>
                   <p class="card-text"><i class="bi bi-geo-alt-fill"></i> <strong>Adresse:</strong> {{ institutionDetails ? institutionDetails.Address : '' }}</p>
                   <p class="card-text"><i class="bi bi-geo-alt-fill"></i> <strong>Lieu:</strong> {{ institutionDetails ? institutionDetails.Locality : '' }}</p>
-                  <p class="card-text"><i class="bi bi-geo-alt-fill"></i> <strong>Site Web:</strong> {{ institutionDetails ? institutionDetails.URL : '' }}</p>
+                  <p class="card-text"><i class="bi bi-geo-alt-fill"></i> <strong>Site Web: </strong>
+                    <a :href="institutionDetails?.URL" target="_blank" class="text-primary ">{{ institutionDetails?.URL }}</a>
+                  </p>
                 </div>
               </div>
             </div>
@@ -70,12 +72,12 @@
                     <p class="card-text">
                       <i class="bi bi-envelope-fill"></i>
                       <strong>Email Responsable Physio: </strong>
-                      <a :href="`mailto:${institutionDetails?.MailChef}`">{{ institutionDetails?.MailChef }}</a>
+                      <a :href="`mailto:${institutionDetails?.MailChef}`" class="text-primary">{{ institutionDetails?.MailChef }}</a>
                     </p>
                     <p class="card-text">
                       <i class="bi bi-telephone-fill"></i>
                       <strong>Téléphone Responsable Physio: </strong>
-                      <a :href="`tel:${institutionDetails?.PhoneChef}`">{{ institutionDetails?.PhoneChef }}</a>
+                      <a :href="`tel:${institutionDetails?.PhoneChef}`" class="text-primary">{{ institutionDetails?.PhoneChef }}</a>
                     </p>
                   </div>
                   <div v-else>
@@ -83,7 +85,13 @@
                   </div>
                   <!-- Bouton pour ouvrir le PDF -->
                   <div class="mt-4">
-                    <Button v-if="institutionDetails?.CyberleanURL" label="Ouvrir le PDF" icon="pi pi-file-pdf" @click="openPDF" class="p-button-raised p-button-primary" />
+                    <Button
+                      v-if="institutionDetails?.CyberleanURL"
+                      label="Ouvrir le PDF"
+                      icon="pi pi-file-pdf"
+                      @click="openPDF"
+                      class="p-button-raised p-button-primary"
+                    />
                     <p v-else>Aucun PDF disponible pour cette institution.</p>
                   </div>
                 </div>
@@ -101,6 +109,7 @@
   </div>
   <Footer />
 </template>
+
 
 <script>
 import { db, auth } from '../../../firebase.js';

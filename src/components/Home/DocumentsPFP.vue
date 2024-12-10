@@ -54,7 +54,16 @@ const onSelectedFiles = async (event) => {
   }
 
   for (const file of event.files) {
-    const acceptedFormats = ['image/jpeg', 'image/png', 'audio/mpeg', 'video/mp4', 'application/pdf'];
+    const acceptedFormats = [
+      'image/jpeg',
+      'image/png',
+      'audio/mpeg',
+      'video/mp4',
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-excel' // Optionnel, pour la compatibilité avec les anciennes versions
+    ];
 
     if (!acceptedFormats.includes(file.type)) {
       alert('Type de fichier non accepté. Veuillez uploader un fichier JPG, PNG, MP3, MP4 ou PDF.');
@@ -101,7 +110,7 @@ onMounted(() => {
             ref="fileUploaderRef"
             id="files-fileupload"
             name="demo[]"
-            accept=".jpg,.png,.mp3,.mp4,.pdf"
+            accept=".jpg,.png,.mp3,.mp4,.pdf, .docx, .xlsx, .doc, .xls"
             customUpload
             multiple
             auto
