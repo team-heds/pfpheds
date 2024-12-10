@@ -89,7 +89,7 @@
         <p>Aucune place trouvée.</p>
       </div>
 
-      <div class="recap mt-4">
+      <div class="recap mt-4 surface-card">
         <h3>Récapitulatif des places par PFP :</h3>
         <ul>
           <li>PFP2 : {{ countPlacesByPFP().PFP2 }} places</li>

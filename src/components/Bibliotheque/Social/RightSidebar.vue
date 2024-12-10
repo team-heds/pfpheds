@@ -54,7 +54,7 @@ import Avatar from "primevue/avatar";
 import Button from "primevue/button";
 import Chip from "primevue/chip";
 import { ref, onMounted, onUnmounted } from "vue";
-import { auth, db } from "@/firebase.js";
+import { auth, db } from "../../../../firebase.js";
 import { onValue, ref as dbRef, get } from "firebase/database";
 
 export default {

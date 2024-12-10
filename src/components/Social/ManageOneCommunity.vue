@@ -201,7 +201,7 @@
 <script>
 import { ref, computed, onMounted } from "vue";
 import Navbar from '@/components/Utils/Navbar.vue';
-import { db, auth } from "@/firebase.js";
+import { db, auth } from "../../../firebase.js";
 import { ref as dbRef, get, update } from "firebase/database";
 import { useRoute } from "vue-router";
 import { onAuthStateChanged } from "firebase/auth";

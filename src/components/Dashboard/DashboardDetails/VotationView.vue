@@ -3,9 +3,9 @@
     <Navbar />
     <ResumStageUserProfile class="mb-5" />
 
-    <div class="container flex justify-content-center">
+    <div class="w-full ">
 
-      <div class="container-fluid mt-4 justify-content-center">
+      <div class="container-fluid mt-4 justify-items-center">
         <!-- Section pour la validation -->
         <div v-if="currentStudent && selectedPFP && selectedClass" class="table-responsive mt-4">
           <div v-if="validationMessage" class="mt-4 text-center">
@@ -20,9 +20,9 @@
             <table class="table table-striped align-middle mb-0 table-hover w-100 text-center">
               <thead>
               <tr>
-                <th>Institution</th>
-                <th>Lieu</th>
-                <th>Domaine</th>
+                <th>Institutions</th>
+                <th>Lieux</th>
+                <th>Domaines</th>
                 <th>FR</th>
                 <th>ALL</th>
                 <th>AIGU</th>
@@ -31,24 +31,24 @@
                 <th>SYSINT</th>
                 <th>NEUROGER</th>
                 <th>AMBU</th>
-                <th>NbPlaces</th>
-                <th>Choix 1</th>
-                <th>Choix 2</th>
-                <th>Choix 3</th>
-                <th>Choix 4</th>
-                <th>Choix 5</th>
-                <th class="hover-highlight" title="résultat étudiant 1">R1</th>
-                <th class="hover-highlight" title="résultat étudiant 2">R2</th>
-                <th class="hover-highlight" title="résultat étudiant 3">R3</th>
-                <th class="hover-highlight" title="résultat étudiant 4">R4</th>
-                <th class="hover-highlight" title="résultat étudiant 5">R5</th>
-                <th class="hover-highlight" title="résultat total">RT</th>
+                <th title="Nombre de places proposées">Nb Places</th>
+                <th title="Votre 1er choix">Choix 1</th>
+                <th title="Votre 2ème choix">Choix 2</th>
+                <th title="Votre 3ème choix">Choix 3</th>
+                <th title="Votre 4ème choix">Choix 4</th>
+                <th title="Votre 5ème choix">Choix 5</th>
+                <th class="hover-highlight" title="Étudiants ayant ce 1er choix">R1</th>
+                <th class="hover-highlight" title="Étudiants ayant ce 2ème choix">R2</th>
+                <th class="hover-highlight" title="Étudiants ayant ce 3ème choix">R3</th>
+                <th class="hover-highlight" title="Étudiants ayant ce 4ème choix">R4</th>
+                <th class="hover-highlight" title="Étudiants ayant ce 5ème choix">R5</th>
+                <th class="hover-highlight" title="Total d'étudiant ayant ce choix">RT</th>
               </tr>
               </thead>
               <tbody>
               <tr v-for="stage in filteredStages" :key="stage.IDENTIFIANT">
                 <td>
-                  <a :href="`/institution/${stage.IDPlace}`">
+                  <a :href="`/institution/${stage.IDPlace}`" class="text-white2">
                     {{ stage.NomPlace }}
                   </a>
                 </td>
@@ -119,8 +119,8 @@
         <div v-if="voteResult" class="vote-result-container mt-4">
           <h4 class="text-center mb-4">Choix du Vote</h4>
           <div class="vote-choices">
-            <div v-for="(choice, index) in voteResult" :key="index" class="vote-choice">
-              <p><strong> {{ index }} : </strong></p>
+            <div v-for="(choice, index) in voteResult" :key="index" class="vote-choice text-center">
+              <h6 class="text-white2"> {{ index }} : </h6>
               <p>Stage Sélectionné : {{ choice.selectedStageName }}</p>
               <p>Lieu : {{ choice.selectedStageLieu }}</p>
               <p>Domaine : {{ choice.selectedStageDomaine }}</p>
@@ -336,7 +336,7 @@ export default {
 
                 }
                 const votationData = {
-                  choice: index + 1,
+                  choice: index + " " + 1,
                   studentId: id,
                   studentName: this.currentStudent.Nom,
                   studentFirstName: this.currentStudent.Prenom,
@@ -872,7 +872,7 @@ export default {
 }
 
 .group-header {
-  background-color: #f1f1f1;
+  background-color: var(--surface-card);
   font-weight: bold;
 }
 
@@ -893,11 +893,11 @@ export default {
 }
 
 .btn-danger {
-  color: white;
+  color: red;
 }
 
 .recoupe {
-  background-color: #f9f9f9;
+  background-color: var(--surface-card);
   padding: 20px;
   border-radius: 5px;
 }
@@ -930,7 +930,7 @@ export default {
 }
 
 .modal-content {
-  background-color: white;
+  background-color: var(--surface-card);
   padding: 30px;
   border-radius: 8px;
   width: 600px;
@@ -1097,7 +1097,7 @@ input[type="checkbox"] {
 /* Styles pour la section des résultats du vote */
 .vote-result-container {
   padding: 20px;
-  background-color: #f9f9f9;
+ /* background-color: var(--surface-card);*/
   border-radius: 8px;
 }
 
@@ -1111,9 +1111,9 @@ input[type="checkbox"] {
 .vote-choice {
   flex: 1 1 calc(20% - 20px);
   /* 5 éléments par ligne avec un espace de 20px */
-  background-color: #ffffff;
-  border: 1px solid #e0e0e0;
-  color: black;
+  background-color: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  color: var(--text-color);
   border-radius: 8px;
   padding: 15px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -1126,6 +1126,13 @@ input[type="checkbox"] {
 
 .vote-choice p strong {
   color: #333333;
+}
+.text-white2 {
+  color: var(--text-color);
+}
+
+.text-white2 :hover {
+  color: var();
 }
 
 /* Responsiveness */
@@ -1157,8 +1164,8 @@ input[type="checkbox"] {
 }
 
 .hover-highlight:hover {
-  background-color: #f0f8ff; /* Couleur de surlignement */
-  color: #007bff; /* Couleur du texte surligné */
+  background-color: var(--surface-hover); /* Couleur de surlignement */
+  color: var(--text-color-secondary); /* Couleur du texte surligné */
 }
 
 </style>

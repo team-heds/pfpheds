@@ -48,8 +48,13 @@ import Navbar from '@/components/Utils/Navbar.vue';
 import CreateNewCommunity from './CreateNewCommunity.vue';
 import CommunitiesList from './CommunitiesList.vue';
 import PublicCommunitiesList from './PublicCommunitiesList.vue';
+
 import { db, auth } from "@/firebase.js";
 import { ref as dbRef, get, update } from "firebase/database";
+
+import { db, auth } from "../../../firebase.js";
+import { ref as dbRef, get, set, update, remove } from "firebase/database";
+
 import { useRouter } from "vue-router";
 
 export default {
