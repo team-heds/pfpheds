@@ -1,7 +1,7 @@
 <template>
   <div class="sidebar card">
     <!-- Profil utilisateur -->
-    <div class="user-profile flex">
+    <div class="user-profile flex ">
       <img
         :src="userPhotoURL"
         alt="Avatar"
@@ -31,29 +31,12 @@
 
     <!-- Messagerie -->
     <h4>Messagerie</h4>
-    <UserCard :user="user" :lastReceivedMessageAt="lastReceivedMessageAt" @click="openChat(userFullName)" />
+    <ChatSidebar
+      :users="users"
+      :currentUser="user"
+      @change:active:user="openChat(chatUser)"class="no-scrollbar"
+    />
 
-    <!-- Messagerie
-
-    <ul class="messaging-list">
-      <li
-        v-for="(contact, index) in contacts"
-        :key="index"
-        class="message-item"
-        @click="openChat(contact.name)"
-      >
-        <Avatar
-          :label="contact.initials"
-          class="mr-2"
-          size="large"
-        />
-        <div class="contact-info">
-          <span class="contact-name">{{ contact.name }}</span>
-          <p class="last-message">{{ contact.lastMessage }}</p>
-        </div>
-      </li>
-    </ul>
-    -->
   </div>
 </template>
 
@@ -62,37 +45,21 @@ import Avatar from "primevue/avatar";
 import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 import { getDatabase, ref as dbRef, get } from "firebase/database";
 import ChatSidebar from '@/views/apps/chat/ChatSidebar.vue'
-import UserCard from '@/views/apps/chat/UserCard.vue'
 
 const defaultAvatar = '../../../public/assets/images/avatar/01.jpg';
 
 export default {
   name: "LeftSidebar",
-  components: { UserCard, ChatSidebar, Avatar },
+  components: { ChatSidebar, Avatar },
   data() {
     return {
       user: {
         Prenom: "",
         Nom: "",
         PhotoURL: "" || defaultAvatar,
+        id: "" // Ajout de l'ID utilisateur
       },
-      contacts: [
-        {
-          name: "Antoine Quarroz",
-          initials: "A",
-          lastMessage: "Salut, tu as vu mon dernier message?",
-        },
-        {
-          name: "Loic Berthod",
-          initials: "L",
-          lastMessage: "On se retrouve à 15h pour le projet.",
-        },
-        {
-          name: "Marie Dupont",
-          initials: "M",
-          lastMessage: "Merci pour les infos, à bientôt !",
-        },
-      ],
+      users: [] // Liste de tous les utilisateurs
     };
   },
 
@@ -123,13 +90,28 @@ export default {
           prenom: userData.Prenom || "",
           nom: userData.Nom || "",
           PhotoURL: userData.PhotoURL || defaultAvatar,
+          id: uid
         };
       } else {
         console.log("Aucun utilisateur trouvé avec l'UID :", uid);
       }
     },
+    async fetchAllUsers() {
+      const db = getDatabase();
+      const usersRef = dbRef(db, 'Users');
+      const snapshot = await get(usersRef);
+      if (snapshot.exists()) {
+        const usersData = snapshot.val();
+        this.users = Object.keys(usersData).map(key => ({
+          id: key,
+          ...usersData[key]
+        }));
+      } else {
+        console.log("Aucun utilisateur trouvé.");
+      }
+    },
     goToProfile() {
-      this.$router.push("/profile/' + user.uid");
+      this.$router.push("/profile/" + this.user.id);
     },
     goToPfpHistory() {
       this.$router.push("/historique_pfp");
@@ -147,8 +129,8 @@ export default {
         console.error("Erreur de déconnexion:", error);
       }
     },
-    openChat(name) {
-      this.$router.push(`/chat?user=${encodeURIComponent(name)}`);
+    openChat(user) {
+      this.$router.push(`/chat?user=${encodeURIComponent(user.id)}`);
     },
   },
   mounted() {
@@ -157,6 +139,7 @@ export default {
       if (authUser) {
         console.log("Utilisateur connecté :", authUser); // Debugging
         this.fetchUserProfile(authUser.uid);
+        this.fetchAllUsers();
       } else {
         console.log("Aucun utilisateur connecté."); // Debugging
       }
@@ -249,5 +232,16 @@ export default {
 .last-message {
   font-size: 0.875rem;
   color: var(--text-color-secondary);
+}
+
+/* Classe pour masquer la barre de défilement */
+.no-scrollbar {
+  /* Masquer la scrollbar pour les navigateurs basés sur Webkit (Chrome, Safari) */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 </style>

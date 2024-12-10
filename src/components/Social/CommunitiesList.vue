@@ -9,7 +9,7 @@
         <table class="communities-table">
           <thead>
             <tr>
-              <th>Nomss</th>
+              <th>Noms</th>
               <th>Description</th>
               <th>Type</th>
               <th>Actions</th>

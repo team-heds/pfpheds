@@ -15,7 +15,7 @@
   <script>
   import { ref, onMounted } from "vue";
   import Navbar from '@/components/Utils/Navbar.vue';
-  import { db } from "@/firebase.js";
+  import { db } from "../../../firebase.js";
   import { ref as dbRef, get } from "firebase/database";
   import { useRoute, useRouter } from "vue-router";
   
