@@ -1,7 +1,7 @@
 <template>
-  <div class="sidebar card">
+  <div class="sidebar card no-scrollbar">
     <!-- Profil utilisateur -->
-    <div class="user-profile flex ">
+    <div class="user-profile flex">
       <img
         :src="userPhotoURL"
         alt="Avatar"
@@ -31,10 +31,11 @@
 
     <!-- Messagerie -->
     <h4>Messagerie</h4>
-    <ChatSidebar
-      :users="users"
-      :currentUser="user"
-      @change:active:user="openChat(chatUser)"class="no-scrollbar"
+    <UserCard
+      v-for="user in users"
+      :key="user.id"
+      :user="user"
+      @click="openChat(user)"
     />
 
   </div>
@@ -45,12 +46,13 @@ import Avatar from "primevue/avatar";
 import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 import { getDatabase, ref as dbRef, get } from "firebase/database";
 import ChatSidebar from '@/views/apps/chat/ChatSidebar.vue'
+import UserCard from '@/views/apps/chat/UserCard.vue'
 
 const defaultAvatar = '../../../public/assets/images/avatar/01.jpg';
 
 export default {
   name: "LeftSidebar",
-  components: { ChatSidebar, Avatar },
+  components: { UserCard, ChatSidebar, Avatar },
   data() {
     return {
       user: {
@@ -234,14 +236,13 @@ export default {
   color: var(--text-color-secondary);
 }
 
-/* Classe pour masquer la barre de défilement */
 .no-scrollbar {
-  /* Masquer la scrollbar pour les navigateurs basés sur Webkit (Chrome, Safari) */
   scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* Internet Explorer 10+ */
+  -ms-overflow-style: none; /* IE 10+ */
 }
 
 .no-scrollbar::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
+  display: none; /* Chrome, Safari et Opera */
 }
+
 </style>
