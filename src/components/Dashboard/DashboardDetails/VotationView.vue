@@ -20,9 +20,9 @@
             <table class="table table-striped align-middle mb-0 table-hover w-100 text-center">
               <thead>
               <tr>
-                <th>Institution</th>
-                <th>Lieu</th>
-                <th>Domaine</th>
+                <th>Institutions</th>
+                <th>Lieux</th>
+                <th>Domaines</th>
                 <th>FR</th>
                 <th>ALL</th>
                 <th>AIGU</th>
@@ -31,18 +31,18 @@
                 <th>SYSINT</th>
                 <th>NEUROGER</th>
                 <th>AMBU</th>
-                <th>NbPlaces</th>
-                <th>Choix 1</th>
-                <th>Choix 2</th>
-                <th>Choix 3</th>
-                <th>Choix 4</th>
-                <th>Choix 5</th>
-                <th class="hover-highlight" title="résultat étudiant 1">R1</th>
-                <th class="hover-highlight" title="résultat étudiant 2">R2</th>
-                <th class="hover-highlight" title="résultat étudiant 3">R3</th>
-                <th class="hover-highlight" title="résultat étudiant 4">R4</th>
-                <th class="hover-highlight" title="résultat étudiant 5">R5</th>
-                <th class="hover-highlight" title="résultat total">RT</th>
+                <th title="Nombre de places proposées">Nb Places</th>
+                <th title="Votre 1er choix">Choix 1</th>
+                <th title="Votre 2ème choix">Choix 2</th>
+                <th title="Votre 3ème choix">Choix 3</th>
+                <th title="Votre 4ème choix">Choix 4</th>
+                <th title="Votre 5ème choix">Choix 5</th>
+                <th class="hover-highlight" title="Étudiants ayant ce 1er choix">R1</th>
+                <th class="hover-highlight" title="Étudiants ayant ce 2ème choix">R2</th>
+                <th class="hover-highlight" title="Étudiants ayant ce 3ème choix">R3</th>
+                <th class="hover-highlight" title="Étudiants ayant ce 4ème choix">R4</th>
+                <th class="hover-highlight" title="Étudiants ayant ce 5ème choix">R5</th>
+                <th class="hover-highlight" title="Total d'étudiant ayant ce choix">RT</th>
               </tr>
               </thead>
               <tbody>

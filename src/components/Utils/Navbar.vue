@@ -33,7 +33,7 @@
                 :hoverBgColor="'var(--surface-hover)'"
                 :iconColor="'var(--primary-color)'"
                 @click="navigateTo('/institution')"
-                title="Institution"
+                title="Institutions"
               />
             </li>
             <li v-if="user" class="mx-3">
