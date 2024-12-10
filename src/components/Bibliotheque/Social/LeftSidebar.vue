@@ -95,6 +95,7 @@ export default {
       ],
     };
   },
+
   computed: {
     userFullName() {
       return `${this.user.prenom} ${this.user.nom}`.trim() || "Utilisateur";

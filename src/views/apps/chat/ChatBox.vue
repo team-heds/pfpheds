@@ -23,7 +23,7 @@
 
     <!-- Conteneur des Messages -->
     <div v-if="user" class="user-message-container p-3 md:px-4 lg:px-6 lg:py-4 mt-2 overflow-y-auto no-scrollbar" style="max-height: 53vh" ref="messageContainer">
-      <div v-for="message in user.messages" :key="message.id">
+      <div v-for="message in messages" :key="message.id">
         <!-- Message Reçu -->
         <div v-if="message.ownerId !== defaultUserId" class="grid grid-nogutter mb-4">
           <div class="mr-3 mt-1">
