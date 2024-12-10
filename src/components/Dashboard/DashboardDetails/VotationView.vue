@@ -529,21 +529,23 @@ export default {
     /**
      * Récupère les places déjà prises par d'autres étudiants.
      */
-    async fetchTakenStages() {
-      const pfp1aRef = ref(db, 'PFP1A-B23'); // Chemin ajusté pour PFP1A
-      onValue(pfp1aRef, (snapshot) => {
-        if (snapshot.exists()) {
-          const takenData = snapshot.val();
-          this.takenStages.clear();
-          for (const key in takenData) {
-            const takenBy = takenData[key].takenBy;
-            if (takenBy) {
-              this.takenStages.add(key); // Ajouter l'IDENTIFIANT des stages pris
-            }
-          }
+     async fetchTakenStages() {
+  const pfp1aRef = ref(db, 'PFP1A'); // Chemin ajusté pour PFP1A
+  onValue(pfp1aRef, (snapshot) => {
+    if (snapshot.exists()) {
+      const takenData = snapshot.val();
+      this.takenStages.clear();
+      for (const key in takenData) {
+        const takenBy = takenData[key].takenBy;
+        if (takenBy) {
+          const keyn = key.split('_')[0]; // Extraire ce qu'il y a avant "_"
+          this.takenStages.add(keyn); // Ajouter l'IDENTIFIANT des stages pris
+          console.log("yaaa " + keyn);
         }
-      });
-    },
+      }
+    }
+  });
+},
     /**
      * Récupère les comptes de votes pour chaque stage.
      */
@@ -813,6 +815,7 @@ export default {
      * @returns {boolean} True si visible, sinon false.
      */
     isStageVisible(stage) {
+      console.log(stage.IDENTIFIANT);
       // Vérifier si la place est déjà prise par un autre étudiant
       if (this.takenStages.has(stage.IDENTIFIANT)) {
         return false;
