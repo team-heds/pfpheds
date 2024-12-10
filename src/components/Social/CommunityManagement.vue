@@ -30,9 +30,6 @@
       @showToast="handleShowToast" 
     />
 
-    <!-- Barre Latérale Droite -->
-
-
     <!-- Toast Notifications -->
     <div class="toast-container">
       <div 
@@ -55,7 +52,7 @@ import CreateNewCommunity from './CreateNewCommunity.vue';
 import CommunitiesList from './CommunitiesList.vue';
 import PublicCommunitiesList from './PublicCommunitiesList.vue';
 import { db, auth } from "@/firebase.js";
-import { ref as dbRef, get, set, update } from "firebase/database"; // Import de update
+import { ref as dbRef, get, set, update, remove } from "firebase/database";
 import { useRouter } from "vue-router";
 
 export default {
@@ -152,13 +149,15 @@ export default {
         addToast('error', 'Erreur', 'Utilisateur non authentifié.');
         return;
       }
-      try {
-        const userId = localCurrentUser.value.uid;
-        const updates = {};
-        updates[`Communities/${communityId}/members/${userId}`] = true;
-        updates[`Users/${userId}/communities/${communityId}`] = true; // Ajouter la communauté à l'utilisateur
+      const userId = localCurrentUser.value.uid;
 
-        await update(dbRef(db), updates);
+      try {
+        // Mettre à jour les deux tables de manière atomique
+        await update(dbRef(db), {
+          [`Communities/${communityId}/members/${userId}`]: true,
+          [`Users/${userId}/communities/${communityId}`]: true
+        });
+
         addToast('success', 'Succès', 'Vous avez rejoint la communauté.');
         fetchCommunities();
       } catch (error) {
@@ -173,13 +172,15 @@ export default {
         addToast('error', 'Erreur', 'Utilisateur non authentifié.');
         return;
       }
-      try {
-        const userId = localCurrentUser.value.uid;
-        const updates = {};
-        updates[`Communities/${communityId}/members/${userId}`] = null;
-        updates[`Users/${userId}/communities/${communityId}`] = null; // Supprimer la communauté de l'utilisateur
+      const userId = localCurrentUser.value.uid;
 
-        await update(dbRef(db), updates);
+      try {
+        // Supprimer les deux entrées de manière atomique
+        await update(dbRef(db), {
+          [`Communities/${communityId}/members/${userId}`]: null,
+          [`Users/${userId}/communities/${communityId}`]: null
+        });
+
         addToast('success', 'Succès', 'Vous avez quitté la communauté.');
         fetchCommunities();
       } catch (error) {
