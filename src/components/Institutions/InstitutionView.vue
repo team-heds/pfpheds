@@ -46,7 +46,7 @@
 
             <div class="grid">
               <div class="col-12 lg:col-12">
-                <span class="text-900 block mb-3 font-bold">Informations générales de l'institution :</span>
+                <p class="text-900 underline mb-3 font-bold">Informations générales de l'institution </p>
                 <div class="py-0 p-0 m-0 text-600 mb-3">
                   <p class="card-text"><i class="bi bi-globe"></i> <strong>Langue:</strong> {{ institutionDetails ? institutionDetails.Language : '' }}</p>
                   <p class="card-text"><i class="bi bi-globe"></i> <strong>Canton:</strong> {{ institutionDetails ? institutionDetails.Canton : '' }}</p>
@@ -67,16 +67,16 @@
                   <div v-if="institutionDetails">
                     <p class="card-text">
                       <i class="bi bi-person-badge-fill"></i>
-                      <strong>Nom Responsable Physio: </strong> {{ institutionDetails?.NomChef }}
+                      <strong>Nom, Prénom du.de la responsable physio: </strong> {{ institutionDetails?.NomChef }}
                     </p>
                     <p class="card-text">
                       <i class="bi bi-envelope-fill"></i>
-                      <strong>Email Responsable Physio: </strong>
+                      <strong>Email du.de la responsable physio: </strong>
                       <a :href="`mailto:${institutionDetails?.MailChef}`" class="text-primary">{{ institutionDetails?.MailChef }}</a>
                     </p>
                     <p class="card-text">
                       <i class="bi bi-telephone-fill"></i>
-                      <strong>Téléphone Responsable Physio: </strong>
+                      <strong>Téléphone du.de la responsable physio: </strong>
                       <a :href="`tel:${institutionDetails?.PhoneChef}`" class="text-primary">{{ institutionDetails?.PhoneChef }}</a>
                     </p>
                   </div>

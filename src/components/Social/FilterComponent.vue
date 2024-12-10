@@ -1,6 +1,6 @@
 <!-- src/components/Social/FilterComponent.vue -->
 <template>
-    <div class="filters-container p-3">
+    <div class="filters-container">
       <Dropdown
         v-model="localSelectedFilterType"
         :options="filterTypes"

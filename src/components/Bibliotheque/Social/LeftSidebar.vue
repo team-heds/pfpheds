@@ -1,5 +1,5 @@
 <template>
-  <div class="sidebar card no-scrollbar">
+  <div class="sidebar card">
     <!-- Profil utilisateur -->
     <div class="user-profile flex">
       <img
@@ -36,6 +36,7 @@
       :key="user.id"
       :user="user"
       @click="openChat(user)"
+
     />
 
   </div>
@@ -158,6 +159,12 @@ export default {
   gap: 1rem;
   padding: 1rem;
   background: var(--surface-card);
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+}
+
+.sidebar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari et Opera */
 }
 
 /* Liens du profil */
@@ -236,13 +243,5 @@ export default {
   color: var(--text-color-secondary);
 }
 
-.no-scrollbar {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE 10+ */
-}
-
-.no-scrollbar::-webkit-scrollbar {
-  display: none; /* Chrome, Safari et Opera */
-}
 
 </style>

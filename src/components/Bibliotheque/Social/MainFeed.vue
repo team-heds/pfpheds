@@ -1,4 +1,3 @@
-
 <!-- src/components/Social/MainFeed.vue -->
 <template>
   <div class="main-feed">
@@ -14,46 +13,6 @@
       @apply-filter="applyFilter"
       @reset-filter="resetFilter"
     />
-
-
-<template>
-  <div class="main-feed">
-    <!-- Section des filtres -->
-    <div class="filters-container ">
-      <Dropdown
-        class="surface-card"
-        v-model="selectedFilterType"
-        :options="filterTypes"
-        optionLabel="label"
-        optionValue="value"
-        placeholder="Sélectionner un type de filtre"
-        @change="onFilterTypeChange"
-      />
-
-      <Dropdown
-        class="surface-card"
-        v-if="selectedFilterType"
-        v-model="selectedFilterValue"
-        :options="filterOptions"
-        optionLabel="label"
-        optionValue="value"
-        placeholder="Sélectionner une option"
-      />
-
-      <Button
-        v-if="selectedFilterType"
-        label="Appliquer le filtre"
-        @click="applyFilter"
-        class="ml-2"
-      />
-      <Button
-        v-if="selectedFilterType"
-        label="Réinitialiser"
-        @click="resetFilter"
-        class="ml-2 p-button-secondary"
-      />
-    </div>
-
 
     <!-- Carte pour la zone de texte et le bouton "Publier" -->
     <transition name="fade">
@@ -135,9 +94,7 @@
       </div>
     </transition>
 
-
     <!-- Conteneur pour les posts avec Infinite Scroll -->
-
     <div class="posts-container" @scroll="handleScroll">
       <InfiniteScroll :loading="loading" @load-more="loadMorePosts">
         <PostItem
@@ -160,12 +117,7 @@ import PostItem from "@/components/Social/PostItem.vue";
 import Tag from "primevue/tag";
 import Button from "primevue/button";
 import FileUpload from "primevue/fileupload";
-
 import FilterComponent from "@/components/Social/FilterComponent.vue"; // Import du FilterComponent
-
-import Editor from "primevue/editor";
-import Dropdown from "primevue/dropdown";
-
 import {
   ref as dbRef,
   push,
@@ -176,12 +128,8 @@ import {
   endAt,
   get,
   query,
-
   equalTo,
   child,
-
-  equalTo
-
 } from "firebase/database";
 import {
   getStorage,
@@ -197,12 +145,8 @@ export default {
     PostItem,
     Tag,
     Button,
-
     FileUpload,
     FilterComponent, // Enregistrement du FilterComponent
-
-    FileUpload
-
   },
   props: {
     currentUser: Object,
@@ -285,13 +229,8 @@ export default {
           Timestamp: serverTimestamp(),
           Hashtags: hashtagsObject,
           MentionGroups: mentionsObject,
-
           media: [],
           // Ajoutez un champ 'Community' si nécessaire
-
-          media: []
-          // Assurez-vous d'ajouter un champ 'Community' si nécessaire
-
         };
 
         const mediaUrls = await uploadMedia();
@@ -379,7 +318,6 @@ export default {
           }));
         }
 
-
         // Récupérer les communautés dont l'utilisateur est membre
         if (localCurrentUser.value) {
           const userCommunitiesSnapshot = await get(
@@ -398,29 +336,17 @@ export default {
         }
       } catch (error) {
         console.error("Erreur lors de la récupération des filtres disponibles :", error);
-
-      // Récupérer les communautés
-      const communitiesSnapshot = await get(dbRef(db, "Communities"));
-      if (communitiesSnapshot.exists()) {
-        const communitiesData = communitiesSnapshot.val();
-        availableCommunities.value = Object.keys(communitiesData).map(comm => ({ label: comm, value: comm }));
-
       }
     };
 
     // Fonction appelée lors du changement de type de filtre
     const onFilterTypeChange = (value) => {
-      
+
       if (value === "hashtag") {
         filterOptions.value = availableHashtags.value;
-
       } else if (value === "community") {
         console.log("yaaa " +  userCommunities.value[1].name);
         filterOptions.value = userCommunities.value; // Utiliser les communautés de l'utilisateur
-
-      } else if (selectedFilterType.value === "community") {
-        filterOptions.value = availableCommunities.value;
-
       } else {
         filterOptions.value = [];
         selectedFilterValue.value = null;
@@ -463,7 +389,6 @@ export default {
     const fetchPosts = async () => {
       loading.value = true;
       let q;
-
 
       try {
         // Référence de base pour les posts
@@ -521,57 +446,6 @@ export default {
           }
         }
 
-
-      // Référence de base pour les posts
-      let postsRefQuery = dbRef(db, "Posts");
-
-      // Appliquer le filtre si nécessaire
-      if (appliedFilter.value.type === "hashtag" && appliedFilter.value.value) {
-        // Filtrer par Hashtag
-        q = query(
-          postsRefQuery,
-          orderByChild(`Hashtags/${appliedFilter.value.value}`),
-          equalTo(true),
-          limitToLast(postsPerPage.value)
-        );
-      } else if (appliedFilter.value.type === "community" && appliedFilter.value.value) {
-        // Filtrer par Communauté
-        q = query(
-          postsRefQuery,
-          orderByChild("Community"), // Assurez-vous que chaque post a un champ 'Community'
-          equalTo(appliedFilter.value.value),
-          limitToLast(postsPerPage.value)
-        );
-      } else {
-        // Pas de filtre, récupérer les posts les plus récents
-        q = query(
-          postsRefQuery,
-          orderByChild("Timestamp"),
-          limitToLast(postsPerPage.value)
-        );
-      }
-
-      // Appliquer le timestamp pour la pagination si nécessaire
-      if (oldestTimestamp.value) {
-        if (appliedFilter.value.type === "hashtag" || appliedFilter.value.type === "community") {
-          q = query(
-            postsRefQuery,
-            orderByChild(appliedFilter.value.type === "hashtag" ? `Hashtags/${appliedFilter.value.value}` : "Community"),
-            endAt(appliedFilter.value.type === "hashtag" ? true : appliedFilter.value.value, oldestTimestamp.value - 1),
-            limitToLast(postsPerPage.value)
-          );
-        } else {
-          q = query(
-            postsRefQuery,
-            orderByChild("Timestamp"),
-            endAt(oldestTimestamp.value - 1),
-            limitToLast(postsPerPage.value)
-          );
-        }
-      }
-
-      try {
-
         const snapshot = await get(q);
         if (snapshot.exists()) {
           const data = snapshot.val();
@@ -589,26 +463,18 @@ export default {
 
           // Mise à jour des posts
           posts.value = [...posts.value, ...postsArray];
-
           console.log("Posts récupérés :", postsArray); // Log de débogage
-
 
           // Mettre à jour oldestTimestamp
           if (posts.value.length > 0) {
             const oldestPost = posts.value[posts.value.length - 1];
             oldestTimestamp.value = oldestPost.Timestamp;
-
             console.log("Oldest Timestamp mis à jour :", oldestTimestamp.value); // Log de débogage
           }
 
           applyFilters();
         } else {
           console.log("Aucun post trouvé pour les critères actuels.");
-
-          }
-
-          applyFilters();
-
         }
       } catch (error) {
         console.error("Erreur lors de la récupération des posts :", error);
@@ -653,25 +519,18 @@ export default {
     onMounted(() => {
       if (props.currentUser) {
         localCurrentUser.value = { ...props.currentUser };
-
         console.log("Utilisateur connecté :", localCurrentUser.value); // Log de débogage
-
         fetchAvailableFilters();
         fetchPosts();
       } else {
         onAuthStateChanged(auth, (user) => {
           if (user) {
             localCurrentUser.value = user;
-
             console.log("Utilisateur connecté via onAuthStateChanged :", localCurrentUser.value); // Log de débogage
             fetchAvailableFilters();
             fetchPosts();
           } else {
             console.warn("Aucun utilisateur connecté.");
-
-            fetchAvailableFilters();
-            fetchPosts();
-
           }
         });
       }
@@ -695,9 +554,7 @@ export default {
       selectedFilterValue,
       availableHashtags,
       availableCommunities,
-
       userCommunities, // Inclure dans le retour si nécessaire
-
       appliedFilter,
       extractTags,
       postMessage,
@@ -712,14 +569,10 @@ export default {
       fetchPosts,
       applyFilters,
       loadMorePosts,
-
       handleScroll,
       // Méthodes pour mettre à jour les filtres
       updateSelectedFilterType,
       updateSelectedFilterValue,
-
-      handleScroll
-
     };
   },
 };
@@ -865,8 +718,6 @@ export default {
     width: 100%;
   }
 }
-
 </style>
-
-</style>
-
+ 
+ 
