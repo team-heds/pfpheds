@@ -48,11 +48,14 @@ import VotationLese from '@/components/Dashboard/DashboardDetails/VotationLese.v
 import LoginHome from '@/components/Utils/LoginHome.vue';
 import NewsFeed from '@/components/Social/NewsFeed.vue';
 import HashtagPage from '@/components/Social/HashtagPage.vue';
+import CommunityManagement from '@/components/Social/CommunityManagement.vue';
+import ManageOneCommunity from '@/components/Social/ManageOneCommunity.vue';
 import MentionGroupPage from '@/components/Social/MentionGroupPage.vue';
 import HistoriquePFP from '@/components/Home/HistoriquePFP.vue'
 import DocumentsPFP from '@/components/Home/DocumentsPFP.vue'
 import Index from '@/views/apps/tasklist/Index.vue'
 import IndexChat from '@/views/apps/chat/IndexChat.vue'
+import CommunityInfo from '@/components/Social/CommunityInfo.vue'; // Import du composant Infos
 
 // Define your routes
 const routes = [
@@ -107,6 +110,19 @@ const routes = [
   { path: '/documents_pfp', component: DocumentsPFP, name: 'DocumentsPFP', meta: { requiresAuth: true } },
   { path: '/tasklist', component: Index, name: 'Index', meta: { requiresAuth: true, requiredRole: ['editor', 'admin'] } },
   { path: '/chat', component: IndexChat, name: 'IndexChat', meta: { requiresAuth: true } },
+  { path: '/communities', component: CommunityManagement, name: 'CommunityManagement', props: true, meta: { requiresAuth: true } },
+  {
+    path: '/communities/:id',
+    name: 'ManageOneCommunity',
+    component: ManageOneCommunity,
+    props: true
+  },
+
+  {
+    path: '/communities/info/:id',
+    name: 'CommunityInfo',
+    component: CommunityInfo // Définition de la route Infos
+  },
 ];
 
 // Create router instance

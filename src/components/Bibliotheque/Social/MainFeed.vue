@@ -1,4 +1,4 @@
-
+<!-- src/views/apps/community/MainFeed.vue -->
 <template>
   <div class="main-feed">
     <!-- Section des filtres -->
@@ -112,6 +112,7 @@
       </div>
     </transition>
 
+    <!-- Liste des Posts avec Infinite Scroll -->
     <div class="posts-container" @scroll="handleScroll">
       <InfiniteScroll :loading="loading" @load-more="loadMorePosts">
         <PostItem
@@ -122,19 +123,26 @@
         />
       </InfiniteScroll>
     </div>
+
+    <!-- Conteneur des toasts -->
+    <div class="toast-container">
+      <div v-for="(toast, index) in toasts" :key="index" :class="['toast', toast.severity]">
+        <p>{{ toast.summary }}: {{ toast.detail }}</p>
+        <button @click="removeToast(index)">✖</button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-import { ref, onMounted, watch } from "vue";
-import { db, auth } from "../../../../firebase.js";
+import { ref, onMounted, watch, computed } from "vue";
+import { db, auth } from "@/firebase.js";
 import { onAuthStateChanged } from "firebase/auth";
 import InfiniteScroll from "@/components/Social/InfiniteScroll.vue";
 import PostItem from "@/components/Social/PostItem.vue";
 import Tag from "primevue/tag";
 import Button from "primevue/button";
 import FileUpload from "primevue/fileupload";
-import Editor from "primevue/editor";
 import Dropdown from "primevue/dropdown";
 import {
   ref as dbRef,
@@ -143,10 +151,9 @@ import {
   serverTimestamp,
   orderByChild,
   limitToLast,
-  endAt,
+  equalTo,
   get,
-  query,
-  equalTo
+  query
 } from "firebase/database";
 import {
   getStorage,
@@ -162,10 +169,8 @@ export default {
     PostItem,
     Tag,
     Button,
-    FileUpload
-  },
-  props: {
-    currentUser: Object,
+    FileUpload,
+    Dropdown
   },
   setup(props) {
     // Références réactives
@@ -196,6 +201,9 @@ export default {
       type: null,
       value: null
     });
+
+    // Communautés de l'utilisateur
+    const userCommunities = ref([]);
 
     // Watcher pour détecter les tags dans le nouveau post
     watch(newPost, (value) => {
@@ -229,6 +237,7 @@ export default {
             return acc;
           }, {});
 
+        // Transformation des mentions en objet
         const mentionsObject = detectedTags.value
           .filter((tag) => tag.startsWith("@"))
           .reduce((acc, tag) => {
@@ -244,8 +253,8 @@ export default {
           Timestamp: serverTimestamp(),
           Hashtags: hashtagsObject,
           MentionGroups: mentionsObject,
-          media: []
-          // Assurez-vous d'ajouter un champ 'Community' si nécessaire
+          media: [],
+          Community: appliedFilter.value.type === "community" ? appliedFilter.value.value : null
         };
 
         const mediaUrls = await uploadMedia();
@@ -329,11 +338,27 @@ export default {
         availableHashtags.value = Object.keys(hashtagsData).map(tag => ({ label: tag, value: tag }));
       }
 
-      // Récupérer les communautés
-      const communitiesSnapshot = await get(dbRef(db, "Communities"));
-      if (communitiesSnapshot.exists()) {
-        const communitiesData = communitiesSnapshot.val();
-        availableCommunities.value = Object.keys(communitiesData).map(comm => ({ label: comm, value: comm }));
+      // Récupérer les communautés de l'utilisateur
+      if (localCurrentUser.value) {
+        const userCommunitiesSnapshot = await get(dbRef(db, `Users/${localCurrentUser.value.uid}/communities`));
+        if (userCommunitiesSnapshot.exists()) {
+          const userCommunitiesData = userCommunitiesSnapshot.val();
+          const communityIds = Object.keys(userCommunitiesData);
+
+          // Récupérer les détails des communautés dont l'utilisateur est membre
+          const communitiesSnapshot = await get(dbRef(db, "Communities"));
+          if (communitiesSnapshot.exists()) {
+            const communitiesData = communitiesSnapshot.val();
+            userCommunities.value = communityIds.map(id => ({
+              label: communitiesData[id]?.name || "Communauté Inconnue",
+              value: id
+            }));
+          } else {
+            userCommunities.value = [];
+          }
+        } else {
+          userCommunities.value = [];
+        }
       }
     };
 
@@ -342,7 +367,7 @@ export default {
       if (selectedFilterType.value === "hashtag") {
         filterOptions.value = availableHashtags.value;
       } else if (selectedFilterType.value === "community") {
-        filterOptions.value = availableCommunities.value;
+        filterOptions.value = userCommunities.value;
       } else {
         filterOptions.value = [];
         selectedFilterValue.value = null;
@@ -368,88 +393,89 @@ export default {
     // Fonction pour récupérer les posts
     const fetchPosts = async () => {
       loading.value = true;
-      let q;
-
-      // Référence de base pour les posts
-      let postsRefQuery = dbRef(db, "Posts");
-
-      // Appliquer le filtre si nécessaire
-      if (appliedFilter.value.type === "hashtag" && appliedFilter.value.value) {
-        // Filtrer par Hashtag
-        q = query(
-          postsRefQuery,
-          orderByChild(`Hashtags/${appliedFilter.value.value}`),
-          equalTo(true),
-          limitToLast(postsPerPage.value)
-        );
-      } else if (appliedFilter.value.type === "community" && appliedFilter.value.value) {
-        // Filtrer par Communauté
-        q = query(
-          postsRefQuery,
-          orderByChild("Community"), // Assurez-vous que chaque post a un champ 'Community'
-          equalTo(appliedFilter.value.value),
-          limitToLast(postsPerPage.value)
-        );
-      } else {
-        // Pas de filtre, récupérer les posts les plus récents
-        q = query(
-          postsRefQuery,
-          orderByChild("Timestamp"),
-          limitToLast(postsPerPage.value)
-        );
-      }
-
-      // Appliquer le timestamp pour la pagination si nécessaire
-      if (oldestTimestamp.value) {
-        if (appliedFilter.value.type === "hashtag" || appliedFilter.value.type === "community") {
-          q = query(
-            postsRefQuery,
-            orderByChild(appliedFilter.value.type === "hashtag" ? `Hashtags/${appliedFilter.value.value}` : "Community"),
-            endAt(appliedFilter.value.type === "hashtag" ? true : appliedFilter.value.value, oldestTimestamp.value - 1),
-            limitToLast(postsPerPage.value)
-          );
-        } else {
-          q = query(
-            postsRefQuery,
-            orderByChild("Timestamp"),
-            endAt(oldestTimestamp.value - 1),
-            limitToLast(postsPerPage.value)
-          );
-        }
-      }
 
       try {
-        const snapshot = await get(q);
-        if (snapshot.exists()) {
-          const data = snapshot.val();
-          let postsArray = Object.entries(data).map(([key, post]) => ({
+        let postsArray = [];
+
+        // Récupérer les posts publics
+        let publicPostsQuery = query(
+          dbRef(db, "Posts"),
+          orderByChild("Community"),
+          equalTo(null),
+          limitToLast(postsPerPage.value)
+        );
+
+        const publicSnapshot = await get(publicPostsQuery);
+        if (publicSnapshot.exists()) {
+          const publicData = publicSnapshot.val();
+          const publicPosts = Object.entries(publicData).map(([key, post]) => ({
             ...post,
             id: key,
           }));
+          postsArray = postsArray.concat(publicPosts);
+        }
 
-          // Trier les posts du plus récent au plus ancien
-          postsArray.sort((a, b) => {
-            const timeA = a.Timestamp ? a.Timestamp : 0;
-            const timeB = b.Timestamp ? b.Timestamp : 0;
-            return timeB - timeA;
+        // Récupérer les posts des communautés de l'utilisateur
+        if (userCommunities.value.length > 0) {
+          const communityPostsPromises = userCommunities.value.map((community) => {
+            return get(
+              query(
+                dbRef(db, "Posts"),
+                orderByChild("Community"),
+                equalTo(community.value),
+                limitToLast(postsPerPage.value)
+              )
+            );
           });
 
-          // Mise à jour des posts
-          posts.value = [...posts.value, ...postsArray];
-
-          // Mettre à jour oldestTimestamp
-          if (posts.value.length > 0) {
-            const oldestPost = posts.value[posts.value.length - 1];
-            oldestTimestamp.value = oldestPost.Timestamp;
-          }
-
-          applyFilters();
+          const communitySnapshots = await Promise.all(communityPostsPromises);
+          communitySnapshots.forEach((snapshot) => {
+            if (snapshot.exists()) {
+              const communityData = snapshot.val();
+              const communityPosts = Object.entries(communityData).map(([key, post]) => ({
+                ...post,
+                id: key,
+              }));
+              postsArray = postsArray.concat(communityPosts);
+            }
+          });
         }
+
+        // Trier les posts du plus récent au plus ancien
+        postsArray.sort((a, b) => {
+          const timeA = a.Timestamp ? a.Timestamp : 0;
+          const timeB = b.Timestamp ? b.Timestamp : 0;
+          return timeB - timeA;
+        });
+
+        // Mettre à jour les posts et oldestTimestamp
+        posts.value = [...posts.value, ...postsArray];
+        if (posts.value.length > 0) {
+          const oldestPost = posts.value[posts.value.length - 1];
+          oldestTimestamp.value = oldestPost.Timestamp;
+        }
+
+        applyFilters();
       } catch (error) {
         console.error("Erreur lors de la récupération des posts :", error);
       }
 
       loading.value = false;
+    };
+
+    const toasts = ref([]);
+
+    // Fonctions pour gérer les toasts
+    const addToast = (severity, summary, detail) => {
+      toasts.value.push({ severity, summary, detail });
+      // Supprimer le toast après 3 secondes
+      setTimeout(() => {
+        removeToast(0);
+      }, 3000);
+    };
+
+    const removeToast = (index) => {
+      toasts.value.splice(index, 1);
     };
 
     // Fonction pour appliquer les filtres aux posts
@@ -477,21 +503,49 @@ export default {
       lastScrollTop.value = scrollTop;
     };
 
-    // Hook de cycle de vie onMounted
-    onMounted(() => {
-      if (props.currentUser) {
-        localCurrentUser.value = { ...props.currentUser };
-        fetchAvailableFilters();
-        fetchPosts();
-      } else {
-        onAuthStateChanged(auth, (user) => {
-          if (user) {
-            localCurrentUser.value = user;
-            fetchAvailableFilters();
-            fetchPosts();
+    // Fonction pour récupérer les communautés de l'utilisateur
+    const fetchUserCommunities = async () => {
+      if (!localCurrentUser.value) return;
+
+      try {
+        const userCommunitiesSnapshot = await get(dbRef(db, `Users/${localCurrentUser.value.uid}/communities`));
+        if (userCommunitiesSnapshot.exists()) {
+          const userCommunitiesData = userCommunitiesSnapshot.val();
+          const communityIds = Object.keys(userCommunitiesData);
+
+          // Récupérer les détails des communautés dont l'utilisateur est membre
+          const communitiesSnapshot = await get(dbRef(db, "Communities"));
+          if (communitiesSnapshot.exists()) {
+            const communitiesData = communitiesSnapshot.val();
+            userCommunities.value = communityIds.map(id => ({
+              label: communitiesData[id]?.name || "Communauté Inconnue",
+              value: id
+            }));
+          } else {
+            userCommunities.value = [];
           }
-        });
+        } else {
+          userCommunities.value = [];
+        }
+      } catch (error) {
+        console.error("Erreur lors de la récupération des communautés de l'utilisateur :", error);
+        addToast('error', 'Erreur', 'Impossible de récupérer vos communautés.');
       }
+    };
+
+    onMounted(async () => {
+      // Écouter l'état d'authentification
+      onAuthStateChanged(auth, async (user) => {
+        if (user) {
+          localCurrentUser.value = user;
+          await fetchUserCommunities(); // Récupérer les communautés d'abord
+          await fetchAvailableFilters();
+          await fetchPosts();
+        } else {
+          // Gérer l'utilisateur non authentifié
+          addToast('error', 'Erreur', 'Utilisateur non authentifié.');
+        }
+      });
     });
 
     return {
@@ -512,6 +566,7 @@ export default {
       selectedFilterValue,
       availableHashtags,
       availableCommunities,
+      userCommunities,
       appliedFilter,
       extractTags,
       postMessage,
@@ -526,7 +581,9 @@ export default {
       fetchPosts,
       applyFilters,
       loadMorePosts,
-      handleScroll
+      handleScroll,
+      addToast,
+      removeToast
     };
   }
 };
@@ -671,5 +728,74 @@ export default {
   .publish-button {
     width: 100%;
   }
+}
+
+/* Styles des filtres */
+.filters-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Styles des dropdowns et boutons */
+.filters-container .p-dropdown {
+  flex: 1;
+}
+
+.filters-container .p-button {
+  flex: none;
+}
+
+/* Styles des posts */
+.posts-container {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Styles des toasts */
+.toast-container {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 2000;
+}
+
+.toast {
+  background-color: #333333;
+  color: #ffffff;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  border-radius: 6px;
+  min-width: 250px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.toast.success {
+  background-color: #28a745;
+}
+
+.toast.error {
+  background-color: #dc3545;
+}
+
+.toast.warn {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.toast p {
+  margin: 0;
+  padding-left: 0.5rem;
+}
+
+.toast button {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 1rem;
+  cursor: pointer;
 }
 </style>
