@@ -79,6 +79,7 @@
               type="text"
               class="search-input"
               placeholder="Rechercher..."
+
             />
             <ButtonNavbar
               icon="pi pi-search"
