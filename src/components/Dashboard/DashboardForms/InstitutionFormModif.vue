@@ -224,8 +224,8 @@ export default {
         { code: 'ZH', name: 'Zurich' },
         { code: 'NE', name: 'Neuchâtel' },
         { code: 'JU', name: 'Jura' },
-        { code: 'LU', name: 'Lucerne'}
-        // Ajouter d'autres cantons si nécessaire
+        { code: 'LU', name: 'Lucerne'},
+        { code: 'ET', name: 'Étranger'}
       ],
       categories: [
         { label: 'Institution valaisanne', value: 'Institution valaisanne' },
