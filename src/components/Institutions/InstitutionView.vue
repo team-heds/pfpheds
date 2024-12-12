@@ -59,24 +59,24 @@
               </div>
             </div>
           </TabPanel>
-          <TabPanel header="Encadrement étudiant.e.s">
+          <TabPanel header="Encadrement étudiant">
             <div class="grid">
               <div class="col-12 lg:col-12">
-                <div class="text-900 font-bold text-3xl mb-4 mt-2">Encadrement étudiant.e.s</div>
+                <div class="text-900 font-bold text-3xl mb-4 mt-2">Encadrement étudiant</div>
                 <div class="list-none p-0 m-0 text-600 mb-4 text-600">
                   <div v-if="institutionDetails">
                     <p class="card-text">
                       <i class="bi bi-person-badge-fill"></i>
-                      <strong>Nom, Prénom du.de la responsable physio: </strong> {{ institutionDetails?.NomChef }}
+                      <strong>Nom, Prénom du responsable physio: </strong> {{ institutionDetails?.NomChef }}
                     </p>
                     <p class="card-text">
                       <i class="bi bi-envelope-fill"></i>
-                      <strong>Email du.de la responsable physio: </strong>
+                      <strong>Email du responsable physio: </strong>
                       <a :href="`mailto:${institutionDetails?.MailChef}`" class="text-primary">{{ institutionDetails?.MailChef }}</a>
                     </p>
                     <p class="card-text">
                       <i class="bi bi-telephone-fill"></i>
-                      <strong>Téléphone du.de la responsable physio: </strong>
+                      <strong>Téléphone du responsable physio: </strong>
                       <a :href="`tel:${institutionDetails?.PhoneChef}`" class="text-primary">{{ institutionDetails?.PhoneChef }}</a>
                     </p>
                   </div>

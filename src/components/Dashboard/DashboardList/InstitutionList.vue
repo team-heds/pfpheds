@@ -19,7 +19,7 @@
             <Button label="Ajouter une institution" icon="pi pi-plus" class="mb-2 mr-2" outlined @click="goToInstitutionForm" />
             <IconField iconPosition="left">
               <InputIcon class="pi pi-search" />
-              <InputText v-model="globalFilter" placeholder="Rechercher" style="width: 100%" />
+              <InputText v-model="searchTerm" placeholder="Rechercher" style="width: 100%" />
             </IconField>
           </div>
         </template>
@@ -86,13 +86,18 @@ export default {
       institutions: [],  // Contient les données d'institutions de Firebase
       filters: {},
       loading: true,
-      globalFilter: ''
+      globalFilter: '',
+      searchTerm: ''
     };
   },
   computed: {
     filteredInstitutions() {
-      // Si nécessaire, applique des filtres ici, pour l'instant, on retourne les institutions telles quelles.
-      return this.institutions;
+      if (!this.searchTerm) {
+        return this.institutions;
+      }
+      return this.institutions.filter(institutions =>
+        institutions.Name && institutions.Name.toLowerCase().includes(this.searchTerm.toLowerCase())
+      );
     }
   },
   async mounted() {

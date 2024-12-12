@@ -30,7 +30,7 @@
           <span class="community-name">{{ community.name }}</span>
         </li>
         <li v-if="userCommunities.length === 0" class="text-center">
-          Aucune communauté jointe.
+          Aucune communauté jointe
         </li>
       </ul>
     </div>
