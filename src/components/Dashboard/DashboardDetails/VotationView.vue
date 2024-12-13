@@ -491,7 +491,7 @@ export default {
               NomPlace: institutionData.Name || '',
               Lieu: institutionData.Locality || '',
               IDPlace: institutionData.InstitutionId || institutionData.IDPlace || '',
-              Domaine: place.Domaine || '', // Correction ici
+              Domaine: place.NomPlace || '', // Correction ici
               PFP1A: pfpValue, // Utilisation de PFP1A
               FR: place.FR || false,
               ALL: place.ALL || place.DE || false, // Vérifiez si 'ALL' correspond à 'ALL' dans vos données
