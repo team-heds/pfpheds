@@ -1,15 +1,15 @@
 <template>
-  <div class="">
+  <div>
     <Navbar />
     <ResumStageUserProfile class="mb-5" />
 
-    <div class="w-full ">
-
+    <div class="w-full">
       <div class="container-fluid mt-4 justify-items-center">
         <!-- Section pour la validation -->
         <div v-if="currentStudent && selectedPFP && selectedClass" class="table-responsive mt-4">
           <div v-if="validationMessage" class="mt-4 text-center">
             <h4>Votation {{ selectedPFP }}</h4>
+            <p>{{ validationMessage }}</p>
           </div>
         </div>
 
@@ -19,97 +19,96 @@
             <h3 class="mb-3 text-center">Toutes les places de stages</h3>
             <table class="table table-striped align-middle mb-0 table-hover w-100 text-center">
               <thead>
-              <tr>
-                <th>Institutions</th>
-                <th>Lieux</th>
-                <th>Domaines</th>
-                <th>FR</th>
-                <th>ALL</th>
-                <th>AIGU</th>
-                <th>REHAB</th>
-                <th>MSQ</th>
-                <th>SYSINT</th>
-                <th>NEUROGER</th>
-                <th>AMBU</th>
-                <th title="Nombre de places proposées">Nb Places</th>
-                <th title="Votre 1er choix">Choix 1</th>
-                <th title="Votre 2ème choix">Choix 2</th>
-                <th title="Votre 3ème choix">Choix 3</th>
-                <th title="Votre 4ème choix">Choix 4</th>
-                <th title="Votre 5ème choix">Choix 5</th>
-                <th class="hover-highlight" title="Étudiants ayant ce 1er choix">R1</th>
-                <th class="hover-highlight" title="Étudiants ayant ce 2ème choix">R2</th>
-                <th class="hover-highlight" title="Étudiants ayant ce 3ème choix">R3</th>
-                <th class="hover-highlight" title="Étudiants ayant ce 4ème choix">R4</th>
-                <th class="hover-highlight" title="Étudiants ayant ce 5ème choix">R5</th>
-                <th class="hover-highlight" title="Total d'étudiant ayant ce choix">RT</th>
-              </tr>
+                <tr>
+                  <th>Institutions</th>
+                  <th>Lieux</th>
+                  <th>Domaines</th>
+                  <th>FR</th>
+                  <th>ALL</th>
+                  <th>AIGU</th>
+                  <th>REHAB</th>
+                  <th>MSQ</th>
+                  <th>SYSINT</th>
+                  <th>NEUROGER</th>
+                  <th>AMBU</th>
+                  <th title="Nombre de places proposées">Nb Places</th>
+                  <th title="Votre 1er choix">Choix 1</th>
+                  <th title="Votre 2ème choix">Choix 2</th>
+                  <th title="Votre 3ème choix">Choix 3</th>
+                  <th title="Votre 4ème choix">Choix 4</th>
+                  <th title="Votre 5ème choix">Choix 5</th>
+                  <th class="hover-highlight" title="Étudiants ayant ce 1er choix">R1</th>
+                  <th class="hover-highlight" title="Étudiants ayant ce 2ème choix">R2</th>
+                  <th class="hover-highlight" title="Étudiants ayant ce 3ème choix">R3</th>
+                  <th class="hover-highlight" title="Étudiants ayant ce 4ème choix">R4</th>
+                  <th class="hover-highlight" title="Étudiants ayant ce 5ème choix">R5</th>
+                  <th class="hover-highlight" title="Total d'étudiant ayant ce choix">RT</th>
+                </tr>
               </thead>
               <tbody>
-              <tr v-for="stage in filteredStages" :key="stage.IDENTIFIANT">
-                <td>
-                  <a :href="`/institution/${stage.IDPlace}`" class="text-white2">
-                    {{ stage.NomPlace }}
-                  </a>
-                </td>
+                <tr v-for="stage in filteredStages" :key="stage.IDENTIFIANT">
+                  <td>
+                    <a :href="`/institution/${stage.IDPlace}`" class="text-white2">
+                      {{ stage.NomPlace }}
+                    </a>
+                  </td>
 
-                <td>{{ stage.Lieu }}</td>
-                <td>{{ stage.Domaine }}</td>
-                <td v-if="Boolean(stage.FR)">&#9989;</td>
-                <td v-else>&#10060;</td>
-                <td v-if="Boolean(stage.ALL)">&#9989;</td>
-                <td v-else>&#10060;</td>
-                <td v-if="Boolean(stage.AIGU)">&#9989;</td>
-                <td v-else>&#10060;</td>
-                <td v-if="Boolean(stage.REHAB)">&#9989;</td>
-                <td v-else>&#10060;</td>
-                <td v-if="Boolean(stage.MSQ)">&#9989;</td>
-                <td v-else>&#10060;</td>
-                <td v-if="Boolean(stage.SYSINT)">&#9989;</td>
-                <td v-else>&#10060;</td>
-                <td v-if="Boolean(stage.NEUROGER)">&#9989;</td>
-                <td v-else>&#10060;</td>
-                <td v-if="Boolean(stage.AMBU)">&#9989;</td>
-                <td v-else>&#10060;</td>
+                  <td>{{ stage.Lieu }}</td>
+                  <td>{{ stage.Domaine }}</td>
+                  <td v-if="Boolean(stage.FR)">&#9989;</td>
+                  <td v-else>&#10060;</td>
+                  <td v-if="Boolean(stage.ALL)">&#9989;</td>
+                  <td v-else>&#10060;</td>
+                  <td v-if="Boolean(stage.AIGU)">&#9989;</td>
+                  <td v-else>&#10060;</td>
+                  <td v-if="Boolean(stage.REHAB)">&#9989;</td>
+                  <td v-else>&#10060;</td>
+                  <td v-if="Boolean(stage.MSQ)">&#9989;</td>
+                  <td v-else>&#10060;</td>
+                  <td v-if="Boolean(stage.SYSINT)">&#9989;</td>
+                  <td v-else>&#10060;</td>
+                  <td v-if="Boolean(stage.NEUROGER)">&#9989;</td>
+                  <td v-else>&#10060;</td>
+                  <td v-if="Boolean(stage.AMBU)">&#9989;</td>
+                  <td v-else>&#10060;</td>
 
-                <td v-if="this.selectedPFP === 'PFP1A'"> {{ stage.NbPlace1A }}
-                </td>
-                <td v-else> {{ stage.NbPlace1B }}
-                </td>
-                <!-- Cases à cocher pour les 5 choix -->
-                <td>
-                  <input type="checkbox" :disabled="isChoiceDisabled(stage, 'choice1')"
-                         :checked="selectedChoices.choice1 === stage.IDENTIFIANT"
-                         @change="handleChoiceChange(stage.IDENTIFIANT, 'choice1')" />
-                </td>
-                <td>
-                  <input type="checkbox" :disabled="isChoiceDisabled(stage, 'choice2')"
-                         :checked="selectedChoices.choice2 === stage.IDENTIFIANT"
-                         @change="handleChoiceChange(stage.IDENTIFIANT, 'choice2')" />
-                </td>
-                <td>
-                  <input type="checkbox" :disabled="isChoiceDisabled(stage, 'choice3')"
-                         :checked="selectedChoices.choice3 === stage.IDENTIFIANT"
-                         @change="handleChoiceChange(stage.IDENTIFIANT, 'choice3')" />
-                </td>
-                <td>
-                  <input type="checkbox" :disabled="isChoiceDisabled(stage, 'choice4')"
-                         :checked="selectedChoices.choice4 === stage.IDENTIFIANT"
-                         @change="handleChoiceChange(stage.IDENTIFIANT, 'choice4')" />
-                </td>
-                <td>
-                  <input type="checkbox" :disabled="isChoiceDisabled(stage, 'choice5')"
-                         :checked="selectedChoices.choice5 === stage.IDENTIFIANT"
-                         @change="handleChoiceChange(stage.IDENTIFIANT, 'choice5')" />
-                </td>
-                <!-- Colonnes supplémentaires avec des chiffres initialisés à 0 -->
-                <td>{{ voteCounts[stage.IDENTIFIANT]?.Votation1 || 0 }}</td>
-                <td>{{ voteCounts[stage.IDENTIFIANT]?.Votation2 || 0 }}</td>
-                <td>{{ voteCounts[stage.IDENTIFIANT]?.Votation3 || 0 }}</td>
-                <td>{{ voteCounts[stage.IDENTIFIANT]?.Votation4 || 0 }}</td>
-                <td>{{ voteCounts[stage.IDENTIFIANT]?.Votation5 || 0 }}</td>
-                <td>{{ voteCounts[stage.IDENTIFIANT]?.VotationTotal || 0 }}</td>
-              </tr>
+                  <td>
+                    {{ selectedPFP === 'PFP1A' ? stage.NbPlace1A : stage.NbPlace1B }}
+                  </td>
+                  <!-- Cases à cocher pour les 5 choix -->
+                  <td>
+                    <input type="checkbox" :disabled="isChoiceDisabled(stage, 'choice1')"
+                           :checked="selectedChoices.choice1 === stage.IDENTIFIANT"
+                           @change="handleChoiceChange(stage.IDENTIFIANT, 'choice1')" />
+                  </td>
+                  <td>
+                    <input type="checkbox" :disabled="isChoiceDisabled(stage, 'choice2')"
+                           :checked="selectedChoices.choice2 === stage.IDENTIFIANT"
+                           @change="handleChoiceChange(stage.IDENTIFIANT, 'choice2')" />
+                  </td>
+                  <td>
+                    <input type="checkbox" :disabled="isChoiceDisabled(stage, 'choice3')"
+                           :checked="selectedChoices.choice3 === stage.IDENTIFIANT"
+                           @change="handleChoiceChange(stage.IDENTIFIANT, 'choice3')" />
+                  </td>
+                  <td>
+                    <input type="checkbox" :disabled="isChoiceDisabled(stage, 'choice4')"
+                           :checked="selectedChoices.choice4 === stage.IDENTIFIANT"
+                           @change="handleChoiceChange(stage.IDENTIFIANT, 'choice4')" />
+                  </td>
+                  <td>
+                    <input type="checkbox" :disabled="isChoiceDisabled(stage, 'choice5')"
+                           :checked="selectedChoices.choice5 === stage.IDENTIFIANT"
+                           @change="handleChoiceChange(stage.IDENTIFIANT, 'choice5')" />
+                  </td>
+                  <!-- Colonnes supplémentaires avec des chiffres initialisés à 0 -->
+                  <td>{{ voteCounts[stage.IDENTIFIANT]?.Votation1 || 0 }}</td>
+                  <td>{{ voteCounts[stage.IDENTIFIANT]?.Votation2 || 0 }}</td>
+                  <td>{{ voteCounts[stage.IDENTIFIANT]?.Votation3 || 0 }}</td>
+                  <td>{{ voteCounts[stage.IDENTIFIANT]?.Votation4 || 0 }}</td>
+                  <td>{{ voteCounts[stage.IDENTIFIANT]?.Votation5 || 0 }}</td>
+                  <td>{{ voteCounts[stage.IDENTIFIANT]?.VotationTotal || 0 }}</td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -120,7 +119,7 @@
           <h4 class="text-center mb-4">Choix du Vote</h4>
           <div class="vote-choices">
             <div v-for="(choice, index) in voteResult" :key="index" class="vote-choice text-center">
-              <h6 class="text-white2"> {{ index }} : </h6>
+              <h6 class="text-white2">Choix {{ index + 1 }} : </h6>
               <p>Stage Sélectionné : {{ choice.selectedStageName }}</p>
               <p>Lieu : {{ choice.selectedStageLieu }}</p>
               <p>Domaine : {{ choice.selectedStageDomaine }}</p>
@@ -336,14 +335,14 @@ export default {
 
                 }
                 const votationData = {
-                  choice: index + " " + 1,
+                  choice: index + 1, // Correction ici
                   studentId: id,
                   studentName: this.currentStudent.Nom,
                   studentFirstName: this.currentStudent.Prenom,
                   selectedStageName: stage.NomPlace,
                   selectedStageLieu: stage.Lieu,
                   selectedStageDomaine: stage.Domaine,
-                  numberPlace: stage.PFP1A, // Utilisation de PFP1A
+                  numberPlace: this.selectedPFP === "PFP1A" ? stage.PFP1A : stage.PFP1B, // Utilisation dynamique
                   selectedStageDetails: {
                     FR: stage.FR,
                     ALL: stage.ALL,
@@ -365,7 +364,6 @@ export default {
                   stageRef = ref(db, `PFP1A-B23/${stage.IDENTIFIANT}`);
 
                 } else if (this.selectedPFP === "PFP1B") {
-                  // eslint-disable-next-line no-unused-vars
                   stageRef = ref(db, `PFP1B-B23/${stage.IDENTIFIANT}`);
 
                 }
@@ -421,22 +419,22 @@ export default {
       // Vérifie si le stageId existe dans voteCounts
       if (!this.voteCounts[stageId]) {
         // Ajoute une nouvelle entrée pour stageId avec des valeurs par défaut
-        this.voteCounts[stageId] = {
+        this.$set(this.voteCounts, stageId, {
           Votation1: 0,
           Votation2: 0,
           Votation3: 0,
           Votation4: 0,
           Votation5: 0,
           VotationTotal: 0,
-        };
+        });
       }
 
       // Détermine la clé de vote basée sur le numéro de choix
-      const choiceKey = `Votation${choiceNumber}`;
+      const votKey = `Votation${choiceNumber}`;
 
       // Vérifie si la clé de vote existe et incrémente les compteurs
-      if (this.voteCounts[stageId][choiceKey] !== undefined) {
-        this.voteCounts[stageId][choiceKey] += 1;
+      if (this.voteCounts[stageId][votKey] !== undefined) {
+        this.voteCounts[stageId][votKey] += 1;
         this.voteCounts[stageId]['VotationTotal'] += 1;
       }
     },
@@ -470,8 +468,6 @@ export default {
      * Récupère les données des places de stages disponibles avec PFP1A > 0.
      */
     async fetchStagesData() {
-
-
       if (!this.selectedPFP || !this.selectedClass) return;
 
       // Récupérer les places depuis Places où selectedPFP >=1
@@ -495,18 +491,18 @@ export default {
               NomPlace: institutionData.Name || '',
               Lieu: institutionData.Locality || '',
               IDPlace: institutionData.InstitutionId || institutionData.IDPlace || '',
-              Domaine: place.NomPlace || '',
+              Domaine: place.Domaine || '', // Correction ici
               PFP1A: pfpValue, // Utilisation de PFP1A
               FR: place.FR || false,
-              ALL: place.ALL || place.DE ||false, // Vérifiez si 'ALL' correspond à 'ALL' dans vos données
+              ALL: place.ALL || place.DE || false, // Vérifiez si 'ALL' correspond à 'ALL' dans vos données
               AIGU: place.AIGU || false,
               REHAB: place.REHAB || false,
               MSQ: place.MSQ || false,
               SYSINT: place.SYSINT || false,
               NEUROGER: place['NEURO-GER'] || false,
               AMBU: place.AMBU || false,
-              NbPlace1A: place.PFP1A || false,
-              NbPlace1B: place.PFP1B || false,
+              NbPlace1A: place.PFP1A || 0, // Assurez-vous que c'est un nombre
+              NbPlace1B: place.PFP1B || 0, // Assurez-vous que c'est un nombre
               Name: institutionData.Name || '',
               AccordCadreDate: institutionData.AccordCadreDate || '',
               Canton: institutionData.Canton || '',
@@ -529,35 +525,32 @@ export default {
     /**
      * Récupère les places déjà prises par d'autres étudiants.
      */
-     async fetchTakenStages() {
-  const pfp1aRef = ref(db, 'PFP1A'); // Chemin ajusté pour PFP1A
-  onValue(pfp1aRef, (snapshot) => {
-    if (snapshot.exists()) {
-      const takenData = snapshot.val();
-      this.takenStages.clear();
-      for (const key in takenData) {
-        const takenBy = takenData[key].takenBy;
-        if (takenBy) {
-          const keyn = key.split('_')[0]; // Extraire ce qu'il y a avant "_"
-          this.takenStages.add(keyn); // Ajouter l'IDENTIFIANT des stages pris
-          console.log("yaaa " + keyn);
+    async fetchTakenStages() {
+      const pfp1aRef = ref(db, 'PFP1A'); // Chemin ajusté pour PFP1A
+      onValue(pfp1aRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const takenData = snapshot.val();
+          this.takenStages.clear();
+          for (const key in takenData) {
+            const takenBy = takenData[key].takenBy;
+            if (takenBy) {
+              const keyn = key.split('_')[0]; // Extraire ce qu'il y a avant "_"
+              this.takenStages.add(keyn); // Ajouter l'IDENTIFIANT des stages pris
+              console.log("Stage pris: " + keyn);
+            }
+          }
         }
-      }
-    }
-  });
-},
+      });
+    },
     /**
      * Récupère les comptes de votes pour chaque stage.
      */
     async fetchVoteCounts() {
-
       let votationRef = "";
       if (this.selectedPFP === "PFP1A") {
         votationRef = ref(db, `VotationPFP1A`);
-
       } else if (this.selectedPFP === "PFP1B") {
         votationRef = ref(db, `VotationPFP1B`);
-
       }
       onValue(votationRef, (snapshot) => {
         if (snapshot.exists()) {
@@ -573,7 +566,9 @@ export default {
                   const stage = this.stages.find(s => s.NomPlace === vote.selectedStageName);
                   if (stage) {
                     const identifiant = stage.IDENTIFIANT;
-                    const votNum = vote.choice;
+                    const votNum = parseInt(vote.choice, 10); // Conversion en nombre
+                    if (isNaN(votNum) || votNum < 1 || votNum > 5) continue;
+
                     if (!counts[identifiant]) {
                       counts[identifiant] = {
                         Votation1: 0,
@@ -585,8 +580,10 @@ export default {
                       };
                     }
                     const votKey = `Votation${votNum}`;
-                    counts[identifiant][votKey] += 1;
-                    counts[identifiant]['VotationTotal'] += 1;
+                    if (counts[identifiant][votKey] !== undefined) {
+                      counts[identifiant][votKey] += 1;
+                      counts[identifiant]['VotationTotal'] += 1;
+                    }
                   }
                 }
               }
@@ -594,6 +591,8 @@ export default {
           }
 
           this.voteCounts = counts;
+        } else {
+          this.voteCounts = {};
         }
       });
     },
@@ -650,17 +649,16 @@ export default {
                   sysint = studentData.SYSINT || null;
                   fr = studentData.FR || null;
                   all = studentData.ALL || null; // Assure que 'ALL' correspond à 'ALL'
-                  pfp1a = studentData.PFP1A;
-                  pfp1b = studentData.PFP1B;
+                  pfp1a = studentData.PFP1A === "true" || studentData.PFP1A === true;
+                  pfp1b = studentData.PFP1B === "true" || studentData.PFP1B === true;
                 }
 
                 // Déterminer le PFP sélectionné
                 let selectedPFP = null;
-                if (pfp1a === "true") {
+                if (pfp1a && !pfp1b) {
                   selectedPFP = 'PFP1A';
-                } else if (pfp1b === "true") {
+                } else if (pfp1b && !pfp1a) {
                   selectedPFP = 'PFP1B';
-
                 } else if (pfp1a && pfp1b) {
                   // Si les deux sont vrais, choisir en priorité PFP1A ou gérer selon votre logique
                   selectedPFP = 'PFP1A'; // Priorité à PFP1A
@@ -671,7 +669,7 @@ export default {
                   alert("Aucun PFP n'est sélectionné pour cet utilisateur.");
                   return;
                 }
-                console.log("yaaaam " + selectedPFP);
+                console.log("PFP sélectionné: " + selectedPFP);
 
                 this.currentStudent = {
                   id: userKey,
@@ -750,19 +748,23 @@ export default {
      * @param {string} studentId - L'ID de l'étudiant.
      */
     async fetchVoteResult(studentId) {
-
       let votationRef = "";
       if (this.selectedPFP === "PFP1A") {
         votationRef = ref(db, `VotationPFP1A/${studentId}/choices`); // Chemin ajusté pour PFP1A
-
       } else if (this.selectedPFP === "PFP1B") {
-        votationRef = ref(db, `VotationPFP1B/${studentId}/choices`); // Chemin ajusté pour PFP1A
-
+        votationRef = ref(db, `VotationPFP1B/${studentId}/choices`); // Chemin ajusté pour PFP1B
       }
       try {
         const snapshot = await get(votationRef);
         if (snapshot.exists()) {
-          this.voteResult = snapshot.val();
+          const choices = snapshot.val();
+          // Transform the choices object into an array for easier iteration in the template
+          this.voteResult = Object.keys(choices).map(choiceKey => ({
+            choiceKey,
+            ...choices[choiceKey]
+          }));
+        } else {
+          this.voteResult = null;
         }
       } catch (error) {
         console.error("Erreur lors de la récupération du résultat du vote:", error);
@@ -797,10 +799,10 @@ export default {
       if (FR == "0") this.missingFields.push("FR");
       if (ALL == "0") this.missingFields.push("ALL");
       if (AMBU === "0" || AMBU === 0) this.missingFields.push("AMBU");
-      if (MSQ === "0") this.missingFields.push("MSQ");
-      if (AIGU === "0") this.missingFields.push("AIGU");
-      if (SYSINT === "0") this.missingFields.push("SYSINT");
-      if (NEUROGER === "0") this.missingFields.push("NEUROGER");
+      if (MSQ == "0") this.missingFields.push("MSQ");
+      if (AIGU == "0") this.missingFields.push("AIGU");
+      if (SYSINT == "0") this.missingFields.push("SYSINT");
+      if (NEUROGER == "0") this.missingFields.push("NEUROGER");
       if (REHAB == "0") this.missingFields.push("REHAB");
 
       if (this.missingFields.length > 0) {
@@ -815,7 +817,7 @@ export default {
      * @returns {boolean} True si visible, sinon false.
      */
     isStageVisible(stage) {
-      console.log(stage.IDENTIFIANT);
+      console.log(`Vérification de la visibilité pour le stage: ${stage.IDENTIFIANT}`);
       // Vérifier si la place est déjà prise par un autre étudiant
       if (this.takenStages.has(stage.IDENTIFIANT)) {
         return false;
@@ -1167,6 +1169,4 @@ input[type="checkbox"] {
   background-color: var(--surface-hover); /* Couleur de surlignement */
   color: var(--text-color-secondary); /* Couleur du texte surligné */
 }
-
 </style>
-
