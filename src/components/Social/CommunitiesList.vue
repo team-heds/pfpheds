@@ -1,83 +1,44 @@
 <!-- src/components/CommunitiesList.vue -->
 <template>
   <div class="communities-list-section card shadow-sm mt-4">
-    <div class="card-header">
+    <div>
       <h2>Liste de vos communautés</h2>
     </div>
 
-    <div class="card-body p-0">
-      <table class="communities-table">
-        <thead>
-          <tr>
-            <th>Nom</th>
-            <th>Description</th>
-            <th>Type</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="community in communities" :key="community.id">
-            <td>{{ community.name }}</td>
-            <td>{{ community.description }}</td>
-            <td>{{ capitalize(community.type) }}</td>
-            <td>
-              <button
-                class="btn btn-success btn-sm"
+    <div>
+      <DataTable v-for="community in communities" :key="community.id" class="w-full">
+
+        <Column field="name" header="Nom">{{ community.name }}</Column>
+        <Column header="Description">
+          {{ community.description }}
+        </Column>
+        <Column field="type" header="Type"><td>{{ capitalize(community.type) }}</td></Column>
+        <Column field="actions" header="Actions"></Column>
+              <Button
+                class="btn btn-success btn-sm m-2"
                 @click="manageCommunity(community.id)"
               >
                 Gérer
-              </button>
-              <button
-                class="btn btn-danger btn-sm"
+              </Button>
+              <Button
+                class="btn btn-danger btn-sm m-2"
                 @click="leaveCommunity(community.id)"
               >
                 Quitter
-              </button>
-            </td>
-          </tr>
-          <tr v-if="communities.length === 0">
-            <td colspan="4" class="text-center">Aucune communauté trouvée.</td>
-          </tr>
-        </tbody>
-      </table>
+              </Button>
 
-      <div class="card-body p-0">
-        <table class="communities-table">
-          <thead>
-            <tr>
-              <th>Noms</th>
-              <th>Description</th>
-              <th>Type</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="community in communities" :key="community.id">
-              <td>{{ community.name }}</td>
-              <td>{{ community.description }}</td>
-              <td>{{ capitalize(community.type) }}</td>
-              <td>
-                <button
-                  class="btn btn-success btn-sm"
-                  @click="manageCommunity(community.id)"
-                >
-                  Gérer
-                </button>
-              </td>
-            </tr>
-            <tr v-if="communities.length === 0">
-              <td colspan="4" class="text-center">Aucune communauté trouvée.</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      </DataTable>
 
     </div>
   </div>
 </template>
 
 <script>
+import DataTable from 'primevue/datatable'
 export default {
+  components: {
+    DataTable
+  },
   name: "CommunitiesList",
   props: {
     communities: {

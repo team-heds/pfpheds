@@ -1,43 +1,42 @@
 <!-- src/components/CreateNewCommunity.vue -->
 <template>
-    <div class="create-community-section card shadow-sm">
-      <div class="card-header">
+    <div class="create-community-section card">
+      <div>
         <h2>Créer une Nouvelle Communauté</h2>
       </div>
-      <div class="card-body">
-        <form @submit.prevent="createCommunity" class="create-community-form">
-          <div class="form-group">
-            <label for="communityName">Nom de la Communauté</label>
-            <input
+      <div class="">
+        <form @submit.prevent="createCommunity" >
+          <div class="container">
+            <label for="communityName" class="text-white">Nom de la Communauté</label>
+            <InputText
               type="text"
               id="communityName"
               v-model="newCommunity.name"
               required
               placeholder="Entrez le nom de la communauté"
-              class="form-control"
+              class="w-full mt-2"
             />
           </div>
+          <br>
           <div class="form-group">
-            <label for="communityDescription">Description</label>
-            <textarea
+            <label class="text-white" for="communityDescription">Description</label>
+            <Textarea
               id="communityDescription"
               v-model="newCommunity.description"
               rows="3"
               required
               placeholder="Entrez la description de la communauté"
-              class="form-control"
-            ></textarea>
+              class="w-full mt-2"
+            ></Textarea>
           </div>
+          <br>
           <div class="form-group">
-            <label for="communityType">Type de Communauté</label>
-            <select id="communityType" v-model="newCommunity.type" required class="form-control">
-              <option value="" disabled>-- Sélectionnez le type --</option>
-              <option value="public">Public</option>
-              <option value="closed">Fermé</option>
-              <option value="hidden">Caché</option>
-            </select>
+            <label class="text-white" for="communityType">Type de Communauté</label>
+            <Dropdown id="communityType" optionLabel="name" :options="types" optionValue="code" placeholder="Sélectionnez le type" v-model="newCommunity.type" required class="w-full mb-4 mt-2" >
+              <option value="" disabled></option>
+            </Dropdown>
           </div>
-          <button type="submit" class="btn btn-primary btn-block">Créer</button>
+          <Button type="submit" class="btn btn-primary text-center align-items-center">Créer</Button>
         </form>
       </div>
     </div>
@@ -48,8 +47,22 @@
   import { ref } from "vue";
   import { db, auth } from "@/firebase.js";
   import { ref as dbRef, push, set } from "firebase/database";
+  import InputText from 'primevue/inputtext';
+
   
   export default {
+    components: {
+      InputText
+    },
+    data() {
+      return {
+        types: [
+          { code: "public", name: "Public" },
+          { code: "ferme", name: "Fermé" },
+          { code: "cache", name: "Caché" }
+        ]
+      };
+    },
     name: "CreateNewCommunity",
     emits: ["communityCreated", "showToast"], // Ajout de l'émission de 'showToast'
     setup(props, { emit }) {
@@ -122,7 +135,6 @@
   .create-community-form .form-control {
     padding: 0.75rem;
     font-size: 1rem;
-    border: 1px solid #cccccc;
     border-radius: 6px;
     width: 100%;
   }
