@@ -2,7 +2,6 @@
   <div>
     <Navbar />
     <ResumStageUserProfile class="mb-5" />
-    <AlertModal :visible="alertVisible" :message="alertMessage" @close="alertVisible = false" />
 
     <div class="w-full">
       <div class="container-fluid mt-4 justify-items-center">
@@ -47,7 +46,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="stage in filteredStages" :key="stage.IDENTIFIANT">
+                <tr v-for="stage in filteredStages" :key="getVoteID(stage)">
                   <td>
                     <a :href="`/institution/${stage.IDPlace}`" class="text-white2">
                       {{ stage.NomPlace }}
@@ -79,36 +78,36 @@
                   <!-- Cases à cocher pour les 5 choix -->
                   <td>
                     <input type="checkbox" :disabled="isChoiceDisabled(stage, 'choice1')"
-                           :checked="selectedChoices.choice1 === stage.IDENTIFIANT"
-                           @change="handleChoiceChange(stage.IDENTIFIANT, 'choice1')" />
+                      :checked="selectedChoices.choice1 === stage.IDENTIFIANT"
+                      @change="handleChoiceChange(stage.IDENTIFIANT, 'choice1')" />
                   </td>
                   <td>
                     <input type="checkbox" :disabled="isChoiceDisabled(stage, 'choice2')"
-                           :checked="selectedChoices.choice2 === stage.IDENTIFIANT"
-                           @change="handleChoiceChange(stage.IDENTIFIANT, 'choice2')" />
+                      :checked="selectedChoices.choice2 === stage.IDENTIFIANT"
+                      @change="handleChoiceChange(stage.IDENTIFIANT, 'choice2')" />
                   </td>
                   <td>
                     <input type="checkbox" :disabled="isChoiceDisabled(stage, 'choice3')"
-                           :checked="selectedChoices.choice3 === stage.IDENTIFIANT"
-                           @change="handleChoiceChange(stage.IDENTIFIANT, 'choice3')" />
+                      :checked="selectedChoices.choice3 === stage.IDENTIFIANT"
+                      @change="handleChoiceChange(stage.IDENTIFIANT, 'choice3')" />
                   </td>
                   <td>
                     <input type="checkbox" :disabled="isChoiceDisabled(stage, 'choice4')"
-                           :checked="selectedChoices.choice4 === stage.IDENTIFIANT"
-                           @change="handleChoiceChange(stage.IDENTIFIANT, 'choice4')" />
+                      :checked="selectedChoices.choice4 === stage.IDENTIFIANT"
+                      @change="handleChoiceChange(stage.IDENTIFIANT, 'choice4')" />
                   </td>
                   <td>
                     <input type="checkbox" :disabled="isChoiceDisabled(stage, 'choice5')"
-                           :checked="selectedChoices.choice5 === stage.IDENTIFIANT"
-                           @change="handleChoiceChange(stage.IDENTIFIANT, 'choice5')" />
+                      :checked="selectedChoices.choice5 === stage.IDENTIFIANT"
+                      @change="handleChoiceChange(stage.IDENTIFIANT, 'choice5')" />
                   </td>
                   <!-- Colonnes supplémentaires avec des chiffres initialisés à 0 -->
-                  <td>{{ voteCounts[stage.Unit]?.Votation1 || 0 }}</td>
-                  <td>{{ voteCounts[stage.Unit]?.Votation2 || 0 }}</td>
-                  <td>{{ voteCounts[stage.Unit]?.Votation3 || 0 }}</td>
-                  <td>{{ voteCounts[stage.Unit]?.Votation4 || 0 }}</td>
-                  <td>{{ voteCounts[stage.Unit]?.Votation5 || 0 }}</td>
-                  <td>{{ voteCounts[stage.Unit]?.VotationTotal || 0 }}</td>
+                  <td>{{ voteCounts[stage.IDENTIFIANT]?.Votation1 || 0 }}</td>
+                  <td>{{ voteCounts[stage.IDENTIFIANT]?.Votation2 || 0 }}</td>
+                  <td>{{ voteCounts[stage.IDENTIFIANT]?.Votation3 || 0 }}</td>
+                  <td>{{ voteCounts[stage.IDENTIFIANT]?.Votation4 || 0 }}</td>
+                  <td>{{ voteCounts[stage.IDENTIFIANT]?.Votation5 || 0 }}</td>
+                  <td>{{ voteCounts[stage.IDENTIFIANT]?.VotationTotal || 0 }}</td>
                 </tr>
               </tbody>
             </table>
@@ -131,7 +130,7 @@
         <!-- Bouton Voter / Revoter -->
         <div class="mt-4 text-center">
           <button class="btn btn-primary" @click="submitVotes" :disabled="!allChoicesSelected"
-                  :class="{ 'opacity-50 cursor-not-allowed': !allChoicesSelected }">
+            :class="{ 'opacity-50 cursor-not-allowed': !allChoicesSelected }">
             {{ hasVoted ? 'Revoter' : 'Voter' }}
           </button>
           <p v-if="!allChoicesSelected" class="text-red-500 mt-2">
@@ -163,15 +162,12 @@ import { ref, onValue, set, get, update } from "firebase/database";
 import { onAuthStateChanged } from "firebase/auth";
 import Navbar from '@/components/Utils/Navbar.vue';
 import ResumStageUserProfile from '@/components/UserProfile/ResumStageUserProfile.vue';
-import AlertModal from './AlertModal.vue'; // Import du composant AlertModal
 
 export default {
   name: "VotationView",
   components: {
     Navbar,
-    ResumStageUserProfile,
-    AlertModal
-
+    ResumStageUserProfile
   },
   data() {
     return {
@@ -196,8 +192,6 @@ export default {
         choice5: null,
       },
       voteCounts: {}, // Object to hold vote counts per stage
-      alertVisible: false, // Propriété pour contrôler la visibilité du modal
-      alertMessage: '' // Propriété pour stocker le message à afficher
     };
   },
   computed: {
@@ -227,14 +221,6 @@ export default {
     }
   },
   methods: {
-
-
-    showAlertModal(message) {
-      this.alertMessage = message;
-      this.alertVisible = true;
-    },
-
-
     /**
      * Récupère les données de l'institution à partir de son ID.
      * @param {string} institutionId - L'ID de l'institution.
@@ -270,6 +256,21 @@ export default {
       });
       return missing;
     },
+
+
+    /**
+ * Génère un ID de vote unique basé sur le nom de l'institution et le domaine.
+ * @param {Object} stage - Le stage pour lequel générer l'ID.
+ * @returns {string} L'ID de vote généré.
+ */
+    getVoteID(stage) {
+      // Remplacez les espaces et caractères spéciaux pour garantir un ID valide
+      const sanitizedNomPlace = stage.NomPlace.replace(/\s+/g, '_').replace(/[^\w\-]/g, '');
+      const sanitizedDomaine = stage.Domaine.replace(/\s+/g, '_').replace(/[^\w\-]/g, '');
+      return `${sanitizedNomPlace}_${sanitizedDomaine}`;
+    },
+
+
     /**
      * Détermine si un stage est sélectionnable.
      * @param {Object} stage - Le stage à évaluer.
@@ -327,7 +328,7 @@ export default {
      */
     async submitVotes() {
       if (!this.allChoicesSelected) {
-        this.showAlertModal("Veuillez sélectionner les 5 choix avant de voter.");
+        alert("Veuillez sélectionner les 5 choix avant de voter.");
         return;
       }
 
@@ -353,10 +354,9 @@ export default {
                   studentId: id,
                   studentName: this.currentStudent.Nom,
                   studentFirstName: this.currentStudent.Prenom,
-                  selectedStageName: stage.NomPlace,
+                  selectedStageName: stage.NomPlace + stage.Domaine,
                   selectedStageLieu: stage.Lieu,
                   selectedStageDomaine: stage.Domaine,
-              //    numberPlace: this.selectedPFP === "PFP1A" ? stage.PFP1A : stage.PFP1B, // Utilisation dynamique
                   selectedStageDetails: {
                     FR: stage.FR,
                     ALL: stage.ALL,
@@ -370,7 +370,7 @@ export default {
                 };
 
                 // Enregistrer le choix dans Firebase
-                await set(votationRef, votationData);
+                await update(votationRef, votationData);
 
 
                 let stageRef = "";
@@ -396,20 +396,20 @@ export default {
           try {
             const results = await Promise.all(votationPromises);
             this.voteResult = results.filter(result => result !== null);
-            this.showAlertModal("Vos votes ont été soumis avec succès !");
+            alert("Vos votes ont été soumis avec succès !");
             // Optionnel: Réinitialiser les choix après soumission
             this.resetChoices();
             // Re-fetch vote counts pour mettre à jour l'affichage
             this.fetchVoteCounts();
           } catch (error) {
             console.error("Erreur lors de la soumission des votes:", error);
-            this.showAlertModal("Une erreur est survenue lors de la soumission de vos votes. Veuillez réessayer.");
+            alert("Une erreur est survenue lors de la soumission de vos votes. Veuillez réessayer.");
           }
         } else {
-          this.showAlertModal("Erreur: Informations de l'étudiant manquantes.");
+          alert("Erreur: Informations de l'étudiant manquantes.");
         }
       } else {
-        this.showAlertModal("Veuillez sélectionner au moins un choix de stage.");
+        alert("Veuillez sélectionner au moins un choix de stage.");
       }
     },
     /**
@@ -429,25 +429,29 @@ export default {
      * @param {string} stageId - L'ID du stage.
      * @param {number} choiceNumber - Le numéro du choix (1 à 5).
      */
-     incrementVoteCount(stageId, choiceNumber) {
-  if (!this.voteCounts[stageId]) {
-    // Crée une nouvelle entrée directement
-    this.voteCounts[stageId] = {
-      Votation1: 0,
-      Votation2: 0,
-      Votation3: 0,
-      Votation4: 0,
-      Votation5: 0,
-      VotationTotal: 0,
-    };
-  }
+    incrementVoteCount(stageId, choiceNumber) {
+      // Vérifie si le stageId existe dans voteCounts
+      if (!this.voteCounts[stageId]) {
+        // Ajoute une nouvelle entrée pour stageId avec des valeurs par défaut
+        this.voteCounts[stageId] = {
+          Votation1: 0,
+          Votation2: 0,
+          Votation3: 0,
+          Votation4: 0,
+          Votation5: 0,
+          VotationTotal: 0,
+        };
+      }
 
-  const votKey = `Votation${choiceNumber}`;
-  if (this.voteCounts[stageId][votKey] !== undefined) {
-    this.voteCounts[stageId][votKey] += 1;
-    this.voteCounts[stageId]['VotationTotal'] += 1;
-  }
-},
+      // Détermine la clé de vote basée sur le numéro de choix
+      const votKey = `Votation${choiceNumber}`;
+
+      // Vérifie si la clé de vote existe et incrémente les compteurs
+      if (this.voteCounts[stageId][votKey] !== undefined) {
+        this.voteCounts[stageId][votKey] += 1;
+        this.voteCounts[stageId].VotationTotal += 1;
+      }
+    },
     /**
      * Récupère les données des étudiants en fonction de la classe et du PFP sélectionnés.
      */
@@ -493,17 +497,15 @@ export default {
             if (isNaN(pfpValue) || pfpValue < 1) {
               return null;
             }
-            console.log("kex "+ key);
+
             const institutionId = place.InstitutionId || place.IDPlace; // Prendre en compte InstitutionId ou IDPlace
             const institutionData = await this.fetchInstitutionData(institutionId);
-            const keyid = institutionData.InstitutionId || institutionData.IDPlace || institutionData.key; 
             return {
               IDENTIFIANT: key,
               NomPlace: institutionData.Name || '',
               Lieu: institutionData.Locality || '',
-              IDPlace: institutionData.InstitutionId || institutionData.IDPlace || institutionData.key || '',
+              IDPlace: institutionData.InstitutionId || institutionData.IDPlace || '',
               Domaine: place.NomPlace || '', // Correction ici
-              Unit:  keyid + "-"+place.NomPlace  || '', // Correction ici
               PFP1A: pfpValue, // Utilisation de PFP1A
               FR: place.FR || false,
               ALL: place.ALL || place.DE || false, // Vérifiez si 'ALL' correspond à 'ALL' dans vos données
@@ -557,64 +559,57 @@ export default {
     /**
      * Récupère les comptes de votes pour chaque stage.
      */
-     async fetchVoteCounts() {
-  let votationRef = "";
-  if (this.selectedPFP === "PFP1A") {
-    votationRef = ref(db, `VotationPFP1A`);
-  } else if (this.selectedPFP === "PFP1B") {
-    votationRef = ref(db, `VotationPFP1B`);
-  }
+    async fetchVoteCounts() {
+      let votationRef = "";
+      if (this.selectedPFP === "PFP1A") {
+        votationRef = ref(db, `VotationPFP1A`);
+      } else if (this.selectedPFP === "PFP1B") {
+        votationRef = ref(db, `VotationPFP1B`);
+      }
+      onValue(votationRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const votations = snapshot.val();
+          const counts = {};
 
-  onValue(votationRef, (snapshot) => {
-    if (snapshot.exists()) {
-      const votations = snapshot.val();
-      const counts = {};
+          for (const studentId in votations) {
+            const studentVotations = votations[studentId].choices;
+            if (studentVotations) {
+              for (const choiceKey in studentVotations) {
+                const vote = studentVotations[choiceKey];
+                if (vote && vote.selectedStageName) {
+                  const stage = this.stages.find(s => s.NomPlace === vote.selectedStageName);
+                  if (stage) {
+                    const identifiant = stage.IDENTIFIANT;
+                    const votNum = parseInt(vote.choice, 10); // Conversion en nombre
+                    if (isNaN(votNum) || votNum < 1 || votNum > 5) continue;
 
-      for (const studentId in votations) {
-        const studentVotations = votations[studentId].choices;
-        if (studentVotations) {
-          for (const choiceKey in studentVotations) {
-            const vote = studentVotations[choiceKey];
-            if (vote && vote.selectedStageName && vote.selectedStageLieu && vote.selectedStageDomaine) {
-              // Trouver le stage correspondant
-              const stage = this.stages.find(s => 
-                s.NomPlace === vote.selectedStageName &&
-                s.Lieu === vote.selectedStageLieu &&
-                s.Domaine === vote.selectedStageDomaine
-              );
-
-              if (stage) {
-                // Construire la clé ra à partir de l'id de l'institution et du domaine
-                const ra = stage.IDPlace + "-" + vote.selectedStageDomaine;
-
-                const votNum = parseInt(vote.choice, 10);
-                if (isNaN(votNum) || votNum < 1 || votNum > 5) continue;
-
-                if (!counts[stage.Unit]) {
-                  counts[ra] = {
-                    Votation1: 0,
-                    Votation2: 0,
-                    Votation3: 0,
-                    Votation4: 0,
-                    Votation5: 0,
-                    VotationTotal: 0,
-                  };
+                    if (!counts[identifiant]) {
+                      counts[identifiant] = {
+                        Votation1: 0,
+                        Votation2: 0,
+                        Votation3: 0,
+                        Votation4: 0,
+                        Votation5: 0,
+                        VotationTotal: 0,
+                      };
+                    }
+                    const votKey = `Votation${votNum}`;
+                    if (counts[identifiant][votKey] !== undefined) {
+                      counts[identifiant][votKey] += 1;
+                      counts[identifiant]['VotationTotal'] += 1;
+                    }
+                  }
                 }
-                const votKey = `Votation${votNum}`;
-                counts[ra][votKey] += 1;
-                counts[ra]['VotationTotal'] += 1;
               }
             }
           }
-        }
-      }
 
-      this.voteCounts = counts;
-    } else {
-      this.voteCounts = {};
-    }
-  });
-},
+          this.voteCounts = counts;
+        } else {
+          this.voteCounts = {};
+        }
+      });
+    },
     /**
      * Met à jour les données de l'étudiant dans Firebase.
      * @param {Object} etudiant - L'étudiant à mettre à jour.
@@ -685,7 +680,7 @@ export default {
                   // Alternativement, vous pouvez demander à l'utilisateur de choisir
                 } else {
                   // Aucun PFP sélectionné, gérer le cas (par exemple, afficher un message d'erreur)
-                  this.showAlertModal("Aucun PFP n'est sélectionné pour cet utilisateur.");
+                  alert("Aucun PFP n'est sélectionné pour cet utilisateur.");
                   return;
                 }
                 console.log("PFP sélectionné: " + selectedPFP);
@@ -1118,7 +1113,7 @@ input[type="checkbox"] {
 /* Styles pour la section des résultats du vote */
 .vote-result-container {
   padding: 20px;
- /* background-color: var(--surface-card);*/
+  /* background-color: var(--surface-card);*/
   border-radius: 8px;
 }
 
@@ -1148,6 +1143,7 @@ input[type="checkbox"] {
 .vote-choice p strong {
   color: #333333;
 }
+
 .text-white2 {
   color: var(--text-color);
 }
@@ -1185,7 +1181,9 @@ input[type="checkbox"] {
 }
 
 .hover-highlight:hover {
-  background-color: var(--surface-hover); /* Couleur de surlignement */
-  color: var(--text-color-secondary); /* Couleur du texte surligné */
+  background-color: var(--surface-hover);
+  /* Couleur de surlignement */
+  color: var(--text-color-secondary);
+  /* Couleur du texte surligné */
 }
 </style>
