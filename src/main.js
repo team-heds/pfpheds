@@ -115,6 +115,9 @@ import "primeflex/primeflex.css";
 
 const app = createApp(App);
 
+// Ignorer l'élément personnalisé 'elevenlabs-convai'
+app.config.compilerOptions.isCustomElement = (tag) => tag === "elevenlabs-convai";
+
 app.use(router);
 app.use(PrimeVue, { ripple: true });
 app.use(ToastService);

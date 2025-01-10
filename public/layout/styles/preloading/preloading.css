@@ -21,10 +21,10 @@ body {
   line-height: 150px;
   font-family: sans-serif;
   font-size: 20px;
-  color: #6366F1;
+  color: var(--primary-color);
   letter-spacing: 4px;
   text-transform: uppercase;
-  text-shadow: 0 0 10px #6366F1;
+  text-shadow: var(--primary-color) 0 0 10px;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
 }
 .layout-preloader-container .layout-preloader:before {
@@ -35,8 +35,8 @@ body {
   width: 100%;
   height: 100%;
   border: 3px solid transparent;
-  border-top: 3px solid #6366F1;
-  border-right: 3px solid #6366F1;
+  border-top: 3px solid var(--primary-color);
+  border-right: 3px solid var(--primary-color);
   border-radius: 50%;
   animation: preloader-rotate-c 1s linear infinite;
 }
@@ -57,10 +57,10 @@ body {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #6366F1;
+  background: var(--primary-color);
   top: -6px;
   right: -8px;
-  box-shadow: 0 0 20px #6366F1;
+  box-shadow: 0 0 20px var(--primary-color);
 }
 
 @keyframes preloader-rotate-c {

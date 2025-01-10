@@ -18,13 +18,11 @@
     <transition name="fade">
       <div v-show="showTextareaCard" class="post-textarea-card">
         <div class="post-form">
-          <!-- Zone de texte -->
-          <textarea
+          <!-- Nouvelle zone de texte riche -->
+          <TextAreaComponent
             v-model="newPost"
             @input="detectTags"
-            class="simple-textarea"
-            placeholder="Commencer un post"
-          ></textarea>
+          />
 
           <!-- Affichage des tags détectés -->
           <div v-if="detectedTags.length > 0" class="tags-container p-1">
@@ -87,7 +85,9 @@
                 controls
                 class="media-item"
               ></video>
-              <button @click="removeMedia(index)" class="remove-media-btn">✖</button>
+              <button @click="removeMedia(index)" class="remove-media-btn">
+                ✖
+              </button>
             </div>
           </div>
         </div>
@@ -109,6 +109,11 @@
 </template>
 
 <script>
+/**
+ * Exemple complet de MainFeed avec un composant "TextAreaComponent" en remplacement
+ * de l'ancienne zone de texte. On conserve l'intégralité de la logique.
+ */
+
 import { ref, onMounted, watch } from "vue";
 import { db, auth } from "../../../../firebase.js";
 import { onAuthStateChanged } from "firebase/auth";
@@ -117,7 +122,9 @@ import PostItem from "@/components/Social/PostItem.vue";
 import Tag from "primevue/tag";
 import Button from "primevue/button";
 import FileUpload from "primevue/fileupload";
-import FilterComponent from "@/components/Social/FilterComponent.vue"; // Import du FilterComponent
+import FilterComponent from "@/components/Social/FilterComponent.vue";
+import TextAreaComponent from "./TextAreaComponent.vue"; // <-- Import du nouveau composant
+
 import {
   ref as dbRef,
   push,
@@ -146,7 +153,8 @@ export default {
     Tag,
     Button,
     FileUpload,
-    FilterComponent, // Enregistrement du FilterComponent
+    FilterComponent,
+    TextAreaComponent, // <-- Enregistrement du nouveau composant
   },
   props: {
     currentUser: Object,
@@ -155,7 +163,7 @@ export default {
     // Références réactives
     const posts = ref([]);
     const filteredPosts = ref([]);
-    const newPost = ref("");
+    const newPost = ref("");               // <-- On gardera le texte (HTML) renvoyé par l'Editor
     const detectedTags = ref([]);
     const loading = ref(false);
     const postsPerPage = ref(10);
@@ -176,7 +184,7 @@ export default {
     const selectedFilterValue = ref(null);
     const availableHashtags = ref([]);
     const availableCommunities = ref([]);
-    const userCommunities = ref([]); // Communautés de l'utilisateur
+    const userCommunities = ref([]);
     const appliedFilter = ref({
       type: null,
       value: null,
@@ -184,7 +192,11 @@ export default {
 
     // Watcher pour détecter les tags dans le nouveau post
     watch(newPost, (value) => {
-      detectedTags.value = extractTags(value);
+      // On peut analyser 'value' (qui est un HTML) pour extraire les tags (# / @).
+      // Ici on récupère le texte brut ou on fait une petite regex
+      // Pour simplifier, on remplace les balises <...> par du vide avant la recherche.
+      const textWithoutHtml = value.replace(/<[^>]+>/g, "");
+      detectedTags.value = extractTags(textWithoutHtml);
     });
 
     // Fonction pour extraire les hashtags et mentions
@@ -195,7 +207,10 @@ export default {
 
     // Fonction pour publier un message
     const postMessage = async () => {
-      if (newPost.value.trim() === "" && selectedMedia.value.length === 0) {
+      // Vérifie si le champ d’édition est vide et s’il n’y a pas de média
+      // Notez que "newPost.value" est du HTML, on peut retirer les balises pour vérifier le contenu
+      const textWithoutHtml = newPost.value.replace(/<[^>]+>/g, "").trim();
+      if (textWithoutHtml === "" && selectedMedia.value.length === 0) {
         console.error("Aucun contenu à publier.");
         return;
       }
@@ -217,7 +232,7 @@ export default {
         const mentionsObject = detectedTags.value
           .filter((tag) => tag.startsWith("@"))
           .reduce((acc, tag) => {
-            const cleanMention = tag.substring(1); // Supprime le '@' de la mention
+            const cleanMention = tag.substring(1); // Supprime le '@'
             acc[cleanMention] = true;
             return acc;
           }, {});
@@ -225,6 +240,7 @@ export default {
         const postData = {
           Author: authorName,
           IdUser: localCurrentUser.value.uid,
+          // 'Content' est maintenant du HTML
           Content: newPost.value,
           Timestamp: serverTimestamp(),
           Hashtags: hashtagsObject,
@@ -260,12 +276,12 @@ export default {
 
       for (const media of selectedMedia.value) {
         try {
-          const mediaRef = storageRef(
+          const fileName = `${Date.now()}_${media.file.name}`;
+          const mediaRf = storageRef(
             storage,
-            `posts/${localCurrentUser.value.uid}/${Date.now()}_${media.file.name}`
+            `posts/${localCurrentUser.value.uid}/${fileName}`
           );
-
-          const uploadResult = await uploadBytes(mediaRef, media.file);
+          const uploadResult = await uploadBytes(mediaRf, media.file);
           const downloadUrl = await getDownloadURL(uploadResult.ref);
           uploadedMediaUrls.push(downloadUrl);
         } catch (error) {
@@ -318,18 +334,19 @@ export default {
           }));
         }
 
-        // Récupérer les communautés dont l'utilisateur est membre
+        // Récupérer les communautés de l'utilisateur
         if (localCurrentUser.value) {
           const userCommunitiesSnapshot = await get(
             child(dbRef(db), `Users/${localCurrentUser.value.uid}/communities`)
           );
           if (userCommunitiesSnapshot.exists()) {
             const userCommunitiesData = userCommunitiesSnapshot.val();
-            userCommunities.value = Object.keys(userCommunitiesData).map((comm) => ({
-              label: comm,
-              value: comm,
-            }));
-            console.log("Communautés de l'utilisateur :", userCommunities.value); // Log de débogage
+            userCommunities.value = Object.keys(userCommunitiesData).map(
+              (comm) => ({
+                label: comm,
+                value: comm,
+              })
+            );
           } else {
             console.warn("Aucune communauté trouvée pour l'utilisateur.");
           }
@@ -341,37 +358,29 @@ export default {
 
     // Fonction appelée lors du changement de type de filtre
     const onFilterTypeChange = (value) => {
-
       if (value === "hashtag") {
         filterOptions.value = availableHashtags.value;
       } else if (value === "community") {
-        console.log("yaaa " +  userCommunities.value[1].name);
-        filterOptions.value = userCommunities.value; // Utiliser les communautés de l'utilisateur
+        filterOptions.value = userCommunities.value;
       } else {
         filterOptions.value = [];
         selectedFilterValue.value = null;
       }
-
-      console.log("Type de filtre sélectionné :", value); // Log de débogage
-      console.log("Options de filtre mises à jour :", filterOptions.value); // Log de débogage
     };
 
     // Méthodes pour mettre à jour les filtres depuis le FilterComponent
     const updateSelectedFilterType = (value) => {
       selectedFilterType.value = value;
-      console.log("Selected Filter Type updated:", value); // Log de débogage
     };
 
     const updateSelectedFilterValue = (value) => {
       selectedFilterValue.value = value;
-      console.log("Selected Filter Value updated:", value); // Log de débogage
     };
 
     // Fonction pour appliquer le filtre
     const applyFilter = () => {
       appliedFilter.value.type = selectedFilterType.value;
       appliedFilter.value.value = selectedFilterValue.value;
-      console.log("Application du filtre :", appliedFilter.value); // Log de débogage
       reloadPosts();
     };
 
@@ -381,7 +390,6 @@ export default {
       selectedFilterValue.value = null;
       appliedFilter.value = { type: null, value: null };
       filterOptions.value = [];
-      console.log("Filtres réinitialisés."); // Log de débogage
       reloadPosts();
     };
 
@@ -391,7 +399,6 @@ export default {
       let q;
 
       try {
-        // Référence de base pour les posts
         let postsRefQuery = dbRef(db, "Posts");
 
         // Appliquer le filtre si nécessaire
@@ -403,16 +410,19 @@ export default {
             equalTo(true),
             limitToLast(postsPerPage.value)
           );
-        } else if (appliedFilter.value.type === "community" && appliedFilter.value.value) {
+        } else if (
+          appliedFilter.value.type === "community" &&
+          appliedFilter.value.value
+        ) {
           // Filtrer par Communauté
           q = query(
             postsRefQuery,
-            orderByChild("Community"), // Assurez-vous que chaque post a un champ 'Community'
+            orderByChild("Community"),
             equalTo(appliedFilter.value.value),
             limitToLast(postsPerPage.value)
           );
         } else {
-          // Pas de filtre, récupérer les posts les plus récents
+          // Pas de filtre
           q = query(
             postsRefQuery,
             orderByChild("Timestamp"),
@@ -420,9 +430,12 @@ export default {
           );
         }
 
-        // Appliquer le timestamp pour la pagination si nécessaire
+        // Appliquer la pagination si un oldestTimestamp existe
         if (oldestTimestamp.value) {
-          if (appliedFilter.value.type === "hashtag" || appliedFilter.value.type === "community") {
+          if (
+            appliedFilter.value.type === "hashtag" ||
+            appliedFilter.value.type === "community"
+          ) {
             q = query(
               postsRefQuery,
               orderByChild(
@@ -431,7 +444,9 @@ export default {
                   : "Community"
               ),
               endAt(
-                appliedFilter.value.type === "hashtag" ? true : appliedFilter.value.value,
+                appliedFilter.value.type === "hashtag"
+                  ? true
+                  : appliedFilter.value.value,
                 oldestTimestamp.value - 1
               ),
               limitToLast(postsPerPage.value)
@@ -463,13 +478,11 @@ export default {
 
           // Mise à jour des posts
           posts.value = [...posts.value, ...postsArray];
-          console.log("Posts récupérés :", postsArray); // Log de débogage
 
           // Mettre à jour oldestTimestamp
           if (posts.value.length > 0) {
             const oldestPost = posts.value[posts.value.length - 1];
             oldestTimestamp.value = oldestPost.Timestamp;
-            console.log("Oldest Timestamp mis à jour :", oldestTimestamp.value); // Log de débogage
           }
 
           applyFilters();
@@ -490,15 +503,16 @@ export default {
           (post) =>
             post.Hashtags && post.Hashtags[appliedFilter.value.value]
         );
-      } else if (appliedFilter.value.type === "community" && appliedFilter.value.value) {
+      } else if (
+        appliedFilter.value.type === "community" &&
+        appliedFilter.value.value
+      ) {
         filteredPosts.value = posts.value.filter(
           (post) => post.Community === appliedFilter.value.value
         );
       } else {
         filteredPosts.value = posts.value;
       }
-
-      console.log("Posts filtrés :", filteredPosts.value); // Log de débogage
     };
 
     // Fonction pour charger plus de posts (infinite scroll)
@@ -519,14 +533,12 @@ export default {
     onMounted(() => {
       if (props.currentUser) {
         localCurrentUser.value = { ...props.currentUser };
-        console.log("Utilisateur connecté :", localCurrentUser.value); // Log de débogage
         fetchAvailableFilters();
         fetchPosts();
       } else {
         onAuthStateChanged(auth, (user) => {
           if (user) {
             localCurrentUser.value = user;
-            console.log("Utilisateur connecté via onAuthStateChanged :", localCurrentUser.value); // Log de débogage
             fetchAvailableFilters();
             fetchPosts();
           } else {
@@ -554,8 +566,9 @@ export default {
       selectedFilterValue,
       availableHashtags,
       availableCommunities,
-      userCommunities, // Inclure dans le retour si nécessaire
+      userCommunities,
       appliedFilter,
+      // Méthodes
       extractTags,
       postMessage,
       uploadMedia,
@@ -570,7 +583,6 @@ export default {
       applyFilters,
       loadMorePosts,
       handleScroll,
-      // Méthodes pour mettre à jour les filtres
       updateSelectedFilterType,
       updateSelectedFilterValue,
     };
@@ -583,7 +595,7 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  height: 100vh; /* Assurez-vous que le container est scrollable */
+  height: 100vh;
   overflow-y: auto;
 }
 
@@ -601,7 +613,7 @@ export default {
 .actions-container {
   display: flex;
   align-items: center;
-  gap: 1rem; /* Espace entre les deux boutons */
+  gap: 1rem;
   margin-top: 1rem;
 }
 
@@ -613,7 +625,7 @@ export default {
   background-color: var(--surface-border);
   border: none;
   border-radius: 0.5rem;
-  padding: 0.5rem 1rem; /* Augmenter le padding pour inclure le label */
+  padding: 0.5rem 1rem;
   cursor: pointer;
   transition: background-color 0.3s, color 0.3s;
 }
@@ -624,36 +636,16 @@ export default {
 }
 
 .upload-button .pi {
-  font-size: 1.2rem; /* Ajuster la taille de l'icône si nécessaire */
-  margin-right: 0.5rem; /* Espace entre l'icône et le label */
+  font-size: 1.2rem;
+  margin-right: 0.5rem;
 }
 
 /* Bouton de publication */
 .publish-button {
-  flex-grow: 1; /* Prend le reste de l'espace disponible */
+  flex-grow: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-/* Zone de texte */
-.simple-textarea {
-  width: 100%;
-  min-height: 120px;
-  max-height: 300px;
-  resize: vertical;
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--surface-border);
-  background-color: var(--surface-card);
-  border-radius: 0.5rem;
-  font-size: 1rem;
-  font-family: inherit;
-  outline: none;
-  box-sizing: border-box;
-}
-
-.simple-textarea:focus {
-  border-color: var(--primary-color);
 }
 
 .tags-container {
@@ -695,19 +687,8 @@ export default {
   justify-content: center;
 }
 
-/* Styles pour le bouton "Publier" */
-.publish-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 /* Responsive mobile */
 @media (max-width: 768px) {
-  .simple-textarea {
-    max-height: 200px;
-  }
-
   .actions-container {
     flex-direction: column;
     align-items: stretch;
@@ -719,5 +700,3 @@ export default {
   }
 }
 </style>
- 
- 

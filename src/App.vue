@@ -1,3 +1,4 @@
+<!-- src/App.vue -->
 <template>
   <div id="app">
     <!-- Cercles de fond -->
@@ -10,16 +11,22 @@
     <div class="content">
       <Toast />
       <router-view />
+
+      <!-- Intégration du widget ConvAI -->
+      <ConvaiWidget />
     </div>
   </div>
 </template>
 
 <script>
 import Toast from 'primevue/toast';
+import ConvaiWidget from './components/ConvaiWidget.vue'; // Import du composant ConvaiWidget
+
 export default {
   name: "App",
   components: {
     Toast,
+    ConvaiWidget, // Déclaration du composant
   },
 };
 </script>

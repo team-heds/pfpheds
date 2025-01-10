@@ -102,7 +102,7 @@
       </div>
 
       <div class="col-12 md:col-4 lg:col-5 py-3 lg:pl-6">
-        <div class="text-900 font-bold text-3xl mb-4 mt-2">Map</div>
+        <div class="text-900 font-bold text-3xl mb-4 mt-2"></div>
         <div id="map" class="shadow map-container"></div>
       </div>
     </div>
@@ -138,6 +138,7 @@ export default {
   methods: {
     initMap(lat, lng) {
       if (this.map) {
+        this.map.remove();
         this.map.remove();
       }
       this.map = L.map('map', {

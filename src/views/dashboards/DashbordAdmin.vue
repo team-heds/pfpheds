@@ -16,7 +16,6 @@ import Dropdown from 'primevue/dropdown';
 import Tag from 'primevue/tag';
 import Rating from 'primevue/rating';
 import Knob from 'primevue/knob';
-import AppTopbar from '@/layout/AppTopbar.vue';
 import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
 

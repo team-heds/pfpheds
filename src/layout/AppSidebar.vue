@@ -35,7 +35,7 @@ const anchor = () => {
     <div class="sidebar-header">
       <router-link :to="{ name: 'DashbordAdmin' }" class="app-logo">
         <a href="/">
-        <img class="img-heds" src="../../public/assets/images/FR-DE_HEdS.png" alt="Description">
+        <img class="img-heds" src="../../public/assets/images/FR-DE_HEdS_rvb_neg.png" alt="Description">
         </a>
       </router-link>
       <button class="layout-sidebar-anchor p-link z-2 mb-2" type="button" @click="anchor()"></button>
