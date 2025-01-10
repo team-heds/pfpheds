@@ -79,23 +79,21 @@ watch(
 <style scoped>
 .textarea-component {
   width: 100%;
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 1rem;
+  max-width: 10000px;
+
+
 }
 
 .editor-container {
   position: relative;
   border-radius: 0.5rem;
-  background: linear-gradient(145deg, #2a2a40, #1c1c30); /* Fond subtilement dégradé */
-  padding: 1rem;
-  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2); /* Ombrage plus doux */
+
 }
 
 .custom-editor {
   border: none; /* Suppression des bordures rigides */
   border-radius: 0.5rem;
-  background-color: #2e2e40; /* Fond légèrement contrasté */
+  background-color : var(--surface-card);
   overflow: hidden;
   color: #fff; /* Texte blanc */
 }
@@ -105,7 +103,7 @@ watch(
   padding: 1rem; /* Marges internes */
   font-family: 'Inter', sans-serif; /* Typographie moderne */
   font-size: 1rem;
-  background-color: #2e2e40;
+  background-color : var(--surface-card);
   color: #fff; /* Texte blanc */
 }
 
