@@ -3,7 +3,7 @@
   <div class="flex flex-nowrap justify-content-between align-items-center border-1 surface-border border-round p-3 cursor-pointer select-none hover:surface-hover transition-colors transition-duration-150" tabindex="0">
     <div class="flex align-items-center">
       <div class="relative md:mr-3">
-        <img :src="user.PhotoURL || 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/avatar1.jpg?alt=media&token=4015f4c6-4abe-446d-8cef-9e54b8257522'"  :alt="userDisplayName" class="w-3rem h-3rem border-circle shadow-4" />
+        <img :src="user.PhotoURL || 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/avatar1.jpg?alt=media&token=4015f4c6-4abe-446d-8cef-9e54b8257522'" style="object-fit: cover;"  :alt="userDisplayName" class="w-3rem h-3rem border-circle shadow-4" />
         <span
           class="w-1rem h-1rem border-circle border-2 surface-border absolute"
           :class="{ 'bg-green-400': user.status === 'active', 'bg-red-400': user.status === 'busy', 'bg-yellow-400': user.status === 'away' }"

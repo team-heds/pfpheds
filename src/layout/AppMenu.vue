@@ -85,6 +85,11 @@ const model = ref([
                   to: '/pfp_details'
                 },
                 {
+                  label: 'Management Places',
+                  icon: 'pi pi-cog',
+                  to: '/management_places'
+                },
+                {
                   label: 'Tableau des Places',
                   icon: 'pi pi-fw pi-list',
                   to: '/place_details'

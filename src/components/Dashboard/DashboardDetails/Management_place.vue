@@ -1,94 +1,234 @@
+<!-- src/components/Social/ManagementPlace.vue -->
 <template>
   <div>
     <Navbar />
     <div class="page-title">
       <h1>Gestion des Places</h1>
     </div>
-    <div class="container mt-4">
+    <div class="container">
       <!-- Bouton Créer une nouvelle place -->
       <div class="text-center mb-3">
-        <button class="btn btn-primary" @click="openCreatePlaceModal">Créer une nouvelle place</button>
+        <Button label="Créer une nouvelle place" class="p-button-primary" @click="openCreatePlaceModal" />
       </div>
 
+      <!-- Barre de recherche -->
       <div class="text-center mb-3">
-        <input v-model="search" placeholder="Recherche par nom de place ou remarques"
-          class="form-control search-input w-50 mx-auto">
+        <InputText
+          v-model="search"
+          placeholder="Recherche par nom de place ou remarques"
+          class="w-50"
+          debounce="300"
+        />
       </div>
 
-      <div v-if="filteredPlaces.length > 0" class="table-responsive">
-        <table class="table table-striped align-middle p-4 mb-0 table-hover w-100 text-center">
-          <thead>
-            <tr>
-              <th scope="col" class="border-0">Nom</th>
-              <th scope="col" class="border-0">NomPlace</th>
-              <th scope="col" class="border-0">MSQ</th>
-              <th scope="col" class="border-0">SYSINT</th>
-              <th scope="col" class="border-0">NEURO-GER</th>
-              <th scope="col" class="border-0">AIGU</th>
-              <th scope="col" class="border-0">REHAB</th>
-              <th scope="col" class="border-0">AMBU</th>
-              <th scope="col" class="border-0">FR</th>
-              <th scope="col" class="border-0">DE</th>
-              <th scope="col" class="border-0">IT</th>
-              <th scope="col" class="border-0">ENG</th>
-              <th scope="col" class="border-0 small-column">PFP2</th>
-              <th scope="col" class="border-0 small-column">PFP1A</th>
-              <th scope="col" class="border-0 small-column">PFP1B</th>
-              <th scope="col" class="border-0 small-column">PFP4</th>
-              <th scope="col" class="border-0 small-column">PFP3</th>
-              <th scope="col" class="border-0">Accord Cadre</th>
-              <th scope="col" class="border-0">Canton</th>
-              <th scope="col" class="border-0">Catégorie</th>
-              <th scope="col" class="border-0">Convention</th>
-              <th scope="col" class="border-0">Lieu</th>
-              <th scope="col" class="border-0">Praticien Formateur</th>
-              <th scope="col" class="border-0 rounded-end">Remarques</th>
-              <th scope="col" class="border-0 rounded-end">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="place in filteredPlaces" :key="place.IdPlace">
-              <td>{{ place.Name }}</td>
-              <td><input v-model="place.NomPlace" @change="updatePlace(place, 'NomPlace', place.NomPlace)" class="form-control"></td>
-              <td><input type="checkbox" v-model="place.MSQ" @change="updatePlace(place, 'MSQ', place.MSQ)"></td>
-              <td><input type="checkbox" v-model="place.SYSINT" @change="updatePlace(place, 'SYSINT', place.SYSINT)"></td>
-              <td><input type="checkbox" v-model="place.NEUROGER" @change="updatePlace(place, 'NEURO-GER', place.NEUROGER)"></td>
-              <td><input type="checkbox" v-model="place.AIGU" @change="updatePlace(place, 'AIGU', place.AIGU)"></td>
-              <td><input type="checkbox" v-model="place.REHAB" @change="updatePlace(place, 'REHAB', place.REHAB)"></td>
-              <td><input type="checkbox" v-model="place.AMBU" @change="updatePlace(place, 'AMBU', place.AMBU)"></td>
-              <td><input type="checkbox" v-model="place.FR" @change="updatePlace(place, 'FR', place.FR)"></td>
-              <td><input type="checkbox" v-model="place.DE" @change="updatePlace(place, 'DE', place.DE)"></td>
-              <td><input type="checkbox" v-model="place.IT" @change="updatePlace(place, 'IT', place.IT)"></td>
-              <td><input type="checkbox" v-model="place.ENG" @change="updatePlace(place, 'ENG', place.ENG)"></td>
-              <td><input type="text" v-model="place.PFP2" @change="updatePlace(place, 'PFP2', place.PFP2)" class="form-control small-input"></td>
-              <td><input type="text" v-model="place.PFP1A" @change="updatePlace(place, 'PFP1A', place.PFP1A)" class="form-control small-input"></td>
-              <td><input type="text" v-model="place.PFP1B" @change="updatePlace(place, 'PFP1B', place.PFP1B)" class="form-control small-input"></td>
-              <td><input type="text" v-model="place.PFP4" @change="updatePlace(place, 'PFP4', place.PFP4)" class="form-control small-input"></td>
-              <td><input type="text" v-model="place.PFP3" @change="updatePlace(place, 'PFP3', place.PFP3)" class="form-control small-input"></td>
-              <td>{{ place.AccordCadreDate }}</td>
-              <td>{{ place.Canton }}</td>
-              <td>{{ place.Categorie }}</td>
-              <td>{{ place.ConventionDate }}</td>
-              <td>{{ place.Lieu }}</td>
-              <td>
-                <select multiple v-model="place.selectedPraticiensFormateurs" @change="updatePraticiensFormateurs(place, place.selectedPraticiensFormateurs)" class="form-control">
-                  <option v-for="(praticien, id) in praticiensFormateurs" :key="id" :value="id">{{ praticien }}</option>
-                </select>
-              </td>
-              <td><input type="text" v-model="place.Remarques" @change="updatePlace(place, 'Note', place.Remarques)" class="form-control"></td>
-              <td>
-                <button class="btn btn-sm btn-warning me-1" @click="editPlace(place)">Modifier</button>
-                <button class="btn btn-sm btn-danger" @click="deletePlace(place.IdPlace)">Supprimer</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <!-- Table des places -->
+      <div v-if="filteredPlaces.length > 0" class="p-datatable-responsive">
+        <DataTable
+          :value="filteredPlaces"
+          class="p-datatable-sm custom-datatable"
+          paginator
+          :rows="10"
+          responsiveLayout="scroll"
+          :rowsPerPageOptions="[10, 20, 50]"
+        >
+          <!-- Colonne Nom de l'Institution -->
+          <Column header="Institution">
+            <template #body="slotProps">
+              <span>{{ slotProps.data.Name || 'Non spécifié' }}</span>
+            </template>
+          </Column>
+
+          <!-- Colonne Nom de la Place -->
+          <Column header="Nom de la Place">
+            <template #body="slotProps">
+              <InputText
+                v-model="slotProps.data.NomPlace"
+                @change="updatePlace(slotProps.data, 'NomPlace', slotProps.data.NomPlace)"
+                class="p-inputtext-sm"
+              />
+            </template>
+          </Column>
+
+          <!-- Colonnes Spécialités -->
+          <Column header="MSQ">
+            <template #body="slotProps">
+              <Checkbox
+                v-model="slotProps.data.MSQ"
+                @change="updatePlace(slotProps.data, 'MSQ', slotProps.data.MSQ)"
+                binary="true"
+              />
+            </template>
+          </Column>
+          <Column header="SYSINT">
+            <template #body="slotProps">
+              <Checkbox
+                v-model="slotProps.data.SYSINT"
+                @change="updatePlace(slotProps.data, 'SYSINT', slotProps.data.SYSINT)"
+                binary="true"
+              />
+            </template>
+          </Column>
+          <Column header="NEURO-GER">
+            <template #body="slotProps">
+              <Checkbox
+                v-model="slotProps.data.NEUROGER"
+                @change="updatePlace(slotProps.data, 'NEURO-GER', slotProps.data.NEUROGER)"
+                binary="true"
+              />
+            </template>
+          </Column>
+          <Column header="AIGU">
+            <template #body="slotProps">
+              <Checkbox
+                v-model="slotProps.data.AIGU"
+                @change="updatePlace(slotProps.data, 'AIGU', slotProps.data.AIGU)"
+                binary="true"
+              />
+            </template>
+          </Column>
+          <Column header="REHAB">
+            <template #body="slotProps">
+              <Checkbox
+                v-model="slotProps.data.REHAB"
+                @change="updatePlace(slotProps.data, 'REHAB', slotProps.data.REHAB)"
+                binary="true"
+              />
+            </template>
+          </Column>
+          <Column header="AMBU">
+            <template #body="slotProps">
+              <Checkbox
+                v-model="slotProps.data.AMBU"
+                @change="updatePlace(slotProps.data, 'AMBU', slotProps.data.AMBU)"
+                binary="true"
+              />
+            </template>
+          </Column>
+
+          <!-- Colonnes Langues -->
+          <Column header="FR">
+            <template #body="slotProps">
+              <Checkbox
+                v-model="slotProps.data.FR"
+                @change="updatePlace(slotProps.data, 'FR', slotProps.data.FR)"
+                binary="true"
+              />
+            </template>
+          </Column>
+          <Column header="DE">
+            <template #body="slotProps">
+              <Checkbox
+                v-model="slotProps.data.DE"
+                @change="updatePlace(slotProps.data, 'DE', slotProps.data.DE)"
+                binary="true"
+              />
+            </template>
+          </Column>
+
+
+          <!-- Colonnes PFP -->
+          <Column header="PFP2">
+            <template #body="slotProps">
+              <InputText
+                v-model="slotProps.data.PFP2"
+                @change="updatePlace(slotProps.data, 'PFP2', slotProps.data.PFP2)"
+                class="p-inputtext-sm small-input"
+              />
+            </template>
+          </Column>
+          <Column header="PFP1A">
+            <template #body="slotProps">
+              <InputText
+                v-model="slotProps.data.PFP1A"
+                @change="updatePlace(slotProps.data, 'PFP1A', slotProps.data.PFP1A)"
+                class="p-inputtext-sm small-input"
+              />
+            </template>
+          </Column>
+          <Column header="PFP1B">
+            <template #body="slotProps">
+              <InputText
+                v-model="slotProps.data.PFP1B"
+                @change="updatePlace(slotProps.data, 'PFP1B', slotProps.data.PFP1B)"
+                class="p-inputtext-sm small-input"
+              />
+            </template>
+          </Column>
+          <Column header="PFP4">
+            <template #body="slotProps">
+              <InputText
+                v-model="slotProps.data.PFP4"
+                @change="updatePlace(slotProps.data, 'PFP4', slotProps.data.PFP4)"
+                class="p-inputtext-sm small-input"
+              />
+            </template>
+          </Column>
+          <Column header="PFP3">
+            <template #body="slotProps">
+              <InputText
+                v-model="slotProps.data.PFP3"
+                @change="updatePlace(slotProps.data, 'PFP3', slotProps.data.PFP3)"
+                class="p-inputtext-sm small-input"
+              />
+            </template>
+          </Column>
+
+          <!-- Colonnes Informations Supplémentaires
+          <Column field="AccordCadreDate" header="Accord Cadre"></Column>
+          <Column field="Canton" header="Canton"></Column>
+          <Column field="Categorie" header="Catégorie"></Column>
+          <Column field="ConventionDate" header="Convention"></Column>
+          <Column field="Lieu" header="Lieu"></Column>
+          -->
+
+          <!-- Colonne Praticien Formateur -->
+          <Column header="Praticien Formateur">
+            <template #body="slotProps">
+              <MultiSelect
+                v-model="slotProps.data.selectedPraticiensFormateurs"
+                :options="praticiensFormateursOptions"
+                optionLabel="label"
+                optionValue="value"
+                @change="updatePraticiensFormateurs(slotProps.data, slotProps.data.selectedPraticiensFormateurs)"
+                placeholder="Sélectionner"
+                display="chip"
+                class="w-full"
+              />
+            </template>
+          </Column>
+
+          <!-- Colonne Remarques -->
+          <Column header="Remarques">
+            <template #body="slotProps">
+              <InputText
+                v-model="slotProps.data.Remarques"
+                @change="updatePlace(slotProps.data, 'Note', slotProps.data.Remarques)"
+                autoResize
+                rows="2"
+                cols="30"
+                class="p-input-sm"
+              />
+            </template>
+          </Column>
+
+          <!-- Colonne Action -->
+          <Column header="Action">
+            <template #body="slotProps">
+              <Button
+                icon="pi pi-trash"
+                class="p-button-rounded p-button-danger"
+                @click="deletePlace(slotProps.data.IdPlace)"
+              />
+            </template>
+          </Column>
+        </DataTable>
       </div>
 
       <div v-else class="text-center mt-3">
         <p>Aucune place trouvée.</p>
       </div>
 
+      <!-- Récapitulatif des places par PFP -->
       <div class="recap mt-4 surface-card">
         <h3>Récapitulatif des places par PFP :</h3>
         <ul>
@@ -102,106 +242,161 @@
     </div>
 
     <!-- Modal de création de place -->
-    <div v-if="showCreatePlaceModal" class="modal-overlay">
-      <div class="modal-content">
-        <h2>Créer une nouvelle place</h2>
-        <form @submit.prevent="createPlace">
-          <div class="form-group">
+    <Dialog header="Créer une nouvelle place" :visible="showCreatePlaceModal" modal @hide="closeCreatePlaceModal" :style="{ width: '50vw' }">
+      <form @submit.prevent="createPlace">
+        <div class="p-fluid p-formgrid p-grid">
+          <!-- Institution -->
+          <div class="p-field p-col-12">
             <label for="institutionId">Institution</label>
-            <select v-model="newPlace.InstitutionId" @change="populateInstitutionData" class="form-control" required>
-              <option value="" disabled selected>Sélectionnez une institution</option>
-              <option v-for="(institution, id) in institutions" :key="id" :value="id">{{ institution.Name }}</option>
-            </select>
+            <Dropdown
+              v-model="newPlace.InstitutionId"
+              :options="institutionOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Sélectionnez une institution"
+              @change="populateInstitutionData"
+              required
+            />
           </div>
-          <div class="form-group">
-            <label for="NomPlace">NomPlace</label>
-            <input v-model="newPlace.NomPlace" type="text" class="form-control" required>
-          </div>
-          <!-- Cases à cocher -->
-          <div class="form-group">
-            <label>Spécialités :</label>
-            <div>
-              <label><input type="checkbox" v-model="newPlace.MSQ"> MSQ</label>
-              <label><input type="checkbox" v-model="newPlace.SYSINT"> SYSINT</label>
-              <label><input type="checkbox" v-model="newPlace['NEURO-GER']"> NEURO-GER</label>
-              <label><input type="checkbox" v-model="newPlace.AIGU"> AIGU</label>
-              <label><input type="checkbox" v-model="newPlace.REHAB"> REHAB</label>
-              <label><input type="checkbox" v-model="newPlace.AMBU"> AMBU</label>
-            </div>
-          </div>
-          <!-- Langues -->
-          <div class="form-group">
-            <label>Langues :</label>
-            <div>
-              <label><input type="checkbox" v-model="newPlace.FR"> FR</label>
-              <label><input type="checkbox" v-model="newPlace.DE"> DE</label>
-              <label><input type="checkbox" v-model="newPlace.IT"> IT</label>
-              <label><input type="checkbox" v-model="newPlace.ENG"> ENG</label>
-            </div>
-          </div>
-          <!-- Champs PFP -->
-          <div class="form-group">
-            <label>PFP2</label>
-            <input v-model="newPlace.PFP2" type="text" class="form-control">
-          </div>
-          <div class="form-group">
-            <label>PFP1A</label>
-            <input v-model="newPlace.PFP1A" type="text" class="form-control">
-          </div>
-          <div class="form-group">
-            <label>PFP1B</label>
-            <input v-model="newPlace.PFP1B" type="text" class="form-control">
-          </div>
-          <div class="form-group">
-            <label>PFP4</label>
-            <input v-model="newPlace.PFP4" type="text" class="form-control">
-          </div>
-          <div class="form-group">
-            <label>PFP3</label>
-            <input v-model="newPlace.PFP3" type="text" class="form-control">
-          </div>
-          <!-- Dates et autres champs -->
-          <div class="form-group">
-            <label>Accord Cadre</label>
-            <input v-model="newPlace.AccordCadreDate" type="date" class="form-control" readonly>
-          </div>
-          <div class="form-group">
-            <label>Canton</label>
-            <input v-model="newPlace.Canton" type="text" class="form-control" readonly>
-          </div>
-          <div class="form-group">
-            <label>Catégorie</label>
-            <input v-model="newPlace.Categorie" type="text" class="form-control" readonly>
-          </div>
-          <div class="form-group">
-            <label>Convention</label>
-            <input v-model="newPlace.ConventionDate" type="date" class="form-control" readonly>
-          </div>
-          <div class="form-group">
-            <label>Lieu</label>
-            <input v-model="newPlace.Lieu" type="text" class="form-control" readonly>
-          </div>
-          <!-- Praticien Formateur -->
-          <div class="form-group">
-            <label>Praticien Formateur</label>
-            <select multiple v-model="newPlace.selectedPraticiensFormateurs" class="form-control">
-              <option v-for="(praticien, id) in praticiensFormateurs" :key="id" :value="id">{{ praticien }}</option>
-            </select>
-          </div>
-          <!-- Remarques -->
-          <div class="form-group">
-            <label>Remarques</label>
-            <textarea v-model="newPlace.Remarques" class="form-control"></textarea>
-          </div>
-          <!-- Boutons -->
-          <div class="form-group text-right">
-            <button type="button" class="btn btn-secondary" @click="closeCreatePlaceModal">Annuler</button>
-            <button type="submit" class="btn btn-primary">Créer</button>
-          </div>
-        </form>
-      </div>
-    </div>
 
+          <!-- Nom de la Place -->
+          <div class="p-field p-col-12">
+            <label for="NomPlace">Nom de la Place</label>
+            <InputText v-model="newPlace.NomPlace" required />
+          </div>
+
+          <!-- Spécialités -->
+          <div class="p-field p-col-12">
+            <label>Spécialités :</label>
+            <div class="p-formgrid p-grid">
+              <div class="p-field-checkbox p-col-2">
+                <Checkbox inputId="MSQ" v-model="newPlace.MSQ" binary />
+                <label for="MSQ">MSQ</label>
+              </div>
+              <div class="p-field-checkbox p-col-2">
+                <Checkbox inputId="SYSINT" v-model="newPlace.SYSINT" binary />
+                <label for="SYSINT">SYSINT</label>
+              </div>
+              <div class="p-field-checkbox p-col-2">
+                <Checkbox inputId="NEUROGER" v-model="newPlace['NEURO-GER']" binary />
+                <label for="NEUROGER">NEURO-GER</label>
+              </div>
+              <div class="p-field-checkbox p-col-2">
+                <Checkbox inputId="AIGU" v-model="newPlace.AIGU" binary />
+                <label for="AIGU">AIGU</label>
+              </div>
+              <div class="p-field-checkbox p-col-2">
+                <Checkbox inputId="REHAB" v-model="newPlace.REHAB" binary />
+                <label for="REHAB">REHAB</label>
+              </div>
+              <div class="p-field-checkbox p-col-2">
+                <Checkbox inputId="AMBU" v-model="newPlace.AMBU" binary />
+                <label for="AMBU">AMBU</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Langues -->
+          <div class="p-field p-col-12">
+            <label>Langues :</label>
+            <div class="p-formgrid p-grid">
+              <div class="p-field-checkbox p-col-3">
+                <Checkbox inputId="FR" v-model="newPlace.FR" binary />
+                <label for="FR">FR</label>
+              </div>
+              <div class="p-field-checkbox p-col-3">
+                <Checkbox inputId="DE" v-model="newPlace.DE" binary />
+                <label for="DE">DE</label>
+              </div>
+              <div class="p-field-checkbox p-col-3">
+                <Checkbox inputId="IT" v-model="newPlace.IT" binary />
+                <label for="IT">IT</label>
+              </div>
+              <div class="p-field-checkbox p-col-3">
+                <Checkbox inputId="ENG" v-model="newPlace.ENG" binary />
+                <label for="ENG">ENG</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Champs PFP -->
+          <div class="p-field p-col-6">
+            <label for="PFP2">PFP2</label>
+            <InputText v-model="newPlace.PFP2" />
+          </div>
+          <div class="p-field p-col-6">
+            <label for="PFP1A">PFP1A</label>
+            <InputText v-model="newPlace.PFP1A" />
+          </div>
+          <div class="p-field p-col-6">
+            <label for="PFP1B">PFP1B</label>
+            <InputText v-model="newPlace.PFP1B" />
+          </div>
+          <div class="p-field p-col-6">
+            <label for="PFP4">PFP4</label>
+            <InputText v-model="newPlace.PFP4" />
+          </div>
+          <div class="p-field p-col-6">
+            <label for="PFP3">PFP3</label>
+            <InputText v-model="newPlace.PFP3" />
+          </div>
+
+          <!-- Dates et autres champs -->
+          <div class="p-field p-col-6">
+            <label for="AccordCadreDate">Accord Cadre</label>
+            <Calendar v-model="newPlace.AccordCadreDate" dateFormat="yy-mm-dd" showIcon />
+          </div>
+          <div class="p-field p-col-6">
+            <label for="Canton">Canton</label>
+            <InputText v-model="newPlace.Canton" readonly />
+          </div>
+          <div class="p-field p-col-6">
+            <label for="Categorie">Catégorie</label>
+            <InputText v-model="newPlace.Categorie" readonly />
+          </div>
+          <div class="p-field p-col-6">
+            <label for="ConventionDate">Convention</label>
+            <Calendar v-model="newPlace.ConventionDate" dateFormat="yy-mm-dd" showIcon readonly />
+          </div>
+          <div class="p-field p-col-6">
+            <label for="Lieu">Lieu</label>
+            <InputText v-model="newPlace.Lieu" readonly />
+          </div>
+
+          <!-- Praticien Formateur -->
+          <div class="p-field p-col-12">
+            <label for="PraticienFormateur">Praticien Formateur</label>
+            <MultiSelect
+              v-model="newPlace.selectedPraticiensFormateurs"
+              :options="praticiensFormateursOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Sélectionner"
+              display="chip"
+              class="w-full"
+            />
+          </div>
+
+          <!-- Remarques -->
+          <div class="p-field p-col-12">
+            <label for="Remarques">Remarques</label>
+            <InputTextarea
+              v-model="newPlace.Remarques"
+              autoResize
+              rows="3"
+              cols="30"
+              class="w-full"
+            />
+          </div>
+        </div>
+
+        <!-- Boutons -->
+        <div class="p-d-flex p-jc-end p-mt-3">
+          <Button label="Annuler" class="p-button-secondary p-mr-2" @click="closeCreatePlaceModal" />
+          <Button label="Créer" type="submit" class="p-button-primary" />
+        </div>
+      </form>
+    </Dialog>
   </div>
 </template>
 
@@ -209,11 +404,29 @@
 import Navbar from '@/components/Utils/Navbar.vue';
 import { db } from '../../../../firebase.js';
 import { ref, onValue, set, update, push } from "firebase/database";
+import Button from 'primevue/button';
+import InputText from 'primevue/inputtext';
+import Checkbox from 'primevue/checkbox';
+import MultiSelect from 'primevue/multiselect';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
+import Dialog from 'primevue/dialog';
+import Calendar from 'primevue/calendar';
+import Dropdown from 'primevue/dropdown';
 
 export default {
   name: "ManagementPlace",
   components: {
-    Navbar
+    Navbar,
+    Button,
+    InputText,
+    Checkbox,
+    MultiSelect,
+    DataTable,
+    Column,
+    Dialog,
+    Calendar,
+    Dropdown,
   },
   data() {
     return {
@@ -240,14 +453,16 @@ export default {
         PFP1B: '',
         PFP4: '',
         PFP3: '',
-        AccordCadreDate: '',
+        AccordCadreDate: null,
         Canton: '',
         Categorie: '',
-        ConventionDate: '',
+        ConventionDate: null,
         Lieu: '',
         selectedPraticiensFormateurs: [],
         Remarques: ''
-      }
+      },
+      institutionsOptions: [], // Options pour le Dropdown des institutions
+      praticiensFormateursOptions: [], // Options pour le MultiSelect des praticiens formateurs
     };
   },
   computed: {
@@ -257,10 +472,10 @@ export default {
       }
 
       const searchLower = this.search.toLowerCase();
-      return this.places.filter(place => 
-        place.NomPlace.toLowerCase().includes(searchLower) || 
+      return this.places.filter(place =>
+        place.NomPlace.toLowerCase().includes(searchLower) ||
         place.Lieu.toLowerCase().includes(searchLower) ||
-        place.Name.toLowerCase().includes(searchLower) ||
+        place.InstitutionName.toLowerCase().includes(searchLower) ||
         (place.Remarques && place.Remarques.toLowerCase().includes(searchLower))
       );
     }
@@ -298,7 +513,7 @@ export default {
         if (placesData) {
           const placePromises = Object.keys(placesData).map(async key => {
             const place = placesData[key];
-            const institutionData = await this.fetchInstitutionData(place.IDPlace || place.InstitutionId);
+            const institutionData = await this.fetchInstitutionData(place.InstitutionId);
             return {
               IdPlace: key,
               NomPlace: place.NomPlace || '',
@@ -317,7 +532,7 @@ export default {
               PFP1B: place.PFP1B || '',
               PFP4: place.PFP4 || '',
               PFP3: place.PFP3 || '',
-              Name: institutionData.Name || '',
+              InstitutionName: institutionData.Name || '',
               AccordCadreDate: institutionData.AccordCadreDate || '',
               Canton: institutionData.Canton || '',
               Categorie: institutionData.Category || '',
@@ -325,7 +540,7 @@ export default {
               Lieu: institutionData.Locality || '',
               Remarques: place.Note || '',
               selectedPraticiensFormateurs: place.praticiensFormateurs || [],
-              InstitutionId: place.IDPlace || place.InstitutionId || ''
+              InstitutionId: place.InstitutionId || ''
             };
           });
 
@@ -342,6 +557,26 @@ export default {
           acc[key] = `${praticiensData[key].Prenom} ${praticiensData[key].Nom}`;
           return acc;
         }, {});
+
+        // Préparer les options pour le MultiSelect
+        this.praticiensFormateursOptions = Object.keys(this.praticiensFormateurs).map(id => ({
+          label: this.praticiensFormateurs[id],
+          value: id
+        }));
+      });
+    },
+
+    async fetchInstitutionsData() {
+      const institutionsRef = ref(db, 'Institutions');
+      onValue(institutionsRef, (snapshot) => {
+        const institutionsData = snapshot.val() || {};
+        this.institutions = institutionsData;
+
+        // Préparer les options pour le Dropdown
+        this.institutionsOptions = Object.keys(institutionsData).map(id => ({
+          label: institutionsData[id].Name,
+          value: id
+        }));
       });
     },
 
@@ -352,14 +587,6 @@ export default {
         onValue(institutionRef, (snapshot) => {
           resolve(snapshot.val() || {});
         });
-      });
-    },
-
-    async fetchInstitutionsData() {
-      const institutionsRef = ref(db, 'Institutions');
-      onValue(institutionsRef, (snapshot) => {
-        const institutionsData = snapshot.val() || {};
-        this.institutions = institutionsData;
       });
     },
 
@@ -404,10 +631,10 @@ export default {
         PFP1B: '',
         PFP4: '',
         PFP3: '',
-        AccordCadreDate: '',
+        AccordCadreDate: null,
         Canton: '',
         Categorie: '',
-        ConventionDate: '',
+        ConventionDate: null,
         Lieu: '',
         selectedPraticiensFormateurs: [],
         Remarques: ''
@@ -422,7 +649,6 @@ export default {
         this.newPlace.Categorie = institutionData.Category || '';
         this.newPlace.ConventionDate = institutionData.ConventionDate || '';
         this.newPlace.Lieu = institutionData.Locality || '';
-        this.newPlace.Name = institutionData.Name || '';
         // Autres champs si nécessaire
       }
     },
@@ -475,48 +701,28 @@ export default {
       }
     }
   },
-  async mounted() {
-    await this.fetchPraticiensFormateursData();
-    await this.fetchInstitutionsData();
-    await this.fetchPlacesData();
+  mounted() {
+    this.fetchPraticiensFormateursData();
+    this.fetchInstitutionsData();
+    this.fetchPlacesData();
   }
 };
 </script>
 
-<style>
-/* Styles existants */
-.table-striped tbody tr:nth-of-type(odd) {
-  background-color: rgba(0, 0, 0, 0.05);
-}
-
-.search-input {
-  max-width: 400px;
-}
-
+<style scoped>
 .page-title {
   margin-bottom: 20px;
-}
-
-.small-column {
-  width: 5%;
+  text-align: center;
 }
 
 .small-input {
   width: 100%;
 }
 
-.btn-warning {
-  color: white;
-}
-
-.btn-danger {
-  color: white;
-}
-
 .recap {
-  background-color: #f9f9f9;
+  background-color: var(--surface-card);
   padding: 20px;
-  border-radius: 5px;
+  border-radius: 8px;
 }
 
 .recap h3 {
@@ -532,58 +738,54 @@ export default {
   margin-bottom: 5px;
 }
 
-/* Styles pour le modal */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
+/* Styles pour les petits inputs dans la table */
+.small-input {
+  max-width: 80px;
 }
 
-.modal-content {
-  background-color: white;
-  padding: 30px;
-  border-radius: 8px;
-  width: 600px;
-  max-height: 80vh;
-  overflow-y: auto;
+/* Ajustements pour les éléments PrimeVue */
+.p-datatable-responsive .p-datatable-wrapper {
+  overflow-x: auto;
 }
 
-.modal-content h2 {
-  margin-top: 0;
+.custom-datatable .p-datatable-thead > tr > th {
+  background-color: var(--surface-card); /* Assure que le fond du header correspond au thème card */
+  color: var(--text-color);
 }
 
-.modal-content .form-group {
-  margin-bottom: 15px;
+.custom-datatable .p-datatable-tbody > tr > td {
+  background-color: var(--surface-card); /* Assure que le fond des cellules correspond au thème card */
+  color: var(--text-color);
 }
 
-.modal-content .form-group label {
-  display: block;
-  margin-bottom: 5px;
+.p-inputtext-sm {
+  font-size: 0.875rem;
 }
 
-.modal-content .form-group input,
-.modal-content .form-group select,
-.modal-content .form-group textarea {
-  width: 100%;
+.p-inputtextarea-sm {
+  font-size: 0.875rem;
 }
 
-.modal-content .form-group input[type="checkbox"] {
-  width: auto;
-  display: inline-block;
+.p-button-warning {
+  margin-right: 0.5rem;
 }
 
-.modal-content .form-group label input {
-  margin-right: 5px;
+.p-button-danger {
+  margin-left: 0.5rem;
 }
 
-.modal-content .form-group.text-right {
-  text-align: right;
+/* Responsivité supplémentaire pour les petits écrans */
+@media (max-width: 768px) {
+  .p-datatable-responsive {
+    width: 100%;
+  }
+
+  .w-50 {
+    width: 100% !important;
+  }
+
+  .small-input {
+    max-width: 100%;
+  }
 }
 </style>

@@ -7,6 +7,7 @@
           <img
             :src="user.PhotoURL || 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/avatar1.jpg?alt=media&token=4015f4c6-4abe-446d-8cef-9e54b8257522'"
             class="w-4rem h-4rem border-circle shadow-4"
+            style="object-fit: cover;"
             :alt="userDisplayName"
           />
           <span class="w-1rem h-1rem border-circle border-2 surface-border absolute bottom-0 right-0" :class="{ 'bg-green-400': user.status === 'active', 'bg-red-400': user.status === 'busy', 'bg-yellow-400': user.status === 'away' }"></span>
