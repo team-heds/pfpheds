@@ -20,36 +20,36 @@
             <td>{{ community.description }}</td>
             <td>{{ capitalize(community.type) }}</td>
             <td>
-              <button
-                class="btn btn-secondary btn-sm"
+              <Button
+                class="btn btn-secondary btn-sm m-1"
                 @click="manageCommunity(community.id)"
               >
                 Gérer
-              </button>
+              </Button>
 
               <!-- Bouton Rejoindre / Quitter -->
-              <button
+              <Button
                 v-if="!community.isMember"
-                class="btn btn-primary btn-sm"
+                class="btn btn-primary btn-sm  m-1"
                 @click="joinCommunity(community.id)"
               >
                 Rejoindre
-              </button>
-              <button
+              </Button>
+              <Button
                 v-else
-                class="btn btn-danger btn-sm"
+                class="btn btn-danger btn-sm  m-1"
                 @click="leaveCommunity(community.id)"
               >
                 Quitter
-              </button>
+              </Button>
 
               <!-- Bouton Infos -->
-              <button
-                class="btn btn-info btn-sm"
+              <Button
+                class="btn btn-info btn-sm  m-1"
                 @click="viewInfo(community.id)"
               >
                 Infos
-              </button>
+              </Button>
             </td>
           </tr>
           <tr v-if="publicCommunities.length === 0">
@@ -129,18 +129,16 @@ export default {
 
 .communities-table th,
 .communities-table td {
-  border: 1px solid #dddddd;
   padding: 1rem;
   text-align: left;
 }
 
 .communities-table th {
-  background-color: #f1f1f1;
   color: #333333;
 }
 
 .communities-table tr:nth-child(even) {
-  background-color: #f9f9f9;
+
 }
 
 .communities-table tr:hover {

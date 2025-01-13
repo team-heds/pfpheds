@@ -26,15 +26,15 @@
 
       <!-- Boutons pour Modifier le Nom, la Description et le Type (Visible uniquement pour les Managers) -->
       <div v-if="isManager" class="edit-community-buttons mt-3">
-        <button @click="toggleEditName" class="btn btn-secondary mr-2">
+        <Button @click="toggleEditName" class="btn btn-secondary mr-2">
           <i class="fas fa-edit mr-2"></i>Modifier le Nom
-        </button>
-        <button @click="toggleEditDescription" class="btn btn-secondary mr-2">
+        </Button>
+        <Button @click="toggleEditDescription" class="btn btn-secondary mr-2">
           <i class="fas fa-edit mr-2"></i>Modifier la Description
-        </button>
-        <button @click="toggleEditType" class="btn btn-secondary">
+        </Button>
+        <Button @click="toggleEditType" class="btn btn-secondary">
           <i class="fas fa-edit mr-2"></i>Modifier le Type de la Communauté
-        </button>
+        </Button>
       </div>
 
       <!-- Formulaire pour Modifier le Nom de la Communauté -->
@@ -51,12 +51,12 @@
                 required
               />
             </div>
-            <button type="submit" class="btn btn-primary mr-2">
+            <Button type="submit" class="btn btn-primary mr-2">
               <i class="fas fa-check mr-1"></i>Mettre à Jour
-            </button>
-            <button type="button" @click="toggleEditName" class="btn btn-secondary">
+            </Button>
+            <Button type="button" @click="toggleEditName" class="btn btn-secondary">
               <i class="fas fa-times mr-1"></i>Annuler
-            </button>
+            </Button>
           </form>
         </div>
       </div>
@@ -75,12 +75,12 @@
                 required
               ></textarea>
             </div>
-            <button type="submit" class="btn btn-primary mr-2">
+            <Button type="submit" class="btn btn-primary mr-2">
               <i class="fas fa-check mr-1"></i>Mettre à Jour
-            </button>
-            <button type="button" @click="toggleEditDescription" class="btn btn-secondary">
+            </Button>
+            <Button type="button" @click="toggleEditDescription" class="btn btn-secondary">
               <i class="fas fa-times mr-1"></i>Annuler
-            </button>
+            </Button>
           </form>
         </div>
       </div>
@@ -140,9 +140,9 @@
               </select>
             </div>
           </div>
-          <button type="submit" class="btn btn-primary">
+          <Button type="submit" class="btn btn-primary">
             <i class="fas fa-plus mr-2"></i>Ajouter Membre
-          </button>
+          </Button>
         </div>
       </form>
 
@@ -168,14 +168,14 @@
                   </span>
                 </td>
                 <td>
-                  <button
+                  <Button
                     class="btn btn-danger btn-sm"
                     @click="removeMember(member.id)"
                     :disabled="member.id === localCurrentUser?.uid"
                     title="Supprimer le membre"
                   >
                     <i class="fas fa-trash-alt"></i>
-                  </button>
+                  </Button>
                 </td>
               </tr>
               <tr v-if="communityMembers.length === 0">
@@ -192,7 +192,7 @@
       <div v-for="(toast, index) in toasts" :key="index" :class="['toast', toast.severity]">
         <strong>{{ toast.summary }}</strong>
         <p>{{ toast.detail }}</p>
-        <button @click="removeToast(index)">✖</button>
+        <Button @click="removeToast(index)">✖</Button>
       </div>
     </div>
   </div>
@@ -572,7 +572,7 @@ export default {
 .manage-community {
   padding: 2rem;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #ffffff; /* Fond clair pour un bon contraste */
+
   color: #333333; /* Texte sombre pour une meilleure lisibilité */
 }
 
@@ -584,9 +584,9 @@ export default {
 
 /* Card pour les détails de la communauté */
 .community-details {
-  background-color: #ffffff;
+
   padding: 1.5rem;
-  border: 1px solid #dddddd;
+
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Ombre légère pour la profondeur */
 }
@@ -602,9 +602,7 @@ export default {
 .edit-community-name-form,
 .edit-community-description-form {
   margin-top: 1rem;
-  background-color: #f9f9f9;
   padding: 1.5rem;
-  border: 1px solid #dddddd;
   border-radius: 8px;
 }
 
@@ -630,8 +628,6 @@ export default {
 .form-group select {
   padding: 0.75rem;
   font-size: 1rem;
-  border: 1px solid #cccccc;
-  border-radius: 6px;
   width: 100%;
 }
 
@@ -645,14 +641,7 @@ export default {
   transition: background-color 0.3s ease;
 }
 
-.btn-primary {
-  background-color: #007bff;
-  color: #ffffff;
-}
 
-.btn-primary:hover {
-  background-color: #0056b3;
-}
 
 .btn-success {
   background-color: #28a745;

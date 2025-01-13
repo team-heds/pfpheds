@@ -77,56 +77,5 @@ export default {
 </script>
 
 <style scoped>
-.communities-list-section {
-  margin-bottom: 2rem;
-}
 
-.communities-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.communities-table th,
-.communities-table td {
-  border: 1px solid #dddddd;
-  padding: 1rem;
-  text-align: left;
-}
-
-.communities-table th {
-  background-color: #f1f1f1;
-  color: #333333;
-}
-
-.communities-table tr:nth-child(even) {
-  background-color: #f9f9f9;
-}
-
-.communities-table tr:hover {
-  background-color: #f1f1f1;
-}
-
-.btn-success {
-  background-color: #28a745;
-  color: #ffffff;
-}
-
-.btn-success:hover {
-  background-color: #218838;
-}
-
-.btn-danger {
-  background-color: #dc3545;
-  color: #ffffff;
-}
-
-.btn-danger:hover {
-  background-color: #c82333;
-}
-
-.btn-sm {
-  padding: 0.4rem 0.75rem;
-  font-size: 0.875rem;
-  margin-right: 0.5rem;
-}
 </style>
