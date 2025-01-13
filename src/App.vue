@@ -15,18 +15,34 @@
       <!-- Intégration du widget ConvAI -->
       <ConvaiWidget />
     </div>
+
+    <!-- Loader -->
+    <Loader v-if="isLoading" />
   </div>
 </template>
 
 <script>
 import Toast from 'primevue/toast';
 import ConvaiWidget from './components/ConvaiWidget.vue'; // Import du composant ConvaiWidget
+import Loader from './components/Utils/Loader.vue'; // Import du composant Loader
 
 export default {
   name: "App",
   components: {
     Toast,
     ConvaiWidget, // Déclaration du composant
+    Loader, // Déclaration du composant Loader
+  },
+  data() {
+    return {
+      isLoading: true, // État de chargement
+    };
+  },
+  mounted() {
+    // Simuler un chargement de données (par exemple, lors du démarrage de l'application)
+    setTimeout(() => {
+      this.isLoading = false; // Masquer le loader après 3 secondes
+    }, 3000); // Temps en millisecondes
   },
 };
 </script>
