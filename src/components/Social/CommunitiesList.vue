@@ -48,7 +48,7 @@
             <Button
               label="Gérer"
               icon="pi pi-cog"
-              class="p-button-primary p-button-sm p-mr-2 m-2"
+              class="p-button-secondary p-button-sm p-mr-2 m-2"
               @click="manageCommunity(slotProps.data.id)"
             />
 
@@ -63,14 +63,14 @@
               v-else
               label="Quitter"
               icon="pi pi-sign-out"
-              class="p-button-primary p-button-sm p-mr-2 m-2"
+              class="p-button-danger p-button-sm p-mr-2 m-2"
               @click="leaveCommunity(slotProps.data.id)"
             />
 
             <Button
               label="Infos"
               icon="pi pi-info-circle"
-              class="p-button-primary p-button-sm p-mr-2 m-2"
+              class="p-button-info p-button-sm p-mr-2 m-2"
               @click="viewInfo(slotProps.data.id)"
             />
           </template>
