@@ -1,6 +1,6 @@
 <template>
   <Navbar />
-  <div class="layout-container">
+  <div class="layout-container ">
     <AppSidebar class="layout-sidebar" />
     <div class="layout-content-wrapper">
       <div class="">
@@ -383,6 +383,7 @@ const onWeekChange = () => {
 .layout-container {
   display: flex;
   height: 100vh; /* Utiliser toute la hauteur de la vue */
+  overflow: auto; /* Permettre le défilement si le contenu dépasse la hauteur de l'écran */
 }
 
 .layout-sidebar {
@@ -400,23 +401,7 @@ const onWeekChange = () => {
   flex-direction: column;
 }
 
-.layout-content {
-  padding: 2rem;
-  background: var(--surface-a);
-  flex: 1;
-  overflow-y: auto; /* Permettre le défilement du contenu */
-}
 
-.card {
-  background: var(--surface-card);
-  box-shadow: var(--shadow-2);
-  border-radius: var(--border-radius);
-  padding: 1.5rem;
-}
-
-.p-column-title {
-  display: none;
-}
 
 @media screen and (max-width: 960px) {
   .p-column-title {

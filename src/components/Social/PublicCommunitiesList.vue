@@ -1,109 +1,131 @@
 <!-- src/components/PublicCommunitiesList.vue -->
 <template>
-  <div class="public-communities-list-section card shadow-sm mt-4">
-    <div class="card-header">
+  <Card class="public-communities-list-section mt-4 card">
+    <template #title>
       <h2>Communautés Publiques</h2>
-    </div>
-    <div class="card-body p-0">
-      <table class="communities-table">
-        <thead>
-          <tr>
-            <th>Nom</th>
-            <th>Description</th>
-            <th>Type</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="community in publicCommunities" :key="community.id">
-            <td>{{ community.name }}</td>
-            <td>{{ community.description }}</td>
-            <td>{{ capitalize(community.type) }}</td>
-            <td>
-              <Button
-                class="btn btn-secondary btn-sm m-1"
-                @click="manageCommunity(community.id)"
-              >
-                Gérer
-              </Button>
+    </template>
+    <template #content>
+      <DataTable
+        :value="publicCommunities"
+        class="w-full"
+        responsiveLayout="scroll"
+        emptyMessage="Aucune communauté publique trouvée."
+      >
+        <!-- Colonne Nom de la Communauté -->
+        <Column field="name" header="Nom" sortable></Column>
 
-              <!-- Bouton Rejoindre / Quitter -->
-              <Button
-                v-if="!community.isMember"
-                class="btn btn-primary btn-sm  m-1"
-                @click="joinCommunity(community.id)"
-              >
-                Rejoindre
-              </Button>
-              <Button
-                v-else
-                class="btn btn-danger btn-sm  m-1"
-                @click="leaveCommunity(community.id)"
-              >
-                Quitter
-              </Button>
+        <!-- Colonne Description -->
+        <Column field="description" header="Description"></Column>
 
-              <!-- Bouton Infos -->
-              <Button
-                class="btn btn-info btn-sm  m-1"
-                @click="viewInfo(community.id)"
-              >
-                Infos
-              </Button>
-            </td>
-          </tr>
-          <tr v-if="publicCommunities.length === 0">
-            <td colspan="4" class="text-center">Aucune communauté publique trouvée.</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
+        <!-- Colonne Type de Communauté -->
+        <Column field="type" header="Type">
+          <template #body="slotProps">
+            {{ capitalize(slotProps.data.type) }}
+          </template>
+        </Column>
+
+        <!-- Colonne Actions -->
+        <Column header="Actions" :style="{ minWidth: '300px' }">
+          <template #body="slotProps">
+            <Button
+              label="Gérer"
+              icon="pi pi-cog"
+              class="p-button-secondary p-button-sm p-mr-2 m-2"
+              @click="manageCommunity(slotProps.data.id)"
+            />
+
+            <Button
+              v-if="!slotProps.data.isMember"
+              label="Rejoindre"
+              icon="pi pi-user-plus"
+              class="p-button-primary p-button-sm p-mr-2 m-2"
+              @click="joinCommunity(slotProps.data.id)"
+            />
+            <Button
+              v-else
+              label="Quitter"
+              icon="pi pi-sign-out"
+              class="p-button-danger p-button-sm p-mr-2 m-2"
+              @click="leaveCommunity(slotProps.data.id)"
+            />
+
+            <Button
+              label="Infos"
+              icon="pi pi-info-circle"
+              class="p-button-info p-button-sm m-2"
+              @click="viewInfo(slotProps.data.id)"
+            />
+          </template>
+        </Column>
+      </DataTable>
+    </template>
+
+    <!-- Composant de confirmation -->
+    <ConfirmDialog />
+  </Card>
 </template>
 
 <script>
 import { computed } from "vue";
+import { useConfirm } from "primevue/useconfirm"; // Correction de l'import
+import Card from "primevue/card";
+import DataTable from "primevue/datatable";
+import Column from "primevue/column";
+import Button from "primevue/button";
+import ConfirmDialog from "primevue/confirmdialog";
 
 export default {
   name: "PublicCommunitiesList",
+  components: {
+    Card,
+    DataTable,
+    Column,
+    Button,
+    ConfirmDialog,
+  },
   props: {
     communities: {
       type: Array,
-      required: true
-    }
+      required: true,
+    },
   },
   emits: ["manageCommunity", "joinCommunity", "leaveCommunity", "viewInfo"],
   setup(props, { emit }) {
+    const confirm = useConfirm();
+
     // Fonction pour capitaliser la première lettre
     const capitalize = (str) => {
-      if (!str) return '';
+      if (!str) return "";
       return str.charAt(0).toUpperCase() + str.slice(1);
     };
 
-    // Émission de l'événement pour gérer la communauté
+    // Filtrer les communautés de type 'public'
+    const publicCommunities = computed(() =>
+      props.communities.filter((community) => community.type === "public")
+    );
+
+    // Fonctions pour émettre les événements
     const manageCommunity = (id) => {
       emit("manageCommunity", id);
     };
 
-    // Émission de l'événement pour rejoindre la communauté
     const joinCommunity = (id) => {
       emit("joinCommunity", id);
     };
 
-    // Émission de l'événement pour quitter la communauté
     const leaveCommunity = (id) => {
-      emit("leaveCommunity", id);
+      confirm.require({
+        message: "Êtes-vous sûr de vouloir quitter cette communauté ?",
+        header: "Confirmation",
+        icon: "pi pi-exclamation-triangle",
+        accept: () => emit("leaveCommunity", id),
+        reject: () => {},
+      });
     };
 
-    // Émission de l'événement pour voir les infos de la communauté
     const viewInfo = (id) => {
       emit("viewInfo", id);
     };
-
-    // Filtrer les communautés de type 'public'
-    const publicCommunities = computed(() => {
-      return props.communities.filter(community => community.type === 'public');
-    });
 
     return {
       capitalize,
@@ -111,83 +133,14 @@ export default {
       joinCommunity,
       leaveCommunity,
       viewInfo,
-      publicCommunities
+      publicCommunities,
     };
-  }
+  },
 };
 </script>
 
 <style scoped>
 .public-communities-list-section {
-  margin-bottom: 2rem;
-}
-
-.communities-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.communities-table th,
-.communities-table td {
-  padding: 1rem;
-  text-align: left;
-}
-
-.communities-table th {
-  color: #333333;
-}
-
-.communities-table tr:nth-child(even) {
-
-}
-
-.communities-table tr:hover {
-  background-color: #f1f1f1;
-}
-
-/* Boutons */
-.btn {
-  padding: 0.4rem 0.75rem;
-  font-size: 0.875rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.btn-secondary {
-  background-color: #6c757d;
-  color: #ffffff;
-}
-
-.btn-secondary:hover {
-  background-color: #5a6268;
-}
-
-.btn-primary {
-  background-color: #007bff;
-  color: #ffffff;
-}
-
-.btn-primary:hover {
-  background-color: #0056b3;
-}
-
-.btn-danger {
-  background-color: #dc3545;
-  color: #ffffff;
-}
-
-.btn-danger:hover {
-  background-color: #c82333;
-}
-
-.btn-info {
-  background-color: #17a2b8;
-  color: #ffffff;
-}
-
-.btn-info:hover {
-  background-color: #117a8b;
+  /* Styles supplémentaires si nécessaire */
 }
 </style>
