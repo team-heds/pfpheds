@@ -1,5 +1,6 @@
 <!-- src/components/ListComponent.vue -->
 <template>
+  <Navbar />
   <div class="container flex-auto">
     <h2>Liste Complète des Composants PrimeVue</h2>
 
