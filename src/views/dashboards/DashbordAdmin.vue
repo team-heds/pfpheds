@@ -14,7 +14,6 @@
               <div class="flex justify-content-between align-items-start mt-3">
                 <div class="w-6">
                   <span class="text-6xl font-bold text-900">{{ totalPlaces }}</span>
-
                 </div>
                 <div class="w-6">
                   <!-- SVG icon (optionnel) -->
@@ -33,7 +32,7 @@
           <!-- Institutions card -->
           <div class="col-12 md:col-6 xl:col-3">
             <div class="card h-full">
-              <span class="font-semibold text-lg">Institutions</span>
+              <span class="font-semibold text-lg">Institutions partenaires</span>
               <div class="flex justify-content-between align-items-start mt-3">
                 <div class="w-6">
                   <span class="text-6xl font-bold text-900">{{ totalInstitutions }}</span>
@@ -54,7 +53,7 @@
           <!-- Élèves card -->
           <div class="col-12 md:col-6 xl:col-3">
             <div class="card h-full">
-              <span class="font-semibold text-lg">Élèves</span>
+              <span class="font-semibold text-lg">Étudiants</span>
               <div class="flex justify-content-between align-items-start mt-3">
                 <div class="w-6">
                   <span class="text-6xl font-bold text-900">{{ totalStudents }}</span>
@@ -75,11 +74,10 @@
           <!-- Formateurs card -->
           <div class="col-12 md:col-6 xl:col-3">
             <div class="card h-full">
-              <span class="font-semibold text-lg">Formateurs</span>
+              <span class="font-semibold text-lg">Praticiens Formateurs</span>
               <div class="flex justify-content-between align-items-start mt-3">
                 <div class="w-6">
                   <span class="text-6xl font-bold text-900">{{ totalFormateurs }}</span>
-
                 </div>
                 <div class="w-6">
                   <!-- SVG icon (optionnel) -->
@@ -94,28 +92,36 @@
             </div>
           </div>
 
-          <!-- Graphique Bar Chart pour les Stats PFP -->
+          <!-- Graphique Bar Chart pour les Stats PFP
           <div class="col-12 xl:col-9">
             <div class="card h-full">
               <div class="flex align-items-start justify-content-between mb-6">
-                <span class="text-900 text-xl font-semibold">Stats PFP</span>
+                <span class="text-900 text-xl font-semibold">Nombre d'étudiants par PFP</span>
                 <Dropdown :options="weeks" v-model="selectedWeek" class="w-10rem" optionLabel="label" @change="onWeekChange"></Dropdown>
               </div>
               <Chart type="bar" :height="300" :data="barData" :options="barOptions"></Chart>
+            </div>
+          </div>
+          -->
+          <!-- Nouvelle Carte pour le Line Chart -->
+          <div class="col-12 xl:col-9">
+            <div class="card h-full">
+              <div class="flex align-items-start justify-content-between mb-6">
+                <span class="text-900 text-xl font-semibold">Offre en formation</span>
+              </div>
+              <Chart type="line" :data="lineData" :options="lineOptions" :height="300" />
             </div>
           </div>
 
           <!-- Graphique Pie Chart pour les Stats PFP1A -->
           <div class="col-12 xl:col-3">
             <div class="card h-full">
-              <div class="text-900 text-xl font-semibold mb-6">Stats Institutions PFP1A</div>
+              <div class="text-900 text-xl font-semibold mb-6">Nombres d'étudiants par PFP</div>
               <Chart type="pie" :data="pieData" :height="300" :options="pieOptions"></Chart>
             </div>
           </div>
-
-
         </div>
-        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -153,6 +159,10 @@ const pieOptions = ref({});
 const barOptions = ref({});
 const barData = ref({});
 const pieData = ref({});
+
+// Line Chart Data and Options
+const lineData = ref({});
+const lineOptions = ref({});
 
 // DataTables
 const institutionsTableRef = ref(null);
@@ -363,6 +373,81 @@ const setChartData = () => {
       }
     }
   };
+
+  // Line chart: Évolution des étudiants
+  const monthlyStudentCounts = [
+    { month: 'PFP1A', count: 32 },
+    { month: 'PFP1B', count: 32 },
+    { month: 'PFP2', count: 61 },
+    { month: 'PFP3', count: 59 },
+    { month: 'PFP4', count: 59 },
+  ];
+
+  const monthlyStudent = [
+    { month: 'PFP1A', count: 42 },
+    { month: 'PFP1B', count: 39 },
+    { month: 'PFP2', count: 64 },
+    { month: 'PFP3', count: 60 },
+    { month: 'PFP4', count: 60 },
+  ];
+
+  lineData.value = {
+    labels: monthlyStudentCounts.map(entry => entry.month),
+    datasets: [
+      {
+        label: "Nombre de places utilisées",
+        data: monthlyStudentCounts.map(entry => entry.count),
+        fill: false,
+        borderColor: documentStyle.getPropertyValue('--primary-500').trim(),
+        tension: 0.4,
+        pointBackgroundColor: documentStyle.getPropertyValue('--primary-500').trim(),
+        pointBorderColor: '#fff',
+        pointHoverBackgroundColor: '#fff',
+        pointHoverBorderColor: documentStyle.getPropertyValue('--primary-500').trim(),
+      },
+
+      {
+        label: "Nombre de places proposées",
+        data: monthlyStudent.map(entry => entry.count),
+        fill: false,
+        borderColor: documentStyle.getPropertyValue('--info-500').trim(),
+        tension: 0.4,
+        pointBackgroundColor: documentStyle.getPropertyValue('--info-500').trim(),
+        pointBorderColor: '#fff',
+        pointHoverBackgroundColor: '#fff',
+        pointHoverBorderColor: documentStyle.getPropertyValue('--info-500').trim(),
+      }
+    ]
+  };
+
+  lineOptions.value = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        labels: {
+          color: textColor,
+          usePointStyle: true,
+          font: { weight: 700 },
+          padding: 28
+        },
+        position: 'bottom'
+      }
+    },
+    scales: {
+      x: {
+        ticks: {
+          color: textColorSecondary,
+          font: { weight: 500 }
+        },
+        grid: { display: false, drawBorder: false }
+      },
+      y: {
+        ticks: { color: textColorSecondary },
+        grid: { color: surfaceBorder, drawBorder: false }
+      }
+    }
+  };
 };
 
 // Watchers pour mettre à jour les graphiques lorsque les données changent
@@ -376,7 +461,6 @@ const onWeekChange = () => {
   // Vous pouvez ajuster cette logique selon vos besoins spécifiques
   setChartData();
 };
-
 </script>
 
 <style scoped>
@@ -401,13 +485,111 @@ const onWeekChange = () => {
   flex-direction: column;
 }
 
-
-
 @media screen and (max-width: 960px) {
   .p-column-title {
     display: inline;
     font-weight: bold;
     margin-right: 0.5rem;
   }
+}
+
+.container {
+  padding: 2rem;
+}
+
+.p-mb-6 {
+  margin-bottom: 2rem;
+}
+
+.p-mb-3 {
+  margin-bottom: 1.5rem;
+}
+
+.p-ml-2 {
+  margin-left: 0.5rem;
+}
+
+.p-ml-3 {
+  margin-left: 0.75rem;
+}
+
+.p-mr-2 {
+  margin-right: 0.5rem;
+}
+
+.p-mt-2 {
+  margin-top: 0.5rem;
+}
+
+.p-card {
+  padding: 1rem;
+}
+
+.p-grid > .p-col-12 {
+  margin-bottom: 1rem;
+}
+
+.text-900 {
+  color: var(--text-color);
+}
+
+.text-xl {
+  font-size: 1.25rem;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+.text-6xl {
+  font-size: 4rem;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+.mb-6 {
+  margin-bottom: 1.5rem;
+}
+
+.mb-3 {
+  margin-bottom: 0.75rem;
+}
+
+.ml-2 {
+  margin-left: 0.5rem;
+}
+
+.ml-3 {
+  margin-left: 0.75rem;
+}
+
+.mr-2 {
+  margin-right: 0.5rem;
+}
+
+.mt-2 {
+  margin-top: 0.5rem;
+}
+
+.h-full {
+  height: 100%;
+}
+
+.flex {
+  display: flex;
+}
+
+.justify-content-between {
+  justify-content: space-between;
+}
+
+.align-items-start {
+  align-items: flex-start;
+}
+
+.mb-6 {
+  margin-bottom: 1.5rem;
 }
 </style>

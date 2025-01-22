@@ -1,181 +1,334 @@
-<script setup>
-import { ref, onMounted } from 'vue';
-import { ref as storageRef, listAll, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { storage} from '../../../firebase.js';
-import Navbar from '@/components/Utils/Navbar.vue'
-
-// Initialisation des données
-const folders = ref([
-  { name: 'Documents généraux FP', path: 'documents-généraux/', icon: 'pi pi-folder' },
-  { name: 'CPT', path: 'cpt/', icon: 'pi pi-folder' },
-  { name: 'Évaluation PFP', path: 'evaluation/', icon: 'pi pi-folder' },
-  { name: 'Débrief post PFP', path: 'débriefPostPFP/', icon: 'pi pi-folder' },
-]);
-
-const selectedFolder = ref(null);  // Dossier sélectionné
-const files = ref([]);  // Fichiers dans le dossier sélectionné
-const subFolders = ref([]);  // Sous-dossiers dans le dossier sélectionné
-const uploadFiles = ref([]);  // Fichiers à uploader
-const currentUser = ref(null);  // Utilisateur courant
-const userFolderPath = ref('');  // Chemin de stockage spécifique à l'utilisateur
-
-// Fonction pour charger les fichiers et sous-dossiers à partir du Storage Firebase
-const loadFilesAndSubFoldersFromFolder = async (folderPath) => {
-  const folderRef = storageRef(storage, `${userFolderPath.value}${folderPath}`);
-  const result = await listAll(folderRef);
-
-  // Nettoyer les fichiers et sous-dossiers actuels
-  files.value = [];
-  subFolders.value = [];
-
-  // Parcourir les fichiers et les sous-dossiers
-  result.items.forEach(async (itemRef) => {
-    const fileUrl = await getDownloadURL(itemRef);
-    files.value.push({ name: itemRef.name, url: fileUrl });
-  });
-
-  result.prefixes.forEach((subFolderRef) => {
-    subFolders.value.push({ name: subFolderRef.name, path: subFolderRef.fullPath });
-  });
-};
-
-// Gérer le clic sur un dossier
-const onFolderClick = (folder) => {
-  selectedFolder.value = folder;
-  loadFilesAndSubFoldersFromFolder(folder.path);  // Charger les fichiers et sous-dossiers
-};
-
-// Gérer l'upload de fichiers dans le dossier sélectionné
-const onSelectedFiles = async (event) => {
-  if (!selectedFolder.value || !currentUser.value) {
-    alert('Sélectionnez un dossier avant de télécharger.');
-    return;
-  }
-
-  for (const file of event.files) {
-    const acceptedFormats = [
-      'image/jpeg',
-      'image/png',
-      'audio/mpeg',
-      'video/mp4',
-      'application/pdf',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'application/vnd.ms-excel' // Optionnel, pour la compatibilité avec les anciennes versions
-    ];
-
-    if (!acceptedFormats.includes(file.type)) {
-      alert('Type de fichier non accepté. Veuillez uploader un fichier JPG, PNG, MP3, MP4 ou PDF.');
-      continue;
-    }
-
-    // Utiliser le chemin spécifique de l'utilisateur pour stocker le fichier
-    const fileRef = storageRef(storage, `${userFolderPath.value}${selectedFolder.value.path}${file.name}`);
-    await uploadBytes(fileRef, file);  // Uploader le fichier dans Firebase Storage
-    const fileUrl = await getDownloadURL(fileRef);
-    files.value.push({ name: file.name, url: fileUrl });  // Ajouter à la liste des fichiers affichés
-  }
-};
-
-// Gérer le choix de fichier pour uploader
-const onChooseUploadFiles = () => {
-  fileUploaderRef.value.choose();  // Ouvrir le sélecteur de fichiers
-};
-
-// Surveiller l'état de connexion de l'utilisateur
-onMounted(() => {
-  const auth = getAuth();
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      currentUser.value = user;
-      userFolderPath.value = `users/${user.uid}/`;  // Utiliser l'ID utilisateur pour son chemin dans Storage
-      console.log(`Chemin de stockage pour cet utilisateur : ${userFolderPath.value}`);
-    } else {
-      currentUser.value = null;
-      userFolderPath.value = '';
-    }
-  });
-});
-</script>
-
 <template>
+  <!-- On insère votre composant NavBar tout en haut -->
   <Navbar />
+
   <div class="grid">
-    <!-- Section pour uploader des fichiers -->
-    <div class="col-12 md:col-5 xl:col-3">
-      <div class="card p-0">
-        <div class="card">
-          <FileUpload
-            ref="fileUploaderRef"
-            id="files-fileupload"
-            name="demo[]"
-            accept=".jpg,.png,.mp3,.mp4,.pdf, .docx, .xlsx, .doc, .xls"
-            customUpload
-            multiple
-            auto
-            class="upload-button-hidden w-full"
-            @select="onSelectedFiles"
-            :pt="{
-          buttonbar: { class: 'hidden' },
-          content: { class: 'border-none' }
-          }"
-          >
-            <template #empty>
-              <div v-if="uploadFiles.length < 1" @click="onChooseUploadFiles" class="w-full py-3" :style="{ cursor: 'copy' }">
-                <div class="h-full flex flex-column justify-content-center align-items-center">
-                  <i class="pi pi-upload text-900 text-2xl mb-3"></i>
-                  <span class="font-bold text-900 text-xl mb-3">Télécharger des fichiers</span>
-                  <span class="font-medium text-600 text-md text-center">Déposez ou sélectionnez des fichiers</span>
+    <!-- Colonne de gauche (titre/menu)
+    <div class="col-12 md:col-3">
+      <div class="card">
+        <h2 class="mt-0 mb-2">Documents PFP</h2>
+        <p class="text-600 m-0">
+          Retrouvez ci-dessous les différentes catégories de documents.
+        </p>
+      </div>
+    </div>
+    -->
+
+    <!-- Colonne de droite (les sections) -->
+    <div class="col-12 md:col-12">
+      <div class="grid">
+        <!-- Chaque section/dossier en pleine largeur (col-12) -->
+        <div
+          v-for="folder in folders"
+          :key="folder.id"
+          class="col-12"
+        >
+          <div class="card mb-3">
+            <!-- En-tête de la section -->
+            <div class="flex align-items-center mb-2">
+              <i :class="[folder.icon, 'text-2xl', 'mr-3']"></i>
+              <h3 class="m-0">{{ folder.name }}</h3>
+            </div>
+
+            <!-- CAS 1 : Le dossier contient des sous-sections (subFolders) -->
+            <template v-if="folder.subFolders && folder.subFolders.length > 0">
+              <!-- On affiche chaque sous-dossier dans une colonne (ex : col-12 md:col-6) -->
+              <div class="grid">
+                <div
+                  v-for="sub in folder.subFolders"
+                  :key="sub.id"
+                  class="col-12 md:col-6"
+                >
+                  <div class="border-round border-1 surface-border p-2 mb-3">
+                    <h4 class="mb-2">{{ sub.name }}</h4>
+
+                    <!-- Liste des fichiers de la sous-section -->
+                    <div v-if="sub.files && sub.files.length > 0">
+                      <ul class="pl-3">
+                        <li
+                          v-for="file in sub.files"
+                          :key="file.id"
+                          class="mb-2"
+                        >
+                          <a
+                            :href="file.url"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="text-primary hover:underline"
+                          >
+                            {{ file.name }}
+                          </a>
+                        </li>
+                      </ul>
+                    </div>
+                    <div v-else>
+                      <p class="text-600 m-0">
+                        Aucun fichier pour cette sous-section.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </template>
-          </FileUpload>
-        </div>
-      </div>
-    </div>
 
-    <!-- Section pour afficher les dossiers, sous-dossiers et fichiers -->
-    <div class="col-12 md:col-7 xl:col-9">
-      <div class="card">
-        <div class="text-900 text-xl font-semibold mb-3">Dossiers</div>
-        <div class="grid">
-          <!-- Afficher les dossiers principaux -->
-          <div v-for="(folder, i) in folders" :key="i" class="col-12 md:col-6 xl:col-4" @click="onFolderClick(folder)">
-            <div class="p-3 border-1 surface-border flex align-items-center justify-content-between hover:surface-100 cursor-pointer border-round">
-              <div class="flex align-items-center">
-                <i class="text-2xl mr-3" :class="folder.icon"></i>
-                <span class="text-900 text-lg font-medium">{{ folder.name }}</span>
+            <!-- CAS 2 : Le dossier n'a PAS de sous-sections, on liste directement ses fichiers -->
+            <template v-else>
+              <div v-if="folder.files.length > 0">
+                <ul class="pl-3">
+                  <li
+                    v-for="file in folder.files"
+                    :key="file.id"
+                    class="mb-2"
+                  >
+                    <a
+                      :href="file.url"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="text-primary hover:underline"
+                    >
+                      {{ file.name }}
+                    </a>
+                  </li>
+                </ul>
               </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Afficher les sous-dossiers si un dossier principal est sélectionné -->
-        <div v-if="subFolders.length > 0" class="mt-4">
-          <h3 class="text-lg font-semibold">Sous-dossiers</h3>
-          <div class="grid">
-            <div v-for="(subFolder, i) in subFolders" :key="i" class="col-12 md:col-6 xl:col-4" @click="onFolderClick(subFolder)">
-              <div class="p-3 border-1 surface-border flex align-items-center justify-content-between hover:surface-100 cursor-pointer border-round">
-                <div class="flex align-items-center">
-                  <i class="pi pi-folder text-2xl mr-3"></i>
-                  <span class="text-900 text-lg font-medium">{{ subFolder.name }}</span>
-                </div>
+              <div v-else>
+                <p class="text-600 m-0">Aucun fichier n'est disponible.</p>
               </div>
-            </div>
-          </div>
-        </div>
+            </template>
 
-        <!-- Afficher les fichiers dans le dossier sélectionné -->
-        <div v-if="files.length > 0" class="mt-4">
-          <h3 class="text-lg font-semibold">Fichiers dans {{ selectedFolder.name }}</h3>
-          <ul>
-            <li v-for="file in files" :key="file.name">
-              <a :href="file.url" target="_blank">{{ file.name }}</a>
-            </li>
-          </ul>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </template>
+
+<script setup>
+import Navbar from '@/components/Utils/Navbar.vue'
+
+/**
+ * Données des 7 sections (dossiers),
+ * avec éventuelles sous-sections (subFolders).
+ */
+const folders = [
+  {
+    id: 'documentsGeneraux',
+    name: 'Documents généraux FP',
+    icon: 'pi pi-folder',
+    subFolders: [
+      {
+        id: 'planEtudeCadre',
+        name: 'Plan d’étude cadre',
+        files: [
+          {
+            id: 'doc1',
+            name: 'PEC_2022_PHY-F 3.pdf',
+            url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FPEC_2022_PHY-F%203.pdf?alt=media&token=354a0075-be4e-4a5e-b101-8a85f4bb8cfb'
+          },
+          {
+            id: 'doc2',
+            name: 'PEC_2022_PHY-D 3.pdf',
+            url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FPEC_2022_PHY-D%203.pdf?alt=media&token=b5ea1f60-23df-4111-b319-df7e816db930'
+          },
+          {
+            id: 'doc3',
+            name: 'PEC_2022_Santé_EnBref_Physiothérapie_EN 1.pdf',
+            url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FPEC_2022_Sant%C3%A9_EnBref_Physioth%C3%A9rapie_EN%201.pdf?alt=media&token=8a7a5056-dce4-42e9-8d31-1feb82e7661b'
+          }
+        ]
+      },
+      {
+        id: 'cadreRealisationFP',
+        name: 'Cadre de réalisation FP',
+        files: [
+          {
+            id: 'doc4',
+            name: 'Cadre de réalisation FP_PEC 22 4.pdf',
+            url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FCadre%20de%20r%C3%A9alisation%20FP_PEC%2022%204.pdf?alt=media&token=9d47a460-0b41-4585-b5cc-06c389f8fac3'
+          },
+          {
+            id: 'doc5',
+            name: 'Rahmenbedingungen_Praxisausbildung_PEC 22 3.pdf',
+            url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FRahmenbedingungen_Praxisausbildung_PEC%2022%203.pdf?alt=media&token=cc300e73-1553-4af0-86b5-0756178f02e3'
+          }
+        ]
+      }
+    ],
+    files: []
+  },
+  {
+    id: 'cpt',
+    name: 'CPT',
+    icon: 'pi pi-folder',
+    subFolders: [],
+    files: [
+      {
+        id: 'doc1',
+        name: 'Contrat pédagogique tripartite vide 2',
+        url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FContrat%20p%C3%A9dagogique%20tripartite_vide%202.docx?alt=media&token=e117726c-cadc-4ed1-a4df-e8d51786a1a0'
+      },
+      {
+        id: 'doc2',
+        name: 'Pädagogicher dreiparteivertrag leer 3',
+        url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FP%C3%A4dagogicher_dreiparteivertrag_leer%203.docx?alt=media&token=0837e0d4-7efa-4869-8029-f1caad79c3e2'
+      }
+    ]
+  },
+  {
+    id: 'journaldebord',
+    name: 'Journal de bord',
+    icon: 'pi pi-folder',
+    subFolders: [],
+    files: [
+      {
+        id: 'doc1',
+        name: 'Journal de bord FP',
+        url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FJournal%20de%20bord%20FP.xls?alt=media&token=ca58bc23-b3b8-486d-89b4-7d0b397154e5'
+      }
+    ]
+  },
+  {
+    id: 'evaluation',
+    name: 'Évaluation PFP',
+    icon: 'pi pi-folder',
+
+    /* 4 sous-sections (PFP1, PFP2, PFP3, PFP4) */
+    subFolders: [
+      {
+        id: 'pfp1',
+        name: 'PFP1',
+        files: [
+          {
+            id: 'doc1',
+            name: 'Evaluation PFP1 - FR.xlsx',
+            url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FEvaluation%20FR%20FP%201A%20vf%203.xlsx?alt=media&token=edcee0d5-8778-4d63-9594-f1b0321d5e21'
+          },
+          {
+            id: 'doc2',
+            name: 'Evaluation PFP1 - DE.xlsx',
+            url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FEvaluation%20DE%20FP%201A%20vf%204.xlsx?alt=media&token=995641e2-db6a-432e-b6c9-b51c1aab731e'
+          }
+        ]
+      },
+      {
+        id: 'pfp2',
+        name: 'PFP2',
+        files: [
+          {
+            id: 'doc1',
+            name: 'Evaluation PFP2 - FR.xlsx',
+            url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FEvaluation%20FR%20FP%202A%20vf%205.xlsx?alt=media&token=02074fe8-06a4-46d6-a335-035884c8a51f'
+          },
+          {
+            id: 'doc2',
+            name: 'Evaluation PFP2 - DE.xlsx',
+            url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FEvaluation%20DE%20FP%202A%20vf%204.xlsx?alt=media&token=97fc56b2-bab3-40f6-b425-cf40a215cf86'
+          }
+        ]
+      },
+      {
+        id: 'pfp3',
+        name: 'PFP3',
+        files: [
+          {
+            id: 'doc1',
+            name: 'Evaluation PFP3 - FR.xlsx',
+            url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FEvaluation%20FR%20FP%203%20vf%202.xlsx?alt=media&token=7a6dcba5-1940-4cb0-a813-be3b83445355'
+          },
+          {
+            id: 'doc2',
+            name: 'Evaluation PFP3 - DE.xlsx',
+            url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FEvaluation%20DE%20FP%203%20vf%201.xlsx?alt=media&token=62eb1c59-e77e-4d69-a954-644f03bf4a04'
+          }
+        ]
+      },
+      {
+        id: 'pfp4',
+        name: 'PFP4',
+        files: [
+          {
+            id: 'doc1',
+            name: 'Evaluation PFP4 - FR.xlsx',
+            url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FEvaluation%20FR%20FP%204%20vf%202.xlsx?alt=media&token=509bebd2-232a-4942-9291-4f7a27c25976'
+          },
+          {
+            id: 'doc2',
+            name: 'Evaluation PFP4 - DE.xlsx',
+            url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FEvaluation%20DE%20FP%204%20vf%201.xlsx?alt=media&token=0aa40318-eb33-4dd5-b4c9-7cc9e6d31680'
+          }
+        ]
+      }
+    ],
+    files: []
+  },
+  {
+    id: 'debriefPostPFP',
+    name: 'Débrief post PFP',
+    icon: 'pi pi-folder',
+    subFolders: [],
+    files: [
+      {
+        id: 'doc1',
+        name: 'Debrief - Post PFP',
+        url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FD%C3%A9brief%20post%20PFP.docx?alt=media&token=049980f2-ea6b-43dd-a0ae-71cd66113dba'
+      }
+    ]
+  },
+  {
+    id: 'MobilitesInternationales',
+    name: 'Mobilités internationales',
+    icon: 'pi pi-folder',
+    subFolders: [
+      {
+        id: 'etranger',
+        name: 'Places de stage à l étranger',
+        files: [
+          {
+            id: 'doc1',
+            name: 'Formulaire intérêt à suivre une PFP à l’étranger',
+            url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2F3.%20Formulaire%20int%C3%A9r%C3%AAt%20%C3%A0%20suivre%20une%20PFP%20%C3%A0%20l%E2%80%99%C3%A9tranger.pdf?alt=media&token=8fa9021f-4aed-405f-9e35-3259f49448b4'
+          },
+          {
+            id: 'doc2',
+            name: 'Ablauf Auslandpraktikum',
+            url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2F2.%20Ablauf%20Auslandpraktikum.pdf?alt=media&token=d66a8e1f-3ebc-4509-b115-a1aa975376f2'
+          },
+          {
+            id: 'doc3',
+            name: 'Places de stages à l´étranger',
+            url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2F1.%20Places%20de%20stages%20%C3%A0%20l%C3%A9tranger.pdf?alt=media&token=e2008f34-dd3a-4a0d-9d31-d65408f47a19'
+          }
+        ]
+      },
+      {
+        id: 'pfp2',
+        name: 'Bourse d étude',
+        files: [
+          {
+            id: 'doc1',
+            name: 'Relation internationale (RI) 2024.pdf',
+            url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FRelation%20internationale%20(RI)%202024.pdf?alt=media&token=461f2f2e-2eb6-464f-ad24-f65f06dc0b90'
+          }
+        ]
+      }
+    ],
+    files: []
+  },
+  {
+    id: 'divers',
+    name: 'Divers',
+    icon: 'pi pi-folder',
+    subFolders: [],
+    files: [
+      {
+        id: 'doc1',
+        name: '....',
+        url: ''
+      }
+    ]
+  }
+]
+</script>
+
+<style scoped>
+</style>

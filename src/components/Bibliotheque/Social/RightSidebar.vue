@@ -5,14 +5,6 @@
     <div class="profile-section card">
       <div class="communities-header">
         <h4 @click="goToCommunities" class="clickable">Communautés</h4>
-        <!-- Bouton pour ajouter une nouvelle communauté -->
-        <Button
-          icon="pi pi-plus"
-          class="add-community-button p-button-rounded p-button-primary"
-          @click="addCommunity"
-          tooltip="Ajouter une communauté"
-          tooltipOptions="{ position: 'top' }"
-        />
       </div>
       <ul class="communities-list">
         <li
