@@ -122,17 +122,17 @@ const folders = [
         files: [
           {
             id: 'doc1',
-            name: 'PEC_2022_PHY-F 3.pdf',
+            name: 'PEC_2022_PHY_FR.pdf',
             url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FPEC_2022_PHY-F%203.pdf?alt=media&token=354a0075-be4e-4a5e-b101-8a85f4bb8cfb'
           },
           {
             id: 'doc2',
-            name: 'PEC_2022_PHY-D 3.pdf',
+            name: 'PEC_2022_PHY_DE.pdf',
             url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FPEC_2022_PHY-D%203.pdf?alt=media&token=b5ea1f60-23df-4111-b319-df7e816db930'
           },
           {
             id: 'doc3',
-            name: 'PEC_2022_Santé_EnBref_Physiothérapie_EN 1.pdf',
+            name: 'PEC_2022_Santé_PHY_EN.pdf',
             url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FPEC_2022_Sant%C3%A9_EnBref_Physioth%C3%A9rapie_EN%201.pdf?alt=media&token=8a7a5056-dce4-42e9-8d31-1feb82e7661b'
           }
         ]
@@ -143,12 +143,12 @@ const folders = [
         files: [
           {
             id: 'doc4',
-            name: 'Cadre de réalisation FP_PEC 22 4.pdf',
+            name: 'Cadre de réalisation FP_PEC 22.pdf',
             url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FCadre%20de%20r%C3%A9alisation%20FP_PEC%2022%204.pdf?alt=media&token=9d47a460-0b41-4585-b5cc-06c389f8fac3'
           },
           {
             id: 'doc5',
-            name: 'Rahmenbedingungen_Praxisausbildung_PEC 22 3.pdf',
+            name: 'Rahmenbedingungen_Praxisausbildung_PEC 22.pdf',
             url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FRahmenbedingungen_Praxisausbildung_PEC%2022%203.pdf?alt=media&token=cc300e73-1553-4af0-86b5-0756178f02e3'
           }
         ]
@@ -164,12 +164,12 @@ const folders = [
     files: [
       {
         id: 'doc1',
-        name: 'Contrat pédagogique tripartite vide 2',
+        name: 'Contrat pédagogique tripartite',
         url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FContrat%20p%C3%A9dagogique%20tripartite_vide%202.docx?alt=media&token=e117726c-cadc-4ed1-a4df-e8d51786a1a0'
       },
       {
         id: 'doc2',
-        name: 'Pädagogicher dreiparteivertrag leer 3',
+        name: 'Pädagogicher dreiparteivertrag',
         url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FP%C3%A4dagogicher_dreiparteivertrag_leer%203.docx?alt=media&token=0837e0d4-7efa-4869-8029-f1caad79c3e2'
       }
     ]
@@ -269,19 +269,19 @@ const folders = [
     files: [
       {
         id: 'doc1',
-        name: 'Debrief - Post PFP',
+        name: 'Débrief post PFP',
         url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FD%C3%A9brief%20post%20PFP.docx?alt=media&token=049980f2-ea6b-43dd-a0ae-71cd66113dba'
       }
     ]
   },
   {
     id: 'MobilitesInternationales',
-    name: 'Mobilités internationales',
+    name: 'Mobilité internationale',
     icon: 'pi pi-folder',
     subFolders: [
       {
         id: 'etranger',
-        name: 'Places de stage à l étranger',
+        name: "Places de stage à l'étranger",
         files: [
           {
             id: 'doc1',
@@ -293,16 +293,11 @@ const folders = [
             name: 'Ablauf Auslandpraktikum',
             url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2F2.%20Ablauf%20Auslandpraktikum.pdf?alt=media&token=d66a8e1f-3ebc-4509-b115-a1aa975376f2'
           },
-          {
-            id: 'doc3',
-            name: 'Places de stages à l´étranger',
-            url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2F1.%20Places%20de%20stages%20%C3%A0%20l%C3%A9tranger.pdf?alt=media&token=e2008f34-dd3a-4a0d-9d31-d65408f47a19'
-          }
         ]
       },
       {
         id: 'pfp2',
-        name: 'Bourse d étude',
+        name: "Bourse d'étude",
         files: [
           {
             id: 'doc1',
