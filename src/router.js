@@ -56,6 +56,7 @@ import DocumentsPFP from '@/components/Home/DocumentsPFP.vue'
 import Index from '@/views/apps/tasklist/Index.vue'
 import IndexChat from '@/views/apps/chat/IndexChat.vue'
 import CommunityInfo from '@/components/Social/CommunityInfo.vue'; // Import du composant Infos
+import ListComponent from '@/components/Bibliotheque/SoundBox/ListComponent.vue'
 
 // Define your routes
 const routes = [
@@ -110,6 +111,11 @@ const routes = [
   { path: '/documents_pfp', component: DocumentsPFP, name: 'DocumentsPFP', meta: { requiresAuth: true } },
   { path: '/tasklist', component: Index, name: 'Index', meta: { requiresAuth: true, requiredRole: ['editor', 'admin'] } },
   { path: '/chat', component: IndexChat, name: 'IndexChat', meta: { requiresAuth: true } },
+  {
+    path: '/list', // Chemin pour ListComponent
+    name: 'ListComponent',
+    component: ListComponent,  meta: { requiresAuth: true, requiredRole: ['editor', 'admin'] }
+  },
   { path: '/communities', component: CommunityManagement, name: 'CommunityManagement', props: true, meta: { requiresAuth: true } },
   {
     path: '/communities/:id',
