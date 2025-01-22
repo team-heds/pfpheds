@@ -9,6 +9,9 @@
         :value="publicCommunities"
         class="w-full"
         responsiveLayout="scroll"
+        paginator
+        rows="10"
+        :rowsPerPageOptions="[5, 10, 20]"
         emptyMessage="Aucune communauté publique trouvée."
       >
         <!-- Colonne Nom de la Communauté -->
@@ -141,6 +144,6 @@ export default {
 
 <style scoped>
 .public-communities-list-section {
-  /* Styles supplémentaires si nécessaire */
+
 }
 </style>
