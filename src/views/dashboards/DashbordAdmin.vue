@@ -116,7 +116,7 @@
           <!-- Graphique Pie Chart pour les Stats PFP1A -->
           <div class="col-12 xl:col-3">
             <div class="card h-full">
-              <div class="text-900 text-xl font-semibold mb-6">Nombres d'étudiants par PFP</div>
+              <div class="text-900 text-xl font-semibold mb-6">Nombres d'étudiants par volée</div>
               <Chart type="pie" :data="pieData" :height="300" :options="pieOptions"></Chart>
             </div>
           </div>
@@ -277,8 +277,8 @@ const setChartData = () => {
 
   // Pie chart: Répartition des institutions par catégorie
   const categoryCounts = {};
-  institutions.value.forEach(inst => {
-    const category = inst.Category || 'Non spécifié';
+  students.value.forEach(inst => {
+    const category = inst.Classe || 'Non spécifié';
     if (categoryCounts[category]) {
       categoryCounts[category] += 1;
     } else {
