@@ -34,7 +34,7 @@
           <!-- Colonne Nom de l'Institution -->
           <Column header="Institution">
             <template #body="slotProps">
-              <span>{{ slotProps.data.Name || 'Non spécifié' }}</span>
+              <span>{{ slotProps.data.InstitutionName || 'Non spécifié' }}</span>
             </template>
           </Column>
 
@@ -211,7 +211,7 @@
             </template>
           </Column>
 
-          <!-- Colonne Action -->
+          <!-- Colonne
           <Column header="Action">
             <template #body="slotProps">
               <Button
@@ -221,6 +221,7 @@
               />
             </template>
           </Column>
+          Action -->
         </DataTable>
       </div>
 
@@ -513,26 +514,33 @@ export default {
         if (placesData) {
           const placePromises = Object.keys(placesData).map(async key => {
             const place = placesData[key];
-            const institutionData = await this.fetchInstitutionData(place.InstitutionId);
+
+
+
+
+            const institutionData = await this.fetchInstitutionData(place.InstitutionId || place.IDPlace);
+            console.log("institutionData");
+            console.log(institutionData.NomPlace);
+            console.log("ya" + place.REHAB);
             return {
               IdPlace: key,
-              NomPlace: place.NomPlace || '',
-              MSQ: place.MSQ || false,
-              SYSINT: place.SYSINT || false,
-              NEUROGER: place['NEURO-GER'] || false,
-              AIGU: place.AIGU || false,
-              REHAB: place.REHAB || false,
-              AMBU: place.AMBU || false,
-              FR: place.FR || false,
-              DE: place.DE || false,
-              IT: place.IT || false,
-              ENG: place.ENG || false,
+              NomPlace: institutionData.NomPlace || institutionData.Name || '',
+              MSQ: place.MSQ || true,
+              SYSINT: place.SYSINT ||true,
+              NEUROGER: place['NEURO-GER'] || true,
+              AIGU: place.AIGU || true,
+              REHAB: place.REHAB || true,
+              AMBU: place.AMBU || true,
+              FR: place.FR || true,
+              DE: place.DE ||  place.ALL || true,
+              IT: place.IT || true,
+              ENG: place.ENG || true,
               PFP2: place.PFP2 || '',
               PFP1A: place.PFP1A || '',
               PFP1B: place.PFP1B || '',
               PFP4: place.PFP4 || '',
               PFP3: place.PFP3 || '',
-              InstitutionName: institutionData.Name || '',
+              InstitutionName: institutionData.Name || institutionData.NomPlace || '',
               AccordCadreDate: institutionData.AccordCadreDate || '',
               Canton: institutionData.Canton || '',
               Categorie: institutionData.Category || '',
