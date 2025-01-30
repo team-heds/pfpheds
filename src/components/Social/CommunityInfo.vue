@@ -4,7 +4,7 @@
       <div class="info-container">
         <h1>{{ community.name }}</h1>
         <p>{{ community.description }}</p>
-        <p><strong>Créée le :</strong> {{ formattedDate }}</p>
+        <p><strong>Créée le  date:</strong> {{ formattedDate }}</p>
         <p><strong>Membres :</strong> {{ memberCount }}</p>
         <!-- Ajoutez d'autres informations pertinentes ici -->
         <button class="btn btn-secondary" @click="goBack">Retour</button>
