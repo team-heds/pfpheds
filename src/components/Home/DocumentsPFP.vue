@@ -284,11 +284,6 @@ const folders = [
         name: "Places de stage à l'étranger",
         files: [
           {
-            id: 'doc1',
-            name: 'Formulaire intérêt à suivre une PFP à l’étranger',
-            url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2F3.%20Formulaire%20int%C3%A9r%C3%AAt%20%C3%A0%20suivre%20une%20PFP%20%C3%A0%20l%E2%80%99%C3%A9tranger.pdf?alt=media&token=8fa9021f-4aed-405f-9e35-3259f49448b4'
-          },
-          {
             id: 'doc2',
             name: 'Places de stages à l’étranger',
             url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2F1.%20Places%20de%20stages%20%C3%A0%20l%27%C3%A9tranger.pdf?alt=media&token=e2008f34-dd3a-4a0d-9d31-d65408f47a19'
@@ -297,6 +292,11 @@ const folders = [
             id: 'doc3',
             name: 'Ablauf Auslandpraktikum',
             url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2F2.%20Ablauf%20Auslandpraktikum.pdf?alt=media&token=d66a8e1f-3ebc-4509-b115-a1aa975376f2'
+          },
+          {
+            id: 'doc1',
+            name: 'Formulaire intérêt à suivre une PFP à l’étranger',
+            url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2F3.%20Formulaire%20int%C3%A9r%C3%AAt%20%C3%A0%20suivre%20une%20PFP%20%C3%A0%20l%E2%80%99%C3%A9tranger.pdf?alt=media&token=8fa9021f-4aed-405f-9e35-3259f49448b4'
           },
         ]
       },

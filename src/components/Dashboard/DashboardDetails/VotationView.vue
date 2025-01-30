@@ -496,7 +496,7 @@ export default {
             console.log("kex "+ key);
             const institutionId = place.InstitutionId || place.IDPlace; // Prendre en compte InstitutionId ou IDPlace
             const institutionData = await this.fetchInstitutionData(institutionId);
-            const keyid = institutionData.InstitutionId || institutionData.IDPlace || institutionData.key; 
+            const keyid = institutionData.InstitutionId || institutionData.IDPlace || institutionData.key;
             return {
               IDENTIFIANT: key,
               NomPlace: institutionData.Name || '',
@@ -577,7 +577,7 @@ export default {
             const vote = studentVotations[choiceKey];
             if (vote && vote.selectedStageName && vote.selectedStageLieu && vote.selectedStageDomaine) {
               // Trouver le stage correspondant
-              const stage = this.stages.find(s => 
+              const stage = this.stages.find(s =>
                 s.NomPlace === vote.selectedStageName &&
                 s.Lieu === vote.selectedStageLieu &&
                 s.Domaine === vote.selectedStageDomaine

@@ -1,7 +1,7 @@
 <!-- src/components/ConvaiWidget.vue -->
 <template>
   <div class="convai-widget-container">
-    <elevenlabs-convai agent-id="uaDV4jFoX5IPj49zy95v"></elevenlabs-convai>
+    <elevenlabs-convai agent-id="mz6MO6cxxKQYHSghIs10"></elevenlabs-convai>
   </div>
 </template>
 
