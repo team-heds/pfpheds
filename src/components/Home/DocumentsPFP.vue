@@ -290,6 +290,11 @@ const folders = [
           },
           {
             id: 'doc2',
+            name: 'Places de stages à l’étranger',
+            url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2F1.%20Places%20de%20stages%20%C3%A0%20l%27%C3%A9tranger.pdf?alt=media&token=e2008f34-dd3a-4a0d-9d31-d65408f47a19'
+          },
+          {
+            id: 'doc3',
             name: 'Ablauf Auslandpraktikum',
             url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2F2.%20Ablauf%20Auslandpraktikum.pdf?alt=media&token=d66a8e1f-3ebc-4509-b115-a1aa975376f2'
           },

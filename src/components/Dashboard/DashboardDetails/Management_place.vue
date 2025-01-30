@@ -106,7 +106,7 @@
           </Column>
 
           <!-- Colonnes Langues -->
-          <Column header="FR">
+          <Column header="DE">
             <template #body="slotProps">
               <Checkbox
                 v-model="slotProps.data.FR"
@@ -115,7 +115,7 @@
               />
             </template>
           </Column>
-          <Column header="DE">
+          <Column header="FR">
             <template #body="slotProps">
               <Checkbox
                 v-model="slotProps.data.DE"
@@ -524,7 +524,7 @@ export default {
             console.log("ya" + place.REHAB);
             return {
               IdPlace: key,
-              NomPlace: institutionData.NomPlace || institutionData.Name || '',
+              NomPlace: place.NomPlace ||  '',
               MSQ: place.MSQ || true,
               SYSINT: place.SYSINT ||true,
               NEUROGER: place['NEURO-GER'] || true,
@@ -532,7 +532,7 @@ export default {
               REHAB: place.REHAB || true,
               AMBU: place.AMBU || true,
               FR: place.FR || true,
-              DE: place.DE ||  place.ALL || true,
+              DE: place.DE || true,
               IT: place.IT || true,
               ENG: place.ENG || true,
               PFP2: place.PFP2 || '',
