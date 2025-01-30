@@ -13,24 +13,13 @@
 
       <!-- Barre de recherche -->
       <div class="text-center mb-3">
-        <InputText
-          v-model="search"
-          placeholder="Recherche par nom de place ou remarques"
-          class="w-50"
-          debounce="300"
-        />
+        <InputText v-model="search" placeholder="Recherche par nom de place ou remarques" class="w-50" debounce="300" />
       </div>
 
       <!-- Table des places -->
       <div v-if="filteredPlaces.length > 0" class="p-datatable-responsive">
-        <DataTable
-          :value="filteredPlaces"
-          class="p-datatable-sm custom-datatable"
-          paginator
-          :rows="10"
-          responsiveLayout="scroll"
-          :rowsPerPageOptions="[10, 20, 50]"
-        >
+        <DataTable :value="filteredPlaces" class="p-datatable-sm custom-datatable" paginator :rows="10"
+          responsiveLayout="scroll" :rowsPerPageOptions="[10, 20, 50, 100]">
           <!-- Colonne Nom de l'Institution -->
           <Column header="Institution">
             <template #body="slotProps">
@@ -41,87 +30,60 @@
           <!-- Colonne Nom de la Place -->
           <Column header="Nom de la Place">
             <template #body="slotProps">
-              <InputText
-                v-model="slotProps.data.NomPlace"
-                @change="updatePlace(slotProps.data, 'NomPlace', slotProps.data.NomPlace)"
-                class="p-inputtext-sm"
-              />
+              <InputText v-model="slotProps.data.NomPlace"
+                @change="updatePlace(slotProps.data, 'NomPlace', slotProps.data.NomPlace)" class="p-inputtext-sm" />
             </template>
           </Column>
 
           <!-- Colonnes Spécialités -->
           <Column header="MSQ">
             <template #body="slotProps">
-              <Checkbox
-                v-model="slotProps.data.MSQ"
-                @change="updatePlace(slotProps.data, 'MSQ', slotProps.data.MSQ)"
-                binary="true"
-              />
+              <Checkbox v-model="slotProps.data.MSQ" @change="updatePlace(slotProps.data, 'MSQ', slotProps.data.MSQ)"
+                binary="true" />
             </template>
           </Column>
           <Column header="SYSINT">
             <template #body="slotProps">
-              <Checkbox
-                v-model="slotProps.data.SYSINT"
-                @change="updatePlace(slotProps.data, 'SYSINT', slotProps.data.SYSINT)"
-                binary="true"
-              />
+              <Checkbox v-model="slotProps.data.SYSINT"
+                @change="updatePlace(slotProps.data, 'SYSINT', slotProps.data.SYSINT)" binary="true" />
             </template>
           </Column>
           <Column header="NEURO-GER">
             <template #body="slotProps">
-              <Checkbox
-                v-model="slotProps.data.NEUROGER"
-                @change="updatePlace(slotProps.data, 'NEURO-GER', slotProps.data.NEUROGER)"
-                binary="true"
-              />
+              <Checkbox v-model="slotProps.data.NEUROGER"
+                @change="updatePlace(slotProps.data, 'NEURO-GER', slotProps.data.NEUROGER)" binary="true" />
             </template>
           </Column>
           <Column header="AIGU">
             <template #body="slotProps">
-              <Checkbox
-                v-model="slotProps.data.AIGU"
-                @change="updatePlace(slotProps.data, 'AIGU', slotProps.data.AIGU)"
-                binary="true"
-              />
+              <Checkbox v-model="slotProps.data.AIGU" @change="updatePlace(slotProps.data, 'AIGU', slotProps.data.AIGU)"
+                binary="true" />
             </template>
           </Column>
           <Column header="REHAB">
             <template #body="slotProps">
-              <Checkbox
-                v-model="slotProps.data.REHAB"
-                @change="updatePlace(slotProps.data, 'REHAB', slotProps.data.REHAB)"
-                binary="true"
-              />
+              <Checkbox v-model="slotProps.data.REHAB"
+                @change="updatePlace(slotProps.data, 'REHAB', slotProps.data.REHAB)" binary="true" />
             </template>
           </Column>
           <Column header="AMBU">
             <template #body="slotProps">
-              <Checkbox
-                v-model="slotProps.data.AMBU"
-                @change="updatePlace(slotProps.data, 'AMBU', slotProps.data.AMBU)"
-                binary="true"
-              />
+              <Checkbox v-model="slotProps.data.AMBU" @change="updatePlace(slotProps.data, 'AMBU', slotProps.data.AMBU)"
+                binary="true" />
             </template>
           </Column>
 
           <!-- Colonnes Langues -->
           <Column header="DE">
             <template #body="slotProps">
-              <Checkbox
-                v-model="slotProps.data.FR"
-                @change="updatePlace(slotProps.data, 'FR', slotProps.data.FR)"
-                binary="true"
-              />
+              <Checkbox v-model="slotProps.data.FR" @change="updatePlace(slotProps.data, 'FR', slotProps.data.FR)"
+                binary="true" />
             </template>
           </Column>
           <Column header="FR">
             <template #body="slotProps">
-              <Checkbox
-                v-model="slotProps.data.DE"
-                @change="updatePlace(slotProps.data, 'DE', slotProps.data.DE)"
-                binary="true"
-              />
+              <Checkbox v-model="slotProps.data.DE" @change="updatePlace(slotProps.data, 'DE', slotProps.data.DE)"
+                binary="true" />
             </template>
           </Column>
 
@@ -129,47 +91,34 @@
           <!-- Colonnes PFP -->
           <Column header="PFP2">
             <template #body="slotProps">
-              <InputText
-                v-model="slotProps.data.PFP2"
-                @change="updatePlace(slotProps.data, 'PFP2', slotProps.data.PFP2)"
-                class="p-inputtext-sm small-input"
-              />
+              <InputText v-model="slotProps.data.PFP2"
+                @change="updatePlace(slotProps.data, 'PFP2', slotProps.data.PFP2)" class="p-inputtext-sm small-input" />
             </template>
           </Column>
           <Column header="PFP1A">
             <template #body="slotProps">
-              <InputText
-                v-model="slotProps.data.PFP1A"
+              <InputText v-model="slotProps.data.PFP1A"
                 @change="updatePlace(slotProps.data, 'PFP1A', slotProps.data.PFP1A)"
-                class="p-inputtext-sm small-input"
-              />
+                class="p-inputtext-sm small-input" />
             </template>
           </Column>
           <Column header="PFP1B">
             <template #body="slotProps">
-              <InputText
-                v-model="slotProps.data.PFP1B"
+              <InputText v-model="slotProps.data.PFP1B"
                 @change="updatePlace(slotProps.data, 'PFP1B', slotProps.data.PFP1B)"
-                class="p-inputtext-sm small-input"
-              />
+                class="p-inputtext-sm small-input" />
             </template>
           </Column>
           <Column header="PFP4">
             <template #body="slotProps">
-              <InputText
-                v-model="slotProps.data.PFP4"
-                @change="updatePlace(slotProps.data, 'PFP4', slotProps.data.PFP4)"
-                class="p-inputtext-sm small-input"
-              />
+              <InputText v-model="slotProps.data.PFP4"
+                @change="updatePlace(slotProps.data, 'PFP4', slotProps.data.PFP4)" class="p-inputtext-sm small-input" />
             </template>
           </Column>
           <Column header="PFP3">
             <template #body="slotProps">
-              <InputText
-                v-model="slotProps.data.PFP3"
-                @change="updatePlace(slotProps.data, 'PFP3', slotProps.data.PFP3)"
-                class="p-inputtext-sm small-input"
-              />
+              <InputText v-model="slotProps.data.PFP3"
+                @change="updatePlace(slotProps.data, 'PFP3', slotProps.data.PFP3)" class="p-inputtext-sm small-input" />
             </template>
           </Column>
 
@@ -184,32 +133,60 @@
           <!-- Colonne Praticien Formateur -->
           <Column header="Praticien Formateur">
             <template #body="slotProps">
-              <MultiSelect
-                v-model="slotProps.data.selectedPraticiensFormateurs"
-                :options="praticiensFormateursOptions"
-                optionLabel="label"
-                optionValue="value"
+              <MultiSelect v-model="slotProps.data.selectedPraticiensFormateurs" :options="praticiensFormateursOptions"
+                optionLabel="label" optionValue="value"
                 @change="updatePraticiensFormateurs(slotProps.data, slotProps.data.selectedPraticiensFormateurs)"
-                placeholder="Sélectionner"
-                display="chip"
-                class="w-full"
-              />
+                placeholder="Sélectionner" display="chip" class="w-full" />
             </template>
           </Column>
 
           <!-- Colonne Remarques -->
           <Column header="Remarques">
             <template #body="slotProps">
-              <InputText
-                v-model="slotProps.data.Remarques"
-                @change="updatePlace(slotProps.data, 'Note', slotProps.data.Remarques)"
-                autoResize
-                rows="2"
-                cols="30"
-                class="p-input-sm"
-              />
+              <InputText v-model="slotProps.data.Remarques"
+                @change="updatePlace(slotProps.data, 'Note', slotProps.data.Remarques)" autoResize rows="2" cols="30"
+                class="p-input-sm" />
             </template>
           </Column>
+
+          <!-- Colonne pour uploader un fichier -->
+          <Column header="Uploader un fichier">
+            <template #body="slotProps">
+              <div class="file-upload-container">
+                <!-- Input File caché -->
+                <input type="file" ref="fileInput" class="hidden-file-input"
+                  @change="handleFileSelection($event, slotProps.data)" />
+                <!-- Bouton de sélection -->
+              
+                
+                <!-- Nom du fichier sélectionné -->
+                <span v-if="slotProps.data.selectedFileName" class="file-name">
+                  {{ slotProps.data.selectedFileName }}
+                </span>
+                <!-- Bouton d'envoi -->
+                <Button label="Envoyer fichier" class="p-button-sm p-button-primary"
+                  :disabled="!slotProps.data.selectedFile" @click="uploadFile(slotProps.data)" />
+              </div>
+            </template>
+          </Column>
+
+          <!-- Colonne pour afficher le fichier existant -->
+          <Column header="Voir Fichier">
+            <template #body="slotProps">
+              <div v-if="slotProps.data.fileURL">
+                <a :href="slotProps.data.fileURL" target="_blank">
+                  📂 Ouvrir
+                </a>
+              </div>
+              <div v-else>
+                Aucun fichier
+              </div>
+            </template>
+          </Column>
+
+
+
+
 
           <!-- Colonne
           <Column header="Action">
@@ -243,21 +220,16 @@
     </div>
 
     <!-- Modal de création de place -->
-    <Dialog header="Créer une nouvelle place" :visible="showCreatePlaceModal" modal @hide="closeCreatePlaceModal" :style="{ width: '50vw' }">
+    <Dialog header="Créer une nouvelle place" :visible="showCreatePlaceModal" modal @hide="closeCreatePlaceModal"
+      :style="{ width: '50vw' }">
       <form @submit.prevent="createPlace">
         <div class="p-fluid p-formgrid p-grid">
           <!-- Institution -->
           <div class="p-field p-col-12">
             <label for="institutionId">Institution</label>
-            <Dropdown
-              v-model="newPlace.InstitutionId"
-              :options="institutionOptions"
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Sélectionnez une institution"
-              @change="populateInstitutionData"
-              required
-            />
+            <Dropdown v-model="newPlace.InstitutionId" :options="institutionOptions" optionLabel="label"
+              optionValue="value" placeholder="Sélectionnez une institution" @change="populateInstitutionData"
+              required />
           </div>
 
           <!-- Nom de la Place -->
@@ -367,27 +339,14 @@
           <!-- Praticien Formateur -->
           <div class="p-field p-col-12">
             <label for="PraticienFormateur">Praticien Formateur</label>
-            <MultiSelect
-              v-model="newPlace.selectedPraticiensFormateurs"
-              :options="praticiensFormateursOptions"
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Sélectionner"
-              display="chip"
-              class="w-full"
-            />
+            <MultiSelect v-model="newPlace.selectedPraticiensFormateurs" :options="praticiensFormateursOptions"
+              optionLabel="label" optionValue="value" placeholder="Sélectionner" display="chip" class="w-full" />
           </div>
 
           <!-- Remarques -->
           <div class="p-field p-col-12">
             <label for="Remarques">Remarques</label>
-            <InputTextarea
-              v-model="newPlace.Remarques"
-              autoResize
-              rows="3"
-              cols="30"
-              class="w-full"
-            />
+            <InputTextarea v-model="newPlace.Remarques" autoResize rows="3" cols="30" class="w-full" />
           </div>
         </div>
 
@@ -403,7 +362,7 @@
 
 <script>
 import Navbar from '@/components/Utils/Navbar.vue';
-import { db } from '../../../../firebase.js';
+import { db , auth , storage} from '../../../../firebase.js';
 import { ref, onValue, set, update, push } from "firebase/database";
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
@@ -414,6 +373,7 @@ import Column from 'primevue/column';
 import Dialog from 'primevue/dialog';
 import Calendar from 'primevue/calendar';
 import Dropdown from 'primevue/dropdown';
+import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 
 export default {
   name: "ManagementPlace",
@@ -524,9 +484,9 @@ export default {
             console.log("ya" + place.REHAB);
             return {
               IdPlace: key,
-              NomPlace: place.NomPlace ||  '',
+              NomPlace: place.NomPlace || '',
               MSQ: place.MSQ || true,
-              SYSINT: place.SYSINT ||true,
+              SYSINT: place.SYSINT || true,
               NEUROGER: place['NEURO-GER'] || true,
               AIGU: place.AIGU || true,
               REHAB: place.REHAB || true,
@@ -548,7 +508,8 @@ export default {
               Lieu: institutionData.Locality || '',
               Remarques: place.Note || '',
               selectedPraticiensFormateurs: place.praticiensFormateurs || [],
-              InstitutionId: place.InstitutionId || ''
+              InstitutionId: place.InstitutionId || '',
+              fileURL : place.fileURL || null
             };
           });
 
@@ -613,6 +574,58 @@ export default {
       const placeRef = ref(db, `Places/${place.IdPlace}`);
       await update(placeRef, { praticiensFormateurs: praticiensIds });
     },
+
+    // 📂 Permet d'ouvrir le sélecteur de fichier
+    triggerFileInput(place) {
+      this.$refs.fileInput.click();
+      this.currentPlace = place;
+    },
+
+    // 📂 Stocke le fichier sélectionné et affiche son nom
+    handleFileSelection(event, place) {
+      const file = event.target.files[0];
+      if (file) {
+        place.selectedFile = file;
+        place.selectedFileName = file.name;
+      }
+    },
+
+
+    async uploadFile(place) {
+  try {
+    const user = auth.currentUser; // Récupérer l'utilisateur connecté
+    if (!user) {
+      alert("Vous devez être connecté pour uploader un fichier.");
+      return;
+    }
+
+    const fileRef = storageRef(storage, `Places/${place.selectedFile.name}`);
+
+    // Ajouter des métadonnées pour identifier le propriétaire
+    const metadata = {
+      customMetadata: { ownerId: user.uid }
+    };
+
+    // Upload du fichier avec les métadonnées
+    await uploadBytes(fileRef, place.selectedFile, metadata);
+
+    // Récupérer l'URL du fichier
+    const url = await getDownloadURL(fileRef);
+
+    // Mettre à jour Firebase Realtime Database avec l'URL
+    const placeRef = ref(db, `Places/${place.IdPlace}`);
+    await update(placeRef, { fileURL: url });
+
+    // Mettre à jour l'interface utilisateur
+    place.fileURL = url;
+    place.selectedFile = null;
+    place.selectedFileName = '';
+
+    alert("Fichier envoyé avec succès !");
+  } catch (error) {
+    console.error("Erreur lors de l'upload du fichier :", error);
+  }
+},
 
     openCreatePlaceModal() {
       this.showCreatePlaceModal = true;
@@ -756,13 +769,15 @@ export default {
   overflow-x: auto;
 }
 
-.custom-datatable .p-datatable-thead > tr > th {
-  background-color: var(--surface-card); /* Assure que le fond du header correspond au thème card */
+.custom-datatable .p-datatable-thead>tr>th {
+  background-color: var(--surface-card);
+  /* Assure que le fond du header correspond au thème card */
   color: var(--text-color);
 }
 
-.custom-datatable .p-datatable-tbody > tr > td {
-  background-color: var(--surface-card); /* Assure que le fond des cellules correspond au thème card */
+.custom-datatable .p-datatable-tbody>tr>td {
+  background-color: var(--surface-card);
+  /* Assure que le fond des cellules correspond au thème card */
   color: var(--text-color);
 }
 
