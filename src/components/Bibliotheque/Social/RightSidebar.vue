@@ -73,7 +73,7 @@ export default {
     goToCommunity(communityId) {
       // Logique pour naviguer vers une communauté spécifique
       console.log(`Naviguer vers la communauté avec l'ID: ${communityId}`);
-      this.$router.push(`/community/${communityId}`);
+      this.$router.push(`/communities/info/${communityId}`);
     },
     goToCommunities() {
       // Redirection vers la page des communautés

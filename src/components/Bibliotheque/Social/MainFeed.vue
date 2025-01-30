@@ -394,107 +394,114 @@ export default {
     };
 
     // Fonction pour récupérer les posts
-    const fetchPosts = async () => {
-      loading.value = true;
-      let q;
+ // Fonction pour récupérer les posts
+const fetchPosts = async () => {
+  loading.value = true;
+  let q;
 
-      try {
-        let postsRefQuery = dbRef(db, "Posts");
+  try {
+    let postsRefQuery = dbRef(db, "Posts");
 
-        // Appliquer le filtre si nécessaire
-        if (appliedFilter.value.type === "hashtag" && appliedFilter.value.value) {
-          // Filtrer par Hashtag
-          q = query(
-            postsRefQuery,
-            orderByChild(`Hashtags/${appliedFilter.value.value}`),
-            equalTo(true),
-            limitToLast(postsPerPage.value)
-          );
-        } else if (
-          appliedFilter.value.type === "community" &&
-          appliedFilter.value.value
-        ) {
-          // Filtrer par Communauté
-          q = query(
-            postsRefQuery,
-            orderByChild("Community"),
-            equalTo(appliedFilter.value.value),
-            limitToLast(postsPerPage.value)
-          );
-        } else {
-          // Pas de filtre
-          q = query(
-            postsRefQuery,
-            orderByChild("Timestamp"),
-            limitToLast(postsPerPage.value)
-          );
-        }
+    // Appliquer le filtre si nécessaire
+    if (appliedFilter.value.type === "hashtag" && appliedFilter.value.value) {
+      // Filtrer par Hashtag
+      q = query(
+        postsRefQuery,
+        orderByChild(`Hashtags/${appliedFilter.value.value}`),
+        equalTo(true),
+        limitToLast(postsPerPage.value)
+      );
+    } else if (
+      appliedFilter.value.type === "community" &&
+      appliedFilter.value.value
+    ) {
+      // Filtrer par Communauté
+      q = query(
+        postsRefQuery,
+        orderByChild("Community"),
+        equalTo(appliedFilter.value.value),
+        limitToLast(postsPerPage.value)
+      );
+    } else {
+      // Pas de filtre
+      q = query(
+        postsRefQuery,
+        orderByChild("Timestamp"),
+        limitToLast(postsPerPage.value)
+      );
+    }
 
-        // Appliquer la pagination si un oldestTimestamp existe
-        if (oldestTimestamp.value) {
-          if (
-            appliedFilter.value.type === "hashtag" ||
-            appliedFilter.value.type === "community"
-          ) {
-            q = query(
-              postsRefQuery,
-              orderByChild(
-                appliedFilter.value.type === "hashtag"
-                  ? `Hashtags/${appliedFilter.value.value}`
-                  : "Community"
-              ),
-              endAt(
-                appliedFilter.value.type === "hashtag"
-                  ? true
-                  : appliedFilter.value.value,
-                oldestTimestamp.value - 1
-              ),
-              limitToLast(postsPerPage.value)
-            );
-          } else {
-            q = query(
-              postsRefQuery,
-              orderByChild("Timestamp"),
-              endAt(oldestTimestamp.value - 1),
-              limitToLast(postsPerPage.value)
-            );
-          }
-        }
+    // Appliquer la pagination si un oldestTimestamp existe
+    if (oldestTimestamp.value) {
+      if (
+        appliedFilter.value.type === "hashtag" ||
+        appliedFilter.value.type === "community"
+      ) {
+        q = query(
+          postsRefQuery,
+          orderByChild(
+            appliedFilter.value.type === "hashtag"
+              ? `Hashtags/${appliedFilter.value.value}`
+              : "Community"
+          ),
+          endAt(
+            appliedFilter.value.type === "hashtag"
+              ? true
+              : appliedFilter.value.value,
+            oldestTimestamp.value - 1
+          ),
+          limitToLast(postsPerPage.value)
+        );
+      } else {
+        q = query(
+          postsRefQuery,
+          orderByChild("Timestamp"),
+          endAt(oldestTimestamp.value - 1),
+          limitToLast(postsPerPage.value)
+        );
+      }
+    }
 
-        const snapshot = await get(q);
-        if (snapshot.exists()) {
-          const data = snapshot.val();
-          let postsArray = Object.entries(data).map(([key, post]) => ({
-            ...post,
-            id: key,
-          }));
+    const snapshot = await get(q);
+    if (snapshot.exists()) {
+      let data = snapshot.val();
+      let postsArray = Object.entries(data).map(([key, post]) => ({
+        ...post,
+        id: key,
+      }));
 
-          // Trier les posts du plus récent au plus ancien
-          postsArray.sort((a, b) => {
-            const timeA = a.Timestamp ? a.Timestamp : 0;
-            const timeB = b.Timestamp ? b.Timestamp : 0;
-            return timeB - timeA;
-          });
+      // ——————————————————————————————————————————————
+      // Exclure les posts ayant un champ "Community"
+      // ——————————————————————————————————————————————
+      postsArray = postsArray.filter((post) => !post.Community);
 
-          // Mise à jour des posts
-          posts.value = [...posts.value, ...postsArray];
+      // Trier les posts du plus récent au plus ancien
+      postsArray.sort((a, b) => {
+        const timeA = a.Timestamp ? a.Timestamp : 0;
+        const timeB = b.Timestamp ? b.Timestamp : 0;
+        return timeB - timeA;
+      });
 
-          // Mettre à jour oldestTimestamp
-          if (posts.value.length > 0) {
-            const oldestPost = posts.value[posts.value.length - 1];
-            oldestTimestamp.value = oldestPost.Timestamp;
-          }
+      // Mise à jour des posts
+      posts.value = [...posts.value, ...postsArray];
 
-          applyFilters();
-        } else {
-          console.log("Aucun post trouvé pour les critères actuels.");
-        }
-      } catch (error) {
-        console.error("Erreur lors de la récupération des posts :", error);
+      // Mettre à jour oldestTimestamp
+      if (posts.value.length > 0) {
+        const oldestPost = posts.value[posts.value.length - 1];
+        oldestTimestamp.value = oldestPost.Timestamp;
       }
 
-      loading.value = false;
-    };
+      applyFilters();
+    } else {
+      console.log("Aucun post trouvé pour les critères actuels.");
+    }
+  } catch (error) {
+    console.error("Erreur lors de la récupération des posts :", error);
+  }
+
+  loading.value = false;
+};
+
 
     // Fonction pour appliquer les filtres aux posts
     const applyFilters = () => {
