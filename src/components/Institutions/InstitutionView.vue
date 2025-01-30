@@ -89,10 +89,12 @@
                   <div v-else>
                     <p class="card-text">Aucun praticien.ne formateur.trice.s disponible.</p>
                   </div>
-            <br>
+                  <br>
 
                   <div v-if="institutionFiles.length > 0">
-                    <h3 class="text-900 font-bold text-xl mb-3">Fichiers associés :</h3>
+                    <h3 class="text-900 font-bold text-xl mb-3">
+                      {{ institutionFiles.length === 1 ? 'Descriptif lieu de formation pratique' : 'Descriptifs lieux de formation pratique' }}
+                    </h3>
                     <ul>
                       <li v-for="file in institutionFiles" :key="file.url">
                         <a :href="file.url" target="_blank" class="text-primary">
@@ -101,6 +103,8 @@
                       </li>
                     </ul>
                   </div>
+
+
                   <p v-else>Aucun PDF disponible pour cette institution.</p>
 
                 </div>
@@ -180,7 +184,7 @@ export default {
           const matchingFiles = [];
 
           Object.values(placesData).forEach(place => {
-            if (place.IDPlace === this.institutionDetails.InstitutionId ) {
+            if (place.IDPlace === this.institutionDetails.InstitutionId) {
               matchingFiles.push({ name: place.NomPlace, url: place.fileURL });
             }
           });
