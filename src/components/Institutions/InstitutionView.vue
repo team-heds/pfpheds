@@ -11,7 +11,8 @@
           {{ institutionDetails ? institutionDetails.Name : 'Chargement...' }}
         </h1>
         <h2 class="text-900 font-bold text-2xl md:text-3xl mb-4 mt-2">
-          <strong>{{ institutionDetails ? institutionDetails.Locality : '' }}</strong> - {{ institutionDetails ? institutionDetails.Address : '' }}
+          <strong>{{ institutionDetails ? institutionDetails.Locality : '' }}</strong> - {{ institutionDetails ?
+            institutionDetails.Address : '' }}
         </h2>
         <div class="flex flex-wrap justify-content-center md:justify-content-start gap-3 mt-2">
           <span class="inline-flex align-items-center py-2 px-3 font-medium border-1 surface-border border-round">
@@ -29,9 +30,7 @@
     <div class="institution-image-wrapper institution-image text-center my-4">
       <img
         :src="institutionDetails ? institutionDetails.ImageURL : 'https://eduport.webestica.com/assets/images/courses/4by3/21.jpg'"
-        alt="Institution Image"
-        class="institution-image w-100px"
-      />
+        alt="Institution Image" class="institution-image w-100px" />
     </div>
 
     <!-- Contenu inférieur : TabView et Map -->
@@ -48,12 +47,17 @@
               <div class="col-12 lg:col-12">
                 <p class="text-900 underline mb-3 font-bold">Informations générales de l'institution </p>
                 <div class="py-0 p-0 m-0 text-600 mb-3">
-                  <p class="card-text"><i class="bi bi-globe"></i> <strong>Langue:</strong> {{ institutionDetails ? institutionDetails.Language : '' }}</p>
-                  <p class="card-text"><i class="bi bi-globe"></i> <strong>Canton:</strong> {{ institutionDetails ? institutionDetails.Canton : '' }}</p>
-                  <p class="card-text"><i class="bi bi-geo-alt-fill"></i> <strong>Adresse:</strong> {{ institutionDetails ? institutionDetails.Address : '' }}</p>
-                  <p class="card-text"><i class="bi bi-geo-alt-fill"></i> <strong>Lieu:</strong> {{ institutionDetails ? institutionDetails.Locality : '' }}</p>
+                  <p class="card-text"><i class="bi bi-globe"></i> <strong>Langue:</strong> {{ institutionDetails ?
+                    institutionDetails.Language : '' }}</p>
+                  <p class="card-text"><i class="bi bi-globe"></i> <strong>Canton:</strong> {{ institutionDetails ?
+                    institutionDetails.Canton : '' }}</p>
+                  <p class="card-text"><i class="bi bi-geo-alt-fill"></i> <strong>Adresse:</strong> {{
+                    institutionDetails ? institutionDetails.Address : '' }}</p>
+                  <p class="card-text"><i class="bi bi-geo-alt-fill"></i> <strong>Lieu:</strong> {{ institutionDetails ?
+                    institutionDetails.Locality : '' }}</p>
                   <p class="card-text"><i class="bi bi-geo-alt-fill"></i> <strong>Site Web: </strong>
-                    <a :href="institutionDetails?.URL" target="_blank" class="text-primary ">{{ institutionDetails?.URL }}</a>
+                    <a :href="institutionDetails?.URL" target="_blank" class="text-primary ">{{ institutionDetails?.URL
+                      }}</a>
                   </p>
                 </div>
               </div>
@@ -72,28 +76,33 @@
                     <p class="card-text">
                       <i class="bi bi-envelope-fill"></i>
                       <strong>Email du responsable physio: </strong>
-                      <a :href="`mailto:${institutionDetails?.MailChef}`" class="text-primary">{{ institutionDetails?.MailChef }}</a>
+                      <a :href="`mailto:${institutionDetails?.MailChef}`" class="text-primary">{{
+                        institutionDetails?.MailChef }}</a>
                     </p>
                     <p class="card-text">
                       <i class="bi bi-telephone-fill"></i>
                       <strong>Téléphone du responsable physio: </strong>
-                      <a :href="`tel:${institutionDetails?.PhoneChef}`" class="text-primary">{{ institutionDetails?.PhoneChef }}</a>
+                      <a :href="`tel:${institutionDetails?.PhoneChef}`" class="text-primary">{{
+                        institutionDetails?.PhoneChef }}</a>
                     </p>
                   </div>
                   <div v-else>
                     <p class="card-text">Aucun praticien.ne formateur.trice.s disponible.</p>
                   </div>
-                  <!-- Bouton pour ouvrir le PDF -->
-                  <div class="mt-4">
-                    <Button
-                      v-if="institutionDetails?.CyberleanURL"
-                      label="Ouvrir le PDF"
-                      icon="pi pi-file-pdf"
-                      @click="openPDF"
-                      class="p-button-raised p-button-primary"
-                    />
-                    <p v-else>Aucun PDF disponible pour cette institution.</p>
+            <br>
+
+                  <div v-if="institutionFiles.length > 0">
+                    <h3 class="text-900 font-bold text-xl mb-3">Fichiers associés :</h3>
+                    <ul>
+                      <li v-for="file in institutionFiles" :key="file.url">
+                        <a :href="file.url" target="_blank" class="text-primary">
+                          📄 {{ file.name }}
+                        </a>
+                      </li>
+                    </ul>
                   </div>
+                  <p v-else>Aucun PDF disponible pour cette institution.</p>
+
                 </div>
               </div>
             </div>
@@ -126,6 +135,8 @@ export default {
   data() {
     return {
       institutionDetails: null,
+      institutionFiles: [],
+
       map: null,
       marker: null,
       userRole: null,
@@ -157,6 +168,29 @@ export default {
       }).addTo(this.map);
     },
 
+    fetchInstitutionFiles() {
+      console.log(this.institutionDetails.InstitutionId)
+      if (!this.institutionDetails || !this.institutionDetails.InstitutionId) return;
+
+      const placesRef = firebaseRef(db, 'Places');
+
+      onValue(placesRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const placesData = snapshot.val();
+          const matchingFiles = [];
+
+          Object.values(placesData).forEach(place => {
+            if (place.IDPlace === this.institutionDetails.InstitutionId ) {
+              matchingFiles.push({ name: place.NomPlace, url: place.fileURL });
+            }
+          });
+
+          this.institutionFiles = matchingFiles;
+        }
+      });
+    },
+
+
     fetchInstitutionDetailsFromFirebase() {
       const institutionId = this.$route.params.id;
       const institutionRef = firebaseRef(db, `Institutions/${institutionId}`);
@@ -165,6 +199,7 @@ export default {
         if (snapshot.exists()) {
           const data = snapshot.val();
           this.institutionDetails = data;
+          this.fetchInstitutionFiles(); // Récupérer les fichiers liés
 
           if (data.Latitude && data.Longitude) {
             this.initMap(parseFloat(data.Latitude), parseFloat(data.Longitude));
@@ -262,7 +297,7 @@ export default {
     align-items: center;
   }
 
-  .content-lower > div {
+  .content-lower>div {
     width: 90% !important;
     margin-bottom: 2rem;
   }
