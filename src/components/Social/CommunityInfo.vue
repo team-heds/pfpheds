@@ -1,21 +1,36 @@
 <template>
-  <div class="community-info">
-    <Navbar />
-    <div class="info-container">
-      <h1>{{ community.name }}</h1>
-      <p>{{ community.description }}</p>
-      <p><strong>Créée le :</strong> {{ formattedDate }}</p>
-      <p><strong>Membres :</strong> {{ memberCount }}</p>
+  <Navbar />
 
-      <button class="btn btn-secondary" @click="goBack">Retour</button>
+  <div class="newsfeed-layout">
+    <!-- Sidebar Gauche -->
+    <div class="sidebar-left">
+      <LeftSidebar />
     </div>
 
-    <!-- Intégration du flux (feed) de la communauté -->
-    <CommunityFeed
-      v-if="communityId"
-      :community-id="communityId"
-      :current-user="currentUser"
-    />
+    <!-- Zone centrale (Main-feed) : Infos de la communauté et flux -->
+    <div class="main-feed">
+      <div class="community-info">
+        <div class="card">
+          <h1>{{ community.name }}</h1>
+          <h5 class="text-white">{{ community.description }}</h5>
+         <!-- <h5><strong>Créée le :</strong> {{ formattedDate }}</h5> -->
+          <h6><strong>Membres :</strong> {{ memberCount }}</h6>
+          <Button @click="goBack">Retour</Button>
+        </div>
+      </div>
+
+      <!-- Intégration du flux de la communauté -->
+      <CommunityFeed
+        v-if="communityId"
+        :community-id="communityId"
+        :current-user="currentUser"
+      />
+    </div>
+
+    <!-- Sidebar Droite -->
+    <div class="sidebar-right">
+      <RightSidebar />
+    </div>
   </div>
 </template>
 
@@ -23,6 +38,8 @@
 import { ref, onMounted } from "vue";
 import Navbar from "@/components/Utils/Navbar.vue";
 import CommunityFeed from "@/components/Social/CommunityFeed.vue";
+import LeftSidebar from '@/components/Bibliotheque/Social/LeftSidebar.vue';
+import RightSidebar from '@/components/Bibliotheque/Social/RightSidebar.vue';
 import { db, auth } from "@/firebase.js";
 import { ref as dbRef, get } from "firebase/database";
 import { useRoute, useRouter } from "vue-router";
@@ -33,6 +50,8 @@ export default {
   components: {
     Navbar,
     CommunityFeed,
+    LeftSidebar,
+    RightSidebar,
   },
   setup() {
     const route = useRoute();
@@ -43,7 +62,7 @@ export default {
     const memberCount = ref(0);
     const currentUser = ref(null);
 
-    // Récupère les informations de la communauté
+    // Récupération des informations de la communauté
     const fetchCommunityInfo = async () => {
       try {
         const snapshot = await get(dbRef(db, `Communities/${communityId.value}`));
@@ -66,12 +85,12 @@ export default {
       }
     };
 
-    // Bouton retour
+    // Action pour le bouton "Retour"
     const goBack = () => {
       router.back();
     };
 
-    // Au montage, on récupère la communauté et on écoute l'auth
+    // Au montage du composant, on récupère les infos et on écoute l'état de l'authentification
     onMounted(() => {
       fetchCommunityInfo();
       onAuthStateChanged(auth, (user) => {
@@ -94,40 +113,72 @@ export default {
 </script>
 
 <style scoped>
-.community-info {
-  padding: 2rem;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #333333;
+/* Layout global inspiré de NewsFeed.vue */
+.newsfeed-layout {
+  display: grid;
+  grid-template-columns: 1fr 3fr 1fr; /* Sidebar gauche, contenu central, Sidebar droite */
+  gap: 1.5rem;
+  height: 100vh;
+  overflow: hidden;
 }
 
-.info-container {
-  max-width: 800px;
-  margin: 0 auto;
+.sidebar-left {
+  overflow-y: auto;
 }
 
-.info-container h1 {
-  margin-bottom: 1rem;
+.main-feed {
+  overflow-y: scroll;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.info-container p {
-  margin-bottom: 0.5rem;
+/* Masquer la barre de défilement dans le main-feed */
+.main-feed::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+.main-feed {
+  scrollbar-width: none;
 }
 
-.btn {
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
-  cursor: pointer;
-  border: none;
-  border-radius: 6px;
-  transition: background-color 0.3s ease;
+.sidebar-right {
+  overflow-y: auto;
 }
 
-.btn-secondary {
-  background-color: #6c757d;
-  color: #ffffff;
+/* Styles spécifiques à CommunityInfo */
+
+
+
+/* Responsiveness */
+@media (max-width: 1024px) {
+  .newsfeed-layout {
+    grid-template-columns: 1fr 2fr;
+  }
+  .sidebar-right {
+    display: none;
+  }
 }
 
-.btn-secondary:hover {
-  background-color: #5a6268;
+@media (max-width: 768px) {
+  .newsfeed-layout {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .sidebar-left {
+    display: none;
+  }
+  .main-feed {
+    overflow-y: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .newsfeed-layout {
+    padding: 0 1rem;
+  }
+  .main-feed {
+    gap: 0.5rem;
+  }
 }
 </style>

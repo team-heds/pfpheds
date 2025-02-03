@@ -5,33 +5,33 @@
     <Navbar />
 
     <!-- Section de création de communauté -->
-    <CreateNewCommunity 
-      @communityCreated="handleCommunityCreated" 
-      @showToast="handleShowToast" 
+    <CreateNewCommunity
+      @communityCreated="handleCommunityCreated"
+      @showToast="handleShowToast"
     />
 
     <!-- Liste des Communautés de l'utilisateur -->
-    <CommunitiesList 
-      :communities="userCommunities" 
-      @manageCommunity="handleManageCommunity" 
+    <CommunitiesList
+      :communities="userCommunities"
+      @manageCommunity="handleManageCommunity"
       @leaveCommunity="handleLeaveCommunity"
-      @showToast="handleShowToast" 
+      @showToast="handleShowToast"
     />
 
     <!-- Liste des Communautés Publiques -->
-    <PublicCommunitiesList 
-      :communities="publicCommunitiesComputed" 
+    <PublicCommunitiesList
+      :communities="publicCommunitiesComputed"
       @manageCommunity="handleManageCommunityPublic"
       @joinCommunity="handleJoinCommunityPublic"
       @leaveCommunity="handleLeaveCommunityPublic"
-      @showToast="handleShowToast" 
+      @showToast="handleShowToast"
     />
 
     <!-- Toast Notifications -->
     <div class="toast-container">
-      <div 
-        v-for="(toast, index) in toasts" 
-        :key="index" 
+      <div
+        v-for="(toast, index) in toasts"
+        :key="index"
         :class="['toast', toast.severity]"
       >
         <strong>{{ toast.summary }}</strong>
@@ -117,7 +117,7 @@ export default {
           // Filtrer les communautés de l'utilisateur
           const userComms = allCommunities.filter(community => community.isMember);
           // Filtrer les communautés publiques que l'utilisateur n'a pas encore rejoint
-          const publicComms = allCommunities.filter(community => 
+          const publicComms = allCommunities.filter(community =>
             community.type === 'public' && !community.isMember
           );
 
@@ -165,7 +165,7 @@ export default {
         addToast('error', 'Erreur', 'Utilisateur non authentifié.');
         return;
       }
-      const userId = localCurrentUser.value.uid;
+      const userId = localCurrentUser.value.userid;
 
       try {
         // Mettre à jour les deux tables de manière atomique
@@ -265,82 +265,6 @@ export default {
   color: #333333; /* Texte sombre pour un bon contraste */
 }
 
-/* Card pour les sections */
-.card {
-  border: 1px solid #dddddd;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Ombre légère */
-}
-
-.card-header {
-  padding: 1rem;
-  border-bottom: 1px solid #dddddd;
-}
-
-.card-body {
-  padding: 1.5rem;
-}
-
-/* Boutons */
-.btn {
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
-  cursor: pointer;
-  border: none;
-  border-radius: 6px;
-  transition: background-color 0.3s ease;
-}
-
-.btn-primary {
-  background-color: #007bff;
-  color: #ffffff;
-}
-
-.btn-primary:hover {
-  background-color: #0056b3;
-}
-
-.btn-success {
-  background-color: #28a745;
-  color: #ffffff;
-}
-
-.btn-success:hover {
-  background-color: #1e7e34;
-}
-
-.btn-danger {
-  background-color: #dc3545;
-  color: #ffffff;
-}
-
-.btn-danger:hover {
-  background-color: #c82333;
-}
-
-.btn-secondary {
-  background-color: #6c757d;
-  color: #ffffff;
-}
-
-.btn-secondary:hover {
-  background-color: #5a6268;
-}
-
-.btn-info {
-  background-color: #17a2b8;
-  color: #ffffff;
-}
-
-.btn-info:hover {
-  background-color: #117a8b;
-}
-
-.btn-sm {
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  margin-right: 0.5rem;
-}
 
 /* Toast Notifications */
 .toast-container {
@@ -395,10 +319,6 @@ export default {
     padding: 1rem;
   }
 
-  .btn {
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
-  }
 
   .toast {
     min-width: 200px;
