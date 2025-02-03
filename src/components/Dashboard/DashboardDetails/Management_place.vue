@@ -48,10 +48,10 @@
                 @change="updatePlace(slotProps.data, 'SYSINT', slotProps.data.SYSINT)" binary="true" />
             </template>
           </Column>
-          <Column header="NEURO-GER">
+          <Column header="NEUROGER">
             <template #body="slotProps">
               <Checkbox v-model="slotProps.data.NEUROGER"
-                @change="updatePlace(slotProps.data, 'NEURO-GER', slotProps.data.NEUROGER)" binary="true" />
+                @change="updatePlace(slotProps.data, 'NEUROGER', slotProps.data.NEUROGER)" binary="true" />
             </template>
           </Column>
           <Column header="AIGU">
@@ -157,8 +157,8 @@
                 <input type="file" ref="fileInput" class="hidden-file-input"
                   @change="handleFileSelection($event, slotProps.data)" />
                 <!-- Bouton de sélection -->
-              
-                
+
+
                 <!-- Nom du fichier sélectionné -->
                 <span v-if="slotProps.data.selectedFileName" class="file-name">
                   {{ slotProps.data.selectedFileName }}
@@ -251,8 +251,8 @@
                 <label for="SYSINT">SYSINT</label>
               </div>
               <div class="p-field-checkbox p-col-2">
-                <Checkbox inputId="NEUROGER" v-model="newPlace['NEURO-GER']" binary />
-                <label for="NEUROGER">NEURO-GER</label>
+                <Checkbox inputId="NEUROGER" v-model="newPlace.NEUROGER" binary />
+                <label for="NEUROGER">NEUROGER</label>
               </div>
               <div class="p-field-checkbox p-col-2">
                 <Checkbox inputId="AIGU" v-model="newPlace.AIGU" binary />
@@ -362,7 +362,7 @@
 
 <script>
 import Navbar from '@/components/Utils/Navbar.vue';
-import { db , auth , storage} from '../../../../firebase.js';
+import { db, auth, storage } from '../../../../firebase.js';
 import { ref, onValue, set, update, push } from "firebase/database";
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
@@ -401,7 +401,7 @@ export default {
         NomPlace: '',
         MSQ: false,
         SYSINT: false,
-        'NEURO-GER': false,
+        NEUROGER: false,
         AIGU: false,
         REHAB: false,
         AMBU: false,
@@ -466,7 +466,6 @@ export default {
       const num = parseInt(value);
       return isNaN(num) ? 0 : num;
     },
-
     async fetchPlacesData() {
       const placesRef = ref(db, 'Places');
       onValue(placesRef, async (snapshot) => {
@@ -474,27 +473,26 @@ export default {
         if (placesData) {
           const placePromises = Object.keys(placesData).map(async key => {
             const place = placesData[key];
-
-
-
-
             const institutionData = await this.fetchInstitutionData(place.InstitutionId || place.IDPlace);
             console.log("institutionData");
             console.log(institutionData.NomPlace);
             console.log("ya" + place.REHAB);
+
+            // Convertir les chaînes "true" / "false" en booléens
             return {
               IdPlace: key,
               NomPlace: place.NomPlace || '',
-              MSQ: place.MSQ || true,
-              SYSINT: place.SYSINT || true,
-              NEUROGER: place['NEURO-GER'] || true,
-              AIGU: place.AIGU || true,
-              REHAB: place.REHAB || true,
-              AMBU: place.AMBU || true,
-              FR: place.FR || true,
-              DE: place.DE || true,
-              IT: place.IT || true,
-              ENG: place.ENG || true,
+              MSQ: (place.MSQ === 'true' || place.MSQ === true),
+              SYSINT: (place.SYSINT === 'true' || place.SYSINT === true),
+              AIGU: (place.AIGU === 'true' || place.AIGU === true),
+              REHAB: (place.REHAB === 'true' || place.REHAB === true),
+              AMBU: (place.AMBU === 'true' || place.AMBU === true),
+              FR: (place.FR === 'true' || place.FR === true),
+              DE: (place.DE === 'true' || place.DE === true),
+              NEUROGER: (place.NEUROGER === 'true' || place.NEUROGER === true),
+
+              IT: place.IT === "true",   // Convertir en booléen
+              ENG: place.ENG === "true",   // Convertir en booléen
               PFP2: place.PFP2 || '',
               PFP1A: place.PFP1A || '',
               PFP1B: place.PFP1B || '',
@@ -509,7 +507,7 @@ export default {
               Remarques: place.Note || '',
               selectedPraticiensFormateurs: place.praticiensFormateurs || [],
               InstitutionId: place.InstitutionId || '',
-              fileURL : place.fileURL || null
+              fileURL: place.fileURL || null
             };
           });
 
@@ -561,12 +559,18 @@ export default {
 
     async updatePlace(place, field, value) {
       const placeRef = ref(db, `Places/${place.IdPlace}`);
+
+      // Convertir les valeurs booléennes en chaînes "true" / "false" avant de les envoyer à Firebase
+      let updateValue = value;
+
+      if (typeof value === "boolean") {
+        updateValue = value ? "true" : "false";  // Convertir en chaîne de caractères
+      }
+
       if (field === 'Note') {
         await update(placeRef, { [field]: value });
-      } else if (field === 'NEURO-GER') {
-        await update(placeRef, { 'NEURO-GER': value });
-      } else {
-        await update(placeRef, { [field]: value });
+      }else {
+        await update(placeRef, { [field]: updateValue });
       }
     },
 
@@ -592,40 +596,40 @@ export default {
 
 
     async uploadFile(place) {
-  try {
-    const user = auth.currentUser; // Récupérer l'utilisateur connecté
-    if (!user) {
-      alert("Vous devez être connecté pour uploader un fichier.");
-      return;
-    }
+      try {
+        const user = auth.currentUser; // Récupérer l'utilisateur connecté
+        if (!user) {
+          alert("Vous devez être connecté pour uploader un fichier.");
+          return;
+        }
 
-    const fileRef = storageRef(storage, `Places/${place.selectedFile.name}`);
+        const fileRef = storageRef(storage, `Places/${place.selectedFile.name}`);
 
-    // Ajouter des métadonnées pour identifier le propriétaire
-    const metadata = {
-      customMetadata: { ownerId: user.uid }
-    };
+        // Ajouter des métadonnées pour identifier le propriétaire
+        const metadata = {
+          customMetadata: { ownerId: user.uid }
+        };
 
-    // Upload du fichier avec les métadonnées
-    await uploadBytes(fileRef, place.selectedFile, metadata);
+        // Upload du fichier avec les métadonnées
+        await uploadBytes(fileRef, place.selectedFile, metadata);
 
-    // Récupérer l'URL du fichier
-    const url = await getDownloadURL(fileRef);
+        // Récupérer l'URL du fichier
+        const url = await getDownloadURL(fileRef);
 
-    // Mettre à jour Firebase Realtime Database avec l'URL
-    const placeRef = ref(db, `Places/${place.IdPlace}`);
-    await update(placeRef, { fileURL: url });
+        // Mettre à jour Firebase Realtime Database avec l'URL
+        const placeRef = ref(db, `Places/${place.IdPlace}`);
+        await update(placeRef, { fileURL: url });
 
-    // Mettre à jour l'interface utilisateur
-    place.fileURL = url;
-    place.selectedFile = null;
-    place.selectedFileName = '';
+        // Mettre à jour l'interface utilisateur
+        place.fileURL = url;
+        place.selectedFile = null;
+        place.selectedFileName = '';
 
-    alert("Fichier envoyé avec succès !");
-  } catch (error) {
-    console.error("Erreur lors de l'upload du fichier :", error);
-  }
-},
+        alert("Fichier envoyé avec succès !");
+      } catch (error) {
+        console.error("Erreur lors de l'upload du fichier :", error);
+      }
+    },
 
     openCreatePlaceModal() {
       this.showCreatePlaceModal = true;
@@ -639,7 +643,7 @@ export default {
         NomPlace: '',
         MSQ: false,
         SYSINT: false,
-        'NEURO-GER': false,
+        NEUROGER: false,
         AIGU: false,
         REHAB: false,
         AMBU: false,
@@ -682,7 +686,7 @@ export default {
           NomPlace: this.newPlace.NomPlace,
           MSQ: this.newPlace.MSQ,
           SYSINT: this.newPlace.SYSINT,
-          'NEURO-GER': this.newPlace['NEURO-GER'],
+          NEUROGER: this.newPlace.NEUROGER,
           AIGU: this.newPlace.AIGU,
           REHAB: this.newPlace.REHAB,
           AMBU: this.newPlace.AMBU,
