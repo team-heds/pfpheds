@@ -20,6 +20,8 @@
         </template>
       </Card>
 
+      <br>
+
       <!-- Boutons pour Modifier le Nom, la Description et le Type (Visible uniquement pour les Managers) -->
       <div v-if="isManager" class="edit-community-buttons p-mt-3 p-d-flex p-gap-2 mb-2">
         <Button
@@ -206,8 +208,6 @@ export default {
     Toast,
     Navbar,
     Card,
-    Button,
-    Dialog,
     Dropdown,
     InputText,
     DataTable,

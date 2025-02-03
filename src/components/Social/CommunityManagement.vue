@@ -5,33 +5,33 @@
     <Navbar />
 
     <!-- Section de création de communauté -->
-    <CreateNewCommunity 
-      @communityCreated="handleCommunityCreated" 
-      @showToast="handleShowToast" 
+    <CreateNewCommunity
+      @communityCreated="handleCommunityCreated"
+      @showToast="handleShowToast"
     />
 
     <!-- Liste des Communautés de l'utilisateur -->
-    <CommunitiesList 
-      :communities="userCommunities" 
-      @manageCommunity="handleManageCommunity" 
+    <CommunitiesList
+      :communities="userCommunities"
+      @manageCommunity="handleManageCommunity"
       @leaveCommunity="handleLeaveCommunity"
-      @showToast="handleShowToast" 
+      @showToast="handleShowToast"
     />
 
     <!-- Liste des Communautés Publiques -->
-    <PublicCommunitiesList 
-      :communities="publicCommunitiesComputed" 
+    <PublicCommunitiesList
+      :communities="publicCommunitiesComputed"
       @manageCommunity="handleManageCommunityPublic"
       @joinCommunity="handleJoinCommunityPublic"
       @leaveCommunity="handleLeaveCommunityPublic"
-      @showToast="handleShowToast" 
+      @showToast="handleShowToast"
     />
 
     <!-- Toast Notifications -->
     <div class="toast-container">
-      <div 
-        v-for="(toast, index) in toasts" 
-        :key="index" 
+      <div
+        v-for="(toast, index) in toasts"
+        :key="index"
         :class="['toast', toast.severity]"
       >
         <strong>{{ toast.summary }}</strong>
@@ -117,7 +117,7 @@ export default {
           // Filtrer les communautés de l'utilisateur
           const userComms = allCommunities.filter(community => community.isMember);
           // Filtrer les communautés publiques que l'utilisateur n'a pas encore rejoint
-          const publicComms = allCommunities.filter(community => 
+          const publicComms = allCommunities.filter(community =>
             community.type === 'public' && !community.isMember
           );
 
@@ -165,7 +165,7 @@ export default {
         addToast('error', 'Erreur', 'Utilisateur non authentifié.');
         return;
       }
-      const userId = localCurrentUser.value.uid;
+      const userId = localCurrentUser.value.userid;
 
       try {
         // Mettre à jour les deux tables de manière atomique
@@ -319,10 +319,6 @@ export default {
     padding: 1rem;
   }
 
-  .btn {
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
-  }
 
   .toast {
     min-width: 200px;
