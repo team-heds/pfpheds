@@ -14,7 +14,7 @@
     <CommunitiesList
       :communities="userCommunities"
       @manageCommunity="handleManageCommunity"
-      @leaveCommunity="handleLeaveCommunity"
+      @click="handleLeaveCommunity"
       @showToast="handleShowToast"
     />
 
@@ -27,33 +27,23 @@
       @showToast="handleShowToast"
     />
 
-    <!-- Toast Notifications -->
-    <div class="toast-container">
-      <div
-        v-for="(toast, index) in toasts"
-        :key="index"
-        :class="['toast', toast.severity]"
-      >
-        <strong>{{ toast.summary }}</strong>
-        <p>{{ toast.detail }}</p>
-        <button @click="removeToast(index)">✖</button>
-      </div>
-    </div>
+    <!-- PrimeVue Toast Notifications -->
+    <Toast ref="toast" />
   </div>
 </template>
 
 <script>
 import { ref, onMounted, computed } from "vue";
+import { useRouter } from "vue-router";
+
 import Navbar from '@/components/Utils/Navbar.vue';
 import CreateNewCommunity from './CreateNewCommunity.vue';
 import CommunitiesList from './CommunitiesList.vue';
 import PublicCommunitiesList from './PublicCommunitiesList.vue';
-
+import Toast from 'primevue/toast';
 
 import { db, auth } from "../../../firebase.js";
 import { ref as dbRef, get, update } from "firebase/database";
-
-import { useRouter } from "vue-router";
 
 export default {
   name: "CommunityManagement",
@@ -62,6 +52,7 @@ export default {
     CreateNewCommunity,
     CommunitiesList,
     PublicCommunitiesList,
+    Toast,
   },
   setup() {
     const router = useRouter();
@@ -69,38 +60,29 @@ export default {
     // Références réactives
     const communities = ref([]);
     const publicCommunities = ref([]);
-    const toasts = ref([]);
     const localCurrentUser = ref(null);
+    const toast = ref(null); // Référence pour PrimeVue Toast
 
-    // Fonctions pour gérer les toasts
+    // Affiche un toast via PrimeVue
     const addToast = (severity, summary, detail) => {
-      const toast = { severity, summary, detail };
-      toasts.value.push(toast);
-      // Supprimer le toast après 3 secondes
-      setTimeout(() => {
-        const index = toasts.value.indexOf(toast);
-        if (index !== -1) {
-          removeToast(index);
-        }
-      }, 3000);
+      if (toast.value) {
+        toast.value.add({ severity, summary, detail, life: 3000 });
+      } else {
+        console.log("Toast", { severity, summary, detail });
+      }
     };
 
-    const removeToast = (index) => {
-      toasts.value.splice(index, 1);
-    };
-
-    // Fonction pour récupérer l'utilisateur actuel
+    // Récupère l'utilisateur actuel
     const fetchCurrentUser = () => {
       const user = auth.currentUser;
       if (user) {
         localCurrentUser.value = user;
       } else {
-        // Gérer l'utilisateur non authentifié
         addToast('error', 'Erreur', 'Utilisateur non authentifié.');
       }
     };
 
-    // Fonction pour récupérer les communautés
+    // Récupère l'ensemble des communautés depuis Firebase
     const fetchCommunities = async () => {
       if (!localCurrentUser.value) return;
 
@@ -114,9 +96,9 @@ export default {
             isMember: community.members && community.members[localCurrentUser.value.uid] ? true : false
           }));
 
-          // Filtrer les communautés de l'utilisateur
+          // Communautés auxquelles l'utilisateur appartient
           const userComms = allCommunities.filter(community => community.isMember);
-          // Filtrer les communautés publiques que l'utilisateur n'a pas encore rejoint
+          // Communautés publiques non encore rejointes
           const publicComms = allCommunities.filter(community =>
             community.type === 'public' && !community.isMember
           );
@@ -133,12 +115,11 @@ export default {
       }
     };
 
-    // Fonction pour gérer une communauté (naviguer vers ManageOneCommunity.vue)
+    // Navigation vers la gestion d'une communauté
     const handleManageCommunity = (communityId) => {
       router.push({ name: 'ManageOneCommunity', params: { id: communityId } });
     };
 
-    // Fonction pour gérer une communauté publique (si un comportement spécifique est nécessaire)
     const handleManageCommunityPublic = (communityId) => {
       router.push({ name: 'ManageOneCommunity', params: { id: communityId } });
     };
@@ -148,27 +129,26 @@ export default {
       fetchCommunities();
     });
 
-    // Fonction appelée lorsque une nouvelle communauté est créée
+    // Rafraîchit la liste après création d'une communauté
     const handleCommunityCreated = () => {
-      fetchCommunities(); // Rafraîchir la liste des communautés
+      fetchCommunities();
       addToast('success', 'Succès', 'Nouvelle communauté ajoutée.');
     };
 
-    // Fonction pour gérer les toasts émis par les composants enfants
-    const handleShowToast = (toast) => {
-      addToast(toast.severity, toast.summary, toast.detail);
+    // Permet aux composants enfants d'afficher un toast
+    const handleShowToast = (toastData) => {
+      addToast(toastData.severity, toastData.summary, toastData.detail);
     };
 
-    // Fonction pour rejoindre une communauté
+    // Rejoint une communauté
     const handleJoinCommunity = async (communityId) => {
       if (!localCurrentUser.value) {
         addToast('error', 'Erreur', 'Utilisateur non authentifié.');
         return;
       }
-      const userId = localCurrentUser.value.userid;
+      const userId = localCurrentUser.value.uid;
 
       try {
-        // Mettre à jour les deux tables de manière atomique
         await update(dbRef(db), {
           [`Communities/${communityId}/members/${userId}`]: true,
           [`Users/${userId}/communities/${communityId}`]: true
@@ -182,8 +162,10 @@ export default {
       }
     };
 
-    // Fonction pour quitter une communauté
+    // Quitte une communauté
+    // Notez que cette méthode doit recevoir l'ID de la communauté (une chaîne) et non un objet événement.
     const handleLeaveCommunity = async (communityId) => {
+      console.log("ID de la communauté reçue :", communityId);
       if (!localCurrentUser.value) {
         addToast('error', 'Erreur', 'Utilisateur non authentifié.');
         return;
@@ -191,7 +173,6 @@ export default {
       const userId = localCurrentUser.value.uid;
 
       try {
-        // Supprimer les deux entrées de manière atomique
         await update(dbRef(db), {
           [`Communities/${communityId}/members/${userId}`]: null,
           [`Users/${userId}/communities/${communityId}`]: null
@@ -203,14 +184,15 @@ export default {
         console.error("Erreur lors de la sortie de la communauté :", error);
         addToast('error', 'Erreur', 'Impossible de quitter la communauté.');
       }
+      console.log("Communautés après la sortie :", communities.value);
     };
 
-    // Fonction pour voir les informations d'une communauté
+    // Navigation pour afficher les informations d'une communauté
     const handleViewInfo = (communityId) => {
       router.push({ name: 'CommunityInfo', params: { id: communityId } });
     };
 
-    // Fonctions spécifiques pour les communautés publiques
+    // Fonctions spécifiques aux communautés publiques
     const handleJoinCommunityPublic = async (communityId) => {
       await handleJoinCommunity(communityId);
     };
@@ -223,12 +205,12 @@ export default {
       handleViewInfo(communityId);
     };
 
-    // Computed property pour les communautés de l'utilisateur
+    // Communautés de l'utilisateur
     const userCommunities = computed(() => {
       return communities.value.filter(community => community.isMember);
     });
 
-    // Computed property pour les communautés publiques non rejointes
+    // Communautés publiques non rejointes
     const publicCommunitiesComputed = computed(() => {
       return publicCommunities.value;
     });
@@ -249,10 +231,8 @@ export default {
       handleJoinCommunityPublic,
       handleLeaveCommunityPublic,
       handleViewInfoPublic,
-      toasts,
-      removeToast,
-      addToast,
-      localCurrentUser
+      localCurrentUser,
+      toast
     };
   }
 };
@@ -262,67 +242,8 @@ export default {
 .community-management {
   padding: 2rem;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #333333; /* Texte sombre pour un bon contraste */
+  color: #333333;
 }
 
-
-/* Toast Notifications */
-.toast-container {
-  position: fixed;
-  top: 1rem;
-  right: 1rem;
-  z-index: 2000;
-}
-
-.toast {
-  background-color: #333333;
-  color: #ffffff;
-  padding: 1rem;
-  margin-bottom: 0.75rem;
-  border-radius: 6px;
-  min-width: 250px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.toast.success {
-  background-color: #28a745;
-}
-
-.toast.error {
-  background-color: #dc3545;
-}
-
-.toast.warn {
-  background-color: #ffc107;
-  color: #212529;
-}
-
-.toast p {
-  margin: 0;
-  padding-left: 0.5rem;
-}
-
-.toast button {
-  background: none;
-  border: none;
-  color: inherit;
-  font-size: 1rem;
-  cursor: pointer;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .community-management {
-    padding: 1rem;
-  }
-
-
-  .toast {
-    min-width: 200px;
-    padding: 0.75rem;
-  }
-}
+/* Les styles de PrimeVue (pour Toast notamment) seront appliqués */
 </style>
