@@ -1,47 +1,49 @@
 <template>
   <div class="sidebar card">
-    <!-- Profil utilisateur -->
-    <div class="user-profile flex">
-      <img
-        :src="userPhotoURL"
-        alt="Avatar"
-        class="m-2 col-6"
-        style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;"
+    <!-- Partie supérieure fixe -->
+    <div class="fixed-content">
+      <!-- Profil utilisateur -->
+      <div class="user-profile flex">
+        <img
+          :src="userPhotoURL"
+          alt="Avatar"
+          class="m-2 col-6"
+          style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;"
+        />
+        <h4 class="m-2 mt-5">
+          <a @click="goToProfile" class="profile-link">{{ userFullName }}</a>
+        </h4>
+      </div>
+
+      <!-- Liens supplémentaires -->
+      <div class="profile-links">
+        <ul>
+          <li @click="goToPfpHistory">
+            <i class="pi pi-images link-icon"></i>
+            <span>Historique des PFP</span>
+          </li>
+          <li @click="goToDocumentPFP">
+            <i class="pi pi-file link-icon"></i>
+            <span>Documents PFP</span>
+          </li>
+        </ul>
+      </div>
+      <h4>Messagerie</h4>
+
+      <hr>
+    </div>
+
+    <!-- Partie inférieure scrollable -->
+    <div class="scrollable-content">
+      <UserCard
+        v-for="user in users"
+        :key="user.id"
+        :user="user"
+        @click="openChat(user)"
       />
-      <h4 class="m-2 mt-5">
-        <a @click="goToProfile" class="profile-link">{{ userFullName }}</a>
-      </h4>
     </div>
-
-    <!-- Liens supplémentaires -->
-    <div class="profile-links">
-      <ul>
-        <li @click="goToPfpHistory">
-          <i class="pi pi-images link-icon"></i>
-          <span>Historique des PFP</span>
-        </li>
-        <li @click="goToDocumentPFP">
-          <i class="pi pi-file link-icon"></i>
-          <span>Documents PFP</span>
-        </li>
-      </ul>
-    </div>
-
-    <hr />
-
-    <!-- Messagerie -->
-    <h4>Messagerie</h4>
-    <UserCard
-      v-for="user in users"
-      :key="user.id"
-      :user="user"
-      @click="openChat(user)"
-
-    />
-
   </div>
 </template>
-
 <script>
 import Avatar from "primevue/avatar";
 import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
@@ -65,7 +67,6 @@ export default {
       users: [] // Liste de tous les utilisateurs
     };
   },
-
   computed: {
     userFullName() {
       return `${this.user.prenom} ${this.user.nom}`.trim() || "Utilisateur";
@@ -150,20 +151,37 @@ export default {
   },
 };
 </script>
-
 <style scoped>
-/* Styles de la sidebar gauche */
+/* Styles généraux pour la sidebar */
 .sidebar {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  padding: 1rem;
+  height: 100vh; /* Assure que la sidebar occupe toute la hauteur de la fenêtre */
   background: var(--surface-card);
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE 10+ */
+  padding: 1rem;
 }
 
-.sidebar::-webkit-scrollbar {
+/* Partie supérieure fixe */
+.fixed-content {
+  flex: 0 0 auto; /* Ne grandit pas */
+  /* Optionnel : pour qu'elle reste bien visible lors du scroll, vous pouvez utiliser sticky */
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface-card);
+  padding-bottom: 1rem;
+}
+
+/* Partie inférieure scrollable */
+.scrollable-content {
+  flex: 1 1 auto; /* Prend le reste de l'espace */
+  overflow-y: auto;
+  /* Masquer la scrollbar pour Chrome, Edge, Safari */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE et Edge Legacy */
+}
+
+.scrollable-content::-webkit-scrollbar {
   display: none; /* Chrome, Safari et Opera */
 }
 
@@ -208,40 +226,5 @@ export default {
   color: var(--primary-color);
 }
 
-/* Liste des contacts */
-.messaging-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.message-item {
-  display: flex;
-  align-items: center;
-  padding: 0.75rem;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.message-item:hover {
-  background-color: var(--surface-hover);
-}
-
-.contact-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.contact-name {
-  font-weight: bold;
-  color: var(--text-color);
-}
-
-.last-message {
-  font-size: 0.875rem;
-  color: var(--text-color-secondary);
-}
-
-
+/* Styles supplémentaires pour UserCard, etc. peuvent rester inchangés */
 </style>

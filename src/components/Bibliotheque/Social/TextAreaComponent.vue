@@ -10,7 +10,7 @@
       />
       <!-- Compteur de caractères -->
       <div class="char-counter" v-if="showCharCounter">
-        {{ characterCount }}/500
+        {{ characterCount }}/1000
       </div>
     </div>
   </div>
@@ -27,7 +27,7 @@ const props = defineProps({
   },
   maxLength: {
     type: Number,
-    default: 500
+    default: 1000
   },
   showCharCounter: {
     type: Boolean,
@@ -80,20 +80,17 @@ watch(
 .textarea-component {
   width: 100%;
   max-width: 10000px;
-
-
 }
 
 .editor-container {
   position: relative;
   border-radius: 0.5rem;
-
 }
 
 .custom-editor {
   border: none; /* Suppression des bordures rigides */
   border-radius: 0.5rem;
-  background-color : var(--surface-card);
+  background-color: var(--surface-card);
   overflow: hidden;
   color: #fff; /* Texte blanc */
 }
@@ -103,13 +100,13 @@ watch(
   padding: 1rem; /* Marges internes */
   font-family: 'Inter', sans-serif; /* Typographie moderne */
   font-size: 1rem;
-  background-color : var(--surface-card);
+  background-color: var(--surface-card);
   color: #fff; /* Texte blanc */
 }
 
-/* Placeholder (texte par défaut dans l’éditeur) */
-.custom-editor .ql-container .ql-editor::before {
-  color: #aaa; /* Couleur claire pour le placeholder */
+/* Pour forcer le style du placeholder en blanc (si nécessaire avec ::v-deep) */
+::v-deep .custom-editor .ql-container .ql-editor::before {
+  color: #fff !important;
 }
 
 /* Compteur de caractères */
@@ -133,3 +130,4 @@ watch(
   }
 }
 </style>
+

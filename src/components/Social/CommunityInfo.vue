@@ -12,10 +12,11 @@
       <div class="community-info">
         <div class="card">
           <h1>{{ community.name }}</h1>
-          <h5 class="text-white">{{ community.description }}</h5>
-         <!-- <h5><strong>Créée le :</strong> {{ formattedDate }}</h5> -->
+          <p><strong>Description:</strong> {{ community.description }}</p>
+
+          <!-- <h5><strong>Créée le :</strong> {{ formattedDate }}</h5>   <Button @click="goBack">Retour</Button> -->
           <h6><strong>Membres :</strong> {{ memberCount }}</h6>
-          <Button @click="goBack">Retour</Button>
+         
         </div>
       </div>
 
@@ -36,13 +37,13 @@
 
 <script>
 import { ref, onMounted } from "vue";
+import { onBeforeRouteUpdate, useRoute, useRouter } from "vue-router";
 import Navbar from "@/components/Utils/Navbar.vue";
 import CommunityFeed from "@/components/Social/CommunityFeed.vue";
 import LeftSidebar from '@/components/Bibliotheque/Social/LeftSidebar.vue';
 import RightSidebar from '@/components/Bibliotheque/Social/RightSidebar.vue';
 import { db, auth } from "@/firebase.js";
 import { ref as dbRef, get } from "firebase/database";
-import { useRoute, useRouter } from "vue-router";
 import { onAuthStateChanged } from "firebase/auth";
 
 export default {
@@ -56,13 +57,14 @@ export default {
   setup() {
     const route = useRoute();
     const router = useRouter();
+    // Stocke l'ID de la communauté en fonction du paramètre d'URL
     const communityId = ref(route.params.id);
     const community = ref({});
     const formattedDate = ref("");
     const memberCount = ref(0);
     const currentUser = ref(null);
 
-    // Récupération des informations de la communauté
+    // Fonction pour récupérer les infos de la communauté depuis la BDD
     const fetchCommunityInfo = async () => {
       try {
         const snapshot = await get(dbRef(db, `Communities/${communityId.value}`));
@@ -73,11 +75,11 @@ export default {
         const data = snapshot.val();
         community.value = data;
 
-        // Formatage de la date
+        // Formatage de la date (si disponible)
         if (data.createdAt) {
           formattedDate.value = new Date(data.createdAt).toLocaleDateString();
         }
-        // Nombre de membres
+        // Calcul du nombre de membres
         memberCount.value = data.members ? Object.keys(data.members).length : 0;
       } catch (error) {
         console.error("Erreur lors de la récupération des infos de la communauté :", error);
@@ -90,7 +92,7 @@ export default {
       router.back();
     };
 
-    // Au montage du composant, on récupère les infos et on écoute l'état de l'authentification
+    // Au montage du composant, on récupère les infos de la communauté et on écoute l'état de l'authentification
     onMounted(() => {
       fetchCommunityInfo();
       onAuthStateChanged(auth, (user) => {
@@ -98,6 +100,14 @@ export default {
           currentUser.value = user;
         }
       });
+    });
+
+    // Lorsqu'on navigue vers une autre communauté (même composant affiché),
+    // on met à jour l'ID et on recharge les infos correspondantes.
+    onBeforeRouteUpdate((to, from, next) => {
+      communityId.value = to.params.id;
+      fetchCommunityInfo();
+      next();
     });
 
     return {
@@ -145,10 +155,6 @@ export default {
 .sidebar-right {
   overflow-y: auto;
 }
-
-/* Styles spécifiques à CommunityInfo */
-
-
 
 /* Responsiveness */
 @media (max-width: 1024px) {

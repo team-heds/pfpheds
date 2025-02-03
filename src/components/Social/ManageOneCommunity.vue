@@ -107,7 +107,7 @@
           <h2>Membres de la Communauté</h2>
         </template>
         <template #content>
-          <!-- Formulaire pour Ajouter un Membre -->
+          <!-- Formulaire pour Ajouter un Membre 
           <Card class="p-p-3 p-mb-4 card">
             <template #title>
               <h3>Ajouter Utilisateur</h3>
@@ -149,7 +149,7 @@
               </div>
             </form>
           </Card>
-
+-->
           <!-- Liste des Membres -->
           <DataTable
             :value="communityMembers"

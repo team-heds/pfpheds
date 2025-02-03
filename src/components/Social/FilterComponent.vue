@@ -1,6 +1,7 @@
 <!-- src/components/Social/FilterComponent.vue -->
 <template>
     <div class="filters-container">
+      <!-- 
       <Dropdown
         v-model="localSelectedFilterType"
         :options="filterTypes"
@@ -8,7 +9,7 @@
         optionValue="value"
         placeholder="Sélectionner un type de filtre"
         @change="handleFilterTypeChange"
-      />
+      />-->
   
       <Dropdown
         v-if="localSelectedFilterType"

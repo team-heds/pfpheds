@@ -5,27 +5,17 @@
     <Navbar />
 
     <!-- Section de création de communauté -->
-    <CreateNewCommunity
-      @communityCreated="handleCommunityCreated"
-      @showToast="handleShowToast"
-    />
 
     <!-- Liste des Communautés de l'utilisateur -->
-    <CommunitiesList
-      :communities="userCommunities"
-      @manageCommunity="handleManageCommunity"
-      @click="handleLeaveCommunity"
-      @showToast="handleShowToast"
-    />
+    <CommunitiesList :communities="userCommunities" @manageCommunity="handleManageCommunity"
+      @leaveCommunity="handleLeaveCommunity" @showToast="handleShowToast" />
 
     <!-- Liste des Communautés Publiques -->
-    <PublicCommunitiesList
-      :communities="publicCommunitiesComputed"
-      @manageCommunity="handleManageCommunityPublic"
-      @joinCommunity="handleJoinCommunityPublic"
-      @leaveCommunity="handleLeaveCommunityPublic"
-      @showToast="handleShowToast"
-    />
+    <PublicCommunitiesList :communities="publicCommunitiesComputed" @manageCommunity="handleManageCommunityPublic"
+      @joinCommunity="handleJoinCommunityPublic" @leaveCommunity="handleLeaveCommunityPublic"
+      @showToast="handleShowToast" />
+
+      <CreateNewCommunity @communityCreated="handleCommunityCreated" @showToast="handleShowToast" />
 
     <!-- PrimeVue Toast Notifications -->
     <Toast ref="toast" />
@@ -127,7 +117,9 @@ export default {
     onMounted(() => {
       fetchCurrentUser();
       fetchCommunities();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     });
+
 
     // Rafraîchit la liste après création d'une communauté
     const handleCommunityCreated = () => {
@@ -155,17 +147,22 @@ export default {
         });
 
         addToast('success', 'Succès', 'Vous avez rejoint la communauté.');
+
+        // Rafraîchir les communautés
         fetchCommunities();
+
+        // Scroll en haut de la page
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       } catch (error) {
         console.error("Erreur lors de la jonction de la communauté :", error);
         addToast('error', 'Erreur', 'Impossible de rejoindre la communauté.');
       }
     };
 
+
     // Quitte une communauté
     // Notez que cette méthode doit recevoir l'ID de la communauté (une chaîne) et non un objet événement.
     const handleLeaveCommunity = async (communityId) => {
-      console.log("ID de la communauté reçue :", communityId);
       if (!localCurrentUser.value) {
         addToast('error', 'Erreur', 'Utilisateur non authentifié.');
         return;
@@ -174,18 +171,24 @@ export default {
 
       try {
         await update(dbRef(db), {
-          [`Communities/${communityId}/members/${userId}`]: null,
-          [`Users/${userId}/communities/${communityId}`]: null
+          [`Communities/${communityId}/members/${userId}`]: false,
+          [`Users/${userId}/communities/${communityId}`]: false
         });
 
         addToast('success', 'Succès', 'Vous avez quitté la communauté.');
+
+        // Rafraîchir les communautés
         fetchCommunities();
+
+        // Scroll en haut de la page
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       } catch (error) {
         console.error("Erreur lors de la sortie de la communauté :", error);
         addToast('error', 'Erreur', 'Impossible de quitter la communauté.');
       }
-      console.log("Communautés après la sortie :", communities.value);
     };
+
+
 
     // Navigation pour afficher les informations d'une communauté
     const handleViewInfo = (communityId) => {
@@ -198,6 +201,7 @@ export default {
     };
 
     const handleLeaveCommunityPublic = async (communityId) => {
+
       await handleLeaveCommunity(communityId);
     };
 

@@ -2,20 +2,12 @@
 <template>
   <Card class="public-communities-list-section p-mt-4 card">
     <template #title>
-      <h2>Communautés Publiques</h2>
+      <h2>Vos Communautés</h2>
     </template>
     <template #content>
-      <DataTable
-        :value="publicCommunities"
-        class="p-datatable-striped p-datatable-responsive"
-        responsiveLayout="scroll"
-        emptyMessage="Aucune communauté publique trouvée."
-        paginator
-        rows="10"
-        :rowsPerPageOptions="[5, 10, 20]"
-        globalFilter
-        :filters="filters"
-      >
+      <DataTable :value="publicCommunities" class="p-datatable-striped p-datatable-responsive" responsiveLayout="scroll"
+        emptyMessage="Aucune communauté publique trouvée." paginator rows="10" :rowsPerPageOptions="[5, 10, 20]"
+        globalFilter :filters="filters">
         <!-- Colonne Nom de la Communauté -->
         <Column field="name" header="Nom" sortable></Column>
 
@@ -35,7 +27,8 @@
         <!-- Colonne Date de Création -->
         <Column field="createdAt" header="Date de Création" sortable>
           <template #body="slotProps">
-            {{ formatDate(slotProps.data.createdAt) }}
+            {{ slotProps.data.createdAt }}
+            <!--  formatDate(slotProps.data.createdAt) || -->
           </template>
         </Column>
 
@@ -45,34 +38,16 @@
         <!-- Colonne Actions -->
         <Column header="Actions" :style="{ minWidth: '200px' }">
           <template #body="slotProps">
-            <Button
-              label="Gérer"
-              icon="pi pi-cog"
-              class="p-button-secondary p-button-sm p-mr-2 m-2"
-              @click="manageCommunity(slotProps.data.id)"
-            />
+            <Button label="Gérer" icon="pi pi-cog" class="p-button-secondary p-button-sm p-mr-2 m-2"
+              @click="manageCommunity(slotProps.data.id)" />
 
-            <Button
-              v-if="!slotProps.data.isMember"
-              label="Rejoindre"
-              icon="pi pi-user-plus"
-              class="p-button-primary p-button-sm p-mr-2 m-2"
-              @click="joinCommunity(slotProps.data.id)"
-            />
-            <Button
-              v-else
-              label="Quitter"
-              icon="pi pi-sign-out"
-              class="p-button-danger p-button-sm p-mr-2 m-2"
-              @click="leaveCommunity(slotProps.data.id)"
-            />
+            <Button v-if="!slotProps.data.isMember" label="Rejoindre" icon="pi pi-user-plus"
+              class="p-button-primary p-button-sm p-mr-2 m-2" @click="joinCommunity(slotProps.data.id)" />
+            <Button v-else label="Quitter" icon="pi pi-sign-out" class="p-button-danger p-button-sm p-mr-2 m-2"
+              @click="leaveCommunity(slotProps.data.id)" />
 
-            <Button
-              label="Infos"
-              icon="pi pi-info-circle"
-              class="p-button-info p-button-sm p-mr-2 m-2"
-              @click="viewInfo(slotProps.data.id)"
-            />
+            <Button label="Infos" icon="pi pi-info-circle" class="p-button-info p-button-sm p-mr-2 m-2"
+              @click="viewInfo(slotProps.data.id)" />
           </template>
         </Column>
       </DataTable>
@@ -110,8 +85,8 @@ export default {
     },
   },
   emits: ["manageCommunity", "joinCommunity", "leaveCommunity", "viewInfo"],
+
   setup(props, { emit }) {
-    const confirm = useConfirm();
 
     // Références pour le filtrage global
     const filters = ref({
@@ -160,13 +135,8 @@ export default {
     };
 
     const leaveCommunity = (id) => {
-      confirm.require({
-        message: "Êtes-vous sûr de vouloir quitter cette communauté ?",
-        header: "Confirmation",
-        icon: "pi pi-exclamation-triangle",
-        accept: () => emit("leaveCommunity", id),
-        reject: () => {}
-      });
+      emit("leaveCommunity", id);
+
     };
 
     const viewInfo = (id) => {

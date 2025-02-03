@@ -11,15 +11,16 @@
           v-for="(community, index) in userCommunities"
           :key="community.id"
           class="community-item"
-          @click="goToCommunity(community.id)"
         >
-          <Avatar
-            :label="getInitial(community.name)"
-            class="mr-2"
-            size="large"
-            shape="circle"
-          />
-          <span class="community-name">{{ community.name }}</span>
+          <router-link :to="`/communities/info/${community.id}`" class="community-link">
+            <Avatar
+              :label="getInitial(community.name)"
+              class="mr-2 fixed-avatar"
+              size="large"
+              shape="circle"
+            />
+            <span class="community-name">{{ community.name }}</span>
+          </router-link>
         </li>
         <li v-if="userCommunities.length === 0" class="text-center">
           Aucune communauté jointe
@@ -45,9 +46,8 @@
 import Avatar from "primevue/avatar";
 import Button from "primevue/button";
 import Chip from "primevue/chip";
-import { ref, onMounted, onUnmounted } from "vue";
-import { auth, db } from "../../../../firebase.js";
 import { onValue, ref as dbRef, get } from "firebase/database";
+import { auth, db } from "../../../../firebase.js";
 
 export default {
   name: "RightSidebar",
@@ -64,19 +64,7 @@ export default {
     };
   },
   methods: {
-    addCommunity() {
-      // Logique pour ajouter une nouvelle communauté
-      console.log("Ajout d'une nouvelle communauté");
-      // Vous pouvez rediriger vers une page de création de communauté ou ouvrir un modal
-      this.$router.push("/create-community");
-    },
-    goToCommunity(communityId) {
-      // Logique pour naviguer vers une communauté spécifique
-      console.log(`Naviguer vers la communauté avec l'ID: ${communityId}`);
-      this.$router.push(`/communities/info/${communityId}`);
-    },
     goToCommunities() {
-      // Redirection vers la page des communautés
       console.log("Naviguer vers la page des communautés");
       this.$router.push("/communities");
     },
@@ -88,7 +76,11 @@ export default {
         const communitySnapshot = await get(dbRef(db, `Communities/${communityId}`));
         if (communitySnapshot.exists()) {
           const communityData = communitySnapshot.val();
-          return { id: communityId, name: communityData.name, initial: communityData.name.charAt(0).toUpperCase() };
+          return {
+            id: communityId,
+            name: communityData.name,
+            initial: communityData.name.charAt(0).toUpperCase(),
+          };
         } else {
           console.warn(`Communauté avec l'ID ${communityId} non trouvée.`);
           return null;
@@ -99,10 +91,13 @@ export default {
       }
     },
     async updateUserCommunities(communitiesObj) {
-      const communityIds = Object.keys(communitiesObj || {});
-      const promises = communityIds.map(id => this.fetchCommunityDetails(id));
+      // Filtrer uniquement les communautés dont la valeur est true
+      const communityIds = Object.keys(communitiesObj || {}).filter(
+        (id) => communitiesObj[id] === true
+      );
+      const promises = communityIds.map((id) => this.fetchCommunityDetails(id));
       const communities = await Promise.all(promises);
-      this.userCommunities = communities.filter(community => community !== null);
+      this.userCommunities = communities.filter((community) => community !== null);
     },
   },
   async mounted() {
@@ -112,24 +107,26 @@ export default {
       const userCommunitiesRef = dbRef(db, `Users/${user.uid}/communities`);
 
       // Écouter les changements en temps réel
-      this.unsubscribeUserCommunities = onValue(userCommunitiesRef, (snapshot) => {
-        const communitiesObj = snapshot.val();
-        this.updateUserCommunities(communitiesObj);
-      }, (error) => {
-        console.error("Erreur lors de l'écoute des communautés de l'utilisateur:", error);
-      });
+      this.unsubscribeUserCommunities = onValue(
+        userCommunitiesRef,
+        (snapshot) => {
+          const communitiesObj = snapshot.val();
+          this.updateUserCommunities(communitiesObj);
+        },
+        (error) => {
+          console.error("Erreur lors de l'écoute des communautés de l'utilisateur:", error);
+        }
+      );
 
       // Initialiser les communautés de l'utilisateur
       const snapshot = await get(userCommunitiesRef);
       const communitiesObj = snapshot.val();
       await this.updateUserCommunities(communitiesObj);
     } else {
-      // Gérer l'utilisateur non authentifié
       console.error("Utilisateur non authentifié.");
     }
   },
   beforeUnmount() {
-    // Désabonner les écouteurs Firebase pour éviter les fuites de mémoire
     if (this.unsubscribeUserCommunities) {
       this.unsubscribeUserCommunities();
     }
@@ -169,10 +166,9 @@ export default {
 
 .community-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.75rem;
   padding: 0.5rem 0;
-  cursor: pointer;
   transition: background-color 0.2s ease;
 }
 
@@ -187,12 +183,12 @@ export default {
   color: var(--text-color);
 }
 
-/* Bouton pour ajouter une communauté */
-.add-community-button {
-  align-self: flex-end;
+.fixed-avatar {
+  width: 50px;
+  height: 50px;
+  flex-shrink: 0;
 }
 
-/* Section Hashtags */
 .hashtags ul {
   list-style: none;
   padding: 0;
@@ -201,5 +197,14 @@ export default {
 
 .hashtags li {
   margin: 0.5rem 0;
+}
+
+/* Optionnel : style pour le lien dans la communauté */
+.community-link {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  text-decoration: none;
+  color: inherit;
 }
 </style>

@@ -74,19 +74,20 @@
           </Column>
 
           <!-- Colonnes Langues -->
-          <Column header="DE">
+   
+          <Column header="FR">
             <template #body="slotProps">
               <Checkbox v-model="slotProps.data.FR" @change="updatePlace(slotProps.data, 'FR', slotProps.data.FR)"
                 binary="true" />
             </template>
           </Column>
-          <Column header="FR">
+
+          <Column header="DE">
             <template #body="slotProps">
               <Checkbox v-model="slotProps.data.DE" @change="updatePlace(slotProps.data, 'DE', slotProps.data.DE)"
                 binary="true" />
             </template>
           </Column>
-
 
           <!-- Colonnes PFP -->
           <Column header="PFP2">
@@ -488,8 +489,8 @@ export default {
               REHAB: (place.REHAB === 'true' || place.REHAB === true),
               AMBU: (place.AMBU === 'true' || place.AMBU === true),
               FR: (place.FR === 'true' || place.FR === true),
-              DE: (place.DE === 'true' || place.DE === true),
-              NEUROGER: (place.NEUROGER === 'true' || place.NEUROGER === true),
+              DE: (place.DE === true  || place.DE === 'true'  ),
+              NEUROGER: (place.NEUROGER === true  ||  place.NEUROGER === 'true'),
 
               IT: place.IT === "true",   // Convertir en booléen
               ENG: place.ENG === "true",   // Convertir en booléen

@@ -2,7 +2,7 @@
 <template>
   <Card class="public-communities-list-section mt-4 card">
     <template #title>
-      <h2>Communautés Publiques</h2>
+      <h2>Les Communautés Publiques</h2>
     </template>
     <template #content>
       <DataTable
