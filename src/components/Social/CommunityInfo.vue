@@ -13,8 +13,8 @@
         <div class="card">
           <h1>{{ community.name }}</h1>
           <h5 class="text-white">{{ community.description }}</h5>
-          <h5><strong>Créée le :</strong> {{ formattedDate }}</h5>
-          <h5><strong>Membres :</strong> {{ memberCount }}</h5>
+         <!-- <h5><strong>Créée le :</strong> {{ formattedDate }}</h5> -->
+          <h6><strong>Membres :</strong> {{ memberCount }}</h6>
           <Button @click="goBack">Retour</Button>
         </div>
       </div>
