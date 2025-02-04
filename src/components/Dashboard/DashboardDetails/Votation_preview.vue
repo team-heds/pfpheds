@@ -123,13 +123,7 @@ export default {
 </script>
 
 <style scoped>
-.container {
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 5px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  margin-top: 20px;
-}
+
 
 .table-header {
   font-size: 24px;
@@ -137,17 +131,5 @@ export default {
   margin-bottom: 20px;
 }
 
-.button {
-  background-color: #007bff;
-  color: white;
-  padding: 10px 15px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
 
-.button:hover {
-  background-color: #0056b3;
-}
 </style>

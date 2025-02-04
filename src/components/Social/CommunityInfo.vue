@@ -148,6 +148,7 @@ export default {
   width: 0;
   height: 0;
 }
+
 .main-feed {
   scrollbar-width: none;
 }

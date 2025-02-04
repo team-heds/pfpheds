@@ -9,7 +9,7 @@
               v-model="newPost"
               @input="detectTags"
             />
-            
+
             <!-- Affichage des tags détectés -->
             <div v-if="detectedTags.length > 0" class="tags-container p-1">
               <Tag
@@ -20,7 +20,7 @@
                 {{ tag }}
               </Tag>
             </div>
-  
+
             <!-- Boutons d'upload et de publication -->
             <div class="actions-container w-3 pb-2">
               <!-- Upload de fichiers (images, vidéos, etc.) -->
@@ -43,7 +43,7 @@
                   />
                 </template>
               </FileUpload>
-  
+
               <!-- Bouton pour publier -->
               <Button
                 label="Publier"
@@ -51,7 +51,7 @@
                 @click="postMessage"
               />
             </div>
-  
+
             <!-- Prévisualisation des médias sélectionnés -->
             <div class="media-preview" v-if="selectedMedia.length > 0">
               <div
@@ -79,7 +79,7 @@
           </div>
         </div>
       </transition>
-  
+
       <!-- Liste des posts (infinite scroll) -->
       <div class="posts-container" @scroll="handleScroll">
         <InfiniteScroll :loading="loading" @load-more="loadMorePosts">
@@ -93,7 +93,7 @@
       </div>
     </div>
   </template>
-  
+
   <script>
   import { ref, onMounted, watch } from "vue";
   import { auth, db } from "@/firebase.js";
@@ -116,7 +116,7 @@
     uploadBytes,
     getDownloadURL
   } from "firebase/storage";
-  
+
   // Composants internes
   import InfiniteScroll from "@/components/Social/InfiniteScroll.vue";
   import PostItem from "@/components/Social/PostItem.vue";
@@ -124,7 +124,7 @@
   import Tag from "primevue/tag";
   import Button from "primevue/button";
   import FileUpload from "primevue/fileupload";
-  
+
   export default {
     name: "CommunityFeed",
     components: {
@@ -158,19 +158,19 @@
       const selectedMedia = ref([]);
       const oldestTimestamp = ref(null);
       const localCurrentUser = ref(props.currentUser || null);
-  
+
       // Surveille si le texte du post change pour détecter automatiquement les tags
       watch(newPost, (value) => {
         const textWithoutHtml = value.replace(/<[^>]+>/g, "");
         detectedTags.value = extractTags(textWithoutHtml);
       });
-  
+
       // Fonction pour extraire les hashtags et mentions
       const extractTags = (text) => {
         const regex = /[#@][\w-]+/g;
         return text.match(regex) || [];
       };
-  
+
       // Fonction pour poster un message
       const postMessage = async () => {
         const textWithoutHtml = newPost.value.replace(/<[^>]+>/g, "").trim();
@@ -186,12 +186,12 @@
           console.error("Aucun contenu à publier.");
           return;
         }
-  
+
         try {
           const authorName =
             localCurrentUser.value.displayName ||
             localCurrentUser.value.email.split("@")[0];
-  
+
           // Construire la liste des hashtags
           const hashtagsObject = detectedTags.value
             .filter((tag) => tag.startsWith("#"))
@@ -200,7 +200,7 @@
               acc[cleanTag] = true;
               return acc;
             }, {});
-  
+
           // Construire la liste des mentions
           const mentionsObject = detectedTags.value
             .filter((tag) => tag.startsWith("@"))
@@ -209,7 +209,7 @@
               acc[cleanMention] = true;
               return acc;
             }, {});
-  
+
           const postData = {
             Author: authorName,
             IdUser: localCurrentUser.value.uid,
@@ -220,32 +220,32 @@
             media: [],
             Community: props.communityId, // on associe le post à la communauté
           };
-  
+
           // Upload des médias
           const mediaUrls = await uploadMedia();
           postData.media = mediaUrls;
-  
+
           // Enregistrement dans la base de données
           const newPostRef = push(dbRef(db, "Posts"));
           await set(newPostRef, postData);
-  
+
           // Réinitialisation
           newPost.value = "";
           selectedMedia.value = [];
           detectedTags.value = [];
-  
+
           // Rechargement
           reloadPosts();
         } catch (error) {
           console.error("Erreur lors de la publication :", error);
         }
       };
-  
+
       // Upload de chaque fichier sélectionné
       const uploadMedia = async () => {
         const storage = getStorage();
         const uploadedMediaUrls = [];
-  
+
         for (const media of selectedMedia.value) {
           try {
             const fileName = `${Date.now()}_${media.file.name}`;
@@ -260,18 +260,18 @@
             console.error("Erreur lors de l'upload du média :", error);
           }
         }
-  
+
         return uploadedMediaUrls;
       };
-  
+
       // Gestion de la sélection de fichiers
       const handleFileSelection = (event) => {
         const files = event.files;
-  
+
         for (const file of files) {
           const fileType = file.type;
           const previewUrl = URL.createObjectURL(file);
-  
+
           selectedMedia.value.push({
             file,
             type: fileType,
@@ -279,19 +279,19 @@
           });
         }
       };
-  
+
       // Suppression d'un média de la liste
       const removeMedia = (index) => {
         selectedMedia.value.splice(index, 1);
       };
-  
+
       // Récupérer les posts de la communauté
       const fetchPosts = async () => {
         if (!props.communityId) return;
-  
+
         loading.value = true;
         let postsRefQuery = dbRef(db, "Posts");
-  
+
         // Filtrage sur la communauté
         let q = query(
           postsRefQuery,
@@ -299,7 +299,7 @@
           equalTo(props.communityId),
           limitToLast(postsPerPage.value)
         );
-  
+
         // Pagination : si on a déjà un oldestTimestamp
         if (oldestTimestamp.value) {
           q = query(
@@ -309,7 +309,7 @@
             limitToLast(postsPerPage.value)
           );
         }
-  
+
         try {
           const snapshot = await get(q);
           if (snapshot.exists()) {
@@ -318,17 +318,17 @@
               ...post,
               id: key,
             }));
-  
+
             // Tri du plus récent au plus ancien
             postsArray.sort((a, b) => {
               const timeA = a.Timestamp ? a.Timestamp : 0;
               const timeB = b.Timestamp ? b.Timestamp : 0;
               return timeB - timeA;
             });
-  
+
             // Mise à jour de la liste globale
             posts.value = [...posts.value, ...postsArray];
-  
+
             // Mettre à jour oldestTimestamp
             if (posts.value.length > 0) {
               const oldestPost = posts.value[posts.value.length - 1];
@@ -338,31 +338,31 @@
         } catch (error) {
           console.error("Erreur lors de la récupération des posts :", error);
         }
-  
+
         loading.value = false;
       };
-  
+
       // Recharger complètement les posts
       const reloadPosts = async () => {
         posts.value = [];
         oldestTimestamp.value = null;
         await fetchPosts();
       };
-  
+
       // Infinite scroll : charger plus de posts
       const loadMorePosts = async () => {
         if (!loading.value) {
           await fetchPosts();
         }
       };
-  
+
       // Gérer le scroll pour afficher/masquer la zone de texte
       const handleScroll = (event) => {
         const scrollTop = event.target.scrollTop;
         showTextareaCard.value = scrollTop <= lastScrollTop.value;
         lastScrollTop.value = scrollTop;
       };
-  
+
       // Au montage, s’assurer d’avoir l’utilisateur et récupérer les posts
       onMounted(() => {
         // Si on n'a pas encore d'utilisateur en prop, on surveille l'auth
@@ -373,7 +373,7 @@
         });
         fetchPosts();
       });
-  
+
       return {
         posts,
         newPost,
@@ -397,7 +397,7 @@
     },
   };
   </script>
-  
+
   <style scoped>
   .community-feed {
     display: flex;
@@ -405,25 +405,27 @@
     gap: 1.5rem;
     height: 100%;
     overflow-y: auto;
+    -ms-overflow-style: none;  /* IE et Edge */
+    scrollbar-width: none;     /* Firefox */
   }
-  
+
   .post-textarea-card {
     border-radius: 0.75rem;
   }
-  
+
   .post-form {
     display: flex;
     flex-direction: column;
     gap: 1rem;
   }
-  
+
   .actions-container {
     display: flex;
     align-items: center;
     gap: 1rem;
     margin-top: 1rem;
   }
-  
+
   .upload-button {
     display: flex;
     align-items: center;
@@ -435,47 +437,47 @@
     cursor: pointer;
     transition: background-color 0.3s, color 0.3s;
   }
-  
+
   .upload-button:hover {
     background-color: var(--primary-color-light);
     color: var(--primary-color);
   }
-  
+
   .upload-button .pi {
     font-size: 1.2rem;
     margin-right: 0.5rem;
   }
-  
+
   .publish-button {
     flex-grow: 1;
     display: flex;
     align-items: center;
     justify-content: center;
   }
-  
+
   .tags-container {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
   }
-  
+
   .media-preview {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
     margin-top: 1rem;
   }
-  
+
   .media-item-wrapper {
     position: relative;
   }
-  
+
   .media-item {
     max-width: 100px;
     max-height: 100px;
     border-radius: 8px;
   }
-  
+
   .remove-media-btn {
     position: absolute;
     top: 0;
@@ -491,7 +493,21 @@
     align-items: center;
     justify-content: center;
   }
-  
+
+  /* Masquer la scrollbar du conteneur des posts */
+
+  /* Pour Chrome, Safari et Opera */
+  .posts-container::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Pour IE, Edge et Firefox */
+  .posts-container {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+
   /* Responsive mobile */
   @media (max-width: 768px) {
     .actions-container {
@@ -499,12 +515,11 @@
       align-items: stretch;
       gap: 0.5rem;
     }
-  
+
     .publish-button {
       width: 100%;
     }
   }
 
-  
+
   </style>
-  

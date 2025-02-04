@@ -104,10 +104,11 @@ watch(
   color: #fff; /* Texte blanc */
 }
 
-/* Pour forcer le style du placeholder en blanc (si nécessaire avec ::v-deep) */
+/* Pour forcer le style du placeholder en blanc (si nécessaire avec ::v-deep)  Ca force tout le texte en noir
 ::v-deep .custom-editor .ql-container .ql-editor::before {
   color: #fff !important;
 }
+ */
 
 /* Compteur de caractères */
 .char-counter {

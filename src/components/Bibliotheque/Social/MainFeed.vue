@@ -85,9 +85,9 @@
                 controls
                 class="media-item"
               ></video>
-              <button @click="removeMedia(index)" class="remove-media-btn">
+              <Button @click="removeMedia(index)" class="remove-media-btn">
                 ✖
-              </button>
+              </Button>
             </div>
           </div>
         </div>

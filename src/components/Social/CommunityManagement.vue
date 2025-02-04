@@ -8,14 +8,14 @@
 
     <!-- Liste des Communautés de l'utilisateur -->
     <CommunitiesList :communities="userCommunities" @manageCommunity="handleManageCommunity"
-      @leaveCommunity="handleLeaveCommunity" @showToast="handleShowToast" />
+                     @leaveCommunity="handleLeaveCommunity" @showToast="handleShowToast" />
 
     <!-- Liste des Communautés Publiques -->
     <PublicCommunitiesList :communities="publicCommunitiesComputed" @manageCommunity="handleManageCommunityPublic"
-      @joinCommunity="handleJoinCommunityPublic" @leaveCommunity="handleLeaveCommunityPublic"
-      @showToast="handleShowToast" />
+                           @joinCommunity="handleJoinCommunityPublic" @leaveCommunity="handleLeaveCommunityPublic"
+                           @showToast="handleShowToast" />
 
-      <CreateNewCommunity @communityCreated="handleCommunityCreated" @showToast="handleShowToast" />
+    <CreateNewCommunity @communityCreated="handleCommunityCreated" @showToast="handleShowToast" />
 
     <!-- PrimeVue Toast Notifications -->
     <Toast ref="toast" />

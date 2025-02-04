@@ -22,7 +22,7 @@
     <!-- Contenu du post -->
     <div class="post-content p-3">
       <!-- Texte du post -->
-      <div v-if="post.Content" class="post-text" v-html="post.Content"></div>
+      <div v-if="post.Content" class="post-text " v-html="post.Content"></div>
 
       <!-- Médias du post -->
       <div v-if="post.media && post.media.length > 0" class="post-media">
@@ -321,6 +321,8 @@ export default {
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
+  -ms-overflow-style: none;  /* IE et Edge */
+  scrollbar-width: none;     /* Firefox */
 }
 
 .post-header {
@@ -384,6 +386,7 @@ export default {
   padding: 10px 0;
   border-top: 1px solid var(--surface-border);
 }
+
 
 .action-button {
   display: flex;
