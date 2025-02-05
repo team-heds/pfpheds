@@ -16,7 +16,7 @@
         <p class="text-600 font-normal text-lg text-center mb-6">
           Liste des différentes places de formation pratique de la filière physiothérapie de la HES-SO Valais-Wallis
         </p>
-        <Divider class="w-full mb-6" />
+
 
         <!-- Container de la Carte -->
         <div class="map-container">
@@ -136,10 +136,8 @@ const schoolLogoIcon = L.icon({
 });
 
 // Import des composants utilisés
-import Navbar from '@/components/Utils/Navbar.vue';
 import LeftSidebar from '@/components/Bibliotheque/Social/LeftSidebar.vue';
 import RightSidebar from '@/components/Bibliotheque/Social/RightSidebar.vue';
-import Divider from 'primevue/divider';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 

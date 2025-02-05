@@ -120,7 +120,6 @@
       </div>
     </div>
   </div>
-  <Footer />
 </template>
 
 
@@ -130,12 +129,39 @@ import { ref as firebaseRef, onValue } from "firebase/database";
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import Navbar from '@/components/Utils/Navbar.vue';
-import Footer from '@/components/Utils/Footer.vue';
 import { onAuthStateChanged } from "firebase/auth";
+
+
+// Importez le logo de l'école (ajustez le chemin si nécessaire)
+import schoolLogo from '../../..//public/assets/images/markerheds.png';
+
+/*
+  Définition des dimensions naturelles de l'image du logo.
+  Vous devez ajuster originalWidth et originalHeight selon les dimensions réelles de votre image.
+*/
+const originalWidth = 25;  // largeur naturelle (en pixels)
+const originalHeight = 30; // hauteur naturelle (en pixels)
+
+/*
+  markerScale permet de réduire ou agrandir l'image.
+  - 1 : taille réelle
+  - 0.5 : la moitié de la taille réelle
+  - 2 : le double de la taille réelle
+*/
+const markerScale = 1;
+
+// Création du marqueur personnalisé avec le logo de l'école
+const schoolLogoIcon = L.icon({
+  iconUrl: schoolLogo,
+  iconSize: [originalWidth * markerScale, originalHeight * markerScale],
+  iconAnchor: [(originalWidth * markerScale) / 2, originalHeight * markerScale],
+  popupAnchor: [0, -(originalHeight * markerScale)]
+});
+
 
 export default {
   name: 'InstitutionView',
-  components: { Navbar, Footer },
+  components: { Navbar },
   data() {
     return {
       institutionDetails: null,
@@ -167,6 +193,7 @@ export default {
       }).addTo(this.map);
 
       this.marker = L.marker([lat, lng], {
+        icon: schoolLogoIcon,
         title: 'Localisation de l\'institution',
         riseOnHover: true,
       }).addTo(this.map);
