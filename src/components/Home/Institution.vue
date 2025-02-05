@@ -25,61 +25,65 @@
             </span>
           </div>
 
-          <!-- Grille auto-adaptative pour les cartes -->
-          <div class="grid-container">
-            <div
-              v-for="(institution, index) in displayedInstitutions"
-              :key="index"
-              class="card-wrapper"
-              :class="{ 'empty': institution.isPlaceholder }"
-            >
-              <Card
-                v-if="!institution.isPlaceholder"
-                class="institution-card surface-card"
-                style="width: 20rem; height: 100%;"
+          <!-- Zone défilante pour la grille -->
+          <div class="grid-scrollable-wrapper">
+            <!-- Grille auto-adaptative pour les cartes -->
+            <div class="grid-container">
+              <div
+                v-for="(institution, index) in displayedInstitutions"
+                :key="index"
+                class="card-wrapper"
+                :class="{ 'empty': institution.isPlaceholder }"
               >
-                <template #header>
-                  <div class="card-header">
-                    <img :src="institution.ImageURL" alt="institution" class="card-image" />
-                    <Tag class="card-tag">{{ institution.Canton }}</Tag>
-                  </div>
-                  <p ref="institutionName" class="card-title">{{ institution.Name }}</p>
-                </template>
-                <template #subtitle>
-                  <div class="card-subtitle">
-                    <p>
-                      {{ institution.Locality }}
-                      <Tag severity="primary">{{ institution.Language }}</Tag>
-                    </p>
-                    <p :class="descriptionClass" class="card-description">
-                      {{ truncateText(institution.Description, 100) }}
-                    </p>
-                  </div>
-                </template>
-                <template #content>
-                  <div class="button-container">
-                    <Button
-                      class="action-button"
-                      @click="goToDetails(institution.InstitutionId)"
-                      label="Détails"
-                      icon="pi pi-info-circle"
-                      outlined
-                    />
-                    <a
-                      :href="institution.URL || '#'"
-                      target="_blank"
-                      class="external-link"
-                      rel="noopener noreferrer"
-                    >
-                      <span class="p-button-icon pi pi-external-link"></span>
-                      <span class="link-label">Site web</span>
-                    </a>
-                  </div>
-                </template>
-              </Card>
+                <Card
+                  v-if="!institution.isPlaceholder"
+                  class="institution-card surface-card"
+                  style="width: 20rem; height: 100%;"
+                >
+                  <template #header>
+                    <div class="card-header">
+                      <img :src="institution.ImageURL" alt="institution" class="card-image" />
+                      <Tag class="card-tag">{{ institution.Canton }}</Tag>
+                    </div>
+                    <p ref="institutionName" class="card-title">{{ institution.Name }}</p>
+                  </template>
+                  <template #subtitle>
+                    <div class="card-subtitle">
+                      <p>
+                        {{ institution.Locality }}
+                        <Tag severity="primary">{{ institution.Language }}</Tag>
+                      </p>
+                      <p :class="descriptionClass" class="card-description">
+                        {{ truncateText(institution.Description, 100) }}
+                      </p>
+                    </div>
+                  </template>
+                  <template #content>
+                    <div class="button-container">
+                      <Button
+                        class="action-button"
+                        @click="goToDetails(institution.InstitutionId)"
+                        label="Détails"
+                        icon="pi pi-info-circle"
+                        outlined
+                      />
+                      <a
+                        :href="institution.URL || '#'"
+                        target="_blank"
+                        class="external-link"
+                        rel="noopener noreferrer"
+                      >
+                        <span class="p-button-icon pi pi-external-link"></span>
+                        <span class="link-label">Site web</span>
+                      </a>
+                    </div>
+                  </template>
+                </Card>
+              </div>
             </div>
           </div>
 
+          <!-- Pagination (statique) -->
           <Paginator
             :rows="itemsPerPage"
             :totalRecords="totalFilteredInstitutions"
@@ -141,7 +145,8 @@ export default {
         return this.allInstitutions;
       }
       return this.allInstitutions.filter(institution =>
-        institution.Name && institution.Name.toLowerCase().includes(this.searchTerm.toLowerCase())
+        institution.Name &&
+        institution.Name.toLowerCase().includes(this.searchTerm.toLowerCase())
       );
     },
     paginatedFilteredInstitutions() {
@@ -298,6 +303,22 @@ export default {
 }
 .search-input {
   width: 300px;
+}
+
+/* Zone scrollable pour la grille (scrollbar masquée) */
+.grid-scrollable-wrapper {
+  max-height: 990px; /* Ajustez cette hauteur selon vos besoins */
+  overflow-y: auto;
+  margin-bottom: 2rem;
+  /* Masquer la scrollbar pour Webkit */
+  -webkit-overflow-scrolling: touch;
+}
+.grid-scrollable-wrapper::-webkit-scrollbar {
+  display: none;
+}
+.grid-scrollable-wrapper {
+  -ms-overflow-style: none; /* IE et Edge */
+  scrollbar-width: none; /* Firefox */
 }
 
 /* Grille auto-adaptative pour les cartes */
