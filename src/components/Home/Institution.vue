@@ -111,7 +111,6 @@ import Button from 'primevue/button';
 import Card from 'primevue/card';
 import Tag from 'primevue/tag';
 import Paginator from 'primevue/paginator';
-import Footer from '@/components/Utils/Footer.vue';
 import LeftSidebar from '@/components/Bibliotheque/Social/LeftSidebar.vue';
 import RightSidebar from '@/components/Bibliotheque/Social/RightSidebar.vue';
 
@@ -124,7 +123,6 @@ export default {
     Card,
     Tag,
     Paginator,
-    Footer,
     LeftSidebar,
     RightSidebar
   },
