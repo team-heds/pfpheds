@@ -1,67 +1,84 @@
 <template>
   <Navbar />
-  <section class="px-4 py-8 md:px-6 lg:px-8">
-    <div class="container flex justify-content-center">
-      <div class="flex-grow">
-        <h1 class="text-900 font-bold text-5xl text-center">Institutions</h1>
-        <p class="text-600 font-normal text-xl text-center">
-          Découvrez les institutions partenaires de notre réseau
-        </p>
+  <!-- Layout principal avec sidebars et contenu central -->
+  <div class="institutions-layout">
+    <!-- Sidebar Gauche -->
+    <div class="sidebar-left">
+      <LeftSidebar />
+    </div>
 
-        <!-- Barre de recherche au centre -->
-        <div class="flex justify-content-center my-4">
-          <span class="p-input-icon-left">
-            <InputText v-model="searchTerm" placeholder="Rechercher par nom" style="width: 300px;" />
-          </span>
-        </div>
+    <!-- Contenu Principal -->
+    <div class="main-content">
+      <section class="px-4 py-8 md:px-6 lg:px-8">
+        <div class="container flex justify-content-center">
+          <div class="flex-grow">
+            <h1 class="text-900 font-bold text-5xl text-center">Institutions</h1>
+            <p class="text-600 font-normal text-xl text-center">
+              Découvrez les institutions partenaires de notre réseau
+            </p>
 
-        <!-- Grille avec toujours 4 colonnes et plus d'espace entre les cartes -->
-        <div class="grid-container mb-4">
-          <!-- Boucle sur les institutions + placeholders -->
-          <div
-            v-for="(institution, index) in displayedInstitutions"
-            :key="index"
-            class="card-wrapper"
-            :class="{ 'empty': institution.isPlaceholder }"
-          >
-            <Card v-if="!institution.isPlaceholder" class="institution-card surface-card" style="width: 20rem; height: 100%;">
-              <template #header>
-                <div style="position: relative;">
-                  <img :src="institution.ImageURL" alt="institution" class="card-image" />
-                  <Tag style="position: absolute; top: 20px; left: 20px;">{{ institution.Canton }}</Tag>
-                </div>
-                <p ref="institutionName" class="text-center text-xl text-900 font-bold m-1 mt-1">{{ institution.Name }}</p>
-              </template>
-              <template #subtitle>
-                <div class="text-center">
-                  <p>{{ institution.Locality }} <Tag severity="primary">{{ institution.Language }}</Tag></p>
-                  <p :class="descriptionClass" class="m-0">{{ truncateText(institution.Description, 100) }}</p>
-                </div>
-              </template>
-              <template #content>
-                <div class="button-container">
-                  <Button class="m-1" @click="goToDetails(institution.InstitutionId)" label="Détails" icon="pi pi-info-circle" outlined />
-                  <a :href="institution.URL || '#'" target="_blank" class="p-button p-component m-1" rel="noopener noreferrer">
-                    <span class="p-button-icon pi pi-external-link"></span>
-                    <span class="p-button-label ml-2">Site web</span>
-                  </a>
-                </div>
-              </template>
-            </Card>
+            <!-- Barre de recherche au centre -->
+            <div class="flex justify-content-center my-4">
+              <span class="p-input-icon-left">
+                <InputText v-model="searchTerm" placeholder="Rechercher par nom" style="width: 300px;" />
+              </span>
+            </div>
+
+            <!-- Grille affichant toujours 4 colonnes (les placeholders sont ajoutés si nécessaire) -->
+            <div class="grid-container mb-4">
+              <div
+                v-for="(institution, index) in displayedInstitutions"
+                :key="index"
+                class="card-wrapper"
+                :class="{ 'empty': institution.isPlaceholder }"
+              >
+                <Card v-if="!institution.isPlaceholder" class="institution-card surface-card" style="width: 20rem; height: 100%;">
+                  <template #header>
+                    <div style="position: relative;">
+                      <img :src="institution.ImageURL" alt="institution" class="card-image" />
+                      <Tag style="position: absolute; top: 20px; left: 20px;">{{ institution.Canton }}</Tag>
+                    </div>
+                    <p ref="institutionName" class="text-center text-xl text-900 font-bold m-1 mt-1">{{ institution.Name }}</p>
+                  </template>
+                  <template #subtitle>
+                    <div class="text-center">
+                      <p>
+                        {{ institution.Locality }}
+                        <Tag severity="primary">{{ institution.Language }}</Tag>
+                      </p>
+                      <p :class="descriptionClass" class="m-0">{{ truncateText(institution.Description, 100) }}</p>
+                    </div>
+                  </template>
+                  <template #content>
+                    <div class="button-container">
+                      <Button class="m-1" @click="goToDetails(institution.InstitutionId)" label="Détails" icon="pi pi-info-circle" outlined />
+                      <a :href="institution.URL || '#'" target="_blank" class="p-button p-component m-1" rel="noopener noreferrer">
+                        <span class="p-button-icon pi pi-external-link"></span>
+                        <span class="p-button-label ml-2">Site web</span>
+                      </a>
+                    </div>
+                  </template>
+                </Card>
+              </div>
+            </div>
+
+            <Paginator
+              :rows="itemsPerPage"
+              :totalRecords="totalFilteredInstitutions"
+              :rowsPerPageOptions="[12, 24, 36, 48, 60, 72, 84]"
+              @page="onPageChange"
+              class="justify-content-center"
+            ></Paginator>
           </div>
         </div>
-
-        <Paginator
-          :rows="itemsPerPage"
-          :totalRecords="totalFilteredInstitutions"
-          :rowsPerPageOptions="[12, 24, 36, 48, 60, 72, 84]"
-          @page="onPageChange"
-          class="justify-content-center"
-        ></Paginator>
-      </div>
+      </section>
     </div>
-  </section>
-  <Footer />
+
+    <!-- Sidebar Droite -->
+    <div class="sidebar-right">
+      <RightSidebar />
+    </div>
+  </div>
 </template>
 
 <script>
@@ -69,15 +86,26 @@ import { db } from '../../../firebase.js';
 import { ref as dbRef, onValue } from "firebase/database";
 import Navbar from '@/components/Utils/Navbar.vue';
 import InputText from 'primevue/inputtext';
-import { onAuthStateChanged } from "firebase/auth";
 import Button from 'primevue/button';
 import Card from 'primevue/card';
 import Tag from 'primevue/tag';
 import Paginator from 'primevue/paginator';
 import Footer from '@/components/Utils/Footer.vue';
+import LeftSidebar from '@/components/Bibliotheque/Social/LeftSidebar.vue';
+import RightSidebar from '@/components/Bibliotheque/Social/RightSidebar.vue';
 
 export default {
-  components: { Navbar, InputText, Button, Card, Tag, Paginator, Footer },
+  components: {
+    Navbar,
+    InputText,
+    Button,
+    Card,
+    Tag,
+    Paginator,
+    Footer,
+    LeftSidebar,
+    RightSidebar
+  },
   data() {
     return {
       allInstitutions: [],
@@ -155,7 +183,6 @@ export default {
         nameElements.forEach((nameElement) => {
           const lineHeight = parseInt(getComputedStyle(nameElement).lineHeight, 10);
           const nameHeight = nameElement.clientHeight;
-
           if (nameHeight > lineHeight * 2) {
             this.descriptionClass = 'description-two-lines';
           } else {
@@ -183,6 +210,50 @@ export default {
 </script>
 
 <style scoped>
+/* Layout principal pour les Institutions avec sidebars */
+.institutions-layout {
+  display: grid;
+  grid-template-columns: 1fr 3fr 1fr; /* Colonne gauche, contenu central, colonne droite */
+  gap: 1.5rem;
+  min-height: 100vh;
+}
+
+/* Sidebar Gauche */
+.sidebar-left {
+  overflow-y: auto;
+}
+
+/* Contenu Principal */
+.main-content {
+  overflow-y: auto;
+}
+
+/* Sidebar Droite */
+.sidebar-right {
+  overflow-y: auto;
+}
+
+/* Responsive : Masquer la sidebar droite sur tablettes et mobiles */
+@media (max-width: 1024px) {
+  .institutions-layout {
+    grid-template-columns: 1fr 2fr;
+  }
+  .sidebar-right {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .institutions-layout {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .sidebar-left {
+    display: none;
+  }
+}
+
+/* Styles existants pour la page Institutions */
 .card-image {
   width: 100%;
   height: 13rem;
@@ -209,7 +280,7 @@ export default {
   height: calc(2 * 1.5em);
 }
 
-/* Grille 4 colonnes, centrée, gap augmenté à 2rem */
+/* Grille pour les cartes d'institutions */
 .grid-container {
   display: grid;
   grid-template-columns: repeat(4, 20rem);
@@ -235,18 +306,7 @@ export default {
   height: 100%;
 }
 
-.institution-image {
-  width: 100%;
-  max-width: 1200px;
-  height: auto;
-  max-height: 400px;
-  object-fit: cover;
-  margin: auto;
-  border-radius: 0.5rem;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-/* Responsive */
+/* Responsive pour la grille des cartes */
 @media (max-width: 600px) {
   .grid-container {
     grid-template-columns: 20rem; /* 1 colonne sur mobile */
