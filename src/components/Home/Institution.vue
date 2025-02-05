@@ -100,7 +100,6 @@
       <RightSidebar />
     </div>
   </div>
-  <Footer />
 </template>
 
 <script>
