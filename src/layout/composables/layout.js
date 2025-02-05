@@ -5,7 +5,8 @@ const layoutConfig = reactive({
     menuTheme: 'colorScheme',
     colorScheme: 'dim',
     theme: 'heds',
-    scale: 14
+    scale: 14,
+    darkTheme: false // Ajoutez cette ligne pour définir le mode sombre par défaut
 });
 
 const layoutState = reactive({
@@ -50,8 +51,13 @@ export function useLayout() {
         layoutState.configSidebarVisible = !layoutState.configSidebarVisible;
     };
 
-    const isSidebarActive = computed(() => layoutState.overlayMenuActive || layoutState.staticMenuMobileActive || layoutState.overlaySubmenuActive);
+    const isSidebarActive = computed(() =>
+      layoutState.overlayMenuActive ||
+      layoutState.staticMenuMobileActive ||
+      layoutState.overlaySubmenuActive
+    );
 
+    // Utilisation de la propriété darkTheme nouvellement ajoutée
     const isDarkTheme = computed(() => layoutConfig.darkTheme);
 
     const isDesktop = computed(() => window.innerWidth > 991);

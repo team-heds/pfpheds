@@ -1,8 +1,5 @@
-<!-- src/components/Map.vue -->
+<!-- src/components/FilterMap.vue -->
 <template>
-
-
-  <!-- Layout global avec sidebars et contenu principal -->
   <div class="map-layout">
     <!-- Sidebar Gauche -->
     <div class="sidebar-left">
@@ -112,14 +109,31 @@ import { ref as firebaseRef, onValue } from 'firebase/database';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-// Correction des chemins des icônes Leaflet
-import icon from 'leaflet/dist/images/marker-icon.png';
-import iconShadow from 'leaflet/dist/images/marker-shadow.png';
-let DefaultIcon = L.icon({
-  iconUrl: icon,
-  shadowUrl: iconShadow
+// Importez le logo de l'école (ajustez le chemin si nécessaire)
+import schoolLogo from '../../..//public/assets/images/markerheds.png';
+
+/*
+  Définition des dimensions naturelles de l'image du logo.
+  Vous devez ajuster originalWidth et originalHeight selon les dimensions réelles de votre image.
+*/
+const originalWidth = 25;  // largeur naturelle (en pixels)
+const originalHeight = 30; // hauteur naturelle (en pixels)
+
+/*
+  markerScale permet de réduire ou agrandir l'image.
+  - 1 : taille réelle
+  - 0.5 : la moitié de la taille réelle
+  - 2 : le double de la taille réelle
+*/
+const markerScale = 1;
+
+// Création du marqueur personnalisé avec le logo de l'école
+const schoolLogoIcon = L.icon({
+  iconUrl: schoolLogo,
+  iconSize: [originalWidth * markerScale, originalHeight * markerScale],
+  iconAnchor: [(originalWidth * markerScale) / 2, originalHeight * markerScale],
+  popupAnchor: [0, -(originalHeight * markerScale)]
 });
-L.Marker.prototype.options.icon = DefaultIcon;
 
 // Import des composants utilisés
 import Navbar from '@/components/Utils/Navbar.vue';
@@ -135,7 +149,6 @@ const markers = ref([]);
 const allInstitutions = ref([]);
 const selectedInstitution = ref(null);
 const dialogVisible = ref(false);
-
 const router = useRouter();
 
 // Initialisation de la carte
@@ -166,14 +179,14 @@ const clearMarkers = () => {
   markers.value = [];
 };
 
-// Ajout des marqueurs sur la carte
+// Ajout des marqueurs sur la carte avec le logo de l'école comme icône
 const addLocationsToMap = (institutions) => {
   clearMarkers();
   institutions.forEach((institution) => {
     const lat = parseFloat(institution.Latitude);
     const lng = parseFloat(institution.Longitude);
     if (!isNaN(lat) && !isNaN(lng)) {
-      const marker = L.marker([lat, lng])
+      const marker = L.marker([lat, lng], { icon: schoolLogoIcon })
         .addTo(map.value)
         .on('click', () => {
           selectedInstitution.value = institution;
@@ -196,9 +209,10 @@ const navigateToDetails = (id) => {
 
 const openWebsite = (url) => {
   if (url) {
-    const completeUrl = url.startsWith('http://') || url.startsWith('https://')
-      ? url
-      : `http://${url}`;
+    const completeUrl =
+      url.startsWith('http://') || url.startsWith('https://')
+        ? url
+        : `http://${url}`;
     window.open(completeUrl, '_blank');
   }
 };
@@ -222,7 +236,7 @@ onUnmounted(() => {
 /* Layout global pour la carte avec sidebars */
 .map-layout {
   display: grid;
-  grid-template-columns: 1fr 3fr 1fr; /* Sidebar gauche, contenu principal, sidebar droite */
+  grid-template-columns: 1fr 3fr 1fr; /* Sidebar gauche, contenu central, sidebar droite */
   gap: 1.5rem;
   min-height: 100vh;
 }
