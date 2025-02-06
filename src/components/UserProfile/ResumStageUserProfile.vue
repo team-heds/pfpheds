@@ -1,5 +1,5 @@
 <template>
-  <div class="m-4">
+  <div >
     <!-- Critères Validés (Agrégation des critères de toutes les places de stage) -->
     <h5 class="mb-4">Critères Validés</h5>
     <div class="grid m-2" v-if="aggregatedCriteria && Object.keys(aggregatedCriteria).length">

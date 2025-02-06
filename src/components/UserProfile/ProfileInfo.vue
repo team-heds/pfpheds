@@ -13,10 +13,10 @@
           <CardNameProfile />
 
           <!-- Résumé du stage utilisateur -->
-          <ResumStageUserProfile class="w-12" />
+          <ResumStageUserProfile class="w-full" />
 
           <!-- Section pour changer la photo de profil -->
-          <div class="p-field m-4 card w-4">
+          <div class="p-field mt-4 card w-full">
             <label for="avatar-upload">Photo de profil actuelle :</label>
             <div class="p-d-flex p-ai-center">
               <img
@@ -166,7 +166,7 @@ onMounted(async () => {
 
 /* Contenu Principal */
 .main-content {
-  overflow-y: auto;
+
 }
 
 /* Responsive pour le layout global */

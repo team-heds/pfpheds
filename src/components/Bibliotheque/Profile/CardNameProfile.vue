@@ -1,6 +1,6 @@
 <template>
-  <div class="filter-menu">
-    <div class="p-fluid p-pt-4 p-pb-4">
+  <div class="mb-4">
+    <div class="p-pt-4 p-pb-4">
       <div class="surface-card p-4 shadow-2 border-round ">
 
         <!-- Section Avatar (Image de profil) -->
@@ -125,9 +125,7 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.p-fluid {
-  padding: 20px;
-}
+
 
 @media (max-width: 600px) {
   .w-4 {
