@@ -1,22 +1,25 @@
 <template>
   <div class="m-4">
-    <!-- Critères Validés -->
+    <!-- Critères Validés (Agrégation des critères de toutes les places de stage) -->
     <h5 class="mb-4">Critères Validés</h5>
-    <div class="grid m-2">
+    <div class="grid m-2" v-if="aggregatedCriteria && Object.keys(aggregatedCriteria).length">
       <div
-        v-for="(value, key) in userProfile"
+        v-for="(value, key) in aggregatedCriteria"
         :key="key"
         class="col-2 sm:col-4 lg:col-2 flex flex-column align-items-center justify-content-center card w-12 criteria-card"
       >
         <span class="font-bold text-center">{{ key }}</span>
         <i
           :class="{
-            'pi pi-check-circle text-green-500': parseInt(value) >= 1,
-            'pi pi-times-circle text-red-500': !value || parseInt(value) === 0
+            'pi pi-check-circle text-green-500': value,
+            'pi pi-times-circle text-red-500': !value
           }"
           class="text-3xl mt-2"
         ></i>
       </div>
+    </div>
+    <div v-else>
+      <p class="text-secondary">Aucun critère validé.</p>
     </div>
 
     <!-- Anciennes Places (PFP) -->
@@ -42,7 +45,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { getDatabase, ref as dbRef, get } from "firebase/database";
 import Button from "primevue/button";
@@ -54,23 +57,45 @@ const institution = ref(null);
 // Référence au routeur pour la navigation
 const router = useRouter();
 
-// Définir une image d'avatar par défaut si nécessaire
+// Définir une image d'avatar par défaut si nécessaire (non utilisée ici)
 const defaultAvatar = '../../../public/assets/images/avatar/01.jpg';
 
-// Fonction pour récupérer le profil utilisateur via son ID
+// Liste des critères à agréger
+const criteriaList = ["MSQ", "SYSINT", "NEUROGER", "REHAB", "AMBU", "FR", "DE"];
+
+// Propriété calculée qui agrège les critères sur toutes les places de stage
+const aggregatedCriteria = computed(() => {
+  const result = {};
+  // Initialiser chaque critère à false
+  criteriaList.forEach(crit => result[crit] = false);
+
+  // Si userProfile contient la clé PFP_valided, on l'agrège
+  if (userProfile.value && userProfile.value.PFP_valided) {
+    for (const place in userProfile.value.PFP_valided) {
+      const pfp = userProfile.value.PFP_valided[place];
+      criteriaList.forEach(crit => {
+        if (pfp[crit] === true) {
+          result[crit] = true;
+        }
+      });
+    }
+  }
+  return result;
+});
+
+// Fonction pour récupérer le profil utilisateur via son ID depuis Firebase
 const fetchUserProfileById = async (userId) => {
   const db = getDatabase();
   try {
     const studentRef = dbRef(db, `Students/${userId}`);
     const snapshotStudent = await get(studentRef);
-
     if (snapshotStudent.exists()) {
       const studentData = snapshotStudent.val();
-      userProfile.PFPValided = studentData.PFP_valided;
-
+      // On affecte l'objet complet à userProfile
+      // Le JSON doit contenir la clé "PFP_valided" qui sera ensuite utilisée dans aggregatedCriteria
+      userProfile.value = { ...studentData };
     } else {
       console.error("Aucun profil trouvé pour l'ID :", userId);
-      // Optionnel : Rediriger vers une page d'erreur ou afficher un message utilisateur
     }
   } catch (error) {
     console.error("Erreur lors de la récupération des données :", error);
@@ -80,14 +105,9 @@ const fetchUserProfileById = async (userId) => {
 // Fonction pour naviguer vers la page de l'institution
 const navigateToInstitution = () => {
   if (institution.value && institution.value.NomInstitution) {
-    // Supposons que chaque institution a un ID unique, stocké quelque part
-    // Ici, nous utilisons NomInstitution pour l'exemple, mais idéalement, utilisez un ID unique
-
-    // Exemple de navigation (à adapter selon votre configuration de routes) :
-    // router.push({ name: 'InstitutionProfile', params: { id: institutionId } });
-
     console.log("Navigating to institution page...");
-    // Implémentez la navigation réelle ici si vous avez un ID d'institution
+    // Exemple de navigation (adapter selon votre configuration de routes) :
+    // router.push({ name: 'InstitutionProfile', params: { id: institution.value.id } });
   }
 };
 
@@ -100,7 +120,6 @@ onMounted(() => {
     fetchUserProfileById(userId); // Charge le profil correspondant à l'ID
   } else {
     console.error("Aucun ID d'utilisateur fourni dans l'URL");
-    // Optionnel : Rediriger vers une page d'erreur ou afficher un message utilisateur
   }
 });
 </script>
@@ -149,7 +168,7 @@ onMounted(() => {
 .action-button {
   flex-shrink: 0;
   display: flex;
-  gap: 1rem; /* Ajoute un espace de 1rem entre les boutons */
+  gap: 1rem;
 }
 
 /* Colors */
@@ -177,14 +196,12 @@ onMounted(() => {
 }
 
 @media (max-width: 600px) {
-  /* Sur mobile, ajuster la largeur des cartes */
   .w-12 {
     width: 100% !important;
   }
 
-  /* Ajustements supplémentaires si nécessaire */
   .criteria-card {
-    height: auto; /* Permet aux cartes de s'adapter à leur contenu sur mobile */
+    height: auto;
   }
 
   .institution-card {
