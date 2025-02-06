@@ -22,24 +22,25 @@
       <p class="text-secondary">Aucun critère validé.</p>
     </div>
 
-    <!-- Anciennes Places (PFP) -->
-    <h5 class="mb-4">Anciennes Places (PFP)</h5>
-    <div class="card w-12">
-      <div v-if="institution && institution.NomInstitution" class="institution-card">
+    <!-- Anciennes Institutions (basées sur les IDs présents dans PFP_valided) -->
+    <h5 class="mb-4">Anciennes Institutions</h5>
+    <div class="card w-12" v-if="institutionsList && institutionsList.length">
+      <div v-for="inst in institutionsList" :key="inst.InstitutionId" class="institution-card">
         <div class="institution-content">
-          <h6 class="font-bold">{{ institution.NomInstitution }}</h6>
+          <!-- On affiche ici le nom de l'institution. Si le JSON d'institution contient "Name", on peut utiliser cette propriété -->
+          <h6 class="font-bold">{{ inst.Name || inst.NomInstitution }}</h6>
         </div>
         <div class="action-button">
           <Button
             label="Voir Plus"
             class="p-button-sm p-button-outlined p-button-primary"
-            @click="navigateToInstitution"
+            @click="navigateToInstitution(inst.InstitutionId)"
           />
         </div>
       </div>
-      <div v-else>
-        <p class="text-secondary">Aucune institution disponible pour cet utilisateur.</p>
-      </div>
+    </div>
+    <div v-else>
+      <p class="text-secondary">Aucune institution disponible pour cet utilisateur.</p>
     </div>
   </div>
 </template>
@@ -52,12 +53,12 @@ import Button from "primevue/button";
 
 // Références pour les données
 const userProfile = ref(null);
-const institution = ref(null);
+const institutionsList = ref([]); // Liste des institutions associées aux places de PFP_valided
 
 // Référence au routeur pour la navigation
 const router = useRouter();
 
-// Définir une image d'avatar par défaut si nécessaire (non utilisée ici)
+// (Optionnel) Image d'avatar par défaut si nécessaire
 const defaultAvatar = '../../../public/assets/images/avatar/01.jpg';
 
 // Liste des critères à agréger
@@ -69,7 +70,6 @@ const aggregatedCriteria = computed(() => {
   // Initialiser chaque critère à false
   criteriaList.forEach(crit => result[crit] = false);
 
-  // Si userProfile contient la clé PFP_valided, on l'agrège
   if (userProfile.value && userProfile.value.PFP_valided) {
     for (const place in userProfile.value.PFP_valided) {
       const pfp = userProfile.value.PFP_valided[place];
@@ -91,9 +91,29 @@ const fetchUserProfileById = async (userId) => {
     const snapshotStudent = await get(studentRef);
     if (snapshotStudent.exists()) {
       const studentData = snapshotStudent.val();
-      // On affecte l'objet complet à userProfile
-      // Le JSON doit contenir la clé "PFP_valided" qui sera ensuite utilisée dans aggregatedCriteria
       userProfile.value = { ...studentData };
+
+      // Récupérer les institutions associées aux places de stage validées
+      if (studentData.PFP_valided) {
+        // Pour chaque place dans PFP_valided, récupérer l'institution via son ID_PFP
+        const pfpEntries = Object.values(studentData.PFP_valided);
+        const dbPromises = pfpEntries.map(place => {
+          const instId = place.ID_PFP;
+          // On suppose que l'institution se trouve dans "Institutions/<instId>"
+          return get(dbRef(db, `Institutions/${instId}`))
+            .then(snapshot => {
+              if (snapshot.exists()) {
+                // On retourne l'objet institution avec son InstitutionId pour faciliter la navigation
+                return { ...snapshot.val(), InstitutionId: instId };
+              } else {
+                return null;
+              }
+            });
+        });
+        const fetchedInstitutions = await Promise.all(dbPromises);
+        // Filtrer les éventuels null si l'institution n'a pas été trouvée
+        institutionsList.value = fetchedInstitutions.filter(inst => inst !== null);
+      }
     } else {
       console.error("Aucun profil trouvé pour l'ID :", userId);
     }
@@ -102,22 +122,21 @@ const fetchUserProfileById = async (userId) => {
   }
 };
 
-// Fonction pour naviguer vers la page de l'institution
-const navigateToInstitution = () => {
-  if (institution.value && institution.value.NomInstitution) {
-    console.log("Navigating to institution page...");
-    // Exemple de navigation (adapter selon votre configuration de routes) :
-    // router.push({ name: 'InstitutionProfile', params: { id: institution.value.id } });
+// Fonction pour naviguer vers la page de l'institution en utilisant son ID
+const navigateToInstitution = (instId) => {
+  if (instId) {
+    console.log("Navigation vers l'institution avec ID :", instId);
+    // Adaptez la route selon votre configuration (ici, nous utilisons une route nommée 'InstitutionProfile')
+    router.push({ name: 'InstitutionProfile', params: { id: instId } });
   }
 };
 
-// Accéder aux paramètres de la route
+// Accéder aux paramètres de la route et lancer la récupération du profil
 const route = useRoute();
-
 onMounted(() => {
-  const userId = route.params.id; // Récupère l'ID depuis l'URL
+  const userId = route.params.id;
   if (userId) {
-    fetchUserProfileById(userId); // Charge le profil correspondant à l'ID
+    fetchUserProfileById(userId);
   } else {
     console.error("Aucun ID d'utilisateur fourni dans l'URL");
   }
@@ -137,7 +156,7 @@ onMounted(() => {
   text-align: center;
 }
 
-/* Styles Anciennes Places */
+/* Styles Anciennes Institutions */
 .institution-card {
   display: flex;
   justify-content: space-between;
@@ -147,6 +166,7 @@ onMounted(() => {
   border-radius: 8px;
   background-color: var(--surface-card);
   transition: box-shadow 0.2s, transform 0.2s;
+  margin-bottom: 1rem;
 }
 
 .institution-card:hover {
@@ -171,7 +191,7 @@ onMounted(() => {
   gap: 1rem;
 }
 
-/* Colors */
+/* Couleurs */
 .text-primary {
   color: var(--primary-color);
 }
@@ -199,16 +219,13 @@ onMounted(() => {
   .w-12 {
     width: 100% !important;
   }
-
   .criteria-card {
     height: auto;
   }
-
   .institution-card {
     flex-direction: column;
     align-items: flex-start;
   }
-
   .action-button {
     width: 100%;
     justify-content: flex-start;
