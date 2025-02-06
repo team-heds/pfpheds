@@ -13,7 +13,7 @@
           <CardNameProfile />
 
           <!-- Résumé du stage utilisateur -->
-          <ResumStageUserProfile class="w-4" />
+          <ResumStageUserProfile class="w-12" />
 
           <!-- Section pour changer la photo de profil -->
           <div class="p-field m-4 card w-4">
