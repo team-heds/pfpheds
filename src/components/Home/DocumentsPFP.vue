@@ -160,19 +160,81 @@ const folders = [
     id: 'cpt',
     name: 'CPT',
     icon: 'pi pi-folder',
-    subFolders: [],
+    subFolders: [
+      {
+        id: 'cpt',
+        name: 'Documents CPT',
+        files: [
+          {
+            id: 'doc1',
+            name: 'Contrat pédagogique tripartite vierge',
+            url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FContrat%20p%C3%A9dagogique%20tripartite_vide%202.docx?alt=media&token=e117726c-cadc-4ed1-a4df-e8d51786a1a0'
+          },
+          {
+            id: 'doc3',
+            name: 'Document explicatif CPT.pdf',
+            url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FDocument%20explicatif%20CPT.pdf?alt=media&token=57cfd14f-f45c-498e-ac82-899759f3bf57'
+          },
+          {
+            id: 'doc4',
+            name: 'Exemple CPT_FR.pdf',
+            url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FDocument%20explicatif%20CPT.pdf?alt=media&token=57cfd14f-f45c-498e-ac82-899759f3bf57'
+          },
+          {
+            id: 'doc2',
+            name: 'Leerer Pädagogicher dreiparteivertrag',
+            url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FP%C3%A4dagogicher_dreiparteivertrag_leer%203.docx?alt=media&token=0837e0d4-7efa-4869-8029-f1caad79c3e2'
+          },
+          {
+            id: 'doc5',
+            name: 'Erklärung Dreiervertrag.pdf',
+            url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FErkl%C3%A4rung%20Dreiervertrag.pdf?alt=media&token=0f20647d-a389-46e3-8e2b-0dead24ed01f'
+          },
+          {
+            id: 'doc6',
+            name: 'Beispiel PDV_DE 1.pdf',
+            url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FBeispiel%20PDV_DE%201.pdf?alt=media&token=d5ade314-2259-4653-85bc-b5658d3d655c'
+          }
+        ]
+      },
+  {
+    id: 'competences',
+    name: 'Compétences FP',
     files: [
       {
         id: 'doc1',
-        name: 'Contrat pédagogique tripartite',
-        url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FContrat%20p%C3%A9dagogique%20tripartite_vide%202.docx?alt=media&token=e117726c-cadc-4ed1-a4df-e8d51786a1a0'
+        name: 'Compétences_1BA.docx',
+        url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FComp%C3%A9tences_1BA.docx?alt=media&token=4e0efcc8-e5b5-4927-ae72-1705081b888c'
       },
       {
         id: 'doc2',
-        name: 'Pädagogicher dreiparteivertrag',
-        url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FP%C3%A4dagogicher_dreiparteivertrag_leer%203.docx?alt=media&token=0837e0d4-7efa-4869-8029-f1caad79c3e2'
-      }
+        name: 'Compétences_2BA.docx',
+        url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FComp%C3%A9tences_2BA.docx?alt=media&token=af62130a-7955-4a00-b2b4-1637793bfbb4'
+      },
+      {
+        id: 'doc3',
+        name: 'Compétences_3BA.docx',
+        url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FComp%C3%A9tences_3BA.docx?alt=media&token=a5eab991-1239-4bca-908f-1f878e6d43b8'
+      },
+      {
+        id: 'doc4',
+        name: 'Kompetenzen_1BA.docx',
+        url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FKompetenzen_1BA.docx?alt=media&token=85edb293-0747-4811-af3e-4f72e253bab1'
+      },
+      {
+        id: 'doc5',
+        name: 'Kompetenzen_2BA.docx',
+        url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FKompetenzen_2BA.docx?alt=media&token=65ed67b6-ced1-4b91-8d52-96bcd9bc3b88'
+      },
+      {
+        id: 'doc6',
+        name: 'Kompetenzen_3BA.docx',
+        url: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/documentPFP%2FKompetenzen_3BA.docx?alt=media&token=cf31571d-3b1e-4b00-b56d-3de8b049c038'
+      },
     ]
+  }
+    ],
+    files: []
   },
   {
     id: 'journaldebord',

@@ -35,7 +35,7 @@
             </div>
             <Button
               label="Enregistrer"
-              class="p-mt-2 w-4"
+              class="p-mt-2 w-2"
               @click="saveProfile"
               icon="pi pi-save"
             />

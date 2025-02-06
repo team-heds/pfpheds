@@ -1,13 +1,13 @@
 <template>
-  <Navbar/>
   <div class="m-4">
+    <Navbar />
     <!-- Critères Validés -->
     <h5 class="mb-4">Critères Validés</h5>
     <div class="grid m-2">
       <div
         v-for="(value, key) in userProfile"
         :key="key"
-        class="col-2 sm:col-4 lg:col-2 flex flex-column align-items-center justify-content-center card w-12 criteria-card "
+        class="col-2 sm:col-4 lg:col-2 flex flex-column align-items-center justify-content-center card w-12 criteria-card"
       >
         <span class="font-bold text-center">{{ key }}</span>
         <i
@@ -47,19 +47,24 @@ import { ref, onMounted } from "vue";
 import { getDatabase, ref as dbRef, get } from "firebase/database";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import Button from "primevue/button";
-import Navbar from '@/components/Utils/Navbar.vue'
+import Navbar from '@/components/Utils/Navbar.vue';
+import { useRouter } from "vue-router";
 
 const userProfile = ref(null);
+// Pour cet ancien code, nous utilisons uniquement la propriété PFP_1
 const institution = ref(null);
 
+const router = useRouter();
+
+// Fonction pour récupérer le profil utilisateur via sa clé (UID)
 const fetchUserProfileByKey = async (key) => {
   const db = getDatabase();
   try {
     const studentRef = dbRef(db, `Students/${key}`);
     const snapshotStudent = await get(studentRef);
-
     if (snapshotStudent.exists()) {
       const studentData = snapshotStudent.val();
+      // On construit l'objet userProfile avec quelques critères de base
       userProfile.value = {
         MSQ: studentData.MSQ || 0,
         SYSINT: studentData.SYSINT || 0,
@@ -71,19 +76,35 @@ const fetchUserProfileByKey = async (key) => {
         ALL: studentData.ALL || 0,
       };
 
-      // Récupérer institution liée à PFP_1
-      institution.value = studentData.PFP_1
-        ? { NomInstitution: studentData.PFP_1 || "Nom non disponible" }
-        : null;
+      // Pour les "Anciennes Places (PFP)", on récupère la donnée PFP_1
+      // Nous supposons ici que PFP_1 contient l'ID réel de l'institution
+      if (studentData.PFP_1) {
+        institution.value = {
+          InstitutionId: studentData.PFP_1,
+          NomInstitution: studentData.PFP_1  // Vous pouvez adapter ici si vous stockez le nom séparément
+        };
+      } else {
+        institution.value = null;
+      }
+    } else {
+      console.error("Aucun profil trouvé pour l'ID :", key);
     }
   } catch (error) {
     console.error("Error fetching data:", error);
   }
 };
 
+// Fonction pour naviguer vers la page de l'institution à partir de l'ID récupéré
 const navigateToInstitution = () => {
-  // Naviguer vers la page de l'institution
-  console.log("Navigating to institution page...");
+  if (institution.value && institution.value.InstitutionId) {
+    console.log("Navigation vers l'institution avec ID :", institution.value.InstitutionId);
+    // Utilise la route existante pour afficher le profil d'une institution
+    // Assurez-vous que dans votre router.js, vous avez une route similaire à :
+    // { path: '/institution/:id', name: 'InstitutionView', component: InstitutionView, props: true, meta: { requiresAuth: true } }
+    router.push({ name: 'InstitutionView', params: { id: institution.value.InstitutionId } });
+  } else {
+    console.error("Aucune institution disponible pour la navigation.");
+  }
 };
 
 onMounted(() => {
