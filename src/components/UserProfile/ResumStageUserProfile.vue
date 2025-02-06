@@ -27,7 +27,7 @@
     <div class="card w-12" v-if="institutionsList && institutionsList.length">
       <div v-for="inst in institutionsList" :key="inst.InstitutionId" class="institution-card">
         <div class="institution-content">
-          <!-- On affiche ici le nom de l'institution. Si le JSON d'institution contient "Name", on peut utiliser cette propriété -->
+          <!-- Affiche le nom de l'institution (si la clé 'Name' n'existe pas, on utilise 'NomInstitution') -->
           <h6 class="font-bold">{{ inst.Name || inst.NomInstitution }}</h6>
         </div>
         <div class="action-button">
@@ -58,7 +58,7 @@ const institutionsList = ref([]); // Liste des institutions associées aux place
 // Référence au routeur pour la navigation
 const router = useRouter();
 
-// (Optionnel) Image d'avatar par défaut si nécessaire
+// (Optionnel) Image d'avatar par défaut
 const defaultAvatar = '../../../public/assets/images/avatar/01.jpg';
 
 // Liste des critères à agréger
@@ -67,8 +67,7 @@ const criteriaList = ["MSQ", "SYSINT", "NEUROGER", "REHAB", "AMBU", "FR", "DE"];
 // Propriété calculée qui agrège les critères sur toutes les places de stage
 const aggregatedCriteria = computed(() => {
   const result = {};
-  // Initialiser chaque critère à false
-  criteriaList.forEach(crit => result[crit] = false);
+  criteriaList.forEach(crit => (result[crit] = false));
 
   if (userProfile.value && userProfile.value.PFP_valided) {
     for (const place in userProfile.value.PFP_valided) {
@@ -95,7 +94,6 @@ const fetchUserProfileById = async (userId) => {
 
       // Récupérer les institutions associées aux places de stage validées
       if (studentData.PFP_valided) {
-        // Pour chaque place dans PFP_valided, récupérer l'institution via son ID_PFP
         const pfpEntries = Object.values(studentData.PFP_valided);
         const dbPromises = pfpEntries.map(place => {
           const instId = place.ID_PFP;
@@ -103,7 +101,6 @@ const fetchUserProfileById = async (userId) => {
           return get(dbRef(db, `Institutions/${instId}`))
             .then(snapshot => {
               if (snapshot.exists()) {
-                // On retourne l'objet institution avec son InstitutionId pour faciliter la navigation
                 return { ...snapshot.val(), InstitutionId: instId };
               } else {
                 return null;
@@ -111,7 +108,6 @@ const fetchUserProfileById = async (userId) => {
             });
         });
         const fetchedInstitutions = await Promise.all(dbPromises);
-        // Filtrer les éventuels null si l'institution n'a pas été trouvée
         institutionsList.value = fetchedInstitutions.filter(inst => inst !== null);
       }
     } else {
@@ -122,16 +118,16 @@ const fetchUserProfileById = async (userId) => {
   }
 };
 
-// Fonction pour naviguer vers la page de l'institution en utilisant son ID
+// Fonction de navigation : utilise la route déjà créée dans votre router.js
 const navigateToInstitution = (instId) => {
   if (instId) {
     console.log("Navigation vers l'institution avec ID :", instId);
-    // Adaptez la route selon votre configuration (ici, nous utilisons une route nommée 'InstitutionProfile')
-    router.push({ name: 'InstitutionProfile', params: { id: instId } });
+    // Utilise la route existante nommée "InstitutionView" (ou "InstitutionProfile" selon votre configuration)
+    // Ici, d'après votre router.js, on suppose que la route qui affiche le profil d'une institution s'appelle "InstitutionView"
+    router.push({ name: 'InstitutionView', params: { id: instId } });
   }
 };
 
-// Accéder aux paramètres de la route et lancer la récupération du profil
 const route = useRoute();
 onMounted(() => {
   const userId = route.params.id;
@@ -152,7 +148,7 @@ onMounted(() => {
 }
 
 .criteria-card {
-  height: 80%; /* Hauteur uniforme pour toutes les cartes */
+  height: 80%;
   text-align: center;
 }
 
@@ -219,13 +215,16 @@ onMounted(() => {
   .w-12 {
     width: 100% !important;
   }
+
   .criteria-card {
     height: auto;
   }
+
   .institution-card {
     flex-direction: column;
     align-items: flex-start;
   }
+
   .action-button {
     width: 100%;
     justify-content: flex-start;

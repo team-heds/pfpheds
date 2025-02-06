@@ -4,7 +4,7 @@
       <div class="surface-card p-4 shadow-2 border-round ">
 
         <!-- Section Avatar (Image de profil) -->
-        <div class="field m-2 col-12 md:col-6">
+        <div class="field m-2 col-12 md:col-6 w-full">
           <div class="flex align-items-center">
             <img :src="user.photoURL || defaultAvatar" alt="Avatar" class="p-2" style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover;" />
             <h1 class="pl-4">{{ user.prenom }} {{ user.nom }}</h1>
@@ -13,7 +13,7 @@
       </div>
 
       <h5 class="mb-4">Informations personnelles</h5>
-      <div class="surface-card p-4 shadow-2 border-round mt-4 w-4 ">
+      <div class="surface-card p-4 shadow-2 border-round mt-4 w-full ">
         <div class="grid form-grid p-fluid">
           <div class="field mb-4 w-6 p-2">
             <h5>Email:</h5>
