@@ -449,6 +449,9 @@ export default {
           };
         }
       });
+
+      console.log(this.institution.imageURL);
+
     },
   },
   mounted() {

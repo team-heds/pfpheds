@@ -66,21 +66,8 @@ const fetchUserProfileById = async (userId) => {
 
     if (snapshotStudent.exists()) {
       const studentData = snapshotStudent.val();
-      userProfile.value = {
-        MSQ: studentData.MSQ || 0,
-        SYSINT: studentData.SYSINT || 0,
-        NEUROGER: studentData.NEUROGER || 0,
-        AIGU: studentData.AIGU || 0,
-        REHAB: studentData.REHAB || 0,
-        AMBU: studentData.AMBU || 0,
-        FR: studentData.FR || 0,
-        ALL: studentData.ALL || 0,
-      };
+      userProfile.PFPValided = studentData.PFP_valided;
 
-      // Récupérer institution liée à PFP_1
-      institution.value = studentData.PFP_1
-        ? { NomInstitution: studentData.PFP_1 || "Nom non disponible" }
-        : null;
     } else {
       console.error("Aucun profil trouvé pour l'ID :", userId);
       // Optionnel : Rediriger vers une page d'erreur ou afficher un message utilisateur
