@@ -1,5 +1,5 @@
 <template>
-  <div >
+  <div>
     <!-- Critères Validés (Agrégation des critères de toutes les places de stage) -->
     <h5 class="mb-4">Critères Validés</h5>
     <div class="grid m-2" v-if="aggregatedCriteria && Object.keys(aggregatedCriteria).length">
@@ -27,12 +27,19 @@
     <div class="card w-12" v-if="institutionsList && institutionsList.length">
       <div v-for="inst in institutionsList" :key="inst.InstitutionId" class="institution-card">
         <div class="institution-content">
-          <!-- Affiche le nom de l'institution (si la clé 'Name' n'existe pas, on utilise 'NomInstitution') -->
+          <!-- Affiche le nom de l'institution -->
           <h6 class="font-bold">{{ inst.Name || inst.NomInstitution }}</h6>
+          <!-- Affiche le domaine et les critères validés, si présents -->
+          <p v-if="inst.Domaines && inst.Domaines.length">
+            Domaine : {{ inst.Domaines.join(', ') }}
+            <span v-if="inst.CriteriaValides && inst.CriteriaValides.length">
+              | Critères validés : {{ inst.CriteriaValides.join(', ') }}
+            </span>
+          </p>
         </div>
         <div class="action-button">
           <Button
-            label="Voir Plus"
+            label="Voir les détails de l'institution"
             class="p-button-sm p-button-outlined p-button-primary"
             @click="navigateToInstitution(inst.InstitutionId)"
           />
@@ -61,8 +68,8 @@ const router = useRouter();
 // (Optionnel) Image d'avatar par défaut
 const defaultAvatar = '../../../public/assets/images/avatar/01.jpg';
 
-// Liste des critères à agréger
-const criteriaList = ["MSQ", "SYSINT", "NEUROGER", "REHAB", "AMBU", "FR", "DE"];
+// Liste des critères à agréger (utilisés dans aggregatedCriteria et pour l'agrégation par institution)
+const criteriaList = ["MSQ", "SYSINT", "NEUROGER", "REHAB", "AMBU", "AIGU", "FR", "DE"];
 
 // Propriété calculée qui agrège les critères sur toutes les places de stage
 const aggregatedCriteria = computed(() => {
@@ -92,10 +99,39 @@ const fetchUserProfileById = async (userId) => {
       const studentData = snapshotStudent.val();
       userProfile.value = { ...studentData };
 
-      // Récupérer les institutions associées aux places de stage validées
       if (studentData.PFP_valided) {
         const pfpEntries = Object.values(studentData.PFP_valided);
-        const dbPromises = pfpEntries.map(place => {
+
+        // Filtrer les entrées dont l'ID d'institution est vide ou indéfini
+        const validPfpEntries = pfpEntries.filter(place => place.ID_PFP);
+
+        // Agrégation des domaines par institution
+        const domainsByInstitution = {};
+        // Agrégation des critères validés par institution
+        const criteriaByInstitution = {};
+
+        validPfpEntries.forEach(place => {
+          const instId = place.ID_PFP;
+          // Agrégation du domaine
+          if (place.Domaine) {
+            if (!domainsByInstitution[instId]) {
+              domainsByInstitution[instId] = new Set();
+            }
+            domainsByInstitution[instId].add(place.Domaine);
+          }
+          // Agrégation des critères validés
+          if (!criteriaByInstitution[instId]) {
+            criteriaByInstitution[instId] = new Set();
+          }
+          criteriaList.forEach(crit => {
+            if (place[crit] === true) {
+              criteriaByInstitution[instId].add(crit);
+            }
+          });
+        });
+
+        // Récupération des institutions associées aux places validées
+        const dbPromises = validPfpEntries.map(place => {
           const instId = place.ID_PFP;
           // On suppose que l'institution se trouve dans "Institutions/<instId>"
           return get(dbRef(db, `Institutions/${instId}`))
@@ -108,7 +144,19 @@ const fetchUserProfileById = async (userId) => {
             });
         });
         const fetchedInstitutions = await Promise.all(dbPromises);
-        institutionsList.value = fetchedInstitutions.filter(inst => inst !== null);
+        institutionsList.value = fetchedInstitutions
+          .filter(inst => inst !== null)
+          .map(inst => {
+            // Ajout du ou des domaines agrégés à l'institution
+            const domainSet = domainsByInstitution[inst.InstitutionId];
+            // Ajout des critères validés pour l'institution
+            const criteriaSet = criteriaByInstitution[inst.InstitutionId];
+            return {
+              ...inst,
+              Domaines: domainSet ? Array.from(domainSet) : [],
+              CriteriaValides: criteriaSet ? Array.from(criteriaSet) : []
+            };
+          });
       }
     } else {
       console.error("Aucun profil trouvé pour l'ID :", userId);
@@ -118,12 +166,12 @@ const fetchUserProfileById = async (userId) => {
   }
 };
 
+
 // Fonction de navigation : utilise la route déjà créée dans votre router.js
 const navigateToInstitution = (instId) => {
   if (instId) {
     console.log("Navigation vers l'institution avec ID :", instId);
     // Utilise la route existante nommée "InstitutionView" (ou "InstitutionProfile" selon votre configuration)
-    // Ici, d'après votre router.js, on suppose que la route qui affiche le profil d'une institution s'appelle "InstitutionView"
     router.push({ name: 'InstitutionView', params: { id: instId } });
   }
 };

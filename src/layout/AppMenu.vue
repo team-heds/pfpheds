@@ -14,6 +14,11 @@ const model = ref([
                 to: '/etudiant_list'
             },
             {
+                label: 'Profil Users Admin',
+                icon: 'pi pi-users',
+                to: '/profilAdmin/4qoWztDujictoqTEJvJK6xF1Zcr1'
+            },
+            {
                 label: 'Institution',
                 icon: 'pi pi-home',
                 to: '/institution_list'

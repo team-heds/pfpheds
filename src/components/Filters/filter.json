@@ -1,0 +1,920 @@
+[
+  {
+    "IDPlace": "-O3k_m7cRctNx0MEzaU-",
+    "criteria": [
+      "AMBU",
+      "FR",
+      "MSQ",
+      "NEUROGER",
+      "REHAB",
+      "PFP2",
+      "PFP3",
+      "PFP4"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Ttzz1yliQ8-FCwd",
+    "criteria": [
+      "DE",
+      "MSQ",
+      "NEUROGER",
+      "REHAB"
+    ]
+  },
+  {
+    "IDPlace": "-O3kbfe81TTvVKEinjxO",
+    "criteria": [
+      "DE",
+      "FR",
+      "MSQ",
+      "SYSINT",
+      "REHAB",
+      "PFP1A",
+      "PFP2",
+      "PFP3",
+      "PFP4",
+      "NEUROGER"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_TtqlkfsEXOpJuZ6",
+    "criteria": [
+      "AMBU",
+      "FR",
+      "MSQ",
+      "NEUROGER",
+      "REHAB",
+      "PFP2",
+      "PFP3"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Ttrz8anl_WDKqed",
+    "criteria": [
+      "AMBU",
+      "FR",
+      "MSQ",
+      "NEUROGER",
+      "REHAB",
+      "PFP1B"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Ttrz8anl_WDKqee",
+    "criteria": [
+      "AMBU",
+      "FR",
+      "MSQ",
+      "NEUROGER",
+      "REHAB",
+      "PFP2",
+      "PFP3"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Ttrz8anl_WDKqef",
+    "criteria": [
+      "AMBU",
+      "FR",
+      "MSQ",
+      "NEUROGER",
+      "REHAB"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Ttrz8anl_WDKqeg",
+    "criteria": [
+      "AMBU",
+      "MSQ",
+      "NEUROGER",
+      "REHAB",
+      "PFP3"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Tts5U9CHo9_p95u",
+    "criteria": [
+      "AMBU",
+      "FR",
+      "MSQ",
+      "NEUROGER",
+      "REHAB",
+      "PFP2",
+      "PFP4"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Tts5U9CHo9_p95v",
+    "criteria": [
+      "AIGU",
+      "DE",
+      "FR",
+      "MSQ",
+      "SYSINT"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Tts5U9CHo9_p95x",
+    "criteria": [
+      "FR",
+      "MSQ",
+      "REHAB",
+      "PFP3",
+      "PFP4"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Tts5U9CHo9_p95y",
+    "criteria": [
+      "AMBU",
+      "DE",
+      "MSQ",
+      "NEUROGER",
+      "REHAB",
+      "PFP4"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_TttD0thS5tY-yyR",
+    "criteria": [
+      "FR",
+      "MSQ",
+      "REHAB",
+      "PFP1A",
+      "PFP1B",
+      "PFP2",
+      "PFP3",
+      "PFP4",
+      "NEUROGER"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Ttu3CYo8WbkqIJn",
+    "criteria": [
+      "AIGU",
+      "AMBU",
+      "FR",
+      "MSQ",
+      "PFP2",
+      "PFP3",
+      "PFP4"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Ttu3CYo8WbkqIJo",
+    "criteria": [
+      "AMBU",
+      "DE",
+      "MSQ",
+      "NEUROGER",
+      "REHAB",
+      "PFP2",
+      "PFP3",
+      "PFP4"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Ttu3CYo8WbkqIJp",
+    "criteria": [
+      "FR",
+      "MSQ",
+      "REHAB",
+      "PFP1B",
+      "PFP2",
+      "PFP3",
+      "PFP4"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Ttu3CYo8WbkqIJq",
+    "criteria": [
+      "AIGU",
+      "FR",
+      "SYSINT",
+      "PFP2",
+      "MSQ",
+      "REHAB"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_TtvxPdffqwTHccH",
+    "criteria": [
+      "DE",
+      "FR",
+      "NEUROGER",
+      "REHAB",
+      "PFP2",
+      "MSQ"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_TtvxPdffqwTHccI",
+    "criteria": [
+      "AIGU",
+      "FR",
+      "NEUROGER",
+      "PFP2"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_TtvxPdffqwTHccJ",
+    "criteria": [
+      "FR",
+      "NEUROGER",
+      "REHAB"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_TtvxPdffqwTHccK",
+    "criteria": [
+      "AIGU",
+      "FR",
+      "MSQ",
+      "SYSINT",
+      "REHAB"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_TtvxPdffqwTHccL",
+    "criteria": [
+      "AIGU",
+      "FR",
+      "MSQ",
+      "NEUROGER",
+      "SYSINT"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_TtvxPdffqwTHccM",
+    "criteria": [
+      "AIGU",
+      "AMBU",
+      "FR",
+      "MSQ",
+      "NEUROGER",
+      "SYSINT",
+      "PFP2"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_TtwPcuW60cfmbyV",
+    "criteria": [
+      "AIGU",
+      "FR",
+      "MSQ",
+      "SYSINT"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_TtwPcuW60cfmbyW",
+    "criteria": [
+      "FR",
+      "MSQ",
+      "NEUROGER",
+      "REHAB",
+      "PFP2"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_TtwPcuW60cfmbyX",
+    "criteria": [
+      "AMBU",
+      "FR",
+      "MSQ",
+      "NEUROGER",
+      "REHAB"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_TtwPcuW60cfmbyY",
+    "criteria": [
+      "AMBU",
+      "FR",
+      "MSQ",
+      "NEUROGER",
+      "REHAB"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_TtwPcuW60cfmbyZ",
+    "criteria": [
+      "AIGU",
+      "FR",
+      "MSQ",
+      "REHAB",
+      "SYSINT",
+      "PFP1A",
+      "PFP1B",
+      "PFP2",
+      "PFP3",
+      "PFP4"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Tu-HYARvsZv31DS",
+    "criteria": [
+      "AIGU",
+      "FR",
+      "SYSINT",
+      "REHAB"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Tu0ifoZo_RPDyHx",
+    "criteria": [
+      "AIGU",
+      "FR",
+      "NEUROGER",
+      "REHAB",
+      "PFP1A",
+      "PFP1B",
+      "PFP2",
+      "PFP3",
+      "PFP4"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_TtwPcuW60cfmby_",
+    "criteria": [
+      "AIGU",
+      "FR",
+      "SYSINT",
+      "REHAB",
+      "PFP1A",
+      "PFP1B",
+      "PFP2",
+      "PFP3",
+      "PFP4",
+      "MSQ",
+      "NEUROGER"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_TtwPcuW60cfmbya",
+    "criteria": [
+      "FR",
+      "NEUROGER",
+      "REHAB",
+      "PFP1A",
+      "PFP1B",
+      "PFP2",
+      "PFP3",
+      "PFP4",
+      "MSQ"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_TtwPcuW60cfmbyb",
+    "criteria": [
+      "AIGU",
+      "FR",
+      "NEUROGER",
+      "PFP1A",
+      "PFP1B",
+      "PFP2",
+      "PFP3",
+      "PFP4",
+      "SYSINT",
+      "MSQ"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_TtwPcuW60cfmbyc",
+    "criteria": [
+      "AIGU",
+      "DE",
+      "MSQ",
+      "NEUROGER",
+      "REHAB",
+      "PFP1A",
+      "PFP1B",
+      "PFP2",
+      "PFP3",
+      "PFP4"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_TtwPcuW60cfmbyd",
+    "criteria": [
+      "FR",
+      "NEUROGER",
+      "REHAB",
+      "PFP1A",
+      "PFP1B",
+      "PFP2",
+      "PFP3",
+      "PFP4"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Ttxx1ljaMN6U_6j",
+    "criteria": [
+      "FR",
+      "NEUROGER",
+      "REHAB",
+      "PFP3"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Ttxx1ljaMN6U_6k",
+    "criteria": [
+      "AMBU",
+      "FR",
+      "MSQ",
+      "NEUROGER",
+      "REHAB",
+      "PFP4"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Ttxx1ljaMN6U_6l",
+    "criteria": [
+      "AIGU",
+      "DE",
+      "MSQ",
+      "NEUROGER",
+      "REHAB",
+      "PFP1B"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Ttxx1ljaMN6U_6m",
+    "criteria": [
+      "DE",
+      "FR",
+      "MSQ",
+      "REHAB",
+      "PFP1A",
+      "PFP1B",
+      "PFP2",
+      "PFP3",
+      "PFP4"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Ttxx1ljaMN6U_6n",
+    "criteria": [
+      "DE",
+      "FR",
+      "MSQ",
+      "SYSINT",
+      "REHAB",
+      "PFP1A",
+      "PFP1B",
+      "PFP2",
+      "PFP3",
+      "PFP4"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Ttxx1ljaMN6U_6p",
+    "criteria": [
+      "AIGU",
+      "AMBU",
+      "FR",
+      "MSQ",
+      "NEUROGER",
+      "PFP2",
+      "PFP3",
+      "PFP4"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Ttxx1ljaMN6U_6o",
+    "criteria": [
+      "AIGU",
+      "AMBU",
+      "FR",
+      "MSQ",
+      "NEUROGER",
+      "PFP2",
+      "PFP3",
+      "PFP4"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Ttxx1ljaMN6U_6q",
+    "criteria": [
+      "AMBU",
+      "DE",
+      "MSQ",
+      "NEUROGER",
+      "REHAB",
+      "PFP2",
+      "PFP3",
+      "PFP4"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Ttyk116hb9GIKGv",
+    "criteria": [
+      "AMBU",
+      "FR",
+      "MSQ",
+      "NEUROGER",
+      "REHAB",
+      "PFP3",
+      "PFP4"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Ttyk116hb9GIKGw",
+    "criteria": [
+      "AMBU",
+      "FR",
+      "MSQ",
+      "NEUROGER",
+      "REHAB",
+      "PFP2",
+      "PFP3",
+      "PFP4"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Ttyk116hb9GIKGx",
+    "criteria": [
+      "AMBU",
+      "DE",
+      "MSQ",
+      "NEUROGER",
+      "REHAB",
+      "PFP1A",
+      "PFP2",
+      "PFP3",
+      "PFP4"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Ttyk116hb9GIKGy",
+    "criteria": [
+      "AMBU",
+      "DE",
+      "MSQ",
+      "NEUROGER",
+      "REHAB",
+      "PFP2",
+      "PFP4"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Ttyk116hb9GIKGz",
+    "criteria": [
+      "AMBU",
+      "FR",
+      "MSQ",
+      "NEUROGER",
+      "REHAB"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Ttyk116hb9GIKH-",
+    "criteria": [
+      "AMBU",
+      "FR",
+      "MSQ",
+      "NEUROGER",
+      "REHAB",
+      "PFP2",
+      "PFP3",
+      "PFP4"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Ttyk116hb9GIKH0",
+    "criteria": [
+      "AMBU",
+      "FR",
+      "MSQ",
+      "NEUROGER",
+      "REHAB"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Ttyk116hb9GIKH2",
+    "criteria": [
+      "AMBU",
+      "FR",
+      "MSQ",
+      "NEUROGER",
+      "REHAB",
+      "PFP4"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Ttyk116hb9GIKH4",
+    "criteria": [
+      "AMBU",
+      "FR",
+      "MSQ",
+      "NEUROGER",
+      "REHAB",
+      "PFP2",
+      "PFP3",
+      "PFP4"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Ttyk116hb9GIKH5",
+    "criteria": [
+      "AMBU",
+      "DE",
+      "MSQ",
+      "NEUROGER",
+      "REHAB",
+      "PFP2",
+      "PFP3",
+      "PFP4"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Ttyk116hb9GIKH6",
+    "criteria": [
+      "AMBU",
+      "DE",
+      "MSQ",
+      "NEUROGER",
+      "REHAB",
+      "PFP1A",
+      "PFP1B",
+      "PFP2"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Ttyk116hb9GIKH7",
+    "criteria": [
+      "AMBU",
+      "DE",
+      "MSQ",
+      "NEUROGER",
+      "REHAB",
+      "PFP2",
+      "PFP3",
+      "PFP4"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Ttzz1yliQ8-FCwT",
+    "criteria": [
+      "AMBU",
+      "DE",
+      "MSQ",
+      "NEUROGER",
+      "REHAB"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Ttzz1yliQ8-FCwU",
+    "criteria": [
+      "AMBU",
+      "DE",
+      "FR",
+      "MSQ",
+      "NEUROGER",
+      "REHAB"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Ttzz1yliQ8-FCwV",
+    "criteria": [
+      "DE",
+      "NEUROGER",
+      "REHAB",
+      "PFP4"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Ttzz1yliQ8-FCwW",
+    "criteria": [
+      "DE",
+      "NEUROGER",
+      "REHAB",
+      "PFP4"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Ttzz1yliQ8-FCwY",
+    "criteria": [
+      "AIGU",
+      "FR",
+      "SYSINT",
+      "MSQ"
+    ]
+  },
+  {
+    "IDPlace": "-O7mmEOrnhY_WC29m23j",
+    "criteria": [
+      "DE",
+      "NEUROGER",
+      "REHAB",
+      "PFP4"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Ttzz1yliQ8-FCw_",
+    "criteria": [
+      "DE",
+      "NEUROGER",
+      "REHAB"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Ttzz1yliQ8-FCwa",
+    "criteria": [
+      "AIGU",
+      "FR",
+      "SYSINT",
+      "PFP2",
+      "AMBU",
+      "MSQ",
+      "PFP4",
+      "PFP3"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Ttzz1yliQ8-FCwb",
+    "criteria": [
+      "FR",
+      "NEUROGER",
+      "REHAB"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Ttzz1yliQ8-FCwc",
+    "criteria": [
+      "FR",
+      "NEUROGER",
+      "REHAB",
+      "PFP2"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Tu-HYARvsZv31DN",
+    "criteria": [
+      "AIGU",
+      "FR",
+      "SYSINT",
+      "MSQ"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Tu-HYARvsZv31DP",
+    "criteria": [
+      "AMBU",
+      "FR",
+      "MSQ",
+      "NEUROGER",
+      "REHAB"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Tu-HYARvsZv31DQ",
+    "criteria": [
+      "AMBU",
+      "FR",
+      "MSQ",
+      "NEUROGER",
+      "REHAB",
+      "PFP2",
+      "PFP3",
+      "PFP4"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Tu-HYARvsZv31DR",
+    "criteria": [
+      "AMBU",
+      "DE",
+      "MSQ",
+      "NEUROGER",
+      "REHAB"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Tu-HYARvsZv31DU",
+    "criteria": [
+      "AMBU",
+      "DE",
+      "MSQ",
+      "REHAB",
+      "PFP2"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Tu0ifoZo_RPDyHw",
+    "criteria": [
+      "FR",
+      "NEUROGER",
+      "REHAB",
+      "PFP1A",
+      "PFP4"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Tu0ifoZo_RPDyHy",
+    "criteria": [
+      "AMBU",
+      "FR",
+      "MSQ",
+      "NEUROGER",
+      "REHAB",
+      "PFP2",
+      "PFP3",
+      "PFP4"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Tu0ifoZo_RPDyHz",
+    "criteria": [
+      "AMBU",
+      "FR",
+      "NEUROGER",
+      "REHAB",
+      "PFP1B"
+    ]
+  },
+  {
+    "IDPlace": "-Neh_Tu0ifoZo_RPDyI-",
+    "criteria": [
+      "AMBU",
+      "FR",
+      "MSQ",
+      "NEUROGER",
+      "SYSINT",
+      "REHAB",
+      "PFP2",
+      "PFP3",
+      "PFP4"
+    ]
+  },
+  {
+    "IDPlace": "-O3kdUkVgFHB-W67PGLP",
+    "criteria": [
+      "AMBU",
+      "DE",
+      "FR",
+      "MSQ",
+      "NEUROGER",
+      "REHAB",
+      "PFP1A",
+      "PFP3",
+      "PFP4"
+    ]
+  },
+  {
+    "IDPlace": "-O3kepWKa225tBUSxTCl",
+    "criteria": [
+      "AMBU",
+      "FR",
+      "MSQ",
+      "NEUROGER",
+      "REHAB",
+      "PFP2",
+      "PFP3",
+      "PFP4"
+    ]
+  },
+  {
+    "IDPlace": "-O3knneiST1PVo8C-Lsw",
+    "criteria": [
+      "AMBU",
+      "FR",
+      "MSQ",
+      "NEUROGER",
+      "REHAB",
+      "PFP2",
+      "PFP4"
+    ]
+  },
+  {
+    "IDPlace": "-O3kooIChpHG3drVGiFR",
+    "criteria": [
+      "AMBU",
+      "DE",
+      "MSQ",
+      "REHAB"
+    ]
+  },
+  {
+    "IDPlace": "-O3krL2VJzl4ioQMbG1j",
+    "criteria": [
+      "AMBU",
+      "FR",
+      "MSQ",
+      "NEUROGER",
+      "REHAB",
+      "PFP2",
+      "PFP3"
+    ]
+  },
+  {
+    "IDPlace": "-O3ksAua4hQ2dEaDzCJv",
+    "criteria": [
+      "AMBU",
+      "DE",
+      "MSQ",
+      "NEUROGER",
+      "REHAB",
+      "PFP2"
+    ]
+  }
+]

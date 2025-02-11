@@ -17,7 +17,6 @@
           Liste des différentes places de formation pratique de la filière physiothérapie de la HES-SO Valais-Wallis
         </p>
 
-
         <!-- Container de la Carte -->
         <div class="map-container">
           <div id="newMap" class="map"></div>
@@ -94,52 +93,43 @@
       </div>
     </div>
 
-    <!-- Sidebar Droite -->
+    <!-- Sidebar Droite : intégration du composant de filtre composite -->
     <div class="sidebar-right">
-      <RightSidebar />
+      <FilterSidebare
+        :cantons="availableCantons"
+        @filters-changed="handleFiltersChange"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { db } from '../../../firebase'; // Vérifiez que le chemin est correct
+import { db } from '../../../firebase';
 import { ref as firebaseRef, onValue } from 'firebase/database';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-// Importez le logo de l'école (ajustez le chemin si nécessaire)
-import schoolLogo from '../../..//public/assets/images/markerheds.png';
+import LeftSidebar from '@/components/Bibliotheque/Social/LeftSidebar.vue';
+import Dialog from 'primevue/dialog';
+import Button from 'primevue/button';
+import FilterSidebare from './FilterSidebar.vue';
 
-/*
-  Définition des dimensions naturelles de l'image du logo.
-  Vous devez ajuster originalWidth et originalHeight selon les dimensions réelles de votre image.
-*/
-const originalWidth = 25;  // largeur naturelle (en pixels)
-const originalHeight = 30; // hauteur naturelle (en pixels)
+// Import du fichier filter.json (contenant les IDPlace et leurs critères)
+import filterData from './filter.json';
 
-/*
-  markerScale permet de réduire ou agrandir l'image.
-  - 1 : taille réelle
-  - 0.5 : la moitié de la taille réelle
-  - 2 : le double de la taille réelle
-*/
+// Import et configuration du logo pour les marqueurs
+import schoolLogo from '../../../public/assets/images/markerheds.png';
+const originalWidth = 25;
+const originalHeight = 30;
 const markerScale = 1;
-
-// Création du marqueur personnalisé avec le logo de l'école
 const schoolLogoIcon = L.icon({
   iconUrl: schoolLogo,
   iconSize: [originalWidth * markerScale, originalHeight * markerScale],
   iconAnchor: [(originalWidth * markerScale) / 2, originalHeight * markerScale],
   popupAnchor: [0, -(originalHeight * markerScale)]
 });
-
-// Import des composants utilisés
-import LeftSidebar from '@/components/Bibliotheque/Social/LeftSidebar.vue';
-import RightSidebar from '@/components/Bibliotheque/Social/RightSidebar.vue';
-import Dialog from 'primevue/dialog';
-import Button from 'primevue/button';
 
 // Variables réactives
 const map = ref(null);
@@ -149,7 +139,60 @@ const selectedInstitution = ref(null);
 const dialogVisible = ref(false);
 const router = useRouter();
 
-// Initialisation de la carte
+// Objet réactif regroupant l'ensemble des filtres sélectionnés
+const selectedFilters = ref({
+  cantons: [],
+  criter: [],
+  languages: [],
+  pfp: [] // Nouveau filtre pour les critères PFP
+});
+
+// Liste des cantons disponibles (extrait dynamiquement depuis les institutions)
+const availableCantons = computed(() => {
+  const cantonsSet = new Set();
+  allInstitutions.value.forEach(institution => {
+    if (institution.Canton) {
+      cantonsSet.add(institution.Canton);
+    }
+  });
+  return Array.from(cantonsSet);
+});
+
+// Calcul des institutions filtrées en fonction des filtres sélectionnés
+const filteredInstitutions = computed(() => {
+  return allInstitutions.value.filter(inst => {
+    // Filtre par canton
+    if (
+      selectedFilters.value.cantons.length > 0 &&
+      !selectedFilters.value.cantons.includes(inst.Canton)
+    ) {
+      return false;
+    }
+    // Recherche l'entrée correspondante dans filterData (pour critères généraux, langues et PFP)
+    const entry = filterData.find(item => item.IDPlace === inst.id);
+    // Filtre par critères généraux
+    if (selectedFilters.value.criter.length > 0) {
+      if (!entry || !entry.criteria.some(c => selectedFilters.value.criter.includes(c))) {
+        return false;
+      }
+    }
+    // Filtre par langue
+    if (selectedFilters.value.languages.length > 0) {
+      if (!entry || !entry.criteria.some(c => selectedFilters.value.languages.includes(c))) {
+        return false;
+      }
+    }
+    // Filtre par PFP
+    if (selectedFilters.value.pfp.length > 0) {
+      if (!entry || !entry.criteria.some(c => selectedFilters.value.pfp.includes(c))) {
+        return false;
+      }
+    }
+    return true;
+  });
+});
+
+// Initialisation de la carte Leaflet
 const initMap = () => {
   map.value = L.map('newMap').setView([46.22292, 7.3668], 10);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -158,7 +201,7 @@ const initMap = () => {
   }).addTo(map.value);
 };
 
-// Récupération des institutions depuis Firebase Realtime Database
+// Récupération des institutions depuis Firebase
 const fetchInstitutionsFromFirebase = () => {
   const institutionsRef = firebaseRef(db, 'Institutions/');
   onValue(institutionsRef, (snapshot) => {
@@ -167,17 +210,17 @@ const fetchInstitutionsFromFirebase = () => {
       ? Object.keys(data).map((key) => ({ id: key, ...data[key] }))
       : [];
     console.log('Institutions récupérées:', allInstitutions.value);
-    addLocationsToMap(allInstitutions.value);
+    addLocationsToMap(filteredInstitutions.value);
   });
 };
 
-// Nettoyage des marqueurs existants
+// Nettoyage des marqueurs existants sur la carte
 const clearMarkers = () => {
   markers.value.forEach((marker) => marker.remove());
   markers.value = [];
 };
 
-// Ajout des marqueurs sur la carte avec le logo de l'école comme icône
+// Ajout des marqueurs sur la carte en fonction des institutions filtrées
 const addLocationsToMap = (institutions) => {
   clearMarkers();
   institutions.forEach((institution) => {
@@ -201,10 +244,23 @@ const addLocationsToMap = (institutions) => {
   }
 };
 
+// Gestionnaire de l'événement émis par FilterSidebare
+const handleFiltersChange = (filters) => {
+  // On met à jour l'objet selectedFilters avec les filtres reçus
+  selectedFilters.value = filters;
+};
+
+// Mise à jour automatique des marqueurs lorsque les institutions filtrées changent
+watch(filteredInstitutions, (newInstitutions) => {
+  addLocationsToMap(newInstitutions);
+});
+
+// Navigation vers la vue détaillée de l'institution
 const navigateToDetails = (id) => {
   router.push({ name: 'InstitutionView', params: { id } });
 };
 
+// Ouverture du site web de l'institution dans un nouvel onglet
 const openWebsite = (url) => {
   if (url) {
     const completeUrl =
@@ -254,7 +310,7 @@ onUnmounted(() => {
   overflow-y: auto;
 }
 
-/* Responsive : Ajustements pour tablettes et mobiles */
+/* Responsive : ajustements pour tablettes et mobiles */
 @media (max-width: 1024px) {
   .map-layout {
     grid-template-columns: 1fr 2fr;

@@ -57,6 +57,8 @@ import Index from '@/views/apps/tasklist/Index.vue'
 import IndexChat from '@/views/apps/chat/IndexChat.vue'
 import CommunityInfo from '@/components/Social/CommunityInfo.vue'; // Import du composant Infos
 import ListComponent from '@/components/Bibliotheque/SoundBox/ListComponent.vue'
+import ProfileAdmin from '@/components/Home/ProfileAdmin.vue'
+import SettingView from '@/components/Home/SettingView.vue'
 
 // Define your routes
 const routes = [
@@ -69,6 +71,10 @@ const routes = [
   { path: '/map', component: Map, name: 'Map', meta: { requiresAuth: true } },
   { path: '/institution', component: Institution, name: 'Institution', meta: { requiresAuth: true } },
   { path: '/place', component: Place, name: 'Place', meta: { requiresAuth: true } },
+  { path: '/place', component: Place, name: 'Place', meta: { requiresAuth: true } },
+  { path: '/profilAdmin/:id', component: ProfileAdmin, name: 'ProfileAdmin', meta: { requiresAuth: true, requiredRole: ['admin']  } ,},
+  { path: '/settings', component: SettingView, name: 'SettingView', meta: { requiresAuth: true}},
+
   {
     path: '/profile/:id',
     name: 'Profile',

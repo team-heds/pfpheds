@@ -299,6 +299,8 @@
           @click="logout"
         />
       </div>
+      <br>
+      @Copyright HEdS
     </Dialog>
   </div>
 </template>

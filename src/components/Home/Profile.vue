@@ -1,5 +1,11 @@
 <template>
+
   <Navbar />
+      <!-- Sidebar Gauche -->
+      <div class="sidebar-left">
+      <LeftSidebar />
+    </div>
+
   <div class="min-h-screen flex relative lg:static">
     <div class="min-h-screen flex flex-column relative flex-auto">
       <div class="p-5 flex flex-column flex-auto">
@@ -10,6 +16,11 @@
       </div>
     </div>
   </div>
+
+      <!-- Sidebar Droite -->
+      <div class="sidebar-right">
+      <RightSidebar />
+    </div>
 </template>
 
 <script>
@@ -25,6 +36,8 @@ import DocumentsUserProfile from '@/components/UserProfile/DocumentsUserProfile.
 import ChatProfil from '@/components/UserProfile/ChatProfil.vue';
 import AppDarkAndLightMode from '@/layout/AppDarkAndLightMode.vue';
 import { storage } from '../../../firebase.js';
+import LeftSidebar from '@/components/Bibliotheque/Social/LeftSidebar.vue';
+import RightSidebar from '@/components/Bibliotheque/Social/RightSidebar.vue';
 
 export default {
   name: 'Profile',

@@ -374,6 +374,19 @@
         fetchPosts();
       });
 
+      watch(
+      () => props.communityId,
+      (newId, oldId) => {
+        if (newId !== oldId) {
+          // Réinitialiser la liste et la pagination
+          posts.value = [];
+          oldestTimestamp.value = null;
+          // Recharger les posts pour la nouvelle communauté
+          fetchPosts();
+        }
+      }
+    );
+
       return {
         posts,
         newPost,

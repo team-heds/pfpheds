@@ -11,9 +11,11 @@
     <div class="content">
       <Toast />
       <router-view />
+      <VersionningComponent />
 
       <!-- Intégration du widget ConvAI -->
       <ConvaiWidget />
+
     </div>
 
     <!-- Loader -->
@@ -25,6 +27,7 @@
 import Toast from 'primevue/toast';
 import ConvaiWidget from './components/ConvaiWidget.vue'; // Import du composant ConvaiWidget
 import Loader from './components/Utils/Loader.vue'; // Import du composant Loader
+import VersionningComponent from './components/utils/VersionningComponent.vue'; // Import du nouveau composant
 
 export default {
   name: "App",
@@ -32,6 +35,7 @@ export default {
     Toast,
     ConvaiWidget, // Déclaration du composant
     Loader, // Déclaration du composant Loader
+    VersionningComponent,
   },
   data() {
     return {
