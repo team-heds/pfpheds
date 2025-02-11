@@ -2,7 +2,7 @@
     <div class="settings-page">
       <Navbar />
       <div class="settings-container">
-        <h1>Paramètres de la plateforme</h1>
+        <h1>Paramètres de la plateforme (demo fonctionelle)</h1>
         <div class="settings-layout">
           <!-- Zone principale : affichage des options selon la catégorie active -->
           <div class="main-content">
