@@ -59,6 +59,7 @@ import CommunityInfo from '@/components/Social/CommunityInfo.vue'; // Import du 
 import ListComponent from '@/components/Bibliotheque/SoundBox/ListComponent.vue'
 import ProfileAdmin from '@/components/Home/ProfileAdmin.vue'
 import SettingView from '@/components/Home/SettingView.vue'
+import SearchResults from '@/components/Utils/SearchResults.vue'
 
 // Define your routes
 const routes = [
@@ -117,6 +118,11 @@ const routes = [
   { path: '/documents_pfp', component: DocumentsPFP, name: 'DocumentsPFP', meta: { requiresAuth: true } },
   { path: '/tasklist', component: Index, name: 'Index', meta: { requiresAuth: true, requiredRole: ['editor', 'admin'] } },
   { path: '/chat', component: IndexChat, name: 'IndexChat', meta: { requiresAuth: true } },
+  {
+    path: '/search',
+    name: 'SearchResults',
+    component: SearchResults
+  },
   {
     path: '/list', // Chemin pour ListComponent
     name: 'ListComponent',

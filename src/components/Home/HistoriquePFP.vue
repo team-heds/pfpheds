@@ -3,107 +3,187 @@
     <Navbar />
     <!-- Critères Validés -->
     <h5 class="mb-4">Critères Validés</h5>
-    <div class="grid m-2">
+    <div
+      class="grid m-2"
+      v-if="aggregatedCriteria && Object.keys(aggregatedCriteria).length"
+    >
       <div
-        v-for="(value, key) in userProfile"
+        v-for="(value, key) in aggregatedCriteria"
         :key="key"
         class="col-2 sm:col-4 lg:col-2 flex flex-column align-items-center justify-content-center card w-12 criteria-card"
       >
         <span class="font-bold text-center">{{ key }}</span>
         <i
           :class="{
-            'pi pi-check-circle text-green-500': parseInt(value) >= 1,
-            'pi pi-times-circle text-red-500': !value || parseInt(value) === 0
+            'pi pi-check-circle text-green-500': value,
+            'pi pi-times-circle text-red-500': !value
           }"
           class="text-3xl mt-2"
         ></i>
       </div>
     </div>
+    <div v-else>
+      <p class="text-secondary">Aucun critère validé.</p>
+    </div>
 
-    <!-- Anciennes Places (PFP) -->
-    <h5 class="mb-4">Anciennes Places (PFP)</h5>
-    <div class="card w-12">
-      <div v-if="institution && institution.NomInstitution" class="institution-card">
+    <!-- Anciennes Institutions -->
+    <h5 class="mb-4">Anciennes Institutions</h5>
+    <div class="card w-12" v-if="institutionsList && institutionsList.length">
+      <div
+        v-for="inst in institutionsList"
+        :key="inst.InstitutionId"
+        class="institution-card"
+      >
         <div class="institution-content">
-          <h6 class="font-bold">{{ institution.NomInstitution }}</h6>
+          <!-- Affichage du nom de l'institution (selon la propriété disponible) -->
+          <h6 class="font-bold">{{ inst.Name || inst.NomInstitution }}</h6>
+          <!-- Affichage des domaines et critères validés -->
+          <p v-if="inst.Domaines && inst.Domaines.length">
+            Domaine : {{ inst.Domaines.join(", ") }}
+            <span
+              v-if="inst.CriteriaValides && inst.CriteriaValides.length"
+            >
+              | Critères validés : {{ inst.CriteriaValides.join(", ") }}
+            </span>
+          </p>
         </div>
         <div class="action-button">
           <Button
-            label="Voir Plus"
+            label="Voir les détails de l'institution"
             class="p-button-sm p-button-outlined p-button-primary"
-            @click="navigateToInstitution"
+            @click="navigateToInstitution(inst.InstitutionId)"
           />
         </div>
       </div>
-      <div v-else>
-        <p class="text-secondary">Aucune institution disponible pour cet utilisateur.</p>
-      </div>
+    </div>
+    <div v-else>
+      <p class="text-secondary">
+        Aucune institution disponible pour cet utilisateur.
+      </p>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { getDatabase, ref as dbRef, get } from "firebase/database";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
-import Button from "primevue/button";
-import Navbar from '@/components/Utils/Navbar.vue';
 import { useRouter } from "vue-router";
+import Button from "primevue/button";
+import Navbar from "@/components/Utils/Navbar.vue";
 
+// Références pour les données
 const userProfile = ref(null);
-// Pour cet ancien code, nous utilisons uniquement la propriété PFP_1
-const institution = ref(null);
+const institutionsList = ref([]);
+
+// Liste des critères à agréger
+const criteriaList = [
+  "MSQ",
+  "SYSINT",
+  "NEUROGER",
+  "AIGU",
+  "REHAB",
+  "AMBU",
+  "FR",
+  "DE"
+];
+
+// Propriété calculée qui agrège les critères sur toutes les places de stage
+const aggregatedCriteria = computed(() => {
+  const result = {};
+  criteriaList.forEach((crit) => (result[crit] = false));
+  if (userProfile.value && userProfile.value.PFP_valided) {
+    for (const place in userProfile.value.PFP_valided) {
+      const pfp = userProfile.value.PFP_valided[place];
+      criteriaList.forEach((crit) => {
+        if (pfp[crit] === true) {
+          result[crit] = true;
+        }
+      });
+    }
+  }
+  return result;
+});
 
 const router = useRouter();
 
-// Fonction pour récupérer le profil utilisateur via sa clé (UID)
-const fetchUserProfileByKey = async (key) => {
+// Fonction pour récupérer le profil utilisateur via son ID depuis Firebase
+const fetchUserProfileById = async (userId) => {
   const db = getDatabase();
   try {
-    const studentRef = dbRef(db, `Students/${key}`);
+    const studentRef = dbRef(db, `Students/${userId}`);
     const snapshotStudent = await get(studentRef);
     if (snapshotStudent.exists()) {
       const studentData = snapshotStudent.val();
-      // On construit l'objet userProfile avec quelques critères de base
-      userProfile.value = {
-        MSQ: studentData.MSQ || 0,
-        SYSINT: studentData.SYSINT || 0,
-        NEUROGER: studentData.NEUROGER || 0,
-        AIGU: studentData.AIGU || 0,
-        REHAB: studentData.REHAB || 0,
-        AMBU: studentData.AMBU || 0,
-        FR: studentData.FR || 0,
-        ALL: studentData.ALL || 0,
-      };
+      userProfile.value = { ...studentData };
 
-      // Pour les "Anciennes Places (PFP)", on récupère la donnée PFP_1
-      // Nous supposons ici que PFP_1 contient l'ID réel de l'institution
-      if (studentData.PFP_1) {
-        institution.value = {
-          InstitutionId: studentData.PFP_1,
-          NomInstitution: studentData.PFP_1  // Vous pouvez adapter ici si vous stockez le nom séparément
-        };
-      } else {
-        institution.value = null;
+      if (studentData.PFP_valided) {
+        const pfpEntries = Object.values(studentData.PFP_valided);
+        // Filtrer les places disposant d'un ID d'institution
+        const validPfpEntries = pfpEntries.filter(
+          (place) => place.ID_PFP
+        );
+
+        // Agrégation des domaines et critères validés par institution
+        const domainsByInstitution = {};
+        const criteriaByInstitution = {};
+
+        validPfpEntries.forEach((place) => {
+          const instId = place.ID_PFP;
+          if (place.Domaine) {
+            if (!domainsByInstitution[instId]) {
+              domainsByInstitution[instId] = new Set();
+            }
+            domainsByInstitution[instId].add(place.Domaine);
+          }
+          if (!criteriaByInstitution[instId]) {
+            criteriaByInstitution[instId] = new Set();
+          }
+          criteriaList.forEach((crit) => {
+            if (place[crit] === true) {
+              criteriaByInstitution[instId].add(crit);
+            }
+          });
+        });
+
+        // Récupération des institutions associées aux places validées
+        const dbPromises = validPfpEntries.map((place) => {
+          const instId = place.ID_PFP;
+          return get(dbRef(db, `Institutions/${instId}`))
+            .then((snapshot) => {
+              if (snapshot.exists()) {
+                return { ...snapshot.val(), InstitutionId: instId };
+              } else {
+                return null;
+              }
+            });
+        });
+        const fetchedInstitutions = await Promise.all(dbPromises);
+        institutionsList.value = fetchedInstitutions
+          .filter((inst) => inst !== null)
+          .map((inst) => {
+            const domainSet = domainsByInstitution[inst.InstitutionId];
+            const criteriaSet = criteriaByInstitution[inst.InstitutionId];
+            return {
+              ...inst,
+              Domaines: domainSet ? Array.from(domainSet) : [],
+              CriteriaValides: criteriaSet ? Array.from(criteriaSet) : []
+            };
+          });
       }
     } else {
-      console.error("Aucun profil trouvé pour l'ID :", key);
+      console.error("Aucun profil trouvé pour l'ID :", userId);
     }
   } catch (error) {
-    console.error("Error fetching data:", error);
+    console.error("Erreur lors de la récupération des données :", error);
   }
 };
 
-// Fonction pour naviguer vers la page de l'institution à partir de l'ID récupéré
-const navigateToInstitution = () => {
-  if (institution.value && institution.value.InstitutionId) {
-    console.log("Navigation vers l'institution avec ID :", institution.value.InstitutionId);
-    // Utilise la route existante pour afficher le profil d'une institution
-    // Assurez-vous que dans votre router.js, vous avez une route similaire à :
-    // { path: '/institution/:id', name: 'InstitutionView', component: InstitutionView, props: true, meta: { requiresAuth: true } }
-    router.push({ name: 'InstitutionView', params: { id: institution.value.InstitutionId } });
-  } else {
-    console.error("Aucune institution disponible pour la navigation.");
+// Fonction de navigation vers la page de l'institution
+const navigateToInstitution = (instId) => {
+  if (instId) {
+    console.log("Navigation vers l'institution avec ID :", instId);
+    router.push({ name: "InstitutionView", params: { id: instId } });
   }
 };
 
@@ -111,7 +191,9 @@ onMounted(() => {
   const auth = getAuth();
   onAuthStateChanged(auth, (user) => {
     if (user) {
-      fetchUserProfileByKey(user.uid);
+      fetchUserProfileById(user.uid);
+    } else {
+      console.error("Utilisateur non authentifié");
     }
   });
 });
@@ -126,11 +208,11 @@ onMounted(() => {
 }
 
 .criteria-card {
-  height: 80%; /* Hauteur uniforme pour toutes les cartes */
+  height: 80%;
   text-align: center;
 }
 
-/* Styles Anciennes Places */
+/* Styles Anciennes Institutions */
 .institution-card {
   display: flex;
   justify-content: space-between;
@@ -140,6 +222,7 @@ onMounted(() => {
   border-radius: 8px;
   background-color: var(--surface-card);
   transition: box-shadow 0.2s, transform 0.2s;
+  margin-bottom: 1rem;
 }
 
 .institution-card:hover {
@@ -160,13 +243,11 @@ onMounted(() => {
 
 .action-button {
   flex-shrink: 0;
+  display: flex;
+  gap: 1rem;
 }
 
-/* Colors */
-.text-primary {
-  color: var(--primary-color);
-}
-
+/* Couleurs */
 .text-secondary {
   color: var(--text-secondary-color);
 }
@@ -183,6 +264,26 @@ onMounted(() => {
 @media (max-width: 768px) {
   .text-3xl {
     font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .w-12 {
+    width: 100% !important;
+  }
+
+  .criteria-card {
+    height: auto;
+  }
+
+  .institution-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .action-button {
+    width: 100%;
+    justify-content: flex-start;
   }
 }
 </style>
