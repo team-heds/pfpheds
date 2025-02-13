@@ -26,10 +26,9 @@
         <Button @click="handleBAUserChange(user.uid)" class="w-full">{{ user.prenom }} {{ user.nom }}</Button>
       </div>
     </div>
-    <div class="pagination flex justify-between items-center mt-4">
-      <Button @click="prevPage" :disabled="currentPage <= 1">Précédent</Button>
-      <span>Page {{ currentPage }} / {{ totalPages }}</span>
-      <Button @click="nextPage" :disabled="currentPage >= totalPages">Suivant</Button>
+    <div class="pagination flex justify-between justify-content-center items-center mt-4">
+      <Button class="m-2" @click="prevPage" :disabled="currentPage <= 0">Précédent</Button>
+      <Button class="m-2" @click="nextPage" :disabled="currentPage >= totalPages - 1">Suivant</Button>
     </div>
   </div>
 </template>
@@ -40,14 +39,15 @@ import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import { useRouter } from 'vue-router';
-import { getDatabase, ref as dbRef, get } from 'firebase/database';
+import { db } from '../../../firebase';
+import { ref as firebaseRef, onValue } from 'firebase/database';
 
 const router = useRouter();
 const searchTerm = ref('');
 const selectedUserId = ref(null);
 const selectedRoleBA = ref(null);
 const roleSearchTerm = ref('');
-const currentPage = ref(1);
+const currentPage = ref(0);
 const itemsPerPage = 15;
 const usersList = ref([]);
 
@@ -57,18 +57,19 @@ const rolesBA = ref([
   { label: 'BA24', value: 'BA24' }
 ]);
 
-const fetchUsers = async () => {
-  const db = getDatabase();
-  const usersRef = dbRef(db, 'Users');
-  const snapshot = await get(usersRef);
-  if (snapshot.exists()) {
-    usersList.value = Object.entries(snapshot.val()).map(([uid, user]) => ({
-      uid,
-      prenom: user.Prenom || '',
-      nom: user.Nom || '',
-      Roles: user.Roles || {}
-    }));
-  }
+const fetchUsers = () => {
+  const usersRef = firebaseRef(db, 'Users');
+  onValue(usersRef, (snapshot) => {
+    if (snapshot.exists()) {
+      usersList.value = Object.entries(snapshot.val()).map(([uid, user]) => ({
+        uid,
+        prenom: user.Prenom || 'Inconnu',
+        nom: user.Nom || 'Inconnu',
+        prenomNom: `${user.Prenom || 'Inconnu'} ${user.Nom || 'Inconnu'}`,
+        Roles: user.Roles || {}
+      }));
+    }
+  });
 };
 
 onMounted(fetchUsers);
@@ -85,12 +86,12 @@ const filteredUsersByRole = computed(() => {
 
 const totalPages = computed(() => Math.ceil(filteredUsersByRole.value.length / itemsPerPage));
 const paginatedUsersByRole = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage;
+  const start = currentPage.value * itemsPerPage;
   return filteredUsersByRole.value.slice(start, start + itemsPerPage);
 });
 
-const nextPage = () => { if (currentPage.value < totalPages.value) currentPage.value++; };
-const prevPage = () => { if (currentPage.value > 1) currentPage.value--; };
+const nextPage = () => { if (currentPage.value < totalPages.value - 1) currentPage.value++; };
+const prevPage = () => { if (currentPage.value > 0) currentPage.value--; };
 
 const handleUserChange = () => {
   if (selectedUserId.value) router.push({ name: 'ProfileAdmin', params: { id: selectedUserId.value } });
@@ -101,8 +102,6 @@ const handleBAUserChange = (userId) => {
 </script>
 
 <style scoped>
-
-
 .field {
   margin-bottom: 1rem;
 }

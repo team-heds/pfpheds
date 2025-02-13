@@ -97,7 +97,7 @@
 
     <!-- Sidebar Droite -->
     <div class="sidebar-right">
-      <RightSidebar />
+      <FilterSidebar />
     </div>
   </div>
 </template>
@@ -113,10 +113,12 @@ import Tag from 'primevue/tag';
 import Paginator from 'primevue/paginator';
 import LeftSidebar from '@/components/Bibliotheque/Social/LeftSidebar.vue';
 import RightSidebar from '@/components/Bibliotheque/Social/RightSidebar.vue';
+import FilterSidebar from '@/components/Filters/FilterSidebar.vue'
 
 export default {
   name: 'Institutions',
   components: {
+    FilterSidebar,
     Navbar,
     InputText,
     Button,

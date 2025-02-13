@@ -31,7 +31,7 @@
     <!-- Section Hashtags -->
     <div class="profile-section card">
       <div class="hashtags">
-        <h4>Hashtags</h4>
+        <h4 class="text-primary">Hashtags</h4>
         <ul>
           <li v-for="(hashtag, index) in hashtags" :key="index">
             <Chip :label="hashtag" removable />

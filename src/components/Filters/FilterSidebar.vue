@@ -3,8 +3,8 @@
   <div class="filter-sidebar">
     <!-- Section Filtrer par Canton -->
     <div class="filter-section card">
-      <div class="section-header">
-        <h4 class="clickable">Filtrer par Canton</h4>
+      <div class="">
+        <h4 class="text-primary">Filtrer par Canton</h4>
       </div>
       <!-- Ajout de la classe "two-columns" pour le layout en deux colonnes -->
       <ul class="filter-list two-columns">
@@ -30,8 +30,8 @@
 
     <!-- Section Filtrer par Critères -->
     <div class="filter-section card">
-      <div class="section-header">
-        <h4>Filtrer par Critères</h4>
+      <div class="">
+        <h4 class="text-primary">Filtrer par Critères</h4>
       </div>
       <ul class="filter-list">
         <li
@@ -53,8 +53,8 @@
 
     <!-- Section Filtrer par PFP -->
     <div class="filter-section card">
-      <div class="section-header">
-        <h4>Filtrer par PFP</h4>
+      <div class="">
+        <h4 class="text-primary">Filtrer par PFP</h4>
       </div>
       <ul class="filter-list">
         <li
@@ -76,8 +76,8 @@
 
     <!-- Section Filtrer par Langue -->
     <div class="filter-section card">
-      <div class="section-header">
-        <h4>Filtrer par Langue</h4>
+      <div class="">
+        <h4 class="text-primary">Filtrer par Langue</h4>
       </div>
       <ul class="filter-list">
         <li
