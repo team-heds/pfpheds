@@ -6,7 +6,7 @@
       <div
         v-for="(value, key) in aggregatedCriteria"
         :key="key"
-        class="col-2 sm:col-4 lg:col-2 flex flex-column align-items-center justify-content-center card w-12 criteria-card"
+        class="col-2 sm:col-4 lg:col-2 flex flex-column align-items-center justify-content-center card w-12 "
       >
         <span class="font-bold text-center">{{ key }}</span>
         <i
@@ -69,7 +69,7 @@ const router = useRouter();
 const defaultAvatar = '../../../public/assets/images/avatar/01.jpg';
 
 // Liste des critères à agréger (utilisés dans aggregatedCriteria et pour l'agrégation par institution)
-const criteriaList = ["MSQ", "SYSINT", "NEUROGER", "REHAB", "AMBU", "AIGU", "FR", "DE"];
+const criteriaList = ["MSQ", "SYSINT", "NEUROGER","AIGU", "REHAB", "AMBU", "FR", "DE"];
 
 // Propriété calculée qui agrège les critères sur toutes les places de stage
 const aggregatedCriteria = computed(() => {
@@ -195,10 +195,6 @@ onMounted(() => {
   gap: 1rem;
 }
 
-.criteria-card {
-  height: 80%;
-  text-align: center;
-}
 
 /* Styles Anciennes Institutions */
 .institution-card {
@@ -233,11 +229,6 @@ onMounted(() => {
   flex-shrink: 0;
   display: flex;
   gap: 1rem;
-}
-
-/* Couleurs */
-.text-primary {
-  color: var(--primary-color);
 }
 
 .text-secondary {

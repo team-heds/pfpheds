@@ -24,6 +24,7 @@
 
             <h5>Ville :</h5>
             <p>{{ user.ville }}</p>
+
           </div>
         </div>
       </div>

@@ -13,7 +13,7 @@
           :key="canton"
           class="filter-item"
         >
-          <input
+          <Checkbox
             type="checkbox"
             :id="`canton-${canton}`"
             :value="canton"
@@ -39,7 +39,7 @@
           :key="criter"
           class="filter-item"
         >
-          <input
+          <Checkbox
             type="checkbox"
             :id="`criter-${criter}`"
             :value="criter"
@@ -62,7 +62,7 @@
           :key="pfp"
           class="filter-item"
         >
-          <input
+          <Checkbox
             type="checkbox"
             :id="`pfp-${pfp}`"
             :value="pfp"
@@ -85,7 +85,7 @@
           :key="lang"
           class="filter-item"
         >
-          <input
+          <Checkbox
             type="checkbox"
             :id="`lang-${lang}`"
             :value="lang"
