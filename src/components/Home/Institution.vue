@@ -132,7 +132,7 @@ export default {
     return {
       allInstitutions: [],
       currentPage: 1,
-      itemsPerPage: 12,
+      itemsPerPage: 9,
       totalInstitutions: 0,
       descriptionClass: 'description',
       searchTerm: '',
