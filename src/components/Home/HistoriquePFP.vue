@@ -1,6 +1,7 @@
 <template>
   <div class="m-4">
     <Navbar />
+    <LeftSidebar />
     <!-- Critères Validés -->
     <h5 class="mb-4">Critères Validés</h5>
     <div
@@ -62,6 +63,7 @@
       </p>
     </div>
   </div>
+  <RightSidebar />
 </template>
 
 <script setup>
@@ -71,6 +73,8 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "vue-router";
 import Button from "primevue/button";
 import Navbar from "@/components/Utils/Navbar.vue";
+import LeftSidebar from '@/components/Bibliotheque/Social/LeftSidebar.vue'
+import RightSidebar from '@/components/Bibliotheque/Social/RightSidebar.vue'
 
 // Références pour les données
 const userProfile = ref(null);
