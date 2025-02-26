@@ -90,9 +90,24 @@ const model = ref([
                   to: '/pfp_details'
                 },
                 {
+                  label: 'Gantt PFP',
+                  icon: 'pi pi-fw pi-image',
+                  to: '/gantt'
+                },
+                {
                   label: 'Management Places',
                   icon: 'pi pi-cog',
                   to: '/management_places'
+                },
+                {
+                  label: 'Management Places Safe',
+                  icon: 'pi pi-cog',
+                  to: '/management_places_safe'
+                },
+                {
+                  label: 'Stage Repartition',
+                  icon: 'pi pi-cog',
+                  to: '/stage_repartition'
                 },
                 {
                   label: 'Tableau des Places',

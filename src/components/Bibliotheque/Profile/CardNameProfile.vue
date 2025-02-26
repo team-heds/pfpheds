@@ -2,7 +2,6 @@
   <div class="mb-4">
     <div class="p-pt-4 p-pb-4">
       <div class="surface-card p-4 shadow-2 border-round ">
-
         <!-- Section Avatar (Image de profil) -->
         <div class="field m-2 col-12 md:col-6 w-full">
           <div class="flex align-items-center">
@@ -19,12 +18,23 @@
             <h5>Email:</h5>
             <p>{{ user.email }}</p>
 
-            <h5>Id :</h5>
-            <p>{{ user.uid }}</p>
+            <h5>Nom :</h5>
+            <p>{{ user.nom }}</p>
+
+            <h5>Prénom :</h5>
+            <p>{{ user.prenom }}</p>
+
+            <h5>Classe:</h5>
+            <p>{{ user.classe }}</p>
 
             <h5>Ville :</h5>
             <p>{{ user.ville }}</p>
 
+            <h5>Répondant HES:</h5>
+            <p>{{ user.repondantHES }}</p>
+
+            <h5>Id :</h5>
+            <p>{{ user.uid }}</p>
           </div>
         </div>
       </div>
@@ -48,12 +58,14 @@ const user = ref({
   bio: '',
   photoURL: '',
   email: '',
-  ville: ''
+  ville: '',
+  classe: '',
+  repondantHES: ''
 });
 
 const selectedAvatarFile = ref(null);
 
-// Fonction pour récupérer le profil de l'utilisateur par son ID
+// Récupérer le profil utilisateur depuis la table Users
 const fetchUserProfileById = async (userId) => {
   const db = getDatabase();
   const userRef = dbRef(db, `Users/${userId}`);
@@ -61,6 +73,7 @@ const fetchUserProfileById = async (userId) => {
   if (snapshot.exists()) {
     const userData = snapshot.val();
     user.value = {
+      ...user.value,
       uid: userId,
       prenom: userData.Prenom || '',
       nom: userData.Nom || '',
@@ -74,19 +87,30 @@ const fetchUserProfileById = async (userId) => {
   }
 };
 
+// Récupérer les données étudiant depuis la table Students
+const fetchStudentProfileById = async (userId) => {
+  const db = getDatabase();
+  const studentRef = dbRef(db, `Students/${userId}`);
+  const snapshot = await get(studentRef);
+  if (snapshot.exists()) {
+    const studentData = snapshot.val();
+    // Utilisation de "Classe" ou "Class" selon la structure
+    user.value.classe = studentData.Classe || studentData.Class || '';
+    user.value.repondantHES = studentData.RepondantHES || '';
+  } else {
+    console.error("Aucun profil étudiant trouvé pour l'ID :", userId);
+  }
+};
+
 const saveProfile = async () => {
   const db = getDatabase();
   const userRef = dbRef(db, `Users/${user.value.uid}`);
 
   if (selectedAvatarFile.value) {
-    // Optionnel : Logic pour uploader l'avatar sur Firebase Storage
-    // Ici, vous aurez besoin des credentials pour l'utilisateur ou faire autrement.
-    // Pour simplifier, on suppose que vous avez déjà les droits.
     try {
       const avatarRef = storageRef(storage, `Users/${user.value.uid}/profile-picture.jpg`);
       await uploadBytes(avatarRef, selectedAvatarFile.value);
       const photoURL = await getDownloadURL(avatarRef);
-
       user.value.photoURL = photoURL;
     } catch (error) {
       console.error('Erreur lors de l\'upload de l\'avatar :', error);
@@ -118,7 +142,8 @@ const route = useRoute();
 onMounted(async () => {
   const userId = route.params.id; // Récupération de l'ID dans l'URL
   if (userId) {
-    await fetchUserProfileById(userId); // Charger le profil correspondant
+    await fetchUserProfileById(userId);     // Charger le profil depuis Users
+    await fetchStudentProfileById(userId);    // Charger les données depuis Students
   } else {
     console.error("Aucun ID d'utilisateur fourni dans l'URL");
   }
@@ -126,8 +151,6 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-
-
 @media (max-width: 600px) {
   .w-4 {
     width: 100% !important;

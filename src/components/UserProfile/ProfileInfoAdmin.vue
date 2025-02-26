@@ -9,21 +9,34 @@
     <div class="main-content">
       <div class="filter-menu p-fluid p-pt-4 p-pb-4">
         <div>
-          <!-- Affichage du composant CardNameProfile -->
           <CardNameProfile />
-
-          <!-- Résumé du stage utilisateur -->
           <ResumStageUserProfile class="w-full" />
-
+          <!-- On passe l'ID de l'utilisateur au composant -->
+          <VotationResultProfil :userId="user.uid" class="w-full" />
           <!-- Section pour changer la photo de profil -->
           <div class="p-field mt-4 card w-full">
             <label for="avatar-upload">Photo de profils actuelle :</label>
             <div class="p-d-flex p-ai-center">
-              <img :src="user.photoURL" alt="Avatar" class="p-mr-2"
-                style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover;" />
-              <input id="avatar-upload" type="file" accept="image/*" @change="onAvatarChange" class="p-ml-2" />
+              <img
+                :src="user.photoURL"
+                alt="Avatar"
+                class="p-mr-2"
+                style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover;"
+              />
+              <input
+                id="avatar-upload"
+                type="file"
+                accept="image/*"
+                @change="onAvatarChange"
+                class="p-ml-2"
+              />
             </div>
-            <Button label="Enregistrer" class="p-mt-2 w-2" @click="saveProfile" icon="pi pi-save" />
+            <Button
+              label="Enregistrer"
+              class="p-mt-2 w-2"
+              @click="saveProfile"
+              icon="pi pi-save"
+            />
           </div>
         </div>
       </div>
@@ -43,16 +56,14 @@ import { getDatabase, ref as dbRef, get, update } from "firebase/database";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import Button from 'primevue/button';
 
-// Importation des composants utilisés
 import CardNameProfile from '@/components/Bibliotheque/Profile/CardNameProfile.vue';
 import ResumStageUserProfile from '@/components/UserProfile/ResumStageUserProfile.vue';
+import VotationResultProfil from '@/components/UserProfile/VotationResultProfil.vue';
 import ProfileAdminRightSidebar from '@/components/Bibliotheque/Profile/ProfileAdminRightSidebar.vue';
 import LeftSidebar from '@/components/Bibliotheque/Social/LeftSidebar.vue';
 
-// Définition d'un avatar par défaut
 const defaultAvatar = '../../../public/assets/images/avatar/01.jpg';
 
-// Réactive l'objet utilisateur
 const user = ref({
   uid: '',
   prenom: '',
@@ -65,7 +76,6 @@ const user = ref({
 
 const selectedAvatarFile = ref(null);
 
-// Fonction pour charger un profil utilisateur via son ID
 const fetchUserProfileById = async (userId) => {
   const db = getDatabase();
   const userRef = dbRef(db, `Users/${userId}`);
@@ -86,7 +96,6 @@ const fetchUserProfileById = async (userId) => {
   }
 };
 
-// Fonction pour sauvegarder la nouvelle photo de profil
 const saveProfile = async () => {
   if (selectedAvatarFile.value) {
     const userId = user.value.uid;
@@ -114,7 +123,6 @@ const saveProfile = async () => {
   }
 };
 
-// Gestion du changement d'avatar
 const onAvatarChange = (event) => {
   const file = event.target.files[0];
   if (file) {
@@ -127,12 +135,13 @@ const route = useRoute();
 onMounted(async () => {
   const userId = route.params.id; // Récupère l'ID depuis l'URL
   if (userId) {
-    await fetchUserProfileById(userId); // Charge le profil correspondant à l'ID
+    await fetchUserProfileById(userId);
   } else {
     console.error("Aucun ID d'utilisateur fourni dans l'URL");
   }
 });
 </script>
+
 
 <style scoped>
 /* Layout global avec sidebars et contenu central */
