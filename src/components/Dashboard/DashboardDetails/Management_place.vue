@@ -13,13 +13,24 @@
 
       <!-- Barre de recherche -->
       <div class="text-center mb-3">
-        <InputText v-model="search" placeholder="Recherche par nom de place ou remarques" class="w-50" debounce="300" />
+        <InputText
+          v-model="search"
+          placeholder="Recherche par nom de place ou remarques"
+          class="w-50"
+          debounce="300"
+        />
       </div>
 
       <!-- Table des places -->
       <div v-if="filteredPlaces.length > 0" class="p-datatable-responsive">
-        <DataTable :value="filteredPlaces" class="p-datatable-sm custom-datatable" paginator :rows="10"
-          responsiveLayout="scroll" :rowsPerPageOptions="[10, 20, 50, 100]">
+        <DataTable
+          :value="filteredPlaces"
+          class="p-datatable-sm custom-datatable"
+          paginator
+          :rows="10"
+          responsiveLayout="scroll"
+          :rowsPerPageOptions="[10, 20, 50, 100]"
+        >
           <!-- Colonne Institution -->
           <Column header="Institution">
             <template #body="slotProps">
@@ -30,113 +41,164 @@
           <!-- Colonne Nom de la Place -->
           <Column header="Nom de la Place">
             <template #body="slotProps">
-              <InputText v-model="slotProps.data.NomPlace"
-                @change="updatePlace(slotProps.data, 'NomPlace', slotProps.data.NomPlace)" class="p-inputtext-sm" />
+              <InputText
+                v-model="slotProps.data.NomPlace"
+                @change="updatePlace(slotProps.data, 'NomPlace', slotProps.data.NomPlace)"
+                class="p-inputtext-sm"
+              />
             </template>
           </Column>
 
           <!-- Colonne Spécialités -->
           <Column header="MSQ">
             <template #body="slotProps">
-              <Checkbox v-model="slotProps.data.MSQ" @change="updatePlace(slotProps.data, 'MSQ', slotProps.data.MSQ)"
-                binary="true" />
+              <Checkbox
+                v-model="slotProps.data.MSQ"
+                @change="updatePlace(slotProps.data, 'MSQ', slotProps.data.MSQ)"
+                binary="true"
+              />
             </template>
           </Column>
           <Column header="SYSINT">
             <template #body="slotProps">
-              <Checkbox v-model="slotProps.data.SYSINT"
-                @change="updatePlace(slotProps.data, 'SYSINT', slotProps.data.SYSINT)" binary="true" />
+              <Checkbox
+                v-model="slotProps.data.SYSINT"
+                @change="updatePlace(slotProps.data, 'SYSINT', slotProps.data.SYSINT)"
+                binary="true"
+              />
             </template>
           </Column>
           <Column header="NEUROGER">
             <template #body="slotProps">
-              <Checkbox v-model="slotProps.data.NEUROGER"
-                @change="updatePlace(slotProps.data, 'NEUROGER', slotProps.data.NEUROGER)" binary="true" />
+              <Checkbox
+                v-model="slotProps.data.NEUROGER"
+                @change="updatePlace(slotProps.data, 'NEUROGER', slotProps.data.NEUROGER)"
+                binary="true"
+              />
             </template>
           </Column>
           <Column header="AIGU">
             <template #body="slotProps">
-              <Checkbox v-model="slotProps.data.AIGU" @change="updatePlace(slotProps.data, 'AIGU', slotProps.data.AIGU)"
-                binary="true" />
+              <Checkbox
+                v-model="slotProps.data.AIGU"
+                @change="updatePlace(slotProps.data, 'AIGU', slotProps.data.AIGU)"
+                binary="true"
+              />
             </template>
           </Column>
           <Column header="REHAB">
             <template #body="slotProps">
-              <Checkbox v-model="slotProps.data.REHAB"
-                @change="updatePlace(slotProps.data, 'REHAB', slotProps.data.REHAB)" binary="true" />
+              <Checkbox
+                v-model="slotProps.data.REHAB"
+                @change="updatePlace(slotProps.data, 'REHAB', slotProps.data.REHAB)"
+                binary="true"
+              />
             </template>
           </Column>
           <Column header="AMBU">
             <template #body="slotProps">
-              <Checkbox v-model="slotProps.data.AMBU" @change="updatePlace(slotProps.data, 'AMBU', slotProps.data.AMBU)"
-                binary="true" />
+              <Checkbox
+                v-model="slotProps.data.AMBU"
+                @change="updatePlace(slotProps.data, 'AMBU', slotProps.data.AMBU)"
+                binary="true"
+              />
             </template>
           </Column>
 
           <!-- Colonne Langues -->
           <Column header="FR">
             <template #body="slotProps">
-              <Checkbox v-model="slotProps.data.FR" @change="updatePlace(slotProps.data, 'FR', slotProps.data.FR)"
-                binary="true" />
+              <Checkbox
+                v-model="slotProps.data.FR"
+                @change="updatePlace(slotProps.data, 'FR', slotProps.data.FR)"
+                binary="true"
+              />
             </template>
           </Column>
           <Column header="DE">
             <template #body="slotProps">
-              <Checkbox v-model="slotProps.data.DE" @change="updatePlace(slotProps.data, 'DE', slotProps.data.DE)"
-                binary="true" />
+              <Checkbox
+                v-model="slotProps.data.DE"
+                @change="updatePlace(slotProps.data, 'DE', slotProps.data.DE)"
+                binary="true"
+              />
             </template>
           </Column>
 
           <!-- Colonnes PFP -->
           <Column header="PFP2">
             <template #body="slotProps">
-              <InputText v-model="slotProps.data.PFP2"
-                @change="updatePlace(slotProps.data, 'PFP2', slotProps.data.PFP2)" class="p-inputtext-sm small-input" />
+              <InputText
+                v-model="slotProps.data.PFP2"
+                @change="updatePlace(slotProps.data, 'PFP2', slotProps.data.PFP2)"
+                class="p-inputtext-sm small-input"
+              />
             </template>
           </Column>
           <Column header="PFP1A">
             <template #body="slotProps">
-              <InputText v-model="slotProps.data.PFP1A"
+              <InputText
+                v-model="slotProps.data.PFP1A"
                 @change="updatePlace(slotProps.data, 'PFP1A', slotProps.data.PFP1A)"
-                class="p-inputtext-sm small-input" />
+                class="p-inputtext-sm small-input"
+              />
             </template>
           </Column>
           <Column header="PFP1B">
             <template #body="slotProps">
-              <InputText v-model="slotProps.data.PFP1B"
+              <InputText
+                v-model="slotProps.data.PFP1B"
                 @change="updatePlace(slotProps.data, 'PFP1B', slotProps.data.PFP1B)"
-                class="p-inputtext-sm small-input" />
+                class="p-inputtext-sm small-input"
+              />
             </template>
           </Column>
           <Column header="PFP4">
             <template #body="slotProps">
-              <InputText v-model="slotProps.data.PFP4"
-                @change="updatePlace(slotProps.data, 'PFP4', slotProps.data.PFP4)" class="p-inputtext-sm small-input" />
+              <InputText
+                v-model="slotProps.data.PFP4"
+                @change="updatePlace(slotProps.data, 'PFP4', slotProps.data.PFP4)"
+                class="p-inputtext-sm small-input"
+              />
             </template>
           </Column>
           <Column header="PFP3">
             <template #body="slotProps">
-              <InputText v-model="slotProps.data.PFP3"
-                @change="updatePlace(slotProps.data, 'PFP3', slotProps.data.PFP3)" class="p-inputtext-sm small-input" />
+              <InputText
+                v-model="slotProps.data.PFP3"
+                @change="updatePlace(slotProps.data, 'PFP3', slotProps.data.PFP3)"
+                class="p-inputtext-sm small-input"
+              />
             </template>
           </Column>
 
           <!-- Colonne Praticien Formateur -->
           <Column header="Praticien Formateur">
             <template #body="slotProps">
-              <MultiSelect v-model="slotProps.data.selectedPraticiensFormateurs" :options="praticiensFormateursOptions"
-                optionLabel="label" optionValue="value"
+              <MultiSelect
+                v-model="slotProps.data.selectedPraticiensFormateurs"
+                :options="praticiensFormateursOptions"
+                optionLabel="label"
+                optionValue="value"
                 @change="updatePraticiensFormateurs(slotProps.data, slotProps.data.selectedPraticiensFormateurs)"
-                placeholder="Sélectionner" display="chip" class="w-full" />
+                placeholder="Sélectionner"
+                display="chip"
+                class="w-full"
+              />
             </template>
           </Column>
 
           <!-- Colonne Remarques -->
           <Column header="Remarques">
             <template #body="slotProps">
-              <InputText v-model="slotProps.data.Remarques"
-                @change="updatePlace(slotProps.data, 'Note', slotProps.data.Remarques)" autoResize rows="2" cols="30"
-                class="p-input-sm" />
+              <InputText
+                v-model="slotProps.data.Remarques"
+                @change="updatePlace(slotProps.data, 'Note', slotProps.data.Remarques)"
+                autoResize
+                rows="2"
+                cols="30"
+                class="p-input-sm"
+              />
             </template>
           </Column>
 
@@ -144,13 +206,21 @@
           <Column header="Uploader un fichier">
             <template #body="slotProps">
               <div class="file-upload-container">
-                <input type="file" ref="fileInput" class="hidden-file-input"
-                  @change="handleFileSelection($event, slotProps.data)" />
+                <input
+                  type="file"
+                  ref="fileInput"
+                  class="hidden-file-input"
+                  @change="handleFileSelection($event, slotProps.data)"
+                />
                 <span v-if="slotProps.data.selectedFileName" class="file-name">
                   {{ slotProps.data.selectedFileName }}
                 </span>
-                <Button label="Envoyer fichier" class="p-button-sm p-button-primary"
-                  :disabled="!slotProps.data.selectedFile" @click="uploadFile(slotProps.data)" />
+                <Button
+                  label="Envoyer fichier"
+                  class="p-button-sm p-button-primary"
+                  :disabled="!slotProps.data.selectedFile"
+                  @click="uploadFile(slotProps.data)"
+                />
               </div>
             </template>
           </Column>
@@ -166,6 +236,17 @@
               <div v-else>
                 Aucun fichier
               </div>
+            </template>
+          </Column>
+
+          <!-- Colonne pour supprimer la place (double confirmation) -->
+          <Column header="Supprimer">
+            <template #body="slotProps">
+              <Button
+                label="Supprimer"
+                class="p-button-sm p-button-danger"
+                @click="confirmDeletePlace(slotProps.data)"
+              />
             </template>
           </Column>
         </DataTable>
@@ -189,9 +270,9 @@
     </div>
 
     <!-- Insertion du composant de création -->
-    <OverCreatePlace 
-      :visible="isCreateModalVisible" 
-      :institutionsOptions="institutionsOptions" 
+    <OverCreatePlace
+      :visible="isCreateModalVisible"
+      :institutionsOptions="institutionsOptions"
       :praticiensFormateursOptions="praticiensFormateursOptions"
       @close="isCreateModalVisible = false"
       @created="handlePlaceCreated"
@@ -203,7 +284,7 @@
 import Navbar from '@/components/Utils/Navbar.vue';
 import OverCreatePlace from './OverCreatePlace.vue';
 import { db, auth, storage } from '../../../../firebase.js';
-import { ref, onValue, set, update, push } from "firebase/database";
+import { ref, onValue, remove, update } from "firebase/database";
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Checkbox from 'primevue/checkbox';
@@ -256,6 +337,7 @@ export default {
     }
   },
   methods: {
+    // Calcul du nombre de places par type de PFP
     countPlacesByPFP() {
       const pfpCounts = {
         PFP2: 0,
@@ -277,6 +359,8 @@ export default {
       const num = parseInt(value);
       return isNaN(num) ? 0 : num;
     },
+
+    // Récupération des données "Places"
     async fetchPlacesData() {
       const placesRef = ref(db, 'Places');
       onValue(placesRef, async (snapshot) => {
@@ -319,6 +403,19 @@ export default {
         }
       });
     },
+
+    // Récupération d'une institution
+    async fetchInstitutionData(institutionId) {
+      if (!institutionId) return {};
+      const institutionRef = ref(db, `Institutions/${institutionId}`);
+      return new Promise((resolve) => {
+        onValue(institutionRef, (snapshot) => {
+          resolve(snapshot.val() || {});
+        });
+      });
+    },
+
+    // Récupération des données "PraticienFormateurs"
     async fetchPraticiensFormateursData() {
       const praticiensRef = ref(db, 'PraticienFormateurs');
       onValue(praticiensRef, (snapshot) => {
@@ -333,6 +430,8 @@ export default {
         }));
       });
     },
+
+    // Récupération de la liste des institutions
     async fetchInstitutionsData() {
       const institutionsRef = ref(db, 'Institutions');
       onValue(institutionsRef, (snapshot) => {
@@ -344,15 +443,8 @@ export default {
         }));
       });
     },
-    async fetchInstitutionData(institutionId) {
-      if (!institutionId) return {};
-      const institutionRef = ref(db, `Institutions/${institutionId}`);
-      return new Promise((resolve) => {
-        onValue(institutionRef, (snapshot) => {
-          resolve(snapshot.val() || {});
-        });
-      });
-    },
+
+    // Mise à jour d'un champ
     async updatePlace(place, field, value) {
       const placeRef = ref(db, `Places/${place.IdPlace}`);
       let updateValue = value;
@@ -365,10 +457,14 @@ export default {
         await update(placeRef, { [field]: updateValue });
       }
     },
+
+    // Mise à jour des praticiens formateurs
     async updatePraticiensFormateurs(place, praticiensIds) {
       const placeRef = ref(db, `Places/${place.IdPlace}`);
       await update(placeRef, { praticiensFormateurs: praticiensIds });
     },
+
+    // Sélection d'un fichier
     handleFileSelection(event, place) {
       const file = event.target.files[0];
       if (file) {
@@ -376,6 +472,8 @@ export default {
         place.selectedFileName = file.name;
       }
     },
+
+    // Upload du fichier
     async uploadFile(place) {
       try {
         const user = auth.currentUser;
@@ -389,8 +487,8 @@ export default {
         };
         await uploadBytes(fileRef, place.selectedFile, metadata);
         const url = await getDownloadURL(fileRef);
-        const placeRef = ref(db, `Places/${place.IdPlace}`);
-        await update(placeRef, { fileURL: url });
+        const placeDbRef = ref(db, `Places/${place.IdPlace}`);
+        await update(placeDbRef, { fileURL: url });
         place.fileURL = url;
         place.selectedFile = null;
         place.selectedFileName = '';
@@ -399,13 +497,44 @@ export default {
         console.error("Erreur lors de l'upload du fichier :", error);
       }
     },
+
+    // Ouvrir la modale de création
     openCreatePlaceModal() {
       this.isCreateModalVisible = true;
     },
+
+    // Une fois la place créée (event "created" du composant enfant)
     handlePlaceCreated() {
       this.isCreateModalVisible = false;
+    },
+
+    // Supprimer une place (double confirmation)
+    async confirmDeletePlace(place) {
+      // 1ère confirmation
+      const firstConfirm = window.confirm(
+        `Êtes-vous sûr de vouloir supprimer la place "${place.NomPlace}" ?`
+      );
+      if (!firstConfirm) {
+        return;
+      }
+      // 2ème confirmation
+      const secondConfirm = window.confirm(
+        `Voulez-vous vraiment SUPPRIMER DÉFINITIVEMENT la place "${place.NomPlace}" ?`
+      );
+      if (!secondConfirm) {
+        return;
+      }
+      try {
+        const placeToRemoveRef = ref(db, `Places/${place.IdPlace}`);
+        await remove(placeToRemoveRef);
+        alert("La place a bien été supprimée !");
+      } catch (error) {
+        console.error("Erreur lors de la suppression de la place :", error);
+        alert("Une erreur est survenue lors de la suppression de la place.");
+      }
     }
   },
+
   mounted() {
     this.fetchPraticiensFormateursData();
     this.fetchInstitutionsData();
@@ -420,10 +549,12 @@ export default {
   text-align: center;
 }
 
+/* Pour forcer l'input "small-input" à prendre toute la largeur */
 .small-input {
   width: 100%;
 }
 
+/* Conteneur recap */
 .recap {
   background-color: var(--surface-card);
   padding: 20px;
@@ -443,24 +574,23 @@ export default {
   margin-bottom: 5px;
 }
 
-.small-input {
-  max-width: 80px;
-}
-
+/* DataTable responsive */
 .p-datatable-responsive .p-datatable-wrapper {
-  overflow-x: auto;
+  overflow-x: auto; /* Conserve le scroll horizontal si colonnes trop nombreuses */
 }
 
-.custom-datatable .p-datatable-thead>tr>th {
+/* Personnalise l'aspect du header et du body */
+.custom-datatable .p-datatable-thead > tr > th {
   background-color: var(--surface-card);
   color: var(--text-color);
 }
 
-.custom-datatable .p-datatable-tbody>tr>td {
+.custom-datatable .p-datatable-tbody > tr > td {
   background-color: var(--surface-card);
   color: var(--text-color);
 }
 
+/* Taille de police par défaut plus petite */
 .p-inputtext-sm {
   font-size: 0.875rem;
 }
@@ -469,15 +599,35 @@ export default {
   font-size: 0.875rem;
 }
 
+/* Marges pour les boutons d'alerte */
 .p-button-warning {
   margin-right: 0.5rem;
 }
-
 .p-button-danger {
   margin-left: 0.5rem;
 }
 
+
+/* Media queries pour adapter la table, le texte, etc. */
+
+@media (max-width: 992px) {
+  /* On réduit un peu la police du tableau */
+  .custom-datatable .p-datatable-thead > tr > th,
+  .custom-datatable .p-datatable-tbody > tr > td {
+    font-size: 0.82rem;
+    padding: 0.4rem;
+  }
+
+  /* On ajuste les inputs */
+  .p-inputtext-sm,
+  .p-inputtextarea-sm,
+  .small-input {
+    font-size: 0.8rem;
+  }
+}
+
 @media (max-width: 768px) {
+  /* La table prend toute la largeur possible */
   .p-datatable-responsive {
     width: 100%;
   }
@@ -487,5 +637,44 @@ export default {
   .small-input {
     max-width: 100%;
   }
+
+  /* On réduit la taille de titre, etc. */
+  .page-title h1 {
+    font-size: 1.3rem;
+  }
 }
+
+@media (max-width: 576px) {
+  /* Police encore plus petite pour les colonnes */
+  .custom-datatable .p-datatable-thead > tr > th,
+  .custom-datatable .p-datatable-tbody > tr > td {
+    font-size: 0.75rem;
+    padding: 0.3rem;
+  }
+
+  /* Titre */
+  .page-title h1 {
+    font-size: 1.1rem;
+  }
+}
+
+/* Forcer la table à ne pas déborder */
+.custom-datatable .p-datatable {
+  table-layout: fixed;  /* distribution fixe de l’espace */
+  width: 100%;          /* occupe 100% de la place */
+}
+
+/* Permettre au texte de se couper si trop long */
+/* Sinon, par défaut, le texte pourrait faire déborder la colonne */
+.custom-datatable .p-datatable-thead > tr > th,
+.custom-datatable .p-datatable-tbody > tr > td {
+  white-space: normal;           /* le texte peut aller à la ligne */
+  overflow-wrap: break-word;     /* coupe le mot si trop long */
+  word-wrap: break-word;         /* compatibilité */
+}
+
+/* Optionnel : pour s'assurer qu'aucune colonne ne “force” un dépassement,
+   on peut aussi réduire la taille de police, etc. en media queries
+   comme vous le faisiez déjà. */
+
 </style>

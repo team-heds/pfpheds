@@ -36,7 +36,7 @@
     <!-- Contenu inférieur : TabView et Map -->
     <div class="content-lower grid mb-4 justify-content-center">
       <div class="col-12 md:col-8 lg:col-5">
-        <TabView>
+        <TabView v-model:activeIndex="activeIndex"> 
           <TabPanel header="Informations générales de l'institution">
             <div v-if="institutionDetails?.Description" class="text-900 font-bold text-3xl mb-4 mt-2">Description</div>
             <p v-if="institutionDetails?.Description" class="line-height-3 text-600 p-0 mx-0 mt-0 mb-4">
@@ -170,11 +170,15 @@ export default {
       map: null,
       marker: null,
       userRole: null,
+      activeIndex: 0,
     };
   },
   mounted() {
     this.fetchInstitutionDetailsFromFirebase();
     this.checkUserRole();
+    if (this.$route.query.tab === 'encadrement') {
+      this.activeIndex = 1; // "Encadrement étudiant" (le 2e TabPanel)
+    }
   },
   methods: {
     initMap(lat, lng) {
