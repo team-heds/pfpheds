@@ -1,78 +1,69 @@
 <template>
-        <Navbar />
+  <div class="m-4">
+    <Navbar />
 
-  <div class="institutions-layout">
-    <!-- Sidebar Gauche -->
-    <div class="sidebar-left">
-      <LeftSidebar />
-    </div>
-
-    <!-- Contenu Principal -->
-    <div class="main-content">
-
-      <!-- Critères Validés -->
-      <h5 class="mb-4">Critères Validés</h5>
+    <!-- Critères Validés -->
+    <h5 class="mb-4">Critères Validés</h5>
+    <div
+      class="grid m-2"
+      v-if="aggregatedCriteria && Object.keys(aggregatedCriteria).length"
+    >
       <div
-        class="grid m-2"
-        v-if="aggregatedCriteria && Object.keys(aggregatedCriteria).length"
+        v-for="(value, key) in aggregatedCriteria"
+        :key="key"
+        class="col-2 sm:col-4 lg:col-2 flex flex-column align-items-center justify-content-center card w-12 criteria-card"
       >
-        <div
-          v-for="(value, key) in aggregatedCriteria"
-          :key="key"
-          class="col-2 sm:col-4 lg:col-2 flex flex-column align-items-center justify-content-center card w-12 criteria-card"
-        >
-          <span class="font-bold text-center">{{ key }}</span>
-          <i
-            :class="{
-              'pi pi-check-circle text-green-500': value,
-              'pi pi-times-circle text-red-500': !value
-            }"
-            class="text-3xl mt-2"
-          ></i>
-        </div>
-      </div>
-      <div v-else>
-        <p class="text-secondary">Aucun critère validé.</p>
-      </div>
-
-      <!-- Anciennes Institutions -->
-      <h5 class="mb-4">Anciennes Institutions</h5>
-      <div class="card w-12" v-if="institutionsList && institutionsList.length">
-        <div
-          v-for="inst in institutionsList"
-          :key="inst.InstitutionId"
-          class="institution-card"
-        >
-          <div class="institution-content">
-            <h6 class="font-bold">{{ inst.Name || inst.NomInstitution }}</h6>
-            <p v-if="inst.Domaines && inst.Domaines.length">
-              Domaine : {{ inst.Domaines.join(", ") }}
-              <span v-if="inst.CriteriaValides && inst.CriteriaValides.length">
-                | Critères validés : {{ inst.CriteriaValides.join(", ") }}
-              </span>
-            </p>
-          </div>
-          <div class="action-button">
-            <Button
-              label="Voir les détails de l'institution"
-              class="p-button-sm p-button-outlined p-button-primary"
-              @click="navigateToInstitution(inst.InstitutionId)"
-            />
-          </div>
-        </div>
-      </div>
-      <div v-else>
-        <p class="text-secondary">
-          Aucune institution disponible pour cet utilisateur.
-        </p>
+        <span class="font-bold text-center">{{ key }}</span>
+        <i
+          :class="{
+            'pi pi-check-circle text-green-500': value,
+            'pi pi-times-circle text-red-500': !value
+          }"
+          class="text-3xl mt-2"
+        ></i>
       </div>
     </div>
+    <div v-else>
+      <p class="text-secondary">Aucun critère validé.</p>
+    </div>
 
-    <!-- Sidebar Droite -->
-    <div class="sidebar-right">
-      <RightSidebar />
+    <!-- Anciennes Institutions -->
+    <h5 class="mb-4">Anciennes Institutions</h5>
+    <div class="card w-12" v-if="institutionsList && institutionsList.length">
+      <div
+        v-for="inst in institutionsList"
+        :key="inst.InstitutionId"
+        class="institution-card"
+      >
+        <div class="institution-content">
+          <!-- Affichage du nom de l'institution (selon la propriété disponible) -->
+          <h6 class="font-bold">{{ inst.Name || inst.NomInstitution }}</h6>
+          <!-- Affichage des domaines et critères validés -->
+          <p v-if="inst.Domaines && inst.Domaines.length">
+            Domaine : {{ inst.Domaines.join(", ") }}
+            <span
+              v-if="inst.CriteriaValides && inst.CriteriaValides.length"
+            >
+              | Critères validés : {{ inst.CriteriaValides.join(", ") }}
+            </span>
+          </p>
+        </div>
+        <div class="action-button">
+          <Button
+            label="Voir les détails de l'institution"
+            class="p-button-sm p-button-outlined p-button-primary"
+            @click="navigateToInstitution(inst.InstitutionId)"
+          />
+        </div>
+      </div>
+    </div>
+    <div v-else>
+      <p class="text-secondary">
+        Aucune institution disponible pour cet utilisateur.
+      </p>
     </div>
   </div>
+
 </template>
 
 <script setup>
@@ -82,8 +73,7 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "vue-router";
 import Button from "primevue/button";
 import Navbar from "@/components/Utils/Navbar.vue";
-import LeftSidebar from '@/components/Bibliotheque/Social/LeftSidebar.vue';
-import RightSidebar from '@/components/Bibliotheque/Social/RightSidebar.vue';
+
 
 // Références pour les données
 const userProfile = ref(null);
@@ -213,28 +203,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Layout principal en grille */
-.institutions-layout {
-  display: grid;
-  grid-template-columns: 1fr 3fr 1fr;
-  gap: 1.5rem;
-  min-height: 100vh;
-}
-
-/* Sidebar Gauche et Droite */
-.sidebar-left,
-.sidebar-right {
-  overflow-y: auto;
-}
-
-/* Contenu Principal */
-.main-content {
-  overflow-y: auto;
-  padding: 1rem;
-}
-
-/* (Les styles existants pour .grid, .criteria-card, .institution-card, etc. restent inchangés) */
-
+/* Styles Critères Validés */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));

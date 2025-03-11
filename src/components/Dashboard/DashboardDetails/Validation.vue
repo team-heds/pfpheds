@@ -36,11 +36,12 @@
                 v-model="result.selected" 
                 :disabled="result.validated" 
               />
+              <Checkbox v-model="result.selected" :disabled="result.validated" />
             </td>
             <td>
-              <button class="edit-button" @click="openEditModal(result, index)">
+              <Button class=" primary" @click="openEditModal(result, index)">
                 Edit
-              </button>
+              </Button>
             </td>
           </tr>
         </tbody>
@@ -369,7 +370,7 @@ h1 {
 }
 
 .modal-content {
-  background: #fff;
+  background: var(--surface-overlay);
   padding: 20px;
   width: 400px;
   border-radius: 8px;
@@ -394,14 +395,14 @@ h1 {
 
 .places-list li {
   padding: 10px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--surface-hover);
   margin-bottom: 5px;
   cursor: pointer;
   border-radius: 4px;
 }
 
 .places-list li:hover {
-  background-color: #f1f1f1;
+  background-color: var(--surface-hover);
 }
 
 .modal-actions button {
