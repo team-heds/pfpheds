@@ -26,6 +26,12 @@
                     </template>
                 </Column>
 
+                <Column header="CategoryInstitution">
+                    <template #body="slotProps">
+                        <span>{{ slotProps.data.CategoryInstitution || 'Non spécifié' }}</span>
+                    </template>
+                </Column>
+
                 <!-- Colonnes booléennes -->
                 <Column header="MSQ">
                     <template #body="slotProps">
@@ -69,40 +75,36 @@
                 </Column>
 
                 <!-- Colonne Praticien Formateur -->
-<!-- Colonne Praticien Formateur -->
-<Column header="Praticien Formateur">
-  <template #body="slotProps">
-    <!-- Si un praticien est déjà sélectionné (vérifié via hasSelectedPraticien), on affiche son nom avec un bouton d'édition -->
-    <div v-if="hasSelectedPraticien(slotProps.data)">
-      <span>{{ getSelectedPraticienName(slotProps.data) }}</span>
-      <Button  class="p-button-text p-button-sm" @click="openPraticienDialog(slotProps.data)" >✏️</Button>
-    </div>
-    <!-- Sinon, on vérifie d'abord si la clé dynamique existe dans la DB -->
-    <div v-else>
-      <div v-if="slotProps.data['selectedPraticiensBA22PFP4-' + slotProps.data.seatIndex]">
-       
-        <span>{{ praticiensFormateurs[ slotProps.data['selectedPraticiensBA22PFP4-' + slotProps.data.seatIndex] ] }}</span>
-        <Button icon="✏️" class="p-button-text p-button-sm" @click="openPraticienDialog(slotProps.data)" />
-      </div>
-      <div v-else>
-        <!-- Sinon, si plusieurs praticiens sont liés -->
-        <div v-if="slotProps.data.selectedPraticiensFormateurs && slotProps.data.selectedPraticiensFormateurs.length > 1">
-          <Button :label="buttonLabel(slotProps.data)" class="p-button-outlined" @click="openPraticienDialog(slotProps.data)" />
-        </div>
-        <!-- S'il n'y a qu'un seul praticien lié -->
-        <div v-else-if="slotProps.data.selectedPraticiensFormateurs && slotProps.data.selectedPraticiensFormateurs.length === 1">
-          <span>{{ praticiensFormateurs[ slotProps.data.selectedPraticiensFormateurs[0] ] }}</span>
-        </div>
-        <!-- Aucun praticien lié -->
-        <div v-else>
-          <span>Aucun praticien</span>
-        </div>
-      </div>
-    </div>
-  </template>
-</Column>
-
-
+                <Column header="Praticien Formateur">
+                    <template #body="slotProps">
+                        <div v-if="hasSelectedPraticien(slotProps.data)">
+                            <span>{{ getSelectedPraticienName(slotProps.data) }}</span>
+                            <Button class="p-button-text p-button-sm"
+                                @click="openPraticienDialog(slotProps.data)">✏️</Button>
+                        </div>
+                        <div v-else>
+                            <div v-if="slotProps.data['selectedPraticiensBA22PFP4-' + slotProps.data.seatIndex]">
+                                <span>{{ praticiensFormateurs[slotProps.data['selectedPraticiensBA22PFP4-' +
+                                    slotProps.data.seatIndex] ] }}</span>
+                                <Button icon="✏️" class="p-button-text p-button-sm"
+                                    @click="openPraticienDialog(slotProps.data)" />
+                            </div>
+                            <div
+                                v-else-if="slotProps.data.selectedPraticiensFormateurs && slotProps.data.selectedPraticiensFormateurs.length > 1">
+                                <Button :label="buttonLabel(slotProps.data)" class="p-button-outlined"
+                                    @click="openPraticienDialog(slotProps.data)" />
+                            </div>
+                            <div
+                                v-else-if="slotProps.data.selectedPraticiensFormateurs && slotProps.data.selectedPraticiensFormateurs.length === 1">
+                                <span>{{ praticiensFormateurs[slotProps.data.selectedPraticiensFormateurs[0]]
+                                    }}</span>
+                            </div>
+                            <div v-else>
+                                <span>Aucun praticien</span>
+                            </div>
+                        </div>
+                    </template>
+                </Column>
 
                 <!-- Colonne Etudiant -->
                 <Column header="Etudiant">
@@ -115,9 +117,10 @@
                 </Column>
 
                 <!-- Colonne Remarques -->
-                <Column header="Remarques">
+                <Column header="Remarques Place">
                     <template #body="slotProps">
-                        <span>{{ slotProps.data.Remarques }}</span>
+                        <textarea v-model="slotProps.data.Remarques" @blur="updateRemark(slotProps.data)"
+                            style="width: 100%; height: 80px;" placeholder="Saisir une remarque..." />
                     </template>
                 </Column>
 
@@ -128,21 +131,14 @@
                     </template>
                 </Column>
 
-                <!-- Colonne Selected PF -->
-                <Column header="Selected PF">
-                    <template #body="slotProps">
-                        <span>{{ getSelectedPraticienName(slotProps.data) || 'Aucun praticien' }}</span>
-                    </template>
-                </Column>
-
-
                 <!-- Colonne Sélection Out -->
                 <Column header="Sélection Out">
                     <template #body="slotProps">
-                        <Checkbox v-model="slotProps.data.selectedOut" binary="true"
-                            @change="onSelectOutChange(slotProps.data)" />
+                        <Checkbox v-model="slotProps.data[`selectedActiveBA22PFP4-${slotProps.data.seatIndex}`]"
+                            binary="true" @change="onSelectActiveChange(slotProps.data)" />
                     </template>
                 </Column>
+
             </DataTable>
 
             <!-- Overlay (Dialog) pour la sélection du Praticien Formateur -->
@@ -158,25 +154,53 @@
                 </div>
             </Dialog>
 
-            <!-- Récapitulatif -->
+            <!-- Récapitulatif des statistiques -->
             <div class="recap mt-4 surface-card">
                 <h3>Récapitulatif</h3>
                 <ul>
-                    <li>Total de places uniques (PFP4 ≥ 1) : {{ totalUniquePlaces }}</li>
-                    <li>Total de lignes affichées : {{ totalExpandedCount }}</li>
                     <li>Nombre d'étudiants BA22 : {{ ba22Students.length }}</li>
-                    <li>Nombre de places sélectionnées (Sélection Out) : {{ totalSelectedOut }}</li>
-                    <li>Nombre de places avec étudiant sélectionné : {{ totalWithStudentSelected }}</li>
-                    <li>Nombre de places avec praticien sélectionné : {{ totalWithPraticienSelected }}</li>
-                    <!-- Affichage détaillé des lignes dont un praticien est sélectionné -->
-                    <li v-if="linesWithSelectedPraticien.length">
-                        Lignes avec praticien sélectionné:
-                        <ul>
-                            <li v-for="row in linesWithSelectedPraticien" :key="row.IdPlace + '-' + row.seatIndex">
-                                {{ row.NomPlace }} (Instance: {{ row.seatIndex }}) : {{ getSelectedPraticienName(row) }}
-                            </li>
-                        </ul>
-                    </li>
+                    <li>Nombre de lésés : {{ leses.length }}</li>
+                    <li>Nombre de SAE : {{ saes.length }}</li>
+                    <li>Nombre de cas particuliers : {{ casparticuliers.length }}</li>
+
+                    <li>Nombre global de places offertes : {{ totalPlacesOffertes }}</li>
+                    <li>Nombre de places sélectionnées pour PFP4 BA22 : {{ totalSelectedOut }}</li>
+
+                    <li>Nombre global d'institutions valaisanne : {{ globalInstitutionsValaisanne }}</li>
+                    <li>Nombre d'institutions valaisanne sélectionnée : {{ selectedInstitutionsValaisanne }}</li>
+                    <li>Nombre global d'institutions hors canton : {{ globalInstitutionsHorsCanton }}</li>
+                    <li>Nombre d'institutions hors canton sélectionnée : {{ selectedInstitutionsHorsCanton }}</li>
+                    <li>Nombre global de cabinets privés valaisan : {{ globalCabinetsPrivesValaisan }}</li>
+                    <li>Nombre de cabinets privés valaisan sélectionné : {{ selectedCabinetsPrivesValaisan }}</li>
+                    <li>Nombre global de cabinets privés hors canton : {{ globalCabinetsPrivesHorsCanton }}</li>
+                    <li>Nombre de cabinets privés hors canton sélectionné : {{ selectedCabinetsPrivesHorsCanton }}</li>
+                 
+                </ul>
+            </div>
+
+            <!-- Liste des lésés -->
+            <div class="liste-leses mt-4 surface-card">
+                <h3>Liste des lésés</h3>
+                <ul>
+                    <li v-for="lese in leses" :key="lese.id">{{ lese.Prenom }} {{ lese.Nom }}</li>
+                </ul>
+            </div>
+
+            <!-- Liste des lésés -->
+            <div class="liste-leses mt-4 surface-card">
+                <h3>Liste des SAE</h3>
+                <ul>
+                    <li v-for="sae in saes" :key="sae.id">{{ sae.Prenom }} {{ sae.Nom }}</li>
+                </ul>
+            </div>
+
+            <!-- Liste des lésés -->
+            <div class="liste-leses mt-4 surface-card">
+                <h3>Liste des cas particuliers</h3>
+                <ul>
+                    <li v-for="casparticulier in casparticuliers" :key="casparticulier.id">{{ casparticulier.Prenom }}
+                        {{
+                        casparticulier.Nom }}</li>
                 </ul>
             </div>
         </div>
@@ -249,33 +273,33 @@ export default {
                 a.NomPlace.localeCompare(b.NomPlace)
             );
         },
-        // Création d'une ligne par itération pour chaque place (pour étudiant et praticien)
-        // Si la place ne comporte pas d'itération (PFP4 invalide ou < 1), on considère 1 itération par défaut.
+        // Création d'une ligne par itération pour chaque place.
+        // Seules les places dont PFP4 est défini et >= 1 sont incluses.
         expandedPFP4() {
             const rows = [];
             this.sortedPlaces.forEach(place => {
                 let count = parseInt(place.PFP4);
-                if (isNaN(count) || count < 1) {
-                    count = 1;
-                }
-                if (!this.dynamicSelections[place.IdPlace]) {
-                    this.dynamicSelections[place.IdPlace] = {};
-                }
-                if (!this.dynamicPraticienSelections[place.IdPlace]) {
-                    this.dynamicPraticienSelections[place.IdPlace] = {};
-                }
-                for (let i = 1; i <= count; i++) {
-                    const keyEtudiant = `selectedEtudiantBA22PFP4-${i}`;
-                    const keyPraticien = `selectedPraticiensBA22PFP4-${i}`;
-                    const dyn = { [keyEtudiant]: this.dynamicSelections[place.IdPlace][keyEtudiant] ?? (place[keyEtudiant] || '') };
-                    const dynPraticien = { [keyPraticien]: this.dynamicPraticienSelections[place.IdPlace][keyPraticien] ?? (place[keyPraticien] || '') };
-                    rows.push({
-                        ...place,
-                        seatIndex: i,
-                        selectedOut: place.selectedOut || false,
-                        dyn,        // pour étudiant
-                        dynPraticien // pour praticien
-                    });
+                if (!isNaN(count) && count >= 1) {
+                    if (!this.dynamicSelections[place.IdPlace]) {
+                        this.dynamicSelections[place.IdPlace] = {};
+                    }
+                    if (!this.dynamicPraticienSelections[place.IdPlace]) {
+                        this.dynamicPraticienSelections[place.IdPlace] = {};
+                    }
+                    for (let i = 1; i <= count; i++) {
+                        const keyEtudiant = `selectedEtudiantBA22PFP4-${i}`;
+                        const keyPraticien = `selectedPraticiensBA22PFP4-${i}`;
+                        const dyn = { [keyEtudiant]: this.dynamicSelections[place.IdPlace][keyEtudiant] ?? (place[keyEtudiant] || '') };
+                        const dynPraticien = { [keyPraticien]: this.dynamicPraticienSelections[place.IdPlace][keyPraticien] ?? (place[keyPraticien] || '') };
+                        rows.push({
+                            ...place,
+                            seatIndex: i,
+                            selectedOut: place.selectedOut || false,
+                            [`selectedActiveBA22PFP4-${i}`]: (place[`selectedActiveBA22PFP4-${i}`] !== undefined ? place[`selectedActiveBA22PFP4-${i}`] : false),
+                            dyn,        // pour étudiant
+                            dynPraticien // pour praticien
+                        });
+                    }
                 }
             });
             return rows;
@@ -286,11 +310,8 @@ export default {
                 return !isNaN(count) && count >= 1;
             }).length;
         },
-        totalExpandedCount() {
-            return this.expandedPFP4.length;
-        },
         totalSelectedOut() {
-            return this.places.filter(place => place.selectedOut === true).length;
+            return this.expandedPFP4.filter(row => row[`selectedActiveBA22PFP4-${row.seatIndex}`] === true).length;
         },
         totalWithStudentSelected() {
             return this.places.filter(place => {
@@ -325,6 +346,139 @@ export default {
         // Liste des lignes dont un praticien est sélectionné
         linesWithSelectedPraticien() {
             return this.expandedPFP4.filter(row => this.praticienSelected(row));
+        },
+        // Liste des lésés (utilisateurs ayant le rôle 'lese')
+        leses() {
+            return this.users.filter(user => user.Roles && user.Roles.lese === true);
+        },
+
+        saes() {
+            return this.users.filter(user => user.Roles && user.Roles.sae === true);
+        },
+
+        casparticuliers() {
+            return this.users.filter(user => user.Roles && user.Roles.casparticulier === true);
+        },
+        // Nombre global de places offertes (somme de PFP4)
+        totalPlacesOffertes() {
+            return this.places.reduce((total, place) => total + (parseInt(place.PFP4) || 0), 0);
+        },
+        // Indicateurs par institution selon la catégorie
+        globalInstitutionsValaisanne() {
+            const institutions = new Set();
+            this.places.forEach(place => {
+                if (place.CategoryInstitution === 'Institution valaisanne') {
+                    institutions.add(place.InstitutionName);
+                }
+            });
+            return institutions.size;
+        },
+        selectedInstitutionsValaisanne() {
+            const institutions = new Set();
+            this.places.forEach(place => {
+                if (place.CategoryInstitution === 'Institution valaisanne') {
+                    const count = parseInt(place.PFP4) || 0;
+                    let selected = false;
+                    for (let i = 1; i <= count; i++) {
+                        const dynamicKey = `selectedActiveBA22PFP4-${i}`;
+                        if (place[dynamicKey] === true) {
+                            selected = true;
+                            break;
+                        }
+                    }
+                    if (selected) {
+                        institutions.add(place.InstitutionName);
+                    }
+                }
+            });
+            return institutions.size;
+        },
+        globalInstitutionsHorsCanton() {
+            const institutions = new Set();
+            this.places.forEach(place => {
+                if (place.CategoryInstitution === 'Institution hors canton') {
+                    institutions.add(place.InstitutionName);
+                }
+            });
+            return institutions.size;
+        },
+        selectedInstitutionsHorsCanton() {
+            const institutions = new Set();
+            this.places.forEach(place => {
+                if (place.CategoryInstitution === 'Institution hors canton') {
+                    const count = parseInt(place.PFP4) || 0;
+                    let selected = false;
+                    for (let i = 1; i <= count; i++) {
+                        const dynamicKey = `selectedActiveBA22PFP4-${i}`;
+                        if (place[dynamicKey] === true) {
+                            selected = true;
+                            break;
+                        }
+                    }
+                    if (selected) {
+                        institutions.add(place.InstitutionName);
+                    }
+                }
+            });
+            return institutions.size;
+        },
+        globalCabinetsPrivesValaisan() {
+            const institutions = new Set();
+            this.places.forEach(place => {
+                if (place.CategoryInstitution === 'Cabinet privé valaisan') {
+                    institutions.add(place.InstitutionName);
+                }
+            });
+            return institutions.size;
+        },
+        selectedCabinetsPrivesValaisan() {
+            const institutions = new Set();
+            this.places.forEach(place => {
+                if (place.CategoryInstitution === 'Cabinet privé valaisan') {
+                    const count = parseInt(place.PFP4) || 0;
+                    let selected = false;
+                    for (let i = 1; i <= count; i++) {
+                        const dynamicKey = `selectedActiveBA22PFP4-${i}`;
+                        if (place[dynamicKey] === true) {
+                            selected = true;
+                            break;
+                        }
+                    }
+                    if (selected) {
+                        institutions.add(place.InstitutionName);
+                    }
+                }
+            });
+            return institutions.size;
+        },
+        globalCabinetsPrivesHorsCanton() {
+            const institutions = new Set();
+            this.places.forEach(place => {
+                if (place.CategoryInstitution === 'Cabinet privé hors canton') {
+                    institutions.add(place.InstitutionName);
+                }
+            });
+            return institutions.size;
+        },
+        selectedCabinetsPrivesHorsCanton() {
+            const institutions = new Set();
+            this.places.forEach(place => {
+                if (place.CategoryInstitution === 'Cabinet privé hors canton') {
+                    const count = parseInt(place.PFP4) || 0;
+                    let selected = false;
+                    for (let i = 1; i <= count; i++) {
+                        const dynamicKey = `selectedActiveBA22PFP4-${i}`;
+                        if (place[dynamicKey] === true) {
+                            selected = true;
+                            break;
+                        }
+                    }
+                    if (selected) {
+                        institutions.add(place.InstitutionName);
+                    }
+                }
+            });
+            return institutions.size;
         }
     },
     methods: {
@@ -332,18 +486,26 @@ export default {
         selectedKey(row) {
             return `selectedEtudiantBA22PFP4-${row.seatIndex}`;
         },
+        updateRemark(row) {
+            const placeRef = ref(db, `Places/${row.IdPlace}`);
+            update(placeRef, { Note: row.Remarques })
+                .then(() => {
+                    console.log("Remarque mise à jour !");
+                })
+                .catch((error) => {
+                    console.error("Erreur lors de la mise à jour de la remarque :", error);
+                });
+        },
         // Clé dynamique pour le praticien
-     
+        selectedKeyPraticien(row) {
+            return `selectedPraticiensBA22PFP4-${row.seatIndex}`;
+        },
         // Vérifie si un praticien est déjà sélectionné pour cette ligne
         praticienSelected(row) {
             const key = this.selectedKeyPraticien(row);
             return row.dynPraticien && row.dynPraticien[key] && row.dynPraticien[key] !== '';
         },
-        // Récupère le nom du praticien sélectionné pour cette ligne (s'il existe dans la DB)
-        selectedKeyPraticien(row) {
-            return `selectedPraticiensBA22PFP4-${row.seatIndex}`;
-        },
-        // Vérifie si un praticien est déjà sélectionné pour cette ligne en testant les deux clés possibles
+        // Vérifie si un praticien est sélectionné pour cette ligne (vérification de deux clés possibles)
         hasSelectedPraticien(row) {
             const keyPlural = `selectedPraticiensBA22PFP4-${row.seatIndex}`;
             const keySingular = `selectedPraticienBA22PFP4-${row.seatIndex}`;
@@ -351,20 +513,17 @@ export default {
             const valueSingular = row.dynPraticien && row.dynPraticien[keySingular] ? row.dynPraticien[keySingular] : row[keySingular];
             return (valuePlural && valuePlural !== '') || (valueSingular && valueSingular !== '');
         },
-        // Récupère le nom du praticien sélectionné, en vérifiant les deux clés
+        // Récupère le nom du praticien sélectionné
         getSelectedPraticienName(row) {
-  const keyPlural = `selectedPraticiensBA22PFP4-${row.seatIndex}`;
-  const keySingular = `selectedPraticienBA22PFP4-${row.seatIndex}`;
-  // Récupération depuis row.dynPraticien ou directement dans row
-  const value = (row.dynPraticien && (row.dynPraticien[keyPlural] || row.dynPraticien[keySingular])) 
+            const keyPlural = `selectedPraticiensBA22PFP4-${row.seatIndex}`;
+            const keySingular = `selectedPraticienBA22PFP4-${row.seatIndex}`;
+            const value = (row.dynPraticien && (row.dynPraticien[keyPlural] || row.dynPraticien[keySingular]))
                 || (row[keyPlural] || row[keySingular]) || '';
-  // Pour le debug, vous pouvez décommenter la ligne suivante :
-  // console.log('getSelectedPraticienName', row, keyPlural, keySingular, value);
-  const practitionerId = String(value).trim();
-  return practitionerId && this.praticiensFormateurs[practitionerId]
-         ? this.praticiensFormateurs[practitionerId]
-         : '';
-},
+            const practitionerId = String(value).trim();
+            return practitionerId && this.praticiensFormateurs[practitionerId]
+                ? this.praticiensFormateurs[practitionerId]
+                : '';
+        },
         // Label pour le bouton d'ouverture de l'overlay
         buttonLabel(row) {
             return "Sélectionner un praticien";
@@ -379,37 +538,38 @@ export default {
             });
         },
         fetchPlacesData() {
-  const placesRef = ref(db, 'Places');
-  onValue(placesRef, async (snapshot) => {
-    const placesData = snapshot.val();
-    if (placesData) {
-      const placePromises = Object.keys(placesData).map(async key => {
-        const place = placesData[key];
-        const institutionData = await this.fetchInstitutionData(place.InstitutionId || place.IDPlace);
-        return {
-          ...place, // On inclut toutes les propriétés de la DB (y compris les clés dynamiques)
-          IdPlace: key,
-          NomPlace: place.NomPlace || '',
-          MSQ: (place.MSQ === 'true' || place.MSQ === true),
-          SYSINT: (place.SYSINT === 'true' || place.SYSINT === true),
-          NEUROGER: (place.NEUROGER === 'true' || place.NEUROGER === true),
-          AIGU: (place.AIGU === 'true' || place.AIGU === true),
-          REHAB: (place.REHAB === 'true' || place.REHAB === true),
-          AMBU: (place.AMBU === 'true' || place.AMBU === true),
-          FR: (place.FR === 'true' || place.FR === true),
-          DE: (place.DE === 'true' || place.DE === true),
-          PFP4: place.PFP4 || '0',
-          InstitutionName: institutionData.Name || institutionData.NomPlace || '',
-          selectedPraticiensFormateurs: place.praticiensFormateurs || [],
-          Remarques: place.Note || '',
-          selectedEtudiant: place.selectedEtudiant || '',
-          selectedOut: (place.selectedOut !== undefined) ? place.selectedOut : false
-        };
-      });
-      this.places = await Promise.all(placePromises);
-    }
-  });
-},
+            const placesRef = ref(db, 'Places');
+            onValue(placesRef, async (snapshot) => {
+                const placesData = snapshot.val();
+                if (placesData) {
+                    const placePromises = Object.keys(placesData).map(async key => {
+                        const place = placesData[key];
+                        const institutionData = await this.fetchInstitutionData(place.InstitutionId || place.IDPlace);
+                        return {
+                            ...place,
+                            IdPlace: key,
+                            NomPlace: place.NomPlace || '',
+                            MSQ: (place.MSQ === 'true' || place.MSQ === true),
+                            SYSINT: (place.SYSINT === 'true' || place.SYSINT === true),
+                            NEUROGER: (place.NEUROGER === 'true' || place.NEUROGER === true),
+                            AIGU: (place.AIGU === 'true' || place.AIGU === true),
+                            REHAB: (place.REHAB === 'true' || place.REHAB === true),
+                            AMBU: (place.AMBU === 'true' || place.AMBU === true),
+                            FR: (place.FR === 'true' || place.FR === true),
+                            DE: (place.DE === 'true' || place.DE === true),
+                            PFP4: place.PFP4 || '0',
+                            InstitutionName: institutionData.Name || institutionData.NomPlace || place.InstitutionName || 'Non spécifié',
+                            CategoryInstitution: institutionData.Category || 'Non spécifié',
+                            selectedPraticiensFormateurs: place.praticiensFormateurs || [],
+                            Remarques: place.Note || '',
+                            selectedEtudiant: place.selectedEtudiant || '',
+                            selectedOut: (place.selectedOut !== undefined) ? place.selectedOut : false
+                        };
+                    });
+                    this.places = await Promise.all(placePromises);
+                }
+            });
+        },
         fetchPraticiensFormateursData() {
             const praticiensRef = ref(db, 'PraticienFormateurs');
             onValue(praticiensRef, (snapshot) => {
@@ -427,7 +587,6 @@ export default {
                 this.users = Object.keys(data).map(key => ({ ...data[key], id: key }));
             });
         },
-        // Mise à jour de la sélection étudiant dans Firebase pour l'itération donnée
         updatePlaceStudent(place, newStudentId, seatIndex) {
             if (newStudentId === undefined || newStudentId === null) {
                 newStudentId = "";
@@ -445,13 +604,11 @@ export default {
                     console.error("Erreur updatePlaceStudent:", error);
                 });
         },
-        // Ouvre l'overlay (Dialog) pour la sélection du praticien
         openPraticienDialog(row) {
             this.selectedRowForPraticien = row;
             this.currentSeatIndex = row.seatIndex;
             this.displayPraticienDialog = true;
         },
-        // Mise à jour de la sélection du praticien dans Firebase pour l'itération donnée
         updatePraticienSelection(row, newId, seatIndex) {
             const propertyName = `selectedPraticiensBA22PFP4-${seatIndex}`;
             const placeRef = ref(db, `Places/${row.IdPlace}`);
@@ -473,22 +630,30 @@ export default {
                     console.error("Erreur updatePraticienSelection:", error);
                 });
         },
-        // Méthode appelée lors de la sélection dans l'overlay
         selectPraticien(newId) {
             if (this.selectedRowForPraticien && this.currentSeatIndex) {
                 this.updatePraticienSelection(this.selectedRowForPraticien, newId, this.currentSeatIndex);
             }
         },
-        onSelectOutChange(row) {
+        onSelectActiveChange(row) {
+            const dynamicKey = `selectedActiveBA22PFP4-${row.seatIndex}`;
             const placeRef = ref(db, `Places/${row.IdPlace}`);
-            update(placeRef, { selectedOut: row.selectedOut });
+            update(placeRef, { [dynamicKey]: row[dynamicKey] })
+                .catch((error) => {
+                    console.error("Erreur updatePlaceSelection:", error);
+                });
         },
         selectAllOut() {
             this.places.forEach(place => {
-                if (parseInt(place.PFP4) >= 1) {
-                    place.selectedOut = true;
-                    const placeRef = ref(db, `Places/${place.IdPlace}`);
-                    update(placeRef, { selectedOut: true });
+                const count = parseInt(place.PFP4);
+                if (count >= 1) {
+                    for (let i = 1; i <= count; i++) {
+                        const dynamicKey = `selectedActiveBA22PFP4-${i}`;
+                        // Met à jour la propriété localement
+                        place[dynamicKey] = true;
+                        const placeRef = ref(db, `Places/${place.IdPlace}`);
+                        update(placeRef, { [dynamicKey]: true });
+                    }
                 }
             });
         }
@@ -524,7 +689,8 @@ export default {
     word-wrap: break-word;
 }
 
-.recap {
+.recap,
+.liste-leses {
     background-color: var(--surface-card);
     padding: 20px;
     border-radius: 8px;

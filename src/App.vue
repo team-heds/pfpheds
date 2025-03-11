@@ -18,8 +18,8 @@
 
     </div>
 
-    <!-- Loader -->
-    <Loader v-if="isLoading" />
+    <!-- Loader 
+    <Loader v-if="isLoading" /> -->
   </div>
 </template>
 
