@@ -1,151 +1,127 @@
 <template>
-  <div>
-    <!-- Critères Validés (Agrégation) -->
-    <h5 class="mb-4">Critères Validés</h5>
-    <div class="grid m-2" v-if="aggregatedCriteria && Object.keys(aggregatedCriteria).length">
-      <div
-        v-for="(value, key) in aggregatedCriteria"
-        :key="key"
-        style="height: 77px;"
-        class="col-2 sm:col-4 lg:col-2 flex flex-column align-items-center justify-content-center w-3 card criteria-card"
-      >
-        <span class="font-bold text-center">{{ key }}</span>
-        <i
-          :class="{
-            'pi pi-check-circle text-green-500': value,
-            'pi pi-times-circle text-red-500': !value
-          }"
-          class="text-3xl mt-2"
-        ></i>
+  <div v-if="institutionsList && institutionsList.length">
+    <div
+      v-for="(inst, index) in institutionsList"
+      :key="inst.InstitutionId"
+      class="surface-card shadow-2 border-round mb-3 p-3 flex flex-column gap-2"
+      style="min-height: 200px;"
+    >
+      <!-- Ligne du titre + bouton "Voir les détails" aligné à droite -->
+      <div class="flex align-items-center ">
+        <h4 class="m-2 w-2">Formation Pratique {{ index + 1 }}</h4>
+        <div class="flex align-items-center m-2">
+          <Button
+            label="Voir les détails"
+            icon="pi pi-arrow-right"
+            class="text-sm p-button-outlined p-button-primary"
+            @click="navigateToInstitution(inst.InstitutionId)"
+          />
+        </div>
+
+
       </div>
-    </div>
-    <div v-else>
-      <p class="text-secondary">Aucun critère validé.</p>
-    </div>
 
-    <!-- Anciennes Institutions -->
-    <h5 class="p-mb-4 p-mt-4">Anciennes Institutions</h5>
-    <div v-if="institutionsList && institutionsList.length">
-      <div
-        v-for="(inst, index) in institutionsList"
-        :key="inst.InstitutionId"
-        class="p-mb-3"
-      >
-        <div class="card">
-            <div class="p-d-flex p-jc-between p-ai-center">
-              <h4>Formation Pratique {{ index + 1 }}</h4>
-              <Button
-                label="Voir les détails"
-                icon="pi pi-arrow-right"
-                class="p-button-sm mb-4 w-2"
-                @click="navigateToInstitution(inst.InstitutionId)"
-              />
-            </div>
-          <div>
-            <h6 class="p-m-0 p-text-bold">
-              {{ inst.Name || inst.NomInstitution }}
-            </h6>
-            <p v-if="inst.Domaines && inst.Domaines.length" class="p-m-0">
-              Domaine : {{ inst.Domaines.join(", ") }}
-              <span v-if="inst.CriteriaValides && inst.CriteriaValides.length">
-                | Critères validés : {{ inst.CriteriaValides.join(", ") }}
-              </span>
-            </p>
-          </div>
-            <div>
-              <h6>Documents liés à cette formation pratique</h6>
-              <div
-                class="mb-2"
-                v-if="
-                  uploads[institutionsKey(inst.InstitutionId)] &&
-                  uploads[institutionsKey(inst.InstitutionId)].docs.length > 0
-                "
-              >
-                <ul style="list-style: none; padding: 0;">
-                  <li
-                    v-for="(doc, docIndex) in uploads[institutionsKey(inst.InstitutionId)].docs"
-                    :key="doc.docId"
-                    class="p-d-flex p-ai-center p-mb-2"
-                  >
-                    <!-- Mode renommage -->
-                    <div v-if="doc.isRenaming" class="p-d-flex p-ai-center">
-                      <InputText
-                        v-model="doc.tempName"
-                        class="p-mr-2"
-                        style="width:200px;"
-                      />
-                      <Button
-                        label="Enregistrer"
-                        class="p-button-sm p-button-success p-mr-2"
-                        @click="saveDocName(inst.InstitutionId, index + 1, doc)"
-                      />
-                      <Button
-                        label="Annuler"
-                        class="p-button-sm p-button-secondary"
-                        @click="cancelRename(doc)"
-                      />
-                    </div>
-                    <!-- Mode affichage normal -->
-                    <div v-else class="p-d-flex p-ai-center">
-                      <span
-                        class="p-mr-2"
-                        style="cursor:pointer; text-decoration:underline;"
-                        @click="openDocument(doc.documentURL)"
-                        title="Cliquez pour ouvrir ce document"
-                      >
-                        {{ doc.fileName }}
-                      </span>
+      <!-- Nom de l'institution + Domaine -->
+      <div>
+        <h6 class="m-2 font-bold">
+          {{ inst.Name || inst.NomInstitution }}
+        </h6>
+        <p v-if="inst.Domaines && inst.Domaines.length" class="m-2">
+          Domaine : {{ inst.Domaines.join(", ") }}
+          <span v-if="inst.CriteriaValides && inst.CriteriaValides.length">
+            | Critères validés : {{ inst.CriteriaValides.join(", ") }}
+          </span>
+        </p>
+      </div>
 
-                        <Button
-                          icon="pi pi-trash"
-                          class="p-button-sm p-button-danger ml-2"
-                          @click="confirmDelete(
-                          inst.InstitutionId,
-                          index + 1,
-                          doc.docId,
-                          doc.fileName
-                        )"
-                        />
-                    </div>
-                  </li>
-                </ul>
-              </div>
-              <div v-else>
-                <p class="p-text-secondary">
-                  Aucun document pour cette formation.
-                </p>
-              </div>
-              <div class="p-mt-2 flex-auto">
-                <!-- Permet la sélection des fichiers -->
-                <FileUpload
-                  mode="basic"
-                  customUpload
-                  multiple
-                  chooseLabel="Sélectionner des fichiers"
-                  @select="($event) => handleFileSelection($event, inst.InstitutionId)"
-                  class="mb-2"
+      <!-- Documents -->
+      <div>
+        <h6 class="m-2">Documents liés à cette formation pratique</h6>
+        <div
+          class="mt-2"
+          v-if="
+            uploads[institutionsKey(inst.InstitutionId)] &&
+            uploads[institutionsKey(inst.InstitutionId)].docs.length > 0
+          "
+        >
+          <ul class="list-none p-0">
+            <li
+              v-for="(doc, docIndex) in uploads[institutionsKey(inst.InstitutionId)].docs"
+              :key="doc.docId"
+              class="flex align-items-center mb-2 gap-2"
+            >
+              <!-- Mode renommage -->
+              <div v-if="doc.isRenaming" class="flex align-items-center gap-2 m-2">
+                <InputText
+                  v-model="doc.tempName"
+                  style="width:200px;"
                 />
-                <!-- Bouton pour envoyer les documents sélectionnés -->
                 <Button
-                  label="Envoyer documents"
-                  class="p-button-sm p-button-outlined p-button-primary p-ml-2 w-2"
-                  @click="uploadDocuments(inst.InstitutionId, index + 1)"
+                  label="Enregistrer"
+                  class="text-sm p-button-success"
+                  @click="saveDocName(inst.InstitutionId, index + 1, doc)"
+                />
+                <Button
+                  label="Annuler"
+                  class="text-sm p-button-secondary"
+                  @click="cancelRename(doc)"
                 />
               </div>
 
-
-            </div>
-
+              <!-- Mode affichage normal -->
+              <div v-else class="flex align-items-center gap-2 m-2">
+                <span
+                  style="cursor: pointer; text-decoration: underline;"
+                  @click="openDocument(doc.documentURL)"
+                  title="Cliquez pour ouvrir ce document"
+                >
+                  {{ doc.fileName }}
+                </span>
+                <Button
+                  icon="pi pi-trash"
+                  class="text-sm p-button-danger"
+                  @click="confirmDelete(
+                    inst.InstitutionId,
+                    index + 1,
+                    doc.docId,
+                    doc.fileName
+                  )"
+                />
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div v-else>
+          <p class="text-secondary m-2">
+            Aucun document pour cette formation.
+          </p>
         </div>
       </div>
-    </div>
-    <div v-else>
-      <p class="p-text-secondary">
-        Aucune institution disponible pour cet utilisateur.
-      </p>
+
+      <!-- Sélection et upload de fichiers alignés à droite -->
+      <div class="flex justify-content-end align-items-center gap-8 w-4 m-2">
+        <FileUpload
+          mode="basic"
+          customUpload
+          multiple
+          chooseLabel="Sélectionner"
+          @select="($event) => handleFileSelection($event, inst.InstitutionId)"
+        />
+        <Button
+          label="Envoyer documents"
+          class="text-sm p-button-outlined p-button-primary"
+          @click="uploadDocuments(inst.InstitutionId, index + 1)"
+        />
+      </div>
     </div>
   </div>
+  <div v-else>
+    <p class="text-secondary">
+      Aucune institution disponible pour cet utilisateur.
+    </p>
+  </div>
 </template>
+
 
 <script setup>
 import { ref, onMounted, computed } from "vue";
