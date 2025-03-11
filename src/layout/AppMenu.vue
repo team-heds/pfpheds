@@ -100,6 +100,11 @@ const model = ref([
                   to: '/management_places'
                 },
                 {
+                  label: 'Management Offres',
+                  icon: 'pi pi-cog',
+                  to: '/management_offre'
+                },
+                {
                   label: 'Management Places Safe',
                   icon: 'pi pi-cog',
                   to: '/management_places_safe'

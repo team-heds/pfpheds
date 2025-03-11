@@ -45,6 +45,7 @@ import ListUser from '@/views/user-management/ListUser.vue';
 import InstitutionView from '@/components/Institutions/InstitutionView.vue';
 import Management_votation from '@/components/Dashboard/DashboardDetails/Management_votation.vue';
 import ManagementPlace from '@/components/Dashboard/DashboardDetails/Management_place.vue';
+import OffreDePlace from '@/components/Dashboard/DashboardDetails/OffreDePlace.vue';
 import ManagementPlacesSafe from '@/components/Dashboard/DashboardDetails/ManagementPlacesSafe.vue';
 import VotationLese from '@/components/Dashboard/DashboardDetails/VotationLese.vue';
 import StageRepartitionBA2 from '@/components/Dashboard/DashboardDetails/StageRepartitionBA2.vue';
@@ -116,6 +117,9 @@ const routes = [
   { path: '/votation', component: VotationView, name: 'VotationView', meta: { requiresAuth: true } },
   { path: '/management_votation', component: Management_votation, name: 'Management_votation', meta: { requiresAuth: true, requiredRole: 'admin' } }, // Protect this route
   { path: '/management_places', component: ManagementPlace, name: 'Management_places',meta: { requiresAuth: true, requiredRole: 'admin' } },
+  { path: '/management_offre', component: OffreDePlace, name: 'Management_offre',meta: { requiresAuth: true, requiredRole: 'admin' } },
+
+  
   { path: '/stage_repartition', component: StageRepartitionBA2, name: 'StageRepartitionBA2',meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/management_places_safe', component: ManagementPlacesSafe, name: 'ManagementPlacesSafe',meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/institution_details/:id', component: InstitutionDetails, name: 'InstitutionDetails', props: true, meta: { requiresAuth: true } },
