@@ -113,11 +113,14 @@
 
           <!-- Nouveau(x) fichier(s) à uploader -->
           <div class="new-file-section mt-2">
-            <input
+
+            <FileUpload
               type="file"
-              @change="handleFileSelection($event, inst.InstitutionId)"
+              chooseLabel="Ajouter"
               multiple
+              @change="handleFileSelection($event, inst.InstitutionId)"
             />
+
             <Button
               label="Uploader les fichiers sélectionnés"
               class="p-button-sm p-button-outlined p-button-primary mt-2"
