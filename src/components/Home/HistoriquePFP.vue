@@ -2,6 +2,7 @@
   <div class="m-4">
     <Navbar />
 
+
     <!-- Critères Validés -->
     <h5 class="mb-4">Critères Validés</h5>
     <div
@@ -73,6 +74,8 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "vue-router";
 import Button from "primevue/button";
 import Navbar from "@/components/Utils/Navbar.vue";
+import CardNameProfile from '@/components/Bibliotheque/Profile/CardNameProfile.vue'
+import ResumStageUserProfile from '@/components/UserProfile/ResumStageUserProfile.vue'
 
 
 // Références pour les données
