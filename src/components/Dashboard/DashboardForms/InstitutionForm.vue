@@ -255,11 +255,9 @@ export default {
         this.institution.key = newInstKey;
 
 
-
-        // Si une image a été sélectionnée, on l'upload d'abord
-
+        // Upload de l'image si sélectionnée
         if (this.imageFile) {
-          const storage = getStorage();
+          // On utilise "storage" importé, et storageRef
           const imageRef = storageRef(storage, `Institutions/${newInstKey}/image`);
           await uploadBytes(imageRef, this.imageFile);
           const imageURL = await getDownloadURL(imageRef);

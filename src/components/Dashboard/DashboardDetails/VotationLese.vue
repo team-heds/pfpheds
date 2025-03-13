@@ -21,10 +21,6 @@
         </ul>
       </div>
 
-      <!-- Récapitulatif du nombre de places sélectionnées -->
-      <ul>
-        <li>Nombre de places sélectionnées pour PFP4 BA22 : {{ totalSelectedOut }}</li>
-      </ul>
 
       <!-- Si tous les critères sont validés, affiche toutes les places disponibles -->
       <div v-if="allCriteriaValidated">
@@ -98,11 +94,11 @@
         <div v-for="group in groupedByCriteriaCount" :key="group.criteriaCount" class="criteria-count-section">
           <div v-if="group.criteriaCount > 0">
             <h2>
-              Validant {{ group.criteriaCount }} critère<span v-if="group.criteriaCount > 1">s</span> manquant<span
-                v-if="group.criteriaCount > 1">s</span>
+              Nombre de places validant {{ group.criteriaCount }} critère<span v-if="group.criteriaCount > 1">s</span> manquant<span
+              v-if="group.criteriaCount > 1">s</span>
               ({{ group.places.length }} place<span v-if="group.places.length > 1">s</span>)
             </h2>
-            <DataTable :value="group.places" class="p-datatable-sm custom-datatable" responsiveLayout="scroll">
+            <DataTable :value="group.places" class="p-datatable-sm custom-datatable text-center" responsiveLayout="scroll">
               <Column header="Institution">
                 <template #body="slotProps">
                   <span>{{ slotProps.data.InstitutionName || 'Non spécifié' }}</span>
@@ -170,19 +166,19 @@
 
       <!-- Section d'action de vote -->
       <div class="vote-action">
-        <button v-if="!votedPlace" @click="sendVote">Envoyer</button>
+        <Button v-if="!votedPlace" @click="sendVote">Envoyer</Button>
         <div v-else>
           <p>
             Votre vote : {{ votedPlace.placeName }} ({{ votedPlace.InstitutionName }})
           </p>
-          <button @click="revote">Revoter</button>
+          <Button @click="revote">Revoter</Button>
         </div>
       </div>
     </div>
 
     <!-- Overlay (Dialog) pour afficher un message stylé -->
     <Dialog v-model:visible="dialogVisible" header="Confirmation de Vote" :modal="true" :closable="false"
-      class="custom-dialog">
+            class="custom-dialog">
       <p>{{ dialogMessage }}</p>
       <template #footer>
         <button class="p-button p-component" @click="closeDialog">OK</button>
