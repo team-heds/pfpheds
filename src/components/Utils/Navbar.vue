@@ -113,7 +113,7 @@ const hasAdminAccess = ref(false);
 const menuItems = [
   { icon: "pi pi-home", link: "/feed", title: "Accueil" },
   { icon: "pi pi-bookmark", link: "/institution", title: "Institutions" },
-  { icon: "pi pi-check", link: "/votation", title: "Votation" },
+  { icon: "pi pi-check", link: "/votation_lese", title: "Votation" },
   { icon: "pi pi-map-marker", link: "/map", title: "Map" },
   { icon: "pi pi-user-plus", link: "/admin", title: "Admin", adminOnly: true }
 ];

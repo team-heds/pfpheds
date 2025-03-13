@@ -21,73 +21,173 @@
         </ul>
       </div>
 
-      <!-- Récapitulatif -->
+      <!-- Récapitulatif du nombre de places sélectionnées -->
       <ul>
-        <li>Nombre de places disponibles pour PFP4 BA22 : {{ totalSelectedOut }}</li>
+        <li>Nombre de places sélectionnées pour PFP4 BA22 : {{ totalSelectedOut }}</li>
       </ul>
 
-      <!-- Tableau des places disponibles -->
-      <DataTable :value="expandedPFP4" class="p-datatable-sm custom-datatable" responsiveLayout="scroll">
-        <Column header="Institution">
-          <template #body="slotProps">
-            <span>{{ slotProps.data.InstitutionName || 'Non spécifié' }}</span>
-          </template>
-        </Column>
-        <Column header="Nom de la Place">
-          <template #body="slotProps">
-            <span>{{ slotProps.data.NomPlace }}</span>
-          </template>
-        </Column>
-        <Column header="MSQ">
-          <template #body="slotProps">
-            <span>{{ slotProps.data.MSQ ? 'MSQ' : '-' }}</span>
-          </template>
-        </Column>
-        <Column header="SYSINT">
-          <template #body="slotProps">
-            <span>{{ slotProps.data.SYSINT ? 'SYSINT' : '-' }}</span>
-          </template>
-        </Column>
-        <Column header="NEUROGER">
-          <template #body="slotProps">
-            <span>{{ slotProps.data.NEUROGER ? 'NEUROGER' : '-' }}</span>
-          </template>
-        </Column>
-        <Column header="AIGU">
-          <template #body="slotProps">
-            <span>{{ slotProps.data.AIGU ? 'AIGU' : '-' }}</span>
-          </template>
-        </Column>
-        <Column header="REHAB">
-          <template #body="slotProps">
-            <span>{{ slotProps.data.REHAB ? 'REHAB' : '-' }}</span>
-          </template>
-        </Column>
-        <Column header="AMBU">
-          <template #body="slotProps">
-            <span>{{ slotProps.data.AMBU ? 'AMBU' : '-' }}</span>
-          </template>
-        </Column>
-        <Column header="FR">
-          <template #body="slotProps">
-            <span>{{ slotProps.data.FR ? 'FR' : '-' }}</span>
-          </template>
-        </Column>
-        <Column header="DE">
-          <template #body="slotProps">
-            <span>{{ slotProps.data.DE ? 'DE' : '-' }}</span>
-          </template>
-        </Column>
-        <Column header="Choix">
-          <template #body="slotProps">
-            <Checkbox
-              v-model="slotProps.data[`selectedActiveBA22PFP4-${slotProps.data.seatIndex}`]"
-              @change="updateSelection(slotProps.data, slotProps.data.seatIndex, slotProps.data[`selectedActiveBA22PFP4-${slotProps.data.seatIndex}`])"
-            />
-          </template>
-        </Column>
-      </DataTable>
+      <!-- Si tous les critères sont validés, affiche toutes les places disponibles -->
+      <div v-if="allCriteriaValidated">
+        <h2>Toutes les places disponibles</h2>
+        <DataTable :value="availablePlaces" class="p-datatable-sm custom-datatable" responsiveLayout="scroll">
+          <Column header="Institution">
+            <template #body="slotProps">
+              <span>{{ slotProps.data.InstitutionName || 'Non spécifié' }}</span>
+            </template>
+          </Column>
+          <Column header="Nom de la Place">
+            <template #body="slotProps">
+              <span>{{ slotProps.data.NomPlace }}</span>
+            </template>
+          </Column>
+          <Column header="MSQ">
+            <template #body="slotProps">
+              <span>{{ slotProps.data.MSQ ? 'MSQ' : '-' }}</span>
+            </template>
+          </Column>
+          <Column header="SYSINT">
+            <template #body="slotProps">
+              <span>{{ slotProps.data.SYSINT ? 'SYSINT' : '-' }}</span>
+            </template>
+          </Column>
+          <Column header="NEUROGER">
+            <template #body="slotProps">
+              <span>{{ slotProps.data.NEUROGER ? 'NEUROGER' : '-' }}</span>
+            </template>
+          </Column>
+          <Column header="AIGU">
+            <template #body="slotProps">
+              <span>{{ slotProps.data.AIGU ? 'AIGU' : '-' }}</span>
+            </template>
+          </Column>
+          <Column header="REHAB">
+            <template #body="slotProps">
+              <span>{{ slotProps.data.REHAB ? 'REHAB' : '-' }}</span>
+            </template>
+          </Column>
+          <Column header="AMBU">
+            <template #body="slotProps">
+              <span>{{ slotProps.data.AMBU ? 'AMBU' : '-' }}</span>
+            </template>
+          </Column>
+          <Column header="FR">
+            <template #body="slotProps">
+              <span>{{ slotProps.data.FR ? 'FR' : '-' }}</span>
+            </template>
+          </Column>
+          <Column header="DE">
+            <template #body="slotProps">
+              <span>{{ slotProps.data.DE ? 'DE' : '-' }}</span>
+            </template>
+          </Column>
+          <Column header="Nouveaux Critères Validés">
+            <template #body="slotProps">
+              <span>{{ getNewValidatedCriteria(slotProps.data).join(', ') }}</span>
+            </template>
+          </Column>
+          <Column header="Choix">
+            <template #body="slotProps">
+              <RadioButton v-model="selectedPlace" :value="slotProps.data" :disabled="votedPlace !== null" />
+            </template>
+          </Column>
+        </DataTable>
+      </div>
+
+      <!-- Sinon, affiche le groupement par nombre de critères validants -->
+      <div v-else>
+        <div v-for="group in groupedByCriteriaCount" :key="group.criteriaCount" class="criteria-count-section">
+          <div v-if="group.criteriaCount > 0">
+            <h2>
+              Validant {{ group.criteriaCount }} critère<span v-if="group.criteriaCount > 1">s</span> manquant<span
+                v-if="group.criteriaCount > 1">s</span>
+              ({{ group.places.length }} place<span v-if="group.places.length > 1">s</span>)
+            </h2>
+            <DataTable :value="group.places" class="p-datatable-sm custom-datatable" responsiveLayout="scroll">
+              <Column header="Institution">
+                <template #body="slotProps">
+                  <span>{{ slotProps.data.InstitutionName || 'Non spécifié' }}</span>
+                </template>
+              </Column>
+              <Column header="Nom de la Place">
+                <template #body="slotProps">
+                  <span>{{ slotProps.data.NomPlace }}</span>
+                </template>
+              </Column>
+              <Column header="MSQ">
+                <template #body="slotProps">
+                  <span>{{ slotProps.data.MSQ ? 'MSQ' : '-' }}</span>
+                </template>
+              </Column>
+              <Column header="SYSINT">
+                <template #body="slotProps">
+                  <span>{{ slotProps.data.SYSINT ? 'SYSINT' : '-' }}</span>
+                </template>
+              </Column>
+              <Column header="NEUROGER">
+                <template #body="slotProps">
+                  <span>{{ slotProps.data.NEUROGER ? 'NEUROGER' : '-' }}</span>
+                </template>
+              </Column>
+              <Column header="AIGU">
+                <template #body="slotProps">
+                  <span>{{ slotProps.data.AIGU ? 'AIGU' : '-' }}</span>
+                </template>
+              </Column>
+              <Column header="REHAB">
+                <template #body="slotProps">
+                  <span>{{ slotProps.data.REHAB ? 'REHAB' : '-' }}</span>
+                </template>
+              </Column>
+              <Column header="AMBU">
+                <template #body="slotProps">
+                  <span>{{ slotProps.data.AMBU ? 'AMBU' : '-' }}</span>
+                </template>
+              </Column>
+              <Column header="FR">
+                <template #body="slotProps">
+                  <span>{{ slotProps.data.FR ? 'FR' : '-' }}</span>
+                </template>
+              </Column>
+              <Column header="DE">
+                <template #body="slotProps">
+                  <span>{{ slotProps.data.DE ? 'DE' : '-' }}</span>
+                </template>
+              </Column>
+              <Column header="Nouveaux Critères Validés">
+                <template #body="slotProps">
+                  <span>{{ getNewValidatedCriteria(slotProps.data).join(', ') }}</span>
+                </template>
+              </Column>
+              <Column header="Choix">
+                <template #body="slotProps">
+                  <RadioButton v-model="selectedPlace" :value="slotProps.data" :disabled="votedPlace !== null" />
+                </template>
+              </Column>
+            </DataTable>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section d'action de vote -->
+      <div class="vote-action">
+        <button v-if="!votedPlace" @click="sendVote">Envoyer</button>
+        <div v-else>
+          <p>
+            Votre vote : {{ votedPlace.placeName }} ({{ votedPlace.InstitutionName }})
+          </p>
+          <button @click="revote">Revoter</button>
+        </div>
+      </div>
     </div>
+
+    <!-- Overlay (Dialog) pour afficher un message stylé -->
+    <Dialog v-model:visible="dialogVisible" header="Confirmation de Vote" :modal="true" :closable="false"
+      class="custom-dialog">
+      <p>{{ dialogMessage }}</p>
+      <template #footer>
+        <button class="p-button p-component" @click="closeDialog">OK</button>
+      </template>
+    </Dialog>
   </div>
 </template>
 
@@ -95,44 +195,41 @@
 import Navbar from '@/components/Utils/Navbar.vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import Checkbox from 'primevue/checkbox';
-import { ref, onValue, update } from "firebase/database";
+import RadioButton from 'primevue/radiobutton';
+import Dialog from 'primevue/dialog';
+import { ref, onValue, update, set, remove } from "firebase/database";
 import { db } from '@/firebase';
 import { getAuth } from "firebase/auth";
 
 export default {
-  name: 'Votation',
+  name: 'VotationLese',
   components: {
     Navbar,
     DataTable,
     Column,
-    Checkbox
+    RadioButton,
+    Dialog
   },
   data() {
     return {
       places: [],
-      userProfile: {} // Données du profil étudiant récupérées depuis /students
+      userProfile: {}, // Données du profil étudiant
+      selectedPlace: null, // Place sélectionnée via le RadioButton
+      votedPlace: null,    // Vote validé (après vote)
+      dialogVisible: false,
+      dialogMessage: ""
     };
   },
   computed: {
-    // Filtre sur le critère DE uniquement
-    filteredPlaces() {
-      // Si le profil indique DE false, ne garder que les places où DE est également false
-      if (this.aggregatedPFP.DE === false) {
-        return this.places.filter(place => place.DE === false);
-      }
-      // Sinon, afficher toutes les places
-      return this.places;
+    // Vérifie si tous les critères de l'étudiant sont validés
+    allCriteriaValidated() {
+      return Object.values(this.aggregatedPFP).every(value => value === true);
     },
-    // Tri alphabétique des places filtrées par Nom de la Place
-    sortedPlaces() {
-      return this.filteredPlaces.sort((a, b) => a.NomPlace.localeCompare(b.NomPlace));
-    },
-    // Génère une ligne par "place" en fonction du nombre de PFP4
-    // SEULEMENT pour les sièges sans étudiant déjà sélectionné
+    // Génère toutes les lignes pour chaque place selon le nombre de sièges PFP4, en excluant celles déjà attribuées
     expandedPFP4() {
       const rows = [];
-      this.sortedPlaces.forEach(place => {
+      const sorted = this.places.sort((a, b) => a.NomPlace.localeCompare(b.NomPlace));
+      sorted.forEach(place => {
         const count = parseInt(place.PFP4 || '0');
         if (!isNaN(count) && count >= 1) {
           for (let i = 1; i <= count; i++) {
@@ -153,11 +250,47 @@ export default {
       });
       return rows;
     },
-    // Calcule le nombre total de places sélectionnées dans le tableau généré
-    totalSelectedOut() {
-      return this.expandedPFP4.filter(row => row[`selectedActiveBA22PFP4-${row.seatIndex}`] === true).length;
+    // Retourne les places disponibles. Si tous les critères sont validés, retourne toutes les places ;
+    // sinon, filtre selon les nouveaux critères.
+    availablePlaces() {
+      if (this.allCriteriaValidated) {
+        return this.expandedPFP4;
+      } else {
+        return this.expandedPFP4.filter(place => this.getNewValidatedCriteria(place).length > 0);
+      }
     },
-    // Agrège les valeurs de PFP_valided pour construire le profil étudiant
+    // Regroupe les places disponibles par nombre de nouveaux critères validés
+    groupedByCriteriaCount() {
+      const groups = {};
+      this.availablePlaces.forEach(place => {
+        const count = this.getNewValidatedCriteria(place).length;
+        if (groups[count]) {
+          groups[count].push(place);
+        } else {
+          groups[count] = [place];
+        }
+      });
+      const allGroups = Object.keys(groups)
+        .map(count => ({
+          criteriaCount: parseInt(count),
+          places: groups[count]
+        }))
+        .sort((a, b) => b.criteriaCount - a.criteriaCount);
+      const groupsWithMoreThanFive = allGroups.filter(g => g.places.length > 5);
+      if (groupsWithMoreThanFive.length > 0) {
+        const maxCriteriaCount = Math.max(...groupsWithMoreThanFive.map(g => g.criteriaCount));
+        return allGroups.filter(g => g.criteriaCount === maxCriteriaCount);
+      } else {
+        return allGroups;
+      }
+    },
+    // Nombre total de places sélectionnées parmi les places disponibles
+    totalSelectedOut() {
+      return this.availablePlaces.filter(
+        row => row[`selectedActiveBA22PFP4-${row.seatIndex}`] === true
+      ).length;
+    },
+    // Agrège les critères déjà validés par l'étudiant depuis son profil
     aggregatedPFP() {
       const fields = {
         AIGU: false,
@@ -185,7 +318,21 @@ export default {
     }
   },
   methods: {
-    // Récupère les données d'une institution depuis Firebase
+    // Vérifie si un vote existe déjà pour l'étudiant et le charge
+    checkExistingVote() {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (user) {
+        const voteRef = ref(db, `VotationLeseBA22PFP4/${user.uid}`);
+        onValue(voteRef, (snapshot) => {
+          const vote = snapshot.val();
+          if (vote) {
+            this.votedPlace = vote;
+            this.selectedPlace = vote;
+          }
+        }, { onlyOnce: true });
+      }
+    },
     async fetchInstitutionData(institutionId) {
       if (!institutionId) return {};
       const institutionRef = ref(db, `Institutions/${institutionId}`);
@@ -195,7 +342,6 @@ export default {
         });
       });
     },
-    // Récupère les places depuis Firebase en intégrant les infos d'institution et PFP4
     fetchPlacesData() {
       const placesRef = ref(db, 'Places');
       onValue(placesRef, async (snapshot) => {
@@ -224,7 +370,6 @@ export default {
         }
       });
     },
-    // Met à jour la sélection dans Firebase lors du changement de la case à cocher
     updateSelection(place, seatIndex, value) {
       const dynamicKey = `selectedActiveBA22PFP4-${seatIndex}`;
       const placeRef = ref(db, `Places/${place.IdPlace}`);
@@ -233,18 +378,90 @@ export default {
           console.error("Erreur updateSelection:", error);
         });
     },
-    // Récupère les données du profil étudiant depuis la table /students
     fetchUserProfile() {
       const auth = getAuth();
       auth.onAuthStateChanged(user => {
         if (user) {
-          const userId = user.uid;
-          const studentRef = ref(db, `Students/${userId}`);
+          const studentRef = ref(db, `Students/${user.uid}`);
           onValue(studentRef, (snapshot) => {
             this.userProfile = snapshot.val() || {};
+            // Vérifie si un vote existe déjà
+            this.checkExistingVote();
           });
         }
       });
+    },
+    getNewValidatedCriteria(place) {
+      const criteria = [];
+      Object.keys(this.aggregatedPFP).forEach(key => {
+        if (!this.aggregatedPFP[key] && place[key]) {
+          criteria.push(key);
+        }
+      });
+      return criteria;
+    },
+    sendVote() {
+      if (!this.selectedPlace) {
+        this.dialogMessage = "Veuillez sélectionner une place.";
+        this.dialogVisible = true;
+        return;
+      }
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (!user) {
+        this.dialogMessage = "Utilisateur non connecté.";
+        this.dialogVisible = true;
+        return;
+      }
+      const voteData = {
+        studentId: user.uid,
+        studentName: this.userProfile.Nom || this.userProfile.name || "",
+        studentPrenom: this.userProfile.Prenom || "",
+        placeId: this.selectedPlace.IdPlace,
+        placeName: this.selectedPlace.NomPlace,
+        InstitutionName: this.selectedPlace.InstitutionName,
+        criteriaValidating: this.getNewValidatedCriteria(this.selectedPlace),
+        timestamp: Date.now()
+      };
+      const voteRef = ref(db, `VotationLeseBA22PFP4/${user.uid}`);
+      set(voteRef, voteData)
+        .then(() => {
+          this.dialogMessage =
+            "Vous avez voté pour la place : " +
+            this.selectedPlace.NomPlace +
+            " de l'institution : " +
+            this.selectedPlace.InstitutionName;
+          this.dialogVisible = true;
+          this.votedPlace = this.selectedPlace;
+        })
+        .catch((error) => {
+          console.error("Erreur d'envoi de vote :", error);
+          this.dialogMessage = "Erreur d'envoi de vote, veuillez réessayer.";
+          this.dialogVisible = true;
+        });
+    },
+    revote() {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (user) {
+        const voteRef = ref(db, `VotationLeseBA22PFP4/${user.uid}`);
+        remove(voteRef)
+          .then(() => {
+            this.votedPlace = null;
+            this.selectedPlace = null;
+          })
+          .catch((error) => {
+            console.error("Erreur de suppression du vote :", error);
+            this.dialogMessage = "Erreur lors de la suppression de votre vote.";
+            this.dialogVisible = true;
+          });
+      } else {
+        this.votedPlace = null;
+        this.selectedPlace = null;
+      }
+    },
+    closeDialog() {
+      this.dialogVisible = false;
     }
   },
   mounted() {
@@ -259,9 +476,11 @@ export default {
   margin-bottom: 20px;
   text-align: center;
 }
+
 .container {
   padding: 20px;
 }
+
 .profile-info {
   margin-bottom: 20px;
   padding: 10px;
@@ -269,15 +488,36 @@ export default {
   color: var(--text-color);
   border-radius: 4px;
 }
-.custom-datatable .p-datatable-thead > tr > th {
+
+.custom-datatable .p-datatable-thead>tr>th {
   background-color: var(--surface-card);
   color: var(--text-color);
 }
-.custom-datatable .p-datatable-tbody > tr > td {
+
+.custom-datatable .p-datatable-tbody>tr>td {
   background-color: var(--surface-card);
   color: var(--text-color);
   white-space: normal;
   overflow-wrap: break-word;
   word-wrap: break-word;
+}
+
+.criteria-count-section {
+  margin-bottom: 40px;
+}
+
+.vote-action {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.vote-action button {
+  padding: 8px 16px;
+  font-size: 16px;
+}
+
+/* Styles personnalisés pour le Dialog */
+.custom-dialog {
+  width: 400px;
 }
 </style>

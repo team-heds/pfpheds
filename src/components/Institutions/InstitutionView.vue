@@ -99,6 +99,8 @@
                       <li v-for="file in institutionFiles" :key="file.url">
                         <a :href="file.url" target="_blank" class="text-primary">
                           📄 {{ file.name }}
+                      
+                          
                         </a>
                       </li>
                     </ul>
@@ -204,18 +206,21 @@ export default {
     },
 
     fetchInstitutionFiles() {
-      console.log(this.institutionDetails.InstitutionId)
-      if (!this.institutionDetails || !this.institutionDetails.InstitutionId) return;
-
+      console.log(this.institutionDetails)
+      if (!this.institutionDetails || !this.institutionDetails.InstitutionId  ) return;
+        console.log("xaa");
       const placesRef = firebaseRef(db, 'Places');
 
       onValue(placesRef, (snapshot) => {
         if (snapshot.exists()) {
           const placesData = snapshot.val();
+          console.log("xa" + placesData);
           const matchingFiles = [];
-
           Object.values(placesData).forEach(place => {
-            if (place.IDPlace === this.institutionDetails.InstitutionId) {
+            const temp = place.IDPlace || place.InstitutionId || place.key; 
+        
+            console.log(place.IDPlace + " --"  +  place.InstitutionId+ "---" + this.institutionDetails.InstitutionId)
+            if ( temp === this.institutionDetails.InstitutionId) {
               matchingFiles.push({ name: place.NomPlace, url: place.fileURL });
             }
           });
@@ -251,8 +256,8 @@ export default {
           const userRef = firebaseRef(db, `Users/${user.uid}/Roles`);
           onValue(userRef, (snapshot) => {
             if (snapshot.exists()) {
-              if (snapshot.val().BA23) {
-                this.userRole = "BA23";
+              if (snapshot.val().BA22) {
+                this.userRole = "BA22";
               }
             }
           });
