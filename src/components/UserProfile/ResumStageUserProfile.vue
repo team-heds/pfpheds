@@ -1,4 +1,31 @@
 <template>
+
+    <!-- Critères Validés (Agrégation) -->
+    <h5 class="mb-4">Critères Validés</h5>
+    <div class="grid m-2" v-if="aggregatedCriteria && Object.keys(aggregatedCriteria).length">
+      <div
+        v-for="(value, key) in aggregatedCriteria"
+        :key="key"
+        style="height: 77px;"
+        class="col-2 sm:col-4 lg:col-2 flex flex-column align-items-center justify-content-center w-3 card criteria-card"
+      >
+        <span class="font-bold text-center">{{ key }}</span>
+        <i
+          :class="{
+            'pi pi-check-circle text-green-500': value,
+            'pi pi-times-circle text-red-500': !value
+          }"
+          class="text-3xl mt-2"
+        ></i>
+      </div>
+    </div>
+    <div v-else>
+      <p class="text-secondary">Aucun critère validé.</p>
+    </div>
+
+    <!-- Institutions pour lesquelles l'étudiant a validé des critères -->
+    <h5 class="mb-4">Anciennes places</h5>
+
   <div v-if="institutionsList && institutionsList.length">
     <div
       v-for="(inst, index) in institutionsList"
