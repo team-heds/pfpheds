@@ -2,11 +2,21 @@
   <div>
     <Navbar />
 
-    <div class="page-title">
+    <!-- Barre de titre + bouton "Retour Profil" -->
+    <div class="page-title p-d-flex p-jc-between">
       <h1>Votation</h1>
     </div>
 
+
+
+
     <div class="container">
+      <Button
+        label="Retour Profil"
+        icon="pi pi-arrow-left"
+        class="p-button-outlined m-2 align-content-end justify-content-end"
+        @click="goBackToProfile"
+      />
       <!-- Affichage du profil étudiant -->
       <div
         class="  w-full flex-auto"
@@ -347,6 +357,12 @@ export default {
     }
   },
   methods: {
+    goBackToProfile() {
+      // Redirige vers la page "Profil"
+      // Adapte la route selon ton router (path ou name)
+      this.$router.push({ name: 'HistoriquePFP' });
+      // ou this.$router.push('/profile') si tu as une route /profile
+    },
     // Vérifie si un vote existe déjà pour l'étudiant et le charge
     checkExistingVote() {
       const auth = getAuth();
