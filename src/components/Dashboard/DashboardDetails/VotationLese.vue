@@ -1,31 +1,31 @@
 <template>
   <div>
     <Navbar />
+
     <div class="page-title">
       <h1>Votation</h1>
     </div>
+
     <div class="container">
       <!-- Affichage du profil étudiant -->
-      <div class="profile-info" v-if="userProfile && Object.keys(userProfile).length">
-        <h2>Profil étudiant</h2>
-        <ul>
-          <li>Classe: {{ userProfile.Class || userProfile.Classe || 'Non spécifié' }}</li>
-          <li>AIGU: {{ aggregatedPFP.AIGU ? 'true' : 'false' }}</li>
-          <li>AMBU: {{ aggregatedPFP.AMBU ? 'true' : 'false' }}</li>
-          <li>DE: {{ aggregatedPFP.DE ? 'true' : 'false' }}</li>
-          <li>FR: {{ aggregatedPFP.FR ? 'true' : 'false' }}</li>
-          <li>MSQ: {{ aggregatedPFP.MSQ ? 'true' : 'false' }}</li>
-          <li>NEUROGER: {{ aggregatedPFP.NEUROGER ? 'true' : 'false' }}</li>
-          <li>REHAB: {{ aggregatedPFP.REHAB ? 'true' : 'false' }}</li>
-          <li>SYSINT: {{ aggregatedPFP.SYSINT ? 'true' : 'false' }}</li>
-        </ul>
+      <div
+        class="  w-full flex-auto"
+        v-if="userProfile && Object.keys(userProfile).length"
+      >
+        <!-- Composant dédié aux critères validés -->
+        <ValidatedCriteriaSection :userId="currentUserId" />
+
       </div>
 
 
       <!-- Si tous les critères sont validés, affiche toutes les places disponibles -->
       <div v-if="allCriteriaValidated">
         <h2>Toutes les places disponibles</h2>
-        <DataTable :value="availablePlaces" class="p-datatable-sm custom-datatable" responsiveLayout="scroll">
+        <DataTable
+          :value="availablePlaces"
+          class="p-datatable-sm custom-datatable"
+          responsiveLayout="scroll"
+        >
           <Column header="Institution">
             <template #body="slotProps">
               <span>{{ slotProps.data.InstitutionName || 'Non spécifié' }}</span>
@@ -83,7 +83,11 @@
           </Column>
           <Column header="Choix">
             <template #body="slotProps">
-              <RadioButton v-model="selectedPlace" :value="slotProps.data" :disabled="votedPlace !== null" />
+              <RadioButton
+                v-model="selectedPlace"
+                :value="slotProps.data"
+                :disabled="votedPlace !== null"
+              />
             </template>
           </Column>
         </DataTable>
@@ -91,14 +95,25 @@
 
       <!-- Sinon, affiche le groupement par nombre de critères validants -->
       <div v-else>
-        <div v-for="group in groupedByCriteriaCount" :key="group.criteriaCount" class="criteria-count-section">
+        <div
+          v-for="group in groupedByCriteriaCount"
+          :key="group.criteriaCount"
+          class="criteria-count-section"
+        >
           <div v-if="group.criteriaCount > 0">
             <h2>
-              Nombre de places validant {{ group.criteriaCount }} critère<span v-if="group.criteriaCount > 1">s</span> manquant<span
-              v-if="group.criteriaCount > 1">s</span>
-              ({{ group.places.length }} place<span v-if="group.places.length > 1">s</span>)
+              Nombre de places validant
+              {{ group.criteriaCount }}
+              critère<span v-if="group.criteriaCount > 1">s</span> manquant
+              <span v-if="group.criteriaCount > 1">s</span>
+              ({{ group.places.length }} places
+              <span v-if="group.places.length > 1"></span>)
             </h2>
-            <DataTable :value="group.places" class="p-datatable-sm custom-datatable text-center" responsiveLayout="scroll">
+            <DataTable
+              :value="group.places"
+              class="p-datatable-sm custom-datatable text-center"
+              responsiveLayout="scroll"
+            >
               <Column header="Institution">
                 <template #body="slotProps">
                   <span>{{ slotProps.data.InstitutionName || 'Non spécifié' }}</span>
@@ -156,7 +171,11 @@
               </Column>
               <Column header="Choix">
                 <template #body="slotProps">
-                  <RadioButton v-model="selectedPlace" :value="slotProps.data" :disabled="votedPlace !== null" />
+                  <RadioButton
+                    v-model="selectedPlace"
+                    :value="slotProps.data"
+                    :disabled="votedPlace !== null"
+                  />
                 </template>
               </Column>
             </DataTable>
@@ -169,7 +188,9 @@
         <Button v-if="!votedPlace" @click="sendVote">Envoyer</Button>
         <div v-else>
           <p>
-            Votre vote : {{ votedPlace.placeName }} ({{ votedPlace.InstitutionName }})
+            Votre vote :
+            {{ votedPlace.placeName }}
+            ({{ votedPlace.InstitutionName }})
           </p>
           <Button @click="revote">Revoter</Button>
         </div>
@@ -177,8 +198,13 @@
     </div>
 
     <!-- Overlay (Dialog) pour afficher un message stylé -->
-    <Dialog v-model:visible="dialogVisible" header="Confirmation de Vote" :modal="true" :closable="false"
-            class="custom-dialog">
+    <Dialog
+      v-model:visible="dialogVisible"
+      header="Confirmation de Vote"
+      :modal="true"
+      :closable="false"
+      class="custom-dialog"
+    >
       <p>{{ dialogMessage }}</p>
       <template #footer>
         <button class="p-button p-component" @click="closeDialog">OK</button>
@@ -193,18 +219,23 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import RadioButton from 'primevue/radiobutton';
 import Dialog from 'primevue/dialog';
+import ValidatedCriteriaSection from '@/components/UserProfile/ValidatedCriteriaSection.vue';
+
 import { ref, onValue, update, set, remove } from "firebase/database";
 import { db } from '@/firebase';
 import { getAuth } from "firebase/auth";
+import CardNameProfile from '@/components/Bibliotheque/Profile/CardNameProfile.vue'
 
 export default {
   name: 'VotationLese',
   components: {
+    CardNameProfile,
     Navbar,
     DataTable,
     Column,
     RadioButton,
-    Dialog
+    Dialog,
+    ValidatedCriteriaSection
   },
   data() {
     return {
@@ -213,7 +244,8 @@ export default {
       selectedPlace: null, // Place sélectionnée via le RadioButton
       votedPlace: null,    // Vote validé (après vote)
       dialogVisible: false,
-      dialogMessage: ""
+      dialogMessage: "",
+      currentUserId: null  // On stocke l'ID utilisateur ici
     };
   },
   computed: {
@@ -238,7 +270,7 @@ export default {
               rows.push({
                 ...place,
                 seatIndex: i,
-                [dynamicKey]: (place[dynamicKey] !== undefined ? place[dynamicKey] : false)
+                [dynamicKey]: place[dynamicKey] !== undefined ? place[dynamicKey] : false
               });
             }
           }
@@ -272,6 +304,7 @@ export default {
           places: groups[count]
         }))
         .sort((a, b) => b.criteriaCount - a.criteriaCount);
+
       const groupsWithMoreThanFive = allGroups.filter(g => g.places.length > 5);
       if (groupsWithMoreThanFive.length > 0) {
         const maxCriteriaCount = Math.max(...groupsWithMoreThanFive.map(g => g.criteriaCount));
@@ -350,16 +383,19 @@ export default {
               ...place,
               IdPlace: key,
               NomPlace: place.NomPlace || '',
-              MSQ: (place.MSQ === 'true' || place.MSQ === true),
-              SYSINT: (place.SYSINT === 'true' || place.SYSINT === true),
-              NEUROGER: (place.NEUROGER === 'true' || place.NEUROGER === true),
-              AIGU: (place.AIGU === 'true' || place.AIGU === true),
-              REHAB: (place.REHAB === 'true' || place.REHAB === true),
-              AMBU: (place.AMBU === 'true' || place.AMBU === true),
-              FR: (place.FR === 'true' || place.FR === true),
-              DE: (place.DE === 'true' || place.DE === true),
+              MSQ: place.MSQ === 'true' || place.MSQ === true,
+              SYSINT: place.SYSINT === 'true' || place.SYSINT === true,
+              NEUROGER: place.NEUROGER === 'true' || place.NEUROGER === true,
+              AIGU: place.AIGU === 'true' || place.AIGU === true,
+              REHAB: place.REHAB === 'true' || place.REHAB === true,
+              AMBU: place.AMBU === 'true' || place.AMBU === true,
+              FR: place.FR === 'true' || place.FR === true,
+              DE: place.DE === 'true' || place.DE === true,
               PFP4: place.PFP4 || '0',
-              InstitutionName: institutionData.Name || institutionData.NomPlace || place.InstitutionName || 'Non spécifié'
+              InstitutionName: institutionData.Name ||
+                institutionData.NomPlace ||
+                place.InstitutionName ||
+                'Non spécifié'
             };
           });
           this.places = await Promise.all(placePromises);
@@ -378,6 +414,7 @@ export default {
       const auth = getAuth();
       auth.onAuthStateChanged(user => {
         if (user) {
+          this.currentUserId = user.uid; // IMPORTANT : on stocke l'ID ici
           const studentRef = ref(db, `Students/${user.uid}`);
           onValue(studentRef, (snapshot) => {
             this.userProfile = snapshot.val() || {};
@@ -422,11 +459,10 @@ export default {
       const voteRef = ref(db, `VotationLeseBA22PFP4/${user.uid}`);
       set(voteRef, voteData)
         .then(() => {
-          this.dialogMessage =
-            "Vous avez voté pour la place : " +
-            this.selectedPlace.NomPlace +
-            " de l'institution : " +
-            this.selectedPlace.InstitutionName;
+          this.dialogMessage = "Vous avez voté pour la place : "
+            + this.selectedPlace.NomPlace
+            + " de l'institution : "
+            + this.selectedPlace.InstitutionName;
           this.dialogVisible = true;
           this.votedPlace = this.selectedPlace;
         })
@@ -485,12 +521,12 @@ export default {
   border-radius: 4px;
 }
 
-.custom-datatable .p-datatable-thead>tr>th {
+.custom-datatable .p-datatable-thead > tr > th {
   background-color: var(--surface-card);
   color: var(--text-color);
 }
 
-.custom-datatable .p-datatable-tbody>tr>td {
+.custom-datatable .p-datatable-tbody > tr > td {
   background-color: var(--surface-card);
   color: var(--text-color);
   white-space: normal;
