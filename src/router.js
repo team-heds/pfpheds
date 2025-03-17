@@ -44,6 +44,8 @@ import DashbordAdmin from '@/views/dashboards/DashbordAdmin.vue';
 import ListUser from '@/views/user-management/ListUser.vue';
 import InstitutionView from '@/components/Institutions/InstitutionView.vue';
 import Management_votation from '@/components/Dashboard/DashboardDetails/Management_votation.vue';
+import Management_votation_lese from '@/components/Dashboard/DashboardDetails/Management_votation_lese.vue';
+import Management_votation_etudiants from '@/components/Dashboard/DashboardDetails/Management_votation_etudiants.vue';
 import ManagementPlace from '@/components/Dashboard/DashboardDetails/Management_place.vue';
 import OffreDePlace from '@/components/Dashboard/DashboardDetails/OffreDePlace.vue';
 import ManagementPlacesSafe from '@/components/Dashboard/DashboardDetails/ManagementPlacesSafe.vue';
@@ -116,9 +118,11 @@ const routes = [
   { path: '/reception', component: Reception, name: 'Reception', meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/votation', component: VotationView, name: 'VotationView', meta: { requiresAuth: true } },
   { path: '/management_votation', component: Management_votation, name: 'Management_votation', meta: { requiresAuth: true, requiredRole: 'admin' } }, // Protect this route
+  { path: '/management_votation_lese', component: Management_votation_lese, name: 'Management_votation_lese', meta: { requiresAuth: true, requiredRole: 'admin' } }, // Protect this route
+  { path: '/management_votation_etudiants', component: Management_votation_etudiants, name: 'Management_votation_etudiants', meta: { requiresAuth: true, requiredRole: 'admin' } }, // Protect this route
   { path: '/management_places', component: ManagementPlace, name: 'Management_places',meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/management_offre', component: OffreDePlace, name: 'Management_offre',meta: { requiresAuth: true, requiredRole: 'admin' } },
-
+  
   
   { path: '/stage_repartition', component: StageRepartitionBA2, name: 'StageRepartitionBA2',meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/management_places_safe', component: ManagementPlacesSafe, name: 'ManagementPlacesSafe',meta: { requiresAuth: true, requiredRole: 'admin' } },

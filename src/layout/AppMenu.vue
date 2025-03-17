@@ -48,36 +48,23 @@ const model = ref([
                 label: 'Votation',
                 icon: 'pi pi-check-square',
                 items: [
-                    {
-                        label: 'Votation',
-                        icon: 'pi pi-check-circle',
-                        to: '/votation'
-                    },
-                  {
-                    label: 'Votation Lésé',
-                    icon: 'pi pi-check-square',
-                    to: '/votation_lese'
-                  },
-                    {
-                        label: 'Votation Preview',
-                        icon: 'pi pi-eye',
-                        to: '/votation_preview'
-                    },
-                    {
-                        label: 'Management Votation',
-                        icon: 'pi pi-cog',
-                        to: '/management_votation'
-                    },
-                    {
-                        label: 'Validation',
-                        icon: 'pi pi-check',
-                        to: '/validation'
-                    },
-                    {
-                      label: 'Reception',
-                      icon: 'pi pi-envelope',
-                      to: '/reception'
-                    }
+                {
+                  label: 'Management Offres',
+                  icon: 'pi pi-cog',
+                  to: '/management_offre'
+                },
+
+                {
+                  label: 'Management Votation Lese',
+                  icon: 'pi pi-cog',
+                  to: '/management_votation_lese'
+                },
+
+                {
+                  label: 'Management Votation Etudiant',
+                  icon: 'pi pi-cog',
+                  to: '/management_votation_etudiants'
+                }
                 ]
             },
             {
@@ -99,11 +86,7 @@ const model = ref([
                   icon: 'pi pi-cog',
                   to: '/management_places'
                 },
-                {
-                  label: 'Management Offres',
-                  icon: 'pi pi-cog',
-                  to: '/management_offre'
-                },
+              
                 {
                   label: 'Management Places Safe',
                   icon: 'pi pi-cog',
@@ -113,12 +96,8 @@ const model = ref([
                   label: 'Stage Repartition',
                   icon: 'pi pi-cog',
                   to: '/stage_repartition'
-                },
-                {
-                  label: 'Tableau des Places',
-                  icon: 'pi pi-fw pi-list',
-                  to: '/place_details'
                 }
+           
               ]
             },
             {
