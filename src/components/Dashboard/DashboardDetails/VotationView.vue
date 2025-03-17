@@ -1,1191 +1,733 @@
 <template>
   <div>
     <Navbar />
-    <ResumStageUserProfile class="mb-5" />
-    <AlertModal :visible="alertVisible" :message="alertMessage" @close="alertVisible = false" />
 
-    <div class="w-full">
-      <div class="container-fluid mt-4 justify-items-center">
-        <!-- Section pour la validation -->
-        <div v-if="currentStudent && selectedPFP && selectedClass" class="table-responsive mt-4">
-          <div v-if="validationMessage" class="mt-4 text-center">
-            <h4>Votation {{ selectedPFP }}</h4>
-            <p>{{ validationMessage }}</p>
-          </div>
-        </div>
+    <!-- Titre et bouton de retour -->
+    <div class="page-title p-d-flex p-jc-between">
+      <h1>Votation</h1>
+    </div>
 
-        <!-- Table affichant toutes les places de stages disponibles -->
-        <div v-if="selectedPFP && selectedClass" class="table-responsive mt-4">
-          <div class="d-flex justify-content-center flex-column align-items-center">
-            <h3 class="mb-3 text-center">Toutes les places de stages</h3>
-            <table class="table table-striped align-middle mb-0 table-hover w-100 text-center">
-              <thead>
-                <tr>
-                  <th>Institutions</th>
-                  <th>Lieux</th>
-                  <th>Domaines</th>
-                  <th>FR</th>
-                  <th>ALL</th>
-                  <th>AIGU</th>
-                  <th>REHAB</th>
-                  <th>MSQ</th>
-                  <th>SYSINT</th>
-                  <th>NEUROGER</th>
-                  <th>AMBU</th>
-                  <th title="Nombre de places proposées">Nb Places</th>
-                  <th title="Votre 1er choix">Choix 1</th>
-                  <th title="Votre 2ème choix">Choix 2</th>
-                  <th title="Votre 3ème choix">Choix 3</th>
-                  <th title="Votre 4ème choix">Choix 4</th>
-                  <th title="Votre 5ème choix">Choix 5</th>
-                  <th class="hover-highlight" title="Étudiants ayant ce 1er choix">R1</th>
-                  <th class="hover-highlight" title="Étudiants ayant ce 2ème choix">R2</th>
-                  <th class="hover-highlight" title="Étudiants ayant ce 3ème choix">R3</th>
-                  <th class="hover-highlight" title="Étudiants ayant ce 4ème choix">R4</th>
-                  <th class="hover-highlight" title="Étudiants ayant ce 5ème choix">R5</th>
-                  <th class="hover-highlight" title="Total d'étudiant ayant ce choix">RT</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="stage in filteredStages" :key="stage.IDENTIFIANT">
-                  <td>
-                    <a :href="`/institution/${stage.IDPlace}`" class="text-white2">
-                      {{ stage.NomPlace }}
-                    </a>
-                  </td>
+    <div class="container">
+      <Button
+        label="Retour Profil"
+        icon="pi pi-arrow-left"
+        class="p-button-outlined m-2 align-content-end justify-content-end"
+        @click="goBackToProfile"
+      />
 
-                  <td>{{ stage.Lieu }}</td>
-                  <td>{{ stage.Domaine }}</td>
-                  <td v-if="Boolean(stage.FR)">&#9989;</td>
-                  <td v-else>&#10060;</td>
-                  <td v-if="Boolean(stage.ALL)">&#9989;</td>
-                  <td v-else>&#10060;</td>
-                  <td v-if="Boolean(stage.AIGU)">&#9989;</td>
-                  <td v-else>&#10060;</td>
-                  <td v-if="Boolean(stage.REHAB)">&#9989;</td>
-                  <td v-else>&#10060;</td>
-                  <td v-if="Boolean(stage.MSQ)">&#9989;</td>
-                  <td v-else>&#10060;</td>
-                  <td v-if="Boolean(stage.SYSINT)">&#9989;</td>
-                  <td v-else>&#10060;</td>
-                  <td v-if="Boolean(stage.NEUROGER)">&#9989;</td>
-                  <td v-else>&#10060;</td>
-                  <td v-if="Boolean(stage.AMBU)">&#9989;</td>
-                  <td v-else>&#10060;</td>
-
-                  <td>
-                    {{ selectedPFP === 'PFP1A' ? stage.NbPlace1A : stage.NbPlace1B }}
-                  </td>
-                  <!-- Cases à cocher pour les 5 choix -->
-                  <td>
-                    <input type="checkbox" :disabled="isChoiceDisabled(stage, 'choice1')"
-                           :checked="selectedChoices.choice1 === stage.IDENTIFIANT"
-                           @change="handleChoiceChange(stage.IDENTIFIANT, 'choice1')" />
-                  </td>
-                  <td>
-                    <input type="checkbox" :disabled="isChoiceDisabled(stage, 'choice2')"
-                           :checked="selectedChoices.choice2 === stage.IDENTIFIANT"
-                           @change="handleChoiceChange(stage.IDENTIFIANT, 'choice2')" />
-                  </td>
-                  <td>
-                    <input type="checkbox" :disabled="isChoiceDisabled(stage, 'choice3')"
-                           :checked="selectedChoices.choice3 === stage.IDENTIFIANT"
-                           @change="handleChoiceChange(stage.IDENTIFIANT, 'choice3')" />
-                  </td>
-                  <td>
-                    <input type="checkbox" :disabled="isChoiceDisabled(stage, 'choice4')"
-                           :checked="selectedChoices.choice4 === stage.IDENTIFIANT"
-                           @change="handleChoiceChange(stage.IDENTIFIANT, 'choice4')" />
-                  </td>
-                  <td>
-                    <input type="checkbox" :disabled="isChoiceDisabled(stage, 'choice5')"
-                           :checked="selectedChoices.choice5 === stage.IDENTIFIANT"
-                           @change="handleChoiceChange(stage.IDENTIFIANT, 'choice5')" />
-                  </td>
-                  <!-- Colonnes supplémentaires avec des chiffres initialisés à 0 -->
-                  <td>{{ voteCounts[stage.Unit]?.Votation1 || 0 }}</td>
-                  <td>{{ voteCounts[stage.Unit]?.Votation2 || 0 }}</td>
-                  <td>{{ voteCounts[stage.Unit]?.Votation3 || 0 }}</td>
-                  <td>{{ voteCounts[stage.Unit]?.Votation4 || 0 }}</td>
-                  <td>{{ voteCounts[stage.Unit]?.Votation5 || 0 }}</td>
-                  <td>{{ voteCounts[stage.Unit]?.VotationTotal || 0 }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Section pour afficher le résultat du vote -->
-        <div v-if="voteResult" class="vote-result-container mt-4">
-          <h4 class="text-center mb-4">Choix du Vote</h4>
-          <div class="vote-choices">
-            <div v-for="(choice, index) in voteResult" :key="index" class="vote-choice text-center">
-              <h6 class="text-white2">Choix {{ index + 1 }} : </h6>
-              <p>Stage Sélectionné : {{ choice.selectedStageName }}</p>
-              <p>Lieu : {{ choice.selectedStageLieu }}</p>
-              <p>Domaine : {{ choice.selectedStageDomaine }}</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Bouton Voter / Revoter -->
-        <div class="mt-4 text-center">
-          <button class="btn btn-primary" @click="submitVotes" :disabled="!allChoicesSelected"
-                  :class="{ 'opacity-50 cursor-not-allowed': !allChoicesSelected }">
-            {{ hasVoted ? 'Revoter' : 'Voter' }}
-          </button>
-          <p v-if="!allChoicesSelected" class="text-red-500 mt-2">
-            Veuillez sélectionner les 5 choix avant de voter.
-          </p>
-          <!-- Message Optionnel -->
-          <div class="mt-2 text-center">
-            <p v-if="hasVoted" class="text-green-500">
-              Vous avez déjà voté. Vous pouvez réviser vos choix si nécessaire.
-            </p>
-            <p v-else class="text-blue-500">
-              Vous n'avez pas encore voté.
-            </p>
-          </div>
-        </div>
-        <br><br><br><br>
+      <!-- Affichage du profil étudiant -->
+      <div v-if="userProfile && Object.keys(userProfile).length">
+        <ValidatedCriteriaSection :userId="currentUserId" />
       </div>
 
-      <UserProfile class="w-5" />
+      <!-- Affichage des places disponibles -->
+      <div v-if="allCriteriaValidated">
+        <h2>Toutes les places disponibles</h2>
+        <DataTable
+          :value="availablePlaces"
+          class="p-datatable-sm custom-datatable"
+          responsiveLayout="scroll"
+        >
+          <!-- Colonnes d'informations sur la place -->
+          <Column header="Institution">
+            <template #body="slotProps">
+              <span>{{ slotProps.data.InstitutionName || 'Non spécifié' }}</span>
+            </template>
+          </Column>
+          <Column header="Nom de la Place">
+            <template #body="slotProps">
+              <span>{{ slotProps.data.NomPlace }}</span>
+            </template>
+          </Column>
+          <Column header="MSQ">
+            <template #body="slotProps">
+              <span>{{ slotProps.data.MSQ ? 'MSQ' : '-' }}</span>
+            </template>
+          </Column>
+          <Column header="SYSINT">
+            <template #body="slotProps">
+              <span>{{ slotProps.data.SYSINT ? 'SYSINT' : '-' }}</span>
+            </template>
+          </Column>
+          <Column header="NEUROGER">
+            <template #body="slotProps">
+              <span>{{ slotProps.data.NEUROGER ? 'NEUROGER' : '-' }}</span>
+            </template>
+          </Column>
+          <Column header="AIGU">
+            <template #body="slotProps">
+              <span>{{ slotProps.data.AIGU ? 'AIGU' : '-' }}</span>
+            </template>
+          </Column>
+          <Column header="REHAB">
+            <template #body="slotProps">
+              <span>{{ slotProps.data.REHAB ? 'REHAB' : '-' }}</span>
+            </template>
+          </Column>
+          <Column header="AMBU">
+            <template #body="slotProps">
+              <span>{{ slotProps.data.AMBU ? 'AMBU' : '-' }}</span>
+            </template>
+          </Column>
+          <Column header="FR">
+            <template #body="slotProps">
+              <span>{{ slotProps.data.FR ? 'FR' : '-' }}</span>
+            </template>
+          </Column>
+          <Column header="DE">
+            <template #body="slotProps">
+              <span>{{ slotProps.data.DE ? 'DE' : '-' }}</span>
+            </template>
+          </Column>
+          <Column header="Nouveaux Critères Validés">
+            <template #body="slotProps">
+              <span>{{ getNewValidatedCriteria(slotProps.data).join(', ') }}</span>
+            </template>
+          </Column>
 
-      <br><br><br><br>
+          <!-- Colonnes de vote : 5 choix (top 1 à top 5) -->
+          <Column header="Choix 1">
+            <template #body="slotProps">
+              <RadioButton
+                v-model="selectedPlaces[0]"
+                :value="slotProps.data"
+                :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 0)"
+              />
+            </template>
+          </Column>
+          <Column header="Choix 2">
+            <template #body="slotProps">
+              <RadioButton
+                v-model="selectedPlaces[1]"
+                :value="slotProps.data"
+                :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 1)"
+              />
+            </template>
+          </Column>
+          <Column header="Choix 3">
+            <template #body="slotProps">
+              <RadioButton
+                v-model="selectedPlaces[2]"
+                :value="slotProps.data"
+                :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 2)"
+              />
+            </template>
+          </Column>
+          <Column header="Choix 4">
+            <template #body="slotProps">
+              <RadioButton
+                v-model="selectedPlaces[3]"
+                :value="slotProps.data"
+                :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 3)"
+              />
+            </template>
+          </Column>
+          <Column header="Choix 5">
+            <template #body="slotProps">
+              <RadioButton
+                v-model="selectedPlaces[4]"
+                :value="slotProps.data"
+                :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 4)"
+              />
+            </template>
+          </Column>
+
+          <!-- Colonnes d'agrégation des votes -->
+          <Column header="Votes Top 1">
+            <template #body="slotProps">
+              <span>{{ getVoteCount(slotProps.data).top1 || 0 }}</span>
+            </template>
+          </Column>
+          <Column header="Votes Top 2">
+            <template #body="slotProps">
+              <span>{{ getVoteCount(slotProps.data).top2 || 0 }}</span>
+            </template>
+          </Column>
+          <Column header="Votes Top 3">
+            <template #body="slotProps">
+              <span>{{ getVoteCount(slotProps.data).top3 || 0 }}</span>
+            </template>
+          </Column>
+          <Column header="Votes Top 4">
+            <template #body="slotProps">
+              <span>{{ getVoteCount(slotProps.data).top4 || 0 }}</span>
+            </template>
+          </Column>
+          <Column header="Votes Top 5">
+            <template #body="slotProps">
+              <span>{{ getVoteCount(slotProps.data).top5 || 0 }}</span>
+            </template>
+          </Column>
+          <Column header="Total Votes">
+            <template #body="slotProps">
+              <span>{{ getVoteCount(slotProps.data).total || 0 }}</span>
+            </template>
+          </Column>
+        </DataTable>
+      </div>
+
+      <!-- En cas de critères non validés, affichage groupé par nombre de critères validés -->
+      <div v-else>
+        <div
+          v-for="group in groupedByCriteriaCount"
+          :key="group.criteriaCount"
+          class="criteria-count-section"
+        >
+          <div v-if="group.criteriaCount > 0">
+            <h2>
+              Nombre de places validant {{ group.criteriaCount }} critère<span v-if="group.criteriaCount > 1">s</span> manquant<span v-if="group.criteriaCount > 1">s</span>
+              ({{ group.places.length }} places)
+            </h2>
+            <DataTable
+              :value="group.places"
+              class="p-datatable-sm custom-datatable text-center"
+              responsiveLayout="scroll"
+            >
+              <Column header="Institution">
+                <template #body="slotProps">
+                  <span>{{ slotProps.data.InstitutionName || 'Non spécifié' }}</span>
+                </template>
+              </Column>
+              <Column header="Nom de la Place">
+                <template #body="slotProps">
+                  <span>{{ slotProps.data.NomPlace }}</span>
+                </template>
+              </Column>
+              <Column header="MSQ">
+                <template #body="slotProps">
+                  <span>{{ slotProps.data.MSQ ? 'MSQ' : '-' }}</span>
+                </template>
+              </Column>
+              <Column header="SYSINT">
+                <template #body="slotProps">
+                  <span>{{ slotProps.data.SYSINT ? 'SYSINT' : '-' }}</span>
+                </template>
+              </Column>
+              <Column header="NEUROGER">
+                <template #body="slotProps">
+                  <span>{{ slotProps.data.NEUROGER ? 'NEUROGER' : '-' }}</span>
+                </template>
+              </Column>
+              <Column header="AIGU">
+                <template #body="slotProps">
+                  <span>{{ slotProps.data.AIGU ? 'AIGU' : '-' }}</span>
+                </template>
+              </Column>
+              <Column header="REHAB">
+                <template #body="slotProps">
+                  <span>{{ slotProps.data.REHAB ? 'REHAB' : '-' }}</span>
+                </template>
+              </Column>
+              <Column header="AMBU">
+                <template #body="slotProps">
+                  <span>{{ slotProps.data.AMBU ? 'AMBU' : '-' }}</span>
+                </template>
+              </Column>
+              <Column header="FR">
+                <template #body="slotProps">
+                  <span>{{ slotProps.data.FR ? 'FR' : '-' }}</span>
+                </template>
+              </Column>
+              <Column header="DE">
+                <template #body="slotProps">
+                  <span>{{ slotProps.data.DE ? 'DE' : '-' }}</span>
+                </template>
+              </Column>
+              <Column header="Nouveaux Critères Validés">
+                <template #body="slotProps">
+                  <span>{{ getNewValidatedCriteria(slotProps.data).join(', ') }}</span>
+                </template>
+              </Column>
+              <!-- Colonnes de vote répétées -->
+              <Column header="Choix 1">
+                <template #body="slotProps">
+                  <RadioButton
+                    v-model="selectedPlaces[0]"
+                    :value="slotProps.data"
+                    :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 0)"
+                  />
+                </template>
+              </Column>
+              <Column header="Choix 2">
+                <template #body="slotProps">
+                  <RadioButton
+                    v-model="selectedPlaces[1]"
+                    :value="slotProps.data"
+                    :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 1)"
+                  />
+                </template>
+              </Column>
+              <Column header="Choix 3">
+                <template #body="slotProps">
+                  <RadioButton
+                    v-model="selectedPlaces[2]"
+                    :value="slotProps.data"
+                    :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 2)"
+                  />
+                </template>
+              </Column>
+              <Column header="Choix 4">
+                <template #body="slotProps">
+                  <RadioButton
+                    v-model="selectedPlaces[3]"
+                    :value="slotProps.data"
+                    :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 3)"
+                  />
+                </template>
+              </Column>
+              <Column header="Choix 5">
+                <template #body="slotProps">
+                  <RadioButton
+                    v-model="selectedPlaces[4]"
+                    :value="slotProps.data"
+                    :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 4)"
+                  />
+                </template>
+              </Column>
+              <!-- Colonnes d'agrégation des votes répétées -->
+              <Column header="Votes Top 1">
+                <template #body="slotProps">
+                  <span>{{ getVoteCount(slotProps.data).top1 || 0 }}</span>
+                </template>
+              </Column>
+              <Column header="Votes Top 2">
+                <template #body="slotProps">
+                  <span>{{ getVoteCount(slotProps.data).top2 || 0 }}</span>
+                </template>
+              </Column>
+              <Column header="Votes Top 3">
+                <template #body="slotProps">
+                  <span>{{ getVoteCount(slotProps.data).top3 || 0 }}</span>
+                </template>
+              </Column>
+              <Column header="Votes Top 4">
+                <template #body="slotProps">
+                  <span>{{ getVoteCount(slotProps.data).top4 || 0 }}</span>
+                </template>
+              </Column>
+              <Column header="Votes Top 5">
+                <template #body="slotProps">
+                  <span>{{ getVoteCount(slotProps.data).top5 || 0 }}</span>
+                </template>
+              </Column>
+              <Column header="Total Votes">
+                <template #body="slotProps">
+                  <span>{{ getVoteCount(slotProps.data).total || 0 }}</span>
+                </template>
+              </Column>
+            </DataTable>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action de vote -->
+      <div class="vote-action">
+        <Button v-if="!voteAlreadyCast" @click="sendVote">Envoyer</Button>
+        <div v-else>
+          <p>Votre vote :</p>
+          <ul>
+            <li v-for="(vote, index) in votedPlaces" :key="index">
+              Choix {{ index + 1 }} : {{ vote.placeName }} ({{ vote.InstitutionName }})
+            </li>
+          </ul>
+          <Button @click="revote">Revoter</Button>
+        </div>
+      </div>
     </div>
+
+    <!-- Dialogue de confirmation -->
+    <Dialog
+      v-model:visible="dialogVisible"
+      header="Confirmation de Vote"
+      :modal="true"
+      :closable="false"
+      class="custom-dialog"
+    >
+      <p>{{ dialogMessage }}</p>
+      <template #footer>
+        <button class="p-button p-component" @click="closeDialog">OK</button>
+      </template>
+    </Dialog>
   </div>
 </template>
 
 <script>
-import { db, auth } from '../../../../firebase.js';
-import { ref, onValue, set, get, update } from "firebase/database";
-import { onAuthStateChanged } from "firebase/auth";
 import Navbar from '@/components/Utils/Navbar.vue';
-import ResumStageUserProfile from '@/components/UserProfile/ResumStageUserProfile.vue';
-import AlertModal from './AlertModal.vue'; // Import du composant AlertModal
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
+import RadioButton from 'primevue/radiobutton';
+import Dialog from 'primevue/dialog';
+import Button from 'primevue/button';
+import ValidatedCriteriaSection from '@/components/UserProfile/ValidatedCriteriaSection.vue';
+import CardNameProfile from '@/components/Bibliotheque/Profile/CardNameProfile.vue';
+import { ref, onValue, update, set, remove } from "firebase/database";
+import { db } from '@/firebase';
+import { getAuth } from "firebase/auth";
 
 export default {
-  name: "VotationView",
+  name: 'VotationView',
   components: {
     Navbar,
-    ResumStageUserProfile,
-    AlertModal
-
+    DataTable,
+    Column,
+    RadioButton,
+    Dialog,
+    Button,
+    ValidatedCriteriaSection,
+    CardNameProfile
   },
   data() {
     return {
-      etudiants: [],
-      selectedClass: null, // À définir dynamiquement
-      selectedPFP: 'PFP1A',   // À définir dynamiquement
-      stages: [],
-      selectedStage: null,
-      currentStudent: null,
-      currentUserEmail: null,
-      validationMessage: null,
-      missingFields: [],
-      languageIssue: null,
-      voteResult: null,
-      takenStages: new Set(),
-      criteriaKeys: ['FR', 'ALL', 'AIGU', 'REHAB', 'MSQ', 'SYSINT', 'NEUROGER', 'AMBU'],
-      selectedChoices: {
-        choice1: null,
-        choice2: null,
-        choice3: null,
-        choice4: null,
-        choice5: null,
-      },
-      voteCounts: {}, // Object to hold vote counts per stage
-      alertVisible: false, // Propriété pour contrôler la visibilité du modal
-      alertMessage: '' // Propriété pour stocker le message à afficher
+      places: [],
+      userProfile: {},
+      // Tableau réactif pour 5 choix de vote
+      selectedPlaces: [null, null, null, null, null],
+      votedPlaces: [null, null, null, null, null],
+      dialogVisible: false,
+      dialogMessage: "",
+      currentUserId: null,
+      // Objet contenant l'agrégation des votes par place
+      votesAggregation: {}
     };
   },
   computed: {
-    filteredStages() {
-      return this.stages.filter(stage => this.isStageVisible(stage));
+    allCriteriaValidated() {
+      return Object.values(this.aggregatedPFP).every(value => value === true);
     },
-    allChoicesSelected() {
-      return Object.values(this.selectedChoices).every(choice => choice !== null);
+    expandedPFP4() {
+      const rows = [];
+      const sorted = this.places.sort((a, b) =>
+        a.NomPlace.localeCompare(b.NomPlace)
+      );
+      sorted.forEach(place => {
+        const count = parseInt(place.PFP4 || '0');
+        if (!isNaN(count) && count >= 1) {
+          for (let i = 1; i <= count; i++) {
+            const studentKey = `selectedEtudiantBA22PFP4-${i}`;
+            const alreadySelected =
+              (i === 1 && place.selectedEtudiant && place.selectedEtudiant.trim() !== "") ||
+              (place[studentKey] && place[studentKey].trim() !== "");
+            if (!alreadySelected) {
+              const dynamicKey = `selectedActiveBA22PFP4-${i}`;
+              rows.push({
+                ...place,
+                seatIndex: i,
+                [dynamicKey]: place[dynamicKey] !== undefined ? place[dynamicKey] : false
+              });
+            }
+          }
+        }
+      });
+      return rows;
     },
-    hasVoted() {
-      return this.voteResult && Object.keys(this.voteResult).length > 0;
-    }
-  },
-  watch: {
-    selectedPFP(newPFP) {
-      console.log("selectedPFP changed:", newPFP);
-      this.fetchStagesData();
-      this.fetchTakenStages();
-      this.fetchVoteCounts();
+    availablePlaces() {
+      if (this.allCriteriaValidated) {
+        return this.expandedPFP4;
+      } else {
+        return this.expandedPFP4.filter(place => this.getNewValidatedCriteria(place).length > 0);
+      }
     },
-    selectedClass(newClass) {
-      console.log("selectedClass changed:", newClass);
-      this.fetchStudentsData();
-      this.fetchStagesData();
-      this.fetchTakenStages();
-      this.fetchVoteCounts();
+    groupedByCriteriaCount() {
+      const groups = {};
+      this.availablePlaces.forEach(place => {
+        const count = this.getNewValidatedCriteria(place).length;
+        if (groups[count]) {
+          groups[count].push(place);
+        } else {
+          groups[count] = [place];
+        }
+      });
+      const allGroups = Object.keys(groups)
+        .map(count => ({
+          criteriaCount: parseInt(count),
+          places: groups[count]
+        }))
+        .sort((a, b) => b.criteriaCount - a.criteriaCount);
+
+      const groupsWithMoreThanFive = allGroups.filter(g => g.places.length > 5);
+      if (groupsWithMoreThanFive.length > 0) {
+        const maxCriteriaCount = Math.max(...groupsWithMoreThanFive.map(g => g.criteriaCount));
+        return allGroups.filter(g => g.criteriaCount === maxCriteriaCount);
+      } else {
+        return allGroups;
+      }
+    },
+    totalSelectedOut() {
+      return this.availablePlaces.filter(
+        row => row[`selectedActiveBA22PFP4-${row.seatIndex}`] === true
+      ).length;
+    },
+    aggregatedPFP() {
+      const fields = {
+        AIGU: false,
+        AMBU: false,
+        DE: false,
+        FR: false,
+        MSQ: false,
+        NEUROGER: false,
+        REHAB: false,
+        SYSINT: false
+      };
+      if (this.userProfile && this.userProfile.PFP_valided) {
+        this.userProfile.PFP_valided.forEach(item => {
+          fields.AIGU = fields.AIGU || item.AIGU;
+          fields.AMBU = fields.AMBU || item.AMBU;
+          fields.DE = fields.DE || item.DE;
+          fields.FR = fields.FR || item.FR;
+          fields.MSQ = fields.MSQ || item.MSQ;
+          fields.NEUROGER = fields.NEUROGER || item.NEUROGER;
+          fields.REHAB = fields.REHAB || item.REHAB;
+          fields.SYSINT = fields.SYSINT || item.SYSINT;
+        });
+      }
+      return fields;
+    },
+    voteAlreadyCast() {
+      // On considère que si le premier vote est renseigné, le vote est validé
+      return this.votedPlaces[0] !== null;
     }
   },
   methods: {
-
-
-    showAlertModal(message) {
-      this.alertMessage = message;
-      this.alertVisible = true;
+    goBackToProfile() {
+      this.$router.push({ name: 'HistoriquePFP' });
     },
-
-
-    /**
-     * Récupère les données de l'institution à partir de son ID.
-     * @param {string} institutionId - L'ID de l'institution.
-     * @returns {Object} Les données de l'institution ou un objet vide si non trouvé.
-     */
+    checkExistingVote() {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (user) {
+        const voteRef = ref(db, `VotationBA22PFP4/${user.uid}`);
+        onValue(voteRef, (snapshot) => {
+          const vote = snapshot.val();
+          if (vote && vote.votes) {
+            this.votedPlaces = vote.votes;
+            // Recopie dans selectedPlaces pour afficher la sélection existante
+            this.selectedPlaces = vote.votes.slice();
+          }
+        }, { onlyOnce: true });
+      }
+    },
     async fetchInstitutionData(institutionId) {
       if (!institutionId) return {};
       const institutionRef = ref(db, `Institutions/${institutionId}`);
-      try {
-        const snapshot = await get(institutionRef);
-        if (snapshot.exists()) {
-          return snapshot.val();
-        } else {
-          console.warn(`Institution avec l'ID ${institutionId} non trouvée.`);
-          return {};
-        }
-      } catch (error) {
-        console.error(`Erreur lors de la récupération de l'institution ${institutionId}:`, error);
-        return {};
-      }
-    },
-    /**
-     * Retourne les critères manquants pour un stage donné.
-     * @param {Object} stage - Le stage à évaluer.
-     * @returns {Array} Liste des critères manquants.
-     */
-    getMissingCriteria(stage) {
-      const missing = [];
-      this.criteriaKeys.forEach(key => {
-        if (!Boolean(stage[key])) {
-          missing.push(key);
-        }
-      });
-      return missing;
-    },
-    /**
-     * Détermine si un stage est sélectionnable.
-     * @param {Object} stage - Le stage à évaluer.
-     * @returns {boolean} True si sélectionnable, sinon false.
-     */
-    isStageSelectable(stage) {
-      // Ajoutez des conditions supplémentaires si nécessaire
-      return true;
-    },
-    /**
-     * Gère le changement de sélection des choix.
-     * @param {string} stageId - L'ID du stage sélectionné.
-     * @param {string} choice - Le choix (choice1, choice2, etc.).
-     */
-    handleChoiceChange(stageId, choice) {
-      if (this.selectedChoices[choice] === stageId) {
-        // Si déjà sélectionné, désélectionner
-        this.selectedChoices[choice] = null;
-      } else {
-        // Sélectionner le nouveau stage pour ce choix
-        this.selectedChoices[choice] = stageId;
-      }
-    },
-    /**
-     * Vérifie si une case à cocher doit être désactivée.
-     * @param {Object} stage - Le stage en question.
-     * @param {string} choice - Le choix (choice1, choice2, etc.).
-     * @returns {boolean} True si la case doit être désactivée, sinon false.
-     */
-    isChoiceDisabled(stage, choice) {
-      // Désactiver si le stage est déjà sélectionné pour un autre choix
-      for (const [key, value] of Object.entries(this.selectedChoices)) {
-        if (key !== choice && value === stage.IDENTIFIANT) {
-          return true;
-        }
-      }
-
-      // Désactiver si un autre stage est déjà sélectionné pour ce choix
-      if (this.selectedChoices[choice] && this.selectedChoices[choice] !== stage.IDENTIFIANT) {
-        return true;
-      }
-
-      // Désactiver si une autre case dans la même ligne est déjà sélectionnée
-      const isAnotherChoiceInRowSelected = Object.keys(this.selectedChoices).some(
-        key => key !== choice && this.selectedChoices[key] === stage.IDENTIFIANT
-      );
-      if (isAnotherChoiceInRowSelected) {
-        return true;
-      }
-
-      return false;
-    },
-    /**
-     * Soumet le vote de l'étudiant pour les places de stage sélectionnées.
-     */
-    async submitVotes() {
-      if (!this.allChoicesSelected) {
-        this.showAlertModal("Veuillez sélectionner les 5 choix avant de voter.");
-        return;
-      }
-
-      if (this.currentStudent) {
-        const { id } = this.currentStudent;
-        if (id) {
-          const votationPromises = Object.keys(this.selectedChoices).map(async (choiceKey, index) => {
-            const stageId = this.selectedChoices[choiceKey];
-            if (stageId) {
-              const stage = this.stages.find(s => s.IDENTIFIANT === stageId);
-              if (stage) {
-
-                let votationRef = "";
-                if (this.selectedPFP === "PFP1A") {
-                  votationRef = ref(db, `VotationPFP1A/${id}/choices/${choiceKey}`);
-
-                } else if (this.selectedPFP === "PFP1B") {
-                  votationRef = ref(db, `VotationPFP1B/${id}/choices/${choiceKey}`);
-
-                }
-                const votationData = {
-                  choice: index + 1, // Correction ici
-                  studentId: id,
-                  studentName: this.currentStudent.Nom,
-                  studentFirstName: this.currentStudent.Prenom,
-                  selectedStageName: stage.NomPlace,
-                  selectedStageLieu: stage.Lieu,
-                  selectedStageDomaine: stage.Domaine,
-              //    numberPlace: this.selectedPFP === "PFP1A" ? stage.PFP1A : stage.PFP1B, // Utilisation dynamique
-                  selectedStageDetails: {
-                    FR: stage.FR,
-                    ALL: stage.ALL,
-                    AIGU: stage.AIGU,
-                    REHAB: stage.REHAB,
-                    MSQ: stage.MSQ,
-                    SYSINT: stage.SYSINT,
-                    NEUROGER: stage.NEUROGER,
-                    AMBU: stage.AMBU
-                  }
-                };
-
-                // Enregistrer le choix dans Firebase
-                await set(votationRef, votationData);
-
-
-                let stageRef = "";
-                if (this.selectedPFP === "PFP1A") {
-                  stageRef = ref(db, `PFP1A-B23/${stage.IDENTIFIANT}`);
-
-                } else if (this.selectedPFP === "PFP1B") {
-                  stageRef = ref(db, `PFP1B-B23/${stage.IDENTIFIANT}`);
-
-                }
-                // Marquer la place comme prise
-                // await update(stageRef, { takenBy: id });
-
-                // Mettre à jour les comptes de votes
-                this.incrementVoteCount(stage.IDENTIFIANT, index + 1);
-
-                return votationData;
-              }
-            }
-            return null;
-          });
-
-          try {
-            const results = await Promise.all(votationPromises);
-            this.voteResult = results.filter(result => result !== null);
-            this.showAlertModal("Vos votes ont été soumis avec succès !");
-            // Optionnel: Réinitialiser les choix après soumission
-            this.resetChoices();
-            // Re-fetch vote counts pour mettre à jour l'affichage
-            this.fetchVoteCounts();
-          } catch (error) {
-            console.error("Erreur lors de la soumission des votes:", error);
-            this.showAlertModal("Une erreur est survenue lors de la soumission de vos votes. Veuillez réessayer.");
-          }
-        } else {
-          this.showAlertModal("Erreur: Informations de l'étudiant manquantes.");
-        }
-      } else {
-        this.showAlertModal("Veuillez sélectionner au moins un choix de stage.");
-      }
-    },
-    /**
-     * Réinitialise les choix sélectionnés.
-     */
-    resetChoices() {
-      this.selectedChoices = {
-        choice1: null,
-        choice2: null,
-        choice3: null,
-        choice4: null,
-        choice5: null,
-      };
-    },
-    /**
-     * Incrémente les comptes de votes pour un stage donné.
-     * @param {string} stageId - L'ID du stage.
-     * @param {number} choiceNumber - Le numéro du choix (1 à 5).
-     */
-     incrementVoteCount(stageId, choiceNumber) {
-  if (!this.voteCounts[stageId]) {
-    // Crée une nouvelle entrée directement
-    this.voteCounts[stageId] = {
-      Votation1: 0,
-      Votation2: 0,
-      Votation3: 0,
-      Votation4: 0,
-      Votation5: 0,
-      VotationTotal: 0,
-    };
-  }
-
-  const votKey = `Votation${choiceNumber}`;
-  if (this.voteCounts[stageId][votKey] !== undefined) {
-    this.voteCounts[stageId][votKey] += 1;
-    this.voteCounts[stageId]['VotationTotal'] += 1;
-  }
-},
-    /**
-     * Récupère les données des étudiants en fonction de la classe et du PFP sélectionnés.
-     */
-    async fetchStudentsData() {
-      if (!this.selectedPFP || !this.selectedClass) return;
-
-      this.etudiants = [];
-      const studentsRef = ref(db, `Students/`);
-      onValue(studentsRef, (snapshot) => {
-        const studentsData = snapshot.val();
-        if (studentsData) {
-          const transformedData = Object.keys(studentsData).map(key => ({
-            id: key,
-            Classe: studentsData[key].Classe,
-            PFPinfo: studentsData[key].PFPinfo || {},
-            ...studentsData[key]
-          })).filter(student =>
-            student.Classe === this.selectedClass &&
-            Boolean(student.PFPinfo[this.selectedPFP])
-          );
-
-          this.etudiants = transformedData;
-          this.findCurrentStudent();
-        }
+      return new Promise((resolve) => {
+        onValue(institutionRef, (snapshot) => {
+          resolve(snapshot.val() || {});
+        });
       });
     },
-    /**
-     * Récupère les données des places de stages disponibles avec PFP1A > 0.
-     */
-    async fetchStagesData() {
-      if (!this.selectedPFP || !this.selectedClass) return;
-
-      // Récupérer les places depuis Places où selectedPFP >=1
+    fetchPlacesData() {
       const placesRef = ref(db, 'Places');
-
       onValue(placesRef, async (snapshot) => {
         const placesData = snapshot.val();
         if (placesData) {
           const placePromises = Object.keys(placesData).map(async key => {
             const place = placesData[key];
-            // Filtrer par selectedPFP >=1
-            const pfpValue = parseInt(place[this.selectedPFP], 10);
-            if (isNaN(pfpValue) || pfpValue < 1) {
-              return null;
-            }
-            console.log("kex "+ key);
-            const institutionId = place.InstitutionId || place.IDPlace; // Prendre en compte InstitutionId ou IDPlace
-            const institutionData = await this.fetchInstitutionData(institutionId);
-            const keyid = institutionData.InstitutionId || institutionData.IDPlace || institutionData.key;
+            const institutionData = await this.fetchInstitutionData(place.InstitutionId || place.IDPlace);
             return {
-              IDENTIFIANT: key,
-              NomPlace: institutionData.Name || '',
-              Lieu: institutionData.Locality || '',
-              IDPlace: institutionData.InstitutionId || institutionData.IDPlace || institutionData.key || '',
-              Domaine: place.NomPlace || '', // Correction ici
-              Unit:  keyid + "-"+place.NomPlace  || '', // Correction ici
-              PFP1A: pfpValue, // Utilisation de PFP1A
-              FR: place.FR || false,
-              ALL: place.ALL || place.DE || false, // Vérifiez si 'ALL' correspond à 'ALL' dans vos données
-              AIGU: place.AIGU || false,
-              REHAB: place.REHAB || false,
-              MSQ: place.MSQ || false,
-              SYSINT: place.SYSINT || false,
-              NEUROGER: place['NEURO-GER'] || false,
-              AMBU: place.AMBU || false,
-              NbPlace1A: place.PFP1A || 0, // Assurez-vous que c'est un nombre
-              NbPlace1B: place.PFP1B || 0, // Assurez-vous que c'est un nombre
-              Name: institutionData.Name || '',
-              AccordCadreDate: institutionData.AccordCadreDate || '',
-              Canton: institutionData.Canton || '',
-              Categorie: institutionData.Category || '',
-              ConventionDate: institutionData.ConventionDate || '',
-              Remarques: place.Note || '',
-              selectedPraticiensFormateurs: place.praticiensFormateurs || []
+              ...place,
+              IdPlace: key,
+              NomPlace: place.NomPlace || '',
+              MSQ: place.MSQ === 'true' || place.MSQ === true,
+              SYSINT: place.SYSINT === 'true' || place.SYSINT === true,
+              NEUROGER: place.NEUROGER === 'true' || place.NEUROGER === true,
+              AIGU: place.AIGU === 'true' || place.AIGU === true,
+              REHAB: place.REHAB === 'true' || place.REHAB === true,
+              AMBU: place.AMBU === 'true' || place.AMBU === true,
+              FR: place.FR === 'true' || place.FR === true,
+              DE: place.DE === 'true' || place.DE === true,
+              PFP4: place.PFP4 || '0',
+              InstitutionName: institutionData.Name ||
+                institutionData.NomPlace ||
+                place.InstitutionName ||
+                'Non spécifié'
             };
           });
-
-          const fetchedStages = await Promise.all(placePromises);
-          this.stages = fetchedStages.filter(stage => stage !== null);
-
-          console.log("Stages chargés:", this.stages);
-          // Re-fetch vote counts après avoir chargé les stages
-          this.fetchVoteCounts();
+          this.places = await Promise.all(placePromises);
         }
       });
     },
-    /**
-     * Récupère les places déjà prises par d'autres étudiants.
-     */
-    async fetchTakenStages() {
-      const pfp1aRef = ref(db, 'PFP1A'); // Chemin ajusté pour PFP1A
-      onValue(pfp1aRef, (snapshot) => {
-        if (snapshot.exists()) {
-          const takenData = snapshot.val();
-          this.takenStages.clear();
-          for (const key in takenData) {
-            const takenBy = takenData[key].takenBy;
-            if (takenBy) {
-              const keyn = key.split('_')[0]; // Extraire ce qu'il y a avant "_"
-              this.takenStages.add(keyn); // Ajouter l'IDENTIFIANT des stages pris
-              console.log("Stage pris: " + keyn);
-            }
-          }
+    updateSelection(place, seatIndex, value) {
+      const dynamicKey = `selectedActiveBA22PFP4-${seatIndex}`;
+      const placeRef = ref(db, `Places/${place.IdPlace}`);
+      update(placeRef, { [dynamicKey]: value })
+        .catch((error) => {
+          console.error("Erreur updateSelection:", error);
+        });
+    },
+    fetchUserProfile() {
+      const auth = getAuth();
+      auth.onAuthStateChanged(user => {
+        if (user) {
+          this.currentUserId = user.uid;
+          const studentRef = ref(db, `Students/${user.uid}`);
+          onValue(studentRef, (snapshot) => {
+            this.userProfile = snapshot.val() || {};
+            this.checkExistingVote();
+          });
         }
       });
     },
-    /**
-     * Récupère les comptes de votes pour chaque stage.
-     */
-     async fetchVoteCounts() {
-  let votationRef = "";
-  if (this.selectedPFP === "PFP1A") {
-    votationRef = ref(db, `VotationPFP1A`);
-  } else if (this.selectedPFP === "PFP1B") {
-    votationRef = ref(db, `VotationPFP1B`);
-  }
-
-  onValue(votationRef, (snapshot) => {
-    if (snapshot.exists()) {
-      const votations = snapshot.val();
-      const counts = {};
-
-      for (const studentId in votations) {
-        const studentVotations = votations[studentId].choices;
-        if (studentVotations) {
-          for (const choiceKey in studentVotations) {
-            const vote = studentVotations[choiceKey];
-            if (vote && vote.selectedStageName && vote.selectedStageLieu && vote.selectedStageDomaine) {
-              // Trouver le stage correspondant
-              const stage = this.stages.find(s =>
-                s.NomPlace === vote.selectedStageName &&
-                s.Lieu === vote.selectedStageLieu &&
-                s.Domaine === vote.selectedStageDomaine
-              );
-
-              if (stage) {
-                // Construire la clé ra à partir de l'id de l'institution et du domaine
-                const ra = stage.IDPlace + "-" + vote.selectedStageDomaine;
-
-                const votNum = parseInt(vote.choice, 10);
-                if (isNaN(votNum) || votNum < 1 || votNum > 5) continue;
-
-                if (!counts[stage.Unit]) {
-                  counts[ra] = {
-                    Votation1: 0,
-                    Votation2: 0,
-                    Votation3: 0,
-                    Votation4: 0,
-                    Votation5: 0,
-                    VotationTotal: 0,
-                  };
-                }
-                const votKey = `Votation${votNum}`;
-                counts[ra][votKey] += 1;
-                counts[ra]['VotationTotal'] += 1;
+    fetchVotesAggregation() {
+      const votesRef = ref(db, 'VotationBA22PFP4');
+      onValue(votesRef, (snapshot) => {
+        const votesData = snapshot.val() || {};
+        const aggregation = {};
+        Object.keys(votesData).forEach(userId => {
+          const vote = votesData[userId];
+          if (vote && vote.votes) {
+            vote.votes.forEach((voteItem, index) => {
+              const placeId = voteItem.placeId;
+              if (!aggregation[placeId]) {
+                aggregation[placeId] = { top1: 0, top2: 0, top3: 0, top4: 0, top5: 0, total: 0 };
               }
-            }
+              const key = `top${index + 1}`;
+              aggregation[placeId][key] += 1;
+              aggregation[placeId].total += 1;
+            });
           }
+        });
+        this.votesAggregation = aggregation;
+      });
+    },
+    getNewValidatedCriteria(place) {
+      const criteria = [];
+      Object.keys(this.aggregatedPFP).forEach(key => {
+        if (!this.aggregatedPFP[key] && place[key]) {
+          criteria.push(key);
         }
-      }
-
-      this.voteCounts = counts;
-    } else {
-      this.voteCounts = {};
-    }
-  });
-},
-    /**
-     * Met à jour les données de l'étudiant dans Firebase.
-     * @param {Object} etudiant - L'étudiant à mettre à jour.
-     */
-    updateStudent(etudiant) {
-      const studentRef = ref(db, `Students/${etudiant.id}`);
-      set(studentRef, etudiant);
+      });
+      return criteria;
     },
-    /**
-     * Recherche et définit l'étudiant actuel basé sur l'email de l'utilisateur connecté.
-     */
-    async findCurrentStudent() {
-      console.log("Recherche de l'étudiant actuel...");
-
-      if (this.currentUserEmail) {
-        console.log("Utilisateur connecté:", this.currentUserEmail);
-
-        // Récupérer les données des utilisateurs
-        const usersRef = ref(db, 'Users');
-        try {
-          const usersSnapshot = await get(usersRef);
-          if (usersSnapshot.exists()) {
-            const usersData = usersSnapshot.val();
-
-            for (const userKey in usersData) {
-              const user = usersData[userKey];
-
-              // Vérifier si l'email correspond
-              if (user.Mail && user.Mail.toLowerCase() === this.currentUserEmail.toLowerCase()) {
-                // Récupérer les données de l'étudiant
-                const studentRef = ref(db, `Students/${userKey}`);
-                const studentSnapshot = await get(studentRef);
-
-                let classe = null;
-                let msq = null;
-                let aigu = null;
-                let neuroger = null;
-                let rehab = null;
-                let sysint = null;
-                let fr = null;
-                let all = null;
-                let pfp1a = false;
-                let pfp1b = false;
-                if (studentSnapshot.exists()) {
-                  const studentData = studentSnapshot.val();
-                  classe = studentData.Classe || null;
-                  msq = studentData.MSQ || null;
-                  aigu = studentData.AIGU || null;
-                  neuroger = studentData['NEURO-GER'] || null;
-                  rehab = studentData.REHAB || null;
-                  sysint = studentData.SYSINT || null;
-                  fr = studentData.FR || null;
-                  all = studentData.ALL || null; // Assure que 'ALL' correspond à 'ALL'
-                  pfp1a = studentData.PFP1A === "true" || studentData.PFP1A === true;
-                  pfp1b = studentData.PFP1B === "true" || studentData.PFP1B === true;
-                }
-
-                // Déterminer le PFP sélectionné
-                let selectedPFP = null;
-                if (pfp1a && !pfp1b) {
-                  selectedPFP = 'PFP1A';
-                } else if (pfp1b && !pfp1a) {
-                  selectedPFP = 'PFP1B';
-                } else if (pfp1a && pfp1b) {
-                  // Si les deux sont vrais, choisir en priorité PFP1A ou gérer selon votre logique
-                  selectedPFP = 'PFP1A'; // Priorité à PFP1A
-
-                  // Alternativement, vous pouvez demander à l'utilisateur de choisir
-                } else {
-                  // Aucun PFP sélectionné, gérer le cas (par exemple, afficher un message d'erreur)
-                  this.showAlertModal("Aucun PFP n'est sélectionné pour cet utilisateur.");
-                  return;
-                }
-                console.log("PFP sélectionné: " + selectedPFP);
-
-                this.currentStudent = {
-                  id: userKey,
-                  Classe: classe,
-                  MSQ: msq,
-                  SYSINT: sysint,
-                  NEUROGER: neuroger,
-                  REHAB: rehab,
-                  AIGU: aigu,
-                  FR: fr,
-                  ALL: all,
-                  PFP1A: pfp1a,
-                  PFP1B: pfp1b,
-                  ...user
-                };
-
-                this.selectedClass = classe;
-                this.selectedPFP = selectedPFP;
-
-                console.log("Étudiant actuel:", this.currentStudent);
-                console.log("selectedClass:", this.selectedClass);
-                console.log("selectedPFP:", this.selectedPFP);
-
-                this.checkValidation();
-                await this.fetchVoteResult(this.currentStudent.id);
-                return;
-              }
-            }
-          }
-        } catch (error) {
-          console.error("Erreur lors de la récupération des utilisateurs:", error);
-        }
-      } else {
-        this.checkValidation();
-      }
-    },
-    /**
-     * Télécharge les données des stages au format JSON.
-     */
-    downloadJSON() {
-      // Crée un objet JSON avec les données de stages, y compris l'ID du stage
-      const stagesData = this.stages.map(stage => ({
-        IDPlace: stage.IDENTIFIANT, // Ajoute l'ID du stage
-        NomPlace: stage.NomPlace,
-        Lieu: stage.Lieu,
-        Domaine: stage.Domaine,
-        FR: stage.FR,
-        ALL: stage.ALL,
-        AIGU: stage.AIGU,
-        REHAB: stage.REHAB,
-        MSQ: stage.MSQ,
-        SYSINT: stage.SYSINT,
-        NEUROGER: stage.NEUROGER,
-        AMBU: stage.AMBU,
-      }));
-
-      // Convertir l'objet en une chaîne JSON
-      const jsonContent = JSON.stringify(stagesData, null, 2);
-
-      // Créer un fichier Blob à partir de la chaîne JSON
-      const blob = new Blob([jsonContent], { type: "application/json" });
-
-      // Créer un lien pour télécharger le fichier
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "stages_data.json"; // Nom du fichier
-
-      // Simuler le clic sur le lien pour télécharger le fichier
-      link.click();
-
-      // Nettoyer l'URL pour éviter les fuites de mémoire
-      URL.revokeObjectURL(link.href);
-    },
-    /**
-     * Récupère les résultats de votation pour un étudiant donné.
-     * @param {string} studentId - L'ID de l'étudiant.
-     */
-    async fetchVoteResult(studentId) {
-      let votationRef = "";
-      if (this.selectedPFP === "PFP1A") {
-        votationRef = ref(db, `VotationPFP1A/${studentId}/choices`); // Chemin ajusté pour PFP1A
-      } else if (this.selectedPFP === "PFP1B") {
-        votationRef = ref(db, `VotationPFP1B/${studentId}/choices`); // Chemin ajusté pour PFP1B
-      }
-      try {
-        const snapshot = await get(votationRef);
-        if (snapshot.exists()) {
-          const choices = snapshot.val();
-          // Transform the choices object into an array for easier iteration in the template
-          this.voteResult = Object.keys(choices).map(choiceKey => ({
-            choiceKey,
-            ...choices[choiceKey]
-          }));
-        } else {
-          this.voteResult = null;
-        }
-      } catch (error) {
-        console.error("Erreur lors de la récupération du résultat du vote:", error);
-      }
-    },
-    /**
-     * Vérifie la validation des critères pour l'étudiant actuel.
-     */
-    checkValidation() {
-      if (!this.currentStudent) return;
-
-      const { FR, ALL, AMBU, MSQ, SYSINT, NEUROGER, REHAB, AIGU } = this.currentStudent;
-      this.missingFields = [];
-      this.languageIssue = null;
-
-      // Vérifier si toutes les cases sont décochées
-      if (
-        FR == "0" &&
-        ALL == "0" &&
-        AMBU == "0" &&
-        MSQ == "0" &&
-        SYSINT == "0" &&
-        NEUROGER == "0" &&
-        REHAB == "0" &&
-        AIGU == "0"
-      ) {
-        this.validationMessage = "Toutes les options sont disponibles";
+    sendVote() {
+      if (this.selectedPlaces.some(place => place === null)) {
+        this.dialogMessage = "Veuillez sélectionner 5 places.";
+        this.dialogVisible = true;
         return;
       }
-
-      // Vérifier les critères manquants
-      if (FR == "0") this.missingFields.push("FR");
-      if (ALL == "0") this.missingFields.push("ALL");
-      if (AMBU === "0" || AMBU === 0) this.missingFields.push("AMBU");
-      if (MSQ == "0") this.missingFields.push("MSQ");
-      if (AIGU == "0") this.missingFields.push("AIGU");
-      if (SYSINT == "0") this.missingFields.push("SYSINT");
-      if (NEUROGER == "0") this.missingFields.push("NEUROGER");
-      if (REHAB == "0") this.missingFields.push("REHAB");
-
-      if (this.missingFields.length > 0) {
-        this.validationMessage = `Manque : ${this.missingFields.join(", ")}`;
+      const selectedIds = this.selectedPlaces.map(place => place.IdPlace);
+      if (new Set(selectedIds).size < 5) {
+        this.dialogMessage = "Veuillez sélectionner 5 places différentes.";
+        this.dialogVisible = true;
+        return;
+      }
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (!user) {
+        this.dialogMessage = "Utilisateur non connecté.";
+        this.dialogVisible = true;
+        return;
+      }
+      const voteData = {
+        studentId: user.uid,
+        studentName: this.userProfile.Nom || this.userProfile.name || "",
+        studentPrenom: this.userProfile.Prenom || "",
+        votes: this.selectedPlaces.map(place => ({
+          placeId: place.IdPlace,
+          placeName: place.NomPlace,
+          InstitutionName: place.InstitutionName,
+          criteriaValidating: this.getNewValidatedCriteria(place)
+        })),
+        timestamp: Date.now()
+      };
+      const voteRef = ref(db, `VotationBA22PFP4/${user.uid}`);
+      set(voteRef, voteData)
+        .then(() => {
+          this.dialogMessage = "Vous avez voté pour les places : " +
+            this.selectedPlaces.map((place, index) => `Choix ${index + 1}: ${place.NomPlace} (${place.InstitutionName})`).join(' | ');
+          this.dialogVisible = true;
+          this.votedPlaces = this.selectedPlaces.slice();
+        })
+        .catch((error) => {
+          console.error("Erreur d'envoi de vote :", error);
+          this.dialogMessage = "Erreur d'envoi de vote, veuillez réessayer.";
+          this.dialogVisible = true;
+        });
+    },
+    revote() {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (user) {
+        const voteRef = ref(db, `VotationBA22PFP4/${user.uid}`);
+        remove(voteRef)
+          .then(() => {
+            this.votedPlaces = [null, null, null, null, null];
+            this.selectedPlaces = [null, null, null, null, null];
+          })
+          .catch((error) => {
+            console.error("Erreur de suppression du vote :", error);
+            this.dialogMessage = "Erreur lors de la suppression de votre vote.";
+            this.dialogVisible = true;
+          });
       } else {
-        this.validationMessage = "Tout validé";
+        this.votedPlaces = [null, null, null, null, null];
+        this.selectedPlaces = [null, null, null, null, null];
       }
     },
-    /**
-     * Détermine si une place de stage est visible (non prise).
-     * @param {Object} stage - Le stage à évaluer.
-     * @returns {boolean} True si visible, sinon false.
-     */
-    isStageVisible(stage) {
-      console.log(`Vérification de la visibilité pour le stage: ${stage.IDENTIFIANT}`);
-      // Vérifier si la place est déjà prise par un autre étudiant
-      if (this.takenStages.has(stage.IDENTIFIANT)) {
-        return false;
-      }
-
-      // Filtrage supplémentaire basé sur les critères de l'étudiant actuel
-      if (this.currentStudent) {
-        const missing = this.getMissingCriteria(stage);
-        // Vous pouvez ajouter des conditions supplémentaires ici si nécessaire
-      }
-
-      return true;
+    closeDialog() {
+      this.dialogVisible = false;
+    },
+    isPlaceDisabled(place, colIndex) {
+      // Interdire la sélection d'une même place sur plusieurs colonnes
+      return this.selectedPlaces.some((p, index) => index !== colIndex && p && p.IdPlace === place.IdPlace);
+    },
+    getVoteCount(place) {
+      return this.votesAggregation[place.IdPlace] || { top1: 0, top2: 0, top3: 0, top4: 0, top5: 0, total: 0 };
     }
   },
-  async mounted() {
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        this.currentUserEmail = user.email;
-        this.findCurrentStudent();
-      } else {
-        this.currentUserEmail = null;
-        this.currentStudent = null;
-      }
-    });
-    // Les données seront chargées après avoir défini selectedClass et selectedPFP dans findCurrentStudent
+  mounted() {
+    this.fetchPlacesData();
+    this.fetchUserProfile();
+    this.fetchVotesAggregation();
   }
 };
 </script>
 
 <style scoped>
-/* Styles existants */
-.table-striped tbody tr:nth-of-type(odd) {
-  background-color: rgba(0, 0, 0, 0.05);
-}
-
-.text-center {
+.page-title {
+  margin-bottom: 20px;
   text-align: center;
 }
 
-.flex {
-  display: flex;
-}
-
-.w-full {
-  width: 100%;
-}
-
-.w-5 {
-  width: 20%;
-}
-
-.w-8 {
-  width: 80%;
-}
-
-.group-header {
-  background-color: var(--surface-card);
-  font-weight: bold;
-}
-
-.group-header td {
-  text-align: left;
-}
-
-.btn-primary {
-  margin: 10px;
-}
-
-.btn-success {
-  margin: 5px;
-}
-
-.btn-warning {
-  color: white;
-}
-
-.btn-danger {
-  color: red;
-}
-
-.recoupe {
-  background-color: var(--surface-card);
+.container {
   padding: 20px;
-  border-radius: 5px;
 }
 
-.recoupe h3 {
-  margin-bottom: 15px;
-}
-
-.recoupe ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-.recoupe li {
-  margin-bottom: 5px;
-}
-
-/* Styles pour le modal */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-}
-
-.modal-content {
+.profile-info {
+  margin-bottom: 20px;
+  padding: 10px;
   background-color: var(--surface-card);
-  padding: 30px;
-  border-radius: 8px;
-  width: 600px;
-  max-height: 80vh;
-  overflow-y: auto;
-}
-
-.modal-content h2 {
-  margin-top: 0;
-}
-
-.modal-content .form-group {
-  margin-bottom: 15px;
-}
-
-.modal-content .form-group label {
-  display: block;
-  margin-bottom: 5px;
-}
-
-.modal-content .form-group input,
-.modal-content .form-group select,
-.modal-content .form-group textarea {
-  width: 100%;
-}
-
-.modal-content .form-group input[type="checkbox"] {
-  width: auto;
-  display: inline-block;
-}
-
-.modal-content .form-group label input {
-  margin-right: 5px;
-}
-
-.modal-content .form-group.text-right {
-  text-align: right;
-}
-
-/* Conteneur principal */
-.main-container {
-  gap: 2rem;
-  display: flex;
-  flex-wrap: wrap;
-}
-
-/* Carte (section de validation, tableau, résultats, etc.) */
-.card {
-  background-color: var(--surface-card);
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  padding: 1.5rem;
-  flex: 1 1 100%;
-  margin-bottom: 1rem;
-}
-
-.card h3,
-.card h4 {
   color: var(--text-color);
-  margin-bottom: 1rem;
-}
-
-/* Table */
-.table-wrapper {
-  overflow-x: auto;
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 1rem;
-}
-
-.table th,
-.table td {
-  padding: 0.75rem;
-  text-align: center;
-  border: 1px solid var(--surface-border);
-}
-
-.table th {
-  background-color: var(--surface-200);
-  font-weight: bold;
-}
-
-.table .hover-row:hover {
-  background-color: var(--surface-hover);
-}
-
-/* Ligne d'en-tête du groupe */
-.group-header {
-  background-color: var(--surface-300);
-  font-weight: bold;
-  text-align: center;
-  color: var(--text-secondary);
-}
-
-.group-header td {
-  text-align: left;
-}
-
-/* Ligne vide entre les groupes */
-.empty-row td {
-  height: 1rem;
-  background-color: transparent;
-  border: none;
-}
-
-/* Indicateurs de validation (✔️ / ❌) */
-.text-green-500 {
-  color: green;
-}
-
-.text-red-500 {
-  color: red;
-}
-
-/* Boutons */
-.btn-primary {
-  background-color: var(--primary-color);
-  color: white;
-  padding: 0.75rem 1.5rem;
   border-radius: 4px;
-  border: none;
-  cursor: pointer;
-  font-size: 1rem;
 }
 
-.btn-primary:hover {
-  background-color: var(--primary-color-hover);
-}
-
-/* Bouton désactivé */
-.btn-primary:disabled,
-.opacity-50.cursor-not-allowed {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Résultats du vote */
-.result-section p {
-  margin: 0.5rem 0;
-}
-
-/* Style pour les cases à cocher */
-input[type="checkbox"] {
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-}
-
-/* Responsiveness */
-@media (max-width: 768px) {
-  .main-container {
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .card {
-    flex: 1 1 100%;
-  }
-}
-
-/* Styles pour la section des résultats du vote */
-.vote-result-container {
-  padding: 20px;
- /* background-color: var(--surface-card);*/
-  border-radius: 8px;
-}
-
-.vote-choices {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 20px;
-}
-
-.vote-choice {
-  flex: 1 1 calc(20% - 20px);
-  /* 5 éléments par ligne avec un espace de 20px */
+.custom-datatable .p-datatable-thead > tr > th {
   background-color: var(--surface-card);
-  border: 1px solid var(--surface-border);
-  color: var(--text-color);
-  border-radius: 8px;
-  padding: 15px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.vote-choice p {
-  margin: 5px 0;
-  font-size: 14px;
-}
-
-.vote-choice p strong {
-  color: #333333;
-}
-.text-white2 {
   color: var(--text-color);
 }
 
-.text-white2 :hover {
-  color: var();
+.custom-datatable .p-datatable-tbody > tr > td {
+  background-color: var(--surface-card);
+  color: var(--text-color);
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
 }
 
-/* Responsiveness */
-@media (max-width: 1200px) {
-  .vote-choice {
-    flex: 1 1 calc(33.333% - 20px);
-    /* 3 éléments par ligne */
-  }
+.criteria-count-section {
+  margin-bottom: 40px;
 }
 
-@media (max-width: 768px) {
-  .vote-choice {
-    flex: 1 1 calc(50% - 20px);
-    /* 2 éléments par ligne */
-  }
+.vote-action {
+  margin-top: 20px;
+  text-align: center;
 }
 
-@media (max-width: 480px) {
-  .vote-choice {
-    flex: 1 1 100%;
-    /* 1 élément par ligne */
-  }
+.vote-action button {
+  padding: 8px 16px;
+  font-size: 16px;
 }
 
-.hover-highlight {
-  position: relative;
-  cursor: pointer;
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-.hover-highlight:hover {
-  background-color: var(--surface-hover); /* Couleur de surlignement */
-  color: var(--text-color-secondary); /* Couleur du texte surligné */
+.custom-dialog {
+  width: 400px;
 }
 </style>

@@ -27,11 +27,15 @@
             <span>{{ slotProps.data.criteria || 'Aucun' }}</span>
           </template>
         </Column>
-        <Column header="Remarques">
+        <Column header="Remarque étudiant">
           <template #body="slotProps">
-            <span>{{ slotProps.data.remarques || 'Aucune' }}</span>
-            <!-- Bouton d'édition affiché en permanence -->
+            <span>{{ slotProps.data.remarqueEtudiant || 'Aucune' }}</span>
             <Button icon="pi pi-pencil" class="p-button-text" @click="openRemarkDialog(slotProps.data)" />
+          </template>
+        </Column>
+        <Column header="Remarques places">
+          <template #body="slotProps">
+            <span>{{ slotProps.data.remarquesPlaces || 'Aucune' }}</span>
           </template>
         </Column>
       </DataTable>
@@ -45,11 +49,10 @@
         </ul>
       </div>
 
-      <!-- Dialog pour modifier les remarques -->
-      <Dialog header="Modifier les remarques" v-model:visible="displayRemarkDialog" modal>
+      <!-- Dialog pour modifier le StudentNote de l'étudiant -->
+      <Dialog header="Modifier le StudentNote de l'étudiant" v-model:visible="displayRemarkDialog" modal>
         <div class="remark-dialog">
-          <textarea v-model="editedRemarks" rows="5" style="width:100%;"
-            placeholder="Saisir vos remarques ici..."></textarea>
+          <textarea v-model="editedRemarks" rows="5" style="width:100%;" placeholder="Saisir vos remarques ici..."></textarea>
           <div class="dialog-buttons" style="margin-top:1em; text-align:right;">
             <Button label="Annuler" class="p-button-text" @click="cancelRemarkEdit" />
             <Button label="Confirmer" class="p-button-success" @click="confirmRemarkUpdate" />
@@ -85,7 +88,7 @@ export default {
       dynamicSelections: {},
       institutions: {}, // données provenant de la table Institutions
       displayRemarkDialog: false,
-      selectedAssignment: null, // Contiendra l'objet de l'affectation (ligne étudiant) sélectionnée pour modification
+      selectedAssignment: null, // Objet de l'affectation (ligne étudiant) sélectionnée pour modification
       editedRemarks: ""
     };
   },
@@ -123,44 +126,55 @@ export default {
       return rows;
     },
     // Pour chaque étudiant BA22, on agrège les détails de son affectation (s'il y en a) en une seule ligne.
+    // "remarqueEtudiant" provient de student.StudentNote (table Users)
+    // "remarquesPlaces" agrège les remarques provenant des affectations (table Places)
     studentAssignments() {
       return this.ba22Students.map(student => {
         const assignments = this.expandedPFP4.filter(row => {
           const key = this.selectedKey(row);
           return row.dyn[key] && row.dyn[key] === student.id;
         });
-        if (assignments.length === 0) {
-          return {
-            id: student.id,
-            studentName: student.Prenom + " " + student.Nom,
-            institution: "",
-            nomPlace: "",
-            criteria: "",
-            remarques: "",
-            assignments: [] // aucun affectation
-          };
+        let institution = "";
+        let nomPlace = "";
+        let criteria = "";
+        let remarquesPlaces = "";
+        if (assignments.length > 0) {
+          institution = assignments.map(a => this.getInstitutionName(a)).join(" | ");
+          nomPlace = assignments.map(a => a.NomPlace).join(" | ");
+          criteria = assignments.map(a => this.getCriteriaList(a)).join(" | ");
+          remarquesPlaces = assignments.map(a => a.Remarques || "").join(" | ");
         }
-        const institution = assignments.map(a => this.getInstitutionName(a)).join(" | ");
-        const nomPlace = assignments.map(a => a.NomPlace).join(" | ");
-        const criteria = assignments.map(a => this.getCriteriaList(a)).join(" | ");
-        const remarques = assignments.map(a => a.Remarques || "").join(" | ");
         return {
           id: student.id,
-          studentName: student.Prenom + " " + student.Nom,
+          studentName: student.Nom + " " + student.Prenom,
+          prenom: student.Prenom,
+          nom: student.Nom,
           institution,
           nomPlace,
           criteria,
-          remarques,
-          assignments // stocke les affectations associées pour modification des remarques
+          remarqueEtudiant: student.StudentNote || "",
+          remarquesPlaces,
+          assignments
         };
       });
     },
-    // Tri final : d'abord les étudiants déjà placés, puis ceux encore à placer, triés par ordre alphabétique du nom.
+    // Tri final : d'abord les étudiants déjà placés, puis ceux encore à placer,
+    // triés par ordre alphabétique du **nom** puis du **prénom**.
     sortedStudentAssignments() {
       const placed = this.studentAssignments.filter(sa => sa.institution && sa.institution.trim() !== "");
       const notPlaced = this.studentAssignments.filter(sa => !sa.institution || sa.institution.trim() === "");
-      placed.sort((a, b) => a.studentName.localeCompare(b.studentName));
-      notPlaced.sort((a, b) => a.studentName.localeCompare(b.studentName));
+      
+      const sortByNomPrenom = (a, b) => {
+        const cmp = a.nom.localeCompare(b.nom);
+        if (cmp === 0) {
+          return a.prenom.localeCompare(b.prenom);
+        }
+        return cmp;
+      };
+      
+      placed.sort(sortByNomPrenom);
+      notPlaced.sort(sortByNomPrenom);
+      
       return [...placed, ...notPlaced];
     }
   },
@@ -171,33 +185,28 @@ export default {
     },
     // Construit une chaîne listant les critères validés par une place
     getCriteriaList(row) {
-  const criteria = [];
-  if (row.MSQ === true || row.MSQ === "true") criteria.push("MSQ");
-  if (row.SYSINT === true || row.SYSINT === "true") criteria.push("SYSINT");
-  if (row.NEUROGER === true || row.NEUROGER === "true") criteria.push("NEUROGER");
-  if (row.AIGU === true || row.AIGU === "true") criteria.push("AIGU");
-  if (row.REHAB === true || row.REHAB === "true") criteria.push("REHAB");
-  if (row.AMBU === true || row.AMBU === "true") criteria.push("AMBU");
-  if (row.FR === true || row.FR === "true") criteria.push("FR");
-  if (row.DE === true || row.DE === "true") criteria.push("DE");
-  return criteria.join(", ");
-},
-
+      const criteria = [];
+      if (row.MSQ === true || row.MSQ === "true") criteria.push("MSQ");
+      if (row.SYSINT === true || row.SYSINT === "true") criteria.push("SYSINT");
+      if (row.NEUROGER === true || row.NEUROGER === "true") criteria.push("NEUROGER");
+      if (row.AIGU === true || row.AIGU === "true") criteria.push("AIGU");
+      if (row.REHAB === true || row.REHAB === "true") criteria.push("REHAB");
+      if (row.AMBU === true || row.AMBU === "true") criteria.push("AMBU");
+      if (row.FR === true || row.FR === "true") criteria.push("FR");
+      if (row.DE === true || row.DE === "true") criteria.push("DE");
+      return criteria.join(", ");
+    },
     // Retourne le nom de l'institution à partir de la table Institutions
     getInstitutionName(row) {
-      console.log(row.IDPlace);
-      // Si InstitutionId est renseigné et correspond à une entrée dans institutions, renvoie le Name.
-      if (row.IDPlace) {
-        console.log(row.IDPlace.Name);
+      if (row.IDPlace && this.institutions[row.IDPlace]) {
         return this.institutions[row.IDPlace].Name || "-";
       }
-      // Sinon, retourne éventuellement le champ InstitutionName déjà présent dans l'enregistrement.
       return row.InstitutionName || 'Aucune';
     },
-    // Ouvre le dialog pour modifier les remarques (même si elles sont vides)
+    // Ouvre le dialog pour modifier le StudentNote de l'étudiant
     openRemarkDialog(assignment) {
       this.selectedAssignment = assignment;
-      this.editedRemarks = assignment.remarques || "";
+      this.editedRemarks = assignment.remarqueEtudiant || "";
       this.displayRemarkDialog = true;
     },
     cancelRemarkEdit() {
@@ -205,19 +214,18 @@ export default {
       this.selectedAssignment = null;
       this.editedRemarks = "";
     },
-    // Demande une confirmation avant de mettre à jour toutes les affectations associées à cet étudiant.
+    // Met à jour le StudentNote dans la table Users et rafraîchit les données
     confirmRemarkUpdate() {
-      if (window.confirm("Confirmez-vous la modification des remarques ?")) {
-        // Pour chaque affectation associée à cet étudiant, on met à jour le champ Note dans Firebase.
-        this.selectedAssignment.assignments.forEach(assignment => {
-          const placeRef = ref(db, `Places/${assignment.IDPlace}`);
-          update(placeRef, { Note: this.editedRemarks })
-            .catch(error => console.error("Erreur lors de la mise à jour des remarques :", error));
-        });
-        this.displayRemarkDialog = false;
-        this.selectedAssignment = null;
-        this.editedRemarks = "";
-      }
+      const userRef = ref(db, `Users/${this.selectedAssignment.id}`);
+      update(userRef, { StudentNote: this.editedRemarks })
+        .then(() => {
+          // Rafraîchit les données pour refléter la modification
+          this.fetchUsersData();
+        })
+        .catch(error => console.error("Erreur lors de la mise à jour du StudentNote :", error));
+      this.displayRemarkDialog = false;
+      this.selectedAssignment = null;
+      this.editedRemarks = "";
     },
     // Récupère les places depuis Firebase
     fetchPlacesData() {
@@ -230,8 +238,6 @@ export default {
             return {
               ...place,
               IdPlace: key,
-              // Assurez-vous que InstitutionId est présent. Par exemple, si ce champ n'existe pas,
-              // vous pouvez éventuellement le déduire d'une autre propriété ou le laisser vide.
               InstitutionId: place.InstitutionId || "",
               PFP4: place.PFP4 || '0'
             };
@@ -294,7 +300,7 @@ export default {
   margin-top: 20px;
 }
 
-/* Styles pour le dialog de modification des remarques */
+/* Styles pour le dialog de modification du StudentNote */
 .remark-dialog textarea {
   resize: vertical;
 }

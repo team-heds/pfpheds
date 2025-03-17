@@ -393,7 +393,7 @@ export default {
               Categorie: institutionData.Category || '',
               ConventionDate: institutionData.ConventionDate || '',
               Lieu: institutionData.Locality || '',
-              Remarques: place.Note || '',
+              Remarques: place.Remarques || '',
               selectedPraticiensFormateurs: place.praticiensFormateurs || [],
               InstitutionId: place.InstitutionId || '',
               fileURL: place.fileURL || null
