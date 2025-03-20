@@ -4,7 +4,7 @@
 
     <!-- Titre et bouton de retour -->
     <div class="page-title p-d-flex p-jc-between">
-      <h1>Votation</h1>
+      <h1>Votation BA22 - PFP4</h1>
     </div>
 
     <div class="container">
@@ -22,7 +22,7 @@
 
       <!-- Affichage des places disponibles -->
       <div v-if="allCriteriaValidated">
-        <h2>Toutes les places disponibles</h2>
+        <h2>Toutes les places disponibles ( {{ availablePlaces.length }} places )</h2>
         <DataTable
           :value="availablePlaces"
           class="p-datatable-sm custom-datatable"
@@ -390,103 +390,117 @@ export default {
       votesAggregation: {}
     };
   },
+
+
   computed: {
-    allCriteriaValidated() {
-      return Object.values(this.aggregatedPFP).every(value => value === true);
-    },
-    expandedPFP4() {
-      const rows = [];
-      const sorted = this.places.sort((a, b) =>
-        a.NomPlace.localeCompare(b.NomPlace)
-      );
-      sorted.forEach(place => {
-        const count = parseInt(place.PFP4 || '0');
-        if (!isNaN(count) && count >= 1) {
-          for (let i = 1; i <= count; i++) {
-            const studentKey = `selectedEtudiantBA22PFP4-${i}`;
-            const alreadySelected =
-              (i === 1 && place.selectedEtudiant && place.selectedEtudiant.trim() !== "") ||
-              (place[studentKey] && place[studentKey].trim() !== "");
-            if (!alreadySelected) {
-              const dynamicKey = `selectedActiveBA22PFP4-${i}`;
-              rows.push({
-                ...place,
-                seatIndex: i,
-                [dynamicKey]: place[dynamicKey] !== undefined ? place[dynamicKey] : false
-              });
-            }
+  // Calcule l'agrégation des critères validés à partir du profil utilisateur
+  aggregatedPFP() {
+    const fields = {
+      AIGU: false,
+      AMBU: false,
+      DE: false,
+      FR: false,
+      MSQ: false,
+      NEUROGER: false,
+      REHAB: false,
+      SYSINT: false
+    };
+    if (this.userProfile && this.userProfile.PFP_valided) {
+      this.userProfile.PFP_valided.forEach(item => {
+        fields.AIGU = fields.AIGU || item.AIGU;
+        fields.AMBU = fields.AMBU || item.AMBU;
+        fields.DE = fields.DE || item.DE;
+        fields.FR = fields.FR || item.FR;
+        fields.MSQ = fields.MSQ || item.MSQ;
+        fields.NEUROGER = fields.NEUROGER || item.NEUROGER;
+        fields.REHAB = fields.REHAB || item.REHAB;
+        fields.SYSINT = fields.SYSINT || item.SYSINT;
+      });
+    }
+    return fields;
+  },
+  // Détermine les critères manquants (non validés)
+  missingCriteria() {
+    return Object.keys(this.aggregatedPFP).filter(key => !this.aggregatedPFP[key]);
+  },
+  // Vérifie si tous les critères sont validés
+  allCriteriaValidated() {
+    return Object.values(this.aggregatedPFP).every(value => value === true);
+  },
+  // Génère dynamiquement une liste de places en fonction de la valeur de PFP4 et des places non encore attribuées
+  expandedPFP4() {
+    const rows = [];
+    // Utilisation d'une copie de l'array pour éviter de modifier this.places
+    const sorted = this.places.slice().sort((a, b) =>
+      a.NomPlace.localeCompare(b.NomPlace)
+    );
+    sorted.forEach(place => {
+      const count = parseInt(place.PFP4 || '0');
+      if (!isNaN(count) && count >= 1) {
+        for (let i = 1; i <= count; i++) {
+          const studentKey = `selectedEtudiantBA22PFP4-${i}`;
+          const alreadySelected =
+            (i === 1 && place.selectedEtudiant && place.selectedEtudiant.trim() !== "") ||
+            (place[studentKey] && place[studentKey].trim() !== "");
+          if (!alreadySelected) {
+            const dynamicKey = `selectedActiveBA22PFP4-${i}`;
+            rows.push({
+              ...place,
+              seatIndex: i,
+              [dynamicKey]: place[dynamicKey] !== undefined ? place[dynamicKey] : false
+            });
           }
         }
-      });
-      return rows;
-    },
-    availablePlaces() {
-      if (this.allCriteriaValidated) {
-        return this.expandedPFP4;
-      } else {
-        return this.expandedPFP4.filter(place => this.getNewValidatedCriteria(place).length > 0);
       }
-    },
-    groupedByCriteriaCount() {
-      const groups = {};
-      this.availablePlaces.forEach(place => {
-        const count = this.getNewValidatedCriteria(place).length;
-        if (groups[count]) {
-          groups[count].push(place);
-        } else {
-          groups[count] = [place];
-        }
-      });
-      const allGroups = Object.keys(groups)
-        .map(count => ({
-          criteriaCount: parseInt(count),
-          places: groups[count]
-        }))
-        .sort((a, b) => b.criteriaCount - a.criteriaCount);
-
-      const groupsWithMoreThanFive = allGroups.filter(g => g.places.length > 5);
-      if (groupsWithMoreThanFive.length > 0) {
-        const maxCriteriaCount = Math.max(...groupsWithMoreThanFive.map(g => g.criteriaCount));
-        return allGroups.filter(g => g.criteriaCount === maxCriteriaCount);
-      } else {
-        return allGroups;
-      }
-    },
-    totalSelectedOut() {
-      return this.availablePlaces.filter(
-        row => row[`selectedActiveBA22PFP4-${row.seatIndex}`] === true
-      ).length;
-    },
-    aggregatedPFP() {
-      const fields = {
-        AIGU: false,
-        AMBU: false,
-        DE: false,
-        FR: false,
-        MSQ: false,
-        NEUROGER: false,
-        REHAB: false,
-        SYSINT: false
-      };
-      if (this.userProfile && this.userProfile.PFP_valided) {
-        this.userProfile.PFP_valided.forEach(item => {
-          fields.AIGU = fields.AIGU || item.AIGU;
-          fields.AMBU = fields.AMBU || item.AMBU;
-          fields.DE = fields.DE || item.DE;
-          fields.FR = fields.FR || item.FR;
-          fields.MSQ = fields.MSQ || item.MSQ;
-          fields.NEUROGER = fields.NEUROGER || item.NEUROGER;
-          fields.REHAB = fields.REHAB || item.REHAB;
-          fields.SYSINT = fields.SYSINT || item.SYSINT;
-        });
-      }
-      return fields;
-    },
-    voteAlreadyCast() {
-      // On considère que si le premier vote est renseigné, le vote est validé
-      return this.votedPlaces[0] !== null;
-    }
+    });
+    return rows;
   },
+  // Filtre les places disponibles en fonction de la validation globale ou partielle des critères
+  // Si le seul critère manquant est "DE", seules les places avec DE=true seront affichées
+  availablePlaces() {
+  let places = this.allCriteriaValidated
+    ? this.expandedPFP4
+    : this.expandedPFP4.filter(place => this.getNewValidatedCriteria(place).length > 0);
+  // Si parmi les critères manquants figure "DE" (allemand), on force l'affichage des places avec DE === true.
+  if (this.missingCriteria.includes('DE')) {
+    places = places.filter(place => place.DE === true);
+  }
+  return places.filter(place => place[`selectedActiveBA22PFP4-${place.seatIndex}`] === true);
+},
+
+  // Groupe les places par nombre de critères validés manquants
+groupedByCriteriaCount() {
+  const groups = {};
+  this.availablePlaces.forEach(place => {
+    const count = this.getNewValidatedCriteria(place).length;
+    if (groups[count]) {
+      groups[count].push(place);
+    } else {
+      groups[count] = [place];
+    }
+  });
+  // Création d'un tableau d'objets { criteriaCount, places } trié par criteriaCount décroissant
+  const allGroups = Object.keys(groups)
+    .map(count => ({
+      criteriaCount: parseInt(count),
+      places: groups[count]
+    }))
+    .sort((a, b) => b.criteriaCount - a.criteriaCount);
+  return allGroups;
+},
+
+  // Compte le nombre de places sélectionnées (vrai dans selectedActiveBA22PFP4-X)
+  totalSelectedOut() {
+    return this.availablePlaces.filter(
+      row => row[`selectedActiveBA22PFP4-${row.seatIndex}`] === true
+    ).length;
+  },
+  // Considère qu'un vote est validé si le premier choix a été renseigné
+  voteAlreadyCast() {
+    return this.votedPlaces[0] !== null;
+  }
+}
+,
   methods: {
     goBackToProfile() {
       this.$router.push({ name: 'HistoriquePFP' });

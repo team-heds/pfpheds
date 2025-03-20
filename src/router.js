@@ -72,6 +72,7 @@ import SearchResults from '@/components/Utils/SearchResults.vue'
 // Define your routes
 const routes = [
   { path: '/', component: LoginHome, name: 'LoginHome',   props: true   }, // Fil d'actualité
+  { path: '/home', component: LoginHome, name: 'LoginHome',   props: true   }, // Fil d'actualité
   { path: '/feed', component: NewsFeed, name: 'NewsFeed',   props: true, meta: { requiresAuth: true } }, // Fil d'actualité
   { path: '/mention/:group', component: MentionGroupPage, name: 'MentionGroupPage', props: true, meta: { requiresAuth: true, requiredRole: true }},
   { path: '/hashtag/:hashtag', component: HashtagPage, name: 'HashtagPage', props: true, meta: { requiresAuth: true } },
@@ -195,9 +196,11 @@ router.beforeEach(async (to, from, next) => {
   if (to.matched.some(record => record.meta.requiresAuth)) {
     if (user) {
       const userId = user.uid;
+      console.log(userId);
       const rolesRef = dbRef(db, `Users/${userId}/Roles`);
       const snapshot = await dbGet(rolesRef);
       const roles = snapshot.val();
+      console.log(roles);
 
       if (roles) {
         const userRoles = Object.keys(roles).filter(role => roles[role]); // Récupération des rôles actifs de l'utilisateur
@@ -219,7 +222,7 @@ router.beforeEach(async (to, from, next) => {
         }
       } else {
         alert('Accès refusé : Aucun rôle trouvé.');
-        return next('/'); // Redirigez vers une page par défaut
+        return next('/home'); // Redirigez vers une page par défaut
       }
     } else {
       alert('Vous devez être connecté pour accéder à cette page.');
