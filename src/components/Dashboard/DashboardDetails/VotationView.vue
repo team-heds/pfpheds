@@ -8,12 +8,8 @@
     </div>
 
     <div class="container">
-      <Button
-        label="Retour Profil"
-        icon="pi pi-arrow-left"
-        class="p-button-outlined m-2 align-content-end justify-content-end"
-        @click="goBackToProfile"
-      />
+      <Button label="Retour Profil" icon="pi pi-arrow-left"
+        class="p-button-outlined m-2 align-content-end justify-content-end" @click="goBackToProfile" />
 
       <!-- Affichage du profil étudiant -->
       <div v-if="userProfile && Object.keys(userProfile).length">
@@ -23,20 +19,16 @@
       <!-- Affichage des places disponibles -->
       <div v-if="allCriteriaValidated">
         <h2>Toutes les places disponibles ( {{ availablePlaces.length }} places )</h2>
-        <DataTable
-          :value="availablePlaces"
-          class="p-datatable-sm custom-datatable"
-          responsiveLayout="scroll"
-        >
+        <DataTable :value="availablePlaces" class="p-datatable-sm custom-datatable" responsiveLayout="scroll">
           <!-- Colonne Institution avec lien -->
           <Column header="Institution">
-                <template #body="slotProps">
-                 
-                  <a target="_blank" :href="`${slotProps.data.url}`">
-      <span>{{ slotProps.data.InstitutionName || 'Non spécifié' }}</span>
-    </a>
-                </template>
-              </Column>
+            <template #body="slotProps">
+
+              <a target="_blank" :href="`${slotProps.data.url}`">
+                <span>{{ slotProps.data.InstitutionName || 'Non spécifié' }}</span>
+              </a>
+            </template>
+          </Column>
 
           <!-- Autres colonnes d'informations -->
           <Column header="Nom de la Place">
@@ -46,10 +38,10 @@
           </Column>
 
           <Column header="Catégorie ">
-                <template #body="slotProps">
-                  <span>{{ slotProps.data.InstitutionCategory }}</span>
-                </template>
-              </Column>
+            <template #body="slotProps">
+              <span>{{ slotProps.data.InstitutionCategory }}</span>
+            </template>
+          </Column>
           <Column header="MSQ">
             <template #body="slotProps">
               <span>{{ slotProps.data.MSQ ? 'MSQ' : '-' }}</span>
@@ -99,47 +91,32 @@
           <!-- Colonnes de vote (Choix 1 à 5) -->
           <Column header="Choix 1">
             <template #body="slotProps">
-              <RadioButton
-                v-model="selectedPlaces[0]"
-                :value="slotProps.data"
-                :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 0)"
-              />
+              <RadioButton v-model="selectedPlaces[0]" :value="slotProps.data"
+                :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 0)" />
             </template>
           </Column>
           <Column header="Choix 2">
             <template #body="slotProps">
-              <RadioButton
-                v-model="selectedPlaces[1]"
-                :value="slotProps.data"
-                :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 1)"
-              />
+              <RadioButton v-model="selectedPlaces[1]" :value="slotProps.data"
+                :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 1)" />
             </template>
           </Column>
           <Column header="Choix 3">
             <template #body="slotProps">
-              <RadioButton
-                v-model="selectedPlaces[2]"
-                :value="slotProps.data"
-                :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 2)"
-              />
+              <RadioButton v-model="selectedPlaces[2]" :value="slotProps.data"
+                :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 2)" />
             </template>
           </Column>
           <Column header="Choix 4">
             <template #body="slotProps">
-              <RadioButton
-                v-model="selectedPlaces[3]"
-                :value="slotProps.data"
-                :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 3)"
-              />
+              <RadioButton v-model="selectedPlaces[3]" :value="slotProps.data"
+                :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 3)" />
             </template>
           </Column>
           <Column header="Choix 5">
             <template #body="slotProps">
-              <RadioButton
-                v-model="selectedPlaces[4]"
-                :value="slotProps.data"
-                :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 4)"
-              />
+              <RadioButton v-model="selectedPlaces[4]" :value="slotProps.data"
+                :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 4)" />
             </template>
           </Column>
 
@@ -179,29 +156,22 @@
 
       <!-- En cas de critères non validés, affichage groupé par nombre de critères validés -->
       <div v-else>
-        <div
-    v-for="group in displayedGroups"
-    :key="group.criteriaCount"
-    class="criteria-count-section"
-  >
-    <div v-if="group.criteriaCount > 0">
-      <h2>
-        Nombre de places validant {{ group.criteriaCount }} critère
-        <span v-if="group.criteriaCount > 1">s</span> manquant
-        <span v-if="group.criteriaCount > 1">s</span>
-        ({{ group.places.length }} places)
-      </h2>
-      <DataTable
-        :value="group.places"
-        class="p-datatable-sm custom-datatable text-center"
-        responsiveLayout="scroll"
-      >
+        <div v-for="group in displayedGroups" :key="group.criteriaCount" class="criteria-count-section">
+          <div v-if="group.criteriaCount > 0">
+            <h2>
+              Nombre de places validant {{ group.criteriaCount }} critère
+              <span v-if="group.criteriaCount > 1">s</span> manquant
+              <span v-if="group.criteriaCount > 1">s</span>
+              ({{ group.places.length }} places)
+            </h2>
+            <DataTable :value="group.places" class="p-datatable-sm custom-datatable text-center"
+              responsiveLayout="scroll">
               <Column header="Institution">
                 <template #body="slotProps">
-                 
+
                   <a target="_blank" :href="`${slotProps.data.url}`">
-      <span>{{ slotProps.data.InstitutionName || 'Non spécifié' }}</span>
-    </a>
+                    <span>{{ slotProps.data.InstitutionName || 'Non spécifié' }}</span>
+                  </a>
                 </template>
               </Column>
               <Column header="Nom de la Place">
@@ -216,7 +186,7 @@
                 </template>
               </Column>
 
-              
+
               <Column header="MSQ">
                 <template #body="slotProps">
                   <span>{{ slotProps.data.MSQ ? 'MSQ' : '-' }}</span>
@@ -265,47 +235,32 @@
               <!-- Colonnes de vote répétées -->
               <Column header="Choix 1">
                 <template #body="slotProps">
-                  <RadioButton
-                    v-model="selectedPlaces[0]"
-                    :value="slotProps.data"
-                    :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 0)"
-                  />
+                  <RadioButton v-model="selectedPlaces[0]" :value="slotProps.data"
+                    :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 0)" />
                 </template>
               </Column>
               <Column header="Choix 2">
                 <template #body="slotProps">
-                  <RadioButton
-                    v-model="selectedPlaces[1]"
-                    :value="slotProps.data"
-                    :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 1)"
-                  />
+                  <RadioButton v-model="selectedPlaces[1]" :value="slotProps.data"
+                    :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 1)" />
                 </template>
               </Column>
               <Column header="Choix 3">
                 <template #body="slotProps">
-                  <RadioButton
-                    v-model="selectedPlaces[2]"
-                    :value="slotProps.data"
-                    :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 2)"
-                  />
+                  <RadioButton v-model="selectedPlaces[2]" :value="slotProps.data"
+                    :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 2)" />
                 </template>
               </Column>
               <Column header="Choix 4">
                 <template #body="slotProps">
-                  <RadioButton
-                    v-model="selectedPlaces[3]"
-                    :value="slotProps.data"
-                    :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 3)"
-                  />
+                  <RadioButton v-model="selectedPlaces[3]" :value="slotProps.data"
+                    :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 3)" />
                 </template>
               </Column>
               <Column header="Choix 5">
                 <template #body="slotProps">
-                  <RadioButton
-                    v-model="selectedPlaces[4]"
-                    :value="slotProps.data"
-                    :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 4)"
-                  />
+                  <RadioButton v-model="selectedPlaces[4]" :value="slotProps.data"
+                    :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 4)" />
                 </template>
               </Column>
               <!-- Colonnes d'agrégation des votes répétées -->
@@ -360,13 +315,8 @@
     </div>
 
     <!-- Dialogue de confirmation -->
-    <Dialog
-      v-model:visible="dialogVisible"
-      header="Confirmation de Vote"
-      :modal="true"
-      :closable="false"
-      class="custom-dialog"
-    >
+    <Dialog v-model:visible="dialogVisible" header="Confirmation de Vote" :modal="true" :closable="false"
+      class="custom-dialog">
       <p>{{ dialogMessage }}</p>
       <template #footer>
         <button class="p-button p-component" @click="closeDialog">OK</button>
@@ -428,36 +378,36 @@ export default {
   },
   computed: {
     groupedByCriteriaCount() {
-    const groups = {};
-    this.availablePlaces.forEach(place => {
-      const count = this.getNewValidatedCriteria(place).length;
-      if (groups[count]) {
-        groups[count].push(place);
-      } else {
-        groups[count] = [place];
-      }
-    });
-    const allGroups = Object.keys(groups)
-      .map(count => ({
-        criteriaCount: parseInt(count),
-        places: groups[count]
-      }))
-      .sort((a, b) => b.criteriaCount - a.criteriaCount);
-    return allGroups;
-  },
+      const groups = {};
+      this.availablePlaces.forEach(place => {
+        const count = this.getNewValidatedCriteria(place).length;
+        if (groups[count]) {
+          groups[count].push(place);
+        } else {
+          groups[count] = [place];
+        }
+      });
+      const allGroups = Object.keys(groups)
+        .map(count => ({
+          criteriaCount: parseInt(count),
+          places: groups[count]
+        }))
+        .sort((a, b) => b.criteriaCount - a.criteriaCount);
+      return allGroups;
+    },
 
-  displayedGroups() {
-    // Si le premier groupe contient plus de 5 places, on affiche uniquement ce groupe,
-    // sinon on affiche tous les groupes.
-    if (
-      this.groupedByCriteriaCount.length > 0 &&
-      this.groupedByCriteriaCount[0].places.length > 5
-    ) {
-      return [this.groupedByCriteriaCount[0]];
-    } else {
-      return this.groupedByCriteriaCount;
-    }
-  },
+    displayedGroups() {
+      // Si le premier groupe contient plus de 5 places, on affiche uniquement ce groupe,
+      // sinon on affiche tous les groupes.
+      if (
+        this.groupedByCriteriaCount.length > 0 &&
+        this.groupedByCriteriaCount[0].places.length > 5
+      ) {
+        return [this.groupedByCriteriaCount[0]];
+      } else {
+        return this.groupedByCriteriaCount;
+      }
+    },
     // Agrégation des critères validés selon le profil utilisateur
     aggregatedPFP() {
       const fields = {
@@ -535,29 +485,29 @@ export default {
   methods: {
 
     async getNameInstitutionById(institutionId) {
-    const institutionData = await this.fetchInstitutionData(institutionId);
-    return institutionData.Name || institutionId;
-  },
+      const institutionData = await this.fetchInstitutionData(institutionId);
+      return institutionData.Name || institutionId;
+    },
 
     checkUserAssignedPlace(placesData) {
       console.log("yes1")
-    for (const key in placesData) {
-      const place = placesData[key];
-      // Récupère le nombre de places (stocké dans PFP4, ici supposé être un nombre ou une chaîne numérique)
-      console.log("yes13")
+      for (const key in placesData) {
+        const place = placesData[key];
+        // Récupère le nombre de places (stocké dans PFP4, ici supposé être un nombre ou une chaîne numérique)
+        console.log("yes13")
 
-      const count = parseInt(place.PFP4 || '0');
-      // Pour chaque siège, vérifie si la clé "selectedEtudiantBA22PFP4-i" correspond à l'ID utilisateur
-      for (let i = 1; i <= count; i++) {
-        if (place[`selectedEtudiantBA22PFP4-${i}`] === this.currentUserId) {
-          console.log("yes122")
+        const count = parseInt(place.PFP4 || '0');
+        // Pour chaque siège, vérifie si la clé "selectedEtudiantBA22PFP4-i" correspond à l'ID utilisateur
+        for (let i = 1; i <= count; i++) {
+          if (place[`selectedEtudiantBA22PFP4-${i}`] === this.currentUserId) {
+            console.log("yes122")
 
-          return place; // Retourne la place trouvée
+            return place; // Retourne la place trouvée
+          }
         }
       }
-    }
-    return null; // Aucun assignement trouvé
-  },
+      return null; // Aucun assignement trouvé
+    },
     updateExpandedPFP4Data() {
       const rows = [];
       const sorted = this.places.slice().sort((a, b) =>
@@ -613,66 +563,66 @@ export default {
 
 
     fetchPlacesData() {
-    const placesRef = ref(db, 'Places');
-    onValue(placesRef, snapshot => {
-      const placesData = snapshot.val();
-      const auth = getAuth();
-      auth.onAuthStateChanged(user => {
-        if (user) {
-          this.currentUserId = user.uid;
-          // Récupération du profil étudiant
-          const studentRef = ref(db, `Students/${user.uid}`);
-          onValue(studentRef, (snapshot) => {
-            this.userProfile = snapshot.val() || {};
-            this.checkExistingVote();
-          });
-          (async () => {
-            if (placesData) {
-              const assignedPlace = this.checkUserAssignedPlace(placesData);
-              if (assignedPlace) {
-                // Appel de getNameInstitutionById pour obtenir le nom de l'institution
-                const institutionName = await this.getNameInstitutionById(assignedPlace.IDPlace);
-                this.dialogMessage = "Vous avez déjà une place sélectionnée qui est "  + institutionName + " - " +    (assignedPlace.NomPlace || 'non spécifiée');
-                this.alreadyAssigned = true;
-                this.dialogVisible = true;
-                return; // On arrête le traitement si une place est déjà assignée
+      const placesRef = ref(db, 'Places');
+      onValue(placesRef, snapshot => {
+        const placesData = snapshot.val();
+        const auth = getAuth();
+        auth.onAuthStateChanged(user => {
+          if (user) {
+            this.currentUserId = user.uid;
+            // Récupération du profil étudiant
+            const studentRef = ref(db, `Students/${user.uid}`);
+            onValue(studentRef, (snapshot) => {
+              this.userProfile = snapshot.val() || {};
+              this.checkExistingVote();
+            });
+            (async () => {
+              if (placesData) {
+                const assignedPlace = this.checkUserAssignedPlace(placesData);
+                if (assignedPlace) {
+                  // Appel de getNameInstitutionById pour obtenir le nom de l'institution
+                  const institutionName = await this.getNameInstitutionById(assignedPlace.IDPlace);
+                  this.dialogMessage = "Vous avez déjà une place sélectionnée qui est " + institutionName + " - " + (assignedPlace.NomPlace || 'non spécifiée');
+                  this.alreadyAssigned = true;
+                  this.dialogVisible = true;
+                  return; // On arrête le traitement si une place est déjà assignée
+                }
               }
-            }
-            if (placesData) {
-  const placePromises = Object.keys(placesData).map(async key => {
-    const place = placesData[key];
-    const institutionData = await this.fetchInstitutionData(place.InstitutionId || place.IDPlace);
-    const va = place.IDPlace || place.InstitutionId;
-    const url = window.location.origin + "/institution/" + va;
-    return {
-      ...place,
-      IdPlace: key,
-      IdInstitution: place.IDPlace || place.InstitutionId,
-      NomPlace: place.NomPlace || '',
-      MSQ: place.MSQ === 'true' || place.MSQ === true,
-      SYSINT: place.SYSINT === 'true' || place.SYSINT === true,
-      NEUROGER: place.NEUROGER === 'true' || place.NEUROGER === true,
-      AIGU: place.AIGU === 'true' || place.AIGU === true,
-      REHAB: place.REHAB === 'true' || place.REHAB === true,
-      AMBU: place.AMBU === 'true' || place.AMBU === true,
-      FR: place.FR === 'true' || place.FR === true,
-      DE: place.DE === 'true' || place.DE === true,
-      PFP4: place.PFP4 || '0',
-      url: url,
-      InstitutionName: institutionData.Name ||
-        institutionData.NomPlace ||
-        place.InstitutionName ||
-        'Non spécifié',
-      InstitutionCategory: institutionData.Category || 'Non spécifié'
-    };
-  });
-  this.places = await Promise.all(placePromises);
-}
-          })();
-        }
+              if (placesData) {
+                const placePromises = Object.keys(placesData).map(async key => {
+                  const place = placesData[key];
+                  const institutionData = await this.fetchInstitutionData(place.InstitutionId || place.IDPlace);
+                  const va = place.IDPlace || place.InstitutionId;
+                  const url = window.location.origin + "/institution/" + va;
+                  return {
+                    ...place,
+                    IdPlace: key,
+                    IdInstitution: place.IDPlace || place.InstitutionId,
+                    NomPlace: place.NomPlace || '',
+                    MSQ: place.MSQ === 'true' || place.MSQ === true,
+                    SYSINT: place.SYSINT === 'true' || place.SYSINT === true,
+                    NEUROGER: place.NEUROGER === 'true' || place.NEUROGER === true,
+                    AIGU: place.AIGU === 'true' || place.AIGU === true,
+                    REHAB: place.REHAB === 'true' || place.REHAB === true,
+                    AMBU: place.AMBU === 'true' || place.AMBU === true,
+                    FR: place.FR === 'true' || place.FR === true,
+                    DE: place.DE === 'true' || place.DE === true,
+                    PFP4: place.PFP4 || '0',
+                    url: url,
+                    InstitutionName: institutionData.Name ||
+                      institutionData.NomPlace ||
+                      place.InstitutionName ||
+                      'Non spécifié',
+                    InstitutionCategory: institutionData.Category || 'Non spécifié'
+                  };
+                });
+                this.places = await Promise.all(placePromises);
+              }
+            })();
+          }
+        });
       });
-    });
-  },
+    },
 
 
 
@@ -796,9 +746,10 @@ export default {
     },
     closeDialog() {
       this.dialogVisible = false;
-  if (this.alreadyAssigned) {
-    this.$router.push({ path: '/feed' });
-  }    },
+      if (this.alreadyAssigned) {
+        this.$router.push({ path: '/feed' });
+      }
+    },
     isPlaceDisabled(place, colIndex) {
       return this.selectedPlaces.some((p, index) => index !== colIndex && p && p.IdPlace === place.IdPlace);
     },
@@ -833,12 +784,12 @@ export default {
   border-radius: 4px;
 }
 
-.custom-datatable .p-datatable-thead > tr > th {
+.custom-datatable .p-datatable-thead>tr>th {
   background-color: var(--surface-card);
   color: var(--text-color);
 }
 
-.custom-datatable .p-datatable-tbody > tr > td {
+.custom-datatable .p-datatable-tbody>tr>td {
   background-color: var(--surface-card);
   color: var(--text-color);
   white-space: normal;

@@ -27,6 +27,22 @@
             <span>{{ slotProps.data.criteria || 'Aucun' }}</span>
           </template>
         </Column>
+        <!-- Nouvelles colonnes pour /Students -->
+        <Column header="Lese">
+          <template #body="slotProps">
+            <span>{{ slotProps.data.lese || 'Aucune donnée' }}</span>
+          </template>
+        </Column>
+        <Column header="SAE">
+          <template #body="slotProps">
+            <span>{{ slotProps.data.sae || 'Aucune donnée' }}</span>
+          </template>
+        </Column>
+        <Column header="Cas particuliers">
+          <template #body="slotProps">
+            <span>{{ slotProps.data.casParticulier || 'Aucun' }}</span>
+          </template>
+        </Column>
         <Column header="Remarque étudiant">
           <template #body="slotProps">
             <span>{{ slotProps.data.remarqueEtudiant || 'Aucune' }}</span>
@@ -85,24 +101,21 @@ export default {
     return {
       places: [],
       users: [],
+      students: [],
       dynamicSelections: {},
-      institutions: {}, // données provenant de la table Institutions
+      institutions: {},
       displayRemarkDialog: false,
-      selectedAssignment: null, // Objet de l'affectation (ligne étudiant) sélectionnée pour modification
+      selectedAssignment: null,
       editedRemarks: ""
     };
   },
   computed: {
-    // Filtrer les utilisateurs ayant le rôle BA22
     ba22Students() {
       return this.users.filter(user => user.Roles && user.Roles.BA22 === true);
     },
-    // Nombre global de places offertes (somme du champ PFP4)
     totalPlacesOffertes() {
       return this.places.reduce((total, place) => total + (parseInt(place.PFP4) || 0), 0);
     },
-    // "Déplie" chaque enregistrement de place en autant de lignes que le nombre indiqué dans PFP4.
-    // Chaque ligne contient une propriété 'dyn' où est stockée l'affectation (l'identifiant étudiant)
     expandedPFP4() {
       const rows = [];
       const sortedPlaces = this.places.sort((a, b) => a.NomPlace.localeCompare(b.NomPlace));
@@ -125,11 +138,9 @@ export default {
       });
       return rows;
     },
-    // Pour chaque étudiant BA22, on agrège les détails de son affectation (s'il y en a) en une seule ligne.
-    // "remarqueEtudiant" provient de student.StudentNote (table Users)
-    // "remarquesPlaces" agrège les remarques provenant des affectations (table Places)
     studentAssignments() {
       return this.ba22Students.map(student => {
+        const studentExtra = this.students.find(s => s.id === student.id) || {};
         const assignments = this.expandedPFP4.filter(row => {
           const key = this.selectedKey(row);
           return row.dyn[key] && row.dyn[key] === student.id;
@@ -154,12 +165,14 @@ export default {
           criteria,
           remarqueEtudiant: student.StudentNote || "",
           remarquesPlaces,
+          // Formatage des colonnes selon vos critères :
+          lese: this.formatBoolean(studentExtra.Lese, "LESE"),
+          sae: this.formatBoolean(studentExtra.SAE, "SAE"),
+          casParticulier: this.formatBoolean(studentExtra.CasParticulier, "CAS"),
           assignments
         };
       });
     },
-    // Tri final : d'abord les étudiants déjà placés, puis ceux encore à placer,
-    // triés par ordre alphabétique du **nom** puis du **prénom**.
     sortedStudentAssignments() {
       const placed = this.studentAssignments.filter(sa => sa.institution && sa.institution.trim() !== "");
       const notPlaced = this.studentAssignments.filter(sa => !sa.institution || sa.institution.trim() === "");
@@ -179,11 +192,9 @@ export default {
     }
   },
   methods: {
-    // Renvoie la clé dynamique associée à une ligne de place
     selectedKey(row) {
       return `selectedEtudiantBA22PFP4-${row.seatIndex}`;
     },
-    // Construit une chaîne listant les critères validés par une place
     getCriteriaList(row) {
       const criteria = [];
       if (row.MSQ === true || row.MSQ === "true") criteria.push("MSQ");
@@ -196,14 +207,12 @@ export default {
       if (row.DE === true || row.DE === "true") criteria.push("DE");
       return criteria.join(", ");
     },
-    // Retourne le nom de l'institution à partir de la table Institutions
     getInstitutionName(row) {
       if (row.IDPlace && this.institutions[row.IDPlace]) {
         return this.institutions[row.IDPlace].Name || "-";
       }
       return row.InstitutionName || 'Aucune';
     },
-    // Ouvre le dialog pour modifier le StudentNote de l'étudiant
     openRemarkDialog(assignment) {
       this.selectedAssignment = assignment;
       this.editedRemarks = assignment.remarqueEtudiant || "";
@@ -214,12 +223,10 @@ export default {
       this.selectedAssignment = null;
       this.editedRemarks = "";
     },
-    // Met à jour le StudentNote dans la table Users et rafraîchit les données
     confirmRemarkUpdate() {
       const userRef = ref(db, `Users/${this.selectedAssignment.id}`);
       update(userRef, { StudentNote: this.editedRemarks })
         .then(() => {
-          // Rafraîchit les données pour refléter la modification
           this.fetchUsersData();
         })
         .catch(error => console.error("Erreur lors de la mise à jour du StudentNote :", error));
@@ -227,7 +234,6 @@ export default {
       this.selectedAssignment = null;
       this.editedRemarks = "";
     },
-    // Récupère les places depuis Firebase
     fetchPlacesData() {
       const placesRef = ref(db, 'Places');
       onValue(placesRef, snapshot => {
@@ -245,7 +251,6 @@ export default {
         }
       });
     },
-    // Récupère les utilisateurs depuis Firebase
     fetchUsersData() {
       const usersRef = ref(db, 'Users');
       onValue(usersRef, snapshot => {
@@ -253,22 +258,35 @@ export default {
         this.users = Object.keys(data).map(key => ({ ...data[key], id: key }));
       });
     },
-    // Récupère les institutions depuis Firebase
     fetchInstitutionsData() {
       const instRef = ref(db, 'Institutions');
       onValue(instRef, snapshot => {
         const data = snapshot.val() || {};
         this.institutions = data;
       });
+    },
+    fetchStudentsData() {
+      const studentsRef = ref(db, 'Students');
+      onValue(studentsRef, snapshot => {
+        const data = snapshot.val() || {};
+        this.students = Object.keys(data).map(key => ({ ...data[key], id: key }));
+      });
+    },
+    // Méthode utilitaire pour formater une valeur booléenne
+    formatBoolean(value, trueLabel) {
+      const truthy = value === true || value === "true" || value === "1";
+      return truthy ? trueLabel : "-";
     }
   },
   mounted() {
     this.fetchPlacesData();
     this.fetchUsersData();
     this.fetchInstitutionsData();
+    this.fetchStudentsData();
   }
 };
 </script>
+
 
 <style scoped>
 .page-title {
@@ -280,12 +298,12 @@ export default {
   padding: 20px;
 }
 
-.custom-datatable .p-datatable-thead>tr>th {
+.custom-datatable .p-datatable-thead > tr > th {
   background-color: var(--surface-card);
   color: var(--text-color);
 }
 
-.custom-datatable .p-datatable-tbody>tr>td {
+.custom-datatable .p-datatable-tbody > tr > td {
   background-color: var(--surface-card);
   color: var(--text-color);
   white-space: normal;
