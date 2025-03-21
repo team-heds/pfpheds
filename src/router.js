@@ -189,7 +189,7 @@ router.beforeEach(async (to, from, next) => {
       return next('/feed');
     }
     // Sinon, continuez vers la page de login ("/")
-    return next();
+    return next('/home');
   }
 
   // Gestion des routes nécessitant une authentification
