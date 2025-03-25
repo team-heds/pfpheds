@@ -5,7 +5,7 @@
       <!-- Section gauche -->
       <div class="flex flex-column justify-content-center align-items-center w-full lg:w-6 text-white p-5">
         <img
-          src="/public/assets/images/FR-DE_HEdS_rvb_neg.png"
+          src="/assets/images/FR-DE_HEdS_rvb_neg.png"
           alt="Logo"
           class="mb-3 h-8rem lg:h-15rem" />
       </div>
@@ -19,6 +19,7 @@
           <div class="mb-4">
             <InputText
               id="email"
+              type="email"
               v-model="email"
               placeholder="Email"
               class="w-full"
@@ -102,10 +103,12 @@ const submitForm = async () => {
     });
     setTimeout(() => router.push("/feed"), 1500);
   } catch (error) {
+    console.error(error);
     const messages = {
       "auth/user-not-found": "Utilisateur introuvable.",
       "auth/wrong-password": "Mot de passe incorrect.",
       "auth/invalid-email": "Adresse e-mail invalide.",
+      "auth/user-disabled": "Ce compte est désactivé.",
     };
     toast.add({
       severity: "error",

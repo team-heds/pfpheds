@@ -44,12 +44,15 @@ import DashbordAdmin from '@/views/dashboards/DashbordAdmin.vue';
 import ListUser from '@/views/user-management/ListUser.vue';
 import InstitutionView from '@/components/Institutions/InstitutionView.vue';
 import Management_votation from '@/components/Dashboard/DashboardDetails/Management_votation.vue';
+import Management_votation_lese from '@/components/Dashboard/DashboardDetails/Management_votation_lese.vue';
+import Management_votation_etudiants from '@/components/Dashboard/DashboardDetails/Management_votation_etudiants.vue';
 import ManagementPlace from '@/components/Dashboard/DashboardDetails/Management_place.vue';
 import OffreDePlace from '@/components/Dashboard/DashboardDetails/OffreDePlace.vue';
 import ManagementPlacesSafe from '@/components/Dashboard/DashboardDetails/ManagementPlacesSafe.vue';
 import VotationLese from '@/components/Dashboard/DashboardDetails/VotationLese.vue';
 import StageRepartitionBA2 from '@/components/Dashboard/DashboardDetails/StageRepartitionBA2.vue';
-
+import ResultPreviewVotation from '@/components/Dashboard/DashboardDetails/ResultPreviewVotation.vue';
+ 
 
 import LoginHome from '@/components/Utils/LoginHome.vue';
 import NewsFeed from '@/components/Social/NewsFeed.vue';
@@ -70,6 +73,7 @@ import SearchResults from '@/components/Utils/SearchResults.vue'
 // Define your routes
 const routes = [
   { path: '/', component: LoginHome, name: 'LoginHome',   props: true   }, // Fil d'actualité
+  { path: '/home', component: LoginHome, name: 'LoginHome',   props: true   }, // Fil d'actualité
   { path: '/feed', component: NewsFeed, name: 'NewsFeed',   props: true, meta: { requiresAuth: true } }, // Fil d'actualité
   { path: '/mention/:group', component: MentionGroupPage, name: 'MentionGroupPage', props: true, meta: { requiresAuth: true, requiredRole: true }},
   { path: '/hashtag/:hashtag', component: HashtagPage, name: 'HashtagPage', props: true, meta: { requiresAuth: true } },
@@ -116,9 +120,11 @@ const routes = [
   { path: '/reception', component: Reception, name: 'Reception', meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/votation', component: VotationView, name: 'VotationView', meta: { requiresAuth: true } },
   { path: '/management_votation', component: Management_votation, name: 'Management_votation', meta: { requiresAuth: true, requiredRole: 'admin' } }, // Protect this route
+  { path: '/management_votation_lese', component: Management_votation_lese, name: 'Management_votation_lese', meta: { requiresAuth: true, requiredRole: 'admin' } }, // Protect this route
+  { path: '/management_votation_etudiants', component: Management_votation_etudiants, name: 'Management_votation_etudiants', meta: { requiresAuth: true, requiredRole: 'admin' } }, // Protect this route
   { path: '/management_places', component: ManagementPlace, name: 'Management_places',meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/management_offre', component: OffreDePlace, name: 'Management_offre',meta: { requiresAuth: true, requiredRole: 'admin' } },
-
+  { path: '/result_preview_votation', component: ResultPreviewVotation, name: 'ResultPreviewVotation',meta: { requiresAuth: true, requiredRole: 'admin' } },
   
   { path: '/stage_repartition', component: StageRepartitionBA2, name: 'StageRepartitionBA2',meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/management_places_safe', component: ManagementPlacesSafe, name: 'ManagementPlacesSafe',meta: { requiresAuth: true, requiredRole: 'admin' } },
@@ -184,16 +190,18 @@ router.beforeEach(async (to, from, next) => {
       return next('/feed');
     }
     // Sinon, continuez vers la page de login ("/")
-    return next();
+    return next('/home');
   }
 
   // Gestion des routes nécessitant une authentification
   if (to.matched.some(record => record.meta.requiresAuth)) {
     if (user) {
       const userId = user.uid;
+      console.log(userId);
       const rolesRef = dbRef(db, `Users/${userId}/Roles`);
       const snapshot = await dbGet(rolesRef);
       const roles = snapshot.val();
+      console.log(roles);
 
       if (roles) {
         const userRoles = Object.keys(roles).filter(role => roles[role]); // Récupération des rôles actifs de l'utilisateur
@@ -215,7 +223,7 @@ router.beforeEach(async (to, from, next) => {
         }
       } else {
         alert('Accès refusé : Aucun rôle trouvé.');
-        return next('/'); // Redirigez vers une page par défaut
+        return next('/home'); // Redirigez vers une page par défaut
       }
     } else {
       alert('Vous devez être connecté pour accéder à cette page.');

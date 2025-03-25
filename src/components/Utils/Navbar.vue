@@ -113,7 +113,7 @@ const hasAdminAccess = ref(false);
 const menuItems = [
   { icon: "pi pi-home", link: "/feed", title: "Accueil" },
   { icon: "pi pi-bookmark", link: "/institution", title: "Institutions" },
-  { icon: "pi pi-check", link: "/votation_lese", title: "Votation" },
+  { icon: "pi pi-check", link: "/votation", title: "Votation" },
   { icon: "pi pi-map-marker", link: "/map", title: "Map" },
   { icon: "pi pi-user-plus", link: "/admin", title: "Admin", adminOnly: true }
 ];
@@ -121,7 +121,7 @@ const menuItems = [
 const openSettingsDialog = () => isSettingsDialogVisible.value = true;
 const navigateTo = (path) => router.push(path);
 const logout = async () => {
-  try { await signOut(auth); navigateTo('/'); }
+  try { await signOut(auth); navigateTo('/home'); }
   catch (error) { console.error('Erreur de déconnexion:', error); }
 };
 
