@@ -4,6 +4,14 @@
     <Navbar />
     <div class="page-title">
       <h1>Gestion des Places</h1>
+    </div>    <!-- Barre de recherche -->
+    <div class="text-center mb-3">
+      <InputText
+        v-model="search"
+        placeholder="Recherche par nom de place ou remarques"
+        class="w-50"
+        debounce="300"
+      />
     </div>
     <div class="container">
       <!-- Bouton Créer une nouvelle place -->
@@ -11,15 +19,7 @@
         <Button label="Créer une nouvelle place" class="p-button-primary" @click="openCreatePlaceModal" />
       </div>
 
-      <!-- Barre de recherche -->
-      <div class="text-center mb-3">
-        <InputText
-          v-model="search"
-          placeholder="Recherche par nom de place ou remarques"
-          class="w-50"
-          debounce="300"
-        />
-      </div>
+
 
       <!-- Table des places -->
       <div v-if="filteredPlaces.length > 0" class="p-datatable-responsive">

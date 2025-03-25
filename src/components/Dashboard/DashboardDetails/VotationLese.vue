@@ -224,22 +224,20 @@
 </template>
 
 <script>
-import Navbar from '@/components/Utils/Navbar.vue';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-import RadioButton from 'primevue/radiobutton';
-import Dialog from 'primevue/dialog';
-import ValidatedCriteriaSection from '@/components/UserProfile/ValidatedCriteriaSection.vue';
+import Navbar from '@/components/Utils/Navbar.vue'
+import DataTable from 'primevue/datatable'
+import Column from 'primevue/column'
+import RadioButton from 'primevue/radiobutton'
+import Dialog from 'primevue/dialog'
+import ValidatedCriteriaSection from '@/components/UserProfile/ValidatedCriteriaSection.vue'
+import { onValue, ref, remove, set, update } from 'firebase/database'
+import { db } from '@/firebase'
+import { getAuth } from 'firebase/auth'
 
-import { ref, onValue, update, set, remove } from "firebase/database";
-import { db } from '@/firebase';
-import { getAuth } from "firebase/auth";
-import CardNameProfile from '@/components/Bibliotheque/Profile/CardNameProfile.vue'
 
 export default {
   name: 'VotationLese',
   components: {
-    CardNameProfile,
     Navbar,
     DataTable,
     Column,

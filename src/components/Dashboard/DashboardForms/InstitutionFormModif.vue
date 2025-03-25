@@ -422,10 +422,30 @@ export default {
       this.pdfFile = event.target.files[0];
     },
     onImageChange(event) {
+      // Récupère tous les fichiers sélectionnés
       const files = Array.from(event.target.files);
-      this.imageFiles.push(...files);
-      const newImageURL = files.map((file) => URL.createObjectURL(file));
-      this.institution.ImageURL.push(...newImageURL);
+
+      files.forEach((file) => {
+        // Nettoie le nom du fichier pour éviter "URI malformed"
+        const safeName = file.name.replace(/[^a-z0-9.]/gi, "_").toLowerCase();
+
+        // Vérifie si on a déjà ajouté un fichier avec le même nom + même taille
+        const alreadyAdded = this.imageFiles.some(
+          (f) => f.name === safeName && f.size === file.size
+        );
+
+        if (!alreadyAdded) {
+          // Crée un nouveau File avec le nom nettoyé
+          const newFile = new File([file], safeName, { type: file.type });
+
+          // Ajoute ce fichier à la liste pour l'upload futur
+          this.imageFiles.push(newFile);
+
+          // Génère un aperçu local (URL) pour l'affichage immédiat
+          const previewURL = URL.createObjectURL(newFile);
+          this.localPreviews.push(previewURL);
+        }
+      });
     },
     removeImage(index) {
       // Supprimer le fichier de l'array imageFiles si c'est un fichier local non encore uploadé

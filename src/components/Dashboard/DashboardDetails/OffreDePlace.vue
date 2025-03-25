@@ -7,8 +7,17 @@
         <div class="container">
             <!-- Bouton "Tout sélectionner" pour la colonne Sélection Out -->
             <div style="text-align: right; margin-bottom: 10px;">
-                <Button label="Tout sélectionner" class="p-button-secondary" @click="selectAllOut" />
+
+              <InputText
+                v-model="search"
+                placeholder="Rechercher par nom d'institution"
+                class="w-50"
+                debounce="300"
+              />
+
+              <Button label="Tout sélectionner" class="p-button-secondary" @click="selectAllOut" />
             </div>
+
 
             <!-- DataTable affichant les places dépliées pour PFP4 -->
             <DataTable :value="expandedPFP4" class="p-datatable-sm custom-datatable" responsiveLayout="scroll">
@@ -174,7 +183,7 @@
                     <li>Nombre de cabinets privés valaisan sélectionné : {{ selectedCabinetsPrivesValaisan }}</li>
                     <li>Nombre global de cabinets privés hors canton : {{ globalCabinetsPrivesHorsCanton }}</li>
                     <li>Nombre de cabinets privés hors canton sélectionné : {{ selectedCabinetsPrivesHorsCanton }}</li>
-                 
+
                 </ul>
             </div>
 
@@ -238,7 +247,8 @@ export default {
             dynamicPraticienSelections: {},  // pour praticiens
             displayPraticienDialog: false,
             selectedRowForPraticien: null,   // ligne en cours pour la sélection
-            currentSeatIndex: null           // numéro de l’itération
+            currentSeatIndex: null,           // numéro de l’itération
+            search: ''
         };
     },
     computed: {
@@ -304,6 +314,7 @@ export default {
             });
             return rows;
         },
+
         totalUniquePlaces() {
             return this.places.filter(place => {
                 const count = parseInt(place.PFP4);
