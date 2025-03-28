@@ -4,6 +4,7 @@
     <div class="fixed-content">
       <!-- Profil utilisateur -->
       <div class="user-profile flex">
+
         <img
           :src="userPhotoURL"
           alt="Avatar"
@@ -41,6 +42,8 @@
         :user="user"
         @click="openChat(user)"
       />
+
+
     </div>
   </div>
 </template>

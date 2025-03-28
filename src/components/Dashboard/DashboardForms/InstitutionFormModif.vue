@@ -392,6 +392,13 @@ export default {
         }
 
         // Mise à jour des détails de l'institution dans Firebase
+        const formatLocalDate = (date) => {
+          if (!date) return "";
+          const yyyy = date.getFullYear();
+          const mm = String(date.getMonth() + 1).padStart(2, "0");
+          const dd = String(date.getDate()).padStart(2, "0");
+          return `${yyyy}-${mm}-${dd}`;
+        };
         console.log("Updating institution details in Firebase...");
         await update(instRef, {
           Name: this.institution.Name || "",
@@ -402,8 +409,8 @@ export default {
           Category: this.institution.Category || "",
           Language: this.institution.Language || "",
           Description: this.institution.Description || "",
-          ConventionDate: this.institution.ConventionDate || "",
-          AccordCadreDate: this.institution.AccordCadreDate || "",
+          ConventionDate: formatLocalDate(this.institution.ConventionDate),
+          AccordCadreDate: formatLocalDate(this.institution.AccordCadreDate),
           Note: this.institution.Note || "",
           CyberleanURL: this.institution.CyberleanURL || "",
           ImageURL: this.institution.ImageURL || [], // Mise à jour avec les nouvelles URLs
@@ -463,15 +470,25 @@ export default {
       onValue(instRef, (snapshot) => {
         if (snapshot.exists()) {
           const data = snapshot.val();
+
+          // Ajustement des dates en soustrayant le décalage horaire
+          if (data.ConventionDate) {
+            let convDate = new Date(data.ConventionDate);
+            convDate.setMinutes(convDate.getMinutes() - convDate.getTimezoneOffset());
+            data.ConventionDate = convDate;
+          }
+          if (data.AccordCadreDate) {
+            let accDate = new Date(data.AccordCadreDate);
+            accDate.setMinutes(accDate.getMinutes() - accDate.getTimezoneOffset());
+            data.AccordCadreDate = accDate;
+          }
+
           this.institution = {
             ...data,
             ImageURL: data.ImageURL || [],
           };
         }
       });
-
-      console.log(this.institution.imageURL);
-
     },
   },
   mounted() {
