@@ -35,7 +35,9 @@
                 />
                 <p v-if="institution.CyberleanURL" class="mt-2">
                   PDF actuel :
-                  <a :href="institution.CyberleanURL" target="_blank">Voir le PDF</a>
+                  <a :href="institution.CyberleanURL" target="_blank"
+                  >Voir le PDF</a
+                  >
                 </p>
               </div>
             </div>
@@ -180,7 +182,7 @@
                 <Calendar
                   id="convention"
                   v-model="institution.ConventionDate"
-                  dateFormat="yy-mm-dd"
+                  dateFormat="dd-mm-yy"
                 />
               </div>
             </div>
@@ -192,7 +194,7 @@
                 <Calendar
                   id="accordCadre"
                   v-model="institution.AccordCadreDate"
-                  dateFormat="yy-mm-dd"
+                  dateFormat="dd-mm-yy"
                 />
               </div>
             </div>
@@ -259,6 +261,7 @@ import {
   uploadBytes,
   getDownloadURL,
 } from "firebase/storage";
+
 import InputText from "primevue/inputtext";
 import Dropdown from "primevue/dropdown";
 import Button from "primevue/button";
@@ -268,7 +271,24 @@ import Textarea from "primevue/textarea";
 import InputGroup from "primevue/inputgroup";
 import InputGroupAddon from "primevue/inputgroupaddon";
 import Navbar from "@/components/Utils/Navbar.vue";
-import Divider from "primevue/divider"; // Assurez-vous d'importer Divider
+import Divider from "primevue/divider";
+
+// --- Fonctions utilitaires pour parser/formatter la date dd-mm-yyyy ---
+function parseDDMMYYYY(str) {
+  // Evite les erreurs si str est vide
+  if (!str) return null;
+  const [dd, mm, yyyy] = str.split("-");
+  // Crée l'objet Date (mois commence à 0)
+  return new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+}
+
+function formatDDMMYYYY(date) {
+  if (!date) return "";
+  const dd = String(date.getDate()).padStart(2, "0");
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const yyyy = date.getFullYear();
+  return `${dd}-${mm}-${yyyy}`;
+}
 
 export default {
   name: "InstitutionFormModif",
@@ -282,7 +302,7 @@ export default {
     Textarea,
     InputGroup,
     InputGroupAddon,
-    Divider, // Ajoutez Divider aux composants
+    Divider,
   },
   data() {
     return {
@@ -295,7 +315,7 @@ export default {
         URL: "",
         Category: "",
         Language: "",
-        ImageURL: [], // Utilisé pour stocker plusieurs URLs d'images
+        ImageURL: [],
         Description: "",
         ConventionDate: "",
         AccordCadreDate: "",
@@ -304,8 +324,8 @@ export default {
         PhoneChef: "",
         NomChef: "",
       },
-      pdfFile: null, // Pour stocker le fichier PDF sélectionné
-      imageFiles: [], // Tableau pour stocker les fichiers images sélectionnés
+      pdfFile: null, // Fichier PDF sélectionné
+      imageFiles: [], // Tableau de fichiers images sélectionnés
       cantons: [
         { code: "AG", name: "Argovie" },
         { code: "AI", name: "Appenzell Rhodes-Intérieures" },
@@ -322,22 +342,10 @@ export default {
         { code: "ET", name: "Étranger" },
       ],
       categories: [
-        {
-          label: "Institution valaisanne",
-          value: "Institution valaisanne",
-        },
-        {
-          label: "Cabinet privé valaisan",
-          value: "Cabinet privé valaisan",
-        },
-        {
-          label: "Institution hors canton",
-          value: "Institution hors canton",
-        },
-        {
-          label: "Cabinet privé hors canton",
-          value: "Cabinet privé hors canton",
-        },
+        { label: "Institution valaisanne", value: "Institution valaisanne" },
+        { label: "Cabinet privé valaisan", value: "Cabinet privé valaisan" },
+        { label: "Institution hors canton", value: "Institution hors canton" },
+        { label: "Cabinet privé hors canton", value: "Cabinet privé hors canton" },
       ],
       langues: [
         { code: "FR", name: "Français" },
@@ -349,9 +357,12 @@ export default {
     };
   },
   methods: {
+    // Déclenche le sélecteur de fichier pour les images
     triggerImageInput() {
       this.$refs.imageInput.click();
     },
+
+    // Met à jour l'institution dans Firebase
     async updateInstitution() {
       try {
         console.log("Starting institution update...");
@@ -391,15 +402,11 @@ export default {
           ];
         }
 
+        // Prépare les dates pour le stockage en dd-mm-yyyy
+        const conventionDateStr = formatDDMMYYYY(this.institution.ConventionDate);
+        const accordCadreDateStr = formatDDMMYYYY(this.institution.AccordCadreDate);
+
         // Mise à jour des détails de l'institution dans Firebase
-        const formatLocalDate = (date) => {
-          if (!date) return "";
-          const yyyy = date.getFullYear();
-          const mm = String(date.getMonth() + 1).padStart(2, "0");
-          const dd = String(date.getDate()).padStart(2, "0");
-          return `${yyyy}-${mm}-${dd}`;
-        };
-        console.log("Updating institution details in Firebase...");
         await update(instRef, {
           Name: this.institution.Name || "",
           Locality: this.institution.Locality || "",
@@ -409,15 +416,16 @@ export default {
           Category: this.institution.Category || "",
           Language: this.institution.Language || "",
           Description: this.institution.Description || "",
-          ConventionDate: formatLocalDate(this.institution.ConventionDate),
-          AccordCadreDate: formatLocalDate(this.institution.AccordCadreDate),
+          ConventionDate: conventionDateStr,
+          AccordCadreDate: accordCadreDateStr,
           Note: this.institution.Note || "",
           CyberleanURL: this.institution.CyberleanURL || "",
-          ImageURL: this.institution.ImageURL || [], // Mise à jour avec les nouvelles URLs
+          ImageURL: this.institution.ImageURL || [],
           MailChef: this.institution.MailChef || "",
           PhoneChef: this.institution.PhoneChef || "",
           NomChef: this.institution.NomChef || "",
         });
+
         console.log("Institution updated successfully!");
         alert("Institution mise à jour avec succès.");
       } catch (error) {
@@ -425,62 +433,62 @@ export default {
         alert("Erreur lors de la mise à jour de l’institution.");
       }
     },
+
+    // Récupération du PDF sélectionné
     onPdfChange(event) {
       this.pdfFile = event.target.files[0];
     },
+
+    // Récupération des images sélectionnées
     onImageChange(event) {
-      // Récupère tous les fichiers sélectionnés
       const files = Array.from(event.target.files);
+      if (!this.localPreviews) {
+        // On peut stocker les aperçus locaux ici si nécessaire
+        this.localPreviews = [];
+      }
 
       files.forEach((file) => {
-        // Nettoie le nom du fichier pour éviter "URI malformed"
         const safeName = file.name.replace(/[^a-z0-9.]/gi, "_").toLowerCase();
-
-        // Vérifie si on a déjà ajouté un fichier avec le même nom + même taille
         const alreadyAdded = this.imageFiles.some(
           (f) => f.name === safeName && f.size === file.size
         );
 
         if (!alreadyAdded) {
-          // Crée un nouveau File avec le nom nettoyé
           const newFile = new File([file], safeName, { type: file.type });
-
-          // Ajoute ce fichier à la liste pour l'upload futur
           this.imageFiles.push(newFile);
 
-          // Génère un aperçu local (URL) pour l'affichage immédiat
+          // Génère un aperçu local (optionnel)
           const previewURL = URL.createObjectURL(newFile);
           this.localPreviews.push(previewURL);
         }
       });
     },
+
+    // Suppression d'une image
     removeImage(index) {
-      // Supprimer le fichier de l'array imageFiles si c'est un fichier local non encore uploadé
-      // Ici, nous supposons que toutes les images dans ImageURL sont déjà uploadées.
-      // Si vous souhaitez gérer la suppression des images uploadées, vous devrez également supprimer le fichier dans Firebase Storage.
       this.institution.ImageURL.splice(index, 1);
-      // Optionnel: Si vous souhaitez également supprimer les fichiers locaux non uploadés
-      // this.imageFiles.splice(index, 1);
+      // Si vous souhaitez aussi supprimer les fichiers locaux non uploadés,
+      // vous pouvez le faire ici si vous gérez la correspondance index/fichier.
     },
+
+    // Retour à la page précédente
     goBack() {
       this.$router.go(-1);
     },
+
+    // Chargement des données de l'institution depuis Firebase
     loadInstitutionData() {
       const instRef = ref(db, "Institutions/" + this.$route.params.id);
       onValue(instRef, (snapshot) => {
         if (snapshot.exists()) {
           const data = snapshot.val();
 
-          // Ajustement des dates en soustrayant le décalage horaire
+          // Convertir les chaînes dd-mm-yyyy en objets Date
           if (data.ConventionDate) {
-            let convDate = new Date(data.ConventionDate);
-            convDate.setMinutes(convDate.getMinutes() - convDate.getTimezoneOffset());
-            data.ConventionDate = convDate;
+            data.ConventionDate = parseDDMMYYYY(data.ConventionDate);
           }
           if (data.AccordCadreDate) {
-            let accDate = new Date(data.AccordCadreDate);
-            accDate.setMinutes(accDate.getMinutes() - accDate.getTimezoneOffset());
-            data.AccordCadreDate = accDate;
+            data.AccordCadreDate = parseDDMMYYYY(data.AccordCadreDate);
           }
 
           this.institution = {
