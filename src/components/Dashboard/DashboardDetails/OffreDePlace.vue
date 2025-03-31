@@ -164,6 +164,7 @@
             <li>Nombre de cabinets privés hors canton sélectionné : {{ selectedCabinetsPrivesHorsCanton }}</li>
           </ul>
 
+
         </div>
   
         <!-- Listes des étudiants par rôle avec, à côté, leur place attribuée si existante -->
