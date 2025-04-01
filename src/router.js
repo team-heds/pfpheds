@@ -52,7 +52,8 @@ import ManagementPlacesSafe from '@/components/Dashboard/DashboardDetails/Manage
 import VotationLese from '@/components/Dashboard/DashboardDetails/VotationLese.vue';
 import StageRepartitionBA2 from '@/components/Dashboard/DashboardDetails/StageRepartitionBA2.vue';
 import ResultPreviewVotation from '@/components/Dashboard/DashboardDetails/ResultPreviewVotation.vue';
- 
+import StatsPlacePFP from '@/components/Dashboard/DashboardDetails/StatsPlacePFP.vue';
+
 
 import LoginHome from '@/components/Utils/LoginHome.vue';
 import NewsFeed from '@/components/Social/NewsFeed.vue';
@@ -125,7 +126,10 @@ const routes = [
   { path: '/management_places', component: ManagementPlace, name: 'Management_places',meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/management_offre', component: OffreDePlace, name: 'Management_offre',meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/result_preview_votation', component: ResultPreviewVotation, name: 'ResultPreviewVotation',meta: { requiresAuth: true, requiredRole: 'admin' } },
+  { path: '/stats_place_pfp', component: StatsPlacePFP, name: 'StatsPlacePFP',meta: { requiresAuth: true, requiredRole: 'admin' } },
   
+
+
   { path: '/stage_repartition', component: StageRepartitionBA2, name: 'StageRepartitionBA2',meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/management_places_safe', component: ManagementPlacesSafe, name: 'ManagementPlacesSafe',meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/institution_details/:id', component: InstitutionDetails, name: 'InstitutionDetails', props: true, meta: { requiresAuth: true } },

@@ -96,7 +96,20 @@ const model = ref([
                   label: 'Stage Repartition',
                   icon: 'pi pi-cog',
                   to: '/stage_repartition'
+                },
+
+                {
+                  label: 'Stats Place PFP',
+                  icon: 'pi pi-cog',
+                  to: '/stats_place_pfp'
+                },
+                {
+                  label: 'Result Votation Preview',
+                  icon: 'pi pi-cog',
+                  to: '/result_preview_votation'
                 }
+
+                
            
               ]
             },
