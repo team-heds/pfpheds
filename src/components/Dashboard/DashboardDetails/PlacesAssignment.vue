@@ -129,7 +129,7 @@ import Column from 'primevue/column';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import { ref, onValue, update, set } from "firebase/database";
-import { db } from '@/firebase';
+import { db } from 'root/firebase';
 
 export default {
   name: 'PlacesAssignmentVoters',

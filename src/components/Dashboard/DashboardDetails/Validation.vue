@@ -83,7 +83,7 @@
 
 <script>
 import { ref, get, update } from "firebase/database";
-import { db } from "@/firebase.js";
+import { db } from "../../../../firebase.js";
 import Navbar from "@/components/Utils/Navbar.vue";
 
 export default {

@@ -66,7 +66,7 @@
   <script>
   import Navbar from '@/components/Utils/Navbar.vue';
   import { ref, onValue } from "firebase/database";
-  import { db } from '@/firebase';
+  import { db } from 'root/firebase';
   
   export default {
     name: 'StatsPlacePFP',

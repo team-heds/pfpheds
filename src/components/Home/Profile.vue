@@ -8,7 +8,7 @@
 
   <div class="min-h-screen flex relative lg:static">
     <div class="min-h-screen flex flex-column relative flex-auto">
-      <div class="p-5 flex flex-column flex-auto">
+      <div class="flex flex-column flex-auto">
         <ProfileInfo v-if="activeTab === 0" :user="user" />
         <DocumentsUserProfile v-if="activeTab === 1" />
         <ResumStageUserProfile v-if="activeTab === 2" />

@@ -49,8 +49,8 @@ import Navbar from '@/components/Utils/Navbar.vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
-import { ref, onValue, set } from "firebase/database";
-import { db } from '@/firebase';
+import { ref, onValue, update } from "firebase/database";
+import { db } from 'root/firebase';
 
 export default {
   name: 'PlacesAssigneds',
