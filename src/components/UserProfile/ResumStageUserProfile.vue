@@ -164,7 +164,7 @@ import Button from "primevue/button";
 import Card from "primevue/card";
 import InputText from "primevue/inputtext";
 import FileUpload from "primevue/fileupload";
-import { storage } from "@/firebase";
+import { storage } from "root/firebase"; // Assurez-vous que le chemin est correct
 import {
   ref as storageRef,
   uploadBytes,

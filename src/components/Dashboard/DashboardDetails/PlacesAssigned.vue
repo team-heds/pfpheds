@@ -1,56 +1,45 @@
 <template>
   <div>
     <Navbar />
-    <h1>Places de Stages</h1>
+    <h1>Places assignées</h1>
 
-    <!-- Section : Affichage des places disponibles avec assignation -->
-    <div>
-      <h2>Liste des Places Disponibles</h2>
-      <DataTable :value="mergedSeats" responsiveLayout="scroll">
-        <!-- Numérotation des sièges -->
-        <Column header="#">
+    <!-- Tableau des affectations finales enrichies -->
+    <div style="margin-top: 40px;">
+      <DataTable :value="finalAssignments" responsiveLayout="scroll">
+        <!-- Numérotation -->
+        <Column header="#" style="width: 3rem;">
           <template #body="slotProps">
-            {{ slotProps.data.rowNumber }}
+            {{ slotProps.index + 1 }}
           </template>
         </Column>
-        <!-- ID de l'institution -->
-        <Column header="Institution ID">
-          <template #body="slotProps">
-            <span>{{ slotProps.data.IdInstitution }}</span>
-          </template>
-        </Column>
-        <!-- Nom de la place -->
+        <Column header="ID Place" field="idPlace" />
         <Column header="Nom de la Place" field="NomPlace" />
-        <!-- Numéro de siège utilisé -->
-        <Column header="Siège">
-          <template #body="slotProps">
-            {{ slotProps.data.usedSeat }}
-          </template>
-        </Column>
-        <!-- Affectation d'un étudiant -->
-        <Column header="Assignation Étudiant">
-          <template #body="slotProps">
-            <!-- Si le siège a été assigné via ResultVotationAlgo, on affiche directement le lien -->
-            <div v-if="slotProps.data.assignedStudent && slotProps.data.autoAssigned">
-              <div v-html="slotProps.data.studentLink"></div>
-            </div>
-            <!-- Si une assignation manuelle existe, on affiche le lien classique -->
-            <div v-else-if="slotProps.data.assignedStudent">
-              <a :href="`/student/${slotProps.data.assignedStudent}`" target="_blank">
-                {{ slotProps.data.assignedStudent }}
-              </a>
-            </div>
-            <!-- Sinon, on affiche le champ de saisie pour affecter un étudiant -->
-            <div v-else>
-              <InputText
-                v-model="newAssignments[`${slotProps.data.IdPlace}-${slotProps.data.seatIndex}`]"
-                placeholder="ID Étudiant"
-              />
-              <Button label="Assigner" @click="assignStudent(slotProps.data)" />
-            </div>
-          </template>
-        </Column>
+        <Column header="ID de l'institution" field="idInstitution" />
+        <Column header="ID Étudiant" field="idEtudiant" />
+        <Column header="Nom" field="nom" />
+        <Column header="Prénom" field="prenom" />
+        <Column header="Vote Rank" field="voteRank" />
+        <Column header="Catégorie" field="category" />
+        <Column header="Canton" field="canton" />
+        <Column header="Localité" field="locality" />
+        <Column header="Institution" field="institutionName" />
+        <!-- Nouvelle colonne pour afficher les critères validants -->
+        <Column header="Critères" field="validCriteria" />
+        <!-- Colonne pour le numéro de siège recalculé -->
+        <Column header="Siège" field="seat" />
+        <!-- Colonne pour l'ID du praticien formateur -->
+        <Column header="ID Praticien Formateur" field="praticienFormateur" />
+        <!-- Colonnes pour les infos du praticien -->
+        <Column header="Praticien Prénom" field="praticienPrenom" />
+        <Column header="Praticien Nom" field="praticienNom" />
+        <Column header="Praticien Mail" field="praticienMail" />
       </DataTable>
+    </div>
+
+    <!-- Boutons d'action -->
+    <div style="margin-top: 20px; text-align: center;">
+      <Button label="Assignation Automatique" @click="assignStudentsAutomatically" />
+      <Button label="Exporter CSV" @click="exportCSV" style="margin-left: 10px;" />
     </div>
   </div>
 </template>
@@ -60,9 +49,8 @@ import Navbar from '@/components/Utils/Navbar.vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
 import { ref, onValue, update } from "firebase/database";
-import { db } from '@/firebase';
+import { db } from 'root/firebase';
 
 export default {
   name: 'PlacesAssigneds',
@@ -70,123 +58,218 @@ export default {
     Navbar,
     DataTable,
     Column,
-    Button,
-    InputText
+    Button
   },
   data() {
     return {
-      expandedSeats: [],    // Données issues de "Places"
-      newAssignments: {},   // Pour l'assignation manuelle
-      resultAlgo: []        // Données issues de "ResultVotationAlgo"
+      placesData: {},         // Données de /Places
+      users: {},              // Données de /Users
+      institutions: {},       // Données de /Institutions
+      resultAlgo: {},         // Affectations enregistrées (de /resultatVotationBA24PFP2)
+      praticienFormateurs: {} // Données de /PraticienFormateurs
     };
   },
   computed: {
-    // Fusionne les sièges issus de "Places" avec les affectations enregistrées dans "ResultVotationAlgo"
-    mergedSeats() {
-      // Création d'un index de correspondance basé sur la clé composite : InstitutionID-NomPlace-seat
-      let lookup = {};
-      this.resultAlgo.forEach(item => {
-        let key = `${item.InstitutionID}-${item.NomPlace}-${item.seat}`;
-        lookup[key] = item;
-      });
-      // Pour chaque siège, on vérifie si une affectation existe dans resultAlgo et on définit usedSeat en conséquence
-      return this.expandedSeats.map(seat => {
-        let key = `${seat.IdInstitution}-${seat.NomPlace}-${seat.seatIndex}`;
-        if (lookup[key]) {
-          let assignment = lookup[key];
-          return {
-            ...seat,
-            assignedStudent: assignment.studentId,
-            studentLink: assignment.studentLink,
-            studentName: assignment.studentName,
-            voteRank: assignment.voteRank,
-            autoAssigned: true,  // Indique que l'affectation provient de ResultVotationAlgo
-            usedSeat: assignment.seat
-          };
-        } else {
-          return {
-            ...seat,
-            usedSeat: seat.seatIndex
-          };
+    finalAssignments() {
+      // Récupération des affectations enregistrées dans Firebase
+      const assignments = this.resultAlgo.finalAssignments || [];
+      // Regrouper par idPlace pour recalculer le numéro de siège
+      const groups = {};
+      assignments.forEach(assignment => {
+        if (!groups[assignment.idPlace]) {
+          groups[assignment.idPlace] = [];
         }
+        groups[assignment.idPlace].push(assignment);
+      });
+      // Réassigner un numéro de siège séquentiel pour chaque groupe
+      const recalculated = [];
+      for (const idPlace in groups) {
+        groups[idPlace].forEach((assignment, index) => {
+          recalculated.push({ ...assignment, seat: index + 1 });
+        });
+      }
+      // Enrichir chaque affectation avec les infos de la place, de l'institution, de l'utilisateur,
+      // déterminer le praticien formateur et construire la liste des critères validants.
+      return recalculated.map(assignment => {
+        const place = this.placesData[assignment.idPlace] || {};
+        const idInstitution = place.IDPlace;
+        const inst = (idInstitution && this.institutions[idInstitution]) ? this.institutions[idInstitution] : {};
+        const user = this.users[assignment.idEtudiant] || {};
+        
+        // Liste des critères à vérifier
+        const criteriaKeys = ["AIGU", "AMBU", "DE", "FR", "REHAB", "MSQ", "NEUROGER"];
+        const validCriteria = criteriaKeys.filter(key => {
+          const val = place[key];
+          return val === true || (typeof val === "string" && val.toLowerCase() === "true");
+        });
+        
+        // Détermination de l'ID du praticien formateur :
+        let praticienFormateur = "";
+        if (Array.isArray(place.praticiensFormateurs)) {
+          if (place.praticiensFormateurs.length === 1) {
+            praticienFormateur = place.praticiensFormateurs[0];
+          } else {
+            const seatNum = assignment.seat;
+            praticienFormateur = place["selectedPraticienBA22PFP4-" + seatNum] ||
+                                  place["selectedPraticiensBA22PFP4-" + seatNum] || "";
+          }
+        }
+        // Récupération des infos du praticien depuis /PraticienFormateurs
+        const pract = this.praticienFormateurs[praticienFormateur] || {};
+        
+        return {
+          idPlace: assignment.idPlace,
+          NomPlace: place.NomPlace || "",
+          idInstitution: place.IDPlace || "",
+          idEtudiant: assignment.idEtudiant,
+          nom: user.Nom || user.name || "",
+          prenom: user.Prenom || "",
+          voteRank: assignment.voteRank || "non voté",
+          category: inst.Category || "non défini",
+          canton: inst.Canton || "non défini",
+          locality: inst.Locality || "non défini",
+          institutionName: inst.Name || "non défini",
+          seat: assignment.seat,
+          praticienFormateur: praticienFormateur,
+          praticienPrenom: pract.Prenom || "",
+          praticienNom: pract.Nom || "",
+          praticienMail: pract.Mail || "",
+          validCriteria: validCriteria.join(", ")
+        };
       });
     }
   },
   methods: {
-    // Récupère et numérote les places disponibles depuis "Places"
-    updateExpandedSeats() {
-      const seats = [];
+    fetchInstitutions() {
+      const instRef = ref(db, 'Institutions');
+      onValue(instRef, snapshot => {
+        this.institutions = snapshot.val() || {};
+      });
+    },
+    fetchPlaces() {
       const placesRef = ref(db, 'Places');
       onValue(placesRef, snapshot => {
-        const placesData = snapshot.val() || {};
-        Object.keys(placesData).forEach(key => {
-          const place = placesData[key];
-          place.IdPlace = key;
-          place.IdInstitution = place.InstitutionId || place.IDPlace || "N/A";
-          const count = parseInt(place.PFP4 || '0');
-          for (let i = 1; i <= count; i++) {
-            const studentKey = `selectedEtudiantBA22PFP4-${i}`;
-            const dynamicKey = `selectedActiveBA22PFP4-${i}`;
-            const assignedStudent = (place[studentKey] && place[studentKey].trim() !== "")
-              ? place[studentKey].trim()
-              : "";
-            if (place[dynamicKey] === true) {
-              seats.push({
-                ...place,
-                seatIndex: i,
-                dynamicKey: dynamicKey,
-                assignedStudent: assignedStudent,
-                rowNumber: seats.length + 1
-              });
-            }
-          }
-        });
-        this.expandedSeats = seats;
+        this.placesData = snapshot.val() || {};
       });
     },
-    // Affectation manuelle d'un étudiant
-    assignStudent(seat) {
-      const assignmentKey = `${seat.IdPlace}-${seat.seatIndex}`;
-      const studentId = this.newAssignments[assignmentKey];
-      if (!studentId || studentId.trim() === "") {
-        alert("Veuillez saisir un ID étudiant.");
-        return;
-      }
-      const placeRef = ref(db, `Places/${seat.IdPlace}`);
-      const studentField = `selectedEtudiantBA22PFP4-${seat.seatIndex}`;
-      update(placeRef, { [studentField]: studentId })
+    fetchUsers() {
+      const usersRef = ref(db, 'Users');
+      onValue(usersRef, snapshot => {
+        this.users = snapshot.val() || {};
+      });
+    },
+    fetchResultAlgo() {
+      const resultRef = ref(db, 'resultatVotationBA24PFP2');
+      onValue(resultRef, snapshot => {
+        this.resultAlgo = snapshot.val() || {};
+      });
+    },
+    fetchPraticienFormateurs() {
+      const practRef = ref(db, 'PraticienFormateurs');
+      onValue(practRef, snapshot => {
+        this.praticienFormateurs = snapshot.val() || {};
+      });
+    },
+    // Méthode d'assignation automatique : génère les affectations sans numéro de siège,
+    // le numéro de siège sera recalculé dans le computed.
+    assignStudentsAutomatically() {
+      const finalAssignments = [];
+      Object.keys(this.placesData).forEach(key => {
+        const place = this.placesData[key];
+        const count = parseInt(place.PFP4 || '0');
+        for (let i = 1; i <= count; i++) {
+          const studentKey = `selectedEtudiantBA22PFP4-${i}`;
+          if (place[studentKey] && place[studentKey].trim() !== "") {
+            finalAssignments.push({
+              idPlace: key,
+              idEtudiant: place[studentKey].trim(),
+              voteRank: "déjà placé"
+              // Le champ 'seat' sera recalculé dans le computed.
+            });
+          }
+        }
+      });
+      const resultData = {
+        finalAssignments: finalAssignments,
+        manualAssignments: finalAssignments
+      };
+      set(ref(db, 'resultatVotationBA24PFP2'), resultData)
         .then(() => {
-          alert("Étudiant assigné avec succès!");
-          this.$set(this.newAssignments, assignmentKey, "");
-          this.updateExpandedSeats();
+          alert("Les affectations ont été enregistrées dans Firebase !");
+          this.fetchResultAlgo();
         })
         .catch(err => {
-          console.error("Erreur d'assignation:", err);
-          alert("Erreur lors de l'assignation.");
+          console.error("Erreur lors de l'enregistrement dans Firebase:", err);
+          alert("Erreur lors de l'enregistrement des affectations.");
         });
     },
-    // Récupère les affectations depuis "ResultVotationAlgo"
-    fetchResultAlgo() {
-      const resultRef = ref(db, 'ResultVotationAlgo');
-      onValue(resultRef, snapshot => {
-        const data = snapshot.val() || [];
-        this.resultAlgo = data;
+    // Méthode pour exporter les affectations au format CSV en UTF-8 avec BOM
+    exportCSV() {
+      const data = this.finalAssignments;
+      if (!data || !data.length) {
+        alert("Aucune donnée à exporter.");
+        return;
+      }
+      const headers = [
+        "idPlace",
+        "NomPlace",
+        "idInstitution",
+        "idEtudiant",
+        "nom",
+        "prenom",
+        "voteRank",
+        "category",
+        "canton",
+        "locality",
+        "institutionName",
+        "seat",
+        "praticienFormateur",
+        "praticienPrenom",
+        "praticienNom",
+        "praticienMail",
+        "validCriteria"
+      ];
+      const csvRows = [];
+      csvRows.push(headers.join(','));
+      data.forEach(item => {
+        const row = headers.map(header => {
+          let val = item[header] !== undefined ? item[header] : "";
+          if (typeof val === "string") {
+            val = val.replace(/"/g, '""');
+            if (val.search(/("|,|\n)/g) >= 0) {
+              val = `"${val}"`;
+            }
+          }
+          return val;
+        });
+        csvRows.push(row.join(','));
       });
+      // Ajout du BOM pour garantir l'encodage UTF-8
+      const csvString = '\uFEFF' + csvRows.join('\n');
+      const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", "affectations.csv");
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   },
   mounted() {
-    this.updateExpandedSeats();
+    this.fetchInstitutions();
+    this.fetchPlaces();
+    this.fetchUsers();
     this.fetchResultAlgo();
+    this.fetchPraticienFormateurs();
   }
 };
 </script>
 
 <style scoped>
-h1 {
+h1, h2 {
   text-align: center;
   margin: 20px 0;
-}
-h2 {
-  margin-top: 20px;
 }
 </style>

@@ -96,7 +96,7 @@
 
   <script>
   import { ref, onMounted, watch } from "vue";
-  import { auth, db } from "@/firebase.js";
+  import { auth, db } from "../../../firebase.js";
   import { onAuthStateChanged } from "firebase/auth";
   import {
     ref as dbRef,

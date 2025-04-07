@@ -335,7 +335,7 @@ import Button from 'primevue/button';
 import ValidatedCriteriaSection from '@/components/UserProfile/ValidatedCriteriaSection.vue';
 import CardNameProfile from '@/components/Bibliotheque/Profile/CardNameProfile.vue';
 import { ref, onValue, update, set, remove } from "firebase/database";
-import { db } from '@/firebase';
+import { db } from 'root/firebase';
 import { getAuth } from "firebase/auth";
 
 export default {
