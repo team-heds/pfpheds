@@ -54,6 +54,7 @@ import StageRepartitionBA2 from '@/components/Dashboard/DashboardDetails/StageRe
 import ResultPreviewVotation from '@/components/Dashboard/DashboardDetails/ResultPreviewVotation.vue';
 import StatsPlacePFP from '@/components/Dashboard/DashboardDetails/StatsPlacePFP.vue';
 import PlacesAssignment from '@/components/Dashboard/DashboardDetails/PlacesAssignment.vue';
+import PlacesAssigned from '@/components/Dashboard/DashboardDetails/PlacesAssigned.vue';
 
 import LoginHome from '@/components/Utils/LoginHome.vue';
 import NewsFeed from '@/components/Social/NewsFeed.vue';
@@ -128,6 +129,7 @@ const routes = [
   { path: '/result_preview_votation', component: ResultPreviewVotation, name: 'ResultPreviewVotation',meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/stats_place_pfp', component: StatsPlacePFP, name: 'StatsPlacePFP',meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/places_assignment', component: PlacesAssignment, name: 'PlacesAssignment',meta: { requiresAuth: true, requiredRole: 'admin' } },
+  { path: '/places_assigned', component: PlacesAssigned, name: 'PlacesAssigned',meta: { requiresAuth: true, requiredRole: 'admin' } },
   
   
 
