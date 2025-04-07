@@ -50,7 +50,7 @@
 <script setup>
 import { ref as vueRef } from 'vue'
 import { defineEmits } from 'vue'
-import { storage } from '@/firebase.js'
+import { storage } from 'root/firebase.js'
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 
 const emits = defineEmits(['close', 'save'])

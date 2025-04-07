@@ -108,7 +108,7 @@ import Navbar from '@/components/Utils/Navbar.vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import { ref, onValue } from "firebase/database";
-import { db } from '@/firebase';
+import { db } from 'root/firebase';
 
 export default {
   name: 'ResultPreviewVotation',

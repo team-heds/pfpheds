@@ -36,7 +36,7 @@
 <script setup>
 import { reactive, watch, ref } from 'vue'
 import { defineProps, defineEmits } from 'vue'
-import { storage } from '@/firebase.js'
+import { storage } from 'root/firebase.js'
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 
 // --- Récupère la prop "file" (l'élément à éditer) ---

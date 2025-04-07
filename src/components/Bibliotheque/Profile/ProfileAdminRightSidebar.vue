@@ -43,7 +43,7 @@ import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import { useRouter } from 'vue-router';
-import { db } from '../../../firebase';
+import { db } from 'root/firebase';
 import { ref as firebaseRef, onValue } from 'firebase/database';
 
 const router = useRouter();
