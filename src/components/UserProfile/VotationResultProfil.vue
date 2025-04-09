@@ -162,7 +162,7 @@ const assignments = computed(() => {
         _key: key,
         idPlace: record.idPlace,
         NomPlace: place.NomPlace || "",
-        idInstitution: place.IDPlace || "",
+        idInstitution:place.IDPlace || place.InstitutionId || "",
         institutionName: institution.Name || "non défini",
         idEtudiant: record.idEtudiant,
         nom: userObj.Nom || student.Nom || "",
