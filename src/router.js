@@ -88,7 +88,7 @@ const routes = [
   { path: '/profilAdmin/:id', component: ProfileAdmin, name: 'ProfileAdmin', meta: { requiresAuth: true, requiredRole: ['admin']  } ,},
   { path: '/settings', component: SettingView, name: 'SettingView', meta: { requiresAuth: true}},
   { path: '/gantt', component: GanttView, name: 'GanttView', meta: { requiresAuth: true}},
-  
+
   {
     path: '/profile/:id',
     name: 'Profile',
@@ -130,8 +130,8 @@ const routes = [
   { path: '/stats_place_pfp', component: StatsPlacePFP, name: 'StatsPlacePFP',meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/places_assignment', component: PlacesAssignment, name: 'PlacesAssignment',meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/places_assigned', component: PlacesAssigned, name: 'PlacesAssigned',meta: { requiresAuth: true, requiredRole: 'admin' } },
-  
-  
+
+
 
   { path: '/stage_repartition', component: StageRepartitionBA2, name: 'StageRepartitionBA2',meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/management_places_safe', component: ManagementPlacesSafe, name: 'ManagementPlacesSafe',meta: { requiresAuth: true, requiredRole: 'admin' } },

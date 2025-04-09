@@ -78,7 +78,12 @@ import Navbar from '@/components/Utils/Navbar.vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
+<<<<<<< HEAD
 import Dropdown from 'primevue/dropdown';
+=======
+import { ref, onValue, update } from "firebase/database";
+import { db } from 'root/firebase';
+>>>>>>> c99c3a904b2e7e85fe467adbb601110ac7151346
 
 export default {
   name: 'PlacesAssigneds',

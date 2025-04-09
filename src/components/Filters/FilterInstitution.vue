@@ -80,7 +80,6 @@
 import L from 'leaflet';
 import { db } from '../../../firebase.js';
 import { ref, onValue } from "firebase/database";
-import AppDarkAndLightMode from '@/layout/AppDarkAndLightMode.vue';
 
 export default {
   components: { AppDarkAndLightMode },

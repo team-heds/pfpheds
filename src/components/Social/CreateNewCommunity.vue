@@ -34,7 +34,7 @@
 
 <script>
 import { ref } from "vue";
-import { db, auth } from "@/firebase.js";
+import { db, auth } from "../../../firebase.js";
 import { ref as dbRef, update, set } from "firebase/database";
 import InputText from 'primevue/inputtext';
 

@@ -42,7 +42,7 @@ import Navbar from "@/components/Utils/Navbar.vue";
 import CommunityFeed from "@/components/Social/CommunityFeed.vue";
 import LeftSidebar from '@/components/Bibliotheque/Social/LeftSidebar.vue';
 import RightSidebar from '@/components/Bibliotheque/Social/RightSidebar.vue';
-import { db, auth } from "@/firebase.js";
+import { db, auth } from "root/firebase.js";
 import { ref as dbRef, get } from "firebase/database";
 import { onAuthStateChanged } from "firebase/auth";
 

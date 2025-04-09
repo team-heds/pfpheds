@@ -41,7 +41,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import { db } from '@/firebase';
+import { db } from 'root/firebase';
 import { ref as dbRef, get } from 'firebase/database';
 
 // Définir la prop userId (l'ID de l'utilisateur sélectionné)
