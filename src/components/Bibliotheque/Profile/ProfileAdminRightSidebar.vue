@@ -53,32 +53,22 @@
     </div>
 
     <div class="user-list">
-      <div
-        v-for="user in paginatedUsersByRole"
-        :key="user.uid"
-        class="user-item"
-      >
+      <div v-for="user in paginatedUsersByRole" :key="user.uid" class="user-item">
         <Button @click="handleBAUserChange(user.uid)" class="w-full">
           {{ user.prenom }} {{ user.nom }}
         </Button>
       </div>
     </div>
 
-    <div
-      class="pagination flex justify-between justify-content-center items-center mt-4"
-    >
-      <Button class="m-2" @click="prevPage" :disabled="currentPage <= 0">
-        Précédent
-      </Button>
-      <Button class="m-2" @click="nextPage" :disabled="currentPage >= totalPages - 1">
-        Suivant
-      </Button>
+    <div class="pagination flex justify-between justify-content-center items-center mt-4">
+      <Button class="m-2" @click="prevPage" :disabled="currentPage <= 0">Précédent</Button>
+      <Button class="m-2" @click="nextPage" :disabled="currentPage >= totalPages - 1">Suivant</Button>
     </div>
 
-    <!-- Nouveaux boutons de navigation pour les étudiants BA22 -->
+    <!-- Boutons de navigation pour les étudiants BA22 -->
     <div class="ba-navigation flex justify-center items-center mt-4">
       <Button class="m-4" @click="prevBA22" icon="pi pi-arrow-left">
-        BA22 <<< 
+        BA22 <<<
       </Button>
       <Button class="m-4" @click="nextBA22" icon="pi pi-arrow-right">
         >>> BA22
@@ -88,34 +78,37 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+defineOptions({ inheritAttrs: false })
+
+import { ref, computed, onMounted, watch } from 'vue';
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import { useRouter } from 'vue-router';
-import { db } from 'root/firebase';
+import { db } from '@/firebase';
 import { ref as firebaseRef, onValue } from 'firebase/database';
 
 const router = useRouter();
 
+// Variables de recherche et de pagination
 const searchTerm = ref('');
 const selectedUserId = ref(null);
 const selectedRoleBA = ref(null);
 const roleSearchTerm = ref('');
 const currentPage = ref(0);
 const itemsPerPage = 15;
-const usersList = ref([]);
-// Nouvelle variable pour la liste des étudiants depuis /Students
-const studentsList = ref([]);
 
-// Liste des rôles BA
+// Liste des utilisateurs depuis /Users
+const usersList = ref([]);
+
+// Liste des rôles BA disponibles
 const rolesBA = ref([
   { label: 'BA22', value: 'BA22' },
   { label: 'BA23', value: 'BA23' },
   { label: 'BA24', value: 'BA24' }
 ]);
 
-// Récupération des utilisateurs depuis Firebase (noeud Users)
+// Récupération des utilisateurs depuis Firebase (/Users)
 const fetchUsers = () => {
   const usersRef = firebaseRef(db, 'Users');
   onValue(usersRef, (snapshot) => {
@@ -131,34 +124,14 @@ const fetchUsers = () => {
   });
 };
 
-// Récupération des étudiants depuis Firebase (noeud Students)
-// On suppose que chaque étudiant possède le champ "Classe" ou "Class"
-const fetchStudents = () => {
-  const studentsRef = firebaseRef(db, 'Students');
-  onValue(studentsRef, (snapshot) => {
-    if (snapshot.exists()) {
-      studentsList.value = Object.entries(snapshot.val()).map(([uid, student]) => ({
-        uid,
-        prenom: student.Prenom || 'Inconnu',
-        nom: student.Nom || 'Inconnu',
-        prenomNom: `${student.Prenom || 'Inconnu'} ${student.Nom || 'Inconnu'}`,
-        classe: student.Classe || student.Class || ''
-      }));
-    }
-  });
-};
+onMounted(fetchUsers);
 
-onMounted(() => {
-  fetchUsers();
-  fetchStudents();
-});
-
-// Tri des utilisateurs par nom de famille (pour le dropdown de recherche)
+// Trie des utilisateurs par nom
 const sortedUsers = computed(() => {
   return usersList.value.slice().sort((a, b) => a.nom.localeCompare(b.nom));
 });
 
-// Filtrage des étudiants par nom/prénom dans le dropdown Users
+// Filtrage pour le dropdown de recherche
 const filteredUsers = computed(() => {
   if (!searchTerm.value) return sortedUsers.value;
   return sortedUsers.value.filter(user =>
@@ -166,21 +139,22 @@ const filteredUsers = computed(() => {
   );
 });
 
-// Filtrage des étudiants par rôle BA (pour la recherche par rôle)
-// Ici, on continue d'utiliser le filtre sur le noeud Users pour ce dropdown
+// Filtrage par rôle BA pour la recherche dans le dropdown
 const filteredUsersByRole = computed(() => {
   if (!selectedRoleBA.value) return [];
-  let users = sortedUsers.value.filter(user => user.Roles?.[selectedRoleBA.value]);
+  let filtered = sortedUsers.value.filter(user => {
+    const role = user.Roles?.[selectedRoleBA.value];
+    return role === true || (typeof role === 'string' && role.toLowerCase() === 'true');
+  });
   if (roleSearchTerm.value) {
     const search = roleSearchTerm.value.toLowerCase();
-    users = users.filter(user =>
+    filtered = filtered.filter(user =>
       `${user.prenom} ${user.nom}`.toLowerCase().includes(search)
     );
   }
-  return users;
+  return filtered;
 });
 
-// Pagination des résultats filtrés par rôle BA
 const totalPages = computed(() => Math.ceil(filteredUsersByRole.value.length / itemsPerPage));
 const paginatedUsersByRole = computed(() => {
   const start = currentPage.value * itemsPerPage;
@@ -198,42 +172,55 @@ const handleUserChange = () => {
   if (selectedUserId.value)
     router.push({ name: 'ProfileAdmin', params: { id: selectedUserId.value } });
 };
-const handleBAUserChange = (userId) => {
-  if (userId)
-    router.push({ name: 'ProfileAdmin', params: { id: userId } });
+
+const handleBAUserChange = (uid) => {
+  if (uid)
+    router.push({ name: 'ProfileAdmin', params: { id: uid } });
 };
 
-// ----------------- Boutons de navigation BA22 -----------------
-// Ici, nous filtrons la liste des étudiants à partir de la liste récupérée depuis /Students
-// pour ne retenir que ceux dont la propriété "classe" est "BA22".
-const ba22Users = computed(() => {
-  return studentsList.value.filter(student => student.Classe === 'BA22');
+// ------------------- Navigation BA22 -------------------
+// Création d'une liste d'ID pour les utilisateurs BA22 
+// en filtrant la liste triée sur Users via Roles.BA22 (booléen ou "true").
+const ba22UserIDs = computed(() => {
+  return sortedUsers.value
+    .filter(user => {
+      const role = user.Roles?.BA22;
+      return role === true || (typeof role === 'string' && role.toLowerCase() === 'true');
+    })
+    .map(user => user.uid);
 });
 
-// Variable réactive pour conserver l'index de navigation dans la liste BA22
-const currentBA22Index = ref(0);
+// Pour vérifier la liste dans la console
+watch(ba22UserIDs, (newIDs) => {
+  console.log("Liste des IDs BA22 :", newIDs);
+}, { immediate: true });
 
+// Gestion de l'indice courant avec persistance via sessionStorage
+const STORAGE_KEY = 'currentBA22Index';
+const initialIndex = parseInt(sessionStorage.getItem(STORAGE_KEY)) || 0;
+const currentBA22Index = ref(initialIndex);
+
+// Watcher pour sauvegarder l'indice dans sessionStorage à chaque mise à jour
+watch(currentBA22Index, (newIndex) => {
+  sessionStorage.setItem(STORAGE_KEY, newIndex);
+});
+
+// Fonctions de navigation entre utilisateurs BA22
 const nextBA22 = () => {
-  if (ba22Users.value.length === 0) return;
-  if (currentBA22Index.value < ba22Users.value.length - 1) {
-    currentBA22Index.value++;
-  } else {
-    currentBA22Index.value = 0; // Retour au premier étudiant
-  }
-  router.push({ name: 'ProfileAdmin', params: { id: ba22Users.value[currentBA22Index.value].uid } });
+  if (ba22UserIDs.value.length === 0) return;
+  currentBA22Index.value = (currentBA22Index.value + 1) % ba22UserIDs.value.length;
+  const nextId = ba22UserIDs.value[currentBA22Index.value];
+  console.log("Étudiant BA22 suivant, ID :", nextId);
+  router.push({ name: 'ProfileAdmin', params: { id: nextId } });
 };
 
 const prevBA22 = () => {
-  if (ba22Users.value.length === 0) return;
-  if (currentBA22Index.value > 0) {
-    currentBA22Index.value--;
-  } else {
-    currentBA22Index.value = ba22Users.value.length - 1; // Aller au dernier étudiant
-  }
-  router.push({ name: 'ProfileAdmin', params: { id: ba22Users.value[currentBA22Index.value].uid } });
+  if (ba22UserIDs.value.length === 0) return;
+  currentBA22Index.value = (currentBA22Index.value - 1 + ba22UserIDs.value.length) % ba22UserIDs.value.length;
+  const prevId = ba22UserIDs.value[currentBA22Index.value];
+  console.log("Étudiant BA22 précédent, ID :", prevId);
+  router.push({ name: 'ProfileAdmin', params: { id: prevId } });
 };
-// -----------------------------------------------------------------
-
 </script>
 
 <style scoped>

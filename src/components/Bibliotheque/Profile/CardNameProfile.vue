@@ -5,12 +5,7 @@
         <!-- Section Avatar (Image de profil) -->
         <div class="field m-2 col-12 md:col-6 w-full">
           <div class="flex align-items-center">
-            <img
-              :src="user.photoURL || defaultAvatar"
-              alt="Avatar"
-              class="p-2"
-              style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover;"
-            />
+            <img :src="user.photoURL || defaultAvatar" alt="Avatar" class="p-2" style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover;" />
             <h1 class="pl-4">{{ user.prenom }} {{ user.nom }}</h1>
           </div>
         </div>
@@ -36,7 +31,7 @@
             <p>{{ user.ville }}</p>
 
             <h5>Répondant HES:</h5>
-            <!-- Seul l'administrateur peut modifier le répondant via le dropdown -->
+            <!-- Seul l'administrateur (l'utilisateur connecté) peut modifier le répondant -->
             <div v-if="isAdmin">
               <Dropdown
                 v-model="selectedTeacher"
@@ -69,13 +64,14 @@ import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { getDatabase, ref as dbRef, get, update } from "firebase/database";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { storage } from '../../../../firebase.js';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 
 const defaultAvatar = '../../../public/assets/images/avatar/01.jpg';
 
-// Objet utilisateur (profil regroupant Users et Students)
+// Profil consulté (celui affiché)
 const user = ref({
   uid: '',
   prenom: '',
@@ -85,21 +81,25 @@ const user = ref({
   email: '',
   ville: '',
   classe: '',
-  repondantHES: '',
-  Roles: {} // On ajoute la propriété Roles pour vérifier le rôle admin
+  repondantHES: ''
+});
+
+// Profil de l'utilisateur connecté (pour vérifier s'il est admin)
+const currentUserProfile = ref({
+  uid: '',
+  Roles: {}
 });
 
 const selectedAvatarFile = ref(null);
-// Référence pour la sélection d'un enseignant dans le dropdown
-// Ce dropdown ne sera visible que si l'utilisateur connecté a le rôle admin
+// Référence pour la sélection d'un enseignant dans le dropdown (pour modifier Répondant HES)
 const selectedTeacher = ref("");
 
 // Computed pour déterminer si l'utilisateur connecté est admin
 const isAdmin = computed(() => {
-  return user.value.Roles && user.value.Roles.admin == true;
+  return currentUserProfile.value.Roles && currentUserProfile.value.Roles.admin === true;
 });
 
-// Récupération du profil utilisateur depuis la table Users
+// Récupération du profil consulté depuis /Users (basé sur l'ID de l'URL)
 const fetchUserProfileById = async (userId) => {
   const db = getDatabase();
   const userRef = dbRef(db, `Users/${userId}`);
@@ -115,21 +115,20 @@ const fetchUserProfileById = async (userId) => {
       ville: userData.Ville || '',
       bio: userData.Biography || '',
       photoURL: userData.PhotoURL || defaultAvatar,
-      Roles: userData.Roles || {}
+      // Ici, on ne se sert pas du rôle pour modifier l'affichage (c'est le currentUserProfile qui compte)
     };
   } else {
     console.error("Aucun profil trouvé pour l'ID :", userId);
   }
 };
 
-// Récupération des données étudiant depuis la table Students
+// Récupération des données étudiant depuis /Students
 const fetchStudentProfileById = async (userId) => {
   const db = getDatabase();
   const studentRef = dbRef(db, `Students/${userId}`);
   const snapshot = await get(studentRef);
   if (snapshot.exists()) {
     const studentData = snapshot.val();
-    // Utilisation de "Classe" ou "Class" selon la structure
     user.value.classe = studentData.Classe || studentData.Class || '';
     user.value.repondantHES = studentData.RepondantHES || '';
   } else {
@@ -137,7 +136,20 @@ const fetchStudentProfileById = async (userId) => {
   }
 };
 
-// Importation des enseignants depuis Firebase (nœud "Enseignants")
+// Récupération du profil de l'utilisateur connecté depuis /Users à l'aide de Firebase Auth
+const fetchCurrentUserProfile = async (currentUserId) => {
+  const db = getDatabase();
+  const currentUserRef = dbRef(db, `Users/${currentUserId}`);
+  const snapshot = await get(currentUserRef);
+  if (snapshot.exists()) {
+    currentUserProfile.value = snapshot.val();
+    currentUserProfile.value.uid = currentUserId;
+  } else {
+    console.error("Aucun profil trouvé pour l'utilisateur connecté :", currentUserId);
+  }
+};
+
+// Importation des enseignants depuis /Enseignants
 const teachers = ref({});
 const fetchTeachers = () => {
   const db = getDatabase();
@@ -153,8 +165,7 @@ const fetchTeachers = () => {
     });
 };
 
-// Construction de la liste d'options pour le dropdown des enseignants
-// Chaque option affiche "Forname Name" et la valeur est l'ID de l'enseignant
+// Construction des options pour le dropdown des enseignants
 const teachersOptions = computed(() => {
   return Object.keys(teachers.value).map(key => {
     const teacher = teachers.value[key];
@@ -162,7 +173,7 @@ const teachersOptions = computed(() => {
   });
 });
 
-// Pré-remplir le dropdown si un répondeant est déjà présent et si l'utilisateur est admin
+// Pré-remplissage du dropdown si un répondeant est déjà présent et si l'utilisateur connecté est admin
 watch(teachersOptions, (newOptions) => {
   if (user.value.repondantHES && isAdmin.value) {
     const teacherMatch = newOptions.find(opt => opt.label === user.value.repondantHES);
@@ -174,7 +185,7 @@ watch(teachersOptions, (newOptions) => {
   }
 }, { immediate: true });
 
-// Fonction de sauvegarde du profil utilisateur et étudiant
+// Fonction de sauvegarde du profil : met à jour Users et Students
 const saveProfile = async () => {
   const db = getDatabase();
   // Si un nouvel avatar a été sélectionné, on l'upload
@@ -191,7 +202,7 @@ const saveProfile = async () => {
     }
   }
   
-  // Mettre à jour le profil dans Users
+  // Mise à jour du profil dans Users
   const userRef = dbRef(db, `Users/${user.value.uid}`);
   await update(userRef, {
     Prenom: user.value.prenom,
@@ -202,14 +213,14 @@ const saveProfile = async () => {
     PhotoURL: user.value.photoURL
   });
 
-  // Pour un utilisateur admin, si une sélection a été faite, mettre à jour le profil étudiant
+  // Seul un administrateur connecté peut modifier le champ Répondant HES
   if (isAdmin.value && selectedTeacher.value) {
     const teacherOpt = teachersOptions.value.find(opt => opt.value === selectedTeacher.value);
     const teacherLabel = teacherOpt ? teacherOpt.label : '';
     user.value.repondantHES = teacherLabel;
   }
   
-  // Mettre à jour le profil dans Students
+  // Mise à jour du profil étudiant dans Students
   const studentRef = dbRef(db, `Students/${user.value.uid}`);
   await update(studentRef, {
     RepondantHES: user.value.repondantHES
@@ -226,15 +237,24 @@ const onAvatarChange = (event) => {
 };
 
 const route = useRoute();
+const auth = getAuth();
 onMounted(async () => {
-  const userId = route.params.id; // Récupération de l'ID dans l'URL
+  // Récupérer l'ID de l'utilisateur dont le profil est consulté (depuis l'URL)
+  const userId = route.params.id;
   if (userId) {
-    await fetchUserProfileById(userId);     // Charger le profil depuis Users (incluant Roles)
-    await fetchStudentProfileById(userId);    // Charger les données depuis Students
-    await fetchTeachers();                    // Charger la liste des enseignants
+    await fetchUserProfileById(userId);
+    await fetchStudentProfileById(userId);
   } else {
     console.error("Aucun ID d'utilisateur fourni dans l'URL");
   }
+  // Récupérer l'utilisateur connecté via Firebase Auth
+  onAuthStateChanged(auth, async (currentUser) => {
+    if (currentUser) {
+      await fetchCurrentUserProfile(currentUser.uid);
+    }
+  });
+  // Charger la liste des enseignants
+  await fetchTeachers();
 });
 </script>
 

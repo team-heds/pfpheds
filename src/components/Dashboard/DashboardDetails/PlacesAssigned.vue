@@ -3,11 +3,6 @@
     <Navbar />
     <h1>Places assignées</h1>
     
-    <!-- Bouton global pour modifier le "Lieu signature" sur toutes les lignes -->
-    <div style="margin-bottom: 20px; text-align: center;">
-      <Button :label="toggleButtonLabel" @click="toggleLieuSignature" />
-    </div>
-    
     <!-- Tableau des affectations finales enrichies -->
     <div style="margin-top: 40px;">
       <DataTable :value="finalAssignments" responsiveLayout="scroll">
@@ -41,11 +36,12 @@
               optionLabel="label"
               optionValue="value"
               placeholder="Sélectionnez"
+              @change="updateSignatureAssignment(data._key)"
             />
           </template>
         </Column>
         
-        <!-- Nouvelle colonne pour "En charge de la signature" -->
+        <!-- Colonne pour En charge de la signature -->
         <Column header="En charge de la signature">
           <template #body="{ data }">
             <Dropdown
@@ -54,7 +50,31 @@
               optionLabel="label"
               optionValue="value"
               placeholder="Sélectionnez un enseignant"
+              @change="updateSignatureAssignment(data._key)"
             />
+          </template>
+        </Column>
+        
+        <!-- Colonne pour Remarque étudiant -->
+        <Column header="Remarque étudiant">
+          <template #body="slotProps">
+            <span>{{ slotProps.data.remarqueEtudiant || 'Aucune' }}</span>
+            <Button icon="pi pi-pencil" class="p-button-text" @click="openRemarkDialog(slotProps.data)" />
+          </template>
+        </Column>
+        
+        <!-- Colonne pour Remarques places -->
+        <Column header="Remarques places">
+          <template #body="slotProps">
+            <span>{{ slotProps.data.remarquesPlaces || 'Aucune' }}</span>
+          </template>
+        </Column>
+        
+        <!-- Colonne pour Remarque Signature -->
+        <Column header="Remarque Signature">
+          <template #body="slotProps">
+            <span>{{ signatureRemarks[slotProps.data._key] || 'Aucune' }}</span>
+            <Button icon="pi pi-pencil" class="p-button-text" @click="openSignatureRemarkDialog(slotProps.data)" />
           </template>
         </Column>
         
@@ -63,19 +83,44 @@
     
     <!-- Boutons d'action -->
     <div style="margin-top: 20px; text-align: center;">
-      <Button label="Assignation Automatique" @click="assignStudentsAutomatically" />
+      <Button :label="toggleButtonLabel" @click="toggleLieuSignature" />
       <Button label="Exporter CSV" @click="exportCSV" style="margin-left: 10px;" />
-      <Button label="Enregistrer signatures" @click="saveSignatureAssignments" style="margin-left: 10px;" />
+      <Button label="Copier Répondant HES" @click="copyRepondantHesToSignature" style="margin-left: 10px;" />
+      <Button label="Valider" @click="saveSignatureAssignments" style="margin-left: 10px;" />
     </div>
+    
+    <!-- Dialog pour StudentNote -->
+    <Dialog header="Modifier le StudentNote de l'étudiant" v-model:visible="displayRemarkDialog" modal>
+      <div class="remark-dialog">
+        <textarea v-model="editedRemarks" rows="5" style="width:100%;" placeholder="Saisir vos remarques ici..."></textarea>
+        <div class="dialog-buttons" style="margin-top:1em; text-align:right;">
+          <Button label="Annuler" class="p-button-text" @click="cancelRemarkEdit" />
+          <Button label="Confirmer" class="p-button-success" @click="confirmRemarkUpdate" />
+        </div>
+      </div>
+    </Dialog>
+    
+    <!-- Dialog pour Remarque Signature -->
+    <Dialog header="Modifier la Remarque Signature" v-model:visible="displaySignatureRemarkDialog" modal>
+      <div class="remark-dialog">
+        <textarea v-model="editedSignatureRemark" rows="5" style="width:100%;" placeholder="Saisir la remarque signature ici..."></textarea>
+        <div class="dialog-buttons" style="margin-top:1em; text-align:right;">
+          <Button label="Annuler" class="p-button-text" @click="cancelSignatureRemarkEdit" />
+          <Button label="Confirmer" class="p-button-success" @click="confirmSignatureRemarkUpdate" />
+        </div>
+      </div>
+    </Dialog>
+    
   </div>
 </template>
 
 <script>
 import { ref, reactive, computed, onMounted } from 'vue';
-import { ref as firebaseRef, onValue, update } from "firebase/database";
+import { ref as firebaseRef, onValue, update, set } from "firebase/database";
 import Navbar from '@/components/Utils/Navbar.vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { db } from 'root/firebase';
@@ -86,34 +131,94 @@ export default {
     Navbar,
     DataTable,
     Column,
+    Dialog,
     Button,
     Dropdown
   },
   setup() {
-    // Références réactives pour les données provenant de Firebase
+    // Références pour charger les données Firebase
     const placesData = ref({});
     const users = ref({});
     const institutions = ref({});
     const resultAlgo = ref({});
     const praticienFormateurs = ref({});
     const students = ref({});
-    
-    // Références pour les enseignants importés depuis Firebase (nœud "Enseignants")
     const teachers = ref({});
-    
-    // Objets réactifs pour stocker la valeur "Lieu signature" et "En charge de la signature" pour chaque ligne
+
+    // Objets réactifs pour gérer les Dropdowns et les remarques
     const lieuSignatureOverrides = reactive({});
     const signatureInChargeOverrides = reactive({});
-    
-    // Options du dropdown "Lieu signature"
+    const signatureRemarks = reactive({}); // Stockage de la remarque signature
+
+    // Options pour le dropdown "Lieu signature" avec trois choix
     const signatureOptions = [
       { label: 'présence', value: 'présence' },
-      { label: 'distance', value: 'distance' }
+      { label: 'distance', value: 'distance' },
+      { label: 'étudiant', value: 'etudiant' }
     ];
-    const firstOption = signatureOptions[0].value;   // "présence"
-    const secondOption = signatureOptions[1].value;    // "distance"
+    const firstOption = signatureOptions[0].value; // "présence"
     
-    // Importation des enseignants et création des options pour le dropdown
+    // Gestion de la remarque étudiant
+    const displayRemarkDialog = ref(false);
+    const selectedAssignment = ref(null);
+    const editedRemarks = ref("");
+
+    const openRemarkDialog = (data) => {
+      selectedAssignment.value = data;
+      editedRemarks.value = data.remarqueEtudiant || "";
+      displayRemarkDialog.value = true;
+    };
+
+    const cancelRemarkEdit = () => {
+      displayRemarkDialog.value = false;
+      selectedAssignment.value = null;
+      editedRemarks.value = "";
+    };
+
+    const confirmRemarkUpdate = () => {
+      const studentRef = firebaseRef(db, `Users/${selectedAssignment.value.idEtudiant}`);
+      update(studentRef, { StudentNote: editedRemarks.value })
+        .then(() => {
+          console.log("StudentNote mise à jour");
+        })
+        .catch(err => console.error("Erreur lors de la mise à jour du StudentNote :", err));
+      displayRemarkDialog.value = false;
+      selectedAssignment.value = null;
+      editedRemarks.value = "";
+    };
+
+    // Gestion de la remarque signature
+    const displaySignatureRemarkDialog = ref(false);
+    const selectedSignatureAssignment = ref(null);
+    const editedSignatureRemark = ref("");
+
+    const openSignatureRemarkDialog = (data) => {
+      selectedSignatureAssignment.value = data;
+      editedSignatureRemark.value = signatureRemarks[data._key] || "";
+      displaySignatureRemarkDialog.value = true;
+    };
+
+    const cancelSignatureRemarkEdit = () => {
+      displaySignatureRemarkDialog.value = false;
+      selectedSignatureAssignment.value = null;
+      editedSignatureRemark.value = "";
+    };
+
+    const confirmSignatureRemarkUpdate = () => {
+      const key = selectedSignatureAssignment.value._key;
+      const sigAssignRef = firebaseRef(db, `signatureAssignments/${key}`);
+      update(sigAssignRef, { remarqueSignature: editedSignatureRemark.value })
+        .then(() => {
+          signatureRemarks[key] = editedSignatureRemark.value;
+          console.log("remarqueSignature mise à jour pour", key);
+        })
+        .catch(err => console.error("Erreur lors de la mise à jour de remarqueSignature :", err));
+      displaySignatureRemarkDialog.value = false;
+      selectedSignatureAssignment.value = null;
+      editedSignatureRemark.value = "";
+    };
+
+    // Récupération des enseignants
     const fetchTeachers = () => {
       const teachersRef = firebaseRef(db, 'Enseignants');
       onValue(teachersRef, snapshot => {
@@ -126,83 +231,72 @@ export default {
         return { label: `${teacher.Forname} ${teacher.Name}`, value: key };
       });
     });
-    
-    // Fonctions de récupération des autres données depuis Firebase
+
+    // Récupération d'autres données
     const fetchInstitutions = () => {
       const instRef = firebaseRef(db, 'Institutions');
       onValue(instRef, snapshot => {
         institutions.value = snapshot.val() || {};
       });
     };
-    
+
     const fetchPlaces = () => {
       const placesRef = firebaseRef(db, 'Places');
       onValue(placesRef, snapshot => {
         placesData.value = snapshot.val() || {};
       });
     };
-    
+
     const fetchUsers = () => {
       const usersRef = firebaseRef(db, 'Users');
       onValue(usersRef, snapshot => {
         users.value = snapshot.val() || {};
       });
     };
-    
+
     const fetchStudents = () => {
       const studentsRef = firebaseRef(db, 'Students');
       onValue(studentsRef, snapshot => {
         students.value = snapshot.val() || {};
       });
     };
-    
+
     const fetchResultAlgo = () => {
       const resultRef = firebaseRef(db, 'resultatVotationBA24PFP2');
       onValue(resultRef, snapshot => {
         resultAlgo.value = snapshot.val() || {};
       });
     };
-    
+
     const fetchPraticienFormateurs = () => {
       const practRef = firebaseRef(db, 'PraticienFormateurs');
       onValue(practRef, snapshot => {
         praticienFormateurs.value = snapshot.val() || {};
       });
     };
-    
-    // Méthode d'assignation automatique des étudiants
-    const assignStudentsAutomatically = () => {
-      const finalAssignments = [];
-      Object.keys(placesData.value).forEach(key => {
-        const place = placesData.value[key];
-        const count = parseInt(place.PFP4 || '0');
-        for (let i = 1; i <= count; i++) {
-          const studentKey = `selectedEtudiantBA22PFP4-${i}`;
-          if (place[studentKey] && place[studentKey].trim() !== "") {
-            finalAssignments.push({
-              idPlace: key,
-              idEtudiant: place[studentKey].trim(),
-              voteRank: "déjà placé"
-            });
+
+    // Récupération des affectations de signature depuis Firebase
+    const fetchSignatureAssignments = () => {
+      const sigAssignRef = firebaseRef(db, 'signatureAssignments');
+      onValue(sigAssignRef, snapshot => {
+        const sigData = snapshot.val() || {};
+        Object.keys(sigData).forEach(key => {
+          const record = sigData[key];
+          if (record.lieuSignature) {
+            lieuSignatureOverrides[key] = record.lieuSignature;
           }
-        }
-      });
-      const resultData = {
-        finalAssignments: finalAssignments,
-        manualAssignments: finalAssignments
-      };
-      set(firebaseRef(db, 'resultatVotationBA24PFP2'), resultData)
-        .then(() => {
-          alert("Les affectations ont été enregistrées dans Firebase !");
-          fetchResultAlgo();
-        })
-        .catch(err => {
-          console.error("Erreur lors de l'enregistrement dans Firebase:", err);
-          alert("Erreur lors de l'enregistrement des affectations.");
+          if (record.teacherKey) {
+            signatureInChargeOverrides[key] = record.teacherKey;
+          } else if (record.enChargeDeLaSignature) {
+            const opt = teachersOptions.value.find(opt => opt.label === record.enChargeDeLaSignature);
+            signatureInChargeOverrides[key] = opt ? opt.value : "";
+          }
+          signatureRemarks[key] = record.remarqueSignature || "";
         });
+      });
     };
-    
-    // Calcul des affectations finales enrichies
+
+    // Calcul des affectations finales enrichies (ajout de repondHESID depuis '/Students')
     const finalAssignments = computed(() => {
       const assignments = resultAlgo.value.finalAssignments || [];
       const groups = {};
@@ -220,18 +314,19 @@ export default {
       }
       return recalculated.map(assignment => {
         const place = placesData.value[assignment.idPlace] || {};
-        const idInstitution = place.IDPlace;
-        const inst = (idInstitution && institutions.value[idInstitution]) ? institutions.value[idInstitution] : {};
-        const student = students.value[assignment.idEtudiant] || {};
+        const idInstitution = place.IDPlace || place.InstitutionId;
+        const inst = (idInstitution && institutions.value[idInstitution])
+          ? institutions.value[idInstitution] : {};
+        const student = students.value[assignment.idEtudiant] || {}; // données de '/Students'
         const userObj = users.value[assignment.idEtudiant] || {};
-    
+
         // Critères validants
         const criteriaKeys = ["AIGU", "AMBU", "DE", "FR", "REHAB", "MSQ", "NEUROGER"];
         const validCriteria = criteriaKeys.filter(key => {
           const val = place[key];
           return val === true || (typeof val === "string" && val.toLowerCase() === "true");
         });
-    
+
         // Identification du praticien formateur
         let praticienFormateur = "";
         if (Array.isArray(place.praticiensFormateurs)) {
@@ -239,23 +334,22 @@ export default {
             praticienFormateur = place.praticiensFormateurs[0];
           } else {
             const seatNum = assignment.seat;
-            praticienFormateur = place["selectedPraticienBA22PFP4-" + seatNum] ||
-                                place["selectedPraticiensBA22PFP4-" + seatNum] || "";
+            praticienFormateur =
+              place["selectedPraticienBA22PFP4-" + seatNum] ||
+              place["selectedPraticiensBA22PFP4-" + seatNum] || "";
           }
         }
         const pract = praticienFormateurs.value[praticienFormateur] || {};
-    
-        // Création d'une clé unique pour chaque ligne
+
+        // Clé unique pour chaque ligne
         const key = assignment.idPlace + '_' + assignment.idEtudiant;
-        // Initialisation par défaut du "Lieu signature" si non défini
         if (!(key in lieuSignatureOverrides)) {
           lieuSignatureOverrides[key] = firstOption;
         }
-        // Initialisation par défaut de "En charge de la signature"
         if (!(key in signatureInChargeOverrides)) {
           signatureInChargeOverrides[key] = "";
         }
-    
+
         return {
           _key: key,
           idPlace: assignment.idPlace,
@@ -265,6 +359,7 @@ export default {
           nom: userObj.Nom || student.Nom || "",
           prenom: userObj.Prenom || student.Prenom || "",
           repondantHES: student.RepondantHES || "",
+          repondHESID: student.repondHESID || "",
           voteRank: assignment.voteRank || "non voté",
           category: inst.Category || "non défini",
           canton: inst.Canton || "non défini",
@@ -275,12 +370,15 @@ export default {
           praticienPrenom: pract.Prenom || "",
           praticienNom: pract.Nom || "",
           praticienMail: pract.Mail || "",
-          validCriteria: validCriteria.join(", ")
+          validCriteria: validCriteria.join(", "),
+          remarqueEtudiant: userObj.StudentNote || student.StudentNote || "",
+          remarquesPlaces: place.Remarques || "",
+          remarqueSignature: signatureRemarks[key] || ""
         };
       });
     });
-    
-    // Détermine l'état global pour le dropdown "Lieu signature"
+
+    // Valeur globale du dropdown "Lieu signature" pour le premier élément
     const globalLastValue = computed(() => {
       if (finalAssignments.value.length > 0) {
         const firstKey = finalAssignments.value[0]._key;
@@ -288,23 +386,71 @@ export default {
       }
       return firstOption;
     });
-    
-    // Libellé du bouton pour basculer entre "présence" et "distance"
-    const toggleButtonLabel = computed(() => {
-      return globalLastValue.value === firstOption 
-        ? `Tout passer en ${secondOption}` 
-        : `Tout passer en ${firstOption}`;
+
+    // Calcul de la prochaine option dans le cycle (présence -> distance -> étudiant -> présence)
+    const nextSignatureOption = computed(() => {
+      const current = globalLastValue.value;
+      if (current === 'présence') {
+        return 'distance';
+      } else if (current === 'distance') {
+        return 'etudiant';
+      } else {
+        return 'présence';
+      }
     });
-    
-    // Méthode pour basculer la valeur du "Lieu signature" sur toutes les lignes
+
+    // Libellé du bouton de bascule
+    const toggleButtonLabel = computed(() => {
+      return `Tout passer en ${nextSignatureOption.value}`;
+    });
+
+    // Fonction de bascule adaptée au cycle à trois valeurs
     const toggleLieuSignature = () => {
-      const newValue = globalLastValue.value === firstOption ? secondOption : firstOption;
+      const newValue = nextSignatureOption.value;
       finalAssignments.value.forEach(assignment => {
         lieuSignatureOverrides[assignment._key] = newValue;
+        updateSignatureAssignment(assignment._key);
       });
     };
-    
-    // Méthode pour exporter les données au format CSV en incluant les colonnes "Lieu signature" et "En charge de la signature"
+
+    // Mise à jour live dans Firebase pour une affectation donnée
+    const updateSignatureAssignment = (key) => {
+      const assignment = finalAssignments.value.find(a => a._key === key);
+      if (!assignment) {
+        console.error('Affectation non trouvée pour la clé', key);
+        return;
+      }
+      const teacherValue = signatureInChargeOverrides[key] || "";
+      const teacherOpt = teachersOptions.value.find(opt => opt.value === teacherValue);
+      const record = {
+        assignmentId: key,
+        idPlace: assignment.idPlace,
+        idEtudiant: assignment.idEtudiant,
+        lieuSignature: lieuSignatureOverrides[key] || firstOption,
+        teacherKey: teacherValue,
+        enChargeDeLaSignature: teacherOpt ? teacherOpt.label : teacherValue,
+        remarqueSignature: signatureRemarks[key] || ""
+      };
+
+      update(firebaseRef(db, 'signatureAssignments/' + key), record)
+        .then(() => {
+          console.log('Mise à jour live réussie pour', key);
+        })
+        .catch(err => {
+          console.error("Erreur lors de la mise à jour live de signatureAssignments:", err);
+        });
+    };
+
+    // Copie le repondHESID dans signatureInChargeOverrides pour chaque assignation
+    const copyRepondantHesToSignature = () => {
+      finalAssignments.value.forEach(assignment => {
+        signatureInChargeOverrides[assignment._key] = assignment.repondHESID || "";
+        updateSignatureAssignment(assignment._key);
+      });
+      alert("Les ID du répondant HES ont été copiés dans la colonne 'En charge de la signature' et mis à jour dans Firebase !");
+    };
+
+    // Export CSV
     const exportCSV = () => {
       const data = finalAssignments.value.map(assignment => {
         const teacherOpt = teachersOptions.value.find(opt => opt.value === signatureInChargeOverrides[assignment._key]);
@@ -366,28 +512,16 @@ export default {
       link.click();
       document.body.removeChild(link);
     };
-    
-    // Nouvelle méthode pour enregistrer les modifications des colonnes "Lieu signature"
-    // et "En charge de la signature" dans une nouvelle table "signatureAssignments"
+
+    // Sauvegarde groupée des affectations
     const saveSignatureAssignments = () => {
       finalAssignments.value.forEach(assignment => {
-        const teacherOpt = teachersOptions.value.find(opt => opt.value === signatureInChargeOverrides[assignment._key]);
-        const record = {
-          assignmentId: assignment._key,
-          idPlace: assignment.idPlace,
-          idEtudiant: assignment.idEtudiant,
-          lieuSignature: lieuSignatureOverrides[assignment._key] || firstOption,
-          enChargeDeLaSignature: teacherOpt ? teacherOpt.label : ""
-        };
-        set(firebaseRef(db, 'signatureAssignments/' + assignment._key), record)
-          .catch(err => {
-            console.error('Erreur lors de la sauvegarde de l\'affectation de signature :', err);
-          });
+        updateSignatureAssignment(assignment._key);
       });
       alert('Les affectations de signature ont été enregistrées avec succès');
     };
-    
-    // Chargement de toutes les données lors du montage du composant
+
+    // Chargement initial de toutes les données
     onMounted(() => {
       fetchInstitutions();
       fetchPlaces();
@@ -396,21 +530,36 @@ export default {
       fetchResultAlgo();
       fetchPraticienFormateurs();
       fetchTeachers();
+      fetchSignatureAssignments();
     });
-    
+
     return {
       lieuSignatureOverrides,
       signatureOptions,
       firstOption,
-      secondOption,
       finalAssignments,
       toggleButtonLabel,
       toggleLieuSignature,
-      assignStudentsAutomatically,
       exportCSV,
       teachersOptions,
       signatureInChargeOverrides,
-      saveSignatureAssignments
+      saveSignatureAssignments,
+      updateSignatureAssignment,
+      copyRepondantHesToSignature,
+      // Dialogs et fonctions pour les remarques
+      displayRemarkDialog,
+      selectedAssignment,
+      editedRemarks,
+      openRemarkDialog,
+      cancelRemarkEdit,
+      confirmRemarkUpdate,
+      signatureRemarks,
+      displaySignatureRemarkDialog,
+      selectedSignatureAssignment,
+      editedSignatureRemark,
+      openSignatureRemarkDialog,
+      cancelSignatureRemarkEdit,
+      confirmSignatureRemarkUpdate
     };
   }
 };
@@ -420,5 +569,8 @@ export default {
 h1, h2 {
   text-align: center;
   margin: 20px 0;
+}
+.remark-dialog textarea {
+  resize: vertical;
 }
 </style>

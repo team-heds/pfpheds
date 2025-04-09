@@ -55,7 +55,7 @@ import ResultPreviewVotation from '@/components/Dashboard/DashboardDetails/Resul
 import StatsPlacePFP from '@/components/Dashboard/DashboardDetails/StatsPlacePFP.vue';
 import PlacesAssignment from '@/components/Dashboard/DashboardDetails/PlacesAssignment.vue';
 import PlacesAssigned from '@/components/Dashboard/DashboardDetails/PlacesAssigned.vue';
-
+import ManagementPFPEnCours from '@/components/Dashboard/DashboardDetails/ManagementPFPEnCours.vue';
 import LoginHome from '@/components/Utils/LoginHome.vue';
 import NewsFeed from '@/components/Social/NewsFeed.vue';
 import HashtagPage from '@/components/Social/HashtagPage.vue';
@@ -130,7 +130,8 @@ const routes = [
   { path: '/stats_place_pfp', component: StatsPlacePFP, name: 'StatsPlacePFP',meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/places_assignment', component: PlacesAssignment, name: 'PlacesAssignment',meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/places_assigned', component: PlacesAssigned, name: 'PlacesAssigned',meta: { requiresAuth: true, requiredRole: 'admin' } },
-
+  { path: '/management_pfpencours', component: ManagementPFPEnCours, name: 'ManagementPFPEnCours',meta: { requiresAuth: true, requiredRole: 'admin' } },
+  
 
 
   { path: '/stage_repartition', component: StageRepartitionBA2, name: 'StageRepartitionBA2',meta: { requiresAuth: true, requiredRole: 'admin' } },
