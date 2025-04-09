@@ -96,7 +96,7 @@ const selectedTeacher = ref("");
 
 // Computed pour déterminer si l'utilisateur connecté est admin
 const isAdmin = computed(() => {
-  return user.value.Roles && user.value.Roles.Admin === true;
+  return user.value.Roles && user.value.Roles.admin == true;
 });
 
 // Récupération du profil utilisateur depuis la table Users
