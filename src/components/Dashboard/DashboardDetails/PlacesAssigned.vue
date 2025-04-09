@@ -414,32 +414,36 @@ export default {
     };
 
     // Mise à jour live dans Firebase pour une affectation donnée
-    const updateSignatureAssignment = (key) => {
-      const assignment = finalAssignments.value.find(a => a._key === key);
-      if (!assignment) {
-        console.error('Affectation non trouvée pour la clé', key);
-        return;
-      }
-      const teacherValue = signatureInChargeOverrides[key] || "";
-      const teacherOpt = teachersOptions.value.find(opt => opt.value === teacherValue);
-      const record = {
-        assignmentId: key,
-        idPlace: assignment.idPlace,
-        idEtudiant: assignment.idEtudiant,
-        lieuSignature: lieuSignatureOverrides[key] || firstOption,
-        teacherKey: teacherValue,
-        enChargeDeLaSignature: teacherOpt ? teacherOpt.label : teacherValue,
-        remarqueSignature: signatureRemarks[key] || ""
-      };
+ // Mise à jour live dans Firebase pour une affectation donnée avec ajout du praticien formateur
+const updateSignatureAssignment = (key) => {
+  const assignment = finalAssignments.value.find(a => a._key === key);
+  if (!assignment) {
+    console.error('Affectation non trouvée pour la clé', key);
+    return;
+  }
+  const teacherValue = signatureInChargeOverrides[key] || "";
+  const teacherOpt = teachersOptions.value.find(opt => opt.value === teacherValue);
+  
+  // On ajoute la donnée du praticien formateur ici
+  const record = {
+    assignmentId: key,
+    idPlace: assignment.idPlace,
+    idEtudiant: assignment.idEtudiant,
+    lieuSignature: lieuSignatureOverrides[key] || firstOption,
+    teacherKey: teacherValue,
+    enChargeDeLaSignature: teacherOpt ? teacherOpt.label : teacherValue,
+    remarqueSignature: signatureRemarks[key] || "",
+    praticienFormateur: assignment.praticienFormateur || ""
+  };
 
-      update(firebaseRef(db, 'signatureAssignments/' + key), record)
-        .then(() => {
-          console.log('Mise à jour live réussie pour', key);
-        })
-        .catch(err => {
-          console.error("Erreur lors de la mise à jour live de signatureAssignments:", err);
-        });
-    };
+  update(firebaseRef(db, 'signatureAssignments/' + key), record)
+    .then(() => {
+      console.log('Mise à jour live réussie pour', key);
+    })
+    .catch(err => {
+      console.error("Erreur lors de la mise à jour live de signatureAssignments:", err);
+    });
+};
 
     // Copie le repondHESID dans signatureInChargeOverrides pour chaque assignation
     const copyRepondantHesToSignature = () => {
