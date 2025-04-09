@@ -1,7 +1,7 @@
 <template>
 
     <!-- Critères Validés (Agrégation) -->
-    <h5 class="mb-4">Critères Validés</h5>
+    <h5 class="mb-4 m-2">Critères Validés</h5>
     <div class="grid m-2" v-if="aggregatedCriteria && Object.keys(aggregatedCriteria).length">
       <div
         v-for="(value, key) in aggregatedCriteria"
@@ -24,7 +24,7 @@
     </div>
 
     <!-- Institutions pour lesquelles l'étudiant a validé des critères -->
-    <h5 class="mb-4">Anciennes places</h5>
+    <h5 class="mb-4 m-2">Anciennes places</h5>
 
   <div v-if="institutionsList && institutionsList.length">
     <div
