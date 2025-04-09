@@ -2,55 +2,83 @@
   <div>
     <Navbar />
     <h1>Places assignées</h1>
-
+    
+    <!-- Bouton global pour modifier le "Lieu signature" sur toutes les lignes -->
+    <div style="margin-bottom: 20px; text-align: center;">
+      <Button :label="toggleButtonLabel" @click="toggleLieuSignature" />
+    </div>
+    
     <!-- Tableau des affectations finales enrichies -->
     <div style="margin-top: 40px;">
       <DataTable :value="finalAssignments" responsiveLayout="scroll">
         <!-- Numérotation -->
         <Column header="#" style="width: 3rem;">
-          <template #body="slotProps">
-            {{ slotProps.index + 1 }}
+          <template #body="{ index }">
+            {{ index + 1 }}
           </template>
         </Column>
-        <Column header="ID Place" field="idPlace" />
+        <Column header="Institution" field="institutionName" />
         <Column header="Nom de la Place" field="NomPlace" />
-        <Column header="ID de l'institution" field="idInstitution" />
-        <Column header="ID Étudiant" field="idEtudiant" />
         <Column header="Nom" field="nom" />
         <Column header="Prénom" field="prenom" />
+        <Column header="Répondant HES" field="repondantHES" />
         <Column header="Vote Rank" field="voteRank" />
         <Column header="Catégorie" field="category" />
         <Column header="Canton" field="canton" />
         <Column header="Localité" field="locality" />
-        <Column header="Institution" field="institutionName" />
-        <!-- Nouvelle colonne pour afficher les critères validants -->
         <Column header="Critères" field="validCriteria" />
-        <!-- Colonne pour le numéro de siège recalculé -->
         <Column header="Siège" field="seat" />
-        <!-- Colonne pour l'ID du praticien formateur -->
-        <Column header="ID Praticien Formateur" field="praticienFormateur" />
-        <!-- Colonnes pour les infos du praticien -->
         <Column header="Praticien Prénom" field="praticienPrenom" />
         <Column header="Praticien Nom" field="praticienNom" />
         <Column header="Praticien Mail" field="praticienMail" />
+        
+        <!-- Colonne pour Lieu signature avec Dropdown -->
+        <Column header="Lieu signature">
+          <template #body="{ data }">
+            <Dropdown
+              v-model="lieuSignatureOverrides[data._key]"
+              :options="signatureOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Sélectionnez"
+            />
+          </template>
+        </Column>
+        
+        <!-- Nouvelle colonne pour "En charge de la signature" -->
+        <Column header="En charge de la signature">
+          <template #body="{ data }">
+            <Dropdown
+              v-model="signatureInChargeOverrides[data._key]"
+              :options="teachersOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Sélectionnez un enseignant"
+            />
+          </template>
+        </Column>
+        
       </DataTable>
     </div>
-
+    
     <!-- Boutons d'action -->
     <div style="margin-top: 20px; text-align: center;">
       <Button label="Assignation Automatique" @click="assignStudentsAutomatically" />
       <Button label="Exporter CSV" @click="exportCSV" style="margin-left: 10px;" />
+      <Button label="Enregistrer signatures" @click="saveSignatureAssignments" style="margin-left: 10px;" />
     </div>
   </div>
 </template>
 
 <script>
+import { ref, reactive, computed, onMounted } from 'vue';
+import { ref as firebaseRef, onValue, set } from "firebase/database";
+import { db } from '@/firebase';
 import Navbar from '@/components/Utils/Navbar.vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
-import { ref, onValue, set } from "firebase/database";
-import { db } from '@/firebase';
+import Dropdown from 'primevue/dropdown';
 
 export default {
   name: 'PlacesAssigneds',
@@ -58,22 +86,125 @@ export default {
     Navbar,
     DataTable,
     Column,
-    Button
+    Button,
+    Dropdown
   },
-  data() {
-    return {
-      placesData: {},         // Données de /Places
-      users: {},              // Données de /Users
-      institutions: {},       // Données de /Institutions
-      resultAlgo: {},         // Affectations enregistrées (de /resultatVotationBA24PFP2)
-      praticienFormateurs: {} // Données de /PraticienFormateurs
+  setup() {
+    // Références réactives pour les données provenant de Firebase
+    const placesData = ref({});
+    const users = ref({});
+    const institutions = ref({});
+    const resultAlgo = ref({});
+    const praticienFormateurs = ref({});
+    const students = ref({});
+    
+    // Références pour les enseignants importés depuis Firebase (nœud "Enseignants")
+    const teachers = ref({});
+    
+    // Objets réactifs pour stocker la valeur "Lieu signature" et "En charge de la signature" pour chaque ligne
+    const lieuSignatureOverrides = reactive({});
+    const signatureInChargeOverrides = reactive({});
+    
+    // Options du dropdown "Lieu signature"
+    const signatureOptions = [
+      { label: 'présence', value: 'présence' },
+      { label: 'distance', value: 'distance' }
+    ];
+    const firstOption = signatureOptions[0].value;   // "présence"
+    const secondOption = signatureOptions[1].value;    // "distance"
+    
+    // Importation des enseignants et création des options pour le dropdown
+    const fetchTeachers = () => {
+      const teachersRef = firebaseRef(db, 'Enseignants');
+      onValue(teachersRef, snapshot => {
+        teachers.value = snapshot.val() || {};
+      });
     };
-  },
-  computed: {
-    finalAssignments() {
-      // Récupération des affectations enregistrées dans Firebase
-      const assignments = this.resultAlgo.finalAssignments || [];
-      // Regrouper par idPlace pour recalculer le numéro de siège
+    const teachersOptions = computed(() => {
+      return Object.keys(teachers.value).map(key => {
+        const teacher = teachers.value[key];
+        return { label: `${teacher.Forname} ${teacher.Name}`, value: key };
+      });
+    });
+    
+    // Fonctions de récupération des autres données depuis Firebase
+    const fetchInstitutions = () => {
+      const instRef = firebaseRef(db, 'Institutions');
+      onValue(instRef, snapshot => {
+        institutions.value = snapshot.val() || {};
+      });
+    };
+    
+    const fetchPlaces = () => {
+      const placesRef = firebaseRef(db, 'Places');
+      onValue(placesRef, snapshot => {
+        placesData.value = snapshot.val() || {};
+      });
+    };
+    
+    const fetchUsers = () => {
+      const usersRef = firebaseRef(db, 'Users');
+      onValue(usersRef, snapshot => {
+        users.value = snapshot.val() || {};
+      });
+    };
+    
+    const fetchStudents = () => {
+      const studentsRef = firebaseRef(db, 'Students');
+      onValue(studentsRef, snapshot => {
+        students.value = snapshot.val() || {};
+      });
+    };
+    
+    const fetchResultAlgo = () => {
+      const resultRef = firebaseRef(db, 'resultatVotationBA24PFP2');
+      onValue(resultRef, snapshot => {
+        resultAlgo.value = snapshot.val() || {};
+      });
+    };
+    
+    const fetchPraticienFormateurs = () => {
+      const practRef = firebaseRef(db, 'PraticienFormateurs');
+      onValue(practRef, snapshot => {
+        praticienFormateurs.value = snapshot.val() || {};
+      });
+    };
+    
+    // Méthode d'assignation automatique des étudiants
+    const assignStudentsAutomatically = () => {
+      const finalAssignments = [];
+      Object.keys(placesData.value).forEach(key => {
+        const place = placesData.value[key];
+        const count = parseInt(place.PFP4 || '0');
+        for (let i = 1; i <= count; i++) {
+          const studentKey = `selectedEtudiantBA22PFP4-${i}`;
+          if (place[studentKey] && place[studentKey].trim() !== "") {
+            finalAssignments.push({
+              idPlace: key,
+              idEtudiant: place[studentKey].trim(),
+              voteRank: "déjà placé"
+            });
+          }
+        }
+      });
+      const resultData = {
+        finalAssignments: finalAssignments,
+        manualAssignments: finalAssignments
+      };
+      set(firebaseRef(db, 'resultatVotationBA24PFP2'), resultData)
+        .then(() => {
+          alert("Les affectations ont été enregistrées dans Firebase !");
+          fetchResultAlgo();
+        })
+        .catch(err => {
+          console.error("Erreur lors de l'enregistrement dans Firebase:", err);
+          alert("Erreur lors de l'enregistrement des affectations.");
+        });
+    };
+    
+    // Calcul des affectations finales enrichies
+    const finalAssignments = computed(() => {
+      const assignments = resultAlgo.value.finalAssignments || [];
       const groups = {};
       assignments.forEach(assignment => {
         if (!groups[assignment.idPlace]) {
@@ -81,29 +212,27 @@ export default {
         }
         groups[assignment.idPlace].push(assignment);
       });
-      // Réassigner un numéro de siège séquentiel pour chaque groupe
       const recalculated = [];
       for (const idPlace in groups) {
         groups[idPlace].forEach((assignment, index) => {
           recalculated.push({ ...assignment, seat: index + 1 });
         });
       }
-      // Enrichir chaque affectation avec les infos de la place, de l'institution, de l'utilisateur,
-      // déterminer le praticien formateur et construire la liste des critères validants.
       return recalculated.map(assignment => {
-        const place = this.placesData[assignment.idPlace] || {};
+        const place = placesData.value[assignment.idPlace] || {};
         const idInstitution = place.IDPlace;
-        const inst = (idInstitution && this.institutions[idInstitution]) ? this.institutions[idInstitution] : {};
-        const user = this.users[assignment.idEtudiant] || {};
-        
-        // Liste des critères à vérifier
+        const inst = (idInstitution && institutions.value[idInstitution]) ? institutions.value[idInstitution] : {};
+        const student = students.value[assignment.idEtudiant] || {};
+        const userObj = users.value[assignment.idEtudiant] || {};
+    
+        // Critères validants
         const criteriaKeys = ["AIGU", "AMBU", "DE", "FR", "REHAB", "MSQ", "NEUROGER"];
         const validCriteria = criteriaKeys.filter(key => {
           const val = place[key];
           return val === true || (typeof val === "string" && val.toLowerCase() === "true");
         });
-        
-        // Détermination de l'ID du praticien formateur :
+    
+        // Identification du praticien formateur
         let praticienFormateur = "";
         if (Array.isArray(place.praticiensFormateurs)) {
           if (place.praticiensFormateurs.length === 1) {
@@ -111,19 +240,31 @@ export default {
           } else {
             const seatNum = assignment.seat;
             praticienFormateur = place["selectedPraticienBA22PFP4-" + seatNum] ||
-                                  place["selectedPraticiensBA22PFP4-" + seatNum] || "";
+                                place["selectedPraticiensBA22PFP4-" + seatNum] || "";
           }
         }
-        // Récupération des infos du praticien depuis /PraticienFormateurs
-        const pract = this.praticienFormateurs[praticienFormateur] || {};
-        
+        const pract = praticienFormateurs.value[praticienFormateur] || {};
+    
+        // Création d'une clé unique pour chaque ligne
+        const key = assignment.idPlace + '_' + assignment.idEtudiant;
+        // Initialisation par défaut du "Lieu signature" si non défini
+        if (!(key in lieuSignatureOverrides)) {
+          lieuSignatureOverrides[key] = firstOption;
+        }
+        // Initialisation par défaut de "En charge de la signature"
+        if (!(key in signatureInChargeOverrides)) {
+          signatureInChargeOverrides[key] = "";
+        }
+    
         return {
+          _key: key,
           idPlace: assignment.idPlace,
           NomPlace: place.NomPlace || "",
           idInstitution: place.IDPlace || "",
           idEtudiant: assignment.idEtudiant,
-          nom: user.Nom || user.name || "",
-          prenom: user.Prenom || "",
+          nom: userObj.Nom || student.Nom || "",
+          prenom: userObj.Prenom || student.Prenom || "",
+          repondantHES: student.RepondantHES || "",
           voteRank: assignment.voteRank || "non voté",
           category: inst.Category || "non défini",
           canton: inst.Canton || "non défini",
@@ -137,75 +278,42 @@ export default {
           validCriteria: validCriteria.join(", ")
         };
       });
-    }
-  },
-  methods: {
-    fetchInstitutions() {
-      const instRef = ref(db, 'Institutions');
-      onValue(instRef, snapshot => {
-        this.institutions = snapshot.val() || {};
+    });
+    
+    // Détermine l'état global pour le dropdown "Lieu signature"
+    const globalLastValue = computed(() => {
+      if (finalAssignments.value.length > 0) {
+        const firstKey = finalAssignments.value[0]._key;
+        return lieuSignatureOverrides[firstKey] || firstOption;
+      }
+      return firstOption;
+    });
+    
+    // Libellé du bouton pour basculer entre "présence" et "distance"
+    const toggleButtonLabel = computed(() => {
+      return globalLastValue.value === firstOption 
+        ? `Tout passer en ${secondOption}` 
+        : `Tout passer en ${firstOption}`;
+    });
+    
+    // Méthode pour basculer la valeur du "Lieu signature" sur toutes les lignes
+    const toggleLieuSignature = () => {
+      const newValue = globalLastValue.value === firstOption ? secondOption : firstOption;
+      finalAssignments.value.forEach(assignment => {
+        lieuSignatureOverrides[assignment._key] = newValue;
       });
-    },
-    fetchPlaces() {
-      const placesRef = ref(db, 'Places');
-      onValue(placesRef, snapshot => {
-        this.placesData = snapshot.val() || {};
+    };
+    
+    // Méthode pour exporter les données au format CSV en incluant les colonnes "Lieu signature" et "En charge de la signature"
+    const exportCSV = () => {
+      const data = finalAssignments.value.map(assignment => {
+        const teacherOpt = teachersOptions.value.find(opt => opt.value === signatureInChargeOverrides[assignment._key]);
+        return {
+          ...assignment,
+          lieuSignature: lieuSignatureOverrides[assignment._key] || firstOption,
+          enChargeDeLaSignature: teacherOpt ? teacherOpt.label : ""
+        };
       });
-    },
-    fetchUsers() {
-      const usersRef = ref(db, 'Users');
-      onValue(usersRef, snapshot => {
-        this.users = snapshot.val() || {};
-      });
-    },
-    fetchResultAlgo() {
-      const resultRef = ref(db, 'resultatVotationBA24PFP2');
-      onValue(resultRef, snapshot => {
-        this.resultAlgo = snapshot.val() || {};
-      });
-    },
-    fetchPraticienFormateurs() {
-      const practRef = ref(db, 'PraticienFormateurs');
-      onValue(practRef, snapshot => {
-        this.praticienFormateurs = snapshot.val() || {};
-      });
-    },
-    // Méthode d'assignation automatique : génère les affectations sans numéro de siège,
-    // le numéro de siège sera recalculé dans le computed.
-    assignStudentsAutomatically() {
-      const finalAssignments = [];
-      Object.keys(this.placesData).forEach(key => {
-        const place = this.placesData[key];
-        const count = parseInt(place.PFP4 || '0');
-        for (let i = 1; i <= count; i++) {
-          const studentKey = `selectedEtudiantBA22PFP4-${i}`;
-          if (place[studentKey] && place[studentKey].trim() !== "") {
-            finalAssignments.push({
-              idPlace: key,
-              idEtudiant: place[studentKey].trim(),
-              voteRank: "déjà placé"
-              // Le champ 'seat' sera recalculé dans le computed.
-            });
-          }
-        }
-      });
-      const resultData = {
-        finalAssignments: finalAssignments,
-        manualAssignments: finalAssignments
-      };
-      set(ref(db, 'resultatVotationBA24PFP2'), resultData)
-        .then(() => {
-          alert("Les affectations ont été enregistrées dans Firebase !");
-          this.fetchResultAlgo();
-        })
-        .catch(err => {
-          console.error("Erreur lors de l'enregistrement dans Firebase:", err);
-          alert("Erreur lors de l'enregistrement des affectations.");
-        });
-    },
-    // Méthode pour exporter les affectations au format CSV en UTF-8 avec BOM
-    exportCSV() {
-      const data = this.finalAssignments;
       if (!data || !data.length) {
         alert("Aucune donnée à exporter.");
         return;
@@ -217,6 +325,7 @@ export default {
         "idEtudiant",
         "nom",
         "prenom",
+        "repondantHES",
         "voteRank",
         "category",
         "canton",
@@ -227,7 +336,9 @@ export default {
         "praticienPrenom",
         "praticienNom",
         "praticienMail",
-        "validCriteria"
+        "validCriteria",
+        "lieuSignature",
+        "enChargeDeLaSignature"
       ];
       const csvRows = [];
       csvRows.push(headers.join(','));
@@ -244,7 +355,6 @@ export default {
         });
         csvRows.push(row.join(','));
       });
-      // Ajout du BOM pour garantir l'encodage UTF-8
       const csvString = '\uFEFF' + csvRows.join('\n');
       const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
@@ -255,14 +365,53 @@ export default {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-    }
-  },
-  mounted() {
-    this.fetchInstitutions();
-    this.fetchPlaces();
-    this.fetchUsers();
-    this.fetchResultAlgo();
-    this.fetchPraticienFormateurs();
+    };
+    
+    // Nouvelle méthode pour enregistrer les modifications des colonnes "Lieu signature"
+    // et "En charge de la signature" dans une nouvelle table "signatureAssignments"
+    const saveSignatureAssignments = () => {
+      finalAssignments.value.forEach(assignment => {
+        const teacherOpt = teachersOptions.value.find(opt => opt.value === signatureInChargeOverrides[assignment._key]);
+        const record = {
+          assignmentId: assignment._key,
+          idPlace: assignment.idPlace,
+          idEtudiant: assignment.idEtudiant,
+          lieuSignature: lieuSignatureOverrides[assignment._key] || firstOption,
+          enChargeDeLaSignature: teacherOpt ? teacherOpt.label : ""
+        };
+        set(firebaseRef(db, 'signatureAssignments/' + assignment._key), record)
+          .catch(err => {
+            console.error('Erreur lors de la sauvegarde de l\'affectation de signature :', err);
+          });
+      });
+      alert('Les affectations de signature ont été enregistrées avec succès');
+    };
+    
+    // Chargement de toutes les données lors du montage du composant
+    onMounted(() => {
+      fetchInstitutions();
+      fetchPlaces();
+      fetchUsers();
+      fetchStudents();
+      fetchResultAlgo();
+      fetchPraticienFormateurs();
+      fetchTeachers();
+    });
+    
+    return {
+      lieuSignatureOverrides,
+      signatureOptions,
+      firstOption,
+      secondOption,
+      finalAssignments,
+      toggleButtonLabel,
+      toggleLieuSignature,
+      assignStudentsAutomatically,
+      exportCSV,
+      teachersOptions,
+      signatureInChargeOverrides,
+      saveSignatureAssignments
+    };
   }
 };
 </script>
