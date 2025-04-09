@@ -53,8 +53,8 @@
     </div>
 
     <!-- Bouton pour sauvegarder le profil -->
-    <div style="margin-top: 20px; text-align: center;">
-      <Button label="Sauvegarder le profil" @click="saveProfile" />
+    <div>
+      <Button label="Sauvegarder le profil" @click="saveProfile"  class="mt-4 flex grid w-2 m-2"/>
     </div>
   </div>
 </template>

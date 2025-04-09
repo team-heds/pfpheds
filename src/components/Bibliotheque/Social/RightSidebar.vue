@@ -31,7 +31,7 @@
     <!-- Section Hashtags -->
     <div class="profile-section card">
       <div class="hashtags">
-        <h4 class="text-primary">Hashtags</h4>
+        <h4 class="text-color">Hashtags</h4>
         <ul>
           <li v-for="(hashtag, index) in hashtags" :key="index">
             <Chip :label="hashtag" removable />
@@ -150,12 +150,12 @@ export default {
 
 .communities-header h4.clickable {
   cursor: pointer;
-  color: var(--primary-color);
+  color: var(--text-color);
   transition: color 0.2s ease;
 }
 
 .communities-header h4.clickable:hover {
-  color: var(--primary-color-hover);
+  color: var(--primary-color);
 }
 
 .communities-list {

@@ -19,10 +19,6 @@
       <!-- Liens supplémentaires -->
       <div class="profile-links">
         <ul>
-          <li @click="goToPfpHistory">
-            <i class="pi pi-images link-icon"></i>
-            <span>Historique des PFP</span>
-          </li>
           <li @click="goToDocumentPFP">
             <i class="pi pi-file link-icon"></i>
             <span>Documents PFP</span>

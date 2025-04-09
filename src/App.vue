@@ -18,7 +18,7 @@
 
     </div>
 
-    <!-- Loader 
+    <!-- Loader
     <Loader v-if="isLoading" /> -->
   </div>
 </template>
@@ -26,7 +26,7 @@
 <script>
 import Toast from 'primevue/toast';
 import ConvaiWidget from './components/ConvaiWidget.vue'; // Import du composant ConvaiWidget
-import Loader from './components/Utils/Loader.vue'; // Import du composant Loader
+import Loader from '@/components/utils/Loader.vue'; // Import du composant Loader
 import VersionningComponent from './components/utils/VersionningComponent.vue'; // Import du nouveau composant
 
 export default {

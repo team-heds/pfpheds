@@ -10,9 +10,10 @@
       <div class="filter-menu p-fluid p-pt-4 p-pb-4">
         <div>
           <CardNameProfile />
+          <VotationResultProfil :userId="user.uid" class="w-full" />
           <ResumStageUserProfile class="w-full" />
           <!-- On passe l'ID de l'utilisateur au composant -->
-          <VotationResultProfil :userId="user.uid" class="w-full" />
+
           <!-- Section pour changer la photo de profil -->
           <div class="p-field mt-4 card w-full">
             <label for="avatar-upload">Photo de profils actuelle :</label>
