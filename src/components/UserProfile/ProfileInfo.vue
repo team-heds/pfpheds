@@ -12,7 +12,7 @@
           <!-- Affichage du composant CardNameProfile -->
           <CardNameProfile />
 
-          <VotationResultProfil :userId="user.uid" class="w-full" />
+          <VotationResultProfil :userId="user.uid" class="w-full "  />
           <!-- Résumé du stage utilisateur -->
           <ResumStageUserProfile class="w-full" />
 

@@ -45,7 +45,6 @@
           />
         </div>
 
-
       </div>
 
       <!-- Nom de l'institution + Domaine -->
