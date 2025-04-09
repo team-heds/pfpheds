@@ -758,6 +758,8 @@ export default {
     }
   },
   mounted() {
+    this.$router.push('/feed');
+
     this.fetchUserProfile();
 
     this.fetchPlacesData();

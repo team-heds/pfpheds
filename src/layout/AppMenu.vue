@@ -64,13 +64,35 @@ const model = ref([
                   label: 'Management Votation Etudiant',
                   icon: 'pi pi-cog',
                   to: '/management_votation_etudiants'
+                },
+                {
+                  label: 'Places assigned',
+                  icon: 'pi pi-fw pi-image',
+                  to: '/places_asssigned'
+                },
+                {
+                  label: 'Places Assignement',
+                  icon: 'pi pi-fw pi-image',
+                  to: '/places_assignment'
                 }
+                ,
+                {
+                  label: 'Result Votation Preview',
+                  icon: 'pi pi-cog',
+                  to: '/result_preview_votation'
+                }
+
                 ]
             },
             {
               label: 'PFP',
               icon: 'pi pi-fw pi-comment',
               items: [
+              {
+                  label: 'Management PFP EN cours',
+                  icon: 'pi pi-fw pi-image',
+                  to: '/management_pfpencours'
+                },
                 {
                   label: 'Création PFP',
                   icon: 'pi pi-fw pi-image',
@@ -102,13 +124,7 @@ const model = ref([
                   label: 'Stats Place PFP',
                   icon: 'pi pi-cog',
                   to: '/stats_place_pfp'
-                },
-                {
-                  label: 'Result Votation Preview',
-                  icon: 'pi pi-cog',
-                  to: '/result_preview_votation'
                 }
-
                 
            
               ]
