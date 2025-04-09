@@ -18,11 +18,9 @@
             <h5>Email:</h5>
             <p>{{ user.email }}</p>
 
-            <h5>Nom :</h5>
-            <p>{{ user.nom }}</p>
+            <h5>Nom, Prénom :</h5>
+            <p>{{ user.nom }} {{user.prenom}}</p>
 
-            <h5>Prénom :</h5>
-            <p>{{ user.prenom }}</p>
 
             <h5>Classe:</h5>
             <p>{{ user.classe }}</p>
