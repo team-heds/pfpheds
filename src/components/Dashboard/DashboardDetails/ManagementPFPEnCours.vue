@@ -85,6 +85,7 @@
       <!-- Boutons d'action -->
       <div style="margin-top: 20px; text-align: center;">
         <Button label="Exporter CSV" @click="exportCSV" style="margin-right: 10px;" />
+        <Button label="Enregistrer Seats" @click="saveSeats" style="margin-right: 10px;" />
         <Button label="Valider" @click="saveSignatureAssignments" />
       </div>
       
@@ -123,6 +124,7 @@
   import Button from 'primevue/button';
   import Dropdown from 'primevue/dropdown';
   import { db } from 'root/firebase';
+  import { EffectComposer } from 'three-stdlib';
   
   export default {
     name: 'ManagementPFPEnCours',
@@ -135,8 +137,6 @@
       Dropdown
     },
     setup() {
-
-        
       // Références aux données Firebase
       const signatureAssignmentsData = ref({});
       const placesData = ref({});
@@ -145,14 +145,14 @@
       const students = ref({});
       const pfInfos = ref({}); // Infos du PF (Praticien Formateur)
       const teachers = ref({});
-
+      const praticienFormateurs = ref({});
+  
       const fetchPraticienFormateurs = () => {
-      const practRef = firebaseRef(db, 'PraticienFormateurs');
-      onValue(practRef, snapshot => {
-        praticienFormateurs.value = snapshot.val() || {};
-      });
-    };
-
+        const practRef = firebaseRef(db, 'PraticienFormateurs');
+        onValue(practRef, snapshot => {
+          praticienFormateurs.value = snapshot.val() || {};
+        });
+      };
   
       // Objets réactifs pour les dropdowns et remarques
       const lieuSignatureOverrides = reactive({});
@@ -300,78 +300,86 @@
   
       // Computed qui enrichit chaque affectation avec les données supplémentaires, y compris les infos PF
       const managementAssignments = computed(() => {
-  const sigAssigns = signatureAssignmentsData.value || {};
-  const assignmentsArray = [];
-  Object.keys(sigAssigns).forEach(key => {
-    const record = sigAssigns[key];
-    const place = placesData.value[record.idPlace] || {};
-    const idInstitution = place.IDPlace || place.InstitutionId;
-    const institution = (idInstitution && institutions.value[idInstitution])
-      ? institutions.value[idInstitution]
-      : {};
-    const student = students.value[record.idEtudiant] || {};
-    const userObj = users.value[record.idEtudiant] || {};
-
-    // Calcul des critères validés
-    const criteriaKeys = ["AIGU", "AMBU", "DE", "FR", "REHAB", "MSQ", "NEUROGER"];
-    const validCriteria = criteriaKeys.filter(k => {
-      const val = place[k];
-      return val === true || (typeof val === "string" && val.toLowerCase() === "true");
-    });
-    const voteRank = record.voteRank || "non voté";
-    const seat = record.seat || "";
-
-    // --- Partie modifiée pour la logique du praticien formateur ---
-    let praticienFormateur = "";
-    if (Array.isArray(place.praticiensFormateurs)) {
-      if (place.praticiensFormateurs.length === 1) {
-        praticienFormateur = place.praticiensFormateurs[0];
-      } else {
-        // Utilisation du numéro de siège pour sélectionner le praticien
-        const seatNum = seat || 1;
-        praticienFormateur =
-          place["selectedPraticienBA22PFP4-" + seatNum] ||
-          place["selectedPraticiensBA22PFP4-" + seatNum] ||
-          "";
-      }
-    }
-    // Récupération des infos du praticien depuis le nouvel objet
-    const pract = praticienFormateurs.value[praticienFormateur] || {};
-    // --------------------------------------------------------------
-
-    assignmentsArray.push({
-      _key: key,
-      idPlace: record.idPlace,
-      NomPlace: place.NomPlace || "",
-      idInstitution: idInstitution || "",
-      institutionName: institution.Name || "non défini",
-      idEtudiant: record.idEtudiant,
-      nom: userObj.Nom || student.Nom || "",
-      prenom: userObj.Prenom || student.Prenom || "",
-      repondantHES: student.RepondantHES || "",
-      voteRank,
-      category: institution.Category || "non défini",
-      canton: institution.Canton || "non défini",
-      locality: institution.Locality || "non défini",
-      validCriteria: validCriteria.join(", "),
-      seat,
-      // Utilisation des données issues de "praticienFormateurs"
-      praticienPrenom: pract.Prenom || "",
-      praticienNom: pract.Nom || "",
-      praticienMail: pract.Mail || "",
-      lieuSignature: record.lieuSignature || firstOption,
-      enChargeDeLaSignature: record.enChargeDeLaSignature || "",
-      remarqueEtudiant: userObj.StudentNote || student.StudentNote || "",
-      remarquesPlaces: place.Remarques || "",
-      remarqueSignature: record.remarqueSignature || ""
-    });
-  });
-  return assignmentsArray;
-});
+        const sigAssigns = signatureAssignmentsData.value || {};
+        const assignmentsArray = [];
+        // Création d'une map pour suivre le nombre de sièges affectés par place
+        const seatsMap = {};
   
-
-
-
+        Object.keys(sigAssigns).forEach(key => {
+          const record = sigAssigns[key];
+          const place = placesData.value[record.idPlace] || {};
+          const idInstitution = place.IDPlace || place.InstitutionId;
+          const institution = (idInstitution && institutions.value[idInstitution])
+            ? institutions.value[idInstitution]
+            : {};
+          const student = students.value[record.idEtudiant] || {};
+          const userObj = users.value[record.idEtudiant] || {};
+  
+          // Calcul des critères validés
+          const criteriaKeys = ["AIGU", "AMBU", "DE", "FR", "REHAB", "MSQ", "NEUROGER"];
+          const validCriteria = criteriaKeys.filter(k => {
+            const val = place[k];
+            return val === true || (typeof val === "string" && val.toLowerCase() === "true");
+          });
+          const voteRank = record.voteRank || "non voté";
+  
+          // --- Calcul dynamique du numéro de siège ---
+          // On vérifie dans seatsMap si des affectations existent déjà pour cette place.
+          let seat;
+          if (!seatsMap[record.idPlace]) {
+            // Première affectation pour cette place, on commence avec 1.
+            seatsMap[record.idPlace] = 1;
+            seat = 1;
+          } else {
+            // Incrémentez le compteur pour cette place.
+            seatsMap[record.idPlace] += 1;
+            seat = seatsMap[record.idPlace];
+          }
+  
+          // --- Calcul de la clé du praticien formateur ---
+          let praticienFormateur = "";
+          if (Array.isArray(place.praticiensFormateurs)) {
+            if (place.praticiensFormateurs.length === 1) {
+              praticienFormateur = place.praticiensFormateurs[0];
+            } else {
+              // Utilisation du numéro de siège pour sélectionner le praticien
+              praticienFormateur =
+                place["selectedPraticienBA22PFP4-" + seat] ||
+                place["selectedPraticiensBA22PFP4-" + seat] ||
+                "";
+            }
+          }
+          const pract = praticienFormateurs.value[praticienFormateur] || {};
+  
+          assignmentsArray.push({
+            _key: key,
+            idPlace: record.idPlace,
+            NomPlace: place.NomPlace || "",
+            idInstitution: idInstitution || "",
+            institutionName: institution.Name || "non défini",
+            idEtudiant: record.idEtudiant,
+            nom: userObj.Nom || student.Nom || "",
+            prenom: userObj.Prenom || student.Prenom || "",
+            repondantHES: student.RepondantHES || "",
+            voteRank,
+            category: institution.Category || "non défini",
+            canton: institution.Canton || "non défini",
+            locality: institution.Locality || "non défini",
+            validCriteria: validCriteria.join(", "),
+            seat,  // Numéro de siège calculé dynamiquement
+            praticienPrenom: pract.Prenom || "",
+            praticienNom: pract.Nom || "",
+            praticienMail: pract.Mail || "",
+            lieuSignature: record.lieuSignature || firstOption,
+            enChargeDeLaSignature: record.enChargeDeLaSignature || "",
+            remarqueEtudiant: userObj.StudentNote || student.StudentNote || "",
+            remarquesPlaces: place.Remarques || "",
+            remarqueSignature: record.remarqueSignature || ""
+          });
+        });
+        return assignmentsArray;
+      });
+  
       // Gestion du dropdown "Lieu signature" global
       const globalLastValue = computed(() => {
         if (managementAssignments.value.length > 0) {
@@ -395,16 +403,40 @@
         });
       };
   
-      // Mise à jour d'une affectation de signature dans Firebase
+      // Mise à jour d'une affectation de signature dans Firebase avec prise en compte du praticien formateur
       const updateSignatureAssignment = (key) => {
+        // Récupération de l'affectation correspondante dans la liste calculée
         const assignment = managementAssignments.value.find(a => a._key === key);
         if (!assignment) {
           console.error('Affectation non trouvée pour la clé', key);
           return;
         }
+  
+        // Récupération de l'option enseignant choisi
         const teacherOpt = teachersOptions.value.find(
           opt => opt.value === signatureInChargeOverrides[key]
         );
+  
+        // Récupération de la place associée à l'affectation
+        const place = placesData.value[assignment.idPlace] || {};
+  
+        // Calcul du nouvel ID du praticien formateur en se basant sur la logique de la ligne :
+        // S'il n'y a qu'un praticien formateur, on le prend directement,
+        // sinon, on utilise le numéro de siège pour choisir le praticien via des clés dynamiques.
+        let newPractitionerKey = "";
+        if (Array.isArray(place.praticiensFormateurs)) {
+          if (place.praticiensFormateurs.length === 1) {
+            newPractitionerKey = place.praticiensFormateurs[0];
+          } else {
+            newPractitionerKey =
+              place["selectedPraticienBA22PFP4-" + assignment.seat] ||
+              place["selectedPraticiensBA22PFP4-" + assignment.seat] ||
+              "";
+          }
+        }
+  
+        // Construction de l'objet de mise à jour : on conserve la nouvelle clé
+        // et on force la suppression (mise à null) des anciens champs du praticien.
         const record = {
           assignmentId: key,
           idPlace: assignment.idPlace,
@@ -412,8 +444,15 @@
           lieuSignature: lieuSignatureOverrides[key] || firstOption,
           teacherKey: signatureInChargeOverrides[key] || "",
           enChargeDeLaSignature: teacherOpt ? teacherOpt.label : "",
-          remarqueSignature: signatureRemarks[key] || ""
+          remarqueSignature: signatureRemarks[key] || "",
+          praticienFormateurKey: newPractitionerKey,
+          // Suppression des anciens champs liés au praticien
+          praticienFormateur: null,
+          praticienPrenom: null,
+          praticienNom: null,
+          praticienMail: null
         };
+  
         update(firebaseRef(db, 'signatureAssignments/' + key), record)
           .then(() => {
             console.log('Mise à jour live réussie pour', key);
@@ -423,74 +462,20 @@
           });
       };
   
-      // Export CSV
-      const exportCSV = () => {
-        const data = managementAssignments.value.map(assignment => {
-          const teacherOpt = teachersOptions.value.find(
-            opt => opt.value === signatureInChargeOverrides[assignment._key]
-          );
-          return {
-            ...assignment,
-            lieuSignature: lieuSignatureOverrides[assignment._key] || firstOption,
-            enChargeDeLaSignature: teacherOpt ? teacherOpt.label : ""
-          };
+      // Nouveau bouton : sauvegarde uniquement du numéro de siège (seat) dans Firebase pour chaque affectation
+      const saveSeats = () => {
+        managementAssignments.value.forEach(assignment => {
+          const record = { seat: assignment.seat };
+          update(firebaseRef(db, 'signatureAssignments/' + assignment._key), record)
+            .then(() => {
+              console.log('Seat mis à jour pour', assignment._key);
+            })
+            .catch(err => console.error('Erreur lors de la mise à jour du seat pour', assignment._key, err));
         });
-        if (!data || !data.length) {
-          alert("Aucune donnée à exporter.");
-          return;
-        }
-        const headers = [
-          "idPlace",
-          "NomPlace",
-          "idInstitution",
-          "idEtudiant",
-          "nom",
-          "prenom",
-          "repondantHES",
-          "voteRank",
-          "category",
-          "canton",
-          "locality",
-          "institutionName",
-          "seat",
-          "praticienPrenom",
-          "praticienNom",
-          "praticienMail",
-          "validCriteria",
-          "lieuSignature",
-          "enChargeDeLaSignature",
-          "remarqueEtudiant",
-          "remarquesPlaces",
-          "remarqueSignature"
-        ];
-        const csvRows = [];
-        csvRows.push(headers.join(','));
-        data.forEach(item => {
-          const row = headers.map(header => {
-            let val = item[header] !== undefined ? item[header] : "";
-            if (typeof val === "string") {
-              val = val.replace(/"/g, '""');
-              if (val.search(/("|,|\n)/g) >= 0) {
-                val = `"${val}"`;
-              }
-            }
-            return val;
-          });
-          csvRows.push(row.join(','));
-        });
-        const csvString = '\uFEFF' + csvRows.join('\n');
-        const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.setAttribute("href", url);
-        link.setAttribute("download", "management_pfp_en_cours.csv");
-        link.style.visibility = "hidden";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        alert('Les sièges ont été enregistrés avec succès');
       };
   
-      // Sauvegarde groupée des mises à jour
+      // Sauvegarde groupée des mises à jour (incluant les mises à jour du lieu, de l’enseignant, et du praticien formateur)
       const saveSignatureAssignments = () => {
         managementAssignments.value.forEach(assignment => {
           updateSignatureAssignment(assignment._key);
@@ -505,24 +490,25 @@
         fetchStudents();
         fetchPFInfos(); // Récupération des infos du PF
         fetchTeachers();
-        fetchPraticienFormateurs();  // Ajoutez l'appel ici pour charger les praticiens formateurs
-
+        fetchPraticienFormateurs();  // Chargement des praticiens formateurs
         fetchSignatureAssignments();
       });
   
       return {
         managementAssignments,
+        praticienFormateurs,
         lieuSignatureOverrides,
         signatureOptions,
         firstOption,
         secondOption,
         toggleButtonLabel,
         toggleLieuSignature,
-        exportCSV,
         teachersOptions,
         signatureInChargeOverrides,
         saveSignatureAssignments,
         updateSignatureAssignment,
+        // Nouveau bouton pour sauvegarder les seat
+        saveSeats,
         // Dialog Remarque Étudiant
         displayRemarkDialog,
         selectedAssignment,
