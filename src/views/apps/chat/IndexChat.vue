@@ -29,7 +29,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import ChatBox from './ChatBox.vue';
 import ChatSidebar from './ChatSidebar.vue';
 import Navbar from '@/components/Utils/Navbar.vue';
@@ -42,35 +43,85 @@ const users = ref([]);
 const activeUserId = ref(null);
 const activeUser = ref(null);
 const currentUser = ref(null); // Définir l'utilisateur actuel
+const route = useRoute();
 
 /**
  * Fonction pour récupérer tous les utilisateurs directement dans le composant.
  * @returns {Promise<Array>} - Une promesse qui résout avec un tableau d'utilisateurs.
  */
 const fetchAllUsers = () => {
-  console.log("fetching");
   return new Promise((resolve, reject) => {
     const usersReference = dbRef(db, 'Users/');
     onValue(usersReference, (snapshot) => {
       const data = snapshot.val();
-      console.log("Snapshot data:", data); // Loguer les données brutes
       if (data) {
         const fetchedUsers = Object.keys(data).map(key => ({
           id: key,
           ...data[key]
         }));
-        console.log("Liste des utilisateurs récupérée :", fetchedUsers[0]);
+        users.value = fetchedUsers;
         resolve(fetchedUsers);
       } else {
-        console.log("Aucun utilisateur trouvé dans la base de données.");
+        users.value = [];
         resolve([]);
       }
-    }, (error) => {
-      console.error("Erreur lors de la récupération des utilisateurs :", error);
-      reject(error);
-    });
+    }, reject);
   });
 };
+
+function selectUserFromRoute() {
+  const userIdFromUrl = route.query.user;
+  if (userIdFromUrl && users.value.length > 0) {
+    const match = users.value.find(u => String(u.id) === String(userIdFromUrl));
+    if (match) {
+      activeUserId.value = match.id;
+      activeUser.value = match;
+      return;
+    }
+  }
+  // Si pas trouvé, sélectionne le premier utilisateur par défaut
+  activeUserId.value = users.value[0]?.id || null;
+  activeUser.value = users.value[0] || null;
+}
+
+onMounted(() => {
+  // Écouter l'état d'authentification
+  onAuthStateChanged(auth, async (firebaseUser) => {
+    if (firebaseUser) {
+      // Définir l'utilisateur actuel
+      currentUser.value = firebaseUser;
+      await fetchAllUsers();
+      selectUserFromRoute();
+    } else {
+      // Gérer l'utilisateur non authentifié
+      currentUser.value = null;
+      users.value = [];
+      activeUser.value = null;
+      activeUserId.value = null;
+    }
+  });
+});
+
+watch(() => route.query.user, () => {
+  selectUserFromRoute();
+});
+
+watch(users, () => {
+  selectUserFromRoute();
+});
+
+/**
+ * Change l'utilisateur actif lorsqu'un utilisateur est sélectionné dans la barre latérale.
+ * @param {Object} user - L'utilisateur sélectionné.
+ */
+function changeActiveUser(user) {
+  activeUserId.value = user.id;
+  activeUser.value = user;
+  // Met à jour l'URL pour garder la synchro
+  if (route.query.user !== String(user.id)) {
+    window.history.replaceState(null, '', `?user=${encodeURIComponent(user.id)}`);
+  }
+}
 
 /**
  * Fonction pour ajouter un message à un utilisateur spécifique dans Firebase Realtime Database.
@@ -137,69 +188,14 @@ const getCurrentUser = (firebaseUser) => {
   };
 };
 
-onMounted(() => {
-  // Écouter l'état d'authentification
-  onAuthStateChanged(auth, async (firebaseUser) => {
-    if (firebaseUser) {
-      // Définir l'utilisateur actuel
-      currentUser.value = getCurrentUser(firebaseUser);
-      console.log("Utilisateur authentifié :", currentUser.value);
-
-      try {
-        // Récupérer tous les utilisateurs
-        const fetchedUsers = await fetchAllUsers();
-        users.value = fetchedUsers;
-        console.log("Utilisateurs assignés à users.value :", users.value);
-
-        // Définir l'utilisateur actif par défaut si aucun n'est sélectionné
-        if (fetchedUsers.length > 0) {
-          activeUserId.value = fetchedUsers[0].id;
-          activeUser.value = fetchedUsers[0];
-          console.log("Utilisateur actif par défaut :", activeUser.value);
-
-          // Écouter les messages de l'utilisateur actif
-          listenToUserMessages(activeUser.value.id, (fetchedMessages) => {
-            activeUser.value.messages = fetchedMessages;
-            console.log("Messages mis à jour pour l'utilisateur actif :", fetchedMessages);
-          });
-        }
-      } catch (error) {
-        console.error("Erreur lors du chargement des utilisateurs :", error);
-      }
-    } else {
-      // Gérer l'utilisateur non authentifié
-      currentUser.value = null;
-      users.value = [];
-      activeUser.value = null;
-      console.log("Aucun utilisateur authentifié.");
-    }
-  });
-});
-
-/**
- * Change l'utilisateur actif lorsqu'un utilisateur est sélectionné dans la barre latérale.
- * @param {Object} user - L'utilisateur sélectionné.
- */
-const changeActiveUser = (user) => {
-  activeUserId.value = user.id;
-  activeUser.value = user;
-  console.log("Utilisateur actif changé :", user);
-
-  // Écouter les messages de l'utilisateur actif en temps réel
-  listenToUserMessages(user.id, (fetchedMessages) => {
-    activeUser.value.messages = fetchedMessages;
-    console.log("Messages mis à jour pour l'utilisateur actif :", fetchedMessages);
-  });
-};
-
 /**
  * Fonction appelée lorsqu'un message est envoyé depuis le ChatBox.
  * @param {Object} message - Le message envoyé.
  */
-const sendMessage = async (message) => {
+function sendMessage(message) {
   if (activeUser.value) {
     try {
-      await addMessageToUser(activeUser.value.id, message);
+      addMessageToUser(activeUser.value.id, message);
       console.log("Message envoyé et sauvegardé dans Firebase :", message);
     } catch (error) {
       console.error("Erreur lors de l'envoi du message à Firebase :", error);

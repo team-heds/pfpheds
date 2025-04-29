@@ -1,23 +1,34 @@
 <script setup>
-import { ref, nextTick, onMounted } from 'vue';
+import { ref, nextTick, onMounted, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import ChatBox from '@/views/apps/chat/ChatBox.vue'
 import ChatSidebar from '@/views/apps/chat/ChatSidebar.vue';
 
 const activeUserId = ref(1);
 const users = ref([]);
 const currentUser = ref({});
-
-onMounted(async () => {
-  users.value = await getUserData();
-  currentUser.value = users.value.find(user => user.id === activeUserId.value);
-  scrollToLastMessage();
-});
+const route = useRoute();
 
 const getUserData = async () => {
   const response = await fetch('/demo/data/chat.json');
   const { data } = await response.json();
 
   return data;
+};
+
+const selectUserFromRoute = () => {
+  const userIdFromUrl = route.query.user;
+  if (userIdFromUrl && users.value.length > 0) {
+    const match = users.value.find(u => String(u.id) === String(userIdFromUrl));
+    if (match) {
+      activeUserId.value = match.id;
+      currentUser.value = match;
+      return;
+    }
+  }
+  // Si pas trouvé, sélectionne le premier utilisateur par défaut
+  activeUserId.value = users.value[0]?.id || 1;
+  currentUser.value = users.value[0] || {};
 };
 
 const changeActiveUser = (user) => {
@@ -44,6 +55,20 @@ const scrollToLastMessage = async () => {
     }
   });
 };
+
+onMounted(async () => {
+  users.value = await getUserData();
+  selectUserFromRoute();
+  scrollToLastMessage();
+});
+
+watch(() => route.query.user, () => {
+  selectUserFromRoute();
+});
+
+watch(users, () => {
+  selectUserFromRoute();
+});
 </script>
 
 <template>
