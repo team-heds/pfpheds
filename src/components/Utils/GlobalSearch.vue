@@ -45,7 +45,6 @@ import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Listbox from 'primevue/listbox';
-import SearchButton from '@/components/Bibliotheque/Buttons/SearchButton.vue';
 
 const router = useRouter();
 const showSearchBar = ref(false);

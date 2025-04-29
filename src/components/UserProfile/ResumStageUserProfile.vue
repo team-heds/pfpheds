@@ -152,6 +152,7 @@
 <script setup>
 import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { useToast } from 'primevue/usetoast';
 import {
   getDatabase,
   ref as dbRef,
@@ -171,6 +172,7 @@ import {
   deleteObject
 } from "firebase/storage";
 
+const toast = useToast();
 const route = useRoute();
 const router = useRouter();
 const userId = route.params.id;
@@ -316,7 +318,7 @@ const uploadDocuments = async (institutionId, formationNumber) => {
   if (!uploads.value[key]) return;
   const newFiles = uploads.value[key].newFiles;
   if (!newFiles || newFiles.length === 0) {
-    alert("Aucun nouveau fichier sélectionné.");
+    toast.add({ severity: 'warn', summary: 'Avertissement', detail: 'Aucun nouveau fichier sélectionné.', life: 4000 });
     return;
   }
   const db = getDatabase();
@@ -357,7 +359,7 @@ const cancelRename = (doc) => {
 
 const saveDocName = async (institutionId, formationNumber, doc) => {
   if (!doc.tempName) {
-    alert("Le nom du fichier ne peut être vide.");
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Le nom du fichier ne peut être vide.', life: 4000 });
     return;
   }
   doc.fileName = doc.tempName;

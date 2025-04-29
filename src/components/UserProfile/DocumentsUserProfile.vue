@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue';
 import { ref as storageRef, listAll, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { storage} from '../../../firebase.js';
+import { useToast } from 'primevue/usetoast';
 
 // Initialisation des données
 const folders = ref([
@@ -17,6 +18,7 @@ const subFolders = ref([]);  // Sous-dossiers dans le dossier sélectionné
 const uploadFiles = ref([]);  // Fichiers à uploader
 const currentUser = ref(null);  // Utilisateur courant
 const userFolderPath = ref('');  // Chemin de stockage spécifique à l'utilisateur
+const toast = useToast();
 
 // Fonction pour charger les fichiers et sous-dossiers à partir du Storage Firebase
 const loadFilesAndSubFoldersFromFolder = async (folderPath) => {
@@ -47,7 +49,7 @@ const onFolderClick = (folder) => {
 // Gérer l'upload de fichiers dans le dossier sélectionné
 const onSelectedFiles = async (event) => {
   if (!selectedFolder.value || !currentUser.value) {
-    alert('Sélectionnez un dossier avant de télécharger.');
+    toast.add({ severity: 'warn', summary: 'Avertissement', detail: 'Sélectionnez un dossier avant de télécharger.', life: 4000 });
     return;
   }
 
@@ -55,7 +57,7 @@ const onSelectedFiles = async (event) => {
     const acceptedFormats = ['image/jpeg', 'image/png', 'audio/mpeg', 'video/mp4', 'application/pdf'];
 
     if (!acceptedFormats.includes(file.type)) {
-      alert('Type de fichier non accepté. Veuillez uploader un fichier JPG, PNG, MP3, MP4 ou PDF.');
+      toast.add({ severity: 'error', summary: 'Erreur', detail: 'Type de fichier non accepté. Veuillez uploader un fichier JPG, PNG, MP3, MP4 ou PDF.', life: 4000 });
       continue;
     }
 

@@ -128,6 +128,9 @@ import {
   getDownloadURL,
   deleteObject
 } from 'firebase/storage';
+import { useToast } from 'primevue/usetoast';
+
+const toast = useToast();
 
 const props = defineProps({
   userId: { type: String, required: true }
@@ -300,7 +303,7 @@ const handleFileSelection = (event, assignmentKey) => {
 
 const uploadDocuments = async (assignmentKey) => {
   if (!upload.value[assignmentKey] || upload.value[assignmentKey].length === 0) {
-    alert("Aucun nouveau fichier sélectionné.");
+    toast.add({ severity: 'warn', summary: 'Avertissement', detail: 'Aucun nouveau fichier sélectionné.', life: 4000 });
     return;
   }
   const docsArray = upload.value[assignmentKey];
@@ -328,7 +331,7 @@ const openDocument = (url) => {
 
 const saveDocName = async (assignmentKey, doc) => {
   if (!doc.tempName) {
-    alert("Le nom du fichier ne peut être vide.");
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Le nom du fichier ne peut être vide.', life: 4000 });
     return;
   }
   doc.fileName = doc.tempName;

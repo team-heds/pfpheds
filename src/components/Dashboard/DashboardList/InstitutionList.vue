@@ -69,6 +69,7 @@ import Button from 'primevue/button';
 import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
 import Navbar from '@/components/Utils/Navbar.vue';
+import { useToast } from 'primevue/usetoast';
 
 export default {
   name: "InstitutionList",
@@ -87,7 +88,8 @@ export default {
       filters: {},
       loading: true,
       globalFilter: '',
-      searchTerm: ''
+      searchTerm: '',
+      toast: null
     };
   },
   computed: {
@@ -100,7 +102,7 @@ export default {
       );
     }
   },
-  async mounted() {
+  mounted() {
     try {
       const institutionsRef = ref(db, 'Institutions/');
       onValue(institutionsRef, (snapshot) => {
@@ -116,6 +118,7 @@ export default {
         }
         this.loading = false;
       });
+      this.toast = useToast();
     } catch (error) {
       console.error('Erreur de récupération des données', error);
       this.loading = false;
@@ -124,7 +127,7 @@ export default {
   methods: {
     supprimerInstitution(InstitutionId) {
       if (!InstitutionId) {
-        alert("ID de l'institution est manquant ou incorrect.");
+        this.toast.add({ severity: 'error', summary: 'Erreur', detail: "ID de l'institution est manquant ou incorrect.", life: 4000 });
         return;
       }
 
@@ -132,12 +135,12 @@ export default {
         const instRef = ref(db, 'Institutions/' + InstitutionId);
         remove(instRef)
           .then(() => {
-            alert("L'institution a été supprimée avec succès.");
+            this.toast.add({ severity: 'success', summary: 'Succès', detail: "L'institution a été supprimée avec succès.", life: 4000 });
             this.institutions = this.institutions.filter(inst => inst.InstitutionId !== InstitutionId);
           })
           .catch((error) => {
             console.error("Erreur lors de la suppression de l'institution:", error);
-            alert("Une erreur est survenue lors de la suppression de l'institution.");
+            this.toast.add({ severity: 'error', summary: 'Erreur', detail: "Une erreur est survenue lors de la suppression de l'institution.", life: 4000 });
           });
       }
     },

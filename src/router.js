@@ -223,18 +223,27 @@ router.beforeEach(async (to, from, next) => {
           if (requiredRoles.some(role => userRoles.includes(role))) {
             return next(); // Autoriser l'accès
           } else {
-            alert('Accès refusé : Vous n\'avez pas les permissions requises.');
+            import('primevue/usetoast').then(({ useToast }) => {
+              const toast = useToast();
+              toast.add({ severity: 'error', summary: 'Accès refusé', detail: "Vous n'avez pas les permissions requises.", life: 4000 });
+            });
             return next('/'); // Redirigez vers une page par défaut
           }
         } else {
           return next(); // Aucune vérification de rôle requise, autorisez l'accès
         }
       } else {
-        alert('Accès refusé : Aucun rôle trouvé.');
+        import('primevue/usetoast').then(({ useToast }) => {
+          const toast = useToast();
+          toast.add({ severity: 'error', summary: 'Accès refusé', detail: 'Aucun rôle trouvé.', life: 4000 });
+        });
         return next('/home'); // Redirigez vers une page par défaut
       }
     } else {
-      alert('Vous devez être connecté pour accéder à cette page.');
+      import('primevue/usetoast').then(({ useToast }) => {
+        const toast = useToast();
+        toast.add({ severity: 'warn', summary: 'Connexion requise', detail: 'Vous devez être connecté pour accéder à cette page.', life: 4000 });
+      });
       return next('/'); // Redirigez vers la page de connexion
     }
   } else {

@@ -36,6 +36,7 @@ import { ref } from 'vue';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import Navbar from '@/components/Utils/Navbar.vue';
+import { useToast } from 'primevue/usetoast';
 
 export default {
   name: 'InfoExterne',
@@ -45,6 +46,7 @@ export default {
     Navbar
   },
   setup() {
+    const toast = useToast();
     const codeSecret = ref('');
     const afficherDocuments = ref(false);
     const categories = ref([
@@ -126,7 +128,7 @@ export default {
         afficherDocuments.value = true;
       } else {
         afficherDocuments.value = false;
-        alert("Code incorrect. Veuillez réessayer.");
+        toast.add({ severity: 'error', summary: 'Erreur', detail: 'Code incorrect. Veuillez réessayer.', life: 4000 });
       }
     };
 
