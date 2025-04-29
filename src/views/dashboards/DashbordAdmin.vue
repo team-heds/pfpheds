@@ -2,11 +2,9 @@
   <Navbar />
   <div class="layout-container">
     <!-- Sidebar gauche (fixe) -->
-    <AppSidebar class="layout-sidebar" />
+    <AdminSidebar class="layout-sidebar" />
     <!-- Zone principale -->
     <div class="layout-content-wrapper">
-      <!-- Si on est sur la route par défaut (/admin), on affiche le dashboard statique ;
-           sinon, le router injecte le composant enfant via <router-view /> -->
       <div v-if="isDefaultDashboard">
         <div class="grid">
           <!-- Places de stages card -->
@@ -126,12 +124,13 @@ import { onMounted, ref, watch, computed } from 'vue';
 import { FilterMatchMode } from 'primevue/api';
 import { useLayout } from '@/layout/composables/layout';
 import { useRoute } from 'vue-router';
-import AppSidebar from '@/layout/AppSidebar.vue';
+import AdminSidebar from '@/components/Dashboard/DashboardList/AdminSidebar.vue';
 import Navbar from '@/components/Utils/Navbar.vue';
 import Chart from 'primevue/chart';
 import Dropdown from 'primevue/dropdown';
 import { db } from '../../../firebase.js';
 import { ref as dbRef, onValue } from "firebase/database";
+import AppSidebar from '@/layout/AppSidebar.vue'
 
 const { layoutConfig } = useLayout();
 
@@ -386,119 +385,21 @@ const isDefaultDashboard = computed(() => route.path === '/admin' || route.path 
 <style scoped>
 .layout-container {
   display: flex;
-  height: 100vh; /* Utilise toute la hauteur de la vue */
+  height: 100vh;
   overflow: auto;
 }
-
 .layout-sidebar {
-  width: 280px; /* Largeur fixe pour la sidebar */
+  width: 280px;
   background: var(--surface-b);
   overflow-y: auto;
-  height: 100vh; /* Sidebar sur toute la hauteur */
+  height: 100vh;
   position: fixed;
 }
-
 .layout-content-wrapper {
-  margin-left: 280px; /* Marge égale à la largeur de la sidebar */
+  margin-left: 280px;
   flex: 1;
   display: flex;
   flex-direction: column;
-}
-
-/* Quelques styles utilitaires repris de votre code */
-.container {
-  padding: 2rem;
-}
-
-.p-mb-6 {
-  margin-bottom: 2rem;
-}
-
-.p-mb-3 {
-  margin-bottom: 1.5rem;
-}
-
-.p-ml-2 {
-  margin-left: 0.5rem;
-}
-
-.p-ml-3 {
-  margin-left: 0.75rem;
-}
-
-.p-mr-2 {
-  margin-right: 0.5rem;
-}
-
-.p-mt-2 {
-  margin-top: 0.5rem;
-}
-
-.p-card {
-  padding: 1rem;
-}
-
-.p-grid > .p-col-12 {
-  margin-bottom: 1rem;
-}
-
-.text-900 {
-  color: var(--text-color);
-}
-
-.text-xl {
-  font-size: 1.25rem;
-}
-
-.font-semibold {
-  font-weight: 600;
-}
-
-.text-6xl {
-  font-size: 4rem;
-}
-
-.font-bold {
-  font-weight: 700;
-}
-
-.mb-6 {
-  margin-bottom: 1.5rem;
-}
-
-.mb-3 {
-  margin-bottom: 0.75rem;
-}
-
-.ml-2 {
-  margin-left: 0.5rem;
-}
-
-.ml-3 {
-  margin-left: 0.75rem;
-}
-
-.mr-2 {
-  margin-right: 0.5rem;
-}
-
-.mt-2 {
-  margin-top: 0.5rem;
-}
-
-.h-full {
-  height: 100%;
-}
-
-.flex {
-  display: flex;
-}
-
-.justify-content-between {
-  justify-content: space-between;
-}
-
-.align-items-start {
-  align-items: flex-start;
+  gap: 1rem;
 }
 </style>
