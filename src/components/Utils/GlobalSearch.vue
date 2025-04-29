@@ -1,14 +1,16 @@
 <template>
   <div class="navbar">
-    <!-- Icône de recherche avec design amélioré -->
-    <ButtonNavbar
-      icon="pi pi-search"
-      :bgColor="'var(--surface-overlay)'"
-      :hoverBgColor="'var(--surface-hover)'"
-      :iconColor="'var(--primary-color)'"
+    <!-- Bouton natif avec logo loupe SVG -->
+    <button
       @click="toggleSearchBar"
+      style="background:var(--surface-overlay);border:none;border-radius:25%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background 0.2s;"
       title="Rechercher"
-    />
+    >
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="11" cy="11" r="7" stroke="var(--primary-color)" stroke-width="2"/>
+        <line x1="16.018" y1="16.4853" x2="20" y2="20.4673" stroke="var(--primary-color)" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
 
     <!-- Barre de recherche globale -->
     <Dialog v-model:visible="showSearchBar" modal header="Rechercher sur le site" :style="{ width: '50vw' }">
@@ -43,7 +45,7 @@ import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Listbox from 'primevue/listbox';
-import ButtonNavbar from '@/components/Bibliotheque/Buttons/ButtonNavbar.vue';
+import SearchButton from '@/components/Bibliotheque/Buttons/SearchButton.vue';
 
 const router = useRouter();
 const showSearchBar = ref(false);
@@ -51,7 +53,7 @@ const searchQuery = ref('');
 const searchResults = ref([]);
 
 const toggleSearchBar = () => {
-  console.log("🔍 Toggle search bar", showSearchBar.value);
+  console.log(" Toggle search bar", showSearchBar.value);
   showSearchBar.value = !showSearchBar.value;
   if (!showSearchBar.value) searchQuery.value = '';
 };
@@ -65,62 +67,75 @@ const fetchSearchResults = async () => {
   }
 
   try {
-    console.log(`🔎 Recherche en cours pour : "${searchQuery.value}"`);
-
     const usersRef = firebaseRef(db, 'Users');
     const institutionsRef = firebaseRef(db, 'Institutions');
     const postsRef = firebaseRef(db, 'Posts');
 
     const [usersSnap, institutionsSnap, postsSnap] = await Promise.all([
-      get(usersRef),
-      get(institutionsRef),
-      get(postsRef),
+      get(usersRef).catch(() => null),
+      get(institutionsRef).catch(() => null),
+      get(postsRef).catch(() => null),
     ]);
 
-    if (usersSnap.exists()) {
+    // USERS
+    if (usersSnap && usersSnap.exists()) {
       const users = Object.entries(usersSnap.val())
-        .filter(([_, user]) =>
-          `${user.Prenom} ${user.Nom}`.toLowerCase().includes(searchQuery.value.toLowerCase())
-        )
+        .filter(([_, user]) => {
+          const nom = user.Nom || user.nom || '';
+          const prenom = user.Prenom || user.prenom || '';
+          return `${prenom} ${nom}`.toLowerCase().includes(searchQuery.value.toLowerCase());
+        })
         .map(([id, user]) => ({
           id,
-          name: `${user.Prenom} ${user.Nom}`,
+          name: `${user.Prenom || user.prenom || ''} ${user.Nom || user.nom || ''}`.trim(),
           link: `/profile/${id}`
         }));
-
-      console.log("👤 Utilisateurs trouvés :", users);
       searchResults.value.push(...users);
     }
 
-    if (institutionsSnap.exists()) {
+    // INSTITUTIONS
+    if (institutionsSnap && institutionsSnap.exists()) {
       const institutions = Object.entries(institutionsSnap.val())
-        .filter(([_, inst]) => inst.Name.toLowerCase().includes(searchQuery.value.toLowerCase()))
+        .filter(([_, inst]) => {
+          const name = inst.Name || inst.nom || '';
+          const ville = inst.Locality || inst.Ville || '';
+          const canton = inst.Canton || '';
+          return (
+            name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+            ville.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+            canton.toLowerCase().includes(searchQuery.value.toLowerCase())
+          );
+        })
         .map(([id, inst]) => ({
           id,
-          name: inst.Name,
+          name: inst.Name || inst.nom || '',
           link: `/institution/${id}`
         }));
-      console.log("🏫 Institutions trouvées :", institutions);
       searchResults.value.push(...institutions);
     }
 
-    if (postsSnap.exists()) {
+    // POSTS
+    if (postsSnap && postsSnap.exists()) {
       const posts = Object.entries(postsSnap.val())
-        .filter(([_, post]) => post.Title.toLowerCase().includes(searchQuery.value.toLowerCase()))
+        .filter(([_, post]) => {
+          const title = post.Title || post.titre || '';
+          return title.toLowerCase().includes(searchQuery.value.toLowerCase());
+        })
         .map(([id, post]) => ({
           id,
-          name: post.Title,
+          name: post.Title || post.titre || '',
           link: `/post/${id}`
         }));
-      console.log("📝 Posts trouvés :", posts);
       searchResults.value.push(...posts);
     }
 
     if (searchResults.value.length === 0) {
-      console.log("🚫 Aucun résultat trouvé.");
+      // Affiche un résultat factice si rien trouvé
+      searchResults.value.push({ id: 'none', name: 'Aucun résultat trouvé', link: '#' });
     }
   } catch (error) {
-    console.error("❌ Erreur lors de la recherche Firebase :", error);
+    console.error(' Erreur lors de la recherche Firebase :', error);
+    searchResults.value = [{ id: 'error', name: 'Erreur lors de la recherche', link: '#' }];
   }
 };
 
@@ -134,7 +149,7 @@ watch(searchQuery, async (newValue) => {
 
 const performSearch = () => {
   if (searchQuery.value.trim()) {
-    console.log("🔍 Recherche envoyée :", searchQuery.value);
+    console.log(" Recherche envoyée :", searchQuery.value);
     router.push({ path: '/search', query: { q: searchQuery.value } });
     toggleSearchBar();
   }
@@ -142,7 +157,7 @@ const performSearch = () => {
 
 const navigateTo = (event) => {
   if (event.value && event.value.link) {
-    console.log("📌 Navigation vers :", event.value.link);
+    console.log(" Navigation vers :", event.value.link);
     router.push(event.value.link);
     toggleSearchBar();
   }

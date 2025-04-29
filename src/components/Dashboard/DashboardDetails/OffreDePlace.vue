@@ -9,7 +9,7 @@
         <div style="text-align: right; margin-bottom: 10px;">
           <Button label="Tout sélectionner" class="p-button-secondary" @click="selectAllOut" />
         </div>
-  
+
         <!-- DataTable affichant les places dépliées pour PFP4 -->
         <DataTable :value="expandedPFP4" class="p-datatable-sm custom-datatable" responsiveLayout="scroll">
           <!-- Colonne Institution -->
@@ -18,20 +18,20 @@
               <span>{{ slotProps.data.InstitutionName || 'Non spécifié' }}</span>
             </template>
           </Column>
-  
+
           <!-- Colonne Nom de la Place -->
           <Column header="Nom de la Place">
             <template #body="slotProps">
               <span>{{ slotProps.data.NomPlace }}</span>
             </template>
           </Column>
-  
+
           <Column header="CategoryInstitution">
             <template #body="slotProps">
               <span>{{ slotProps.data.CategoryInstitution || 'Non spécifié' }}</span>
             </template>
           </Column>
-  
+
           <!-- Colonnes booléennes -->
           <Column header="MSQ">
             <template #body="slotProps">
@@ -73,7 +73,7 @@
               <span>{{ slotProps.data.DE ? 'DE' : '-' }}</span>
             </template>
           </Column>
-  
+
           <!-- Colonne Praticien Formateur -->
           <Column header="Praticien Formateur">
             <template #body="slotProps">
@@ -98,7 +98,7 @@
               </div>
             </template>
           </Column>
-  
+
           <!-- Colonne Etudiant -->
           <Column header="Etudiant">
             <template #body="slotProps">
@@ -108,22 +108,22 @@
                 @change="updatePlaceStudent(slotProps.data, slotProps.data.dyn[selectedKey(slotProps.data)], slotProps.data.seatIndex)" />
             </template>
           </Column>
-  
+
           <!-- Colonne Remarques -->
           <Column header="Remarques Place">
             <template #body="slotProps">
-              <textarea v-model="slotProps.data.Remarques" @blur="updateRemark(slotProps.data)"
+              <Textarea v-model="slotProps.data.Remarques" @blur="updateRemark(slotProps.data)"
                 style="width: 100%; height: 80px;" placeholder="Saisir une remarque..." />
             </template>
           </Column>
-  
+
           <!-- Colonne Instance -->
           <Column header="Instance">
             <template #body="slotProps">
               <span>{{ slotProps.data.seatIndex }}</span>
             </template>
           </Column>
-  
+
           <!-- Colonne Sélection Out -->
           <Column header="Sélection Out">
             <template #body="slotProps">
@@ -132,7 +132,7 @@
             </template>
           </Column>
         </DataTable>
-  
+
         <!-- Overlay (Dialog) pour la sélection du Praticien Formateur -->
         <Dialog header="Sélectionner un praticien" v-model:visible="displayPraticienDialog" modal>
           <div class="praticien-list" v-if="selectedRowForPraticien">
@@ -143,7 +143,7 @@
             </ul>
           </div>
         </Dialog>
-  
+
         <!-- Récapitulatif des statistiques -->
         <div class="recap mt-4 surface-card">
           <h3>Récapitulatif</h3>
@@ -166,7 +166,7 @@
 
 
         </div>
-  
+
         <!-- Listes des étudiants par rôle avec, à côté, leur place attribuée si existante -->
         <div class="liste-leses mt-4 surface-card">
           <h3>Liste des lésés</h3>
@@ -177,7 +177,7 @@
             </li>
           </ul>
         </div>
-  
+
         <div class="liste-leses mt-4 surface-card">
           <h3>Liste des SAE</h3>
           <ul>
@@ -187,7 +187,7 @@
             </li>
           </ul>
         </div>
-  
+
         <div class="liste-leses mt-4 surface-card">
           <h3>Liste des cas particuliers</h3>
           <ul>
@@ -201,7 +201,7 @@
       </div>
     </div>
   </template>
-  
+
   <script>
   import Navbar from '@/components/Utils/Navbar.vue';
   import DataTable from 'primevue/datatable';
@@ -212,7 +212,8 @@
   import Dialog from 'primevue/dialog';
   import { ref, onValue, update } from "firebase/database";
   import { db } from '../../../../firebase.js';
-  
+  import Textarea from 'primevue/textarea';
+
   export default {
     name: "OfferPFP4Places",
     components: {
@@ -222,7 +223,8 @@
       Dropdown,
       Checkbox,
       Button,
-      Dialog
+      Dialog,
+      Textarea
     },
     data() {
       return {
@@ -671,22 +673,22 @@
     }
   };
   </script>
-  
+
   <style scoped>
   .page-title {
     margin-bottom: 20px;
     text-align: center;
   }
-  
+
   .container {
     padding: 20px;
   }
-  
+
   .custom-datatable .p-datatable-thead > tr > th {
     background-color: var(--surface-card);
     color: var(--text-color);
   }
-  
+
   .custom-datatable .p-datatable-tbody > tr > td {
     background-color: var(--surface-card);
     color: var(--text-color);
@@ -694,7 +696,7 @@
     overflow-wrap: break-word;
     word-wrap: break-word;
   }
-  
+
   .recap,
   .liste-leses {
     background-color: var(--surface-card);
@@ -702,14 +704,13 @@
     border-radius: 8px;
     margin-top: 20px;
   }
-  
+
   .praticien-list ul {
     list-style: none;
     padding: 0;
   }
-  
+
   .praticien-list li {
     margin-bottom: 0.5rem;
   }
   </style>
-  
