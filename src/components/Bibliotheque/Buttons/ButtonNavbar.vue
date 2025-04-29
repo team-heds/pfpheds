@@ -3,19 +3,19 @@
     :class="customClass"
     :style="buttonStyle"
     @click="onClick"
+    :title="title"
   >
     <i :class="icon" :style="iconStyle"></i>
-
   </Button>
 </template>
 
 <script>
 import { defineComponent } from "vue";
-
+import Button from 'primevue/button';
 
 export default defineComponent({
   name: "ButtonNavbar",
-  components: {  },
+  components: { Button },
   props: {
     icon: {
       type: String,
@@ -37,6 +37,10 @@ export default defineComponent({
       type: String,
       default: "var(--primary-color)", // Couleur de l'icône
     },
+    title: {
+      type: String,
+      default: '',
+    }
   },
   computed: {
     buttonStyle() {
@@ -50,6 +54,7 @@ export default defineComponent({
         alignItems: "center",
         justifyContent: "center",
         transition: "background-color 0.3s ease",
+        cursor: 'pointer',
       };
     },
     iconStyle() {
@@ -57,18 +62,17 @@ export default defineComponent({
         color: this.iconColor,
         fontSize: "20px",
       };
-    },
+    }
   },
   methods: {
-    onClick() {
-      this.$emit("click");
-    },
-  },
+    onClick(e) {
+      this.$emit("click", e);
+    }
+  }
 });
 </script>
 
 <style scoped>
-/* Effet au survol */
 .p-button:hover {
   background-color: var(--surface-hover) !important;
 }
