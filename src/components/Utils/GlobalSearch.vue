@@ -1,16 +1,18 @@
 <template>
   <div class="navbar">
-    <!-- Bouton natif avec logo loupe SVG -->
-    <button
+    <!-- Bouton PrimeVue avec logo loupe SVG -->
+    <Button
+      class="search-navbar-btn"
+      :style="buttonStyle"
       @click="toggleSearchBar"
-      style="background:var(--surface-overlay);border:none;border-radius:25%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background 0.2s;"
       title="Rechercher"
+      aria-label="Rechercher"
     >
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="11" cy="11" r="7" stroke="var(--primary-color)" stroke-width="2"/>
-        <line x1="16.018" y1="16.4853" x2="20" y2="20.4673" stroke="var(--primary-color)" stroke-width="2" stroke-linecap="round"/>
+      <svg class="search-icon-svg" width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="22" cy="22" r="18" stroke="var(--primary-color)" stroke-width="6"/>
+        <line x1="34" y1="42" x2="40" y2="50" stroke="var(--primary-color)" stroke-width="6" stroke-linecap="round"/>
       </svg>
-    </button>
+    </Button>
 
     <!-- Barre de recherche globale -->
     <Dialog v-model:visible="showSearchBar" modal header="Rechercher sur le site" :style="{ width: '50vw' }">
@@ -37,7 +39,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { db } from '../../../firebase';
 import { ref as firebaseRef, get } from 'firebase/database';
@@ -50,6 +52,19 @@ const router = useRouter();
 const showSearchBar = ref(false);
 const searchQuery = ref('');
 const searchResults = ref([]);
+
+const buttonStyle = computed(() => ({
+  backgroundColor: 'var(--surface-overlay)',
+  border: 'none',
+  borderRadius: '25%',
+  width: '50px',
+  height: '50px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  transition: 'background-color 0.3s ease',
+  cursor: 'pointer',
+}));
 
 const toggleSearchBar = () => {
   console.log(" Toggle search bar", showSearchBar.value);
@@ -168,7 +183,11 @@ const navigateTo = (event) => {
   width: 100%;
   display: flex;
 }
-
+.search-navbar-btn .search-icon-svg {
+  width: 44px;
+  height: 44px;
+  display: block;
+}
 .search-suggestions {
   margin-top: 1rem;
   max-height: 200px;
