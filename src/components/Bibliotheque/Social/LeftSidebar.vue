@@ -1,16 +1,27 @@
 <template>
   <div class="sidebar card">
+    <Toast ref="toast" />
     <!-- Partie supérieure fixe -->
     <div class="fixed-content">
       <!-- Profil utilisateur -->
       <div class="user-profile flex">
-
-        <img
-          :src="userPhotoURL"
-          alt="Avatar"
-          class="m-2 col-6"
-          style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;"
-        />
+        <!-- Avatar -->
+        <label style="cursor:pointer; margin:0;">
+          <img
+            :src="userPhotoURL"
+            alt="Avatar"
+            class="m-2 col-6"
+            style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border:2px solid #ccc;"
+            @click.prevent="triggerFileInput"
+          />
+          <input
+            ref="fileInput"
+            type="file"
+            accept="image/*"
+            style="display:none"
+            @change="onAvatarSelected"
+          />
+        </label>
         <h4 class="m-2 mt-5">
           <a @click="goToProfile" class="profile-link">{{ userFullName }}</a>
         </h4>
@@ -45,8 +56,11 @@
 </template>
 <script>
 import Avatar from "primevue/avatar";
+import Toast from "primevue/toast";
 import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
-import { getDatabase, ref as dbRef, get } from "firebase/database";
+import { getDatabase, ref as dbRef, get, update } from "firebase/database";
+import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storage } from '../../../../firebase.js';
 import ChatSidebar from '@/views/apps/chat/ChatSidebar.vue'
 import UserCard from '@/views/apps/chat/UserCard.vue'
 
@@ -54,7 +68,7 @@ const defaultAvatar = '../../../public/assets/images/avatar/01.jpg';
 
 export default {
   name: "LeftSidebar",
-  components: { UserCard, ChatSidebar, Avatar },
+  components: { UserCard, ChatSidebar, Avatar, Toast },
   data() {
     return {
       user: {
@@ -82,6 +96,33 @@ export default {
     },
   },
   methods: {
+    triggerFileInput() {
+      this.$refs.fileInput.click();
+    },
+    async onAvatarSelected(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        this.$refs.toast.add({ severity: 'error', summary: 'Erreur', detail: 'Utilisateur non connecté.', life: 4000 });
+        return;
+      }
+      const userId = currentUser.uid;
+      const avatarRef = storageRef(storage, `users/${userId}/profile-picture.jpg`);
+      try {
+        await uploadBytes(avatarRef, file);
+        const photoURL = await getDownloadURL(avatarRef);
+        const db = getDatabase();
+        const userRef = dbRef(db, `Users/${userId}`);
+        await update(userRef, { PhotoURL: photoURL });
+        this.user.PhotoURL = photoURL;
+        this.$refs.toast.add({ severity: 'success', summary: 'Succès', detail: 'Photo de profil mise à jour avec succès', life: 4000 });
+      } catch (error) {
+        console.error("Erreur lors de l'upload de l'avatar :", error);
+        this.$refs.toast.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur lors de l\'upload de l\'avatar : ' + (error && error.message ? error.message : error), life: 6000 });
+      }
+    },
     async fetchUserProfile(uid) {
       const db = getDatabase();
       const userRef = dbRef(db, `Users/${uid}`);
@@ -130,11 +171,12 @@ export default {
         this.$router.push("/"); // Redirection à la page d'accueil
       } catch (error) {
         console.error("Erreur de déconnexion:", error);
+        this.$refs.toast.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur de déconnexion : ' + (error && error.message ? error.message : error), life: 6000 });
       }
     },
     openChat(user) {
       this.$router.push(`/chat?user=${encodeURIComponent(user.id)}`);
-    },
+    }
   },
   mounted() {
     const auth = getAuth();
@@ -147,7 +189,7 @@ export default {
         console.log("Aucun utilisateur connecté."); // Debugging
       }
     });
-  },
+  }
 };
 </script>
 <style scoped>

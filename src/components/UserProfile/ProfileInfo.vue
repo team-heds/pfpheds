@@ -11,12 +11,10 @@
         <div>
           <!-- Affichage du composant CardNameProfile -->
           <CardNameProfile />
-
+          <!-- Affichage du nom et prénom de l'utilisateur -->
           <VotationResultProfil :userId="user.uid" class="w-full "  />
           <!-- Résumé du stage utilisateur -->
           <ResumStageUserProfile class="w-full" />
-
-
 
           <!-- Section pour changer la photo de profil -->
           <div class="p-field mt-4 card w-full">
@@ -33,7 +31,7 @@
                 type="file"
                 accept="image/*"
                 @change="onAvatarChange"
-                class="p-ml-2"
+                class="p-ml-2 mt-2"
               />
             </div>
             <Button
@@ -67,6 +65,7 @@ import ResumStageUserProfile from '@/components/UserProfile/ResumStageUserProfil
 import LeftSidebar from '@/components/Bibliotheque/Social/LeftSidebar.vue';
 import RightSidebar from '@/components/Bibliotheque/Social/RightSidebar.vue';
 import VotationResultProfil from '@/components/UserProfile/VotationResultProfil.vue'
+
 
 // Définition d'un avatar par défaut
 const defaultAvatar = '../../../public/assets/images/avatar/01.jpg';
