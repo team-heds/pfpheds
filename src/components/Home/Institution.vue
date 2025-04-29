@@ -21,7 +21,7 @@
           <!-- Barre de recherche au centre -->
           <div class="search-bar">
             <span class="p-input-icon-left">
-              <InputText v-model="searchTerm" placeholder="Rechercher par nom" class="search-input" />
+              <InputText v-model="searchTerm" placeholder="Rechercher par nom, ville, canton ou id" class="search-input" />
             </span>
           </div>
 
@@ -97,7 +97,7 @@
 
     <!-- Sidebar Droite -->
     <div class="sidebar-right">
-      <FilterSidebar />
+      <FilterSidebar :cantons="cantonsList" @filters-changed="handleSidebarFilters" />
     </div>
   </div>
 </template>
@@ -136,17 +136,42 @@ export default {
       totalInstitutions: 0,
       descriptionClass: 'description',
       searchTerm: '',
+      activeFilters: {
+        cantons: [],
+        criter: [],
+        pfp: [],
+        languages: []
+      },
+      cantonsList: [] // <-- Liste dynamique des cantons
     };
   },
   computed: {
     filteredInstitutions() {
-      if (!this.searchTerm) {
-        return this.allInstitutions;
+      // Filtrage texte (nom, ville, id, canton)
+      let institutions = this.allInstitutions;
+      if (this.searchTerm) {
+        const search = this.searchTerm.toLowerCase();
+        institutions = institutions.filter(inst =>
+          (inst.Name && inst.Name.toLowerCase().includes(search)) ||
+          (inst.Locality && inst.Locality.toLowerCase().includes(search)) ||
+          (inst.InstitutionId && String(inst.InstitutionId).toLowerCase().includes(search)) ||
+          (inst.Canton && inst.Canton.toLowerCase().includes(search))
+        );
       }
-      return this.allInstitutions.filter(institution =>
-        institution.Name &&
-        institution.Name.toLowerCase().includes(this.searchTerm.toLowerCase())
-      );
+      // Filtrage sidebar
+      if (this.activeFilters.cantons.length > 0) {
+        institutions = institutions.filter(inst => this.activeFilters.cantons.includes(inst.Canton));
+      }
+      if (this.activeFilters.criter.length > 0) {
+        institutions = institutions.filter(inst => this.activeFilters.criter.some(crit => (inst.Criteres || []).includes(crit)));
+      }
+      if (this.activeFilters.pfp.length > 0) {
+        institutions = institutions.filter(inst => this.activeFilters.pfp.some(pfp => inst[pfp] && inst[pfp] !== 0));
+      }
+      if (this.activeFilters.languages.length > 0) {
+        institutions = institutions.filter(inst => this.activeFilters.languages.includes(inst.Language));
+      }
+      return institutions;
     },
     paginatedFilteredInstitutions() {
       const start = (this.currentPage - 1) * this.itemsPerPage;
@@ -193,12 +218,16 @@ export default {
             Description: data[key].Description || 'Pas de description disponible'
           }));
           this.totalInstitutions = this.allInstitutions.length;
+          // Génère la liste unique des cantons présents
+          const allCantons = this.allInstitutions.map(inst => inst.Canton).filter(Boolean);
+          this.cantonsList = [...new Set(allCantons)].sort();
           this.$nextTick(() => {
             this.adjustDescriptionHeight();
           });
         } else {
           this.allInstitutions = [];
           this.totalInstitutions = 0;
+          this.cantonsList = [];
         }
       });
     },
@@ -226,11 +255,15 @@ export default {
       } else {
         console.error("L'ID est indéfini pour cette institution.");
       }
+    },
+    handleSidebarFilters(filters) {
+      this.activeFilters = filters;
     }
   },
   mounted() {
     this.fetchInstitutionsFromFirebase();
-  }
+  },
+  beforeUnmount() {},
 };
 </script>
 
