@@ -132,15 +132,6 @@ import { useToast } from 'primevue/usetoast';
 
 const toast = useToast();
 
-import { ref, computed, onMounted } from 'vue'
-import { ref as firebaseRef, onValue, get } from 'firebase/database'
-import { useRouter } from 'vue-router'
-import Button from 'primevue/button'
-import FileUpload from 'primevue/fileupload'
-import { db, storage } from 'root/firebase'
-import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
-
-
 const props = defineProps({
   userId: { type: String, required: true }
 })
