@@ -115,6 +115,23 @@
 </template>
 
 <script setup>
+
+import { ref, computed, onMounted } from 'vue';
+import { ref as firebaseRef, onValue, get } from 'firebase/database';
+import { useRouter } from 'vue-router';
+import Button from 'primevue/button';
+import FileUpload from 'primevue/fileupload';
+import { db, storage } from 'root/firebase';
+import {
+  ref as storageRef,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject
+} from 'firebase/storage';
+import { useToast } from 'primevue/usetoast';
+
+const toast = useToast();
+
 import { ref, computed, onMounted } from 'vue'
 import { ref as firebaseRef, onValue, get } from 'firebase/database'
 import { useRouter } from 'vue-router'
@@ -122,6 +139,7 @@ import Button from 'primevue/button'
 import FileUpload from 'primevue/fileupload'
 import { db, storage } from 'root/firebase'
 import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
+
 
 const props = defineProps({
   userId: { type: String, required: true }
@@ -317,8 +335,13 @@ const handleFileSelection = (event, assignmentKey) => {
 
 const uploadDocuments = async (assignmentKey) => {
   if (!upload.value[assignmentKey] || upload.value[assignmentKey].length === 0) {
+
+    toast.add({ severity: 'warn', summary: 'Avertissement', detail: 'Aucun nouveau fichier sélectionné.', life: 4000 });
+    return;
+
     alert('Aucun nouveau fichier sélectionné.')
     return
+
   }
   const docsArray = upload.value[assignmentKey]
   const updatedDocs = []
@@ -345,8 +368,13 @@ const openDocument = (url) => {
 
 const saveDocName = async (assignmentKey, doc) => {
   if (!doc.tempName) {
+
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Le nom du fichier ne peut être vide.', life: 4000 });
+    return;
+
     alert('Le nom du fichier ne peut être vide.')
     return
+
   }
   doc.fileName = doc.tempName
   doc.isRenaming = false

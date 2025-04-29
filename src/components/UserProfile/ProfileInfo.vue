@@ -58,6 +58,7 @@ import { useRoute } from 'vue-router';
 import { getDatabase, ref as dbRef, get, update } from "firebase/database";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import Button from 'primevue/button';
+import { useToast } from 'primevue/usetoast';
 
 // Importation des composants utilisés
 import CardNameProfile from '@/components/Bibliotheque/Profile/CardNameProfile.vue';
@@ -66,6 +67,7 @@ import LeftSidebar from '@/components/Bibliotheque/Social/LeftSidebar.vue';
 import RightSidebar from '@/components/Bibliotheque/Social/RightSidebar.vue';
 import VotationResultProfil from '@/components/UserProfile/VotationResultProfil.vue'
 
+const toast = useToast();
 
 // Définition d'un avatar par défaut
 const defaultAvatar = '../../../public/assets/images/avatar/01.jpg';
@@ -109,7 +111,7 @@ const saveProfile = async () => {
   if (selectedAvatarFile.value) {
     const userId = user.value.uid;
     if (!userId) {
-      alert('Aucun utilisateur chargé, impossible de sauvegarder.');
+      toast.add({ severity: 'error', summary: 'Erreur', detail: 'Aucun utilisateur chargé, impossible de sauvegarder.', life: 4000 });
       return;
     }
     const avatarRef = storageRef(storage, `users/${userId}/profile-picture.jpg`);
@@ -122,13 +124,13 @@ const saveProfile = async () => {
         PhotoURL: photoURL
       });
       user.value.photoURL = photoURL;
-      alert('Photo de profil mise à jour avec succès');
+      toast.add({ severity: 'success', summary: 'Succès', detail: 'Photo de profil mise à jour avec succès', life: 4000 });
     } catch (error) {
       console.error("Erreur lors de l'upload de l'avatar :", error);
-      alert("Erreur lors de l'upload de l'avatar");
+      toast.add({ severity: 'error', summary: 'Erreur', detail: "Erreur lors de l'upload de l'avatar", life: 4000 });
     }
   } else {
-    alert('Veuillez sélectionner une photo avant de sauvegarder.');
+    toast.add({ severity: 'warn', summary: 'Avertissement', detail: 'Veuillez sélectionner une photo avant de sauvegarder.', life: 4000 });
   }
 };
 
