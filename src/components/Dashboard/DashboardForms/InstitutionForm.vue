@@ -35,8 +35,6 @@
                   <Dropdown id="langue" v-model="institution.Language" :options="langues" optionLabel="name" optionValue="code" class="w-full" />
                 </div>
                 <div class="field col-6">
-                  <label for="cyberlearn">Cyberlean URL</label>
-                  <InputText id="cyberlearn" v-model="institution.CyberleanURL" class="w-full" />
                 </div>
                 <div class="field col-6">
                   <label for="url">URL</label>
@@ -67,7 +65,7 @@
                   <Textarea id="description" v-model="institution.Description" rows="3" class="w-full" />
                 </div>
                 <div class="field col-4">
-                  <label for="name">Nom du chef</label>
+                  <label for="name">Nom, Prénom du chef</label>
                   <InputText id="name" v-model="institution.NomChef" class="w-full" />
                 </div>
                 <div class="field col-4">
@@ -87,8 +85,17 @@
               <Divider />
               <div class="grid formgrid">
                 <div class="field col-12 md:col-6">
-                  <label for="institutionId">ID Institution</label>
-                  <InputText id="institutionId" v-model="institution.InstitutionId" />
+                  <label for="institutionId" style="display:block;margin-bottom:0.5rem;">ID Institution</label>
+                  <div class="flex align-items-center mb-2" style="gap:0.5rem;">
+                    <Checkbox v-model="manualInstitutionId" :binary="true" inputId="manualIdCheckbox" />
+                    <label for="manualIdCheckbox" class="text-xs">Définir manuellement</label>
+                  </div>
+                  <InputText id="institutionId"
+                    v-model="institution.InstitutionId"
+                    :disabled="!manualInstitutionId"
+                    class="w-full"
+                    :style="!manualInstitutionId ? 'background:#eee;color:#888;' : ''"
+                  />
                 </div>
                 <div class="field col-12 md:col-6">
                   <label for="category">Catégorie</label>
@@ -165,6 +172,7 @@ import Button from 'primevue/button';
 import Divider from 'primevue/divider';
 import Calendar from 'primevue/calendar';
 import Navbar from '@/components/Utils/Navbar.vue'
+import Checkbox from 'primevue/checkbox';
 
 export default {
   name: 'InstitutionForm',
@@ -177,10 +185,11 @@ export default {
     Button,
     Divider,
     Calendar,
+    Checkbox,
   },
   data() {
     return {
-      activeIndex: 0,
+      activeIndex: 1,
       steps: [
         { label: 'Détails de l\'institution' },
         { label: 'Informations supplémentaires' },
@@ -207,6 +216,7 @@ export default {
         PhoneChef: '',
       },
       imageFile: null,
+      manualInstitutionId: false,
       cantons: [
         { code: 'AG', name: 'Argovie' },
         { code: 'AI', name: 'Appenzell Rhodes-Intérieures' },
