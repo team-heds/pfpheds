@@ -2,6 +2,9 @@
   <div>
     <Navbar />
     <div class="filter-menu">
+      <div class="mb-3" style="max-width:400px;margin:auto;">
+        <InputText v-model="globalFilter" placeholder="Rechercher un praticien formateur par nom, prénom ou mail..." class="w-100 p-inputtext-lg" />
+      </div>
       <DataTable
         :value="filteredPraticiensFormateurs"
         :paginator="true"

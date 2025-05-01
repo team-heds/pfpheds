@@ -131,8 +131,6 @@ const routes = [
   { path: '/places_assignment', component: PlacesAssignment, name: 'PlacesAssignment',meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/places_assigned', component: PlacesAssigned, name: 'PlacesAssigned',meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/management_pfpencours', component: ManagementPFPEnCours, name: 'ManagementPFPEnCours',meta: { requiresAuth: true, requiredRole: 'admin' } },
-  
-
 
   { path: '/stage_repartition', component: StageRepartitionBA2, name: 'StageRepartitionBA2',meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/management_places_safe', component: ManagementPlacesSafe, name: 'ManagementPlacesSafe',meta: { requiresAuth: true, requiredRole: 'admin' } },
