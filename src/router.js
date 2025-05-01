@@ -165,6 +165,11 @@ const routes = [
     name: 'CommunityInfo',
     component: CommunityInfo // Définition de la route Infos
   },
+  {
+    path: '/template-test',
+    name: 'TemplateTest',
+    component: () => import('@/views/TemplateTest.vue')
+  },
 ];
 
 // Create router instance
