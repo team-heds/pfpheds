@@ -13,6 +13,14 @@
         debounce="300"
       />
     </div>
+    <!-- Sélecteur d'année -->
+    <div class="text-center mb-3">
+      <label for="annee-select" class="mr-2">Année :</label>
+      <select id="annee-select" v-model="selectedYear" class="p-inputtext-sm">
+        <option value="2025">2025</option>
+        <option value="2026">2026</option>
+      </select>
+    </div>
     <div class="container">
       <!-- Bouton Créer une nouvelle place -->
       <div class="text-center mb-3">
@@ -126,20 +134,11 @@
           </Column>
 
           <!-- Colonnes PFP -->
-          <Column header="PFP2">
-            <template #body="slotProps">
-              <InputText
-                v-model="slotProps.data.PFP2"
-                @change="updatePlace(slotProps.data, 'PFP2', slotProps.data.PFP2)"
-                class="p-inputtext-sm small-input"
-              />
-            </template>
-          </Column>
           <Column header="PFP1A">
             <template #body="slotProps">
               <InputText
-                v-model="slotProps.data.PFP1A"
-                @change="updatePlace(slotProps.data, 'PFP1A', slotProps.data.PFP1A)"
+                :value="getYearField(slotProps.data, 'PFP1A')"
+                @input="setYearField(slotProps.data, 'PFP1A', $event.target.value)"
                 class="p-inputtext-sm small-input"
               />
             </template>
@@ -147,17 +146,17 @@
           <Column header="PFP1B">
             <template #body="slotProps">
               <InputText
-                v-model="slotProps.data.PFP1B"
-                @change="updatePlace(slotProps.data, 'PFP1B', slotProps.data.PFP1B)"
+                :value="getYearField(slotProps.data, 'PFP1B')"
+                @input="setYearField(slotProps.data, 'PFP1B', $event.target.value)"
                 class="p-inputtext-sm small-input"
               />
             </template>
           </Column>
-          <Column header="PFP4">
+          <Column header="PFP2">
             <template #body="slotProps">
               <InputText
-                v-model="slotProps.data.PFP4"
-                @change="updatePlace(slotProps.data, 'PFP4', slotProps.data.PFP4)"
+                :value="getYearField(slotProps.data, 'PFP2')"
+                @input="setYearField(slotProps.data, 'PFP2', $event.target.value)"
                 class="p-inputtext-sm small-input"
               />
             </template>
@@ -165,8 +164,17 @@
           <Column header="PFP3">
             <template #body="slotProps">
               <InputText
-                v-model="slotProps.data.PFP3"
-                @change="updatePlace(slotProps.data, 'PFP3', slotProps.data.PFP3)"
+                :value="getYearField(slotProps.data, 'PFP3')"
+                @input="setYearField(slotProps.data, 'PFP3', $event.target.value)"
+                class="p-inputtext-sm small-input"
+              />
+            </template>
+          </Column>
+          <Column header="PFP4">
+            <template #body="slotProps">
+              <InputText
+                :value="getYearField(slotProps.data, 'PFP4')"
+                @input="setYearField(slotProps.data, 'PFP4', $event.target.value)"
                 class="p-inputtext-sm small-input"
               />
             </template>
@@ -195,8 +203,8 @@
           <Column header="Remarques">
             <template #body="slotProps">
               <InputText
-                v-model="slotProps.data.Remarques"
-                @change="updatePlace(slotProps.data, 'Note', slotProps.data.Remarques)"
+                :value="getYearField(slotProps.data, 'Remarques')"
+                @input="setYearField(slotProps.data, 'Remarques', $event.target.value)"
                 autoResize
                 rows="2"
                 cols="30"
@@ -322,7 +330,8 @@ export default {
       search: '',
       isCreateModalVisible: false,
       institutionsOptions: [],
-      praticiensFormateursOptions: []
+      praticiensFormateursOptions: [],
+      selectedYear: '2025',
     };
   },
   computed: {
@@ -335,7 +344,7 @@ export default {
         place.NomPlace.toLowerCase().includes(searchLower) ||
         place.Lieu.toLowerCase().includes(searchLower) ||
         place.InstitutionName.toLowerCase().includes(searchLower) ||
-        (place.Remarques && place.Remarques.toLowerCase().includes(searchLower))
+        (place.Remarques && place.Remarques[this.selectedYear] && place.Remarques[this.selectedYear].toLowerCase().includes(searchLower))
       );
     },
     praticiensFormateursOptions() {
@@ -367,11 +376,11 @@ export default {
         PFP3: 0
       };
       this.places.forEach(place => {
-        pfpCounts.PFP2 += this.getPFPIncrement(place.PFP2);
-        pfpCounts.PFP1A += this.getPFPIncrement(place.PFP1A);
-        pfpCounts.PFP1B += this.getPFPIncrement(place.PFP1B);
-        pfpCounts.PFP4 += this.getPFPIncrement(place.PFP4);
-        pfpCounts.PFP3 += this.getPFPIncrement(place.PFP3);
+        pfpCounts.PFP2 += this.getPFPIncrement(place.PFP2 && place.PFP2[this.selectedYear]);
+        pfpCounts.PFP1A += this.getPFPIncrement(place.PFP1A && place.PFP1A[this.selectedYear]);
+        pfpCounts.PFP1B += this.getPFPIncrement(place.PFP1B && place.PFP1B[this.selectedYear]);
+        pfpCounts.PFP4 += this.getPFPIncrement(place.PFP4 && place.PFP4[this.selectedYear]);
+        pfpCounts.PFP3 += this.getPFPIncrement(place.PFP3 && place.PFP3[this.selectedYear]);
       });
       return pfpCounts;
     },
@@ -389,6 +398,27 @@ export default {
           const placePromises = Object.keys(placesData).map(async key => {
             const place = placesData[key];
             const institutionData = await this.fetchInstitutionData(place.InstitutionId || place.IDPlace);
+            // Migration des champs PFP* et Remarques pour 2025/2026 si nécessaire
+            const migrateField = (field) => {
+              let obj = {};
+              if (typeof place[field] === 'object') {
+                obj = { ...place[field] };
+              } else if (place[field] !== undefined && place[field] !== null && place[field] !== '') {
+                obj = { '2025': place[field] };
+              }
+              // Charger la valeur -2026 si présente
+              if (place[field + '-2026'] !== undefined && place[field + '-2026'] !== null && place[field + '-2026'] !== '') {
+                obj['2026'] = place[field + '-2026'];
+              } else if (!obj['2026']) {
+                obj['2026'] = '';
+              }
+              return obj;
+            };
+            // Gestion spéciale pour Remarques-2026
+            let remarques = migrateField('Remarques');
+            if (place['Remarques-2026']) {
+              remarques['2026'] = place['Remarques-2026'];
+            }
             return {
               IdPlace: key,
               NomPlace: place.NomPlace || '',
@@ -402,18 +432,18 @@ export default {
               NEUROGER: (place.NEUROGER === true  ||  place.NEUROGER === 'true'),
               IT: place.IT === "true",
               ENG: place.ENG === "true",
-              PFP2: place.PFP2 || '',
-              PFP1A: place.PFP1A || '',
-              PFP1B: place.PFP1B || '',
-              PFP4: place.PFP4 || '',
-              PFP3: place.PFP3 || '',
+              PFP2: migrateField('PFP2'),
+              PFP1A: migrateField('PFP1A'),
+              PFP1B: migrateField('PFP1B'),
+              PFP4: migrateField('PFP4'),
+              PFP3: migrateField('PFP3'),
               InstitutionName: institutionData.Name || institutionData.NomPlace || '',
               AccordCadreDate: institutionData.AccordCadreDate || '',
               Canton: institutionData.Canton || '',
               Categorie: institutionData.Category || '',
               ConventionDate: institutionData.ConventionDate || '',
               Lieu: institutionData.Locality || '',
-              Remarques: place.Remarques || '',
+              Remarques: remarques,
               selectedPraticiensFormateurs: place.praticiensFormateurs || [],
               InstitutionId: place.InstitutionId || '',
               fileURL: place.fileURL || null
@@ -465,15 +495,24 @@ export default {
     },
 
     // Mise à jour d'un champ
-    async updatePlace(place, field, value) {
+    async updatePlace(place, field, value, year) {
       const placeRef = ref(db, `Places/${place.IdPlace}`);
       let updateValue = value;
       if (typeof value === "boolean") {
         updateValue = value ? "true" : "false";
       }
-      if (field === 'Note') {
-        await update(placeRef, { [field]: value });
+      // Gestion spéciale pour les champs PFP* et Remarques selon l'année
+      if (["PFP1A", "PFP1B", "PFP2", "PFP3", "PFP4", "Remarques"].includes(field)) {
+        if ((year || this.selectedYear) === "2026") {
+          // Pour 2026 : sauvegarder dans PFP1A-2026, etc.
+          const dbField = field + "-2026";
+          await update(placeRef, { [dbField]: updateValue });
+        } else {
+          // Pour 2025 : sauvegarder dans PFP1A, etc.
+          await update(placeRef, { [field]: updateValue });
+        }
       } else {
+        place[field] = value;
         await update(placeRef, { [field]: updateValue });
       }
     },
@@ -552,7 +591,15 @@ export default {
         console.error("Erreur lors de la suppression de la place :", error);
         alert("Une erreur est survenue lors de la suppression de la place.");
       }
-    }
+    },
+    getYearField(place, field) {
+      return place[field] && place[field][this.selectedYear] ? place[field][this.selectedYear] : '';
+    },
+    setYearField(place, field, value) {
+      if (!place[field]) place[field] = {};
+      place[field][this.selectedYear] = value;
+      this.updatePlace(place, field, value, this.selectedYear);
+    },
   },
 
   mounted() {
