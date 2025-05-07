@@ -1,4 +1,6 @@
 <template>
+      <Navbar />
+
   <div>
     <div class="page-title">
       <h1>Validation PFP1A</h1>
@@ -90,9 +92,12 @@
 import { ref, onMounted, watch, computed } from 'vue';
 import { ref as dbRef, onValue, set, get, child, update } from 'firebase/database';
 import { db } from 'root/firebase';
+import Navbar from "@/components/Utils/Navbar.vue";
 
 export default {
   name: 'ValidatePFP1A',
+  components: { Navbar },
+
   setup() {
     const pfp1aResults = ref([]);
     const loading = ref(true);

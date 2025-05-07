@@ -64,11 +64,20 @@ const menu = ref([
           { label: 'Gantt PFP', icon: 'pi pi-fw pi-image', to: '/gantt' },
           { label: 'Management Places', icon: 'pi pi-cog', to: '/management_places' },
           { label: 'Management Places Safe', icon: 'pi pi-cog', to: '/management_places_safe' },
-          { label: 'Stage Repartition', icon: 'pi pi-cog', to: '/stage_repartition' }
+          { label: 'Stage Repartition', icon: 'pi pi-cog', to: '/stage_repartition' },
+          { label: 'Validation PFP1A', icon: 'pi pi-cog', to: '/validate-pfp1a' }
+        ]
+      },
+      {
+        label: 'Répondant HES',
+        icon: 'pi pi-fw pi-comment',
+        items: [
+          { label: 'Management Répondant HES', icon: 'pi pi-fw pi-image', to: '/management_repondant' },
+          { label: 'Informations Répondant HES', icon: 'pi pi-fw pi-image', to: '/info_repondant' }
         ]
       },
       { label: 'Export Excel', icon: 'pi pi-file-excel', to: '/export_excel' },
-      { label: 'Rapports', icon: 'pi pi-chart-bar', to: '/rapports' },
+        { label: 'Rapports', icon: 'pi pi-chart-bar', to: '/rapports' },
     ]
   }
 ]);

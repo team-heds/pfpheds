@@ -56,6 +56,8 @@ import StatsPlacePFP from '@/components/Dashboard/DashboardDetails/StatsPlacePFP
 import PlacesAssignment from '@/components/Dashboard/DashboardDetails/PlacesAssignment.vue';
 import PlacesAssigned from '@/components/Dashboard/DashboardDetails/PlacesAssigned.vue';
 import ManagementPFPEnCours from '@/components/Dashboard/DashboardDetails/ManagementPFPEnCours.vue';
+import ManagementRepondant from '@/components/Dashboard/DashboardDetails/Management_repondant.vue';
+import InfoRepondant from '@/components/Dashboard/DashboardDetails/Info_repondant.vue';
 import LoginHome from '@/components/Utils/LoginHome.vue';
 import NewsFeed from '@/components/Social/NewsFeed.vue';
 import HashtagPage from '@/components/Social/HashtagPage.vue';
@@ -122,6 +124,7 @@ const routes = [
   { path: '/reception', component: Reception, name: 'Reception', meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/votation', component: VotationView, name: 'VotationView', meta: { requiresAuth: true } },
   { path: '/management_votation', component: Management_votation, name: 'Management_votation', meta: { requiresAuth: true, requiredRole: 'admin' } }, // Protect this route
+  { path: '/info_repondant', component: InfoRepondant, name: 'InfoRepondant', meta: { requiresAuth: true, requiredRole: ['admin', 'enseignant'] } },
   { path: '/management_votation_lese', component: Management_votation_lese, name: 'Management_votation_lese', meta: { requiresAuth: true, requiredRole: 'admin' } }, // Protect this route
   { path: '/management_votation_etudiants', component: Management_votation_etudiants, name: 'Management_votation_etudiants', meta: { requiresAuth: true, requiredRole: 'admin' } }, // Protect this route
   { path: '/management_places', component: ManagementPlace, name: 'Management_places',meta: { requiresAuth: true, requiredRole: 'admin' } },
@@ -131,6 +134,7 @@ const routes = [
   { path: '/places_assignment', component: PlacesAssignment, name: 'PlacesAssignment',meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/places_assigned', component: PlacesAssigned, name: 'PlacesAssigned',meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/management_pfpencours', component: ManagementPFPEnCours, name: 'ManagementPFPEnCours',meta: { requiresAuth: true, requiredRole: 'admin' } },
+  { path: '/management_repondant', component: ManagementRepondant, name: 'Management_repondant', meta: { requiresAuth: true, requiredRole: 'admin' } },
 
   { path: '/stage_repartition', component: StageRepartitionBA2, name: 'StageRepartitionBA2',meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/management_places_safe', component: ManagementPlacesSafe, name: 'ManagementPlacesSafe',meta: { requiresAuth: true, requiredRole: 'admin' } },
