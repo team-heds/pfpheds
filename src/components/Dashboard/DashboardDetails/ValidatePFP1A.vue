@@ -1,4 +1,5 @@
 <template>
+
       <Navbar />
 
   <div>
@@ -92,11 +93,17 @@
 import { ref, onMounted, watch, computed } from 'vue';
 import { ref as dbRef, onValue, set, get, child, update } from 'firebase/database';
 import { db } from 'root/firebase';
+
 import Navbar from "@/components/Utils/Navbar.vue";
 
 export default {
   name: 'ValidatePFP1A',
   components: { Navbar },
+
+
+
+export default {
+  name: 'ValidatePFP1A',
 
   setup() {
     const pfp1aResults = ref([]);

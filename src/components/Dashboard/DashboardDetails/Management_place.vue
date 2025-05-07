@@ -179,7 +179,7 @@
               />
             </template>
           </Column>
-
+          <!-- Colonne Praticien Formateur -->
           <!-- Colonne Praticien Formateur -->
           <Column header="Praticien Formateur">
             <template #body="slotProps">
