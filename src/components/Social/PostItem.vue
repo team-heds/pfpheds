@@ -1,5 +1,3 @@
-
-// ---------------------------
 <template>
   <div class="post-item">
     <!-- En-tête du post -->
@@ -22,7 +20,17 @@
     <!-- Contenu du post -->
     <div class="post-content p-3">
       <!-- Texte du post -->
-      <div v-if="post.Content" class="post-text " v-html="post.Content"></div>
+      <div v-if="post.Content" class="post-text ">
+        <div v-html="post.Content"></div>
+        <!-- YouTube Embed -->
+        <div v-for="(yt, i) in extractYouTubeLinks(post.Content)" :key="'yt-'+i" class="embed-responsive embed-responsive-16by9 mt-2">
+          <iframe :src="getYouTubeEmbedUrl(yt)" frameborder="0" allowfullscreen style="width:100%;height:900px;"></iframe>
+        </div>
+        <!-- Spotify Embed -->
+        <div v-for="(sp, i) in extractSpotifyLinks(post.Content)" :key="'sp-'+i" class="embed-responsive embed-responsive-16by9 mt-2">
+          <iframe :src="getSpotifyEmbedUrl(sp)" frameborder="0" allow="encrypted-media" style="width:100%;min-height:152px;"></iframe>
+        </div>
+      </div>
 
       <!-- Médias du post -->
       <div v-if="post.media && post.media.length > 0" class="post-media">
@@ -308,7 +316,51 @@ export default {
           }
         }
       });
-    }
+    },
+    // --- YouTube/Spotify embed helpers ---
+    extractYouTubeLinks(content) {
+      if (!content) return [];
+      // Regex to match YouTube URLs
+      const ytRegex = /(https?:\/\/(?:www\.|m\.)?(?:youtube\.com\/watch\?v=|youtu.be\/)([\w-]{11}))/g;
+      const matches = [...content.matchAll(ytRegex)];
+      return matches.map(m => m[1]);
+    },
+    getYouTubeEmbedUrl(url) {
+      // Extract video id
+      let id = '';
+      const match = url.match(/(?:v=|be\/)([\w-]{11})/);
+      if (match) id = match[1];
+      return `https://www.youtube.com/embed/${id}`;
+    },
+    extractSpotifyLinks(content) {
+      if (!content) return [];
+      const links = [];
+      try {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(content, 'text/html');
+        doc.querySelectorAll('a').forEach(a => {
+          if (a.href && a.href.includes('spotify.com/')) links.push(a.href);
+        });
+      } catch (e) {
+        // fallback: regex sur le texte brut
+        const spRegex = /(https?:\/\/(?:open\.)?spotify\.com\/([a-zA-Z0-9]+)\/[a-zA-Z0-9]+[\w\?=\-&]*)/g;
+        const matches = [...content.matchAll(spRegex)];
+        matches.forEach(m => links.push(m[1]));
+      }
+      // Ajoute aussi les liens détectés par regex sur le texte brut (au cas où pas dans <a>)
+      const spRegex = /(https?:\/\/(?:open\.)?spotify\.com\/([a-zA-Z0-9]+)\/[a-zA-Z0-9]+[\w\?=\-&]*)/g;
+      const matches = [...content.matchAll(spRegex)];
+      matches.forEach(m => { if (!links.includes(m[1])) links.push(m[1]); });
+      return links;
+    },
+    getSpotifyEmbedUrl(url) {
+      // Accepte tout type d'URL Spotify (track, album, playlist, show, episode, artist, etc.)
+      const match = url.match(/open\.spotify\.com\/([a-zA-Z0-9]+)\/([a-zA-Z0-9]+)/);
+      if (!match) return '';
+      const type = match[1];
+      const id = match[2];
+      return `https://open.spotify.com/embed/${type}/${id}`;
+    },
   },
 };
 </script>
@@ -486,4 +538,3 @@ export default {
   }
 }
 </style>
-
