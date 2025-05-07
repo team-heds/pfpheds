@@ -44,11 +44,13 @@
     <!-- Partie inférieure scrollable -->
     <div class="scrollable-content">
       <UserCard
-        v-for="user in lastConversations"
+        v-for="user in users"
         :key="user.id"
         :user="user"
         @click="openChat(user)"
       />
+
+
     </div>
   </div>
 </template>
@@ -75,8 +77,7 @@ export default {
         PhotoURL: "" || defaultAvatar,
         id: "" // Ajout de l'ID utilisateur
       },
-      users: [], // Liste de tous les utilisateurs
-      lastConversations: [] // Ajouté : 20 dernières conversations
+      users: [] // Liste de tous les utilisateurs
     };
   },
   computed: {
@@ -153,46 +154,6 @@ export default {
         console.log("Aucun utilisateur trouvé.");
       }
     },
-    async fetchLastConversations() {
-      // Récupère les 40 dernières conversations de l'utilisateur connecté
-      const db = getDatabase();
-      const auth = getAuth();
-      const currentUser = auth.currentUser;
-      if (!currentUser) return;
-      const conversationsRef = dbRef(db, 'conversations');
-      const usersRef = dbRef(db, 'Users');
-      const snapshot = await get(conversationsRef);
-      const usersSnap = await get(usersRef);
-      const usersData = usersSnap.exists() ? usersSnap.val() : {};
-      let lastConversations = [];
-      if (snapshot.exists()) {
-        const allConversations = snapshot.val();
-        // Filtrer les conversations où l'utilisateur est membre
-        const userConversations = Object.entries(allConversations)
-          .filter(([id, conv]) => conv.member1 === currentUser.uid || conv.member2 === currentUser.uid)
-          .sort((a, b) => (b[1].lastReceivedMessageAt || 0) - (a[1].lastReceivedMessageAt || 0))
-          .slice(0, 20);
-        // Récupérer les infos utilisateurs pour chaque conversation
-        lastConversations = userConversations.map(([id, conv]) => {
-          const otherId = conv.member1 === currentUser.uid ? conv.member2 : conv.member1;
-          return {
-            id: otherId,
-            ...usersData[otherId]
-          };
-        });
-      }
-      // Compléter avec d'autres profils si moins de 40
-      if (Object.keys(usersData).length > 0 && lastConversations.length < 40) {
-        // Exclure l'utilisateur courant et ceux déjà dans la liste
-        const alreadyIds = new Set([currentUser.uid, ...lastConversations.map(u => u.id)]);
-        const others = Object.entries(usersData)
-          .filter(([id, u]) => !alreadyIds.has(id))
-          .slice(0, 40 - lastConversations.length)
-          .map(([id, u]) => ({ id, ...u }));
-        lastConversations = lastConversations.concat(others);
-      }
-      this.lastConversations = lastConversations;
-    },
     goToProfile() {
       this.$router.push("/profile/" + this.user.id);
     },
@@ -221,8 +182,9 @@ export default {
     const auth = getAuth();
     onAuthStateChanged(auth, (authUser) => {
       if (authUser) {
+        console.log("Utilisateur connecté :", authUser); // Debugging
         this.fetchUserProfile(authUser.uid);
-        this.fetchLastConversations();
+        this.fetchAllUsers();
       } else {
         console.log("Aucun utilisateur connecté."); // Debugging
       }
