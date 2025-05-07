@@ -1,9 +1,6 @@
 <template>
   <div class="cropper-modal">
     <div class="cropper-content">
-      <div class="cropper-container">
-        <canvas ref="canvas" :width="canvasWidth" :height="canvasHeight" @mousedown="startDrag" @mousemove="onDrag" @mouseup="endDrag" @mouseleave="endDrag"></canvas>
-      </div>
       <div class="cropper-controls">
         <label>Zoom
           <input type="range" min="1" max="3" step="0.01" v-model.number="zoom" @input="draw" />
@@ -11,6 +8,10 @@
         <button @click="$emit('cancel')">Annuler</button>
         <button @click="emitCropped">Valider</button>
       </div>
+      <div class="cropper-container">
+        <canvas ref="canvas" :width="canvasWidth" :height="canvasHeight" @mousedown="startDrag" @mousemove="onDrag" @mouseup="endDrag" @mouseleave="endDrag"></canvas>
+      </div>
+  
     </div>
   </div>
 </template>

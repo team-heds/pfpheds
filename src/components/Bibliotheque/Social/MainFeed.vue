@@ -68,11 +68,6 @@
               @click="postMessage"
             />
             <!-- Bouton Créer une Story -->
-            <Button
-              label="Créer une Story"
-              class="story-button"
-              @click="showAddStoryFeed = true"
-            />
             <AddStory v-if="showAddStoryFeed" @close="showAddStoryFeed = false" @uploaded="showAddStoryFeed = false" />
           </div>
 

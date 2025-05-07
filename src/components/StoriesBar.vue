@@ -14,7 +14,7 @@
       @click="openStory(story)"
     >
       <img :src="story.userAvatar || defaultAvatar" alt="avatar" class="avatar" />
-      <p>{{ story.userName }}</p>
+      <p>{{ getUserDisplayName(story.userName) }}</p>
     </div>
     <AddStory v-if="showAddStory" @close="showAddStory = false" @uploaded="fetchStories" />
     <StoryModal v-if="selectedStory" :story="selectedStory" @close="selectedStory = null" />
@@ -42,6 +42,13 @@ export default {
     this.fetchStories();
   },
   methods: {
+    getUserDisplayName(userName) {
+      if (!userName) return '';
+      if (userName.includes('@')) {
+        return userName.split('@')[0];
+      }
+      return userName;
+    },
     fetchStories() {
       // Récupère les stories non expirées depuis la RTDB
       const now = Date.now();
@@ -88,7 +95,6 @@ export default {
   display: flex;
   flex-direction: row;
   align-items: center;
-  background: #fff;
   border-bottom: 2px solid #e0e0e0;
   padding: 12px 0;
   gap: 16px;
@@ -109,7 +115,6 @@ export default {
 }
 
 .story-item.add-story {
-  background: #f5f5f5;
   border-radius: 50%;
   width: 64px;
   height: 64px;
@@ -147,8 +152,7 @@ export default {
   gap: 16px;
   padding: 12px 0;
   overflow-x: auto;
-  background: #fff;
-  border-bottom: 1px solid #eee;
+    border-bottom: 1px solid #eee;
 }
 
 .story-item {
@@ -167,7 +171,6 @@ export default {
 }
 .add-story {
   border: 2px dashed #2196f3;
-  background: #f0f8ff;
   border-radius: 50%;
   width: 48px;
   height: 48px;

@@ -3,26 +3,47 @@
     <div class="modal-content">
       <button class="close-btn" @click="$emit('close')">&times;</button>
       <h3>Ajouter une story</h3>
-      <input type="file" accept="image/*" @change="onFileChange" />
+      <input v-if="step === 'select'" type="file" accept="image/*" @change="onFileChange" />
+      <div v-if="step === 'select'" class="step-msg">Sélectionnez une image à publier en story.</div>
+
       <ImageCropper
-        v-if="showCropper && previewUrl"
+        v-if="step === 'crop' && previewUrl"
         :src="previewUrl"
         :aspect="9/16"
         :outputWidth="720"
         :outputHeight="1280"
         @cropped="onCropped"
-        @cancel="showCropper = false"
+        @cancel="step = 'select'"
       />
-      <div v-if="!showCropper && previewUrl" class="story-preview">
+      <div v-if="step === 'crop'" class="step-msg">Recadrez votre image pour la story.</div>
+
+      <StoryEditor
+        v-if="step === 'edit' && previewUrl"
+        :src="previewUrl"
+        :outputWidth="720"
+        :outputHeight="1280"
+        @edited="onEdited"
+        @cancel="step = 'crop'"
+      />
+      <div v-if="step === 'edit'" class="step-msg">Ajoutez du texte ou des emojis sur votre image.</div>
+
+      <div v-if="step === 'preview' && previewUrl" class="story-preview">
         <img :src="previewUrl" alt="Prévisualisation" />
       </div>
-      <textarea v-model="caption" maxlength="100" placeholder="Ajouter un texte (optionnel)" class="caption-input"></textarea>
-      <div v-if="uploading" class="progress-bar-container">
+      <div v-if="step === 'preview'" class="step-msg">Prévisualisez votre story, ajoutez une légende puis publiez.</div>
+
+      <textarea v-if="step === 'preview'" v-model="caption" maxlength="100" placeholder="Ajouter un texte (optionnel)" class="caption-input"></textarea>
+
+      <div v-if="step === 'upload' || uploading" class="progress-bar-container">
         <div class="progress-bar" :style="{ width: uploadProgress + '%' }"></div>
         <span>{{ uploadProgress }}%</span>
       </div>
       <div v-if="error" class="error">{{ error }}</div>
-      <button class="add-btn" :disabled="uploading || !fileSelected" @click="submitStory">Publier la story</button>
+      <button
+        class="add-btn"
+        :disabled="step !== 'preview' || uploading || !fileSelected"
+        @click="submitStory"
+      >Publier la story</button>
     </div>
   </div>
 </template>
@@ -33,20 +54,22 @@ import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage
 import { ref as dbRef, push, set } from 'firebase/database';
 import { getAuth } from 'firebase/auth';
 import ImageCropper from './ImageCropper.vue';
+import StoryEditor from './StoryEditor.vue';
 
 export default {
   name: 'AddStory',
-  components: { ImageCropper },
+  components: { ImageCropper, StoryEditor },
   data() {
     return {
+      step: 'select', // étapes: select, crop, edit, preview, upload
       uploading: false,
       error: null,
       previewUrl: '',
       fileSelected: null,
       caption: '',
       uploadProgress: 0,
-      showCropper: false,
       croppedBlob: null,
+      editedBlob: null,
     };
   },
   methods: {
@@ -59,33 +82,38 @@ export default {
       }
       this.error = null;
       this.fileSelected = file;
-      // Preview
       const reader = new FileReader();
       reader.onload = (ev) => {
         this.previewUrl = ev.target.result;
-        this.showCropper = true;
+        this.step = 'crop';
       };
       reader.readAsDataURL(file);
     },
     onCropped(blob) {
       this.croppedBlob = blob;
-      this.showCropper = false;
-      // On affiche la preview du crop
       this.previewUrl = URL.createObjectURL(blob);
+      this.step = 'edit';
+    },
+    onEdited(blob) {
+      this.editedBlob = blob;
+      this.previewUrl = URL.createObjectURL(blob);
+      this.step = 'preview';
     },
     async submitStory() {
-      if (!this.croppedBlob) {
-        this.error = 'Merci de recadrer l’image au format story (9/16)';
+      if (!this.editedBlob && !this.croppedBlob) {
+        this.error = 'Merci de recadrer et éditer l’image.';
         return;
       }
+      const fileToUpload = this.editedBlob || this.croppedBlob;
       this.uploading = true;
       this.uploadProgress = 0;
       this.error = null;
+      this.step = 'upload';
       try {
         const auth = getAuth();
         const user = auth.currentUser;
         if (!user) throw new Error('Vous devez être connecté pour créer une story.');
-        const file = this.croppedBlob;
+        const file = fileToUpload;
         const fileName = `story_${user.uid}_${Date.now()}.jpg`;
         const storageReference = storageRef(storage, `stories/${user.uid}/${fileName}`);
         await uploadBytes(storageReference, file).then(() => {
@@ -114,7 +142,9 @@ export default {
         this.previewUrl = '';
         this.fileSelected = null;
         this.croppedBlob = null;
+        this.editedBlob = null;
         this.caption = '';
+        this.step = 'select';
       }
     },
   },
