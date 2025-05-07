@@ -1,0 +1,1994 @@
+{
+  "0": {
+    "AMBU": true,
+    "DE": "false",
+    "FR": "true",
+    "IDPlace": "-O3k_m7cRctNx0MEzaU-",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "Note": "",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "SYSINT": "false",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_Actifisio_Fribourg_24.11.2023.pdf?alt=media&token=d95d4cd2-1bb5-455a-90fb-c295a28565a1",
+    "praticiensFormateurs": [
+      "94"
+    ],
+    "selectedActiveBA22PFP4-1": false,
+    "selectedEtudiant": "",
+    "selectedEtudiantBA22PFP4-1": "",
+    "selectedOut": true
+  },
+  "1": {
+    "DE": true,
+    "IDPlace": "-Neh_Ttzz1yliQ8-FCwd",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ortho",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FBeschreibung%20RehaBern%20Heiligenschwendi%2025.03.2025_HESSO.pdf?alt=media&token=49149092-270a-42e0-ba3c-e05f33cd60e3",
+    "praticiensFormateurs": [
+      "58",
+      "59"
+    ],
+    "selectedPraticiensBA22PFP4-1": "59"
+  },
+  "2": {
+    "DE": true,
+    "FR": "true",
+    "IDPlace": "-O3kbfe81TTvVKEinjxO",
+    "MSQ": "true",
+    "NomPlace": "Ortho - Med",
+    "PFP1A": "1",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "SYSINT": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FBeschreibung_BernerKlinik_Montana_10.04.2025.pdf?alt=media&token=39a888be-9152-44b0-925a-78748de984b6",
+    "praticiensFormateurs": [
+      "6"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedOut": true
+  },
+  "3": {
+    "DE": true,
+    "FR": true,
+    "IDPlace": "-O3kbfe81TTvVKEinjxO",
+    "NEUROGER": "true",
+    "NomPlace": "Neuro",
+    "Note": "",
+    "PFP1A": "1",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": true,
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FBeschreibung_BernerKlinik_Montana_neuro_17.06.2022.pdf?alt=media&token=e076d821-8d01-4ca4-abd3-c29f5f800eda",
+    "praticiensFormateurs": [
+      "6"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedEtudiantBA22PFP4-1": "4JHSpsz0l8QKrQaIYxO3wcD8yLd2",
+    "selectedOut": true
+  },
+  "4": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_TtqlkfsEXOpJuZ6",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "0",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_Cabinet%20de%20la%20Cour_Sierre_09.06.2021.pdf?alt=media&token=c44ee5db-f35e-454e-8f58-a66f6b33744a",
+    "praticiensFormateurs": [
+      "39"
+    ]
+  },
+  "5": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttrz8anl_WDKqed",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "1",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_Cabinet%20des%20Vergers_18.01.2023.pdf?alt=media&token=95f22ca9-8210-42d8-a317-4ff105a13f55",
+    "praticiensFormateurs": [
+      "38"
+    ]
+  },
+  "6": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttrz8anl_WDKqee",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "0",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_Dynaphyz_Tour-de-Treme_18.03.22.pdf?alt=media&token=217048c9-b151-4933-94da-18d655ac5743",
+    "praticiensFormateurs": [
+      "90"
+    ]
+  },
+  "7": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttrz8anl_WDKqef",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_Prevo%20Physio%20Moutier_08.07.2022.pdf?alt=media&token=433f55bc-ab75-44b7-a011-c9721ace040f",
+    "praticiensFormateurs": [
+      "92"
+    ]
+  },
+  "8": {
+    "AIGU": "false",
+    "AMBU": "true",
+    "IDPlace": "-Neh_Ttrz8anl_WDKqeg",
+    "IT": "true",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "1",
+    "PFP4": "0",
+    "REHAB": "true",
+    "SYSINT": "false",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_Cardiocentro%20Ticino_Lugano_02.2025.pdf?alt=media&token=f42af1c2-1763-4f41-a9e7-ec24e6c51275",
+    "praticiensFormateurs": [
+      "-O3qTX4SvkksuQsiZjTD"
+    ]
+  },
+  "9": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Tts5U9CHo9_p95u",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "0",
+    "PFP4": "1",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_CareConnex_Sierre_07.11.2024.pdf?alt=media&token=0504de6b-06ca-45c8-b9bc-047841601126",
+    "praticiensFormateurs": [
+      "-O3gE_FtS_t08gFUfpS3"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedEtudiant": "",
+    "selectedEtudiantBA22PFP4-1": "",
+    "selectedOut": true
+  },
+  "10": {
+    "AIGU": "true",
+    "DE": true,
+    "FR": "true",
+    "IDPlace": "-Neh_Tts5U9CHo9_p95v",
+    "MSQ": "true",
+    "NomPlace": "Ortho - Med",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "SYSINT": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_CHB_Biel-Bienne_26.02.19.pdf?alt=media&token=264bc0ec-1e16-4429-aedd-6f29afb0153b",
+    "praticiensFormateurs": [
+      "79"
+    ]
+  },
+  "11": {
+    "FR": "true",
+    "IDPlace": "-Neh_Tts5U9CHo9_p95x",
+    "MSQ": "true",
+    "NomPlace": "Rehab - Sport",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "2",
+    "PFP4": "3",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDOC%20DIR%2008%20-%20LIVRET%20ACCUEIL%20STAGIAIRE%20KINE.pdf?alt=media&token=c4af45f7-d2ba-4822-83ae-e3ef8ec02682",
+    "praticiensFormateurs": [
+      "112"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedActiveBA22PFP4-2": true,
+    "selectedActiveBA22PFP4-3": true,
+    "selectedEtudiantBA22PFP4-1": "pJ1l5n67Q1cqbFcbb8v2oNclzEG3",
+    "selectedEtudiantBA22PFP4-2": "fbadhGkVyQeUbyibQYQJt8p0rzY2",
+    "selectedEtudiantBA22PFP4-3": "7pOa1Es9lwWjgIA3zv806JSk3wr1",
+    "selectedOut": true
+  },
+  "12": {
+    "AMBU": "true",
+    "DE": "true",
+    "IDPlace": "-Neh_Tts5U9CHo9_p95y",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "1",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FBeschreibung_Circles%20Health_Bern_03.09.2022.pdf?alt=media&token=518adc92-ec85-4b72-8630-95f34e67f434",
+    "praticiensFormateurs": [
+      "95"
+    ],
+    "selectedActiveBA22PFP4-1": false,
+    "selectedEtudiant": "",
+    "selectedOut": true
+  },
+  "13": {
+    "FR": "true",
+    "IDPlace": "-Neh_TttD0thS5tY-yyR",
+    "MSQ": "true",
+    "NomPlace": "Ortho",
+    "PFP1A": "3",
+    "PFP1B": "3",
+    "PFP2": "3",
+    "PFP3": "3",
+    "PFP4": "3",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_CRR-Ortho_09.11.2021.pdf?alt=media&token=b28feb90-86c9-40a3-9d48-fb9a15eb6fe0",
+    "praticiensFormateurs": [
+      "22",
+      "23",
+      "24"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedActiveBA22PFP4-2": true,
+    "selectedActiveBA22PFP4-3": true,
+    "selectedOut": true,
+    "selectedPraticienBA22PFP4-1": "22",
+    "selectedPraticienBA22PFP4-2": "23",
+    "selectedPraticiensBA22PFP4-1": "22",
+    "selectedPraticiensBA22PFP4-3": "24"
+  },
+  "14": {
+    "FR": "true",
+    "IDPlace": "-Neh_TttD0thS5tY-yyR",
+    "NEUROGER": "true",
+    "NomPlace": "Para - Tetra",
+    "PFP1A": "1",
+    "PFP1B": "1",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_CRR-Para_09.11.2021.pdf?alt=media&token=c4604c89-363b-49b9-b77d-10707e07d0f3",
+    "praticiensFormateurs": [
+      "25"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedOut": true
+  },
+  "15": {
+    "AIGU": "true",
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttu3CYo8WbkqIJn",
+    "MSQ": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_FC%20Sion_10.10.2023.pdf?alt=media&token=da0e00ee-f971-4bbd-b65f-a25fcaa28925",
+    "praticiensFormateurs": [
+      "44"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedOut": true
+  },
+  "16": {
+    "AMBU": "true",
+    "DE": "true",
+    "IDPlace": "-Neh_Ttu3CYo8WbkqIJo",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FBeschreibung_Physio-Saas_Saas-Grund_.pdf?alt=media&token=6ff80933-3497-4970-92cb-914615f611c1",
+    "praticiensFormateurs": [
+      "46"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedEtudiantBA22PFP4-1": "VeVpsByadIVqFdjpdbHF3TNfU3h2",
+    "selectedOut": true
+  },
+  "17": {
+    "FR": "true",
+    "IDPlace": "-Neh_Ttu3CYo8WbkqIJp",
+    "MSQ": "true",
+    "NomPlace": "Ortho - Psychosomatique",
+    "PFP1A": "0",
+    "PFP1B": "1",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_Clinique-Genevoise_Montana_20.10.2021.pdf?alt=media&token=613ff25b-06a9-4635-b34f-996e271c9b17",
+    "praticiensFormateurs": [
+      "8"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedOut": true
+  },
+  "18": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttu3CYo8WbkqIJq",
+    "NomPlace": "Med",
+    "PFP2": "1",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "SYSINT": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_HFR%20site%20Fribourg.pdf?alt=media&token=baa5e482-dd39-4cd9-b1c5-26748415ea1d",
+    "praticiensFormateurs": [
+      "-OBk1xnQnNicucQf3pAI"
+    ]
+  },
+  "19": {
+    "AMBU": false,
+    "FR": "true",
+    "IDPlace": "-Neh_Ttu3CYo8WbkqIJq",
+    "MSQ": "true",
+    "NomPlace": "Ortho",
+    "PFP2": "0",
+    "REHAB": "true",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_HFR%20site%20Fribourg.pdf?alt=media&token=e87970db-4bdc-4fa4-8f46-42b7e0ee7fb3",
+    "praticiensFormateurs": [
+      "77"
+    ]
+  },
+  "20": {
+    "DE": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_TtvxPdffqwTHccH",
+    "NEUROGER": "true",
+    "NomPlace": "Neuro",
+    "PFP2": "1",
+    "REHAB": "true",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif%20HFR%20site%20Meyrier%202025.pdf?alt=media&token=8d76852b-f31e-4d15-a292-a46628460c21",
+    "praticiensFormateurs": [
+      "-ODjYE5WQaHiJrOaXiC4"
+    ]
+  },
+  "21": {
+    "FR": "true",
+    "IDPlace": "-Neh_TtvxPdffqwTHccH",
+    "MSQ": "true",
+    "NomPlace": "Ortho",
+    "PFP2": "0",
+    "REHAB": "true",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif%20HFR%20site%20Meyrier%202025.pdf?alt=media&token=a528fd56-1c99-4d08-b373-67f9fe9c4704",
+    "praticiensFormateurs": [
+      "76"
+    ]
+  },
+  "22": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_TtvxPdffqwTHccI",
+    "NEUROGER": "true",
+    "NomPlace": "Ger",
+    "PFP2": "1",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_HFR_Riaz_01.04.2022.pdf?alt=media&token=830931d5-520d-42a4-98ae-2a39b32b3543",
+    "praticiensFormateurs": [
+      "74"
+    ]
+  },
+  "23": {
+    "FR": "true",
+    "IDPlace": "-Neh_TtvxPdffqwTHccJ",
+    "NEUROGER": "true",
+    "NomPlace": "Ger",
+    "PFP2": "0",
+    "REHAB": "true",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescription_HIB_Estavayer_10.10.2023.pdf?alt=media&token=ef17b854-6938-49bb-ab76-9de02f2651c7",
+    "praticiensFormateurs": [
+      "80"
+    ]
+  },
+  "24": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_TtvxPdffqwTHccK",
+    "MSQ": "true",
+    "NomPlace": "Ortho - Med",
+    "PFP2": "0",
+    "REHAB": "true",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "SYSINT": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescription_HIB_Payerne_10.10.2023.pdf?alt=media&token=84b83bca-d77a-45d9-be73-00797d4fed17",
+    "praticiensFormateurs": [
+      "81"
+    ]
+  },
+  "25": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_TtvxPdffqwTHccL",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ortho - Med - Ger",
+    "PFP2": "0",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "SYSINT": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_HJB_Moutier_23.11.2020.pdf?alt=media&token=7598ce6a-341a-4270-a6a5-c8822ca47823",
+    "praticiensFormateurs": [
+      "65"
+    ]
+  },
+  "26": {
+    "AIGU": "true",
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_TtvxPdffqwTHccM",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ortho - Med - Ger",
+    "PFP2": "1",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "SYSINT": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_HJB_St-Imier_03.2018.pdf?alt=media&token=7c8861b4-b7b9-4ca5-81a8-32bc0278917c",
+    "praticiensFormateurs": [
+      "66"
+    ]
+  },
+  "27": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_TtwPcuW60cfmbyV",
+    "MSQ": "true",
+    "NomPlace": "Ortho - Med",
+    "PFP2": "0",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "SYSINT": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_HJU_D%C3%A9lemont_10.12.2020.pdf?alt=media&token=860fd9cb-2369-4d06-87db-610ea802bb86",
+    "praticiensFormateurs": [
+      "68"
+    ]
+  },
+  "28": {
+    "FR": "true",
+    "IDPlace": "-Neh_TtwPcuW60cfmbyW",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ortho - Ger",
+    "PFP2": "1",
+    "REHAB": "true",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_HJU_Porrentruy_05.03.2020.pdf?alt=media&token=d0fb89fe-0c53-4f89-98eb-b9fc86b8942b",
+    "praticiensFormateurs": [
+      "67",
+      "69"
+    ]
+  },
+  "29": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_TtwPcuW60cfmbyX",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_HorizonPhysioth%C3%A9rapie_Sion_20.03.2021.pdf?alt=media&token=dd41ccc5-6f82-446b-bacb-a993d4372477",
+    "praticiensFormateurs": [
+      "45"
+    ]
+  },
+  "30": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_TtwPcuW60cfmbyY",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_ODF%20HRC%20P%C3%B4le%20Physio-Ergo%20Valerette.pdf?alt=media&token=a07a1ab0-3a97-4f94-8969-d1177c02930d",
+    "praticiensFormateurs": [
+      "95"
+    ]
+  },
+  "31": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_TtwPcuW60cfmbyZ",
+    "MSQ": "true",
+    "NomPlace": "Ortho",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_ODF%20HRC%20Physioth%C3%A9rapie%20Rennaz%20Secteur%201%20Orthop%C3%A9die-Traumatologie-Chirurgie%20g%C3%A9n%C3%A9rale.pdf?alt=media&token=9297867d-3165-41fc-93ed-7a5ff0847fdb",
+    "praticiensFormateurs": [
+      "26"
+    ]
+  },
+  "32": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_TtwPcuW60cfmbyZ",
+    "NomPlace": "Med",
+    "PFP1A": "2",
+    "PFP1B": "2",
+    "PFP2": "2",
+    "PFP3": "1",
+    "PFP4": "2",
+    "REHAB": "true",
+    "SYSINT": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_ODF%20HRC%20Physioth%C3%A9rapie%20Rennaz%20Secteur%202%20m%C3%A9decine.pdf?alt=media&token=47105043-f7da-467e-beb5-c9aa06a38bff",
+    "praticiensFormateurs": [
+      "28",
+      "-ONPZ4OqEYtFstkJfmzL"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedActiveBA22PFP4-2": true,
+    "selectedEtudiantBA22PFP4-2": "",
+    "selectedOut": true,
+    "selectedPraticiensBA22PFP4-1": "-ONPZ4OqEYtFstkJfmzL",
+    "selectedPraticiensBA22PFP4-2": "-ONPZ4OqEYtFstkJfmzL"
+  },
+  "33": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Tu-HYARvsZv31DS",
+    "NomPlace": "Ger",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "SYSINT": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_ODF%20HRC%20Physioth%C3%A9rapie%20Providence%20Vevey.pdf?alt=media&token=eb9c8ee0-3d8d-4f03-a6b3-13a196bd5d6b",
+    "praticiensFormateurs": [
+      "118"
+    ]
+  },
+  "34": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Tu0ifoZo_RPDyHx",
+    "NEUROGER": "true",
+    "NomPlace": "Ger",
+    "PFP1A": "1",
+    "PFP1B": "1",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_ODF%20HRC%20Physioth%C3%A9rapie%20Monthey.pdf?alt=media&token=cffeeb7a-13c8-45b1-9f8b-ea8e1aa8e3f5",
+    "praticiensFormateurs": [
+      "-ONPqMQRktuea831x0ow"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedOut": true
+  },
+  "35": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_TtwPcuW60cfmby_",
+    "NomPlace": "Med",
+    "PFP1A": "1",
+    "PFP1B": "1",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "SYSINT": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_HVS_Martigny_med.pdf?alt=media&token=e37fb96e-3917-4fdc-ba26-3f5d63791814",
+    "praticiensFormateurs": [
+      "15"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedOut": true
+  },
+  "36": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_TtwPcuW60cfmby_",
+    "MSQ": "true",
+    "NomPlace": "Ortho",
+    "PFP1A": "2",
+    "PFP1B": "2",
+    "PFP2": "2",
+    "PFP3": "2",
+    "PFP4": "2",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_HVS_Martigny_ortho.pdf?alt=media&token=6b3ed0fd-61a8-47cb-978e-c59bf8368916",
+    "praticiensFormateurs": [
+      "16",
+      "17"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedActiveBA22PFP4-2": true,
+    "selectedOut": true,
+    "selectedPraticiensBA22PFP4-1": "17",
+    "selectedPraticiensBA22PFP4-2": "17"
+  },
+  "37": {
+    "FR": "true",
+    "IDPlace": "-Neh_TtwPcuW60cfmby_",
+    "NEUROGER": "true",
+    "NomPlace": "Ger",
+    "PFP1A": "1",
+    "PFP1B": "1",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_HVS_Martigny_ger.pdf?alt=media&token=191fdd58-39e7-4a9a-9212-340e3730990b",
+    "praticiensFormateurs": [
+      "14"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedOut": true
+  },
+  "38": {
+    "FR": "true",
+    "IDPlace": "-Neh_TtwPcuW60cfmbya",
+    "NEUROGER": "true",
+    "NomPlace": "Ger",
+    "PFP1A": "1",
+    "PFP1B": "1",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_HVS_Sierre_Ger_25.01.2024.pdf?alt=media&token=6f767d7a-f6e9-4eb5-a672-637eeb7a57e5",
+    "praticiensFormateurs": [
+      "19"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedOut": true
+  },
+  "39": {
+    "FR": "true",
+    "IDPlace": "-Neh_TtwPcuW60cfmbya",
+    "MSQ": "true",
+    "NomPlace": "Ortho",
+    "PFP1A": "1",
+    "PFP1B": "1",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_HVS_Sierre_Ortho_25.01.2024.pdf?alt=media&token=7611b7b1-eefa-4581-8f27-4fe97a2c8f3a",
+    "praticiensFormateurs": [
+      "18"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedOut": true
+  },
+  "40": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_TtwPcuW60cfmbyb",
+    "NEUROGER": "true",
+    "NomPlace": "Neuro - ped",
+    "PFP1A": "1",
+    "PFP1B": "1",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_HVS%20_Sion_ped-neuro_19.01.2024.pdf?alt=media&token=678e08b1-d1cd-49a5-b8ab-e75bb54075f3",
+    "praticiensFormateurs": [
+      "9"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedOut": true
+  },
+  "41": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_TtwPcuW60cfmbyb",
+    "NomPlace": "Tournus SC med-chir - Cardio",
+    "PFP1A": "2",
+    "PFP1B": "2",
+    "PFP2": "2",
+    "PFP3": "2",
+    "PFP4": "2",
+    "SYSINT": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_HVS_Sion_CardioResp_29.01.2025.pdf?alt=media&token=0e0cb488-6c7a-477d-b1c5-42f8146c6f7e",
+    "praticiensFormateurs": [
+      "-O3gEis0u3yLywZaLV1O"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedActiveBA22PFP4-2": true,
+    "selectedEtudiantBA22PFP4-1": "5FZziOms6zP3wBowkZdZBdjxdKH3",
+    "selectedOut": true
+  },
+  "42": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_TtwPcuW60cfmbyb",
+    "NomPlace": "Soins intensifs",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "SYSINT": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_HVS_Sion_Soins-intensifs_19.01.2024.pdf?alt=media&token=bd2a22c5-0791-4e7b-92ee-56f177d2bec9",
+    "praticiensFormateurs": [
+      "12"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedOut": true
+  },
+  "43": {
+    "AIGU": "true",
+    "FR": true,
+    "IDPlace": "-Neh_TtwPcuW60cfmbyb",
+    "MSQ": "true",
+    "NomPlace": "Chir viscerale, ORL et thoracique - Pneumo",
+    "PFP1A": "1",
+    "PFP1B": "1",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "SYSINT": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_HVS_Sion_Chirurgie_19.01.2024.pdf?alt=media&token=d9862880-33a5-4d23-a8db-62b5c188ad6c",
+    "praticiensFormateurs": [
+      "13"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedOut": true
+  },
+  "44": {
+    "AIGU": "true",
+    "DE": "true",
+    "IDPlace": "-Neh_TtwPcuW60cfmbyc",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ortho",
+    "PFP1A": "2",
+    "PFP1B": "2",
+    "PFP2": "2",
+    "PFP3": "2",
+    "PFP4": "2",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FBeschreibung%20Spitalzentrum%20Oberwallis_15.5.2024.pdf?alt=media&token=f00b007b-25fc-4b0e-a2db-d8fb24662fbe",
+    "praticienFormateur": "",
+    "praticiensFormateurs": [
+      "1",
+      "114"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedActiveBA22PFP4-2": true,
+    "selectedOut": true,
+    "selectedPraticiensBA22PFP4-1": "1",
+    "selectedPraticiensBA22PFP4-2": "114"
+  },
+  "45": {
+    "FR": "true",
+    "IDPlace": "-Neh_TtwPcuW60cfmbyd",
+    "NEUROGER": "true",
+    "NomPlace": "Ger",
+    "PFP1A": "2",
+    "PFP1B": "2",
+    "PFP2": "2",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif%20Clinique%20St-Am%C3%A9_09.02.2023.pdf?alt=media&token=fbf9d844-7f05-4864-a669-c6cf21a2937c",
+    "praticiensFormateurs": [
+      "20",
+      "21"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedEtudiantBA22PFP4-1": "",
+    "selectedOut": true,
+    "selectedPraticienBA22PFP4-1": "20",
+    "selectedPraticiensBA22PFP4-1": "20"
+  },
+  "46": {
+    "FR": "true",
+    "IDPlace": "-Neh_Ttxx1ljaMN6U_6j",
+    "NEUROGER": "true",
+    "NomPlace": "Neuro - Ped",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "1",
+    "PFP4": "0",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_Notre%20Dame_Sierre_25.04.2023.pdf?alt=media&token=a29a9a83-d32f-4752-a602-749a7864f783",
+    "praticiensFormateurs": [
+      "30"
+    ]
+  },
+  "47": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttxx1ljaMN6U_6k",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "1",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_Centre%20ITS_Villars-sur-Gl%C3%A2ne_14.12.2023.pdf?alt=media&token=c222ebd0-6483-42ca-bf1b-f0a5f158ed34",
+    "praticiensFormateurs": [
+      "93"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedEtudiantBA22PFP4-1": "kCpveTSa80XY21RwPcpSX7zoNfI2",
+    "selectedOut": true
+  },
+  "48": {
+    "AIGU": "true",
+    "DE": "true",
+    "IDPlace": "-Neh_Ttxx1ljaMN6U_6l",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ortho",
+    "PFP1A": "0",
+    "PFP1B": "1",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FBeschreibung_KlinikSch%C3%B6nberg_Gunten_14.12.2023.pdf?alt=media&token=f9767d9e-f388-428f-85a2-996b5884ccac",
+    "praticiensFormateurs": [
+      "86"
+    ]
+  },
+  "49": {
+    "DE": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttxx1ljaMN6U_6m",
+    "MSQ": "true",
+    "NomPlace": "Ortho",
+    "PFP1A": "3",
+    "PFP1B": "3",
+    "PFP2": "3",
+    "PFP3": "3",
+    "PFP4": "4",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FBeschreibung_LeukerbadClinic_Leukerbad_24.11.2023.pdf?alt=media&token=e4d419f2-6c1b-4d0c-9b30-0b05923e9f81",
+    "praticiensFormateurs": [
+      "3"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedActiveBA22PFP4-2": true,
+    "selectedActiveBA22PFP4-3": true,
+    "selectedEtudiantBA22PFP4-1": "HpqIqa88yTMXJYEJjl0bc957INT2",
+    "selectedEtudiantBA22PFP4-2": "gOKeYNsylNcwi1IDXNyaXrQT37y2",
+    "selectedOut": true
+  },
+  "50": {
+    "DE": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttxx1ljaMN6U_6n",
+    "MSQ": "true",
+    "NomPlace": "Ortho - Med",
+    "PFP1A": "2",
+    "PFP1B": "2",
+    "PFP2": "2",
+    "PFP3": "2",
+    "PFP4": "2",
+    "REHAB": "true",
+    "SYSINT": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FBeschreibung_Luzernerhohenklinik_Montana_18.12.23.pdf?alt=media&token=2bed172d-3601-4ebb-a74b-2acb2f791599",
+    "praticiensFormateurs": [
+      "4",
+      "5"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedActiveBA22PFP4-2": true,
+    "selectedOut": true,
+    "selectedPraticiensBA22PFP4-1": "4",
+    "selectedPraticiensBA22PFP4-2": "5"
+  },
+  "51": {
+    "AIGU": true,
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttxx1ljaMN6U_6p",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": false,
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_Medsport_Sion_30.01.24.pdf?alt=media&token=f3bdb9de-bc9f-4275-9a74-67983df0ac3e",
+    "praticiensFormateurs": [
+      "34"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedOut": true
+  },
+  "52": {
+    "AIGU": "false",
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttxx1ljaMN6U_6o",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_Medsport_Sierre_30.01.24.pdf?alt=media&token=915f85e2-a7cc-4c71-a315-896c6cc0a58a",
+    "praticiensFormateurs": [
+      "33"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedOut": true
+  },
+  "53": {
+    "AMBU": "true",
+    "DE": "true",
+    "IDPlace": "-Neh_Ttxx1ljaMN6U_6q",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "2",
+    "PFP3": "3",
+    "PFP4": "3",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FBeschreibung_Nextherapy_30.09.22.pdf?alt=media&token=093e7479-d401-4fba-8010-c37fb1751e0a",
+    "praticiensFormateurs": [
+      "-O3qTTQyZYW2c6BD2aMY"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedActiveBA22PFP4-2": false,
+    "selectedActiveBA22PFP4-3": false,
+    "selectedEtudiant": "5U2dHT6GCPRCgVzG7B22I1OVwDk1",
+    "selectedEtudiantBA22PFP4-1": "xTAytSvop1VXXhVwTg4nfwBSmwG3",
+    "selectedEtudiantBA22PFP4-2": "",
+    "selectedEtudiantBA22PFP4-3": "",
+    "selectedOut": true
+  },
+  "54": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttyk116hb9GIKGv",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_Physio58_St-Leonard_09.06.2022.pdf?alt=media&token=4a2a8fc4-f646-4d02-b018-35ce88cb02ce",
+    "praticienFormateur": "",
+    "praticiensFormateurs": [
+      "41"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedOut": true
+  },
+  "55": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttyk116hb9GIKGw",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_PhysioClinics_Collombey_17.06.2022.pdf?alt=media&token=01a3df3c-2e81-4e41-91be-aa6ee16ae786",
+    "praticiensFormateurs": [
+      "42"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedOut": true
+  },
+  "56": {
+    "AMBU": "true",
+    "DE": "true",
+    "IDPlace": "-Neh_Ttyk116hb9GIKGx",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "1",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FBeschreibung_Physiolife_Brig-Glis_23.11.2023.pdf?alt=media&token=88144d9f-f0ea-40df-842f-0aa09b7b794b",
+    "praticiensFormateurs": [
+      "53"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedOut": true
+  },
+  "57": {
+    "AMBU": "true",
+    "DE": "true",
+    "IDPlace": "-Neh_Ttyk116hb9GIKGy",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "0",
+    "PFP4": "1",
+    "REHAB": "true",
+    "Remarques": "Revoir si besoin pour PFP3 et demander",
+    "SYSINT": false,
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FBeschreibung%20Institution_physio%20watt.pdf?alt=media&token=bdcc8dc2-1684-4aca-b80e-c0977cfe6b10",
+    "praticiensFormateurs": [
+      "105"
+    ],
+    "selectedActiveBA22PFP4-1": false,
+    "selectedOut": true
+  },
+  "58": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttyk116hb9GIKGz",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_Physio%26APA_Courfaivre_07.06.2022.pdf?alt=media&token=bfc148ec-f748-4bac-9c20-4a1ac8945bde",
+    "praticiensFormateurs": [
+      "91"
+    ]
+  },
+  "59": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttyk116hb9GIKH-",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_Physio-Abbet_Martigny_11.03.2021.pdf?alt=media&token=dd3c1139-b5b2-4df5-9990-100f3ec5d047",
+    "praticiensFormateurs": [
+      "40"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedOut": true
+  },
+  "60": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttyk116hb9GIKH0",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif%20lieu%20FP%20Physio%20Bulle_18.01.2023.pdf?alt=media&token=8d08c29f-1c5e-46a2-91dc-35fa7561c7e1",
+    "praticiensFormateurs": [
+      "107"
+    ]
+  },
+  "61": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttyk116hb9GIKH2",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptiflieuFP_PhysiOsteoRivieraChablais.pdf?alt=media&token=a6e12bd0-5c20-46a7-a58c-b2495375cb5b",
+    "praticiensFormateurs": [
+      "96"
+    ]
+  },
+  "62": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttyk116hb9GIKH4",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_Physio-Amacker_Sion_13.12.2024.pdf?alt=media&token=aa6d9ec8-eda9-4785-b45b-643672a50289",
+    "praticienFormateur": "",
+    "praticiensFormateurs": [
+      "37"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedOut": true
+  },
+  "63": {
+    "AMBU": "true",
+    "DE": "true",
+    "IDPlace": "-Neh_Ttyk116hb9GIKH5",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FBeschreibung_Physiotherapie%20Sunnepark_Egerkingen_16.12.2023.pdf?alt=media&token=a88ad500-91a2-4604-843a-3728d8b5cf5c",
+    "praticiensFormateurs": [
+      "104"
+    ],
+    "selectedActiveBA22PFP4-1": false,
+    "selectedOut": true
+  },
+  "64": {
+    "AMBU": "true",
+    "DE": "true",
+    "IDPlace": "-Neh_Ttyk116hb9GIKH6",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "1",
+    "PFP1B": "1",
+    "PFP2": "1",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FBeschreibung%20Institution_physioVeil_31.08.2023.pdf?alt=media&token=df2e5a62-9663-490c-a084-5dab910f8970",
+    "praticiensFormateurs": [
+      "61",
+      "62"
+    ],
+    "selectedPraticiensBA22PFP4-1": "62"
+  },
+  "65": {
+    "AMBU": "true",
+    "DE": "true",
+    "IDPlace": "-Neh_Ttyk116hb9GIKH7",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FBeschreibung_DasR%C3%BCckenzentrum_Thun_10.06.2015.pdf?alt=media&token=7c00cd42-9176-47e6-98cd-58e1d19db869",
+    "praticiensFormateurs": [
+      "60"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedOut": true
+  },
+  "66": {
+    "AMBU": "true",
+    "DE": "true",
+    "IDPlace": "-Neh_Ttzz1yliQ8-FCwT",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FBeschreibung_PhysioZentrum_Bern_02.09.2022.pdf?alt=media&token=0116a7f1-a136-489c-a74c-8f9876c3c830",
+    "praticiensFormateurs": [
+      "101"
+    ]
+  },
+  "67": {
+    "AMBU": "true",
+    "DE": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttzz1yliQ8-FCwU",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FBeschreibung_PhysioZentrum_Biel_02.09.2022.pdf?alt=media&token=d691a393-1353-4006-9781-7bf5b9a2fc88",
+    "praticiensFormateurs": [
+      "99"
+    ]
+  },
+  "68": {
+    "DE": "true",
+    "IDPlace": "-Neh_Ttzz1yliQ8-FCwV",
+    "NEUROGER": "true",
+    "NomPlace": "Neuro",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "1",
+    "REHAB": "true",
+    "Remarques": "PFP de 18 semaines durant PFP4 (etudiant.e suivra PFP3 et PFP4 ensemble)",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FBeschreibung_Rehaklinik_Bellikon_27.12.2023.pdf?alt=media&token=253cc804-6f8d-4a8f-8f7c-966ef15fdd1b",
+    "praticiensFormateurs": [
+      "55"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedEtudiantBA22PFP4-1": "a2d2SPdegxP7Hx3DGTZI1DbZB7I2",
+    "selectedOut": true
+  },
+  "69": {
+    "DE": "true",
+    "IDPlace": "-Neh_Ttzz1yliQ8-FCwW",
+    "NEUROGER": "true",
+    "NomPlace": "Neuro",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "1",
+    "REHAB": "true",
+    "Remarques": "PFP de 18 semaines durant PFP4 (etudiant.e suivra PFP3 et PFP4 ensemble)",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FBeschreibung_Rehaklinik%20Zihlschlacht_10.5.2024.pdf?alt=media&token=7256f2c7-05b5-46b4-8d78-758731ed1300",
+    "praticiensFormateurs": [
+      "57"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedEtudiantBA22PFP4-1": "NEHM5YWuj1R8gJnyZkHHQSo2rSw1",
+    "selectedOut": true
+  },
+  "70": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttzz1yliQ8-FCwY",
+    "NomPlace": "Med",
+    "PFP2": "0",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "SYSINT": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_RHNE_Chaux-de-Fonds_F%C3%A9vrier2024.pdf?alt=media&token=533212b2-ba27-4f29-b161-3a49d8e21f24",
+    "praticiensFormateurs": [
+      "71"
+    ]
+  },
+  "71": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttzz1yliQ8-FCwY",
+    "MSQ": "true",
+    "NomPlace": "Ortho",
+    "PFP2": "0",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_RHNE_Chaux-de-Fonds_F%C3%A9vrier2024.pdf?alt=media&token=d5f519bc-9be3-41ad-90f6-9ca9322a5d4f",
+    "praticiensFormateurs": [
+      "72"
+    ]
+  },
+  "72": {
+    "DE": "true",
+    "IDPlace": "-O7mmEOrnhY_WC29m23j",
+    "NEUROGER": "true",
+    "NomPlace": "Neuro",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "1",
+    "REHAB": "true",
+    "Remarques": "PFP de 18 semaines durant PFP4 (etudiant.e suivra PFP3 et PFP4 ensemble)",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FBeschreibung%20SPZ-Nottwil_2022.pdf?alt=media&token=c2693c6c-6190-4606-9c43-0acd723418dc",
+    "praticiensFormateurs": [
+      "56"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedEtudiantBA22PFP4-1": "T10nbuPIoZOIu1LDCbT4e7abrPH3",
+    "selectedOut": true
+  },
+  "73": {
+    "DE": "true",
+    "IDPlace": "-Neh_Ttzz1yliQ8-FCw_",
+    "NEUROGER": "true",
+    "NomPlace": "Neuro",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "88"
+    ]
+  },
+  "74": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttzz1yliQ8-FCwa",
+    "NomPlace": "Soins intensifs (DCILM-SMIA)",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "0",
+    "PFP4": "1",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "SYSINT": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_CHUV%20-%20soins%20intensifs_28.09.2023.pdf?alt=media&token=79d1420c-beb9-4732-8b68-d571b6702e64",
+    "praticiensFormateurs": [
+      "82",
+      "117"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedEtudiantBA22PFP4-1": "zp51igKc0JdBYi2dZLyngG2zgBq2",
+    "selectedOut": true,
+    "selectedPraticiensBA22PFP4-1": "117"
+  },
+  "75": {
+    "AIGU": "true",
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttzz1yliQ8-FCwa",
+    "MSQ": "true",
+    "NomPlace": "Pediatrie (DFME-HEL6 - Site HEL)",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "1",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_CHUV_HEL-DMCP_12.08.2017.pdf?alt=media&token=97e904cb-e6a7-45d5-bb77-b863a68e29c2",
+    "praticiensFormateurs": [
+      "83"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedEtudiantBA22PFP4-1": "3GA8e6F0oJYTWNopbsEXlRRXXfi1",
+    "selectedOut": true
+  },
+  "76": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttzz1yliQ8-FCwa",
+    "NomPlace": "Pediatrie - Cardio resp (DFME-NHE - Site BH)",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "1",
+    "PFP4": "0",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "SYSINT": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_CHUV%20p%C3%A9diatrie%20BH_28.09.2023.pdf?alt=media&token=686bb730-b312-4577-b710-13a569192f81",
+    "praticiensFormateurs": [
+      "84"
+    ]
+  },
+  "77": {
+    "FR": "true",
+    "IDPlace": "-Neh_Ttzz1yliQ8-FCwb",
+    "NEUROGER": "true",
+    "NomPlace": "Ger",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_EHNV_CTR-Orbe_12.07.2018.pdf?alt=media&token=302fefff-bfcc-4535-8251-19a8aafe6d08",
+    "praticiensFormateurs": [
+      "85"
+    ]
+  },
+  "78": {
+    "FR": "true",
+    "IDPlace": "-Neh_Ttzz1yliQ8-FCwc",
+    "NEUROGER": "true",
+    "NomPlace": "Neuro",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_Centre%20Rencontres%20Courfaivre_2020.pdf?alt=media&token=06a5fc49-6a5e-4721-840b-63a0fce6ab7e",
+    "praticiensFormateurs": [
+      "89"
+    ]
+  },
+  "79": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Tu-HYARvsZv31DN",
+    "NomPlace": "Médecine interne",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "SYSINT": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif%20lieu%20FP%20-%20m%C3%A9decine%20R%C3%A9seau%20Hospitalier%20Neuch%C3%A2telois%20PRT_f%C3%A9vrier%202023.pdf?alt=media&token=7bbb3c22-fea4-494b-9aac-18f5680dc510",
+    "praticiensFormateurs": [
+      "70"
+    ]
+  },
+  "80": {
+    "AIGU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Tu-HYARvsZv31DN",
+    "MSQ": "true",
+    "NomPlace": "Ortho",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "Remarques": "A voir lors de repartition avec GT FP",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif%20lieu%20FP%20-%20chirurgie%20R%C3%A9seau%20Hospitalier%20Neuch%C3%A2telois%20%20PRT_f%C3%A9vrier%202023.pdf?alt=media&token=5b84f286-d975-43c1-9045-b3969df58887",
+    "praticiensFormateurs": [
+      "70"
+    ]
+  },
+  "82": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Tu-HYARvsZv31DP",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_m%C3%A9decin%20du%20chablais_31.10.2023.pdf?alt=media&token=6dfe09f8-f114-4728-a922-8a9ab6b91c3d",
+    "praticiensFormateurs": [
+      "50"
+    ]
+  },
+  "83": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Tu-HYARvsZv31DQ",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_MOVEA_21.03.2023.pdf?alt=media&token=87208ac7-594e-47e9-898f-d1792af84ff7",
+    "praticiensFormateurs": [
+      "52"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedOut": true
+  },
+  "84": {
+    "AMBU": "true",
+    "DE": "true",
+    "IDPlace": "-Neh_Tu-HYARvsZv31DR",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FBeschreibung%20Institution_Physiotherapie%20Ulmenhof%20gmbh_19.01.2023.pdf?alt=media&token=3090a316-52b8-4588-9495-132f28f0810c",
+    "praticiensFormateurs": [
+      "110"
+    ]
+  },
+  "85": {
+    "AMBU": "true",
+    "DE": "true",
+    "IDPlace": "-Neh_Tu-HYARvsZv31DU",
+    "MSQ": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescription_Therapiezentrum%20Region%20Stalden_09.05.2023.pdf?alt=media&token=7aa3d72e-9c85-44c9-a587-732e40bac2ce",
+    "praticiensFormateurs": [
+      "53"
+    ]
+  },
+  "86": {
+    "FR": "true",
+    "IDPlace": "-Neh_Tu0ifoZo_RPDyHw",
+    "NEUROGER": "true",
+    "NomPlace": "Neuro - ped - adultes a besoin particuliers",
+    "Note": "gfgf",
+    "PFP1A": "1",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "1",
+    "PFP4": "0",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif%20lieu%20FP_%20la%20Castalie_%2006.07.2023.pdf?alt=media&token=936e3844-c45b-43fd-9c24-6ff43161194f",
+    "praticiensFormateurs": [
+      "32"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedOut": true
+  },
+  "87": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Tu0ifoZo_RPDyHy",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif%20lieu%20FP%20Physio%20Optima_14.06.2023.pdf?alt=media&token=f72b63cb-ed81-4f71-9d7c-05647c51c65c",
+    "praticiensFormateurs": [
+      "98"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedEtudiantBA22PFP4-1": "ULEM3jpbM2Y5vFukycKvDKKIhqc2",
+    "selectedOut": true
+  },
+  "88": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Tu0ifoZo_RPDyHz",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu - Ger",
+    "PFP1A": "0",
+    "PFP1B": "1",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_CMS%20Martigny%20%26%20R%C3%A9gion_Martigny_18.01.2024.pdf?alt=media&token=08795d37-52d8-4111-a926-0e66d704fdba",
+    "praticiensFormateurs": [
+      "31"
+    ]
+  },
+  "89": {
+    "AMBU": "true",
+    "FR": "true",
+    "IDPlace": "-Neh_Tu0ifoZo_RPDyI-",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "SYSINT": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif%20lieu_phoenix_28.11.2022.pdf?alt=media&token=c093ec8f-3272-4c92-aae2-2131339c7459",
+    "praticiensFormateurs": [
+      "51"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedOut": true
+  },
+  "90": {
+    "AMBU": "true",
+    "DE": "true",
+    "FR": "true",
+    "IDPlace": "-O3kdUkVgFHB-W67PGLP",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "1",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FBeschreibung%20Institution_Physio%20Plaffeien.pdf?alt=media&token=87fbc27d-3c2c-4909-bc34-554b89c5fe22",
+    "praticiensFormateurs": [
+      "108"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedEtudiantBA22PFP4-1": "LVfc4PJZ0KfbtUmuGLJ3SAHsiJ02",
+    "selectedOut": true
+  },
+  "91": {
+    "AIGU": "false",
+    "AMBU": "true",
+    "DE": "false",
+    "FR": "true",
+    "IDPlace": "-O3kepWKa225tBUSxTCl",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": "true",
+    "SYSINT": "false",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FMovare_DescriptifLieuFP.pdf?alt=media&token=cf07639a-0ace-4b51-85b9-b7f02c37de85",
+    "praticiensFormateurs": [
+      "109"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedEtudiantBA22PFP4-1": "qQGTdBi5R5d1JZPCcLdkmW6Lezs2",
+    "selectedOut": true
+  },
+  "92": {
+    "AIGU": false,
+    "AMBU": true,
+    "DE": "false",
+    "FR": "true",
+    "IDPlace": "-O3knneiST1PVo8C-Lsw",
+    "MSQ": true,
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "0",
+    "PFP4": "1",
+    "REHAB": true,
+    "SYSINT": false,
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_AST_09.2024.pdf?alt=media&token=0bb26ed3-536b-4d3a-a6e4-304c31648732",
+    "praticiensFormateurs": [
+      "49"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedOut": true
+  },
+  "93": {
+    "AIGU": "false",
+    "AMBU": true,
+    "DE": "true",
+    "FR": "false",
+    "IDPlace": "-O3kooIChpHG3drVGiFR",
+    "MSQ": true,
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "1",
+    "PFP4": "0",
+    "REHAB": true,
+    "SYSINT": false,
+    "praticiensFormateurs": [
+      "-OBk28gpf8gb0_z7Ny1M"
+    ]
+  },
+  "94": {
+    "AMBU": true,
+    "DE": "false",
+    "FR": "true",
+    "IDPlace": "-O3krL2VJzl4ioQMbG1j",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "1",
+    "PFP4": "0",
+    "REHAB": "true",
+    "praticiensFormateurs": [
+      "115"
+    ]
+  },
+  "95": {
+    "AMBU": "true",
+    "DE": "true",
+    "FR": "false",
+    "IDPlace": "-O3ksAua4hQ2dEaDzCJv",
+    "MSQ": "true",
+    "NEUROGER": "true",
+    "NomPlace": "Ambu",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FBeschreibung_PhysioPlusAqua.pdf?alt=media&token=bc83527d-5ff1-4daa-b9d8-f1809654cec8",
+    "praticiensFormateurs": [
+      "-O3qTNursXwwqNTXs5wc"
+    ]
+  },
+  "101": {
+    "AIGU": "true",
+    "DE": "false",
+    "FR": "true",
+    "IDPlace": "-Neh_Ttzz1yliQ8-FCwa",
+    "NomPlace": "Cardio-respiratoire (DFME-BH + NHE) ",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "1",
+    "PFP3": "0",
+    "PFP4": "0",
+    "SYSINT": "true",
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif_CHUV%20p%C3%A9diatrie%20BH_28.09.2023.pdf?alt=media&token=3d449c03-277f-4d14-8f61-8ec9cd23dc54",
+    "praticiensFormateurs": [
+      "84"
+    ]
+  },
+  "-OCrwImQngDhnjT6R4U6": {
+    "AIGU": false,
+    "AMBU": false,
+    "DE": false,
+    "ENG": false,
+    "FR": false,
+    "IT": false,
+    "InstitutionId": "-OCrXQIXG77B4_jGCmHY",
+    "MSQ": true,
+    "NEUROGER": false,
+    "NomPlace": "yahoou",
+    "Note": "",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": false,
+    "SYSINT": true,
+    "praticiensFormateurs": [
+      "3"
+    ],
+    "selectedActiveBA22PFP4-1": false,
+    "selectedOut": true
+  },
+  "-OCsDSm-qjuMU7ALGIgp": {
+    "AIGU": "false",
+    "AMBU": true,
+    "DE": "false",
+    "ENG": false,
+    "FR": "true",
+    "IT": false,
+    "InstitutionId": "-OCs84RnzSPXKeVCPvAQ",
+    "MSQ": true,
+    "NEUROGER": true,
+    "NomPlace": "Ambu",
+    "Note": "",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "1",
+    "PFP4": "1",
+    "REHAB": true,
+    "SYSINT": false,
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif%20Atelier%20Th%C3%A9rapies.pdf?alt=media&token=f54420b4-6878-4eb5-a05f-e2eae96d15bc",
+    "praticiensFormateurs": [
+      "-OCsC746CLHx-jIC2Tqx"
+    ],
+    "selectedActiveBA22PFP4-1": true,
+    "selectedOut": true
+  },
+  "-OCsDtqyzhQ3oxdImRAg": {
+    "AIGU": false,
+    "AMBU": true,
+    "DE": "false",
+    "ENG": false,
+    "FR": "true",
+    "IT": false,
+    "InstitutionId": "-OCsBn9iJKDVcAQta0zu",
+    "MSQ": true,
+    "NEUROGER": false,
+    "NomPlace": "Ambu",
+    "Note": "",
+    "PFP1A": "0",
+    "PFP1B": "1",
+    "PFP2": "0",
+    "PFP3": "1",
+    "PFP4": "0",
+    "REHAB": true,
+    "SYSINT": false,
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif%20LHC.pdf?alt=media&token=4a0d96eb-19a5-41b4-a432-17ea3787e1b2",
+    "praticiensFormateurs": [
+      "-OCsCCxdlommFdr2WBD8"
+    ]
+  },
+  "-OJSrF_K5tV88rGzo1lR": {
+    "AIGU": false,
+    "AMBU": false,
+    "DE": false,
+    "ENG": false,
+    "FR": false,
+    "IT": false,
+    "InstitutionId": "-OCrXQIXG77B4_jGCmHY",
+    "MSQ": true,
+    "NEUROGER": false,
+    "NomPlace": "test1",
+    "Note": "",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "0",
+    "PFP4": "0",
+    "REHAB": false,
+    "SYSINT": false,
+    "praticiensFormateurs": [
+      "1"
+    ]
+  },
+  "-OL8IILqI3BTVGVxyIrb": {
+    "AIGU": false,
+    "AMBU": true,
+    "DE": true,
+    "ENG": false,
+    "FR": true,
+    "IT": false,
+    "InstitutionId": "-OCsBn9iJdsVcAWta0ab",
+    "MSQ": true,
+    "NEUROGER": false,
+    "NomPlace": "Ambu",
+    "Note": "",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "1",
+    "PFP4": "0",
+    "REHAB": true,
+    "SYSINT": false,
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif%20EHCV.pdf?alt=media&token=71a84d2f-e03c-47ab-9dd3-18ef3b6511e3",
+    "praticiensFormateurs": [
+      "43"
+    ]
+  },
+  "-OLDXpXJbRxOJcWjxQ6j": {
+    "AIGU": false,
+    "AMBU": true,
+    "DE": true,
+    "ENG": false,
+    "FR": false,
+    "IT": false,
+    "InstitutionId": "-OCs9flH6Ir4fz_fN5hT",
+    "MSQ": true,
+    "NEUROGER": true,
+    "NomPlace": "Ambu",
+    "Note": "",
+    "PFP1A": "0",
+    "PFP1B": "0",
+    "PFP2": "0",
+    "PFP3": "1",
+    "PFP4": "0",
+    "REHAB": true,
+    "SYSINT": false,
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2F1741853253126_Descriptif%20Ferrazzi.pdf?alt=media&token=3b05367b-f4da-4a6a-abba-8d57d9e7f61e",
+    "praticiensFormateurs": [
+      "-OCsC-wuj2JulL3JO5ug"
+    ],
+    "selectedActiveBA22PFP4-1": true
+  },
+  "-OP0pdKqlDSuY1cGwj9Z": {
+    "AIGU": false,
+    "AMBU": true,
+    "DE": false,
+    "ENG": false,
+    "FR": true,
+    "IT": false,
+    "InstitutionId": "-OP0ouyOKWo4Xd9DE-Et",
+    "MSQ": true,
+    "NEUROGER": true,
+    "NomPlace": "Ambu",
+    "Note": "",
+    "PFP1A": "",
+    "PFP1B": "",
+    "PFP2": "",
+    "PFP3": "1",
+    "PFP4": "",
+    "REHAB": false,
+    "SYSINT": false,
+    "fileURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/Places%2FDescriptif%20Lieu%20FP%20-%20Physio%20Quartier.pdf?alt=media&token=10b72999-41cd-4d45-a37b-dba7d59958c9",
+    "praticiensFormateurs": [
+      "50"
+    ]
+  }
+}

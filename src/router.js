@@ -170,6 +170,12 @@ const routes = [
     name: 'TemplateTest',
     component: () => import('@/views/TemplateTest.vue')
   },
+  {
+    path: '/validate-pfp1a',
+    name: 'ValidatePFP1A',
+    component: () => import('@/components/Dashboard/DashboardDetails/ValidatePFP1A.vue'),
+    meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] }
+  },
 ];
 
 // Create router instance
