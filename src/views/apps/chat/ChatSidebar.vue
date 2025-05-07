@@ -210,8 +210,7 @@ const filteredAndSortedUsers = computed(() => {
     return dateB - dateA;
   });
 
-  // Limiter à 20 conversations les plus récentes
-  return filtered.slice(0, 20);
+  return filtered;
 });
 
 /**
