@@ -21,132 +21,128 @@
 
         <div class="p-fluid">
           <form @submit.prevent="envoyerDonnees">
-            <!-- Étape 1 : Détails de l'institution -->
-            <div v-if="activeIndex === 0">
-              <h4>Détails de l'institution</h4>
-              <Divider />
-              <div class="grid formgrid">
-                <div class="field col-6">
-                  <label for="name">Nom</label>
-                  <InputText id="name" v-model="institution.Name" class="w-full" />
-                </div>
-                <div class="field col-6">
-                  <label for="name">Langue</label>
-                  <Dropdown id="langue" v-model="institution.Language" :options="langues" optionLabel="name" optionValue="code" class="w-full" />
-                </div>
-                <div class="field col-6">
-                </div>
-                <div class="field col-6">
-                  <label for="url">URL</label>
-                  <InputText id="url" v-model="institution.URL" class="w-full" />
-                </div>
-                <div class="field col-6">
-                  <label for="locality">Localité</label>
-                  <InputText id="locality" v-model="institution.Locality" class="w-full" />
-                </div>
-                <div class="field col-6">
-                  <label for="canton">Canton</label>
-                  <Dropdown id="canton" v-model="institution.Canton" :options="cantons" optionLabel="name" optionValue="code" class="w-full" />
-                </div>
-                <div class="field col-6">
-                  <label for="address">Adresse</label>
-                  <InputText id="address" v-model="institution.Address" class="w-full" />
-                </div>
-                <div class="field col-3">
-                  <label for="latitude">Latitude</label>
-                  <InputText id="latitude" v-model="institution.Latitude" class="w-full" placeholder="Ex: 48.8566" />
-                </div>
-                <div class="field col-3">
-                  <label for="longitude">Longitude</label>
-                  <InputText id="longitude" v-model="institution.Longitude" class="w-full" placeholder="Ex: 2.3522" />
-                </div>
-                <div class="col-12">
-                  <label for="description">Description</label>
-                  <Textarea id="description" v-model="institution.Description" rows="3" class="w-full" />
-                </div>
-                <div class="field col-4">
-                  <label for="name">Nom, Prénom du chef</label>
-                  <InputText id="name" v-model="institution.NomChef" class="w-full" />
-                </div>
-                <div class="field col-4">
-                  <label for="name">Téléphone du chef</label>
-                  <InputText id="name" v-model="institution.PhoneChef" class="w-full" />
-                </div>
-                <div class="field col-4">
-                  <label for="name">Mail du chef</label>
-                  <InputText id="name" v-model="institution.MailChef" class="w-full" />
-              </div>
-              </div>
-            </div>
-
-            <!-- Étape 2 : Informations supplémentaires -->
-            <div v-if="activeIndex === 1">
-              <h4>Informations supplémentaires</h4>
-              <Divider />
-              <div class="grid formgrid">
-                <div class="field col-12 md:col-6">
-                  <label for="institutionId" style="display:block;margin-bottom:0.5rem;">ID Institution</label>
-                  <div class="flex align-items-center mb-2" style="gap:0.5rem;">
-                    <Checkbox v-model="manualInstitutionId" :binary="true" inputId="manualIdCheckbox" />
-                    <label for="manualIdCheckbox" class="text-xs">Définir manuellement</label>
+            <transition name="fade-slide" mode="out-in">
+              <!-- Étape 1 : Détails de l'institution -->
+              <div v-if="activeIndex === 0" key="etape1">
+                <h4>Détails de l'institution</h4>
+                <Divider />
+                <div class="grid formgrid">
+                  <div class="field col-12 md:col-6">
+                    <label for="name">Nom de l'institution</label>
+                    <InputText id="name" v-model="institution.Name" class="w-full" />
                   </div>
-                  <InputText id="institutionId"
-                    v-model="institution.InstitutionId"
-                    :disabled="!manualInstitutionId"
-                    class="w-full"
-                    :style="!manualInstitutionId ? 'background:#eee;color:#888;' : ''"
-                  />
-                </div>
-                <div class="field col-12 md:col-6">
-                  <label for="category">Catégorie</label>
-                  <Dropdown id="category" v-model="institution.Category" :options="categories" optionLabel="label" optionValue="value" class="w-full" />
-                </div>
-                <div class="field col-12 md:col-6">
-                  <label for="conventionDate">Date de Convention</label>
-                  <Calendar id="conventionDate" v-model="institution.ConventionDate" dateFormat="yy-mm-dd" />
-                </div>
-                <div class="field col-12 md:col-6">
-                  <label for="accordCadreDate">Date de l'Accord Cadre</label>
-                  <Calendar id="accordCadreDate" v-model="institution.AccordCadreDate" dateFormat="yy-mm-dd" />
-                </div>
-                <div class="field col-12">
-                  <label for="note">Remarques</label>
-                  <Textarea id="note" v-model="institution.Note" />
+                  <div class="field col-12 md:col-6">
+                    <label for="langue">Langue</label>
+                    <Dropdown id="langue" v-model="institution.Language" :options="langues" optionLabel="name" optionValue="code" class="w-full" />
+                  </div>
+                  <div class="field col-12 md:col-6">
+                    <label for="locality">Localité</label>
+                    <InputText id="locality" v-model="institution.Locality" class="w-full" />
+                  </div>
+                  <div class="field col-12 md:col-6">
+                    <label for="canton">Canton</label>
+                    <Dropdown id="canton" v-model="institution.Canton" :options="cantons" optionLabel="name" optionValue="code" class="w-full" />
+                  </div>
+                  <div class="field col-12 md:col-6">
+                    <label for="address">Adresse</label>
+                    <InputText id="address" v-model="institution.Address" class="w-full" />
+                  </div>
+                  <div class="field col-6 md:col-3">
+                    <label for="latitude">Latitude</label>
+                    <InputText id="latitude" v-model="institution.Latitude" class="w-full" placeholder="Ex: 48.8566" />
+                  </div>
+                  <div class="field col-6 md:col-3">
+                    <label for="longitude">Longitude</label>
+                    <InputText id="longitude" v-model="institution.Longitude" class="w-full" placeholder="Ex: 2.3522" />
+                  </div>
+                  <div class="field col-12 md:col-4">
+                    <label for="url">URL</label>
+                    <InputText id="url" v-model="institution.URL" class="w-full" />
+                  </div>
+                  <div class="field col-12 md:col-4">
+                    <label for="nomchef">Nom, Prénom du chef</label>
+                    <InputText id="nomchef" v-model="institution.NomChef" class="w-full" />
+                  </div>
+                  <div class="field col-12 md:col-4">
+                    <label for="phonechef">Téléphone du chef</label>
+                    <InputText id="phonechef" v-model="institution.PhoneChef" class="w-full" />
+                  </div>
+                  <div class="field col-12 md:col-4">
+                    <label for="mailchef">Mail du chef</label>
+                    <InputText id="mailchef" v-model="institution.MailChef" class="w-full" />
+                  </div>
+                  <div class="col-12">
+                    <label for="description">Description</label>
+                    <Textarea id="description" v-model="institution.Description" rows="3" class="w-full" />
+                  </div>
                 </div>
               </div>
-            </div>
-
-            <!-- Étape 3 : Médias -->
-            <div v-if="activeIndex === 2">
-              <h4>Médias de l'institution</h4>
-              <Divider />
-              <div class="text-center">
-                <div class="border-2 border-dashed surface-border rounded-lg p-5 mb-3">
-                  <i class="pi pi-image text-5xl"></i>
-                  <h6 class="mt-2">
-                    Téléchargez l'image de l'institution ici, ou <a href="#!" class="text-primary" @click.prevent="$refs.fileInput.click()">Parcourir</a>
-                  </h6>
-                  <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFileChange" />
-                  <p class="mt-2">Seulement JPG, JPEG et PNG. Dimensions suggérées: 600px * 450px.</p>
+              <!-- Étape 2 : Informations supplémentaires -->
+              <div v-else-if="activeIndex === 1" key="etape2">
+                <h4>Informations supplémentaires</h4>
+                <Divider />
+                <div class="grid formgrid">
+                  <div class="field col-12 md:col-6">
+                    <label for="institutionId">ID Institution</label>
+                    <div class="flex align-items-center mb-2" style="gap:0.5rem;">
+                      <Checkbox v-model="manualInstitutionId" :binary="true" inputId="manualIdCheckbox" />
+                      <label for="manualIdCheckbox" class="text-xs">Définir manuellement</label>
+                    </div>
+                    <InputText id="institutionId"
+                      v-model="institution.InstitutionId"
+                      :disabled="!manualInstitutionId"
+                      class="w-full"
+                      :style="!manualInstitutionId ? 'background:#eee;color:#888;' : ''"
+                    />
+                  </div>
+                  <div class="field col-12 md:col-6">
+                    <label for="category">Catégorie</label>
+                    <Dropdown id="category" v-model="institution.Category" :options="categories" optionLabel="label" optionValue="value" class="w-full" />
+                  </div>
+                  <div class="field col-12 md:col-6">
+                    <label for="conventionDate">Date de Convention</label>
+                    <Calendar id="conventionDate" v-model="institution.ConventionDate" dateFormat="yy-mm-dd" />
+                  </div>
+                  <div class="field col-12 md:col-6">
+                    <label for="accordCadreDate">Date de l'Accord Cadre</label>
+                    <Calendar id="accordCadreDate" v-model="institution.AccordCadreDate" dateFormat="yy-mm-dd" />
+                  </div>
+                  <div class="field col-12">
+                    <label for="note">Remarques</label>
+                    <Textarea id="note" v-model="institution.Note" />
+                  </div>
                 </div>
-                <Button type="button" label="Supprimer l'image" class="p-button-danger mt-2" icon="pi pi-trash" @click="removeImage" />
               </div>
-              <div class="field mt-4">
-                <label for="imageUrl">URL de l'image</label>
-                <InputText id="imageUrl" v-model="institution.ImageURL" class="w-full" readonly />
+              <!-- Étape 3 : Médias -->
+              <div v-else-if="activeIndex === 2" key="etape3">
+                <h4>Médias de l'institution</h4>
+                <Divider />
+                <div class="text-center">
+                  <div class="border-2 border-dashed surface-border rounded-lg p-5 mb-3">
+                    <i class="pi pi-image text-5xl"></i>
+                    <h6 class="mt-2">
+                      Téléchargez l'image de l'institution ici, ou <a href="#" class="text-primary" @click.prevent="$refs.fileInput.click()">Parcourir</a>
+                    </h6>
+                    <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFileChange" />
+                    <p class="mt-2">Seulement JPG, JPEG et PNG. Dimensions suggérées: 600px * 450px.</p>
+                  </div>
+                  <Button type="button" label="Supprimer l'image" class="p-button-danger mt-2" icon="pi pi-trash" @click="removeImage" />
+                </div>
+                <div class="field mt-4">
+                  <label for="imageUrl">URL de l'image</label>
+                  <InputText id="imageUrl" v-model="institution.ImageURL" class="w-full" readonly />
+                </div>
               </div>
-            </div>
-
-            <!-- Étape 4 : Description -->
-            <div v-if="activeIndex === 3">
-              <h4>Description</h4>
-              <Divider />
-              <div class="field">
-                <label for="description">Description du lieu</label>
-                <Textarea id="description" v-model="institution.Description" rows="5" class="w-full" placeholder="Entrez la description du lieu ici..."></Textarea>
+              <!-- Étape 4 : Description -->
+              <div v-else-if="activeIndex === 3" key="etape4">
+                <h4>Description</h4>
+                <Divider />
+                <div class="field">
+                  <label for="description">Description du lieu</label>
+                  <Textarea id="description" v-model="institution.Description" rows="5" class="w-full" placeholder="Entrez la description du lieu ici..."></Textarea>
+                </div>
               </div>
-            </div>
-
+            </transition>
             <!-- Boutons de navigation -->
             <div class="flex justify-content-between mt-5">
               <Button v-if="activeIndex > 0" type="button" label="Précédent" class="p-button-secondary" @click="goToPrevStep" />
@@ -298,6 +294,17 @@ export default {
 </script>
 
 <style scoped>
+.fade-slide-enter-active, .fade-slide-leave-active {
+  transition: all 0.4s cubic-bezier(0.4,0,0.2,1);
+}
+.fade-slide-enter-from, .fade-slide-leave-to {
+  opacity: 0;
+  transform: translateX(50px);
+}
+.fade-slide-leave-from, .fade-slide-enter-to {
+  opacity: 1;
+  transform: translateX(0);
+}
 .hidden {
   display: none;
 }
