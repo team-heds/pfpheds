@@ -1,6 +1,9 @@
 <!-- src/components/Social/MainFeed.vue -->
 <template>
   <div class="main-feed">
+    <!-- Stories en haut du feed -->
+    <StoriesBar />
+  
     <!-- Section des filtres -->
     <FilterComponent
       :filterTypes="filterTypes"
@@ -64,6 +67,13 @@
               class="publish-button"
               @click="postMessage"
             />
+            <!-- Bouton Créer une Story -->
+            <Button
+              label="Créer une Story"
+              class="story-button"
+              @click="showAddStoryFeed = true"
+            />
+            <AddStory v-if="showAddStoryFeed" @close="showAddStoryFeed = false" @uploaded="showAddStoryFeed = false" />
           </div>
 
           <!-- Prévisualisation des médias sélectionnés -->
@@ -123,7 +133,9 @@ import Tag from "primevue/tag";
 import Button from "primevue/button";
 import FileUpload from "primevue/fileupload";
 import FilterComponent from "@/components/Social/FilterComponent.vue";
+import StoriesBar from '@/components/StoriesBar.vue';
 import TextAreaComponent from "./TextAreaComponent.vue"; // <-- Import du nouveau composant
+import AddStory from '@/components/AddStory.vue';
 
 import {
   ref as dbRef,
@@ -155,6 +167,8 @@ export default {
     FileUpload,
     FilterComponent,
     TextAreaComponent, // <-- Enregistrement du nouveau composant
+    AddStory,
+    StoriesBar
   },
   props: {
     currentUser: Object,
@@ -172,6 +186,8 @@ export default {
     const lastScrollTop = ref(0);
     const selectedMedia = ref([]);
     const oldestTimestamp = ref(null);
+    // Pour le bouton Créer une Story
+    const showAddStoryFeed = ref(false);
 
     // Filtres
     const filterTypes = ref([
@@ -190,13 +206,14 @@ export default {
       value: null,
     });
 
-    // Watcher pour détecter les tags dans le nouveau post
-    watch(newPost, (value) => {
-      // On peut analyser 'value' (qui est un HTML) pour extraire les tags (# / @).
-      // Ici on récupère le texte brut ou on fait une petite regex
-      // Pour simplifier, on remplace les balises <...> par du vide avant la recherche.
+    // Fonction pour détecter les tags (appelée sur input)
+    const detectTags = (value) => {
       const textWithoutHtml = value.replace(/<[^>]+>/g, "");
       detectedTags.value = extractTags(textWithoutHtml);
+    };
+    // Watcher pour compatibilité si la valeur change autrement
+    watch(newPost, (value) => {
+      detectTags(value);
     });
 
     // Fonction pour extraire les hashtags et mentions
@@ -556,6 +573,8 @@ const fetchPosts = async () => {
     });
 
     return {
+      showAddStoryFeed,
+      detectTags,
       posts,
       filteredPosts,
       newPost,

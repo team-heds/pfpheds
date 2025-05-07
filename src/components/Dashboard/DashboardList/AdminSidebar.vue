@@ -62,7 +62,7 @@ const menu = ref([
           { label: 'Management PFP EN cours', icon: 'pi pi-fw pi-image', to: '/management_pfpencours' },
           { label: 'Création PFP', icon: 'pi pi-fw pi-image', to: '/pfp_details' },
           { label: 'Gantt PFP', icon: 'pi pi-fw pi-image', to: '/gantt' },
-          { label: 'Management Places', icon: 'pi pi-cog', to: '/management_places' },
+          { label: 'Management Places', icon: 'pi pi-cog', to: '/git commitmanagement_places' },
           { label: 'Management Places Safe', icon: 'pi pi-cog', to: '/management_places_safe' },
           { label: 'Stage Repartition', icon: 'pi pi-cog', to: '/stage_repartition' },
           { label: 'Validation PFP1A', icon: 'pi pi-cog', to: '/validate-pfp1a' }
