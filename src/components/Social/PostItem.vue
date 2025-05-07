@@ -343,19 +343,21 @@ export default {
         });
       } catch (e) {
         // fallback: regex sur le texte brut
-        const spRegex = /(https?:\/\/(?:open\.)?spotify\.com\/([a-zA-Z0-9]+)\/[a-zA-Z0-9]+[\w\?=\-&]*)/g;
+        const spRegex = /(https?:\/\/(?:open\.)?spotify\.com\/(?:[a-zA-Z0-9-]+\/)?([a-zA-Z0-9]+)\/[a-zA-Z0-9]+[\w\?=\-&]*)/g;
         const matches = [...content.matchAll(spRegex)];
         matches.forEach(m => links.push(m[1]));
       }
       // Ajoute aussi les liens détectés par regex sur le texte brut (au cas où pas dans <a>)
-      const spRegex = /(https?:\/\/(?:open\.)?spotify\.com\/([a-zA-Z0-9]+)\/[a-zA-Z0-9]+[\w\?=\-&]*)/g;
+      const spRegex = /(https?:\/\/(?:open\.)?spotify\.com\/(?:[a-zA-Z0-9-]+\/)?([a-zA-Z0-9]+)\/[a-zA-Z0-9]+[\w\?=\-&]*)/g;
       const matches = [...content.matchAll(spRegex)];
       matches.forEach(m => { if (!links.includes(m[1])) links.push(m[1]); });
       return links;
     },
     getSpotifyEmbedUrl(url) {
-      // Accepte tout type d'URL Spotify (track, album, playlist, show, episode, artist, etc.)
-      const match = url.match(/open\.spotify\.com\/([a-zA-Z0-9]+)\/([a-zA-Z0-9]+)/);
+      // Supporte les URLs avec ou sans segment de langue (ex: /intl-fr/)
+      // Ex: https://open.spotify.com/intl-fr/album/0nzKO3ydTYeXC4RTPSXEv1?si=xxx
+      // Embed attendu: https://open.spotify.com/embed/album/0nzKO3ydTYeXC4RTPSXEv1
+      const match = url.match(/open\.spotify\.com\/(?:[a-zA-Z0-9-]+\/)?([a-zA-Z0-9]+)\/([a-zA-Z0-9]+)/);
       if (!match) return '';
       const type = match[1];
       const id = match[2];
