@@ -157,6 +157,8 @@ export default {
       const x = e.offsetX;
       const y = e.offsetY;
       const el = this.elements[this.draggingIdx];
+      // Sécurité : vérifier que el et el.font existent
+      if (!el || !el.font) return;
       // Estimation de la taille de l'élément
       const ctx = this.$refs.canvas.getContext('2d');
       ctx.font = el.font;

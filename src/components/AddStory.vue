@@ -3,8 +3,12 @@
     <div class="modal-content">
       <button class="close-btn" @click="$emit('close')">&times;</button>
       <h3>Ajouter une story</h3>
-      <input v-if="step === 'select'" type="file" accept="image/*" @change="onFileChange" />
-      <div v-if="step === 'select'" class="step-msg">Sélectionnez une image à publier en story.</div>
+      <input v-if="step === 'select'" type="file" accept="image/*" capture @change="onFileChange" />
+      <button v-if="step === 'select'" class="webcam-btn" @click="step = 'webcam'">Prendre une photo avec la webcam</button>
+      <div v-if="step === 'select'" class="step-msg">Prenez une photo ou choisissez une image à publier en story.</div>
+
+      <WebcamCapture v-if="step === 'webcam'" @captured="onWebcamCaptured" @cancel="step = 'select'" />
+
 
       <ImageCropper
         v-if="step === 'crop' && previewUrl"
@@ -32,6 +36,15 @@
       </div>
       <div v-if="step === 'preview'" class="step-msg">Prévisualisez votre story, ajoutez une légende puis publiez.</div>
 
+      <div v-if="step === 'preview'" class="duration-select">
+        <label for="duration">Durée de visibilité :</label>
+        <select id="duration" v-model="selectedDuration">
+          <option :value="1 * 60 * 1000">1 minute</option>
+          <option :value="60 * 60 * 1000">1 heure</option>
+          <option :value="24 * 60 * 60 * 1000">24 heures</option>
+        </select>
+      </div>
+
       <textarea v-if="step === 'preview'" v-model="caption" maxlength="100" placeholder="Ajouter un texte (optionnel)" class="caption-input"></textarea>
 
       <div v-if="step === 'upload' || uploading" class="progress-bar-container">
@@ -55,10 +68,11 @@ import { ref as dbRef, push, set } from 'firebase/database';
 import { getAuth } from 'firebase/auth';
 import ImageCropper from './ImageCropper.vue';
 import StoryEditor from './StoryEditor.vue';
+import WebcamCapture from './WebcamCapture.vue';
 
 export default {
   name: 'AddStory',
-  components: { ImageCropper, StoryEditor },
+  components: { ImageCropper, StoryEditor, WebcamCapture },
   data() {
     return {
       step: 'select', // étapes: select, crop, edit, preview, upload
@@ -70,9 +84,16 @@ export default {
       uploadProgress: 0,
       croppedBlob: null,
       editedBlob: null,
+      selectedDuration: 60 * 60 * 1000, // Par défaut 1 heure
     };
   },
   methods: {
+    onWebcamCaptured(blob) {
+      this.fileSelected = true;
+      this.croppedBlob = blob;
+      this.previewUrl = URL.createObjectURL(blob);
+      this.step = 'edit';
+    },
     onFileChange(e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -129,7 +150,7 @@ export default {
           imageUrl,
           caption: this.caption,
           timestamp: now,
-          expiresAt: now + 24 * 60 * 60 * 1000,
+          expiresAt: now + (this.selectedDuration || 60 * 60 * 1000), // durée choisie
           viewers: [],
         });
         this.$emit('uploaded');

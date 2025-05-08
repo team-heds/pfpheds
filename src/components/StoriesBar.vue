@@ -8,13 +8,13 @@
     </div>
     <!-- Liste des stories -->
     <div
-      v-for="story in stories"
-      :key="story.id"
+      v-for="user in uniqueUsers"
+      :key="user.userId"
       class="story-item"
-      @click="openStory(story)"
+      @click="openStory(user.stories)"
     >
-      <img :src="story.userAvatar || defaultAvatar" alt="avatar" class="avatar" />
-      <p>{{ getUserDisplayName(story.userName) }}</p>
+      <img :src="user.userAvatar || defaultAvatar" alt="avatar" class="avatar" />
+      <p>{{ getUserDisplayName(user.userName) }}</p>
     </div>
     <AddStory v-if="showAddStory" @close="showAddStory = false" @uploaded="fetchStories" />
     <StoryModal v-if="selectedStory" :story="selectedStory" @close="selectedStory = null" />
@@ -32,7 +32,8 @@ export default {
   components: { AddStory, StoryModal },
   data() {
     return {
-      stories: [],
+      stories: [], // toutes les stories non expirées
+      uniqueUsers: [], // stories groupées par utilisateur
       showAddStory: false,
       selectedStory: null,
       defaultAvatar: 'https://ui-avatars.com/api/?name=User',
@@ -76,15 +77,35 @@ export default {
            return { ...story, userAvatar: story.userAvatar || this.defaultAvatar };
          });
          Promise.all(promises).then(storiesWithAvatars => {
-           this.stories = storiesWithAvatars;
-         });
+            this.stories = storiesWithAvatars;
+            // Grouper les stories par utilisateur
+            const userMap = {};
+            storiesWithAvatars.forEach(story => {
+              if (!userMap[story.userId]) {
+                userMap[story.userId] = [];
+              }
+              userMap[story.userId].push(story);
+            });
+            this.uniqueUsers = Object.values(userMap).map(stories => {
+              // Trier les stories de l'utilisateur par date
+              stories.sort((a, b) => b.timestamp - a.timestamp);
+              // Utiliser la plus récente pour l'avatar/nom
+              return {
+                userId: stories[0].userId,
+                userName: stories[0].userName,
+                userAvatar: stories[0].userAvatar,
+                stories: stories
+              };
+            });
+          });
          return;
         }
         this.stories = stories;
       });
     },
-    openStory(story) {
-      this.selectedStory = story;
+    openStory(stories) {
+      // stories = tableau de stories de l'utilisateur
+      this.selectedStory = stories;
     }
   }
 };

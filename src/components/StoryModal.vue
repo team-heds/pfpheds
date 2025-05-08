@@ -2,13 +2,18 @@
   <div class="story-modal" @click.self="$emit('close')">
     <div class="modal-content">
       <button class="close-btn" @click="$emit('close')">&times;</button>
-      <img :src="story.imageUrl" alt="story" class="story-image" />
+      <img :src="currentStory.imageUrl" alt="story" class="story-image" />
       <div class="user-info">
-        <img :src="story.userAvatar || defaultAvatar" class="avatar"/>
-        <span>{{ story.userName }}</span>
+        <img :src="currentStory.userAvatar || defaultAvatar" class="avatar"/>
+        <span>{{ currentStory.userName }}</span>
       </div>
       <div class="timestamp">
         {{ formattedTime }}
+      </div>
+      <div v-if="isMultiple" class="story-nav">
+        <button @click="prevStory" :disabled="currentIndex === 0">&lt;</button>
+        <span>{{ currentIndex + 1 }}/{{ story.length }}</span>
+        <button @click="nextStory" :disabled="currentIndex === story.length - 1">&gt;</button>
       </div>
     </div>
   </div>
@@ -18,21 +23,64 @@
 export default {
   name: 'StoryModal',
   props: {
-    story: { type: Object, required: true }
+    story: { type: [Object, Array], required: true }
   },
   data() {
     return {
       defaultAvatar: 'https://ui-avatars.com/api/?name=User',
+      currentIndex: 0,
     };
   },
   computed: {
+    isMultiple() {
+      return Array.isArray(this.story);
+    },
+    currentStory() {
+      return this.isMultiple ? this.story[this.currentIndex] : this.story;
+    },
     formattedTime() {
-      const date = new Date(this.story.timestamp);
+      const date = new Date(this.currentStory.timestamp);
       return date.toLocaleString();
+    }
+  },
+  methods: {
+    nextStory() {
+      if (this.currentIndex < this.story.length - 1) {
+        this.currentIndex++;
+      }
+    },
+    prevStory() {
+      if (this.currentIndex > 0) {
+        this.currentIndex--;
+      }
     }
   }
 };
 </script>
+
+<style scoped>
+.story-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  justify-content: center;
+}
+.story-nav button {
+  background: #2196f3;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+.story-nav button:disabled {
+  background: #bdbdbd;
+  cursor: not-allowed;
+}
+</style>
 
 <style scoped>
 .story-modal {
