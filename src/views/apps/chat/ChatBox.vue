@@ -28,15 +28,27 @@
         <!-- Message Reçu -->
         <div v-if="message.ownerId !== defaultUserId" class="grid grid-nogutter mb-4">
           <div class="mr-3 mt-1">
-          <img
-            :src="user.PhotoURL || 'src/assets/avatar/avatar1.jpg'"
-            class="w-3rem h-3rem border-circle shadow-4"
-            :alt="userDisplayName"
-          />
+            <img
+              :src="user.PhotoURL || 'src/assets/avatar/avatar1.jpg'"
+              class="w-3rem h-3rem border-circle shadow-4"
+              :alt="userDisplayName"
+            />
           </div>
           <div class="col mt-3">
             <p class="text-900 font-semibold mb-3">{{ userDisplayName }}</p>
-            <span class="text-700 inline-block font-medium border-1 surface-border p-3 white-space-normal border-round" style="word-break: break-word; max-width: 80%">{{ message.text }}</span>
+            <template v-if="message.type === 'story_reply'">
+              <div class="story-reply-container story-reply-received flex flex-column mb-2 p-3">
+                <div class="story-reply-badge flex align-items-center mb-2">
+                  <i class="pi pi-image text-primary-700 mr-2" style="font-size: 1.5rem;"></i>
+                  <span class="font-bold text-uppercase text-white story-badge-label">RÉPONSE À UNE STORY</span>
+                </div>
+                <div v-if="message.storyImage" class="story-image-preview mb-2">
+                  <img :src="message.storyImage" alt="Story" class="w-7rem h-7rem border-3 border-primary-600 border-round-lg object-cover shadow-4" />
+                </div>
+                <span class="text-900 font-semibold story-reply-text">{{ message.text }}</span>
+              </div>
+            </template>
+            <span v-else class="text-700 inline-block font-medium border-1 surface-border p-3 white-space-normal border-round" style="word-break: break-word; max-width: 80%">{{ message.text }}</span>
             <p class="text-700 mt-3">{{ formatTime(message.createdAt) }} <i class="pi pi-check ml-2 text-green-400"></i></p>
           </div>
         </div>
@@ -44,7 +56,19 @@
         <!-- Message Envoyé -->
         <div v-else class="grid grid-nogutter mb-2">
           <div class="col mt-3 text-right">
-            <span class="inline-block text-left font-medium border-1 surface-border bg-primary-100 text-primary-900 p-3 white-space-normal border-round" style="word-break: break-word; max-width: 80%">{{ message.text }}</span>
+            <template v-if="message.type === 'story_reply'">
+              <div class="story-reply-container story-reply-sent flex flex-column align-items-end mb-2 p-3">
+                <div class="story-reply-badge flex align-items-center justify-content-end mb-2">
+                  <span class="font-bold text-uppercase text-white story-badge-label mr-2">RÉPONSE À UNE STORY</span>
+                  <i class="pi pi-image text-primary-700" style="font-size: 1.5rem;"></i>
+                </div>
+                <div v-if="message.storyImage" class="story-image-preview mb-2 flex justify-content-end">
+                  <img :src="message.storyImage" alt="Story" class="w-7rem h-7rem border-3 border-primary-600 border-round-lg object-cover shadow-4" />
+                </div>
+                <span class="text-900 font-semibold story-reply-text text-right">{{ message.text }}</span>
+              </div>
+            </template>
+            <span v-else class="inline-block text-left font-medium border-1 surface-border bg-primary-100 text-primary-900 p-3 white-space-normal border-round" style="word-break: break-word; max-width: 80%">{{ message.text }}</span>
             <p class="text-700 mt-3">{{ formatTime(message.createdAt) }} <i class="pi pi-check ml-2 text-green-400"></i></p>
           </div>
         </div>
@@ -74,6 +98,66 @@
     <Button v-for="emoji in emojis" :key="emoji" @click="addEmoji(emoji)" type="button" :label="emoji" class="p-2 text-2xl" text></Button>
   </OverlayPanel>
 </template>
+
+<style scoped>
+.story-reply-container {
+  background: linear-gradient(90deg, var(--primary-50), #fff 80%);
+  border-radius: 1.2rem;
+  border-left: 6px solid var(--primary-600);
+  box-shadow: 0 4px 24px 0 rgba(80, 120, 200, 0.11);
+  transition: box-shadow 0.2s, background 0.2s;
+  margin-bottom: 0.5rem;
+  position: relative;
+}
+.story-reply-sent {
+  border-left: none;
+  border-right: 6px solid var(--primary-600);
+  background: linear-gradient(270deg, var(--primary-50), #fff 80%);
+}
+.story-reply-badge {
+  background: linear-gradient(90deg, var(--primary-700), var(--primary-400));
+  border-radius: 1.5rem;
+  padding: 0.35rem 1.2rem;
+  font-size: 1.05rem;
+  letter-spacing: 0.05em;
+  box-shadow: 0 2px 8px 0 rgba(80, 120, 200, 0.10);
+  border: 2px solid var(--primary-600);
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(80,120,200,0.12);
+  cursor: pointer;
+  user-select: none;
+  font-weight: 700;
+  text-transform: uppercase;
+  transition: background 0.2s;
+}
+.story-badge-label {
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(80,120,200,0.19);
+}
+.story-reply-container:hover {
+  box-shadow: 0 8px 36px 0 rgba(80, 120, 200, 0.18);
+  background: linear-gradient(90deg, var(--primary-100), #fff 80%);
+}
+.story-reply-sent:hover {
+  background: linear-gradient(270deg, var(--primary-100), #fff 80%);
+}
+.story-image-preview img {
+  object-fit: cover;
+  box-shadow: 0 4px 24px 0 rgba(80, 120, 200, 0.18);
+  border-radius: 1rem;
+  border: 3px solid var(--primary-600);
+  margin-bottom: 0.2rem;
+}
+.story-reply-text {
+  font-size: 1.08rem;
+  color: var(--primary-900);
+  margin-top: 0.2rem;
+  margin-bottom: 0.1rem;
+  word-break: break-word;
+  max-width: 90%;
+}
+</style>
+
 
 <script setup>
 import { ref, watch, computed } from 'vue';

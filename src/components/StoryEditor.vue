@@ -10,8 +10,57 @@
         </select>
         <button @click="addText">Ajouter texte</button>
         <button @click="addEmoji">Ajouter emoji</button>
+        <button @click="showQuiz = true">Ajouter quiz</button>
+        <button @click="showPoll = true">Ajouter sondage</button>
+        <button @click="showAudio = true">Ajouter audio</button>
+        <button @click="showCarousel = true">Ajouter carrousel</button>
         <button @click="$emit('cancel')">Annuler</button>
         <button @click="emitEdited">Valider</button>
+      </div>
+
+      <StoryQuiz v-if="showQuiz" :question="quizQuestion" :options="quizOptions" :answerIdx="quizAnswerIdx" @answered="closeQuiz" />
+      <div v-if="showQuiz" class="quiz-editor-modal">
+        <input v-model="quizQuestion" placeholder="Question du quiz" />
+        <input v-for="(opt, idx) in quizOptions" :key="idx" v-model="quizOptions[idx]" placeholder="Option" />
+        <button @click="quizOptions.push('')">Ajouter option</button>
+        <label>Bonne réponse:
+          <select v-model.number="quizAnswerIdx">
+            <option v-for="(opt, idx) in quizOptions" :key="idx" :value="idx">{{ opt }}</option>
+          </select>
+        </label>
+        <button @click="addQuiz">Valider quiz</button>
+        <button @click="showQuiz = false">Annuler</button>
+      </div>
+
+      <StoryStickerPoll v-if="showPoll" :question="pollQuestion" :options="pollOptions" @voted="closePoll" />
+      <div v-if="showPoll" class="poll-editor-modal">
+        <input v-model="pollQuestion" placeholder="Question du sondage" />
+        <input v-for="(opt, idx) in pollOptions" :key="idx" v-model="pollOptions[idx]" placeholder="Option" />
+        <button @click="pollOptions.push('')">Ajouter option</button>
+        <button @click="addPoll">Valider sondage</button>
+        <button @click="showPoll = false">Annuler</button>
+      </div>
+
+      <StoryAudio v-if="showAudio" :src="audioSrc" :caption="audioCaption" />
+      <div v-if="showAudio" class="audio-editor-modal">
+        <input type="file" @change="onAudioChange" accept="audio/*" />
+        <input v-model="audioCaption" placeholder="Légende audio" />
+        <button @click="addAudio">Valider audio</button>
+        <button @click="showAudio = false">Annuler</button>
+      </div>
+
+      <StoryCarousel v-if="showCarousel" :media="carouselMedia" />
+      <div v-if="showCarousel" class="carousel-editor-modal">
+        <input type="file" multiple @change="onCarouselChange" accept="image/*,video/*" />
+        <button @click="addCarousel">Valider carrousel</button>
+        <button @click="showCarousel = false">Annuler</button>
+      </div>
+
+      <div v-if="elements.length" class="story-elements-list">
+        <div v-for="(el, idx) in elements" :key="idx" class="story-element-preview">
+          <span>{{ el.type }}</span>
+          <button @click="removeElement(idx)">Supprimer</button>
+        </div>
       </div>
       <div class="cropper-container">
         <canvas ref="canvas" :width="outputWidth" :height="outputHeight"
@@ -31,8 +80,14 @@
 </template>
 
 <script>
+import StoryQuiz from './StoryQuiz.vue';
+import StoryStickerPoll from './StoryStickerPoll.vue';
+import StoryAudio from './StoryAudio.vue';
+import StoryCarousel from './StoryCarousel.vue';
+
 export default {
   name: 'StoryEditor',
+  components: { StoryQuiz, StoryStickerPoll, StoryAudio, StoryCarousel },
   props: {
     src: { type: String, required: true },
     outputWidth: { type: Number, default: 720 },
@@ -49,6 +104,18 @@ export default {
       dragging: false,
       scale: 0.5, // Pour correspondre au transform: scale(0.5) CSS
       dragOffset: { x: 0, y: 0 },
+      showQuiz: false,
+      quizQuestion: '',
+      quizOptions: ['', ''],
+      quizAnswerIdx: 0,
+      showPoll: false,
+      pollQuestion: '',
+      pollOptions: ['', ''],
+      showAudio: false,
+      audioSrc: '',
+      audioCaption: '',
+      showCarousel: false,
+      carouselMedia: [],
     };
   },
   mounted() {
@@ -115,6 +182,54 @@ export default {
       });
       this.selectedEmoji = '';
       this.draw();
+    },
+    // Quiz
+    addQuiz() {
+      this.elements.push({ type: 'quiz', question: this.quizQuestion, options: [...this.quizOptions], answerIdx: this.quizAnswerIdx });
+      this.showQuiz = false;
+      this.quizQuestion = '';
+      this.quizOptions = ['', ''];
+      this.quizAnswerIdx = 0;
+    },
+    closeQuiz() {
+      this.showQuiz = false;
+    },
+    // Poll
+    addPoll() {
+      this.elements.push({ type: 'poll', question: this.pollQuestion, options: [...this.pollOptions] });
+      this.showPoll = false;
+      this.pollQuestion = '';
+      this.pollOptions = ['', ''];
+    },
+    closePoll() {
+      this.showPoll = false;
+    },
+    // Audio
+    onAudioChange(e) {
+      const file = e.target.files[0];
+      if (file) {
+        this.audioSrc = URL.createObjectURL(file);
+      }
+    },
+    addAudio() {
+      this.elements.push({ type: 'audio', src: this.audioSrc, caption: this.audioCaption });
+      this.showAudio = false;
+      this.audioSrc = '';
+      this.audioCaption = '';
+    },
+    // Carousel
+    onCarouselChange(e) {
+      const files = Array.from(e.target.files);
+      this.carouselMedia = files.map(f => URL.createObjectURL(f));
+    },
+    addCarousel() {
+      this.elements.push({ type: 'carousel', media: [...this.carouselMedia] });
+      this.showCarousel = false;
+      this.carouselMedia = [];
+    },
+    // Remove
+    removeElement(idx) {
+      this.elements.splice(idx, 1);
     },
     startDrag(e) {
       const x = e.offsetX;
@@ -212,9 +327,9 @@ export default {
       this.draw(); // Enlève la surbrillance
     },
     emitEdited() {
-      const canvas = this.$refs.canvas;
-      canvas.toBlob(blob => {
-        this.$emit('edited', blob);
+      // On génère un nouveau blob à partir du canvas
+      this.$refs.canvas.toBlob(blob => {
+        this.$emit('edited', blob, this.elements);
       }, 'image/jpeg', 0.92);
     },
   },
@@ -244,18 +359,20 @@ canvas {
   
 }
 .cropper-content {
-  background: #222;
+  background: var(--surface-card, #fff);
   border-radius: 12px;
-  box-shadow: 0 2px 24px #000a;
+  box-shadow: 0 2px 24px rgba(33,150,243,0.07);
   padding: 24px 16px 16px 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
   transform: scale(0.5);
   transform-origin: center center;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
 }
+
 .cropper-container {
-  background: #111;
+  background: var(--surface-50, #f8fafd);
   border-radius: 12px;
   overflow: hidden;
   margin-bottom: 16px;
@@ -263,37 +380,81 @@ canvas {
   justify-content: center;
   align-items: center;
 }
+
 .editor-controls {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px 14px;
   justify-content: center;
-  margin-top: 8px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  align-items: center;
 }
+
 .text-input {
-  padding: 4px 8px;
-  border-radius: 6px;
-  border: 1px solid #444;
-  background: #222;
-  color: #fff;
+  width: 180px;
+  border-radius: 8px;
+  border: 1.5px solid var(--surface-border, #e0e0e0);
+  padding: 7px 10px;
+  font-size: 1rem;
+  background: var(--surface-card, #f8fafd);
+  color: var(--text-color, #222);
+  font-family: inherit;
+  transition: border 0.2s;
 }
+.text-input:focus {
+  border: 1.5px solid var(--primary-color, #2196f3);
+  outline: none;
+}
+.text-input::placeholder {
+  color: var(--text-secondary-color, #aaa);
+  opacity: 1;
+}
+
 .emoji-select {
-  padding: 4px 8px;
-  border-radius: 6px;
-  border: 1px solid #444;
-  background: #222;
-  color: #fff;
+  font-size: 1.5rem;
+  background: var(--surface-card, #f8fafd);
+  color: var(--text-color, #222);
+  border-radius: 8px;
+  border: 1.5px solid var(--surface-border, #e0e0e0);
+  padding: 4px 10px;
+  font-family: inherit;
+  transition: border 0.2s;
 }
+.emoji-select:focus {
+  border: 1.5px solid var(--primary-color, #2196f3);
+  outline: none;
+}
+.emoji-select option {
+  font-size: 1.3rem;
+}
+
 button {
-  background: #3b82f6;
+  background: var(--primary-color, #2196f3);
   color: #fff;
   border: none;
-  border-radius: 6px;
-  padding: 6px 12px;
+  border-radius: 8px;
+  padding: 7px 16px;
   cursor: pointer;
   font-weight: bold;
-  transition: background 0.2s;
+  font-family: inherit;
+  font-size: 1rem;
+  box-shadow: 0 2px 8px rgba(33,150,243,0.10);
+  transition: background 0.18s, box-shadow 0.18s;
+  outline: none;
 }
+button:focus-visible {
+  outline: 2px solid var(--primary-color, #2196f3);
+  outline-offset: 2px;
+}
+button:hover:not(:disabled) {
+  background: var(--primary-color-hover, #1565c0);
+  box-shadow: 0 6px 18px rgba(33,150,243,0.13);
+}
+button:active {
+  background: var(--primary-color, #1976d2);
+}
+
 button:hover {
   background: #2563eb;
 }
@@ -317,39 +478,16 @@ button:hover {
   flex-direction: column;
   align-items: center;
 }
-.canvas-container {
-  margin-bottom: 14px;
-  background: #111;
-  border-radius: 12px;
-  padding: 8px;
-  box-shadow: 0 1px 8px rgba(0,0,0,0.12);
-}
-canvas {
-  border-radius: 10px;
-  background: #000;
-  display: block;
-}
-.editor-controls {
+.cropper-modal {
+  position: fixed;
+  top: 10%; left: 10%; right: 10%; bottom: 10%;
+  background: rgba(0,0,0,0.7);
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  z-index: 9999;
   margin-top: 10px;
 }
-.text-input {
-  width: 180px;
-  border-radius: 6px;
-  border: none;
-  padding: 6px;
-  font-size: 1rem;
-  background: #242526;
-  color: #fff;
-}
-.emoji-select {
-  font-size: 1.5rem;
-  background: #242526;
-  color: #fff;
-  border-radius: 6px;
-  border: none;
-  padding: 4px 8px;
-}
+
+
 </style>

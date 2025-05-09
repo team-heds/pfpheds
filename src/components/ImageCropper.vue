@@ -127,12 +127,12 @@ export default {
   z-index: 2000;
 }
 .cropper-content {
-  background: #222;
+  background: var(--surface-card);
   border-radius: 16px;
   padding: 24px 28px 18px;
   min-width: 380px;
   box-shadow: 0 2px 32px rgba(0,0,0,0.38);
-  color: #fff;
+  color: var(--text-color);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -155,4 +155,31 @@ canvas {
   gap: 16px;
   margin-top: 10px;
 }
+
+.cropper-controls button {
+  background: var(--primary-color, #2196f3);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 7px 16px;
+  cursor: pointer;
+  font-weight: bold;
+  font-family: inherit;
+  font-size: 1rem;
+  box-shadow: 0 2px 8px rgba(33,150,243,0.10);
+  transition: background 0.18s, box-shadow 0.18s;
+  outline: none;
+}
+.cropper-controls button:focus-visible {
+  outline: 2px solid var(--primary-color, #2196f3);
+  outline-offset: 2px;
+}
+.cropper-controls button:hover:not(:disabled) {
+  background: var(--primary-color-hover, #1565c0);
+  box-shadow: 0 6px 18px rgba(33,150,243,0.13);
+}
+.cropper-controls button:active {
+  background: var(--primary-color, #1976d2);
+}
+
 </style>

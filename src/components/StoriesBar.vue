@@ -13,11 +13,16 @@
       class="story-item"
       @click="openStory(user.stories)"
     >
-      <img :src="user.userAvatar || defaultAvatar" alt="avatar" class="avatar" />
+      <img
+        :src="user.userAvatar || defaultAvatar"
+        alt="avatar"
+        class="avatar"
+        :class="{ 'unseen-story': user.hasUnseenStory }"
+      />
       <p>{{ getUserDisplayName(user.userName) }}</p>
     </div>
     <AddStory v-if="showAddStory" @close="showAddStory = false" @uploaded="fetchStories" />
-    <StoryModal v-if="selectedStory" :story="selectedStory" @close="selectedStory = null" />
+    <StoryModal v-if="selectedStory" :story="selectedStory" @close="selectedStory = null" @refreshStories="fetchStories" />
   </div>
 </template>
 
@@ -25,7 +30,8 @@
 import AddStory from './AddStory.vue';
 import StoryModal from './StoryModal.vue';
 import { db } from 'root/firebase';
-import { ref as dbRef, onValue } from 'firebase/database';
+import { ref as dbRef, onValue, update } from 'firebase/database';
+import { getCurrentUser } from './Utils/authUser.js';
 
 export default {
   name: 'StoriesBar',
@@ -37,9 +43,11 @@ export default {
       showAddStory: false,
       selectedStory: null,
       defaultAvatar: 'https://ui-avatars.com/api/?name=User',
+      currentUser: null,
     };
   },
-  mounted() {
+  async mounted() {
+    this.currentUser = await getCurrentUser();
     this.fetchStories();
   },
   methods: {
@@ -89,12 +97,17 @@ export default {
             this.uniqueUsers = Object.values(userMap).map(stories => {
               // Trier les stories de l'utilisateur par date
               stories.sort((a, b) => b.timestamp - a.timestamp);
+              // Vérifier si l'utilisateur courant a vu toutes les stories de cet utilisateur
+              const hasUnseenStory = this.currentUser
+                ? stories.some(story => !(story.viewers || []).includes(this.currentUser.uid))
+                : false;
               // Utiliser la plus récente pour l'avatar/nom
               return {
                 userId: stories[0].userId,
                 userName: stories[0].userName,
                 userAvatar: stories[0].userAvatar,
-                stories: stories
+                stories: stories,
+                hasUnseenStory
               };
             });
           });
@@ -103,9 +116,22 @@ export default {
         this.stories = stories;
       });
     },
-    openStory(stories) {
+    async openStory(stories) {
       // stories = tableau de stories de l'utilisateur
       this.selectedStory = stories;
+      // Marquer toutes les stories comme vues pour l'utilisateur courant
+      if (this.currentUser) {
+        for (const story of stories) {
+          if (!(story.viewers || []).includes(this.currentUser.uid)) {
+            const storyRef = dbRef(db, `stories/${story.id}/viewers`);
+            // Ajoute l'uid dans viewers (évite les doublons)
+            const newViewers = [...(story.viewers || []), this.currentUser.uid];
+            await update(dbRef(db, `stories/${story.id}`), { viewers: newViewers });
+          }
+        }
+        // Refresh stories to update seen status
+        setTimeout(() => this.fetchStories(), 500);
+      }
     }
   }
 };
@@ -123,91 +149,142 @@ export default {
   top: 0;
   z-index: 10;
   min-height: 90px;
+  overflow-x: auto;
 }
-
 .story-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  margin-right: 16px;
+  margin: 0 8px;
   cursor: pointer;
-  min-width: 70px;
+  background: rgba(255,255,255,0.85);
+  border-radius: 14px;
+  box-shadow: 0 2px 12px 0 rgba(33,150,243,0.09), 0 1.5px 6px 0 rgba(0,0,0,0.07);
+  padding: 10px 7px 10px 7px;
+  transition: box-shadow 0.22s, background 0.22s, transform 0.18s;
+  border: 1.5px solid var(--surface-border, #e0e0e0);
+  backdrop-filter: blur(7px) saturate(1.15);
+  -webkit-backdrop-filter: blur(7px) saturate(1.15);
+  position: relative;
+  outline: none;
 }
 
-.story-item.add-story {
+.story-item:focus-visible {
+  box-shadow: 0 0 0 3px var(--primary-color, #2196f3), 0 2px 12px 0 rgba(33,150,243,0.09);
+}
+
+.story-item:hover {
+  box-shadow: 0 8px 28px 0 rgba(33,150,243,0.18), 0 1.5px 6px 0 rgba(0,0,0,0.10);
+  background: rgba(255,255,255,0.97);
+  transform: translateY(-2px) scale(1.03);
+}
+
+.story-item:active::after {
+  content: '';
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%,-50%) scale(1.5);
+  width: 80%; height: 80%;
   border-radius: 50%;
-  width: 64px;
-  height: 64px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: 2rem;
-  color: #007bff;
-  border: 2px dashed #007bff;
+  background: rgba(33,150,243,0.11);
+  animation: ripple-story 0.4s linear;
+  pointer-events: none;
+  z-index: 1;
 }
 
-.add-icon {
-  font-size: 2rem;
+@keyframes ripple-story {
+  0% { opacity: 1; transform: translate(-50%,-50%) scale(0.8); }
+  100% { opacity: 0; transform: translate(-50%,-50%) scale(1.6); }
 }
 
-.avatar {
-  width: 48px;
-  height: 48px;
+.story-item .avatar {
+  width: 54px;
+  height: 54px;
   border-radius: 50%;
+  margin-bottom: 5px;
   object-fit: cover;
-  border: 2px solid #007bff;
-  margin-bottom: 4px;
+  border: 3px solid var(--primary-color, #2196f3);
+  box-shadow: 0 0 0 0 rgba(33,150,243,0);
+  transition: box-shadow 0.22s, border 0.22s;
+  background: linear-gradient(135deg, #e3f2fd 0%, #fff 100%);
+  position: relative;
+}
+
+.story-item .avatar.active, .story-item .avatar.unseen {
+  border: 3px solid;
+  border-image: linear-gradient(120deg, #2196f3 60%, #ffb300 100%) 1;
+  box-shadow: 0 0 0 3px #fff, 0 0 12px 2px #2196f3;
+}
+
+.story-item .avatar:hover {
+  box-shadow: 0 0 0 4px var(--primary-color, #2196f3), 0 0 12px 3px #2196f3;
 }
 
 .story-item p {
-  font-size: 0.8rem;
   margin: 0;
+  margin-top: 3px;
+  font-size: 1.07rem;
+  color: var(--primary-color, #1976d2);
+  font-weight: 600;
   text-align: center;
+  letter-spacing: 0.01em;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  text-shadow: 0 1px 2px rgba(33,150,243,0.07);
 }
 
-.stories-bar {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 12px 0;
-  overflow-x: auto;
-    border-bottom: 1px solid #eee;
-}
-
-.story-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  cursor: pointer;
-  width: 64px;
-}
-.story-item .avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid #2196f3;
-}
 .add-story {
-  border: 2px dashed #2196f3;
-  border-radius: 50%;
-  width: 48px;
-  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 4px;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--primary-color, #2196f3);
+  box-shadow: 0 4px 16px 0 rgba(33,150,243,0.11);
+  color: #fff;
+  font-size: 2rem;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  margin-bottom: 5px;
+  position: relative;
+  transition: box-shadow 0.2s, background 0.2s;
+  aria-label: "Ajouter une histoire";
 }
+
+.add-story:hover {
+  background: var(--primary-color, #42a5f5);
+  box-shadow: 0 8px 28px 0 rgba(33,150,243,0.18);
+}
+
+.add-story:focus-visible {
+  box-shadow: 0 0 0 3px var(--primary-color, #2196f3), 0 4px 16px 0 rgba(33,150,243,0.11);
+}
+
+.add-story .plus-icon {
+  font-size: 2.1rem;
+  font-weight: bold;
+  text-shadow: 0 2px 8px rgba(33,150,243,0.13);
+  color: #fff;
+}
+
 .add-icon {
   font-size: 2rem;
   color: #2196f3;
 }
+
 .story-item p {
   font-size: 0.8rem;
   margin: 4px 0 0 0;
   text-align: center;
   word-break: break-word;
+}
+
+@media (max-width: 768px) {
+  .add-story {
+    width: 40px;
+    height: 40px;
+    font-size: 1.5rem;
+  }
 }
 </style>

@@ -85,6 +85,7 @@ export default {
       croppedBlob: null,
       editedBlob: null,
       selectedDuration: 60 * 60 * 1000, // Par défaut 1 heure
+      storyElements: [], // <-- Ajouté pour stocker les modules interactifs
     };
   },
   methods: {
@@ -115,9 +116,10 @@ export default {
       this.previewUrl = URL.createObjectURL(blob);
       this.step = 'edit';
     },
-    onEdited(blob) {
+    onEdited(blob, elements) {
       this.editedBlob = blob;
       this.previewUrl = URL.createObjectURL(blob);
+      this.storyElements = elements || [];
       this.step = 'preview';
     },
     async submitStory() {
@@ -152,6 +154,7 @@ export default {
           timestamp: now,
           expiresAt: now + (this.selectedDuration || 60 * 60 * 1000), // durée choisie
           viewers: [],
+          elements: this.storyElements || [], // <-- Ajout modules interactifs
         });
         this.$emit('uploaded');
         this.$emit('close');
@@ -165,6 +168,7 @@ export default {
         this.croppedBlob = null;
         this.editedBlob = null;
         this.caption = '';
+        this.storyElements = [];
         this.step = 'select';
       }
     },
@@ -177,45 +181,83 @@ export default {
 .add-story-modal {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0,0,0,0.7);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 2000;
 }
+
 .modal-content {
-  background: #18191a;
-  border-radius: 16px;
-  padding: 32px 28px 24px;
-  min-width: 340px;
-  box-shadow: 0 2px 32px rgba(0,0,0,0.32);
+  background: var(--surface-card);
+  border-radius: 8px;
+  padding: 18px 16px 18px 16px;
+  max-width: 90vw;
+  max-height: 90vh;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
   position: relative;
-  color: #fff;
+  color: var(--text-color, #222);
   display: flex;
   flex-direction: column;
   align-items: center;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
 }
+
+@media (max-width: 600px) {
+  .modal-content {
+    min-width: unset;
+    padding: 10px 3vw 14px 3vw;
+    border-radius: 6px;
+    max-width: 98vw;
+    max-height: 97vh;
+  }
+}
+
+.modal-content h3 {
+  color: var(--primary-color, #2196f3);
+  font-weight: 700;
+  margin-bottom: 20px;
+  font-size: 1.3rem;
+  letter-spacing: 0.01em;
+}
+
 .story-preview img {
   max-width: 220px;
   max-height: 340px;
-  border-radius: 18px;
+  border-radius: 12px;
   margin-bottom: 14px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+  box-shadow: 0 2px 12px rgba(33,150,243,0.11);
 }
+
+@media (max-width: 600px) {
+  .story-preview img {
+    max-width: 95vw;
+    max-height: 50vh;
+    border-radius: 6px;
+  }
+}
+
 .caption-input {
   width: 95%;
   min-height: 38px;
   margin: 8px 0 18px 0;
   border-radius: 8px;
-  border: none;
+  border: 1.5px solid var(--surface-border, #e0e0e0);
   padding: 8px;
   font-size: 1rem;
-  background: #242526;
-  color: #fff;
+  background: var(--surface-card, #f8fafd);
+  color: var(--text-color, #222);
+  font-family: inherit;
+  transition: border 0.2s;
 }
+.caption-input:focus {
+  border: 1.5px solid var(--primary-color, #2196f3);
+  outline: none;
+}
+
 .add-btn {
   margin-top: 14px;
-  background: #0095f6;
+  background: var(--primary-color, #2196f3);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -223,15 +265,25 @@ export default {
   font-size: 1.1rem;
   font-weight: bold;
   cursor: pointer;
-  transition: background 0.2s;
+  box-shadow: 0 2px 8px rgba(33,150,243,0.10);
+  transition: background 0.18s, box-shadow 0.18s;
 }
+.add-btn:hover:not(:disabled) {
+  background: var(--primary-color-hover, #1565c0);
+  box-shadow: 0 6px 18px rgba(33,150,243,0.13);
+}
+.add-btn:focus-visible {
+  outline: 2px solid var(--primary-color, #2196f3);
+  outline-offset: 2px;
+}
+
 .add-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 .progress-bar-container {
   width: 100%;
-  background: #333;
+  background: var(--surface-border, #e0e0e0);
   border-radius: 8px;
   height: 14px;
   margin-bottom: 8px;
@@ -239,26 +291,39 @@ export default {
   display: flex;
   align-items: center;
 }
+
 .progress-bar {
   height: 100%;
-  background: #0095f6;
+  background: var(--primary-color, #2196f3);
   transition: width 0.3s;
 }
+
 .error {
-  color: #ff4d4f;
-  margin-top: 8px;
-  font-size: 0.9rem;
+  color: #d32f2f;
+  margin-top: 10px;
+  font-size: 0.98rem;
 }
+
 .close-btn {
   position: absolute;
-  top: 8px;
-  right: 12px;
-  font-size: 1.8rem;
+  top: 10px;
+  right: 14px;
+  font-size: 2rem;
   background: none;
   border: none;
-  color: #fff;
+  color: var(--primary-color, #2196f3);
   cursor: pointer;
+  transition: color 0.18s;
+  z-index: 2;
 }
+.close-btn:hover {
+  color: var(--primary-color-hover, #1565c0);
+}
+.close-btn:focus-visible {
+  outline: 2px solid var(--primary-color, #2196f3);
+  outline-offset: 2px;
+}
+
 
 .close-btn {
   position: absolute;
