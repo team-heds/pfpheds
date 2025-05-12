@@ -133,6 +133,26 @@
             </template>
           </Column>
 
+          <Column header="PFP3">
+            <template #body="slotProps">
+              <InputText
+                :value="getYearField(slotProps.data, 'PFP3')"
+                @input="setYearField(slotProps.data, 'PFP3', $event.target.value)"
+                class="p-inputtext-sm small-input"
+              />
+            </template>
+          </Column>
+
+          <Column header="PFP2">
+            <template #body="slotProps">
+              <InputText
+                :value="getYearField(slotProps.data, 'PFP2')"
+                @input="setYearField(slotProps.data, 'PFP2', $event.target.value)"
+                class="p-inputtext-sm small-input"
+              />
+            </template>
+          </Column>
+
           <!-- Colonnes PFP -->
           <Column header="PFP1A">
             <template #body="slotProps">
@@ -148,24 +168,6 @@
               <InputText
                 :value="getYearField(slotProps.data, 'PFP1B')"
                 @input="setYearField(slotProps.data, 'PFP1B', $event.target.value)"
-                class="p-inputtext-sm small-input"
-              />
-            </template>
-          </Column>
-          <Column header="PFP2">
-            <template #body="slotProps">
-              <InputText
-                :value="getYearField(slotProps.data, 'PFP2')"
-                @input="setYearField(slotProps.data, 'PFP2', $event.target.value)"
-                class="p-inputtext-sm small-input"
-              />
-            </template>
-          </Column>
-          <Column header="PFP3">
-            <template #body="slotProps">
-              <InputText
-                :value="getYearField(slotProps.data, 'PFP3')"
-                @input="setYearField(slotProps.data, 'PFP3', $event.target.value)"
                 class="p-inputtext-sm small-input"
               />
             </template>
