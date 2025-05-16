@@ -18,9 +18,9 @@
     </div>
 
     <!-- Contenu du post -->
-    <div class="post-content p-3
+    <div class="post-content p-3">
       <!-- Texte du post -->
-      <div v-if="post.Content" class="post-text ">
+      <div v-if="post.Content" class="post-text">
         <div v-html="post.Content"></div>
         <!-- YouTube Embed -->
         <div v-for="(yt, i) in extractYouTubeLinks(post.Content)" :key="'yt-'+i" class="embed-responsive embed-responsive-16by9 mt-2">
