@@ -23,8 +23,8 @@
       <div v-if="post.Content" class="post-text">
         <div v-html="post.Content"></div>
         <!-- YouTube Embed -->
-        <div v-for="(yt, i) in extractYouTubeLinks(post.Content)" :key="'yt-'+i" class="embed-responsive embed-responsive-16by9 mt-2">
-          <iframe :src="getYouTubeEmbedUrl(yt)" frameborder="0" allowfullscreen style="width:100%;height:900px;"></iframe>
+        <div v-for="(yt, i) in extractYouTubeLinks(post.Content)" :key="'yt-'+i" class="youtube-responsive">
+          <iframe :src="getYouTubeEmbedUrl(yt)" frameborder="0" allowfullscreen></iframe>
         </div>
         <!-- Spotify Embed -->
         <div v-for="(sp, i) in extractSpotifyLinks(post.Content)" :key="'sp-'+i" class="embed-responsive embed-responsive-16by9 mt-2">
@@ -369,8 +369,12 @@ export default {
 
 <style scoped>
 .post-item {
-  padding: 15px;
-  margin-bottom: 10px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 15px 8px;
   background-color: var(--surface-card);
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -394,6 +398,7 @@ export default {
   display: flex;
   flex-direction: column;
   margin-top: 10px;
+
 }
 
 .post-media {
@@ -401,6 +406,7 @@ export default {
   justify-content: center;
   align-items: center;
   width: 100%;
+  height: 100%;
   margin-top: 20px;
 }
 
@@ -409,10 +415,13 @@ export default {
   flex-direction: column;
   align-items: center;
   width: 100%;
+  height: auto;
 }
 
 .media-item {
-  max-width: 80%;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
   height: auto;
   border-radius: 8px;
   object-fit: cover;
@@ -499,44 +508,95 @@ export default {
   color: var(--text-color);
 }
 
+.youtube-responsive {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/9;
+  margin: 12px 0;
+}
+
+.youtube-responsive iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 8px;
+  background: #000;
+}
+
 /* Responsive mobile */
 @media (max-width: 600px) {
+  .post-item,
+  .post-content,
+  .post-media,
+  .media-container {
+    width: 90vw !important;
+    max-width: 90vw !important;
+    box-sizing: border-box !important;
+    padding: 5px 5px 5px 5px !important;
+    margin: 2px 2px 2px 2px !important;
+  }
   .post-item {
-    padding: 10px;
+    border-radius: 10px !important;
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
   }
-
-  .media-item {
-    max-width: 100%;
-  }
-
+  .media-item,
+  .youtube-responsive,
+  .youtube-responsive iframe,
   .pdf-embed {
-    width: 90vw;
+    width: 90vw !important;
+    max-width: 90vw !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    box-sizing: border-box !important;
+    display: block;
+  }
+  .pdf-embed {
+    width: 87vw !important;
+    max-width: 87vw !important;
     height: 60vh;
   }
-
+  .post-item {
+    width: 100%;
+    max-width: 100%;
+    padding: 10px 2px;
+  }
+  .post-content,
+  .post-media,
+  .media-container {
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
+  }
+  .media-item {
+    max-width: 100%;
+    width: 100%;
+  }
   .avatar {
     width: 30px;
     height: 30px;
     margin-right: 8px;
   }
-
-  /* Les boutons d'action en colonne sur mobile */
   .post-actions {
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
   }
-
   .action-button {
     font-size: 0.9em;
   }
-
   .comment-author {
     font-size: 0.8em;
   }
-
   .comment-content {
     font-size: 0.9em;
+  }
+  .post-content,
+  .media-container {
+    padding: 12px 10px !important;
   }
 }
 </style>

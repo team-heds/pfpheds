@@ -558,7 +558,7 @@ export default {
   box-shadow: 0 1px 4px rgba(0,0,0,0.04);
   cursor: pointer;
   transition: background 0.18s;
-  max-width: 880px;
+  max-width: 650px;
   width: 100%;
   margin-left: auto;
   margin-right: auto;

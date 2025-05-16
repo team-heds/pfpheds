@@ -79,13 +79,15 @@ watch(
 <style scoped>
 .textarea-component {
   width: 100%;
-  max-width: 10000px;
+  max-width: 880px;
 }
 
 .editor-container {
   position: relative;
   border-radius: 0.5rem;
+  max-width: 880px;
 }
+
 
 .custom-editor {
   border: none; /* Suppression des bordures rigides */
@@ -93,6 +95,8 @@ watch(
   background-color: var(--surface-card);
   overflow: hidden;
   color: #fff; /* Texte blanc */
+  width: 880px;
+  max-width: 100%;
 }
 
 .custom-editor .ql-container {
@@ -131,4 +135,3 @@ watch(
   }
 }
 </style>
-
