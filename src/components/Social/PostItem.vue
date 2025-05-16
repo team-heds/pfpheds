@@ -17,8 +17,8 @@
       </div>
     </div>
 
-    <!-- Contenu du posst -->
-    <div class="post-content p-3">
+    <!-- Contenu du post -->
+    <div class="post-content p-3
       <!-- Texte du post -->
       <div v-if="post.Content" class="post-text ">
         <div v-html="post.Content"></div>
