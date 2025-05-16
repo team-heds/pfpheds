@@ -16,6 +16,7 @@
       <RightSidebar />
     </div>
   </div>
+  <MobileBottomNav />
 </template>
 
 <script>
@@ -23,13 +24,15 @@ import LeftSidebar from '@/components/Bibliotheque/Social/LeftSidebar.vue'
 import MainFeed from '@/components/Bibliotheque/Social/MainFeed.vue'
 import RightSidebar from '@/components/Bibliotheque/Social/RightSidebar.vue'
 import Navbar from '@/components/Utils/Navbar.vue'
+import MobileBottomNav from '@/components/Utils/MobileBottomNav.vue'
 
 export default {
   components: {
     Navbar,
     LeftSidebar,
     MainFeed,
-    RightSidebar
+    RightSidebar,
+    MobileBottomNav
   }
 };
 </script>
@@ -72,39 +75,37 @@ export default {
   overflow-y: auto; /* Permet de scroller si nécessaire */
 }
 
-/* Responsiveness */
+/* RESPONSIVE DESIGN */
 @media (max-width: 1024px) {
   .newsfeed-layout {
-    grid-template-columns: 1fr 2fr; /* Sidebar gauche et MainFeed */
+    grid-template-columns: 1fr 2fr;
   }
-
   .sidebar-right {
-    display: none; /* Masquer la Sidebar droite */
+    display: none;
   }
 }
 
 @media (max-width: 768px) {
   .newsfeed-layout {
-    grid-template-columns: 1fr; /* Une seule colonne */
-    gap: 1rem; /* Réduire l'espacement entre les éléments */
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 0 0.5rem;
   }
-
   .sidebar-left {
-    display: none; /* Masquer la Sidebar gauche */
+    display: none;
   }
-
   .main-feed {
-    overflow-y: auto; /* Permettre le scroll pour le contenu principal */
+    overflow-y: auto;
+    gap: 0.5rem;
   }
 }
 
 @media (max-width: 480px) {
   .newsfeed-layout {
-    padding: 0 1rem; /* Ajouter un léger padding sur les très petits écrans */
+    padding: 0 0.25rem;
   }
-
   .main-feed {
-    gap: 0.5rem; /* Réduire les espaces entre les éléments pour les écrans très petits */
+    gap: 0.25rem;
   }
 }
 </style>

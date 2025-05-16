@@ -1,40 +1,25 @@
 <!-- src/components/ConvaiWidget.vue -->
 <template>
-  <div class="convai-widget-container">
+  <div v-if="!isMobile" class="convai-widget-container">
     <elevenlabs-convai agent-id="mz6MO6cxxKQYHSghIs10"></elevenlabs-convai>
   </div>
 </template>
 
-<script>
-export default {
-  name: "ConvaiWidget",
-  mounted() {
-    if (!document.querySelector('script[src="https://elevenlabs.io/convai-widget/index.js"]')) {
-      const script = document.createElement("script");
-      script.src = "https://elevenlabs.io/convai-widget/index.js";
-      script.async = true;
-      script.type = "text/javascript";
-      document.body.appendChild(script);
-    }
-  },
+<script setup>
+import { ref, onMounted, onUnmounted } from 'vue';
+const isMobile = ref(window.innerWidth <= 768);
+const handleResize = () => {
+  isMobile.value = window.innerWidth <= 768;
 };
+onMounted(() => window.addEventListener('resize', handleResize));
+onUnmounted(() => window.removeEventListener('resize', handleResize));
 </script>
 
-/* src/components/ConvaiWidget.vue */
 <style scoped>
 .convai-widget-container {
   position: fixed;
-  bottom: 20px;
+  bottom: 80px;
   right: 20px;
-  z-index: 1000;
-}
-
-@media (max-width: 768px) {
-  .convai-widget-container {
-    bottom: 10px;
-    right: 10px;
-    width: 80px; /* Ajuster la taille pour les petits écrans */
-    height: 80px;
-  }
+  z-index: 999;
 }
 </style>
