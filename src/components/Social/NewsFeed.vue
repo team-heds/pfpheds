@@ -90,6 +90,11 @@ export default {
     grid-template-columns: 1fr;
     gap: 1rem;
     padding: 0 0.5rem;
+    width: 100%;
+    max-width: 100vw;
+    margin: 0 auto;
+    box-sizing: border-box;
+    overflow-x: hidden;
   }
   .sidebar-left {
     display: none;
@@ -97,15 +102,24 @@ export default {
   .main-feed {
     overflow-y: auto;
     gap: 0.5rem;
+    width: 100%;
+    max-width: 100vw;
+    margin: 0 auto;
+    box-sizing: border-box;
+    overflow-x: hidden;
   }
 }
 
 @media (max-width: 480px) {
   .newsfeed-layout {
     padding: 0 0.25rem;
+    width: 100%;
+    max-width: 100vw;
   }
   .main-feed {
     gap: 0.25rem;
+    width: 100%;
+    max-width: 100vw;
   }
 }
 </style>

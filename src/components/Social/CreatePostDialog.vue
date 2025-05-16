@@ -5,7 +5,7 @@
     modal
     class="create-post-dialog"
     :breakpoints="{ '768px': '98vw', '1200px': '40vw' }"
-    :style="dialogStyle"
+    :style="{ width: '100vw', maxWidth: '880px', borderRadius: '1.2rem', padding: 0 }"
   >
     <div class="create-post-wrapper">
       <TextAreaComponent
@@ -22,33 +22,36 @@
           {{ tag }}
         </Tag>
       </div>
-      <div class="actions-container w-3 pb-2">
-        <FileUpload
-          ref="fileupload"
-          mode="basic"
-          name="media[]"
-          accept=".jpg,.png,.mp3,.mp4,.pdf"
-          :maxFileSize="10000000"
-          customUpload
-          @select="handleFileSelection"
-          class="file-upload"
-        >
-          <template #choose>
-            <Button
-              label="Médias"
-              icon="pi pi-image"
-              class="upload-button"
-              @click="$refs.fileupload.choose()"
-            />
-          </template>
-        </FileUpload>
-        <Button
-          label="Publier"
-          icon="pi pi-send"
-          class="p-button-primary publish-button"
-          @click="emitPublish"
-          :disabled="!postContent || loading"
-        />
+      <div class="actions-row">
+        <div class="left-action">
+          <FileUpload
+            ref="fileupload"
+            mode="basic"
+            name="media[]"
+            accept=".jpg,.png,.mp3,.mp4,.pdf"
+            :maxFileSize="10000000"
+            customUpload
+            @uploader="handleFileUpload"
+            class="file-upload"
+          >
+            <template #choose>
+              <Button
+                label="Médias"
+                icon="pi pi-image"
+                class="upload-button"
+              />
+            </template>
+          </FileUpload>
+        </div>
+        <div class="right-action">
+          <Button
+            label="Publier"
+            icon="pi pi-send"
+            class="p-button-primary publish-button"
+            @click="emitPublish"
+            :disabled="!postContent || loading"
+          />
+        </div>
       </div>
       <div class="media-preview" v-if="selectedMedia.length > 0">
         <div
@@ -89,15 +92,12 @@ const props = defineProps({
   modelValue: Boolean,
   loading: Boolean,
   value: String,
-  selectedMedia: {
-    type: Array,
-    default: () => []
-  }
 });
 const emit = defineEmits(['update:modelValue', 'publish', 'update:value', 'media-selected', 'remove-media']);
 
 const postContent = ref(props.value || '');
 const detectedTags = ref([]);
+const selectedMedia = ref([]);
 
 watch(() => props.value, (val) => {
   postContent.value = val;
@@ -109,7 +109,7 @@ watch(postContent, (val) => {
 
 const dialogStyle = computed(() => ({
   width: '100vw',
-  maxWidth: '500px',
+  maxWidth: '880px',
   borderRadius: '1.2rem',
   padding: 0
 }));
@@ -119,25 +119,60 @@ function detectTags() {
   const regex = /([#@][\w\-]+)/g;
   detectedTags.value = (postContent.value.match(regex) || []);
 }
-function handleFileSelection(e) {
-  emit('media-selected', e.files);
+function handleFileUpload(event) {
+  selectedMedia.value = event.files;
+  emit('media-selected', event.files);
 }
 function removeMedia(index) {
+  selectedMedia.value.splice(index, 1);
   emit('remove-media', index);
 }
 function emitPublish() {
   emit('publish');
+  emit('update:modelValue', false);
 }
 </script>
 
 <style scoped>
 .create-post-dialog >>> .p-dialog-content {
   padding: 1.2rem 1.1rem 1.1rem 1.1rem;
+  max-width: 880px;
 }
 .create-post-wrapper {
   display: flex;
   flex-direction: column;
   gap: 1.1rem;
+}
+.actions-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 18px 0 0 0;
+  width: 100%;
+  gap: 10px;
+}
+.left-action {
+  flex: 1;
+  display: flex;
+  justify-content: flex-start;
+}
+.right-action {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+}
+@media (max-width: 900px) {
+  .create-post-dialog >>> .p-dialog-content {
+    max-width: 100vw !important;
+  }
+  .actions-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .left-action, .right-action {
+    justify-content: stretch;
+  }
 }
 @media (max-width: 768px) {
   .create-post-dialog >>> .p-dialog-content {
