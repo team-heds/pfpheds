@@ -14,85 +14,23 @@
       @reset-filter="resetFilter"
     />
 
-    <!-- Carte pour la zone de texte et le bouton "Publier" -->
-    <transition name="fade">
-      <div v-show="showTextareaCard && !isMobile" class="post-textarea-card">
-        <div class="post-form">
-          <!-- Nouvelle zone de texte riche -->
-          <TextAreaComponent
-            v-model="newPost"
-            @input="detectTags"
-          />
-
-          <!-- Affichage des tags détectés -->
-          <div v-if="detectedTags.length > 0" class="tags-container p-1">
-            <Tag
-              v-for="(tag, index) in detectedTags"
-              :key="index"
-              :class="tag.startsWith('#') ? 'bg-primary' : 'bg-secondary'"
-            >
-              {{ tag }}
-            </Tag>
-          </div>
-
-          <!-- Conteneur pour les boutons d'upload et de publication -->
-          <div class="actions-container w-3 pb-2">
-            <!-- Upload de fichiers avec un pictogramme d'image et le label "Médias" -->
-            <FileUpload
-              ref="fileupload"
-              mode="basic"
-              name="media[]"
-              accept=".jpg,.png,.mp3,.mp4,.pdf"
-              :maxFileSize="10000000"
-              customUpload
-              @select="handleFileSelection"
-              class="file-upload"
-            >
-              <template #choose>
-                <Button
-                  label="Médias"
-                  icon="pi pi-image"
-                  class="upload-button"
-                  @click="$refs.fileupload.choose()"
-                />
-              </template>
-            </FileUpload>
-
-            <!-- Bouton de publication -->
-            <Button
-              label="Publier"
-              class="publish-button"
-              @click="postMessage"
-            />
-          </div>
-
-          <!-- Prévisualisation des médias sélectionnés -->
-          <div class="media-preview" v-if="selectedMedia.length > 0">
-            <div
-              v-for="(media, index) in selectedMedia"
-              :key="index"
-              class="media-item-wrapper"
-            >
-              <img
-                v-if="media.type.startsWith('image/')"
-                :src="media.preview"
-                alt="Preview"
-                class="media-item"
-              />
-              <video
-                v-if="media.type.startsWith('video/')"
-                :src="media.preview"
-                controls
-                class="media-item"
-              ></video>
-              <Button @click="removeMedia(index)" class="remove-media-btn">
-                ✖
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </transition>
+    <!-- Barre de création façon Facebook -->
+    <div class="quick-post-bar" @click="showCreatePost = true">
+      <span class="quick-post-icon-circle">
+        <i class="pi pi-file-edit quick-post-icon"></i>
+      </span>
+      <div class="quick-post-placeholder">Exprime-toi...</div>
+    </div>
+    <CreatePostDialog
+      v-model="showCreatePost"
+      :loading="loading"
+      :value="newPost"
+      :selectedMedia="selectedMedia"
+      @update:value="val => newPost = val"
+      @publish="postMessage"
+      @media-selected="handleFileSelection"
+      @remove-media="removeMedia"
+    />
 
     <!-- Conteneur pour les posts avec Infinite Scroll -->
     <div class="posts-container" @scroll="handleScroll">
@@ -124,6 +62,7 @@ import Button from "primevue/button";
 import FileUpload from "primevue/fileupload";
 import FilterComponent from "@/components/Social/FilterComponent.vue";
 import TextAreaComponent from "./TextAreaComponent.vue"; // <-- Import du nouveau composant
+import CreatePostDialog from '@/components/Social/CreatePostDialog.vue';
 
 import {
   ref as dbRef,
@@ -154,7 +93,8 @@ export default {
     Button,
     FileUpload,
     FilterComponent,
-    TextAreaComponent, // <-- Enregistrement du nouveau composant
+    TextAreaComponent,
+    CreatePostDialog,
   },
   props: {
     currentUser: Object,
@@ -168,10 +108,12 @@ export default {
     const loading = ref(false);
     const postsPerPage = ref(10);
     const localCurrentUser = ref(null);
-    const showTextareaCard = ref(true);
     const lastScrollTop = ref(0);
     const selectedMedia = ref([]);
     const oldestTimestamp = ref(null);
+    const showCreatePost = ref(false);
+    const userAvatarUrl = ref('');
+    const defaultAvatar = '/default-avatar.png';
 
     // Filtres
     const filterTypes = ref([
@@ -538,7 +480,6 @@ export default {
     // Fonction pour gérer le scroll (pour afficher/masquer la zone de texte)
     const handleScroll = (event) => {
       const scrollTop = event.target.scrollTop;
-      showTextareaCard.value = scrollTop <= lastScrollTop.value;
       lastScrollTop.value = scrollTop;
     };
 
@@ -569,7 +510,6 @@ export default {
       loading,
       postsPerPage,
       localCurrentUser,
-      showTextareaCard,
       lastScrollTop,
       selectedMedia,
       oldestTimestamp,
@@ -581,6 +521,9 @@ export default {
       availableCommunities,
       userCommunities,
       appliedFilter,
+      showCreatePost,
+      userAvatarUrl,
+      defaultAvatar,
       // Méthodes
       extractTags,
       postMessage,
@@ -605,86 +548,100 @@ export default {
 </script>
 
 <style scoped>
+.quick-post-bar {
+  display: flex;
+  align-items: center;
+  background: var(--surface-card, #f8f8fa);
+  border-radius: 1.2rem;
+  padding: 0.5rem 1rem;
+  margin-bottom: 1.1rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  cursor: pointer;
+  transition: background 0.18s;
+  max-width: 650px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+@media (max-width: 900px) {
+  .quick-post-bar {
+    max-width: 98vw;
+  }
+}
+.quick-post-icon-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: var(--surface-hover);
+  border-radius: 50%;
+  margin-right: 0.7rem;
+  flex-shrink: 0;
+}
+.quick-post-icon {
+  font-size: 1rem;
+  color: var(--primary-color);
+}
+.quick-post-placeholder {
+  color: #888;
+  font-size: 1.01rem;
+  flex: 1;
+  text-align: left;
+}
+@media (max-width: 768px) {
+  .quick-post-bar {
+    padding: 0.35rem 0.5rem;
+    border-radius: 0.8rem;
+    margin-bottom: 0.6rem;
+  }
+  .quick-post-icon-circle {
+    width: 26px;
+    height: 26px;
+    margin-right: 0.5rem;
+  }
+  .quick-post-icon {
+    font-size: 0.85rem;
+  }
+  .quick-post-placeholder {
+    font-size: 0.96rem;
+  }
+}
 .main-feed {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  height: 100vh;
+  align-items: center;
+  width: 100%;
+  min-height: 100vh;
   overflow-y: auto;
+  max-width: 740px;
+  margin-left: auto;
+  margin-right: auto;
 }
-
-.post-textarea-card {
-  border-radius: 0.75rem;
+@media (max-width: 900px) {
+  .main-feed {
+    max-width: 98vw;
+  }
 }
-
-.post-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-/* Conteneur pour les boutons d'upload et de publication */
-.actions-container {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-/* Personnalisation du bouton d'upload */
-.upload-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--surface-border);
-  border: none;
-  border-radius: 0.5rem;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  transition: background-color 0.3s, color 0.3s;
-}
-
-.upload-button:hover {
-  background-color: var(--primary-color-light);
-  color: var(--primary-color);
-}
-
-.upload-button .pi {
-  font-size: 1.2rem;
-  margin-right: 0.5rem;
-}
-
-/* Bouton de publication */
-.publish-button {
-  flex-grow: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .tags-container {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
 }
-
 .media-preview {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
   margin-top: 1rem;
 }
-
 .media-item-wrapper {
   position: relative;
 }
-
 .media-item {
   max-width: 100px;
   max-height: 100px;
   border-radius: 8px;
 }
-
 .remove-media-btn {
   position: absolute;
   top: 0;
@@ -700,7 +657,6 @@ export default {
   align-items: center;
   justify-content: center;
 }
-
 /* Responsive mobile */
 @media (max-width: 768px) {
   .actions-container {
@@ -708,7 +664,6 @@ export default {
     align-items: stretch;
     gap: 0.5rem;
   }
-
   .publish-button {
     width: 100%;
   }

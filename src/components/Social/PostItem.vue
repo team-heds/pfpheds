@@ -8,7 +8,7 @@
           v-if="post.IdUser"
           :to="{ name: 'Profile', params: { id: post.IdUser } }"
         >
-      <strong>  <p class="text-primary strong">{{ authorName }}</p></strong>
+          <strong><p class="text-primary strong">{{ authorName }}</p></strong>
         </router-link>
         <h5 v-else>{{ authorName }}</h5>
         <div>
@@ -20,15 +20,15 @@
     <!-- Contenu du post -->
     <div class="post-content p-3">
       <!-- Texte du post -->
-      <div v-if="post.Content" class="post-text ">
+      <div v-if="post.Content" class="post-text">
         <div v-html="post.Content"></div>
         <!-- YouTube Embed -->
         <div v-for="(yt, i) in extractYouTubeLinks(post.Content)" :key="'yt-'+i" class="embed-responsive embed-responsive-16by9 mt-2">
-          <iframe :src="getYouTubeEmbedUrl(yt)" frameborder="0" allowfullscreen style="width:100%;height:900px;"></iframe>
+          <iframe :src="getYouTubeEmbedUrl(yt)" frameborder="0" allowfullscreen style="width:100%;height:220px;"></iframe>
         </div>
         <!-- Spotify Embed -->
         <div v-for="(sp, i) in extractSpotifyLinks(post.Content)" :key="'sp-'+i" class="embed-responsive embed-responsive-16by9 mt-2">
-          <iframe :src="getSpotifyEmbedUrl(sp)" frameborder="0" allow="encrypted-media" style="width:100%;min-height:152px;"></iframe>
+          <iframe :src="getSpotifyEmbedUrl(sp)" frameborder="0" allow="encrypted-media" style="width:100%;min-height:120px;"></iframe>
         </div>
       </div>
 
@@ -52,14 +52,15 @@
                 controls
                 muted
                 playsinline
+                style="max-height:220px; width:100%; object-fit:cover;"
               ></video>
             </template>
             <template v-else-if="isPDF(mediaUrl)">
-              <embed :src="mediaUrl" type="application/pdf" class="media-item pdf-embed" />
+              <embed :src="mediaUrl" type="application/pdf" class="media-item pdf-embed" style="max-height:220px; width:100%; object-fit:cover;" />
             </template>
             <template v-else>
               <a :href="mediaUrl" target="_blank" rel="noopener noreferrer" class="media-item media-link">
-                Ouvrir le fichier
+                {{ mediaUrl }}
               </a>
             </template>
           </div>
@@ -120,6 +121,21 @@
         <div class="comment-content">{{ reply.Content }}</div>
       </div>
     </div>
+
+    <!-- Zone de commentaire compacte en bas du post -->
+    <div class="comment-quick-bar">
+      <input
+        v-model="quickComment"
+        class="quick-comment-input"
+        type="text"
+        placeholder="Ajouter un commentaire..."
+        @keyup.enter="submitQuickComment"
+        maxlength="200"
+      />
+      <button class="quick-comment-btn" :disabled="!quickComment.trim()" @click="submitQuickComment">
+        <i class="pi pi-send"></i>
+      </button>
+    </div>
   </div>
 </template>
 
@@ -154,7 +170,8 @@ export default {
       likeCount: 0,
       commentCount: 0,
       likedUsers: [],
-      showComments: false // Par défaut les commentaires sont cachés, surtout utile sur mobile
+      showComments: false, // Par défaut les commentaires sont cachés, surtout utile sur mobile
+      quickComment: '',
     };
   },
   watch: {
@@ -363,180 +380,144 @@ export default {
       const id = match[2];
       return `https://open.spotify.com/embed/${type}/${id}`;
     },
+    submitQuickComment() {
+      if (!this.quickComment.trim()) return;
+      // Ici, tu peux appeler ta logique d'ajout de commentaire (API, emit, etc.)
+      // Exemple placeholder :
+      alert('Commentaire envoyé : ' + this.quickComment);
+      this.quickComment = '';
+    },
   },
 };
 </script>
 
 <style scoped>
 .post-item {
-  padding: 15px;
-  margin-bottom: 10px;
-  background-color: var(--surface-card);
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-  -ms-overflow-style: none;  /* IE et Edge */
-  scrollbar-width: none;     /* Firefox */
+  background: var(--surface-card, #fff);
+  border-radius: 1.1rem;
+  box-shadow: 0 2px 8px rgba(40,40,60,0.07);
+  margin-bottom: 1.2rem;
+  padding: 1.1rem 1rem 0.6rem 1rem;
+  max-width: 600px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
 }
-
 .post-header {
   display: flex;
   align-items: center;
-  margin-bottom: 10px;
+  gap: 0.7rem;
+  margin-bottom: 0.6rem;
 }
-
-.post-author {
-  display: flex;
-  flex-direction: column;
-}
-
-.post-content {
-  display: flex;
-  flex-direction: column;
-  margin-top: 10px;
-}
-
-.post-media {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  margin-top: 20px;
-}
-
-.media-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-}
-
-.media-item {
-  max-width: 80%;
-  height: auto;
-  border-radius: 8px;
-  object-fit: cover;
-  display: block;
-  margin: 0 auto;
-}
-
-.pdf-embed {
-  width: 70vw;
-  height: 80vh;
-  border: none;
-  margin: 0 auto;
-}
-
-.media-link {
-  word-break: break-all;
-  color: var(--primary-color);
-  text-decoration: underline;
-}
-
-.post-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 0;
-  border-top: 1px solid var(--surface-border);
-}
-
-
-.action-button {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  cursor: pointer;
-  color: var(--text-color);
-  transition: color 0.3s;
-}
-
-.action-button:hover {
-  color: var(--primary-color);
-}
-
-.action-icon {
-  font-size: 20px;
-}
-
 .avatar {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  margin-right: 10px;
   object-fit: cover;
+  border: 1.5px solid #e3e3e3;
 }
-
-.liked-users {
-  margin-top: 10px;
+.post-author {
+  flex: 1;
+  min-width: 0;
 }
-
-.liked-users ul {
-  list-style-type: disc;
-  margin: 5px 0 0 20px;
-  padding: 0;
+.post-date {
+  font-size: 0.8rem;
+  color: #888;
 }
-
-.comments-section {
-  margin-top: 20px;
+.post-content {
+  font-size: 1rem;
+  word-break: break-word;
 }
-
-.comment-item {
-  background: var(--surface-50);
-  padding: 10px;
-  border-radius: 6px;
-  margin-bottom: 10px;
+.media-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
-
-.comment-author {
-  font-size: 0.9em;
-  margin-bottom: 5px;
-  color: var(--text-secondary-color);
+.media-item {
+  max-width: 100%;
+  border-radius: 0.7rem;
+  margin-top: 0.3rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
 }
-
-.comment-content {
-  font-size: 1em;
-  color: var(--text-color);
+.embed-responsive {
+  width: 100%;
+  border-radius: 0.7rem;
+  overflow: hidden;
 }
-
-/* Responsive mobile */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .post-item {
-    padding: 10px;
+    padding: 0.7rem 0.3rem 0.5rem 0.3rem;
+    border-radius: 0.6rem;
+    box-shadow: 0 1px 4px rgba(40,40,60,0.08);
+    margin-bottom: 0.7rem;
+    max-width: 98vw;
   }
-
-  .media-item {
-    max-width: 100%;
-  }
-
-  .pdf-embed {
-    width: 90vw;
-    height: 60vh;
-  }
-
   .avatar {
-    width: 30px;
-    height: 30px;
-    margin-right: 8px;
+    width: 32px;
+    height: 32px;
   }
-
-  /* Les boutons d'action en colonne sur mobile */
-  .post-actions {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
+  .post-header {
+    gap: 0.5rem;
+    margin-bottom: 0.3rem;
   }
-
-  .action-button {
-    font-size: 0.9em;
+  .media-item, .embed-responsive iframe, .embed-responsive embed, .embed-responsive video {
+    max-height: 220px !important;
+    min-height: 120px;
+    object-fit: cover;
   }
-
-  .comment-author {
-    font-size: 0.8em;
+  .post-content {
+    font-size: 0.97rem;
   }
-
-  .comment-content {
-    font-size: 0.9em;
+}
+.comment-quick-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.7rem;
+  padding: 0.5rem 0.6rem 0.2rem 0.6rem;
+  background: var(--surface-card, #f8f8fa);
+  border-radius: 0.7rem;
+}
+.quick-comment-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 0.97rem;
+  padding: 0.4rem 0.2rem;
+  outline: none;
+}
+.quick-comment-btn {
+  background: var(--primary-color, #1976d2);
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.quick-comment-btn:disabled {
+  background: #bfc9d1;
+  cursor: not-allowed;
+}
+@media (max-width: 768px) {
+  .comment-quick-bar {
+    padding: 0.3rem 0.2rem 0.1rem 0.2rem;
+    margin-top: 0.4rem;
+    border-radius: 0.5rem;
+  }
+  .quick-comment-input {
+    font-size: 0.93rem;
+    padding: 0.3rem 0.1rem;
+  }
+  .quick-comment-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 1rem;
   }
 }
 </style>
