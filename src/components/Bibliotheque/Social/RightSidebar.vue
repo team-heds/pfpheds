@@ -2,7 +2,7 @@
 <template>
   <div class="right-sidebar">
     <!-- Section Communautés -->
-    <div class="profile-section card">
+    <div class="profile-section">
       <div class="communities-header">
         <h4 @click="goToCommunities" class="clickable">Communautés</h4>
       </div>
@@ -29,7 +29,7 @@
     </div>
 
     <!-- Section Hashtags -->
-    <div class="profile-section card">
+    <div class="profile-section">
       <div class="hashtags">
         <h4 class="text-color">Hashtags</h4>
         <ul>
@@ -139,7 +139,6 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 1.5rem; /* Espace entre les sections */
-  border-radius: 1.2rem; /* Coins arrondis taille que je dois uttilser */
 }
 
 /* Section Communautés */
@@ -209,5 +208,15 @@ export default {
   text-decoration: none;
   color: inherit;
   border-radius: 1.2rem; /* Coins arrondis taille que je dois uttilser */
+}
+.profile-section {
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  max-height: 100vh;
+  min-height: auto;
+  background: var(--surface-card);
+  padding: 1.5rem;
+  border-radius: 1.2rem;
 }
 </style>
