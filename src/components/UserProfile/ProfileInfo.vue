@@ -230,9 +230,28 @@ img {
 }
 
 /* Responsive */
-@media (max-width: 600px) {
-  .w-4 {
+@media (max-width: 991px) {
+  .filter-layout {
+    flex-direction: column !important;
+    display: flex;
+  }
+  .sidebar-left,
+  .sidebar-right {
+    display: none !important;
+  }
+  .main-content {
     width: 100% !important;
+    padding: 0 0.5rem;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+  .filter-menu {
+    padding: 0.5rem 0 !important;
+  }
+}
+@media (max-width: 600px) {
+  .main-content {
+    padding: 0 0.2rem;
   }
 }
 </style>

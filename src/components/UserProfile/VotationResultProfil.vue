@@ -435,4 +435,49 @@ onMounted(() => {
   padding: 2rem;
   border-radius: 2rem;
 }
+
+/* --- Responsive Mobile Styles --- */
+@media (max-width: 991px) {
+  .grid {
+    gap: 1.2rem !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding: 0 1.2rem;
+    justify-content: center;
+  }
+  .surfaces-card.shadow-2.mb-3.flex.flex-column.gap-2 {
+    padding: 1.5rem 1.2rem !important;
+    margin: 1.2rem 0 !important;
+    min-width: 0;
+    border-radius: 1.2rem;
+    display: flex;
+    align-items: center;
+  }
+  .flex.align-items-center {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 0.7rem;
+    width: 100%;
+  }
+  h4.m-0 {
+    margin: 0 !important;
+    width: 100% !important;
+    text-align: center;
+    font-size: 1.2rem;
+  }
+  .list-none.p-0.m-2 {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  .m-2 {
+    margin-left: 0.4rem !important;
+    margin-right: 0.4rem !important;
+  }
+}
+@media (max-width: 600px) {
+  .grid, .surfaces-card.shadow-2.mb-3.flex.flex-column.gap-2 {
+    padding-left: 0.4rem !important;
+    padding-right: 0.4rem !important;
+  }
+}
 </style>

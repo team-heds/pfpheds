@@ -1,65 +1,57 @@
 <template>
-  <div class="mb-4">
-    <div class="p-pt-4 p-pb-4">
-      <div class="surfaces-card p-4 shadow-2 ">
-        <!-- Section Avatar (Image de profil) -->
-        <div class="field m-2 col-12 md:col-6 w-full">
-          <div class="flex align-items-center">
-            <img :src="user.photoURL || defaultAvatar" alt="Avatar" class="p-2" style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover;" />
-            <h1 class="pl-4">{{ user.prenom }} {{ user.nom }}</h1>
-          </div>
-        </div>
+  <div class="mb-4 card-profile-responsive">
+    <div class="avatar-wrapper">
+      <img :src="user.photoURL || defaultAvatar" alt="Avatar" />
+      <h1 class="pl-4">{{ user.prenom }} {{ user.nom }}</h1>
+    </div>
+    <h5 class="mb-4">Informations personnelles</h5>
+    <div class="surfaces-card info-grid">
+      <div class="info-item">
+        <i class="pi pi-envelope info-icon"></i>
+        <span class="info-label">Email :</span>
+        <span class="info-value">{{ user.email }}</span>
       </div>
-
-      <h5 class="mb-4">Informations personnelles</h5>
-      <div class="surfaces-card info-grid">
-        <div class="info-item">
-          <i class="pi pi-envelope info-icon"></i>
-          <span class="info-label">Email :</span>
-          <span class="info-value">{{ user.email }}</span>
-        </div>
-        <div class="info-item">
-          <i class="pi pi-user info-icon"></i>
-          <span class="info-label">Nom, Prénom :</span>
-          <span class="info-value">{{ user.nom }} {{user.prenom}}</span>
-        </div>
-        <div class="info-item">
-          <i class="pi pi-briefcase info-icon"></i>
-          <span class="info-label">Classe :</span>
-          <span class="info-value">{{ user.classe }}</span>
-        </div>
-        <div class="info-item">
-          <i class="pi pi-map-marker info-icon"></i>
-          <span class="info-label">Ville :</span>
-          <span class="info-value">{{ user.ville }}</span>
-        </div>
-        <div class="info-item">
-          <i class="pi pi-id-card info-icon"></i>
-          <span class="info-label">Id :</span>
-          <span class="info-value id">{{ user.uid }}</span>
-        </div>
-        <div class="info-item info-item-respondant">
-          <i class="pi pi-users info-icon"></i>
-          <span class="info-label">Répondant HES :</span>
-          <br class="show-on-overflow"/>
-          <span class="info-value">
-            <template v-if="isAdmin">
-              <Dropdown
-                v-model="selectedTeacher"
-                :options="teachersOptions"
-                optionLabel="label"
-                optionValue="value"
-                placeholder="Sélectionnez un enseignant"
-              />
-            </template>
-            <template v-else>
-              {{ user.repondantHES }}
-            </template>
-          </span>
-        </div>
-        <div class="info-item info-item-full actions-row">
-          <Button label="Sauvegarder le profil" @click="saveProfile" class="save-btn" />
-        </div>
+      <div class="info-item">
+        <i class="pi pi-user info-icon"></i>
+        <span class="info-label">Nom, Prénom :</span>
+        <span class="info-value">{{ user.nom }} {{user.prenom}}</span>
+      </div>
+      <div class="info-item">
+        <i class="pi pi-briefcase info-icon"></i>
+        <span class="info-label">Classe :</span>
+        <span class="info-value">{{ user.classe }}</span>
+      </div>
+      <div class="info-item">
+        <i class="pi pi-map-marker info-icon"></i>
+        <span class="info-label">Ville :</span>
+        <span class="info-value">{{ user.ville }}</span>
+      </div>
+      <div class="info-item">
+        <i class="pi pi-id-card info-icon"></i>
+        <span class="info-label">Id :</span>
+        <span class="info-value id">{{ user.uid }}</span>
+      </div>
+      <div class="info-item info-item-respondant">
+        <i class="pi pi-users info-icon"></i>
+        <span class="info-label">Répondant HES :</span>
+        <br class="show-on-overflow"/>
+        <span class="info-value">
+          <template v-if="isAdmin">
+            <Dropdown
+              v-model="selectedTeacher"
+              :options="teachersOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Sélectionnez un enseignant"
+            />
+          </template>
+          <template v-else>
+            {{ user.repondantHES }}
+          </template>
+        </span>
+      </div>
+      <div class="info-item info-item-full actions-row">
+        <Button label="Sauvegarder le profil" @click="saveProfile" class="save-btn" />
       </div>
     </div>
   </div>
@@ -370,5 +362,111 @@ onMounted(async () => {
   display: block;
   width: 100%;
   word-break: break-word;
+}
+
+/* --- Responsive Mobile Styles --- */
+@media (max-width: 991px) {
+  .mb-4 {
+    margin-bottom: 1rem !important;
+  }
+  .p-pt-4, .p-pb-4, .p-4 {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+  .surfaces-card {
+    border-radius: 1rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  }
+  .flex.align-items-center {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 0.5rem;
+  }
+  img[alt="Avatar"] {
+    width: 90px !important;
+    height: 90px !important;
+    margin: 0 auto;
+    display: block;
+  }
+  h1.pl-4 {
+    padding-left: 0 !important;
+    font-size: 1.2rem;
+    text-align: center;
+    margin-top: 0.4rem;
+  }
+  .info-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .info-item {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    font-size: 0.98rem;
+    padding: 0.2rem 0.1rem;
+  }
+  .actions-row {
+    justify-content: center !important;
+    display: flex;
+  }
+  .save-btn {
+    width: 100% !important;
+    font-size: 1rem;
+  }
+}
+@media (max-width: 600px) {
+  .surfaces-card {
+    padding: 0.3rem !important;
+  }
+  h1.pl-4 {
+    font-size: 1rem;
+  }
+}
+
+.card-profile-responsive {
+  padding: 1.2rem 1rem 1.2rem 1rem;
+}
+.avatar-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding-bottom: 1rem;
+}
+.avatar-wrapper img[alt="Avatar"] {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin: 0 auto;
+  display: block;
+}
+.avatar-wrapper h1 {
+  padding-left: 0 !important;
+  text-align: center;
+  margin-top: 0.4rem;
+}
+@media (max-width: 991px) {
+  .card-profile-responsive {
+    padding: 1rem 0.7rem 1rem 0.7rem;
+  }
+  .avatar-wrapper img[alt="Avatar"] {
+    width: 90px !important;
+    height: 90px !important;
+  }
+  .avatar-wrapper {
+    padding-bottom: 0.7rem;
+  }
+}
+@media (max-width: 600px) {
+  .card-profile-responsive {
+    padding: 0.5rem 0.2rem 0.5rem 0.2rem;
+  }
+  .avatar-wrapper img[alt="Avatar"] {
+    width: 70px !important;
+    height: 70px !important;
+  }
 }
 </style>

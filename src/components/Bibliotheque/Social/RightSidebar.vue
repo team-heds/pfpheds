@@ -140,7 +140,7 @@ export default {
   flex-direction: column;
   gap: 1.5rem;
   margin-right: 4rem;
-  width: 100%;
+  width: auto;
 }
 
 /* Section Communautés */
@@ -234,6 +234,7 @@ export default {
   display: flex;
   flex-direction: column;
   height: auto;
+  width: 100%;
   max-height: 100vh;
   min-height: auto;
   background: var(--surface-card);

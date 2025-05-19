@@ -2,7 +2,7 @@
 <template>
   <div class="filter-sidebar">
     <!-- Section Filtrer par Canton -->
-    <div class="filter-section card">
+    <div class="filter-section ">
       <h4>Filtrer par Canton</h4>
       <!-- Ajout de la classe "two-columns" pour le layout en deux colonnes -->
       <ul class="filter-list">
@@ -142,6 +142,7 @@ export default {
   background: var(--surface-card);
   box-shadow: 0 2px 8px rgba(0,0,0,0.03);
   margin: 0;
+  width: auto;
 }
 
 h4 {
@@ -157,7 +158,7 @@ h4 {
   margin: 0;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 0.5rem 1.5rem;
+  gap: 0.2rem 1rem;
 }
 
 .filter-item {
