@@ -32,8 +32,8 @@ export default defineConfig({
         name: 'HEdS',
         short_name: 'HEdS',
         description: 'Progressive Web App pour PFPHEDS',
-        theme_color: '#111827',
-        background_color: '#111827',
+        theme_color: '#0B213F',
+        background_color: '#0B213F',
         display: 'standalone',
         start_url: '.',
         icons: [
