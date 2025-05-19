@@ -250,6 +250,7 @@ export default {
 </script>
 <style scoped>
 .sidebar {
+  margin-left: 4rem;
   display: flex;
   flex-direction: column;
   max-height: 100vh;
@@ -268,6 +269,7 @@ export default {
   box-shadow: 0 2px 8px rgba(0,0,0,0.03);
   font-weight: bold;
   text-align: left;
+  margin-left: 4rem;
 }
 
 .messaging-card {
@@ -276,6 +278,7 @@ export default {
   border-radius: 1.2rem;
   background: var(--surface-card);
   box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  margin-left: 4rem;
 }
 
 .scrollable-content {

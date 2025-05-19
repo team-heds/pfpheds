@@ -139,6 +139,7 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  margin-right: 4rem;
 }
 
 /* Section Communautés */
@@ -237,5 +238,6 @@ export default {
   background: var(--surface-card);
   padding: 1rem;
   border-radius: 1.2rem;
+  margin-right: 4rem;
 }
 </style>
