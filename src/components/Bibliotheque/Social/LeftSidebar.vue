@@ -43,41 +43,42 @@
 
     <!-- Partie inférieure scrollable -->
     <div class="scrollable-content">
+      <div v-if="recentConversations.length === 0" class="text-center text-600 mt-4">
+        Aucune conversation récente
+      </div>
       <UserCard
-        v-for="user in users"
+        v-for="user in recentConversations"
         :key="user.id"
         :user="user"
+        :lastReceivedMessageAt="user.lastReceivedMessageAt"
         @click="openChat(user)"
       />
-
-
     </div>
   </div>
 </template>
 <script>
 import Avatar from "primevue/avatar";
 import Toast from "primevue/toast";
-import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
-import { getDatabase, ref as dbRef, get, update } from "firebase/database";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { getDatabase, ref as dbRef, get, update, onValue } from "firebase/database";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from '../../../../firebase.js';
-import ChatSidebar from '@/views/apps/chat/ChatSidebar.vue'
-import UserCard from '@/views/apps/chat/UserCard.vue'
+import UserCard from '@/views/apps/chat/UserCard.vue';
 
 const defaultAvatar = '../../../public/assets/images/avatar/01.jpg';
 
 export default {
   name: "LeftSidebar",
-  components: { UserCard, ChatSidebar, Avatar, Toast },
+  components: { UserCard, Avatar, Toast },
   data() {
     return {
       user: {
         Prenom: "",
         Nom: "",
         PhotoURL: "" || defaultAvatar,
-        id: "" // Ajout de l'ID utilisateur
+        id: ""
       },
-      users: [] // Liste de tous les utilisateurs
+      recentConversations: [] // 6 dernières conversations
     };
   },
   computed: {
@@ -140,25 +141,59 @@ export default {
         console.log("Aucun utilisateur trouvé avec l'UID :", uid);
       }
     },
-    async fetchAllUsers() {
+    async fetchRecentConversations() {
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
+      const userId = currentUser.uid;
       const db = getDatabase();
-      const usersRef = dbRef(db, 'Users');
-      const snapshot = await get(usersRef);
-      if (snapshot.exists()) {
-        const usersData = snapshot.val();
-        this.users = Object.keys(usersData).map(key => ({
-          id: key,
-          ...usersData[key]
-        }));
-      } else {
-        console.log("Aucun utilisateur trouvé.");
-      }
+      const conversationsRef = dbRef(db, 'conversations');
+      onValue(conversationsRef, async (snapshot) => {
+        const data = snapshot.val() || {};
+        console.log('[DEBUG] userId courant:', userId);
+        console.log('[DEBUG] conversations node complet:', data);
+        // Nouvelle logique adaptée à la structure
+        let convs = Object.entries(data)
+          .filter(([key, conv]) => key.includes(userId))
+          .map(([key, conv]) => {
+            const [id1, id2] = key.split('-');
+            const otherUserId = id1 === userId ? id2 : id1;
+            return {
+              id: key,
+              otherUserId,
+              lastReceivedMessageAt: conv.lastReceivedMessageAt || 0
+            };
+          });
+        console.log('Conversations trouvées:', convs);
+        // Trier par date décroissante
+        convs.sort((a, b) => (b.lastReceivedMessageAt || 0) - (a.lastReceivedMessageAt || 0));
+        convs = convs.slice(0, 6);
+        // Récupérer les infos de l'autre utilisateur
+        const dbUsers = dbRef(db, 'Users');
+        const usersSnap = await get(dbUsers);
+        const usersData = usersSnap.val() || {};
+        this.recentConversations = convs.map(conv => {
+          const userData = usersData[conv.otherUserId];
+          if (!userData) return null;
+          return {
+            ...userData,
+            id: conv.otherUserId,
+            lastReceivedMessageAt: conv.lastReceivedMessageAt
+          };
+        }).filter(u => u && u.id);
+        console.log('Utilisateurs à afficher:', this.recentConversations);
+      });
+    },
+    openChat(user) {
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
+      const userId = currentUser.uid;
+      const conversationId = [userId, user.id].sort().join('-');
+      this.$router.push({ name: 'IndexChat', query: { id: conversationId, user: user.id } });
     },
     goToProfile() {
       this.$router.push("/profile/" + this.user.id);
-    },
-    goToPfpHistory() {
-      this.$router.push("/historique_pfp");
     },
     goToDocumentPFP() {
       this.$router.push("/documents_pfp");
@@ -173,20 +208,15 @@ export default {
         console.error("Erreur de déconnexion:", error);
         this.$refs.toast.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur de déconnexion : ' + (error && error.message ? error.message : error), life: 6000 });
       }
-    },
-    openChat(user) {
-      this.$router.push(`/chat?user=${encodeURIComponent(user.id)}`);
     }
   },
   mounted() {
     const auth = getAuth();
-    onAuthStateChanged(auth, (authUser) => {
-      if (authUser) {
-        console.log("Utilisateur connecté :", authUser); // Debugging
-        this.fetchUserProfile(authUser.uid);
-        this.fetchAllUsers();
-      } else {
-        console.log("Aucun utilisateur connecté."); // Debugging
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        this.user.id = user.uid;
+        this.fetchUserProfile(user.uid);
+        this.fetchRecentConversations();
       }
     });
   }
