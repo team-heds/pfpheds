@@ -64,8 +64,23 @@
 
   <!-- Nouvelle card "test" sous la sidebar -->
   <div class="test-card">
-    test
+    <h4>Événements à venir</h4>
+    <ul class="event-list">
+      <li>
+        <span class="event-title">Afterwork étudiants</span>
+        <span class="event-date">21/05/2025</span>
+      </li>
+      <li>
+        <span class="event-title">Conférence santé</span>
+        <span class="event-date">28/05/2025</span>
+      </li>
+    </ul>
+    <button class="p-button p-button-text event-link">
+      Voir tous les événements
+      <span class="pi pi-arrow-right event-arrow"></span>
+    </button>
   </div>
+
 </template>
 <script>
 import Avatar from "primevue/avatar";
@@ -252,7 +267,7 @@ export default {
   background: var(--surface-card);
   box-shadow: 0 2px 8px rgba(0,0,0,0.03);
   font-weight: bold;
-  text-align: center;
+  text-align: left;
 }
 
 .messaging-card {
@@ -284,7 +299,6 @@ export default {
   top: 0;
   z-index: 1;
   background: var(--surface-card);
-  padding-bottom: 1rem;
 }
 
 /* Liens du profil */
@@ -326,6 +340,43 @@ export default {
   margin-right: 0.5rem;
   padding: 0.5rem;
   color: var(--primary-color);
+}
+
+.event-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem 0;
+}
+.event-list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.25rem 0;
+  font-size: 0.95rem;
+}
+.event-title {
+  font-weight: 500;
+}
+.event-date {
+  color: var(--text-color-secondary);
+  font-size: 0.92em;
+}
+
+.event-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--primary-color);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.event-arrow {
+  font-size: 1.2em;
+  margin-left: 0.2em;
 }
 
 /* Styles supplémentaires pour UserCard, etc. peuvent rester inchangés */

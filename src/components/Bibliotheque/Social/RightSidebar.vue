@@ -161,7 +161,7 @@ export default {
 
 .communities-list {
   list-style: none;
-  padding: 1rem;
+
   margin: 0;
 }
 
@@ -200,7 +200,7 @@ export default {
 
 .hashtags ul {
   list-style: none;
-  padding: 1rem;
+  padding-top:  0.5rem;
   margin: 0;
   display: flex;
   flex-wrap: wrap;
@@ -235,7 +235,7 @@ export default {
   max-height: 100vh;
   min-height: auto;
   background: var(--surface-card);
-  padding: 1.5rem;
+  padding: 1rem;
   border-radius: 1.2rem;
 }
 </style>
