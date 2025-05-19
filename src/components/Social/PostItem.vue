@@ -928,10 +928,12 @@ export default {
 
 @media (max-width: 600px) {
   .comment-bar-modern.compact {
-    padding: 3px 3px;
-    border-radius: 9px;
-    gap: 5px;
-    min-height: 32px;
+    width: 100% !important;
+    margin: 12px 0 0 0;
+    box-sizing: border-box;
+    border-radius: 10px;
+    padding: 5px 5vw!important;
+    background: var(--surface-card, #182336);
   }
   .comment-bar-send.compact {
     width: 22px;
@@ -941,6 +943,9 @@ export default {
   .comment-bar-textarea.compact {
     font-size: 0.93em;
     padding: 2px 4px;
+  }
+  .avatar {
+    margin: 1rem !important;
   }
 }
 
@@ -968,4 +973,5 @@ export default {
 .post-actions.post-actions-mobile-row .action-icon {
   font-size: 1.05em;
 }
+
 </style>
