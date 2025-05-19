@@ -227,10 +227,12 @@ export default {
 .sidebar {
   display: flex;
   flex-direction: column;
-  height: 100vh; /* Assure que la sidebar occupe toute la hauteur de la fenêtre */
+  height: auto;
+  max-height: 100vh;
+  min-height: 350px;
   background: var(--surface-card);
-  padding: 1rem;
-  border-radius: 1.2rem; /* Coins arrondis taille que je dois uttilser */
+  padding: 1.5rem;
+  border-radius: 1.2rem;
 }
 
 /* Partie supérieure fixe */
@@ -248,7 +250,7 @@ export default {
 .scrollable-content {
   flex: 1 1 auto; /* Prend le reste de l'espace */
   overflow-y: auto;
-  /* Masquer la scrollbar pour Chrome, Edge, Safari */
+  max-height: 50vh;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE et Edge Legacy */
 }
