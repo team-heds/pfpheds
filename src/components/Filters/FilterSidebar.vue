@@ -5,7 +5,7 @@
     <div class="filter-section card">
       <h4>Filtrer par Canton</h4>
       <!-- Ajout de la classe "two-columns" pour le layout en deux colonnes -->
-      <ul class="filter-list two-columns">
+      <ul class="filter-list">
         <li
           v-for="canton in cantons"
           :key="canton"
@@ -147,7 +147,7 @@ export default {
 h4 {
   font-size: 1.1rem;
   font-weight: 500;
-  color: var(--primary-color);
+  color: #fff;
   margin-bottom: 1rem;
 }
 
@@ -155,12 +155,9 @@ h4 {
   list-style: none;
   padding: 0;
   margin: 0;
-}
-
-.filter-list.two-columns {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 0.5rem;
+  gap: 0.5rem 1.5rem;
 }
 
 .filter-item {
@@ -169,6 +166,7 @@ h4 {
   gap: 0.5rem;
   padding: 0.5rem 0;
   transition: background-color 0.2s ease;
+  justify-content: flex-start;
 }
 
 .filter-item:hover {
@@ -183,6 +181,7 @@ h4 {
 .filter-item label {
   font-size: 1rem;
   color: var(--text-color);
+  text-align: left;
 }
 
 .text-center {
