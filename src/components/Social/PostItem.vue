@@ -28,7 +28,7 @@
         </div>
         <!-- Spotify Embed -->
         <div v-for="(sp, i) in extractSpotifyLinks(post.Content)" :key="'sp-'+i" class="embed-responsive embed-responsive-16by9 mt-2">
-          <iframe :src="getSpotifyEmbedUrl(sp)" frameborder="0" allow="encrypted-media" style="width:100%;min-height:152px;"></iframe>
+          <iframe :src="getSpotifyEmbedUrl(sp)" frameborder="0" allow="encrypted-media" style="width:100%;min-height:152px; background: var(--surface-card);"></iframe>
         </div>
         <!-- Instagram Embed -->
         <div v-for="(ig, i) in extractInstagramLinks(post.Content)" :key="'ig-'+i" class="instagram-embed-wrapper mt-2">
@@ -38,7 +38,7 @@
             allowtransparency="true"
             allowfullscreen
             class="instagram-embed"
-            style="width:100%; aspect-ratio:9/16; max-width:400px; min-height:520px; max-height:700px; margin:auto; display:block; border-radius:12px; background:#fff;"
+            style="width:100%; aspect-ratio:9/16; max-width:400px; min-height:520px; max-height:700px; margin:auto; display:block; border-radius:12px; background: var(--surface-card);"
           ></iframe>
         </div>
       </div>
