@@ -55,7 +55,14 @@
               ></video>
             </template>
             <template v-else-if="isPDF(mediaUrl)">
-              <embed :src="mediaUrl" type="application/pdf" class="media-item pdf-embed" />
+              <div v-if="!isMobile">
+                <embed :src="mediaUrl" type="application/pdf" class="media-item pdf-embed" />
+              </div>
+              <div v-else style="text-align:center; margin:16px 0;">
+                <a :href="mediaUrl" target="_blank" rel="noopener noreferrer" class="media-item media-link pdf-mobile-btn">
+                  📄 Voir le PDF
+                </a>
+              </div>
             </template>
             <template v-else>
               <a :href="mediaUrl" target="_blank" rel="noopener noreferrer" class="media-item media-link">
@@ -190,9 +197,9 @@ export default {
       commentCount: 0,
       likedUsers: [],
       showComments: false,
-      // Ajout utilisateur connecté
       currentUserLocal: null,
-      userPhotoCache: {}, // { userId: photoURL }
+      userPhotoCache: {},
+      isMobile: window.matchMedia('(max-width: 600px)').matches,
     };
   },
   created() {
@@ -201,6 +208,12 @@ export default {
     onAuthStateChanged(auth, (user) => {
       this.currentUserLocal = user;
     });
+  },
+  mounted() {
+    window.addEventListener('resize', this.handleResize);
+  },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.handleResize);
   },
   watch: {
     post: {
@@ -366,34 +379,46 @@ export default {
       this.replyToContent = "";
       this.replyToId = null;
     },
-    initVideoObserver() {
-      const options = {
-        root: null,
-        rootMargin: '0px',
-        threshold: 0.5
-      };
-
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          const video = entry.target;
-          if (entry.isIntersecting) {
-            video.play().catch(() => {});
-          } else {
-            video.pause();
-          }
-        });
-      }, options);
-
-      this.$nextTick(() => {
-        const videos = this.$refs.videos;
-        if (videos) {
-          if (Array.isArray(videos)) {
-            videos.forEach(video => observer.observe(video));
-          } else {
-            observer.observe(videos);
+    async loadCommentAvatars() {
+      const userIds = new Set();
+      // Collecte tous les IdUser des commentaires et réponses (thread 1 niveau)
+      for (const reply of Object.values(this.post.replies || {})) {
+        if (reply && reply.IdUser) userIds.add(reply.IdUser);
+        if (reply && reply.replies) {
+          for (const subReply of Object.values(reply.replies)) {
+            if (subReply && subReply.IdUser) userIds.add(subReply.IdUser);
           }
         }
-      });
+      }
+      // Pour chaque userId, récupère photoURL si ce n'est pas le currentUser
+      for (const userId of userIds) {
+        if (userId === (this.currentUserLocal && this.currentUserLocal.uid)) {
+          this.userPhotoCache[userId] = this.currentUserLocal.photoURL;
+          continue;
+        }
+        if (!this.userPhotoCache[userId]) {
+          // Va chercher dans la base Users/{userId}/PhotoURL
+          const userSnap = await get(dbRef(db, `Users/${userId}`));
+          if (userSnap.exists() && userSnap.val().PhotoURL) {
+            this.userPhotoCache[userId] = userSnap.val().PhotoURL;
+          } else {
+            this.userPhotoCache[userId] = null;
+          }
+        }
+      }
+      // Ajoute photoURL à chaque commentaire et réponse pour le template
+      for (const reply of Object.values(this.post.replies || {})) {
+        if (reply && reply.IdUser) reply.photoURL = this.userPhotoCache[reply.IdUser] || null;
+        if (reply && reply.replies) {
+          for (const subReply of Object.values(reply.replies)) {
+            if (subReply && subReply.IdUser) subReply.photoURL = this.userPhotoCache[subReply.IdUser] || null;
+          }
+        }
+      }
+      this.$forceUpdate();
+    },
+    handleResize() {
+      this.isMobile = window.matchMedia('(max-width: 600px)').matches;
     },
     // --- YouTube/Spotify embed helpers ---
     extractYouTubeLinks(content) {
@@ -441,43 +466,34 @@ export default {
       const id = match[2];
       return `https://open.spotify.com/embed/${type}/${id}`;
     },
-    async loadCommentAvatars() {
-      const userIds = new Set();
-      // Collecte tous les IdUser des commentaires et réponses (thread 1 niveau)
-      for (const reply of Object.values(this.post.replies || {})) {
-        if (reply && reply.IdUser) userIds.add(reply.IdUser);
-        if (reply && reply.replies) {
-          for (const subReply of Object.values(reply.replies)) {
-            if (subReply && subReply.IdUser) userIds.add(subReply.IdUser);
-          }
-        }
-      }
-      // Pour chaque userId, récupère photoURL si ce n'est pas le currentUser
-      for (const userId of userIds) {
-        if (userId === (this.currentUserLocal && this.currentUserLocal.uid)) {
-          this.userPhotoCache[userId] = this.currentUserLocal.photoURL;
-          continue;
-        }
-        if (!this.userPhotoCache[userId]) {
-          // Va chercher dans la base Users/{userId}/PhotoURL
-          const userSnap = await get(dbRef(db, `Users/${userId}`));
-          if (userSnap.exists() && userSnap.val().PhotoURL) {
-            this.userPhotoCache[userId] = userSnap.val().PhotoURL;
+    initVideoObserver() {
+      const options = {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.5
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          const video = entry.target;
+          if (entry.isIntersecting) {
+            video.play().catch(() => {});
           } else {
-            this.userPhotoCache[userId] = null;
+            video.pause();
+          }
+        });
+      }, options);
+
+      this.$nextTick(() => {
+        const videos = this.$refs.videos;
+        if (videos) {
+          if (Array.isArray(videos)) {
+            videos.forEach(video => observer.observe(video));
+          } else {
+            observer.observe(videos);
           }
         }
-      }
-      // Ajoute photoURL à chaque commentaire et réponse pour le template
-      for (const reply of Object.values(this.post.replies || {})) {
-        if (reply && reply.IdUser) reply.photoURL = this.userPhotoCache[reply.IdUser] || null;
-        if (reply && reply.replies) {
-          for (const subReply of Object.values(reply.replies)) {
-            if (subReply && subReply.IdUser) subReply.photoURL = this.userPhotoCache[subReply.IdUser] || null;
-          }
-        }
-      }
-      this.$forceUpdate();
+      });
     },
   },
 };
@@ -743,70 +759,61 @@ export default {
   .post-content,
   .post-media,
   .media-container {
-    width: 90vw !important;
-    max-width: 90vw !important;
+    width: 96vw !important;
+    max-width: 96vw !important;
+    margin: 10px auto !important;
+    padding: 14px 6px 16px 6px !important;
+    border-radius: 14px !important;
     box-sizing: border-box !important;
-    padding: 5px 5px 5px 5px !important;
-    margin: 2px 2px 2px 2px !important;
-  }
-  .post-item {
-    border-radius: 10px !important;
-    padding-top: 8px !important;
-    padding-bottom: 8px !important;
-  }
-  .media-item,
-
-  .pdf-embed {
-    width: 90vw !important;
-    max-width: 90vw !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-    box-sizing: border-box !important;
-    display: block;
-  }
-  .pdf-embed {
-    width: 87vw !important;
-    max-width: 87vw !important;
-    height: 60vh;
-  }
-  .post-item {
-    width: 100%;
-    max-width: 100%;
-    padding: 10px 2px;
+    text-align: center;
   }
   .post-content,
   .post-media,
   .media-container {
-    width: 100%;
-    max-width: 100%;
-    padding: 0;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+    text-align: center;
   }
-  .media-item {
-    max-width: 100%;
-    width: 100%;
+  .post-text {
+    text-align: left;
+    word-break: break-word;
+    padding: 0 5vw;
   }
-  .avatar {
-    width: 30px;
-    height: 30px;
-    margin-right: 8px;
+  .media-item,
+  .pdf-embed {
+    max-width: 98vw !important;
+    width: 100% !important;
+    height: auto;
+    margin: 0 auto 10px auto !important;
+    display: block;
+    border-radius: 8px;
   }
-  .post-actions {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
+  .pdf-mobile-btn {
+    display: block;
+    width: auto;
+    min-width: 120px;
+    max-width: 320px;
+    margin: 18px auto 0 auto;
+    padding: 8px 18px;
+    font-size: 0.98em;
+    background: var(--primary-color, #2196f3);
+    color: #fff !important;
+    border: none;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.16s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   }
-  .action-button {
-    font-size: 0.9em;
-  }
-  .comment-author {
-    font-size: 0.8em;
-  }
-  .comment-content {
-    font-size: 0.9em;
-  }
-  .post-content,
-  .media-container {
-    padding: 12px 10px !important;
+  .pdf-mobile-btn:active,
+  .pdf-mobile-btn:hover {
+    background: var(--primary-color-hover, #1976d2);
+    color: #fff;
+    text-decoration: none;
   }
 }
 
@@ -957,9 +964,6 @@ export default {
   border-radius: 7px;
   transition: background 0.15s;
 }
-
-.post-actions.post-actions-mobile-row .action-button:active,
-
 
 .post-actions.post-actions-mobile-row .action-icon {
   font-size: 1.05em;
