@@ -907,7 +907,7 @@ export default {
 }
 
 .comment-bar-send.compact {
-  background: var(--primary-color, #2196f3);
+  background: var(--surface-100);
   color: #fff;
   border: none;
   border-radius: 50%;
@@ -923,7 +923,7 @@ export default {
 }
 
 .comment-bar-send.compact:hover {
-  background: var(--primary-color-hover, #1976d2);
+  background: var(--primary-color, #1976d2);
 }
 
 @media (max-width: 600px) {

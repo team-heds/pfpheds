@@ -10,16 +10,30 @@
 <script setup>
 import { useRoute } from 'vue-router';
 import { ref, computed, onMounted, onUnmounted, defineProps, watch, nextTick } from 'vue';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 const props = defineProps({ scrollTarget: Object });
 
-const navItems = [
+const userId = ref('');
+
+onMounted(() => {
+  const auth = getAuth();
+  if (auth.currentUser) {
+    userId.value = auth.currentUser.uid;
+  } else {
+    onAuthStateChanged(auth, (user) => {
+      if (user) userId.value = user.uid;
+    });
+  }
+});
+
+const navItems = computed(() => [
   { label: 'Accueil', to: '/feed', icon: 'pi pi-home' },
   { label: 'Institution', to: '/institution', icon: 'pi pi-bookmark' },
   { label: 'Autre', to: '/map', icon: 'pi pi-th-large' },
   { label: 'Messages', to: '/chat', icon: 'pi pi-inbox' },
-  { label: 'Profil', to: '/profil', icon: 'pi pi-user' },
-];
+  { label: 'Profil', to: userId.value ? `/profile/${userId.value}` : '/profile', icon: 'pi pi-user' },
+]);
 
 const route = useRoute();
 const isActive = (to) => route.path.startsWith(to);
