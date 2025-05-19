@@ -59,7 +59,7 @@ export default {
   data() {
     return {
       userCommunities: [], // Communautés de l'utilisateur
-      hashtags: ["#BA22", "#BA23", "#BA24", "#ALL"],
+      hashtags: ["#BA22", "#BA23", "#BA24", "#ALL", "#PFP1A", "#PFP1B", "#PFP2", "#PFP3", "#PFP4", "#PHYSIO", "#LLB", '#HEdS'], // Hashtags à afficher
       unsubscribeUserCommunities: null, // Fonction de désabonnement
     };
   },
@@ -202,10 +202,21 @@ export default {
   list-style: none;
   padding: 1rem;
   margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .hashtags li {
-  margin: 0.5rem 0;
+  margin: 0;
+  display: flex;
+  justify-content: left;
+  flex: 0 1 auto;
+}
+
+.hashtags .p-chip {
+  white-space: nowrap;
+  max-width: 100%;
 }
 
 /* Optionnel : style pour le lien dans la communauté */
