@@ -142,15 +142,6 @@
 
     <!-- Nouvelle zone de commentaire compacte et colorée -->
     <div class="comment-bar-modern compact">
-      <img
-        v-if="currentUserLocal && currentUserLocal.photoURL"
-        :src="currentUserLocal.photoURL"
-        class="comment-bar-avatar compact"
-        alt="avatar"
-      />
-      <div v-else class="comment-bar-avatar comment-bar-avatar-fallback compact">
-        {{ currentUserLocal && currentUserLocal.displayName ? currentUserLocal.displayName[0] : '?' }}
-      </div>
       <Textarea
         v-model="replyContent"
         placeholder="Écrire un commentaire..."
@@ -166,7 +157,7 @@
 </template>
 
 <script>
-import { ref as dbRef, onValue, push, serverTimestamp, update, get } from "firebase/database";
+import { ref as dbRef, onValue, push, serverTimestamp, update, get, child } from "firebase/database";
 import { db } from "../../../firebase.js";
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import Textarea from "primevue/textarea";
@@ -201,6 +192,7 @@ export default {
       showComments: false,
       // Ajout utilisateur connecté
       currentUserLocal: null,
+      userPhotoCache: {}, // { userId: photoURL }
     };
   },
   created() {
@@ -217,20 +209,16 @@ export default {
         this.checkLikeStatus();
         this.loadCommentCount();
         this.loadLikedUsers();
+        this.loadCommentAvatars(); // Ajouté
       },
       immediate: true,
     },
   },
-  mounted() {
-    this.initVideoObserver();
-  },
   computed: {
     topLevelReplies() {
-      // On filtre pour ne garder que les objets qui sont bien des commentaires (et pas des sous-objets replies)
       if (!this.post.replies) return {};
       const result = {};
       for (const [key, value] of Object.entries(this.post.replies)) {
-        // On considère qu'un commentaire doit avoir un Author et un Content
         if (value && typeof value === 'object' && value.Author && value.Content) {
           result[key] = value;
         }
@@ -452,6 +440,44 @@ export default {
       const type = match[1];
       const id = match[2];
       return `https://open.spotify.com/embed/${type}/${id}`;
+    },
+    async loadCommentAvatars() {
+      const userIds = new Set();
+      // Collecte tous les IdUser des commentaires et réponses (thread 1 niveau)
+      for (const reply of Object.values(this.post.replies || {})) {
+        if (reply && reply.IdUser) userIds.add(reply.IdUser);
+        if (reply && reply.replies) {
+          for (const subReply of Object.values(reply.replies)) {
+            if (subReply && subReply.IdUser) userIds.add(subReply.IdUser);
+          }
+        }
+      }
+      // Pour chaque userId, récupère photoURL si ce n'est pas le currentUser
+      for (const userId of userIds) {
+        if (userId === (this.currentUserLocal && this.currentUserLocal.uid)) {
+          this.userPhotoCache[userId] = this.currentUserLocal.photoURL;
+          continue;
+        }
+        if (!this.userPhotoCache[userId]) {
+          // Va chercher dans la base Users/{userId}/PhotoURL
+          const userSnap = await get(dbRef(db, `Users/${userId}`));
+          if (userSnap.exists() && userSnap.val().PhotoURL) {
+            this.userPhotoCache[userId] = userSnap.val().PhotoURL;
+          } else {
+            this.userPhotoCache[userId] = null;
+          }
+        }
+      }
+      // Ajoute photoURL à chaque commentaire et réponse pour le template
+      for (const reply of Object.values(this.post.replies || {})) {
+        if (reply && reply.IdUser) reply.photoURL = this.userPhotoCache[reply.IdUser] || null;
+        if (reply && reply.replies) {
+          for (const subReply of Object.values(reply.replies)) {
+            if (subReply && subReply.IdUser) subReply.photoURL = this.userPhotoCache[subReply.IdUser] || null;
+          }
+        }
+      }
+      this.$forceUpdate();
     },
   },
 };
@@ -854,23 +880,6 @@ export default {
   max-width: 99%;
 }
 
-.comment-bar-avatar.compact {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  object-fit: cover;
-  background: #e0e0e0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 0.95em;
-}
-
-.comment-bar-avatar-fallback.compact {
-  color: #aaa;
-}
-
 .comment-bar-textarea.compact {
   flex: 1;
   min-height: 22px;
@@ -916,11 +925,6 @@ export default {
     border-radius: 9px;
     gap: 5px;
     min-height: 32px;
-  }
-  .comment-bar-avatar.compact {
-    width: 22px;
-    height: 22px;
-    font-size: 0.85em;
   }
   .comment-bar-send.compact {
     width: 22px;
