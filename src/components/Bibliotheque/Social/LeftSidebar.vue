@@ -1,5 +1,5 @@
 <template>
-  <div class="sidebar card">
+  <div class="sidebar ">
     <Toast ref="toast" />
     <!-- Partie supérieure fixe -->
     <div class="fixed-content">
@@ -36,48 +36,75 @@
           </li>
         </ul>
       </div>
-      <h4>Messagerie</h4>
-
-      <hr>
     </div>
 
     <!-- Partie inférieure scrollable -->
     <div class="scrollable-content">
-      <UserCard
-        v-for="user in users"
-        :key="user.id"
-        :user="user"
-        @click="openChat(user)"
-      />
-
-
+      <!-- Supprimé -->
     </div>
   </div>
+
+  <!-- Nouvelle card Messagerie détachée -->
+  <div class="messaging-card">
+    <h4>Messagerie</h4>
+    <br>
+    <div class="scrollable-content">
+      <div v-if="recentConversations.length === 0" class="text-center text-600 mt-4">
+        Aucune conversation récente
+      </div>
+      <UserCard
+        v-for="user in recentConversations"
+        :key="user.id"
+        :user="user"
+        :lastReceivedMessageAt="user.lastReceivedMessageAt"
+        @click="openChat(user)"
+      />
+    </div>
+  </div>
+
+  <!-- Nouvelle card "test" sous la sidebar -->
+  <div class="test-card">
+    <h4>Événements à venir</h4>
+    <ul class="event-list">
+      <li>
+        <span class="event-title">Afterwork étudiants</span>
+        <span class="event-date">21/05/2025</span>
+      </li>
+      <li>
+        <span class="event-title">Conférence santé</span>
+        <span class="event-date">28/05/2025</span>
+      </li>
+    </ul>
+    <button class="p-button p-button-text event-link">
+      Voir tous les événements
+      <span class="pi pi-arrow-right event-arrow"></span>
+    </button>
+  </div>
+
 </template>
 <script>
 import Avatar from "primevue/avatar";
 import Toast from "primevue/toast";
-import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
-import { getDatabase, ref as dbRef, get, update } from "firebase/database";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { getDatabase, ref as dbRef, get, update, onValue } from "firebase/database";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from '../../../../firebase.js';
-import ChatSidebar from '@/views/apps/chat/ChatSidebar.vue'
-import UserCard from '@/views/apps/chat/UserCard.vue'
+import UserCard from '@/views/apps/chat/UserCard.vue';
 
 const defaultAvatar = '../../../public/assets/images/avatar/01.jpg';
 
 export default {
   name: "LeftSidebar",
-  components: { UserCard, ChatSidebar, Avatar, Toast },
+  components: { UserCard, Avatar, Toast },
   data() {
     return {
       user: {
         Prenom: "",
         Nom: "",
         PhotoURL: "" || defaultAvatar,
-        id: "" // Ajout de l'ID utilisateur
+        id: ""
       },
-      users: [] // Liste de tous les utilisateurs
+      recentConversations: [] // 6 dernières conversations
     };
   },
   computed: {
@@ -140,25 +167,59 @@ export default {
         console.log("Aucun utilisateur trouvé avec l'UID :", uid);
       }
     },
-    async fetchAllUsers() {
+    async fetchRecentConversations() {
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
+      const userId = currentUser.uid;
       const db = getDatabase();
-      const usersRef = dbRef(db, 'Users');
-      const snapshot = await get(usersRef);
-      if (snapshot.exists()) {
-        const usersData = snapshot.val();
-        this.users = Object.keys(usersData).map(key => ({
-          id: key,
-          ...usersData[key]
-        }));
-      } else {
-        console.log("Aucun utilisateur trouvé.");
-      }
+      const conversationsRef = dbRef(db, 'conversations');
+      onValue(conversationsRef, async (snapshot) => {
+        const data = snapshot.val() || {};
+        console.log('[DEBUG] userId courant:', userId);
+        console.log('[DEBUG] conversations node complet:', data);
+        // Nouvelle logique adaptée à la structure
+        let convs = Object.entries(data)
+          .filter(([key, conv]) => key.includes(userId))
+          .map(([key, conv]) => {
+            const [id1, id2] = key.split('-');
+            const otherUserId = id1 === userId ? id2 : id1;
+            return {
+              id: key,
+              otherUserId,
+              lastReceivedMessageAt: conv.lastReceivedMessageAt || 0
+            };
+          });
+        console.log('Conversations trouvées:', convs);
+        // Trier par date décroissante
+        convs.sort((a, b) => (b.lastReceivedMessageAt || 0) - (a.lastReceivedMessageAt || 0));
+        convs = convs.slice(0, 6);
+        // Récupérer les infos de l'autre utilisateur
+        const dbUsers = dbRef(db, 'Users');
+        const usersSnap = await get(dbUsers);
+        const usersData = usersSnap.val() || {};
+        this.recentConversations = convs.map(conv => {
+          const userData = usersData[conv.otherUserId];
+          if (!userData) return null;
+          return {
+            ...userData,
+            id: conv.otherUserId,
+            lastReceivedMessageAt: conv.lastReceivedMessageAt
+          };
+        }).filter(u => u && u.id);
+        console.log('Utilisateurs à afficher:', this.recentConversations);
+      });
+    },
+    openChat(user) {
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
+      const userId = currentUser.uid;
+      const conversationId = [userId, user.id].sort().join('-');
+      this.$router.push({ name: 'IndexChat', query: { id: conversationId, user: user.id } });
     },
     goToProfile() {
       this.$router.push("/profile/" + this.user.id);
-    },
-    goToPfpHistory() {
-      this.$router.push("/historique_pfp");
     },
     goToDocumentPFP() {
       this.$router.push("/documents_pfp");
@@ -173,34 +234,64 @@ export default {
         console.error("Erreur de déconnexion:", error);
         this.$refs.toast.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur de déconnexion : ' + (error && error.message ? error.message : error), life: 6000 });
       }
-    },
-    openChat(user) {
-      this.$router.push(`/chat?user=${encodeURIComponent(user.id)}`);
     }
   },
   mounted() {
     const auth = getAuth();
-    onAuthStateChanged(auth, (authUser) => {
-      if (authUser) {
-        console.log("Utilisateur connecté :", authUser); // Debugging
-        this.fetchUserProfile(authUser.uid);
-        this.fetchAllUsers();
-      } else {
-        console.log("Aucun utilisateur connecté."); // Debugging
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        this.user.id = user.uid;
+        this.fetchUserProfile(user.uid);
+        this.fetchRecentConversations();
       }
     });
   }
 };
 </script>
 <style scoped>
-/* Styles généraux pour la sidebar */
 .sidebar {
+  margin-left: 4rem;
   display: flex;
   flex-direction: column;
-  height: 100vh; /* Assure que la sidebar occupe toute la hauteur de la fenêtre */
+  max-height: 100vh;
+  height: auto;
+  min-height: auto;
   background: var(--surface-card);
-  padding: 1rem;
-  border-radius: 1.2rem; /* Coins arrondis taille que je dois uttilser */
+  padding: 1.5rem;
+  border-radius: 1.2rem;
+}
+
+.test-card {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  border-radius: 1.2rem;
+  background: var(--surface-card);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  font-weight: bold;
+  text-align: left;
+  margin-left: 4rem;
+}
+
+.messaging-card {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  border-radius: 1.2rem;
+  background: var(--surface-card);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  margin-left: 4rem;
+}
+
+.scrollable-content {
+  flex: none;
+  overflow-y: auto;
+  max-height: 50vh;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+/* Ajoute un espace entre les cards de messagerie */
+.scrollable-content > *:not(:last-child) {
+  margin-bottom: 0.75rem;
 }
 
 /* Partie supérieure fixe */
@@ -211,20 +302,6 @@ export default {
   top: 0;
   z-index: 1;
   background: var(--surface-card);
-  padding-bottom: 1rem;
-}
-
-/* Partie inférieure scrollable */
-.scrollable-content {
-  flex: 1 1 auto; /* Prend le reste de l'espace */
-  overflow-y: auto;
-  /* Masquer la scrollbar pour Chrome, Edge, Safari */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE et Edge Legacy */
-}
-
-.scrollable-content::-webkit-scrollbar {
-  display: none; /* Chrome, Safari et Opera */
 }
 
 /* Liens du profil */
@@ -268,5 +345,43 @@ export default {
   color: var(--primary-color);
 }
 
+.event-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem 0;
+}
+.event-list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.25rem 0;
+  font-size: 0.95rem;
+}
+.event-title {
+  font-weight: 500;
+}
+.event-date {
+  color: var(--text-color-secondary);
+  font-size: 0.92em;
+}
+
+.event-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--primary-color);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.event-arrow {
+  font-size: 1.2em;
+  margin-left: 0.2em;
+}
+
 /* Styles supplémentaires pour UserCard, etc. peuvent rester inchangés */
+
 </style>

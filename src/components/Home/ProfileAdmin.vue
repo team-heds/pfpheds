@@ -6,8 +6,7 @@
 
     <div class="min-h-screen flex relative lg:static">
       <div class="min-h-screen flex flex-column relative flex-auto">
-        <div class="p-5">
-          <h1>Gestion des profils étudiants pour administrateur</h1>
+        <div class="">
 
           <!-- Indicateur de chargement -->
           <div v-if="isLoading" class="text-center mb-6">

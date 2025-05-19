@@ -2,7 +2,7 @@
 <template>
   <div class="right-sidebar">
     <!-- Section Communautés -->
-    <div class="profile-section card">
+    <div class="profile-section">
       <div class="communities-header">
         <h4 @click="goToCommunities" class="clickable">Communautés</h4>
       </div>
@@ -29,7 +29,7 @@
     </div>
 
     <!-- Section Hashtags -->
-    <div class="profile-section card">
+    <div class="profile-section">
       <div class="hashtags">
         <h4 class="text-color">Hashtags</h4>
         <ul>
@@ -59,7 +59,7 @@ export default {
   data() {
     return {
       userCommunities: [], // Communautés de l'utilisateur
-      hashtags: ["#BA22", "#BA23", "#BA24", "#ALL"],
+      hashtags: ["#BA22", "#BA23", "#BA24", "#ALL", "#PFP1A", "#PFP1B", "#PFP2", "#PFP3", "#PFP4", "#PHYSIO", "#LLB", '#HEdS'], // Hashtags à afficher
       unsubscribeUserCommunities: null, // Fonction de désabonnement
     };
   },
@@ -138,8 +138,9 @@ export default {
 .right-sidebar {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem; /* Espace entre les sections */
-  border-radius: 1.2rem; /* Coins arrondis taille que je dois uttilser */
+  gap: 1.5rem;
+  margin-right: 4rem;
+  width: 100%;
 }
 
 /* Section Communautés */
@@ -147,6 +148,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 1rem;
 }
 
 .communities-header h4.clickable {
@@ -161,7 +163,7 @@ export default {
 
 .communities-list {
   list-style: none;
-  padding: 0;
+
   margin: 0;
 }
 
@@ -171,12 +173,13 @@ export default {
   gap: 0.75rem;
   padding: 0.5rem 0;
   transition: background-color 0.2s ease;
-  border-radius: 1.2rem; /* Coins arrondis taille que je dois uttilser */border-radius: 1.2rem; /* Coins arrondis taille que je dois uttilser */
+  border-radius: 1.2rem; /* Coins arrondis taille que je dois uttilser */
 }
 
 .community-item:hover {
   background-color: var(--surface-hover);
-  border-radius: 0.5rem;
+  border-radius: 1.2rem;
+
 }
 
 .community-name {
@@ -191,14 +194,31 @@ export default {
   flex-shrink: 0;
 }
 
-.hashtags ul {
+.hashtags {
   list-style: none;
-  padding: 0;
+  padding: 1rem;
   margin: 0;
 }
 
+.hashtags ul {
+  list-style: none;
+  padding-top:  0.5rem;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .hashtags li {
-  margin: 0.5rem 0;
+  margin: 0;
+  display: flex;
+  justify-content: left;
+  flex: 0 1 auto;
+}
+
+.hashtags .p-chip {
+  white-space: nowrap;
+  max-width: 100%;
 }
 
 /* Optionnel : style pour le lien dans la communauté */
@@ -209,5 +229,16 @@ export default {
   text-decoration: none;
   color: inherit;
   border-radius: 1.2rem; /* Coins arrondis taille que je dois uttilser */
+}
+.profile-section {
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  max-height: 100vh;
+  min-height: auto;
+  background: var(--surface-card);
+  padding: 1rem;
+  border-radius: 1.2rem;
+  margin-right: 4rem;
 }
 </style>

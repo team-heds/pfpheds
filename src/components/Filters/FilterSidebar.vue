@@ -3,11 +3,9 @@
   <div class="filter-sidebar">
     <!-- Section Filtrer par Canton -->
     <div class="filter-section card">
-      <div class="">
-        <h4 class="text-primary">Filtrer par Canton</h4>
-      </div>
+      <h4>Filtrer par Canton</h4>
       <!-- Ajout de la classe "two-columns" pour le layout en deux colonnes -->
-      <ul class="filter-list two-columns">
+      <ul class="filter-list">
         <li
           v-for="canton in cantons"
           :key="canton"
@@ -30,9 +28,7 @@
 
     <!-- Section Filtrer par Critères -->
     <div class="filter-section card">
-      <div class="">
-        <h4 class="text-primary">Filtrer par Critères</h4>
-      </div>
+      <h4>Filtrer par Critères</h4>
       <ul class="filter-list">
         <li
           v-for="criter in criterOptions"
@@ -53,9 +49,7 @@
 
     <!-- Section Filtrer par PFP -->
     <div class="filter-section card">
-      <div class="">
-        <h4 class="text-primary">Filtrer par PFP</h4>
-      </div>
+      <h4>Filtrer par PFP</h4>
       <ul class="filter-list">
         <li
           v-for="pfp in pfpOptions"
@@ -76,9 +70,7 @@
 
     <!-- Section Filtrer par Langue -->
     <div class="filter-section card">
-      <div class="">
-        <h4 class="text-primary">Filtrer par Langue</h4>
-      </div>
+      <h4>Filtrer par Langue</h4>
       <ul class="filter-list">
         <li
           v-for="lang in languageOptions"
@@ -139,42 +131,33 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  border-radius: 1.2rem; /* Coins arrondis taille que je dois uttilser */
+  border-radius: 1.2rem;
+  margin-right: 4rem;
+  margin-left: 0;
 }
 
-/* Style commun aux sections de filtre */
 .filter-section {
-  padding: 1rem;
-  border-radius: 1.2rem; /* Coins arrondis taille que je dois uttilser */
+  padding: 1.5rem;
+  border-radius: 1.2rem;
+  background: var(--surface-card);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  margin: 0;
 }
 
-.section-header {
-  margin-bottom: 0.5rem;
-}
-
-.section-header h4 {
+h4 {
   font-size: 1.1rem;
   font-weight: 500;
-  color: var(--primary-color);
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
-
-.section-header h4:hover {
-  color: var(--primary-color-hover);
+  color: #fff;
+  margin-bottom: 1rem;
 }
 
 .filter-list {
   list-style: none;
   padding: 0;
   margin: 0;
-}
-
-/* Nouveau style pour afficher les cantons en deux colonnes */
-.filter-list.two-columns {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 0.5rem;
+  gap: 0.5rem 1.5rem;
 }
 
 .filter-item {
@@ -183,6 +166,7 @@ export default {
   gap: 0.5rem;
   padding: 0.5rem 0;
   transition: background-color 0.2s ease;
+  justify-content: flex-start;
 }
 
 .filter-item:hover {
@@ -197,6 +181,7 @@ export default {
 .filter-item label {
   font-size: 1rem;
   color: var(--text-color);
+  text-align: left;
 }
 
 .text-center {

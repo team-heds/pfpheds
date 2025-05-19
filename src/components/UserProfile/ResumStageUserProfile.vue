@@ -30,7 +30,7 @@
     <div
       v-for="(inst, index) in institutionsList"
       :key="inst.InstitutionId"
-      class="surface-card shadow-2 border-round mb-3 p-3 flex flex-column gap-2"
+      class="surfaces-card mb-4 shadow-2 flex flex-column gap-2"
       style="min-height: 200px;"
     >
       <!-- Ligne du titre + bouton "Voir les détails" aligné à droite -->
@@ -125,7 +125,7 @@
       </div>
 
       <!-- Sélection et upload de fichiers alignés à droite -->
-      <div class="flex justify-content-end align-items-center gap-8 w-4 m-2">
+      <div class="flex justify-content-end align-items-center gap-8 w-6 m-2">
         <FileUpload
           mode="basic"
           customUpload
@@ -420,3 +420,11 @@ onMounted(() => {
   }
 });
 </script>
+
+<style scoped>
+.surfaces-card {
+  background-color: var(--surface-card);
+  padding: 2rem;
+  border-radius: 2rem;
+}
+</style>

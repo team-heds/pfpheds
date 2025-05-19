@@ -1,24 +1,35 @@
 <template>
-  <aside class="admin-sidebar card">
-    <div class="sidebar-header">
-      <div class="admin-name">Dashboard Admin</div>
-    </div>
-    <nav class="sidebar-nav">
-      <ul class="sidebar-menu">
-        <template v-for="(section, idx) in menu" :key="section.label">
+  <aside class="admin-sidebar card sidebar">
+    <div class="sidebar-card-listes">
+      <nav class="sidebar-nav">
+        <ul class="sidebar-menu">
           <li class="sidebar-section">
             <div class="sidebar-section-label">
-              <i :class="section.icon" />
-              <span>{{ section.label }}</span>
+              <i :class="menu[0].icon" />
+              <span>{{ menu[0].label }}</span>
             </div>
-            <ul v-if="section.items" class="sidebar-submenu">
-              <SidebarMenuItems :items="section.items" />
+            <ul v-if="menu[0].items" class="sidebar-submenu">
+              <SidebarMenuItems :items="menu[0].items" />
             </ul>
           </li>
-          <li v-if="idx < menu.length - 1" class="sidebar-divider"></li>
-        </template>
-      </ul>
-    </nav>
+        </ul>
+      </nav>
+    </div>
+    <div class="sidebar-card-outils">
+      <nav class="sidebar-nav">
+        <ul class="sidebar-menu">
+          <li class="sidebar-section">
+            <div class="sidebar-section-label">
+              <i :class="menu[1].icon" />
+              <span>{{ menu[1].label }}</span>
+            </div>
+            <ul v-if="menu[1].items" class="sidebar-submenu">
+              <SidebarMenuItems :items="menu[1].items" />
+            </ul>
+          </li>
+        </ul>
+      </nav>
+    </div>
   </aside>
 </template>
 
@@ -84,61 +95,78 @@ const menu = ref([
 </script>
 
 <style scoped>
-.admin-sidebar {
-  width: 260px;
-  min-height: 100vh;
+.admin-sidebar.card.sidebar {
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  max-height: 70vh;
+  min-height: 0;
   background: var(--surface-card);
-  box-shadow: 0 0 8px 0 rgba(0,0,0,0.05);
-  display: flex;
-  flex-direction: column;
-  padding: 1.5rem 0.5rem;
-  position: relative;
+  padding: 1.5rem;
+  border-radius: 1.2rem;
+  width: 400px;
+  min-width: 300px;
+  max-width: 400px;
+  box-sizing: border-box;
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  z-index: 10;
+  overflow-y: auto;
 }
+
+.admin-sidebar {
+  width: 340px;
+  min-width: 300px;
+  max-width: 400px;
+}
+
+/* Pour garantir que le parent ne décale pas la sidebar */
+:global(.layout-container) {
+  display: flex;
+  align-items: flex-start;
+  height: 100vh;
+}
+
 .sidebar-header {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
-.admin-name {
-  font-weight: 700;
-  font-size: 1.2rem;
-  color: #ffffff
-;
-  letter-spacing: 1px;
-}
-.sidebar-nav {
-  flex: 1;
-}
+
 .sidebar-menu {
-  list-style: none;
   padding: 0;
   margin: 0;
+  list-style: none;
 }
-.sidebar-section {
-  margin-bottom: 0.5rem;
-}
+
 .sidebar-section-label {
-  font-weight: 600;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 1.1rem;
-  color: var(--primary-color);
+  font-weight: bold;
   margin-bottom: 0.5rem;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  background: var(--surface-section);
 }
+
 .sidebar-divider {
   height: 1px;
-  background: var(--surface-border);
+  background: var(--surface-border, #eee);
   margin: 1rem 0;
-  border-radius: 1px;
+  border-radius: 2px;
 }
+
 .sidebar-submenu {
-  list-style: none;
-  padding-left: 1.2rem;
+  margin-left: 1.5rem;
+}
+
+.sidebar-card-listes,
+.sidebar-card-outils {
+  background: var(--surface-card);
+  border-radius: 1.2rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  padding: 1.2rem 1rem 1.2rem 1rem;
+  width: 100%;
+}
+
+.sidebar-card-outils {
+  margin-top: 1.5rem;
 }
 </style>
