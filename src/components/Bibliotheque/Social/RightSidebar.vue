@@ -234,6 +234,7 @@ export default {
   display: flex;
   flex-direction: column;
   height: auto;
+  width: 100%;
   max-height: 100vh;
   min-height: auto;
   background: var(--surface-card);
