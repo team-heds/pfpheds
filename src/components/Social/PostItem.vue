@@ -68,7 +68,7 @@
     </div>
 
     <!-- Boutons d'action -->
-    <div class="post-actions p-3 flex align-items-center justify-content-between">
+    <div class="post-actions post-actions-mobile-row">
       <div class="action-button" @click="toggleLike">
         <i :class="isLiked ? 'pi pi-heart-fill' : 'pi pi-heart'" class="action-icon"></i>
         <span>{{ likeCount }}</span>
@@ -935,5 +935,33 @@ export default {
     font-size: 0.93em;
     padding: 2px 4px;
   }
+}
+
+.post-actions.post-actions-mobile-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2vw;
+  padding: 10px 0 0 0;
+  border-top: 1px solid var(--surface-border);
+}
+
+.post-actions.post-actions-mobile-row .action-button {
+  flex: 1 1 0;
+  justify-content: center;
+  font-size: 1em;
+  padding: 10px 0;
+  background: none;
+  border: none;
+  border-radius: 7px;
+  transition: background 0.15s;
+}
+
+.post-actions.post-actions-mobile-row .action-button:active,
+
+
+.post-actions.post-actions-mobile-row .action-icon {
+  font-size: 1.05em;
 }
 </style>
