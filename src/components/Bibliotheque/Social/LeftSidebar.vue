@@ -1,5 +1,5 @@
 <template>
-  <div class="sidebar card">
+  <div class="sidebar ">
     <Toast ref="toast" />
     <!-- Partie supérieure fixe -->
     <div class="fixed-content">
@@ -36,12 +36,18 @@
           </li>
         </ul>
       </div>
-      <h4>Messagerie</h4>
-
-      <hr>
     </div>
 
     <!-- Partie inférieure scrollable -->
+    <div class="scrollable-content">
+      <!-- Supprimé -->
+    </div>
+  </div>
+
+  <!-- Nouvelle card Messagerie détachée -->
+  <div class="messaging-card">
+    <h4>Messagerie</h4>
+    <br>
     <div class="scrollable-content">
       <div v-if="recentConversations.length === 0" class="text-center text-600 mt-4">
         Aucune conversation récente
@@ -54,6 +60,11 @@
         @click="openChat(user)"
       />
     </div>
+  </div>
+
+  <!-- Nouvelle card "test" sous la sidebar -->
+  <div class="test-card">
+    test
   </div>
 </template>
 <script>
@@ -223,16 +234,46 @@ export default {
 };
 </script>
 <style scoped>
-/* Styles généraux pour la sidebar */
 .sidebar {
   display: flex;
   flex-direction: column;
-  height: auto;
   max-height: 100vh;
-  min-height: 350px;
+  height: auto;
+  min-height: auto;
   background: var(--surface-card);
   padding: 1.5rem;
   border-radius: 1.2rem;
+}
+
+.test-card {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  border-radius: 1.2rem;
+  background: var(--surface-card);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  font-weight: bold;
+  text-align: center;
+}
+
+.messaging-card {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  border-radius: 1.2rem;
+  background: var(--surface-card);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.scrollable-content {
+  flex: none;
+  overflow-y: auto;
+  max-height: 50vh;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+/* Ajoute un espace entre les cards de messagerie */
+.scrollable-content > *:not(:last-child) {
+  margin-bottom: 0.75rem;
 }
 
 /* Partie supérieure fixe */
@@ -244,19 +285,6 @@ export default {
   z-index: 1;
   background: var(--surface-card);
   padding-bottom: 1rem;
-}
-
-/* Partie inférieure scrollable */
-.scrollable-content {
-  flex: 1 1 auto; /* Prend le reste de l'espace */
-  overflow-y: auto;
-  max-height: 50vh;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE et Edge Legacy */
-}
-
-.scrollable-content::-webkit-scrollbar {
-  display: none; /* Chrome, Safari et Opera */
 }
 
 /* Liens du profil */
@@ -301,4 +329,5 @@ export default {
 }
 
 /* Styles supplémentaires pour UserCard, etc. peuvent rester inchangés */
+
 </style>

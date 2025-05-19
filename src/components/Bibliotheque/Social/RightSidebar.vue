@@ -138,7 +138,7 @@ export default {
 .right-sidebar {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem; /* Espace entre les sections */
+  gap: 1.5rem;
 }
 
 /* Section Communautés */
@@ -146,6 +146,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 1rem;
 }
 
 .communities-header h4.clickable {
@@ -160,7 +161,7 @@ export default {
 
 .communities-list {
   list-style: none;
-  padding: 0;
+  padding: 1rem;
   margin: 0;
 }
 
@@ -170,12 +171,13 @@ export default {
   gap: 0.75rem;
   padding: 0.5rem 0;
   transition: background-color 0.2s ease;
-  border-radius: 1.2rem; /* Coins arrondis taille que je dois uttilser */border-radius: 1.2rem; /* Coins arrondis taille que je dois uttilser */
+  border-radius: 1.2rem; /* Coins arrondis taille que je dois uttilser */
 }
 
 .community-item:hover {
   background-color: var(--surface-hover);
-  border-radius: 0.5rem;
+  border-radius: 1.2rem;
+
 }
 
 .community-name {
@@ -190,9 +192,15 @@ export default {
   flex-shrink: 0;
 }
 
+.hashtags {
+  list-style: none;
+  padding: 1rem;
+  margin: 0;
+}
+
 .hashtags ul {
   list-style: none;
-  padding: 0;
+  padding: 1rem;
   margin: 0;
 }
 
