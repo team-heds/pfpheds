@@ -140,6 +140,7 @@ export default {
   flex-direction: column;
   gap: 1.5rem;
   margin-right: 4rem;
+  width: 100%;
 }
 
 /* Section Communautés */
