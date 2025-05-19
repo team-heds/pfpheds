@@ -54,7 +54,7 @@
         </p>
       </div>
     </div>
-    <Toast />
+
   </div>
 </template>
 
