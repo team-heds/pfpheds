@@ -99,7 +99,7 @@ const menu = ref([
   display: flex;
   flex-direction: column;
   height: auto;
-  max-height: 70vh;
+  max-height: 100vh;
   min-height: 0;
   background: var(--surface-card);
   padding: 1.5rem;
