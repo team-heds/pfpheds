@@ -28,7 +28,7 @@
         </div>
         <!-- Spotify Embed -->
         <div v-for="(sp, i) in extractSpotifyLinks(post.Content)" :key="'sp-'+i" class="embed-responsive embed-responsive-16by9 mt-2">
-          <iframe :src="getSpotifyEmbedUrl(sp)" frameborder="0" allow="encrypted-media" style="width:100%;min-height:152px;"></iframe>
+          <iframe :src="getSpotifyEmbedUrl(sp)" frameborder="0" allow="encrypted-media" style="width:100%;min-height:152px; background: var(--surface-card);"></iframe>
         </div>
         <!-- Instagram Embed -->
         <div v-for="(ig, i) in extractInstagramLinks(post.Content)" :key="'ig-'+i" class="instagram-embed-wrapper mt-2">
@@ -38,7 +38,7 @@
             allowtransparency="true"
             allowfullscreen
             class="instagram-embed"
-            style="width:100%; aspect-ratio:9/16; max-width:400px; min-height:520px; max-height:700px; margin:auto; display:block; border-radius:12px; background:#fff;"
+            style="width:100%; aspect-ratio:9/16; max-width:400px; min-height:520px; max-height:700px; margin:auto; display:block; border-radius:12px; background: var(--surface-card);"
           ></iframe>
         </div>
       </div>
@@ -99,14 +99,6 @@
         <i class="pi pi-share-alt action-icon"></i>
         <span>Partager</span>
       </div>
-    </div>
-
-    <!-- Liste des personnes ayant liké -->
-    <div v-if="likedUsers.length > 0" class="liked-users p-3">
-      <strong>Personnes qui ont aimé :</strong>
-      <ul>
-        <li v-for="(user, index) in likedUsers" :key="index">{{ user }}</li>
-      </ul>
     </div>
 
     <!-- Liste des commentaires (affichés seulement si showComments est true) -->
@@ -206,7 +198,6 @@ export default {
       isLiked: false,
       likeCount: 0,
       commentCount: 0,
-      likedUsers: [],
       showComments: false,
       currentUserLocal: null,
       userPhotoCache: {},
@@ -232,7 +223,6 @@ export default {
         this.fetchAuthorDetails();
         this.checkLikeStatus();
         this.loadCommentCount();
-        this.loadLikedUsers();
         this.loadCommentAvatars(); // Ajouté
       },
       immediate: true,
@@ -318,7 +308,6 @@ export default {
 
       this.isLiked = !this.isLiked;
       this.likeCount += this.isLiked ? 1 : -1;
-      this.loadLikedUsers();
     },
     loadCommentCount() {
       if (this.post.replies) {
@@ -332,22 +321,6 @@ export default {
       navigator.clipboard.writeText(postUrl).then(() => {
         alert("Lien du post copié dans le presse-papiers !");
       });
-    },
-    async loadLikedUsers() {
-      this.likedUsers = [];
-      if (this.post.likes) {
-        const likeUserIds = Object.keys(this.post.likes);
-        for (const uid of likeUserIds) {
-          const userRef = dbRef(db, `Users/${uid}`);
-          const snapshot = await get(userRef);
-          const userData = snapshot.val();
-          if (userData) {
-            this.likedUsers.push(userData.username || userData.email.split('@')[0] || "Utilisateur");
-          } else {
-            this.likedUsers.push("Utilisateur inconnu");
-          }
-        }
-      }
     },
     isImage(url) {
       const extension = this.getExtension(url);
@@ -639,16 +612,6 @@ export default {
   border-radius: 50%;
   margin-right: 10px;
   object-fit: cover;
-}
-
-.liked-users {
-  margin-top: 10px;
-}
-
-.liked-users ul {
-  list-style-type: disc;
-  margin: 5px 0 0 20px;
-  padding: 0;
 }
 
 .comment-card.compact {

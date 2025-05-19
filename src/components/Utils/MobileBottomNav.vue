@@ -94,16 +94,18 @@ watch(() => props.scrollTarget, (newVal, oldVal) => {
   left: 0;
   right: 0;
   bottom: 0;
-  height: 56px;
-  background: var(--surface-overlay, #fff);
-  border-top: 1px solid var(--surface-border, #ddd);
+  z-index: 1000;
   display: flex;
   justify-content: space-around;
   align-items: center;
-  z-index: 1000;
-  box-shadow: 0 -2px 8px rgba(0,0,0,0.04);
-  transition: transform 0.32s cubic-bezier(.4,0,.2,1);
-  will-change: transform;
+  background: var(--surface-overlay, #fff);
+  box-shadow: 0 -2px 16px rgba(0,0,0,0.08);
+  border-radius: 18px 18px 0 0;
+  max-width: 600px;
+  margin: 0 auto;
+  padding-bottom: calc(30px + env(safe-area-inset-bottom, 0px)); /* For iOS safe area */
+  padding-top: 8px;
+  transition: bottom 0.25s;
 }
 .mobile-bottom-nav.hide {
   transform: translateY(100%);

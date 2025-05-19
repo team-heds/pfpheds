@@ -33,7 +33,7 @@
     />
 
     <!-- Conteneur pour les posts avec Infinite Scroll -->
-    <div class="posts-container" @scroll="handleScroll">
+    <div class="posts-container">
       <InfiniteScroll :loading="loading" @load-more="loadMorePosts">
         <PostItem
           v-for="post in filteredPosts"
@@ -442,7 +442,13 @@ export default {
 
           applyFilters();
         } else {
-          console.log("Aucun post trouvé pour les critères actuels.");
+          // Si aucun post trouvé, mais il y en a déjà affichés, on repart du début
+          if (posts.value.length > 0) {
+            oldestTimestamp.value = null;
+            await fetchPosts();
+          } else {
+            console.log("Aucun post trouvé pour les critères actuels.");
+          }
         }
       } catch (error) {
         console.error("Erreur lors de la récupération des posts :", error);
@@ -622,6 +628,16 @@ export default {
   .main-feed {
     max-width: 98vw;
   }
+}
+.posts-container {
+  height: 100vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+.posts-container::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 .tags-container {
   display: flex;
