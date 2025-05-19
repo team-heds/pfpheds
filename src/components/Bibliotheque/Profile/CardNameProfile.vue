@@ -38,9 +38,10 @@
           <span class="info-label">Id :</span>
           <span class="info-value id">{{ user.uid }}</span>
         </div>
-        <div class="info-item">
+        <div class="info-item info-item-respondant">
           <i class="pi pi-users info-icon"></i>
           <span class="info-label">Répondant HES :</span>
+          <br class="show-on-overflow"/>
           <span class="info-value">
             <template v-if="isAdmin">
               <Dropdown
@@ -355,5 +356,19 @@ onMounted(async () => {
   .w-4 {
     width: 100% !important;
   }
+}
+
+.info-item-respondant {
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+.info-item-respondant .info-label {
+  min-width: unset;
+  margin-bottom: 0.2rem;
+}
+.info-item-respondant .info-value {
+  display: block;
+  width: 100%;
+  word-break: break-word;
 }
 </style>
