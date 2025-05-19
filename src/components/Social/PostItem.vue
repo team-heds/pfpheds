@@ -30,6 +30,17 @@
         <div v-for="(sp, i) in extractSpotifyLinks(post.Content)" :key="'sp-'+i" class="embed-responsive embed-responsive-16by9 mt-2">
           <iframe :src="getSpotifyEmbedUrl(sp)" frameborder="0" allow="encrypted-media" style="width:100%;min-height:152px;"></iframe>
         </div>
+        <!-- Instagram Embed -->
+        <div v-for="(ig, i) in extractInstagramLinks(post.Content)" :key="'ig-'+i" class="instagram-embed-wrapper mt-2">
+          <iframe
+            :src="getInstagramEmbedUrl(ig)"
+            frameborder="0"
+            allowtransparency="true"
+            allowfullscreen
+            class="instagram-embed"
+            style="width:100%; aspect-ratio:9/16; max-width:400px; min-height:520px; max-height:700px; margin:auto; display:block; border-radius:12px; background:#fff;"
+          ></iframe>
+        </div>
       </div>
 
       <!-- Médias du post -->
@@ -465,6 +476,27 @@ export default {
       const type = match[1];
       const id = match[2];
       return `https://open.spotify.com/embed/${type}/${id}`;
+    },
+    extractInstagramLinks(content) {
+      if (!content) return [];
+      // Match Instagram post URLs (post, reel, tv)
+      const regex = /https?:\/\/(www\.)?instagram\.com\/(p|reel|tv)\/([\w-]+)/g;
+      const matches = [];
+      let match;
+      while ((match = regex.exec(content)) !== null) {
+        matches.push(match[0]);
+      }
+      return matches;
+    },
+    getInstagramEmbedUrl(url) {
+      // Convert Instagram URL (post, reel, tv) to embed URL
+      // Ex: https://www.instagram.com/reel/xxxxx/ => https://www.instagram.com/reel/xxxxx/embed
+      if (!url) return '';
+      const postMatch = url.match(/https?:\/\/(www\.)?instagram\.com\/(p|reel|tv)\/([\w-]+)/);
+      if (postMatch) {
+        return `https://www.instagram.com/${postMatch[2]}/${postMatch[3]}/embed`;
+      }
+      return url;
     },
     initVideoObserver() {
       const options = {
@@ -974,4 +1006,31 @@ export default {
   font-size: 1.05em;
 }
 
+.instagram-embed-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.instagram-embed {
+  width: 100%;
+  aspect-ratio: 9/16;
+  max-width: 400px;
+  min-height: 520px;
+  max-height: 700px;
+  border: none;
+  border-radius: 12px;
+  background: #fff;
+  object-fit: contain;
+  display: block;
+}
+@media (max-width: 600px) {
+  .instagram-embed {
+    max-width: 100vw;
+    min-height: 380px;
+    max-height: 90vw;
+    border-radius: 8px;
+  }
+}
 </style>
