@@ -1,5 +1,5 @@
 <template>
-  <div class="profile-admin-right-sidebar card">
+  <div class="profile-admin-right-sidebar">
     <h4>Rechercher un étudiant</h4>
     <div class="field">
       <label for="search-user">Rechercher un étudiant :</label>
@@ -229,5 +229,15 @@ const prevBA22 = () => {
 }
 .user-item {
   margin-bottom: 0.5rem;
+}
+.profile-admin-right-sidebar {
+  padding: 2rem;
+  background-color: var(--surface-card);
+  border-radius: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-right: 4rem;
+  width: 100%;
 }
 </style>

@@ -206,7 +206,7 @@ const saveProfile = async () => {
       return;
     }
   }
-  
+
   // Mise à jour du profil dans Users
   const userRef = dbRef(db, `Users/${user.value.uid}`);
   await update(userRef, {
@@ -224,7 +224,7 @@ const saveProfile = async () => {
     const teacherLabel = teacherOpt ? teacherOpt.label : '';
     user.value.repondantHES = teacherLabel;
   }
-  
+
   // Mise à jour du profil étudiant dans Students
   const studentRef = dbRef(db, `Students/${user.value.uid}`);
   await update(studentRef, {
@@ -264,10 +264,34 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.surfaces-card,
+.info-item {
+  box-sizing: border-box;
+}
+
+.actions-row,
+.info-item-full {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.save-btn {
+  width: auto;
+  min-width: 200px;
+  max-width: 100%;
+}
+
+.p-dropdown {
+  max-width: 100%;
+  min-width: 0;
+}
+
 .surfaces-card {
+  margin: 1.5rem 0;
   background-color: var(--surface-card);
   padding: 1.5rem;
   border-radius: 2rem;
+  overflow: hidden;
 }
 .info-grid {
   display: grid;
@@ -320,7 +344,6 @@ onMounted(async () => {
   margin-bottom: 1.5rem;
 }
 .save-btn {
-  min-width: 200px;
   font-weight: 600;
 }
 .info-item-full {

@@ -14,8 +14,8 @@
           <ResumStageUserProfile class="w-full" />
           <!-- On passe l'ID de l'utilisateur au composant -->
 
-          <!-- Section pour changer la photo de profil -->
-          <div class="p-field mt-4 card w-full">
+          <!-- Section pour changer la photo de profil
+          <div class="p-field mt-4 surfaces-card w-full">
             <label for="avatar-upload">Photo de profils actuelle :</label>
             <div class="p-d-flex p-ai-center">
               <img
@@ -32,13 +32,15 @@
                 class="p-ml-2"
               />
             </div>
-            <Button
-              label="Enregistrer"
-              class="p-mt-2 w-2"
-              @click="saveProfile"
-              icon="pi pi-save"
-            />
-          </div>
+            <div class="actions-row">
+              <Button
+                label="Enregistrer"
+                class="save-btn"
+                @click="saveProfile"
+                icon="pi pi-save"
+              />
+            </div>
+          </div> -->
         </div>
       </div>
     </div>
@@ -164,7 +166,12 @@ onMounted(async () => {
 }
 
 /* Contenu Principal */
-.main-content {}
+.main-content {
+  max-width: 880px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
 
 /* Responsive pour le layout global */
 @media (max-width: 1024px) {
@@ -190,7 +197,7 @@ onMounted(async () => {
 
 /* Styles spécifiques au composant FilterMenu */
 .filter-menu {
-  padding: 20px;
+  padding: 1rem;
 }
 
 /* Exemple de style pour les images et boutons */
@@ -224,5 +231,24 @@ img {
   .w-4 {
     width: 100% !important;
   }
+}
+
+/* Styles pour la section de modification de photo de profil */
+.surfaces-card {
+  background-color: var(--surface-card);
+  padding: 1.5rem;
+  border-radius: 2rem;
+}
+
+.actions-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.save-btn {
+  min-width: 200px;
+  font-weight: 600;
 }
 </style>

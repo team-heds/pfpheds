@@ -1,13 +1,13 @@
 <template>
   <div class="pfp-en-cours">
     <!-- Section Formation pratique en cours -->
-    <h5 class="mb-4">Formation pratique en cours</h5>
+    <h5 class="mb-5">Formation pratique en cours</h5>
     <div v-if="assignments.length">
       <div class="grid">
         <div
           v-for="(assignment, index) in assignments"
           :key="assignment._key"
-          class="surface-card shadow-2 border-round mb-3 p-3 flex flex-column gap-2"
+          class="surfaces-card shadow-2  mb-3 flex flex-column gap-2"
           style="min-height: 200px"
         >
           <!-- En-tête de la carte avec titre et bouton -->
@@ -91,7 +91,7 @@
           </div>
 
           <!-- Sélection et upload de nouveaux fichiers -->
-          <div class="flex justify-content-end align-items-center gap-8 w-4 m-2">
+          <div class="flex justify-content-end align-items-center gap-8 w-6 m-2">
             <FileUpload
               mode="basic"
               customUpload
@@ -428,5 +428,11 @@ onMounted(() => {
   border-radius: 8px;
   padding: 0.75rem;
   background-color: var(--surface-card, #fff);
+}
+
+.surfaces-card {
+  background-color: var(--surface-card);
+  padding: 2rem;
+  border-radius: 2rem;
 }
 </style>
