@@ -103,7 +103,7 @@ watch(() => props.scrollTarget, (newVal, oldVal) => {
   border-radius: 18px 18px 0 0;
   max-width: 600px;
   margin: 0 auto;
-  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); /* For iOS safe area */
+  padding-bottom: calc(30px + env(safe-area-inset-bottom, 0px)); /* For iOS safe area */
   padding-top: 8px;
   transition: bottom 0.25s;
 }
