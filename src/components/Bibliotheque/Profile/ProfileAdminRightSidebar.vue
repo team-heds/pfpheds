@@ -66,12 +66,13 @@
     </div>
 
     <!-- Boutons de navigation pour les étudiants BA22 -->
-    <div class="ba-navigation flex justify-center items-center mt-4">
-      <Button class="m-4" @click="prevBA22" icon="pi pi-arrow-left">
-        BA22 <<<
+    <div class="ba-navigation-modern">
+      <Button class="ba-btn" @click="prevBA22" icon="pi pi-arrow-left" severity="secondary">
+        <span class="ba-btn-label">Précédent BA22</span>
       </Button>
-      <Button class="m-4" @click="nextBA22" icon="pi pi-arrow-right">
-        >>> BA22
+      <span class="ba-nav-separator"></span>
+      <Button class="ba-btn" @click="nextBA22" icon="pi pi-arrow-right" iconPos="right" severity="primary">
+        <span class="ba-btn-label">Suivant BA22</span>
       </Button>
     </div>
   </div>
@@ -238,6 +239,32 @@ const prevBA22 = () => {
   flex-direction: column;
   gap: 1.5rem;
   margin-right: 4rem;
-  width: 100%;
+}
+.ba-navigation-modern {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 2rem;
+  margin-bottom: 0.5rem;
+}
+.ba-btn {
+  min-width: 170px;
+  font-weight: 600;
+  border-radius: 1.2rem;
+  font-size: 1.05rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  transition: background 0.2s, color 0.2s;
+}
+.ba-btn-label {
+  margin-left: 0.5rem;
+  margin-right: 0.5rem;
+}
+.ba-nav-separator {
+  width: 2.5rem;
+  height: 2px;
+  background: var(--primary-color, #ffb703);
+  border-radius: 2px;
+  opacity: 0.7;
 }
 </style>
