@@ -16,18 +16,20 @@
       }
     },
     mounted() {
-      window.addEventListener('scroll', this.onScroll);
+      // Scroll sur le parent direct (ex: .posts-container)
+      if (this.$el.parentNode) {
+        this.$el.parentNode.addEventListener('scroll', this.onScroll);
+      }
     },
-    beforeDestroy() {
-      window.removeEventListener('scroll', this.onScroll);
+    beforeUnmount() {
+      if (this.$el.parentNode) {
+        this.$el.parentNode.removeEventListener('scroll', this.onScroll);
+      }
     },
     methods: {
-      onScroll() {
-        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-        const windowHeight = window.innerHeight;
-        const documentHeight = document.documentElement.scrollHeight;
-  
-        if (scrollTop + windowHeight >= documentHeight - 50 && !this.loading) {
+      onScroll(e) {
+        const el = e.target;
+        if (el.scrollTop + el.clientHeight >= el.scrollHeight - 50 && !this.loading) {
           this.$emit('load-more');
         }
       }
@@ -40,7 +42,6 @@
     text-align: center;
     padding: 20px;
     font-size: 16px;
-    color: #888;
+    color: #f3c300;
   }
   </style>
-  
