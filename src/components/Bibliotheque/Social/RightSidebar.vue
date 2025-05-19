@@ -138,7 +138,8 @@ export default {
 .right-sidebar {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.5rem; /* Espace entre les sections */
+  border-radius: 1.2rem; /* Coins arrondis taille que je dois uttilser */
 }
 
 /* Section Communautés */
@@ -170,6 +171,7 @@ export default {
   gap: 0.75rem;
   padding: 0.5rem 0;
   transition: background-color 0.2s ease;
+  border-radius: 1.2rem; /* Coins arrondis taille que je dois uttilser */border-radius: 1.2rem; /* Coins arrondis taille que je dois uttilser */
 }
 
 .community-item:hover {
@@ -206,5 +208,6 @@ export default {
   width: 100%;
   text-decoration: none;
   color: inherit;
+  border-radius: 1.2rem; /* Coins arrondis taille que je dois uttilser */
 }
 </style>

@@ -372,15 +372,16 @@ export default {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
-  margin-left: auto;
-  margin-right: auto;
+  margin-left: auto; /* Centrer le post */
+  margin-right: auto; /* Centrer le post */
   padding: 15px 8px;
   background-color: var(--surface-card);
-  border-radius: 8px;
+  border-radius: 1.2rem; /* Coins arrondis taille que je dois uttilser */
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
   -ms-overflow-style: none;  /* IE et Edge */
   scrollbar-width: none;     /* Firefox */
+  margin-bottom: 15px; /* Espace entre les posts */
 }
 
 .post-header {

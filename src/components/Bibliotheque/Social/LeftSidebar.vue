@@ -200,6 +200,7 @@ export default {
   height: 100vh; /* Assure que la sidebar occupe toute la hauteur de la fenêtre */
   background: var(--surface-card);
   padding: 1rem;
+  border-radius: 1.2rem; /* Coins arrondis taille que je dois uttilser */
 }
 
 /* Partie supérieure fixe */

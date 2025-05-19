@@ -21,7 +21,7 @@
           <!-- Barre de recherche au centre -->
           <div class="search-bar">
             <span class="p-input-icon-left">
-              <InputText v-model="searchTerm" placeholder="Rechercher par nom, ville, canton ou id" class="search-input" />
+              <InputText v-model="searchTerm" placeholder="Rechercher par nom, ville, canton ou id" class="search-input style-bar" />
             </span>
           </div>
 
@@ -451,4 +451,10 @@ export default {
   justify-content: center;
   margin-top: 2rem;
 }
+
+.style-bar {
+  background-color: var(--surface-card);
+  border-radius: 1.2rem;
+}
+
 </style>

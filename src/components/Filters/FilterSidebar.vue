@@ -139,12 +139,13 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  border-radius: 1.2rem; /* Coins arrondis taille que je dois uttilser */
 }
 
 /* Style commun aux sections de filtre */
 .filter-section {
   padding: 1rem;
-  border-radius: 0.5rem;
+  border-radius: 1.2rem; /* Coins arrondis taille que je dois uttilser */
 }
 
 .section-header {

@@ -213,14 +213,15 @@
   .main-content {
     flex: 1;
     padding: 20px;
-    border-radius: 8px;
+    border-radius: 1.2rem; /* Coins arrondis taille que je dois uttilser */
+
   }
   
   /* Sidebar de navigation (positionnée à droite) */
   .sidebar {
     width: 250px;
     padding: 20px;
-    border-radius: 8px;
+    border-radius: 1.2rem;
     border: 1px solid #ddd;
   }
   
