@@ -1,5 +1,5 @@
 <template>
-  <nav class="mobile-bottom-nav" v-if="isMobile">
+  <nav class="mobile-bottom-nav" v-if="isMobile" :class="{ hide: !isVisible }">
     <router-link v-for="item in navItems" :key="item.to" :to="item.to" class="nav-item" :class="{ active: isActive(item.to) }">
       <i :class="item.icon"></i>
       <span>{{ item.label }}</span>
@@ -9,7 +9,9 @@
 
 <script setup>
 import { useRoute } from 'vue-router';
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, defineProps, watch, nextTick } from 'vue';
+
+const props = defineProps({ scrollTarget: Object });
 
 const navItems = [
   { label: 'Accueil', to: '/feed', icon: 'pi pi-home' },
@@ -28,6 +30,48 @@ const handleResize = () => {
 };
 onMounted(() => window.addEventListener('resize', handleResize));
 onUnmounted(() => window.removeEventListener('resize', handleResize));
+
+// --- Scroll hide/show logic ---
+const isVisible = ref(true);
+let lastScrollY = 0;
+const handleScroll = () => {
+  if (!props.scrollTarget) return;
+  const currentY = props.scrollTarget.scrollTop;
+  if (currentY > lastScrollY + 10) {
+    isVisible.value = false; // Scroll down: hide
+  } else if (currentY < lastScrollY - 10) {
+    isVisible.value = true; // Scroll up: show
+  }
+  lastScrollY = currentY;
+};
+
+function attachScrollListener() {
+  if (props.scrollTarget) {
+    lastScrollY = props.scrollTarget.scrollTop;
+    props.scrollTarget.addEventListener('scroll', handleScroll);
+  }
+}
+function detachScrollListener() {
+  if (props.scrollTarget) {
+    props.scrollTarget.removeEventListener('scroll', handleScroll);
+  }
+}
+
+onMounted(async () => {
+  await nextTick();
+  attachScrollListener();
+});
+onUnmounted(() => {
+  detachScrollListener();
+});
+
+watch(() => props.scrollTarget, (newVal, oldVal) => {
+  if (oldVal) oldVal.removeEventListener('scroll', handleScroll);
+  if (newVal) {
+    lastScrollY = newVal.scrollTop;
+    newVal.addEventListener('scroll', handleScroll);
+  }
+});
 </script>
 
 <style scoped>
@@ -44,6 +88,12 @@ onUnmounted(() => window.removeEventListener('resize', handleResize));
   align-items: center;
   z-index: 1000;
   box-shadow: 0 -2px 8px rgba(0,0,0,0.04);
+  transition: transform 0.32s cubic-bezier(.4,0,.2,1);
+  will-change: transform;
+}
+.mobile-bottom-nav.hide {
+  transform: translateY(100%);
+  pointer-events: none;
 }
 .nav-item {
   flex: 1 1 0;
