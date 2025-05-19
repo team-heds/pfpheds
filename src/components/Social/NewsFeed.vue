@@ -7,7 +7,7 @@
     </div>
 
     <!-- Fil d'actualité avec Infinity Scroll -->
-    <div class="main-feed">
+    <div class="main-feed" ref="mainFeed">
       <MainFeed />
     </div>
 
@@ -16,10 +16,11 @@
       <RightSidebar />
     </div>
   </div>
-  <MobileBottomNav />
+  <MobileBottomNav :scrollTarget="mainFeedRef" />
 </template>
 
 <script>
+import { ref } from 'vue';
 import LeftSidebar from '@/components/Bibliotheque/Social/LeftSidebar.vue'
 import MainFeed from '@/components/Bibliotheque/Social/MainFeed.vue'
 import RightSidebar from '@/components/Bibliotheque/Social/RightSidebar.vue'
@@ -33,6 +34,10 @@ export default {
     MainFeed,
     RightSidebar,
     MobileBottomNav
+  },
+  setup() {
+    const mainFeedRef = ref(null);
+    return { mainFeedRef };
   }
 };
 </script>

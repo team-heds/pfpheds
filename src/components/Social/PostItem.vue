@@ -2,13 +2,13 @@
   <div class="post-item">
     <!-- En-tête du post -->
     <div class="post-header">
-      <img :src="authorAvatarUrl || defaultAvatar" alt="Avatar" class="avatar" />
+      <img :src="authorAvatarUrl || defaultAvatar" alt="Avatar" class="avatar m-2" />
       <div class="post-author">
         <router-link
           v-if="post.IdUser"
           :to="{ name: 'Profile', params: { id: post.IdUser } }"
         >
-      <strong>  <p class="text-primary strong">{{ authorName }}</p></strong>
+          <strong> <p class="text-primary strong">{{ authorName }}</p></strong>
         </router-link>
         <h5 v-else>{{ authorName }}</h5>
         <div>
@@ -55,7 +55,14 @@
               ></video>
             </template>
             <template v-else-if="isPDF(mediaUrl)">
-              <embed :src="mediaUrl" type="application/pdf" class="media-item pdf-embed" />
+              <div v-if="!isMobile">
+                <embed :src="mediaUrl" type="application/pdf" class="media-item pdf-embed" />
+              </div>
+              <div v-else style="text-align:center; margin:16px 0;">
+                <a :href="mediaUrl" target="_blank" rel="noopener noreferrer" class="media-item media-link pdf-mobile-btn">
+                  📄 Voir le PDF
+                </a>
+              </div>
             </template>
             <template v-else>
               <a :href="mediaUrl" target="_blank" rel="noopener noreferrer" class="media-item media-link">
@@ -68,12 +75,12 @@
     </div>
 
     <!-- Boutons d'action -->
-    <div class="post-actions p-3 flex align-items-center justify-content-between">
+    <div class="post-actions post-actions-mobile-row">
       <div class="action-button" @click="toggleLike">
         <i :class="isLiked ? 'pi pi-heart-fill' : 'pi pi-heart'" class="action-icon"></i>
         <span>{{ likeCount }}</span>
       </div>
-      <div class="action-button" @click="toggleReplyForm">
+      <div class="action-button" @click="toggleComments">
         <i class="pi pi-comment action-icon"></i>
         <span>{{ commentCount }}</span>
       </div>
@@ -91,47 +98,80 @@
       </ul>
     </div>
 
-    <!-- Formulaire de réponse -->
-    <div v-if="showReplyForm" class="reply-form w-full p-3">
-      <Textarea
-        v-model="replyContent"
-        placeholder="Écrire une réponse..."
-        class="reply-textarea"
-      />
-      <div class="pt-3">
-        <Button @click="submitReply" size="small">Envoyer</Button>
-      </div>
-    </div>
-
-    <!-- Bouton pour afficher/masquer les commentaires sur mobile si des commentaires existent -->
-    <div v-if="post.replies && Object.keys(post.replies).length > 0" class="comments-toggle p-3">
-      <Button @click="toggleComments" size="small">
-        {{ showComments ? 'Masquer les commentaires' : 'Afficher les commentaires' }}
-      </Button>
-    </div>
-
     <!-- Liste des commentaires (affichés seulement si showComments est true) -->
     <div v-if="showComments && post.replies" class="comments-section p-3">
-      <h4>Commentaires :</h4>
-      <div v-for="(reply, replyId) in post.replies" :key="replyId" class="comment-item">
-        <div class="comment-author">
-          <strong>{{ reply.Author }}</strong> - <span class="comment-date">{{ formatTimestamp(reply.Timestamp) }}</span>
+      <div v-for="(reply, replyId) in topLevelReplies" :key="replyId" class="comment-card compact">
+        <div class="comment-card-avatar" :class="{'with-photo': reply.photoURL}" >
+          <img v-if="reply.photoURL" :src="reply.photoURL" alt="avatar" />
+          <span v-else>{{ reply.Author ? reply.Author[0].toUpperCase() : '?' }}</span>
         </div>
-        <div class="comment-content">{{ reply.Content }}</div>
+        <div class="comment-card-body">
+          <div class="comment-card-meta">
+            <span class="comment-card-author">{{ reply.Author }}</span>
+            <span class="comment-card-date">{{ formatTimestamp(reply.Timestamp) }}</span>
+          </div>
+          <div class="comment-card-content">{{ reply.Content }}</div>
+          <div class="comment-card-actions">
+            <button class="reply-link" @click="toggleReplyTo(replyId)">Répondre</button>
+          </div>
+          <!-- Champ de réponse -->
+          <div v-if="replyToId === replyId" class="reply-to-bar">
+            <Textarea
+              v-model="replyToContent"
+              placeholder="Répondre à ce commentaire..."
+              class="comment-bar-textarea compact"
+              autoResize
+              @keydown.enter.exact.prevent="submitReplyTo(replyId)"
+            />
+            <button class="comment-bar-send compact" @click="submitReplyTo(replyId)">
+              <i class="pi pi-send"></i>
+            </button>
+          </div>
+          <!-- Réponses -->
+          <div v-if="reply.replies" class="comment-replies compact">
+            <div v-for="(subReply, subId) in reply.replies" :key="subId" class="comment-card reply-thread compact">
+              <div class="comment-card-avatar small" :class="{'with-photo': subReply.photoURL}">
+                <img v-if="subReply.photoURL" :src="subReply.photoURL" alt="avatar" />
+                <span v-else>{{ subReply.Author ? subReply.Author[0].toUpperCase() : '?' }}</span>
+              </div>
+              <div class="comment-card-body">
+                <div class="comment-card-meta">
+                  <span class="comment-card-author">{{ subReply.Author }}</span>
+                  <span class="comment-card-date">{{ formatTimestamp(subReply.Timestamp) }}</span>
+                </div>
+                <div class="comment-card-content">{{ subReply.Content }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
+    </div>
+
+    <!-- Nouvelle zone de commentaire compacte et colorée -->
+    <div class="comment-bar-modern compact">
+      <Textarea
+        v-model="replyContent"
+        placeholder="Écrire un commentaire..."
+        class="comment-bar-textarea compact"
+        autoResize
+        @keydown.enter.exact.prevent="submitReply"
+      />
+      <button class="comment-bar-send compact" @click="submitReply">
+        <i class="pi pi-send"></i>
+      </button>
     </div>
   </div>
 </template>
 
 <script>
-import { ref as dbRef, onValue, push, serverTimestamp, update, get } from "firebase/database";
+import { ref as dbRef, onValue, push, serverTimestamp, update, get, child } from "firebase/database";
 import { db } from "../../../firebase.js";
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import Textarea from "primevue/textarea";
 import Button from "primevue/button";
 
 export default {
   name: "PostItem",
-  // eslint-disable-next-line vue/no-reserved-component-names
   components: { Textarea, Button },
   props: {
     post: {
@@ -147,6 +187,8 @@ export default {
     return {
       showReplyForm: false,
       replyContent: "",
+      replyToId: null,
+      replyToContent: "",
       defaultAvatar: new URL("@/assets/avatar/avatar1.jpg", import.meta.url).href,
       authorName: "",
       authorAvatarUrl: "",
@@ -154,8 +196,24 @@ export default {
       likeCount: 0,
       commentCount: 0,
       likedUsers: [],
-      showComments: false // Par défaut les commentaires sont cachés, surtout utile sur mobile
+      showComments: false,
+      currentUserLocal: null,
+      userPhotoCache: {},
+      isMobile: window.matchMedia('(max-width: 600px)').matches,
     };
+  },
+  created() {
+    // Récupération de l'utilisateur connecté
+    const auth = getAuth();
+    onAuthStateChanged(auth, (user) => {
+      this.currentUserLocal = user;
+    });
+  },
+  mounted() {
+    window.addEventListener('resize', this.handleResize);
+  },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.handleResize);
   },
   watch: {
     post: {
@@ -164,12 +222,22 @@ export default {
         this.checkLikeStatus();
         this.loadCommentCount();
         this.loadLikedUsers();
+        this.loadCommentAvatars(); // Ajouté
       },
       immediate: true,
     },
   },
-  mounted() {
-    this.initVideoObserver();
+  computed: {
+    topLevelReplies() {
+      if (!this.post.replies) return {};
+      const result = {};
+      for (const [key, value] of Object.entries(this.post.replies)) {
+        if (value && typeof value === 'object' && value.Author && value.Content) {
+          result[key] = value;
+        }
+      }
+      return result;
+    }
   },
   methods: {
     fetchAuthorDetails() {
@@ -199,8 +267,8 @@ export default {
       }
 
       const newReply = {
-        IdUser: this.currentUser.uid,
-        Author: this.currentUser.email.split("@")[0],
+        IdUser: this.currentUserLocal.uid,
+        Author: this.currentUserLocal.email.split("@")[0],
         Content: this.replyContent,
         Timestamp: serverTimestamp(),
       };
@@ -217,23 +285,23 @@ export default {
       return `${date.toLocaleDateString()} à ${date.toLocaleTimeString()}`;
     },
     checkLikeStatus() {
-      if (this.post.likes && this.currentUser) {
-        this.isLiked = !!this.post.likes[this.currentUser.uid];
+      if (this.post.likes && this.currentUserLocal) {
+        this.isLiked = !!this.post.likes[this.currentUserLocal.uid];
         this.likeCount = Object.keys(this.post.likes).length;
       } else {
         this.likeCount = 0;
       }
     },
     toggleLike() {
-      if (!this.currentUser) return alert("Vous devez être connecté pour liker.");
+      if (!this.currentUserLocal) return alert("Vous devez être connecté pour liker.");
       const postLikesRef = dbRef(db, `Posts/${this.post.id}/likes`);
       if (this.isLiked) {
         const updates = {};
-        updates[this.currentUser.uid] = null;
+        updates[this.currentUserLocal.uid] = null;
         update(postLikesRef, updates);
       } else {
         const updates = {};
-        updates[this.currentUser.uid] = true;
+        updates[this.currentUserLocal.uid] = true;
         update(postLikesRef, updates);
       }
 
@@ -288,34 +356,69 @@ export default {
     toggleComments() {
       this.showComments = !this.showComments;
     },
-    initVideoObserver() {
-      const options = {
-        root: null,
-        rootMargin: '0px',
-        threshold: 0.5
+    toggleReplyTo(replyId) {
+      if (this.replyToId === replyId) {
+        this.replyToId = null;
+        this.replyToContent = "";
+      } else {
+        this.replyToId = replyId;
+        this.replyToContent = "";
+      }
+    },
+    async submitReplyTo(parentReplyId) {
+      if (!this.replyToContent.trim()) return;
+      // Ajout d'une réponse à un commentaire existant (thread niveau 1)
+      const postRef = dbRef(db, `Posts/${this.post.id}/replies/${parentReplyId}/replies`);
+      const newReply = {
+        IdUser: this.currentUserLocal.uid,
+        Author: this.currentUserLocal.email.split("@")[0],
+        Content: this.replyToContent,
+        Timestamp: serverTimestamp(),
       };
-
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          const video = entry.target;
-          if (entry.isIntersecting) {
-            video.play().catch(() => {});
-          } else {
-            video.pause();
-          }
-        });
-      }, options);
-
-      this.$nextTick(() => {
-        const videos = this.$refs.videos;
-        if (videos) {
-          if (Array.isArray(videos)) {
-            videos.forEach(video => observer.observe(video));
-          } else {
-            observer.observe(videos);
+      await push(postRef, newReply);
+      this.replyToContent = "";
+      this.replyToId = null;
+    },
+    async loadCommentAvatars() {
+      const userIds = new Set();
+      // Collecte tous les IdUser des commentaires et réponses (thread 1 niveau)
+      for (const reply of Object.values(this.post.replies || {})) {
+        if (reply && reply.IdUser) userIds.add(reply.IdUser);
+        if (reply && reply.replies) {
+          for (const subReply of Object.values(reply.replies)) {
+            if (subReply && subReply.IdUser) userIds.add(subReply.IdUser);
           }
         }
-      });
+      }
+      // Pour chaque userId, récupère photoURL si ce n'est pas le currentUser
+      for (const userId of userIds) {
+        if (userId === (this.currentUserLocal && this.currentUserLocal.uid)) {
+          this.userPhotoCache[userId] = this.currentUserLocal.photoURL;
+          continue;
+        }
+        if (!this.userPhotoCache[userId]) {
+          // Va chercher dans la base Users/{userId}/PhotoURL
+          const userSnap = await get(dbRef(db, `Users/${userId}`));
+          if (userSnap.exists() && userSnap.val().PhotoURL) {
+            this.userPhotoCache[userId] = userSnap.val().PhotoURL;
+          } else {
+            this.userPhotoCache[userId] = null;
+          }
+        }
+      }
+      // Ajoute photoURL à chaque commentaire et réponse pour le template
+      for (const reply of Object.values(this.post.replies || {})) {
+        if (reply && reply.IdUser) reply.photoURL = this.userPhotoCache[reply.IdUser] || null;
+        if (reply && reply.replies) {
+          for (const subReply of Object.values(reply.replies)) {
+            if (subReply && subReply.IdUser) subReply.photoURL = this.userPhotoCache[subReply.IdUser] || null;
+          }
+        }
+      }
+      this.$forceUpdate();
+    },
+    handleResize() {
+      this.isMobile = window.matchMedia('(max-width: 600px)').matches;
     },
     // --- YouTube/Spotify embed helpers ---
     extractYouTubeLinks(content) {
@@ -362,6 +465,35 @@ export default {
       const type = match[1];
       const id = match[2];
       return `https://open.spotify.com/embed/${type}/${id}`;
+    },
+    initVideoObserver() {
+      const options = {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.5
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          const video = entry.target;
+          if (entry.isIntersecting) {
+            video.play().catch(() => {});
+          } else {
+            video.pause();
+          }
+        });
+      }, options);
+
+      this.$nextTick(() => {
+        const videos = this.$refs.videos;
+        if (videos) {
+          if (Array.isArray(videos)) {
+            videos.forEach(video => observer.observe(video));
+          } else {
+            observer.observe(videos);
+          }
+        }
+      });
     },
   },
 };
@@ -487,26 +619,202 @@ export default {
   padding: 0;
 }
 
-.comments-section {
-  margin-top: 20px;
+.comment-card.compact {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: var(--surface-card, #f7f8fa);
+  border-radius: 11px;
+  box-shadow: none;
+  padding: 7px 10px 7px 7px;
+  margin-bottom: 8px;
+  max-width: 99%;
+  min-width: 0;
 }
-
-.comment-item {
-  background: var(--surface-50);
-  padding: 10px;
-  border-radius: 6px;
-  margin-bottom: 10px;
+.comment-card-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #e0e4ea;
+  color: #5a5a5a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.95em;
+  flex-shrink: 0;
+  user-select: none;
+  border: 1px solid #ececec;
+  overflow: hidden;
 }
-
-.comment-author {
-  font-size: 0.9em;
+.comment-card-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+.comment-card-avatar.small {
+  width: 22px;
+  height: 22px;
+  font-size: 0.85em;
+}
+.comment-card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.comment-card-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 0;
+}
+.comment-card-author {
+  color: var(--primary-color, #1976d2);
+  font-weight: 600;
+  font-size: 0.98em;
+  letter-spacing: 0.01em;
+}
+.comment-card-date {
+  color: #b5b5b5;
+  font-size: 0.80em;
+  margin-top: 0;
+}
+.comment-card-content {
+  font-size: 0.98em;
+  color: var(--text-color, #222);
+  margin-top: 1px;
+  margin-bottom: 2px;
+  word-break: break-word;
+  line-height: 1.35;
+}
+.comment-card-actions {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+.reply-link {
+  background: none;
+  border: none;
+  color: var(--primary-color, #1976d2);
+  cursor: pointer;
+  font-size: 0.93em;
+  padding: 0 0.25em;
+  opacity: 0.8;
+  transition: opacity 0.17s;
+}
+.reply-link:hover {
+  text-decoration: underline;
+  opacity: 1;
+}
+.reply-to-bar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 5px;
   margin-bottom: 5px;
-  color: var(--text-secondary-color);
+}
+.comment-replies.compact {
+  margin-left: 18px;
+  margin-top: 4px;
+}
+.comment-card.reply-thread.compact {
+  background: var(--surface-card, #f7f8fa);
+  border-radius: 9px;
+  box-shadow: none;
+  padding: 5px 7px 5px 5px;
+  margin-bottom: 4px;
+  margin-top: 0;
+  max-width: 97%;
+  min-width: 0;
+}
+@media (max-width: 600px) {
+  .comment-card.compact {
+    padding: 4px 3px 4px 3px;
+    border-radius: 8px;
+    font-size: 0.93em;
+  }
+  .comment-card-avatar {
+    width: 22px;
+    height: 22px;
+    font-size: 0.85em;
+  }
+  .comment-card-content, .comment-card-actions {
+    margin-left: 0;
+  }
+  .comment-replies.compact {
+    margin-left: 7px;
+  }
+  .comment-card.reply-thread.compact {
+    padding: 3px 4px 3px 3px;
+    border-radius: 6px;
+    font-size: 0.90em;
+  }
 }
 
-.comment-content {
-  font-size: 1em;
-  color: var(--text-color);
+/* Responsive mobile */
+@media (max-width: 600px) {
+  .post-item,
+  .post-content,
+  .post-media,
+  .media-container {
+    width: 96vw !important;
+    max-width: 96vw !important;
+    margin: 10px auto !important;
+    padding: 14px 6px 16px 6px !important;
+    border-radius: 14px !important;
+    box-sizing: border-box !important;
+    text-align: center;
+  }
+  .post-content,
+  .post-media,
+  .media-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+    text-align: center;
+  }
+  .post-text {
+    text-align: left;
+    word-break: break-word;
+    padding: 0 5vw;
+  }
+  .media-item,
+  .pdf-embed {
+    max-width: 98vw !important;
+    width: 100% !important;
+    height: auto;
+    margin: 0 auto 10px auto !important;
+    display: block;
+    border-radius: 8px;
+  }
+  .pdf-mobile-btn {
+    display: block;
+    width: auto;
+    min-width: 120px;
+    max-width: 320px;
+    margin: 18px auto 0 auto;
+    padding: 8px 18px;
+    font-size: 0.98em;
+    background: var(--primary-color, #2196f3);
+    color: #fff !important;
+    border: none;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.16s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .pdf-mobile-btn:active,
+  .pdf-mobile-btn:hover {
+    background: var(--primary-color-hover, #1976d2);
+    color: #fff;
+    text-decoration: none;
+  }
 }
 
 .youtube-responsive {
@@ -527,77 +835,143 @@ export default {
   background: #000;
 }
 
-/* Responsive mobile */
+.reply-link {
+  background: none;
+  border: none;
+  color: var(--primary-color, #2196f3);
+  cursor: pointer;
+  font-size: 0.95em;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  padding: 0 0.5em;
+  opacity: 0.8;
+  transition: opacity 0.17s;
+}
+
+.reply-link:hover {
+  text-decoration: underline;
+  opacity: 1;
+}
+
+.reply-to-bar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 6px;
+  margin-bottom: 10px;
+}
+
+.comment-replies {
+  margin-left: 24px;
+  margin-top: 4px;
+}
+
+.comment-thread {
+  background: var(--surface-50, #f7f8fa);
+  border-radius: 9px;
+  margin-bottom: 4px;
+  padding: 7px 11px;
+}
+
+.comment-bar-modern.compact {
+  display: flex;
+  align-items: center;
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border, #ececec);
+  border-radius: 13px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+  padding: 5px 8px;
+  margin: 12px 0 0 0;
+  gap: 7px;
+  min-height: 38px;
+  max-width: 99%;
+}
+
+.comment-bar-textarea.compact {
+  flex: 1;
+  min-height: 22px;
+  border: none;
+  background: transparent;
+  resize: none;
+  font-size: 0.97em;
+  padding: 4px 8px;
+  outline: none;
+  border-radius: 10px;
+  box-shadow: none;
+  color: var(--text-color, #222);
+}
+
+.comment-bar-textarea.compact::placeholder {
+  color: #bcbcbc;
+  opacity: 1;
+}
+
+.comment-bar-send.compact {
+  background: var(--primary-color, #2196f3);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1em;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.07);
+  cursor: pointer;
+  transition: background 0.18s;
+}
+
+.comment-bar-send.compact:hover {
+  background: var(--primary-color-hover, #1976d2);
+}
+
 @media (max-width: 600px) {
-  .post-item,
-  .post-content,
-  .post-media,
-  .media-container {
-    width: 90vw !important;
-    max-width: 90vw !important;
-    box-sizing: border-box !important;
-    padding: 5px 5px 5px 5px !important;
-    margin: 2px 2px 2px 2px !important;
+  .comment-bar-modern.compact {
+    width: 100% !important;
+    margin: 12px 0 0 0;
+    box-sizing: border-box;
+    border-radius: 10px;
+    padding: 5px 5vw!important;
+    background: var(--surface-card, #182336);
   }
-  .post-item {
-    border-radius: 10px !important;
-    padding-top: 8px !important;
-    padding-bottom: 8px !important;
+  .comment-bar-send.compact {
+    width: 22px;
+    height: 22px;
+    font-size: 0.9em;
   }
-  .media-item,
-  .youtube-responsive,
-  .youtube-responsive iframe,
-  .pdf-embed {
-    width: 90vw !important;
-    max-width: 90vw !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-    box-sizing: border-box !important;
-    display: block;
-  }
-  .pdf-embed {
-    width: 87vw !important;
-    max-width: 87vw !important;
-    height: 60vh;
-  }
-  .post-item {
-    width: 100%;
-    max-width: 100%;
-    padding: 10px 2px;
-  }
-  .post-content,
-  .post-media,
-  .media-container {
-    width: 100%;
-    max-width: 100%;
-    padding: 0;
-  }
-  .media-item {
-    max-width: 100%;
-    width: 100%;
+  .comment-bar-textarea.compact {
+    font-size: 0.93em;
+    padding: 2px 4px;
   }
   .avatar {
-    width: 30px;
-    height: 30px;
-    margin-right: 8px;
-  }
-  .post-actions {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
-  .action-button {
-    font-size: 0.9em;
-  }
-  .comment-author {
-    font-size: 0.8em;
-  }
-  .comment-content {
-    font-size: 0.9em;
-  }
-  .post-content,
-  .media-container {
-    padding: 12px 10px !important;
+    margin: 1rem !important;
   }
 }
+
+.post-actions.post-actions-mobile-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2vw;
+  padding: 10px 0 0 0;
+  border-top: 1px solid var(--surface-border);
+}
+
+.post-actions.post-actions-mobile-row .action-button {
+  flex: 1 1 0;
+  justify-content: center;
+  font-size: 1em;
+  padding: 10px 0;
+  background: none;
+  border: none;
+  border-radius: 7px;
+  transition: background 0.15s;
+}
+
+.post-actions.post-actions-mobile-row .action-icon {
+  font-size: 1.05em;
+}
+
 </style>
