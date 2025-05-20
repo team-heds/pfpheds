@@ -16,8 +16,8 @@
           <!-- Résumé du stage utilisateur -->
           <ResumStageUserProfile class="w-full" />
 
-          <!-- Section pour changer la photo de profil -->
-          <div class="p-field mt-4 card w-full">
+          <!-- Section pour changer la photo de profil
+          <div class="p-field mt-4 surfaces-card w-full">
             <label for="avatar-upload">Photo de profil actuelle :</label>
             <div class="p-d-flex p-ai-center">
               <img
@@ -40,7 +40,7 @@
               @click="saveProfile"
               icon="pi pi-save"
             />
-          </div>
+          </div> -->
         </div>
       </div>
     </div>
@@ -171,7 +171,15 @@ onMounted(async () => {
 
 /* Contenu Principal */
 .main-content {
-
+  max-width: 880px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+.surfaces-card {
+  background-color: var(--surface-card);
+  padding: 1.5rem;
+  border-radius: 2rem;
 }
 
 /* Responsive pour le layout global */
@@ -222,9 +230,28 @@ img {
 }
 
 /* Responsive */
-@media (max-width: 600px) {
-  .w-4 {
+@media (max-width: 991px) {
+  .filter-layout {
+    flex-direction: column !important;
+    display: flex;
+  }
+  .sidebar-left,
+  .sidebar-right {
+    display: none !important;
+  }
+  .main-content {
     width: 100% !important;
+    padding: 0 0.5rem;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+  .filter-menu {
+    padding: 0.5rem 0 !important;
+  }
+}
+@media (max-width: 600px) {
+  .main-content {
+    padding: 0 0.2rem;
   }
 }
 </style>

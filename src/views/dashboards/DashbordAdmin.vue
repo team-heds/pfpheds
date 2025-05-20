@@ -385,21 +385,30 @@ const isDefaultDashboard = computed(() => route.path === '/admin' || route.path 
 <style scoped>
 .layout-container {
   display: flex;
-  height: 100vh;
+  align-items: flex-start;
+  height: auto;
   overflow: auto;
 }
+
 .layout-sidebar {
   width: 280px;
   background: var(--surface-b);
   overflow-y: auto;
-  height: 100vh;
+  height: auto;
   position: fixed;
+  margin-left : 4rem;
 }
+
 .layout-content-wrapper {
-  margin-left: 280px;
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  align-items: flex-start;
+  justify-content: flex-start;
+  max-width: none;
+  min-width: 0;
+  min-height: 100vh;
+  margin-left: 4rem;
 }
 </style>

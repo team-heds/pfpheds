@@ -1,9 +1,6 @@
 <!-- src/components/Social/MainFeed.vue -->
 <template>
   <div class="main-feed">
-    <!-- Stories en haut du feed -->
-    <StoriesBar />
-  
     <!-- Section des filtres -->
     <FilterComponent
       :filterTypes="filterTypes"
@@ -17,90 +14,26 @@
       @reset-filter="resetFilter"
     />
 
-    <!-- Carte pour la zone de texte et le bouton "Publier" -->
-    <transition name="fade">
-      <div v-show="showTextareaCard" class="post-textarea-card">
-        <div class="post-form">
-          <!-- Nouvelle zone de texte riche -->
-          <TextAreaComponent
-            v-model="newPost"
-            @input="detectTags"
-          />
-
-          <!-- Affichage des tags détectés -->
-          <div v-if="detectedTags.length > 0" class="tags-container p-1">
-            <Tag
-              v-for="(tag, index) in detectedTags"
-              :key="index"
-              :class="tag.startsWith('#') ? 'bg-primary' : 'bg-secondary'"
-            >
-              {{ tag }}
-            </Tag>
-          </div>
-
-          <!-- Conteneur pour les boutons d'upload et de publication -->
-          <div class="actions-container w-3 pb-2">
-            <!-- Upload de fichiers avec un pictogramme d'image et le label "Médias" -->
-            <FileUpload
-              ref="fileupload"
-              mode="basic"
-              name="media[]"
-              accept=".jpg,.png,.mp3,.mp4,.pdf"
-              :maxFileSize="10000000"
-              customUpload
-              @select="handleFileSelection"
-              class="file-upload"
-            >
-              <template #choose>
-                <Button
-                  label="Médias"
-                  icon="pi pi-image"
-                  class="upload-button"
-                  @click="$refs.fileupload.choose()"
-                />
-              </template>
-            </FileUpload>
-
-            <!-- Bouton de publication -->
-            <Button
-              label="Publier"
-              class="publish-button"
-              @click="postMessage"
-            />
-            <!-- Bouton Créer une Story -->
-            <AddStory v-if="showAddStoryFeed" @close="showAddStoryFeed = false" @uploaded="showAddStoryFeed = false" />
-          </div>
-
-          <!-- Prévisualisation des médias sélectionnés -->
-          <div class="media-preview" v-if="selectedMedia.length > 0">
-            <div
-              v-for="(media, index) in selectedMedia"
-              :key="index"
-              class="media-item-wrapper"
-            >
-              <img
-                v-if="media.type.startsWith('image/')"
-                :src="media.preview"
-                alt="Preview"
-                class="media-item"
-              />
-              <video
-                v-if="media.type.startsWith('video/')"
-                :src="media.preview"
-                controls
-                class="media-item"
-              ></video>
-              <Button @click="removeMedia(index)" class="remove-media-btn">
-                ✖
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </transition>
+    <!-- Barre de création façon Facebook -->
+    <div class="quick-post-bar" @click="showCreatePost = true">
+      <span class="quick-post-icon-circle">
+        <i class="pi pi-file-edit quick-post-icon"></i>
+      </span>
+      <div class="quick-post-placeholder">Exprime-toi...</div>
+    </div>
+    <CreatePostDialog
+      v-model="showCreatePost"
+      :loading="loading"
+      :value="newPost"
+      :selectedMedia="selectedMedia"
+      @update:value="val => newPost = val"
+      @publish="postMessage"
+      @media-selected="handleFileSelection"
+      @remove-media="removeMedia"
+    />
 
     <!-- Conteneur pour les posts avec Infinite Scroll -->
-    <div class="posts-container" @scroll="handleScroll">
+    <div class="posts-container">
       <InfiniteScroll :loading="loading" @load-more="loadMorePosts">
         <PostItem
           v-for="post in filteredPosts"
@@ -119,7 +52,7 @@
  * de l'ancienne zone de texte. On conserve l'intégralité de la logique.
  */
 
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch, onUnmounted } from "vue";
 import { db, auth } from "../../../../firebase.js";
 import { onAuthStateChanged } from "firebase/auth";
 import InfiniteScroll from "@/components/Social/InfiniteScroll.vue";
@@ -128,9 +61,8 @@ import Tag from "primevue/tag";
 import Button from "primevue/button";
 import FileUpload from "primevue/fileupload";
 import FilterComponent from "@/components/Social/FilterComponent.vue";
-import StoriesBar from '@/components/StoriesBar.vue';
 import TextAreaComponent from "./TextAreaComponent.vue"; // <-- Import du nouveau composant
-import AddStory from '@/components/AddStory.vue';
+import CreatePostDialog from '@/components/Social/CreatePostDialog.vue';
 
 import {
   ref as dbRef,
@@ -161,9 +93,8 @@ export default {
     Button,
     FileUpload,
     FilterComponent,
-    TextAreaComponent, // <-- Enregistrement du nouveau composant
-    AddStory,
-    StoriesBar
+    TextAreaComponent,
+    CreatePostDialog,
   },
   props: {
     currentUser: Object,
@@ -177,12 +108,12 @@ export default {
     const loading = ref(false);
     const postsPerPage = ref(10);
     const localCurrentUser = ref(null);
-    const showTextareaCard = ref(true);
     const lastScrollTop = ref(0);
     const selectedMedia = ref([]);
     const oldestTimestamp = ref(null);
-    // Pour le bouton Créer une Story
-    const showAddStoryFeed = ref(false);
+    const showCreatePost = ref(false);
+    const userAvatarUrl = ref('');
+    const defaultAvatar = '/default-avatar.png';
 
     // Filtres
     const filterTypes = ref([
@@ -201,14 +132,21 @@ export default {
       value: null,
     });
 
-    // Fonction pour détecter les tags (appelée sur input)
-    const detectTags = (value) => {
+    // Ajout d'un détecteur mobile simple
+    const isMobile = ref(window.innerWidth <= 768);
+    const handleResize = () => {
+      isMobile.value = window.innerWidth <= 768;
+    };
+    onMounted(() => window.addEventListener('resize', handleResize));
+    onUnmounted(() => window.removeEventListener('resize', handleResize));
+
+    // Watcher pour détecter les tags dans le nouveau post
+    watch(newPost, (value) => {
+      // On peut analyser 'value' (qui est un HTML) pour extraire les tags (# / @).
+      // Ici on récupère le texte brut ou on fait une petite regex
+      // Pour simplifier, on remplace les balises <...> par du vide avant la recherche.
       const textWithoutHtml = value.replace(/<[^>]+>/g, "");
       detectedTags.value = extractTags(textWithoutHtml);
-    };
-    // Watcher pour compatibilité si la valeur change autrement
-    watch(newPost, (value) => {
-      detectTags(value);
     });
 
     // Fonction pour extraire les hashtags et mentions
@@ -406,114 +344,118 @@ export default {
     };
 
     // Fonction pour récupérer les posts
- // Fonction pour récupérer les posts
-const fetchPosts = async () => {
-  loading.value = true;
-  let q;
+    const fetchPosts = async () => {
+      loading.value = true;
+      let q;
 
-  try {
-    let postsRefQuery = dbRef(db, "Posts");
+      try {
+        let postsRefQuery = dbRef(db, "Posts");
 
-    // Appliquer le filtre si nécessaire
-    if (appliedFilter.value.type === "hashtag" && appliedFilter.value.value) {
-      // Filtrer par Hashtag
-      q = query(
-        postsRefQuery,
-        orderByChild(`Hashtags/${appliedFilter.value.value}`),
-        equalTo(true),
-        limitToLast(postsPerPage.value)
-      );
-    } else if (
-      appliedFilter.value.type === "community" &&
-      appliedFilter.value.value
-    ) {
-      // Filtrer par Communauté
-      q = query(
-        postsRefQuery,
-        orderByChild("Community"),
-        equalTo(appliedFilter.value.value),
-        limitToLast(postsPerPage.value)
-      );
-    } else {
-      // Pas de filtre
-      q = query(
-        postsRefQuery,
-        orderByChild("Timestamp"),
-        limitToLast(postsPerPage.value)
-      );
-    }
+        // Appliquer le filtre si nécessaire
+        if (appliedFilter.value.type === "hashtag" && appliedFilter.value.value) {
+          // Filtrer par Hashtag
+          q = query(
+            postsRefQuery,
+            orderByChild(`Hashtags/${appliedFilter.value.value}`),
+            equalTo(true),
+            limitToLast(postsPerPage.value)
+          );
+        } else if (
+          appliedFilter.value.type === "community" &&
+          appliedFilter.value.value
+        ) {
+          // Filtrer par Communauté
+          q = query(
+            postsRefQuery,
+            orderByChild("Community"),
+            equalTo(appliedFilter.value.value),
+            limitToLast(postsPerPage.value)
+          );
+        } else {
+          // Pas de filtre
+          q = query(
+            postsRefQuery,
+            orderByChild("Timestamp"),
+            limitToLast(postsPerPage.value)
+          );
+        }
 
-    // Appliquer la pagination si un oldestTimestamp existe
-    if (oldestTimestamp.value) {
-      if (
-        appliedFilter.value.type === "hashtag" ||
-        appliedFilter.value.type === "community"
-      ) {
-        q = query(
-          postsRefQuery,
-          orderByChild(
-            appliedFilter.value.type === "hashtag"
-              ? `Hashtags/${appliedFilter.value.value}`
-              : "Community"
-          ),
-          endAt(
-            appliedFilter.value.type === "hashtag"
-              ? true
-              : appliedFilter.value.value,
-            oldestTimestamp.value - 1
-          ),
-          limitToLast(postsPerPage.value)
-        );
-      } else {
-        q = query(
-          postsRefQuery,
-          orderByChild("Timestamp"),
-          endAt(oldestTimestamp.value - 1),
-          limitToLast(postsPerPage.value)
-        );
+        // Appliquer la pagination si un oldestTimestamp existe
+        if (oldestTimestamp.value) {
+          if (
+            appliedFilter.value.type === "hashtag" ||
+            appliedFilter.value.type === "community"
+          ) {
+            q = query(
+              postsRefQuery,
+              orderByChild(
+                appliedFilter.value.type === "hashtag"
+                  ? `Hashtags/${appliedFilter.value.value}`
+                  : "Community"
+              ),
+              endAt(
+                appliedFilter.value.type === "hashtag"
+                  ? true
+                  : appliedFilter.value.value,
+                oldestTimestamp.value - 1
+              ),
+              limitToLast(postsPerPage.value)
+            );
+          } else {
+            q = query(
+              postsRefQuery,
+              orderByChild("Timestamp"),
+              endAt(oldestTimestamp.value - 1),
+              limitToLast(postsPerPage.value)
+            );
+          }
+        }
+
+        const snapshot = await get(q);
+        if (snapshot.exists()) {
+          let data = snapshot.val();
+          let postsArray = Object.entries(data).map(([key, post]) => ({
+            ...post,
+            id: key,
+          }));
+
+          // ——————————————————————————————————————————————
+          // Exclure les posts ayant un champ "Community"
+          // ——————————————————————————————————————————————
+          postsArray = postsArray.filter((post) => !post.Community);
+
+          // Trier les posts du plus récent au plus ancien
+          postsArray.sort((a, b) => {
+            const timeA = a.Timestamp ? a.Timestamp : 0;
+            const timeB = b.Timestamp ? b.Timestamp : 0;
+            return timeB - timeA;
+          });
+
+          // Mise à jour des posts
+          posts.value = [...posts.value, ...postsArray];
+
+          // Mettre à jour oldestTimestamp
+          if (posts.value.length > 0) {
+            const oldestPost = posts.value[posts.value.length - 1];
+            oldestTimestamp.value = oldestPost.Timestamp;
+          }
+
+          applyFilters();
+        } else {
+          // Si aucun post trouvé, mais il y en a déjà affichés, on repart du début
+          if (posts.value.length > 0) {
+            oldestTimestamp.value = null;
+            await fetchPosts();
+          } else {
+            console.log("Aucun post trouvé pour les critères actuels.");
+          }
+        }
+      } catch (error) {
+        console.error("Erreur lors de la récupération des posts :", error);
       }
-    }
 
-    const snapshot = await get(q);
-    if (snapshot.exists()) {
-      let data = snapshot.val();
-      let postsArray = Object.entries(data).map(([key, post]) => ({
-        ...post,
-        id: key,
-      }));
-
-      // ——————————————————————————————————————————————
-      // Exclure les posts ayant un champ "Community"
-      // ——————————————————————————————————————————————
-      postsArray = postsArray.filter((post) => !post.Community);
-
-      // Trier les posts du plus récent au plus ancien
-      postsArray.sort((a, b) => {
-        const timeA = a.Timestamp ? a.Timestamp : 0;
-        const timeB = b.Timestamp ? b.Timestamp : 0;
-        return timeB - timeA;
-      });
-
-      // Mise à jour des posts
-      posts.value = [...posts.value, ...postsArray];
-
-      // Mettre à jour oldestTimestamp
-      if (posts.value.length > 0) {
-        const oldestPost = posts.value[posts.value.length - 1];
-        oldestTimestamp.value = oldestPost.Timestamp;
-      }
-
-      applyFilters();
-    } else {
-      console.log("Aucun post trouvé pour les critères actuels.");
-    }
-  } catch (error) {
-    console.error("Erreur lors de la récupération des posts :", error);
-  }
-
-  loading.value = false;
-};
-
+      loading.value = false;
+    };
 
     // Fonction pour appliquer les filtres aux posts
     const applyFilters = () => {
@@ -544,7 +486,6 @@ const fetchPosts = async () => {
     // Fonction pour gérer le scroll (pour afficher/masquer la zone de texte)
     const handleScroll = (event) => {
       const scrollTop = event.target.scrollTop;
-      showTextareaCard.value = scrollTop <= lastScrollTop.value;
       lastScrollTop.value = scrollTop;
     };
 
@@ -568,8 +509,6 @@ const fetchPosts = async () => {
     });
 
     return {
-      showAddStoryFeed,
-      detectTags,
       posts,
       filteredPosts,
       newPost,
@@ -577,7 +516,6 @@ const fetchPosts = async () => {
       loading,
       postsPerPage,
       localCurrentUser,
-      showTextareaCard,
       lastScrollTop,
       selectedMedia,
       oldestTimestamp,
@@ -589,6 +527,9 @@ const fetchPosts = async () => {
       availableCommunities,
       userCommunities,
       appliedFilter,
+      showCreatePost,
+      userAvatarUrl,
+      defaultAvatar,
       // Méthodes
       extractTags,
       postMessage,
@@ -606,92 +547,117 @@ const fetchPosts = async () => {
       handleScroll,
       updateSelectedFilterType,
       updateSelectedFilterValue,
+      isMobile,
     };
   },
 };
 </script>
 
 <style scoped>
+.quick-post-bar {
+  display: flex;
+  align-items: center;
+  background: var(--surface-card, #f8f8fa);
+  border-radius: 1.2rem;
+  padding: 0.5rem 1rem;
+  margin-bottom: 1.1rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  cursor: pointer;
+  transition: background 0.18s;
+  max-width: 880px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+@media (max-width: 900px) {
+  .quick-post-bar {
+    max-width: 98vw;
+  }
+}
+.quick-post-icon-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: var(--surface-hover);
+  border-radius: 50%;
+  margin-right: 0.7rem;
+  flex-shrink: 0;
+}
+.quick-post-icon {
+  font-size: 1rem;
+  color: var(--primary-color);
+}
+.quick-post-placeholder {
+  color: #888;
+  font-size: 1.01rem;
+  flex: 1;
+  text-align: left;
+}
+@media (max-width: 768px) {
+  .quick-post-bar {
+    padding: 0.35rem 0.5rem;
+    border-radius: 0.8rem;
+    margin-bottom: 0.6rem;
+  }
+  .quick-post-icon-circle {
+    width: 26px;
+    height: 26px;
+    margin-right: 0.5rem;
+  }
+  .quick-post-icon {
+    font-size: 0.85rem;
+  }
+  .quick-post-placeholder {
+    font-size: 0.96rem;
+  }
+}
 .main-feed {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  align-items: center;
+  width: 100%;
+  min-height: 100vh;
+  overflow-y: auto;
+  max-width: 880px;
+  margin-left: auto;
+  margin-right: auto;
+}
+@media (max-width: 900px) {
+  .main-feed {
+    max-width: 98vw;
+  }
+}
+.posts-container {
   height: 100vh;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
 }
-
-.post-textarea-card {
-  border-radius: 0.75rem;
+.posts-container::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
-
-.post-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-/* Conteneur pour les boutons d'upload et de publication */
-.actions-container {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-/* Personnalisation du bouton d'upload */
-.upload-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--surface-border);
-  border: none;
-  border-radius: 0.5rem;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  transition: background-color 0.3s, color 0.3s;
-}
-
-.upload-button:hover {
-  background-color: var(--primary-color-light);
-  color: var(--primary-color);
-}
-
-.upload-button .pi {
-  font-size: 1.2rem;
-  margin-right: 0.5rem;
-}
-
-/* Bouton de publication */
-.publish-button {
-  flex-grow: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .tags-container {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
 }
-
 .media-preview {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
   margin-top: 1rem;
 }
-
 .media-item-wrapper {
   position: relative;
 }
-
 .media-item {
   max-width: 100px;
   max-height: 100px;
   border-radius: 8px;
 }
-
 .remove-media-btn {
   position: absolute;
   top: 0;
@@ -707,7 +673,6 @@ const fetchPosts = async () => {
   align-items: center;
   justify-content: center;
 }
-
 /* Responsive mobile */
 @media (max-width: 768px) {
   .actions-container {
@@ -715,7 +680,6 @@ const fetchPosts = async () => {
     align-items: stretch;
     gap: 0.5rem;
   }
-
   .publish-button {
     width: 100%;
   }

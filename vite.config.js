@@ -32,7 +32,10 @@ export default defineConfig({
         name: 'HEdS',
         short_name: 'HEdS',
         description: 'Progressive Web App pour PFPHEDS',
-        theme_color: '#ffffff',
+        theme_color: '#0B213F',
+        background_color: '#0B213F',
+        display: 'standalone',
+        start_url: '.',
         icons: [
           {
             src: '/assets/images/hespicto.png',
@@ -45,6 +48,10 @@ export default defineConfig({
             type: 'image/png',
           },
         ],
+      },
+      includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
+      devOptions: {
+        enabled: true,
       },
     }),
   ],

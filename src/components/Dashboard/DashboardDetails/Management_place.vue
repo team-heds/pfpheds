@@ -28,7 +28,7 @@
       </div>
 
 
-
+      <!-- Table des places -->
       <!-- Table des places -->
       <div v-if="filteredPlaces.length > 0" class="p-datatable-responsive">
         <DataTable

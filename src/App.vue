@@ -11,8 +11,10 @@
     <div class="content">
       <Toast />
       <router-view />
+      <Toast position="bottom-center" />
+      <MobileBottomNav />
       <VersionningComponent />
-
+      <PwaInstallPrompt />
       <!-- Intégration du widget ConvAI -->
       <ConvaiWidget />
 
@@ -28,6 +30,8 @@ import Toast from 'primevue/toast';
 import ConvaiWidget from './components/ConvaiWidget.vue'; // Import du composant ConvaiWidget
 import Loader from '@/components/utils/Loader.vue'; // Import du composant Loader
 import VersionningComponent from './components/utils/VersionningComponent.vue'; // Import du nouveau composant
+import MobileBottomNav from '@/components/Utils/MobileBottomNav.vue';
+import PwaInstallPrompt from '@/components/Utils/PwaInstallPrompt.vue';
 
 export default {
   name: "App",
@@ -36,6 +40,8 @@ export default {
     ConvaiWidget, // Déclaration du composant
     Loader, // Déclaration du composant Loader
     VersionningComponent,
+    MobileBottomNav,
+    PwaInstallPrompt
   },
   data() {
     return {

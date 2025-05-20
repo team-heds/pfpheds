@@ -73,6 +73,7 @@ import ListComponent from '@/components/Bibliotheque/SoundBox/ListComponent.vue'
 import ProfileAdmin from '@/components/Home/ProfileAdmin.vue'
 import SettingView from '@/components/Home/SettingView.vue'
 import SearchResults from '@/components/Utils/SearchResults.vue'
+import AffectationStageEtudiant from '@/components/Dashboard/DashboardForms/AffectationStageEtudiant.vue'
 
 // Define your routes
 const routes = [
@@ -146,6 +147,7 @@ const routes = [
   { path: '/documents_pfp', component: DocumentsPFP, name: 'DocumentsPFP', meta: { requiresAuth: true } },
   { path: '/tasklist', component: Index, name: 'Index', meta: { requiresAuth: true, requiredRole: ['editor', 'admin'] } },
   { path: '/chat', component: IndexChat, name: 'IndexChat', meta: { requiresAuth: true } },
+  { path : '/affectation_stage_etudiant', component: AffectationStageEtudiant, name: 'AffectationStageEtudiant', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
   {
     path: '/search',
     name: 'SearchResults',

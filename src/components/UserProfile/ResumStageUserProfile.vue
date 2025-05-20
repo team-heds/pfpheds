@@ -30,7 +30,7 @@
     <div
       v-for="(inst, index) in institutionsList"
       :key="inst.InstitutionId"
-      class="surface-card shadow-2 border-round mb-3 p-3 flex flex-column gap-2"
+      class="surfaces-card mb-4 shadow-2 flex flex-column gap-2"
       style="min-height: 200px;"
     >
       <!-- Ligne du titre + bouton "Voir les détails" aligné à droite -->
@@ -125,7 +125,7 @@
       </div>
 
       <!-- Sélection et upload de fichiers alignés à droite -->
-      <div class="flex justify-content-end align-items-center gap-8 w-4 m-2">
+      <div class="flex justify-content-end align-items-center gap-8 w-6 m-2">
         <FileUpload
           mode="basic"
           customUpload
@@ -420,3 +420,72 @@ onMounted(() => {
   }
 });
 </script>
+
+<style scoped>
+.surfaces-card {
+  background-color: var(--surface-card);
+  padding: 2rem;
+  border-radius: 2rem;
+}
+
+/* --- Responsive Mobile Styles --- */
+@media (max-width: 991px) {
+  .grid.m-2 {
+    gap: 1.2rem !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding: 0 1.2rem;
+    justify-content: center;
+  }
+  .criteria-card {
+    min-width: 130px;
+    width: 90% !important;
+    margin-bottom: 1rem;
+    padding: 1.2rem 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    border-radius: 1rem;
+  }
+  .surfaces-card.mb-4.shadow-2.flex.flex-column.gap-2 {
+    padding: 1.5rem 1.2rem !important;
+    margin: 1.2rem 0 !important;
+    min-width: 0;
+    border-radius: 1.2rem;
+    display: flex;
+    align-items: center;
+  }
+  .flex.align-items-center {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 0.7rem;
+    width: 100%;
+  }
+  h4.m-2.w-2 {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    width: 100% !important;
+    text-align: center;
+    font-size: 1.2rem;
+  }
+  .list-none.p-0 {
+    padding: 0 !important;
+  }
+  .info-item, .m-2 {
+    margin-left: 0.4rem !important;
+    margin-right: 0.4rem !important;
+  }
+}
+@media (max-width: 600px) {
+  .grid.m-2, .surfaces-card.mb-4.shadow-2.flex.flex-column.gap-2 {
+    padding-left: 0.4rem !important;
+    padding-right: 0.4rem !important;
+  }
+  .criteria-card {
+    min-width: 100px;
+    padding: 1rem 0.5rem;
+  }
+}
+</style>

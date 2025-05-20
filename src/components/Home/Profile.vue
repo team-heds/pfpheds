@@ -148,4 +148,35 @@ export default {
   border-radius: 50%;
   object-fit: cover;
 }
+
+/* --- Responsive Mobile Styles --- */
+@media (max-width: 991px) {
+  .sidebar-left, .sidebar-right {
+    display: none !important;
+  }
+  .min-h-screen.flex.relative.lg\:static {
+    flex-direction: column !important;
+    padding: 0 0.5rem;
+    min-height: 0;
+  }
+  .min-h-screen.flex.flex-column.relative.flex-auto {
+    min-height: 0;
+    width: 100%;
+    padding: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .min-h-screen.flex.relative.lg\:static {
+    padding: 0 0.2rem;
+  }
+}
+
+/* Optionnel : améliore l'affichage des tabs ou du contenu central sur mobile */
+@media (max-width: 991px) {
+  .flex.flex-column.flex-auto {
+    width: 100% !important;
+    min-width: 0;
+  }
+}
 </style>
