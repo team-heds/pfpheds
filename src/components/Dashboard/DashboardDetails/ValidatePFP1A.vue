@@ -79,7 +79,27 @@ import Navbar from '@/components/Utils/Navbar.vue';
 import { ref, onMounted, watch, computed } from 'vue';
 import { ref as dbRef, onValue, set, get, child, update } from 'firebase/database';
 import { db } from 'root/firebase';
-import Button from 'primevue/button';
+import Navbar from "@/components/Utils/Navbar.vue";
+
+export default {
+  name: 'ValidatePFP1A',
+  components: { Navbar },
+
+  setup() {
+    const pfp1aResults = ref([]);
+    const loading = ref(true);
+    const usersMap = ref({});
+    const placesMap = ref({});
+    const praticiensMap = ref({});
+    const validationPath = '/ValidationEnAttente/BA24/PFP1A';
+    let initialLoad = true;
+    const showPlaceModal = ref(false);
+    const selectedRowIdx = ref(null);
+    const institutionsNameCache = ref({});
+    const institutionsNames = ref({});
+    const searchPlace = ref('');
+
+    import Button from 'primevue/button';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import InputText from 'primevue/inputtext';

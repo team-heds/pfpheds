@@ -172,7 +172,7 @@ const filteredInstitutions = computed(() => {
     const entry = filterData.find(item => item.IDPlace === inst.id);
     // Filtre par critères généraux
     if (selectedFilters.value.criter.length > 0) {
-      if (!entry || !entry.criteria.some(c => selectedFilters.value.criter.includes(c))) {
+      if (!entry || !selectedFilters.value.criter.every(c => entry.criteria.includes(c))) {
         return false;
       }
     }
