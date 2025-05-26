@@ -1,0 +1,47 @@
+/* Ajustement de l'échelle pour l'affichage mobile */
+:root {
+  font-size: 11.2px !important; /* 80% de 14px = 11.2px */
+}
+
+/* Ajustements supplémentaires pour garantir que tous les éléments suivent la nouvelle échelle */
+body {
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
+}
+
+/* Ajuster les tailles des éléments qui pourraient avoir des tailles fixes */
+.p-component {
+  font-size: 1rem;
+}
+
+/* Ajuster les marges et paddings pour les éléments PrimeVue */
+.p-card, .p-panel, .p-dialog, .p-tabview, .p-datatable {
+  font-size: 1rem;
+}
+
+/* Ajuster les icônes */
+.pi {
+  font-size: 1rem;
+}
+
+/* Ajuster les boutons */
+.p-button {
+  font-size: 1rem;
+}
+
+/* Ajuster les inputs */
+.p-inputtext, .p-dropdown, .p-multiselect, .p-calendar {
+  font-size: 1rem;
+}
+
+/* Ajuster les éléments spécifiques à votre application */
+.post-item, .comment-card, .avatar {
+  transform-origin: top left;
+  transform: scale(1);
+}
+
+/* Assurer que les conteneurs s'adaptent correctement */
+.layout-container, #app, .content {
+  width: 100%;
+  max-width: 100%;
+}

@@ -81,6 +81,26 @@ export default {
 }
 
 /* RESPONSIVE DESIGN */
+/* Écrans d'ordinateur plus petits (13 pouces et moins) */
+@media (max-width: 1366px) {
+  .newsfeed-layout {
+    grid-template-columns: 0.8fr 2.5fr 0.8fr;
+    gap: 1rem;
+  }
+  
+  .sidebar-left, .sidebar-right {
+    font-size: 0.9rem;
+  }
+}
+
+/* Écrans encore plus petits */
+@media (max-width: 1200px) {
+  .newsfeed-layout {
+    grid-template-columns: 0.7fr 2.8fr 0.7fr;
+    gap: 0.8rem;
+  }
+}
+
 @media (max-width: 1024px) {
   .newsfeed-layout {
     grid-template-columns: 1fr 2fr;

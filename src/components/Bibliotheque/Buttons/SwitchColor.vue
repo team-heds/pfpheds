@@ -95,10 +95,10 @@ const replaceLink = (linkElement, href, onComplete) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 25%;
+  border-radius: 32%;
   position: relative;
-  height: 50px;
-  width: 50px;
+  height: 44px;
+  width: 44px;
   cursor: pointer;
   background-color: var(--surface-overlay);
   transition: background-color 0.3s ease, transform 0.3s ease;

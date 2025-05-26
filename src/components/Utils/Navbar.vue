@@ -6,18 +6,18 @@
 
     <!-- ✅ Navbar Desktop -->
     <div class="landing-wrapper desktop-nav">
-      <div class="flex align-items-center justify-content-between relative lg:static py-4 px-1">
+      <div class="flex align-items-center py-4 px-1 navbar-container">
 
         <!-- ✅ Logo (gauche) -->
-        <div class="flex-shrink-0 px-8 mx-8">
+        <div class="flex-shrink-0 px-4">
           <a class="cursor-pointer" @click="navigateTo('/feed')">
-            <img src="/pictoHEdS.png" alt="Logo" style="height: 50px; width: 50px;" />
+            <img src="/pictoHEdS.png" alt="Logo" style="height: 44px; width: 44px; border-radius: 32%;" />
           </a>
         </div>
 
         <!-- ✅ Menu principal (centre) -->
-        <div class="flex-grow-1 flex justify-content-center">
-          <ul class="list-none p-3 m-0 flex align-items-center select-none flex-row cursor-pointer">
+        <div class="flex-auto flex justify-content-center align-items-center">
+          <ul class="list-none p-3 m-0 flex align-items-center select-none flex-row cursor-pointer center-menu">
             <li class="mx-3" v-for="item in menuItems" :key="item.title">
               <ButtonNavbar
                 :icon="item.icon"
@@ -32,10 +32,12 @@
         </div>
 
         <!-- ✅ Barre de recherche et autres boutons (droite) -->
-        <div class="flex items-center space-x-5 ml-auto">
+        <div class="flex-shrink-0 flex align-items-center px-4">
 
           <!-- 🔍 Global Search -->
-          <GlobalSearch />
+          <GlobalSearch
+          class="mx-3"
+          />
 
           <!-- 📩 Messages -->
           <ButtonNavbar
@@ -45,7 +47,7 @@
             :hoverBgColor="'var(--surface-hover)'"
             :iconColor="'var(--primary-color)'"
             @click="navigateTo('/chat')"
-            class="ml-3"
+            class="mx-3"
             title="Message"
           />
 
@@ -57,7 +59,7 @@
             :hoverBgColor="'var(--surface-hover)'"
             :iconColor="'var(--primary-color)'"
             @click="navigateTo('/feed')"
-            class="ml-3"
+            class="mx-3"
             title="Notifications"
           />
 
@@ -69,12 +71,12 @@
             :hoverBgColor="'var(--surface-hover)'"
             :iconColor="'var(--primary-color)'"
             @click="openSettingsDialog"
-            class="ml-3"
+            class="mx-3"
             title="Paramètres"
           />
 
           <!-- 🎨 Switch Color -->
-          <SwitchColor class="ml-3" title="Thème" />
+          <SwitchColor class="mx-3" title="Thème" />
 
         </div>
       </div>
@@ -148,10 +150,34 @@ setPersistence(auth, browserLocalPersistence).then(() => {
 
 <style scoped>
 /* ✅ Ajustements pour la navbar */
-.desktop-nav { display: flex; flex-direction: column; }
+.desktop-nav { 
+  display: flex;
+  flex-direction: column;
+  padding-left: 10rem;
+  padding-right: 10rem;
+}
+
+.navbar-container {
+  padding-left: 4rem;
+  padding-right: 4rem;
+}
+
+.center-menu {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
 
 /* ✅ Ajustements pour mobile */
 @media (max-width: 768px) {
   .desktop-nav { display: none; }
+}
+
+/* Ajustements pour les appareils plus petits */
+@media (max-width: 992px) {
+  .navbar-container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
 }
 </style>
