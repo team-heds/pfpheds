@@ -1,7 +1,7 @@
 <template>
   <div class="mb-4 card-profile-responsive">
     <div class="avatar-wrapper">
-      <img :src="user.photoURL || defaultAvatar" alt="Avatar" />
+      <img :src="user.photoURL || defaultAvatar" alt="Avatar" style="border-radius: 3rem;" />
       <h1 class="pl-4">{{ user.prenom }} {{ user.nom }}</h1>
     </div>
     <h5 class="mb-4">Informations personnelles</h5>

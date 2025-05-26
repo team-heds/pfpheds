@@ -13,7 +13,7 @@
   -->
 
   <!-- Barre de recherche -->
-  <div class="w-full flex row-gap-4 flex-column surface-border p-4">
+  <div class="w-full flex row-gap-4 flex-column surface-border p-4" style="border-radius: 1.2rem;">
     <IconField iconPosition="left" class="w-full">
       <InputIcon class="pi pi-search" />
       <InputText

@@ -11,7 +11,7 @@
             :src="userPhotoURL"
             alt="Avatar"
             class="m-2 col-6"
-            style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border:2px solid #ccc;"
+            style="width: 50px; height: 50px; border-radius: 1.2rem; object-fit: cover; border:2px solid #ccc;"
             @click.prevent="triggerFileInput"
           />
           <input

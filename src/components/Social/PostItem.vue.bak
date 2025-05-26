@@ -286,29 +286,28 @@ export default {
       return `${date.toLocaleDateString()} à ${date.toLocaleTimeString()}`;
     },
     checkLikeStatus() {
-      if (this.post.likes && this.currentUser) {
-        this.isLiked = !!this.post.likes[this.currentUser.uid];
+      if (this.post.likes && this.currentUserLocal) {
+        this.isLiked = !!this.post.likes[this.currentUserLocal.uid];
         this.likeCount = Object.keys(this.post.likes).length;
       } else {
         this.likeCount = 0;
       }
     },
     toggleLike() {
-      if (!this.currentUser) return alert("Vous devez être connecté pour liker.");
+      if (!this.currentUserLocal) return alert("Vous devez être connecté pour liker.");
       const postLikesRef = dbRef(db, `Posts/${this.post.id}/likes`);
       if (this.isLiked) {
         const updates = {};
-        updates[this.currentUser.uid] = null;
+        updates[this.currentUserLocal.uid] = null;
         update(postLikesRef, updates);
       } else {
         const updates = {};
-        updates[this.currentUser.uid] = true;
+        updates[this.currentUserLocal.uid] = true;
         update(postLikesRef, updates);
       }
 
       this.isLiked = !this.isLiked;
       this.likeCount += this.isLiked ? 1 : -1;
-      this.loadLikedUsers();
     },
     loadCommentCount() {
       if (this.post.replies) {
@@ -610,7 +609,7 @@ export default {
 .avatar {
   width: 40px;
   height: 40px;
-  border-radius: 1.2rem;
+  border-radius: 50%;
   margin-right: 10px;
   object-fit: cover;
 }
@@ -630,7 +629,7 @@ export default {
 .comment-card-avatar {
   width: 28px;
   height: 28px;
-  border-radius: 1.2rem;
+  border-radius: 50%;
   background: #e0e4ea;
   color: #5a5a5a;
   display: flex;
