@@ -12,7 +12,7 @@
       <Toast />
       <router-view />
       <Toast position="bottom-center" />
-      <MobileBottomNav />
+      <MobileBottomNav v-if="showMobileBottomNav" />
       <VersionningComponent />
       <PwaInstallPrompt />
       <!-- Intégration du widget ConvAI -->
@@ -46,13 +46,28 @@ export default {
   data() {
     return {
       isLoading: true, // État de chargement
+      showMobileBottomNav: true,
     };
+  },
+  watch: {
+    '$route'(to) {
+      // Cacher la navbar mobile sur LoginHome
+      if (to.name === 'LoginHome') {
+        this.showMobileBottomNav = false;
+      } else {
+        this.showMobileBottomNav = true;
+      }
+    }
   },
   mounted() {
     // Simuler un chargement de données (par exemple, lors du démarrage de l'application)
     setTimeout(() => {
       this.isLoading = false; // Masquer le loader après 3 secondes
     }, 3000); // Temps en millisecondes
+    // Initial check
+    if (this.$route.name === 'LoginHome') {
+      this.showMobileBottomNav = false;
+    }
   },
 };
 </script>
