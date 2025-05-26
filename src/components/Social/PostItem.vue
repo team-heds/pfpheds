@@ -101,6 +101,7 @@
       </div>
     </div>
 
+
     <!-- Liste des commentaires (affichés seulement si showComments est true) -->
     <div v-if="showComments && post.replies" class="comments-section p-3">
       <div v-for="(reply, replyId) in topLevelReplies" :key="replyId" class="comment-card compact">
@@ -110,7 +111,6 @@
         </div>
         <div class="comment-card-body">
           <div class="comment-card-meta">
-            <span class="comment-card-author">{{ reply.Author }}</span>
             <span class="comment-card-date">{{ formatTimestamp(reply.Timestamp) }}</span>
           </div>
           <div class="comment-card-content">{{ reply.Content }}</div>
