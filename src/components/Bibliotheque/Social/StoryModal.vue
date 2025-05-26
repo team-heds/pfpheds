@@ -1,6 +1,6 @@
 <template>
   <div class="story-modal" @click.self="$emit('close')">
-    <div class="story-content">
+    <div class="story-content" :class="{ 'mobile-view': isMobileView }">
       <div class="story-header">
         <div class="progress-container" v-if="isMultiple">
           <div 
@@ -22,15 +22,16 @@
         
         <div class="story-user-info">
           <div class="user-avatar-name">
-            <Avatar :image="currentStory.userAvatar || defaultAvatar" size="normal" shape="circle" />
+            <Avatar :image="currentStory.userAvatar || defaultAvatar" :size="isMobileView ? 'small' : 'normal'" shape="circle" />
             <div class="user-details">
               <span class="user-name">{{ currentStory.userName }}</span>
+              <br>
               <span class="time-ago">{{ formattedTime }}</span>
             </div>
           </div>
           <Button 
             icon="pi pi-times" 
-            class="p-button-rounded p-button-text p-button-sm close-btn" 
+            :class="['p-button-rounded', 'p-button-text', isMobileView ? 'p-button-sm' : '', 'close-btn']" 
             @click="$emit('close')"
           />
         </div>
@@ -224,6 +225,9 @@ export default {
       replySent: false,
       showModuleOverlay: false,
       activeModule: null,
+      isMobileView: false,
+      windowWidth: window.innerWidth,
+      windowHeight: window.innerHeight
     };
   },
   computed: {
@@ -451,7 +455,12 @@ export default {
       } catch (error) {
         console.error("Erreur lors de la récupération des statistiques:", error);
       }
-    }
+    },
+    handleResize() {
+      this.windowWidth = window.innerWidth;
+      this.windowHeight = window.innerHeight;
+      this.isMobileView = this.windowWidth <= 768;
+    },
   },
   async mounted() {
     this.currentUser = await getCurrentUser();
@@ -463,9 +472,14 @@ export default {
       const viewerRef = dbRef(db, `stories/${storyId}/viewers/${this.currentUser.uid}`);
       await update(viewerRef, true);
     }
+    
+    // Détecter si on est sur mobile
+    this.handleResize();
+    window.addEventListener('resize', this.handleResize);
   },
   beforeUnmount() {
     clearTimeout(this.timer);
+    window.removeEventListener('resize', this.handleResize);
   }
 };
 </script>
@@ -495,6 +509,15 @@ export default {
   border-radius: 12px;
   overflow: hidden;
   background-color: #000;
+  transition: all 0.3s ease;
+}
+
+.story-content.mobile-view {
+  width: 100%;
+  height: 100vh;
+  max-height: none;
+  border-radius: 0;
+  margin: 0;
 }
 
 .story-header {
@@ -541,10 +564,18 @@ export default {
   overflow: hidden;
 }
 
+.mobile-view .story-image-container {
+  width: 100%;
+}
+
 .story-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.mobile-view .story-image {
+  object-position: center;
 }
 
 .story-user-info {
@@ -560,15 +591,18 @@ export default {
   z-index: 5;
 }
 
+.mobile-view .story-user-info {
+  padding: 10px;
+}
+
 .user-avatar-name {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.user-details {
-  display: flex;
-  flex-direction: column;
+.mobile-view .user-avatar-name {
+  gap: 8px;
 }
 
 .user-name {
@@ -577,29 +611,17 @@ export default {
   font-size: 14px;
 }
 
+.mobile-view .user-name {
+  font-size: 13px;
+}
+
 .time-ago {
   color: rgba(255, 255, 255, 0.8);
   font-size: 12px;
 }
 
-.close-btn {
-  color: #f3c300 !important;
-}
-
-.story-elements {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-}
-
-.story-element {
-  position: absolute;
-  color: #f3c300;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-  font-weight: 600;
+.mobile-view .time-ago {
+  font-size: 11px;
 }
 
 .story-interactive-modules {
@@ -611,16 +633,34 @@ export default {
   z-index: 5;
 }
 
+.mobile-view .story-interactive-modules {
+  bottom: 70px;
+  padding: 0 12px;
+}
+
 .story-interactive-btns {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
 }
 
+.mobile-view .story-interactive-btns {
+  gap: 6px;
+}
+
 .module-btn {
   background-color: rgba(255, 255, 255, 0.2) !important;
   border: 1px solid rgba(255, 255, 255, 0.4) !important;
   color: #fff !important;
+}
+
+.mobile-view .module-btn {
+  padding: 0.4rem 0.6rem !important;
+  font-size: 12px !important;
+}
+
+.mobile-view .module-btn .p-button-icon {
+  font-size: 12px !important;
 }
 
 .story-navigation {
@@ -636,15 +676,19 @@ export default {
   z-index: 5;
 }
 
+.mobile-view .story-navigation {
+  padding: 0 4px;
+}
+
 .nav-btn {
   pointer-events: auto;
   color: #fff !important;
   background-color: rgba(0, 0, 0, 0.3) !important;
 }
 
-.nav-btn:disabled {
-  opacity: 0;
-  pointer-events: none;
+.mobile-view .nav-btn {
+  width: 2.5rem !important;
+  height: 2.5rem !important;
 }
 
 .story-reactions {
@@ -656,11 +700,20 @@ export default {
   z-index: 5;
 }
 
+.mobile-view .story-reactions {
+  bottom: 12px;
+  padding: 0 12px;
+}
+
 .emoji-list {
   display: flex;
   gap: 8px;
   overflow-x: auto;
   padding: 4px 0;
+}
+
+.mobile-view .emoji-list {
+  gap: 6px;
 }
 
 .emoji-btn {
@@ -670,16 +723,10 @@ export default {
   position: relative;
 }
 
-.emoji-btn.p-button-outlined {
-  background-color: rgba(255, 255, 255, 0.3) !important;
-  border-color: #fff !important;
-}
-
-.reaction-count {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  font-size: 10px;
+.mobile-view .emoji-btn {
+  width: 2.2rem !important;
+  height: 2.2rem !important;
+  font-size: 14px;
 }
 
 .story-reply {
@@ -694,6 +741,12 @@ export default {
   z-index: 5;
 }
 
+.mobile-view .story-reply {
+  bottom: 12px;
+  padding: 0 12px;
+  gap: 6px;
+}
+
 .reply-input {
   flex: 1;
   background-color: rgba(255, 255, 255, 0.2) !important;
@@ -702,13 +755,23 @@ export default {
   border-radius: 20px !important;
 }
 
-.reply-input::placeholder {
-  color: rgba(255, 255, 255, 0.7);
+.mobile-view .reply-input {
+  height: 36px !important;
+  font-size: 12px !important;
 }
 
 .reply-btn {
   background-color: var(--primary-color, #3B82F6) !important;
   color: #fff !important;
+}
+
+.mobile-view .reply-btn {
+  width: 36px !important;
+  height: 36px !important;
+}
+
+.mobile-view .reply-btn .p-button-icon {
+  font-size: 12px !important;
 }
 
 .reply-confirm {
@@ -721,6 +784,10 @@ export default {
   z-index: 6;
 }
 
+.mobile-view .reply-confirm {
+  bottom: 60px;
+}
+
 .story-stats-button {
   position: absolute;
   bottom: 16px;
@@ -728,29 +795,153 @@ export default {
   z-index: 5;
 }
 
-@media (max-width: 480px) {
-  .story-content {
-    width: 100%;
-    height: 100vh;
-    max-height: none;
-    border-radius: 0;
+.mobile-view .story-stats-button {
+  bottom: 12px;
+  right: 12px;
+}
+
+.mobile-view .story-stats-button .p-button {
+  font-size: 12px !important;
+  padding: 0.4rem 0.6rem !important;
+}
+
+/* Styles pour les appareils très petits */
+@media (max-width: 360px) {
+  .progress-item {
+    height: 2px;
+  }
+  
+  .story-user-info {
+    padding: 8px;
+  }
+  
+  .user-avatar-name {
+    gap: 4px;
   }
   
   .user-name {
-    font-size: 13px;
-  }
-  
-  .time-ago {
     font-size: 11px;
   }
   
+  .time-ago {
+    font-size: 9px;
+  }
+  
   .module-btn {
-    padding: 0.5rem !important;
+    padding: 0.3rem 0.5rem !important;
+    font-size: 10px !important;
+  }
+  
+  .module-btn .p-button-icon {
+    font-size: 10px !important;
   }
   
   .emoji-btn {
-    width: 2.5rem !important;
-    height: 2.5rem !important;
+    width: 2rem !important;
+    height: 2rem !important;
+    font-size: 12px;
+  }
+  
+  .story-interactive-modules {
+    bottom: 60px;
+  }
+  
+  .story-reactions, .story-reply {
+    bottom: 8px;
+  }
+  
+  .reply-input {
+    height: 32px !important;
+    font-size: 11px !important;
+  }
+  
+  .reply-btn {
+    width: 32px !important;
+    height: 32px !important;
+  }
+}
+
+/* Styles pour orientation paysage sur mobile */
+@media (max-height: 480px) and (orientation: landscape) {
+  .story-content {
+    height: 100vh;
+    max-width: 70vh;
+    flex-direction: row;
+  }
+  
+  .story-image-container {
+    width: 70%;
+  }
+  
+  .story-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 70%;
+    z-index: 10;
+  }
+  
+  .story-interactive-modules {
+    position: absolute;
+    right: 0;
+    width: 30%;
+    bottom: auto;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 0 8px;
+  }
+  
+  .story-interactive-btns {
+    flex-direction: column;
+  }
+  
+  .story-reactions {
+    width: 30%;
+    left: auto;
+    right: 0;
+    bottom: 50px;
+  }
+  
+  .emoji-list {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .story-reply {
+    width: 30%;
+    left: auto;
+    right: 0;
+    bottom: 10px;
+  }
+  
+  .story-navigation {
+    width: 70%;
+  }
+  
+  .reply-confirm {
+    width: 30%;
+    left: auto;
+    right: 0;
+    bottom: 90px;
+  }
+}
+
+/* Styles pour les appareils à écran large */
+@media (min-width: 1200px) {
+  .story-content {
+    max-width: 480px;
+    max-height: 850px;
+  }
+}
+
+/* Styles pour assurer la compatibilité avec les appareils iOS */
+@supports (-webkit-touch-callout: none) {
+  .story-content {
+    height: -webkit-fill-available;
+  }
+  
+  .story-image {
+    height: -webkit-fill-available;
   }
 }
 </style>
