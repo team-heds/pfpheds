@@ -1,6 +1,8 @@
-<!-- src/components/Social/MainFeed.vue -->
+<!-- src/components/Bibliotheque/Social/MainFeed.vue -->
 <template>
   <div class="main-feed">
+
+    
     <!-- Section des filtres -->
     <FilterComponent
       :filterTypes="filterTypes"
@@ -31,6 +33,9 @@
       @media-selected="handleFileSelection"
       @remove-media="removeMedia"
     />
+
+    <!-- Barre des stories -->
+    <StoriesBar />
 
     <!-- Conteneur pour les posts avec Infinite Scroll -->
     <div class="posts-container">
@@ -83,10 +88,12 @@ import {
   uploadBytes,
   getDownloadURL,
 } from "firebase/storage";
+import StoriesBar from './StoriesBar.vue'
 
 export default {
   name: "MainFeed",
   components: {
+    StoriesBar,
     InfiniteScroll,
     PostItem,
     Tag,

@@ -2,8 +2,10 @@
   
   <div class="stories-bar">
     <!-- Bouton d'ajout de story -->
-    <div class="story-item add-story" @click="showAddStory = true">
-      <span class="add-icon">+</span>
+    <div class="story-item add-story-container">
+      <div class="add-story" @click="showAddStory = true">
+        <span class="add-icon">+</span>
+      </div>
       <p>Votre story</p>
     </div>
     <!-- Liste des stories -->
@@ -29,7 +31,7 @@
 <script>
 import AddStory from './AddStory.vue';
 import StoryModal from './StoryModal.vue';
-import { db } from 'root/firebase';
+import { db } from '../../../../firebase';
 import { ref as dbRef, onValue, update } from 'firebase/database';
 import { getCurrentUser } from './Utils/authUser.js';
 
@@ -142,7 +144,6 @@ export default {
   display: flex;
   flex-direction: row;
   align-items: center;
-  border-bottom: 2px solid #e0e0e0;
   padding: 12px 0;
   gap: 16px;
   position: sticky;
@@ -150,33 +151,35 @@ export default {
   z-index: 10;
   min-height: 90px;
   overflow-x: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  max-width: 880px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 1.1rem;
+
 }
+
+@media (max-width: 900px) {
+  .stories-bar {
+    max-width: 98vw;
+  }
+}
+
+.stories-bar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Styles pour les stories */
 .story-item {
   display: flex;
   flex-direction: column;
   align-items: center;
   margin: 0 8px;
   cursor: pointer;
-  background: rgba(255,255,255,0.85);
-  border-radius: 14px;
-  box-shadow: 0 2px 12px 0 rgba(33,150,243,0.09), 0 1.5px 6px 0 rgba(0,0,0,0.07);
-  padding: 10px 7px 10px 7px;
-  transition: box-shadow 0.22s, background 0.22s, transform 0.18s;
-  border: 1.5px solid var(--surface-border, #e0e0e0);
-  backdrop-filter: blur(7px) saturate(1.15);
-  -webkit-backdrop-filter: blur(7px) saturate(1.15);
   position: relative;
   outline: none;
-}
-
-.story-item:focus-visible {
-  box-shadow: 0 0 0 3px var(--primary-color, #2196f3), 0 2px 12px 0 rgba(33,150,243,0.09);
-}
-
-.story-item:hover {
-  box-shadow: 0 8px 28px 0 rgba(33,150,243,0.18), 0 1.5px 6px 0 rgba(0,0,0,0.10);
-  background: rgba(255,255,255,0.97);
-  transform: translateY(-2px) scale(1.03);
 }
 
 .story-item:active::after {
@@ -185,7 +188,7 @@ export default {
   left: 50%; top: 50%;
   transform: translate(-50%,-50%) scale(1.5);
   width: 80%; height: 80%;
-  border-radius: 50%;
+  border-radius: 32%;
   background: rgba(33,150,243,0.11);
   animation: ripple-story 0.4s linear;
   pointer-events: none;
@@ -198,13 +201,12 @@ export default {
 }
 
 .story-item .avatar {
-  width: 54px;
-  height: 54px;
-  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  border-radius: 32%;
   margin-bottom: 5px;
   object-fit: cover;
-  border: 3px solid var(--primary-color, #2196f3);
-  box-shadow: 0 0 0 0 rgba(33,150,243,0);
+  border: 2px solid var(--primary-color, #2196f3);
   transition: box-shadow 0.22s, border 0.22s;
   background: linear-gradient(135deg, #e3f2fd 0%, #fff 100%);
   position: relative;
@@ -217,29 +219,36 @@ export default {
 }
 
 .story-item .avatar:hover {
-  box-shadow: 0 0 0 4px var(--primary-color, #2196f3), 0 0 12px 3px #2196f3;
+  box-shadow: 0 0 0 2px var(--primary-color, #2196f3), 0 0 3px 2px #d49f3f;
 }
 
 .story-item p {
   margin: 0;
-  margin-top: 3px;
+  margin-top: 2px;
   font-size: 1.07rem;
   color: var(--primary-color, #1976d2);
   font-weight: 600;
   text-align: center;
   letter-spacing: 0.01em;
-  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
   text-shadow: 0 1px 2px rgba(33,150,243,0.07);
+}
+
+.add-story-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 8px;
+  cursor: pointer;
 }
 
 .add-story {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 54px;
-  height: 54px;
-  border-radius: 50%;
-  background: var(--primary-color, #2196f3);
+  width: 50px;
+  height: 50px;
+  border-radius: 32%;
+  background: var(--surface-card, #f8fafd);
   box-shadow: 0 4px 16px 0 rgba(33,150,243,0.11);
   color: #fff;
   font-size: 2rem;
@@ -249,12 +258,10 @@ export default {
   margin-bottom: 5px;
   position: relative;
   transition: box-shadow 0.2s, background 0.2s;
-  aria-label: "Ajouter une histoire";
 }
 
 .add-story:hover {
-  background: var(--primary-color, #42a5f5);
-  box-shadow: 0 8px 28px 0 rgba(33,150,243,0.18);
+  box-shadow: 0 0 0 3px var(--primary-color, #2196f3), 0 4px 16px 0 rgba(33,150,243,0.11);
 }
 
 .add-story:focus-visible {
@@ -270,20 +277,53 @@ export default {
 
 .add-icon {
   font-size: 2rem;
-  color: #2196f3;
+  color: var(--primary-color, #2196f3);
 }
 
-.story-item p {
+.story-item p, .add-story-container p {
   font-size: 0.8rem;
-  margin: 4px 0 0 0;
   text-align: center;
   word-break: break-word;
 }
 
 @media (max-width: 768px) {
+  .stories-bar {
+    padding: 10px;
+    gap: 12px;
+    min-height: 80px;
+    border-radius: 0.8rem;
+    margin-bottom: 0.6rem;
+  }
+  
+  .story-item .avatar,
+  .add-story {
+    width: 45px;
+    height: 45px;
+  }
+  
+  .add-icon {
+    font-size: 1.7rem;
+  }
+  
+  .story-item p, .add-story-container p {
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .stories-bar {
+    padding: 8px;
+    gap: 10px;
+    min-height: 70px;
+  }
+  
+  .story-item .avatar,
   .add-story {
     width: 40px;
     height: 40px;
+  }
+  
+  .add-icon {
     font-size: 1.5rem;
   }
 }
