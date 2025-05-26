@@ -1,67 +1,179 @@
 <template>
   <div class="story-modal" @click.self="$emit('close')">
-    <div class="modal-content">
-      <button class="close-btn" @click="$emit('close')">&times;</button>
-      <div class="progress-bar" v-if="isMultiple">
-        <div class="progress" :style="{ width: progress + '%' }"></div>
-      </div>
-      <img :src="currentStory.imageUrl" alt="story" class="story-image" />
-
-      <!-- Modules interactifs Story - version boutons + overlay -->
-      <div v-if="currentStory.elements && currentStory.elements.length" class="story-interactive-modules mt-3">
-        <div class="story-interactive-btns">
-          <button
-            v-for="(el, idx) in currentStory.elements"
-            :key="'btn-'+idx"
-            class="module-btn"
-            @click="openModule(idx)"
+    <div class="story-content">
+      <div class="story-header">
+        <div class="progress-container" v-if="isMultiple">
+          <div 
+            v-for="(_, idx) in story" 
+            :key="idx" 
+            class="progress-item"
           >
-            <span v-if="el.type==='quiz'">Quiz</span>
-            <span v-else-if="el.type==='poll'">Sondage</span>
-            <span v-else-if="el.type==='audio'">Audio</span>
-            <span v-else-if="el.type==='carousel'">Carrousel</span>
-          </button>
-        </div>
-        <!-- Overlay interactif -->
-        <div v-if="showModuleOverlay" class="module-overlay" @click.self="closeModule">
-          <div class="module-overlay-content">
-            <button class="close-overlay" @click="closeModule">&times;</button>
-            <StoryQuiz v-if="activeModule && activeModule.type === 'quiz'" :question="activeModule.question" :options="activeModule.options" :answerIdx="activeModule.answerIdx" />
-            <StoryStickerPoll v-else-if="activeModule && activeModule.type === 'poll'" :question="activeModule.question" :options="activeModule.options" />
-            <StoryAudio v-else-if="activeModule && activeModule.type === 'audio'" :src="activeModule.src" :caption="activeModule.caption" />
-            <StoryCarousel v-else-if="activeModule && activeModule.type === 'carousel'" :media="activeModule.media" />
+            <div 
+              class="progress-bar" 
+              :class="{ 'active': idx === currentIndex, 'completed': idx < currentIndex }"
+              :style="idx === currentIndex ? { width: `${progress}%` } : {}"
+            ></div>
           </div>
         </div>
       </div>
-      <div class="user-info">
-        <img :src="currentStory.userAvatar || defaultAvatar" class="avatar"/>
-        <span>{{ currentStory.userName }}</span>
+      
+      <div class="story-image-container">
+        <img :src="currentStory.imageUrl" alt="story" class="story-image" />
+        
+        <div class="story-user-info">
+          <div class="user-avatar-name">
+            <Avatar :image="currentStory.userAvatar || defaultAvatar" size="normal" shape="circle" />
+            <div class="user-details">
+              <span class="user-name">{{ currentStory.userName }}</span>
+              <span class="time-ago">{{ formattedTime }}</span>
+            </div>
+          </div>
+          <Button 
+            icon="pi pi-times" 
+            class="p-button-rounded p-button-text p-button-sm close-btn" 
+            @click="$emit('close')"
+          />
+        </div>
+        
+        <!-- Éléments interactifs (textes, emojis) -->
+        <div v-if="currentStory.elements" class="story-elements">
+          <div 
+            v-for="(el, idx) in currentStory.elements" 
+            :key="'el-'+idx"
+            class="story-element"
+            :style="{
+              top: `${el.y}px`,
+              left: `${el.x}px`,
+              color: el.color || '#ffffff',
+              fontSize: el.size ? `${el.size}px` : '24px'
+            }"
+          >
+            {{ el.value }}
+          </div>
+        </div>
+        
+        <!-- Modules interactifs -->
+        <div v-if="currentStory.elements && currentStory.elements.length" class="story-interactive-modules">
+          <div class="story-interactive-btns">
+            <Button
+              v-for="(el, idx) in currentStory.elements.filter(e => ['quiz', 'poll', 'audio', 'carousel'].includes(e.type))"
+              :key="'btn-'+idx"
+              :label="getModuleLabel(el.type)"
+              :icon="getModuleIcon(el.type)"
+              class="p-button-rounded p-button-outlined module-btn"
+              @click="openModule(idx)"
+            />
+          </div>
+        </div>
       </div>
-      <div class="timestamp">
-        {{ formattedTime }}
+      
+      <!-- Navigation -->
+      <div v-if="isMultiple" class="story-navigation">
+        <Button 
+          icon="pi pi-chevron-left" 
+          class="p-button-rounded p-button-text nav-btn prev-btn" 
+          @click="prevStory" 
+          :disabled="currentIndex === 0"
+        />
+        <Button 
+          icon="pi pi-chevron-right" 
+          class="p-button-rounded p-button-text nav-btn next-btn" 
+          @click="nextStory" 
+          :disabled="currentIndex === story.length - 1"
+        />
       </div>
-      <div v-if="isMultiple" class="story-nav">
-        <button @click="prevStory" :disabled="currentIndex === 0">&lt;</button>
-        <span>{{ currentIndex + 1 }}/{{ story.length }}</span>
-        <button @click="nextStory" :disabled="currentIndex === story.length - 1">&gt;</button>
-      </div>
-      <div class="reactions">
+      
+      <!-- Réactions -->
+      <div class="story-reactions">
         <div class="emoji-list">
-          <span
-            v-for="emoji in emojis"
-            :key="emoji"
-            class="emoji-btn"
-            :class="{ selected: userReaction === emoji }"
+          <Button 
+            v-for="emoji in emojis" 
+            :key="emoji" 
+            class="p-button-rounded p-button-text emoji-btn" 
+            :class="{ 'p-button-outlined': userReaction === emoji }"
             @click="reactToStory(emoji)"
           >
             {{ emoji }}
-            <span v-if="reactionCounts[emoji]">{{ reactionCounts[emoji] }}</span>
-          </span>
+            <Badge v-if="reactionCounts[emoji]" :value="reactionCounts[emoji]" class="reaction-count" />
+          </Button>
         </div>
       </div>
-      <button v-if="isCreator" class="stat-btn" @click="showStats = true">Statistiques</button>
+      
+      <!-- Répondre -->
+      <div v-if="!isCreator" class="story-reply">
+        <InputText 
+          v-model="replyMessage" 
+          class="reply-input p-inputtext-sm" 
+          type="text" 
+          maxlength="300" 
+          :placeholder="'Répondre à ' + currentStory.userName + '...'" 
+          @keyup.enter="sendReply"
+        />
+        <Button 
+          icon="pi pi-send" 
+          class="p-button-rounded reply-btn" 
+          :disabled="!replyMessage.trim()" 
+          @click="sendReply"
+        />
+      </div>
+      
+      <div v-if="replySent" class="reply-confirm">
+        <Message severity="success" text="Message envoyé !" />
+      </div>
+      
+      <!-- Statistiques (pour le créateur) -->
+      <div v-if="isCreator" class="story-stats-button">
+        <Button 
+          label="Statistiques" 
+          icon="pi pi-chart-bar" 
+          class="p-button-outlined p-button-sm" 
+          @click="showStats = true"
+        />
+      </div>
+    </div>
+    
+    <!-- Overlay pour modules interactifs -->
+    <Dialog 
+      v-if="showModuleOverlay" 
+      v-model:visible="showModuleOverlay" 
+      :header="getModuleTitle(activeModule?.type)" 
+      :style="{width: '90%', maxWidth: '500px'}" 
+      :modal="true" 
+      :closable="true"
+      @hide="closeModule"
+    >
+      <StoryQuiz 
+        v-if="activeModule && activeModule.type === 'quiz'" 
+        :question="activeModule.question" 
+        :options="activeModule.options" 
+        :answerIdx="activeModule.answerIdx" 
+      />
+      <StoryStickerPoll 
+        v-else-if="activeModule && activeModule.type === 'poll'" 
+        :question="activeModule.question" 
+        :options="activeModule.options" 
+      />
+      <StoryAudio 
+        v-else-if="activeModule && activeModule.type === 'audio'" 
+        :src="activeModule.src" 
+        :caption="activeModule.caption" 
+      />
+      <StoryCarousel 
+        v-else-if="activeModule && activeModule.type === 'carousel'" 
+        :media="activeModule.media" 
+      />
+    </Dialog>
+    
+    <!-- Statistiques -->
+    <Dialog 
+      v-model:visible="showStats" 
+      header="Statistiques de la story" 
+      :style="{width: '90%', maxWidth: '600px'}" 
+      :modal="true" 
+      :closable="true"
+      @hide="showStats = false"
+    >
       <StoryStats
-        v-if="showStats && isCreator"
         :viewsCount="(currentStory.viewers || []).length"
         :reactionRate="reactionRate"
         :viewersInfo="viewersInfo"
@@ -69,21 +181,8 @@
         :sortedViewers="sortedViewers"
         :sortedReactions="sortedReactions"
         :defaultAvatar="defaultAvatar"
-        @close="showStats = false"
       />
-      <div v-if="!isCreator" class="story-reply-bar">
-        <input
-          v-model="replyMessage"
-          class="reply-input"
-          type="text"
-          maxlength="300"
-          :placeholder="'Répondre à ' + currentStory.userName + '…'"
-          @keyup.enter="sendReply"
-        />
-        <button class="reply-btn" :disabled="!replyMessage.trim()" @click="sendReply">Envoyer</button>
-      </div>
-      <div v-if="replySent" class="reply-confirm">Message envoyé !</div>
-    </div>
+    </Dialog>
   </div>
 </template>
 
@@ -96,6 +195,7 @@ import StoryCarousel from './StoryCarousel.vue';
 import { db } from '../../../../firebase';
 import { ref as dbRef, push, update, get } from 'firebase/database';
 import { getCurrentUser } from './Utils/authUser.js';
+
 export default {
   components: {
     StoryStats,
@@ -104,24 +204,6 @@ export default {
     StoryAudio,
     StoryCarousel
   },
-  data() {
-    return {
-      showModuleOverlay: false,
-      activeModule: null,
-      ...this.$options.__proto__.data ? this.$options.__proto__.data() : {}, // conserve data existant si présent
-    };
-  },
-  methods: {
-    ...((typeof Object.getPrototypeOf({}).methods === 'object') ? Object.getPrototypeOf({}).methods : {}),
-    openModule(idx) {
-      this.activeModule = this.currentStory.elements[idx];
-      this.showModuleOverlay = true;
-    },
-    closeModule() {
-      this.showModuleOverlay = false;
-      this.activeModule = null;
-    },
-  }, 
   name: 'StoryModal',
   props: {
     story: { type: [Object, Array], required: true }
@@ -138,8 +220,10 @@ export default {
       viewersInfo: [],
       reactionsInfo: [],
       showStats: false,
-    replyMessage: '',
-    replySent: false,
+      replyMessage: '',
+      replySent: false,
+      showModuleOverlay: false,
+      activeModule: null,
     };
   },
   computed: {
@@ -170,7 +254,20 @@ export default {
     },
     formattedTime() {
       const date = new Date(this.currentStory.timestamp);
-      return date.toLocaleString();
+      const now = new Date();
+      const diffMs = now - date;
+      const diffMins = Math.round(diffMs / 60000);
+      
+      if (diffMins < 1) return 'à l\'instant';
+      if (diffMins < 60) return `${diffMins}m ago`;
+      
+      const diffHours = Math.floor(diffMins / 60);
+      if (diffHours < 24) return `${diffHours}h ago`;
+      
+      const diffDays = Math.floor(diffHours / 24);
+      if (diffDays < 7) return `${diffDays}d ago`;
+      
+      return date.toLocaleDateString();
     },
     reactionCounts() {
       const reactions = (this.currentStory.reactions || {});
@@ -188,37 +285,94 @@ export default {
     }
   },
   methods: {
+    getModuleLabel(type) {
+      switch(type) {
+        case 'quiz': return 'Quiz';
+        case 'poll': return 'Sondage';
+        case 'audio': return 'Audio';
+        case 'carousel': return 'Photos';
+        default: return type;
+      }
+    },
+    getModuleIcon(type) {
+      switch(type) {
+        case 'quiz': return 'pi pi-question-circle';
+        case 'poll': return 'pi pi-chart-bar';
+        case 'audio': return 'pi pi-volume-up';
+        case 'carousel': return 'pi pi-images';
+        default: return 'pi pi-star';
+      }
+    },
+    getModuleTitle(type) {
+      switch(type) {
+        case 'quiz': return 'Quiz';
+        case 'poll': return 'Sondage';
+        case 'audio': return 'Écouter l\'audio';
+        case 'carousel': return 'Galerie de médias';
+        default: return 'Contenu interactif';
+      }
+    },
+    openModule(idx) {
+      this.activeModule = this.currentStory.elements.filter(e => ['quiz', 'poll', 'audio', 'carousel'].includes(e.type))[idx];
+      this.showModuleOverlay = true;
+    },
+    closeModule() {
+      this.showModuleOverlay = false;
+      this.activeModule = null;
+    },
     async sendReply() {
       if (!this.replyMessage.trim()) return;
       try {
         const sender = this.currentUser;
         const recipientId = this.currentStory.userId;
         if (!sender || !recipientId || sender.uid === recipientId) return;
-        // Génère l’ID unique de conversation (même logique que ChatBox)
+        // Génère l'ID unique de conversation (même logique que ChatBox)
         const generateConversationId = (uid1, uid2) => {
           return [uid1, uid2].sort().join('-');
         };
         const conversationId = generateConversationId(sender.uid, recipientId);
-        // Message enrichi pour le chat
-        const message = {
+        
+        // Référence à la conversation
+        const conversationRef = dbRef(db, `conversations/${conversationId}`);
+        const conversationSnap = await get(conversationRef);
+        
+        // Si la conversation n'existe pas, l'initialiser
+        if (!conversationSnap.exists()) {
+          await update(conversationRef, {
+            participants: {
+              [sender.uid]: true,
+              [recipientId]: true
+            },
+            lastUpdated: Date.now()
+          });
+        }
+        
+        // Ajouter le message
+        const messagesRef = dbRef(db, `conversations/${conversationId}/messages`);
+        await push(messagesRef, {
+          senderId: sender.uid,
+          senderName: sender.displayName || 'Utilisateur',
+          senderPhoto: sender.photoURL || this.defaultAvatar,
           text: this.replyMessage,
-          ownerId: sender.uid,
-          createdAt: Date.now(),
-          type: 'story_reply',
-          storyId: this.currentStory.id || null,
-          storyImage: this.currentStory.imageUrl || null,
-          storyUser: this.currentStory.userName || null,
-        };
-        console.log("yaaa");
-        // Envoi dans /conversations/{conversationId}/messages
-        const messagesRef = dbRef(db, `/conversations/${conversationId}/messages`);
-        await push(messagesRef, message);
-        await update(dbRef(db, `/conversations/${conversationId}`), { lastReceivedMessageAt: message.createdAt });
-        this.replySent = true;
+          timestamp: Date.now(),
+          storyReply: {
+            storyId: this.currentStory.id,
+            storyImage: this.currentStory.imageUrl
+          }
+        });
+        
+        // Mettre à jour le timestamp de dernière mise à jour
+        await update(conversationRef, {
+          lastUpdated: Date.now()
+        });
+        
         this.replyMessage = '';
-        setTimeout(() => (this.replySent = false), 2000);
-      } catch (e) {
-        alert('Erreur lors de l’envoi du message');
+        this.replySent = true;
+        setTimeout(() => {
+          this.replySent = false;
+        }, 3000);
+      } catch (error) {
+        console.error("Erreur lors de l'envoi du message:", error);
       }
     },
     nextStory() {
@@ -234,171 +388,369 @@ export default {
       }
     },
     resetTimer() {
-      if (this.timer) {
-        clearTimeout(this.timer);
-      }
+      clearTimeout(this.timer);
       this.progress = 0;
-      this.timer = setTimeout(() => {
-        this.nextStory();
-      }, this.autoAdvanceDelay);
-      this.incrementProgress();
+      
+      // Si c'est une story multiple, démarrer le timer pour avancer automatiquement
+      if (this.isMultiple) {
+        this.timer = setInterval(this.incrementProgress, 50);
+      }
     },
     incrementProgress() {
-      const interval = this.autoAdvanceDelay / 100;
-      const increment = 1;
-      const intervalId = setInterval(() => {
-        if (this.progress < 100) {
-          this.progress += increment;
+      this.progress += (100 / (this.autoAdvanceDelay / 50));
+      
+      if (this.progress >= 100) {
+        clearInterval(this.timer);
+        
+        // Passer à la story suivante ou fermer si c'est la dernière
+        if (this.currentIndex < this.story.length - 1) {
+          this.nextStory();
         } else {
-          clearInterval(intervalId);
+          this.$emit('close');
         }
-      }, interval);
+      }
     },
     async reactToStory(emoji) {
       if (!this.currentUser) return;
+      
       const storyId = this.currentStory.id;
-      // Copie l'objet reactions courant, modifie la réaction de l'utilisateur
-      const reactions = { ...(this.currentStory.reactions || {}) };
-      reactions[this.currentUser.uid] = emoji;
-      await update(dbRef(db, `stories/${storyId}`), { reactions });
-      // Rafraîchit la story (parent doit écouter 'refreshStories' et relancer fetchStories)
-      this.$emit('refreshStories');
+      const userId = this.currentUser.uid;
+      
+      try {
+        const storyRef = dbRef(db, `stories/${storyId}/reactions/${userId}`);
+        await update(storyRef, this.userReaction === emoji ? null : emoji);
+      } catch (error) {
+        console.error("Erreur lors de la réaction:", error);
+      }
     },
     async fetchStatsUsers() {
-      const viewers = this.currentStory.viewers || [];
-      const reactions = this.currentStory.reactions || {};
-      // Utilise la table /Users et récupère Nom, Prenom, PhotoURL
-      const allUids = Array.from(new Set([...viewers, ...Object.keys(reactions)]));
-      const userSnaps = await Promise.all(allUids.map(uid => get(dbRef(db, `Users/${uid}`))));
-      const users = {};
-      userSnaps.forEach((snap, idx) => {
-        const uid = allUids[idx];
-        const val = snap.exists() ? snap.val() : {};
-        users[uid] = {
-          uid,
-          displayName: (val.Prenom || '') + (val.Nom ? ' ' + val.Nom : '') || val.displayName || val.name || '',
-          photoURL: val.PhotoURL || val.photoURL || '',
-        };
-      });
-      // viewersInfo : tableau dans l'ordre des viewers
-      this.viewersInfo = viewers.map(uid => users[uid] || { uid, displayName: '', photoURL: '' });
-      // reactionsInfo : tableau {uid, displayName, photoURL, emoji}
-      this.reactionsInfo = Object.entries(reactions).map(([uid, emoji]) => {
-        const user = users[uid] || { uid, displayName: '', photoURL: '' };
-        return { ...user, emoji };
-      });
-    },
+      if (!this.isCreator) return;
+      
+      try {
+        // Récupérer les infos des viewers
+        const viewersIds = this.currentStory.viewers || [];
+        const viewersPromises = viewersIds.map(async (viewerId) => {
+          const userRef = dbRef(db, `users/${viewerId}`);
+          const userSnap = await get(userRef);
+          return userSnap.exists() ? { id: viewerId, ...userSnap.val() } : { id: viewerId, displayName: 'Utilisateur inconnu' };
+        });
+        this.viewersInfo = await Promise.all(viewersPromises);
+        
+        // Récupérer les infos des réactions
+        const reactions = this.currentStory.reactions || {};
+        const reactionsPromises = Object.entries(reactions).map(async ([userId, emoji]) => {
+          const userRef = dbRef(db, `users/${userId}`);
+          const userSnap = await get(userRef);
+          return {
+            id: userId,
+            emoji,
+            ...(userSnap.exists() ? userSnap.val() : { displayName: 'Utilisateur inconnu' })
+          };
+        });
+        this.reactionsInfo = await Promise.all(reactionsPromises);
+      } catch (error) {
+        console.error("Erreur lors de la récupération des statistiques:", error);
+      }
+    }
   },
   async mounted() {
     this.currentUser = await getCurrentUser();
-    this.fetchStatsUsers();
-    if (this.isMultiple) {
-      this.resetTimer();
+    this.resetTimer();
+    
+    // Ajouter l'utilisateur à la liste des viewers s'il n'est pas le créateur
+    if (this.currentUser && !this.isCreator) {
+      const storyId = this.currentStory.id;
+      const viewerRef = dbRef(db, `stories/${storyId}/viewers/${this.currentUser.uid}`);
+      await update(viewerRef, true);
     }
   },
   beforeUnmount() {
-    if (this.timer) {
-      clearTimeout(this.timer);
-    }
+    clearTimeout(this.timer);
   }
 };
 </script>
 
 <style scoped>
-.story-nav button {
-  background: var(--primary-color, #2196f3);
-  color: #fff;
-  border: none;
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  font-size: 1.2rem;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.story-nav button:disabled {
-  background: var(--surface-border, #bdbdbd);
-  cursor: not-allowed;
-}
-</style>
-
-<style scoped>
 .story-modal {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.7);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.9);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1100;
 }
-.modal-content {
-  background: var(--surface-card, #fff);
-  border-radius: 8px;
-  padding: 18px 16px 18px 16px;
-  max-width: 90vw;
-  max-height: 90vh;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+
+.story-content {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  height: 90vh;
+  max-height: 800px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #000;
 }
-.close-btn {
-  position: absolute;
-  top: 10px;
-  right: 14px;
-  background: none;
-  border: none;
-  color: var(--primary-color, #1976d2);
-  font-size: 2rem;
-  cursor: pointer;
-  transition: color 0.2s;
+
+.story-header {
+  padding: 8px;
+  z-index: 10;
 }
-.close-btn:hover {
-  color: var(--primary-color-hover, #0d47a1);
-}
-.story-image {
-  max-width: 70vw;
-  max-height: 60vh;
-  border-radius: 10px;
-  margin-bottom: 12px;
-  object-fit: contain;
-}
-.user-info {
+
+.progress-container {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 4px;
-}
-.avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  margin-right: 10px;
-  object-fit: cover;
-  border: 1px solid var(--surface-border, #b3c6e0);
-  transition: box-shadow 0.2s;
-}
-.avatar:hover {
-  box-shadow: 0 0 0 2px var(--primary-color, #2196f3);
-}
-.timestamp {
-  color: var(--text-secondary-color, #888);
-  font-size: 0.95rem;
-  margin-bottom: 10px;
-}
-.progress-bar {
+  gap: 4px;
   width: 100%;
-  height: 6px;
-  background: var(--surface-border, #eee);
-  border-radius: 4px;
-  margin-bottom: 12px;
+  padding: 0 4px;
+}
+
+.progress-item {
+  flex: 1;
+  height: 4px;
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
   overflow: hidden;
 }
-.progress {
+
+.progress-bar {
   height: 100%;
-  background: var(--primary-color, #2196f3);
-  transition: width 0.2s;
+  width: 0;
+  background-color: #fff;
+  border-radius: 2px;
+}
+
+.progress-bar.active {
+  transition: width 0.05s linear;
+}
+
+.progress-bar.completed {
+  width: 100%;
+}
+
+.story-image-container {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.story-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.story-user-info {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%);
+  z-index: 5;
+}
+
+.user-avatar-name {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.time-ago {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 12px;
+}
+
+.close-btn {
+  color: #fff !important;
+}
+
+.story-elements {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.story-element {
+  position: absolute;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  font-weight: 600;
+}
+
+.story-interactive-modules {
+  position: absolute;
+  bottom: 80px;
+  left: 0;
+  width: 100%;
+  padding: 0 16px;
+  z-index: 5;
+}
+
+.story-interactive-btns {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.module-btn {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  color: #fff !important;
+}
+
+.story-navigation {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+  display: flex;
+  justify-content: space-between;
+  padding: 0 8px;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.nav-btn {
+  pointer-events: auto;
+  color: #fff !important;
+  background-color: rgba(0, 0, 0, 0.3) !important;
+}
+
+.nav-btn:disabled {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.story-reactions {
+  position: absolute;
+  bottom: 16px;
+  left: 0;
+  width: 100%;
+  padding: 0 16px;
+  z-index: 5;
+}
+
+.emoji-list {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 0;
+}
+
+.emoji-btn {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  color: #fff !important;
+  font-size: 16px;
+  position: relative;
+}
+
+.emoji-btn.p-button-outlined {
+  background-color: rgba(255, 255, 255, 0.3) !important;
+  border-color: #fff !important;
+}
+
+.reaction-count {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  font-size: 10px;
+}
+
+.story-reply {
+  position: absolute;
+  bottom: 16px;
+  left: 0;
+  width: 100%;
+  padding: 0 16px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  z-index: 5;
+}
+
+.reply-input {
+  flex: 1;
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  color: #fff !important;
+  border-radius: 20px !important;
+}
+
+.reply-input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.reply-btn {
+  background-color: var(--primary-color, #3B82F6) !important;
+  color: #fff !important;
+}
+
+.reply-confirm {
+  position: absolute;
+  bottom: 70px;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  z-index: 6;
+}
+
+.story-stats-button {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  z-index: 5;
+}
+
+@media (max-width: 480px) {
+  .story-content {
+    width: 100%;
+    height: 100vh;
+    max-height: none;
+    border-radius: 0;
+  }
+  
+  .user-name {
+    font-size: 13px;
+  }
+  
+  .time-ago {
+    font-size: 11px;
+  }
+  
+  .module-btn {
+    padding: 0.5rem !important;
+  }
+  
+  .emoji-btn {
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+  }
 }
 </style>
