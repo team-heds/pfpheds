@@ -536,15 +536,15 @@ export default {
   flex: 1;
   height: 4px;
   background-color: rgba(255, 255, 255, 0.3);
-  border-radius: 2px;
   overflow: hidden;
+  border-radius: 1.2rem !important;
 }
 
 .progress-bar {
   height: 100%;
   width: 0;
   background-color: #f3c300;
-  border-radius: 2px;
+  border-radius: 1.2rem !important;
 }
 
 .progress-bar.active {
@@ -553,7 +553,9 @@ export default {
 
 .progress-bar.completed {
   width: 100%;
+  border-radius: 1.2rem !important;
 }
+
 
 .story-image-container {
   position: relative;
@@ -562,6 +564,7 @@ export default {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  border-radius: 1.2rem !important;
 }
 
 .mobile-view .story-image-container {
@@ -572,10 +575,12 @@ export default {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border-radius: 1.2rem !important;
 }
 
 .mobile-view .story-image {
   object-position: center;
+  border-radius: 1.2rem !important;
 }
 
 .story-user-info {
@@ -752,7 +757,7 @@ export default {
   background-color: rgba(255, 255, 255, 0.2) !important;
   border: 1px solid rgba(255, 255, 255, 0.4) !important;
   color: #fff !important;
-  border-radius: 20px !important;
+  border-radius: 1.2rem !important;
 }
 
 .mobile-view .reply-input {
@@ -763,6 +768,7 @@ export default {
 .reply-btn {
   background-color: var(--primary-color, #3B82F6) !important;
   color: #fff !important;
+  border-radius: 1.2rem !important;
 }
 
 .mobile-view .reply-btn {
