@@ -286,28 +286,29 @@ export default {
       return `${date.toLocaleDateString()} à ${date.toLocaleTimeString()}`;
     },
     checkLikeStatus() {
-      if (this.post.likes && this.currentUserLocal) {
-        this.isLiked = !!this.post.likes[this.currentUserLocal.uid];
+      if (this.post.likes && this.currentUser) {
+        this.isLiked = !!this.post.likes[this.currentUser.uid];
         this.likeCount = Object.keys(this.post.likes).length;
       } else {
         this.likeCount = 0;
       }
     },
     toggleLike() {
-      if (!this.currentUserLocal) return alert("Vous devez être connecté pour liker.");
+      if (!this.currentUser) return alert("Vous devez être connecté pour liker.");
       const postLikesRef = dbRef(db, `Posts/${this.post.id}/likes`);
       if (this.isLiked) {
         const updates = {};
-        updates[this.currentUserLocal.uid] = null;
+        updates[this.currentUser.uid] = null;
         update(postLikesRef, updates);
       } else {
         const updates = {};
-        updates[this.currentUserLocal.uid] = true;
+        updates[this.currentUser.uid] = true;
         update(postLikesRef, updates);
       }
 
       this.isLiked = !this.isLiked;
       this.likeCount += this.isLiked ? 1 : -1;
+      this.loadLikedUsers();
     },
     loadCommentCount() {
       if (this.post.replies) {
@@ -629,7 +630,7 @@ export default {
 .comment-card-avatar {
   width: 28px;
   height: 28px;
-  border-radius: 50%;
+  border-radius: 1.2rem;
   background: #e0e4ea;
   color: #5a5a5a;
   display: flex;
