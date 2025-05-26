@@ -47,10 +47,9 @@
           <Button label="Se connecter" type="submit" class="w-full p-button-raised p-button-primary" />
         </form>
 
-        <!-- Lien d'inscription -->
+        <!-- Lien mot de passe oublié -->
         <p class="mt-4 text-sm text-center">
-          Vous n'avez pas de compte ?
-          <a href="/" class="text-primary font-bold hover:underline">Inscrivez-vous</a>
+          <a href="/reset-password" class="text-primary font-bold hover:underline">Mot de passe oublié ?</a>
         </p>
       </div>
     </div>
