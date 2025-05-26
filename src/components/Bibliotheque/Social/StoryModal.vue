@@ -93,7 +93,7 @@ import StoryQuiz from './StoryQuiz.vue';
 import StoryStickerPoll from './StoryStickerPoll.vue';
 import StoryAudio from './StoryAudio.vue';
 import StoryCarousel from './StoryCarousel.vue';
-import { db } from 'root/firebase';
+import { db } from '../../../../firebase';
 import { ref as dbRef, push, update, get } from 'firebase/database';
 import { getCurrentUser } from './Utils/authUser.js';
 export default {

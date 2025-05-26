@@ -62,13 +62,13 @@
 </template>
 
 <script>
-import { storage, db } from 'root/firebase';
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { ref as dbRef, push, set } from 'firebase/database';
-import { getAuth } from 'firebase/auth';
+import WebcamCapture from './WebcamCapture.vue';
 import ImageCropper from './ImageCropper.vue';
 import StoryEditor from './StoryEditor.vue';
-import WebcamCapture from './WebcamCapture.vue';
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref as dbRef, push, set } from 'firebase/database';
+import { getAuth } from 'firebase/auth';
+import { db } from '../../../../firebase.js';
 
 export default {
   name: 'AddStory',
@@ -138,7 +138,7 @@ export default {
         if (!user) throw new Error('Vous devez être connecté pour créer une story.');
         const file = fileToUpload;
         const fileName = `story_${user.uid}_${Date.now()}.jpg`;
-        const storageReference = storageRef(storage, `stories/${user.uid}/${fileName}`);
+        const storageReference = storageRef(getStorage(), `stories/${user.uid}/${fileName}`);
         await uploadBytes(storageReference, file).then(() => {
           this.uploadProgress = 100;
         });
