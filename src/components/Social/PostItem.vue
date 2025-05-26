@@ -609,7 +609,7 @@ export default {
 .avatar {
   width: 40px;
   height: 40px;
-  border-radius: 50%;
+  border-radius: 1.2rem;
   margin-right: 10px;
   object-fit: cover;
 }
