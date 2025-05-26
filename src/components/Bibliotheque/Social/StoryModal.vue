@@ -556,7 +556,6 @@ export default {
   border-radius: 1.2rem !important;
 }
 
-
 .story-image-container {
   position: relative;
   flex: 1;
@@ -754,8 +753,7 @@ export default {
 
 .reply-input {
   flex: 1;
-  background-color: rgba(255, 255, 255, 0.2) !important;
-  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  background-color: var(--surface-card);
   color: #fff !important;
   border-radius: 1.2rem !important;
 }
