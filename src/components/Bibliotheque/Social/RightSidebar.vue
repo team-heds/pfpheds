@@ -133,7 +133,6 @@ export default {
   },
 };
 </script>
-
 <style scoped>
 .right-sidebar {
   display: flex;
@@ -163,14 +162,12 @@ export default {
 
 .communities-list {
   list-style: none;
-
   margin: 0;
 }
 
 .community-item {
   display: flex;
   align-items: flex-start;
-  gap: 0.75rem;
   padding: 0.5rem 0;
   transition: background-color 0.2s ease;
   border-radius: 1.2rem; /* Coins arrondis taille que je dois uttilser */
@@ -240,6 +237,5 @@ export default {
   background: var(--surface-card);
   padding: 1rem;
   border-radius: 1.2rem;
-  margin-right: 4rem;
 }
 </style>
