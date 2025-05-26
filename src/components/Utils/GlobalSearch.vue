@@ -56,9 +56,9 @@ const searchResults = ref([]);
 const buttonStyle = computed(() => ({
   backgroundColor: 'var(--surface-overlay)',
   border: 'none',
-  borderRadius: '25%',
-  width: '50px',
-  height: '50px',
+  borderRadius: '32%',
+  width: '44px',
+  height: '44px',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',

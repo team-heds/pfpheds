@@ -112,6 +112,7 @@ import BlockViewer from '@/components/BlockViewer.vue';
 
 import '@/assets/styles.scss';
 import "primeflex/primeflex.css";
+import '@/assets/mobile-scale.css'; 
 
 const app = createApp(App);
 
@@ -241,4 +242,3 @@ app.component('Tree', Tree);
 app.component('TreeSelect', TreeSelect);
 app.component('TreeTable', TreeTable);
 app.component('VirtualScroller', VirtualScroller);
-
