@@ -153,6 +153,18 @@ export default {
   overflow-x: auto;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
+  max-width: 880px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 1.1rem;
+
+}
+
+@media (max-width: 900px) {
+  .stories-bar {
+    max-width: 98vw;
+  }
 }
 
 .stories-bar::-webkit-scrollbar {
@@ -276,9 +288,11 @@ export default {
 
 @media (max-width: 768px) {
   .stories-bar {
-    padding: 10px 0;
+    padding: 10px;
     gap: 12px;
     min-height: 80px;
+    border-radius: 0.8rem;
+    margin-bottom: 0.6rem;
   }
   
   .story-item .avatar,
@@ -298,7 +312,7 @@ export default {
 
 @media (max-width: 480px) {
   .stories-bar {
-    padding: 8px 0;
+    padding: 8px;
     gap: 10px;
     min-height: 70px;
   }
