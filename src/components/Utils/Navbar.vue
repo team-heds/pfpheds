@@ -157,6 +157,12 @@ setPersistence(auth, browserLocalPersistence).then(() => {
   padding-right: 10rem;
 }
 
+.inputcolor {
+  background: linear-gradient(90deg, #F3C300 0%, #D49F3F 100%);
+  color: #222;
+  border: none;
+}
+
 .navbar-container {
   padding-left: 4rem;
   padding-right: 4rem;
