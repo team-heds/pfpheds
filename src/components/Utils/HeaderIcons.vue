@@ -16,7 +16,7 @@ export default {
 
 <style scoped>
 .header-bar-mobile {
-  position: relative;
+  position: sticky;
   top: 0;
   left: 0;
   right: 0;
@@ -30,7 +30,7 @@ export default {
   background-color: transparent;
 }
 .school-logo {
-  height: 40px;
+  height: 35px;
   width: 40px;
   object-fit: contain;
 }
@@ -40,8 +40,7 @@ export default {
   align-items: center;
 }
 .notif-icon, .msg-icon {
-  cursor: pointer;
-  padding-right: 2rem;
+  padding-right: 3rem;
   width: 40px;
   height: 50px;
   font-size: 24px;
