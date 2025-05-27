@@ -1,0 +1,60 @@
+<template>
+  <div class="header-bar-mobile">
+    <img src="/assets/images/hespicto.png" alt="Logo école" class="school-logo" />
+    <div class="header-icons-mobile">
+      <i class="pi pi-bell notif-icon"></i>
+      <i class="pi pi-send msg-icon"></i>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  name: "HeaderIcons"
+}
+</script>
+
+<style scoped>
+.header-bar-mobile {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 3000;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 18px 0 18px;
+  height: 90px;
+  width: 100vw;
+  background-color: transparent;
+}
+.school-logo {
+  height: 35px;
+  width: 35px;
+  object-fit: contain;
+  border-radius: 12px;
+}
+.header-icons-mobile {
+  display: flex;
+  gap: 1px;
+  align-items: center;
+  padding-left: 1rem;
+}
+.notif-icon, .msg-icon {
+  padding-right: 3rem;
+  width: 40px;
+  height: 50px;
+  font-size: 24px;
+  transition: color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.notif-icon:hover, .msg-icon:hover {
+  color: #F3C300;
+}
+@media (min-width: 601px) {
+  .header-bar-mobile { display: none; }
+}
+</style>

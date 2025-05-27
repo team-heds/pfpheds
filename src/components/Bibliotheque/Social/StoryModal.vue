@@ -18,7 +18,7 @@
       </div>
       
       <div class="story-image-container">
-        <img :src="currentStory.imageUrl" alt="story" class="story-image" />
+        <img :src="currentStory.imageUrl || currentStory.media || currentStory.url || currentStory.src" alt="story" class="story-image" />
         
         <div class="story-user-info">
           <div class="user-avatar-name">
@@ -84,22 +84,6 @@
         />
       </div>
       
-      <!-- Réactions -->
-      <div class="story-reactions">
-        <div class="emoji-list">
-          <Button 
-            v-for="emoji in emojis" 
-            :key="emoji" 
-            class="p-button-rounded p-button-text emoji-btn" 
-            :class="{ 'p-button-outlined': userReaction === emoji }"
-            @click="reactToStory(emoji)"
-          >
-            {{ emoji }}
-            <Badge v-if="reactionCounts[emoji]" :value="reactionCounts[emoji]" class="reaction-count" />
-          </Button>
-        </div>
-      </div>
-      
       <!-- Répondre -->
       <div v-if="!isCreator" class="story-reply">
         <InputText 
@@ -122,15 +106,7 @@
         <Message severity="success" text="Message envoyé !" />
       </div>
       
-      <!-- Statistiques (pour le créateur) -->
-      <div v-if="isCreator" class="story-stats-button">
-        <Button 
-          label="Statistiques" 
-          icon="pi pi-chart-bar" 
-          class="p-button-outlined p-button-sm" 
-          @click="showStats = true"
-        />
-      </div>
+
     </div>
     
     <!-- Overlay pour modules interactifs -->
@@ -541,10 +517,10 @@ export default {
 }
 
 .progress-bar {
-  height: 100%;
-  width: 0;
-  background-color: #f3c300;
-  border-radius: 1.2rem !important;
+  height: 4px;
+  border-radius: 3px;
+  transition: width 0.3s linear;
+  background: linear-gradient(90deg, #F3C300 0%, #D49F3F 100%);
 }
 
 .progress-bar.active {
@@ -764,7 +740,7 @@ export default {
 }
 
 .reply-btn {
-  background-color: var(--primary-color, #3B82F6) !important;
+  background-color: linear-gradient(90deg, #F3C300 0%, #D49F3F 100%)!important;
   color: #fff !important;
   border-radius: 1.2rem !important;
 }

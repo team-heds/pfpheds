@@ -74,6 +74,7 @@ import ProfileAdmin from '@/components/Home/ProfileAdmin.vue'
 import SettingView from '@/components/Home/SettingView.vue'
 import SearchResults from '@/components/Utils/SearchResults.vue'
 import AffectationStageEtudiant from '@/components/Dashboard/DashboardForms/AffectationStageEtudiant.vue'
+import CreateContentMobile from '@/components/Bibliotheque/Social/CreateContentMobile.vue';
 
 // Define your routes
 const routes = [
@@ -181,6 +182,12 @@ const routes = [
     name: 'ValidatePFP1A',
     component: () => import('@/components/Dashboard/DashboardDetails/ValidatePFP1A.vue'),
     meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] }
+  },
+  {
+    path: '/create',
+    name: 'CreateContentMobile',
+    component: CreateContentMobile,
+    meta: { mobileOnly: true }
   },
 ];
 

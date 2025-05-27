@@ -9,6 +9,7 @@
 
     <!-- Contenu de l'application -->
     <div class="content">
+      <HeaderIcons v-if="showHeaderIconsMobile" />
       <Toast />
       <router-view />
       <Toast position="bottom-center" />
@@ -32,6 +33,7 @@ import Loader from '@/components/utils/Loader.vue'; // Import du composant Loade
 import VersionningComponent from './components/utils/VersionningComponent.vue'; // Import du nouveau composant
 import MobileBottomNav from '@/components/Utils/MobileBottomNav.vue';
 import PwaInstallPrompt from '@/components/Utils/PwaInstallPrompt.vue';
+import HeaderIcons from '@/components/Utils/HeaderIcons.vue'
 
 export default {
   name: "App",
@@ -41,13 +43,31 @@ export default {
     Loader, // Déclaration du composant Loader
     VersionningComponent,
     MobileBottomNav,
-    PwaInstallPrompt
+    PwaInstallPrompt,
+    HeaderIcons
   },
   data() {
     return {
       isLoading: true, // État de chargement
       showMobileBottomNav: true,
     };
+  },
+  computed: {
+    showHeaderIconsMobile() {
+      const routeName = this.$route.name;
+      // Liste des pages où on NE VEUT PAS les icônes
+      const excluded = [
+        'LoginHome',
+        'CreatePostDialog',
+        'StoryEditor',
+        'StoryModal',
+        'AddStory',
+        'AddStoryCore',
+        'AddStoryMobile',
+      ];
+      // Affiche uniquement sur mobile
+      return window.innerWidth <= 600 && !excluded.includes(routeName);
+    }
   },
   watch: {
     '$route'(to) {
@@ -77,7 +97,6 @@ export default {
 #app {
   position: relative;
   min-height: 100vh;
-  overflow: hidden;
 }
 
 /* Conteneur des cercles */

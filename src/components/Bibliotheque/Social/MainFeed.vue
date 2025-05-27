@@ -1,53 +1,60 @@
 <!-- src/components/Bibliotheque/Social/MainFeed.vue -->
 <template>
   <div class="main-feed">
-
-    
-    <!-- Section des filtres -->
-    <FilterComponent
-      :filterTypes="filterTypes"
-      :selectedFilterType="selectedFilterType"
-      :filterOptions="filterOptions"
-      :selectedFilterValue="selectedFilterValue"
-      @update:selectedFilterType="updateSelectedFilterType"
-      @update:selectedFilterValue="updateSelectedFilterValue"
-      @filter-type-change="onFilterTypeChange"
-      @apply-filter="applyFilter"
-      @reset-filter="resetFilter"
-    />
-
-    <!-- Barre de création façon Facebook -->
-    <div class="quick-post-bar" @click="showCreatePost = true">
-      <span class="quick-post-icon-circle">
-        <i class="pi pi-file-edit quick-post-icon"></i>
-      </span>
-      <div class="quick-post-placeholder">Exprime-toi...</div>
+    <div v-if="isMobile" class="mainfeed-mobile">
+      <StoriesBar />
+      <div class="post-feed-scrollable">
+        <InfiniteScroll :loading="loading" @load-more="loadMorePosts">
+          <PostItem
+            v-for="post in filteredPosts"
+            :key="post.id"
+            :post="post"
+            :currentUser="localCurrentUser"
+          />
+        </InfiniteScroll>
+      </div>
     </div>
-    <CreatePostDialog
-      v-model="showCreatePost"
-      :loading="loading"
-      :value="newPost"
-      :selectedMedia="selectedMedia"
-      @update:value="val => newPost = val"
-      @publish="postMessage"
-      @media-selected="handleFileSelection"
-      @remove-media="removeMedia"
-    />
-
-    <!-- Barre des stories -->
-    <StoriesBar />
-
-    <!-- Conteneur pour les posts avec Infinite Scroll -->
-    <div class="posts-container">
-      <InfiniteScroll :loading="loading" @load-more="loadMorePosts">
-        <PostItem
-          v-for="post in filteredPosts"
-          :key="post.id"
-          :post="post"
-          :currentUser="localCurrentUser"
-        />
-      </InfiniteScroll>
-    </div>
+    <template v-else>
+      <!-- Desktop : structure actuelle -->
+      <FilterComponent
+        :filterTypes="filterTypes"
+        :selectedFilterType="selectedFilterType"
+        :filterOptions="filterOptions"
+        :selectedFilterValue="selectedFilterValue"
+        @update:selectedFilterType="updateSelectedFilterType"
+        @update:selectedFilterValue="updateSelectedFilterValue"
+        @filter-type-change="onFilterTypeChange"
+        @apply-filter="applyFilter"
+        @reset-filter="resetFilter"
+      />
+      <div class="quick-post-bar" @click="handleCreateClick">
+        <span class="quick-post-icon-circle">
+          <i class="pi pi-file-edit quick-post-icon"></i>
+        </span>
+        <div class="quick-post-placeholder">Exprime-toi...</div>
+      </div>
+      <CreatePostDialog
+        v-model="showCreatePost"
+        :loading="loading"
+        :value="newPost"
+        :selectedMedia="selectedMedia"
+        @update:value="val => newPost = val"
+        @publish="postMessage"
+        @media-selected="handleFileSelection"
+        @remove-media="removeMedia"
+      />
+      <StoriesBar />
+      <div class="posts-container">
+        <InfiniteScroll :loading="loading" @load-more="loadMorePosts">
+          <PostItem
+            v-for="post in filteredPosts"
+            :key="post.id"
+            :post="post"
+            :currentUser="localCurrentUser"
+          />
+        </InfiniteScroll>
+      </div>
+    </template>
   </div>
 </template>
 
@@ -57,7 +64,7 @@
  * de l'ancienne zone de texte. On conserve l'intégralité de la logique.
  */
 
-import { ref, onMounted, watch, onUnmounted } from "vue";
+import { ref, onMounted, watch, onUnmounted, computed } from "vue";
 import { db, auth } from "../../../../firebase.js";
 import { onAuthStateChanged } from "firebase/auth";
 import InfiniteScroll from "@/components/Social/InfiniteScroll.vue";
@@ -68,6 +75,8 @@ import FileUpload from "primevue/fileupload";
 import FilterComponent from "@/components/Social/FilterComponent.vue";
 import TextAreaComponent from "./TextAreaComponent.vue"; // <-- Import du nouveau composant
 import CreatePostDialog from '@/components/Social/CreatePostDialog.vue';
+import { useRouter } from 'vue-router';
+import HeaderIcons from '@/components/Utils/HeaderIcons.vue'
 
 import {
   ref as dbRef,
@@ -93,6 +102,7 @@ import StoriesBar from './StoriesBar.vue'
 export default {
   name: "MainFeed",
   components: {
+    HeaderIcons,
     StoriesBar,
     InfiniteScroll,
     PostItem,
@@ -107,6 +117,7 @@ export default {
     currentUser: Object,
   },
   setup(props) {
+    const router = useRouter();
     // Références réactives
     const posts = ref([]);
     const filteredPosts = ref([]);
@@ -140,12 +151,7 @@ export default {
     });
 
     // Ajout d'un détecteur mobile simple
-    const isMobile = ref(window.innerWidth <= 768);
-    const handleResize = () => {
-      isMobile.value = window.innerWidth <= 768;
-    };
-    onMounted(() => window.addEventListener('resize', handleResize));
-    onUnmounted(() => window.removeEventListener('resize', handleResize));
+    const isMobile = computed(() => window.innerWidth <= 600);
 
     // Watcher pour détecter les tags dans le nouveau post
     watch(newPost, (value) => {
@@ -496,6 +502,15 @@ export default {
       lastScrollTop.value = scrollTop;
     };
 
+    // Fonction pour gérer le clic sur la barre de création
+    const handleCreateClick = () => {
+      if (isMobile.value) {
+        router.push('/create');
+      } else {
+        showCreatePost.value = true;
+      }
+    };
+
     // Hook de cycle de vie onMounted
     onMounted(() => {
       if (props.currentUser) {
@@ -512,6 +527,22 @@ export default {
             console.warn("Aucun utilisateur connecté.");
           }
         });
+      }
+    });
+
+    // --- Ajout : recharger les posts après retour de publication ---
+    onMounted(() => {
+      router.afterEach((to, from) => {
+        if (from.name === 'CreateContentMobile' && to.name === 'MainFeed') {
+          reloadPosts();
+        }
+      });
+      // Recharge si event global (publication depuis PostTextarea)
+      if (typeof window !== 'undefined' && window && window.$vueRoot) {
+        window.$vueRoot.$on('refresh-mobile-feed', reloadPosts);
+      } else if (typeof getCurrentInstance === 'function') {
+        const vm = getCurrentInstance()?.proxy?.$root;
+        vm && vm.$on && vm.$on('refresh-mobile-feed', reloadPosts);
       }
     });
 
@@ -537,6 +568,8 @@ export default {
       showCreatePost,
       userAvatarUrl,
       defaultAvatar,
+      isMobile,
+      handleCreateClick,
       // Méthodes
       extractTags,
       postMessage,
@@ -554,7 +587,6 @@ export default {
       handleScroll,
       updateSelectedFilterType,
       updateSelectedFilterValue,
-      isMobile,
     };
   },
 };
@@ -690,5 +722,17 @@ export default {
   .publish-button {
     width: 100%;
   }
+}
+.mainfeed-mobile {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+.post-feed-scrollable {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  /* Optionnel : padding si tu veux éviter que le dernier post soit masqué */
 }
 </style>
