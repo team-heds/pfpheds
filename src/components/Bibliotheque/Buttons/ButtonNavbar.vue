@@ -76,4 +76,11 @@ export default defineComponent({
 .p-button:hover {
   background-color: var(--surface-hover) !important;
 }
+
+
+.inputcolor {
+  background: linear-gradient(90deg, #F3C300 0%, #D49F3F 100%);
+  color: #222;
+  border: none;
+}
 </style>
