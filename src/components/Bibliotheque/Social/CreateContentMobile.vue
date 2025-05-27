@@ -7,12 +7,9 @@
     </div>
 
 
-    <div class="add-media-row">
-      <Button icon="pi pi-plus" class="add-media-btn" @click="handleAddMedia" />
-    </div>
 
 
-    <div class="content-area">
+    <div class="content-area pt-6">
       <PostTextarea ref="textareaRef" v-if="currentTab === 'post'" v-model="contentValue" @publish="onMobilePostPublish" />
       <AddStoryCore v-else @publish-story="updateStoryData" />
     </div>
@@ -56,6 +53,7 @@ export default {
       loading: false,
       touchStartX: 0,
       touchEndX: 0,
+      selectedMedia: [], // Ajout pour stocker les médias sélectionnés
     };
   },
   computed: {
@@ -118,7 +116,9 @@ export default {
       }
     },
     handleAddMedia() {},
-    onMediaSelected(media) {},
+    onMediaSelected(media) {
+      this.selectedMedia = media;
+    },
     updateStoryData(data) {
       this.storyData = data;
     },
@@ -135,29 +135,33 @@ export default {
       }
     },
     async onMobilePostPublish(postData) {
-      // Enregistrement Firebase comme CreatePostDialog.vue (structure attendue)
+      // Fusionne les médias sélectionnés côté parent
+      postData.media = this.selectedMedia;
       this.loading = true;
       try {
         let mediaUrls = [];
-        // Upload des médias si présents
+        const auth = getAuth();
+        const user = auth.currentUser;
+        const authorName = (user && (user.displayName || user.email.split('@')[0])) || postData.userName || postData.Author || '';
+        // DEBUG: log pour vérifier la structure reçue
         if (postData.media && postData.media.length > 0) {
-          const auth = getAuth();
-          const user = auth.currentUser;
           const storage = getStorage();
           for (const fileMeta of postData.media) {
-            if (fileMeta.file) {
-              const ext = fileMeta.name.split('.').pop();
+            if (fileMeta.file instanceof File) {
+              const ext = fileMeta.name ? fileMeta.name.split('.').pop() : 'bin';
               const fileName = `post_${user.uid}_${Date.now()}_${Math.random().toString(36).substring(2,8)}.${ext}`;
               const storageReference = storageRef(storage, `posts/${user.uid}/${fileName}`);
               await uploadBytes(storageReference, fileMeta.file);
               const url = await getDownloadURL(storageReference);
               mediaUrls.push({ url, type: fileMeta.type, name: fileMeta.name });
+            } else {
+              console.warn('[DEBUG] Média ignoré (pas de .file):', fileMeta);
             }
           }
         }
         const postRef = push(dbRef(db, 'Posts'));
         const firebaseData = {
-          Author: postData.userName || '',
+          Author: authorName,
           Content: postData.content,
           IdUser: postData.userId,
           Timestamp: Date.now(),

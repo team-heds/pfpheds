@@ -93,27 +93,29 @@ export default {
         reader.onload = ev => {
           this.selectedMedia.push({
             file,
+            name: file.name,
             type: file.type,
             preview: ev.target.result
           });
-          this.$emit('media-selected', this.selectedMedia.map(m => m.file));
+          this.$emit('media-selected', this.selectedMedia);
         };
         if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
           reader.readAsDataURL(file);
         } else {
           this.selectedMedia.push({
             file,
+            name: file.name,
             type: file.type,
             preview: ''
           });
-          this.$emit('media-selected', this.selectedMedia.map(m => m.file));
+          this.$emit('media-selected', this.selectedMedia);
         }
       });
       e.target.value = '';
     },
     removeMedia(idx) {
       this.selectedMedia.splice(idx, 1);
-      this.$emit('media-selected', this.selectedMedia.map(m => m.file));
+      this.$emit('media-selected', this.selectedMedia);
     },
     async handlePublish() {
       if (!this.localValue && this.selectedMedia.length === 0) return;
@@ -129,12 +131,13 @@ export default {
           userName: user.displayName || '',
           userAvatar: user.photoURL || '',
           media: this.selectedMedia.map(m => ({
+            file: m.file,
             name: m.name,
             type: m.type,
-            preview: m.preview || '',
-            // TODO: url réelle à compléter côté parent après upload
+            preview: m.preview || ''
           })),
         };
+        console.log('[DEBUG] postData envoyé au parent:', postData);
         this.$emit('publish', postData);
         this.localValue = '';
         this.selectedMedia = [];

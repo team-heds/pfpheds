@@ -47,36 +47,36 @@
       <div v-if="post.media && post.media.length > 0" class="post-media">
         <div class="media-container">
           <div
-            v-for="(mediaUrl, index) in post.media"
+            v-for="(mediaItem, index) in post.media"
             :key="index"
             class="media-item-wrapper"
           >
-            <template v-if="isImage(mediaUrl)">
-              <img :src="mediaUrl" alt="media" class="media-item" />
+            <template v-if="isImage(getMediaUrl(mediaItem))">
+              <img :src="getMediaUrl(mediaItem)" alt="media" class="media-item" />
             </template>
-            <template v-else-if="isVideo(mediaUrl)">
+            <template v-else-if="isVideo(getMediaUrl(mediaItem))">
               <video
                 ref="videos"
                 :key="'video-' + index"
-                :src="mediaUrl"
+                :src="getMediaUrl(mediaItem)"
                 class="media-item"
                 controls
                 muted
                 playsinline
               ></video>
             </template>
-            <template v-else-if="isPDF(mediaUrl)">
+            <template v-else-if="isPDF(getMediaUrl(mediaItem))">
               <div v-if="!isMobile">
-                <embed :src="mediaUrl" type="application/pdf" class="media-item pdf-embed" />
+                <embed :src="getMediaUrl(mediaItem)" type="application/pdf" class="media-item pdf-embed" />
               </div>
               <div v-else style="text-align:center; margin:16px 0;">
-                <a :href="mediaUrl" target="_blank" rel="noopener noreferrer" class="media-item media-link pdf-mobile-btn">
+                <a :href="getMediaUrl(mediaItem)" target="_blank" rel="noopener noreferrer" class="media-item media-link pdf-mobile-btn">
                   📄 Voir le PDF
                 </a>
               </div>
             </template>
             <template v-else>
-              <a :href="mediaUrl" target="_blank" rel="noopener noreferrer" class="media-item media-link">
+              <a :href="getMediaUrl(mediaItem)" target="_blank" rel="noopener noreferrer" class="media-item media-link">
                 Ouvrir le fichier
               </a>
             </template>
@@ -324,18 +324,22 @@ export default {
       });
     },
     isImage(url) {
+      if (!url || typeof url !== 'string') return false;
       const extension = this.getExtension(url);
       return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension);
     },
     isVideo(url) {
+      if (!url || typeof url !== 'string') return false;
       const extension = this.getExtension(url);
       return ['mp4', 'webm', 'ogg'].includes(extension);
     },
     isPDF(url) {
+      if (!url || typeof url !== 'string') return false;
       const extension = this.getExtension(url);
       return extension === 'pdf';
     },
     getExtension(url) {
+      if (!url || typeof url !== 'string' || !url.includes('.')) return '';
       return url.split('?')[0].split('.').pop().toLowerCase();
     },
     toggleComments() {
@@ -500,6 +504,13 @@ export default {
           }
         }
       });
+    },
+    getMediaUrl(mediaItem) {
+      // Pour compatibilité : accepte string (ancienne version) ou objet {url:...}
+      if (!mediaItem) return '';
+      if (typeof mediaItem === 'string') return mediaItem;
+      if (typeof mediaItem === 'object' && mediaItem.url) return mediaItem.url;
+      return '';
     },
   },
 };
