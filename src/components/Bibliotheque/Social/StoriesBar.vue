@@ -9,7 +9,7 @@
       <div class="add-story" @click="handleAddStoryClick">
         <span class="add-icon">+</span>
       </div>
-      <p>Votre story</p>
+      <p>Créer</p>
     </div>
     <!-- Liste des stories -->
     <div
