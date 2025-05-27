@@ -16,8 +16,8 @@
       @reset-filter="resetFilter"
     />
 
-    <!-- Barre de création façon Facebook -->
-    <div class="quick-post-bar" @click="handleCreateClick">
+    <!-- Barre de création façon Facebook : affichée uniquement sur desktop -->
+    <div class="quick-post-bar" @click="handleCreateClick" v-if="!isMobile">
       <span class="quick-post-icon-circle">
         <i class="pi pi-file-edit quick-post-icon"></i>
       </span>
@@ -58,7 +58,7 @@
  * de l'ancienne zone de texte. On conserve l'intégralité de la logique.
  */
 
-import { ref, onMounted, watch, onUnmounted } from "vue";
+import { ref, onMounted, watch, onUnmounted, computed } from "vue";
 import { db, auth } from "../../../../firebase.js";
 import { onAuthStateChanged } from "firebase/auth";
 import InfiniteScroll from "@/components/Social/InfiniteScroll.vue";
@@ -143,12 +143,7 @@ export default {
     });
 
     // Ajout d'un détecteur mobile simple
-    const isMobile = ref(window.innerWidth <= 768);
-    const handleResize = () => {
-      isMobile.value = window.innerWidth <= 768;
-    };
-    onMounted(() => window.addEventListener('resize', handleResize));
-    onUnmounted(() => window.removeEventListener('resize', handleResize));
+    const isMobile = computed(() => window.innerWidth <= 600);
 
     // Watcher pour détecter les tags dans le nouveau post
     watch(newPost, (value) => {
