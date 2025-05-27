@@ -1,56 +1,60 @@
 <!-- src/components/Bibliotheque/Social/MainFeed.vue -->
 <template>
   <div class="main-feed">
-
-    
-    <!-- Section des filtres -->
-    <FilterComponent
-      :filterTypes="filterTypes"
-      :selectedFilterType="selectedFilterType"
-      :filterOptions="filterOptions"
-      :selectedFilterValue="selectedFilterValue"
-      @update:selectedFilterType="updateSelectedFilterType"
-      @update:selectedFilterValue="updateSelectedFilterValue"
-      @filter-type-change="onFilterTypeChange"
-      @apply-filter="applyFilter"
-      @reset-filter="resetFilter"
-    />
-
-    <!-- Barre de création façon Facebook : affichée uniquement sur desktop -->
-    <div class="quick-post-bar" @click="handleCreateClick" v-if="!isMobile">
-      <span class="quick-post-icon-circle">
-        <i class="pi pi-file-edit quick-post-icon"></i>
-      </span>
-      <div class="quick-post-placeholder">Exprime-toi...</div>
+    <div v-if="isMobile" class="mainfeed-mobile">
+      <StoriesBar />
+      <div class="post-feed-scrollable">
+        <InfiniteScroll :loading="loading" @load-more="loadMorePosts">
+          <PostItem
+            v-for="post in filteredPosts"
+            :key="post.id"
+            :post="post"
+            :currentUser="localCurrentUser"
+          />
+        </InfiniteScroll>
+      </div>
     </div>
-    <CreatePostDialog
-      v-if="!isMobile"
-      v-model="showCreatePost"
-      :loading="loading"
-      :value="newPost"
-      :selectedMedia="selectedMedia"
-      @update:value="val => newPost = val"
-      @publish="postMessage"
-      @media-selected="handleFileSelection"
-      @remove-media="removeMedia"
-    />
-
-
-
-    <!-- Barre des stories -->
-    <StoriesBar />
-
-    <!-- Conteneur pour les posts avec Infinite Scroll -->
-    <div class="posts-container">
-      <InfiniteScroll :loading="loading" @load-more="loadMorePosts">
-        <PostItem
-          v-for="post in filteredPosts"
-          :key="post.id"
-          :post="post"
-          :currentUser="localCurrentUser"
-        />
-      </InfiniteScroll>
-    </div>
+    <template v-else>
+      <!-- Desktop : structure actuelle -->
+      <FilterComponent
+        :filterTypes="filterTypes"
+        :selectedFilterType="selectedFilterType"
+        :filterOptions="filterOptions"
+        :selectedFilterValue="selectedFilterValue"
+        @update:selectedFilterType="updateSelectedFilterType"
+        @update:selectedFilterValue="updateSelectedFilterValue"
+        @filter-type-change="onFilterTypeChange"
+        @apply-filter="applyFilter"
+        @reset-filter="resetFilter"
+      />
+      <div class="quick-post-bar" @click="handleCreateClick">
+        <span class="quick-post-icon-circle">
+          <i class="pi pi-file-edit quick-post-icon"></i>
+        </span>
+        <div class="quick-post-placeholder">Exprime-toi...</div>
+      </div>
+      <CreatePostDialog
+        v-model="showCreatePost"
+        :loading="loading"
+        :value="newPost"
+        :selectedMedia="selectedMedia"
+        @update:value="val => newPost = val"
+        @publish="postMessage"
+        @media-selected="handleFileSelection"
+        @remove-media="removeMedia"
+      />
+      <StoriesBar />
+      <div class="posts-container">
+        <InfiniteScroll :loading="loading" @load-more="loadMorePosts">
+          <PostItem
+            v-for="post in filteredPosts"
+            :key="post.id"
+            :post="post"
+            :currentUser="localCurrentUser"
+          />
+        </InfiniteScroll>
+      </div>
+    </template>
   </div>
 </template>
 
@@ -718,5 +722,17 @@ export default {
   .publish-button {
     width: 100%;
   }
+}
+.mainfeed-mobile {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+.post-feed-scrollable {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  /* Optionnel : padding si tu veux éviter que le dernier post soit masqué */
 }
 </style>

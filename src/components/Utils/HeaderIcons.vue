@@ -31,13 +31,15 @@ export default {
 }
 .school-logo {
   height: 35px;
-  width: 40px;
+  width: 35px;
   object-fit: contain;
+  border-radius: 12px;
 }
 .header-icons-mobile {
   display: flex;
   gap: 1px;
   align-items: center;
+  padding-left: 1rem;
 }
 .notif-icon, .msg-icon {
   padding-right: 3rem;
