@@ -3,7 +3,7 @@
     <div class="header">
       <Button icon="pi pi-arrow-left" class="back-btn" @click="goBack" />
       <span class="title">CRÉATION</span>
-      <Button label="Publier" class="publish-btn" :disabled="!canPublish || loading" @click="handlePublish" :loading="loading" />
+      <Button label="Publier" class="publish-btn" :disabled="!canPublish || loading" @click="onPublishClick" :loading="loading" />
     </div>
 
 
@@ -13,7 +13,7 @@
 
 
     <div class="content-area">
-      <PostTextarea v-if="currentTab === 'post'" v-model="contentValue" />
+      <PostTextarea ref="textareaRef" v-if="currentTab === 'post'" v-model="contentValue" @publish="onMobilePostPublish" />
       <AddStoryCore v-else @publish-story="updateStoryData" />
     </div>
 
@@ -80,29 +80,7 @@ export default {
     },
     async handlePublish() {
       if (this.currentTab === 'post') {
-        this.loading = true;
-        try {
-          const auth = getAuth();
-          const user = auth.currentUser;
-          if (!user) throw new Error("Vous devez être connecté pour publier.");
-          const postData = {
-            userId: user.uid,
-            content: this.contentValue,
-            createdAt: Date.now(),
-            userName: user.displayName || '',
-            userAvatar: user.photoURL || '',
-          };
-          // Ajout dans la base
-          const postRef = push(dbRef(db, 'Posts'));
-          await set(postRef, postData);
-          this.contentValue = '';
-          this.$toast && this.$toast.add({severity:'success', summary:'Post publié', life: 2000});
-          this.goBack();
-        } catch (e) {
-          alert('Erreur lors de la publication du post: ' + e.message);
-        } finally {
-          this.loading = false;
-        }
+        // Désactivé : publication gérée par PostTextarea
       } else if (this.currentTab === 'story') {
         if (this.storyData && this.storyData.file) {
           this.loading = true;
@@ -139,12 +117,8 @@ export default {
         }
       }
     },
-    handleAddMedia() {
-      // Optionnel: ouvrir media picker
-    },
-    onMediaSelected(media) {
-      // Optionnel: gérer media
-    },
+    handleAddMedia() {},
+    onMediaSelected(media) {},
     updateStoryData(data) {
       this.storyData = data;
     },
@@ -158,6 +132,57 @@ export default {
       if (Math.abs(diff) > 40) {
         if (diff < 0 && this.currentTab === 'post') this.currentTab = 'story';
         if (diff > 0 && this.currentTab === 'story') this.currentTab = 'post';
+      }
+    },
+    async onMobilePostPublish(postData) {
+      // Enregistrement Firebase comme CreatePostDialog.vue (structure attendue)
+      this.loading = true;
+      try {
+        let mediaUrls = [];
+        // Upload des médias si présents
+        if (postData.media && postData.media.length > 0) {
+          const auth = getAuth();
+          const user = auth.currentUser;
+          const storage = getStorage();
+          for (const fileMeta of postData.media) {
+            if (fileMeta.file) {
+              const ext = fileMeta.name.split('.').pop();
+              const fileName = `post_${user.uid}_${Date.now()}_${Math.random().toString(36).substring(2,8)}.${ext}`;
+              const storageReference = storageRef(storage, `posts/${user.uid}/${fileName}`);
+              await uploadBytes(storageReference, fileMeta.file);
+              const url = await getDownloadURL(storageReference);
+              mediaUrls.push({ url, type: fileMeta.type, name: fileMeta.name });
+            }
+          }
+        }
+        const postRef = push(dbRef(db, 'Posts'));
+        const firebaseData = {
+          Author: postData.userName || '',
+          Content: postData.content,
+          IdUser: postData.userId,
+          Timestamp: Date.now(),
+          media: mediaUrls,
+        };
+        await set(postRef, firebaseData);
+        this.$toast && this.$toast.add({severity:'success', summary:'Post publié', life: 2000});
+        this.goBack();
+      } catch (e) {
+        alert('Erreur lors de la publication du post: ' + e.message);
+      } finally {
+        this.loading = false;
+      }
+    },
+    onPostPublished(postData) {
+      // Affiche un toast et retourne au feed (UX instantanée)
+      this.$toast && this.$toast.add({severity:'success', summary:'Post publié', life: 2000});
+      this.goBack();
+    },
+    onPublishClick() {
+      if (this.currentTab === 'post') {
+        // Appel explicite de la méthode handlePublish du PostTextarea via ref
+        this.$refs.textareaRef && this.$refs.textareaRef.handlePublish();
+      } else {
+        this.handlePublish();
       }
     },
   },

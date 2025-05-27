@@ -527,6 +527,22 @@ export default {
       }
     });
 
+    // --- Ajout : recharger les posts après retour de publication ---
+    onMounted(() => {
+      router.afterEach((to, from) => {
+        if (from.name === 'CreateContentMobile' && to.name === 'MainFeed') {
+          reloadPosts();
+        }
+      });
+      // Recharge si event global (publication depuis PostTextarea)
+      if (typeof window !== 'undefined' && window && window.$vueRoot) {
+        window.$vueRoot.$on('refresh-mobile-feed', reloadPosts);
+      } else if (typeof getCurrentInstance === 'function') {
+        const vm = getCurrentInstance()?.proxy?.$root;
+        vm && vm.$on && vm.$on('refresh-mobile-feed', reloadPosts);
+      }
+    });
+
     return {
       posts,
       filteredPosts,

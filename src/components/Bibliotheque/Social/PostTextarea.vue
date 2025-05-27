@@ -44,6 +44,10 @@
 </template>
 
 <script>
+import { db } from '../../../../firebase';
+import { getAuth } from 'firebase/auth';
+import { ref as dbRef, push, set } from 'firebase/database';
+
 export default {
   name: "PostTextarea",
   props: {
@@ -56,12 +60,13 @@ export default {
       default: "Exprimez-vous...",
     },
   },
-  emits: ["update:modelValue", "media-selected", "remove-media"],
+  emits: ["update:modelValue", "media-selected", "remove-media", "post-published", "publish"],
   data() {
     return {
       localValue: this.modelValue,
       detectedTags: [],
       selectedMedia: [],
+      loading: false,
     };
   },
   watch: {
@@ -96,7 +101,6 @@ export default {
         if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
           reader.readAsDataURL(file);
         } else {
-          // Pour pdf/mp3 : pas d'aperçu, icône
           this.selectedMedia.push({
             file,
             type: file.type,
@@ -110,6 +114,35 @@ export default {
     removeMedia(idx) {
       this.selectedMedia.splice(idx, 1);
       this.$emit('media-selected', this.selectedMedia.map(m => m.file));
+    },
+    async handlePublish() {
+      if (!this.localValue && this.selectedMedia.length === 0) return;
+      this.loading = true;
+      try {
+        const auth = getAuth();
+        const user = auth.currentUser;
+        if (!user) throw new Error("Vous devez être connecté pour publier.");
+        const postData = {
+          userId: user.uid,
+          content: this.localValue,
+          createdAt: Date.now(),
+          userName: user.displayName || '',
+          userAvatar: user.photoURL || '',
+          media: this.selectedMedia.map(m => ({
+            name: m.name,
+            type: m.type,
+            preview: m.preview || '',
+            // TODO: url réelle à compléter côté parent après upload
+          })),
+        };
+        this.$emit('publish', postData);
+        this.localValue = '';
+        this.selectedMedia = [];
+      } catch (e) {
+        alert('Erreur lors de la préparation du post: ' + e.message);
+      } finally {
+        this.loading = false;
+      }
     }
   }
 };
@@ -224,6 +257,25 @@ export default {
 .remove-media-btn:hover {
   background: #F3C300;
   color: #222;
+}
+.publish-btn {
+  background: linear-gradient(90deg, #F3C300 0%, #D49F3F 100%);
+  color: #222;
+  border: none;
+  border-radius: 12px;
+  padding: 0.38rem 1.2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-left: 0.7rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: background 0.15s;
+}
+.publish-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 @media (max-width: 600px) {
   .post-textarea {
