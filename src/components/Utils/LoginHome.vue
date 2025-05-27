@@ -22,18 +22,18 @@
               type="email"
               v-model="email"
               placeholder="Email"
-              class="w-full"
+              class="w-full "
               :class="{ 'p-invalid': emailError }"
             />
             <small v-if="emailError" class="p-error">Veuillez entrer une adresse e-mail valide.</small>
           </div>
-          <div class="flex flex-column lg:flex-row align-items-center mb-4">
+          <div class="flex flex-column lg:flex-row align-items-center mb-4 ">
             <Password
               id="password"
               placeholder="Mot de passe"
               v-model="password"
               class="w-full"
-              inputClass="w-full"
+              inputClass="w-full "
               :feedback="false"
               :class="{ 'p-invalid': passwordError }"
               toggleMask
@@ -47,10 +47,9 @@
           <Button label="Se connecter" type="submit" class="w-full p-button-raised inputcolor" />
         </form>
 
-        <!-- Lien d'inscription -->
+        <!-- Lien mot de passe oublié -->
         <p class="mt-4 text-sm text-center">
-          Vous n'avez pas de compte ?
-          <a href="/" class="text-primary font-bold hover:underline">Inscrivez-vous</a>
+          <a href="/reset-password" class="text-primary font-bold hover:underline">Mot de passe oublié ?</a>
         </p>
       </div>
     </div>
@@ -121,12 +120,6 @@ const submitForm = async () => {
 </script>
 
 <style scoped>
-
-.inputcolor {
-  background: linear-gradient(90deg, #F3C300 0%, #D49F3F 100%);
-  color: #222;
-  border: none;
-}
 /* Adaptations pour mobile */
 @media (max-width: 768px) {
   h1 {
@@ -136,6 +129,12 @@ const submitForm = async () => {
   img {
     max-height: 8rem;
   }
+}
+
+.inputcolor {
+  background: linear-gradient(90deg, #F3C300 0%, #D49F3F 100%);
+  color: #222;
+  border: none;
 }
 
 .p-password .p-password-icon {

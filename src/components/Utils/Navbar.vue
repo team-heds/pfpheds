@@ -157,6 +157,8 @@ setPersistence(auth, browserLocalPersistence).then(() => {
   padding-right: 10rem;
 }
 
+
+
 .navbar-container {
   padding-left: 4rem;
   padding-right: 4rem;
