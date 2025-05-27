@@ -35,7 +35,7 @@ export default {
 .form-control {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid var(--surface-border);
-  border-radius: 0.5rem;
+  background-color: #f5f5f5;
+  border-radius: 1.2rem;
 }
 </style>

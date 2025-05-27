@@ -5,17 +5,19 @@
       <span class="title">CRÉATION</span>
       <Button label="Publier" class="publish-btn" :disabled="!canPublish || loading" @click="handlePublish" :loading="loading" />
     </div>
-    <div class="user-row">
-      <Avatar :image="userAvatar" shape="circle" size="large" />
-      <span class="placeholder">What's on your mind?</span>
-    </div>
+
+
     <div class="add-media-row">
       <Button icon="pi pi-plus" class="add-media-btn" @click="handleAddMedia" />
     </div>
+
+
     <div class="content-area">
       <PostTextarea v-if="currentTab === 'post'" v-model="contentValue" />
       <AddStoryCore v-else @publish-story="updateStoryData" />
     </div>
+
+
     <div class="tab-bar-slider">
       <div class="slider-bg">
         <div :class="['slider-btn', currentTab === 'post' ? 'slider-active' : '']" @click="currentTab = 'post'">POST</div>
@@ -164,7 +166,6 @@ export default {
 
 <style scoped>
 .create-content-mobile {
-  background: #0d223d;
   min-height: 100vh;
   color: #fff;
   display: flex;
@@ -179,7 +180,7 @@ export default {
   padding: 16px 16px 0 16px;
 }
 .back-btn {
-  background: #192c43;
+  background: linear-gradient(90deg, #F3C300 0%, #D49F3F 100%);
   color: #fff;
   border-radius: 12px;
   margin-right: 8px;
@@ -214,7 +215,7 @@ export default {
 .add-media-btn {
   background: #192c43;
   color: #fff;
-  border-radius: 50%;
+  border-radius: 12px;
   width: 36px;
   height: 36px;
   font-size: 1.3rem;
