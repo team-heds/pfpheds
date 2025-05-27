@@ -204,7 +204,7 @@ export default {
         const fileName = `story_${user.uid}_${Date.now()}.${ext}`;
         const storageReference = storageRef(getStorage(), `stories/${user.uid}/${fileName}`);
         await uploadBytes(storageReference, fileToUpload);
-        const mediaUrl = await getDownloadURL(storageReference);
+        const imageUrl = await getDownloadURL(storageReference);
         // Créer l'entrée dans la base de données
         const storyRef = push(dbRef(db, 'stories'));
         const storyId = storyRef.key;
@@ -213,8 +213,7 @@ export default {
           userId: user.uid,
           userName: user.displayName || 'Utilisateur',
           userAvatar: user.photoURL || null,
-          mediaUrl: mediaUrl,
-          mediaType: this.isImage ? 'image' : 'video',
+          imageUrl: imageUrl,
           caption: this.caption,
           timestamp: Date.now(),
           expiresAt: Date.now() + this.selectedDuration,

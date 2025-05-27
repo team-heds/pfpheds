@@ -18,7 +18,7 @@
       </div>
       
       <div class="story-image-container">
-        <img :src="currentStory.imageUrl" alt="story" class="story-image" />
+        <img :src="currentStory.imageUrl || currentStory.media || currentStory.url || currentStory.src" alt="story" class="story-image" />
         
         <div class="story-user-info">
           <div class="user-avatar-name">
