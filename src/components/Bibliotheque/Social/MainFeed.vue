@@ -17,13 +17,14 @@
     />
 
     <!-- Barre de création façon Facebook -->
-    <div class="quick-post-bar" @click="showCreatePost = true">
+    <div class="quick-post-bar" @click="handleCreateClick">
       <span class="quick-post-icon-circle">
         <i class="pi pi-file-edit quick-post-icon"></i>
       </span>
       <div class="quick-post-placeholder">Exprime-toi...</div>
     </div>
     <CreatePostDialog
+      v-if="!isMobile"
       v-model="showCreatePost"
       :loading="loading"
       :value="newPost"
@@ -68,6 +69,7 @@ import FileUpload from "primevue/fileupload";
 import FilterComponent from "@/components/Social/FilterComponent.vue";
 import TextAreaComponent from "./TextAreaComponent.vue"; // <-- Import du nouveau composant
 import CreatePostDialog from '@/components/Social/CreatePostDialog.vue';
+import { useRouter } from 'vue-router';
 
 import {
   ref as dbRef,
@@ -107,6 +109,7 @@ export default {
     currentUser: Object,
   },
   setup(props) {
+    const router = useRouter();
     // Références réactives
     const posts = ref([]);
     const filteredPosts = ref([]);
@@ -496,6 +499,15 @@ export default {
       lastScrollTop.value = scrollTop;
     };
 
+    // Fonction pour gérer le clic sur la barre de création
+    const handleCreateClick = () => {
+      if (isMobile.value) {
+        router.push('/create');
+      } else {
+        showCreatePost.value = true;
+      }
+    };
+
     // Hook de cycle de vie onMounted
     onMounted(() => {
       if (props.currentUser) {
@@ -537,6 +549,8 @@ export default {
       showCreatePost,
       userAvatarUrl,
       defaultAvatar,
+      isMobile,
+      handleCreateClick,
       // Méthodes
       extractTags,
       postMessage,
@@ -554,7 +568,6 @@ export default {
       handleScroll,
       updateSelectedFilterType,
       updateSelectedFilterValue,
-      isMobile,
     };
   },
 };

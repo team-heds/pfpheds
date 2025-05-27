@@ -1,9 +1,12 @@
 <template>
-  
   <div class="stories-bar">
     <!-- Bouton d'ajout de story -->
     <div class="story-item add-story-container">
-      <div class="add-story" @click="showAddStory = true">
+      <!--
+        Sur mobile : redirige vers /create (page dédiée)
+        Sur desktop : ouvre la dialog AddStory
+      -->
+      <div class="add-story" @click="handleAddStoryClick">
         <span class="add-icon">+</span>
       </div>
       <p>Votre story</p>
@@ -23,7 +26,8 @@
       />
       <p>{{ getUserDisplayName(user.userName) }}</p>
     </div>
-    <AddStory v-if="showAddStory" @close="showAddStory = false" @uploaded="fetchStories" />
+    <!-- Sur desktop uniquement, dialog AddStory -->
+    <AddStory v-if="showAddStory && !isMobile" @close="showAddStory = false" @uploaded="fetchStories" />
     <StoryModal v-if="selectedStory" :story="selectedStory" @close="selectedStory = null" @refreshStories="fetchStories" />
   </div>
 </template>
@@ -34,6 +38,7 @@ import StoryModal from './StoryModal.vue';
 import { db } from '../../../../firebase';
 import { ref as dbRef, onValue, update } from 'firebase/database';
 import { getCurrentUser } from './Utils/authUser.js';
+import { useRouter } from 'vue-router';
 
 export default {
   name: 'StoriesBar',
@@ -46,11 +51,16 @@ export default {
       selectedStory: null,
       defaultAvatar: 'https://ui-avatars.com/api/?name=User',
       currentUser: null,
+      isMobile: window.innerWidth <= 768,
     };
   },
   async mounted() {
     this.currentUser = await getCurrentUser();
     this.fetchStories();
+    window.addEventListener('resize', this.checkMobile);
+  },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.checkMobile);
   },
   methods: {
     getUserDisplayName(userName) {
@@ -134,7 +144,18 @@ export default {
         // Refresh stories to update seen status
         setTimeout(() => this.fetchStories(), 500);
       }
-    }
+    },
+    checkMobile() {
+      this.isMobile = window.innerWidth <= 768;
+    },
+    handleAddStoryClick() {
+      // Mobile : redirige vers la page /create, Desktop : ouvre la dialog
+      if (this.isMobile) {
+        this.$router.push('/create');
+      } else {
+        this.showAddStory = true;
+      }
+    },
   }
 };
 </script>
