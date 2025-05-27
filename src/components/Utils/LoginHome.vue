@@ -22,7 +22,7 @@
               type="email"
               v-model="email"
               placeholder="Email"
-              class="w-full inputcolor"
+              class="w-full "
               :class="{ 'p-invalid': emailError }"
             />
             <small v-if="emailError" class="p-error">Veuillez entrer une adresse e-mail valide.</small>
