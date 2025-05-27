@@ -35,6 +35,8 @@
       @remove-media="removeMedia"
     />
 
+
+
     <!-- Barre des stories -->
     <StoriesBar />
 
@@ -70,6 +72,7 @@ import FilterComponent from "@/components/Social/FilterComponent.vue";
 import TextAreaComponent from "./TextAreaComponent.vue"; // <-- Import du nouveau composant
 import CreatePostDialog from '@/components/Social/CreatePostDialog.vue';
 import { useRouter } from 'vue-router';
+import HeaderIcons from '@/components/Utils/HeaderIcons.vue'
 
 import {
   ref as dbRef,
@@ -95,6 +98,7 @@ import StoriesBar from './StoriesBar.vue'
 export default {
   name: "MainFeed",
   components: {
+    HeaderIcons,
     StoriesBar,
     InfiniteScroll,
     PostItem,
