@@ -44,7 +44,7 @@
             <Checkbox v-model="rememberMe" inputId="remember-me" binary class="mr-2" />
             <label for="remember-me" class="text-sm">Se souvenir de moi</label>
           </div>
-          <Button label="Se connecter" type="submit" class="w-full p-button-raised p-button-primary" />
+          <Button label="Se connecter" type="submit" class="w-full p-button-raised inputcolor" />
         </form>
 
         <!-- Lien d'inscription -->
@@ -121,6 +121,12 @@ const submitForm = async () => {
 </script>
 
 <style scoped>
+
+.inputcolor {
+  background: linear-gradient(90deg, #F3C300 0%, #D49F3F 100%);
+  color: #222;
+  border: none;
+}
 /* Adaptations pour mobile */
 @media (max-width: 768px) {
   h1 {
