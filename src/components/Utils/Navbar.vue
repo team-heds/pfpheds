@@ -11,7 +11,7 @@
         <!-- ✅ Logo (gauche) -->
         <div class="flex-shrink-0 px-4">
           <a class="cursor-pointer" @click="navigateTo('/feed')">
-            <img src="/pictoHEdS.png" alt="Logo" style="height: 44px; width: 44px; border-radius: 32%;" />
+            <img src="/pictoHEdS.png" alt="Logo" style="height: 44px; width: 44px; border-radius: 12px;" />
           </a>
         </div>
 

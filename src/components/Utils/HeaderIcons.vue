@@ -2,15 +2,26 @@
   <div class="header-bar-mobile">
     <img src="/assets/images/hespicto.png" alt="Logo école" class="school-logo" />
     <div class="header-icons-mobile">
-      <i class="pi pi-bell notif-icon"></i>
-      <i class="pi pi-send msg-icon"></i>
+      <i class="pi pi-bell notif-icon" @click="goToNotifications"></i>
+      <i class="pi pi-send msg-icon" @click="goToChat"></i>
     </div>
   </div>
 </template>
 
 <script>
+import { useRouter } from 'vue-router'
 export default {
-  name: "HeaderIcons"
+  name: "HeaderIcons",
+  setup() {
+    const router = useRouter();
+    function goToNotifications() {
+      router.push({ name: 'Notifications' });
+    }
+    function goToChat() {
+      router.push({ name: 'IndexChat' });
+    }
+    return { goToNotifications, goToChat };
+  }
 }
 </script>
 
@@ -35,6 +46,7 @@ export default {
   height: 40px;
   width: 40px;
   object-fit: contain;
+  border-radius: 12px;
 }
 .header-icons-mobile {
   display: flex;
@@ -42,8 +54,7 @@ export default {
   align-items: center;
 }
 .notif-icon, .msg-icon {
-  padding-right: 2rem;
-  width: 40px;
+  width: 50px;
   height: 50px;
   font-size: 24px;
   transition: color 0.2s;

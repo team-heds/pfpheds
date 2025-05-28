@@ -1,103 +1,108 @@
 <template>
-  <Navbar />
-  <!-- Layout principal avec sidebars et contenu central -->
-  <div class="institutions-layout">
-    <!-- Sidebar Gauche -->
-    <div class="sidebar-left">
-      <LeftSidebar />
+  <div class="institution-page">
+    <div v-if="isMobile">
+      <HeaderIcons />
     </div>
+    <Navbar />
+    <!-- Layout principal avec sidebars et contenu central -->
+    <div class="institutions-layout">
+      <!-- Sidebar Gauche -->
+      <div class="sidebar-left">
+        <LeftSidebar />
+      </div>
 
-    <!-- Contenu Principal -->
-    <div class="main-content">
-      <section class="content-section">
-        <div class="container">
-          <header class="page-header">
-            <h1 class="title">Institutions</h1>
-            <p class="subtitle">
-              Découvrez les institutions partenaires de notre réseau
-            </p>
-          </header>
+      <!-- Contenu Principal -->
+      <div class="main-content">
+        <section class="content-section">
+          <div class="container">
+            <header class="page-header">
+              <h1 class="title">Institutions</h1>
+              <p class="subtitle">
+                Découvrez les institutions partenaires de notre réseau
+              </p>
+            </header>
 
-          <!-- Barre de recherche au centre -->
-          <div class="search-bar">
-            <span class="p-input-icon-left">
-              <InputText v-model="searchTerm" placeholder="Rechercher par nom, ville, canton ou id" class="search-input style-bar" />
-            </span>
-          </div>
+            <!-- Barre de recherche au centre -->
+            <div class="search-bar">
+              <span class="p-input-icon-left">
+                <InputText v-model="searchTerm" placeholder="Rechercher par nom, ville, canton ou id" class="search-input style-bar" />
+              </span>
+            </div>
 
-          <!-- Zone défilante pour la grille -->
-          <div class="grid-scrollable-wrapper">
-            <!-- Grille auto-adaptative pour les cartes -->
-            <div class="grid-container">
-              <div
-                v-for="(institution, index) in displayedInstitutions"
-                :key="index"
-                class="card-wrapper"
-                :class="{ 'empty': institution.isPlaceholder }"
-              >
-                <Card
-                  v-if="!institution.isPlaceholder"
-                  class="institution-card surface-card"
-                  style="width: 20rem; height: 100%;"
+            <!-- Zone défilante pour la grille -->
+            <div class="grid-scrollable-wrapper">
+              <!-- Grille auto-adaptative pour les cartes -->
+              <div class="grid-container">
+                <div
+                  v-for="(institution, index) in displayedInstitutions"
+                  :key="index"
+                  class="card-wrapper"
+                  :class="{ 'empty': institution.isPlaceholder }"
                 >
-                  <template #header>
-                    <div class="card-header">
-                      <img :src="institution.ImageURL" alt="institution" class="card-image" />
-                      <Tag class="card-tag">{{ institution.Canton }}</Tag>
-                    </div>
-                    <p ref="institutionName" class="card-title">{{ institution.Name }}</p>
-                  </template>
-                  <template #subtitle>
-                    <div class="card-subtitle">
-                      <p>
-                        {{ institution.Locality }}
-                        <Tag severity="primary">{{ institution.Language }}</Tag>
-                      </p>
-                      <p :class="descriptionClass" class="card-description">
-                        {{ truncateText(institution.Description, 100) }}
-                      </p>
-                    </div>
-                  </template>
-                  <template #content>
-                    <div class="button-container">
-                      <Button
-                        class="action-button"
-                        @click="goToDetails(institution.InstitutionId)"
-                        label="Détails"
-                        icon="pi pi-info-circle"
-                        outlined
-                      />
-                      <a
-                        :href="institution.URL || '#'"
-                        target="_blank"
-                        class="external-link"
-                        rel="noopener noreferrer"
-                      >
-                        <span class="p-button-icon pi pi-external-link"></span>
-                        <span class="link-label">Site web</span>
-                      </a>
-                    </div>
-                  </template>
-                </Card>
+                  <Card
+                    v-if="!institution.isPlaceholder"
+                    class="institution-card surface-card"
+                    style="width: 20rem; height: 100%;"
+                  >
+                    <template #header>
+                      <div class="card-header">
+                        <img :src="institution.ImageURL" alt="institution" class="card-image" />
+                        <Tag class="card-tag">{{ institution.Canton }}</Tag>
+                      </div>
+                      <p ref="institutionName" class="card-title">{{ institution.Name }}</p>
+                    </template>
+                    <template #subtitle>
+                      <div class="card-subtitle">
+                        <p>
+                          {{ institution.Locality }}
+                          <Tag severity="primary">{{ institution.Language }}</Tag>
+                        </p>
+                        <p :class="descriptionClass" class="card-description">
+                          {{ truncateText(institution.Description, 100) }}
+                        </p>
+                      </div>
+                    </template>
+                    <template #content>
+                      <div class="button-container">
+                        <Button
+                          class="action-button"
+                          @click="goToDetails(institution.InstitutionId)"
+                          label="Détails"
+                          icon="pi pi-info-circle"
+                          outlined
+                        />
+                        <a
+                          :href="institution.URL || '#'"
+                          target="_blank"
+                          class="external-link"
+                          rel="noopener noreferrer"
+                        >
+                          <span class="p-button-icon pi pi-external-link"></span>
+                          <span class="link-label">Site web</span>
+                        </a>
+                      </div>
+                    </template>
+                  </Card>
+                </div>
               </div>
             </div>
+
+            <!-- Pagination (statique) -->
+            <Paginator
+              :rows="itemsPerPage"
+              :totalRecords="totalFilteredInstitutions"
+              :rowsPerPageOptions="[12, 24, 36, 48, 60, 72, 84]"
+              @page="onPageChange"
+              class="paginator"
+            ></Paginator>
           </div>
+        </section>
+      </div>
 
-          <!-- Pagination (statique) -->
-          <Paginator
-            :rows="itemsPerPage"
-            :totalRecords="totalFilteredInstitutions"
-            :rowsPerPageOptions="[12, 24, 36, 48, 60, 72, 84]"
-            @page="onPageChange"
-            class="paginator"
-          ></Paginator>
-        </div>
-      </section>
-    </div>
-
-    <!-- Sidebar Droite -->
-    <div class="sidebar-right">
-      <FilterSidebar :cantons="cantonsList" @filters-changed="handleSidebarFilters" />
+      <!-- Sidebar Droite -->
+      <div class="sidebar-right">
+        <FilterSidebar :cantons="cantonsList" @filters-changed="handleSidebarFilters" />
+      </div>
     </div>
   </div>
 </template>
@@ -113,7 +118,8 @@ import Tag from 'primevue/tag';
 import Paginator from 'primevue/paginator';
 import LeftSidebar from '@/components/Bibliotheque/Social/LeftSidebar.vue';
 import RightSidebar from '@/components/Bibliotheque/Social/RightSidebar.vue';
-import FilterSidebar from '@/components/Filters/FilterSidebar.vue'
+import FilterSidebar from '@/components/Filters/FilterSidebar.vue';
+import HeaderIcons from '@/components/Utils/HeaderIcons.vue';
 
 export default {
   name: 'Institutions',
@@ -126,7 +132,8 @@ export default {
     Tag,
     Paginator,
     LeftSidebar,
-    RightSidebar
+    RightSidebar,
+    HeaderIcons
   },
   data() {
     return {
@@ -142,7 +149,8 @@ export default {
         pfp: [],
         languages: []
       },
-      cantonsList: [] // <-- Liste dynamique des cantons
+      cantonsList: [], // <-- Liste dynamique des cantons
+      isMobile: window.innerWidth < 768
     };
   },
   computed: {
