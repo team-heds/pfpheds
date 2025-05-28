@@ -2,9 +2,11 @@
 <template>
   <div class="main-feed">
     <div v-if="isMobile" class="mainfeed-mobile">
-      <div :class="{ hidden: !showHeaderStories }">
-        <HeaderIcons />
-      </div>
+      <transition name="fade">
+        <div v-show="showHeaderIcons">
+          <HeaderIcons />
+        </div>
+      </transition>
       <div :class="{ hidden: !showHeaderStories }">
         <StoriesBar />
       </div>
@@ -67,7 +69,7 @@
  * de l'ancienne zone de texte. On conserve l'intégralité de la logique.
  */
 
-import { ref, onMounted, watch, onUnmounted, computed } from "vue";
+import { ref, onMounted, onUnmounted, computed, watch } from "vue";
 import { db, auth } from "../../../../firebase.js";
 import { onAuthStateChanged } from "firebase/auth";
 import InfiniteScroll from "@/components/Social/InfiniteScroll.vue";
@@ -136,6 +138,8 @@ export default {
     const userAvatarUrl = ref('');
     const defaultAvatar = '/default-avatar.png';
     const showHeaderStories = ref(true);
+    const showHeaderIcons = ref(true);
+    let lastScrollY = 0;
 
     // Filtres
     const filterTypes = ref([
@@ -526,6 +530,17 @@ export default {
       lastScrollTop.value = scrollTop;
     };
 
+    // Fonction pour gérer le scroll de la page
+    const handleWindowScroll = () => {
+      const currentScroll = window.scrollY;
+      if (currentScroll > lastScrollY + 10) {
+        showHeaderIcons.value = false;
+      } else if (currentScroll < lastScrollY - 10) {
+        showHeaderIcons.value = true;
+      }
+      lastScrollY = currentScroll;
+    };
+
     // Hook de cycle de vie onMounted
     onMounted(() => {
       if (props.currentUser) {
@@ -543,6 +558,15 @@ export default {
           }
         });
       }
+      if (isMobile.value) {
+        lastScrollY = window.scrollY;
+        window.addEventListener('scroll', handleWindowScroll);
+      }
+    });
+
+    // Hook de cycle de vie onUnmounted
+    onUnmounted(() => {
+      window.removeEventListener('scroll', handleWindowScroll);
     });
 
     // --- Ajout : recharger les posts après retour de publication ---
@@ -586,6 +610,7 @@ export default {
       isMobile,
       handleCreateClick,
       showHeaderStories,
+      showHeaderIcons,
       // Méthodes
       extractTags,
       postMessage,
@@ -758,5 +783,11 @@ export default {
   flex: 1 1 auto;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+}
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.25s;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
 }
 </style>
