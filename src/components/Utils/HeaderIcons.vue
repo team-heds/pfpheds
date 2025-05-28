@@ -24,25 +24,25 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 18px 18px 0 18px;
+  padding: 18px 4vw 0 4vw;
   height: 90px;
-  width: 100vw;
+  width: 100%;
+  max-width: 100vw;
+  box-sizing: border-box;
   background-color: transparent;
 }
 .school-logo {
-  height: 35px;
-  width: 35px;
+  height: 40px;
+  width: 40px;
   object-fit: contain;
-  border-radius: 12px;
 }
 .header-icons-mobile {
   display: flex;
   gap: 1px;
   align-items: center;
-  padding-left: 1rem;
 }
 .notif-icon, .msg-icon {
-  padding-right: 3rem;
+  padding-right: 2rem;
   width: 40px;
   height: 50px;
   font-size: 24px;
