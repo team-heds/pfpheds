@@ -1,6 +1,11 @@
 <template>
-  <Navbar />
-  <FiltreMap />
+  <div class="map-page">
+    <div v-if="isMobile">
+      <HeaderIcons />
+    </div>
+    <Navbar />
+    <FiltreMap />
+  </div>
 </template>
 
 
@@ -9,9 +14,10 @@
 import { defineComponent } from 'vue'
 import FiltreMap from '@/components/Filters/FiltreMap.vue'
 import Navbar from '@/components/Utils/Navbar.vue'
+import HeaderIcons from '@/components/Utils/HeaderIcons.vue'
 
 export default defineComponent({
-  components: { Navbar,   FiltreMap }
+  components: { Navbar, FiltreMap, HeaderIcons }
 })
 </script>
 

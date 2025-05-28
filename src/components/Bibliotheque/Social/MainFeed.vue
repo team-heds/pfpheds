@@ -2,20 +2,25 @@
 <template>
   <div class="main-feed">
     <div v-if="isMobile" class="mainfeed-mobile">
-      <StoriesBar />
-      <div class="post-feed-scrollable">
-        <InfiniteScroll :loading="loading" @load-more="loadMorePosts">
-          <PostItem
-            v-for="post in filteredPosts"
-            :key="post.id"
-            :post="post"
-            :currentUser="localCurrentUser"
-          />
-        </InfiniteScroll>
+      <transition name="fade">
+        <div v-show="showHeaderIcons">
+          <HeaderIcons />
+        </div>
+      </transition>
+      <div :class="{ hidden: !showHeaderStories }">
+        <StoriesBar />
       </div>
+      <InfiniteScroll :loading="loading" @load-more="loadMorePosts">
+        <PostItem
+          v-for="post in filteredPosts"
+          :key="post.id"
+          :post="post"
+          :currentUser="localCurrentUser"
+        />
+      </InfiniteScroll>
     </div>
     <template v-else>
-      <!-- Desktop : structure actuelle -->
+      <!-- Desktop: structure actuelle -->
       <FilterComponent
         :filterTypes="filterTypes"
         :selectedFilterType="selectedFilterType"
@@ -64,7 +69,7 @@
  * de l'ancienne zone de texte. On conserve l'intégralité de la logique.
  */
 
-import { ref, onMounted, watch, onUnmounted, computed } from "vue";
+import { ref, onMounted, onUnmounted, computed, watch } from "vue";
 import { db, auth } from "../../../../firebase.js";
 import { onAuthStateChanged } from "firebase/auth";
 import InfiniteScroll from "@/components/Social/InfiniteScroll.vue";
@@ -132,6 +137,9 @@ export default {
     const showCreatePost = ref(false);
     const userAvatarUrl = ref('');
     const defaultAvatar = '/default-avatar.png';
+    const showHeaderStories = ref(true);
+    const showHeaderIcons = ref(true);
+    let lastScrollY = 0;
 
     // Filtres
     const filterTypes = ref([
@@ -511,6 +519,28 @@ export default {
       }
     };
 
+    // Fonction pour gérer le scroll du feed
+    const handleFeedScroll = (event) => {
+      const scrollTop = event.target.scrollTop;
+      if (scrollTop > lastScrollTop.value + 10) {
+        showHeaderStories.value = false;
+      } else if (scrollTop < lastScrollTop.value - 10) {
+        showHeaderStories.value = true;
+      }
+      lastScrollTop.value = scrollTop;
+    };
+
+    // Fonction pour gérer le scroll de la page
+    const handleWindowScroll = () => {
+      const currentScroll = window.scrollY;
+      if (currentScroll > lastScrollY + 10) {
+        showHeaderIcons.value = false;
+      } else if (currentScroll < lastScrollY - 10) {
+        showHeaderIcons.value = true;
+      }
+      lastScrollY = currentScroll;
+    };
+
     // Hook de cycle de vie onMounted
     onMounted(() => {
       if (props.currentUser) {
@@ -528,6 +558,15 @@ export default {
           }
         });
       }
+      if (isMobile.value) {
+        lastScrollY = window.scrollY;
+        window.addEventListener('scroll', handleWindowScroll);
+      }
+    });
+
+    // Hook de cycle de vie onUnmounted
+    onUnmounted(() => {
+      window.removeEventListener('scroll', handleWindowScroll);
     });
 
     // --- Ajout : recharger les posts après retour de publication ---
@@ -570,6 +609,8 @@ export default {
       defaultAvatar,
       isMobile,
       handleCreateClick,
+      showHeaderStories,
+      showHeaderIcons,
       // Méthodes
       extractTags,
       postMessage,
@@ -585,6 +626,7 @@ export default {
       applyFilters,
       loadMorePosts,
       handleScroll,
+      handleFeedScroll,
       updateSelectedFilterType,
       updateSelectedFilterValue,
     };
@@ -726,13 +768,26 @@ export default {
 .mainfeed-mobile {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
+}
+.header-stories-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #0d1a2f;
+  transition: transform 0.25s;
+}
+.header-stories-sticky.hidden {
+  transform: translateY(-100%);
 }
 .post-feed-scrollable {
   flex: 1 1 auto;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  /* Optionnel : padding si tu veux éviter que le dernier post soit masqué */
+}
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.25s;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
 }
 </style>

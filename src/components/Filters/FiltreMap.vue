@@ -1,6 +1,9 @@
 <!-- src/components/FilterMap.vue -->
 <template>
   <div class="map-layout">
+    <div v-if="isMobile">
+      <HeaderIcons />
+    </div>
     <!-- Sidebar Gauche -->
     <div class="sidebar-left">
       <LeftSidebar />
@@ -115,6 +118,7 @@ import LeftSidebar from '@/components/Bibliotheque/Social/LeftSidebar.vue';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 import FilterSidebare from './FilterSidebar.vue';
+import HeaderIcons from '@/components/Utils/HeaderIcons.vue'
 
 // Import du fichier filter.json (contenant les IDPlace et leurs critères)
 import filterData from './filter.json';
