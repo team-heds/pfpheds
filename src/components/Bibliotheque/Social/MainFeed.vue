@@ -2,24 +2,20 @@
 <template>
   <div class="main-feed">
     <div v-if="isMobile" class="mainfeed-mobile">
-      <div class="" :class="{ hidden: !showHeaderStories }">
+      <div :class="{ hidden: !showHeaderStories }">
         <HeaderIcons />
       </div>
-
-      <div class="" :class="{ hidden: !showHeaderStories }">
-
+      <div :class="{ hidden: !showHeaderStories }">
         <StoriesBar />
       </div>
-      <div class="post-feed-scrollable" @scroll="handleFeedScroll">
-        <InfiniteScroll :loading="loading" @load-more="loadMorePosts">
-          <PostItem
-            v-for="post in filteredPosts"
-            :key="post.id"
-            :post="post"
-            :currentUser="localCurrentUser"
-          />
-        </InfiniteScroll>
-      </div>
+      <InfiniteScroll :loading="loading" @load-more="loadMorePosts">
+        <PostItem
+          v-for="post in filteredPosts"
+          :key="post.id"
+          :post="post"
+          :currentUser="localCurrentUser"
+        />
+      </InfiniteScroll>
     </div>
     <template v-else>
       <!-- Desktop: structure actuelle -->
@@ -747,8 +743,6 @@ export default {
 .mainfeed-mobile {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
 }
 .header-stories-sticky {
   position: sticky;
