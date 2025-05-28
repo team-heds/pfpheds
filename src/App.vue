@@ -9,7 +9,6 @@
 
     <!-- Contenu de l'application -->
     <div class="content">
-      <HeaderIcons v-if="showHeaderIconsMobile" />
       <Toast />
       <router-view />
       <Toast position="bottom-center" />

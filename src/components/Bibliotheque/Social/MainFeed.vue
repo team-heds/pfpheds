@@ -2,8 +2,15 @@
 <template>
   <div class="main-feed">
     <div v-if="isMobile" class="mainfeed-mobile">
-      <StoriesBar />
-      <div class="post-feed-scrollable">
+      <div class="" :class="{ hidden: !showHeaderStories }">
+        <HeaderIcons />
+      </div>
+
+      <div class="" :class="{ hidden: !showHeaderStories }">
+
+        <StoriesBar />
+      </div>
+      <div class="post-feed-scrollable" @scroll="handleFeedScroll">
         <InfiniteScroll :loading="loading" @load-more="loadMorePosts">
           <PostItem
             v-for="post in filteredPosts"
@@ -15,7 +22,7 @@
       </div>
     </div>
     <template v-else>
-      <!-- Desktop : structure actuelle -->
+      <!-- Desktop: structure actuelle -->
       <FilterComponent
         :filterTypes="filterTypes"
         :selectedFilterType="selectedFilterType"
@@ -132,6 +139,7 @@ export default {
     const showCreatePost = ref(false);
     const userAvatarUrl = ref('');
     const defaultAvatar = '/default-avatar.png';
+    const showHeaderStories = ref(true);
 
     // Filtres
     const filterTypes = ref([
@@ -511,6 +519,17 @@ export default {
       }
     };
 
+    // Fonction pour gérer le scroll du feed
+    const handleFeedScroll = (event) => {
+      const scrollTop = event.target.scrollTop;
+      if (scrollTop > lastScrollTop.value + 10) {
+        showHeaderStories.value = false;
+      } else if (scrollTop < lastScrollTop.value - 10) {
+        showHeaderStories.value = true;
+      }
+      lastScrollTop.value = scrollTop;
+    };
+
     // Hook de cycle de vie onMounted
     onMounted(() => {
       if (props.currentUser) {
@@ -570,6 +589,7 @@ export default {
       defaultAvatar,
       isMobile,
       handleCreateClick,
+      showHeaderStories,
       // Méthodes
       extractTags,
       postMessage,
@@ -585,6 +605,7 @@ export default {
       applyFilters,
       loadMorePosts,
       handleScroll,
+      handleFeedScroll,
       updateSelectedFilterType,
       updateSelectedFilterValue,
     };
@@ -729,10 +750,19 @@ export default {
   height: 100vh;
   overflow: hidden;
 }
+.header-stories-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #0d1a2f;
+  transition: transform 0.25s;
+}
+.header-stories-sticky.hidden {
+  transform: translateY(-100%);
+}
 .post-feed-scrollable {
   flex: 1 1 auto;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  /* Optionnel : padding si tu veux éviter que le dernier post soit masqué */
 }
 </style>
