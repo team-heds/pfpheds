@@ -95,7 +95,20 @@ export default {
 /* Contexte général de l'application */
 #app {
   position: relative;
+  width: 100vw;
+  height: 100vh;
   min-height: 100vh;
+  min-width: 100vw;
+  overflow: hidden;
+}
+:global(html), :global(body) {
+  width: 100vw;
+  height: 100vh;
+  min-height: 100vh;
+  min-width: 100vw;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
 /* Conteneur des cercles */
@@ -103,8 +116,8 @@ export default {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
   z-index: -1; /* Envoyer en arrière-plan */
   display: flex;
   justify-content: space-between;

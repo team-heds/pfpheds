@@ -1,6 +1,6 @@
 <!-- src/components/Bibliotheque/Social/MainFeed.vue -->
 <template>
-  <div class="main-feed">
+  <div class="main-feed" ref="mainFeedRef">
     <div v-if="isMobile" class="mainfeed-mobile">
       <transition name="fade">
         <div v-show="showHeaderIcons">
@@ -8,7 +8,7 @@
         </div>
       </transition>
       <div :class="{ hidden: !showHeaderStories }">
-        <StoriesBar />
+        <StoriesBar v-if="showEditAndStories" />
       </div>
       <InfiniteScroll :loading="loading" @load-more="loadMorePosts">
         <PostItem
@@ -39,6 +39,7 @@
         <div class="quick-post-placeholder">Exprime-toi...</div>
       </div>
       <CreatePostDialog
+        v-if="showEditAndStories"
         v-model="showCreatePost"
         :loading="loading"
         :value="newPost"
@@ -48,7 +49,7 @@
         @media-selected="handleFileSelection"
         @remove-media="removeMedia"
       />
-      <StoriesBar />
+      <StoriesBar v-if="showEditAndStories" />
       <div class="posts-container">
         <InfiniteScroll :loading="loading" @load-more="loadMorePosts">
           <PostItem
@@ -140,6 +141,15 @@ export default {
     const showHeaderStories = ref(true);
     const showHeaderIcons = ref(true);
     let lastScrollY = 0;
+    const showEditAndStories = ref(true);
+    const mainFeedRef = ref(null);
+
+    // Fonction pour gérer le scroll (pour afficher/masquer la zone de texte et StoriesBar)
+    const handleScroll = (event) => {
+      const scrollTop = event.target.scrollTop;
+      lastScrollTop.value = scrollTop;
+      showEditAndStories.value = scrollTop === 0;
+    };
 
     // Filtres
     const filterTypes = ref([
@@ -504,12 +514,6 @@ export default {
       }
     };
 
-    // Fonction pour gérer le scroll (pour afficher/masquer la zone de texte)
-    const handleScroll = (event) => {
-      const scrollTop = event.target.scrollTop;
-      lastScrollTop.value = scrollTop;
-    };
-
     // Fonction pour gérer le clic sur la barre de création
     const handleCreateClick = () => {
       if (isMobile.value) {
@@ -562,11 +566,17 @@ export default {
         lastScrollY = window.scrollY;
         window.addEventListener('scroll', handleWindowScroll);
       }
+      if (mainFeedRef.value) {
+        mainFeedRef.value.addEventListener('scroll', handleScroll);
+      }
     });
 
     // Hook de cycle de vie onUnmounted
     onUnmounted(() => {
       window.removeEventListener('scroll', handleWindowScroll);
+      if (mainFeedRef.value) {
+        mainFeedRef.value.removeEventListener('scroll', handleScroll);
+      }
     });
 
     // --- Ajout : recharger les posts après retour de publication ---
@@ -611,6 +621,7 @@ export default {
       handleCreateClick,
       showHeaderStories,
       showHeaderIcons,
+      showEditAndStories,
       // Méthodes
       extractTags,
       postMessage,
@@ -695,12 +706,14 @@ export default {
   }
 }
 .main-feed {
+  height: 85vh;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 100%;
-  min-height: 100vh;
-  overflow-y: auto;
   max-width: 880px;
   margin-left: auto;
   margin-right: auto;
