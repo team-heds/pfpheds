@@ -4,7 +4,7 @@
       <div class="page-title">
         <h1>Offre de Place - PFP4</h1>
       </div>
-      <div class="container">
+      <div class="container scroll-table-container">
         <!-- Bouton "Tout sélectionner" pour la colonne Sélection Out -->
         <div style="text-align: right; margin-bottom: 10px;">
           <Button label="Tout sélectionner" class="p-button-secondary" @click="selectAllOut" />
@@ -682,6 +682,17 @@
 
   .container {
     padding: 20px;
+  }
+
+  .scroll-table-container {
+    padding: 20px;
+    height: 100vh;
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scroll-table-container::-webkit-scrollbar {
+    display: none;
   }
 
   .custom-datatable .p-datatable-thead > tr > th {

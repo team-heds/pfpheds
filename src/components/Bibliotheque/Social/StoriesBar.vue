@@ -162,34 +162,23 @@ export default {
 
 <style scoped>
 .stories-bar {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  padding: 12px 0;
-  gap: 16px;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  min-height: 90px;
-  overflow-x: auto;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
-  max-width: 880px;
   width: 100%;
-  margin-left: auto;
-  margin-right: auto;
-  margin-bottom: 1.1rem;
-
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 1rem 0 1.5rem 0;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
 }
-
-@media (max-width: 900px) {
-  .stories-bar {
-    max-width: 98vw;
-  }
-}
-
 .stories-bar::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
+  height: 7px;
+  background: transparent;
+}
+.stories-bar::-webkit-scrollbar-thumb {
+  background: #bdbdbd;
+  border-radius: 4px;
 }
 
 /* Styles pour les stories */

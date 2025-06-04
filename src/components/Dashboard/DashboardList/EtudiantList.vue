@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="admin-scrollable">
     <Navbar />
     <div class="filter-menu">
       <DataTable
@@ -183,6 +183,15 @@ export default {
 </script>
 
 <style scoped>
+.admin-scrollable {
+  overflow-y: auto;
+  height: 100vh;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.admin-scrollable::-webkit-scrollbar {
+  display: none;
+}
 .filter-menu {
   padding: 20px;
 }

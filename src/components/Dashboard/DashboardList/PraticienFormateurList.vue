@@ -1,9 +1,8 @@
 <template>
-  <div>
+  <div class="admin-scrollable">
     <Navbar />
     <div class="filter-menu">
       <div class="mb-3" style="max-width:400px;margin:auto;">
-        <InputText v-model="globalFilter" placeholder="Rechercher un praticien formateur par nom, prénom ou mail..." class="w-100 p-inputtext-lg" />
       </div>
       <DataTable
         :value="filteredPraticiensFormateurs"
@@ -153,6 +152,15 @@ export default {
 </script>
 
 <style scoped>
+.admin-scrollable {
+  overflow-y: auto;
+  height: 100vh;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.admin-scrollable::-webkit-scrollbar {
+  display: none;
+}
 .filter-menu {
   padding: 20px;
 }

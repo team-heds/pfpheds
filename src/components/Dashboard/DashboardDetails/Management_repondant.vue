@@ -1,11 +1,15 @@
 <template>
-    <div>
+    <div class="scroll-table-container compact-table">
         <Navbar />
         <h1>Liste des Répondants HES</h1>
         <div style="margin-bottom: 1rem; font-weight: bold;">
             Nombre total d'étudiants assignés : {{ totalEtudiantsAssignes }}
         </div>
-        <DataTable :value="enseignantsAvecEtudiants" responsiveLayout="scroll" v-if="enseignantsAvecEtudiants.length">
+        <DataTable :value="enseignantsAvecEtudiants" responsiveLayout="scroll" v-if="enseignantsAvecEtudiants.length"
+          class="p-datatable-sm"
+          :paginator="true"
+          :rows="10"
+        >
             <Column header="#" style="width: 3rem;">
                 <template #body="{ index }">{{ index + 1 }}</template>
             </Column>
@@ -272,6 +276,36 @@ export default {
 </script>
 
 <style scoped>
+.scroll-table-container {
+  padding: 12px 6px 32px 6px;
+  height: calc(100vh - 100px);
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scroll-table-container::-webkit-scrollbar {
+  display: none;
+}
+.compact-table .p-datatable {
+  font-size: 0.95em;
+}
+.compact-table .p-datatable th,
+.compact-table .p-datatable td {
+  padding: 0.32em 0.5em;
+}
+@media (max-width: 900px) {
+  .scroll-table-container {
+    padding: 4px 2px 20px 2px;
+    height: calc(100vh - 60px);
+  }
+  .compact-table .p-datatable {
+    font-size: 0.85em;
+  }
+  .compact-table .p-datatable th,
+  .compact-table .p-datatable td {
+    padding: 0.18em 0.2em;
+  }
+}
 h1 {
     margin-bottom: 2rem;
 }

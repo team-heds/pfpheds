@@ -397,10 +397,14 @@ export default {
       }
       // Ajoute photoURL à chaque commentaire et réponse pour le template
       for (const reply of Object.values(this.post.replies || {})) {
-        if (reply && reply.IdUser) reply.photoURL = this.userPhotoCache[reply.IdUser] || null;
-        if (reply && reply.replies) {
-          for (const subReply of Object.values(reply.replies)) {
-            if (subReply && subReply.IdUser) subReply.photoURL = this.userPhotoCache[subReply.IdUser] || null;
+        if (reply && typeof reply === 'object') {
+          if (reply.IdUser) reply.photoURL = this.userPhotoCache[reply.IdUser] || null;
+          if (reply.replies) {
+            for (const subReply of Object.values(reply.replies)) {
+              if (subReply && typeof subReply === 'object' && subReply.IdUser) {
+                subReply.photoURL = this.userPhotoCache[subReply.IdUser] || null;
+              }
+            }
           }
         }
       }

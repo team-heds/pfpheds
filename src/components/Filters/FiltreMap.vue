@@ -13,7 +13,7 @@
     <div class="main-content">
       <div class="px-4 py-8 md:px-6 lg:px-8">
         <!-- Titre et Description -->
-        <div class="text-900 font-bold text-3xl text-center mb-4">
+        <div class="text-900 font-bold text-6xl text-center mb-4">
           Carte Interactive
         </div>
         <p class="text-600 font-normal text-lg text-center mb-6">
