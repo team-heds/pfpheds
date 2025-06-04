@@ -4,7 +4,7 @@
     <h1>Assignment des Places Disponibles</h1>
 
     <!-- Section : Affichage des places disponibles avec assignation manuelle -->
-    <div>
+    <div class="container scroll-table-container">
       <h2>Liste des Places Disponibles</h2>
       <DataTable :value="expandedSeats" responsiveLayout="scroll">
         <!-- Numérotation -->
@@ -45,79 +45,79 @@
           </template>
         </Column>
       </DataTable>
-    </div>
 
-    <!-- Section : Liste des Étudiants ayant voté -->
-    <div style="margin-top: 20px;">
-      <h2>Liste des Étudiants ayant voté</h2>
-      <ul>
-        <li v-for="voter in voters" :key="voter.id">
-          <strong>ID:</strong> {{ voter.id }} – <strong>Nom:</strong> {{ voter.Nom || voter.name }} – <strong>Prénom:</strong> {{ voter.Prenom }}
-          <div v-if="voter.votes && voter.votes.length">
-            <em>Choix:</em>
-            <ol>
-              <li v-for="(vote, index) in voter.votes" :key="index">
-                Top {{ index + 1 }} : {{ vote.InstitutionName }} - {{ vote.placeName }} (ID: {{ vote.placeId }})
-              </li>
-            </ol>
-          </div>
-        </li>
-      </ul>
-      <h3>Total de votants : {{ voterCount }}</h3>
-    </div>
+      <!-- Section : Liste des Étudiants ayant voté -->
+      <div style="margin-top: 20px;">
+        <h2>Liste des Étudiants ayant voté</h2>
+        <ul>
+          <li v-for="voter in voters" :key="voter.id">
+            <strong>ID:</strong> {{ voter.id }} – <strong>Nom:</strong> {{ voter.Nom || voter.name }} – <strong>Prénom:</strong> {{ voter.Prenom }}
+            <div v-if="voter.votes && voter.votes.length">
+              <em>Choix:</em>
+              <ol>
+                <li v-for="(vote, index) in voter.votes" :key="index">
+                  Top {{ index + 1 }} : {{ vote.InstitutionName }} - {{ vote.placeName }} (ID: {{ vote.placeId }})
+                </li>
+              </ol>
+            </div>
+          </li>
+        </ul>
+        <h3>Total de votants : {{ voterCount }}</h3>
+      </div>
 
-    <!-- Section : Résumé des Places -->
-    <div style="margin-top: 20px;">
-      <h2>Résumé des Places</h2>
-      <ul>
-        <li v-for="place in placesSummary" :key="place.IdPlace">
-          <strong>ID Place:</strong>
-          <a :href="`/place/${place.IdPlace}`" target="_blank">{{ place.IdPlace }}</a>
-          - <strong>Nom:</strong> {{ place.NomPlace }} - <strong>Total:</strong> {{ place.count }}
-        </li>
-      </ul>
-    </div>
+      <!-- Section : Résumé des Places -->
+      <div style="margin-top: 20px;">
+        <h2>Résumé des Places</h2>
+        <ul>
+          <li v-for="place in placesSummary" :key="place.IdPlace">
+            <strong>ID Place:</strong>
+            <a :href="`/place/${place.IdPlace}`" target="_blank">{{ place.IdPlace }}</a>
+            - <strong>Nom:</strong> {{ place.NomPlace }} - <strong>Total:</strong> {{ place.count }}
+          </li>
+        </ul>
+      </div>
 
-    <!-- Bouton d'assignation automatique -->
-    <div style="margin-top: 20px; text-align: center;">
-      <Button label="Assignation Automatique" @click="assignStudentsAutomatically" />
-    </div>
+      <!-- Bouton d'assignation automatique -->
+      <div style="margin-top: 20px; text-align: center;">
+        <Button label="Assignation Automatique" @click="assignStudentsAutomatically" />
+      </div>
 
-    <!-- Section : Tableau des Affectations Finales -->
-    <div style="margin-top: 20px;">
-      <h2>Affectations Finales</h2>
-      <DataTable :value="assignmentsTable" responsiveLayout="scroll">
-        <Column header="ID Place" field="idPlace" />
-        <Column header="ID Étudiant" field="idEtudiant" />
-        <Column header="Vote Rank" field="voteRank" />
-      </DataTable>
-    </div>
+      <!-- Section : Tableau des Affectations Finales -->
+      <div style="margin-top: 20px;">
+        <h2>Affectations Finales</h2>
+        <DataTable :value="assignmentsTable" responsiveLayout="scroll">
+          <Column header="ID Place" field="idPlace" />
+          <Column header="ID Étudiant" field="idEtudiant" />
+          <Column header="Vote Rank" field="voteRank" />
+        </DataTable>
+      </div>
 
-    <!-- Section : Affectations Finales avec étudiant déjà inscrit -->
-    <div style="margin-top: 20px;">
-      <h2>Affectations Finales avec étudiant déjà inscrit</h2>
-      <DataTable :value="manualAssignments" responsiveLayout="scroll">
-        <Column header="ID Place" field="idPlace" />
-        <Column header="ID Étudiant" field="idEtudiant" />
-        <Column header="Vote Rank" field="voteRank" />
-      </DataTable>
-    </div>
+      <!-- Section : Affectations Finales avec étudiant déjà inscrit -->
+      <div style="margin-top: 20px;">
+        <h2>Affectations Finales avec étudiant déjà inscrit</h2>
+        <DataTable :value="manualAssignments" responsiveLayout="scroll">
+          <Column header="ID Place" field="idPlace" />
+          <Column header="ID Étudiant" field="idEtudiant" />
+          <Column header="Vote Rank" field="voteRank" />
+        </DataTable>
+      </div>
 
-    <!-- Section : Tous les Étudiants -->
-    <div style="margin-top: 20px;">
-      <h2>Tous les Étudiants</h2>
-      <DataTable :value="allStudents" responsiveLayout="scroll">
-        <Column header="ID Étudiant" field="idEtudiant" />
-        <Column header="Nom" field="nom" />
-        <Column header="Prénom" field="prenom" />
-        <Column header="Vote Rank" field="voteRank" />
-      </DataTable>
-    </div>
+      <!-- Section : Tous les Étudiants -->
+      <div style="margin-top: 20px;">
+        <h2>Tous les Étudiants</h2>
+        <DataTable :value="allStudents" responsiveLayout="scroll">
+          <Column header="ID Étudiant" field="idEtudiant" />
+          <Column header="Nom" field="nom" />
+          <Column header="Prénom" field="prenom" />
+          <Column header="Vote Rank" field="voteRank" />
+        </DataTable>
+      </div>
 
-    <!-- Section : Affichage du JSON complet des affectations -->
-    <div style="margin-top: 20px;">
-      <h2>Affectations JSON</h2>
-      <pre>{{ JSON.stringify(assignmentsJSON, null, 2) }}</pre>
+      <!-- Section : Affichage du JSON complet des affectations -->
+      <div style="margin-top: 20px;">
+        <h2>Affectations JSON</h2>
+        <pre>{{ JSON.stringify(assignmentsJSON, null, 2) }}</pre>
+      </div>
     </div>
   </div>
 </template>
@@ -442,6 +442,16 @@ export default {
 </script>
 
 <style scoped>
+.scroll-table-container {
+  padding: 20px;
+  height: 100vh;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scroll-table-container::-webkit-scrollbar {
+  display: none;
+}
 h1, h2, h3 {
   text-align: center;
   margin: 20px 0;

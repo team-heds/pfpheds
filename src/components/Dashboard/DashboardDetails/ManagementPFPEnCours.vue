@@ -4,8 +4,14 @@
       <h1>Management PFP En Cours</h1>
       
       <!-- Tableau récapitulatif enrichi -->
-      <div style="margin-top: 40px;">
-        <DataTable :value="managementAssignments" responsiveLayout="scroll">
+      <div class="scroll-table-container compact-table">
+        <DataTable 
+          :value="managementAssignments" 
+          responsiveLayout="scroll" 
+          :paginator="true" 
+          :rows="10"
+          class="p-datatable-sm"
+        >
           <!-- Numérotation -->
           <Column header="#" style="width: 3rem;">
             <template #body="{ index }">
@@ -536,6 +542,35 @@
   }
   .remark-dialog textarea {
     resize: vertical;
+  }
+  .scroll-table-container {
+    padding: 20px;
+    height: calc(100vh - 120px); /* Ajuste 120px si besoin selon la hauteur réelle de ta navbar + titre */
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scroll-table-container::-webkit-scrollbar {
+    display: none;
+  }
+  .compact-table .p-datatable {
+    font-size: 0.92em;
+  }
+  .compact-table .p-datatable th,
+  .compact-table .p-datatable td {
+    padding: 0.35em 0.5em;
+  }
+  @media (max-width: 900px) {
+    .scroll-table-container {
+      padding: 6px;
+    }
+    .compact-table .p-datatable {
+      font-size: 0.85em;
+    }
+    .compact-table .p-datatable th,
+    .compact-table .p-datatable td {
+      padding: 0.2em 0.3em;
+    }
   }
   </style>
   
