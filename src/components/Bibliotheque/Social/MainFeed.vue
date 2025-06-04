@@ -7,6 +7,7 @@
           <HeaderIcons />
         </div>
       </transition>
+      <StoriesBar />
       <div :class="{ hidden: !showHeaderStories }">
         <!-- Déplacement de StoriesBar -->
         <!-- <StoriesBar v-if="showEditAndStories" /> -->
