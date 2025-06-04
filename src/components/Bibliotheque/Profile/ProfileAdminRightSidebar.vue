@@ -66,7 +66,7 @@
     </div>
 
     <!-- Boutons de navigation pour les étudiants BA22 -->
-    <div class="ba-navigation-modern">
+    <div class="ba-navigation-modern flex justify-between justify-content-center items-center mt-4">
       <Button class="ba-btn" @click="prevBA22" icon="pi pi-arrow-left" severity="secondary">
         <span class="ba-btn-label">Précédent BA22</span>
       </Button>
@@ -249,7 +249,7 @@ const prevBA22 = () => {
   margin-bottom: 0.5rem;
 }
 .ba-btn {
-  min-width: 170px;
+  min-width: 90px;
   font-weight: 600;
   border-radius: 1.2rem;
   font-size: 1.05rem;

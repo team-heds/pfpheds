@@ -260,7 +260,7 @@ img {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding: 2rem;
-  padding-bottom: 8rem;
+  padding-bottom: 9rem;
   scrollbar-width: none; /* Firefox */
 }
 .profileinfo-scrollable::-webkit-scrollbar {
