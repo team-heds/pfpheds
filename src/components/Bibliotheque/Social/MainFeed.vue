@@ -20,45 +20,48 @@
       </InfiniteScroll>
     </div>
     <template v-else>
-      <!-- Desktop: structure actuelle -->
-      <FilterComponent
-        :filterTypes="filterTypes"
-        :selectedFilterType="selectedFilterType"
-        :filterOptions="filterOptions"
-        :selectedFilterValue="selectedFilterValue"
-        @update:selectedFilterType="updateSelectedFilterType"
-        @update:selectedFilterValue="updateSelectedFilterValue"
-        @filter-type-change="onFilterTypeChange"
-        @apply-filter="applyFilter"
-        @reset-filter="resetFilter"
-      />
-      <div class="quick-post-bar" @click="handleCreateClick">
-        <span class="quick-post-icon-circle">
-          <i class="pi pi-file-edit quick-post-icon"></i>
-        </span>
-        <div class="quick-post-placeholder">Exprime-toi...</div>
-      </div>
-      <CreatePostDialog
-        v-if="showEditAndStories"
-        v-model="showCreatePost"
-        :loading="loading"
-        :value="newPost"
-        :selectedMedia="selectedMedia"
-        @update:value="val => newPost = val"
-        @publish="postMessage"
-        @media-selected="handleFileSelection"
-        @remove-media="removeMedia"
-      />
-      <StoriesBar v-if="showEditAndStories" />
-      <div class="posts-container">
-        <InfiniteScroll :loading="loading" @load-more="loadMorePosts">
-          <PostItem
-            v-for="post in filteredPosts"
-            :key="post.id"
-            :post="post"
-            :currentUser="localCurrentUser"
-          />
-        </InfiniteScroll>
+      <!-- Desktop: tout scrolle ensemble -->
+      <div class="main-feed-scrollable">
+        <HeaderIcons />
+        <FilterComponent
+          :filterTypes="filterTypes"
+          :selectedFilterType="selectedFilterType"
+          :filterOptions="filterOptions"
+          :selectedFilterValue="selectedFilterValue"
+          @update:selectedFilterType="updateSelectedFilterType"
+          @update:selectedFilterValue="updateSelectedFilterValue"
+          @filter-type-change="onFilterTypeChange"
+          @apply-filter="applyFilter"
+          @reset-filter="resetFilter"
+        />
+        <div class="quick-post-bar" @click="handleCreateClick">
+          <span class="quick-post-icon-circle">
+            <i class="pi pi-file-edit quick-post-icon"></i>
+          </span>
+          <div class="quick-post-placeholder">Exprime-toi...</div>
+        </div>
+        <CreatePostDialog
+          v-if="showEditAndStories"
+          v-model="showCreatePost"
+          :loading="loading"
+          :value="newPost"
+          :selectedMedia="selectedMedia"
+          @update:value="val => newPost = val"
+          @publish="postMessage"
+          @media-selected="handleFileSelection"
+          @remove-media="removeMedia"
+        />
+        <StoriesBar v-if="showEditAndStories" />
+        <div class="posts-container">
+          <InfiniteScroll :loading="loading" @load-more="loadMorePosts">
+            <PostItem
+              v-for="post in filteredPosts"
+              :key="post.id"
+              :post="post"
+              :currentUser="localCurrentUser"
+            />
+          </InfiniteScroll>
+        </div>
       </div>
     </template>
   </div>
@@ -706,7 +709,7 @@ export default {
   }
 }
 .main-feed {
-  height: 85vh;
+  height: 100vh;
   max-height: 90vh;
   overflow-y: auto;
   box-sizing: border-box;
@@ -724,14 +727,9 @@ export default {
   }
 }
 .posts-container {
-  height: 100vh;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE/Edge */
-}
-.posts-container::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
 }
 .tags-container {
   display: flex;
@@ -802,5 +800,17 @@ export default {
 }
 .fade-enter-from, .fade-leave-to {
   opacity: 0;
+}
+.main-feed-scrollable {
+  height: 100vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 2rem;
+  padding-bottom: 7rem;
+  scrollbar-width: none;
+}
+.main-feed-scrollable::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
 </style>
