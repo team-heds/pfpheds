@@ -6,7 +6,7 @@
     </div>
 
     <!-- Contenu Principal -->
-    <div class="main-content">
+    <div class="main-content profileinfo-scrollable ">
       <div class="filter-menu p-fluid p-pt-4 p-pb-4">
         <div>
           <!-- Affichage du composant CardNameProfile -->
@@ -253,5 +253,18 @@ img {
   .main-content {
     padding: 0 0.2rem;
   }
+}
+
+.profileinfo-scrollable {
+  height: 100vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 2rem;
+  padding-bottom: 8rem;
+  scrollbar-width: none; /* Firefox */
+}
+.profileinfo-scrollable::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
 </style>
