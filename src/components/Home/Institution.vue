@@ -298,8 +298,6 @@ export default {
 
 /* Zone scrollable pour la grille (scrollbar masquée) */
 .grid-scrollable-wrapper {
-  max-height: 990px; /* Ajustez cette hauteur selon vos besoins */
-  overflow-y: auto;
   margin-bottom: 2rem;
   /* Masquer la scrollbar pour Webkit */
   -webkit-overflow-scrolling: touch;
