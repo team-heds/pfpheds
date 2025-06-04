@@ -35,7 +35,7 @@
       </div>
 
       <!-- Tableau des Étudiants -->
-      <div v-if="selectedPFP && selectedClasses.length > 0" class="table-responsive">
+      <div v-if="selectedPFP && selectedClasses.length > 0" class="table-responsive admin-scrollable">
         <table class="table table-striped align-middle p-4 mb-0 table-hover w-100 text-center">
           <thead>
             <tr>
@@ -651,7 +651,17 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
+.admin-scrollable {
+  overflow-y: auto;
+  height: 100vh;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.admin-scrollable::-webkit-scrollbar {
+  display: none;
+}
+
 .bg-success {
   background-color: green !important;
   color: white;

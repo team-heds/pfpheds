@@ -747,4 +747,13 @@ export default {
    on peut aussi réduire la taille de police, etc. en media queries
    comme vous le faisiez déjà. */
 
+.admin-scrollable {
+  overflow-y: auto;
+  height: 100vh;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.admin-scrollable::-webkit-scrollbar {
+  display: none;
+}
 </style>
