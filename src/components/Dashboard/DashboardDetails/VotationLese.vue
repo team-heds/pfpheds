@@ -4,7 +4,7 @@
 
     <!-- Barre de titre + bouton "Retour Profil" -->
     <div class="page-title p-d-flex p-jc-between">
-      <h1>Votation</h1>
+      <h1>Votation Lésé - BA23 PFP3</h1>
     </div>
 
 
@@ -18,6 +18,7 @@
         @click="goBackToProfile"
       />
       <!-- Affichage du profil étudiant -->
+      <h1>L'état de vos critères :   </h1>
       <div
         class="  w-full flex-auto"
         v-if="userProfile && Object.keys(userProfile).length"
@@ -81,9 +82,17 @@
               <span>{{ slotProps.data.FR ? 'FR' : '-' }}</span>
             </template>
           </Column>
-          <Column header="DE">
+          <Column header="DEs ">
             <template #body="slotProps">
               <span>{{ slotProps.data.DE ? 'DE' : '-' }}</span>
+            </template>
+          </Column>
+          <!-- Colonne pour indiquer si la place respecte le critère FR ou DE -->
+          <Column header="Langue OK ?">
+            <template #body="slotProps">
+              <span :style="{ color: (slotProps.data.FR || slotProps.data.DE) ? 'green' : 'red' }">
+                {{ (slotProps.data.FR || slotProps.data.DE) ? 'OK' : 'Non' }}
+              </span>
             </template>
           </Column>
           <Column header="Nouveaux Critères Validés">
@@ -266,15 +275,15 @@ export default {
       const rows = [];
       const sorted = this.places.sort((a, b) => a.NomPlace.localeCompare(b.NomPlace));
       sorted.forEach(place => {
-        const count = parseInt(place.PFP4 || '0');
+        const count = parseInt(place.PFP3 || '0');
         if (!isNaN(count) && count >= 1) {
           for (let i = 1; i <= count; i++) {
-            const studentKey = `selectedEtudiantBA22PFP4-${i}`;
+            const studentKey = `selectedEtudiantBA23PFP3-${i}`;
             const alreadySelected =
               (i === 1 && place.selectedEtudiant && place.selectedEtudiant.trim() !== "") ||
               (place[studentKey] && place[studentKey].trim() !== "");
             if (!alreadySelected) {
-              const dynamicKey = `selectedActiveBA22PFP4-${i}`;
+              const dynamicKey = `selectedActiveBA23PFP3-${i}`;
               rows.push({
                 ...place,
                 seatIndex: i,
@@ -289,12 +298,26 @@ export default {
     // Retourne les places disponibles. Si tous les critères sont validés, retourne toutes les places ;
     // sinon, filtre selon les nouveaux critères.
     availablePlaces() {
-      if (this.allCriteriaValidated) {
-        return this.expandedPFP4;
-      } else {
-        return this.expandedPFP4.filter(place => this.getNewValidatedCriteria(place).length > 0);
-      }
-    },
+  let places = this.expandedPFP4;
+
+  if (this.allCriteriaValidated) {
+    return places;
+  }
+
+  const manqueFR = !this.aggregatedPFP.FR;
+  const manqueDE = !this.aggregatedPFP.DE;
+
+  if (manqueFR && manqueDE) {
+    return places.filter(place => !!place.FR || !!place.DE);
+  }
+  if (manqueFR) {
+    return places.filter(place => !!place.FR);
+  }
+  if (manqueDE) {
+    return places.filter(place => !!place.DE);
+  }
+  return places;
+},
     // Regroupe les places disponibles par nombre de nouveaux critères validés
     groupedByCriteriaCount() {
       const groups = {};
@@ -324,7 +347,7 @@ export default {
     // Nombre total de places sélectionnées parmi les places disponibles
     totalSelectedOut() {
       return this.availablePlaces.filter(
-        row => row[`selectedActiveBA22PFP4-${row.seatIndex}`] === true
+        row => row[`selectedActiveBA23PFP3-${row.seatIndex}`] === true
       ).length;
     },
     // Agrège les critères déjà validés par l'étudiant depuis son profil
@@ -366,7 +389,7 @@ export default {
       const auth = getAuth();
       const user = auth.currentUser;
       if (user) {
-        const voteRef = ref(db, `VotationLeseBA22PFP4/${user.uid}`);
+        const voteRef = ref(db, `VotationLeseBA23PFP3/${user.uid}`);
         onValue(voteRef, (snapshot) => {
           const vote = snapshot.val();
           if (vote) {
@@ -405,7 +428,7 @@ export default {
               AMBU: place.AMBU === 'true' || place.AMBU === true,
               FR: place.FR === 'true' || place.FR === true,
               DE: place.DE === 'true' || place.DE === true,
-              PFP4: place.PFP4 || '0',
+              PFP3: place.PFP3 || '0',
               InstitutionName: institutionData.Name ||
                 institutionData.NomPlace ||
                 place.InstitutionName ||
@@ -417,7 +440,7 @@ export default {
       });
     },
     updateSelection(place, seatIndex, value) {
-      const dynamicKey = `selectedActiveBA22PFP4-${seatIndex}`;
+      const dynamicKey = `selectedActiveBA23PFP3-${seatIndex}`;
       const placeRef = ref(db, `Places/${place.IdPlace}`);
       update(placeRef, { [dynamicKey]: value })
         .catch((error) => {
@@ -470,7 +493,7 @@ export default {
         criteriaValidating: this.getNewValidatedCriteria(this.selectedPlace),
         timestamp: Date.now()
       };
-      const voteRef = ref(db, `VotationLeseBA22PFP4/${user.uid}`);
+      const voteRef = ref(db, `VotationLeseBA23PFP3/${user.uid}`);
       set(voteRef, voteData)
         .then(() => {
           this.dialogMessage = "Vous avez voté pour la place : "
@@ -490,7 +513,7 @@ export default {
       const auth = getAuth();
       const user = auth.currentUser;
       if (user) {
-        const voteRef = ref(db, `VotationLeseBA22PFP4/${user.uid}`);
+        const voteRef = ref(db, `VotationLeseBA23PFP3/${user.uid}`);
         remove(voteRef)
           .then(() => {
             this.votedPlace = null;
