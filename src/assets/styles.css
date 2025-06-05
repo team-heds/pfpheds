@@ -15,3 +15,13 @@ body::before {
   border-bottom: 2px solid black;
   content: "Error: Can't find stylesheet to import.\a   \2577 \a 4 \2502  @import '@/assets/layout/layout.scss';\a   \2502          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\a   \2575 \a   styles.scss 4:9  root stylesheet";
 }
+
+.admin-scrollable {
+  overflow-y: auto;
+  height: 100vh;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.admin-scrollable::-webkit-scrollbar {
+  display: none;
+}

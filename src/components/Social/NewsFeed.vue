@@ -48,8 +48,9 @@ export default {
   display: grid;
   grid-template-columns: 1fr 3fr 1fr; /* Sidebar gauche, MainFeed, Sidebar droite */
   gap: 1.5rem; /* Espace entre les colonnes */
-  height: 100vh; /* Hauteur fixe pour la page */
-  overflow: hidden; /* Empêche tout débordement de contenu */
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
 }
 
 /* Sidebar Gauche */
@@ -59,10 +60,12 @@ export default {
 
 /* MainFeed (Infinity Scroll) */
 .main-feed {
-  overflow-y: scroll; /* Activer le scroll uniquement pour MainFeed */
-  display: flex;
+  height: 90vh;
+  overflow-y: auto;
+  overflow-x: hidden;
   flex-direction: column;
   gap: 1rem;
+  box-sizing: border-box;
 }
 
 /* Masquer la barre de défilement dans le MainFeed */
@@ -146,5 +149,16 @@ export default {
     width: 100%;
     max-width: 100vw;
   }
+}
+
+/* Ajout du bloc CSS global pour html, body, #app */
+html, body, #app {
+  height: 100vh !important;
+  min-height: 100vh !important;
+  max-height: 100vh !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box;
 }
 </style>

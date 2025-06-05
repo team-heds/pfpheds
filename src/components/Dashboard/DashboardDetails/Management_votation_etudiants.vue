@@ -4,7 +4,7 @@
     <div class="page-title">
       <h1>Management Votation Étudiants</h1>
     </div>
-    <div class="container">
+    <div class="container scroll-table-container">
       <!-- Tableau récapitulatif d'une seule ligne par étudiant -->
       <DataTable :value="sortedStudentAssignments" class="p-datatable-sm custom-datatable" responsiveLayout="scroll">
         <Column header="Étudiant">
@@ -296,6 +296,18 @@ export default {
 
 .container {
   padding: 20px;
+}
+
+.scroll-table-container {
+  padding: 20px;
+  height: 100vh;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scroll-table-container::-webkit-scrollbar {
+  display: none;
 }
 
 .custom-datatable .p-datatable-thead > tr > th {

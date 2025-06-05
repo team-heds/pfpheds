@@ -128,6 +128,15 @@ export default {
 </script>
 
 <style scoped>
+.admin-scrollable {
+  overflow-y: auto;
+  height: 100vh;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.admin-scrollable::-webkit-scrollbar {
+  display: none;
+}
 .container {
   max-width: 1200px;
 }

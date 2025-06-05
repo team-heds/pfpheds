@@ -11,8 +11,8 @@
         <LeftSidebar />
       </div>
 
-      <!-- Contenu Principal -->
-      <div class="main-content">
+      <!-- Contenu Principal scrollable -->
+      <div class="main-content institution-center-scrollable">
         <section class="content-section">
           <div class="container">
             <header class="page-header">
@@ -34,13 +34,11 @@
               <!-- Grille auto-adaptative pour les cartes -->
               <div class="grid-container">
                 <div
-                  v-for="(institution, index) in displayedInstitutions"
+                  v-for="(institution, index) in filteredInstitutions"
                   :key="index"
                   class="card-wrapper"
-                  :class="{ 'empty': institution.isPlaceholder }"
                 >
                   <Card
-                    v-if="!institution.isPlaceholder"
                     class="institution-card surface-card"
                     style="width: 20rem; height: 100%;"
                   >
@@ -87,14 +85,6 @@
               </div>
             </div>
 
-            <!-- Pagination (statique) -->
-            <Paginator
-              :rows="itemsPerPage"
-              :totalRecords="totalFilteredInstitutions"
-              :rowsPerPageOptions="[12, 24, 36, 48, 60, 72, 84]"
-              @page="onPageChange"
-              class="paginator"
-            ></Paginator>
           </div>
         </section>
       </div>
@@ -115,9 +105,7 @@ import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
 import Tag from 'primevue/tag';
-import Paginator from 'primevue/paginator';
 import LeftSidebar from '@/components/Bibliotheque/Social/LeftSidebar.vue';
-import RightSidebar from '@/components/Bibliotheque/Social/RightSidebar.vue';
 import FilterSidebar from '@/components/Filters/FilterSidebar.vue';
 import HeaderIcons from '@/components/Utils/HeaderIcons.vue';
 
@@ -130,17 +118,12 @@ export default {
     Button,
     Card,
     Tag,
-    Paginator,
     LeftSidebar,
-    RightSidebar,
     HeaderIcons
   },
   data() {
     return {
       allInstitutions: [],
-      currentPage: 1,
-      itemsPerPage: 9,
-      totalInstitutions: 0,
       descriptionClass: 'description',
       searchTerm: '',
       activeFilters: {
@@ -155,7 +138,6 @@ export default {
   },
   computed: {
     filteredInstitutions() {
-      // Filtrage texte (nom, ville, id, canton)
       let institutions = this.allInstitutions;
       if (this.searchTerm) {
         const search = this.searchTerm.toLowerCase();
@@ -181,31 +163,6 @@ export default {
       }
       return institutions;
     },
-    paginatedFilteredInstitutions() {
-      const start = (this.currentPage - 1) * this.itemsPerPage;
-      const end = start + this.itemsPerPage;
-      return this.filteredInstitutions.slice(start, end);
-    },
-    totalFilteredInstitutions() {
-      return this.filteredInstitutions.length;
-    },
-    displayedInstitutions() {
-      const result = [...this.paginatedFilteredInstitutions];
-      // Compléter la dernière rangée avec des placeholders si nécessaire
-      const remainder = result.length % 4;
-      if (remainder !== 0) {
-        const placeholdersToAdd = 4 - remainder;
-        for (let i = 0; i < placeholdersToAdd; i++) {
-          result.push({ isPlaceholder: true });
-        }
-      } else if (result.length === 0) {
-        // Si aucun résultat, ajouter 4 placeholders
-        for (let i = 0; i < 4; i++) {
-          result.push({ isPlaceholder: true });
-        }
-      }
-      return result;
-    }
   },
   methods: {
     truncateText(text, length) {
@@ -225,7 +182,6 @@ export default {
             ImageURL: data[key].ImageURL || '/default-image.jpg',
             Description: data[key].Description || 'Pas de description disponible'
           }));
-          this.totalInstitutions = this.allInstitutions.length;
           // Génère la liste unique des cantons présents
           const allCantons = this.allInstitutions.map(inst => inst.Canton).filter(Boolean);
           this.cantonsList = [...new Set(allCantons)].sort();
@@ -234,7 +190,6 @@ export default {
           });
         } else {
           this.allInstitutions = [];
-          this.totalInstitutions = 0;
           this.cantonsList = [];
         }
       });
@@ -252,10 +207,6 @@ export default {
           }
         });
       }
-    },
-    onPageChange(event) {
-      this.currentPage = event.page + 1;
-      this.itemsPerPage = event.rows;
     },
     goToDetails(id) {
       if (id) {
@@ -347,8 +298,6 @@ export default {
 
 /* Zone scrollable pour la grille (scrollbar masquée) */
 .grid-scrollable-wrapper {
-  max-height: 990px; /* Ajustez cette hauteur selon vos besoins */
-  overflow-y: auto;
   margin-bottom: 2rem;
   /* Masquer la scrollbar pour Webkit */
   -webkit-overflow-scrolling: touch;
@@ -373,9 +322,6 @@ export default {
 .card-wrapper {
   display: flex;
   justify-content: center;
-}
-.card-wrapper.empty {
-  visibility: hidden;
 }
 .institution-card {
   display: flex;
@@ -465,4 +411,16 @@ export default {
   border-radius: 1.2rem;
 }
 
+.institution-center-scrollable {
+  height: 100vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 2rem;
+  padding-bottom: 6rem;
+  scrollbar-width: none;
+}
+.institution-center-scrollable::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
 </style>

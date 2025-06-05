@@ -6,7 +6,7 @@
     </div>
 
     <!-- Contenu Principal -->
-    <div class="main-content">
+    <div class="main-content profileinfo-scrollable">
       <div class="filter-menu p-fluid p-pt-4 p-pb-4">
         <div>
           <CardNameProfile />
@@ -171,6 +171,14 @@ onMounted(async () => {
   width: 100%;
   margin-left: auto;
   margin-right: auto;
+  overflow-y: auto;
+  height: 100vh;
+  padding-bottom: 7rem;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.main-content::-webkit-scrollbar {
+  display: none;
 }
 
 /* Responsive pour le layout global */

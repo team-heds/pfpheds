@@ -1,8 +1,8 @@
 <template>
   <Navbar />
-  <div class="p-4 border-round">
+  <div class="p-4 border-round scrollable-with-padding">
     <!-- Conteneur principal de l'institution -->
-    <div class="institution-container">
+    <div class="institution-container" >
       <!-- Image de l'institution -->
 
       <!-- Informations institution -->
@@ -34,7 +34,7 @@
     </div>
 
     <!-- Contenu inférieur : TabView et Map -->
-    <div class="content-lower grid mb-4 justify-content-center">
+    <div class="content-lower grid justify-content-center">
       <div class="col-12 md:col-8 lg:col-5">
         <TabView v-model:activeIndex="activeIndex"> 
           <TabPanel header="Informations générales de l'institution">
@@ -117,10 +117,17 @@
       </div>
 
       <div class="col-12 md:col-4 lg:col-5 py-3 lg:pl-6">
-        <div class="text-900 font-bold text-3xl mb-4 mt-2"></div>
-        <div id="map" class="shadow map-container"></div>
+        <div class="text-900 font-bold text-3xl mb-5 mt-2"></div>
+        <div id="map" class="shadow map-container" ></div>
       </div>
     </div>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
   </div>
 </template>
 
@@ -277,6 +284,22 @@ export default {
 </script>
 
 <style scoped>
+.scrollable-with-padding {
+  height: 100vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 2rem;
+  padding-bottom: 7rem;
+  scrollbar-width: none;
+}
+.scrollable-with-padding::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+.institution-info {
+  flex: 1;
+  margin-left: 2rem;
+}
 .institution-image {
   width: 100%;
   max-width: 1200px;
@@ -304,11 +327,6 @@ export default {
   justify-content: space-between;
   margin-left: 2rem;
   margin-right: 2rem;
-}
-
-.institution-info {
-  flex: 1;
-  margin-left: 2rem;
 }
 
 /* Version mobile */
