@@ -47,7 +47,7 @@ import Management_votation from '@/components/Dashboard/DashboardDetails/Managem
 import Management_votation_lese from '@/components/Dashboard/DashboardDetails/Management_votation_lese.vue';
 import Management_votation_etudiants from '@/components/Dashboard/DashboardDetails/Management_votation_etudiants.vue';
 import ManagementPlace from '@/components/Dashboard/DashboardDetails/Management_place.vue';
-import OffreDePlace from '@/components/Dashboard/DashboardDetails/OffreDePlace.vue';
+import OffreDePlace from '@/components/Dashboard/DashboardDetails/OffreDePlac3BA22PFP4.vue';
 import ManagementPlacesSafe from '@/components/Dashboard/DashboardDetails/ManagementPlacesSafe.vue';
 import VotationLese from '@/components/Dashboard/DashboardDetails/VotationLese.vue';
 import StageRepartitionBA2 from '@/components/Dashboard/DashboardDetails/StageRepartitionBA2.vue';
@@ -127,7 +127,7 @@ const routes = [
   { path: '/votation', component: VotationView, name: 'VotationView', meta: { requiresAuth: true } },
   { path: '/management_votation', component: Management_votation, name: 'Management_votation', meta: { requiresAuth: true, requiredRole: 'admin' } }, // Protect this route
   { path: '/info_repondant', component: InfoRepondant, name: 'InfoRepondant', meta: { requiresAuth: true, requiredRole: ['admin', 'enseignant'] } },
-  { path: '/management_votation_lese', component: Management_votation_lese, name: 'Management_votation_lese', meta: { requiresAuth: true, requiredRole: 'admin' } }, // Protect this route
+  { path: '/management_votation_lese', component: Management_votation_lese, name: 'Management_votation_lese', meta: { requiresAuth: true, requiredRole: 'lese' } }, // Protect this route
   { path: '/management_votation_etudiants', component: Management_votation_etudiants, name: 'Management_votation_etudiants', meta: { requiresAuth: true, requiredRole: 'admin' } }, // Protect this route
   { path: '/management_places', component: ManagementPlace, name: 'Management_places',meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/management_offre', component: OffreDePlace, name: 'Management_offre',meta: { requiresAuth: true, requiredRole: 'admin' } },
