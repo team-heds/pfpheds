@@ -1,14 +1,11 @@
 <template>
-  <div>
+  <div class="scroll-page">
     <Navbar />
 
     <!-- Barre de titre + bouton "Retour Profil" -->
     <div class="page-title p-d-flex p-jc-between">
       <h1>Votation Lésé - BA23 PFP3</h1>
     </div>
-
-
-
 
     <div class="container">
       <Button
@@ -20,7 +17,7 @@
       <!-- Affichage du profil étudiant -->
       <h1>L'état de vos critères :   </h1>
       <div
-        class="  w-full flex-auto"
+        class="w-full flex-auto"
         v-if="userProfile && Object.keys(userProfile).length"
       >
         <!-- Composant dédié aux critères validés -->
@@ -123,10 +120,7 @@
             <h2>
               Nombre de places validant
               {{ group.criteriaCount }}
-              critère<span v-if="group.criteriaCount > 1">s</span> manquant
-              <span v-if="group.criteriaCount > 1">s</span>
-              ({{ group.places.length }} places
-              <span v-if="group.places.length > 1"></span>)
+              critère<span v-if="group.criteriaCount >1">s</span> manquant<span v-if="group.criteriaCount > 1">s</span>({{ group.places.length }} place<span v-if="group.places.length > 1">s</span>)
             </h2>
             <DataTable
               :value="group.places"
@@ -541,6 +535,16 @@ export default {
 </script>
 
 <style scoped>
+.scroll-page {
+  min-height: 100vh;
+  height: 100vh;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scroll-page::-webkit-scrollbar {
+  display: none;
+}
 .page-title {
   margin-bottom: 20px;
   text-align: center;

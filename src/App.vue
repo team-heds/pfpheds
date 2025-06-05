@@ -17,6 +17,7 @@
       <PwaInstallPrompt />
       <!-- Intégration du widget ConvAI -->
       <ConvaiWidget />
+      <ConvaiWidget /> <!-- Ajout du widget ConvaiWidget -->
 
     </div>
 
@@ -43,7 +44,8 @@ export default {
     VersionningComponent,
     MobileBottomNav,
     PwaInstallPrompt,
-    HeaderIcons
+    HeaderIcons,
+    ConvaiWidget // Déclaration du composant ConvaiWidget
   },
   data() {
     return {

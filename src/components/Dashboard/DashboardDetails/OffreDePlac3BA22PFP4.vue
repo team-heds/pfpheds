@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="scroll-page">
     <Navbar />
     <div class="page-title">
       <h1>Offre de Place - PFP3</h1>
@@ -163,8 +163,6 @@
           <li>Nombre global de cabinets privés hors canton : {{ globalCabinetsPrivesHorsCanton }}</li>
           <li>Nombre de cabinets privés hors canton sélectionné : {{ selectedCabinetsPrivesHorsCanton }}</li>
         </ul>
-
-
       </div>
 
       <!-- Listes des étudiants par rôle avec, à côté, leur place attribuée si existante -->
@@ -189,7 +187,7 @@
       </div>
 
       <div class="liste-leses mt-4 surface-card">
-        <h3>Liste des cas particulierss</h3>
+        <h3>Liste des cas particuliers</h3>
         <ul>
           <li v-for="user in casparticuliers" :key="user.id">
             {{ user.Prenom }} {{ user.Nom }}
@@ -197,7 +195,6 @@
           </li>
         </ul>
       </div>
-
     </div>
   </div>
 </template>
@@ -654,17 +651,16 @@ export default {
     },
     // Méthode qui retourne la (ou les) place(s) attribuée(s) à un étudiant
     getAssignedPlace(studentId) {
-const assignedRows = this.expandedPFP3.filter(row => {
-  const key = this.selectedKey(row);
-  return row.dyn[key] && row.dyn[key] === studentId;
-});
-if (assignedRows.length > 0) {
-  // Si plusieurs affectations, on joint chaque "Institution - NomPlace" par une virgule
-  return assignedRows.map(row => row.InstitutionName + ' - ' + row.NomPlace).join(', ');
-}
-return '';
-}
-
+      const assignedRows = this.expandedPFP3.filter(row => {
+        const key = this.selectedKey(row);
+        return row.dyn[key] && row.dyn[key] === studentId;
+      });
+      if (assignedRows.length > 0) {
+        // Si plusieurs affectations, on joint chaque "Institution - NomPlace" par une virgule
+        return assignedRows.map(row => row.InstitutionName + ' - ' + row.NomPlace).join(', ');
+      }
+      return '';
+    }
   },
   mounted() {
     this.fetchPraticiensFormateursData();
@@ -675,6 +671,16 @@ return '';
 </script>
 
 <style scoped>
+.scroll-page {
+  min-height: 100vh;
+  height: 100vh;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scroll-page::-webkit-scrollbar {
+  display: none;
+}
 .page-title {
   margin-bottom: 20px;
   text-align: center;
