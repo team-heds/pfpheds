@@ -109,7 +109,7 @@ function setupScene() {
   scene.background = new THREE.Color(cssBg);
   camera = new THREE.PerspectiveCamera(60, canvas3d.value.width / canvas3d.value.height, 0.1, 1000);
   camera.position.set(0, 8, 20);
-  camera.lookAt(0, 0, -70 / 2);
+  camera.lookAt(0, 0, -120 / 2);
 
   // Lumière
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
@@ -128,28 +128,28 @@ function setupScene() {
   wallTexture.repeat.set(10, 4);
 
   // Sol
-  const floorGeometry = new THREE.PlaneGeometry(getTrackLength(), 70 + 40);
+  const floorGeometry = new THREE.PlaneGeometry(getTrackLength(), 120 + 40);
   const floorMaterial = new THREE.MeshPhongMaterial({ map: floorTexture });
   const floor = new THREE.Mesh(floorGeometry, floorMaterial);
   floor.rotation.x = -Math.PI / 2;
-  floor.position.set(0, -1.1, -70 / 2);
+  floor.position.set(0, -1.1, -120 / 2);
   scene.add(floor);
 
   // Murs (gauche, droite, fond, devant)
-  const wallGeometry = new THREE.PlaneGeometry(70 + 40, 6);
+  const wallGeometry = new THREE.PlaneGeometry(120 + 40, 6);
   // Mur gauche
   const wallLeft = new THREE.Mesh(wallGeometry, new THREE.MeshPhongMaterial({ map: wallTexture }));
-  wallLeft.position.set(-(getTrackLength()/2), 2, -70 / 2);
+  wallLeft.position.set(-(getTrackLength()/2), 2, -120 / 2);
   wallLeft.rotation.y = Math.PI / 2;
   scene.add(wallLeft);
   // Mur droit
   const wallRight = new THREE.Mesh(wallGeometry, new THREE.MeshPhongMaterial({ map: wallTexture }));
-  wallRight.position.set(getTrackLength()/2, 2, -70 / 2);
+  wallRight.position.set(getTrackLength()/2, 2, -120 / 2);
   wallRight.rotation.y = -Math.PI / 2;
   scene.add(wallRight);
   // Mur fond
   const wallBack = new THREE.Mesh(new THREE.PlaneGeometry(getTrackLength(), 6), new THREE.MeshPhongMaterial({ map: wallTexture }));
-  wallBack.position.set(0, 2, -70 - 20);
+  wallBack.position.set(0, 2, -120 - 20);
   scene.add(wallBack);
   // Mur devant (optionnel)
   const wallFront = new THREE.Mesh(new THREE.PlaneGeometry(getTrackLength(), 6), new THREE.MeshPhongMaterial({ map: wallTexture, opacity: 0.3, transparent: true }));
@@ -207,26 +207,29 @@ function setupScene() {
 function animate() {
   let allStopped = true;
   let maxDistance = 0;
+  const trackLength = 120;
+  const wallBackZ = -(trackLength + 20); // position du mur du fond
+  const avatarDepth = 3.2; // profondeur approximative de l'avatar Ready Player Me (scale)
+  const maxDist = Math.abs(wallBackZ) - avatarDepth / 2; // limite stricte
   participants.forEach((p) => {
     if (p.velocity > 0.01) {
-      // Calcul de la limite maximale (mur du fond)
-      const maxDist = 70 + 20; // longueur piste + décalage mur
-      if (p.distance < maxDist) {
-        p.distance += p.velocity;
-        p.velocity -= friction;
-        if (p.velocity < 0) p.velocity = 0;
-        if (p.distance > maxDist) p.distance = maxDist;
-        if (p.mesh) p.mesh.position.z = -p.distance;
-        if (p.distance > maxDistance) maxDistance = p.distance;
-        allStopped = false;
-      } else {
+      let nextDist = p.distance + p.velocity;
+      if (nextDist >= maxDist) {
+        p.distance = maxDist;
         p.velocity = 0;
         if (p.mesh) p.mesh.position.z = -maxDist;
+      } else {
+        p.distance = nextDist;
+        p.velocity -= friction;
+        if (p.velocity < 0) p.velocity = 0;
+        if (p.mesh) p.mesh.position.z = -p.distance;
+        allStopped = false;
       }
     }
+    if (p.distance > maxDistance) maxDistance = p.distance;
   });
   camera.position.z = 20 - maxDistance;
-  camera.lookAt(0, 0, -70 / 2 - maxDistance / 2);
+  camera.lookAt(0, 0, -120 / 2 - maxDistance / 2);
   renderer.render(scene, camera);
   if (!allStopped) {
     animationId = requestAnimationFrame(animate);
