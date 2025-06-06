@@ -3,7 +3,11 @@
     <form class="participants-form" @submit.prevent="applyParticipants">
       <div v-for="(p, idx) in editableParticipants" :key="idx" class="participant-row">
         <input v-model="p.name" placeholder="Nom du participant" required />
-        <input v-model="p.avatarUrl" placeholder="URL avatar ReadyPlayerMe (.glb)" required />
+        <select v-model="p.gender" @change="setAvatarByGender(idx)">
+          <option value="male">Homme</option>
+          <option value="female">Femme</option>
+        </select>
+        <!-- Suppression du champ URL avatar, avatar choisi automatiquement selon le genre -->
         <button type="button" @click="removeParticipant(idx)" v-if="editableParticipants.length > 2">🗑️</button>
       </div>
       <button type="button" @click="addParticipant">+ Ajouter un participant</button>
@@ -15,12 +19,15 @@
       </div>
     </transition>
     <canvas ref="canvas3d" class="ventriglisse-canvas" width="1600" height="700"></canvas>
+    <div class="labels-3d">
+      <div v-for="(p, idx) in participants" :key="p.name" class="avatar-label" :id="'label-' + idx">{{ p.name }}</div>
+    </div>
     <Dialog v-model:visible="showResults" modal :closable="false" class="results-dialog" :style="{width: '420px'}">
       <template #header>
         <h2 class="classement-title">Classement</h2>
       </template>
       <ol class="classement-list">
-        <li v-for="(p, idx) in sortedParticipants" :key="p.name" :class="['rank', idx === 0 ? 'first' : idx === 1 ? 'second' : idx === 2 ? 'third' : '']">
+        <li v-for="(p, idx) in sortedParticipants" :key="p.name" :class="['rank', idx === 0 ? 'first' : idx === 1 ? 'second' : idx === 2 ? 'third' : idx === 3 ? 'fourth' : '']">
           <span class="rank-num">{{ idx+1 }}</span>
           <span class="rank-name">{{ p.name }}</span>
           <span class="rank-dist">{{ p.distance.toFixed(1) }} m</span>
@@ -34,6 +41,10 @@
     <div v-if="!showResults" class="launch-panel">
       <button @click="startRace">Lancer la glissade</button>
     </div>
+    <audio ref="audioBip" src="./assets/bip.waw"></audio>
+    <audio ref="audioGo" src="./assets/go.waw"></audio>
+    <audio ref="audioSlide" src="./assets/slide.mp3"></audio>
+    <audio ref="audioFinish" src="./assets/finish.mp3"></audio>
   </div>
 </template>
 
@@ -47,10 +58,10 @@ import Dialog from 'primevue/dialog';
 
 // Liste modifiable par l'utilisateur
 const defaultParticipants = [
-  { name: 'Alice', avatarUrl: 'https://models.readyplayer.me/6842a0f9105ed34bf86c5850.glb' },
-  { name: 'Bob', avatarUrl: 'https://models.readyplayer.me/6842a147c4abd0700dc2d13c.glb' },
-  { name: 'Charly', avatarUrl: 'https://models.readyplayer.me/6842a15582bf1c08fbfaeeca.glb' },
-  { name: 'Diane', avatarUrl: 'https://models.readyplayer.me/6842a1c3e02ade94ce20e85e.glb' }
+  { name: 'Joueur 1', gender: 'male', avatarUrl: 'https://models.readyplayer.me/6842d8990b840e8455020dce.glb' },
+  { name: 'Joueur 2', gender: 'male', avatarUrl: 'https://models.readyplayer.me/6842d86f1a0b245e75786dbf.glb' },
+  { name: 'Joueur 3', gender: 'female', avatarUrl: 'https://models.readyplayer.me/6842d84d105ed34bf86e03ad.glb' },
+  { name: 'Joueur 4', gender: 'female', avatarUrl: 'https://models.readyplayer.me/6842d8d1cca2917b669a9e4e.glb' }
 ];
 const editableParticipants = ref(JSON.parse(JSON.stringify(defaultParticipants)));
 
@@ -63,6 +74,10 @@ let scene, camera, renderer, animationId;
 const friction = 0.012;
 const countdownValue = ref(null);
 let countdownTimer = null;
+const audioBip = ref(null);
+const audioGo = ref(null);
+const audioSlide = ref(null);
+const audioFinish = ref(null);
 
 function getTrackLength() {
   // Largeur de base : 26, +4 par participant au-delà de 4 (encore plus large)
@@ -72,7 +87,7 @@ function getTrackLength() {
 }
 
 function addParticipant() {
-  editableParticipants.value.push({ name: '', avatarUrl: '' });
+  editableParticipants.value.push({ name: '', gender: 'male', avatarUrl: '' });
 }
 function removeParticipant(idx) {
   if (editableParticipants.value.length > 2) {
@@ -80,9 +95,9 @@ function removeParticipant(idx) {
   }
 }
 function applyParticipants() {
-  // Vérifie que tous les noms et URLs sont remplis
-  if (editableParticipants.value.some(p => !p.name.trim() || !p.avatarUrl.trim())) {
-    alert('Merci de remplir tous les noms et URLs d\'avatar !');
+  // Vérifie que tous les noms et genres sont remplis
+  if (editableParticipants.value.some(p => !p.name.trim() || !p.gender.trim())) {
+    alert('Merci de remplir tous les noms et genres !');
     return;
   }
   showResults.value = false;
@@ -168,7 +183,7 @@ function setupScene() {
         const spacing = getTrackLength() / Math.max(1, participants.length);
         avatar.position.set((idx - (participants.length - 1) / 2) * spacing, 0, 0);
         avatar.scale.set(3.2, 3.2, 3.2);
-        avatar.rotation.x = -Math.PI / 2;
+        avatar.rotation.x = 0; // debout au départ
         avatar.rotation.y = Math.PI;
         scene.add(avatar);
         p.mesh = avatar;
@@ -188,6 +203,7 @@ function setupScene() {
         const mesh = new THREE.Mesh(capsuleGeometry, mat);
         const spacing = getTrackLength() / Math.max(1, participants.length);
         mesh.position.set((idx - (participants.length - 1) / 2) * spacing, 0, 0);
+        mesh.rotation.x = 0; // debout au départ
         scene.add(mesh);
         p.mesh = mesh;
         p.distance = 0;
@@ -231,6 +247,22 @@ function animate() {
   camera.position.z = 20 - maxDistance;
   camera.lookAt(0, 0, -120 / 2 - maxDistance / 2);
   renderer.render(scene, camera);
+  // Mise à jour des labels au-dessus des avatars
+  participants.forEach((p, idx) => {
+    if (!p.mesh) return;
+    // Position du sommet de l'avatar (ajuste y selon la taille)
+    const pos = p.mesh.position.clone();
+    pos.y += 3.5; // hauteur au-dessus de la tête (adapter si besoin)
+    const vector = pos.project(camera);
+    const x = (vector.x * 0.5 + 0.5) * renderer.domElement.clientWidth;
+    const y = (-vector.y * 0.5 + 0.5) * renderer.domElement.clientHeight;
+    const label = document.getElementById('label-' + idx);
+    if (label) {
+      label.style.left = x + 'px';
+      label.style.top = y + 'px';
+      label.style.display = (vector.z < 1 && vector.z > -1) ? 'block' : 'none';
+    }
+  });
   if (!allStopped) {
     animationId = requestAnimationFrame(animate);
   } else {
@@ -250,19 +282,32 @@ function startRace() {
 }
 
 function launchCountdown() {
-  const sequence = [5, 4, 3, 2, 1, 'GO!'];
+  const sequence = [3, 2, 1, 'GO!'];
   let idx = 0;
   countdownValue.value = sequence[idx];
   countdownTimer = setInterval(() => {
     idx++;
     if (idx < sequence.length) {
       countdownValue.value = sequence[idx];
+      if (typeof sequence[idx] === 'number' && audioBip.value) {
+        audioBip.value.currentTime = 0;
+        audioBip.value.play();
+      }
     } else {
       clearInterval(countdownTimer);
       countdownValue.value = null;
+      if (audioGo.value) {
+        audioGo.value.currentTime = 0;
+        audioGo.value.play();
+      }
       // Lancer la glissade
       participants.forEach(p => {
-        // Vitesse de départ modérée mais friction réduite pour aller plus loin
+        if (audioSlide.value) {
+          audioSlide.value.currentTime = 0;
+          audioSlide.value.play();
+        }
+        // Plongeon à plat ventre
+        if (p.mesh) p.mesh.rotation.x = -Math.PI / 2;
         p.velocity = Math.random() * 0.9 + 0.7;
       });
       animate();
@@ -271,6 +316,10 @@ function launchCountdown() {
 }
 
 function showRaceResults() {
+  if (audioFinish.value) {
+    audioFinish.value.currentTime = 0;
+    audioFinish.value.play();
+  }
   sortedParticipants.value = [...participants].sort((a, b) => b.distance - a.distance);
   winner.value = sortedParticipants.value[0];
   showResults.value = true;
@@ -286,6 +335,15 @@ function replay() {
   });
   // On ne lance pas la course, il faudra cliquer sur "Lancer la glissade"
   resetScene();
+}
+
+function setAvatarByGender(idx) {
+  const gender = editableParticipants.value[idx].gender;
+  if (gender === 'male') {
+    editableParticipants.value[idx].avatarUrl = 'https://models.readyplayer.me/6842a0f9105ed34bf86c5850.glb';
+  } else if (gender === 'female') {
+    editableParticipants.value[idx].avatarUrl = 'https://models.readyplayer.me/6842a1c3e02ade94ce20e85e.glb';
+  }
 }
 
 onMounted(() => {
@@ -333,6 +391,13 @@ onBeforeUnmount(() => {
   font-size: 1em;
   min-width: 180px;
 }
+.participant-row select {
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 1em;
+  min-width: 100px;
+}
 .participant-row button {
   background: #ff6666;
   color: #fff;
@@ -366,6 +431,23 @@ onBeforeUnmount(() => {
   display: block;
   border-radius: 10px;
   background: #aeefff;
+}
+.labels-3d {
+  position: absolute;
+  left: 0; top: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 10;
+}
+.avatar-label {
+  position: absolute;
+  color: #fff;
+  font-weight: bold;
+  text-shadow: 1px 1px 4px #000, 0 0 6px #000;
+  font-size: 1.1em;
+  white-space: nowrap;
+  transform: translate(-50%, -100%);
+  pointer-events: none;
 }
 .launch-panel {
   text-align: center;
@@ -453,6 +535,11 @@ button:hover {
 .classement-list .third {
   background: linear-gradient(90deg, #f7b267 60%, #fffbe6 100%);
   color: #a85c00;
+}
+.classement-list .fourth {
+  background: #cfd8dc;
+  color: #333;
+  border-left: 6px solid #607d8b;
 }
 .rank-num {
   font-size: 1.1em;
