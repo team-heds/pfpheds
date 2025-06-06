@@ -20,6 +20,7 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, reactive } from 'vue';
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import participantsData from './participants.json';
 
 const canvas3d = ref(null);
@@ -52,17 +53,46 @@ function setupScene() {
   track.position.set(0, -1, -trackLength / 2);
   scene.add(track);
 
-  // Avatars/capsules
-  const capsuleGeometry = new THREE.CapsuleGeometry(0.5, 1.2, 8, 16);
+  // Avatars ReadyPlayerMe
+  const loader = new GLTFLoader();
+  let loadedCount = 0;
   participants.forEach((p, idx) => {
-    const color = new THREE.Color().setHSL(idx / participants.length, 0.7, 0.5);
-    const mat = new THREE.MeshPhongMaterial({ color });
-    const mesh = new THREE.Mesh(capsuleGeometry, mat);
-    mesh.position.set((idx - (participants.length - 1) / 2) * 1.5, 0, 0);
-    scene.add(mesh);
-    p.mesh = mesh;
-    p.distance = 0;
-    p.velocity = 0;
+    loader.load(
+      p.avatarUrl,
+      gltf => {
+        const avatar = gltf.scene;
+        avatar.position.set((idx - (participants.length - 1) / 2) * 2.5, 0, 0); // Plus espacé
+        avatar.scale.set(3.2, 3.2, 3.2); // Plus grand
+        // Faire glisser à plat ventre (dans l'autre sens) et tourner sur Y
+        avatar.rotation.x = -Math.PI / 2; // -90°
+        avatar.rotation.y = Math.PI; // Tourner de 180° sur Y
+        scene.add(avatar);
+        p.mesh = avatar;
+        p.distance = 0;
+        p.velocity = 0;
+        loadedCount++;
+        if (loadedCount === participants.length) {
+          renderer.render(scene, camera);
+        }
+      },
+      undefined,
+      error => {
+        // Si erreur, fallback capsule
+        const capsuleGeometry = new THREE.CapsuleGeometry(0.5, 1.2, 8, 16);
+        const color = new THREE.Color().setHSL(idx / participants.length, 0.7, 0.5);
+        const mat = new THREE.MeshPhongMaterial({ color });
+        const mesh = new THREE.Mesh(capsuleGeometry, mat);
+        mesh.position.set((idx - (participants.length - 1) / 2) * 2.5, 0, 0);
+        scene.add(mesh);
+        p.mesh = mesh;
+        p.distance = 0;
+        p.velocity = 0;
+        loadedCount++;
+        if (loadedCount === participants.length) {
+          renderer.render(scene, camera);
+        }
+      }
+    );
   });
 
   renderer = new THREE.WebGLRenderer({ canvas: canvas3d.value, antialias: true });
@@ -77,7 +107,7 @@ function animate() {
       p.distance += p.velocity;
       p.velocity -= friction;
       if (p.velocity < 0) p.velocity = 0;
-      p.mesh.position.z = -p.distance;
+      if (p.mesh) p.mesh.position.z = -p.distance;
       if (p.distance > maxDistance) maxDistance = p.distance;
       allStopped = false;
     }
@@ -100,7 +130,7 @@ function startRace() {
   participants.forEach(p => {
     p.distance = 0;
     p.velocity = Math.random() * 1.3 + 0.7; // force aléatoire
-    p.mesh.position.z = 0;
+    if (p.mesh) p.mesh.position.z = 0;
   });
   animate();
 }
