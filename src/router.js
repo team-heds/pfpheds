@@ -75,6 +75,7 @@ import SettingView from '@/components/Home/SettingView.vue'
 import SearchResults from '@/components/Utils/SearchResults.vue'
 import AffectationStageEtudiant from '@/components/Dashboard/DashboardForms/AffectationStageEtudiant.vue'
 import CreateContentMobile from '@/components/Bibliotheque/Social/CreateContentMobile.vue';
+import Ventriglisse3D from '@/ventriglisse3d/Ventriglisse3D.vue';
 
 // Define your routes
 const routes = [
@@ -188,6 +189,12 @@ const routes = [
     name: 'CreateContentMobile',
     component: CreateContentMobile,
     meta: { mobileOnly: true }
+  },
+  {
+    path: '/ventriglisse3d',
+    name: 'Ventriglisse3D',
+    component: Ventriglisse3D,
+    meta: { requiresAuth: false }
   },
 ];
 
