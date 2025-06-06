@@ -27,7 +27,7 @@
         <h2 class="classement-title">Classement</h2>
       </template>
       <ol class="classement-list">
-        <li v-for="(p, idx) in sortedParticipants" :key="p.name" :class="['rank', idx === 0 ? 'first' : idx === 1 ? 'second' : idx === 2 ? 'third' : idx === 3 ? 'fourth' : '']">
+        <li v-for="(p, idx) in sortedParticipants" :key="p.name" :class="['rank', idx === 0 ? 'first' : idx === 1 ? 'second' : idx === 2 ? 'third' : idx === 3 ? 'fourth' : 'rest']">
           <span class="rank-num">{{ idx+1 }}</span>
           <span class="rank-name">{{ p.name }}</span>
           <span class="rank-dist">{{ p.distance.toFixed(1) }} m</span>
@@ -39,7 +39,7 @@
       </div>
     </Dialog>
     <div v-if="!showResults" class="launch-panel">
-      <button @click="startRace">Lancer la glissade</button>
+      <button @click="startRace">Lancer le ventriglisse</button>
     </div>
     <audio ref="audioBip" src="./assets/bip.waw"></audio>
     <audio ref="audioGo" src="./assets/go.waw"></audio>
@@ -51,16 +51,17 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, reactive, watch } from 'vue';
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { AnimationMixer } from 'three';
 import floorTextureImg from './assets/floor.png';
 import wallTextureImg from './assets/wall.png';
 import Dialog from 'primevue/dialog';
 
 // Liste modifiable par l'utilisateur
 const defaultParticipants = [
-  { name: 'Joueur 1', gender: 'male', avatarUrl: 'https://models.readyplayer.me/6842d8990b840e8455020dce.glb' },
-  { name: 'Joueur 2', gender: 'male', avatarUrl: 'https://models.readyplayer.me/6842d86f1a0b245e75786dbf.glb' },
-  { name: 'Joueur 3', gender: 'female', avatarUrl: 'https://models.readyplayer.me/6842d84d105ed34bf86e03ad.glb' },
+  { name: 'Joueur 1', gender: 'male', avatarUrl: 'https://models.readyplayer.me/6842a0f9105ed34bf86c5850.glb' },
+  { name: 'Joueur 2', gender: 'female', avatarUrl: 'https://models.readyplayer.me/6842a1c3e02ade94ce20e85e.glb' },
+  { name: 'Joueur 3', gender: 'male', avatarUrl: 'https://models.readyplayer.me/6842d8990b840e8455020dce.glb' },
   { name: 'Joueur 4', gender: 'female', avatarUrl: 'https://models.readyplayer.me/6842d8d1cca2917b669a9e4e.glb' }
 ];
 const editableParticipants = ref(JSON.parse(JSON.stringify(defaultParticipants)));
@@ -78,6 +79,15 @@ const audioBip = ref(null);
 const audioGo = ref(null);
 const audioSlide = ref(null);
 const audioFinish = ref(null);
+let idleStartTime = null;
+let isIdle = ref(true);
+
+const jumpAnim = ref(null);
+
+function loadAnimations() {
+  const loader = new GLTFLoader();
+  loader.load('./assets/jump.glb', gltf => { jumpAnim.value = gltf.animations[0]; });
+}
 
 function getTrackLength() {
   // Largeur de base : 26, +4 par participant au-delà de 4 (encore plus large)
@@ -87,7 +97,7 @@ function getTrackLength() {
 }
 
 function addParticipant() {
-  editableParticipants.value.push({ name: '', gender: 'male', avatarUrl: '' });
+  editableParticipants.value.push({ name: 'joueur', gender: 'male', avatarUrl: 'https://models.readyplayer.me/6842d8990b840e8455020dce.glb' });
 }
 function removeParticipant(idx) {
   if (editableParticipants.value.length > 2) {
@@ -102,7 +112,7 @@ function applyParticipants() {
   }
   showResults.value = false;
   // Copie profonde pour éviter les effets de bord
-  participants.splice(0, participants.length, ...editableParticipants.value.map(p => ({ ...p, distance: 0, velocity: 0, mesh: null })));
+  participants.splice(0, participants.length, ...editableParticipants.value.map(p => ({ ...p, distance: 0, velocity: 0, mesh: null, mixer: null, currentAction: null, isSliding: false })));
   // Recharge la scène avec les nouveaux participants
   resetScene();
 }
@@ -189,6 +199,11 @@ function setupScene() {
         p.mesh = avatar;
         p.distance = 0;
         p.velocity = 0;
+        p.mixer = null;
+        if (jumpAnim.value) {
+          p.mixer = new AnimationMixer(avatar);
+          p.currentAction = null;
+        }
         loadedCount++;
         if (loadedCount === participants.length) {
           renderer.render(scene, camera);
@@ -227,7 +242,12 @@ function animate() {
   const wallBackZ = -(trackLength + 20); // position du mur du fond
   const avatarDepth = 3.2; // profondeur approximative de l'avatar Ready Player Me (scale)
   const maxDist = Math.abs(wallBackZ) - avatarDepth / 2; // limite stricte
+  const clock = new THREE.Clock();
+  const delta = clock.getDelta();
   participants.forEach((p) => {
+    if (p.mixer && p.currentAction) {
+      p.mixer.update(delta);
+    }
     if (p.velocity > 0.01) {
       let nextDist = p.distance + p.velocity;
       if (nextDist >= maxDist) {
@@ -272,11 +292,18 @@ function animate() {
 
 function startRace() {
   showResults.value = false;
-  // Place avatars au départ
+  isIdle.value = true;
   participants.forEach(p => {
     p.distance = 0;
     p.velocity = 0;
-    if (p.mesh) p.mesh.position.z = 0;
+    if (p.mesh) {
+      p.mesh.position.z = 0;
+      p.mesh.rotation.x = 0;
+    }
+    if (p.mixer && p.currentAction) {
+      p.currentAction.stop();
+      p.currentAction = null;
+    }
   });
   launchCountdown();
 }
@@ -300,11 +327,21 @@ function launchCountdown() {
         audioGo.value.currentTime = 0;
         audioGo.value.play();
       }
+      isIdle.value = false;
       // Lancer la glissade
       participants.forEach(p => {
-        if (audioSlide.value) {
-          audioSlide.value.currentTime = 0;
-          audioSlide.value.play();
+        // Stop toute action précédente
+        if (p.mixer && p.currentAction) {
+          p.currentAction.stop();
+        }
+        // Joue Jump
+        if (p.mixer && jumpAnim.value) {
+          const jumpAction = p.mixer.clipAction(jumpAnim.value);
+          jumpAction.reset();
+          jumpAction.setLoop(THREE.LoopOnce, 1);
+          jumpAction.clampWhenFinished = true;
+          jumpAction.play();
+          p.currentAction = jumpAction;
         }
         // Plongeon à plat ventre
         if (p.mesh) p.mesh.rotation.x = -Math.PI / 2;
@@ -326,14 +363,20 @@ function showRaceResults() {
 }
 
 function replay() {
-  // Réinitialise les positions et distances, cache le classement, avatars sur la ligne de départ
   showResults.value = false;
+  isIdle.value = true;
   participants.forEach(p => {
     p.distance = 0;
     p.velocity = 0;
-    if (p.mesh) p.mesh.position.z = 0;
+    if (p.mesh) {
+      p.mesh.position.z = 0;
+      p.mesh.rotation.x = 0;
+    }
+    if (p.mixer && p.currentAction) {
+      p.currentAction.stop();
+      p.currentAction = null;
+    }
   });
-  // On ne lance pas la course, il faudra cliquer sur "Lancer la glissade"
   resetScene();
 }
 
@@ -347,8 +390,9 @@ function setAvatarByGender(idx) {
 }
 
 onMounted(() => {
+  loadAnimations();
   // Initialise la liste des participants (copie profonde)
-  participants.splice(0, participants.length, ...editableParticipants.value.map(p => ({ ...p, distance: 0, velocity: 0, mesh: null })));
+  participants.splice(0, participants.length, ...editableParticipants.value.map(p => ({ ...p, distance: 0, velocity: 0, mesh: null, mixer: null, currentAction: null, isSliding: false })));
   setTimeout(() => {
     setupScene();
     renderer.render(scene, camera);
@@ -536,7 +580,12 @@ button:hover {
   background: linear-gradient(90deg, #f7b267 60%, #fffbe6 100%);
   color: #a85c00;
 }
-.classement-list .fourth {
+.classement-list .fourth, .classement-list .rest {
+  background: #cfd8dc;
+  color: #333;
+  border-left: 6px solid #607d8b;
+}
+.classement-list li:not(.first):not(.second):not(.third):not(.fourth) {
   background: #cfd8dc;
   color: #333;
   border-left: 6px solid #607d8b;
