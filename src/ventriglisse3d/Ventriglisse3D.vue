@@ -55,6 +55,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { AnimationMixer } from 'three';
 import floorTextureImg from './assets/floor.png';
 import wallTextureImg from './assets/wall.png';
+import cafeteriaImg from './assets/cafeteria.jpeg';
 import Dialog from 'primevue/dialog';
 
 // Liste modifiable par l'utilisateur
@@ -151,6 +152,7 @@ function setupScene() {
   const wallTexture = textureLoader.load(wallTextureImg);
   wallTexture.wrapS = wallTexture.wrapT = THREE.RepeatWrapping;
   wallTexture.repeat.set(10, 4);
+  const cafeteriaTexture = textureLoader.load(cafeteriaImg);
 
   // Sol
   const floorGeometry = new THREE.PlaneGeometry(getTrackLength(), 120 + 40);
@@ -160,25 +162,79 @@ function setupScene() {
   floor.position.set(0, -1.1, -120 / 2);
   scene.add(floor);
 
+  // --- Encore plus de bulles de savon sur le sol ---
+  for (let i = 0; i < 40; i++) { // Augmente à 40 bulles
+    const bubbleRadius = Math.random() * 0.8 + 0.2;
+    const bubbleGeo = new THREE.SphereGeometry(bubbleRadius, 16, 16);
+    const bubbleMat = new THREE.MeshPhysicalMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.38,
+      roughness: 0.12,
+      metalness: 0.8,
+      transmission: 0.8,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.08
+    });
+    const bubble = new THREE.Mesh(bubbleGeo, bubbleMat);
+    bubble.position.x = (Math.random() - 0.5) * getTrackLength();
+    bubble.position.z = -Math.random() * 120;
+    bubble.position.y = -0.7 + Math.random() * 0.2;
+    scene.add(bubble);
+  }
+  // --- Fin bulles de savon ---
+
+  // --- Beaucoup plus de flaques d'eau brillantes ---
+  const waterCount = 10;
+  for (let i = 0; i < waterCount; i++) {
+    const waterGeometry = new THREE.CircleGeometry(getTrackLength() * (0.18 + Math.random() * 0.22), 48);
+    const waterMaterial = new THREE.MeshPhysicalMaterial({
+      color: 0x7fd8ff,
+      transparent: true,
+      opacity: 0.35,
+      roughness: 0.05,
+      metalness: 0.5,
+      transmission: 0.7,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.04
+    });
+    const water = new THREE.Mesh(waterGeometry, waterMaterial);
+    water.rotation.x = -Math.PI / 2;
+    // Positionne les flaques à différentes profondeurs et légèrement décalées
+    water.position.set(
+      (Math.random() - 0.5) * getTrackLength() * 0.7,
+      -1.08,
+      -120 / 2 + 6 + i * 11 + Math.random() * 12
+    );
+    scene.add(water);
+  }
+  // --- Fin multiples flaques d'eau ---
+
   // Murs (gauche, droite, fond, devant)
-  const wallGeometry = new THREE.PlaneGeometry(120 + 40, 6);
+  const wallGeometry = new THREE.PlaneGeometry(120 + 40, 16); // Hauteur doublée
   // Mur gauche
   const wallLeft = new THREE.Mesh(wallGeometry, new THREE.MeshPhongMaterial({ map: wallTexture }));
-  wallLeft.position.set(-(getTrackLength()/2), 2, -120 / 2);
+  wallLeft.position.set(-(getTrackLength()/2), 8, -120 / 2); // milieu hauteur
   wallLeft.rotation.y = Math.PI / 2;
   scene.add(wallLeft);
   // Mur droit
   const wallRight = new THREE.Mesh(wallGeometry, new THREE.MeshPhongMaterial({ map: wallTexture }));
-  wallRight.position.set(getTrackLength()/2, 2, -120 / 2);
+  wallRight.position.set(getTrackLength()/2, 8, -120 / 2);
   wallRight.rotation.y = -Math.PI / 2;
   scene.add(wallRight);
-  // Mur fond
-  const wallBack = new THREE.Mesh(new THREE.PlaneGeometry(getTrackLength(), 6), new THREE.MeshPhongMaterial({ map: wallTexture }));
-  wallBack.position.set(0, 2, -120 - 20);
+  // Mur fond : utilise la photo cafeteria, plus grand et plus haut
+  const wallBack = new THREE.Mesh(
+    new THREE.PlaneGeometry(getTrackLength() * 1.5, 16), // Largeur et hauteur augmentées
+    new THREE.MeshPhongMaterial({ map: cafeteriaTexture })
+  );
+  wallBack.position.set(0, 8, -120 - 20); // centre hauteur
   scene.add(wallBack);
-  // Mur devant (optionnel)
-  const wallFront = new THREE.Mesh(new THREE.PlaneGeometry(getTrackLength(), 6), new THREE.MeshPhongMaterial({ map: wallTexture, opacity: 0.3, transparent: true }));
-  wallFront.position.set(0, 2, 20);
+  // Mur devant (optionnel, plus haut aussi)
+  const wallFront = new THREE.Mesh(
+    new THREE.PlaneGeometry(getTrackLength(), 16),
+    new THREE.MeshPhongMaterial({ map: wallTexture, opacity: 0.3, transparent: true })
+  );
+  wallFront.position.set(0, 8, 20);
   wallFront.rotation.y = Math.PI;
   scene.add(wallFront);
 
@@ -328,26 +384,28 @@ function launchCountdown() {
         audioGo.value.play();
       }
       isIdle.value = false;
-      // Lancer la glissade
       participants.forEach(p => {
-        // Stop toute action précédente
         if (p.mixer && p.currentAction) {
           p.currentAction.stop();
         }
         // Joue Jump
-        if (p.mixer && jumpAnim.value) {
-          const jumpAction = p.mixer.clipAction(jumpAnim.value);
-          jumpAction.reset();
-          jumpAction.setLoop(THREE.LoopOnce, 1);
-          jumpAction.clampWhenFinished = true;
-          jumpAction.play();
-          p.currentAction = jumpAction;
-        }
-        // Plongeon à plat ventre
-        if (p.mesh) p.mesh.rotation.x = -Math.PI / 2;
-        p.velocity = Math.random() * 0.9 + 0.7;
+        // if (p.mixer && jumpAnim.value) {
+        //   const jumpAction = p.mixer.clipAction(jumpAnim.value);
+        //   jumpAction.reset();
+        //   jumpAction.setLoop(THREE.LoopOnce, 1);
+        //   jumpAction.clampWhenFinished = true;
+        //   jumpAction.play();
+        //   p.currentAction = jumpAction;
+        // }
       });
-      animate();
+      // Attend la fin du jump avant de plonger et glisser
+      setTimeout(() => {
+        participants.forEach(p => {
+          if (p.mesh) p.mesh.rotation.x = -Math.PI / 2;
+          p.velocity = Math.random() * 0.9 + 0.7;
+        });
+        animate();
+      }, 900); // 0.9s ≈ durée du jump Mixamo
     }
   }, 800);
 }
