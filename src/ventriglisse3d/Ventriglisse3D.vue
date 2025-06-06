@@ -15,17 +15,23 @@
       </div>
     </transition>
     <canvas ref="canvas3d" class="ventriglisse-canvas" width="1600" height="700"></canvas>
-    <div v-if="showResults" class="results-panel">
-      <h3>Résultats</h3>
-      <ul>
-        <li v-for="p in sortedParticipants" :key="p.name">
-          {{ p.name }} : {{ p.distance.toFixed(1) }} m
+    <Dialog v-model:visible="showResults" modal :closable="false" class="results-dialog" :style="{width: '420px'}">
+      <template #header>
+        <h2 class="classement-title">Classement</h2>
+      </template>
+      <ol class="classement-list">
+        <li v-for="(p, idx) in sortedParticipants" :key="p.name" :class="['rank', idx === 0 ? 'first' : idx === 1 ? 'second' : idx === 2 ? 'third' : '']">
+          <span class="rank-num">{{ idx+1 }}</span>
+          <span class="rank-name">{{ p.name }}</span>
+          <span class="rank-dist">{{ p.distance.toFixed(1) }} m</span>
         </li>
-      </ul>
-      <h2>Gagnant : {{ winner.name }}</h2>
-      <button @click="replay">Rejouer</button>
-    </div>
-    <div v-else class="launch-panel">
+      </ol>
+      <div class="dialog-footer">
+        <span class="winner-label">🏆 Gagnant : <b>{{ winner.name }}</b></span>
+        <button @click="replay" class="replay-btn">Rejouer</button>
+      </div>
+    </Dialog>
+    <div v-if="!showResults" class="launch-panel">
       <button @click="startRace">Lancer la glissade</button>
     </div>
   </div>
@@ -37,6 +43,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import floorTextureImg from './assets/floor.png';
 import wallTextureImg from './assets/wall.png';
+import Dialog from 'primevue/dialog';
 
 // Liste modifiable par l'utilisateur
 const defaultParticipants = [
@@ -53,7 +60,7 @@ const participants = reactive([]);
 const sortedParticipants = ref([]);
 const winner = ref({ name: '', distance: 0 });
 let scene, camera, renderer, animationId;
-const friction = 0.04;
+const friction = 0.012;
 const countdownValue = ref(null);
 let countdownTimer = null;
 
@@ -202,12 +209,20 @@ function animate() {
   let maxDistance = 0;
   participants.forEach((p) => {
     if (p.velocity > 0.01) {
-      p.distance += p.velocity;
-      p.velocity -= friction;
-      if (p.velocity < 0) p.velocity = 0;
-      if (p.mesh) p.mesh.position.z = -p.distance;
-      if (p.distance > maxDistance) maxDistance = p.distance;
-      allStopped = false;
+      // Calcul de la limite maximale (mur du fond)
+      const maxDist = 70 + 20; // longueur piste + décalage mur
+      if (p.distance < maxDist) {
+        p.distance += p.velocity;
+        p.velocity -= friction;
+        if (p.velocity < 0) p.velocity = 0;
+        if (p.distance > maxDist) p.distance = maxDist;
+        if (p.mesh) p.mesh.position.z = -p.distance;
+        if (p.distance > maxDistance) maxDistance = p.distance;
+        allStopped = false;
+      } else {
+        p.velocity = 0;
+        if (p.mesh) p.mesh.position.z = -maxDist;
+      }
     }
   });
   camera.position.z = 20 - maxDistance;
@@ -244,7 +259,8 @@ function launchCountdown() {
       countdownValue.value = null;
       // Lancer la glissade
       participants.forEach(p => {
-        p.velocity = Math.random() * 1.3 + 0.7;
+        // Vitesse de départ modérée mais friction réduite pour aller plus loin
+        p.velocity = Math.random() * 0.9 + 0.7;
       });
       animate();
     }
@@ -258,7 +274,15 @@ function showRaceResults() {
 }
 
 function replay() {
-  startRace();
+  // Réinitialise les positions et distances, cache le classement, avatars sur la ligne de départ
+  showResults.value = false;
+  participants.forEach(p => {
+    p.distance = 0;
+    p.velocity = 0;
+    if (p.mesh) p.mesh.position.z = 0;
+  });
+  // On ne lance pas la course, il faudra cliquer sur "Lancer la glissade"
+  resetScene();
 }
 
 onMounted(() => {
@@ -340,7 +364,7 @@ onBeforeUnmount(() => {
   border-radius: 10px;
   background: #aeefff;
 }
-.results-panel, .launch-panel {
+.launch-panel {
   text-align: center;
   margin-top: 18px;
 }
@@ -387,5 +411,81 @@ button:hover {
 }
 .countdown-fade-enter-from, .countdown-fade-leave-to {
   opacity: 0;
+}
+.results-dialog .classement-title {
+  text-align: center;
+  font-size: 2.1em;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.6em;
+  color: #f3c300;
+  text-shadow: 2px 2px 12px #000, 0 0 32px #fff;
+}
+.classement-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.2em 0;
+}
+.classement-list .rank {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 1.3em;
+  background: #fffbe6;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  padding: 10px 18px;
+  box-shadow: 0 2px 8px #0002;
+  font-weight: 500;
+}
+.classement-list .first {
+  background: linear-gradient(90deg, #ffe066 60%, #fffbe6 100%);
+  color: #c89100;
+  font-size: 1.5em;
+  font-weight: bold;
+}
+.classement-list .second {
+  background: linear-gradient(90deg, #e0e0e0 60%, #fffbe6 100%);
+  color: #888;
+}
+.classement-list .third {
+  background: linear-gradient(90deg, #f7b267 60%, #fffbe6 100%);
+  color: #a85c00;
+}
+.rank-num {
+  font-size: 1.1em;
+  margin-right: 8px;
+  font-weight: bold;
+}
+.rank-name {
+  flex: 1;
+  text-align: left;
+}
+.rank-dist {
+  margin-left: 12px;
+  font-size: 0.95em;
+}
+.dialog-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1.2em;
+}
+.winner-label {
+  font-size: 1.1em;
+  color: #f3c300;
+  font-weight: bold;
+}
+.replay-btn {
+  background: #00bcd4;
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 18px;
+  font-size: 1.1em;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.replay-btn:hover {
+  background: #0097a7;
 }
 </style>
