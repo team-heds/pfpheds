@@ -11,7 +11,6 @@
     <div class="content">
       <Toast />
       <router-view />
-      <Toast position="bottom-center" />
       <MobileBottomNav v-if="showMobileBottomNav" />
       <VersionningComponent />
       <PwaInstallPrompt />
