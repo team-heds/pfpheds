@@ -7,6 +7,7 @@
     </div>
     <!-- Zone centrale événement -->
     <div class="main-feed">
+      <!-- Partie centrale gestion événements -->
       <div class="event-management-page">
         <h2>Gestion des événements</h2>
         <Card class="event-form-card">
@@ -54,7 +55,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, getCurrentInstance } from 'vue';
+import { ref, computed, onMounted, getCurrentInstance } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
@@ -101,6 +102,21 @@ function formatDate(date) {
   if (typeof date === 'string') return new Date(date).toLocaleDateString('fr-CH', { year: 'numeric', month: 'long', day: 'numeric' });
   return date.toLocaleDateString('fr-CH', { year: 'numeric', month: 'long', day: 'numeric' });
 }
+function formatSidebarDate(date) {
+  if (!date) return '';
+  if (typeof date === 'string') date = new Date(date);
+  return date.toLocaleDateString('fr-CH', { month: '2-digit', day: '2-digit' });
+}
+
+// Mobile detection
+const isMobile = computed(() => window.innerWidth <= 900);
+const top5Events = computed(() => {
+  const now = new Date();
+  return events.value
+    .filter(ev => new Date(ev.date) >= now)
+    .sort((a, b) => new Date(a.date) - new Date(b.date))
+    .slice(0, 5);
+});
 
 // Provide events to LeftSidebar via event bus ($root)
 onMounted(() => {
@@ -238,5 +254,44 @@ h2 {
 .event-register-btn {
   font-size: 1.05em;
   min-width: 120px;
+}
+/* --- MOBILE CENTERING & MARGINS --- */
+@media (max-width: 900px) {
+  .sidebar-left, .sidebar-right {
+    display: none !important;
+  }
+  .main-feed {
+    width: 100vw;
+    max-width: 100vw;
+    padding: 0;
+    justify-content: center;
+    align-items: center;
+  }
+  .event-management-page {
+    max-width: 100vw;
+    margin: 0 auto;
+    padding: 1.2em 0.15em 1.8em 0.15em;
+    background: transparent;
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .event-form-card {
+    width: 100%;
+    max-width: 360px;
+    min-width: 260px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .event-list-scrollable {
+    width: 100%;
+    max-width: 99vw;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  h2 {
+    text-align: center;
+  }
 }
 </style>
