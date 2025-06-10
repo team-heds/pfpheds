@@ -150,11 +150,7 @@ const routes = [
   { path: '/tasklist', component: Index, name: 'Index', meta: { requiresAuth: true, requiredRole: ['editor', 'admin'] } },
   { path: '/chat', component: IndexChat, name: 'IndexChat', meta: { requiresAuth: true } },
   { path : '/affectation_stage_etudiant', component: AffectationStageEtudiant, name: 'AffectationStageEtudiant', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
-  {
-    path: '/search',
-    name: 'SearchResults',
-    component: SearchResults
-  },
+
   {
     path: '/list', // Chemin pour ListComponent
     name: 'ListComponent',
@@ -195,6 +191,18 @@ const routes = [
     name: 'Ventriglisse3D',
     component: Ventriglisse3D,
     meta: { requiresAuth: false }
+  },
+  {
+    path: '/mobile-outils',
+    name: 'MobileOutils',
+    component: () => import('./views/MobileOutils.vue'),
+    meta: { mobileOnly: true }
+  },
+  {
+    path: '/mobile-search',
+    name: 'MobileSearch',
+    component: () => import('./views/MobileSearch.vue'),
+    meta: { mobileOnly: true }
   },
 ];
 
