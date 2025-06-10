@@ -198,6 +198,12 @@ const routes = [
     component: () => import('./views/MobileOutils.vue'),
     meta: { mobileOnly: true }
   },
+  {
+    path: '/mobile-search',
+    name: 'MobileSearch',
+    component: () => import('./views/MobileSearch.vue'),
+    meta: { mobileOnly: true }
+  },
 ];
 
 // Create router instance

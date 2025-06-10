@@ -29,7 +29,7 @@ onMounted(() => {
 
 const navItems = computed(() => [
   {  to: '/feed', icon: 'pi pi-home' },
-  {  to: '/institution', icon: 'pi pi-search' },
+  {  to: '/mobile-search', icon: 'pi pi-search' },
   {  to: '/mobile-outils', icon: 'pi pi-th-large' },
   {  to: '/communities/info/:id', icon: 'pi pi-comments' },
   {  to: userId.value ? `/profile/${userId.value}` : '/profile', icon: 'pi pi-user' },
