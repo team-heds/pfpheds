@@ -54,7 +54,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, getCurrentInstance } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
@@ -101,6 +101,18 @@ function formatDate(date) {
   if (typeof date === 'string') return new Date(date).toLocaleDateString('fr-CH', { year: 'numeric', month: 'long', day: 'numeric' });
   return date.toLocaleDateString('fr-CH', { year: 'numeric', month: 'long', day: 'numeric' });
 }
+
+// Provide events to LeftSidebar via event bus ($root)
+onMounted(() => {
+  const instance = getCurrentInstance();
+  if (instance && instance.proxy && instance.proxy.$root && instance.proxy.$root.$on) {
+    instance.proxy.$root.$on('request-events', (cb) => {
+      if (typeof cb === 'function') {
+        cb(events.value);
+      }
+    });
+  }
+});
 </script>
 
 <style scoped>
