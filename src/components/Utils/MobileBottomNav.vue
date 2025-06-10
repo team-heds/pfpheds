@@ -28,11 +28,11 @@ onMounted(() => {
 });
 
 const navItems = computed(() => [
-  { label: 'Accueil', to: '/feed', icon: 'pi pi-home' },
-  { label: 'Institution', to: '/institution', icon: 'pi pi-bookmark' },
-  { label: 'Autre', to: '/map', icon: 'pi pi-th-large' },
-  { label: 'Messages', to: '/chat', icon: 'pi pi-inbox' },
-  { label: 'Profil', to: userId.value ? `/profile/${userId.value}` : '/profile', icon: 'pi pi-user' },
+  {  to: '/feed', icon: 'pi pi-home' },
+  {  to: '/institution', icon: 'pi pi-search' },
+  {  to: '/mobile-outils', icon: 'pi pi-th-large' },
+  {  to: '/communities/info/:id', icon: 'pi pi-comments' },
+  {  to: userId.value ? `/profile/${userId.value}` : '/profile', icon: 'pi pi-user' },
 ]);
 
 const route = useRoute();
