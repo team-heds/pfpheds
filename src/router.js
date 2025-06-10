@@ -212,7 +212,13 @@ const routes = [
     path: '/qr',
     name: 'QrCodeGenerator',
     component: QrCodeGenerator,
-  }
+  },
+  {
+    path: '/event-management',
+    name: 'EventManagement',
+    component: () => import('@/views/EventManagement.vue'),
+    meta: { requiresAuth: false }
+  },
 ];
 
 // Create router instance
