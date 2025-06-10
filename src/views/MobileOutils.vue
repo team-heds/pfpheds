@@ -23,8 +23,10 @@ import { computed } from 'vue';
 const outils = [
   { to: '/institution', icon: 'pi pi-building', label: 'Institutions' },
   { to: '/map', icon: 'pi pi-map', label: 'Carte' },
+  { to: '/documents_pfp', icon: 'pi pi-file', label: 'Documents' },
   { to: '/event', icon: 'pi pi-calendar', label: 'Event' },
-  { to: '/votation', icon: 'pi pi-check-square', label: 'Votation' },
+  { to: '/qr', icon: 'pi pi-qrcode', label: 'QR code' },
+  { to: '/votation_lese', icon: 'pi pi-check-square', label: 'Votation' },
   { to: '/game', icon: 'pi pi-star', label: 'Game' },
   // Ajoute ici d'autres outils si besoin
 ];
