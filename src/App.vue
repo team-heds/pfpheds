@@ -16,18 +16,18 @@
       <PwaInstallPrompt />
       <!-- Intégration du widget ConvAI -->
       <ConvaiWidget />
-      <ConvaiWidget /> <!-- Ajout du widget ConvaiWidget -->
 
     </div>
 
     <!-- Loader
+ Loader
     <Loader v-if="isLoading" /> -->
   </div>
 </template>
 
 <script>
 import Toast from 'primevue/toast';
-import ConvaiWidget from './components/ConvaiWidget.vue'; // Import du composant ConvaiWidget
+import ConvaiWidget from '@/components/ConvaiWidget.vue'
 import Loader from '@/components/utils/Loader.vue'; // Import du composant Loader
 import VersionningComponent from './components/utils/VersionningComponent.vue'; // Import du nouveau composant
 import MobileBottomNav from '@/components/Utils/MobileBottomNav.vue';
@@ -44,7 +44,7 @@ export default {
     MobileBottomNav,
     PwaInstallPrompt,
     HeaderIcons,
-    ConvaiWidget // Déclaration du composant ConvaiWidget
+
   },
   data() {
     return {
