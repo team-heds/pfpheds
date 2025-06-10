@@ -19,7 +19,7 @@
     <div v-if="searchQuery.length >= 3" class="search-suggestions">
       <ul v-if="searchResults.length">
         <li v-for="result in searchResults" :key="result.id" @click="goToResult(result)">
-          {{ result.name }}
+          <span class="result-type" v-if="result.type">{{ result.type }}:</span> {{ result.name }}
         </li>
       </ul>
       <div v-else class="no-results">Aucun résultat trouvé</div>
@@ -37,7 +37,9 @@
 import HeaderIcons from '@/components/Utils/HeaderIcons.vue';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-// Adapter fetchSearchResults selon ta logique de recherche
+import { db } from '../../firebase';
+import { ref as firebaseRef, get } from 'firebase/database';
+
 const searchQuery = ref('');
 const searchResults = ref([]);
 const trends = ref([
@@ -54,12 +56,75 @@ const onInput = async () => {
 };
 
 const fetchSearchResults = async () => {
-  // Exemple : à adapter avec ta logique (Firebase, API, etc)
-  // searchResults.value = await ...
-  searchResults.value = [
-    { id: 1, name: 'Résultat exemple 1' },
-    { id: 2, name: 'Résultat exemple 2' },
-  ];
+  searchResults.value = [];
+  if (searchQuery.value.length < 3) return;
+  try {
+    const usersRef = firebaseRef(db, 'Users');
+    const institutionsRef = firebaseRef(db, 'Institutions');
+    const postsRef = firebaseRef(db, 'Posts');
+    const [usersSnap, institutionsSnap, postsSnap] = await Promise.all([
+      get(usersRef).catch(() => null),
+      get(institutionsRef).catch(() => null),
+      get(postsRef).catch(() => null),
+    ]);
+    // USERS
+    if (usersSnap && usersSnap.exists()) {
+      const users = Object.entries(usersSnap.val())
+        .filter(([_, user]) => {
+          const nom = user.Nom || user.nom || '';
+          const prenom = user.Prenom || user.prenom || '';
+          return `${prenom} ${nom}`.toLowerCase().includes(searchQuery.value.toLowerCase());
+        })
+        .map(([id, user]) => ({
+          id,
+          name: `${user.Prenom || user.prenom || ''} ${user.Nom || user.nom || ''}`.trim(),
+          link: `/profile/${id}`,
+          type: 'Utilisateur',
+        }));
+      searchResults.value.push(...users);
+    }
+    // INSTITUTIONS
+    if (institutionsSnap && institutionsSnap.exists()) {
+      const institutions = Object.entries(institutionsSnap.val())
+        .filter(([_, inst]) => {
+          const name = inst.Name || inst.nom || '';
+          const ville = inst.Locality || inst.Ville || '';
+          const canton = inst.Canton || '';
+          return (
+            name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+            ville.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+            canton.toLowerCase().includes(searchQuery.value.toLowerCase())
+          );
+        })
+        .map(([id, inst]) => ({
+          id,
+          name: inst.Name || inst.nom || '',
+          link: `/institution/${id}`,
+          type: 'Institution',
+        }));
+      searchResults.value.push(...institutions);
+    }
+    // POSTS
+    if (postsSnap && postsSnap.exists()) {
+      const posts = Object.entries(postsSnap.val())
+        .filter(([_, post]) => {
+          const title = post.Title || post.titre || '';
+          return title.toLowerCase().includes(searchQuery.value.toLowerCase());
+        })
+        .map(([id, post]) => ({
+          id,
+          name: post.Title || post.titre || '',
+          link: `/post/${id}`,
+          type: 'Post',
+        }));
+      searchResults.value.push(...posts);
+    }
+    if (searchResults.value.length === 0) {
+      searchResults.value.push({ id: 'none', name: 'Aucun résultat trouvé', link: '#', type: '' });
+    }
+  } catch (error) {
+    searchResults.value = [{ id: 'error', name: 'Erreur lors de la recherche', link: '#', type: '' }];
+  }
 };
 
 const performSearch = async () => {
@@ -72,8 +137,9 @@ const clearSearch = () => {
 };
 
 const goToResult = (result) => {
-  // Adapter la navigation selon la nature des résultats
-  // router.push(...)
+  if (result.link && result.link !== '#') {
+    router.push(result.link);
+  }
 };
 </script>
 
@@ -161,5 +227,10 @@ const goToResult = (result) => {
   color: var(--primary-color, #f3c300);
   cursor: pointer;
   margin-bottom: 7px;
+}
+.result-type {
+  font-size: 0.9em;
+  color: var(--text-color-secondary, #999);
+  margin-right: 5px;
 }
 </style>
