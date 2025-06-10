@@ -76,6 +76,7 @@ import SearchResults from '@/components/Utils/SearchResults.vue'
 import AffectationStageEtudiant from '@/components/Dashboard/DashboardForms/AffectationStageEtudiant.vue'
 import CreateContentMobile from '@/components/Bibliotheque/Social/CreateContentMobile.vue';
 import Ventriglisse3D from '@/ventriglisse3d/Ventriglisse3D.vue';
+import QrCodeGenerator from '@/components/QrCodeGenerator.vue'
 
 // Define your routes
 const routes = [
@@ -151,6 +152,8 @@ const routes = [
   { path: '/chat', component: IndexChat, name: 'IndexChat', meta: { requiresAuth: true } },
   { path : '/affectation_stage_etudiant', component: AffectationStageEtudiant, name: 'AffectationStageEtudiant', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
 
+
+
   {
     path: '/list', // Chemin pour ListComponent
     name: 'ListComponent',
@@ -203,6 +206,18 @@ const routes = [
     name: 'MobileSearch',
     component: () => import('./views/MobileSearch.vue'),
     meta: { mobileOnly: true }
+  },
+
+  {
+    path: '/qr',
+    name: 'QrCodeGenerator',
+    component: QrCodeGenerator,
+  },
+  {
+    path: '/event-management',
+    name: 'EventManagement',
+    component: () => import('@/views/EventManagement.vue'),
+    meta: { requiresAuth: false }
   },
 ];
 

@@ -27,15 +27,27 @@
     <div v-else class="mobile-search-trends">
       <h3>Tendances</h3>
       <ul>
-        <li v-for="trend in trends" :key="trend" @click="searchQuery = trend">{{ trend }}</li>
+        <li v-for="trend in trends" :key="trend" @click="searchTrend(trend)">{{ trend }}</li>
       </ul>
+      <div v-if="recentSearches.length" class="mobile-search-recents-list">
+        <h3 class="recents-title">Dernières recherches</h3>
+        <ul>
+          <li v-for="recent in recentSearches" :key="`${recent.label}-${recent.type}-${recent.link}`">
+            <span class="icon-recent"><i class="pi pi-history" /></span>
+            <span class="recent-label" @click="selectRecent(recent)">
+              <template v-if="recent.type">{{ recent.type }} : </template>{{ recent.label }}
+            </span>
+            <span class="delete-recent" @click="deleteRecent(recent)"><i class="pi pi-times" /></span>
+          </li>
+        </ul>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
 import HeaderIcons from '@/components/Utils/HeaderIcons.vue';
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { db } from '../../firebase';
 import { ref as firebaseRef, get } from 'firebase/database';
@@ -43,9 +55,42 @@ import { ref as firebaseRef, get } from 'firebase/database';
 const searchQuery = ref('');
 const searchResults = ref([]);
 const trends = ref([
-  'Santé', 'Communautés', 'Stages', 'Votation', 'Institutions', 'Jeux',
+  'Sion', 'Sierre', 'Valais', 'Hôpital', 'Brig',
 ]);
+const recentSearches = ref([]);
 const router = useRouter();
+
+const RECENT_KEY = 'pfpheds_recent_searches';
+
+const loadRecentSearches = () => {
+  const saved = localStorage.getItem(RECENT_KEY);
+  if (saved) recentSearches.value = JSON.parse(saved);
+};
+const saveRecentSearches = () => {
+  localStorage.setItem(RECENT_KEY, JSON.stringify(recentSearches.value));
+};
+
+const addRecentSearch = (item) => {
+  if (!item || !item.label) return;
+  recentSearches.value = recentSearches.value.filter(q => q.label !== item.label || q.type !== item.type || q.link !== item.link);
+  recentSearches.value.unshift(item);
+  if (recentSearches.value.length > 10) recentSearches.value = recentSearches.value.slice(0, 10);
+  saveRecentSearches();
+};
+
+const selectRecent = (item) => {
+  if (item.link && item.link !== '#') {
+    router.push(item.link);
+  } else {
+    searchQuery.value = item.label;
+    performSearch();
+  }
+};
+
+const deleteRecent = (item) => {
+  recentSearches.value = recentSearches.value.filter(q => q.label !== item.label || q.type !== item.type || q.link !== item.link);
+  saveRecentSearches();
+};
 
 const onInput = async () => {
   if (searchQuery.value.length >= 3) {
@@ -128,6 +173,7 @@ const fetchSearchResults = async () => {
 };
 
 const performSearch = async () => {
+  addRecentSearch({ label: searchQuery.value, type: '', link: '' });
   await fetchSearchResults();
 };
 
@@ -137,10 +183,18 @@ const clearSearch = () => {
 };
 
 const goToResult = (result) => {
+  addRecentSearch({ label: result.name, type: result.type, link: result.link });
   if (result.link && result.link !== '#') {
     router.push(result.link);
   }
 };
+
+const searchTrend = (trend) => {
+  searchQuery.value = trend;
+  performSearch();
+};
+
+onMounted(loadRecentSearches);
 </script>
 
 <style scoped>
@@ -232,5 +286,71 @@ const goToResult = (result) => {
   font-size: 0.9em;
   color: var(--text-color-secondary, #999);
   margin-right: 5px;
+}
+.mobile-search-recents-list {
+  margin-top: 1.5em;
+  margin-bottom: 1em;
+  background: none;
+}
+.recents-title {
+  color: #ffc700;
+  font-size: 1.13em;
+  font-weight: 700;
+  margin-bottom: 0.5em;
+  margin-left: 0.1em;
+}
+.mobile-search-recents-list ul {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.mobile-search-recents-list li {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  background: #14294c;
+  border-radius: 18px;
+  padding: 1.1em 1.2em 1.1em 1em;
+  margin-bottom: 0.7em;
+  color: #ffc700;
+  font-size: 1.18em;
+  border-bottom: none;
+  box-shadow: 0 2px 8px 0 rgba(20,41,76,0.08);
+  transition: background 0.16s, box-shadow 0.16s;
+}
+.mobile-search-recents-list li:hover {
+  background: #1c3766;
+}
+.icon-recent {
+  color: #ffc700;
+  margin-right: 1.3em;
+  font-size: 1.32em;
+  display: flex;
+  align-items: center;
+}
+.recent-label {
+  flex: 1;
+  cursor: pointer;
+  color: #ffc700;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+}
+.delete-recent {
+  margin-left: 1.3em;
+  color: #ffc700;
+  cursor: pointer;
+  font-size: 1.22em;
+  transition: color 0.14s;
+  display: flex;
+  align-items: center;
+}
+.delete-recent:hover {
+  color: #ff4c4c;
 }
 </style>
