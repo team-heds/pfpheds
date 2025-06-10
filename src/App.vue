@@ -20,7 +20,7 @@
     </div>
 
     <!-- Loader
- Loader
+
     <Loader v-if="isLoading" /> -->
   </div>
 </template>
