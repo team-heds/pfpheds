@@ -1,4 +1,5 @@
 import { createApp, reactive } from 'vue';
+import { createPinia } from 'pinia';
 import App from './App.vue';
 import router from './router';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
@@ -115,6 +116,8 @@ import "primeflex/primeflex.css";
 import '@/assets/mobile-scale.css'; 
 
 const app = createApp(App);
+const pinia = createPinia();
+app.use(pinia);
 
 // Ignorer l'élément personnalisé 'elevenlabs-convai'
 app.config.compilerOptions.isCustomElement = (tag) => tag === "elevenlabs-convai";
