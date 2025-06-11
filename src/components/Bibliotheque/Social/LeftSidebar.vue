@@ -66,19 +66,17 @@
   <div class="test-card">
     <h4>Événements à venir</h4>
     <ul class="event-list">
-      <li>
-        <span class="event-title">Afterwork étudiants</span>
-        <span class="event-date">21/05/2025</span>
-      </li>
-      <li>
-        <span class="event-title">Conférence santé</span>
-        <span class="event-date">28/05/2025</span>
+      <li v-for="event in upcomingEvents" :key="event.id">
+        <span class="event-title">{{ event.title }}</span>
+        <span class="event-date">{{ formatSidebarDate(event.date) }}</span>
       </li>
     </ul>
-    <button class="p-button p-button-text event-link">
-      Voir tous les événements
-      <span class="pi pi-arrow-right event-arrow"></span>
-    </button>
+    <router-link to="/event-management">
+      <button class="p-button p-button-text event-link">
+        Voir tous les événements
+        <span class="pi pi-arrow-right event-arrow"></span>
+      </button>
+    </router-link>
   </div>
 
 </template>
@@ -90,6 +88,7 @@ import { getDatabase, ref as dbRef, get, update, onValue } from "firebase/databa
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from '../../../../firebase.js';
 import UserCard from '@/views/apps/chat/UserCard.vue';
+import { inject } from 'vue';
 
 const defaultAvatar = '../../../public/assets/images/avatar/01.jpg';
 
@@ -104,7 +103,8 @@ export default {
         PhotoURL: "" || defaultAvatar,
         id: ""
       },
-      recentConversations: [] // 6 dernières conversations
+      recentConversations: [], // 6 dernières conversations
+      upcomingEvents: [],
     };
   },
   computed: {
@@ -234,7 +234,12 @@ export default {
         console.error("Erreur de déconnexion:", error);
         this.$refs.toast.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur de déconnexion : ' + (error && error.message ? error.message : error), life: 6000 });
       }
-    }
+    },
+    formatSidebarDate(date) {
+      if (!date) return '';
+      if (typeof date === 'string') date = new Date(date);
+      return date.toLocaleDateString('fr-CH', { month: '2-digit', day: '2-digit' });
+    },
   },
   mounted() {
     const auth = getAuth();
@@ -245,6 +250,19 @@ export default {
         this.fetchRecentConversations();
       }
     });
+    // Inject events if provided by parent (EventManagement.vue)
+    if (this.$root && this.$root.$emit) {
+      this.$root.$emit('request-events', (events) => {
+        if (Array.isArray(events)) {
+          // Trier par date croissante et ne garder que les 5 prochains
+          const now = new Date();
+          this.upcomingEvents = events
+            .filter(ev => new Date(ev.date) >= now)
+            .sort((a, b) => new Date(a.date) - new Date(b.date))
+            .slice(0, 5);
+        }
+      });
+    }
   }
 };
 </script>
