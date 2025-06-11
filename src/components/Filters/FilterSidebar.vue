@@ -114,6 +114,7 @@ export default {
   },
   methods: {
     emitFilters() {
+      console.log(this.selectedCantons, this.selectedCriter, this.selectedLanguages, this.selectedPfp);
       // Émission d'un objet regroupant les filtres sélectionnés
       this.$emit("filters-changed", {
         cantons: this.selectedCantons,
