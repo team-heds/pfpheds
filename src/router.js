@@ -126,7 +126,7 @@ const routes = [
   { path: '/votation_preview', component: VotationPreview, name: 'VotationPreview', meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/validation', component: Validation, name: 'Validation', meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/reception', component: Reception, name: 'Reception', meta: { requiresAuth: true, requiredRole: 'admin' } },
-  { path: '/votation', component: VotationView, name: 'VotationView', meta: { requiresAuth: true } },
+  { path: '/votation', component: VotationView, name: 'VotationView', meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/management_votation', component: Management_votation, name: 'Management_votation', meta: { requiresAuth: true, requiredRole: 'admin' } }, // Protect this route
   { path: '/info_repondant', component: InfoRepondant, name: 'InfoRepondant', meta: { requiresAuth: true, requiredRole: ['admin', 'enseignant'] } },
   { path: '/management_votation_lese', component: Management_votation_lese, name: 'Management_votation_lese', meta: { requiresAuth: true, requiredRole: 'lese' } }, // Protect this route

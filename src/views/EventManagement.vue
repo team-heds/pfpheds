@@ -22,25 +22,47 @@
                 <Textarea v-model="newEvent.description" required placeholder="Description" class="w-full" autoResize rows="3" />
               </div>
               <div class="form-group">
-                <label>Date</label>
-                <Calendar v-model="newEvent.date" dateFormat="dd/mm/yy" class="w-full" showIcon />
+                <label>Date et heure de début</label>
+                <Calendar v-model="newEvent.startDate" showTime hourFormat="24" dateFormat="dd/mm/yy" class="w-full" showIcon />
+              </div>
+              <div class="form-group">
+                <label>Date et heure de fin</label>
+                <Calendar v-model="newEvent.endDate" showTime hourFormat="24" dateFormat="dd/mm/yy" class="w-full" showIcon />
+              </div>
+              <div class="form-group">
+                <label>Type d'événement</label>
+                <Dropdown v-model="newEvent.type" :options="TYPE_OPTIONS" optionLabel="label" optionValue="value" placeholder="Sélectionner le type" class="w-full" />
+              </div>
+              <div class="form-group" v-if="newEvent.type === 'private'">
+                <label>Rôle dédié</label>
+                <Dropdown v-model="newEvent.role" :options="ROLE_OPTIONS" optionLabel="label" optionValue="value" placeholder="Sélectionner le rôle" class="w-full" />
               </div>
               <Button type="submit" label="Créer" class="p-button-primary w-full mt-2" icon="pi pi-plus-circle" />
             </form>
           </template>
         </Card>
+
+        
         <div class="event-list-scrollable">
           <h3>Événements à venir</h3>
-          <div v-if="events.length === 0" class="empty">Aucun événement pour l'instant.</div>
-          <div v-for="event in events" :key="event.id" class="event-card-beautiful">
+          <div v-if="eventStore.events.length === 0" class="empty">Aucun événement pour l'instant.</div>
+          <div v-for="event in eventStore.events" :key="event.id" class="event-card-beautiful">
             <div class="event-card-header">
-              <span class="event-date-pill"><i class="pi pi-calendar"></i> {{ formatDate(event.date) }}</span>
+              <span class="event-date-pill"><i class="pi pi-calendar"></i> {{ formatDate(event.startDate) }} - {{ formatDate(event.endDate) }}</span>
               <Button icon="pi pi-heart" :label="event.likes.toString()" class="p-button-rounded p-button-text p-button-danger event-like-btn" :severity="event.liked ? 'danger' : undefined" @click="likeEvent(event)" />
             </div>
             <div class="event-title-main">{{ event.title }}</div>
             <div class="event-description-main">{{ event.description }}</div>
+            <div class="event-details">
+              <span class="event-type">Type : {{ event.type === 'private' ? 'Privé' : 'Public' }}</span>
+              <span v-if="event.type === 'private' && event.role">| Rôle : {{ event.role }}</span>
+            </div>
             <div class="event-card-footer">
-              <Button icon="pi pi-user-plus" :label="event.registered ? 'Inscrit !' : 'S\'inscrire'" class="p-button-rounded p-button-primary event-register-btn" :severity="event.registered ? 'success' : 'primary'" @click="registerEvent(event)" />
+              <Button icon="pi pi-user-plus"
+        :label="event.registered && event.registered.includes(userId) ? 'Inscrit !' : 'S\'inscrire'"
+        class="p-button-rounded p-button-primary event-register-btn"
+        :severity="event.registered && event.registered.includes(userId) ? 'success' : 'primary'"
+        @click="registerEvent(event)" />
             </div>
           </div>
         </div>
@@ -55,46 +77,75 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, getCurrentInstance } from 'vue';
+import { ref, computed, onMounted, inject } from 'vue';
+import { useEventStore } from '@/stores/eventStore';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
 import Card from 'primevue/card';
 import Calendar from 'primevue/calendar';
+import Dropdown from 'primevue/dropdown';
 import LeftSidebar from '@/components/Bibliotheque/Social/LeftSidebar.vue';
 import RightSidebar from '@/components/Bibliotheque/Social/RightSidebar.vue';
 import Navbar from '@/components/Utils/Navbar.vue';
 import MobileBottomNav from '@/components/Utils/MobileBottomNav.vue';
 
-const events = ref([]);
-const newEvent = ref({ title: '', description: '', date: '' });
+const eventStore = useEventStore();
+const ROLE_OPTIONS = [
+  { label: 'Site Loeche', value: 'siteLoeche' },
+  { label: 'BA24', value: 'BA24' },
+  { label: 'BA23', value: 'BA23' },
+  { label: 'BA22', value: 'BA22' },
+  { label: 'Student', value: 'student' },
+  { label: 'Manuel', value: 'manuel' }
+];
+const TYPE_OPTIONS = [
+  { label: 'Public', value: 'public' },
+  { label: 'Privé', value: 'private' }
+];
+
+const newEvent = ref({
+  title: '',
+  description: '',
+  startDate: '',
+  endDate: '',
+  type: '',
+  role: ''
+});
+
+onMounted(() => {
+  eventStore.listenEvents();
+});
 
 function addEvent() {
-  if (!newEvent.value.title || !newEvent.value.description || !newEvent.value.date) return;
-  events.value.unshift({
-    id: Date.now(),
+  if (!newEvent.value.title || !newEvent.value.description || !newEvent.value.startDate || !newEvent.value.endDate || !newEvent.value.type || (newEvent.value.type === 'private' && !newEvent.value.role)) return;
+  const eventToSend = {
     title: newEvent.value.title,
     description: newEvent.value.description,
-    date: newEvent.value.date,
-    likes: 0,
-    liked: false,
-    registered: false,
-  });
-  newEvent.value = { title: '', description: '', date: '' };
+    startDate: newEvent.value.startDate,
+    endDate: newEvent.value.endDate,
+    type: newEvent.value.type,
+    role: newEvent.value.type === 'private' ? newEvent.value.role : null,
+    admin: userId.value
+  };
+  console.log('event envoyé', eventToSend);
+  eventStore.addEvent(eventToSend);
+  newEvent.value = { title: '', description: '', startDate: '', endDate: '', type: '', role: '' };
 }
 
 function likeEvent(event) {
-  if (!event.liked) {
-    event.likes++;
-    event.liked = true;
-  } else {
-    event.likes--;
-    event.liked = false;
-  }
+  eventStore.updateEvent(event.id, {
+    likes: event.liked ? event.likes - 1 : event.likes + 1,
+    liked: !event.liked
+  });
 }
 
+const userState = inject('userState');
+const userId = computed(() => userState?.user?.uid || null);
+
 function registerEvent(event) {
-  event.registered = !event.registered;
+  if (!userId.value) return; // Optionnel : afficher une alerte si non connecté
+  eventStore.toggleRegistration(event.id, userId.value, event.registered);
 }
 
 function formatDate(date) {
@@ -118,17 +169,7 @@ const top5Events = computed(() => {
     .slice(0, 5);
 });
 
-// Provide events to LeftSidebar via event bus ($root)
-onMounted(() => {
-  const instance = getCurrentInstance();
-  if (instance && instance.proxy && instance.proxy.$root && instance.proxy.$root.$on) {
-    instance.proxy.$root.$on('request-events', (cb) => {
-      if (typeof cb === 'function') {
-        cb(events.value);
-      }
-    });
-  }
-});
+
 </script>
 
 <style scoped>
