@@ -108,6 +108,7 @@ import Tag from 'primevue/tag';
 import LeftSidebar from '@/components/Bibliotheque/Social/LeftSidebar.vue';
 import FilterSidebar from '@/components/Filters/FilterSidebar.vue';
 import HeaderIcons from '@/components/Utils/HeaderIcons.vue';
+import filterData from '@/components/Filters/filter.json';
 
 export default {
   name: 'Institutions',
@@ -138,31 +139,46 @@ export default {
   },
   computed: {
     filteredInstitutions() {
-      let institutions = this.allInstitutions;
-      if (this.searchTerm) {
-        const search = this.searchTerm.toLowerCase();
-        institutions = institutions.filter(inst =>
-          (inst.Name && inst.Name.toLowerCase().includes(search)) ||
-          (inst.Locality && inst.Locality.toLowerCase().includes(search)) ||
-          (inst.InstitutionId && String(inst.InstitutionId).toLowerCase().includes(search)) ||
-          (inst.Canton && inst.Canton.toLowerCase().includes(search))
-        );
+  return this.allInstitutions.filter(inst => {
+    // Recherche textuelle
+    if (this.searchTerm) {
+      const search = this.searchTerm.toLowerCase();
+      if (!(
+        (inst.Name && inst.Name.toLowerCase().includes(search)) ||
+        (inst.Locality && inst.Locality.toLowerCase().includes(search)) ||
+        (inst.InstitutionId && String(inst.InstitutionId).toLowerCase().includes(search)) ||
+        (inst.Canton && inst.Canton.toLowerCase().includes(search))
+      )) {
+        return false;
       }
-      // Filtrage sidebar
-      if (this.activeFilters.cantons.length > 0) {
-        institutions = institutions.filter(inst => this.activeFilters.cantons.includes(inst.Canton));
+    }
+    // Recherche l'entrée correspondante dans filterData
+    const entry = filterData.find(item => item.IDPlace === inst.InstitutionId);
+    // Filtre par canton
+    if (this.activeFilters.cantons.length > 0 && (!inst.Canton || !this.activeFilters.cantons.includes(inst.Canton))) {
+      return false;
+    }
+    // Filtre par critères généraux
+    if (this.activeFilters.criter.length > 0) {
+      if (!entry || !this.activeFilters.criter.every(c => entry.criteria.includes(c))) {
+        return false;
       }
-      if (this.activeFilters.criter.length > 0) {
-        institutions = institutions.filter(inst => this.activeFilters.criter.some(crit => (inst.Criteres || []).includes(crit)));
+    }
+    // Filtre par langue (l'institution doit avoir toutes les langues sélectionnées)
+    if (this.activeFilters.languages.length > 0) {
+      if (!entry || !this.activeFilters.languages.every(lang => entry.criteria.includes(lang))) {
+        return false;
       }
-      if (this.activeFilters.pfp.length > 0) {
-        institutions = institutions.filter(inst => this.activeFilters.pfp.some(pfp => inst[pfp] && inst[pfp] !== 0));
+    }
+    // Filtre par PFP
+    if (this.activeFilters.pfp.length > 0) {
+      if (!entry || !this.activeFilters.pfp.every(pfp => entry.criteria.includes(pfp))) {
+        return false;
       }
-      if (this.activeFilters.languages.length > 0) {
-        institutions = institutions.filter(inst => this.activeFilters.languages.includes(inst.Language));
-      }
-      return institutions;
-    },
+    }
+    return true;
+  });
+},
   },
   methods: {
     truncateText(text, length) {
@@ -211,8 +227,6 @@ export default {
     goToDetails(id) {
       if (id) {
         this.$router.push({ name: 'InstitutionView', params: { id: id } });
-      } else {
-        console.error("L'ID est indéfini pour cette institution.");
       }
     },
     handleSidebarFilters(filters) {

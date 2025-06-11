@@ -180,9 +180,9 @@ const filteredInstitutions = computed(() => {
         return false;
       }
     }
-    // Filtre par langue
+    // Filtre par langue (l'institution doit avoir toutes les langues sélectionnées)
     if (selectedFilters.value.languages.length > 0) {
-      if (!entry || !entry.criteria.some(c => selectedFilters.value.languages.includes(c))) {
+      if (!entry || !selectedFilters.value.languages.every(lang => entry.criteria.includes(lang))) {
         return false;
       }
     }
