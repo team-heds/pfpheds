@@ -1,4 +1,5 @@
 <template>
+  <Navbar />
   <div class="ventriglisse3d-container">
     <form class="participants-form" @submit.prevent="applyParticipants">
       <div v-for="(p, idx) in editableParticipants" :key="idx" class="participant-row">
@@ -55,8 +56,11 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { AnimationMixer } from 'three';
 import floorTextureImg from './assets/floor.png';
 import wallTextureImg from './assets/wall.png';
-import cafeteriaImg from './assets/cafeteria.jpeg';
+import wallLeftImg from './assets/cafte1.png';
+import wallRightImg from './assets/cafte2.png';
+import cafeteriaImg from './assets/cafte3.png';
 import Dialog from 'primevue/dialog';
+import Navbar from '@/components/Utils/Navbar.vue';
 
 // Liste modifiable par l'utilisateur
 const defaultParticipants = [
@@ -152,6 +156,12 @@ function setupScene() {
   const wallTexture = textureLoader.load(wallTextureImg);
   wallTexture.wrapS = wallTexture.wrapT = THREE.RepeatWrapping;
   wallTexture.repeat.set(10, 4);
+  const wallLeftTexture = textureLoader.load(wallLeftImg);
+  wallLeftTexture.wrapS = wallLeftTexture.wrapT = THREE.ClampToEdgeWrapping;
+  wallLeftTexture.repeat.set(1, 1);
+  const wallRightTexture = textureLoader.load(wallRightImg);
+  wallRightTexture.wrapS = wallRightTexture.wrapT = THREE.ClampToEdgeWrapping;
+  wallRightTexture.repeat.set(1, 1);
   const cafeteriaTexture = textureLoader.load(cafeteriaImg);
 
   // Sol
@@ -213,12 +223,12 @@ function setupScene() {
   // Murs (gauche, droite, fond, devant)
   const wallGeometry = new THREE.PlaneGeometry(120 + 40, 16); // Hauteur doublée
   // Mur gauche
-  const wallLeft = new THREE.Mesh(wallGeometry, new THREE.MeshPhongMaterial({ map: wallTexture }));
+  const wallLeft = new THREE.Mesh(wallGeometry, new THREE.MeshPhongMaterial({ map: wallLeftTexture }));
   wallLeft.position.set(-(getTrackLength()/2), 8, -120 / 2); // milieu hauteur
   wallLeft.rotation.y = Math.PI / 2;
   scene.add(wallLeft);
   // Mur droit
-  const wallRight = new THREE.Mesh(wallGeometry, new THREE.MeshPhongMaterial({ map: wallTexture }));
+  const wallRight = new THREE.Mesh(wallGeometry, new THREE.MeshPhongMaterial({ map: wallRightTexture }));
   wallRight.position.set(getTrackLength()/2, 8, -120 / 2);
   wallRight.rotation.y = -Math.PI / 2;
   scene.add(wallRight);
