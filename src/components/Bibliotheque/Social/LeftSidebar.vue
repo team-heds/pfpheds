@@ -63,31 +63,22 @@
   </div>
 
   <!-- Nouvelle card "test" sous la sidebar -->
- <div class="test-card">
-  <h4>Mes événements à venir</h4>
-  <ul class="event-list">
-    <li v-for="event in registeredEvents" :key="event.id">
-      <span class="event-title">{{ event.title }}</span>
-      <span class="event-date">{{ formatSidebarDate(event.startDate) }}</span>
-    </li>
-    <li v-if="registeredEvents.length === 0" class="empty">Aucun événement inscrit.</li>
-  </ul>
-  <h4 style="margin-top:1em;">Autres événements accessibles</h4>
-  <ul class="event-list">
-    <li v-for="event in accessibleEvents" :key="event.id">
-      <span class="event-title">{{ event.title }}</span>
-      <span class="event-date">{{ formatSidebarDate(event.startDate) }}</span>
-    </li>
-    <li v-if="accessibleEvents.length === 0" class="empty">Aucun autre événement à venir.</li>
-  </ul>
-  <router-link to="/event-management">
-    <button class="p-button p-button-text event-link">
-      Voir tous les événements
-      <span class="pi pi-arrow-right event-arrow"></span>
-    </button>
-  </router-link>
-</div>
- 
+  <div class="test-card">
+    <h4>Événements à venir</h4>
+    <ul class="event-list">
+      <li v-for="event in upcomingEvents" :key="event.id">
+        <span class="event-title">{{ event.title }}</span>
+        <span class="event-date">{{ formatSidebarDate(event.date) }}</span>
+      </li>
+    </ul>
+    <router-link to="/event-management">
+      <button class="p-button p-button-text event-link">
+        Voir tous les événements
+        <span class="pi pi-arrow-right event-arrow"></span>
+      </button>
+    </router-link>
+  </div>
+
 </template>
 <script>
 import Avatar from "primevue/avatar";
@@ -97,8 +88,7 @@ import { getDatabase, ref as dbRef, get, update, onValue } from "firebase/databa
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from '../../../../firebase.js';
 import UserCard from '@/views/apps/chat/UserCard.vue';
-import { inject, computed } from 'vue';
-import { useEventStore } from '@/stores/eventStore';
+import { inject } from 'vue';
 
 const defaultAvatar = '../../../public/assets/images/avatar/01.jpg';
 
@@ -114,49 +104,10 @@ export default {
         id: ""
       },
       recentConversations: [], // 6 dernières conversations
-
+      upcomingEvents: [],
     };
   },
   computed: {
-    userId() {
-      // Si tu utilises Pinia ou un autre système, adapte ici
-      const userState = this.$root?.$?.appContext.provides?.userState;
-      return userState?.user?.uid || null;
-    },
-    eventStore() {
-      return useEventStore();
-    },
-    events() {
-      return this.eventStore.events;
-    },
-    registeredEvents() {
-      const now = new Date();
-      return this.events
-        .filter(ev => {
-          const reg = this.toArray(ev.registered);
-          return this.userId && reg.includes(this.userId) && new Date(ev.startDate) >= now;
-        })
-        .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
-    },
-    accessibleEvents() {
-      const now = new Date();
-      const already = new Set(this.registeredEvents.map(ev => ev.id));
-      return this.events
-        .filter(ev => {
-          const reg = this.toArray(ev.registered);
-          return !already.has(ev.id)
-            && new Date(ev.startDate) >= now
-            && (
-              ev.type === 'public'
-              || (ev.type === 'private' && (
-                (ev.role && this.userId && this.$root?.$?.appContext.provides?.userState?.user?.role === ev.role)
-                || ev.admin === this.userId
-              ))
-            );
-        })
-        .sort((a, b) => new Date(a.startDate) - new Date(b.startDate))
-        .slice(0, 5);
-    },
     userFullName() {
       return `${this.user.prenom} ${this.user.nom}`.trim() || "Utilisateur";
     },
@@ -290,73 +241,6 @@ export default {
       return date.toLocaleDateString('fr-CH', { month: '2-digit', day: '2-digit' });
     },
   },
-  methods: {
-    toArray(val) {
-      if (Array.isArray(val)) return val;
-      if (val && typeof val === 'object') return Object.values(val);
-      return [];
-    },
-    async fetchUserProfile(uid) {
-      const db = getDatabase();
-      const userRef = dbRef(db, `Users/${uid}`);
-      const snapshot = await get(userRef);
-      if (snapshot.exists()) {
-        const userData = snapshot.val();
-        console.log("Utilisateur trouvé :", userData); // Debugging
-        this.user = {
-          prenom: userData.Prenom || "",
-          nom: userData.Nom || "",
-          PhotoURL: userData.PhotoURL || defaultAvatar,
-          id: uid
-        };
-      } else {
-        console.log("Aucun utilisateur trouvé avec l'UID :", uid);
-      }
-    },
-    async fetchRecentConversations() {
-      const auth = getAuth();
-      const currentUser = auth.currentUser;
-      if (!currentUser) return;
-      const userId = currentUser.uid;
-      const db = getDatabase();
-      const conversationsRef = dbRef(db, 'conversations');
-      onValue(conversationsRef, async (snapshot) => {
-        const data = snapshot.val() || {};
-        console.log('[DEBUG] userId courant:', userId);
-        console.log('[DEBUG] conversations node complet:', data);
-        // Nouvelle logique adaptée à la structure
-        let convs = Object.entries(data)
-          .filter(([key, conv]) => key.includes(userId))
-          .map(([key, conv]) => {
-            const [id1, id2] = key.split('-');
-            const otherUserId = id1 === userId ? id2 : id1;
-            return {
-              id: key,
-              otherUserId,
-              lastReceivedMessageAt: conv.lastReceivedMessageAt || 0
-            };
-          });
-        console.log('Conversations trouvées:', convs);
-        // Trier par date décroissante
-        convs.sort((a, b) => (b.lastReceivedMessageAt || 0) - (a.lastReceivedMessageAt || 0));
-        convs = convs.slice(0, 6);
-        // Récupérer les infos de l'autre utilisateur
-        const dbUsers = dbRef(db, 'Users');
-        const usersSnap = await get(dbUsers);
-        const usersData = usersSnap.val() || {};
-        this.recentConversations = convs.map(conv => {
-          const userData = usersData[conv.otherUserId];
-          if (!userData) return null;
-          return {
-            ...userData,
-            id: conv.otherUserId,
-            lastReceivedMessageAt: conv.lastReceivedMessageAt
-          };
-        }).filter(u => u && u.id);
-        console.log('Utilisateurs à afficher:', this.recentConversations);
-      });
-    },
-  },
   mounted() {
     const auth = getAuth();
     onAuthStateChanged(auth, (user) => {
@@ -370,7 +254,12 @@ export default {
     if (this.$root && this.$root.$emit) {
       this.$root.$emit('request-events', (events) => {
         if (Array.isArray(events)) {
-          this.allEvents = events;
+          // Trier par date croissante et ne garder que les 5 prochains
+          const now = new Date();
+          this.upcomingEvents = events
+            .filter(ev => new Date(ev.date) >= now)
+            .sort((a, b) => new Date(a.date) - new Date(b.date))
+            .slice(0, 5);
         }
       });
     }
