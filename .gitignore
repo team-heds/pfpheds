@@ -31,3 +31,5 @@ coverage
 
 # IDE
 firebase.js
+
+dev-dist/
