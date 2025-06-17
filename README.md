@@ -98,13 +98,45 @@ Des automatisations synchronisent les statuts Jira en fonction des actions sur G
 
 ## 4. 🧩 Structure des données principales (Firestore Realtime DB)
 
-> À compléter selon les collections/documents utilisés (exemple):
->
-> - `/users` : profils utilisateurs, rôles, infos personnelles
-> - `/documents` : fichiers partagés, métadonnées, droits d’accès
-> - `/offers` : offres de stage/emploi
-> - `/votes` : résultats et paramètres de votation
-> - `/notifications` : messages temps réel
+# Architecture des Données & Usage Applicatif
+
+## Vue d’ensemble
+
+L’application repose sur une base de données structurée en JSON autour de collections principales représentant les acteurs (utilisateurs, enseignants, étudiants), les contenus (posts, fichiers, stories), les interactions (votes, conversations, événements) et les entités organisationnelles (institutions, communautés, places).
+
+
+---
+
+
+## Schéma des Collections Principales
+
+| Collection            | Description                                                                                 |
+|-----------------------|---------------------------------------------------------------------------------------------|
+| **Users**             | Profils utilisateurs (étudiants, enseignants, praticiens, etc.)                             |
+| **Students**          | Données spécifiques aux étudiants                                                           |
+| **Enseignants**       | Profils enseignants, gestion des encadrants                                                 |
+| **PraticienFormateurs** | Profils hybrides praticiens/enseignants                                                   |
+| **Communities**       | Groupes d’intérêt, communautés thématiques                                                  |
+| **Institutions**      | Établissements partenaires, lieux d’affectation                                             |
+| **Places**            | Lieux physiques (salles, cabinets, etc.)                                                    |
+| **Posts**             | Publications des utilisateurs                                                               |
+| **Stories**           | Contenus temporaires à la manière des réseaux sociaux                                       |
+| **FilePFPPhysio**     | Fichiers pédagogiques et ressources                                                         |
+| **HashTags**          | Système de tags pour catégoriser et filtrer les contenus                                    |
+| **Votation**          | Processus de vote, sessions de sondage                                                      |
+| **VotationLese**      | Votes consultés ou réservés à certains rôles                                                |
+| **VotationsResult**   | Résultats des votes                                                                         |
+| **ResultatVotationAlgo** | Résultats calculés par des algorithmes de vote                                           |
+| **ValidationEnAttente** | Éléments en attente de validation (inscriptions, signatures, etc.)                        |
+| **SignatureAssigments** | Assignations de signatures électroniques                                                  |
+| **Answer**            | Réponses à des sondages, quiz, ou évaluations                                               |
+| **Conversations**     | Messages privés ou discussions de groupe                                                    |
+| **Events**            | Événements (cours, réunions, webinaires, etc.)                                              |
+
+
+---
+
+
 
 ---
 
