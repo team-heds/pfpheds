@@ -28,8 +28,8 @@
 <script>
 import Toast from 'primevue/toast';
 import ConvaiWidget from '@/components/ConvaiWidget.vue'
-import Loader from '@/components/utils/Loader.vue'; // Import du composant Loader
-import VersionningComponent from './components/utils/VersionningComponent.vue'; // Import du nouveau composant
+import Loader from '@/components/Utils/Loader.vue'; // Import du composant Loader
+import VersionningComponent from './components/Utils/VersionningComponent.vue'; // Import du nouveau composant
 import MobileBottomNav from '@/components/Utils/MobileBottomNav.vue';
 import PwaInstallPrompt from '@/components/Utils/PwaInstallPrompt.vue';
 import HeaderIcons from '@/components/Utils/HeaderIcons.vue'

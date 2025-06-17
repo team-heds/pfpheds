@@ -25,7 +25,7 @@ L'équipe suit une méthode Agile afin d'assurer un développement itératif, co
 
 ### ⚙️ Automatisations
 
-Des automatisations synchronisent les statuts Jira en fonction des actions sur GitHub/GitLab (ex : PR ouverte → "Code Review").
+Des automatisations synchronisent les statuts Jira en fonction des actions sur GitHub (ex : PR ouverte → "Code Review").
 
 ---
 
@@ -33,7 +33,7 @@ Des automatisations synchronisent les statuts Jira en fonction des actions sur G
 
 ### 🖥️ Frontend
 
-- **Framework** : Vue.js 3 + Composition API
+- **Framework** : Vue.js 3 
 - **UI Library** : PrimeVue (custom theme)
 - **Bundler** : Vite.js
 - **PWA** : manifest.json + Service Worker intégré
@@ -81,7 +81,6 @@ Des automatisations synchronisent les statuts Jira en fonction des actions sur G
 │   └── views/                    # Pages principales (routes)
 │       ├── apps/
 │       ├── dashboards/
-│       ├── e-commerce/
 │       ├── pages/
 │       ├── uikit/
 │       ├── user-management/
@@ -201,5 +200,17 @@ npm run build
 - Ne jamais partager les clés Firebase/publics sensibles.
 - Toujours passer par des Pull Requests pour valider le code.
 - Documentation des composants et services obligatoire.
+
+---
+
+## 8. 📚 Équipe & Ressources
+
+### Membres de l'équipe
+- **Chefs de projet** : [Christophe Baur]
+- **Développeurs** : [Antoine Quarroz, Loïc Berthod]
+- **Designers** : [Antoine Quarroz]
+- **Backend** : [Loïc Berthod]
+- **Contributeurs** : [Yohan Hoolman, Sabine Schär]
+- **Stagiaires** : [Lauraine Savoy]
 
 ---
