@@ -17,11 +17,11 @@ L'équipe suit une méthode Agile afin d'assurer un développement itératif, co
 
 1. Création de User Stories (avec sous-tâches Frontend / Backend) dans Jira.
 2. Le développeur prend une tâche "À faire", l'assigne, et la passe en "En cours".
-3. Création d'une branche Git : `feature/JIRA-xxx-nom-tache`
+3. Création d'une branche Git : `HEDS25--nom-tache`
 4. Développement avec commits référencés Jira.
 5. Création d'une Pull/Merge Request vers `develop`, puis revue de code.
-6. Une fois validée, fusion dans `develop`, puis regroupement dans `prod` pour test.
-7. Après validation finale, fusion dans `main` pour mise en production.
+6. Une fois validée, fusion dans `develop`, puis regroupement dans `main` pour test.
+7. Après validation finale, fusion dans `prod` pour mise en production.
 
 ### ⚙️ Automatisations
 
@@ -48,7 +48,7 @@ Des automatisations synchronisent les statuts Jira en fonction des actions sur G
 
 ### 🚀 Déploiement
 
-- **FileZilla** (FTP)
+- **GitHub Action** (GitHub + FTP)
 - **Hébergement** : Infomaniak
 
 ---
@@ -145,16 +145,16 @@ L’application repose sur une base de données structurée en JSON autour de co
 
 ### Branches secondaires
 
-- `newBranch` : nouvelles fonctionnalités, partent de `develop`
-- `newBranchFix` : corrections de bugs
-- `newBranchHotFix` : corrections urgentes en production (partent de `prod`)
+- `HEDS25-xxx` : nouvelles fonctionnalités, partent de `develop`
+- `HEDS25-xxx-Fix` : corrections de bugs
+- `HEDS25-xxx-HotFix` : corrections urgentes en production (partent de `prod`)
 
 ### Exemple de cycle
 
 ```
-newBranch   ──┐
+HEDS25-xxx  ──┐
               ├─> develop ──┬─> main ─┬─> prod
-newBranch   ──┘             │         │
+HEDS25-xxx  ──┘             │         │
    (PR + review)         (PR + review)│
                                       │
                                   (PR + review)
