@@ -96,7 +96,50 @@ Des automatisations synchronisent les statuts Jira en fonction des actions sur G
 
 ---
 
-## 4. 🧩 Structure des données principales (Firestore Realtime DB)
+## 4. 🚦 Workflow Git & Stratégie de branches
+
+### Branches principales
+
+- `develop` : branche de travail principale (intégration continue, toutes les features sont mergées ici)
+- `main` : branche stable, pré-production (merge validé depuis `develop`)
+- `prod` : branche de production (release officielle, merge validé depuis `main`)
+
+### Branches secondaires
+
+- `newBranch` : nouvelles fonctionnalités, partent de `develop`
+- `newBranchFix` : corrections de bugs
+- `newBranchHotFix` : corrections urgentes en production (partent de `prod`)
+
+### Exemple de cycle
+
+```
+newBranch   ──┐
+              ├─> develop ──┬─> main ──┬─> prod
+newBranch   ──┘             │         │
+   (PR + review)         (PR + review)│
+                                      │
+                                  (PR + review)
+```
+
+### Protection des branches sur GitHub
+
+1. Va dans **Settings > Branches** de ton repo GitHub
+2. Ajoute une règle de protection pour chaque branche :
+   - `develop`
+   - `main`
+   - `prod`
+3. Configure les protections suivantes :
+   - Require a pull request before merging
+   - Require approvals (1 ou 2 reviewers)
+   - Require status checks to pass before merging (lint/tests si existants)
+   - Require branches to be up to date before merging
+   - Include administrators
+
+👉 [Guide officiel GitHub](https://docs.github.com/fr/repositories/configuring-branches-and-merges-in-your-repository/managing-branches-in-your-repository/configuring-protected-branches)
+
+---
+
+## 5. 🧩 Structure des données principales (Firestore Realtime DB)
 
 > À compléter selon les collections/documents utilisés (exemple):
 >
@@ -108,7 +151,7 @@ Des automatisations synchronisent les statuts Jira en fonction des actions sur G
 
 ---
 
-## 5. 🛠️ Installation et lancement
+## 6. 🛠️ Installation et lancement
 
 ```bash
 git clone <repo>
@@ -123,10 +166,30 @@ npm run dev
 npm run build
 ```
 
-## 6. 🔒 Sécurité & bonnes pratiques
+---
+
+## 7. 🔒 Sécurité & bonnes pratiques
 
 - Ne jamais partager les clés Firebase/publics sensibles.
 - Toujours passer par des Pull Requests pour valider le code.
+- Respecter la structure des branches (`feature/`, `bugfix/`, `hotfix/`).
 - Documentation des composants et services obligatoire.
+
+---
+
+## 8. 🤝 Contribution
+
+1. Fork le projet
+2. Crée une branche (`git checkout -b feature/ma-feature`)
+3. Commit tes changements (`git commit -am 'feat: ajout nouvelle feature'`)
+4. Push la branche (`git push origin feature/ma-feature`)
+5. Ouvre une Pull Request
+
+---
+
+## 9. 👤 Contacts & support
+
+- Antoine Quarroz et contributeurs
+- Pour toute question, ouvre une issue ou contacte l’équipe projet.
 
 ---
