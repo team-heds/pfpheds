@@ -37,7 +37,7 @@
 <script setup>
 import { ref, onMounted, nextTick, watch } from 'vue'
 import mermaid from 'mermaid'
-import { db } from '../../../firebase.js'
+import { db } from '@/../firebase.js'
 import { ref as dbRef, onValue, set } from 'firebase/database'
 import Navbar from '@/components/Utils/Navbar.vue'
 
