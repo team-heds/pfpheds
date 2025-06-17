@@ -7,7 +7,7 @@ const price = ref(0);
 const chartData = ref(null);
 const chartOptions = ref(null);
 const payments = ref([
-    { name: 'Electric Bill', amount: 75.6, paid: true, date: '06/04/2022' },
+    { name: 'Electsric Bill', amount: 75.6, paid: true, date: '06/04/2022' },
     { name: 'Water Bill', amount: 45.5, paid: true, date: '07/04/2022' },
     { name: 'Gas Bill', amount: 45.2, paid: false, date: '12/04/2022' },
     { name: 'Internet Bill', amount: 25.9, paid: true, date: '17/04/2022' },
