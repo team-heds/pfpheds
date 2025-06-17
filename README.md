@@ -41,7 +41,7 @@ Des automatisations synchronisent les statuts Jira en fonction des actions sur G
 
 ### 🔙 Backend
 
-- **API** : Firebase Cloud Functions (Node.js)
+- **VPS** :  Infomaniak - Node.js / Python
 - **Auth** : Firebase Auth (email/password)
 - **Database** : Firestore Realtime DB
 - **Fichiers** : Firebase Storage
