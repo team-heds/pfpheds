@@ -96,9 +96,9 @@ Des automatisations synchronisent les statuts Jira en fonction des actions sur G
 
 ---
 
-## 4. 🧩 Structure des données principales (Firestore)
+## 4. 🧩 Structure des données principales (Firestore Realtime DB)
 
-> À compléter selon les collections/documents utilisés (exemple) :
+> À compléter selon les collections/documents utilisés (exemple):
 >
 > - `/users` : profils utilisateurs, rôles, infos personnelles
 > - `/documents` : fichiers partagés, métadonnées, droits d’accès
@@ -123,37 +123,10 @@ npm run dev
 npm run build
 ```
 
-### Lancer sur mobile (Capacitor)
-
-```bash
-npx cap sync
-npx cap open android   # ou ios
-```
-
----
-
 ## 6. 🔒 Sécurité & bonnes pratiques
 
 - Ne jamais partager les clés Firebase/publics sensibles.
 - Toujours passer par des Pull Requests pour valider le code.
-- Respecter la structure des branches (`feature/`, `bugfix/`, `hotfix/`).
 - Documentation des composants et services obligatoire.
-
----
-
-## 7. 🤝 Contribution
-
-1. Fork le projet
-2. Crée une branche (`git checkout -b feature/ma-feature`)
-3. Commit tes changements (`git commit -am 'feat: ajout nouvelle feature'`)
-4. Push la branche (`git push origin feature/ma-feature`)
-5. Ouvre une Pull Request
-
----
-
-## 8. 👤 Contacts & support
-
-- Antoine Quarroz et contributeurs
-- Pour toute question, ouvre une issue ou contacte l’équipe projet.
 
 ---
