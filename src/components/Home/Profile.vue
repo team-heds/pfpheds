@@ -26,7 +26,6 @@
 <script>
 import { ref, reactive, onMounted } from 'vue';
 import { getDatabase, ref as dbRef, get } from 'firebase/database';
-import { ref as storageRef, getDownloadURL } from 'firebase/storage';
 import Navbar from '@/components/Utils/Navbar.vue';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
@@ -35,9 +34,8 @@ import ResumStageUserProfile from '@/components/UserProfile/ResumStageUserProfil
 import DocumentsUserProfile from '@/components/UserProfile/DocumentsUserProfile.vue';
 import ChatProfil from '@/components/UserProfile/ChatProfil.vue';
 import AppDarkAndLightMode from '@/layout/AppDarkAndLightMode.vue';
-import { storage } from '../../../firebase.js';
-import LeftSidebar from '@/components/Bibliotheque/Social/LeftSidebar.vue';
-import RightSidebar from '@/components/Bibliotheque/Social/RightSidebar.vue';
+
+
 
 export default {
   name: 'Profile',
