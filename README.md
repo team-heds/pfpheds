@@ -153,7 +153,7 @@ L’application repose sur une base de données structurée en JSON autour de co
 
 ```
 newBranch   ──┐
-              ├─> develop ──┬─> main ──┬─> prod
+              ├─> develop ──┬─> main ─┬─> prod
 newBranch   ──┘             │         │
    (PR + review)         (PR + review)│
                                       │
