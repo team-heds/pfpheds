@@ -2,7 +2,7 @@
   <!-- Insertion du composant Navbar -->
   <Navbar />
 
-  <div class="grid">
+  <div class="grid scrollable-container">
     <!-- Parcours de chaque dossier -->
     <div class="col-12 md:col-12">
       <div class="grid">
@@ -356,5 +356,16 @@ const saveNewFile = async (newFile) => {
 .add-file-button {
   margin-top: 1rem;
   text-align: center;
+}
+
+.scrollable-container {
+  overflow-y: auto;
+  height: 100vh;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-bottom: 12rem;
+}
+.scrollable-container::-webkit-scrollbar {
+  display: none;
 }
 </style>
