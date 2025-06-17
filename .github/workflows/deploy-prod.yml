@@ -75,5 +75,5 @@ jobs:
           local-dir: ./dist/
           server-dir: /
           passive: true
-          concurrency: 2
+          concurrency: 1
           verbose: true
