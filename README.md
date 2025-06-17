@@ -41,7 +41,7 @@ Des automatisations synchronisent les statuts Jira en fonction des actions sur G
 
 ### 🔙 Backend
 
-- **API** : Firebase Cloud Functions (Node.js)
+- **VPS** :  Infomaniak - Node.js / Python
 - **Auth** : Firebase Auth (email/password)
 - **Database** : Firestore Realtime DB
 - **Fichiers** : Firebase Storage
@@ -96,7 +96,46 @@ Des automatisations synchronisent les statuts Jira en fonction des actions sur G
 
 ---
 
-## 4. 🚦 Workflow Git & Stratégie de branches
+## 4. 🧩 Structure des données principales (Firestore Realtime DB)
+
+# Architecture des Données & Usage Applicatif
+
+## Vue d’ensemble
+
+L’application repose sur une base de données structurée en JSON autour de collections principales représentant les acteurs (utilisateurs, enseignants, étudiants), les contenus (posts, fichiers, stories), les interactions (votes, conversations, événements) et les entités organisationnelles (institutions, communautés, places).
+
+
+---
+
+
+## Schéma des Collections Principales
+
+| Collection            | Description                                                                                 |
+|-----------------------|---------------------------------------------------------------------------------------------|
+| **Users**             | Profils utilisateurs (étudiants, enseignants, praticiens, etc.)                             |
+| **Students**          | Données spécifiques aux étudiants                                                           |
+| **Enseignants**       | Profils enseignants, gestion des encadrants                                                 |
+| **PraticienFormateurs** | Profils hybrides praticiens/enseignants                                                   |
+| **Communities**       | Groupes d’intérêt, communautés thématiques                                                  |
+| **Institutions**      | Établissements partenaires, lieux d’affectation                                             |
+| **Places**            | Lieux physiques (salles, cabinets, etc.)                                                    |
+| **Posts**             | Publications des utilisateurs                                                               |
+| **Stories**           | Contenus temporaires à la manière des réseaux sociaux                                       |
+| **FilePFPPhysio**     | Fichiers pédagogiques et ressources                                                         |
+| **HashTags**          | Système de tags pour catégoriser et filtrer les contenus                                    |
+| **Votation**          | Processus de vote, sessions de sondage                                                      |
+| **VotationLese**      | Votes consultés ou réservés à certains rôles                                                |
+| **VotationsResult**   | Résultats des votes                                                                         |
+| **ResultatVotationAlgo** | Résultats calculés par des algorithmes de vote                                           |
+| **ValidationEnAttente** | Éléments en attente de validation (inscriptions, signatures, etc.)                        |
+| **SignatureAssigments** | Assignations de signatures électroniques                                                  |
+| **Answer**            | Réponses à des sondages, quiz, ou évaluations                                               |
+| **Conversations**     | Messages privés ou discussions de groupe                                                    |
+| **Events**            | Événements (cours, réunions, webinaires, etc.)                                              |
+
+
+---
+## 5. 🚦 Workflow Git & Stratégie de branches
 
 ### Branches principales
 
@@ -139,15 +178,6 @@ newBranch   ──┘             │         │
 
 ---
 
-## 5. 🧩 Structure des données principales (Firestore Realtime DB)
-
-> À compléter selon les collections/documents utilisés (exemple):
->
-> - `/users` : profils utilisateurs, rôles, infos personnelles
-> - `/documents` : fichiers partagés, métadonnées, droits d’accès
-> - `/offers` : offres de stage/emploi
-> - `/votes` : résultats et paramètres de votation
-> - `/notifications` : messages temps réel
 
 ---
 
@@ -166,30 +196,10 @@ npm run dev
 npm run build
 ```
 
----
-
 ## 7. 🔒 Sécurité & bonnes pratiques
 
 - Ne jamais partager les clés Firebase/publics sensibles.
 - Toujours passer par des Pull Requests pour valider le code.
-- Respecter la structure des branches (`feature/`, `bugfix/`, `hotfix/`).
 - Documentation des composants et services obligatoire.
-
----
-
-## 8. 🤝 Contribution
-
-1. Fork le projet
-2. Crée une branche (`git checkout -b feature/ma-feature`)
-3. Commit tes changements (`git commit -am 'feat: ajout nouvelle feature'`)
-4. Push la branche (`git push origin feature/ma-feature`)
-5. Ouvre une Pull Request
-
----
-
-## 9. 👤 Contacts & support
-
-- Antoine Quarroz et contributeurs
-- Pour toute question, ouvre une issue ou contacte l’équipe projet.
 
 ---
