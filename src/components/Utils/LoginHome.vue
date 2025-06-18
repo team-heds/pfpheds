@@ -51,6 +51,7 @@
         <p class="mt-4 text-sm text-center">
           <a type="button" @click="resetPassword" class="text-primary font-bold hover:underline bg-transparent border-0 cursor-pointer p-0">Mot de passe oublié ?</a>
         </p>
+
       </div>
     </div>
 
