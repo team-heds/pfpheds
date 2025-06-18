@@ -49,7 +49,7 @@
 
         <!-- Lien mot de passe oublié -->
         <p class="mt-4 text-sm text-center">
-          <a href="/reset-password" class="text-primary font-bold hover:underline">Mot de passe oublié ?</a>
+          <a type="button" @click="resetPassword" class="text-primary font-bold hover:underline bg-transparent border-0 cursor-pointer p-0">Mot de passe oublié ?</a>
         </p>
       </div>
     </div>
@@ -60,7 +60,7 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { useToast } from "primevue/usetoast";
 import InputText from "primevue/inputtext";
 import Password from "primevue/password";
@@ -114,6 +114,36 @@ const submitForm = async () => {
       summary: "Erreur de connexion",
       detail: messages[error.code] || "Une erreur est survenue.",
       life: 5000,
+    });
+  }
+};
+
+// Méthode pour réinitialiser le mot de passe
+const resetPassword = async () => {
+  emailError.value = !email.value || !email.value.includes("@");
+  if (emailError.value) {
+    toast.add({
+      severity: "warn",
+      summary: "Email requis",
+      detail: "Veuillez entrer votre email pour recevoir un lien de réinitialisation.",
+      life: 3000,
+    });
+    return;
+  }
+  try {
+    await sendPasswordResetEmail(auth, email.value);
+    toast.add({
+      severity: "success",
+      summary: "Email envoyé",
+      detail: "Un lien de réinitialisation a été envoyé à votre adresse email.",
+      life: 4000,
+    });
+  } catch (error) {
+    toast.add({
+      severity: "error",
+      summary: "Erreur",
+      detail: error.message || "Erreur lors de l'envoi de l'email.",
+      life: 4000,
     });
   }
 };
