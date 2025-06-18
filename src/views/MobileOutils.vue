@@ -28,6 +28,7 @@ const outils = [
   { to: '/qr', icon: 'pi pi-qrcode', label: 'QR code' },
   { to: '/votation_lese', icon: 'pi pi-check-square', label: 'Votation' },
   { to: '/game', icon: 'pi pi-star', label: 'Game' },
+  { to: '/lang-apps', icon: 'pi pi-globe', label: 'Apps langues' },
   // Ajoute ici d'autres outils si besoin
 ];
 
