@@ -210,7 +210,7 @@ npm run build
 - **Développeurs** : [Antoine Quarroz, Loïc Berthod]
 - **Designers** : [Antoine Quarroz]
 - **Backend** : [Loïc Berthod]
-- **Contributeurs** : [Yohan Houlmann, Sabine Schär]
+- **Contributeurs** : [Yohan Houlmann, Sabine Cina]
 - **Stagiaires** : [Lauraine Savoy]
 
 ---
