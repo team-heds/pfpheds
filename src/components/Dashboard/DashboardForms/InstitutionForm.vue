@@ -1,6 +1,6 @@
 <template>
   <Navbar />
-  <div class="surface-section px-4 py-8 md:px-6 lg:px-8">
+  <div class="surface-section px-4 py-8 md:px-6 lg:px-8 institution-form-scroll">
     <section class="text-white text-center py-5 rounded-lg">
       <h1 class="text-5xl font-bold">Soumettre une nouvelle institution</h1>
     </section>
@@ -28,24 +28,28 @@
                 <Divider />
                 <div class="grid formgrid">
                   <div class="field col-12 md:col-6">
-                    <label for="name">Nom de l'institution</label>
-                    <InputText id="name" v-model="institution.Name" class="w-full" />
+                    <label for="name">Nom de l'institution <span class="text-danger">*</span></label>
+                    <InputText id="name" v-model="institution.Name" class="w-full" required :class="{'p-invalid': submitted && !institution.Name}" placeholder="Nom de l'institution" />
+                    <small v-if="submitted && !institution.Name" class="p-error">Champ requis</small>
                   </div>
                   <div class="field col-12 md:col-6">
-                    <label for="langue">Langue</label>
-                    <Dropdown id="langue" v-model="institution.Language" :options="langues" optionLabel="name" optionValue="code" class="w-full" />
+                    <label for="langue">Langue <span class="text-danger">*</span></label>
+                    <Dropdown id="langue" v-model="institution.Language" :options="langues" optionLabel="name" optionValue="code" class="w-full" required :class="{'p-invalid': submitted && !institution.Language}" placeholder="Sélectionner la langue" />
+                    <small v-if="submitted && !institution.Language" class="p-error">Champ requis</small>
                   </div>
                   <div class="field col-12 md:col-6">
-                    <label for="locality">Localité</label>
-                    <InputText id="locality" v-model="institution.Locality" class="w-full" />
+                    <label for="locality">Localité <span class="text-danger">*</span></label>
+                    <InputText id="locality" v-model="institution.Locality" class="w-full" required :class="{'p-invalid': submitted && !institution.Locality}" placeholder="Localité" />
+                    <small v-if="submitted && !institution.Locality" class="p-error">Champ requis</small>
                   </div>
                   <div class="field col-12 md:col-6">
-                    <label for="canton">Canton</label>
-                    <Dropdown id="canton" v-model="institution.Canton" :options="cantons" optionLabel="name" optionValue="code" class="w-full" />
+                    <label for="canton">Canton <span class="text-danger">*</span></label>
+                    <Dropdown id="canton" v-model="institution.Canton" :options="cantons" optionLabel="name" optionValue="code" class="w-full" required :class="{'p-invalid': submitted && !institution.Canton}" placeholder="Sélectionner le canton" />
+                    <small v-if="submitted && !institution.Canton" class="p-error">Champ requis</small>
                   </div>
                   <div class="field col-12 md:col-6">
                     <label for="address">Adresse</label>
-                    <InputText id="address" v-model="institution.Address" class="w-full" />
+                    <InputText id="address" v-model="institution.Address" class="w-full" placeholder="Adresse" />
                   </div>
                   <div class="field col-6 md:col-3">
                     <label for="latitude">Latitude</label>
@@ -57,23 +61,23 @@
                   </div>
                   <div class="field col-12 md:col-4">
                     <label for="url">URL</label>
-                    <InputText id="url" v-model="institution.URL" class="w-full" />
+                    <InputText id="url" v-model="institution.URL" class="w-full" placeholder="URL" />
                   </div>
                   <div class="field col-12 md:col-4">
                     <label for="nomchef">Nom, Prénom du chef</label>
-                    <InputText id="nomchef" v-model="institution.NomChef" class="w-full" />
+                    <InputText id="nomchef" v-model="institution.NomChef" class="w-full" placeholder="Nom, Prénom du chef" />
                   </div>
                   <div class="field col-12 md:col-4">
                     <label for="phonechef">Téléphone du chef</label>
-                    <InputText id="phonechef" v-model="institution.PhoneChef" class="w-full" />
+                    <InputText id="phonechef" v-model="institution.PhoneChef" class="w-full" placeholder="Téléphone du chef" />
                   </div>
                   <div class="field col-12 md:col-4">
                     <label for="mailchef">Mail du chef</label>
-                    <InputText id="mailchef" v-model="institution.MailChef" class="w-full" />
+                    <InputText id="mailchef" v-model="institution.MailChef" class="w-full" placeholder="Mail du chef" />
                   </div>
                   <div class="col-12">
                     <label for="description">Description</label>
-                    <Textarea id="description" v-model="institution.Description" rows="3" class="w-full" />
+                    <Textarea id="description" v-model="institution.Description" rows="3" class="w-full" placeholder="Décrivez brièvement l'institution" />
                   </div>
                 </div>
               </div>
@@ -101,11 +105,11 @@
                   </div>
                   <div class="field col-12 md:col-6">
                     <label for="conventionDate">Date de Convention</label>
-                    <Calendar id="conventionDate" v-model="institution.ConventionDate" dateFormat="yy-mm-dd" />
+                    <Calendar id="conventionDate" v-model="institution.ConventionDate" :showIcon="true" placeholder="Date de convention" dateFormat="dd-mm-yy" />
                   </div>
                   <div class="field col-12 md:col-6">
                     <label for="accordCadreDate">Date de l'Accord Cadre</label>
-                    <Calendar id="accordCadreDate" v-model="institution.AccordCadreDate" dateFormat="yy-mm-dd" />
+                    <Calendar id="accordCadreDate" v-model="institution.AccordCadreDate" :showIcon="true" placeholder="Date de l'accord cadre" dateFormat="dd-mm-yy" />
                   </div>
                   <div class="field col-12">
                     <label for="note">Remarques</label>
@@ -125,8 +129,9 @@
                     </h6>
                     <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFileChange" />
                     <p class="mt-2">Seulement JPG, JPEG et PNG. Dimensions suggérées: 600px * 450px.</p>
+                    <img v-if="institution.ImageURL" :src="institution.ImageURL" alt="Preview" class="mt-3 mx-auto" style="max-width:200px;max-height:150px;border-radius:8px;" />
                   </div>
-                  <Button type="button" label="Supprimer l'image" class="p-button-danger mt-2" icon="pi pi-trash" @click="removeImage" />
+                  <Button v-if="institution.ImageURL" type="button" label="Supprimer l'image" class="p-button-danger mt-2" icon="pi pi-trash" @click="removeImage" />
                 </div>
                 <div class="field mt-4">
                   <label for="imageUrl">URL de l'image</label>
@@ -147,7 +152,7 @@
             <div class="flex justify-content-between mt-5">
               <Button v-if="activeIndex > 0" type="button" label="Précédent" class="p-button-secondary" @click="goToPrevStep" />
               <Button v-if="activeIndex < steps.length - 1" type="button" label="Suivant" class="p-button-primary ml-auto" @click="goToNextStep" />
-              <Button v-if="activeIndex === steps.length - 1" type="submit" label="Envoyer" class="p-button-primary ml-auto" />
+              <Button v-if="activeIndex === steps.length - 1" type="submit" label="Envoyer" class="p-button-primary ml-auto" :disabled="loading" />
             </div>
           </form>
         </div>
@@ -170,6 +175,12 @@ import Calendar from 'primevue/calendar';
 import Navbar from '@/components/Utils/Navbar.vue'
 import Checkbox from 'primevue/checkbox';
 
+function parseDateLocal(dateStr) {
+  if (!dateStr) return null;
+  const [year, month, day] = dateStr.split('-');
+  return new Date(Number(year), Number(month) - 1, Number(day));
+}
+
 export default {
   name: 'InstitutionForm',
   components: {
@@ -185,7 +196,8 @@ export default {
   },
   data() {
     return {
-      activeIndex: 1,
+      activeIndex: 0,
+      submitted: false,
       steps: [
         { label: 'Détails de l\'institution' },
         { label: 'Informations supplémentaires' },
@@ -241,6 +253,8 @@ export default {
         { code: 'ANG', name: 'Anglais' },
         { code: 'BIL', name: 'Bilingue' }
       ],
+      errorMsg: '',
+      loading: false,
     };
   },
   methods: {
@@ -255,27 +269,43 @@ export default {
       }
     },
     async envoyerDonnees() {
+      this.submitted = true;
+      this.errorMsg = '';
+      // Validation simple des champs requis de la première étape
+      if (!this.institution.Name || !this.institution.Language || !this.institution.Locality || !this.institution.Canton) {
+        this.activeIndex = 0;
+        this.errorMsg = 'Veuillez remplir tous les champs obligatoires.';
+        return;
+      }
+      this.loading = true;
       try {
+        // Conversion des dates en string ISO (yyyy-mm-dd)
+        const dataToSend = {
+          ...this.institution,
+          ConventionDate: this.institution.ConventionDate
+            ? this.institution.ConventionDate.toLocaleDateString('fr-CA')
+            : '',
+          AccordCadreDate: this.institution.AccordCadreDate
+            ? this.institution.AccordCadreDate.toLocaleDateString('fr-CA')
+            : '',
+        };
         const newInstRef = push(ref(db, 'Institutions'));
         const newInstKey = newInstRef.key;
-        this.institution.key = newInstKey;
-
-
+        dataToSend.key = newInstKey;
         // Upload de l'image si sélectionnée
         if (this.imageFile) {
-          // On utilise "storage" importé, et storageRef
           const imageRef = storageRef(storage, `Institutions/${newInstKey}/image`);
           await uploadBytes(imageRef, this.imageFile);
           const imageURL = await getDownloadURL(imageRef);
-          this.institution.ImageURL = imageURL;
+          dataToSend.ImageURL = imageURL;
         }
-
-        await set(newInstRef, this.institution);
-
-        // Redirection vers le tableau de bord après succès
+        await set(newInstRef, dataToSend);
         this.$router.push('/institution_list');
       } catch (error) {
+        this.errorMsg = "Erreur lors de l'envoi des données : " + error.message;
         console.error("Erreur lors de l'envoi des données :", error);
+      } finally {
+        this.loading = false;
       }
     },
     onFileChange(event) {
@@ -290,10 +320,27 @@ export default {
       this.institution.ImageURL = '';
     },
   },
+  mounted() {
+    if (this.institution.ConventionDate && typeof this.institution.ConventionDate === 'string') {
+      this.institution.ConventionDate = parseDateLocal(this.institution.ConventionDate);
+    }
+    if (this.institution.AccordCadreDate && typeof this.institution.AccordCadreDate === 'string') {
+      this.institution.AccordCadreDate = parseDateLocal(this.institution.AccordCadreDate);
+    }
+  },
 };
 </script>
 
 <style scoped>
+.institution-form-scroll {
+  overflow-y: auto;
+  height: 100vh;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.institution-form-scroll::-webkit-scrollbar {
+  display: none;
+}
 .fade-slide-enter-active, .fade-slide-leave-active {
   transition: all 0.4s cubic-bezier(0.4,0,0.2,1);
 }
@@ -308,4 +355,5 @@ export default {
 .hidden {
   display: none;
 }
+.text-danger { color: #ff5252; }
 </style>

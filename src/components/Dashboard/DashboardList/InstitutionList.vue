@@ -1,7 +1,8 @@
 <template>
   <div class="admin-scrollable">
     <Navbar />
-    <div class="filter-menu">
+    <h1 style="margin: 2rem 0 1rem 0; text-align: center;" class="m-8">Liste des institutions</h1>
+    <div style="margin: 0 2rem;">
       <DataTable
         :value="filteredInstitutions"
         :paginator="true"
@@ -13,41 +14,44 @@
         :loading="loading"
         :globalFilterFields="['Name', 'Address', 'Locality', 'Canton', 'InstitutionId']"
       >
-        <!-- Table Header -->
         <template #header>
-          <div class="flex justify-content-between flex-column sm:flex-row">
-            <Button label="Ajouter une institution" icon="pi pi-plus" class="mb-2 mr-2" outlined @click="goToInstitutionForm" />
-            <IconField iconPosition="left">
-              <InputIcon class="pi pi-search" />
-              <InputText v-model="searchTerm" placeholder="Rechercher" style="width: 100%" />
-            </IconField>
+          <div style="display: flex; justify-content: space-between; align-items: center;" class="mr-5" >
+            <Button label="Ajouter une institution" icon="pi pi-plus" outlined @click="goToInstitutionForm" class="ml-5"  />
+            <span style="flex: 1"></span>
+            <span>
+              <InputText v-model="searchTerm" placeholder="Rechercher" />
+              <i class="pi pi-search" style="margin-left: -2rem; color: #aaa;"></i>
+            </span>
           </div>
         </template>
-
-        <!-- Empty and Loading States -->
         <template #empty> Aucun institution trouvée. </template>
         <template #loading> Chargement des données des institutions. Veuillez patienter. </template>
-
-        <!-- Table Columns -->
-        <Column field="InstitutionId" header="ID" style="min-width: 6rem" class="text-center">
+        <Column field="InstitutionId" header="ID">
           <template #body="{ data }">{{ data.InstitutionId }}</template>
         </Column>
-        <Column field="Name" header="Nom de l'institution" style="min-width: 12rem" class="text-center">
+        <Column field="Name" header="Nom de l'institution">
           <template #body="{ data }">{{ data.Name }}</template>
         </Column>
-        <Column field="Address" header="Adresse" style="min-width: 12rem" class="text-center">
+        <Column field="Address" header="Adresse">
           <template #body="{ data }">{{ data.Address }}</template>
         </Column>
-        <Column field="Locality" header="Localité" style="min-width: 6rem" class="text-center">
+        <Column field="Locality" header="Localité">
           <template #body="{ data }">{{ data.Locality }}</template>
         </Column>
-        <Column field="Canton" header="Canton" style="min-width: 6rem" class="text-center">
+        <Column field="Canton" header="Canton">
           <template #body="{ data }">{{ data.Canton }}</template>
         </Column>
-        <Column field="AccordCadreDate" header="Accord Cadre" style="min-width: 12rem" class="text-center">
-          <template #body="{ data }">{{ data.AccordCadreDate }}</template>
+        <Column field="AccordCadreDate" header="Accord Cadre">
+          <template #body="{ data }">
+            {{ formatDateFr(data.AccordCadreDate) }}
+          </template>
         </Column>
-        <Column header="Action" style="min-width: 22rem" class="text-center">
+        <Column field="ConventionDate" header="Date de convention">
+          <template #body="{ data }">
+            {{ formatDateFr(data.ConventionDate) }}
+          </template>
+        </Column>
+        <Column header="Action">
           <template #body="{ data }">
             <Button label="Détails" class="mb-2 mr-2" size="small" outlined @click="goToDetails(data.InstitutionId)" />
             <Button label="Modifier" class="mb-2 mr-2" size="small" outlined severity="success" @click="goToInstitutionFormModif(data.InstitutionId)" />
@@ -66,8 +70,6 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
-import IconField from 'primevue/iconfield';
-import InputIcon from 'primevue/inputicon';
 import Navbar from '@/components/Utils/Navbar.vue';
 import { useToast } from 'primevue/usetoast';
 
@@ -78,8 +80,6 @@ export default {
     Column,
     InputText,
     Button,
-    IconField,
-    InputIcon,
     Navbar
   },
   data() {
@@ -156,22 +156,25 @@ export default {
       } else {
         console.error("ID is undefined for this institution.");
       }
-    }
+    },
+    formatDateFr(dateStr) {
+      if (!dateStr) return '';
+      const [year, month, day] = dateStr.split('-');
+      return `${day}-${month}-${year}`;
+    },
   }
 };
 </script>
 
 <style scoped>
 .admin-scrollable {
-  overflow-y: auto;
   height: 100vh;
+  overflow-y: auto;
+  padding-bottom: 2rem;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
 .admin-scrollable::-webkit-scrollbar {
   display: none;
-}
-.filter-menu {
-  margin: 1rem;
 }
 </style>
