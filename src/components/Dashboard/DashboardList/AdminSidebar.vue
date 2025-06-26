@@ -71,7 +71,6 @@ const menu = ref([
         icon: 'pi pi-fw pi-comment',
         items: [
           { label: 'Management PFP EN cours', icon: 'pi pi-fw pi-image', to: '/management_pfpencours' },
-          { label: 'Création PFP', icon: 'pi pi-fw pi-image', to: '/pfp_details' },
           { label: 'Gantt PFP', icon: 'pi pi-fw pi-image', to: '/gantt' },
           { label: 'Management Places', icon: 'pi pi-cog', to: '/management_places' },
           { label: 'Management Places Safe', icon: 'pi pi-cog', to: '/management_places_safe' },
