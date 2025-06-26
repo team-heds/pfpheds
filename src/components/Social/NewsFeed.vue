@@ -66,6 +66,7 @@ export default {
   flex-direction: column;
   gap: 1rem;
   box-sizing: border-box;
+  /* background: rgba(255,0,0,0.08);  temporaire debug retiré */
 }
 
 /* Masquer la barre de défilement dans le MainFeed */
@@ -90,7 +91,7 @@ export default {
     grid-template-columns: 0.8fr 2.5fr 0.8fr;
     gap: 1rem;
   }
-  
+
   .sidebar-left, .sidebar-right {
     font-size: 0.9rem;
   }
@@ -156,7 +157,6 @@ html, body, #app {
   height: 100vh !important;
   min-height: 100vh !important;
   max-height: 100vh !important;
-  overflow: hidden !important;
   margin: 0 !important;
   padding: 0 !important;
   box-sizing: border-box;

@@ -13,7 +13,9 @@ export default defineConfig({
   },
   plugins: [
     vue(),
-    VueDevTools(),
+    VueDevTools({
+      launchEditor: 'phpstorm',
+    }),
     VitePWA({
       registerType: 'autoUpdate',
       workbox: {

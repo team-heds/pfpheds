@@ -226,6 +226,11 @@ const routes = [
     name: 'MobileLangApps', 
     meta: { mobileOnly: true } 
   },
+  {
+    path: '/notes',
+    name: 'NotesWorkspace',
+    component: () => import('./views/NotesWorkspace.vue')
+  },
 ];
 
 // Create router instance
