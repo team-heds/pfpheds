@@ -231,7 +231,7 @@ export default {
       this.$router.push("/documents_pfp");
     },
     goToTools() {
-      this.$router.push("/mobile-outils");
+      this.$router.push("/outils");
     },
     async goToLogout() {
       const auth = getAuth();

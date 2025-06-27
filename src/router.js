@@ -78,6 +78,7 @@ import CreateContentMobile from '@/components/Bibliotheque/Social/CreateContentM
 import Ventriglisse3D from '@/ventriglisse3d/Ventriglisse3D.vue';
 import QrCodeGenerator from '@/components/QrCodeGenerator.vue'
 import MobileLangApps from '@/views/MobileLangApps.vue';
+import Outils from '@/views/Outils.vue';
 
 // Define your routes
 const routes = [
@@ -230,6 +231,12 @@ const routes = [
     path: '/notes',
     name: 'NotesWorkspace',
     component: () => import('./views/NotesWorkspace.vue')
+  },
+  {
+    path: '/outils', 
+    component: Outils, 
+    name: 'Outils', 
+    meta: { requiresAuth: true } 
   },
 ];
 

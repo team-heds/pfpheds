@@ -1,4 +1,5 @@
 <template>
+  <Navbar />
   <div class="landing-bg">
     <div class="landing-container">
       <h1 class="p-text-center">Générateur de QR Code</h1>
@@ -56,6 +57,7 @@ import ColorPicker from 'primevue/colorpicker'
 import Checkbox from 'primevue/checkbox'
 import InputNumber from 'primevue/inputnumber'
 import Button from 'primevue/button'
+import Navbar from '@/components/Utils/Navbar.vue';
 
 const url = ref('https://')
 const size = ref(240)
