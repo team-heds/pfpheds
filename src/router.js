@@ -79,6 +79,7 @@ import Ventriglisse3D from '@/ventriglisse3d/Ventriglisse3D.vue';
 import QrCodeGenerator from '@/components/QrCodeGenerator.vue'
 import MobileLangApps from '@/views/MobileLangApps.vue';
 import Outils from '@/views/Outils.vue';
+import Game from '@/views/Game.vue';
 
 // Define your routes
 const routes = [
@@ -236,6 +237,12 @@ const routes = [
     path: '/outils', 
     component: Outils, 
     name: 'Outils', 
+    meta: { requiresAuth: true } 
+  },
+  {
+    path: '/game', 
+    component: Game, 
+    name: 'Game', 
     meta: { requiresAuth: true } 
   },
 ];
