@@ -53,7 +53,7 @@ const allOutils = [
   { to: '/votation_lese', icon: 'pi pi-check-square', label: 'Votation' },
   { to: '/game', icon: 'pi pi-star', label: 'Game' },
   { to: '/lang-apps', icon: 'pi pi-globe', label: 'Apps langues' },
-  // Ajoute ici d'autres outils si besoin
+  { to: '/notes', icon: 'pi pi-book', label: 'Notes' },
 ];
 
 const isMobile = ref(false);
@@ -65,8 +65,9 @@ onMounted(() => {
 });
 
 const outils = computed(() => {
-  if (isMobile.value) return allOutils;
-  // Desktop: ne garder que QR code, Game, Apps Langues
+  // Desktop: QR code, Game, Apps Langues, Notes
+  if (!isMobile.value) return allOutils.filter(o => ['QR code', 'Game', 'Apps langues', 'Notes'].includes(o.label));
+  // Mobile: QR code, Game, Apps Langues (pas Notes)
   return allOutils.filter(o => ['QR code', 'Game', 'Apps langues'].includes(o.label));
 });
 

@@ -80,6 +80,7 @@ import QrCodeGenerator from '@/components/QrCodeGenerator.vue'
 import MobileLangApps from '@/views/MobileLangApps.vue';
 import Outils from '@/views/Outils.vue';
 import Game from '@/views/Game.vue';
+import NotesWorkspace from '@/views/NotesWorkspace.vue';
 
 // Define your routes
 const routes = [
@@ -231,7 +232,8 @@ const routes = [
   {
     path: '/notes',
     name: 'NotesWorkspace',
-    component: () => import('./views/NotesWorkspace.vue')
+    component: NotesWorkspace,
+    meta: { requiresAuth: true }
   },
   {
     path: '/outils', 
