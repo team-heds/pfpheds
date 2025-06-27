@@ -150,7 +150,7 @@ setPersistence(auth, browserLocalPersistence).then(() => {
 
 <style scoped>
 /* ✅ Ajustements pour la navbar */
-.desktop-nav { 
+.desktop-nav {
   display: flex;
   flex-direction: column;
   padding-left: 10rem;

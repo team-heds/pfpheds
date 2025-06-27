@@ -1,115 +1,50 @@
 <template>
   <div class="pfp-en-cours">
-    <!-- Section Formation pratique en cours -->
     <h5 class="mb-5">Formation pratique en cours</h5>
-    <div v-if="assignments.length">
+    <div v-if="assignedPlaces.length">
       <div class="grid">
         <div
-          v-for="(assignment, index) in assignments"
-          :key="assignment._key"
-          class="surfaces-card shadow-2  mb-3 flex flex-column gap-2"
-          style="min-height: 200px"
+          v-for="(place, idx) in assignedPlaces"
+          :key="place._key || idx"
+          class="surfaces-card shadow-2 mb-3 flex flex-column gap-2"
+          style="min-height: 120px; border-radius: 2rem; background: var(--surface-card);"
         >
-          <!-- En-tête de la carte avec titre et bouton -->
-          <div class="flex align-items-center">
-            <h4 class="m-0">Formation Pratique en cours</h4>
-            <div class="flex align-items-center m-2">
-              <Button
-                label="Voir les détails"
-                icon="pi pi-arrow-right"
-                class="text-sm p-button-outlined p-button-primary"
-                @click="viewAssignmentDetails(assignment)"
-              />
-            </div>
-
+          <!-- Ligne du titre + bouton Voir les détails aligné à droite -->
+          <div class="flex align-items-center justify-content-between mb-2" style="height: 32px;">
+            <h4 class="m-0">Formation Pratique attribuée</h4>
+            <Button
+              label="Voir les détails"
+              icon="pi pi-arrow-right"
+              class="text-sm p-button-outlined p-button-primary details-btn ml-3"
+              style="height: 32px; width: 200px; min-width: 200px;"
+              @click="navigateToInstitution(place.IDPlace)"
+            />
           </div>
-
-          <!-- Bloc d'informations de l'affectation -->
           <div>
             <h6 class="m-2 font-bold">
-              {{ assignment.institutionName }}
+              {{ getInstitutionNameById(place.IDPlace) }}
             </h6>
             <p class="m-2">
-              Domaine : {{ assignment.NomPlace }} | Critères validités :
-              {{ assignment.validCriteria }}
+              Domaine : {{ place.NomPlace }}<br />
+              Critères : {{ getValidCriterias(place).join(', ') }}<br />
+              <span v-if="getPraticienFormateurInfos(place)">
+                Praticien formateur :
+                <b>{{ getPraticienFormateurInfos(place) }}</b><br />
+                <span v-if="getPraticienFormateurContact(place)">
+                  Contact :
+                  <a :href="'mailto:' + getPraticienFormateurContact(place)" class="text-primary font-bold" style="text-decoration: underline;">
+                    {{ getPraticienFormateurContact(place) }}
+                  </a>
+                </span>
+              </span>
             </p>
-            <p class="m-2">
-              Praticien Formateur : {{ assignment.praticienNom }} {{ assignment.praticienPrenom }} |
-              <a
-                :href="'mailto:' + assignment.praticienMail"
-                style="color: var(--text-primary); text-decoration: underline"
-              >
-                {{ assignment.praticienMail }}
-              </a>
-            </p>
           </div>
-
-          <!-- Bloc Documents liés -->
-          <div>
-            <h6 class="m-2">Documents liés à cette formation pratique</h6>
-            <div v-if="upload[assignment._key] && upload[assignment._key].length > 0" class="mt-2">
-              <ul class="list-none p-0 m-2">
-                <li
-                  v-for="(doc, docIndex) in upload[assignment._key]"
-                  :key="doc.docId"
-                  class="flex align-items-center justify-content-between mb-2 gap-2"
-                >
-                  <!-- Affichage du nom du document avec clic pour l'ouvrir -->
-                  <span
-                    style="cursor: pointer; text-decoration: underline"
-                    @click="openDocument(doc.documentURL)"
-                    title="Cliquez pour ouvrir ce document"
-                  >
-                    {{ doc.fileName }}
-                  </span>
-                  <!-- Boutons pour renommage et suppression -->
-                  <div v-if="doc.isRenaming" class="flex align-items-center gap-2">
-                    <input type="text" v-model="doc.tempName" style="width: 200px" />
-                    <Button
-                      label="Enregistrer"
-                      class="text-sm p-button-success"
-                      @click="saveDocName(assignment._key, doc)"
-                    />
-                    <Button
-                      label="Annuler"
-                      class="text-sm p-button-secondary"
-                      @click="cancelRename(doc)"
-                    />
-                  </div>
-                  <div v-else class="flex align-items-center gap-2">
-                    <Button
-                      icon="pi pi-trash"
-                      class="text-sm p-button-danger"
-                      @click="confirmDelete(assignment._key, doc.docId, doc.fileName)"
-                    />
-                  </div>
-                </li>
-              </ul>
-            </div>
-            <div v-else class="m-2">
-              <p class="text-secondary">Aucun document pour cette formation.</p>
-            </div>
-          </div>
-
-          <!-- Sélection et upload de nouveaux fichiers -->
-          <div class="flex justify-content-end align-items-center gap-8 w-6 m-2">
-            <FileUpload
-              mode="basic"
-              customUpload
-              multiple
-              chooseLabel="Sélectionner"
-              @select="($event) => handleFileSelection($event, assignment._key)"
-            />
-            <Button
-              label="Envoyer documents"
-              class="text-sm p-button-outlined p-button-primary"
-              @click="uploadDocuments(assignment._key)"
-            />
-          </div>
+          <!-- Documents -->
         </div>
       </div>
     </div>
     <div v-else>
+      <!-- Si aucune affectation n'est trouvée pour cet utilisateur, ce message s'affiche -->
       <p>Aucune affectation PFP disponible pour cet utilisateur.</p>
     </div>
   </div>
@@ -189,6 +124,90 @@ const institutions = ref({})
 const users = ref({})
 const students = ref({})
 const praticienFormateurs = ref({})
+
+// Ajout : computed pour trouver toutes les places où l'utilisateur courant est affecté via les clés selectedEtudiant...
+const assignedPlaces = computed(() => {
+  const userId = props.userId;
+  const results = [];
+  Object.values(placesData.value || {}).forEach(place => {
+    Object.entries(place).forEach(([key, value]) => {
+      if (
+        key.startsWith('selectedEtudiant') &&
+        typeof value === 'string' &&
+        value === userId
+      ) {
+        // On extrait l'index (numéro de place) pour l'affichage
+        const seatIndex = key.split('-').pop();
+        results.push({ ...place, seatIndex, assignmentKey: key });
+      }
+    });
+  });
+  return results;
+});
+
+
+const getInstitutionNameById = (idInstitution) => {
+  const inst = institutions.value[idInstitution];
+  return inst && inst.Name ? inst.Name : 'Institution inconnue';
+};
+
+// Retourne la liste des critères à true pour une place donnée
+function getValidCriterias(place) {
+  const criteriaKeys = ['AMBU', 'DE', 'FR', 'MSQ', 'NEUROGER', 'REHAB', 'SYSINT', 'AIGU'];
+  return criteriaKeys.filter(key => {
+    const val = place[key];
+    return val === true || (typeof val === 'string' && val.toLowerCase() === 'true');
+  });
+}
+
+// Retourne l'ID du praticien formateur lié à la place et au seat (ex: selectedPraticiensBA23PFP3-1)
+function getPraticienFormateurId(place) {
+  // On essaie de déterminer la clé du praticien selon le seatIndex
+  // Correction : fallback sur place.praticiensFormateurs[0] si rien trouvé
+  const seat = place.seatIndex;
+  if (!seat) {
+    if (Array.isArray(place.praticiensFormateurs) && place.praticiensFormateurs.length > 0) {
+      return place.praticiensFormateurs[0];
+    }
+    return '';
+  }
+  const keysToTry = [
+    `selectedPraticiensBA23PFP3-${seat}`,
+    `selectedPraticienBA23PFP3-${seat}`,
+    `selectedPraticiensBA22PFP4-${seat}`,
+    `selectedPraticienBA22PFP4-${seat}`
+  ];
+  for (const key of keysToTry) {
+    if (place[key]) return place[key];
+  }
+  if (Array.isArray(place.praticiensFormateurs) && place.praticiensFormateurs.length > 0) {
+    return place.praticiensFormateurs[0];
+  }
+  return '';
+}
+
+// Retourne "Prénom Nom" du praticien formateur lié à la place et au seat
+function getPraticienFormateurInfos(place) {
+  const id = getPraticienFormateurId(place);
+  if (!id) return '';
+  const pract = praticienFormateurs.value && praticienFormateurs.value[id];
+  if (!pract) return '';
+  const prenom = pract.Prenom ? pract.Prenom.trim() : '';
+  const nom = pract.Nom ? pract.Nom.trim() : '';
+  return `${prenom} ${nom}`.trim();
+}
+
+// Ajout utilitaire pour le contact du praticien formateur
+function getPraticienFormateurContact(place) {
+  if (place && place.praticienMail) {
+    return place.praticienMail;
+  }
+  const praticienId = getPraticienFormateurId(place);
+  if (praticienId && praticienFormateurs.value[praticienId]) {
+    return praticienFormateurs.value[praticienId].Mail || praticienFormateurs.value[praticienId].mail || '';
+  }
+  return '';
+}
 
 const fetchAssignmentsData = () => {
   const assignRef = firebaseRef(db, 'signatureAssignments')
@@ -397,10 +416,11 @@ const confirmDelete = async (assignmentKey, docId, fileName) => {
 /* ---------------------------
    Navigation vers la page de l'institution
 --------------------------- */
-const viewAssignmentDetails = (assignment) => {
-  // Navigation vers la page de l'institution en utilisant l'id de l'institution
-  router.push({ name: 'InstitutionView', params: { id: assignment.idInstitution } })
-}
+const navigateToInstitution = (instId) => {
+  if (instId) {
+    router.push({ name: 'InstitutionView', params: { id: instId } });
+  }
+};
 
 onMounted(() => {
   fetchInstitutions()
@@ -435,6 +455,22 @@ onMounted(() => {
   background-color: var(--surface-card);
   padding: 2rem;
   border-radius: 2rem;
+}
+
+.details-btn {
+  min-width: 200px;
+  width: 200px;
+  height: 32px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  padding: 0.5rem 1.25rem;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.ml-3 {
+  margin-left: 1rem;
 }
 
 /* --- Responsive Mobile Styles --- */
