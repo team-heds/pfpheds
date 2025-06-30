@@ -13,8 +13,12 @@
           <CardNameProfile />
           <!-- Affichage du nom et prénom de l'utilisateur -->
           <VotationResultProfil :userId="user.uid" class="w-full "  />
+
+          <!-- Radar profil stage + critères validés -->
+          <RadarProfil :scores="radarScores" :totalStages="totalStages" />
           <!-- Résumé du stage utilisateur -->
           <ResumStageUserProfile class="w-full" />
+
 
           <!-- Section pour changer la photo de profil
           <div class="p-field mt-4 surfaces-card w-full">
@@ -53,7 +57,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { getDatabase, ref as dbRef, get, update } from "firebase/database";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -65,7 +69,8 @@ import CardNameProfile from '@/components/Bibliotheque/Profile/CardNameProfile.v
 import ResumStageUserProfile from '@/components/UserProfile/ResumStageUserProfile.vue';
 import LeftSidebar from '@/components/Bibliotheque/Social/LeftSidebar.vue';
 import RightSidebar from '@/components/Bibliotheque/Social/RightSidebar.vue';
-import VotationResultProfil from '@/components/UserProfile/VotationResultProfil.vue'
+import VotationResultProfil from '@/components/UserProfile/VotationResultProfil.vue';
+import RadarProfil from '@/components/UserProfile/RadarProfil.vue';
 
 const toast = useToast();
 
@@ -85,8 +90,68 @@ const user = ref({
 
 const selectedAvatarFile = ref(null);
 
-// Fonction pour charger un profil utilisateur via son ID
+// --- Ajout récupération profil étudiant et scores radar ---
+const userProfile = ref(null);
+const criteriaLabels = [
+  "MSQ",
+  "SYSINT",
+  "NEUROGER",
+  "AIGU",
+  "REHAB",
+  "AMBU",
+  "FR",
+  "DE"
+];
+
+const route = useRoute();
+const userId = route?.params?.id || null;
+
 const fetchUserProfileById = async (userId) => {
+  const db = getDatabase();
+  try {
+    const studentRef = dbRef(db, `Students/${userId}`);
+    const snapshotStudent = await get(studentRef);
+    if (snapshotStudent.exists()) {
+      userProfile.value = { ...snapshotStudent.val() };
+    } else {
+      userProfile.value = null;
+      console.error("Aucun profil trouvé pour l'ID :", userId);
+    }
+  } catch (error) {
+    userProfile.value = null;
+    console.error("Erreur lors de la récupération des données :", error);
+  }
+};
+
+onMounted(async () => {
+  if (userId) {
+    user.value.uid = userId;
+    await fetchUserProfileById(userId);
+  }
+});
+
+// Agrégation des scores radar par critère (nombre de validations)
+const radarScores = computed(() => {
+  const scores = Object.fromEntries(criteriaLabels.map(k => [k, 0]));
+  if (userProfile.value?.PFP_valided) {
+    Object.values(userProfile.value.PFP_valided).forEach(place => {
+      criteriaLabels.forEach(crit => {
+        if (place[crit] === true) scores[crit]++;
+      });
+    });
+  }
+  return scores;
+});
+
+const totalStages = computed(() => {
+  if (userProfile.value?.PFP_valided) {
+    return Object.keys(userProfile.value.PFP_valided).length;
+  }
+  return 0;
+});
+
+// Fonction pour charger un profil utilisateur via son ID
+const fetchUserProfile = async (userId) => {
   const db = getDatabase();
   const userRef = dbRef(db, `Users/${userId}`);
   const snapshot = await get(userRef);
@@ -141,17 +206,6 @@ const onAvatarChange = (event) => {
     selectedAvatarFile.value = file;
   }
 };
-
-const route = useRoute();
-
-onMounted(async () => {
-  const userId = route.params.id; // Récupère l'ID depuis l'URL
-  if (userId) {
-    await fetchUserProfileById(userId); // Charge le profil correspondant à l'ID
-  } else {
-    console.error("Aucun ID d'utilisateur fourni dans l'URL");
-  }
-});
 </script>
 
 <style scoped>

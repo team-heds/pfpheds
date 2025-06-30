@@ -11,6 +11,9 @@
         <div>
           <CardNameProfile />
           <VotationResultProfil :userId="user.uid" class="w-full" />
+          <!-- Radar profil stage + critères validés -->
+          <RadarProfil :scores="radarScores" :totalStages="totalStages" />
+          <!-- Résumé du stage utilisateur -->
           <ResumStageUserProfile class="w-full" />
           <!-- On passe l'ID de l'utilisateur au composant -->
 
@@ -53,7 +56,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { getDatabase, ref as dbRef, get, update } from "firebase/database";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -65,6 +68,7 @@ import ResumStageUserProfile from '@/components/UserProfile/ResumStageUserProfil
 import VotationResultProfil from '@/components/UserProfile/VotationResultProfil.vue';
 import ProfileAdminRightSidebar from '@/components/Bibliotheque/Profile/ProfileAdminRightSidebar.vue';
 import LeftSidebar from '@/components/Bibliotheque/Social/LeftSidebar.vue';
+import RadarProfil from '@/components/UserProfile/RadarProfil.vue'
 
 const defaultAvatar = '../../../public/assets/images/avatar/01.jpg';
 
@@ -84,21 +88,18 @@ const toast = useToast();
 
 const fetchUserProfileById = async (userId) => {
   const db = getDatabase();
-  const userRef = dbRef(db, `Users/${userId}`);
-  const snapshot = await get(userRef);
-  if (snapshot.exists()) {
-    const userData = snapshot.val();
-    user.value = {
-      uid: userId,
-      prenom: userData.Prenom || '',
-      nom: userData.Nom || '',
-      email: userData.Mail || '',
-      ville: userData.Ville || '',
-      bio: userData.Biography || '',
-      photoURL: userData.PhotoURL || defaultAvatar
-    };
-  } else {
-    console.error("Aucun profil trouvé pour l'ID :", userId);
+  try {
+    const studentRef = dbRef(db, `Students/${userId}`);
+    const snapshotStudent = await get(studentRef);
+    if (snapshotStudent.exists()) {
+      userProfile.value = { ...snapshotStudent.val() };
+    } else {
+      userProfile.value = null;
+      console.error("Aucun profil trouvé pour l'ID :", userId);
+    }
+  } catch (error) {
+    userProfile.value = null;
+    console.error("Erreur lors de la récupération des données :", error);
   }
 };
 
@@ -138,9 +139,42 @@ const onAvatarChange = (event) => {
 
 const route = useRoute();
 
+const userProfile = ref(null);
+const criteriaLabels = [
+  "MSQ",
+  "SYSINT",
+  "NEUROGER",
+  "AIGU",
+  "REHAB",
+  "AMBU",
+  "FR",
+  "DE"
+];
+
+// Agrégation des scores radar par critère (nombre de validations)
+const radarScores = computed(() => {
+  const scores = Object.fromEntries(criteriaLabels.map(k => [k, 0]));
+  if (userProfile.value?.PFP_valided) {
+    Object.values(userProfile.value.PFP_valided).forEach(place => {
+      criteriaLabels.forEach(crit => {
+        if (place[crit] === true) scores[crit]++;
+      });
+    });
+  }
+  return scores;
+});
+
+const totalStages = computed(() => {
+  if (userProfile.value?.PFP_valided) {
+    return Object.keys(userProfile.value.PFP_valided).length;
+  }
+  return 0;
+});
+
 onMounted(async () => {
   const userId = route.params.id; // Récupère l'ID depuis l'URL
   if (userId) {
+    user.value.uid = userId;
     await fetchUserProfileById(userId);
   } else {
     console.error("Aucun ID d'utilisateur fourni dans l'URL");
