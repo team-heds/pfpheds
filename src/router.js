@@ -81,6 +81,7 @@ import MobileLangApps from '@/views/MobileLangApps.vue';
 import Outils from '@/views/Outils.vue';
 import Game from '@/views/Game.vue';
 import NotesWorkspace from '@/views/NotesWorkspace.vue';
+import ChatBotSI from '@/views/ChatBotSI.vue'
 
 // Define your routes
 const routes = [
@@ -224,10 +225,10 @@ const routes = [
     meta: { requiresAuth: false }
   },
   {
-    path: '/lang-apps', 
-    component: MobileLangApps, 
-    name: 'MobileLangApps', 
-    meta: { mobileOnly: true } 
+    path: '/lang-apps',
+    component: MobileLangApps,
+    name: 'MobileLangApps',
+    meta: { mobileOnly: true }
   },
   {
     path: '/notes',
@@ -236,16 +237,23 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
-    path: '/outils', 
-    component: Outils, 
-    name: 'Outils', 
-    meta: { requiresAuth: true } 
+    path: '/outils',
+    component: Outils,
+    name: 'Outils',
+    meta: { requiresAuth: true }
   },
   {
-    path: '/game', 
-    component: Game, 
-    name: 'Game', 
-    meta: { requiresAuth: true } 
+    path: '/game',
+    component: Game,
+    name: 'Game',
+    meta: { requiresAuth: true }
+  },
+
+  {
+    path: '/chatbotsi',
+    component: ChatBotSI,
+    name: 'ChatBotSI',
+    meta: { requiresAuth: true, requiredRole: ['admin', 'chatbotSi'] }
   },
 ];
 
