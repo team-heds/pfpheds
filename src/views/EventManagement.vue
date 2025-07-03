@@ -1,338 +1,503 @@
 <template>
   <Navbar />
-  <div class="newsfeed-layout">
-    <!-- Sidebar Gauche -->
-    <div class="sidebar-left">
+  <div class="event-layout event-layout-padded">
+    <!-- Sidebar gauche -->
+    <div class="sidebar-left sidebar-padded">
       <LeftSidebar />
     </div>
-    <!-- Zone centrale événement -->
-    <div class="main-feed">
-      <!-- Partie centrale gestion événements -->
-      <div class="event-management-page">
-        <h2>Gestion des événements</h2>
-        <Card class="event-form-card">
-          <template #content>
-            <form class="event-form" @submit.prevent="addEvent">
-              <div class="form-group">
-                <label>Titre</label>
-                <InputText v-model="newEvent.title" required placeholder="Titre de l'événement" class="w-full" />
-              </div>
-              <div class="form-group">
-                <label>Description</label>
-                <Textarea v-model="newEvent.description" required placeholder="Description" class="w-full" autoResize rows="3" />
-              </div>
-              <div class="form-group">
-                <label>Date et heure de début</label>
-                <Calendar v-model="newEvent.startDate" showTime hourFormat="24" dateFormat="dd/mm/yy" class="w-full" showIcon />
-              </div>
-              <div class="form-group">
-                <label>Date et heure de fin</label>
-                <Calendar v-model="newEvent.endDate" showTime hourFormat="24" dateFormat="dd/mm/yy" class="w-full" showIcon />
-              </div>
-              <div class="form-group">
-                <label>Type d'événement</label>
-                <Dropdown v-model="newEvent.type" :options="TYPE_OPTIONS" optionLabel="label" optionValue="value" placeholder="Sélectionner le type" class="w-full" />
-              </div>
-              <div class="form-group" v-if="newEvent.type === 'private'">
-                <label>Rôle dédié</label>
-                <Dropdown v-model="newEvent.role" :options="ROLE_OPTIONS" optionLabel="label" optionValue="value" placeholder="Sélectionner le rôle" class="w-full" />
-              </div>
-              <Button type="submit" label="Créer" class="p-button-primary w-full mt-2" icon="pi pi-plus-circle" />
-            </form>
-          </template>
-        </Card>
-
-        
-        <div class="event-list-scrollable">
-          <h3>Événements à venir</h3>
-          <div v-if="eventStore.events.length === 0" class="empty">Aucun événement pour l'instant.</div>
-          <div v-for="event in eventStore.events" :key="event.id" class="event-card-beautiful">
-            <div class="event-card-header">
-              <span class="event-date-pill"><i class="pi pi-calendar"></i> {{ formatDate(event.startDate) }} - {{ formatDate(event.endDate) }}</span>
-              <Button icon="pi pi-heart" :label="event.likes.toString()" class="p-button-rounded p-button-text p-button-danger event-like-btn" :severity="event.liked ? 'danger' : undefined" @click="likeEvent(event)" />
-            </div>
-            <div class="event-title-main">{{ event.title }}</div>
-            <div class="event-description-main">{{ event.description }}</div>
-            <div class="event-details">
-              <span class="event-type">Type : {{ event.type === 'private' ? 'Privé' : 'Public' }}</span>
-              <span v-if="event.type === 'private' && event.role">| Rôle : {{ event.role }}</span>
-            </div>
-            <div class="event-card-footer">
-              <Button icon="pi pi-user-plus"
-        :label="event.registered && event.registered.includes(userId) ? 'Inscrit !' : 'S\'inscrire'"
-        class="p-button-rounded p-button-primary event-register-btn"
-        :severity="event.registered && event.registered.includes(userId) ? 'success' : 'primary'"
-        @click="registerEvent(event)" />
-            </div>
-          </div>
-        </div>
+    <!-- Zone centrale -->
+    <main class="main-content main-content-padded">
+      <div class="event-header-bar event-header-bar-centered">
+        <header class="page-header">
+          <h1 class="title">Évenements</h1>
+          <p class="subtitle">
+            Découvrez et participez aux événements de notre communauté
+          </p>
+        </header>
       </div>
-    </div>
-    <!-- Sidebar Droite -->
-    <div class="sidebar-right">
+      <!-- Barre de recherche et filtres avancés -->
+      <div class="search-bar" style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+        <span class="p-input-icon-left">
+          <InputText v-model="searchTerm" placeholder="Rechercher par titre, description ou type" class="search-input style-bar" />
+        </span>
+
+      </div>
+      <div class="filter-bar" style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+
+      <Button icon="pi pi-plus" label="Créer un événement" class="p-button-primary mb-6 ml-5" @click="showCreateDialog = true" />
+        <span>
+          <Button
+            :outlined="!privateOnly"
+            :severity="privateOnly ? 'danger' : 'secondary'"
+            icon="pi pi-lock"
+            label="Privé seulement"
+            class="p-button-sm mr-2 same-width-btn"
+            @click="privateOnly = !privateOnly"
+            :aria-pressed="privateOnly.toString()"
+          />
+        </span>
+        <span v-if="privateOnly">
+          <Dropdown v-model="selectedGroup" :options="privateRolesDropdown" optionLabel="label" optionValue="value" placeholder="Rôle (tous)" class="p-inputtext p-dropdown-sm same-width-btn event-dropdown" />
+        </span>
+        <span>
+          <Dropdown v-model="sortOrder" :options="sortOptions" optionLabel="label" optionValue="value" class="p-inputtext p-dropdown-sm same-width-btn event-dropdown" />
+        </span>
+      </div>
+
+      <!-- Grille de cartes événements -->
+      <div class="event-card-grid">
+        <div
+          v-for="event in filteredEvents"
+          :key="event.id"
+          class="event-card-col"
+        >
+          <EventCard
+            :event="event"
+            :user-id="userId"
+            @like="likeEvent"
+            @register="registerEvent"
+            @show-details="openEventDetails"
+          />
+        </div>
+        <div v-if="filteredEvents.length === 0" class="empty">Aucun événement pour l'instant.</div>
+      </div>
+    </main>
+    <!-- Sidebar droite -->
+    <div class="sidebar-right sidebar-padded">
       <RightSidebar />
     </div>
+    <!-- Modale création événement -->
+    <Dialog v-model:visible="showCreateDialog" modal header="Créer un événement" :style="{ minWidth: '340px', maxWidth: '98vw' }">
+      <EventForm @submit="addEventFromForm" @close="showCreateDialog = false" />
+    </Dialog>
+    <!-- Modale modification événement -->
+    <Dialog v-model:visible="showEditDialog" modal header="Modifier l'événement" :style="{ minWidth: '340px', maxWidth: '98vw' }">
+      <EventForm 
+        :event="eventToEdit" 
+        :edit-mode="true"
+        @submit="updateEventFromForm" 
+        @close="showEditDialog = false" />
+    </Dialog>
+    <!-- Modale détails événement -->
+    <Dialog v-model:visible="showDetailDialog" modal  :style="{ width: '600px', maxWidth: '96vw' }">
+      <EventDetail 
+        v-if="selectedEvent" 
+        :event="selectedEvent" 
+        :user-id="userId" 
+        @register="registerEvent"
+        @like="likeEvent"
+        @edit="editEvent"
+        @delete="deleteEvent"
+        @fixAdmin="fixEventAdmin"
+        @close="showDetailDialog = false" />
+    </Dialog>
   </div>
-  <MobileBottomNav />
 </template>
 
 <script setup>
+// Imports Vue/Pinia/PrimeVue
 import { ref, computed, onMounted, inject } from 'vue';
-import { useEventStore } from '@/stores/eventStore';
-import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
-import Textarea from 'primevue/textarea';
-import Card from 'primevue/card';
-import Calendar from 'primevue/calendar';
-import Dropdown from 'primevue/dropdown';
+import Navbar from '@/components/Utils/Navbar.vue';
 import LeftSidebar from '@/components/Bibliotheque/Social/LeftSidebar.vue';
 import RightSidebar from '@/components/Bibliotheque/Social/RightSidebar.vue';
-import Navbar from '@/components/Utils/Navbar.vue';
-import MobileBottomNav from '@/components/Utils/MobileBottomNav.vue';
+import Button from 'primevue/button';
+import Dialog from 'primevue/dialog';
+import InputText from 'primevue/inputtext';
+import Dropdown from 'primevue/dropdown';
+import { useEventStore } from '@/stores/eventStore';
+import { getDatabase, ref as dbRef, get } from 'firebase/database';
+// Composants custom
+import EventForm from '@/components/Events/EventForm.vue';
+import EventCard from '@/components/Events/EventCard.vue';
+import EventDetail from '@/components/Events/EventDetail.vue';
 
+// Pinia store
 const eventStore = useEventStore();
-const ROLE_OPTIONS = [
-  { label: 'Site Loeche', value: 'siteLoeche' },
-  { label: 'BA24', value: 'BA24' },
-  { label: 'BA23', value: 'BA23' },
-  { label: 'BA22', value: 'BA22' },
-  { label: 'Student', value: 'student' },
-  { label: 'Manuel', value: 'manuel' }
-];
-const TYPE_OPTIONS = [
-  { label: 'Public', value: 'public' },
-  { label: 'Privé', value: 'private' }
-];
+const events = computed(() => eventStore.events);
 
-const newEvent = ref({
-  title: '',
-  description: '',
-  startDate: '',
-  endDate: '',
-  type: '',
-  role: ''
+// Utilisateur courant (auth injectée)
+const userState = inject('userState');
+const userId = computed(() => userState?.user?.uid || null);
+
+// Modales
+const showCreateDialog = ref(false);
+const showEditDialog = ref(false);
+const showDetailDialog = ref(false);
+const selectedEvent = ref(null);
+const eventToEdit = ref(null);
+
+// Recherche
+const searchTerm = ref('');
+const privateOnly = ref(false);
+const selectedGroup = ref('');
+const sortOrder = ref('asc');
+
+// Options pour Dropdown PrimeVue
+const sortOptions = [
+  { label: 'Plus proche', value: 'asc' },
+  { label: 'Plus lointain', value: 'desc' }
+];
+const privateRoles = computed(() => {
+  const roles = new Set();
+  events.value.forEach(ev => {
+    if (ev.type === 'private' && ev.role) roles.add(ev.role);
+  });
+  return Array.from(roles);
+});
+const privateRolesDropdown = computed(() => [
+  { label: 'Tous', value: '' },
+  ...privateRoles.value.map(r => ({ label: r, value: r }))
+]);
+
+const filteredEvents = computed(() => {
+  const now = new Date();
+  let filtered = events.value.filter(ev => {
+    const eventDate = new Date(ev.endDate || ev.startDate);
+    // Afficher uniquement les événements futurs ou du jour
+    const isFuture = eventDate > now || eventDate.toDateString() === now.toDateString();
+    if (!isFuture) return false;
+    // Filtre privé
+    if (privateOnly.value && ev.type !== 'private') return false;
+    // Filtre rôle
+    if (privateOnly.value && selectedGroup.value && ev.role !== selectedGroup.value) return false;
+    return true;
+  });
+  // Recherche texte
+  if (searchTerm.value.trim()) {
+    const term = searchTerm.value.toLowerCase();
+    filtered = filtered.filter(ev =>
+      (ev.title && ev.title.toLowerCase().includes(term)) ||
+      (ev.description && ev.description.toLowerCase().includes(term)) ||
+      (ev.type && ev.type.toLowerCase().includes(term))
+    );
+  }
+  // Tri par date
+  filtered.sort((a, b) => {
+    const dateA = new Date(a.startDate);
+    const dateB = new Date(b.startDate);
+    return sortOrder.value === 'asc' ? dateA - dateB : dateB - dateA;
+  });
+  return filtered;
 });
 
-onMounted(() => {
-  eventStore.listenEvents();
-});
-
-function addEvent() {
-  if (!newEvent.value.title || !newEvent.value.description || !newEvent.value.startDate || !newEvent.value.endDate || !newEvent.value.type || (newEvent.value.type === 'private' && !newEvent.value.role)) return;
-  const eventToSend = {
-    title: newEvent.value.title,
-    description: newEvent.value.description,
-    startDate: newEvent.value.startDate,
-    endDate: newEvent.value.endDate,
-    type: newEvent.value.type,
-    role: newEvent.value.type === 'private' ? newEvent.value.role : null,
-    admin: userId.value
-  };
-  console.log('event envoyé', eventToSend);
-  eventStore.addEvent(eventToSend);
-  newEvent.value = { title: '', description: '', startDate: '', endDate: '', type: '', role: '' };
+// Actions
+function addEventFromForm(eventData) {
+  eventStore.addEvent({ ...eventData, admin: userId.value });
+  showCreateDialog.value = false;
 }
-
 function likeEvent(event) {
   eventStore.updateEvent(event.id, {
     likes: event.liked ? event.likes - 1 : event.likes + 1,
     liked: !event.liked
   });
 }
-
-const userState = inject('userState');
-const userId = computed(() => userState?.user?.uid || null);
-
-function registerEvent(event) {
-  if (!userId.value) return; // Optionnel : afficher une alerte si non connecté
-  eventStore.toggleRegistration(event.id, userId.value, event.registered);
+async function registerEvent(event) {
+  if (!userId.value) return;
+  
+  try {
+    const db = getDatabase();
+    const userRef = dbRef(db, `Users/${userId.value}`);
+    const snapshot = await get(userRef);
+    
+    let currentUserInfo = {
+      nom: '',
+      prenom: '',
+      photoURL: userState.user?.photoURL || 'https://ui-avatars.com/api/?name=Utilisateur'
+    };
+    
+    if (snapshot.exists()) {
+      const userData = snapshot.val();
+      console.log('Données utilisateur Firebase:', userData);
+      
+      currentUserInfo = {
+        nom: userData.Nom || userData.nom || userData.lastName || '',
+        prenom: userData.Prenom || userData.prenom || userData.firstName || '',
+        photoURL: userData.PhotoURL || userData.photoURL || userData.avatar || userState.user?.photoURL || 'https://ui-avatars.com/api/?name=Utilisateur'
+      };
+    } else {
+      console.log('Aucune donnée utilisateur trouvée dans Firebase');
+      // Utiliser les données de Firebase Auth comme fallback
+      currentUserInfo = {
+        nom: userState.user?.displayName?.split(' ')[1] || '',
+        prenom: userState.user?.displayName?.split(' ')[0] || '',
+        photoURL: userState.user?.photoURL || 'https://ui-avatars.com/api/?name=Utilisateur'
+      };
+    }
+    
+    console.log('Infos utilisateur finales:', currentUserInfo);
+    eventStore.toggleRegistration(event.id, userId.value, event.registered, currentUserInfo);
+    
+  } catch (error) {
+    console.error('Erreur lors de la récupération des données utilisateur:', error);
+    // Fallback avec les données Firebase Auth
+    const currentUserInfo = {
+      nom: userState.user?.displayName?.split(' ')[1] || '',
+      prenom: userState.user?.displayName?.split(' ')[0] || '',
+      photoURL: userState.user?.photoURL || 'https://ui-avatars.com/api/?name=Utilisateur'
+    };
+    eventStore.toggleRegistration(event.id, userId.value, event.registered, currentUserInfo);
+  }
+}
+function openEventDetails(event) {
+  selectedEvent.value = event;
+  showDetailDialog.value = true;
 }
 
-function formatDate(date) {
-  if (!date) return '';
-  if (typeof date === 'string') return new Date(date).toLocaleDateString('fr-CH', { year: 'numeric', month: 'long', day: 'numeric' });
-  return date.toLocaleDateString('fr-CH', { year: 'numeric', month: 'long', day: 'numeric' });
-}
-function formatSidebarDate(date) {
-  if (!date) return '';
-  if (typeof date === 'string') date = new Date(date);
-  return date.toLocaleDateString('fr-CH', { month: '2-digit', day: '2-digit' });
+function editEvent(event) {
+  eventToEdit.value = event;
+  showEditDialog.value = true;
+  showDetailDialog.value = false; // Fermer la modale de détails
 }
 
-// Mobile detection
-const isMobile = computed(() => window.innerWidth <= 900);
-const top5Events = computed(() => {
-  const now = new Date();
-  return events.value
-    .filter(ev => new Date(ev.date) >= now)
-    .sort((a, b) => new Date(a.date) - new Date(b.date))
-    .slice(0, 5);
+async function updateEventFromForm(eventData) {
+  try {
+    await eventStore.updateEventComplete(eventToEdit.value.id, eventData);
+    showEditDialog.value = false;
+    console.log('Événement mis à jour avec succès');
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour:', error);
+    alert('Erreur lors de la mise à jour de l\'événement');
+  }
+}
+
+async function deleteEvent(event) {
+  if (confirm(`Voulez-vous vraiment supprimer l'événement "${event.title}" ?`)) {
+    try {
+      await eventStore.deleteEvent(event.id);
+      showDetailDialog.value = false;
+      console.log('Événement supprimé avec succès');
+    } catch (error) {
+      console.error('Erreur lors de la suppression:', error);
+      alert('Erreur lors de la suppression de l\'événement');
+    }
+  }
+}
+
+async function fixExistingEvent() {
+  if (!userId.value) {
+    alert('Vous devez être connecté pour corriger un événement');
+    return;
+  }
+  
+  // Trouver tous les événements sans admin
+  const eventsToFix = events.value.filter(event => !event.admin);
+  
+  if (eventsToFix.length > 0) {
+    const confirmFix = confirm(`Voulez-vous vous attribuer la propriété de ${eventsToFix.length} événement(s) sans propriétaire ?`);
+    
+    if (confirmFix) {
+      try {
+        for (const event of eventsToFix) {
+          await eventStore.updateEvent(event.id, { admin: userId.value });
+        }
+        alert(`${eventsToFix.length} événement(s) corrigé(s) ! Vous pouvez maintenant les modifier/supprimer.`);
+      } catch (error) {
+        console.error('Erreur:', error);
+        alert('Erreur lors de la correction des événements');
+      }
+    }
+  } else {
+    alert('Aucun événement à corriger trouvé');
+  }
+}
+
+async function fixEventAdmin(event) {
+  try {
+    await eventStore.updateEvent(event.id, { admin: userId.value });
+    console.log('Propriété de l\'événement attribuée automatiquement');
+  } catch (error) {
+    console.error('Erreur lors de la correction:', error);
+    alert('Erreur lors de la correction de l\'événement');
+  }
+}
+
+// Charger les événements au montage
+onMounted(() => {
+  eventStore.listenEvents();
 });
-
-
 </script>
 
 <style scoped>
-.newsfeed-layout {
+.event-layout {
   display: grid;
   grid-template-columns: 1fr 3fr 1fr;
   gap: 1.5rem;
-  height: 100vh;
-  max-height: 100vh;
-  overflow: hidden;
-}
-.sidebar-left {
-  overflow-y: auto;
-}
-.sidebar-right {
-  overflow-y: auto;
-}
-.main-feed {
-  height: 90vh;
-  overflow-y: auto;
-  overflow-x: hidden;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  box-sizing: border-box;
-}
-.main-feed::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-}
-.main-feed {
-  scrollbar-width: none;
-}
-.event-management-page {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  padding: 1.3em 0.7em 2em 0.7em;
-  min-width: 0;
   min-height: 100vh;
-  position: relative;
 }
-h2 {
-  margin-bottom: 1.2em;
-  color: #ffc700;
-  font-size: 1.4em;
+.event-layout-padded {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
 }
-.event-form-card {
-  margin-bottom: 1.2em;
+.sidebar-left, .sidebar-right {
+  min-width: 0;
 }
-.event-list-scrollable {
-  flex: 1 1 auto;
+.sidebar-padded {
+  padding-top: 2.2rem;
+  padding-bottom: 2.2rem;
+}
+.main-content {
+  padding: 2em 0.5em 8em 0.5em;
+  min-width: 0;
   overflow-y: auto;
-  max-height: 60vh;
-  padding-bottom: 1.5em;
+  height: 100vh;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
-.event-list-scrollable h3 {
-  color: #ffc700;
-  margin-bottom: 0.7em;
+.main-content::-webkit-scrollbar {
+  display: none;
+}
+.main-content-padded {
+  padding-left: 2.5rem;
+  padding-right: 2.5rem;
+  padding-bottom: 8em;
+}
+/* Header de la page */
+.page-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+.title {
+  color: var(--text-color);
+  font-size: 3rem;
+  font-weight: bold;
+}
+.subtitle {
+  color: var(--text-color-secondary);
+  font-size: 1.25rem;
+}
+.event-header-bar-centered {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8em;
+  margin-bottom: 1.4em;
+}
+.event-title-centered {
+  text-align: center;
+  font-size: 2.1em;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0.2em;
+}
+.search-bar {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2em;
+}
+.search-input {
+  width: 320px;
+  max-width: 90vw;
+}
+.style-bar {
+  background-color: var(--surface-card);
+  border-radius: 1.2rem;
+}
+.event-card-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 2em;
+  margin: 0 auto;
+}
+.event-card-col {
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
 }
 .empty {
   color: #888;
-  margin: 1.5em 0;
+  margin: 2em 0;
   text-align: center;
+  grid-column: 1/-1;
 }
-.event-card-beautiful {
-  background: linear-gradient(135deg, #232b4a 70%, #ffc700 120%);
-  border-radius: 22px;
-  box-shadow: 0 4px 24px 0 rgba(34,34,60,0.11);
-  margin-bottom: 1.1em;
-  padding: 1.1em 1.2em 1em 1.2em;
-  color: #fff;
-  font-size: 1.05em;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  border: 2px solid #ffc70022;
-  transition: box-shadow 0.18s;
+.same-width-btn {
+  min-width: 160px !important;
+  max-width: 180px;
+  flex-shrink: 0;
+  height: 38px !important;
+  line-height: 36px !important;
+  padding: 0 1rem !important;
+  font-size: 1rem;
+  border-radius: 6px;
 }
-.event-card-beautiful:hover {
-  box-shadow: 0 8px 32px 0 #ffc70077;
-}
-.event-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.5em;
-}
-.event-date-pill {
-  background: #ffc700;
-  color: #232b4a;
-  border-radius: 18px;
-  padding: 0.18em 1em 0.18em 0.8em;
-  font-size: 0.98em;
-  font-weight: 600;
+.event-dropdown {
+  --width: 160px;
+  width: 160px !important;
+  min-width: 160px !important;
+  max-width: 180px;
+  box-sizing: border-box;
+  height: 38px !important;
+  line-height: 36px !important;
+  font-size: 1rem;
+  border-radius: 6px;
   display: flex;
   align-items: center;
-  gap: 0.4em;
-  box-shadow: 0 1px 5px 0 #232b4a22;
 }
-.event-date-pill i {
-  color: #232b4a;
+.event-toolbar {
+  margin-bottom: 2rem;
 }
-.event-title-main {
-  font-size: 1.18em;
-  font-weight: 700;
-  margin-bottom: 0.3em;
-  color: #fff;
-  text-shadow: 0 2px 8px #232b4a44;
+@media (max-width: 1400px) {
+  .event-layout,
+  .event-layout-padded {
+    grid-template-columns: 1fr 4fr 1fr;
+    padding-left: 0.8rem;
+    padding-right: 0.8rem;
+  }
+  .main-content-padded {
+    padding-left: 0.7rem;
+    padding-right: 0.7rem;
+  }
+  .event-card-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
-.event-description-main {
-  color: #fff;
-  margin-bottom: 1.1em;
-  opacity: 0.95;
+@media (max-width: 1100px) {
+  .event-layout,
+  .event-layout-padded {
+    grid-template-columns: 1fr 6fr 1fr;
+    padding-left: 0.2rem;
+    padding-right: 0.2rem;
+  }
+  .main-content-padded {
+    padding-left: 0.3rem;
+    padding-right: 0.3rem;
+  }
+  .event-card-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
-.event-card-footer {
-  display: flex;
-  justify-content: flex-end;
-}
-.event-like-btn {
-  font-size: 1.05em;
-}
-.event-register-btn {
-  font-size: 1.05em;
-  min-width: 120px;
-}
-/* --- MOBILE CENTERING & MARGINS --- */
 @media (max-width: 900px) {
-  .sidebar-left, .sidebar-right {
-    display: none !important;
-  }
-  .main-feed {
-    width: 100vw;
-    max-width: 100vw;
+  .event-layout,
+  .event-layout-padded {
+    grid-template-columns: 1fr;
     padding: 0;
-    justify-content: center;
-    align-items: center;
   }
-  .event-management-page {
-    max-width: 100vw;
-    margin: 0 auto;
-    padding: 1.2em 0.15em 1.8em 0.15em;
-    background: transparent;
-    align-items: center;
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
+  .sidebar-left, .sidebar-right {
+    display: none;
+    padding: 0;
   }
-  .event-form-card {
+  .main-content, .main-content-padded {
+    padding: 1.2em 0.2em 1.2em 0.2em;
+  }
+  .event-card-grid {
+    grid-template-columns: 1fr;
+    gap: 1.2em;
+  }
+  .event-card-col {
     width: 100%;
-    max-width: 360px;
-    min-width: 260px;
-    margin-left: auto;
-    margin-right: auto;
+    min-width: 0;
   }
-  .event-list-scrollable {
-    width: 100%;
-    max-width: 99vw;
-    margin-left: auto;
-    margin-right: auto;
+}
+@media (max-width: 700px) {
+  .event-toolbar {
+    flex-wrap: wrap;
+    gap: 0.5rem;
   }
-  h2 {
-    text-align: center;
+  .same-width-btn, .event-dropdown {
+    min-width: 120px !important;
+    max-width: 100%;
+    width: 100% !important;
+    height: 36px !important;
+    font-size: 0.97rem;
   }
 }
 </style>

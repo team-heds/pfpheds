@@ -12,12 +12,18 @@
         crossorigin=""/>
 </head>
 <body>
-<div id="app">
-  <!-- Loader supprimé -->
-</div>
-<script type="module" src="/src/main.js"></script>
-<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
-        integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
-        crossorigin=""></script>
+  <noscript>
+    <strong>We're sorry but pfpheds doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
+  </noscript>
+  <div id="app">
+    <!-- Loader supprimé -->
+  </div>
+  <script type="module" src="/src/main.js"></script>
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+          integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+          crossorigin=""></script>
+  <!-- ElevenLabs Convai Widget -->
+  <elevenlabs-convai agent-id="mz6MO6cxxKQYHSghIs10"></elevenlabs-convai>
+  <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
 </body>
 </html>

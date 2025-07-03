@@ -10,6 +10,7 @@
     <!-- Contenu de l'application -->
     <div class="content">
       <Toast />
+      <ConfirmDialog />
       <router-view />
       <MobileBottomNav v-if="showMobileBottomNav" />
       <VersionningComponent />
@@ -27,6 +28,7 @@
 
 <script>
 import Toast from 'primevue/toast';
+import ConfirmDialog from 'primevue/confirmdialog';
 import ConvaiWidget from '@/components/ConvaiWidget.vue'
 import Loader from '@/components/Utils/Loader.vue'; // Import du composant Loader
 import VersionningComponent from './components/Utils/VersionningComponent.vue'; // Import du nouveau composant
@@ -38,6 +40,7 @@ export default {
   name: "App",
   components: {
     Toast,
+    ConfirmDialog,
     ConvaiWidget, // Déclaration du composant
     Loader, // Déclaration du composant Loader
     VersionningComponent,
