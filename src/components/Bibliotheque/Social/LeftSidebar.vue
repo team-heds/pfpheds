@@ -337,7 +337,7 @@ export default {
             };
           });
         convs.sort((a, b) => (b.lastReceivedMessageAt || 0) - (a.lastReceivedMessageAt || 0));
-        convs = convs.slice(0, 6);
+        convs = convs.slice(0, 5);
         const dbUsers = dbRef(db, 'Users');
         const usersSnap = await get(dbUsers);
         const usersData = usersSnap.val() || {};
