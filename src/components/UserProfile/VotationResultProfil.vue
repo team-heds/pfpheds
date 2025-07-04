@@ -9,6 +9,19 @@
           class="surfaces-card shadow-2 mb-3 flex flex-column gap-2"
           style="min-height: 120px; border-radius: 2rem; background: var(--surface-card);"
         >
+
+          <!-- En-tête de la carte avec titre et bouton -->
+          <div class="flex align-items-center">
+            <h4 class="m-0">Formation Pratique en cours</h4>
+            <div class="flex align-items-center m-2">
+              <Button
+                label="Voir les détails"
+                icon="pi pi-arrow-right"
+                class="text-sm p-button-outlined p-button-primary"
+                @click="viewAssignmentDetails(assignment)"
+              />
+            </div>
+
           <!-- Ligne du titre + bouton Voir les détails aligné à droite -->
           <div class="flex align-items-center justify-content-between mb-2" style="height: 32px;">
             <h4 class="m-0">Formation Pratique attribuée</h4>
@@ -19,6 +32,7 @@
               style="height: 32px; width: 200px; min-width: 200px;"
               @click="navigateToInstitution(place.IDPlace)"
             />
+
           </div>
           <div>
             <h6 class="m-2 font-bold">

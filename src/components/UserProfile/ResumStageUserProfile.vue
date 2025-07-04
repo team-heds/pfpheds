@@ -26,6 +26,57 @@
     <!-- Institutions pour lesquelles l'étudiant a validé des critères -->
     <h5 class="mb-4 m-2">Anciennes places</h5>
 
+    <!-- Bloc d'édition de la PFP1 -->
+    <div v-if="isAdmin" class="card my-4 p-3">
+      <h5>Modifier ma PFP1</h5>
+      <div v-if="placesList.length">
+        <!-- Recherche et sélection de la place -->
+<input
+  v-model="searchQuery"
+  class="form-control"
+  type="text"
+  placeholder="Rechercher une place..."
+  autocomplete="off"
+/>
+<ul v-if="searchQuery && filteredPlaces.length" class="list-group" style="max-height:200px;overflow:auto;">
+  <li
+    v-for="place in filteredPlaces"
+    :key="place.IDPlace"
+    class="list-group-item list-group-item-action"
+    style="cursor:pointer"
+    @click="selectPlace(place)"
+  >
+    {{ getPlaceLabel(place) }}
+  </li>
+</ul>
+<div v-if="searchQuery && !filteredPlaces.length" class="text-secondary p-2">
+  Aucun résultat.
+</div>
+<div v-if="selectedPFP1" class="mt-2">
+  <strong>Place sélectionnée :</strong>
+  <span>
+    {{
+      getPlaceLabel(
+        placesList.find(p => p.IDPlace === selectedPFP1) || {}
+      )
+    }}
+  </span>
+</div>
+<button
+  class="btn btn-primary mt-2"
+  @click="updatePFP1"
+  :disabled="!selectedPFP1"
+>
+  Enregistrer
+</button>
+
+      </div>
+      <div v-else>
+        Chargement des places....
+      </div>
+    </div>
+
+
   <div v-if="institutionsList && institutionsList.length">
     <div
       v-for="(inst, index) in institutionsList"
@@ -151,15 +202,189 @@
 
 <script setup>
 import { ref, onMounted, computed } from "vue";
+import { db, auth } from '../../../firebase.js'; // adapte le chemin si besoin
+import { onAuthStateChanged } from "firebase/auth";
+
+// Variable pour vérifier le rôle de l'utilisateur
+const isAdmin = ref(false);
+
+// Variables pour EditPFP1
+const placesList = ref([]);
+const selectedPFP1 = ref("");
+const currentUserId = ref("");
+const institutionsMap = ref({});
+const searchQuery = ref("");
+const filteredPlaces = computed(() =>
+  placesList.value.filter(place =>
+    getPlaceLabel(place).toLowerCase().includes(searchQuery.value.toLowerCase())
+  )
+);
+
+function selectPlace(place) {
+  selectedPFP1.value = place.IDPlace;
+  searchQuery.value = getPlaceLabel(place);
+}
+
+
+// Fonction utilitaire pour afficher le label complet d'une place
+function getPlaceLabel(place) {
+  let label = place.NomPlace || '';
+  if (place.InstitutionId && institutionsMap.value[place.InstitutionId] || institutionsMap.value[place.IDPlace]) {
+    label += ' - ' + institutionsMap.value[place.InstitutionId || place.IDPlace].Name;
+  }
+  label += ' (ID: ' + (place.IDPlace || place.InstitutionId) + ')';
+  return label;
+}
+
+function getPlaceName(place) {
+  let label = place.NomPlace || '';
+  if (place.InstitutionId && institutionsMap.value[place.InstitutionId] || institutionsMap.value[place.IDPlace]) {
+    label += '' + institutionsMap.value[place.InstitutionId || place.IDPlace].Name;
+  }
+  return label;
+}
+
+// Récupère toutes les Places depuis Firebase
+async function fetchPlaces() {
+  const placesRef = dbRef(db, "Places");
+  const snapshot = await get(placesRef);
+  if (snapshot.exists()) {
+    const data = snapshot.val();
+    placesList.value = Object.entries(data).map(([key, value]) => ({
+      ...value,
+      key,
+    }));
+  }
+}
+
+// Récupère l'utilisateur connecté, sa PFP1 et vérifie s'il est admin
+function fetchCurrentUser() {
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      currentUserId.value = user.uid;
+      // Récupère les données de l'utilisateur connecté, y compris les rôles
+      const userRef = dbRef(db, `Users/${user.uid}`);
+      const snapshot = await get(userRef);
+      if (snapshot.exists()) {
+        const userData = snapshot.val();
+        selectedPFP1.value = userData.PFP1 || "";
+        // Vérifie si l'utilisateur est un admin
+        isAdmin.value = !!(userData.Roles && userData.Roles.admin);
+      } else {
+        isAdmin.value = false;
+      }
+    } else {
+      // Gérer le cas où l'utilisateur est déconnecté
+      isAdmin.value = false;
+      currentUserId.value = "";
+    }
+  });
+}
+
+onMounted(() => {
+  fetchPlaces();
+  fetchCurrentUser();
+  fetchInstitutions();
+});
+
+// Récupère toutes les Institutions depuis Firebase
+async function fetchInstitutions() {
+  const institutionsRef = dbRef(db, "Institutions");
+  const snapshot = await get(institutionsRef);
+  if (snapshot.exists()) {
+    const data = snapshot.val();
+    institutionsMap.value = data;
+  }
+}
+
+
+// Fonction de mise à jour de la PFP1
+async function updatePFP1() {
+  if (!currentUserId.value || !selectedPFP1.value) {
+    console.warn('updatePFP1: currentUserId ou selectedPFP1 manquant', { currentUserId: currentUserId.value, selectedPFP1: selectedPFP1.value });
+    return;
+  }
+
+  console.log("id " + currentUserId.value);
+
+  // Correction de la référence pour utiliser currentUserId.value
+  const studentRef = dbRef(db, `Students/${userId}`);
+  console.log('updatePFP1: studentRef path', `Students/${currentUserId.value}`);
+
+  // On récupère la place sélectionnée pour en extraire le nom
+  const selectedPlace = placesList.value.find(p => p.IDPlace === selectedPFP1.value);
+  const selectedPlaceName = getPlaceName(selectedPlace);
+  console.log('updatePFP1: selectedPlace', selectedPlace);
+  console.log('updatePFP1: selectedPlaceName', selectedPlaceName);
+
+  // On récupère les données actuelles pour ne pas écraser le tableau PFP_valided
+  const snapshot = await get(studentRef);
+  if (snapshot.exists()) {
+    const studentData = snapshot.val();
+    console.log('updatePFP1: studentData avant modification', studentData);
+
+    // --- Modification des données en local ---
+    studentData.PFP1A = true;
+
+    // S'assurer que PFPinfo et PFPinfo.PFP1 existent pour éviter les erreurs
+    if (!studentData.PFPinfo) studentData.PFPinfo = {};
+    if (!studentData.PFPinfo.PFP1) studentData.PFPinfo.PFP1 = {};
+    studentData.PFPinfo.PFP1.selectedStageId = selectedPFP1.value;
+    studentData.PFPinfo.PFP1.selectedStageName = selectedPlaceName;
+
+    // Mise à jour ou création du tableau PFP_valided
+    const institutionName = institutionsMap.value[selectedPlace.IDInstitution] || 'Institution inconnue';
+    const fieldsToCopy = ['DE', 'FR', 'MSQ', 'REHAB', 'SYSINT', 'NEUROGER', 'AMBU', 'AIGU'];
+    const placeCharacteristics = {};
+    for (const field of fieldsToCopy) {
+      placeCharacteristics[field] = selectedPlace[field] === 'true' || selectedPlace[field] === true;
+    }
+
+    const newPfpEntry = {
+      ID_PFP: selectedPFP1.value,
+      Nom_PFP: selectedPlace.NomPlace,
+      Selected_Places: selectedPlace.key,
+      Nom_Complet_PFP: selectedPlaceName,
+      ...placeCharacteristics
+    };
+
+    // Logique de création/mise à jour de PFP_valided[0] simplifiée et plus robuste
+    if (!studentData.PFP_valided || !Array.isArray(studentData.PFP_valided)) {
+      studentData.PFP_valided = []; // Initialise le tableau s'il n'existe pas
+    }
+
+    // Prépare la nouvelle entrée en la fusionnant avec l'ancienne si elle existe
+    const oldEntry = studentData.PFP_valided[0] || {};
+    studentData.PFP_valided[0] = {
+      ...oldEntry,
+      ...newPfpEntry
+    };
+    console.log('updatePFP1: PFP_valided[0] créé/mis à jour.');
+    // --- Fin des modifications ---
+
+    console.log('updatePFP1: Données prêtes pour le "set"', studentData);
+    console.log('updatePFP1: Données prêtes pour le "set"', studentRef);
+
+    try {
+      // TEST FINAL : Écrire sur un nœud complètement nouveau pour vérifier la connexion
+      const testRef = dbRef(db, `test-writes/${currentUserId.value}`);
+      await set(testRef, { timestamp: new Date().toISOString(), status: 'test-write-successful' });
+      console.log('TEST FINAL: Écriture sur /test-writes réussie !');
+
+      // On utilise "set" pour réécrire l'intégralité des données de l'étudiant
+      await set(studentRef, studentData);
+      console.log('updatePFP1: "set" terminé avec succès.');
+    } catch (error) {
+      console.error('updatePFP1: Erreur lors du "set" Firebase', error);
+    }
+  } else {
+    console.warn('updatePFP1: Aucun étudiant trouvé à ce chemin !');
+  }
+}
+
 import { useRoute, useRouter } from "vue-router";
 import { useToast } from 'primevue/usetoast';
-import {
-  getDatabase,
-  ref as dbRef,
-  get,
-  set,
-  remove
-} from "firebase/database";
+import { getDatabase, ref as dbRef, get, set } from "firebase/database";
 import Button from "primevue/button";
 import Card from "primevue/card";
 import InputText from "primevue/inputtext";
@@ -208,11 +433,11 @@ const fetchUserProfileById = async (userId) => {
         const criteriaByInstitution = {};
         validPfpEntries.forEach((place) => {
           const instId = place.ID_PFP;
-          if (place.Domaine) {
+          if (place.Domaine || place.Nom_PFP  ) {
             if (!domainsByInstitution[instId]) {
               domainsByInstitution[instId] = new Set();
             }
-            domainsByInstitution[instId].add(place.Domaine);
+            domainsByInstitution[instId].add(place.Domaine || place.Nom_PFP);
           }
           if (!criteriaByInstitution[instId]) {
             criteriaByInstitution[instId] = new Set();

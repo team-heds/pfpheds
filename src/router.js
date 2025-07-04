@@ -255,6 +255,11 @@ const routes = [
     name: 'ChatBotSI',
     meta: { requiresAuth: true, requiredRole: ['admin', 'chatbotSi'] }
   },
+  {
+    path: '/notes',
+    name: 'NotesWorkspace',
+    component: () => import('./views/NotesWorkspace.vue')
+  },
 ];
 
 // Create router instance
