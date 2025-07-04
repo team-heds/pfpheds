@@ -1,80 +1,80 @@
 <template>
 
-    <!-- Critères Validés (Agrégation) -->
-    <h5 class="mb-4 m-2">Critères Validés</h5>
-    <div class="grid m-2" v-if="aggregatedCriteria && Object.keys(aggregatedCriteria).length">
-      <div
-        v-for="(value, key) in aggregatedCriteria"
-        :key="key"
-        style="height: 77px;"
-        class="col-2 sm:col-4 lg:col-2 flex flex-column align-items-center justify-content-center w-3 card criteria-card"
-      >
-        <span class="font-bold text-center">{{ key }}</span>
-        <i
-          :class="{
+  <!-- Critères Validés (Agrégation) -->
+  <h5 class="mb-4 m-2">Critères Validés</h5>
+  <div class="grid m-2" v-if="aggregatedCriteria && Object.keys(aggregatedCriteria).length">
+    <div
+      v-for="(value, key) in aggregatedCriteria"
+      :key="key"
+      style="height: 77px;"
+      class="col-2 sm:col-4 lg:col-2 flex flex-column align-items-center justify-content-center w-3 card criteria-card"
+    >
+      <span class="font-bold text-center">{{ key }}</span>
+      <i
+        :class="{
             'pi pi-check-circle text-green-500': value,
             'pi pi-times-circle text-red-500': !value
           }"
-          class="text-3xl mt-2"
-        ></i>
+        class="text-3xl mt-2"
+      ></i>
+    </div>
+  </div>
+  <div v-else>
+    <p class="text-secondary">Aucun critère validé.</p>
+  </div>
+
+  <!-- Institutions pour lesquelles l'étudiant a validé des critères -->
+  <h5 class="mb-4 m-2">Anciennes places</h5>
+
+  <!-- Bloc d'édition de la PFP1 -->
+  <div v-if="isAdmin" class="card my-4 p-3">
+    <h5>Modifier ma PFP1</h5>
+    <div v-if="placesList.length">
+      <!-- Recherche et sélection de la place -->
+      <input
+        v-model="searchQuery"
+        class="form-control"
+        type="text"
+        placeholder="Rechercher une place..."
+        autocomplete="off"
+      />
+      <ul v-if="searchQuery && filteredPlaces.length" class="list-group" style="max-height:200px;overflow:auto;">
+        <li
+          v-for="place in filteredPlaces"
+          :key="place.IDPlace"
+          class="list-group-item list-group-item-action"
+          style="cursor:pointer"
+          @click="selectPlace(place)"
+        >
+          {{ getPlaceLabel(place) }}
+        </li>
+      </ul>
+      <div v-if="searchQuery && !filteredPlaces.length" class="text-secondary p-2">
+        Aucun résultat.
       </div>
+      <div v-if="selectedPFP1" class="mt-2">
+        <strong>Place sélectionnée :</strong>
+        <span>
+    {{
+            getPlaceLabel(
+              placesList.find(p => p.IDPlace === selectedPFP1) || {}
+            )
+          }}
+  </span>
+      </div>
+      <button
+        class="btn btn-primary mt-2"
+        @click="updatePFP1"
+        :disabled="!selectedPFP1"
+      >
+        Enregistrer
+      </button>
+
     </div>
     <div v-else>
-      <p class="text-secondary">Aucun critère validé.</p>
+      Chargement des places....
     </div>
-
-    <!-- Institutions pour lesquelles l'étudiant a validé des critères -->
-    <h5 class="mb-4 m-2">Anciennes places</h5>
-
-    <!-- Bloc d'édition de la PFP1 -->
-    <div v-if="isAdmin" class="card my-4 p-3">
-      <h5>Modifier ma PFP1</h5>
-      <div v-if="placesList.length">
-        <!-- Recherche et sélection de la place -->
-<input
-  v-model="searchQuery"
-  class="form-control"
-  type="text"
-  placeholder="Rechercher une place..."
-  autocomplete="off"
-/>
-<ul v-if="searchQuery && filteredPlaces.length" class="list-group" style="max-height:200px;overflow:auto;">
-  <li
-    v-for="place in filteredPlaces"
-    :key="place.IDPlace"
-    class="list-group-item list-group-item-action"
-    style="cursor:pointer"
-    @click="selectPlace(place)"
-  >
-    {{ getPlaceLabel(place) }}
-  </li>
-</ul>
-<div v-if="searchQuery && !filteredPlaces.length" class="text-secondary p-2">
-  Aucun résultat.
-</div>
-<div v-if="selectedPFP1" class="mt-2">
-  <strong>Place sélectionnée :</strong>
-  <span>
-    {{
-      getPlaceLabel(
-        placesList.find(p => p.IDPlace === selectedPFP1) || {}
-      )
-    }}
-  </span>
-</div>
-<button
-  class="btn btn-primary mt-2"
-  @click="updatePFP1"
-  :disabled="!selectedPFP1"
->
-  Enregistrer
-</button>
-
-      </div>
-      <div v-else>
-        Chargement des places....
-      </div>
-    </div>
+  </div>
 
 
   <div v-if="institutionsList && institutionsList.length">
@@ -87,6 +87,7 @@
       <!-- Ligne du titre + bouton "Voir les détails" aligné à droite -->
       <div class="flex align-items-center ">
         <h4 class="m-2 w-2">Formation Pratique {{ index + 1 }}</h4>
+        <Tag v-if="inst.State === 'Echec'" value="Non Validé" severity="danger" class="ml-2"></Tag>
         <div class="flex align-items-center m-2">
           <Button
             label="Voir les détails"
@@ -389,6 +390,7 @@ import Button from "primevue/button";
 import Card from "primevue/card";
 import InputText from "primevue/inputtext";
 import FileUpload from "primevue/fileupload";
+import Tag from 'primevue/tag';
 import { storage } from "root/firebase"; // Assurez-vous que le chemin est correct
 import {
   ref as storageRef,
@@ -396,7 +398,6 @@ import {
   getDownloadURL,
   deleteObject
 } from "firebase/storage";
-import RadarProfil from '@/components/UserProfile/RadarProfil.vue'
 
 const toast = useToast();
 const route = useRoute();
@@ -461,10 +462,12 @@ const fetchUserProfileById = async (userId) => {
           .map((inst) => {
             const domainSet = domainsByInstitution[inst.InstitutionId];
             const criteriaSet = criteriaByInstitution[inst.InstitutionId];
+            const originalPfp = validPfpEntries.find(p => p.ID_PFP === inst.InstitutionId);
             return {
               ...inst,
               Domaines: domainSet ? Array.from(domainSet) : [],
-              CriteriaValides: criteriaSet ? Array.from(criteriaSet) : []
+              CriteriaValides: criteriaSet ? Array.from(criteriaSet) : [],
+              State: originalPfp ? originalPfp.State : undefined
             };
           });
         // Charger ensuite les documents pour chaque institution
