@@ -260,6 +260,7 @@ const routes = [
     name: 'NotesWorkspace',
     component: () => import('./views/NotesWorkspace.vue')
   },
+
 ];
 
 // Create router instance
