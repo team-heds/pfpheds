@@ -97,7 +97,7 @@
     
     <div v-else class="events-list">
       <div 
-        v-for="event in upcomingEvents" 
+        v-for="event in upcomingEvents.slice(0, 4)"
         :key="event.id"
         class="flex flex-nowrap justify-content-between align-items-center border-1 surface-border border-circles p-3 cursor-pointer select-none hover:surface-hover transition-colors transition-duration-150 mb-2"
         @click="openEventDetail(event)"
@@ -337,7 +337,7 @@ export default {
             };
           });
         convs.sort((a, b) => (b.lastReceivedMessageAt || 0) - (a.lastReceivedMessageAt || 0));
-        convs = convs.slice(0, 6);
+        convs = convs.slice(0, 4);
         const dbUsers = dbRef(db, 'Users');
         const usersSnap = await get(dbUsers);
         const usersData = usersSnap.val() || {};
