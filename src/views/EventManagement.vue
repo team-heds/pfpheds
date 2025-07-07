@@ -45,21 +45,24 @@
       </div>
 
       <!-- Grille de cartes événements -->
-      <div class="event-card-grid">
-        <div
-          v-for="event in filteredEvents"
-          :key="event.id"
-          class="event-card-col"
-        >
-          <EventCard
-            :event="event"
-            :user-id="userId"
-            @like="likeEvent"
-            @register="registerEvent"
-            @show-details="openEventDetails"
-          />
+      <div class="grid-scrollable-wrapper">
+        <div class="grid-container">
+          <div
+            v-for="event in filteredEvents"
+            :key="event.id"
+            class="card-wrapper"
+          >
+            <EventCard
+              :event="event"
+              :user-id="userId"
+              @like="likeEvent"
+              @register="registerEvent"
+              @show-details="openEventDetails"
+              style="width: 20rem; height: 100%;"
+            />
+          </div>
+          <div v-if="filteredEvents.length === 0" class="empty">Aucun événement pour l'instant.</div>
         </div>
-        <div v-if="filteredEvents.length === 0" class="empty">Aucun événement pour l'instant.</div>
       </div>
     </main>
     <!-- Sidebar droite -->
@@ -392,16 +395,26 @@ onMounted(() => {
   background-color: var(--surface-card);
   border-radius: 1.2rem;
 }
-.event-card-grid {
+.grid-scrollable-wrapper {
+  margin-bottom: 2rem;
+  -webkit-overflow-scrolling: touch;
+}
+.grid-scrollable-wrapper::-webkit-scrollbar {
+  display: none;
+}
+.grid-scrollable-wrapper {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.grid-container {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 2em;
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  gap: 2rem;
   margin: 0 auto;
 }
-.event-card-col {
+.card-wrapper {
   display: flex;
   justify-content: center;
-  align-items: stretch;
 }
 .empty {
   color: #888;
@@ -446,9 +459,6 @@ onMounted(() => {
     padding-left: 0.7rem;
     padding-right: 0.7rem;
   }
-  .event-card-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
 }
 @media (max-width: 1100px) {
   .event-layout,
@@ -460,9 +470,6 @@ onMounted(() => {
   .main-content-padded {
     padding-left: 0.3rem;
     padding-right: 0.3rem;
-  }
-  .event-card-grid {
-    grid-template-columns: repeat(3, 1fr);
   }
 }
 @media (max-width: 900px) {
@@ -477,14 +484,6 @@ onMounted(() => {
   }
   .main-content, .main-content-padded {
     padding: 1.2em 0.2em 1.2em 0.2em;
-  }
-  .event-card-grid {
-    grid-template-columns: 1fr;
-    gap: 1.2em;
-  }
-  .event-card-col {
-    width: 100%;
-    min-width: 0;
   }
 }
 @media (max-width: 700px) {
