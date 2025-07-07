@@ -22,9 +22,8 @@
         </span>
 
       </div>
-      <div class="filter-bar" style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
-
-      <Button icon="pi pi-plus" label="Créer un événement" class="p-button-primary mb-6 ml-5" @click="showCreateDialog = true" />
+      <div class="filter-bar mb-5" style="display: flex; gap: 1rem; align-items: center; flex-wrap: nowrap; overflow-x: auto;">
+        <Button icon="pi pi-plus" label="Créer un événement" class="p-button-primary ml-5 mb-0" @click="showCreateDialog = true" />
         <span>
           <Button
             :outlined="!privateOnly"
