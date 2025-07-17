@@ -1,5 +1,6 @@
 require('dotenv').config()
 const express = require('express')
+const supabase = require('./supabaseClient');
 const app = express()
 app.use(express.json())
 
@@ -7,6 +8,22 @@ app.get('/api/ping', (req, res) => {
   res.send('pingpong')
 })
 
+app.get('/api/pong', (req, res) => {
+  res.send('aller')
+})
+
+// Exemple de route test Supabase
+app.get('/api/supabase-test', async (req, res) => {
+  const { data, error } = await supabase.from('test').select('*').limit(1);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+app.get('/api/chapters', async (req, res) => {
+  const { data, error } = await supabase.from('chapters').select('*');
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
 const PORT = process.env.PORT || 3000
 app.listen(PORT, () => console.log(`Backend OK sur le port ${PORT}`))
-
