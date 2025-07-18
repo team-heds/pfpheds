@@ -36,6 +36,7 @@ import MobileBottomNav from '@/components/Utils/MobileBottomNav.vue';
 import PwaInstallPrompt from '@/components/Utils/PwaInstallPrompt.vue';
 import HeaderIcons from '@/components/Utils/HeaderIcons.vue'
 
+
 export default {
   name: "App",
   components: {
