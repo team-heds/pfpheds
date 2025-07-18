@@ -28,18 +28,18 @@ services:
       - "3000:3000"
 
 
-  # proxy:
-  #   image: nginx:stable-alpine
-  #   container_name: proxy
-  #   volumes:
-  #     - ./nginx/nginx.proxy.conf:/etc/nginx/conf.d/default.conf
-  #   ports:
-  #     - "80:80"
-  #   depends_on:
-  #     - frontend
-  #     - backend
-  #   networks:
-  #     - appnet
+  proxy:
+    image: nginx:stable-alpine
+    container_name: proxy
+    volumes:
+      - ./nginx/nginx.proxy.conf:/etc/nginx/conf.d/default.conf
+    ports:
+     - "80:80"
+    depends_on:
+     - frontend
+     - backend
+    networks:
+     - appnet
 
 
 networks:

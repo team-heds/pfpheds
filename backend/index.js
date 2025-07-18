@@ -13,11 +13,6 @@ app.get('/api/pong', (req, res) => {
 })
 
 // Exemple de route test Supabase
-app.get('/api/supabase-test', async (req, res) => {
-  const { data, error } = await supabase.from('test').select('*').limit(1);
-  if (error) return res.status(500).json({ error: error.message });
-  res.json(data);
-});
 
 app.get('/api/chapters', async (req, res) => {
   const { data, error } = await supabase.from('chapters').select('*');
