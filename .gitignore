@@ -31,12 +31,11 @@ coverage
 
 # Secrets et config Firebase
 .env
-firebase.js
-src/firebase.js
+
 
 # Secrets backend
 backend/.env
-backend/firebase.js
+
 
 # IDE
 
