@@ -27,20 +27,16 @@ services:
     ports:
       - "3000:3000"
 
-
   proxy:
     image: nginx:stable-alpine
     container_name: proxy
-    volumes:
-      - ./nginx/nginx.proxy.conf:/etc/nginx/conf.d/default.conf
     ports:
-     - "80:80"
-    depends_on:
-     - frontend
-     - backend
-    networks:
-     - appnet
-
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - /etc/letsencrypt/live/hedsvs.ch/fullchain.pem:/etc/letsencrypt/live/hedsvs.ch/fullchain.pem:ro
+      - /etc/letsencrypt/live/hedsvs.ch/privkey.pem:/etc/letsencrypt/live/hedsvs.ch/privkey.pem:ro
 
 networks:
   appnet:
