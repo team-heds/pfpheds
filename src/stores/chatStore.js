@@ -17,10 +17,22 @@ export const useChatStore = defineStore('chat', {
       this.loading = false
     },
     async sendMessage(content) {
-      await supabase.from('messages').insert([{ content, sender: 'user' }])
-      const botReply = this.generateBotReply(content)
-      await supabase.from('messages').insert([{ content: botReply, sender: 'bot' }])
-      this.fetchMessages()
+      try {
+        const { error: userError } = await supabase.from('messages').insert([{ content, sender: 'user' }])
+        if (userError) {
+          console.error('Erreur insertion user:', userError)
+          return
+        }
+        const botReply = this.generateBotReply(content)
+        const { error: botError } = await supabase.from('messages').insert([{ content: botReply, sender: 'bot' }])
+        if (botError) {
+          console.error('Erreur insertion bot:', botError)
+          return
+        }
+        this.fetchMessages()
+      } catch (e) {
+        console.error('Erreur générale sendMessage:', e)
+      }
     },
     generateBotReply(userMessage) {
       if (userMessage.toLowerCase().includes('bonjour')) return 'Bonjour à toi !'
