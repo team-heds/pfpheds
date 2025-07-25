@@ -39,6 +39,7 @@
     "@tiptap/react": "^2.22.3",
     "@tiptap/starter-kit": "^2.22.3",
     "@tiptap/vue-3": "^2.22.3",
+    "axios": "^1.11.0",
     "chart.js": "^4.5.0",
     "csv-parser": "^3.0.0",
     "csv-stringify": "^6.5.0",

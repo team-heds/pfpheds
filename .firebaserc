@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "pfpheds"
-  }
+    "default": "pfpheds",
+    "firebase auth:export users.json --format=json": "pfpheds"
+  },
+  "targets": {},
+  "etags": {}
 }

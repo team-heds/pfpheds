@@ -34,6 +34,7 @@ import PraticienFormateurForm from "@/components/Dashboard/DashboardForms/Pratic
 import PraticienFormateurFormModif from "@/components/Dashboard/DashboardForms/PraticienFormateurFormModif.vue";
 import PraticienFormateurList from "@/components/Dashboard/DashboardList/PraticienFormateurList.vue";
 import Faq from "@/components/Home/Faq.vue";
+import NewPassword from '@/views/pages/auth/NewPassword.vue'
 import SignUp from "@/components/Utils/SignUp.vue";
 import TermsOfUse from "@/components/Utils/TermsOfUse.vue";
 import InfoExterne from "@/components/Utils/InfoExterne.vue";
@@ -59,6 +60,7 @@ import ManagementPFPEnCours from '@/components/Dashboard/DashboardDetails/Manage
 import ManagementRepondant from '@/components/Dashboard/DashboardDetails/Management_repondant.vue';
 import InfoRepondant from '@/components/Dashboard/DashboardDetails/Info_repondant.vue';
 import LoginHome from '@/components/Utils/LoginHome.vue';
+import LoginHome2 from '@/components/Utils/LoginHome2.vue'
 import NewsFeed from '@/components/Social/NewsFeed.vue';
 import HashtagPage from '@/components/Social/HashtagPage.vue';
 import CommunityManagement from '@/components/Social/CommunityManagement.vue';
@@ -87,6 +89,8 @@ import ChatBotSI from '@/views/ChatBotSI.vue'
 const routes = [
   { path: '/', component: LoginHome, name: 'LoginHome',   props: true   }, // Fil d'actualité
   { path: '/home', component: LoginHome, name: 'LoginHome',   props: true   }, // Fil d'actualité
+  { path: '/home2', component: LoginHome2, name: 'LoginHome2',   props: true   }, // Fil d'actualité
+
   { path: '/feed', component: NewsFeed, name: 'NewsFeed',   props: true, meta: { requiresAuth: true } }, // Fil d'actualité
   { path: '/mention/:group', component: MentionGroupPage, name: 'MentionGroupPage', props: true, meta: { requiresAuth: true, requiredRole: true }},
   { path: '/hashtag/:hashtag', component: HashtagPage, name: 'HashtagPage', props: true, meta: { requiresAuth: true } },
@@ -156,7 +160,7 @@ const routes = [
   { path: '/tasklist', component: Index, name: 'Index', meta: { requiresAuth: true, requiredRole: ['editor', 'admin'] } },
   { path: '/chat', component: IndexChat, name: 'IndexChat', meta: { requiresAuth: true } },
   { path : '/affectation_stage_etudiant', component: AffectationStageEtudiant, name: 'AffectationStageEtudiant', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
-
+  { path: '/new-password', component: NewPassword, name: 'NewPassword' },
 
 
   {

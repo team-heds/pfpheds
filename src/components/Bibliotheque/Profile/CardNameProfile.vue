@@ -1,4 +1,24 @@
 <template>
+  <!-- BANDEAU MAISON GAMIFICATION
+  <BandeauMaison
+    v-if="userGamification && userGamification.maison && userGamification.niveau"
+    :maison="userGamification.maison"
+    :niveau="userGamification.niveau"
+    class="mb-4"
+  />
+
+  -->
+  <!-- XP BAR
+  <XPBar
+    v-if="userGamification && userGamification.xp !== undefined && userGamification.xpToNext !== undefined"
+    :xp="userGamification.xp"
+    :xp-to-next="userGamification.xpToNext"
+    :niveau="userGamification.niveau"
+    :maison="userGamification.maison"
+    class="mb-4"
+  />
+   -->
+  <!-- FIN BANDEAU MAISON + XP -->
   <div class="mb-4 card-profile-responsive">
     <div class="avatar-wrapper">
       <img :src="user.photoURL || defaultAvatar" alt="Avatar" style="border-radius: 3rem;" />
@@ -66,6 +86,8 @@ import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { storage } from '../../../../firebase.js';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
+import BandeauMaison from '@/components/Profile/BandeauMaison.vue'
+import XPBar from '@/components/Profile/XPBar.vue'
 
 const defaultAvatar = '../../../public/assets/images/avatar/01.jpg';
 
@@ -79,7 +101,11 @@ const user = ref({
   email: '',
   ville: '',
   classe: '',
-  repondantHES: ''
+  repondantHES: '',
+  maison: '',
+  niveau: '',
+  xp: 0,
+  xpToNext: 100
 });
 
 // Profil de l'utilisateur connecté (pour vérifier s'il est admin)
@@ -253,6 +279,28 @@ onMounted(async () => {
   });
   // Charger la liste des enseignants
   await fetchTeachers();
+});
+
+// Exemple de récupération des infos gamification (à adapter à ta logique)
+const userGamification = ref({
+  maison: user.value.maison || 'harmonis',
+  niveau: user.value.niveau || 1,
+  xp: user.value.xp || 20,
+  xpToNext: user.value.xpToNext || 100
+});
+
+const xpPercent = computed(() => {
+  if (!userGamification.value.xpToNext) return 0;
+  return Math.round((userGamification.value.xp / userGamification.value.xpToNext) * 100);
+});
+const xpColor = computed(() => {
+  switch ((userGamification.value.maison || '').toLowerCase()) {
+    case 'harmonis': return '#608E62';
+    case 'elaris': return '#B15E56';
+    case 'doloris': return '#D4B25B';
+    case 'solencia': return '#668DA3';
+    default: return '#6366F1';
+  }
 });
 </script>
 

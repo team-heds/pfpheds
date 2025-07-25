@@ -21,6 +21,13 @@ export default defineConfig({
       workbox: {
         runtimeCaching: [
           {
+            urlPattern: /^https:\/\/[a-zA-Z0-9-]+\.supabase\.co\/.*$/,
+            handler: 'NetworkOnly',
+            options: {
+              cacheName: 'supabase-api',
+            },
+          },
+          {
             urlPattern: ({ url }) => url.origin === self.location.origin,
             handler: 'CacheFirst',
             options: {
@@ -58,6 +65,7 @@ export default defineConfig({
       includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
       devOptions: {
         enabled: true,
+        suppressLogs: true
       },
     }),
   ],
