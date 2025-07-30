@@ -1,3 +1,4 @@
+
 <template>
   <div class="admin-scrollable">
     <Navbar />
@@ -401,9 +402,14 @@ export default {
             try {
               const oldImageRef = storageRef(storage, `Institutions/${this.$route.params.id}/image`);
               await deleteObject(oldImageRef);
+              console.log('Ancienne image supprimée avec succès');
             } catch (err) {
-              // L'image n'existait peut-être pas, on ignore l'erreur
-              console.warn('Ancienne image non trouvée ou déjà supprimée.', err);
+              // L'image n'existait peut-être pas, on ignore l'erreur 404
+              if (err.code === 'storage/object-not-found') {
+                console.log('Aucune ancienne image à supprimer (normal pour la première image)');
+              } else {
+                console.warn('Erreur lors de la suppression de l\'ancienne image:', err);
+              }
             }
           }
           // Uploader la nouvelle image
@@ -530,3 +536,4 @@ export default {
   display: none;
 }
 </style>
+

@@ -11,7 +11,7 @@ import LoginHome2 from '@/views/auth/LoginHome2.vue' // avec supabase
 import NewPasswordView from '@/views/auth/NewPasswordView.vue' // avec supabase
 import LoginView from '@/views/auth/LoginView.vue';
 import RegisterView from '@/views/auth/RegisterView.vue';
-import ForgotPasswordView from '@/views/auth/ForgotPasswordView.vue';
+
 import VerificationView from '@/views/auth/VerificationView.vue';
 import LockScreenView from '@/views/auth/LockScreenView.vue';
 import AccessView from '@/views/auth/AccessView.vue';
@@ -54,7 +54,7 @@ import CommunityInfoView from '@/views/social/CommunityInfoView.vue';
 // ========================================
 // GESTION UTILISATEURS - LISTES
 // ========================================
-import ListUser from '@/views/user-management/ListUser.vue';
+
 import UserListView from "@/views/admin/users/UserListView.vue";
 import StudentListView from "@/views/admin/users/StudentListView.vue";
 import TeacherListView from "@/views/admin/users/TeacherListView.vue";
@@ -162,7 +162,7 @@ const routes = [
   { path: '/new-password', component: NewPasswordView, name: 'NewPassword' },
   { path: '/login', component: LoginView, name: 'LoginView' },
   { path: '/register', component: RegisterView, name: 'RegisterView' },
-  { path: '/forgot-password', component: ForgotPasswordView, name: 'ForgotPasswordView' },
+
   { path: '/verification', component: VerificationView, name: 'VerificationView' },
   { path: '/lock-screen', component: LockScreenView, name: 'LockScreenView' },
   { path: '/access', component: AccessView, name: 'AccessView' },
@@ -205,7 +205,7 @@ const routes = [
   // ========================================
   // GESTION UTILISATEURS - LISTES
   // ========================================
-  { path: '/listUser', component: ListUser, name: 'ListUser', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
+
   { path: '/user_list', component: UserListView, name: 'UserListView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
   { path: '/etudiant_list', component: StudentListView, name: 'StudentListView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
   { path: '/enseignent_list', component: TeacherListView, name: 'TeacherListView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },

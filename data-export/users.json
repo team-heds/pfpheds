@@ -1,0 +1,5579 @@
+{
+  "0FdoULhDoRWF8b7JyDeSFAgKmsC2": {
+    "Bio": "",
+    "Mail": "norine.vonlanthen@students.hevs.ch",
+    "Nom": "Vonlanthen",
+    "PFP_valided": {
+      "-OQ3Ixd_WwaV1L8rG7G4": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ortho",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_TtwPcuW60cfmbyc",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "44",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      },
+      "-OQ3J4CRo50gdNvwxvaO": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ortho",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_TtwPcuW60cfmbyc",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "44",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      }
+    },
+    "PhotoURL": "",
+    "Prenom": "Norine",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "norine.vonlanthen",
+    "messages": {
+      "-ODfA9XONqGBDgqwteur": {
+        "createdAt": 1733743650581,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "test"
+      },
+      "-ODfAA7OE-9S1qOefpwk": {
+        "createdAt": 1733743653012,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "test2"
+      },
+      "-ODfG9nCZImw7qH-Q1e1": {
+        "createdAt": 1733745224455,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "salut"
+      },
+      "-ODfNdvkEKteuTsfsFrE": {
+        "createdAt": 1733747187064,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "fdsa"
+      },
+      "-ODfOuhbh5NlNmThsqkc": {
+        "createdAt": 1733747517935,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "tre"
+      },
+      "-ODfOyG6Eeyj2WLzBhdB": {
+        "createdAt": 1733747532494,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "fdsa"
+      },
+      "-ODfR5FtX-6TxplUHiUy": {
+        "createdAt": 1733748089533,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "fdsa"
+      },
+      "-ODfVhPPlCf4nJEZstnb": {
+        "createdAt": 1733749298464,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "fds"
+      },
+      "-ODfVqeNA5se0gQPHnW-": {
+        "createdAt": 1733749336352,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "fds"
+      },
+      "-ODfVtdjPUXLSDzuSm-u": {
+        "createdAt": 1733749348600,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "fd"
+      },
+      "-ODfWI4zEXOtktjsnS90": {
+        "createdAt": 1733749452807,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "123"
+      },
+      "-ODfWtibacT1y5eTYCA3": {
+        "createdAt": 1733749611055,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "dfas"
+      },
+      "-ODfbd7toSF0K7DZ5XUs": {
+        "createdAt": 1733751115970,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "fds"
+      },
+      "-ODfkhhFtPsRETGis48q": {
+        "createdAt": 1733753493864,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "salasd"
+      },
+      "-OIzq57fbYz_Vi3ISHwo": {
+        "createdAt": 1739459158620,
+        "ownerId": "xeIiCd1BcydVmyKnzuEeffclQiu1",
+        "text": "hello Antoine"
+      },
+      "-OQ2lALdQzGv5slnO9Cw": {
+        "createdAt": 1747041171353,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "😡😡"
+      },
+      "-OSZ3g07ywBayMZyBKQk": {
+        "createdAt": 1749730639577,
+        "ownerId": "8M3ZbwOu7tgpTAY5sfxeVKBoBUI3",
+        "text": "yo"
+      },
+      "-OT1Vy0bGYl5Fse2a8L0": {
+        "createdAt": 1750241370221,
+        "ownerId": "EO6uiys65gW0pEb8N94jiuX58bx2",
+        "text": "Wesh alors ?"
+      }
+    }
+  },
+  "0snh4jih7f5o93b": {
+    "communities": {
+      "communityId": "0snh4jih7f5o93b"
+    }
+  },
+  "2tQybqqiJwbRkLUnBGcHiyG5KyO2": {
+    "Bio": "",
+    "Mail": "antoine.quarroz@hevs.ch",
+    "Nom": "Quarroz",
+    "PhotoURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/users%2F2tQybqqiJwbRkLUnBGcHiyG5KyO2%2Fprofile-picture.jpg?alt=media&token=abccedf4-6bf9-4fe1-b9ae-aaf921f8696a",
+    "Prenom": "Antoine",
+    "Roles": {
+      "BA24": true,
+      "admin": true,
+      "chatbotSi": true,
+      "editor": true,
+      "lese": true,
+      "student": true,
+      "viewer": true
+    },
+    "UserName": "antoine.quarroz",
+    "Ville": "Saint-Martin",
+    "communities": {
+      "-OH2EtA7BZdgLt97TcK5": true,
+      "-OH2EyVMYrpoVFpYqkeL": true,
+      "-OHCbDdLqcqwMLwwOeyl": true,
+      "0s8nbwih7hgopuk": true,
+      "e6a669j49q8ni2z": true,
+      "oaa2h8iwggs1m9d": true,
+      "vtdej6f1r4a27gw": true
+    },
+    "messages": {
+      "-ODfTxdwYI73wdplUuCh": {
+        "createdAt": 1733748840706,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "fds"
+      },
+      "-ODfWsLr4-mQVXeoZqbx": {
+        "createdAt": 1733749605439,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "fdsa"
+      },
+      "-ODfWsyjtFKAaesCe3Fv": {
+        "createdAt": 1733749607991,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "fds"
+      },
+      "-ODfZe8hfAYrE3Q29F-K": {
+        "createdAt": 1733750333684,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "fds"
+      },
+      "-ODfZgw3nBakOPnX6Q5h": {
+        "createdAt": 1733750345100,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "fddf"
+      },
+      "-ODfe2m-9TouRCoOvUwq": {
+        "createdAt": 1733751749392,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "dsfa"
+      },
+      "-ODffB5aRIIPg9Qp-FVx": {
+        "createdAt": 1733752045622,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "fdsaf"
+      },
+      "-ODffBG_R9FRcd4zle8Q": {
+        "createdAt": 1733752046325,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "fdsaffdsa"
+      },
+      "-ODffBRNpk6FZmMxaGdP": {
+        "createdAt": 1733752047016,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "fdsaffdsafa"
+      },
+      "-ODffBbWu8fVWTsfg5Re": {
+        "createdAt": 1733752047729,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "fdsaffdsafa"
+      },
+      "-ODfgE13xvwQq280UlNw": {
+        "createdAt": 1733752319652,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "sd"
+      },
+      "-ODfgEVOXQLGm9xEKibX": {
+        "createdAt": 1733752321594,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "sdd"
+      },
+      "-ODfgFAP9be5FYhGFoEy": {
+        "createdAt": 1733752324347,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "😁"
+      },
+      "-ODfgJmsIJSnBRxx1fZ7": {
+        "createdAt": 1733752343365,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "dfsfds"
+      },
+      "-ODfgK95NbFO1ri0ipZ1": {
+        "createdAt": 1733752344853,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "fdsa"
+      },
+      "-ODfuUG1Oe19AnfJYdTr": {
+        "createdAt": 1733756056149,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "salut"
+      },
+      "-ODfycW08M6PyIplzWN4": {
+        "createdAt": 1733757142614,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "saasASasAS"
+      },
+      "-ODfycy_I-3hNw1raYNK": {
+        "createdAt": 1733757144505,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "sASaasASsa"
+      },
+      "-ODg-Ig2n6D6h1KRVCxs": {
+        "createdAt": 1733757581592,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "😀asddas"
+      },
+      "-ODg02U_oOKb4EmgrUPz": {
+        "createdAt": 1733757777402,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "etzrtzertz"
+      },
+      "-ODjct0sDuVELfwOa_m7": {
+        "createdAt": 1733818552451,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "salut"
+      },
+      "-ODjd60f4qMNMpq_dJAF": {
+        "createdAt": 1733818609785,
+        "ownerId": "xeIiCd1BcydVmyKnzuEeffclQiu1",
+        "text": "yo"
+      },
+      "-ODjd6qHqRtqDtbizAZ3": {
+        "createdAt": 1733818613151,
+        "ownerId": "xeIiCd1BcydVmyKnzuEeffclQiu1",
+        "text": "ca va"
+      },
+      "-ODjdHuXzrXi64GIzINO": {
+        "createdAt": 1733818658479,
+        "ownerId": "xeIiCd1BcydVmyKnzuEeffclQiu1",
+        "text": "yo¨"
+      },
+      "-ODjdJPAaplvcfIsawPn": {
+        "createdAt": 1733818664601,
+        "ownerId": "xeIiCd1BcydVmyKnzuEeffclQiu1",
+        "text": "yp"
+      },
+      "-ODjdL-9uRuPnWWoY8pl": {
+        "createdAt": 1733818671128,
+        "ownerId": "xeIiCd1BcydVmyKnzuEeffclQiu1",
+        "text": "gfd"
+      },
+      "-ODjevKDYADM1gc3IYPI": {
+        "createdAt": 1733819086172,
+        "ownerId": "xeIiCd1BcydVmyKnzuEeffclQiu1",
+        "text": "fggffgd"
+      },
+      "-ODjexRCX8oPrIKJpZXi": {
+        "createdAt": 1733819094810,
+        "ownerId": "xeIiCd1BcydVmyKnzuEeffclQiu1",
+        "text": "salut bro"
+      },
+      "-ODjeywwD3DTMbQS6mkp": {
+        "createdAt": 1733819101002,
+        "ownerId": "xeIiCd1BcydVmyKnzuEeffclQiu1",
+        "text": "Loïc est content"
+      },
+      "-ODjgCUomVWwcRS5U5oW": {
+        "createdAt": 1733819422721,
+        "ownerId": "xeIiCd1BcydVmyKnzuEeffclQiu1",
+        "text": "Hello"
+      },
+      "-ODjgKj_T2p2KoBzPNEq": {
+        "createdAt": 1733819456494,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "test"
+      },
+      "-ODjgN73rIh6PsyKY4e9": {
+        "createdAt": 1733819466253,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "test"
+      },
+      "-ODjgOb9XlaX4OrjP_Dh": {
+        "createdAt": 1733819472339,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "fdsa"
+      },
+      "-ODjgVEkF4PmRh_RniiA": {
+        "createdAt": 1733819499534,
+        "ownerId": "xeIiCd1BcydVmyKnzuEeffclQiu1",
+        "text": "Test FC SION"
+      },
+      "-ODjhkjAEqfjSVjXOOtF": {
+        "createdAt": 1733819829215,
+        "ownerId": "G4NAdY5zmYeEj1cFF3upqqCcwFF3",
+        "text": "testt"
+      },
+      "-ODjhoNTP2CvA0exFC9J": {
+        "createdAt": 1733819844147,
+        "ownerId": "G4NAdY5zmYeEj1cFF3upqqCcwFF3",
+        "text": "testt"
+      },
+      "-ODjiitoRVPDoP_mDc9x": {
+        "createdAt": 1733820083837,
+        "ownerId": "G4NAdY5zmYeEj1cFF3upqqCcwFF3",
+        "text": "fdsfd"
+      },
+      "-ODjitcjysLQNeAawiax": {
+        "createdAt": 1733820127823,
+        "ownerId": "xeIiCd1BcydVmyKnzuEeffclQiu1",
+        "text": "Test montée?"
+      },
+      "-ODjity6N_usCY7vLqwP": {
+        "createdAt": 1733820129170,
+        "ownerId": "oEenshn2ZOMTx69MEGXNcxmeoTr1",
+        "text": "test"
+      },
+      "-ODjiutee7gnIqsdrE7b": {
+        "createdAt": 1733820132982,
+        "ownerId": "oEenshn2ZOMTx69MEGXNcxmeoTr1",
+        "text": "test"
+      },
+      "-ODjjCJZDog4nerIqsw0": {
+        "createdAt": 1733820208431,
+        "ownerId": "G4NAdY5zmYeEj1cFF3upqqCcwFF3",
+        "text": "fdsafd"
+      },
+      "-ODjjDR3o_tE4nxjzgHC": {
+        "createdAt": 1733820213027,
+        "ownerId": "xeIiCd1BcydVmyKnzuEeffclQiu1",
+        "text": "Loïc est heureux?"
+      },
+      "-ODkqNPBRBibJHaNzvkb": {
+        "createdAt": 1733838866095,
+        "ownerId": "LYgTG7cUqEgvJ2RkgrmoFQoHQQu2",
+        "text": "Salut chef ça roule?🤡"
+      },
+      "-ODkz92-i2RE4eybySr3": {
+        "createdAt": 1733841166537,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "adsadsasd"
+      },
+      "-ODkz9Xzfn9m1JdZGzll": {
+        "createdAt": 1733841168584,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "asdasdasd"
+      },
+      "-ODkzA5OxBxYLa5Cg27Q": {
+        "createdAt": 1733841170850,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "asdasd"
+      },
+      "-ODkzR_DdRNi9Xxt1Rtz": {
+        "createdAt": 1733841242475,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "yooo"
+      },
+      "-ODkzu6ygPKOINEdQr9S": {
+        "createdAt": 1733841363489,
+        "ownerId": "xeIiCd1BcydVmyKnzuEeffclQiu1",
+        "text": "🤑"
+      },
+      "-ODuvn58051jJd5GGg9k": {
+        "createdAt": 1734008058262,
+        "ownerId": "5ASMnImQzIS2wiQwiN5Wt6Nwd0C2",
+        "text": "Hello, j'ai remarqué que je ne peux pas accéder aux paramètres, ça plante à chaque fois et chez moi la date est en format mois, jour, année"
+      },
+      "-ODuvqqFXEJjh0-A-pQn": {
+        "createdAt": 1734008073630,
+        "ownerId": "5ASMnImQzIS2wiQwiN5Wt6Nwd0C2",
+        "text": "Pour info"
+      },
+      "-ODuvrqc4jZKW1QVE3js": {
+        "createdAt": 1734008077750,
+        "ownerId": "5ASMnImQzIS2wiQwiN5Wt6Nwd0C2",
+        "text": "Bone journée"
+      },
+      "-ODuvu5N5k32Nq0eFUM9": {
+        "createdAt": 1734008086950,
+        "ownerId": "5ASMnImQzIS2wiQwiN5Wt6Nwd0C2",
+        "text": "Bonne *"
+      },
+      "-OEJAQNKz_0OIpfOUeuJ": {
+        "createdAt": 1734431585842,
+        "ownerId": "xeIiCd1BcydVmyKnzuEeffclQiu1",
+        "text": "test test"
+      },
+      "-OGZbHv8anJZ3zTLslDW": {
+        "createdAt": 1736854810247,
+        "ownerId": "hJnT8DFglHci9Dfen82BIGqU6sz2",
+        "text": "bonjour, mes anciennes places de stages ne sont pas sur la plateforme, est-ce normal ? comment peux-je voir quels critères j‘ai deja validé ?"
+      },
+      "-OGZbLlaxy_V7YFGl8SJ": {
+        "createdAt": 1736854826021,
+        "ownerId": "hJnT8DFglHci9Dfen82BIGqU6sz2",
+        "text": "merci d‘avance"
+      },
+      "-OH82FjOReX0UCmHPUAm": {
+        "createdAt": 1737466121696,
+        "ownerId": "Dkrj5I1LdfgsJ5KUlqs3gag1PV43",
+        "text": "Salut!"
+      },
+      "-OHCe2CSIzdt-e5Q0kjw": {
+        "createdAt": 1737543398241,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "Bonjour;"
+      },
+      "-OHCe3QzVo6ZY5abjwpv": {
+        "createdAt": 1737543403268,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "Bonjour,"
+      },
+      "-OHCe53RXg6l_kEXDq-S": {
+        "createdAt": 1737543409968,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "test"
+      },
+      "-OHCeTDG4P-gE6GckK57": {
+        "createdAt": 1737543508922,
+        "ownerId": "xeIiCd1BcydVmyKnzuEeffclQiu1",
+        "text": "Hello boss"
+      },
+      "-OIBNbHQJhNem4r_sBOU": {
+        "createdAt": 1738595792092,
+        "ownerId": "xeIiCd1BcydVmyKnzuEeffclQiu1",
+        "text": "hello Antoine"
+      },
+      "-OIBNbJv0WUbDhKC4h99": {
+        "createdAt": 1738595792254,
+        "ownerId": "xeIiCd1BcydVmyKnzuEeffclQiu1",
+        "text": "hello Antoine"
+      },
+      "-OIC8eVjPG-qnSPZq3eA": {
+        "createdAt": 1738608648790,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "test"
+      },
+      "-OIzqH-y6PhAmgQERxoi": {
+        "createdAt": 1739459207279,
+        "ownerId": "xeIiCd1BcydVmyKnzuEeffclQiu1",
+        "text": "1212 test 1212"
+      },
+      "-OIzqIHdRXfAbE2DIn-b": {
+        "createdAt": 1739459212507,
+        "ownerId": "xeIiCd1BcydVmyKnzuEeffclQiu1",
+        "text": "yes merci"
+      },
+      "-OPf0GW7RMsu784yy72v": {
+        "createdAt": 1746625959049,
+        "ownerId": "lMzLCfyBONNuxRa5AzM2VPnTpOx1",
+        "text": "C'est génial ce que tu as fait pour Spotify!"
+      },
+      "-OPf8X50IOWKebeSxXMa": {
+        "createdAt": 1746628124017,
+        "ownerId": "lMzLCfyBONNuxRa5AzM2VPnTpOx1",
+        "text": "Petit détail pas important, mais est-ce qu’il est possible de voir qui a liké les posts ?"
+      },
+      "-OQ9NMlIZDtE5z3mslhu": {
+        "createdAt": 1747152108576,
+        "ownerId": "lMzLCfyBONNuxRa5AzM2VPnTpOx1",
+        "text": "tu peux m'expliquer pk j'ai deux fois la vidéo youtube dans mon nouveau poste? merci"
+      },
+      "-OQcBGtZcfHa1NbWgfbu": {
+        "createdAt": 1747652252685,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "ghjghj"
+      },
+      "-OQcMI7nQsUzG2CPXUSa": {
+        "createdAt": 1747655143614,
+        "ownerId": "lMzLCfyBONNuxRa5AzM2VPnTpOx1",
+        "text": "d'acc merci !"
+      },
+      "-ORL9Q9b1tCjmd7xt9PD": {
+        "createdAt": 1748423521223,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "Yooo"
+      },
+      "-OT1okhviiTEEkFdX7e1": {
+        "createdAt": 1750246558578,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "test"
+      },
+      "-OT7-jwdNG4ijhxCGQ94": {
+        "createdAt": 1750333586602,
+        "ownerId": "lMzLCfyBONNuxRa5AzM2VPnTpOx1",
+        "text": "Yo, J'ai un beug avec ma fiche clinique. Que penses-tu de mettre à dispo. que je puisse supprimer mes posts?"
+      },
+      "-OTgIsHSY1OYBfW6rof8": {
+        "createdAt": 1750942582941,
+        "ownerId": "ZMJqJI1ZlWTHwkJ375Ut7MrjjvC2",
+        "text": "kjlsndf.kjshfjsdéfjsdéfkjsdéfkijsdéfvjisdéofidéàfoj"
+      }
+    }
+  },
+  "300XSnsx9bZ0jEopCVAxykYsTUK2": {
+    "Bio": "",
+    "Mail": "romy.savioz@students.hevs.ch",
+    "Nom": "Savioz",
+    "PhotoURL": "",
+    "Prenom": "Romy",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "romy.savioz",
+    "communities": {
+      "-OGEoXV-jNbXy0JJunid": true
+    },
+    "messages": {
+      "-ODfIp6x19QLwKqKb5iO": {
+        "createdAt": 1733745922172,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "dsadsa"
+      },
+      "-ODfO1z7tLREWqxJj6GA": {
+        "createdAt": 1733747289679,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "fds"
+      },
+      "-ODfWEvbwlpV6c8R5PjE": {
+        "createdAt": 1733749439856,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "123"
+      },
+      "-ODfWrZzKcncUJq4tLw5": {
+        "createdAt": 1733749602247,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "fd"
+      },
+      "-ODfX61M4KXCKCimtnme": {
+        "createdAt": 1733749665567,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "a"
+      },
+      "-ODfc7iHIk2XZec5gpNe": {
+        "createdAt": 1733751245345,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "fdsa"
+      },
+      "-ODfe4z6KJO_OBq7l4G-": {
+        "createdAt": 1733751758423,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "asd"
+      },
+      "-ODg3f793k2EKeprSNNP": {
+        "createdAt": 1733758726160,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "aasdad"
+      },
+      "-ODkHizHsP4GqE7r5iXg": {
+        "createdAt": 1733829521361,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "asdasd"
+      }
+    }
+  },
+  "3GA8e6F0oJYTWNopbsEXlRRXXfi1": {
+    "Bio": "",
+    "Mail": "eliot.vaucher@students.hevs.ch",
+    "Nom": "Vaucher",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Eliot",
+    "Roles": {
+      "BA22": true,
+      "casparticulier": true,
+      "physio": true,
+      "sae": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "StudentNote": "suivra PFP 3 durant PFP4",
+    "UserName": "eliot.vaucher",
+    "Ville": "",
+    "messages": {
+      "-OPjmqeZe6d1TqoxKVBY": {
+        "createdAt": 1746706066477,
+        "ownerId": "oaMwp6sIC9bw1kBaMO5dKzXgiKt1",
+        "text": "oooh🤗"
+      }
+    }
+  },
+  "3L7tmLU7MXYYnpCMjgB1imlYmSv2": {
+    "Bio": "",
+    "Mail": "arnaud.douchez@students.hevs.ch",
+    "Nom": "Douchez",
+    "PhotoURL": "",
+    "Prenom": "Arnaud",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "arnaud.douchez",
+    "messages": {
+      "-ODfTgU30ZXNgm_lxQTr": {
+        "createdAt": 1733748770378,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "as"
+      },
+      "-ODfZZQhqgIsz7rG3GZ1": {
+        "createdAt": 1733750310260,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "fdsa"
+      },
+      "-ODfZhwJ7kHMb4hZ9neJ": {
+        "createdAt": 1733750349212,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "a"
+      }
+    }
+  },
+  "3MUi3R9jIsPhIs6kat4WwPorLvy1": {
+    "Mail": "laeticia.fernandes@students.hevs.ch",
+    "Nom": "Fernandes",
+    "Prenom": "Laeticia",
+    "Roles": {
+      "option": true
+    }
+  },
+  "3XdluvWkn4NM3gFsvPNCtUDM5Oi1": {
+    "Bio": "",
+    "Mail": "kristie.morard@students.hevs.ch",
+    "Nom": "Morard",
+    "PhotoURL": "",
+    "Prenom": "Kristie",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "casparticulier": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "kristie.morard",
+    "messages": {
+      "-ODfJiHveQaPXfqrcwrI": {
+        "createdAt": 1733746156348,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "fds"
+      },
+      "-ODfNTytRoBEAJQrWRBN": {
+        "createdAt": 1733747142208,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "a"
+      },
+      "-ODfR64VbDEfB3RiJWfS": {
+        "createdAt": 1733748092900,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "dsa"
+      },
+      "-ODfR6TFBBB977Fo0ZtJ": {
+        "createdAt": 1733748094484,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "fda"
+      },
+      "-ODfWGxUs7E1a52Nv8xN": {
+        "createdAt": 1733749448168,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "123"
+      },
+      "-OP5rnpCGaV-dEyT4e-C": {
+        "createdAt": 1746019499319,
+        "ownerId": "atQ2mk9k2lUYzt9nrJgwsjyzz702",
+        "text": "🥱"
+      },
+      "-OPizwSP1T84jAPG82H1": {
+        "createdAt": 1746692720488,
+        "ownerId": "atQ2mk9k2lUYzt9nrJgwsjyzz702",
+        "text": "Coucou"
+      },
+      "-OPj-177-H5ii6huCNbn": {
+        "createdAt": 1746692743704,
+        "ownerId": "atQ2mk9k2lUYzt9nrJgwsjyzz702",
+        "text": "Il faut suivre le cours si jamais"
+      }
+    }
+  },
+  "3mNxNnsOOKVCjzwuYka6JsJMgr43": {
+    "Bio": "",
+    "Mail": "celia.vuadens@students.hevs.ch",
+    "Nom": "Vuadens",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Célia",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "celia.vuadens",
+    "Ville": ""
+  },
+  "4Bf1mBR9HjcLeFcDeuEVRrGDaU63": {
+    "Bio": "",
+    "Mail": "alexis.markianos@students.hevs.ch",
+    "Nom": "Markianos",
+    "PhotoURL": "",
+    "Prenom": "Alexis",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "alexis.markianos",
+    "messages": {
+      "-ODfVj2kh-Ysv15_5nFz": {
+        "createdAt": 1733749305208,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "fdd"
+      },
+      "-ODf_BIJKFGUni7KRC-M": {
+        "createdAt": 1733750473564,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "dsf"
+      }
+    }
+  },
+  "4EMbJ7d0BdgylbLaNiIpmfR1TYh2": {
+    "Bio": "",
+    "Mail": "sabine.cina@hevs.ch",
+    "Nom": "Cina",
+    "PhotoURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/users%2F4EMbJ7d0BdgylbLaNiIpmfR1TYh2%2Fprofile-picture.jpg?alt=media&token=ceef94ea-bc3c-415a-973f-4d1e21e4be90",
+    "Prenom": "Sabine",
+    "Roles": {
+      "admin": false,
+      "editor": false,
+      "viewer": true
+    },
+    "UserName": "sabine.cina",
+    "messages": {
+      "-OEJ9X7r3jaJD6GMYV-Z": {
+        "createdAt": 1734431351378,
+        "ownerId": "xeIiCd1BcydVmyKnzuEeffclQiu1",
+        "text": "hello sabine😛"
+      },
+      "-OEJ9_zPiiClCbq4a3DH": {
+        "createdAt": 1734431367160,
+        "ownerId": "xeIiCd1BcydVmyKnzuEeffclQiu1",
+        "text": "ça roule?"
+      },
+      "-OEJA2QReNV-t8DeKgUs": {
+        "createdAt": 1734431487737,
+        "ownerId": "xeIiCd1BcydVmyKnzuEeffclQiu1",
+        "text": "Test test"
+      }
+    }
+  },
+  "4JHSpsz0l8QKrQaIYxO3wcD8yLd2": {
+    "Bio": "",
+    "Mail": "melissa.girardin@students.hevs.ch",
+    "Nom": "Girardin",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Mélissa",
+    "Roles": {
+      "BA22": true,
+      "casparticulier": true,
+      "physio": true,
+      "sae": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "StudentNote": "suivra PFP 3 durant PFP4",
+    "UserName": "melissa.girardin",
+    "Ville": ""
+  },
+  "4R50GarwviXp3uQmkH2dXtvSeNl1": {
+    "Mail": "thi-lana.tran@students.hevs.ch",
+    "Nom": "Tran",
+    "Prenom": "Thi-lana",
+    "Roles": {
+      "option": true
+    }
+  },
+  "4XpuWt6oUEgmQ9IjEloUtqyd4c43": {
+    "Bio": "",
+    "Mail": "aude.maret@students.hevs.ch",
+    "Nom": "Maret",
+    "PhotoURL": "",
+    "Prenom": "Aude",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "aude.maret"
+  },
+  "4qoWztDujictoqTEJvJK6xF1Zcr1": {
+    "Bio": "",
+    "Mail": "fanny.mathieu@students.hevs.ch",
+    "Nom": "Mathieu",
+    "PhotoURL": "",
+    "Prenom": "Fanny",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "casparticulier": true,
+      "lese": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "fanny.mathieu"
+  },
+  "581dNZTAJCPqd9zslKpK30tIVgU2": {
+    "Bio": "",
+    "Mail": "laure.courtine@students.hevs.ch",
+    "Nom": "Courtine",
+    "PFP_valided": {
+      "-OQ3IxYKuPLlHhsv4vXT": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ortho",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_TttD0thS5tY-yyR",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "13",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      },
+      "-OQ3J45feYlr1LzymX6r": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ortho",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_TttD0thS5tY-yyR",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "13",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      }
+    },
+    "PhotoURL": "",
+    "Prenom": "Laure",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "laure.courtine",
+    "messages": {
+      "-ODfWuTzLnCnoOg1Y3b3": {
+        "createdAt": 1733749614151,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "fdsa"
+      }
+    }
+  },
+  "5ASMnImQzIS2wiQwiN5Wt6Nwd0C2": {
+    "Bio": "",
+    "Mail": "rebecca.blum@hevs.ch",
+    "Nom": "Blum",
+    "PhotoURL": "",
+    "Prenom": "Rebecca",
+    "Roles": {
+      "admin": true,
+      "editor": true,
+      "viewer": true
+    },
+    "UserName": "rebecca.blum",
+    "messages": {
+      "-ODfevYjs2B6jtAMmH2c": {
+        "createdAt": 1733751977854,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "fdsfa"
+      }
+    }
+  },
+  "5FZziOms6zP3wBowkZdZBdjxdKH3": {
+    "Bio": "",
+    "Mail": "laura.bocchino@students.hevs.ch",
+    "Nom": "Bocchino",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Laura",
+    "Roles": {
+      "BA22": true,
+      "casparticulier": true,
+      "physio": true,
+      "sae": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "StudentNote": "suivra PFP 3 durant PFP4",
+    "UserName": "laura.bocchino",
+    "Ville": ""
+  },
+  "5U2dHT6GCPRCgVzG7B22I1OVwDk1": {
+    "Bio": "",
+    "Mail": "alyssa.python@students.hevs.ch",
+    "Nom": "Python",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Alyssa",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "alyssa.python",
+    "Ville": ""
+  },
+  "6Kza76qZHxOb8TlrP068rdr93br1": {
+    "Bio": "",
+    "Mail": "mickael.paciotti@students.hevs.ch",
+    "Nom": "Paciotti",
+    "PhotoURL": "",
+    "Prenom": "Mickael",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "mickael.paciotti"
+  },
+  "6UAwmxDs11TJPhHnymraK40KmGo1": {
+    "Bio": "",
+    "Mail": "yohan.houlmann@hevs.ch",
+    "Nom": "Houlmann",
+    "PhotoURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/users%2F6UAwmxDs11TJPhHnymraK40KmGo1%2Fprofile-picture.jpg?alt=media&token=c6d49486-18bc-45e7-9090-9b17d70fb16b",
+    "Prenom": "Yohan",
+    "Roles": {
+      "admin": true,
+      "editor": true,
+      "viewer": true
+    },
+    "UserName": "yohan.houlmann",
+    "messages": {
+      "-ODp6id67rUM9-AJiVmW": {
+        "createdAt": 1733910522473,
+        "ownerId": "xeIiCd1BcydVmyKnzuEeffclQiu1",
+        "text": "Change ta photo😏"
+      },
+      "-OP6E3W84_pIhbLhxs96": {
+        "createdAt": 1746025597044,
+        "ownerId": "xeIiCd1BcydVmyKnzuEeffclQiu1",
+        "text": "Hello !!!!🤡"
+      },
+      "-OQgfKivkYwyIRpf170L": {
+        "createdAt": 1747727506226,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "test"
+      },
+      "-OSZ3iNCvdd0sV42_AEm": {
+        "createdAt": 1749730649248,
+        "ownerId": "8M3ZbwOu7tgpTAY5sfxeVKBoBUI3",
+        "text": "yo"
+      }
+    }
+  },
+  "6h34zLTdZBel48NYAIA6MC4kgRx1": {
+    "Bio": "",
+    "Mail": "guillaume.schosser@students.hevs.ch",
+    "Nom": "Schösser",
+    "PFP_valided": {
+      "-OQ3Ix_oRB54MJZ_ntsz": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ortho",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_TtwPcuW60cfmby_",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "36",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      },
+      "-OQ3J48MStTjksjXfpaM": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ortho",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_TtwPcuW60cfmby_",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "36",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      }
+    },
+    "PhotoURL": "",
+    "Prenom": "Guillaume",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "guillaume.schosser"
+  },
+  "6ms7JSSPxXhVq8QcNf1eYIIHNAN2": {
+    "Bio": "",
+    "Mail": "lena.zaugg@students.hevs.ch",
+    "Nom": "Zaugg",
+    "PhotoURL": "",
+    "Prenom": "Léna",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "lena.zaugg"
+  },
+  "75T63heiutWI4tPSVfZzflsOcLS2": {
+    "Bio": "",
+    "Mail": "mallaury.burnier@students.hevs.ch",
+    "Nom": "Burnier",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Mallaury",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "mallaury.burnier",
+    "Ville": ""
+  },
+  "7KoSrhGzWEUiszGjtvfVJmxuRRD2": {
+    "Bio": "",
+    "Mail": "naomi.carrel@students.hevs.ch",
+    "Nom": "Carrel",
+    "PFP_valided": {
+      "-OQ3Ix_P8E-jwvaVgQlq": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Med",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_TtwPcuW60cfmby_",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "35",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      },
+      "-OQ3J47vCKXOfWQwDsTY": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Med",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_TtwPcuW60cfmby_",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "35",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      }
+    },
+    "PhotoURL": "",
+    "Prenom": "Naomi",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "naomi.carrel"
+  },
+  "7U8Wq0fWS6VMvUHugVEzEORfHl33": {
+    "Bio": "",
+    "Mail": "flora.brasil@students.hevs.ch",
+    "Nom": "Brasil",
+    "PFP_valided": {
+      "-OQ3IxZZsGBsrCk6_66C": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Med",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_TtwPcuW60cfmbyZ",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "32",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "A voir lors de repartition avec GT FP",
+        "remarquesStages": "",
+        "status": "reussi"
+      },
+      "-OQ3J4704Cl1k4vt6qtw": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Med",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_TtwPcuW60cfmbyZ",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "32",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "A voir lors de repartition avec GT FP",
+        "remarquesStages": "",
+        "status": "reussi"
+      }
+    },
+    "PhotoURL": "",
+    "Prenom": "Flora",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "flora.brasil"
+  },
+  "7pOa1Es9lwWjgIA3zv806JSk3wr1": {
+    "Bio": "",
+    "Mail": "emma.jeanneret@students.hevs.ch",
+    "Nom": "Jeanneret",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Emma",
+    "Roles": {
+      "BA22": true,
+      "casparticulier": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "emma.jeanneret",
+    "Ville": ""
+  },
+  "8GfJjXG0oWT16FIALgqek1gjXLS2": {
+    "Bio": "",
+    "Mail": "emilie.constantin@students.hevs.ch",
+    "Nom": "Constantin",
+    "PhotoURL": "",
+    "Prenom": "Emilie",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "emilie.constantin"
+  },
+  "8M3ZbwOu7tgpTAY5sfxeVKBoBUI3": {
+    "Bio": "",
+    "Mail": "sebastien.pretre@students.hevs.ch",
+    "Nom": "Prêtre",
+    "PhotoURL": "",
+    "Prenom": "Sébastien",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "sebastien.pretre"
+  },
+  "8YdsoZycr3P4EfZJpsjs8P6Q8Le2": {
+    "Bio": "",
+    "Mail": "laetitia.lugon-moulin@students.hevs.ch",
+    "Nom": "Lugon-moulin",
+    "PFP_valided": {
+      "-OQ3IxXUacD_AypRlWx1": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ortho",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_TttD0thS5tY-yyR",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "13",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      },
+      "-OQ3J44knnOcxex6FUGq": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ortho",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_TttD0thS5tY-yyR",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "13",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      }
+    },
+    "PhotoURL": "",
+    "Prenom": "Laetitia",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "laetitia.lugon-moulin"
+  },
+  "8YkNXMIQd4OiFHX0Ljm4LKsbZ2A2": {
+    "Bio": "",
+    "Mail": "rebecca.FRyand@students.hevs.ch",
+    "Nom": "Fryand",
+    "PhotoURL": "",
+    "Prenom": "Rebecca",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "rebecca.FRyand",
+    "communities": {
+      "vtdej6f1r4a27gw": true
+    }
+  },
+  "90inEeLuG0aPKGuBOK8ZItjXdgP2": {
+    "Bio": "",
+    "Mail": "sarah.muriset@students.hevs.ch",
+    "Nom": "Muriset",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Sarah",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "sarah.muriset",
+    "Ville": ""
+  },
+  "A5gF87EUo6NdCaKoemDLN5V4gkF2": {
+    "Bio": "",
+    "Mail": "sarah.robyr@students.hevs.ch",
+    "Nom": "Robyr",
+    "PhotoURL": "",
+    "Prenom": "Sarah",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "sarah.robyr"
+  },
+  "AXP0X3rUqzbpG3thTZcuZ6Ax1no1": {
+    "Bio": "",
+    "Mail": "gauthier.martig@students.hevs.ch",
+    "Nom": "Martig",
+    "PhotoURL": "",
+    "Prenom": "Gauthier",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "gauthier.martig"
+  },
+  "Aa83ofXKhFbAHcRuAhOF7AXgsd03": {
+    "Bio": "",
+    "Mail": "heidi.biasca@students.hevs.ch",
+    "Nom": "Biasca",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Heidi",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "heidi.biasca",
+    "Ville": ""
+  },
+  "AaVsgnDJcfc4ZG8BwfCezt1VSZA3": {
+    "Bio": "",
+    "Mail": "andreieric.dubois@students.hevs.ch",
+    "Nom": "Dubois",
+    "PhotoURL": "",
+    "Prenom": "Andrei eric",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "andreieric.dubois"
+  },
+  "B8U1UbnAMzUnVHufhX1gshJPCaE3": {
+    "Bio": "",
+    "Mail": "elias.torbay@students.hevs.ch",
+    "Nom": "Torbay",
+    "PhotoURL": "",
+    "Prenom": "Elias",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "elias.torbay"
+  },
+  "BZaUgshWLWWNozSTlUkjpXT0dD03": {
+    "Bio": "",
+    "Mail": "marie-christine.demilt-blanjean@hevs.ch",
+    "Nom": "Demilt-blanjean",
+    "PhotoURL": "",
+    "Prenom": "Marie-christine",
+    "Roles": {
+      "BA24": "true",
+      "admin": false,
+      "editor": false,
+      "physio": true,
+      "student": false,
+      "viewer": true
+    },
+    "UserName": "marie-christine.demilt-blanjean",
+    "messages": {
+      "-ODfuXMXH4r1cKWUq72H": {
+        "createdAt": 1733756068855,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "salut marie"
+      }
+    }
+  },
+  "C2QrJqemFxaWOoBUDF2tTRgXqnx2": {
+    "Bio": "",
+    "Mail": "jana.geier@students.hevs.ch",
+    "Nom": "Geier",
+    "PhotoURL": "",
+    "Prenom": "Jana",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "casparticulier": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "jana.geier"
+  },
+  "CGEF6vCTQvZW9Vp3zfrJiwNd9de2": {
+    "Bio": "",
+    "Mail": "nina.eyholzer@students.hevs.ch",
+    "Nom": "Eyholzer",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Nina",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "nina.eyholzer",
+    "Ville": ""
+  },
+  "Cu3MPuNjQNQzVO1PjiDNabOxbG93": {
+    "Bio": "",
+    "Mail": "lea.grichting@students.hevs.ch",
+    "Nom": "Grichting",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Léa",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "lea.grichting",
+    "Ville": ""
+  },
+  "DKvyLNIK6GgTgDLHteY8E4G6sbj2": {
+    "Bio": "",
+    "Mail": "ryan.alvarez@students.hevs.ch",
+    "Nom": "Alvarez",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Ryan",
+    "Roles": {
+      "BA22": true,
+      "casparticulier": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "StudentNote": "suivra PFP 3 durant PFP4",
+    "UserName": "ryan.alvarez",
+    "Ville": ""
+  },
+  "DQ2zU1gw3TfVvi2YVLjYWYv7oPv2": {
+    "Bio": "",
+    "Mail": "emma.vonlanthen@students.hevs.ch",
+    "Nom": "Vonlanthen",
+    "PFP_valided": {
+      "-OQ3IxiFWTRm649oAOpt": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ambu",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-O3kdUkVgFHB-W67PGLP",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "90",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      },
+      "-OQ3J4HKL6yFYHl25UuH": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ambu",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-O3kdUkVgFHB-W67PGLP",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "90",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      }
+    },
+    "PhotoURL": "",
+    "Prenom": "Emma",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "emma.vonlanthen"
+  },
+  "Dkrj5I1LdfgsJ5KUlqs3gag1PV43": {
+    "Bio": "",
+    "Mail": "fabien.gerber@hevs.ch",
+    "Nom": "Gerber",
+    "PhotoURL": "",
+    "Prenom": "Fabien",
+    "Roles": {
+      "BA24": "true",
+      "admin": false,
+      "editor": false,
+      "physio": true,
+      "student": false,
+      "viewer": true
+    },
+    "UserName": "fabien.gerber",
+    "messages": {
+      "-OH821Gh32A2hXuJr5Hd": {
+        "createdAt": 1737466061945,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "salut"
+      },
+      "-OH82H00oihm6lLc2QCC": {
+        "createdAt": 1737466126414,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "top"
+      }
+    }
+  },
+  "DxQ49km6KIbNB2hYFuiO0kltVnb2": {
+    "Bio": "",
+    "Mail": "jonathan.stucki@students.hevs.ch",
+    "Nom": "Stucki",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Jonathan",
+    "Roles": {
+      "BA22": true,
+      "casparticulier": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "StudentNote": "suivra PFP 3 durant PFP4",
+    "UserName": "jonathan.stucki",
+    "Ville": ""
+  },
+  "EO6uiys65gW0pEb8N94jiuX58bx2": {
+    "Bio": "",
+    "Mail": "louis.rahmani@students.hevs.ch",
+    "Nom": "Rahmani",
+    "PhotoURL": "",
+    "Prenom": "Louis",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "louis.rahmani"
+  },
+  "ExRyVWTh1SNrba3nHZo4mWO6PGV2": {
+    "Bio": "",
+    "Mail": "manuel.stoffel@students.hevs.ch",
+    "Nom": "Stoffel",
+    "PhotoURL": "",
+    "Prenom": "Manuel",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "manuel.stoffel"
+  },
+  "F1JD4lAEpxSFOD0y1Xdp443ms7t2": {
+    "Mail": "bruna.dossantosribeiro@students.hevs.ch",
+    "Nom": "Dos santos ribeiro",
+    "Prenom": "Bruna",
+    "Roles": {
+      "option": true
+    }
+  },
+  "Fta3WQZxEPU9zVSt0JtTBeTsPPt1": {
+    "Bio": "",
+    "Mail": "guillaume.hamann@students.hevs.ch",
+    "Nom": "Hamann",
+    "PhotoURL": "",
+    "Prenom": "Guillaume",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "guillaume.hamann"
+  },
+  "FxwAVKYFShdtkAxR5judf9T9kE03": {
+    "Bio": "",
+    "Mail": "louisa.rognon@students.hevs.ch",
+    "Nom": "Rognon",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Louisa",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "louisa.rognon",
+    "Ville": ""
+  },
+  "G4NAdY5zmYeEj1cFF3upqqCcwFF3": {
+    "Bio": "",
+    "Mail": "maude.bersier@students.hevs.ch",
+    "Nom": "Bersier",
+    "PFP_valided": {
+      "-OQ3Ixhp_QKxdTZnox3G": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Neuro - ped - adultes a besoin particuliers",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_Tu0ifoZo_RPDyHw",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "86",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      },
+      "-OQ3J4GtuNZSj6_LGelY": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Neuro - ped - adultes a besoin particuliers",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_Tu0ifoZo_RPDyHw",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "86",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      }
+    },
+    "PhotoURL": "",
+    "Prenom": "Maude",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "maude.bersier"
+  },
+  "GNhZSpoHkhh7Ip2wYPNeDORm3fC2": {
+    "Bio": "",
+    "Mail": "lucas.fauchere@students.hevs.ch",
+    "Nom": "Fauchère",
+    "PhotoURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/users%2FGNhZSpoHkhh7Ip2wYPNeDORm3fC2%2Fprofile-picture.jpg?alt=media&token=e2eacfa1-76b0-4477-8782-c2ddcd52b22a",
+    "Prenom": "Lucas",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "lucas.fauchere"
+  },
+  "H4RtKMKXpYhJkTOTOOm62ANGNAo2": {
+    "Bio": "",
+    "Mail": "baptiste.neuhaus@students.hevs.ch",
+    "Nom": "Neuhaus",
+    "PhotoURL": "",
+    "Prenom": "Baptiste",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "baptiste.neuhaus"
+  },
+  "HaQxtRFWiaRFFHeErRyaMQtcF222": {
+    "Bio": "",
+    "Mail": "frederic.hull@students.hevs.ch",
+    "Nom": "Hull",
+    "PhotoURL": "",
+    "Prenom": "Frederic",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "frederic.hull"
+  },
+  "Hnqd1QWfsafGdmWBECGv7owgJFt2": {
+    "Bio": "",
+    "Mail": "sarah.lealcastanheira@students.hevs.ch",
+    "Nom": "Leal castanheira",
+    "PhotoURL": "",
+    "Prenom": "Sarah",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "sarah.lealcastanheira"
+  },
+  "HpqIqa88yTMXJYEJjl0bc957INT2": {
+    "Bio": "",
+    "Mail": "ines.laine@students.hevs.ch",
+    "Nom": "Laine",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Ines",
+    "Roles": {
+      "BA22": true,
+      "casparticulier": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "ines.laine",
+    "Ville": ""
+  },
+  "IBhyDws6lPNCFbIz9ZjfNf3WgGm2": {
+    "Bio": "",
+    "Mail": "caroline.gapany@students.hevs.ch",
+    "Nom": "Gapany",
+    "PhotoURL": "",
+    "Prenom": "Caroline",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "casparticulier": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "caroline.gapany"
+  },
+  "JPPdkPtt39R0mill22u22ci6hbO2": {
+    "Bio": "",
+    "Mail": "chloe.flutsch@students.hevs.ch",
+    "Nom": "Flutsch",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Chloé",
+    "Roles": {
+      "BA22": true,
+      "casparticulier": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "StudentNote": "Rem: suivra PFP 3 durant PFP4",
+    "UserName": "chloe.flutsch",
+    "Ville": ""
+  },
+  "JUcPJSqtFZSHClWKzw4ufzi7R1K3": {
+    "Bio": "",
+    "Mail": "alix.tache@students.hevs.ch",
+    "Nom": "Tâche",
+    "PhotoURL": "",
+    "Prenom": "Alix",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "alix.tache"
+  },
+  "Jg1Ejqc46rbcTHBwOMRYZZRwbTE2": {
+    "Bio": "",
+    "Mail": "fiona.nanchen@students.hevs.ch",
+    "Nom": "Nanchen",
+    "PhotoURL": "",
+    "Prenom": "Fiona",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "lese": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "fiona.nanchen"
+  },
+  "K15m2x7n3LTwTDdNesSot0JRVwJ2": {
+    "Mail": "julie.evequoz@students.hevs.ch",
+    "Nom": "Evequoz",
+    "Prenom": "Julie",
+    "Roles": {
+      "option": true
+    }
+  },
+  "KAdJzLJg3bR7RBCnUXqlCgnVx4R2": {
+    "Bio": "",
+    "Mail": "stefano.cascini@students.hevs.ch",
+    "Nom": "Cascini",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Stefano",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "stefano.cascini",
+    "Ville": ""
+  },
+  "Kco9BEwQYmbiG2jrxTQusqVCsrh2": {
+    "Bio": "",
+    "Mail": "valerie.hafner@students.hevs.ch",
+    "Nom": "Hafner",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Valérie",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "valerie.hafner",
+    "Ville": ""
+  },
+  "KplEdkaz5na6IzzQUFxy8ldozMA2": {
+    "Bio": "",
+    "Mail": "michelle.schar@students.hevs.ch",
+    "Nom": "Schär",
+    "PhotoURL": "",
+    "Prenom": "Michelle",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "michelle.schar",
+    "communities": {
+      "vtdej6f1r4a27gw": true
+    }
+  },
+  "LQKDXnLshmRkxxJWGhAcqLlEe3B2": {
+    "Bio": "",
+    "Mail": "sebastien.putallaz@hevs.ch",
+    "Nom": "Puttalaz",
+    "PhotoURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/users%2FLQKDXnLshmRkxxJWGhAcqLlEe3B2%2Fprofile-picture.jpg?alt=media&token=00e257c2-8274-4a8b-b1af-aa83608321c2",
+    "Prenom": "Sébastien",
+    "Roles": {
+      "chatbotSi": true,
+      "si": true,
+      "siteAgasse": true
+    },
+    "UserName": "sébastien.puttalaz"
+  },
+  "LVfc4PJZ0KfbtUmuGLJ3SAHsiJ02": {
+    "Bio": "",
+    "Mail": "samuel.villet@students.hevs.ch",
+    "Nom": "Villet",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Samuel",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "StudentNote": "lésé",
+    "UserName": "samuel.villet",
+    "Ville": ""
+  },
+  "LYgTG7cUqEgvJ2RkgrmoFQoHQQu2": {
+    "Bio": "",
+    "Mail": "chloe.abbet@students.hevs.ch",
+    "Nom": "Abbet",
+    "PFP_valided": {
+      "-OQ3IxadHZzSZu_1DZY_": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ger",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_TtwPcuW60cfmby_",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "37",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      },
+      "-OQ3J49EylDCl0pY0acR": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ger",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_TtwPcuW60cfmby_",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "37",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      }
+    },
+    "PhotoURL": "",
+    "Prenom": "Chloé",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "chloe.abbet",
+    "communities": {
+      "-ODl-pYLjIiuGRypGCSk": true
+    },
+    "messages": {
+      "-ORBt2Hg8ihM0SwUcH3L": {
+        "createdAt": 1748267964448,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "test"
+      }
+    }
+  },
+  "M8ySAiobcuStMPVUKB1SUjfZO2D2": {
+    "Bio": "",
+    "Mail": "arthur.python@students.hevs.ch",
+    "Nom": "Python",
+    "PhotoURL": "",
+    "Prenom": "Arthur",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "arthur.python",
+    "communities": {
+      "vtdej6f1r4a27gw": true
+    }
+  },
+  "MW9mnO2TlbZ5mKZQNX8YUDHNviX2": {
+    "Bio": "",
+    "Mail": "debora.hutter@students.hevs.ch",
+    "Nom": "Hutter",
+    "PhotoURL": "",
+    "Prenom": "Debora",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "debora.hutter"
+  },
+  "N8koxvd1HBPOd8JW608fml7v9G82": {
+    "Bio": "",
+    "Mail": "karen.crettenand@students.hevs.ch",
+    "Nom": "Crettenand",
+    "PhotoURL": "",
+    "Prenom": "Karen",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "karen.crettenand"
+  },
+  "NEHM5YWuj1R8gJnyZkHHQSo2rSw1": {
+    "Bio": "",
+    "Mail": "estelle.fresard@students.hevs.ch",
+    "Nom": "Fresard",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Estelle",
+    "Roles": {
+      "BA22": true,
+      "casparticulier": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "StudentNote": "PFP 3 et PFP 4 ensemble : 16.06.-17.10.25, 16.06.-24.10.25 (2sem. Vacances 21.7.25-1.8.25)",
+    "UserName": "estelle.fresard",
+    "Ville": ""
+  },
+  "NEb3RfsJaNfrEHySWsezhFsqeVH3": {
+    "Bio": "",
+    "Mail": "tanya.alberti@students.hevs.ch",
+    "Nom": "Alberti",
+    "PhotoURL": "",
+    "Prenom": "Tanya",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "tanya.alberti"
+  },
+  "NKzeoLK9hlSWLKHy858f84dZ7jz1": {
+    "Bio": "",
+    "Mail": "emma.sebastian@students.hevs.ch",
+    "Nom": "Sebastian",
+    "PhotoURL": "",
+    "Prenom": "Emma",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "emma.sebastian"
+  },
+  "NR8huwU63SO8aHfW5e7UxN0mw0i1": {
+    "Bio": "",
+    "Mail": "nicolas.beguin@students.hevs.ch",
+    "Nom": "Béguin",
+    "PhotoURL": "",
+    "Prenom": "Nicolas",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "nicolas.beguin",
+    "communities": {
+      "vtdej6f1r4a27gw": true
+    }
+  },
+  "Na44fbbTNZUjn7JIw6bBgLmTGmB2": {
+    "Bio": "",
+    "Mail": "alexandre.arrobas@students.hevs.ch",
+    "Nom": "Arrobas da silva",
+    "PhotoURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/users%2FNa44fbbTNZUjn7JIw6bBgLmTGmB2%2Fprofile-picture.jpg?alt=media&token=124de59b-b368-4786-8223-d3bc4f7e0f64",
+    "Prenom": "Alexandre",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "alexandre.arrobas",
+    "communities": {
+      "-ODkHYbuqvMAJ5DS2SOh": true,
+      "0s8nbwih7hgopuk": true,
+      "e6a669j49q8ni2z": true
+    }
+  },
+  "Ni6HKUq2QVdM0xbRs69RHBkIAT52": {
+    "Bio": "",
+    "Mail": "thibert.joray@students.hevs.ch",
+    "Nom": "Joray",
+    "PhotoURL": "",
+    "Prenom": "Thibert",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "thibert.joray"
+  },
+  "OF57uEVkqYVwIuob7T9gdsowwRg2": {
+    "Bio": "",
+    "Mail": "lea.volpe@students.hevs.ch",
+    "Nom": "Volpe",
+    "PFP_valided": {
+      "-OQ3IxZ8ne5DiiCBV28t": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Med",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_TtwPcuW60cfmbyZ",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "32",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "A voir lors de repartition avec GT FP",
+        "remarquesStages": "",
+        "status": "reussi"
+      },
+      "-OQ3J46Yyp-f_VC4kcgn": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Med",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_TtwPcuW60cfmbyZ",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "32",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "A voir lors de repartition avec GT FP",
+        "remarquesStages": "",
+        "status": "reussi"
+      }
+    },
+    "PhotoURL": "",
+    "Prenom": "Léa",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "lea.volpe"
+  },
+  "OHiqZvS1Nndvd2BuMQhISNFBCZ12": {
+    "Bio": "",
+    "Mail": "celine.guex1@students.hevs.ch",
+    "Nom": "Guex",
+    "PhotoURL": "",
+    "Prenom": "Céline",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "celine.guex1"
+  },
+  "OLwMN2VoK6MnHyaU4Arj3bruOPb2": {
+    "Bio": "",
+    "Mail": "theo.dejean@students.hevs.ch",
+    "Nom": "Dejean",
+    "PFP_valided": {
+      "-OQ3IxW_b-F4EvWvmxjm": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ortho - Med",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-O3kbfe81TTvVKEinjxO",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "2",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      },
+      "-OQ3J43sS4PeY7c3wjaV": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ortho - Med",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-O3kbfe81TTvVKEinjxO",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "2",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      }
+    },
+    "PhotoURL": "",
+    "Prenom": "Théo",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "theo.dejean"
+  },
+  "OkwlAWJnq4bOFvTVrcyI1BwAcZ72": {
+    "Bio": "",
+    "Mail": "noemie.ioset@students.hevs.ch",
+    "Nom": "Ioset",
+    "PhotoURL": "",
+    "Prenom": "Noémie",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "noemie.ioset"
+  },
+  "PDq9AvK5vFXTOhTIvWMsi2oJaWy1": {
+    "Bio": "",
+    "Mail": "corentin.naga@students.hevs.ch",
+    "Nom": "Naga",
+    "PFP_valided": {
+      "-OQ3IxifZoUkQhMTDYgv": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ger",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_TtwPcuW60cfmbya",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "38",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      },
+      "-OQ3J4Hm10ed373moaBv": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ger",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_TtwPcuW60cfmbya",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "38",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      }
+    },
+    "PhotoURL": "",
+    "Prenom": "Corentin",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "corentin.naga"
+  },
+  "PKwyn9EnKGQIArbRjekISyj6pOE2": {
+    "Bio": "",
+    "Mail": "yanae.mathieu@students.hevs.ch",
+    "Nom": "Mathieu",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Yanae",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "yanae.mathieu",
+    "Ville": ""
+  },
+  "PQKKiABo9oWhgcOKlmD5f1kKPoF3": {
+    "Bio": "",
+    "Mail": "isaline.baechler@students.hevs.ch",
+    "Nom": "Baechler",
+    "PhotoURL": "",
+    "Prenom": "Isaline",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "isaline.baechler"
+  },
+  "PmKh822zycVd80j0Pv7ly2mKCAl2": {
+    "Bio": "",
+    "Mail": "marion.schlub@students.hevs.ch",
+    "Nom": "Schlub",
+    "PFP_valided": {
+      "-OQ3IxfHlZDWQPEH35EG": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ortho",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_Ttxx1ljaMN6U_6m",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "49",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      },
+      "-OQ3J4EDU9VNr6xw9SgZ": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ortho",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_Ttxx1ljaMN6U_6m",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "49",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      }
+    },
+    "PhotoURL": "",
+    "Prenom": "Marion",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "marion.schlub"
+  },
+  "Q5vWcYBhtMgXIJHVMdxFuPsNfHr2": {
+    "Bio": "",
+    "Mail": "lucie.droux@students.hevs.ch",
+    "Nom": "Droux",
+    "PFP_valided": {
+      "-OQ3Ixb33ntBBO0KQfDP": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ortho",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_TtwPcuW60cfmbya",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "39",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      },
+      "-OQ3J49htloRdbx-v4lF": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ortho",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_TtwPcuW60cfmbya",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "39",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      }
+    },
+    "PhotoURL": "",
+    "Prenom": "Lucie",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "lucie.droux"
+  },
+  "QQOYekoFoPZirNCAyA7XfyPmwew1": {
+    "Mail": "melvin.tissieres@students.hevs.ch",
+    "Nom": "Tissieres",
+    "Prenom": "Melvin",
+    "Roles": {
+      "option": true
+    }
+  },
+  "QTVwIqgC4GXmt0kHWsjSOHyrwW22": {
+    "Bio": "",
+    "Mail": "nina.liengme@students.hevs.ch",
+    "Nom": "Liengme",
+    "PhotoURL": "",
+    "Prenom": "Nina",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "nina.liengme"
+  },
+  "QToZ1zKsBxOMaHuMJ9Dq7D9GkXl1": {
+    "Bio": "",
+    "Mail": "anouk.heritier@students.hevs.ch",
+    "Nom": "Heritier",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Anouk",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "anouk.heritier",
+    "Ville": ""
+  },
+  "QaokVxvZqMfjsFg1kAP7sVoMTPz2": {
+    "Bio": "",
+    "Mail": "jilia.cremona@students.hevs.ch",
+    "Nom": "Cremona",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Jilia",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "jilia.cremona",
+    "Ville": ""
+  },
+  "Qvh2i4LhM8fcQ68Tabn4Na51mUr1": {
+    "Bio": "",
+    "Mail": "luca.fleury@students.hevs.ch",
+    "Nom": "Fleury",
+    "PFP_valided": {
+      "-OQ3IxhQZ2FGViRqB6Yg": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ambu",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_Ttyk116hb9GIKH6",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "64",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      },
+      "-OQ3J4GSh7Rn0ZtlWtRU": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ambu",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_Ttyk116hb9GIKH6",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "64",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      }
+    },
+    "PhotoURL": "",
+    "Prenom": "Luca",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "luca.fleury"
+  },
+  "QzBEdtlEIsfsg3pD6B1adFBmZSG2": {
+    "Bio": "",
+    "Mail": "barbara.palthey@students.hevs.ch",
+    "Nom": "Palthey",
+    "PhotoURL": "",
+    "Prenom": "Barbara",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "casparticulier": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "barbara.palthey"
+  },
+  "R0lJR6Su1wcDPzzzbrkcObRyjTO2": {
+    "Bio": "",
+    "Mail": "hugues.savioz@students.hevs.ch",
+    "Nom": "Savioz",
+    "PhotoURL": "",
+    "Prenom": "Hugues",
+    "Roles": {
+      "BA23": false,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "hugues.savioz"
+  },
+  "R0pPVZKr6rN5cSOyg0tf5XW894w1": {
+    "Bio": "",
+    "Mail": "nora.philippoz@students.hevs.ch",
+    "Nom": "Philippoz",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Nora",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "nora.philippoz",
+    "Ville": ""
+  },
+  "R5PCIOnQeUhRSyFRTI9fg0Wp8p23": {
+    "Bio": "",
+    "Mail": "cynthia.peronetti@students.hevs.ch",
+    "Nom": "Peronetti",
+    "PhotoURL": "",
+    "Prenom": "Cynthia",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "cynthia.peronetti"
+  },
+  "RY3eRRvuMhcM10siGR3QdhIHBI42": {
+    "Bio": "",
+    "Mail": "mandy.narbel@students.hevs.ch",
+    "Nom": "Narbel",
+    "PhotoURL": "",
+    "Prenom": "Mandy",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "lese": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "mandy.narbel"
+  },
+  "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83": {
+    "Bio": "",
+    "Mail": "loic.berthod@hevs.ch",
+    "Nom": "Berthod",
+    "PFP1": "-O3k_m7cRctNx0MEzaU-",
+    "PhotoURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/users%2FRd7b2Oyr7ch9dYGDqF1f6Cu2GP83%2Fprofile-picture.jpg?alt=media&token=3a04f6e4-48dc-439d-ad16-a0df0a6de1a3",
+    "Prenom": "Loïc",
+    "Roles": {
+      "admin": true,
+      "editor": true,
+      "viewer": true
+    },
+    "UserName": "loic.berthod",
+    "communities": {
+      "0s8nbwih7hgopuk": true,
+      "99gmvh44l3y6jvs": false,
+      "9l96jozexy5a89r": true,
+      "e6a669j49q8ni2z": true,
+      "n6xovspcxuw3qds": false,
+      "oaa2h8iwggs1m9d": true,
+      "vtdej6f1r4a27gw": true,
+      "w2e8tyfzih2kich": false
+    },
+    "messages": {
+      "-ODfAif9zBFT3a6qaykx": {
+        "createdAt": 1733743798596,
+        "ownerId": "0FdoULhDoRWF8b7JyDeSFAgKmsC2",
+        "text": "fds"
+      },
+      "-ODfGMqEuaoDlYAbCdnC": {
+        "createdAt": 1733745277898,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "salut chef"
+      },
+      "-ODfGP4DduND32EVwVjj": {
+        "createdAt": 1733745287049,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "sdfdsdsffd"
+      },
+      "-ODfGP9BWo2eRs1SNrkw": {
+        "createdAt": 1733745287367,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "fdsds"
+      },
+      "-ODfGPG-QuixnowPaUhn": {
+        "createdAt": 1733745287803,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "sdf"
+      },
+      "-ODfGPMqBERj7avL7XBg": {
+        "createdAt": 1733745288241,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "ssdf"
+      },
+      "-ODfGPTkCJKAt3EiBNlS": {
+        "createdAt": 1733745288683,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "sdffsd"
+      },
+      "-ODfGPZlEHyRb57MqK7R": {
+        "createdAt": 1733745289068,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "fdssdf"
+      },
+      "-ODfGPfBfOYKsLelH32b": {
+        "createdAt": 1733745289479,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "dsfdsf"
+      },
+      "-ODfGPktHUh1o--VAxJG": {
+        "createdAt": 1733745289844,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "sdfdsf"
+      },
+      "-ODfGPqjXk1DiUNO40tQ": {
+        "createdAt": 1733745290218,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "sdfsd"
+      },
+      "-ODfGPwjK85JvTD_iil7": {
+        "createdAt": 1733745290602,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "dsfdsf"
+      },
+      "-ODfGR037XJI-Dyf7iYc": {
+        "createdAt": 1733745294975,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "😀"
+      },
+      "-ODfN_1xm9xWLvJnahY5": {
+        "createdAt": 1733747167031,
+        "ownerId": "0FdoULhDoRWF8b7JyDeSFAgKmsC2",
+        "text": "fds"
+      },
+      "-ODfNa_BbN4qsEOamLfc": {
+        "createdAt": 1733747173319,
+        "ownerId": "0FdoULhDoRWF8b7JyDeSFAgKmsC2",
+        "text": "yyy"
+      },
+      "-ODfWquMchKg2-9M4C_U": {
+        "createdAt": 1733749599519,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "fds"
+      },
+      "-ODfZfX3Z8s27Ye1hMyP": {
+        "createdAt": 1733750339340,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "fd"
+      },
+      "-ODfgHVa_XoAalnIAPwh": {
+        "createdAt": 1733752333895,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "dsfdsf"
+      },
+      "-ODfljyFx44ofYP5ykuD": {
+        "createdAt": 1733753765288,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "sdfsdf"
+      },
+      "-ODfxxgf_G-kltHqUlL8": {
+        "createdAt": 1733756967231,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "aSADASDASD"
+      },
+      "-ODfxzPf8bee4JhDTVYE": {
+        "createdAt": 1733756974272,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "adsdasadsdasadsads"
+      },
+      "-ODfyasGEkL5houOtdAP": {
+        "createdAt": 1733757135910,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "AS"
+      },
+      "-ODfybBISMD4iQbxv_58": {
+        "createdAt": 1733757137192,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "asASAasASas"
+      },
+      "-ODjgNo9Zhd-tbEPTL5e": {
+        "createdAt": 1733819469083,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "oui"
+      },
+      "-ODjiV75fUJdas497aXV": {
+        "createdAt": 1733820023317,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "asdads"
+      },
+      "-ODkzcz-Td-7Fvi6yqAz": {
+        "createdAt": 1733841293274,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "test"
+      },
+      "-ODkzrJx8mWul7CDSJu9": {
+        "createdAt": 1733841352031,
+        "ownerId": "xeIiCd1BcydVmyKnzuEeffclQiu1",
+        "text": "😱"
+      },
+      "-OHCe840xzzq-E5o4ZFq": {
+        "createdAt": 1737543422278,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "😄😄"
+      },
+      "-OPA6XaywVDqWeQicc2T": {
+        "createdAt": 1746090731990,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "salut"
+      },
+      "-OPdbwRyx744GvZFHV8x": {
+        "createdAt": 1746602542930,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "test"
+      },
+      "-OPf6B70APHxcSS-l8pZ": {
+        "createdAt": 1746627510797,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "test"
+      },
+      "-OPoTD7zczdGPYb87OYZ": {
+        "createdAt": 1746784543258,
+        "ownerId": "zqZSrlEAXYV2Rxl73KmCl8oK0QA3",
+        "text": "test"
+      },
+      "-OPoTE3dJ7VIbWxkVe84": {
+        "createdAt": 1746784547077,
+        "ownerId": "zqZSrlEAXYV2Rxl73KmCl8oK0QA3",
+        "text": "test"
+      },
+      "-OQ2l81Kcn0EcuvczlWU": {
+        "createdAt": 1747041161860,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "salut"
+      },
+      "-OQO7TvcwjrdoMW0-8MO": {
+        "createdAt": 1747399601149,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "salut je t'écris depuis mon natel"
+      },
+      "-OQOBUD4dHPk9jRW-mXB": {
+        "createdAt": 1747400651681,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "Salut"
+      },
+      "-OQbwhULgzXvS8Ljmts3": {
+        "createdAt": 1747648171396,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "test"
+      },
+      "-ORLw-3KowS_zRvBdP8r": {
+        "createdAt": 1748436517141,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "Wosisk"
+      },
+      "-OSTQszq0-5Ffbn5zbj5": {
+        "createdAt": 1749636041311,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "chat"
+      }
+    }
+  },
+  "S7M0CkaSxANRtWvdxDTQ5Naugvo1": {
+    "Bio": "",
+    "Mail": "timothee.sridharan@students.hevs.ch",
+    "Nom": "Sridharan",
+    "PhotoURL": "",
+    "Prenom": "Timothée",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "timothee.sridharan"
+  },
+  "SodSajGZ6lhfjjwB8YB4pMYT3hZ2": {
+    "Bio": "",
+    "Mail": "alexis.coty@students.hevs.ch",
+    "Nom": "Coty",
+    "PhotoURL": "",
+    "Prenom": "Alexis",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "alexis.coty"
+  },
+  "SwW62V5dsQhlXgTBPNYzXrVHJ3u1": {
+    "Bio": "",
+    "Mail": "maximilien.cattier@students.hevs.ch",
+    "Nom": "Cattier",
+    "PFP_valided": {
+      "-OQ3Ixh-TU6KynFlZadH": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ambu",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_Ttyk116hb9GIKGx",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "56",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      },
+      "-OQ3J4G-SUGe-sQMfeoa": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ambu",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_Ttyk116hb9GIKGx",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "56",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      }
+    },
+    "PhotoURL": "",
+    "Prenom": "Maximilien",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "maximilien.cattier"
+  },
+  "T10nbuPIoZOIu1LDCbT4e7abrPH3": {
+    "Bio": "",
+    "Mail": "elio.schneider@students.hevs.ch",
+    "Nom": "Schneider",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Elio",
+    "Roles": {
+      "BA22": true,
+      "casparticulier": true,
+      "physio": true,
+      "sae": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "StudentNote": "suivra PFP 3 durant PFP4",
+    "UserName": "elio.schneider",
+    "Ville": ""
+  },
+  "T70EwGWJMtZ22rcprSkqiOcPzTf1": {
+    "Bio": "",
+    "Mail": "clemence.masserey@students.hevs.ch",
+    "Nom": "Masserey",
+    "PhotoURL": "",
+    "Prenom": "Clémence",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "clemence.masserey"
+  },
+  "TSZOjmPDJzWzxHqG72GUc1HvDRo2": {
+    "Bio": "",
+    "Mail": "elie.pelot@students.hevs.ch",
+    "Nom": "Pelot",
+    "PFP_valided": {
+      "-OQ3IxYjAeeuk7AJzjLs": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Para - Tetra",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_TttD0thS5tY-yyR",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "14",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      },
+      "-OQ3J466pllXmtHhP_9D": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Para - Tetra",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_TttD0thS5tY-yyR",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "14",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      }
+    },
+    "PhotoURL": "",
+    "Prenom": "Elie",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "elie.pelot"
+  },
+  "Tgb9x5IKuQbO7ay8ggPRL1hMqaD3": {
+    "Mail": "virginie.ancay@students.hevs.ch",
+    "Nom": "Ancay",
+    "Prenom": "Virginie",
+    "Roles": {
+      "option": true
+    }
+  },
+  "Tj7voHmZL3NOjVvh5xeHtImsdIx1": {
+    "Bio": "",
+    "Mail": "zoe.lochmatter@students.hevs.ch",
+    "Nom": "Lochmatter",
+    "PhotoURL": "",
+    "Prenom": "Zoe",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "zoe.lochmatter"
+  },
+  "U5xkB2FwGNVFitOlk9IP5YR9Fj52": {
+    "Bio": "",
+    "Mail": "naomi.barmaz@students.hevs.ch",
+    "Nom": "Barmaz",
+    "PhotoURL": "",
+    "Prenom": "Naomi",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "naomi.barmaz"
+  },
+  "ULEM3jpbM2Y5vFukycKvDKKIhqc2": {
+    "Bio": "",
+    "Mail": "lisa.renevey@students.hevs.ch",
+    "Nom": "Renevey",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Lisa",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "StudentNote": "lésé",
+    "UserName": "lisa.renevey",
+    "Ville": ""
+  },
+  "UfEaZf2c3YejPXUFXzz3A8Yxh1x2": {
+    "Bio": "",
+    "Mail": "elena.lengen@students.hevs.ch",
+    "Nom": "Lengen",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Elena",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "elena.lengen",
+    "Ville": ""
+  },
+  "UywMMEAm6cfbtprxcuKNM1fR4ib2": {
+    "Bio": "",
+    "Mail": "bryan.oliveirateixeira@students.hevs.ch",
+    "Nom": "Oliveira teixeira",
+    "PFP_valided": {
+      "-OQ3IxXtreTrFKaHLvh5": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ortho",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_TttD0thS5tY-yyR",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "13",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      },
+      "-OQ3J45C4ET74L_6ieVe": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ortho",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_TttD0thS5tY-yyR",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "13",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      }
+    },
+    "PhotoURL": "",
+    "Prenom": "Bryan",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "bryan.oliveirateixeira"
+  },
+  "V7JjLyepAnQg4eR2kOugg55dfHj2": {
+    "Bio": "",
+    "Mail": "noelle.dubois@students.hevs.ch",
+    "Nom": "Dubois",
+    "PhotoURL": "",
+    "Prenom": "Noëlle",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "noelle.dubois"
+  },
+  "VO9wOi3JGvVchoaQvtNTidOABe03": {
+    "Bio": "",
+    "Mail": "romain.depury@students.hevs.ch",
+    "Nom": "De pury",
+    "PhotoURL": "",
+    "Prenom": "Romain",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "romain.depury"
+  },
+  "VeVpsByadIVqFdjpdbHF3TNfU3h2": {
+    "Bio": "",
+    "Mail": "markus.ratz@students.hevs.ch",
+    "Nom": "Ratz",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Markus",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "StudentNote": "lésé",
+    "UserName": "markus.ratz",
+    "Ville": ""
+  },
+  "Vnf1L8xxhFheK6RE3P18MGzMDkc2": {
+    "Bio": "",
+    "Mail": "theo.mayoraz@students.hevs.ch",
+    "Nom": "Mayoraz",
+    "PhotoURL": "",
+    "Prenom": "Théo",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "theo.mayoraz",
+    "communities": {
+      "vtdej6f1r4a27gw": true
+    }
+  },
+  "VnxB5z6JxOS8jsDHrPfbvgt9rxE2": {
+    "Bio": "",
+    "Mail": "diane.meyer@students.hevs.ch",
+    "Nom": "Meyer",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Diane",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "diane.meyer",
+    "Ville": ""
+  },
+  "WwfAPnGOElWCCprK8J9QpARedqV2": {
+    "Bio": "",
+    "Mail": "rosalie.menoud@students.hevs.ch",
+    "Nom": "Menoud",
+    "PhotoURL": "",
+    "Prenom": "Rosalie",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "rosalie.menoud"
+  },
+  "X4mx5vm2lsdrS4Sn6OUHquIl1ED2": {
+    "Bio": "",
+    "Mail": "svenja.fux@students.hevs.ch",
+    "Nom": "Fux",
+    "PhotoURL": "",
+    "Prenom": "Svenja",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "svenja.fux"
+  },
+  "XB79EORSf4dsxbG9hhjE68bBA0v2": {
+    "Mail": "antoine.quarroz@hes-so.ch",
+    "Nom": "Quarroz",
+    "Prenom": "Antoine"
+  },
+  "XK3sK3I48cMs89evbLhJZwBNlS92": {
+    "Bio": "",
+    "Mail": "amandine.michellod@students.hevs.ch",
+    "Nom": "Michellod",
+    "PhotoURL": "",
+    "Prenom": "Amandine",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "lese": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "amandine.michellod"
+  },
+  "XQtDBAPWalffkax0p7ml1k0yOtr2": {
+    "Bio": "",
+    "Mail": "quentin.egger@students.hevs.ch",
+    "Nom": "Egger",
+    "PhotoURL": "",
+    "Prenom": "Quentin",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "lese": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "quentin.egger"
+  },
+  "YZUZfSqWHob4mtjdKi1y5KIaFv62": {
+    "Bio": "",
+    "Mail": "yohan.houlmann@hevs.ch",
+    "Nom": "",
+    "PhotoURL": "",
+    "Prenom": "",
+    "Roles": {
+      "admin": true,
+      "editor": true,
+      "viewer": true
+    },
+    "UserName": ""
+  },
+  "YiI50LxSiZYDXMtiCNf6kwEWSQ42": {
+    "Bio": "",
+    "Mail": "theo.filippini@students.hevs.ch",
+    "Nom": "Filippini",
+    "PhotoURL": "",
+    "Prenom": "Théo",
+    "Roles": {
+      "BA23": true,
+      "Lese": true,
+      "PFP2BA23": true,
+      "lese": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "theo.filippini"
+  },
+  "Z17WasZ4jjTqI5MnidpGgjIF0sX2": {
+    "Bio": "",
+    "Mail": "justine.pollmann@students.hevs.ch",
+    "Nom": "Pollmann",
+    "PhotoURL": "",
+    "Prenom": "Justine",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "justine.pollmann"
+  },
+  "ZAdl5I9IabUWF0Hy5MfAeN41fLE3": {
+    "Bio": "",
+    "Mail": "leonie.maurer@students.hevs.ch",
+    "Nom": "Maurer",
+    "PFP_valided": {
+      "-OQ3IxcjS5vEWIrpYPVW": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Chir viscerale, ORL et thoracique - Pneumo",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_TtwPcuW60cfmbyb",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "43",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      },
+      "-OQ3J4BXZbEE4Di0y8Ri": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Chir viscerale, ORL et thoracique - Pneumo",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_TtwPcuW60cfmbyb",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "43",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      }
+    },
+    "PhotoURL": "",
+    "Prenom": "Léonie",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "leonie.maurer"
+  },
+  "ZMJqJI1ZlWTHwkJ375Ut7MrjjvC2": {
+    "Bio": "",
+    "Mail": "lauraine.savoy@hevs.ch",
+    "Nom": "Savoy",
+    "PhotoURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/users%2FZMJqJI1ZlWTHwkJ375Ut7MrjjvC2%2Fprofile-picture.jpg?alt=media&token=19f168cc-b345-4161-a019-4aef637ce471",
+    "Prenom": "Lauraine",
+    "Roles": {
+      "admin": false,
+      "editor": true,
+      "viewer": true
+    },
+    "UserName": "",
+    "communities": {
+      "0s8nbwih7hgopuk": true
+    }
+  },
+  "ZVCpk613pBd4vkWhfh8yu7esg7P2": {
+    "Bio": "",
+    "Mail": "loic.ornigg@students.hevs.ch",
+    "Nom": "Ornigg",
+    "PFP_valided": {
+      "-OQ3Ixg7f9dsKs7MZBkL": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ortho - Med",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_Ttxx1ljaMN6U_6n",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "50",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      },
+      "-OQ3J4F7N5b-JD8xaSLL": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ortho - Med",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_Ttxx1ljaMN6U_6n",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "50",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      }
+    },
+    "PhotoURL": "",
+    "Prenom": "Loïc",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "loic.ornigg"
+  },
+  "ZwhrcMB8yUWbhoB0sH14BKvhG6p1": {
+    "Mail": "rais.melanie@gmail.com",
+    "Nom": "Rais",
+    "Prenom": "Melanie",
+    "Roles": {
+      "option": true
+    }
+  },
+  "a2d2SPdegxP7Hx3DGTZI1DbZB7I2": {
+    "Bio": "",
+    "Mail": "camille.jung@students.hevs.ch",
+    "Nom": "Jung",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Camille",
+    "Roles": {
+      "BA22": true,
+      "casparticulier": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "StudentNote": "PFP 3 et PFP 4 ensemble : 16.06.-17.10.25, 16.06.-24.10.25 (2sem. Vacances 21.7.25-1.8.25)",
+    "UserName": "camille.jung",
+    "Ville": ""
+  },
+  "aMpDSmIIsjZHIHJrVFGyKiLF94j2": {
+    "Bio": "",
+    "Mail": "celine.claivaz@students.hevs.ch",
+    "Nom": "Claivaz",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Céline",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "lese": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "celine.claivaz",
+    "Ville": ""
+  },
+  "aONg6fgWxXci0NpoHYZmEzVGMH42": {
+    "Bio": "",
+    "Mail": "angela.erpen@students.hevs.ch",
+    "Nom": "Erpen",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Angela",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "angela.erpen",
+    "Ville": ""
+  },
+  "anlcemH0XtWV6VTVSKy2emvg5hr2": {
+    "Bio": "",
+    "Mail": "solene.depaiva@students.hevs.ch",
+    "Nom": "De paiva",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Solene",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "solene.depaiva",
+    "Ville": ""
+  },
+  "atQ2mk9k2lUYzt9nrJgwsjyzz702": {
+    "Bio": "",
+    "Mail": "quentin.sarrasin@students.hevs.ch",
+    "Nom": "Sarrasin",
+    "PhotoURL": "",
+    "Prenom": "Quentin",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "lese": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "quentin.sarrasin"
+  },
+  "azunlXgEKXVCeusTJvNpPj1bOAF3": {
+    "Bio": "",
+    "Mail": "patrick.crettenand@hevs.ch",
+    "Nom": "Crettenand",
+    "PhotoURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/users%2FazunlXgEKXVCeusTJvNpPj1bOAF3%2Fprofile-picture.jpg?alt=media&token=d4db93c5-8430-4162-be20-e8935937b388",
+    "Prenom": "Patrick",
+    "Roles": {
+      "BA24": "true",
+      "admin": false,
+      "editor": false,
+      "physio": true,
+      "student": false,
+      "viewer": true
+    },
+    "UserName": "patrick.crettenand"
+  },
+  "b7iLUR5J9idzUlm37L9zQtePK9A2": {
+    "Bio": "",
+    "Mail": "emma.enggist@students.hevs.ch",
+    "Nom": "Enggist",
+    "PFP_valided": {
+      "-OQ3IxerU9NsgAZiIYY4": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ortho",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_Ttxx1ljaMN6U_6m",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "49",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      },
+      "-OQ3J4Dlbit-Fw0USm0z": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ortho",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_Ttxx1ljaMN6U_6m",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "49",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      }
+    },
+    "PhotoURL": "",
+    "Prenom": "Emma",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "emma.enggist"
+  },
+  "bIXzvq98L6P0PE1qmDuTqHvBHee2": {
+    "Bio": "",
+    "Mail": "ines.rivier@students.hevs.ch",
+    "Nom": "Rivier",
+    "PhotoURL": "",
+    "Prenom": "Inès",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "ines.rivier"
+  },
+  "bTZVtsHKMuUL7MH05G4HxVdGvxt2": {
+    "Bio": "",
+    "Mail": "martin.verhulst@students.hevs.ch",
+    "Nom": "Verhulst",
+    "PhotoURL": "",
+    "Prenom": "Martin",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "casparticulier": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "martin.verhulst"
+  },
+  "bsUFlHRFhEaHxVrcLGxE7Iab4MD3": {
+    "Bio": "",
+    "Mail": "pierrick.frossard@students.hevs.ch",
+    "Nom": "Frossard",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Pierrick",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "pierrick.frossard",
+    "Ville": ""
+  },
+  "c3hGLH3yJ2YEz1xgJpfmZ8FBBKk1": {
+    "Bio": "",
+    "Mail": "margarida.pereiradasilva@students.hevs.ch",
+    "Nom": "Pereira da silva",
+    "PhotoURL": "",
+    "Prenom": "Margarida",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "margarida.pereiradasilva"
+  },
+  "ccIQTja74Pf6bdjdkjZq6NijIZX2": {
+    "Bio": "",
+    "Mail": "milena.imfeld@students.hevs.ch",
+    "Nom": "Imfeld",
+    "PhotoURL": "",
+    "Prenom": "Milena",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "milena.imfeld"
+  },
+  "cfvflYW8hwNRIcV21iZCh5YIyR92": {
+    "Bio": "",
+    "Mail": "matthieu.vuignier@students.hevs.ch",
+    "Nom": "Vuignier",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Matthieu",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "matthieu.vuignier",
+    "Ville": "",
+    "messages": {
+      "-OPjmweVsg2Gh52Bbssq": {
+        "createdAt": 1746706091049,
+        "ownerId": "oaMwp6sIC9bw1kBaMO5dKzXgiKt1",
+        "text": "saluuuuut 🤭"
+      }
+    }
+  },
+  "d9g3UQl4B6fZAmccHjbIYAtZYA12": {
+    "Bio": "",
+    "Mail": "romain.beney@students.hevs.ch",
+    "Nom": "Beney",
+    "PhotoURL": "",
+    "Prenom": "Romain",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "romain.beney"
+  },
+  "dQZvpOoIERVQNMUFXEpvSTBJJpW2": {
+    "Bio": "",
+    "Mail": "caroline.meyer@students.hevs.ch",
+    "Nom": "Meyer",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Caroline",
+    "Roles": {
+      "BA22": true,
+      "casparticulier": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "StudentNote": "Ne doit pas participer au tirage au sort !!",
+    "UserName": "caroline.meyer",
+    "Ville": ""
+  },
+  "daxvhnd6nnZdoUgKyxc2VjlIq1c2": {
+    "Bio": "",
+    "Mail": "jasmin.gohl@students.hevs.ch",
+    "Nom": "Gohl",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Jasmin",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "jasmin.gohl",
+    "Ville": ""
+  },
+  "db0aQCgPMGgusm21XWqJ6RkXRvU2": {
+    "Bio": "",
+    "Mail": "diane.doyen@students.hevs.ch",
+    "Nom": "Doyen",
+    "PhotoURL": "",
+    "Prenom": "Diane",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "admin": false,
+      "casparticulier": true,
+      "editor": false,
+      "viewer": false
+    },
+    "UserName": "diane.doyen"
+  },
+  "dbnAzCKYIENlogoOgt5QKt0sYND3": {
+    "Bio": "",
+    "Mail": "isabel.schmid@students.hevs.ch",
+    "Nom": "Schmid",
+    "PhotoURL": "",
+    "Prenom": "Isabel alessia",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "isabel.schmid"
+  },
+  "djz1MyC7JsYen1wobYSUQC4aeF92": {
+    "Bio": "",
+    "Mail": "chenoa.peris@students.hevs.ch",
+    "Nom": "Peris",
+    "PhotoURL": "",
+    "Prenom": "Chenoa",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "lese": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "chenoa.peris"
+  },
+  "dzA0UgKyRNXOmV5lBQIPWAjxDj23": {
+    "Bio": "",
+    "Mail": "matteo.bertholet@hevs.ch",
+    "Nom": "",
+    "PhotoURL": "",
+    "Prenom": "",
+    "Roles": {
+      "admin": true,
+      "editor": true,
+      "viewer": true
+    },
+    "UserName": ""
+  },
+  "ecYucboCChaVNL7XrU8IrsEfcRu1": {
+    "Bio": "",
+    "Mail": "loric.defferrard@students.hevs.ch",
+    "Nom": "Defferrard",
+    "PFP_valided": {
+      "-OQ3IxaEF1Cm2OIj5u3m": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ortho",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_TtwPcuW60cfmby_",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "36",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      },
+      "-OQ3J48m4YjRSLVp1Tfw": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ortho",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_TtwPcuW60cfmby_",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "36",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      }
+    },
+    "PhotoURL": "",
+    "Prenom": "Loric",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "loric.defferrard"
+  },
+  "eeDI6zyi6VW6aLWkFCeOv3HUWEv2": {
+    "Bio": "",
+    "Mail": "noe.willemin@students.hevs.ch",
+    "Nom": "Willemin",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Noe",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "noe.willemin",
+    "Ville": ""
+  },
+  "f75T63heiutWI4tPSVfZzflsOcLS2": {
+    "Bio": "",
+    "Mail": "mallaury.burnier@students.hevs.ch",
+    "Nom": "Burnier",
+    "PhotoURL": "",
+    "Prenom": "Mallaury",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "mallaury.burnier"
+  },
+  "fE3EIKzXzKd3e7k8xoye5uc3PPd2": {
+    "Bio": "",
+    "Mail": "leane.metroz@students.hevs.ch",
+    "Nom": "Métroz",
+    "PhotoURL": "",
+    "Prenom": "Léane",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "lese": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "leane.metroz",
+    "communities": {
+      "vtdej6f1r4a27gw": true
+    }
+  },
+  "fWUoCG9okEVZ3YCcmT59CdAQyhk1": {
+    "Bio": "",
+    "Mail": "erine.buntschu@students.hevs.ch",
+    "Nom": "Buntschu",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Erine",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "erine.buntschu",
+    "Ville": ""
+  },
+  "fXGdEztkb9MpJ7BtSKUE5qDlyA03": {
+    "Bio": "",
+    "Mail": "karen.wulf@students.hevs.ch",
+    "Nom": "Wulf",
+    "PhotoURL": "",
+    "Prenom": "Karen",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "karen.wulf"
+  },
+  "fbadhGkVyQeUbyibQYQJt8p0rzY2": {
+    "Bio": "",
+    "Mail": "vivienne.bregy@students.hevs.ch",
+    "Nom": "Bregy",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Vivienne",
+    "Roles": {
+      "BA22": true,
+      "casparticulier": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "vivienne.bregy",
+    "Ville": ""
+  },
+  "fgw7KyTqr4WAoThi0KjJtDRY7Ri2": {
+    "Bio": "",
+    "Mail": "nadine.corminboeuf@students.hevs.ch",
+    "Nom": "Corminboeuf",
+    "PhotoURL": "",
+    "Prenom": "Nadine",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "nadine.corminboeuf"
+  },
+  "fqt1Fw8cs7RiFUYABu3Psf2b4fS2": {
+    "Bio": "",
+    "Mail": "nelson.lealascensao@students.hevs.ch",
+    "Nom": "Leal ascensao",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Nelson",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "nelson.lealascensao",
+    "Ville": ""
+  },
+  "gOKeYNsylNcwi1IDXNyaXrQT37y2": {
+    "Bio": "",
+    "Mail": "benjamin.chaussade@students.hevs.ch",
+    "Nom": "Chaussade",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Benjamin",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "StudentNote": "lésé",
+    "UserName": "benjamin.chaussade",
+    "Ville": ""
+  },
+  "gUEcoFSfPIPSGe5vh2n1tNvWqMZ2": {
+    "Bio": "",
+    "Mail": "jonathan.tam@hevs.ch",
+    "Nom": "Tam",
+    "PhotoURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/users%2FgUEcoFSfPIPSGe5vh2n1tNvWqMZ2%2Fprofile-picture.jpg?alt=media&token=5b89ab07-8b20-4651-82f4-78f150c00fe7",
+    "Prenom": "Jonathan",
+    "Roles": {
+      "BA24": "true",
+      "admin": false,
+      "editor": false,
+      "physio": true,
+      "student": false,
+      "viewer": true
+    },
+    "UserName": "jonathan.tam"
+  },
+  "gx0MnsCOhhamj6Jth8uEfk49vKh1": {
+    "Bio": "",
+    "Mail": "phenri.cortat@hevs.ch",
+    "Nom": "Cortat",
+    "PhotoURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/users%2Fgx0MnsCOhhamj6Jth8uEfk49vKh1%2Fprofile-picture.jpg?alt=media&token=d6cf5df7-e12b-41b8-928b-38d66df6cbd8",
+    "Prenom": "Pierre-henri",
+    "Roles": {
+      "BA24": "true",
+      "admin": false,
+      "editor": false,
+      "physio": true,
+      "student": false,
+      "viewer": true
+    },
+    "UserName": "pierre-henri.cortat"
+  },
+  "h21ZyIpknGUksWjxUDLo2Mthwy92": {
+    "Bio": "",
+    "Mail": "maxime.schaer@students.hevs.ch",
+    "Nom": "Schaer",
+    "PhotoURL": "",
+    "Prenom": "Maxime",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "maxime.schaer"
+  },
+  "h6gxzCsBeZdWL0IIzIZsiSeebU82": {
+    "Bio": "",
+    "Mail": "sandia.imhasly@students.hevs.ch",
+    "Nom": "Imhasly",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Sandia",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "sandia.imhasly",
+    "Ville": ""
+  },
+  "hAFP6aoU7yVzhdXsZwO4LS1XXb23": {
+    "Bio": "",
+    "Mail": "rachel.schaad@students.hevs.ch",
+    "Nom": "",
+    "PhotoURL": "",
+    "Prenom": "",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": ""
+  },
+  "hJnT8DFglHci9Dfen82BIGqU6sz2": {
+    "Bio": "",
+    "Mail": "valerie.mathieu@students.hevs.ch",
+    "Nom": "Mathieu",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Valerie",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "valerie.mathieu",
+    "Ville": "",
+    "messages": {
+      "-OHCeNVvC0XRXhUXJfNM": {
+        "createdAt": 1737543485504,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "Bonjour, nous sommes en train de travailler sur l'ajout de l'historique des stages validés. Tu devrais pouvoir y avoir accès courant février. Merci à toi pour ce message"
+      }
+    }
+  },
+  "hZTRrS8UMrfybYXKulfk1pI03jw2": {
+    "Bio": "",
+    "Mail": "alexandre.lavanchy@students.hevs.ch",
+    "Nom": "Lavanchy",
+    "PhotoURL": "",
+    "Prenom": "Alexandre",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "alexandre.lavanchy"
+  },
+  "i3VYPIfwLqTWfAL1E5HeHRRM5TE3": {
+    "Bio": "",
+    "Mail": "hannah.theler@students.hevs.ch",
+    "Nom": "Theler",
+    "PhotoURL": "",
+    "Prenom": "Hannah",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "hannah.theler"
+  },
+  "iyd830oz2j4pvp0": {
+    "communities": {
+      "communityId": "iyd830oz2j4pvp0"
+    }
+  },
+  "j382NBS1whNwFUh9R9STLQcYM5m1": {
+    "Bio": "",
+    "Mail": "marie-laure.probst@students.hevs.ch",
+    "Nom": "Probst",
+    "PFP_valided": {
+      "-OQ3IxZyVDV0YRjbHRGu": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ger",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_Tu0ifoZo_RPDyHx",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "34",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      },
+      "-OQ3J47S3UXPVC2YxIr3": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ger",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_Tu0ifoZo_RPDyHx",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "34",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      }
+    },
+    "PhotoURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/users%2Fj382NBS1whNwFUh9R9STLQcYM5m1%2Fprofile-picture.jpg?alt=media&token=cf51dce2-6317-41d4-94f3-ec5786a11210",
+    "Prenom": "Marie-laure",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "marie-laure.probst"
+  },
+  "kBlGnRSNhgaQSTPumpAz4jZ7pgq2": {
+    "Bio": "",
+    "Mail": "steve.bagnoud@students.hevs.ch",
+    "Nom": "Bagnoud",
+    "PhotoURL": "",
+    "Prenom": "Steve",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "steve.bagnoud"
+  },
+  "kCpveTSa80XY21RwPcpSX7zoNfI2": {
+    "Bio": "",
+    "Mail": "lucie.guillet@students.hevs.ch",
+    "Nom": "Guillet",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Lucie",
+    "Roles": {
+      "BA22": true,
+      "casparticulier": "true",
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "lucie.guillet",
+    "Ville": ""
+  },
+  "lMzLCfyBONNuxRa5AzM2VPnTpOx1": {
+    "Bio": "",
+    "Mail": "nathan.imboden@students.hevs.ch",
+    "Nom": "Imboden",
+    "PhotoURL": "",
+    "Prenom": "Nathan",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "nathan.imboden",
+    "communities": {
+      "0s8nbwih7hgopuk": true,
+      "vtdej6f1r4a27gw": true
+    },
+    "messages": {
+      "-OPf39mtRNP8aFfQo2ep": {
+        "createdAt": 1746626718916,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "Ca va pour toi comme ça ?"
+      },
+      "-OPf3KIyNBwdKGoqpzXV": {
+        "createdAt": 1746626761994,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "Et si tu as des bug vraiment hésite pas. C'est comme ça qu'on avance"
+      },
+      "-OPkNkPtc2-wZZlX7VKT": {
+        "createdAt": 1746716001518,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "Pas encore mais je vais le faire"
+      },
+      "-OQHsC9Dy0hSPjlLFNCE": {
+        "createdAt": 1747294671551,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "Je vais aller voir"
+      },
+      "-OQNVmh8iYJWKwYjy3zP": {
+        "createdAt": 1747389196467,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "Je comprends pas pourquoi tu as deux vidéos, je viens de tester mais ça marche chez moi"
+      },
+      "-OQNWn4V5tmleaPJwPaY": {
+        "createdAt": 1747389460160,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "Alors je viens de trouver le problème. C'est que tu n'as pas besoin d'ajouter un lien hypertexte. Tu peux tout simplement coller juste le liens de la vidéos dans la zone de texte. Et ça ajoute automatiquement la vidéo"
+      }
+    }
+  },
+  "lQVKbNduW7gdmCOBxC5KYnaIvGG3": {
+    "Bio": "",
+    "Mail": "noah.imboden@students.hevs.ch",
+    "Nom": "Imboden",
+    "PhotoURL": "",
+    "Prenom": "Noah",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "lese": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "noah.imboden"
+  },
+  "lRjmWjDaAUcsqHli7A3rfvAazgl2": {
+    "Bio": "",
+    "Mail": "stella.bonvin@students.hevs.ch",
+    "Nom": "Bonvin",
+    "PhotoURL": "",
+    "Prenom": "Stella",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "stella.bonvin",
+    "messages": {
+      "-OMSHyvGq5KXuv0GtwxM": {
+        "createdAt": 1743174495971,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "Salut"
+      }
+    }
+  },
+  "lbZj0CNpzQRkVbIw2FtppNdDMGg1": {
+    "Bio": "",
+    "Mail": "celia.aebli@students.hevs.ch",
+    "Nom": "Aebli",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Celia",
+    "Roles": {
+      "BA22": true
+    },
+    "Ville": ""
+  },
+  "m7E0JzfojnMGwoMunxjgqiQe3wc2": {
+    "Bio": "",
+    "Mail": "mael.corthay@students.hevs.ch",
+    "Nom": "Corthay",
+    "PhotoURL": "",
+    "Prenom": "Maël",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "mael.corthay"
+  },
+  "mGwDQ6cu9BfI9d0sLUVdZBnoooB2": {
+    "Bio": "",
+    "Mail": "jose.espinchocarneiro@students.hevs.ch",
+    "Nom": "Espincho carneiro",
+    "PhotoURL": "",
+    "Prenom": "José luis",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "jose.espinchocarneiro"
+  },
+  "mrSvh6UTl5OBpayeafUU4okWsE82": {
+    "Bio": "",
+    "Mail": "amaelle.scala@students.hevs.ch",
+    "Nom": "Scala",
+    "PFP_valided": {
+      "-OQ3IxX3Fgw7nMkd0Jh4": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Neuro",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-O3kbfe81TTvVKEinjxO",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "3",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      },
+      "-OQ3J44Jujq_W5AgukV5": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Neuro",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-O3kbfe81TTvVKEinjxO",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "3",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      }
+    },
+    "PhotoURL": "",
+    "Prenom": "Amaëlle",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "amaelle.scala"
+  },
+  "n4Ing0jPm5T6mKx4qXEZNseBZtC2": {
+    "Bio": "",
+    "Mail": "claire.savary@students.hevs.ch",
+    "Nom": "Savary",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Claire",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "claire.savary",
+    "Ville": ""
+  },
+  "nOtmxFVlekUSWSVgawocyWhiXoJ2": {
+    "Bio": "",
+    "Mail": "jeremie.saillen@students.hevs.ch",
+    "Nom": "Saillen",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Jeremie",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "jeremie.saillen",
+    "Ville": ""
+  },
+  "nQ30nrQx98YCWhnfNfiR6lLSx1a2": {
+    "Bio": "",
+    "Mail": "seraina.obrist@hevs.ch",
+    "Nom": "Obrist",
+    "PhotoURL": "",
+    "Prenom": "Seraina",
+    "Roles": {
+      "BA24": "true",
+      "admin": false,
+      "editor": false,
+      "physio": true,
+      "student": false,
+      "viewer": true
+    },
+    "UserName": "seraina.obrist"
+  },
+  "nqvttcCyf3SL6YT1DJJ8GGM3MKz2": {
+    "Bio": "",
+    "Mail": "maelle.ruf@students.hevs.ch",
+    "Nom": "Ruf",
+    "PhotoURL": "",
+    "Prenom": "Maëlle",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "maelle.ruf",
+    "communities": {
+      "vtdej6f1r4a27gw": true
+    }
+  },
+  "oEenshn2ZOMTx69MEGXNcxmeoTr1": {
+    "Bio": "",
+    "Mail": "anne-lucie.chautems@students.hevs.ch",
+    "Nom": "Chautems",
+    "PFP_valided": {
+      "-OQ3IxbVstIsogVoNDLu": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Neuro - ped",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_TtwPcuW60cfmbyb",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "40",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      },
+      "-OQ3J4A9UiAwyYsv7TcQ": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Neuro - ped",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_TtwPcuW60cfmbyb",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "40",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      }
+    },
+    "PhotoURL": "",
+    "Prenom": "Anne-lucie",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "anne-lucie.chautems",
+    "communities": {
+      "-ODfzPfyZK6PV1QxF7CA": true
+    }
+  },
+  "oS4RPsF7OdghF5LPgHZGa5ydfSH2": {
+    "Bio": "",
+    "Mail": "yasmina.haberli@students.hevs.ch",
+    "Nom": "Haberli",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Yasmina",
+    "Role": {
+      "BA22": true
+    },
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "yasmina.haberli",
+    "Ville": ""
+  },
+  "oaMwp6sIC9bw1kBaMO5dKzXgiKt1": {
+    "Bio": "",
+    "Mail": "luca.dealmeida@students.hevs.ch",
+    "Nom": "De almeida",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Luca",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "luca.dealmeida",
+    "Ville": ""
+  },
+  "pJ1l5n67Q1cqbFcbb8v2oNclzEG3": {
+    "Bio": "",
+    "Mail": "kim.jenny@students.hevs.ch",
+    "Nom": "Jenny",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Kim",
+    "Roles": {
+      "BA22": true,
+      "casparticulier": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "kim.jenny",
+    "Ville": ""
+  },
+  "piWvrK73dndDGcIVjLqZ2sah20C2": {
+    "Bio": "",
+    "Mail": "lara.allet@hevs.ch",
+    "Nom": "De preux-allet",
+    "PhotoURL": "",
+    "Prenom": "Lara",
+    "Roles": {
+      "BA24": true,
+      "admin": true,
+      "editor": true,
+      "student": true,
+      "viewer": true
+    },
+    "UserName": "lara.allet"
+  },
+  "qGJqyDBBIZcnPnRtOwi7vnefv723": {
+    "Bio": "",
+    "Mail": "marlena.gerber@students.hevs.ch",
+    "Nom": "Gerber",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Marlena",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "marlena.gerber",
+    "Ville": ""
+  },
+  "qMjlyqwW8wN9IsVapiUoCXrJjOG2": {
+    "Bio": "",
+    "Mail": "zoe.duvoisin@students.hevs.ch",
+    "Nom": "Duvoisin",
+    "PhotoURL": "",
+    "Prenom": "Zoé",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "lese": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "zoe.duvoisin"
+  },
+  "qQGTdBi5R5d1JZPCcLdkmW6Lezs2": {
+    "Bio": "",
+    "Mail": "liam.chandy@students.hevs.ch",
+    "Nom": "Chandy",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Liam",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "StudentNote": "lésé",
+    "UserName": "liam.chandy",
+    "Ville": "",
+    "communities": {
+      "0s8nbwih7hgopuk": true,
+      "e6a669j49q8ni2z": true
+    }
+  },
+  "qhCrypuoDXc5zIWJAD9dOL8Ljv63": {
+    "Bio": "",
+    "Mail": "nina.fuhrer@students.hevs.ch",
+    "Nom": "Fuhrer",
+    "PhotoURL": "",
+    "Prenom": "Nina",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "casparticulier": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "nina.fuhrer"
+  },
+  "r5UrZGFGxUWH9EPXD4tar3ZhpEx2": {
+    "Bio": "",
+    "Mail": "claire.pheulpin@students.hevs.ch",
+    "Nom": "Pheulpin",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Claire",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "claire.pheulpin",
+    "Ville": ""
+  },
+  "rac21yrBaNhMzt543lOgyGtx5CL2": {
+    "Bio": "",
+    "Mail": "jane.berclaz@students.hevs.ch",
+    "Nom": "Berclaz",
+    "PFP_valided": {
+      "-OQ3Ixbu6E5_V6tC7ez1": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Tournus SC med-chir - Cardio",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_TtwPcuW60cfmbyb",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "41",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      },
+      "-OQ3J4Ad9dfboZ3-IHcE": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Tournus SC med-chir - Cardio",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_TtwPcuW60cfmbyb",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "41",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      }
+    },
+    "PhotoURL": "",
+    "Prenom": "Jane",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "jane.berclaz"
+  },
+  "s6Eol6sysjPkT3LVGjdWD01V1VA2": {
+    "Bio": "",
+    "Mail": "dario.coletta@students.hevs.ch",
+    "Nom": "Coletta",
+    "PFP_valided": {
+      "-OQ3Ixe0EOUGXpsCP6LW": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ger",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_TtwPcuW60cfmbyd",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "45",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      },
+      "-OQ3J4Cu0IfPDFWLHjxN": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ger",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_TtwPcuW60cfmbyd",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "45",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      }
+    },
+    "PhotoURL": "",
+    "Prenom": "Dario",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "dario.coletta"
+  },
+  "sJ0z0k4idEg6PMCnMrjW3lho9cs1": {
+    "Bio": "",
+    "Mail": "leanne.murith@students.hevs.ch",
+    "Nom": "Murith",
+    "PhotoURL": "",
+    "Prenom": "Leanne",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "leanne.murITh"
+  },
+  "ta5fEsMcBHV64fLfjy7knGlQVd93": {
+    "Bio": "",
+    "Mail": "leonie.dennda@students.hevs.ch",
+    "Nom": "Dennda",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Leonie",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "lese": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "leonie.dennda",
+    "Ville": "",
+    "communities": {
+      "0s8nbwih7hgopuk": false,
+      "vtdej6f1r4a27gw": true
+    }
+  },
+  "tc2VPj6NxHQyXqO9cxgs1VvCH9A2": {
+    "Bio": "",
+    "Mail": "camille.monnier@students.hevs.ch",
+    "Nom": "Monnier",
+    "PhotoURL": "",
+    "Prenom": "Camille",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "lese": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "camille.monnier"
+  },
+  "uHd9onm2ErPGBdh860d3hWumDGj1": {
+    "Bio": "",
+    "Mail": "alexandra.jaeger@students.hevs.ch",
+    "Nom": "Jaeger",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Alexandra",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "alexandra.jaeger",
+    "Ville": ""
+  },
+  "ugBbi96TQGRuQLKFwT43qJHa4za2": {
+    "Bio": "",
+    "Mail": "celine.FRossard1@students.hevs.ch",
+    "Nom": "Frossard",
+    "PhotoURL": "",
+    "Prenom": "Céline",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "lese": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "celine.FRossard1"
+  },
+  "uwUTp2rxDHhytEej6vKfcVlOCY73": {
+    "Bio": "",
+    "Mail": "laura.behrens@students.hevs.ch",
+    "Nom": "Behrens",
+    "PhotoURL": "",
+    "Prenom": "Laura",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "laura.behrens"
+  },
+  "v0Bv2oLhCkhDJvVvXktZsmnj16U2": {
+    "Bio": "",
+    "Mail": "leane.wagner@students.hevs.ch",
+    "Nom": "Wagner",
+    "PhotoURL": "",
+    "Prenom": "Léane",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "leane.wagner"
+  },
+  "vH8t0UwxD3cush3gMsSRjEMDgdN2": {
+    "Bio": "",
+    "Mail": "christophe.baur@hevs.ch",
+    "Nom": "",
+    "PhotoURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/users%2FxeIiCd1BcydVmyKnzuEeffclQiu1%2Fprofile-picture.jpg?alt=media&token=c197db12-0a09-4caf-887d-e6223307b394",
+    "Prenom": "",
+    "Roles": {
+      "admin": true,
+      "editor": true,
+      "viewer": true
+    },
+    "UserName": "",
+    "messages": {
+      "-ODkzjqwg5zYZblMrjsW": {
+        "createdAt": 1733841321431,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "fdsf"
+      }
+    }
+  },
+  "vb9QNaanAjbOPMpbk5qwpvOjMWo1": {
+    "Bio": "",
+    "Mail": "mariana.egger@students.hevs.ch",
+    "Nom": "Egger",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Mariana",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "mariana.egger",
+    "Ville": ""
+  },
+  "wCdr4pfHdCVicshlexanf93vmvg1": {
+    "Bio": "",
+    "Mail": "aurelie.romy@students.hevs.ch",
+    "Nom": "Romy",
+    "PFP_valided": {
+      "-OQ3IxgaE3RHs_DyGvpI": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ortho - Med",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_Ttxx1ljaMN6U_6n",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "50",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      },
+      "-OQ3J4FZ6cD2yZu65uEe": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ortho - Med",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_Ttxx1ljaMN6U_6n",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "50",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      }
+    },
+    "PhotoURL": "",
+    "Prenom": "Aurélie",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "aurelie.romy"
+  },
+  "wCo17k8JUiUF4K6O17WKJowF6473": {
+    "Bio": "",
+    "Mail": "damien.catillaz@students.hevs.ch",
+    "Nom": "Catillaz",
+    "PFP_valided": {
+      "-OQ3IxcK3xwbTQMAJ67m": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Tournus SC med-chir - Cardio",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_TtwPcuW60cfmbyb",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "41",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "echec"
+      },
+      "-OQ3J4B5_kf9TbzK87hN": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Tournus SC med-chir - Cardio",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_TtwPcuW60cfmbyb",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "41",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "echec"
+      }
+    },
+    "PhotoURL": "",
+    "Prenom": "Damien",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "damien.catillaz",
+    "messages": {
+      "-ODjhaym6CEfLK1GHvnS": {
+        "createdAt": 1733819789249,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "sa"
+      },
+      "-ODtmOv7bnN2zbsQKRu6": {
+        "createdAt": 1733988820669,
+        "ownerId": "GNhZSpoHkhh7Ip2wYPNeDORm3fC2",
+        "text": "adieu ma biche, comment tu suis un peu le cours🙃"
+      }
+    }
+  },
+  "wb6ciGEN2tVpmU0Ld5ftdVCy1Qi1": {
+    "Bio": "",
+    "Mail": "meline.brix@students.hevs.ch",
+    "Nom": "Brix",
+    "PhotoURL": "",
+    "Prenom": "Méline",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "meline.brix"
+  },
+  "wdk6bytclysye7t": {
+    "communities": {
+      "communityId": "wdk6bytclysye7t"
+    }
+  },
+  "wt4Un0XBVBQzUWnJGrVnyWHHfkA3": {
+    "Bio": "",
+    "Mail": "mattia.innocenti@students.hevs.ch",
+    "Nom": "Innocenti",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Mattia",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "mattia.innocenti",
+    "Ville": ""
+  },
+  "xTAytSvop1VXXhVwTg4nfwBSmwG3": {
+    "Bio": "",
+    "Mail": "astrid.julen@students.hevs.ch",
+    "Nom": "Julen",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Astrid",
+    "Roles": {
+      "BA22": true,
+      "casparticulier": true,
+      "physio": true,
+      "sae": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "StudentNote": "suivra PFP 3 durant PFP4",
+    "UserName": "astrid.julen",
+    "Ville": ""
+  },
+  "xeIiCd1BcydVmyKnzuEeffclQiu1": {
+    "Bio": "",
+    "Mail": "christophe.baur@hevs.ch",
+    "Nom": "Baur",
+    "PhotoURL": "https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/users%2FxeIiCd1BcydVmyKnzuEeffclQiu1%2Fprofile-picture.jpg?alt=media&token=c197db12-0a09-4caf-887d-e6223307b394",
+    "Prenom": "Christophe",
+    "Roles": {
+      "admin": true,
+      "editor": true,
+      "viewer": true
+    },
+    "UserName": "christophe.baur",
+    "communities": {
+      "0s8nbwih7hgopuk": true,
+      "99gmvh44l3y6jvs": false,
+      "e6a669j49q8ni2z": true,
+      "n6xovspcxuw3qds": false,
+      "vtdej6f1r4a27gw": true,
+      "w2e8tyfzih2kich": false
+    },
+    "messages": {
+      "-ODfDmNKzLvNiXcQSdFy": {
+        "createdAt": 1733744600209,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "salut"
+      },
+      "-ODfDnj3t0w0mAi8VCUd": {
+        "createdAt": 1733744605761,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "salut :) 😁"
+      },
+      "-ODjZu-C45tP0kLgbAA2": {
+        "createdAt": 1733817508038,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "salut chef de projet. Prêt pour le COPIL 4 ??"
+      },
+      "-ODjcuE4UFtx-Zzq8hw3": {
+        "createdAt": 1733818557392,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "salut"
+      },
+      "-ODjcyRTKCszk7W-B9j7": {
+        "createdAt": 1733818574633,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "ahnfihuasiufdasuidfospldu"
+      },
+      "-ODjd1sd5PZ_fxppPh4R": {
+        "createdAt": 1733818592809,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "ssasfadsfdasdfsdfsdfsfdsfdfdsdfsdfs"
+      },
+      "-ODjd2M3mTj6iFdluKT-": {
+        "createdAt": 1733818594768,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "sfdssfdasdfsdfsdfsdfdfsdf"
+      },
+      "-ODjd2ntyL1W-HkPVVVZ": {
+        "createdAt": 1733818596613,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "sdfasdfsdffsdsdfdfssdf"
+      },
+      "-ODjd6f5NGQ4ioaeRCMz": {
+        "createdAt": 1733818612434,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "ca va"
+      },
+      "-ODjd7xYEgIXDvzCoj_4": {
+        "createdAt": 1733818617701,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "oui et toi"
+      },
+      "-ODjdwepuCTPVNESwTkq": {
+        "createdAt": 1733818829540,
+        "ownerId": "wCo17k8JUiUF4K6O17WKJowF6473",
+        "text": "salut"
+      },
+      "-ODje4OiwUlnIXjYMxan": {
+        "createdAt": 1733818865309,
+        "ownerId": "wCo17k8JUiUF4K6O17WKJowF6473",
+        "text": "ya"
+      },
+      "-ODjejdDm8veQ1llH-n1": {
+        "createdAt": 1733819038302,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "salut"
+      },
+      "-ODjewlzKFfYpBJOAIpV": {
+        "createdAt": 1733819092113,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "salut chef"
+      },
+      "-ODjg2IUNwFcrQk-ro9s": {
+        "createdAt": 1733819380973,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "hey"
+      },
+      "-ODjg5ct5T30GqZjbQ5W": {
+        "createdAt": 1733819394631,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "salut"
+      },
+      "-ODjg8vk5WfBh3RQLmuC": {
+        "createdAt": 1733819408127,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "sdfsdfsdfsdf"
+      },
+      "-ODjgE4xvY7b5wFTsyUO": {
+        "createdAt": 1733819429262,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "aslut"
+      },
+      "-ODjgVw23hVoEZO8duOz": {
+        "createdAt": 1733819502364,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "oui"
+      },
+      "-ODji_5x0h6gnwKJIB7k": {
+        "createdAt": 1733820043722,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "asdajsdnajksdnajskdn"
+      },
+      "-ODjkdETpDVhe0Ji72-E": {
+        "createdAt": 1733820584940,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "yessss"
+      },
+      "-ODjm7cXzcedYc0HGZfA": {
+        "createdAt": 1733820975663,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "salut"
+      },
+      "-ODjscAKZn3P1UBPLSO3": {
+        "createdAt": 1733822677720,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "sadasd"
+      },
+      "-ODjsd8_FBI8MUdRX0Nr": {
+        "createdAt": 1733822681705,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "🤔"
+      },
+      "-ODjvx0MshnHqQqHqM85": {
+        "createdAt": 1733823549450,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "Salut"
+      },
+      "-ODk1qbAZ7818d_SLR2M": {
+        "createdAt": 1733825358343,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "😅"
+      },
+      "-ODk5xSokP_OLFZTVz6t": {
+        "createdAt": 1733826434930,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "heyyyy"
+      },
+      "-ODkBZ1e4FjAmBIIS4Pp": {
+        "createdAt": 1733827903676,
+        "ownerId": "LYgTG7cUqEgvJ2RkgrmoFQoHQQu2",
+        "text": "bonjour monsieur Baur"
+      },
+      "-ODkweKQ6INHi1MRfuWh": {
+        "createdAt": 1733840512343,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "salut"
+      },
+      "-ODkwghVcdgMnIFCi3Ff": {
+        "createdAt": 1733840522076,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "ca va"
+      },
+      "-ODkzWufDYeopP3XXsTX": {
+        "createdAt": 1733841264308,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "mghfmjghfmhgf"
+      },
+      "-ODkzkd0XIJ1xETFMztV": {
+        "createdAt": 1733841324635,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "fdas"
+      },
+      "-ODkzlQblNYSyc5hRlw6": {
+        "createdAt": 1733841327873,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "fds"
+      },
+      "-ODu4g_GQPFm8KyYfEI0": {
+        "createdAt": 1733993875806,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "ca va😫"
+      },
+      "-OHCeWF2QkoFWOvFTxz0": {
+        "createdAt": 1737543521303,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "yoo"
+      },
+      "-OIzq68LWTtZtcDQLE-b": {
+        "createdAt": 1739459162716,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "ca va"
+      },
+      "-OIzq6YhNF4B47V_OCpH": {
+        "createdAt": 1739459164404,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "sava"
+      },
+      "-OIzqHAKDdB0JuSuDGO6": {
+        "createdAt": 1739459207900,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "sa va"
+      },
+      "-OIzqJfaNpay3IoDjP1k": {
+        "createdAt": 1739459218157,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "Compris terminé"
+      },
+      "-OPdbfCliFy6yaAgZI4X": {
+        "createdAt": 1746602472327,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "test"
+      },
+      "-OPdbmM9ZtLWbI-ymPff": {
+        "createdAt": 1746602501598,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "test"
+      },
+      "-OPdbrbdmvl8V9bKpP-X": {
+        "createdAt": 1746602523133,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "encore"
+      },
+      "-OPdckNW349G1ewZ1_KL": {
+        "createdAt": 1746602755648,
+        "ownerId": "2tQybqqiJwbRkLUnBGcHiyG5KyO2",
+        "text": "test"
+      }
+    }
+  },
+  "y8DpmAnCORR36gtBPSzpoeAnGha2": {
+    "Bio": "",
+    "Mail": "nicolas.gullotta@students.hevs.ch",
+    "Nom": "Gullotta",
+    "PhotoURL": "",
+    "Prenom": "Nicolas",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "nicolas.gullotta"
+  },
+  "y8wVFUpKidgUo6Rz6JEBtGNYAa82": {
+    "Bio": "",
+    "Mail": "chiara.denervaud@students.hevs.ch",
+    "Nom": "Dénervaud",
+    "PhotoURL": "",
+    "Prenom": "Chiara",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "chiara.denervaud"
+  },
+  "yWShM6jbuNcck2CfI0ihEtckesW2": {
+    "Bio": "",
+    "Mail": "lucie.rey@students.hevs.ch",
+    "Nom": "Rey",
+    "PhotoURL": "",
+    "Prenom": "Lucie",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "lucie.rey"
+  },
+  "yn7VMvQNy8gz9G2SrHjsYIuCfxA2": {
+    "Bio": "",
+    "Mail": "lou.pugin@students.hevs.ch",
+    "Nom": "Pugin",
+    "PhotoURL": "",
+    "Prenom": "Lou",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "physio": true,
+      "siteLoeche": false,
+      "student": false
+    },
+    "UserName": "lou.pugin"
+  },
+  "yzjX3tWlIMYd4PxCa2EpQVbmx703": {
+    "Bio": "",
+    "Mail": "norma.jentsch@students.hevs.ch",
+    "Nom": "Jentsch",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Norma",
+    "Roles": {
+      "BA22": true,
+      "casparticulier": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "StudentNote": "suivra PFP 3 durant PFP4",
+    "UserName": "norma.jentsch",
+    "Ville": ""
+  },
+  "z6zxUKpOmPUh7ISzMz8JMUmQhdG3": {
+    "Bio": "",
+    "Mail": "liam.madrid@students.hevs.ch",
+    "Nom": "Madrid",
+    "PFP_valided": {
+      "-OQ3IxfihK8UGPHvjRWg": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ortho",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_Ttxx1ljaMN6U_6m",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "49",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      },
+      "-OQ3J4Efp8iEuuW9BmDC": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ortho",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_Ttxx1ljaMN6U_6m",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "49",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      }
+    },
+    "PhotoURL": "",
+    "Prenom": "Liam",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "liam.madrid"
+  },
+  "zACycM16YHg7MfVVzzMFUuFziWp2": {
+    "Bio": "",
+    "Mail": "megane.cherbuin@students.hevs.ch",
+    "Nom": "Cherbuin",
+    "PhotoURL": "",
+    "Prenom": "Mégane",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "megane.cherbuin"
+  },
+  "zp51igKc0JdBYi2dZLyngG2zgBq2": {
+    "Bio": "",
+    "Mail": "estelle.moser@students.hevs.ch",
+    "Nom": "Moser",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Estelle",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "StudentNote": "lésé",
+    "UserName": "estelle.moser",
+    "Ville": ""
+  },
+  "zqZSrlEAXYV2Rxl73KmCl8oK0QA3": {
+    "Bio": "",
+    "Mail": "helene.schaad@students.hevs.ch",
+    "Nom": "Schaad",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Helene",
+    "Roles": {
+      "BA22": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "helene.schaad",
+    "Ville": "",
+    "messages": {
+      "-OPoTJhTLmvM8F7kGKqx": {
+        "createdAt": 1746784570172,
+        "ownerId": "Rd7b2Oyr7ch9dYGDqF1f6Cu2GP83",
+        "text": "merci"
+      }
+    }
+  },
+  "zss86bdGCVgvYgWzkc8dK7qLNi92": {
+    "Bio": "",
+    "Mail": "gregory.wahl@students.hevs.ch",
+    "Nom": "Wahl",
+    "PhotoURL": "../../../public/assets/images/avatar/01.jpg",
+    "Prenom": "Gregory",
+    "Roles": {
+      "BA23": true,
+      "PFP2BA23": true,
+      "admin": false,
+      "editor": false,
+      "viewer": false
+    },
+    "UserName": "gregory.wahl",
+    "Ville": "",
+    "communities": {
+      "vtdej6f1r4a27gw": true
+    }
+  },
+  "zuDEj907RZSu7BvOZPRhvG4k94D2": {
+    "Bio": "",
+    "Mail": "adelie.dacampo@students.hevs.ch",
+    "Nom": "Da campo",
+    "PFP_valided": {
+      "-OQ3IxeRkV2Apouqy8yE": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ger",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_TtwPcuW60cfmbyd",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "45",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      },
+      "-OQ3J4DKBrJkuSzOHu2o": {
+        "AIGU": false,
+        "AMBU": false,
+        "DE": false,
+        "Domaine": "Ger",
+        "FR": false,
+        "ID_PFP": "",
+        "IdInstitution": "-Neh_TtwPcuW60cfmbyd",
+        "MSQ": false,
+        "NEUROGER": false,
+        "REHAB": false,
+        "SYSINT": false,
+        "placeKey": "45",
+        "remarquesEtudiant": "",
+        "remarquesPlace": "",
+        "remarquesStages": "",
+        "status": "reussi"
+      }
+    },
+    "PhotoURL": "",
+    "Prenom": "Adélie",
+    "Roles": {
+      "BA24": true,
+      "physio": true,
+      "siteLoeche": true,
+      "student": true
+    },
+    "UserName": "adelie.dacampo"
+  }
+}
