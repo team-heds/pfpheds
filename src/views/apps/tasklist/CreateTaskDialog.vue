@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 import { getDatabase, ref as dbRef, onValue, push, update } from 'firebase/database';
-import { db } from '../../../../firebase.js'; // Importez votre configuration Firebase
+import { db } from '../../../../firebase'; // Importez votre configuration Firebase
 
 const emit = defineEmits(['close', 'save']);
 const props = defineProps({

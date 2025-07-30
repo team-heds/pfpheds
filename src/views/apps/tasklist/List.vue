@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import { getDatabase, ref as dbRef, update, remove } from 'firebase/database';
-import { db } from '../../../..//firebase.js'; // Importez votre configuration Firebase
+import { db } from '../../../../firebase'; // Importez votre configuration Firebase
 
 // Événements émis par le composant
 const emit = defineEmits(['checkbox:change', 'delete:task', 'open:edit:dialog']);

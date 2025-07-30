@@ -29,12 +29,12 @@
 <script>
 import Toast from 'primevue/toast';
 import ConfirmDialog from 'primevue/confirmdialog';
-import ConvaiWidget from '@/components/ConvaiWidget.vue'
-import Loader from '@/components/Utils/Loader.vue'; // Import du composant Loader
-import VersionningComponent from './components/Utils/VersionningComponent.vue'; // Import du nouveau composant
-import MobileBottomNav from '@/components/Utils/MobileBottomNav.vue';
-import PwaInstallPrompt from '@/components/Utils/PwaInstallPrompt.vue';
-import HeaderIcons from '@/components/Utils/HeaderIcons.vue'
+import ConvaiWidget from '@/components/ui/ConvaiWidget.vue'
+import Loader from '@/components/common/utils/Loader.vue'; // Import du composant Loader
+import VersionningComponent from './components/common/utils/VersionningComponent.vue'; // Import du nouveau composant
+import MobileBottomNav from '@/components/common/utils/MobileBottomNav.vue';
+import PwaInstallPrompt from '@/components/common/utils/PwaInstallPrompt.vue';
+import HeaderIcons from '@/components/common/utils/HeaderIcons.vue'
 
 
 export default {

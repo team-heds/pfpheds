@@ -4,8 +4,8 @@ import { getDatabase, ref as dbRef, onValue, push, remove, update } from 'fireba
 import List from './List.vue';
 import CreateTaskDialog from './CreateTaskDialog.vue';
 import { useToast } from 'primevue/usetoast';
-import Navbar from '@/components/Utils/Navbar.vue';
-import { db } from '../../../../firebase.js'; // Importez votre configuration Firebase
+import Navbar from '@/components/common/utils/Navbar.vue';
+import { db } from '../../../../firebase'; // Importez votre configuration Firebase
 
 const toast = useToast();
 

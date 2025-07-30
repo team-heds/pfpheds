@@ -1,216 +1,570 @@
-# 📚 Documentation de la Plateforme HEdS
+# 🏥 Plateforme HEdS - Formation Pratique Physiothérapie
 
-Bienvenue dans la documentation technique et méthodologique de la plateforme HEdS. Ce document sert de guide pour comprendre notre fonctionnement en équipe, notre stack technologique, ainsi que la structure de l'application.
+> **Plateforme éducative et collaborative pour la Haute École de Santé (HEdS) du Valais**  
+> Version 0.1.0.21 | Vue.js 3 + Firebase + PrimeVue
 
----
-
-## 1. 🚀 Fonctionnement général de l'équipe (Workflow)
-
-L'équipe suit une méthode Agile afin d'assurer un développement itératif, collaboratif et de qualité. Le processus est structuré autour d'outils fiables et d'une communication fluide.
-
-### 🛠️ Outils principaux
-
-- **Jira** : gestion des sprints, backlog, tâches, et suivi des livrables.
-- **GitHub** : gestion du code source, revue de code.
-
-### 🔧 Étapes du workflow technique
-
-1. Création de User Stories (avec sous-tâches Frontend / Backend) dans Jira.
-2. Le développeur prend une tâche "À faire", l'assigne, et la passe en "En cours".
-3. Création d'une branche Git : `HEDS25--nom-tache`
-4. Développement avec commits référencés Jira.
-5. Création d'une Pull/Merge Request vers `develop`, puis revue de code.
-6. Une fois validée, fusion dans `develop`, puis regroupement dans `main` pour test.
-7. Après validation finale, fusion dans `prod` pour mise en production.
-
-### ⚙️ Automatisations
-
-Des automatisations synchronisent les statuts Jira en fonction des actions sur GitHub (ex : PR ouverte → "Code Review").
+[![Vue.js](https://img.shields.io/badge/Vue.js-3.x-4FC08D?style=flat-square&logo=vue.js)](https://vuejs.org/)
+[![Firebase](https://img.shields.io/badge/Firebase-Latest-FFCA28?style=flat-square&logo=firebase)](https://firebase.google.com/)
+[![PrimeVue](https://img.shields.io/badge/PrimeVue-Latest-007ACC?style=flat-square)](https://primefaces.org/primevue/)
+[![Vite](https://img.shields.io/badge/Vite-Latest-646CFF?style=flat-square&logo=vite)](https://vitejs.dev/)
 
 ---
 
-## 2. 🧱 Stack & structure technique de la plateforme
+## 🎯 Vue d'ensemble
 
-### 🖥️ Frontend
+La **Plateforme HEdS** est une application web moderne dédiée à la formation pratique en physiothérapie. Elle combine gestion institutionnelle, réseau social éducatif, outils de productivité et gamification pour créer un écosystème d'apprentissage complet.
 
-- **Framework** : Vue.js 3 
-- **UI Library** : PrimeVue (custom theme)
-- **Bundler** : Vite.js
-- **PWA** : manifest.json + Service Worker intégré
-- **Mobile** : Capacitor & Ionic (intégration mobile native)
+### 🎓 Objectifs Principaux
 
-### 🔙 Backend
-
-- **VPS** :  Infomaniak - Node.js / Python
-- **Auth** : Firebase Auth (email/password)
-- **Database** : Firestore Realtime DB
-- **Fichiers** : Firebase Storage
-
-### 🚀 Déploiement
-
-- **GitHub Action** (GitHub + FTP)
-- **Hébergement** : Infomaniak
+- **📚 Formation Pratique (PFP)** : Gestion des stages et formations pratiques
+- **🏥 Cartographie Institutionnelle** : Localisation des lieux de stage partenaires
+- **👥 Réseau Social Éducatif** : Communication et collaboration entre étudiants/formateurs
+- **📝 Outils de Productivité** : Notes, tâches, calendrier, messagerie
+- **🎮 Gamification** : Jeux éducatifs et système de progression
+- **📊 Administration** : Gestion complète des utilisateurs et institutions
 
 ---
 
-## 3. 🗂️ Arborescence de l’application
+## 🚀 Démarrage Rapide
 
-```
-.
-├── public/                       # Fichiers statiques
-├── src/
-│   ├── App.vue                   # Composant racine Vue
-│   ├── main.js                   # Point d’entrée JS
-│   ├── router.js                 # Définition des routes
-│   ├── assets/                   # Images, styles, etc.
-│   ├── components/               # Composants réutilisables
-│   │   ├── Bibliotheque/
-│   │   ├── Dashboard/
-│   │   ├── Filters/
-│   │   ├── Home/
-│   │   ├── Institutions/
-│   │   ├── Social/
-│   │   ├── Template/
-│   │   ├── UserProfile/
-│   │   ├── Utils/
-│   │   └── plugins/
-│   ├── layout/                   # Composants de layout (sidebar, topbar, etc.)
-│   ├── service/                  # Services JS (API, data, etc.)
-│   ├── stores/                   # Gestion d’état (Pinia ou Vuex)
-│   ├── ventriglisse3d/           # Module spécifique
-│   └── views/                    # Pages principales (routes)
-│       ├── apps/
-│       ├── dashboards/
-│       ├── pages/
-│       ├── uikit/
-│       ├── user-management/
-│       └── utilities/
-├── package.json                  # Dépendances
-├── vite.config.js                # Config Vite
-├── index.html                    # Entrée HTML
-├── firebase.js                   # Connexion Firebase
-├── .eslintrc.cjs, .prettierrc.json, etc. # Configs outils
-└── README.md                     # Document racine du projet
-```
+### Prérequis
 
----
+- **Node.js** 18+ 
+- **npm** ou **yarn**
+- **Git**
+- Compte **Firebase** (pour le backend)
 
-## 4. 🧩 Structure des données principales (Firestore Realtime DB)
-
-# Architecture des Données & Usage Applicatif
-
-## Vue d’ensemble
-
-L’application repose sur une base de données structurée en JSON autour de collections principales représentant les acteurs (utilisateurs, enseignants, étudiants), les contenus (posts, fichiers, stories), les interactions (votes, conversations, événements) et les entités organisationnelles (institutions, communautés, places).
-
-
----
-
-
-## Schéma des Collections Principales
-
-| Collection            | Description                                                                                 |
-|-----------------------|---------------------------------------------------------------------------------------------|
-| **Users**             | Profils utilisateurs (étudiants, enseignants, praticiens, etc.)                             |
-| **Students**          | Données spécifiques aux étudiants                                                           |
-| **Enseignants**       | Profils enseignants, gestion des encadrants                                                 |
-| **PraticienFormateurs** | Profils hybrides praticiens/enseignants                                                   |
-| **Communities**       | Groupes d’intérêt, communautés thématiques                                                  |
-| **Institutions**      | Établissements partenaires, lieux d’affectation                                             |
-| **Places**            | Lieux physiques (salles, cabinets, etc.)                                                    |
-| **Posts**             | Publications des utilisateurs                                                               |
-| **Stories**           | Contenus temporaires à la manière des réseaux sociaux                                       |
-| **FilePFPPhysio**     | Fichiers pédagogiques et ressources                                                         |
-| **HashTags**          | Système de tags pour catégoriser et filtrer les contenus                                    |
-| **Votation**          | Processus de vote, sessions de sondage                                                      |
-| **VotationLese**      | Votes consultés ou réservés à certains rôles                                                |
-| **VotationsResult**   | Résultats des votes                                                                         |
-| **ResultatVotationAlgo** | Résultats calculés par des algorithmes de vote                                           |
-| **ValidationEnAttente** | Éléments en attente de validation (inscriptions, signatures, etc.)                        |
-| **SignatureAssigments** | Assignations de signatures électroniques                                                  |
-| **Answer**            | Réponses à des sondages, quiz, ou évaluations                                               |
-| **Conversations**     | Messages privés ou discussions de groupe                                                    |
-| **Events**            | Événements (cours, réunions, webinaires, etc.)                                              |
-
-
----
-## 5. 🚦 Workflow Git & Stratégie de branches
-
-### Branches principales
-
-- `develop` : branche de travail principale (intégration continue, toutes les features sont mergées ici)
-- `main` : branche stable, pré-production (merge validé depuis `develop`)
-- `prod` : branche de production (release officielle, merge validé depuis `main`)
-
-### Branches secondaires
-
-- `HEDS25-xxx` : nouvelles fonctionnalités, partent de `develop`
-- `HEDS25-xxx-Fix` : corrections de bugs
-- `HEDS25-xxx-HotFix` : corrections urgentes en production (partent de `prod`)
-
-### Exemple de cycle
-
-```
-HEDS25-xxx  ──┐
-              ├─> develop ──┬─> main ─┬─> prod
-HEDS25-xxx  ──┘             │         │
-   (PR + review)         (PR + review)│
-                                      │
-                                  (PR + review)
-```
-
-### Protection des branches sur GitHub
-
-1. Va dans **Settings > Branches** de ton repo GitHub
-2. Ajoute une règle de protection pour chaque branche :
-   - `develop`
-   - `main`
-   - `prod`
-3. Configure les protections suivantes :
-   - Require a pull request before merging
-   - Require approvals (1 ou 2 reviewers)
-   - Require status checks to pass before merging (lint/tests si existants)
-   - Require branches to be up to date before merging
-   - Include administrators
-
-👉 [Guide officiel GitHub](https://docs.github.com/fr/repositories/configuring-branches-and-merges-in-your-repository/managing-branches-in-your-repository/configuring-protected-branches)
-
----
-
-
----
-
-## 6. 🛠️ Installation et lancement
+### Installation
 
 ```bash
-git clone <repo>
+# Cloner le repository
+git clone https://github.com/your-org/pfpheds.git
 cd pfpheds
+
+# Installer les dépendances
 npm install
+
+# Configurer les variables d'environnement
+cp .env.example .env
+# Éditer .env avec vos clés Firebase
+
+# Lancer en mode développement
 npm run dev
 ```
 
-### Build production
+### Scripts Disponibles
 
 ```bash
-npm run build
+npm run dev          # Serveur de développement
+npm run build        # Build de production
+npm run preview      # Prévisualisation du build
+npm run lint         # Linting du code
+npm run format       # Formatage du code
+npm run clean        # Nettoyage et réinstallation
 ```
 
-## 7. 🔒 Sécurité & bonnes pratiques
+---
 
-- Ne jamais partager les clés Firebase/publics sensibles.
-- Toujours passer par des Pull Requests pour valider le code.
-- Documentation des composants et services obligatoire.
+## 🏗️ Architecture Technique
+
+### Stack Frontend
+
+- **🖼️ Framework** : Vue.js 3 (Composition API)
+- **⚡ Build Tool** : Vite.js
+- **🎨 UI Library** : PrimeVue + Thème personnalisé
+- **🗃️ State Management** : Pinia
+- **🛣️ Routing** : Vue Router 4
+- **📱 PWA** : Workbox + Service Worker
+- **📲 Mobile** : Capacitor + Ionic
+
+### Stack Backend
+
+- **🔐 Authentication** : Firebase Auth
+- **🗄️ Database** : Firebase Realtime Database
+- **📁 Storage** : Firebase Storage
+- **☁️ Hosting** : Firebase Hosting
+- **⚡ Functions** : Firebase Cloud Functions
+
+*Cela va être modifié avec Supabase et Supabase Auth*
+
+### Technologies Complémentaires
+
+- **🗺️ Cartographie** : Leaflet.js
+- **✏️ Éditeur Riche** : TipTap
+- **📊 Graphiques** : Chart.js
+- **📅 Calendrier** : FullCalendar
+- **🤖 IA/Voice** : ElevenLabs
+- **🎨 Styles** : CSS Custom + PrimeVue
+- **🚀 Deployment** : Docker + VPS
+- **⚙️ CI/CD** : GitHub Actions
 
 ---
 
-## 8. 📚 Équipe & Ressources
+## 📂 Structure du Projet
 
-### Membres de l'équipe
-- **Chefs de projet** : [Christophe Baur]
-- **Développeurs** : [Antoine Quarroz, Loïc Berthod]
-- **Designers** : [Antoine Quarroz]
-- **Backend** : [Loïc Berthod]
-- **Contributeurs** : [Yohan Houlmann, Sabine Cina]
-- **Stagiaires** : [Lauraine Savoy]
+```
+pfpheds/
+├── 📁 public/                    # Assets statiques
+│   ├── assets/images/           # Images publiques
+│   ├── manifest.json           # PWA manifest
+│   └── sw.js                   # Service Worker
+├── 📁 src/
+│   ├── 📁 assets/              # Assets sources
+│   ├── 📁 components/          # Composants Vue
+│   │   ├── admin/              # Interface d'administration
+│   │   ├── social/             # Réseau social
+│   │   ├── editor/             # Éditeurs (TipTap, notes)
+│   │   ├── games/              # Gamification
+│   │   ├── common/             # Composants réutilisables
+│   │   └── ...
+│   ├── 📁 views/               # Pages principales
+│   │   ├── auth/               # Authentification
+│   │   ├── admin/              # Administration
+│   │   ├── apps/               # Applications intégrées
+│   │   ├── social/             # Pages sociales
+│   │   └── ...
+│   ├── 📁 service/             # Services API
+│   ├── 📁 stores/              # Stores Pinia
+│   ├── 📁 hooks/               # Composables Vue
+│   ├── App.vue                 # Composant racine
+│   ├── main.js                 # Point d'entrée
+│   └── router.js               # Configuration routing
+├── firebase.js                 # Configuration Firebase
+├── vite.config.js              # Configuration Vite
+└── package.json                # Dépendances
+```
 
 ---
+
+## 🧩 Fonctionnalités Principales
+
+### 🔐 Authentification Multi-Provider
+
+- **Auth** : Email/password
+- **Supabase** : Alternative backend / *En développement*
+- **Gestion des rôles** : Étudiant, Enseignant, Praticien, Admin
+- **Sécurité** : Guards de navigation, permissions
+
+### 👑 Interface d'Administration
+
+- **📊 Dashboard** : Métriques et vue d'ensemble
+- **👥 Gestion Utilisateurs** : Étudiants, enseignants, praticiens formateurs
+- **🏥 Gestion Institutions** : Lieux de stage partenaires
+- **📍 Gestion Places** : Attribution et statistiques
+- **✅ Validation** : Validation des PFP
+- **🗳️ Votation** : Système de votes
+
+### 💬 Réseau Social Éducatif
+
+- **📱 Feed** : Flux d'actualités personnalisé
+- **🏘️ Communautés** : Groupes thématiques
+- **💬 Messagerie** : Chat privé et de groupe
+- **📸 Médias** : Partage d'images, vidéos, documents
+- **#️⃣ Hashtags** : Organisation du contenu
+- **👥 Mentions** : Interactions sociales
+
+### 📱 Applications Intégrées
+
+- **📝 Notes** : Éditeur TipTap avec classeurs
+- **✅ Tâches** : Gestion de tâches et projets
+- **📅 Calendrier** : Planning et événements
+- **📧 Mail** : Système de messagerie interne
+- **💬 Chat** : Messagerie instantanée
+- **📁 Fichiers** : Gestionnaire de documents
+- **📝 Blog** : Système de publication
+
+### 🗺️ Cartographie Interactive
+
+- **🏥 Institutions** : Localisation des lieux de stage
+- **🔍 Filtres** : Recherche par canton, critères, langues
+- **📍 Détails** : Informations complètes par institution
+- **🗺️ Navigation** : Intégration Leaflet.js
+
+### 🎮 Gamification
+
+- **🎯 Jeux Éducatifs** : Games (Three.js)
+- **🏆 Système de Points** : Progression et récompenses
+- **🥇 Classements** : Compétition amicale
+- **🎖️ Achievements** : Badges et accomplissements
+
+---
+
+## 🔧 Configuration et Développement
+
+### Variables d'Environnement
+
+```env
+# Firebase Configuration
+VITE_FIREBASE_API_KEY=your_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_domain
+VITE_FIREBASE_DATABASE_URL=your_database_url
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_bucket
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
+
+# Supabase (optionnel)
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_key
+```
+
+### Structure Firebase
+
+```json
+{
+  "users": {
+    "userId": {
+      "email": "user@example.com",
+      "displayName": "John Doe",
+      "role": "student",
+      "profile": { "avatar": "url", "bio": "..." }
+    }
+  },
+  "institutions": {
+    "institutionId": {
+      "name": "Hôpital du Valais",
+      "address": "...",
+      "coordinates": { "latitude": 46.22, "longitude": 7.36 }
+    }
+  },
+  "posts": {
+    "postId": {
+      "authorId": "userId",
+      "content": "...",
+      "likes": { "userId": true },
+      "comments": { "commentId": { "..." } }
+    }
+  },
+  "notes": {
+    "userId": {
+      "notebooks": {
+        "notebookId": {
+          "title": "Mon Classeur",
+          "pages": { "pageId": { "title": "...", "content": "..." } }
+        }
+      }
+    }
+  }
+}
+```
+
+---
+
+## 🛣️ Routing et Navigation
+
+### Routes Principales
+
+```javascript
+// Authentification
+/login                    # Connexion
+/register                 # Inscription
+/forgot-password          # Mot de passe oublié
+
+// Accueil
+/                         # Page d'accueil
+/dashboard               # Tableau de bord
+/map                     # Carte interactive
+
+// Administration (requiresAdmin)
+/admin                   # Dashboard admin
+/admin/users             # Gestion utilisateurs
+/admin/institutions      # Gestion institutions
+
+// Applications (requiresAuth)
+/apps/notes              # Système de notes
+/apps/chat               # Messagerie
+/apps/calendar           # Calendrier
+/apps/tasks              # Gestion de tâches
+
+// Social (requiresAuth)
+/social                  # Feed principal
+/community/:id           # Vue communauté
+/profile/:id             # Profil utilisateur
+```
+
+### Guards de Navigation
+
+- **requiresAuth** : Authentification requise
+- **requiresAdmin** : Droits administrateur
+- **requiresRole** : Rôle spécifique requis
+
+---
+
+## 🎨 Conventions de Code
+
+### Nomenclature
+
+- **Composants** : PascalCase (`UserProfile.vue`)
+- **Fichiers** : kebab-case (`user-profile.vue`)
+- **Variables** : camelCase (`userName`)
+- **Constants** : UPPER_SNAKE_CASE (`API_BASE_URL`)
+
+### Structure d'un Composant
+
+```vue
+<template>
+  <div class="component-container">
+    <!-- Template HTML -->
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+// Imports et logique
+
+// Props
+const props = defineProps({
+  // Props definition
+})
+
+// Reactive data
+const data = ref(null)
+
+// Computed properties
+const computedValue = computed(() => {
+  // Logic
+})
+
+// Lifecycle
+onMounted(() => {
+  // Initialization
+})
+</script>
+
+<style scoped>
+/* Styles scopés */
+.component-container {
+  /* Styles */
+}
+</style>
+```
+
+---
+
+## 🚀 Déploiement
+
+### Environnements
+
+- **Development** : Local (Vite dev server)
+- **Staging** : Server Hosting (branch develop)
+- **Test** : Server Hosting (branch main)
+- **Production** : VPS (branch prod)
+
+
+### Build et Déploiement
+
+```bash
+# Build de production
+npm run build
+
+# Déploiement staging
+npm run deploy:staging
+
+# Déploiement production
+npm run deploy:prod
+```
+
+### Configuration Vite
+
+```javascript
+// vite.config.js
+export default defineConfig({
+  plugins: [
+    vue(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg}']
+      }
+    })
+  ],
+  resolve: {
+    alias: { '@': '/src' }
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['vue', 'vue-router', 'pinia'],
+          ui: ['primevue'],
+          editor: ['@tiptap/vue-3']
+        }
+      }
+    }
+  }
+})
+```
+
+---
+
+## 📊 Performance et Monitoring
+
+### Objectifs de Performance
+
+- **Lighthouse Score** : 90+ (Performance, Accessibility, SEO)
+- **Bundle Size** : < 2MB (avec code splitting)
+- **First Contentful Paint** : < 2s
+- **Time to Interactive** : < 3s
+
+### Monitoring Firebase
+
+- **Analytics** : Suivi d'utilisation
+- **Crashlytics** : Rapport d'erreurs
+- **Performance** : Métriques de performance
+
+### Optimisations
+
+- **Code Splitting** : Division par routes
+- **Lazy Loading** : Chargement à la demande
+- **Tree Shaking** : Élimination du code mort
+- **Asset Optimization** : Compression des médias
+
+---
+
+## 🧪 Tests et Qualité
+
+### Outils de Qualité
+
+- **ESLint** : Linting JavaScript/Vue
+- **Prettier** : Formatage de code
+- **Husky** : Git hooks
+- **Commitizen** : Commits conventionnels
+
+### Tests (À implémenter)
+
+```bash
+# Tests unitaires
+npm run test:unit
+
+# Tests de composants
+npm run test:components
+
+# Tests E2E
+npm run test:e2e
+```
+
+---
+
+## 🔄 Workflow de Développement
+
+### Git Flow
+
+```
+main (production)
+├── develop (staging)
+│   ├── feature/HEDS-123-add-notes-feature
+│   ├── bugfix/HEDS-124-fix-login-issue
+│   └── hotfix/HEDS-125-critical-fix
+```
+
+### Processus de Développement
+
+1. **Jira** : Création de User Stories
+2. **Branche** : `HEDS-XXX-description`
+3. **Développement** : Commits référencés
+4. **Pull Request** : Vers `develop`
+5. **Code Review** : Validation par l'équipe
+6. **Merge** : Fusion dans `develop`
+7. **Test** : Validation en staging dans `main`
+8. **Production** : Fusion dans `prod`
+
+---
+
+## 📚 Documentation
+
+### Documentation Technique
+
+- **[Architecture](./ARCHITECTURE-DOCUMENTATION.md)** : Architecture complète
+- **[Views](./src/views/README.md)** : Structure des vues
+- **[Components](./src/components/README.md)** : Composants réutilisables
+- **[Services](./src/service/README.md)** : Services API
+
+### Guides Utilisateur
+
+- **Guide Étudiant** : Utilisation de la plateforme
+- **Guide Enseignant** : Gestion des formations
+- **Guide Administrateur** : Administration système
+
+---
+
+## 🎯 Roadmap
+
+### Phase 1 (Actuelle) ✅
+
+- ✅ Architecture de base Vue.js 3 + Firebase
+- ✅ Authentification multi-provider
+- ✅ Interface d'administration complète
+- ✅ Réseau social éducatif
+- ✅ Système de notes TipTap
+- ✅ Cartographie des institutions
+- ✅ Applications intégrées (chat, mail, tâches)
+
+### Phase 2 (En cours) 🔄
+
+- 🔄 Optimisation des performances
+- 🔄 Tests automatisés complets
+- 🔄 PWA avancée (offline, notifications)
+- 🔄 Gamification étendue
+- 🔄 Analytics et reporting
+
+### Phase 3 (Planifiée) 📋
+
+- 📋 Application mobile native (Capacitor)
+- 📋 IA/ML pour recommandations
+- 📋 API GraphQL
+- 📋 Microservices architecture
+- 📋 Intégrations tierces (LMS, ERP)
+
+---
+
+## 🤝 Contribution
+
+### Comment Contribuer
+
+1. **Fork** le repository
+2. **Créer** une branche feature
+3. **Développer** avec les conventions
+4. **Tester** les modifications
+5. **Soumettre** une Pull Request
+
+### Standards de Code
+
+- Suivre les conventions ESLint/Prettier
+- Documenter les nouvelles fonctionnalités
+- Ajouter des tests pour le nouveau code
+- Respecter l'architecture existante
+
+---
+
+## 📞 Support et Contact
+
+### Équipe de Développement
+
+- **Lead Developer** : Antoine Quarroz et Loïc Berthod
+- **Architecture** : Antoine Quarroz et Loïc Berthod
+- **UI/UX** : Antoine Quarroz 
+
+### Support Technique
+
+- **Issues** : [GitHub Issues](https://github.com/your-org/pfpheds/issues)
+- **Documentation** : Ce README + docs/
+
+---
+
+## 📄 Licence
+
+Ce projet est sous licence MIT. Voir le fichier [LICENSE](./LICENSE) pour plus de détails.
+
+---
+
+## 🙏 Remerciements
+
+- **HEdS Valais-Wallis** : Pour le soutien institutionnel
+- **Équipe de développement** : Pour leur engagement
+- **Communauté Open Source** : Vue.js, Firebase, PrimeVue
+- **Étudiants et formateurs** : Pour leurs retours précieux
+
+---
+
+*Dernière mise à jour : 30 juillet 2025*  
+*Version : 0.2.0.0*

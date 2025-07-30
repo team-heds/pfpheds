@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { db } from 'root/firebase';
+import { db } from '../../firebase.js';
 import { ref as dbRef, onValue, push, set, update, remove } from 'firebase/database';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { ref } from 'vue';

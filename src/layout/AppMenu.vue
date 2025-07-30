@@ -32,11 +32,6 @@ const model = ref([
               label: 'Praticien formateur',
               icon: 'pi pi-check-circle',
               to: '/praticien_formateur_list'
-            },
-            {
-              label: 'Utilisateur',
-              icon: 'pi pi-user',
-              to: '/user_list'
             }
         ]
     },

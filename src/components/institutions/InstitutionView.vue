@@ -1,0 +1,367 @@
+<template>
+  <Navbar />
+  <div class="p-4 border-round scrollable-with-padding">
+    <!-- Conteneur principal de l'institution -->
+    <div class="institution-container" >
+      <!-- Image de l'institution -->
+
+      <!-- Informations institution -->
+      <div class="institution-info px-2 mb-2">
+        <h1 class="text-900 font-medium text-4xl md:text-6xl mb-2">
+          {{ institutionDetails ? institutionDetails.Name : 'Chargement...' }}
+        </h1>
+        <h2 class="text-900 font-bold text-2xl md:text-3xl mb-4 mt-2">
+          <strong>{{ institutionDetails ? institutionDetails.Locality : '' }}</strong> - {{ institutionDetails ?
+            institutionDetails.Address : '' }}
+        </h2>
+        <div class="flex flex-wrap justify-content-center md:justify-content-start gap-3 mt-2">
+          <span class="inline-flex align-items-center py-2 px-3 font-medium border-1 surface-border border-round">
+            <i class="pi pi-comments text-primary mr-2"></i>
+            <span class="text-900">Langue : {{ institutionDetails ? institutionDetails.Language : '' }}</span>
+          </span>
+          <span class="inline-flex align-items-center py-2 px-3 font-medium border-1 surface-border border-round">
+            <i class="pi pi-comments text-primary mr-2"></i>
+            <span class="text-900">Canton : {{ institutionDetails ? institutionDetails.Canton : '' }}</span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="institution-image-wrapper institution-image text-center my-4">
+      <img
+        :src="institutionDetails ? institutionDetails.ImageURL : 'https://eduport.webestica.com/assets/images/courses/4by3/21.jpg'"
+        alt="Institution Image" class="institution-image w-100px" />
+    </div>
+
+    <!-- Contenu inférieur : TabView et Map -->
+    <div class="content-lower grid justify-content-center">
+      <div class="col-12 md:col-8 lg:col-5">
+        <TabView v-model:activeIndex="activeIndex"> 
+          <TabPanel header="Informations générales de l'institution">
+            <div v-if="institutionDetails?.Description" class="text-900 font-bold text-3xl mb-4 mt-2">Description</div>
+            <p v-if="institutionDetails?.Description" class="line-height-3 text-600 p-0 mx-0 mt-0 mb-4">
+              {{ institutionDetails.Description }}
+            </p>
+
+            <div class="grid">
+              <div class="col-12 lg:col-12">
+                <p class="text-900 underline mb-3 font-bold">Informations générales de l'institution </p>
+                <div class="py-0 p-0 m-0 text-600 mb-3">
+                  <p class="card-text"><i class="bi bi-globe"></i> <strong>Langue:</strong> {{ institutionDetails ?
+                    institutionDetails.Language : '' }}</p>
+                  <p class="card-text"><i class="bi bi-globe"></i> <strong>Canton:</strong> {{ institutionDetails ?
+                    institutionDetails.Canton : '' }}</p>
+                  <p class="card-text"><i class="bi bi-geo-alt-fill"></i> <strong>Adresse:</strong> {{
+                    institutionDetails ? institutionDetails.Address : '' }}</p>
+                  <p class="card-text"><i class="bi bi-geo-alt-fill"></i> <strong>Lieu:</strong> {{ institutionDetails ?
+                    institutionDetails.Locality : '' }}</p>
+                  <p class="card-text"><i class="bi bi-geo-alt-fill"></i> <strong>Site Web: </strong>
+                    <a :href="institutionDetails?.URL" target="_blank" class="text-primary ">{{ institutionDetails?.URL
+                      }}</a>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </TabPanel>
+          <TabPanel header="Encadrement étudiant">
+            <div class="grid">
+              <div class="col-12 lg:col-12">
+                <div class="text-900 font-bold text-3xl mb-4 mt-2">Encadrement étudiant</div>
+                <div class="list-none p-0 m-0 text-600 mb-4 text-600">
+                  <div v-if="institutionDetails">
+                    <p class="card-text">
+                      <i class="bi bi-person-badge-fill"></i>
+                      <strong>Nom, Prénom du responsable physio: </strong> {{ institutionDetails?.NomChef }}
+                    </p>
+                    <p class="card-text">
+                      <i class="bi bi-envelope-fill"></i>
+                      <strong>Email du responsable physio: </strong>
+                      <a :href="`mailto:${institutionDetails?.MailChef}`" class="text-primary">{{
+                        institutionDetails?.MailChef }}</a>
+                    </p>
+                    <p class="card-text">
+                      <i class="bi bi-telephone-fill"></i>
+                      <strong>Téléphone du responsable physio: </strong>
+                      <a :href="`tel:${institutionDetails?.PhoneChef}`" class="text-primary">{{
+                        institutionDetails?.PhoneChef }}</a>
+                    </p>
+                  </div>
+                  <div v-else>
+                    <p class="card-text">Aucun praticien.ne formateur.trice.s disponible.</p>
+                  </div>
+                  <br>
+
+                  <div v-if="institutionFiles.length > 0">
+                    <h3 class="text-900 font-bold text-xl mb-3">
+                      {{ institutionFiles.length === 1 ? 'Descriptif lieu de formation pratique' : 'Descriptifs lieux de formation pratique' }}
+                    </h3>
+                    <ul>
+                      <li v-for="file in institutionFiles" :key="file.url">
+                        <a :href="file.url" target="_blank" class="text-primary">
+                          📄 {{ file.name }}
+                      
+                          
+                        </a>
+                      </li>
+                    </ul>
+                  </div>
+
+
+                  <p v-else>Aucun PDF disponible pour cette institution.</p>
+
+                </div>
+              </div>
+            </div>
+          </TabPanel>
+        </TabView>
+      </div>
+
+      <div class="col-12 md:col-4 lg:col-5 py-3 lg:pl-6">
+        <div class="text-900 font-bold text-3xl mb-5 mt-2"></div>
+        <div id="map" class="shadow map-container" ></div>
+      </div>
+    </div>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+  </div>
+</template>
+
+
+<script>
+import { db, auth } from '../../../firebase.js';
+import { ref as firebaseRef, onValue } from "firebase/database";
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import Navbar from '@/components/common/utils/Navbar.vue';
+import { onAuthStateChanged } from "firebase/auth";
+
+
+// Importez le logo de l'école (ajustez le chemin si nécessaire)
+import schoolLogo from '@/assets/images/markerheds.png';
+
+/*
+  Définition des dimensions naturelles de l'image du logo.
+  Vous devez ajuster originalWidth et originalHeight selon les dimensions réelles de votre image.
+*/
+const originalWidth = 25;  // largeur naturelle (en pixels)
+const originalHeight = 30; // hauteur naturelle (en pixels)
+
+/*
+  markerScale permet de réduire ou agrandir l'image.
+  - 1 : taille réelle
+  - 0.5 : la moitié de la taille réelle
+  - 2 : le double de la taille réelle
+*/
+const markerScale = 1;
+
+// Création du marqueur personnalisé avec le logo de l'école
+const schoolLogoIcon = L.icon({
+  iconUrl: schoolLogo,
+  iconSize: [originalWidth * markerScale, originalHeight * markerScale],
+  iconAnchor: [(originalWidth * markerScale) / 2, originalHeight * markerScale],
+  popupAnchor: [0, -(originalHeight * markerScale)]
+});
+
+
+export default {
+  name: 'InstitutionView',
+  components: { Navbar },
+  data() {
+    return {
+      institutionDetails: null,
+      institutionFiles: [],
+
+      map: null,
+      marker: null,
+      userRole: null,
+      activeIndex: 0,
+    };
+  },
+  mounted() {
+    this.fetchInstitutionDetailsFromFirebase();
+    this.checkUserRole();
+    if (this.$route.query.tab === 'encadrement') {
+      this.activeIndex = 1; // "Encadrement étudiant" (le 2e TabPanel)
+    }
+  },
+  methods: {
+    initMap(lat, lng) {
+      if (this.map) {
+        this.map.remove();
+        this.map.remove();
+      }
+      this.map = L.map('map', {
+        center: [lat, lng],
+        zoom: 13,
+        scrollWheelZoom: false,
+      });
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+      }).addTo(this.map);
+
+      this.marker = L.marker([lat, lng], {
+        icon: schoolLogoIcon,
+        title: 'Localisation de l\'institution',
+        riseOnHover: true,
+      }).addTo(this.map);
+    },
+
+    fetchInstitutionFiles() {
+      console.log(this.institutionDetails)
+      if (!this.institutionDetails || !this.institutionDetails.InstitutionId  ) return;
+        console.log("xaa");
+      const placesRef = firebaseRef(db, 'Places');
+
+      onValue(placesRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const placesData = snapshot.val();
+          console.log("xa" + placesData);
+          const matchingFiles = [];
+          Object.values(placesData).forEach(place => {
+            const temp = place.IDPlace || place.InstitutionId || place.key; 
+        
+            console.log(place.IDPlace + " --"  +  place.InstitutionId+ "---" + this.institutionDetails.InstitutionId)
+            if ( temp === this.institutionDetails.InstitutionId) {
+              matchingFiles.push({ name: place.NomPlace, url: place.fileURL });
+            }
+          });
+
+          this.institutionFiles = matchingFiles;
+        }
+      });
+    },
+
+
+    fetchInstitutionDetailsFromFirebase() {
+      const institutionId = this.$route.params.id;
+      const institutionRef = firebaseRef(db, `Institutions/${institutionId}`);
+
+      onValue(institutionRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          this.institutionDetails = data;
+          this.fetchInstitutionFiles(); // Récupérer les fichiers liés
+
+          if (data.Latitude && data.Longitude) {
+            this.initMap(parseFloat(data.Latitude), parseFloat(data.Longitude));
+          }
+        } else {
+          this.$router.push({ name: 'Error404' });
+        }
+      });
+    },
+
+    checkUserRole() {
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          const userRef = firebaseRef(db, `Users/${user.uid}/Roles`);
+          onValue(userRef, (snapshot) => {
+            if (snapshot.exists()) {
+              if (snapshot.val().BA22) {
+                this.userRole = "BA22";
+              }
+            }
+          });
+        } else {
+          this.userRole = null;
+        }
+      });
+    },
+
+    openPDF() {
+      if (this.institutionDetails?.CyberleanURL) {
+        window.open(this.institutionDetails.CyberleanURL, '_blank');
+      }
+    },
+  },
+};
+</script>
+
+<style scoped>
+.scrollable-with-padding {
+  height: 100vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 2rem;
+  padding-bottom: 7rem;
+  scrollbar-width: none;
+}
+.scrollable-with-padding::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+.institution-info {
+  flex: 1;
+  margin-left: 2rem;
+}
+.institution-image {
+  width: 100%;
+  max-width: 1200px;
+  height: auto;
+  max-height: 400px;
+  object-fit: cover;
+  margin: auto;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+
+.shadow {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+#map {
+  height: 400px;
+  width: 100%;
+}
+
+.institution-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  margin-left: 2rem;
+  margin-right: 2rem;
+}
+
+/* Version mobile */
+@media (max-width: 768px) {
+  .institution-container {
+    flex-direction: column;
+    align-items: center;
+    margin: 0;
+  }
+
+  .institution-image-wrapper {
+    order: 1;
+    width: 100%;
+    padding: 0 1rem;
+  }
+
+  .institution-info {
+    order: 2;
+    width: 100%;
+    margin: 1rem;
+  }
+
+  .content-lower {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .content-lower>div {
+    width: 90% !important;
+    margin-bottom: 2rem;
+  }
+
+  .map-container {
+    height: 300px !important;
+  }
+}
+</style>

@@ -33,7 +33,7 @@ import { ref, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import ChatBox from './ChatBox.vue';
 import ChatSidebar from './ChatSidebar.vue';
-import Navbar from '@/components/Utils/Navbar.vue';
+import Navbar from '@/components/common/utils/Navbar.vue';
 import { db, auth } from '../../../../firebase'; // Importer seulement db et auth
 import { ref as dbRef, onValue, push } from 'firebase/database';
 import { onAuthStateChanged } from 'firebase/auth';

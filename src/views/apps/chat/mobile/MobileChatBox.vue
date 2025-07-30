@@ -8,7 +8,7 @@
 import { ref, watch, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import ChatBox from '../ChatBox.vue';
-import { db } from '@/../firebase';
+import { db } from '../../../../../firebase';
 import { ref as dbRef, get } from 'firebase/database';
 const props = defineProps({ users: Array, currentUser: Object });
 const route = useRoute();
