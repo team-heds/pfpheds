@@ -1,17 +1,20 @@
-# Stage 1: Build
-FROM node:20-alpine AS builder
+# Alternative Dockerfile utilisant Ubuntu pour éviter les problèmes Alpine/musl
+FROM node:20-bullseye AS builder
 
 WORKDIR /app
 
-# Installer les dépendances système nécessaires pour le build
-RUN apk add --no-cache python3 make g++ git
+# Mettre à jour les packages et installer les dépendances
+RUN apt-get update && apt-get install -y \
+    python3 \
+    build-essential \
+    git \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copier les fichiers de configuration
 COPY package*.json ./
 
-# Nettoyer et installer les dépendances avec force pour éviter les conflits
+# Installer les dépendances npm
 RUN npm cache clean --force && \
-    rm -rf node_modules package-lock.json && \
     npm install --force --legacy-peer-deps
 
 # Copier le code source
@@ -20,8 +23,8 @@ COPY . .
 # Build de l'application
 RUN npm run build
 
-# Stage 2: Production
-FROM nginx:stable-alpine
+# Stage 2: Production avec Nginx
+FROM nginx:stable
 
 # Copier les fichiers buildés
 COPY --from=builder /app/dist /usr/share/nginx/html

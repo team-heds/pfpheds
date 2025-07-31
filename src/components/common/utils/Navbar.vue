@@ -86,8 +86,8 @@
     <Dialog v-model:visible="isSettingsDialogVisible" modal header="Param├¿tre" :style="{ width: '20rem' }">
       <div class="flex flex-column gap-3">
         <Button label="Profil" icon="pi pi-user" class="w-full p-button-outlined" @click="navigateTo(`/profile/${user.uid}`)" />
-        <Button label="Param├¿tres" icon="pi pi-cog" class="w-full p-button-outlined" @click="navigateTo('/settings')" />
-        <Button label="Se d├®connecter" icon="pi pi-power-off" class="w-full p-button-danger" @click="logout" />
+        <Button label="Paramètres" icon="pi pi-cog" class="w-full p-button-outlined" @click="navigateTo('/settings')" />
+        <Button label="Se déconnecter" icon="pi pi-power-off" class="w-full p-button-danger" @click="logout" />
       </div>
       <br>
       @Copyright HEdS

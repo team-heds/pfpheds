@@ -67,7 +67,16 @@
             </template>
             <template v-else-if="isPDF(getMediaUrl(mediaItem))">
               <div v-if="!isMobile">
-                <embed :src="getMediaUrl(mediaItem)" type="application/pdf" class="media-item pdf-embed" />
+                <embed 
+                  :src="getMediaUrl(mediaItem)" 
+                  type="application/pdf" 
+                  class="media-item pdf-embed"
+                  @error="handlePDFError(mediaItem)"
+                />
+                <div v-if="pdfError" class="pdf-error-message">
+                  <i class="pi pi-exclamation-triangle"></i>
+                  <p>Impossible de charger le PDF. <a :href="getMediaUrl(mediaItem)" target="_blank" rel="noopener noreferrer">Cliquez ici pour l'ouvrir</a></p>
+                </div>
               </div>
               <div v-else style="text-align:center; margin:16px 0;">
                 <a :href="getMediaUrl(mediaItem)" target="_blank" rel="noopener noreferrer" class="media-item media-link pdf-mobile-btn">
@@ -202,6 +211,7 @@ export default {
       currentUserLocal: null,
       userPhotoCache: {},
       isMobile: window.matchMedia('(max-width: 600px)').matches,
+      pdfError: false,
     };
   },
   created() {
@@ -426,6 +436,9 @@ export default {
     },
     handleResize() {
       this.isMobile = window.matchMedia('(max-width: 600px)').matches;
+    },
+    handlePDFError(mediaItem) {
+      this.pdfError = true;
     },
     // --- YouTube/Spotify embed helpers ---
     extractYouTubeLinks(content) {
