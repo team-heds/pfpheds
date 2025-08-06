@@ -687,7 +687,7 @@ onMounted(async () => {
 }
 
 .message-card {
-  background: white;
+  background: var(--surface-card);
   border-radius: 12px;
   padding: 2rem;
   box-shadow: 0 8px 32px rgba(0,0,0,0.1);
@@ -708,7 +708,7 @@ onMounted(async () => {
 .message-card p {
   font-size: 1.1rem;
   line-height: 1.6;
-  color: #34495e;
+  color: var(--text-color);
   margin-bottom: 1rem;
 }
 
@@ -718,7 +718,8 @@ onMounted(async () => {
   border: none;
   padding: 1rem 2rem;
   border-radius: 25px;
-  font-size: 1rem;
+  font-size: 1.2rem;
+  font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;

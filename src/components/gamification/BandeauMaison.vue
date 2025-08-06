@@ -11,10 +11,18 @@
         <p class="house-motto">"{{ houseMotto }}"</p>
         
         <div class="level-section">
-
           <br>
           <br>
           <span class="level-text">Niveau {{ niveau }}</span>
+        </div>
+        
+        <!-- Streak Display -->
+        <div v-if="loginStreak > 0" class="streak-display">
+          <div class="streak-flame">
+            <i class="pi pi-bolt" :class="{ 'streak-active': loginStreak >= 3 }"></i>
+            <span class="streak-count">{{ loginStreak }}</span>
+          </div>
+          <span class="streak-text">{{ streakText }}</span>
         </div>
       </div>
       
@@ -49,6 +57,10 @@ const props = defineProps({
   niveau: {
     type: Number,
     default: 1
+  },
+  loginStreak: {
+    type: Number,
+    default: 0
   }
 })
 
@@ -85,13 +97,17 @@ const houseColor = computed(() => {
   return houseConfig[props.maison.toLowerCase()]?.color || '#6366F1'
 })
 
-
 const houseMotto = computed(() => {
   return houseConfig[props.maison.toLowerCase()]?.motto || ''
 })
 
 const houseBackground = computed(() => {
   return houseConfig[props.maison.toLowerCase()]?.background || ''
+})
+
+const streakText = computed(() => {
+  if (props.loginStreak === 1) return 'jour de connexion'
+  else return `${props.loginStreak} jours de connexion`
 })
 
 const getParticleStyle = (index) => {
@@ -247,6 +263,79 @@ const getParticleStyle = (index) => {
   background: rgba(255,255,255,0.3);
   transform: translateY(-1px);
   box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+}
+
+.streak-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  width: 100%;
+}
+
+.streak-flame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.streak-flame .pi-bolt {
+  font-size: 1.5rem;
+  color: #ff6b35;
+  filter: drop-shadow(0 0 8px rgba(255, 107, 53, 0.6));
+  animation: flameFlicker 2s ease-in-out infinite alternate;
+}
+
+.streak-flame .pi-bolt.streak-active {
+  color: #ff4500;
+  filter: drop-shadow(0 0 12px rgba(255, 69, 0, 0.8));
+  animation: flameIntense 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes flameFlicker {
+  0% { 
+    transform: scale(1) rotate(-2deg);
+    opacity: 0.8;
+  }
+  50% { 
+    transform: scale(1.1) rotate(2deg);
+    opacity: 1;
+  }
+  100% { 
+    transform: scale(1.05) rotate(-1deg);
+    opacity: 0.9;
+  }
+}
+
+@keyframes flameIntense {
+  0% { 
+    transform: scale(1) rotate(-3deg);
+    opacity: 0.9;
+    filter: drop-shadow(0 0 12px rgba(255, 69, 0, 0.8));
+  }
+  50% { 
+    transform: scale(1.2) rotate(3deg);
+    opacity: 1;
+    filter: drop-shadow(0 0 16px rgba(255, 69, 0, 1));
+  }
+  100% { 
+    transform: scale(1.1) rotate(-2deg);
+    opacity: 0.95;
+    filter: drop-shadow(0 0 14px rgba(255, 69, 0, 0.9));
+  }
+}
+
+.streak-count {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.streak-text {
+  font-size: 1.1rem;
+  opacity: 0.9;
 }
 
 .house-actions {

@@ -8,7 +8,7 @@
         </div>
         <div class="xp-text">
           <span class="xp-label">Expérience</span>
-          <span class="xp-values">{{ xp }} / {{ xpToNext }} XP</span>
+          <span class="xp-values">{{ xp }} / {{ xp + xpToNext }} XP</span>
         </div>
       </div>
       <div class="xp-gain" v-if="recentXPGain > 0">
@@ -31,7 +31,7 @@
     </div>
     
     <div class="xp-footer">
-      <span class="next-level">{{ xpToNext - xp }} XP jusqu'au niveau {{ niveau + 1 }}</span>
+      <span class="next-level">{{ xpToNext }} XP jusqu'au niveau {{ niveau + 1 }}</span>
     </div>
   </div>
 </template>
@@ -89,7 +89,8 @@ const houseColorGradient = computed(() => {
 
 const progressPercentage = computed(() => {
   if (props.xpToNext === 0) return 100
-  return Math.min((props.xp / props.xpToNext) * 100, 100)
+  const totalXPNeeded = props.xp + props.xpToNext
+  return Math.min((props.xp / totalXPNeeded) * 100, 100)
 })
 
 // Animation pour les gains d'XP

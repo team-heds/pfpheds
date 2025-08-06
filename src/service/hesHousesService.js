@@ -6,25 +6,51 @@
 import { getDatabase, ref as dbRef, get, update, set, push } from 'firebase/database'
 import { db } from '../../firebase' // Chemin corrigé
 
-// Configuration des niveaux et XP
+// Configuration des niveaux et XP - Système à 20 niveaux (Reset annuel)
 export const LEVEL_CONFIG = {
-  1: { name: 'Novice', xpRequired: 0, xpToNext: 100 },
-  2: { name: 'Apprenti', xpRequired: 100, xpToNext: 200 },
-  3: { name: 'Compagnon', xpRequired: 300, xpToNext: 300 },
-  4: { name: 'Expert', xpRequired: 600, xpToNext: 400 },
-  5: { name: 'Maître', xpRequired: 1000, xpToNext: 0 }
+  1: { name: 'Étudiant·e', xpRequired: 0, xpToNext: 50 },
+  2: { name: 'Stagiaire', xpRequired: 50, xpToNext: 75 },
+  3: { name: 'Assistant·e', xpRequired: 125, xpToNext: 100 },
+  4: { name: 'Praticien·ne Junior', xpRequired: 225, xpToNext: 150 },
+  5: { name: 'Soignant·e', xpRequired: 375, xpToNext: 200 },
+  6: { name: 'Thérapeute', xpRequired: 575, xpToNext: 275 },
+  7: { name: 'Clinicien·ne', xpRequired: 850, xpToNext: 350 },
+  8: { name: 'Spécialiste', xpRequired: 1200, xpToNext: 450 },
+  9: { name: 'Expert·e Clinique', xpRequired: 1650, xpToNext: 600 },
+  10: { name: 'Référent·e', xpRequired: 2250, xpToNext: 750 },
+  11: { name: 'Mentor·e', xpRequired: 3000, xpToNext: 950 },
+  12: { name: 'Superviseur·se', xpRequired: 3950, xpToNext: 1200 },
+  13: { name: 'Coordinateur·trice', xpRequired: 5150, xpToNext: 1500 },
+  14: { name: 'Chef·fe de Service', xpRequired: 6650, xpToNext: 1900 },
+  15: { name: 'Directeur·trice Adjoint·e', xpRequired: 8550, xpToNext: 2400 },
+  16: { name: 'Directeur·trice', xpRequired: 10950, xpToNext: 3000 },
+  17: { name: 'Expert·e Reconnu·e', xpRequired: 13950, xpToNext: 3800 },
+  18: { name: 'Maître·sse de la Discipline', xpRequired: 17750, xpToNext: 4750 },
+  19: { name: 'Sage de la Maison', xpRequired: 22500, xpToNext: 6000 },
+  20: { name: 'Légende Vivante', xpRequired: 28500, xpToNext: 0 }
 }
 
-// Actions qui donnent de l'XP
+// Actions qui donnent de l'XP - Système rebalancé (Reset annuel)
 export const XP_ACTIONS = {
   LOGIN: { xp: 5, description: 'Connexion quotidienne' },
-  QUIZ_COMPLETE: { xp: 50, description: 'Quiz de maison terminé' },
-  PROFILE_UPDATE: { xp: 10, description: 'Profil mis à jour' },
-  COMMENT: { xp: 15, description: 'Commentaire ajouté' },
+  QUIZ_COMPLETE: { xp: 10, description: 'Quiz de maison terminé' },
+  PROFILE_UPDATE: { xp: 15, description: 'Profil mis à jour' },
+  COMMENT: { xp: 8, description: 'Commentaire ajouté' },
   POST: { xp: 25, description: 'Publication créée' },
-  LIKE: { xp: 2, description: 'Like donné' },
-  SHARE: { xp: 10, description: 'Partage effectué' },
-  ACHIEVEMENT: { xp: 100, description: 'Achievement débloqué' }
+  LIKE: { xp: 1, description: 'Like donné' },
+  SHARE: { xp: 12, description: 'Partage effectué' },
+  ACHIEVEMENT: { xp: 200, description: 'Achievement débloqué' },
+  DAILY_STREAK_3: { xp: 50, description: '3 jours consécutifs' },
+  DAILY_STREAK_7: { xp: 150, description: '7 jours consécutifs' },
+  DAILY_STREAK_30: { xp: 500, description: '30 jours consécutifs' },
+  FIRST_POST: { xp: 75, description: 'Première publication' },
+  FIRST_COMMENT: { xp: 50, description: 'Premier commentaire' },
+  HELPFUL_COMMENT: { xp: 60, description: 'Commentaire utile (5+ likes)' },
+  POPULAR_POST: { xp: 150, description: 'Publication populaire (10+ likes)' },
+  MENTOR_HELP: { xp: 100, description: 'Aide apportée à un·e étudiant·e' },
+  COURSE_COMPLETION: { xp: 300, description: 'Cours terminé' },
+  RESEARCH_CONTRIBUTION: { xp: 500, description: 'Contribution à la recherche' },
+  COMMUNITY_EVENT: { xp: 200, description: 'Participation à un événement' }
 }
 
 // Configuration des maisons HES
@@ -98,7 +124,7 @@ export async function saveUserHouse(userId, houseName) {
       'gamification/maison': houseName.toLowerCase(),
       'gamification/niveau': 1,
       'gamification/xp': 0,
-      'gamification/xpToNext': 100,
+      'gamification/xpToNext': 50,
       'gamification/dateSelection': new Date().toISOString(),
       'gamification/houseInfo': {
         name: houseInfo.name,
@@ -132,7 +158,7 @@ export async function getUserHouse(userId) {
         houseInfo: getHouseInfo(gamificationData.maison),
         niveau: gamificationData.niveau || 1,
         xp: gamificationData.xp || 0,
-        xpToNext: gamificationData.xpToNext || 100,
+        xpToNext: gamificationData.xpToNext || 50,
         dateSelection: gamificationData.dateSelection
       }
     }
@@ -171,7 +197,7 @@ export async function resetUserHouse(userId) {
       maison: null,
       niveau: 1,
       xp: 0,
-      xpToNext: 100,
+      xpToNext: 50,
       houseInfo: null,
       dateSelection: null
     })
@@ -274,21 +300,21 @@ export async function getHouseStatistics() {
  * @returns {Object} Informations du niveau
  */
 export function calculateLevel(totalXP) {
-  for (let level = 5; level >= 1; level--) {
+  for (let level = 20; level >= 1; level--) {
     if (totalXP >= LEVEL_CONFIG[level].xpRequired) {
       return {
         niveau: level,
         name: LEVEL_CONFIG[level].name,
         xpRequired: LEVEL_CONFIG[level].xpRequired,
-        xpToNext: level < 5 ? LEVEL_CONFIG[level + 1].xpRequired - totalXP : 0
+        xpToNext: level < 20 ? LEVEL_CONFIG[level + 1].xpRequired - totalXP : 0
       }
     }
   }
   return {
     niveau: 1,
-    name: 'Novice',
+    name: 'Étudiant·e',
     xpRequired: 0,
-    xpToNext: 100 - totalXP
+    xpToNext: 50 - totalXP
   }
 }
 
@@ -364,7 +390,7 @@ export async function getUserGamificationData(userId) {
         niveau: 1,
         xp: 0,
         totalXP: 0,
-        xpToNext: 100,
+        xpToNext: 50,
         lastXPGain: null,
         dateSelection: null
       }
@@ -406,7 +432,7 @@ export async function initializeUserGamification(userId, houseName) {
       niveau: 1,
       xp: 0,
       totalXP: 0,
-      xpToNext: 100,
+      xpToNext: 50,
       dateSelection: new Date().toISOString(),
       achievements: {},
       stats: {
@@ -449,6 +475,75 @@ export async function updateGlobalHouseStats() {
   }
 }
 
+/**
+ * Calcule et met à jour le streak de connexion d'un utilisateur
+ * @param {string} userId - ID de l'utilisateur
+ * @returns {Promise<number>} Nombre de jours de streak
+ */
+export async function updateLoginStreak(userId) {
+  try {
+    const userRef = dbRef(getDatabase(), `Users/${userId}/gamification`)
+    const snapshot = await get(userRef)
+    const data = snapshot.val() || {}
+    
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const todayString = today.toISOString().split('T')[0]
+    
+    const lastLogin = data.stats?.lastLogin ? new Date(data.stats.lastLogin) : null
+    let currentStreak = data.stats?.loginStreak || 0
+    
+    if (lastLogin) {
+      lastLogin.setHours(0, 0, 0, 0)
+      const lastLoginString = lastLogin.toISOString().split('T')[0]
+      
+      if (lastLoginString === todayString) {
+        // Déjà connecté aujourd'hui, pas de changement
+        return currentStreak
+      }
+      
+      const yesterday = new Date(today)
+      yesterday.setDate(yesterday.getDate() - 1)
+      const yesterdayString = yesterday.toISOString().split('T')[0]
+      
+      if (lastLoginString === yesterdayString) {
+        // Connexion hier, continuer le streak
+        currentStreak += 1
+      } else {
+        // Streak cassé, recommencer
+        currentStreak = 1
+      }
+    } else {
+      // Première connexion
+      currentStreak = 1
+    }
+    
+    // Mettre à jour les stats
+    await update(userRef, {
+      'stats/loginStreak': currentStreak,
+      'stats/lastLogin': new Date().toISOString(),
+      'stats/totalLogins': (data.stats?.totalLogins || 0) + 1
+    })
+    
+    // Ajouter XP pour la connexion
+    await addUserXP(userId, 'LOGIN')
+    
+    // Bonus XP pour les streaks
+    if (currentStreak === 3) {
+      await addUserXP(userId, 'DAILY_STREAK_3')
+    } else if (currentStreak === 7) {
+      await addUserXP(userId, 'DAILY_STREAK_7')
+    } else if (currentStreak === 30) {
+      await addUserXP(userId, 'DAILY_STREAK_30')
+    }
+    
+    return currentStreak
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour du streak:', error)
+    return 0
+  }
+}
+
 export default {
   HES_HOUSES,
   LEVEL_CONFIG,
@@ -465,5 +560,6 @@ export default {
   addUserXP,
   getUserGamificationData,
   initializeUserGamification,
-  updateGlobalHouseStats
+  updateGlobalHouseStats,
+  updateLoginStreak
 }

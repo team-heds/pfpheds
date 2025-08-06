@@ -5,6 +5,7 @@
     v-if="hasValidHouse"
     :maison="userGamification.maison"
     :niveau="userGamification.niveau"
+    :loginStreak="userGamification.loginStreak"
     class="mb-4"
   />
 
@@ -312,7 +313,8 @@ const fetchGamificationData = async (userId) => {
       xp: gamificationData.xp || 0,
       totalXP: gamificationData.totalXP || 0,
       xpToNext: gamificationData.xpToNext || 100,
-      lastXPGain: gamificationData.lastXPGain || null
+      lastXPGain: gamificationData.lastXPGain || null,
+      loginStreak: gamificationData.stats?.loginStreak || 0
     }
   } catch (error) {
     console.error('Erreur lors de la récupération des données de gamification:', error)
@@ -322,7 +324,8 @@ const fetchGamificationData = async (userId) => {
       xp: 0,
       totalXP: 0,
       xpToNext: 100,
-      lastXPGain: null
+      lastXPGain: null,
+      loginStreak: 0
     }
   }
 };
@@ -334,7 +337,8 @@ const userGamification = ref({
   xp: 0,
   totalXP: 0,
   xpToNext: 100,
-  lastXPGain: null
+  lastXPGain: null,
+  loginStreak: 0
 });
 
 const xpPercent = computed(() => {
@@ -375,12 +379,13 @@ const giveUserXP = async (action, customXP = null) => {
     
     // Mettre à jour les données locales
     userGamification.value = {
-      maison: newData.maison || null,
+      maison: newData.maison || userGamification.value.maison,
       niveau: newData.niveau || 1,
       xp: newData.xp || 0,
       totalXP: newData.totalXP || 0,
       xpToNext: newData.xpToNext || 100,
-      lastXPGain: newData.lastXPGain || null
+      lastXPGain: newData.lastXPGain || null,
+      loginStreak: newData.stats?.loginStreak || userGamification.value.loginStreak || 0
     }
     
     // Afficher une notification de gain d'XP
