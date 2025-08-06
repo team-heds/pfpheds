@@ -38,6 +38,12 @@ import SettingView from '@/views/users/SettingsView.vue'
 import HESHouseQuizView from '@/views/users/HESHouseQuizView.vue'
 
 // ========================================
+// GAMIFICATION & MAISONS HES
+// ========================================
+import HouseStatsPage from '@/components/gamification/HouseStatsPage.vue'
+import HousesRankingPage from '@/components/gamification/HousesRankingPage.vue'
+
+// ========================================
 // DASHBOARD & ADMINISTRATION
 // ========================================
 import DashboardView from '@/views/admin/DashboardView.vue';
@@ -188,6 +194,8 @@ const routes = [
   { path: '/profilAdmin/:id', component: ProfileAdmin, name: 'ProfileAdmin', meta: { requiresAuth: true, requiredRole: ['admin'] } },
   { path: '/settings', component: SettingView, name: 'SettingView', meta: { requiresAuth: true } },
   { path: '/hes-house-quiz', component: HESHouseQuizView, name: 'HESHouseQuizView', meta: { requiresAuth: true } },
+  { path: '/houses/:houseName/stats', component: HouseStatsPage, name: 'HouseStatsPage', props: true, meta: { requiresAuth: true } },
+  { path: '/houses/ranking', component: HousesRankingPage, name: 'HousesRankingPage', meta: { requiresAuth: true } },
 
   // ========================================
   // DASHBOARD & ADMINISTRATION

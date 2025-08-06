@@ -89,6 +89,30 @@ export const HES_HOUSES = {
   }
 }
 
+// Configuration des niveaux de maisons (basé sur 47,5 personnes par maison)
+export const HOUSE_LEVEL_CONFIG = {
+  1: { name: 'Maison Naissante', xpRequired: 0, xpToNext: 2375 }, // 50 * 47.5
+  2: { name: 'Maison Émergente', xpRequired: 2375, xpToNext: 3563 }, // 75 * 47.5
+  3: { name: 'Maison Croissante', xpRequired: 5938, xpToNext: 4750 }, // 100 * 47.5
+  4: { name: 'Maison Prometteuse', xpRequired: 10688, xpToNext: 7125 }, // 150 * 47.5
+  5: { name: 'Maison Établie', xpRequired: 17813, xpToNext: 9500 }, // 200 * 47.5
+  6: { name: 'Maison Respectée', xpRequired: 27313, xpToNext: 13063 }, // 275 * 47.5
+  7: { name: 'Maison Reconnue', xpRequired: 40375, xpToNext: 16625 }, // 350 * 47.5
+  8: { name: 'Maison Experte', xpRequired: 57000, xpToNext: 21375 }, // 450 * 47.5
+  9: { name: 'Maison Éminente', xpRequired: 78375, xpToNext: 28500 }, // 600 * 47.5
+  10: { name: 'Maison Référente', xpRequired: 106875, xpToNext: 35625 }, // 750 * 47.5
+  11: { name: 'Maison Mentore', xpRequired: 142500, xpToNext: 45125 }, // 950 * 47.5
+  12: { name: 'Maison Superviseure', xpRequired: 187625, xpToNext: 57000 }, // 1200 * 47.5
+  13: { name: 'Maison Coordinatrice', xpRequired: 244625, xpToNext: 71250 }, // 1500 * 47.5
+  14: { name: 'Maison Dirigeante', xpRequired: 315875, xpToNext: 90250 }, // 1900 * 47.5
+  15: { name: 'Maison Directrice', xpRequired: 406125, xpToNext: 114000 }, // 2400 * 47.5
+  16: { name: 'Maison Magistrale', xpRequired: 520125, xpToNext: 142500 }, // 3000 * 47.5
+  17: { name: 'Maison Experte Reconnue', xpRequired: 662625, xpToNext: 180500 }, // 3800 * 47.5
+  18: { name: 'Maison Maîtresse', xpRequired: 843125, xpToNext: 225625 }, // 4750 * 47.5
+  19: { name: 'Maison Sage', xpRequired: 1068750, xpToNext: 285000 }, // 6000 * 47.5
+  20: { name: 'Maison Légendaire', xpRequired: 1353750, xpToNext: 0 } // 28500 * 47.5
+}
+
 /**
  * Récupère les informations d'une maison
  * @param {string} houseName - Nom de la maison
@@ -319,6 +343,30 @@ export function calculateLevel(totalXP) {
 }
 
 /**
+ * Calcule le niveau d'une maison basé sur l'XP total de tous ses membres
+ * @param {number} totalHouseXP - XP total de la maison
+ * @returns {Object} Informations du niveau de la maison
+ */
+export function calculateHouseLevel(totalHouseXP) {
+  for (let level = 20; level >= 1; level--) {
+    if (totalHouseXP >= HOUSE_LEVEL_CONFIG[level].xpRequired) {
+      return {
+        niveau: level,
+        name: HOUSE_LEVEL_CONFIG[level].name,
+        xpRequired: HOUSE_LEVEL_CONFIG[level].xpRequired,
+        xpToNext: level < 20 ? HOUSE_LEVEL_CONFIG[level + 1].xpRequired - totalHouseXP : 0
+      }
+    }
+  }
+  return {
+    niveau: 1,
+    name: 'Maison Naissante',
+    xpRequired: 0,
+    xpToNext: 2375 - totalHouseXP
+  }
+}
+
+/**
  * Ajoute de l'XP à un utilisateur
  * @param {string} userId - ID de l'utilisateur
  * @param {string} action - Type d'action (LOGIN, QUIZ_COMPLETE, etc.)
@@ -457,25 +505,6 @@ export async function initializeUserGamification(userId, houseName) {
 }
 
 /**
- * Met à jour les statistiques globales des maisons
- * @returns {Promise<Object>} Statistiques mises à jour
- */
-export async function updateGlobalHouseStats() {
-  try {
-    const stats = await getHouseStatistics()
-    const globalStatsRef = dbRef(getDatabase(), 'globalStats/houses')
-    await set(globalStatsRef, {
-      ...stats,
-      lastUpdated: new Date().toISOString()
-    })
-    return stats
-  } catch (error) {
-    console.error('Erreur lors de la mise à jour des statistiques globales:', error)
-    throw error
-  }
-}
-
-/**
  * Calcule et met à jour le streak de connexion d'un utilisateur
  * @param {string} userId - ID de l'utilisateur
  * @returns {Promise<number>} Nombre de jours de streak
@@ -484,7 +513,7 @@ export async function updateLoginStreak(userId) {
   try {
     const userRef = dbRef(getDatabase(), `Users/${userId}/gamification`)
     const snapshot = await get(userRef)
-    const data = snapshot.val() || {}
+    const data = snapshot.val()
     
     const today = new Date()
     today.setHours(0, 0, 0, 0)
@@ -544,10 +573,149 @@ export async function updateLoginStreak(userId) {
   }
 }
 
+/**
+ * Récupère les statistiques complètes d'une maison avec classement des membres
+ * @param {string} houseName - Nom de la maison
+ * @returns {Promise<Object>} Statistiques complètes de la maison
+ */
+export async function getHouseDetailedStats(houseName) {
+  try {
+    const usersRef = dbRef(getDatabase(), 'Users')
+    const snapshot = await get(usersRef)
+    const users = snapshot.val() || {}
+    
+    const houseMembers = []
+    let totalHouseXP = 0
+    
+    // Parcourir tous les utilisateurs pour trouver les membres de la maison
+    Object.keys(users).forEach(userId => {
+      const user = users[userId]
+      const gamification = user.gamification
+      
+      if (gamification && gamification.maison === houseName.toLowerCase()) {
+        const memberXP = gamification.totalXP || 0
+        totalHouseXP += memberXP
+        
+        houseMembers.push({
+          userId: userId,
+          prenom: user.prenom || 'Inconnu',
+          nom: user.nom || 'Inconnu',
+          niveau: gamification.niveau || 1,
+          xp: gamification.xp || 0,
+          totalXP: memberXP,
+          loginStreak: gamification.stats?.loginStreak || 0,
+          dateSelection: gamification.dateSelection
+        })
+      }
+    })
+    
+    // Trier les membres par XP total décroissant
+    houseMembers.sort((a, b) => b.totalXP - a.totalXP)
+    
+    // Calculer le niveau de la maison
+    const houseLevel = calculateHouseLevel(totalHouseXP)
+    
+    // Calculer les statistiques
+    const averageXP = houseMembers.length > 0 ? Math.round(totalHouseXP / houseMembers.length) : 0
+    const averageLevel = houseMembers.length > 0 ? 
+      Math.round(houseMembers.reduce((sum, member) => sum + member.niveau, 0) / houseMembers.length * 10) / 10 : 0
+    
+    return {
+      houseName: houseName,
+      houseInfo: getHouseInfo(houseName),
+      houseLevel: houseLevel,
+      totalMembers: houseMembers.length,
+      totalXP: totalHouseXP,
+      averageXP: averageXP,
+      averageLevel: averageLevel,
+      members: houseMembers,
+      topMembers: houseMembers.slice(0, 10), // Top 10
+      lastUpdated: new Date().toISOString()
+    }
+  } catch (error) {
+    console.error('Erreur lors de la récupération des stats détaillées de la maison:', error)
+    throw error
+  }
+}
+
+/**
+ * Récupère le classement global des maisons avec leurs niveaux
+ * @returns {Promise<Object>} Classement des maisons
+ */
+export async function getHousesRanking() {
+  try {
+    const houses = ['harmonis', 'elaris', 'doloris', 'solencia']
+    const housesRanking = []
+    
+    for (const houseName of houses) {
+      const houseStats = await getHouseDetailedStats(houseName)
+      housesRanking.push({
+        name: houseName,
+        displayName: houseStats.houseInfo.name,
+        color: houseStats.houseInfo.color,
+        motto: houseStats.houseInfo.motto,
+        level: houseStats.houseLevel.niveau,
+        levelName: houseStats.houseLevel.name,
+        totalXP: houseStats.totalXP,
+        totalMembers: houseStats.totalMembers,
+        averageXP: houseStats.averageXP,
+        averageLevel: houseStats.averageLevel,
+        xpToNext: houseStats.houseLevel.xpToNext
+      })
+    }
+    
+    // Trier par niveau décroissant, puis par XP total décroissant
+    housesRanking.sort((a, b) => {
+      if (a.level !== b.level) {
+        return b.level - a.level
+      }
+      return b.totalXP - a.totalXP
+    })
+    
+    // Ajouter les positions
+    housesRanking.forEach((house, index) => {
+      house.position = index + 1
+    })
+    
+    return {
+      ranking: housesRanking,
+      lastUpdated: new Date().toISOString(),
+      totalUsers: housesRanking.reduce((sum, house) => sum + house.totalMembers, 0)
+    }
+  } catch (error) {
+    console.error('Erreur lors de la récupération du classement des maisons:', error)
+    throw error
+  }
+}
+
+/**
+ * Met à jour les statistiques globales des maisons avec les niveaux
+ * @returns {Promise<Object>} Statistiques mises à jour
+ */
+export async function updateGlobalHouseStats() {
+  try {
+    const ranking = await getHousesRanking()
+    const globalStatsRef = dbRef(getDatabase(), 'globalStats/houses')
+    
+    const statsToSave = {
+      ranking: ranking.ranking,
+      lastUpdated: ranking.lastUpdated,
+      totalUsers: ranking.totalUsers
+    }
+    
+    await set(globalStatsRef, statsToSave)
+    return statsToSave
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour des statistiques globales:', error)
+    throw error
+  }
+}
+
 export default {
   HES_HOUSES,
   LEVEL_CONFIG,
   XP_ACTIONS,
+  HOUSE_LEVEL_CONFIG,
   getHouseInfo,
   getAllHouses,
   saveUserHouse,
@@ -557,9 +725,12 @@ export default {
   calculateHouseFromAnswers,
   getHouseStatistics,
   calculateLevel,
+  calculateHouseLevel,
   addUserXP,
   getUserGamificationData,
   initializeUserGamification,
-  updateGlobalHouseStats,
-  updateLoginStreak
+  updateLoginStreak,
+  getHouseDetailedStats,
+  getHousesRanking,
+  updateGlobalHouseStats
 }

@@ -27,11 +27,14 @@
       </div>
       
       <div class="house-actions">
-        <button class="action-btn" @click="$emit('viewProfile')" title="Voir le profil">
+        <button class="action-btn" @click="navigateToProfile" title="Voir le profil">
           <i class="pi pi-user"></i>
         </button>
-        <button class="action-btn" @click="$emit('viewStats')" title="Voir les statistiques">
+        <button class="action-btn" @click="navigateToHouseStats" title="Voir les statistiques de la maison">
           <i class="pi pi-chart-bar"></i>
+        </button>
+        <button class="action-btn" @click="navigateToGlobalRanking" title="Voir le classement global des maisons">
+          <i class="pi pi-trophy"></i>
         </button>
       </div>
     </div>
@@ -42,6 +45,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 
 // Import des images de fond des maisons
 import FondHarmonis from '@/assets/maisons/FondHarmonis.png'
@@ -64,7 +68,24 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['viewProfile', 'viewStats'])
+const emit = defineEmits(['viewProfile', 'viewStats', 'viewHouseRankings'])
+
+const router = useRouter()
+
+// Fonctions de navigation
+const navigateToProfile = () => {
+  emit('viewProfile')
+}
+
+const navigateToHouseStats = () => {
+  // Navigation vers les statistiques de la maison avec le nom de la maison
+  router.push(`/houses/${props.maison}/stats`)
+}
+
+const navigateToGlobalRanking = () => {
+  // Navigation vers le classement global des maisons
+  router.push('/houses/ranking')
+}
 
 const houseConfig = {
   harmonis: {
