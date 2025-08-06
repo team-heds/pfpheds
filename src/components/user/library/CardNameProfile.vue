@@ -1,24 +1,38 @@
 
 <template>
-  <!-- BANDEAU MAISON GAMIFICATION
+
   <BandeauMaison
-    v-if="userGamification && userGamification.maison && userGamification.niveau"
+    v-if="hasValidHouse"
     :maison="userGamification.maison"
     :niveau="userGamification.niveau"
     class="mb-4"
   />
 
-  -->
-  <!-- XP BAR
+  <!-- PROMPT POUR QUIZ HES si pas de maison -->
+  <div v-if="!hasValidHouse" class="house-quiz-prompt mb-4">
+    <div class="quiz-prompt-card">
+      <div class="quiz-prompt-content">
+        <i class="pi pi-graduation-cap quiz-prompt-icon"></i>
+        <h3>Découvre ta maison HES !</h3>
+        <p>Passe le quiz pour être assigné à ta maison selon tes valeurs et ta personnalité.</p>
+        <button @click="startHESQuiz" class="quiz-prompt-button">
+          <i class="pi pi-play"></i>
+          Commencer le quiz
+        </button>
+      </div>
+    </div>
+  </div>
+
+
   <XPBar
-    v-if="userGamification && userGamification.xp !== undefined && userGamification.xpToNext !== undefined"
+    v-if="hasValidHouse"
     :xp="userGamification.xp"
     :xp-to-next="userGamification.xpToNext"
     :niveau="userGamification.niveau"
     :maison="userGamification.maison"
     class="mb-4"
   />
-   -->
+
   <!-- FIN BANDEAU MAISON + XP -->
   <div class="mb-4 card-profile-responsive">
     <div class="avatar-wrapper">
@@ -72,7 +86,7 @@
         </span>
       </div>
       <div class="info-item info-item-full actions-row">
-        <Button label="Sauvegarder le profil" @click="saveProfile" class="save-btn" />
+        <Button label="Sauvegarder le profil" @click="saveProfileWithXP" class="save-btn" />
       </div>
     </div>
   </div>
@@ -80,15 +94,16 @@
 
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { getDatabase, ref as dbRef, get, update } from "firebase/database";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { storage } from '../../../../firebase.js';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
-import BandeauMaison from '@/components/user/profile/BandeauMaison.vue'
-import XPBar from '@/components/user/profile/XPBar.vue'
+import BandeauMaison from '@/components/gamification/BandeauMaison.vue';
+import XPBar from '@/components/gamification/XPBar.vue';
+import { getUserGamificationData, addUserXP } from '@/service/hesHousesService'
 
 const defaultAvatar = '@/assets/images/avatar/01.jpg';
 
@@ -169,6 +184,9 @@ const fetchCurrentUserProfile = async (currentUserId) => {
   if (snapshot.exists()) {
     currentUserProfile.value = snapshot.val();
     currentUserProfile.value.uid = currentUserId;
+    
+    // Récupérer aussi les données de gamification pour l'utilisateur connecté
+    await fetchGamificationData(currentUserId);
   } else {
     console.error("Aucun profil trouvé pour l'utilisateur connecté :", currentUserId);
   }
@@ -262,6 +280,7 @@ const onAvatarChange = (event) => {
 };
 
 const route = useRoute();
+const router = useRouter();
 const auth = getAuth();
 onMounted(async () => {
   // Récupérer l'ID de l'utilisateur dont le profil est consulté (depuis l'URL)
@@ -269,6 +288,7 @@ onMounted(async () => {
   if (userId) {
     await fetchUserProfileById(userId);
     await fetchStudentProfileById(userId);
+    await fetchGamificationData(userId);
   } else {
     console.error("Aucun ID d'utilisateur fourni dans l'URL");
   }
@@ -282,12 +302,39 @@ onMounted(async () => {
   await fetchTeachers();
 });
 
+// Récupération des données de gamification depuis Firebase
+const fetchGamificationData = async (userId) => {
+  try {
+    const gamificationData = await getUserGamificationData(userId)
+    userGamification.value = {
+      maison: gamificationData.maison || null,
+      niveau: gamificationData.niveau || 1,
+      xp: gamificationData.xp || 0,
+      totalXP: gamificationData.totalXP || 0,
+      xpToNext: gamificationData.xpToNext || 100,
+      lastXPGain: gamificationData.lastXPGain || null
+    }
+  } catch (error) {
+    console.error('Erreur lors de la récupération des données de gamification:', error)
+    userGamification.value = {
+      maison: null,
+      niveau: 1,
+      xp: 0,
+      totalXP: 0,
+      xpToNext: 100,
+      lastXPGain: null
+    }
+  }
+};
+
 // Exemple de récupération des infos gamification (à adapter à ta logique)
 const userGamification = ref({
-  maison: user.value.maison || 'harmonis',
-  niveau: user.value.niveau || 1,
-  xp: user.value.xp || 20,
-  xpToNext: user.value.xpToNext || 100
+  maison: null,
+  niveau: 1,
+  xp: 0,
+  totalXP: 0,
+  xpToNext: 100,
+  lastXPGain: null
 });
 
 const xpPercent = computed(() => {
@@ -303,6 +350,55 @@ const xpColor = computed(() => {
     default: return '#6366F1';
   }
 });
+
+// Computed pour valider si l'utilisateur a une maison valide
+const hasValidHouse = computed(() => {
+  if (!userGamification.value || !userGamification.value.maison) {
+    return false;
+  }
+  const validHouses = ['harmonis', 'elaris', 'doloris', 'solencia'];
+  return validHouses.includes(userGamification.value.maison.toLowerCase());
+});
+
+// Méthode pour démarrer le quiz HES
+const startHESQuiz = () => {
+  router.push('/hes-house-quiz');
+};
+
+// Fonction pour ajouter de l'XP à l'utilisateur
+const giveUserXP = async (action, customXP = null) => {
+  try {
+    const userId = route.params.id || currentUserProfile.value?.uid
+    if (!userId) return
+    
+    const newData = await addUserXP(userId, action, customXP)
+    
+    // Mettre à jour les données locales
+    userGamification.value = {
+      maison: newData.maison || null,
+      niveau: newData.niveau || 1,
+      xp: newData.xp || 0,
+      totalXP: newData.totalXP || 0,
+      xpToNext: newData.xpToNext || 100,
+      lastXPGain: newData.lastXPGain || null
+    }
+    
+    // Afficher une notification de gain d'XP
+    if (newData.lastXPGain) {
+      // Ici on pourrait déclencher une animation ou notification
+      console.log(`+${newData.lastXPGain.amount} XP - ${newData.lastXPGain.description}`)
+    }
+  } catch (error) {
+    console.error('Erreur lors de l\'ajout d\'XP:', error)
+  }
+}
+
+// Fonction appelée lors de la sauvegarde du profil (pour donner de l'XP)
+const saveProfileWithXP = async () => {
+  await saveProfile()
+  // Donner de l'XP pour la mise à jour du profil
+  await giveUserXP('PROFILE_UPDATE')
+}
 </script>
 
 <style scoped>
@@ -516,6 +612,91 @@ const xpColor = computed(() => {
   .avatar-wrapper img[alt="Avatar"] {
     width: 70px !important;
     height: 70px !important;
+  }
+}
+
+/* Styles pour le prompt du quiz HES */
+.house-quiz-prompt {
+  margin-bottom: 1rem;
+}
+
+.quiz-prompt-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  color: white;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+}
+
+.quiz-prompt-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.quiz-prompt-icon {
+  font-size: 3rem;
+  color: #FFD700;
+  margin-bottom: 0.5rem;
+}
+
+.quiz-prompt-card h3 {
+  font-size: 1.5rem;
+  margin: 0;
+  font-weight: 700;
+}
+
+.quiz-prompt-card p {
+  font-size: 1rem;
+  margin: 0;
+  opacity: 0.9;
+  line-height: 1.5;
+}
+
+.quiz-prompt-button {
+  background: #FFD700;
+  color: #2c3e50;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  margin-top: 0.5rem;
+}
+
+.quiz-prompt-button:hover {
+  background: #FFC107;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.quiz-prompt-button i {
+  font-size: 1rem;
+}
+
+@media (max-width: 768px) {
+  .quiz-prompt-card {
+    padding: 1.5rem;
+  }
+  
+  .quiz-prompt-icon {
+    font-size: 2.5rem;
+  }
+  
+  .quiz-prompt-card h3 {
+    font-size: 1.3rem;
+  }
+  
+  .quiz-prompt-button {
+    padding: 0.8rem 1.5rem;
+    font-size: 0.9rem;
   }
 }
 </style>

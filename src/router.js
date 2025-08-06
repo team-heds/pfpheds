@@ -35,6 +35,7 @@ import DocumentsPFP from '@/views/home/DocumentsView.vue'
 import Profile from "@/views/users/ProfileView.vue";
 import ProfileAdmin from '@/views/admin/ProfileAdminView.vue'
 import SettingView from '@/views/users/SettingsView.vue'
+import HESHouseQuizView from '@/views/users/HESHouseQuizView.vue'
 
 // ========================================
 // DASHBOARD & ADMINISTRATION
@@ -186,6 +187,7 @@ const routes = [
   { path: '/profile/:id', component: Profile, name: 'Profile', meta: { requiresAuth: true } },
   { path: '/profilAdmin/:id', component: ProfileAdmin, name: 'ProfileAdmin', meta: { requiresAuth: true, requiredRole: ['admin'] } },
   { path: '/settings', component: SettingView, name: 'SettingView', meta: { requiresAuth: true } },
+  { path: '/hes-house-quiz', component: HESHouseQuizView, name: 'HESHouseQuizView', meta: { requiresAuth: true } },
 
   // ========================================
   // DASHBOARD & ADMINISTRATION
