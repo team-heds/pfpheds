@@ -27,14 +27,13 @@
       </div>
       
       <div class="house-actions">
-        <button class="action-btn" @click="navigateToProfile" title="Voir le profil">
-          <i class="pi pi-user"></i>
-        </button>
+
         <button class="action-btn" @click="navigateToHouseStats" title="Voir les statistiques de la maison">
-          <i class="pi pi-chart-bar"></i>
+          <i class="pi pi-home"></i>
         </button>
+        <br>
         <button class="action-btn" @click="navigateToGlobalRanking" title="Voir le classement global des maisons">
-          <i class="pi pi-trophy"></i>
+          <i class="pi pi-chart-bar"></i>
         </button>
       </div>
     </div>
@@ -202,12 +201,7 @@ const getParticleStyle = (index) => {
   pointer-events: none;
 }
 
-.particle {
-  position: absolute;
-  background: rgba(255,255,255,0.6);
-  border-radius: 50%;
-  animation: float infinite ease-in-out;
-}
+
 
 @keyframes float {
   0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0; }

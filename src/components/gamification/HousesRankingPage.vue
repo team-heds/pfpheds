@@ -257,7 +257,7 @@ onMounted(() => {
 }
 
 .back-btn:hover, .refresh-btn:hover {
-  background: rgba(255,255,255,0.3);
+  background: var(--surface-hover);
 }
 
 .refresh-btn:disabled {
