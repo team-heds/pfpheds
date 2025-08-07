@@ -711,6 +711,52 @@ export async function updateGlobalHouseStats() {
   }
 }
 
+/**
+ * Fonction pour récupérer les statistiques complètes d'un utilisateur
+ * @param {string} userId - ID de l'utilisateur
+ * @returns {Promise<Object>} Statistiques de l'utilisateur
+ */
+export async function getUserGamificationStats(userId) {
+  try {
+    const userRef = dbRef(getDatabase(), `Users/${userId}`)
+    const snapshot = await get(userRef)
+    
+    if (snapshot.exists()) {
+      const userData = snapshot.val()
+      const gamificationData = userData.gamification || {}
+      
+      // Calculer les jours depuis l'inscription
+      const joinedAt = gamificationData.dateSelection || userData.createdAt || new Date().toISOString()
+      
+      return {
+        displayName: userData.displayName || userData.nom || userData.prenom || 'Utilisateur',
+        photoURL: userData.photoURL || null,
+        email: userData.email || null,
+        maison: gamificationData.maison || null,
+        niveau: gamificationData.niveau || 1,
+        xp: gamificationData.xp || 0,
+        xpToNext: gamificationData.xpToNext || 100,
+        streak: gamificationData.loginStreak || 0,
+        streakMax: gamificationData.maxStreak || gamificationData.loginStreak || 0,
+        joursActifs: gamificationData.joursActifs || 0,
+        defisCompletes: gamificationData.defisCompletes || 0,
+        pointsBonus: gamificationData.pointsBonus || 0,
+        lastLogin: gamificationData.lastLogin || null,
+        dateSelection: gamificationData.dateSelection || null,
+        joinedAt: joinedAt,
+        // Données utilisateur supplémentaires
+        userId: userId,
+        isActive: true
+      }
+    }
+    
+    return null
+  } catch (error) {
+    console.error('Erreur lors de la récupération des stats utilisateur:', error)
+    throw error
+  }
+}
+
 export default {
   HES_HOUSES,
   LEVEL_CONFIG,
@@ -732,5 +778,6 @@ export default {
   updateLoginStreak,
   getHouseDetailedStats,
   getHousesRanking,
-  updateGlobalHouseStats
+  updateGlobalHouseStats,
+  getUserGamificationStats
 }

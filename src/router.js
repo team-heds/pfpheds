@@ -42,6 +42,7 @@ import HESHouseQuizView from '@/views/users/HESHouseQuizView.vue'
 // ========================================
 import HouseStatsPage from '@/components/gamification/HouseStatsPage.vue'
 import HousesRankingPage from '@/components/gamification/HousesRankingPage.vue'
+import GamificationProfilePage from '@/components/gamification/GamificationProfilePage.vue'
 
 // ========================================
 // DASHBOARD & ADMINISTRATION
@@ -196,6 +197,7 @@ const routes = [
   { path: '/hes-house-quiz', component: HESHouseQuizView, name: 'HESHouseQuizView', meta: { requiresAuth: true } },
   { path: '/houses/:houseName/stats', component: HouseStatsPage, name: 'HouseStatsPage', props: true, meta: { requiresAuth: true } },
   { path: '/houses/ranking', component: HousesRankingPage, name: 'HousesRankingPage', meta: { requiresAuth: true } },
+  { path: '/gamification-profile', component: GamificationProfilePage, name: 'GamificationProfilePage', meta: { requiresAuth: false } },
 
   // ========================================
   // DASHBOARD & ADMINISTRATION

@@ -27,11 +27,12 @@
       </div>
       
       <div class="house-actions">
-
+        <button class="action-btn" @click="navigateToProfile" title="Voir le profil">
+          <i class="pi pi-user"></i>
+        </button>
         <button class="action-btn" @click="navigateToHouseStats" title="Voir les statistiques de la maison">
           <i class="pi pi-home"></i>
         </button>
-        <br>
         <button class="action-btn" @click="navigateToGlobalRanking" title="Voir le classement global des maisons">
           <i class="pi pi-chart-bar"></i>
         </button>
@@ -73,17 +74,32 @@ const router = useRouter()
 
 // Fonctions de navigation
 const navigateToProfile = () => {
-  emit('viewProfile')
+  console.log('Navigating to gamification profile...')
+  try {
+    router.push({ name: 'GamificationProfilePage' })
+  } catch (error) {
+    console.error('Navigation error:', error)
+  }
 }
 
 const navigateToHouseStats = () => {
-  // Navigation vers les statistiques de la maison avec le nom de la maison
-  router.push(`/houses/${props.maison}/stats`)
+  console.log('Navigating to house stats...')
+  try {
+    // Navigation vers les statistiques de la maison avec le nom de la maison
+    router.push(`/houses/${props.maison}/stats`)
+  } catch (error) {
+    console.error('Navigation error:', error)
+  }
 }
 
 const navigateToGlobalRanking = () => {
-  // Navigation vers le classement global des maisons
-  router.push('/houses/ranking')
+  console.log('Navigating to global ranking...')
+  try {
+    // Navigation vers le classement global des maisons
+    router.push('/houses/ranking')
+  } catch (error) {
+    console.error('Navigation error:', error)
+  }
 }
 
 const houseConfig = {
