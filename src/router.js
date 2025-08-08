@@ -48,6 +48,7 @@ import GamificationProfilePage from '@/components/gamification/GamificationProfi
 // DASHBOARD & ADMINISTRATION
 // ========================================
 import DashboardView from '@/views/admin/DashboardView.vue';
+import AdminDefisView from '@/views/admin/gamification/AdminDefisView.vue';
 
 // ========================================
 // SOCIAL & COMMUNICATION
@@ -203,6 +204,7 @@ const routes = [
   // DASHBOARD & ADMINISTRATION
   // ========================================
   { path: '/admin', component: DashboardView, name: 'DashboardView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
+  { path: '/admin/defis', component: AdminDefisView, name: 'AdminDefisView', meta: { requiresAuth: true, requiredRole: ['admin'] } },
 
   // ========================================
   // SOCIAL & COMMUNICATION

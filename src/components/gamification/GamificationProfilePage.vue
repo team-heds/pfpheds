@@ -1,6 +1,6 @@
 <template>
   <Navbar />
-  <div class="gamification-profile-page">
+  <div class="gamification-profile-page" :style="{ '--house-color': houseColor }">
     
     <!-- Loading State -->
     <div v-if="loading" class="loading-container">
@@ -80,17 +80,18 @@
         <div class="progress-card">
           <h3>Progression vers le niveau {{ (userStats.niveau || 1) + 1 }}</h3>
           <div class="xp-progress">
-            <div class="progress-bar">
+            <div class="xp-bar">
               <div 
-                class="progress-fill" 
+                class="xp-fill" 
                 :style="{ 
-                  width: `${xpProgress}%`,
-                  backgroundColor: houseColor
+                  width: `${xpProgress}%`, 
+                  backgroundColor: houseColor 
                 }"
               ></div>
             </div>
-            <div class="progress-text">
-              {{ formatNumber(userStats.xp || 0) }} / {{ formatNumber(getNextLevelXP(userStats.niveau || 1)) }} XP
+            <div class="xp-text">
+              <span>{{ formatNumber(userStats.xp || 0) }} XP</span>
+              <span>{{ formatNumber(getNextLevelXP(userStats.niveau || 1)) }} XP pour le niveau suivant</span>
             </div>
           </div>
         </div>
@@ -121,15 +122,101 @@
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Back Button -->
-      <div class="back-button-container">
-        <button @click="goBack" class="back-btn">
-          <i class="pi pi-arrow-left"></i>
-          Retour
-        </button>
+        <!-- Prochaines quêtes / défis -->
+        <div class="card-section">
+          <div class="card-header">
+            <h3><i class="pi pi-flag"></i> Prochaines Quêtes & Défis</h3>
+            <span class="count-chip">{{ upcoming.length }}</span>
+          </div>
+          <div class="table-container" v-if="upcoming.length">
+            <table class="data-table">
+              <thead>
+              <tr>
+                <th>Défi</th>
+                <th>Objectif</th>
+                <th>Récompense</th>
+                <th>Échéance</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr v-for="(q, i) in upcoming" :key="q.id || i">
+                <td>{{ q.title || q.name }}</td>
+                <td>{{ q.goal || q.description || '-' }}</td>
+                <td>{{ q.reward ? `${formatNumber(q.reward)} XP` : '-' }}</td>
+                <td>{{ q.deadline ? new Date(q.deadline).toLocaleDateString() : '-' }}</td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+          <div v-else class="empty-state">
+            <i class="pi pi-info-circle"></i>
+            <p>Aucun défi planifié pour le moment.</p>
+          </div>
+        </div>
+
+        <!-- Badges -->
+        <div class="card-section">
+          <div class="card-header">
+            <h3><i class="pi pi-shield"></i> Mes Badges</h3>
+            <span class="count-chip">{{ badges.length }}</span>
+          </div>
+          <div v-if="badges.length" class="badge-grid">
+            <div v-for="(badge, i) in badges" :key="badge.id || i" class="badge-item">
+              <div class="badge-icon" :style="{ borderColor: houseColor }">
+                <i :class="badge.icon || 'pi pi-star'" :style="{ color: houseColor }"></i>
+              </div>
+              <div class="badge-meta">
+                <div class="badge-title">{{ badge.title || badge.name }}</div>
+                <div class="badge-desc">{{ badge.description || 'Badge obtenu' }}</div>
+              </div>
+              <div class="badge-xp" v-if="badge.xp">+{{ formatNumber(badge.xp) }} XP</div>
+            </div>
+          </div>
+          <div v-else class="empty-state">
+            <i class="pi pi-info-circle"></i>
+            <p>Aucun badge pour l’instant.</p>
+          </div>
+        </div>
+
+        <!-- Achievements / Hauts faits -->
+        <div class="card-section">
+          <div class="card-header">
+            <h3><i class="pi pi-trophy"></i> Mes Hauts Faits</h3>
+            <span class="count-chip">{{ achievements.length }}</span>
+          </div>
+          <div class="table-container" v-if="achievements.length">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Haut fait</th>
+                  <th>Statut</th>
+                  <th>XP</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(a, i) in achievements" :key="a.id || i">
+                  <td>{{ a.title || a.name }}</td>
+                  <td>
+                    <span class="status-pill" :class="a.completed ? 'completed' : 'inprogress'">
+                      {{ a.completed ? 'Complété' : 'En cours' }}
+                    </span>
+                  </td>
+                  <td>{{ a.xp ? formatNumber(a.xp) : '-' }}</td>
+                  <td>{{ a.date ? new Date(a.date).toLocaleDateString() : '-' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div v-else class="empty-state">
+            <i class="pi pi-info-circle"></i>
+            <p>Aucun haut fait enregistré.</p>
+          </div>
+        </div>
+
       </div>
+      
     </div>
   </div>
 </template>
@@ -139,6 +226,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { getAuth } from 'firebase/auth'
 import { getUserGamificationStats } from '@/service/hesHousesService'
+import { getActiveDefis } from '@/service/defisService'
 import Navbar from '@/components/common/utils/Navbar.vue'
 
 // Router and auth
@@ -171,6 +259,11 @@ const xpProgress = computed(() => {
   const currentLevelXP = getCurrentLevelXP(userStats.value.niveau || 1)
   return Math.min(100, ((currentXP - currentLevelXP) / (nextLevelXP - currentLevelXP)) * 100)
 })
+
+// Collections (safe fallbacks)
+const badges = computed(() => userStats.value?.badges || [])
+const achievements = computed(() => userStats.value?.achievements || [])
+const upcoming = computed(() => userStats.value?.upcomingChallenges || userStats.value?.upcoming || [])
 
 // Utility functions
 const formatNumber = (num) => {
@@ -212,7 +305,16 @@ const loadUserStats = async () => {
       throw new Error('Aucune donnée trouvée pour cet utilisateur')
     }
     
-    userStats.value = stats
+    // Fetch upcoming active challenges from Firebase and merge
+    let house = stats?.maison || null
+    let activeDefis = []
+    try {
+      activeDefis = await getActiveDefis(house)
+    } catch (e) {
+      console.warn('Impossible de charger les défis actifs:', e)
+    }
+
+    userStats.value = { ...stats, upcomingChallenges: activeDefis }
   } catch (err) {
     console.error('Erreur lors du chargement des stats:', err)
     error.value = err.message || 'Erreur lors du chargement des données'
@@ -234,7 +336,6 @@ onMounted(() => {
 <style scoped>
 .gamification-profile-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
   padding-bottom: 2rem;
 }
 
@@ -285,7 +386,7 @@ onMounted(() => {
 }
 
 .profile-banner {
-  background: linear-gradient(135deg, var(--house-color, #6B7280) 0%, rgba(0,0,0,0.1) 100%);
+  background: linear-gradient(135deg, var(--house-color, #6B7280) 0%, rgba(0,0,0,0.15) 100%);
   color: white;
   padding: 2rem;
   border-radius: 0 0 20px 20px;
@@ -348,7 +449,7 @@ onMounted(() => {
 }
 
 .level-badge {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15);
   padding: 0.25rem 0.75rem;
   border-radius: 20px;
   font-weight: bold;
@@ -391,42 +492,42 @@ onMounted(() => {
 
 /* Progress Card */
 .progress-card {
-  background: white;
+  background: var(--surface-card);
   padding: 1.5rem;
   border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
   margin-bottom: 2rem;
 }
 
 .progress-card h3 {
   margin-bottom: 1rem;
-  color: #1f2937;
+  color: white;
 }
 
 .xp-progress {
   margin-bottom: 1rem;
 }
 
-.progress-bar {
+.xp-bar {
   width: 100%;
   height: 12px;
-  background: #e5e7eb;
+  background: #e9ecef;
   border-radius: 6px;
   overflow: hidden;
   margin-bottom: 0.5rem;
 }
 
-.progress-fill {
+.xp-fill {
   height: 100%;
-  background: #3B82F6;
   border-radius: 6px;
-  transition: width 0.3s ease;
+  transition: width 0.8s ease;
 }
 
-.progress-text {
-  text-align: center;
-  font-weight: 500;
-  color: #6b7280;
+.xp-text {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: white;
 }
 
 /* Detailed Stats */
@@ -437,10 +538,10 @@ onMounted(() => {
 }
 
 .stat-card {
-  background: white;
+  background: var(--surface-card);
   padding: 1.5rem;
   border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -448,7 +549,7 @@ onMounted(() => {
 
 .stat-card i {
   font-size: 2rem;
-  color: #3B82F6;
+  color: white;
 }
 
 .stat-info {
@@ -458,35 +559,172 @@ onMounted(() => {
 .stat-number {
   font-size: 1.5rem;
   font-weight: bold;
-  color: #1f2937;
+  color: white;
 }
 
 .stat-desc {
-  color: #6b7280;
+  color: white;
+  opacity: 0.9;
   font-size: 0.875rem;
 }
 
-/* Back Button */
-.back-button-container {
-  text-align: center;
-  margin-top: 3rem;
+/* Page Header (harmonized with HouseStatsPage) */
+.page-header {
+  padding: 1.5rem 1rem;
+}
+
+.header-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  justify-content: flex-start;
 }
 
 .back-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  background: #6b7280;
-  color: white;
+  background: var(--surface-card);
   border: none;
-  border-radius: 8px;
+  color: var(--text-color);
+  padding: 0.75rem;
+  border-radius: 50%;
   cursor: pointer;
-  transition: background 0.3s ease;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .back-btn:hover {
-  background: #4b5563;
+  background: var(--surface-hover);
+  transform: translateX(-2px);
+}
+
+.header-title-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  margin-right: 3rem;
+}
+
+.page-title {
+  font-size: 2rem;
+  margin: 0;
+  font-weight: bold;
+  color: var(--text-color);
+  text-align: center;
+}
+
+/* Card sections */
+.card-section {
+  background: var(--surface-card);
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  margin-top: 2rem;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 2px solid rgba(255,255,255,0.08);
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.card-header h3 {
+  margin: 0;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.count-chip {
+  background: rgba(255,255,255,0.12);
+  color: white;
+  padding: 0.25rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+}
+
+/* Badges */
+.badge-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.badge-item {
+  background: var(--surface-hover);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.badge-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 2px solid var(--house-color, #6B7280);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.06);
+}
+
+.badge-title { color: white; font-weight: 600; }
+.badge-desc { color: white; opacity: 0.8; font-size: 0.85rem; }
+.badge-xp { color: white; font-weight: 600; }
+
+/* Tables */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table thead th {
+  text-align: left;
+  font-weight: 600;
+  color: white;
+  padding: 0.75rem 0.75rem;
+  border-bottom: 2px solid rgba(255,255,255,0.08);
+}
+
+.data-table tbody td {
+  padding: 0.75rem 0.75rem;
+  color: white;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.data-table tbody tr:hover {
+  background: var(--surface-hover);
+}
+
+.status-pill {
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.status-pill.completed { background: rgba(16, 185, 129, 0.25); color: #34d399; }
+.status-pill.inprogress { background: rgba(245, 158, 11, 0.25); color: #fbbf24; }
+
+.empty-state {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: white;
+  opacity: 0.9;
 }
 
 /* Responsive */
@@ -502,6 +740,10 @@ onMounted(() => {
   }
 
   .detailed-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .badge-grid {
     grid-template-columns: 1fr;
   }
 }
