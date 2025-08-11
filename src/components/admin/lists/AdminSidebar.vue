@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <aside class="admin-sidebar card sidebar">
     <div class="sidebar-card-listes">
       <nav class="sidebar-nav">
@@ -75,6 +75,13 @@ const menu = ref([
           { label: 'Management Places Safe', icon: 'pi pi-cog', to: '/management_places_safe' },
           { label: 'Stage Repartition', icon: 'pi pi-cog', to: '/stage_repartition' },
           { label: 'Validation PFP1A', icon: 'pi pi-cog', to: '/validate-pfp1a' }
+        ]
+      },
+      {
+        label: 'Gamification',
+        icon: 'pi pi-star',
+        items: [
+          { label: 'Gestion des Défis', icon: 'pi pi-flag', to: '/admin/defis' }
         ]
       },
       {
