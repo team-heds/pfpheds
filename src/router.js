@@ -35,11 +35,20 @@ import DocumentsPFP from '@/views/home/DocumentsView.vue'
 import Profile from "@/views/users/ProfileView.vue";
 import ProfileAdmin from '@/views/admin/ProfileAdminView.vue'
 import SettingView from '@/views/users/SettingsView.vue'
+import HESHouseQuizView from '@/views/users/HESHouseQuizView.vue'
+
+// ========================================
+// GAMIFICATION & MAISONS HES
+// ========================================
+import HouseStatsPage from '@/components/gamification/HouseStatsPage.vue'
+import HousesRankingPage from '@/components/gamification/HousesRankingPage.vue'
+import GamificationProfilePage from '@/components/gamification/GamificationProfilePage.vue'
 
 // ========================================
 // DASHBOARD & ADMINISTRATION
 // ========================================
 import DashboardView from '@/views/admin/DashboardView.vue';
+import AdminDefisView from '@/views/admin/gamification/AdminDefisView.vue';
 
 // ========================================
 // SOCIAL & COMMUNICATION
@@ -186,11 +195,16 @@ const routes = [
   { path: '/profile/:id', component: Profile, name: 'Profile', meta: { requiresAuth: true } },
   { path: '/profilAdmin/:id', component: ProfileAdmin, name: 'ProfileAdmin', meta: { requiresAuth: true, requiredRole: ['admin'] } },
   { path: '/settings', component: SettingView, name: 'SettingView', meta: { requiresAuth: true } },
+  { path: '/hes-house-quiz', component: HESHouseQuizView, name: 'HESHouseQuizView', meta: { requiresAuth: true } },
+  { path: '/houses/:houseName/stats', component: HouseStatsPage, name: 'HouseStatsPage', props: true, meta: { requiresAuth: true } },
+  { path: '/houses/ranking', component: HousesRankingPage, name: 'HousesRankingPage', meta: { requiresAuth: true } },
+  { path: '/gamification-profile', component: GamificationProfilePage, name: 'GamificationProfilePage', meta: { requiresAuth: false } },
 
   // ========================================
   // DASHBOARD & ADMINISTRATION
   // ========================================
   { path: '/admin', component: DashboardView, name: 'DashboardView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
+  { path: '/admin/defis', component: AdminDefisView, name: 'AdminDefisView', meta: { requiresAuth: true, requiredRole: ['admin'] } },
 
   // ========================================
   // SOCIAL & COMMUNICATION
