@@ -28,7 +28,7 @@
       
       <!-- Profile Header -->
       <div class="profile-header">
-        <div class="profile-banner" :style="{ backgroundColor: houseColor }">
+        <div class="profile-banner" :style="{ backgroundImage: `url(${houseBackgroundImage})` }">
           <div class="profile-info">
             
             <!-- User Avatar -->
@@ -72,64 +72,86 @@
         </div>
       </div>
 
-      <!-- Progression Section -->
-      <div class="section-content">
-        <h2><i class="pi pi-chart-line"></i> Ma Progression</h2>
-        
-        <!-- XP Progress -->
-        <div class="progress-card">
-          <h3>Progression vers le niveau {{ (userStats.niveau || 1) + 1 }}</h3>
-          <div class="xp-progress">
-            <div class="xp-bar">
-              <div 
-                class="xp-fill" 
-                :style="{ 
-                  width: `${xpProgress}%`, 
-                  backgroundColor: houseColor 
-                }"
-              ></div>
+      <!-- Page header aligned with HouseStatsPage -->
+      <div class="page-header">
+        <div class="header-content">
+          <button class="back-btn" @click="goBack">
+            <i class="pi pi-arrow-left"></i>
+          </button>
+          <div class="header-title-container">
+            <h2 class="page-title">Mon Profil Gamification</h2>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section principale, calquée sur HouseStatsPage -->
+      <div class="stats-container">
+        <!-- Carte niveau/progression (style house-level-card) -->
+        <div class="house-level-card">
+          <div class="level-info">
+            <div class="level-badge" :style="{ backgroundColor: houseColor }">
+              Niveau {{ userStats.niveau || 1 }}
             </div>
-            <div class="xp-text">
-              <span>{{ formatNumber(userStats.xp || 0) }} XP</span>
-              <span>{{ formatNumber(getNextLevelXP(userStats.niveau || 1)) }} XP pour le niveau suivant</span>
+            <h2 class="level-name">Progression du Niveau</h2>
+            <div class="xp-progress">
+              <div class="xp-bar">
+                <div 
+                  class="xp-fill" 
+                  :style="{ 
+                    width: `${xpProgress}%`, 
+                    backgroundColor: houseColor 
+                  }"
+                ></div>
+              </div>
+              <div class="xp-text">
+                <span>{{ formatNumber(userStats.xp || 0) }} XP</span>
+                <span>{{ formatNumber(getNextLevelXP(userStats.niveau || 1)) }} XP pour le niveau suivant</span>
+              </div>
             </div>
           </div>
         </div>
-        
-        <!-- Detailed Stats -->
-        <div class="detailed-stats">
+
+        <!-- Statistiques générales (grille 3 colonnes) -->
+        <div class="stats-grid">
           <div class="stat-card">
-            <i class="pi pi-calendar"></i>
-            <div class="stat-info">
-              <div class="stat-number">{{ getDaysSinceJoined() }}</div>
-              <div class="stat-desc">Jours depuis l'inscription</div>
+            <div class="stat-icon" :style="{ backgroundColor: houseColor }">
+              <i class="pi pi-star"></i>
+            </div>
+            <div class="stat-content">
+              <h3>{{ formatNumber(userStats.xp || 0) }}</h3>
+              <p>XP Total</p>
             </div>
           </div>
-          
+
           <div class="stat-card">
-            <i class="pi pi-trophy"></i>
-            <div class="stat-info">
-              <div class="stat-number">{{ userStats.defisCompletes || 0 }}</div>
-              <div class="stat-desc">Défis complétés</div>
+            <div class="stat-icon" :style="{ backgroundColor: houseColor }">
+              <i class="pi pi-bolt"></i>
+            </div>
+            <div class="stat-content">
+              <h3>{{ userStats.streak || 0 }}</h3>
+              <p>Série Actuelle</p>
             </div>
           </div>
-          
+
           <div class="stat-card">
-            <i class="pi pi-star"></i>
-            <div class="stat-info">
-              <div class="stat-number">{{ userStats.pointsBonus || 0 }}</div>
-              <div class="stat-desc">Points bonus</div>
+            <div class="stat-icon" :style="{ backgroundColor: houseColor }">
+              <i class="pi pi-fire"></i>
+            </div>
+            <div class="stat-content">
+              <h3>{{ userStats.streakMax || 0 }}</h3>
+              <p>Meilleure Série</p>
             </div>
           </div>
         </div>
+      </div>
 
         <!-- Prochaines quêtes / défis -->
         <div class="card-section">
           <div class="card-header">
             <h3><i class="pi pi-flag"></i> Prochaines Quêtes & Défis</h3>
-            <span class="count-chip">{{ upcoming.length }}</span>
+            <span class="count-chip">{{ upcomingLimited.length }}</span>
           </div>
-          <div class="table-container" v-if="upcoming.length">
+          <div class="table-container" v-if="upcomingLimited.length">
             <table class="data-table">
               <thead>
               <tr>
@@ -137,14 +159,26 @@
                 <th>Objectif</th>
                 <th>Récompense</th>
                 <th>Échéance</th>
+                <th>Statut</th>
               </tr>
               </thead>
               <tbody>
-              <tr v-for="(q, i) in upcoming" :key="q.id || i">
+              <tr v-for="(q, i) in upcomingLimited" :key="q.id || i">
                 <td>{{ q.title || q.name }}</td>
                 <td>{{ q.goal || q.description || '-' }}</td>
                 <td>{{ q.reward ? `${formatNumber(q.reward)} XP` : '-' }}</td>
                 <td>{{ q.deadline ? new Date(q.deadline).toLocaleDateString() : '-' }}</td>
+                <td>
+                  <span class="status-pill"
+                        :class="{
+                          completed: challengeStatus(q) === 'validé',
+                          missed: challengeStatus(q) === 'loupé',
+                          inprogress: challengeStatus(q) === 'en cours'
+                        }">
+                    <i class="pi" :class="challengeStatus(q) === 'validé' ? 'pi-check-circle' : (challengeStatus(q) === 'loupé' ? 'pi-times-circle' : 'pi-clock')"></i>
+                    {{ challengeStatus(q) }}
+                  </span>
+                </td>
               </tr>
               </tbody>
             </table>
@@ -159,10 +193,10 @@
         <div class="card-section">
           <div class="card-header">
             <h3><i class="pi pi-shield"></i> Mes Badges</h3>
-            <span class="count-chip">{{ badges.length }}</span>
+            <span class="count-chip">{{ badgesLimited.length }}</span>
           </div>
-          <div v-if="badges.length" class="badge-grid">
-            <div v-for="(badge, i) in badges" :key="badge.id || i" class="badge-item">
+          <div v-if="badgesLimited.length" class="badge-grid">
+            <div v-for="(badge, i) in badgesLimited" :key="badge.id || i" class="badge-item">
               <div class="badge-icon" :style="{ borderColor: houseColor }">
                 <i :class="badge.icon || 'pi pi-star'" :style="{ color: houseColor }"></i>
               </div>
@@ -183,9 +217,9 @@
         <div class="card-section">
           <div class="card-header">
             <h3><i class="pi pi-trophy"></i> Mes Hauts Faits</h3>
-            <span class="count-chip">{{ achievements.length }}</span>
+            <span class="count-chip">{{ achievementsLimited.length }}</span>
           </div>
-          <div class="table-container" v-if="achievements.length">
+          <div class="table-container" v-if="achievementsLimited.length">
             <table class="data-table">
               <thead>
                 <tr>
@@ -196,7 +230,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(a, i) in achievements" :key="a.id || i">
+                <tr v-for="(a, i) in achievementsLimited" :key="a.id || i">
                   <td>{{ a.title || a.name }}</td>
                   <td>
                     <span class="status-pill" :class="a.completed ? 'completed' : 'inprogress'">
@@ -215,19 +249,22 @@
           </div>
         </div>
 
-      </div>
-      
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { getAuth } from 'firebase/auth'
 import { getUserGamificationStats } from '@/service/hesHousesService'
-import { getActiveDefis } from '@/service/defisService'
+import { getActiveDefis, subscribeActiveDefis } from '@/service/defisService'
 import Navbar from '@/components/common/utils/Navbar.vue'
+// Background images per house (align with HouseStatsPage)
+import FondHarmonis from '@/assets/maisons/FondHarmonis.png'
+import FondElaris from '@/assets/maisons/FondElaris.png'
+import FondDoloris from '@/assets/maisons/FondDoloris.png'
+import FondSolencia from '@/assets/maisons/FondSolencia.png'
 
 // Router and auth
 const router = useRouter()
@@ -237,6 +274,7 @@ const auth = getAuth()
 const loading = ref(true)
 const error = ref(null)
 const userStats = ref(null)
+let unsubscribeDefis = null
 
 // House configuration
 const houseConfig = {
@@ -247,9 +285,34 @@ const houseConfig = {
 }
 
 // Computed properties
+const normalizeHouse = (val) => {
+  if (!val) return null
+  const s = String(val).trim().toLowerCase()
+  if (s.startsWith('harm')) return 'Harmonis'
+  if (s.startsWith('ela')) return 'Elaris'
+  if (s.startsWith('dol')) return 'Doloris'
+  if (s.startsWith('sol')) return 'Solencia'
+  return null
+}
+
 const houseColor = computed(() => {
-  if (!userStats.value?.maison) return '#6B7280'
-  return houseConfig[userStats.value.maison]?.color || '#6B7280'
+  const h = normalizeHouse(userStats.value?.maison)
+  if (!h) return '#6B7280'
+  return houseConfig[h]?.color || '#6B7280'
+})
+
+// Map background image by normalized house
+const houseImages = {
+  harmonis: FondHarmonis,
+  elaris: FondElaris,
+  doloris: FondDoloris,
+  solencia: FondSolencia
+}
+
+const houseBackgroundImage = computed(() => {
+  const h = normalizeHouse(userStats.value?.maison)
+  const key = (h || 'Harmonis').toLowerCase()
+  return houseImages[key] || FondHarmonis
 })
 
 const xpProgress = computed(() => {
@@ -264,6 +327,34 @@ const xpProgress = computed(() => {
 const badges = computed(() => userStats.value?.badges || [])
 const achievements = computed(() => userStats.value?.achievements || [])
 const upcoming = computed(() => userStats.value?.upcomingChallenges || userStats.value?.upcoming || [])
+
+// Limited views (10 max)
+const badgesLimited = computed(() => {
+  const arr = [...badges.value]
+  arr.sort((a, b) => new Date(b.date || b.earnedAt || b.createdAt || 0) - new Date(a.date || a.earnedAt || a.createdAt || 0))
+  return arr.slice(0, 10)
+})
+
+const achievementsLimited = computed(() => {
+  const arr = [...achievements.value]
+  arr.sort((a, b) => new Date(b.date || b.completedAt || b.createdAt || 0) - new Date(a.date || a.completedAt || a.createdAt || 0))
+  return arr.slice(0, 10)
+})
+
+const upcomingLimited = computed(() => {
+  const arr = [...upcoming.value]
+  arr.sort((a, b) => new Date(a.deadline || Infinity) - new Date(b.deadline || Infinity))
+  return arr.slice(0, 10)
+})
+
+// Helper: status for a challenge
+const challengeStatus = (q) => {
+  if (q?.completed || q?.status === 'completed') return 'validé'
+  const now = new Date()
+  const deadline = q?.deadline ? new Date(q.deadline) : null
+  if (q?.failed || q?.status === 'failed' || (deadline && deadline < now)) return 'loupé'
+  return 'en cours'
+}
 
 // Utility functions
 const formatNumber = (num) => {
@@ -305,7 +396,7 @@ const loadUserStats = async () => {
       throw new Error('Aucune donnée trouvée pour cet utilisateur')
     }
     
-    // Fetch upcoming active challenges from Firebase and merge
+    // Fetch upcoming active challenges and also subscribe for real-time updates
     let house = stats?.maison || null
     let activeDefis = []
     try {
@@ -313,8 +404,22 @@ const loadUserStats = async () => {
     } catch (e) {
       console.warn('Impossible de charger les défis actifs:', e)
     }
-
     userStats.value = { ...stats, upcomingChallenges: activeDefis }
+
+    // Setup realtime subscription
+    if (unsubscribeDefis) {
+      try { unsubscribeDefis() } catch {}
+      unsubscribeDefis = null
+    }
+    try {
+      unsubscribeDefis = subscribeActiveDefis(house, (list) => {
+        if (userStats.value) {
+          userStats.value = { ...userStats.value, upcomingChallenges: list }
+        }
+      })
+    } catch (e) {
+      console.warn('Subscription défis actifs échouée:', e)
+    }
   } catch (err) {
     console.error('Erreur lors du chargement des stats:', err)
     error.value = err.message || 'Erreur lors du chargement des données'
@@ -330,6 +435,13 @@ const goBack = () => {
 // Initialization
 onMounted(() => {
   loadUserStats()
+})
+
+onBeforeUnmount(() => {
+  if (unsubscribeDefis) {
+    try { unsubscribeDefis() } catch {}
+    unsubscribeDefis = null
+  }
 })
 </script>
 
@@ -386,13 +498,30 @@ onMounted(() => {
 }
 
 .profile-banner {
-  background: linear-gradient(135deg, var(--house-color, #6B7280) 0%, rgba(0,0,0,0.15) 100%);
   color: white;
-  padding: 2rem;
+  padding: 4rem 1rem;
   border-radius: 0 0 20px 20px;
+  position: relative;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  min-height: 280px;
+  display: flex;
+  align-items: center;
+}
+
+.profile-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 100%);
+  /* subtle tint from house color */
+  box-shadow: inset 0 0 0 100vmax color-mix(in srgb, var(--house-color, #6B7280) 12%, transparent);
 }
 
 .profile-info {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: 2rem;
@@ -405,7 +534,8 @@ onMounted(() => {
   height: 100px;
   border-radius: 50%;
   overflow: hidden;
-  border: 4px solid rgba(255, 255, 255, 0.3);
+  border: 4px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.35);
 }
 
 .user-avatar img {
@@ -432,6 +562,7 @@ onMounted(() => {
   font-size: 2rem;
   font-weight: bold;
   margin: 0 0 0.5rem 0;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.35);
 }
 
 .user-house {
@@ -453,6 +584,8 @@ onMounted(() => {
   padding: 0.25rem 0.75rem;
   border-radius: 20px;
   font-weight: bold;
+  border: 2px solid rgba(255,255,255,0.3);
+  backdrop-filter: blur(6px);
 }
 
 .quick-stats {
@@ -468,6 +601,7 @@ onMounted(() => {
   font-size: 1.5rem;
   font-weight: bold;
   margin-bottom: 0.25rem;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.25);
 }
 
 .stat-label {
@@ -716,8 +850,9 @@ onMounted(() => {
   font-size: 0.8rem;
   font-weight: 600;
 }
-.status-pill.completed { background: rgba(16, 185, 129, 0.25); color: #34d399; }
-.status-pill.inprogress { background: rgba(245, 158, 11, 0.25); color: #fbbf24; }
+.status-pill.completed { background: #dcfce7; color: #14532d; }
+.status-pill.inprogress { background: #dbeafe; color: #1e3a8a; }
+.status-pill.missed { background: #fee2e2; color: #7f1d1d; }
 
 .empty-state {
   display: flex;

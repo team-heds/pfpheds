@@ -1,5 +1,5 @@
 import { db } from '../../firebase'
-import { ref as dbRef, push, update, remove, get, query, orderByChild, equalTo } from 'firebase/database'
+import { ref as dbRef, push, update, remove, get, query, orderByChild, equalTo, onValue } from 'firebase/database'
 
 // Path constant
 const DEFIS_PATH = 'defis'
@@ -46,6 +46,28 @@ export const getActiveDefis = async (house = null) => {
     const dbb = b.deadline ? new Date(b.deadline).getTime() : Infinity
     return da - dbb
   })
+}
+
+// Subscribe to active upcoming challenges (real-time)
+export const subscribeActiveDefis = (house = null, callback) => {
+  const ref = dbRef(db, DEFIS_PATH)
+  const unsubscribe = onValue(ref, (snapshot) => {
+    const val = snapshot.val() || {}
+    const items = Object.entries(val).map(([id, item]) => ({ id, ...item }))
+    const now = new Date()
+    const filtered = items.filter(d => {
+      if (!d.active) return false
+      if (d.deadline && new Date(d.deadline) < now) return false
+      if (house && d.targetHouse && d.targetHouse !== 'all' && d.targetHouse !== house) return false
+      return true
+    }).sort((a, b) => {
+      const da = a.deadline ? new Date(a.deadline).getTime() : Infinity
+      const dbb = b.deadline ? new Date(b.deadline).getTime() : Infinity
+      return da - dbb
+    })
+    callback(filtered)
+  })
+  return unsubscribe
 }
 
 // Update an existing challenge by id
