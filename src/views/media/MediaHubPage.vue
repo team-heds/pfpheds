@@ -1,4 +1,5 @@
 <template>
+  <Navbar />
   <div class="media-hub">
     <div class="header">
       <h2 class="title">Bibliothèque Multimédia</h2>
@@ -197,6 +198,7 @@ import { listYears, listModules, listVideos, getVideo, publishVideo, createTicke
 import VideoPlayerVimeo from '@/components/media/VideoPlayerVimeo.vue'
 import { listAllVideos, testVimeoAuth } from '@/service/vimeoService'
 import { envTest } from '@/utils/envTest'
+import Navbar from '@/components/common/utils/Navbar.vue'
 
 // Auth & roles (local)
 const userUid = ref(null)

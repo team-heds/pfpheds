@@ -1,4 +1,5 @@
 <template>
+  <Navbar />
   <div class="module-videos-page">
     <!-- Header du module -->
     <div class="module-header">
@@ -213,6 +214,7 @@ import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
 import Toast from 'primevue/toast'
 import { getModuleById, getModuleVideos, updateVideo } from '@/service/moduleService'
+import Navbar from '@/components/common/utils/Navbar.vue'
 
 const router = useRouter()
 const route = useRoute()

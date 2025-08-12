@@ -1,4 +1,5 @@
 <template>
+  <Navbar />
   <div class="modules-page">
     <div class="page-header">
       <h1>Modules Vidéo</h1>
@@ -14,6 +15,13 @@
           class="search-input"
         />
         <Button icon="pi pi-search" class="search-btn" />
+        <Button 
+          icon="pi pi-refresh" 
+          @click="refreshModules"
+          :loading="loading"
+          v-tooltip="'Actualiser les modules'"
+          class="refresh-btn"
+        />
       </div>
       
       <div class="filter-buttons">
@@ -137,7 +145,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
-import { getAllModules } from '@/service/moduleService'
+import { getAllModules } from '@/service/mediaService'
+import Navbar from '@/components/common/utils/Navbar.vue'
 
 const router = useRouter()
 
@@ -204,27 +213,25 @@ const getStatusLabel = (status) => {
   }
 }
 
+const refreshModules = async () => {
+  loading.value = true
+  try {
+    modules.value = await getAllModules()
+    console.log('[ModulesPage] Modules actualisés:', modules.value)
+  } catch (error) {
+    console.error('[ModulesPage] Erreur lors de l\'actualisation des modules:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
 // Lifecycle
 onMounted(async () => {
   try {
     modules.value = await getAllModules()
+    console.log('[ModulesPage] Modules chargés:', modules.value)
   } catch (error) {
-    console.error('Error loading modules:', error)
-    // Fallback avec des modules fictifs pour la démo
-    modules.value = [
-      {
-        id: 'demo-module-1',
-        name: 'Module de démonstration',
-        description: 'Module créé automatiquement pour la démonstration',
-        thumbnail: 'https://via.placeholder.com/300x200/4f46e5/white?text=Demo',
-        videoCount: 0,
-        validatedCount: 0,
-        pendingCount: 0,
-        rejectedCount: 0,
-        status: 'pending',
-        progressPercentage: 0
-      }
-    ]
+    console.error('[ModulesPage] Erreur lors du chargement des modules:', error)
   }
 })
 </script>
@@ -243,12 +250,10 @@ onMounted(async () => {
 
 .page-header h1 {
   font-size: 2.5rem;
-  color: #1f2937;
   margin-bottom: 0.5rem;
 }
 
 .page-header p {
-  color: #6b7280;
   font-size: 1.1rem;
 }
 
@@ -270,6 +275,12 @@ onMounted(async () => {
 
 .search-input {
   flex: 1;
+}
+
+.refresh-btn {
+  background: var(--primary-color);
+  border: none;
+
 }
 
 .filter-buttons {

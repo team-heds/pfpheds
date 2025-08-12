@@ -34,6 +34,7 @@ import ModulesPage from '@/views/media/ModulesPage.vue'
 import ModuleVideosPage from '@/views/media/ModuleVideosPage.vue'
 import VideoValidationPage from '@/views/media/VideoValidationPage.vue'
 import ModuleAdminPage from '@/views/media/ModuleAdminPage.vue'
+import ModuleAdminPageSimple from '@/views/admin/ModuleAdminPageSimple.vue'
 import VimeoTestPage from '@/views/media/VimeoTestPage.vue'
 import QrCodeGenerator from '@/components/ui/QrCodeGenerator.vue'
 
@@ -201,9 +202,10 @@ const routes = [
   // MEDIA & MULTIMÉDIA
   { path: '/media', component: MediaHubPage, name: 'MediaHubPage', meta: { requiresAuth: true } },
   { path: '/modules', component: ModulesPage, name: 'ModulesPage', meta: { requiresAuth: true } },
-  { path: '/modules/admin', component: ModuleAdminPage, name: 'ModuleAdminPage', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
   { path: '/modules/:moduleId/videos', component: ModuleVideosPage, name: 'ModuleVideosPage', props: true, meta: { requiresAuth: true } },
-  { path: '/modules/:moduleId/videos/:videoId/validation', component: VideoValidationPage, name: 'VideoValidationPage', props: true, meta: { requiresAuth: true } },
+  { path: '/videos/:videoId/validation', component: VideoValidationPage, name: 'VideoValidationPage', props: true, meta: { requiresAuth: true } },
+  { path: '/admin/modules', component: ModuleAdminPage, name: 'ModuleAdminPage', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
+  { path: '/admin/modules/simple', component: ModuleAdminPageSimple, name: 'ModuleAdminPageSimple', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
   { path: '/vimeo-test', component: VimeoTestPage, name: 'VimeoTestPage', meta: { requiresAuth: true } },
 
   // ========================================
