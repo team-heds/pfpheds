@@ -86,111 +86,105 @@
             <InputText v-model="vimeoSearch" placeholder="Rechercher sur Vimeo" class="w-full" @keyup="onVimeoKeyup" />
           </span>
           <Button label="Actualiser" icon="pi pi-refresh" class="p-button-text" @click="loadVimeoVideos" />
-          <Button label="Tester Auth" icon="pi pi-shield" class="p-button-text" @click="runVimeoAuthTest" />
-          <Button label="Debug Env" icon="pi pi-cog" class="p-button-text" @click="debugEnvironment" />
-          <span class="p-input-icon-left w-20rem">
-            <i class="pi pi-key" />
-            <InputText v-model="vimeoTokenInput" placeholder="Token override (DEV)" class="w-full" />
-          </span>
-          <Button label="Set token" class="p-button-text" @click="applyVimeoTokenOverride" />
-          <Button label="Clear token" class="p-button-text" severity="danger" @click="clearVimeoTokenOverride" />
-        </div>
-        <div v-if="vimeoDebug" class="mt-2 text-600" style="white-space:pre-wrap; word-break:break-word;">
-          {{ vimeoDebug }}
-        </div>
-        <div v-if="vimeoLoading" class="mt-4">
-          <div class="text-center">
-            <ProgressSpinner style="width:50px;height:50px" strokeWidth="4" />
-            <p class="mt-2 text-600">Chargement des vidéos Vimeo...</p>
-          </div>
-        </div>
-        <div v-else-if="vimeoVideos.length === 0" class="mt-4 text-center">
-          <div class="text-6xl text-300 mb-3">
-            <i class="pi pi-video"></i>
-          </div>
-          <h3 class="text-700">Aucune vidéo trouvée</h3>
-          <p class="text-600 mb-4">Cliquez sur "Actualiser" pour charger vos vidéos Vimeo</p>
-          <Button label="Actualiser" icon="pi pi-refresh" @click="loadVimeoVideos" />
-        </div>
-        <div v-else>
-          <DataTable :value="vimeoVideosPaginated" responsive-layout="scroll" class="mt-3">
-            <Column header="Aperçu" style="width: 120px">
-              <template #body="{ data }">
-                <img v-if="data.thumbnail" :src="data.thumbnail" alt="thumb" style="width:96px;height:54px;object-fit:cover;border-radius:6px;" />
-                <div v-else class="w-6rem h-3rem bg-gray-200 border-round flex align-items-center justify-content-center">
-                  <i class="pi pi-video text-gray-500"></i>
-                </div>
-              </template>
-            </Column>
-            <Column field="title" header="Titre">
-              <template #body="{ data }">
-                <div class="font-medium">{{ data.title }}</div>
-                <div class="text-sm text-500" v-if="data.description">
-                  {{ data.description.substring(0, 100) }}{{ data.description.length > 100 ? '...' : '' }}
-                </div>
-              </template>
-            </Column>
-            <Column field="duration" header="Durée" style="width: 100px" />
-            <Column field="privacy" header="Confidentialité" style="width: 120px">
-              <template #body="{ data }">
-                <Tag :value="data.privacy" :severity="data.privacy === 'anybody' ? 'success' : 'warning'" />
-              </template>
-            </Column>
-            <Column header="Actions" style="width: 100px">
-              <template #body="{ data }">
-                <Button label="Ouvrir" icon="pi pi-play" size="small" @click="openVimeoVideo(data)" />
-              </template>
-            </Column>
-          </DataTable>
-        </div>
-        <div v-if="vimeoVideosFiltered.length > 0" class="flex justify-content-between align-items-center mt-3">
-          <span class="text-600">{{ vimeoVideosFiltered.length }} vidéo(s) • Page {{ vimeoCurrentPage }} sur {{ vimeoTotalPages }}</span>
-          <div class="flex gap-2">
-            <Button label="Précédent" icon="pi pi-chevron-left" :disabled="vimeoCurrentPage <= 1" @click="vimeoPreviousPage" />
-            <Button label="Suivant" icon="pi pi-chevron-right" :disabled="vimeoCurrentPage >= vimeoTotalPages" @click="vimeoNextPage" />
-          </div>
-        </div>
-        <div v-if="vimeoVideos.length > 0" class="text-center mt-2">
-          <small class="text-500">Total exact : {{ vimeoVideos.length }} vidéos dans votre compte Vimeo</small>
-        </div>
-        <Dialog v-model:visible="vimeoViewerVisible" modal header="Lecture Vimeo" :style="{ width: '70vw' }">
-          <div v-if="selectedVimeo">
-            <VideoPlayerVimeo :vimeo-id="selectedVimeo.id" class="mb-3" />
-            <div class="text-xl font-medium mb-1">{{ selectedVimeo.title }}</div>
-            <div class="text-600">{{ selectedVimeo.description }}</div>
-            <div class="text-sm text-500 mt-2">
-              Durée: {{ selectedVimeo.duration }} • Confidentialité: {{ selectedVimeo.privacy }}
-            </div>
-          </div>
-        </Dialog>
-      </TabPanel>
-    </TabView>
+          <!-- <Button label="Tester Auth" icon="pi pi-shield" class="p-button-text" @click="runVimeoAuthTest" /> -->
+          <!-- <Button label="Debug Env" icon="pi pi-cog" class="p-button-text" @click="debugEnvironment" /> -->
+         </div>
+         <div v-if="vimeoDebug" class="mt-2 text-600" style="white-space:pre-wrap; word-break:break-word;">
+           {{ vimeoDebug }}
+         </div>
+         <div v-if="vimeoLoading" class="mt-4">
+           <div class="text-center">
+             <ProgressSpinner style="width:50px;height:50px" strokeWidth="4" />
+             <p class="mt-2 text-600">Chargement des vidéos Vimeo...</p>
+           </div>
+         </div>
+         <div v-else-if="vimeoVideos.length === 0" class="mt-4 text-center">
+           <div class="text-6xl text-300 mb-3">
+             <i class="pi pi-video"></i>
+           </div>
+           <h3 class="text-700">Aucune vidéo trouvée</h3>
+           <p class="text-600 mb-4">Cliquez sur "Actualiser" pour charger vos vidéos Vimeo</p>
+           <Button label="Actualiser" icon="pi pi-refresh" @click="loadVimeoVideos" />
+         </div>
+         <div v-else>
+           <DataTable :value="vimeoVideosPaginated" responsive-layout="scroll" class="mt-3">
+             <Column header="Aperçu" style="width: 120px">
+               <template #body="{ data }">
+                 <img v-if="data.thumbnail" :src="data.thumbnail" alt="thumb" style="width:96px;height:54px;object-fit:cover;border-radius:6px;" />
+                 <div v-else class="w-6rem h-3rem bg-gray-200 border-round flex align-items-center justify-content-center">
+                   <i class="pi pi-video text-gray-500"></i>
+                 </div>
+               </template>
+             </Column>
+             <Column field="title" header="Titre">
+               <template #body="{ data }">
+                 <div class="font-medium">{{ data.title }}</div>
+                 <div class="text-sm text-500" v-if="data.description">
+                   {{ data.description.substring(0, 100) }}{{ data.description.length > 100 ? '...' : '' }}
+                 </div>
+               </template>
+             </Column>
+             <Column field="duration" header="Durée" style="width: 100px" />
+             <Column field="privacy" header="Confidentialité" style="width: 120px">
+               <template #body="{ data }">
+                 <Tag :value="data.privacy" :severity="data.privacy === 'anybody' ? 'success' : 'warning'" />
+               </template>
+             </Column>
+             <Column header="Actions" style="width: 100px">
+               <template #body="{ data }">
+                 <Button label="Ouvrir" icon="pi pi-play" size="small" @click="openVimeoVideo(data)" />
+               </template>
+             </Column>
+           </DataTable>
+         </div>
+         <div v-if="vimeoVideosFiltered.length > 0" class="flex justify-content-between align-items-center mt-3">
+           <span class="text-600">{{ vimeoVideosFiltered.length }} vidéo(s) • Page {{ vimeoCurrentPage }} sur {{ vimeoTotalPages }}</span>
+           <div class="flex gap-2">
+             <Button label="Précédent" icon="pi pi-chevron-left" :disabled="vimeoCurrentPage <= 1" @click="vimeoPreviousPage" />
+             <Button label="Suivant" icon="pi pi-chevron-right" :disabled="vimeoCurrentPage >= vimeoTotalPages" @click="vimeoNextPage" />
+           </div>
+         </div>
+         <div v-if="vimeoVideos.length > 0" class="text-center mt-2">
+           <small class="text-500">Total exact : {{ vimeoVideos.length }} vidéos dans votre compte Vimeo</small>
+         </div>
+         <Dialog v-model:visible="vimeoViewerVisible" modal header="Lecture Vimeo" :style="{ width: '70vw' }">
+           <div v-if="selectedVimeo">
+             <VideoPlayerVimeo :vimeo-id="selectedVimeo.id" class="mb-3" />
+             <div class="text-xl font-medium mb-1">{{ selectedVimeo.title }}</div>
+             <div class="text-600">{{ selectedVimeo.description }}</div>
+             <div class="text-sm text-500 mt-2">
+               Durée: {{ selectedVimeo.duration }} • Confidentialité: {{ selectedVimeo.privacy }}
+             </div>
+           </div>
+         </Dialog>
+       </TabPanel>
+     </TabView>
 
-    <Dialog v-model:visible="ticketDialog" modal header="Créer un ticket" :style="{ width: '40rem' }">
-      <div class="p-fluid">
-        <div class="field">
-          <label for="tTitle">Titre</label>
-          <InputText id="tTitle" v-model="ticketForm.title" />
-        </div>
-        <div class="field">
-          <label for="tType">Type</label>
-          <Dropdown id="tType" v-model="ticketForm.type" :options="ticketTypes" />
-        </div>
-        <div class="field">
-          <label for="tPriority">Priorité</label>
-          <Dropdown id="tPriority" v-model="ticketForm.priority" :options="ticketPriorities" />
-        </div>
-        <div class="field">
-          <label for="tDesc">Description</label>
-          <Textarea id="tDesc" v-model="ticketForm.description" rows="5" />
-        </div>
-        <div class="flex justify-content-end gap-2">
-          <Button label="Annuler" class="p-button-text" @click="ticketDialog=false" />
-          <Button label="Créer" icon="pi pi-check" @click="createTicketAction" />
-        </div>
-      </div>
-    </Dialog>
-    <!-- Anchor for scroll-to-bottom with small margin -->
+     <Dialog v-model:visible="ticketDialog" modal header="Créer un ticket" :style="{ width: '40rem' }">
+       <div class="p-fluid">
+         <div class="field">
+           <label for="tTitle">Titre</label>
+           <InputText id="tTitle" v-model="ticketForm.title" />
+         </div>
+         <div class="field">
+           <label for="tType">Type</label>
+           <Dropdown id="tType" v-model="ticketForm.type" :options="ticketTypes" />
+         </div>
+         <div class="field">
+           <label for="tPriority">Priorité</label>
+           <Dropdown id="tPriority" v-model="ticketForm.priority" :options="ticketPriorities" />
+         </div>
+         <div class="field">
+           <label for="tDesc">Description</label>
+           <Textarea id="tDesc" v-model="ticketForm.description" rows="5" />
+         </div>
+         <div class="flex justify-content-end gap-2">
+           <Button label="Annuler" class="p-button-text" @click="ticketDialog=false" />
+           <Button label="Créer" icon="pi pi-check" @click="createTicketAction" />
+         </div>
+       </div>
+     </Dialog>
+     <!-- Anchor for scroll-to-bottom with small margin -->
     <div ref="pageEnd" style="height: 24px;"></div>
   </div>
 </template>
@@ -316,13 +310,13 @@ async function loadVimeoVideos() {
     } else {
       // Formatage des vidéos pour l'affichage
       const formattedVideos = fetchedVideos.map(video => ({
-        id: video.uri?.split('/').pop() || video.id,
+        id: video.id || video.uri?.split('/').pop(),
         title: video.name || 'Sans titre',
         description: video.description || '',
         duration: formatDuration(video.duration || 0),
-        thumbnail: video.pictures?.[0]?.link || '',
+        thumbnail: video.pictures?.length > 0 ? video.pictures[video.pictures.length - 1]?.link : '',
         link: video.link || '',
-        privacy: video.privacy?.view || 'unknown',
+        privacy: video.privacy || 'unknown',
         created_time: video.created_time || '',
         modified_time: video.modified_time || ''
       }))

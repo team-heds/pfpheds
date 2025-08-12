@@ -21,23 +21,37 @@ function getToken() {
 
 // Fonction helper pour récupérer les vidéos depuis un endpoint
 async function fetchVideosFromEndpoint(baseUrl, { perPage, maxPages, query, token }) {
-  let url = `${baseUrl}?per_page=${perPage}` + (query ? `&query=${encodeURIComponent(query)}` : '');
+  // Construction propre de l'URL avec paramètres
+  const url = new URL(baseUrl);
+  url.searchParams.set('per_page', perPage);
+  if (query && query.trim()) {
+    url.searchParams.set('query', query.trim());
+  }
+  
+  let currentUrl = url.toString();
   const results = [];
   let pages = 0;
   
-  while (url && pages < maxPages) {
+  console.log(`[vimeoService] Début récupération depuis: ${currentUrl}`);
+  
+  while (currentUrl && pages < maxPages) {
     pages += 1;
+    console.log(`[vimeoService] Page ${pages}: ${currentUrl}`);
+    
     try {
-      const res = await fetch(url, {
+      const res = await fetch(currentUrl, {
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: 'application/vnd.vimeo.*+json;version=3.4',
         },
       });
+      
       if (!res.ok) {
-        console.error('[vimeoService] fetchVideosFromEndpoint page failed', res.status, await res.text());
+        const errorText = await res.text();
+        console.error(`[vimeoService] Page ${pages} failed:`, res.status, errorText);
         break;
       }
+      
       const data = await res.json();
       const items = (data.data || []).map(v => ({
         id: v.uri?.split('/').pop(),
@@ -46,15 +60,27 @@ async function fetchVideosFromEndpoint(baseUrl, { perPage, maxPages, query, toke
         duration: v.duration,
         pictures: v.pictures?.sizes || [],
         link: v.link,
-        privacy: v.privacy,
+        privacy: v.privacy?.view || 'unknown',
       }));
+      
+      console.log(`[vimeoService] Page ${pages}: ${items.length} vidéos récupérées`);
       results.push(...items);
-      url = data.paging?.next || null;
+      
+      // URL suivante pour la pagination
+      let nextUrl = data.paging?.next || null;
+      if (nextUrl && nextUrl.startsWith('/')) {
+        // Si l'URL est relative, la convertir en URL absolue
+        nextUrl = `${VIMEO_API_BASE}${nextUrl}`;
+      }
+      currentUrl = nextUrl;
+      
     } catch (e) {
-      console.error('[vimeoService] fetchVideosFromEndpoint error', e);
+      console.error(`[vimeoService] Erreur page ${pages}:`, e);
       break;
     }
   }
+  
+  console.log(`[vimeoService] Total récupéré: ${results.length} vidéos en ${pages} pages`);
   return results;
 }
 
@@ -67,52 +93,45 @@ export async function listAllVideos({ perPage = 50, maxPages = 10, query = '', t
     return [];
   }
   
-  console.log('[vimeoService] Récupération de toutes les vidéos depuis plusieurs endpoints...');
+  console.log('[vimeoService] Récupération des vidéos depuis /me/videos...');
   
-  // Récupérer les vidéos depuis TOUS les endpoints possibles
-  const allEndpoints = [
-    // Endpoints directs
-    `${VIMEO_API_BASE}/me/videos`,                    // Vidéos personnelles
-    `${VIMEO_API_BASE}/me/videos?filter=appears`,     // Vidéos où tu apparais
-    `${VIMEO_API_BASE}/me/videos?filter=embeddable`,  // Vidéos intégrables
-    `${VIMEO_API_BASE}/videos`,                       // Toutes les vidéos accessibles
-    // Endpoints équipe/organisation
-    `${VIMEO_API_BASE}/me/team/videos`,               // Vidéos d'équipe
-
-  ];
+  // SIMPLIFICATION: Utiliser uniquement l'endpoint principal qui fonctionne
+  const mainEndpoint = `${VIMEO_API_BASE}/me/videos`;
   
-  console.log('[vimeoService] Test de tous les endpoints disponibles...');
+  console.log(`[vimeoService] Récupération depuis: ${mainEndpoint}`);
   
-  // Tester chaque endpoint individuellement avec logs
-  const allVideoResults = [];
-  for (const endpoint of allEndpoints) {
+  try {
+    const videos = await fetchVideosFromEndpoint(mainEndpoint, { 
+      perPage, 
+      maxPages, 
+      query, 
+      token: finalToken 
+    });
+    
+    console.log(`[vimeoService] ${videos.length} vidéos récupérées depuis /me/videos`);
+    
+    // Récupérer aussi les albums (qui fonctionnent généralement)
+    let albumVideos = [];
     try {
-      console.log(`[vimeoService] Test endpoint: ${endpoint}`);
-      const videos = await fetchVideosFromEndpoint(endpoint, { perPage, maxPages: 2, query, token: finalToken });
-      console.log(`[vimeoService] ${endpoint} → ${videos.length} vidéos`);
-      allVideoResults.push(...videos);
+      albumVideos = await fetchAlbumsAndVideos({ perPage, maxPages: 2, query, token: finalToken });
+      console.log(`[vimeoService] ${albumVideos.length} vidéos récupérées depuis les albums`);
     } catch (e) {
-      console.log(`[vimeoService] ${endpoint} → ERREUR:`, e.message);
+      console.log('[vimeoService] Albums non accessibles:', e.message);
     }
+    
+    // Combiner et dédupliquer
+    const allVideos = [...videos, ...albumVideos];
+    const uniqueVideos = allVideos.filter((video, index, self) => 
+      index === self.findIndex(v => v.id === video.id)
+    );
+    
+    console.log(`[vimeoService] TOTAL: ${uniqueVideos.length} vidéos uniques récupérées`);
+    return uniqueVideos;
+    
+  } catch (error) {
+    console.error('[vimeoService] Erreur lors de la récupération des vidéos:', error);
+    return [];
   }
-  
-  // Récupérer aussi les vidéos des conteneurs
-  const containersResults = await Promise.all([
-    fetchAlbumsAndVideos({ perPage, maxPages, query, token: finalToken }),
-    fetchFoldersAndVideos({ perPage, maxPages, query, token: finalToken }),
-    fetchProjectsAndVideos({ perPage, maxPages, query, token: finalToken }),
-    fetchTeamFoldersAndVideos({ perPage, maxPages, query, token: finalToken })
-  ]);
-  
-  const allVideos = [...allVideoResults, ...containersResults.flat()];
-  
-  // Combiner et dédupliquer par ID
-  const uniqueVideos = allVideos.filter((video, index, self) => 
-    index === self.findIndex(v => v.id === video.id)
-  );
-  
-  console.log(`[vimeoService] TOTAL: ${uniqueVideos.length} vidéos uniques récupérées`);
-  return uniqueVideos;
 }
 
 // Récupérer les vidéos des albums
