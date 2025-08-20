@@ -12,6 +12,11 @@ app.get('/api/pong', (req, res) => {
   res.send('aller')
 })
 
+app.get('/api/pongg', (req, res) => {
+  res.send('aller 2x')
+})
+
+
 // Exemple de route test Supabase
 
 app.get('/api/chapters', async (req, res) => {

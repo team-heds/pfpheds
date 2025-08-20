@@ -304,7 +304,7 @@ const routes = [
   { path: '/mobile-tools', component: MobileToolsView, name: 'MobileToolsView', meta: { requiresAuth: true } },
   { path: '/mobile-lang-apps', component: MobileLangAppsView, name: 'MobileLangApps', meta: { mobileOnly: true } },
   { path: '/mobile-search', component: MobileSearchView, name: 'MobileSearchView', meta: { requiresAuth: true } },
-  { path: '/template-test', component: () => import('@/views/template/TemplateTest.vue'), name: 'TemplateTest' },
+  //{ path: '/template-test', component: () => import('@/views/template/TemplateTest.vue'), name: 'TemplateTest' },
 
   // ========================================
   // MOBILE SPÉCIFIQUE
