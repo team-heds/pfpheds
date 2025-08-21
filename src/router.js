@@ -28,6 +28,15 @@ import TermsOfUse from "@/views/home/TermsView.vue";
 import InfoExterne from "@/views/home/InfoExterneView.vue";
 import HistoriquePFP from '@/views/home/HistoryView.vue'
 import DocumentsPFP from '@/views/home/DocumentsView.vue'
+// MEDIA
+import MediaHubPage from '@/views/media/MediaHubPage.vue'
+import ModulesPage from '@/views/media/ModulesPage.vue'
+import ModuleVideosPage from '@/views/media/ModuleVideosPage.vue'
+import VideoValidationPage from '@/views/media/VideoValidationPage.vue'
+import ModuleAdminPage from '@/views/media/ModuleAdminPage.vue'
+import ModuleAdminPageSimple from '@/views/admin/ModuleAdminPageSimple.vue'
+import VimeoTestPage from '@/views/media/VimeoTestPage.vue'
+import QrCodeGenerator from '@/components/ui/QrCodeGenerator.vue'
 
 // ========================================
 // PROFILS & UTILISATEURS
@@ -153,7 +162,6 @@ import CreateContentMobile from '@/components/social/library/CreateContentMobile
 import ListComponent from '@/components/media/audio/ListComponent.vue'
 import SearchResults from '@/components/common/utils/SearchResults.vue'
 import Ventriglisse3D from '@/components/games/Ventriglisse3D.vue'
-import QrCodeGenerator from '@/components/ui/QrCodeGenerator.vue'
 
 // ========================================
 // ERREURS & CATCH-ALL
@@ -188,6 +196,17 @@ const routes = [
   { path: '/info_externe', component: InfoExterne, name: 'InfoExterne', meta: { requiresAuth: true } },
   { path: '/history', component: HistoriquePFP, name: 'HistoriquePFP', meta: { requiresAuth: true } },
   { path: '/documents', component: DocumentsPFP, name: 'DocumentsPFP', meta: { requiresAuth: true } },
+
+
+
+  // MEDIA & MULTIMÉDIA
+  { path: '/media', component: MediaHubPage, name: 'MediaHubPage', meta: { requiresAuth: true } },
+  { path: '/modules', component: ModulesPage, name: 'ModulesPage', meta: { requiresAuth: true } },
+  { path: '/modules/:moduleId/videos', component: ModuleVideosPage, name: 'ModuleVideosPage', props: true, meta: { requiresAuth: true } },
+  { path: '/videos/:videoId/validation', component: VideoValidationPage, name: 'VideoValidationPage', props: true, meta: { requiresAuth: true } },
+  { path: '/admin/modules', component: ModuleAdminPage, name: 'ModuleAdminPage', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
+  { path: '/admin/modules/simple', component: ModuleAdminPageSimple, name: 'ModuleAdminPageSimple', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
+  { path: '/vimeo-test', component: VimeoTestPage, name: 'VimeoTestPage', meta: { requiresAuth: true } },
 
   // ========================================
   // PROFILS & UTILISATEURS
