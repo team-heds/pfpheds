@@ -22,7 +22,9 @@
 
         <!-- Container de la Carte -->
         <div class="map-container">
-          <div id="newMap" class="map"></div>
+          <div v-if="institutionsLoading" class="flex justify-center items-center h-full">Chargement de la carte...</div>
+          <div v-else-if="institutionsError" class="text-red-500 p-4">Erreur: {{ institutionsError }}</div>
+          <div v-else id="newMap" class="map"></div>
         </div>
 
         <!-- Dialog pour les détails de l'institution -->
@@ -107,10 +109,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue';
+import { storeToRefs } from 'pinia';
 import { useRouter } from 'vue-router';
-import { db } from '../../../../firebase';
-import { ref as firebaseRef, onValue } from 'firebase/database';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -120,10 +121,11 @@ import Button from 'primevue/button';
 import FilterSidebare from './FilterSidebar.vue';
 import HeaderIcons from '@/components/common/utils/HeaderIcons.vue'
 
-// Import du fichier filter.json (contenant les IDPlace et leurs critères)
+// Import du fichier filter.json (contenant les IDPlace et leurs §s)
 import filterData from './filter.json';
 
 // Import et configuration du logo pour les marqueurs
+import { useInstitutionsStore } from '@/stores/institutionsStore';
 import schoolLogo from '../../../../public/assets/images/markerheds.png';
 const originalWidth = 25;
 const originalHeight = 30;
@@ -138,7 +140,8 @@ const schoolLogoIcon = L.icon({
 // Variables réactives
 const map = ref(null);
 const markers = ref([]);
-const allInstitutions = ref([]);
+const institutionsStore = useInstitutionsStore();
+const { institutions, loading: institutionsLoading, error: institutionsError } = storeToRefs(institutionsStore);
 const selectedInstitution = ref(null);
 const dialogVisible = ref(false);
 const router = useRouter();
@@ -154,7 +157,7 @@ const selectedFilters = ref({
 // Liste des cantons disponibles (extrait dynamiquement depuis les institutions)
 const availableCantons = computed(() => {
   const cantonsSet = new Set();
-  allInstitutions.value.forEach(institution => {
+  institutions.value.forEach(institution => {
     if (institution.Canton) {
       cantonsSet.add(institution.Canton);
     }
@@ -164,7 +167,7 @@ const availableCantons = computed(() => {
 
 // Calcul des institutions filtrées en fonction des filtres sélectionnés
 const filteredInstitutions = computed(() => {
-  return allInstitutions.value.filter(inst => {
+  return institutions.value.filter(inst => {
     // Filtre par canton
     if (
       selectedFilters.value.cantons.length > 0 &&
@@ -205,18 +208,19 @@ const initMap = () => {
   }).addTo(map.value);
 };
 
-// Récupération des institutions depuis Firebase
-const fetchInstitutionsFromFirebase = () => {
-  const institutionsRef = firebaseRef(db, 'Institutions/');
-  onValue(institutionsRef, (snapshot) => {
-    const data = snapshot.val();
-    allInstitutions.value = data
-      ? Object.keys(data).map((key) => ({ id: key, ...data[key] }))
-      : [];
-    console.log('Institutions récupérées:', allInstitutions.value);
-    addLocationsToMap(filteredInstitutions.value);
-  });
-};
+// Récupération des institutions depuis le store
+onMounted(() => {
+  institutionsStore.fetchInstitutions();
+});
+
+watch(institutionsLoading, (newLoading, oldLoading) => {
+  if (oldLoading && !newLoading && !institutionsError.value) {
+    nextTick(() => {
+      initMap();
+      addLocationsToMap(filteredInstitutions.value);
+    });
+  }
+});
 
 // Nettoyage des marqueurs existants sur la carte
 const clearMarkers = () => {
@@ -226,6 +230,7 @@ const clearMarkers = () => {
 
 // Ajout des marqueurs sur la carte en fonction des institutions filtrées
 const addLocationsToMap = (institutions) => {
+  if (!map.value) return; // Ne rien faire si la carte n'est pas initialisée
   clearMarkers();
   institutions.forEach((institution) => {
     const lat = parseFloat(institution.Latitude);
@@ -274,12 +279,6 @@ const openWebsite = (url) => {
     window.open(completeUrl, '_blank');
   }
 };
-
-// Initialisation lors du montage du composant
-onMounted(() => {
-  initMap();
-  fetchInstitutionsFromFirebase();
-});
 
 // Nettoyage lors de la destruction du composant
 onUnmounted(() => {

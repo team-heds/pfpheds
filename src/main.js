@@ -113,9 +113,15 @@ import '@/assets/styles/styles.scss';
 import "primeflex/primeflex.css";
 import '@/assets/styles/mobile-scale.css'; 
 
+import { useUserStore } from '@/stores/userStore'
+
+
+
 const app = createApp(App);
 const pinia = createPinia();
 app.use(pinia);
+const userStore = useUserStore()
+userStore.init()
 
 // Ignorer l'élément personnalisé 'elevenlabs-convai'
 app.config.compilerOptions.isCustomElement = (tag) => tag === "elevenlabs-convai";

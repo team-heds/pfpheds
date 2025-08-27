@@ -2,7 +2,7 @@
 <template>
   <div class="admin-scrollable">
     <Navbar />
-    <div class="px-4 py-8 md:px-6 lg:px-8">
+    <div v-if="institution" class="px-4 py-8 md:px-6 lg:px-8">
       <section class="text-center py-5 rounded-lg mb-5 text-white">
         <h1 class="text-5xl font-bold">Modifier l'institution</h1>
       </section>
@@ -16,259 +16,139 @@
               <Badge :value="institution.Canton" class="p-mr-2 p-ml-auto" />
             </div>
 
-            <div class="p-fluid grid">
-              <!-- Nom -->
+            <form @submit.prevent="handleUpdateInstitution" class="p-fluid grid">
+              <!-- All form fields here -->
               <div class="col-12 md:col-6">
                 <div class="p-field">
                   <label for="name">Nom</label>
                   <InputText id="name" v-model="institution.Name" />
                 </div>
               </div>
-
-              <!-- Téléchargement du PDF pour Cyberlearn -->
               <div class="col-12 md:col-6">
                 <div class="p-field">
                   <label for="cyberlearn">Descriptif FP (PDF)</label>
-                  <input
-                    type="file"
-                    accept="application/pdf"
-                    @change="onPdfChange"
-                    class="p-button-outlined p-mt-2"
-                  />
+                  <input type="file" accept="application/pdf" @change="onPdfChange" class="p-button-outlined p-mt-2" />
                   <p v-if="institution.CyberleanURL" class="mt-2">
-                    PDF actuel :
-                    <a :href="institution.CyberleanURL" target="_blank"
-                    >Voir le PDF</a
-                    >
+                    PDF actuel: <a :href="institution.CyberleanURL" target="_blank">Voir le PDF</a>
                   </p>
                 </div>
               </div>
-
-              <!-- Lieu -->
               <div class="col-12 md:col-4">
                 <div class="p-field">
                   <label for="locality">Lieu</label>
                   <InputText id="locality" v-model="institution.Locality" />
                 </div>
               </div>
-
-              <!-- Canton -->
               <div class="col-12 md:col-4">
                 <div class="p-field">
                   <label for="canton">Canton</label>
-                  <Dropdown
-                    id="canton"
-                    v-model="institution.Canton"
-                    :options="cantons"
-                    optionLabel="name"
-                    optionValue="code"
-                    class="w-full"
-                  />
+                  <Dropdown id="canton" v-model="institution.Canton" :options="cantons" optionLabel="name" optionValue="code" class="w-full" />
                 </div>
               </div>
-
-              <!-- Langue -->
               <div class="col-12 md:col-4">
                 <div class="p-field">
                   <label for="langue">Langue</label>
-                  <Dropdown
-                    id="langue"
-                    v-model="institution.Language"
-                    :options="langues"
-                    optionLabel="name"
-                    optionValue="code"
-                    class="w-full"
-                  />
+                  <Dropdown id="langue" v-model="institution.Language" :options="langues" optionLabel="name" optionValue="code" class="w-full" />
                 </div>
               </div>
-
-              <!-- Rue -->
               <div class="col-12 md:col-6">
                 <div class="p-field">
                   <label for="address">Adresse</label>
                   <InputText id="address" v-model="institution.Address" />
                 </div>
               </div>
-
-              <!-- URL -->
               <div class="col-12 md:col-6">
                 <div class="p-field">
                   <label for="url">URL</label>
                   <InputGroup>
                     <InputGroupAddon>www</InputGroupAddon>
-                    <InputText
-                      id="url"
-                      v-model="institution.URL"
-                      placeholder="Site Web"
-                    />
+                    <InputText id="url" v-model="institution.URL" placeholder="Site Web" />
                   </InputGroup>
                 </div>
               </div>
-
-              <!-- Catégorie -->
               <div class="col-12 md:col-6">
                 <div class="p-field">
                   <label for="category">Catégorie</label>
-                  <InputText
-                    id="category"
-                    v-model="institution.Category"
-                    class="w-full"
-                  />
+                  <InputText id="category" v-model="institution.Category" class="w-full" />
                 </div>
               </div>
-
-              <!-- Téléchargement des images -->
               <div class="col-12">
                 <h4>Médias de l'institution</h4>
                 <Divider />
                 <div class="text-center">
                   <div class="border-2 border-dashed surface-border rounded-lg p-5 mb-3">
                     <i class="pi pi-image text-5xl"></i>
-                    <h6 class="mt-2">
-                      Téléchargez les images de l'institution ici, ou
-                      <a href="#!" class="text-primary" @click="triggerImageInput"
-                      >Parcourir</a
-                      >
-                    </h6>
-                    <input
-                      ref="imageInput"
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      class="hidden"
-                      @change="onImageChange"
-                    />
-                    <p class="mt-2">
-                      Seulement JPG, JPEG et PNG. Dimensions suggérées: 600px *
-                      450px.
-                    </p>
+                    <h6 class="mt-2">Téléchargez les images ici, ou <a href="#!" class="text-primary" @click="triggerImageInput">Parcourir</a></h6>
+                    <input ref="imageInputRef" type="file" accept="image/*" multiple class="hidden" @change="onImageChange" />
+                    <p class="mt-2">Seulement JPG, JPEG et PNG. Dimensions suggérées: 600px * 450px.</p>
                   </div>
-                  <div v-if="Array.isArray(localPreviews) && localPreviews.length" class="image-preview">
-                    <div
-                      v-for="(imageURL, index) in localPreviews"
-                      :key="index"
-                      class="mb-4"
-                    >
-                      <img
-                        :src="imageURL"
-                        alt="Image de l'institution"
-                        class="w-full h-auto mb-2"
-                      />
-                      <Button
-                        type="button"
-                        label="Supprimer l'image"
-                        class="p-button-danger"
-                        @click="removeImage(index)"
-                      />
+                  <div v-if="localPreviews.length" class="image-preview">
+                    <div v-for="(imageURL, index) in localPreviews" :key="index" class="mb-4">
+                      <img :src="imageURL" alt="Aperçu de l'image" class="w-full h-auto mb-2" />
+                      <Button type="button" label="Supprimer l'image" class="p-button-danger" @click="removeImage(index)" />
                     </div>
                   </div>
                 </div>
               </div>
-
-              <!-- Description -->
               <div class="col-12 md:col-12">
                 <div class="p-field">
                   <label for="description">Description</label>
-                  <Textarea
-                    id="description"
-                    v-model="institution.Description"
-                  />
+                  <Textarea id="description" v-model="institution.Description" />
                 </div>
               </div>
-
-              <!-- Convention -->
               <div class="col-12 md:col-6">
                 <div class="p-field">
                   <label for="convention">Date de Convention</label>
-                  <Calendar
-                    id="convention"
-                    v-model="institution.ConventionDate"
-                    :showIcon="true"
-                    placeholder="Date de convention"
-                    dateFormat="dd-mm-yy"
-                  />
+                  <Calendar id="convention" v-model="institution.ConventionDate" :showIcon="true" placeholder="Date de convention" dateFormat="dd-mm-yy" />
                 </div>
               </div>
-
-              <!-- Accord Cadre -->
               <div class="col-12 md:col-6">
                 <div class="p-field">
                   <label for="accordCadre">Date de l'Accord Cadre</label>
-                  <Calendar
-                    id="accordCadre"
-                    v-model="institution.AccordCadreDate"
-                    :showIcon="true"
-                    placeholder="Date de l'accord cadre"
-                    dateFormat="dd-mm-yy"
-                  />
+                  <Calendar id="accordCadre" v-model="institution.AccordCadreDate" :showIcon="true" placeholder="Date de l'accord cadre" dateFormat="dd-mm-yy" />
                 </div>
               </div>
-
-              <!-- Remarque sur la convention / accord cadre -->
               <div class="col-12 md:col-12">
                 <div class="p-field">
                   <label for="note">Remarque convention / accord cadre</label>
                   <Textarea id="note" v-model="institution.Note" />
                 </div>
               </div>
-
-              <!-- Informations du responsable physique -->
               <div class="field col-4">
                 <label for="nomChef">Nom, Prénom resp phy</label>
-                <InputText
-                  id="nomChef"
-                  v-model="institution.NomChef"
-                  class="w-full"
-                />
+                <InputText id="nomChef" v-model="institution.NomChef" class="w-full" />
               </div>
               <div class="field col-4">
                 <label for="phoneChef">Téléphone resp phy</label>
-                <InputText
-                  id="phoneChef"
-                  v-model="institution.PhoneChef"
-                  class="w-full"
-                />
+                <InputText id="phoneChef" v-model="institution.PhoneChef" class="w-full" />
               </div>
               <div class="field col-4">
                 <label for="mailChef">Mail resp phy</label>
-                <InputText
-                  id="mailChef"
-                  v-model="institution.MailChef"
-                  class="w-full"
-                />
+                <InputText id="mailChef" v-model="institution.MailChef" class="w-full" />
               </div>
-
-              <!-- Boutons de soumission -->
               <div class="col-12">
-                <Button
-                  label="Mettre à jour l'institution"
-                  class="p-button-warning mt-3 btn-small"
-                  @click="updateInstitution"
-                />
-                <Button
-                  label="Retour"
-                  class="p-button-secondary mt-3 btn-small"
-                  @click="goBack"
-                />
+                <Button type="submit" label="Mettre à jour l'institution" class="p-button-warning mt-3 btn-small" />
+                <Button label="Retour" class="p-button-secondary mt-3 btn-small" @click="goBack" />
               </div>
-            </div>
+            </form>
           </div>
         </div>
       </div>
     </div>
+    <div v-else class="text-center">
+      <p>Chargement de l'institution...</p>
+    </div>
   </div>
 </template>
 
-<script>
-import { db, storage } from "../../../../firebase.js";
-import { ref, onValue, update } from "firebase/database";
-import {
-  ref as storageRef,
-  uploadBytes,
-  getDownloadURL,
-  deleteObject,
-} from "firebase/storage";
+<script setup>
+import { ref, onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useInstitutionsStore } from '@/stores/institutionsStore';
+import { storage } from "../../../../firebase.js";
+import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 
+// Import PrimeVue components
 import InputText from "primevue/inputtext";
 import Dropdown from "primevue/dropdown";
 import Button from "primevue/button";
@@ -280,260 +160,157 @@ import InputGroupAddon from "primevue/inputgroupaddon";
 import Navbar from "@/components/common/utils/Navbar.vue";
 import Divider from "primevue/divider";
 
-// --- Fonctions utilitaires pour parser/formatter la date dd-mm-yyyy ---
-function parseDDMMYYYY(str) {
-  // Evite les erreurs si str est vide
-  if (!str) return null;
-  const [dd, mm, yyyy] = str.split("-");
-  // Crée l'objet Date (mois commence à 0)
-  return new Date(Number(yyyy), Number(mm) - 1, Number(dd));
-}
+// --- Setup ---
+const route = useRoute();
+const router = useRouter();
+const institutionsStore = useInstitutionsStore();
+const institutionId = route.params.id;
 
-function formatDDMMYYYY(date) {
-  if (!date) return "";
-  const dd = String(date.getDate()).padStart(2, "0");
-  const mm = String(date.getMonth() + 1).padStart(2, "0");
-  const yyyy = date.getFullYear();
-  return `${dd}-${mm}-${yyyy}`;
-}
+// --- Reactive State ---
+const institution = ref(null);
+const pdfFile = ref(null);
+const imageFiles = ref([]);
+const localPreviews = ref([]);
+const imageInputRef = ref(null);
 
-function parseDateLocal(dateStr) {
-  if (!dateStr) return null;
-  const [year, month, day] = dateStr.split('-');
-  return new Date(Number(year), Number(month) - 1, Number(day));
-}
-
-export default {
-  name: "InstitutionFormModif",
-  components: {
-    Navbar,
-    InputText,
-    Dropdown,
-    Button,
-    Badge,
-    Calendar,
-    Textarea,
-    InputGroup,
-    InputGroupAddon,
-    Divider,
-  },
-  data() {
-    return {
-      institution: {
-        CyberleanURL: "",
-        Name: "",
-        Locality: "",
-        Canton: "",
-        Address: "",
-        URL: "",
-        Category: "",
-        Language: "",
-        Description: "",
-        ConventionDate: "",
-        AccordCadreDate: "",
-        Note: "",
-        MailChef: "",
-        PhoneChef: "",
-        NomChef: "",
-        ImageURL: [], // Toujours un tableau
-      },
-      pdfFile: null, // Fichier PDF sélectionné
-      imageFiles: [], // Tableau de fichiers images sélectionnés
-      localPreviews: [], // Tableau d'aperçus locaux des images sélectionnées
-      cantons: [
-        { code: "AG", name: "Argovie" },
-        { code: "AI", name: "Appenzell Rhodes-Intérieures" },
-        { code: "AR", name: "Appenzell Rhodes-Extérieures" },
-        { code: "BE", name: "Berne" },
-        { code: "FR", name: "Fribourg" },
-        { code: "VS", name: "Valais" },
-        { code: "VD", name: "Vaud" },
-        { code: "GE", name: "Genève" },
-        { code: "ZH", name: "Zurich" },
-        { code: "NE", name: "Neuchâtel" },
-        { code: "JU", name: "Jura" },
-        { code: "LU", name: "Lucerne" },
-        { code: "ET", name: "Étranger" },
-      ],
-      categories: [
-        { label: "Institution valaisanne", value: "Institution valaisanne" },
-        { label: "Cabinet privé valaisan", value: "Cabinet privé valaisan" },
-        { label: "Institution hors canton", value: "Institution hors canton" },
-        { label: "Cabinet privé hors canton", value: "Cabinet privé hors canton" },
-      ],
-      langues: [
-        { code: "FR", name: "Français" },
-        { code: "ALL", name: "Allemand" },
-        { code: "IT", name: "Italien" },
-        { code: "ANG", name: "Anglais" },
-        { code: "BIL", name: "Bilingue" },
-      ],
-    };
-  },
-  methods: {
-    // Déclenche le sélecteur de fichier pour les images
-    triggerImageInput() {
-      this.$refs.imageInput.click();
-    },
-
-    // Met à jour l'institution dans Firebase
-    async updateInstitution() {
-      try {
-        console.log("Starting institution update...");
-        const instRef = ref(db, "Institutions/" + this.$route.params.id);
-
-        // Gestion du téléchargement du PDF
-        if (this.pdfFile) {
-          console.log("Uploading PDF...");
-          const pdfRef = storageRef(
-            storage,
-            `Institutions/${this.$route.params.id}/cyberlearn.pdf`
-          );
-          const pdfSnapshot = await uploadBytes(pdfRef, this.pdfFile);
-          const pdfURL = await getDownloadURL(pdfSnapshot.ref);
-          this.institution.CyberleanURL = pdfURL;
-          console.log("PDF uploaded:", pdfURL);
-        }
-
-        // Gestion de l'image
-        if (this.imageFiles.length > 0) {
-          // Supprimer l'ancienne image si elle existe
-          if (this.institution.ImageURL) {
-            try {
-              const oldImageRef = storageRef(storage, `Institutions/${this.$route.params.id}/image`);
-              await deleteObject(oldImageRef);
-              console.log('Ancienne image supprimée avec succès');
-            } catch (err) {
-              // L'image n'existait peut-être pas, on ignore l'erreur 404
-              if (err.code === 'storage/object-not-found') {
-                console.log('Aucune ancienne image à supprimer (normal pour la première image)');
-              } else {
-                console.warn('Erreur lors de la suppression de l\'ancienne image:', err);
-              }
-            }
-          }
-          // Uploader la nouvelle image
-          const newImageRef = storageRef(storage, `Institutions/${this.$route.params.id}/image`);
-          const imageSnapshot = await uploadBytes(newImageRef, this.imageFiles[0]);
-          const newImageURL = await getDownloadURL(imageSnapshot.ref);
-          this.institution.ImageURL = [newImageURL];
-        }
-
-        const dataToUpdate = {
-          ...this.institution,
-          ConventionDate: this.institution.ConventionDate
-            ? this.institution.ConventionDate.toLocaleDateString('fr-CA')
-            : '',
-          AccordCadreDate: this.institution.AccordCadreDate
-            ? this.institution.AccordCadreDate.toLocaleDateString('fr-CA')
-            : '',
-        };
-
-        // Mise à jour des détails de l'institution dans Firebase
-        await update(instRef, dataToUpdate);
-
-        console.log("Institution updated successfully!");
-        alert("Institution mise à jour avec succès.");
-      } catch (error) {
-        console.error("Erreur lors de la mise à jour:", error);
-        alert("Erreur lors de la mise à jour de l’institution.");
-      }
-    },
-
-    // Récupération du PDF sélectionné
-    onPdfChange(event) {
-      this.pdfFile = event.target.files[0];
-    },
-
-    // Récupération des images sélectionnées
-    onImageChange(event) {
-      const files = Array.from(event.target.files);
-      if (!this.localPreviews) {
-        this.localPreviews = [];
-      }
-      files.forEach((file) => {
-        const safeName = file.name.replace(/[^a-z0-9.]/gi, "_").toLowerCase();
-        const alreadyAdded = this.imageFiles.some(
-          (f) => f.name === safeName && f.size === file.size
-        );
-        if (!alreadyAdded) {
-          const newFile = new File([file], safeName, { type: file.type });
-          this.imageFiles.push(newFile);
-          const previewURL = URL.createObjectURL(newFile);
-          this.localPreviews.push(previewURL);
-        }
-      });
-    },
-
-    // Suppression d'une image
-    removeImage(index) {
-      if (this.localPreviews && this.localPreviews[index]) {
-        URL.revokeObjectURL(this.localPreviews[index]);
-        this.localPreviews.splice(index, 1);
-        this.imageFiles.splice(index, 1);
-      }
-    },
-
-    // Retour à la page précédente
-    goBack() {
-      this.$router.go(-1);
-    },
-
-    // Chargement des données de l'institution depuis Firebase
-    loadInstitutionData() {
-      const instRef = ref(db, "Institutions/" + this.$route.params.id);
-      onValue(instRef, (snapshot) => {
-        if (snapshot.exists()) {
-          const data = snapshot.val();
-
-          // Convertir les chaînes dd-mm-yyyy en objets Date
-          if (data.ConventionDate && typeof data.ConventionDate === 'string') {
-            data.ConventionDate = parseDateLocal(data.ConventionDate);
-          }
-          if (data.AccordCadreDate && typeof data.AccordCadreDate === 'string') {
-            data.AccordCadreDate = parseDateLocal(data.AccordCadreDate);
-          }
-
-          this.institution = {
-            ...data,
-            ImageURL: data.ImageURL || [],
-          };
-        }
-      });
-    },
-  },
-  mounted() {
-    this.loadInstitutionData();
-  },
+// --- Date Handling ---
+const parseDateLocal = (dateStr) => {
+  if (!dateStr || typeof dateStr !== 'string') return null;
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return null;
+  // Assuming YYYY-MM-DD format from backend
+  return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
 };
+
+// --- Lifecycle Hooks ---
+onMounted(async () => {
+  if (institutionsStore.institutions.length === 0) {
+    await institutionsStore.fetchInstitutions();
+  }
+  const data = institutionsStore.institutions.find(i => i.InstitutionId === institutionId);
+  if (data) {
+    institution.value = JSON.parse(JSON.stringify(data)); // Deep copy
+    // Convert date strings to Date objects for Calendar component
+    institution.value.ConventionDate = parseDateLocal(institution.value.ConventionDate);
+    institution.value.AccordCadreDate = parseDateLocal(institution.value.AccordCadreDate);
+    // Set initial image previews
+    if (institution.value.ImageURL && Array.isArray(institution.value.ImageURL)) {
+      localPreviews.value = [...institution.value.ImageURL];
+    }
+  } else {
+    console.error("Institution not found in store");
+  }
+});
+
+// --- Methods ---
+const triggerImageInput = () => imageInputRef.value.click();
+const goBack = () => router.go(-1);
+
+const onPdfChange = (event) => {
+  pdfFile.value = event.target.files[0];
+};
+
+const onImageChange = (event) => {
+  const files = Array.from(event.target.files);
+  files.forEach(file => {
+    imageFiles.value.push(file);
+    localPreviews.value.push(URL.createObjectURL(file));
+  });
+};
+
+const removeImage = async (index) => {
+  const urlToRemove = localPreviews.value[index];
+
+  // If it's a firebase URL, delete from storage
+  if (urlToRemove.includes('firebasestorage.googleapis.com')) {
+    try {
+      const imageHttpRef = storageRef(storage, urlToRemove);
+      await deleteObject(imageHttpRef);
+    } catch (error) {
+      // Ignore object-not-found error, as it might have been deleted already or never existed
+      if (error.code !== 'storage/object-not-found') {
+        console.error("Erreur lors de la suppression de l'image de Firebase Storage:", error);
+        // Optionally, alert the user that the deletion failed
+        alert("La suppression de l'image du serveur a échoué.");
+        return; // Stop execution if deletion fails for other reasons
+      }
+    }
+  } else {
+    // If it's a local blob URL, revoke it and remove the corresponding file from the upload queue
+    URL.revokeObjectURL(urlToRemove);
+    const fileIndex = localPreviews.value.indexOf(urlToRemove);
+    if(fileIndex > -1) {
+        // This logic assumes a 1-to-1 mapping between new files and blob previews
+        // A more robust implementation might be needed if the order can change
+        const newFileIndex = fileIndex - (institution.value.ImageURL?.length || 0);
+        if(newFileIndex >= 0 && newFileIndex < imageFiles.value.length) {
+            imageFiles.value.splice(newFileIndex, 1);
+        }
+    }
+  }
+
+  // Remove from the institution's data model
+  const imageUrlIndex = institution.value.ImageURL.indexOf(urlToRemove);
+  if (imageUrlIndex > -1) {
+    institution.value.ImageURL.splice(imageUrlIndex, 1);
+  }
+
+  // Remove from the preview list
+  localPreviews.value.splice(index, 1);
+};
+
+const handleUpdateInstitution = async () => {
+  if (!institution.value) return;
+
+  try {
+    // 1. Handle PDF Upload to Firebase Storage
+    if (pdfFile.value) {
+      const pdfStorageRef = storageRef(storage, `Institutions/${institutionId}/cyberlearn.pdf`);
+      const pdfSnapshot = await uploadBytes(pdfStorageRef, pdfFile.value);
+      institution.value.CyberleanURL = await getDownloadURL(pdfSnapshot.ref);
+    }
+
+    // 2. Handle Image Uploads to Firebase Storage
+    if (imageFiles.value.length > 0) {
+        const uploadPromises = imageFiles.value.map(file => {
+            const imgStorageRef = storageRef(storage, `Institutions/${institutionId}/${file.name}`);
+            return uploadBytes(imgStorageRef, file).then(snapshot => getDownloadURL(snapshot.ref));
+        });
+        const newImageUrls = await Promise.all(uploadPromises);
+        // Combine old and new URLs
+        institution.value.ImageURL = [...(institution.value.ImageURL || []), ...newImageUrls];
+    }
+
+    // 3. Prepare data for the store (format dates back to string YYYY-MM-DD)
+    const dataToUpdate = {
+      ...institution.value,
+      ConventionDate: institution.value.ConventionDate ? new Date(institution.value.ConventionDate).toLocaleDateString('fr-CA') : null,
+      AccordCadreDate: institution.value.AccordCadreDate ? new Date(institution.value.AccordCadreDate).toLocaleDateString('fr-CA') : null,
+    };
+
+    // 4. Update data via Pinia Store
+    await institutionsStore.updateInstitution(institutionId, dataToUpdate);
+
+    alert("Institution mise à jour avec succès.");
+    router.push({ name: 'InstitutionListView' });
+
+  } catch (error) {
+    console.error("Erreur lors de la mise à jour:", error);
+    alert("Erreur lors de la mise à jour de l’institution.");
+  }
+};
+
+// --- Static Data ---
+const cantons = [{ code: "AG", name: "Argovie" }, { code: "AI", name: "Appenzell Rhodes-Intérieures" }, { code: "AR", name: "Appenzell Rhodes-Extérieures" }, { code: "BE", name: "Berne" }, { code: "FR", name: "Fribourg" }, { code: "VS", name: "Valais" }, { code: "VD", name: "Vaud" }, { code: "GE", name: "Genève" }, { code: "ZH", name: "Zurich" }, { code: "NE", name: "Neuchâtel" }, { code: "JU", name: "Jura" }, { code: "LU", name: "Lucerne" }, { code: "ET", name: "Étranger" }];
+const langues = [{ code: "FR", name: "Français" }, { code: "ALL", name: "Allemand" }, { code: "IT", name: "Italien" }, { code: "ANG", name: "Anglais" }, { code: "BIL", name: "Bilingue" }];
+
 </script>
 
 <style scoped>
-.hidden {
-  display: none;
-}
-
-.image-preview img {
-  max-width: 30%;
-  height: auto;
-  border-radius: 8px;
-}
-
-.btn-small {
-  font-size: 0.875rem;
-  padding: 0.5rem 1rem;
-}
-
-.admin-scrollable {
-  height: 100vh;
-  overflow-y: auto;
-  padding-bottom: 2rem;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.admin-scrollable::-webkit-scrollbar {
-  display: none;
-}
+.hidden { display: none; }
+.image-preview img { max-width: 30%; height: auto; border-radius: 8px; }
+.btn-small { font-size: 0.875rem; padding: 0.5rem 1rem; }
+.admin-scrollable { height: 100vh; overflow-y: auto; padding-bottom: 2rem; scrollbar-width: none; -ms-overflow-style: none; }
+.admin-scrollable::-webkit-scrollbar { display: none; }
+.p-field { margin-bottom: 1rem; }
 </style>
-

@@ -28,6 +28,14 @@ import TermsOfUse from "@/views/home/TermsView.vue";
 import InfoExterne from "@/views/home/InfoExterneView.vue";
 import HistoriquePFP from '@/views/home/HistoryView.vue'
 import DocumentsPFP from '@/views/home/DocumentsView.vue'
+// MEDIA
+import MediaHubPage from '@/views/media/MediaHubPage.vue'
+import ModulesPage from '@/views/media/ModulesPage.vue'
+import ModuleVideosPage from '@/views/media/ModuleVideosPage.vue'
+import VideoValidationPage from '@/views/media/VideoValidationPage.vue'
+import ModuleAdminPage from '@/views/media/ModuleAdminPage.vue'
+import ModuleAdminPageSimple from '@/views/admin/ModuleAdminPageSimple.vue'
+import VimeoTestPage from '@/views/media/VimeoTestPage.vue'
 
 // ========================================
 // PROFILS & UTILISATEURS
@@ -48,7 +56,7 @@ import GamificationProfilePage from '@/components/gamification/GamificationProfi
 // DASHBOARD & ADMINISTRATION
 // ========================================
 import DashboardView from '@/views/admin/DashboardView.vue';
-import AdminDefisView from '@/views/admin/gamification/AdminDefisView.vue';
+import AdminDefisView from '@/views/admin/institutions/gamification/AdminDefisView.vue';
 
 // ========================================
 // SOCIAL & COMMUNICATION
@@ -136,8 +144,6 @@ import PlaceStatsView from '@/views/admin/places/PlaceStatsView.vue';
 // ========================================
 import Index from '@/views/apps/tasklist/Index.vue'
 import IndexChat from "@/views/apps/chat/IndexChat.vue";
-import ChatBox from "@/views/apps/chat/ChatBox.vue";
-import ChatSidebar from "@/views/apps/chat/ChatSidebar.vue";
 import CalendarView from '@/views/apps/calendar/CalendarView.vue';
 import FilesView from '@/views/apps/files/FilesView.vue';
 import MailIndex from '@/views/apps/mail/Index.vue';
@@ -151,9 +157,9 @@ import MobileLangAppsView from '@/views/apps/tools/MobileLangAppsView.vue';
 import MobileSearchView from '@/views/apps/tools/MobileSearchView.vue'
 import CreateContentMobile from '@/components/social/library/CreateContentMobile.vue';
 import ListComponent from '@/components/media/audio/ListComponent.vue'
-import SearchResults from '@/components/common/utils/SearchResults.vue'
-import Ventriglisse3D from '@/components/games/Ventriglisse3D.vue'
-import QrCodeGenerator from '@/components/ui/QrCodeGenerator.vue'
+//import SearchResults from '@/components/common/utils/SearchResults.vue'
+import Ventriglisse3D from '@/components/games/Ventriglisse3D.vue';
+import CareConvers from '@/views/pages/CareConvers.vue';
 
 // ========================================
 // ERREURS & CATCH-ALL
@@ -188,6 +194,17 @@ const routes = [
   { path: '/info_externe', component: InfoExterne, name: 'InfoExterne', meta: { requiresAuth: true } },
   { path: '/history', component: HistoriquePFP, name: 'HistoriquePFP', meta: { requiresAuth: true } },
   { path: '/documents', component: DocumentsPFP, name: 'DocumentsPFP', meta: { requiresAuth: true } },
+
+
+
+  // MEDIA & MULTIMÉDIA
+  { path: '/media', component: MediaHubPage, name: 'MediaHubPage', meta: { requiresAuth: true } },
+  { path: '/modules', component: ModulesPage, name: 'ModulesPage', meta: { requiresAuth: true } },
+  { path: '/modules/:moduleId/videos', component: ModuleVideosPage, name: 'ModuleVideosPage', props: true, meta: { requiresAuth: true } },
+  { path: '/videos/:videoId/validation', component: VideoValidationPage, name: 'VideoValidationPage', props: true, meta: { requiresAuth: true } },
+  { path: '/admin/modules', component: ModuleAdminPage, name: 'ModuleAdminPage', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
+  { path: '/admin/modules/simple', component: ModuleAdminPageSimple, name: 'ModuleAdminPageSimple', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
+  { path: '/vimeo-test', component: VimeoTestPage, name: 'VimeoTestPage', meta: { requiresAuth: true } },
 
   // ========================================
   // PROFILS & UTILISATEURS
@@ -304,6 +321,9 @@ const routes = [
   { path: '/mobile-tools', component: MobileToolsView, name: 'MobileToolsView', meta: { requiresAuth: true } },
   { path: '/mobile-lang-apps', component: MobileLangAppsView, name: 'MobileLangApps', meta: { mobileOnly: true } },
   { path: '/mobile-search', component: MobileSearchView, name: 'MobileSearchView', meta: { requiresAuth: true } },
+//  { path: '/template-test', component: () => import('@/views/template/TemplateTest.vue'), name: 'TemplateTest' },
+  { path: '/supabase-demo', component: () => import('@/views/pages/Supabase.vue'), name: 'SupabaseDemo', meta: { requiresAuth: true } },
+  { path: '/care-convers', component: CareConvers, name: 'CareConvers', meta: { requiresAuth: true } },
   //{ path: '/template-test', component: () => import('@/views/template/TemplateTest.vue'), name: 'TemplateTest' },
 
   // ========================================
