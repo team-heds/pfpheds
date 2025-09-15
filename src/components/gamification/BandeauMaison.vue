@@ -27,15 +27,15 @@
       </div>
       
       <div class="house-actions">
-        <button class="action-btn" @click="navigateToProfile" title="Voir le profil">
+        <Button class="action-btn" @click="navigateToProfile" title="Voir le profil">
           <i class="pi pi-user"></i>
-        </button>
-        <button class="action-btn" @click="navigateToHouseStats" title="Voir les statistiques de la maison">
+        </Button>
+        <Button class="action-btn" @click="navigateToHouseStats" title="Voir les statistiques de la maison">
           <i class="pi pi-home"></i>
-        </button>
-        <button class="action-btn" @click="navigateToGlobalRanking" title="Voir le classement global des maisons">
+        </Button>
+        <Button class="action-btn" @click="navigateToGlobalRanking" title="Voir le classement global des maisons">
           <i class="pi pi-chart-bar"></i>
-        </button>
+        </Button>
       </div>
     </div>
     
