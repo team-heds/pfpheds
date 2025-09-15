@@ -1,6 +1,7 @@
 <template>
-  <Navbar />
-  <div class="house-stats-page">
+  <div class="page-wrapper">
+    <Navbar />
+    <div class="house-stats-page">
     <!-- Bandeau de la maison -->
     <div class="house-banner" >
       <div class="house-banner-content">
@@ -21,9 +22,9 @@
 
     <div class="page-header">
       <div class="header-content">
-        <button class="back-btn" @click="$router.go(-1)">
+        <Button class="back-btn" @click="$router.go(-1)">
           <i class="pi pi-arrow-left"></i>
-        </button>
+        </Button>
         <div class="header-title-container">
           <h2 class="page-title">Statistiques de la Maison</h2>
         </div>
@@ -125,9 +126,15 @@
       </div>
     </div>
 
+    <!-- Section de test pour forcer le scroll -->
+    <div class="test-scroll-section" v-if="houseStats">
+      <div class="scroll-spacer"></div>
+    </div>
+
     <div v-else class="loading">
       <i class="pi pi-spin pi-spinner"></i>
       <p>Chargement des statistiques...</p>
+    </div>
     </div>
   </div>
 </template>
@@ -204,8 +211,17 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.page-wrapper {
+  width: 100%;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
 .house-stats-page {
-  min-height: 100vh;
+  width: 100%;
+  position: relative;
+  padding-bottom: 4rem;
 }
 
 .house-banner {
@@ -535,6 +551,15 @@ onMounted(() => {
 .loading i {
   font-size: 2rem;
   margin-bottom: 1rem;
+}
+
+.test-scroll-section {
+  width: 100%;
+}
+
+.scroll-spacer {
+  height: 100vh;
+  background: transparent;
 }
 
 @media (max-width: 768px) {

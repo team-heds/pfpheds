@@ -1,6 +1,7 @@
 <template>
-  <Navbar />
-  <div class="gamification-profile-page" :style="{ '--house-color': houseColor }">
+  <div class="page-wrapper">
+    <Navbar />
+    <div class="gamification-profile-page" :style="{ '--house-color': houseColor }">
     
     <!-- Loading State -->
     <div v-if="loading" class="loading-container">
@@ -16,10 +17,10 @@
         <i class="pi pi-exclamation-triangle"></i>
         <h3>Erreur de chargement</h3>
         <p>{{ error }}</p>
-        <button @click="loadUserStats" class="retry-btn">
+        <Button @click="loadUserStats" class="retry-btn">
           <i class="pi pi-refresh"></i>
           Réessayer
-        </button>
+        </Button>
       </div>
     </div>
 
@@ -143,10 +144,9 @@
             </div>
           </div>
         </div>
-      </div>
 
         <!-- Prochaines quêtes / défis -->
-        <div class="card-section">
+        <div class="members-ranking">
           <div class="card-header">
             <h3><i class="pi pi-flag"></i> Prochaines Quêtes & Défis</h3>
             <span class="count-chip">{{ upcomingLimited.length }}</span>
@@ -190,7 +190,7 @@
         </div>
 
         <!-- Badges -->
-        <div class="card-section">
+        <div class="members-ranking">
           <div class="card-header">
             <h3><i class="pi pi-shield"></i> Mes Badges</h3>
             <span class="count-chip">{{ badgesLimited.length }}</span>
@@ -214,7 +214,7 @@
         </div>
 
         <!-- Achievements / Hauts faits -->
-        <div class="card-section">
+        <div class="members-ranking">
           <div class="card-header">
             <h3><i class="pi pi-trophy"></i> Mes Hauts Faits</h3>
             <span class="count-chip">{{ achievementsLimited.length }}</span>
@@ -248,7 +248,14 @@
             <p>Aucun haut fait enregistré.</p>
           </div>
         </div>
-
+      </div>
+    </div>
+    
+    <!-- Section de test pour forcer le scroll -->
+    <div class="test-scroll-section" v-if="userStats">
+      <div class="scroll-spacer"></div>
+    </div>
+    
     </div>
   </div>
 </template>
@@ -446,9 +453,17 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+.page-wrapper {
+  width: 100%;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
 .gamification-profile-page {
-  min-height: 100vh;
-  padding-bottom: 2rem;
+  width: 100%;
+  position: relative;
+  padding-bottom: 4rem;
 }
 
 /* Loading and Error States */
@@ -499,7 +514,7 @@ onBeforeUnmount(() => {
 
 .profile-banner {
   color: white;
-  padding: 4rem 1rem;
+  padding: 4rem 0;
   border-radius: 0 0 20px 20px;
   position: relative;
   overflow: hidden;
@@ -527,6 +542,7 @@ onBeforeUnmount(() => {
   gap: 2rem;
   max-width: 1200px;
   margin: 0 auto;
+  padding: 0 2rem;
 }
 
 .user-avatar {
@@ -664,43 +680,7 @@ onBeforeUnmount(() => {
   color: white;
 }
 
-/* Detailed Stats */
-.detailed-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
-}
-
-.stat-card {
-  background: var(--surface-card);
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.stat-card i {
-  font-size: 2rem;
-  color: white;
-}
-
-.stat-info {
-  flex: 1;
-}
-
-.stat-number {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: white;
-}
-
-.stat-desc {
-  color: white;
-  opacity: 0.9;
-  font-size: 0.875rem;
-}
+/* Supprimé - remplacé par les nouveaux styles */
 
 /* Page Header (harmonized with HouseStatsPage) */
 .page-header {
@@ -749,13 +729,93 @@ onBeforeUnmount(() => {
   text-align: center;
 }
 
-/* Card sections */
-.card-section {
+/* Stats container - même style que HouseStatsPage */
+.stats-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.house-level-card {
   background: var(--surface-card);
-  padding: 1.5rem;
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+}
+
+.level-info {
+  color: white;
+}
+
+.level-badge {
+  display: inline-block;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.level-name {
+  font-size: 2rem;
+  margin: 0 0 1.5rem 0;
+  color: white;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: var(--surface-card);
   border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
   box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-  margin-top: 2rem;
+  transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+}
+
+.stat-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.2rem;
+}
+
+.stat-content h3 {
+  font-size: 1.8rem;
+  margin: 0;
+  color: white;
+}
+
+.stat-content p {
+  margin: 0;
+  color: white;
+  font-size: 0.9rem;
+}
+
+/* Members ranking style - exactement comme HouseStatsPage */
+.members-ranking {
+  background: var(--surface-card);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
 }
 
 .card-header {
@@ -765,6 +825,14 @@ onBeforeUnmount(() => {
   border-bottom: 2px solid rgba(255,255,255,0.08);
   padding-bottom: 0.75rem;
   margin-bottom: 1rem;
+}
+
+.members-ranking h2, .members-ranking h3 {
+  margin: 0 0 1.5rem 0;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .card-header h3 {
@@ -860,6 +928,44 @@ onBeforeUnmount(() => {
   gap: 0.5rem;
   color: white;
   opacity: 0.9;
+}
+
+.test-scroll-section {
+  width: 100%;
+}
+
+.scroll-spacer {
+  height: 150vh;
+  background: transparent;
+}
+
+/* Membres ranking style - même que HouseStatsPage */
+.card-section h2, .card-section h3 {
+  margin: 0 0 1.5rem 0;
+  color: white;
+}
+
+.card-section .data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.card-section .data-table thead th {
+  text-align: left;
+  font-weight: 600;
+  color: white;
+  padding: 0.75rem;
+  border-bottom: 2px solid rgba(255,255,255,0.08);
+}
+
+.card-section .data-table tbody td {
+  padding: 0.75rem;
+  color: white;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.card-section .data-table tbody tr:hover {
+  background: var(--surface-hover);
 }
 
 /* Responsive */

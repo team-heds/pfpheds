@@ -1,19 +1,20 @@
 <template>
   <Navbar />
-  <div class="houses-ranking-page mt-5">
+  <div class="page-wrapper">
+    <div class="houses-ranking-page mt-5">
 
     <div class="page-header">
       <div class="header-content">
-        <button class="back-btn" @click="$router.go(-1)">
+        <Button class="back-btn" @click="$router.go(-1)">
           <i class="pi pi-arrow-left"></i>
-        </button>
+        </Button>
         <div class="title-section">
           <h1>🏆 Classement des Maisons</h1>
 
         </div>
-        <button class="refresh-btn" @click="refreshRanking" :disabled="loading">
+        <Button class="refresh-btn" @click="refreshRanking" :disabled="loading">
           <i class="pi pi-refresh" :class="{ 'pi-spin': loading }"></i>
-        </button>
+        </Button>
       </div>
     </div>
 
@@ -155,6 +156,13 @@
       <i class="pi pi-spin pi-spinner"></i>
       <p>Chargement du classement...</p>
     </div>
+
+    <!-- Section de test pour forcer le scroll -->
+    <div class="test-scroll-section">
+      <div class="scroll-spacer"></div>
+    </div>
+    
+    </div>
   </div>
 </template>
 
@@ -229,6 +237,13 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* Page wrapper pour le scroll - même méthode que HouseStatsPage */
+.page-wrapper {
+  height: 100vh;
+  overflow-y: auto;
+  padding-bottom: 2rem;
+}
+
 .houses-ranking-page {
   min-height: 100vh;
 }
@@ -561,5 +576,15 @@ onMounted(() => {
   .ranking-item {
     flex-wrap: wrap;
   }
+}
+
+/* Section de test pour le scroll - même style que les autres pages */
+.test-scroll-section {
+  width: 100%;
+}
+
+.scroll-spacer {
+  height: 150vh;
+  background: transparent;
 }
 </style>
