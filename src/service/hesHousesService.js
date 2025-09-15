@@ -596,10 +596,29 @@ export async function getHouseDetailedStats(houseName) {
         const memberXP = gamification.totalXP || 0
         totalHouseXP += memberXP
         
+        // Récupérer le nom depuis différentes sources possibles
+        const displayName = user.displayName || user.UserName || user.nom || user.name || ''
+        const email = user.email || user.Mail || ''
+        
+        // Construire le nom d'affichage
+        let finalDisplayName = displayName
+        if (!finalDisplayName && email) {
+          finalDisplayName = email.split('@')[0]
+        }
+        if (!finalDisplayName) {
+          finalDisplayName = `Utilisateur ${userId.slice(-4)}`
+        }
+        
+        // Séparer en prénom et nom pour l'affichage
+        const nameParts = finalDisplayName.split(' ')
+        const firstName = nameParts[0] || finalDisplayName
+        const lastName = nameParts.slice(1).join(' ') || ''
+
         houseMembers.push({
           userId: userId,
-          prenom: user.prenom || 'Inconnu',
-          nom: user.nom || 'Inconnu',
+          prenom: firstName,
+          nom: lastName,
+          displayName: finalDisplayName,
           niveau: gamification.niveau || 1,
           xp: gamification.xp || 0,
           totalXP: memberXP,

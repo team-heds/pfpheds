@@ -32,18 +32,7 @@
         <div class="profile-banner-wrapper">
           <div class="profile-banner" :style="{ backgroundImage: `url(${houseBackgroundImage})` }">
             <div class="profile-info">
-            
-            <!-- Avatar avec effet de halo -->
-            <div class="avatar-container">
-              <div class="avatar-halo"></div>
-              <div class="user-avatar">
-                <img v-if="userStats.photoURL" :src="userStats.photoURL" :alt="userStats.displayName" />
-                <div v-else class="avatar-placeholder">
-                  <i class="pi pi-user"></i>
-                </div>
-              </div>
-              <div class="avatar-ring"></div>
-            </div>
+
             
             <!-- Nom avec effet brillant -->
             <div class="user-name-container">
