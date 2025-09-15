@@ -29,48 +29,71 @@
       
       <!-- Profile Header -->
       <div class="profile-header">
-        <div class="profile-banner" :style="{ backgroundImage: `url(${houseBackgroundImage})` }">
-          <div class="profile-info">
+        <div class="profile-banner-wrapper">
+          <div class="profile-banner" :style="{ backgroundImage: `url(${houseBackgroundImage})` }">
+            <div class="profile-info">
             
-            <!-- User Avatar -->
-            <div class="user-avatar">
-              <img v-if="userStats.photoURL" :src="userStats.photoURL" :alt="userStats.displayName" />
-              <div v-else class="avatar-placeholder">
-                <i class="pi pi-user"></i>
+            <!-- Avatar avec effet de halo -->
+            <div class="avatar-container">
+              <div class="avatar-halo"></div>
+              <div class="user-avatar">
+                <img v-if="userStats.photoURL" :src="userStats.photoURL" :alt="userStats.displayName" />
+                <div v-else class="avatar-placeholder">
+                  <i class="pi pi-user"></i>
+                </div>
+              </div>
+              <div class="avatar-ring"></div>
+            </div>
+            
+            <!-- Nom avec effet brillant -->
+            <div class="user-name-container">
+              <h1 class="user-name-fancy">{{ userStats.displayName || userStats.nom || userStats.prenom || 'Utilisateur' }}</h1>
+              <div class="name-shine"></div>
+            </div>
+            
+            <!-- Cartes d'informations flottantes -->
+            <div class="info-cards">
+              <div class="info-card house-card" v-if="userStats.maison">
+                <div class="card-icon">
+                  <i class="pi pi-home"></i>
+                </div>
+                <div class="card-content">
+                  <span class="card-label">Maison</span>
+                  <span class="card-value">{{ userStats.maison }}</span>
+                </div>
+              </div>
+              
+              <div class="info-card level-card">
+                <div class="card-icon">
+                  <i class="pi pi-star"></i>
+                </div>
+                <div class="card-content">
+                  <span class="card-label">Niveau</span>
+                  <span class="card-value">{{ userStats.niveau || 1 }}</span>
+                </div>
+              </div>
+              
+              <div class="info-card xp-card">
+                <div class="card-icon">
+                  <i class="pi pi-bolt"></i>
+                </div>
+                <div class="card-content">
+                  <span class="card-label">XP Total</span>
+                  <span class="card-value">{{ formatNumber(userStats.xp || 0) }}</span>
+                </div>
               </div>
             </div>
             
-            <!-- User Details -->
-            <div class="user-details">
-              <h1 class="user-name">{{ userStats.displayName || 'Utilisateur' }}</h1>
-              
-              <div class="user-house" v-if="userStats.maison">
-                <i class="pi pi-home"></i>
-                <span>Maison {{ userStats.maison }}</span>
-              </div>
-              
-              <div class="user-level">
-                <span class="level-badge">Niveau {{ userStats.niveau || 1 }}</span>
-              </div>
+            <!-- Particules décoratives -->
+            <div class="floating-particles">
+              <div class="particle" v-for="i in 6" :key="i" :style="{ '--delay': i * 0.5 + 's' }"></div>
             </div>
             
             <!-- Quick Stats -->
-            <div class="quick-stats">
-              <div class="stat-item">
-                <div class="stat-value">{{ formatNumber(userStats.xp || 0) }}</div>
-                <div class="stat-label">XP Total</div>
-              </div>
-              <div class="stat-item">
-                <div class="stat-value">{{ userStats.streak || 0 }}</div>
-                <div class="stat-label">Série Actuelle</div>
-              </div>
-              <div class="stat-item">
-                <div class="stat-value">{{ userStats.streakMax || 0 }}</div>
-                <div class="stat-label">Meilleure Série</div>
-              </div>
-            </div>
+            
           </div>
         </div>
+      </div>
       </div>
 
       <!-- Page header aligned with HouseStatsPage -->
@@ -285,10 +308,10 @@ let unsubscribeDefis = null
 
 // House configuration
 const houseConfig = {
-  'Harmonis': { name: 'Harmonis', color: '#10B981' },
-  'Elaris': { name: 'Elaris', color: '#3B82F6' },
-  'Doloris': { name: 'Doloris', color: '#EF4444' },
-  'Solencia': { name: 'Solencia', color: '#F59E0B' }
+  'Harmonis': { name: 'Harmonis', color: '#2E8B57' }, // Vert - "L'équilibre soigne"
+  'Elaris': { name: 'Elaris', color: '#DC143C' }, // Rouge - "Clarifier, guider, apaiser"
+  'Doloris': { name: 'Doloris', color: '#FFD700' }, // Jaune/Or - "Comprendre la douleur, c'est soigner"
+  'Solencia': { name: 'Solencia', color: '#4169E1' } // Bleu - "Apaiser pour mieux guérir"
 }
 
 // Computed properties
@@ -403,6 +426,13 @@ const loadUserStats = async () => {
       throw new Error('Aucune donnée trouvée pour cet utilisateur')
     }
     
+    // Améliorer le nom d'affichage avec les données Firebase Auth si nécessaire
+    if (!stats.displayName || stats.displayName === 'Utilisateur') {
+      stats.displayName = auth.currentUser.displayName || 
+                          auth.currentUser.email?.split('@')[0] || 
+                          'Utilisateur'
+    }
+    
     // Fetch upcoming active challenges and also subscribe for real-time updates
     let house = stats?.maison || null
     let activeDefis = []
@@ -458,6 +488,13 @@ onBeforeUnmount(() => {
   height: 100vh;
   overflow-y: auto;
   overflow-x: hidden;
+  /* Masquer la scrollbar */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE et Edge */
+}
+
+.page-wrapper::-webkit-scrollbar {
+  display: none; /* Chrome, Safari et Opera */
 }
 
 .gamification-profile-page {
@@ -497,7 +534,7 @@ onBeforeUnmount(() => {
 .retry-btn {
   margin-top: 1rem;
   padding: 0.5rem 1rem;
-  background: #3B82F6;
+  background: var(--house-color);
   color: white;
   border: none;
   border-radius: 6px;
@@ -510,6 +547,12 @@ onBeforeUnmount(() => {
 /* Profile Header */
 .profile-header {
   margin-bottom: 2rem;
+}
+
+.profile-banner-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
 }
 
 .profile-banner {
@@ -538,20 +581,73 @@ onBeforeUnmount(() => {
   position: relative;
   z-index: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 2rem;
+  justify-content: center;
+  text-align: center;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+/* Avatar avec effet de halo */
+.avatar-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-halo {
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--house-color, #6B7280) 0%, transparent 70%);
+  opacity: 0.3;
+  animation: pulse-halo 3s ease-in-out infinite;
+  z-index: 1;
 }
 
 .user-avatar {
-  width: 100px;
-  height: 100px;
+  position: relative;
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
   overflow: hidden;
-  border: 4px solid rgba(255, 255, 255, 0.35);
-  box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+  border: 4px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 
+    0 0 30px rgba(0,0,0,0.3),
+    0 0 60px var(--house-color, #6B7280);
+  z-index: 3;
+  transition: all 0.3s ease;
+}
+
+.user-avatar:hover {
+  transform: scale(1.05);
+  box-shadow: 
+    0 0 40px rgba(0,0,0,0.4),
+    0 0 80px var(--house-color, #6B7280);
+}
+
+.avatar-ring {
+  position: absolute;
+  width: 160px;
+  height: 160px;
+  border: 2px solid var(--house-color, #6B7280);
+  border-radius: 50%;
+  opacity: 0.6;
+  animation: rotate-ring 10s linear infinite;
+  z-index: 2;
+}
+
+@keyframes pulse-halo {
+  0%, 100% { transform: scale(1); opacity: 0.3; }
+  50% { transform: scale(1.1); opacity: 0.5; }
+}
+
+@keyframes rotate-ring {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .user-avatar img {
@@ -574,11 +670,191 @@ onBeforeUnmount(() => {
   flex: 1;
 }
 
+/* Nom avec effet brillant */
+.user-name-container {
+  position: relative;
+  margin: 1rem 0;
+}
+
+.user-name-fancy {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: white;
+  text-shadow: 
+    0 0 20px var(--house-color, #6B7280),
+    0 4px 8px rgba(0,0,0,0.3);
+  margin: 0;
+  position: relative;
+  z-index: 2;
+  background: linear-gradient(45deg, white, rgba(255,255,255,0.8));
+  background-clip: text;
+  -webkit-background-clip: text;
+  animation: name-glow 2s ease-in-out infinite alternate;
+}
+
+.name-shine {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: shine-effect 3s ease-in-out infinite;
+  z-index: 3;
+}
+
+@keyframes name-glow {
+  0% { text-shadow: 0 0 20px var(--house-color, #6B7280), 0 4px 8px rgba(0,0,0,0.3); }
+  100% { text-shadow: 0 0 30px var(--house-color, #6B7280), 0 4px 12px rgba(0,0,0,0.4); }
+}
+
+@keyframes shine-effect {
+  0% { left: -100%; }
+  50% { left: 100%; }
+  100% { left: 100%; }
+}
+
 .user-name {
   font-size: 2rem;
   font-weight: bold;
   margin: 0 0 0.5rem 0;
   text-shadow: 2px 2px 4px rgba(0,0,0,0.35);
+}
+
+/* Cartes d'informations flottantes */
+.info-cards {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.info-card {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  min-width: 120px;
+}
+
+.info-card:hover {
+  transform: translateY(-5px);
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.card-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--house-color, #6B7280);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.card-icon i {
+  color: white;
+  font-size: 1.2rem;
+}
+
+.card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.card-label {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+}
+
+.card-value {
+  font-size: 1.1rem;
+  color: white;
+  font-weight: 700;
+}
+
+/* Particules décoratives */
+.floating-particles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  animation: float-particle 6s ease-in-out infinite;
+}
+
+.particle:nth-child(1) {
+  left: 10%;
+  animation-delay: 0s;
+  animation-duration: 6s;
+}
+
+.particle:nth-child(2) {
+  left: 20%;
+  animation-delay: 1s;
+  animation-duration: 8s;
+}
+
+.particle:nth-child(3) {
+  left: 30%;
+  animation-delay: 2s;
+  animation-duration: 7s;
+}
+
+.particle:nth-child(4) {
+  left: 70%;
+  animation-delay: 3s;
+  animation-duration: 9s;
+}
+
+.particle:nth-child(5) {
+  left: 80%;
+  animation-delay: 4s;
+  animation-duration: 6s;
+}
+
+.particle:nth-child(6) {
+  left: 90%;
+  animation-delay: 5s;
+  animation-duration: 8s;
+}
+
+@keyframes float-particle {
+  0% {
+    transform: translateY(100vh) scale(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100px) scale(1);
+    opacity: 0;
+  }
 }
 
 .user-house {
@@ -918,9 +1194,21 @@ onBeforeUnmount(() => {
   font-size: 0.8rem;
   font-weight: 600;
 }
-.status-pill.completed { background: #dcfce7; color: #14532d; }
-.status-pill.inprogress { background: #dbeafe; color: #1e3a8a; }
-.status-pill.missed { background: #fee2e2; color: #7f1d1d; }
+.status-pill.completed { 
+  background: color-mix(in srgb, var(--house-color) 20%, transparent);
+  color: var(--house-color);
+  border: 1px solid color-mix(in srgb, var(--house-color) 40%, transparent);
+}
+.status-pill.inprogress { 
+  background: color-mix(in srgb, var(--house-color) 10%, transparent);
+  color: var(--house-color);
+  border: 1px solid color-mix(in srgb, var(--house-color) 30%, transparent);
+}
+.status-pill.missed { 
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
 
 .empty-state {
   display: flex;
@@ -935,7 +1223,7 @@ onBeforeUnmount(() => {
 }
 
 .scroll-spacer {
-  height: 150vh;
+  height: 50vh;
   background: transparent;
 }
 
