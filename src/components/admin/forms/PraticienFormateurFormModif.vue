@@ -4,87 +4,77 @@
       <h1 class="text-5xl font-bold">Modifier le praticien formateur</h1>
     </section>
 
-    <div class="card p-4 shadow-lg">
-      <form @submit.prevent="updatePraticienFormateur" class="p-fluid">
-        <div class="p-field">
+    <div v-if="praticien" class="card p-4 shadow-lg">
+      <form @submit.prevent="submitUpdate" class="p-fluid">
+        <div class="field">
           <label for="prenom">Prénom</label>
-          <InputText id="prenom" v-model="prenom" required />
+          <InputText id="prenom" v-model="praticien.prenom" required />
         </div>
-        <div class="p-field">
+        <div class="field">
           <label for="nom">Nom</label>
-          <InputText id="nom" v-model="nom" required />
+          <InputText id="nom" v-model="praticien.nom" required />
         </div>
-        <div class="p-field">
+        <div class="field">
           <label for="mail">Mail</label>
-          <InputText id="mail" v-model="mail" required />
+          <InputText id="mail" v-model="praticien.mail" type="email" required />
         </div>
-        <Button type="submit" label="Mettre à jour" class="p-button-primary" />
+        <div class="field">
+          <label for="institution">Institution</label>
+          <InputText id="institution" v-model="praticien.institution" />
+        </div>
+        <div class="field">
+          <label for="localite">Localité</label>
+          <InputText id="localite" v-model="praticien.localite" />
+        </div>
+        <Button type="submit" label="Mettre à jour" class="p-button-primary mt-4" />
       </form>
+    </div>
+    <div v-else class="text-center">
+      <p>Chargement du praticien formateur ou praticien non trouvé...</p>
     </div>
   </div>
 </template>
 
-<script>
-import { db } from '../../../../firebase.js';
-import { ref, get, set } from "firebase/database";
+<script setup>
+import { ref, onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { usePraticiensFormateursStore } from '@/stores/praticiensFormateursStore';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 
-export default {
-  name: 'PraticienFormateurModif',
-  components: {
-    InputText,
-    Button
-  },
-  props: {
-    praticienFormateurId: String
-  },
-  data() {
-    return {
-      prenom: '',
-      nom: '',
-      mail: '',
-    };
-  },
-  async mounted() {
-    if (this.praticienFormateurId) {
-      const praticienFormateurRef = ref(db, 'PraticienFormateurs/' + this.praticienFormateurId);
-      try {
-        const snapshot = await get(praticienFormateurRef);
-        if (snapshot.exists()) {
-          const data = snapshot.val();
-          this.prenom = data.Prenom;
-          this.nom = data.Nom;
-          this.mail = data.Mail;
-        } else {
-          console.error('Praticien formateur non trouvé');
-        }
-      } catch (error) {
-        console.error('Erreur de chargement des données du praticien formateur:', error);
-      }
-    } else {
-      console.error('Aucun ID de praticien formateur fourni');
-    }
-  },
-  methods: {
-    async updatePraticienFormateur() {
-      if (confirm('Êtes-vous sûr de vouloir mettre à jour ce praticien formateur ?')) {
-        try {
-          const praticienFormateurRef = ref(db, 'PraticienFormateurs/' + this.praticienFormateurId);
-          await set(praticienFormateurRef, {
-            Prenom: this.prenom,
-            Nom: this.nom,
-            Mail: this.mail,
-          });
-          this.$router.push({ name: 'PraticienFormateurList' });
-        } catch (error) {
-          console.error('Erreur de mise à jour du praticien formateur:', error);
-        }
-      }
+const route = useRoute();
+const router = useRouter();
+const store = usePraticiensFormateursStore();
+
+const praticien = ref(null);
+const praticienFormateurId = route.params.praticienFormateurId;
+
+onMounted(async () => {
+  if (store.praticiensFormateurs.length === 0) {
+    await store.fetchPraticiensFormateurs();
+  }
+  
+  const foundPraticien = store.praticiensFormateurs.find(p => p.id === praticienFormateurId);
+  
+  if (foundPraticien) {
+    praticien.value = { ...foundPraticien };
+  } else {
+    console.error('Praticien formateur non trouvé dans le store');
+  }
+});
+
+const submitUpdate = async () => {
+  if (confirm('Êtes-vous sûr de vouloir mettre à jour ce praticien formateur ?')) {
+    if (praticien.value) {
+      await store.updatePraticienFormateur(praticien.value.id, praticien.value);
+      router.push({ name: 'TrainerListView' });
     }
   }
 };
 </script>
 
 <style scoped>
+.field {
+  margin-bottom: 1.5rem;
+}
 </style>
