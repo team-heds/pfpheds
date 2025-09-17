@@ -1,0 +1,25 @@
+-- Create the institutions table
+CREATE TABLE institutions (
+    "InstitutionId" TEXT PRIMARY KEY,
+    "AccordCadreDate" DATE,
+    "AccordCadrePDF" TEXT,
+    "Address" TEXT,
+    "Canton" VARCHAR(10),
+    "Category" TEXT,
+    "ConventionDate" DATE,
+    "ConventionPDF" TEXT,
+    "CyberleanURL" TEXT,
+    "Description" TEXT,
+    "IdResponsablePhysio" TEXT,
+    "ImageURL" JSONB,
+    "Language" VARCHAR(10),
+    "Latitude" FLOAT8,
+    "Locality" TEXT,
+    "Longitude" FLOAT8,
+    "MailChef" TEXT,
+    "NPA" TEXT,
+    "Name" TEXT,
+    "NomChef" TEXT,
+    "Note" TEXT,
+    "PhoneChef" TEXT
+);

@@ -1,27 +1,46 @@
 require('dotenv').config()
 const express = require('express')
-const supabase = require('./supabaseClient');
+const cors = require('cors')
+
+const userStoreRoutes = require('./supabase/userStoreBackend')                // si existant
+const institutionsStoreRoutes = require('./supabase/institutionsStoreBackend')
+const enseignantsStoreRoutes = require('./supabase/enseignantsStoreBackend') // si existant
+const hashtagStoreRoutes = require('./supabase/hashtagStoreBackend')         // si existant
+const communitiesStoreRoutes = require('./supabase/communitiesStoreBackend') // si existant
+const filePhysioRoutes = require('./supabase/filePhysioBackendStore')        // si existant
+const postsStoreRoutes = require('./supabase/postsBackendStore')             // si existant
+const praticiensFormateursStoreRoutes = require('./supabase/praticiensFormateursBackendStore') // si existant
+
 const app = express()
-app.use(express.json())
 
-app.get('/api/ping', (req, res) => {
-  res.send('pingpong')
-})
+// --- Middlewares globaux AVANT les routes ---
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}))
+app.options(/.*/, cors())
+app.use(express.json({ limit: '1mb' }))
 
-app.get('/api/pong', (req, res) => {
-  res.send('aller')
-})
+// --- Health ---
+app.get('/api/ping', (_req, res) => res.send('pingpong'))
 
-// Exemple de route test Supabase
+// --- Routes ---
+if (userStoreRoutes) app.use('/api', userStoreRoutes)
+app.use('/api/institutions', institutionsStoreRoutes)
+if (communitiesStoreRoutes) app.use('/api/communities', communitiesStoreRoutes)
+if (enseignantsStoreRoutes) app.use('/api/enseignants', enseignantsStoreRoutes)
+if (filePhysioRoutes) app.use('/api/filePhysio', filePhysioRoutes)
+if (hashtagStoreRoutes) app.use('/api/hashtags', hashtagStoreRoutes)
+if (postsStoreRoutes) app.use('/api/posts', postsStoreRoutes)
+if (praticiensFormateursStoreRoutes) app.use('/api/praticiens-formateurs', praticiensFormateursStoreRoutes)
 
-app.get('/api/chapters', async (req, res) => {
-  const { data, error } = await supabase.from('chapters').select('*');
-  if (error) return res.status(500).json({ error: error.message });
-  res.json(data);
-});
+// --- 404 générique ---
+app.use((_req, res) => res.status(404).json({ error: 'Not Found' }))
 
-// Lancement du serveur sur toutes les interfaces réseau
-const PORT = process.env.PORT || 3000;
+// --- Start ---
+const PORT = process.env.PORT || 3000
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
-});
+  console.log(`Backend running on http://localhost:${PORT}`)
+})
+  

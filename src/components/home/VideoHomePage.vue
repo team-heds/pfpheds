@@ -67,17 +67,21 @@
 
 <script>
 import Plyr from "plyr";
+import "plyr/dist/plyr.css";
 
 export default {
   name: "VideoHomePage",
   mounted() {
     // Assurez-vous que le style Plyr est inclus dans votre projet pour que le lecteur soit stylisé correctement
-    require("plyr/dist/plyr.css");
+    // Le CSS est importé en haut du fichier.
 
-    // Initialisation de Plyr
-    this.player = new Plyr(this.$refs.player);
+    // Initialisation de Plyr (si un élément cible est présent)
+    const target = this.$refs.player ?? this.$el.querySelector('video, audio');
+    if (target) {
+      this.player = new Plyr(target);
+    }
   },
-  beforeDestroy() {
+  beforeUnmount() {
     // Nettoyez le lecteur lorsque le composant est détruit
     if (this.player) {
       this.player.destroy();

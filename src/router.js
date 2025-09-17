@@ -32,11 +32,28 @@ import DocumentsPFP from '@/views/home/DocumentsView.vue'
 import MediaHubPage from '@/views/media/MediaHubPage.vue'
 import ModulesPage from '@/views/media/ModulesPage.vue'
 import ModuleVideosPage from '@/views/media/ModuleVideosPage.vue'
+
+// PLANNING / CALENDAR
+import HomePlanning from '@/views/planning/HomePlanning.vue'
+import CalendrierFormationPlein from '@/views/planning/CalendrierFormationPlein.vue'
+import CalendrierFormationPleinEdit from '@/views/planning/CalendrierFormationPleinEdit.vue'
+import CalendrierSemestriel from '@/views/planning/CalendrierSemestriel.vue'
+import CalendrierModule from '@/views/planning/CalendrierModule.vue'
+import CalendrierModuleEdit from '@/views/planning/CalendrierModuleEdit.vue'
+import CalendrierEnseignant from '@/views/planning/CalendrierEnseignant.vue'
+import CalendarMyCourses from '@/views/planning/CalendarMyCourses.vue'
+import CalendarMyModules from '@/views/planning/CalendarMyModules.vue'
+import CalendarModulesList from '@/views/planning/CalendarModulesList.vue'
+import CalendarModuleView from '@/views/planning/CalendarModuleView.vue'
+import CalendarCourseView from '@/views/planning/CalendarCourseView.vue'
+
 import VideoValidationPage from '@/views/media/VideoValidationPage.vue'
 import ModuleAdminPage from '@/views/media/ModuleAdminPage.vue'
 import ModuleAdminPageSimple from '@/views/admin/ModuleAdminPageSimple.vue'
 import VimeoTestPage from '@/views/media/VimeoTestPage.vue'
+
 import QrCodeGenerator from '@/components/ui/QrCodeGenerator.vue'
+
 
 // ========================================
 // PROFILS & UTILISATEURS
@@ -60,7 +77,7 @@ import QuestsPage from '@/components/gamification/QuestsPage.vue'
 // DASHBOARD & ADMINISTRATION
 // ========================================
 import DashboardView from '@/views/admin/DashboardView.vue';
-import AdminDefisView from '@/views/admin/gamification/AdminDefisView.vue';
+import AdminDefisView from '@/views/admin/institutions/gamification/AdminDefisView.vue';
 
 // ========================================
 // GAMIFICATION ADMIN VIEWS
@@ -158,8 +175,6 @@ import PlaceStatsView from '@/views/admin/places/PlaceStatsView.vue';
 // ========================================
 import Index from '@/views/apps/tasklist/Index.vue'
 import IndexChat from "@/views/apps/chat/IndexChat.vue";
-import ChatBox from "@/views/apps/chat/ChatBox.vue";
-import ChatSidebar from "@/views/apps/chat/ChatSidebar.vue";
 import CalendarView from '@/views/apps/calendar/CalendarView.vue';
 import FilesView from '@/views/apps/files/FilesView.vue';
 import MailIndex from '@/views/apps/mail/Index.vue';
@@ -173,13 +188,20 @@ import MobileLangAppsView from '@/views/apps/tools/MobileLangAppsView.vue';
 import MobileSearchView from '@/views/apps/tools/MobileSearchView.vue'
 import CreateContentMobile from '@/components/social/library/CreateContentMobile.vue';
 import ListComponent from '@/components/media/audio/ListComponent.vue'
+
+//import SearchResults from '@/components/common/utils/SearchResults.vue'
+import Ventriglisse3D from '@/components/games/Ventriglisse3D.vue';
+import CareConvers from '@/views/pages/CareConvers.vue';
+
 import SearchResults from '@/components/common/utils/SearchResults.vue'
 import Ventriglisse3D from '@/components/games/Ventriglisse3D.vue'
+
 
 // ========================================
 // ERREURS & CATCH-ALL
 // ========================================
 import Error404 from "@/components/common/utils/Error404.vue";
+import ResetPassword from '@/views/pages/ResetPassword.vue';
 
 // Define your routes
 const routes = [
@@ -192,6 +214,7 @@ const routes = [
   { path: '/new-password', component: NewPasswordView, name: 'NewPassword' },
   { path: '/login', component: LoginView, name: 'LoginView' },
   { path: '/register', component: RegisterView, name: 'RegisterView' },
+  { path: '/reset-password', component: ResetPassword  ,name: 'ResetPassword' },
 
   { path: '/verification', component: VerificationView, name: 'VerificationView' },
   { path: '/lock-screen', component: LockScreenView, name: 'LockScreenView' },
@@ -209,6 +232,24 @@ const routes = [
   { path: '/info_externe', component: InfoExterne, name: 'InfoExterne', meta: { requiresAuth: true } },
   { path: '/history', component: HistoriquePFP, name: 'HistoriquePFP', meta: { requiresAuth: true } },
   { path: '/documents', component: DocumentsPFP, name: 'DocumentsPFP', meta: { requiresAuth: true } },
+
+  // Planning / Calendar
+  { path: '/home-calendar', component: HomePlanning, name: 'HomeCalendar', meta: { requiresAuth: false } },
+  { path: '/calendar', component: HomePlanning, name: 'CalendarHome', meta: { requiresAuth: false } },
+  { path: '/calendar/home', component: HomePlanning, name: 'CalendarHomeAlias', meta: { requiresAuth: false } },
+  { path: '/calendar/full', component: CalendrierFormationPlein, name: 'CalendrierFormationPlein', meta: { requiresAuth: false } },
+  { path: '/calendar/full/edit', component: CalendrierFormationPleinEdit, name: 'CalendrierFormationPleinEdit', meta: { requiresAuth: false } },
+  { path: '/calendar/admin', component: CalendrierFormationPleinEdit, name: 'CalendarAdmin', meta: { requiresAuth: false } },
+  { path: '/calendar/semester', component: CalendrierSemestriel, name: 'CalendrierSemestriel', meta: { requiresAuth: false } },
+  { path: '/calendar/module', component: CalendrierModule, name: 'CalendrierModule', meta: { requiresAuth: false } },
+  { path: '/calendar/module/:moduleId/edit', component: CalendrierModuleEdit, name: 'CalendrierModuleEdit', props: true, meta: { requiresAuth: false } },
+  { path: '/calendar/teacher', component: CalendrierEnseignant, name: 'CalendrierEnseignant', meta: { requiresAuth: false } },
+  { path: '/calendar/my-courses', component: CalendarMyCourses, name: 'CalendarMyCourses', meta: { requiresAuth: false } },
+  { path: '/calendar/my-modules', component: CalendarMyModules, name: 'CalendarMyModules', meta: { requiresAuth: false } },
+  { path: '/calendar/modules', component: CalendarModulesList, name: 'CalendarModulesList', meta: { requiresAuth: false } },
+  { path: '/calendar/module/:moduleId', component: CalendarModuleView, name: 'CalendarModuleView', props: true, meta: { requiresAuth: false } },
+  { path: '/calendar/course/:courseId', component: CalendarCourseView, name: 'CalendarCourseView', props: true, meta: { requiresAuth: false } },
+
 
 
 
@@ -349,7 +390,10 @@ const routes = [
   { path: '/mobile-tools', component: MobileToolsView, name: 'MobileToolsView', meta: { requiresAuth: true } },
   { path: '/mobile-lang-apps', component: MobileLangAppsView, name: 'MobileLangApps', meta: { mobileOnly: true } },
   { path: '/mobile-search', component: MobileSearchView, name: 'MobileSearchView', meta: { requiresAuth: true } },
-  { path: '/template-test', component: () => import('@/views/template/TemplateTest.vue'), name: 'TemplateTest' },
+//  { path: '/template-test', component: () => import('@/views/template/TemplateTest.vue'), name: 'TemplateTest' },
+  { path: '/supabase-demo', component: () => import('@/views/pages/Supabase.vue'), name: 'SupabaseDemo', meta: { requiresAuth: true } },
+  { path: '/care-convers', component: CareConvers, name: 'CareConvers', meta: { requiresAuth: true } },
+  //{ path: '/template-test', component: () => import('@/views/template/TemplateTest.vue'), name: 'TemplateTest' },
 
   // ========================================
   // MOBILE SPÉCIFIQUE

@@ -7,7 +7,7 @@
       <div class="bg-circle_violet"></div>
     </div>
 
-    <!-- Contenu de l'application -->
+    <!-- Layout de l'application -->
     <div class="content">
       <Toast />
       <ConfirmDialog />
@@ -17,11 +17,9 @@
       <PwaInstallPrompt />
       <!-- Intégration du widget ConvAI -->
       <ConvaiWidget />
-
     </div>
 
     <!-- Loader
-
     <Loader v-if="isLoading" /> -->
   </div>
 </template>
@@ -30,25 +28,22 @@
 import Toast from 'primevue/toast';
 import ConfirmDialog from 'primevue/confirmdialog';
 import ConvaiWidget from '@/components/ui/ConvaiWidget.vue'
+import TheNavbar from '@/components/TheNavbar.vue';
 import Loader from '@/components/common/utils/Loader.vue'; // Import du composant Loader
 import VersionningComponent from './components/common/utils/VersionningComponent.vue'; // Import du nouveau composant
 import MobileBottomNav from '@/components/common/utils/MobileBottomNav.vue';
 import PwaInstallPrompt from '@/components/common/utils/PwaInstallPrompt.vue';
-import HeaderIcons from '@/components/common/utils/HeaderIcons.vue'
-
 
 export default {
   name: "App",
   components: {
+    TheNavbar,
     Toast,
     ConfirmDialog,
-    ConvaiWidget, // Déclaration du composant
-    Loader, // Déclaration du composant Loader
+    ConvaiWidget,
     VersionningComponent,
     MobileBottomNav,
     PwaInstallPrompt,
-    HeaderIcons,
-
   },
   data() {
     return {
@@ -102,18 +97,18 @@ export default {
   position: relative;
   width: 100vw;
   height: 100vh;
-  min-height: 100vh;
-  min-width: 100vw;
-  overflow: hidden;
+  overflow: hidden; /* Keep for background */
+  display: flex;
+  flex-direction: column;
 }
-:global(html), :global(body) {
+
+:global(html),
+:global(body) {
   width: 100vw;
   height: 100vh;
-  min-height: 100vh;
-  min-width: 100vw;
   margin: 0;
   padding: 0;
-  overflow: hidden;
+  overflow: hidden; /* Keep for background */
 }
 
 /* Conteneur des cercles */
@@ -158,7 +153,8 @@ export default {
 .content {
   position: relative;
   z-index: 1; /* S'assurer que le contenu est au-dessus */
-  min-height: 100vh;
+  flex-grow: 1; /* Take remaining space */
+  overflow-y: auto; /* Allow scrolling */
   padding: 1rem;
 }
 
