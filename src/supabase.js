@@ -1,13 +1,22 @@
+
+
 import { createClient } from '@supabase/supabase-js'
 
-// Remplace ces valeurs par celles de ton projet Supabase (onglet Project Settings > API)
+// ✅ Lis les variables d’environnement de Vite
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseKey = import.meta.env.VITE_SUPABASE_KEY
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_KEY
 
-console.log('SUPABASE_URL:', import.meta.env.VITE_SUPABASE_URL)
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('[Supabase] ❌ Variables d’environnement manquantes.')
+  console.error('VITE_SUPABASE_URL:', supabaseUrl)
+  console.error('VITE_SUPABASE_ANON_KEY:', supabaseAnonKey)
+}
 
-
-
-export const supabase = createClient(supabaseUrl, supabaseKey)
-
-
+// ✅ Crée le client avec options recommandées
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,       // garde la session même après refresh
+    autoRefreshToken: true,     // refresh automatique des tokens
+    detectSessionInUrl: true,   // utile pour login OAuth et reset password
+  },
+})

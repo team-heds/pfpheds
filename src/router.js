@@ -191,7 +191,7 @@ const routes = [
   { path: '/new-password', component: NewPasswordView, name: 'NewPassword' },
   { path: '/login', component: LoginView, name: 'LoginView' },
   { path: '/register', component: RegisterView, name: 'RegisterView' },
-  { path: '/reset-password', component: ResetPassword },
+  { path: '/reset-password', component: ResetPassword  ,name: 'ResetPassword' },
 
   { path: '/verification', component: VerificationView, name: 'VerificationView' },
   { path: '/lock-screen', component: LockScreenView, name: 'LockScreenView' },
