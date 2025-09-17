@@ -1,19 +1,20 @@
 <template>
   <Navbar />
-  <div class="houses-ranking-page mt-5">
+  <div class="page-wrapper">
+    <div class="houses-ranking-page mt-5">
 
     <div class="page-header">
       <div class="header-content">
-        <button class="back-btn" @click="$router.go(-1)">
+        <Button class="back-btn" @click="$router.go(-1)">
           <i class="pi pi-arrow-left"></i>
-        </button>
+        </Button>
         <div class="title-section">
           <h1>🏆 Classement des Maisons</h1>
 
         </div>
-        <button class="refresh-btn" @click="refreshRanking" :disabled="loading">
+        <Button class="refresh-btn" @click="refreshRanking" :disabled="loading">
           <i class="pi pi-refresh" :class="{ 'pi-spin': loading }"></i>
-        </button>
+        </Button>
       </div>
     </div>
 
@@ -155,6 +156,9 @@
       <i class="pi pi-spin pi-spinner"></i>
       <p>Chargement du classement...</p>
     </div>
+
+    
+    </div>
   </div>
 </template>
 
@@ -229,8 +233,25 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* Page wrapper pour le scroll - même structure que GamificationProfilePage et HouseStatsPage */
+.page-wrapper {
+  width: 100%;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* Masquer la scrollbar */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+
+/* Masquer la scrollbar pour WebKit (Chrome, Safari, Edge) */
+.page-wrapper::-webkit-scrollbar {
+  display: none;
+}
+
 .houses-ranking-page {
   min-height: 100vh;
+  padding-bottom: 2rem;
 }
 
 .page-header {
@@ -562,4 +583,5 @@ onMounted(() => {
     flex-wrap: wrap;
   }
 }
+
 </style>

@@ -1,6 +1,7 @@
 <template>
-  <Navbar />
-  <div class="gamification-profile-page" :style="{ '--house-color': houseColor }">
+  <div class="page-wrapper">
+    <Navbar />
+    <div class="gamification-profile-page" :style="{ '--house-color': houseColor }">
     
     <!-- Loading State -->
     <div v-if="loading" class="loading-container">
@@ -16,10 +17,10 @@
         <i class="pi pi-exclamation-triangle"></i>
         <h3>Erreur de chargement</h3>
         <p>{{ error }}</p>
-        <button @click="loadUserStats" class="retry-btn">
+        <Button @click="loadUserStats" class="retry-btn">
           <i class="pi pi-refresh"></i>
           Réessayer
-        </button>
+        </Button>
       </div>
     </div>
 
@@ -28,48 +29,60 @@
       
       <!-- Profile Header -->
       <div class="profile-header">
-        <div class="profile-banner" :style="{ backgroundImage: `url(${houseBackgroundImage})` }">
-          <div class="profile-info">
+        <div class="profile-banner-wrapper">
+          <div class="profile-banner" :style="{ backgroundImage: `url(${houseBackgroundImage})` }">
+            <div class="profile-info">
+
             
-            <!-- User Avatar -->
-            <div class="user-avatar">
-              <img v-if="userStats.photoURL" :src="userStats.photoURL" :alt="userStats.displayName" />
-              <div v-else class="avatar-placeholder">
-                <i class="pi pi-user"></i>
+            <!-- Nom avec effet brillant -->
+            <div class="user-name-container">
+              <h1 class="user-name-fancy">{{ userStats.displayName || userStats.nom || userStats.prenom || 'Utilisateur' }}</h1>
+              <div class="name-shine"></div>
+            </div>
+            
+            <!-- Cartes d'informations flottantes -->
+            <div class="info-cards">
+              <div class="info-card house-card" v-if="userStats.maison">
+                <div class="card-icon">
+                  <i class="pi pi-home"></i>
+                </div>
+                <div class="card-content">
+                  <span class="card-label">Maison</span>
+                  <span class="card-value">{{ userStats.maison }}</span>
+                </div>
+              </div>
+              
+              <div class="info-card level-card">
+                <div class="card-icon">
+                  <i class="pi pi-star"></i>
+                </div>
+                <div class="card-content">
+                  <span class="card-label">Niveau</span>
+                  <span class="card-value">{{ userStats.niveau || 1 }}</span>
+                </div>
+              </div>
+              
+              <div class="info-card xp-card">
+                <div class="card-icon">
+                  <i class="pi pi-bolt"></i>
+                </div>
+                <div class="card-content">
+                  <span class="card-label">XP Total</span>
+                  <span class="card-value">{{ formatNumber(userStats.xp || 0) }}</span>
+                </div>
               </div>
             </div>
             
-            <!-- User Details -->
-            <div class="user-details">
-              <h1 class="user-name">{{ userStats.displayName || 'Utilisateur' }}</h1>
-              
-              <div class="user-house" v-if="userStats.maison">
-                <i class="pi pi-home"></i>
-                <span>Maison {{ userStats.maison }}</span>
-              </div>
-              
-              <div class="user-level">
-                <span class="level-badge">Niveau {{ userStats.niveau || 1 }}</span>
-              </div>
+            <!-- Particules décoratives -->
+            <div class="floating-particles">
+              <div class="particle" v-for="i in 6" :key="i" :style="{ '--delay': i * 0.5 + 's' }"></div>
             </div>
             
             <!-- Quick Stats -->
-            <div class="quick-stats">
-              <div class="stat-item">
-                <div class="stat-value">{{ formatNumber(userStats.xp || 0) }}</div>
-                <div class="stat-label">XP Total</div>
-              </div>
-              <div class="stat-item">
-                <div class="stat-value">{{ userStats.streak || 0 }}</div>
-                <div class="stat-label">Série Actuelle</div>
-              </div>
-              <div class="stat-item">
-                <div class="stat-value">{{ userStats.streakMax || 0 }}</div>
-                <div class="stat-label">Meilleure Série</div>
-              </div>
-            </div>
+            
           </div>
         </div>
+      </div>
       </div>
 
       <!-- Page header aligned with HouseStatsPage -->
@@ -143,10 +156,9 @@
             </div>
           </div>
         </div>
-      </div>
 
         <!-- Prochaines quêtes / défis -->
-        <div class="card-section">
+        <div class="members-ranking">
           <div class="card-header">
             <h3><i class="pi pi-flag"></i> Prochaines Quêtes & Défis</h3>
             <span class="count-chip">{{ upcomingLimited.length }}</span>
@@ -190,22 +202,53 @@
         </div>
 
         <!-- Badges -->
-        <div class="card-section">
+        <div class="members-ranking">
           <div class="card-header">
             <h3><i class="pi pi-shield"></i> Mes Badges</h3>
-            <span class="count-chip">{{ badgesLimited.length }}</span>
-          </div>
-          <div v-if="badgesLimited.length" class="badge-grid">
-            <div v-for="(badge, i) in badgesLimited" :key="badge.id || i" class="badge-item">
-              <div class="badge-icon" :style="{ borderColor: houseColor }">
-                <i :class="badge.icon || 'pi pi-star'" :style="{ color: houseColor }"></i>
-              </div>
-              <div class="badge-meta">
-                <div class="badge-title">{{ badge.title || badge.name }}</div>
-                <div class="badge-desc">{{ badge.description || 'Badge obtenu' }}</div>
-              </div>
-              <div class="badge-xp" v-if="badge.xp">+{{ formatNumber(badge.xp) }} XP</div>
+            <div class="badge-stats">
+              <span class="count-chip">{{ userBadges.length }}/{{ totalBadges }}</span>
+              <span class="completion-chip" :style="{ backgroundColor: houseColor }">
+                {{ badgeCompletionPercentage }}% complété
+              </span>
             </div>
+          </div>
+          <!-- Badge Statistics -->
+          <div class="badge-summary" v-if="userBadges.length > 0">
+            <div class="badge-rarity-stats">
+              <div v-for="(count, rarity) in badgesByRarity" :key="rarity" 
+                   class="rarity-stat" :class="`rarity-${rarity}`">
+                <span class="rarity-count">{{ count }}</span>
+                <span class="rarity-label">{{ getRarityName(rarity) }}</span>
+              </div>
+            </div>
+            <div class="total-xp-from-badges">
+              <i class="pi pi-star-fill"></i>
+              <span>{{ formatNumber(totalXPFromBadges) }} XP des badges</span>
+            </div>
+          </div>
+          
+          <!-- Badges Grid -->
+          <div v-if="userBadges.length > 0" class="modern-badge-grid">
+            <BadgeCard
+              v-for="badge in displayedBadges"
+              :key="badge.id"
+              :badge="badge"
+              :is-unlocked="true"
+              :is-newly-unlocked="isNewlyUnlocked(badge)"
+              @click="showBadgeDetails(badge)"
+            />
+          </div>
+          
+          <!-- Show More Button -->
+          <div v-if="userBadges.length > displayLimit" class="show-more-section">
+            <Button 
+              @click="showAllBadges = !showAllBadges" 
+              class="show-more-btn"
+              :style="{ backgroundColor: houseColor }"
+            >
+              <i class="pi" :class="showAllBadges ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+              {{ showAllBadges ? 'Voir moins' : `Voir tous (${userBadges.length - displayLimit} de plus)` }}
+            </Button>
           </div>
           <div v-else class="empty-state">
             <i class="pi pi-info-circle"></i>
@@ -214,7 +257,7 @@
         </div>
 
         <!-- Achievements / Hauts faits -->
-        <div class="card-section">
+        <div class="members-ranking">
           <div class="card-header">
             <h3><i class="pi pi-trophy"></i> Mes Hauts Faits</h3>
             <span class="count-chip">{{ achievementsLimited.length }}</span>
@@ -248,8 +291,152 @@
             <p>Aucun haut fait enregistré.</p>
           </div>
         </div>
-
+      </div>
+      
+      <!-- Défis Hebdomadaires -->
+      <div class="members-ranking">
+        <div class="card-header">
+          <h3><i class="pi pi-flag"></i> Défis de la Semaine</h3>
+          <div class="challenge-stats">
+            <span class="count-chip">{{ completedChallengesCount }}/{{ activeChallenges.length }}</span>
+            <span class="completion-chip" :style="{ backgroundColor: houseColor }">
+              {{ challengeCompletionRate }}% complété
+            </span>
+          </div>
+        </div>
+        
+        <!-- Challenge Statistics -->
+        <div class="challenge-summary" v-if="challengeStats.totalCompleted > 0">
+          <div class="challenge-overview-stats">
+            <div class="stat-item">
+              <i class="pi pi-trophy"></i>
+              <span>{{ challengeStats.totalCompleted }} défis complétés</span>
+            </div>
+            <div class="stat-item">
+              <i class="pi pi-star-fill"></i>
+              <span>{{ formatNumber(challengeStats.totalXPFromChallenges) }} XP des défis</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Challenges Grid -->
+        <div v-if="activeChallenges.length > 0" class="modern-challenge-grid">
+          <ChallengeCard
+            v-for="challenge in displayedChallenges"
+            :key="challenge.id"
+            :challenge="challenge"
+            :house-color="houseColor"
+            @click="showChallengeDetails(challenge)"
+          />
+        </div>
+        
+        <!-- Show More Button -->
+        <div v-if="activeChallenges.length > challengeDisplayLimit" class="show-more-section">
+          <Button 
+            @click="showAllChallenges = !showAllChallenges" 
+            class="show-more-btn"
+            :style="{ backgroundColor: houseColor }"
+          >
+            <i class="pi" :class="showAllChallenges ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+            {{ showAllChallenges ? 'Voir moins' : `Voir tous les défis (${activeChallenges.length})` }}
+          </Button>
+        </div>
+        
+        <!-- Empty State -->
+        <div v-if="activeChallenges.length === 0" class="empty-badge-state">
+          <div class="empty-badge-icon">🎯</div>
+          <h4>Aucun défi actif</h4>
+          <p>Les nouveaux défis arrivent chaque lundi !</p>
+          <Button 
+            @click="router.push('/challenges')" 
+            class="check-challenges-btn"
+            :style="{ backgroundColor: houseColor }"
+          >
+            <i class="pi pi-external-link"></i>
+            Voir tous les défis
+          </Button>
+        </div>
+      </div>
+      
+      <!-- Quêtes Dynamiques -->
+      <div class="members-ranking">
+        <div class="card-header">
+          <h3><i class="pi pi-compass"></i> Mes Quêtes</h3>
+          <div class="quest-stats">
+            <span class="count-chip">{{ completedQuestsCount }}/{{ activeQuests.length }}</span>
+            <span class="completion-chip" :style="{ backgroundColor: houseColor }">
+              {{ questCompletionRate }}% complété
+            </span>
+          </div>
+        </div>
+        
+        <!-- Quest Statistics -->
+        <div class="quest-summary" v-if="questStats.totalCompleted > 0">
+          <div class="quest-overview-stats">
+            <div class="stat-item">
+              <i class="pi pi-check-circle"></i>
+              <span>{{ questStats.totalCompleted }} quêtes complétées</span>
+            </div>
+            <div class="stat-item">
+              <i class="pi pi-star-fill"></i>
+              <span>{{ formatNumber(totalXPFromQuests) }} XP des quêtes</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Quests Grid -->
+        <div v-if="activeQuests.length > 0" class="modern-quest-grid">
+          <QuestCard
+            v-for="quest in displayedQuests"
+            :key="quest.id"
+            :quest="quest"
+            :house-color="houseColor"
+            @click="showQuestDetails(quest)"
+          />
+        </div>
+        
+        <!-- Show More Button -->
+        <div v-if="activeQuests.length > questDisplayLimit" class="show-more-section">
+          <Button 
+            @click="showAllQuests = !showAllQuests" 
+            class="show-more-btn"
+            :style="{ backgroundColor: houseColor }"
+          >
+            <i class="pi" :class="showAllQuests ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+            {{ showAllQuests ? 'Voir moins' : `Voir toutes les quêtes (${activeQuests.length})` }}
+          </Button>
+        </div>
+        
+        <!-- Empty State -->
+        <div v-if="activeQuests.length === 0" class="empty-badge-state">
+          <div class="empty-badge-icon">🗺️</div>
+          <h4>Aucune quête active</h4>
+          <p>Explorez de nouvelles aventures et débloquez des quêtes !</p>
+          <Button 
+            @click="router.push('/quests')" 
+            class="check-quests-btn"
+            :style="{ backgroundColor: houseColor }"
+          >
+            <i class="pi pi-external-link"></i>
+            Voir toutes les quêtes
+          </Button>
+        </div>
+      </div>
     </div>
+    
+    <!-- Section de test pour forcer le scroll -->
+    <div class="test-scroll-section" v-if="userStats">
+      <div class="scroll-spacer"></div>
+    </div>
+    
+    </div>
+
+    <!-- Achievement Notification -->
+    <AchievementNotification
+      v-if="showNotification && currentNotification"
+      :badge="currentNotification"
+      @close="onNotificationClose"
+    />
   </div>
 </template>
 
@@ -259,7 +446,14 @@ import { useRouter } from 'vue-router'
 import { getAuth } from 'firebase/auth'
 import { getUserGamificationStats } from '@/service/hesHousesService'
 import { getActiveDefis, subscribeActiveDefis } from '@/service/defisService'
+import badgesService from '@/service/badgesService'
+import challengesService from '@/service/challengesService'
+import questsService from '@/service/questsService'
 import Navbar from '@/components/common/utils/Navbar.vue'
+import BadgeCard from '@/components/gamification/BadgeCard.vue'
+import ChallengeCard from '@/components/gamification/ChallengeCard.vue'
+import QuestCard from '@/components/gamification/QuestCard.vue'
+import AchievementNotification from '@/components/gamification/AchievementNotification.vue'
 // Background images per house (align with HouseStatsPage)
 import FondHarmonis from '@/assets/maisons/FondHarmonis.png'
 import FondElaris from '@/assets/maisons/FondElaris.png'
@@ -276,12 +470,33 @@ const error = ref(null)
 const userStats = ref(null)
 let unsubscribeDefis = null
 
+// Badge system state
+const userBadges = ref([])
+const allBadges = ref([])
+const showAllBadges = ref(false)
+const displayLimit = ref(6)
+const newlyUnlockedBadges = ref(new Set())
+const showNotification = ref(false)
+const currentNotification = ref(null)
+
+// Challenge system state
+const activeChallenges = ref([])
+const challengeStats = ref({})
+const showAllChallenges = ref(false)
+const challengeDisplayLimit = ref(3)
+
+// Quest system state
+const activeQuests = ref([])
+const questStats = ref({})
+const showAllQuests = ref(false)
+const questDisplayLimit = ref(3)
+
 // House configuration
 const houseConfig = {
-  'Harmonis': { name: 'Harmonis', color: '#10B981' },
-  'Elaris': { name: 'Elaris', color: '#3B82F6' },
-  'Doloris': { name: 'Doloris', color: '#EF4444' },
-  'Solencia': { name: 'Solencia', color: '#F59E0B' }
+  'Harmonis': { name: 'Harmonis', color: '#2E8B57' }, // Vert - "L'équilibre soigne"
+  'Elaris': { name: 'Elaris', color: '#DC143C' }, // Rouge - "Clarifier, guider, apaiser"
+  'Doloris': { name: 'Doloris', color: '#FFD700' }, // Jaune/Or - "Comprendre la douleur, c'est soigner"
+  'Solencia': { name: 'Solencia', color: '#4169E1' } // Bleu - "Apaiser pour mieux guérir"
 }
 
 // Computed properties
@@ -347,6 +562,72 @@ const upcomingLimited = computed(() => {
   return arr.slice(0, 10)
 })
 
+// Badge system computed properties
+const totalBadges = computed(() => allBadges.value.length)
+
+const badgeCompletionPercentage = computed(() => {
+  if (totalBadges.value === 0) return 0
+  return Math.round((userBadges.value.length / totalBadges.value) * 100)
+})
+
+const badgesByRarity = computed(() => {
+  const rarityCount = { common: 0, rare: 0, epic: 0, legendary: 0 }
+  userBadges.value.forEach(badge => {
+    if (rarityCount.hasOwnProperty(badge.rarity)) {
+      rarityCount[badge.rarity]++
+    }
+  })
+  return rarityCount
+})
+
+const totalXPFromBadges = computed(() => {
+  return userBadges.value.reduce((total, badge) => total + (badge.xpBonus || 0), 0)
+})
+
+const displayedBadges = computed(() => {
+  if (showAllBadges.value) return userBadges.value
+  return userBadges.value.slice(0, displayLimit.value)
+})
+
+const lockedBadges = computed(() => {
+  const unlockedIds = new Set(userBadges.value.map(b => b.id))
+  return allBadges.value.filter(badge => !unlockedIds.has(badge.id))
+})
+
+// Challenge system computed properties
+const displayedChallenges = computed(() => {
+  if (showAllChallenges.value) return activeChallenges.value
+  return activeChallenges.value.slice(0, challengeDisplayLimit.value)
+})
+
+const completedChallengesCount = computed(() => {
+  return activeChallenges.value.filter(c => c.completed).length
+})
+
+const challengeCompletionRate = computed(() => {
+  if (activeChallenges.value.length === 0) return 0
+  return Math.round((completedChallengesCount.value / activeChallenges.value.length) * 100)
+})
+
+// Quest system computed properties
+const displayedQuests = computed(() => {
+  if (showAllQuests.value) return activeQuests.value
+  return activeQuests.value.slice(0, questDisplayLimit.value)
+})
+
+const completedQuestsCount = computed(() => {
+  return activeQuests.value.filter(q => q.status === 'completed').length
+})
+
+const questCompletionRate = computed(() => {
+  if (activeQuests.value.length === 0) return 0
+  return Math.round((completedQuestsCount.value / activeQuests.value.length) * 100)
+})
+
+const totalXPFromQuests = computed(() => {
+  return questStats.value.totalXPFromQuests || 0
+})
+
 // Helper: status for a challenge
 const challengeStatus = (q) => {
   if (q?.completed || q?.status === 'completed') return 'validé'
@@ -380,6 +661,119 @@ const getDaysSinceJoined = () => {
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 }
 
+// Badge system methods
+const getRarityName = (rarity) => {
+  const names = {
+    common: 'Commun',
+    rare: 'Rare',
+    epic: 'Épique',
+    legendary: 'Légendaire'
+  }
+  return names[rarity] || rarity
+}
+
+const isNewlyUnlocked = (badge) => {
+  return newlyUnlockedBadges.value.has(badge.id)
+}
+
+const showBadgeDetails = (badge) => {
+  // TODO: Implémenter modal de détails du badge
+  console.log('Badge details:', badge)
+}
+
+const getBadgeProgressHint = (badge) => {
+  // TODO: Calculer le progrès vers le déblocage du badge
+  return null
+}
+
+const checkForNewBadges = async () => {
+  if (!auth.currentUser?.uid) return
+  
+  try {
+    const newBadges = await badgesService.autoCheckAndUnlockBadges(
+      auth.currentUser.uid, 
+      userStats.value
+    )
+    
+    if (newBadges.length > 0) {
+      // Ajouter les nouveaux badges à la liste
+      userBadges.value.push(...newBadges)
+      
+      // Marquer comme nouvellement débloqués
+      newBadges.forEach(badge => {
+        newlyUnlockedBadges.value.add(badge.id)
+      })
+      
+      // Afficher notification pour le premier badge
+      if (newBadges.length > 0) {
+        currentNotification.value = newBadges[0]
+        showNotification.value = true
+      }
+    }
+  } catch (error) {
+    console.error('Erreur lors de la vérification des badges:', error)
+  }
+}
+
+const loadBadgesData = async () => {
+  if (!auth.currentUser?.uid) return
+  
+  try {
+    // Charger tous les badges disponibles depuis la configuration
+    allBadges.value = Object.values(badgesService.BADGES_CONFIG)
+    
+    // Charger les badges de l'utilisateur
+    userBadges.value = await badgesService.getUserBadges(auth.currentUser.uid)
+  } catch (error) {
+    console.error('Erreur lors du chargement des badges:', error)
+  }
+}
+
+const onNotificationClose = () => {
+  showNotification.value = false
+  currentNotification.value = null
+}
+
+// Challenge system methods
+const loadChallengesData = async () => {
+  if (!auth.currentUser?.uid) return
+  
+  try {
+    // Charger les défis actifs
+    activeChallenges.value = await challengesService.getUserActiveChallenges(auth.currentUser.uid)
+    
+    // Charger les statistiques des défis
+    challengeStats.value = await challengesService.getUserChallengeStats(auth.currentUser.uid)
+  } catch (error) {
+    console.error('Erreur lors du chargement des défis:', error)
+  }
+}
+
+const showChallengeDetails = (challenge) => {
+  // Rediriger vers la page des défis avec le défi sélectionné
+  router.push('/challenges')
+}
+
+// Quest system methods
+const loadQuestsData = async () => {
+  if (!auth.currentUser?.uid) return
+  
+  try {
+    // Charger les quêtes actives
+    activeQuests.value = await questsService.getUserActiveQuests(auth.currentUser.uid)
+    
+    // Charger les statistiques des quêtes
+    questStats.value = await questsService.getUserQuestStats(auth.currentUser.uid)
+  } catch (error) {
+    console.error('Erreur lors du chargement des quêtes:', error)
+  }
+}
+
+const showQuestDetails = (quest) => {
+  // Rediriger vers la page des quêtes avec la quête sélectionnée
+  router.push('/quests')
+}
+
 // Data loading
 const loadUserStats = async () => {
   try {
@@ -396,6 +790,13 @@ const loadUserStats = async () => {
       throw new Error('Aucune donnée trouvée pour cet utilisateur')
     }
     
+    // Améliorer le nom d'affichage avec les données Firebase Auth si nécessaire
+    if (!stats.displayName || stats.displayName === 'Utilisateur') {
+      stats.displayName = auth.currentUser.displayName || 
+                          auth.currentUser.email?.split('@')[0] || 
+                          'Utilisateur'
+    }
+    
     // Fetch upcoming active challenges and also subscribe for real-time updates
     let house = stats?.maison || null
     let activeDefis = []
@@ -405,6 +806,15 @@ const loadUserStats = async () => {
       console.warn('Impossible de charger les défis actifs:', e)
     }
     userStats.value = { ...stats, upcomingChallenges: activeDefis }
+
+    // Charger les données des badges
+    await loadBadgesData()
+    
+    // Charger les données des défis
+    await loadChallengesData()
+    
+    // Charger les données des quêtes
+    await loadQuestsData()
 
     // Setup realtime subscription
     if (unsubscribeDefis) {
@@ -446,9 +856,24 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+.page-wrapper {
+  width: 100%;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* Masquer la scrollbar */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE et Edge */
+}
+
+.page-wrapper::-webkit-scrollbar {
+  display: none; /* Chrome, Safari et Opera */
+}
+
 .gamification-profile-page {
-  min-height: 100vh;
-  padding-bottom: 2rem;
+  width: 100%;
+  position: relative;
+  padding-bottom: 4rem;
 }
 
 /* Loading and Error States */
@@ -482,7 +907,7 @@ onBeforeUnmount(() => {
 .retry-btn {
   margin-top: 1rem;
   padding: 0.5rem 1rem;
-  background: #3B82F6;
+  background: var(--house-color);
   color: white;
   border: none;
   border-radius: 6px;
@@ -497,9 +922,15 @@ onBeforeUnmount(() => {
   margin-bottom: 2rem;
 }
 
+.profile-banner-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
 .profile-banner {
   color: white;
-  padding: 4rem 1rem;
+  padding: 4rem 0;
   border-radius: 0 0 20px 20px;
   position: relative;
   overflow: hidden;
@@ -523,19 +954,73 @@ onBeforeUnmount(() => {
   position: relative;
   z-index: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
+  justify-content: center;
+  text-align: center;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+/* Avatar avec effet de halo */
+.avatar-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-halo {
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--house-color, #6B7280) 0%, transparent 70%);
+  opacity: 0.3;
+  animation: pulse-halo 3s ease-in-out infinite;
+  z-index: 1;
 }
 
 .user-avatar {
-  width: 100px;
-  height: 100px;
+  position: relative;
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
   overflow: hidden;
-  border: 4px solid rgba(255, 255, 255, 0.35);
-  box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+  border: 4px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 
+    0 0 30px rgba(0,0,0,0.3),
+    0 0 60px var(--house-color, #6B7280);
+  z-index: 3;
+  transition: all 0.3s ease;
+}
+
+.user-avatar:hover {
+  transform: scale(1.05);
+  box-shadow: 
+    0 0 40px rgba(0,0,0,0.4),
+    0 0 80px var(--house-color, #6B7280);
+}
+
+.avatar-ring {
+  position: absolute;
+  width: 160px;
+  height: 160px;
+  border: 2px solid var(--house-color, #6B7280);
+  border-radius: 50%;
+  opacity: 0.6;
+  animation: rotate-ring 10s linear infinite;
+  z-index: 2;
+}
+
+@keyframes pulse-halo {
+  0%, 100% { transform: scale(1); opacity: 0.3; }
+  50% { transform: scale(1.1); opacity: 0.5; }
+}
+
+@keyframes rotate-ring {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .user-avatar img {
@@ -558,11 +1043,191 @@ onBeforeUnmount(() => {
   flex: 1;
 }
 
+/* Nom avec effet brillant */
+.user-name-container {
+  position: relative;
+  margin: 1rem 0;
+}
+
+.user-name-fancy {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: white;
+  text-shadow: 
+    0 0 20px var(--house-color, #6B7280),
+    0 4px 8px rgba(0,0,0,0.3);
+  margin: 0;
+  position: relative;
+  z-index: 2;
+  background: linear-gradient(45deg, white, rgba(255,255,255,0.8));
+  background-clip: text;
+  -webkit-background-clip: text;
+  animation: name-glow 2s ease-in-out infinite alternate;
+}
+
+.name-shine {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: shine-effect 3s ease-in-out infinite;
+  z-index: 3;
+}
+
+@keyframes name-glow {
+  0% { text-shadow: 0 0 20px var(--house-color, #6B7280), 0 4px 8px rgba(0,0,0,0.3); }
+  100% { text-shadow: 0 0 30px var(--house-color, #6B7280), 0 4px 12px rgba(0,0,0,0.4); }
+}
+
+@keyframes shine-effect {
+  0% { left: -100%; }
+  50% { left: 100%; }
+  100% { left: 100%; }
+}
+
 .user-name {
   font-size: 2rem;
   font-weight: bold;
   margin: 0 0 0.5rem 0;
   text-shadow: 2px 2px 4px rgba(0,0,0,0.35);
+}
+
+/* Cartes d'informations flottantes */
+.info-cards {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.info-card {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  min-width: 120px;
+}
+
+.info-card:hover {
+  transform: translateY(-5px);
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.card-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--house-color, #6B7280);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.card-icon i {
+  color: white;
+  font-size: 1.2rem;
+}
+
+.card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.card-label {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+}
+
+.card-value {
+  font-size: 1.1rem;
+  color: white;
+  font-weight: 700;
+}
+
+/* Particules décoratives */
+.floating-particles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  animation: float-particle 6s ease-in-out infinite;
+}
+
+.particle:nth-child(1) {
+  left: 10%;
+  animation-delay: 0s;
+  animation-duration: 6s;
+}
+
+.particle:nth-child(2) {
+  left: 20%;
+  animation-delay: 1s;
+  animation-duration: 8s;
+}
+
+.particle:nth-child(3) {
+  left: 30%;
+  animation-delay: 2s;
+  animation-duration: 7s;
+}
+
+.particle:nth-child(4) {
+  left: 70%;
+  animation-delay: 3s;
+  animation-duration: 9s;
+}
+
+.particle:nth-child(5) {
+  left: 80%;
+  animation-delay: 4s;
+  animation-duration: 6s;
+}
+
+.particle:nth-child(6) {
+  left: 90%;
+  animation-delay: 5s;
+  animation-duration: 8s;
+}
+
+@keyframes float-particle {
+  0% {
+    transform: translateY(100vh) scale(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100px) scale(1);
+    opacity: 0;
+  }
 }
 
 .user-house {
@@ -664,43 +1329,7 @@ onBeforeUnmount(() => {
   color: white;
 }
 
-/* Detailed Stats */
-.detailed-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
-}
-
-.stat-card {
-  background: var(--surface-card);
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.stat-card i {
-  font-size: 2rem;
-  color: white;
-}
-
-.stat-info {
-  flex: 1;
-}
-
-.stat-number {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: white;
-}
-
-.stat-desc {
-  color: white;
-  opacity: 0.9;
-  font-size: 0.875rem;
-}
+/* Supprimé - remplacé par les nouveaux styles */
 
 /* Page Header (harmonized with HouseStatsPage) */
 .page-header {
@@ -749,13 +1378,93 @@ onBeforeUnmount(() => {
   text-align: center;
 }
 
-/* Card sections */
-.card-section {
+/* Stats container - même style que HouseStatsPage */
+.stats-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.house-level-card {
   background: var(--surface-card);
-  padding: 1.5rem;
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+}
+
+.level-info {
+  color: white;
+}
+
+.level-badge {
+  display: inline-block;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.level-name {
+  font-size: 2rem;
+  margin: 0 0 1.5rem 0;
+  color: white;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: var(--surface-card);
   border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
   box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-  margin-top: 2rem;
+  transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+}
+
+.stat-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.2rem;
+}
+
+.stat-content h3 {
+  font-size: 1.8rem;
+  margin: 0;
+  color: white;
+}
+
+.stat-content p {
+  margin: 0;
+  color: white;
+  font-size: 0.9rem;
+}
+
+/* Members ranking style - exactement comme HouseStatsPage */
+.members-ranking {
+  background: var(--surface-card);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
 }
 
 .card-header {
@@ -765,6 +1474,14 @@ onBeforeUnmount(() => {
   border-bottom: 2px solid rgba(255,255,255,0.08);
   padding-bottom: 0.75rem;
   margin-bottom: 1rem;
+}
+
+.members-ranking h2, .members-ranking h3 {
+  margin: 0 0 1.5rem 0;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .card-header h3 {
@@ -850,9 +1567,21 @@ onBeforeUnmount(() => {
   font-size: 0.8rem;
   font-weight: 600;
 }
-.status-pill.completed { background: #dcfce7; color: #14532d; }
-.status-pill.inprogress { background: #dbeafe; color: #1e3a8a; }
-.status-pill.missed { background: #fee2e2; color: #7f1d1d; }
+.status-pill.completed { 
+  background: color-mix(in srgb, var(--house-color) 20%, transparent);
+  color: var(--house-color);
+  border: 1px solid color-mix(in srgb, var(--house-color) 40%, transparent);
+}
+.status-pill.inprogress { 
+  background: color-mix(in srgb, var(--house-color) 10%, transparent);
+  color: var(--house-color);
+  border: 1px solid color-mix(in srgb, var(--house-color) 30%, transparent);
+}
+.status-pill.missed { 
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
 
 .empty-state {
   display: flex;
@@ -860,6 +1589,44 @@ onBeforeUnmount(() => {
   gap: 0.5rem;
   color: white;
   opacity: 0.9;
+}
+
+.test-scroll-section {
+  width: 100%;
+}
+
+.scroll-spacer {
+  height: 50vh;
+  background: transparent;
+}
+
+/* Membres ranking style - même que HouseStatsPage */
+.card-section h2, .card-section h3 {
+  margin: 0 0 1.5rem 0;
+  color: white;
+}
+
+.card-section .data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.card-section .data-table thead th {
+  text-align: left;
+  font-weight: 600;
+  color: white;
+  padding: 0.75rem;
+  border-bottom: 2px solid rgba(255,255,255,0.08);
+}
+
+.card-section .data-table tbody td {
+  padding: 0.75rem;
+  color: white;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.card-section .data-table tbody tr:hover {
+  background: var(--surface-hover);
 }
 
 /* Responsive */
@@ -880,6 +1647,308 @@ onBeforeUnmount(() => {
 
   .badge-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Badge System Styles */
+.badge-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.completion-chip {
+  background: var(--house-color);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badge-summary {
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.badge-rarity-stats {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.rarity-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem;
+  border-radius: 6px;
+  min-width: 60px;
+}
+
+.rarity-stat.rarity-common {
+  background: rgba(156, 163, 175, 0.1);
+  color: #6B7280;
+}
+
+.rarity-stat.rarity-rare {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3B82F6;
+}
+
+.rarity-stat.rarity-epic {
+  background: rgba(147, 51, 234, 0.1);
+  color: #9333EA;
+}
+
+.rarity-stat.rarity-legendary {
+  background: rgba(245, 158, 11, 0.1);
+  color: #F59E0B;
+}
+
+.rarity-count {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.rarity-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.total-xp-from-badges {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--house-color);
+  font-weight: 600;
+}
+
+.modern-badge-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.show-more-section {
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+.show-more-btn {
+  background: var(--house-color);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.show-more-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.empty-badge-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.empty-state h4 {
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.check-badges-btn {
+  background: var(--house-color);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  margin-top: 1rem;
+  transition: all 0.2s ease;
+}
+
+.check-badges-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.locked-badges-section {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.locked-badges-section h4 {
+  color: #6B7280;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.locked-badges-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+/* Responsive adjustments for badges */
+@media (max-width: 768px) {
+  .badge-rarity-stats {
+    justify-content: center;
+  }
+  
+  .modern-badge-grid,
+  .locked-badges-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+  
+  .badge-stats {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+
+/* Styles pour les défis */
+.challenge-stats {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.challenge-summary {
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.challenge-overview-stats {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-color-secondary);
+  font-size: 0.9rem;
+}
+
+.stat-item i {
+  color: var(--primary-color);
+}
+
+.modern-challenge-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.check-challenges-btn {
+  margin-top: 1rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.check-challenges-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Quest system styles */
+.quest-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.quest-summary {
+  background: rgba(0, 0, 0, 0.02);
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.quest-overview-stats {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.modern-quest-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.check-quests-btn {
+  background: var(--house-color);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  margin-top: 1rem;
+  transition: all 0.2s ease;
+}
+
+.check-quests-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive pour défis et quêtes */
+@media (max-width: 768px) {
+  .modern-challenge-grid,
+  .modern-quest-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .challenge-stats,
+  .quest-stats {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .challenge-overview-stats {
+    justify-content: center;
   }
 }
 </style>

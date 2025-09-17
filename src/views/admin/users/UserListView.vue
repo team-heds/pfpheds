@@ -1,7 +1,30 @@
-﻿<template>
-  <div>
-    <Navbar />
-    <div class="filter-menu">
+<template>
+  <Navbar />
+  <div class="page-wrapper">
+    <div class="user-list-page">
+      <!-- Header de la page -->
+      <div class="col-12">
+        <div class="card">
+          <div class="flex align-items-center gap-2 mb-3 text-sm text-600">
+            <router-link to="/admin" class="text-600 no-underline hover:text-primary transition-colors">
+              <i class="pi pi-home mr-1"></i>
+              Dashboard
+            </router-link>
+            <i class="pi pi-angle-right text-300"></i>
+            <span class="text-900 font-medium">Liste des Utilisateurs</span>
+          </div>
+          <h1 class="text-3xl font-bold text-900 m-0 mb-2 flex align-items-center gap-3">
+            <i class="pi pi-users text-blue-500 text-3xl"></i>
+            Liste des Utilisateurs
+          </h1>
+          <p class="text-600 text-lg line-height-3 m-0">
+            Consultez et gérez la liste complète des utilisateurs de la plateforme.
+          </p>
+        </div>
+      </div>
+
+      <!-- Contenu principal -->
+      <div class="col-12">
       <DataTable
         :value="filteredUtilisateurs"
         :paginator="true"
@@ -13,14 +36,26 @@
         :loading="loading"
         :globalFilterFields="['Nom', 'Prenom', 'Role', 'Email']"
         showGridlines
+        class="surface-card border-round shadow-2"
       >
         <template #header>
-          <div class="flex justify-content-between flex-column sm:flex-row">
-            <Button label="Ajouter un utilisateur" icon="pi pi-plus" class="mb-2 mr-2" outlined @click="goToUserForm" />
-            <IconField iconPosition="left">
-              <InputIcon class="pi pi-search" />
-              <InputText v-model="globalFilter" placeholder="Recherche" style="width: 100%" />
-            </IconField>
+          <div class="flex justify-content-between align-items-center flex-wrap gap-3 p-4">
+            <div class="flex align-items-center gap-3">
+              <div class="bg-blue-50 w-3rem h-3rem border-circle flex align-items-center justify-content-center">
+                <i class="pi pi-users text-blue-500 text-xl"></i>
+              </div>
+              <div>
+                <h3 class="text-xl font-semibold text-900 m-0">Utilisateurs</h3>
+                <p class="text-600 m-0 text-sm">{{ filteredUtilisateurs.length }} utilisateur(s) trouvé(s)</p>
+              </div>
+            </div>
+            <div class="flex gap-3 align-items-center flex-wrap">
+              <IconField iconPosition="left">
+                <InputIcon class="pi pi-search" />
+                <InputText v-model="globalFilter" placeholder="Rechercher..." class="w-20rem" />
+              </IconField>
+              <Button label="Ajouter" icon="pi pi-plus" class="p-button-success" @click="goToUserForm" />
+            </div>
           </div>
         </template>
         <template #empty> Aucun utilisateur trouvé. </template>
@@ -64,6 +99,7 @@
           </template>
         </Column>
       </DataTable>
+      </div>
     </div>
   </div>
 </template>
@@ -156,7 +192,32 @@ export default {
 </script>
 
 <style scoped>
-.filter-menu {
-  padding: 20px;
+.page-wrapper {
+  width: 100%;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.page-wrapper::-webkit-scrollbar {
+  display: none;
+}
+
+.user-list-page {
+  min-height: 100vh;
+  padding: 2rem;
+  padding-bottom: 8rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (max-width: 768px) {
+  .user-list-page {
+    padding: 1rem;
+    padding-bottom: 6rem;
+  }
 }
 </style>

@@ -32,6 +32,7 @@ import DocumentsPFP from '@/views/home/DocumentsView.vue'
 import MediaHubPage from '@/views/media/MediaHubPage.vue'
 import ModulesPage from '@/views/media/ModulesPage.vue'
 import ModuleVideosPage from '@/views/media/ModuleVideosPage.vue'
+
 // PLANNING / CALENDAR
 import HomePlanning from '@/views/planning/HomePlanning.vue'
 import CalendrierFormationPlein from '@/views/planning/CalendrierFormationPlein.vue'
@@ -45,10 +46,14 @@ import CalendarMyModules from '@/views/planning/CalendarMyModules.vue'
 import CalendarModulesList from '@/views/planning/CalendarModulesList.vue'
 import CalendarModuleView from '@/views/planning/CalendarModuleView.vue'
 import CalendarCourseView from '@/views/planning/CalendarCourseView.vue'
+
 import VideoValidationPage from '@/views/media/VideoValidationPage.vue'
 import ModuleAdminPage from '@/views/media/ModuleAdminPage.vue'
 import ModuleAdminPageSimple from '@/views/admin/ModuleAdminPageSimple.vue'
 import VimeoTestPage from '@/views/media/VimeoTestPage.vue'
+
+import QrCodeGenerator from '@/components/ui/QrCodeGenerator.vue'
+
 
 // ========================================
 // PROFILS & UTILISATEURS
@@ -64,12 +69,25 @@ import HESHouseQuizView from '@/views/users/HESHouseQuizView.vue'
 import HouseStatsPage from '@/components/gamification/HouseStatsPage.vue'
 import HousesRankingPage from '@/components/gamification/HousesRankingPage.vue'
 import GamificationProfilePage from '@/components/gamification/GamificationProfilePage.vue'
+import AchievementsPage from '@/components/gamification/AchievementsPage.vue'
+import ChallengesPage from '@/components/gamification/ChallengesPage.vue'
+import QuestsPage from '@/components/gamification/QuestsPage.vue'
 
 // ========================================
 // DASHBOARD & ADMINISTRATION
 // ========================================
 import DashboardView from '@/views/admin/DashboardView.vue';
 import AdminDefisView from '@/views/admin/institutions/gamification/AdminDefisView.vue';
+
+// ========================================
+// GAMIFICATION ADMIN VIEWS
+// ========================================
+import ChallengeManagementView from '@/views/admin/gamification/ChallengeManagementView.vue';
+import QuestManagementView from '@/views/admin/gamification/QuestManagementView.vue';
+import BadgeManagementView from '@/views/admin/gamification/BadgeManagementView.vue';
+import UserManagementView from '@/views/admin/gamification/UserManagementView.vue';
+import HouseManagementView from '@/views/admin/gamification/HouseManagementView.vue';
+import AnalyticsDashboardView from '@/views/admin/gamification/AnalyticsDashboardView.vue';
 
 // ========================================
 // SOCIAL & COMMUNICATION
@@ -170,9 +188,14 @@ import MobileLangAppsView from '@/views/apps/tools/MobileLangAppsView.vue';
 import MobileSearchView from '@/views/apps/tools/MobileSearchView.vue'
 import CreateContentMobile from '@/components/social/library/CreateContentMobile.vue';
 import ListComponent from '@/components/media/audio/ListComponent.vue'
+
 //import SearchResults from '@/components/common/utils/SearchResults.vue'
 import Ventriglisse3D from '@/components/games/Ventriglisse3D.vue';
 import CareConvers from '@/views/pages/CareConvers.vue';
+
+import SearchResults from '@/components/common/utils/SearchResults.vue'
+import Ventriglisse3D from '@/components/games/Ventriglisse3D.vue'
+
 
 // ========================================
 // ERREURS & CATCH-ALL
@@ -229,6 +252,7 @@ const routes = [
 
 
 
+
   // MEDIA & MULTIMÉDIA
   { path: '/media', component: MediaHubPage, name: 'MediaHubPage', meta: { requiresAuth: true } },
   { path: '/modules', component: ModulesPage, name: 'ModulesPage', meta: { requiresAuth: true } },
@@ -248,12 +272,25 @@ const routes = [
   { path: '/houses/:houseName/stats', component: HouseStatsPage, name: 'HouseStatsPage', props: true, meta: { requiresAuth: true } },
   { path: '/houses/ranking', component: HousesRankingPage, name: 'HousesRankingPage', meta: { requiresAuth: true } },
   { path: '/gamification-profile', component: GamificationProfilePage, name: 'GamificationProfilePage', meta: { requiresAuth: false } },
+  { path: '/achievements', component: AchievementsPage, name: 'AchievementsPage', meta: { requiresAuth: true } },
+  { path: '/challenges', component: ChallengesPage, name: 'ChallengesPage', meta: { requiresAuth: true } },
+  { path: '/quests', component: QuestsPage, name: 'QuestsPage', meta: { requiresAuth: true } },
 
   // ========================================
   // DASHBOARD & ADMINISTRATION
   // ========================================
   { path: '/admin', component: DashboardView, name: 'DashboardView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
   { path: '/admin/defis', component: AdminDefisView, name: 'AdminDefisView', meta: { requiresAuth: true, requiredRole: ['admin'] } },
+  
+  // ========================================
+  // GAMIFICATION ADMIN ROUTES
+  // ========================================
+  { path: '/admin/gamification/challenges', component: ChallengeManagementView, name: 'ChallengeManagementView', meta: { requiresAuth: true, requiredRole: ['admin', 'game_master', 'house_coach'] } },
+  { path: '/admin/gamification/quests', component: QuestManagementView, name: 'QuestManagementView', meta: { requiresAuth: true, requiredRole: ['admin', 'game_master', 'house_coach'] } },
+  { path: '/admin/gamification/badges', component: BadgeManagementView, name: 'BadgeManagementView', meta: { requiresAuth: true, requiredRole: ['admin', 'game_master'] } },
+  { path: '/admin/gamification/users', component: UserManagementView, name: 'UserManagementView', meta: { requiresAuth: true, requiredRole: ['admin', 'game_master'] } },
+  { path: '/admin/gamification/houses', component: HouseManagementView, name: 'HouseManagementView', meta: { requiresAuth: true, requiredRole: ['admin', 'game_master', 'house_coach'] } },
+  { path: '/admin/gamification/analytics', component: AnalyticsDashboardView, name: 'AnalyticsDashboardView', meta: { requiresAuth: true, requiredRole: ['admin', 'game_master', 'professor'] } },
 
   // ========================================
   // SOCIAL & COMMUNICATION
