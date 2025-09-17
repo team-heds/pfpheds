@@ -32,6 +32,19 @@ import DocumentsPFP from '@/views/home/DocumentsView.vue'
 import MediaHubPage from '@/views/media/MediaHubPage.vue'
 import ModulesPage from '@/views/media/ModulesPage.vue'
 import ModuleVideosPage from '@/views/media/ModuleVideosPage.vue'
+// PLANNING / CALENDAR
+import HomePlanning from '@/views/planning/HomePlanning.vue'
+import CalendrierFormationPlein from '@/views/planning/CalendrierFormationPlein.vue'
+import CalendrierFormationPleinEdit from '@/views/planning/CalendrierFormationPleinEdit.vue'
+import CalendrierSemestriel from '@/views/planning/CalendrierSemestriel.vue'
+import CalendrierModule from '@/views/planning/CalendrierModule.vue'
+import CalendrierModuleEdit from '@/views/planning/CalendrierModuleEdit.vue'
+import CalendrierEnseignant from '@/views/planning/CalendrierEnseignant.vue'
+import CalendarMyCourses from '@/views/planning/CalendarMyCourses.vue'
+import CalendarMyModules from '@/views/planning/CalendarMyModules.vue'
+import CalendarModulesList from '@/views/planning/CalendarModulesList.vue'
+import CalendarModuleView from '@/views/planning/CalendarModuleView.vue'
+import CalendarCourseView from '@/views/planning/CalendarCourseView.vue'
 import VideoValidationPage from '@/views/media/VideoValidationPage.vue'
 import ModuleAdminPage from '@/views/media/ModuleAdminPage.vue'
 import ModuleAdminPageSimple from '@/views/admin/ModuleAdminPageSimple.vue'
@@ -165,6 +178,7 @@ import CareConvers from '@/views/pages/CareConvers.vue';
 // ERREURS & CATCH-ALL
 // ========================================
 import Error404 from "@/components/common/utils/Error404.vue";
+import ResetPassword from '@/views/pages/ResetPassword.vue';
 
 // Define your routes
 const routes = [
@@ -177,6 +191,7 @@ const routes = [
   { path: '/new-password', component: NewPasswordView, name: 'NewPassword' },
   { path: '/login', component: LoginView, name: 'LoginView' },
   { path: '/register', component: RegisterView, name: 'RegisterView' },
+  { path: '/reset-password', component: ResetPassword },
 
   { path: '/verification', component: VerificationView, name: 'VerificationView' },
   { path: '/lock-screen', component: LockScreenView, name: 'LockScreenView' },
@@ -194,6 +209,23 @@ const routes = [
   { path: '/info_externe', component: InfoExterne, name: 'InfoExterne', meta: { requiresAuth: true } },
   { path: '/history', component: HistoriquePFP, name: 'HistoriquePFP', meta: { requiresAuth: true } },
   { path: '/documents', component: DocumentsPFP, name: 'DocumentsPFP', meta: { requiresAuth: true } },
+
+  // Planning / Calendar
+  { path: '/home-calendar', component: HomePlanning, name: 'HomeCalendar', meta: { requiresAuth: false } },
+  { path: '/calendar', component: HomePlanning, name: 'CalendarHome', meta: { requiresAuth: false } },
+  { path: '/calendar/home', component: HomePlanning, name: 'CalendarHomeAlias', meta: { requiresAuth: false } },
+  { path: '/calendar/full', component: CalendrierFormationPlein, name: 'CalendrierFormationPlein', meta: { requiresAuth: false } },
+  { path: '/calendar/full/edit', component: CalendrierFormationPleinEdit, name: 'CalendrierFormationPleinEdit', meta: { requiresAuth: false } },
+  { path: '/calendar/admin', component: CalendrierFormationPleinEdit, name: 'CalendarAdmin', meta: { requiresAuth: false } },
+  { path: '/calendar/semester', component: CalendrierSemestriel, name: 'CalendrierSemestriel', meta: { requiresAuth: false } },
+  { path: '/calendar/module', component: CalendrierModule, name: 'CalendrierModule', meta: { requiresAuth: false } },
+  { path: '/calendar/module/:moduleId/edit', component: CalendrierModuleEdit, name: 'CalendrierModuleEdit', props: true, meta: { requiresAuth: false } },
+  { path: '/calendar/teacher', component: CalendrierEnseignant, name: 'CalendrierEnseignant', meta: { requiresAuth: false } },
+  { path: '/calendar/my-courses', component: CalendarMyCourses, name: 'CalendarMyCourses', meta: { requiresAuth: false } },
+  { path: '/calendar/my-modules', component: CalendarMyModules, name: 'CalendarMyModules', meta: { requiresAuth: false } },
+  { path: '/calendar/modules', component: CalendarModulesList, name: 'CalendarModulesList', meta: { requiresAuth: false } },
+  { path: '/calendar/module/:moduleId', component: CalendarModuleView, name: 'CalendarModuleView', props: true, meta: { requiresAuth: false } },
+  { path: '/calendar/course/:courseId', component: CalendarCourseView, name: 'CalendarCourseView', props: true, meta: { requiresAuth: false } },
 
 
 

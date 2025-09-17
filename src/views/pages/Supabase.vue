@@ -1,340 +1,300 @@
 <template>
-        <TheNavbar />
+  <TheNavbar />
 
-    <div class="p-4">
-      <h1 class="text-2xl mb-3">Supabase Realtime Demo</h1>
-      <p class="text-600 text-sm mb-3">Backend: {{ backendUrl }}</p>
-      
-      <!-- Auth section -->
-      <div class="mb-4 border-1 surface-border border-round p-3" style="max-width: 520px;">
-        <div class="mb-2 text-800 font-medium">Authentification</div>
-        <div v-if="user" class="text-700 mb-2">
-          Connecté en tant que <strong>{{ user.email }}</strong>
+  <div class="p-4">
+    <h1 class="text-2xl mb-3">Supabase (DB only) — Todos</h1>
+
+    <!-- Auth -->
+    <div class="mb-4 border-1 surface-border border-round p-3" style="max-width:520px">
+      <div class="mb-2 text-800 font-medium">Authentification</div>
+      <div v-if="user" class="text-700 mb-2">
+        Connecté en tant que <strong>{{ user.email }}</strong>
+      </div>
+
+      <div class="grid" style="row-gap:.5rem">
+        <div class="col-12">
+          <InputText v-model="email" placeholder="email" class="w-full" type="email" />
         </div>
-        <div class="grid" style="row-gap: .5rem;">
+        <div class="col-12">
+          <InputText v-model="password" placeholder="mot de passe" class="w-full" type="password" />
+        </div>
+
+        <div class="col-12 flex gap-2 justify-content-end">
+          <Button size="small" :loading="authLoading" label="S'inscrire" @click="handleSignUp" />
+          <Button size="small" :loading="authLoading" label="Se connecter" @click="handleSignIn" />
+          <Button size="small" severity="secondary" outlined :loading="authLoading" label="Se déconnecter" @click="handleSignOut" />
+        </div>
+
+        <div class="col-12">
+          <Button size="small" link label="Mot de passe oublié ?" @click="handleResetRequest" />
+        </div>
+      </div>
+
+      <!-- Bloc reset visible en mode recovery -->
+      <div v-if="recovery.active" class="mt-3 border-1 surface-border border-round p-3">
+        <div class="mb-2 text-800 font-medium">Définir un nouveau mot de passe</div>
+        <div class="grid" style="row-gap:.5rem">
           <div class="col-12">
-            <InputText v-model="email" placeholder="email" class="w-full" type="email" />
+            <InputText v-model="recovery.newPassword" type="password" placeholder="Nouveau mot de passe" class="w-full" />
           </div>
           <div class="col-12">
-            <InputText v-model="password" placeholder="mot de passe" class="w-full" type="password" />
+            <InputText v-model="recovery.newPassword2" type="password" placeholder="Confirmer le mot de passe" class="w-full" />
           </div>
           <div class="col-12 flex gap-2 justify-content-end">
-            <Button size="small" :loading="authLoading" label="S'inscrire" @click="handleSignUp" />
-            <Button size="small" :loading="authLoading" label="Se connecter" @click="handleSignIn" />
-            <Button size="small" severity="secondary" outlined :loading="authLoading" label="Se déconnecter" @click="handleSignOut" />
+            <Button size="small" label="Enregistrer" :loading="authLoading" @click="handleSetNewPassword" />
           </div>
         </div>
       </div>
-  
-      <!-- Profile section -->
-      <div v-if="isAuthenticated" class="mb-4 border-1 surface-border border-round p-3" style="max-width: 520px;">
-        <div class="mb-2 text-800 font-medium">Profil Utilisateur</div>
-        <div v-if="profileLoading" class="text-700">Chargement du profil...</div>
-        <div v-else-if="profile" class="grid formgrid" style="row-gap: .5rem;">
-          <div class="col-12 field">
-            <label for="username">Username</label>
-            <InputText id="username" v-model="profile.username" class="w-full" />
-          </div>
-          <div class="col-12 field">
-            <label for="prenom">Prénom</label>
-            <InputText id="prenom" v-model="profile.prenom" class="w-full" />
-          </div>
-          <div class="col-12 field">
-            <label for="nom">Nom</label>
-            <InputText id="nom" v-model="profile.nom" class="w-full" />
-          </div>
-          <div class="col-12 field">
-            <label for="photo_url">Photo URL</label>
-            <InputText id="photo_url" v-model="profile.photo_url" class="w-full" />
-          </div>
-          <div class="col-12 field">
-            <label for="ville">Ville</label>
-            <InputText id="ville" v-model="profile.ville" class="w-full" />
-          </div>
-          <div class="col-12 field">
-            <label for="roles">Roles (JSON)</label>
-            <InputText id="roles" v-model="profile.roles" class="w-full" />
-          </div>
-          <div class="col-12 field">
-            <label for="communities">Communities (JSON)</label>
-            <InputText id="communities" v-model="profile.communities" class="w-full" />
-          </div>
-          <div class="col-12 flex justify-content-end">
-            <Button size="small" :loading="savingProfile" label="Enregistrer profil" @click="handleUpsertProfile" />
-          </div>
+    </div>
+
+    <!-- Todos CRUD (DB only) -->
+    <div class="mb-4 border-1 surface-border border-round p-3" style="max-width: 860px;">
+      <div class="mb-2 text-800 font-medium">Todos (CRUD via REST)</div>
+
+      <div class="grid" style="row-gap:.5rem; max-width:860px">
+        <div class="col-12 md:col-4">
+          <InputText v-model="todo.draft.title" placeholder="Titre (obligatoire)" class="w-full" />
         </div>
-         <div v-else class="text-600">Aucun profil trouvé. Enregistrez pour en créer un.</div>
+        <div class="col-12 md:col-5">
+          <InputText v-model="todo.draft.content" placeholder="Contenu" class="w-full" />
+        </div>
+        <div class="col-12 md:col-3 flex gap-2 justify-content-end">
+          <Button size="small" :loading="todo.mutating" label="Ajouter" @click="onAdd" v-if="!todo.draft.id"/>
+          <Button size="small" :loading="todo.mutating" label="Mettre à jour" @click="onUpdate" v-else />
+          <Button size="small" severity="secondary" outlined label="Annuler" @click="todo.resetDraft" v-if="todo.draft.id"/>
+        </div>
       </div>
-  
-      <!-- Events section (inchangée) -->
-      
-      <!-- Institutions Section -->
-      <div class="mb-4 border-1 surface-border border-round p-3">
-        <div class="mb-2 text-800 font-medium">Institutions</div>
-        <div v-if="institutionsLoading">Chargement des institutions...</div>
-        <div v-else-if="institutionsError" class="text-red-500">{{ institutionsError }}</div>
-        <DataTable v-else :value="institutions" stripedRows responsiveLayout="scroll" size="small">
-                    <Column header="Image">
-            <template #body="slotProps">
-              <img v-if="slotProps.data.ImageURL && slotProps.data.ImageURL.length > 0" :src="slotProps.data.ImageURL[0]" :alt="`Image de ${slotProps.data.Name}`" class="w-9rem shadow-2 border-round" />
+
+      <div class="flex align-items-center gap-2 mt-3">
+        <Button size="small" label="Rafraîchir" :loading="todo.loading" @click="todo.fetchTodos" />
+        <small class="text-600">Dernier sync :
+          {{ todo.lastSyncedAt ? new Date(todo.lastSyncedAt).toLocaleTimeString() : '—' }}
+        </small>
+      </div>
+
+      <div class="mt-3">
+        <div v-if="todo.loading" class="text-700">Chargement...</div>
+
+        <DataTable v-else :value="todo.todos" stripedRows responsiveLayout="scroll" size="small">
+          <Column field="title" header="Titre" />
+          <Column field="content" header="Description" />
+          <Column header="Créé le">
+            <template #body="{ data }">
+              {{ data.created_at ? new Date(data.created_at).toLocaleString() : '—' }}
             </template>
           </Column>
-          <Column field="Name" header="Nom" :sortable="true"></Column>
-          <Column field="Canton" header="Canton" :sortable="true"></Column>
-          <Column field="Locality" header="Localité" :sortable="true"></Column>
-          <Column field="NPA" header="NPA" :sortable="true"></Column>
-          <Column field="Address" header="Adresse"></Column>
-          <Column field="Category" header="Catégorie" :sortable="true"></Column>
-          <Column field="NomChef" header="Nom du Chef"></Column>
-          <Column field="PhoneChef" header="Téléphone Chef"></Column>
-          <Column field="MailChef" header="Email Chef"></Column>
-          <Column field="Language" header="Langue"></Column>
-          <Column field="AccordCadreDate" header="Date Accord Cadre"></Column>
-          <Column field="ConventionDate" header="Date Convention"></Column>
-          <Column field="Description" header="Description"></Column>
-          <Column field="Note" header="Note"></Column>
-          <Column field="CyberleanURL" header="URL Cyberlearn"></Column>
-          <Column header="Actions">
+          <Column header="Actions" :style="{ width: '160px' }">
             <template #body="slotProps">
-              <Button icon="pi pi-pencil" class="p-button-rounded p-button-text" @click="editInstitution(slotProps.data)"></Button>
-              <Button icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger" @click="deleteInstitution(slotProps.data.InstitutionId)"></Button>
+              <div class="flex gap-2">
+                <Button size="small" icon="pi pi-pencil" class="p-button-text" @click="todo.edit(slotProps.data)" />
+                <Button size="small" icon="pi pi-trash" class="p-button-text p-button-danger" @click="onDelete(slotProps.data.id)" />
+              </div>
             </template>
           </Column>
         </DataTable>
-      </div>
 
-      
-      <!-- Edit Institution Dialog -->
-      <Dialog v-model:visible="isEditDialogVisible" header="Modifier l'institution" :modal="true" style="width: 50vw;">
-        <div v-if="editingInstitution" class="p-fluid grid formgrid">
-          <div class="field col-12 md:col-6">
-            <label for="name">Nom</label>
-            <InputText id="name" v-model="editingInstitution.Name" />
-          </div>
-          <div class="field col-12 md:col-6">
-            <label for="category">Catégorie</label>
-            <InputText id="category" v-model="editingInstitution.Category" />
-          </div>
-          <div class="field col-12">
-            <label for="address">Adresse</label>
-            <InputText id="address" v-model="editingInstitution.Address" />
-          </div>
-          <div class="field col-12 md:col-4">
-            <label for="locality">Localité</label>
-            <InputText id="locality" v-model="editingInstitution.Locality" />
-          </div>
-          <div class="field col-12 md:col-4">
-            <label for="npa">NPA</label>
-            <InputText id="npa" v-model="editingInstitution.NPA" />
-          </div>
-          <div class="field col-12 md:col-4">
-            <label for="canton">Canton</label>
-            <InputText id="canton" v-model="editingInstitution.Canton" />
-          </div>
-          <div class="field col-12 md:col-6">
-            <label for="nomchef">Nom du Chef</label>
-            <InputText id="nomchef" v-model="editingInstitution.NomChef" />
-          </div>
-          <div class="field col-12 md:col-6">
-            <label for="mailchef">Email Chef</label>
-            <InputText id="mailchef" type="email" v-model="editingInstitution.MailChef" />
-          </div>
-          <div class="field col-12 md:col-6">
-            <label for="phonechef">Téléphone Chef</label>
-            <InputText id="phonechef" v-model="editingInstitution.PhoneChef" />
-          </div>
-           <div class="field col-12 md:col-6">
-            <label for="language">Langue</label>
-            <InputText id="language" v-model="editingInstitution.Language" />
-          </div>
-          <div class="field col-12">
-            <label for="description">Description</label>
-            <Textarea id="description" v-model="editingInstitution.Description" rows="3" />
-          </div>
-          <div class="field col-12">
-            <label for="note">Note</label>
-            <Textarea id="note" v-model="editingInstitution.Note" rows="3" />
-          </div>
-        </div>
-        <template #footer>
-          <Button label="Annuler" icon="pi pi-times" @click="isEditDialogVisible = false" class="p-button-text"/>
-          <Button label="Enregistrer" icon="pi pi-check" @click="saveInstitution" :loading="savingInstitution"/>
-        </template>
-      </Dialog>
-
-      <!-- Events section (inchangée) -->
-      <div class="grid mb-3" style="row-gap: .5rem; max-width: 520px;">
-        <!-- ... votre code pour ajouter/éditer des événements ... -->
+        <div v-if="!todo.loading && todo.todos.length === 0" class="text-600 mt-2">Aucun todo.</div>
       </div>
-      <div v-if="loading" class="text-700">Chargement...</div>
-      <ul v-else class="list-none p-0 m-0" style="max-height: 380px; overflow: auto;">
-        <!-- ... votre code pour lister les événements ... -->
-      </ul>
     </div>
-  </template>
-  
-  <script setup>
-  import { ref, onMounted, onBeforeUnmount } from 'vue'
-  import { supabase } from '@/supabase.js'
-  import { useToast } from 'primevue/usetoast'
-  import { storeToRefs } from 'pinia'
-  import { useUserStore } from '@/stores/userStore'
-  import { useInstitutionsStore } from '@/stores/institutionsStore'
-  import TheNavbar from '@/components/TheNavbar.vue';
-  import DataTable from 'primevue/datatable';
-  import Column from 'primevue/column';
-  import Button from 'primevue/button';
-  import InputText from 'primevue/inputtext';
-  import Dialog from 'primevue/dialog';
-  import Textarea from 'primevue/textarea';
+  </div>
+</template>
 
-  const toast = useToast()
-  const userStore = useUserStore()
-  const institutionsStore = useInstitutionsStore()
-  
-  // State from Pinia store
-  const { user, profile, profileLoading, authLoading, isAuthenticated } = storeToRefs(userStore)
-  const { institutions, loading: institutionsLoading, error: institutionsError } = storeToRefs(institutionsStore)
-  
-  // Local state for auth form
-  const email = ref('')
-  const password = ref('')
-  
-  // Local state for profile form
-  const savingProfile = ref(false)
+<script setup>
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import { supabase } from '@/supabase.js'
+import { useToast } from 'primevue/usetoast'
+import { useTodoStore } from '@/stores/todoStore.js'
 
-  // Local state for institutions
-  const editingInstitution = ref(null)
-  const isEditDialogVisible = ref(false)
-  const savingInstitution = ref(false)
-  
-  // Backend URL
-  const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
-  
-  // Auth handlers
-  const handleSignUp = async () => {
-    try {
-      await userStore.signUp(email.value, password.value)
-      toast.add({ severity: 'success', summary: "Inscription envoyée", detail: "Vérifie tes emails pour confirmer", life: 3000 })
-    } catch (e) {
-      toast.add({ severity: 'error', summary: 'Erreur inscription', detail: e.message, life: 4000 })
-    }
-  }
-  
-  const handleSignIn = async () => {
-    try {
-      await userStore.signIn(email.value, password.value)
-      toast.add({ severity: 'success', summary: 'Connecté', detail: user.value?.email || '', life: 2500 })
-    } catch (e) {
-      toast.add({ severity: 'error', summary: 'Erreur connexion', detail: e.message, life: 4000 })
-    }
-  }
-  
-  const handleSignOut = async () => {
-    try {
-      await userStore.signOut()
-      toast.add({ severity: 'success', summary: 'Déconnecté', life: 2000 })
-    } catch (e) {
-      toast.add({ severity: 'error', summary: 'Erreur déconnexion', detail: e.message, life: 4000 })
-    }
-  }
-  
-  // Profile handler
-  
-  // Institution handlers
-  const editInstitution = (institution) => {
-    editingInstitution.value = { ...institution }; // Create a copy for editing
-    isEditDialogVisible.value = true;
-  };
+import TheNavbar from '@/components/TheNavbar.vue'
+import DataTable from 'primevue/datatable'
+import Column from 'primevue/column'
+import Button from 'primevue/button'
+import InputText from 'primevue/inputtext'
 
-  const saveInstitution = async () => {
-    if (!editingInstitution.value) return;
-    savingInstitution.value = true;
-    try {
-      await institutionsStore.updateInstitution(editingInstitution.value.InstitutionId, editingInstitution.value);
-      toast.add({ severity: 'success', summary: 'Succès', detail: 'Institution mise à jour', life: 3000 });
-      isEditDialogVisible.value = false;
-      editingInstitution.value = null;
-    } catch (e) {
-      toast.add({ severity: 'error', summary: 'Erreur', detail: e.message, life: 4000 });
-    } finally {
-      savingInstitution.value = false;
-    }
-  };
+const toast = useToast()
+const todo = useTodoStore()
 
-  const deleteInstitution = async (id) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette institution ?')) {
-      try {
-        await institutionsStore.deleteInstitution(id);
-        toast.add({ severity: 'success', summary: 'Succès', detail: 'Institution supprimée', life: 3000 });
-      } catch (e) {
-        toast.add({ severity: 'error', summary: 'Erreur', detail: e.message, life: 4000 });
-      }
-    }
-  };
+// -------- Auth local --------
+const email = ref('')
+const password = ref('')
+const user = ref(null)
+const authLoading = ref(false)
 
-  // Profile handler
-  const handleUpsertProfile = async () => {
-    try {
-      savingProfile.value = true
-      // On envoie uniquement les champs modifiables
-      const fieldsToUpdate = {
-        username: profile.value.username,
-        prenom: profile.value.prenom,
-        nom: profile.value.nom,
-        photo_url: profile.value.photo_url,
-        ville: profile.value.ville,
-        roles: profile.value.roles,
-        communities: profile.value.communities,
-      }
-      await userStore.upsertProfile(fieldsToUpdate)
-      toast.add({ severity: 'success', summary: 'Profil enregistré', life: 2500 })
-    } catch (e) {
-      toast.add({ severity: 'error', summary: 'Erreur profil', detail: e.message, life: 4000 })
-    } finally {
-      savingProfile.value = false
+// Bloc recovery (point 2)
+const recovery = ref({
+  active: false,
+  newPassword: '',
+  newPassword2: '',
+})
+
+const loadSession = async () => {
+  const { data } = await supabase.auth.getSession()
+  user.value = data.session?.user ?? null
+}
+
+// Inscription : on force l’URL de redirection vers hedsvs.ch
+const handleSignUp = async () => {
+  authLoading.value = true
+  try {
+    const { error } = await supabase.auth.signUp({
+      email: email.value,
+      password: password.value,
+      options: { emailRedirectTo: 'https://hedsvs.ch' }
+    })
+    if (error) throw error
+    toast.add({ severity: 'success', summary: 'Inscription envoyée', detail: 'Vérifie tes e-mails', life: 3000 })
+  } catch (e) {
+    toast.add({ severity: 'error', summary: 'Erreur inscription', detail: e.message, life: 4000 })
+  } finally {
+    authLoading.value = false
+  }
+}
+
+const handleSignIn = async () => {
+  authLoading.value = true
+  try {
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.value,
+      password: password.value
+    })
+    if (error) throw error
+    await loadSession()
+    toast.add({ severity: 'success', summary: 'Connecté', detail: user.value?.email || '', life: 2500 })
+    await todo.fetchTodos()
+  } catch (e) {
+    toast.add({ severity: 'error', summary: 'Erreur connexion', detail: e.message, life: 4000 })
+  } finally {
+    authLoading.value = false
+  }
+}
+
+const handleSignOut = async () => {
+  authLoading.value = true
+  try {
+    await supabase.auth.signOut()
+    user.value = null
+    todo.todos = []
+    toast.add({ severity: 'success', summary: 'Déconnecté', life: 2000 })
+  } catch (e) {
+    toast.add({ severity: 'error', summary: 'Erreur déconnexion', detail: e.message, life: 4000 })
+  } finally {
+    authLoading.value = false
+  }
+}
+
+// ---- Mot de passe oublié ? (envoi e-mail)
+// Envoi de l'e-mail de réinit
+const handleResetRequest = async () => {
+  if (!email.value) {
+    toast.add({ severity: 'warn', summary: 'Adresse requise', detail: 'Saisis ton e-mail puis clique sur “Mot de passe oublié ?”', life: 4000 })
+    return
+  }
+  authLoading.value = true
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(email.value, {
+      redirectTo: 'https://hedsvs.ch/reset-password'   // <<< ta page dédiée
+    })
+    if (error) throw error
+    toast.add({ severity: 'success', summary: 'E-mail envoyé', detail: 'Vérifie ta boîte mail', life: 4000 })
+  } catch (e) {
+    toast.add({ severity: 'error', summary: 'Erreur', detail: e.message, life: 5000 })
+  } finally {
+    authLoading.value = false
+  }
+}
+
+// ---- Détecte le retour depuis l’e-mail (type=recovery dans le hash) et installe la session
+const checkRecoveryFromUrl = async () => {
+  const hash = window.location.hash?.replace(/^#/, '') || ''
+  const p = new URLSearchParams(hash)
+  const type = p.get('type')
+  const access_token = p.get('access_token')
+  const refresh_token = p.get('refresh_token')
+  if (type === 'recovery' && access_token && refresh_token) {
+    const { error } = await supabase.auth.setSession({ access_token, refresh_token })
+    if (!error) {
+      recovery.value.active = true
+      // Retire les tokens de l’URL
+      history.replaceState({}, document.title, window.location.pathname + window.location.search)
     }
   }
-  
-  
-  // --- LOGIQUE POUR LES "EVENTS" (inchangée) ---
-  const events = ref([])
-  const loading = ref(true)
-  let eventsChannel = null
-  
-  const loadInitial = async () => {
-    loading.value = true
-    const { data, error } = await supabase.from('events').select('*').order('created_at', { ascending: false }).limit(50)
-    if (error) {
-      toast.add({ severity: 'error', summary: 'Erreur (load)', detail: error.message, life: 4000 })
-    } else {
-      events.value = data || []
-    }
-    loading.value = false
+}
+
+const handleSetNewPassword = async () => {
+  if (recovery.value.newPassword.length < 8) {
+    toast.add({ severity: 'warn', summary: 'Mot de passe trop court', detail: '8 caractères minimum', life: 3000 })
+    return
   }
-  
-  const subscribeRealtime = () => {
-    eventsChannel = supabase
-      .channel('events-feed')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, (payload) => {
-        if (payload.eventType === 'INSERT') events.value = [payload.new, ...events.value]
-        else if (payload.eventType === 'UPDATE') events.value = events.value.map(r => (r.id === payload.new.id ? payload.new : r))
-        else if (payload.eventType === 'DELETE') events.value = events.value.filter(r => r.id !== payload.old.id)
-      })
-      .subscribe()
+  if (recovery.value.newPassword !== recovery.value.newPassword2) {
+    toast.add({ severity: 'warn', summary: 'Les mots de passe ne correspondent pas', life: 3000 })
+    return
   }
-  
-    onMounted(async () => {
-    institutionsStore.fetchInstitutions()
-    await loadInitial()
-    subscribeRealtime()
-    // L'initialisation de l'auth se fait maintenant dans main.js via userStore.init()
+  authLoading.value = true
+  try {
+    const { error } = await supabase.auth.updateUser({ password: recovery.value.newPassword })
+    if (error) throw error
+    toast.add({ severity: 'success', summary: 'Mot de passe changé', life: 2500 })
+    recovery.value.active = false
+    recovery.value.newPassword = ''
+    recovery.value.newPassword2 = ''
+    await loadSession()
+  } catch (e) {
+    toast.add({ severity: 'error', summary: 'Erreur', detail: e.message, life: 5000 })
+  } finally {
+    authLoading.value = false
+  }
+}
+
+// -------- Handlers CRUD --------
+const onAdd = async () => {
+  try {
+    await todo.addTodo()
+    toast.add({ severity: 'success', summary: 'Ajouté', life: 1500 })
+  } catch (e) {
+    toast.add({ severity: 'error', summary: 'Erreur (insert)', detail: e.message, life: 4000 })
+  }
+}
+const onUpdate = async () => {
+  try {
+    await todo.updateTodo()
+    toast.add({ severity: 'success', summary: 'Mis à jour', life: 1500 })
+  } catch (e) {
+    toast.add({ severity: 'error', summary: 'Erreur (update)', detail: e.message, life: 4000 })
+  }
+}
+const onDelete = async (id) => {
+  if (!confirm('Supprimer ce todo ?')) return
+  try {
+    await todo.deleteTodo(id)
+    toast.add({ severity: 'success', summary: 'Supprimé', life: 1200 })
+  } catch (e) {
+    toast.add({ severity: 'error', summary: 'Erreur (delete)', detail: e.message, life: 4000 })
+  }
+}
+
+// -------- Lifecycle --------
+let authSub = null
+const onVis = () => {
+  if (document.visibilityState === 'visible') todo.fetchTodos()
+}
+
+onMounted(async () => {
+  await loadSession()
+  await checkRecoveryFromUrl()   // <<< Point 2 : détection du retour
+  await todo.fetchTodos()
+  todo.startPolling(10000)
+  document.addEventListener('visibilitychange', onVis)
+
+  const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    user.value = session?.user ?? null
+    todo.fetchTodos()
   })
-  
-  onBeforeUnmount(() => {
-    if (eventsChannel) supabase.removeChannel(eventsChannel)
-    // Le dispose du store peut se faire dans App.vue si nécessaire
-    // userStore.dispose() 
-  })
-  
-  </script>
+  authSub = subscription
+})
+onBeforeUnmount(() => {
+  todo.stopPolling()
+  document.removeEventListener('visibilitychange', onVis)
+  if (authSub) authSub.unsubscribe()
+})
+watch(user, () => todo.fetchTodos())
+</script>

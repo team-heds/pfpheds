@@ -1,50 +1,63 @@
-const { Router } = require('express');
-const supabase = require('../supabaseClient');
+// supabase/institutionsStoreBackend.js
+const { Router } = require('express')
+const supabase = require('../supabaseClient')
 
-const router = Router();
+const router = Router()
 
-// GET all institutions
+// GET all
 router.get('/', async (req, res) => {
   try {
-    const { data, error } = await supabase.from('institutions').select('*');
-    if (error) throw error;
-    res.json(data);
+    const { data, error } = await supabase.from('institutions').select('*')
+    if (error) {
+      console.error('[Supabase] institutions list error:', error)
+      return res.status(502).json({ error: error.message })
+    }
+    res.json(data)
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error('GET /api/institutions failed:', e)
+    res.status(500).json({ error: 'Internal Server Error' })
   }
-});
+})
 
-// GET a single institution by ID
+// GET by ID (InstitutionId logique)
 router.get('/:id', async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('institutions')
       .select('*')
       .eq('InstitutionId', req.params.id)
-      .single();
-    if (error) throw error;
-    res.json(data);
+      .single()
+    if (error) {
+      console.error('[Supabase] institutions get error:', error)
+      return res.status(error.code === 'PGRST116' ? 404 : 502).json({ error: error.message })
+    }
+    res.json(data)
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error('GET /api/institutions/:id failed:', e)
+    res.status(500).json({ error: 'Internal Server Error' })
   }
-});
+})
 
-// POST (create) a new institution
+// CREATE
 router.post('/', async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('institutions')
       .insert([req.body])
       .select()
-      .single();
-    if (error) throw error;
-    res.status(201).json(data);
+      .single()
+    if (error) {
+      console.error('[Supabase] institutions create error:', error)
+      return res.status(400).json({ error: error.message })
+    }
+    res.status(201).json(data)
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error('POST /api/institutions failed:', e)
+    res.status(500).json({ error: 'Internal Server Error' })
   }
-});
+})
 
-// PUT (update) an institution by ID
+// UPDATE (PATCH)
 router.put('/:id', async (req, res) => {
   try {
     const { data, error } = await supabase
@@ -52,26 +65,34 @@ router.put('/:id', async (req, res) => {
       .update(req.body)
       .eq('InstitutionId', req.params.id)
       .select()
-      .single();
-    if (error) throw error;
-    res.json(data);
+      .single()
+    if (error) {
+      console.error('[Supabase] institutions update error:', error)
+      return res.status(400).json({ error: error.message })
+    }
+    res.json(data)
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error('PUT /api/institutions/:id failed:', e)
+    res.status(500).json({ error: 'Internal Server Error' })
   }
-});
+})
 
-// DELETE an institution by ID
+// DELETE
 router.delete('/:id', async (req, res) => {
   try {
     const { error } = await supabase
       .from('institutions')
       .delete()
-      .eq('InstitutionId', req.params.id);
-    if (error) throw error;
-    res.status(204).send(); // No content
+      .eq('InstitutionId', req.params.id)
+    if (error) {
+      console.error('[Supabase] institutions delete error:', error)
+      return res.status(400).json({ error: error.message })
+    }
+    res.status(204).send()
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error('DELETE /api/institutions/:id failed:', e)
+    res.status(500).json({ error: 'Internal Server Error' })
   }
-});
+})
 
-module.exports = router;
+module.exports = router

@@ -125,6 +125,7 @@ import HeaderIcons from '@/components/common/utils/HeaderIcons.vue'
 import filterData from './filter.json';
 
 // Import et configuration du logo pour les marqueurs
+
 import { useInstitutionsStore } from '@/stores/institutionsStore';
 import schoolLogo from '../../../../public/assets/images/markerheds.png';
 const originalWidth = 25;

@@ -117,6 +117,7 @@
     { icon: "pi pi-bookmark", link: "/institution", title: "institutions" },
     { icon: "pi pi-check", link: "/votation", title: "Votation" },
     { icon: "pi pi-map-marker", link: "/map", title: "Map" },
+    { icon: "pi pi-calendar", link: "/home-calendar", title: "HomeCalendar" },
     { icon: "pi pi-user-plus", link: "/admin", title: "Admin", adminOnly: true }
   ];
   
