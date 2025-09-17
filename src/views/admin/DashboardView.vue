@@ -92,6 +92,194 @@
             </div>
           </div>
 
+          <!-- Section Gamification -->
+          <div class="col-12">
+            <div class="card">
+              <div class="flex align-items-center justify-content-between mb-4">
+                <span class="text-900 text-xl font-semibold">
+                  <i class="pi pi-trophy mr-2" style="color: var(--primary-color)"></i>
+                  Système de Gamification
+                </span>
+                <div class="role-badge" :class="`role-${currentUserRole}`" v-if="currentUserRole">
+                  <i :class="getRoleIcon(currentUserRole)" class="mr-2"></i>
+                  <span>{{ getRoleName(currentUserRole) }}</span>
+                </div>
+              </div>
+
+              <!-- Statistiques Gamification -->
+              <div class="grid mb-4">
+                <div class="col-12 md:col-3">
+                  <div class="gamification-stat-card challenges">
+                    <div class="stat-icon">
+                      <i class="pi pi-trophy"></i>
+                    </div>
+                    <div class="stat-content">
+                      <h3>{{ gamificationStats.challenges?.total || 0 }}</h3>
+                      <p>Défis Totaux</p>
+                      <span class="stat-detail">{{ gamificationStats.challenges?.active || 0 }} actifs</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 md:col-3">
+                  <div class="gamification-stat-card quests">
+                    <div class="stat-icon">
+                      <i class="pi pi-flag"></i>
+                    </div>
+                    <div class="stat-content">
+                      <h3>{{ gamificationStats.quests?.total || 0 }}</h3>
+                      <p>Quêtes Totales</p>
+                      <span class="stat-detail">{{ gamificationStats.quests?.active || 0 }} actives</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 md:col-3">
+                  <div class="gamification-stat-card badges">
+                    <div class="stat-icon">
+                      <i class="pi pi-star"></i>
+                    </div>
+                    <div class="stat-content">
+                      <h3>{{ gamificationStats.badges?.total || 0 }}</h3>
+                      <p>Badges Totaux</p>
+                      <span class="stat-detail">{{ gamificationStats.badges?.unlocked || 0 }} débloqués</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 md:col-3">
+                  <div class="gamification-stat-card users">
+                    <div class="stat-icon">
+                      <i class="pi pi-users"></i>
+                    </div>
+                    <div class="stat-content">
+                      <h3>{{ gamificationStats.users?.active || 0 }}</h3>
+                      <p>Utilisateurs Actifs</p>
+                      <span class="stat-detail">7 derniers jours</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Actions Rapides Gamification -->
+              <div class="grid">
+                <div class="col-12 md:col-4" v-if="hasPermission('CREATE_CHALLENGES')">
+                  <div class="gamification-action-card" @click="navigateToGamification('/admin/challenges')">
+                    <div class="action-icon challenges">
+                      <i class="pi pi-trophy"></i>
+                    </div>
+                    <h4>Gérer les Défis</h4>
+                    <p>Créer, modifier et supprimer des défis</p>
+                    <Button 
+                      label="Accéder" 
+                      icon="pi pi-arrow-right" 
+                      class="p-button-sm p-button-outlined"
+                    />
+                  </div>
+                </div>
+
+                <div class="col-12 md:col-4" v-if="hasPermission('CREATE_QUESTS')">
+                  <div class="gamification-action-card" @click="navigateToGamification('/admin/quests')">
+                    <div class="action-icon quests">
+                      <i class="pi pi-flag"></i>
+                    </div>
+                    <h4>Gérer les Quêtes</h4>
+                    <p>Créer, modifier et supprimer des quêtes</p>
+                    <Button 
+                      label="Accéder" 
+                      icon="pi pi-arrow-right" 
+                      class="p-button-sm p-button-outlined"
+                    />
+                  </div>
+                </div>
+
+                <div class="col-12 md:col-4" v-if="hasPermission('CREATE_BADGES')">
+                  <div class="gamification-action-card" @click="navigateToGamification('/admin/badges')">
+                    <div class="action-icon badges">
+                      <i class="pi pi-star"></i>
+                    </div>
+                    <h4>Gérer les Badges</h4>
+                    <p>Créer, modifier et supprimer des badges</p>
+                    <Button 
+                      label="Accéder" 
+                      icon="pi pi-arrow-right" 
+                      class="p-button-sm p-button-outlined"
+                    />
+                  </div>
+                </div>
+
+                <div class="col-12 md:col-4" v-if="hasPermission('MANAGE_USERS')">
+                  <div class="gamification-action-card" @click="navigateToGamification('/admin/users')">
+                    <div class="action-icon users">
+                      <i class="pi pi-users"></i>
+                    </div>
+                    <h4>Gérer les Utilisateurs</h4>
+                    <p>Attribuer des rôles et permissions</p>
+                    <Button 
+                      label="Accéder" 
+                      icon="pi pi-arrow-right" 
+                      class="p-button-sm p-button-outlined"
+                    />
+                  </div>
+                </div>
+
+                <div class="col-12 md:col-4" v-if="hasPermission('MANAGE_HOUSES')">
+                  <div class="gamification-action-card" @click="navigateToGamification('/admin/houses')">
+                    <div class="action-icon houses">
+                      <i class="pi pi-home"></i>
+                    </div>
+                    <h4>Gérer les Maisons</h4>
+                    <p>Points des maisons et statistiques</p>
+                    <Button 
+                      label="Accéder" 
+                      icon="pi pi-arrow-right" 
+                      class="p-button-sm p-button-outlined"
+                    />
+                  </div>
+                </div>
+
+                <div class="col-12 md:col-4" v-if="hasPermission('VIEW_ANALYTICS')">
+                  <div class="gamification-action-card" @click="navigateToGamification('/admin/analytics')">
+                    <div class="action-icon analytics">
+                      <i class="pi pi-chart-line"></i>
+                    </div>
+                    <h4>Analytics</h4>
+                    <p>Statistiques détaillées et rapports</p>
+                    <Button 
+                      label="Accéder" 
+                      icon="pi pi-arrow-right" 
+                      class="p-button-sm p-button-outlined"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Activité Récente -->
+              <div class="mt-4" v-if="recentGamificationLogs.length > 0">
+                <h4 class="text-900 mb-3">Activité Récente - Gamification</h4>
+                <div class="activity-list">
+                  <div 
+                    v-for="log in recentGamificationLogs.slice(0, 5)" 
+                    :key="log.id"
+                    class="activity-item"
+                  >
+                    <div class="activity-icon">
+                      <i :class="getActionIcon(log.action)"></i>
+                    </div>
+                    <div class="activity-content">
+                      <p class="activity-description">
+                        {{ getActionDescription(log.action, log.targetId) }}
+                      </p>
+                      <span class="activity-time">
+                        {{ formatTime(log.timestamp) }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Carte pour le Line Chart (Offre en formation) -->
           <div class="col-12 xl:col-9">
             <div class="card h-full">
@@ -123,21 +311,33 @@
 import { onMounted, ref, watch, computed } from 'vue';
 import { FilterMatchMode } from 'primevue/api';
 import { useLayout } from '@/layout/composables/layout';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import AdminSidebar from '@/components/admin/lists/AdminSidebar.vue';
 import Navbar from '@/components/common/utils/Navbar.vue';
 import Chart from 'primevue/chart';
 import Dropdown from 'primevue/dropdown';
+import Button from 'primevue/button';
 import { db } from '../../../firebase';
 import { ref as dbRef, onValue } from "firebase/database";
+import { getAuth } from 'firebase/auth';
 import AppSidebar from '@/layout/AppSidebar.vue'
+import adminService from '../../service/adminService';
+import rolesService, { ROLES, PERMISSIONS } from '../../service/rolesService';
 
 const { layoutConfig } = useLayout();
+const router = useRouter();
+const auth = getAuth();
 
 const totalPlaces = ref(0);
 const totalInstitutions = ref(0);
 const totalStudents = ref(0);
 const totalFormateurs = ref(0);
+
+// Gamification data
+const gamificationStats = ref({});
+const recentGamificationLogs = ref([]);
+const currentUserRole = ref('');
+const userPermissions = ref([]);
 
 const pieOptions = ref({});
 const barOptions = ref({});
@@ -329,7 +529,7 @@ const setChartData = () => {
   };
 };
 
-onMounted(() => {
+onMounted(async () => {
   // institutions
   const institutionsRef = dbRef(db, 'institutions/');
   onValue(institutionsRef, (snapshot) => {
@@ -368,6 +568,9 @@ onMounted(() => {
   });
 
   setChartData();
+  
+  // Charger les données de gamification
+  await loadGamificationData();
 });
 
 watch([institutions, students, totalPlaces, totalFormateurs], () => {
@@ -380,6 +583,109 @@ const onWeekChange = () => {
 
 const route = useRoute();
 const isDefaultDashboard = computed(() => route.path === '/admin' || route.path === '/admin/');
+
+// Gamification computed properties
+const hasPermission = computed(() => {
+  return (permission) => {
+    return userPermissions.value.includes(PERMISSIONS[permission])
+  }
+});
+
+// Gamification methods
+const loadGamificationData = async () => {
+  try {
+    if (!auth.currentUser) return;
+    
+    // Charger les données en parallèle
+    const [statsData, logsData, userRole, permissions] = await Promise.all([
+      adminService.getGeneralStats(),
+      rolesService.getAdminLogs(10),
+      rolesService.getUserRole(auth.currentUser.uid),
+      rolesService.getUserPermissions(auth.currentUser.uid)
+    ]);
+    
+    gamificationStats.value = statsData || {};
+    recentGamificationLogs.value = logsData || [];
+    currentUserRole.value = userRole;
+    userPermissions.value = permissions;
+    
+  } catch (error) {
+    console.error('Erreur lors du chargement des données gamification:', error);
+  }
+};
+
+const navigateToGamification = (path) => {
+  router.push(path);
+};
+
+const getRoleName = (role) => {
+  const roleNames = {
+    [ROLES.GAME_MASTER]: 'Maître du Jeu',
+    [ROLES.HOUSE_COACH]: 'Coach de Maison',
+    [ROLES.PROFESSOR]: 'Professeur',
+    [ROLES.ADMIN]: 'Administrateur',
+    [ROLES.STUDENT]: 'Étudiant'
+  };
+  return roleNames[role] || 'Inconnu';
+};
+
+const getRoleIcon = (role) => {
+  const roleIcons = {
+    [ROLES.GAME_MASTER]: 'pi pi-crown',
+    [ROLES.HOUSE_COACH]: 'pi pi-shield',
+    [ROLES.PROFESSOR]: 'pi pi-graduation-cap',
+    [ROLES.ADMIN]: 'pi pi-cog',
+    [ROLES.STUDENT]: 'pi pi-user'
+  };
+  return roleIcons[role] || 'pi pi-user';
+};
+
+const getActionIcon = (action) => {
+  const actionIcons = {
+    create_challenge: 'pi pi-plus-circle',
+    update_challenge: 'pi pi-pencil',
+    delete_challenge: 'pi pi-trash',
+    create_quest: 'pi pi-plus-circle',
+    update_quest: 'pi pi-pencil',
+    delete_quest: 'pi pi-trash',
+    create_badge: 'pi pi-plus-circle',
+    update_badge: 'pi pi-pencil',
+    delete_badge: 'pi pi-trash',
+    role_change: 'pi pi-user-edit'
+  };
+  return actionIcons[action] || 'pi pi-info-circle';
+};
+
+const getActionDescription = (action, targetId) => {
+  const descriptions = {
+    create_challenge: `Nouveau défi créé (${targetId})`,
+    update_challenge: `Défi modifié (${targetId})`,
+    delete_challenge: `Défi supprimé (${targetId})`,
+    create_quest: `Nouvelle quête créée (${targetId})`,
+    update_quest: `Quête modifiée (${targetId})`,
+    delete_quest: `Quête supprimée (${targetId})`,
+    create_badge: `Nouveau badge créé (${targetId})`,
+    update_badge: `Badge modifié (${targetId})`,
+    delete_badge: `Badge supprimé (${targetId})`,
+    role_change: `Rôle utilisateur modifié (${targetId})`
+  };
+  return descriptions[action] || `Action ${action} sur ${targetId}`;
+};
+
+const formatTime = (timestamp) => {
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffMinutes = Math.floor((now - date) / (1000 * 60));
+  
+  if (diffMinutes < 1) return 'À l\'instant';
+  if (diffMinutes < 60) return `Il y a ${diffMinutes} min`;
+  
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) return `Il y a ${diffHours}h`;
+  
+  const diffDays = Math.floor(diffHours / 24);
+  return `Il y a ${diffDays}j`;
+};
 </script>
 
 <style scoped>
@@ -410,5 +716,206 @@ const isDefaultDashboard = computed(() => route.path === '/admin' || route.path 
   min-width: 0;
   min-height: 100vh;
   margin-left: 4rem;
+}
+
+/* Gamification Styles */
+.role-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 600;
+  color: white;
+  font-size: 0.875rem;
+}
+
+.role-badge.role-game_master {
+  background: linear-gradient(135deg, #8B5CF6, #A855F7);
+}
+
+.role-badge.role-house_coach {
+  background: linear-gradient(135deg, #10B981, #059669);
+}
+
+.role-badge.role-professor {
+  background: linear-gradient(135deg, #3B82F6, #2563EB);
+}
+
+.role-badge.role-admin {
+  background: linear-gradient(135deg, #EF4444, #DC2626);
+}
+
+.gamification-stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: transform 0.2s ease;
+  height: 100%;
+}
+
+.gamification-stat-card:hover {
+  transform: translateY(-2px);
+}
+
+.gamification-stat-card .stat-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: white;
+}
+
+.gamification-stat-card.challenges .stat-icon {
+  background: linear-gradient(135deg, #F59E0B, #D97706);
+}
+
+.gamification-stat-card.quests .stat-icon {
+  background: linear-gradient(135deg, #8B5CF6, #7C3AED);
+}
+
+.gamification-stat-card.badges .stat-icon {
+  background: linear-gradient(135deg, #EF4444, #DC2626);
+}
+
+.gamification-stat-card.users .stat-icon {
+  background: linear-gradient(135deg, #10B981, #059669);
+}
+
+.gamification-stat-card .stat-content h3 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.gamification-stat-card .stat-content p {
+  margin: 0.25rem 0;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.gamification-stat-card .stat-detail {
+  font-size: 0.875rem;
+  color: #9ca3af;
+}
+
+.gamification-action-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.gamification-action-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  border-color: var(--primary-color);
+}
+
+.gamification-action-card .action-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  color: white;
+}
+
+.gamification-action-card .action-icon.challenges {
+  background: linear-gradient(135deg, #F59E0B, #D97706);
+}
+
+.gamification-action-card .action-icon.quests {
+  background: linear-gradient(135deg, #8B5CF6, #7C3AED);
+}
+
+.gamification-action-card .action-icon.badges {
+  background: linear-gradient(135deg, #EF4444, #DC2626);
+}
+
+.gamification-action-card .action-icon.users {
+  background: linear-gradient(135deg, #10B981, #059669);
+}
+
+.gamification-action-card .action-icon.houses {
+  background: linear-gradient(135deg, #3B82F6, #2563EB);
+}
+
+.gamification-action-card .action-icon.analytics {
+  background: linear-gradient(135deg, #6366F1, #4F46E5);
+}
+
+.gamification-action-card h4 {
+  margin: 0;
+  color: #1f2937;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.gamification-action-card p {
+  margin: 0;
+  color: #6b7280;
+  line-height: 1.5;
+  flex: 1;
+}
+
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 8px;
+  background: #f9fafb;
+  border-left: 3px solid var(--primary-color);
+}
+
+.activity-item .activity-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1rem;
+}
+
+.activity-item .activity-content {
+  flex: 1;
+}
+
+.activity-item .activity-description {
+  margin: 0 0 0.25rem 0;
+  color: #1f2937;
+  font-weight: 500;
+}
+
+.activity-item .activity-time {
+  color: #6b7280;
+  font-size: 0.875rem;
 }
 </style>
