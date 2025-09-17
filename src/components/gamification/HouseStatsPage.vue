@@ -111,7 +111,7 @@
             </div>
             
             <div class="member-info">
-              <h4>{{ member.prenom }} {{ member.nom }}</h4>
+              <h4>{{ member.displayName || `${member.prenom} ${member.nom}` }}</h4>
               <div class="member-details">
                 <span class="level">Niveau {{ member.niveau }}</span>
                 <span class="xp">{{ formatNumber(member.totalXP) }} XP</span>
@@ -126,10 +126,6 @@
       </div>
     </div>
 
-    <!-- Section de test pour forcer le scroll -->
-    <div class="test-scroll-section" v-if="houseStats">
-      <div class="scroll-spacer"></div>
-    </div>
 
     <div v-else class="loading">
       <i class="pi pi-spin pi-spinner"></i>
@@ -221,7 +217,7 @@ onMounted(() => {
 .house-stats-page {
   width: 100%;
   position: relative;
-  padding-bottom: 4rem;
+  padding-bottom: 2rem;
 }
 
 .house-banner {
@@ -553,14 +549,6 @@ onMounted(() => {
   margin-bottom: 1rem;
 }
 
-.test-scroll-section {
-  width: 100%;
-}
-
-.scroll-spacer {
-  height: 100vh;
-  background: transparent;
-}
 
 @media (max-width: 768px) {
   .house-banner {

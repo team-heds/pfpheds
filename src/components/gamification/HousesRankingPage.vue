@@ -157,10 +157,6 @@
       <p>Chargement du classement...</p>
     </div>
 
-    <!-- Section de test pour forcer le scroll -->
-    <div class="test-scroll-section">
-      <div class="scroll-spacer"></div>
-    </div>
     
     </div>
   </div>
@@ -237,15 +233,25 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Page wrapper pour le scroll - même méthode que HouseStatsPage */
+/* Page wrapper pour le scroll - même structure que GamificationProfilePage et HouseStatsPage */
 .page-wrapper {
+  width: 100%;
   height: 100vh;
   overflow-y: auto;
-  padding-bottom: 2rem;
+  overflow-x: hidden;
+  /* Masquer la scrollbar */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+
+/* Masquer la scrollbar pour WebKit (Chrome, Safari, Edge) */
+.page-wrapper::-webkit-scrollbar {
+  display: none;
 }
 
 .houses-ranking-page {
   min-height: 100vh;
+  padding-bottom: 2rem;
 }
 
 .page-header {
@@ -578,13 +584,4 @@ onMounted(() => {
   }
 }
 
-/* Section de test pour le scroll - même style que les autres pages */
-.test-scroll-section {
-  width: 100%;
-}
-
-.scroll-spacer {
-  height: 150vh;
-  background: transparent;
-}
 </style>

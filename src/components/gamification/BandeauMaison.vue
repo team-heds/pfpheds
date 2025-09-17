@@ -7,7 +7,7 @@
     
     <div class="house-content">
       <div class="house-info">
-        <h3 class="house-name">{{ maison }}</h3>
+        <h3 class="house-name clickable" @click="navigateToHouseStats" title="Cliquer pour voir les statistiques de la maison">{{ maison }}</h3>
         <p class="house-motto">"{{ houseMotto }}"</p>
         
         <div class="level-section">
@@ -255,6 +255,21 @@ const getParticleStyle = (index) => {
   text-shadow: 0 2px 4px rgba(0,0,0,0.3);
   letter-spacing: 0.5px;
   line-height: 1.2;
+}
+
+.house-name.clickable {
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.house-name.clickable:hover {
+  transform: scale(1.05);
+  text-shadow: 0 4px 8px rgba(0,0,0,0.4), 0 0 20px rgba(255,255,255,0.3);
+}
+
+.house-name.clickable:active {
+  transform: scale(0.98);
 }
 
 .house-motto {
