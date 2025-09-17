@@ -52,12 +52,25 @@ import HESHouseQuizView from '@/views/users/HESHouseQuizView.vue'
 import HouseStatsPage from '@/components/gamification/HouseStatsPage.vue'
 import HousesRankingPage from '@/components/gamification/HousesRankingPage.vue'
 import GamificationProfilePage from '@/components/gamification/GamificationProfilePage.vue'
+import AchievementsPage from '@/components/gamification/AchievementsPage.vue'
+import ChallengesPage from '@/components/gamification/ChallengesPage.vue'
+import QuestsPage from '@/components/gamification/QuestsPage.vue'
 
 // ========================================
 // DASHBOARD & ADMINISTRATION
 // ========================================
 import DashboardView from '@/views/admin/DashboardView.vue';
 import AdminDefisView from '@/views/admin/gamification/AdminDefisView.vue';
+
+// ========================================
+// GAMIFICATION ADMIN VIEWS
+// ========================================
+import ChallengeManagementView from '@/views/admin/gamification/ChallengeManagementView.vue';
+import QuestManagementView from '@/views/admin/gamification/QuestManagementView.vue';
+import BadgeManagementView from '@/views/admin/gamification/BadgeManagementView.vue';
+import UserManagementView from '@/views/admin/gamification/UserManagementView.vue';
+import HouseManagementView from '@/views/admin/gamification/HouseManagementView.vue';
+import AnalyticsDashboardView from '@/views/admin/gamification/AnalyticsDashboardView.vue';
 
 // ========================================
 // SOCIAL & COMMUNICATION
@@ -218,12 +231,25 @@ const routes = [
   { path: '/houses/:houseName/stats', component: HouseStatsPage, name: 'HouseStatsPage', props: true, meta: { requiresAuth: true } },
   { path: '/houses/ranking', component: HousesRankingPage, name: 'HousesRankingPage', meta: { requiresAuth: true } },
   { path: '/gamification-profile', component: GamificationProfilePage, name: 'GamificationProfilePage', meta: { requiresAuth: false } },
+  { path: '/achievements', component: AchievementsPage, name: 'AchievementsPage', meta: { requiresAuth: true } },
+  { path: '/challenges', component: ChallengesPage, name: 'ChallengesPage', meta: { requiresAuth: true } },
+  { path: '/quests', component: QuestsPage, name: 'QuestsPage', meta: { requiresAuth: true } },
 
   // ========================================
   // DASHBOARD & ADMINISTRATION
   // ========================================
   { path: '/admin', component: DashboardView, name: 'DashboardView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
   { path: '/admin/defis', component: AdminDefisView, name: 'AdminDefisView', meta: { requiresAuth: true, requiredRole: ['admin'] } },
+  
+  // ========================================
+  // GAMIFICATION ADMIN ROUTES
+  // ========================================
+  { path: '/admin/gamification/challenges', component: ChallengeManagementView, name: 'ChallengeManagementView', meta: { requiresAuth: true, requiredRole: ['admin', 'game_master', 'house_coach'] } },
+  { path: '/admin/gamification/quests', component: QuestManagementView, name: 'QuestManagementView', meta: { requiresAuth: true, requiredRole: ['admin', 'game_master', 'house_coach'] } },
+  { path: '/admin/gamification/badges', component: BadgeManagementView, name: 'BadgeManagementView', meta: { requiresAuth: true, requiredRole: ['admin', 'game_master'] } },
+  { path: '/admin/gamification/users', component: UserManagementView, name: 'UserManagementView', meta: { requiresAuth: true, requiredRole: ['admin', 'game_master'] } },
+  { path: '/admin/gamification/houses', component: HouseManagementView, name: 'HouseManagementView', meta: { requiresAuth: true, requiredRole: ['admin', 'game_master', 'house_coach'] } },
+  { path: '/admin/gamification/analytics', component: AnalyticsDashboardView, name: 'AnalyticsDashboardView', meta: { requiresAuth: true, requiredRole: ['admin', 'game_master', 'professor'] } },
 
   // ========================================
   // SOCIAL & COMMUNICATION

@@ -1,28 +1,24 @@
 <template>
-  <div>
-    <!-- Barre de navigation -->
-    <Navbar />
-    <!-- Sidebar Gauche -->
-
-    <div class="min-h-screen flex relative lg:static">
-      <div class="min-h-screen flex flex-column relative flex-auto">
-        <div class="">
-
-          <!-- Indicateur de chargement -->
-          <div v-if="isLoading" class="text-center mb-6">
-            Chargement…
-          </div>
-
-          <!-- Contenu en fonction de l'onglet actif, affiché quand le chargement est terminé -->
-          <div v-else class="flex flex-column flex-auto">
-
-            <!-- On utilise "profileKey" comme clé afin de forcer la recréation des composants -->
-            <ProfileInfoAdmin v-if="activeTab === 0" :user="user" :key="profileKey" />
-            <DocumentsUserProfile v-if="activeTab === 1" :key="profileKey" />
-            <ResumStageUserProfile v-if="activeTab === 2" :user="user" :key="profileKey" />
-            <ChatProfil v-if="activeTab === 3" :key="profileKey" />
+  <Navbar />
+  <div class="page-wrapper">
+    <div class="profile-admin-page">
+      <!-- Indicateur de chargement -->
+      <div v-if="isLoading" class="col-12">
+        <div class="card">
+          <div class="text-center p-6">
+            <i class="pi pi-spin pi-spinner text-4xl text-primary mb-3"></i>
+            <p class="text-600 m-0">Chargement du profil...</p>
           </div>
         </div>
+      </div>
+
+      <!-- Contenu en fonction de l'onglet actif, affiché quand le chargement est terminé -->
+      <div v-else class="col-12">
+        <!-- On utilise "profileKey" comme clé afin de forcer la recréation des composants -->
+        <ProfileInfoAdmin v-if="activeTab === 0" :user="user" :key="profileKey" />
+        <DocumentsUserProfile v-if="activeTab === 1" :key="profileKey" />
+        <ResumStageUserProfile v-if="activeTab === 2" :user="user" :key="profileKey" />
+        <ChatProfil v-if="activeTab === 3" :key="profileKey" />
       </div>
     </div>
   </div>
@@ -207,15 +203,32 @@ export default {
 </script>
 
 <style scoped>
-.min-h-screen {
+.page-wrapper {
+  width: 100%;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.page-wrapper::-webkit-scrollbar {
+  display: none;
+}
+
+.profile-admin-page {
   min-height: 100vh;
+  padding: 2rem;
+  padding-bottom: 8rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
 }
 
-.mb-4 {
-  margin-bottom: 1rem;
-}
-
-.mb-6 {
-  margin-bottom: 1.5rem;
+@media (max-width: 768px) {
+  .profile-admin-page {
+    padding: 1rem;
+    padding-bottom: 6rem;
+  }
 }
 </style>

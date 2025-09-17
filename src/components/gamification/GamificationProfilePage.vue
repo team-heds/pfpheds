@@ -205,19 +205,50 @@
         <div class="members-ranking">
           <div class="card-header">
             <h3><i class="pi pi-shield"></i> Mes Badges</h3>
-            <span class="count-chip">{{ badgesLimited.length }}</span>
-          </div>
-          <div v-if="badgesLimited.length" class="badge-grid">
-            <div v-for="(badge, i) in badgesLimited" :key="badge.id || i" class="badge-item">
-              <div class="badge-icon" :style="{ borderColor: houseColor }">
-                <i :class="badge.icon || 'pi pi-star'" :style="{ color: houseColor }"></i>
-              </div>
-              <div class="badge-meta">
-                <div class="badge-title">{{ badge.title || badge.name }}</div>
-                <div class="badge-desc">{{ badge.description || 'Badge obtenu' }}</div>
-              </div>
-              <div class="badge-xp" v-if="badge.xp">+{{ formatNumber(badge.xp) }} XP</div>
+            <div class="badge-stats">
+              <span class="count-chip">{{ userBadges.length }}/{{ totalBadges }}</span>
+              <span class="completion-chip" :style="{ backgroundColor: houseColor }">
+                {{ badgeCompletionPercentage }}% complété
+              </span>
             </div>
+          </div>
+          <!-- Badge Statistics -->
+          <div class="badge-summary" v-if="userBadges.length > 0">
+            <div class="badge-rarity-stats">
+              <div v-for="(count, rarity) in badgesByRarity" :key="rarity" 
+                   class="rarity-stat" :class="`rarity-${rarity}`">
+                <span class="rarity-count">{{ count }}</span>
+                <span class="rarity-label">{{ getRarityName(rarity) }}</span>
+              </div>
+            </div>
+            <div class="total-xp-from-badges">
+              <i class="pi pi-star-fill"></i>
+              <span>{{ formatNumber(totalXPFromBadges) }} XP des badges</span>
+            </div>
+          </div>
+          
+          <!-- Badges Grid -->
+          <div v-if="userBadges.length > 0" class="modern-badge-grid">
+            <BadgeCard
+              v-for="badge in displayedBadges"
+              :key="badge.id"
+              :badge="badge"
+              :is-unlocked="true"
+              :is-newly-unlocked="isNewlyUnlocked(badge)"
+              @click="showBadgeDetails(badge)"
+            />
+          </div>
+          
+          <!-- Show More Button -->
+          <div v-if="userBadges.length > displayLimit" class="show-more-section">
+            <Button 
+              @click="showAllBadges = !showAllBadges" 
+              class="show-more-btn"
+              :style="{ backgroundColor: houseColor }"
+            >
+              <i class="pi" :class="showAllBadges ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+              {{ showAllBadges ? 'Voir moins' : `Voir tous (${userBadges.length - displayLimit} de plus)` }}
+            </Button>
           </div>
           <div v-else class="empty-state">
             <i class="pi pi-info-circle"></i>
@@ -261,6 +292,136 @@
           </div>
         </div>
       </div>
+      
+      <!-- Défis Hebdomadaires -->
+      <div class="members-ranking">
+        <div class="card-header">
+          <h3><i class="pi pi-flag"></i> Défis de la Semaine</h3>
+          <div class="challenge-stats">
+            <span class="count-chip">{{ completedChallengesCount }}/{{ activeChallenges.length }}</span>
+            <span class="completion-chip" :style="{ backgroundColor: houseColor }">
+              {{ challengeCompletionRate }}% complété
+            </span>
+          </div>
+        </div>
+        
+        <!-- Challenge Statistics -->
+        <div class="challenge-summary" v-if="challengeStats.totalCompleted > 0">
+          <div class="challenge-overview-stats">
+            <div class="stat-item">
+              <i class="pi pi-trophy"></i>
+              <span>{{ challengeStats.totalCompleted }} défis complétés</span>
+            </div>
+            <div class="stat-item">
+              <i class="pi pi-star-fill"></i>
+              <span>{{ formatNumber(challengeStats.totalXPFromChallenges) }} XP des défis</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Challenges Grid -->
+        <div v-if="activeChallenges.length > 0" class="modern-challenge-grid">
+          <ChallengeCard
+            v-for="challenge in displayedChallenges"
+            :key="challenge.id"
+            :challenge="challenge"
+            :house-color="houseColor"
+            @click="showChallengeDetails(challenge)"
+          />
+        </div>
+        
+        <!-- Show More Button -->
+        <div v-if="activeChallenges.length > challengeDisplayLimit" class="show-more-section">
+          <Button 
+            @click="showAllChallenges = !showAllChallenges" 
+            class="show-more-btn"
+            :style="{ backgroundColor: houseColor }"
+          >
+            <i class="pi" :class="showAllChallenges ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+            {{ showAllChallenges ? 'Voir moins' : `Voir tous les défis (${activeChallenges.length})` }}
+          </Button>
+        </div>
+        
+        <!-- Empty State -->
+        <div v-if="activeChallenges.length === 0" class="empty-badge-state">
+          <div class="empty-badge-icon">🎯</div>
+          <h4>Aucun défi actif</h4>
+          <p>Les nouveaux défis arrivent chaque lundi !</p>
+          <Button 
+            @click="router.push('/challenges')" 
+            class="check-challenges-btn"
+            :style="{ backgroundColor: houseColor }"
+          >
+            <i class="pi pi-external-link"></i>
+            Voir tous les défis
+          </Button>
+        </div>
+      </div>
+      
+      <!-- Quêtes Dynamiques -->
+      <div class="members-ranking">
+        <div class="card-header">
+          <h3><i class="pi pi-compass"></i> Mes Quêtes</h3>
+          <div class="quest-stats">
+            <span class="count-chip">{{ completedQuestsCount }}/{{ activeQuests.length }}</span>
+            <span class="completion-chip" :style="{ backgroundColor: houseColor }">
+              {{ questCompletionRate }}% complété
+            </span>
+          </div>
+        </div>
+        
+        <!-- Quest Statistics -->
+        <div class="quest-summary" v-if="questStats.totalCompleted > 0">
+          <div class="quest-overview-stats">
+            <div class="stat-item">
+              <i class="pi pi-check-circle"></i>
+              <span>{{ questStats.totalCompleted }} quêtes complétées</span>
+            </div>
+            <div class="stat-item">
+              <i class="pi pi-star-fill"></i>
+              <span>{{ formatNumber(totalXPFromQuests) }} XP des quêtes</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Quests Grid -->
+        <div v-if="activeQuests.length > 0" class="modern-quest-grid">
+          <QuestCard
+            v-for="quest in displayedQuests"
+            :key="quest.id"
+            :quest="quest"
+            :house-color="houseColor"
+            @click="showQuestDetails(quest)"
+          />
+        </div>
+        
+        <!-- Show More Button -->
+        <div v-if="activeQuests.length > questDisplayLimit" class="show-more-section">
+          <Button 
+            @click="showAllQuests = !showAllQuests" 
+            class="show-more-btn"
+            :style="{ backgroundColor: houseColor }"
+          >
+            <i class="pi" :class="showAllQuests ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+            {{ showAllQuests ? 'Voir moins' : `Voir toutes les quêtes (${activeQuests.length})` }}
+          </Button>
+        </div>
+        
+        <!-- Empty State -->
+        <div v-if="activeQuests.length === 0" class="empty-badge-state">
+          <div class="empty-badge-icon">🗺️</div>
+          <h4>Aucune quête active</h4>
+          <p>Explorez de nouvelles aventures et débloquez des quêtes !</p>
+          <Button 
+            @click="router.push('/quests')" 
+            class="check-quests-btn"
+            :style="{ backgroundColor: houseColor }"
+          >
+            <i class="pi pi-external-link"></i>
+            Voir toutes les quêtes
+          </Button>
+        </div>
+      </div>
     </div>
     
     <!-- Section de test pour forcer le scroll -->
@@ -269,6 +430,13 @@
     </div>
     
     </div>
+
+    <!-- Achievement Notification -->
+    <AchievementNotification
+      v-if="showNotification && currentNotification"
+      :badge="currentNotification"
+      @close="onNotificationClose"
+    />
   </div>
 </template>
 
@@ -278,7 +446,14 @@ import { useRouter } from 'vue-router'
 import { getAuth } from 'firebase/auth'
 import { getUserGamificationStats } from '@/service/hesHousesService'
 import { getActiveDefis, subscribeActiveDefis } from '@/service/defisService'
+import badgesService from '@/service/badgesService'
+import challengesService from '@/service/challengesService'
+import questsService from '@/service/questsService'
 import Navbar from '@/components/common/utils/Navbar.vue'
+import BadgeCard from '@/components/gamification/BadgeCard.vue'
+import ChallengeCard from '@/components/gamification/ChallengeCard.vue'
+import QuestCard from '@/components/gamification/QuestCard.vue'
+import AchievementNotification from '@/components/gamification/AchievementNotification.vue'
 // Background images per house (align with HouseStatsPage)
 import FondHarmonis from '@/assets/maisons/FondHarmonis.png'
 import FondElaris from '@/assets/maisons/FondElaris.png'
@@ -294,6 +469,27 @@ const loading = ref(true)
 const error = ref(null)
 const userStats = ref(null)
 let unsubscribeDefis = null
+
+// Badge system state
+const userBadges = ref([])
+const allBadges = ref([])
+const showAllBadges = ref(false)
+const displayLimit = ref(6)
+const newlyUnlockedBadges = ref(new Set())
+const showNotification = ref(false)
+const currentNotification = ref(null)
+
+// Challenge system state
+const activeChallenges = ref([])
+const challengeStats = ref({})
+const showAllChallenges = ref(false)
+const challengeDisplayLimit = ref(3)
+
+// Quest system state
+const activeQuests = ref([])
+const questStats = ref({})
+const showAllQuests = ref(false)
+const questDisplayLimit = ref(3)
 
 // House configuration
 const houseConfig = {
@@ -366,6 +562,72 @@ const upcomingLimited = computed(() => {
   return arr.slice(0, 10)
 })
 
+// Badge system computed properties
+const totalBadges = computed(() => allBadges.value.length)
+
+const badgeCompletionPercentage = computed(() => {
+  if (totalBadges.value === 0) return 0
+  return Math.round((userBadges.value.length / totalBadges.value) * 100)
+})
+
+const badgesByRarity = computed(() => {
+  const rarityCount = { common: 0, rare: 0, epic: 0, legendary: 0 }
+  userBadges.value.forEach(badge => {
+    if (rarityCount.hasOwnProperty(badge.rarity)) {
+      rarityCount[badge.rarity]++
+    }
+  })
+  return rarityCount
+})
+
+const totalXPFromBadges = computed(() => {
+  return userBadges.value.reduce((total, badge) => total + (badge.xpBonus || 0), 0)
+})
+
+const displayedBadges = computed(() => {
+  if (showAllBadges.value) return userBadges.value
+  return userBadges.value.slice(0, displayLimit.value)
+})
+
+const lockedBadges = computed(() => {
+  const unlockedIds = new Set(userBadges.value.map(b => b.id))
+  return allBadges.value.filter(badge => !unlockedIds.has(badge.id))
+})
+
+// Challenge system computed properties
+const displayedChallenges = computed(() => {
+  if (showAllChallenges.value) return activeChallenges.value
+  return activeChallenges.value.slice(0, challengeDisplayLimit.value)
+})
+
+const completedChallengesCount = computed(() => {
+  return activeChallenges.value.filter(c => c.completed).length
+})
+
+const challengeCompletionRate = computed(() => {
+  if (activeChallenges.value.length === 0) return 0
+  return Math.round((completedChallengesCount.value / activeChallenges.value.length) * 100)
+})
+
+// Quest system computed properties
+const displayedQuests = computed(() => {
+  if (showAllQuests.value) return activeQuests.value
+  return activeQuests.value.slice(0, questDisplayLimit.value)
+})
+
+const completedQuestsCount = computed(() => {
+  return activeQuests.value.filter(q => q.status === 'completed').length
+})
+
+const questCompletionRate = computed(() => {
+  if (activeQuests.value.length === 0) return 0
+  return Math.round((completedQuestsCount.value / activeQuests.value.length) * 100)
+})
+
+const totalXPFromQuests = computed(() => {
+  return questStats.value.totalXPFromQuests || 0
+})
+
 // Helper: status for a challenge
 const challengeStatus = (q) => {
   if (q?.completed || q?.status === 'completed') return 'validé'
@@ -397,6 +659,119 @@ const getDaysSinceJoined = () => {
   const today = new Date()
   const diffTime = Math.abs(today - joinDate)
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+}
+
+// Badge system methods
+const getRarityName = (rarity) => {
+  const names = {
+    common: 'Commun',
+    rare: 'Rare',
+    epic: 'Épique',
+    legendary: 'Légendaire'
+  }
+  return names[rarity] || rarity
+}
+
+const isNewlyUnlocked = (badge) => {
+  return newlyUnlockedBadges.value.has(badge.id)
+}
+
+const showBadgeDetails = (badge) => {
+  // TODO: Implémenter modal de détails du badge
+  console.log('Badge details:', badge)
+}
+
+const getBadgeProgressHint = (badge) => {
+  // TODO: Calculer le progrès vers le déblocage du badge
+  return null
+}
+
+const checkForNewBadges = async () => {
+  if (!auth.currentUser?.uid) return
+  
+  try {
+    const newBadges = await badgesService.autoCheckAndUnlockBadges(
+      auth.currentUser.uid, 
+      userStats.value
+    )
+    
+    if (newBadges.length > 0) {
+      // Ajouter les nouveaux badges à la liste
+      userBadges.value.push(...newBadges)
+      
+      // Marquer comme nouvellement débloqués
+      newBadges.forEach(badge => {
+        newlyUnlockedBadges.value.add(badge.id)
+      })
+      
+      // Afficher notification pour le premier badge
+      if (newBadges.length > 0) {
+        currentNotification.value = newBadges[0]
+        showNotification.value = true
+      }
+    }
+  } catch (error) {
+    console.error('Erreur lors de la vérification des badges:', error)
+  }
+}
+
+const loadBadgesData = async () => {
+  if (!auth.currentUser?.uid) return
+  
+  try {
+    // Charger tous les badges disponibles depuis la configuration
+    allBadges.value = Object.values(badgesService.BADGES_CONFIG)
+    
+    // Charger les badges de l'utilisateur
+    userBadges.value = await badgesService.getUserBadges(auth.currentUser.uid)
+  } catch (error) {
+    console.error('Erreur lors du chargement des badges:', error)
+  }
+}
+
+const onNotificationClose = () => {
+  showNotification.value = false
+  currentNotification.value = null
+}
+
+// Challenge system methods
+const loadChallengesData = async () => {
+  if (!auth.currentUser?.uid) return
+  
+  try {
+    // Charger les défis actifs
+    activeChallenges.value = await challengesService.getUserActiveChallenges(auth.currentUser.uid)
+    
+    // Charger les statistiques des défis
+    challengeStats.value = await challengesService.getUserChallengeStats(auth.currentUser.uid)
+  } catch (error) {
+    console.error('Erreur lors du chargement des défis:', error)
+  }
+}
+
+const showChallengeDetails = (challenge) => {
+  // Rediriger vers la page des défis avec le défi sélectionné
+  router.push('/challenges')
+}
+
+// Quest system methods
+const loadQuestsData = async () => {
+  if (!auth.currentUser?.uid) return
+  
+  try {
+    // Charger les quêtes actives
+    activeQuests.value = await questsService.getUserActiveQuests(auth.currentUser.uid)
+    
+    // Charger les statistiques des quêtes
+    questStats.value = await questsService.getUserQuestStats(auth.currentUser.uid)
+  } catch (error) {
+    console.error('Erreur lors du chargement des quêtes:', error)
+  }
+}
+
+const showQuestDetails = (quest) => {
+  // Rediriger vers la page des quêtes avec la quête sélectionnée
+  router.push('/quests')
 }
 
 // Data loading
@@ -431,6 +806,15 @@ const loadUserStats = async () => {
       console.warn('Impossible de charger les défis actifs:', e)
     }
     userStats.value = { ...stats, upcomingChallenges: activeDefis }
+
+    // Charger les données des badges
+    await loadBadgesData()
+    
+    // Charger les données des défis
+    await loadChallengesData()
+    
+    // Charger les données des quêtes
+    await loadQuestsData()
 
     // Setup realtime subscription
     if (unsubscribeDefis) {
@@ -1263,6 +1647,308 @@ onBeforeUnmount(() => {
 
   .badge-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Badge System Styles */
+.badge-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.completion-chip {
+  background: var(--house-color);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badge-summary {
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.badge-rarity-stats {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.rarity-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem;
+  border-radius: 6px;
+  min-width: 60px;
+}
+
+.rarity-stat.rarity-common {
+  background: rgba(156, 163, 175, 0.1);
+  color: #6B7280;
+}
+
+.rarity-stat.rarity-rare {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3B82F6;
+}
+
+.rarity-stat.rarity-epic {
+  background: rgba(147, 51, 234, 0.1);
+  color: #9333EA;
+}
+
+.rarity-stat.rarity-legendary {
+  background: rgba(245, 158, 11, 0.1);
+  color: #F59E0B;
+}
+
+.rarity-count {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.rarity-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.total-xp-from-badges {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--house-color);
+  font-weight: 600;
+}
+
+.modern-badge-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.show-more-section {
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+.show-more-btn {
+  background: var(--house-color);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.show-more-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.empty-badge-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.empty-state h4 {
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.check-badges-btn {
+  background: var(--house-color);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  margin-top: 1rem;
+  transition: all 0.2s ease;
+}
+
+.check-badges-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.locked-badges-section {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.locked-badges-section h4 {
+  color: #6B7280;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.locked-badges-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+/* Responsive adjustments for badges */
+@media (max-width: 768px) {
+  .badge-rarity-stats {
+    justify-content: center;
+  }
+  
+  .modern-badge-grid,
+  .locked-badges-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+  
+  .badge-stats {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+
+/* Styles pour les défis */
+.challenge-stats {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.challenge-summary {
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.challenge-overview-stats {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-color-secondary);
+  font-size: 0.9rem;
+}
+
+.stat-item i {
+  color: var(--primary-color);
+}
+
+.modern-challenge-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.check-challenges-btn {
+  margin-top: 1rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.check-challenges-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Quest system styles */
+.quest-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.quest-summary {
+  background: rgba(0, 0, 0, 0.02);
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.quest-overview-stats {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.modern-quest-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.check-quests-btn {
+  background: var(--house-color);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  margin-top: 1rem;
+  transition: all 0.2s ease;
+}
+
+.check-quests-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive pour défis et quêtes */
+@media (max-width: 768px) {
+  .modern-challenge-grid,
+  .modern-quest-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .challenge-stats,
+  .quest-stats {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .challenge-overview-stats {
+    justify-content: center;
   }
 }
 </style>

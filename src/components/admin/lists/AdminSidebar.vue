@@ -81,7 +81,13 @@ const menu = ref([
         label: 'Gamification',
         icon: 'pi pi-star',
         items: [
-          { label: 'Gestion des Défis', icon: 'pi pi-flag', to: '/admin/defis' }
+          { label: 'Dashboard Gamification', icon: 'pi pi-chart-line', to: '/admin' },
+          { label: 'Gestion des Défis', icon: 'pi pi-trophy', to: '/admin/gamification/challenges' },
+          { label: 'Gestion des Quêtes', icon: 'pi pi-flag', to: '/admin/gamification/quests' },
+          { label: 'Gestion des Badges', icon: 'pi pi-star', to: '/admin/gamification/badges' },
+          { label: 'Gestion des Utilisateurs', icon: 'pi pi-users', to: '/admin/gamification/users' },
+          { label: 'Gestion des Maisons', icon: 'pi pi-home', to: '/admin/gamification/houses' },
+          { label: 'Analytics & Statistiques', icon: 'pi pi-chart-bar', to: '/admin/gamification/analytics' }
         ]
       },
       {

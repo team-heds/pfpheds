@@ -414,6 +414,130 @@ export async function addUserXP(userId, action, customXP = null) {
       totalXPAfter: newTotalXP
     })
     
+    // Vérifier et débloquer automatiquement les badges
+    try {
+      const badgesService = await import('./badgesService')
+      const userStats = {
+        ...newData,
+        maison: currentData.maison,
+        dateSelection: currentData.dateSelection,
+        stats: currentData.stats || {}
+      }
+      
+      const newBadges = await badgesService.default.autoCheckAndUnlockBadges(userId, userStats)
+      if (newBadges.length > 0) {
+        console.log(`🏆 ${newBadges.length} nouveau(x) badge(s) débloqué(s) pour ${userId}:`, 
+          newBadges.map(b => b.name).join(', '))
+      }
+    } catch (badgeError) {
+      console.warn('Erreur lors de la vérification des badges:', badgeError)
+    }
+    
+    // Mettre à jour les défis hebdomadaires
+    try {
+      const challengesService = await import('./challengesService')
+      
+      // Mettre à jour les défis selon l'action
+      let challengeType = null
+      switch (action) {
+        case 'LOGIN':
+          challengeType = challengesService.default.CHALLENGE_TYPES.LOGIN_STREAK
+          break
+        case 'QUIZ_COMPLETE':
+          challengeType = challengesService.default.CHALLENGE_TYPES.QUIZ_COMPLETE
+          break
+        default:
+          challengeType = challengesService.default.CHALLENGE_TYPES.XP_GAIN
+          break
+      }
+      
+      if (challengeType) {
+        const completedChallenges = await challengesService.default.updateChallengeProgress(
+          userId, 
+          challengeType, 
+          challengeType === challengesService.default.CHALLENGE_TYPES.XP_GAIN ? xpToAdd : 1,
+          { action, xpGained: xpToAdd }
+        )
+        
+        if (completedChallenges.length > 0) {
+          console.log(`🎯 ${completedChallenges.length} défi(s) complété(s) pour ${userId}:`, 
+            completedChallenges.map(c => c.name).join(', '))
+        }
+      }
+    } catch (challengeError) {
+      console.warn('Erreur lors de la mise à jour des défis:', challengeError)
+    }
+    
+    // Mettre à jour les quêtes
+    try {
+      const questsService = await import('./questsService')
+      
+      // Déterminer les types d'étapes de quête à mettre à jour
+      const questUpdates = []
+      
+      switch (action) {
+        case 'LOGIN':
+          questUpdates.push({ stepType: 'login_action', increment: 1 })
+          break
+        case 'QUIZ_COMPLETE':
+          questUpdates.push({ stepType: 'quiz_complete', increment: 1 })
+          break
+        case 'PROFILE_UPDATE':
+          questUpdates.push({ stepType: 'profile_completion', increment: 1 })
+          break
+        default:
+          // Pour les gains d'XP génériques
+          questUpdates.push({ stepType: 'xp_gain', increment: xpToAdd })
+          break
+      }
+      
+      // Ajouter les mises à jour basées sur le niveau
+      if (newData.level !== oldLevel) {
+        questUpdates.push({ stepType: 'level_reach', increment: newData.level })
+      }
+      
+      // Mettre à jour chaque type d'étape de quête
+      for (const update of questUpdates) {
+        const userQuests = await questsService.default.getUserQuests(userId)
+        
+        for (const [questId, quest] of Object.entries(userQuests)) {
+          if (quest.status === 'in_progress' || quest.status === 'available') {
+            // Trouver les étapes correspondantes
+            const matchingSteps = quest.steps.filter(step => step.type === update.stepType)
+            
+            for (const step of matchingSteps) {
+              const updatedQuest = await questsService.default.updateQuestProgress(
+                userId, 
+                questId, 
+                step.id, 
+                update.increment
+              )
+              
+              // Vérifier si la quête est complétée
+              if (updatedQuest && updatedQuest.status === 'completed') {
+                const completion = await questsService.default.completeQuest(userId, questId)
+                console.log(`🏆 Quête complétée pour ${userId}: ${completion.quest.title}`)
+                
+                // Débloquer de nouvelles quêtes
+                const userHouse = newData.house || 'gryffindor'
+                const completedQuestIds = Object.values(userQuests)
+                  .filter(q => q.status === 'completed')
+                  .map(q => q.id)
+                completedQuestIds.push(questId)
+                
+                await questsService.default.unlockNewQuests(userId, userHouse, completedQuestIds)
+              }
+            }
+          }
+        }
+      }
+      
+      console.log(`🗺️ Quêtes mises à jour pour ${userId} (action: ${action})`)
+      
+    } catch (questError) {
+      console.warn('Erreur lors de la mise à jour des quêtes:', questError)
+    }
+    
     return newData
   } catch (error) {
     console.error('Erreur lors de l\'ajout d\'XP:', error)
