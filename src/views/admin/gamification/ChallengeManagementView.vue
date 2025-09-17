@@ -67,17 +67,20 @@ onMounted(() => {
 
 .challenge-management-page {
   min-height: 100vh;
-  padding: 2rem;
+  padding: 1rem;
   padding-bottom: 8rem;
   display: grid;
   grid-template-columns: 1fr;
   gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 @media (max-width: 768px) {
   .challenge-management-page {
-    padding: 1rem;
+    padding: 0.5rem;
     padding-bottom: 6rem;
+    gap: 1rem;
   }
 }
 </style>

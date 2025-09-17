@@ -12,9 +12,9 @@
         </div>
       </div>
       <Button 
-        @click="showHouseDialog = true; resetForm()"
-        icon="pi pi-home"
-        label="Modifier Maison"
+        @click="showPointsDialog = true; resetPointsForm()"
+        icon="pi pi-plus-circle"
+        label="Ajouter Points"
         class="p-button-success"
       />
     </div>
@@ -142,10 +142,10 @@
               
               <div class="flex gap-2 justify-content-center">
                 <Button 
-                  @click="editUserHouse(user)"
-                  icon="pi pi-home"
+                  @click="addPointsToUser(user)"
+                  icon="pi pi-plus-circle"
                   class="p-button-success p-button-sm flex-1"
-                  label="Maison"
+                  label="Points"
                 />
                 <Button 
                   @click="viewUserProfile(user)"
@@ -244,10 +244,10 @@
             <template #body="{ data }">
               <div class="flex gap-1 justify-content-center">
                 <Button 
-                  @click="editUserHouse(data)"
-                  icon="pi pi-home"
+                  @click="addPointsToUser(data)"
+                  icon="pi pi-plus-circle"
                   class="p-button-text p-button-success p-button-sm"
-                  v-tooltip="'Modifier maison'"
+                  v-tooltip="'Ajouter des points'"
                 />
                 <Button 
                   @click="viewUserProfile(data)"
@@ -323,6 +323,86 @@
         />
       </template>
     </Dialog>
+
+    <!-- Dialog d'ajout de points -->
+    <Dialog 
+      v-model:visible="showPointsDialog" 
+      header="Ajouter des Points XP"
+      :modal="true"
+      :closable="true"
+      :style="{ width: '500px' }"
+    >
+      <div class="flex flex-column gap-4">
+        <div class="field">
+          <label class="font-semibold text-900">Utilisateur sélectionné</label>
+          <div class="p-3 surface-100 border-round flex align-items-center gap-2">
+            <Avatar 
+              v-if="pointsForm.userPhoto" 
+              :image="pointsForm.userPhoto" 
+              size="normal" 
+              shape="circle"
+            />
+            <Avatar 
+              v-else 
+              icon="pi pi-user" 
+              size="normal" 
+              shape="circle"
+              class="bg-gray-100 text-gray-600"
+            />
+            <div>
+              <div class="font-semibold text-900">{{ pointsForm.userName }}</div>
+              <div class="text-600 text-sm">{{ pointsForm.userEmail }}</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="field">
+          <label for="pointsInput" class="font-semibold text-900">Points à ajouter *</label>
+          <InputNumber 
+            id="pointsInput"
+            v-model="pointsForm.points" 
+            :min="1"
+            :max="1000"
+            placeholder="Nombre de points (ex: 50)"
+            :class="{ 'p-invalid': pointsErrors.points }"
+            class="w-full"
+            suffix=" XP"
+          />
+          <small v-if="pointsErrors.points" class="p-error">{{ pointsErrors.points }}</small>
+          <small class="text-600">Entre 1 et 1000 points XP</small>
+        </div>
+        
+        <div class="field">
+          <label for="reasonInput" class="font-semibold text-900">Raison *</label>
+          <Textarea 
+            id="reasonInput"
+            v-model="pointsForm.reason" 
+            placeholder="Pourquoi attribuer ces points ? (ex: Participation exceptionnelle, projet réussi...)"
+            :class="{ 'p-invalid': pointsErrors.reason }"
+            class="w-full"
+            rows="3"
+            :maxlength="200"
+          />
+          <small v-if="pointsErrors.reason" class="p-error">{{ pointsErrors.reason }}</small>
+          <small class="text-600">{{ pointsForm.reason?.length || 0 }}/200 caractères</small>
+        </div>
+      </div>
+      
+      <template #footer>
+        <Button 
+          @click="closePointsDialog" 
+          label="Annuler" 
+          class="p-button-text"
+        />
+        <Button 
+          @click="addPoints" 
+          label="Ajouter Points"
+          :loading="assigning"
+          class="p-button-success"
+          icon="pi pi-plus-circle"
+        />
+      </template>
+    </Dialog>
   </div>
 </template>
 
@@ -339,6 +419,8 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Avatar from 'primevue/avatar'
 import ToggleButton from 'primevue/togglebutton'
+import InputNumber from 'primevue/inputnumber'
+import Textarea from 'primevue/textarea'
 // Système de rôles temporairement désactivé - sera réintégré plus tard
 
 const toast = useToast()
@@ -359,6 +441,7 @@ const viewMode = ref('cards') // 'cards' ou 'table'
 
 // Dialogs
 const showHouseDialog = ref(false)
+const showPointsDialog = ref(false)
 
 // Formulaire d'attribution de maison
 const houseForm = reactive({
@@ -366,7 +449,16 @@ const houseForm = reactive({
   house: ''
 })
 
+// Formulaire d'ajout de points
+const pointsForm = reactive({
+  userId: '',
+  userName: '',
+  points: 0,
+  reason: ''
+})
+
 const errors = ref({})
+const pointsErrors = ref({})
 
 // Options pour les dropdowns - rôles temporairement supprimés
 
@@ -521,6 +613,16 @@ const editUserHouse = (user) => {
   showHouseDialog.value = true
 }
 
+const addPointsToUser = (user) => {
+  pointsForm.userId = user.id
+  pointsForm.userName = user.displayName || 'Utilisateur'
+  pointsForm.userEmail = user.email
+  pointsForm.userPhoto = user.photoURL
+  pointsForm.points = 0
+  pointsForm.reason = ''
+  showPointsDialog.value = true
+}
+
 const viewUserProfile = (user) => {
   // Naviguer vers le profil utilisateur
   console.log('Voir profil de:', user)
@@ -564,6 +666,77 @@ const getHouseGradientClass = (house) => {
 const resetForm = () => {
   Object.assign(houseForm, { userId: '', house: '' })
   errors.value = {}
+}
+
+const resetPointsForm = () => {
+  Object.assign(pointsForm, { 
+    userId: '', 
+    userName: '', 
+    userEmail: '', 
+    userPhoto: '', 
+    points: 0, 
+    reason: '' 
+  })
+  pointsErrors.value = {}
+}
+
+const validatePointsForm = () => {
+  pointsErrors.value = {}
+  
+  if (!pointsForm.points || pointsForm.points < 1) {
+    pointsErrors.value.points = 'Veuillez saisir un nombre de points valide (minimum 1)'
+  }
+  
+  if (pointsForm.points > 1000) {
+    pointsErrors.value.points = 'Le nombre de points ne peut pas dépasser 1000'
+  }
+  
+  if (!pointsForm.reason || pointsForm.reason.trim().length < 5) {
+    pointsErrors.value.reason = 'Veuillez saisir une raison (minimum 5 caractères)'
+  }
+  
+  return Object.keys(pointsErrors.value).length === 0
+}
+
+const addPoints = async () => {
+  if (!validatePointsForm()) return
+  
+  try {
+    assigning.value = true
+    
+    // Simuler l'ajout de points - à remplacer par l'appel au service de gamification
+    const userIndex = users.value.findIndex(u => u.id === pointsForm.userId)
+    if (userIndex !== -1) {
+      users.value[userIndex].totalPoints = (users.value[userIndex].totalPoints || 0) + pointsForm.points
+    }
+    
+    toast.add({
+      severity: 'success',
+      summary: 'Points ajoutés !',
+      detail: `${pointsForm.points} points XP attribués à ${pointsForm.userName}`,
+      life: 4000
+    })
+    
+    showPointsDialog.value = false
+    resetPointsForm()
+    await loadUsers()
+    
+  } catch (error) {
+    console.error('Erreur lors de l\'ajout de points:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: error.message || 'Erreur lors de l\'ajout de points',
+      life: 3000
+    })
+  } finally {
+    assigning.value = false
+  }
+}
+
+const closePointsDialog = () => {
+  showPointsDialog.value = false
+  resetPointsForm()
 }
 
 // Permissions simplifiées - accès libre pour le développement
