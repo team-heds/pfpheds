@@ -1,0 +1,51 @@
+# Dockerfile pour développement local - simule l'environnement de production
+FROM nginx:alpine
+
+# Copier la configuration Nginx optimisée pour SPA Vue.js
+RUN cat > /etc/nginx/conf.d/default.conf << 'EOF'
+server {
+    listen 80;
+    server_name localhost;
+    
+    # Racine des fichiers statiques
+    root /usr/share/nginx/html;
+    index index.html;
+    
+    # Configuration pour SPA (Single Page Application)
+    location / {
+        try_files $uri $uri/ /index.html;
+        
+        # Headers de sécurité
+        add_header X-Frame-Options SAMEORIGIN;
+        add_header X-Content-Type-Options nosniff;
+        add_header X-XSS-Protection "1; mode=block";
+    }
+    
+    # Cache pour les assets statiques
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        add_header Access-Control-Allow-Origin "*";
+    }
+    
+    # Pas de cache pour index.html
+    location = /index.html {
+        add_header Cache-Control "no-cache, no-store, must-revalidate";
+        add_header Pragma "no-cache";
+        add_header Expires "0";
+    }
+    
+    # Logs pour debug
+    access_log /var/log/nginx/access.log;
+    error_log /var/log/nginx/error.log;
+}
+EOF
+
+# Créer le répertoire pour les fichiers statiques
+RUN mkdir -p /usr/share/nginx/html
+
+# Exposer le port 80
+EXPOSE 80
+
+# Commande par défaut
+CMD ["nginx", "-g", "daemon off;"]

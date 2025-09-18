@@ -189,12 +189,9 @@ import MobileSearchView from '@/views/apps/tools/MobileSearchView.vue'
 import CreateContentMobile from '@/components/social/library/CreateContentMobile.vue';
 import ListComponent from '@/components/media/audio/ListComponent.vue'
 
-//import SearchResults from '@/components/common/utils/SearchResults.vue'
-import Ventriglisse3D from '@/components/games/Ventriglisse3D.vue';
-import CareConvers from '@/views/pages/CareConvers.vue';
-
 import SearchResults from '@/components/common/utils/SearchResults.vue'
 import Ventriglisse3D from '@/components/games/Ventriglisse3D.vue'
+import CareConvers from '@/views/pages/CareConvers.vue'
 
 
 // ========================================

@@ -100,8 +100,9 @@
                   <i class="pi pi-trophy mr-2" style="color: var(--primary-color)"></i>
                   Système de Gamification
                 </span>
-                <div class="role-badge" :class="`role-${currentUserRole}`" v-if="currentUserRole">
-                  <i :class="getRoleIcon(currentUserRole)" class="mr-2"></i>
+                <div class="flex align-items-center gap-2 px-3 py-2 border-round-3xl font-semibold text-white text-sm" 
+                     :class="getRoleBadgeClass(currentUserRole)" v-if="currentUserRole">
+                  <i :class="getRoleIcon(currentUserRole)"></i>
                   <span>{{ getRoleName(currentUserRole) }}</span>
                 </div>
               </div>
@@ -109,53 +110,53 @@
               <!-- Statistiques Gamification -->
               <div class="grid mb-4">
                 <div class="col-12 md:col-3">
-                  <div class="gamification-stat-card challenges">
-                    <div class="stat-icon">
+                  <div class="surface-card p-4 border-round shadow-2 h-full flex align-items-center gap-3 hover:shadow-4 transition-all transition-duration-200">
+                    <div class="w-4rem h-4rem border-round flex align-items-center justify-content-center text-white text-xl" style="background-color: #2E8B57;">
                       <i class="pi pi-trophy"></i>
                     </div>
-                    <div class="stat-content">
-                      <h3>{{ gamificationStats.challenges?.total || 0 }}</h3>
-                      <p>Défis Totaux</p>
-                      <span class="stat-detail">{{ gamificationStats.challenges?.active || 0 }} actifs</span>
+                    <div class="flex-1">
+                      <div class="text-900 font-bold text-2xl m-0">{{ gamificationStats.challenges?.total || 0 }}</div>
+                      <div class="text-600 font-medium mb-1">Défis Totaux</div>
+                      <div class="text-500 text-sm">{{ gamificationStats.challenges?.active || 0 }} actifs</div>
                     </div>
                   </div>
                 </div>
 
                 <div class="col-12 md:col-3">
-                  <div class="gamification-stat-card quests">
-                    <div class="stat-icon">
+                  <div class="surface-card p-4 border-round shadow-2 h-full flex align-items-center gap-3 hover:shadow-4 transition-all transition-duration-200">
+                    <div class="w-4rem h-4rem border-round flex align-items-center justify-content-center text-white text-xl" style="background-color: #4169E1;">
                       <i class="pi pi-flag"></i>
                     </div>
-                    <div class="stat-content">
-                      <h3>{{ gamificationStats.quests?.total || 0 }}</h3>
-                      <p>Quêtes Totales</p>
-                      <span class="stat-detail">{{ gamificationStats.quests?.active || 0 }} actives</span>
+                    <div class="flex-1">
+                      <div class="text-900 font-bold text-2xl m-0">{{ gamificationStats.quests?.total || 0 }}</div>
+                      <div class="text-600 font-medium mb-1">Quêtes Totales</div>
+                      <div class="text-500 text-sm">{{ gamificationStats.quests?.active || 0 }} actives</div>
                     </div>
                   </div>
                 </div>
 
                 <div class="col-12 md:col-3">
-                  <div class="gamification-stat-card badges">
-                    <div class="stat-icon">
+                  <div class="surface-card p-4 border-round shadow-2 h-full flex align-items-center gap-3 hover:shadow-4 transition-all transition-duration-200">
+                    <div class="w-4rem h-4rem border-round flex align-items-center justify-content-center text-white text-xl" style="background-color: #DC143C;">
                       <i class="pi pi-star"></i>
                     </div>
-                    <div class="stat-content">
-                      <h3>{{ gamificationStats.badges?.total || 0 }}</h3>
-                      <p>Badges Totaux</p>
-                      <span class="stat-detail">{{ gamificationStats.badges?.unlocked || 0 }} débloqués</span>
+                    <div class="flex-1">
+                      <div class="text-900 font-bold text-2xl m-0">{{ gamificationStats.badges?.total || 0 }}</div>
+                      <div class="text-600 font-medium mb-1">Badges Totaux</div>
+                      <div class="text-500 text-sm">{{ gamificationStats.badges?.unlocked || 0 }} débloqués</div>
                     </div>
                   </div>
                 </div>
 
                 <div class="col-12 md:col-3">
-                  <div class="gamification-stat-card users">
-                    <div class="stat-icon">
+                  <div class="surface-card p-4 border-round shadow-2 h-full flex align-items-center gap-3 hover:shadow-4 transition-all transition-duration-200">
+                    <div class="w-4rem h-4rem border-round flex align-items-center justify-content-center text-white text-xl" style="background-color: #FFD700;">
                       <i class="pi pi-users"></i>
                     </div>
-                    <div class="stat-content">
-                      <h3>{{ gamificationStats.users?.active || 0 }}</h3>
-                      <p>Utilisateurs Actifs</p>
-                      <span class="stat-detail">7 derniers jours</span>
+                    <div class="flex-1">
+                      <div class="text-900 font-bold text-2xl m-0">{{ gamificationStats.users?.active || 0 }}</div>
+                      <div class="text-600 font-medium mb-1">Utilisateurs Actifs</div>
+                      <div class="text-500 text-sm">7 derniers jours</div>
                     </div>
                   </div>
                 </div>
@@ -164,91 +165,97 @@
               <!-- Actions Rapides Gamification -->
               <div class="grid">
                 <div class="col-12 md:col-4" v-if="hasPermission('CREATE_CHALLENGES')">
-                  <div class="gamification-action-card" @click="navigateToGamification('/admin/challenges')">
-                    <div class="action-icon challenges">
-                      <i class="pi pi-trophy"></i>
+                  <div class="surface-card p-4 border-round shadow-2 cursor-pointer transition-all transition-duration-300 hover:shadow-4 hover:surface-hover h-full flex flex-column gap-3" 
+                       @click="navigateToGamification('/admin/challenges')">
+                    <div class="w-3rem h-3rem border-round flex align-items-center justify-content-center text-white" style="background-color: #2E8B57;">
+                      <i class="pi pi-trophy text-lg"></i>
                     </div>
-                    <h4>Gérer les Défis</h4>
-                    <p>Créer, modifier et supprimer des défis</p>
+                    <h4 class="text-900 font-semibold text-lg m-0">Gérer les Défis</h4>
+                    <p class="text-600 line-height-3 m-0 flex-1">Créer, modifier et supprimer des défis</p>
                     <Button 
                       label="Accéder" 
                       icon="pi pi-arrow-right" 
-                      class="p-button-sm p-button-outlined"
+                      class="p-button-sm p-button-outlined w-full"
                     />
                   </div>
                 </div>
 
                 <div class="col-12 md:col-4" v-if="hasPermission('CREATE_QUESTS')">
-                  <div class="gamification-action-card" @click="navigateToGamification('/admin/quests')">
-                    <div class="action-icon quests">
-                      <i class="pi pi-flag"></i>
+                  <div class="surface-card p-4 border-round shadow-2 cursor-pointer transition-all transition-duration-300 hover:shadow-4 hover:surface-hover h-full flex flex-column gap-3" 
+                       @click="navigateToGamification('/admin/quests')">
+                    <div class="w-3rem h-3rem border-round flex align-items-center justify-content-center text-white" style="background-color: #4169E1;">
+                      <i class="pi pi-flag text-lg"></i>
                     </div>
-                    <h4>Gérer les Quêtes</h4>
-                    <p>Créer, modifier et supprimer des quêtes</p>
+                    <h4 class="text-900 font-semibold text-lg m-0">Gérer les Quêtes</h4>
+                    <p class="text-600 line-height-3 m-0 flex-1">Créer, modifier et supprimer des quêtes</p>
                     <Button 
                       label="Accéder" 
                       icon="pi pi-arrow-right" 
-                      class="p-button-sm p-button-outlined"
+                      class="p-button-sm p-button-outlined w-full"
                     />
                   </div>
                 </div>
 
                 <div class="col-12 md:col-4" v-if="hasPermission('CREATE_BADGES')">
-                  <div class="gamification-action-card" @click="navigateToGamification('/admin/badges')">
-                    <div class="action-icon badges">
-                      <i class="pi pi-star"></i>
+                  <div class="surface-card p-4 border-round shadow-2 cursor-pointer transition-all transition-duration-300 hover:shadow-4 hover:surface-hover h-full flex flex-column gap-3" 
+                       @click="navigateToGamification('/admin/badges')">
+                    <div class="w-3rem h-3rem border-round flex align-items-center justify-content-center text-white" style="background-color: #DC143C;">
+                      <i class="pi pi-star text-lg"></i>
                     </div>
-                    <h4>Gérer les Badges</h4>
-                    <p>Créer, modifier et supprimer des badges</p>
+                    <h4 class="text-900 font-semibold text-lg m-0">Gérer les Badges</h4>
+                    <p class="text-600 line-height-3 m-0 flex-1">Créer, modifier et supprimer des badges</p>
                     <Button 
                       label="Accéder" 
                       icon="pi pi-arrow-right" 
-                      class="p-button-sm p-button-outlined"
+                      class="p-button-sm p-button-outlined w-full"
                     />
                   </div>
                 </div>
 
                 <div class="col-12 md:col-4" v-if="hasPermission('MANAGE_USERS')">
-                  <div class="gamification-action-card" @click="navigateToGamification('/admin/users')">
-                    <div class="action-icon users">
-                      <i class="pi pi-users"></i>
+                  <div class="surface-card p-4 border-round shadow-2 cursor-pointer transition-all transition-duration-300 hover:shadow-4 hover:surface-hover h-full flex flex-column gap-3" 
+                       @click="navigateToGamification('/admin/users')">
+                    <div class="w-3rem h-3rem border-round flex align-items-center justify-content-center text-white" style="background-color: #FFD700;">
+                      <i class="pi pi-users text-lg"></i>
                     </div>
-                    <h4>Gérer les Utilisateurs</h4>
-                    <p>Attribuer des rôles et permissions</p>
+                    <h4 class="text-900 font-semibold text-lg m-0">Gérer les Utilisateurs</h4>
+                    <p class="text-600 line-height-3 m-0 flex-1">Attribuer des rôles et permissions</p>
                     <Button 
                       label="Accéder" 
                       icon="pi pi-arrow-right" 
-                      class="p-button-sm p-button-outlined"
+                      class="p-button-sm p-button-outlined w-full"
                     />
                   </div>
                 </div>
 
                 <div class="col-12 md:col-4" v-if="hasPermission('MANAGE_HOUSES')">
-                  <div class="gamification-action-card" @click="navigateToGamification('/admin/houses')">
-                    <div class="action-icon houses">
-                      <i class="pi pi-home"></i>
+                  <div class="surface-card p-4 border-round shadow-2 cursor-pointer transition-all transition-duration-300 hover:shadow-4 hover:surface-hover h-full flex flex-column gap-3" 
+                       @click="navigateToGamification('/admin/houses')">
+                    <div class="w-3rem h-3rem border-round flex align-items-center justify-content-center text-white bg-blue-500">
+                      <i class="pi pi-home text-lg"></i>
                     </div>
-                    <h4>Gérer les Maisons</h4>
-                    <p>Points des maisons et statistiques</p>
+                    <h4 class="text-900 font-semibold text-lg m-0">Gérer les Maisons</h4>
+                    <p class="text-600 line-height-3 m-0 flex-1">Points des maisons et statistiques</p>
                     <Button 
                       label="Accéder" 
                       icon="pi pi-arrow-right" 
-                      class="p-button-sm p-button-outlined"
+                      class="p-button-sm p-button-outlined w-full"
                     />
                   </div>
                 </div>
 
                 <div class="col-12 md:col-4" v-if="hasPermission('VIEW_ANALYTICS')">
-                  <div class="gamification-action-card" @click="navigateToGamification('/admin/analytics')">
-                    <div class="action-icon analytics">
-                      <i class="pi pi-chart-line"></i>
+                  <div class="surface-card p-4 border-round shadow-2 cursor-pointer transition-all transition-duration-300 hover:shadow-4 hover:surface-hover h-full flex flex-column gap-3" 
+                       @click="navigateToGamification('/admin/analytics')">
+                    <div class="w-3rem h-3rem border-round flex align-items-center justify-content-center text-white bg-indigo-500">
+                      <i class="pi pi-chart-line text-lg"></i>
                     </div>
-                    <h4>Analytics</h4>
-                    <p>Statistiques détaillées et rapports</p>
+                    <h4 class="text-900 font-semibold text-lg m-0">Analytics</h4>
+                    <p class="text-600 line-height-3 m-0 flex-1">Statistiques détaillées et rapports</p>
                     <Button 
                       label="Accéder" 
                       icon="pi pi-arrow-right" 
-                      class="p-button-sm p-button-outlined"
+                      class="p-button-sm p-button-outlined w-full"
                     />
                   </div>
                 </div>
@@ -256,21 +263,21 @@
 
               <!-- Activité Récente -->
               <div class="mt-4" v-if="recentGamificationLogs.length > 0">
-                <h4 class="text-900 mb-3">Activité Récente - Gamification</h4>
-                <div class="activity-list">
+                <h4 class="text-900 mb-3 font-semibold">Activité Récente - Gamification</h4>
+                <div class="flex flex-column gap-3">
                   <div 
                     v-for="log in recentGamificationLogs.slice(0, 5)" 
                     :key="log.id"
-                    class="activity-item"
+                    class="flex align-items-center gap-3 p-3 border-round surface-50 border-left-3 border-primary"
                   >
-                    <div class="activity-icon">
+                    <div class="w-2rem h-2rem border-round bg-primary flex align-items-center justify-content-center text-white">
                       <i :class="getActionIcon(log.action)"></i>
                     </div>
-                    <div class="activity-content">
-                      <p class="activity-description">
+                    <div class="flex-1">
+                      <p class="text-900 font-medium m-0 mb-1">
                         {{ getActionDescription(log.action, log.targetId) }}
                       </p>
-                      <span class="activity-time">
+                      <span class="text-600 text-sm">
                         {{ formatTime(log.timestamp) }}
                       </span>
                     </div>
@@ -640,6 +647,17 @@ const getRoleIcon = (role) => {
   return roleIcons[role] || 'pi pi-user';
 };
 
+const getRoleBadgeClass = (role) => {
+  const roleClasses = {
+    [ROLES.GAME_MASTER]: 'bg-purple-500',
+    [ROLES.HOUSE_COACH]: 'bg-green-500',
+    [ROLES.PROFESSOR]: 'bg-blue-500',
+    [ROLES.ADMIN]: 'bg-red-500',
+    [ROLES.STUDENT]: 'bg-gray-500'
+  };
+  return roleClasses[role] || 'bg-gray-500';
+};
+
 const getActionIcon = (action) => {
   const actionIcons = {
     create_challenge: 'pi pi-plus-circle',
@@ -689,6 +707,7 @@ const formatTime = (timestamp) => {
 </script>
 
 <style scoped>
+/* Layout styles - utilisant PrimeVue au maximum */
 .layout-container {
   display: flex;
   align-items: flex-start;
@@ -702,7 +721,7 @@ const formatTime = (timestamp) => {
   overflow-y: auto;
   height: auto;
   position: fixed;
-  margin-left : 4rem;
+  margin-left: 4rem;
 }
 
 .layout-content-wrapper {
@@ -716,206 +735,5 @@ const formatTime = (timestamp) => {
   min-width: 0;
   min-height: 100vh;
   margin-left: 4rem;
-}
-
-/* Gamification Styles */
-.role-badge {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-weight: 600;
-  color: white;
-  font-size: 0.875rem;
-}
-
-.role-badge.role-game_master {
-  background: linear-gradient(135deg, #8B5CF6, #A855F7);
-}
-
-.role-badge.role-house_coach {
-  background: linear-gradient(135deg, #10B981, #059669);
-}
-
-.role-badge.role-professor {
-  background: linear-gradient(135deg, #3B82F6, #2563EB);
-}
-
-.role-badge.role-admin {
-  background: linear-gradient(135deg, #EF4444, #DC2626);
-}
-
-.gamification-stat-card {
-  background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  transition: transform 0.2s ease;
-  height: 100%;
-}
-
-.gamification-stat-card:hover {
-  transform: translateY(-2px);
-}
-
-.gamification-stat-card .stat-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-  color: white;
-}
-
-.gamification-stat-card.challenges .stat-icon {
-  background: linear-gradient(135deg, #F59E0B, #D97706);
-}
-
-.gamification-stat-card.quests .stat-icon {
-  background: linear-gradient(135deg, #8B5CF6, #7C3AED);
-}
-
-.gamification-stat-card.badges .stat-icon {
-  background: linear-gradient(135deg, #EF4444, #DC2626);
-}
-
-.gamification-stat-card.users .stat-icon {
-  background: linear-gradient(135deg, #10B981, #059669);
-}
-
-.gamification-stat-card .stat-content h3 {
-  margin: 0;
-  font-size: 2rem;
-  font-weight: 700;
-  color: #1f2937;
-}
-
-.gamification-stat-card .stat-content p {
-  margin: 0.25rem 0;
-  color: #6b7280;
-  font-weight: 500;
-}
-
-.gamification-stat-card .stat-detail {
-  font-size: 0.875rem;
-  color: #9ca3af;
-}
-
-.gamification-action-card {
-  background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border: 2px solid transparent;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.gamification-action-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-  border-color: var(--primary-color);
-}
-
-.gamification-action-card .action-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.25rem;
-  color: white;
-}
-
-.gamification-action-card .action-icon.challenges {
-  background: linear-gradient(135deg, #F59E0B, #D97706);
-}
-
-.gamification-action-card .action-icon.quests {
-  background: linear-gradient(135deg, #8B5CF6, #7C3AED);
-}
-
-.gamification-action-card .action-icon.badges {
-  background: linear-gradient(135deg, #EF4444, #DC2626);
-}
-
-.gamification-action-card .action-icon.users {
-  background: linear-gradient(135deg, #10B981, #059669);
-}
-
-.gamification-action-card .action-icon.houses {
-  background: linear-gradient(135deg, #3B82F6, #2563EB);
-}
-
-.gamification-action-card .action-icon.analytics {
-  background: linear-gradient(135deg, #6366F1, #4F46E5);
-}
-
-.gamification-action-card h4 {
-  margin: 0;
-  color: #1f2937;
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
-.gamification-action-card p {
-  margin: 0;
-  color: #6b7280;
-  line-height: 1.5;
-  flex: 1;
-}
-
-.activity-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.activity-item {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  border-radius: 8px;
-  background: #f9fafb;
-  border-left: 3px solid var(--primary-color);
-}
-
-.activity-item .activity-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  background: var(--primary-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 1rem;
-}
-
-.activity-item .activity-content {
-  flex: 1;
-}
-
-.activity-item .activity-description {
-  margin: 0 0 0.25rem 0;
-  color: #1f2937;
-  font-weight: 500;
-}
-
-.activity-item .activity-time {
-  color: #6b7280;
-  font-size: 0.875rem;
 }
 </style>
