@@ -100,7 +100,7 @@
                   <i class="pi pi-trophy mr-2" style="color: var(--primary-color)"></i>
                   Système de Gamification
                 </span>
-                <div class="flex align-items-center gap-2 px-3 py-2 border-round-3xl font-semibold text-white text-sm" 
+                <div class="flex align-items-center gap-2 px-3 py-2 border-round-3xl font-semibold text-white text-sm"
                      :class="getRoleBadgeClass(currentUserRole)" v-if="currentUserRole">
                   <i :class="getRoleIcon(currentUserRole)"></i>
                   <span>{{ getRoleName(currentUserRole) }}</span>
@@ -165,96 +165,96 @@
               <!-- Actions Rapides Gamification -->
               <div class="grid">
                 <div class="col-12 md:col-4" v-if="hasPermission('CREATE_CHALLENGES')">
-                  <div class="surface-card p-4 border-round shadow-2 cursor-pointer transition-all transition-duration-300 hover:shadow-4 hover:surface-hover h-full flex flex-column gap-3" 
+                  <div class="surface-card p-4 border-round shadow-2 cursor-pointer transition-all transition-duration-300 hover:shadow-4 hover:surface-hover h-full flex flex-column gap-3"
                        @click="navigateToGamification('/admin/challenges')">
                     <div class="w-3rem h-3rem border-round flex align-items-center justify-content-center text-white" style="background-color: #2E8B57;">
                       <i class="pi pi-trophy text-lg"></i>
                     </div>
                     <h4 class="text-900 font-semibold text-lg m-0">Gérer les Défis</h4>
                     <p class="text-600 line-height-3 m-0 flex-1">Créer, modifier et supprimer des défis</p>
-                    <Button 
-                      label="Accéder" 
-                      icon="pi pi-arrow-right" 
+                    <Button
+                      label="Accéder"
+                      icon="pi pi-arrow-right"
                       class="p-button-sm p-button-outlined w-full"
                     />
                   </div>
                 </div>
 
                 <div class="col-12 md:col-4" v-if="hasPermission('CREATE_QUESTS')">
-                  <div class="surface-card p-4 border-round shadow-2 cursor-pointer transition-all transition-duration-300 hover:shadow-4 hover:surface-hover h-full flex flex-column gap-3" 
+                  <div class="surface-card p-4 border-round shadow-2 cursor-pointer transition-all transition-duration-300 hover:shadow-4 hover:surface-hover h-full flex flex-column gap-3"
                        @click="navigateToGamification('/admin/quests')">
                     <div class="w-3rem h-3rem border-round flex align-items-center justify-content-center text-white" style="background-color: #4169E1;">
                       <i class="pi pi-flag text-lg"></i>
                     </div>
                     <h4 class="text-900 font-semibold text-lg m-0">Gérer les Quêtes</h4>
                     <p class="text-600 line-height-3 m-0 flex-1">Créer, modifier et supprimer des quêtes</p>
-                    <Button 
-                      label="Accéder" 
-                      icon="pi pi-arrow-right" 
+                    <Button
+                      label="Accéder"
+                      icon="pi pi-arrow-right"
                       class="p-button-sm p-button-outlined w-full"
                     />
                   </div>
                 </div>
 
                 <div class="col-12 md:col-4" v-if="hasPermission('CREATE_BADGES')">
-                  <div class="surface-card p-4 border-round shadow-2 cursor-pointer transition-all transition-duration-300 hover:shadow-4 hover:surface-hover h-full flex flex-column gap-3" 
+                  <div class="surface-card p-4 border-round shadow-2 cursor-pointer transition-all transition-duration-300 hover:shadow-4 hover:surface-hover h-full flex flex-column gap-3"
                        @click="navigateToGamification('/admin/badges')">
                     <div class="w-3rem h-3rem border-round flex align-items-center justify-content-center text-white" style="background-color: #DC143C;">
                       <i class="pi pi-star text-lg"></i>
                     </div>
                     <h4 class="text-900 font-semibold text-lg m-0">Gérer les Badges</h4>
                     <p class="text-600 line-height-3 m-0 flex-1">Créer, modifier et supprimer des badges</p>
-                    <Button 
-                      label="Accéder" 
-                      icon="pi pi-arrow-right" 
+                    <Button
+                      label="Accéder"
+                      icon="pi pi-arrow-right"
                       class="p-button-sm p-button-outlined w-full"
                     />
                   </div>
                 </div>
 
                 <div class="col-12 md:col-4" v-if="hasPermission('MANAGE_USERS')">
-                  <div class="surface-card p-4 border-round shadow-2 cursor-pointer transition-all transition-duration-300 hover:shadow-4 hover:surface-hover h-full flex flex-column gap-3" 
+                  <div class="surface-card p-4 border-round shadow-2 cursor-pointer transition-all transition-duration-300 hover:shadow-4 hover:surface-hover h-full flex flex-column gap-3"
                        @click="navigateToGamification('/admin/users')">
                     <div class="w-3rem h-3rem border-round flex align-items-center justify-content-center text-white" style="background-color: #FFD700;">
                       <i class="pi pi-users text-lg"></i>
                     </div>
                     <h4 class="text-900 font-semibold text-lg m-0">Gérer les Utilisateurs</h4>
                     <p class="text-600 line-height-3 m-0 flex-1">Attribuer des rôles et permissions</p>
-                    <Button 
-                      label="Accéder" 
-                      icon="pi pi-arrow-right" 
+                    <Button
+                      label="Accéder"
+                      icon="pi pi-arrow-right"
                       class="p-button-sm p-button-outlined w-full"
                     />
                   </div>
                 </div>
 
                 <div class="col-12 md:col-4" v-if="hasPermission('MANAGE_HOUSES')">
-                  <div class="surface-card p-4 border-round shadow-2 cursor-pointer transition-all transition-duration-300 hover:shadow-4 hover:surface-hover h-full flex flex-column gap-3" 
+                  <div class="surface-card p-4 border-round shadow-2 cursor-pointer transition-all transition-duration-300 hover:shadow-4 hover:surface-hover h-full flex flex-column gap-3"
                        @click="navigateToGamification('/admin/houses')">
                     <div class="w-3rem h-3rem border-round flex align-items-center justify-content-center text-white bg-blue-500">
                       <i class="pi pi-home text-lg"></i>
                     </div>
                     <h4 class="text-900 font-semibold text-lg m-0">Gérer les Maisons</h4>
                     <p class="text-600 line-height-3 m-0 flex-1">Points des maisons et statistiques</p>
-                    <Button 
-                      label="Accéder" 
-                      icon="pi pi-arrow-right" 
+                    <Button
+                      label="Accéder"
+                      icon="pi pi-arrow-right"
                       class="p-button-sm p-button-outlined w-full"
                     />
                   </div>
                 </div>
 
                 <div class="col-12 md:col-4" v-if="hasPermission('VIEW_ANALYTICS')">
-                  <div class="surface-card p-4 border-round shadow-2 cursor-pointer transition-all transition-duration-300 hover:shadow-4 hover:surface-hover h-full flex flex-column gap-3" 
+                  <div class="surface-card p-4 border-round shadow-2 cursor-pointer transition-all transition-duration-300 hover:shadow-4 hover:surface-hover h-full flex flex-column gap-3"
                        @click="navigateToGamification('/admin/analytics')">
                     <div class="w-3rem h-3rem border-round flex align-items-center justify-content-center text-white bg-indigo-500">
                       <i class="pi pi-chart-line text-lg"></i>
                     </div>
                     <h4 class="text-900 font-semibold text-lg m-0">Analytics</h4>
                     <p class="text-600 line-height-3 m-0 flex-1">Statistiques détaillées et rapports</p>
-                    <Button 
-                      label="Accéder" 
-                      icon="pi pi-arrow-right" 
+                    <Button
+                      label="Accéder"
+                      icon="pi pi-arrow-right"
                       class="p-button-sm p-button-outlined w-full"
                     />
                   </div>
@@ -265,8 +265,8 @@
               <div class="mt-4" v-if="recentGamificationLogs.length > 0">
                 <h4 class="text-900 mb-3 font-semibold">Activité Récente - Gamification</h4>
                 <div class="flex flex-column gap-3">
-                  <div 
-                    v-for="log in recentGamificationLogs.slice(0, 5)" 
+                  <div
+                    v-for="log in recentGamificationLogs.slice(0, 5)"
                     :key="log.id"
                     class="flex align-items-center gap-3 p-3 border-round surface-50 border-left-3 border-primary"
                   >
@@ -575,7 +575,7 @@ onMounted(async () => {
   });
 
   setChartData();
-  
+
   // Charger les données de gamification
   await loadGamificationData();
 });
@@ -602,7 +602,7 @@ const hasPermission = computed(() => {
 const loadGamificationData = async () => {
   try {
     if (!auth.currentUser) return;
-    
+
     // Charger les données en parallèle
     const [statsData, logsData, userRole, permissions] = await Promise.all([
       adminService.getGeneralStats(),
@@ -610,12 +610,12 @@ const loadGamificationData = async () => {
       rolesService.getUserRole(auth.currentUser.uid),
       rolesService.getUserPermissions(auth.currentUser.uid)
     ]);
-    
+
     gamificationStats.value = statsData || {};
     recentGamificationLogs.value = logsData || [];
     currentUserRole.value = userRole;
     userPermissions.value = permissions;
-    
+
   } catch (error) {
     console.error('Erreur lors du chargement des données gamification:', error);
   }
@@ -694,13 +694,13 @@ const formatTime = (timestamp) => {
   const date = new Date(timestamp);
   const now = new Date();
   const diffMinutes = Math.floor((now - date) / (1000 * 60));
-  
+
   if (diffMinutes < 1) return 'À l\'instant';
   if (diffMinutes < 60) return `Il y a ${diffMinutes} min`;
-  
+
   const diffHours = Math.floor(diffMinutes / 60);
   if (diffHours < 24) return `Il y a ${diffHours}h`;
-  
+
   const diffDays = Math.floor(diffHours / 24);
   return `Il y a ${diffDays}j`;
 };
