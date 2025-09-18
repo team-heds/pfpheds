@@ -2,7 +2,8 @@ import { createApp, reactive } from 'vue';
 import { createPinia } from 'pinia';
 import App from './App.vue';
 import router from './router';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '../firebase.js';
 
 import PrimeVue from 'primevue/config';
 import AutoComplete from 'primevue/autocomplete';
@@ -120,8 +121,6 @@ import { useUserStore } from '@/stores/userStore'
 const app = createApp(App);
 const pinia = createPinia();
 app.use(pinia);
-const userStore = useUserStore()
-userStore.init()
 
 // Ignorer l'élément personnalisé 'elevenlabs-convai'
 app.config.compilerOptions.isCustomElement = (tag) => tag === "elevenlabs-convai";
@@ -138,7 +137,6 @@ const userState = reactive({
 });
 
 // Écouter les changements d'état d'authentification
-const auth = getAuth();
 onAuthStateChanged(auth, (user) => {
   userState.user = user;
 });
@@ -147,6 +145,10 @@ onAuthStateChanged(auth, (user) => {
 app.provide('userState', userState);
 
 app.mount('#app');
+
+// Initialize user store after app is mounted and Pinia is ready
+const userStore = useUserStore();
+userStore.init();
 
 app.directive('tooltip', Tooltip);
 app.directive('badge', BadgeDirective);

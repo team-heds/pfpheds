@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  frontend-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: pfpheds-frontend-dev
+    ports:
+      - "3002:80"
+    volumes:
+      - ./dist:/usr/share/nginx/html:ro
+    restart: unless-stopped
+    networks:
+      - dev-network
+    environment:
+      - NODE_ENV=production
+
+  # Simuler un backend local si nécessaire
+  backend-dev:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: pfpheds-backend-dev
+    ports:
+      - "3001:3000"
+    env_file:
+      - ./backend/.env
+    networks:
+      - dev-network
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+
+networks:
+  dev-network:
+    driver: bridge
