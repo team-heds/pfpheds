@@ -2,8 +2,7 @@ import { createApp, reactive } from 'vue';
 import { createPinia } from 'pinia';
 import App from './App.vue';
 import router from './router';
-import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '../firebase.js';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 import PrimeVue from 'primevue/config';
 import AutoComplete from 'primevue/autocomplete';
@@ -112,7 +111,7 @@ import BlockViewer from '@/components/ui/BlockViewer.vue';
 
 import '@/assets/styles/styles.scss';
 import "primeflex/primeflex.css";
-import '@/assets/styles/mobile-scale.css'; 
+import '@/assets/styles/mobile-scale.css';
 
 import { useUserStore } from '@/stores/userStore'
 
@@ -137,6 +136,7 @@ const userState = reactive({
 });
 
 // Écouter les changements d'état d'authentification
+const auth = getAuth();
 onAuthStateChanged(auth, (user) => {
   userState.user = user;
 });
@@ -146,9 +146,8 @@ app.provide('userState', userState);
 
 app.mount('#app');
 
-// Initialize user store after app is mounted and Pinia is ready
-const userStore = useUserStore();
-userStore.init();
+const userStore = useUserStore()
+userStore.init()
 
 app.directive('tooltip', Tooltip);
 app.directive('badge', BadgeDirective);
