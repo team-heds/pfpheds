@@ -8,13 +8,22 @@
           <i class="pi pi-trophy text-primary text-2xl"></i>
           <h1 class="text-2xl font-semibold m-0 text-900">Gestion des Défis</h1>
         </div>
-        <Button 
-          v-if="canCreateChallenges"
-          @click="showCreateDialog = true"
-          icon="pi pi-plus"
-          label="Nouveau Défi"
-          class="p-button-success"
-        />
+        <div class="flex gap-2">
+          <Button 
+            @click="navigateToPublicCreation"
+            icon="pi pi-external-link"
+            label="Vue Publique"
+            class="p-button-outlined"
+            v-tooltip="'Voir la vue de création publique'"
+          />
+          <Button 
+            v-if="canCreateChallenges"
+            @click="showCreateDialog = true"
+            icon="pi pi-plus"
+            label="Nouveau Défi"
+            class="p-button-success"
+          />
+        </div>
       </div>
 
       <!-- Filtres et recherche -->
@@ -276,6 +285,7 @@
 <script setup>
 import { ref, computed, onMounted, reactive } from 'vue'
 import { useToast } from 'primevue/usetoast'
+import { useRouter } from 'vue-router'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import InputNumber from 'primevue/inputnumber'
@@ -289,6 +299,7 @@ import adminService from '../../service/adminService'
 import rolesService, { PERMISSIONS } from '../../service/rolesService'
 
 const toast = useToast()
+const router = useRouter()
 
 // État réactif
 const challenges = ref([])
@@ -572,6 +583,11 @@ const getDifficultySeverity = (difficulty) => {
 const formatDate = (timestamp) => {
   if (!timestamp) return 'N/A'
   return new Date(timestamp).toLocaleDateString('fr-FR')
+}
+
+// Navigation vers la vue de création publique
+const navigateToPublicCreation = () => {
+  router.push('/gamification/create-challenge')
 }
 
 // Lifecycle

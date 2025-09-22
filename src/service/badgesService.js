@@ -1,5 +1,6 @@
 import { ref as dbRef, get, set, update, push } from 'firebase/database'
 import { db } from '../../firebase'
+import { notificationService } from './notificationService.js'
 
 // Configuration des badges disponibles
 export const BADGES_CONFIG = {
@@ -191,7 +192,7 @@ export const BADGE_RARITY = {
 export const checkUnlockedBadges = async (userId, userStats, houseStats = null) => {
   try {
     // Récupérer les badges actuels de l'utilisateur
-    const userBadgesRef = dbRef(db, `users/${userId}/gamification/badges`)
+    const userBadgesRef = dbRef(db, `Users/${userId}/gamification/badges`)
     const userBadgesSnapshot = await get(userBadgesRef)
     const currentBadges = userBadgesSnapshot.val() || {}
     
@@ -239,7 +240,7 @@ export const unlockBadge = async (userId, badge) => {
     }
     
     // Sauvegarder le badge
-    const badgeRef = dbRef(db, `users/${userId}/gamification/badges/${badge.id}`)
+    const badgeRef = dbRef(db, `Users/${userId}/gamification/badges/${badge.id}`)
     await set(badgeRef, badgeData)
     
     // Ajouter l'XP bonus
@@ -249,13 +250,31 @@ export const unlockBadge = async (userId, badge) => {
     }
     
     // Enregistrer dans l'historique
-    const historyRef = dbRef(db, `users/${userId}/gamification/badgeHistory`)
+    const historyRef = dbRef(db, `Users/${userId}/gamification/badgeHistory`)
     await push(historyRef, {
       badgeId: badge.id,
       badgeName: badge.name,
       xpBonus: badge.xpBonus,
       unlockedAt: badgeData.unlockedAt
     })
+
+    // Déclencher notification pour le nouveau badge
+    try {
+      await notificationService.createNotification(userId, {
+        type: 'badge',
+        title: 'Nouveau Badge !',
+        message: `Badge "${badge.name}" débloqué !`,
+        data: { 
+          badgeId: badge.id, 
+          badgeName: badge.name,
+          icon: badge.icon,
+          rarity: badge.rarity,
+          xpBonus: badge.xpBonus
+        }
+      })
+    } catch (notificationError) {
+      console.warn('Erreur lors de l\'envoi de la notification badge:', notificationError)
+    }
     
     console.log(`🏆 Badge débloqué pour ${userId}: ${badge.name} (+${badge.xpBonus} XP)`)
     return true
@@ -272,7 +291,7 @@ export const unlockBadge = async (userId, badge) => {
  */
 export const getUserBadges = async (userId) => {
   try {
-    const badgesRef = dbRef(db, `users/${userId}/gamification/badges`)
+    const badgesRef = dbRef(db, `Users/${userId}/gamification/badges`)
     const snapshot = await get(badgesRef)
     return snapshot.val() || {}
   } catch (error) {
@@ -288,7 +307,7 @@ export const getUserBadges = async (userId) => {
  */
 export const getUserBadgeHistory = async (userId) => {
   try {
-    const historyRef = dbRef(db, `users/${userId}/gamification/badgeHistory`)
+    const historyRef = dbRef(db, `Users/${userId}/gamification/badgeHistory`)
     const snapshot = await get(historyRef)
     const history = snapshot.val() || {}
     
@@ -298,6 +317,127 @@ export const getUserBadgeHistory = async (userId) => {
   } catch (error) {
     console.error('Erreur lors de la récupération de l\'historique des badges:', error)
     return []
+  }
+}
+
+/**
+ * Vérifie et débloque automatiquement les badges basés sur les actions utilisateur
+ * @param {string} userId - ID de l'utilisateur
+ * @param {string} action - Action effectuée par l'utilisateur
+ * @param {Object} context - Contexte supplémentaire (XP, niveau, etc.)
+ * @returns {Array} Badges débloqués
+ */
+export const checkAndUnlockActionBadges = async (userId, action, context = {}) => {
+  try {
+    const userBadges = await getUserBadges(userId)
+    const userStats = context.userStats || await getUserGamificationStats(userId)
+    const newBadges = []
+
+    // Vérifier les badges basés sur l'action spécifique
+    switch (action) {
+      case 'LOGIN':
+        // Badge première connexion
+        if (!userBadges.FIRST_LOGIN && userStats.totalLogins === 1) {
+          newBadges.push(BADGES_CONFIG.FIRST_LOGIN)
+        }
+        // Badge connexion régulière (7 jours consécutifs)
+        if (!userBadges.LOGIN_STREAK_7 && userStats.loginStreak >= 7) {
+          newBadges.push(BADGES_CONFIG.LOGIN_STREAK_7)
+        }
+        // Badge connexion dédiée (30 jours consécutifs)
+        if (!userBadges.LOGIN_STREAK_30 && userStats.loginStreak >= 30) {
+          newBadges.push(BADGES_CONFIG.LOGIN_STREAK_30)
+        }
+        break
+
+      case 'QUIZ_COMPLETE':
+        // Badge première quête
+        if (!userBadges.FIRST_QUEST && userStats.questsCompleted === 1) {
+          newBadges.push(BADGES_CONFIG.FIRST_QUEST)
+        }
+        // Badge explorateur (5 quêtes)
+        if (!userBadges.QUEST_EXPLORER && userStats.questsCompleted >= 5) {
+          newBadges.push(BADGES_CONFIG.QUEST_EXPLORER)
+        }
+        break
+
+      case 'XP_GAINED':
+        // Badge premiers pas (100 XP)
+        if (!userBadges.XP_MILESTONE_100 && userStats.totalXP >= 100) {
+          newBadges.push(BADGES_CONFIG.XP_MILESTONE_100)
+        }
+        // Badge progresseur (500 XP)
+        if (!userBadges.XP_MILESTONE_500 && userStats.totalXP >= 500) {
+          newBadges.push(BADGES_CONFIG.XP_MILESTONE_500)
+        }
+        // Badge expert (1000 XP)
+        if (!userBadges.XP_MILESTONE_1000 && userStats.totalXP >= 1000) {
+          newBadges.push(BADGES_CONFIG.XP_MILESTONE_1000)
+        }
+        break
+
+      case 'LEVEL_UP':
+        // Badge niveau 5
+        if (!userBadges.LEVEL_5 && userStats.niveau >= 5) {
+          newBadges.push(BADGES_CONFIG.LEVEL_5)
+        }
+        // Badge niveau 10
+        if (!userBadges.LEVEL_10 && userStats.niveau >= 10) {
+          newBadges.push(BADGES_CONFIG.LEVEL_10)
+        }
+        break
+
+      case 'CHALLENGE_COMPLETED':
+        // Badge premier défi
+        if (!userBadges.FIRST_CHALLENGE && userStats.challengesCompleted === 1) {
+          newBadges.push(BADGES_CONFIG.FIRST_CHALLENGE)
+        }
+        // Badge challenger (5 défis)
+        if (!userBadges.CHALLENGE_MASTER && userStats.challengesCompleted >= 5) {
+          newBadges.push(BADGES_CONFIG.CHALLENGE_MASTER)
+        }
+        break
+    }
+
+    // Débloquer les nouveaux badges
+    const unlockedBadges = []
+    for (const badge of newBadges) {
+      const success = await unlockBadge(userId, badge)
+      if (success) {
+        unlockedBadges.push(badge)
+      }
+    }
+
+    return unlockedBadges
+  } catch (error) {
+    console.error('Erreur lors de la vérification des badges automatiques:', error)
+    return []
+  }
+}
+
+/**
+ * Récupère les statistiques gamification d'un utilisateur pour les badges
+ * @param {string} userId - ID de l'utilisateur
+ * @returns {Object} Statistiques utilisateur
+ */
+const getUserGamificationStats = async (userId) => {
+  try {
+    const userRef = dbRef(db, `Users/${userId}/gamification`)
+    const snapshot = await get(userRef)
+    const data = snapshot.val() || {}
+    
+    return {
+      totalXP: data.totalXP || 0,
+      niveau: data.niveau || 1,
+      loginStreak: data.loginStreak || 0,
+      totalLogins: data.totalLogins || 0,
+      questsCompleted: data.questsCompleted || 0,
+      challengesCompleted: data.challengesCompleted || 0,
+      badgesUnlocked: Object.keys(data.badges || {}).length
+    }
+  } catch (error) {
+    console.error('Erreur lors de la récupération des stats utilisateur:', error)
+    return {}
   }
 }
 
@@ -370,5 +510,6 @@ export default {
   getUserBadges,
   getUserBadgeHistory,
   calculateBadgeStats,
-  autoCheckAndUnlockBadges
+  autoCheckAndUnlockBadges,
+  checkAndUnlockActionBadges
 }

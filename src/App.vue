@@ -17,6 +17,8 @@
       <PwaInstallPrompt />
       <!-- Intégration du widget ConvAI -->
       <ConvaiWidget />
+      <!-- Système de notifications gamification -->
+      <GamificationNotification />
     </div>
 
     <!-- Loader
@@ -33,6 +35,8 @@ import Loader from '@/components/common/utils/Loader.vue'; // Import du composan
 import VersionningComponent from './components/common/utils/VersionningComponent.vue'; // Import du nouveau composant
 import MobileBottomNav from '@/components/common/utils/MobileBottomNav.vue';
 import PwaInstallPrompt from '@/components/common/utils/PwaInstallPrompt.vue';
+import GamificationNotification from '@/components/gamification/notifications/GamificationNotification.vue';
+import { notificationService } from '@/service/notificationService';
 
 export default {
   name: "App",
@@ -44,6 +48,7 @@ export default {
     VersionningComponent,
     MobileBottomNav,
     PwaInstallPrompt,
+    GamificationNotification,
   },
   data() {
     return {
@@ -87,6 +92,9 @@ export default {
     if (this.$route.name === 'LoginHome') {
       this.showMobileBottomNav = false;
     }
+    
+    // Initialiser le service de notifications gamification
+    notificationService.initialize();
   },
 };
 </script>

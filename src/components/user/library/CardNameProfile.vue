@@ -104,7 +104,8 @@ import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import BandeauMaison from '@/components/gamification/BandeauMaison.vue';
 import XPBar from '@/components/gamification/XPBar.vue';
-import { getUserGamificationData, addUserXP } from '@/service/hesHousesService'
+import { addUserXP } from '@/service/hesHousesService'
+import gamificationService from '@/service/gamificationService'
 
 const defaultAvatar = '@/assets/images/avatar/01.jpg';
 
@@ -303,18 +304,39 @@ onMounted(async () => {
   await fetchTeachers();
 });
 
-// Récupération des données de gamification depuis Firebase
+// Récupération des données de gamification avec le service unifié
 const fetchGamificationData = async (userId) => {
   try {
-    const gamificationData = await getUserGamificationData(userId)
-    userGamification.value = {
-      maison: gamificationData.maison || null,
-      niveau: gamificationData.niveau || 1,
-      xp: gamificationData.xp || 0,
-      totalXP: gamificationData.totalXP || 0,
-      xpToNext: gamificationData.xpToNext || 100,
-      lastXPGain: gamificationData.lastXPGain || null,
-      loginStreak: gamificationData.stats?.loginStreak || 0
+    // Utiliser exclusivement le service gamification unifié
+    const gamificationData = await gamificationService.getUserGamificationData(userId);
+    
+    if (gamificationData) {
+      userGamification.value = {
+        maison: gamificationData.maison || null,
+        niveau: gamificationData.niveau || 1,
+        xp: gamificationData.xp || 0,
+        totalXP: gamificationData.totalXP || 0,
+        xpToNext: gamificationData.xpToNext || 100,
+        lastXPGain: gamificationData.lastXPGain || null,
+        loginStreak: gamificationData.loginStreak || 0,
+        badges: gamificationData.badges || [],
+        quests: gamificationData.quests || [],
+        challenges: gamificationData.challenges || []
+      };
+    } else {
+      // Données par défaut si aucune donnée trouvée
+      userGamification.value = {
+        maison: null,
+        niveau: 1,
+        xp: 0,
+        totalXP: 0,
+        xpToNext: 100,
+        lastXPGain: null,
+        loginStreak: 0,
+        badges: [],
+        quests: [],
+        challenges: []
+      };
     }
   } catch (error) {
     console.error('Erreur lors de la récupération des données de gamification:', error)
@@ -325,12 +347,15 @@ const fetchGamificationData = async (userId) => {
       totalXP: 0,
       xpToNext: 100,
       lastXPGain: null,
-      loginStreak: 0
+      loginStreak: 0,
+      badges: [],
+      quests: [],
+      challenges: []
     }
   }
 };
 
-// Exemple de récupération des infos gamification (à adapter à ta logique)
+// Données gamification unifiées avec badges, quêtes et défis
 const userGamification = ref({
   maison: null,
   niveau: 1,
@@ -338,7 +363,10 @@ const userGamification = ref({
   totalXP: 0,
   xpToNext: 100,
   lastXPGain: null,
-  loginStreak: 0
+  loginStreak: 0,
+  badges: [],
+  quests: [],
+  challenges: []
 });
 
 const xpPercent = computed(() => {
@@ -369,30 +397,35 @@ const startHESQuiz = () => {
   router.push('/hes-house-quiz');
 };
 
-// Fonction pour ajouter de l'XP à l'utilisateur
+// Fonction pour ajouter de l'XP à l'utilisateur avec priorité à l'ancien service
 const giveUserXP = async (action, customXP = null) => {
   try {
     const userId = route.params.id || currentUserProfile.value?.uid
     if (!userId) return
     
-    const newData = await addUserXP(userId, action, customXP)
+    // Utiliser exclusivement le service gamification unifié
+    const xpAmount = customXP || 10;
+    const newData = await addUserXP(userId, action, xpAmount);
     
-    // Mettre à jour les données locales
-    userGamification.value = {
-      maison: newData.maison || userGamification.value.maison,
-      niveau: newData.niveau || 1,
-      xp: newData.xp || 0,
-      totalXP: newData.totalXP || 0,
-      xpToNext: newData.xpToNext || 100,
-      lastXPGain: newData.lastXPGain || null,
-      loginStreak: newData.stats?.loginStreak || userGamification.value.loginStreak || 0
+    // Mettre à jour les données locales avec les nouvelles données
+    if (newData) {
+      userGamification.value = {
+        ...userGamification.value,
+        maison: newData.maison || userGamification.value.maison,
+        niveau: newData.niveau || 1,
+        xp: newData.xp || 0,
+        totalXP: newData.totalXP || 0,
+        xpToNext: newData.xpToNext || 100,
+        lastXPGain: newData.lastXPGain || null,
+        loginStreak: newData.loginStreak || userGamification.value.loginStreak || 0
+      };
+      
+      // Afficher une notification de gain d'XP
+      if (newData.lastXPGain) {
+        console.log(`+${newData.lastXPGain.amount} XP - ${newData.lastXPGain.description}`);
+      }
     }
     
-    // Afficher une notification de gain d'XP
-    if (newData.lastXPGain) {
-      // Ici on pourrait déclencher une animation ou notification
-      console.log(`+${newData.lastXPGain.amount} XP - ${newData.lastXPGain.description}`)
-    }
   } catch (error) {
     console.error('Erreur lors de l\'ajout d\'XP:', error)
   }

@@ -282,12 +282,18 @@ const routes = [
   // ========================================
   // GAMIFICATION ADMIN ROUTES
   // ========================================
-  { path: '/admin/gamification/challenges', component: ChallengeManagementView, name: 'ChallengeManagementView', meta: { requiresAuth: true, requiredRole: ['admin', 'game_master', 'house_coach'] } },
-  { path: '/admin/gamification/quests', component: QuestManagementView, name: 'QuestManagementView', meta: { requiresAuth: true, requiredRole: ['admin', 'game_master', 'house_coach'] } },
+  { path: '/admin/gamification/challenges', component: ChallengeManagementView, name: 'AdminChallengeManagement', meta: { requiresAuth: true, requiredRole: ['admin', 'game_master'] } },
+  { path: '/admin/gamification/quests', component: QuestManagementView, name: 'AdminQuestManagement', meta: { requiresAuth: true, requiredRole: ['admin', 'game_master'] } },
   { path: '/admin/gamification/badges', component: BadgeManagementView, name: 'BadgeManagementView', meta: { requiresAuth: true, requiredRole: ['admin', 'game_master'] } },
   { path: '/admin/gamification/users', component: UserManagementView, name: 'UserManagementView', meta: { requiresAuth: true, requiredRole: ['admin', 'game_master'] } },
   { path: '/admin/gamification/houses', component: HouseManagementView, name: 'HouseManagementView', meta: { requiresAuth: true, requiredRole: ['admin', 'game_master', 'house_coach'] } },
   { path: '/admin/gamification/analytics', component: AnalyticsDashboardView, name: 'AnalyticsDashboardView', meta: { requiresAuth: true, requiredRole: ['admin', 'game_master', 'professor'] } },
+
+  // ========================================
+  // GAMIFICATION CREATION ROUTES (PUBLIC)
+  // ========================================
+  { path: '/create-challenge', component: ChallengeManagementView, name: 'CreateChallenge', meta: { requiresAuth: true } },
+  { path: '/create-quest', component: QuestManagementView, name: 'CreateQuest', meta: { requiresAuth: true } },
 
   // ========================================
   // SOCIAL & COMMUNICATION
