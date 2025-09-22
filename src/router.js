@@ -28,6 +28,10 @@ import TermsOfUse from "@/views/home/TermsView.vue";
 import InfoExterne from "@/views/home/InfoExterneView.vue";
 import HistoriquePFP from '@/views/home/HistoryView.vue'
 import DocumentsPFP from '@/views/home/DocumentsView.vue'
+
+// ASSOCIATIONS
+import AlpinPhysioView from '@/views/associations/AlpinPhysioView.vue'
+
 // MEDIA
 import MediaHubPage from '@/views/media/MediaHubPage.vue'
 import ModulesPage from '@/views/media/ModulesPage.vue'
@@ -229,6 +233,9 @@ const routes = [
   { path: '/info_externe', component: InfoExterne, name: 'InfoExterne', meta: { requiresAuth: true } },
   { path: '/history', component: HistoriquePFP, name: 'HistoriquePFP', meta: { requiresAuth: true } },
   { path: '/documents', component: DocumentsPFP, name: 'DocumentsPFP', meta: { requiresAuth: true } },
+
+  // ASSOCIATIONS
+  { path: '/alpinphysio', component: AlpinPhysioView, name: 'AlpinPhysio', meta: { requiresAuth: false } },
 
   // Planning / Calendar
   { path: '/home-calendar', component: HomePlanning, name: 'HomeCalendar', meta: { requiresAuth: false } },
