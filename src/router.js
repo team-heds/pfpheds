@@ -429,13 +429,17 @@ let isAuthStateChecked = false;
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
   
+  console.log(`🧭 Navigation vers: ${to.path} depuis: ${from.path}`);
+  
   // Vérifiez si l'état d'authentification est déjà récupéré
   if (!isAuthStateChecked) {
+    console.log('🔄 Première vérification de l\'état d\'authentification...');
     await authStore.checkAuthState();
     isAuthStateChecked = true;
   }
 
   const user = authStore.user;
+  console.log('👤 Utilisateur actuel:', user ? `${user.email} (${authStore.authProvider})` : 'Aucun');
 
   // Gestion spécifique pour la route "/"
   if (to.path === '/') {

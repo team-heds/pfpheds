@@ -144,27 +144,46 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function checkAuthState() {
-    // Vérifier Firebase
-    const firebaseUser = auth.currentUser;
+    console.log('🔍 Vérification de l\'état d\'authentification...');
+    
+    // Vérifier Firebase avec une promesse pour attendre la restauration de session
+    const firebaseUser = await new Promise((resolve) => {
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        unsubscribe();
+        resolve(user);
+      });
+    });
+    
     if (firebaseUser) {
+      console.log('✅ Utilisateur Firebase trouvé:', firebaseUser.email);
       user.value = firebaseUser;
       authProvider.value = 'firebase';
+      session.value = null;
       return;
     }
 
     // Vérifier Supabase
     const { data } = await supabase.auth.getUser();
     if (data.user) {
+      console.log('✅ Utilisateur Supabase trouvé:', data.user.email);
       user.value = data.user;
       authProvider.value = 'supabase';
       const { data: sessionData } = await supabase.auth.getSession();
       session.value = sessionData.session;
+      return;
     }
+    
+    console.log('❌ Aucun utilisateur connecté trouvé');
+    user.value = null;
+    authProvider.value = null;
+    session.value = null;
   }
   
   // Initialisation du store
   async function initializeAuth() {
+    console.log('🚀 Initialisation du store d\'authentification...');
     await checkAuthState();
+    console.log('✅ Store d\'authentification initialisé');
   }
 
   // Gérer les changements d'état d'authentification pour les deux systèmes
