@@ -8,7 +8,7 @@
       </div>
       <ul class="communities-list">
         <li
-          v-for="(community, index) in userCommunities"
+          v-for="community in userCommunities"
           :key="community.id"
           class="community-item"
         >
@@ -33,7 +33,7 @@
       <div class="hashtags">
         <h4 class="text-color">Hashtags</h4>
         <ul>
-          <li v-for="(hashtag, index) in hashtags" :key="index">
+          <li v-for="hashtag in hashtags" :key="hashtag">
             <Chip :label="hashtag" removable />
           </li>
         </ul>
@@ -44,24 +44,28 @@
 
 <script>
 import Avatar from "primevue/avatar";
-import Button from "primevue/button";
 import Chip from "primevue/chip";
 import { onValue, ref as dbRef, get } from "firebase/database";
-import { auth, db } from "../../../../firebase.js";
+import { db } from "../../../../firebase.js";
+import { useAuthStore } from '@/stores/authStore';
+// import { supabase } from '@/supabase'; // Décommentez si vous implémentez des requêtes Supabase
 
 export default {
   name: "RightSidebar",
   components: {
     Avatar,
-    Button,
     Chip,
   },
   data() {
     return {
       userCommunities: [], // Communautés de l'utilisateur
-      hashtags: ["#BA22", "#BA23", "#BA24", "#ALL", "#PFP1A", "#PFP1B", "#PFP2", "#PFP3", "#PFP4", "#PHYSIO", "#LLB", '#HEdS'], // Hashtags à afficher
+      hashtags: ["#BA22", "#BA23", "#BA24", "#BA25", "#ALL", "#PFP1A", "#PFP1B", "#PFP2", "#PFP3", "#PFP4", "#PHYSIO", "#LLB", '#HEdS'], // Hashtags à afficher
       unsubscribeUserCommunities: null, // Fonction de désabonnement
+      authStore: null, // Store d'authentification
     };
+  },
+  created() {
+    this.authStore = useAuthStore();
   },
   methods: {
     goToCommunities() {
@@ -103,31 +107,109 @@ export default {
       const communities = await Promise.all(communityPromises);
       this.userCommunities = communities.filter((c) => c !== null);
     },
+    async loadFirebaseCommunities(user) {
+      try {
+        // Référence à la liste des communautés de l'utilisateur Firebase
+        const userCommunitiesRef = dbRef(db, `Users/${user.uid}/communities`);
+
+        // Écouter les changements en temps réel
+        this.unsubscribeUserCommunities = onValue(
+          userCommunitiesRef,
+          (snapshot) => {
+            const communitiesObj = snapshot.val();
+            this.updateUserCommunities(communitiesObj);
+          },
+          (error) => {
+            console.error("Erreur lors de l'écoute des communautés de l'utilisateur:", error);
+          }
+        );
+
+        // Initialiser les communautés de l'utilisateur
+        const snapshot = await get(userCommunitiesRef);
+        const communitiesObj = snapshot.val();
+        await this.updateUserCommunities(communitiesObj);
+      } catch (error) {
+        console.error('Erreur lors du chargement des communautés Firebase:', error);
+      }
+    },
+    
+    async loadSupabaseCommunities(user) {
+      try {
+        console.log('Chargement des communautés Supabase pour:', user.email);
+        
+        // Ici vous pouvez implémenter la logique Supabase pour récupérer les communautés
+        // Par exemple, depuis une table 'user_communities' dans Supabase
+        
+        // Pour l'instant, on simule des communautés basées sur l'email de l'utilisateur
+        const defaultCommunities = [
+          {
+            id: 'supabase-general-ba25',
+            name: 'Général BA25',
+            initial: 'G'
+          },
+          {
+            id: 'supabase-physio-ba25',
+            name: 'Physiothérapie BA25',
+            initial: 'P'
+          }
+        ];
+        
+        // Si l'utilisateur est un étudiant en physio (exemple de logique)
+        if (user.email && user.email.includes('physio')) {
+          defaultCommunities.push({
+            id: 'supabase-physio-advanced',
+            name: 'Physio Avancée',
+            initial: 'A'
+          });
+        }
+        
+        // Vous pouvez aussi faire une requête Supabase ici :
+        // const { data, error } = await supabase
+        //   .from('user_communities')
+        //   .select('community_id, communities(name)')
+        //   .eq('user_id', user.id);
+        
+        this.userCommunities = defaultCommunities;
+        console.log('Communautés Supabase chargées:', this.userCommunities);
+        
+      } catch (error) {
+        console.error('Erreur lors du chargement des communautés Supabase:', error);
+        this.loadFallbackCommunities();
+      }
+    },
+    
+    loadFallbackCommunities() {
+      // Communautés de secours en cas d'erreur
+      this.userCommunities = [
+        {
+          id: 'fallback-general',
+          name: 'Général',
+          initial: 'G'
+        }
+      ];
+    }
   },
   async mounted() {
-    const user = auth.currentUser;
+    // Attendre que l'état d'authentification soit initialisé
+    await this.authStore.checkAuthState();
+    
+    const user = this.authStore.user;
+    console.log('RightSidebar - User:', user);
+    console.log('RightSidebar - Auth Provider:', this.authStore.authProvider);
+    
     if (user) {
-      // Référence à la liste des communautés de l'utilisateur
-      const userCommunitiesRef = dbRef(db, `Users/${user.uid}/communities`);
-
-      // Écouter les changements en temps réel
-      this.unsubscribeUserCommunities = onValue(
-        userCommunitiesRef,
-        (snapshot) => {
-          const communitiesObj = snapshot.val();
-          this.updateUserCommunities(communitiesObj);
-        },
-        (error) => {
-          console.error("Erreur lors de l'écoute des communautés de l'utilisateur:", error);
-        }
-      );
-
-      // Initialiser les communautés de l'utilisateur
-      const snapshot = await get(userCommunitiesRef);
-      const communitiesObj = snapshot.val();
-      await this.updateUserCommunities(communitiesObj);
+      // Pour les utilisateurs Firebase, on utilise les communautés Firebase
+      if (this.authStore.isFirebaseUser) {
+        console.log('RightSidebar - Chargement des communautés Firebase pour:', user.uid);
+        await this.loadFirebaseCommunities(user);
+      } 
+      // Pour les utilisateurs Supabase, on utilise la logique Supabase
+      else if (this.authStore.isSupabaseUser) {
+        console.log('RightSidebar - Utilisateur Supabase détecté:', user.email);
+        await this.loadSupabaseCommunities(user);
+      }
     } else {
-      console.error("Utilisateur non authentifié.");
+      console.log("RightSidebar - Aucun utilisateur authentifié détecté.");
     }
   },
   beforeUnmount() {

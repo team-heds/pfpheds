@@ -52,12 +52,12 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { useToast } from 'primevue/usetoast';
 import { useLayout } from '@/layout/composables/layout';
+import { useAuthStore } from '@/stores/authStore';
 
 const router = useRouter();
-const auth = getAuth();
+const authStore = useAuthStore();
 const toast = useToast();
 const email = ref('');
 const password = ref('');
@@ -66,13 +66,22 @@ const darkMode = ref(layoutConfig.colorScheme.value !== 'light');
 
 const submitForm = async () => {
   try {
-    await signInWithEmailAndPassword(auth, email.value, password.value);
-    toast.add({ severity: 'success', summary: 'Connexion réussie', detail: 'Vous allez être redirigé.', life: 3000 });
+    await authStore.signInFirebase({ email: email.value, password: password.value });
+    toast.add({ severity: 'success', summary: 'Connexion réussie', detail: 'Vous allez être redirigé vers le feed...', life: 3000 });
     setTimeout(() => {
-      router.push('/');
+      router.push('/feed');
     }, 1500);
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Erreur de connexion', detail: `Échec de la connexion`, life: 5000 });
+    console.error('Firebase login error:', error);
+    const messages = {
+      'auth/user-not-found': 'Utilisateur introuvable.',
+      'auth/wrong-password': 'Mot de passe incorrect.',
+      'auth/invalid-email': 'Adresse e-mail invalide.',
+      'auth/user-disabled': 'Ce compte est désactivé.',
+      'auth/invalid-credential': 'Identifiants invalides.'
+    };
+    const errorMessage = messages[error.code] || 'Une erreur est survenue lors de la connexion.';
+    toast.add({ severity: 'error', summary: 'Erreur de connexion', detail: errorMessage, life: 5000 });
   }
 };
 
@@ -83,10 +92,11 @@ const resetPassword = async () => {
   }
 
   try {
-    await sendPasswordResetEmail(auth, email.value);
+    await authStore.resetPasswordFirebase(email.value);
     toast.add({ severity: 'success', summary: 'Email envoyé', detail: 'Un email de réinitialisation de mot de passe a été envoyé.', life: 5000 });
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Erreur', detail: `Impossible d'envoyer l'email de réinitialisation.`, life: 5000 });
+    console.error('Firebase reset password error:', error);
+    toast.add({ severity: 'error', summary: 'Erreur', detail: error.message || 'Impossible d\'envoyer l\'email de réinitialisation.', life: 5000 });
   }
 };
 </script>

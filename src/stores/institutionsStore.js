@@ -9,6 +9,25 @@ export const useInstitutionsStore = defineStore('institutions', {
     loading: false,
     error: null,
   }),
+  getters: {
+    getInstitutionById: (state) => (id) => {
+      return state.institutions.find(institution => 
+        institution.InstitutionId === id || 
+        institution.id === id ||
+        institution.InstitutionId === parseInt(id) ||
+        institution.id === parseInt(id)
+      );
+    },
+    getInstitutionNameById: (state) => (id) => {
+      const institution = state.institutions.find(institution => 
+        institution.InstitutionId === id || 
+        institution.id === id ||
+        institution.InstitutionId === parseInt(id) ||
+        institution.id === parseInt(id)
+      );
+      return institution?.Name || institution?.name || 'Institution inconnue';
+    }
+  },
   actions: {
     async fetchInstitutions() {
       this.loading = true;

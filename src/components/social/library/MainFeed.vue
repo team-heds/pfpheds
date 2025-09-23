@@ -73,8 +73,8 @@
  */
 
 import { ref, onMounted, onUnmounted, computed, watch } from "vue";
-import { db, auth } from "../../../../firebase.js";
-import { onAuthStateChanged } from "firebase/auth";
+import { db } from "../../../../firebase.js";
+import { useAuthStore } from '@/stores/authStore';
 import InfinityScroll from '@/components/social/library/InfinityScroll.vue'
 import PostItem from '@/components/social/library/PostItem.vue'
 import Tag from "primevue/tag";
@@ -126,6 +126,7 @@ export default {
   },
   setup(props) {
     const router = useRouter();
+    const authStore = useAuthStore();
     // Références réactives
     const posts = ref([]);
     const filteredPosts = ref([]);
@@ -548,21 +549,26 @@ export default {
     };
 
     // Hook de cycle de vie onMounted
-    onMounted(() => {
+    onMounted(async () => {
       if (props.currentUser) {
         localCurrentUser.value = { ...props.currentUser };
         fetchAvailableFilters();
         fetchPosts();
       } else {
-        onAuthStateChanged(auth, (user) => {
-          if (user) {
-            localCurrentUser.value = user;
-            fetchAvailableFilters();
-            fetchPosts();
-          } else {
-            console.warn("Aucun utilisateur connecté.");
-          }
-        });
+        // Utiliser le store d'authentification unifié
+        await authStore.checkAuthState();
+        const currentUser = authStore.user;
+        
+        if (currentUser) {
+          console.log('MainFeed - Utilisateur connecté:', currentUser.email || currentUser.uid);
+          console.log('MainFeed - Provider:', authStore.authProvider);
+          
+          localCurrentUser.value = currentUser;
+          fetchAvailableFilters();
+          fetchPosts();
+        } else {
+          console.warn("MainFeed - Aucun utilisateur connecté.");
+        }
       }
       if (isMobile.value) {
         lastScrollY = window.scrollY;

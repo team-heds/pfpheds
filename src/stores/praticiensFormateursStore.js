@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia';
-import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_URL = '/api/praticiens_formateurs'; // Using the backend proxy
 
 export const usePraticiensFormateursStore = defineStore('praticiensFormateurs', {
   state: () => ({
@@ -11,82 +10,96 @@ export const usePraticiensFormateursStore = defineStore('praticiensFormateurs', 
   }),
 
   actions: {
-    /**
-     * Fetches praticiens formateurs from the backend, with an optional search query.
-     * @param {string} [searchQuery] - A string to search for in name, prenom, or institution.
-     */
     async fetchPraticiensFormateurs(searchQuery = '') {
       this.loading = true;
       this.error = null;
       try {
-        const params = searchQuery ? { q: searchQuery } : {};
-        const response = await axios.get(`${API_URL}/praticiens-formateurs`, { params });
-        this.praticiensFormateurs = response.data;
-      } catch (error) {
-        this.error = 'Failed to fetch praticiens formateurs.';
-        console.error(error);
+        let url = API_URL;
+        
+        // Add search query parameter if provided
+        if (searchQuery) {
+          url += `?q=${encodeURIComponent(searchQuery)}`;
+        }
+
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`Network response was not ok: ${response.statusText}`);
+        }
+        this.praticiensFormateurs = await response.json();
+      } catch (e) {
+        this.error = e.message;
+        throw e;
       } finally {
         this.loading = false;
       }
     },
 
-    /**
-     * Creates a new praticien formateur.
-     * @param {object} praticienData - The data for the new praticien.
-     */
     async createPraticienFormateur(praticienData) {
       this.loading = true;
       this.error = null;
       try {
-        const response = await axios.post(`${API_URL}/praticiens-formateurs`, praticienData);
-        this.praticiensFormateurs.push(response.data);
-        return response.data;
-      } catch (error) {
-        this.error = 'Failed to create praticien formateur.';
-        console.error(error);
-        return null;
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(praticienData),
+        });
+        if (!response.ok) {
+          const errorBody = await response.json().catch(() => ({ error: 'Failed to parse error response' }));
+          throw new Error(errorBody.error || 'Failed to create praticien formateur');
+        }
+        const newPraticien = await response.json();
+        this.praticiensFormateurs.push(newPraticien);
+        return newPraticien;
+      } catch (e) {
+        this.error = e.message;
+        throw e;
       } finally {
         this.loading = false;
       }
     },
 
-    /**
-     * Updates an existing praticien formateur.
-     * @param {string} praticienId - The ID of the praticien to update.
-     * @param {object} updateData - The data to update.
-     */
     async updatePraticienFormateur(praticienId, updateData) {
       this.loading = true;
       this.error = null;
       try {
-        const response = await axios.put(`${API_URL}/praticiens-formateurs/${praticienId}`, updateData);
+        const response = await fetch(`${API_URL}/${praticienId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updateData),
+        });
+        if (!response.ok) {
+          const errorBody = await response.json().catch(() => ({ error: 'Failed to parse error response' }));
+          throw new Error(errorBody.error || 'Failed to update praticien formateur');
+        }
+        const updatedPraticien = await response.json();
         const index = this.praticiensFormateurs.findIndex(p => p.id === praticienId);
         if (index !== -1) {
-          this.praticiensFormateurs[index] = { ...this.praticiensFormateurs[index], ...response.data };
+          this.praticiensFormateurs[index] = updatedPraticien;
         }
-        return response.data;
-      } catch (error) {
-        this.error = 'Failed to update praticien formateur.';
-        console.error(error);
-        return null;
+        return updatedPraticien;
+      } catch (e) {
+        this.error = e.message;
+        throw e;
       } finally {
         this.loading = false;
       }
     },
 
-    /**
-     * Deletes a praticien formateur.
-     * @param {string} praticienId - The ID of the praticien to delete.
-     */
     async deletePraticienFormateur(praticienId) {
       this.loading = true;
       this.error = null;
       try {
-        await axios.delete(`${API_URL}/praticiens-formateurs/${praticienId}`);
+        const response = await fetch(`${API_URL}/${praticienId}`, {
+          method: 'DELETE',
+        });
+        if (!response.ok) {
+          const errorBody = await response.json().catch(() => ({ error: 'Failed to parse error response' }));
+          throw new Error(errorBody.error || 'Failed to delete praticien formateur');
+        }
         this.praticiensFormateurs = this.praticiensFormateurs.filter(p => p.id !== praticienId);
-      } catch (error) {
-        this.error = 'Failed to delete praticien formateur.';
-        console.error(error);
+      } catch (e) {
+        this.error = e.message;
+        throw e;
       } finally {
         this.loading = false;
       }

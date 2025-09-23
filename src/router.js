@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { ref as dbRef, get as dbGet } from 'firebase/database';
-import { onAuthStateChanged } from 'firebase/auth';
-import { db, auth } from '../firebase'; // Import your Firebase configuration
+import { db } from '@/firebase'; // Import your Firebase configuration
+import { useAuthStore } from '@/stores/authStore';
 
 // ========================================
 // AUTHENTIFICATION & ACCUEIL // View
@@ -211,7 +211,7 @@ const routes = [
   { path: '/new-password', component: NewPasswordView, name: 'NewPassword' },
   { path: '/login', component: LoginView, name: 'LoginView' },
   { path: '/register', component: RegisterView, name: 'RegisterView' },
-  { path: '/reset-password', component: ResetPassword  ,name: 'ResetPassword' },
+  { path: '/reset-password', component: ResetPassword, name: 'ResetPassword', meta: { requiresAuth: false } },
 
   { path: '/verification', component: VerificationView, name: 'VerificationView' },
   { path: '/lock-screen', component: LockScreenView, name: 'LockScreenView' },
@@ -427,17 +427,19 @@ const router = createRouter({
 let isAuthStateChecked = false;
 
 router.beforeEach(async (to, from, next) => {
+  const authStore = useAuthStore();
+  
+  console.log(`🧭 Navigation vers: ${to.path} depuis: ${from.path}`);
+  
   // Vérifiez si l'état d'authentification est déjà récupéré
   if (!isAuthStateChecked) {
-    await new Promise((resolve) => {
-      onAuthStateChanged(auth, (user) => {
-        isAuthStateChecked = true;
-        resolve(user); // Continue une fois que l'état est chargé
-      });
-    });
+    console.log('🔄 Première vérification de l\'état d\'authentification...');
+    await authStore.checkAuthState();
+    isAuthStateChecked = true;
   }
 
-  const user = auth.currentUser;
+  const user = authStore.user;
+  console.log('👤 Utilisateur actuel:', user ? `${user.email} (${authStore.authProvider})` : 'Aucun');
 
   // Gestion spécifique pour la route "/"
   if (to.path === '/') {
@@ -452,12 +454,24 @@ router.beforeEach(async (to, from, next) => {
   // Gestion des routes nécessitant une authentification
   if (to.matched.some(record => record.meta.requiresAuth)) {
     if (user) {
-      const userId = user.uid;
-      console.log(userId);
-      const rolesRef = dbRef(db, `Users/${userId}/Roles`);
-      const snapshot = await dbGet(rolesRef);
-      const roles = snapshot.val();
-      console.log(roles);
+      // Pour Firebase, on vérifie les rôles dans la DB Firebase
+      // Pour Supabase, on peut soit utiliser les métadonnées utilisateur soit une autre logique
+      let roles = null;
+      
+      if (authStore.isFirebaseUser) {
+        const userId = user.uid;
+        console.log('Firebase user ID:', userId);
+        const rolesRef = dbRef(db, `Users/${userId}/Roles`);
+        const snapshot = await dbGet(rolesRef);
+        roles = snapshot.val();
+        console.log('Firebase roles:', roles);
+      } else if (authStore.isSupabaseUser) {
+        // Pour Supabase, on peut utiliser les métadonnées ou une table de rôles
+        console.log('Supabase user:', user);
+        // Pour l'instant, on autorise l'accès pour les utilisateurs Supabase
+        // Vous pouvez implémenter une logique de rôles spécifique à Supabase ici
+        roles = { user: true }; // Rôle par défaut pour Supabase
+      }
 
       if (roles) {
         const userRoles = Object.keys(roles).filter(role => roles[role]); // Récupération des rôles actifs de l'utilisateur
@@ -481,6 +495,10 @@ router.beforeEach(async (to, from, next) => {
           return next(); // Aucune vérification de rôle requise, autorisez l'accès
         }
       } else {
+        // Si pas de rôles trouvés mais utilisateur connecté via Supabase, on autorise l'accès de base
+        if (authStore.isSupabaseUser) {
+          return next();
+        }
         import('primevue/usetoast').then(({ useToast }) => {
           const toast = useToast();
           toast.add({ severity: 'error', summary: 'Accès refusé', detail: 'Aucun rôle trouvé.', life: 4000 });
