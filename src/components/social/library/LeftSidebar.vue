@@ -147,14 +147,12 @@
 </template>
 
 <script>
-import Avatar from "primevue/avatar";
 import Toast from "primevue/toast";
-import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 import { getDatabase, ref as dbRef, get, update, onValue } from "firebase/database";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import UserCard from '@/views/apps/chat/UserCard.vue';
-import { inject, computed } from 'vue';
 import { useEventStore } from '@/stores/eventStore';
+import { useAuthStore } from '@/stores/authStore';
 import EventDetail from '@/components/events/EventDetail.vue';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
@@ -163,11 +161,14 @@ const defaultAvatar = '@/assets/images/avatar/01.jpg';
 
 export default {
   name: "LeftSidebar",
-  components: { UserCard, Avatar, Toast, EventDetail, Dialog, Button }, 
+  components: { UserCard, Toast, EventDetail, Dialog, Button }, 
   setup() {
     const eventStore = useEventStore();
+    const authStore = useAuthStore();
     return {
-      eventStore
+      eventStore,
+      authStore,
+      // upcomingEvents: computed(() => eventStore.upcomingEvents) // Supprimé car dupliqué
     };
   },
   data() {
@@ -254,27 +255,37 @@ export default {
     },
     async handleRegister(event) {
       // Récupérer les infos utilisateur pour l'inscription
-      const auth = getAuth();
-      const currentUser = auth.currentUser;
+      const currentUser = this.authStore.user;
       if (!currentUser) return;
 
       try {
-        const db = getDatabase();
-        const userRef = dbRef(db, `Users/${currentUser.uid}`);
-        const snapshot = await get(userRef);
-        
         let userInfo = {
           nom: 'Utilisateur',
           prenom: '',
           photoURL: ''
         };
-
-        if (snapshot.exists()) {
-          const userData = snapshot.val();
+        
+        // Pour Firebase, on récupère depuis Firebase DB
+        if (this.authStore.isFirebaseUser) {
+          const db = getDatabase();
+          const userRef = dbRef(db, `Users/${currentUser.uid}`);
+          const snapshot = await get(userRef);
+        
+          if (snapshot.exists()) {
+            const userData = snapshot.val();
+            userInfo = {
+              nom: userData.Nom || 'Utilisateur',
+              prenom: userData.Prenom || '',
+              photoURL: userData.PhotoURL || ''
+            };
+          }
+        }
+        // Pour Supabase, on utilise les données disponibles
+        else if (this.authStore.isSupabaseUser) {
           userInfo = {
-            nom: userData.Nom || 'Utilisateur',
-            prenom: userData.Prenom || '',
-            photoURL: userData.PhotoURL || ''
+            nom: currentUser.user_metadata?.nom || 'Utilisateur',
+            prenom: currentUser.user_metadata?.prenom || '',
+            photoURL: currentUser.user_metadata?.photoURL || ''
           };
         }
 
@@ -285,7 +296,7 @@ export default {
         console.error('Erreur lors de l\'inscription:', error);
       }
     },
-    handleEdit(event) {
+    handleEdit(eventData) {
       // Fermer la modale et naviguer vers la page de gestion
       this.showEventDetail = false;
       this.$router.push('/event-management');
@@ -317,9 +328,15 @@ export default {
       }
     },
     async fetchRecentConversations() {
-      const auth = getAuth();
-      const currentUser = auth.currentUser;
+      const currentUser = this.authStore.user;
       if (!currentUser) return;
+      
+      // Pour Firebase uniquement (Supabase n'a pas cette fonctionnalité pour l'instant)
+      if (!this.authStore.isFirebaseUser) {
+        console.log('Messagerie disponible uniquement pour Firebase');
+        return;
+      }
+      
       const userId = currentUser.uid;
       const db = getDatabase();
       const conversationsRef = dbRef(db, 'conversations');
@@ -353,9 +370,8 @@ export default {
       });
     },
     openChat(user) {
-      const auth = getAuth();
-      const currentUser = auth.currentUser;
-      if (!currentUser) return;
+      const currentUser = this.authStore.user;
+      if (!currentUser || !this.authStore.isFirebaseUser) return;
       const userId = currentUser.uid;
       const conversationId = [userId, user.id].sort().join('-');
       this.$router.push({ name: 'IndexChat', query: { id: conversationId, user: user.id } });
@@ -366,12 +382,19 @@ export default {
     async onAvatarSelected(event) {
       const file = event.target.files[0];
       if (!file) return;
-      const auth = getAuth();
-      const currentUser = auth.currentUser;
+      
+      const currentUser = this.authStore.user;
       if (!currentUser) {
         this.$refs.toast.add({ severity: 'error', summary: 'Erreur', detail: 'Utilisateur non connecté.', life: 4000 });
         return;
       }
+      
+      // Upload d'avatar disponible uniquement pour Firebase pour l'instant
+      if (!this.authStore.isFirebaseUser) {
+        this.$refs.toast.add({ severity: 'info', summary: 'Info', detail: 'Upload d\'avatar disponible uniquement pour Firebase.', life: 4000 });
+        return;
+      }
+      
       const userId = currentUser.uid;
       const storage = getStorage();
       const avatarRef = storageRef(storage, `users/${userId}/profile-picture.jpg`);
@@ -389,7 +412,15 @@ export default {
       }
     },
     goToProfile() {
-      this.$router.push("/profile/" + this.user.id);
+      const currentUser = this.authStore.user;
+      if (currentUser) {
+        // Utiliser la logique adaptée selon le système d'auth
+        if (this.authStore.isFirebaseUser) {
+          this.$router.push(`/profile/${currentUser.uid}`);
+        } else if (this.authStore.isSupabaseUser) {
+          this.$router.push(`/profile/${currentUser.id}`);
+        }
+      }
     },
     goToDocumentPFP() {
       this.$router.push("/documents_pfp");
@@ -397,15 +428,12 @@ export default {
     goToTools() {
       this.$router.push("/outils");
     },
-    async goToLogout() {
-      const auth = getAuth();
+    async logout() {
       try {
-        await signOut(auth);
-        console.log("Utilisateur déconnecté");
-        this.$router.push("/");
+        await this.authStore.signOut();
+        this.$router.push('/home');
       } catch (error) {
-        console.error("Erreur de déconnexion:", error);
-        this.$refs.toast.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur de déconnexion : ' + (error && error.message ? error.message : error), life: 6000 });
+        console.error('Erreur de déconnexion:', error);
       }
     },
     goToEventManagement() {
@@ -415,15 +443,31 @@ export default {
       this.$router.push("/chat");
     },
   },
-  mounted() {
-    const auth = getAuth();
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        this.user.id = user.uid;
-        this.fetchUserProfile(user.uid);
+  async mounted() {
+    // Initialiser l'état d'authentification
+    await this.authStore.checkAuthState();
+    
+    const currentUser = this.authStore.user;
+    if (currentUser) {
+      console.log('LeftSidebar - Utilisateur connecté:', currentUser.email || currentUser.uid);
+      console.log('LeftSidebar - Provider:', this.authStore.authProvider);
+      
+      if (this.authStore.isFirebaseUser) {
+        // Logique Firebase complète
+        this.user.id = currentUser.uid;
+        await this.fetchUserProfile(currentUser.uid);
         this.fetchRecentConversations();
+      } else if (this.authStore.isSupabaseUser) {
+        // Logique Supabase simplifiée
+        this.user.id = currentUser.id;
+        this.user.prenom = currentUser.user_metadata?.prenom || currentUser.email?.split('@')[0] || 'Utilisateur';
+        this.user.nom = currentUser.user_metadata?.nom || '';
+        this.user.PhotoURL = currentUser.user_metadata?.photoURL || defaultAvatar;
+        console.log('LeftSidebar - Utilisateur Supabase configuré:', this.user);
       }
-    });
+    } else {
+      console.log('LeftSidebar - Aucun utilisateur connecté');
+    }
     
     // Initialiser le store des événements
     this.eventStore.listenEvents();
