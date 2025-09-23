@@ -5,7 +5,7 @@
 
 import { getDatabase, ref as dbRef, get, update, set, push } from 'firebase/database'
 import { db } from '../../firebase' // Chemin corrigé
-import { notificationService } from './notificationService.js'
+import notificationService from './notificationService.js'
 
 // Configuration des niveaux et XP - Système à 20 niveaux (Reset annuel)
 export const LEVEL_CONFIG = {

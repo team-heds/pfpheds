@@ -36,7 +36,7 @@ import VersionningComponent from './components/common/utils/VersionningComponent
 import MobileBottomNav from '@/components/common/utils/MobileBottomNav.vue';
 import PwaInstallPrompt from '@/components/common/utils/PwaInstallPrompt.vue';
 import GamificationNotification from '@/components/gamification/notifications/GamificationNotification.vue';
-import { notificationService } from '@/service/notificationService';
+import notificationService from '@/service/notificationService';
 
 export default {
   name: "App",
@@ -93,8 +93,8 @@ export default {
       this.showMobileBottomNav = false;
     }
     
-    // Initialiser le service de notifications gamification
-    notificationService.initialize();
+    // Le service de notifications est déjà initialisé automatiquement
+    // via l'instance singleton dans notificationService.js
   },
 };
 </script>

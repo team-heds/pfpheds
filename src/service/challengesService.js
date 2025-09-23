@@ -1,6 +1,6 @@
 import { ref as dbRef, get, set, update, push } from 'firebase/database'
 import { db } from '../../firebase'
-import { notificationService } from './notificationService.js'
+import notificationService from './notificationService.js'
 
 // ========================================
 // CONFIGURATION DES DÉFIS HEBDOMADAIRES

@@ -6,7 +6,7 @@
 
 import { getDatabase, ref as dbRef, get, set, push, remove, onValue, off } from 'firebase/database'
 import { getAuth } from 'firebase/auth'
-import { notificationService } from './notificationService.js'
+import notificationService from './notificationService.js'
 
 const db = getDatabase()
 const auth = getAuth()
