@@ -57,25 +57,57 @@ router.post('/', async (req, res) => {
   }
 })
 
-// UPDATE (PATCH)
+// UPDATE (PUT) institutions
 router.put('/:id', async (req, res) => {
   try {
+    const id = String(req.params.id || '').trim()
+    console.log('🔧 PUT institutions for InstitutionId:', id)
+
+    // Build payload from body, but never allow changing the primary key
+    const payload = { ...req.body }
+    delete payload.InstitutionId
+
+    if (Object.keys(payload).length === 0) {
+      return res.status(400).json({ error: 'No updatable fields provided' })
+    }
+
     const { data, error } = await supabase
       .from('institutions')
-      .update(req.body)
-      .eq('InstitutionId', req.params.id)
-      .select()
-      .single()
-    if (error) {
+      .update(payload)
+      .eq('InstitutionId', id)
+      .select('*')
+      .maybeSingle()
+
+    // Handle real errors returned by Supabase
+    const hasRealError = !!(error && (error.message || error.code))
+    if (hasRealError) {
       console.error('[Supabase] institutions update error:', error)
-      return res.status(400).json({ error: error.message })
+      return res.status(400).json({
+        error: error.message || 'Supabase update failed',
+        code: error.code || null
+      })
     }
-    res.json(data)
+
+    // Not found
+    if (!data) {
+      // Double-check existence
+      const chk = await supabase
+        .from('institutions')
+        .select('InstitutionId')
+        .eq('InstitutionId', id)
+        .maybeSingle()
+      if (!chk.data) return res.status(404).json({ error: 'Institution not found' })
+      // If exists but nothing returned, send current state
+      return res.json(chk.data)
+    }
+
+    return res.json(data)
   } catch (e) {
     console.error('PUT /api/institutions/:id failed:', e)
-    res.status(500).json({ error: 'Internal Server Error' })
+    return res.status(500).json({ error: 'Internal Server Error' })
   }
 })
+
 
 // DELETE
 router.delete('/:id', async (req, res) => {

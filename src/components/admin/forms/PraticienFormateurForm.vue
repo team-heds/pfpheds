@@ -35,12 +35,12 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { usePraticiensFormateursStore } from '@/stores/praticiensFormateursStore';
+import { usePraticiensStore } from '@/stores/praticiensStore';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 
 const router = useRouter();
-const store = usePraticiensFormateursStore();
+const store = usePraticiensStore();
 
 const newPraticien = ref({
   prenom: '',

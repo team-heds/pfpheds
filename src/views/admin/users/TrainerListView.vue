@@ -1,9 +1,10 @@
 <template>
   <div class="admin-scrollable">
     <Navbar />
+
     <div class="filter-menu">
       <DataTable
-        :value="praticiensFormateurs"
+        :value="items"
         :paginator="true"
         :rows="10"
         dataKey="id"
@@ -16,33 +17,50 @@
       >
         <template #header>
           <div class="flex justify-content-between flex-column sm:flex-row">
-            <Button label="Ajouter un praticien" icon="pi pi-plus" class="mb-2 mr-2" outlined @click="goToPraticienFormateurForm" />
+            <Button
+              label="Ajouter un praticien"
+              icon="pi pi-plus"
+              class="mb-2 mr-2"
+              outlined
+              @click="goToPraticienForm"
+            />
             <IconField iconPosition="left">
               <InputIcon class="pi pi-search" />
-              <InputText v-model="filters['global'].value" placeholder="Recherche globale" style="width: 100%" />
+              <InputText
+                v-model="filters['global'].value"
+                placeholder="Recherche globale"
+                style="width: 100%"
+              />
             </IconField>
           </div>
         </template>
-        <template #empty> Aucun praticien formateur trouvé. </template>
-        <template #loading> Chargement des données... </template>
-        
-        <Column field="nom" header="Nom" style="min-width: 12rem" sortable>
-          <template #body="{ data }">{{ data.nom }}</template>
-        </Column>
-        <Column field="prenom" header="Prénom" style="min-width: 12rem" sortable>
-          <template #body="{ data }">{{ data.prenom }}</template>
-        </Column>
-        <Column field="mail" header="Mail" style="min-width: 12rem" sortable>
-          <template #body="{ data }">{{ data.mail }}</template>
-        </Column>
-        <Column field="institution" header="Institution" style="min-width: 12rem" sortable>
-          <template #body="{ data }">{{ data.institution }}</template>
-        </Column>
 
-        <Column header="Action" style="min-width: 12rem" class="text-center">
+        <template #empty>Aucun praticien trouvé.</template>
+        <template #loading>Chargement des données...</template>
+
+        <Column field="nom" header="Nom" style="min-width:12rem" sortable />
+        <Column field="prenom" header="Prénom" style="min-width:12rem" sortable />
+        <Column field="mail" header="Mail" style="min-width:12rem" sortable />
+        <Column field="institution" header="Institution" style="min-width:12rem" sortable />
+
+        <Column header="Action" style="min-width:12rem" class="text-center">
           <template #body="{ data }">
-            <Button label="Modifier" class="mb-2 mr-2" size="small" outlined severity="success" @click="goToPraticienFormateurFormModif(data.id)" />
-            <Button label="Supprimer" class="mb-2 mr-2" size="small" outlined severity="danger" @click="confirmDelete(data.id)" />
+            <Button
+              label="Modifier"
+              class="mb-2 mr-2"
+              size="small"
+              outlined
+              severity="success"
+              @click="goToPraticienFormModif(data.id)"
+            />
+            <Button
+              label="Supprimer"
+              class="mb-2 mr-2"
+              size="small"
+              outlined
+              severity="danger"
+              @click="confirmDelete(data.id)"
+            />
           </template>
         </Column>
       </DataTable>
@@ -51,49 +69,49 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { storeToRefs } from 'pinia';
-import { usePraticiensFormateursStore } from '@/stores/praticiensFormateursStore';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-import InputText from 'primevue/inputtext';
-import Button from 'primevue/button';
-import IconField from 'primevue/iconfield';
-import InputIcon from 'primevue/inputicon';
-import Navbar from '@/components/common/utils/Navbar.vue';
-import { FilterMatchMode } from 'primevue/api';
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { storeToRefs } from 'pinia'
+import { usePraticiensStore } from '@/stores/praticiensStore'
 
-const router = useRouter();
-const store = usePraticiensFormateursStore();
+import DataTable from 'primevue/datatable'
+import Column from 'primevue/column'
+import InputText from 'primevue/inputtext'
+import Button from 'primevue/button'
+import IconField from 'primevue/iconfield'
+import InputIcon from 'primevue/inputicon'
+import Navbar from '@/components/common/utils/Navbar.vue'
+import { FilterMatchMode } from 'primevue/api'
 
-// State from store - using storeToRefs to keep reactivity
-const { praticiensFormateurs, loading } = storeToRefs(store);
+const router = useRouter()
+const store = usePraticiensStore()
 
-// Local state for filtering
+// ✅ on lit bien items + loading depuis le store
+const { items, loading } = storeToRefs(store)
+
 const filters = ref({
   global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-});
+})
 
-// Fetch data on component mount
 onMounted(() => {
-  store.fetchPraticiensFormateurs();
-});
+  store.fetchPraticiens()
+})
 
-// Methods
-const confirmDelete = (id) => {
-  if (confirm('Êtes-vous sûr de vouloir supprimer ce praticien formateur ?')) {
-    store.deletePraticienFormateur(id);
+const confirmDelete = async (id) => {
+  if (confirm('Êtes-vous sûr de vouloir supprimer ce praticien ?')) {
+    await store.deletePraticien(id)
   }
-};
+}
 
-const goToPraticienFormateurFormModif = (id) => {
-  router.push({ name: 'PraticienFormateurFormModif', params: { praticienFormateurId: id } });
-};
+const goToPraticienFormModif = (id) => {
+  // adapte le nom de route selon ton router
+  router.push({ name: 'PraticienFormateurFormModif', params: { praticienFormateurId: id } })
+}
 
-const goToPraticienFormateurForm = () => {
-  router.push({ name: 'PraticienFormateurForm' });
-};
+const goToPraticienForm = () => {
+  // adapte le nom de route selon ton router
+  router.push({ name: 'PraticienForm' })
+}
 </script>
 
 <style scoped>
@@ -101,10 +119,10 @@ const goToPraticienFormateurForm = () => {
   overflow-y: auto;
   height: 100vh;
   scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none;  /* IE and Edge */
+  -ms-overflow-style: none; /* IE and Edge */
 }
 .admin-scrollable::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, and Opera */
+  display: none; /* Chrome, Safari, Opera */
 }
 .filter-menu {
   padding: 20px;

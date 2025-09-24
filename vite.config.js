@@ -23,7 +23,7 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:3000',
         changeOrigin: true,
-        secure: false,
+        //secure: false,
       },
     },
   },
@@ -80,7 +80,7 @@ export default defineConfig({
       },
       includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
       devOptions: {
-        enabled: true,
+        enabled: false,
         suppressLogs: true
       },
     }),
