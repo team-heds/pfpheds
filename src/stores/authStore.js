@@ -114,9 +114,6 @@ export const useAuthStore = defineStore('auth', () => {
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: 'https://hedsvs.ch/reset-password'
       });
-
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email);
-
       if (resetError) throw resetError;
     } catch (e) {
       error.value = e.message;
@@ -150,7 +147,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function checkAuthState() {
     console.log('🔍 Vérification de l\'état d\'authentification...');
-    
+
     // Vérifier Firebase avec une promesse pour attendre la restauration de session
     const firebaseUser = await new Promise((resolve) => {
       const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -158,7 +155,7 @@ export const useAuthStore = defineStore('auth', () => {
         resolve(user);
       });
     });
-    
+
     if (firebaseUser) {
       console.log('✅ Utilisateur Firebase trouvé:', firebaseUser.email);
       user.value = firebaseUser;
@@ -177,13 +174,13 @@ export const useAuthStore = defineStore('auth', () => {
       session.value = sessionData.session;
       return;
     }
-    
+
     console.log('❌ Aucun utilisateur connecté trouvé');
     user.value = null;
     authProvider.value = null;
     session.value = null;
   }
-  
+
   // Initialisation du store
   async function initializeAuth() {
     console.log('🚀 Initialisation du store d\'authentification...');
@@ -192,11 +189,11 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   // Gérer les changements d'état d'authentification pour les deux systèmes
-  
+
   // Supabase auth state change
   supabase.auth.onAuthStateChange((event, newSession) => {
     console.log('Supabase auth state change:', event, newSession?.user?.email);
-    
+
     if (event === 'SIGNED_IN' && newSession) {
       // Ne pas écraser si Firebase est déjà connecté
       if (authProvider.value !== 'firebase') {
@@ -216,7 +213,7 @@ export const useAuthStore = defineStore('auth', () => {
   // Firebase auth state change
   onAuthStateChanged(auth, (firebaseUser) => {
     console.log('Firebase auth state change:', firebaseUser?.email);
-    
+
     if (firebaseUser) {
       // Ne pas écraser si Supabase est déjà connecté
       if (authProvider.value !== 'supabase') {
