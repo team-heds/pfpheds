@@ -113,3 +113,16 @@ jspm_packages/
 # Stores VSCode versions used for testing VSCode extensions
 .vscode-test
 firebase-to-supabase/
+
+# Deployment files (large archives)
+temp-deploy/*.tar.gz
+temp-deploy/*.zip
+temp-deploy/*.tar
+temp-deploy/*.rar
+temp-deploy/*.7z
+
+# Large build artifacts
+*.tar.gz
+*.zip
+dist/*.tar.gz
+build/*.tar.gz
