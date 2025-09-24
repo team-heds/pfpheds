@@ -3,7 +3,7 @@
  * Gère les maisons Harmonis, Elaris, Doloris et Solencia
  */
 
-import { getDatabase, ref as dbRef, get, update, set, push } from 'firebase/database'
+import { ref as dbRef, get, update, set, push } from 'firebase/database'
 import { db } from '../../firebase' // Chemin corrigé
 import notificationService from './notificationService.js'
 
@@ -144,7 +144,7 @@ export async function saveUserHouse(userId, houseName) {
       throw new Error('Maison invalide')
     }
 
-    const userRef = dbRef(getDatabase(), `Users/${userId}`)
+    const userRef = dbRef(db, `Users/${userId}`)
     await update(userRef, {
       'gamification/maison': houseName.toLowerCase(),
       'gamification/niveau': 1,
@@ -173,7 +173,7 @@ export async function saveUserHouse(userId, houseName) {
  */
 export async function getUserHouse(userId) {
   try {
-    const userRef = dbRef(getDatabase(), `Users/${userId}/gamification`)
+    const userRef = dbRef(db, `Users/${userId}/gamification`)
     const snapshot = await get(userRef)
     const gamificationData = snapshot.val()
     
@@ -217,7 +217,7 @@ export async function userHasHouse(userId) {
  */
 export async function resetUserHouse(userId) {
   try {
-    const userRef = dbRef(getDatabase(), `Users/${userId}/gamification`)
+    const userRef = dbRef(db, `Users/${userId}/gamification`)
     await update(userRef, {
       maison: null,
       niveau: 1,
@@ -274,7 +274,7 @@ export function calculateHouseFromAnswers(answers) {
  */
 export async function getHouseStatistics() {
   try {
-    const usersRef = dbRef(getDatabase(), 'Users')
+    const usersRef = dbRef(db, 'Users')
     const snapshot = await get(usersRef)
     const users = snapshot.val() || {}
     
@@ -376,7 +376,7 @@ export function calculateHouseLevel(totalHouseXP) {
  */
 export async function addUserXP(userId, action, customXP = null) {
   try {
-    const userRef = dbRef(getDatabase(), `Users/${userId}/gamification`)
+    const userRef = dbRef(db, `Users/${userId}/gamification`)
     const snapshot = await get(userRef)
     const currentData = snapshot.val() || {}
     
@@ -408,7 +408,7 @@ export async function addUserXP(userId, action, customXP = null) {
     await update(userRef, newData)
     
     // Ajouter à l'historique XP
-    const historyRef = dbRef(getDatabase(), `Users/${userId}/gamification/xpHistory`)
+    const historyRef = dbRef(db, `Users/${userId}/gamification/xpHistory`)
     await push(historyRef, {
       amount: xpToAdd,
       action: action,
@@ -595,7 +595,7 @@ export async function addUserXP(userId, action, customXP = null) {
  */
 export async function getUserGamificationData(userId) {
   try {
-    const userRef = dbRef(getDatabase(), `Users/${userId}/gamification`)
+    const userRef = dbRef(db, `Users/${userId}/gamification`)
     const snapshot = await get(userRef)
     const data = snapshot.val()
     
@@ -658,7 +658,7 @@ export async function initializeUserGamification(userId, houseName) {
       }
     }
     
-    const userRef = dbRef(getDatabase(), `Users/${userId}/gamification`)
+    const userRef = dbRef(db, `Users/${userId}/gamification`)
     await set(userRef, initialData)
     
     // Ajouter l'XP pour avoir terminé le quiz
@@ -678,7 +678,7 @@ export async function initializeUserGamification(userId, houseName) {
  */
 export async function updateLoginStreak(userId) {
   try {
-    const userRef = dbRef(getDatabase(), `Users/${userId}/gamification`)
+    const userRef = dbRef(db, `Users/${userId}/gamification`)
     const snapshot = await get(userRef)
     const data = snapshot.val()
     
@@ -747,7 +747,7 @@ export async function updateLoginStreak(userId) {
  */
 export async function getHouseDetailedStats(houseName) {
   try {
-    const usersRef = dbRef(getDatabase(), 'Users')
+    const usersRef = dbRef(db, 'Users')
     const snapshot = await get(usersRef)
     const users = snapshot.val() || {}
     
@@ -881,7 +881,7 @@ export async function getHousesRanking() {
 export async function updateGlobalHouseStats() {
   try {
     const ranking = await getHousesRanking()
-    const globalStatsRef = dbRef(getDatabase(), 'globalStats/houses')
+    const globalStatsRef = dbRef(db, 'globalStats/houses')
     
     const statsToSave = {
       ranking: ranking.ranking,
@@ -904,7 +904,7 @@ export async function updateGlobalHouseStats() {
  */
 export async function getUserGamificationStats(userId) {
   try {
-    const userRef = dbRef(getDatabase(), `Users/${userId}`)
+    const userRef = dbRef(db, `Users/${userId}`)
     const snapshot = await get(userRef)
     
     if (snapshot.exists()) {

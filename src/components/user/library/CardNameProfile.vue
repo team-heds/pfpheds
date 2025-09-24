@@ -96,16 +96,17 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { getDatabase, ref as dbRef, get, update } from "firebase/database";
+import { ref as dbRef, get, update } from "firebase/database";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { storage } from '../../../../firebase.js';
+import { onAuthStateChanged } from 'firebase/auth';
+import { db, auth, storage } from '../../../../firebase.js';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import BandeauMaison from '@/components/gamification/BandeauMaison.vue';
 import XPBar from '@/components/gamification/XPBar.vue';
 import { addUserXP } from '@/service/hesHousesService'
 import gamificationService from '@/service/gamificationService'
+import gamificationIntegration from '@/service/gamificationIntegration'
 
 const defaultAvatar = '@/assets/images/avatar/01.jpg';
 
@@ -143,7 +144,6 @@ const isAdmin = computed(() => {
 
 // Récupération du profil consulté depuis /Users (basé sur l'ID de l'URL)
 const fetchUserProfileById = async (userId) => {
-  const db = getDatabase();
   const userRef = dbRef(db, `Users/${userId}`);
   const snapshot = await get(userRef);
   if (snapshot.exists()) {
@@ -166,7 +166,6 @@ const fetchUserProfileById = async (userId) => {
 
 // Récupération des données étudiant depuis /Students
 const fetchStudentProfileById = async (userId) => {
-  const db = getDatabase();
   const studentRef = dbRef(db, `Students/${userId}`);
   const snapshot = await get(studentRef);
   if (snapshot.exists()) {
@@ -180,7 +179,6 @@ const fetchStudentProfileById = async (userId) => {
 
 // Récupération du profil de l'utilisateur connecté depuis /Users à l'aide de Firebase Auth
 const fetchCurrentUserProfile = async (currentUserId) => {
-  const db = getDatabase();
   const currentUserRef = dbRef(db, `Users/${currentUserId}`);
   const snapshot = await get(currentUserRef);
   if (snapshot.exists()) {
@@ -197,7 +195,6 @@ const fetchCurrentUserProfile = async (currentUserId) => {
 // Importation des enseignants depuis /Enseignants
 const teachers = ref({});
 const fetchTeachers = () => {
-  const db = getDatabase();
   const teachersRef = dbRef(db, `Enseignants`);
   get(teachersRef)
     .then(snapshot => {
@@ -232,46 +229,64 @@ watch(teachersOptions, (newOptions) => {
 
 // Fonction de sauvegarde du profil : met à jour Users et Students
 const saveProfile = async () => {
-  const db = getDatabase();
-  // Si un nouvel avatar a été sélectionné, on l'upload
-  if (selectedAvatarFile.value) {
-    try {
-      const avatarRef = storageRef(storage, `Users/${user.value.uid}/profile-picture.jpg`);
-      await uploadBytes(avatarRef, selectedAvatarFile.value);
-      const photoURL = await getDownloadURL(avatarRef);
-      user.value.photoURL = photoURL;
-    } catch (error) {
-      console.error("Erreur lors de l'upload de l'avatar :", error);
-      alert("Erreur lors de l'upload de l'avatar");
-      return;
+  
+  try {
+    // Si un nouvel avatar a été sélectionné, on l'upload
+    if (selectedAvatarFile.value) {
+      try {
+        const avatarRef = storageRef(storage, `Users/${user.value.uid}/profile-picture.jpg`);
+        await uploadBytes(avatarRef, selectedAvatarFile.value);
+        const photoURL = await getDownloadURL(avatarRef);
+        user.value.photoURL = photoURL;
+      } catch (error) {
+        console.error("Erreur lors de l'upload de l'avatar :", error);
+        alert("Erreur lors de l'upload de l'avatar");
+        return;
+      }
     }
+
+    // Mise à jour du profil dans Users
+    const userRef = dbRef(db, `Users/${user.value.uid}`);
+    await update(userRef, {
+      Prenom: user.value.prenom,
+      Nom: user.value.nom,
+      Mail: user.value.email,
+      Ville: user.value.ville,
+      Bio: user.value.bio,
+      PhotoURL: user.value.photoURL
+    });
+
+    // Seul un administrateur connecté peut modifier le champ Répondant HES
+    if (isAdmin.value && selectedTeacher.value) {
+      const teacherOpt = teachersOptions.value.find(opt => opt.value === selectedTeacher.value);
+      const teacherLabel = teacherOpt ? teacherOpt.label : '';
+      user.value.repondantHES = teacherLabel;
+    }
+
+    // Mise à jour du profil étudiant dans Students
+    const studentRef = dbRef(db, `Students/${user.value.uid}`);
+    await update(studentRef, {
+      RepondantHES: user.value.repondantHES
+    });
+
+    // NOUVEAU : Déclencher l'intégration gamification pour mise à jour profil
+    await gamificationIntegration.onProfileUpdate(user.value.uid, {
+      profileCompleted: true,
+      hasAvatar: !!user.value.photoURL,
+      hasBio: !!user.value.bio,
+      hasCity: !!user.value.ville,
+      timestamp: Date.now()
+    });
+
+    alert("Profil mis à jour avec succès");
+    
+    // Recharger les données de gamification pour afficher les nouveaux badges/XP
+    await fetchGamificationData(user.value.uid);
+    
+  } catch (error) {
+    console.error("Erreur lors de la sauvegarde du profil :", error);
+    alert("Erreur lors de la sauvegarde du profil");
   }
-
-  // Mise à jour du profil dans Users
-  const userRef = dbRef(db, `Users/${user.value.uid}`);
-  await update(userRef, {
-    Prenom: user.value.prenom,
-    Nom: user.value.nom,
-    Mail: user.value.email,
-    Ville: user.value.ville,
-    Bio: user.value.bio,
-    PhotoURL: user.value.photoURL
-  });
-
-  // Seul un administrateur connecté peut modifier le champ Répondant HES
-  if (isAdmin.value && selectedTeacher.value) {
-    const teacherOpt = teachersOptions.value.find(opt => opt.value === selectedTeacher.value);
-    const teacherLabel = teacherOpt ? teacherOpt.label : '';
-    user.value.repondantHES = teacherLabel;
-  }
-
-  // Mise à jour du profil étudiant dans Students
-  const studentRef = dbRef(db, `Students/${user.value.uid}`);
-  await update(studentRef, {
-    RepondantHES: user.value.repondantHES
-  });
-
-  alert("Profil mis à jour avec succès");
 };
 
 const onAvatarChange = (event) => {
@@ -283,7 +298,6 @@ const onAvatarChange = (event) => {
 
 const route = useRoute();
 const router = useRouter();
-const auth = getAuth();
 onMounted(async () => {
   // Récupérer l'ID de l'utilisateur dont le profil est consulté (depuis l'URL)
   const userId = route.params.id;
@@ -309,7 +323,7 @@ const fetchGamificationData = async (userId) => {
   try {
     // Utiliser exclusivement le service gamification unifié
     const gamificationData = await gamificationService.getUserGamificationData(userId);
-    
+
     if (gamificationData) {
       userGamification.value = {
         maison: gamificationData.maison || null,
@@ -402,11 +416,11 @@ const giveUserXP = async (action, customXP = null) => {
   try {
     const userId = route.params.id || currentUserProfile.value?.uid
     if (!userId) return
-    
+
     // Utiliser exclusivement le service gamification unifié
     const xpAmount = customXP || 10;
     const newData = await addUserXP(userId, action, xpAmount);
-    
+
     // Mettre à jour les données locales avec les nouvelles données
     if (newData) {
       userGamification.value = {
@@ -419,13 +433,13 @@ const giveUserXP = async (action, customXP = null) => {
         lastXPGain: newData.lastXPGain || null,
         loginStreak: newData.loginStreak || userGamification.value.loginStreak || 0
       };
-      
+
       // Afficher une notification de gain d'XP
       if (newData.lastXPGain) {
         console.log(`+${newData.lastXPGain.amount} XP - ${newData.lastXPGain.description}`);
       }
     }
-    
+
   } catch (error) {
     console.error('Erreur lors de l\'ajout d\'XP:', error)
   }
@@ -433,9 +447,26 @@ const giveUserXP = async (action, customXP = null) => {
 
 // Fonction appelée lors de la sauvegarde du profil (pour donner de l'XP)
 const saveProfileWithXP = async () => {
-  await saveProfile()
-  // Donner de l'XP pour la mise à jour du profil
-  await giveUserXP('PROFILE_UPDATE')
+  try {
+    await saveProfile()
+
+    // NOUVEAU : Utiliser gamificationIntegration pour déclencher tous les événements
+    const userId = route.params.id || currentUserProfile.value?.uid
+    if (userId) {
+      await gamificationIntegration.onProfileUpdate(userId, {
+        profileCompleted: true,
+        hasAvatar: !!user.value.photoURL,
+        hasBio: !!user.value.bio,
+        hasCity: !!user.value.ville,
+        timestamp: Date.now()
+      })
+
+      // Recharger les données gamification pour voir les nouveaux badges/XP
+      await fetchGamificationData(userId)
+    }
+  } catch (error) {
+    console.error('Erreur lors de la sauvegarde avec gamification:', error)
+  }
 }
 </script>
 

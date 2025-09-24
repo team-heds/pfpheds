@@ -3,11 +3,8 @@
  * Fournit les statistiques et données d'administration pour le système de gamification HEdS
  */
 
-import { getDatabase, ref as dbRef, get, query, orderByChild, limitToLast } from 'firebase/database';
-import { getAuth } from 'firebase/auth';
-
-const db = getDatabase();
-const auth = getAuth();
+import { ref as dbRef, get, query, orderByChild, limitToLast } from 'firebase/database';
+import { db, auth } from '../../firebase.js';
 
 /**
  * Récupère les statistiques complètes de gamification pour l'administration

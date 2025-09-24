@@ -9,11 +9,11 @@ import { VitePWA } from 'vite-plugin-pwa';
 export default defineConfig({
   server: {
     host: '0.0.0.0',
-    port: 5170,
+    port: 5172,
     hmr: {
-      port: 5170,
+      port: 5172,
       host: 'localhost',
-      clientPort: 5170
+      clientPort: 5172
     },
     watch: {
       usePolling: true,
@@ -80,7 +80,7 @@ export default defineConfig({
       },
       includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
       devOptions: {
-        enabled: true,
+        enabled: false, // Désactiver PWA en développement pour éviter les conflits de cache
         suppressLogs: true
       },
     }),

@@ -4,12 +4,9 @@
  * Utilisé par : Admin Dashboard, Composants User, Profile, Gestion
  */
 
-import { getDatabase, ref as dbRef, get, set, push, remove, onValue, off } from 'firebase/database'
-import { getAuth } from 'firebase/auth'
+import { ref as dbRef, get, set, push, remove, onValue, off } from 'firebase/database'
+import { db, auth } from '../../firebase.js'
 import notificationService from './notificationService.js'
-
-const db = getDatabase()
-const auth = getAuth()
 
 class GamificationService {
   constructor() {

@@ -17,7 +17,7 @@
       <PwaInstallPrompt />
       <!-- Intégration du widget ConvAI -->
       <ConvaiWidget />
-      <!-- Système de notifications gamification -->
+      <!-- Centre de notifications gamification -->
       <GamificationNotification />
     </div>
 
@@ -29,8 +29,7 @@
 <script>
 import Toast from 'primevue/toast';
 import ConfirmDialog from 'primevue/confirmdialog';
-import ConvaiWidget from '@/components/ui/ConvaiWidget.vue'
-import TheNavbar from '@/components/TheNavbar.vue';
+import ConvaiWidget from '@/components/ui/ConvaiWidget.vue';
 import Loader from '@/components/common/utils/Loader.vue'; // Import du composant Loader
 import VersionningComponent from './components/common/utils/VersionningComponent.vue'; // Import du nouveau composant
 import MobileBottomNav from '@/components/common/utils/MobileBottomNav.vue';
@@ -41,7 +40,6 @@ import notificationService from '@/service/notificationService';
 export default {
   name: "App",
   components: {
-    TheNavbar,
     Toast,
     ConfirmDialog,
     ConvaiWidget,
