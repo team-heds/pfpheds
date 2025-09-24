@@ -66,39 +66,44 @@ export const usePraticiensStore = defineStore('praticiens', {
       }
     },
 
-// stores/praticiensStore.js (action updatePraticien)
-// stores/praticiensStore.js (action updatePraticien)
-async updatePraticien(id, form) {
-  this.error = null
-  try {
-    const res = await fetch(`${API_URL}/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        nom: form.nom,
-        prenom: form.prenom,
-        mail: form.mail ?? null,
-        institution: form.institution ?? null,
-        localite: form.localite ?? null,
-      }),
-    })
-
-    const json = await res.json().catch(() => ({}))
-
-    // ✅ un seul test d'erreur, avec message provenant du backend
-    if (!res.ok) {
-      const msg = json?.error || `${res.status} ${res.statusText}`
-      throw new Error(msg)
+    async updatePraticien(id, form) {
+      this.error = null
+      try {
+        const res = await fetch(`${API_URL}/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nom: form.nom,
+            prenom: form.prenom,
+            mail: form.mail ?? null,
+            institution: form.institution ?? null,
+            localite: form.localite ?? null,
+          }),
+        })
+    
+        let msg = ''
+        let json = null
+        try {
+          json = await res.json()
+        } catch {
+          // si pas JSON, lis le texte brut
+          msg = await res.text()
+        }
+    
+        if (!res.ok) {
+          const err = (json && (json.error || json.message)) || msg || `${res.status} ${res.statusText}`
+          throw new Error(err)
+        }
+    
+        const i = this.items.findIndex(p => p.id === id)
+        if (i !== -1) this.items[i] = json
+        return json
+      } catch (e) {
+        this.error = e.message
+        throw e
+      }
     }
-
-    const i = this.items.findIndex(p => p.id === id)
-    if (i !== -1) this.items[i] = json
-    return json
-  } catch (e) {
-    this.error = e.message
-    throw e
-  }
-}
+    
 ,
 
 

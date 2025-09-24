@@ -1,4 +1,5 @@
-// supabase/praticiensBackendStore.js
+// 
+// .js
 const { Router } = require('express')
 const supabase = require('../supabaseClient') // 👈 le même client que pour institutions
 
@@ -89,8 +90,8 @@ router.put('/:id', async (req, res) => {
   try {
     const id = String(req.params.id || '').trim()
     console.log('🔧 PUT praticiens for id:', id)
+    console.log('🔧 RAW body =', req.body)
 
-    // sanity check UUID
     if (!/^[0-9a-fA-F-]{36}$/.test(id)) {
       return res.status(400).json({ error: 'Invalid UUID' })
     }
@@ -106,7 +107,8 @@ router.put('/:id', async (req, res) => {
       return res.status(400).json({ error: 'No updatable fields provided' })
     }
 
-    // ✅ utilise maybeSingle pour éviter PGRST116 -> 400
+    console.log('🔧 UPDATE payload =', payload)
+
     const { data, error } = await supabase
       .from('praticiens')
       .update(payload)
@@ -114,18 +116,18 @@ router.put('/:id', async (req, res) => {
       .select('id, nom, prenom, mail, institution, localite, created_at')
       .maybeSingle()
 
-    // Cas "aucune ligne" => 404
+    console.log('🔧 Supabase update result:', { data, error })
+
     if (!data && !error) {
       return res.status(404).json({ error: 'Praticien not found' })
     }
-
     if (error) {
-      console.error('[Supabase] praticiens update error:', error)
-      // si Supabase renvoie PGRST116 malgré maybeSingle
-      if (error.code === 'PGRST116') {
-        return res.status(404).json({ error: 'Praticien not found' })
-      }
-      return res.status(400).json({ error: error.message, code: error.code || null })
+      return res.status(400).json({
+        error: error.message || 'Supabase update failed',
+        code: error.code || null,
+        details: error.details || null,
+        hint: error.hint || null
+      })
     }
 
     return res.json(data)
@@ -134,6 +136,7 @@ router.put('/:id', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' })
   }
 })
+
 
 
 // DELETE
