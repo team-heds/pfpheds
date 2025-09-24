@@ -40,10 +40,7 @@
               <div class="stat-number">50+</div>
               <div class="stat-label">Événements</div>
             </div>
-            <div class="stat-item">
-              <div class="stat-number">8</div>
-              <div class="stat-label">Membres</div>
-            </div>
+
           </div>
           <Button 
             @click="scrollToSection('about')"
@@ -116,7 +113,7 @@
                 <i class="pi pi-flag"></i>
               </div>
               <div class="timeline-content">
-                <div class="timeline-card">
+                <div class="timeline-card border-primary">
                   <h5>Partenariats Sportifs</h5>
                   <p>
                     Alp'in physio crée des partenariats avec petites et grandes manifestations 
@@ -137,7 +134,7 @@
                 <i class="pi pi-users"></i>
               </div>
               <div class="timeline-content">
-                <div class="timeline-card">
+                <div class="timeline-card border-primary">
                   <h5>Massage Post-Effort</h5>
                   <p>
                     Les étudiants de Loèche-les-Bains se mettent à disposition lors de courses 
@@ -157,8 +154,8 @@
                 <i class="pi pi-book"></i>
               </div>
               <div class="timeline-content">
-                <div class="timeline-card">
-                  <h5>Formation Continue</h5>
+                <div class="timeline-card border-primary">
+                  <h5>Formations et Conférences</h5>
                   <p>
                     Au-delà de la pratique sur le terrain, nous mettons sur pied diverses 
                     conférences et formations au sein de l'école pour développer le réseau 
@@ -261,15 +258,7 @@
             </div>
           </div>
 
-          <div class="committee-note">
-            <div class="note-content">
-              <i class="pi pi-info-circle"></i>
-              <p>
-                <em>Petit mot de chaque membre pour se présenter et présenter son rôle 
-                (à mettre à jour chaque année mais ça rend le site un peu dynamique !)</em>
-              </p>
-            </div>
-          </div>
+
         </div>
 
         <!-- Section Sponsors -->
@@ -359,25 +348,6 @@
             </div>
           </div>
 
-          <div class="sponsors-cta">
-            <div class="cta-content">
-              <h5>Intéressé par un partenariat ?</h5>
-              <p>Possibilité de diriger vers leur site internet si on clique sur leur logo</p>
-              <div class="cta-actions">
-                <Button 
-                  label="Dossier sponsoring"
-                  icon="pi pi-download"
-                  class="p-button-outlined"
-                  @click="downloadSponsoring"
-                />
-                <Button 
-                  label="Nous contacter"
-                  icon="pi pi-envelope"
-                  @click="openContact"
-                />
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </section>
@@ -386,12 +356,12 @@
     <section id="events" class="section-modern alt-bg">
       <div class="section-container">
         <div class="section-header">
-          <h2 class="section-title">Événements 2025</h2>
+          <h2 class="section-title">Notre calendrier</h2>
           <p class="section-subtitle">Rejoignez-nous lors de nos prochains événements</p>
         </div>
         
-        <div class="events-container">
-          <div v-for="event in events" :key="event.id" class="event-card">
+        <div class="events-container ">
+          <div v-for="event in events" :key="event.id" class="event-card border-primary">
             <div class="event-date">
               <span class="date-day">{{ event.day }}</span>
               <span class="date-month">{{ event.month }}</span>
@@ -699,13 +669,17 @@ import Button from 'primevue/button'
 const activeSection = ref('hero')
 const isScrolled = ref(false)
 const currentSlide = ref(0)
+let scrollTimeout = null
 
 // Configuration
 const sections = [
   { id: 'hero', name: 'Accueil' },
   { id: 'about', name: 'À propos' },
+  { id: 'committee', name: 'Comité' },
+  { id: 'sponsors', name: 'Sponsors' },
   { id: 'events', name: 'Événements' },
   { id: 'services', name: 'Services' },
+  { id: 'gallery', name: 'Galerie' },
   { id: 'contact', name: 'Contact' }
 ]
 
@@ -755,23 +729,35 @@ const scrollToSection = (sectionId) => {
 }
 
 const handleScroll = () => {
-  const scrollY = window.scrollY
-  isScrolled.value = scrollY > 100
+  // Throttling pour éviter les appels trop fréquents
+  if (scrollTimeout) return
+  
+  scrollTimeout = setTimeout(() => {
+    const scrollY = window.scrollY
+    isScrolled.value = scrollY > 100
 
-  // Détection section active
-  const sectionElements = sections.map(s => ({
-    id: s.id,
-    element: document.getElementById(s.id),
-    offset: document.getElementById(s.id)?.offsetTop || 0
-  }))
+    // Détection section active - optimisée pour éviter les recalculs
+    let currentSectionId = 'hero'
+    
+    for (const section of sections) {
+      const element = document.getElementById(section.id)
+      if (element) {
+        const rect = element.getBoundingClientRect()
+        const elementTop = rect.top + scrollY
+        
+        if (scrollY >= elementTop - 300) {
+          currentSectionId = section.id
+        }
+      }
+    }
 
-  const current = sectionElements
-    .filter(s => s.element && scrollY >= s.offset - 200)
-    .pop()
-
-  if (current) {
-    activeSection.value = current.id
-  }
+    // Mise à jour seulement si la section a changé
+    if (activeSection.value !== currentSectionId) {
+      activeSection.value = currentSectionId
+    }
+    
+    scrollTimeout = null
+  }, 16) // ~60fps
 }
 
 const downloadContract = () => {
