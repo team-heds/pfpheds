@@ -28,6 +28,10 @@ import TermsOfUse from "@/views/home/TermsView.vue";
 import InfoExterne from "@/views/home/InfoExterneView.vue";
 import HistoriquePFP from '@/views/home/HistoryView.vue'
 import DocumentsPFP from '@/views/home/DocumentsView.vue'
+
+// ASSOCIATIONS
+import AlpinPhysioView from '@/views/associations/AlpinPhysioView.vue'
+
 // MEDIA
 import MediaHubPage from '@/views/media/MediaHubPage.vue'
 import ModulesPage from '@/views/media/ModulesPage.vue'
@@ -230,6 +234,9 @@ const routes = [
   { path: '/history', component: HistoriquePFP, name: 'HistoriquePFP', meta: { requiresAuth: true } },
   { path: '/documents', component: DocumentsPFP, name: 'DocumentsPFP', meta: { requiresAuth: true } },
 
+  // ASSOCIATIONS
+  { path: '/alpinphysio', component: AlpinPhysioView, name: 'AlpinPhysio', meta: { requiresAuth: false } },
+
   // Planning / Calendar
   { path: '/home-calendar', component: HomePlanning, name: 'HomeCalendar', meta: { requiresAuth: false } },
   { path: '/calendar', component: HomePlanning, name: 'CalendarHome', meta: { requiresAuth: false } },
@@ -282,12 +289,18 @@ const routes = [
   // ========================================
   // GAMIFICATION ADMIN ROUTES
   // ========================================
-  { path: '/admin/gamification/challenges', component: ChallengeManagementView, name: 'ChallengeManagementView', meta: { requiresAuth: true, requiredRole: ['admin', 'game_master', 'house_coach'] } },
-  { path: '/admin/gamification/quests', component: QuestManagementView, name: 'QuestManagementView', meta: { requiresAuth: true, requiredRole: ['admin', 'game_master', 'house_coach'] } },
+  { path: '/admin/gamification/challenges', component: ChallengeManagementView, name: 'AdminChallengeManagement', meta: { requiresAuth: true, requiredRole: ['admin', 'game_master'] } },
+  { path: '/admin/gamification/quests', component: QuestManagementView, name: 'AdminQuestManagement', meta: { requiresAuth: true, requiredRole: ['admin', 'game_master'] } },
   { path: '/admin/gamification/badges', component: BadgeManagementView, name: 'BadgeManagementView', meta: { requiresAuth: true, requiredRole: ['admin', 'game_master'] } },
   { path: '/admin/gamification/users', component: UserManagementView, name: 'UserManagementView', meta: { requiresAuth: true, requiredRole: ['admin', 'game_master'] } },
   { path: '/admin/gamification/houses', component: HouseManagementView, name: 'HouseManagementView', meta: { requiresAuth: true, requiredRole: ['admin', 'game_master', 'house_coach'] } },
   { path: '/admin/gamification/analytics', component: AnalyticsDashboardView, name: 'AnalyticsDashboardView', meta: { requiresAuth: true, requiredRole: ['admin', 'game_master', 'professor'] } },
+
+  // ========================================
+  // GAMIFICATION CREATION ROUTES (PUBLIC)
+  // ========================================
+  { path: '/create-challenge', component: ChallengeManagementView, name: 'CreateChallenge', meta: { requiresAuth: true } },
+  { path: '/create-quest', component: QuestManagementView, name: 'CreateQuest', meta: { requiresAuth: true } },
 
   // ========================================
   // SOCIAL & COMMUNICATION

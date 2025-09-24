@@ -17,6 +17,8 @@
       <PwaInstallPrompt />
       <!-- Intégration du widget ConvAI -->
       <ConvaiWidget />
+      <!-- Centre de notifications gamification -->
+      <GamificationNotification />
     </div>
 
     <!-- Loader
@@ -27,23 +29,24 @@
 <script>
 import Toast from 'primevue/toast';
 import ConfirmDialog from 'primevue/confirmdialog';
-import ConvaiWidget from '@/components/ui/ConvaiWidget.vue'
-import TheNavbar from '@/components/TheNavbar.vue';
+import ConvaiWidget from '@/components/ui/ConvaiWidget.vue';
 import Loader from '@/components/common/utils/Loader.vue'; // Import du composant Loader
 import VersionningComponent from './components/common/utils/VersionningComponent.vue'; // Import du nouveau composant
 import MobileBottomNav from '@/components/common/utils/MobileBottomNav.vue';
 import PwaInstallPrompt from '@/components/common/utils/PwaInstallPrompt.vue';
+import GamificationNotification from '@/components/gamification/notifications/GamificationNotification.vue';
+import notificationService from '@/service/notificationService';
 
 export default {
   name: "App",
   components: {
-    TheNavbar,
     Toast,
     ConfirmDialog,
     ConvaiWidget,
     VersionningComponent,
     MobileBottomNav,
     PwaInstallPrompt,
+    GamificationNotification,
   },
   data() {
     return {
@@ -87,6 +90,9 @@ export default {
     if (this.$route.name === 'LoginHome') {
       this.showMobileBottomNav = false;
     }
+    
+    // Le service de notifications est déjà initialisé automatiquement
+    // via l'instance singleton dans notificationService.js
   },
 };
 </script>

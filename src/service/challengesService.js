@@ -1,5 +1,6 @@
 import { ref as dbRef, get, set, update, push } from 'firebase/database'
 import { db } from '../../firebase'
+import notificationService from './notificationService.js'
 
 // ========================================
 // CONFIGURATION DES DÉFIS HEBDOMADAIRES
@@ -244,7 +245,7 @@ export function generateWeeklyChallenges() {
 export async function getUserActiveChallenges(userId) {
   try {
     const currentWeek = getCurrentWeekNumber()
-    const challengesRef = dbRef(db, `users/${userId}/gamification/challenges/week_${currentWeek}`)
+    const challengesRef = dbRef(db, `Users/${userId}/gamification/challenges/week_${currentWeek}`)
     const snapshot = await get(challengesRef)
     
     if (snapshot.exists()) {
@@ -269,7 +270,7 @@ export async function getUserActiveChallenges(userId) {
 export async function initializeUserWeeklyChallenges(userId, challenges) {
   try {
     const currentWeek = getCurrentWeekNumber()
-    const challengesRef = dbRef(db, `users/${userId}/gamification/challenges/week_${currentWeek}`)
+    const challengesRef = dbRef(db, `Users/${userId}/gamification/challenges/week_${currentWeek}`)
     
     const challengesData = {}
     challenges.forEach(challenge => {
@@ -292,7 +293,7 @@ export async function initializeUserWeeklyChallenges(userId, challenges) {
 export async function updateChallengeProgress(userId, challengeType, increment = 1, context = {}) {
   try {
     const currentWeek = getCurrentWeekNumber()
-    const challengesRef = dbRef(db, `users/${userId}/gamification/challenges/week_${currentWeek}`)
+    const challengesRef = dbRef(db, `Users/${userId}/gamification/challenges/week_${currentWeek}`)
     const snapshot = await get(challengesRef)
     
     if (!snapshot.exists()) {
@@ -323,10 +324,40 @@ export async function updateChallengeProgress(userId, challengeType, increment =
           
           // Ajouter les récompenses
           await awardChallengeReward(userId, challenge)
+
+          // Déclencher notification pour le défi complété
+          try {
+            await notificationService.createNotification(userId, {
+              type: 'challenge',
+              title: 'Défi Relevé !',
+              message: `Défi "${challenge.name}" terminé !`,
+              data: { 
+                challengeId: challengeId, 
+                challengeName: challenge.name,
+                challengeType: challenge.type,
+                reward: challenge.reward,
+                xpReward: challenge.reward?.xp || 0
+              }
+            })
+          } catch (notificationError) {
+            console.warn('Erreur lors de l\'envoi de la notification défi:', notificationError)
+          }
+
+          // Vérifier et débloquer automatiquement les badges liés aux défis
+          try {
+            const badgesService = await import('./badgesService')
+            const actionBadges = await badgesService.default.checkAndUnlockActionBadges(userId, 'CHALLENGE_COMPLETED', {})
+            if (actionBadges.length > 0) {
+              console.log(`🏆 ${actionBadges.length} badge(s) débloqué(s) après complétion de défi:`, 
+                actionBadges.map(b => b.name).join(', '))
+            }
+          } catch (badgeError) {
+            console.warn('Erreur lors de la vérification des badges défi:', badgeError)
+          }
         }
         
         // Mettre à jour dans Firebase
-        const challengeRef = dbRef(db, `users/${userId}/gamification/challenges/week_${currentWeek}/${challengeId}`)
+        const challengeRef = dbRef(db, `Users/${userId}/gamification/challenges/week_${currentWeek}/${challengeId}`)
         await update(challengeRef, {
           progress: challenge.progress,
           completed: challenge.completed,
@@ -349,7 +380,7 @@ export async function updateChallengeProgress(userId, challengeType, increment =
  */
 export async function awardChallengeReward(userId, challenge) {
   try {
-    const userRef = dbRef(db, `users/${userId}/gamification`)
+    const userRef = dbRef(db, `Users/${userId}/gamification`)
     const snapshot = await get(userRef)
     const userData = snapshot.val() || {}
     
@@ -375,7 +406,7 @@ export async function awardChallengeReward(userId, challenge) {
     }
     
     // Enregistrer dans l'historique
-    const historyRef = dbRef(db, `users/${userId}/gamification/challengeHistory`)
+    const historyRef = dbRef(db, `Users/${userId}/gamification/challengeHistory`)
     await push(historyRef, {
       challengeId: challenge.id,
       challengeName: challenge.name,
@@ -397,7 +428,7 @@ export async function awardChallengeReward(userId, challenge) {
  */
 export async function getUserChallengeHistory(userId, limit = 20) {
   try {
-    const historyRef = dbRef(db, `users/${userId}/gamification/challengeHistory`)
+    const historyRef = dbRef(db, `Users/${userId}/gamification/challengeHistory`)
     const snapshot = await get(historyRef)
     
     if (snapshot.exists()) {
@@ -518,7 +549,7 @@ function getWeekEndDate() {
 export async function checkAndResetWeeklyChallenges(userId) {
   try {
     const currentWeek = getCurrentWeekNumber()
-    const userRef = dbRef(db, `users/${userId}/gamification/lastChallengeWeek`)
+    const userRef = dbRef(db, `Users/${userId}/gamification/lastChallengeWeek`)
     const snapshot = await get(userRef)
     
     const lastWeek = snapshot.val()

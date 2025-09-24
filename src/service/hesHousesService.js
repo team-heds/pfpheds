@@ -3,8 +3,9 @@
  * Gère les maisons Harmonis, Elaris, Doloris et Solencia
  */
 
-import { getDatabase, ref as dbRef, get, update, set, push } from 'firebase/database'
+import { ref as dbRef, get, update, set, push } from 'firebase/database'
 import { db } from '../../firebase' // Chemin corrigé
+import notificationService from './notificationService.js'
 
 // Configuration des niveaux et XP - Système à 20 niveaux (Reset annuel)
 export const LEVEL_CONFIG = {
@@ -143,7 +144,7 @@ export async function saveUserHouse(userId, houseName) {
       throw new Error('Maison invalide')
     }
 
-    const userRef = dbRef(getDatabase(), `Users/${userId}`)
+    const userRef = dbRef(db, `Users/${userId}`)
     await update(userRef, {
       'gamification/maison': houseName.toLowerCase(),
       'gamification/niveau': 1,
@@ -172,7 +173,7 @@ export async function saveUserHouse(userId, houseName) {
  */
 export async function getUserHouse(userId) {
   try {
-    const userRef = dbRef(getDatabase(), `Users/${userId}/gamification`)
+    const userRef = dbRef(db, `Users/${userId}/gamification`)
     const snapshot = await get(userRef)
     const gamificationData = snapshot.val()
     
@@ -216,7 +217,7 @@ export async function userHasHouse(userId) {
  */
 export async function resetUserHouse(userId) {
   try {
-    const userRef = dbRef(getDatabase(), `Users/${userId}/gamification`)
+    const userRef = dbRef(db, `Users/${userId}/gamification`)
     await update(userRef, {
       maison: null,
       niveau: 1,
@@ -273,7 +274,7 @@ export function calculateHouseFromAnswers(answers) {
  */
 export async function getHouseStatistics() {
   try {
-    const usersRef = dbRef(getDatabase(), 'Users')
+    const usersRef = dbRef(db, 'Users')
     const snapshot = await get(usersRef)
     const users = snapshot.val() || {}
     
@@ -375,16 +376,18 @@ export function calculateHouseLevel(totalHouseXP) {
  */
 export async function addUserXP(userId, action, customXP = null) {
   try {
-    const userRef = dbRef(getDatabase(), `Users/${userId}/gamification`)
+    const userRef = dbRef(db, `Users/${userId}/gamification`)
     const snapshot = await get(userRef)
     const currentData = snapshot.val() || {}
     
     // Calculer l'XP à ajouter
     const xpToAdd = customXP || XP_ACTIONS[action]?.xp || 0
     const newTotalXP = (currentData.totalXP || 0) + xpToAdd
+    const previousLevel = currentData.niveau || 1
     
     // Calculer le nouveau niveau
     const levelInfo = calculateLevel(newTotalXP)
+    const hasLeveledUp = levelInfo.niveau > previousLevel
     
     // Préparer les nouvelles données
     const newData = {
@@ -405,7 +408,7 @@ export async function addUserXP(userId, action, customXP = null) {
     await update(userRef, newData)
     
     // Ajouter à l'historique XP
-    const historyRef = dbRef(getDatabase(), `Users/${userId}/gamification/xpHistory`)
+    const historyRef = dbRef(db, `Users/${userId}/gamification/xpHistory`)
     await push(historyRef, {
       amount: xpToAdd,
       action: action,
@@ -413,6 +416,40 @@ export async function addUserXP(userId, action, customXP = null) {
       timestamp: new Date().toISOString(),
       totalXPAfter: newTotalXP
     })
+
+    // Déclencher les notifications gamification
+    try {
+      // Notification pour le gain d'XP
+      if (xpToAdd > 0) {
+        await notificationService.createNotification(userId, {
+          type: 'xp',
+          title: 'XP Gagné !',
+          message: `+${xpToAdd} XP`,
+          data: { 
+            xp: xpToAdd, 
+            source: XP_ACTIONS[action]?.description || action,
+            totalXP: newTotalXP
+          }
+        })
+      }
+
+      // Notification pour la montée de niveau
+      if (hasLeveledUp) {
+        const levelName = LEVEL_CONFIG[levelInfo.niveau]?.name || `Niveau ${levelInfo.niveau}`
+        await notificationService.createNotification(userId, {
+          type: 'level_up',
+          title: 'Niveau Supérieur !',
+          message: `Félicitations ! Vous êtes maintenant ${levelName}`,
+          data: { 
+            level: levelInfo.niveau, 
+            previousLevel: previousLevel,
+            levelName: levelName
+          }
+        })
+      }
+    } catch (notificationError) {
+      console.warn('Erreur lors de l\'envoi des notifications:', notificationError)
+    }
     
     // Vérifier et débloquer automatiquement les badges
     try {
@@ -424,10 +461,16 @@ export async function addUserXP(userId, action, customXP = null) {
         stats: currentData.stats || {}
       }
       
-      const newBadges = await badgesService.default.autoCheckAndUnlockBadges(userId, userStats)
-      if (newBadges.length > 0) {
-        console.log(`🏆 ${newBadges.length} nouveau(x) badge(s) débloqué(s) pour ${userId}:`, 
-          newBadges.map(b => b.name).join(', '))
+      // Vérification des badges basés sur l'action spécifique
+      const actionBadges = await badgesService.default.checkAndUnlockActionBadges(userId, action, { userStats })
+      
+      // Vérification générale des badges
+      const generalBadges = await badgesService.default.autoCheckAndUnlockBadges(userId, userStats)
+      
+      const allNewBadges = [...actionBadges, ...generalBadges]
+      if (allNewBadges.length > 0) {
+        console.log(`🏆 ${allNewBadges.length} nouveau(x) badge(s) débloqué(s) pour ${userId}:`, 
+          allNewBadges.map(b => b.name).join(', '))
       }
     } catch (badgeError) {
       console.warn('Erreur lors de la vérification des badges:', badgeError)
@@ -552,7 +595,7 @@ export async function addUserXP(userId, action, customXP = null) {
  */
 export async function getUserGamificationData(userId) {
   try {
-    const userRef = dbRef(getDatabase(), `Users/${userId}/gamification`)
+    const userRef = dbRef(db, `Users/${userId}/gamification`)
     const snapshot = await get(userRef)
     const data = snapshot.val()
     
@@ -615,7 +658,7 @@ export async function initializeUserGamification(userId, houseName) {
       }
     }
     
-    const userRef = dbRef(getDatabase(), `Users/${userId}/gamification`)
+    const userRef = dbRef(db, `Users/${userId}/gamification`)
     await set(userRef, initialData)
     
     // Ajouter l'XP pour avoir terminé le quiz
@@ -635,7 +678,7 @@ export async function initializeUserGamification(userId, houseName) {
  */
 export async function updateLoginStreak(userId) {
   try {
-    const userRef = dbRef(getDatabase(), `Users/${userId}/gamification`)
+    const userRef = dbRef(db, `Users/${userId}/gamification`)
     const snapshot = await get(userRef)
     const data = snapshot.val()
     
@@ -704,7 +747,7 @@ export async function updateLoginStreak(userId) {
  */
 export async function getHouseDetailedStats(houseName) {
   try {
-    const usersRef = dbRef(getDatabase(), 'Users')
+    const usersRef = dbRef(db, 'Users')
     const snapshot = await get(usersRef)
     const users = snapshot.val() || {}
     
@@ -838,7 +881,7 @@ export async function getHousesRanking() {
 export async function updateGlobalHouseStats() {
   try {
     const ranking = await getHousesRanking()
-    const globalStatsRef = dbRef(getDatabase(), 'globalStats/houses')
+    const globalStatsRef = dbRef(db, 'globalStats/houses')
     
     const statsToSave = {
       ranking: ranking.ranking,
@@ -861,7 +904,7 @@ export async function updateGlobalHouseStats() {
  */
 export async function getUserGamificationStats(userId) {
   try {
-    const userRef = dbRef(getDatabase(), `Users/${userId}`)
+    const userRef = dbRef(db, `Users/${userId}`)
     const snapshot = await get(userRef)
     
     if (snapshot.exists()) {

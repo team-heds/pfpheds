@@ -115,6 +115,7 @@ import "primeflex/primeflex.css";
 import '@/assets/styles/mobile-scale.css';
 
 import { useUserStore } from '@/stores/userStore'
+import gamificationIntegration from '@/service/gamificationIntegration'
 
 
 
@@ -138,8 +139,21 @@ const userState = reactive({
 
 // Écouter les changements d'état d'authentification
 const auth = getAuth();
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
   userState.user = user;
+  
+  // NOUVEAU : Déclencher l'intégration gamification lors de la connexion
+  if (user) {
+    try {
+      await gamificationIntegration.onLogin(user.uid, {
+        loginTime: Date.now(),
+        loginMethod: 'firebase_auth',
+        deviceType: window.innerWidth <= 768 ? 'mobile' : 'desktop'
+      });
+    } catch (error) {
+      console.error('Erreur lors du déclenchement gamification à la connexion:', error);
+    }
+  }
 });
 
 // Créer un plugin simple pour fournir l'état de l'utilisateur à toute l'application

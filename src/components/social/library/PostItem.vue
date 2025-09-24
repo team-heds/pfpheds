@@ -180,6 +180,7 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { usePostsStore } from '@/stores/postsStore';
 import { useAuthStore } from '@/stores/authStore'; // Assurez-vous que ce store existe et expose l'utilisateur
 import Textarea from 'primevue/textarea';
+import gamificationIntegration from '@/service/gamificationIntegration';
 
 const props = defineProps({
   post: {
@@ -221,36 +222,87 @@ const topLevelReplies = computed(() => {
 const submitReply = async () => {
   if (!replyContent.value.trim() || !currentUser.value) return;
 
-  const newReply = {
-    content: replyContent.value,
-    author_id: currentUser.value.id,
-    parent_id: props.post.id,
-  };
+  try {
+    const newReply = {
+      content: replyContent.value,
+      author_id: currentUser.value.id,
+      parent_id: props.post.id,
+    };
 
-  await postsStore.createPost(newReply);
-  replyContent.value = '';
+    await postsStore.createPost(newReply);
+    
+    // NOUVEAU : Déclencher l'intégration gamification pour commentaire
+    await gamificationIntegration.onSocialInteraction(currentUser.value.uid, {
+      action: 'comment',
+      targetType: 'post',
+      targetId: props.post.id,
+      targetAuthorId: props.post.IdUser,
+      commentLength: replyContent.value.length,
+      timestamp: Date.now()
+    });
+    
+    replyContent.value = '';
+  } catch (error) {
+    console.error('Erreur lors de la création du commentaire:', error);
+  }
 };
 
 const submitReplyTo = async (parentReplyId) => {
   if (!replyToContent.value.trim() || !currentUser.value) return;
 
-  const newReply = {
-    content: replyToContent.value,
-    author_id: currentUser.value.id,
-    parent_id: parentReplyId, // Répondre à un commentaire, pas au post principal
-  };
+  try {
+    const newReply = {
+      content: replyToContent.value,
+      author_id: currentUser.value.id,
+      parent_id: parentReplyId, // Répondre à un commentaire, pas au post principal
+    };
 
-  await postsStore.createPost(newReply);
-  replyToContent.value = '';
-  replyToId.value = null;
+    await postsStore.createPost(newReply);
+    
+    // NOUVEAU : Déclencher l'intégration gamification pour réponse à commentaire
+    await gamificationIntegration.onSocialInteraction(currentUser.value.uid, {
+      action: 'reply',
+      targetType: 'comment',
+      targetId: parentReplyId,
+      originalPostId: props.post.id,
+      commentLength: replyToContent.value.length,
+      timestamp: Date.now()
+    });
+    
+    replyToContent.value = '';
+    replyToId.value = null;
+  } catch (error) {
+    console.error('Erreur lors de la création de la réponse:', error);
+  }
 };
 
-const toggleLike = () => {
+const toggleLike = async () => {
   if (!currentUser.value) return alert('Vous devez être connecté pour liker.');
-  // TODO: Implémenter l'action 'toggleLike' dans le postsStore et l'API backend.
-  console.log(`Toggling like for post ${props.post.id}`);
-  // postsStore.toggleLike(props.post.id);
-  isLiked.value = !isLiked.value; // Optimistic update
+  
+  try {
+    // TODO: Implémenter l'action 'toggleLike' dans le postsStore et l'API backend.
+    console.log(`Toggling like for post ${props.post.id}`);
+    // postsStore.toggleLike(props.post.id);
+    
+    const wasLiked = isLiked.value;
+    isLiked.value = !isLiked.value; // Optimistic update
+    
+    // NOUVEAU : Déclencher l'intégration gamification pour like
+    if (!wasLiked) { // Seulement si c'est un nouveau like (pas un unlike)
+      await gamificationIntegration.onSocialInteraction(currentUser.value.uid, {
+        action: 'like',
+        targetType: 'post',
+        targetId: props.post.id,
+        targetAuthorId: props.post.IdUser,
+        timestamp: Date.now()
+      });
+    }
+    
+  } catch (error) {
+    console.error('Erreur lors du like:', error);
+    // Revert optimistic update en cas d'erreur
+    isLiked.value = !isLiked.value;
+  }
 };
 
 const formatTimestamp = (timestamp) => {

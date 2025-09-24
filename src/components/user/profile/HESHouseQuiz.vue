@@ -99,6 +99,7 @@ import { getAuth } from 'firebase/auth'
 import { getDatabase, ref as dbRef, get, update } from "firebase/database"
 import { useToast } from 'primevue/usetoast'
 import { initializeUserGamification, addUserXP } from '@/service/hesHousesService'
+import gamificationIntegration from '@/service/gamificationIntegration'
 
 const router = useRouter()
 const toast = useToast()
@@ -373,6 +374,14 @@ const saveHouseSelection = async () => {
 
     // Utiliser le nouveau service de gamification pour initialiser l'utilisateur
     await initializeUserGamification(userId, selectedHouse.value.name)
+
+    // NOUVEAU : Déclencher l'intégration gamification pour quiz terminé
+    await gamificationIntegration.onQuizComplete(userId, {
+      house: selectedHouse.value.name.toLowerCase(),
+      quizType: 'house_selection',
+      questionsAnswered: questions.value.length,
+      timestamp: Date.now()
+    })
 
     toast.add({
       severity: 'success',

@@ -7,21 +7,21 @@
         <div class="card">
           <!-- Breadcrumb -->
           <div class="flex align-items-center gap-2 mb-4 text-sm text-600">
-            <router-link to="/admin" class="flex align-items-center gap-1 text-600 no-underline hover:text-primary transition-colors">
+            <router-link to="/" class="flex align-items-center gap-1 text-600 no-underline hover:text-primary transition-colors">
               <i class="pi pi-home"></i>
-              <span>Dashboard</span>
+              <span>Accueil</span>
             </router-link>
             <i class="pi pi-angle-right text-300 text-xs"></i>
-            <span class="text-900 font-medium">Gestion des Défis</span>
+            <span class="text-900 font-medium">Créer un Défi</span>
           </div>
           
           <!-- Titre et description -->
           <div class="flex align-items-center gap-3 mb-3">
             <i class="pi pi-trophy text-orange-500 text-3xl"></i>
-            <h1 class="text-3xl font-bold text-900 m-0">Gestion des Défis</h1>
+            <h1 class="text-3xl font-bold text-900 m-0">Créer un Défi</h1>
           </div>
           <p class="text-600 text-lg line-height-3 m-0">
-            Créez, modifiez et gérez les défis de gamification pour motiver vos étudiants.
+            Créez et partagez des défis de gamification pour motiver la communauté.
           </p>
         </div>
       </div>
@@ -36,19 +36,7 @@
 
 <script setup>
 import ChallengeManagement from '@/components/admin/ChallengeManagement.vue'
-import { onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import rolesService, { PERMISSIONS } from '@/service/rolesService'
 import Navbar from '@/components/common/utils/Navbar.vue'
-
-const router = useRouter()
-
-// Vérification des permissions au montage
-onMounted(() => {
-  if (!rolesService.hasPermission(PERMISSIONS.VIEW_CHALLENGES)) {
-    router.push('/admin')
-  }
-})
 </script>
 
 <style scoped>

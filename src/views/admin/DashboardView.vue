@@ -330,6 +330,10 @@ import { getAuth } from 'firebase/auth';
 import AppSidebar from '@/layout/AppSidebar.vue'
 import adminService from '../../service/adminService';
 import rolesService, { ROLES, PERMISSIONS } from '../../service/rolesService';
+import gamificationAdminService from '../../service/gamificationAdminService';
+import GamificationStatsWidget from '@/components/gamification/widgets/GamificationStatsWidget.vue';
+import GamificationActivityWidget from '@/components/gamification/widgets/GamificationActivityWidget.vue';
+import UserGamificationWidget from '@/components/gamification/widgets/UserGamificationWidget.vue';
 
 const { layoutConfig } = useLayout();
 const router = useRouter();
@@ -604,20 +608,49 @@ const loadGamificationData = async () => {
     if (!auth.currentUser) return;
 
     // Charger les données en parallèle
-    const [statsData, logsData, userRole, permissions] = await Promise.all([
-      adminService.getGeneralStats(),
-      rolesService.getAdminLogs(10),
+    const [realGamificationData, userRole, permissions] = await Promise.all([
+      gamificationAdminService.getGamificationStats(),
       rolesService.getUserRole(auth.currentUser.uid),
       rolesService.getUserPermissions(auth.currentUser.uid)
     ]);
 
-    gamificationStats.value = statsData || {};
-    recentGamificationLogs.value = logsData || [];
+    // Utiliser les données réelles de Firebase avec structure appropriée
+    gamificationStats.value = {
+      totalUsers: realGamificationData?.totalUsers || 0,
+      activeChallenges: realGamificationData?.activeChallenges || 0,
+      completedQuests: realGamificationData?.completedQuests || 0,
+      totalBadges: realGamificationData?.totalBadges || 0,
+      houses: realGamificationData?.houses || {}
+    };
+    // Charger les logs récents depuis les données gamification
+    recentGamificationLogs.value = realGamificationData?.recentLogs || [];
+    
+    console.log('[DashboardView] Données gamification chargées:', gamificationStats.value);
     currentUserRole.value = userRole;
     userPermissions.value = permissions;
 
   } catch (error) {
     console.error('Erreur lors du chargement des données gamification:', error);
+    
+    // Fallback avec données par défaut en cas d'erreur
+    gamificationStats.value = {
+      totalUsers: 0,
+      activeChallenges: 0,
+      completedQuests: 0,
+      totalBadges: 0,
+      houses: {}
+    };
+    recentGamificationLogs.value = [];
+    
+    // Garder les rôles et permissions même en cas d'erreur gamification
+    try {
+      if (auth.currentUser) {
+        currentUserRole.value = await rolesService.getUserRole(auth.currentUser.uid);
+        userPermissions.value = await rolesService.getUserPermissions(auth.currentUser.uid);
+      }
+    } catch (roleError) {
+      console.error('Erreur lors du chargement des rôles:', roleError);
+    }
   }
 };
 

@@ -85,6 +85,7 @@ import TextAreaComponent from "./TextAreaComponent.vue"; // <-- Import du nouvea
 import CreatePostDialog from '@/components/social/library/CreatePostDialog.vue'
 import { useRouter } from 'vue-router';
 import HeaderIcons from '@/components/common/utils/HeaderIcons.vue'
+import gamificationIntegration from '@/service/gamificationIntegration'
 
 import {
   ref as dbRef,
@@ -240,6 +241,18 @@ export default {
         await set(newPostRef, postData);
 
         console.log("Publication réussie :", postData);
+
+        // NOUVEAU : Déclencher l'intégration gamification pour création de post
+        await gamificationIntegration.onSocialInteraction(localCurrentUser.value.uid, {
+          action: 'post',
+          targetType: 'post',
+          targetId: newPostRef.key,
+          postLength: textWithoutHtml.length,
+          hasMedia: selectedMedia.value.length > 0,
+          hashtagsCount: Object.keys(hashtagsObject).length,
+          mentionsCount: Object.keys(mentionsObject).length,
+          timestamp: Date.now()
+        });
 
         // Réinitialiser les champs après publication
         newPost.value = "";

@@ -114,11 +114,15 @@ jspm_packages/
 .vscode-test
 firebase-to-supabase/
 
-# Archives de déploiement (trop volumineuses pour Git)
-*.zip
-*.tar.gz
-pfpheds-frontend-v*.zip
-pfpheds-frontend-v*.tar.gz
+# Deployment files (large archives)
+temp-deploy/*.tar.gz
+temp-deploy/*.zip
+temp-deploy/*.tar
+temp-deploy/*.rar
+temp-deploy/*.7z
 
-# Dossier temporaire de déploiement
-temp-deploy/
+# Large build artifacts
+*.tar.gz
+*.zip
+dist/*.tar.gz
+build/*.tar.gz
