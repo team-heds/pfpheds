@@ -101,6 +101,10 @@ if (Test-Path "dist") {
 
 # ÉTAPE 3: Transfert vers le VPS
 Write-Info "ÉTAPE 3: Transfert vers le VPS..."
+
+# Extraire seulement le nom du fichier pour le déploiement sur le serveur
+$archiveFileName = Split-Path $archiveName -Leaf
+
 $scpResult = scp -i "C:\Users\antoine.quarroz\Desktop\LabDev\PrivateKey\HEdSLinux.txt" $archiveName ubuntu@83.228.204.5:/tmp/
 if ($LASTEXITCODE -ne 0) { Write-Error "Échec du transfert SCP" }
 Write-Success "Archive transférée vers le VPS"
@@ -122,19 +126,19 @@ sudo mkdir -p /var/www/pfpheds-frontend
 cd /var/www/pfpheds-frontend
 
 # Détecter le type d'archive et extraire en conséquence
-if [[ "$archiveName" == *.tar.gz ]]; then
+if [[ "$archiveFileName" == *.tar.gz ]]; then
     echo '[DEPLOY] Extraction archive tar.gz...'
-    sudo tar -xzf /tmp/$archiveName -C /var/www/pfpheds-frontend/
-elif [[ "$archiveName" == *.zip ]]; then
+    sudo tar -xzf /tmp/$archiveFileName -C /var/www/pfpheds-frontend/
+elif [[ "$archiveFileName" == *.zip ]]; then
     echo '[DEPLOY] Extraction archive ZIP...'
-    cd /tmp && sudo unzip -q $archiveName -d /var/www/pfpheds-frontend/
+    cd /tmp && sudo unzip -q $archiveFileName -d /var/www/pfpheds-frontend/
     echo '[DEPLOY] Correction des chemins Windows si necessaire...'
     if [ -d "/var/www/pfpheds-frontend/dist" ]; then
         sudo mv /var/www/pfpheds-frontend/dist/* /var/www/pfpheds-frontend/ 2>/dev/null || true
         sudo rmdir /var/www/pfpheds-frontend/dist 2>/dev/null || true
     fi
 else
-    echo '[ERROR] Type d archive non reconnu: $archiveName'
+    echo '[ERROR] Type d archive non reconnu: $archiveFileName'
     exit 1
 fi
 
@@ -151,14 +155,14 @@ echo '[DEPLOY] Rechargement de Caddy...'
 sudo docker exec supabase-caddy-1 caddy reload --config /etc/caddy/Caddyfile
 
 echo '[DEPLOY] Nettoyage...'
-rm -f /tmp/$archiveName
+rm -f /tmp/$archiveFileName
 
 echo '[SUCCESS] Deploiement termine - Version $Version active sur https://hedsvs.ch'
 "@
 
 # Écriture du script temporaire et exécution
 $tempScript = "/tmp/deploy-$timestamp.sh"
-$deployScript | ssh -i "C:\Users\antoine.quarroz\Desktop\LabDev\PrivateKey\HEdSLinux.txt" ubuntu@83.228.204.5 "cat > $tempScript && chmod +x $tempScript && bash $tempScript && rm $tempScript"
+$deployScript | ssh -i "C:\Users\antoine.quarroz\Desktop\LabDev\PrivateKey\HEdSLinux.txt" ubuntu@83.228.204.5 "cat > $tempScript && chmod +x $tempScript && archiveFileName='$archiveFileName' Version='$Version' timestamp='$timestamp' bash $tempScript && rm $tempScript"
 
 if ($LASTEXITCODE -eq 0) {
     Write-Success "Déploiement réussi !"
