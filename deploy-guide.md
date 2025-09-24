@@ -6,6 +6,7 @@
 - Domaine configuré (hedsvs.ch)
 - Certificats SSL Let's Encrypt configurés
 - Accès SSH au serveur
+- 
 
 ## 🔧 1. Configuration des Variables d'Environnement
 
