@@ -50,7 +50,14 @@ if (-not $SkipBuild) {
 # ÉTAPE 2: Création de l'archive
 Write-Info "ÉTAPE 2: Création de l'archive de déploiement..."
 $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
-$archiveName = "pfpheds-frontend-v$Version-$timestamp.tar.gz"
+
+# Créer un dossier temporaire pour les archives (évite qu'elles soient commitées)
+$tempDir = "temp-deploy"
+if (-not (Test-Path $tempDir)) {
+    New-Item -ItemType Directory -Path $tempDir | Out-Null
+}
+
+$archiveName = "$tempDir/pfpheds-frontend-v$Version-$timestamp.tar.gz"
 
 if (Test-Path "dist") {
     # Utilisation de tar pour créer une archive compatible Linux
@@ -83,7 +90,7 @@ if (Test-Path "dist") {
         } else {
             # Dernière option: PowerShell avec correction côté serveur
             Write-Warning "Utilisation de PowerShell Compress-Archive (nécessite correction côté serveur)"
-            $archiveName = "pfpheds-frontend-v$Version-$timestamp.zip"
+            $archiveName = "$tempDir/pfpheds-frontend-v$Version-$timestamp.zip"
             Compress-Archive -Path "dist\*" -DestinationPath $archiveName -Force
             Write-Success "Archive ZIP créée: $archiveName (avec correction serveur)"
         }
