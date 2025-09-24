@@ -1,7 +1,7 @@
   import { defineStore } from 'pinia';
-
+ 
   const API_URL = '/api/institutions'; // Using the backend proxy
-
+ 
   export const useInstitutionsStore = defineStore('institutions', {
     state: () => ({
       institutions: [],
@@ -11,16 +11,16 @@
     }),
     getters: {
       getInstitutionById: (state) => (id) => {
-        return state.institutions.find(institution => 
-          institution.InstitutionId === id || 
+        return state.institutions.find(institution =>
+          institution.InstitutionId === id ||
           institution.id === id ||
           institution.InstitutionId === parseInt(id) ||
           institution.id === parseInt(id)
         );
       },
       getInstitutionNameById: (state) => (id) => {
-        const institution = state.institutions.find(institution => 
-          institution.InstitutionId === id || 
+        const institution = state.institutions.find(institution =>
+          institution.InstitutionId === id ||
           institution.id === id ||
           institution.InstitutionId === parseInt(id) ||
           institution.id === parseInt(id)
@@ -56,7 +56,7 @@
           this.loading = false;
         }
       },
-
+ 
       async fetchInstitutionById(id) {
         this.loading = true;
         this.error = null;
@@ -71,7 +71,7 @@
           this.loading = false;
         }
       },
-
+ 
       async createInstitution(institutionData) {
         this.loading = true;
         this.error = null;
@@ -95,7 +95,7 @@
           this.loading = false;
         }
       },
-
+ 
       async updateInstitution(id, institutionData) {
         this.loading = true;
         this.error = null;
@@ -129,7 +129,7 @@
           this.loading = false;
         }
       },
-
+ 
       async deleteInstitution(id) {
         this.loading = true;
         this.error = null;
@@ -151,3 +151,5 @@
       },
     },
   });
+ 
+ 

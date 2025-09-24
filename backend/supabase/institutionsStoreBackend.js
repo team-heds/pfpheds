@@ -1,9 +1,9 @@
 // supabase/institutionsStoreBackend.js
 const { Router } = require('express')
 const supabase = require('../supabaseClient')
-
+ 
 const router = Router()
-
+ 
 // GET all
 router.get('/', async (req, res) => {
   try {
@@ -18,7 +18,7 @@ router.get('/', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' })
   }
 })
-
+ 
 // GET by ID (InstitutionId logique)
 router.get('/:id', async (req, res) => {
   try {
@@ -37,7 +37,7 @@ router.get('/:id', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' })
   }
 })
-
+ 
 // CREATE
 router.post('/', async (req, res) => {
   try {
@@ -56,28 +56,28 @@ router.post('/', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' })
   }
 })
-
+ 
 // UPDATE (PUT) institutions
 router.put('/:id', async (req, res) => {
   try {
     const id = String(req.params.id || '').trim()
     console.log('🔧 PUT institutions for InstitutionId:', id)
-
+ 
     // Build payload from body, but never allow changing the primary key
     const payload = { ...req.body }
     delete payload.InstitutionId
-
+ 
     if (Object.keys(payload).length === 0) {
       return res.status(400).json({ error: 'No updatable fields provided' })
     }
-
+ 
     const { data, error } = await supabase
       .from('institutions')
       .update(payload)
       .eq('InstitutionId', id)
       .select('*')
       .maybeSingle()
-
+ 
     // Handle real errors returned by Supabase
     const hasRealError = !!(error && (error.message || error.code))
     if (hasRealError) {
@@ -87,7 +87,7 @@ router.put('/:id', async (req, res) => {
         code: error.code || null
       })
     }
-
+ 
     // Not found
     if (!data) {
       // Double-check existence
@@ -100,15 +100,15 @@ router.put('/:id', async (req, res) => {
       // If exists but nothing returned, send current state
       return res.json(chk.data)
     }
-
+ 
     return res.json(data)
   } catch (e) {
     console.error('PUT /api/institutions/:id failed:', e)
     return res.status(500).json({ error: 'Internal Server Error' })
   }
 })
-
-
+ 
+ 
 // DELETE
 router.delete('/:id', async (req, res) => {
   try {
@@ -126,5 +126,7 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' })
   }
 })
-
+ 
 module.exports = router
+ 
+ 

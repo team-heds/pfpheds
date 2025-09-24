@@ -1,7 +1,7 @@
 <template>
   <div class="admin-scrollable">
     <Navbar />
-
+ 
     <div class="filter-menu">
       <DataTable
         :value="items"
@@ -34,15 +34,15 @@
             </IconField>
           </div>
         </template>
-
+ 
         <template #empty>Aucun praticien trouvé.</template>
         <template #loading>Chargement des données...</template>
-
+ 
         <Column field="nom" header="Nom" style="min-width:12rem" sortable />
         <Column field="prenom" header="Prénom" style="min-width:12rem" sortable />
         <Column field="mail" header="Mail" style="min-width:12rem" sortable />
         <Column field="institution" header="Institution" style="min-width:12rem" sortable />
-
+ 
         <Column header="Action" style="min-width:12rem" class="text-center">
           <template #body="{ data }">
             <Button
@@ -67,13 +67,13 @@
     </div>
   </div>
 </template>
-
+ 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { usePraticiensStore } from '@/stores/praticiensStore'
-
+ 
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import InputText from 'primevue/inputtext'
@@ -82,38 +82,38 @@ import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
 import Navbar from '@/components/common/utils/Navbar.vue'
 import { FilterMatchMode } from 'primevue/api'
-
+ 
 const router = useRouter()
 const store = usePraticiensStore()
-
+ 
 // ✅ on lit bien items + loading depuis le store
 const { items, loading } = storeToRefs(store)
-
+ 
 const filters = ref({
   global: { value: null, matchMode: FilterMatchMode.CONTAINS },
 })
-
+ 
 onMounted(() => {
   store.fetchPraticiens()
 })
-
+ 
 const confirmDelete = async (id) => {
   if (confirm('Êtes-vous sûr de vouloir supprimer ce praticien ?')) {
     await store.deletePraticien(id)
   }
 }
-
+ 
 const goToPraticienFormModif = (id) => {
   // adapte le nom de route selon ton router
   router.push({ name: 'PraticienFormateurFormModif', params: { praticienFormateurId: id } })
 }
-
+ 
 const goToPraticienForm = () => {
   // adapte le nom de route selon ton router
   router.push({ name: 'PraticienForm' })
 }
 </script>
-
+ 
 <style scoped>
 .admin-scrollable {
   overflow-y: auto;
@@ -128,3 +128,5 @@ const goToPraticienForm = () => {
   padding: 20px;
 }
 </style>
+ 
+ 
