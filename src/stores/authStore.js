@@ -111,7 +111,12 @@ export const useAuthStore = defineStore('auth', () => {
     loading.value = true;
     error.value = null;
     try {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: 'https://hedsvs.ch/reset-password'
+      });
+
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(email);
+
       if (resetError) throw resetError;
     } catch (e) {
       error.value = e.message;

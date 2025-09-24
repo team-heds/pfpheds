@@ -7,7 +7,6 @@
 - Certificats SSL Let's Encrypt configurés
 - Accès SSH au serveur
 
-
 ## 🔧 1. Configuration des Variables d'Environnement
 
 ### Créer le fichier .env.production
