@@ -119,3 +119,6 @@ firebase-to-supabase/
 *.tar.gz
 pfpheds-frontend-v*.zip
 pfpheds-frontend-v*.tar.gz
+
+# Dossier temporaire de déploiement
+temp-deploy/
