@@ -51,8 +51,8 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { supabase } from '@/supabase.js'
 import { useToast } from 'primevue/usetoast'
+import { useAuthStore } from '@/stores/authStore'
 import InputText from 'primevue/inputtext'
 import Password from 'primevue/password'
 import Button from 'primevue/button'
@@ -66,21 +66,22 @@ const emailError = ref(false)
 const passwordError = ref(false)
 const router = useRouter()
 const toast = useToast()
+const authStore = useAuthStore()
 
 const submitForm = async () => {
   emailError.value = !email.value || !email.value.includes('@')
   passwordError.value = !password.value
-  if (emailError.value || passwordError.value) return
+  if (emailError.value || passwordError.value) {
+    toast.add({ severity: 'warn', summary: 'Champs invalides', detail: 'Veuillez corriger les erreurs pour continuer.', life: 3000 })
+    return
+  }
   try {
-    const { error } = await supabase.auth.signInWithPassword({ email: email.value, password: password.value })
-    if (error) {
-      toast.add({ severity: 'error', summary: 'Erreur', detail: error.message, life: 4000 })
-    } else {
-      toast.add({ severity: 'success', summary: 'Connexion réussie', detail: 'Bienvenue !', life: 3000 })
-      // router.push('/home') // Décommente si tu veux rediriger
-    }
-  } catch (e) {
-    toast.add({ severity: 'error', summary: 'Erreur', detail: e.message, life: 4000 })
+    await authStore.signInSupabase({ email: email.value, password: password.value })
+    toast.add({ severity: 'success', summary: 'Connexion réussie', detail: 'Bienvenue ! Redirection en cours...', life: 3000 })
+    setTimeout(() => router.push('/feed'), 1500)
+  } catch (error) {
+    console.error('Supabase login error:', error)
+    toast.add({ severity: 'error', summary: 'Erreur de connexion', detail: error.message || 'Une erreur est survenue.', life: 4000 })
   }
 }
 
@@ -91,15 +92,11 @@ const resetPassword = async () => {
     return
   }
   try {
-    const { error } = await supabase.auth.resetPasswordForEmail(email.value)
-    console.log('resetPasswordForEmail error:', error)
-    if (error) {
-      toast.add({ severity: 'error', summary: 'Erreur', detail: error.message, life: 4000 })
-    } else {
-      toast.add({ severity: 'success', summary: 'Email envoyé', detail: 'Un lien de réinitialisation a été envoyé à votre adresse email.', life: 4000 })
-    }
-  } catch (e) {
-    toast.add({ severity: 'error', summary: 'Erreur', detail: e.message, life: 4000 })
+    await authStore.resetPasswordSupabase(email.value)
+    toast.add({ severity: 'success', summary: 'Email envoyé', detail: 'Un lien de réinitialisation a été envoyé à votre adresse email.', life: 4000 })
+  } catch (error) {
+    console.error('Supabase reset password error:', error)
+    toast.add({ severity: 'error', summary: 'Erreur', detail: error.message || 'Erreur lors de l\'envoi de l\'email.', life: 4000 })
   }
 }
 </script>

@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { supabase } from '@/supabase'; // Assurez-vous que ce chemin est correct
+import { supabase } from '@/supabase';
+import { auth } from '@/firebase'; // Import Firebase auth
+import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 
 export const useAuthStore = defineStore('auth', () => {
   // State
@@ -8,30 +10,85 @@ export const useAuthStore = defineStore('auth', () => {
   const session = ref(null);
   const loading = ref(false);
   const error = ref(null);
+  const authProvider = ref(null); // 'firebase' ou 'supabase'
 
   // Getters
   const isLoggedIn = computed(() => !!user.value);
+  const isFirebaseUser = computed(() => authProvider.value === 'firebase');
+  const isSupabaseUser = computed(() => authProvider.value === 'supabase');
 
-  // Actions
-  async function signUp(credentials) {
+  // Actions Firebase
+  async function signUpFirebase(credentials) {
     loading.value = true;
     error.value = null;
     try {
-      const { data, error: signUpError } = await supabase.auth.signUp(credentials);
-      if (signUpError) throw signUpError;
-      // L'utilisateur est créé, mais la session peut ne pas être active avant la confirmation de l'email
-      user.value = data.user;
-      session.value = data.session;
-      return data;
+      const userCredential = await createUserWithEmailAndPassword(auth, credentials.email, credentials.password);
+      user.value = userCredential.user;
+      authProvider.value = 'firebase';
+      session.value = null;
+      return userCredential;
     } catch (e) {
       error.value = e.message;
-      console.error('Sign up error:', e.message);
+      console.error('Firebase sign up error:', e.message);
+      throw e;
     } finally {
       loading.value = false;
     }
   }
 
-  async function signIn(credentials) {
+  async function signInFirebase(credentials) {
+    loading.value = true;
+    error.value = null;
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, credentials.email, credentials.password);
+      user.value = userCredential.user;
+      authProvider.value = 'firebase';
+      session.value = null;
+      return userCredential;
+    } catch (e) {
+      error.value = e.message;
+      console.error('Firebase sign in error:', e.message);
+      throw e;
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  async function resetPasswordFirebase(email) {
+    loading.value = true;
+    error.value = null;
+    try {
+      await sendPasswordResetEmail(auth, email);
+    } catch (e) {
+      error.value = e.message;
+      console.error('Firebase reset password error:', e.message);
+      throw e;
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  // Actions Supabase
+  async function signUpSupabase(credentials) {
+    loading.value = true;
+    error.value = null;
+    try {
+      const { data, error: signUpError } = await supabase.auth.signUp(credentials);
+      if (signUpError) throw signUpError;
+      user.value = data.user;
+      session.value = data.session;
+      authProvider.value = 'supabase';
+      return data;
+    } catch (e) {
+      error.value = e.message;
+      console.error('Supabase sign up error:', e.message);
+      throw e;
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  async function signInSupabase(credentials) {
     loading.value = true;
     error.value = null;
     try {
@@ -39,9 +96,29 @@ export const useAuthStore = defineStore('auth', () => {
       if (signInError) throw signInError;
       user.value = data.user;
       session.value = data.session;
+      authProvider.value = 'supabase';
+      return data;
     } catch (e) {
       error.value = e.message;
-      console.error('Sign in error:', e.message);
+      console.error('Supabase sign in error:', e.message);
+      throw e;
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  async function resetPasswordSupabase(email) {
+    loading.value = true;
+    error.value = null;
+    try {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: 'https://hedsvs.ch/reset-password'
+      });
+      if (resetError) throw resetError;
+    } catch (e) {
+      error.value = e.message;
+      console.error('Supabase reset password error:', e.message);
+      throw e;
     } finally {
       loading.value = false;
     }
@@ -51,10 +128,15 @@ export const useAuthStore = defineStore('auth', () => {
     loading.value = true;
     error.value = null;
     try {
-      const { error: signOutError } = await supabase.auth.signOut();
-      if (signOutError) throw signOutError;
+      if (authProvider.value === 'supabase') {
+        const { error: signOutError } = await supabase.auth.signOut();
+        if (signOutError) throw signOutError;
+      } else if (authProvider.value === 'firebase') {
+        await auth.signOut();
+      }
       user.value = null;
       session.value = null;
+      authProvider.value = null;
     } catch (e) {
       error.value = e.message;
       console.error('Sign out error:', e.message);
@@ -63,15 +145,88 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  async function fetchUser() {
+  async function checkAuthState() {
+    console.log('🔍 Vérification de l\'état d\'authentification...');
+
+    // Vérifier Firebase avec une promesse pour attendre la restauration de session
+    const firebaseUser = await new Promise((resolve) => {
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        unsubscribe();
+        resolve(user);
+      });
+    });
+
+    if (firebaseUser) {
+      console.log('✅ Utilisateur Firebase trouvé:', firebaseUser.email);
+      user.value = firebaseUser;
+      authProvider.value = 'firebase';
+      session.value = null;
+      return;
+    }
+
+    // Vérifier Supabase
     const { data } = await supabase.auth.getUser();
-    user.value = data.user;
+    if (data.user) {
+      console.log('✅ Utilisateur Supabase trouvé:', data.user.email);
+      user.value = data.user;
+      authProvider.value = 'supabase';
+      const { data: sessionData } = await supabase.auth.getSession();
+      session.value = sessionData.session;
+      return;
+    }
+
+    console.log('❌ Aucun utilisateur connecté trouvé');
+    user.value = null;
+    authProvider.value = null;
+    session.value = null;
   }
-  
-  // Gérer les changements d'état d'authentification
+
+  // Initialisation du store
+  async function initializeAuth() {
+    console.log('🚀 Initialisation du store d\'authentification...');
+    await checkAuthState();
+    console.log('✅ Store d\'authentification initialisé');
+  }
+
+  // Gérer les changements d'état d'authentification pour les deux systèmes
+
+  // Supabase auth state change
   supabase.auth.onAuthStateChange((event, newSession) => {
-    session.value = newSession;
-    user.value = newSession?.user ?? null;
+    console.log('Supabase auth state change:', event, newSession?.user?.email);
+
+    if (event === 'SIGNED_IN' && newSession) {
+      // Ne pas écraser si Firebase est déjà connecté
+      if (authProvider.value !== 'firebase') {
+        session.value = newSession;
+        user.value = newSession.user;
+        authProvider.value = 'supabase';
+      }
+    } else if (event === 'SIGNED_OUT') {
+      if (authProvider.value === 'supabase') {
+        session.value = null;
+        user.value = null;
+        authProvider.value = null;
+      }
+    }
+  });
+
+  // Firebase auth state change
+  onAuthStateChanged(auth, (firebaseUser) => {
+    console.log('Firebase auth state change:', firebaseUser?.email);
+
+    if (firebaseUser) {
+      // Ne pas écraser si Supabase est déjà connecté
+      if (authProvider.value !== 'supabase') {
+        user.value = firebaseUser;
+        authProvider.value = 'firebase';
+        session.value = null; // Firebase n'utilise pas de session comme Supabase
+      }
+    } else {
+      if (authProvider.value === 'firebase') {
+        user.value = null;
+        authProvider.value = null;
+      }
+    }
   });
 
   return {
@@ -79,10 +234,21 @@ export const useAuthStore = defineStore('auth', () => {
     session,
     loading,
     error,
+    authProvider,
     isLoggedIn,
-    signUp,
-    signIn,
+    isFirebaseUser,
+    isSupabaseUser,
+    // Firebase methods
+    signUpFirebase,
+    signInFirebase,
+    resetPasswordFirebase,
+    // Supabase methods
+    signUpSupabase,
+    signInSupabase,
+    resetPasswordSupabase,
+    // Common methods
     signOut,
-    fetchUser,
+    checkAuthState,
+    initializeAuth,
   };
 });

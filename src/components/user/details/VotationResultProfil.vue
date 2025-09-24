@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="pfp-en-cours">
     <h5 class="mb-5">Formation pratique en cours</h5>
     <div v-if="assignedPlaces.length">
@@ -65,8 +65,10 @@ import {
   deleteObject
 } from 'firebase/storage';
 import { useToast } from 'primevue/usetoast';
+import { useInstitutionsStore } from '@/stores/institutionsStore';
 
 const toast = useToast();
+const institutionsStore = useInstitutionsStore();
 
 const props = defineProps({
   userId: { type: String, required: true }
@@ -91,8 +93,9 @@ const fetchVotationData = async () => {
     console.error('Erreur lors de la récupération des données de votation :', error)
   }
 }
-onMounted(() => {
+onMounted(async () => {
   fetchVotationData()
+  await fetchInstitutions() // Charger les institutions depuis le store
 })
 const filteredVotationData = computed(() => {
   const result = {}
@@ -147,8 +150,8 @@ const assignedPlaces = computed(() => {
 
 
 const getInstitutionNameById = (idInstitution) => {
-  const inst = institutions.value[idInstitution];
-  return inst && inst.Name ? inst.Name : 'Institution inconnue';
+  // Utiliser le getter du store Pinia
+  return institutionsStore.getInstitutionNameById(idInstitution);
 };
 
 // Retourne la liste des critères à true pour une place donnée
@@ -215,11 +218,19 @@ const fetchAssignmentsData = () => {
     assignmentsData.value = snapshot.val() || {}
   })
 }
-const fetchInstitutions = () => {
-  const instRef = firebaseRef(db, 'institutions')
-  onValue(instRef, (snapshot) => {
-    institutions.value = snapshot.val() || {}
-  })
+const fetchInstitutions = async () => {
+  try {
+    // Utiliser le store Pinia pour charger les institutions
+    await institutionsStore.fetchInstitutions();
+    console.log('Institutions chargées depuis le store:', institutionsStore.institutions.length);
+  } catch (error) {
+    console.error('Erreur lors du chargement des institutions:', error);
+    // Fallback vers Firebase si le store échoue
+    const instRef = firebaseRef(db, 'institutions')
+    onValue(instRef, (snapshot) => {
+      institutions.value = snapshot.val() || {}
+    })
+  }
 }
 const fetchPlaces = () => {
   const placesRef = firebaseRef(db, 'Places')

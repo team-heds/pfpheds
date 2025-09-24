@@ -3,6 +3,7 @@ import { createPinia } from 'pinia';
 import App from './App.vue';
 import router from './router';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { useAuthStore } from '@/stores/authStore';
 
 import PrimeVue from 'primevue/config';
 import AutoComplete from 'primevue/autocomplete';
@@ -159,6 +160,12 @@ onAuthStateChanged(auth, async (user) => {
 app.provide('userState', userState);
 
 app.mount('#app');
+
+// Initialiser le store d'authentification unifié
+const authStore = useAuthStore();
+authStore.initializeAuth().then(() => {
+  console.log('🎉 Application et authentification initialisées');
+});
 
 const userStore = useUserStore()
 userStore.init()

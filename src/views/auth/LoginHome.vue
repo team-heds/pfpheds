@@ -14,43 +14,51 @@
       <div class="flex flex-column justify-content-center align-items-center w-full lg:w-3 p-4 lg:p-7">
         <h1 class="text-4xl lg:text-6xl text-left mb-4">La formation pratique, clé de votre avenir.</h1>
 
-        <!-- Formulaire de connexion -->
-        <form @submit.prevent="submitForm" class="w-full max-w-25rem">
+        <!-- Sélection du système d'authentification -->
+        <div class="w-full max-w-25rem">
+          <div class="mb-6">
+            <h2 class="text-2xl font-semibold text-center mb-4">Choisissez votre système de connexion</h2>
+            <p class="text-center text-gray-600 mb-6">Sélectionnez la plateforme correspondant à votre promotion</p>
+          </div>
+          
+          <!-- Bouton BA23-24 (Firebase) -->
           <div class="mb-4">
-            <InputText
-              id="email"
-              type="email"
-              v-model="email"
-              placeholder="Email"
-              class="w-full "
-              :class="{ 'p-invalid': emailError }"
-            />
-            <small v-if="emailError" class="p-error">Veuillez entrer une adresse e-mail valide.</small>
+            <Button 
+              @click="navigateToFirebaseLogin" 
+              class="w-full p-button-raised firebase-button flex align-items-center justify-content-center"
+              style="height: 4rem;"
+            >
+              <i class="pi pi-graduation-cap mr-3" style="font-size: 1.5rem;"></i>
+              <div class="text-left">
+                <div class="font-bold text-lg">BA23-24</div>
+                <div class="text-sm opacity-90">Connexion via Firebase</div>
+              </div>
+            </Button>
           </div>
-          <div class="flex flex-column lg:flex-row align-items-center mb-4 ">
-            <Password
-              id="password"
-              placeholder="Mot de passe"
-              v-model="password"
-              class="w-full"
-              inputClass="w-full "
-              :feedback="false"
-              :class="{ 'p-invalid': passwordError }"
-              toggleMask
-            />
-            <small v-if="passwordError" class="p-error">Le mot de passe est requis.</small>
+          
+          <!-- Bouton BA25 (Supabase) -->
+          <div class="mb-4">
+            <Button 
+              @click="navigateToSupabaseLogin" 
+              class="w-full p-button-raised supabase-button flex align-items-center justify-content-center"
+              style="height: 4rem;"
+            >
+              <i class="pi pi-users mr-3" style="font-size: 1.5rem;"></i>
+              <div class="text-left">
+                <div class="font-bold text-lg">BA25</div>
+                <div class="text-sm opacity-90">Connexion via Supabase</div>
+              </div>
+            </Button>
           </div>
-          <div class="flex align-items-center mb-4">
-            <Checkbox v-model="rememberMe" inputId="remember-me" binary class="mr-2" />
-            <label for="remember-me" class="text-sm">Se souvenir de moi</label>
+          
+          <!-- Information supplémentaire -->
+          <div class="mt-6 p-3 bg-blue-50 border-round text-center">
+            <small class="text-blue-800">
+              <i class="pi pi-info-circle mr-1"></i>
+              Choisissez le système correspondant à votre année d'études
+            </small>
           </div>
-          <Button label="Se connecter" type="submit" class="w-full p-button-raised inputcolor" />
-        </form>
-
-        <!-- Lien mot de passe oublié -->
-        <p class="mt-4 text-sm text-center">
-          <a type="button" @click="resetPassword" class="text-primary font-bold hover:underline bg-transparent border-0 cursor-pointer p-0">Mot de passe oublié ?</a>
-        </p>
+        </div>
 
       </div>
     </div>
@@ -59,94 +67,36 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
 import { useRouter } from "vue-router";
-import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { useToast } from "primevue/usetoast";
-import InputText from "primevue/inputtext";
-import Password from "primevue/password";
 import Button from "primevue/button";
-import Checkbox from "primevue/checkbox";
 
 // Variables réactives
-const email = ref("");
-const password = ref("");
-const rememberMe = ref(false);
-const emailError = ref(false);
-const passwordError = ref(false);
 const router = useRouter();
-const auth = getAuth();
 const toast = useToast();
 
-// Méthode pour gérer la soumission du formulaire
-const submitForm = async () => {
-  emailError.value = !email.value || !email.value.includes("@");
-  passwordError.value = !password.value;
-
-  if (emailError.value || passwordError.value) {
-    toast.add({
-      severity: "warn",
-      summary: "Champs invalides",
-      detail: "Veuillez corriger les erreurs pour continuer.",
-      life: 3000,
-    });
-    return;
-  }
-
-  try {
-    await signInWithEmailAndPassword(auth, email.value, password.value);
-    toast.add({
-      severity: "success",
-      summary: "Connexion réussie",
-      detail: "Vous êtes connecté ! Redirection en cours...",
-      life: 3000,
-    });
-    setTimeout(() => router.push("/feed"), 1500);
-  } catch (error) {
-    console.error(error);
-    const messages = {
-      "auth/user-not-found": "Utilisateur introuvable.",
-      "auth/wrong-password": "Mot de passe incorrect.",
-      "auth/invalid-email": "Adresse e-mail invalide.",
-      "auth/user-disabled": "Ce compte est désactivé.",
-    };
-    toast.add({
-      severity: "error",
-      summary: "Erreur de connexion",
-      detail: messages[error.code] || "Une erreur est survenue.",
-      life: 5000,
-    });
-  }
+// Méthode pour naviguer vers la connexion Firebase (BA23-24)
+const navigateToFirebaseLogin = () => {
+  toast.add({
+    severity: "info",
+    summary: "Redirection",
+    detail: "Redirection vers la connexion Firebase (BA23-24)...",
+    life: 2000,
+  });
+  // Rediriger vers la page de login Firebase (actuel LoginView ou créer une nouvelle page)
+  setTimeout(() => router.push("/login"), 1000);
 };
 
-// Méthode pour réinitialiser le mot de passe
-const resetPassword = async () => {
-  emailError.value = !email.value || !email.value.includes("@");
-  if (emailError.value) {
-    toast.add({
-      severity: "warn",
-      summary: "Email requis",
-      detail: "Veuillez entrer votre email pour recevoir un lien de réinitialisation.",
-      life: 3000,
-    });
-    return;
-  }
-  try {
-    await sendPasswordResetEmail(auth, email.value);
-    toast.add({
-      severity: "success",
-      summary: "Email envoyé",
-      detail: "Un lien de réinitialisation a été envoyé à votre adresse email.",
-      life: 4000,
-    });
-  } catch (error) {
-    toast.add({
-      severity: "error",
-      summary: "Erreur",
-      detail: error.message || "Erreur lors de l'envoi de l'email.",
-      life: 4000,
-    });
-  }
+// Méthode pour naviguer vers la connexion Supabase (BA25)
+const navigateToSupabaseLogin = () => {
+  toast.add({
+    severity: "info",
+    summary: "Redirection",
+    detail: "Redirection vers la connexion Supabase (BA25)...",
+    life: 2000,
+  });
+  // Rediriger vers la page de login Supabase
+  setTimeout(() => router.push("/home2"), 1000);
 };
 </script>
 
@@ -162,28 +112,53 @@ const resetPassword = async () => {
   }
 }
 
-.inputcolor {
-  background: linear-gradient(90deg, #F3C300 0%, #D49F3F 100%);
+/* Bouton Firebase (BA23-24) */
+.firebase-button {
+  background: linear-gradient(135deg, #F3C300 0%, #D49F3F 100%);
   color: #222;
   border: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(243, 195, 0, 0.3);
 }
 
-.p-password .p-password-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  position: absolute;
-  right: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-color);
-  font-size: 1.25rem;
-  cursor: pointer;
+.firebase-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(243, 195, 0, 0.4);
 }
 
-.p-error {
-  font-size: 0.875rem;
-  color: var(--red-500);
+/* Bouton Supabase (BA25) */
+.supabase-button {
+  background: linear-gradient(135deg, #3ECF8E 0%, #2DD4BF 100%);
+  color: white;
+  border: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(62, 207, 142, 0.3);
+}
+
+.supabase-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(62, 207, 142, 0.4);
+}
+
+/* Styles généraux pour les boutons */
+.firebase-button, .supabase-button {
+  font-weight: 600;
+  border-radius: 12px;
+}
+
+/* Animation d'entrée */
+.firebase-button, .supabase-button {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>
