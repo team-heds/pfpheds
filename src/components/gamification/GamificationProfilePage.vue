@@ -157,6 +157,9 @@
           </div>
         </div>
 
+        <!-- Outils de création -->
+        <CreationToolsCard :userCreationStats="userCreationStats" />
+
         <!-- Prochaines quêtes / défis -->
         <div class="members-ranking">
           <div class="card-header">
@@ -449,11 +452,13 @@ import { getActiveDefis, subscribeActiveDefis } from '@/service/defisService'
 import badgesService from '@/service/badgesService'
 import challengesService from '@/service/challengesService'
 import questsService from '@/service/questsService'
+import gamificationService from '@/service/gamificationService'
 import Navbar from '@/components/common/utils/Navbar.vue'
 import BadgeCard from '@/components/gamification/BadgeCard.vue'
 import ChallengeCard from '@/components/gamification/ChallengeCard.vue'
 import QuestCard from '@/components/gamification/QuestCard.vue'
 import AchievementNotification from '@/components/gamification/AchievementNotification.vue'
+import CreationToolsCard from '@/components/gamification/CreationToolsCard.vue'
 // Background images per house (align with HouseStatsPage)
 import FondHarmonis from '@/assets/maisons/FondHarmonis.png'
 import FondElaris from '@/assets/maisons/FondElaris.png'
@@ -490,6 +495,13 @@ const activeQuests = ref([])
 const questStats = ref({})
 const showAllQuests = ref(false)
 const questDisplayLimit = ref(3)
+
+// Creation tools stats
+const userCreationStats = ref({
+  questsCreated: 0,
+  challengesCreated: 0,
+  totalEngagement: 0
+})
 
 // House configuration
 const houseConfig = {
@@ -719,13 +731,18 @@ const loadBadgesData = async () => {
   if (!auth.currentUser?.uid) return
   
   try {
-    // Charger tous les badges disponibles depuis la configuration
-    allBadges.value = Object.values(badgesService.BADGES_CONFIG)
+    // Utiliser le service unifié pour charger les badges
+    const [allBadgesData, userBadgesData] = await Promise.all([
+      gamificationService.getAllBadges(),
+      gamificationService.getUserBadges(auth.currentUser.uid)
+    ])
     
-    // Charger les badges de l'utilisateur
-    userBadges.value = await badgesService.getUserBadges(auth.currentUser.uid)
+    allBadges.value = allBadgesData || []
+    userBadges.value = userBadgesData || []
   } catch (error) {
     console.error('Erreur lors du chargement des badges:', error)
+    allBadges.value = []
+    userBadges.value = []
   }
 }
 
@@ -739,13 +756,18 @@ const loadChallengesData = async () => {
   if (!auth.currentUser?.uid) return
   
   try {
-    // Charger les défis actifs
-    activeChallenges.value = await challengesService.getUserActiveChallenges(auth.currentUser.uid)
+    // Utiliser le service unifié pour charger les défis
+    const [challenges, stats] = await Promise.all([
+      gamificationService.getUserChallenges(auth.currentUser.uid),
+      challengesService.getUserChallengeStats(auth.currentUser.uid)
+    ])
     
-    // Charger les statistiques des défis
-    challengeStats.value = await challengesService.getUserChallengeStats(auth.currentUser.uid)
+    activeChallenges.value = challenges || []
+    challengeStats.value = stats || {}
   } catch (error) {
     console.error('Erreur lors du chargement des défis:', error)
+    activeChallenges.value = []
+    challengeStats.value = {}
   }
 }
 
@@ -759,13 +781,18 @@ const loadQuestsData = async () => {
   if (!auth.currentUser?.uid) return
   
   try {
-    // Charger les quêtes actives
-    activeQuests.value = await questsService.getUserActiveQuests(auth.currentUser.uid)
+    // Utiliser le service unifié pour charger les quêtes
+    const [quests, stats] = await Promise.all([
+      gamificationService.getUserQuests(auth.currentUser.uid),
+      questsService.getUserQuestStats(auth.currentUser.uid)
+    ])
     
-    // Charger les statistiques des quêtes
-    questStats.value = await questsService.getUserQuestStats(auth.currentUser.uid)
+    activeQuests.value = quests || []
+    questStats.value = stats || {}
   } catch (error) {
     console.error('Erreur lors du chargement des quêtes:', error)
+    activeQuests.value = []
+    questStats.value = {}
   }
 }
 

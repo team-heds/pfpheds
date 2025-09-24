@@ -18,11 +18,7 @@ class AdminService {
         throw new Error('Utilisateur non authentifié')
       }
       
-      // Vérifier les permissions
-      const hasPermission = await rolesService.hasPermission(currentUser.uid, PERMISSIONS.CREATE_CHALLENGES)
-      if (!hasPermission) {
-        throw new Error('Permissions insuffisantes pour créer des défis')
-      }
+      // Permissions supprimées - accès libre pour tous les utilisateurs authentifiés
       
       // Valider les données
       this.validateChallengeData(challengeData)
@@ -156,11 +152,7 @@ class AdminService {
         throw new Error('Utilisateur non authentifié')
       }
       
-      // Vérifier les permissions
-      const hasPermission = await rolesService.hasPermission(currentUser.uid, PERMISSIONS.CREATE_QUESTS)
-      if (!hasPermission) {
-        throw new Error('Permissions insuffisantes pour créer des quêtes')
-      }
+      // Permissions supprimées - accès libre pour tous les utilisateurs authentifiés
       
       // Valider les données
       this.validateQuestData(questData)
@@ -280,6 +272,33 @@ class AdminService {
       console.error('Erreur lors de la récupération des quêtes:', error)
       return []
     }
+  }
+  
+  // Alias pour compatibilité avec les composants
+  async getQuests() {
+    return this.getAllQuests()
+  }
+  
+  // Obtenir tous les défis pour l'administration
+  async getAllChallenges() {
+    try {
+      const challengesRef = dbRef(db, 'challenges')
+      const snapshot = await get(challengesRef)
+      const challenges = snapshot.val() || {}
+      
+      return Object.entries(challenges).map(([id, challenge]) => ({
+        id,
+        ...challenge
+      })).filter(challenge => challenge.status !== 'deleted')
+    } catch (error) {
+      console.error('Erreur lors de la récupération des défis:', error)
+      return []
+    }
+  }
+  
+  // Alias pour compatibilité avec les composants
+  async getChallenges() {
+    return this.getAllChallenges()
   }
   
   // ==================== GESTION DES BADGES ====================

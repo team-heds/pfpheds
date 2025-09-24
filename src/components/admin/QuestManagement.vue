@@ -6,13 +6,22 @@
         <i class="pi pi-flag text-primary text-2xl"></i>
         <h1 class="text-2xl font-semibold m-0 text-900">Gestion des Quêtes</h1>
       </div>
-      <Button 
-        v-if="canCreateQuests"
-        @click="showCreateDialog = true"
-        icon="pi pi-plus"
-        label="Nouvelle Quête"
-        class="p-button-success"
-      />
+      <div class="flex gap-2">
+        <Button 
+          @click="navigateToPublicCreation"
+          icon="pi pi-external-link"
+          label="Vue Publique"
+          class="p-button-outlined"
+          v-tooltip="'Voir la vue de création publique'"
+        />
+        <Button 
+          v-if="canCreateQuests"
+          @click="showCreateDialog = true"
+          icon="pi pi-plus"
+          label="Nouvelle Quête"
+          class="p-button-success"
+        />
+      </div>
     </div>
 
     <!-- Filtres et recherche -->
@@ -182,6 +191,20 @@
           </div>
           
           <div class="form-group">
+            <label for="difficulty">Difficulté *</label>
+            <Dropdown 
+              id="difficulty"
+              v-model="questForm.difficulty" 
+              :options="difficultyOptions" 
+              optionLabel="label" 
+              optionValue="value"
+              placeholder="Sélectionner"
+              :class="{ 'p-invalid': errors.difficulty }"
+            />
+            <small v-if="errors.difficulty" class="p-error">{{ errors.difficulty }}</small>
+          </div>
+          
+          <div class="form-group">
             <label for="points">Points *</label>
             <InputNumber 
               id="points"
@@ -296,6 +319,7 @@
 <script setup>
 import { ref, computed, onMounted, reactive } from 'vue'
 import { useToast } from 'primevue/usetoast'
+import { useRouter } from 'vue-router'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import InputNumber from 'primevue/inputnumber'
@@ -308,6 +332,7 @@ import adminService from '../../service/adminService'
 import rolesService, { PERMISSIONS } from '../../service/rolesService'
 
 const toast = useToast()
+const router = useRouter()
 
 // État réactif
 const quests = ref([])
@@ -332,6 +357,7 @@ const questForm = reactive({
   title: '',
   description: '',
   type: '',
+  difficulty: 'easy',
   points: 50,
   category: '',
   status: 'active',
@@ -346,6 +372,13 @@ const statusOptions = [
   { label: 'Actif', value: 'active' },
   { label: 'Inactif', value: 'inactive' },
   { label: 'Brouillon', value: 'draft' }
+]
+
+const difficultyOptions = [
+  { label: 'Facile', value: 'easy' },
+  { label: 'Moyen', value: 'medium' },
+  { label: 'Difficile', value: 'hard' },
+  { label: 'Légendaire', value: 'legendary' }
 ]
 
 const typeOptions = [
@@ -411,6 +444,7 @@ const resetForm = () => {
     title: '',
     description: '',
     type: '',
+    difficulty: 'easy',
     points: 50,
     category: '',
     status: 'active',
@@ -433,6 +467,10 @@ const validateForm = () => {
   
   if (!questForm.type) {
     errors.value.type = 'Le type est requis'
+  }
+  
+  if (!questForm.difficulty) {
+    errors.value.difficulty = 'La difficulté est requise'
   }
   
   if (!questForm.points || questForm.points < 1) {
@@ -462,13 +500,19 @@ const saveQuest = async () => {
       title: questForm.title.trim(),
       description: questForm.description.trim(),
       type: questForm.type,
+      difficulty: questForm.difficulty,
       points: questForm.points,
       category: questForm.category.trim(),
       status: questForm.status,
       steps: questForm.steps.filter(step => step.title.trim()).map(step => ({
         title: step.title.trim(),
         completed: false
-      }))
+      })),
+      rewards: {
+        xp: questForm.points,
+        badges: [],
+        items: []
+      }
     }
     
     if (editingQuest.value) {
@@ -512,6 +556,7 @@ const editQuest = (quest) => {
     title: quest.title || '',
     description: quest.description || '',
     type: quest.type || '',
+    difficulty: quest.difficulty || 'easy',
     points: quest.points || 50,
     category: quest.category || '',
     status: quest.status || 'active',
@@ -558,6 +603,11 @@ const deleteQuest = async () => {
 
 const viewQuestDetails = (quest) => {
   console.log('Voir détails de la quête:', quest)
+}
+
+// Navigation vers la vue de création publique
+const navigateToPublicCreation = () => {
+  router.push('/gamification/create-quest')
 }
 
 // Utilitaires de rôles supprimés - système désactivé

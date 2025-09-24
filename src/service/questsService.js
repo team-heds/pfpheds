@@ -1,5 +1,6 @@
 import { ref as dbRef, get, set, update, push } from 'firebase/database'
 import { db } from '../../firebase'
+import notificationService from './notificationService.js'
 
 // ========================================
 // CONFIGURATION DES QUÊTES DYNAMIQUES
@@ -395,7 +396,7 @@ export const calculateQuestRewards = (quest) => {
  */
 export const getUserQuests = async (userId) => {
   try {
-    const questsRef = dbRef(db, `users/${userId}/gamification/quests`)
+    const questsRef = dbRef(db, `Users/${userId}/gamification/quests`)
     const snapshot = await get(questsRef)
     return snapshot.val() || {}
   } catch (error) {
@@ -435,7 +436,7 @@ export const initializeUserQuests = async (userId, userHouse) => {
       }
     }
     
-    const questsRef = dbRef(db, `users/${userId}/gamification/quests`)
+    const questsRef = dbRef(db, `Users/${userId}/gamification/quests`)
     await set(questsRef, initialQuests)
     
     return initialQuests
@@ -455,7 +456,7 @@ export const startQuest = async (userId, questId) => {
       throw new Error(`Quête ${questId} introuvable`)
     }
     
-    const questRef = dbRef(db, `users/${userId}/gamification/quests/${questId}`)
+    const questRef = dbRef(db, `Users/${userId}/gamification/quests/${questId}`)
     const questData = {
       ...quest,
       status: QUEST_STATUS.IN_PROGRESS,
@@ -479,7 +480,7 @@ export const startQuest = async (userId, questId) => {
  */
 export const updateQuestProgress = async (userId, questId, stepId, increment = 1) => {
   try {
-    const questRef = dbRef(db, `users/${userId}/gamification/quests/${questId}`)
+    const questRef = dbRef(db, `Users/${userId}/gamification/quests/${questId}`)
     const snapshot = await get(questRef)
     
     if (!snapshot.exists()) {
@@ -559,7 +560,7 @@ export const updateQuestProgress = async (userId, questId, stepId, increment = 1
  */
 export const completeQuest = async (userId, questId) => {
   try {
-    const questRef = dbRef(db, `users/${userId}/gamification/quests/${questId}`)
+    const questRef = dbRef(db, `Users/${userId}/gamification/quests/${questId}`)
     const snapshot = await get(questRef)
     
     if (!snapshot.exists()) {
@@ -576,13 +577,43 @@ export const completeQuest = async (userId, questId) => {
     })
     
     // Enregistrer les récompenses dans l'historique
-    const rewardRef = dbRef(db, `users/${userId}/gamification/questRewards`)
+    const rewardRef = dbRef(db, `Users/${userId}/gamification/questRewards`)
     await push(rewardRef, {
       questId,
       questTitle: questData.title,
       rewards,
       date: Date.now()
     })
+
+    // Déclencher notification pour la quête complétée
+    try {
+      await notificationService.createNotification(userId, {
+        type: 'quest',
+        title: 'Quête Terminée !',
+        message: `Quête "${questData.title}" complétée !`,
+        data: { 
+          questId: questId, 
+          questName: questData.title,
+          questType: questData.type,
+          rewards: rewards,
+          xpReward: rewards.xp || 0
+        }
+      })
+    } catch (notificationError) {
+      console.warn('Erreur lors de l\'envoi de la notification quête:', notificationError)
+    }
+
+    // Vérifier et débloquer automatiquement les badges liés aux quêtes
+    try {
+      const badgesService = await import('./badgesService')
+      const actionBadges = await badgesService.default.checkAndUnlockActionBadges(userId, 'QUIZ_COMPLETE', {})
+      if (actionBadges.length > 0) {
+        console.log(`🏆 ${actionBadges.length} badge(s) débloqué(s) après complétion de quête:`, 
+          actionBadges.map(b => b.name).join(', '))
+      }
+    } catch (badgeError) {
+      console.warn('Erreur lors de la vérification des badges quête:', badgeError)
+    }
     
     console.log(`Quête ${questId} complétée! Récompenses:`, rewards)
     
@@ -622,7 +653,7 @@ export const unlockNewQuests = async (userId, userHouse, completedQuestIds) => {
     }
     
     if (questsUnlocked > 0) {
-      const questsRef = dbRef(db, `users/${userId}/gamification/quests`)
+      const questsRef = dbRef(db, `Users/${userId}/gamification/quests`)
       await update(questsRef, newQuests)
       
       console.log(`${questsUnlocked} nouvelles quêtes débloquées pour l'utilisateur ${userId}`)
@@ -653,7 +684,7 @@ export const getQuestStats = async (userId) => {
     }
     
     // Calculer l'XP total des quêtes complétées
-    const rewardsRef = dbRef(db, `users/${userId}/gamification/questRewards`)
+    const rewardsRef = dbRef(db, `Users/${userId}/gamification/questRewards`)
     const rewardsSnapshot = await get(rewardsRef)
     
     if (rewardsSnapshot.exists()) {

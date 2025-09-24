@@ -80,7 +80,7 @@ export default defineConfig({
       },
       includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
       devOptions: {
-        enabled: true,
+        enabled: false, // Désactiver PWA en développement pour éviter les conflits de cache
         suppressLogs: true
       },
     }),
