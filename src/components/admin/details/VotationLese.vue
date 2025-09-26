@@ -416,8 +416,8 @@ export default {
               AMBU: place.AMBU === 'true' || place.AMBU === true,
               FR: place.FR === 'true' || place.FR === true,
               DE: place.DE === 'true' || place.DE === true,
-              PFP2: place.PFP2 || '0',
-              InstitutionName: institutionData.Name ||
+              PFP2: place['PFP2-2026'] || '0',
+               InstitutionName: institutionData.Name ||
                 institutionData.NomPlace ||
                 place.InstitutionName ||
                 'Non spécifié'
