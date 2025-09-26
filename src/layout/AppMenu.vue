@@ -52,7 +52,7 @@ const model = ref([
                 {
                   label: 'Management Votation Lese',
                   icon: 'pi pi-cog',
-                  to: '/management_votation_lese'
+                  to: '/management_votation_prioritaire'
                 },
 
                 {

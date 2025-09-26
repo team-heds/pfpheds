@@ -8,6 +8,7 @@
           <thead>
             <tr>
               <th>ID Étudiant</th>
+              <th>Nom, Prénom</th>
               <th>Institution</th>
               <th>Place ID</th>
               <th>Place Name</th>
@@ -17,6 +18,7 @@
           <tbody>
             <tr v-for="(vote, index) in votes" :key="index">
               <td>{{ vote.studentId }}</td>
+              <td>{{ getUserFullName(vote.studentId) }}</td>
               <td>{{ vote.InstitutionName }}</td>
               <td>{{ vote.placeId }}</td>
               <td>{{ vote.placeName }}</td>
@@ -45,22 +47,47 @@ export default {
   components: { Navbar },
   data() {
     return {
-      votes: []
+      votes: [],
+      users: {} // Cache pour stocker les données utilisateur
     };
   },
   methods: {
     // Récupère les votes depuis le noeud VotationLeseBA22PFP4
     fetchVotes() {
-      const votesRef = ref(db, "VotationLeseBA22PFP4");
+      const votesRef = ref(db, "VotationLeseBA24PFP2");
       onValue(votesRef, (snapshot) => {
         const votesData = snapshot.val();
         if (votesData) {
           // Transformation de l'objet en tableau
           this.votes = Object.keys(votesData).map(key => votesData[key]);
+          // Charger les données utilisateur pour chaque vote
+          this.fetchUsersData();
         } else {
           this.votes = [];
         }
       });
+    },
+    // Récupère les données utilisateur depuis la table Users
+    async fetchUsersData() {
+      const usersRef = ref(db, "Users");
+      try {
+        const snapshot = await get(usersRef);
+        if (snapshot.exists()) {
+          this.users = snapshot.val();
+        }
+      } catch (error) {
+        console.error("Erreur lors de la récupération des données utilisateur:", error);
+      }
+    },
+    // Retourne le nom complet de l'utilisateur
+    getUserFullName(studentId) {
+      if (!studentId || !this.users[studentId]) {
+        return "Utilisateur inconnu";
+      }
+      const user = this.users[studentId];
+      const nom = user.Nom || "";
+      const prenom = user.Prenom || "";
+      return `${nom} ${prenom}`.trim() || "Nom non renseigné";
     },
     // Convertit un timestamp en date lisible
     formatTimestamp(timestamp) {
