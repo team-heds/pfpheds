@@ -351,7 +351,7 @@ const routes = [
   // ========================================
   { path: '/votation', component: VotationView, name: 'VotationView', meta: { requiresAuth: true } },
   { path: '/votation_preview', component: VotationPreview, name: 'VotationPreview', meta: { requiresAuth: true, requiredRole: 'admin' } },
-  { path: '/votation_lese', component: VotationLese, name: 'VotationLese', meta: { requiresAuth: true, requiredRole: 'lese' } },
+  { path: '/votation_prioritaire', component: VotationLese, name: 'VotationLese', meta: { requiresAuth: true, requiredRole: 'prioritaire' } },
   { path: '/votation_management', component: VotationManagementView, name: 'VotationManagementView', meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/management_votation_lese', component: Management_votation_lese, name: 'Management_votation_lese', meta: { requiresAuth: true, requiredRole: 'lese' } },
   { path: '/management_votation_etudiants', component: Management_votation_etudiants, name: 'Management_votation_etudiants', meta: { requiresAuth: true, requiredRole: 'admin' } },
@@ -498,10 +498,8 @@ router.beforeEach(async (to, from, next) => {
           if (requiredRoles.some(role => userRoles.includes(role))) {
             return next(); // Autoriser l'accès
           } else {
-            import('primevue/usetoast').then(({ useToast }) => {
-              const toast = useToast();
-              toast.add({ severity: 'error', summary: 'Accès refusé', detail: "Vous n'avez pas les permissions requises.", life: 4000 });
-            });
+            console.warn('Accès refusé: Vous n\'avez pas les permissions requises pour accéder à cette page.');
+            alert('Accès refusé: Vous n\'avez pas les permissions requises.');
             return next('/'); // Redirigez vers une page par défaut
           }
         } else {
