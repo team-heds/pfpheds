@@ -1,5 +1,5 @@
   import { defineStore } from 'pinia';
-
+ 
 // Configuration adaptative pour backend + frontend
 const getApiUrl = () => {
   // En développement : utiliser le backend local via proxy Vite
@@ -9,9 +9,9 @@ const getApiUrl = () => {
   // En production : utiliser l'API directe
   return 'https://api2.hedsvs.ch/api/institutions';
 };
-
+ 
 const API_URL = getApiUrl();
-
+ 
 export const useInstitutionsStore = defineStore('institutions', {
   state: () => ({
     institutions: [],
@@ -36,7 +36,7 @@ export const useInstitutionsStore = defineStore('institutions', {
         institution.id === parseInt(id)
       );
       console.log(" Recherche institution ID:", id);
-
+ 
       return institution?.Name || institution?.name || 'Institution inconnue';
     }
   },
@@ -72,7 +72,7 @@ export const useInstitutionsStore = defineStore('institutions', {
         this.loading = false;
       }
     },
-
+ 
     async fetchInstitutionById(id) {
       this.loading = true;
       this.error = null;
@@ -87,7 +87,7 @@ export const useInstitutionsStore = defineStore('institutions', {
         this.loading = false;
       }
     },
-
+ 
     async createInstitution(institutionData) {
       this.loading = true;
       this.error = null;
@@ -111,7 +111,7 @@ export const useInstitutionsStore = defineStore('institutions', {
         this.loading = false;
       }
     },
-
+ 
     async updateInstitution(id, institutionData) {
       this.loading = true;
       this.error = null;
@@ -145,7 +145,7 @@ export const useInstitutionsStore = defineStore('institutions', {
         this.loading = false;
       }
     },
-
+ 
     async deleteInstitution(id) {
       this.loading = true;
       this.error = null;
@@ -167,3 +167,4 @@ export const useInstitutionsStore = defineStore('institutions', {
     },
   },
 });
+ 
