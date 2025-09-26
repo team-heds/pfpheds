@@ -30,7 +30,7 @@ Write-Info "Version à déployer: $Version"
 # ÉTAPE 1: Build du frontend (si nécessaire)
 if (-not $SkipBuild) {
     Write-Info "ÉTAPE 1: Build du frontend Vue.js..."
-    
+
     # Nettoyage si Force
     if ($Force) {
         Write-Info "Nettoyage forcé des dépendances..."
@@ -38,7 +38,7 @@ if (-not $SkipBuild) {
         if (Test-Path "package-lock.json") { Remove-Item -Force "package-lock.json" }
         npm install --force --legacy-peer-deps
     }
-    
+
     # Build
     npm run build
     if ($LASTEXITCODE -ne 0) { Write-Error "Échec du build" }
@@ -55,7 +55,7 @@ $archiveName = "pfpheds-frontend-v$Version-$timestamp.tar.gz"
 if (Test-Path "dist") {
     # Utilisation de tar pour créer une archive compatible Linux
     Write-Info "Création de l'archive tar.gz avec chemins Unix..."
-    
+
     # Vérifier si tar est disponible (Git Bash ou WSL)
     $tarAvailable = $false
     try {
@@ -64,7 +64,7 @@ if (Test-Path "dist") {
     } catch {
         $tarAvailable = $false
     }
-    
+
     if ($tarAvailable) {
         # Utiliser tar natif pour créer l'archive avec chemins Unix
         Push-Location "dist"
@@ -160,7 +160,7 @@ if ($LASTEXITCODE -eq 0) {
     Write-Success "Déploiement réussi !"
     Write-Info "Votre application est maintenant disponible sur: https://hedsvs.ch"
     Write-Info "Version déployée: $Version"
-    
+
     # Nettoyage local
     Remove-Item $archiveName -Force
     Write-Info "Archive locale supprimée"

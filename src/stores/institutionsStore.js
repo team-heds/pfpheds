@@ -1,16 +1,78 @@
-import { defineStore } from 'pinia';
+import { defineStore } from 'pinia'
 
-// Configuration adaptative pour backend + frontend
-const getApiUrl = () => {
-  // En développement : utiliser le backend local via proxy Vite
-  if (import.meta.env.DEV) {
-    return '/api/institutions';
+/**
+ * ===========================
+ *  Config & helpers Supabase
+ * ===========================
+ */
+
+// Base REST Supabase : adapte si besoin via .env
+const REST_BASE = import.meta.env.VITE_SUPABASE_REST_URL
+  // Exemple d’URL: https://api2.hedsvs.ch/rest/v1
+  // Si non défini, on tombe sur prod api2 (modifie si nécessaire)
+  || 'https://api2.hedsvs.ch/rest/v1'
+
+const ANON_KEY = import.meta.env.VITE_SUPABASE_KEY // <-- ton anon key
+
+if (!ANON_KEY) {
+  console.error('[InstitutionsStore] VITE_SUPABASE_KEY manquant dans .env')
+}
+if (!REST_BASE) {
+  console.error('[InstitutionsStore] VITE_SUPABASE_REST_URL manquant (fallback utilisé)')
+}
+
+// En-têtes communs pour PostgREST
+const baseHeaders = {
+  apikey: ANON_KEY,
+  Authorization: `Bearer ${ANON_KEY}`,
+  Accept: 'application/json',
+}
+
+/**
+ * Wrapper fetch → PostgREST
+ */
+async function sbFetch(path, options = {}) {
+  const url = `${REST_BASE}${path}`
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      ...baseHeaders,
+      ...(options.headers || {}),
+    },
+  })
+  if (!res.ok) {
+    let detail = ''
+    try {
+      const err = await res.json()
+      detail = err?.message || err?.error || JSON.stringify(err)
+    } catch {
+      detail = res.statusText
+    }
+    throw new Error(`[${res.status}] ${detail}`)
   }
-  // En production : utiliser l'API directe
-  return 'https://api2.hedsvs.ch/api/institutions';
-};
+  // Certaines réponses (DELETE sans return=representation) n’ont pas de JSON
+  const text = await res.text()
+  return text ? JSON.parse(text) : null
+}
 
-const API_URL = getApiUrl();
+/**
+ * Utils
+ */
+function normalizeInstitution(inst) {
+  // ImageURL renvoyé parfois stringifiable → on homogénéise en array
+  if (inst?.ImageURL && typeof inst.ImageURL === 'string') {
+    try {
+      const parsed = JSON.parse(inst.ImageURL)
+      inst.ImageURL = Array.isArray(parsed) ? parsed : [parsed]
+    } catch {
+      // si c'est une string simple (URL unique)
+      if (inst.ImageURL.startsWith('http')) inst.ImageURL = [inst.ImageURL]
+      else inst.ImageURL = []
+    }
+  }
+  if (!Array.isArray(inst?.ImageURL)) inst.ImageURL = inst?.ImageURL ? [inst.ImageURL] : []
+  return inst
+}
 
 export const useInstitutionsStore = defineStore('institutions', {
   state: () => ({
@@ -19,152 +81,144 @@ export const useInstitutionsStore = defineStore('institutions', {
     loading: false,
     error: null,
   }),
+
   getters: {
     getInstitutionById: (state) => (id) => {
-      return state.institutions.find(institution =>
-        institution.InstitutionId === id ||
-        institution.id === id ||
-        institution.InstitutionId === parseInt(id) ||
-        institution.id === parseInt(id)
-      );
+      const numId = Number.isNaN(Number(id)) ? null : Number(id)
+      return state.institutions.find((i) =>
+        i.InstitutionId === id ||
+        i.id === id ||
+        (numId !== null && (i.InstitutionId === numId || i.id === numId))
+      )
     },
     getInstitutionNameById: (state) => (id) => {
-      const institution = state.institutions.find(institution =>
-        institution.InstitutionId === id ||
-        institution.id === id ||
-        institution.InstitutionId === parseInt(id) ||
-        institution.id === parseInt(id)
-      );
-      console.log(" Recherche institution ID:", id);
-
-      return institution?.Name || institution?.name || 'Institution inconnue';
-    }
+      const inst = state.institutions.find((i) =>
+        i.InstitutionId === id ||
+        i.id === id ||
+        i.InstitutionId === parseInt(id) ||
+        i.id === parseInt(id)
+      )
+      return inst?.Name || inst?.name || 'Institution inconnue'
+    },
   },
+
   actions: {
     async fetchInstitutions() {
-      this.loading = true;
-      this.error = null;
-      console.log(' Chargement depuis:', API_URL);
-
+      this.loading = true
+      this.error = null
       try {
-        const response = await fetch(API_URL);
-        if (!response.ok) {
-          throw new Error(`Network response was not ok: ${response.statusText}`);
-        }
-        const institutions = await response.json();
-        this.institutions = institutions.map(inst => {
-          if (inst.ImageURL && typeof inst.ImageURL === 'string') {
-            try {
-              inst.ImageURL = JSON.parse(inst.ImageURL);
-            } catch (e) {
-              console.error(`Failed to parse ImageURL for institution ${inst.InstitutionId}:`, inst.ImageURL);
-              inst.ImageURL = [];
-            }
-          }
-          return inst;
-        });
-        console.log(`${this.institutions.length} institutions chargées`);
+        // PostgREST: /institutions?select=*  (select=* facultatif)
+        const data = await sbFetch(`/institutions?select=*`)
+        this.institutions = (Array.isArray(data) ? data : []).map(normalizeInstitution)
+        return this.institutions
       } catch (e) {
-        console.error('Erreur lors du chargement:', e);
-        this.error = e.message;
-        throw e;
+        this.error = e.message
+        throw e
       } finally {
-        this.loading = false;
+        this.loading = false
       }
     },
 
     async fetchInstitutionById(id) {
-      this.loading = true;
-      this.error = null;
+      this.loading = true
+      this.error = null
       try {
-        const response = await fetch(`${API_URL}/${id}`);
-        if (!response.ok) throw new Error('Failed to fetch institution');
-        this.currentInstitution = await response.json();
+        // Filtre eq sur la clé (ici on suppose InstitutionId)
+        // Adapte si ton PK est différent (id vs InstitutionId)
+        const q = encodeURIComponent(`eq.${id}`)
+        const rows = await sbFetch(`/institutions?InstitutionId=${q}&select=*`)
+        const inst = Array.isArray(rows) && rows.length ? normalizeInstitution(rows[0]) : null
+        this.currentInstitution = inst
+        return inst
       } catch (e) {
-        this.error = e.message;
-        throw e;
+        this.error = e.message
+        throw e
       } finally {
-        this.loading = false;
+        this.loading = false
       }
     },
 
-    async createInstitution(institutionData) {
-      this.loading = true;
-      this.error = null;
+    async createInstitution(payload) {
+      this.loading = true
+      this.error = null
       try {
-        const response = await fetch(API_URL, {
+        const data = await sbFetch(`/institutions`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(institutionData),
-        });
-        if (!response.ok) {
-          const errorBody = await response.json().catch(() => ({ error: 'Failed to parse error response' }));
-          throw new Error(errorBody.error || 'Failed to create institution');
-        }
-        const newInstitution = await response.json();
-        this.institutions.push(newInstitution);
-        return newInstitution;
+          headers: {
+            'Content-Type': 'application/json',
+            // Retourne la ligne insérée
+            Prefer: 'return=representation',
+          },
+          body: JSON.stringify(payload),
+        })
+        const row = Array.isArray(data) ? data[0] : data
+        const created = normalizeInstitution(row)
+        this.institutions.push(created)
+        return created
       } catch (e) {
-        this.error = e.message;
-        throw e;
+        this.error = e.message
+        throw e
       } finally {
-        this.loading = false;
+        this.loading = false
       }
     },
 
-    async updateInstitution(id, institutionData) {
-      this.loading = true;
-      this.error = null;
+    async updateInstitution(id, patch) {
+      this.loading = true
+      this.error = null
       try {
-        const response = await fetch(`${API_URL}/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(institutionData),
-        });
-        if (!response.ok) {
-          const errorBody = await response.json().catch(() => ({ error: 'Failed to parse error response' }));
-          throw new Error(errorBody.error || 'Failed to update institution');
+        const q = encodeURIComponent(`eq.${id}`)
+        const data = await sbFetch(`/institutions?InstitutionId=${q}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Prefer: 'return=representation',
+          },
+          body: JSON.stringify(patch),
+        })
+        const row = Array.isArray(data) ? data[0] : data
+        const updated = normalizeInstitution(row)
+
+        const idx = this.institutions.findIndex((i) => i.InstitutionId === id || i.id === id)
+        if (idx !== -1) this.institutions[idx] = updated
+        else this.institutions.push(updated)
+
+        if (this.currentInstitution?.InstitutionId === id || this.currentInstitution?.id === id) {
+          this.currentInstitution = updated
         }
-        let updatedInstitution = await response.json();
-        if (updatedInstitution.ImageURL && typeof updatedInstitution.ImageURL === 'string') {
-          try {
-            updatedInstitution.ImageURL = JSON.parse(updatedInstitution.ImageURL);
-          } catch (e) {
-            updatedInstitution.ImageURL = [];
-          }
-        }
-        const index = this.institutions.findIndex(i => i.InstitutionId === id);
-        if (index !== -1) {
-          this.institutions[index] = updatedInstitution;
-        }
-        return updatedInstitution;
+        return updated
       } catch (e) {
-        this.error = e.message;
-        throw e;
+        this.error = e.message
+        throw e
       } finally {
-        this.loading = false;
+        this.loading = false
       }
     },
 
     async deleteInstitution(id) {
-      this.loading = true;
-      this.error = null;
+      this.loading = true
+      this.error = null
       try {
-        const response = await fetch(`${API_URL}/${id}`, {
+        const q = encodeURIComponent(`eq.${id}`)
+        await sbFetch(`/institutions?InstitutionId=${q}`, {
           method: 'DELETE',
-        });
-        if (!response.ok) {
-          const errorBody = await response.json().catch(() => ({ error: 'Failed to parse error response' }));
-          throw new Error(errorBody.error || 'Failed to delete institution');
+          headers: {
+            // Si tu veux récupérer la ligne supprimée :
+            // Prefer: 'return=representation'
+          },
+        })
+        this.institutions = this.institutions.filter((i) => i.InstitutionId !== id && i.id !== id)
+        if (this.currentInstitution?.InstitutionId === id || this.currentInstitution?.id === id) {
+          this.currentInstitution = null
         }
-        this.institutions = this.institutions.filter(i => i.InstitutionId !== id);
       } catch (e) {
-        this.error = e.message;
-        throw e;
+        this.error = e.message
+        throw e
       } finally {
-        this.loading = false;
+        this.loading = false
       }
     },
   },
-});
+})
+
  

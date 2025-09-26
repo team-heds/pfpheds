@@ -1,12 +1,12 @@
 ﻿<template>
   <div class="scroll-page">
     <Navbar />
- 
+
     <!-- Barre de titre + bouton "Retour Profil" -->
     <div class="page-title p-d-flex p-jc-between">
       <h1>Votation Prioritaire - BA24 PFP2</h1>
     </div>
- 
+
     <div class="container">
       <Button
         label="Retour Profil"
@@ -22,10 +22,10 @@
       >
         <!-- Composant dédié aux critères validés -->
         <ValidatedCriteriaSection :userId="currentUserId" />
- 
+
       </div>
- 
- 
+
+
       <!-- Si tous les critères sont validés, affiche toutes les places disponibles -->
       <div v-if="allCriteriaValidated">
         <h2>Toutes les places disponibles</h2>
@@ -108,7 +108,7 @@
           </Column>
         </DataTable>
       </div>
- 
+
       <!-- Sinon, affiche le groupement par nombre de critères validants -->
       <div v-else>
         <div
@@ -195,7 +195,7 @@
           </div>
         </div>
       </div>
- 
+
       <!-- Section d'action de vote -->
       <div class="vote-action">
         <Button v-if="!votedPlace" @click="sendVote">Envoyer</Button>
@@ -209,7 +209,7 @@
         </div>
       </div>
     </div>
- 
+
     <!-- Overlay (Dialog) pour afficher un message stylé -->
     <Dialog
       v-model:visible="dialogVisible"
@@ -225,7 +225,7 @@
     </Dialog>
   </div>
 </template>
- 
+
 <script>
 import Navbar from '@/components/common/utils/Navbar.vue'
 import DataTable from 'primevue/datatable'
@@ -236,8 +236,8 @@ import ValidatedCriteriaSection from '@/components/user/details/ValidatedCriteri
 import { onValue, ref, remove, set, update } from 'firebase/database'
 import { db } from 'root/firebase'
 import { getAuth } from 'firebase/auth'
- 
- 
+
+
 export default {
   name: 'VotationLese',
   components: {
@@ -294,15 +294,15 @@ export default {
 
 
 
-availablePlacesavecLangue() {
+    availablePlacesavecLangue() {
       let places = this.expandedPFP4;
- 
+
       if (this.allCriteriaValidated) {
         return places;
       }
       const manqueFR = !this.aggregatedPFP.FR;
-   const manqueDE = !this.aggregatedPFP.DE;
- 
+      const manqueDE = !this.aggregatedPFP.DE;
+
       if (manqueFR && manqueDE) {
         return places.filter(place => !!place.FR || !!place.DE);
       }
@@ -324,9 +324,23 @@ availablePlacesavecLangue() {
         return places;
       }
 
+      // Filtrage : si l'étudiant a validé DE ou SYSINT, exclure les places avec ces critères
+      const hasValidatedDE = this.aggregatedPFP.DE;
+      const hasValidatedSYSINT = this.aggregatedPFP.SYSINT;
+
+      places = places.filter(place => {
+        // Si l'étudiant a validé DE, exclure TOUTES les places qui ont le critère DE
+        if (hasValidatedDE && place.DE) {
+          return false;
+        }
+        // Si l'étudiant a validé SYSINT, exclure TOUTES les places qui ont le critère SYSINT
+        if (hasValidatedSYSINT && place.SYSINT) {
+          return false;
+        }
+        return true;
+      });
+
       return places;
-
-
     },
     // Regroupe les places disponibles par nombre de nouveaux critères validés
     groupedByCriteriaCount() {
@@ -345,7 +359,7 @@ availablePlacesavecLangue() {
           places: groups[count]
         }))
         .sort((a, b) => b.criteriaCount - a.criteriaCount);
- 
+
       return allGroups;
     },
     // Nombre total de places sélectionnées parmi les places disponibles
@@ -433,7 +447,7 @@ availablePlacesavecLangue() {
               FR: place.FR === 'true' || place.FR === true,
               DE: place.DE === 'true' || place.DE === true,
               PFP2: place['PFP2-2026'] || '0',
-               InstitutionName: institutionData.Name ||
+              InstitutionName: institutionData.Name ||
                 institutionData.NomPlace ||
                 place.InstitutionName ||
                 'Non spécifié'
@@ -543,7 +557,7 @@ availablePlacesavecLangue() {
   }
 };
 </script>
- 
+
 <style scoped>
 .scroll-page {
   min-height: 100vh;
@@ -559,11 +573,11 @@ availablePlacesavecLangue() {
   margin-bottom: 20px;
   text-align: center;
 }
- 
+
 .container {
   padding: 20px;
 }
- 
+
 .profile-info {
   margin-bottom: 20px;
   padding: 10px;
@@ -571,12 +585,12 @@ availablePlacesavecLangue() {
   color: var(--text-color);
   border-radius: 4px;
 }
- 
+
 .custom-datatable .p-datatable-thead > tr > th {
   background-color: var(--surface-card);
   color: var(--text-color);
 }
- 
+
 .custom-datatable .p-datatable-tbody > tr > td {
   background-color: var(--surface-card);
   color: var(--text-color);
@@ -584,24 +598,25 @@ availablePlacesavecLangue() {
   overflow-wrap: break-word;
   word-wrap: break-word;
 }
- 
+
 .criteria-count-section {
   margin-bottom: 40px;
 }
- 
+
 .vote-action {
   margin-top: 20px;
   text-align: center;
 }
- 
+
 .vote-action button {
   padding: 8px 16px;
   font-size: 16px;
 }
- 
+
 /* Styles personnalisés pour le Dialog */
 .custom-dialog {
   width: 400px;
 }
 </style>
+
  
