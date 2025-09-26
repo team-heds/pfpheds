@@ -25,7 +25,7 @@
           institution.InstitutionId === parseInt(id) ||
           institution.id === parseInt(id)
         );
-        return institution?.Name || institution?.name || 'Institution inconnue';
+        return institution?.Name || institution?.name || 'Institution aainconnue';
       }
     },
     actions: {

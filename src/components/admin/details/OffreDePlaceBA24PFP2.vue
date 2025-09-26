@@ -332,7 +332,7 @@
                 <i class="pi pi-exclamation-triangle"></i>
               </div>
               <div class="category-info">
-                <h3>Lésés</h3>
+                <h3>Prioritaires</h3>
                 <span class="category-count">{{ leses.length }} étudiant{{ leses.length > 1 ? 's' : '' }}</span>
               </div>
               <div class="category-stats">
