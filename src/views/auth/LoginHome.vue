@@ -55,7 +55,7 @@
           <div class="mt-6 p-3 bg-blue-50 border-round text-center">
             <small class="text-blue-800">
               <i class="pi pi-info-circle mr-1"></i>
-              Choisissez le système correspondant à votre année d'études
+              Choisissez le système correspondant à votre besoin
             </small>
           </div>
         </div>

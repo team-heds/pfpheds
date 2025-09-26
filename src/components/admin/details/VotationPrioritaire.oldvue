@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="scroll-page">
     <Navbar />
  
@@ -269,7 +269,7 @@ export default {
       const rows = [];
       const sorted = this.places.sort((a, b) => a.NomPlace.localeCompare(b.NomPlace));
       sorted.forEach(place => {
-        const count = parseInt(place.PFP2 || '0');
+        const count = parseInt(place['PFP2-2026'] || '0');
         if (!isNaN(count) && count >= 1) {
           for (let i = 1; i <= count; i++) {
             const studentKey = `selectedEtudiantBA24PFP2-${i}`;
@@ -291,15 +291,17 @@ export default {
     },
     // Retourne les places disponibles. Si tous les critères sont validés, retourne toutes les places ;
     // sinon, filtre selon les nouveaux critères.
-    availablePlaces() {
+
+
+
+availablePlacesavecLangue() {
       let places = this.expandedPFP4;
  
       if (this.allCriteriaValidated) {
         return places;
       }
- 
       const manqueFR = !this.aggregatedPFP.FR;
-      const manqueDE = !this.aggregatedPFP.DE;
+   const manqueDE = !this.aggregatedPFP.DE;
  
       if (manqueFR && manqueDE) {
         return places.filter(place => !!place.FR || !!place.DE);
@@ -311,6 +313,20 @@ export default {
         return places.filter(place => !!place.DE);
       }
       return places;
+    },
+
+
+
+    availablePlaces() {
+      let places = this.expandedPFP4;
+
+      if (this.allCriteriaValidated) {
+        return places;
+      }
+
+      return places;
+
+
     },
     // Regroupe les places disponibles par nombre de nouveaux critères validés
     groupedByCriteriaCount() {
