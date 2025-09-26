@@ -58,7 +58,7 @@ const menu = ref([
         icon: 'pi pi-check-square',
         items: [
           { label: 'Management Offres', icon: 'pi pi-cog', to: '/management_offre' },
-          { label: 'Management Votation Lese', icon: 'pi pi-cog', to: '/management_votation_lese' },
+          { label: 'Management Votation Lese', icon: 'pi pi-cog', to: '/management_votation_prioritaire' },
           { label: 'Management Votation Etudiant', icon: 'pi pi-cog', to: '/management_votation_etudiants' },
           { label: 'Places assigned', icon: 'pi pi-fw pi-image', to: '/places_asssigned' },
           { label: 'Places Assignement', icon: 'pi pi-fw pi-image', to: '/places_assignment' },
