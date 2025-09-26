@@ -18,20 +18,25 @@ const praticiensStoreRoutes = require('./supabase/praticiensStoreBackend.js');
  
 // CORS and JSON parsing MUST be before routes
 app.use(cors({
-  origin: '*',
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://hedsvs.ch', 'https://www.hedsvs.ch', 'https://api2.hedsvs.ch']
+    : '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 }))
 // Express 5 uses path-to-regexp v6 which doesn't support '*' patterns.
 // Use a regex to match all paths for CORS preflight handling.
 app.options(/.*/, cors())
 app.use(express.json())
  
-// Debug middleware
-app.use((req, res, next) => {
-  console.log(`[DEBUG] ${req.method} ${req.url}`);
-  next();
-});
+// Debug middleware (seulement en développement)
+if (process.env.NODE_ENV !== 'production') {
+  app.use((req, res, next) => {
+    console.log(`[DEBUG] ${req.method} ${req.url}`);
+    next();
+  });
+}
  
 // Routes - specific routes FIRST, then general ones
 console.log('[ROUTES] Mounting routes...');
@@ -59,6 +64,16 @@ const openai = new OpenAI({
  
 app.get('/api/ping', (req, res) => {
   res.send('pingpong')
+})
+
+// Health check endpoint pour Docker/Kubernetes
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development'
+  });
 })
  
 // Test route for praticiens_formateurs
