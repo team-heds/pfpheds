@@ -52,8 +52,15 @@ const newPraticien = ref({
  
 const submitForm = async () => {
   if (confirm('Êtes-vous sûr de vouloir ajouter ce nouveau praticien formateur ?')) {
-    await store.createPraticienFormateur(newPraticien.value);
-    router.push({ name: 'TrainerListView' });
+    try {
+      console.log('➕ [FORM] Creating new praticien:', newPraticien.value);
+      await store.createPraticien(newPraticien.value);
+      console.log('✅ [FORM] Praticien created successfully');
+      router.push({ name: 'TrainerListView' });
+    } catch (error) {
+      console.error('❌ [FORM] Error creating praticien:', error);
+      alert('Erreur lors de la création: ' + error.message);
+    }
   }
 };
 </script>
