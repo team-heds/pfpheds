@@ -142,9 +142,9 @@ import PFPDetails from "@/components/admin/details/PFPDetails.vue";
 // ========================================
 import VotationView from "@/views/admin/votations/VotationView.vue";
 import VotationPreview from "@/components/admin/details/Votation_preview.vue";
-import VotationLese from '@/components/admin/details/VotationLese.vue';
+import VotationPrioritaire from '@/components/admin/details/VotationPrioritaire.vue';
 import VotationManagementView from '@/views/admin/votations/VotationManagementView.vue';
-import management_votation_prioritaire from '@/components/admin/details/management_votation_prioritaire.vue';
+import Management_votation_prioritaire from '@/components/admin/details/Management_votation_prioritaire.vue';
 import Management_votation_etudiants from '@/components/admin/details/Management_votation_etudiants.vue';
 
 // ========================================
@@ -152,7 +152,7 @@ import Management_votation_etudiants from '@/components/admin/details/Management
 // ========================================
 import PlaceManagementView from '@/views/admin/places/PlaceManagementView.vue';
 import ManagementPlacesSafe from '@/components/admin/details/ManagementPlacesSafe.vue';
-import OffreDePlace from '@/components/admin/details/OffreDePlac3BA22PFP4.vue';
+import OffreDePlace from '@/components/admin/details/OffreDePlaceBA24PFP2.vue';
 import PlaceAssignmentView from '@/views/admin/places/PlaceAssignmentView.vue';
 import PlacesAssigned from '@/components/admin/details/PlacesAssigned.vue';
 import StageRepartitionBA2 from '@/components/admin/details/StageRepartitionBA2.vue';
@@ -189,7 +189,7 @@ import GameView from '@/views/apps/tools/GameView.vue';
 import ChatBotView from '@/views/apps/tools/ChatBotView.vue';
 import MobileToolsView from '@/views/apps/tools/MobileToolsView.vue';
 import MobileLangAppsView from '@/views/apps/tools/MobileLangAppsView.vue';
-import MobileSearchView from '@/views/apps/tools/MobileSearchView.vue'
+//import MobiprioritairearchView from '@/views/apps/tools/MobiprioritairearchView.vue'
 import CreateContentMobile from '@/components/social/library/CreateContentMobile.vue';
 import ListComponent from '@/components/media/audio/ListComponent.vue'
 
@@ -351,9 +351,9 @@ const routes = [
   // ========================================
   { path: '/votation', component: VotationView, name: 'VotationView', meta: { requiresAuth: true } },
   { path: '/votation_preview', component: VotationPreview, name: 'VotationPreview', meta: { requiresAuth: true, requiredRole: 'admin' } },
-  { path: '/votation_prioritaire', component: VotationLese, name: 'VotationLese', meta: { requiresAuth: true, requiredRole: 'prioritaire' } },
+  { path: '/votation_prioritaire', component: VotationPrioritaire, name: 'VotationPrioritaire', meta: { requiresAuth: true, requiredRole: 'prioritaire' } },
   { path: '/votation_management', component: VotationManagementView, name: 'VotationManagementView', meta: { requiresAuth: true, requiredRole: 'admin' } },
-  { path: '/management_votation_prioritaire', component: management_votation_prioritaire, name: 'management_votation_prioritaire', meta: { requiresAuth: true, requiredRole: 'lese' } },
+  { path: '/management_votation_prioritaire', component: Management_votation_prioritaire, name: 'Management_votation_prioritaire', meta: { requiresAuth: true, requiredRole: 'prioritaire' } },
   { path: '/management_votation_etudiants', component: Management_votation_etudiants, name: 'Management_votation_etudiants', meta: { requiresAuth: true, requiredRole: 'admin' } },
 
   // ========================================
@@ -399,7 +399,7 @@ const routes = [
   { path: '/chatbot', component: ChatBotView, name: 'ChatBotView', meta: { requiresAuth: true } },
   { path: '/mobile-tools', component: MobileToolsView, name: 'MobileToolsView', meta: { requiresAuth: true } },
   { path: '/mobile-lang-apps', component: MobileLangAppsView, name: 'MobileLangApps', meta: { mobileOnly: true } },
-  { path: '/mobile-search', component: MobileSearchView, name: 'MobileSearchView', meta: { requiresAuth: true } },
+//  { path: '/mobile-search', component: MobiprioritairearchView, name: 'MobiprioritairearchView', meta: { requiresAuth: true } },
 //  { path: '/template-test', component: () => import('@/views/template/TemplateTest.vue'), name: 'TemplateTest' },
   { path: '/supabase-demo', component: () => import('@/views/pages/Supabase.vue'), name: 'SupabaseDemo', meta: { requiresAuth: true } },
   { path: '/care-convers', component: CareConvers, name: 'CareConvers', meta: { requiresAuth: true } },
@@ -410,7 +410,7 @@ const routes = [
   // ========================================
   { path: '/create', component: CreateContentMobile, name: 'CreateContentMobile', meta: { mobileOnly: true } },
   { path: '/mobile-outils', component: MobileToolsView, name: 'MobileToolsView', meta: { mobileOnly: true } },
-  { path: '/mobile-search-old', component: MobileSearchView, name: 'MobileSearchOld', meta: { mobileOnly: true } },
+  //{ path: '/mobile-search-old', component: MobiprioritairearchView, name: 'MobiprioritairearchOld', meta: { mobileOnly: true } },
   { path: '/list', component: ListComponent, name: 'ListComponent', meta: { requiresAuth: true, requiredRole: ['editor', 'admin'] } },
 
   // ========================================

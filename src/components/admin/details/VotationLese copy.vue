@@ -91,7 +91,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import Navbar from '@/components/Utils/Navbar.vue';
 import UserProfile from './UserProfile.vue';
 
-
+//aa
 
 export default {
   name: "VotationLese",
