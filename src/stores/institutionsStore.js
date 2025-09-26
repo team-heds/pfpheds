@@ -25,6 +25,8 @@
           institution.InstitutionId === parseInt(id) ||
           institution.id === parseInt(id)
         );
+        console.log("ID inst" + id);
+
         return institution?.Name || institution?.name || 'Institution aainconnue';
       }
     },

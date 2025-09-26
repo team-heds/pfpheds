@@ -150,7 +150,8 @@ const assignedPlaces = computed(() => {
 
 
 const getInstitutionNameById = (idInstitution) => {
-  // Utiliser le getter du store Pinia
+  // Utiliser le getter du store Pinia twst
+  console.log("ID inst" + idInstitution);
   return institutionsStore.getInstitutionNameById(idInstitution);
 };
 
