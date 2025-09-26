@@ -110,7 +110,7 @@ const goToPraticienFormModif = (id) => {
  
 const goToPraticienForm = () => {
   // adapte le nom de route selon ton router
-  router.push({ name: 'PraticienForm' })
+  router.push({ name: 'PraticienFormateurForm' })
 }
 </script>
  
