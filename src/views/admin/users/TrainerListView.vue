@@ -6,7 +6,7 @@
       <DataTable
         :value="items"
         :paginator="true"
-        :rows="10"
+        :rows="20"
         dataKey="id"
         :rowHover="true"
         v-model:filters="filters"
