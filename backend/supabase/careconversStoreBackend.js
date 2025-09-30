@@ -65,12 +65,12 @@ async function getIntent(userInput, currentStep = 1) {
 
   // Map ASCII or variant labels to the canonical labels used in the switch
   const canonicalMap = new Map([
-    ["Bonjour, je m'appelle nom, prenom et je suis etudiant-e infirmier-ere, actuellement en 1ere annee Bachelor", "Bonjour, je m'appelle nom, prénom et je suis étudiant-e infirmier-ère, actuellement en 1ère année Bachelor"],
-    ["Je m'assieds en face de vous, comme ca vous me voyez bien", "Je m'assieds en face de vous, comme ça vous me voyez bien"],
+    ["Bonjour, je m’appelle nom, prénom et je suis étudiant infirmier, actuellement en 1ère année Bachelor"],
+    ["Je m'assieds en face de vous, comme ca vous me voyez bien"],
     ["Vous etes bien Madame Aubry, Denise, du 14.05.1940", "Vous êtes bien Madame Aubry, Denise, du 14.05.1940"],
     ["Je vous apporte votre petit dejeuner", "Je vous apporte votre petit déjeuner"],
     ["Vous avez faim", "Vous avez faim"],
-    ["C'est etonnant, d'habitude vous demander regulierement a quelle heure vous allez manger, vous n'etes pas en forme ce matin", "C'est étonnant, d'habitude vous demander régulièrement à quelle heure vous allez manger, vous n'êtes pas en forme ce matin"],
+    ["C’est étonnant, d’habitude vous demander régulièrement à quelle heure vous allez manger, vous n’êtes pas en forme ce matin"],
     ["Avez-vous mal/des douleurs ?", "Avez-vous mal/des douleurs ?"],
     ["Qu'est ce qui provoque votre douleur ?", "Qu'est ce qui provoque votre douleur ?"],
     ["Qu'est ce qui aide a soulager votre douleur ?", "Qu'est ce qui aide à soulager votre douleur ?"],
@@ -89,7 +89,7 @@ async function getIntent(userInput, currentStep = 1) {
   const getRelevantIntents = (step) => {
     switch (step) {
       case 1:
-        return ["Bonjour, je m'appelle nom, prenom et je suis etudiant-e infirmier-ere, actuellement en 1ere annee Bachelo"];
+        return ["Bonjour, je m’appelle nom, prénom et je suis étudiant infirmier, actuellement en 1ère année Bachelor"];
       case 2:
         return ["Je m'assieds en face de vous, comme ca vous me voyez bien"];
       case 3:
@@ -98,7 +98,7 @@ async function getIntent(userInput, currentStep = 1) {
         return ["Je vous apporte votre petit dejeuner", "Vous avez faim"];
       case 5:
         return [
-            "C'est etonnant, d'habitude vous demander regulierement a quelle heure vous allez manger, vous n'etes pas en forme ce matin",
+            "C’est étonnant, d’habitude vous demander régulièrement à quelle heure vous allez manger, vous n’êtes pas en forme ce matin",
             "e constate que vous avez l air d’avoir mal, c est exact ",
         ];
         case 6:
@@ -174,7 +174,7 @@ function registerCareConversStoreRoutes(app) {
  
       case 1:
         
-                if (intent === "Bonjour, je m’appelle nom, prénom et je suis étudiant-e infirmier-ère, actuellement en 1ère année Bachelor") {
+                if (intent === "Bonjour, je m’appelle nom, prénom et je suis étudiant infirmier, actuellement en 1ère année Bachelor") {
           responseText = '--';
           nextStep = 2;
           media = {
@@ -182,12 +182,12 @@ function registerCareConversStoreRoutes(app) {
             caption: ': "La patiente ne vous a pas entendu"  (a un déficit auditif non-compensé)'
           };
         } else {
-          responseText = '-';
+          responseText = '-?';
         }
         break;
 
       case 2:
-        if (intent === 'Je m’assieds en face de vous, comme ça vous me voyez bien') {
+        if (intent === "Je m'assieds en face de vous, comme ca vous me voyez bien") {
           responseText = 'Bonjour, vous ressemblez à ma voisine, c’est bien vous ?';
           nextStep = 3;
        
@@ -258,7 +258,7 @@ function registerCareConversStoreRoutes(app) {
         case 6:
 
         switch (intent) {
-              case 'C’est étonnant, d’habitude vous demander régulièrement à quelle heure vous allez manger, vous n’êtes pas en forme ce matin':
+              case "C’est étonnant, d’habitude vous demander régulièrement à quelle heure vous allez manger, vous n’êtes pas en forme ce matin":
                 responseText =
                   'S il vous plait, dites à mon mari de venir, il faut appeler la police avant qu il fasse nuit'+temp;
                 
