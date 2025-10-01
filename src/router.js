@@ -351,7 +351,7 @@ const routes = [
   // ========================================
   // VOTATIONS & GESTION
   // ========================================
-  { path: '/votation', component: VotationView, name: 'VotationView', meta: { requiresAuth: true } },
+  { path: '/votation', component: VotationView, name: 'VotationView', meta: { requiresAuth: true , requiredRole: 'BA24'  } },
   { path: '/votation_preview', component: VotationPreview, name: 'VotationPreview', meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/votation_prioritaire', component: VotationPrioritaire, name: 'VotationPrioritaire', meta: { requiresAuth: true, requiredRole: 'prioritaire' } },
   { path: '/votation_management', component: VotationManagementView, name: 'VotationManagementView', meta: { requiresAuth: true, requiredRole: 'admin' } },
