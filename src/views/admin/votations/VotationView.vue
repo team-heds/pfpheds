@@ -4,7 +4,7 @@
 
     <!-- Titre et bouton de retour -->
     <div class="page-title p-d-flex p-jc-between">
-      <h1>Votation BA23 - PFP3</h1>
+      <h1>Votation BA24 - PFP2</h1>
     </div>
 
     <div class="container">
@@ -353,7 +353,7 @@ export default {
   data() {
     return {
       places: [],
-      expandedPFP3Data: [],
+      expandedPFP2Data: [],
       userProfile: {},
       // Tableau réactif pour 5 choix de vote
       selectedPlaces: [null, null, null, null, null],
@@ -370,7 +370,7 @@ export default {
   watch: {
     places: {
       handler() {
-        this.updateExpandedPFP3Data();
+        this.updateExpandedPFP2Data();
       },
       immediate: true,
       deep: true
@@ -397,16 +397,8 @@ export default {
     },
 
     displayedGroups() {
-      // Si le premier groupe contient plus de 5 places, on affiche uniquement ce groupe,
-      // sinon on affiche tous les groupes.
-      if (
-        this.groupedByCriteriaCount.length > 0 &&
-        this.groupedByCriteriaCount[0].places.length > 5
-      ) {
-        return [this.groupedByCriteriaCount[0]];
-      } else {
-        return this.groupedByCriteriaCount;
-      }
+      // Afficher tous les groupes (1, 2, 3, 4, 5 critères)
+      return this.groupedByCriteriaCount;
     },
     // Agrégation des critères validés selon le profil utilisateur
     aggregatedPFP() {
@@ -444,13 +436,20 @@ export default {
     },
     // Utilise la donnée pré-calculée pour les places
     availablePlaces() {
-      let places = this.allCriteriaValidated
-        ? this.expandedPFP3Data
-        : this.expandedPFP3Data.filter(place => this.getNewValidatedCriteria(place).length > 0);
-      if (this.missingCriteria.includes('DE')) {
-        places = places.filter(place => place.DE === true);
+      let places = this.expandedPFP2Data;
+      
+      // Si tous les critères sont validés, afficher toutes les places
+      if (this.allCriteriaValidated) {
+        return places.filter(place => place[`selectedActiveBA24PFP2-${place.seatIndex}`] === true);
       }
-      return places.filter(place => place[`selectedActiveBA23PFP3-${place.seatIndex}`] === true);
+
+      // Afficher uniquement les places qui valident AU MOINS UN critère manquant
+      places = places.filter(place => {
+        const newCriteria = this.getNewValidatedCriteria(place);
+        return newCriteria.length > 0;
+      });
+
+      return places.filter(place => place[`selectedActiveBA24PFP2-${place.seatIndex}`] === true);
     },
     // Regroupe les places par nombre de critères non validés
     groupedByCriteriaCount() {
@@ -474,7 +473,7 @@ export default {
     // Nombre de places sélectionnées
     totalSelectedOut() {
       return this.availablePlaces.filter(
-        row => row[`selectedActiveBA23PFP3-${row.seatIndex}`] === true
+        row => row[`selectedActiveBA24PFP2-${row.seatIndex}`] === true
       ).length;
     },
     // Le vote est considéré validé si le premier choix est renseigné
@@ -493,13 +492,13 @@ export default {
       console.log("yes1")
       for (const key in placesData) {
         const place = placesData[key];
-        // Récupère le nombre de places (stocké dans PFP3, ici supposé être un nombre ou une chaîne numérique)
+        // Récupère le nombre de places (stocké dans PFP2, ici supposé être un nombre ou une chaîne numérique)
         console.log("yes13")
 
-        const count = parseInt(place.PFP3 || '0');
-        // Pour chaque siège, vérifie si la clé "selectedEtudiantBA23PFP3-i" correspond à l'ID utilisateur
+        const count = parseInt(place.PFP2 || '0');
+        // Pour chaque siège, vérifie si la clé "selectedEtudiantBA24PFP2-i" correspond à l'ID utilisateur
         for (let i = 1; i <= count; i++) {
-          if (place[`selectedEtudiantBA23PFP3-${i}`] === this.currentUserId) {
+          if (place[`selectedEtudiantBA24PFP2-${i}`] === this.currentUserId) {
             console.log("yes122")
 
             return place; // Retourne la place trouvée
@@ -508,21 +507,21 @@ export default {
       }
       return null; // Aucun assignement trouvé
     },
-    updateExpandedPFP3Data() {
+    updateExpandedPFP2Data() {
       const rows = [];
       const sorted = this.places.slice().sort((a, b) =>
         a.NomPlace.localeCompare(b.NomPlace)
       );
       sorted.forEach(place => {
-        const count = parseInt(place.PFP3 || '0');
+        const count = parseInt(place.PFP2 || '0');
         if (!isNaN(count) && count >= 1) {
           for (let i = 1; i <= count; i++) {
-            const studentKey = `selectedEtudiantBA23PFP3-${i}`;
+            const studentKey = `selectedEtudiantBA24PFP2-${i}`;
             const alreadySelected =
               (i === 1 && place.selectedEtudiant && place.selectedEtudiant.trim() !== "") ||
               (place[studentKey] && place[studentKey].trim() !== "");
             if (!alreadySelected) {
-              const dynamicKey = `selectedActiveBA23PFP3-${i}`;
+              const dynamicKey = `selectedActiveBA24PFP2-${i}`;
               rows.push({
                 ...place,
                 seatIndex: i,
@@ -532,7 +531,7 @@ export default {
           }
         }
       });
-      this.expandedPFP3Data = rows;
+      this.expandedPFP2Data = rows;
     },
     goBackToProfile() {
       this.$router.push({ name: 'HistoriquePFP' });
@@ -541,7 +540,7 @@ export default {
       const auth = getAuth();
       const user = auth.currentUser;
       if (user) {
-        const voteRef = ref(db, `VotationBA23PFP3/${user.uid}`);
+        const voteRef = ref(db, `VotationBA24PFP2/${user.uid}`);
         onValue(voteRef, (snapshot) => {
           const vote = snapshot.val();
           if (vote && vote.votes) {
@@ -607,7 +606,7 @@ export default {
                     AMBU: place.AMBU === 'true' || place.AMBU === true,
                     FR: place.FR === 'true' || place.FR === true,
                     DE: place.DE === 'true' || place.DE === true,
-                    PFP3: place.PFP3 || '0',
+                    PFP2: place.PFP2 || '0',
                     url: url,
                     InstitutionName: institutionData.Name ||
                       institutionData.NomPlace ||
@@ -627,7 +626,7 @@ export default {
 
 
     updateSelection(place, seatIndex, value) {
-      const dynamicKey = `selectedActiveBA23PFP3-${seatIndex}`;
+      const dynamicKey = `selectedActiveBA24PFP2-${seatIndex}`;
       const placeRef = ref(db, `Places/${place.IdPlace}`);
       update(placeRef, { [dynamicKey]: value })
         .catch((error) => {
@@ -649,7 +648,7 @@ export default {
       });
     },
     fetchVotesAggregation() {
-      const votesRef = ref(db, 'VotationBA23PFP3');
+      const votesRef = ref(db, 'VotationBA24PFP2');
       onValue(votesRef, (snapshot) => {
         const votesData = snapshot.val() || {};
         const aggregation = {};
@@ -710,7 +709,7 @@ export default {
         })),
         timestamp: Date.now()
       };
-      const voteRef = ref(db, `VotationBA23PFP3/${user.uid}`);
+      const voteRef = ref(db, `VotationBA24PFP2/${user.uid}`);
       set(voteRef, voteData)
         .then(() => {
           this.dialogMessage = "Vous avez voté pour les places : " +
@@ -728,7 +727,7 @@ export default {
       const auth = getAuth();
       const user = auth.currentUser;
       if (user) {
-        const voteRef = ref(db, `VotationBA23PFP3/${user.uid}`);
+        const voteRef = ref(db, `VotationBA24PFP2/${user.uid}`);
         remove(voteRef)
           .then(() => {
             this.votedPlaces = [null, null, null, null, null];
