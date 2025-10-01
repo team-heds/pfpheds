@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="scroll-page">
     <Navbar />
 
@@ -324,20 +324,10 @@ export default {
         return places;
       }
 
-      // Filtrage : si l'étudiant a validé DE ou SYSINT, exclure les places avec ces critères
-      const hasValidatedDE = this.aggregatedPFP.DE;
-      const hasValidatedSYSINT = this.aggregatedPFP.SYSINT;
-
+      // Afficher uniquement les places qui valident AU MOINS UN critère manquant
       places = places.filter(place => {
-        // Si l'étudiant a validé DE, exclure TOUTES les places qui ont le critère DE
-        if (hasValidatedDE && place.DE) {
-          return false;
-        }
-        // Si l'étudiant a validé SYSINT, exclure TOUTES les places qui ont le critère SYSINT
-        if (hasValidatedSYSINT && place.SYSINT) {
-          return false;
-        }
-        return true;
+        const newCriteria = this.getNewValidatedCriteria(place);
+        return newCriteria.length > 0;
       });
 
       return places;
