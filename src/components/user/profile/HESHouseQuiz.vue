@@ -331,10 +331,10 @@ const nextQuestion = () => {
   }
 }
 
-const calculateHouse = () => {
+const calculateHouse = async () => {
   isCalculating.value = true
   
-  setTimeout(() => {
+  try {
     // Compter les réponses pour chaque maison
     const houseScores = {
       harmonis: 0,
@@ -347,15 +347,48 @@ const calculateHouse = () => {
       houseScores[answer.house]++
     })
     
-    // Trouver la maison avec le score le plus élevé
-    const winningHouse = Object.keys(houseScores).reduce((a, b) => 
-      houseScores[a] > houseScores[b] ? a : b
-    )
+    console.log('📊 Scores du quiz:', houseScores)
     
-    selectedHouse.value = houses[winningHouse]
-    isCalculating.value = false
-    quizCompleted.value = true
-  }, 2000)
+    // 🎯 NOUVEAU: Utiliser le système d'équilibrage automatique
+    const bestAvailableHouse = await gamificationServiceSupabase.findBestAvailableHouse(houseScores, 50)
+    
+    console.log(`🏠 Maison assignée: ${bestAvailableHouse}`)
+    
+    // Attendre 2 secondes pour l'effet dramatique
+    setTimeout(() => {
+      selectedHouse.value = houses[bestAvailableHouse]
+      isCalculating.value = false
+      quizCompleted.value = true
+      
+      // Afficher un message si la maison a été changée pour équilibrage
+      const originalWinner = Object.keys(houseScores).reduce((a, b) => 
+        houseScores[a] > houseScores[b] ? a : b
+      )
+      
+      if (originalWinner !== bestAvailableHouse) {
+        toast.add({
+          severity: 'info',
+          summary: 'Équilibrage des Maisons',
+          detail: `Tu as été assigné à ${houses[bestAvailableHouse].name} pour maintenir l'équilibre entre les maisons !`,
+          life: 5000
+        })
+      }
+    }, 2000)
+    
+  } catch (error) {
+    console.error('❌ Erreur lors du calcul de la maison:', error)
+    
+    // Fallback: méthode originale en cas d'erreur
+    setTimeout(() => {
+      const winningHouse = Object.keys(houseScores).reduce((a, b) => 
+        houseScores[a] > houseScores[b] ? a : b
+      )
+      
+      selectedHouse.value = houses[winningHouse]
+      isCalculating.value = false
+      quizCompleted.value = true
+    }, 2000)
+  }
 }
 
 const saveHouseSelection = async () => {

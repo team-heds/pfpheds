@@ -472,6 +472,117 @@ class GamificationServiceSupabase {
   }
 
   /**
+   * Vérifie le nombre de membres dans chaque maison
+   * @returns {Promise<Object>} Statistiques des membres par maison
+   */
+  async getHouseMemberCounts() {
+    try {
+      console.log('🏠 Vérification du nombre de membres par maison...')
+      
+      // Récupérer toutes les données de gamification
+      const { data: gamificationData, error } = await supabase
+        .from('gamification_data')
+        .select('house_id')
+      
+      if (error) {
+        console.error('❌ Erreur récupération données:', error)
+        throw error
+      }
+      
+      // Mapping house_id vers nom de maison
+      const houseIdToName = {
+        '550e8400-e29b-41d4-a716-446655440000': 'harmonis',
+        '550e8400-e29b-41d4-a716-446655440001': 'elaris', 
+        '550e8400-e29b-41d4-a716-446655440002': 'doloris',
+        '550e8400-e29b-41d4-a716-446655440004': 'solencia'
+      }
+      
+      // Compter les membres par maison
+      const houseCounts = {
+        harmonis: 0,
+        elaris: 0,
+        doloris: 0,
+        solencia: 0
+      }
+      
+      if (gamificationData && gamificationData.length > 0) {
+        gamificationData.forEach(user => {
+          const houseName = houseIdToName[user.house_id]
+          if (houseName && houseCounts.hasOwnProperty(houseName)) {
+            houseCounts[houseName]++
+          }
+        })
+      }
+      
+      console.log('📊 Nombre de membres par maison:', houseCounts)
+      return houseCounts
+      
+    } catch (error) {
+      console.error('❌ Erreur lors du comptage des membres:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Trouve la meilleure maison disponible en fonction des résultats du quiz et des limites
+   * @param {Object} quizResults - Résultats du quiz avec scores par maison
+   * @param {number} maxMembersPerHouse - Limite maximale de membres par maison (défaut: 50)
+   * @returns {Promise<string>} Nom de la maison assignée
+   */
+  async findBestAvailableHouse(quizResults, maxMembersPerHouse = 50) {
+    try {
+      console.log('🎯 Recherche de la meilleure maison disponible...')
+      console.log('📝 Résultats du quiz:', quizResults)
+      
+      // Obtenir le nombre actuel de membres par maison
+      const houseCounts = await this.getHouseMemberCounts()
+      
+      // Trier les maisons par score du quiz (ordre décroissant)
+      const sortedHouses = Object.entries(quizResults)
+        .sort(([,a], [,b]) => b - a)
+        .map(([house]) => house)
+      
+      console.log('🏆 Ordre de préférence du quiz:', sortedHouses)
+      
+      // Chercher la première maison disponible selon les préférences du quiz
+      for (const house of sortedHouses) {
+        const currentMembers = houseCounts[house] || 0
+        console.log(`🏠 ${house}: ${currentMembers}/${maxMembersPerHouse} membres`)
+        
+        if (currentMembers < maxMembersPerHouse) {
+          console.log(`✅ Maison ${house} sélectionnée (${currentMembers + 1}/${maxMembersPerHouse})`)
+          return house
+        } else {
+          console.log(`❌ Maison ${house} pleine (${currentMembers}/${maxMembersPerHouse})`)
+        }
+      }
+      
+      // Si toutes les maisons préférées sont pleines, trouver la maison avec le moins de membres
+      const availableHouses = Object.entries(houseCounts)
+        .filter(([, count]) => count < maxMembersPerHouse)
+        .sort(([,a], [,b]) => a - b)
+      
+      if (availableHouses.length > 0) {
+        const fallbackHouse = availableHouses[0][0]
+        console.log(`🔄 Redirection vers ${fallbackHouse} (maison avec le moins de membres)`)
+        return fallbackHouse
+      }
+      
+      // Si toutes les maisons sont pleines, assigner à celle avec le moins de membres
+      const leastFullHouse = Object.entries(houseCounts)
+        .sort(([,a], [,b]) => a - b)[0][0]
+      
+      console.log(`⚠️ Toutes les maisons sont pleines, assignation à ${leastFullHouse}`)
+      return leastFullHouse
+      
+    } catch (error) {
+      console.error('❌ Erreur lors de la recherche de maison:', error)
+      // En cas d'erreur, retourner la première maison des résultats du quiz
+      return Object.keys(quizResults)[0] || 'harmonis'
+    }
+  }
+
+  /**
    * Obtient les statistiques détaillées d'une maison
    * @param {string} houseName - Nom de la maison
    * @returns {Promise<Object>} Statistiques détaillées de la maison
