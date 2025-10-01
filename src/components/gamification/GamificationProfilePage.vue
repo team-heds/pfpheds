@@ -157,8 +157,10 @@
           </div>
         </div>
 
-        <!-- Outils de création -->
+        <!-- Outils de création
         <CreationToolsCard :userCreationStats="userCreationStats" />
+
+        -->
 
         <!-- Prochaines quêtes / défis -->
         <div class="members-ranking">
@@ -446,13 +448,8 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { getAuth } from 'firebase/auth'
-import { getUserGamificationStats } from '@/service/hesHousesService'
-import { getActiveDefis, subscribeActiveDefis } from '@/service/defisService'
-import badgesService from '@/service/badgesService'
-import challengesService from '@/service/challengesService'
-import questsService from '@/service/questsService'
-import gamificationService from '@/service/gamificationService'
+import { useAuthStore } from '@/stores/authStore'
+import gamificationServiceSupabase from '@/service/gamificationServiceSupabase'
 import Navbar from '@/components/common/utils/Navbar.vue'
 import BadgeCard from '@/components/gamification/BadgeCard.vue'
 import ChallengeCard from '@/components/gamification/ChallengeCard.vue'
@@ -467,7 +464,7 @@ import FondSolencia from '@/assets/maisons/FondSolencia.png'
 
 // Router and auth
 const router = useRouter()
-const auth = getAuth()
+const authStore = useAuthStore()
 
 // Reactive state
 const loading = ref(true)
@@ -699,48 +696,29 @@ const getBadgeProgressHint = (badge) => {
 }
 
 const checkForNewBadges = async () => {
-  if (!auth.currentUser?.uid) return
+  if (!authStore.user?.id) return
   
   try {
-    const newBadges = await badgesService.autoCheckAndUnlockBadges(
-      auth.currentUser.uid, 
-      userStats.value
-    )
-    
-    if (newBadges.length > 0) {
-      // Ajouter les nouveaux badges à la liste
-      userBadges.value.push(...newBadges)
-      
-      // Marquer comme nouvellement débloqués
-      newBadges.forEach(badge => {
-        newlyUnlockedBadges.value.add(badge.id)
-      })
-      
-      // Afficher notification pour le premier badge
-      if (newBadges.length > 0) {
-        currentNotification.value = newBadges[0]
-        showNotification.value = true
-      }
-    }
+    console.log('🔍 Vérification des nouveaux badges...')
+    // TODO: Implémenter la vérification automatique des badges
+    console.log('✅ Vérification badges terminée (système à implémenter)')
   } catch (error) {
-    console.error('Erreur lors de la vérification des badges:', error)
+    console.error('❌ Erreur lors de la vérification des badges:', error)
   }
 }
 
 const loadBadgesData = async () => {
-  if (!auth.currentUser?.uid) return
+  if (!authStore.user?.id) return
   
   try {
-    // Utiliser le service unifié pour charger les badges
-    const [allBadgesData, userBadgesData] = await Promise.all([
-      gamificationService.getAllBadges(),
-      gamificationService.getUserBadges(auth.currentUser.uid)
-    ])
-    
-    allBadges.value = allBadgesData || []
-    userBadges.value = userBadgesData || []
+    console.log('🏆 Chargement des badges...')
+    // Pour l'instant, utiliser des données par défaut
+    // TODO: Implémenter le système de badges dans Supabase
+    allBadges.value = []
+    userBadges.value = []
+    console.log('✅ Badges chargés (système à implémenter)')
   } catch (error) {
-    console.error('Erreur lors du chargement des badges:', error)
+    console.error('❌ Erreur lors du chargement des badges:', error)
     allBadges.value = []
     userBadges.value = []
   }
@@ -753,19 +731,17 @@ const onNotificationClose = () => {
 
 // Challenge system methods
 const loadChallengesData = async () => {
-  if (!auth.currentUser?.uid) return
+  if (!authStore.user?.id) return
   
   try {
-    // Utiliser le service unifié pour charger les défis
-    const [challenges, stats] = await Promise.all([
-      gamificationService.getUserChallenges(auth.currentUser.uid),
-      challengesService.getUserChallengeStats(auth.currentUser.uid)
-    ])
-    
-    activeChallenges.value = challenges || []
-    challengeStats.value = stats || {}
+    console.log('🎯 Chargement des défis...')
+    // Pour l'instant, utiliser des données par défaut
+    // TODO: Implémenter le système de défis dans Supabase
+    activeChallenges.value = []
+    challengeStats.value = { totalCompleted: 0, totalXPFromChallenges: 0 }
+    console.log('✅ Défis chargés (système à implémenter)')
   } catch (error) {
-    console.error('Erreur lors du chargement des défis:', error)
+    console.error('❌ Erreur lors du chargement des défis:', error)
     activeChallenges.value = []
     challengeStats.value = {}
   }
@@ -778,19 +754,17 @@ const showChallengeDetails = (challenge) => {
 
 // Quest system methods
 const loadQuestsData = async () => {
-  if (!auth.currentUser?.uid) return
+  if (!authStore.user?.id) return
   
   try {
-    // Utiliser le service unifié pour charger les quêtes
-    const [quests, stats] = await Promise.all([
-      gamificationService.getUserQuests(auth.currentUser.uid),
-      questsService.getUserQuestStats(auth.currentUser.uid)
-    ])
-    
-    activeQuests.value = quests || []
-    questStats.value = stats || {}
+    console.log('🗺️ Chargement des quêtes...')
+    // Pour l'instant, utiliser des données par défaut
+    // TODO: Implémenter le système de quêtes dans Supabase
+    activeQuests.value = []
+    questStats.value = { totalCompleted: 0, totalXPFromQuests: 0 }
+    console.log('✅ Quêtes chargées (système à implémenter)')
   } catch (error) {
-    console.error('Erreur lors du chargement des quêtes:', error)
+    console.error('❌ Erreur lors du chargement des quêtes:', error)
     activeQuests.value = []
     questStats.value = {}
   }
@@ -807,58 +781,48 @@ const loadUserStats = async () => {
     loading.value = true
     error.value = null
     
-    if (!auth.currentUser?.uid) {
+    if (!authStore.user?.id) {
       throw new Error('Utilisateur non connecté')
     }
     
-    const stats = await getUserGamificationStats(auth.currentUser.uid)
+    console.log('🔍 Chargement des stats gamification pour:', authStore.user.id)
+    
+    // Utiliser le service Supabase pour récupérer les données
+    const stats = await gamificationServiceSupabase.getUserGamificationData(authStore.user.id)
     
     if (!stats) {
       throw new Error('Aucune donnée trouvée pour cet utilisateur')
     }
     
-    // Améliorer le nom d'affichage avec les données Firebase Auth si nécessaire
+    console.log('✅ Stats gamification chargées:', stats)
+    
+    // Améliorer le nom d'affichage avec les données Supabase Auth si nécessaire
     if (!stats.displayName || stats.displayName === 'Utilisateur') {
-      stats.displayName = auth.currentUser.displayName || 
-                          auth.currentUser.email?.split('@')[0] || 
-                          'Utilisateur'
+      stats.displayName = authStore.user.email?.split('@')[0] || 'Utilisateur'
     }
     
-    // Fetch upcoming active challenges and also subscribe for real-time updates
-    let house = stats?.maison || null
-    let activeDefis = []
-    try {
-      activeDefis = await getActiveDefis(house)
-    } catch (e) {
-      console.warn('Impossible de charger les défis actifs:', e)
+    // Adapter les données pour correspondre au format attendu
+    const adaptedStats = {
+      ...stats,
+      niveau: stats.current_level || 1,
+      xp: stats.total_xp || 0,
+      maison: stats.house_name || stats.maison,
+      streak: 0, // À implémenter plus tard
+      streakMax: 0, // À implémenter plus tard
+      badges: [], // À implémenter plus tard
+      achievements: [], // À implémenter plus tard
+      upcomingChallenges: [] // À implémenter plus tard
     }
-    userStats.value = { ...stats, upcomingChallenges: activeDefis }
-
-    // Charger les données des badges
+    
+    userStats.value = adaptedStats
+    
+    // Charger les données supplémentaires (badges, défis, quêtes)
     await loadBadgesData()
-    
-    // Charger les données des défis
     await loadChallengesData()
-    
-    // Charger les données des quêtes
     await loadQuestsData()
-
-    // Setup realtime subscription
-    if (unsubscribeDefis) {
-      try { unsubscribeDefis() } catch {}
-      unsubscribeDefis = null
-    }
-    try {
-      unsubscribeDefis = subscribeActiveDefis(house, (list) => {
-        if (userStats.value) {
-          userStats.value = { ...userStats.value, upcomingChallenges: list }
-        }
-      })
-    } catch (e) {
-      console.warn('Subscription défis actifs échouée:', e)
-    }
+    
   } catch (err) {
-    console.error('Erreur lors du chargement des stats:', err)
+    console.error('❌ Erreur lors du chargement des stats:', err)
     error.value = err.message || 'Erreur lors du chargement des données'
   } finally {
     loading.value = false

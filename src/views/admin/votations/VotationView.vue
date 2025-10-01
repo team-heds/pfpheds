@@ -1,21 +1,21 @@
 <template>
   <div class="votation-scrollable">
     <Navbar />
-
+ 
     <!-- Titre et bouton de retour -->
     <div class="page-title p-d-flex p-jc-between">
       <h1>Votation BA24 - PFP2</h1>
     </div>
-
+ 
     <div class="container">
       <Button label="Retour Profil" icon="pi pi-arrow-left"
         class="p-button-outlined m-2 align-content-end justify-content-end" @click="goBackToProfile" />
-
+ 
       <!-- Affichage du profil étudiant -->
       <div v-if="userProfile && Object.keys(userProfile).length">
         <ValidatedCriteriaSection :userId="currentUserId" />
       </div>
-
+ 
       <!-- Affichage des places disponibles -->
       <div v-if="allCriteriaValidated">
         <h2>Toutes les places disponibles ( {{ availablePlaces.length }} places )</h2>
@@ -23,20 +23,20 @@
           <!-- Colonne Institution avec lien -->
           <Column header="Institution">
             <template #body="slotProps">
-
+ 
               <a target="_blank" :href="`${slotProps.data.url}`">
                 <span>{{ slotProps.data.InstitutionName || 'Non spécifié' }}</span>
               </a>
             </template>
           </Column>
-
+ 
           <!-- Autres colonnes d'informations -->
           <Column header="Nom de la Place">
             <template #body="slotProps">
               <span>{{ slotProps.data.NomPlace }}</span>
             </template>
           </Column>
-
+ 
           <Column header="Catégorie ">
             <template #body="slotProps">
               <span>{{ slotProps.data.InstitutionCategory }}</span>
@@ -87,7 +87,7 @@
               <span>{{ getNewValidatedCriteria(slotProps.data).join(', ') }}</span>
             </template>
           </Column>
-
+ 
           <!-- Colonnes de vote (Choix 1 à 5) -->
           <Column header="Choix 1">
             <template #body="slotProps">
@@ -119,7 +119,7 @@
                 :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 4)" />
             </template>
           </Column>
-
+ 
           <!-- Colonnes d'agrégation des votes -->
           <Column header="Votes Top 1">
             <template #body="slotProps">
@@ -153,7 +153,7 @@
           </Column>
         </DataTable>
       </div>
-
+ 
       <!-- En cas de critères non validés, affichage groupé par nombre de critères validés -->
       <div v-else>
         <div v-for="group in displayedGroups" :key="group.criteriaCount" class="criteria-count-section">
@@ -168,7 +168,7 @@
               responsiveLayout="scroll">
               <Column header="Institution">
                 <template #body="slotProps">
-
+ 
                   <a target="_blank" :href="`${slotProps.data.url}`">
                     <span>{{ slotProps.data.InstitutionName || 'Non spécifié' }}</span>
                   </a>
@@ -179,14 +179,14 @@
                   <span>{{ slotProps.data.NomPlace }}</span>
                 </template>
               </Column>
-
+ 
               <Column header="Catégorie ">
                 <template #body="slotProps">
                   <span>{{ slotProps.data.InstitutionCategory }}</span>
                 </template>
               </Column>
-
-
+ 
+ 
               <Column header="MSQ">
                 <template #body="slotProps">
                   <span>{{ slotProps.data.MSQ ? 'MSQ' : '-' }}</span>
@@ -298,7 +298,7 @@
           </div>
         </div>
       </div>
-
+ 
       <!-- Action de vote -->
       <div class="vote-action">
         <Button v-if="!voteAlreadyCast" @click="sendVote">Envoyer</Button>
@@ -313,7 +313,7 @@
         </div>
       </div>
     </div>
-
+ 
     <!-- Dialogue de confirmation -->
     <Dialog v-model:visible="dialogVisible" header="Confirmation de Vote" :modal="true" :closable="false"
       class="custom-dialog">
@@ -324,7 +324,7 @@
     </Dialog>
   </div>
 </template>
-
+ 
 <script>
 import Navbar from '@/components/common/utils/Navbar.vue';
 import DataTable from 'primevue/datatable';
@@ -337,7 +337,7 @@ import CardNameProfile from '@/components/user/library/CardNameProfile.vue';
 import { ref, onValue, update, set, remove } from "firebase/database";
 import { db } from 'root/firebase';
 import { getAuth } from "firebase/auth";
-
+ 
 export default {
   name: 'VotationView',
   components: {
@@ -364,7 +364,7 @@ export default {
       // Objet contenant l'agrégation des votes par place
       votesAggregation: {},
       alreadyAssigned: false, // Propriété ajoutée
-
+ 
     };
   },
   watch: {
@@ -395,7 +395,7 @@ export default {
         .sort((a, b) => b.criteriaCount - a.criteriaCount);
       return allGroups;
     },
-
+ 
     displayedGroups() {
       // Afficher tous les groupes (1, 2, 3, 4, 5 critères)
       return this.groupedByCriteriaCount;
@@ -442,17 +442,17 @@ export default {
       if (this.allCriteriaValidated) {
         return places.filter(place => place[`selectedActiveBA24PFP2-${place.seatIndex}`] === true);
       }
-
+ 
       // Afficher uniquement les places qui valident AU MOINS UN critère manquant
       places = places.filter(place => {
         const newCriteria = this.getNewValidatedCriteria(place);
         return newCriteria.length > 0;
       });
-
+ 
       // Filtrage : si l'étudiant a validé DE ou SYSINT, exclure les places avec ces critères
       const hasValidatedDE = this.aggregatedPFP.DE;
       const hasValidatedSYSINT = this.aggregatedPFP.SYSINT;
-
+ 
       places = places.filter(place => {
         // Si l'étudiant a validé DE, exclure TOUTES les places qui ont le critère DE
         if (hasValidatedDE && place.DE) {
@@ -464,7 +464,7 @@ export default {
         }
         return true;
       });
-
+ 
       return places.filter(place => place[`selectedActiveBA24PFP2-${place.seatIndex}`] === true);
     },
     // Regroupe les places par nombre de critères non validés
@@ -498,25 +498,25 @@ export default {
     }
   },
   methods: {
-
+ 
     async getNameInstitutionById(institutionId) {
       const institutionData = await this.fetchInstitutionData(institutionId);
       return institutionData.Name || institutionId;
     },
-
+ 
     checkUserAssignedPlace(placesData) {
       console.log("yes1")
       for (const key in placesData) {
         const place = placesData[key];
         // Récupère le nombre de places (stocké dans PFP2, ici supposé être un nombre ou une chaîne numérique)
         console.log("yes13")
-
+ 
         const count = parseInt(place.PFP2 || '0');
         // Pour chaque siège, vérifie si la clé "selectedEtudiantBA24PFP2-i" correspond à l'ID utilisateur
         for (let i = 1; i <= count; i++) {
           if (place[`selectedEtudiantBA24PFP2-${i}`] === this.currentUserId) {
             console.log("yes122")
-
+ 
             return place; // Retourne la place trouvée
           }
         }
@@ -575,8 +575,8 @@ export default {
         });
       });
     },
-
-
+ 
+ 
     fetchPlacesData() {
       const placesRef = ref(db, 'Places');
       onValue(placesRef, snapshot => {
@@ -638,9 +638,9 @@ export default {
         });
       });
     },
-
-
-
+ 
+ 
+ 
     updateSelection(place, seatIndex, value) {
       const dynamicKey = `selectedActiveBA24PFP2-${seatIndex}`;
       const placeRef = ref(db, `Places/${place.IdPlace}`);
@@ -773,36 +773,36 @@ export default {
     }
   },
   mounted() {
-
+ 
     this.fetchUserProfile();
-
+ 
     this.fetchPlacesData();
     this.fetchVotesAggregation();
   }
 };
 </script>
-
+ 
 <style scoped>
 .votation-scrollable {
   overflow-y: auto;
   max-height: 100vh;
 }
-
+ 
 html, body, #app {
   height: 100%;
   min-height: 100%;
   overflow-y: auto;
 }
-
+ 
 .page-title {
   margin-bottom: 20px;
   text-align: center;
 }
-
+ 
 .container {
   padding: 20px;
 }
-
+ 
 .profile-info {
   margin-bottom: 20px;
   padding: 10px;
@@ -810,12 +810,12 @@ html, body, #app {
   color: var(--text-color);
   border-radius: 4px;
 }
-
+ 
 .custom-datatable .p-datatable-thead>tr>th {
   background-color: var(--surface-card);
   color: var(--text-color);
 }
-
+ 
 .custom-datatable .p-datatable-tbody>tr>td {
   background-color: var(--surface-card);
   color: var(--text-color);
@@ -823,23 +823,25 @@ html, body, #app {
   overflow-wrap: break-word;
   word-wrap: break-word;
 }
-
+ 
 .criteria-count-section {
   margin-bottom: 40px;
 }
-
+ 
 .vote-action {
   margin-top: 20px;
   text-align: center;
 }
-
+ 
 .vote-action button {
   padding: 8px 16px;
   font-size: 16px;
 }
-
+ 
 .custom-dialog {
   width: 400px;
 }
 </style>
   
+ 
+ 

@@ -165,7 +165,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { getHousesRanking, HOUSE_LEVEL_CONFIG } from '@/service/hesHousesService'
+import gamificationServiceSupabase from '@/service/gamificationServiceSupabase'
 import Navbar from '@/components/common/utils/Navbar.vue'
 
 const router = useRouter()
@@ -197,12 +197,16 @@ const formatDate = (dateString) => {
 // Calcul du pourcentage de progression
 const calculateProgress = (house) => {
   if (house.level >= 20) return 100
+  if (house.xpToNext <= 0) return 100
   
-  const currentLevelXP = HOUSE_LEVEL_CONFIG[house.level].xpRequired
-  const nextLevelXP = HOUSE_LEVEL_CONFIG[house.level + 1].xpRequired
-  const currentXP = house.totalXP
+  // Utiliser les données déjà calculées par le service Supabase
+  const houseLevel = gamificationServiceSupabase.calculateHouseLevel(house.totalXP)
+  const currentLevelXP = houseLevel.xpRequired
+  const nextLevelXP = currentLevelXP + house.xpToNext
   
-  return Math.min(100, ((currentXP - currentLevelXP) / (nextLevelXP - currentLevelXP)) * 100)
+  if (nextLevelXP <= currentLevelXP) return 100
+  
+  return Math.min(100, ((house.totalXP - currentLevelXP) / (nextLevelXP - currentLevelXP)) * 100)
 }
 
 // Navigation vers les détails d'une maison
@@ -215,13 +219,21 @@ const refreshRanking = async () => {
   await loadRanking()
 }
 
-// Chargement des données
+// Chargement des données depuis Supabase
 const loadRanking = async () => {
   try {
     loading.value = true
-    housesRanking.value = await getHousesRanking()
+    console.log('🔄 Chargement du classement des maisons depuis Supabase...')
+    housesRanking.value = await gamificationServiceSupabase.getHousesRanking()
+    console.log('✅ Classement chargé:', housesRanking.value)
   } catch (error) {
-    console.error('Erreur lors du chargement du classement:', error)
+    console.error('❌ Erreur lors du chargement du classement:', error)
+    // Données par défaut en cas d'erreur
+    housesRanking.value = {
+      ranking: [],
+      lastUpdated: new Date().toISOString(),
+      totalUsers: 0
+    }
   } finally {
     loading.value = false
   }

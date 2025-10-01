@@ -76,6 +76,7 @@ import GamificationProfilePage from '@/components/gamification/GamificationProfi
 import AchievementsPage from '@/components/gamification/AchievementsPage.vue'
 import ChallengesPage from '@/components/gamification/ChallengesPage.vue'
 import QuestsPage from '@/components/gamification/QuestsPage.vue'
+import DiagnosticGamificationView from '@/views/DiagnosticGamificationView.vue'
 
 // ========================================
 // DASHBOARD & ADMINISTRATION
@@ -279,6 +280,7 @@ const routes = [
   { path: '/achievements', component: AchievementsPage, name: 'AchievementsPage', meta: { requiresAuth: true } },
   { path: '/challenges', component: ChallengesPage, name: 'ChallengesPage', meta: { requiresAuth: true } },
   { path: '/quests', component: QuestsPage, name: 'QuestsPage', meta: { requiresAuth: true } },
+  { path: '/diagnostic-gamification', component: DiagnosticGamificationView, name: 'DiagnosticGamificationView', meta: { requiresAuth: true } },
 
   // ========================================
   // DASHBOARD & ADMINISTRATION
