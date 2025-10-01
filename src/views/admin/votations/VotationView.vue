@@ -449,6 +449,22 @@ export default {
         return newCriteria.length > 0;
       });
 
+      // Filtrage : si l'étudiant a validé DE ou SYSINT, exclure les places avec ces critères
+      const hasValidatedDE = this.aggregatedPFP.DE;
+      const hasValidatedSYSINT = this.aggregatedPFP.SYSINT;
+
+      places = places.filter(place => {
+        // Si l'étudiant a validé DE, exclure TOUTES les places qui ont le critère DE
+        if (hasValidatedDE && place.DE) {
+          return false;
+        }
+        // Si l'étudiant a validé SYSINT, exclure TOUTES les places qui ont le critère SYSINT
+        if (hasValidatedSYSINT && place.SYSINT) {
+          return false;
+        }
+        return true;
+      });
+
       return places.filter(place => place[`selectedActiveBA24PFP2-${place.seatIndex}`] === true);
     },
     // Regroupe les places par nombre de critères non validés
