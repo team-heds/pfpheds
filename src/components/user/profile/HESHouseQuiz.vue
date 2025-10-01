@@ -95,15 +95,14 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { getAuth } from 'firebase/auth'
-import { getDatabase, ref as dbRef, get, update } from "firebase/database"
 import { useToast } from 'primevue/usetoast'
-import { initializeUserGamification, addUserXP } from '@/service/hesHousesService'
+import gamificationServiceSupabase from '@/service/gamificationServiceSupabase'
 import gamificationIntegration from '@/service/gamificationIntegration'
+import { useAuthStore } from '@/stores/authStore'
 
 const router = useRouter()
 const toast = useToast()
-const auth = getAuth()
+const authStore = useAuthStore()
 
 // Props
 const props = defineProps({
@@ -361,7 +360,7 @@ const calculateHouse = () => {
 
 const saveHouseSelection = async () => {
   try {
-    const userId = props.userId || auth.currentUser?.uid
+    const userId = props.userId || authStore.user?.id
     if (!userId) {
       toast.add({
         severity: 'error',
@@ -372,8 +371,41 @@ const saveHouseSelection = async () => {
       return
     }
 
-    // Utiliser le nouveau service de gamification pour initialiser l'utilisateur
-    await initializeUserGamification(userId, selectedHouse.value.name)
+    // Sauvegarder la maison directement dans gamification_data
+    try {
+      const houseId = getHouseIdByName(selectedHouse.value.name)
+      
+      // Insertion directe dans gamification_data avec colonnes correctes
+      const { data, error } = await gamificationServiceSupabase.supabase
+        .from('gamification_data')
+        .upsert({
+          user_id: userId,
+          email: authStore.user?.email || 'unknown@email.com',
+          house_id: houseId,
+          current_level: 1,
+          total_xp: 50, // Bonus quiz
+          house_points: 50, // Points initiaux pour la maison
+          gamification_metadata: {
+            quiz_completed: true,
+            house_assigned: selectedHouse.value.name,
+            quiz_date: new Date().toISOString()
+          },
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id' })
+        .select()
+        .single()
+
+      if (error) {
+        console.error('❌ Erreur sauvegarde gamification_data:', error)
+        throw error
+      }
+
+      console.log('✅ Maison sauvegardée dans gamification_data:', selectedHouse.value.name, 'pour utilisateur:', userId)
+      console.log('Données sauvegardées:', data)
+    } catch (error) {
+      console.error('❌ Erreur sauvegarde Supabase:', error)
+      // Continuer même en cas d'erreur de sauvegarde
+    }
 
     // NOUVEAU : Déclencher l'intégration gamification pour quiz terminé
     await gamificationIntegration.onQuizComplete(userId, {
@@ -417,21 +449,31 @@ const restartQuiz = () => {
   selectedHouse.value = null
 }
 
-// Vérifier si l'utilisateur a déjà une maison
+// Helper pour obtenir l'ID de la maison par son nom
+const getHouseIdByName = (houseName) => {
+  const houseMapping = {
+    'Harmonis': '550e8400-e29b-41d4-a716-446655440001',
+    'Elaris': '550e8400-e29b-41d4-a716-446655440002', 
+    'Nexus': '550e8400-e29b-41d4-a716-446655440003',
+    'Solencia': '550e8400-e29b-41d4-a716-446655440004'
+  }
+  return houseMapping[houseName] || houseMapping['Harmonis'] // Fallback
+}
+
+// Vérifier si l'utilisateur a déjà une maison avec Supabase
 onMounted(async () => {
   try {
-    const userId = props.userId || auth.currentUser?.uid
+    const userId = props.userId || authStore.user?.id
     if (userId) {
-      const userRef = dbRef(getDatabase(), `Users/${userId}`)
-      const snapshot = await get(userRef)
-      const userData = snapshot.val()
-      if (userData?.gamification?.maison) {
-        existingHouse.value = userData.gamification.maison
-        // router.push('/profile/' + userId) // commented to allow quiz retake
+      // Utiliser le service Supabase pour vérifier la maison existante
+      const gamificationData = await gamificationServiceSupabase.getUserGamificationData(userId)
+      if (gamificationData?.maison) {
+        existingHouse.value = gamificationData.maison
+        // Permettre de refaire le quiz même avec une maison existante
       }
     }
   } catch (error) {
-    console.error('Erreur lors de la vérification:', error)
+    console.error('Erreur lors de la vérification Supabase:', error)
   }
 })
 </script>

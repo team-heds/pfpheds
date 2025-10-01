@@ -104,8 +104,7 @@ import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import BandeauMaison from '@/components/gamification/BandeauMaison.vue';
 import XPBar from '@/components/gamification/XPBar.vue';
-import { addUserXP } from '@/service/hesHousesService'
-import gamificationService from '@/service/gamificationService'
+import gamificationServiceSupabase from '@/service/gamificationServiceSupabase'
 import gamificationIntegration from '@/service/gamificationIntegration'
 
 const defaultAvatar = '@/assets/images/avatar/01.jpg';
@@ -318,11 +317,11 @@ onMounted(async () => {
   await fetchTeachers();
 });
 
-// Récupération des données de gamification avec le service unifié
+// Récupération des données de gamification avec le service Supabase
 const fetchGamificationData = async (userId) => {
   try {
-    // Utiliser exclusivement le service gamification unifié
-    const gamificationData = await gamificationService.getUserGamificationData(userId);
+    // Utiliser le service Supabase pour récupérer les données
+    const gamificationData = await gamificationServiceSupabase.getUserGamificationData(userId);
 
     if (gamificationData) {
       userGamification.value = {
@@ -411,15 +410,15 @@ const startHESQuiz = () => {
   router.push('/hes-house-quiz');
 };
 
-// Fonction pour ajouter de l'XP à l'utilisateur avec priorité à l'ancien service
+// Fonction pour ajouter de l'XP à l'utilisateur avec le service Supabase
 const giveUserXP = async (action, customXP = null) => {
   try {
     const userId = route.params.id || currentUserProfile.value?.uid
     if (!userId) return
 
-    // Utiliser exclusivement le service gamification unifié
+    // Utiliser le service Supabase pour ajouter de l'XP
     const xpAmount = customXP || 10;
-    const newData = await addUserXP(userId, action, xpAmount);
+    const newData = await gamificationServiceSupabase.addUserXP(userId, action, xpAmount);
 
     // Mettre à jour les données locales avec les nouvelles données
     if (newData) {
