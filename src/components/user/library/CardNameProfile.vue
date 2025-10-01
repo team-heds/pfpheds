@@ -38,19 +38,19 @@
   <div class="mb-4 card-profile-responsive">
     <div class="avatar-wrapper">
       <img :src="user.photoURL || defaultAvatar" alt="Avatar" style="border-radius: 3rem;" />
-      <h1 class="pl-4">{{ user.prenom }} {{ user.nom }}</h1>
+      <h1 class="pl-4">{{ displayName }}</h1>
     </div>
     <h5 class="mb-4">Informations personnelles</h5>
     <div class="surfaces-card info-grid">
       <div class="info-item">
         <i class="pi pi-envelope info-icon"></i>
         <span class="info-label">Email :</span>
-        <span class="info-value">{{ user.email }}</span>
+        <span class="info-value">{{ displayEmail }}</span>
       </div>
       <div class="info-item">
         <i class="pi pi-user info-icon"></i>
         <span class="info-label">Nom, Prénom :</span>
-        <span class="info-value">{{ user.nom }} {{user.prenom}}</span>
+        <span class="info-value">{{ displayFullName }}</span>
       </div>
       <div class="info-item">
         <i class="pi pi-briefcase info-icon"></i>
@@ -96,6 +96,7 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useAuthStore } from '@/stores/authStore';
 import { ref as dbRef, get, update } from "firebase/database";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { onAuthStateChanged } from 'firebase/auth';
@@ -106,6 +107,7 @@ import BandeauMaison from '@/components/gamification/BandeauMaison.vue';
 import XPBar from '@/components/gamification/XPBar.vue';
 import gamificationServiceSupabase from '@/service/gamificationServiceSupabase'
 import gamificationIntegration from '@/service/gamificationIntegration'
+import supabaseStorageService from '@/service/supabaseStorageService'
 
 const defaultAvatar = '@/assets/images/avatar/01.jpg';
 
@@ -139,6 +141,42 @@ const selectedTeacher = ref("");
 // Computed pour déterminer si l'utilisateur connecté est admin
 const isAdmin = computed(() => {
   return currentUserProfile.value.Roles && currentUserProfile.value.Roles.admin === true;
+});
+
+// Computed pour l'affichage des données utilisateur avec fallback sur authStore
+const displayName = computed(() => {
+  // Si c'est le profil de l'utilisateur connecté, utiliser authStore
+  if (route.params.id === authStore.user?.id) {
+    const email = authStore.user?.email || '';
+    return email.split('@')[0] || 'Utilisateur';
+  }
+  // Sinon utiliser les données du profil consulté
+  return `${user.value.prenom} ${user.value.nom}`.trim() || 'Utilisateur';
+});
+
+const displayEmail = computed(() => {
+  // Si c'est le profil de l'utilisateur connecté, utiliser authStore
+  if (route.params.id === authStore.user?.id) {
+    return authStore.user?.email || user.value.email || '';
+  }
+  // Sinon utiliser les données du profil consulté
+  return user.value.email || '';
+});
+
+const displayFullName = computed(() => {
+  // Si c'est le profil de l'utilisateur connecté, utiliser authStore
+  if (route.params.id === authStore.user?.id) {
+    const email = authStore.user?.email || '';
+    const username = email.split('@')[0] || '';
+    // Essayer d'extraire prénom/nom du username
+    const parts = username.split('.');
+    if (parts.length >= 2) {
+      return `${parts[1]} ${parts[0]}`.toUpperCase();
+    }
+    return username || 'Utilisateur';
+  }
+  // Sinon utiliser les données du profil consulté
+  return `${user.value.nom} ${user.value.prenom}`.trim() || 'Utilisateur';
 });
 
 // Récupération du profil consulté depuis /Users (basé sur l'ID de l'URL)
@@ -230,15 +268,18 @@ watch(teachersOptions, (newOptions) => {
 const saveProfile = async () => {
   
   try {
-    // Si un nouvel avatar a été sélectionné, on l'upload
+    // Si un nouvel avatar a été sélectionné, on l'upload sur Supabase Storage
     if (selectedAvatarFile.value) {
       try {
-        const avatarRef = storageRef(storage, `Users/${user.value.uid}/profile-picture.jpg`);
-        await uploadBytes(avatarRef, selectedAvatarFile.value);
-        const photoURL = await getDownloadURL(avatarRef);
-        user.value.photoURL = photoURL;
+        console.log('📸 Upload avatar vers Supabase Storage...');
+        const uploadResult = await supabaseStorageService.uploadAvatar(
+          user.value.uid, 
+          selectedAvatarFile.value
+        );
+        user.value.photoURL = uploadResult.url;
+        console.log('✅ Avatar uploadé sur Supabase:', uploadResult.url);
       } catch (error) {
-        console.error("Erreur lors de l'upload de l'avatar :", error);
+        console.error("❌ Erreur lors de l'upload de l'avatar sur Supabase:", error);
         alert("Erreur lors de l'upload de l'avatar");
         return;
       }
@@ -297,7 +338,12 @@ const onAvatarChange = (event) => {
 
 const route = useRoute();
 const router = useRouter();
+const authStore = useAuthStore();
+
 onMounted(async () => {
+  // Vérifier et créer le bucket avatars si nécessaire
+  await supabaseStorageService.ensureAvatarsBucket();
+  
   // Récupérer l'ID de l'utilisateur dont le profil est consulté (depuis l'URL)
   const userId = route.params.id;
   if (userId) {
@@ -307,12 +353,12 @@ onMounted(async () => {
   } else {
     console.error("Aucun ID d'utilisateur fourni dans l'URL");
   }
-  // Récupérer l'utilisateur connecté via Firebase Auth
-  onAuthStateChanged(auth, async (currentUser) => {
-    if (currentUser) {
-      await fetchCurrentUserProfile(currentUser.uid);
-    }
-  });
+  
+  // Utiliser authStore au lieu de Firebase Auth pour l'utilisateur connecté
+  if (authStore.user?.id) {
+    await fetchCurrentUserProfile(authStore.user.id);
+  }
+  
   // Charger la liste des enseignants
   await fetchTeachers();
 });

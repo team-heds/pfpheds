@@ -138,7 +138,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { getHouseDetailedStats, getHouseInfo } from '@/service/hesHousesService'
+import gamificationServiceSupabase from '@/service/gamificationServiceSupabase'
 import Navbar from '@/components/common/utils/Navbar.vue'
 
 // Import des images de fond des maisons
@@ -191,11 +191,13 @@ const formatNumber = (num) => {
 // Chargement des données
 const loadHouseStats = async () => {
   try {
+    console.log(`🔄 Chargement des stats pour la maison ${houseName}...`)
     loading.value = true
-    houseInfo.value = getHouseInfo(houseName)
-    houseStats.value = await getHouseDetailedStats(houseName)
+    houseInfo.value = gamificationServiceSupabase.getHouseInfo(houseName)
+    houseStats.value = await gamificationServiceSupabase.getHouseDetailedStats(houseName)
+    console.log(`✅ Stats chargées pour ${houseName}:`, houseStats.value)
   } catch (error) {
-    console.error('Erreur lors du chargement des statistiques:', error)
+    console.error('❌ Erreur lors du chargement des statistiques:', error)
   } finally {
     loading.value = false
   }
