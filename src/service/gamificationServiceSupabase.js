@@ -491,10 +491,10 @@ class GamificationServiceSupabase {
       
       // Mapping house_id vers nom de maison
       const houseIdToName = {
-        '550e8400-e29b-41d4-a716-446655440000': 'harmonis',
-        '550e8400-e29b-41d4-a716-446655440001': 'elaris', 
-        '550e8400-e29b-41d4-a716-446655440002': 'doloris',
-        '550e8400-e29b-41d4-a716-446655440004': 'solencia'
+        '550e8400-e29b-41d4-a716-446655440000': 'doloris', // checker le bug // juste
+        '550e8400-e29b-41d4-a716-446655440001': 'harmonis', // --> fetch elaris
+        '550e8400-e29b-41d4-a716-446655440002': 'elaris', // --> fetch doloris
+        '550e8400-e29b-41d4-a716-446655440004': 'solencia' // juste
       }
       
       // Compter les membres par maison
