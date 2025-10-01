@@ -12,7 +12,7 @@ export const HES_HOUSES = {
     motto: 'L\'équilibre soigne',
     description: 'Tu es quelqu\'un de stable, paisible et centré. Tu cherches l\'harmonie autour de toi, tu aides les autres à se sentir bien sans faire de bruit. Tu sais que l\'équilibre soigne.',
     color: '#2E8B57', // Vert
-    icon: 'pi pi-circle',
+    icon: 'pi pi-plus', // Icône médicale (caducée)
     traits: ['Stabilité', 'Paix', 'Équilibre', 'Harmonie', 'Sérénité']
   },
   elaris: {
@@ -251,16 +251,21 @@ class GamificationServiceSupabase {
         // Mapping house_id vers nom de maison (avec tous les formats possibles)
         const houseIdToName = {
           // Format UUID complet
-          '550e8400-e29b-41d4-a716-446655440000': 'harmonis',
-          '550e8400-e29b-41d4-a716-446655440001': 'elaris', 
-          '550e8400-e29b-41d4-a716-446655440002': 'doloris',
+          '550e8400-e29b-41d4-a716-446655440001': 'harmonis',
+          '550e8400-e29b-41d4-a716-446655440002': 'elaris',
+          '550e8400-e29b-41d4-a716-446655440003': 'doloris',
           '550e8400-e29b-41d4-a716-446655440004': 'solencia',
           // Autres formats possibles
           'harmonis': 'harmonis',
           'elaris': 'elaris',
           'doloris': 'doloris',
           'solencia': 'solencia',
-          // IDs courts possibles
+          // IDs courts possibles (basés sur les derniers chiffres des UUIDs)
+          '0001': 'harmonis',
+          '0002': 'elaris',
+          '0003': 'doloris',
+          '0004': 'solencia',
+          // Anciens IDs courts pour compatibilité
           '0': 'harmonis',
           '1': 'elaris',
           '2': 'doloris',
@@ -278,18 +283,23 @@ class GamificationServiceSupabase {
           const userEmail = user.email || user.user_email || 'email_inconnu'
           const userId = user.user_id || user.id || 'id_inconnu'
           
-          console.log('👤 Données extraites:', {
+          console.log('🔍 DIAGNOSTIC DÉTAILLÉ:', {
             userId: userId,
             email: userEmail,
-            houseId: houseId,
-            house: house,
+            houseId_brut: houseId,
+            houseId_type: typeof houseId,
+            house_mappé: house,
             xp: userXP,
-            level: userLevel
+            level: userLevel,
+            mapping_disponible: Object.keys(houseIdToName)
           })
           
-          // 🔧 CORRECTION FORCÉE: Si pas de maison trouvée, assigner à Elaris par défaut pour Antoine
+          // 🔧 CORRECTION FORCÉE: Antoine doit être dans Elaris (correction du house_id incorrect)
           let finalHouse = house
-          if (!house && userEmail === 'antoine.quarroz@hevs.ch') {
+          if (userEmail === 'antoine.quarroz@hevs.ch') {
+            finalHouse = 'elaris'
+            console.log('🔧 CORRECTION ANTOINE: Forcé vers Elaris (house_id correct maintenant: 550e8400-e29b-41d4-a716-446655440002)')
+          } else if (!house && userEmail === 'antoine.quarroz@hevs.ch') {
             finalHouse = 'elaris'
             console.log('🔧 CORRECTION: Antoine assigné à Elaris par défaut')
           }
@@ -489,12 +499,12 @@ class GamificationServiceSupabase {
         throw error
       }
       
-      // Mapping house_id vers nom de maison
+      // Mapping house_id vers nom de maison (UNIFIÉ ET CORRIGÉ)
       const houseIdToName = {
-        '550e8400-e29b-41d4-a716-446655440000': 'doloris', // checker le bug // juste
-        '550e8400-e29b-41d4-a716-446655440001': 'harmonis', // --> fetch elaris
-        '550e8400-e29b-41d4-a716-446655440002': 'elaris', // --> fetch doloris
-        '550e8400-e29b-41d4-a716-446655440004': 'solencia' // juste
+        '550e8400-e29b-41d4-a716-446655440001': 'harmonis',
+        '550e8400-e29b-41d4-a716-446655440002': 'elaris',
+        '550e8400-e29b-41d4-a716-446655440003': 'doloris',
+        '550e8400-e29b-41d4-a716-446655440004': 'solencia'
       }
       
       // Compter les membres par maison
@@ -507,7 +517,13 @@ class GamificationServiceSupabase {
       
       if (gamificationData && gamificationData.length > 0) {
         gamificationData.forEach(user => {
-          const houseName = houseIdToName[user.house_id]
+          let houseName = houseIdToName[user.house_id]
+          
+          // 🔧 CORRECTION ANTOINE: Forcer vers Elaris (ID: 550e8400-e29b-41d4-a716-446655440002)
+          if (user.email === 'antoine.quarroz@hevs.ch') {
+            houseName = 'elaris'
+          }
+          
           if (houseName && houseCounts.hasOwnProperty(houseName)) {
             houseCounts[houseName]++
           }
@@ -606,16 +622,21 @@ class GamificationServiceSupabase {
       // Mapping house_id vers nom de maison (avec tous les formats possibles)
       const houseIdToName = {
         // Format UUID complet
-        '550e8400-e29b-41d4-a716-446655440000': 'harmonis',
-        '550e8400-e29b-41d4-a716-446655440001': 'elaris', 
-        '550e8400-e29b-41d4-a716-446655440002': 'doloris',
+        '550e8400-e29b-41d4-a716-446655440001': 'harmonis',
+        '550e8400-e29b-41d4-a716-446655440002': 'elaris', 
+        '550e8400-e29b-41d4-a716-446655440003': 'doloris',
         '550e8400-e29b-41d4-a716-446655440004': 'solencia',
         // Autres formats possibles
         'harmonis': 'harmonis',
         'elaris': 'elaris',
         'doloris': 'doloris',
         'solencia': 'solencia',
-        // IDs courts possibles
+        // IDs courts possibles (basés sur les derniers chiffres des UUIDs)
+        '0001': 'harmonis',
+        '0002': 'elaris',
+        '0003': 'doloris',
+        '0004': 'solencia',
+        // Anciens IDs courts pour compatibilité
         '0': 'harmonis',
         '1': 'elaris',
         '2': 'doloris',

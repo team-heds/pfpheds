@@ -487,7 +487,7 @@ const getHouseIdByName = (houseName) => {
   const houseMapping = {
     'Harmonis': '550e8400-e29b-41d4-a716-446655440001',
     'Elaris': '550e8400-e29b-41d4-a716-446655440002', 
-    'Nexus': '550e8400-e29b-41d4-a716-446655440003',
+    'Doloris': '550e8400-e29b-41d4-a716-446655440003',
     'Solencia': '550e8400-e29b-41d4-a716-446655440004'
   }
   return houseMapping[houseName] || houseMapping['Harmonis'] // Fallback

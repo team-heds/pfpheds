@@ -3,6 +3,7 @@ import { ref, computed } from 'vue';
 import { supabase } from '@/supabase';
 import { auth } from '@/firebase'; // Import Firebase auth
 import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+// import userProfileAutoCreation from '@/service/userProfileAutoCreation';
 
 export const useAuthStore = defineStore('auth', () => {
   // State
@@ -191,7 +192,7 @@ export const useAuthStore = defineStore('auth', () => {
   // Gérer les changements d'état d'authentification pour les deux systèmes
 
   // Supabase auth state change
-  supabase.auth.onAuthStateChange((event, newSession) => {
+  supabase.auth.onAuthStateChange(async (event, newSession) => {
     console.log('Supabase auth state change:', event, newSession?.user?.email);
 
     if (event === 'SIGNED_IN' && newSession) {
@@ -200,6 +201,17 @@ export const useAuthStore = defineStore('auth', () => {
         session.value = newSession;
         user.value = newSession.user;
         authProvider.value = 'supabase';
+        
+        // 🆕 CRÉATION AUTOMATIQUE DU PROFIL (DÉSACTIVÉ TEMPORAIREMENT)
+        try {
+          console.log('🔄 Création automatique du profil pour:', newSession.user.email);
+          // await userProfileAutoCreation.createUserProfileFromAuth(newSession.user, 'supabase');
+          // await userProfileAutoCreation.updateLastLogin(newSession.user.id);
+          console.log('✅ Profil créé/mis à jour automatiquement (désactivé)');
+        } catch (error) {
+          console.error('❌ Erreur création automatique profil:', error);
+          // L\'erreur ne bloque pas la connexion
+        }
       }
     } else if (event === 'SIGNED_OUT') {
       if (authProvider.value === 'supabase') {
