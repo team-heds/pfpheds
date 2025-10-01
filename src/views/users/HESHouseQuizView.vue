@@ -20,12 +20,12 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
-import { getAuth, onAuthStateChanged } from 'firebase/auth'
+import { useAuthStore } from '@/stores/authStore'
 import HESHouseQuiz from '@/components/user/profile/HESHouseQuiz.vue'
 
 const router = useRouter()
 const toast = useToast()
-const auth = getAuth()
+const authStore = useAuthStore()
 
 const currentUserId = ref(null)
 
@@ -40,16 +40,17 @@ const onHouseSelected = (house) => {
   })
 }
 
-// Vérifier l'authentification
-onMounted(() => {
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      currentUserId.value = user.uid
-    } else {
-      // Rediriger vers la page de connexion si non connecté
-      router.push('/')
-    }
-  })
+// Vérifier l'authentification Supabase
+onMounted(async () => {
+  await authStore.checkAuthState()
+  
+  if (authStore.isLoggedIn && authStore.user) {
+    currentUserId.value = authStore.user.id
+    console.log('✅ HESHouseQuizView - Utilisateur connecté:', authStore.user.email, `(${authStore.authProvider})`)
+  } else {
+    console.log('❌ HESHouseQuizView - Utilisateur non connecté, redirection vers /')
+    router.push('/')
+  }
 })
 </script>
 
