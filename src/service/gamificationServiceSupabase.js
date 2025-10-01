@@ -599,6 +599,37 @@ class GamificationServiceSupabase {
   }
 
   /**
+   * Test rapide pour vérifier l'accès aux données
+   */
+  async testDataAccess() {
+    try {
+      console.log('🧪 TEST: Vérification accès données gamification...')
+      
+      // Test 1: Count total
+      const { count, error: countError } = await supabase
+        .from('gamification_data')
+        .select('*', { count: 'exact', head: true })
+      
+      console.log(`📊 Total enregistrements: ${count}`)
+      if (countError) console.error('❌ Erreur count:', countError)
+      
+      // Test 2: Récupération limitée
+      const { data: limitedData, error: limitedError } = await supabase
+        .from('gamification_data')
+        .select('user_id, email, house_id')
+        .limit(10)
+      
+      console.log(`📋 Échantillon (10 premiers):`, limitedData)
+      if (limitedError) console.error('❌ Erreur échantillon:', limitedError)
+      
+      return { count, sample: limitedData }
+    } catch (error) {
+      console.error('❌ Erreur test accès:', error)
+      return null
+    }
+  }
+
+  /**
    * Obtient les statistiques détaillées d'une maison
    * @param {string} houseName - Nom de la maison
    * @returns {Promise<Object>} Statistiques détaillées de la maison
@@ -607,17 +638,134 @@ class GamificationServiceSupabase {
     try {
       console.log(`🏠 Récupération des stats détaillées pour ${houseName}...`)
       
+      // Test d'accès aux données d'abord
+      await this.testDataAccess()
+      
       // Récupérer les données de gamification
-      const { data: gamificationData, error } = await supabase
-        .from('gamification_data')
-        .select('*')
+      console.log('🔍 Exécution de la requête Supabase...')
+      
+      // SOLUTION: Récupérer toutes les vraies données via RPC
+      console.log('🔄 Récupération des vraies données via fonction RPC...')
+      
+      let gamificationData = []
+      let error = null
+      
+      try {
+        // Méthode 1: Utiliser la fonction RPC qui contourne RLS
+        console.log('🔑 Appel de la fonction get_all_gamification_users()...')
+        const { data: rpcData, error: rpcError } = await supabase
+          .rpc('get_all_gamification_users')
+        
+        if (rpcData && rpcData.length > 0) {
+          console.log('✅ RPC réussi:', rpcData.length, 'utilisateurs récupérés')
+          gamificationData = rpcData
+          error = rpcError
+        } else if (rpcError) {
+          console.log('❌ Erreur RPC:', rpcError.message)
+          console.log('🔄 Fallback sur requête directe...')
+          
+          // Méthode 2: Fallback sur requête directe (limitée par RLS)
+          const { data: directData, error: directError } = await supabase
+            .from('gamification_data')
+            .select('*')
+          
+          gamificationData = directData || []
+          error = directError
+          
+          if (gamificationData.length <= 1) {
+            console.log('⚠️ RLS actif - seules tes données sont visibles')
+            console.log('📋 Pour voir tous les utilisateurs, exécute le script get-all-gamification-data.sql dans Supabase')
+          }
+        }
+      } catch (fetchError) {
+        console.error('❌ Erreur lors de la récupération RPC:', fetchError)
+        
+        // Fallback final sur requête directe
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('gamification_data')
+          .select('*')
+        
+        gamificationData = fallbackData || []
+        error = fallbackError
+        
+        console.log('⚠️ Utilisation des données limitées par RLS')
+      }
+      
+      // Si pas de données, essayer avec une approche différente
+      if (!gamificationData || gamificationData.length <= 1) {
+        console.log('🔄 Tentative avec requête alternative...')
+        
+        // Essayer différentes combinaisons de colonnes
+        const queries = [
+          'user_id, house_id',
+          'user_id, email, house_id', 
+          'user_id, house_id, total_xp',
+          '*'
+        ]
+        
+        for (const selectQuery of queries) {
+          try {
+            console.log(`🔍 Test requête: ${selectQuery}`)
+            const { data: altData, error: altError } = await supabase
+              .from('gamification_data')
+              .select(selectQuery)
+            
+            if (!altError && altData && altData.length > gamificationData?.length) {
+              console.log(`✅ Requête réussie avec: ${selectQuery}, ${altData.length} résultats`)
+              gamificationData = altData
+              error = altError
+              break
+            } else if (altError) {
+              console.log(`❌ Erreur avec ${selectQuery}:`, altError.message)
+            }
+          } catch (e) {
+            console.log(`❌ Exception avec ${selectQuery}:`, e.message)
+          }
+        }
+        
+        // Test avec d'autres tables possibles
+        console.log('🔍 Test autres tables...')
+        const tables = ['student_data', 'user_profiles', 'users']
+        
+        for (const table of tables) {
+          try {
+            const { count, error: countError } = await supabase
+              .from(table)
+              .select('*', { count: 'exact', head: true })
+            
+            if (!countError && count > 1) {
+              console.log(`📊 Table ${table}: ${count} enregistrements`)
+            }
+          } catch (e) {
+            // Table n'existe pas
+          }
+        }
+      }
       
       if (error) {
         console.error('❌ Erreur récupération données gamification:', error)
+        console.error('❌ Détails erreur:', error.message, error.details, error.hint)
         throw error
       }
       
       console.log(`📊 ${gamificationData?.length || 0} utilisateurs trouvés`)
+      console.log('📋 Données récupérées:', gamificationData)
+      
+      // Vérifier si on a des données
+      if (!gamificationData || gamificationData.length === 0) {
+        console.warn('⚠️ Aucune donnée trouvée dans gamification_data')
+        console.log('🔍 Tentative de requête avec count pour vérifier la table...')
+        
+        const { count, error: countError } = await supabase
+          .from('gamification_data')
+          .select('*', { count: 'exact', head: true })
+        
+        if (countError) {
+          console.error('❌ Erreur count:', countError)
+        } else {
+          console.log(`📊 Total d'enregistrements dans la table: ${count}`)
+        }
+      }
       
       // Mapping house_id vers nom de maison (avec tous les formats possibles)
       const houseIdToName = {
@@ -648,13 +796,17 @@ class GamificationServiceSupabase {
       let totalXP = 0
       
       if (gamificationData && gamificationData.length > 0) {
+        console.log(`🔍 DEBUG: Recherche membres pour ${houseName}`)
         gamificationData.forEach(user => {
           const houseId = user.house_id
           const house = houseIdToName[houseId]
           const userXP = user.total_xp || 0
           const userLevel = user.current_level || 1
           
+          console.log(`👤 User: ${user.email}, house_id: ${houseId}, mapped to: ${house}`)
+          
           if (house === houseName) {
+            console.log(`✅ Membre trouvé pour ${houseName}: ${user.email}`)
             houseMembers.push({
               userId: user.user_id,
               email: user.email,
@@ -666,6 +818,8 @@ class GamificationServiceSupabase {
               loginStreak: 0 // Pas de streak dans Supabase pour l'instant
             })
             totalXP += userXP
+          } else {
+            console.log(`❌ ${user.email} pas dans ${houseName} (house: ${house})`)
           }
         })
       }
