@@ -1,63 +1,15 @@
 import { defineStore } from 'pinia'
-
+import { db } from 'root/firebase.js'
+import { ref as dbRef, onValue, set, off } from 'firebase/database'
+ 
 /**
- * ===========================
- *  Document Store - FilePhysio
- * ===========================
- * Gère les dossiers et fichiers via l'API /api/filePhysio
- * Basé sur la logique de institutionsStore.js
- */
-
-// Base REST Supabase : adapte si besoin via .env
-const REST_BASE = import.meta.env.VITE_SUPABASE_REST_URL
-  // Exemple d'URL: https://api2.hedsvs.ch/rest/v1
-  // Si non défini, on tombe sur prod api2 (modifie si nécessaire)
-  || 'https://api2.hedsvs.ch/rest/v1'
-
-const ANON_KEY = import.meta.env.VITE_SUPABASE_KEY // <-- ton anon key
-
-if (!ANON_KEY) {
-  console.error('[DocumentStore] VITE_SUPABASE_KEY manquant dans .env')
-}
-if (!REST_BASE) {
-  console.error('[DocumentStore] VITE_SUPABASE_REST_URL manquant (fallback utilisé)')
-}
-
-// En-têtes communs pour PostgREST
-const baseHeaders = {
-  apikey: ANON_KEY,
-  Authorization: `Bearer ${ANON_KEY}`,
-  Accept: 'application/json',
-}
-
-/**
- * Wrapper fetch pour gérer les requêtes API
- */
-async function apiFetch(path, options = {}) {
-  const url = `${REST_BASE}${path}`
-  const res = await fetch(url, {
-    ...options,
-    headers: {
-      ...baseHeaders,
-      ...(options.headers || {}),
-    },
-  })
-  
-  if (!res.ok) {
-    let detail = ''
-    try {
-      const err = await res.json()
-      detail = err?.message || err?.error || JSON.stringify(err)
-    } catch {
-      detail = res.statusText
-    }
-    throw new Error(`[${res.status}] ${detail}`)
-  }
-  
-  const text = await res.text()
-  return text ? JSON.parse(text) : null
-}
-
+* ===========================
+*  Document Store - FilePhysio
+* ===========================
+* Gère les dossiers et fichiers depuis Firebase Realtime Database
+* Path Firebase: FilePFPPhysio
+*/
+ 
 export const useDocumentStore = defineStore('documents', {
   state: () => ({
     folders: [],           // Arborescence complète des dossiers
@@ -66,7 +18,7 @@ export const useDocumentStore = defineStore('documents', {
     loading: false,
     error: null,
   }),
-
+ 
   getters: {
     /**
      * Récupère un dossier par ID
@@ -75,7 +27,7 @@ export const useDocumentStore = defineStore('documents', {
       // Cherche dans les dossiers racine
       let found = state.topFolders.find((f) => f.id === id)
       if (found) return found
-
+ 
       // Cherche dans les sous-dossiers
       for (const topFolder of state.topFolders) {
         if (topFolder.subFolders) {
@@ -85,26 +37,26 @@ export const useDocumentStore = defineStore('documents', {
       }
       return null
     },
-
+ 
     /**
      * Récupère tous les fichiers d'un dossier (incluant sous-dossiers)
      */
     getAllFilesFromFolder: (state) => (folderId) => {
       const folder = state.topFolders.find((f) => f.id === folderId)
       if (!folder) return []
-
+ 
       let allFiles = [...(folder.files || [])]
-
+ 
       // Ajoute les fichiers des sous-dossiers
       if (folder.subFolders) {
         for (const sub of folder.subFolders) {
           allFiles = [...allFiles, ...(sub.files || [])]
         }
       }
-
+ 
       return allFiles
     },
-
+ 
     /**
      * Compte total de fichiers
      */
@@ -121,168 +73,231 @@ export const useDocumentStore = defineStore('documents', {
       return count
     },
   },
-
+ 
   actions: {
     /**
-     * Charge l'arborescence complète des dossiers et fichiers
+     * Charge l'arborescence complète depuis Firebase
      */
     async loadFoldersTree() {
       this.loading = true
       this.error = null
       
       try {
-        console.log('📂 [DocumentStore] Chargement de l\'arborescence...')
+        console.log('📂 [DocumentStore] Chargement depuis Firebase...')
         
-        // 1. Récupère les dossiers racine
-        const tops = await apiFetch('/folders/top')
+        const foldersRef = dbRef(db, 'FilePFPPhysio')
         
-        // 2. Pour chaque dossier racine, charge les enfants et fichiers
-        const enriched = await Promise.all(
-          (tops || []).map(async (top) => {
-            const [children, topFiles] = await Promise.all([
-              apiFetch(`/folders/${encodeURIComponent(top.id)}/children`),
-              apiFetch(`/folders/${encodeURIComponent(top.id)}/files`),
-            ])
-
-            // 3. Pour chaque sous-dossier, charge les fichiers
-            const subFolders = await Promise.all(
-              (children || []).map(async (sub) => {
-                const subFiles = await apiFetch(`/folders/${encodeURIComponent(sub.id)}/files`)
-                return {
-                  id: sub.id,
-                  name: sub.name,
-                  files: subFiles || [],
-                }
+        return new Promise((resolve, reject) => {
+          onValue(
+            foldersRef,
+            (snapshot) => {
+              const data = snapshot.val()
+              this.folders = data || []
+              this.topFolders = data || []
+              
+              console.log('✅ [DocumentStore] Arborescence chargée:', {
+                foldersCount: this.folders.length,
+                totalFiles: this.totalFilesCount,
               })
-            )
-
-            return {
-              id: top.id,
-              name: top.name,
-              icon: top.icon || 'pi pi-folder',
-              files: topFiles || [],
-              subFolders,
+              
+              this.loading = false
+              resolve(this.folders)
+            },
+            (error) => {
+              console.error('❌ [DocumentStore] Erreur Firebase:', error)
+              this.error = error.message
+              this.loading = false
+              reject(error)
             }
-          })
-        )
-
-        this.topFolders = enriched
-        this.folders = enriched
+          )
+        })
+      } catch (e) {
+        this.error = e.message
+        console.error('❌ [DocumentStore] Erreur chargement:', e)
+        this.loading = false
+        throw e
+      }
+    },
+ 
+    /**
+     * Met à jour un fichier
+     */
+    async updateFile(fileId, updates) {
+      this.loading = true
+      this.error = null
+      
+      try {
+        console.log('📝 [DocumentStore] Mise à jour fichier:', fileId)
         
-        console.log('✅ [DocumentStore] Arborescence chargée:', {
-          foldersCount: enriched.length,
-          totalFiles: this.totalFilesCount,
+        let updated = false
+        const newFolders = this.folders.map(folder => {
+          // Mise à jour dans folder.files
+          if (folder.files && Array.isArray(folder.files)) {
+            folder.files = folder.files.map(file => {
+              if (file.id === fileId) {
+                updated = true
+                return { ...file, ...updates }
+              }
+              return file
+            })
+          }
+          
+          // Mise à jour dans les sous-dossiers
+          if (folder.subFolders && Array.isArray(folder.subFolders)) {
+            folder.subFolders = folder.subFolders.map(subFolder => {
+              if (subFolder.files && Array.isArray(subFolder.files)) {
+                subFolder.files = subFolder.files.map(file => {
+                  if (file.id === fileId) {
+                    updated = true
+                    return { ...file, ...updates }
+                  }
+                  return file
+                })
+              }
+              return subFolder
+            })
+          }
+          
+          return folder
+        })
+ 
+        if (!updated) {
+          throw new Error('Fichier non trouvé')
+        }
+ 
+        await set(dbRef(db, 'FilePFPPhysio'), newFolders)
+        this.folders = newFolders
+        this.topFolders = newFolders
+        
+        console.log('✅ [DocumentStore] Fichier mis à jour')
+        return true
+      } catch (e) {
+        this.error = e.message
+        console.error('❌ [DocumentStore] Erreur mise à jour:', e)
+        throw e
+      } finally {
+        this.loading = false
+      }
+    },
+ 
+    /**
+     * Supprime un fichier
+     */
+    async deleteFile(fileId) {
+      this.loading = true
+      this.error = null
+      
+      try {
+        console.log('🗑️ [DocumentStore] Suppression fichier:', fileId)
+        
+        let deleted = false
+        const newFolders = this.folders.map(folder => {
+          // Suppression dans folder.files
+          if (folder.files && Array.isArray(folder.files)) {
+            const beforeLength = folder.files.length
+            folder.files = folder.files.filter(file => {
+              if (file.id === fileId) {
+                deleted = true
+                return false
+              }
+              return true
+            })
+            if (beforeLength !== folder.files.length) deleted = true
+          }
+          
+          // Suppression dans les sous-dossiers
+          if (folder.subFolders && Array.isArray(folder.subFolders)) {
+            folder.subFolders = folder.subFolders.map(subFolder => {
+              if (subFolder.files && Array.isArray(subFolder.files)) {
+                const beforeLength = subFolder.files.length
+                subFolder.files = subFolder.files.filter(file => {
+                  if (file.id === fileId) {
+                    deleted = true
+                    return false
+                  }
+                  return true
+                })
+                if (beforeLength !== subFolder.files.length) deleted = true
+              }
+              return subFolder
+            })
+          }
+          
+          return folder
+        })
+ 
+        if (!deleted) {
+          throw new Error('Fichier non trouvé')
+        }
+ 
+        await set(dbRef(db, 'FilePFPPhysio'), newFolders)
+        this.folders = newFolders
+        this.topFolders = newFolders
+        
+        console.log('✅ [DocumentStore] Fichier supprimé')
+        return true
+      } catch (e) {
+        this.error = e.message
+        console.error('❌ [DocumentStore] Erreur suppression:', e)
+        throw e
+      } finally {
+        this.loading = false
+      }
+    },
+ 
+    /**
+     * Ajoute un fichier dans un dossier ou sous-dossier
+     */
+    async addFile(newFile, targetFolderId, targetSubFolderId = null) {
+      this.loading = true
+      this.error = null
+      
+      try {
+        console.log('➕ [DocumentStore] Ajout fichier:', {
+          file: newFile,
+          folderId: targetFolderId,
+          subFolderId: targetSubFolderId,
         })
         
-        return enriched
-      } catch (e) {
-        this.error = e.message
-        console.error('❌ [DocumentStore] Erreur chargement arborescence:', e)
-        throw e
-      } finally {
-        this.loading = false
-      }
-    },
-
-    /**
-     * Charge uniquement les dossiers racine (sans fichiers)
-     */
-    async fetchTopFolders() {
-      this.loading = true
-      this.error = null
-      
-      try {
-        const data = await apiFetch('/folders/top')
-        this.topFolders = Array.isArray(data) ? data : []
-        return this.topFolders
-      } catch (e) {
-        this.error = e.message
-        console.error('❌ [DocumentStore] Erreur chargement dossiers racine:', e)
-        throw e
-      } finally {
-        this.loading = false
-      }
-    },
-
-    /**
-     * Charge les sous-dossiers d'un dossier parent
-     */
-    async fetchFolderChildren(folderId) {
-      this.loading = true
-      this.error = null
-      
-      try {
-        const data = await apiFetch(`/folders/${encodeURIComponent(folderId)}/children`)
-        return Array.isArray(data) ? data : []
-      } catch (e) {
-        this.error = e.message
-        console.error(`❌ [DocumentStore] Erreur chargement enfants de ${folderId}:`, e)
-        throw e
-      } finally {
-        this.loading = false
-      }
-    },
-
-    /**
-     * Charge les fichiers d'un dossier
-     */
-    async fetchFolderFiles(folderId) {
-      this.loading = true
-      this.error = null
-      
-      try {
-        const data = await apiFetch(`/folders/${encodeURIComponent(folderId)}/files`)
-        return Array.isArray(data) ? data : []
-      } catch (e) {
-        this.error = e.message
-        console.error(`❌ [DocumentStore] Erreur chargement fichiers de ${folderId}:`, e)
-        throw e
-      } finally {
-        this.loading = false
-      }
-    },
-
-    /**
-     * Charge un dossier complet (avec sous-dossiers et fichiers)
-     */
-    async fetchFolderComplete(folderId) {
-      this.loading = true
-      this.error = null
-      
-      try {
-        const [children, files] = await Promise.all([
-          apiFetch(`/folders/${encodeURIComponent(folderId)}/children`),
-          apiFetch(`/folders/${encodeURIComponent(folderId)}/files`),
-        ])
-
-        const subFolders = await Promise.all(
-          (children || []).map(async (sub) => {
-            const subFiles = await apiFetch(`/folders/${encodeURIComponent(sub.id)}/files`)
-            return {
-              id: sub.id,
-              name: sub.name,
-              files: subFiles || [],
+        const newFolders = this.folders.map(folder => {
+          if (targetSubFolderId && folder.id === targetFolderId) {
+            // Ajout dans un sous-dossier
+            if (folder.subFolders && Array.isArray(folder.subFolders)) {
+              folder.subFolders = folder.subFolders.map(sub => {
+                if (sub.id === targetSubFolderId) {
+                  if (!sub.files || !Array.isArray(sub.files)) {
+                    sub.files = []
+                  }
+                  sub.files.push(newFile)
+                }
+                return sub
+              })
             }
-          })
-        )
-
-        const folder = {
-          id: folderId,
-          files: files || [],
-          subFolders,
-        }
-
-        this.currentFolder = folder
-        return folder
+          } else if (!targetSubFolderId && folder.id === targetFolderId) {
+            // Ajout dans le dossier directement
+            if (!folder.files || !Array.isArray(folder.files)) {
+              folder.files = []
+            }
+            folder.files.push(newFile)
+          }
+          return folder
+        })
+ 
+        await set(dbRef(db, 'FilePFPPhysio'), newFolders)
+        this.folders = newFolders
+        this.topFolders = newFolders
+        
+        console.log('✅ [DocumentStore] Fichier ajouté')
+        return true
       } catch (e) {
         this.error = e.message
-        console.error(`❌ [DocumentStore] Erreur chargement complet de ${folderId}:`, e)
+        console.error('❌ [DocumentStore] Erreur ajout:', e)
         throw e
       } finally {
         this.loading = false
       }
     },
-
+ 
     /**
      * Recherche de fichiers par nom
      */
@@ -291,8 +306,8 @@ export const useDocumentStore = defineStore('documents', {
       
       const searchTerm = query.toLowerCase()
       const results = []
-
-      for (const folder of this.topFolders) {
+ 
+      for (const folder of this.folders) {
         // Cherche dans les fichiers du dossier racine
         if (folder.files) {
           for (const file of folder.files) {
@@ -305,7 +320,7 @@ export const useDocumentStore = defineStore('documents', {
             }
           }
         }
-
+ 
         // Cherche dans les sous-dossiers
         if (folder.subFolders) {
           for (const sub of folder.subFolders) {
@@ -323,14 +338,23 @@ export const useDocumentStore = defineStore('documents', {
           }
         }
       }
-
+ 
       return results
     },
-
+ 
+    /**
+     * Nettoie les listeners Firebase
+     */
+    cleanup() {
+      const foldersRef = dbRef(db, 'FilePFPPhysio')
+      off(foldersRef)
+    },
+ 
     /**
      * Réinitialise le store
      */
     reset() {
+      this.cleanup()
       this.folders = []
       this.topFolders = []
       this.currentFolder = null
@@ -339,3 +363,5 @@ export const useDocumentStore = defineStore('documents', {
     },
   },
 })
+ 
+ 

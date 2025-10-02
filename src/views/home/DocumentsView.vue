@@ -31,11 +31,36 @@
                           >
                             {{ file.name }}
                           </a>
+                          <!-- Bouton d'édition pour admin -->
+                          <button
+                            v-if="isAdmin"
+                            @click="openEditModal(file)"
+                            class="p-button p-component p-button-text ml-2"
+                          >
+                            🖋
+                          </button>
+                          <!-- Bouton de suppression pour admin -->
+                          <button
+                            v-if="isAdmin"
+                            @click="deleteFile(file.id)"
+                            class="p-button p-component p-button-text ml-2"
+                          >
+                            🗑️
+                          </button>
                         </li>
                       </ul>
                     </div>
                     <div v-else>
                       <p class="text-600 m-0">Aucun fichier pour cette sous-section.</p>
+                    </div>
+                    <!-- Bouton d'ajout pour ce sous-dossier -->
+                    <div v-if="isAdmin" class="add-file-button mt-2">
+                      <button
+                        @click="openAddModalForSubFolder(folder.id, sub.id)"
+                        class="p-button p-component"
+                      >
+                        Ajouter un nouveau fichier
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -55,11 +80,36 @@
                     >
                       {{ file.name }}
                     </a>
+                    <!-- Bouton d'édition pour admin -->
+                    <button
+                      v-if="isAdmin"
+                      @click="openEditModal(file)"
+                      class="p-button p-component p-button-text ml-2"
+                    >
+                      Edit
+                    </button>
+                    <!-- Bouton de suppression pour admin -->
+                    <button
+                      v-if="isAdmin"
+                      @click="deleteFile(file.id)"
+                      class="p-button p-component p-button-text ml-2"
+                    >
+                      🗑️
+                    </button>
                   </li>
                 </ul>
               </div>
               <div v-else>
                 <p class="text-600 m-0">Aucun fichier n'est disponible.</p>
+              </div>
+              <!-- Bouton d'ajout pour ce dossier -->
+              <div v-if="isAdmin" class="add-file-button mt-2">
+                <button
+                  @click="openAddModalForFolder(folder.id)"
+                  class="p-button p-component"
+                >
+                  Ajouter un nouveau fichier
+                </button>
               </div>
             </template>
           </div>
@@ -67,68 +117,137 @@
       </div>
     </div>
   </div>
+
+  <!-- Modal d'édition -->
+  <EditFileDocPFP
+    v-if="showEditModal"
+    :file="editForm"
+    @close="closeEditModal"
+    @save="saveFileEdit"
+  />
+
+  <!-- Modal d'ajout -->
+  <AddFileDocPFP
+    v-if="showAddModal"
+    @close="closeAddModal"
+    @save="saveNewFile"
+  />
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { db, auth } from 'root/firebase.js'
+import { ref as dbRef, onValue } from 'firebase/database'
+import { onAuthStateChanged } from 'firebase/auth'
+import { useDocumentStore } from '@/stores/documentStore'
 import Navbar from '@/components/common/utils/Navbar.vue'
+import EditFileDocPFP from '@/components/home/EditFileDocPFP.vue'
+import AddFileDocPFP from '@/components/home/AddFileDocPFP.vue'
 
-const folders = ref([])
-const loading = ref(false)
-const error = ref(null)
+// Store Pinia pour les documents
+const documentStore = useDocumentStore()
 
-const API_URL = '/api/filePhysio'
+// Variables réactives pour l'auth et l'affichage des modales
+const isAdmin = ref(false)
+const showEditModal = ref(false)
+const showAddModal = ref(false)
+const editForm = ref({
+  id: '',
+  name: '',
+  url: ''
+})
 
-async function fetchJSON(url) {
-  const res = await fetch(url)
-  if (!res.ok) throw new Error(`HTTP ${res.status} - ${res.statusText}`)
-  return await res.json()
+// Variables pour stocker la cible d'ajout (folder et sous-dossier éventuel)
+const targetFolderId = ref(null)
+const targetSubFolderId = ref(null)
+
+// Computed pour utiliser les folders du store
+const folders = computed(() => documentStore.folders)
+
+// Vérification du profil utilisateur (chemin "Users/{uid}")
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    const userProfileRef = dbRef(db, `Users/${user.uid}`)
+    onValue(userProfileRef, (snapshot) => {
+      const profile = snapshot.val()
+      isAdmin.value = profile && profile.Roles && profile.Roles.admin === true
+      console.log("✅ [DocumentsView] isAdmin =", isAdmin.value)
+    })
+  } else {
+    isAdmin.value = false
+  }
+})
+
+// Récupérer les dossiers depuis Firebase via le store
+onMounted(async () => {
+  try {
+    await documentStore.loadFoldersTree()
+  } catch (error) {
+    console.error('❌ [DocumentsView] Erreur chargement:', error)
+  }
+})
+
+// --- Gestion de la modale d'édition ---
+const openEditModal = (file) => {
+  editForm.value = { ...file }
+  showEditModal.value = true
 }
 
-async function loadFoldersTree() {
-  loading.value = true
-  error.value = null
+const closeEditModal = () => {
+  showEditModal.value = false
+}
+
+const saveFileEdit = async (editedFile) => {
   try {
-    const tops = await fetchJSON(`${API_URL}/folders/top`)
-    const enriched = await Promise.all(
-      (tops || []).map(async (top) => {
-        const [children, topFiles] = await Promise.all([
-          fetchJSON(`${API_URL}/folders/${encodeURIComponent(top.id)}/children`),
-          fetchJSON(`${API_URL}/folders/${encodeURIComponent(top.id)}/files`),
-        ])
-
-        const subFolders = await Promise.all(
-          (children || []).map(async (sub) => {
-            const subFiles = await fetchJSON(`${API_URL}/folders/${encodeURIComponent(sub.id)}/files`)
-            return {
-              id: sub.id,
-              name: sub.name,
-              files: subFiles || [],
-            }
-          })
-        )
-
-        return {
-          id: top.id,
-          name: top.name,
-          icon: top.icon || 'pi pi-folder',
-          files: topFiles || [],
-          subFolders,
-        }
-      })
-    )
-    folders.value = enriched
-  } catch (e) {
-    error.value = e.message
-    console.error('Erreur chargement FilePhysio:', e)
-  } finally {
-    loading.value = false
+    await documentStore.updateFile(editedFile.id, {
+      name: editedFile.name,
+      url: editedFile.url
+    })
+    console.log("✅ [DocumentsView] Fichier mis à jour")
+    closeEditModal()
+  } catch (error) {
+    console.error("❌ [DocumentsView] Erreur mise à jour fichier:", error)
   }
 }
 
-onMounted(() => {
-  loadFoldersTree()
-})
+// --- Gestion de la suppression ---
+const deleteFile = async (fileId) => {
+  if (!confirm("Voulez-vous vraiment supprimer ce fichier ?")) return
+  
+  try {
+    await documentStore.deleteFile(fileId)
+    console.log("✅ [DocumentsView] Fichier supprimé")
+  } catch (error) {
+    console.error("❌ [DocumentsView] Erreur suppression fichier:", error)
+  }
+}
+
+// --- Gestion de la modale d'ajout ---
+const openAddModalForFolder = (folderId) => {
+  targetFolderId.value = folderId
+  targetSubFolderId.value = null
+  showAddModal.value = true
+}
+
+const openAddModalForSubFolder = (folderId, subFolderId) => {
+  targetFolderId.value = folderId
+  targetSubFolderId.value = subFolderId
+  showAddModal.value = true
+}
+
+const closeAddModal = () => {
+  showAddModal.value = false
+}
+
+const saveNewFile = async (newFile) => {
+  try {
+    await documentStore.addFile(newFile, targetFolderId.value, targetSubFolderId.value)
+    console.log("✅ [DocumentsView] Fichier ajouté")
+    closeAddModal()
+  } catch (error) {
+    console.error("❌ [DocumentsView] Erreur ajout fichier:", error)
+  }
+}
 </script>
 
 <style scoped>
