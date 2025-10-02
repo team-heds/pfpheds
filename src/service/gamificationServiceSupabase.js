@@ -869,7 +869,7 @@ class GamificationServiceSupabase {
       harmonis: {
         name: 'Harmonis',
         color: '#3498db',
-        motto: 'L\'harmonie dans la diversité'
+        motto: "L'harmonie du corps, force de l’esprit"
       },
       elaris: {
         name: 'Elaris',
