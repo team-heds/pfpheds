@@ -25,6 +25,7 @@ import Institution from '@/views/institutions/Institution.vue'
 import Place from "@/views/institutions/PlaceListView.vue";
 import Faq from "@/views/home/FaqView.vue";
 import TermsOfUse from "@/views/home/TermsView.vue";
+import PushView from "@/views/home/Pushview.vue";
 import InfoExterne from "@/views/home/InfoExterneView.vue";
 import HistoriquePFP from '@/views/home/HistoryView.vue'
 import DocumentsPFP from '@/views/home/DocumentsView.vue'
@@ -234,6 +235,7 @@ const routes = [
   { path: '/info_externe', component: InfoExterne, name: 'InfoExterne', meta: { requiresAuth: true } },
   { path: '/history', component: HistoriquePFP, name: 'HistoriquePFP', meta: { requiresAuth: true } },
   { path: '/documents', component: DocumentsPFP, name: 'DocumentsPFP', meta: { requiresAuth: true } },
+  { path: '/push', component: PushView, name: 'PushView', meta: { requiresAuth: true } },
 
   // ASSOCIATIONS
   { path: '/alpinphysio', component: AlpinPhysioView, name: 'AlpinPhysio', meta: { requiresAuth: false } },

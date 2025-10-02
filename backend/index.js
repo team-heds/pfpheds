@@ -16,6 +16,10 @@ const postsStoreRoutes = require('./supabase/postsBackendStore.js');
 //const praticiensFormateursStoreRoutes = require('./supabase/praticiensFormateursBackendStore.js');
 const praticiensStoreRoutes = require('./supabase/praticiensStoreBackend.js');
  
+// push
+const pushRoutes = require('./supabase/pushBackend');
+
+
 // CORS and JSON parsing MUST be before routes
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
@@ -52,7 +56,8 @@ app.use('/api/posts', postsStoreRoutes);
 app.use('/api/praticiens', praticiensStoreRoutes);
 // General /api route DISABLED for debugging
 // app.use('/api', userStoreRoutes);
- 
+app.use('/api/push', pushRoutes);
+
 // OpenAI Client Initialization
 if (!process.env.OPENAI_API_KEY) {
   console.warn("WARNING: OPENAI_API_KEY is not set. The /api/chat endpoint will not work.");

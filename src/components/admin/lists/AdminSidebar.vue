@@ -47,6 +47,7 @@ const menu = ref([
       { label: 'Enseignant', icon: 'pi pi-flag', to: '/enseignent_list' },
       { label: 'Praticien formateur', icon: 'pi pi-check-circle', to: '/praticien_formateur_list' },
       { label: 'Profil Users Admin', icon: 'pi pi-users', to: '/profilAdmin/4qoWztDujictoqTEJvJK6xF1Zcr1' },
+      { label: 'Push Test', icon: 'pi pi-users', to: '/push' },
     ]
   },
   {

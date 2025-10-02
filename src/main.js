@@ -117,6 +117,10 @@ import '@/assets/styles/mobile-scale.css';
 import { useUserStore } from '@/stores/userStore'
 import gamificationIntegration from '@/service/gamificationIntegration'
 
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js'); // path public
+}
+
 
 
 const app = createApp(App);
