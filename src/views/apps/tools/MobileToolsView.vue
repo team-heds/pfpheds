@@ -2,13 +2,15 @@
   <div class="mobile-tools-view">
     <h2>Outils Mobiles</h2>
     <p>Interface en cours de développement</p>
+    <PushControls />
+
   </div>
 </template>
 
-<script>
-export default {
-  name: 'MobileToolsView'
-}
+<script setup>
+  import PushControls from '@/components/push/PushControls.vue';
+
+
 </script>
 
 <style scoped>
