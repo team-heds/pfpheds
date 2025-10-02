@@ -13,9 +13,11 @@
   "description": "",
   "dependencies": {
     "@supabase/supabase-js": "^2.52.0",
+    "cors": "^2.8.5",
     "dotenv": "^17.1.0",
     "express": "^5.1.0",
+    "express-rate-limit": "^8.1.0",
     "openai": "^4.0.0",
-    "cors": "^2.8.5"
+    "web-push": "^3.6.7"
   }
 }

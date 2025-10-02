@@ -83,11 +83,12 @@
       </div>
   
       <!-- Ô£à Fen├¬tre de dialogue Param├¿tres -->
-      <Dialog v-model:visible="isSettingsDialogVisible" modal header="Param├¿tre" :style="{ width: '20rem' }">
+      <Dialog v-model:visible="isSettingsDialogVisible" modal header="Paramètre" :style="{ width: '20rem' }">
         <div class="flex flex-column gap-3">
           <Button label="Profil" icon="pi pi-user" class="w-full p-button-outlined" @click="navigateTo(`/profile/${user.uid}`)" />
           <Button label="Paramètres" icon="pi pi-cog" class="w-full p-button-outlined" @click="navigateTo('/settings')" />
           <Button label="Se déconnecter" icon="pi pi-power-off" class="w-full p-button-danger" @click="logout" />
+
         </div>
         <br>
         @Copyright HEdS
@@ -105,6 +106,7 @@
   import ButtonNavbar from '@/components/ui/buttons/ButtonNavbar.vue';
   import Dialog from 'primevue/dialog';
   import GlobalSearch from '@/components/common/utils/GlobalSearch.vue';
+  import PushControls from '@/components/push/PushControls.vue';
   
   const router = useRouter();
   const user = ref(null);

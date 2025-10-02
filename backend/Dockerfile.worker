@@ -1,0 +1,18 @@
+FROM node:20-alpine
+
+# Sécu basique
+RUN addgroup -S app && adduser -S app -G app
+WORKDIR /app
+
+# Cache build
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+# Code (inclut /workers)
+COPY . .
+
+ENV NODE_ENV=production
+USER app
+
+# Lance le worker
+CMD ["node", "workers/pushOutboxWorker.js"]
