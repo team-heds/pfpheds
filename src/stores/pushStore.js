@@ -9,30 +9,30 @@ const sb = createClient(SB_URL, SB_ANON)
 const REST    = import.meta.env.VITE_SUPABASE_REST_URL      // ex: https://api2.hedsvs.ch/rest/v1
   || 'https://api2.hedsvs.ch/rest/v1'  
 /**
- * ===========================
- *  Config & helpers Supabase
- * ===========================
- */
-
+* ===========================
+*  Config & helpers Supabase
+* ===========================
+*/
+ 
 const REST_BASE =
   import.meta.env.VITE_SUPABASE_REST_URL ||
   'https://api2.hedsvs.ch/rest/v1'
-
+ 
 const ANON_KEY = import.meta.env.VITE_SUPABASE_KEY
-
+ 
 if (!ANON_KEY) {
   console.error('[PushStore] VITE_SUPABASE_KEY manquant dans .env')
 }
 if (!REST_BASE) {
   console.error('[PushStore] VITE_SUPABASE_REST_URL manquant (fallback utilisé)')
 }
-
+ 
 const baseHeaders = {
   apikey: ANON_KEY,
   Authorization: `Bearer ${ANON_KEY}`,
   Accept: 'application/json',
 }
-
+ 
 async function authHeaders () {
   const { data: { session } } = await sb.auth.getSession()
   const token = session?.access_token ?? import.meta.env.VITE_SUPABASE_KEY
@@ -42,11 +42,11 @@ async function authHeaders () {
     Accept: 'application/json'
   }
 }
-
-
+ 
+ 
 /**
- * Wrapper fetch → PostgREST
- */
+* Wrapper fetch → PostgREST
+*/
 async function sbFetch(path, options = {}) {
   const headers = await authHeaders()
   const res = await fetch(`${import.meta.env.VITE_SUPABASE_REST_URL}${path}`, {
@@ -66,12 +66,12 @@ async function sbFetch(path, options = {}) {
   const text = await res.text()
   return text ? JSON.parse(text) : null
 }
-
+ 
 /**
- * ===========================
- *  Pinia Store
- * ===========================
- */
+* ===========================
+*  Pinia Store
+* ===========================
+*/
 export const usePushStore = defineStore('push', () => {
   // state
   const isSupported = ref(
@@ -83,10 +83,10 @@ export const usePushStore = defineStore('push', () => {
   const permission = ref(typeof Notification !== 'undefined' ? Notification.permission : 'unsupported')
   const isSubscribed = ref(false)
   const endpoint = ref(null)
-
+ 
   const loading = ref(false)
   const error = ref(null)
-
+ 
   // getters
   const statusText = computed(() => {
     if (!isSupported.value) return 'non supporté'
@@ -94,7 +94,7 @@ export const usePushStore = defineStore('push', () => {
     if (!isSubscribed.value) return 'désactivé'
     return 'activé'
   })
-
+ 
   // actions
   async function refreshStatus() {
     try {
@@ -115,7 +115,7 @@ export const usePushStore = defineStore('push', () => {
       endpoint.value = null
     }
   }
-
+ 
   async function enable() {
     loading.value = true
     error.value = null
@@ -130,7 +130,7 @@ export const usePushStore = defineStore('push', () => {
       loading.value = false
     }
   }
-
+ 
   async function disable() {
     loading.value = true
     error.value = null
@@ -145,24 +145,24 @@ export const usePushStore = defineStore('push', () => {
       loading.value = false
     }
   }
-
+ 
   /**
    * Envoi d’un test via PostgREST
    * On insère une ligne dans une table `push_outbox` (à créer côté Supabase)
    * ou on appelle une RPC exposée
    */
 // pushStore.js (remplace ta fonction sendTest)
- async function sendTest(payload = {}) {
+async function sendTest(payload = {}) {
   const {
     title = 'Hello 👋',
     body  = 'Test push depuis la PWA',
     url   = '/',
     user_id // facultatif : ignoré si non connecté
   } = payload
-
+ 
   // Récupère la session (si l'utilisateur est loggé)
   const { data: { session } } = await sb.auth.getSession()
-
+ 
   // Headers: session si dispo, sinon anon
   const headers = {
     apikey: SB_ANON,
@@ -171,33 +171,33 @@ export const usePushStore = defineStore('push', () => {
     Prefer: 'return=representation',
     Accept: 'application/json'
   }
-
+ 
   // IMPORTANT :
   // - si pas de session => n'envoie PAS user_id (la policy anon exige user_id IS NULL)
   // - si session => envoie user_id (id de l'utilisateur courant si fourni)
   const bodyObj = session?.user?.id
     ? { user_id: user_id ?? session.user.id, title, body, url }
     : { title, body, url }
-
+ 
   const res = await fetch(`${REST}/push_outbox`, {
     method: 'POST',
     headers,
     body: JSON.stringify(bodyObj)
   })
-
+ 
   const text = await res.text()
   const json = text ? JSON.parse(text) : null
-
+ 
   if (!res.ok) {
     const detail = json?.message || json?.error || res.statusText
     throw new Error(`[${res.status}] ${detail}`)
   }
-
+ 
   // Supabase peut renvoyer [row] ou row → normaliser
   return Array.isArray(json) ? json[0] : json
 }
-
-
+ 
+ 
   return {
     // state
     isSupported, permission, isSubscribed, endpoint, loading, error,
@@ -207,3 +207,5 @@ export const usePushStore = defineStore('push', () => {
     refreshStatus, enable, disable, sendTest,
   }
 })
+ 
+ 

@@ -255,16 +255,19 @@ class GamificationServiceSupabase {
           '550e8400-e29b-41d4-a716-446655440002': 'elaris',
           '550e8400-e29b-41d4-a716-446655440003': 'doloris',
           '550e8400-e29b-41d4-a716-446655440004': 'solencia',
+
           // Autres formats possibles
           'harmonis': 'harmonis',
           'elaris': 'elaris',
           'doloris': 'doloris',
           'solencia': 'solencia',
+
           // IDs courts possibles (basés sur les derniers chiffres des UUIDs)
           '0001': 'harmonis',
           '0002': 'elaris',
           '0003': 'doloris',
           '0004': 'solencia',
+
           // Anciens IDs courts pour compatibilité
           '0': 'harmonis',
           '1': 'elaris',
@@ -869,7 +872,7 @@ class GamificationServiceSupabase {
       harmonis: {
         name: 'Harmonis',
         color: '#3498db',
-        motto: 'L\'harmonie dans la diversité'
+        motto: "L'harmonie du corps, force de l’esprit"
       },
       elaris: {
         name: 'Elaris',
