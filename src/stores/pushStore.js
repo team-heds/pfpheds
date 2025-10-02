@@ -1,4 +1,3 @@
-// src/stores/pushStore.js
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { enablePush, disablePush } from '@/push'
@@ -8,11 +7,6 @@ const SB_ANON = import.meta.env.VITE_SUPABASE_KEY
 const sb = createClient(SB_URL, SB_ANON)
 const REST    = import.meta.env.VITE_SUPABASE_REST_URL      // ex: https://api2.hedsvs.ch/rest/v1
   || 'https://api2.hedsvs.ch/rest/v1'  
-/**
-* ===========================
-*  Config & helpers Supabase
-* ===========================
-*/
  
 const REST_BASE =
   import.meta.env.VITE_SUPABASE_REST_URL ||
@@ -43,10 +37,7 @@ async function authHeaders () {
   }
 }
  
- 
-/**
-* Wrapper fetch → PostgREST
-*/
+
 async function sbFetch(path, options = {}) {
   const headers = await authHeaders()
   const res = await fetch(`${import.meta.env.VITE_SUPABASE_REST_URL}${path}`, {
@@ -67,14 +58,6 @@ async function sbFetch(path, options = {}) {
   return text ? JSON.parse(text) : null
 }
  
-/**
-=======
-/**
->>>>>>> e6fba2c (deploy admin push)
-* ===========================
-*  Pinia Store
-* ===========================
-*/
 export const usePushStore = defineStore('push', () => {
   // state
   const isSupported = ref(
@@ -187,7 +170,7 @@ async function sendTest(payload = {}) {
     headers,
     body: JSON.stringify(bodyObj)
   })
-
+ 
   const text = await res.text()
   const json = text ? JSON.parse(text) : null
  
@@ -199,45 +182,45 @@ async function sendTest(payload = {}) {
   // Supabase peut renvoyer [row] ou row → normaliser
   return Array.isArray(json) ? json[0] : json
 }
-
-
+ 
+ 
 /**
- * Envoie une notification push à tous les utilisateurs avec le rôle 'admin'
- */
+* Envoie une notification push à tous les utilisateurs avec le rôle 'admin'
+*/
 async function sendToAllAdmins(payload = {}) {
   const {
     title = 'Notification Admin ',
     body  = 'Message pour tous les administrateurs',
     url   = '/'
   } = payload
-
+ 
   loading.value = true
   error.value = null
-
+ 
   try {
     // 1. Récupère la session actuelle
     const { data: { session } } = await sb.auth.getSession()
     if (!session) {
       throw new Error('Vous devez être connecté pour envoyer des notifications aux admins')
     }
-
+ 
     // 2. Récupère tous les user_id avec role = 'admin'
     const { data: admins, error: fetchError } = await sb
       .from('user_profiles')
       .select('user_id, email, forname, family_name')
       .eq('role', 'admin')
       .eq('is_active', true)
-
+ 
     if (fetchError) {
       throw new Error(`Erreur lors de la récupération des admins: ${fetchError.message}`)
     }
-
+ 
     if (!admins || admins.length === 0) {
       throw new Error('Aucun administrateur trouvé')
     }
-
+ 
     console.log(` [PushStore] Envoi de notifications à ${admins.length} admin(s)`)
-
+ 
     // 3. Headers avec authentification
     const headers = {
       apikey: SB_ANON,
@@ -246,7 +229,7 @@ async function sendToAllAdmins(payload = {}) {
       Prefer: 'return=representation',
       Accept: 'application/json'
     }
-
+ 
     // 4. Envoie une notification pour chaque admin
     const promises = admins.map(admin => {
       const bodyObj = {
@@ -255,9 +238,9 @@ async function sendToAllAdmins(payload = {}) {
         body,
         url
       }
-
+ 
       console.log(` Envoi à ${admin.email || admin.user_id}`)
-
+ 
       return fetch(`${REST}/push_outbox`, {
         method: 'POST',
         headers,
@@ -276,14 +259,14 @@ async function sendToAllAdmins(payload = {}) {
         return { success: true, admin, data: Array.isArray(json) ? json[0] : json }
       })
     })
-
+ 
     // 5. Attend toutes les réponses
     const results = await Promise.all(promises)
     const successCount = results.filter(r => r.success).length
     const failCount = results.filter(r => !r.success).length
-
+ 
     console.log(` [PushStore] ${successCount} notification(s) envoyée(s), ${failCount} échec(s)`)
-
+ 
     return {
       total: admins.length,
       success: successCount,
@@ -298,7 +281,7 @@ async function sendToAllAdmins(payload = {}) {
     loading.value = false
   }
 }
-
+ 
   return {
     // state
     isSupported, permission, isSubscribed, endpoint, loading, error,
@@ -308,6 +291,3 @@ async function sendToAllAdmins(payload = {}) {
     refreshStatus, enable, disable, sendTest, sendToAllAdmins,
   }
 })
- 
- 
-

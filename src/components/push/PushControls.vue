@@ -9,7 +9,7 @@ const push = usePushStore()
 const userProfile = ref(null)
 const currentUserId = ref(null)
 const currentUserRole = ref(null)
-
+ 
 async function loadUserProfile() {
   try {
     const { data: { session } } = await supabase.auth.getSession()
@@ -35,7 +35,7 @@ async function loadUserProfile() {
     console.error('Erreur loadUserProfile:', e)
   }
 }
-
+ 
 onMounted(async () => {
   await push.refreshStatus()
   await loadUserProfile()
@@ -53,13 +53,13 @@ async function onSendTest () {
     alert(`Erreur: ${e?.message || e}`)
   }
 }
-
+ 
 async function onSendToAdmins () {
   try {
-    const result = await push.sendToAllAdmins({ 
-      title: 'Notification Admin 🔔', 
-      body: 'Ceci est un message pour tous les administrateurs', 
-      url: '/admin' 
+    const result = await push.sendToAllAdmins({
+      title: 'Notification Admin 🔔',
+      body: 'Ceci est un message pour tous les administrateurs',
+      url: '/admin'
     })
     alert(`✅ Notifications envoyées aux admins\n\nTotal: ${result.total}\nRéussi: ${result.success}\nÉchec: ${result.failed}`)
   } catch (e) {
@@ -81,7 +81,7 @@ async function onSendToAdmins () {
     </div>
  
     <div class="flex gap-2 mb-2">
-
+ 
     <div class="text-sm mb-3 p-2 rounded">
       <div class="font-semibold mb-1">👤 Utilisateur connecté :</div>
       <div class="text-xs">
@@ -113,3 +113,5 @@ async function onSendToAdmins () {
   </div>
   </div>
 </template>
+ 
+ 
