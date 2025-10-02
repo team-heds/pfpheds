@@ -1,17 +1,17 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { usePushStore } from '@/stores/pushStore'
- import { supabase } from '@/supabase'
-
+import { supabase } from '@/supabase'
+ 
 onMounted(() => push.refreshStatus())
  
 const push = usePushStore()
 const userProfile = ref(null)
 const currentUserId = ref(null)
 const currentUserRole = ref(null)
-
+ 
 const adminCount = ref(0)
-
+ 
 async function loadUserProfile() {
   try {
     const { data: { session } } = await supabase.auth.getSession()
@@ -87,7 +87,7 @@ async function onSendToAdmins () {
     <div class="flex gap-2 mb-2">
  
     <div class="text-sm mb-3 p-2 rounded">
-
+ 
       <div class="font-semibold mb-1">👤 Utilisateur connecté :</div>
       <div class="text-xs">
         <div><strong>ID :</strong> <span class="font-mono">{{ currentUserId || 'Non connecté' }}</span></div>
@@ -96,7 +96,7 @@ async function onSendToAdmins () {
         <div v-if="userProfile?.forname || userProfile?.family_name"><strong>Nom :</strong> {{ userProfile.forname }} {{ userProfile.family_name }}</div>
       </div>
     </div>
-
+ 
     <div class="text-sm mb-3 p-2 bg-orange-50 border border-orange-200 rounded">
       <div class="flex items-center gap-2">
         <span class="text-lg">👥</span>
@@ -128,5 +128,6 @@ async function onSendToAdmins () {
   </div>
   </div>
 </template>
+ 
  
  

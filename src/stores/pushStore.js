@@ -37,7 +37,7 @@ async function authHeaders () {
   }
 }
  
-
+ 
 async function sbFetch(path, options = {}) {
   const headers = await authHeaders()
   const res = await fetch(`${import.meta.env.VITE_SUPABASE_REST_URL}${path}`, {
@@ -184,7 +184,7 @@ async function sendTest(payload = {}) {
 }
  
  
-
+ 
 async function getAdminCount() {
   try {
     console.log('🔍 [PushStore] Début getAdminCount...')
@@ -215,12 +215,12 @@ async function getAdminCount() {
       .select('*', { count: 'exact', head: true })
       .eq('role', 'admin')
       .eq('is_active', true)
-
+ 
     console.log('🔍 [PushStore] Test 3 - Admins actifs (count only):', {
       count,
       error
     })
-
+ 
     if (error) {
       console.error('❌ [PushStore] Erreur getAdminCount:', error)
       console.error('❌ [PushStore] Error code:', error.code)
@@ -234,7 +234,7 @@ async function getAdminCount() {
       }
       return 0
     }
-
+ 
     console.log(`✅ [PushStore] ${count} administrateur(s) actif(s) dans la DB`)
     return count || 0
   } catch (e) {
@@ -243,10 +243,10 @@ async function getAdminCount() {
     return 0
   }
 }
-
+ 
 /**
- * Envoie une notification push à tous les utilisateurs avec le rôle 'admin'
- */
+* Envoie une notification push à tous les utilisateurs avec le rôle 'admin'
+*/
 async function sendToAllAdmins(payload = {}) {
   const {
     title = 'Notification Admin ',
@@ -265,7 +265,7 @@ async function sendToAllAdmins(payload = {}) {
     }
  
     // 2. Récupère tous les user_id avec role = 'admin'
-
+ 
     // 2. Récupère tous les user_id avec role = 'admin' (y compris l'utilisateur actuel)
     const { data: admins, error: fetchError } = await sb
       .from('user_profiles')
@@ -283,11 +283,11 @@ async function sendToAllAdmins(payload = {}) {
  
     console.log(` [PushStore] Envoi de notifications à ${admins.length} admin(s)`)
  
-
+ 
     // Vérifie si l'utilisateur actuel est dans la liste
     const currentUserInList = admins.find(a => a.user_id === session.user.id)
     const currentUserEmail = currentUserInList?.email || session.user.email
-
+ 
     console.log(`📢 [PushStore] Envoi de notifications à ${admins.length} admin(s)`)
     console.log(`📧 [PushStore] Liste des admins:`, admins.map(a => a.email || a.user_id))
     
@@ -296,7 +296,7 @@ async function sendToAllAdmins(payload = {}) {
     } else {
       console.warn(`⚠️ [PushStore] Attention: Vous (${currentUserEmail}) n'êtes pas dans la liste des admins`)
     }
-
+ 
     // 3. Headers avec authentification
     const headers = {
       apikey: SB_ANON,
@@ -367,3 +367,4 @@ async function sendToAllAdmins(payload = {}) {
     refreshStatus, enable, disable, sendTest, sendToAllAdmins, getAdminCount,
   }
 })
+ 
