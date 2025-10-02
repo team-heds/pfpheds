@@ -1,14 +1,16 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { usePushStore } from '@/stores/pushStore'
+import { supabase } from '@/supabase'
  
 onMounted(() => push.refreshStatus())
-import { supabase } from '@/supabase'
  
 const push = usePushStore()
 const userProfile = ref(null)
 const currentUserId = ref(null)
 const currentUserRole = ref(null)
+ 
+const adminCount = ref(0)
  
 async function loadUserProfile() {
   try {
@@ -39,6 +41,8 @@ async function loadUserProfile() {
 onMounted(async () => {
   await push.refreshStatus()
   await loadUserProfile()
+  // Charger le nombre d'admins
+  adminCount.value = await push.getAdminCount()
 })
  
 async function onEnable () { await push.enable() }
@@ -61,7 +65,7 @@ async function onSendToAdmins () {
       body: 'Ceci est un message pour tous les administrateurs',
       url: '/admin'
     })
-    alert(`✅ Notifications envoyées aux admins\n\nTotal: ${result.total}\nRéussi: ${result.success}\nÉchec: ${result.failed}`)
+    alert(`✅ Notifications envoyées à TOUS les admins\n(y compris vous-même)\n\nTotal: ${result.total} admin(s)\nRéussi: ${result.success}\nÉchec: ${result.failed}`)
   } catch (e) {
     alert(`❌ Erreur: ${e?.message || e}`)
   }
@@ -83,12 +87,23 @@ async function onSendToAdmins () {
     <div class="flex gap-2 mb-2">
  
     <div class="text-sm mb-3 p-2 rounded">
+ 
       <div class="font-semibold mb-1">👤 Utilisateur connecté :</div>
       <div class="text-xs">
         <div><strong>ID :</strong> <span class="font-mono">{{ currentUserId || 'Non connecté' }}</span></div>
         <div><strong>Rôle :</strong> <span class="px-2 py-0.5 rounded" :class="currentUserRole === 'admin' ? 'bg-orange-200 text-orange-800' : 'bg-blue-200 text-blue-800'">{{ currentUserRole || 'Non défini' }}</span></div>
         <div v-if="userProfile?.email"><strong>Email :</strong> {{ userProfile.email }}</div>
         <div v-if="userProfile?.forname || userProfile?.family_name"><strong>Nom :</strong> {{ userProfile.forname }} {{ userProfile.family_name }}</div>
+      </div>
+    </div>
+ 
+    <div class="text-sm mb-3 p-2 bg-orange-50 border border-orange-200 rounded">
+      <div class="flex items-center gap-2">
+        <span class="text-lg">👥</span>
+        <div>
+          <div class="font-semibold text-orange-800">Administrateurs actifs :</div>
+          <div class="text-2xl font-bold text-orange-600">{{ adminCount }}</div>
+        </div>
       </div>
     </div>
  
@@ -113,5 +128,6 @@ async function onSendToAdmins () {
   </div>
   </div>
 </template>
+ 
  
  
