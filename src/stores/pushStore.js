@@ -184,13 +184,7 @@ async function sendTest(payload = {}) {
 }
  
  
-/**
-<<<<<<< HEAD
-* Envoie une notification push à tous les utilisateurs avec le rôle 'admin'
-*/
-=======
- * Récupère le nombre total d'administrateurs actifs
- */
+
 async function getAdminCount() {
   try {
     console.log('🔍 [PushStore] Début getAdminCount...')
@@ -253,7 +247,6 @@ async function getAdminCount() {
 /**
  * Envoie une notification push à tous les utilisateurs avec le rôle 'admin'
  */
->>>>>>> 8c6a0e4 (piush admin)
 async function sendToAllAdmins(payload = {}) {
   const {
     title = 'Notification Admin ',
@@ -270,13 +263,10 @@ async function sendToAllAdmins(payload = {}) {
     if (!session) {
       throw new Error('Vous devez être connecté pour envoyer des notifications aux admins')
     }
-<<<<<<< HEAD
  
     // 2. Récupère tous les user_id avec role = 'admin'
-=======
 
     // 2. Récupère tous les user_id avec role = 'admin' (y compris l'utilisateur actuel)
->>>>>>> 8c6a0e4 (piush admin)
     const { data: admins, error: fetchError } = await sb
       .from('user_profiles')
       .select('user_id, email, forname, family_name')
@@ -290,11 +280,9 @@ async function sendToAllAdmins(payload = {}) {
     if (!admins || admins.length === 0) {
       throw new Error('Aucun administrateur trouvé')
     }
-<<<<<<< HEAD
  
     console.log(` [PushStore] Envoi de notifications à ${admins.length} admin(s)`)
  
-=======
 
     // Vérifie si l'utilisateur actuel est dans la liste
     const currentUserInList = admins.find(a => a.user_id === session.user.id)
@@ -309,7 +297,6 @@ async function sendToAllAdmins(payload = {}) {
       console.warn(`⚠️ [PushStore] Attention: Vous (${currentUserEmail}) n'êtes pas dans la liste des admins`)
     }
 
->>>>>>> 8c6a0e4 (piush admin)
     // 3. Headers avec authentification
     const headers = {
       apikey: SB_ANON,

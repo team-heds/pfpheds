@@ -9,12 +9,9 @@ const push = usePushStore()
 const userProfile = ref(null)
 const currentUserId = ref(null)
 const currentUserRole = ref(null)
-<<<<<<< HEAD
- 
-=======
+
 const adminCount = ref(0)
 
->>>>>>> 8c6a0e4 (piush admin)
 async function loadUserProfile() {
   try {
     const { data: { session } } = await supabase.auth.getSession()
@@ -88,13 +85,9 @@ async function onSendToAdmins () {
     </div>
  
     <div class="flex gap-2 mb-2">
-<<<<<<< HEAD
  
     <div class="text-sm mb-3 p-2 rounded">
-=======
 
-    <div class="text-sm mb-3 p-2 bg-gray-100 rounded">
->>>>>>> 8c6a0e4 (piush admin)
       <div class="font-semibold mb-1">👤 Utilisateur connecté :</div>
       <div class="text-xs">
         <div><strong>ID :</strong> <span class="font-mono">{{ currentUserId || 'Non connecté' }}</span></div>
