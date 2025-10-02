@@ -3,13 +3,30 @@
     <!-- Message si l'utilisateur a déjà une maison -->
     <div v-if="existingHouse" class="existing-house-message">
       <div class="message-card">
-        <i class="pi pi-info-circle"></i>
-        <h3>Vous avez déjà une maison !</h3>
-        <p>Vous êtes actuellement dans la maison <strong>{{ existingHouse }}</strong>.</p>
-        <p>Vous pouvez refaire le quiz pour changer de maison si vous le souhaitez.</p>
-        <button @click="existingHouse = null" class="continue-button">
-          Refaire le quiz
-        </button>
+        <div class="house-icon-container">
+          <i :class="getHouseIcon(existingHouse)" class="house-main-icon" :style="{ color: getHouseColor(existingHouse) }"></i>
+        </div>
+        <h2 class="house-name" :style="{ color: getHouseColor(existingHouse) }">{{ existingHouse }}</h2>
+        <p class="house-motto">"{{ getHouseMotto(existingHouse) }}"</p>
+        <div class="house-description">
+          <p>{{ getHouseDescription(existingHouse) }}</p>
+        </div>
+        <div class="confirmation-message">
+          <i class="pi pi-check-circle success-icon"></i>
+          <h3>Votre maison est confirmée !</h3>
+          <p>Vous faites partie de la maison <strong>{{ existingHouse }}</strong>.</p>
+          <p>Le quiz ne peut être effectué qu'une seule fois pour maintenir l'équilibre entre les maisons.</p>
+        </div>
+        <div class="action-buttons">
+          <button @click="goToProfile" class="profile-button">
+            <i class="pi pi-user"></i>
+            Voir mon profil
+          </button>
+          <button @click="goToHouseStats" class="house-button" :style="{ backgroundColor: getHouseColor(existingHouse) }">
+            <i class="pi pi-home"></i>
+            Statistiques de ma maison
+          </button>
+        </div>
       </div>
     </div>
 
@@ -72,10 +89,6 @@
             <button @click="saveHouseSelection" class="accept-button" :style="{ backgroundColor: selectedHouse.color }">
               <i class="pi pi-check"></i>
               Accepter ma maison
-            </button>
-            <button @click="restartQuiz" class="restart-button">
-              <i class="pi pi-refresh"></i>
-              Refaire le test
             </button>
           </div>
         </div>
@@ -493,6 +506,42 @@ const getHouseIdByName = (houseName) => {
   return houseMapping[houseName] || houseMapping['Harmonis'] // Fallback
 }
 
+// Helpers pour obtenir les informations des maisons existantes
+const getHouseColor = (houseName) => {
+  const house = Object.values(houses).find(h => h.name === houseName)
+  return house?.color || '#2E8B57'
+}
+
+const getHouseIcon = (houseName) => {
+  const house = Object.values(houses).find(h => h.name === houseName)
+  return house?.icon || 'pi pi-circle'
+}
+
+const getHouseMotto = (houseName) => {
+  const house = Object.values(houses).find(h => h.name === houseName)
+  return house?.motto || 'L\'équilibre soigne'
+}
+
+const getHouseDescription = (houseName) => {
+  const house = Object.values(houses).find(h => h.name === houseName)
+  return house?.description || 'Votre maison vous correspond parfaitement.'
+}
+
+// Actions de navigation
+const goToProfile = () => {
+  const userId = props.userId || authStore.user?.id
+  if (userId) {
+    router.push(`/profile/${userId}`)
+  }
+}
+
+const goToHouseStats = () => {
+  const houseName = existingHouse.value?.toLowerCase()
+  if (houseName) {
+    router.push(`/houses/${houseName}/stats`)
+  }
+}
+
 // Vérifier si l'utilisateur a déjà une maison avec Supabase
 onMounted(async () => {
   try {
@@ -773,47 +822,79 @@ onMounted(async () => {
 .message-card {
   background: var(--surface-card);
   border-radius: 12px;
-  padding: 2rem;
+  padding: 3rem;
   box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  max-width: 600px;
+  margin: 0 auto;
 }
 
-.message-card i {
-  font-size: 2rem;
-  color: var(--primary-color);
+.confirmation-message {
+  background: #f0f9ff;
+  border: 2px solid #22c55e;
+  border-radius: 12px;
+  padding: 2rem;
+  margin: 2rem 0;
+}
+
+.success-icon {
+  font-size: 3rem;
+  color: #22c55e;
   margin-bottom: 1rem;
 }
 
-.message-card h3 {
+.confirmation-message h3 {
   font-size: 1.5rem;
+  color: #22c55e;
   margin: 1rem 0;
   font-weight: 700;
 }
 
-.message-card p {
+.confirmation-message p {
   font-size: 1.1rem;
   line-height: 1.6;
-  color: var(--text-color);
+  color: #374151;
   margin-bottom: 1rem;
 }
 
-.continue-button {
-  background: var(--primary-color);
-  color: white;
-  border: none;
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 2rem;
+}
+
+.profile-button,
+.house-button {
   padding: 1rem 2rem;
   border-radius: 25px;
-  font-size: 1.2rem;
+  border: none;
   font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin: 0 auto;
-  transition: background 0.3s ease;
+  transition: all 0.3s ease;
+  font-size: 1rem;
 }
 
-.continue-button:hover {
-  background: var(--primary-color-dark);
+.profile-button {
+  background: var(--surface-border);
+  color: var(--text-color);
+}
+
+.profile-button:hover {
+  background: var(--surface-hover);
+  transform: translateY(-2px);
+}
+
+.house-button {
+  color: white;
+}
+
+.house-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
 /* Responsive */

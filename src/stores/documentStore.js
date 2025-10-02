@@ -1,15 +1,15 @@
 import { defineStore } from 'pinia'
 import { db } from 'root/firebase.js'
 import { ref as dbRef, onValue, set, off } from 'firebase/database'
-
+ 
 /**
- * ===========================
- *  Document Store - FilePhysio
- * ===========================
- * Gère les dossiers et fichiers depuis Firebase Realtime Database
- * Path Firebase: FilePFPPhysio
- */
-
+* ===========================
+*  Document Store - FilePhysio
+* ===========================
+* Gère les dossiers et fichiers depuis Firebase Realtime Database
+* Path Firebase: FilePFPPhysio
+*/
+ 
 export const useDocumentStore = defineStore('documents', {
   state: () => ({
     folders: [],           // Arborescence complète des dossiers
@@ -18,7 +18,7 @@ export const useDocumentStore = defineStore('documents', {
     loading: false,
     error: null,
   }),
-
+ 
   getters: {
     /**
      * Récupère un dossier par ID
@@ -27,7 +27,7 @@ export const useDocumentStore = defineStore('documents', {
       // Cherche dans les dossiers racine
       let found = state.topFolders.find((f) => f.id === id)
       if (found) return found
-
+ 
       // Cherche dans les sous-dossiers
       for (const topFolder of state.topFolders) {
         if (topFolder.subFolders) {
@@ -37,26 +37,26 @@ export const useDocumentStore = defineStore('documents', {
       }
       return null
     },
-
+ 
     /**
      * Récupère tous les fichiers d'un dossier (incluant sous-dossiers)
      */
     getAllFilesFromFolder: (state) => (folderId) => {
       const folder = state.topFolders.find((f) => f.id === folderId)
       if (!folder) return []
-
+ 
       let allFiles = [...(folder.files || [])]
-
+ 
       // Ajoute les fichiers des sous-dossiers
       if (folder.subFolders) {
         for (const sub of folder.subFolders) {
           allFiles = [...allFiles, ...(sub.files || [])]
         }
       }
-
+ 
       return allFiles
     },
-
+ 
     /**
      * Compte total de fichiers
      */
@@ -73,7 +73,7 @@ export const useDocumentStore = defineStore('documents', {
       return count
     },
   },
-
+ 
   actions: {
     /**
      * Charge l'arborescence complète depuis Firebase
@@ -118,7 +118,7 @@ export const useDocumentStore = defineStore('documents', {
         throw e
       }
     },
-
+ 
     /**
      * Met à jour un fichier
      */
@@ -160,11 +160,11 @@ export const useDocumentStore = defineStore('documents', {
           
           return folder
         })
-
+ 
         if (!updated) {
           throw new Error('Fichier non trouvé')
         }
-
+ 
         await set(dbRef(db, 'FilePFPPhysio'), newFolders)
         this.folders = newFolders
         this.topFolders = newFolders
@@ -179,7 +179,7 @@ export const useDocumentStore = defineStore('documents', {
         this.loading = false
       }
     },
-
+ 
     /**
      * Supprime un fichier
      */
@@ -225,11 +225,11 @@ export const useDocumentStore = defineStore('documents', {
           
           return folder
         })
-
+ 
         if (!deleted) {
           throw new Error('Fichier non trouvé')
         }
-
+ 
         await set(dbRef(db, 'FilePFPPhysio'), newFolders)
         this.folders = newFolders
         this.topFolders = newFolders
@@ -244,7 +244,7 @@ export const useDocumentStore = defineStore('documents', {
         this.loading = false
       }
     },
-
+ 
     /**
      * Ajoute un fichier dans un dossier ou sous-dossier
      */
@@ -282,7 +282,7 @@ export const useDocumentStore = defineStore('documents', {
           }
           return folder
         })
-
+ 
         await set(dbRef(db, 'FilePFPPhysio'), newFolders)
         this.folders = newFolders
         this.topFolders = newFolders
@@ -297,7 +297,7 @@ export const useDocumentStore = defineStore('documents', {
         this.loading = false
       }
     },
-
+ 
     /**
      * Recherche de fichiers par nom
      */
@@ -306,7 +306,7 @@ export const useDocumentStore = defineStore('documents', {
       
       const searchTerm = query.toLowerCase()
       const results = []
-
+ 
       for (const folder of this.folders) {
         // Cherche dans les fichiers du dossier racine
         if (folder.files) {
@@ -320,7 +320,7 @@ export const useDocumentStore = defineStore('documents', {
             }
           }
         }
-
+ 
         // Cherche dans les sous-dossiers
         if (folder.subFolders) {
           for (const sub of folder.subFolders) {
@@ -338,10 +338,10 @@ export const useDocumentStore = defineStore('documents', {
           }
         }
       }
-
+ 
       return results
     },
-
+ 
     /**
      * Nettoie les listeners Firebase
      */
@@ -349,7 +349,7 @@ export const useDocumentStore = defineStore('documents', {
       const foldersRef = dbRef(db, 'FilePFPPhysio')
       off(foldersRef)
     },
-
+ 
     /**
      * Réinitialise le store
      */
@@ -363,3 +363,5 @@ export const useDocumentStore = defineStore('documents', {
     },
   },
 })
+ 
+ 
