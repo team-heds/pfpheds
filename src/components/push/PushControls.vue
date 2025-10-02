@@ -1,21 +1,24 @@
 <script setup>
-import { onMounted, computed } from 'vue'
+import { onMounted } from 'vue'
 import { usePushStore } from '@/stores/pushStore'
 
 const push = usePushStore()
-const msg = computed(() => push.error ? `Erreur: ${push.error}` : `Statut: ${push.statusText}`)
-
 onMounted(() => push.refreshStatus())
 
 async function onEnable () { await push.enable() }
 async function onDisable () { await push.disable() }
+
 async function onSendTest () {
   try {
-    const r = await push.sendTest({ title: 'Hello 👋', body: 'Test push depuis la PWA', url: '/' })
-    alert(`Test envoyé (sent=${r.sent ?? '?'}, cleaned=${r.cleaned ?? 0})`)
-  } catch (_) {}
+    const row = await push.sendTest({ title: 'Hello 👋', body: 'Test push', url: '/' })
+    // row contient au moins id, status='pending'
+    alert(`Commande push créée ✅\nID: ${row?.id || 'inconnu'}\nStatus: ${row?.status || 'pending'}`)
+  } catch (e) {
+    alert(`Erreur: ${e?.message || e}`)
+  }
 }
 </script>
+
 
 <template>
   <div class="p-4 border rounded max-w-md">

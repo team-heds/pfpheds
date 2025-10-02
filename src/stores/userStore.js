@@ -36,24 +36,28 @@ export const useUserStore = defineStore('user', {
         // Recharger/vider profil selon connexion
         if (this.user) {
           this.fetchProfile()
-          this.subscribeProfile()
+          // ❌ Realtime désactivé
+          // this.subscribeProfile()
         } else {
-          this.unsubscribeProfile()
+          // ❌ Realtime désactivé
+          // this.unsubscribeProfile()
           this.profile = null
         }
       })
       this.authSub = sub
-      // Charger/abonner si déjà connecté
+      // Charger si déjà connecté (sans Realtime)
       if (this.user) {
         await this.fetchProfile()
-        this.subscribeProfile()
+        // ❌ Realtime désactivé
+        // this.subscribeProfile()
       }
     },
 
     // Nettoyage (ex: avant app destroy)
     dispose() {
       if (this.authSub) this.authSub.unsubscribe()
-      this.unsubscribeProfile()
+      // ❌ Realtime désactivé
+      // this.unsubscribeProfile()
     },
 
     async fetchProfile() {
@@ -92,26 +96,46 @@ export const useUserStore = defineStore('user', {
 
     subscribeProfile() {
       if (!this.user || this.profileChannel) return
-      this.profileChannel = supabase
-        .channel(`user_profile:${this.user.id}`)
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'user_profiles',
-            filter: `user_id=eq.${this.user.id}`,
-          },
-          (payload) => {
-            if (payload.eventType === 'DELETE') {
-              this.profile = null
-            } else {
-              // INSERT/UPDATE: payload.new contient la ligne complète
-              this.profile = payload.new
+      
+      try {
+        this.profileChannel = supabase
+          .channel(`user_profile:${this.user.id}`)
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'user_profiles',
+              filter: `user_id=eq.${this.user.id}`,
+            },
+            (payload) => {
+              console.log('📡 [UserStore] Profile update received:', payload.eventType)
+              if (payload.eventType === 'DELETE') {
+                this.profile = null
+              } else {
+                // INSERT/UPDATE: payload.new contient la ligne complète
+                this.profile = payload.new
+              }
             }
-          }
-        )
-        .subscribe()
+          )
+          .subscribe((status, err) => {
+            if (status === 'SUBSCRIBED') {
+              console.log('✅ [UserStore] Profile realtime subscription active')
+            } else if (status === 'CHANNEL_ERROR') {
+              console.warn('⚠️ [UserStore] Realtime subscription error:', err)
+              console.log('ℹ️ [UserStore] App will continue without realtime updates')
+            } else if (status === 'TIMED_OUT') {
+              console.warn('⚠️ [UserStore] Realtime subscription timed out')
+              console.log('ℹ️ [UserStore] App will continue without realtime updates')
+            } else if (status === 'CLOSED') {
+              console.log('🔌 [UserStore] Realtime subscription closed')
+            }
+          })
+      } catch (error) {
+        console.error('❌ [UserStore] Failed to subscribe to profile updates:', error)
+        console.log('ℹ️ [UserStore] App will continue without realtime updates')
+        this.profileChannel = null
+      }
     },
 
     unsubscribeProfile() {
@@ -141,7 +165,8 @@ export const useUserStore = defineStore('user', {
         this.session = data.session
         this.user = data.user
         await this.fetchProfile()
-        this.subscribeProfile()
+        // ❌ Realtime désactivé
+        // this.subscribeProfile()
       } finally {
         this.authLoading = false
       }
@@ -155,7 +180,8 @@ export const useUserStore = defineStore('user', {
         this.session = null
         this.user = null
         this.profile = null
-        this.unsubscribeProfile()
+        // ❌ Realtime désactivé
+        // this.unsubscribeProfile()
       } finally {
         this.authLoading = false
       }

@@ -12,7 +12,7 @@
     console.error('VITE_SUPABASE_ANON_KEY:', supabaseAnonKey)
     }
 
-    // ✅ Crée le client avec options recommandées salut
+    // ✅ Crée le client avec options recommandées (Realtime désactivé)
     export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
         persistSession: true,       // garde la session même après refresh
