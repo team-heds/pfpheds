@@ -1,21 +1,21 @@
 <template>
   <div class="votation-scrollable">
     <Navbar />
- 
+
     <!-- Titre et bouton de retour -->
     <div class="page-title p-d-flex p-jc-between">
       <h1>Votation BA24 - PFP2</h1>
     </div>
- 
+
     <div class="container">
       <Button label="Retour Profil" icon="pi pi-arrow-left"
-        class="p-button-outlined m-2 align-content-end justify-content-end" @click="goBackToProfile" />
- 
+              class="p-button-outlined m-2 align-content-end justify-content-end" @click="goBackToProfile" />
+
       <!-- Affichage du profil étudiant -->
       <div v-if="userProfile && Object.keys(userProfile).length">
         <ValidatedCriteriaSection :userId="currentUserId" />
       </div>
- 
+
       <!-- Affichage des places disponibles -->
       <div v-if="allCriteriaValidated">
         <h2>Toutes les places disponibles ( {{ availablePlaces.length }} places )</h2>
@@ -23,20 +23,20 @@
           <!-- Colonne Institution avec lien -->
           <Column header="Institution">
             <template #body="slotProps">
- 
+
               <a target="_blank" :href="`${slotProps.data.url}`">
                 <span>{{ slotProps.data.InstitutionName || 'Non spécifié' }}</span>
               </a>
             </template>
           </Column>
- 
+
           <!-- Autres colonnes d'informations -->
           <Column header="Nom de la Place">
             <template #body="slotProps">
               <span>{{ slotProps.data.NomPlace }}</span>
             </template>
           </Column>
- 
+
           <Column header="Catégorie ">
             <template #body="slotProps">
               <span>{{ slotProps.data.InstitutionCategory }}</span>
@@ -87,39 +87,39 @@
               <span>{{ getNewValidatedCriteria(slotProps.data).join(', ') }}</span>
             </template>
           </Column>
- 
+
           <!-- Colonnes de vote (Choix 1 à 5) -->
           <Column header="Choix 1">
             <template #body="slotProps">
               <RadioButton v-model="selectedPlaces[0]" :value="slotProps.data"
-                :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 0)" />
+                           :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 0)" />
             </template>
           </Column>
           <Column header="Choix 2">
             <template #body="slotProps">
               <RadioButton v-model="selectedPlaces[1]" :value="slotProps.data"
-                :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 1)" />
+                           :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 1)" />
             </template>
           </Column>
           <Column header="Choix 3">
             <template #body="slotProps">
               <RadioButton v-model="selectedPlaces[2]" :value="slotProps.data"
-                :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 2)" />
+                           :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 2)" />
             </template>
           </Column>
           <Column header="Choix 4">
             <template #body="slotProps">
               <RadioButton v-model="selectedPlaces[3]" :value="slotProps.data"
-                :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 3)" />
+                           :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 3)" />
             </template>
           </Column>
           <Column header="Choix 5">
             <template #body="slotProps">
               <RadioButton v-model="selectedPlaces[4]" :value="slotProps.data"
-                :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 4)" />
+                           :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 4)" />
             </template>
           </Column>
- 
+
           <!-- Colonnes d'agrégation des votes -->
           <Column header="Votes Top 1">
             <template #body="slotProps">
@@ -153,7 +153,7 @@
           </Column>
         </DataTable>
       </div>
- 
+
       <!-- En cas de critères non validés, affichage groupé par nombre de critères validés -->
       <div v-else>
         <div v-for="group in displayedGroups" :key="group.criteriaCount" class="criteria-count-section">
@@ -165,10 +165,10 @@
               ({{ group.places.length }} places)
             </h2>
             <DataTable :value="group.places" class="p-datatable-sm custom-datatable text-center"
-              responsiveLayout="scroll">
+                       responsiveLayout="scroll">
               <Column header="Institution">
                 <template #body="slotProps">
- 
+
                   <a target="_blank" :href="`${slotProps.data.url}`">
                     <span>{{ slotProps.data.InstitutionName || 'Non spécifié' }}</span>
                   </a>
@@ -179,14 +179,14 @@
                   <span>{{ slotProps.data.NomPlace }}</span>
                 </template>
               </Column>
- 
+
               <Column header="Catégorie ">
                 <template #body="slotProps">
                   <span>{{ slotProps.data.InstitutionCategory }}</span>
                 </template>
               </Column>
- 
- 
+
+
               <Column header="MSQ">
                 <template #body="slotProps">
                   <span>{{ slotProps.data.MSQ ? 'MSQ' : '-' }}</span>
@@ -236,31 +236,31 @@
               <Column header="Choix 1">
                 <template #body="slotProps">
                   <RadioButton v-model="selectedPlaces[0]" :value="slotProps.data"
-                    :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 0)" />
+                               :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 0)" />
                 </template>
               </Column>
               <Column header="Choix 2">
                 <template #body="slotProps">
                   <RadioButton v-model="selectedPlaces[1]" :value="slotProps.data"
-                    :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 1)" />
+                               :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 1)" />
                 </template>
               </Column>
               <Column header="Choix 3">
                 <template #body="slotProps">
                   <RadioButton v-model="selectedPlaces[2]" :value="slotProps.data"
-                    :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 2)" />
+                               :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 2)" />
                 </template>
               </Column>
               <Column header="Choix 4">
                 <template #body="slotProps">
                   <RadioButton v-model="selectedPlaces[3]" :value="slotProps.data"
-                    :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 3)" />
+                               :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 3)" />
                 </template>
               </Column>
               <Column header="Choix 5">
                 <template #body="slotProps">
                   <RadioButton v-model="selectedPlaces[4]" :value="slotProps.data"
-                    :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 4)" />
+                               :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 4)" />
                 </template>
               </Column>
               <!-- Colonnes d'agrégation des votes répétées -->
@@ -298,7 +298,7 @@
           </div>
         </div>
       </div>
- 
+
       <!-- Action de vote -->
       <div class="vote-action">
         <Button v-if="!voteAlreadyCast" @click="sendVote">Envoyer</Button>
@@ -312,11 +312,21 @@
           <Button @click="revote">Revoter</Button>
         </div>
       </div>
+
+      <!-- Export des places disponibles
+      <div class="export-section">
+        <Button
+          @click="exportPlacesToCSV"
+          icon="pi pi-download"
+          label="Exporter toutes les places disponibles"
+          class="p-button-success"
+        />
+      </div>-->
     </div>
- 
+
     <!-- Dialogue de confirmation -->
     <Dialog v-model:visible="dialogVisible" header="Confirmation de Vote" :modal="true" :closable="false"
-      class="custom-dialog">
+            class="custom-dialog">
       <p>{{ dialogMessage }}</p>
       <template #footer>
         <button class="p-button p-component" @click="closeDialog">OK</button>
@@ -324,7 +334,7 @@
     </Dialog>
   </div>
 </template>
- 
+
 <script>
 import Navbar from '@/components/common/utils/Navbar.vue';
 import DataTable from 'primevue/datatable';
@@ -337,7 +347,7 @@ import CardNameProfile from '@/components/user/library/CardNameProfile.vue';
 import { ref, onValue, update, set, remove } from "firebase/database";
 import { db } from 'root/firebase';
 import { getAuth } from "firebase/auth";
- 
+
 export default {
   name: 'VotationView',
   components: {
@@ -364,7 +374,7 @@ export default {
       // Objet contenant l'agrégation des votes par place
       votesAggregation: {},
       alreadyAssigned: false, // Propriété ajoutée
- 
+
     };
   },
   watch: {
@@ -395,7 +405,7 @@ export default {
         .sort((a, b) => b.criteriaCount - a.criteriaCount);
       return allGroups;
     },
- 
+
     displayedGroups() {
       // Afficher tous les groupes (1, 2, 3, 4, 5 critères)
       return this.groupedByCriteriaCount;
@@ -437,22 +447,22 @@ export default {
     // Utilise la donnée pré-calculée pour les places
     availablePlaces() {
       let places = this.expandedPFP2Data;
-      
+
       // Si tous les critères sont validés, afficher toutes les places
       if (this.allCriteriaValidated) {
         return places.filter(place => place[`selectedActiveBA24PFP2-${place.seatIndex}`] === true);
       }
- 
+
       // Afficher uniquement les places qui valident AU MOINS UN critère manquant
       places = places.filter(place => {
         const newCriteria = this.getNewValidatedCriteria(place);
         return newCriteria.length > 0;
       });
- 
+
       // Filtrage : si l'étudiant a validé DE ou SYSINT, exclure les places avec ces critères
       const hasValidatedDE = this.aggregatedPFP.DE;
       const hasValidatedSYSINT = this.aggregatedPFP.SYSINT;
- 
+
       places = places.filter(place => {
         // Si l'étudiant a validé DE, exclure TOUTES les places qui ont le critère DE
         if (hasValidatedDE && place.DE) {
@@ -464,27 +474,8 @@ export default {
         }
         return true;
       });
- 
+
       return places.filter(place => place[`selectedActiveBA24PFP2-${place.seatIndex}`] === true);
-    },
-    // Regroupe les places par nombre de critères non validés
-    groupedByCriteriaCount() {
-      const groups = {};
-      this.availablePlaces.forEach(place => {
-        const count = this.getNewValidatedCriteria(place).length;
-        if (groups[count]) {
-          groups[count].push(place);
-        } else {
-          groups[count] = [place];
-        }
-      });
-      const allGroups = Object.keys(groups)
-        .map(count => ({
-          criteriaCount: parseInt(count),
-          places: groups[count]
-        }))
-        .sort((a, b) => b.criteriaCount - a.criteriaCount);
-      return allGroups;
     },
     // Nombre de places sélectionnées
     totalSelectedOut() {
@@ -498,25 +489,25 @@ export default {
     }
   },
   methods: {
- 
+
     async getNameInstitutionById(institutionId) {
       const institutionData = await this.fetchInstitutionData(institutionId);
       return institutionData.Name || institutionId;
     },
- 
+
     checkUserAssignedPlace(placesData) {
       console.log("yes1")
       for (const key in placesData) {
         const place = placesData[key];
         // Récupère le nombre de places (stocké dans PFP2, ici supposé être un nombre ou une chaîne numérique)
         console.log("yes13")
- 
+
         const count = parseInt(place.PFP2 || '0');
         // Pour chaque siège, vérifie si la clé "selectedEtudiantBA24PFP2-i" correspond à l'ID utilisateur
         for (let i = 1; i <= count; i++) {
           if (place[`selectedEtudiantBA24PFP2-${i}`] === this.currentUserId) {
             console.log("yes122")
- 
+
             return place; // Retourne la place trouvée
           }
         }
@@ -529,13 +520,16 @@ export default {
         a.NomPlace.localeCompare(b.NomPlace)
       );
       sorted.forEach(place => {
-        const count = parseInt(place.PFP2 || '0');
+        const count = parseInt(place['PFP2-2026'] || place.PFP2 || '0');
         if (!isNaN(count) && count >= 1) {
           for (let i = 1; i <= count; i++) {
+            // Vérifier si un étudiant est déjà assigné à cette place
             const studentKey = `selectedEtudiantBA24PFP2-${i}`;
             const alreadySelected =
               (i === 1 && place.selectedEtudiant && place.selectedEtudiant.trim() !== "") ||
               (place[studentKey] && place[studentKey].trim() !== "");
+
+            // N'afficher que les places sans étudiant assigné
             if (!alreadySelected) {
               const dynamicKey = `selectedActiveBA24PFP2-${i}`;
               rows.push({
@@ -548,9 +542,6 @@ export default {
         }
       });
       this.expandedPFP2Data = rows;
-    },
-    goBackToProfile() {
-      this.$router.push({ name: 'HistoriquePFP' });
     },
     checkExistingVote() {
       const auth = getAuth();
@@ -575,8 +566,8 @@ export default {
         });
       });
     },
- 
- 
+
+
     fetchPlacesData() {
       const placesRef = ref(db, 'Places');
       onValue(placesRef, snapshot => {
@@ -638,9 +629,9 @@ export default {
         });
       });
     },
- 
- 
- 
+
+
+
     updateSelection(place, seatIndex, value) {
       const dynamicKey = `selectedActiveBA24PFP2-${seatIndex}`;
       const placeRef = ref(db, `Places/${place.IdPlace}`);
@@ -770,39 +761,119 @@ export default {
     },
     getVoteCount(place) {
       return this.votesAggregation[place.IdPlace] || { top1: 0, top2: 0, top3: 0, top4: 0, top5: 0, total: 0 };
+    },
+    exportPlacesToCSV() {
+      try {
+        // Entêtes du CSV
+        const headers = [
+          'Institution',
+          'Nom Place',
+          'Catégorie',
+          'MSQ',
+          'SYSINT',
+          'NEUROGER',
+          'AIGU',
+          'REHAB',
+          'AMBU',
+          'FR',
+          'DE',
+          'Nouveaux Critères',
+          'Votes Top 1',
+          'Votes Top 2',
+          'Votes Top 3',
+          'Votes Top 4',
+          'Votes Top 5',
+          'Total Votes',
+          'URL'
+        ];
+
+        // Données des places
+        const rows = this.availablePlaces.map(place => {
+          const voteCounts = this.getVoteCount(place);
+          const newCriteria = this.getNewValidatedCriteria(place).join(', ');
+
+          return [
+            place.InstitutionName || 'Non spécifié',
+            place.NomPlace || '',
+            place.InstitutionCategory || 'Non spécifié',
+            place.MSQ ? 'Oui' : 'Non',
+            place.SYSINT ? 'Oui' : 'Non',
+            place.NEUROGER ? 'Oui' : 'Non',
+            place.AIGU ? 'Oui' : 'Non',
+            place.REHAB ? 'Oui' : 'Non',
+            place.AMBU ? 'Oui' : 'Non',
+            place.FR ? 'Oui' : 'Non',
+            place.DE ? 'Oui' : 'Non',
+            newCriteria,
+            voteCounts.top1 || 0,
+            voteCounts.top2 || 0,
+            voteCounts.top3 || 0,
+            voteCounts.top4 || 0,
+            voteCounts.top5 || 0,
+            voteCounts.total || 0,
+            place.url || ''
+          ];
+        });
+
+        // Création du contenu CSV
+        const csvContent = [
+          headers.join(';'),
+          ...rows.map(row => row.map(cell => `"${cell}"`).join(';'))
+        ].join('\n');
+
+        // Création du blob et téléchargement
+        const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+
+        link.setAttribute('href', url);
+        link.setAttribute('download', `places_disponibles_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        this.dialogMessage = `Export réussi ! ${this.availablePlaces.length} places exportées.`;
+        this.dialogVisible = true;
+      } catch (error) {
+        console.error('Erreur lors de l\'export:', error);
+        this.dialogMessage = "Erreur lors de l'export. Veuillez réessayer.";
+        this.dialogVisible = true;
+      }
     }
   },
   mounted() {
- 
+
     this.fetchUserProfile();
- 
+
     this.fetchPlacesData();
     this.fetchVotesAggregation();
   }
 };
 </script>
- 
+
 <style scoped>
 .votation-scrollable {
   overflow-y: auto;
   max-height: 100vh;
 }
- 
+
 html, body, #app {
   height: 100%;
   min-height: 100%;
   overflow-y: auto;
 }
- 
+
 .page-title {
   margin-bottom: 20px;
   text-align: center;
 }
- 
+
 .container {
   padding: 20px;
 }
- 
+
 .profile-info {
   margin-bottom: 20px;
   padding: 10px;
@@ -810,12 +881,12 @@ html, body, #app {
   color: var(--text-color);
   border-radius: 4px;
 }
- 
+
 .custom-datatable .p-datatable-thead>tr>th {
   background-color: var(--surface-card);
   color: var(--text-color);
 }
- 
+
 .custom-datatable .p-datatable-tbody>tr>td {
   background-color: var(--surface-card);
   color: var(--text-color);
@@ -823,25 +894,31 @@ html, body, #app {
   overflow-wrap: break-word;
   word-wrap: break-word;
 }
- 
+
 .criteria-count-section {
   margin-bottom: 40px;
 }
- 
+
 .vote-action {
   margin-top: 20px;
   text-align: center;
 }
- 
+
 .vote-action button {
   padding: 8px 16px;
   font-size: 16px;
 }
- 
+
+.export-section {
+  margin-top: 30px;
+  margin-bottom: 30px;
+  text-align: center;
+  padding: 20px;
+  border-top: 2px solid var(--surface-border);
+}
+
 .custom-dialog {
   width: 400px;
 }
 </style>
-  
- 
- 
+
