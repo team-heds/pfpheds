@@ -152,6 +152,33 @@
       </div>
     </div>
 
+    <!-- État d'erreur -->
+    <div v-else-if="errorState.hasError" class="error-state">
+      <div class="error-content">
+        <i class="pi pi-exclamation-circle"></i>
+        <h3>{{ errorState.message }}</h3>
+        <Button 
+          v-if="errorState.canRetry" 
+          @click="loadRanking" 
+          label="Réessayer" 
+          icon="pi pi-refresh"
+          class="p-button-outlined"
+        />
+      </div>
+    </div>
+
+    <!-- Skeleton loader pendant le chargement initial -->
+    <div v-else-if="loading" class="skeleton-container">
+      <div class="skeleton-stats">
+        <Skeleton height="50px" class="mb-3" />
+      </div>
+      <div class="skeleton-podium">
+        <Skeleton height="300px" class="mb-3" v-for="i in 3" :key="i" />
+      </div>
+      <Skeleton height="400px" />
+    </div>
+
+    <!-- État de chargement legacy (fallback) -->
     <div v-else class="loading">
       <i class="pi pi-spin pi-spinner"></i>
       <p>Chargement du classement...</p>
@@ -165,12 +192,16 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useToast } from 'primevue/usetoast'
 import gamificationServiceSupabase from '@/service/gamificationServiceSupabase'
 import Navbar from '@/components/common/utils/Navbar.vue'
 
 const router = useRouter()
+const toast = useToast()
 const housesRanking = ref(null)
 const loading = ref(false)
+const errorState = ref({ hasError: false, message: '', canRetry: true })
+const justRefreshed = ref(false)
 
 // Formatage des nombres
 const formatNumber = (num) => {
@@ -194,19 +225,22 @@ const formatDate = (dateString) => {
   return `il y a ${Math.floor(diffMinutes / 1440)} jour(s)`
 }
 
-// Calcul du pourcentage de progression
+// Calcul du pourcentage de progression (simplifié)
 const calculateProgress = (house) => {
   if (house.level >= 20) return 100
   if (house.xpToNext <= 0) return 100
   
-  // Utiliser les données déjà calculées par le service Supabase
-  const houseLevel = gamificationServiceSupabase.calculateHouseLevel(house.totalXP)
-  const currentLevelXP = houseLevel.xpRequired
-  const nextLevelXP = currentLevelXP + house.xpToNext
+  // Utiliser directement le progressPercent si disponible
+  if (house.progressPercent !== undefined) {
+    return house.progressPercent
+  }
   
-  if (nextLevelXP <= currentLevelXP) return 100
+  // Sinon calculer simplement basé sur xpToNext
+  // Estimation: niveau actuel nécessite environ 50 * 1.5^(level-1) XP
+  const estimatedLevelXP = Math.floor(50 * Math.pow(1.5, house.level - 1))
+  const progress = ((estimatedLevelXP - house.xpToNext) / estimatedLevelXP) * 100
   
-  return Math.min(100, ((house.totalXP - currentLevelXP) / (nextLevelXP - currentLevelXP)) * 100)
+  return Math.min(100, Math.max(0, progress))
 }
 
 // Navigation vers les détails d'une maison
@@ -214,8 +248,48 @@ const viewHouseDetails = (houseName) => {
   router.push(`/houses/${houseName}/stats`)
 }
 
+// Cache localStorage
+const CACHE_KEY = 'houses_ranking'
+const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+
+const loadFromCache = () => {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY)
+    if (!cached) return null
+    
+    const { data, timestamp } = JSON.parse(cached)
+    const now = Date.now()
+    
+    if (now - timestamp < CACHE_DURATION) {
+      console.log('📦 Chargement du classement depuis le cache')
+      return data
+    } else {
+      console.log('⏰ Cache du classement expiré')
+      localStorage.removeItem(CACHE_KEY)
+      return null
+    }
+  } catch (err) {
+    console.error('❌ Erreur lecture cache classement:', err)
+    return null
+  }
+}
+
+const saveToCache = (data) => {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({
+      data,
+      timestamp: Date.now()
+    }))
+    console.log('💾 Classement sauvegardé dans le cache')
+  } catch (err) {
+    console.error('❌ Erreur sauvegarde cache classement:', err)
+  }
+}
+
 // Actualisation du classement
 const refreshRanking = async () => {
+  justRefreshed.value = true
+  localStorage.removeItem(CACHE_KEY) // Forcer le rechargement
   await loadRanking()
 }
 
@@ -223,11 +297,54 @@ const refreshRanking = async () => {
 const loadRanking = async () => {
   try {
     loading.value = true
+    errorState.value = { hasError: false, message: '', canRetry: true }
+    
+    // Charger depuis le cache d'abord (sauf si refresh manuel)
+    if (!justRefreshed.value) {
+      const cachedData = loadFromCache()
+      if (cachedData) {
+        housesRanking.value = cachedData
+        loading.value = false
+        return
+      }
+    }
+    
     console.log('🔄 Chargement du classement des maisons depuis Supabase...')
-    housesRanking.value = await gamificationServiceSupabase.getHousesRanking()
-    console.log('✅ Classement chargé:', housesRanking.value)
+    const ranking = await gamificationServiceSupabase.getHousesRanking()
+    housesRanking.value = ranking
+    
+    // Sauvegarder dans le cache
+    saveToCache(ranking)
+    
+    console.log('✅ Classement chargé:', ranking)
+    
+    // Afficher un toast de succès si c'est un refresh
+    if (justRefreshed.value) {
+      toast.add({
+        severity: 'success',
+        summary: 'Mis à jour !',
+        detail: 'Le classement a été actualisé',
+        life: 3000
+      })
+      justRefreshed.value = false
+    }
   } catch (error) {
     console.error('❌ Erreur lors du chargement du classement:', error)
+    
+    errorState.value = {
+      hasError: true,
+      message: 'Impossible de charger le classement. Veuillez réessayer.',
+      canRetry: true
+    }
+    
+    // Toast d'erreur
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur de chargement',
+      detail: 'Impossible de charger le classement des maisons',
+      life: 5000
+    })
+    
     // Données par défaut en cas d'erreur
     housesRanking.value = {
       ranking: [],
@@ -569,6 +686,52 @@ onMounted(() => {
 .loading i {
   font-size: 2rem;
   margin-bottom: 1rem;
+}
+
+/* État d'erreur */
+.error-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  padding: 2rem;
+}
+
+.error-content {
+  text-align: center;
+  background: var(--surface-card);
+  padding: 3rem;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+}
+
+.error-content i {
+  font-size: 4rem;
+  color: #ef4444;
+  margin-bottom: 1rem;
+}
+
+.error-content h3 {
+  color: white;
+  margin-bottom: 2rem;
+}
+
+/* Skeleton loaders */
+.skeleton-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem 2rem 1rem;
+}
+
+.skeleton-stats {
+  margin-bottom: 2rem;
+}
+
+.skeleton-podium {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
 }
 
 @media (max-width: 768px) {
