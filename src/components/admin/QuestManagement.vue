@@ -220,15 +220,6 @@
         
         <div class="form-row">
           <div class="form-group">
-            <label for="category">Catégorie</label>
-            <InputText 
-              id="category"
-              v-model="questForm.category" 
-              placeholder="Catégorie de la quête"
-            />
-          </div>
-          
-          <div class="form-group">
             <label for="status">Statut</label>
             <Dropdown 
               id="status"
@@ -328,7 +319,7 @@ import Dropdown from 'primevue/dropdown'
 import Dialog from 'primevue/dialog'
 import ProgressSpinner from 'primevue/progressspinner'
 import Tag from 'primevue/tag'
-import adminService from '../../service/adminService'
+import adminQuestsService from '../../service/adminQuestsService'
 import rolesService, { PERMISSIONS } from '../../service/rolesService'
 
 const toast = useToast()
@@ -359,7 +350,6 @@ const questForm = reactive({
   type: '',
   difficulty: 'easy',
   points: 50,
-  category: '',
   status: 'active',
   steps: [{ title: '' }]
 })
@@ -398,14 +388,13 @@ const canDeleteQuests = computed(() => true)
 const loadQuests = async () => {
   try {
     loading.value = true
-    const data = await adminService.getQuests()
-    quests.value = Object.keys(data || {}).map(key => ({
-      id: key,
-      ...data[key]
-    }))
+    // Récupération depuis Supabase
+    const data = await adminQuestsService.getQuests()
+    quests.value = data || []
     filterQuests()
+    console.log('✅ Quêtes chargées:', quests.value.length)
   } catch (error) {
-    console.error('Erreur lors du chargement des quêtes:', error)
+    console.error('❌ Erreur lors du chargement des quêtes:', error)
     toast.add({
       severity: 'error',
       summary: 'Erreur',
@@ -446,7 +435,6 @@ const resetForm = () => {
     type: '',
     difficulty: 'easy',
     points: 50,
-    category: '',
     status: 'active',
     steps: [{ title: '' }]
   })
@@ -502,11 +490,11 @@ const saveQuest = async () => {
       type: questForm.type,
       difficulty: questForm.difficulty,
       points: questForm.points,
-      category: questForm.category.trim(),
       status: questForm.status,
       steps: questForm.steps.filter(step => step.title.trim()).map(step => ({
         title: step.title.trim(),
-        completed: false
+        description: step.description || null,
+        required: step.required !== false
       })),
       rewards: {
         xp: questForm.points,
@@ -516,7 +504,7 @@ const saveQuest = async () => {
     }
     
     if (editingQuest.value) {
-      await adminService.updateQuest(editingQuest.value.id, questData)
+      await adminQuestsService.updateQuest(editingQuest.value.id, questData)
       toast.add({
         severity: 'success',
         summary: 'Succès',
@@ -524,12 +512,14 @@ const saveQuest = async () => {
         life: 3000
       })
     } else {
-      await adminService.createQuest(questData)
+      await adminQuestsService.createQuest(questData)
       toast.add({
         severity: 'success',
         summary: 'Succès',
-        detail: 'Quête créée avec succès',
-        life: 3000
+        detail: questData.status === 'active' 
+          ? 'Quête créée et assignée à tous les utilisateurs !'
+          : 'Quête créée avec succès',
+        life: 4000
       })
     }
     
@@ -538,7 +528,7 @@ const saveQuest = async () => {
     await loadQuests()
     
   } catch (error) {
-    console.error('Erreur lors de la sauvegarde:', error)
+    console.error('❌ Erreur lors de la sauvegarde:', error)
     toast.add({
       severity: 'error',
       summary: 'Erreur',
@@ -558,7 +548,6 @@ const editQuest = (quest) => {
     type: quest.type || '',
     difficulty: quest.difficulty || 'easy',
     points: quest.points || 50,
-    category: quest.category || '',
     status: quest.status || 'active',
     steps: quest.steps?.length ? [...quest.steps] : [{ title: '' }]
   })
@@ -575,7 +564,7 @@ const deleteQuest = async () => {
   
   try {
     deleting.value = true
-    await adminService.deleteQuest(questToDelete.value.id)
+    await adminQuestsService.deleteQuest(questToDelete.value.id)
     
     toast.add({
       severity: 'success',
@@ -589,7 +578,7 @@ const deleteQuest = async () => {
     await loadQuests()
     
   } catch (error) {
-    console.error('Erreur lors de la suppression:', error)
+    console.error('❌ Erreur lors de la suppression:', error)
     toast.add({
       severity: 'error',
       summary: 'Erreur',

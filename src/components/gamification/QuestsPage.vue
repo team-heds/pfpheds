@@ -334,14 +334,12 @@ import Paginator from 'primevue/paginator'
 import Toast from 'primevue/toast'
 import Chip from 'primevue/chip'
 import QuestCard from './QuestCard.vue'
-import questsService, { QUEST_DIFFICULTIES, QUEST_STATUS } from '../../service/questsService'
-import { getAuth } from 'firebase/auth'
+import userQuestsService from '../../service/userQuestsService'
 import { useAuthStore } from '@/stores/authStore'
 
 // Services
 const router = useRouter()
 const toast = useToast()
-const auth = getAuth()
 const authStore = useAuthStore()
 
 // État réactif
@@ -374,7 +372,7 @@ const houseColor = computed(() => {
   if (!h) return '#6B7280'
   return houseConfig[h]?.color || '#6B7280'
 })
-const userQuests = ref({})
+const userQuests = ref([])
 const questStats = ref({})
 const searchQuery = ref('')
 const selectedDifficulty = ref('all')
@@ -416,25 +414,25 @@ const sortOptions = [
 ]
 
 // Computed properties
-const questsArray = computed(() => Object.values(userQuests.value))
+const questsArray = computed(() => userQuests.value || [])
 
 const activeQuestsCount = computed(() => {
   return questsArray.value.filter(q => 
-    q.status === 'available' || q.status === 'in_progress'
+    q.userProgress?.status === 'not_started' || q.userProgress?.status === 'in_progress'
   ).length
 })
 
 const completedQuestsCount = computed(() => {
-  return questsArray.value.filter(q => q.status === 'completed').length
+  return questsArray.value.filter(q => q.userProgress?.status === 'completed').length
 })
 
 const tabFilteredQuests = computed(() => {
   if (activeTab.value === 'active') {
     return questsArray.value.filter(q => 
-      q.status === 'available' || q.status === 'in_progress'
+      q.userProgress?.status === 'not_started' || q.userProgress?.status === 'in_progress'
     )
   } else if (activeTab.value === 'completed') {
-    return questsArray.value.filter(q => q.status === 'completed')
+    return questsArray.value.filter(q => q.userProgress?.status === 'completed')
   }
   return questsArray.value // 'all'
 })
@@ -517,18 +515,16 @@ const loadQuestsData = async () => {
     // ID utilisateur selon le provider
     const userId = authStore.isFirebaseUser ? user.uid : user.id
 
-    // Charger les quêtes utilisateur
-    userQuests.value = await questsService.getUserQuests(userId)
+    // Charger les quêtes utilisateur depuis Supabase
+    const quests = await userQuestsService.getUserQuests(userId)
+    userQuests.value = quests
     
-    // Initialiser si aucune quête
-    if (Object.keys(userQuests.value).length === 0) {
-      // Récupérer la maison de l'utilisateur
-      const userHouse = normalizeHouse(user.maison || user.user_metadata?.house) || 'Harmonis'
-      userQuests.value = await questsService.initializeUserQuests(userId, userHouse)
-    }
+    console.log(`✅ ${quests.length} quêtes chargées depuis Supabase`)
 
     // Charger les statistiques
-    questStats.value = await questsService.getQuestStats(userId)
+    questStats.value = await userQuestsService.getQuestStats(userId)
+    
+    console.log('📊 Stats quêtes:', questStats.value)
     
   } catch (error) {
     console.error('Erreur lors du chargement des quêtes:', error)
@@ -550,7 +546,7 @@ const startQuest = async (questId) => {
     const userId = authStore.isFirebaseUser ? user.uid : user.id
     if (!userId) return
 
-    await questsService.startQuest(userId, questId)
+    await userQuestsService.startQuest(userId, questId)
     
     // Recharger les données
     await loadQuestsData()
@@ -558,11 +554,11 @@ const startQuest = async (questId) => {
     toast.add({
       severity: 'success',
       summary: 'Quête démarrée!',
-      detail: 'Votre aventure commence maintenant',
+      detail: 'Votre aventure commence maintenant 🎯',
       life: 3000
     })
   } catch (error) {
-    console.error('Erreur lors du démarrage de la quête:', error)
+    console.error('❌ Erreur lors du démarrage de la quête:', error)
     toast.add({
       severity: 'error',
       summary: 'Erreur',

@@ -94,9 +94,9 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
-import { supabase } from '@/supabase'
 import { useAuthStore } from '@/stores/authStore'
 import Button from 'primevue/button'
+import userQuestsService from '@/service/userQuestsService'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -164,105 +164,39 @@ const loadUserHouseColor = async () => {
 const loadNewQuests = async () => {
   try {
     loading.value = true
-    const userId = authStore.user?.id
+    const user = authStore.user
+    if (!user) return
     
-    if (!userId) return
+    const userId = authStore.isFirebaseUser ? user.uid : user.id
 
     console.log('🔍 Chargement des nouvelles quêtes pour:', userId)
 
-    // Récupérer les quêtes de l'utilisateur avec les infos complètes
-    const { data: userQuests, error } = await supabase
-      .from('user_quest_progress')
-      .select(`
-        *,
-        quest:quests(*)
-      `)
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(10) // Limiter à 10 quêtes max
+    // Utiliser le service unifié
+    const quests = await userQuestsService.getNewQuests(userId)
+    newQuests.value = quests
 
-    if (error) {
-      console.error('Erreur chargement quêtes:', error)
-      return
-    }
-
-    if (userQuests && userQuests.length > 0) {
-      // Marquer les quêtes créées il y a moins de 7 jours comme "nouvelles"
-      const sevenDaysAgo = new Date()
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-
-      newQuests.value = userQuests
-        .filter(uq => !uq.completed) // Seulement les quêtes non complétées
-        .map(uq => {
-          const createdAt = new Date(uq.created_at)
-          return {
-            id: uq.quest_id,
-            title: uq.quest?.title || 'Quête',
-            description: uq.quest?.description || '',
-            difficulty: uq.quest?.difficulty || 'medium',
-            xp_reward: uq.quest?.xp_reward || uq.quest?.points || 0,
-            points: uq.quest?.points || 0,
-            progress: uq.progress || 0,
-            isNew: createdAt > sevenDaysAgo,
-            createdAt: uq.created_at
-          }
-        })
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) // Plus récentes en premier
-
-      console.log(`✅ ${newQuests.value.length} quêtes chargées (${newQuestsCount.value} nouvelles)`)
-    } else {
-      newQuests.value = []
-      console.log('📭 Aucune nouvelle quête trouvée')
-    }
+    console.log(`✅ ${newQuests.value.length} quêtes chargées (${newQuestsCount.value} nouvelles)`)
   } catch (err) {
     console.error('❌ Erreur lors du chargement des quêtes:', err)
+    newQuests.value = []
   } finally {
     loading.value = false
   }
 }
 
 const subscribeToQuestUpdates = () => {
-  const userId = authStore.user?.id
+  const user = authStore.user
+  if (!user) return
   
-  if (!userId) return
+  const userId = authStore.isFirebaseUser ? user.uid : user.id
 
   console.log('🔔 Abonnement aux nouvelles quêtes pour:', userId)
 
-  realtimeChannel = supabase
-    .channel('new-quests-sidebar')
-    .on('postgres_changes', 
-      { 
-        event: 'INSERT', 
-        schema: 'public', 
-        table: 'user_quest_progress',
-        filter: `user_id=eq.${userId}`
-      }, 
-      (payload) => {
-        console.log('🆕 Nouvelle quête détectée!', payload)
-        loadNewQuests() // Recharger les quêtes
-        
-        // Optionnel: Afficher une notification toast
-        // toast.add({ 
-        //   severity: 'success', 
-        //   summary: 'Nouvelle Quête!', 
-        //   detail: 'Une nouvelle quête est disponible', 
-        //   life: 5000 
-        // })
-      }
-    )
-    .on('postgres_changes',
-      {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'user_quest_progress',
-        filter: `user_id=eq.${userId}`
-      },
-      (payload) => {
-        console.log('🔄 Progression quête mise à jour', payload)
-        loadNewQuests()
-      }
-    )
-    .subscribe()
+  // Utiliser le service pour s'abonner aux mises à jour
+  realtimeChannel = userQuestsService.subscribeToQuestUpdates(userId, (payload) => {
+    console.log('🔄 Changement de quête détecté:', payload.eventType)
+    loadNewQuests() // Recharger les quêtes
+  })
 }
 
 const viewQuestDetails = (quest) => {
@@ -282,7 +216,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   if (realtimeChannel) {
-    supabase.removeChannel(realtimeChannel)
+    userQuestsService.unsubscribeFromQuestUpdates(realtimeChannel)
   }
 })
 </script>
