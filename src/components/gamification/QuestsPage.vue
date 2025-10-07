@@ -1,162 +1,239 @@
 <template>
   <div class="page-wrapper">
     <Navbar />
-    <div class="quests-page" :style="{ '--house-color': houseColor }">
+    <div :style="{ '--house-color': houseColor, 'max-width': '1400px', 'margin': '0 auto', 'padding': '2rem' }">
       
       <!-- Loading State -->
-      <div v-if="loading" class="loading-container">
-        <div class="loading-spinner">
-          <i class="pi pi-spin pi-spinner"></i>
-          <p>Chargement des quêtes...</p>
-        </div>
+      <div v-if="loading" class="flex flex-column justify-content-center align-items-center gap-3" style="min-height: 60vh;">
+        <ProgressSpinner :style="{ width: '50px', height: '50px' }" strokeWidth="4" />
+        <p class="text-lg font-medium text-600">Chargement des quêtes...</p>
       </div>
 
       <!-- Main Content -->
-      <div v-else class="quests-content">
+      <div v-else>
         
         <!-- Page Header -->
-        <div class="page-header">
-          <div class="header-content">
-            <div class="title-section">
-              <h1><i class="pi pi-flag"></i> Quêtes & Aventures</h1>
-              <p>Embarquez dans des aventures épiques et progressez à travers des quêtes narratives</p>
+        <div class="surface-card border-round-3xl p-5 mb-5 shadow-3" :style="{ borderLeft: `6px solid ${houseColor}` }">
+          <div class="flex justify-content-between align-items-center flex-wrap gap-4">
+            <div class="flex align-items-center gap-4 flex-1">
+              <div class="flex align-items-center justify-content-center border-round-2xl p-3" 
+                   :style="{ background: `${houseColor}15` }">
+                <i class="pi pi-flag text-3xl" :style="{ color: houseColor }"></i>
+              </div>
+              <div>
+                <h1 class="m-0 text-4xl font-bold text-900">Journal de Quêtes</h1>
+                <p class="m-0 mt-2 text-600 font-medium">
+                  Progressez dans votre aventure et débloquez des récompenses
+                </p>
+              </div>
             </div>
-            <Button @click="goBack" class="back-btn">
-              <i class="pi pi-arrow-left"></i>
-              Retour
-            </Button>
+            <Button 
+              @click="goBack" 
+              icon="pi pi-arrow-left"
+              label="Retour"
+              outlined
+              class="font-semibold border-round-xl"
+              :style="{ borderColor: houseColor, color: houseColor }"
+            />
           </div>
         </div>
 
         <!-- Statistics Overview -->
-        <div class="stats-overview">
-          <div class="stat-card completion">
-            <div class="stat-icon">🏆</div>
-            <div class="stat-content">
-              <div class="stat-number">{{ questStats.completedQuests }}/{{ questStats.totalQuests }}</div>
-              <div class="stat-label">Quêtes Complétées</div>
-              <div class="progress-bar">
-                <div class="progress-fill" :style="{ width: completionRate + '%' }"></div>
+        <div class="grid mb-5">
+          <div class="col-12 md:col-4">
+            <div class="surface-card border-round-xl p-4 shadow-2 hover:shadow-4 transition-all transition-duration-300 cursor-pointer" 
+                 :style="{ borderTop: `4px solid ${houseColor}` }">
+              <div class="flex align-items-center gap-3">
+                <div class="flex align-items-center justify-content-center border-round-xl" 
+                     :style="{ width: '64px', height: '64px', background: `${houseColor}10` }">
+                  <span class="text-4xl">🏆</span>
+                </div>
+                <div class="flex-1">
+                  <div class="text-3xl font-bold mb-1" :style="{ color: houseColor }">
+                    {{ questStats.completedQuests }}/{{ questStats.totalQuests }}
+                  </div>
+                  <div class="text-xs text-600 font-semibold uppercase letter-spacing-1">Quêtes Complétées</div>
+                  <ProgressBar :value="completionRate" :showValue="false" class="mt-2" 
+                               :style="{ height: '8px', background: '#e5e7eb' }" 
+                               :pt="{ value: { style: { background: houseColor } } }" />
+                </div>
               </div>
             </div>
           </div>
           
-          <div class="stat-card xp">
-            <div class="stat-icon">⭐</div>
-            <div class="stat-content">
-              <div class="stat-number">{{ formatNumber(questStats.totalXPFromQuests) }}</div>
-              <div class="stat-label">XP des Quêtes</div>
+          <div class="col-12 md:col-4">
+            <div class="surface-card border-round-xl p-4 shadow-2 hover:shadow-4 transition-all transition-duration-300 cursor-pointer" 
+                 :style="{ borderTop: `4px solid #f59e0b` }">
+              <div class="flex align-items-center gap-3">
+                <div class="flex align-items-center justify-content-center border-round-xl" 
+                     style="width: 64px; height: 64px; background: rgba(245, 158, 11, 0.1);">
+                  <span class="text-4xl">⭐</span>
+                </div>
+                <div class="flex-1">
+                  <div class="text-3xl font-bold text-900 mb-1">
+                    {{ formatNumber(questStats.totalXPFromQuests) }}
+                  </div>
+                  <div class="text-xs text-600 font-semibold uppercase letter-spacing-1">XP des Quêtes</div>
+                  <div class="mt-2 text-sm" style="color: #f59e0b;">
+                    <i class="pi pi-arrow-up text-xs"></i> Points accumulés
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           
-          <div class="stat-card progress">
-            <div class="stat-icon">📊</div>
-            <div class="stat-content">
-              <div class="stat-number">{{ questStats.averageProgress }}%</div>
-              <div class="stat-label">Progression Moyenne</div>
+          <div class="col-12 md:col-4">
+            <div class="surface-card border-round-xl p-4 shadow-2 hover:shadow-4 transition-all transition-duration-300 cursor-pointer" 
+                 :style="{ borderTop: `4px solid #3b82f6` }">
+              <div class="flex align-items-center gap-3">
+                <div class="flex align-items-center justify-content-center border-round-xl" 
+                     style="width: 64px; height: 64px; background: rgba(59, 130, 246, 0.1);">
+                  <span class="text-4xl">📊</span>
+                </div>
+                <div class="flex-1">
+                  <div class="text-3xl font-bold text-900 mb-1">{{ questStats.averageProgress }}%</div>
+                  <div class="text-xs text-600 font-semibold uppercase letter-spacing-1">Progression Moyenne</div>
+                  <div class="mt-2 text-sm" style="color: #3b82f6;">
+                    <i class="pi pi-chart-line text-xs"></i> Performance globale
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
     </div>
 
+    <!-- Onglets Navigation -->
+    <div class="mb-4">
+      <TabView v-model:activeIndex="activeTabIndex" @tab-change="onTabChange">
+        <TabPanel>
+          <template #header>
+            <div class="flex align-items-center gap-3 font-semibold">
+              <i class="pi pi-compass"></i>
+              <span>Mes Quêtes</span>
+              <span class="px-3 py-1 border-round-xl text-xs font-bold text-center" 
+                    style="background: rgba(0, 0, 0, 0.15); min-width: 28px;">
+                {{ activeQuestsCount }}
+              </span>
+            </div>
+          </template>
+        </TabPanel>
+        
+        <TabPanel>
+          <template #header>
+            <div class="flex align-items-center gap-3 font-semibold">
+              <i class="pi pi-check-circle"></i>
+              <span>Historique</span>
+              <span class="px-3 py-1 border-round-xl text-xs font-bold text-center" 
+                    style="background: rgba(16, 185, 129, 0.15); color: #10b981; min-width: 28px;">
+                {{ completedQuestsCount }}
+              </span>
+            </div>
+          </template>
+        </TabPanel>
+        
+        <TabPanel>
+          <template #header>
+            <div class="flex align-items-center gap-3 font-semibold">
+              <i class="pi pi-list"></i>
+              <span>Toutes</span>
+              <span class="px-3 py-1 border-round-xl text-xs font-bold text-center" 
+                    style="background: rgba(0, 0, 0, 0.15); min-width: 28px;">
+                {{ questStats.totalQuests || 0 }}
+              </span>
+            </div>
+          </template>
+        </TabPanel>
+      </TabView>
+    </div>
+
     <!-- Filtres et recherche -->
-    <div class="filters-section">
-      <div class="filters-row">
+    <div class="surface-card border-round-xl p-4 mb-5 shadow-2">
+      <div class="mb-3">
+        <h3 class="text-lg font-bold text-900 m-0 mb-1">
+          <i class="pi pi-filter-fill mr-2" :style="{ color: houseColor }"></i>
+          Recherche et Filtres
+        </h3>
+        <p class="text-sm text-600 m-0">Affinez vos résultats pour trouver les quêtes parfaites</p>
+      </div>
+      
+      <div class="grid">
         <!-- Recherche -->
-        <div class="search-container">
-          <i class="pi pi-search search-icon"></i>
-          <InputText 
-            v-model="searchQuery" 
-            placeholder="Rechercher une quête..."
-            class="search-input"
-          />
+        <div class="col-12 md:col-6">
+          <label class="block text-sm font-semibold text-900 mb-2">
+            <i class="pi pi-search mr-1"></i> Rechercher
+          </label>
+          <span class="p-input-icon-left w-full">
+            <i class="pi pi-search"></i>
+            <InputText 
+              v-model="searchQuery" 
+              placeholder="Nom de la quête..."
+              class="w-full"
+            />
+          </span>
         </div>
         
-        <!-- Filtres -->
-        <div class="filters-container">
-          <Dropdown 
-            v-model="selectedStatus" 
-            :options="statusOptions" 
-            optionLabel="label" 
-            optionValue="value"
-            placeholder="Statut"
-            class="filter-dropdown"
-          />
-          
+        <!-- Difficulté -->
+        <div class="col-12 md:col-2">
+          <label class="block text-sm font-semibold text-900 mb-2">
+            <i class="pi pi-star-fill mr-1"></i> Difficulté
+          </label>
           <Dropdown 
             v-model="selectedDifficulty" 
             :options="difficultyOptions" 
             optionLabel="label" 
             optionValue="value"
-            placeholder="Difficulté"
-            class="filter-dropdown"
+            placeholder="Toutes"
+            class="w-full"
           />
-          
+        </div>
+        
+        <!-- Type -->
+        <div class="col-12 md:col-2">
+          <label class="block text-sm font-semibold text-900 mb-2">
+            <i class="pi pi-tag mr-1"></i> Type
+          </label>
           <Dropdown 
             v-model="selectedType" 
             :options="typeOptions" 
             optionLabel="label" 
             optionValue="value"
-            placeholder="Type"
-            class="filter-dropdown"
+            placeholder="Tous"
+            class="w-full"
           />
         </div>
         
         <!-- Tri -->
-        <div class="sort-container">
+        <div class="col-12 md:col-2">
+          <label class="block text-sm font-semibold text-900 mb-2">
+            <i class="pi pi-sort-alt mr-1"></i> Tri
+          </label>
           <Dropdown 
             v-model="sortBy" 
             :options="sortOptions" 
             optionLabel="label" 
             optionValue="value"
-            placeholder="Trier par"
-            class="sort-dropdown"
+            placeholder="Défaut"
+            class="w-full"
           />
         </div>
       </div>
-    </div>
-
-    <!-- Statistiques détaillées -->
-    <div class="detailed-stats" v-if="questStats.totalQuests > 0">
-      <div class="stats-grid">
-        <div class="stat-item">
-          <i class="pi pi-trophy"></i>
-          <div class="stat-content">
-            <span class="stat-number">{{ formatNumber(questStats.totalXPFromQuests) }}</span>
-            <span class="stat-text">XP des quêtes</span>
-          </div>
-        </div>
-        <div class="stat-item">
-          <i class="pi pi-percentage"></i>
-          <div class="stat-content">
-            <span class="stat-number">{{ questStats.averageProgress }}%</span>
-            <span class="stat-text">Progression moyenne</span>
-          </div>
-        </div>
-        <div class="stat-item">
-          <i class="pi pi-chart-line"></i>
-          <div class="stat-content">
-            <span class="stat-number">{{ completionRate }}%</span>
-            <span class="stat-text">Taux de complétion</span>
-          </div>
-        </div>
+      
+      <!-- Résumé des filtres actifs -->
+      <div v-if="hasFilters" class="mt-3 flex align-items-center gap-2 flex-wrap">
+        <span class="text-sm font-semibold text-600">Filtres actifs:</span>
+        <Chip v-if="selectedDifficulty" :label="`Difficulté: ${selectedDifficulty}`" removable @remove="selectedDifficulty = null" />
+        <Chip v-if="selectedType" :label="`Type: ${selectedType}`" removable @remove="selectedType = null" />
+        <Button label="Tout effacer" size="small" text @click="clearFilters" class="p-0 text-sm" :style="{ color: houseColor }" />
       </div>
     </div>
 
-    <!-- Contenu principal -->
-    <div class="main-content">
-      <!-- Loading -->
-      <div v-if="loading" class="loading-container">
-        <ProgressSpinner />
-        <p>Chargement des quêtes...</p>
-      </div>
 
-      <!-- Quêtes -->
-      <div v-else-if="filteredQuests.length > 0" class="quests-container">
-        <div class="quests-grid">
+    <!-- Quêtes -->
+    <div v-if="filteredQuests.length > 0">
+      <div class="grid">
+        <div v-for="quest in paginatedQuests" :key="quest.id" class="col-12 md:col-6 lg:col-4">
           <QuestCard
-            v-for="quest in paginatedQuests"
-            :key="quest.id"
             :quest="quest"
             :house-color="houseColor"
             @click="showQuestDetails"
@@ -164,31 +241,43 @@
             @view-details="showQuestDetails"
           />
         </div>
-        
-        <!-- Pagination -->
-        <div v-if="totalPages > 1" class="pagination-container">
-          <Paginator
-            :rows="questsPerPage"
-            :totalRecords="filteredQuests.length"
-            v-model:first="currentPage"
-            @page="onPageChange"
-          />
-        </div>
       </div>
+      
+      <!-- Pagination -->
+      <Paginator
+        v-if="totalPages > 1"
+        :rows="questsPerPage"
+        :totalRecords="filteredQuests.length"
+        v-model:first="currentPage"
+        @page="onPageChange"
+        class="mt-4"
+      />
+    </div>
 
-      <!-- État vide -->
-      <div v-else class="empty-state">
-        <div class="empty-icon">🗺️</div>
-        <h3>{{ getEmptyStateTitle() }}</h3>
-        <p>{{ getEmptyStateMessage() }}</p>
+    <!-- État vide -->
+    <div v-else class="surface-card border-round-xl p-6 text-center shadow-2">
+      <div class="inline-flex align-items-center justify-content-center border-round-circle mb-4" 
+           :style="{ width: '120px', height: '120px', background: `${houseColor}10` }">
+        <span class="text-6xl">🗺️</span>
+      </div>
+      <h3 class="text-2xl font-bold text-900 mb-2">{{ getEmptyStateTitle() }}</h3>
+      <p class="text-600 text-lg mb-4 mx-auto" style="max-width: 500px;">{{ getEmptyStateMessage() }}</p>
+      <div class="flex gap-2 justify-content-center">
         <Button 
           v-if="hasFilters"
           @click="clearFilters"
-          class="clear-filters-btn"
-        >
-          <i class="pi pi-filter-slash"></i>
-          Effacer les filtres
-        </Button>
+          icon="pi pi-filter-slash"
+          label="Effacer les filtres"
+          :style="{ backgroundColor: houseColor, borderColor: houseColor }"
+        />
+        <Button 
+          v-else
+          @click="() => activeTabIndex = 0"
+          icon="pi pi-compass"
+          label="Voir mes quêtes"
+          outlined
+          :style="{ borderColor: houseColor, color: houseColor }"
+        />
       </div>
     </div>
 
@@ -199,20 +288,20 @@
       :modal="true"
       :closable="true"
       :draggable="false"
-      class="quest-modal"
     >
       <template #header>
-        <div class="modal-header">
-          <h2>{{ selectedQuest?.title }}</h2>
-          <div class="quest-difficulty-badge" v-if="selectedQuest">
-            <span :style="{ color: getDifficultyColor(selectedQuest.difficulty) }">
-              {{ getDifficultyName(selectedQuest.difficulty) }}
-            </span>
+        <div class="flex justify-content-between align-items-center w-full">
+          <h2 class="text-2xl font-bold m-0">{{ selectedQuest?.title }}</h2>
+          <div v-if="selectedQuest" 
+               class="px-4 py-2 border-round-2xl font-bold text-sm uppercase" 
+               style="background: linear-gradient(135deg, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.08));"
+               :style="{ color: getDifficultyColor(selectedQuest.difficulty) }">
+            {{ getDifficultyName(selectedQuest.difficulty) }}
           </div>
         </div>
       </template>
       
-      <div v-if="selectedQuest" class="modal-content">
+      <div v-if="selectedQuest">
         <QuestCard 
           :quest="selectedQuest" 
           :show-steps="true"
@@ -230,6 +319,8 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
+import TabView from 'primevue/tabview'
+import TabPanel from 'primevue/tabpanel'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import Navbar from '../common/utils/Navbar.vue'
@@ -238,8 +329,10 @@ import Dropdown from 'primevue/dropdown'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 import ProgressSpinner from 'primevue/progressspinner'
+import ProgressBar from 'primevue/progressbar'
 import Paginator from 'primevue/paginator'
 import Toast from 'primevue/toast'
+import Chip from 'primevue/chip'
 import QuestCard from './QuestCard.vue'
 import questsService, { QUEST_DIFFICULTIES, QUEST_STATUS } from '../../service/questsService'
 import { getAuth } from 'firebase/auth'
@@ -280,7 +373,6 @@ const houseColor = computed(() => {
 const userQuests = ref({})
 const questStats = ref({})
 const searchQuery = ref('')
-const selectedStatus = ref('all')
 const selectedDifficulty = ref('all')
 const selectedType = ref('all')
 const sortBy = ref('progress_desc')
@@ -288,16 +380,10 @@ const currentPage = ref(0)
 const questsPerPage = 12
 const showModal = ref(false)
 const selectedQuest = ref(null)
+const activeTab = ref('active') // 'active', 'completed', 'all'
+const activeTabIndex = ref(0) // Index pour PrimeVue TabView
 
 // Options pour les filtres
-const statusOptions = [
-  { label: 'Tous les statuts', value: 'all' },
-  { label: 'Disponibles', value: 'available' },
-  { label: 'En cours', value: 'in_progress' },
-  { label: 'Complétées', value: 'completed' },
-  { label: 'Expirées', value: 'expired' }
-]
-
 const difficultyOptions = [
   { label: 'Toutes difficultés', value: 'all' },
   { label: 'Facile', value: 'EASY' },
@@ -328,8 +414,29 @@ const sortOptions = [
 // Computed properties
 const questsArray = computed(() => Object.values(userQuests.value))
 
+const activeQuestsCount = computed(() => {
+  return questsArray.value.filter(q => 
+    q.status === 'available' || q.status === 'in_progress'
+  ).length
+})
+
+const completedQuestsCount = computed(() => {
+  return questsArray.value.filter(q => q.status === 'completed').length
+})
+
+const tabFilteredQuests = computed(() => {
+  if (activeTab.value === 'active') {
+    return questsArray.value.filter(q => 
+      q.status === 'available' || q.status === 'in_progress'
+    )
+  } else if (activeTab.value === 'completed') {
+    return questsArray.value.filter(q => q.status === 'completed')
+  }
+  return questsArray.value // 'all'
+})
+
 const filteredQuests = computed(() => {
-  let filtered = questsArray.value
+  let filtered = tabFilteredQuests.value
 
   // Recherche
   if (searchQuery.value) {
@@ -341,10 +448,6 @@ const filteredQuests = computed(() => {
   }
 
   // Filtres
-  if (selectedStatus.value !== 'all') {
-    filtered = filtered.filter(quest => quest.status === selectedStatus.value)
-  }
-
   if (selectedDifficulty.value !== 'all') {
     filtered = filtered.filter(quest => quest.difficulty === selectedDifficulty.value)
   }
@@ -391,7 +494,6 @@ const completionRate = computed(() => {
 
 const hasFilters = computed(() => {
   return searchQuery.value || 
-         selectedStatus.value !== 'all' || 
          selectedDifficulty.value !== 'all' || 
          selectedType.value !== 'all'
 })
@@ -469,9 +571,15 @@ const showQuestDetails = (quest) => {
   showModal.value = true
 }
 
+const onTabChange = (event) => {
+  const tabs = ['active', 'completed', 'all']
+  activeTab.value = tabs[event.index]
+  activeTabIndex.value = event.index
+  currentPage.value = 0
+}
+
 const clearFilters = () => {
   searchQuery.value = ''
-  selectedStatus.value = 'all'
   selectedDifficulty.value = 'all'
   selectedType.value = 'all'
   sortBy.value = 'progress_desc'
@@ -501,12 +609,24 @@ const getEmptyStateTitle = () => {
   if (hasFilters.value) {
     return 'Aucune quête trouvée'
   }
+  
+  if (activeTab.value === 'active') {
+    return 'Aucune quête active'
+  } else if (activeTab.value === 'completed') {
+    return 'Aucune quête complétée'
+  }
   return 'Aucune quête disponible'
 }
 
 const getEmptyStateMessage = () => {
   if (hasFilters.value) {
     return 'Essayez de modifier vos critères de recherche ou filtres.'
+  }
+  
+  if (activeTab.value === 'active') {
+    return 'Vous n\'avez pas de quêtes en cours. Explorez l\'onglet "Toutes" pour découvrir de nouvelles aventures !'
+  } else if (activeTab.value === 'completed') {
+    return 'Vous n\'avez pas encore terminé de quêtes. Lancez-vous dans une aventure pour commencer votre collection !'
   }
   return 'Les quêtes seront bientôt disponibles. Revenez plus tard!'
 }
@@ -520,7 +640,7 @@ const goBack = () => {
 }
 
 // Watchers
-watch([searchQuery, selectedStatus, selectedDifficulty, selectedType], () => {
+watch([searchQuery, selectedDifficulty, selectedType], () => {
   currentPage.value = 0
 })
 
@@ -530,341 +650,25 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
+<style>
 .page-wrapper {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
 }
 
-.quests-page {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
-  --house-color: #740001;
+/* Onglet actif avec couleur de maison */
+:deep(.p-tabview .p-tabview-nav li.p-highlight .p-tabview-nav-link) {
+  background: var(--house-color) !important;
+  color: white !important;
 }
 
-.loading-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 60vh;
+/* Badge dans onglet actif */
+:deep(.p-tabview .p-tabview-nav li.p-highlight span[style*="background"]) {
+  background: rgba(255, 255, 255, 0.25) !important;
+  color: white !important;
 }
 
-.loading-spinner {
-  text-align: center;
-  color: var(--house-color);
-}
-
-.loading-spinner i {
-  font-size: 2rem;
-  margin-bottom: 1rem;
-}
-
-/* Header */
-.page-header {
-  background: white;
-  border-radius: 16px;
-  padding: 2rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  margin-bottom: 2rem;
-  border-left: 4px solid var(--house-color);
-}
-
-.header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 2rem;
-}
-
-.title-section h1 {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin: 0 0 0.5rem 0;
-  color: var(--house-color);
-  font-size: 2rem;
-  font-weight: 700;
-}
-
-.title-section p {
-  color: #6b7280;
-  font-size: 1.1rem;
-  margin: 0;
-}
-
-.back-btn {
-  background: var(--house-color);
-  border: none;
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: all 0.2s ease;
-}
-
-.back-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-/* Statistics Overview */
-.stats-overview {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.stat-card {
-  background: white;
-  border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  transition: transform 0.2s ease;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-}
-
-.stat-card.completion {
-  border-left: 4px solid #10b981;
-}
-
-.stat-card.xp {
-  border-left: 4px solid #f59e0b;
-}
-
-.stat-card.progress {
-  border-left: 4px solid #8b5cf6;
-}
-
-.stat-icon {
-  font-size: 2rem;
-  flex-shrink: 0;
-}
-
-.stat-content {
-  flex: 1;
-}
-
-.stat-number {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin-bottom: 0.25rem;
-}
-
-.stat-label {
-  color: #6b7280;
-  font-size: 0.875rem;
-  text-transform: uppercase;
+/* Letter spacing utility */
+.letter-spacing-1 {
   letter-spacing: 0.05em;
-  font-weight: 600;
-}
-
-.progress-bar {
-  height: 6px;
-  background: #e5e7eb;
-  border-radius: 3px;
-  margin-top: 0.5rem;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: var(--house-color);
-  border-radius: 3px;
-  transition: width 0.3s ease;
-}
-
-/* Filtres et recherche */
-.filters-section {
-  background: white;
-  border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  margin-bottom: 2rem;
-}
-
-.filters-row {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.search-container {
-  position: relative;
-  flex: 1;
-  min-width: 250px;
-}
-
-.search-icon {
-  position: absolute;
-  left: 0.75rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #6b7280;
-}
-
-.search-input {
-  width: 100%;
-  padding-left: 2.5rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
-  padding-top: 0.75rem;
-  padding-bottom: 0.75rem;
-  transition: border-color 0.2s ease;
-}
-
-.search-input:focus {
-  border-color: var(--house-color);
-  outline: none;
-}
-
-.filters-container {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.filter-dropdown,
-.sort-dropdown {
-  min-width: 140px;
-}
-
-/* Contenu principal */
-.quests-container {
-  background: white;
-  border-radius: 16px;
-  padding: 2rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-}
-
-.quests-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.pagination-container {
-  display: flex;
-  justify-content: center;
-  margin-top: 2rem;
-}
-
-/* État vide */
-.empty-state {
-  background: white;
-  border-radius: 16px;
-  padding: 4rem 2rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  text-align: center;
-}
-
-.empty-icon {
-  font-size: 4rem;
-  margin-bottom: 1rem;
-}
-
-.empty-state h3 {
-  margin: 0 0 1rem 0;
-  color: #1f2937;
-  font-size: 1.5rem;
-}
-
-.empty-state p {
-  color: #6b7280;
-  margin: 0 0 2rem 0;
-  font-size: 1.1rem;
-}
-
-.clear-filters-btn {
-  background: var(--house-color);
-  border: none;
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: all 0.2s ease;
-}
-
-.clear-filters-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-/* Modal */
-.quest-modal .modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-}
-
-.quest-difficulty-badge {
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  background: rgba(0, 0, 0, 0.1);
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
-.modal-content {
-  padding: 0;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .quests-page {
-    padding: 1rem;
-  }
-  
-  .header-content {
-    flex-direction: column;
-    gap: 1rem;
-    text-align: center;
-  }
-  
-  .stats-overview {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-  
-  .filters-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .search-container {
-    min-width: auto;
-  }
-  
-  .filters-container {
-    justify-content: space-between;
-  }
-  
-  .filter-dropdown,
-  .sort-dropdown {
-    flex: 1;
-    min-width: auto;
-  }
-  
-  .quests-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
 }
 </style>

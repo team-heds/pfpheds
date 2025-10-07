@@ -281,7 +281,7 @@ const routes = [
   { path: '/gamification-profile', component: GamificationProfilePage, name: 'GamificationProfilePage', meta: { requiresAuth: false } },
   { path: '/achievements', component: AchievementsPage, name: 'AchievementsPage', meta: { requiresAuth: true } },
   { path: '/challenges', component: ChallengesPage, name: 'ChallengesPage', meta: { requiresAuth: true } },
-  { path: '/quests', component: QuestsPage, name: 'QuestsPage', meta: { requiresAuth: true } },
+  { path: '/quests', component: QuestsPage, name: 'QuestsPage', meta: { requiresAuth: false } },
   { path: '/diagnostic-gamification', component: DiagnosticGamificationView, name: 'DiagnosticGamificationView', meta: { requiresAuth: true } },
 
   // ========================================

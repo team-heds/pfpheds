@@ -1,178 +1,189 @@
 <template>
   <div 
-    class="quest-card" 
+    class="surface-card border-round-xl p-4 shadow-2 hover:shadow-4 transition-all transition-duration-300 cursor-pointer"
     :class="[
-      `quest-${quest.difficulty?.toLowerCase()}`,
-      `quest-${quest.status}`,
-      { 'quest-completed': isCompleted, 'quest-expired': isExpired }
+      { 'opacity-80': isExpired }
     ]"
-    :style="{ '--house-color': houseColor }"
+    :style="{ 
+      '--house-color': houseColor,
+      'border': `2px solid ${isCompleted ? '#4CAF50' : isExpired ? '#f44336' : houseColor}`
+    }"
     @click="$emit('click', quest)"
   >
     <!-- Header de la quête -->
-    <div class="quest-header">
-      <div class="quest-icon">
-        <i :class="getQuestIcon(quest.type)" :style="{ color: getDifficultyColor() }"></i>
+    <div class="flex align-items-start gap-3 mb-3">
+      <div class="flex-shrink-0 flex align-items-center justify-content-center border-round-xl" 
+           style="width: 48px; height: 48px; background: rgba(0, 0, 0, 0.05);">
+        <i :class="getQuestIcon(quest.type)" class="text-2xl" :style="{ color: getDifficultyColor() }"></i>
       </div>
-      <div class="quest-info">
-        <h3 class="quest-title">{{ quest.title }}</h3>
-        <p class="quest-description">{{ quest.description }}</p>
+      <div class="flex-1">
+        <h3 class="text-xl font-semibold m-0 mb-2">{{ quest.title }}</h3>
+        <p class="text-sm text-600 m-0 line-height-3">{{ quest.description }}</p>
       </div>
-      <div class="quest-status-badge">
-        <span class="status-indicator" :class="quest.status">
+      <div class="flex-shrink-0">
+        <span class="px-3 py-1 border-round-2xl text-xs font-semibold uppercase" :style="getStatusStyle()">
           {{ getStatusText() }}
         </span>
       </div>
     </div>
 
     <!-- Informations de la quête -->
-    <div class="quest-meta">
-      <div class="quest-difficulty">
-        <i class="pi pi-star-fill"></i>
+    <div class="flex flex-wrap gap-3 mb-3">
+      <div class="flex align-items-center gap-1 text-xs text-600">
+        <i class="pi pi-star-fill" style="font-size: 0.7rem;"></i>
         <span>{{ getDifficultyName() }}</span>
       </div>
-      <div class="quest-type">
-        <i class="pi pi-tag"></i>
+      <div class="flex align-items-center gap-1 text-xs text-600">
+        <i class="pi pi-tag" style="font-size: 0.7rem;"></i>
         <span>{{ getTypeText() }}</span>
       </div>
-      <div v-if="quest.duration" class="quest-duration">
-        <i class="pi pi-clock"></i>
+      <div v-if="quest.duration" class="flex align-items-center gap-1 text-xs text-600">
+        <i class="pi pi-clock" style="font-size: 0.7rem;"></i>
         <span>{{ formatDuration() }}</span>
       </div>
     </div>
 
     <!-- Progression globale -->
-    <div class="quest-progress-section">
-      <div class="progress-header">
-        <span class="progress-text">Progression</span>
-        <span class="progress-percentage">{{ quest.progress || 0 }}%</span>
+    <div class="mb-4">
+      <div class="flex justify-content-between align-items-center mb-2">
+        <span class="text-sm font-semibold">Progression</span>
+        <span class="text-sm font-bold" :style="{ color: houseColor }">{{ quest.progress || 0 }}%</span>
       </div>
-      <div class="progress-bar-container">
+      <div style="height: 8px; background: #f0f0f0; border-radius: 4px; overflow: hidden; position: relative;">
         <div 
-          class="progress-bar" 
+          style="height: 100%; border-radius: 4px; transition: width 0.3s ease; position: relative;"
           :style="{ 
             width: `${quest.progress || 0}%`,
             backgroundColor: getDifficultyColor()
           }"
         >
-          <div class="progress-shimmer" v-if="quest.progress > 0 && quest.progress < 100"></div>
+          <div v-if="quest.progress > 0 && quest.progress < 100" 
+               style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent); animation: shimmer 2s infinite;"></div>
         </div>
       </div>
     </div>
 
     <!-- Étapes de la quête -->
-    <div class="quest-steps" v-if="showSteps && quest.steps">
-      <h4 class="steps-title">
+    <div class="mb-4" v-if="showSteps && quest.steps">
+      <h4 class="flex align-items-center gap-2 text-base font-semibold m-0 mb-3">
         <i class="pi pi-list"></i>
         Étapes ({{ completedStepsCount }}/{{ quest.steps.length }})
       </h4>
       
-      <div class="steps-list">
+      <div class="flex flex-column gap-2">
         <div 
           v-for="(step, index) in quest.steps" 
           :key="step.id"
-          class="quest-step"
-          :class="{ 
-            'step-completed': isStepCompleted(step),
-            'step-current': isCurrentStep(step, index)
-          }"
+          class="flex align-items-start gap-3 p-3 border-round-lg transition-all transition-duration-200"
+          :style="getStepStyle(step, index)"
         >
-          <div class="step-icon">
+          <div class="flex-shrink-0" style="margin-top: 0.1rem;">
             <i 
               :class="isStepCompleted(step) ? 'pi pi-check-circle' : 'pi pi-circle'"
               :style="{ color: isStepCompleted(step) ? getDifficultyColor() : '#ccc' }"
             ></i>
           </div>
           
-          <div class="step-content">
-            <h5 class="step-title">{{ step.title }}</h5>
-            <p class="step-description">{{ step.description }}</p>
+          <div class="flex-1">
+            <h5 class="text-sm font-semibold m-0 mb-1">{{ step.title }}</h5>
+            <p class="text-xs text-600 m-0 mb-2 line-height-3">{{ step.description }}</p>
             
             <!-- Progression de l'étape -->
-            <div class="step-progress" v-if="step.target > 1">
-              <div class="step-progress-bar">
+            <div class="flex align-items-center gap-2" v-if="step.target > 1">
+              <div class="flex-1" style="height: 4px; background: #f0f0f0; border-radius: 2px; overflow: hidden;">
                 <div 
-                  class="step-progress-fill"
+                  style="height: 100%; border-radius: 2px; transition: width 0.3s ease;"
                   :style="{ 
                     width: `${Math.min((step.current / step.target) * 100, 100)}%`,
                     backgroundColor: getDifficultyColor()
                   }"
                 ></div>
               </div>
-              <span class="step-progress-text">
+              <span class="text-xs text-600 font-semibold">
                 {{ step.current }}/{{ step.target }}
               </span>
             </div>
           </div>
           
-          <div class="step-reward">
-            <span class="step-xp">+{{ step.xp }} XP</span>
+          <div class="flex-shrink-0">
+            <span class="px-2 py-1 border-round-xl text-xs font-semibold text-white" 
+                  :style="{ backgroundColor: houseColor }">
+              +{{ step.xp }} XP
+            </span>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Récompenses -->
-    <div class="quest-rewards">
-      <h4 class="rewards-title">
+    <div class="mb-4">
+      <h4 class="flex align-items-center gap-2 text-base font-semibold m-0 mb-3">
         <i class="pi pi-gift"></i>
         Récompenses
       </h4>
-      <div class="rewards-list">
-        <div class="reward-item" v-if="totalRewards.totalXP">
-          <i class="pi pi-star-fill"></i>
+      <div class="flex flex-wrap gap-2">
+        <div class="flex align-items-center gap-1 px-3 py-2 border-round-2xl text-xs font-medium" 
+             style="background: rgba(0, 0, 0, 0.05);" 
+             v-if="totalRewards.totalXP">
+          <i class="pi pi-star-fill" style="font-size: 0.7rem;"></i>
           <span>{{ formatNumber(totalRewards.totalXP) }} XP</span>
         </div>
-        <div class="reward-item" v-if="quest.rewards.badge">
-          <i class="pi pi-trophy"></i>
+        <div class="flex align-items-center gap-1 px-3 py-2 border-round-2xl text-xs font-medium" 
+             style="background: rgba(0, 0, 0, 0.05);" 
+             v-if="quest.rewards.badge">
+          <i class="pi pi-trophy" style="font-size: 0.7rem;"></i>
           <span>Badge: {{ quest.rewards.badge }}</span>
         </div>
-        <div class="reward-item" v-if="quest.rewards.title">
-          <i class="pi pi-crown"></i>
+        <div class="flex align-items-center gap-1 px-3 py-2 border-round-2xl text-xs font-medium" 
+             style="background: rgba(0, 0, 0, 0.05);" 
+             v-if="quest.rewards.title">
+          <i class="pi pi-crown" style="font-size: 0.7rem;"></i>
           <span>Titre: {{ quest.rewards.title }}</span>
         </div>
-        <div class="reward-item special" v-if="quest.rewards.special">
-          <i class="pi pi-sparkles"></i>
+        <div class="flex align-items-center gap-1 px-3 py-2 border-round-2xl text-xs font-semibold" 
+             style="background: linear-gradient(135deg, #ffd700, #ffed4e); color: #8b5a00;"
+             v-if="quest.rewards.special">
+          <i class="pi pi-sparkles" style="font-size: 0.7rem;"></i>
           <span>{{ quest.rewards.special }}</span>
         </div>
       </div>
     </div>
 
     <!-- Actions -->
-    <div class="quest-actions" v-if="!isCompleted && !isExpired">
+    <div class="flex gap-2" v-if="!isCompleted && !isExpired">
       <Button 
         v-if="quest.status === 'available'"
         @click.stop="$emit('start-quest', quest.id)"
-        class="start-quest-btn"
-        :style="{ backgroundColor: getDifficultyColor() }"
-      >
-        <i class="pi pi-play"></i>
-        Commencer la quête
-      </Button>
+        class="flex-1 font-semibold border-round-lg"
+        icon="pi pi-play"
+        label="Commencer la quête"
+        :style="{ backgroundColor: getDifficultyColor(), borderColor: getDifficultyColor() }"
+      />
       
       <Button 
         v-else-if="quest.status === 'in_progress'"
         @click.stop="$emit('view-details', quest.id)"
-        class="continue-quest-btn"
+        class="flex-1 font-semibold border-round-lg"
+        icon="pi pi-eye"
+        label="Voir les détails"
         outlined
         :style="{ borderColor: getDifficultyColor(), color: getDifficultyColor() }"
-      >
-        <i class="pi pi-eye"></i>
-        Voir les détails
-      </Button>
+      />
     </div>
 
     <!-- Indicateur de complétion -->
-    <div v-if="isCompleted" class="completion-overlay">
-      <div class="completion-badge">
+    <div v-if="isCompleted" class="absolute top-0 right-0 p-2">
+      <div class="flex align-items-center gap-1 px-3 py-2 border-round-2xl text-xs font-semibold text-white" 
+           style="background: #4CAF50;">
         <i class="pi pi-check-circle"></i>
         <span>Quête Terminée!</span>
       </div>
     </div>
 
     <!-- Indicateur d'expiration -->
-    <div v-if="isExpired" class="expiration-overlay">
-      <div class="expiration-badge">
+    <div v-if="isExpired" class="absolute top-0 right-0 p-2">
+      <div class="flex align-items-center gap-1 px-3 py-2 border-round-2xl text-xs font-semibold text-white" 
+           style="background: #f44336;">
         <i class="pi pi-times-circle"></i>
         <span>Quête Expirée</span>
       </div>
@@ -288,431 +299,31 @@ const isCurrentStep = (step, index) => {
 const formatNumber = (num) => {
   return new Intl.NumberFormat('fr-FR').format(num)
 }
+
+const getStatusStyle = () => {
+  const styles = {
+    available: { background: '#e3f2fd', color: '#1976d2' },
+    in_progress: { background: '#fff3e0', color: '#f57c00' },
+    completed: { background: '#e8f5e8', color: '#2e7d32' },
+    expired: { background: '#ffebee', color: '#c62828' }
+  }
+  return styles[props.quest.status] || {}
+}
+
+const getStepStyle = (step, index) => {
+  if (isStepCompleted(step)) {
+    return { background: 'rgba(76, 175, 80, 0.1)' }
+  }
+  if (isCurrentStep(step, index)) {
+    return { background: 'rgba(33, 150, 243, 0.1)', border: '1px solid rgba(33, 150, 243, 0.2)' }
+  }
+  return { background: 'rgba(0, 0, 0, 0.02)' }
+}
 </script>
 
-<style scoped>
-.quest-card {
-  background: linear-gradient(135deg, 
-    rgba(255, 255, 255, 0.95) 0%, 
-    color-mix(in srgb, var(--house-color) 15%, white) 100%
-  );
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border: 2px solid var(--house-color);
-  transition: all 0.3s ease;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-}
-
-.quest-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-}
-
-.quest-card.quest-completed {
-  border-color: #4CAF50;
-  background: linear-gradient(135deg, #f8fff8 0%, #ffffff 100%);
-}
-
-.quest-card.quest-expired {
-  border-color: #f44336;
-  background: linear-gradient(135deg, #fff8f8 0%, #ffffff 100%);
-  opacity: 0.8;
-}
-
-.quest-card.quest-in_progress {
-  border-color: #2196F3;
-  background: linear-gradient(135deg, #f8fbff 0%, #ffffff 100%);
-}
-
-/* Header */
-.quest-header {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.quest-icon {
-  flex-shrink: 0;
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.05);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-}
-
-.quest-info {
-  flex: 1;
-}
-
-.quest-title {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text-color);
-}
-
-.quest-description {
-  margin: 0;
-  color: var(--text-color-secondary);
-  font-size: 0.9rem;
-  line-height: 1.4;
-}
-
-.quest-status-badge {
-  flex-shrink: 0;
-}
-
-.status-indicator {
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.status-indicator.available {
-  background: #e3f2fd;
-  color: #1976d2;
-}
-
-.status-indicator.in_progress {
-  background: #fff3e0;
-  color: #f57c00;
-}
-
-.status-indicator.completed {
-  background: #e8f5e8;
-  color: #2e7d32;
-}
-
-.status-indicator.expired {
-  background: #ffebee;
-  color: #c62828;
-}
-
-/* Meta informations */
-.quest-meta {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  flex-wrap: wrap;
-}
-
-.quest-difficulty,
-.quest-type,
-.quest-duration {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-size: 0.8rem;
-  color: var(--text-color-secondary);
-}
-
-.quest-difficulty i,
-.quest-type i,
-.quest-duration i {
-  font-size: 0.7rem;
-}
-
-/* Progression */
-.quest-progress-section {
-  margin-bottom: 1.5rem;
-}
-
-.progress-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
-}
-
-.progress-text {
-  font-weight: 600;
-  color: var(--text-color);
-  font-size: 0.9rem;
-}
-
-.progress-percentage {
-  font-weight: 700;
-  color: var(--primary-color);
-  font-size: 0.9rem;
-}
-
-.progress-bar-container {
-  height: 8px;
-  background: #f0f0f0;
-  border-radius: 4px;
-  overflow: hidden;
-  position: relative;
-}
-
-.progress-bar {
-  height: 100%;
-  border-radius: 4px;
-  transition: width 0.3s ease;
-  position: relative;
-}
-
-.progress-shimmer {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-  animation: shimmer 2s infinite;
-}
-
+<style>
 @keyframes shimmer {
   0% { transform: translateX(-100%); }
   100% { transform: translateX(100%); }
-}
-
-/* Étapes */
-.quest-steps {
-  margin-bottom: 1.5rem;
-}
-
-.steps-title {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0 0 1rem 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-color);
-}
-
-.steps-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.quest-step {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.02);
-  transition: all 0.2s ease;
-}
-
-.quest-step.step-completed {
-  background: rgba(76, 175, 80, 0.1);
-}
-
-.quest-step.step-current {
-  background: rgba(33, 150, 243, 0.1);
-  border: 1px solid rgba(33, 150, 243, 0.2);
-}
-
-.step-icon {
-  flex-shrink: 0;
-  margin-top: 0.1rem;
-}
-
-.step-content {
-  flex: 1;
-}
-
-.step-title {
-  margin: 0 0 0.25rem 0;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--text-color);
-}
-
-.step-description {
-  margin: 0 0 0.5rem 0;
-  font-size: 0.8rem;
-  color: var(--text-color-secondary);
-  line-height: 1.3;
-}
-
-.step-progress {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.step-progress-bar {
-  flex: 1;
-  height: 4px;
-  background: #f0f0f0;
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.step-progress-fill {
-  height: 100%;
-  border-radius: 2px;
-  transition: width 0.3s ease;
-}
-
-.step-progress-text {
-  font-size: 0.75rem;
-  color: var(--text-color-secondary);
-  font-weight: 600;
-}
-
-.step-reward {
-  flex-shrink: 0;
-}
-
-.step-xp {
-  background: var(--primary-color);
-  color: white;
-  padding: 0.25rem 0.5rem;
-  border-radius: 12px;
-  font-size: 0.7rem;
-  font-weight: 600;
-}
-
-/* Récompenses */
-.quest-rewards {
-  margin-bottom: 1.5rem;
-}
-
-.rewards-title {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0 0 0.75rem 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-color);
-}
-
-.rewards-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.reward-item {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.5rem 0.75rem;
-  background: rgba(0, 0, 0, 0.05);
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: var(--text-color);
-}
-
-.reward-item.special {
-  background: linear-gradient(135deg, #ffd700, #ffed4e);
-  color: #8b5a00;
-  font-weight: 600;
-}
-
-.reward-item i {
-  font-size: 0.7rem;
-}
-
-/* Actions */
-.quest-actions {
-  display: flex;
-  gap: 0.75rem;
-}
-
-.start-quest-btn,
-.continue-quest-btn {
-  flex: 1;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  transition: all 0.2s ease;
-}
-
-.start-quest-btn {
-  color: white;
-  border: none;
-}
-
-.start-quest-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-/* Overlays */
-.completion-overlay,
-.expiration-overlay {
-  position: absolute;
-  top: 0;
-  right: 0;
-  padding: 0.5rem;
-}
-
-.completion-badge,
-.expiration-badge {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.completion-badge {
-  background: #4CAF50;
-  color: white;
-}
-
-.expiration-badge {
-  background: #f44336;
-  color: white;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .quest-card {
-    padding: 1rem;
-  }
-  
-  .quest-header {
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  
-  .quest-meta {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  
-  .quest-step {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  
-  .step-progress {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.25rem;
-  }
-  
-  .rewards-list {
-    flex-direction: column;
-  }
-  
-  .quest-actions {
-    flex-direction: column;
-  }
 }
 </style>

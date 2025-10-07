@@ -1,103 +1,94 @@
 <template>
-  <div class="quests-profile-card surfaces-card">
+  <div class="quests-profile-card">
     <!-- Header -->
     <div class="card-header">
-      <div class="header-left">
-        <i class="pi pi-compass header-icon"></i>
-        <h3>🗺️ Mes Quêtes Actives</h3>
+      <div class="header-with-badge">
+        <h4>🗺️ Mes Quêtes Actives</h4>
+        <span v-if="activeQuests.length > 0" class="count-badge" :style="{ backgroundColor: houseColor }">
+          {{ activeQuests.length }}
+        </span>
       </div>
-      <span class="quest-count-badge" :style="{ backgroundColor: houseColor }">
-        {{ activeQuests.length }}
-      </span>
+      <Button 
+        icon="pi pi-arrow-right" 
+        class="p-button-text p-button-sm"
+        @click="navigateToAllQuests"
+        v-tooltip.top="'Voir toutes les quêtes'"
+      />
     </div>
-    
-    <!-- Statistiques rapides -->
-    <div class="quick-stats" v-if="activeQuests.length > 0">
-      <div class="stat-item">
-        <span class="stat-value">{{ completedCount }}</span>
-        <span class="stat-label">Complétées</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-value">{{ totalXP }}</span>
-        <span class="stat-label">XP Total</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-value">{{ averageProgress }}%</span>
-        <span class="stat-label">Progression Moy.</span>
-      </div>
+
+    <!-- Loading State -->
+    <div v-if="loading" class="loading-state">
+      <ProgressSpinner :style="{ width: '40px', height: '40px' }" strokeWidth="4" />
+      <p class="text-sm text-600 mt-2">Chargement...</p>
     </div>
-    
+
     <!-- Liste des quêtes -->
-    <div class="quests-list" v-if="activeQuests.length > 0">
+    <div v-else-if="activeQuests.length > 0" class="quests-list">
       <div 
-        v-for="quest in displayedQuests" 
-        :key="quest.id" 
+        v-for="quest in displayedQuests"
+        :key="quest.id"
         class="quest-item"
         @click="navigateToQuestDetails(quest)"
       >
+        <!-- Icône -->
         <div class="quest-icon" :style="{ backgroundColor: houseColor }">
           <i class="pi pi-flag"></i>
         </div>
         
-        <div class="quest-info">
+        <!-- Contenu -->
+        <div class="quest-content">
           <div class="quest-header">
-            <h4>{{ quest.title }}</h4>
+            <span class="quest-title">{{ quest.title }}</span>
             <span class="difficulty-badge" :class="`difficulty-${quest.difficulty}`">
               {{ getDifficultyLabel(quest.difficulty) }}
             </span>
           </div>
+          
           <p class="quest-description">{{ quest.description }}</p>
           
           <!-- Barre de progression -->
           <div class="quest-progress">
             <div class="progress-bar">
-              <div 
-                class="progress-fill" 
-                :style="{ width: quest.progress + '%', backgroundColor: houseColor }"
-              ></div>
+              <div class="progress-fill" :style="{ width: quest.progress + '%', backgroundColor: houseColor }"></div>
             </div>
             <span class="progress-text">{{ quest.progress }}%</span>
           </div>
         </div>
-        
+
+        <!-- Récompense -->
         <div class="quest-reward">
-          <div class="xp-badge" :style="{ borderColor: houseColor }">
+          <div class="xp-badge" :style="{ color: houseColor, borderColor: houseColor }">
             <i class="pi pi-star-fill"></i>
-            <span>{{ quest.xp_reward || quest.points }} XP</span>
+            {{ quest.xp_reward || quest.points }} XP
           </div>
+          <i class="pi pi-chevron-right quest-arrow"></i>
         </div>
       </div>
-      
+
       <!-- Bouton Voir Plus -->
       <Button 
         v-if="activeQuests.length > 3"
         @click="navigateToAllQuests"
-        class="see-more-btn"
-        :style="{ backgroundColor: houseColor }"
-      >
-        <i class="pi pi-arrow-right"></i>
-        Voir toutes mes quêtes ({{ activeQuests.length }})
-      </Button>
+        :label="`Voir toutes mes quêtes (${activeQuests.length})`"
+        icon="pi pi-arrow-right"
+        iconPos="right"
+        class="see-all-btn"
+        size="small"
+        :style="{ backgroundColor: houseColor, borderColor: houseColor }"
+      />
     </div>
-    
+
     <!-- État vide -->
     <div v-else class="empty-state">
       <div class="empty-icon">🗺️</div>
-      <h4>Aucune quête active</h4>
-      <p>Commence ton aventure en acceptant ta première quête !</p>
+      <p class="text-600 text-sm">Aucune quête active pour le moment</p>
       <Button 
         @click="navigateToAllQuests"
-        class="explore-btn"
-        :style="{ backgroundColor: houseColor }"
-      >
-        <i class="pi pi-compass"></i>
-        Découvrir les quêtes
-      </Button>
-    </div>
-    
-    <!-- Loading State -->
-    <div v-if="loading" class="loading-overlay">
-      <i class="pi pi-spin pi-spinner"></i>
+        label="Explorer les quêtes"
+        icon="pi pi-compass"
+        class="p-button-sm mt-3"
+        :style="{ backgroundColor: houseColor, borderColor: houseColor }"
+      />
     </div>
   </div>
 </template>
@@ -108,6 +99,7 @@ import { useRouter } from 'vue-router'
 import { supabase } from '@/supabase'
 import { useAuthStore } from '@/stores/authStore'
 import Button from 'primevue/button'
+import ProgressSpinner from 'primevue/progressspinner'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -171,7 +163,7 @@ const loadUserQuests = async () => {
     
     console.log('🔍 Chargement des quêtes pour:', userId)
     
-    // Récupérer les quêtes actives de l'utilisateur avec leurs infos complètes
+    // Récupérer UNIQUEMENT les quêtes actives (non complétées) de l'utilisateur
     const { data: userQuests, error } = await supabase
       .from('user_quest_progress')
       .select(`
@@ -179,6 +171,7 @@ const loadUserQuests = async () => {
         quest:quests(*)
       `)
       .eq('user_id', userId)
+      .eq('completed', false) // Filtrer les quêtes NON complétées
       .order('created_at', { ascending: false })
     
     if (error) {
@@ -260,17 +253,11 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .quests-profile-card {
-  background: var(--surface-card);
-  border-radius: 1rem;
+  margin-top: 1.5rem;
   padding: 1.5rem;
-  margin-top: 1rem;
-  position: relative;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-}
-
-.quests-profile-card:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  border-radius: 1.2rem;
+  background: var(--surface-card);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
 }
 
 /* Header */
@@ -278,131 +265,108 @@ onBeforeUnmount(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid var(--surface-border);
+  margin-bottom: 1.25rem;
 }
 
-.header-left {
+.header-with-badge {
   display: flex;
   align-items: center;
   gap: 0.75rem;
 }
 
-.header-icon {
-  font-size: 1.5rem;
-  color: var(--primary-color);
-}
-
-.card-header h3 {
+.header-with-badge h4 {
+  font-weight: bold;
   margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: white;
+  font-size: 1.1rem;
 }
 
-.quest-count-badge {
-  background: var(--primary-color);
-  color: white;
-  padding: 0.25rem 0.75rem;
-  border-radius: 1rem;
-  font-weight: bold;
-  font-size: 0.9rem;
-}
-
-/* Quick Stats */
-.quick-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  padding: 1rem;
-  background: var(--surface-ground);
-  border-radius: 0.75rem;
-}
-
-.stat-item {
-  display: flex;
-  flex-direction: column;
+.count-badge {
+  display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-}
-
-.stat-value {
-  font-size: 1.5rem;
-  font-weight: bold;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 0.5rem;
+  border-radius: 12px;
   color: white;
-}
-
-.stat-label {
   font-size: 0.75rem;
-  color: white;
-  opacity: 0.8;
+  font-weight: bold;
+}
+
+/* Loading */
+.loading-state {
   text-align: center;
+  padding: 2rem;
 }
 
 /* Liste des quêtes */
 .quests-list {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .quest-item {
   display: flex;
+  align-items: flex-start;
   gap: 1rem;
   padding: 1rem;
-  background: var(--surface-ground);
-  border-radius: 0.75rem;
+  border: 1px solid var(--surface-border);
+  border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
-  border: 2px solid transparent;
+  background: var(--surface-ground);
 }
 
 .quest-item:hover {
   background: var(--surface-hover);
   border-color: var(--primary-color);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
+/* Icône */
 .quest-icon {
   width: 48px;
   height: 48px;
-  border-radius: 0.75rem;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   font-size: 1.25rem;
   flex-shrink: 0;
+  transition: transform 0.3s ease;
 }
 
-.quest-info {
+.quest-item:hover .quest-icon {
+  transform: scale(1.05);
+}
+
+/* Contenu */
+.quest-content {
   flex: 1;
   min-width: 0;
 }
 
 .quest-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 0.75rem;
   margin-bottom: 0.5rem;
-  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
-.quest-info h4 {
-  margin: 0;
-  font-size: 1rem;
+.quest-title {
   font-weight: 600;
-  color: white;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 1rem;
+  color: var(--text-color);
+  flex: 1;
+  min-width: 0;
 }
 
 .difficulty-badge {
-  padding: 0.125rem 0.5rem;
+  padding: 0.15rem 0.5rem;
   border-radius: 0.5rem;
   font-size: 0.7rem;
   font-weight: 600;
@@ -415,22 +379,21 @@ onBeforeUnmount(() => {
 .difficulty-expert { background: #8b5cf6; color: white; }
 
 .quest-description {
-  font-size: 0.85rem;
-  color: white;
-  opacity: 0.8;
-  margin: 0.5rem 0;
+  font-size: 0.875rem;
+  color: var(--text-color-secondary);
+  margin: 0 0 0.75rem 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  line-height: 1.5;
 }
 
-/* Barre de progression */
+/* Progression */
 .quest-progress {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin-top: 0.75rem;
 }
 
 .progress-bar {
@@ -450,7 +413,7 @@ onBeforeUnmount(() => {
 .progress-text {
   font-size: 0.75rem;
   font-weight: 600;
-  color: white;
+  color: var(--text-color-secondary);
   min-width: 35px;
   text-align: right;
 }
@@ -458,7 +421,9 @@ onBeforeUnmount(() => {
 /* Récompense */
 .quest-reward {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
   flex-shrink: 0;
 }
 
@@ -466,104 +431,71 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  padding: 0.5rem 0.75rem;
+  padding: 0.4rem 0.75rem;
   border: 2px solid;
   border-radius: 0.75rem;
   font-weight: bold;
   font-size: 0.85rem;
-  color: white;
   background: var(--surface-card);
 }
 
 .xp-badge i {
+  font-size: 0.8rem;
+}
+
+.quest-arrow {
+  color: var(--text-color-secondary);
   font-size: 0.9rem;
 }
 
-/* Boutons */
-.see-more-btn,
-.explore-btn {
+/* Bouton voir tout */
+.see-all-btn {
   width: 100%;
   margin-top: 0.5rem;
   border: none;
   color: white;
   font-weight: 600;
-  padding: 0.75rem;
-  border-radius: 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  cursor: pointer;
   transition: all 0.3s ease;
 }
 
-.see-more-btn:hover,
-.explore-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+.see-all-btn:hover {
   opacity: 0.9;
+  transform: translateY(-2px);
 }
 
 /* État vide */
 .empty-state {
   text-align: center;
-  padding: 2rem 1rem;
+  padding: 2.5rem 1rem;
 }
 
 .empty-icon {
   font-size: 3rem;
   margin-bottom: 1rem;
+  animation: float 3s ease-in-out infinite;
 }
 
-.empty-state h4 {
-  color: white;
-  margin: 0.5rem 0;
-  font-size: 1.1rem;
-}
-
-.empty-state p {
-  color: white;
-  opacity: 0.7;
-  margin-bottom: 1.5rem;
-  font-size: 0.9rem;
-}
-
-/* Loading */
-.loading-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 1rem;
-  z-index: 10;
-}
-
-.loading-overlay i {
-  font-size: 2rem;
-  color: white;
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 }
 
 /* Responsive */
 @media (max-width: 768px) {
   .quest-item {
     flex-direction: column;
+    gap: 0.75rem;
   }
   
   .quest-reward {
-    align-self: flex-start;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    justify-content: space-between;
   }
   
-  .quick-stats {
-    grid-template-columns: 1fr;
-  }
-  
-  .stat-value {
-    font-size: 1.25rem;
+  .quest-title {
+    font-size: 0.95rem;
   }
 }
 </style>
