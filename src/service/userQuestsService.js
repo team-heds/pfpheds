@@ -22,7 +22,6 @@ class UserQuestsService {
             description,
             type,
             difficulty,
-            category,
             points,
             xp_reward,
             status,

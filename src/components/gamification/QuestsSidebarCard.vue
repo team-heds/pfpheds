@@ -80,13 +80,6 @@
     <div v-else class="no-quests">
       <i class="pi pi-compass text-400"></i>
       <p class="text-500 text-sm mt-2">Aucune nouvelle quête pour le moment</p>
-      <Button 
-        @click="goToQuests"
-        class="p-button-text p-button-sm mt-2"
-        icon="pi pi-search"
-      >
-        Explorer les quêtes
-      </Button>
     </div>
   </div>
 </template>

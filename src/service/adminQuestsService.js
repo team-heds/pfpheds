@@ -124,7 +124,9 @@ class AdminQuestsService {
       
       // 3. Si statut = active, assigner automatiquement à tous les utilisateurs
       if (quest.status === 'active') {
-        await this.assignQuestToAllUsers(quest.id)
+        console.log('🎯 Quête active détectée, lancement attribution avec ID:', quest.id)
+        const assignCount = await this.assignQuestToAllUsers(quest.id)
+        console.log('📊 Résultat attribution:', assignCount, 'utilisateur(s)')
       }
       
       return quest
@@ -231,39 +233,21 @@ class AdminQuestsService {
    */
   async assignQuestToAllUsers(questId) {
     try {
-      // Récupérer tous les utilisateurs
-      const { data: users, error: usersError } = await supabase.auth.admin.listUsers()
+      console.log(`📢 Attribution automatique de la quête ${questId}...`)
       
-      if (usersError) throw usersError
+      // Appeler la fonction PostgreSQL côté serveur
+      const { data, error } = await supabase.rpc('assign_quest_to_all_users', {
+        p_quest_id: questId
+      })
       
-      console.log(`📢 Attribution de la quête ${questId} à ${users.users.length} utilisateurs...`)
+      if (error) throw error
       
-      // Créer les entrées de progression pour chaque utilisateur
-      const progressEntries = users.users.map(user => ({
-        user_id: user.id,
-        quest_id: questId,
-        status: 'not_started',
-        progress: 0
-      }))
-      
-      // Insertion avec gestion des doublons
-      const { data, error } = await supabase
-        .from('user_quest_progress')
-        .upsert(progressEntries, { 
-          onConflict: 'user_id,quest_id',
-          ignoreDuplicates: true 
-        })
-      
-      if (error) {
-        console.warn('⚠️ Erreur attribution (possiblement normal si déjà existant):', error)
-      } else {
-        console.log(`✅ Quête assignée à ${progressEntries.length} utilisateurs`)
-      }
-      
-      return progressEntries.length
+      console.log(`✅ Quête assignée à ${data} utilisateur(s)`)
+      return data
       
     } catch (error) {
       console.error('❌ Erreur attribution quête:', error)
+      console.warn('⚠️ Vérifiez que la fonction SQL assign_quest_to_all_users() existe')
       // Ne pas bloquer si l'attribution échoue
       return 0
     }
