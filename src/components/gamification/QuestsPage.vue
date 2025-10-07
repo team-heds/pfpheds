@@ -231,7 +231,8 @@
 
     <!-- Quêtes -->
     <div v-if="filteredQuests.length > 0">
-      <div class="grid">
+      <
+      div class="grid">
         <div v-for="quest in paginatedQuests" :key="quest.id" class="col-12 md:col-6 lg:col-4">
           <QuestCard
             :quest="quest"

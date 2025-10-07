@@ -124,27 +124,14 @@
       <div class="flex flex-wrap gap-2">
         <div class="flex align-items-center gap-1 px-3 py-2 border-round-2xl text-xs font-medium" 
              style="background: rgba(0, 0, 0, 0.05);" 
-             v-if="totalRewards.totalXP">
+             v-if="totalRewards.xp">
           <i class="pi pi-star-fill" style="font-size: 0.7rem;"></i>
-          <span>{{ formatNumber(totalRewards.totalXP) }} XP</span>
+          <span>{{ totalRewards.xp }} XP</span>
         </div>
         <div class="flex align-items-center gap-1 px-3 py-2 border-round-2xl text-xs font-medium" 
-             style="background: rgba(0, 0, 0, 0.05);" 
-             v-if="quest.rewards.badge">
-          <i class="pi pi-trophy" style="font-size: 0.7rem;"></i>
-          <span>Badge: {{ quest.rewards.badge }}</span>
-        </div>
-        <div class="flex align-items-center gap-1 px-3 py-2 border-round-2xl text-xs font-medium" 
-             style="background: rgba(0, 0, 0, 0.05);" 
-             v-if="quest.rewards.title">
-          <i class="pi pi-crown" style="font-size: 0.7rem;"></i>
-          <span>Titre: {{ quest.rewards.title }}</span>
-        </div>
-        <div class="flex align-items-center gap-1 px-3 py-2 border-round-2xl text-xs font-semibold" 
-             style="background: linear-gradient(135deg, #ffd700, #ffed4e); color: #8b5a00;"
-             v-if="quest.rewards.special">
-          <i class="pi pi-sparkles" style="font-size: 0.7rem;"></i>
-          <span>{{ quest.rewards.special }}</span>
+             style="background: rgba(0, 0, 0, 0.05);">
+          <i class="pi pi-flag" style="font-size: 0.7rem;"></i>
+          <span>{{ quest.points }} pts</span>
         </div>
       </div>
     </div>
@@ -193,8 +180,23 @@
 
 <script setup>
 import { computed } from 'vue'
-import { QUEST_DIFFICULTIES, QUEST_STATUS, calculateQuestRewards } from '../../service/questsService'
 import Button from 'primevue/button'
+
+// Constantes Supabase (alignées avec la DB)
+const QUEST_STATUS = {
+  AVAILABLE: 'not_started',
+  IN_PROGRESS: 'in_progress',
+  COMPLETED: 'completed',
+  EXPIRED: 'failed',
+  LOCKED: 'locked'
+}
+
+const QUEST_DIFFICULTIES = {
+  easy: { name: 'Facile', color: '#4CAF50', multiplier: 1 },
+  medium: { name: 'Moyen', color: '#FF9800', multiplier: 1.5 },
+  hard: { name: 'Difficile', color: '#F44336', multiplier: 2 },
+  expert: { name: 'Expert', color: '#9C27B0', multiplier: 2.5 }
+}
 
 // Props
 const props = defineProps({
@@ -220,12 +222,25 @@ const isCompleted = computed(() => props.quest.status === QUEST_STATUS.COMPLETED
 const isExpired = computed(() => props.quest.status === QUEST_STATUS.EXPIRED)
 
 const completedStepsCount = computed(() => {
-  if (!props.quest.steps) return 0
-  return props.quest.steps.filter(step => step.current >= step.target).length
+  if (!props.quest.steps || !Array.isArray(props.quest.steps)) return 0
+  
+  // Si on a un pourcentage de progression, calculer les steps complétées
+  if (props.quest.progress !== undefined) {
+    const totalSteps = props.quest.steps.length || 1
+    return Math.floor((props.quest.progress / 100) * totalSteps)
+  }
+  
+  // Sinon, compter les steps avec completed=true
+  return props.quest.steps.filter(step => step.completed === true).length
 })
 
 const totalRewards = computed(() => {
-  return calculateQuestRewards(props.quest)
+  // Adaptation pour Supabase : structure simple
+  return {
+    xp: props.quest.xp_reward || props.quest.points || 0,
+    badges: [],
+    items: []
+  }
 })
 
 // Methods

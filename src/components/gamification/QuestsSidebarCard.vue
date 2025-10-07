@@ -90,6 +90,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import Button from 'primevue/button'
 import userQuestsService from '@/service/userQuestsService'
+import { supabase } from '@/supabase'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -164,9 +165,18 @@ const loadNewQuests = async () => {
 
     console.log('🔍 Chargement des nouvelles quêtes pour:', userId)
 
-    // Utiliser le service unifié
-    const quests = await userQuestsService.getNewQuests(userId)
-    newQuests.value = quests
+    // Utiliser getActiveQuests au lieu de getNewQuests pour afficher toutes les quêtes non complétées
+    const quests = await userQuestsService.getActiveQuests(userId)
+    
+    // Marquer comme nouvelles si créées récemment (7 jours)
+    const sevenDaysAgo = new Date()
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+    
+    newQuests.value = quests.map(q => ({
+      ...q,
+      isNew: new Date(q.created_at || q.userProgress?.started_at) > sevenDaysAgo,
+      progress: q.userProgress?.progress || 0
+    }))
 
     console.log(`✅ ${newQuests.value.length} quêtes chargées (${newQuestsCount.value} nouvelles)`)
   } catch (err) {

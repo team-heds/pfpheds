@@ -39,9 +39,17 @@ class UserQuestsService {
       
       if (error) throw error
       
-      // Restructurer les données
+      // Restructurer les données pour compatibilité QuestCard
       return data.map(progress => ({
         ...progress.quest,
+        // Aplatir la progression au niveau supérieur pour QuestCard
+        status: progress.status,
+        progress: progress.progress,
+        current_step: progress.current_step,
+        started_at: progress.started_at,
+        completed_at: progress.completed_at,
+        updated_at: progress.updated_at,
+        // Garder aussi userProgress pour compatibilité
         userProgress: {
           id: progress.id,
           status: progress.status,
