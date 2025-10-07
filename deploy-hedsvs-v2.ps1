@@ -113,7 +113,7 @@ ls -t pfpheds-frontend-*.tar.gz 2>/dev/null | tail -n +3 | xargs rm -f 2>/dev/nu
 
 # Afficher l'espace disponible
 echo "Espace disponible dans ~/deploy:"
-df -h ~/deploy | tail -1
+df -h ~/deploy | awk 'NR==2'
 
 echo "SUCCESS"
 '@
@@ -178,7 +178,7 @@ fi
 
 echo '[SUCCESS] Deploiement termine - Version $Version active sur https://hedsvs.ch'
 echo '[INFO] Espace disque restant:'
-df -h / | tail -1
+df -h / | awk 'NR==2'
 "@
 
 $tempScript = "/tmp/deploy-$timestamp.sh"
