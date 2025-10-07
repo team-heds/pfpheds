@@ -1,7 +1,9 @@
 <template>
-  <div class="page-wrapper">
-    <Navbar />
-    <div class="gamification-profile-page" :style="{ '--house-color': houseColor }">
+  <Navbar />
+  
+  <div class="min-h-screen flex relative lg:static">
+    <div class="min-h-screen flex flex-column relative flex-auto profile-center-scrollable">
+      <div class="gamification-profile-page" :style="{ '--house-color': houseColor }">
     
     <!-- Loading State -->
     <div v-if="loading" class="loading-container">
@@ -434,28 +436,50 @@
       <div class="scroll-spacer"></div>
     </div>
     
+      </div>
     </div>
-
-    <!-- Achievement Notification -->
-    <AchievementNotification
-      v-if="showNotification && currentNotification"
-      :badge="currentNotification"
-      @close="onNotificationClose"
-    />
   </div>
+
+  <!-- Achievement Notification -->
+  <AchievementNotification
+    v-if="showNotification && currentNotification"
+    :badge="currentNotification"
+    @close="onNotificationClose"
+  />
+
+  <!-- Detail Modal -->
+  <DetailModal
+    v-model="showDetailModal"
+    :type="modalType"
+    :item="modalItem"
+    @start="handleStart"
+  />
+
+  <!-- Toast Notification -->
+  <GamificationToast
+    v-model="showToast"
+    :type="toastData.type"
+    :title="toastData.title"
+    :message="toastData.message"
+    :xp="toastData.xp"
+  />
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { supabase } from '@/supabase.js'
 import gamificationServiceSupabase from '@/service/gamificationServiceSupabase'
+import levelsConfig from '@/config/levelsConfig'
 import Navbar from '@/components/common/utils/Navbar.vue'
 import BadgeCard from '@/components/gamification/BadgeCard.vue'
 import ChallengeCard from '@/components/gamification/ChallengeCard.vue'
 import QuestCard from '@/components/gamification/QuestCard.vue'
 import AchievementNotification from '@/components/gamification/AchievementNotification.vue'
 import CreationToolsCard from '@/components/gamification/CreationToolsCard.vue'
+import DetailModal from '@/components/gamification/DetailModal.vue'
+import GamificationToast from '@/components/gamification/GamificationToast.vue'
 // Background images per house (align with HouseStatsPage)
 import FondHarmonis from '@/assets/maisons/FondHarmonis.png'
 import FondElaris from '@/assets/maisons/FondElaris.png'
@@ -524,6 +548,126 @@ const houseColor = computed(() => {
   if (!h) return '#6B7280'
   return houseConfig[h]?.color || '#6B7280'
 })
+
+// Calcul automatique du niveau basé sur l'XP (nouveau système 20 niveaux)
+const calculateLevel = (totalXP) => {
+  return levelsConfig.getLevelFromXP(totalXP)
+}
+
+const calculateXPToNext = (currentLevel, currentXP) => {
+  return levelsConfig.getXPToNextLevel(currentLevel, currentXP)
+}
+
+const getLevelProgress = (currentLevel, currentXP) => {
+  return levelsConfig.getLevelProgress(currentLevel, currentXP)
+}
+
+const getLevelInfo = (level) => {
+  return levelsConfig.getLevelInfo(level)
+}
+
+const updateLevelFromXP = async (newTotalXP) => {
+  if (!userStats.value) return
+  
+  const newLevel = calculateLevel(newTotalXP)
+  const oldLevel = userStats.value.niveau
+  const levelInfo = getLevelInfo(newLevel)
+  
+  // Si niveau a changé, mettre à jour la base de données
+  if (newLevel !== oldLevel) {
+    console.log(`🎉 NIVEAU UP ! ${oldLevel} (${getLevelInfo(oldLevel).name}) → ${newLevel} (${levelInfo.name})`)
+    
+    try {
+      // Mettre à jour dans Supabase
+      const { error } = await supabase
+        .from('gamification_data')
+        .update({ 
+          current_level: newLevel,
+          total_xp: newTotalXP
+        })
+        .eq('user_id', authStore.user.id)
+      
+      if (error) {
+        console.error('Erreur mise à jour niveau:', error)
+      } else {
+        // Mettre à jour localement
+        userStats.value.niveau = newLevel
+        userStats.value.xp = newTotalXP
+        userStats.value.xpToNext = calculateXPToNext(newLevel, newTotalXP)
+        
+        // Vérifier si c'est un palier (5, 10, 15, 20)
+        const isPalierLevel = levelsConfig.isPalier(newLevel)
+        
+        // Afficher notification
+        showToast.value = true
+        toastData.value = {
+          type: 'levelup',
+          title: isPalierLevel ? `🎊 PALIER ${newLevel} ATTEINT !` : 'Niveau Supérieur !',
+          message: `Tu es maintenant ${levelInfo.name} (niveau ${newLevel}) !`,
+          xp: isPalierLevel ? levelInfo.palierBonus : 0
+        }
+        
+        // Si c'est un palier, ajouter les points à la maison
+        if (isPalierLevel && levelInfo.palierBonus && userStats.value.maison) {
+          await addHousePoints(userStats.value.maison, levelInfo.palierBonus)
+          console.log(`✨ +${levelInfo.palierBonus} points pour ${userStats.value.maison} !`)
+        }
+      }
+    } catch (err) {
+      console.error('Erreur:', err)
+    }
+  }
+}
+
+const addHousePoints = async (houseName, points) => {
+  try {
+    // Récupérer la maison
+    const { data: house, error: fetchError } = await supabase
+      .from('houses')
+      .select('*')
+      .eq('name', houseName)
+      .single()
+    
+    if (fetchError || !house) {
+      console.error('Erreur récupération maison:', fetchError)
+      return
+    }
+    
+    const newTotalXP = (house.total_xp || 0) + points
+    const oldLevel = house.level || 1
+    const newLevel = Math.max(1, Math.floor(Math.sqrt(newTotalXP / 10000)) + 1)
+    
+    // Ajouter les points XP (le trigger mettra à jour le niveau automatiquement)
+    const { error: updateError } = await supabase
+      .from('houses')
+      .update({ 
+        total_xp: newTotalXP
+      })
+      .eq('name', houseName)
+    
+    if (updateError) {
+      console.error('Erreur ajout XP maison:', updateError)
+    } else {
+      console.log(`✅ +${points} XP ajoutés à ${houseName} (Total: ${newTotalXP} XP)`)
+      
+      // Si la maison a changé de niveau
+      if (newLevel > oldLevel) {
+        console.log(`🏆 ${houseName} est passée au niveau ${newLevel} !`)
+        
+        // Notification optionnelle pour toute la maison
+        showToast.value = true
+        toastData.value = {
+          type: 'success',
+          title: `🏆 ${houseName} niveau ${newLevel} !`,
+          message: `Votre maison progresse grâce à vous !`,
+          xp: 0
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Erreur addHousePoints:', err)
+  }
+}
 
 // Map background image by normalized house
 const houseImages = {
@@ -685,9 +829,22 @@ const isNewlyUnlocked = (badge) => {
   return newlyUnlockedBadges.value.has(badge.id)
 }
 
+// Modal and Toast states
+const showDetailModal = ref(false)
+const modalType = ref('badge')
+const modalItem = ref(null)
+const showToast = ref(false)
+const toastData = ref({
+  type: 'info',
+  title: '',
+  message: '',
+  xp: 0
+})
+
 const showBadgeDetails = (badge) => {
-  // TODO: Implémenter modal de détails du badge
-  console.log('Badge details:', badge)
+  modalType.value = 'badge'
+  modalItem.value = badge
+  showDetailModal.value = true
 }
 
 const getBadgeProgressHint = (badge) => {
@@ -711,12 +868,47 @@ const loadBadgesData = async () => {
   if (!authStore.user?.id) return
   
   try {
-    console.log('🏆 Chargement des badges...')
-    // Pour l'instant, utiliser des données par défaut
-    // TODO: Implémenter le système de badges dans Supabase
-    allBadges.value = []
-    userBadges.value = []
-    console.log('✅ Badges chargés (système à implémenter)')
+    console.log('🏆 Chargement des badges depuis Supabase...')
+    
+    // Récupérer les badges de l'utilisateur depuis Supabase
+    const { data: userBadgesData, error: userBadgesError } = await supabase
+      .from('user_badges')
+      .select(`
+        *,
+        badge:badges(*)
+      `)
+      .eq('user_id', authStore.user.id)
+    
+    if (userBadgesError && userBadgesError.code !== 'PGRST116') {
+      console.error('Erreur chargement badges utilisateur:', userBadgesError)
+    }
+    
+    // Récupérer tous les badges disponibles
+    const { data: allBadgesData, error: allBadgesError } = await supabase
+      .from('badges')
+      .select('*')
+      .order('rarity', { ascending: true })
+    
+    if (allBadgesError) {
+      console.error('Erreur chargement badges:', allBadgesError)
+    }
+    
+    // Formatter les données
+    allBadges.value = allBadgesData || []
+    
+    // Formatter les badges de l'utilisateur
+    if (userBadgesData && userBadgesData.length > 0) {
+      userBadges.value = userBadgesData.map(ub => ({
+        ...ub.badge,
+        unlocked_at: ub.unlocked_at,
+        progress: ub.progress || 100
+      }))
+    } else {
+      userBadges.value = []
+    }
+    
+    console.log(`✅ ${userBadges.value.length} badges débloqués sur ${allBadges.value.length}`)
+    
   } catch (error) {
     console.error('❌ Erreur lors du chargement des badges:', error)
     allBadges.value = []
@@ -734,22 +926,75 @@ const loadChallengesData = async () => {
   if (!authStore.user?.id) return
   
   try {
-    console.log('🎯 Chargement des défis...')
-    // Pour l'instant, utiliser des données par défaut
-    // TODO: Implémenter le système de défis dans Supabase
-    activeChallenges.value = []
-    challengeStats.value = { totalCompleted: 0, totalXPFromChallenges: 0 }
-    console.log('✅ Défis chargés (système à implémenter)')
+    console.log('🎯 Chargement des défis depuis Supabase...')
+    
+    // Récupérer les défis actifs (non expirés)
+    const { data: challengesData, error: challengesError } = await supabase
+      .from('challenges')
+      .select('*')
+      .or('end_date.is.null,end_date.gte.' + new Date().toISOString())
+      .eq('active', true)
+      .order('created_at', { ascending: false })
+    
+    if (challengesError && challengesError.code !== 'PGRST116') {
+      console.error('Erreur chargement défis:', challengesError)
+    }
+    
+    // Récupérer les progressions de l'utilisateur
+    const { data: userProgressData, error: progressError } = await supabase
+      .from('user_challenge_progress')
+      .select('*')
+      .eq('user_id', authStore.user.id)
+    
+    if (progressError && progressError.code !== 'PGRST116') {
+      console.error('Erreur chargement progression défis:', progressError)
+    }
+    
+    // Combiner les données
+    if (challengesData && challengesData.length > 0) {
+      activeChallenges.value = challengesData.map(challenge => {
+        const userProgress = userProgressData?.find(p => p.challenge_id === challenge.id)
+        return {
+          ...challenge,
+          progress: userProgress?.progress || 0,
+          completed: userProgress?.completed || false,
+          completed_at: userProgress?.completed_at || null
+        }
+      })
+    } else {
+      activeChallenges.value = []
+    }
+    
+    // Calculer les stats
+    const completed = activeChallenges.value.filter(c => c.completed)
+    challengeStats.value = {
+      totalCompleted: completed.length,
+      totalXPFromChallenges: completed.reduce((sum, c) => sum + (c.points || c.xp_reward || 0), 0)
+    }
+    
+    console.log(`✅ ${activeChallenges.value.length} défis chargés (${completed.length} complétés)`)
+    
   } catch (error) {
     console.error('❌ Erreur lors du chargement des défis:', error)
     activeChallenges.value = []
-    challengeStats.value = {}
+    challengeStats.value = { totalCompleted: 0, totalXPFromChallenges: 0 }
   }
 }
 
 const showChallengeDetails = (challenge) => {
-  // Rediriger vers la page des défis avec le défi sélectionné
-  router.push('/challenges')
+  modalType.value = 'challenge'
+  modalItem.value = challenge
+  showDetailModal.value = true
+}
+
+const handleStart = ({ type, item }) => {
+  showToast.value = true
+  toastData.value = {
+    type: type,
+    title: `${type === 'challenge' ? 'Défi' : 'Quête'} commencé !`,
+    message: `Tu as commencé : ${item.title}`,
+    xp: 0
+  }
 }
 
 // Quest system methods
@@ -757,73 +1002,137 @@ const loadQuestsData = async () => {
   if (!authStore.user?.id) return
   
   try {
-    console.log('🗺️ Chargement des quêtes...')
-    // Pour l'instant, utiliser des données par défaut
-    // TODO: Implémenter le système de quêtes dans Supabase
-    activeQuests.value = []
-    questStats.value = { totalCompleted: 0, totalXPFromQuests: 0 }
-    console.log('✅ Quêtes chargées (système à implémenter)')
+    console.log('🗺️ Chargement des quêtes depuis Supabase...')
+    
+    // Récupérer les quêtes actives
+    const { data: questsData, error: questsError } = await supabase
+      .from('quests')
+      .select('*')
+      .eq('active', true)
+      .order('created_at', { ascending: false })
+    
+    if (questsError && questsError.code !== 'PGRST116') {
+      console.error('Erreur chargement quêtes:', questsError)
+    }
+    
+    // Récupérer les progressions de l'utilisateur
+    const { data: userQuestsData, error: userQuestsError } = await supabase
+      .from('user_quest_progress')
+      .select('*')
+      .eq('user_id', authStore.user.id)
+    
+    if (userQuestsError && userQuestsError.code !== 'PGRST116') {
+      console.error('Erreur chargement progression quêtes:', userQuestsError)
+    }
+    
+    // Combiner les données
+    if (questsData && questsData.length > 0) {
+      activeQuests.value = questsData.map(quest => {
+        const userQuest = userQuestsData?.find(q => q.quest_id === quest.id)
+        return {
+          ...quest,
+          progress: userQuest?.progress || 0,
+          completed: userQuest?.completed || false,
+          completed_at: userQuest?.completed_at || null,
+          steps_completed: userQuest?.steps_completed || 0
+        }
+      })
+    } else {
+      activeQuests.value = []
+    }
+    
+    // Calculer les stats
+    const completed = activeQuests.value.filter(q => q.completed)
+    questStats.value = {
+      totalCompleted: completed.length,
+      totalXPFromQuests: completed.reduce((sum, q) => sum + (q.points || q.xp_reward || 0), 0)
+    }
+    
+    console.log(`✅ ${activeQuests.value.length} quêtes chargées (${completed.length} complétées)`)
+    
   } catch (error) {
     console.error('❌ Erreur lors du chargement des quêtes:', error)
     activeQuests.value = []
-    questStats.value = {}
+    questStats.value = { totalCompleted: 0, totalXPFromQuests: 0 }
   }
 }
 
 const showQuestDetails = (quest) => {
-  // Rediriger vers la page des quêtes avec la quête sélectionnée
-  router.push('/quests')
+  modalType.value = 'quest'
+  modalItem.value = quest
+  showDetailModal.value = true
 }
 
-// Data loading
+// Data loading - Connexion Supabase comme CardNameProfile
 const loadUserStats = async () => {
   try {
     loading.value = true
     error.value = null
     
+    // Vérifier que l'utilisateur est connecté
     if (!authStore.user?.id) {
       throw new Error('Utilisateur non connecté')
     }
     
-    console.log('🔍 Chargement des stats gamification pour:', authStore.user.id)
+    const userId = authStore.user.id
+    console.log('🔍 Chargement des stats gamification Supabase pour:', userId)
     
-    // Utiliser le service Supabase pour récupérer les données
-    const stats = await gamificationServiceSupabase.getUserGamificationData(authStore.user.id)
+    // Récupérer les données de gamification depuis Supabase
+    const gamificationData = await gamificationServiceSupabase.getUserGamificationData(userId)
     
-    if (!stats) {
-      throw new Error('Aucune donnée trouvée pour cet utilisateur')
+    if (!gamificationData) {
+      console.warn('⚠️ Aucune donnée gamification trouvée, création de données par défaut')
+      userStats.value = {
+        uid: userId,
+        displayName: authStore.user.email?.split('@')[0] || 'Utilisateur',
+        niveau: 1,
+        xp: 0,
+        maison: null,
+        streak: 0,
+        streakMax: 0
+      }
+      loading.value = false
+      return
     }
     
-    console.log('✅ Stats gamification chargées:', stats)
+    console.log('✅ Données gamification Supabase chargées:', gamificationData)
     
-    // Améliorer le nom d'affichage avec les données Supabase Auth si nécessaire
-    if (!stats.displayName || stats.displayName === 'Utilisateur') {
-      stats.displayName = authStore.user.email?.split('@')[0] || 'Utilisateur'
+    // Formater le nom d'affichage
+    let displayName = gamificationData.displayName || gamificationData.display_name
+    if (!displayName || displayName === 'Utilisateur') {
+      const email = authStore.user.email || ''
+      displayName = email.split('@')[0] || 'Utilisateur'
     }
     
-    // Adapter les données pour correspondre au format attendu
-    const adaptedStats = {
-      ...stats,
-      niveau: stats.current_level || 1,
-      xp: stats.total_xp || 0,
-      maison: stats.house_name || stats.maison,
-      streak: 0, // À implémenter plus tard
-      streakMax: 0, // À implémenter plus tard
-      badges: [], // À implémenter plus tard
-      achievements: [], // À implémenter plus tard
-      upcomingChallenges: [] // À implémenter plus tard
+    // Adapter les données Supabase au format du composant
+    userStats.value = {
+      uid: userId,
+      displayName: displayName,
+      niveau: gamificationData.current_level || gamificationData.niveau || 1,
+      xp: gamificationData.total_xp || gamificationData.xp || 0,
+      xpToNext: gamificationData.xpToNext || gamificationData.xp_to_next || 100,
+      maison: gamificationData.house_name || gamificationData.maison || null,
+      loginStreak: gamificationData.loginStreak || gamificationData.login_streak || 0,
+      streak: gamificationData.loginStreak || gamificationData.login_streak || 0,
+      streakMax: gamificationData.streakMax || gamificationData.streak_max || 0,
+      totalXP: gamificationData.totalXP || gamificationData.total_xp || 0,
+      lastXPGain: gamificationData.lastXPGain || gamificationData.last_xp_gain || null,
+      lastLogin: gamificationData.lastLogin || gamificationData.last_login || null,
+      createdAt: gamificationData.created_at || gamificationData.createdAt || null
     }
-    
-    userStats.value = adaptedStats
     
     // Charger les données supplémentaires (badges, défis, quêtes)
-    await loadBadgesData()
-    await loadChallengesData()
-    await loadQuestsData()
+    await Promise.all([
+      loadBadgesData(),
+      loadChallengesData(),
+      loadQuestsData()
+    ])
+    
+    console.log('✅ Toutes les données gamification chargées avec succès')
     
   } catch (err) {
-    console.error('❌ Erreur lors du chargement des stats:', err)
-    error.value = err.message || 'Erreur lors du chargement des données'
+    console.error('❌ Erreur lors du chargement des stats gamification:', err)
+    error.value = err.message || 'Erreur lors du chargement des données de gamification'
   } finally {
     loading.value = false
   }
@@ -832,6 +1141,20 @@ const loadUserStats = async () => {
 const goBack = () => {
   router.go(-1)
 }
+
+// Watcher pour recalculer le niveau automatiquement quand l'XP change
+watch(
+  () => userStats.value?.xp,
+  (newXP, oldXP) => {
+    if (newXP !== undefined && newXP !== oldXP && userStats.value) {
+      const expectedLevel = calculateLevel(newXP)
+      if (expectedLevel !== userStats.value.niveau) {
+        console.log(`🔄 XP changé: ${oldXP} → ${newXP}, recalcul du niveau...`)
+        updateLevelFromXP(newXP)
+      }
+    }
+  }
+)
 
 // Initialization
 onMounted(() => {
@@ -847,24 +1170,55 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.page-wrapper {
-  width: 100%;
+/* ProfileView.vue structure CSS */
+.profile-center-scrollable {
   height: 100vh;
   overflow-y: auto;
-  overflow-x: hidden;
-  /* Masquer la scrollbar */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE et Edge */
-}
-
-.page-wrapper::-webkit-scrollbar {
-  display: none; /* Chrome, Safari et Opera */
+  -webkit-overflow-scrolling: touch;
 }
 
 .gamification-profile-page {
   width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
   position: relative;
-  padding-bottom: 4rem;
+  padding: 2rem;
+}
+
+/* Responsive Mobile Styles */
+@media (max-width: 1200px) {
+  .gamification-profile-page {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 991px) {
+  .sidebar-left, .sidebar-right {
+    display: none !important;
+  }
+  .min-h-screen.flex.relative.lg\:static {
+    flex-direction: column !important;
+    padding: 0;
+    min-height: 0;
+  }
+  .min-h-screen.flex.flex-column.relative.flex-auto {
+    min-height: 0;
+    width: 100%;
+    padding: 0;
+  }
+  .gamification-profile-page {
+    padding: 1rem;
+  }
+  .flex.flex-column.flex-auto {
+    width: 100% !important;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .gamification-profile-page {
+    padding: 0.75rem;
+  }
 }
 
 /* Loading and Error States */
@@ -910,7 +1264,7 @@ onBeforeUnmount(() => {
 
 /* Profile Header */
 .profile-header {
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .profile-banner-wrapper {
@@ -1369,19 +1723,11 @@ onBeforeUnmount(() => {
   text-align: center;
 }
 
-/* Stats container - même style que HouseStatsPage */
+/* Stats container */
 .stats-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
-}
-
-.house-level-card {
-  background: var(--surface-card);
-  border-radius: 16px;
-  padding: 2rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 .level-info {
@@ -1408,7 +1754,7 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1.5rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .stat-card {
@@ -1449,13 +1795,37 @@ onBeforeUnmount(() => {
   font-size: 0.9rem;
 }
 
-/* Members ranking style - exactement comme HouseStatsPage */
-.members-ranking {
+/* Unified Card Styles */
+.members-ranking,
+.house-level-card {
   background: var(--surface-card);
   border-radius: 16px;
   padding: 2rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  height: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.members-ranking .empty-badge-state,
+.members-ranking .empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 250px;
+  padding: 2rem;
+}
+
+/* Adaptive responsiveness for cards */
+@media (max-width: 768px) {
+  .members-ranking,
+  .house-level-card {
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
 }
 
 .card-header {
@@ -1722,9 +2092,9 @@ onBeforeUnmount(() => {
 
 .modern-badge-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .show-more-section {
@@ -1855,7 +2225,7 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 1.5rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .check-challenges-btn {
@@ -1899,7 +2269,7 @@ onBeforeUnmount(() => {
 
 .modern-quest-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 1.5rem;
   margin-bottom: 1rem;
 }
@@ -1941,5 +2311,99 @@ onBeforeUnmount(() => {
   .challenge-overview-stats {
     justify-content: center;
   }
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+/* Appliquer les animations aux cards */
+.members-ranking,
+.house-level-card {
+  animation: fadeIn 0.6s ease-out;
+  animation-fill-mode: both;
+}
+
+.members-ranking:nth-child(1) { animation-delay: 0.1s; }
+.members-ranking:nth-child(2) { animation-delay: 0.2s; }
+.members-ranking:nth-child(3) { animation-delay: 0.3s; }
+.members-ranking:nth-child(4) { animation-delay: 0.4s; }
+.members-ranking:nth-child(5) { animation-delay: 0.5s; }
+
+/* Hover effects améliorés */
+.members-ranking:hover,
+.house-level-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Transitions fluides */
+.members-ranking,
+.house-level-card,
+.stat-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Animation pour les badges */
+.modern-badge-grid > *,
+.modern-challenge-grid > *,
+.modern-quest-grid > * {
+  animation: slideInUp 0.5s ease-out;
+  animation-fill-mode: both;
+}
+
+.modern-badge-grid > *:nth-child(1) { animation-delay: 0.05s; }
+.modern-badge-grid > *:nth-child(2) { animation-delay: 0.1s; }
+.modern-badge-grid > *:nth-child(3) { animation-delay: 0.15s; }
+.modern-badge-grid > *:nth-child(4) { animation-delay: 0.2s; }
+.modern-badge-grid > *:nth-child(5) { animation-delay: 0.25s; }
+.modern-badge-grid > *:nth-child(6) { animation-delay: 0.3s; }
+
+/* Loading shimmer effect */
+.loading-spinner {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Smooth scroll behavior */
+.profile-center-scrollable {
+  scroll-behavior: smooth;
 }
 </style>

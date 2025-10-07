@@ -89,8 +89,10 @@ class GamificationServiceSupabase {
         return this.getDefaultGamificationData()
       }
 
-      // Récupérer les informations de la maison
+      // Récupérer les informations de la maison par ID
       let houseInfo = null
+      let houseName = null
+      
       if (gamificationData.house_id) {
         const { data: houseData } = await this.supabase
           .from('houses')
@@ -99,8 +101,11 @@ class GamificationServiceSupabase {
           .single()
 
         if (houseData) {
+          houseName = houseData.name.toLowerCase()
           houseInfo = {
             name: houseData.name,
+            level: houseData.level || 1,
+            total_xp: houseData.total_xp || 0,
             color: houseData.color,
             motto: houseData.motto,
             description: houseData.description
@@ -108,15 +113,19 @@ class GamificationServiceSupabase {
         }
       }
 
+      // Calculer le niveau basé sur XP (formule: niveau = √(XP/100), min 1, max 20)
+      const totalXP = gamificationData.total_xp || 0
+      const calculatedLevel = Math.min(20, Math.max(1, Math.floor(Math.sqrt(totalXP / 100))))
+      
       // Convertir les données Supabase au format attendu par CardNameProfile
       const formattedData = {
-        maison: houseInfo?.name?.toLowerCase() || null,
-        niveau: gamificationData.current_level || 1,
-        xp: gamificationData.total_xp || 0,
-        totalXP: gamificationData.total_xp || 0,
-        xpToNext: this.calculateXPToNext(gamificationData.current_level || 1, gamificationData.total_xp || 0),
+        maison: houseName,
+        niveau: calculatedLevel,
+        xp: totalXP,
+        totalXP: totalXP,
+        xpToNext: this.calculateXPToNext(calculatedLevel, totalXP),
         lastXPGain: null,
-        loginStreak: 0, // À implémenter si nécessaire
+        loginStreak: 0,
         badges: [],
         quests: [],
         challenges: [],
@@ -139,15 +148,17 @@ class GamificationServiceSupabase {
 
   /**
    * Calcule l'XP nécessaire pour le prochain niveau
+   * Nouveau système 20 niveaux: XP requis = (niveau)² × 100
    */
   calculateXPToNext(currentLevel, currentXP) {
     const nextLevel = currentLevel + 1
-    if (nextLevel > 5) return 0 // Niveau max atteint
+    if (nextLevel > 20) return 0 // Niveau max atteint
     
-    const nextLevelConfig = LEVEL_CONFIG[nextLevel]
-    if (!nextLevelConfig) return 0
+    // Formule: XP pour niveau N = N² × 100
+    const xpForNextLevel = Math.pow(nextLevel, 2) * 100
+    const xpRemaining = xpForNextLevel - currentXP
     
-    return Math.max(0, nextLevelConfig.xpRequired - currentXP)
+    return Math.max(0, xpRemaining)
   }
 
   /**
@@ -206,7 +217,20 @@ class GamificationServiceSupabase {
     try {
       console.log('🏆 Récupération du classement des maisons depuis Supabase...')
 
-      // Récupérer toutes les données de gamification
+      // Récupérer les données des maisons directement depuis la table houses
+      const { data: housesData, error: housesError } = await this.supabase
+        .from('houses')
+        .select('*')
+        .order('total_xp', { ascending: false })
+
+      if (housesError) {
+        console.error('❌ Erreur récupération maisons:', housesError)
+        throw housesError
+      }
+
+      console.log(`🏠 ${housesData?.length || 0} maisons trouvées`)
+
+      // Récupérer toutes les données de gamification pour stats détaillées
       const { data: gamificationData, error } = await this.supabase
         .from('gamification_data')
         .select('*')
@@ -331,38 +355,56 @@ class GamificationServiceSupabase {
         console.warn('⚠️ Aucune donnée de gamification trouvée ou erreur de permissions RLS')
       }
 
-      // Convertir en array et calculer les niveaux/moyennes
-      const housesRanking = houses.map(house => {
-        const stats = housesStats[house]
-        const averageXP = stats.totalMembers > 0 ? Math.round(stats.totalXP / stats.totalMembers) : 0
-        const averageLevel = stats.totalMembers > 0 ? 
-          Math.round(stats.members.reduce((sum, member) => sum + member.level, 0) / stats.totalMembers * 10) / 10 : 1
+      // Créer le classement depuis les données réelles de la table houses
+      const housesRanking = housesData.map(houseDB => {
+        const houseName = houseDB.name.toLowerCase()
+        const stats = housesStats[houseName] || { members: [] }
+        
+        // Utiliser les données de la table houses (source de vérité)
+        const totalXP = houseDB.total_xp || 0
+        const totalMembers = houseDB.member_count || stats.totalMembers || 0
+        const houseLevel = houseDB.level || 1
+        
+        // Calculer moyennes depuis gamification_data
+        const averageXP = totalMembers > 0 ? Math.round(totalXP / totalMembers) : 0
+        const averageLevel = stats.members.length > 0 ? 
+          Math.round(stats.members.reduce((sum, member) => sum + member.level, 0) / stats.members.length * 10) / 10 : 1
 
-        // Calculer le niveau de la maison basé sur l'XP total
-        const houseLevel = this.calculateHouseLevel(stats.totalXP)
+        // Calculer XP pour prochain niveau (formule: niveau N = (N-1)² × 10000)
+        const nextLevel = houseLevel + 1
+        const xpForNextLevel = Math.pow(nextLevel - 1, 2) * 10000
+        const xpToNext = xpForNextLevel > totalXP ? xpForNextLevel - totalXP : 0
+
+        // Nom du niveau
+        const levelNames = {
+          1: 'Maison Naissante',
+          2: 'Maison Active',
+          3: 'Maison Dynamique',
+          4: 'Maison Brillante',
+          5: 'Maison d\'Excellence',
+          6: 'Maison Prestigieuse',
+          7: 'Maison Légendaire',
+          8: 'Maison Mythique'
+        }
 
         return {
-          name: house,
-          displayName: stats.displayName,
-          color: stats.color,
-          motto: stats.motto,
-          level: houseLevel.niveau,
-          levelName: houseLevel.name,
-          totalXP: stats.totalXP,
-          totalMembers: stats.totalMembers,
+          name: houseName,
+          displayName: this.getHouseDisplayName(houseName),
+          color: houseDB.color || this.getHouseColor(houseName),
+          motto: houseDB.motto || this.getHouseMotto(houseName),
+          level: houseLevel,
+          levelName: levelNames[houseLevel] || `Niveau ${houseLevel}`,
+          totalXP: totalXP,
+          totalMembers: totalMembers,
           averageXP: averageXP,
           averageLevel: averageLevel,
-          xpToNext: houseLevel.xpToNext
+          xpToNext: xpToNext
         }
       })
 
-      // Trier par niveau décroissant, puis par XP total décroissant
-      housesRanking.sort((a, b) => {
-        if (a.level !== b.level) {
-          return b.level - a.level
-        }
-        return b.totalXP - a.totalXP
-      })
+      // Trier par XP total décroissant (déjà trié par la query)
+      // Mais on trie quand même au cas où
+      housesRanking.sort((a, b) => b.totalXP - a.totalXP)
 
       // Ajouter les positions
       housesRanking.forEach((house, index) => {
