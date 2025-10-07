@@ -3,10 +3,43 @@
     <Navbar />
     <div :style="{ '--house-color': houseColor, 'max-width': '1400px', 'margin': '0 auto', 'padding': '2rem' }">
       
-      <!-- Loading State -->
-      <div v-if="loading" class="flex flex-column justify-content-center align-items-center gap-3" style="min-height: 60vh;">
-        <ProgressSpinner :style="{ width: '50px', height: '50px' }" strokeWidth="4" />
-        <p class="text-lg font-medium text-600">Chargement des quêtes...</p>
+      <!-- Loading State avec Skeleton -->
+      <div v-if="loading">
+        <!-- Header Skeleton -->
+        <div class="surface-card border-round-3xl p-5 mb-5 shadow-3">
+          <div class="flex justify-content-between align-items-center">
+            <div class="flex align-items-center gap-4 flex-1">
+              <Skeleton shape="circle" size="4rem" />
+              <div class="flex-1">
+                <Skeleton width="300px" height="2rem" class="mb-2" />
+                <Skeleton width="400px" height="1rem" />
+              </div>
+            </div>
+            <Skeleton width="100px" height="2.5rem" borderRadius="12px" />
+          </div>
+        </div>
+        
+        <!-- Stats Skeletons -->
+        <div class="grid mb-5">
+          <div v-for="i in 3" :key="i" class="col-12 md:col-4">
+            <div class="surface-card border-round-xl p-4 shadow-2">
+              <div class="flex align-items-center gap-3">
+                <Skeleton shape="circle" size="4rem" />
+                <div class="flex-1">
+                  <Skeleton width="100px" height="2rem" class="mb-2" />
+                  <Skeleton width="150px" height="1rem" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Cards Skeletons -->
+        <div class="grid">
+          <div v-for="i in 6" :key="i" class="col-12 md:col-6 lg:col-4">
+            <Skeleton height="350px" borderRadius="16px" />
+          </div>
+        </div>
       </div>
 
       <!-- Main Content -->
@@ -163,13 +196,19 @@
           <label class="block text-sm font-semibold text-900 mb-2">
             <i class="pi pi-search mr-1"></i> Rechercher
           </label>
-          <span class="p-input-icon-left w-full">
+          <span class="p-input-icon-left w-full" :class="{ 'p-input-icon-right': searchQuery }">
             <i class="pi pi-search"></i>
             <InputText 
               v-model="searchQuery" 
-              placeholder="Nom de la quête..."
+              placeholder="Rechercher une quête..."
               class="w-full"
             />
+            <i 
+              v-if="searchQuery" 
+              class="pi pi-times cursor-pointer text-400 hover:text-900 transition-colors transition-duration-200"
+              @click="searchQuery = ''"
+              style="right: 0.75rem;"
+            ></i>
           </span>
         </div>
         
@@ -230,10 +269,47 @@
 
 
     <!-- Quêtes -->
-    <div v-if="filteredQuests.length > 0">
-      <
-      div class="grid">
-        <div v-for="quest in paginatedQuests" :key="quest.id" class="col-12 md:col-6 lg:col-4">
+    <div v-if="filteredQuests.length > 0" class="quests-container">
+      <!-- Barre d'actions -->
+      <div class="surface-card border-round-xl p-3 mb-4 shadow-1 flex justify-content-between align-items-center flex-wrap gap-3">
+        <div class="flex align-items-center gap-2">
+          <i class="pi pi-list" :style="{ color: houseColor }"></i>
+          <span class="text-lg font-bold text-900">{{ filteredQuests.length }}</span>
+          <span class="text-sm text-600">quête{{ filteredQuests.length > 1 ? 's' : '' }} {{ activeTab === 'active' ? 'actives' : activeTab === 'completed' ? 'complétées' : 'au total' }}</span>
+        </div>
+        
+        <div class="flex align-items-center gap-2">
+          <span class="text-sm text-600 mr-2 hidden md:inline">Affichage:</span>
+          <Button 
+            icon="pi pi-th-large" 
+            :outlined="viewMode !== 'grid'"
+            @click="viewMode = 'grid'" 
+            size="small"
+            :style="viewMode === 'grid' ? { backgroundColor: houseColor, borderColor: houseColor } : { color: houseColor, borderColor: houseColor }"
+            class="view-toggle-btn"
+          />
+          <Button 
+            icon="pi pi-list" 
+            :outlined="viewMode !== 'list'"
+            @click="viewMode = 'list'" 
+            size="small"
+            :style="viewMode === 'list' ? { backgroundColor: houseColor, borderColor: houseColor } : { color: houseColor, borderColor: houseColor }"
+            class="view-toggle-btn"
+          />
+          <Divider layout="vertical" class="hidden md:inline-flex" />
+          <span class="text-sm text-600 hidden md:inline">
+            Page {{ Math.floor(currentPage / questsPerPage) + 1 }}/{{ totalPages }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Grille ou Liste avec transition -->
+      <div :class="viewMode === 'grid' ? 'grid' : 'flex flex-column gap-3'">
+        <div 
+          v-for="quest in paginatedQuests" 
+          :key="quest.id" 
+          :class="viewMode === 'grid' ? 'col-12 md:col-6 lg:col-4 quest-card-wrapper' : 'quest-card-wrapper'"
+        >
           <QuestCard
             :quest="quest"
             :house-color="houseColor"
@@ -255,27 +331,39 @@
       />
     </div>
 
-    <!-- État vide -->
-    <div v-else class="surface-card border-round-xl p-6 text-center shadow-2">
-      <div class="inline-flex align-items-center justify-content-center border-round-circle mb-4" 
-           :style="{ width: '120px', height: '120px', background: `${houseColor}10` }">
-        <span class="text-6xl">🗺️</span>
+    <!-- État vide amélioré -->
+    <div v-else class="surface-card border-round-xl p-6 text-center shadow-2 empty-state-card">
+      <div class="empty-state-icon inline-flex align-items-center justify-content-center border-round-circle mb-4" 
+           :style="{ width: '140px', height: '140px', background: `${houseColor}15` }">
+        <span class="text-7xl">{{ getEmptyStateIcon() }}</span>
       </div>
-      <h3 class="text-2xl font-bold text-900 mb-2">{{ getEmptyStateTitle() }}</h3>
-      <p class="text-600 text-lg mb-4 mx-auto" style="max-width: 500px;">{{ getEmptyStateMessage() }}</p>
-      <div class="flex gap-2 justify-content-center">
+      <h3 class="text-3xl font-bold text-900 mb-3">{{ getEmptyStateTitle() }}</h3>
+      <p class="text-600 text-lg mb-4 mx-auto line-height-3" style="max-width: 550px;">
+        {{ getEmptyStateMessage() }}
+      </p>
+      <div class="flex gap-3 justify-content-center flex-wrap">
         <Button 
           v-if="hasFilters"
           @click="clearFilters"
           icon="pi pi-filter-slash"
           label="Effacer les filtres"
+          size="large"
+          :style="{ backgroundColor: houseColor, borderColor: houseColor }"
+        />
+        <Button 
+          v-else-if="activeTab !== 'active'"
+          @click="() => activeTabIndex = 0"
+          icon="pi pi-compass"
+          label="Voir mes quêtes actives"
+          size="large"
           :style="{ backgroundColor: houseColor, borderColor: houseColor }"
         />
         <Button 
           v-else
-          @click="() => activeTabIndex = 0"
-          icon="pi pi-compass"
-          label="Voir mes quêtes"
+          @click="() => activeTabIndex = 2"
+          icon="pi pi-list"
+          label="Parcourir toutes les quêtes"
+          size="large"
           outlined
           :style="{ borderColor: houseColor, color: houseColor }"
         />
@@ -329,11 +417,12 @@ import InputText from 'primevue/inputtext'
 import Dropdown from 'primevue/dropdown'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
-import ProgressSpinner from 'primevue/progressspinner'
 import ProgressBar from 'primevue/progressbar'
 import Paginator from 'primevue/paginator'
 import Toast from 'primevue/toast'
 import Chip from 'primevue/chip'
+import Skeleton from 'primevue/skeleton'
+import Divider from 'primevue/divider'
 import QuestCard from './QuestCard.vue'
 import userQuestsService from '../../service/userQuestsService'
 import { useAuthStore } from '@/stores/authStore'
@@ -345,6 +434,7 @@ const authStore = useAuthStore()
 
 // État réactif
 const loading = ref(true)
+const viewMode = ref('grid') // 'grid' ou 'list'
 
 // House configuration (identique à GamificationProfilePage)
 const houseConfig = {
@@ -613,6 +703,19 @@ const getDifficultyOrder = (difficulty) => {
   return order[difficulty] || 0
 }
 
+const getEmptyStateIcon = () => {
+  if (hasFilters.value) {
+    return '🔍'
+  }
+  
+  if (activeTab.value === 'active') {
+    return '🗺️'
+  } else if (activeTab.value === 'completed') {
+    return '🏆'
+  }
+  return '📋'
+}
+
 const getEmptyStateTitle = () => {
   if (hasFilters.value) {
     return 'Aucune quête trouvée'
@@ -658,9 +761,36 @@ onMounted(() => {
 })
 </script>
 
-<style>
+<style scoped>
 .page-wrapper {
   min-height: 100vh;
+}
+
+/* Animations entrée */
+.quest-card-wrapper {
+  animation: fadeInUp 0.4s ease forwards;
+  opacity: 0;
+}
+
+.quest-card-wrapper:nth-child(1) { animation-delay: 0.05s; }
+.quest-card-wrapper:nth-child(2) { animation-delay: 0.1s; }
+.quest-card-wrapper:nth-child(3) { animation-delay: 0.15s; }
+.quest-card-wrapper:nth-child(4) { animation-delay: 0.2s; }
+.quest-card-wrapper:nth-child(5) { animation-delay: 0.25s; }
+.quest-card-wrapper:nth-child(6) { animation-delay: 0.3s; }
+.quest-card-wrapper:nth-child(7) { animation-delay: 0.35s; }
+.quest-card-wrapper:nth-child(8) { animation-delay: 0.4s; }
+.quest-card-wrapper:nth-child(9) { animation-delay: 0.45s; }
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Onglet actif avec couleur de maison */
@@ -675,8 +805,96 @@ onMounted(() => {
   color: white !important;
 }
 
+/* Quests container */
+.quests-container {
+  animation: fadeIn 0.6s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 /* Letter spacing utility */
 .letter-spacing-1 {
   letter-spacing: 0.05em;
+}
+
+/* Pagination style */
+:deep(.p-paginator) {
+  background: white;
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  padding: 1rem;
+}
+
+:deep(.p-paginator .p-paginator-page.p-highlight) {
+  background: var(--house-color) !important;
+  border-color: var(--house-color) !important;
+  color: white;
+}
+
+/* Hover effects améliorés */
+:deep(.surface-card) {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+:deep(.surface-card:hover) {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* View toggle buttons */
+.view-toggle-btn {
+  transition: all 0.2s ease;
+}
+
+.view-toggle-btn:hover {
+  transform: scale(1.05);
+}
+
+/* Skeleton animations */
+:deep(.p-skeleton) {
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Empty state animations */
+.empty-state-card {
+  animation: fadeIn 0.5s ease;
+}
+
+.empty-state-icon {
+  animation: bounce-in 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes bounce-in {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .quest-card-wrapper {
+    animation-delay: 0s !important;
+  }
 }
 </style>
