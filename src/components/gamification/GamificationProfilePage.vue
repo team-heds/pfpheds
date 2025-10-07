@@ -70,7 +70,7 @@
                 </div>
                 <div class="card-content">
                   <span class="card-label">XP Total</span>
-                  <span class="card-value">{{ formatNumber(userStats.xp || 0) }}</span>
+                  <span class="card-value">{{ formatNumber(userStats.xp || userStats.totalXP || 0) }}</span>
                 </div>
               </div>
             </div>
@@ -119,8 +119,8 @@
                 ></div>
               </div>
               <div class="xp-text">
-                <span>{{ formatNumber(userStats.xp || 0) }} XP</span>
-                <span>{{ formatNumber(getNextLevelXP(userStats.niveau || 1)) }} XP pour le niveau suivant</span>
+                <span>{{ formatNumber(userStats.xp || 0) }} / {{ formatNumber(getNextLevelXP(userStats.niveau || 1)) }} XP</span>
+                <span>{{ formatNumber(calculateXPToNext(userStats.niveau || 1, userStats.xp || 0)) }} XP pour le niveau suivant</span>
               </div>
             </div>
           </div>
@@ -485,6 +485,7 @@ import FondHarmonis from '@/assets/maisons/FondHarmonis.png'
 import FondElaris from '@/assets/maisons/FondElaris.png'
 import FondDoloris from '@/assets/maisons/FondDoloris.png'
 import FondSolencia from '@/assets/maisons/FondSolencia.png'
+import MaitreDuJeuFond from '@/assets/maisons/MaitreDuJeuFond.png'
 
 // Router and auth
 const router = useRouter()
@@ -529,7 +530,8 @@ const houseConfig = {
   'Harmonis': { name: 'Harmonis', color: '#2E8B57' }, // Vert - "L'équilibre soigne"
   'Elaris': { name: 'Elaris', color: '#DC143C' }, // Rouge - "Clarifier, guider, apaiser"
   'Doloris': { name: 'Doloris', color: '#FFD700' }, // Jaune/Or - "Comprendre la douleur, c'est soigner"
-  'Solencia': { name: 'Solencia', color: '#4169E1' } // Bleu - "Apaiser pour mieux guérir"
+  'Solencia': { name: 'Solencia', color: '#4169E1' }, // Bleu - "Apaiser pour mieux guérir"
+  'Gamemaster': { name: 'Gamemaster', color: '#9333ea' } // Violet - "Voir tout, gérer tout"
 }
 
 // Computed properties
@@ -540,13 +542,14 @@ const normalizeHouse = (val) => {
   if (s.startsWith('ela')) return 'Elaris'
   if (s.startsWith('dol')) return 'Doloris'
   if (s.startsWith('sol')) return 'Solencia'
+  if (s.startsWith('game') || s.startsWith('maitre')) return 'Gamemaster'
   return null
 }
 
 const houseColor = computed(() => {
   const h = normalizeHouse(userStats.value?.maison)
-  if (!h) return '#6B7280'
-  return houseConfig[h]?.color || '#6B7280'
+  if (!h) return '#6B7280' // Gris par défaut si pas de maison
+  return houseConfig[h]?.color || '#9333ea' // Violet par défaut pour Game Master
 })
 
 // Calcul automatique du niveau basé sur l'XP (nouveau système 20 niveaux)
@@ -674,7 +677,8 @@ const houseImages = {
   harmonis: FondHarmonis,
   elaris: FondElaris,
   doloris: FondDoloris,
-  solencia: FondSolencia
+  solencia: FondSolencia,
+  gamemaster: MaitreDuJeuFond
 }
 
 const houseBackgroundImage = computed(() => {
@@ -685,10 +689,9 @@ const houseBackgroundImage = computed(() => {
 
 const xpProgress = computed(() => {
   if (!userStats.value) return 0
-  const currentXP = userStats.value.xp || 0
-  const nextLevelXP = getNextLevelXP(userStats.value.niveau || 1)
-  const currentLevelXP = getCurrentLevelXP(userStats.value.niveau || 1)
-  return Math.min(100, ((currentXP - currentLevelXP) / (nextLevelXP - currentLevelXP)) * 100)
+  const currentLevel = userStats.value.niveau || 1
+  const totalXP = userStats.value.xp || 0
+  return getLevelProgress(currentLevel, totalXP)
 })
 
 // Collections (safe fallbacks)
@@ -798,12 +801,14 @@ const formatNumber = (num) => {
 }
 
 const getCurrentLevelXP = (level) => {
-  if (level <= 1) return 0
-  return Math.floor(50 * Math.pow(1.5, level - 2))
+  const levelInfo = getLevelInfo(level)
+  return levelInfo.xpRequired
 }
 
 const getNextLevelXP = (level) => {
-  return Math.floor(50 * Math.pow(1.5, level - 1))
+  if (level >= 20) return 0 // Niveau maximum
+  const nextLevelInfo = getLevelInfo(level + 1)
+  return nextLevelInfo.xpRequired
 }
 
 const getDaysSinceJoined = () => {

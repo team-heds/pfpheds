@@ -355,8 +355,11 @@ class GamificationServiceSupabase {
         console.warn('⚠️ Aucune donnée de gamification trouvée ou erreur de permissions RLS')
       }
 
+      // Filtrer Game Master (hors compétition)
+      const competitionHouses = housesData.filter(h => h.name.toLowerCase() !== 'gamemaster')
+      
       // Créer le classement depuis les données réelles de la table houses
-      const housesRanking = housesData.map(houseDB => {
+      const housesRanking = competitionHouses.map(houseDB => {
         const houseName = houseDB.name.toLowerCase()
         const stats = housesStats[houseName] || { members: [] }
         
@@ -482,7 +485,8 @@ class GamificationServiceSupabase {
       harmonis: 'Harmonis',
       elaris: 'Elaris', 
       doloris: 'Doloris',
-      solencia: 'Solencia'
+      solencia: 'Solencia',
+      gamemaster: 'Maître du Jeu'
     }
     return houses[house] || house
   }
@@ -492,7 +496,8 @@ class GamificationServiceSupabase {
       harmonis: '#2E8B57', // Vert
       elaris: '#DC143C',   // Rouge
       doloris: '#FFD700',  // Jaune
-      solencia: '#4169E1'  // Bleu
+      solencia: '#4169E1', // Bleu
+      gamemaster: '#9333ea' // Violet royal
     }
     return colors[house] || '#666666'
   }
@@ -502,7 +507,8 @@ class GamificationServiceSupabase {
       harmonis: 'L\'équilibre soigne',
       elaris: 'Clarifier, guider, apaiser',
       doloris: 'Comprendre la douleur, c\'est soigner',
-      solencia: 'Apaiser pour mieux guérir'
+      solencia: 'Apaiser pour mieux guérir',
+      gamemaster: 'Voir tout, gérer tout'
     }
     return mottos[house] || ''
   }
@@ -913,7 +919,7 @@ class GamificationServiceSupabase {
     const houses = {
       harmonis: {
         name: 'Harmonis',
-        color: '#3498db',
+        color: '#27ae60',
         motto: "L'harmonie du corps, force de l’esprit"
       },
       elaris: {
@@ -928,7 +934,7 @@ class GamificationServiceSupabase {
       },
       solencia: {
         name: 'Solencia',
-        color: '#27ae60',
+        color: '#3498db',
         motto: 'La sagesse éclaire le chemin'
       }
     }

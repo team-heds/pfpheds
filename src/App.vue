@@ -36,6 +36,7 @@ import MobileBottomNav from '@/components/common/utils/MobileBottomNav.vue';
 import PwaInstallPrompt from '@/components/common/utils/PwaInstallPrompt.vue';
 import GamificationNotification from '@/components/gamification/notifications/GamificationNotification.vue';
 import notificationService from '@/service/notificationService';
+import questExpirationService from '@/service/questExpirationService';
 
 export default {
   name: "App",
@@ -52,6 +53,7 @@ export default {
     return {
       isLoading: true, // État de chargement
       showMobileBottomNav: true,
+      expirationCheckInterval: null, // ID de l'intervalle d'expiration
     };
   },
   computed: {
@@ -93,6 +95,16 @@ export default {
     
     // Le service de notifications est déjà initialisé automatiquement
     // via l'instance singleton dans notificationService.js
+    
+    // 🕐 Démarrer la vérification automatique des quêtes expirées (toutes les 5 min)
+    console.log('🚀 Démarrage service d\'expiration des quêtes...')
+    this.expirationCheckInterval = questExpirationService.startPeriodicCheck(5)
+  },
+  beforeUnmount() {
+    // 🛑 Arrêter proprement la vérification à la fermeture de l'app
+    if (this.expirationCheckInterval) {
+      questExpirationService.stopPeriodicCheck(this.expirationCheckInterval)
+    }
   },
 };
 </script>

@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { ref as dbRef, get as dbGet } from 'firebase/database';
 import { db } from '@/firebase'; // Import your Firebase configuration
 import { useAuthStore } from '@/stores/authStore';
+import rolesService from '@/service/rolesService';
 
 // ========================================
 // AUTHENTIFICATION & ACCUEIL // View
@@ -457,6 +458,13 @@ router.beforeEach(async (to, from, next) => {
 
   const user = authStore.user;
   console.log('👤 Utilisateur actuel:', user ? `${user.email} (${authStore.authProvider})` : 'Aucun');
+  console.log('🔍 Debug authStore:', {
+    user: authStore.user,
+    provider: authStore.authProvider,
+    isLoggedIn: authStore.isLoggedIn,
+    isSupabaseUser: authStore.isSupabaseUser,
+    isFirebaseUser: authStore.isFirebaseUser
+  });
 
   // Gestion spécifique pour la route "/"
   if (to.path === '/') {
@@ -471,54 +479,46 @@ router.beforeEach(async (to, from, next) => {
   // Gestion des routes nécessitant une authentification
   if (to.matched.some(record => record.meta.requiresAuth)) {
     if (user) {
-      // Pour Firebase, on vérifie les rôles dans la DB Firebase
-      // Pour Supabase, on peut soit utiliser les métadonnées utilisateur soit une autre logique
-      let roles = null;
-      
-      if (authStore.isFirebaseUser) {
-        const userId = user.uid;
-        console.log('Firebase user ID:', userId);
-        const rolesRef = dbRef(db, `Users/${userId}/Roles`);
-        const snapshot = await dbGet(rolesRef);
-        roles = snapshot.val();
-        console.log('Firebase roles:', roles);
-      } else if (authStore.isSupabaseUser) {
-        // Pour Supabase, on peut utiliser les métadonnées ou une table de rôles
-        console.log('Supabase user:', user);
-        // Pour l'instant, on autorise l'accès pour les utilisateurs Supabase
-        // Vous pouvez implémenter une logique de rôles spécifique à Supabase ici
-        roles = { user: true }; // Rôle par défaut pour Supabase
+      // Si pas de rôle requis, autoriser directement l'accès
+      if (!to.meta.requiredRole) {
+        console.log('✅ Accès autorisé: utilisateur connecté, aucun rôle spécifique requis');
+        return next();
       }
+      
+      // Sinon, vérifier les rôles
+      const userId = authStore.isFirebaseUser ? user.uid : user.id;
+      const provider = authStore.authProvider;
+      
+      console.log(`🔑 Vérification des rôles pour ${provider} user ID:`, userId);
+      
+      // Récupération des rôles via le service unifié
+      const roles = await rolesService.getUserRoles(userId, provider);
+      console.log(`📋 Rôles récupérés (${provider}):`, roles);
 
-      if (roles) {
+      if (roles && Object.keys(roles).length > 0) {
         const userRoles = Object.keys(roles).filter(role => roles[role]); // Récupération des rôles actifs de l'utilisateur
 
-        if (to.meta.requiredRole) {
-          const requiredRoles = Array.isArray(to.meta.requiredRole)
-            ? to.meta.requiredRole
-            : [to.meta.requiredRole]; // Assurez-vous que `requiredRole` est un tableau
+        const requiredRoles = Array.isArray(to.meta.requiredRole)
+          ? to.meta.requiredRole
+          : [to.meta.requiredRole];
 
-          // Vérifiez si l'utilisateur a au moins un des rôles requis
-          if (requiredRoles.some(role => userRoles.includes(role))) {
-            return next(); // Autoriser l'accès
-          } else {
-            console.warn('Accès refusé: Vous n\'avez pas les permissions requises pour accéder à cette page.');
-            alert('Accès refusé: Vous n\'avez pas les permissions requises.');
-            return next('/'); // Redirigez vers une page par défaut
-          }
+        // Vérifiez si l'utilisateur a au moins un des rôles requis
+        if (requiredRoles.some(role => userRoles.includes(role))) {
+          console.log(`✅ Accès autorisé: utilisateur a le(s) rôle(s) requis`);
+          return next();
         } else {
-          return next(); // Aucune vérification de rôle requise, autorisez l'accès
+          console.warn(`❌ Accès refusé: rôles requis ${requiredRoles.join(', ')}, rôles utilisateur: ${userRoles.join(', ')}`);
+          alert('Accès refusé: Vous n\'avez pas les permissions requises.');
+          return next('/');
         }
       } else {
-        // Si pas de rôles trouvés mais utilisateur connecté via Supabase, on autorise l'accès de base
-        if (authStore.isSupabaseUser) {
-          return next();
-        }
+        // Pas de rôles trouvés mais rôle requis
+        console.warn('⚠️ Aucun rôle trouvé pour cet utilisateur');
         import('primevue/usetoast').then(({ useToast }) => {
           const toast = useToast();
           toast.add({ severity: 'error', summary: 'Accès refusé', detail: 'Aucun rôle trouvé.', life: 4000 });
         });
-        return next('/home'); // Redirigez vers une page par défaut
+        return next('/home');
       }
     } else {
       import('primevue/usetoast').then(({ useToast }) => {

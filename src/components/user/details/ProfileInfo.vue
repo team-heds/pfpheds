@@ -20,6 +20,13 @@
           <!-- Résumé du stage utilisateur -->
           <ResumStageUserProfile class="w-full" />
 
+          <!-- 🆕 Section Quêtes Actives -->
+          <QuestsProfileCard 
+            :userId="user.uid" 
+            :houseColor="userHouseColor"
+            class="w-full" 
+          />
+
 
           <!-- Section pour changer la photo de profil
           <div class="p-field mt-4 surfaces-card w-full">
@@ -62,6 +69,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { getDatabase, ref as dbRef, get, update } from "firebase/database";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import { supabase } from '@/supabase';
 import Button from 'primevue/button';
 import { useToast } from 'primevue/usetoast';
 
@@ -72,6 +80,7 @@ import LeftSidebar from '@/components/social/library/LeftSidebar.vue';
 import RightSidebar from '@/components/social/library/RightSidebar.vue';
 import VotationResultProfil from '@/components/user/details/VotationResultProfil.vue'
 import RadarProfil from '@/components/user/details/RadarProfil.vue'
+import QuestsProfileCard from '@/components/gamification/QuestsProfileCard.vue'
 
 const toast = useToast();
 
@@ -90,6 +99,44 @@ const user = ref({
 });
 
 const selectedAvatarFile = ref(null);
+
+// Couleur de la maison de l'utilisateur (pour le composant Quêtes)
+const userHouseColor = ref('#2E8B57'); // Harmonis par défaut
+
+const houseColors = {
+  harmonis: '#2E8B57',
+  elaris: '#DC143C',
+  doloris: '#FFD700',
+  solencia: '#4169E1',
+  gamemaster: '#9333ea'
+};
+
+// Fonction pour récupérer la couleur de la maison de l'utilisateur
+const fetchUserHouseColor = async (userId) => {
+  try {
+    const { data, error } = await supabase
+      .from('gamification_data')
+      .select('house_id')
+      .eq('user_id', userId)
+      .single();
+    
+    if (data && data.house_id) {
+      // Récupérer le nom de la maison
+      const { data: houseData } = await supabase
+        .from('houses')
+        .select('name')
+        .eq('id', data.house_id)
+        .single();
+      
+      if (houseData) {
+        const houseName = houseData.name.toLowerCase();
+        userHouseColor.value = houseColors[houseName] || '#2E8B57';
+      }
+    }
+  } catch (err) {
+    console.error('Erreur récupération couleur maison:', err);
+  }
+};
 
 // --- Ajout récupération profil étudiant et scores radar ---
 const userProfile = ref(null);
@@ -128,6 +175,7 @@ onMounted(async () => {
   if (userId) {
     user.value.uid = userId;
     await fetchUserProfileById(userId);
+    await fetchUserHouseColor(userId);
   }
 });
 

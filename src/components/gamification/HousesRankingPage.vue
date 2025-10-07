@@ -250,7 +250,7 @@ const viewHouseDetails = (houseName) => {
 
 // Cache localStorage
 const CACHE_KEY = 'houses_ranking'
-const CACHE_DURATION = 1 * 60 * 1000 // 1 minute (rafraîchissement plus fréquent)
+const CACHE_DURATION = 10 * 1000 // 10 secondes (rafraîchissement plus fréquent)
 
 const loadFromCache = () => {
   try {
