@@ -336,11 +336,13 @@ import Chip from 'primevue/chip'
 import QuestCard from './QuestCard.vue'
 import questsService, { QUEST_DIFFICULTIES, QUEST_STATUS } from '../../service/questsService'
 import { getAuth } from 'firebase/auth'
+import { useAuthStore } from '@/stores/authStore'
 
 // Services
 const router = useRouter()
 const toast = useToast()
 const auth = getAuth()
+const authStore = useAuthStore()
 
 // État réactif
 const loading = ref(true)
@@ -366,7 +368,9 @@ const normalizeHouse = (val) => {
 
 // Computed properties pour le design
 const houseColor = computed(() => {
-  const h = normalizeHouse(auth.currentUser?.maison)
+  const user = authStore.user
+  if (!user) return '#6B7280'
+  const h = normalizeHouse(user.maison || user.user_metadata?.house)
   if (!h) return '#6B7280'
   return houseConfig[h]?.color || '#6B7280'
 })
@@ -502,19 +506,24 @@ const hasFilters = computed(() => {
 const loadQuestsData = async () => {
   try {
     loading.value = true
-    const userId = auth.currentUser?.uid
     
-    if (!userId) {
+    // Utiliser authStore qui supporte Firebase ET Supabase
+    const user = authStore.user
+    if (!user) {
       router.push('/login')
       return
     }
+    
+    // ID utilisateur selon le provider
+    const userId = authStore.isFirebaseUser ? user.uid : user.id
 
     // Charger les quêtes utilisateur
     userQuests.value = await questsService.getUserQuests(userId)
     
     // Initialiser si aucune quête
     if (Object.keys(userQuests.value).length === 0) {
-      const userHouse = normalizeHouse(auth.currentUser?.maison) || 'Harmonis'
+      // Récupérer la maison de l'utilisateur
+      const userHouse = normalizeHouse(user.maison || user.user_metadata?.house) || 'Harmonis'
       userQuests.value = await questsService.initializeUserQuests(userId, userHouse)
     }
 
@@ -536,7 +545,9 @@ const loadQuestsData = async () => {
 
 const startQuest = async (questId) => {
   try {
-    const userId = auth.currentUser?.uid
+    const user = authStore.user
+    if (!user) return
+    const userId = authStore.isFirebaseUser ? user.uid : user.id
     if (!userId) return
 
     await questsService.startQuest(userId, questId)
