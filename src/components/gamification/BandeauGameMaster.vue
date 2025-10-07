@@ -1,5 +1,5 @@
 <template>
-  <div class="bandeau-maison" :style="{ '--house-color': houseColor, 'background-image': `url(${houseBackground})` }">
+  <div class="bandeau-maison" :style="{ '--house-color': '#9333ea', 'background-image': `url(${MaitreDuJeuFond})` }">
     <div class="background-pattern"></div>
     <div class="particles-container">
       <div v-for="i in 20" :key="i" class="particle" :style="getParticleStyle(i)"></div>
@@ -7,8 +7,8 @@
     
     <div class="house-content">
       <div class="house-info">
-        <h3 class="house-name clickable" @click="navigateToHouseStats" :title="props.maison.toLowerCase() === 'gamemaster' ? 'Voir le classement' : 'Cliquer pour voir les statistiques de la maison'">{{ houseDisplayName }}</h3>
-        <p class="house-motto">"{{ houseMotto }}"</p>
+        <h3 class="house-name">🎮 Maître du Jeu 🎮</h3>
+        <p class="house-motto">"{{ motto }}"</p>
         
         <div class="level-section">
           <br>
@@ -30,10 +30,10 @@
         <Button class="action-btn" @click="navigateToProfile" title="Voir le profil">
           <i class="pi pi-user"></i>
         </Button>
-        <Button class="action-btn" @click="navigateToHouseStats" title="Voir les statistiques de la maison">
-          <i class="pi pi-home"></i>
+        <Button class="action-btn" @click="navigateToDashboard" title="Dashboard Admin">
+          <i class="pi pi-cog"></i>
         </Button>
-        <Button class="action-btn" @click="navigateToGlobalRanking" title="Voir le classement global des maisons">
+        <Button class="action-btn" @click="navigateToRanking" title="Voir le classement global des maisons">
           <i class="pi pi-chart-bar"></i>
         </Button>
       </div>
@@ -47,21 +47,13 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 
-// Import des images de fond des maisons
-import FondHarmonis from '@/assets/maisons/FondHarmonis.png'
-import FondElaris from '@/assets/maisons/FondElaris.png'
-import FondDoloris from '@/assets/maisons/FondDoloris.png'
-import FondSolencia from '@/assets/maisons/FondSolencia.png'
+// Import de l'image de fond Game Master
 import MaitreDuJeuFond from '@/assets/maisons/MaitreDuJeuFond.png'
 
 const props = defineProps({
-  maison: {
-    type: String,
-    required: true
-  },
   niveau: {
     type: Number,
-    default: 1
+    default: 20
   },
   loginStreak: {
     type: Number,
@@ -69,9 +61,9 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['viewProfile', 'viewStats', 'viewHouseRankings'])
-
 const router = useRouter()
+
+const motto = 'Voir tout, gérer tout'
 
 // Fonctions de navigation
 const navigateToProfile = () => {
@@ -83,84 +75,24 @@ const navigateToProfile = () => {
   }
 }
 
-const navigateToHouseStats = () => {
-  console.log('Navigating to house stats...')
+const navigateToDashboard = () => {
+  console.log('Navigating to dashboard...')
   try {
-    // Pour Game Master, aller vers le classement au lieu des stats
-    if (props.maison.toLowerCase() === 'gamemaster') {
-      router.push('/houses/ranking')
-    } else {
-      // Navigation vers les statistiques de la maison avec le nom de la maison
-      router.push(`/houses/${props.maison}/stats`)
-    }
+    // TODO: Créer la route /gamemaster/dashboard
+    router.push('/houses/ranking') // Temporaire
   } catch (error) {
     console.error('Navigation error:', error)
   }
 }
 
-const navigateToGlobalRanking = () => {
+const navigateToRanking = () => {
   console.log('Navigating to global ranking...')
   try {
-    // Navigation vers le classement global des maisons
     router.push('/houses/ranking')
   } catch (error) {
     console.error('Navigation error:', error)
   }
 }
-
-const houseConfig = {
-  harmonis: {
-    color: '#2E8B57',
-    icon: 'pi pi-circle',
-    motto: 'L\'équilibre soigne',
-    background: FondHarmonis
-  },
-  elaris: {
-    color: '#DC143C',
-    icon: 'pi pi-sun',
-    motto: 'Clarifier, guider, apaiser',
-    background: FondElaris
-  },
-  doloris: {
-    color: '#FFD700',
-    icon: 'pi pi-heart',
-    motto: 'Comprendre la douleur, c\'est soigner',
-    background: FondDoloris
-  },
-  solencia: {
-    color: '#4169E1',
-    icon: 'pi pi-moon',
-    motto: 'Apaiser pour mieux guérir',
-    background: FondSolencia
-  },
-  gamemaster: {
-    color: '#9333ea',
-    icon: 'pi pi-crown',
-    motto: 'Voir tout, gérer tout',
-    background: MaitreDuJeuFond
-  }
-}
-
-const houseColor = computed(() => {
-  return houseConfig[props.maison.toLowerCase()]?.color || '#6366F1'
-})
-
-const houseMotto = computed(() => {
-  return houseConfig[props.maison.toLowerCase()]?.motto || ''
-})
-
-const houseBackground = computed(() => {
-  return houseConfig[props.maison.toLowerCase()]?.background || ''
-})
-
-const houseDisplayName = computed(() => {
-  const house = props.maison.toLowerCase()
-  if (house === 'gamemaster') {
-    return '🎮 Maître du Jeu 🎮'
-  }
-  // Capitaliser la première lettre pour les autres maisons
-  return props.maison.charAt(0).toUpperCase() + props.maison.slice(1)
-})
 
 const streakText = computed(() => {
   if (props.loginStreak === 1) return 'jour de connexion'
@@ -238,8 +170,6 @@ const getParticleStyle = (index) => {
   pointer-events: none;
 }
 
-
-
 @keyframes float {
   0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0; }
   50% { transform: translateY(-20px) rotate(180deg); opacity: 1; }
@@ -272,25 +202,9 @@ const getParticleStyle = (index) => {
   font-size: 2.8rem;
   font-weight: 700;
   margin: 0 0 0.8rem 0;
-  text-transform: capitalize;
   text-shadow: 0 2px 4px rgba(0,0,0,0.3);
   letter-spacing: 0.5px;
   line-height: 1.2;
-}
-
-.house-name.clickable {
-  cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
-}
-
-.house-name.clickable:hover {
-  transform: scale(1.05);
-  text-shadow: 0 4px 8px rgba(0,0,0,0.4), 0 0 20px rgba(255,255,255,0.3);
-}
-
-.house-name.clickable:active {
-  transform: scale(0.98);
 }
 
 .house-motto {

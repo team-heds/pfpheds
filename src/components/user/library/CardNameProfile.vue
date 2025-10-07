@@ -1,6 +1,7 @@
 
 <template>
 
+  <!-- Bandeau Maison (inclut Game Master) -->
   <BandeauMaison
     v-if="hasValidHouse"
     :maison="userGamification.maison"
@@ -9,8 +10,8 @@
     class="mb-4"
   />
 
-  <!-- PROMPT POUR QUIZ HES si pas de maison -->
-  <div v-if="!hasValidHouse" class="house-quiz-prompt mb-4">
+  <!-- PROMPT POUR QUIZ HES si pas de maison (sauf Game Master) -->
+  <div v-if="!hasValidHouse && !isGameMaster" class="house-quiz-prompt mb-4">
     <div class="quiz-prompt-card">
       <div class="quiz-prompt-content">
         <i class="pi pi-graduation-cap quiz-prompt-icon"></i>
@@ -25,8 +26,9 @@
   </div>
 
 
+  <!-- XP Bar (sauf pour Game Master qui a déjà tout dans son bandeau) -->
   <XPBar
-    v-if="hasValidHouse"
+    v-if="hasValidHouse && !isGameMaster"
     :xp="userGamification.xp"
     :xp-to-next="userGamification.xpToNext"
     :niveau="userGamification.niveau"
@@ -442,12 +444,20 @@ const xpColor = computed(() => {
   }
 });
 
+// Computed pour détecter si c'est un Game Master
+const isGameMaster = computed(() => {
+  if (!userGamification.value || !userGamification.value.maison) {
+    return false;
+  }
+  return userGamification.value.maison.toLowerCase() === 'gamemaster';
+});
+
 // Computed pour valider si l'utilisateur a une maison valide
 const hasValidHouse = computed(() => {
   if (!userGamification.value || !userGamification.value.maison) {
     return false;
   }
-  const validHouses = ['harmonis', 'elaris', 'doloris', 'solencia'];
+  const validHouses = ['harmonis', 'elaris', 'doloris', 'solencia', 'gamemaster'];
   return validHouses.includes(userGamification.value.maison.toLowerCase());
 });
 
