@@ -153,6 +153,7 @@
 import Toast from "primevue/toast";
 import { getDatabase, ref as dbRef, get, update, onValue } from "firebase/database";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import { supabase } from '@/supabase.js';
 import UserCard from '@/views/apps/chat/UserCard.vue';
 import { useEventStore } from '@/stores/eventStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -190,7 +191,13 @@ export default {
   },
   computed: {
     userFullName() {
-      return `${this.user.prenom} ${this.user.nom}`.trim() || "Utilisateur";
+      const capitalize = (str) => {
+        if (!str) return ''
+        return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
+      }
+      const prenom = capitalize(this.user.prenom)
+      const nom = capitalize(this.user.nom)
+      return `${nom}.${prenom}`.trim() || "Utilisateur";
     },
     userPhotoURL() {
       return this.user.PhotoURL || defaultAvatar;
@@ -331,6 +338,55 @@ export default {
         };
       }
     },
+    async fetchUserProfileSupabase(userId) {
+      console.log('📥 Chargement profil Supabase depuis user_profiles pour:', userId);
+      
+      const { data: profileData, error } = await supabase
+        .from('user_profiles')
+        .select('forname, family_name, avatar_url, profile_picture_url, email')
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      if (error) {
+        console.error('❌ Erreur chargement profil:', error);
+        // Fallback sur l'email de l'utilisateur connecté
+        const currentUser = this.authStore.user;
+        const email = currentUser?.email || '';
+        const parts = email.split('@')[0].split('.');
+        this.user = {
+          prenom: parts[0] || 'Utilisateur',
+          nom: parts[1] || '',
+          PhotoURL: defaultAvatar,
+          email: email,
+          id: userId
+        };
+        return;
+      }
+      
+      if (profileData) {
+        console.log('✅ Profil Supabase chargé:', profileData);
+        this.user = {
+          prenom: profileData.forname || '',
+          nom: profileData.family_name || '',
+          PhotoURL: profileData.avatar_url || profileData.profile_picture_url || defaultAvatar,
+          email: profileData.email || '',
+          id: userId
+        };
+      } else {
+        console.warn('⚠️ Aucun profil trouvé dans user_profiles');
+        // Fallback sur l'email
+        const currentUser = this.authStore.user;
+        const email = currentUser?.email || '';
+        const parts = email.split('@')[0].split('.');
+        this.user = {
+          prenom: parts[0] || 'Utilisateur',
+          nom: parts[1] || '',
+          PhotoURL: defaultAvatar,
+          email: email,
+          id: userId
+        };
+      }
+    },
     async fetchRecentConversations() {
       const currentUser = this.authStore.user;
       if (!currentUser) return;
@@ -462,11 +518,9 @@ export default {
         await this.fetchUserProfile(currentUser.uid);
         this.fetchRecentConversations();
       } else if (this.authStore.isSupabaseUser) {
-        // Logique Supabase simplifiée
+        // Logique Supabase - charger depuis user_profiles
         this.user.id = currentUser.id;
-        this.user.prenom = currentUser.user_metadata?.prenom || currentUser.email?.split('@')[0] || 'Utilisateur';
-        this.user.nom = currentUser.user_metadata?.nom || '';
-        this.user.PhotoURL = currentUser.user_metadata?.photoURL || defaultAvatar;
+        await this.fetchUserProfileSupabase(currentUser.id);
         console.log('LeftSidebar - Utilisateur Supabase configuré:', this.user);
       }
     } else {
