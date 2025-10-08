@@ -82,23 +82,48 @@ class AdminQuestsService {
   async createQuest(questData) {
     try {
       // 1. Créer la quête
+      const questPayload = {
+        title: questData.title,
+        description: questData.description,
+        type: questData.type,
+        difficulty: questData.difficulty,
+        points: questData.points,
+        xp_reward: questData.rewards?.xp || questData.points,
+        status: questData.status || 'active'
+      }
+
+      // Ajouter les nouveaux champs seulement s'ils existent dans le schema
+      // IMPORTANT: Assurez-vous d'avoir exécuté la migration add_quest_columns_safe.sql
+      if (questData.icon) questPayload.icon = questData.icon
+      if (questData.startDate) questPayload.start_date = questData.startDate
+      if (questData.endDate) questPayload.end_date = questData.endDate
+      if (questData.duration !== undefined) questPayload.duration = questData.duration
+      if (questData.isRecurring !== undefined) questPayload.is_recurring = questData.isRecurring
+      if (questData.recurringType) questPayload.recurring_type = questData.recurringType
+      if (questData.minLevel !== undefined) questPayload.min_level = questData.minLevel
+      if (questData.maxLevel !== undefined) questPayload.max_level = questData.maxLevel
+      if (questData.targetHouses) questPayload.target_houses = questData.targetHouses
+
+      console.log('📤 Payload envoyé à Supabase:', questPayload)
+
       const { data: quest, error: questError } = await supabase
         .from('quests')
-        .insert({
-          title: questData.title,
-          description: questData.description,
-          type: questData.type,
-          difficulty: questData.difficulty,
-          points: questData.points,
-          xp_reward: questData.rewards?.xp || questData.points,
-          status: questData.status || 'active'
-        })
+        .insert(questPayload)
         .select()
         .single()
       
-      if (questError) throw questError
+      console.log('📥 Réponse Supabase:', { data: quest, error: questError })
       
-      console.log('✅ Quête créée:', quest.id)
+      if (questError) {
+        console.error('❌ Erreur Supabase détaillée:', questError)
+        throw questError
+      }
+      
+      if (!quest) {
+        throw new Error('Aucune quête retournée par Supabase')
+      }
+      
+      console.log('✅ Quête créée avec succès:', quest.id)
       
       // 2. Créer les étapes si présentes
       if (questData.steps && questData.steps.length > 0) {
@@ -155,7 +180,18 @@ class AdminQuestsService {
           difficulty: questData.difficulty,
           points: questData.points,
           xp_reward: questData.rewards?.xp || questData.points,
-          status: questData.status
+          status: questData.status,
+          icon: questData.icon,
+          // Dates avec timezone
+          start_date: questData.startDate || null,
+          end_date: questData.endDate || null,
+          duration: questData.duration || null,
+          is_recurring: questData.isRecurring || false,
+          recurring_type: questData.recurringType || null,
+          min_level: questData.minLevel || 1,
+          max_level: questData.maxLevel || null,
+          target_houses: questData.targetHouses || null,
+          updated_at: new Date().toISOString()
         })
         .eq('id', questId)
         .select()

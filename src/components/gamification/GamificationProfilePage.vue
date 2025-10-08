@@ -1096,7 +1096,7 @@ const loadChallengesData = async () => {
       .from('challenges')
       .select('*')
       .or('end_date.is.null,end_date.gte.' + new Date().toISOString())
-      .eq('active', true)
+      .eq('is_active', true)
       .order('created_at', { ascending: false })
     
     if (challengesError && challengesError.code !== 'PGRST116') {

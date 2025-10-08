@@ -203,11 +203,11 @@ const subscribeToQuestUpdates = () => {
 }
 
 const viewQuestDetails = (quest) => {
-  router.push('/quests')
+  router.push('/gamification-profile')
 }
 
 const goToQuests = () => {
-  router.push('/quests')
+  router.push('/gamification-profile')
 }
 
 // Lifecycle

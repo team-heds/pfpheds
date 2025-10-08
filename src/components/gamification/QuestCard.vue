@@ -28,6 +28,18 @@
         <span class="xp-value">{{ quest.xp_reward || quest.points || 0 }} XP</span>
       </div>
       
+      <!-- Date de fin si existe -->
+      <div v-if="quest.end_date || quest.endDate" class="quest-deadline-compact" 
+           :class="{ 'deadline-urgent': isExpiringSoon, 'deadline-expired': isExpired }">
+        <i :class="isExpired ? 'pi pi-times-circle' : 'pi pi-calendar-times'"></i>
+        <span v-if="isExpired" class="deadline-text">
+          Expirée le {{ formatEndDateShort() }}
+        </span>
+        <span v-else class="deadline-text">
+          Fin: {{ formatEndDateShort() }} ({{ getTimeRemainingShort() }})
+        </span>
+      </div>
+      
       <!-- Progress si en cours -->
       <div v-if="hasProgress" class="progress-mini">
         <div class="progress-bar-tiny">
@@ -43,7 +55,7 @@
     </div>
 
     <!-- Deadline warning si urgent -->
-    <div v-if="quest.endDate && isExpiringSoon && !isExpired" class="deadline-warning-compact">
+    <div v-if="(quest.end_date || quest.endDate) && isExpiringSoon && !isExpired" class="deadline-warning-compact">
       <i class="pi pi-clock"></i>
       <span>{{ getTimeRemainingCompact() }}</span>
     </div>
@@ -80,7 +92,7 @@
     </template>
 
     <!-- Deadline banner si existe -->
-    <div v-if="quest.endDate" class="modal-deadline" :class="{ 'urgent': isExpiringSoon, 'expired': isExpired }">
+    <div v-if="quest.end_date || quest.endDate" class="modal-deadline" :class="{ 'urgent': isExpiringSoon, 'expired': isExpired }">
       <i :class="isExpired ? 'pi pi-times-circle' : isExpiringSoon ? 'pi pi-exclamation-triangle' : 'pi pi-clock'"></i>
       <span>{{ isExpired ? 'Expirée le ' + formatEndDate() : 'Se termine dans ' + getTimeRemaining() }}</span>
     </div>
@@ -98,6 +110,54 @@
         <div class="progress-bar-modal">
           <div class="progress-fill-modal" :style="{ width: `${quest.progress || 0}%`, backgroundColor: houseColor }">
             <span class="progress-text-modal">{{ quest.progress || 0 }}%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dates et Timing -->
+    <div v-if="quest.start_date || quest.end_date" class="modal-infos mb-3">
+      <h4><i class="pi pi-calendar"></i> Période de la Quête</h4>
+      <div class="info-grid-modal">
+        <!-- Date de début -->
+        <div v-if="quest.start_date" class="info-item-modal">
+          <i class="pi pi-calendar-plus" :style="{ color: houseColor }"></i>
+          <div>
+            <div class="info-label">Début</div>
+            <div class="info-value">{{ formatStartDate() }}</div>
+          </div>
+        </div>
+        
+        <!-- Date de fin -->
+        <div v-if="quest.end_date" class="info-item-modal">
+          <i class="pi pi-calendar-times" :style="{ color: isExpired ? '#ef4444' : isExpiringSoon ? '#f97316' : houseColor }"></i>
+          <div>
+            <div class="info-label">Fin</div>
+            <div class="info-value" :style="{ color: isExpired ? '#ef4444' : isExpiringSoon ? '#f97316' : 'inherit' }">
+              {{ formatEndDate() }}
+            </div>
+          </div>
+        </div>
+        
+        <!-- Temps restant (si pas expiré) -->
+        <div v-if="quest.end_date && !isExpired" class="info-item-modal" style="grid-column: 1 / -1;">
+          <i class="pi pi-hourglass" :style="{ color: isExpiringSoon ? '#f97316' : '#10b981' }"></i>
+          <div>
+            <div class="info-label">Temps restant</div>
+            <div class="info-value" :style="{ color: isExpiringSoon ? '#f97316' : '#10b981', fontWeight: '700' }">
+              ⏱️ {{ getTimeRemaining() }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Quête expirée -->
+        <div v-if="quest.end_date && isExpired" class="info-item-modal expired-notice" style="grid-column: 1 / -1;">
+          <i class="pi pi-times-circle" style="color: #ef4444;"></i>
+          <div>
+            <div class="info-label">Statut</div>
+            <div class="info-value" style="color: #ef4444; font-weight: 700;">
+              ❌ Quête expirée depuis {{ getExpiredSince() }}
+            </div>
           </div>
         </div>
       </div>
@@ -226,13 +286,14 @@ const emit = defineEmits(['click', 'start-quest', 'view-details', 'quest-expired
 // Computed properties
 const isCompleted = computed(() => props.quest.status === QUEST_STATUS.COMPLETED)
 
-// Vérification expiration basée sur endDate
+// Vérification expiration basée sur end_date
 const isQuestExpired = computed(() => {
   if (props.quest.status === QUEST_STATUS.EXPIRED || props.quest.status === QUEST_STATUS.COMPLETED) {
     return true
   }
-  if (props.quest.endDate) {
-    const endTime = new Date(props.quest.endDate).getTime()
+  const dateField = props.quest.end_date || props.quest.endDate
+  if (dateField) {
+    const endTime = new Date(dateField).getTime()
     return currentTime.value >= endTime
   }
   return false
@@ -242,8 +303,9 @@ const isExpired = computed(() => isQuestExpired.value)
 
 // Expire dans moins de 24h
 const isExpiringSoon = computed(() => {
-  if (!props.quest.endDate || isQuestExpired.value) return false
-  const endTime = new Date(props.quest.endDate).getTime()
+  const dateField = props.quest.end_date || props.quest.endDate
+  if (!dateField || isQuestExpired.value) return false
+  const endTime = new Date(dateField).getTime()
   const timeLeft = endTime - currentTime.value
   return timeLeft <= 24 * 60 * 60 * 1000 // 24 heures
 })
@@ -396,12 +458,28 @@ const toggleExpand = () => {
 }
 
 // Méthodes pour la gestion des dates
-const formatEndDate = () => {
-  if (!props.quest.endDate) return ''
-  const date = new Date(props.quest.endDate)
-  return date.toLocaleDateString('fr-FR', {
+const formatStartDate = () => {
+  const dateField = props.quest.start_date || props.quest.startDate
+  if (!dateField) return ''
+  const date = new Date(dateField)
+  return date.toLocaleString('fr-CH', {
+    timeZone: 'Europe/Zurich',
     day: '2-digit',
-    month: 'short',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+const formatEndDate = () => {
+  const dateField = props.quest.end_date || props.quest.endDate
+  if (!dateField) return ''
+  const date = new Date(dateField)
+  return date.toLocaleString('fr-CH', {
+    timeZone: 'Europe/Zurich',
+    day: '2-digit',
+    month: 'long',
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit'
@@ -409,9 +487,10 @@ const formatEndDate = () => {
 }
 
 const getTimeRemaining = () => {
-  if (!props.quest.endDate || isQuestExpired.value) return 'Expiré'
+  const dateField = props.quest.end_date || props.quest.endDate
+  if (!dateField || isQuestExpired.value) return 'Expiré'
   
-  const endTime = new Date(props.quest.endDate).getTime()
+  const endTime = new Date(dateField).getTime()
   const diff = endTime - currentTime.value
   
   if (diff <= 0) return 'Expiré'
@@ -421,11 +500,30 @@ const getTimeRemaining = () => {
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
   
   if (days > 0) {
-    return `${days}j ${hours}h`
+    return `${days} jour${days > 1 ? 's' : ''} ${hours}h`
   } else if (hours > 0) {
-    return `${hours}h ${minutes}m`
+    return `${hours}h ${minutes}min`
   } else {
-    return `${minutes}m`
+    return `${minutes} minute${minutes > 1 ? 's' : ''}`
+  }
+}
+
+const getExpiredSince = () => {
+  const dateField = props.quest.end_date || props.quest.endDate
+  if (!dateField) return ''
+  
+  const endTime = new Date(dateField).getTime()
+  const diff = currentTime.value - endTime
+  
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+  
+  if (days > 0) {
+    return `${days} jour${days > 1 ? 's' : ''}`
+  } else if (hours > 0) {
+    return `${hours} heure${hours > 1 ? 's' : ''}`
+  } else {
+    return 'moins d\'une heure'
   }
 }
 
@@ -512,9 +610,10 @@ const getRecurringTextCompact = () => {
 }
 
 const getTimeRemainingCompact = () => {
-  if (!props.quest.endDate || isQuestExpired.value) return 'Expiré'
+  const dateField = props.quest.end_date || props.quest.endDate
+  if (!dateField || isQuestExpired.value) return 'Expiré'
   
-  const endTime = new Date(props.quest.endDate).getTime()
+  const endTime = new Date(dateField).getTime()
   const diff = endTime - currentTime.value
   
   if (diff <= 0) return 'Expiré'
@@ -525,6 +624,43 @@ const getTimeRemainingCompact = () => {
   if (days > 0) return `${days}j`
   if (hours > 0) return `${hours}h`
   return '<1h'
+}
+
+// Formatage date de fin compact pour la carte
+const formatEndDateShort = () => {
+  const dateField = props.quest.end_date || props.quest.endDate
+  if (!dateField) return ''
+  const date = new Date(dateField)
+  return date.toLocaleString('fr-CH', {
+    timeZone: 'Europe/Zurich',
+    day: '2-digit',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+// Temps restant très court pour la carte
+const getTimeRemainingShort = () => {
+  const dateField = props.quest.end_date || props.quest.endDate
+  if (!dateField || isQuestExpired.value) return ''
+  
+  const endTime = new Date(dateField).getTime()
+  const diff = endTime - currentTime.value
+  
+  if (diff <= 0) return ''
+  
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+  
+  if (days > 0) {
+    return `${days}j`
+  } else if (hours > 0) {
+    return `${hours}h`
+  } else {
+    return `${minutes}m`
+  }
 }
 
 const getStatusClass = () => {
@@ -644,6 +780,45 @@ onUnmounted(() => {
   align-items: center;
   gap: 8px;
   font-size: 0.8rem;
+}
+
+/* Deadline compact dans la carte */
+.quest-deadline-compact {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--text-color-secondary);
+  margin-top: 4px;
+  padding: 4px 8px;
+  background: var(--surface-100);
+  border-radius: 6px;
+  border-left: 3px solid var(--blue-500);
+}
+
+.quest-deadline-compact.deadline-urgent {
+  background: rgba(249, 115, 22, 0.1);
+  border-left-color: var(--orange-500);
+  color: var(--orange-700);
+  font-weight: 600;
+}
+
+.quest-deadline-compact.deadline-expired {
+  background: rgba(239, 68, 68, 0.1);
+  border-left-color: var(--red-500);
+  color: var(--red-700);
+  font-weight: 600;
+}
+
+.quest-deadline-compact i {
+  font-size: 0.9rem;
+}
+
+.deadline-text {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .badge-mini {
@@ -957,6 +1132,25 @@ onUnmounted(() => {
 
 .modal-footer-custom {
   padding: 0;
+}
+
+/* 🚨 NOTICE QUÊTE EXPIRÉE */
+.info-item-modal.expired-notice {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
+  border: 2px solid #fee2e2;
+  border-left: 4px solid #ef4444;
+  animation: pulse-expired 2s infinite;
+}
+
+@keyframes pulse-expired {
+  0%, 100% { 
+    opacity: 1; 
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.9; 
+    transform: scale(1.01);
+  }
 }
 
 /* MAIN CONTENT */

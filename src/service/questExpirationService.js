@@ -28,7 +28,7 @@ class QuestExpirationService {
         query = query.eq('user_id', userId)
       }
       
-      // Jointure avec quests pour vérifier endDate
+      // Jointure avec quests pour vérifier end_date
       const { data: progressData, error: progressError } = await supabase
         .from('user_quest_progress')
         .select(`
@@ -36,17 +36,17 @@ class QuestExpirationService {
           user_id,
           quest_id,
           status,
-          quest:quests(endDate)
+          quest:quests(end_date)
         `)
         .neq('status', 'completed')
         .neq('status', 'failed')
       
       if (progressError) throw progressError
       
-      // Filtrer les quêtes dont endDate est dépassée
+      // Filtrer les quêtes dont end_date est dépassée
       const expiredQuests = progressData.filter(p => {
-        if (!p.quest?.endDate) return false
-        const endTime = new Date(p.quest.endDate).getTime()
+        if (!p.quest?.end_date) return false
+        const endTime = new Date(p.quest.end_date).getTime()
         return Date.now() >= endTime
       })
       

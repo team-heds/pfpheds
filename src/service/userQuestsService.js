@@ -25,6 +25,15 @@ class UserQuestsService {
             points,
             xp_reward,
             status,
+            icon,
+            start_date,
+            end_date,
+            duration,
+            is_recurring,
+            recurring_type,
+            min_level,
+            max_level,
+            target_houses,
             steps:quest_steps(
               id,
               step_order,
@@ -90,7 +99,11 @@ class UserQuestsService {
             type,
             difficulty,
             points,
-            xp_reward
+            xp_reward,
+            icon,
+            start_date,
+            end_date,
+            duration
           )
         `)
         .eq('user_id', userId)
@@ -109,6 +122,10 @@ class UserQuestsService {
         type: progress.quest.type,
         xp_reward: progress.quest.xp_reward,
         points: progress.quest.points,
+        icon: progress.quest.icon,
+        start_date: progress.quest.start_date,
+        end_date: progress.quest.end_date,
+        duration: progress.quest.duration,
         progress: progress.progress,
         status: progress.status,
         isNew: true,
