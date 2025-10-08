@@ -19,8 +19,23 @@
       </div>
     </nav>
 
-    <!-- Hero Ultra-Moderne -->
+    <!-- Hero Ultra-Moderne avec Carousel Background -->
     <section id="hero" class="hero-modern">
+      <!-- Photo Carousel en arrière-plan -->
+      <div class="hero-carousel-bg">
+        <div 
+          v-for="(photo, index) in carouselPhotos" 
+          :key="index"
+          class="carousel-slide"
+          :class="{ active: currentCarouselSlide === index }"
+        >
+          <img :src="getImagePath(photo)" :alt="`Alp'in Physio ${index + 1}`" />
+        </div>
+      </div>
+      
+      <!-- Overlay sombre -->
+      <div class="hero-overlay"></div>
+      
       <div class="hero-container">
         <div class="hero-content">
           <div class="hero-badge">Association Étudiante</div>
@@ -29,11 +44,11 @@
             <span class="title-accent">Physio</span>
           </h1>
           <p class="hero-description">
-            L'excellence en physiothérapie sportive depuis 2012
+            Association étudiante depuis 2012
           </p>
           <div class="hero-stats">
             <div class="stat-item">
-              <div class="stat-number">12</div>
+              <div class="stat-number">13</div>
               <div class="stat-label">Années</div>
             </div>
             <div class="stat-item">
@@ -50,7 +65,6 @@
           />
         </div>
       </div>
-      <div class="hero-bg"></div>
     </section>
 
     <!-- About Section -->
@@ -88,7 +102,7 @@
               </div>
               <div class="visual-stats">
                 <div class="mini-stat">
-                  <span class="stat-num">12+</span>
+                  <span class="stat-num">13+</span>
                   <span class="stat-text">Années</span>
                 </div>
                 <div class="mini-stat">
@@ -104,11 +118,13 @@
         <div class="activities-timeline">
           <div class="timeline-header">
             <h4>Nos Activités</h4>
-            <div class="timeline-line"></div>
           </div>
           
           <div class="timeline-items">
-            <div class="timeline-item">
+            <div class="timeline-item reverse">
+              <div class="timeline-image-side">
+                <img :src="getImagePath('JPhotos/Photocourses/Tour des Stations/TDS_2024_1.jpeg')" alt="Partenariats Sportifs" />
+              </div>
               <div class="timeline-marker">
                 <i class="pi pi-flag"></i>
               </div>
@@ -120,16 +136,14 @@
                     sportives (Sierre-Zinal, le Grand Raid...), essentiellement en Suisse romande 
                     de par la localisation de notre école.
                   </p>
-                  <div class="timeline-tags">
-                    <span class="tag">Sierre-Zinal</span>
-                    <span class="tag">Grand Raid</span>
-                    <span class="tag">Suisse Romande</span>
-                  </div>
                 </div>
               </div>
             </div>
 
-            <div class="timeline-item reverse">
+            <div class="timeline-item">
+              <div class="timeline-image-side">
+                <img :src="getImagePath('JPhotos/Photocourses/Grand Raid/grand_raid_24_1.JPG')" alt="Massage Post-Effort" />
+              </div>
               <div class="timeline-marker">
                 <i class="pi pi-users"></i>
               </div>
@@ -141,15 +155,14 @@
                     pour le massage post-effort des participants. Cela permet aux sportifs de 
                     bénéficier de massages de qualité.
                   </p>
-                  <div class="timeline-highlight">
-                    <i class="pi pi-map-marker"></i>
-                    <span>Loèche-les-Bains</span>
-                  </div>
                 </div>
               </div>
             </div>
 
-            <div class="timeline-item">
+            <div class="timeline-item reverse">
+              <div class="timeline-image-side">
+                <img :src="getImagePath('JPhotos/Photoconférences/Conférence Bastien Murith/DSC03767.JPG')" alt="Formations et Conférences" />
+              </div>
               <div class="timeline-marker">
                 <i class="pi pi-book"></i>
               </div>
@@ -179,82 +192,174 @@
 
         <!-- Section Comité -->
         <div class="committee-section">
-          <div class="committee-header">
-            <h4>Notre Comité</h4>
-            <p>Des étudiants des trois années de Bachelor, chacun avec son rôle clé</p>
-          </div>
-          
           <div class="committee-intro">
             <div class="intro-card">
-              <div class="intro-icon">
-                <i class="pi pi-users"></i>
-              </div>
+              <h4>Notre Comité</h4>
+              <p>Des étudiants des trois années de Bachelor, chacun avec son rôle clé</p>
               <p>
                 Notre comité est composé d'étudiants des trois années de Bachelor ayant chacun 
                 son rôle clé au sein de l'association.
               </p>
-              <div class="photo-placeholder">
-                <i class="pi pi-image"></i>
-                <span>Photo du comité</span>
+              <div class="">
+                <img :src="getImagePath('JPhotos/Divers/Comité25-26/DSC05361.JPG')" alt="Photo du comité 2025-2026" style="width: 100%; border-radius: 12px; margin-top: 1rem;" />
               </div>
             </div>
           </div>
 
           <div class="committee-grid">
+            <!-- Présidente - Leanne -->
             <div class="committee-member">
+              <div class="member-photo">
+                <img :src="getImagePath('JPhotos/Divers/photocomite/DSC09605.JPG')" alt="Leanne" />
+              </div>
               <div class="member-icon">
                 <i class="pi pi-crown"></i>
               </div>
-              <h5>Président</h5>
-              <p>Direction générale et représentation de l'association</p>
+              <h5>Présidente – Leanne</h5>
+              <h6>Coordination des événements et représentation de l'association</h6>
+              <p>
+                Sportive et amoureuse de ma Gruyère natale, je me sens chez moi dès que je mets les pieds 
+                en montagne. L'appareil photo à la main, je chasse les couchers de soleil en altitude. 
+                Ah oui et… j'adore les hélicoptères… !
+              </p>
             </div>
 
+            <!-- Vice-président - Romain -->
             <div class="committee-member">
+              <div class="member-photo">
+                <img :src="getImagePath('JPhotos/Divers/photocomite/romain_de_pury.jpeg')" alt="Romain" />
+              </div>
               <div class="member-icon">
                 <i class="pi pi-user-plus"></i>
               </div>
-              <h5>Vice-président</h5>
-              <p>Soutien au président et coordination des projets</p>
+              <h5>Vice-président – Romain</h5>
+              <h6>Soutient à la présidence et gestion des projets</h6>
+              <p>
+                Passionné de sport (et de bonne bouffe), je dis rarement non à un petit verre pour fêter l'effort. 
+                Sur les courses, je suis là pour masser… et surtout pour obéir aux ordres de Leanne !
+              </p>
             </div>
 
+            <!-- Secrétaire - Salomé -->
             <div class="committee-member">
+              <div class="member-photo">
+                <img :src="getImagePath('JPhotos/Divers/photocomite/salome_clemons.jpeg')" alt="Salomé" />
+              </div>
               <div class="member-icon">
                 <i class="pi pi-file-edit"></i>
               </div>
-              <h5>Secrétaire</h5>
-              <p>Gestion administrative et procès-verbaux</p>
+              <h5>Secrétaire – Salomé</h5>
+              <h6>Gestion administrative</h6>
+              <p>
+                Hello, moi c'est Salomé et vous me trouverez soit en train de gambader dans les montagnes 
+                soit à la découverte d'un autre pays. Toujours le smile, je suis une pub Colgate ambulante 
+                et fière de l'être !
+              </p>
             </div>
 
+            <!-- Secrétaire - Rosalie -->
             <div class="committee-member">
+              <div class="member-photo">
+                <img :src="getImagePath('JPhotos/Divers/photocomite/rosalie_menoud.jpeg')" alt="Rosalie" />
+              </div>
+              <div class="member-icon">
+                <i class="pi pi-file-edit"></i>
+              </div>
+              <h5>Secrétaire – Rosalie</h5>
+              <h6>Gestion administrative</h6>
+              <p>
+                Je viens du Valais, une région que j'adore… mais dès que l'occasion se présente, je pars 
+                explorer le monde et faire de la plongée sous-marine. Après des années d'athlétisme, 
+                je me consacre désormais au volley, au ski et aux sorties en peau de phoque. Et pour me 
+                ressourcer, rien de tel que du temps passé avec ma famille, mes amis et mes chats ;)
+              </p>
+            </div>
+
+            <!-- Caissière - Océane -->
+            <div class="committee-member">
+              <div class="member-photo">
+                <img :src="getImagePath('JPhotos/Divers/photocomite/oceane_fornay.jpeg')" alt="Océane" />
+              </div>
               <div class="member-icon">
                 <i class="pi pi-wallet"></i>
               </div>
-              <h5>Caissier</h5>
-              <p>Gestion financière et comptabilité</p>
+              <h5>Caissière – Océane (& Leanne)</h5>
+              <h6>Gestion financière et comptabilité</h6>
+              <p>
+                Archère dans l'âme et accro aux sentiers de trail, j'aime repousser mes limites au grand air. 
+                L'appareil photo me suit dans mes aventures, comme un autre moyen de prolonger l'effort. 
+                Et pour le carburant… rien ne vaut une pause chocolatée !
+              </p>
             </div>
 
+            <!-- Responsable Web & Communication - Loïc -->
             <div class="committee-member">
+              <div class="member-photo">
+                <div class="photo-placeholder">
+                  <i class="pi pi-user"></i>
+                </div>
+              </div>
               <div class="member-icon">
                 <i class="pi pi-megaphone"></i>
               </div>
-              <h5>Responsable Communication</h5>
+              <h5>Responsable Web & Communication – Loïc</h5>
+              <h6>Communication digitale et gestion du site web</h6>
               <p>Communication digitale et gestion du site web</p>
             </div>
 
+            <!-- Responsables Formations - Groupe -->
             <div class="committee-member">
+              <div class="member-photo">
+                <img :src="getImagePath('JPhotos/Divers/Comité25-26/DSC05389.JPG')" alt="Julie, Marine, Méline & Romain" />
+              </div>
               <div class="member-icon">
                 <i class="pi pi-calendar"></i>
               </div>
-              <h5>Responsable Formations</h5>
-              <p>Organisation des événements extra-sportifs</p>
+              <h5>Responsables Formations & Activités – Julie, Marine, Méline & Romain</h5>
+              <h6>Organisation des événements extra-sportifs</h6>
+              <p>
+                <strong>Julie :</strong> Amoureuse de nature, de sport, de ski et du Valais, je ne dis jamais 
+                non à une aventure en montagne… ou à un voyage peu importe la destination.<br><br>
+                <strong>Marine :</strong> Curieuse et sportive, j'aime créer des événements qui rassemblent 
+                et puiser mon énergie dans la nature et les nouvelles aventures.<br><br>
+                <strong>Méline :</strong> Neuchâteloise dans l'âme, je navigue entre lac et montagne. 
+                Je vis au rythme du sport et des souvenirs que j'aime figer… surtout quand la photo est 
+                réussie du premier coup ! ;)
+              </p>
             </div>
 
+            <!-- Responsable Matériel - Léa -->
             <div class="committee-member">
+              <div class="member-photo">
+                <img :src="getImagePath('JPhotos/Divers/photocomite/lea_volpe.jpeg')" alt="Léa" />
+              </div>
               <div class="member-icon">
                 <i class="pi pi-flag"></i>
               </div>
-              <h5>Responsable Matériel</h5>
-              <p>Gestion de l'équipement et logistique</p>
+              <h5>Responsable Matériel – Léa</h5>
+              <h6>Logistique et gestion du matériel</h6>
+              <p>
+                Passionnée par le sport en tout genre, j'apprécie l'aventure et me lancer de nouveaux challenges. 
+                Rien de tel que la montagne pour me ressourcer et me reconnecter à l'essentiel. Quant à ma créativité, 
+                je lui laisse libre cours dans la pâtisserie et la réalisation de petits bijoux homemade.
+              </p>
+            </div>
+
+            <!-- Responsable des Responsables - Luca -->
+            <div class="committee-member">
+              <div class="member-photo">
+                <img :src="getImagePath('JPhotos/Divers/photocomite/luca_fleury.jpeg')" alt="Luca" />
+              </div>
+              <div class="member-icon">
+                <i class="pi pi-users"></i>
+              </div>
+              <h5>Responsable des Responsables de course – Luca</h5>
+              <h6>Soutien organisationnel pour les événements sportifs</h6>
+              <p>
+                L'équilibre de ma vie : les études, le sport et faire la fête ! Je trouve mon bonheur dans la 
+                diversité de mes activités. Épicurien dans l'âme, j'aime autant cuisiner que bien manger. 
+                Toujours à la recherche des plus beaux paysages au fil de mes voyages.
+              </p>
             </div>
           </div>
 
@@ -263,15 +368,13 @@
 
         <!-- Section Sponsors -->
         <div class="sponsors-section">
-          <div class="sponsors-header">
-            <h4>Nos Sponsors</h4>
-            <p>Des partenaires fidèles qui nous accompagnent depuis de nombreuses années</p>
-          </div>
           
           <div class="sponsors-intro">
             <div class="intro-text">
+              <h4>Nos Sponsors</h4>
+              <p>Des partenaires fidèles qui nous accompagnent depuis de nombreuses années.</p>
               <p>
-                Nos sponsors sont à nos côtés depuis de nombreuses années ! Nous pouvons compter sur eux 
+                Nos sponsors sont à nos côtés depuis de nombreuses années. Nous pouvons compter sur eux 
                 puisqu'ils nous apportent leur soutien précieux dans nos projets et contribuent à la réussite 
                 de nos divers événements tout au long de l'année.
               </p>
@@ -281,10 +384,7 @@
           <div class="sponsors-grid">
             <div class="sponsor-card premium">
               <div class="sponsor-logo">
-                <div class="logo-placeholder">
-                  <i class="pi pi-image"></i>
-                  <span>Logo Compex</span>
-                </div>
+                <img :src="getImagePath('JPhotos/Divers/logosponsors/COMPEX-logo.jpg')" alt="Compex" />
               </div>
               <div class="sponsor-info">
                 <h5>Compex</h5>
@@ -298,10 +398,7 @@
 
             <div class="sponsor-card premium">
               <div class="sponsor-logo">
-                <div class="logo-placeholder">
-                  <i class="pi pi-image"></i>
-                  <span>Logo Perskindol</span>
-                </div>
+                <img :src="getImagePath('JPhotos/Divers/logosponsors/perskindol_2.jpg')" alt="Perskindol" />
               </div>
               <div class="sponsor-info">
                 <h5>Perskindol</h5>
@@ -315,10 +412,7 @@
 
             <div class="sponsor-card premium">
               <div class="sponsor-logo">
-                <div class="logo-placeholder">
-                  <i class="pi pi-image"></i>
-                  <span>Logo PhysioSwiss</span>
-                </div>
+                <img :src="getImagePath('JPhotos/Divers/logosponsors/PhysioValais_logo_unique.gif')" alt="PhysioSwiss" />
               </div>
               <div class="sponsor-info">
                 <h5>PhysioSwiss</h5>
@@ -332,10 +426,7 @@
 
             <div class="sponsor-card institutional">
               <div class="sponsor-logo">
-                <div class="logo-placeholder institutional-logo">
-                  <i class="pi pi-building"></i>
-                  <span>Logo HES-SO Valais</span>
-                </div>
+                <img :src="getImagePath('JPhotos/Divers/logosponsors/FR-DE_HEdS.png')" alt="HES-SO Valais" />
               </div>
               <div class="sponsor-info">
                 <h5>HES-SO Valais // Wallis</h5>
@@ -422,7 +513,7 @@
               <p>
                 Au début de l'année scolaire, Alp'in Physio propose un cours de massage pour permettre aux étudiants
                 d'acquérir les bases nécessaires au massage sportif. De plus, dans les premières semaines du Bachelor,
-                quelques cours de massage sont dispensés par l'école. Chaque étudiant est dont prêt très tôt à venir
+                quelques cours de massage sont dispensés par l'école. Chaque étudiant est donc prêt très tôt à venir
                 masser sur les événements !
               </p>
             </div>
@@ -693,30 +784,58 @@ const events = [
   { id: 4, day: '12', month: 'NOV', title: 'Distribution habits', location: 'HES-SO' }
 ]
 
+// Fonction helper pour les chemins d'images (évite l'analyse statique de Vite)
+const getImagePath = (relativePath) => `/assets/images/heds/AlpinPhysioPhoto/${relativePath}`
+
+// Photos du carousel hero
+const carouselPhotos = [
+  'JPhotos/Divers/Comité25-26/DSC05374.JPG',
+  'JPhotos/Divers/Comité25-26/DSC05383.JPG',
+  'JPhotos/Divers/Comité25-26/DSC05385.JPG'
+]
+
+const currentCarouselSlide = ref(0)
+
 const galleryPhotos = [
   {
-    src: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-    alt: 'Massage post-effort trail',
+    src: getImagePath('JPhotos/Photocourses/Grand Raid/grand_raid_24_1.JPG'),
+    alt: 'Grand Raid BCVS 2024',
     title: 'Grand Raid BCVS 2024',
-    description: 'Nos étudiants en action lors du Grand Raid, offrant des massages de récupération aux coureurs épuisés.',
-    date: 'Septembre 2024',
+    description: 'Nos étudiants en action lors du Grand Raid offrant des massages de récupération aux coureurs après plusieurs heures de course.',
+    date: 'Août 2024',
     location: 'Verbier - Grimentz'
   },
   {
-    src: 'https://images.unsplash.com/photo-1594736797933-d0401ba2fe65?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-    alt: 'Équipe Alp\'in Physio',
-    title: 'Formation Massage Sportif',
-    description: 'Session de formation intensive pour préparer nos étudiants aux techniques de massage post-effort.',
+    src: getImagePath('JPhotos/Photoconférences/Conférence Bastien Murith/DSC03767.JPG'), // a changer
+    alt: 'Formation au Massage Sportif',
+    title: 'Formation au Massage Sportif',
+    description: 'Session de formation annuelle pour préparer nos nouveaux étudiants aux techniques de massage post-effort.',
     date: 'Octobre 2024',
     location: 'HES-SO Valais, Leukerbad'
   },
   {
-    src: 'https://images.unsplash.com/photo-1566737236500-c8ac43014a8e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-    alt: 'Stand Alp\'in Physio',
-    title: 'Marathon de Lausanne',
-    description: 'Notre stand de massage au marathon de Lausanne, un succès avec plus de 100 massages réalisés.',
-    date: 'Octobre 2024',
-    location: 'Lausanne'
+    src: getImagePath('JPhotos/Photocourses/SKA-skieurs/ska_torrent_2024.png'),
+    alt: 'Récupération pour les skieurs du SKA',
+    title: 'Récupération pour les skieurs du SKA',
+    description: 'Aperçu des séances de récupération et d\'étirements, proposées aux jeunes skieurs du SKA Torrent durant l\'hiver 2024.',
+    date: 'Hiver 24-25',
+    location: 'Torrent'
+  },
+  {
+    src: getImagePath('JPhotos/Photocourses/Trail Verbier - St-Bernard by UTMB/trail_VSB_2024_3.JPG'),
+    alt: 'Trail du Grand Saint-Bernard 2024',
+    title: 'Trail du Grand Saint-Bernard 2024',
+    description: 'Deux belles journées de massage pour notre équipe d\'étudiants sur le Trail Verbier Saint-Bernard by UTMB.',
+    date: 'Juillet 2024',
+    location: 'Verbier - Saint-Bernard'
+  },
+  {
+    src: getImagePath('JPhotos/Photocourses/Fête Fédérale de Gym 2025/FFG_25_3.JPG'),
+    alt: 'Fête Fédérale de gymnastique 2025',
+    title: 'Fête Fédérale de gymnastique 2025',
+    description: 'Alp\'in Physio a eu l\'honneur de masser durant le week-end de la FFG 2025 en partenariat avec le cabinet EnMouvement. Une chouette expérience sur une fête d\'une telle ampleur !',
+    date: 'Juin 2025',
+    location: 'Suisse'
   }
 ]
 
@@ -798,14 +917,25 @@ const openMaps = () => {
   window.open('https://maps.google.com/?q=HES-SO+Valais+Thermenstrasse+41+Leukerbad', '_blank')
 }
 
+// Carousel auto-play
+let carouselInterval = null
+
 // Lifecycle
 onMounted(() => {
   window.addEventListener('scroll', handleScroll)
   handleScroll()
+  
+  // Démarrer le carousel automatique
+  carouselInterval = setInterval(() => {
+    currentCarouselSlide.value = (currentCarouselSlide.value + 1) % carouselPhotos.length
+  }, 5000) // Change toutes les 5 secondes
 })
 
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
+  if (carouselInterval) {
+    clearInterval(carouselInterval)
+  }
 })
 </script>
 
@@ -974,11 +1104,53 @@ onUnmounted(() => {
   animation: fadeInUp 1s ease 1.2s both;
 }
 
-.hero-bg {
+/* Hero Carousel Background */
+.hero-carousel-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.carousel-slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 2s ease-in-out;
+  z-index: 0;
+}
+
+.carousel-slide.active {
+  opacity: 1;
+  z-index: 1;
+}
+
+.carousel-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  filter: brightness(0.6);
+  display: block;
+  transform: scale(1);
+  transition: transform 5s ease-out;
+}
+
+.carousel-slide.active img {
+  transform: scale(1.05);
+}
+
+/* Overlay sombre pour améliorer la lisibilité */
+.hero-overlay {
   position: absolute;
   inset: 0;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-  opacity: 0.3;
+  z-index: 1;
 }
 
 /* Sections Modernes */
@@ -1134,27 +1306,31 @@ onUnmounted(() => {
 /* Timeline des Activités */
 .activities-timeline {
   margin-bottom: 6rem;
+  padding: 4rem 2rem;
+  background: linear-gradient(to bottom, transparent 0%, rgba(102, 126, 234, 0.02) 50%, transparent 100%);
 }
 
 .timeline-header {
   text-align: center;
-  margin-bottom: 4rem;
+  margin-bottom: 5rem;
   position: relative;
 }
 
 .timeline-header h4 {
-  font-size: 2rem;
+  font-size: 2.5rem;
   font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 1rem;
+  color: white;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.5px;
 }
 
 .timeline-line {
-  width: 100px;
-  height: 4px;
-  background: var(--gradient);
+  width: 120px;
+  height: 5px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
   margin: 0 auto;
-  border-radius: 2px;
+  border-radius: 3px;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 }
 
 .timeline-items {
@@ -1169,23 +1345,23 @@ onUnmounted(() => {
   left: 50%;
   top: 0;
   bottom: 0;
-  width: 2px;
-  background: linear-gradient(to bottom, var(--secondary), var(--accent));
+  width: 3px;
+  background: linear-gradient(to bottom, #667eea 0%, #764ba2 50%, #667eea 100%);
   transform: translateX(-50%);
+  border-radius: 2px;
+  box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
 }
 
 .timeline-item {
   display: flex;
+  align-items: center;
   margin-bottom: 4rem;
   position: relative;
+  gap: 8rem;
 }
 
 .timeline-item.reverse {
   flex-direction: row-reverse;
-}
-
-.timeline-item.reverse .timeline-content {
-  text-align: right;
 }
 
 .timeline-marker {
@@ -1193,17 +1369,24 @@ onUnmounted(() => {
   left: 50%;
   top: 2rem;
   transform: translateX(-50%);
-  width: 60px;
-  height: 60px;
-  background: var(--gradient);
+  width: 70px;
+  height: 70px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 1.5rem;
-  box-shadow: var(--shadow-md);
+  font-size: 1.6rem;
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
   z-index: 2;
+  border: 4px solid white;
+  transition: all 0.3s ease;
+}
+
+.timeline-item:hover .timeline-marker {
+  transform: translateX(-50%) scale(1.1) rotate(5deg);
+  box-shadow: 0 15px 40px rgba(102, 126, 234, 0.6);
 }
 
 .timeline-content {
@@ -1213,39 +1396,106 @@ onUnmounted(() => {
 
 .timeline-item:not(.reverse) .timeline-content {
   margin-right: auto;
-  padding-right: 3rem;
 }
 
 .timeline-item.reverse .timeline-content {
   margin-left: auto;
-  padding-left: 3rem;
+}
+
+.timeline-item:not(.reverse) .timeline-image-side {
+  margin-left: auto;
+}
+
+.timeline-item.reverse .timeline-image-side {
+  margin-right: auto;
 }
 
 .timeline-card {
   background: var(--bg-primary);
   padding: 2.5rem;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-md);
-  transition: var(--transition);
-  border: 1px solid rgba(0,0,0,0.05);
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(102, 126, 234, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.timeline-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--gradient);
+  transform: scaleY(0);
+  transition: transform 0.4s ease;
 }
 
 .timeline-card:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--shadow-lg);
+  transform: translateY(-8px);
+  box-shadow: 0 20px 60px rgba(102, 126, 234, 0.2);
+  border-color: rgba(102, 126, 234, 0.3);
+}
+
+.timeline-card:hover::before {
+  transform: scaleY(1);
+}
+
+.timeline-image-side {
+  width: 45%;
+  height: 320px;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.timeline-image-side::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: 1;
+}
+
+.timeline-image-side img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.timeline-item:hover .timeline-image-side {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3);
+}
+
+.timeline-item:hover .timeline-image-side::before {
+  opacity: 1;
+}
+
+.timeline-item:hover .timeline-image-side img {
+  transform: scale(1.08);
 }
 
 .timeline-card h5 {
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: white;
   margin-bottom: 1rem;
 }
 
 .timeline-card p {
   color: var(--text-secondary);
-  line-height: 1.6;
+  line-height: 1.8;
   margin-bottom: 1.5rem;
+  font-size: 1.05rem;
 }
 
 .timeline-tags {
@@ -1274,14 +1524,29 @@ onUnmounted(() => {
 .timeline-features {
   display: flex;
   gap: 1rem;
+  margin-top: 1.5rem;
 }
 
 .feature {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: var(--text-secondary);
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  border-radius: 50px;
+  color: var(--text-primary);
   font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.feature i {
+  color: #667eea;
+}
+
+.feature:hover {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+  transform: translateY(-2px);
 }
 
 /* Section Sponsors */
@@ -1358,12 +1623,24 @@ onUnmounted(() => {
 }
 
 .sponsor-logo {
-  height: 120px;
+  height: 150px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-secondary);
+  background: white;
   position: relative;
+  padding: 1.5rem;
+}
+
+.sponsor-logo img {
+  width: 180px;
+  height: 100px;
+  object-fit: contain;
+  transition: transform 0.3s ease;
+}
+
+.sponsor-card:hover .sponsor-logo img {
+  transform: scale(1.05);
 }
 
 .logo-placeholder {
@@ -1594,6 +1871,23 @@ onUnmounted(() => {
   transform: scaleX(1);
 }
 
+.member-photo {
+  width: 200px;
+  height: 200px;
+  margin: 0 auto 1.5rem;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 4px solid var(--secondary);
+  box-shadow: var(--shadow-md);
+}
+
+.member-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
 .member-icon {
   width: 70px;
   height: 70px;
@@ -1616,13 +1910,23 @@ onUnmounted(() => {
   font-size: 1.3rem;
   font-weight: 700;
   color: var(--text-primary);
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.committee-member h6 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--secondary);
   margin-bottom: 1rem;
+  text-align: center;
 }
 
 .committee-member p {
   color: var(--text-secondary);
   line-height: 1.5;
   font-size: 0.95rem;
+  text-align: center;
 }
 
 .committee-note {
@@ -2333,6 +2637,10 @@ onUnmounted(() => {
     font-size: 2rem;
   }
   
+  .carousel-slide img {
+    object-position: center center;
+  }
+  
   /* Story Layout Mobile */
   .story-layout {
     grid-template-columns: 1fr;
@@ -2381,6 +2689,12 @@ onUnmounted(() => {
   
   .timeline-card {
     padding: 1.5rem;
+  }
+  
+  .timeline-image-side {
+    width: 100%;
+    height: 200px;
+    margin-bottom: 1rem;
   }
   
   /* Sponsors Mobile */
