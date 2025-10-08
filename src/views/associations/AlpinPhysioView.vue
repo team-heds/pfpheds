@@ -1,20 +1,19 @@
 <template>
   <div class="alpin-physio-modern">
-    <!-- Navigation Ultra-Moderne -->
-    <nav class="modern-nav" :class="{ 'nav-active': isScrolled }">
+    <!-- Navigation Classique -->
+    <nav class="modern-nav" :class="{ 'nav-active': isScrolled, 'nav-hidden': isNavHidden }">
       <div class="nav-content">
-        <div class="nav-brand">
-          <span class="brand-text">Alp'in Physio</span>
-        </div>
-        <div class="nav-dots">
-          <div 
-            v-for="(section, index) in sections" 
+        <div class="nav-links">
+          <a 
+            v-for="section in sections" 
             :key="section.id"
-            class="nav-dot"
+            class="nav-link"
             :class="{ active: activeSection === section.id }"
-            @click="scrollToSection(section.id)"
-            :title="section.name"
-          ></div>
+            @click.prevent="scrollToSection(section.id)"
+            :href="`#${section.id}`"
+          >
+            {{ section.name }}
+          </a>
         </div>
       </div>
     </nav>
@@ -304,7 +303,7 @@
               </div>
               <h5>Responsable Web & Communication – Loïc</h5>
               <h6>Communication digitale et gestion du site web</h6>
-              <p>Communication digitale et gestion du site web</p>
+              <p>Entre des longueurs de nage, des kilomètres à vélo et un bon run, je garde toujours de l’énergie pour rigoler, écouter de la musique et dévorer tout ce qui passe à table!</p>
             </div>
 
             <!-- Responsables Formations - Groupe -->
@@ -389,10 +388,10 @@
               <div class="sponsor-info">
                 <h5>Compex</h5>
                 <p>Électrostimulation et récupération sportive</p>
-                <div class="sponsor-link">
+                <a href="https://www.compex.com/" target="_blank" rel="noopener noreferrer" class="sponsor-link">
                   <i class="pi pi-external-link"></i>
                   <span>Visiter le site</span>
-                </div>
+                </a>
               </div>
             </div>
 
@@ -403,10 +402,10 @@
               <div class="sponsor-info">
                 <h5>Perskindol</h5>
                 <p>Produits de soins et récupération</p>
-                <div class="sponsor-link">
+                <a href="https://www.perskindol.ch/" target="_blank" rel="noopener noreferrer" class="sponsor-link">
                   <i class="pi pi-external-link"></i>
                   <span>Visiter le site</span>
-                </div>
+                </a>
               </div>
             </div>
 
@@ -417,10 +416,10 @@
               <div class="sponsor-info">
                 <h5>PhysioSwiss</h5>
                 <p>Association suisse de physiothérapie</p>
-                <div class="sponsor-link">
+                <a href="https://www.physioswiss.ch/" target="_blank" rel="noopener noreferrer" class="sponsor-link">
                   <i class="pi pi-external-link"></i>
                   <span>Visiter le site</span>
-                </div>
+                </a>
               </div>
             </div>
 
@@ -431,10 +430,10 @@
               <div class="sponsor-info">
                 <h5>HES-SO Valais // Wallis</h5>
                 <p>Haute École Spécialisée de Suisse Occidentale</p>
-                <div class="sponsor-link">
+                <a href="https://www.hevs.ch/" target="_blank" rel="noopener noreferrer" class="sponsor-link">
                   <i class="pi pi-external-link"></i>
                   <span>Visiter le site</span>
-                </div>
+                </a>
               </div>
             </div>
           </div>
@@ -472,17 +471,11 @@
     <!-- Services Section -->
     <section id="services" class="section-modern">
       <div class="section-container">
-        <div class="section-header">
-          <h2 class="section-title">Nos Prestations</h2>
-          <p class="section-subtitle">Espace organisateurs - Massages de récupération pour vos événements</p>
-        </div>
         
         <!-- Introduction organisateurs -->
         <div class="services-intro">
           <div class="intro-highlight">
-            <div class="highlight-icon">
-              <i class="pi pi-users"></i>
-            </div>
+            <h2 class="section-title">Nos Prestations</h2>
             <h3>Organisateurs d'événements sportifs</h3>
             <p>
               Si vous êtes organisateur d'un évènement sportif et que vous cherchez un groupe d'étudiants pour les
@@ -507,7 +500,7 @@
           <div class="context-grid">
             <div class="context-card">
               <div class="context-icon">
-                <i class="pi pi-graduation-cap"></i>
+                <i class="pi pi-compass"></i>
               </div>
               <h5>Un peu de contexte...</h5>
               <p>
@@ -759,18 +752,18 @@ import Button from 'primevue/button'
 // État réactif
 const activeSection = ref('hero')
 const isScrolled = ref(false)
+const isNavHidden = ref(false)
 const currentSlide = ref(0)
 let scrollTimeout = null
+let lastScrollY = 0
 
 // Configuration
 const sections = [
   { id: 'hero', name: 'Accueil' },
-  { id: 'about', name: 'À propos' },
-  { id: 'committee', name: 'Comité' },
-  { id: 'sponsors', name: 'Sponsors' },
-  { id: 'events', name: 'Événements' },
-  { id: 'services', name: 'Services' },
-  { id: 'gallery', name: 'Galerie' },
+  { id: 'about', name: 'Notre Histoire' },
+  { id: 'events', name: 'Notre Calendrier' },
+  { id: 'services', name: 'Nos Prestations' },
+  { id: 'gallery', name: 'Nos Moments' },
   { id: 'contact', name: 'Contact' }
 ]
 
@@ -854,6 +847,16 @@ const handleScroll = () => {
   scrollTimeout = setTimeout(() => {
     const scrollY = window.scrollY
     isScrolled.value = scrollY > 100
+
+    // Détection direction du scroll et cacher/montrer la nav
+    if (scrollY > lastScrollY && scrollY > 200) {
+      // Scroll vers le bas - cacher la nav
+      isNavHidden.value = true
+    } else {
+      // Scroll vers le haut - montrer la nav
+      isNavHidden.value = false
+    }
+    lastScrollY = scrollY
 
     // Détection section active - optimisée pour éviter les recalculs
     let currentSectionId = 'hero'
@@ -961,67 +964,164 @@ onUnmounted(() => {
 .alpin-physio-modern {
   scroll-behavior: smooth;
   overflow-x: hidden;
+  margin: 0;
+  padding: 0;
 }
 
-/* Navigation Ultra-Moderne */
+/* Standardisation des tailles de texte */
+.alpin-physio-modern h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.alpin-physio-modern h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.alpin-physio-modern h4 {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.alpin-physio-modern h5 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.alpin-physio-modern p {
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+/* Navigation Classique */
 .modern-nav {
   position: fixed;
-  top: 2rem;
+  top: 1.5rem;
   left: 50%;
   transform: translateX(-50%);
   z-index: 1000;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(11, 33, 63, 0.9);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(102, 126, 234, 0.3);
   border-radius: 50px;
-  padding: 1rem 2rem;
-  transition: var(--transition);
+  padding: 0.75rem 2rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 1;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  max-width: fit-content;
+}
+
+.modern-nav.nav-hidden {
+  transform: translateX(-50%) translateY(-150%);
+  opacity: 0;
 }
 
 .modern-nav.nav-active {
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: var(--shadow-md);
+  background: rgba(11, 33, 63, 0.95);
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
+  border-color: rgba(102, 126, 234, 0.5);
 }
 
 .nav-content {
   display: flex;
   align-items: center;
-  gap: 3rem;
+  justify-content: center;
+  gap: 2rem;
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.nav-brand:hover {
+  transform: translateY(-2px);
+}
+
+.brand-logo {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgba(255, 255, 255, 0.2));
+  transition: filter 0.3s ease;
+}
+
+.nav-brand:hover .brand-logo {
+  filter: drop-shadow(0 4px 12px rgba(255, 255, 255, 0.4));
 }
 
 .brand-text {
   font-weight: 700;
-  font-size: 1.2rem;
-  color: var(--primary);
+  font-size: 1.1rem;
+  color: white;
+  letter-spacing: -0.5px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
-.nav-dots {
+.nav-links {
   display: flex;
-  gap: 1rem;
+  gap: 0.25rem;
+  align-items: center;
 }
 
-.nav-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: rgba(107, 114, 128, 0.3);
+.nav-link {
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.9rem;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
-  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
 }
 
-.nav-dot:hover {
-  background: rgba(107, 114, 128, 0.6);
-  transform: scale(1.2);
+.nav-link::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  transform: translateX(-50%);
+  transition: width 0.3s ease;
 }
 
-.nav-dot.active {
-  background: var(--secondary);
-  transform: scale(1.3);
+.nav-link:hover {
+  background: rgba(102, 126, 234, 0.15);
+  color: white;
+  transform: translateY(-2px);
+}
+
+.nav-link:hover::before {
+  width: 80%;
+}
+
+.nav-link.active {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.nav-link.active::before {
+  width: 100%;
 }
 
 /* Hero Ultra-Moderne */
 .hero-modern {
   height: 100vh;
+  width: 100vw;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1029,6 +1129,12 @@ onUnmounted(() => {
   background: var(--gradient);
   color: white;
   text-align: center;
+  margin: 0;
+  padding: 0;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
 }
 
 .hero-container {
@@ -1050,7 +1156,7 @@ onUnmounted(() => {
 }
 
 .hero-title {
-  font-size: clamp(3rem, 8vw, 6rem);
+  font-size: 3.5rem;
   font-weight: 800;
   margin-bottom: 1.5rem;
   line-height: 1.1;
@@ -1070,7 +1176,6 @@ onUnmounted(() => {
 }
 
 .hero-description {
-  font-size: 1.3rem;
   margin-bottom: 3rem;
   opacity: 0.9;
   animation: fadeInUp 1s ease 0.8s both;
@@ -1175,14 +1280,13 @@ onUnmounted(() => {
 }
 
 .section-title {
-  font-size: clamp(2.5rem, 5vw, 4rem);
-  font-weight: 800;
+  font-size: 2rem;
+  font-weight: 700;
   color: var(--text-primary);
   margin-bottom: 1rem;
 }
 
 .section-subtitle {
-  font-size: 1.2rem;
   color: var(--text-secondary);
   max-width: 600px;
   margin: 0 auto;
@@ -1317,8 +1421,6 @@ onUnmounted(() => {
 }
 
 .timeline-header h4 {
-  font-size: 2.5rem;
-  font-weight: 700;
   color: white;
   margin-bottom: 1.5rem;
   letter-spacing: -0.5px;
@@ -1485,17 +1587,13 @@ onUnmounted(() => {
 }
 
 .timeline-card h5 {
-  font-size: 1.5rem;
-  font-weight: 700;
   color: white;
   margin-bottom: 1rem;
 }
 
 .timeline-card p {
   color: var(--text-secondary);
-  line-height: 1.8;
   margin-bottom: 1.5rem;
-  font-size: 1.05rem;
 }
 
 .timeline-tags {
@@ -1675,8 +1773,6 @@ onUnmounted(() => {
 }
 
 .sponsor-info h5 {
-  font-size: 1.3rem;
-  font-weight: 700;
   color: var(--text-primary);
   margin-bottom: 0.5rem;
 }
@@ -1696,6 +1792,13 @@ onUnmounted(() => {
   font-size: 0.9rem;
   font-weight: 500;
   transition: var(--transition);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.sponsor-link:hover {
+  color: var(--primary);
+  transform: translateX(5px);
 }
 
 .sponsor-card:hover .sponsor-link {
