@@ -20,12 +20,6 @@
           <!-- Résumé du stage utilisateur -->
           <ResumStageUserProfile class="w-full" />
 
-          <!-- 🆕 Section Quêtes Actives -->
-          <QuestsProfileCard 
-            :userId="user.uid" 
-            :houseColor="userHouseColor"
-            class="w-full" 
-          />
 
 
           <!-- Section pour changer la photo de profil

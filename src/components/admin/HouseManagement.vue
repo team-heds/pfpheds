@@ -154,7 +154,7 @@
             class="flex align-items-center gap-3 p-3 border-1 surface-border border-round"
           >
             <div class="flex align-items-center justify-content-center w-3rem h-3rem border-circle"
-                 :style="{ backgroundColor: houseData[entry.house]?.color + '20', color: houseData[entry.house]?.color }">
+                 :style="{ backgroundColor: houseData.value[entry.house]?.color + '20', color: houseData.value[entry.house]?.color }">
               <i class="pi pi-home text-lg"></i>
             </div>
             
@@ -257,6 +257,9 @@
 <script setup>
 import { ref, computed, onMounted, reactive } from 'vue'
 import { useToast } from 'primevue/usetoast'
+import { useAuthStore } from '@/stores/authStore'
+import { supabase } from '@/supabase'
+import Tag from 'primevue/tag'
 import Button from 'primevue/button'
 import InputNumber from 'primevue/inputnumber'
 import Textarea from 'primevue/textarea'
@@ -264,10 +267,17 @@ import Dropdown from 'primevue/dropdown'
 import Calendar from 'primevue/calendar'
 import Dialog from 'primevue/dialog'
 import ProgressSpinner from 'primevue/progressspinner'
-// Système de rôles temporairement désactivé - sera réintégré plus tard
 
-// Accès libre pour le développement
-const canManageHouses = computed(() => true)
+const authStore = useAuthStore()
+
+// Vérifier les permissions
+const canManageHouses = computed(() => {
+  return authStore.user && (
+    authStore.user.role === 'admin' || 
+    authStore.user.role === 'house_coach' ||
+    authStore.user.role === 'game_master'
+  )
+})
 
 const toast = useToast()
 
@@ -294,26 +304,21 @@ const pointsForm = reactive({
 
 const errors = ref({})
 
-// Données des vraies maisons HES
-const houseData = {
-  harmonis: { displayName: 'Harmonis', color: '#2E8B57' },
-  elaris: { displayName: 'Elaris', color: '#DC143C' },
-  doloris: { displayName: 'Doloris', color: '#FFD700' },
-  solencia: { displayName: 'Solencia', color: '#4169E1' }
-}
+// Données des maisons chargées depuis Supabase
+const houseData = ref({})
 
-// Options pour les dropdowns
-const houseOptions = [
-  { label: 'Harmonis', value: 'harmonis' },
-  { label: 'Elaris', value: 'elaris' },
-  { label: 'Doloris', value: 'doloris' },
-  { label: 'Solencia', value: 'solencia' }
-]
+// Options pour les dropdowns (computed pour être dynamiques)
+const houseOptions = computed(() => {
+  return Object.keys(houseData.value).map(key => ({
+    label: houseData.value[key].displayName || key,
+    value: key
+  }))
+})
 
-const houseFilterOptions = [
+const houseFilterOptions = computed(() => [
   { label: 'Toutes les maisons', value: null },
-  ...houseOptions
-]
+  ...houseOptions.value
+])
 
 // Permissions temporairement désactivées
 
@@ -323,47 +328,69 @@ const rankedHouses = computed(() => {
 })
 
 // Méthodes
+const loadHouseDefinitions = async () => {
+  try {
+    // Charger les définitions des maisons depuis la table houses
+    const { data, error } = await supabase
+      .from('houses')
+      .select('*')
+    
+    if (error) throw error
+    
+    // Convertir en objet pour accès facile
+    houseData.value = data.reduce((acc, house) => {
+      acc[house.name] = {
+        displayName: house.name.charAt(0).toUpperCase() + house.name.slice(1),
+        color: house.color,
+        description: house.description
+      }
+      return acc
+    }, {})
+    
+    console.log('🏠 Maisons chargées depuis Supabase:', houseData.value)
+    
+  } catch (error) {
+    console.error('Erreur lors du chargement des définitions de maisons:', error)
+    // Fallback sur les données en dur si erreur
+    houseData.value = {
+      harmonis: { displayName: 'Harmonis', color: '#2E8B57', description: 'Empathie et Collaboration' },
+      elaris: { displayName: 'Elaris', color: '#DC143C', description: 'Courage et Leadership' },
+      doloris: { displayName: 'Doloris', color: '#FFD700', description: 'Persévérance et Excellence' },
+      solencia: { displayName: 'Solencia', color: '#4169E1', description: 'Sagesse et Innovation' }
+    }
+  }
+}
+
 const loadHouses = async () => {
   try {
     loading.value = true
     
-    // Simuler le chargement des données des vraies maisons HES
-    const mockHouses = [
-      {
-        name: 'harmonis',
-        displayName: 'Harmonis',
-        totalPoints: 1320,
-        memberCount: 48,
-        completedChallenges: 25,
-        completedQuests: 18
-      },
-      {
-        name: 'elaris',
-        displayName: 'Elaris',
-        totalPoints: 1250,
-        memberCount: 45,
-        completedChallenges: 23,
-        completedQuests: 12
-      },
-      {
-        name: 'doloris',
-        displayName: 'Doloris',
-        totalPoints: 1180,
-        memberCount: 52,
-        completedChallenges: 19,
-        completedQuests: 15
-      },
-      {
-        name: 'solencia',
-        displayName: 'Solencia',
-        totalPoints: 1095,
-        memberCount: 41,
-        completedChallenges: 17,
-        completedQuests: 10
-      }
-    ]
+    // Utiliser la vue SQL pour obtenir toutes les statistiques en une seule requête
+    const { data, error } = await supabase
+      .from('house_points_totals')
+      .select('*')
     
-    houses.value = mockHouses
+    if (error) {
+      // Si la vue n'existe pas encore, fallback sur l'ancienne méthode
+      console.warn('Vue house_points_totals non trouvée, utilisation de la méthode manuelle')
+      await loadHousesManually()
+      return
+    }
+    
+    // Mapper les données de la vue
+    houses.value = data.map(house => ({
+      name: house.name,
+      displayName: houseData.value[house.name]?.displayName || house.name,
+      color: house.color,
+      description: house.description,
+      totalPoints: parseInt(house.total_points) || 0,
+      memberCount: parseInt(house.member_count) || 0,
+      completedChallenges: parseInt(house.completed_challenges) || 0,
+      completedQuests: parseInt(house.completed_quests) || 0
+    }))
+    
+    console.log('📊 Statistiques des maisons chargées:', houses.value)
+    
   } catch (error) {
     console.error('Erreur lors du chargement des maisons:', error)
     toast.add({
@@ -377,53 +404,120 @@ const loadHouses = async () => {
   }
 }
 
-const loadPointsHistory = async () => {
-  try {
-    // Simuler le chargement de l'historique avec les vraies maisons HES
-    const mockHistory = [
-      {
-        id: '1',
-        house: 'harmonis',
-        points: 50,
-        reason: 'Victoire au défi "Innovation en Soins Infirmiers"',
-        timestamp: Date.now() - 3600000,
-        authorName: 'Dr. Martin'
-      },
-      {
-        id: '2',
-        house: 'elaris',
-        points: -20,
-        reason: 'Pénalité pour retard dans le projet de recherche',
-        timestamp: Date.now() - 7200000,
-        authorName: 'Prof. Dubois'
-      },
-      {
-        id: '3',
-        house: 'doloris',
-        points: 30,
-        reason: 'Excellent travail d\'équipe en simulation clinique',
-        timestamp: Date.now() - 86400000,
-        authorName: 'Dr. Leroy'
-      },
-      {
-        id: '4',
-        house: 'solencia',
-        points: 25,
-        reason: 'Participation active aux ateliers de communication',
-        timestamp: Date.now() - 172800000,
-        authorName: 'Prof. Bernard'
-      }
-    ]
+// Méthode manuelle de fallback si la vue n'existe pas
+const loadHousesManually = async () => {
+  const housesData = []
+  
+  for (const houseName of Object.keys(houseData.value)) {
+    let memberCount = 0
     
-    let filtered = mockHistory
-    
-    if (selectedHouseFilter.value) {
-      filtered = filtered.filter(entry => entry.house === selectedHouseFilter.value)
+    // Essayer de compter les membres (peut échouer si la colonne house n'existe pas)
+    try {
+      const { count } = await supabase
+        .from('users_profiles')
+        .select('*', { count: 'exact', head: true })
+        .eq('house', houseName)
+      memberCount = count || 0
+    } catch (error) {
+      console.warn(`Impossible de compter les membres de ${houseName}:`, error.message)
     }
     
-    pointsHistory.value = filtered
+    // Calculer les points totaux depuis l'historique
+    let totalPoints = 0
+    try {
+      const { data: pointsData } = await supabase
+        .from('house_points_history')
+        .select('points')
+        .eq('house', houseName)
+      
+      totalPoints = pointsData?.reduce((sum, entry) => sum + entry.points, 0) || 0
+    } catch (error) {
+      console.warn(`Impossible de charger les points de ${houseName}:`, error.message)
+    }
+    
+    housesData.push({
+      name: houseName,
+      displayName: houseData.value[houseName].displayName,
+      color: houseData.value[houseName].color,
+      description: houseData.value[houseName].description,
+      totalPoints,
+      memberCount,
+      completedChallenges: 0,
+      completedQuests: 0
+    })
+  }
+  
+  houses.value = housesData
+}
+
+const loadPointsHistory = async () => {
+  try {
+    let query = supabase
+      .from('house_points_history')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(50)
+    
+    // Filtre par maison
+    if (selectedHouseFilter.value) {
+      query = query.eq('house', selectedHouseFilter.value)
+    }
+    
+    // Filtre par date
+    if (dateRange.value && dateRange.value[0]) {
+      query = query.gte('created_at', dateRange.value[0].toISOString())
+      
+      if (dateRange.value[1]) {
+        query = query.lte('created_at', dateRange.value[1].toISOString())
+      }
+    }
+    
+    const { data, error } = await query
+    
+    if (error) throw error
+    
+    // Charger les informations des auteurs séparément
+    const userIds = [...new Set(data.map(entry => entry.created_by).filter(Boolean))]
+    
+    let authorsMap = {}
+    if (userIds.length > 0) {
+      const { data: authorsData } = await supabase
+        .from('users_profiles')
+        .select('id, first_name, last_name, email')
+        .in('id', userIds)
+      
+      if (authorsData) {
+        authorsMap = authorsData.reduce((acc, author) => {
+          acc[author.id] = author
+          return acc
+        }, {})
+      }
+    }
+    
+    // Formater les données pour l'affichage
+    pointsHistory.value = data.map(entry => {
+      const author = authorsMap[entry.created_by]
+      
+      return {
+        id: entry.id,
+        house: entry.house,
+        points: entry.points,
+        reason: entry.reason,
+        timestamp: new Date(entry.created_at).getTime(),
+        authorName: author 
+          ? `${author.first_name || ''} ${author.last_name || ''}`.trim() || author.email
+          : 'Système'
+      }
+    })
+    
   } catch (error) {
     console.error('Erreur lors du chargement de l\'historique:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: 'Impossible de charger l\'historique des points',
+      life: 3000
+    })
   }
 }
 
@@ -451,13 +545,22 @@ const assignPoints = async () => {
   try {
     assigning.value = true
     
-    // Ici vous appelleriez votre service pour attribuer les points
-    // await houseService.assignPoints(pointsForm.house, pointsForm.points, pointsForm.reason)
+    // Insérer dans l'historique des points
+    const { error } = await supabase
+      .from('house_points_history')
+      .insert({
+        house: pointsForm.house,
+        points: pointsForm.points,
+        reason: pointsForm.reason,
+        created_by: authStore.user.id
+      })
+    
+    if (error) throw error
     
     toast.add({
       severity: 'success',
       summary: 'Succès',
-      detail: `${pointsForm.points > 0 ? 'Points attribués' : 'Points retirés'} avec succès`,
+      detail: `${pointsForm.points > 0 ? 'Points attribués' : 'Points retirés'} avec succès à ${getHouseDisplayName(pointsForm.house)}`,
       life: 3000
     })
     
@@ -465,8 +568,11 @@ const assignPoints = async () => {
     Object.assign(pointsForm, { house: '', points: 0, reason: '' })
     editingHouse.value = null
     
-    await loadHouses()
-    await loadPointsHistory()
+    // Recharger les données
+    await Promise.all([
+      loadHouses(),
+      loadPointsHistory()
+    ])
     
   } catch (error) {
     console.error('Erreur lors de l\'attribution des points:', error)
@@ -504,7 +610,7 @@ const getProgressPercentage = (house, leader) => {
 }
 
 const getHouseDisplayName = (houseName) => {
-  return houseData[houseName]?.displayName || houseName
+  return houseData.value[houseName]?.displayName || houseName
 }
 
 const getHouseSeverity = (houseName) => {
@@ -537,9 +643,15 @@ const formatDate = (timestamp) => {
 }
 
 // Initialisation
-onMounted(() => {
-  loadHouses()
-  loadPointsHistory()
+onMounted(async () => {
+  // Charger d'abord les définitions des maisons
+  await loadHouseDefinitions()
+  
+  // Puis charger les statistiques et l'historique
+  await Promise.all([
+    loadHouses(),
+    loadPointsHistory()
+  ])
 })
 </script>
 

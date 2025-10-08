@@ -40,7 +40,7 @@
   <div class="mb-4 card-profile-responsive">
     <div class="avatar-wrapper">
       <img :src="user.photoURL || defaultAvatar" alt="Avatar" style="border-radius: 3rem;" />
-      <h1 class="pl-4">{{ displayName }}</h1>
+      <h1 class="pl-4">{{ displayFullName }}</h1>
     </div>
     <h5 class="mb-4">Informations personnelles</h5>
     <div class="surfaces-card info-grid">
@@ -99,10 +99,7 @@
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/authStore';
-import { ref as dbRef, get, update } from "firebase/database";
-import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
-import { onAuthStateChanged } from 'firebase/auth';
-import { db, auth, storage } from '../../../../firebase.js';
+import { supabase } from '@/supabase.js';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import BandeauMaison from '@/components/gamification/BandeauMaison.vue';
@@ -145,6 +142,12 @@ const isAdmin = computed(() => {
   return currentUserProfile.value.Roles && currentUserProfile.value.Roles.admin === true;
 });
 
+// Fonction helper pour capitaliser (première lettre en majuscule)
+const capitalize = (str) => {
+  if (!str) return ''
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
+}
+
 // Computed pour l'affichage des données utilisateur avec fallback sur authStore
 const displayName = computed(() => {
   // Si c'est le profil de l'utilisateur connecté, utiliser authStore
@@ -152,8 +155,10 @@ const displayName = computed(() => {
     const email = authStore.user?.email || '';
     return email.split('@')[0] || 'Utilisateur';
   }
-  // Sinon utiliser les données du profil consulté
-  return `${user.value.prenom} ${user.value.nom}`.trim() || 'Utilisateur';
+  // Sinon utiliser les données du profil consulté avec capitalisation
+  const prenom = capitalize(user.value.prenom)
+  const nom = capitalize(user.value.nom)
+  return `${prenom} ${nom}`.trim() || 'Utilisateur';
 });
 
 const displayEmail = computed(() => {
@@ -173,84 +178,124 @@ const displayFullName = computed(() => {
     // Essayer d'extraire prénom/nom du username
     const parts = username.split('.');
     if (parts.length >= 2) {
-      return `${parts[1]} ${parts[0]}`.toUpperCase();
+      return `${capitalize(parts[1])} ${capitalize(parts[0])}`;
     }
-    return username || 'Utilisateur';
+    return capitalize(username) || 'Utilisateur';
   }
-  // Sinon utiliser les données du profil consulté
-  return `${user.value.nom} ${user.value.prenom}`.trim() || 'Utilisateur';
+  // Sinon utiliser les données du profil consulté avec capitalisation
+  const nom = capitalize(user.value.nom)
+  const prenom = capitalize(user.value.prenom)
+  return `${nom} ${prenom}`.trim() || 'Utilisateur';
 });
 
-// Récupération du profil consulté depuis /Users (basé sur l'ID de l'URL)
+// Récupération du profil consulté depuis user_profiles Supabase
 const fetchUserProfileById = async (userId) => {
-  const userRef = dbRef(db, `Users/${userId}`);
-  const snapshot = await get(userRef);
-  if (snapshot.exists()) {
-    const userData = snapshot.val();
+  console.log('📥 Chargement profil depuis user_profiles pour:', userId)
+  
+  const { data: profileData, error } = await supabase
+    .from('user_profiles')
+    .select('*')
+    .eq('user_id', userId)
+    .maybeSingle()
+  
+  if (error) {
+    console.error('❌ Erreur chargement profil:', error)
+    return
+  }
+  
+  if (profileData) {
+    console.log('✅ Profil chargé:', profileData)
     user.value = {
       ...user.value,
       uid: userId,
-      prenom: userData.Prenom || '',
-      nom: userData.Nom || '',
-      email: userData.Mail || '',
-      ville: userData.Ville || '',
-      bio: userData.Biography || '',
-      photoURL: userData.PhotoURL || defaultAvatar,
-      // Ici, on ne se sert pas du rôle pour modifier l'affichage (c'est le currentUserProfile qui compte)
+      prenom: profileData.forname || '',
+      nom: profileData.family_name || '',
+      email: profileData.email || '',
+      ville: profileData.city || '',
+      bio: profileData.bio || '',
+      photoURL: profileData.avatar_url || profileData.profile_picture_url || defaultAvatar,
+      classe: profileData.class || '',
+      repondantHES: profileData.hes_referent || ''
     };
   } else {
-    console.error("Aucun profil trouvé pour l'ID :", userId);
+    console.warn("⚠️ Aucun profil trouvé pour l'ID :", userId);
   }
 };
 
-// Récupération des données étudiant depuis /Students
+// Note: Les données étudiant sont maintenant incluses dans user_profiles
+// Cette fonction n'est plus nécessaire mais gardée pour compatibilité
 const fetchStudentProfileById = async (userId) => {
-  const studentRef = dbRef(db, `Students/${userId}`);
-  const snapshot = await get(studentRef);
-  if (snapshot.exists()) {
-    const studentData = snapshot.val();
-    user.value.classe = studentData.Classe || studentData.Class || '';
-    user.value.repondantHES = studentData.RepondantHES || '';
-  } else {
-    console.error("Aucun profil étudiant trouvé pour l'ID :", userId);
-  }
+  console.log('ℹ️ fetchStudentProfileById: données déjà chargées depuis user_profiles')
+  // Les données sont déjà chargées dans fetchUserProfileById
 };
 
-// Récupération du profil de l'utilisateur connecté depuis /Users à l'aide de Firebase Auth
+// Récupération du profil de l'utilisateur connecté depuis user_profiles Supabase
 const fetchCurrentUserProfile = async (currentUserId) => {
-  const currentUserRef = dbRef(db, `Users/${currentUserId}`);
-  const snapshot = await get(currentUserRef);
-  if (snapshot.exists()) {
-    currentUserProfile.value = snapshot.val();
-    currentUserProfile.value.uid = currentUserId;
-    
-    // Récupérer aussi les données de gamification pour l'utilisateur connecté
-    await fetchGamificationData(currentUserId);
-  } else {
-    console.error("Aucun profil trouvé pour l'utilisateur connecté :", currentUserId);
+  console.log('👤 Chargement profil utilisateur connecté:', currentUserId)
+  
+  // Charger les rôles depuis user_roles
+  const { data: rolesData } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', currentUserId)
+  
+  const roles = {}
+  rolesData?.forEach(r => {
+    roles[r.role] = true
+  })
+  
+  currentUserProfile.value = {
+    uid: currentUserId,
+    Roles: roles
   }
+  
+  console.log('✅ Rôles utilisateur:', roles)
+  
+  // Récupérer aussi les données de gamification pour l'utilisateur connecté
+  await fetchGamificationData(currentUserId);
 };
 
-// Importation des enseignants depuis /Enseignants
-const teachers = ref({});
-const fetchTeachers = () => {
-  const teachersRef = dbRef(db, `Enseignants`);
-  get(teachersRef)
-    .then(snapshot => {
-      if (snapshot.exists()) {
-        teachers.value = snapshot.val() || {};
-      }
-    })
-    .catch(error => {
-      console.error("Erreur lors de la récupération des enseignants :", error);
-    });
+// Importation des enseignants depuis user_profiles (filtrés par rôle)
+const teachers = ref([]);
+const fetchTeachers = async () => {
+  console.log('👨‍🏫 Chargement des enseignants depuis Supabase...')
+  
+  // Charger les utilisateurs avec le rôle 'professor' depuis user_roles
+  const { data: teacherRoles } = await supabase
+    .from('user_roles')
+    .select('user_id')
+    .eq('role', 'professor')
+  
+  if (!teacherRoles || teacherRoles.length === 0) {
+    console.log('⚠️ Aucun enseignant trouvé')
+    return
+  }
+  
+  const teacherIds = teacherRoles.map(r => r.user_id)
+  
+  // Charger les profils des enseignants
+  const { data: teachersData, error } = await supabase
+    .from('user_profiles')
+    .select('user_id, display_name, forname, family_name, email')
+    .in('user_id', teacherIds)
+  
+  if (error) {
+    console.error('❌ Erreur chargement enseignants:', error)
+    return
+  }
+  
+  teachers.value = teachersData || []
+  console.log(`✅ ${teachers.value.length} enseignants chargés`)
 };
 
 // Construction des options pour le dropdown des enseignants
 const teachersOptions = computed(() => {
-  return Object.keys(teachers.value).map(key => {
-    const teacher = teachers.value[key];
-    return { label: `${teacher.Forname} ${teacher.Name}`, value: key };
+  return teachers.value.map(teacher => {
+    const displayName = teacher.display_name || `${teacher.forname} ${teacher.family_name}`
+    return { 
+      label: displayName,
+      value: teacher.user_id 
+    };
   });
 });
 
@@ -266,10 +311,12 @@ watch(teachersOptions, (newOptions) => {
   }
 }, { immediate: true });
 
-// Fonction de sauvegarde du profil : met à jour Users et Students
+// Fonction de sauvegarde du profil : met à jour user_profiles dans Supabase
 const saveProfile = async () => {
   
   try {
+    console.log('💾 Sauvegarde du profil dans Supabase...')
+    
     // Si un nouvel avatar a été sélectionné, on l'upload sur Supabase Storage
     if (selectedAvatarFile.value) {
       try {
@@ -287,29 +334,37 @@ const saveProfile = async () => {
       }
     }
 
-    // Mise à jour du profil dans Users
-    const userRef = dbRef(db, `Users/${user.value.uid}`);
-    await update(userRef, {
-      Prenom: user.value.prenom,
-      Nom: user.value.nom,
-      Mail: user.value.email,
-      Ville: user.value.ville,
-      Bio: user.value.bio,
-      PhotoURL: user.value.photoURL
-    });
-
-    // Seul un administrateur connecté peut modifier le champ Répondant HES
+    // Trouver le label de l'enseignant si un est sélectionné
+    let hesReferent = user.value.repondantHES
     if (isAdmin.value && selectedTeacher.value) {
       const teacherOpt = teachersOptions.value.find(opt => opt.value === selectedTeacher.value);
-      const teacherLabel = teacherOpt ? teacherOpt.label : '';
-      user.value.repondantHES = teacherLabel;
+      hesReferent = teacherOpt ? teacherOpt.label : '';
     }
 
-    // Mise à jour du profil étudiant dans Students
-    const studentRef = dbRef(db, `Students/${user.value.uid}`);
-    await update(studentRef, {
-      RepondantHES: user.value.repondantHES
-    });
+    // Mise à jour du profil dans user_profiles Supabase
+    const { error: updateError } = await supabase
+      .from('user_profiles')
+      .update({
+        forname: user.value.prenom,
+        family_name: user.value.nom,
+        email: user.value.email,
+        city: user.value.ville,
+        bio: user.value.bio,
+        avatar_url: user.value.photoURL,
+        class: user.value.classe,
+        hes_referent: hesReferent,
+        updated_at: new Date().toISOString()
+      })
+      .eq('user_id', user.value.uid)
+    
+    if (updateError) {
+      console.error('❌ Erreur mise à jour profil:', updateError)
+      alert('Erreur lors de la sauvegarde du profil')
+      return
+    }
+    
+    user.value.repondantHES = hesReferent
+    console.log('✅ Profil mis à jour dans Supabase')
 
     // NOUVEAU : Déclencher l'intégration gamification pour mise à jour profil
     await gamificationIntegration.onProfileUpdate(user.value.uid, {

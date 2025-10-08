@@ -1,242 +1,222 @@
 <template>
+  <!-- CARTE COMPACTE -->
   <div 
-    class="modern-quest-card cursor-pointer"
+    class="quest-card-compact"
     :class="[
       { 'quest-expired': isExpired },
       { 'quest-completed': isCompleted },
       { 'quest-expiring-soon': isExpiringSoon && !isExpired }
     ]"
     :style="{ '--house-color': houseColor }"
-    @click="toggleExpand"
+    @click="showModal = true"
   >
-    <!-- BADGE STATUT EN HAUT À DROITE -->
-    <div class="status-corner" :class="getStatusCornerClass()">
-      <i :class="getStatusIcon()" class="mr-1"></i>
-      <span>{{ getStatusText() }}</span>
+    <!-- Icône -->
+    <div class="quest-icon-small" :style="{ backgroundColor: `${houseColor}15`, borderColor: houseColor }">
+      <span v-if="quest.icon" class="icon-emoji">{{ quest.icon }}</span>
+      <i v-else :class="getQuestIcon(quest.type)" :style="{ color: houseColor }"></i>
     </div>
-    
-    <!-- HEADER AVEC GROSSE ICÔNE -->
-    <div class="quest-header">
-      <div class="quest-icon-large">
-        <span v-if="quest.icon" class="icon-emoji">{{ quest.icon }}</span>
-        <i v-else :class="getQuestIcon(quest.type)" class="icon-fallback"></i>
+
+    <!-- Contenu -->
+    <div class="quest-content-compact">
+      <div class="quest-title-compact">{{ quest.title }}</div>
+      <div class="quest-meta-compact">
+        <span class="badge-mini" :class="'diff-' + quest.difficulty">
+          {{ getDifficultyEmoji() }}
+        </span>
+        <span class="badge-mini type">{{ getTypeEmoji() }}</span>
+        <span class="separator">•</span>
+        <span class="xp-value">{{ quest.xp_reward || quest.points || 0 }} XP</span>
       </div>
       
-      <div class="quest-title-section">
-        <h2 class="quest-title">{{ quest.title }}</h2>
-        <div class="quest-badges">
-          <span v-if="quest.minLevel && quest.minLevel > 1" class="badge badge-level">
-            <i class="pi pi-shield"></i> Niveau {{ quest.minLevel }}+
-          </span>
-          <span class="badge badge-difficulty" :class="'difficulty-' + quest.difficulty">
-            <i class="pi pi-star-fill"></i> {{ getDifficultyName() }}
-          </span>
-          <span class="badge badge-type">
-            <i class="pi pi-tag"></i> {{ getTypeText() }}
-          </span>
-        </div>
+      <!-- Date de fin si existe -->
+      <div v-if="quest.end_date || quest.endDate" class="quest-deadline-compact" 
+           :class="{ 'deadline-urgent': isExpiringSoon, 'deadline-expired': isExpired }">
+        <i :class="isExpired ? 'pi pi-times-circle' : 'pi pi-calendar-times'"></i>
+        <span v-if="isExpired" class="deadline-text">
+          Expirée le {{ formatEndDateShort() }}
+        </span>
+        <span v-else class="deadline-text">
+          Fin: {{ formatEndDateShort() }} ({{ getTimeRemainingShort() }})
+        </span>
       </div>
-    </div>
-    
-    <!-- DESCRIPTION -->
-    <p class="quest-description" :class="{ 'collapsed': !isExpanded }">
-      {{ quest.description }}
-    </p>
-
-    <!-- DATE DE FIN ULTRA VISIBLE -->
-    <div v-if="quest.endDate" class="end-date-banner" :class="getEndDateBannerClass()">
-      <div class="end-date-content">
-        <div class="end-date-icon">
-          <i :class="isQuestExpired ? 'pi pi-times-circle' : isExpiringSoon ? 'pi pi-exclamation-triangle' : 'pi pi-calendar'"></i>
-        </div>
-        <div class="end-date-info">
-          <div class="end-date-label">{{ getEndDateLabel() }}</div>
-          <div class="end-date-value">{{ formatEndDate() }}</div>
-        </div>
-        <div v-if="!isQuestExpired" class="countdown-box">
-          <div class="countdown-label">⏱️ Temps restant</div>
-          <div class="countdown-value">{{ getTimeRemaining() }}</div>
-        </div>
-        <div v-else class="expired-stamp">
-          <i class="pi pi-ban"></i>
-          <span>EXPIRÉ</span>
-        </div>
-      </div>
-    </div>
-    
-    <!-- INFOS SUPPLÉMENTAIRES -->
-    <div class="quest-meta">
-      <div v-if="quest.duration" class="meta-item">
-        <i class="pi pi-clock"></i>
-        <span>{{ formatDuration() }}</span>
-      </div>
-      <div v-if="quest.isRecurring" class="meta-item recurring">
-        <i class="pi pi-refresh"></i>
-        <span>{{ getRecurringText() }}</span>
-      </div>
-      <div v-if="quest.targetHouses && quest.targetHouses.length > 0" class="meta-item">
-        <i class="pi pi-users"></i>
-        <span>{{ quest.targetHouses.length }} maison(s)</span>
-      </div>
-    </div>
-
-    <!-- Progression globale (uniquement si en cours ou complétée) -->
-    <div v-if="hasProgress" class="mb-4">
-      <div class="flex justify-content-between align-items-center mb-2">
-        <span class="text-sm font-semibold text-600">📊 Progression</span>
-        <span class="text-sm font-bold" :style="{ color: houseColor }">{{ quest.progress || 0 }}%</span>
-      </div>
-      <div class="progress-bar-container">
-        <div 
-          class="progress-bar-fill"
-          :style="{ 
-            width: `${quest.progress || 0}%`,
-            backgroundColor: houseColor
-          }"
-        >
-          <div v-if="quest.progress > 0 && quest.progress < 100" class="progress-shimmer"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Étapes de la quête (seulement si expanded et qu'il y a des étapes) -->
-    <div class="mb-4" v-if="isExpanded && hasSteps">
-      <h4 class="flex align-items-center gap-2 text-base font-semibold m-0 mb-3">
-        <i class="pi pi-list" :style="{ color: houseColor }"></i>
-        <span>Étapes</span>
-        <span class="text-xs font-normal text-600">({{ completedStepsCount }}/{{ quest.steps.length }})</span>
-      </h4>
       
-      <div class="flex flex-column gap-2">
-        <div 
-          v-for="(step, index) in quest.steps" 
-          :key="step.id"
-          class="flex align-items-start gap-3 p-3 border-round-lg transition-all transition-duration-200"
-          :style="getStepStyle(step, index)"
-        >
-          <div class="flex-shrink-0" style="margin-top: 0.1rem;">
-            <i 
-              :class="isStepCompleted(step) ? 'pi pi-check-circle' : 'pi pi-circle'"
-              :style="{ color: isStepCompleted(step) ? getDifficultyColor() : '#ccc' }"
-            ></i>
-          </div>
-          
-          <div class="flex-1">
-            <h5 class="text-sm font-semibold m-0 mb-1">{{ step.title }}</h5>
-            <p class="text-xs text-600 m-0 mb-2 line-height-3">{{ step.description }}</p>
-            
-            <!-- Progression de l'étape -->
-            <div class="flex align-items-center gap-2" v-if="step.target > 1">
-              <div class="flex-1" style="height: 4px; background: var(--surface-card); border-radius: 2px; overflow: hidden;">
-                <div 
-                  style="height: 100%; border-radius: 2px; transition: width 0.3s ease;"
-                  :style="{ 
-                    width: `${Math.min((step.current / step.target) * 100, 100)}%`,
-                    backgroundColor: getDifficultyColor()
-                  }"
-                ></div>
-              </div>
-              <span class="text-xs text-600 font-semibold">
-                {{ step.current }}/{{ step.target }}
-              </span>
-            </div>
-          </div>
-          
-          <div class="flex-shrink-0">
-            <span class="px-2 py-1 border-round-xl text-xs font-semibold text-white" 
-                  :style="{ backgroundColor: houseColor }">
-              +{{ step.xp }} XP
+      <!-- Progress si en cours -->
+      <div v-if="hasProgress" class="progress-mini">
+        <div class="progress-bar-tiny">
+          <div class="progress-fill-tiny" :style="{ width: `${quest.progress || 0}%`, backgroundColor: houseColor }"></div>
+        </div>
+        <span class="progress-text-tiny">{{ quest.progress || 0 }}%</span>
+      </div>
+    </div>
+
+    <!-- Status badge -->
+    <div class="status-badge-compact" :class="getStatusClass()">
+      <i :class="getStatusIcon()"></i>
+    </div>
+
+    <!-- Deadline warning si urgent -->
+    <div v-if="(quest.end_date || quest.endDate) && isExpiringSoon && !isExpired" class="deadline-warning-compact">
+      <i class="pi pi-clock"></i>
+      <span>{{ getTimeRemainingCompact() }}</span>
+    </div>
+  </div>
+
+  <!-- MODAL DÉTAILLÉE -->
+  <Dialog 
+    v-model:visible="showModal" 
+    :header="quest.title"
+    :modal="true"
+    :style="{ width: '90vw', maxWidth: '700px' }"
+    :dismissableMask="true"
+    class="quest-detail-modal"
+  >
+    <template #header>
+      <div class="modal-header-custom">
+        <div class="modal-icon" :style="{ backgroundColor: `${houseColor}20`, borderColor: houseColor }">
+          <span v-if="quest.icon" class="icon-emoji-large">{{ quest.icon }}</span>
+          <i v-else :class="getQuestIcon(quest.type)" :style="{ color: houseColor }"></i>
+        </div>
+        <div class="modal-title-zone">
+          <h3>{{ quest.title }}</h3>
+          <div class="modal-badges">
+            <span class="modal-badge difficulty" :class="'diff-' + quest.difficulty">
+              {{ getDifficultyEmoji() }} {{ getDifficultyName() }}
+            </span>
+            <span class="modal-badge type">{{ getTypeEmoji() }} {{ getTypeText() }}</span>
+            <span class="modal-badge status" :class="getStatusClass()">
+              <i :class="getStatusIcon()"></i> {{ getStatusText() }}
             </span>
           </div>
         </div>
       </div>
+    </template>
+
+    <!-- Deadline banner si existe -->
+    <div v-if="quest.end_date || quest.endDate" class="modal-deadline" :class="{ 'urgent': isExpiringSoon, 'expired': isExpired }">
+      <i :class="isExpired ? 'pi pi-times-circle' : isExpiringSoon ? 'pi pi-exclamation-triangle' : 'pi pi-clock'"></i>
+      <span>{{ isExpired ? 'Expirée le ' + formatEndDate() : 'Se termine dans ' + getTimeRemaining() }}</span>
     </div>
 
-    <!-- Récompenses enrichies -->
-    <div class="mb-3" v-if="isExpanded">
-      <div class="flex align-items-center gap-2 mb-2">
-        <i class="pi pi-gift" :style="{ color: houseColor }"></i>
-        <span class="text-sm font-semibold text-900">Récompenses</span>
-      </div>
-      <div class="flex flex-wrap gap-2">
-        <!-- Points -->
-        <div class="reward-chip flex align-items-center gap-1">
-          <i class="pi pi-flag" style="font-size: 0.7rem; color: #f97316;"></i>
-          <span class="text-xs font-bold">{{ quest.points }} Points</span>
-        </div>
-        <!-- XP -->
-        <div class="reward-chip flex align-items-center gap-1" v-if="quest.xp_reward">
-          <i class="pi pi-star-fill" style="font-size: 0.7rem; color: #fbbf24;"></i>
-          <span class="text-xs font-bold">{{ quest.xp_reward }} XP</span>
-        </div>
-        <!-- Badges -->
-        <div v-if="quest.rewardBadges && quest.rewardBadges.length > 0" 
-             class="reward-chip flex align-items-center gap-1"
-             style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(139, 92, 246, 0.05));">
-          <i class="pi pi-trophy" style="font-size: 0.7rem; color: #8b5cf6;"></i>
-          <span class="text-xs font-bold text-purple-600">{{ quest.rewardBadges.length }} badge{{ quest.rewardBadges.length > 1 ? 's' : '' }}</span>
+    <!-- Description -->
+    <div class="modal-description">
+      <h4><i class="pi pi-align-left"></i> Description</h4>
+      <p>{{ quest.description }}</p>
+    </div>
+
+    <!-- Progress -->
+    <div v-if="hasProgress" class="modal-progress">
+      <h4><i class="pi pi-chart-line"></i> Progression</h4>
+      <div class="progress-section-modal">
+        <div class="progress-bar-modal">
+          <div class="progress-fill-modal" :style="{ width: `${quest.progress || 0}%`, backgroundColor: houseColor }">
+            <span class="progress-text-modal">{{ quest.progress || 0 }}%</span>
+          </div>
         </div>
       </div>
     </div>
-    
-    <!-- Récompenses compactes (non expanded) -->
-    <div class="rewards-section flex align-items-center gap-2 mb-3" v-else>
-      <div class="flex align-items-center gap-1 reward-chip">
-        <i class="pi pi-flag" style="font-size: 0.7rem; color: #f97316;"></i>
-        <span class="text-xs font-bold">{{ quest.points }}</span>
-      </div>
-      <div class="flex align-items-center gap-1 reward-chip" v-if="quest.xp_reward">
-        <i class="pi pi-star-fill" style="font-size: 0.7rem; color: #fbbf24;"></i>
-        <span class="text-xs font-bold">{{ quest.xp_reward }}</span>
+
+    <!-- Dates et Timing -->
+    <div v-if="quest.start_date || quest.end_date" class="modal-infos mb-3">
+      <h4><i class="pi pi-calendar"></i> Période de la Quête</h4>
+      <div class="info-grid-modal">
+        <!-- Date de début -->
+        <div v-if="quest.start_date" class="info-item-modal">
+          <i class="pi pi-calendar-plus" :style="{ color: houseColor }"></i>
+          <div>
+            <div class="info-label">Début</div>
+            <div class="info-value">{{ formatStartDate() }}</div>
+          </div>
+        </div>
+        
+        <!-- Date de fin -->
+        <div v-if="quest.end_date" class="info-item-modal">
+          <i class="pi pi-calendar-times" :style="{ color: isExpired ? '#ef4444' : isExpiringSoon ? '#f97316' : houseColor }"></i>
+          <div>
+            <div class="info-label">Fin</div>
+            <div class="info-value" :style="{ color: isExpired ? '#ef4444' : isExpiringSoon ? '#f97316' : 'inherit' }">
+              {{ formatEndDate() }}
+            </div>
+          </div>
+        </div>
+        
+        <!-- Temps restant (si pas expiré) -->
+        <div v-if="quest.end_date && !isExpired" class="info-item-modal" style="grid-column: 1 / -1;">
+          <i class="pi pi-hourglass" :style="{ color: isExpiringSoon ? '#f97316' : '#10b981' }"></i>
+          <div>
+            <div class="info-label">Temps restant</div>
+            <div class="info-value" :style="{ color: isExpiringSoon ? '#f97316' : '#10b981', fontWeight: '700' }">
+              ⏱️ {{ getTimeRemaining() }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Quête expirée -->
+        <div v-if="quest.end_date && isExpired" class="info-item-modal expired-notice" style="grid-column: 1 / -1;">
+          <i class="pi pi-times-circle" style="color: #ef4444;"></i>
+          <div>
+            <div class="info-label">Statut</div>
+            <div class="info-value" style="color: #ef4444; font-weight: 700;">
+              ❌ Quête expirée depuis {{ getExpiredSince() }}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Actions (seulement si expanded) -->
-    <div v-if="isExpanded" class="flex gap-2 mt-3">
-      <Button 
-        v-if="quest.status === 'not_started' && !isCompleted && !isExpired"
-        @click.stop="$emit('start-quest', quest.id)"
-        class="flex-1 font-semibold border-round-lg action-button"
-        icon="pi pi-play"
-        label="Commencer"
-        :style="{ backgroundColor: houseColor, borderColor: houseColor }"
-      />
-      
-      <Button 
-        v-else-if="quest.status === 'in_progress' && !isCompleted"
-        @click.stop="$emit('view-details', quest.id)"
-        class="flex-1 font-semibold border-round-lg action-button"
-        icon="pi pi-arrow-right"
-        label="Continuer"
-        :style="{ backgroundColor: houseColor, borderColor: houseColor }"
-      />
-    </div>
-
-    <!-- Indicateur de complétion -->
-    <div v-if="isCompleted" class="absolute top-0 right-0 p-2">
-      <div class="flex align-items-center gap-1 px-3 py-2 border-round-2xl text-xs font-semibold text-white" 
-           style="background: #4CAF50;">
-        <i class="pi pi-check-circle"></i>
-        <span>Quête Terminée!</span>
+    <!-- Informations -->
+    <div class="modal-infos">
+      <h4><i class="pi pi-info-circle"></i> Informations</h4>
+      <div class="info-grid-modal">
+        <div class="info-item-modal">
+          <i class="pi pi-star-fill"></i>
+          <div>
+            <div class="info-label">Récompense XP</div>
+            <div class="info-value">{{ quest.xp_reward || quest.points || 0 }} points</div>
+          </div>
+        </div>
+        <div v-if="quest.duration" class="info-item-modal">
+          <i class="pi pi-clock"></i>
+          <div>
+            <div class="info-label">Durée estimée</div>
+            <div class="info-value">{{ formatDuration() }}</div>
+          </div>
+        </div>
+        <div v-if="quest.rewardBadges && quest.rewardBadges.length > 0" class="info-item-modal">
+          <i class="pi pi-trophy"></i>
+          <div>
+            <div class="info-label">Badges</div>
+            <div class="info-value">{{ quest.rewardBadges.length }} badge{{ quest.rewardBadges.length > 1 ? 's' : '' }}</div>
+          </div>
+        </div>
+        <div v-if="quest.isRecurring" class="info-item-modal">
+          <i class="pi pi-refresh"></i>
+          <div>
+            <div class="info-label">Récurrence</div>
+            <div class="info-value">{{ getRecurringText() }}</div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Indicateur d'expiration -->
-    <div v-if="isExpired" class="absolute top-0 right-0 p-2">
-      <div class="flex align-items-center gap-1 px-3 py-2 border-round-2xl text-xs font-semibold text-white" 
-           style="background: #f44336;">
-        <i class="pi pi-times-circle"></i>
-        <span>Quête Expirée</span>
+    <template #footer>
+      <div class="modal-footer-custom">
+        <!-- Indicateurs de statut uniquement (pas d'action nécessaire) -->
+        <div class="quest-status-info" :class="getStatusFooterClass()">
+          <i :class="getStatusIcon()"></i>
+          <span>{{ getStatusFooterText() }}</span>
+        </div>
       </div>
-    </div>
-  </div>
+    </template>
+  </Dialog>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import Button from 'primevue/button'
+import Dialog from 'primevue/dialog'
 
 // State local
+const showModal = ref(false)
 const isExpanded = ref(false)
 const currentTime = ref(Date.now())
 let timeUpdateInterval = null
@@ -279,13 +259,14 @@ const emit = defineEmits(['click', 'start-quest', 'view-details', 'quest-expired
 // Computed properties
 const isCompleted = computed(() => props.quest.status === QUEST_STATUS.COMPLETED)
 
-// Vérification expiration basée sur endDate
+// Vérification expiration basée sur end_date
 const isQuestExpired = computed(() => {
   if (props.quest.status === QUEST_STATUS.EXPIRED || props.quest.status === QUEST_STATUS.COMPLETED) {
     return true
   }
-  if (props.quest.endDate) {
-    const endTime = new Date(props.quest.endDate).getTime()
+  const dateField = props.quest.end_date || props.quest.endDate
+  if (dateField) {
+    const endTime = new Date(dateField).getTime()
     return currentTime.value >= endTime
   }
   return false
@@ -295,8 +276,9 @@ const isExpired = computed(() => isQuestExpired.value)
 
 // Expire dans moins de 24h
 const isExpiringSoon = computed(() => {
-  if (!props.quest.endDate || isQuestExpired.value) return false
-  const endTime = new Date(props.quest.endDate).getTime()
+  const dateField = props.quest.end_date || props.quest.endDate
+  if (!dateField || isQuestExpired.value) return false
+  const endTime = new Date(dateField).getTime()
   const timeLeft = endTime - currentTime.value
   return timeLeft <= 24 * 60 * 60 * 1000 // 24 heures
 })
@@ -449,12 +431,28 @@ const toggleExpand = () => {
 }
 
 // Méthodes pour la gestion des dates
-const formatEndDate = () => {
-  if (!props.quest.endDate) return ''
-  const date = new Date(props.quest.endDate)
-  return date.toLocaleDateString('fr-FR', {
+const formatStartDate = () => {
+  const dateField = props.quest.start_date || props.quest.startDate
+  if (!dateField) return ''
+  const date = new Date(dateField)
+  return date.toLocaleString('fr-CH', {
+    timeZone: 'Europe/Zurich',
     day: '2-digit',
-    month: 'short',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+const formatEndDate = () => {
+  const dateField = props.quest.end_date || props.quest.endDate
+  if (!dateField) return ''
+  const date = new Date(dateField)
+  return date.toLocaleString('fr-CH', {
+    timeZone: 'Europe/Zurich',
+    day: '2-digit',
+    month: 'long',
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit'
@@ -462,9 +460,10 @@ const formatEndDate = () => {
 }
 
 const getTimeRemaining = () => {
-  if (!props.quest.endDate || isQuestExpired.value) return 'Expiré'
+  const dateField = props.quest.end_date || props.quest.endDate
+  if (!dateField || isQuestExpired.value) return 'Expiré'
   
-  const endTime = new Date(props.quest.endDate).getTime()
+  const endTime = new Date(dateField).getTime()
   const diff = endTime - currentTime.value
   
   if (diff <= 0) return 'Expiré'
@@ -474,11 +473,30 @@ const getTimeRemaining = () => {
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
   
   if (days > 0) {
-    return `${days}j ${hours}h`
+    return `${days} jour${days > 1 ? 's' : ''} ${hours}h`
   } else if (hours > 0) {
-    return `${hours}h ${minutes}m`
+    return `${hours}h ${minutes}min`
   } else {
-    return `${minutes}m`
+    return `${minutes} minute${minutes > 1 ? 's' : ''}`
+  }
+}
+
+const getExpiredSince = () => {
+  const dateField = props.quest.end_date || props.quest.endDate
+  if (!dateField) return ''
+  
+  const endTime = new Date(dateField).getTime()
+  const diff = currentTime.value - endTime
+  
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+  
+  if (days > 0) {
+    return `${days} jour${days > 1 ? 's' : ''}`
+  } else if (hours > 0) {
+    return `${hours} heure${hours > 1 ? 's' : ''}`
+  } else {
+    return 'moins d\'une heure'
   }
 }
 
@@ -520,6 +538,133 @@ const getStatusIcon = () => {
   return 'pi pi-circle'
 }
 
+// NOUVELLES MÉTHODES POUR LE DESIGN COMPACT
+const truncateText = (text, maxLength) => {
+  if (!text) return ''
+  return text.length > maxLength ? text.substring(0, maxLength) + '...' : text
+}
+
+const getDifficultyEmoji = () => {
+  const emojiMap = {
+    EASY: '⭐',
+    MEDIUM: '⭐⭐',
+    HARD: '⭐⭐⭐',
+    EPIC: '🔥',
+    LEGENDARY: '👑'
+  }
+  return emojiMap[props.quest.difficulty] || '⭐'
+}
+
+const getTypeEmoji = () => {
+  const emojiMap = {
+    daily: '📅',
+    weekly: '📆',
+    multi_step: '📋',
+    achievement: '🏆',
+    recurring: '🔄'
+  }
+  return emojiMap[props.quest.type] || '🎯'
+}
+
+const formatDurationCompact = () => {
+  if (!props.quest.duration) return ''
+  const hours = Math.floor(props.quest.duration / 60)
+  const minutes = props.quest.duration % 60
+  return hours > 0 ? `${hours}h${minutes > 0 ? minutes + 'm' : ''}` : `${minutes}m`
+}
+
+const getRecurringTextCompact = () => {
+  const map = {
+    daily: 'Quotidien',
+    weekly: 'Hebdo',
+    monthly: 'Mensuel'
+  }
+  return map[props.quest.recurring] || 'Récurrent'
+}
+
+const getTimeRemainingCompact = () => {
+  const dateField = props.quest.end_date || props.quest.endDate
+  if (!dateField || isQuestExpired.value) return 'Expiré'
+  
+  const endTime = new Date(dateField).getTime()
+  const diff = endTime - currentTime.value
+  
+  if (diff <= 0) return 'Expiré'
+  
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+  
+  if (days > 0) return `${days}j`
+  if (hours > 0) return `${hours}h`
+  return '<1h'
+}
+
+// Formatage date de fin compact pour la carte
+const formatEndDateShort = () => {
+  const dateField = props.quest.end_date || props.quest.endDate
+  if (!dateField) return ''
+  const date = new Date(dateField)
+  return date.toLocaleString('fr-CH', {
+    timeZone: 'Europe/Zurich',
+    day: '2-digit',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+// Temps restant très court pour la carte
+const getTimeRemainingShort = () => {
+  const dateField = props.quest.end_date || props.quest.endDate
+  if (!dateField || isQuestExpired.value) return ''
+  
+  const endTime = new Date(dateField).getTime()
+  const diff = endTime - currentTime.value
+  
+  if (diff <= 0) return ''
+  
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+  
+  if (days > 0) {
+    return `${days}j`
+  } else if (hours > 0) {
+    return `${hours}h`
+  } else {
+    return `${minutes}m`
+  }
+}
+
+const getStatusClass = () => {
+  if (isCompleted.value) return 'status-completed'
+  if (isQuestExpired.value) return 'status-expired'
+  if (props.quest.status === 'in_progress') return 'status-progress'
+  return 'status-available'
+}
+
+const getActionIcon = () => {
+  if (isCompleted.value) return 'pi pi-check'
+  if (isQuestExpired.value) return 'pi pi-times'
+  if (props.quest.status === 'in_progress') return 'pi pi-arrow-right'
+  return 'pi pi-play'
+}
+
+// Fonctions pour le footer de statut
+const getStatusFooterClass = () => {
+  if (isCompleted.value) return 'status-footer-completed'
+  if (isExpired.value) return 'status-footer-expired'
+  if (props.quest.status === 'in_progress') return 'status-footer-progress'
+  return 'status-footer-available'
+}
+
+const getStatusFooterText = () => {
+  if (isCompleted.value) return '✅ Quête terminée avec succès'
+  if (isExpired.value) return '❌ Cette quête a expiré'
+  if (props.quest.status === 'in_progress') return '🎯 Quête en cours - Progresse en réalisant les activités'
+  return '📋 Quête disponible - Progresse en réalisant les activités'
+}
+
 // Lifecycle hooks
 onMounted(() => {
   // Mettre à jour le temps toutes les minutes
@@ -541,97 +686,1388 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* 🎨 NOUVEAU DESIGN ULTRA MODERNE ET VISIBLE */
+/* 🎯 CARTE COMPACTE - Design minimaliste et moderne */
 
-.modern-quest-card {
+.quest-card-compact {
   background: var(--surface-card);
-  border-radius: 16px;
-  padding: 24px;
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--surface-border);
+  border-left: 4px solid var(--house-color);
+  transition: all 0.25s ease;
+  cursor: pointer;
   position: relative;
-  overflow: visible;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border-left: 5px solid var(--house-color);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  animation: fadeInScale 0.4s ease;
+  min-height: 80px;
+  max-height: 90px;
 }
 
-.modern-quest-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+.quest-card-compact:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  border-color: var(--house-color);
 }
 
-.quest-expired {
-  border-left-color: #ef4444 !important;
-  background: var(--surface-card);
-  opacity: 0.75;
+/* Icône carte compacte */
+.quest-icon-small {
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  border: 2px solid;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
 }
 
-.quest-completed {
-  border-left-color: #22c55e !important;
-  background: var(--surface-card);
+.quest-card-compact:hover .quest-icon-small {
+  transform: scale(1.05);
 }
 
-.quest-expiring-soon {
-  border-left-color: #f97316 !important;
-  animation: pulse-shadow 2s infinite;
+.quest-icon-small .icon-emoji {
+  font-size: 28px;
 }
 
-@keyframes pulse-shadow {
-  0%, 100% { 
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); 
-  }
-  50% { 
-    box-shadow: 0 4px 16px rgba(249, 115, 22, 0.3); 
-  }
+/* Contenu carte compacte */
+.quest-content-compact {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
 }
 
-@keyframes fadeInScale {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-.quest-icon {
-  width: 48px;
-  height: 48px;
-  transition: all 0.3s ease;
-}
-
-.quest-card:hover .quest-icon {
-  transform: scale(1.1) rotate(5deg);
-}
-
-.truncated-text {
+.quest-title-compact {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-color);
+  line-height: 1.3;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.quest-meta-compact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+}
+
+/* Deadline compact dans la carte */
+.quest-deadline-compact {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--text-color-secondary);
+  margin-top: 4px;
+  padding: 4px 8px;
+  background: var(--surface-100);
+  border-radius: 6px;
+  border-left: 3px solid var(--blue-500);
+}
+
+.quest-deadline-compact.deadline-urgent {
+  background: rgba(249, 115, 22, 0.1);
+  border-left-color: var(--orange-500);
+  color: var(--orange-700);
+  font-weight: 600;
+}
+
+.quest-deadline-compact.deadline-expired {
+  background: rgba(239, 68, 68, 0.1);
+  border-left-color: var(--red-500);
+  color: var(--red-700);
+  font-weight: 600;
+}
+
+.quest-deadline-compact i {
+  font-size: 0.9rem;
+}
+
+.deadline-text {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.expand-icon {
-  transition: transform 0.3s ease;
+.badge-mini {
+  font-size: 1rem;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
 }
 
-.status-badge {
-  font-size: 0.65rem;
-  letter-spacing: 0.5px;
-  white-space: nowrap;
+.badge-mini.diff-EASY { background: var(--green-100); }
+.badge-mini.diff-MEDIUM { background: var(--blue-100); }
+.badge-mini.diff-HARD { background: var(--orange-100); }
+.badge-mini.diff-EPIC { background: var(--purple-100); }
+.badge-mini.diff-LEGENDARY { background: var(--pink-100); }
+.badge-mini.type { background: var(--cyan-100); }
+
+.separator {
+  color: var(--text-color-secondary);
+  font-weight: 400;
 }
 
-.info-chip {
-  background: rgba(0, 0, 0, 0.04);
+.xp-value {
+  color: var(--yellow-700);
+  font-weight: 700;
+}
+
+/* Progress mini */
+.progress-mini {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.progress-bar-tiny {
+  flex: 1;
+  height: 5px;
+  background: var(--surface-border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill-tiny {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.progress-text-tiny {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-color-secondary);
+  min-width: 35px;
+}
+
+/* Status badge compact */
+.status-badge-compact {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 14px;
+  border: 2px solid;
+}
+
+.status-badge-compact.status-available {
+  background: var(--blue-50);
+  border-color: var(--blue-500);
+  color: var(--blue-600);
+}
+
+.status-badge-compact.status-progress {
+  background: var(--yellow-50);
+  border-color: var(--yellow-500);
+  color: var(--yellow-700);
+}
+
+.status-badge-compact.status-completed {
+  background: var(--green-50);
+  border-color: var(--green-500);
+  color: var(--green-600);
+}
+
+.status-badge-compact.status-expired {
+  background: var(--red-50);
+  border-color: var(--red-500);
+  color: var(--red-600);
+}
+
+/* Deadline warning compact */
+.deadline-warning-compact {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: var(--orange-500);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  animation: pulse-warning 1.5s infinite;
+}
+
+@keyframes pulse-warning {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.quest-expired {
+  border-left-color: var(--red-500) !important;
+  opacity: 0.7;
+}
+
+.quest-completed {
+  border-left-color: var(--green-500) !important;
+}
+
+.quest-expiring-soon {
+  border-left-color: var(--orange-500) !important;
+}
+
+/* 🎨 MODAL DÉTAILLÉE - Styles */
+
+.modal-header-custom {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.modal-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  border: 3px solid;
+  flex-shrink: 0;
+}
+
+.modal-icon .icon-emoji-large {
+  font-size: 36px;
+}
+
+.modal-title-zone {
+  flex: 1;
+}
+
+.modal-title-zone h3 {
+  margin: 0 0 10px 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.modal-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.modal-badge {
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.modal-badge.difficulty { background: var(--yellow-100); color: var(--yellow-900); }
+.modal-badge.diff-EASY { background: var(--green-100); color: var(--green-900); }
+.modal-badge.diff-MEDIUM { background: var(--blue-100); color: var(--blue-900); }
+.modal-badge.diff-HARD { background: var(--orange-100); color: var(--orange-900); }
+.modal-badge.diff-EPIC { background: var(--purple-100); color: var(--purple-900); }
+.modal-badge.diff-LEGENDARY { background: var(--pink-100); color: var(--pink-900); }
+.modal-badge.type { background: var(--cyan-100); color: var(--cyan-900); }
+.modal-badge.status { background: var(--surface-section); }
+
+.modal-deadline {
+  background: var(--blue-100);
+  color: var(--blue-900);
+  padding: 12px 16px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+.modal-deadline.urgent {
+  background: var(--orange-100);
+  color: var(--orange-900);
+  animation: pulse-modal 2s infinite;
+}
+
+.modal-deadline.expired {
+  background: var(--red-100);
+  color: var(--red-900);
+}
+
+@keyframes pulse-modal {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+.modal-description h4,
+.modal-progress h4,
+.modal-infos h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin: 0 0 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modal-description p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--text-color-secondary);
+}
+
+.modal-description {
+  margin-bottom: 20px;
+}
+
+.progress-section-modal {
+  margin-top: 12px;
+}
+
+.progress-bar-modal {
+  height: 14px;
+  background: var(--surface-border);
+  border-radius: 7px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-fill-modal {
+  height: 100%;
+  border-radius: 7px;
+  transition: width 0.6s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.progress-text-modal {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  z-index: 1;
+}
+
+.modal-progress {
+  margin-bottom: 20px;
+}
+
+.info-grid-modal {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.info-item-modal {
+  background: var(--surface-section);
+  padding: 14px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--surface-border);
+}
+
+.info-item-modal i {
+  font-size: 1.3rem;
+  color: var(--house-color);
+}
+
+.info-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-color-secondary);
+  margin-bottom: 4px;
+}
+
+.info-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.modal-footer-custom {
+  padding: 0;
+}
+
+/* 📊 FOOTER AVEC INDICATEUR DE STATUT */
+.quest-status-info {
+  width: 100%;
+  padding: 16px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: left;
+  border: 2px solid;
   transition: all 0.2s ease;
 }
 
-.quest-card:hover .info-chip {
-  background: rgba(0, 0, 0, 0.06);
+.quest-status-info i {
+  font-size: 1.5rem;
+  flex-shrink: 0;
 }
 
-.reward-chip {
-  background: linear-gradient(135deg, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.02));
-  padding: 0.5rem 0.75rem;
+.status-footer-available {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.05));
+  color: #2563eb;
+  border-color: #3b82f6;
+}
+
+.status-footer-progress {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.1), rgba(249, 115, 22, 0.05));
+  color: #ea580c;
+  border-color: #f97316;
+  animation: pulse-progress 2s infinite;
+}
+
+.status-footer-completed {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.05));
+  color: #16a34a;
+  border-color: #22c55e;
+}
+
+.status-footer-expired {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
+  color: #dc2626;
+  border-color: #ef4444;
+}
+
+@keyframes pulse-progress {
+  0%, 100% { 
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.95;
+    transform: scale(1.01);
+  }
+}
+
+/* 🚨 NOTICE QUÊTE EXPIRÉE */
+.info-item-modal.expired-notice {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
+  border: 2px solid #fee2e2;
+  border-left: 4px solid #ef4444;
+  animation: pulse-expired 2s infinite;
+}
+
+@keyframes pulse-expired {
+  0%, 100% { 
+    opacity: 1; 
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.9; 
+    transform: scale(1.01);
+  }
+}
+
+/* MAIN CONTENT */
+.quest-main-content {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* HEADER CLAIR */
+.quest-header-clear {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.quest-icon-visual {
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  border: 3px solid;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, var(--surface-ground), var(--surface-section));
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transition: transform 0.3s ease;
+}
+
+.user-friendly-quest-card:hover .quest-icon-visual {
+  transform: scale(1.05) rotate(-3deg);
+}
+
+.quest-icon-visual .icon-emoji {
+  font-size: 40px;
+}
+
+.quest-icon-visual .pi {
+  font-size: 32px;
+}
+
+.quest-title-zone {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.quest-title-main {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text-color);
+  line-height: 1.3;
+  margin: 0;
+}
+
+.quest-meta-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.meta-badge {
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 6px 12px;
   border-radius: 8px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+}
+
+.meta-badge.difficulty {
+  background: linear-gradient(135deg, var(--yellow-50), var(--yellow-100));
+  color: var(--yellow-900);
+  border: 1px solid var(--yellow-200);
+}
+
+.meta-badge.diff-EASY {
+  background: linear-gradient(135deg, var(--green-50), var(--green-100));
+  color: var(--green-900);
+  border: 1px solid var(--green-200);
+}
+
+.meta-badge.diff-MEDIUM {
+  background: linear-gradient(135deg, var(--blue-50), var(--blue-100));
+  color: var(--blue-900);
+  border: 1px solid var(--blue-200);
+}
+
+.meta-badge.diff-HARD {
+  background: linear-gradient(135deg, var(--orange-50), var(--orange-100));
+  color: var(--orange-900);
+  border: 1px solid var(--orange-200);
+}
+
+.meta-badge.diff-EPIC {
+  background: linear-gradient(135deg, var(--purple-50), var(--purple-100));
+  color: var(--purple-900);
+  border: 1px solid var(--purple-200);
+}
+
+.meta-badge.diff-LEGENDARY {
+  background: linear-gradient(135deg, var(--pink-50), var(--pink-100));
+  color: var(--pink-900);
+  border: 1px solid var(--pink-200);
+  animation: shimmer-legendary 2s infinite;
+}
+
+@keyframes shimmer-legendary {
+  0%, 100% { box-shadow: 0 2px 4px rgba(0,0,0,0.08); }
+  50% { box-shadow: 0 4px 12px var(--pink-300); }
+}
+
+.meta-badge.type {
+  background: linear-gradient(135deg, var(--cyan-50), var(--cyan-100));
+  color: var(--cyan-900);
+  border: 1px solid var(--cyan-200);
+}
+
+.meta-badge.level {
+  background: linear-gradient(135deg, var(--indigo-50), var(--indigo-100));
+  color: var(--indigo-900);
+  border: 1px solid var(--indigo-200);
+}
+
+/* STATUS INDICATOR CLAIR */
+.status-indicator {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border: 2px solid;
+}
+
+.status-indicator.status-available {
+  background: var(--blue-50);
+  color: var(--blue-700);
+  border-color: var(--blue-300);
+}
+
+.status-indicator.status-progress {
+  background: var(--yellow-50);
+  color: var(--yellow-800);
+  border-color: var(--yellow-300);
+  animation: pulse-status 2s infinite;
+}
+
+.status-indicator.status-completed {
+  background: var(--green-50);
+  color: var(--green-700);
+  border-color: var(--green-300);
+}
+
+.status-indicator.status-expired {
+  background: var(--red-50);
+  color: var(--red-700);
+  border-color: var(--red-300);
+}
+
+@keyframes pulse-status {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+
+/* DESCRIPTION CLAIRE */
+.quest-description-clear {
+  background: var(--surface-section);
+  padding: 16px;
+  border-radius: 12px;
+  border-left: 4px solid var(--house-color);
+}
+
+.quest-description-clear p {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--text-color);
+}
+
+/* PROGRESS SECTION */
+.quest-progress-section {
+  background: var(--surface-ground);
+  padding: 16px;
+  border-radius: 12px;
+}
+
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.progress-percentage {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--house-color);
+}
+
+.progress-bar-visual {
+  height: 12px;
+  background: var(--surface-border);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.progress-fill-visual {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(90deg, var(--house-color), color-mix(in srgb, var(--house-color) 80%, white));
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  position: relative;
+}
+
+.progress-fill-visual::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: progress-shine 2s infinite;
+}
+
+@keyframes progress-shine {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* DETAILS GRID */
+.quest-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.detail-item {
+  background: var(--surface-section);
+  padding: 12px 16px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--surface-border);
+  transition: all 0.2s ease;
+}
+
+.detail-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.detail-item.reward-item-detail {
+  background: linear-gradient(135deg, var(--yellow-50), var(--yellow-100));
+  border-color: var(--yellow-200);
+}
+
+.detail-icon {
+  font-size: 1.5rem;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.detail-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.detail-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-color-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+/* CALL TO ACTION */
+.quest-action-zone {
+  padding-top: 8px;
+  border-top: 2px dashed var(--surface-border);
+}
+
+.quest-cta-button {
+  width: 100%;
+  font-size: 1.05rem !important;
+  font-weight: 700 !important;
+  padding: 16px !important;
+  border-radius: 12px !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+}
+
+.quest-cta-button.start,
+.quest-cta-button.continue {
+  position: relative;
+  overflow: hidden;
+}
+
+.quest-cta-button.start::before,
+.quest-cta-button.continue::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.4s ease, height 0.4s ease;
+}
+
+.quest-cta-button.start:hover::before,
+.quest-cta-button.continue:hover::before {
+  width: 300%;
+  height: 300%;
+}
+
+.quest-cta-button:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25) !important;
+}
+
+.quest-cta-button:active:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.quest-icon-compact {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  border: 2px solid;
+  background: linear-gradient(135deg, var(--surface-ground), var(--surface-section));
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+/* Effet de shine au hover */
+.quest-icon-compact::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+  transform: rotate(45deg);
+  transition: all 0.5s ease;
+}
+
+.compact-quest-card:hover .quest-icon-compact {
+  transform: scale(1.08) rotate(3deg);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.compact-quest-card:hover .quest-icon-compact::after {
+  left: 100%;
+}
+
+.quest-icon-compact .icon-emoji {
+  font-size: 36px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+
+.quest-icon-compact .pi {
+  font-size: 28px;
+}
+
+.status-badge {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  border: 2px solid;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  transition: all 0.2s ease;
+}
+
+.status-badge:hover {
+  transform: scale(1.1);
+}
+
+.status-badge.status-available {
+  background: var(--blue-50);
+  border-color: var(--blue-500);
+  color: var(--blue-600);
+}
+
+.status-badge.status-progress {
+  background: var(--yellow-50);
+  border-color: var(--yellow-500);
+  color: var(--yellow-700);
+  animation: pulse-status 2s infinite;
+}
+
+.status-badge.status-completed {
+  background: var(--green-50);
+  border-color: var(--green-500);
+  color: var(--green-600);
+}
+
+.status-badge.status-expired {
+  background: var(--red-50);
+  border-color: var(--red-500);
+  color: var(--red-600);
+}
+
+@keyframes pulse-status {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.9; }
+}
+
+/* CENTER - Contenu Principal */
+.quest-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  justify-content: center;
+}
+
+.quest-header-compact {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.quest-title-compact {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin: 0;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  letter-spacing: -0.01em;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.quest-meta-badges {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.mini-badge {
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.mini-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+}
+
+.mini-badge.difficulty {
+  background: linear-gradient(135deg, var(--yellow-50), var(--yellow-100));
+  color: var(--yellow-800);
+  border-color: var(--yellow-200);
+}
+
+.mini-badge.diff-EASY {
+  background: linear-gradient(135deg, var(--green-50), var(--green-100));
+  color: var(--green-800);
+}
+
+.mini-badge.diff-MEDIUM {
+  background: linear-gradient(135deg, var(--blue-50), var(--blue-100));
+  color: var(--blue-800);
+}
+
+.mini-badge.diff-HARD {
+  background: linear-gradient(135deg, var(--orange-50), var(--orange-100));
+  color: var(--orange-800);
+}
+
+.mini-badge.diff-EPIC {
+  background: linear-gradient(135deg, var(--purple-50), var(--purple-100));
+  color: var(--purple-800);
+}
+
+.mini-badge.diff-LEGENDARY {
+  background: linear-gradient(135deg, var(--pink-50), var(--pink-100));
+  color: var(--pink-800);
+  animation: shimmer-badge 3s infinite;
+}
+
+@keyframes shimmer-badge {
+  0%, 100% { box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  50% { box-shadow: 0 2px 8px var(--pink-200), 0 0 12px var(--pink-100); }
+}
+
+.mini-badge.type {
+  background: linear-gradient(135deg, var(--cyan-50), var(--cyan-100));
+  color: var(--cyan-800);
+  border-color: var(--cyan-200);
+}
+
+.mini-badge.level {
+  background: linear-gradient(135deg, var(--indigo-50), var(--indigo-100));
+  color: var(--indigo-800);
+  font-size: 0.7rem;
+  border-color: var(--indigo-200);
+}
+
+.quest-description-compact {
+  font-size: 0.88rem;
+  color: var(--text-color-secondary);
+  margin: 0;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.quest-description-full {
+  font-size: 0.92rem;
+  color: var(--text-color);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.quest-progress-compact {
+  margin-top: 4px;
+}
+
+.progress-bar-mini {
+  height: 8px;
+  background: var(--surface-border);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 8px;
+  background: linear-gradient(90deg, var(--house-color), color-mix(in srgb, var(--house-color) 80%, white));
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.progress-fill::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: progress-shine 2s infinite;
+}
+
+@keyframes progress-shine {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.progress-text {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: white;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+  z-index: 1;
+}
+
+.quest-info-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 0.78rem;
+  color: var(--text-color-secondary);
+  margin-top: 4px;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--surface-section);
+  transition: all 0.2s ease;
+}
+
+.info-item:hover {
+  background: var(--surface-hover);
+  transform: translateY(-1px);
+}
+
+.info-item i {
+  font-size: 0.75rem;
+}
+
+.info-item.recurring {
+  color: var(--purple-600);
+  background: var(--purple-50);
+}
+
+.info-item.expiring {
+  color: var(--orange-700);
+  font-weight: 700;
+  background: var(--orange-50);
+  animation: pulse-warning 1.5s infinite;
+}
+
+.info-item.expired {
+  color: var(--red-700);
+  font-weight: 700;
+  background: var(--red-50);
+}
+
+@keyframes pulse-warning {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+/* RIGHT SIDE - Récompenses et Actions */
+.quest-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.rewards-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
+}
+
+.reward-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  transition: all 0.2s ease;
+  border: 1px solid;
+}
+
+.reward-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.reward-item.xp {
+  background: linear-gradient(135deg, var(--yellow-50), var(--yellow-100));
+  color: var(--yellow-900);
+  border-color: var(--yellow-200);
+}
+
+.reward-item.xp i {
+  color: var(--yellow-600);
+  font-size: 0.8rem;
+  animation: sparkle 3s infinite;
+}
+
+@keyframes sparkle {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.8; }
+}
+
+.reward-item.badges {
+  background: linear-gradient(135deg, var(--purple-50), var(--purple-100));
+  color: var(--purple-900);
+  border-color: var(--purple-200);
+}
+
+.reward-item.badges i {
+  color: var(--purple-600);
+  font-size: 0.8rem;
+}
+
+.quest-action-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 2px solid var(--house-color);
+  color: white;
+  background: var(--house-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+.quest-action-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.3s ease, height 0.3s ease;
+}
+
+.quest-action-btn:hover:not(:disabled)::before {
+  width: 100%;
+  height: 100%;
+}
+
+.quest-action-btn:hover:not(:disabled) {
+  transform: scale(1.15) rotate(5deg);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+}
+
+.quest-action-btn:active:not(:disabled) {
+  transform: scale(1.05);
+}
+
+.quest-action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  filter: grayscale(1);
+}
+
+/* RESPONSIVE MOBILE */
+@media (max-width: 768px) {
+  .quest-main-content {
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .quest-header-clear {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .quest-icon-visual {
+    width: 60px;
+    height: 60px;
+  }
+
+  .quest-icon-visual .icon-emoji {
+    font-size: 32px;
+  }
+
+  .quest-title-main {
+    font-size: 1.1rem;
+  }
+
+  .meta-badge {
+    font-size: 0.8rem;
+    padding: 4px 10px;
+  }
+
+  .status-indicator {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+  }
+
+  .quest-details-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .detail-item {
+    padding: 10px 14px;
+  }
+
+  .detail-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 1.3rem;
+  }
+
+  .quest-cta-button {
+    font-size: 1rem !important;
+    padding: 14px !important;
+  }
+
+  .deadline-banner {
+    padding: 10px 16px;
+  }
+
+  .deadline-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+
+  .deadline-label {
+    font-size: 0.8rem;
+  }
+
+  .deadline-value {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .quest-main-content {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .quest-icon-visual {
+    width: 52px;
+    height: 52px;
+  }
+
+  .quest-title-main {
+    font-size: 1rem;
+  }
+
+  .quest-details-grid {
+    gap: 6px;
+  }
+
+  .detail-value {
+    font-size: 0.9rem;
+  }
 }
 
 .progress-bar-container {

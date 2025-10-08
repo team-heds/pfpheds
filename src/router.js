@@ -274,12 +274,12 @@ const routes = [
   // PROFILS & UTILISATEURS
   // ========================================
   { path: '/profile/:id', component: Profile, name: 'Profile', meta: { requiresAuth: true } },
-  { path: '/profilAdmin/:id', component: ProfileAdmin, name: 'ProfileAdmin', meta: { requiresAuth: true, requiredRole: ['admin'] } },
+  { path: '/profilAdmin/:id', component: ProfileAdmin, name: 'ProfileAdmin', meta: { requiresAuth: true, requiredRole: ['admin', 'house_coach'] } },
   { path: '/settings', component: SettingView, name: 'SettingView', meta: { requiresAuth: true } },
   { path: '/hes-house-quiz', component: HESHouseQuizView, name: 'HESHouseQuizView', meta: { requiresAuth: true } },
   { path: '/houses/:houseName/stats', component: HouseStatsPage, name: 'HouseStatsPage', props: true, meta: { requiresAuth: true } },
   { path: '/houses/ranking', component: HousesRankingPage, name: 'HousesRankingPage', meta: { requiresAuth: true } },
-  { path: '/gamification-profile', component: GamificationProfilePage, name: 'GamificationProfilePage', meta: { requiresAuth: false } },
+  { path: '/gamification-profile/:id', component: GamificationProfilePage, name: 'GamificationProfilePage', props: true, meta: { requiresAuth: true } },
   { path: '/achievements', component: AchievementsPage, name: 'AchievementsPage', meta: { requiresAuth: true } },
   { path: '/challenges', component: ChallengesPage, name: 'ChallengesPage', meta: { requiresAuth: true } },
   { path: '/quests', component: QuestsPage, name: 'QuestsPage', meta: { requiresAuth: true } },
@@ -288,8 +288,8 @@ const routes = [
   // ========================================
   // DASHBOARD & ADMINISTRATION
   // ========================================
-  { path: '/admin', component: DashboardView, name: 'DashboardView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
-  { path: '/admin/defis', component: AdminDefisView, name: 'AdminDefisView', meta: { requiresAuth: true, requiredRole: ['admin'] } },
+  { path: '/admin', component: DashboardView, name: 'DashboardView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor', 'house_coach'] } },
+  { path: '/admin/defis', component: AdminDefisView, name: 'AdminDefisView', meta: { requiresAuth: true, requiredRole: ['admin', 'house_coach'] } },
   
   // ========================================
   // GAMIFICATION ADMIN ROUTES

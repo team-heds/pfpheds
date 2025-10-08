@@ -281,6 +281,72 @@
                   </div>
                 </div>
               </div>
+
+              <!-- 📅 DATES DE DÉBUT ET FIN (avec heure - Fuseau horaire Berne) -->
+              <div class="col-12">
+                <div class="surface-section p-4 border-round mb-3">
+                  <h4 class="text-900 font-bold mb-3">
+                    <i class="pi pi-calendar text-purple-500 mr-2"></i>Période de la Quête (Fuseau horaire: Europe/Zurich)
+                  </h4>
+                  <div class="grid">
+                    <div class="col-12 md:col-6">
+                      <div class="mb-4">
+                        <label for="startDate" class="block text-900 font-bold mb-2">
+                          <i class="pi pi-clock mr-2"></i>Date et Heure de Début
+                        </label>
+                        <Calendar 
+                          id="startDate"
+                          v-model="questForm.startDate" 
+                          showTime
+                          hourFormat="24"
+                          dateFormat="dd/mm/yy"
+                          placeholder="Sélectionner la date et l'heure"
+                          class="w-full"
+                          showIcon
+                          :showButtonBar="true"
+                        />
+                        <small class="text-500 block mt-1">
+                          <i class="pi pi-info-circle mr-1"></i>La quête sera disponible à partir de cette date/heure
+                        </small>
+                      </div>
+                    </div>
+                    
+                    <div class="col-12 md:col-6">
+                      <div class="mb-4">
+                        <label for="endDate" class="block text-900 font-bold mb-2">
+                          <i class="pi pi-clock mr-2"></i>Date et Heure de Fin
+                        </label>
+                        <Calendar 
+                          id="endDate"
+                          v-model="questForm.endDate" 
+                          showTime
+                          hourFormat="24"
+                          dateFormat="dd/mm/yy"
+                          placeholder="Sélectionner la date et l'heure"
+                          class="w-full"
+                          showIcon
+                          :showButtonBar="true"
+                          :minDate="questForm.startDate"
+                        />
+                        <small class="text-500 block mt-1">
+                          <i class="pi pi-info-circle mr-1"></i>La quête expirera automatiquement après cette date/heure
+                        </small>
+                      </div>
+                    </div>
+
+                    <!-- Récapitulatif durée -->
+                    <div class="col-12" v-if="questForm.startDate && questForm.endDate">
+                      <div class="bg-purple-50 border-1 border-purple-200 border-round p-3">
+                        <div class="flex align-items-center gap-2 text-purple-900">
+                          <i class="pi pi-calendar-times text-xl"></i>
+                          <strong>Durée totale:</strong>
+                          <span>{{ calculateQuestDuration() }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </TabPanel>
@@ -919,16 +985,34 @@ const saveQuest = async () => {
       difficulty: questForm.difficulty,
       points: questForm.points,
       status: questForm.status,
+      xp_reward: questForm.xp_reward,
+      icon: questForm.icon,
+      // Dates avec fuseau horaire Berne (Europe/Zurich)
+      startDate: questForm.startDate ? formatDateTimeForBerne(questForm.startDate) : null,
+      endDate: questForm.endDate ? formatDateTimeForBerne(questForm.endDate) : null,
+      duration: questForm.duration,
+      isRecurring: questForm.isRecurring,
+      recurringType: questForm.recurringType,
+      minLevel: questForm.minLevel,
+      maxLevel: questForm.maxLevel,
+      targetHouses: questForm.targetHouses,
+      prerequisites: questForm.prerequisites,
+      rewardBadges: questForm.rewardBadges,
       steps: questForm.steps.filter(step => step.title.trim()).map(step => ({
         title: step.title.trim(),
         description: step.description || null,
-        required: step.required !== false
+        required: step.required !== false,
+        target: step.target || 1,
+        current: step.current || 0
       })),
+      hints: questForm.hints.filter(hint => hint.trim()),
       rewards: {
-        xp: questForm.points,
-        badges: [],
+        xp: questForm.xp_reward,
+        badges: questForm.rewardBadges || [],
         items: []
-      }
+      },
+      createdAt: Date.now(),
+      updatedAt: Date.now()
     }
     
     if (editingQuest.value) {
@@ -976,8 +1060,22 @@ const editQuest = (quest) => {
     type: quest.type || '',
     difficulty: quest.difficulty || 'easy',
     points: quest.points || 50,
+    xp_reward: quest.xp_reward || 100,
     status: quest.status || 'active',
-    steps: quest.steps?.length ? [...quest.steps] : [{ title: '' }]
+    icon: quest.icon || '🗺️',
+    // Charger les dates (converties depuis ISO vers Date object)
+    startDate: quest.startDate ? new Date(quest.startDate) : null,
+    endDate: quest.endDate ? new Date(quest.endDate) : null,
+    duration: quest.duration || null,
+    isRecurring: quest.isRecurring || false,
+    recurringType: quest.recurringType || null,
+    minLevel: quest.minLevel || 1,
+    maxLevel: quest.maxLevel || null,
+    targetHouses: quest.targetHouses || [],
+    prerequisites: quest.prerequisites || [],
+    rewardBadges: quest.rewardBadges || [],
+    steps: quest.steps?.length ? [...quest.steps] : [{ title: '', description: '', required: true, target: 1, current: 0 }],
+    hints: quest.hints?.length ? [...quest.hints] : ['']
   })
   showCreateDialog.value = true
 }
@@ -1024,7 +1122,7 @@ const viewQuestDetails = (quest) => {
 
 // Navigation vers la vue de création publique
 const navigateToPublicCreation = () => {
-  router.push('/gamification/create-quest')
+  router.push('/gamification-profile')
 }
 
 // Utilitaires de rôles supprimés - système désactivé
@@ -1070,6 +1168,37 @@ const getTypeSeverity = (type) => {
 const formatDate = (timestamp) => {
   if (!timestamp) return 'N/A'
   return new Date(timestamp).toLocaleDateString('fr-FR')
+}
+
+// Calculer la durée entre la date de début et fin (fuseau horaire Berne)
+const calculateQuestDuration = () => {
+  if (!questForm.startDate || !questForm.endDate) return 'Non définie'
+  
+  const start = new Date(questForm.startDate)
+  const end = new Date(questForm.endDate)
+  const diffMs = end - start
+  
+  if (diffMs < 0) return 'Date de fin antérieure au début'
+  
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+  const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+  const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
+  
+  let duration = []
+  if (diffDays > 0) duration.push(`${diffDays} jour${diffDays > 1 ? 's' : ''}`)
+  if (diffHours > 0) duration.push(`${diffHours} heure${diffHours > 1 ? 's' : ''}`)
+  if (diffMinutes > 0) duration.push(`${diffMinutes} minute${diffMinutes > 1 ? 's' : ''}`)
+  
+  return duration.length > 0 ? duration.join(', ') : 'Moins d\'une minute'
+}
+
+// Formater date avec heure pour Supabase (TIMESTAMPTZ)
+const formatDateTimeForBerne = (date) => {
+  if (!date) return null
+  
+  // Simplement retourner la date en format ISO
+  // PostgreSQL TIMESTAMPTZ gère automatiquement le timezone
+  return date.toISOString()
 }
 
 // Lifecycle
