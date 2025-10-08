@@ -200,38 +200,11 @@
 
     <template #footer>
       <div class="modal-footer-custom">
-        <Button 
-          v-if="!isCompleted && !isExpired && quest.status === 'not_started'"
-          @click="handleQuickAction"
-          :style="{ backgroundColor: houseColor, borderColor: houseColor }"
-          icon="pi pi-play-circle"
-          label="Commencer la quête"
-          class="w-full"
-        />
-        <Button 
-          v-else-if="!isCompleted && !isExpired && quest.status === 'in_progress'"
-          @click="handleQuickAction"
-          :style="{ backgroundColor: houseColor, borderColor: houseColor }"
-          icon="pi pi-arrow-right"
-          label="Continuer la quête"
-          class="w-full"
-        />
-        <Button 
-          v-else-if="isCompleted"
-          icon="pi pi-check-circle"
-          label="Quête terminée"
-          severity="success"
-          disabled
-          class="w-full"
-        />
-        <Button 
-          v-else-if="isExpired"
-          icon="pi pi-times-circle"
-          label="Quête expirée"
-          severity="danger"
-          disabled
-          class="w-full"
-        />
+        <!-- Indicateurs de statut uniquement (pas d'action nécessaire) -->
+        <div class="quest-status-info" :class="getStatusFooterClass()">
+          <i :class="getStatusIcon()"></i>
+          <span>{{ getStatusFooterText() }}</span>
+        </div>
       </div>
     </template>
   </Dialog>
@@ -677,14 +650,19 @@ const getActionIcon = () => {
   return 'pi pi-play'
 }
 
-const handleQuickAction = () => {
-  if (isExpired.value) return
-  
-  if (props.quest.status === 'not_started') {
-    emit('start-quest', props.quest.id)
-  } else if (props.quest.status === 'in_progress') {
-    emit('view-details', props.quest.id)
-  }
+// Fonctions pour le footer de statut
+const getStatusFooterClass = () => {
+  if (isCompleted.value) return 'status-footer-completed'
+  if (isExpired.value) return 'status-footer-expired'
+  if (props.quest.status === 'in_progress') return 'status-footer-progress'
+  return 'status-footer-available'
+}
+
+const getStatusFooterText = () => {
+  if (isCompleted.value) return '✅ Quête terminée avec succès'
+  if (isExpired.value) return '❌ Cette quête a expiré'
+  if (props.quest.status === 'in_progress') return '🎯 Quête en cours - Progresse en réalisant les activités'
+  return '📋 Quête disponible - Progresse en réalisant les activités'
 }
 
 // Lifecycle hooks
@@ -1132,6 +1110,62 @@ onUnmounted(() => {
 
 .modal-footer-custom {
   padding: 0;
+}
+
+/* 📊 FOOTER AVEC INDICATEUR DE STATUT */
+.quest-status-info {
+  width: 100%;
+  padding: 16px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: left;
+  border: 2px solid;
+  transition: all 0.2s ease;
+}
+
+.quest-status-info i {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.status-footer-available {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.05));
+  color: #2563eb;
+  border-color: #3b82f6;
+}
+
+.status-footer-progress {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.1), rgba(249, 115, 22, 0.05));
+  color: #ea580c;
+  border-color: #f97316;
+  animation: pulse-progress 2s infinite;
+}
+
+.status-footer-completed {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.05));
+  color: #16a34a;
+  border-color: #22c55e;
+}
+
+.status-footer-expired {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
+  color: #dc2626;
+  border-color: #ef4444;
+}
+
+@keyframes pulse-progress {
+  0%, 100% { 
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.95;
+    transform: scale(1.01);
+  }
 }
 
 /* 🚨 NOTICE QUÊTE EXPIRÉE */
