@@ -164,7 +164,7 @@
 
         -->
 
-        <!-- Prochaines quêtes / défis -->
+        <!-- Prochaines quêtes / défis
         <div class="members-ranking">
           <div class="card-header">
             <h3><i class="pi pi-flag"></i> Prochaines Quêtes & Défis</h3>
@@ -208,7 +208,139 @@
           </div>
         </div>
 
-        <!-- Badges -->
+        -->
+
+        <!-- 1. QUÊTES DYNAMIQUES EN PREMIER -->
+        <div class="members-ranking">
+          <div class="card-header">
+            <h3><i class="pi pi-compass"></i> Mes Quêtes</h3>
+            <div class="quest-stats">
+              <span class="count-chip">{{ completedQuestsCount }}/{{ activeQuests.length }}</span>
+              <span class="completion-chip" :style="{ backgroundColor: houseColor }">
+                {{ questCompletionRate }}% complété
+              </span>
+            </div>
+          </div>
+          
+          <!-- Quest Statistics -->
+          <div class="quest-summary" v-if="questStats.totalCompleted > 0">
+            <div class="quest-overview-stats">
+              <div class="stat-item">
+                <i class="pi pi-check-circle"></i>
+                <span>{{ questStats.totalCompleted }} quêtes complétées</span>
+              </div>
+              <div class="stat-item">
+                <i class="pi pi-star-fill"></i>
+                <span>{{ formatNumber(totalXPFromQuests) }} XP des quêtes</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Quests Grid -->
+          <div v-if="activeQuests.length > 0" class="modern-quest-grid">
+            <QuestCard
+              v-for="quest in displayedQuests"
+              :key="quest.id"
+              :quest="quest"
+              :house-color="houseColor"
+              @click="showQuestDetails(quest)"
+            />
+          </div>
+          
+          <!-- Show More Button -->
+          <div v-if="activeQuests.length > questDisplayLimit" class="show-more-section">
+            <Button 
+              @click="showAllQuests = !showAllQuests" 
+              class="show-more-btn"
+              :style="{ backgroundColor: houseColor }"
+            >
+              <i class="pi" :class="showAllQuests ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+              {{ showAllQuests ? 'Voir moins' : `Voir toutes les quêtes (${activeQuests.length})` }}
+            </Button>
+          </div>
+          
+          <!-- Empty State -->
+          <div v-if="activeQuests.length === 0" class="empty-badge-state">
+            <div class="empty-badge-icon">🗺️</div>
+            <h4>Aucune quête active</h4>
+            <p>Explorez de nouvelles aventures et débloquez des quêtes !</p>
+            <Button 
+              @click="router.push('/quests')" 
+              class="check-quests-btn"
+              :style="{ backgroundColor: houseColor }"
+            >
+              <i class="pi pi-external-link"></i>
+              Voir toutes les quêtes
+            </Button>
+          </div>
+        </div>
+
+        <!-- 2. DÉFIS DE LA SEMAINE EN DEUXIÈME -->
+        <div class="members-ranking">
+          <div class="card-header">
+            <h3><i class="pi pi-flag"></i> Défis de la Semaine</h3>
+            <div class="challenge-stats">
+              <span class="count-chip">{{ completedChallengesCount }}/{{ activeChallenges.length }}</span>
+              <span class="completion-chip" :style="{ backgroundColor: houseColor }">
+                {{ challengeCompletionRate }}% complété
+              </span>
+            </div>
+          </div>
+          
+          <!-- Challenge Statistics -->
+          <div class="challenge-summary" v-if="challengeStats.totalCompleted > 0">
+            <div class="challenge-overview-stats">
+              <div class="stat-item">
+                <i class="pi pi-trophy"></i>
+                <span>{{ challengeStats.totalCompleted }} défis complétés</span>
+              </div>
+              <div class="stat-item">
+                <i class="pi pi-star-fill"></i>
+                <span>{{ formatNumber(challengeStats.totalXPFromChallenges) }} XP des défis</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Challenges Grid -->
+          <div v-if="activeChallenges.length > 0" class="modern-challenge-grid">
+            <ChallengeCard
+              v-for="challenge in displayedChallenges"
+              :key="challenge.id"
+              :challenge="challenge"
+              :house-color="houseColor"
+              @click="showChallengeDetails(challenge)"
+            />
+          </div>
+          
+          <!-- Show More Button -->
+          <div v-if="activeChallenges.length > challengeDisplayLimit" class="show-more-section">
+            <Button 
+              @click="showAllChallenges = !showAllChallenges" 
+              class="show-more-btn"
+              :style="{ backgroundColor: houseColor }"
+            >
+              <i class="pi" :class="showAllChallenges ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+              {{ showAllChallenges ? 'Voir moins' : `Voir tous les défis (${activeChallenges.length})` }}
+            </Button>
+          </div>
+          
+          <!-- Empty State -->
+          <div v-if="activeChallenges.length === 0" class="empty-badge-state">
+            <div class="empty-badge-icon">🎯</div>
+            <h4>Aucun défi actif</h4>
+            <p>Les nouveaux défis arrivent chaque lundi !</p>
+            <Button 
+              @click="router.push('/challenges')" 
+              class="check-challenges-btn"
+              :style="{ backgroundColor: houseColor }"
+            >
+              <i class="pi pi-external-link"></i>
+              Voir tous les défis
+            </Button>
+          </div>
+        </div>
+
+        <!-- 3. BADGES EN DERNIER -->
         <div class="members-ranking">
           <div class="card-header">
             <h3><i class="pi pi-shield"></i> Mes Badges</h3>
@@ -263,7 +395,7 @@
           </div>
         </div>
 
-        <!-- Achievements / Hauts faits -->
+        <!-- Achievements / Hauts faits
         <div class="members-ranking">
           <div class="card-header">
             <h3><i class="pi pi-trophy"></i> Mes Hauts Faits</h3>
@@ -298,137 +430,11 @@
             <p>Aucun haut fait enregistré.</p>
           </div>
         </div>
+        -->
       </div>
+
+
       
-      <!-- Défis Hebdomadaires -->
-      <div class="members-ranking">
-        <div class="card-header">
-          <h3><i class="pi pi-flag"></i> Défis de la Semaine</h3>
-          <div class="challenge-stats">
-            <span class="count-chip">{{ completedChallengesCount }}/{{ activeChallenges.length }}</span>
-            <span class="completion-chip" :style="{ backgroundColor: houseColor }">
-              {{ challengeCompletionRate }}% complété
-            </span>
-          </div>
-        </div>
-        
-        <!-- Challenge Statistics -->
-        <div class="challenge-summary" v-if="challengeStats.totalCompleted > 0">
-          <div class="challenge-overview-stats">
-            <div class="stat-item">
-              <i class="pi pi-trophy"></i>
-              <span>{{ challengeStats.totalCompleted }} défis complétés</span>
-            </div>
-            <div class="stat-item">
-              <i class="pi pi-star-fill"></i>
-              <span>{{ formatNumber(challengeStats.totalXPFromChallenges) }} XP des défis</span>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Challenges Grid -->
-        <div v-if="activeChallenges.length > 0" class="modern-challenge-grid">
-          <ChallengeCard
-            v-for="challenge in displayedChallenges"
-            :key="challenge.id"
-            :challenge="challenge"
-            :house-color="houseColor"
-            @click="showChallengeDetails(challenge)"
-          />
-        </div>
-        
-        <!-- Show More Button -->
-        <div v-if="activeChallenges.length > challengeDisplayLimit" class="show-more-section">
-          <Button 
-            @click="showAllChallenges = !showAllChallenges" 
-            class="show-more-btn"
-            :style="{ backgroundColor: houseColor }"
-          >
-            <i class="pi" :class="showAllChallenges ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
-            {{ showAllChallenges ? 'Voir moins' : `Voir tous les défis (${activeChallenges.length})` }}
-          </Button>
-        </div>
-        
-        <!-- Empty State -->
-        <div v-if="activeChallenges.length === 0" class="empty-badge-state">
-          <div class="empty-badge-icon">🎯</div>
-          <h4>Aucun défi actif</h4>
-          <p>Les nouveaux défis arrivent chaque lundi !</p>
-          <Button 
-            @click="router.push('/challenges')" 
-            class="check-challenges-btn"
-            :style="{ backgroundColor: houseColor }"
-          >
-            <i class="pi pi-external-link"></i>
-            Voir tous les défis
-          </Button>
-        </div>
-      </div>
-      
-      <!-- Quêtes Dynamiques -->
-      <div class="members-ranking">
-        <div class="card-header">
-          <h3><i class="pi pi-compass"></i> Mes Quêtes</h3>
-          <div class="quest-stats">
-            <span class="count-chip">{{ completedQuestsCount }}/{{ activeQuests.length }}</span>
-            <span class="completion-chip" :style="{ backgroundColor: houseColor }">
-              {{ questCompletionRate }}% complété
-            </span>
-          </div>
-        </div>
-        
-        <!-- Quest Statistics -->
-        <div class="quest-summary" v-if="questStats.totalCompleted > 0">
-          <div class="quest-overview-stats">
-            <div class="stat-item">
-              <i class="pi pi-check-circle"></i>
-              <span>{{ questStats.totalCompleted }} quêtes complétées</span>
-            </div>
-            <div class="stat-item">
-              <i class="pi pi-star-fill"></i>
-              <span>{{ formatNumber(totalXPFromQuests) }} XP des quêtes</span>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Quests Grid -->
-        <div v-if="activeQuests.length > 0" class="modern-quest-grid">
-          <QuestCard
-            v-for="quest in displayedQuests"
-            :key="quest.id"
-            :quest="quest"
-            :house-color="houseColor"
-            @click="showQuestDetails(quest)"
-          />
-        </div>
-        
-        <!-- Show More Button -->
-        <div v-if="activeQuests.length > questDisplayLimit" class="show-more-section">
-          <Button 
-            @click="showAllQuests = !showAllQuests" 
-            class="show-more-btn"
-            :style="{ backgroundColor: houseColor }"
-          >
-            <i class="pi" :class="showAllQuests ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
-            {{ showAllQuests ? 'Voir moins' : `Voir toutes les quêtes (${activeQuests.length})` }}
-          </Button>
-        </div>
-        
-        <!-- Empty State -->
-        <div v-if="activeQuests.length === 0" class="empty-badge-state">
-          <div class="empty-badge-icon">🗺️</div>
-          <h4>Aucune quête active</h4>
-          <p>Explorez de nouvelles aventures et débloquez des quêtes !</p>
-          <Button 
-            @click="router.push('/quests')" 
-            class="check-quests-btn"
-            :style="{ backgroundColor: houseColor }"
-          >
-            <i class="pi pi-external-link"></i>
-            Voir toutes les quêtes
-          </Button>
-        </div>
-      </div>
     </div>
     
     <!-- Section de test pour forcer le scroll -->
@@ -467,11 +473,23 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
+import TabView from 'primevue/tabview'
+import TabPanel from 'primevue/tabpanel'
+import InputText from 'primevue/inputtext'
+import Dropdown from 'primevue/dropdown'
+import Paginator from 'primevue/paginator'
+import Toast from 'primevue/toast'
+import Chip from 'primevue/chip'
+import Skeleton from 'primevue/skeleton'
+import Divider from 'primevue/divider'
+import ProgressBar from 'primevue/progressbar'
 import { useRouter } from 'vue-router'
+import { useToast } from 'primevue/usetoast'
 import { useAuthStore } from '@/stores/authStore'
 import { supabase } from '@/supabase.js'
 import gamificationServiceSupabase from '@/service/gamificationServiceSupabase'
 import levelsConfig from '@/config/levelsConfig'
+import userQuestsService from '@/service/userQuestsService'
 import Navbar from '@/components/common/utils/Navbar.vue'
 import BadgeCard from '@/components/gamification/BadgeCard.vue'
 import ChallengeCard from '@/components/gamification/ChallengeCard.vue'
@@ -480,6 +498,8 @@ import AchievementNotification from '@/components/gamification/AchievementNotifi
 import CreationToolsCard from '@/components/gamification/CreationToolsCard.vue'
 import DetailModal from '@/components/gamification/DetailModal.vue'
 import GamificationToast from '@/components/gamification/GamificationToast.vue'
+import Button from 'primevue/button'
+import Dialog from 'primevue/dialog'
 // Background images per house (align with HouseStatsPage)
 import FondHarmonis from '@/assets/maisons/FondHarmonis.png'
 import FondElaris from '@/assets/maisons/FondElaris.png'
@@ -489,6 +509,7 @@ import MaitreDuJeuFond from '@/assets/maisons/MaitreDuJeuFond.png'
 
 // Router and auth
 const router = useRouter()
+const toast = useToast()
 const authStore = useAuthStore()
 
 // Reactive state
@@ -512,11 +533,30 @@ const challengeStats = ref({})
 const showAllChallenges = ref(false)
 const challengeDisplayLimit = ref(3)
 
-// Quest system state
+// Quest system state (ENRICHI depuis QuestsPage)
 const activeQuests = ref([])
-const questStats = ref({})
+const questStats = ref({
+  totalQuests: 0,
+  completedQuests: 0,
+  totalXPFromQuests: 0,
+  averageProgress: 0
+})
 const showAllQuests = ref(false)
 const questDisplayLimit = ref(3)
+
+// NOUVEAU: Filtres et recherche des quêtes (depuis QuestsPage)
+const userQuests = ref([])
+const searchQuery = ref('')
+const selectedDifficulty = ref('all')
+const selectedType = ref('all')
+const sortBy = ref('progress_desc')
+const currentPage = ref(0)
+const questsPerPage = 12
+const showQuestModal = ref(false)
+const selectedQuestDetail = ref(null)
+const activeQuestTab = ref('active') // 'active', 'completed', 'all'
+const activeQuestTabIndex = ref(0)
+const viewMode = ref('grid') // 'grid' ou 'list'
 
 // Creation tools stats
 const userCreationStats = ref({
@@ -524,6 +564,41 @@ const userCreationStats = ref({
   challengesCreated: 0,
   totalEngagement: 0
 })
+
+// NOUVEAU: Constantes pour les filtres et options (depuis QuestsPage)
+const QUEST_DIFFICULTIES = {
+  EASY: { name: 'Facile', color: '#10b981', order: 1 },
+  MEDIUM: { name: 'Moyen', color: '#f59e0b', order: 2 },
+  HARD: { name: 'Difficile', color: '#ef4444', order: 3 },
+  EPIC: { name: 'Épique', color: '#8b5cf6', order: 4 },
+  LEGENDARY: { name: 'Légendaire', color: '#f97316', order: 5 }
+}
+
+const difficultyOptions = [
+  { label: 'Toutes', value: 'all' },
+  { label: 'Facile', value: 'EASY' },
+  { label: 'Moyen', value: 'MEDIUM' },
+  { label: 'Difficile', value: 'HARD' },
+  { label: 'Épique', value: 'EPIC' },
+  { label: 'Légendaire', value: 'LEGENDARY' }
+]
+
+const typeOptions = [
+  { label: 'Tous', value: 'all' },
+  { label: 'Multi-étapes', value: 'multi_step' },
+  { label: 'Quotidienne', value: 'daily' },
+  { label: 'Hebdomadaire', value: 'weekly' },
+  { label: 'Achievement', value: 'achievement' }
+]
+
+const sortOptions = [
+  { label: 'Progression (desc)', value: 'progress_desc' },
+  { label: 'Progression (asc)', value: 'progress_asc' },
+  { label: 'Difficulté (asc)', value: 'difficulty_asc' },
+  { label: 'Difficulté (desc)', value: 'difficulty_desc' },
+  { label: 'Nom (A-Z)', value: 'name_asc' },
+  { label: 'Nom (Z-A)', value: 'name_desc' }
+]
 
 // House configuration
 const houseConfig = {
@@ -784,6 +859,89 @@ const totalXPFromQuests = computed(() => {
   return questStats.value.totalXPFromQuests || 0
 })
 
+// NOUVEAU: Computed properties avancées pour filtrage des quêtes (depuis QuestsPage)
+const questsArray = computed(() => userQuests.value || [])
+
+const activeQuestsCount = computed(() => {
+  return questsArray.value.filter(q => 
+    q.userProgress?.status === 'not_started' || q.userProgress?.status === 'in_progress'
+  ).length
+})
+
+const tabFilteredQuests = computed(() => {
+  if (activeQuestTab.value === 'active') {
+    return questsArray.value.filter(q => 
+      q.userProgress?.status === 'not_started' || q.userProgress?.status === 'in_progress'
+    )
+  } else if (activeQuestTab.value === 'completed') {
+    return questsArray.value.filter(q => q.userProgress?.status === 'completed')
+  }
+  return questsArray.value // 'all'
+})
+
+const filteredQuests = computed(() => {
+  let filtered = tabFilteredQuests.value
+
+  // Recherche
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase()
+    filtered = filtered.filter(quest => 
+      quest.title.toLowerCase().includes(query) ||
+      quest.description.toLowerCase().includes(query)
+    )
+  }
+
+  // Filtres
+  if (selectedDifficulty.value !== 'all') {
+    filtered = filtered.filter(quest => quest.difficulty === selectedDifficulty.value)
+  }
+
+  if (selectedType.value !== 'all') {
+    filtered = filtered.filter(quest => quest.type === selectedType.value)
+  }
+
+  // Tri
+  filtered.sort((a, b) => {
+    switch (sortBy.value) {
+      case 'progress_desc':
+        return (b.progress || 0) - (a.progress || 0)
+      case 'progress_asc':
+        return (a.progress || 0) - (b.progress || 0)
+      case 'difficulty_asc':
+        return getDifficultyOrder(a.difficulty) - getDifficultyOrder(b.difficulty)
+      case 'difficulty_desc':
+        return getDifficultyOrder(b.difficulty) - getDifficultyOrder(a.difficulty)
+      case 'name_asc':
+        return a.title.localeCompare(b.title)
+      case 'name_desc':
+        return b.title.localeCompare(a.title)
+      default:
+        return 0
+    }
+  })
+
+  return filtered
+})
+
+const paginatedQuests = computed(() => {
+  const start = currentPage.value
+  const end = start + questsPerPage
+  return filteredQuests.value.slice(start, end)
+})
+
+const totalQuestPages = computed(() => Math.ceil(filteredQuests.value.length / questsPerPage))
+
+const completionRate = computed(() => {
+  if (questStats.value.totalQuests === 0) return 0
+  return Math.round((questStats.value.completedQuests / questStats.value.totalQuests) * 100)
+})
+
+const hasFilters = computed(() => {
+  return searchQuery.value || 
+         selectedDifficulty.value !== 'all' || 
+         selectedType.value !== 'all'
+})
+
 // Helper: status for a challenge
 const challengeStatus = (q) => {
   if (q?.completed || q?.status === 'completed') return 'validé'
@@ -1002,70 +1160,104 @@ const handleStart = ({ type, item }) => {
   }
 }
 
-// Quest system methods
+// Quest system methods (ENRICHI depuis QuestsPage)
 const loadQuestsData = async () => {
   if (!authStore.user?.id) return
   
   try {
-    console.log('🗺️ Chargement des quêtes depuis Supabase...')
+    console.log('🗺️ Chargement des quêtes avec userQuestsService...')
     
-    // Récupérer les quêtes actives
-    const { data: questsData, error: questsError } = await supabase
-      .from('quests')
-      .select('*')
-      .eq('active', true)
-      .order('created_at', { ascending: false })
+    // ID utilisateur selon le provider
+    const userId = authStore.isFirebaseUser ? authStore.user.uid : authStore.user.id
+
+    // Charger les quêtes utilisateur depuis Supabase via le service
+    const quests = await userQuestsService.getUserQuests(userId)
+    userQuests.value = quests
+    activeQuests.value = quests.filter(q => 
+      q.userProgress?.status === 'not_started' || q.userProgress?.status === 'in_progress'
+    )
     
-    if (questsError && questsError.code !== 'PGRST116') {
-      console.error('Erreur chargement quêtes:', questsError)
-    }
+    console.log(`✅ ${quests.length} quêtes chargées depuis Supabase`)
+
+    // Charger les statistiques
+    questStats.value = await userQuestsService.getQuestStats(userId)
     
-    // Récupérer les progressions de l'utilisateur
-    const { data: userQuestsData, error: userQuestsError } = await supabase
-      .from('user_quest_progress')
-      .select('*')
-      .eq('user_id', authStore.user.id)
-    
-    if (userQuestsError && userQuestsError.code !== 'PGRST116') {
-      console.error('Erreur chargement progression quêtes:', userQuestsError)
-    }
-    
-    // Combiner les données
-    if (questsData && questsData.length > 0) {
-      activeQuests.value = questsData.map(quest => {
-        const userQuest = userQuestsData?.find(q => q.quest_id === quest.id)
-        return {
-          ...quest,
-          progress: userQuest?.progress || 0,
-          completed: userQuest?.completed || false,
-          completed_at: userQuest?.completed_at || null,
-          steps_completed: userQuest?.steps_completed || 0
-        }
-      })
-    } else {
-      activeQuests.value = []
-    }
-    
-    // Calculer les stats
-    const completed = activeQuests.value.filter(q => q.completed)
-    questStats.value = {
-      totalCompleted: completed.length,
-      totalXPFromQuests: completed.reduce((sum, q) => sum + (q.points || q.xp_reward || 0), 0)
-    }
-    
-    console.log(`✅ ${activeQuests.value.length} quêtes chargées (${completed.length} complétées)`)
+    console.log('📊 Stats quêtes:', questStats.value)
     
   } catch (error) {
     console.error('❌ Erreur lors du chargement des quêtes:', error)
+    userQuests.value = []
     activeQuests.value = []
-    questStats.value = { totalCompleted: 0, totalXPFromQuests: 0 }
+    questStats.value = {
+      totalQuests: 0,
+      completedQuests: 0,
+      totalXPFromQuests: 0,
+      averageProgress: 0
+    }
   }
 }
 
 const showQuestDetails = (quest) => {
-  modalType.value = 'quest'
-  modalItem.value = quest
-  showDetailModal.value = true
+  selectedQuestDetail.value = quest
+  showQuestModal.value = true
+}
+
+const startQuest = async (questId) => {
+  try {
+    const user = authStore.user
+    if (!user) return
+    const userId = authStore.isFirebaseUser ? user.uid : user.id
+    if (!userId) return
+
+    await userQuestsService.startQuest(userId, questId)
+    
+    // Recharger les données
+    await loadQuestsData()
+    
+    toast.add({
+      severity: 'success',
+      summary: 'Quête démarrée!',
+      detail: 'Votre aventure commence maintenant 🎯',
+      life: 3000
+    })
+  } catch (error) {
+    console.error('❌ Erreur lors du démarrage de la quête:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: 'Impossible de démarrer la quête',
+      life: 3000
+    })
+  }
+}
+
+const startQuestFromModal = async (questId) => {
+  showQuestModal.value = false
+  await startQuest(questId)
+}
+
+const onTabChange = (event) => {
+  const tabs = ['active', 'completed', 'all']
+  activeQuestTab.value = tabs[event.index]
+  activeQuestTabIndex.value = event.index
+  currentPage.value = 0
+}
+
+const clearFilters = () => {
+  searchQuery.value = ''
+  selectedDifficulty.value = 'all'
+  selectedType.value = 'all'
+  sortBy.value = 'progress_desc'
+  currentPage.value = 0
+}
+
+const onPageChange = (event) => {
+  currentPage.value = event.first
+}
+
+const getDifficultyOrder = (difficulty) => {
+  const order = { EASY: 1, MEDIUM: 2, HARD: 3, EPIC: 4, LEGENDARY: 5 }
+  return order[difficulty] || 0
 }
 
 // Data loading - Connexion Supabase comme CardNameProfile
@@ -1160,6 +1352,11 @@ watch(
     }
   }
 )
+
+// NOUVEAU: Watchers pour les filtres de quêtes (depuis QuestsPage)
+watch([searchQuery, selectedDifficulty, selectedType], () => {
+  currentPage.value = 0 // Réinitialiser la pagination quand les filtres changent
+})
 
 // Initialization
 onMounted(() => {
