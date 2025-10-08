@@ -343,7 +343,7 @@ export default {
       
       const { data: profileData, error } = await supabase
         .from('user_profiles')
-        .select('forname, family_name, avatar_url, profile_picture_url, email')
+        .select('forname, family_name, avatar_url, email')
         .eq('user_id', userId)
         .maybeSingle();
       
@@ -365,13 +365,20 @@ export default {
       
       if (profileData) {
         console.log('✅ Profil Supabase chargé:', profileData);
+        
+        const photoURL = profileData.avatar_url || defaultAvatar;
+        console.log('📷 Avatar URL récupéré:', photoURL && photoURL !== defaultAvatar ? photoURL.substring(0, 50) + '...' : 'avatar par défaut');
+        
         this.user = {
           prenom: profileData.forname || '',
           nom: profileData.family_name || '',
-          PhotoURL: profileData.avatar_url || profileData.profile_picture_url || defaultAvatar,
+          PhotoURL: photoURL,
           email: profileData.email || '',
           id: userId
         };
+        
+        // Forcer la mise à jour de l'UI
+        this.$forceUpdate();
       } else {
         console.warn('⚠️ Aucun profil trouvé dans user_profiles');
         // Fallback sur l'email
@@ -449,26 +456,90 @@ export default {
         return;
       }
       
-      // Upload d'avatar disponible uniquement pour Firebase pour l'instant
-      if (!this.authStore.isFirebaseUser) {
-        this.$refs.toast.add({ severity: 'info', summary: 'Info', detail: 'Upload d\'avatar disponible uniquement pour Firebase.', life: 4000 });
+      // Vérifier que c'est une image
+      if (!file.type.startsWith('image/')) {
+        this.$refs.toast.add({ severity: 'error', summary: 'Erreur', detail: 'Veuillez sélectionner une image.', life: 4000 });
         return;
       }
       
-      const userId = currentUser.uid;
-      const storage = getStorage();
-      const avatarRef = storageRef(storage, `users/${userId}/profile-picture.jpg`);
+      // Vérifier la taille (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        this.$refs.toast.add({ severity: 'error', summary: 'Erreur', detail: 'L\'image ne doit pas dépasser 5MB.', life: 4000 });
+        return;
+      }
+      
+      this.$refs.toast.add({ severity: 'info', summary: 'Upload en cours', detail: 'Upload de votre photo...', life: 2000 });
+      
       try {
-        await uploadBytes(avatarRef, file);
-        const photoURL = await getDownloadURL(avatarRef);
-        const db = getDatabase();
-        const userRef = dbRef(db, `Users/${userId}`);
-        await update(userRef, { PhotoURL: photoURL });
-        this.user.PhotoURL = photoURL;
-        this.$refs.toast.add({ severity: 'success', summary: 'Succès', detail: 'Photo de profil mise à jour avec succès', life: 4000 });
+        if (this.authStore.isFirebaseUser) {
+          // Upload vers Firebase Storage
+          const userId = currentUser.uid;
+          const storage = getStorage();
+          const avatarRef = storageRef(storage, `users/${userId}/profile-picture.jpg`);
+          
+          await uploadBytes(avatarRef, file);
+          const photoURL = await getDownloadURL(avatarRef);
+          
+          const db = getDatabase();
+          const userRef = dbRef(db, `Users/${userId}`);
+          await update(userRef, { PhotoURL: photoURL });
+          
+          this.user.PhotoURL = photoURL;
+          this.$refs.toast.add({ severity: 'success', summary: 'Succès', detail: 'Photo de profil mise à jour !', life: 4000 });
+          
+        } else if (this.authStore.isSupabaseUser) {
+          // Solution alternative : Convertir l'image en base64 et stocker dans user_profiles
+          const userId = currentUser.id;
+          
+          console.log('📤 Conversion de l\'image en base64...');
+          
+          // Lire le fichier et le convertir en base64
+          const reader = new FileReader();
+          
+          const photoURL = await new Promise((resolve, reject) => {
+            reader.onload = (e) => {
+              resolve(e.target.result);
+            };
+            reader.onerror = (error) => {
+              reject(error);
+            };
+            reader.readAsDataURL(file);
+          });
+          
+          console.log('✅ Image convertie en base64 (taille:', photoURL.length, 'caractères)');
+          
+          // Mettre à jour user_profiles avec l'image base64
+          const { data: updateData, error: updateError } = await supabase
+            .from('user_profiles')
+            .update({ 
+              avatar_url: photoURL,
+              updated_at: new Date().toISOString()
+            })
+            .eq('user_id', userId)
+            .select();
+          
+          if (updateError) {
+            console.error('❌ Erreur mise à jour profile:', updateError);
+            throw updateError;
+          }
+          
+          console.log('✅ Profil mis à jour dans user_profiles');
+          console.log('📊 Données mises à jour:', updateData);
+          console.log('📷 Avatar stocké:', updateData?.[0]?.avatar_url ? 'Oui (' + updateData[0].avatar_url.length + ' caractères)' : 'Non');
+          
+          // Mettre à jour l'UI
+          this.user.PhotoURL = photoURL;
+          this.$refs.toast.add({ severity: 'success', summary: 'Succès', detail: 'Photo de profil mise à jour !', life: 4000 });
+        }
+        
       } catch (error) {
-        console.error("Erreur lors de l'upload de l'avatar :", error);
-        this.$refs.toast.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur lors de l\'upload de l\'avatar : ' + (error && error.message ? error.message : error), life: 6000 });
+        console.error("❌ Erreur lors de l'upload de l'avatar :", error);
+        this.$refs.toast.add({ 
+          severity: 'error', 
+          summary: 'Erreur', 
+          detail: 'Erreur lors de l\'upload : ' + (error?.message || error), 
+          life: 6000 
+        });
       }
     },
     goToProfile() {
