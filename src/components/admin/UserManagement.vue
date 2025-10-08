@@ -120,7 +120,7 @@
             <div class="p-3 pt-2">
               <div class="flex align-items-center justify-content-between mb-3">
                 <span 
-                  v-if="user.house" 
+                  v-if="user.house"
                   class="px-2 py-1 border-round text-white font-semibold text-sm"
                   :style="{ backgroundColor: user.houseColor || '#6b7280' }"
                 >
