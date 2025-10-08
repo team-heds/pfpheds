@@ -427,6 +427,7 @@
 
 <script setup>
 import { ref, computed, onMounted, reactive } from 'vue'
+import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import { useAuthStore } from '@/stores/authStore'
 import { supabase } from '@/supabase'
@@ -444,6 +445,7 @@ import InputNumber from 'primevue/inputnumber'
 import Textarea from 'primevue/textarea'
 
 const toast = useToast()
+const router = useRouter()
 const authStore = useAuthStore()
 
 // État réactif
@@ -520,9 +522,9 @@ const loadUsers = async () => {
       housesMap[house.id] = house
     })
     
-    // Charger les infos utilisateur depuis users_profiles
+    // Charger les infos utilisateur depuis user_profiles
     const { data: profilesData } = await supabase
-      .from('users_profiles')
+      .from('user_profiles')
       .select('user_id, display_name, forname, family_name, avatar_url, profile_picture_url, last_login')
     
     // Créer un map des profils pour accès rapide
@@ -695,8 +697,22 @@ const addPointsToUser = (user) => {
 }
 
 const viewUserProfile = (user) => {
-  // Naviguer vers le profil utilisateur
-  console.log('Voir profil de:', user)
+  // Naviguer vers le profil de gamification de l'utilisateur
+  console.log('🔍 Viewing profile for user:', user.id, user.email)
+  
+  if (!user.id) {
+    console.error('❌ User ID is missing!')
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: 'ID utilisateur manquant',
+      life: 3000
+    })
+    return
+  }
+  
+  // Navigation avec le path directement pour garantir le bon format
+  router.push(`/gamification-profile/${user.id}`)
 }
 
 // Méthodes utilitaires pour l'affichage

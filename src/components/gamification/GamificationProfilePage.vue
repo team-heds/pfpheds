@@ -507,10 +507,22 @@ import FondDoloris from '@/assets/maisons/FondDoloris.png'
 import FondSolencia from '@/assets/maisons/FondSolencia.png'
 import MaitreDuJeuFond from '@/assets/maisons/MaitreDuJeuFond.png'
 
+// Props - Receive optional user ID from route params
+const props = defineProps({
+  id: {
+    type: String,
+    default: null
+  }
+})
+
 // Router and auth
 const router = useRouter()
 const toast = useToast()
 const authStore = useAuthStore()
+
+// Computed: ID de l'utilisateur à afficher (prop.id ou utilisateur connecté)
+const displayUserId = computed(() => props.id || authStore.user?.id)
+const isViewingOtherUser = computed(() => !!props.id && props.id !== authStore.user?.id)
 
 // Reactive state
 const loading = ref(true)
@@ -1028,10 +1040,11 @@ const checkForNewBadges = async () => {
 }
 
 const loadBadgesData = async () => {
-  if (!authStore.user?.id) return
+  const userId = displayUserId.value
+  if (!userId) return
   
   try {
-    console.log('🏆 Chargement des badges depuis Supabase...')
+    console.log('🏆 Chargement des badges depuis Supabase pour:', userId)
     
     // Récupérer les badges de l'utilisateur depuis Supabase
     const { data: userBadgesData, error: userBadgesError } = await supabase
@@ -1040,7 +1053,7 @@ const loadBadgesData = async () => {
         *,
         badge:badges(*)
       `)
-      .eq('user_id', authStore.user.id)
+      .eq('user_id', userId)
     
     if (userBadgesError && userBadgesError.code !== 'PGRST116') {
       console.error('Erreur chargement badges utilisateur:', userBadgesError)
@@ -1086,10 +1099,11 @@ const onNotificationClose = () => {
 
 // Challenge system methods
 const loadChallengesData = async () => {
-  if (!authStore.user?.id) return
+  const userId = displayUserId.value
+  if (!userId) return
   
   try {
-    console.log('🎯 Chargement des défis depuis Supabase...')
+    console.log('🎯 Chargement des défis depuis Supabase pour:', userId)
     
     // Récupérer les défis actifs (non expirés)
     const { data: challengesData, error: challengesError } = await supabase
@@ -1107,7 +1121,7 @@ const loadChallengesData = async () => {
     const { data: userProgressData, error: progressError } = await supabase
       .from('user_challenge_progress')
       .select('*')
-      .eq('user_id', authStore.user.id)
+      .eq('user_id', userId)
     
     if (progressError && progressError.code !== 'PGRST116') {
       console.error('Erreur chargement progression défis:', progressError)
@@ -1162,14 +1176,12 @@ const handleStart = ({ type, item }) => {
 
 // Quest system methods (ENRICHI depuis QuestsPage)
 const loadQuestsData = async () => {
-  if (!authStore.user?.id) return
+  const userId = displayUserId.value
+  if (!userId) return
   
   try {
-    console.log('🗺️ Chargement des quêtes avec userQuestsService...')
+    console.log('🗺️ Chargement des quêtes avec userQuestsService pour:', userId)
     
-    // ID utilisateur selon le provider
-    const userId = authStore.isFirebaseUser ? authStore.user.uid : authStore.user.id
-
     // Charger les quêtes utilisateur depuis Supabase via le service
     const quests = await userQuestsService.getUserQuests(userId)
     userQuests.value = quests
@@ -1266,13 +1278,15 @@ const loadUserStats = async () => {
     loading.value = true
     error.value = null
     
-    // Vérifier que l'utilisateur est connecté
-    if (!authStore.user?.id) {
-      throw new Error('Utilisateur non connecté')
+    // Utiliser displayUserId (prop.id ou user connecté)
+    const userId = displayUserId.value
+    
+    if (!userId) {
+      throw new Error('Aucun ID utilisateur disponible')
     }
     
-    const userId = authStore.user.id
     console.log('🔍 Chargement des stats gamification Supabase pour:', userId)
+    console.log('👀 Mode consultation:', isViewingOtherUser.value ? 'Autre utilisateur' : 'Mon profil')
     
     // Récupérer les données de gamification depuis Supabase
     const gamificationData = await gamificationServiceSupabase.getUserGamificationData(userId)
@@ -1294,12 +1308,34 @@ const loadUserStats = async () => {
     
     console.log('✅ Données gamification Supabase chargées:', gamificationData)
     
-    // Formater le nom d'affichage
-    let displayName = gamificationData.displayName || gamificationData.display_name
-    if (!displayName || displayName === 'Utilisateur') {
-      const email = authStore.user.email || ''
-      displayName = email.split('@')[0] || 'Utilisateur'
+    // Récupérer les infos du profil utilisateur depuis user_profiles
+    const { data: profileData, error: profileError } = await supabase
+      .from('user_profiles')
+      .select('display_name, forname, family_name, email')
+      .eq('user_id', userId)
+      .maybeSingle() // Utiliser maybeSingle() au lieu de single() pour éviter l'erreur si pas de résultat
+    
+    if (profileError && profileError.code !== 'PGRST116') {
+      console.warn('⚠️ Erreur chargement profil utilisateur:', profileError)
     }
+    
+    console.log('👤 Données profil utilisateur:', profileData)
+    
+    // Formater le nom d'affichage (priorité: display_name, puis family_name + forname, puis email)
+    let displayName = profileData?.display_name
+    if (!displayName && profileData?.family_name && profileData?.forname) {
+      // Format: Nom Prénom (comme dans CardNameProfile)
+      displayName = `${profileData.family_name} ${profileData.forname}`
+    }
+    if (!displayName && profileData?.email) {
+      displayName = profileData.email.split('@')[0]
+    }
+    if (!displayName && gamificationData.email) {
+      displayName = gamificationData.email.split('@')[0]
+    }
+    displayName = displayName || 'Utilisateur'
+    
+    console.log('✅ Nom formaté:', displayName)
     
     // Adapter les données Supabase au format du composant
     userStats.value = {

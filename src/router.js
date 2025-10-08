@@ -279,7 +279,7 @@ const routes = [
   { path: '/hes-house-quiz', component: HESHouseQuizView, name: 'HESHouseQuizView', meta: { requiresAuth: true } },
   { path: '/houses/:houseName/stats', component: HouseStatsPage, name: 'HouseStatsPage', props: true, meta: { requiresAuth: true } },
   { path: '/houses/ranking', component: HousesRankingPage, name: 'HousesRankingPage', meta: { requiresAuth: true } },
-  { path: '/gamification-profile', component: GamificationProfilePage, name: 'GamificationProfilePage', meta: { requiresAuth: false } },
+  { path: '/gamification-profile/:id', component: GamificationProfilePage, name: 'GamificationProfilePage', props: true, meta: { requiresAuth: true } },
   { path: '/achievements', component: AchievementsPage, name: 'AchievementsPage', meta: { requiresAuth: true } },
   { path: '/challenges', component: ChallengesPage, name: 'ChallengesPage', meta: { requiresAuth: true } },
   { path: '/quests', component: QuestsPage, name: 'QuestsPage', meta: { requiresAuth: true } },
