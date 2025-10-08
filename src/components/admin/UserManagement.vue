@@ -48,17 +48,17 @@
         <!-- Toggle de vue -->
         <div class="flex align-items-center gap-2">
           <Button 
-            :icon="viewMode === 'cards' ? 'pi pi-th-large' : 'pi pi-list'"
+            icon="pi pi-th-large"
             :class="viewMode === 'cards' ? 'p-button-success' : 'p-button-outlined'"
             @click="viewMode = 'cards'"
-            v-tooltip="'Vue en cartes'"
+            v-tooltip.top="'Vue en cartes'"
             class="p-button-sm"
           />
           <Button 
-            :icon="viewMode === 'table' ? 'pi pi-table' : 'pi pi-table'"
+            icon="pi pi-list"
             :class="viewMode === 'table' ? 'p-button-success' : 'p-button-outlined'"
             @click="viewMode = 'table'"
-            v-tooltip="'Vue en tableau'"
+            v-tooltip.top="'Vue en tableau'"
             class="p-button-sm"
           />
         </div>
@@ -86,8 +86,14 @@
           class="col-12 md:col-6 xl:col-4"
         >
           <div class="surface-card border-round shadow-3 h-full overflow-hidden hover:shadow-4 transition-all transition-duration-200">
-            <!-- Header de la carte avec gradient selon la maison -->
-            <div class="p-3 pb-2" :class="getHouseGradientClass(user.house)">
+            <!-- Header de la carte avec couleur de la maison -->
+            <div 
+              class="p-3 pb-2" 
+              :style="{ 
+                backgroundColor: user.houseColor || '#6b7280',
+                background: user.houseColor ? `linear-gradient(135deg, ${user.houseColor} 0%, ${user.houseColor}dd 100%)` : '#6b7280'
+              }"
+            >
               <div class="flex align-items-center gap-3">
                 <Avatar 
                   v-if="user.photoURL" 
@@ -113,7 +119,14 @@
             <!-- Corps de la carte -->
             <div class="p-3 pt-2">
               <div class="flex align-items-center justify-content-between mb-3">
-                <Tag v-if="user.house" :value="getHouseLabel(user.house)" :severity="getHouseSeverity(user.house)" />
+                <span 
+                  v-if="user.house" 
+                  class="px-2 py-1 border-round text-white font-semibold text-sm"
+                  :style="{ backgroundColor: user.houseColor || '#6b7280' }"
+                >
+                  {{ getHouseLabel(user.house) }}
+                </span>
+                <span v-else class="text-500 text-sm">Aucune maison</span>
                 <div class="text-right">
                   <div class="text-900 font-bold text-lg">{{ user.totalPoints || 0 }}</div>
                   <div class="text-600 text-xs">Points totaux</div>
@@ -204,7 +217,13 @@
           
           <Column field="house" header="Maison" sortable style="min-width: 120px">
             <template #body="{ data }">
-              <Tag v-if="data.house" :value="getHouseLabel(data.house)" :severity="getHouseSeverity(data.house)" />
+              <span 
+                v-if="data.house" 
+                class="px-2 py-1 border-round text-white font-semibold text-sm inline-block"
+                :style="{ backgroundColor: data.houseColor || '#6b7280' }"
+              >
+                {{ getHouseLabel(data.house) }}
+              </span>
               <span v-else class="text-500">Aucune</span>
             </template>
           </Column>
@@ -409,6 +428,8 @@
 <script setup>
 import { ref, computed, onMounted, reactive } from 'vue'
 import { useToast } from 'primevue/usetoast'
+import { useAuthStore } from '@/stores/authStore'
+import { supabase } from '@/supabase'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import Dropdown from 'primevue/dropdown'
@@ -421,9 +442,9 @@ import Avatar from 'primevue/avatar'
 import ToggleButton from 'primevue/togglebutton'
 import InputNumber from 'primevue/inputnumber'
 import Textarea from 'primevue/textarea'
-// Système de rôles temporairement désactivé - sera réintégré plus tard
 
 const toast = useToast()
+const authStore = useAuthStore()
 
 // État réactif
 const users = ref([])
@@ -476,54 +497,87 @@ const houseOptions = [
 const loadUsers = async () => {
   try {
     loading.value = true
-    // Simuler le chargement des utilisateurs depuis Firebase
-    // En réalité, cela viendrait de votre service utilisateur
-    const mockUsers = [
-      {
-        id: '1',
-        displayName: 'John Doe',
-        email: 'john.doe@hes-so.ch',
-        house: 'harmonis',
-        totalPoints: 150,
-        completedChallenges: 5,
-        completedQuests: 2,
-        lastActive: Date.now() - 86400000
-      },
-      {
-        id: '2',
-        displayName: 'Jane Smith',
-        email: 'jane.smith@hes-so.ch',
-        house: 'elaris',
-        totalPoints: 300,
-        completedChallenges: 8,
-        completedQuests: 4,
-        lastActive: Date.now() - 3600000
-      },
-      {
-        id: '3',
-        displayName: 'Alice Martin',
-        email: 'alice.martin@hes-so.ch',
-        house: 'doloris',
-        totalPoints: 220,
-        completedChallenges: 6,
-        completedQuests: 3,
-        lastActive: Date.now() - 7200000
-      },
-      {
-        id: '4',
-        displayName: 'Marc Dubois',
-        email: 'marc.dubois@hes-so.ch',
-        house: 'solencia',
-        totalPoints: 180,
-        completedChallenges: 4,
-        completedQuests: 3,
-        lastActive: Date.now() - 1800000
-      }
-    ]
+    console.log('🔄 Chargement des utilisateurs depuis gamification_data...')
     
-    users.value = mockUsers
-    allUsers.value = mockUsers
+    // Charger tous les utilisateurs depuis gamification_data
+    const { data: gamificationData, error: gamificationError } = await supabase
+      .from('gamification_data')
+      .select('*')
+      .order('created_at', { ascending: false })
+    
+    if (gamificationError) throw gamificationError
+    
+    console.log('📊 Données gamification chargées:', gamificationData?.length)
+    
+    // Charger toutes les maisons séparément
+    const { data: housesData } = await supabase
+      .from('houses')
+      .select('id, name, color')
+    
+    // Créer un map des maisons pour accès rapide
+    const housesMap = {}
+    housesData?.forEach(house => {
+      housesMap[house.id] = house
+    })
+    
+    // Charger les infos utilisateur depuis users_profiles
+    const { data: profilesData } = await supabase
+      .from('users_profiles')
+      .select('user_id, display_name, forname, family_name, avatar_url, profile_picture_url, last_login')
+    
+    // Créer un map des profils pour accès rapide
+    const profilesMap = {}
+    profilesData?.forEach(profile => {
+      profilesMap[profile.user_id] = profile
+    })
+    
+    // Charger les statistiques de gamification pour chaque utilisateur
+    const usersWithStats = await Promise.all(
+      gamificationData.map(async (gamif) => {
+        const profile = profilesMap[gamif.user_id]
+        const house = housesMap[gamif.house_id]
+        
+        // Compter les défis complétés
+        const { count: challengesCount } = await supabase
+          .from('user_challenge_progress')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', gamif.user_id)
+          .eq('completed', true)
+        
+        // Compter les quêtes complétées
+        const { count: questsCount } = await supabase
+          .from('user_quest_progress')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', gamif.user_id)
+          .eq('status', 'completed')
+        
+        return {
+          id: gamif.user_id,
+          displayName: profile?.display_name || (profile?.forname && profile?.family_name ? `${profile.forname} ${profile.family_name}` : null) || gamif.email?.split('@')[0] || 'Utilisateur',
+          email: gamif.email,
+          photoURL: profile?.avatar_url || profile?.profile_picture_url,
+          house: house?.name || null,
+          houseId: gamif.house_id,
+          houseColor: house?.color,
+          totalPoints: gamif.total_xp || 0,
+          housePoints: gamif.house_points || 0,
+          currentLevel: gamif.current_level || 1,
+          completedChallenges: challengesCount || 0,
+          completedQuests: questsCount || 0,
+          lastActive: profile?.last_login ? new Date(profile.last_login).getTime() : new Date(gamif.updated_at).getTime(),
+          metadata: gamif.gamification_metadata || {},
+          createdAt: gamif.created_at,
+          updatedAt: gamif.updated_at
+        }
+      })
+    )
+    
+    users.value = usersWithStats
+    allUsers.value = usersWithStats
     filterUsers()
+    
+    console.log(`✅ ${usersWithStats.length} utilisateurs chargés depuis gamification_data`)
+    
   } catch (error) {
     console.error('Erreur lors du chargement des utilisateurs:', error)
     toast.add({
@@ -577,16 +631,33 @@ const assignHouse = async () => {
   try {
     assigning.value = true
     
-    // Simuler l'attribution de maison
-    const userIndex = users.value.findIndex(u => u.id === houseForm.userId)
-    if (userIndex !== -1) {
-      users.value[userIndex].house = houseForm.house
-    }
+    // Récupérer l'ID de la maison depuis le nom
+    const { data: houseData, error: houseError } = await supabase
+      .from('houses')
+      .select('id, name')
+      .eq('name', houseForm.house)
+      .single()
+    
+    if (houseError) throw houseError
+    
+    // Mettre à jour la maison dans gamification_data
+    const { error } = await supabase
+      .from('gamification_data')
+      .update({ 
+        house_id: houseData.id,
+        updated_at: new Date().toISOString()
+      })
+      .eq('user_id', houseForm.userId)
+    
+    if (error) throw error
+    
+    const user = users.value.find(u => u.id === houseForm.userId)
+    const houseName = getHouseLabel(houseForm.house)
     
     toast.add({
       severity: 'success',
-      summary: 'Succès',
-      detail: 'Maison modifiée avec succès',
+      summary: 'Maison modifiée !',
+      detail: `${user?.displayName || 'L\'utilisateur'} a été assigné à ${houseName}`,
       life: 3000
     })
     
@@ -704,16 +775,82 @@ const addPoints = async () => {
   try {
     assigning.value = true
     
-    // Simuler l'ajout de points - à remplacer par l'appel au service de gamification
-    const userIndex = users.value.findIndex(u => u.id === pointsForm.userId)
-    if (userIndex !== -1) {
-      users.value[userIndex].totalPoints = (users.value[userIndex].totalPoints || 0) + pointsForm.points
+    console.log('💫 Ajout de points pour user_id:', pointsForm.userId)
+    console.log('📊 Points à ajouter:', pointsForm.points)
+    
+    // Récupérer les points actuels de l'utilisateur depuis gamification_data
+    const { data: currentGamif, error: fetchError } = await supabase
+      .from('gamification_data')
+      .select('total_xp, current_level')
+      .eq('user_id', pointsForm.userId)
+      .single()
+    
+    console.log('🔍 Données actuelles:', currentGamif)
+    
+    if (fetchError) {
+      console.error('❌ Erreur lors de la récupération:', fetchError)
+      throw fetchError
     }
+    
+    const currentXP = currentGamif.total_xp || 0
+    const newTotalXP = currentXP + pointsForm.points
+    
+    console.log(`📈 XP: ${currentXP} → ${newTotalXP}`)
+    
+    // Calculer le nouveau niveau basé sur les XP (ex: 100 XP par niveau)
+    const newLevel = Math.floor(newTotalXP / 100) + 1
+    
+    console.log('🎯 Niveau:', newLevel)
+    
+    // Mettre à jour les points XP dans gamification_data
+    const { data: updateData, error: updateError } = await supabase
+      .from('gamification_data')
+      .update({ 
+        total_xp: newTotalXP,
+        current_level: newLevel,
+        updated_at: new Date().toISOString()
+      })
+      .eq('user_id', pointsForm.userId)
+      .select()
+    
+    console.log('✅ Mise à jour effectuée:', updateData)
+    
+    if (updateError) {
+      console.error('❌ Erreur lors de la mise à jour:', updateError)
+      throw updateError
+    }
+    
+    // Vérifier que la mise à jour a bien été effectuée
+    if (!updateData || updateData.length === 0) {
+      console.warn('⚠️ Aucune ligne mise à jour - Vérifier que user_id existe dans gamification_data')
+      throw new Error('Utilisateur non trouvé dans gamification_data')
+    }
+    
+    // Log l'action dans l'historique (optionnel - créer une table xp_history si nécessaire)
+    try {
+      await supabase
+        .from('xp_history')
+        .insert({
+          user_id: pointsForm.userId,
+          xp_gained: pointsForm.points,
+          reason: pointsForm.reason,
+          admin_id: authStore.user?.id,
+          created_at: new Date().toISOString()
+        })
+      console.log('📝 Action loggée dans xp_history')
+    } catch (historyError) {
+      console.warn('⚠️ Impossible de logger dans l\'historique XP:', historyError.message)
+      // Ne pas bloquer si la table n'existe pas encore
+    }
+    
+    const levelUp = newLevel > (currentGamif.current_level || 1)
     
     toast.add({
       severity: 'success',
-      summary: 'Points ajoutés !',
-      detail: `${pointsForm.points} points XP attribués à ${pointsForm.userName}`,
+      summary: levelUp ? '🎉 Points ajoutés et Niveau augmenté !' : 'Points ajoutés !',
+      detail: levelUp 
+        ? `${pointsForm.points} XP attribués à ${pointsForm.userName} - Nouveau niveau: ${newLevel}` 
+        : `${pointsForm.points} XP attribués à ${pointsForm.userName}`,
       life: 4000
     })
     
@@ -722,7 +859,7 @@ const addPoints = async () => {
     await loadUsers()
     
   } catch (error) {
-    console.error('Erreur lors de l\'ajout de points:', error)
+    console.error('❌ Erreur lors de l\'ajout de points:', error)
     toast.add({
       severity: 'error',
       summary: 'Erreur',
