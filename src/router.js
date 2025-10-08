@@ -274,7 +274,7 @@ const routes = [
   // PROFILS & UTILISATEURS
   // ========================================
   { path: '/profile/:id', component: Profile, name: 'Profile', meta: { requiresAuth: true } },
-  { path: '/profilAdmin/:id', component: ProfileAdmin, name: 'ProfileAdmin', meta: { requiresAuth: true, requiredRole: ['admin'] } },
+  { path: '/profilAdmin/:id', component: ProfileAdmin, name: 'ProfileAdmin', meta: { requiresAuth: true, requiredRole: ['admin', 'house_coach'] } },
   { path: '/settings', component: SettingView, name: 'SettingView', meta: { requiresAuth: true } },
   { path: '/hes-house-quiz', component: HESHouseQuizView, name: 'HESHouseQuizView', meta: { requiresAuth: true } },
   { path: '/houses/:houseName/stats', component: HouseStatsPage, name: 'HouseStatsPage', props: true, meta: { requiresAuth: true } },
@@ -288,8 +288,8 @@ const routes = [
   // ========================================
   // DASHBOARD & ADMINISTRATION
   // ========================================
-  { path: '/admin', component: DashboardView, name: 'DashboardView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
-  { path: '/admin/defis', component: AdminDefisView, name: 'AdminDefisView', meta: { requiresAuth: true, requiredRole: ['admin'] } },
+  { path: '/admin', component: DashboardView, name: 'DashboardView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor', 'house_coach'] } },
+  { path: '/admin/defis', component: AdminDefisView, name: 'AdminDefisView', meta: { requiresAuth: true, requiredRole: ['admin', 'house_coach'] } },
   
   // ========================================
   // GAMIFICATION ADMIN ROUTES

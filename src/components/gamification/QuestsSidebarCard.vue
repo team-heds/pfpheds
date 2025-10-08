@@ -203,11 +203,19 @@ const subscribeToQuestUpdates = () => {
 }
 
 const viewQuestDetails = (quest) => {
-  router.push('/gamification-profile')
+  const user = authStore.user
+  if (!user) return
+  
+  const userId = authStore.isFirebaseUser ? user.uid : user.id
+  router.push(`/gamification-profile/${userId}`)
 }
 
 const goToQuests = () => {
-  router.push('/gamification-profile')
+  const user = authStore.user
+  if (!user) return
+  
+  const userId = authStore.isFirebaseUser ? user.uid : user.id
+  router.push(`/gamification-profile/${userId}`)
 }
 
 // Lifecycle
