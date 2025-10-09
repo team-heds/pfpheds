@@ -114,7 +114,7 @@
           </div>
           <!-- Badge du type d'événement -->
           <div class="event-type-badge mr-3">
-            <span class="event-type-text">{{ event.type || 'Événement' }}</span>
+            <span class="event-type-text">{{ getEventTypeLabel(event.type) }}</span>
           </div>
         </div>
         
@@ -138,6 +138,8 @@
     <EventDetail 
       v-if="selectedEvent"
       :event="selectedEvent"
+      :user-id="user.id"
+      :user-profile="user"
       @register="handleRegister"
       @edit="handleEdit"
       @delete="handleDelete"
@@ -239,6 +241,17 @@ export default {
     },
   },
   methods: {
+    getEventTypeLabel(type) {
+      switch (type) {
+        case 'private':
+          return 'Privé';
+        case 'alpinphysio':
+          return "Alp'in Physio";
+        case 'public':
+        default:
+          return 'Public';
+      }
+    },
     formatEventDate(date) {
       if (!date) return '';
       if (typeof date === 'string') date = new Date(date);
@@ -294,17 +307,41 @@ export default {
         // Pour Supabase, on utilise les données disponibles
         else if (this.authStore.isSupabaseUser) {
           userInfo = {
-            nom: currentUser.user_metadata?.nom || 'Utilisateur',
-            prenom: currentUser.user_metadata?.prenom || '',
-            photoURL: currentUser.user_metadata?.photoURL || ''
+            nom: currentUser.user_metadata?.nom || this.user.nom || 'Utilisateur',
+            prenom: currentUser.user_metadata?.prenom || this.user.prenom || '',
+            photoURL: currentUser.user_metadata?.photoURL || this.user.PhotoURL || ''
           };
         }
 
         // Appeler la fonction d'inscription du store
         await this.eventStore.toggleRegistration(event.id, userInfo);
-        console.log('Inscription réussie');
+        console.log('✅ Inscription réussie - L\'événement apparaîtra dans "Événements à venir"');
+        
+        // Rafraîchir les événements pour mettre à jour la liste
+        await this.eventStore.fetchEvents();
+        
+        // Fermer le dialog après inscription
+        this.showEventDetail = false;
+        
+        // Afficher un toast de succès
+        if (this.$refs.toast) {
+          this.$refs.toast.add({ 
+            severity: 'success', 
+            summary: 'Inscription réussie !', 
+            detail: 'L\'événement apparaît maintenant dans vos événements à venir', 
+            life: 4000 
+          });
+        }
       } catch (error) {
         console.error('Erreur lors de l\'inscription:', error);
+        if (this.$refs.toast) {
+          this.$refs.toast.add({ 
+            severity: 'error', 
+            summary: 'Erreur', 
+            detail: 'Impossible de s\'inscrire à l\'événement', 
+            life: 4000 
+          });
+        }
       }
     },
     handleEdit(eventData) {
