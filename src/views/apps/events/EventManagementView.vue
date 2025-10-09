@@ -105,10 +105,9 @@
 
 <script setup>
 // Imports Vue/Pinia/PrimeVue
-import { ref, computed, onMounted, inject } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { auth } from '../../../../firebase.js';
-import { onAuthStateChanged } from 'firebase/auth';
+import { supabase } from '@/supabase';
 import Navbar from '@/components/common/utils/Navbar.vue';
 import LeftSidebar from '@/components/social/library/LeftSidebar.vue';
 import RightSidebar from '@/components/social/library/RightSidebar.vue';
@@ -117,7 +116,6 @@ import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 import { useEventStore } from '@/stores/eventStore';
-import { getDatabase, ref as dbRef, get } from 'firebase/database';
 // Composants custom
 import EventForm from '@/components/events/EventForm.vue';
 import EventCard from '@/components/events/EventCard.vue';
@@ -130,13 +128,19 @@ const events = computed(() => eventStore.events || []);
 // Router
 const router = useRouter();
 
-// Utilisateur courant (auth directe au lieu d'injection)
+// Utilisateur courant avec Supabase Auth
 const currentUser = ref(null);
-const userId = computed(() => currentUser.value?.uid || null);
+const userId = computed(() => currentUser.value?.id || null);
 
-// Écouter les changements d'authentification
-onAuthStateChanged(auth, (user) => {
-  currentUser.value = user;
+// Écouter les changements d'authentification Supabase
+let authSubscription = null;
+supabase.auth.getSession().then(({ data: { session } }) => {
+  currentUser.value = session?.user || null;
+});
+
+authSubscription = supabase.auth.onAuthStateChange((event, session) => {
+  currentUser.value = session?.user || null;
+  console.log('Auth state changed:', event, currentUser.value?.id);
 });
 
 // Modales
@@ -172,7 +176,8 @@ const privateRolesDropdown = computed(() => [
 const filteredEvents = computed(() => {
   const now = new Date();
   let filtered = events.value.filter(ev => {
-    const eventDate = new Date(ev.endDate || ev.startDate);
+    // Adapter pour les noms de champs Supabase (start_date, end_date)
+    const eventDate = new Date(ev.end_date || ev.endDate || ev.start_date || ev.startDate);
     // Afficher uniquement les événements futurs ou du jour
     const isFuture = eventDate > now || eventDate.toDateString() === now.toDateString();
     if (!isFuture) return false;
@@ -191,10 +196,10 @@ const filteredEvents = computed(() => {
       (ev.type && ev.type.toLowerCase().includes(term))
     );
   }
-  // Tri par date
+  // Tri par date (adapter pour Supabase)
   filtered.sort((a, b) => {
-    const dateA = new Date(a.startDate);
-    const dateB = new Date(b.startDate);
+    const dateA = new Date(a.start_date || a.startDate);
+    const dateB = new Date(b.start_date || b.startDate);
     return sortOrder.value === 'asc' ? dateA - dateB : dateB - dateA;
   });
   return filtered;
@@ -205,57 +210,82 @@ function addEventFromForm(eventData) {
   eventStore.addEvent({ ...eventData, admin: userId.value });
   showCreateDialog.value = false;
 }
-function likeEvent(event) {
-  eventStore.updateEvent(event.id, {
-    likes: event.liked ? event.likes - 1 : event.likes + 1,
-    liked: !event.liked
-  });
+
+async function likeEvent(event) {
+  if (!userId.value) {
+    alert('Vous devez être connecté pour liker un événement');
+    return;
+  }
+  
+  try {
+    await eventStore.toggleLike(event.id, userId.value);
+  } catch (error) {
+    console.error('Erreur lors du like:', error);
+    alert('Erreur lors du like');
+  }
 }
+
 async function registerEvent(event) {
-  if (!userId.value) return;
+  if (!userId.value) {
+    alert('Vous devez être connecté pour vous inscrire');
+    return;
+  }
 
   try {
-    const db = getDatabase();
-    const userRef = dbRef(db, `Users/${userId.value}`);
-    const snapshot = await get(userRef);
-
+    // Récupérer les infos utilisateur depuis Supabase
     let currentUserInfo = {
       nom: '',
       prenom: '',
-      photoURL: auth.currentUser?.photoURL || 'https://ui-avatars.com/api/?name=Utilisateur'
+      photoURL: currentUser.value?.user_metadata?.avatar_url || 
+                currentUser.value?.user_metadata?.photoURL || 
+                'https://ui-avatars.com/api/?name=Utilisateur'
     };
 
-    if (snapshot.exists()) {
-      const userData = snapshot.val();
-      console.log('Données utilisateur Firebase:', userData);
-
+    // Option 1 : Depuis user_metadata Supabase Auth
+    if (currentUser.value?.user_metadata) {
+      const metadata = currentUser.value.user_metadata;
       currentUserInfo = {
-        nom: userData.Nom || userData.nom || userData.lastName || '',
-        prenom: userData.Prenom || userData.prenom || userData.firstName || '',
-        photoURL: userData.PhotoURL || userData.photoURL || userData.avatar || auth.currentUser?.photoURL || 'https://ui-avatars.com/api/?name=Utilisateur'
-      };
-    } else {
-      console.log('Aucune donnée utilisateur trouvée dans Firebase');
-      // Utiliser les données de Firebase Auth comme fallback
-      currentUserInfo = {
-        nom: auth.currentUser?.displayName?.split(' ')[1] || '',
-        prenom: auth.currentUser?.displayName?.split(' ')[0] || '',
-        photoURL: auth.currentUser?.photoURL || 'https://ui-avatars.com/api/?name=Utilisateur'
+        nom: metadata.nom || metadata.lastName || metadata.last_name || '',
+        prenom: metadata.prenom || metadata.firstName || metadata.first_name || '',
+        photoURL: metadata.photoURL || metadata.avatar_url || metadata.picture || 
+                  'https://ui-avatars.com/api/?name=Utilisateur'
       };
     }
 
+    // Option 2 : Essayer de récupérer depuis user_profiles
+    const { data: userData, error: userError } = await supabase
+      .from('user_profiles')
+      .select('family_name, forname, avatar_url')
+      .eq('user_id', userId.value)
+      .maybeSingle();
+
+    if (userData && !userError) {
+      currentUserInfo = {
+        nom: userData.family_name || currentUserInfo.nom,
+        prenom: userData.forname || currentUserInfo.prenom,
+        photoURL: userData.avatar_url || currentUserInfo.photoURL
+      };
+    }
+
+    // Si pas de nom/prénom, utiliser l'email comme fallback
+    if (!currentUserInfo.nom && !currentUserInfo.prenom) {
+      const email = currentUser.value?.email || '';
+      const namePart = email.split('@')[0];
+      currentUserInfo.prenom = namePart || 'Utilisateur';
+    }
+
     console.log('Infos utilisateur finales:', currentUserInfo);
-    eventStore.toggleRegistration(event.id, userId.value, event.registered, currentUserInfo);
+    await eventStore.toggleRegistration(event.id, userId.value, event.registered, currentUserInfo);
 
   } catch (error) {
-    console.error('Erreur lors de la récupération des données utilisateur:', error);
-    // Fallback avec les données Firebase Auth
+    console.error('Erreur lors de l\'inscription:', error);
+    // Fallback basique
     const currentUserInfo = {
-      nom: auth.currentUser?.displayName?.split(' ')[1] || '',
-      prenom: auth.currentUser?.displayName?.split(' ')[0] || '',
-      photoURL: auth.currentUser?.photoURL || 'https://ui-avatars.com/api/?name=Utilisateur'
+      nom: '',
+      prenom: currentUser.value?.email?.split('@')[0] || 'Utilisateur',
+      photoURL: 'https://ui-avatars.com/api/?name=Utilisateur'
     };
-    eventStore.toggleRegistration(event.id, userId.value, event.registered, currentUserInfo);
+    await eventStore.toggleRegistration(event.id, userId.value, event.registered, currentUserInfo);
   }
 }
 function openEventDetails(event) {
@@ -300,7 +330,7 @@ async function fixExistingEvent() {
   }
 
   // Trouver tous les événements sans admin
-  const eventsToFix = events.value.filter(event => !event.admin);
+  const eventsToFix = events.value.filter(event => !event.admin_uid);
 
   if (eventsToFix.length > 0) {
     const confirmFix = confirm(`Voulez-vous vous attribuer la propriété de ${eventsToFix.length} événement(s) sans propriétaire ?`);
@@ -308,7 +338,7 @@ async function fixExistingEvent() {
     if (confirmFix) {
       try {
         for (const event of eventsToFix) {
-          await eventStore.updateEvent(event.id, { admin: userId.value });
+          await eventStore.fixEventAdmin(event.id, userId.value);
         }
         alert(`${eventsToFix.length} événement(s) corrigé(s) ! Vous pouvez maintenant les modifier/supprimer.`);
       } catch (error) {
@@ -323,7 +353,7 @@ async function fixExistingEvent() {
 
 async function fixEventAdmin(event) {
   try {
-    await eventStore.updateEvent(event.id, { admin: userId.value });
+    await eventStore.fixEventAdmin(event.id, userId.value);
     console.log('Propriété de l\'événement attribuée automatiquement');
   } catch (error) {
     console.error('Erreur lors de la correction:', error);
@@ -332,14 +362,31 @@ async function fixEventAdmin(event) {
 }
 
 // Charger les événements au montage
+let unsubscribeEvents = null;
+
 onMounted(async () => {
-  console.log('EventManagementView mounted');
+  console.log('EventManagementView mounted - Supabase version');
   try {
     console.log('Starting to listen for events...');
-    await eventStore.listenEvents();
+    unsubscribeEvents = eventStore.listenEvents();
     console.log('Events loaded:', events.value.length);
   } catch (error) {
     console.error('Error loading events:', error);
+  }
+});
+
+// Nettoyer les abonnements au démontage
+onUnmounted(() => {
+  console.log('EventManagementView unmounted');
+  
+  // Désabonner du realtime events
+  if (unsubscribeEvents && typeof unsubscribeEvents === 'function') {
+    unsubscribeEvents();
+  }
+  
+  // Désabonner de l'auth
+  if (authSubscription && authSubscription.data && authSubscription.data.subscription) {
+    authSubscription.data.subscription.unsubscribe();
   }
 });
 </script>

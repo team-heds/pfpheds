@@ -83,7 +83,8 @@ const confirm = useConfirm();
 
 const typeOptions = [
   { label: 'Public', value: 'public' },
-  { label: 'Privé', value: 'private' }
+  { label: 'Privé', value: 'private' },
+  { label: "Alp'in Physio", value: 'alpinphysio' }
 ];
 const roleOptions = [
   { label: 'Site Loeche', value: 'siteLoeche' },

@@ -15,37 +15,13 @@ export const useEventStore = defineStore('event', () => {
       loading.value = true;
       error.value = null;
 
-      console.log('📥 Chargement des événements depuis Supabase...');
-
-      // Essayer d'abord avec la vue, sinon fallback sur la table events
-      let data, fetchError;
-      
-      const result = await supabase
+      const { data, error: fetchError } = await supabase
         .from('events_with_counts')
         .select('*')
         .order('start_date', { ascending: true });
 
-      data = result.data;
-      fetchError = result.error;
+      if (fetchError) throw fetchError;
 
-      // Si la vue n'existe pas, utiliser la table directe
-      if (fetchError && fetchError.message?.includes('does not exist')) {
-        console.log('⚠️ Vue events_with_counts introuvable, utilisation de la table events');
-        const result2 = await supabase
-          .from('events')
-          .select('*')
-          .order('start_date', { ascending: true });
-        
-        data = result2.data;
-        fetchError = result2.error;
-      }
-
-      if (fetchError) {
-        console.error('❌ Erreur lors du chargement:', fetchError);
-        throw fetchError;
-      }
-
-      console.log(`✅ ${data?.length || 0} événements chargés`);
       events.value = data || [];
       return data;
     } catch (err) {
@@ -64,38 +40,24 @@ export const useEventStore = defineStore('event', () => {
     // Charger les événements initiaux
     fetchEvents();
 
-    // S'abonner aux changements en temps réel (avec gestion d'erreur)
-    try {
-      const subscription = supabase
-        .channel('events-channel')
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'events' },
-          (payload) => {
-            console.log('🔄 Changement temps réel détecté:', payload);
-            // Recharger les événements quand il y a un changement
-            fetchEvents();
-          }
-        )
-        .subscribe((status, err) => {
-          if (status === 'SUBSCRIBED') {
-            console.log('✅ Abonnement temps réel actif');
-          }
-          if (err) {
-            console.warn('⚠️ Erreur abonnement temps réel (non bloquant):', err);
-          }
-        });
+    // S'abonner aux changements en temps réel
+    const subscription = supabase
+      .channel('events-channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'events' },
+        (payload) => {
+          console.log('Changement détecté:', payload);
+          // Recharger les événements quand il y a un changement
+          fetchEvents();
+        }
+      )
+      .subscribe();
 
-      // Retourner la fonction de désabonnement
-      return () => {
-        console.log('🔌 Désabonnement du temps réel');
-        supabase.removeChannel(subscription);
-      };
-    } catch (err) {
-      console.warn('⚠️ Temps réel non disponible (non bloquant):', err);
-      // Retourner une fonction vide si le temps réel échoue
-      return () => {};
-    }
+    // Retourner la fonction de désabonnement
+    return () => {
+      supabase.removeChannel(subscription);
+    };
   }
 
   /**
@@ -134,30 +96,25 @@ export const useEventStore = defineStore('event', () => {
       }
 
       // 2. Créer l'événement dans la base de données
-      const eventData = {
-        title: event.title,
-        description: event.description || '',
-        start_date: event.startDate,
-        end_date: event.endDate,
-        lieu: event.lieu || '',
-        type: event.type || 'public',
-        role: event.type === 'private' ? (event.role || null) : null,
-        admin_uid: event.admin,  // ✅ Utilise admin_uid (contrainte NOT NULL)
-        image_url: imageUrl
-      };
-
-      console.log('📤 Données envoyées à Supabase:', eventData);
-
       const { data, error: insertError } = await supabase
         .from('events')
-        .insert([eventData])
+        .insert([
+          {
+            title: event.title,
+            description: event.description,
+            start_date: event.startDate,
+            end_date: event.endDate,
+            lieu: event.lieu || '',
+            type: event.type,
+            role: event.type === 'private' ? event.role : null,
+            admin_uid: event.admin,
+            image_url: imageUrl
+          }
+        ])
         .select()
         .single();
 
-      if (insertError) {
-        console.error('❌ Erreur Supabase insert:', insertError);
-        throw insertError;
-      }
+      if (insertError) throw insertError;
 
       console.log('Événement créé avec succès:', data);
       
@@ -304,7 +261,7 @@ export const useEventStore = defineStore('event', () => {
     try {
       const { error: updateError } = await supabase
         .from('events')
-        .update({ admin_uid: adminUserId })  // ✅ Utilise admin_uid
+        .update({ admin_uid: adminUserId })
         .eq('id', eventId);
 
       if (updateError) throw updateError;

@@ -212,7 +212,7 @@
                 <img :src="getImagePath('JPhotos/Divers/photocomite/DSC09605.JPG')" alt="Leanne" />
               </div>
               <div class="member-icon">
-                <i class="pi pi-crown"></i>
+                <i class="pi pi-bell"></i>
               </div>
               <h5>Présidente – Leanne</h5>
               <h6>Coordination des événements et représentation de l'association</h6>
@@ -294,9 +294,7 @@
             <!-- Responsable Web & Communication - Loïc -->
             <div class="committee-member">
               <div class="member-photo">
-                <div class="photo-placeholder">
-                  <i class="pi pi-user"></i>
-                </div>
+                <img :src="getImagePath('JPhotos/Divers/photocomite/loic_orny.JPG')" alt="Loïc" />
               </div>
               <div class="member-icon">
                 <i class="pi pi-megaphone"></i>
@@ -499,8 +497,8 @@
         <div class="services-context">
           <div class="context-grid">
             <div class="context-card">
-              <div class="context-icon">
-                <i class="pi pi-compass"></i>
+              <div class="context-icon context-icon-image">
+                <img :src="getImagePath('JPhotos/Photoformations/DSC05665.JPG')" alt="Formation massage" />
               </div>
               <h5>Un peu de contexte...</h5>
               <p>
@@ -512,8 +510,8 @@
             </div>
             
             <div class="context-card">
-              <div class="context-icon">
-                <i class="pi pi-heart"></i>
+              <div class="context-icon context-icon-image">
+                <img :src="getImagePath('JPhotos/Photoformations/DSC05699.JPG')" alt="Notre vision" />
               </div>
               <h5>Notre Vision</h5>
               <p>
@@ -783,8 +781,8 @@ const getImagePath = (relativePath) => `/assets/images/heds/AlpinPhysioPhoto/${r
 // Photos du carousel hero
 const carouselPhotos = [
   'JPhotos/Divers/Comité25-26/DSC05374.JPG',
-  'JPhotos/Divers/Comité25-26/DSC05383.JPG',
-  'JPhotos/Divers/Comité25-26/DSC05385.JPG'
+  'JPhotos/Divers/Comité25-26/DSC05389.JPG',
+  'JPhotos/Divers/Comité25-26/DSC05365.JPG'
 ]
 
 const currentCarouselSlide = ref(0)
@@ -799,7 +797,7 @@ const galleryPhotos = [
     location: 'Verbier - Grimentz'
   },
   {
-    src: getImagePath('JPhotos/Photoconférences/Conférence Bastien Murith/DSC03767.JPG'), // a changer
+    src: getImagePath('JPhotos/Photoformations/DSC05658.JPG'),
     alt: 'Formation au Massage Sportif',
     title: 'Formation au Massage Sportif',
     description: 'Session de formation annuelle pour préparer nos nouveaux étudiants aux techniques de massage post-effort.',
@@ -841,45 +839,47 @@ const scrollToSection = (sectionId) => {
 }
 
 const handleScroll = () => {
-  // Throttling pour éviter les appels trop fréquents
-  if (scrollTimeout) return
-  
-  scrollTimeout = setTimeout(() => {
-    const scrollY = window.scrollY
-    isScrolled.value = scrollY > 100
+  // Utiliser requestAnimationFrame pour de meilleures performances
+  if (!scrollTimeout) {
+    scrollTimeout = requestAnimationFrame(() => {
+      const scrollY = window.scrollY
 
-    // Détection direction du scroll et cacher/montrer la nav
-    if (scrollY > lastScrollY && scrollY > 200) {
-      // Scroll vers le bas - cacher la nav
-      isNavHidden.value = true
-    } else {
-      // Scroll vers le haut - montrer la nav
-      isNavHidden.value = false
-    }
-    lastScrollY = scrollY
-
-    // Détection section active - optimisée pour éviter les recalculs
-    let currentSectionId = 'hero'
-    
-    for (const section of sections) {
-      const element = document.getElementById(section.id)
-      if (element) {
-        const rect = element.getBoundingClientRect()
-        const elementTop = rect.top + scrollY
-        
-        if (scrollY >= elementTop - 300) {
-          currentSectionId = section.id
-        }
+      // Détection direction du scroll et cacher/montrer la nav
+      if (scrollY > lastScrollY && scrollY > 200) {
+        isNavHidden.value = true
+      } else {
+        isNavHidden.value = false
       }
-    }
+      isScrolled.value = scrollY > 100
+      lastScrollY = scrollY
 
-    // Mise à jour seulement si la section a changé
-    if (activeSection.value !== currentSectionId) {
-      activeSection.value = currentSectionId
-    }
-    
-    scrollTimeout = null
-  }, 16) // ~60fps
+      // Détection section active avec une meilleure logique
+      let currentSectionId = 'hero'
+      let minDistance = Infinity
+      
+      sections.forEach(section => {
+        const element = document.getElementById(section.id)
+        if (element) {
+          const rect = element.getBoundingClientRect()
+          const distance = Math.abs(rect.top)
+          
+          // La section la plus proche du haut de la page devient active
+          if (rect.top <= 200 && distance < minDistance) {
+            minDistance = distance
+            currentSectionId = section.id
+          }
+        }
+      })
+
+      // Mise à jour seulement si la section a changé
+      if (activeSection.value !== currentSectionId) {
+        console.log('Section active changée:', activeSection.value, '->', currentSectionId)
+        activeSection.value = currentSectionId
+      }
+      
+      scrollTimeout = null
+    })
+  }
 }
 
 const downloadContract = () => {
@@ -925,8 +925,15 @@ let carouselInterval = null
 
 // Lifecycle
 onMounted(() => {
+  console.log('Component mounted - attaching scroll listener')
   window.addEventListener('scroll', handleScroll)
-  handleScroll()
+  handleScroll() // Appel initial
+  
+  // Vérifier que les sections existent
+  sections.forEach(section => {
+    const element = document.getElementById(section.id)
+    console.log(`Section ${section.id}:`, element ? 'trouvée' : 'NON TROUVÉE')
+  })
   
   // Démarrer le carousel automatique
   carouselInterval = setInterval(() => {
@@ -1079,7 +1086,7 @@ onUnmounted(() => {
   font-size: 0.9rem;
   padding: 0.5rem 1rem;
   border-radius: 20px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   position: relative;
   overflow: hidden;
@@ -1094,7 +1101,21 @@ onUnmounted(() => {
   height: 2px;
   background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
   transform: translateX(-50%);
-  transition: width 0.3s ease;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
+  border-radius: 20px;
+  opacity: 0;
+  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: -1;
 }
 
 .nav-link:hover {
@@ -1108,10 +1129,14 @@ onUnmounted(() => {
 }
 
 .nav-link.active {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
   color: white;
   font-weight: 600;
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  transform: translateY(-1px);
+}
+
+.nav-link.active::after {
+  opacity: 1;
 }
 
 .nav-link.active::before {
@@ -2237,6 +2262,24 @@ onUnmounted(() => {
   font-size: 1.8rem;
 }
 
+.context-icon-image {
+  width: 100%;
+  max-width: 400px;
+  height: 250px;
+  background: transparent;
+  overflow: hidden;
+  padding: 0;
+  border-radius: var(--radius);
+}
+
+.context-icon-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+}
+
 .context-card h5 {
   font-size: 1.3rem;
   font-weight: 700;
@@ -2479,7 +2522,7 @@ onUnmounted(() => {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  background: rgba(0, 0, 0, 0.5);
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
   color: white;
   border: none;
   width: 50px;
@@ -2494,16 +2537,16 @@ onUnmounted(() => {
 }
 
 .slide-nav:hover {
-  background: rgba(0, 0, 0, 0.7);
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
   transform: translateY(-50%) scale(1.1);
 }
 
 .slide-nav.prev {
-  left: 20px;
+  left: 0rem;
 }
 
 .slide-nav.next {
-  right: 20px;
+  right: 0rem;
 }
 
 .slide-dots {
@@ -2853,6 +2896,15 @@ onUnmounted(() => {
   
   .services-cta {
     padding: 2rem 1.5rem;
+  }
+  
+  /* Gallery Mobile */
+  .slide-nav.prev {
+    left: 1rem;
+  }
+  
+  .slide-nav.next {
+    right: 1rem;
   }
   
   /* Committee Mobile */

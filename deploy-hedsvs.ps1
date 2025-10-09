@@ -1,6 +1,6 @@
 # Script de déploiement optimisé pour hedsvs.ch
-# Version finale après résolution des conflits Nginx/Caddy
-# Déploie le frontend Vue.js v0.1.0.22+ sur hedsvs.ch avec HTTPS
+# Version améliorée avec meilleure gestion des erreurs
+# Déploie le frontend Vue.js sur hedsvs.ch
 
 param(
     [string]$Version = "auto",
@@ -13,7 +13,7 @@ function Write-Success($message) { Write-Host "[SUCCESS] $message" -ForegroundCo
 function Write-Warning($message) { Write-Host "[WARNING] $message" -ForegroundColor Yellow }
 function Write-Error($message) { Write-Host "[ERROR] $message" -ForegroundColor Red; exit 1 }
 
-Write-Host "=== DÉPLOIEMENT HEDSVS.CH - SCRIPT OPTIMISÉ ===" -ForegroundColor Yellow
+Write-Host "=== DÉPLOIEMENT HEDSVS.CH - SCRIPT AMÉLIORÉ ===" -ForegroundColor Yellow
 
 # Vérification des prérequis
 if (-not (Test-Path "package.json")) {
@@ -26,6 +26,13 @@ if ($Version -eq "auto") {
     $Version = $packageJson.version
 }
 Write-Info "Version à déployer: $Version"
+
+# Configuration
+$remoteUser = "ubuntu"
+$remoteHost = "83.228.204.5"
+$remoteDir = "/tmp"  # Utilisation de /tmp pour le transfert
+$localKeyPath = "C:\Users\antoine.quarroz\Desktop\LabDev\PrivateKey\HEdSLinux.txt"
+$remoteAppPath = "/var/www/pfpheds-frontend"
 
 # ÉTAPE 1: Build du frontend (si nécessaire)
 if (-not $SkipBuild) {
@@ -50,111 +57,118 @@ if (-not $SkipBuild) {
 # ÉTAPE 2: Création de l'archive
 Write-Info "ÉTAPE 2: Création de l'archive de déploiement..."
 $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
-$archiveName = "pfpheds-frontend-v$Version-$timestamp.tar.gz"
+$archiveName = "pfp-frontend-v$Version-$timestamp.tar.gz"
 
 if (Test-Path "dist") {
     # Utilisation de tar pour créer une archive compatible Linux
-    Write-Info "Création de l'archive tar.gz avec chemins Unix..."
+    Write-Info "Création de l'archive tar.gz..."
+    Push-Location "dist"
+    & tar -czf "../$archiveName" *
+    $tarResult = $LASTEXITCODE
+    Pop-Location
 
-    # Vérifier si tar est disponible (Git Bash ou WSL)
-    $tarAvailable = $false
-    try {
-        $null = & tar --version 2>$null
-        $tarAvailable = $true
-    } catch {
-        $tarAvailable = $false
+    if ($tarResult -ne 0) {
+        Write-Error "Échec de la création de l'archive"
     }
-
-    if ($tarAvailable) {
-        # Utiliser tar natif pour créer l'archive avec chemins Unix
-        Push-Location "dist"
-        & tar -czf "..\$archiveName" *
-        Pop-Location
-        Write-Success "Archive tar.gz créée: $archiveName"
-    } else {
-        # Fallback: utiliser 7-Zip si disponible
-        $sevenZipPath = "${env:ProgramFiles}\7-Zip\7z.exe"
-        if (Test-Path $sevenZipPath) {
-            Write-Info "Utilisation de 7-Zip pour créer l'archive..."
-            Push-Location "dist"
-            & $sevenZipPath a -ttar -so * | & $sevenZipPath a -si -tgzip "..\$archiveName"
-            Pop-Location
-            Write-Success "Archive 7-Zip créée: $archiveName"
-        } else {
-            # Dernière option: PowerShell avec correction côté serveur
-            Write-Warning "Utilisation de PowerShell Compress-Archive (nécessite correction côté serveur)"
-            $archiveName = "pfpheds-frontend-v$Version-$timestamp.zip"
-            Compress-Archive -Path "dist\*" -DestinationPath $archiveName -Force
-            Write-Success "Archive ZIP créée: $archiveName (avec correction serveur)"
-        }
-    }
+    Write-Success "Archive créée: $archiveName"
 } else {
     Write-Error "Répertoire dist non trouvé. Exécutez d'abord le build."
 }
 
+# Vérification de la connexion SSH
+Write-Info "Vérification de la connexion SSH au serveur..."
+$testConnection = ssh -i $localKeyPath -o BatchMode=yes -o ConnectTimeout=5 "${remoteUser}@${remoteHost}" "echo 'OK'" 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "Impossible de se connecter au serveur. Vérifiez la clé SSH et la connexion réseau."
+}
+Write-Success "Connexion SSH vérifiée"
+
+# Nettoyage des anciennes archives sur le serveur
+Write-Info "Nettoyage des anciennes archives sur le serveur..."
+$cleanupCmd = "rm -f /tmp/pfp-frontend-*.tar.gz"
+ssh -i $localKeyPath "${remoteUser}@${remoteHost}" $cleanupCmd
+
 # ÉTAPE 3: Transfert vers le VPS
 Write-Info "ÉTAPE 3: Transfert vers le VPS..."
-$scpResult = scp -i "C:\Users\antoine.quarroz\Desktop\LabDev\PrivateKey\HEdSLinux.txt" $archiveName ubuntu@83.228.204.5:/tmp/
-if ($LASTEXITCODE -ne 0) { Write-Error "Échec du transfert SCP" }
-Write-Success "Archive transférée vers le VPS"
+$transferStart = Get-Date
+$archiveFileName = Split-Path $archiveName -Leaf
+$remoteArchivePath = "$remoteDir/$archiveFileName"
+
+Write-Info "Transfert de $archiveName vers ${remoteUser}@${remoteHost}:$remoteArchivePath"
+
+# Utilisation de scp sans mode verbose pour éviter les problèmes
+$scpCommand = "scp -i `"$localKeyPath`" -o StrictHostKeyChecking=no `"$archiveName`" `"${remoteUser}@${remoteHost}:$remoteArchivePath`""
+Invoke-Expression $scpCommand
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "Échec du transfert SCP. Vérifiez les permissions et l'espace disque disponible."
+}
+
+# Vérification que le fichier est bien arrivé sur le serveur
+Write-Info "Vérification du fichier sur le serveur..."
+$verifyCmd = "test -f '$remoteArchivePath' && echo 'OK' || echo 'FAIL'"
+$verifyResult = ssh -i $localKeyPath "${remoteUser}@${remoteHost}" $verifyCmd
+if ($verifyResult -ne "OK") {
+    Write-Error "Le fichier n'a pas été transféré correctement sur le serveur."
+}
+
+$transferTime = (Get-Date) - $transferStart
+Write-Success "Archive transférée et vérifiée en $([math]::Round($transferTime.TotalSeconds, 2)) secondes"
 
 # ÉTAPE 4: Déploiement sur le VPS
 Write-Info "ÉTAPE 4: Déploiement sur le VPS..."
 
-# Extraire seulement le nom du fichier pour le déploiement
-$archiveFileName = Split-Path $archiveName -Leaf
-
-# Commandes de déploiement avec échappement correct des variables
 $deployScript = @"
 #!/bin/bash
 set -e
 
-echo '[DEPLOY] Sauvegarde de l ancienne version...'
-sudo cp -r /var/www/pfpheds-frontend /var/www/pfpheds-frontend.backup-$timestamp 2>/dev/null || echo 'Pas de version precedente'
+ARCHIVE_PATH='$remoteArchivePath'
+APP_PATH='$remoteAppPath'
+VERSION='$Version'
+TIMESTAMP='$timestamp'
 
-echo '[DEPLOY] Extraction de la nouvelle version...'
-sudo rm -rf /var/www/pfpheds-frontend
-sudo mkdir -p /var/www/pfpheds-frontend
-cd /var/www/pfpheds-frontend
-
-# Détecter le type d'archive et extraire en conséquence
-if [[ "$archiveFileName" == *.tar.gz ]]; then
-    echo '[DEPLOY] Extraction archive tar.gz...'
-    sudo tar -xzf /tmp/$archiveFileName -C /var/www/pfpheds-frontend/
-elif [[ "$archiveFileName" == *.zip ]]; then
-    echo '[DEPLOY] Extraction archive ZIP...'
-    cd /tmp && sudo unzip -q $archiveFileName -d /var/www/pfpheds-frontend/
-    echo '[DEPLOY] Correction des chemins Windows si necessaire...'
-    if [ -d "/var/www/pfpheds-frontend/dist" ]; then
-        sudo mv /var/www/pfpheds-frontend/dist/* /var/www/pfpheds-frontend/ 2>/dev/null || true
-        sudo rmdir /var/www/pfpheds-frontend/dist 2>/dev/null || true
-    fi
-else
-    echo '[ERROR] Type d archive non reconnu: $archiveFileName'
+echo '[DEPLOY] Vérification de l archive...'
+if [ ! -f "`$ARCHIVE_PATH" ]; then
+    echo "[ERROR] Fichier `$ARCHIVE_PATH non trouve sur le serveur"
     exit 1
 fi
 
+echo '[DEPLOY] Sauvegarde de l ancienne version...'
+sudo cp -r `$APP_PATH `${APP_PATH}.backup-`$TIMESTAMP 2>/dev/null || echo '[INFO] Pas de version precedente a sauvegarder'
+
+echo '[DEPLOY] Extraction de la nouvelle version...'
+sudo mkdir -p `$APP_PATH
+sudo tar -xzf "`$ARCHIVE_PATH" -C `$APP_PATH
+
 echo '[DEPLOY] Configuration des permissions...'
-sudo chown -R www-data:www-data /var/www/pfpheds-frontend
-sudo chmod -R 755 /var/www/pfpheds-frontend
+sudo chown -R www-data:www-data `$APP_PATH
+sudo chmod -R 755 `$APP_PATH
 
 echo '[DEPLOY] Mise a jour du conteneur Caddy...'
 sudo docker exec supabase-caddy-1 rm -rf /var/www/pfpheds-frontend 2>/dev/null || true
 sudo docker exec supabase-caddy-1 mkdir -p /var/www/pfpheds-frontend
-sudo docker cp /var/www/pfpheds-frontend/. supabase-caddy-1:/var/www/pfpheds-frontend/
+sudo docker cp `$APP_PATH/. supabase-caddy-1:/var/www/pfpheds-frontend/
 
 echo '[DEPLOY] Rechargement de Caddy...'
 sudo docker exec supabase-caddy-1 caddy reload --config /etc/caddy/Caddyfile
 
 echo '[DEPLOY] Nettoyage...'
-rm -f /tmp/$archiveFileName
+rm -f "`$ARCHIVE_PATH"
 
-echo '[SUCCESS] Deploiement termine - Version $Version active sur https://hedsvs.ch'
+echo "[SUCCESS] Deploiement termine - Version `$VERSION active sur https://hedsvs.ch"
 "@
 
-# Écriture du script temporaire et exécution avec variables d'environnement
-$tempScript = "/tmp/deploy-$timestamp.sh"
-$deployScript | ssh -i "C:\Users\antoine.quarroz\Desktop\LabDev\PrivateKey\HEdSLinux.txt" ubuntu@83.228.204.5 "cat > $tempScript && chmod +x $tempScript && archiveFileName='$archiveFileName' Version='$Version' timestamp='$timestamp' bash $tempScript && rm $tempScript"
+# Exécution du script de déploiement
+Write-Info "Exécution du script de déploiement sur le serveur..."
+
+# Envoyer et exécuter le script bash directement
+$sshCommand = @"
+bash -s << 'HEREDOC'
+$deployScript
+HEREDOC
+"@
+
+ssh -i $localKeyPath "${remoteUser}@${remoteHost}" $sshCommand
 
 if ($LASTEXITCODE -eq 0) {
     Write-Success "Déploiement réussi !"
@@ -162,10 +176,11 @@ if ($LASTEXITCODE -eq 0) {
     Write-Info "Version déployée: $Version"
 
     # Nettoyage local
-    Remove-Item $archiveName -Force
+    Remove-Item $archiveName -Force -ErrorAction SilentlyContinue
     Write-Info "Archive locale supprimée"
 } else {
-    Write-Error "Échec du déploiement"
+    Write-Error "Échec du déploiement. Consultez les logs ci-dessus pour plus de détails."
+    exit 1
 }
 
 Write-Host "`n=== DÉPLOIEMENT TERMINÉ ===" -ForegroundColor Green

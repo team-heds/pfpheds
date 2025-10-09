@@ -20,7 +20,7 @@
     </div>
     <div class="event-detail-description">{{ event.description }}</div>
     <div class="event-detail-type">
-      <span class="event-type-badge" :class="event.type">{{ event.type === 'private' ? 'Privé' : 'Public' }}</span>
+      <span class="event-type-badge" :class="event.type">{{ eventTypeLabel }}</span>
       <span v-if="event.type === 'private' && event.role">| Rôle : {{ event.role }}</span>
     </div>
     <div class="event-detail-participants">
@@ -80,6 +80,19 @@ const isUserRegistered = computed(() => {
 const canManageEvent = computed(() => {
   // L'utilisateur peut gérer l'événement s'il en est le créateur
   return props.event && props.userId && props.event.admin === props.userId;
+});
+
+// Label du type d'événement
+const eventTypeLabel = computed(() => {
+  switch (props.event?.type) {
+    case 'private':
+      return 'Privé';
+    case 'alpinphysio':
+      return "Alp'in Physio";
+    case 'public':
+    default:
+      return 'Public';
+  }
 });
 
 const newsFeedStore = useNewsFeedStore();
