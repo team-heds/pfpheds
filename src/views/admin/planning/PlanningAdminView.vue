@@ -48,6 +48,14 @@
                 @click="goToView" 
                 severity="secondary"
               />
+              
+              <Button 
+                label="Planning Hebdomadaire" 
+                icon="pi pi-calendar" 
+                @click="goToWeeklyPlanning" 
+                severity="help"
+                v-tooltip="'Gérer les horaires détaillés par semaine'"
+              />
             </div>
           </template>
         </Toolbar>
@@ -1013,6 +1021,10 @@ const editSelectedCells = () => {
 
 const goToView = () => {
   router.push('/admin/planning')
+}
+
+const goToWeeklyPlanning = () => {
+  router.push('/admin/planning/weekly')
 }
 
 onMounted(async () => {
