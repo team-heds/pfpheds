@@ -83,7 +83,9 @@ import DiagnosticGamificationView from '@/views/DiagnosticGamificationView.vue'
 // ========================================
 // DASHBOARD & ADMINISTRATION
 // ========================================
-import DashboardView from '@/views/admin/DashboardView.vue';
+import DashboardView from '@/views/admin/DashboardView.vue'
+import PlanningView from '@/views/admin/planning/PlanningView.vue'
+import PlanningAdminView from '@/views/admin/planning/PlanningAdminView.vue'
 import AdminDefisView from '@/views/admin/institutions/gamification/AdminDefisView.vue';
 
 // ========================================
@@ -292,6 +294,9 @@ const routes = [
   // ========================================
   { path: '/admin', component: DashboardView, name: 'DashboardView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor', 'house_coach'] } },
   { path: '/admin/defis', component: AdminDefisView, name: 'AdminDefisView', meta: { requiresAuth: true, requiredRole: ['admin', 'house_coach'] } },
+  // Planning académique
+  { path: '/admin/planning', component: PlanningView, name: 'PlanningView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
+  { path: '/admin/planning/manage', component: PlanningAdminView, name: 'PlanningAdminView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
   
   // ========================================
   // GAMIFICATION ADMIN ROUTES
