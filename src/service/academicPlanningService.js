@@ -173,32 +173,56 @@ class AcademicPlanningService {
         // 1ère année - MODULES THÉORIQUES (Bleus)
         'ia1': {
           moduleNumber: '1011',
-          label: 'Éthique et communication 1a',
-          color: '#64B5F6',  // Bleu clair
+          label: 'Raisonnement clinique 1a',
+          color: '#E6B8B7',
           year: 1
         },
         'ia1b': {
           moduleNumber: '1012',
-          label: 'Introduction à la santé et chirurgie adulte',
-          color: '#42A5F5',  // Bleu moyen
+          label: 'Raisonnement clinique 1b',
+          color: '#E6B8B7',
           year: 1
         },
         'ia1c': {
-          moduleNumber: '1013',
-          label: 'Douleur et soins de fin de vie',
-          color: '#2196F3',  // Bleu
+          moduleNumber: '1021',
+          label: 'Ethique et communication 1a',
+          color: '#808080',
           year: 1
         },
         'ia1d': {
-          moduleNumber: '1014',
-          label: 'Raisonnement clinique 1a',
-          color: '#1E88E5',  // Bleu foncé
+          moduleNumber: '1022',
+          label: 'Ethique et communication 1b',
+          color: '#808080',
           year: 1
         },
         'ia1e': {
-          moduleNumber: '1015',
+          moduleNumber: '1031',
           label: 'EBP 1a',
-          color: '#1976D2',  // Bleu très foncé
+          color: '#7030A0',
+          year: 1
+        },
+        'ia1f': {
+          moduleNumber: '1032',
+          label: 'EBP 1b',
+          color: '#7030A0',
+          year: 1
+        },
+        'ia1g': {
+          moduleNumber: '1041',
+          label: 'Introduction à la santé et chirurgie adulte',
+          color: '#538DD5',
+          year: 1
+        },
+        'ia1h': {
+          moduleNumber: '1042',
+          label: ' Douleur et âges de la vie',
+          color: '#8EA9DB',
+          year: 1
+        },
+        'ia1i': {
+          moduleNumber: '1043',
+          label: 'Santé mentale et soins à la personne âgée ',
+          color: '#8EA9DB',
           year: 1
         },
         
@@ -206,47 +230,47 @@ class AcademicPlanningService {
         'pfp1': {
           moduleNumber: 'PFP1',
           label: 'PFP 1',
-          color: '#66BB6A',  // Vert clair
+          color: '#99FF33',
           year: 1
         },
         'pfp2': {
           moduleNumber: 'PFP2',
           label: 'PFP 2',
-          color: '#4CAF50',  // Vert
+          color: '#99FF33',
           year: 1
         },
         
         // JOURS FÉRIÉS (Gris foncés)
         'immacule_conception': {
           label: 'Immaculée Conception',
-          color: '#616161',  // Gris foncé
-          year: 1
-        },
-        'escalade': {
-          label: 'Escalade',
-          color: '#757575',  // Gris moyen
+          color: '#000000',
           year: 1
         },
         'ascension': {
           label: 'Ascension',
-          color: '#616161',  // Gris foncé
+          color: '#000000',
           year: 1
         },
         'fete_dieu': {
           label: 'Fête-Dieu',
-          color: '#757575',  // Gris moyen
+          color: '#000000',
           year: 1
         },
         
         // VACANCES ET INTERRUPTIONS (Oranges/Jaunes)
         'vacances': {
           label: 'Vacances',
-          color: '#FFA726',  // Orange
+          color: '#FFFF00',
           year: 1
         },
         'interruption_cours': {
           label: 'Interruption de cours',
-          color: '#FFB74D',  // Orange clair
+          color: '#FF9933',
+          year: 1
+        },
+        'examen': {
+          label: 'Examen',
+          color: '#FF0000',
           year: 1
         },
 
@@ -447,9 +471,13 @@ class AcademicPlanningService {
         // 1ère année
         'ia1': '1011',
         'ia1b': '1012',
-        'ia1c': '1013',
-        'ia1d': '1014',
-        'ia1e': '1015',
+        'ia1c': '1021',
+        'ia1d': '1022',
+        'ia1e': '1031',
+        'ia1f': '1032',
+        'ia1g': '1041',
+        'ia1h': '1042',
+        'ia1i': '1043',
         'pfp1': 'PFP1',
         'pfp2': 'PFP2',
         
@@ -708,6 +736,381 @@ class AcademicPlanningService {
       return new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
     } catch (error) {
       console.error('[AcademicPlanningService] Erreur exportPlanningToExcel:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Exporte toutes les années en Excel avec mise en forme professionnelle et couleurs
+   */
+  async exportAllYearsToExcel(mergeCells = true) {
+    try {
+      const ExcelJS = await import('exceljs')
+      const workbook = new ExcelJS.Workbook()
+      const worksheet = workbook.addWorksheet('Planning Complet')
+      
+      // Charger les données
+      const years = ['bac25', 'bac24', 'bac23']
+      const yearLabels = ['1ère année 2025-2026 / Bac 25', '2ème année 2025-2026 / Bac 24', '3ème année 2025-2026 / Bac 23']
+      const courseCodes = await this.getAllCourseCodes()
+      
+      let currentRow = 1
+      
+      // Titre principal
+      worksheet.mergeCells('A1:D1')
+      worksheet.getCell('A1').value = 'Bachelor of science in nursing.'
+      worksheet.getCell('A1').font = { size: 14, bold: true }
+      
+      worksheet.mergeCells('E1:F1')
+      worksheet.getCell('E1').value = 'PROJET'
+      worksheet.getCell('E1').font = { size: 14, bold: true, color: { argb: 'FFFF0000' } }
+      
+      currentRow++
+      worksheet.mergeCells(`A${currentRow}:D${currentRow}`)
+      worksheet.getCell(`A${currentRow}`).value = 'Structure de programme'
+      worksheet.getCell(`A${currentRow}`).font = { size: 12, bold: true }
+      
+      worksheet.mergeCells(`E${currentRow}:F${currentRow}`)
+      worksheet.getCell(`E${currentRow}`).value = '2025-2026'
+      worksheet.getCell(`E${currentRow}`).font = { size: 12, bold: true }
+      
+      currentRow += 2
+      
+      // Pour chaque année
+      for (let yearIndex = 0; yearIndex < years.length; yearIndex++) {
+        const yearId = years[yearIndex]
+        const yearLabel = yearLabels[yearIndex]
+        
+        // Titre de l'année
+        worksheet.mergeCells(`A${currentRow}:E${currentRow}`)
+        const yearCell = worksheet.getCell(`A${currentRow}`)
+        yearCell.value = yearLabel
+        yearCell.font = { size: 12, bold: true }
+        yearCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0E0E0' } }
+        currentRow++
+        
+        // Charger les cellules
+        const autumnCells = await this.getPlanningCells(yearId, 'autumn') || {}
+        const springCells = await this.getPlanningCells(yearId, 'spring') || {}
+        const allCells = { ...autumnCells, ...springCells }
+        
+        // Headers
+        const autumnWeeks = [...Array.from({ length: 15 }, (_, i) => i + 38), ...Array.from({ length: 7 }, (_, i) => i + 1)]
+        const springWeeks = Array.from({ length: 30 }, (_, i) => i + 8)
+        
+        // Header semestre automne
+        const autumnStartCol = 3
+        worksheet.mergeCells(currentRow, autumnStartCol, currentRow, autumnStartCol + autumnWeeks.length - 1)
+        const autumnHeader = worksheet.getCell(currentRow, autumnStartCol)
+        autumnHeader.value = 'Semestre d\'automne'
+        autumnHeader.font = { bold: true }
+        autumnHeader.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFA500' } }
+        autumnHeader.alignment = { horizontal: 'center', vertical: 'middle' }
+        
+        // Header semestre printemps
+        const springStartCol = autumnStartCol + autumnWeeks.length
+        worksheet.mergeCells(currentRow, springStartCol, currentRow, springStartCol + springWeeks.length - 1)
+        const springHeader = worksheet.getCell(currentRow, springStartCol)
+        springHeader.value = 'Semestre de printemps'
+        springHeader.font = { bold: true }
+        springHeader.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF00CED1' } }
+        springHeader.alignment = { horizontal: 'center', vertical: 'middle' }
+        
+        currentRow++
+        
+        // Headers des semaines
+        const weekRow = worksheet.getRow(currentRow)
+        weekRow.getCell(1).value = ''
+        weekRow.getCell(2).value = ''
+        
+        let col = autumnStartCol
+        autumnWeeks.forEach(week => {
+          const cell = weekRow.getCell(col)
+          cell.value = week
+          cell.font = { size: 9, bold: true }
+          cell.alignment = { horizontal: 'center' }
+          col++
+        })
+        
+        springWeeks.forEach(week => {
+          const cell = weekRow.getCell(col)
+          cell.value = week
+          cell.font = { size: 9, bold: true }
+          cell.alignment = { horizontal: 'center' }
+          col++
+        })
+        
+        currentRow++
+        
+        // Lignes des jours
+        const days = ['Lu', 'Ma', 'Me', 'Je', 'Ve']
+        const allWeeks = [...autumnWeeks, ...springWeeks]
+        const dayStartRow = currentRow
+        
+        if (mergeCells) {
+          // MODE FUSION : Créer une matrice des cellules pour détecter les blocs 2D
+          const matrix = []
+          for (let d = 0; d < days.length; d++) {
+            const dayCode = days[d].toLowerCase()
+            matrix[d] = []
+            for (let w = 0; w < allWeeks.length; w++) {
+              const week = allWeeks[w]
+              const cellKey = `${dayCode}_${week}`
+              const cell = allCells[cellKey]
+              matrix[d][w] = cell?.courseCode || null
+            }
+          }
+          
+          // Marquer les cellules déjà fusionnées
+          const merged = Array(days.length).fill(null).map(() => Array(allWeeks.length).fill(false))
+          const blocks = []
+          
+          // Détecter les blocs rectangulaires
+          for (let d = 0; d < days.length; d++) {
+            for (let w = 0; w < allWeeks.length; w++) {
+              if (!merged[d][w] && matrix[d][w]) {
+                const courseCode = matrix[d][w]
+                
+                // Trouver la largeur maximale (semaines consécutives)
+                let maxWidth = 1
+                while (w + maxWidth < allWeeks.length && 
+                       matrix[d][w + maxWidth] === courseCode && 
+                       !merged[d][w + maxWidth]) {
+                  maxWidth++
+                }
+                
+                // Trouver la hauteur maximale (jours consécutifs avec la même largeur)
+                let maxHeight = 1
+                let canExtend = true
+                while (d + maxHeight < days.length && canExtend) {
+                  // Vérifier que toute la ligne suivante a le même courseCode
+                  for (let ww = w; ww < w + maxWidth; ww++) {
+                    if (matrix[d + maxHeight][ww] !== courseCode || merged[d + maxHeight][ww]) {
+                      canExtend = false
+                      break
+                    }
+                  }
+                  if (canExtend) maxHeight++
+                }
+                
+                // Créer le bloc
+                blocks.push({
+                  courseCode,
+                  startRow: dayStartRow + d,
+                  endRow: dayStartRow + d + maxHeight - 1,
+                  startCol: autumnStartCol + w,
+                  endCol: autumnStartCol + w + maxWidth - 1,
+                  width: maxWidth,
+                  height: maxHeight
+                })
+                
+                // Marquer les cellules comme fusionnées
+                for (let dd = d; dd < d + maxHeight; dd++) {
+                  for (let ww = w; ww < w + maxWidth; ww++) {
+                    merged[dd][ww] = true
+                  }
+                }
+              }
+            }
+          }
+        
+        // Créer les lignes de jours
+        for (let d = 0; d < days.length; d++) {
+          const dayRow = worksheet.getRow(currentRow)
+          dayRow.getCell(1).value = days[d]
+          dayRow.getCell(1).font = { bold: true }
+          dayRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEEEEEE' } }
+          
+          // Ajouter les bordures à toutes les cellules
+          for (let w = 0; w < allWeeks.length; w++) {
+            const cell = dayRow.getCell(autumnStartCol + w)
+            cell.border = {
+              top: { style: 'thin' },
+              left: { style: 'thin' },
+              bottom: { style: 'thin' },
+              right: { style: 'thin' }
+            }
+          }
+          
+          currentRow++
+        }
+        
+        // Appliquer les fusions et les styles
+        for (const block of blocks) {
+          if (block.courseCode) {
+            const code = courseCodes[block.courseCode]
+            if (code) {
+              // Fusionner le bloc rectangulaire
+              if (block.startRow !== block.endRow || block.startCol !== block.endCol) {
+                worksheet.mergeCells(block.startRow, block.startCol, block.endRow, block.endCol)
+              }
+              
+              // Styliser toutes les cellules du bloc
+              const hexColor = code.color ? code.color.replace('#', 'FF') : 'FFFFFFFF'
+              
+              // Calculer la luminosité
+              let brightness = 255
+              if (code.color) {
+                const rgb = parseInt(code.color.slice(1), 16)
+                const r = (rgb >> 16) & 0xff
+                const g = (rgb >> 8) & 0xff
+                const b = rgb & 0xff
+                brightness = (r * 299 + g * 587 + b * 114) / 1000
+              }
+              
+              // Déterminer l'orientation du texte selon la forme du bloc
+              const isVertical = block.height > block.width * 1.5
+              const textRotation = isVertical ? 90 : 0
+              
+              // Ajuster la taille de police selon la taille du bloc
+              let fontSize = 9
+              if (block.width >= 10 || block.height >= 3) {
+                fontSize = 11
+              } else if (block.width >= 5 || block.height >= 2) {
+                fontSize = 10
+              }
+              
+              for (let row = block.startRow; row <= block.endRow; row++) {
+                for (let col = block.startCol; col <= block.endCol; col++) {
+                  const cell = worksheet.getRow(row).getCell(col)
+                  
+                  // Valeur uniquement dans la première cellule
+                  if (row === block.startRow && col === block.startCol) {
+                    cell.value = code.moduleNumber || block.courseCode.toUpperCase()
+                  }
+                  
+                  cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: hexColor } }
+                  
+                  if (brightness < 155) {
+                    cell.font = { color: { argb: 'FFFFFFFF' }, size: fontSize, bold: true }
+                  } else {
+                    cell.font = { size: fontSize, bold: true }
+                  }
+                  
+                  cell.alignment = { 
+                    horizontal: 'center', 
+                    vertical: 'middle',
+                    textRotation: textRotation,
+                    wrapText: false
+                  }
+                  
+                  cell.border = {
+                    top: { style: 'thin' },
+                    left: { style: 'thin' },
+                    bottom: { style: 'thin' },
+                    right: { style: 'thin' }
+                  }
+                }
+              }
+            }
+          }
+        }
+        } else {
+          // MODE CELLULES SÉPARÉES : Chaque cellule individuellement
+          for (let d = 0; d < days.length; d++) {
+            const dayRow = worksheet.getRow(currentRow)
+            dayRow.getCell(1).value = days[d]
+            dayRow.getCell(1).font = { bold: true }
+            dayRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEEEEEE' } }
+            
+            const dayCode = days[d].toLowerCase()
+            let col = autumnStartCol
+            
+            for (const week of allWeeks) {
+              const cellKey = `${dayCode}_${week}`
+              const cell = allCells[cellKey]
+              const excelCell = dayRow.getCell(col)
+              
+              if (cell && cell.courseCode) {
+                const code = courseCodes[cell.courseCode]
+                if (code) {
+                  excelCell.value = code.moduleNumber || cell.courseCode.toUpperCase()
+                  
+                  // Appliquer la couleur
+                  const hexColor = code.color ? code.color.replace('#', 'FF') : 'FFFFFFFF'
+                  excelCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: hexColor } }
+                  
+                  // Calculer la luminosité pour le texte
+                  let brightness = 255
+                  if (code.color) {
+                    const rgb = parseInt(code.color.slice(1), 16)
+                    const r = (rgb >> 16) & 0xff
+                    const g = (rgb >> 8) & 0xff
+                    const b = rgb & 0xff
+                    brightness = (r * 299 + g * 587 + b * 114) / 1000
+                  }
+                  
+                  if (brightness < 155) {
+                    excelCell.font = { color: { argb: 'FFFFFFFF' }, size: 8, bold: true }
+                  } else {
+                    excelCell.font = { size: 8, bold: true }
+                  }
+                  
+                  excelCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
+                }
+              }
+              
+              // Bordures pour toutes les cellules
+              excelCell.border = {
+                top: { style: 'thin' },
+                left: { style: 'thin' },
+                bottom: { style: 'thin' },
+                right: { style: 'thin' }
+              }
+              
+              col++
+            }
+            
+            currentRow++
+          }
+        }
+        
+        // Légende
+        currentRow++
+        worksheet.getCell(`A${currentRow}`).value = 'Légende:'
+        worksheet.getCell(`A${currentRow}`).font = { bold: true, size: 11 }
+        currentRow++
+        
+        const yearCodes = Object.entries(courseCodes)
+          .filter(([_, code]) => code.year === (yearIndex + 1))
+          .sort((a, b) => {
+            if (a[1].moduleNumber && b[1].moduleNumber) {
+              return a[1].moduleNumber.localeCompare(b[1].moduleNumber, undefined, { numeric: true })
+            }
+            return a[1].label.localeCompare(b[1].label)
+          })
+        
+        yearCodes.forEach(([id, code]) => {
+          const legendRow = worksheet.getRow(currentRow)
+          const colorCell = legendRow.getCell(1)
+          colorCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: code.color.replace('#', 'FF') } }
+          colorCell.border = {
+            top: { style: 'thin' },
+            left: { style: 'thin' },
+            bottom: { style: 'thin' },
+            right: { style: 'thin' }
+          }
+          
+          legendRow.getCell(2).value = code.moduleNumber || id.toUpperCase()
+          legendRow.getCell(3).value = code.label
+          currentRow++
+        })
+        
+        currentRow += 2
+      }
+      
+      // Ajuster les largeurs de colonnes
+      worksheet.getColumn(1).width = 5
+      worksheet.getColumn(2).width = 5
+      for (let i = 3; i < 60; i++) {
+        worksheet.getColumn(i).width = 4
+      }
+      
+      // Générer le fichier
+      const buffer = await workbook.xlsx.writeBuffer()
+      return new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    } catch (error) {
+      console.error('[AcademicPlanningService] Erreur exportAllYearsToExcel:', error)
       throw error
     }
   }

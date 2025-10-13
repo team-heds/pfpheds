@@ -96,16 +96,20 @@
     <!-- Grid d'édition -->
     <Panel :toggleable="true" class="mb-4">
       <template #header>
-        <div class="flex align-items-center gap-2">
-          <i class="pi pi-calendar-plus text-primary text-xl"></i>
-          <span class="font-bold text-xl">Planning Académique Complet</span>
-          <Tag value="Automne: S38-52 & S1-7 | Printemps: S8-37" severity="info" class="ml-2"></Tag>
-          <Tag 
-            v-if="editMode === 'multiple' && selectedCells.length > 0"
-            :value="`${selectedCells.length} cellule(s) sélectionnée(s)`"
-            severity="info"
-            class="ml-2"
-          ></Tag>
+        <div class="flex align-items-center gap-2 flex-wrap">
+          <div class="flex align-items-center gap-2">
+            <i class="pi pi-calendar-plus text-primary text-xl"></i>
+            <span class="font-bold text-xl">Planning Académique Complet</span>
+          </div>
+          <div class="flex gap-2">
+            <Tag value="Automne: S38-52 & S1-7" severity="warning"></Tag>
+            <Tag value="Printemps: S8-37" severity="info"></Tag>
+            <Tag 
+              v-if="editMode === 'multiple' && selectedCells.length > 0"
+              :value="`${selectedCells.length} cellule(s) sélectionnée(s)`"
+              severity="success"
+            ></Tag>
+          </div>
         </div>
       </template>
       <template #icons>
@@ -185,7 +189,11 @@
             optionLabel="label" 
             optionValue="value"
             placeholder="Sélectionner un code"
+            filter
+            filterPlaceholder="Rechercher un code..."
             showClear
+            :filterMatchMode="'contains'"
+            class="w-full"
           />
         </div>
 
@@ -278,11 +286,6 @@
         responsiveLayout="scroll"
         class="p-datatable-sm"
       >
-        <Column field="id" header="Code" sortable style="width: 8rem">
-          <template #body="slotProps">
-            <Tag :value="slotProps.data.id.toUpperCase()" severity="info"></Tag>
-          </template>
-        </Column>
         <Column field="moduleNumber" header="N° Module" sortable style="width: 9rem">
           <template #body="slotProps">
             <span v-if="slotProps.data.moduleNumber" class="font-bold text-primary">
@@ -473,11 +476,24 @@ const editModeOptions = ref([
 ])
 
 // Options d'export
+const mergeCells = ref(true)
+
 const exportOptions = ref([
   {
-    label: 'Exporter Excel',
+    label: 'Exporter Excel (cellules fusionnées)',
     icon: 'pi pi-file-excel',
-    command: () => exportPlanningExcel()
+    command: () => {
+      mergeCells.value = true
+      exportPlanningExcel()
+    }
+  },
+  {
+    label: 'Exporter Excel (cellules séparées)',
+    icon: 'pi pi-table',
+    command: () => {
+      mergeCells.value = false
+      exportPlanningExcel()
+    }
   }
 ])
 
@@ -503,10 +519,13 @@ const getSemesterForWeek = (week) => {
 }
 
 const courseCodeOptions = computed(() => {
-  return Object.entries(courseCodes.value).map(([id, data]) => ({
-    label: `${id.toUpperCase()} - ${data.label}`,
-    value: id
-  }))
+  return Object.entries(courseCodes.value).map(([id, data]) => {
+    const moduleNum = data.moduleNumber ? `[${data.moduleNumber}] ` : ''
+    return {
+      label: `${moduleNum}${id.toUpperCase()} - ${data.label}`,
+      value: id
+    }
+  })
 })
 
 const courseCodesArray = computed(() => {
@@ -730,10 +749,10 @@ const getCellLabel = (day, week) => {
     return cell.displayLabel
   }
   
-  // Sinon, afficher le numéro de module avec le nom court
+  // Afficher uniquement le numéro de module
   const courseCode = courseCodes.value[cell.courseCode]
   if (courseCode && courseCode.moduleNumber) {
-    return `${courseCode.moduleNumber}\n${courseCode.label}`
+    return courseCode.moduleNumber
   }
   
   return cell.courseCode?.toUpperCase() || ''
@@ -944,12 +963,13 @@ const exportPlanning = async () => {
 
 const exportPlanningExcel = async () => {
   try {
-    const blob = await academicPlanningService.exportPlanningToExcel(selectedYear.value)
+    // Exporter les 3 années en même temps
+    const blob = await academicPlanningService.exportAllYearsToExcel(mergeCells.value)
     
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `planning_${selectedYear.value}_${new Date().toISOString().split('T')[0]}.xlsx`
+    link.download = `Planning_BScN_2025-2026_${new Date().toISOString().split('T')[0]}.xlsx`
     link.click()
     URL.revokeObjectURL(url)
     
@@ -992,7 +1012,7 @@ const editSelectedCells = () => {
 }
 
 const goToView = () => {
-  router.push('/admin/planning-view')
+  router.push('/admin/planning')
 }
 
 onMounted(async () => {

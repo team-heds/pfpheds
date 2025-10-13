@@ -46,6 +46,7 @@
     "csv-stringify": "^6.5.0",
     "csv-writer": "^1.6.0",
     "elevenlabs": "^1.50.2",
+    "exceljs": "^4.4.0",
     "firebase": "^10.6.0",
     "font-awesome": "^4.7.0",
     "json2csv": "^6.0.0-alpha.2",

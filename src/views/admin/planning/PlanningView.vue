@@ -62,10 +62,15 @@
       <!-- Planning complet année académique -->
       <Panel v-if="yearData" :toggleable="true" class="mb-4">
         <template #header>
-          <div class="flex align-items-center gap-2">
-            <i class="pi pi-calendar-plus text-primary text-xl"></i>
-            <span class="font-bold text-xl">Planning Académique Complet</span>
-            <Tag value="Automne: S38-52 & S1-7 | Printemps: S8-37" severity="info" class="ml-2"></Tag>
+          <div class="flex align-items-center gap-2 flex-wrap">
+            <div class="flex align-items-center gap-2">
+              <i class="pi pi-calendar-plus text-primary text-xl"></i>
+              <span class="font-bold text-xl">Planning Académique Complet</span>
+            </div>
+            <div class="flex gap-2">
+              <Tag value="Automne: S38-52 & S1-7" severity="warning"></Tag>
+              <Tag value="Printemps: S8-37" severity="info"></Tag>
+            </div>
           </div>
         </template>
         
@@ -358,10 +363,10 @@ const getCellLabel = (day, week) => {
     return cell.displayLabel
   }
   
-  // Sinon, afficher le numéro de module avec le nom court
+  // Afficher uniquement le numéro de module
   const courseCode = courseCodes.value[cell.courseCode]
   if (courseCode && courseCode.moduleNumber) {
-    return `${courseCode.moduleNumber}\n${courseCode.label}`
+    return courseCode.moduleNumber
   }
   
   return cell.courseCode.toUpperCase()
