@@ -190,6 +190,8 @@ import EventManagementView from '@/views/apps/events/EventManagementView.vue';
 import ToolsView from '@/views/apps/tools/ToolsView.vue';
 import GameView from '@/views/apps/tools/GameView.vue';
 import ChatBotView from '@/views/apps/tools/ChatBotView.vue';
+import TournoisView from '@/views/apps/tools/TournoisView.vue';
+import TournoiDetailsView from '@/views/apps/tools/TournoiDetailsView.vue';
 import MobileToolsView from '@/views/apps/tools/MobileToolsView.vue';
 import MobileLangAppsView from '@/views/apps/tools/MobileLangAppsView.vue';
 //import MobiprioritairearchView from '@/views/apps/tools/MobiprioritairearchView.vue'
@@ -402,6 +404,8 @@ const routes = [
   { path: '/tools', component: ToolsView, name: 'ToolsView', meta: { requiresAuth: true } },
   { path: '/game', component: GameView, name: 'GameView', meta: { requiresAuth: true } },
   { path: '/chatbot', component: ChatBotView, name: 'ChatBotView', meta: { requiresAuth: true } },
+  { path: '/tournois', component: TournoisView, name: 'TournoisView', meta: { requiresAuth: true } },
+  { path: '/tournois/:id', component: TournoiDetailsView, name: 'TournoiDetailsView', meta: { requiresAuth: true } },
   { path: '/mobile-tools', component: MobileToolsView, name: 'MobileToolsView', meta: { requiresAuth: true } },
   { path: '/mobile-lang-apps', component: MobileLangAppsView, name: 'MobileLangApps', meta: { mobileOnly: true } },
 //  { path: '/mobile-search', component: MobiprioritairearchView, name: 'MobiprioritairearchView', meta: { requiresAuth: true } },

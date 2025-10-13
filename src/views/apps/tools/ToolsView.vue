@@ -55,6 +55,7 @@ const allOutils = [
   { to: '/lang-apps', icon: 'pi pi-globe', label: 'Apps langues' },
   { to: '/notes', icon: 'pi pi-book', label: 'Notes' },
   { to: '/chatbotsi', icon: 'pi pi-comments', label: 'ChatBotSI' },
+  { to: '/tournois', icon: 'pi pi-trophy', label: 'Tournois' },
 ];
 
 const isMobile = ref(false);
@@ -66,10 +67,10 @@ onMounted(() => {
 });
 
 const outils = computed(() => {
-  // Desktop: QR code, Game, Apps Langues, Notes
-  if (!isMobile.value) return allOutils.filter(o => ['QR code', 'Game', 'Apps langues', 'Notes', 'ChatBotSI'].includes(o.label));
-  // Mobile: QR code, Game, Apps Langues (pas Notes)
-  return allOutils.filter(o => ['QR code', 'Game', 'Apps langues', 'ChatBotSI'].includes(o.label));
+  // Desktop: QR code, Game, Apps Langues, Notes, ChatBotSI, Tournois
+  if (!isMobile.value) return allOutils.filter(o => ['QR code', 'Game', 'Apps langues', 'Notes', 'ChatBotSI', 'Tournois'].includes(o.label));
+  // Mobile: QR code, Game, Apps Langues, ChatBotSI, Tournois (pas Notes)
+  return allOutils.filter(o => ['QR code', 'Game', 'Apps langues', 'ChatBotSI', 'Tournois'].includes(o.label));
 });
 
 const showVoirPlus = computed(() => outils.value.length >= 12);
