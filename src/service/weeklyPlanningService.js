@@ -72,6 +72,41 @@ class WeeklyPlanningService {
   /**
    * Générer automatiquement les créneaux d'une semaine basés sur le minibrick
    */
+  /**
+   * Calculer la date d'un jour à partir du numéro de semaine
+   * Année académique: S8-S37 (printemps) puis S38-S7 (automne)
+   */
+  getDateForWeekAndDay(weekNumber, dayIndex) {
+    // Année 2026 pour les semaines 8-37 (printemps)
+    // Année 2025 pour les semaines 38-52 puis 2026 pour 1-7 (automne)
+    let year = 2026
+    let actualWeek = weekNumber
+    
+    if (weekNumber >= 38) {
+      // Automne première partie (2025)
+      year = 2025
+    } else if (weekNumber <= 7) {
+      // Automne deuxième partie (2026)
+      year = 2026
+    }
+    
+    // Calculer la date du lundi de la semaine
+    const jan1 = new Date(year, 0, 1)
+    const daysToMonday = (actualWeek - 1) * 7 - jan1.getDay() + 1
+    const monday = new Date(year, 0, 1 + daysToMonday)
+    
+    // Ajouter les jours (0=lundi, 1=mardi, etc.)
+    const targetDate = new Date(monday)
+    targetDate.setDate(monday.getDate() + dayIndex)
+    
+    // Formater en DD.MM.YYYY
+    const day = String(targetDate.getDate()).padStart(2, '0')
+    const month = String(targetDate.getMonth() + 1).padStart(2, '0')
+    const fullYear = targetDate.getFullYear()
+    
+    return `${day}.${month}.${fullYear}`
+  }
+
   async generateWeekFromMinibrick(yearId, weekNumber, minibrickData) {
     try {
       const days = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi']
@@ -83,6 +118,9 @@ class WeeklyPlanningService {
         const dayKey = dayKeys[d]
         const cellKey = `${dayKey}_${weekNumber}`
         
+        // Calculer la date automatiquement
+        const calculatedDate = this.getDateForWeekAndDay(weekNumber, d)
+        
         // Vérifier si ce jour a un module dans le minibrick
         if (minibrickData[cellKey] && minibrickData[cellKey].courseCode) {
           const courseCode = minibrickData[cellKey].courseCode
@@ -91,7 +129,7 @@ class WeeklyPlanningService {
           timeSlots.push({
             id: `${dayKey}_${weekNumber}_morning`,
             day: days[d],
-            date: '', // À remplir manuellement
+            date: calculatedDate,
             startTime: '09h00',
             endTime: '12h00',
             moduleCode: courseCode,
@@ -107,7 +145,7 @@ class WeeklyPlanningService {
           timeSlots.push({
             id: `${dayKey}_${weekNumber}_afternoon`,
             day: days[d],
-            date: '', // À remplir manuellement
+            date: calculatedDate,
             startTime: '13h00',
             endTime: '16h00',
             moduleCode: courseCode,

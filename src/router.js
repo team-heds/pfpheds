@@ -298,6 +298,8 @@ const routes = [
   { path: '/admin/planning', component: PlanningView, name: 'PlanningView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
   { path: '/admin/planning/manage', component: PlanningAdminView, name: 'PlanningAdminView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
   { path: '/admin/planning/weekly', component: () => import('@/views/admin/planning/WeeklyPlanningAdminView.vue'), name: 'WeeklyPlanningAdminView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
+  { path: '/admin/planning/semester', component: () => import('@/views/admin/planning/SemesterPlanningAdminView.vue'), name: 'SemesterPlanningAdminView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
+  { path: '/admin/planning/annual', component: () => import('@/views/admin/planning/AnnualPlanningView.vue'), name: 'AnnualPlanningView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
   
   // ========================================
   // GAMIFICATION ADMIN ROUTES
