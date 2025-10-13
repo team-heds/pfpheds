@@ -1268,9 +1268,16 @@ const fillWeekDataToSheet = async (worksheet, weekSlots) => {
         moduleCounts[a] > moduleCounts[b] ? a : b
       )
       const firstSlot = daySlots.find(s => s.moduleCode === mainModuleCode)
+      
+      // Récupérer le titre depuis courseCodes si disponible
+      let moduleTitle = firstSlot.moduleTitle || ''
+      if (!moduleTitle && courseCodes.value[mainModuleCode]) {
+        moduleTitle = courseCodes.value[mainModuleCode].label
+      }
+      
       mainModule = {
         number: firstSlot.moduleNumber || mainModuleCode.toUpperCase(),
-        title: firstSlot.moduleTitle || '',
+        title: moduleTitle,
         color: getModuleColor(mainModuleCode)
       }
     }
@@ -1410,30 +1417,39 @@ const fillWeekDataToSheetContinuous = async (worksheet, weekSlots, startRow) => 
         moduleCounts[a] > moduleCounts[b] ? a : b
       )
       const firstSlot = daySlots.find(s => s.moduleCode === mainModuleCode)
+      
+      // Récupérer le titre depuis courseCodes si disponible
+      let moduleTitle = firstSlot.moduleTitle || ''
+      if (!moduleTitle && courseCodes.value[mainModuleCode]) {
+        moduleTitle = courseCodes.value[mainModuleCode].label
+      }
+      
       mainModule = {
         number: firstSlot.moduleNumber || mainModuleCode.toUpperCase(),
-        title: firstSlot.moduleTitle || '',
+        title: moduleTitle,
         color: getModuleColor(mainModuleCode)
       }
     }
     
-    // Ligne du module (avec titre complet)
+    // Ligne du module (avec titre complet) - ne pas fusionner colonne 1 (jour)
     if (mainModule) {
-      worksheet.mergeCells(currentRow, 1, currentRow, 10)
-      const moduleCell = worksheet.getCell(currentRow, 1)
+      worksheet.mergeCells(currentRow, 2, currentRow, 9)
+      const moduleCell = worksheet.getCell(currentRow, 2)
       moduleCell.value = `${mainModule.number} - ${mainModule.title}`
       moduleCell.font = { size: 11, bold: true }
       moduleCell.alignment = { horizontal: 'center', vertical: 'middle' }
       moduleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } }
       moduleCell.border = { 
         top: { style: 'medium' }, 
-        left: { style: 'medium' }, 
+        left: { style: 'thin' }, 
         bottom: { style: 'medium' }, 
         right: { style: 'medium' } 
       }
       worksheet.getRow(currentRow).height = 20
       currentRow++
     }
+    
+    const slotsStartRow = currentRow
     
     // Créneaux
     daySlots.forEach(slot => {
