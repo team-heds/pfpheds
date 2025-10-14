@@ -55,6 +55,18 @@
           <div class="text-center">
             <Tag :value="yearData.label" severity="info" class="text-xl px-4 py-2"></Tag>
             <p class="mt-2 mb-0 text-600 text-lg">{{ yearData.academicYear }}</p>
+            
+            <!-- Indicateur modules Supabase -->
+            <div v-if="supabaseModules.length > 0" class="mt-3 flex justify-content-center gap-3">
+              <Tag severity="success" class="px-3">
+                <i class="pi pi-database mr-2"></i>
+                {{ supabaseModules.length }} modules Supabase chargés
+              </Tag>
+              <Tag severity="info" class="px-3">
+                <i class="pi pi-link mr-2"></i>
+                {{ Object.keys(courseCodes).filter(id => courseCodes[id].supabaseData).length }} enrichis
+              </Tag>
+            </div>
           </div>
         </template>
       </Card>
@@ -135,14 +147,32 @@
               :key="code.id" 
               class="col-12 md:col-6 lg:col-4"
             >
-              <div class="flex align-items-center gap-3 p-3 border-round surface-100 hover:surface-200 transition-colors transition-duration-150">
+              <div class="flex align-items-center gap-3 p-3 border-round surface-100 hover:surface-200 transition-colors transition-duration-150 module-card">
                 <div 
                   class="legend-color-badge"
                   :style="{ backgroundColor: code.color }"
                 ></div>
                 <div class="flex-1">
                   <div class="font-bold text-900 text-lg">{{ code.moduleNumber || code.id.toUpperCase() }}</div>
-                  <div class="text-sm text-600">{{ code.label }}</div>
+                  <div class="text-sm text-600 mb-2">{{ code.supabaseData?.titre || code.label }}</div>
+                  
+                  <!-- Données Supabase enrichies -->
+                  <div v-if="code.supabaseData" class="module-details">
+                    <div v-if="code.supabaseData.responsable" class="text-xs text-500 mb-1">
+                      <i class="pi pi-user mr-1"></i>
+                      <strong>Responsable:</strong> {{ code.supabaseData.responsable }}
+                    </div>
+                    <div class="flex gap-3 text-xs text-500">
+                      <span v-if="code.supabaseData.credits">
+                        <i class="pi pi-star-fill mr-1"></i>
+                        <strong>{{ code.supabaseData.credits }}</strong> crédits
+                      </span>
+                      <span v-if="code.supabaseData.heures_contact">
+                        <i class="pi pi-clock mr-1"></i>
+                        <strong>{{ code.supabaseData.heures_contact }}h</strong> contact
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -160,14 +190,32 @@
               :key="code.id" 
               class="col-12 md:col-6 lg:col-4"
             >
-              <div class="flex align-items-center gap-3 p-3 border-round surface-100 hover:surface-200 transition-colors transition-duration-150">
+              <div class="flex align-items-center gap-3 p-3 border-round surface-100 hover:surface-200 transition-colors transition-duration-150 module-card">
                 <div 
                   class="legend-color-badge"
                   :style="{ backgroundColor: code.color }"
                 ></div>
                 <div class="flex-1">
                   <div class="font-bold text-900 text-lg">{{ code.moduleNumber || code.id.toUpperCase() }}</div>
-                  <div class="text-sm text-600">{{ code.label }}</div>
+                  <div class="text-sm text-600 mb-2">{{ code.supabaseData?.titre || code.label }}</div>
+                  
+                  <!-- Données Supabase enrichies -->
+                  <div v-if="code.supabaseData" class="module-details">
+                    <div v-if="code.supabaseData.responsable" class="text-xs text-500 mb-1">
+                      <i class="pi pi-user mr-1"></i>
+                      <strong>Responsable:</strong> {{ code.supabaseData.responsable }}
+                    </div>
+                    <div class="flex gap-3 text-xs text-500">
+                      <span v-if="code.supabaseData.credits">
+                        <i class="pi pi-star-fill mr-1"></i>
+                        <strong>{{ code.supabaseData.credits }}</strong> crédits
+                      </span>
+                      <span v-if="code.supabaseData.heures_contact">
+                        <i class="pi pi-clock mr-1"></i>
+                        <strong>{{ code.supabaseData.heures_contact }}h</strong> contact
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -185,14 +233,32 @@
               :key="code.id" 
               class="col-12 md:col-6 lg:col-4"
             >
-              <div class="flex align-items-center gap-3 p-3 border-round surface-100 hover:surface-200 transition-colors transition-duration-150">
+              <div class="flex align-items-center gap-3 p-3 border-round surface-100 hover:surface-200 transition-colors transition-duration-150 module-card">
                 <div 
                   class="legend-color-badge"
                   :style="{ backgroundColor: code.color }"
                 ></div>
                 <div class="flex-1">
                   <div class="font-bold text-900 text-lg">{{ code.moduleNumber || code.id.toUpperCase() }}</div>
-                  <div class="text-sm text-600">{{ code.label }}</div>
+                  <div class="text-sm text-600 mb-2">{{ code.supabaseData?.titre || code.label }}</div>
+                  
+                  <!-- Données Supabase enrichies -->
+                  <div v-if="code.supabaseData" class="module-details">
+                    <div v-if="code.supabaseData.responsable" class="text-xs text-500 mb-1">
+                      <i class="pi pi-user mr-1"></i>
+                      <strong>Responsable:</strong> {{ code.supabaseData.responsable }}
+                    </div>
+                    <div class="flex gap-3 text-xs text-500">
+                      <span v-if="code.supabaseData.credits">
+                        <i class="pi pi-star-fill mr-1"></i>
+                        <strong>{{ code.supabaseData.credits }}</strong> crédits
+                      </span>
+                      <span v-if="code.supabaseData.heures_contact">
+                        <i class="pi pi-clock mr-1"></i>
+                        <strong>{{ code.supabaseData.heures_contact }}h</strong> contact
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -240,6 +306,7 @@ import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import ProgressSpinner from 'primevue/progressspinner'
 import academicPlanningService from '@/service/academicPlanningService'
+import { useModules } from '@/composables/useModules'
 
 const router = useRouter()
 
@@ -249,6 +316,9 @@ const selectedYear = ref('bac25')
 const yearData = ref(null)
 const courseCodes = ref({})
 const planningCells = ref({})
+
+// Modules Supabase
+const { modules: supabaseModules, loadModules, loading: modulesLoading } = useModules()
 
 // Options des années
 const yearOptions = ref([
@@ -313,8 +383,53 @@ const loadPlanning = async () => {
     // Charger les données de l'année
     yearData.value = await academicPlanningService.getAcademicYear(selectedYear.value)
     
-    // Charger les codes de cours
-    courseCodes.value = await academicPlanningService.getAllCourseCodes()
+    // Charger les modules Supabase UNIQUEMENT
+    await loadModules()
+    console.log('[PlanningView] 📚 Modules Supabase chargés:', supabaseModules.value.length)
+    
+    // DEBUG: Afficher les premiers modules
+    if (supabaseModules.value.length > 0) {
+      console.log('[PlanningView] 📖 Premier module Supabase:', {
+        number: supabaseModules.value[0].number,
+        title: supabaseModules.value[0].title,
+        responsable: supabaseModules.value[0].responsable,
+        year: supabaseModules.value[0].year
+      })
+    }
+    
+    // Créer les codes de cours depuis Supabase UNIQUEMENT
+    courseCodes.value = {}
+    
+    supabaseModules.value.forEach((module, index) => {
+      const courseCodeId = module.number?.toString() || module.short_code?.toString() || `module_${module.id}`
+      
+      console.log(`[PlanningView] 📝 Création code ${index + 1}:`, {
+        id: courseCodeId,
+        number: module.number,
+        title: module.title,
+        year: module.year
+      })
+      
+      // Créer l'entrée avec les données Supabase
+      courseCodes.value[courseCodeId] = {
+        id: courseCodeId,
+        moduleNumber: module.number,
+        label: module.title,
+        // Couleur par défaut selon l'année
+        color: module.color || getDefaultColorByYear(module.year),
+        year: module.year,
+        // Données complètes Supabase
+        supabaseData: {
+          title: module.title,
+          responsable: module.responsable,
+          credits: module.credits,
+          description: module.description,
+          year: module.year
+        }
+      }
+    })
+    
+    console.log('[PlanningView] ✅ Codes de cours créés depuis Supabase:', Object.keys(courseCodes.value).length)
     
     // Charger les cellules pour les deux semestres
     const autumnCells = await academicPlanningService.getPlanningCells(selectedYear.value, 'autumn')
@@ -325,12 +440,22 @@ const loadPlanning = async () => {
       spring: springCells || {}
     }
     
-    console.log('[PlanningView] Planning chargé:', yearData.value)
+    console.log('[PlanningView] 🎯 Planning complètement chargé avec Supabase!')
   } catch (error) {
-    console.error('[PlanningView] Erreur chargement planning:', error)
+    console.error('[PlanningView] ❌ Erreur chargement planning:', error)
   } finally {
     loading.value = false
   }
+}
+
+// Fonction helper pour obtenir une couleur par défaut selon l'année
+const getDefaultColorByYear = (annee) => {
+  const colorsByYear = {
+    1: '#E6B8B7',  // Rose pour 1ère année
+    2: '#BA68C8',  // Violet pour 2ème année
+    3: '#4DD0E1',  // Cyan pour 3ème année
+  }
+  return colorsByYear[annee] || '#CCCCCC'
 }
 
 // Obtenir le style d'une cellule
@@ -381,7 +506,21 @@ const getCellTooltip = (day, week) => {
   if (!cell || !cell.courseCode) return ''
   
   const courseCode = courseCodes.value[cell.courseCode]
-  return courseCode?.label || cell.courseCode
+  if (!courseCode) return cell.courseCode
+  
+  // Tooltip enrichi avec données Supabase
+  let tooltip = courseCode.label
+  
+  if (courseCode.supabaseData) {
+    const data = courseCode.supabaseData
+    tooltip += `\n\n📚 ${data.titre}`
+    if (data.responsable) tooltip += `\n👤 Responsable: ${data.responsable}`
+    if (data.credits) tooltip += `\n⭐ ${data.credits} crédits ECTS`
+    if (data.heures_contact) tooltip += `\n🕐 ${data.heures_contact}h contact`
+    if (data.heures_travail_autonome) tooltip += `\n📖 ${data.heures_travail_autonome}h travail autonome`
+  }
+  
+  return tooltip
 }
 
 // Vérifier si une couleur est claire (pour le contraste du texte)
@@ -414,6 +553,24 @@ onMounted(async () => {
 
 .planning-header-card {
   margin-bottom: 1.5rem;
+}
+
+/* Module card enrichi */
+.module-card {
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.module-card:hover {
+  border-color: var(--primary-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.module-details {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--surface-border);
 }
 
 .planning-grid {

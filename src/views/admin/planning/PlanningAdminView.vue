@@ -439,9 +439,13 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Toast from 'primevue/toast'
 import academicPlanningService from '@/service/academicPlanningService'
+import { useModules } from '@/composables/useModules'
 
 const router = useRouter()
 const toast = useToast()
+
+// Supabase modules
+const { modules: supabaseModules, loadModules } = useModules()
 
 // State
 const selectedYear = ref('bac25')
@@ -550,10 +554,10 @@ const filteredCourseCodesArray = computed(() => {
   if (courseCodeSearch.value) {
     const searchTerm = courseCodeSearch.value.toLowerCase()
     filtered = filtered.filter(code => 
-      code.id.toLowerCase().includes(searchTerm) ||
-      code.label.toLowerCase().includes(searchTerm) ||
-      code.color.toLowerCase().includes(searchTerm) ||
-      (code.moduleNumber && code.moduleNumber.toLowerCase().includes(searchTerm))
+      (code.id && code.id.toLowerCase().includes(searchTerm)) ||
+      (code.label && code.label.toLowerCase().includes(searchTerm)) ||
+      (code.color && code.color.toLowerCase().includes(searchTerm)) ||
+      (code.moduleNumber && String(code.moduleNumber).toLowerCase().includes(searchTerm))
     )
   }
   
@@ -568,19 +572,80 @@ const filteredCourseCodesArray = computed(() => {
     
     // Puis par numéro de module
     if (a.moduleNumber && b.moduleNumber) {
-      return a.moduleNumber.localeCompare(b.moduleNumber, undefined, { numeric: true })
+      const numA = String(a.moduleNumber)
+      const numB = String(b.moduleNumber)
+      return numA.localeCompare(numB, undefined, { numeric: true })
     }
     
-    // Sinon par label
-    return a.label.localeCompare(b.label)
+    // Si seulement A a un numéro, il vient en premier
+    if (a.moduleNumber) return -1
+    if (b.moduleNumber) return 1
+    
+    // Sinon par label (avec protection)
+    const labelA = a.label || a.id || ''
+    const labelB = b.label || b.id || ''
+    return labelA.localeCompare(labelB)
   })
 })
+
+// Fonction helper pour obtenir une couleur par défaut selon l'année
+const getDefaultColorByYear = (annee) => {
+  const colorsByYear = {
+    1: '#E6B8B7',  // Rose pour 1ère année
+    2: '#BA68C8',  // Violet pour 2ème année
+    3: '#4DD0E1',  // Cyan pour 3ème année
+  }
+  return colorsByYear[annee] || '#CCCCCC'
+}
 
 // Fonctions
 const loadPlanning = async () => {
   try {
+    console.log('[PlanningAdmin] 🚀 Début chargement du planning...')
+    
     yearData.value = await academicPlanningService.getAcademicYear(selectedYear.value)
-    courseCodes.value = await academicPlanningService.getAllCourseCodes()
+    console.log('[PlanningAdmin] 📅 Année chargée:', selectedYear.value)
+    
+    // Charger les modules Supabase UNIQUEMENT
+    await loadModules()
+    console.log('[PlanningAdmin] 📚 Modules Supabase chargés:', supabaseModules.value.length)
+    
+    if (supabaseModules.value.length > 0) {
+      console.log('[PlanningAdmin] 📖 Premier module:', {
+        number: supabaseModules.value[0].number,
+        title: supabaseModules.value[0].title,
+        year: supabaseModules.value[0].year
+      })
+    } else {
+      console.warn('[PlanningAdmin] ⚠️ Aucun module Supabase trouvé!')
+    }
+    
+    // Créer les codes de cours depuis Supabase UNIQUEMENT
+    courseCodes.value = {}
+    
+    supabaseModules.value.forEach((module, index) => {
+      const courseCodeId = module.number?.toString() || module.short_code?.toString() || `module_${module.id}`
+      
+      console.log(`[PlanningAdmin] 📝 Module ${index + 1}:`, {
+        id: courseCodeId,
+        number: module.number,
+        title: module.title,
+        year: module.year
+      })
+      
+      // Créer l'entrée avec les données Supabase
+      courseCodes.value[courseCodeId] = {
+        id: courseCodeId,
+        moduleNumber: module.number,
+        label: module.title,
+        // Couleur par défaut selon l'année
+        color: module.color || getDefaultColorByYear(module.year),
+        year: module.year
+      }
+    })
+    
+    console.log('[PlanningAdmin] ✅ Codes de cours créés:', Object.keys(courseCodes.value).length)
+    console.log('[PlanningAdmin] 📋 Liste des codes:', Object.keys(courseCodes.value))
     
     // Charger les cellules des deux semestres
     const autumnCells = await academicPlanningService.getPlanningCells(selectedYear.value, 'autumn')
@@ -592,14 +657,15 @@ const loadPlanning = async () => {
       ...(springCells || {})
     }
     
-    console.log('[PlanningAdmin] Planning chargé')
+    console.log('[PlanningAdmin] 🎯 Planning complètement chargé avec Supabase!')
   } catch (error) {
-    console.error('[PlanningAdmin] Erreur chargement:', error)
+    console.error('[PlanningAdmin] ❌ Erreur chargement:', error)
+    console.error('[PlanningAdmin] Stack trace:', error.stack)
     toast.add({
       severity: 'error',
       summary: 'Erreur',
-      detail: 'Impossible de charger le planning',
-      life: 3000
+      detail: `Impossible de charger le planning: ${error.message}`,
+      life: 5000
     })
   }
 }
