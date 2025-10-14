@@ -307,6 +307,7 @@ import Tag from 'primevue/tag'
 import ProgressSpinner from 'primevue/progressspinner'
 import academicPlanningService from '@/service/academicPlanningService'
 import { useModules } from '@/composables/useModules'
+import { useAcademicYear } from '@/composables/useAcademicYear'
 
 const router = useRouter()
 
@@ -320,12 +321,28 @@ const planningCells = ref({})
 // Modules Supabase
 const { modules: supabaseModules, loadModules, loading: modulesLoading } = useModules()
 
-// Options des années
-const yearOptions = ref([
-  { label: '1ère année 2025-2026 / Bac 25', value: 'bac25' },
-  { label: '2ème année 2025-2026 / Bac 24', value: 'bac24' },
-  { label: '3ème année 2025-2026 / Bac 23', value: 'bac23' }
-])
+// Années académiques et classes
+const { activeAcademicYear, sortedClasses, loadActiveAcademicYear, loadClassesByYear } = useAcademicYear()
+
+// Options dynamiques basées sur les classes
+const yearOptions = computed(() => {
+  if (!activeAcademicYear.value || sortedClasses.value.length === 0) {
+    // Fallback vers les valeurs statiques
+    return [
+      { label: '1ère année 2025-2026 / Bac 25', value: 'bac25' },
+      { label: '2ème année 2025-2026 / Bac 24', value: 'bac24' },
+      { label: '3ème année 2025-2026 / Bac 23', value: 'bac23' }
+    ]
+  }
+  
+  return sortedClasses.value.map(classItem => {
+    const yearLevel = classItem.year_level === 1 ? '1ère' : classItem.year_level === 2 ? '2ème' : '3ème'
+    return {
+      label: `${yearLevel} année ${activeAcademicYear.value.name} / ${classItem.code}`,
+      value: 'bac' + classItem.code.substring(1) // B25 -> bac25
+    }
+  })
+})
 
 // Jours de la semaine
 const days = ['lu', 'ma', 'me', 'je', 've']
@@ -541,6 +558,14 @@ const goToAdmin = () => {
 
 // Montage du composant
 onMounted(async () => {
+  // Charger l'année académique active et ses classes
+  await loadActiveAcademicYear()
+  if (activeAcademicYear.value) {
+    await loadClassesByYear(activeAcademicYear.value.id)
+    console.log('[PlanningView] 📅 Année active:', activeAcademicYear.value.name)
+    console.log('[PlanningView] 👥 Classes:', sortedClasses.value.length)
+  }
+  
   await loadPlanning()
 })
 </script>

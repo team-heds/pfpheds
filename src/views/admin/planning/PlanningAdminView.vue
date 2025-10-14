@@ -56,6 +56,14 @@
                 severity="help"
                 v-tooltip="'Gérer les horaires détaillés par semaine'"
               />
+              
+              <Button 
+                label="Années Académiques" 
+                icon="pi pi-calendar-plus" 
+                @click="goToYearsManagement" 
+                outlined
+                v-tooltip="'Gérer les années et cohortes'"
+              />
             </div>
           </template>
         </Toolbar>
@@ -440,12 +448,16 @@ import Column from 'primevue/column'
 import Toast from 'primevue/toast'
 import academicPlanningService from '@/service/academicPlanningService'
 import { useModules } from '@/composables/useModules'
+import { useAcademicYear } from '@/composables/useAcademicYear'
 
 const router = useRouter()
 const toast = useToast()
 
 // Supabase modules
 const { modules: supabaseModules, loadModules } = useModules()
+
+// Années académiques et classes
+const { activeAcademicYear, sortedClasses, loadActiveAcademicYear, loadClassesByYear } = useAcademicYear()
 
 // State
 const selectedYear = ref('bac25')
@@ -475,12 +487,25 @@ const courseCodeForm = ref({
   year: 1
 })
 
-// Options
-const yearOptions = ref([
-  { label: '1ère année 2025-2026 / Bac 25', value: 'bac25' },
-  { label: '2ème année 2025-2026 / Bac 24', value: 'bac24' },
-  { label: '3ème année 2025-2026 / Bac 23', value: 'bac23' }
-])
+// Options dynamiques basées sur les classes
+const yearOptions = computed(() => {
+  if (!activeAcademicYear.value || sortedClasses.value.length === 0) {
+    // Fallback vers les valeurs statiques
+    return [
+      { label: '1ère année 2025-2026 / Bac 25', value: 'bac25' },
+      { label: '2ème année 2025-2026 / Bac 24', value: 'bac24' },
+      { label: '3ème année 2025-2026 / Bac 23', value: 'bac23' }
+    ]
+  }
+  
+  return sortedClasses.value.map(classItem => {
+    const yearLevel = classItem.year_level === 1 ? '1ère' : classItem.year_level === 2 ? '2ème' : '3ème'
+    return {
+      label: `${yearLevel} année ${activeAcademicYear.value.name} / ${classItem.code}`,
+      value: 'bac' + classItem.code.substring(1) // B25 -> bac25
+    }
+  })
+})
 
 const editModeOptions = ref([
   { label: "Cellule unique", value: 'single' },
@@ -601,51 +626,30 @@ const getDefaultColorByYear = (annee) => {
 // Fonctions
 const loadPlanning = async () => {
   try {
-    console.log('[PlanningAdmin] 🚀 Début chargement du planning...')
-    
     yearData.value = await academicPlanningService.getAcademicYear(selectedYear.value)
-    console.log('[PlanningAdmin] 📅 Année chargée:', selectedYear.value)
     
     // Charger les modules Supabase UNIQUEMENT
     await loadModules()
-    console.log('[PlanningAdmin] 📚 Modules Supabase chargés:', supabaseModules.value.length)
     
-    if (supabaseModules.value.length > 0) {
-      console.log('[PlanningAdmin] 📖 Premier module:', {
-        number: supabaseModules.value[0].number,
-        title: supabaseModules.value[0].title,
-        year: supabaseModules.value[0].year
-      })
-    } else {
+    if (supabaseModules.value.length === 0) {
       console.warn('[PlanningAdmin] ⚠️ Aucun module Supabase trouvé!')
     }
     
     // Créer les codes de cours depuis Supabase UNIQUEMENT
     courseCodes.value = {}
     
-    supabaseModules.value.forEach((module, index) => {
+    supabaseModules.value.forEach((module) => {
       const courseCodeId = module.number?.toString() || module.short_code?.toString() || `module_${module.id}`
-      
-      console.log(`[PlanningAdmin] 📝 Module ${index + 1}:`, {
-        id: courseCodeId,
-        number: module.number,
-        title: module.title,
-        year: module.year
-      })
       
       // Créer l'entrée avec les données Supabase
       courseCodes.value[courseCodeId] = {
         id: courseCodeId,
         moduleNumber: module.number,
         label: module.title,
-        // Couleur par défaut selon l'année
         color: module.color || getDefaultColorByYear(module.year),
         year: module.year
       }
     })
-    
-    console.log('[PlanningAdmin] ✅ Codes de cours créés:', Object.keys(courseCodes.value).length)
-    console.log('[PlanningAdmin] 📋 Liste des codes:', Object.keys(courseCodes.value))
     
     // Charger les cellules des deux semestres
     const autumnCells = await academicPlanningService.getPlanningCells(selectedYear.value, 'autumn')
@@ -656,11 +660,8 @@ const loadPlanning = async () => {
       ...(autumnCells || {}),
       ...(springCells || {})
     }
-    
-    console.log('[PlanningAdmin] 🎯 Planning complètement chargé avec Supabase!')
   } catch (error) {
-    console.error('[PlanningAdmin] ❌ Erreur chargement:', error)
-    console.error('[PlanningAdmin] Stack trace:', error.stack)
+    console.error('[PlanningAdmin] Erreur chargement planning:', error)
     toast.add({
       severity: 'error',
       summary: 'Erreur',
@@ -1037,13 +1038,20 @@ const exportPlanning = async () => {
 
 const exportPlanningExcel = async () => {
   try {
-    // Exporter les 3 années en même temps
-    const blob = await academicPlanningService.exportAllYearsToExcel(mergeCells.value)
+    // Passer les courseCodes chargés depuis Supabase + données dynamiques des classes
+    const exportData = {
+      courseCodes: courseCodes.value,
+      academicYear: activeAcademicYear.value,
+      classes: sortedClasses.value
+    }
+    
+    const blob = await academicPlanningService.exportAllYearsToExcel(mergeCells.value, exportData)
     
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `Planning_BScN_2025-2026_${new Date().toISOString().split('T')[0]}.xlsx`
+    const yearName = activeAcademicYear.value?.name || '2025-2026'
+    link.download = `Planning_BScN_${yearName}_${new Date().toISOString().split('T')[0]}.xlsx`
     link.click()
     URL.revokeObjectURL(url)
     
@@ -1093,7 +1101,19 @@ const goToWeeklyPlanning = () => {
   router.push('/admin/planning/weekly')
 }
 
+const goToYearsManagement = () => {
+  router.push('/admin/planning/years')
+}
+
 onMounted(async () => {
+  // Charger l'année académique active et ses classes
+  await loadActiveAcademicYear()
+  if (activeAcademicYear.value) {
+    await loadClassesByYear(activeAcademicYear.value.id)
+    console.log('[PlanningAdmin] 📅 Année active:', activeAcademicYear.value.name)
+    console.log('[PlanningAdmin] 👥 Classes:', sortedClasses.value.length)
+  }
+  
   await loadPlanning()
 })
 </script>

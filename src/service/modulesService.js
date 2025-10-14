@@ -11,10 +11,6 @@ class ModulesService {
         .select('*')
 
       if (error) throw error
-      console.log('[ModulesService] ✅ Modules chargés:', data?.length || 0)
-      if (data && data.length > 0) {
-        console.log('[ModulesService] 📋 Colonnes disponibles:', Object.keys(data[0]))
-      }
       return data || []
     } catch (error) {
       console.error('[ModulesService] Erreur getAllModules:', error)

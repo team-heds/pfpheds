@@ -743,16 +743,40 @@ class AcademicPlanningService {
   /**
    * Exporte toutes les années en Excel avec mise en forme professionnelle et couleurs
    */
-  async exportAllYearsToExcel(mergeCells = true) {
+  async exportAllYearsToExcel(mergeCells = true, exportDataParam = null) {
     try {
       const ExcelJS = await import('exceljs')
       const workbook = new ExcelJS.Workbook()
       const worksheet = workbook.addWorksheet('Planning Complet')
       
-      // Charger les données
-      const years = ['bac25', 'bac24', 'bac23']
-      const yearLabels = ['1ère année 2025-2026 / Bac 25', '2ème année 2025-2026 / Bac 24', '3ème année 2025-2026 / Bac 23']
-      const courseCodes = await this.getAllCourseCodes()
+      // Extraire les données ou utiliser les valeurs par défaut
+      let courseCodes, academicYear, classes, years, yearLabels
+      
+      if (exportDataParam && typeof exportDataParam === 'object' && exportDataParam.courseCodes) {
+        // Nouvelles données dynamiques
+        courseCodes = exportDataParam.courseCodes
+        academicYear = exportDataParam.academicYear
+        classes = exportDataParam.classes || []
+        
+        // Générer years et yearLabels depuis les classes
+        if (classes.length > 0 && academicYear) {
+          years = classes.map(c => 'bac' + c.code.substring(1))
+          yearLabels = classes.map(c => {
+            const level = c.year_level === 1 ? '1ère' : c.year_level === 2 ? '2ème' : '3ème'
+            return `${level} année ${academicYear.name} / ${c.code}`
+          })
+        } else {
+          // Fallback
+          years = ['bac25', 'bac24', 'bac23']
+          yearLabels = ['1ère année 2025-2026 / Bac 25', '2ème année 2025-2026 / Bac 24', '3ème année 2025-2026 / Bac 23']
+        }
+      } else {
+        // Ancien format (rétrocompatibilité)
+        courseCodes = exportDataParam || await this.getAllCourseCodes()
+        years = ['bac25', 'bac24', 'bac23']
+        yearLabels = ['1ère année 2025-2026 / Bac 25', '2ème année 2025-2026 / Bac 24', '3ème année 2025-2026 / Bac 23']
+        academicYear = { name: '2025-2026' }
+      }
       
       let currentRow = 1
       
@@ -771,7 +795,7 @@ class AcademicPlanningService {
       worksheet.getCell(`A${currentRow}`).font = { size: 12, bold: true }
       
       worksheet.mergeCells(`E${currentRow}:F${currentRow}`)
-      worksheet.getCell(`E${currentRow}`).value = '2025-2026'
+      worksheet.getCell(`E${currentRow}`).value = academicYear.name
       worksheet.getCell(`E${currentRow}`).font = { size: 12, bold: true }
       
       currentRow += 2
