@@ -152,6 +152,20 @@
           Les classes seront générées automatiquement pour {{ selectedYear?.name }}
         </Message>
         
+        <div class="field mb-3">
+          <label>Modalité de formation</label>
+          <Dropdown 
+            v-model="selectedModality" 
+            :options="modalityOptions" 
+            optionLabel="label" 
+            optionValue="value"
+            placeholder="Sélectionner une modalité"
+          />
+          <small v-if="selectedModality === 'temps_plein'">Classes: B26, B25, B24</small>
+          <small v-else-if="selectedModality === 'temps_partiel'">Classes: B26-PT, B25-PT, B24-PT</small>
+          <small v-else>Classes: B26-EE, B25-EE, B24-EE</small>
+        </div>
+        
         <div class="field">
           <label>Année de la 1ère année</label>
           <InputNumber 
@@ -160,7 +174,7 @@
             :max="2050"
             placeholder="Ex: 2026"
           />
-          <small>Génère B26 (1ère), B25 (2ème), B24 (3ème)</small>
+          <small>Année de promotion pour la 1ère année</small>
         </div>
       </div>
 
@@ -190,6 +204,7 @@ import Tag from 'primevue/tag'
 import Dialog from 'primevue/dialog'
 import InputNumber from 'primevue/inputnumber'
 import Message from 'primevue/message'
+import Dropdown from 'primevue/dropdown'
 
 const toast = useToast()
 
@@ -211,6 +226,13 @@ const showCreateDialog = ref(false)
 const showGenerateDialog = ref(false)
 const newYear = ref({ startYear: new Date().getFullYear() + 1 })
 const generateYear = ref(new Date().getFullYear() + 1)
+const selectedModality = ref('temps_plein')
+
+const modalityOptions = [
+  { label: 'Temps plein', value: 'temps_plein' },
+  { label: 'Temps partiel', value: 'temps_partiel' },
+  { label: 'En emploi', value: 'en_emploi' }
+]
 
 onMounted(async () => {
   await loadAcademicYears()
@@ -284,18 +306,21 @@ const createYear = async () => {
 
 const generateClassesForYear = async () => {
   try {
-    await generateClasses(selectedYear.value.id, generateYear.value)
+    await generateClasses(selectedYear.value.id, generateYear.value, selectedModality.value)
     await loadClassesByYear(selectedYear.value.id)
+    
+    const modalityLabel = modalityOptions.find(m => m.value === selectedModality.value)?.label || 'Temps plein'
     
     toast.add({
       severity: 'success',
       summary: 'Classes générées',
-      detail: 'Les classes ont été générées avec succès',
+      detail: `Classes ${modalityLabel} générées avec succès`,
       life: 3000
     })
     
     showGenerateDialog.value = false
     generateYear.value = new Date().getFullYear() + 1
+    selectedModality.value = 'temps_plein'
   } catch (error) {
     toast.add({
       severity: 'error',

@@ -182,14 +182,33 @@ class AcademicYearService {
   /**
    * Génère automatiquement les classes pour une année académique
    * Basé sur l'année de départ (ex: 2025 génère B25, B24, B23)
+   * @param {string} academicYearId - ID de l'année académique
+   * @param {number} startYear - Année de départ (ex: 2025)
+   * @param {string} modality - Modalité: 'temps_plein', 'temps_partiel', 'en_emploi'
    */
-  async generateClassesForYear(academicYearId, startYear) {
+  async generateClassesForYear(academicYearId, startYear, modality = 'temps_plein') {
     try {
-      // Vérifier quelles classes existent déjà pour cette année
+      const modalitySuffixes = {
+        temps_plein: '',
+        temps_partiel: '-PT',
+        en_emploi: '-EE'
+      }
+      
+      const modalityNames = {
+        temps_plein: 'Temps plein',
+        temps_partiel: 'Temps partiel',
+        en_emploi: 'En emploi'
+      }
+      
+      const suffix = modalitySuffixes[modality] || ''
+      const modalityName = modalityNames[modality] || 'Temps plein'
+      
+      // Vérifier quelles classes existent déjà pour cette année et modalité
       const { data: existingClasses } = await supabase
         .from('classes')
-        .select('code')
+        .select('code, modality')
         .eq('academic_year_id', academicYearId)
+        .eq('modality', modality)
       
       const existingCodes = new Set(existingClasses?.map(c => c.code) || [])
       
@@ -197,15 +216,16 @@ class AcademicYearService {
       
       for (let level = 1; level <= 3; level++) {
         const classYear = startYear - (level - 1)
-        const code = `B${classYear.toString().slice(-2)}`
+        const code = `B${classYear.toString().slice(-2)}${suffix}`
         
         // Seulement ajouter si elle n'existe pas déjà
         if (!existingCodes.has(code)) {
           classes.push({
             code,
-            name: `Bachelor ${classYear} - ${level}${level === 1 ? 'ère' : 'ème'} année`,
+            name: `Bachelor ${classYear} - ${level}${level === 1 ? 'ère' : 'ème'} année (${modalityName})`,
             year_level: level,
-            academic_year_id: academicYearId
+            academic_year_id: academicYearId,
+            modality
           })
         }
       }

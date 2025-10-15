@@ -111,12 +111,15 @@ export function useAcademicYear() {
 
   /**
    * Génère automatiquement les classes pour une année
+   * @param {string} academicYearId - ID de l'année académique
+   * @param {number} startYear - Année de départ
+   * @param {string} modality - Modalité: 'temps_plein', 'temps_partiel', 'en_emploi'
    */
-  const generateClasses = async (academicYearId, startYear) => {
+  const generateClasses = async (academicYearId, startYear, modality = 'temps_plein') => {
     loading.value = true
     error.value = null
     try {
-      const newClasses = await academicYearService.generateClassesForYear(academicYearId, startYear)
+      const newClasses = await academicYearService.generateClassesForYear(academicYearId, startYear, modality)
       classes.value.push(...newClasses)
       return newClasses
     } catch (e) {
