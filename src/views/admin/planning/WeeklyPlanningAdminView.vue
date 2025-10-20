@@ -30,47 +30,103 @@
         </template>
       </Card>
 
-      <!-- Sélection de la semaine -->
+      <!-- Sélection améliorée -->
+      <div class="selection-panel">
+        <Card class="selection-card">
+          <template #content>
+            <div class="selection-item">
+              <div class="selection-icon">
+                <i class="pi pi-calendar text-4xl text-primary"></i>
+              </div>
+              <div class="selection-content">
+                <label class="selection-label">Année académique</label>
+                <Dropdown 
+                  v-model="selectedYear"
+                  :options="yearOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  @change="loadWeekPlanning"
+                  class="w-full selection-dropdown"
+                />
+              </div>
+            </div>
+          </template>
+        </Card>
+
+        <Card class="selection-card">
+          <template #content>
+            <div class="selection-item">
+              <div class="selection-icon">
+                <i class="pi pi-eye text-4xl text-cyan-500"></i>
+              </div>
+              <div class="selection-content">
+                <label class="selection-label">Mode d'affichage</label>
+                <Dropdown 
+                  v-model="viewMode"
+                  :options="viewModeOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  @change="onViewModeChange"
+                  class="w-full selection-dropdown"
+                >
+                  <template #value="{ value }">
+                    <Tag 
+                      :value="viewModeOptions.find(v => v.value === value)?.label" 
+                      :severity="value === 'week' ? 'info' : 'warning'"
+                      :icon="value === 'week' ? 'pi pi-calendar' : 'pi pi-calendar-times'"
+                    />
+                  </template>
+                </Dropdown>
+              </div>
+            </div>
+          </template>
+        </Card>
+
+        <Card v-if="viewMode === 'week'" class="selection-card week-selector">
+          <template #content>
+            <div class="selection-item">
+              <div class="selection-icon">
+                <i class="pi pi-clock text-4xl text-orange-500"></i>
+              </div>
+              <div class="selection-content">
+                <label class="selection-label">Semaine</label>
+                <div class="week-navigation">
+                  <Button 
+                    icon="pi pi-chevron-left" 
+                    @click="previousWeek"
+                    outlined
+                    rounded
+                    v-tooltip="'Semaine précédente'"
+                  />
+                  <Dropdown 
+                    v-model="selectedWeek"
+                    :options="weekOptions"
+                    optionLabel="label"
+                    optionValue="value"
+                    @change="loadWeekPlanning"
+                    filter
+                    class="flex-1 selection-dropdown"
+                  />
+                  <Button 
+                    icon="pi pi-chevron-right" 
+                    @click="nextWeek"
+                    outlined
+                    rounded
+                    v-tooltip="'Semaine suivante'"
+                  />
+                </div>
+              </div>
+            </div>
+          </template>
+        </Card>
+      </div>
+
+      <!-- Actions -->
       <Card>
         <template #content>
-          <div class="flex gap-3 align-items-end flex-wrap">
-            <div class="flex-1">
-              <label class="block mb-2 font-bold">Année académique :</label>
-              <Dropdown 
-                v-model="selectedYear"
-                :options="yearOptions"
-                optionLabel="label"
-                optionValue="value"
-                @change="loadWeekPlanning"
-                class="w-full"
-              />
-            </div>
-            
-            <div class="flex-1">
-              <label class="block mb-2 font-bold">Mode d'affichage :</label>
-              <Dropdown 
-                v-model="viewMode"
-                :options="viewModeOptions"
-                optionLabel="label"
-                optionValue="value"
-                @change="onViewModeChange"
-                class="w-full"
-              />
-            </div>
-            
-            <div v-if="viewMode === 'week'" class="flex-1">
-              <label class="block mb-2 font-bold">Semaine :</label>
-              <Dropdown 
-                v-model="selectedWeek"
-                :options="weekOptions"
-                optionLabel="label"
-                optionValue="value"
-                @change="loadWeekPlanning"
-                filter
-                class="w-full"
-              />
-            </div>
-            
+          <div class="flex gap-2 flex-wrap justify-content-center">
+            <!-- Fonctionnalité de génération depuis minibrick désactivée (migration Supabase) -->
+            <!--
             <Button 
               v-if="viewMode === 'week'"
               label="Générer depuis Minibrick"
@@ -88,6 +144,7 @@
               severity="warning"
               v-tooltip="'Créer automatiquement tous les créneaux du semestre'"
             />
+            -->
             
             <Button 
               v-if="viewMode === 'week'"
@@ -134,7 +191,7 @@
         </template>
         
         <template #content>
-          <DataTable 
+          <DataTable
             :value="sortedTimeSlots"
             :rows="viewMode === 'week' ? 20 : 50"
             :paginator="viewMode !== 'week'"
@@ -201,10 +258,7 @@
                 <div 
                   v-if="slotProps.data.moduleCode"
                   class="module-cell"
-                  :style="{ 
-                    backgroundColor: getModuleColor(slotProps.data.moduleCode),
-                    borderLeft: `4px solid ${darkenColor(getModuleColor(slotProps.data.moduleCode))}`
-                  }"
+                  
                 >
                   <div class="course-title-text">{{ slotProps.data.courseTitle || slotProps.data.activity || slotProps.data.moduleTitle }}</div>
                 </div>
@@ -467,21 +521,24 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
+import Tag from 'primevue/tag'
+import Badge from 'primevue/badge'
+import Chip from 'primevue/chip'
 import Navbar from '@/components/common/utils/Navbar.vue'
-import weeklyPlanningService from '@/service/weeklyPlanningService'
-import academicPlanningService from '@/service/academicPlanningService'
+import planningService from '@/service/planningService'
+import academicYearService from '@/service/academicYearService'
 
 const router = useRouter()
 const toast = useToast()
 
 // État
-const selectedYear = ref('bac25')
+const selectedYear = ref(null)
 const selectedWeek = ref(null)
 const viewMode = ref('week') // 'week', 'semester1', 'semester2'
 const timeSlots = ref([])
-const courseCodes = ref({})
-const minibrickData = ref({})
+const courseModules = ref([])
 const expandedDays = ref(['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi'])
+const yearOptions = ref([])
 
 const showSlotDialog = ref(false)
 const editingSlot = ref(null)
@@ -505,65 +562,63 @@ const duplicateFrom = ref(null)
 const duplicateTo = ref(null)
 
 // Options
-const yearOptions = ref([
-  { label: '1ère année 2025-2026 / Bac 25', value: 'bac25' },
-  { label: '2ème année 2025-2026 / Bac 24', value: 'bac24' },
-  { label: '3ème année 2025-2026 / Bac 23', value: 'bac23' }
-])
-
 const viewModeOptions = [
   { label: 'Semaine unique', value: 'week' },
-  { label: 'Semestre de Printemps (S8-S37)', value: 'semester1' },
-  { label: 'Semestre d\'Automne (S38-S7)', value: 'semester2' }
+  { label: 'Semestre d\'Automne (S38-S7)', value: 'semester2' },
+  { label: 'Semestre de Printemps (S8-S37)', value: 'semester1' }
 ]
 
 const weekOptions = computed(() => {
   const weeks = []
-  const autumnWeeks = [...Array.from({ length: 15 }, (_, i) => i + 38), ...Array.from({ length: 7 }, (_, i) => i + 1)]
-  const springWeeks = Array.from({ length: 30 }, (_, i) => i + 8)
   
-  autumnWeeks.forEach(w => {
-    weeks.push({ label: `Semaine ${w} (Automne)`, value: w })
-  })
+  // Année académique : S38 → S52, puis S1 → S37
+  // Semestre d'Automne : S38-S52 (2024) + S1-S7 (2025)
+  for (let w = 38; w <= 52; w++) {
+    weeks.push({ label: `Semaine ${w}`, value: w })
+  }
   
-  springWeeks.forEach(w => {
-    weeks.push({ label: `Semaine ${w} (Printemps)`, value: w })
-  })
+  // Semestre de Printemps : S1-S37 (2025)
+  for (let w = 1; w <= 37; w++) {
+    weeks.push({ label: `Semaine ${w}`, value: w })
+  }
   
   return weeks
 })
 
 const moduleOptions = computed(() => {
-  return Object.entries(courseCodes.value).map(([id, data]) => ({
-    label: `[${data.moduleNumber}] ${data.label}`,
-    value: id
+  return courseModules.value.map(module => ({
+    label: `[${module.module_number}] ${module.label}`,
+    value: module.code
   }))
 })
 
 // Computed
 const sortedTimeSlots = computed(() => {
   const dayOrder = { lundi: 1, mardi: 2, mercredi: 3, jeudi: 4, vendredi: 5 }
+  
+  // Fonction pour obtenir l'ordre académique d'une semaine
+  const getAcademicWeekOrder = (week) => {
+    // Ordre académique : S38-S52 (0-14), S1-S7 (15-21), S8-S37 (22-51)
+    if (week >= 38 && week <= 52) {
+      return week - 38 // 0 à 14
+    } else if (week >= 1 && week <= 7) {
+      return week + 14 // 15 à 21
+    } else if (week >= 8 && week <= 37) {
+      return week + 14 // 22 à 51
+    }
+    return 999 // Valeur par défaut pour semaines invalides
+  }
+  
   return [...timeSlots.value].sort((a, b) => {
-    // Si mode semestre, trier d'abord par numéro de semaine
+    // Si mode semestre, trier d'abord par numéro de semaine (ordre académique)
     if (viewMode.value !== 'week') {
       const weekA = a.weekNumber || 0
       const weekB = b.weekNumber || 0
       
-      // Pour le semestre d'automne, 38-52 vient avant 1-7
-      if (viewMode.value === 'semester2') {
-        if (weekA >= 38 && weekB >= 38) {
-          if (weekA !== weekB) return weekA - weekB
-        } else if (weekA >= 38 && weekB < 38) {
-          return -1
-        } else if (weekA < 38 && weekB >= 38) {
-          return 1
-        } else if (weekA < 38 && weekB < 38) {
-          if (weekA !== weekB) return weekA - weekB
-        }
-      } else {
-        // Pour printemps, tri normal
-        if (weekA !== weekB) return weekA - weekB
-      }
+      const orderA = getAcademicWeekOrder(weekA)
+      const orderB = getAcademicWeekOrder(weekB)
+      
+      if (orderA !== orderB) return orderA - orderB
     }
     
     // Puis par jour
@@ -584,19 +639,36 @@ const onViewModeChange = async () => {
     }
   } else if (viewMode.value === 'semester1') {
     // Charger semestre de printemps (semaines 8-37)
-    await loadSemesterPlanning(8, 37)
+    await loadSemesterPlanning('spring')
   } else if (viewMode.value === 'semester2') {
     // Charger semestre d'automne (semaines 38-52 puis 1-7)
-    await loadSemesterPlanning(38, 52, 1, 7)
+    await loadSemesterPlanning('autumn')
   }
 }
 
 const loadWeekPlanning = async () => {
-  if (!selectedWeek.value) return
+  if (!selectedWeek.value || !selectedYear.value) return
   
   try {
-    const weekData = await weeklyPlanningService.getWeekPlanning(selectedYear.value, selectedWeek.value)
-    timeSlots.value = Object.entries(weekData).map(([id, data]) => ({ id, ...data }))
+    const slots = await planningService.getWeekTimeSlots(selectedYear.value, selectedWeek.value)
+    
+    // Convertir snake_case en camelCase pour compatibilité avec le template
+    timeSlots.value = slots.map(slot => ({
+      id: slot.id,
+      day: slot.day,
+      date: slot.date,
+      startTime: slot.start_time,
+      endTime: slot.end_time,
+      moduleCode: slot.module_code,
+      moduleNumber: slot.course_module?.number || '',
+      moduleTitle: slot.course_module?.title || '',
+      courseTitle: slot.course_title,
+      activity: slot.activity,
+      teachers: slot.teachers || [],
+      room: slot.room,
+      notes: slot.notes,
+      weekNumber: slot.week_number
+    }))
   } catch (error) {
     console.error('Erreur chargement planning:', error)
     toast.add({
@@ -608,44 +680,53 @@ const loadWeekPlanning = async () => {
   }
 }
 
-const loadSemesterPlanning = async (startWeek1, endWeek1, startWeek2 = null, endWeek2 = null) => {
+// Navigation entre semaines
+const previousWeek = () => {
+  const currentIndex = weekOptions.value.findIndex(w => w.value === selectedWeek.value)
+  if (currentIndex > 0) {
+    selectedWeek.value = weekOptions.value[currentIndex - 1].value
+    loadWeekPlanning()
+  }
+}
+
+const nextWeek = () => {
+  const currentIndex = weekOptions.value.findIndex(w => w.value === selectedWeek.value)
+  if (currentIndex < weekOptions.value.length - 1) {
+    selectedWeek.value = weekOptions.value[currentIndex + 1].value
+    loadWeekPlanning()
+  }
+}
+
+const loadSemesterPlanning = async (semester) => {
+  if (!selectedYear.value) return
+  
   try {
-    const allSlots = []
+    const slots = await planningService.getSemesterTimeSlots(selectedYear.value, semester)
     
-    // Première plage de semaines
-    for (let weekNum = startWeek1; weekNum <= endWeek1; weekNum++) {
-      const weekData = await weeklyPlanningService.getWeekPlanning(selectedYear.value, weekNum)
-      const weekSlots = Object.entries(weekData).map(([id, data]) => ({ 
-        id: `${id}_w${weekNum}`,
-        weekNumber: weekNum,
-        ...data 
-      }))
-      allSlots.push(...weekSlots)
-    }
+    // Convertir snake_case en camelCase
+    timeSlots.value = slots.map(slot => ({
+      id: slot.id,
+      day: slot.day,
+      date: slot.date,
+      startTime: slot.start_time,
+      endTime: slot.end_time,
+      moduleCode: slot.module_code,
+      moduleNumber: slot.course_module?.number || '',
+      moduleTitle: slot.course_module?.title || '',
+      courseTitle: slot.course_title,
+      activity: slot.activity,
+      teachers: slot.teachers || [],
+      room: slot.room,
+      notes: slot.notes,
+      weekNumber: slot.week_number
+    }))
     
-    // Deuxième plage de semaines (pour automne: 38-52 puis 1-7)
-    if (startWeek2 !== null && endWeek2 !== null) {
-      for (let weekNum = startWeek2; weekNum <= endWeek2; weekNum++) {
-        const weekData = await weeklyPlanningService.getWeekPlanning(selectedYear.value, weekNum)
-        const weekSlots = Object.entries(weekData).map(([id, data]) => ({ 
-          id: `${id}_w${weekNum}`,
-          weekNumber: weekNum,
-          ...data 
-        }))
-        allSlots.push(...weekSlots)
-      }
-    }
-    
-    timeSlots.value = allSlots
-    
-    const weekRange = startWeek2 !== null 
-      ? `${startWeek1}-${endWeek1} et ${startWeek2}-${endWeek2}`
-      : `${startWeek1}-${endWeek1}`
+    const semesterLabel = semester === 'spring' ? 'Printemps (S8-S37)' : 'Automne (S38-S7)'
     
     toast.add({
       severity: 'success',
       summary: 'Succès',
-      detail: `${allSlots.length} créneaux chargés pour les semaines ${weekRange}`,
+      detail: `${timeSlots.value.length} créneaux chargés pour le semestre ${semesterLabel}`,
       life: 3000
     })
   } catch (error) {
@@ -713,14 +794,14 @@ const getDayDate = (day) => {
 }
 
 const getDayMainModule = (day) => {
-  const daySlots = timeSlots.value.filter(slot => slot.day === day && slot.moduleCode)
+  const daySlots = timeSlots.value.filter(slot => slot.day === day && slot.module_code)
   if (daySlots.length === 0) return null
   
   // Trouver le module le plus fréquent du jour
   const moduleCounts = {}
   daySlots.forEach(slot => {
-    if (slot.moduleCode) {
-      moduleCounts[slot.moduleCode] = (moduleCounts[slot.moduleCode] || 0) + 1
+    if (slot.module_code) {
+      moduleCounts[slot.module_code] = (moduleCounts[slot.module_code] || 0) + 1
     }
   })
   
@@ -728,13 +809,13 @@ const getDayMainModule = (day) => {
     moduleCounts[a] > moduleCounts[b] ? a : b
   )
   
-  const firstSlot = daySlots.find(s => s.moduleCode === mainModuleCode)
-  const courseData = courseCodes.value[mainModuleCode]
+  const firstSlot = daySlots.find(s => s.module_code === mainModuleCode)
+  const moduleData = courseModules.value.find(m => m.code === mainModuleCode)
   
   return {
     code: mainModuleCode,
-    number: firstSlot.moduleNumber || courseData?.moduleNumber || mainModuleCode.toUpperCase(),
-    title: firstSlot.moduleTitle || courseData?.label || 'Module',
+    number: moduleData?.module_number || mainModuleCode.toUpperCase(),
+    title: moduleData?.label || 'Module',
     color: getModuleColor(mainModuleCode)
   }
 }
@@ -764,17 +845,32 @@ const openSlotDialog = (slot = null) => {
 }
 
 const onModuleChange = () => {
-  const module = courseCodes.value[slotForm.value.moduleCode]
+  const module = courseModules.value.find(m => m.code === slotForm.value.moduleCode)
   if (module) {
-    slotForm.value.moduleNumber = module.moduleNumber
-    slotForm.value.moduleTitle = `${module.moduleNumber} - ${module.label}`
+    slotForm.value.moduleNumber = module.module_number
+    slotForm.value.moduleTitle = `${module.module_number} - ${module.label}`
   }
 }
 
 const saveSlot = async () => {
   try {
-    const slotId = editingSlot.value || `${slotForm.value.day}_${selectedWeek.value}_${Date.now()}`
-    await weeklyPlanningService.saveTimeSlot(selectedYear.value, selectedWeek.value, slotId, slotForm.value)
+    const slotData = {
+      id: editingSlot.value || null,
+      classCode: selectedYear.value,
+      weekNumber: selectedWeek.value,
+      day: slotForm.value.day,
+      date: slotForm.value.date,
+      startTime: slotForm.value.startTime,
+      endTime: slotForm.value.endTime,
+      moduleCode: slotForm.value.moduleCode,
+      courseTitle: slotForm.value.courseTitle,
+      activity: slotForm.value.activity,
+      teachers: slotForm.value.teachers,
+      room: slotForm.value.room,
+      notes: slotForm.value.notes
+    }
+    
+    await planningService.saveTimeSlot(slotData)
     
     toast.add({
       severity: 'success',
@@ -800,7 +896,7 @@ const deleteSlot = async (slotId) => {
   if (!confirm('Supprimer ce créneau ?')) return
   
   try {
-    await weeklyPlanningService.deleteTimeSlot(selectedYear.value, selectedWeek.value, slotId)
+    await planningService.deleteTimeSlot(slotId)
     toast.add({
       severity: 'success',
       summary: 'Succès',
@@ -819,28 +915,7 @@ const deleteSlot = async (slotId) => {
   }
 }
 
-const generateFromMinibrick = async () => {
-  if (!confirm('Générer les créneaux depuis le planning annuel ? Les créneaux existants seront conservés.')) return
-  
-  try {
-    await weeklyPlanningService.generateWeekFromMinibrick(selectedYear.value, selectedWeek.value, minibrickData.value)
-    toast.add({
-      severity: 'success',
-      summary: 'Succès',
-      detail: 'Créneaux générés depuis le minibrick',
-      life: 3000
-    })
-    await loadWeekPlanning()
-  } catch (error) {
-    console.error('Erreur génération:', error)
-    toast.add({
-      severity: 'error',
-      summary: 'Erreur',
-      detail: 'Impossible de générer les créneaux',
-      life: 3000
-    })
-  }
-}
+// Fonction generateFromMinibrick supprimée (nécessite migration complète du système minibrick)
 
 const performDuplicate = async () => {
   if (!duplicateFrom.value || !duplicateTo.value) {
@@ -854,7 +929,7 @@ const performDuplicate = async () => {
   }
   
   try {
-    await weeklyPlanningService.duplicateWeek(selectedYear.value, duplicateFrom.value, duplicateTo.value)
+    await planningService.duplicateWeek(selectedYear.value, duplicateFrom.value, duplicateTo.value)
     toast.add({
       severity: 'success',
       summary: 'Succès',
@@ -877,7 +952,8 @@ const performDuplicate = async () => {
 }
 
 const getModuleColor = (moduleCode) => {
-  return courseCodes.value[moduleCode]?.color || '#CCCCCC'
+  const module = courseModules.value.find(m => m.code === moduleCode)
+  return module?.color || '#CCCCCC'
 }
 
 const getSemesterLabel = (week) => {
@@ -1127,14 +1203,62 @@ const exportToExcel = async () => {
   }
 }
 
+// Charger les classes depuis l'année académique active
+const loadYearOptions = async () => {
+  try {
+    const activeYear = await academicYearService.getActiveAcademicYear()
+    if (!activeYear) {
+      toast.add({
+        severity: 'warn',
+        summary: 'Attention',
+        detail: 'Aucune année académique active',
+        life: 3000
+      })
+      return
+    }
+
+    const classes = await academicYearService.getClassesByAcademicYear(activeYear.id)
+    
+    // Convertir les classes en options pour le dropdown
+    yearOptions.value = classes
+      .sort((a, b) => a.year_level - b.year_level)
+      .map(classItem => {
+        const yearLabel = classItem.year_level === 1 ? '1ère' : 
+                         classItem.year_level === 2 ? '2ème' : '3ème'
+        const modalitySuffix = classItem.modality === 'temps_partiel' ? ' (PT)' :
+                               classItem.modality === 'en_emploi' ? ' (EE)' : ''
+        
+        // Convertir B26 -> bac26, B26-PT -> bac26-PT, etc. (même format que PlanningAdminView)
+        const codeValue = 'bac' + classItem.code.substring(1).toLowerCase()
+        
+        return {
+          label: `${yearLabel} année ${activeYear.name} / ${classItem.code}${modalitySuffix}`,
+          value: codeValue
+        }
+      })
+    
+    // Sélectionner la première option par défaut
+    if (yearOptions.value.length > 0 && !selectedYear.value) {
+      selectedYear.value = yearOptions.value[0].value
+    }
+  } catch (error) {
+    console.error('Erreur chargement classes:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: 'Impossible de charger les classes',
+      life: 3000
+    })
+  }
+}
+
 onMounted(async () => {
   try {
-    courseCodes.value = await academicPlanningService.getAllCourseCodes()
+    // Charger les classes disponibles
+    await loadYearOptions()
     
-    // Charger les données minibrick
-    const autumnCells = await academicPlanningService.getPlanningCells(selectedYear.value, 'autumn') || {}
-    const springCells = await academicPlanningService.getPlanningCells(selectedYear.value, 'spring') || {}
-    minibrickData.value = { ...autumnCells, ...springCells }
+    // Charger les modules de cours
+    courseModules.value = await planningService.getAllCourseModules()
   } catch (error) {
     console.error('Erreur chargement données:', error)
   }
@@ -1269,10 +1393,13 @@ const fillWeekDataToSheet = async (worksheet, weekSlots) => {
       )
       const firstSlot = daySlots.find(s => s.moduleCode === mainModuleCode)
       
-      // Récupérer le titre depuis courseCodes si disponible
-      let moduleTitle = firstSlot.moduleTitle || ''
-      if (!moduleTitle && courseCodes.value[mainModuleCode]) {
-        moduleTitle = courseCodes.value[mainModuleCode].label
+      // Récupérer le titre depuis courseModules si disponible
+      let moduleTitle = firstSlot.moduleTitle || firstSlot.course_title || ''
+      if (!moduleTitle) {
+        const moduleData = courseModules.value.find(m => m.code === mainModuleCode)
+        if (moduleData) {
+          moduleTitle = moduleData.label || moduleData.title || ''
+        }
       }
       
       mainModule = {
@@ -1418,10 +1545,13 @@ const fillWeekDataToSheetContinuous = async (worksheet, weekSlots, startRow) => 
       )
       const firstSlot = daySlots.find(s => s.moduleCode === mainModuleCode)
       
-      // Récupérer le titre depuis courseCodes si disponible
-      let moduleTitle = firstSlot.moduleTitle || ''
-      if (!moduleTitle && courseCodes.value[mainModuleCode]) {
-        moduleTitle = courseCodes.value[mainModuleCode].label
+      // Récupérer le titre depuis courseModules si disponible
+      let moduleTitle = firstSlot.moduleTitle || firstSlot.course_title || ''
+      if (!moduleTitle) {
+        const moduleData = courseModules.value.find(m => m.code === mainModuleCode)
+        if (moduleData) {
+          moduleTitle = moduleData.label || moduleData.title || ''
+        }
       }
       
       mainModule = {
@@ -1525,58 +1655,7 @@ const fillWeekDataToSheetContinuous = async (worksheet, weekSlots, startRow) => 
   return currentRow
 }
 
-const generateSemesterFromMinibrick = async () => {
-  const semesterNum = viewMode.value === 'semester1' ? 1 : 2
-  
-  let weeksToGenerate = []
-  let weekRange = ''
-  
-  if (semesterNum === 1) {
-    // Printemps: semaines 8-37
-    weeksToGenerate = Array.from({ length: 30 }, (_, i) => i + 8)
-    weekRange = '8-37'
-  } else {
-    // Automne: semaines 38-52 puis 1-7
-    weeksToGenerate = [
-      ...Array.from({ length: 15 }, (_, i) => i + 38), // 38-52
-      ...Array.from({ length: 7 }, (_, i) => i + 1)    // 1-7
-    ]
-    weekRange = '38-52 et 1-7'
-  }
-  
-  if (!confirm(`Générer tous les créneaux du semestre ${semesterNum === 1 ? 'de Printemps' : 'd\'Automne'} (semaines ${weekRange}) depuis le planning annuel ?`)) return
-  
-  try {
-    let generatedCount = 0
-    
-    for (const weekNum of weeksToGenerate) {
-      try {
-        await weeklyPlanningService.generateWeekFromMinibrick(selectedYear.value, weekNum, minibrickData.value)
-        generatedCount++
-      } catch (error) {
-        console.error(`Erreur génération semaine ${weekNum}:`, error)
-      }
-    }
-    
-    toast.add({
-      severity: 'success',
-      summary: 'Génération terminée',
-      detail: `${generatedCount}/${weeksToGenerate.length} semaines générées depuis le minibrick`,
-      life: 4000
-    })
-    
-    // Recharger le semestre
-    await onViewModeChange()
-  } catch (error) {
-    console.error('Erreur génération semestre:', error)
-    toast.add({
-      severity: 'error',
-      summary: 'Erreur',
-      detail: 'Impossible de générer le semestre',
-      life: 3000
-    })
-  }
-}
+// Fonction generateSemesterFromMinibrick supprimée (nécessite migration complète du système minibrick)
 </script>
 
 <style scoped>
@@ -1600,6 +1679,74 @@ const generateSemesterFromMinibrick = async () => {
   display: grid;
   grid-template-columns: 1fr;
   gap: 2rem;
+}
+
+/* Panneau de sélection amélioré */
+.selection-panel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.selection-card {
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 2px solid transparent;
+}
+
+.selection-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  border-color: var(--primary-color);
+}
+
+.selection-item {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 0.5rem;
+}
+
+.selection-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 70px;
+  height: 70px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--primary-color-light), var(--primary-color));
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.selection-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.selection-label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-color-secondary);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.selection-dropdown {
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+/* Navigation de semaine */
+.week-selector {
+  grid-column: span 2;
+}
+
+.week-navigation {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .weekly-planning-table {

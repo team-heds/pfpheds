@@ -446,7 +446,7 @@ import ColorPicker from 'primevue/colorpicker'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Toast from 'primevue/toast'
-import academicPlanningService from '@/service/academicPlanningService'
+import planningService from '@/service/planningService'
 import { useModules } from '@/composables/useModules'
 import { useAcademicYear } from '@/composables/useAcademicYear'
 
@@ -545,7 +545,25 @@ const dayLabels = {
 
 // Computed
 const currentWeeks = computed(() => {
-  return academicPlanningService.generateAllWeeks()
+  // Ordre académique : Automne (S38-S52, S1-S7) puis Printemps (S8-S37)
+  const weeks = []
+  
+  // Semestre d'Automne : S38 → S52
+  for (let w = 38; w <= 52; w++) {
+    weeks.push(w)
+  }
+  
+  // Semestre d'Automne (suite) : S1 → S7
+  for (let w = 1; w <= 7; w++) {
+    weeks.push(w)
+  }
+  
+  // Semestre de Printemps : S8 → S37
+  for (let w = 8; w <= 37; w++) {
+    weeks.push(w)
+  }
+  
+  return weeks
 })
 
 // Déterminer le semestre d'une semaine
@@ -626,8 +644,6 @@ const getDefaultColorByYear = (annee) => {
 // Fonctions
 const loadPlanning = async () => {
   try {
-    yearData.value = await academicPlanningService.getAcademicYear(selectedYear.value)
-    
     // Charger les modules Supabase UNIQUEMENT
     await loadModules()
     
@@ -639,7 +655,7 @@ const loadPlanning = async () => {
     courseCodes.value = {}
     
     supabaseModules.value.forEach((module) => {
-      const courseCodeId = module.number?.toString() || module.short_code?.toString() || `module_${module.id}`
+      const courseCodeId = module.code || module.number?.toString() || `module_${module.id}`
       
       // Créer l'entrée avec les données Supabase
       courseCodes.value[courseCodeId] = {
@@ -651,15 +667,30 @@ const loadPlanning = async () => {
       }
     })
     
-    // Charger les cellules des deux semestres
-    const autumnCells = await academicPlanningService.getPlanningCells(selectedYear.value, 'autumn')
-    const springCells = await academicPlanningService.getPlanningCells(selectedYear.value, 'spring')
+    console.log('[PlanningAdmin] Codes de cours créés:', Object.keys(courseCodes.value).length)
     
-    // Fusionner les cellules
-    planningCells.value = {
-      ...(autumnCells || {}),
-      ...(springCells || {})
+    // Charger les cellules depuis Supabase
+    const autumnCells = await planningService.getPlanningCells(selectedYear.value, 'autumn')
+    const springCells = await planningService.getPlanningCells(selectedYear.value, 'spring')
+    
+    // Fusionner les cellules et adapter le format
+    planningCells.value = {}
+    
+    // Convertir le format Supabase vers le format attendu par le template
+    const convertCells = (cells) => {
+      Object.entries(cells).forEach(([key, cell]) => {
+        planningCells.value[key] = {
+          courseCode: cell.module_code,
+          displayLabel: '',
+          notes: ''
+        }
+      })
     }
+    
+    convertCells(autumnCells)
+    convertCells(springCells)
+    
+    console.log('[PlanningAdmin] ✅ Planning chargé:', Object.keys(planningCells.value).length, 'cellules')
   } catch (error) {
     console.error('[PlanningAdmin] Erreur chargement planning:', error)
     toast.add({
@@ -711,18 +742,22 @@ const saveCell = async () => {
       const cellCount = selectedCells.value.length
       for (const cellKey of selectedCells.value) {
         const [day, week] = cellKey.split('_')
-        const semester = getSemesterForWeek(parseInt(week))
-        await academicPlanningService.savePlanningCell(
+        
+        // Sauvegarder la cellule
+        await planningService.savePlanningCell(
           selectedYear.value,
-          semester,
-          day,
           parseInt(week),
-          {
-            courseCode: editingCell.value.courseCode,
-            displayLabel: editingCell.value.displayLabel,
-            notes: editingCell.value.notes
-          }
+          day,
+          editingCell.value.courseCode
         )
+        
+        // Générer automatiquement les créneaux hebdomadaires
+        await planningService.generateTimeSlotsFromCell({
+          class_code: selectedYear.value,
+          week_number: parseInt(week),
+          day: day,
+          module_code: editingCell.value.courseCode
+        })
       }
       
       selectedCells.value = []
@@ -734,23 +769,25 @@ const saveCell = async () => {
       })
     } else {
       // Mode single
-      const semester = getSemesterForWeek(editingCell.value.week)
-      await academicPlanningService.savePlanningCell(
+      await planningService.savePlanningCell(
         selectedYear.value,
-        semester,
-        editingCell.value.day,
         editingCell.value.week,
-        {
-          courseCode: editingCell.value.courseCode,
-          displayLabel: editingCell.value.displayLabel,
-          notes: editingCell.value.notes
-        }
+        editingCell.value.day,
+        editingCell.value.courseCode
       )
+      
+      // Générer automatiquement les créneaux hebdomadaires
+      await planningService.generateTimeSlotsFromCell({
+        class_code: selectedYear.value,
+        week_number: editingCell.value.week,
+        day: editingCell.value.day,
+        module_code: editingCell.value.courseCode
+      })
       
       toast.add({
         severity: 'success',
         summary: 'Succès',
-        detail: 'Cellule sauvegardée',
+        detail: 'Cellule sauvegardée + créneaux générés automatiquement',
         life: 3000
       })
     }
@@ -759,24 +796,33 @@ const saveCell = async () => {
     await loadPlanning()
   } catch (error) {
     console.error('[PlanningAdmin] Erreur saveCell:', error)
+    console.error('[PlanningAdmin] Message:', error?.message)
+    console.error('[PlanningAdmin] Code:', error?.code)
+    console.error('[PlanningAdmin] Détails:', JSON.stringify(error, null, 2))
     toast.add({
       severity: 'error',
       summary: 'Erreur',
-      detail: 'Impossible de sauvegarder la cellule',
-      life: 3000
+      detail: error?.message || 'Impossible de sauvegarder la cellule',
+      life: 5000
     })
   }
 }
 
 const deleteCell = async () => {
   try {
-    const semester = getSemesterForWeek(editingCell.value.week)
-    await academicPlanningService.deletePlanningCell(
+    await planningService.deletePlanningCell(
       selectedYear.value,
-      semester,
-      editingCell.value.day,
-      editingCell.value.week
+      editingCell.value.week,
+      editingCell.value.day
     )
+    
+    // Supprimer aussi les créneaux hebdomadaires générés
+    await planningService.generateTimeSlotsFromCell({
+      class_code: selectedYear.value,
+      week_number: editingCell.value.week,
+      day: editingCell.value.day,
+      module_code: null
+    })
 
     toast.add({
       severity: 'success',
@@ -900,15 +946,16 @@ const saveCourseCode = async () => {
       return
     }
 
-    await academicPlanningService.saveCourseCode(
-      courseCodeForm.value.id,
-      {
-        moduleNumber: courseCodeForm.value.moduleNumber,
-        label: courseCodeForm.value.label,
-        color: courseCodeForm.value.color,
-        year: courseCodeForm.value.year
-      }
-    )
+    // Les codes de cours sont maintenant gérés via les modules Supabase
+    toast.add({
+      severity: 'info',
+      summary: 'Info',
+      detail: 'Les codes de cours sont maintenant gérés dans les modules Supabase',
+      life: 3000
+    })
+    return
+    
+    // TODO: Implémenter la création de module Supabase si nécessaire
 
     toast.add({
       severity: 'success',
@@ -934,8 +981,16 @@ const saveCourseCode = async () => {
 
 const deleteCourseCode = async (codeId) => {
   try {
+    toast.add({
+      severity: 'info',
+      summary: 'Info',
+      detail: 'La suppression de modules se fait maintenant dans la gestion des modules',
+      life: 3000
+    })
+    return
+    
     if (confirm(`Supprimer le code "${codeId}" ?`)) {
-      await academicPlanningService.deleteCourseCode(codeId)
+      // TODO: Implémenter la suppression dans Supabase
       
       toast.add({
         severity: 'success',
@@ -958,58 +1013,37 @@ const deleteCourseCode = async (codeId) => {
 }
 
 const initializePlanning = async () => {
-  try {
-    if (confirm('Initialiser le planning avec les données par défaut ?')) {
-      await academicPlanningService.initializeDefaultPlanning()
-      
-      toast.add({
-        severity: 'success',
-        summary: 'Succès',
-        detail: 'Planning initialisé',
-        life: 3000
-      })
-      
-      await loadPlanning()
-    }
-  } catch (error) {
-    console.error('[PlanningAdmin] Erreur initializePlanning:', error)
-    toast.add({
-      severity: 'error',
-      summary: 'Erreur',
-      detail: 'Impossible d\'initialiser le planning',
-      life: 3000
-    })
-  }
+  toast.add({
+    severity: 'info',
+    summary: 'Fonction désactivée',
+    detail: 'Cette fonction sera réimplémentée avec Supabase',
+    life: 3000
+  })
+  // TODO: Réimplémenter l'initialisation avec Supabase
 }
 
 const migrateModuleNumbers = async () => {
-  try {
-    if (confirm('Ajouter les numéros de module aux codes existants ?\n\nCela ne supprimera pas vos codes, mais ajoutera juste les numéros de module.')) {
-      await academicPlanningService.migrateModuleNumbers()
-      
-      toast.add({
-        severity: 'success',
-        summary: 'Migration réussie',
-        detail: 'Les numéros de module ont été ajoutés',
-        life: 3000
-      })
-      
-      await loadPlanning()
-    }
-  } catch (error) {
-    console.error('[PlanningAdmin] Erreur migrateModuleNumbers:', error)
-    toast.add({
-      severity: 'error',
-      summary: 'Erreur',
-      detail: 'Impossible de migrer les numéros de module',
-      life: 3000
-    })
-  }
+  toast.add({
+    severity: 'info',
+    summary: 'Fonction désactivée',
+    detail: 'Les modules sont maintenant directement gérés dans Supabase',
+    life: 3000
+  })
+  // Plus nécessaire avec Supabase
 }
 
 const exportPlanning = async () => {
   try {
-    const jsonData = await academicPlanningService.exportPlanningToJSON(selectedYear.value)
+    toast.add({
+      severity: 'info',
+      summary: 'Fonction temporairement désactivée',
+      detail: 'L\'export sera réimplémenté avec Supabase',
+      life: 3000
+    })
+    return
+    
+    // TODO: Réimplémenter l'export avec Supabase
+    const jsonData = JSON.stringify({ message: 'Export pas encore implémenté' })
     
     const blob = new Blob([jsonData], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
@@ -1045,7 +1079,16 @@ const exportPlanningExcel = async () => {
       classes: sortedClasses.value
     }
     
-    const blob = await academicPlanningService.exportAllYearsToExcel(mergeCells.value, exportData)
+    // TODO: Réimplémenter l'export Excel avec Supabase
+    toast.add({
+      severity: 'info',
+      summary: 'Export temporairement désactivé',
+      detail: 'L\'export Excel sera réimplémenté avec Supabase',
+      life: 3000
+    })
+    return
+    
+    const blob = null // await planningService.exportAllYearsToExcel(mergeCells.value, exportData)
     
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')

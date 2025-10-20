@@ -398,12 +398,30 @@ class AcademicPlanningService {
         await this.saveCourseCode(codeId, codeData)
       }
 
-      // Créer les structures pour les 3 années
-      const years = ['bac25', 'bac24', 'bac23']
+      // Créer les structures pour toutes les années (2023-2030 + variantes PT)
+      const years = [
+        'bac30', 'bac29', 'bac28', 'bac27', 'bac26', 'bac25', 'bac24', 'bac23',
+        'bac30-pt', 'bac29-pt', 'bac28-pt', 'bac27-pt', 'bac26-pt', 'bac25-pt', 'bac24-pt', 'bac23-pt'
+      ]
       const yearLabels = {
+        // Temps plein
+        'bac30': '1ère année 2030-2031 / Bac 30',
+        'bac29': '1ère année 2029-2030 / Bac 29',
+        'bac28': '1ère année 2028-2029 / Bac 28',
+        'bac27': '1ère année 2027-2028 / Bac 27',
+        'bac26': '1ère année 2026-2027 / Bac 26',
         'bac25': '1ère année 2025-2026 / Bac 25',
         'bac24': '2ème année 2025-2026 / Bac 24',
-        'bac23': '3ème année 2025-2026 / Bac 23'
+        'bac23': '3ème année 2025-2026 / Bac 23',
+        // Temps partiel
+        'bac30-pt': '1ère année PT 2030-2031 / Bac 30',
+        'bac29-pt': '1ère année PT 2029-2030 / Bac 29',
+        'bac28-pt': '1ère année PT 2028-2029 / Bac 28',
+        'bac27-pt': '1ère année PT 2027-2028 / Bac 27',
+        'bac26-pt': '1ère année PT 2026-2027 / Bac 26',
+        'bac25-pt': '2ème année PT 2025-2026 / Bac 25',
+        'bac24-pt': '3ème année PT 2025-2026 / Bac 24',
+        'bac23-pt': '4ème année PT 2025-2026 / Bac 23'
       }
 
       for (const yearId of years) {
