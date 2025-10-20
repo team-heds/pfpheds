@@ -87,6 +87,14 @@ const menu = ref([
         ]
       },
       {
+        label: 'Gestion Académique',
+        icon: 'pi pi-box',
+        items: [
+          { label: 'Tableau Kanban', icon: 'pi pi-th-large', to: '/admin/academic/kanban' },
+          { label: 'Gestion Contenu Multimédia', icon: 'pi pi-video', to: '/admin/academic/media-content' }
+        ]
+      },
+      {
         label: 'Gamification',
         icon: 'pi pi-star',
         items: [

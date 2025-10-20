@@ -10,15 +10,18 @@ export function useModules() {
    * Charge tous les modules
    */
   const loadModules = async () => {
+    console.log('[useModules] 🚀 Début loadModules...')
     loading.value = true
     error.value = null
     try {
       modules.value = await modulesService.getAllModules()
+      console.log('[useModules] ✅ Modules assignés:', modules.value)
     } catch (e) {
       error.value = e.message
-      console.error('Erreur loadModules:', e)
+      console.error('[useModules] ❌ Erreur loadModules:', e)
     } finally {
       loading.value = false
+      console.log('[useModules] 🏁 loadModules terminé')
     }
   }
 

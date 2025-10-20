@@ -87,6 +87,8 @@ import DashboardView from '@/views/admin/DashboardView.vue'
 import PlanningView from '@/views/admin/planning/PlanningView.vue'
 import PlanningAdminView from '@/views/admin/planning/PlanningAdminView.vue'
 import AcademicYearManagement from '@/views/admin/AcademicYearManagement.vue'
+import AcademicKanbanView from '@/views/admin/academic/AcademicKanbanView.vue'
+import MediaContentView from '@/views/admin/academic/MediaContentView.vue'
 import AdminDefisView from '@/views/admin/institutions/gamification/AdminDefisView.vue';
 
 // ========================================
@@ -302,6 +304,9 @@ const routes = [
   { path: '/admin/planning/weekly', component: () => import('@/views/admin/planning/WeeklyPlanningAdminView.vue'), name: 'WeeklyPlanningAdminView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
   { path: '/admin/planning/semester', component: () => import('@/views/admin/planning/SemesterPlanningAdminView.vue'), name: 'SemesterPlanningAdminView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
   { path: '/admin/planning/annual', component: () => import('@/views/admin/planning/AnnualPlanningView.vue'), name: 'AnnualPlanningView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
+  // Gestion académique (Kanban & Contenu)
+  { path: '/admin/academic/kanban', component: AcademicKanbanView, name: 'AcademicKanbanView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
+  { path: '/admin/academic/media-content', component: MediaContentView, name: 'MediaContentView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
   
   // ========================================
   // GAMIFICATION ADMIN ROUTES
