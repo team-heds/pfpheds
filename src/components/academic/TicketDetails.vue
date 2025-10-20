@@ -37,9 +37,7 @@
         <!-- Description -->
         <div class="description-section">
           <h3 class="section-label">Description</h3>
-          <div v-if="ticket.description" class="description-content">
-            <p>{{ ticket.description }}</p>
-          </div>
+          <div v-if="ticket.description" class="description-content markdown-rendered" v-html="renderedDescription"></div>
           <div v-else class="empty-description">
             <span class="text-500">Aucune description</span>
           </div>
@@ -268,9 +266,21 @@
         <!-- Créateur -->
         <div v-if="ticket.created_by" class="detail-item">
           <span class="detail-label">Créé par</span>
-          <div class="user-info">
-            <div class="user-avatar">{{ getInitials(ticket.created_by) }}</div>
-            <span class="user-name">{{ ticket.created_by_user?.full_name || ticket.created_by }}</span>
+          <div class="user-info-enhanced">
+            <img 
+              v-if="creatorProfile?.avatar_url" 
+              :src="creatorProfile.avatar_url" 
+              :alt="creatorProfile.full_name"
+              class="user-avatar-image"
+              @error="handleAvatarError"
+            />
+            <div v-else class="user-avatar-fallback">
+              {{ getInitials(creatorProfile?.full_name || creatorProfile?.email || ticket.created_by) }}
+            </div>
+            <div class="user-details">
+              <span class="user-name">{{ creatorProfile?.full_name || 'Utilisateur' }}</span>
+              <span class="user-email" v-if="creatorProfile?.email">{{ creatorProfile.email }}</span>
+            </div>
           </div>
         </div>
 
@@ -379,6 +389,8 @@
 
 <script setup>
 import { ref, reactive, computed, watch } from 'vue'
+import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 import Tag from 'primevue/tag'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
@@ -389,6 +401,12 @@ import { TICKET_STATUS, TICKET_TYPES } from '@/service/ticketService'
 import { useToast } from 'primevue/usetoast'
 
 const toast = useToast()
+
+// Configuration Markdown
+marked.setOptions({
+  breaks: true,
+  gfm: true
+})
 
 const props = defineProps({
   ticket: {
@@ -415,6 +433,49 @@ const currentBranch = ref('')
 const newBranchName = ref('')
 const baseBranch = ref('prod')
 
+// Profil du créateur
+const creatorProfile = ref(null)
+
+// Rendu Markdown sécurisé de la description
+const renderedDescription = computed(() => {
+  if (!props.ticket.description) return ''
+  try {
+    const rawHtml = marked(props.ticket.description)
+    return DOMPurify.sanitize(rawHtml)
+  } catch (error) {
+    console.error('[TicketDetails] Erreur Markdown:', error)
+    return props.ticket.description
+  }
+})
+
+// Fonction pour charger le profil du créateur
+async function loadCreatorProfile() {
+  if (!props.ticket.created_by) return
+  
+  try {
+    const { supabase } = await import('@/supabase')
+    
+    // Récupérer le profil depuis la table profiles
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, email, full_name, avatar_url')
+      .eq('id', props.ticket.created_by)
+      .single()
+    
+    if (error) {
+      console.error('[TicketDetails] Erreur chargement profil:', error)
+      return
+    }
+    
+    if (data) {
+      creatorProfile.value = data
+      console.log('[TicketDetails] Profil créateur chargé:', data)
+    }
+  } catch (error) {
+    console.error('[TicketDetails] Erreur:', error)
+  }
+}
+
 // Fonction pour charger les données du ticket
 function loadTicketData() {
   console.log('[TicketDetails] Chargement des données du ticket:', props.ticket.id)
@@ -422,6 +483,10 @@ function loadTicketData() {
   // Réinitialiser
   videoLinks.value = []
   currentBranch.value = ''
+  creatorProfile.value = null
+  
+  // Charger le profil du créateur
+  loadCreatorProfile()
   
   // Charger depuis metadata
   if (props.ticket.metadata) {
@@ -722,12 +787,27 @@ function getDaysUntil(date) {
   return `Dans ${Math.floor(diffDays / 30)}mois`
 }
 
-function getInitials(userId) {
-  if (!userId) return 'U'
-  if (typeof userId === 'string') {
-    return userId.substring(0, 2).toUpperCase()
+function getInitials(name) {
+  if (!name) return 'U'
+  if (typeof name === 'string') {
+    // Si c'est un email
+    if (name.includes('@')) {
+      return name.substring(0, 2).toUpperCase()
+    }
+    // Si c'est un nom complet
+    const parts = name.split(' ')
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase()
+    }
+    return name.substring(0, 2).toUpperCase()
   }
   return 'U'
+}
+
+function handleAvatarError(event) {
+  // En cas d'erreur de chargement de l'image, on cache l'élément
+  event.target.style.display = 'none'
+  creatorProfile.value.avatar_url = null
 }
 </script>
 
@@ -860,6 +940,115 @@ function getInitials(userId) {
   border-radius: 8px;
   border: 1px solid var(--surface-border);
   line-height: 1.6;
+}
+
+/* Style du Markdown rendu */
+.markdown-rendered :deep(h1),
+.markdown-rendered :deep(h2),
+.markdown-rendered :deep(h3) {
+  margin: 1rem 0 0.5rem 0;
+  color: var(--text-color);
+  font-weight: 600;
+}
+
+.markdown-rendered :deep(h1) {
+  font-size: 1.5rem;
+  border-bottom: 2px solid var(--surface-border);
+  padding-bottom: 0.5rem;
+}
+
+.markdown-rendered :deep(h2) {
+  font-size: 1.25rem;
+}
+
+.markdown-rendered :deep(h3) {
+  font-size: 1.1rem;
+}
+
+.markdown-rendered :deep(p) {
+  margin: 0.75rem 0;
+}
+
+.markdown-rendered :deep(ul),
+.markdown-rendered :deep(ol) {
+  margin: 0.75rem 0;
+  padding-left: 2rem;
+}
+
+.markdown-rendered :deep(li) {
+  margin: 0.25rem 0;
+}
+
+.markdown-rendered :deep(code) {
+  background: rgba(0,0,0,0.1);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 0.875rem;
+}
+
+.markdown-rendered :deep(pre) {
+  background: rgba(0,0,0,0.05);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  border-left: 4px solid var(--primary-color);
+  margin: 1rem 0;
+}
+
+.markdown-rendered :deep(pre code) {
+  background: none;
+  padding: 0;
+}
+
+.markdown-rendered :deep(a) {
+  color: var(--primary-color);
+  text-decoration: underline;
+}
+
+.markdown-rendered :deep(a:hover) {
+  text-decoration: none;
+}
+
+.markdown-rendered :deep(blockquote) {
+  margin: 1rem 0;
+  padding-left: 1rem;
+  border-left: 4px solid var(--surface-border);
+  color: var(--text-color-secondary);
+  font-style: italic;
+}
+
+.markdown-rendered :deep(strong) {
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.markdown-rendered :deep(em) {
+  font-style: italic;
+}
+
+.markdown-rendered :deep(hr) {
+  border: none;
+  border-top: 2px solid var(--surface-border);
+  margin: 1.5rem 0;
+}
+
+.markdown-rendered :deep(table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+
+.markdown-rendered :deep(th),
+.markdown-rendered :deep(td) {
+  padding: 0.5rem;
+  border: 1px solid var(--surface-border);
+  text-align: left;
+}
+
+.markdown-rendered :deep(th) {
+  background: var(--surface-100);
+  font-weight: 600;
 }
 
 .description-content p {
@@ -1393,6 +1582,64 @@ function getInitials(userId) {
   font-size: 0.938rem;
   color: var(--text-color);
   font-weight: 500;
+}
+
+/* Enhanced User Info */
+.user-info-enhanced {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  background: var(--surface-50);
+  border-radius: 10px;
+  border: 1px solid var(--surface-border);
+  transition: all 0.2s ease;
+}
+
+.user-info-enhanced:hover {
+  background: var(--surface-100);
+  border-color: var(--primary-color);
+}
+
+.user-avatar-image {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--primary-color);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.user-avatar-fallback {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-600) 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.user-details .user-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.user-email {
+  font-size: 0.813rem;
+  color: var(--text-color-secondary);
 }
 
 /* Assets Badge */

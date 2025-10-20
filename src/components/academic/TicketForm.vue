@@ -38,14 +38,81 @@
 
       <!-- Description -->
       <div class="col-12">
-        <label for="description" class="block mb-2 font-semibold">Description</label>
+        <label for="description" class="block mb-2 font-semibold">
+          Description
+          <span class="text-sm text-500 ml-2">(Markdown supporté)</span>
+        </label>
+        
+        <!-- Boutons de formatage Markdown -->
+        <div class="markdown-toolbar">
+          <Button 
+            icon="pi pi-bold" 
+            @click="insertMarkdown('**', '**', 'texte en gras')"
+            text
+            size="small"
+            v-tooltip="'Gras'"
+          />
+          <Button 
+            icon="pi pi-italic" 
+            @click="insertMarkdown('_', '_', 'texte en italique')"
+            text
+            size="small"
+            v-tooltip="'Italique'"
+          />
+          <Button 
+            icon="pi pi-list" 
+            @click="insertMarkdown('- ', '', 'élément de liste')"
+            text
+            size="small"
+            v-tooltip="'Liste'"
+          />
+          <Button 
+            icon="pi pi-hashtag" 
+            @click="insertMarkdown('## ', '', 'Titre')"
+            text
+            size="small"
+            v-tooltip="'Titre'"
+          />
+          <Button 
+            icon="pi pi-link" 
+            @click="insertMarkdown('[', '](url)', 'texte du lien')"
+            text
+            size="small"
+            v-tooltip="'Lien'"
+          />
+          <Button 
+            icon="pi pi-code" 
+            @click="insertMarkdown('`', '`', 'code')"
+            text
+            size="small"
+            v-tooltip="'Code inline'"
+          />
+        </div>
+        
         <Textarea 
+          ref="descriptionTextarea"
           v-model="formData.description" 
           id="description"
-          rows="4"
-          placeholder="Décrivez le contenu à produire..."
-          class="w-full"
+          rows="6"
+          placeholder="Décrivez le contenu à produire...
+
+Vous pouvez utiliser le Markdown :
+- **Gras** ou _italique_
+- ## Titres
+- Listes à puces
+- [Liens](url)
+- `Code`"
+          class="w-full markdown-editor"
         />
+        
+        <!-- Aperçu Markdown -->
+        <div v-if="formData.description" class="markdown-preview mt-2">
+          <div class="preview-header">
+            <i class="pi pi-eye"></i>
+            <span>Aperçu</span>
+          </div>
+          <div class="preview-content" v-html="renderedMarkdown"></div>
+        </div>
       </div>
 
       <!-- Module -->
@@ -305,7 +372,9 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch } from 'vue'
+import { ref, reactive, watch, computed } from 'vue'
+import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
 import InputNumber from 'primevue/inputnumber'
@@ -331,6 +400,51 @@ const emit = defineEmits(['save', 'cancel'])
 
 const saving = ref(false)
 const errors = ref({})
+const descriptionTextarea = ref(null)
+
+// Configuration Markdown
+marked.setOptions({
+  breaks: true,
+  gfm: true
+})
+
+// Rendu Markdown sécurisé
+const renderedMarkdown = computed(() => {
+  if (!formData.description) return ''
+  try {
+    // marked.parse peut retourner une Promise, donc on utilise parseInline pour du sync
+    const rawHtml = marked(formData.description)
+    return DOMPurify.sanitize(rawHtml)
+  } catch (error) {
+    console.error('[TicketForm] Erreur Markdown:', error)
+    return formData.description
+  }
+})
+
+// Insérer du Markdown dans le textarea
+function insertMarkdown(before, after, placeholder) {
+  const textarea = descriptionTextarea.value?.$el || descriptionTextarea.value
+  if (!textarea) return
+  
+  const start = textarea.selectionStart
+  const end = textarea.selectionEnd
+  const selectedText = formData.description.substring(start, end)
+  const textToInsert = selectedText || placeholder
+  
+  const newText = 
+    formData.description.substring(0, start) +
+    before + textToInsert + after +
+    formData.description.substring(end)
+  
+  formData.description = newText
+  
+  // Replacer le curseur
+  setTimeout(() => {
+    const newCursorPos = start + before.length + textToInsert.length
+    textarea.focus()
+    textarea.setSelectionRange(newCursorPos, newCursorPos)
+  }, 0)
+}
 
 // Types de tickets
 const ticketTypes = [
@@ -493,6 +607,139 @@ async function submit() {
 <style scoped>
 .ticket-form {
   padding: 1rem;
+}
+
+/* Markdown Toolbar */
+.markdown-toolbar {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  background: var(--surface-50);
+  border: 1px solid var(--surface-border);
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  flex-wrap: wrap;
+}
+
+.markdown-editor {
+  border-radius: 0 0 8px 8px !important;
+}
+
+/* Aperçu Markdown */
+.markdown-preview {
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.preview-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--surface-100);
+  border-bottom: 1px solid var(--surface-border);
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-color-secondary);
+}
+
+.preview-content {
+  padding: 1rem;
+  background: var(--surface-card);
+  color: var(--text-color) !important;
+  line-height: 1.6;
+  min-height: 100px;
+}
+
+.preview-content * {
+  color: var(--text-color) !important;
+}
+
+/* Style du Markdown rendu */
+.preview-content :deep(h1),
+.preview-content :deep(h2),
+.preview-content :deep(h3) {
+  margin: 1rem 0 0.5rem 0;
+  color: var(--text-color) !important;
+  font-weight: 600;
+}
+
+.preview-content :deep(h1) {
+  font-size: 1.5rem;
+  border-bottom: 2px solid var(--surface-border);
+  padding-bottom: 0.5rem;
+}
+
+.preview-content :deep(h2) {
+  font-size: 1.25rem;
+}
+
+.preview-content :deep(h3) {
+  font-size: 1.1rem;
+}
+
+.preview-content :deep(p) {
+  margin: 0.75rem 0;
+  color: var(--text-color) !important;
+}
+
+.preview-content :deep(ul),
+.preview-content :deep(ol) {
+  margin: 0.75rem 0;
+  padding-left: 2rem;
+  color: var(--text-color) !important;
+}
+
+.preview-content :deep(li) {
+  margin: 0.25rem 0;
+  color: var(--text-color) !important;
+}
+
+.preview-content :deep(code) {
+  background: rgba(255, 193, 7, 0.2);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 0.875rem;
+  color: #ffc107 !important;
+}
+
+.preview-content :deep(pre) {
+  background: rgba(0,0,0,0.3);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  border-left: 4px solid var(--primary-color);
+}
+
+.preview-content :deep(pre code) {
+  background: none;
+  padding: 0;
+  color: #ffc107 !important;
+}
+
+.preview-content :deep(a) {
+  color: var(--primary-color) !important;
+  text-decoration: underline;
+}
+
+.preview-content :deep(blockquote) {
+  margin: 1rem 0;
+  padding-left: 1rem;
+  border-left: 4px solid var(--primary-color);
+  color: var(--text-color-secondary) !important;
+  font-style: italic;
+}
+
+.preview-content :deep(strong) {
+  font-weight: 700;
+  color: var(--text-color) !important;
+}
+
+.preview-content :deep(em) {
+  font-style: italic;
+  color: var(--text-color) !important;
 }
 
 .type-card {
