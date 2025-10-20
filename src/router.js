@@ -67,6 +67,7 @@ import QrCodeGenerator from '@/components/ui/QrCodeGenerator.vue'
 import Profile from "@/views/users/ProfileView.vue";
 import ProfileAdmin from '@/views/admin/ProfileAdminView.vue'
 import SettingView from '@/views/users/SettingsView.vue'
+import AdminSettingsView from '@/views/admin/SettingsView.vue'
 import HESHouseQuizView from '@/views/users/HESHouseQuizView.vue'
 
 // ========================================
@@ -296,6 +297,7 @@ const routes = [
   // DASHBOARD & ADMINISTRATION
   // ========================================
   { path: '/admin', component: DashboardView, name: 'DashboardView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor', 'house_coach'] } },
+  { path: '/admin/settings', component: AdminSettingsView, name: 'AdminSettingsView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
   { path: '/admin/defis', component: AdminDefisView, name: 'AdminDefisView', meta: { requiresAuth: true, requiredRole: ['admin', 'house_coach'] } },
   // Planning académique
   { path: '/admin/planning', component: PlanningView, name: 'PlanningView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },

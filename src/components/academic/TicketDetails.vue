@@ -378,7 +378,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import Tag from 'primevue/tag'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
@@ -397,16 +397,14 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['edit', 'delete', 'publish', 'close'])
+const emit = defineEmits(['edit', 'delete', 'publish', 'close', 'update'])
 
 const showMenu = ref(false)
 const showAddVideoLink = ref(false)
 const showCreateBranch = ref(false)
 
 // Video links
-const videoLinks = ref([
-  // Example: { title: 'Vidéo brute', url: 'https://...' }
-])
+const videoLinks = ref([])
 const newVideoLink = reactive({
   title: '',
   url: ''
@@ -416,6 +414,42 @@ const newVideoLink = reactive({
 const currentBranch = ref('')
 const newBranchName = ref('')
 const baseBranch = ref('prod')
+
+// Fonction pour charger les données du ticket
+function loadTicketData() {
+  console.log('[TicketDetails] Chargement des données du ticket:', props.ticket.id)
+  
+  // Réinitialiser
+  videoLinks.value = []
+  currentBranch.value = ''
+  
+  // Charger depuis metadata
+  if (props.ticket.metadata) {
+    if (props.ticket.metadata.video_links && Array.isArray(props.ticket.metadata.video_links)) {
+      videoLinks.value = [...props.ticket.metadata.video_links]
+      console.log('[TicketDetails] Liens vidéo chargés:', videoLinks.value)
+    }
+    if (props.ticket.metadata.github_branch) {
+      currentBranch.value = props.ticket.metadata.github_branch
+      console.log('[TicketDetails] Branche GitHub chargée:', currentBranch.value)
+    }
+  }
+}
+
+// Charger les données au montage
+loadTicketData()
+
+// Recharger les données quand le ticket change (surveiller l'ID)
+watch(() => props.ticket.id, (newId, oldId) => {
+  console.log('[TicketDetails] Changement de ticket détecté:', oldId, '→', newId)
+  loadTicketData()
+})
+
+// Recharger aussi quand les metadata changent
+watch(() => props.ticket.metadata, () => {
+  console.log('[TicketDetails] Metadata mis à jour')
+  loadTicketData()
+}, { deep: true })
 
 const suggestedBranchName = computed(() => {
   const ticketId = props.ticket.id?.substring(0, 8) || 'ticket'
@@ -429,12 +463,16 @@ function toggleMenu() {
   showMenu.value = !showMenu.value
 }
 
-function addVideoLink() {
+async function addVideoLink() {
   if (newVideoLink.title && newVideoLink.url) {
     videoLinks.value.push({
       title: newVideoLink.title,
       url: newVideoLink.url
     })
+    
+    // Sauvegarder dans la base de données
+    await saveMetadata()
+    
     toast.add({ 
       severity: 'success', 
       summary: 'Lien ajouté', 
@@ -447,8 +485,12 @@ function addVideoLink() {
   }
 }
 
-function removeVideoLink(index) {
+async function removeVideoLink(index) {
   videoLinks.value.splice(index, 1)
+  
+  // Sauvegarder dans la base de données
+  await saveMetadata()
+  
   toast.add({ 
     severity: 'info', 
     summary: 'Lien supprimé', 
@@ -457,26 +499,111 @@ function removeVideoLink(index) {
   })
 }
 
-function createGitHubBranch() {
+async function createGitHubBranch() {
   const branchName = newBranchName.value || suggestedBranchName.value
   
-  // Simuler la création de la branche (à remplacer par un vrai appel API GitHub)
-  currentBranch.value = branchName
-  
-  toast.add({ 
-    severity: 'success', 
-    summary: 'Branche créée', 
-    detail: `La branche "${branchName}" a été créée avec succès`,
-    life: 4000 
-  })
-  
-  showCreateBranch.value = false
-  newBranchName.value = ''
+  try {
+    // Vérifier qu'on a une URL de repository
+    if (!props.ticket.metadata?.repository_url) {
+      toast.add({ 
+        severity: 'warn', 
+        summary: 'Repository manquant', 
+        detail: 'Ajoutez l\'URL du repository GitHub dans les métadonnées du ticket',
+        life: 4000 
+      })
+      return
+    }
+    
+    // Importer le service GitHub
+    const { createBranch, getGitHubToken } = await import('@/service/githubService')
+    
+    // Récupérer le token
+    const token = getGitHubToken()
+    if (!token) {
+      toast.add({ 
+        severity: 'warn', 
+        summary: 'Token GitHub manquant', 
+        detail: 'Configurez votre token GitHub dans les paramètres',
+        life: 5000 
+      })
+      showCreateBranch.value = false
+      return
+    }
+    
+    // Créer la branche sur GitHub
+    toast.add({ 
+      severity: 'info', 
+      summary: 'Création en cours...', 
+      detail: 'Création de la branche sur GitHub',
+      life: 2000 
+    })
+    
+    const result = await createBranch(
+      props.ticket.metadata.repository_url,
+      branchName,
+      baseBranch.value,
+      token
+    )
+    
+    // Sauvegarder la branche dans la base de données
+    currentBranch.value = branchName
+    await saveMetadata()
+    
+    toast.add({ 
+      severity: 'success', 
+      summary: 'Branche créée sur GitHub !', 
+      detail: `La branche "${branchName}" est disponible`,
+      life: 4000 
+    })
+    
+    console.log('[TicketDetails] ✅ Branche créée:', result)
+    
+    showCreateBranch.value = false
+    newBranchName.value = ''
+  } catch (error) {
+    console.error('[TicketDetails] ❌ Erreur création branche:', error)
+    toast.add({ 
+      severity: 'error', 
+      summary: 'Erreur GitHub', 
+      detail: error.message || 'Impossible de créer la branche sur GitHub',
+      life: 5000 
+    })
+  }
 }
 
 function openRepository() {
   if (props.ticket.metadata?.repository_url) {
     window.open(props.ticket.metadata.repository_url, '_blank')
+  }
+}
+
+// Sauvegarder les métadonnées dans le ticket
+async function saveMetadata() {
+  try {
+    const updatedMetadata = {
+      ...props.ticket.metadata,
+      video_links: videoLinks.value,
+      github_branch: currentBranch.value
+    }
+    
+    // Utiliser le service pour mettre à jour le ticket
+    const { updateTicket } = await import('@/service/ticketService')
+    await updateTicket(props.ticket.id, {
+      metadata: updatedMetadata
+    })
+    
+    console.log('[TicketDetails] Métadonnées sauvegardées:', updatedMetadata)
+    
+    // Émettre un événement pour dire au parent de recharger les données
+    emit('update')
+  } catch (error) {
+    console.error('[TicketDetails] Erreur lors de la sauvegarde:', error)
+    toast.add({ 
+      severity: 'error', 
+      summary: 'Erreur', 
+      detail: 'Impossible de sauvegarder les modifications',
+      life: 4000 
+    })
   }
 }
 

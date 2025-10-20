@@ -125,6 +125,7 @@
           @delete="deleteTicketConfirm"
           @publish="publishToVimeo"
           @close="showDetailsDialog = false"
+          @update="handleTicketUpdate"
         />
       </Dialog>
 
@@ -356,6 +357,21 @@ function handleTicketAction({ action, ticket }) {
 function openTicketDetails(ticket) {
   selectedTicket.value = ticket
   showDetailsDialog.value = true
+}
+
+// Gérer la mise à jour du ticket depuis TicketDetails
+async function handleTicketUpdate() {
+  console.log('[AcademicKanban] 🔄 Rechargement suite à une mise à jour...')
+  await loadTickets()
+  
+  // Mettre à jour le ticket sélectionné avec les nouvelles données
+  if (selectedTicket.value) {
+    const updatedTicket = tickets.value.find(t => t.id === selectedTicket.value.id)
+    if (updatedTicket) {
+      selectedTicket.value = updatedTicket
+      console.log('[AcademicKanban] ✅ Ticket sélectionné mis à jour:', updatedTicket)
+    }
+  }
 }
 
 // Éditer un ticket
