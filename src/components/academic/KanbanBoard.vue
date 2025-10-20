@@ -353,7 +353,8 @@ function showTicketMenu(event, ticket) {
 }
 
 .column-backlog { 
-  background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
+  background: linear-gradient(180deg, rgba(108, 117, 125, 0.15) 0%, rgba(73, 80, 87, 0.2) 100%);
+  border: 1px solid rgba(108, 117, 125, 0.3);
 }
 .column-backlog .column-header {
   background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
@@ -361,7 +362,8 @@ function showTicketMenu(event, ticket) {
 }
 
 .column-todo { 
-  background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.2) 100%);
+  border: 1px solid rgba(59, 130, 246, 0.3);
 }
 .column-todo .column-header {
   background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
@@ -369,7 +371,8 @@ function showTicketMenu(event, ticket) {
 }
 
 .column-in_progress { 
-  background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%);
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.2) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.3);
 }
 .column-in_progress .column-header {
   background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
@@ -377,7 +380,8 @@ function showTicketMenu(event, ticket) {
 }
 
 .column-validation { 
-  background: linear-gradient(180deg, #f5f3ff 0%, #ede9fe 100%);
+  background: linear-gradient(180deg, rgba(139, 92, 246, 0.15) 0%, rgba(124, 58, 237, 0.2) 100%);
+  border: 1px solid rgba(139, 92, 246, 0.3);
 }
 .column-validation .column-header {
   background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
@@ -385,7 +389,8 @@ function showTicketMenu(event, ticket) {
 }
 
 .column-problems { 
-  background: linear-gradient(180deg, #fef2f2 0%, #fee2e2 100%);
+  background: linear-gradient(180deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.2) 100%);
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 .column-problems .column-header {
   background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
@@ -393,7 +398,8 @@ function showTicketMenu(event, ticket) {
 }
 
 .column-done { 
-  background: linear-gradient(180deg, #f0fdf4 0%, #dcfce7 100%);
+  background: linear-gradient(180deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.2) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.3);
 }
 .column-done .column-header {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
