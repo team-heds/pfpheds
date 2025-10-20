@@ -6,7 +6,7 @@
 CREATE TABLE IF NOT EXISTS video_library (
   -- Identifiants
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  ticket_id UUID REFERENCES academic_tickets(id) ON DELETE SET NULL,
+  ticket_id UUID, -- Référence au ticket source (nullable si ticket supprimé) - Pas de FK pour éviter conflit de types
   
   -- Informations Vimeo
   vimeo_url TEXT NOT NULL,
@@ -19,8 +19,8 @@ CREATE TABLE IF NOT EXISTS video_library (
   duration INTEGER, -- Durée en minutes
   
   -- Organisation
-  module_id UUID, -- Référence au module (peut être null)
-  year_id UUID, -- Année académique (peut être null)
+  module_id INTEGER, -- Référence au module (peut être null) - INTEGER pour correspondre à la table modules
+  year_id INTEGER, -- Année académique (peut être null) - INTEGER si academic_years utilise INTEGER
   type VARCHAR(50) DEFAULT 'cours', -- Type: cours, tp, demo, simulation, autre
   
   -- Métadonnées additionnelles
@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS video_library (
   
   -- Timestamps et audit
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  created_by UUID, -- Référence à l'utilisateur créateur - Pas de FK pour éviter conflit
   
   -- Contraintes
   CONSTRAINT unique_vimeo_url UNIQUE(vimeo_url)
@@ -68,61 +68,70 @@ CREATE INDEX IF NOT EXISTS idx_video_library_tags ON video_library USING GIN(tag
 -- RLS (Row Level Security) Policies
 -- =====================================================
 
+-- Note : Les policies existent déjà, ce bloc est commenté
+-- Si vous avez besoin de les recréer, décommentez et exécutez
+
 -- Activer RLS
-ALTER TABLE video_library ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE video_library ENABLE ROW LEVEL SECURITY;
+
+-- Supprimer les policies existantes avant de les recréer (si nécessaire)
+-- DROP POLICY IF EXISTS "Anyone authenticated can view videos" ON video_library;
+-- DROP POLICY IF EXISTS "Only admin and editor can insert videos" ON video_library;
+-- DROP POLICY IF EXISTS "Only admin and editor can update videos" ON video_library;
+-- DROP POLICY IF EXISTS "Only admin can delete videos" ON video_library;
 
 -- Politique : Tous les utilisateurs authentifiés peuvent lire
-CREATE POLICY "Anyone authenticated can view videos"
-  ON video_library
-  FOR SELECT
-  TO authenticated
-  USING (true);
+-- CREATE POLICY "Anyone authenticated can view videos"
+--   ON video_library
+--   FOR SELECT
+--   TO authenticated
+--   USING (true);
 
 -- Politique : Seuls admin et editor peuvent insérer
-CREATE POLICY "Only admin and editor can insert videos"
-  ON video_library
-  FOR INSERT
-  TO authenticated
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE profiles.id = auth.uid()
-      AND profiles.role IN ('admin', 'editor')
-    )
-  );
+-- CREATE POLICY "Only admin and editor can insert videos"
+--   ON video_library
+--   FOR INSERT
+--   TO authenticated
+--   WITH CHECK (
+--     EXISTS (
+--       SELECT 1 FROM profiles
+--       WHERE profiles.id = auth.uid()
+--       AND profiles.role IN ('admin', 'editor')
+--     )
+--   );
 
 -- Politique : Seuls admin et editor peuvent mettre à jour
-CREATE POLICY "Only admin and editor can update videos"
-  ON video_library
-  FOR UPDATE
-  TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE profiles.id = auth.uid()
-      AND profiles.role IN ('admin', 'editor')
-    )
-  );
+-- CREATE POLICY "Only admin and editor can update videos"
+--   ON video_library
+--   FOR UPDATE
+--   TO authenticated
+--   USING (
+--     EXISTS (
+--       SELECT 1 FROM profiles
+--       WHERE profiles.id = auth.uid()
+--       AND profiles.role IN ('admin', 'editor')
+--     )
+--   );
 
 -- Politique : Seuls admin peuvent supprimer
-CREATE POLICY "Only admin can delete videos"
-  ON video_library
-  FOR DELETE
-  TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE profiles.id = auth.uid()
-      AND profiles.role = 'admin'
-    )
-  );
+-- CREATE POLICY "Only admin can delete videos"
+--   ON video_library
+--   FOR DELETE
+--   TO authenticated
+--   USING (
+--     EXISTS (
+--       SELECT 1 FROM profiles
+--       WHERE profiles.id = auth.uid()
+--       AND profiles.role = 'admin'
+--     )
+--   );
 
 -- =====================================================
 -- FONCTIONS UTILITAIRES
 -- =====================================================
 
 -- Fonction pour obtenir le nombre de vidéos par module
-CREATE OR REPLACE FUNCTION get_module_video_count(p_module_id UUID)
+CREATE OR REPLACE FUNCTION get_module_video_count(p_module_id INTEGER)
 RETURNS INTEGER AS $$
   SELECT COUNT(*)::INTEGER
   FROM video_library
@@ -130,7 +139,7 @@ RETURNS INTEGER AS $$
 $$ LANGUAGE SQL STABLE;
 
 -- Fonction pour obtenir le nombre total de vidéos par année
-CREATE OR REPLACE FUNCTION get_year_video_count(p_year_id UUID)
+CREATE OR REPLACE FUNCTION get_year_video_count(p_year_id INTEGER)
 RETURNS INTEGER AS $$
   SELECT COUNT(*)::INTEGER
   FROM video_library

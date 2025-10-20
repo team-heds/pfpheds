@@ -248,8 +248,8 @@ export function getVimeoThumbnailUrl(vimeoId) {
   return `https://vumbnail.com/${vimeoId}.jpg`
 }
 
-// Récupérer toutes les vidéos depuis Vimeo API
-export async function getVimeoVideos() {
+// Récupérer toutes les vidéos depuis Vimeo API avec pagination
+export async function getVimeoVideos(onProgress = null) {
   try {
     const accessToken = import.meta.env.VITE_VIMEO_ACCESS_TOKEN
     
@@ -257,35 +257,63 @@ export async function getVimeoVideos() {
       throw new Error('VITE_VIMEO_ACCESS_TOKEN non configuré')
     }
 
-    const response = await fetch('https://api.vimeo.com/me/videos?per_page=100', {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Accept': 'application/vnd.vimeo.*+json;version=3.4'
-      }
-    })
+    let allVideos = []
+    let page = 1
+    let hasMore = true
+    const perPage = 100 // Maximum autorisé par Vimeo
 
-    if (!response.ok) {
-      throw new Error(`Erreur Vimeo API: ${response.status}`)
+    console.log('[VideoLibrary] 🔄 Début du chargement des vidéos Vimeo...')
+
+    while (hasMore) {
+      const response = await fetch(`https://api.vimeo.com/me/videos?per_page=${perPage}&page=${page}`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Accept': 'application/vnd.vimeo.*+json;version=3.4'
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error(`Erreur Vimeo API: ${response.status}`)
+      }
+
+      const data = await response.json()
+      
+      // Transformer les données Vimeo
+      const videos = data.data.map(video => ({
+        vimeo_id: video.uri.split('/').pop(),
+        vimeo_url: video.link,
+        title: video.name,
+        description: video.description || '',
+        thumbnail_url: video.pictures?.sizes?.[3]?.link || '',
+        duration: Math.round(video.duration / 60), // Convertir en minutes
+        created_at: video.created_time,
+        in_library: false // Par défaut pas dans la bibliothèque
+      }))
+
+      allVideos = [...allVideos, ...videos]
+      
+      console.log(`[VideoLibrary] 📄 Page ${page}: ${videos.length} vidéos chargées (Total: ${allVideos.length})`)
+
+      // Callback de progression
+      if (onProgress) {
+        onProgress(allVideos.length, page)
+      }
+
+      // Vérifier s'il y a une page suivante
+      hasMore = data.paging && data.paging.next !== null
+      page++
+
+      // Limite de sécurité pour éviter une boucle infinie
+      if (page > 50) {
+        console.warn('[VideoLibrary] ⚠️ Limite de 50 pages atteinte (5000 vidéos)')
+        break
+      }
     }
 
-    const data = await response.json()
-    
-    // Transformer les données Vimeo
-    const videos = data.data.map(video => ({
-      vimeo_id: video.uri.split('/').pop(),
-      vimeo_url: video.link,
-      title: video.name,
-      description: video.description || '',
-      thumbnail_url: video.pictures?.sizes?.[3]?.link || '',
-      duration: Math.round(video.duration / 60), // Convertir en minutes
-      created_at: video.created_time,
-      in_library: false // Par défaut pas dans la bibliothèque
-    }))
-
-    console.log('[VideoLibrary] Vidéos Vimeo chargées:', videos.length)
-    return videos
+    console.log('[VideoLibrary] ✅ Toutes les vidéos Vimeo chargées:', allVideos.length)
+    return allVideos
   } catch (error) {
-    console.error('[VideoLibrary] Erreur chargement Vimeo:', error)
+    console.error('[VideoLibrary] ❌ Erreur chargement Vimeo:', error)
     throw error
   }
 }

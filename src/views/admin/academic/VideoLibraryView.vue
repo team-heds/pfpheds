@@ -15,14 +15,15 @@
           </div>
           
           <div class="header-actions">
-            <Button 
-              label="Charger Vimeo" 
-              icon="pi pi-cloud-download" 
-              outlined
-              :loading="loadingVimeo"
-              @click="loadVimeoVideos"
-              v-if="activeTab === 'vimeo'"
-            />
+            <div v-if="activeTab === 'vimeo'" class="vimeo-action-group">
+              <Button 
+                :label="loadingVimeo ? loadingProgress : 'Charger Vimeo'" 
+                icon="pi pi-cloud-download" 
+                outlined
+                :loading="loadingVimeo"
+                @click="loadVimeoVideos"
+              />
+            </div>
             <Button 
               label="Statistiques" 
               icon="pi pi-chart-bar" 
@@ -55,6 +56,26 @@
             @click="activeTab = 'vimeo'"
             text
           />
+          
+          <!-- Toggle vue (seulement pour bibliothèque) -->
+          <div v-if="activeTab === 'library'" class="view-toggle">
+            <Button 
+              icon="pi pi-th-large" 
+              :class="{ 'active': libraryView === 'grid' }"
+              @click="libraryView = 'grid'"
+              text
+              rounded
+              v-tooltip.top="'Vue grille'"
+            />
+            <Button 
+              icon="pi pi-list" 
+              :class="{ 'active': libraryView === 'modules' }"
+              @click="libraryView = 'modules'"
+              text
+              rounded
+              v-tooltip.top="'Vue par modules'"
+            />
+          </div>
         </div>
 
         <!-- Stats rapides -->
@@ -140,8 +161,68 @@
         </div>
       </div>
 
-      <!-- Grille de vidéos - Bibliothèque -->
-      <div v-if="activeTab === 'library' && filteredVideos.length > 0" class="videos-grid">
+      <!-- Vue par modules -->
+      <div v-if="activeTab === 'library' && libraryView === 'modules'" class="modules-view">
+        <div v-for="moduleGroup in videosByModule" :key="moduleGroup.module_id" class="module-section">
+          <div class="module-header">
+            <div class="module-info">
+              <h2>{{ moduleGroup.module_name }}</h2>
+              <p v-if="moduleGroup.module_description" class="module-description">{{ moduleGroup.module_description }}</p>
+              <span class="video-count">{{ moduleGroup.videos.length }} vidéo(s)</span>
+            </div>
+            <Button 
+              label="Ajouter une vidéo" 
+              icon="pi pi-plus" 
+              size="small"
+              @click="addVideoToModule(moduleGroup.module_id)"
+            />
+          </div>
+          
+          <div class="module-videos-grid">
+            <div 
+              v-for="video in moduleGroup.videos" 
+              :key="video.id"
+              class="video-card-small"
+            >
+              <div class="video-thumbnail-small" @click="playVideo(video)">
+                <img 
+                  :src="getVimeoThumbnail(video.vimeo_id)" 
+                  :alt="video.title"
+                  @error="handleThumbnailError"
+                />
+                <div class="play-overlay-small">
+                  <i class="pi pi-play"></i>
+                </div>
+                <div v-if="video.duration" class="duration-badge">
+                  {{ formatDuration(video.duration) }}
+                </div>
+              </div>
+              <div class="video-info-small">
+                <h4 class="video-title-small" v-tooltip.top="video.title">{{ video.title }}</h4>
+                <div class="video-actions-small">
+                  <Button 
+                    icon="pi pi-play" 
+                    text
+                    rounded
+                    size="small"
+                    @click="playVideo(video)"
+                  />
+                  <Button 
+                    icon="pi pi-copy" 
+                    text
+                    rounded
+                    size="small"
+                    @click="copyLink(video.vimeo_url)"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grille de vidéos - Bibliothèque (Vue grille) -->
+      <div v-if="activeTab === 'library' && libraryView === 'grid' && filteredVideos.length > 0" class="videos-grid">
         <div 
           v-for="video in filteredVideos" 
           :key="video.id"
@@ -379,6 +460,52 @@
       </div>
     </Dialog>
 
+    <!-- Dialog Ajouter vidéo à un module -->
+    <Dialog 
+      v-model:visible="showAddToModuleDialog" 
+      header="Ajouter une vidéo Vimeo au module" 
+      :style="{ width: '900px' }" 
+      modal
+    >
+      <div class="add-to-module-content">
+        <p class="mb-3">Sélectionnez les vidéos Vimeo à ajouter à ce module :</p>
+        
+        <div v-if="vimeoVideos.length === 0" class="no-vimeo-message">
+          <i class="pi pi-info-circle"></i>
+          <p>Chargez d'abord les vidéos Vimeo depuis l'onglet Vimeo</p>
+          <Button 
+            label="Aller à l'onglet Vimeo" 
+            icon="pi pi-cloud" 
+            @click="activeTab = 'vimeo'; showAddToModuleDialog = false"
+          />
+        </div>
+        
+        <div v-else class="vimeo-selection-grid">
+          <div 
+            v-for="video in vimeoVideos.filter(v => !v.in_library)" 
+            :key="video.vimeo_id"
+            class="vimeo-selection-card"
+          >
+            <img 
+              :src="video.thumbnail_url || getVimeoThumbnail(video.vimeo_id)" 
+              :alt="video.title"
+              class="vimeo-thumb"
+            />
+            <div class="vimeo-info">
+              <h4>{{ video.title }}</h4>
+              <span v-if="video.duration">{{ formatDuration(video.duration) }}</span>
+            </div>
+            <Button 
+              label="Ajouter" 
+              icon="pi pi-plus" 
+              size="small"
+              @click="addVimeoToLibraryAndModule(video, selectedModule)"
+            />
+          </div>
+        </div>
+      </div>
+    </Dialog>
+
     <Toast />
   </div>
 </template>
@@ -412,7 +539,11 @@ const showStatsDialog = ref(false)
 const videoMenu = ref(null)
 const loading = ref(false)
 const loadingVimeo = ref(false)
+const loadingProgress = ref('')
 const activeTab = ref('library')
+const libraryView = ref('grid') // 'grid' ou 'modules'
+const showAddToModuleDialog = ref(false)
+const selectedModule = ref(null)
 
 // Filtres
 const searchQuery = ref('')
@@ -573,6 +704,33 @@ const displayedVideos = computed(() => {
   return activeTab.value === 'library' ? filteredVideos.value : filteredVimeoVideos.value
 })
 
+// Vidéos groupées par module
+const videosByModule = computed(() => {
+  const grouped = {}
+  
+  // Créer un groupe pour chaque module_id unique
+  filteredVideos.value.forEach(video => {
+    const moduleId = video.module_id || 'non_assignees'
+    if (!grouped[moduleId]) {
+      // Trouver le nom du module dans modules.value
+      const module = modules.value.find(m => m.id === moduleId)
+      grouped[moduleId] = {
+        module_id: moduleId,
+        module_name: moduleId === 'non_assignees' ? 'Vidéos non assignées' : (module?.title || 'Module inconnu'),
+        module_description: module?.description || '',
+        videos: []
+      }
+    }
+    grouped[moduleId].videos.push(video)
+  })
+  
+  return Object.values(grouped).sort((a, b) => {
+    if (a.module_id === 'non_assignees') return 1
+    if (b.module_id === 'non_assignees') return -1
+    return a.module_name.localeCompare(b.module_name)
+  })
+})
+
 // Stats
 const totalDuration = computed(() => {
   const total = videos.value.reduce((sum, v) => sum + (v.duration || 0), 0)
@@ -718,9 +876,17 @@ async function loadVideos() {
 
 async function loadVimeoVideos() {
   loadingVimeo.value = true
+  loadingProgress.value = 'Chargement...'
+  
   try {
-    const vimeoList = await getVimeoVideos()
+    // Charger avec callback de progression
+    const vimeoList = await getVimeoVideos((count, page) => {
+      loadingProgress.value = `${count} vidéos (page ${page})`
+    })
+    
+    loadingProgress.value = 'Vérification dans la bibliothèque...'
     vimeoVideos.value = await checkVimeoVideosInLibrary(vimeoList)
+    
     toast.add({ 
       severity: 'success', 
       summary: 'Succès', 
@@ -737,6 +903,7 @@ async function loadVimeoVideos() {
     })
   } finally {
     loadingVimeo.value = false
+    loadingProgress.value = ''
   }
 }
 
@@ -772,8 +939,92 @@ async function addToLibrary(video) {
   }
 }
 
+async function loadModules() {
+  try {
+    const { supabase } = await import('@/supabase')
+    const { data, error } = await supabase
+      .from('modules')
+      .select('*')
+      .order('title')
+    
+    if (error) throw error
+    
+    modules.value = data || []
+    console.log('[VideoLibrary] Modules Supabase chargés:', modules.value.length)
+  } catch (error) {
+    console.error('[VideoLibrary] Erreur chargement modules:', error)
+  }
+}
+
+function addVideoToModule(moduleId) {
+  selectedModule.value = moduleId
+  showAddToModuleDialog.value = true
+}
+
+async function assignVideoToModule(video, moduleId) {
+  try {
+    const { updateVideo } = await import('@/service/videoLibraryService')
+    await updateVideo(video.id, { module_id: moduleId })
+    
+    toast.add({ 
+      severity: 'success', 
+      summary: 'Vidéo assignée', 
+      detail: 'La vidéo a été assignée au module',
+      life: 3000 
+    })
+    
+    await loadVideos()
+    showAddToModuleDialog.value = false
+  } catch (error) {
+    console.error('[VideoLibrary] Erreur assignation:', error)
+    toast.add({ 
+      severity: 'error', 
+      summary: 'Erreur', 
+      detail: 'Impossible d\'assigner la vidéo',
+      life: 4000 
+    })
+  }
+}
+
+async function addVimeoToLibraryAndModule(video, moduleId) {
+  try {
+    const { addVideoToLibrary } = await import('@/service/videoLibraryService')
+    await addVideoToLibrary({
+      vimeo_url: video.vimeo_url,
+      title: video.title,
+      description: video.description,
+      thumbnail_url: video.thumbnail_url,
+      duration: video.duration,
+      module_id: moduleId, // Assigner directement au module
+      type: 'cours'
+    })
+    
+    video.in_library = true
+    toast.add({ 
+      severity: 'success', 
+      summary: 'Vidéo ajoutée', 
+      detail: 'La vidéo a été ajoutée au module',
+      life: 3000 
+    })
+    
+    await loadVideos()
+    showAddToModuleDialog.value = false
+  } catch (error) {
+    console.error('[VideoLibrary] Erreur ajout:', error)
+    toast.add({ 
+      severity: 'error', 
+      summary: 'Erreur', 
+      detail: 'Impossible d\'ajouter la vidéo',
+      life: 4000 
+    })
+  }
+}
+
 onMounted(async () => {
-  await loadVideos()
+  await Promise.all([
+    loadVideos(),
+    loadModules()
+  ])
 })
 </script>
 
@@ -849,6 +1100,203 @@ onMounted(async () => {
   border-bottom-color: var(--primary-color);
   color: var(--primary-color);
   font-weight: 600;
+}
+
+.view-toggle {
+  margin-left: auto;
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+  padding: 0.5rem;
+  background: var(--surface-100);
+  border-radius: 8px;
+}
+
+.view-toggle .p-button.active {
+  background: var(--primary-color);
+  color: white;
+}
+
+/* Vue par modules */
+.modules-view {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.module-section {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.module-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--surface-border);
+}
+
+.module-info h2 {
+  margin: 0 0 0.5rem 0;
+  color: var(--primary-color);
+  font-size: 1.5rem;
+}
+
+.module-description {
+  margin: 0.5rem 0;
+  color: var(--text-color-secondary);
+  font-size: 0.938rem;
+}
+
+.video-count {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background: var(--primary-50);
+  color: var(--primary-color);
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.module-videos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.video-card-small {
+  background: var(--surface-50);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+
+.video-card-small:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.video-thumbnail-small {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/9;
+  overflow: hidden;
+  background: var(--surface-200);
+}
+
+.video-thumbnail-small img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.play-overlay-small {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.3);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.video-thumbnail-small:hover .play-overlay-small {
+  opacity: 1;
+}
+
+.play-overlay-small i {
+  font-size: 2rem;
+  color: white;
+}
+
+.video-info-small {
+  padding: 0.75rem;
+}
+
+.video-title-small {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.video-actions-small {
+  display: flex;
+  gap: 0.25rem;
+}
+
+/* Dialog ajouter vidéo */
+.add-to-module-content {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.no-vimeo-message {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-color-secondary);
+}
+
+.no-vimeo-message i {
+  font-size: 3rem;
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+}
+
+.vimeo-selection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.vimeo-selection-card {
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.vimeo-selection-card:hover {
+  border-color: var(--primary-color);
+}
+
+.vimeo-thumb {
+  width: 100%;
+  aspect-ratio: 16/9;
+  object-fit: cover;
+}
+
+.vimeo-info {
+  padding: 1rem;
+}
+
+.vimeo-info h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.938rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.vimeo-info span {
+  color: var(--text-color-secondary);
+  font-size: 0.875rem;
+}
+
+.vimeo-selection-card .p-button {
+  width: 100%;
+  margin-top: 0.5rem;
 }
 
 /* Stats rapides */
