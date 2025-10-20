@@ -62,9 +62,11 @@
           <h4 class="ticket-title">{{ ticket.title }}</h4>
 
           <!-- Description -->
-          <p v-if="ticket.description" class="ticket-description">
-            {{ truncateText(ticket.description, 80) }}
-          </p>
+          <div 
+            v-if="ticket.description" 
+            class="ticket-description markdown-content" 
+            v-html="renderMarkdown(ticket.description, 100)"
+          ></div>
 
           <!-- Infos principales -->
           <div class="ticket-info">
@@ -148,6 +150,8 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 import Tag from 'primevue/tag'
 import Button from 'primevue/button'
 import Menu from 'primevue/menu'
@@ -277,6 +281,27 @@ function truncateText(text, length) {
   if (!text) return ''
   if (text.length <= length) return text
   return text.substring(0, length) + '...'
+}
+
+// Rendu Markdown sécurisé avec limitation de longueur
+function renderMarkdown(text, maxLength = 100) {
+  if (!text) return ''
+  
+  try {
+    // Tronquer d'abord le texte brut (avant le rendu Markdown)
+    const truncated = text.length > maxLength 
+      ? text.substring(0, maxLength) + '...' 
+      : text
+    
+    // Rendre le Markdown
+    const rawHtml = marked(truncated, { breaks: true, gfm: true })
+    
+    // Nettoyer et sécuriser
+    return DOMPurify.sanitize(rawHtml)
+  } catch (error) {
+    console.error('[KanbanBoard] Erreur Markdown:', error)
+    return truncateText(text, maxLength)
+  }
 }
 
 // Initiales pour avatar
@@ -564,6 +589,60 @@ function showTicketMenu(event, ticket) {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  max-height: 3rem;
+}
+
+/* Markdown dans les cards */
+.ticket-description.markdown-content :deep(p) {
+  margin: 0;
+  color: var(--text-color-secondary);
+  font-size: 0.875rem;
+  display: inline;
+}
+
+.ticket-description.markdown-content :deep(strong) {
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.ticket-description.markdown-content :deep(em) {
+  font-style: italic;
+}
+
+.ticket-description.markdown-content :deep(code) {
+  background: rgba(255, 193, 7, 0.15);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-family: monospace;
+  font-size: 0.813rem;
+  color: #ffc107;
+}
+
+.ticket-description.markdown-content :deep(ul),
+.ticket-description.markdown-content :deep(ol) {
+  margin: 0.25rem 0;
+  padding-left: 1.5rem;
+  font-size: 0.875rem;
+}
+
+.ticket-description.markdown-content :deep(li) {
+  margin: 0;
+  color: var(--text-color-secondary);
+  font-size: 0.875rem;
+}
+
+.ticket-description.markdown-content :deep(h1),
+.ticket-description.markdown-content :deep(h2),
+.ticket-description.markdown-content :deep(h3) {
+  margin: 0.25rem 0;
+  font-size: 0.938rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.ticket-description.markdown-content :deep(a) {
+  color: var(--primary-color);
+  text-decoration: none;
 }
 
 .ticket-info {
