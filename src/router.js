@@ -308,6 +308,7 @@ const routes = [
   { path: '/admin/planning/annual', component: () => import('@/views/admin/planning/AnnualPlanningView.vue'), name: 'AnnualPlanningView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
   // Gestion académique (Kanban & Contenu)
   { path: '/admin/academic/kanban', component: AcademicKanbanView, name: 'AcademicKanbanView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
+  { path: '/admin/academic/calendar', component: () => import('@/views/admin/academic/AcademicCalendarView.vue'), name: 'AcademicCalendarView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
   { path: '/admin/academic/media-content', component: MediaContentView, name: 'MediaContentView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
   
   // ========================================

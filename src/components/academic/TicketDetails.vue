@@ -284,6 +284,27 @@
           </div>
         </div>
 
+        <!-- Assigné à -->
+        <div v-if="ticket.assigned_to" class="detail-item">
+          <span class="detail-label">Assigné à</span>
+          <div class="user-info-enhanced">
+            <img 
+              v-if="assignedUser?.avatar_url" 
+              :src="assignedUser.avatar_url" 
+              :alt="assignedUser.full_name"
+              class="user-avatar-image"
+              @error="handleAvatarError"
+            />
+            <div v-else class="user-avatar-fallback">
+              {{ getInitials(assignedUser?.full_name || assignedUser?.email) }}
+            </div>
+            <div class="user-details">
+              <span class="user-name">{{ assignedUser?.full_name || 'Utilisateur' }}</span>
+              <span class="user-email" v-if="assignedUser?.email">{{ assignedUser.email }}</span>
+            </div>
+          </div>
+        </div>
+
         <!-- Dates -->
         <div class="detail-item">
           <span class="detail-label">Créé le</span>
@@ -436,6 +457,9 @@ const baseBranch = ref('prod')
 // Profil du créateur
 const creatorProfile = ref(null)
 
+// Utilisateur assigné
+const assignedUser = ref(null)
+
 // Rendu Markdown sécurisé de la description
 const renderedDescription = computed(() => {
   if (!props.ticket.description) return ''
@@ -476,6 +500,33 @@ async function loadCreatorProfile() {
   }
 }
 
+// Fonction pour charger l'utilisateur assigné
+async function loadAssignedUser() {
+  if (!props.ticket.assigned_to) return
+  
+  try {
+    const { supabase } = await import('@/supabase')
+    
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, email, full_name, avatar_url')
+      .eq('id', props.ticket.assigned_to)
+      .single()
+    
+    if (error) {
+      console.error('[TicketDetails] Erreur chargement utilisateur assigné:', error)
+      return
+    }
+    
+    if (data) {
+      assignedUser.value = data
+      console.log('[TicketDetails] Utilisateur assigné chargé:', data)
+    }
+  } catch (error) {
+    console.error('[TicketDetails] Erreur:', error)
+  }
+}
+
 // Fonction pour charger les données du ticket
 function loadTicketData() {
   console.log('[TicketDetails] Chargement des données du ticket:', props.ticket.id)
@@ -484,9 +535,13 @@ function loadTicketData() {
   videoLinks.value = []
   currentBranch.value = ''
   creatorProfile.value = null
+  assignedUser.value = null
   
   // Charger le profil du créateur
   loadCreatorProfile()
+  
+  // Charger l'utilisateur assigné
+  loadAssignedUser()
   
   // Charger depuis metadata
   if (props.ticket.metadata) {

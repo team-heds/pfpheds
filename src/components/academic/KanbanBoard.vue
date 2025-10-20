@@ -128,9 +128,17 @@
               </Tag>
             </div>
             
-            <!-- Créateur -->
-            <div v-if="ticket.created_by" class="ticket-creator">
-              <div class="creator-avatar">{{ getInitials(ticket.created_by) }}</div>
+            <!-- Utilisateur assigné -->
+            <div v-if="ticket.assigned_to" class="ticket-assignee">
+              <div class="assignee-avatar" v-tooltip.top="'Assigné à ' + getAssignedUserName(ticket.assigned_to)">
+                {{ getInitials(getAssignedUserName(ticket.assigned_to)) }}
+              </div>
+            </div>
+            <!-- Créateur (si pas d'assignation) -->
+            <div v-else-if="ticket.created_by" class="ticket-creator">
+              <div class="creator-avatar" v-tooltip.top="'Créé par'">
+                {{ getInitials(ticket.created_by) }}
+              </div>
             </div>
           </div>
         </div>
@@ -165,6 +173,34 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['ticket-click', 'status-change', 'ticket-action'])
+
+// Liste des utilisateurs pour l'assignation
+const users = ref([])
+
+// Charger la liste des utilisateurs
+async function loadUsers() {
+  try {
+    const { supabase } = await import('@/supabase')
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, email, full_name, avatar_url')
+      .order('full_name')
+    
+    if (error) throw error
+    users.value = data || []
+  } catch (error) {
+    console.error('[KanbanBoard] Erreur chargement utilisateurs:', error)
+  }
+}
+
+// Obtenir le nom de l'utilisateur assigné
+function getAssignedUserName(userId) {
+  const user = users.value.find(u => u.id === userId)
+  return user?.full_name || user?.email || 'Utilisateur'
+}
+
+// Charger au montage
+loadUsers()
 
 // Colonnes du Kanban
 const columns = [
@@ -735,6 +771,35 @@ function showTicketMenu(event, ticket) {
 .creator-avatar:hover {
   transform: scale(1.1);
   box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* Utilisateur assigné */
+.ticket-assignee {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.assignee-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--green-500) 0%, var(--green-600) 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 2px solid var(--green-200);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: all 0.2s;
+}
+
+.assignee-avatar:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
 }
 
 .column-empty {

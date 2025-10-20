@@ -15,16 +15,22 @@
           
           <div class="header-actions">
             <Button 
-              label="Nouveau ticket"
-              icon="pi pi-plus"
-              @click="showCreateDialog = true"
-              severity="success"
+              label="Vue Calendrier"
+              icon="pi pi-calendar"
+              @click="$router.push('/admin/academic/calendar')"
+              outlined
             />
             <Button 
               label="Statistiques"
               icon="pi pi-chart-bar"
               @click="showStatsDialog = true"
               outlined
+            />
+            <Button 
+              label="Nouveau ticket"
+              icon="pi pi-plus"
+              @click="showCreateDialog = true"
+              severity="success"
             />
           </div>
         </div>
@@ -598,7 +604,7 @@ onMounted(async () => {
   justify-content: space-between;
   align-items: center;
   padding: 1.5rem;
-  background: var(--primary-50);
+  background: var(--surface-card);
   border-radius: 12px;
   margin-bottom: 1rem;
 }

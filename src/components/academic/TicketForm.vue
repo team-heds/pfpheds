@@ -131,6 +131,55 @@ Vous pouvez utiliser le Markdown :
         <small class="text-600">Optionnel - Laissez vide si non applicable</small>
       </div>
 
+      <!-- Assigné à -->
+      <div class="col-12 md:col-6">
+        <label for="assigned_to" class="block mb-2 font-semibold">
+          <i class="pi pi-user mr-2"></i>Assigné à
+        </label>
+        <Dropdown
+          v-model="formData.assigned_to"
+          :options="users"
+          optionLabel="full_name"
+          optionValue="id"
+          placeholder="Sélectionner une personne"
+          class="w-full"
+          filter
+          showClear
+        >
+          <template #value="slotProps">
+            <div v-if="slotProps.value" class="flex align-items-center gap-2">
+              <img 
+                v-if="getUserById(slotProps.value)?.avatar_url" 
+                :src="getUserById(slotProps.value)?.avatar_url" 
+                class="user-avatar-small"
+              />
+              <div v-else class="user-avatar-small-fallback">
+                {{ getInitials(getUserById(slotProps.value)?.full_name) }}
+              </div>
+              <span>{{ getUserById(slotProps.value)?.full_name }}</span>
+            </div>
+            <span v-else>{{ slotProps.placeholder }}</span>
+          </template>
+          <template #option="slotProps">
+            <div class="flex align-items-center gap-2">
+              <img 
+                v-if="slotProps.option.avatar_url" 
+                :src="slotProps.option.avatar_url" 
+                class="user-avatar-small"
+              />
+              <div v-else class="user-avatar-small-fallback">
+                {{ getInitials(slotProps.option.full_name) }}
+              </div>
+              <div>
+                <div>{{ slotProps.option.full_name }}</div>
+                <small class="text-500">{{ slotProps.option.email }}</small>
+              </div>
+            </div>
+          </template>
+        </Dropdown>
+        <small class="text-600">Personne responsable de ce ticket</small>
+      </div>
+
       <!-- Date de rendu -->
       <div class="col-12 md:col-6">
         <label for="due_date" class="block mb-2 font-semibold">Date de rendu</label>
@@ -401,6 +450,42 @@ const emit = defineEmits(['save', 'cancel'])
 const saving = ref(false)
 const errors = ref({})
 const descriptionTextarea = ref(null)
+const users = ref([])
+
+// Charger la liste des utilisateurs
+async function loadUsers() {
+  try {
+    const { supabase } = await import('@/supabase')
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, email, full_name, avatar_url')
+      .order('full_name')
+    
+    if (error) throw error
+    users.value = data || []
+    console.log('[TicketForm] Utilisateurs chargés:', users.value.length)
+  } catch (error) {
+    console.error('[TicketForm] Erreur chargement utilisateurs:', error)
+  }
+}
+
+// Récupérer un utilisateur par ID
+function getUserById(userId) {
+  return users.value.find(u => u.id === userId)
+}
+
+// Obtenir les initiales
+function getInitials(name) {
+  if (!name) return 'U'
+  const parts = name.split(' ')
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase()
+  }
+  return name.substring(0, 2).toUpperCase()
+}
+
+// Charger les utilisateurs au montage
+loadUsers()
 
 // Configuration Markdown
 marked.setOptions({
@@ -523,6 +608,7 @@ const formData = reactive({
   title: '',
   description: '',
   module_id: null,
+  assigned_to: null,
   due_date: null,
   priority: 'normal',
   status: TICKET_STATUS.BACKLOG,
@@ -607,6 +693,29 @@ async function submit() {
 <style scoped>
 .ticket-form {
   padding: 1rem;
+}
+
+/* Avatars users */
+.user-avatar-small {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--surface-border);
+}
+
+.user-avatar-small-fallback {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-600) 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border: 2px solid var(--surface-border);
 }
 
 /* Markdown Toolbar */
