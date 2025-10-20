@@ -83,7 +83,10 @@ import DiagnosticGamificationView from '@/views/DiagnosticGamificationView.vue'
 // ========================================
 // DASHBOARD & ADMINISTRATION
 // ========================================
-import DashboardView from '@/views/admin/DashboardView.vue';
+import DashboardView from '@/views/admin/DashboardView.vue'
+import PlanningView from '@/views/admin/planning/PlanningView.vue'
+import PlanningAdminView from '@/views/admin/planning/PlanningAdminView.vue'
+import AcademicYearManagement from '@/views/admin/AcademicYearManagement.vue'
 import AdminDefisView from '@/views/admin/institutions/gamification/AdminDefisView.vue';
 
 // ========================================
@@ -292,6 +295,13 @@ const routes = [
   // ========================================
   { path: '/admin', component: DashboardView, name: 'DashboardView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor', 'house_coach'] } },
   { path: '/admin/defis', component: AdminDefisView, name: 'AdminDefisView', meta: { requiresAuth: true, requiredRole: ['admin', 'house_coach'] } },
+  // Planning académique
+  { path: '/admin/planning', component: PlanningView, name: 'PlanningView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
+  { path: '/admin/planning/manage', component: PlanningAdminView, name: 'PlanningAdminView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
+  { path: '/admin/planning/years', component: AcademicYearManagement, name: 'AcademicYearManagement', meta: { requiresAuth: true, requiredRole: ['admin'] } },
+  { path: '/admin/planning/weekly', component: () => import('@/views/admin/planning/WeeklyPlanningAdminView.vue'), name: 'WeeklyPlanningAdminView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
+  { path: '/admin/planning/semester', component: () => import('@/views/admin/planning/SemesterPlanningAdminView.vue'), name: 'SemesterPlanningAdminView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
+  { path: '/admin/planning/annual', component: () => import('@/views/admin/planning/AnnualPlanningView.vue'), name: 'AnnualPlanningView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
   
   // ========================================
   // GAMIFICATION ADMIN ROUTES

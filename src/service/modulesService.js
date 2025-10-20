@@ -1,0 +1,174 @@
+import { supabase } from '@/supabase'
+
+class ModulesService {
+  /**
+   * Récupère tous les modules
+   */
+  async getAllModules() {
+    try {
+      const { data, error } = await supabase
+        .from('modules')
+        .select('*')
+
+      if (error) throw error
+      return data || []
+    } catch (error) {
+      console.error('[ModulesService] Erreur getAllModules:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Récupère les modules par année
+   */
+  async getModulesByYear(year) {
+    try {
+      const { data, error } = await supabase
+        .from('modules')
+        .select('*')
+
+      if (error) throw error
+      
+      // Filtrer par année si la donnée existe dans les modules
+      if (year && data) {
+        return data.filter(m => m.annee === year || m.year === year)
+      }
+      
+      return data || []
+    } catch (error) {
+      console.error('[ModulesService] Erreur getModulesByYear:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Récupère un module par son ID
+   */
+  async getModuleById(id) {
+    try {
+      const { data, error } = await supabase
+        .from('modules')
+        .select('*')
+        .eq('id', id)
+        .single()
+
+      if (error) throw error
+      return data
+    } catch (error) {
+      console.error('[ModulesService] Erreur getModuleById:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Récupère un module par son numéro
+   */
+  async getModuleByNumber(numero) {
+    try {
+      const { data, error } = await supabase
+        .from('modules')
+        .select('*')
+        .eq('number', numero)
+        .single()
+
+      if (error) throw error
+      return data
+    } catch (error) {
+      console.error('[ModulesService] Erreur getModuleByNumber:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Crée un nouveau module
+   */
+  async createModule(moduleData) {
+    try {
+      const { data, error } = await supabase
+        .from('modules')
+        .insert([moduleData])
+        .select()
+        .single()
+
+      if (error) throw error
+      return data
+    } catch (error) {
+      console.error('[ModulesService] Erreur createModule:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Met à jour un module
+   */
+  async updateModule(id, moduleData) {
+    try {
+      const { data, error } = await supabase
+        .from('modules')
+        .update(moduleData)
+        .eq('id', id)
+        .select()
+        .single()
+
+      if (error) throw error
+      return data
+    } catch (error) {
+      console.error('[ModulesService] Erreur updateModule:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Supprime un module
+   */
+  async deleteModule(id) {
+    try {
+      const { error } = await supabase
+        .from('modules')
+        .delete()
+        .eq('id', id)
+
+      if (error) throw error
+      return true
+    } catch (error) {
+      console.error('[ModulesService] Erreur deleteModule:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Récupère les modules par semestre
+   */
+  async getModulesBySemester(annee, semestre) {
+    try {
+      const { data, error } = await supabase
+        .from('modules')
+        .select('*')
+
+      if (error) throw error
+      
+      // Filtrer côté client par semestre et année
+      if (data) {
+        let filtered = data
+        
+        if (semestre) {
+          filtered = filtered.filter(m => m.semestre === semestre)
+        }
+        
+        if (annee) {
+          filtered = filtered.filter(m => m.annee === annee || m.year === annee)
+        }
+        
+        return filtered
+      }
+      
+      return []
+    } catch (error) {
+      console.error('[ModulesService] Erreur getModulesBySemester:', error)
+      throw error
+    }
+  }
+}
+
+const modulesService = new ModulesService()
+export default modulesService
