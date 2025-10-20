@@ -50,11 +50,11 @@
     <div v-else class="planning-content mt-4">
       
       <!-- Année académique Info -->
-      <Card v-if="yearData" class="mb-4">
+      <Card v-if="activeAcademicYear" class="mb-4">
         <template #content>
           <div class="text-center">
-            <Tag :value="yearData.label" severity="info" class="text-xl px-4 py-2"></Tag>
-            <p class="mt-2 mb-0 text-600 text-lg">{{ yearData.academicYear }}</p>
+            <Tag :value="selectedYear" severity="info" class="text-xl px-4 py-2"></Tag>
+            <p class="mt-2 mb-0 text-600 text-lg">{{ activeAcademicYear.name }}</p>
             
             <!-- Indicateur modules Supabase -->
             <div v-if="supabaseModules.length > 0" class="mt-3 flex justify-content-center gap-3">
@@ -72,7 +72,7 @@
       </Card>
 
       <!-- Planning complet année académique -->
-      <Panel v-if="yearData" :toggleable="true" class="mb-4">
+      <Panel :toggleable="true" class="mb-4">
         <template #header>
           <div class="flex align-items-center gap-2 flex-wrap">
             <div class="flex align-items-center gap-2">
@@ -80,8 +80,8 @@
               <span class="font-bold text-xl">Planning Académique Complet</span>
             </div>
             <div class="flex gap-2">
-              <Tag value="Automne: S38-52 & S1-7" severity="warning"></Tag>
-              <Tag value="Printemps: S8-37" severity="info"></Tag>
+              <Tag :value="semesterLabels.autumn" severity="warning"></Tag>
+              <Tag :value="semesterLabels.spring" severity="info"></Tag>
             </div>
           </div>
         </template>
@@ -93,7 +93,7 @@
               <i class="pi pi-calendar text-500"></i>
             </div>
             <div 
-              v-for="week in allWeeks" 
+              v-for="week in currentWeeks" 
               :key="`w${week}`" 
               class="week-header"
               :class="{ 'autumn-week': week >= 38 || week <= 7, 'spring-week': week >= 8 && week <= 37 }"
@@ -111,7 +111,7 @@
             <div class="day-label">{{ dayLabels[day] }}</div>
             
             <div 
-              v-for="week in allWeeks" 
+              v-for="week in currentWeeks" 
               :key="`${day}-${week}`" 
               class="grid-cell"
               :class="{ 'autumn-cell': week >= 38 || week <= 7, 'spring-cell': week >= 8 && week <= 37 }"
@@ -305,7 +305,7 @@ import Dropdown from 'primevue/dropdown'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import ProgressSpinner from 'primevue/progressspinner'
-import academicPlanningService from '@/service/academicPlanningService'
+import planningService from '@/service/planningService'
 import { useModules } from '@/composables/useModules'
 import { useAcademicYear } from '@/composables/useAcademicYear'
 
@@ -314,9 +314,8 @@ const router = useRouter()
 // State
 const loading = ref(true)
 const selectedYear = ref('bac25')
-const yearData = ref(null)
 const courseCodes = ref({})
-const planningCells = ref({})
+const planningCells = ref([])
 
 // Modules Supabase
 const { modules: supabaseModules, loadModules, loading: modulesLoading } = useModules()
@@ -354,17 +353,64 @@ const dayLabels = {
   ve: 'Ven'
 }
 
-// Semaines
-const autumnWeeks = computed(() => academicPlanningService.generateWeekGrid('autumn'))
-const springWeeks = computed(() => academicPlanningService.generateWeekGrid('spring'))
-const allWeeks = computed(() => academicPlanningService.generateAllWeeks())
+// Semaines (même structure que PlanningAdminView)
+const currentWeeks = computed(() => {
+  // Ordre académique : Automne (S38-S52, S1-S7) puis Printemps (S8-S37)
+  const weeks = []
 
-// Déterminer le semestre d'une semaine
-const getSemesterForWeek = (week) => {
-  // Automne : S38-S52 + S1-S7
-  // Printemps : S8-S37
-  return (week >= 38 || week <= 7) ? 'autumn' : 'spring'
-}
+  // Semestre d'Automne : S38 → S52
+  for (let w = 38; w <= 52; w++) {
+    weeks.push(w)
+  }
+
+  // Semestre d'Automne (suite) : S1 → S7
+  for (let w = 1; w <= 7; w++) {
+    weeks.push(w)
+  }
+
+  // Semestre de Printemps : S8 → S37
+  for (let w = 8; w <= 37; w++) {
+    weeks.push(w)
+  }
+
+  return weeks
+})
+
+// Labels des semestres (depuis Supabase)
+const semesterLabels = computed(() => {
+  // Si pas d'année académique chargée, valeurs par défaut
+  if (!activeAcademicYear.value) {
+    return {
+      autumn: 'Semestre d\'Automne',
+      spring: 'Semestre de Printemps'
+    }
+  }
+  
+  // Construire le label d'automne (peut avoir une coupure d'année)
+  let autumnLabel = 'Semestre d\'Automne'
+  if (activeAcademicYear.value.autumn_start_week && activeAcademicYear.value.autumn_end_week) {
+    const start = activeAcademicYear.value.autumn_start_week
+    const end = activeAcademicYear.value.autumn_end_week
+    
+    // Si end < start, il y a une coupure d'année (ex: S38-52 puis S1-7)
+    if (end < start) {
+      autumnLabel = `Automne: S${start}-52 & S1-${end}`
+    } else {
+      autumnLabel = `Automne: S${start}-${end}`
+    }
+  }
+  
+  // Label de printemps (simple)
+  let springLabel = 'Semestre de Printemps'
+  if (activeAcademicYear.value.spring_start_week && activeAcademicYear.value.spring_end_week) {
+    springLabel = `Printemps: S${activeAcademicYear.value.spring_start_week}-${activeAcademicYear.value.spring_end_week}`
+  }
+  
+  return {
+    autumn: autumnLabel,
+    spring: springLabel
+  }
+})
 
 // Organiser les codes par année
 const coursesByYear = computed(() => {
@@ -397,45 +443,22 @@ const coursesByYear = computed(() => {
 const loadPlanning = async () => {
   loading.value = true
   try {
-    // Charger les données de l'année
-    yearData.value = await academicPlanningService.getAcademicYear(selectedYear.value)
-    
-    // Charger les modules Supabase UNIQUEMENT
+    // Charger les modules Supabase
     await loadModules()
     console.log('[PlanningView] 📚 Modules Supabase chargés:', supabaseModules.value.length)
     
-    // DEBUG: Afficher les premiers modules
-    if (supabaseModules.value.length > 0) {
-      console.log('[PlanningView] 📖 Premier module Supabase:', {
-        number: supabaseModules.value[0].number,
-        title: supabaseModules.value[0].title,
-        responsable: supabaseModules.value[0].responsable,
-        year: supabaseModules.value[0].year
-      })
-    }
-    
-    // Créer les codes de cours depuis Supabase UNIQUEMENT
+    // Créer les codes de cours depuis Supabase
     courseCodes.value = {}
     
-    supabaseModules.value.forEach((module, index) => {
+    supabaseModules.value.forEach((module) => {
       const courseCodeId = module.number?.toString() || module.short_code?.toString() || `module_${module.id}`
       
-      console.log(`[PlanningView] 📝 Création code ${index + 1}:`, {
-        id: courseCodeId,
-        number: module.number,
-        title: module.title,
-        year: module.year
-      })
-      
-      // Créer l'entrée avec les données Supabase
       courseCodes.value[courseCodeId] = {
         id: courseCodeId,
         moduleNumber: module.number,
         label: module.title,
-        // Couleur par défaut selon l'année
         color: module.color || getDefaultColorByYear(module.year),
         year: module.year,
-        // Données complètes Supabase
         supabaseData: {
           title: module.title,
           responsable: module.responsable,
@@ -446,20 +469,26 @@ const loadPlanning = async () => {
       }
     })
     
-    console.log('[PlanningView] ✅ Codes de cours créés depuis Supabase:', Object.keys(courseCodes.value).length)
+    console.log('[PlanningView] ✅ Codes de cours créés:', Object.keys(courseCodes.value).length)
     
-    // Charger les cellules pour les deux semestres
-    const autumnCells = await academicPlanningService.getPlanningCells(selectedYear.value, 'autumn')
-    const springCells = await academicPlanningService.getPlanningCells(selectedYear.value, 'spring')
+    // Charger les cellules depuis Supabase (automne + printemps)
+    const autumnCells = await planningService.getPlanningCells(selectedYear.value, 'autumn')
+    const springCells = await planningService.getPlanningCells(selectedYear.value, 'spring')
     
-    planningCells.value = {
-      autumn: autumnCells || {},
-      spring: springCells || {}
+    // Fusionner les cellules des 2 semestres dans un seul array
+    planningCells.value = []
+    
+    // Convertir les objets en array
+    if (autumnCells) {
+      Object.values(autumnCells).forEach(cell => planningCells.value.push(cell))
+    }
+    if (springCells) {
+      Object.values(springCells).forEach(cell => planningCells.value.push(cell))
     }
     
-    console.log('[PlanningView] 🎯 Planning complètement chargé avec Supabase!')
+    console.log('[PlanningView] 🎯 Cellules chargées:', planningCells.value.length)
   } catch (error) {
-    console.error('[PlanningView] ❌ Erreur chargement planning:', error)
+    console.error('[PlanningView] ❌ Erreur chargement:', error)
   } finally {
     loading.value = false
   }
@@ -477,15 +506,13 @@ const getDefaultColorByYear = (annee) => {
 
 // Obtenir le style d'une cellule
 const getCellStyle = (day, week) => {
-  const semester = getSemesterForWeek(week)
-  const cellKey = `${day}_${week}`
-  const cell = planningCells.value[semester]?.[cellKey]
+  const cell = planningCells.value.find(c => c.day === day && c.week_number === week)
   
-  if (!cell || !cell.courseCode) {
+  if (!cell || !cell.module_code) {
     return { backgroundColor: '#ffffff' }
   }
   
-  const courseCode = courseCodes.value[cell.courseCode]
+  const courseCode = courseCodes.value[cell.module_code]
   return {
     backgroundColor: courseCode?.color || '#CCCCCC',
     color: isLightColor(courseCode?.color) ? '#000000' : '#ffffff'
@@ -494,47 +521,41 @@ const getCellStyle = (day, week) => {
 
 // Obtenir le label d'une cellule
 const getCellLabel = (day, week) => {
-  const semester = getSemesterForWeek(week)
-  const cellKey = `${day}_${week}`
-  const cell = planningCells.value[semester]?.[cellKey]
+  const cell = planningCells.value.find(c => c.day === day && c.week_number === week)
   
-  if (!cell || !cell.courseCode) return ''
+  if (!cell || !cell.module_code) return ''
   
   // Si un label personnalisé est défini, l'utiliser
-  if (cell.displayLabel) {
-    return cell.displayLabel
+  if (cell.display_label) {
+    return cell.display_label
   }
   
-  // Afficher uniquement le numéro de module
-  const courseCode = courseCodes.value[cell.courseCode]
+  // Afficher le numéro de module
+  const courseCode = courseCodes.value[cell.module_code]
   if (courseCode && courseCode.moduleNumber) {
     return courseCode.moduleNumber
   }
   
-  return cell.courseCode.toUpperCase()
+  return cell.module_code.toUpperCase()
 }
 
 // Obtenir le tooltip d'une cellule
 const getCellTooltip = (day, week) => {
-  const semester = getSemesterForWeek(week)
-  const cellKey = `${day}_${week}`
-  const cell = planningCells.value[semester]?.[cellKey]
+  const cell = planningCells.value.find(c => c.day === day && c.week_number === week)
   
-  if (!cell || !cell.courseCode) return ''
+  if (!cell || !cell.module_code) return ''
   
-  const courseCode = courseCodes.value[cell.courseCode]
-  if (!courseCode) return cell.courseCode
+  const courseCode = courseCodes.value[cell.module_code]
+  if (!courseCode) return cell.module_code
   
   // Tooltip enrichi avec données Supabase
   let tooltip = courseCode.label
   
   if (courseCode.supabaseData) {
     const data = courseCode.supabaseData
-    tooltip += `\n\n📚 ${data.titre}`
+    if (data.title) tooltip += `\n\n📚 ${data.title}`
     if (data.responsable) tooltip += `\n👤 Responsable: ${data.responsable}`
     if (data.credits) tooltip += `\n⭐ ${data.credits} crédits ECTS`
-    if (data.heures_contact) tooltip += `\n🕐 ${data.heures_contact}h contact`
-    if (data.heures_travail_autonome) tooltip += `\n📖 ${data.heures_travail_autonome}h travail autonome`
   }
   
   return tooltip
@@ -680,16 +701,13 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
+  cursor: default;
   transition: all 0.2s;
   position: relative;
 }
 
 .grid-cell:hover {
-  transform: scale(1.08);
-  z-index: 10;
-  box-shadow: var(--card-shadow);
-  border-radius: 4px;
+  opacity: 0.9;
 }
 
 .cell-label {
