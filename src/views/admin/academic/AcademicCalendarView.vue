@@ -16,6 +16,12 @@
           
           <div class="header-actions">
             <Button 
+              label="Vue Liste" 
+              icon="pi pi-list" 
+              outlined
+              @click="$router.push('/admin/academic/tickets')"
+            />
+            <Button 
               label="Vue Kanban" 
               icon="pi pi-th-large" 
               outlined
@@ -392,7 +398,6 @@ onMounted(async () => {
 <style scoped>
 .calendar-view {
   min-height: 100vh;
-  background: var(--surface-ground);
 }
 
 .calendar-container {

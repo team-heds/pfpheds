@@ -15,6 +15,12 @@
           
           <div class="header-actions">
             <Button 
+              label="Vue Liste"
+              icon="pi pi-list"
+              @click="$router.push('/admin/academic/tickets')"
+              outlined
+            />
+            <Button 
               label="Vue Calendrier"
               icon="pi pi-calendar"
               @click="$router.push('/admin/academic/calendar')"
