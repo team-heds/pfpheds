@@ -192,7 +192,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Navbar from '@/components/common/utils/Navbar.vue'
-import weeklyPlanningService from '@/service/weeklyPlanningService'
+import planningService from '@/service/planningService'
 import academicPlanningService from '@/service/academicPlanningService'
 
 const router = useRouter()
@@ -254,8 +254,7 @@ const loadSemesterPlanning = async () => {
     allSlots.value = []
     
     semesterWeeks.value = await Promise.all(weeks.map(async (weekNum) => {
-      const weekData = await weeklyPlanningService.getWeekPlanning(selectedYear.value, weekNum)
-      const slots = weekData?.timeSlots || []
+      const slots = await planningService.getWeekTimeSlots(selectedYear.value, weekNum)
       allSlots.value.push(...slots)
       
       // Extraire les modules uniques de la semaine
@@ -293,8 +292,7 @@ const exportSemesterToExcel = async () => {
     
     for (const weekNum of weeks) {
       const worksheet = workbook.addWorksheet(`Semaine ${weekNum}`)
-      const weekData = await weeklyPlanningService.getWeekPlanning(selectedYear.value, weekNum)
-      const slots = weekData?.timeSlots || []
+      const slots = await planningService.getWeekTimeSlots(selectedYear.value, weekNum)
       
       if (slots.length === 0) continue
       
