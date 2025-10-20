@@ -27,6 +27,12 @@
               outlined
             />
             <Button 
+              label="Bibliothèque"
+              icon="pi pi-video"
+              @click="$router.push('/admin/academic/video-library')"
+              outlined
+            />
+            <Button 
               label="Statistiques"
               icon="pi pi-chart-bar"
               @click="showStatsDialog = true"

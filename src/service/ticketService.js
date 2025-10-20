@@ -126,6 +126,13 @@ export async function updateTicket(ticketId, updates) {
       cleanUpdates.module_id = null
     }
     
+    // Récupérer l'ancien statut avant la mise à jour
+    const { data: oldTicket } = await supabase
+      .from('academic_tickets')
+      .select('status, metadata')
+      .eq('id', ticketId)
+      .single()
+    
     const { data, error } = await supabase
       .from('academic_tickets')
       .update({
@@ -138,6 +145,24 @@ export async function updateTicket(ticketId, updates) {
 
     if (error) throw error
     console.log('[ticketService] ✅ Ticket mis à jour:', ticketId)
+    
+    // Si le ticket passe en "done" et a des vidéos, les ajouter à la bibliothèque
+    if (oldTicket && oldTicket.status !== TICKET_STATUS.DONE && 
+        cleanUpdates.status === TICKET_STATUS.DONE && 
+        data.metadata?.video_links && data.metadata.video_links.length > 0) {
+      
+      console.log('[ticketService] 🎬 Ticket terminé avec vidéos, ajout à la bibliothèque...')
+      
+      // Import dynamique pour éviter les dépendances circulaires
+      try {
+        const { addTicketVideosToLibrary } = await import('./videoLibraryService')
+        await addTicketVideosToLibrary(data)
+        console.log('[ticketService] ✅ Vidéos ajoutées à la bibliothèque')
+      } catch (libError) {
+        console.error('[ticketService] ⚠️ Erreur ajout bibliothèque (non bloquant):', libError)
+      }
+    }
+    
     return data
   } catch (error) {
     console.error('[ticketService] ❌ Erreur updateTicket:', error)

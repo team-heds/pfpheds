@@ -310,6 +310,7 @@ const routes = [
   { path: '/admin/academic/tickets', component: () => import('@/views/admin/academic/TicketListView.vue'), name: 'TicketListView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
   { path: '/admin/academic/kanban', component: AcademicKanbanView, name: 'AcademicKanbanView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
   { path: '/admin/academic/calendar', component: () => import('@/views/admin/academic/AcademicCalendarView.vue'), name: 'AcademicCalendarView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
+  { path: '/admin/academic/video-library', component: () => import('@/views/admin/academic/VideoLibraryView.vue'), name: 'VideoLibraryView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
   { path: '/admin/academic/media-content', component: MediaContentView, name: 'MediaContentView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
   
   // ========================================

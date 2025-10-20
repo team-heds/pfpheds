@@ -28,6 +28,12 @@
               @click="$router.push('/admin/academic/kanban')"
             />
             <Button 
+              label="Bibliothèque" 
+              icon="pi pi-video" 
+              outlined
+              @click="$router.push('/admin/academic/video-library')"
+            />
+            <Button 
               label="Nouveau ticket" 
               icon="pi pi-plus" 
               @click="showCreateDialog = true"

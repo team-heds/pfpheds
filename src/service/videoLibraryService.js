@@ -49,11 +49,7 @@ export async function getAllVideos(filters = {}) {
   try {
     let query = supabase
       .from('video_library')
-      .select(`
-        *,
-        modules:module_id (id, title),
-        years:year_id (id, name)
-      `)
+      .select('*')
       .order('published_date', { ascending: false })
 
     // Appliquer les filtres
@@ -250,4 +246,70 @@ export function getVimeoEmbedUrl(vimeoId) {
 // Générer l'URL de la thumbnail Vimeo
 export function getVimeoThumbnailUrl(vimeoId) {
   return `https://vumbnail.com/${vimeoId}.jpg`
+}
+
+// Récupérer toutes les vidéos depuis Vimeo API
+export async function getVimeoVideos() {
+  try {
+    const accessToken = import.meta.env.VITE_VIMEO_ACCESS_TOKEN
+    
+    if (!accessToken) {
+      throw new Error('VITE_VIMEO_ACCESS_TOKEN non configuré')
+    }
+
+    const response = await fetch('https://api.vimeo.com/me/videos?per_page=100', {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Accept': 'application/vnd.vimeo.*+json;version=3.4'
+      }
+    })
+
+    if (!response.ok) {
+      throw new Error(`Erreur Vimeo API: ${response.status}`)
+    }
+
+    const data = await response.json()
+    
+    // Transformer les données Vimeo
+    const videos = data.data.map(video => ({
+      vimeo_id: video.uri.split('/').pop(),
+      vimeo_url: video.link,
+      title: video.name,
+      description: video.description || '',
+      thumbnail_url: video.pictures?.sizes?.[3]?.link || '',
+      duration: Math.round(video.duration / 60), // Convertir en minutes
+      created_at: video.created_time,
+      in_library: false // Par défaut pas dans la bibliothèque
+    }))
+
+    console.log('[VideoLibrary] Vidéos Vimeo chargées:', videos.length)
+    return videos
+  } catch (error) {
+    console.error('[VideoLibrary] Erreur chargement Vimeo:', error)
+    throw error
+  }
+}
+
+// Vérifier quelles vidéos Vimeo sont déjà dans la bibliothèque
+export async function checkVimeoVideosInLibrary(vimeoVideos) {
+  try {
+    const vimeoIds = vimeoVideos.map(v => v.vimeo_id)
+    
+    const { data, error } = await supabase
+      .from('video_library')
+      .select('vimeo_id')
+      .in('vimeo_id', vimeoIds)
+
+    if (error) throw error
+
+    const existingIds = new Set(data.map(v => v.vimeo_id))
+    
+    return vimeoVideos.map(video => ({
+      ...video,
+      in_library: existingIds.has(video.vimeo_id)
+    }))
+  } catch (error) {
+    console.error('[VideoLibrary] Erreur vérification:', error)
+    return vimeoVideos // Retourner sans statut si erreur
+  }
 }
