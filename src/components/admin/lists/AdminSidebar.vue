@@ -98,8 +98,7 @@ const menu = ref([
         label: 'Gamification',
         icon: 'pi pi-star',
         items: [
-          { label: 'Dashboard Gamification', icon: 'pi pi-chart-line', to: '/admin' },
-          { label: 'Gestion des Défis', icon: 'pi pi-trophy', to: '/admin/gamification/challenges' },
+          { label: 'Gestion des Défis', icon: 'pi pi-flag-fill', to: '/admin/gamification/challenges' },
           { label: 'Gestion des Quêtes', icon: 'pi pi-flag', to: '/admin/gamification/quests' },
           { label: 'Gestion des Badges', icon: 'pi pi-star', to: '/admin/gamification/badges' },
           { label: 'Gestion des Utilisateurs', icon: 'pi pi-users', to: '/admin/gamification/users' },
@@ -143,6 +142,7 @@ const menu = ref([
   overflow-y: auto;
 }
 
+
 .admin-sidebar {
   width: 340px;
   min-width: 300px;
@@ -170,7 +170,8 @@ const menu = ref([
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-weight: bold;
+  font-weight: 700;
+  font-size: 1.2rem;
   margin-bottom: 0.5rem;
 }
 

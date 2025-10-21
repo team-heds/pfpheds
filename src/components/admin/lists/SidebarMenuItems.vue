@@ -74,8 +74,8 @@ function toggle(item) {
   border: 1px solid var(--primary-color, #3b82f6);
 }
 .sidebar-subsection-label {
-  font-weight: 500;
-  font-size: 1rem;
+  font-weight: 600;
+  font-size: 1.10rem;
   margin: 0.2rem 0 0.1rem 0;
   user-select: none;
   border-radius: 8px;
