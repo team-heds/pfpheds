@@ -108,18 +108,6 @@ const menu = ref([
         ]
       },
       {
-        label: 'Médias',
-        icon: 'pi pi-video',
-        items: [
-          { label: 'Gestion Tickets', icon: 'pi pi-list', to: '/admin/academic/tickets' },
-          { label: 'Bibliothèque Vidéo', icon: 'pi pi-video', to: '/admin/academic/video-library' },
-          { label: 'Administration Modules', icon: 'pi pi-folder', to: '/admin/modules/simple' },
-          { label: 'Hub Multimédia', icon: 'pi pi-play', to: '/media' },
-          { label: 'Modules Vidéo', icon: 'pi pi-list', to: '/modules' },
-          { label: 'Test Vimeo', icon: 'pi pi-external-link', to: '/vimeo-test' }
-        ]
-      },
-      {
         label: 'Répondant HES',
         icon: 'pi pi-fw pi-comment',
         items: [
