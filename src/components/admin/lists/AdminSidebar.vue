@@ -87,6 +87,14 @@ const menu = ref([
         ]
       },
       {
+        label: 'Gestion Académique',
+        icon: 'pi pi-box',
+        items: [
+          { label: 'Tableau Kanban', icon: 'pi pi-th-large', to: '/admin/academic/kanban' },
+          { label: 'Gestion Contenu Multimédia', icon: 'pi pi-video', to: '/admin/academic/media-content' }
+        ]
+      },
+      {
         label: 'Gamification',
         icon: 'pi pi-star',
         items: [
@@ -97,16 +105,6 @@ const menu = ref([
           { label: 'Gestion des Utilisateurs', icon: 'pi pi-users', to: '/admin/gamification/users' },
           { label: 'Gestion des Maisons', icon: 'pi pi-home', to: '/admin/gamification/houses' },
           { label: 'Analytics & Statistiques', icon: 'pi pi-chart-bar', to: '/admin/gamification/analytics' }
-        ]
-      },
-      {
-        label: 'Médias',
-        icon: 'pi pi-video',
-        items: [
-          { label: 'Administration Modules', icon: 'pi pi-folder', to: '/admin/modules/simple' },
-          { label: 'Hub Multimédia', icon: 'pi pi-play', to: '/media' },
-          { label: 'Modules Vidéo', icon: 'pi pi-list', to: '/modules' },
-          { label: 'Test Vimeo', icon: 'pi pi-external-link', to: '/vimeo-test' }
         ]
       },
       {
