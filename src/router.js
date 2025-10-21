@@ -89,7 +89,7 @@ import PlanningView from '@/views/admin/planning/PlanningView.vue'
 import PlanningAdminView from '@/views/admin/planning/PlanningAdminView.vue'
 import AcademicYearManagement from '@/views/admin/AcademicYearManagement.vue'
 import AcademicKanbanView from '@/views/admin/academic/AcademicKanbanView.vue'
-import MediaContentView from '@/views/admin/academic/MediaContentView.vue'
+// MediaContentView est obsolète - redirigé vers VideoLibraryView
 import AdminDefisView from '@/views/admin/institutions/gamification/AdminDefisView.vue';
 
 // ========================================
@@ -311,7 +311,8 @@ const routes = [
   { path: '/admin/academic/kanban', component: AcademicKanbanView, name: 'AcademicKanbanView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
   { path: '/admin/academic/calendar', component: () => import('@/views/admin/academic/AcademicCalendarView.vue'), name: 'AcademicCalendarView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
   { path: '/admin/academic/video-library', component: () => import('@/views/admin/academic/VideoLibraryView.vue'), name: 'VideoLibraryView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
-  { path: '/admin/academic/media-content', component: MediaContentView, name: 'MediaContentView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
+  // Redirection de media-content vers video-library (composant obsolète)
+  { path: '/admin/academic/media-content', redirect: '/admin/academic/video-library' },
   
   // ========================================
   // GAMIFICATION ADMIN ROUTES

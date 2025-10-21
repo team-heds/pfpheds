@@ -287,6 +287,7 @@ export async function getVimeoVideos(onProgress = null) {
         thumbnail_url: video.pictures?.sizes?.[3]?.link || '',
         duration: Math.round(video.duration / 60), // Convertir en minutes
         created_at: video.created_time,
+        vimeo_tags: video.tags?.map(tag => tag.name) || [], // Récupérer les tags Vimeo
         in_library: false // Par défaut pas dans la bibliothèque
       }))
 

@@ -11,54 +11,45 @@
               <i class="pi pi-video"></i>
               Bibliothèque Vidéo
             </h1>
-            <p class="subtitle">{{ displayedVideos.length }} vidéos disponibles</p>
+            <p class="subtitle">
+              {{ displayedVideos.length }} vidéos disponibles
+              <span v-if="cacheAge" class="cache-info"> • Cache: {{ cacheAge }}</span>
+            </p>
           </div>
           
           <div class="header-actions">
-            <div v-if="activeTab === 'vimeo'" class="vimeo-action-group">
-              <Button 
-                :label="loadingVimeo ? loadingProgress : 'Charger Vimeo'" 
-                icon="pi pi-cloud-download" 
-                outlined
-                :loading="loadingVimeo"
-                @click="loadVimeoVideos"
-              />
-            </div>
+            <Button 
+              label="Re-matcher" 
+              icon="pi pi-bolt" 
+              outlined
+              severity="warning"
+              @click="rematchVideos"
+              v-tooltip="'Re-matcher les vidéos avec les modules via les tags Vimeo'"
+            />
+            <Button 
+              :label="loadingVimeo ? loadingProgress : 'Recharger Vimeo'" 
+              icon="pi pi-refresh" 
+              outlined
+              :loading="loadingVimeo"
+              @click="loadVimeoVideos(true)"
+              v-tooltip="'Forcer le rechargement depuis Vimeo'"
+            />
             <Button 
               label="Statistiques" 
               icon="pi pi-chart-bar" 
               outlined
               @click="showStatsDialog = true"
             />
-            <Button 
-              label="Actualiser" 
-              icon="pi pi-refresh" 
-              outlined
-              :loading="loading"
-              @click="loadVideos"
-            />
           </div>
         </div>
 
-        <!-- Onglets -->
+        <!-- Toggle vue -->
         <div class="tabs-section">
-          <Button 
-            label="Bibliothèque" 
-            icon="pi pi-database"
-            :class="{ 'active-tab': activeTab === 'library' }"
-            @click="activeTab = 'library'"
-            text
-          />
-          <Button 
-            label="Vimeo" 
-            icon="pi pi-cloud"
-            :class="{ 'active-tab': activeTab === 'vimeo' }"
-            @click="activeTab = 'vimeo'"
-            text
-          />
+          <h3 style="margin: 0; color: var(--primary-color); font-size: 1.1rem;">
+            <i class="pi pi-cloud"></i> Catalogue Vimeo
+          </h3>
           
-          <!-- Toggle vue (seulement pour bibliothèque) -->
-          <div v-if="activeTab === 'library'" class="view-toggle">
+          <div class="view-toggle">
             <Button 
               icon="pi pi-th-large" 
               :class="{ 'active': libraryView === 'grid' }"
@@ -79,12 +70,13 @@
         </div>
 
         <!-- Stats rapides -->
+        <br>
         <div class="quick-stats">
           <div class="stat-card">
             <i class="pi pi-video"></i>
             <div>
-              <span class="stat-value">{{ videos.length }}</span>
-              <span class="stat-label">Vidéos totales</span>
+              <span class="stat-value">{{ vimeoVideos.length }}</span>
+              <span class="stat-label">Vidéos Vimeo</span>
             </div>
           </div>
           <div class="stat-card">
@@ -119,33 +111,11 @@
 
         <div class="filters-row">
           <Dropdown 
-            v-if="activeTab === 'library'"
-            v-model="filterYear" 
-            :options="yearOptions"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Toutes les années"
-            class="filter-item"
-            showClear
-          />
-          
-          <Dropdown 
-            v-if="activeTab === 'library'"
             v-model="filterModule" 
             :options="moduleOptions"
             optionLabel="label"
             optionValue="value"
-            placeholder="Tous les modules"
-            class="filter-item"
-            showClear
-          />
-
-          <Dropdown 
-            v-model="filterType" 
-            :options="typeOptions"
-            optionLabel="label"
-            optionValue="value"
-            :placeholder="activeTab === 'library' ? 'Tous les types' : 'Toutes les vidéos'"
+            placeholder="Filtrer par module"
             class="filter-item"
             showClear
           />
@@ -162,203 +132,70 @@
       </div>
 
       <!-- Vue par modules -->
-      <div v-if="activeTab === 'library' && libraryView === 'modules'" class="modules-view">
-        <div v-for="moduleGroup in videosByModule" :key="moduleGroup.module_id" class="module-section">
-          <div class="module-header">
-            <div class="module-info">
-              <h2>{{ moduleGroup.module_name }}</h2>
-              <p v-if="moduleGroup.module_description" class="module-description">{{ moduleGroup.module_description }}</p>
-              <span class="video-count">{{ moduleGroup.videos.length }} vidéo(s)</span>
-            </div>
-            <Button 
-              label="Ajouter une vidéo" 
-              icon="pi pi-plus" 
-              size="small"
-              @click="addVideoToModule(moduleGroup.module_id)"
-            />
-          </div>
-          
-          <div class="module-videos-grid">
-            <div 
-              v-for="video in moduleGroup.videos" 
-              :key="video.id"
-              class="video-card-small"
-            >
-              <div class="video-thumbnail-small" @click="playVideo(video)">
-                <img 
-                  :src="getVimeoThumbnail(video.vimeo_id)" 
-                  :alt="video.title"
-                  @error="handleThumbnailError"
-                />
-                <div class="play-overlay-small">
-                  <i class="pi pi-play"></i>
-                </div>
-                <div v-if="video.duration" class="duration-badge">
-                  {{ formatDuration(video.duration) }}
-                </div>
-              </div>
-              <div class="video-info-small">
-                <h4 class="video-title-small" v-tooltip.top="video.title">{{ video.title }}</h4>
-                <div class="video-actions-small">
-                  <Button 
-                    icon="pi pi-play" 
-                    text
-                    rounded
-                    size="small"
-                    @click="playVideo(video)"
-                  />
-                  <Button 
-                    icon="pi pi-copy" 
-                    text
-                    rounded
-                    size="small"
-                    @click="copyLink(video.vimeo_url)"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Grille de vidéos - Bibliothèque (Vue grille) -->
-      <div v-if="activeTab === 'library' && libraryView === 'grid' && filteredVideos.length > 0" class="videos-grid">
-        <div 
-          v-for="video in filteredVideos" 
-          :key="video.id"
-          class="video-card"
-        >
-          <!-- Thumbnail -->
-          <div class="video-thumbnail" @click="playVideo(video)">
-            <img 
-              :src="getVimeoThumbnail(video.vimeo_id)" 
-              :alt="video.title"
-              @error="handleThumbnailError"
-            />
-            <div class="play-overlay">
-              <i class="pi pi-play"></i>
-            </div>
-            <div v-if="video.duration" class="duration-badge">
-              {{ formatDuration(video.duration) }}
-            </div>
-          </div>
-
-          <!-- Infos -->
-          <div class="video-info">
-            <h3 class="video-title" v-tooltip.top="video.title">{{ video.title }}</h3>
-            
-            <div class="video-meta">
-              <Tag v-if="video.modules" :value="video.modules.title" severity="info" class="module-tag" />
-              <Tag v-if="video.years" :value="video.years.name" severity="secondary" class="year-tag" />
-            </div>
-
-            <p v-if="video.description" class="video-description">
-              {{ truncateText(video.description, 100) }}
+      <div v-if="libraryView === 'modules'" class="modules-view">
+        <!-- Header modules -->
+        <div v-if="videosByModule.length > 0" class="modules-header">
+          <div>
+            <h3>
+              <i class="pi pi-folder"></i>
+              {{ videosByModule.length }} module{{ videosByModule.length > 1 ? 's' : '' }}
+            </h3>
+            <p class="modules-subtitle">
+              {{ filteredVimeoVideos.length }} vidéo{{ filteredVimeoVideos.length > 1 ? 's' : '' }} au total
             </p>
-
-            <div class="video-details">
-              <span v-if="video.person_filmed" class="detail-item">
-                <i class="pi pi-user"></i>
-                {{ video.person_filmed }}
-              </span>
-              <span class="detail-item">
-                <i class="pi pi-calendar"></i>
-                {{ formatDate(video.published_date) }}
-              </span>
-            </div>
-
-            <!-- Actions -->
-            <div class="video-actions">
-              <Button 
-                label="Visionner" 
-                icon="pi pi-play" 
-                @click="playVideo(video)"
-                class="action-btn"
-              />
-              <Button 
-                label="Copier lien" 
-                icon="pi pi-copy" 
-                outlined
-                @click="copyLink(video.vimeo_url)"
-                class="action-btn"
-              />
-              <Button 
-                icon="pi pi-ellipsis-v" 
-                text
-                @click="showVideoMenu($event, video)"
-                class="action-btn"
-              />
-            </div>
           </div>
+          <Button 
+            :label="allModulesExpanded ? 'Tout replier' : 'Tout déplier'" 
+            :icon="allModulesExpanded ? 'pi pi-minus' : 'pi pi-plus'"
+            outlined
+            severity="secondary"
+            @click="toggleAllModules"
+          />
+        </div>
+        
+        <ModuleSection
+          v-for="moduleGroup in videosByModule"
+          :key="moduleGroup.module_id"
+          :module-group="moduleGroup"
+          :get-vimeo-thumbnail="getVimeoThumbnail"
+          :initial-expanded="allModulesExpanded"
+          @play="playVideo"
+          @copy-link="copyLink"
+          @show-menu="showVideoMenu"
+        />
+        
+        <!-- Empty state pour vue modules -->
+        <div v-if="videosByModule.length === 0" class="empty-state">
+          <i class="pi pi-folder-open"></i>
+          <h3>Aucun module avec vidéos</h3>
+          <p>Assignez des vidéos à vos modules pour les voir ici</p>
         </div>
       </div>
 
-      <!-- Grille de vidéos - Vimeo -->
-      <div v-if="activeTab === 'vimeo' && filteredVimeoVideos.length > 0" class="videos-grid">
-        <div 
+      <!-- Grille de vidéos (Vue grille) -->
+      <transition-group 
+        v-if="libraryView === 'grid' && filteredVimeoVideos.length > 0" 
+        name="video-list"
+        tag="div"
+        class="videos-grid"
+      >
+        <VideoCard
           v-for="video in filteredVimeoVideos" 
           :key="video.vimeo_id"
-          class="video-card"
-        >
-          <!-- Thumbnail -->
-          <div class="video-thumbnail" @click="playVideo(video)">
-            <img 
-              :src="video.thumbnail_url || getVimeoThumbnail(video.vimeo_id)" 
-              :alt="video.title"
-              @error="handleThumbnailError"
-            />
-            <div class="play-overlay">
-              <i class="pi pi-play"></i>
-            </div>
-            <div v-if="video.duration" class="duration-badge">
-              {{ formatDuration(video.duration) }}
-            </div>
-            <Tag v-if="video.in_library" value="Dans bibliothèque" severity="success" class="library-badge" />
-          </div>
-
-          <!-- Infos -->
-          <div class="video-info">
-            <h3 class="video-title" v-tooltip.top="video.title">{{ video.title }}</h3>
-            
-            <p v-if="video.description" class="video-description">
-              {{ truncateText(video.description, 100) }}
-            </p>
-
-            <!-- Actions -->
-            <div class="video-actions">
-              <Button 
-                label="Visionner" 
-                icon="pi pi-play" 
-                @click="playVideo(video)"
-                class="action-btn"
-              />
-              <Button 
-                label="Copier lien" 
-                icon="pi pi-copy" 
-                outlined
-                @click="copyLink(video.vimeo_url)"
-                class="action-btn"
-              />
-              <Button 
-                v-if="!video.in_library"
-                label="Ajouter à la bibliothèque" 
-                icon="pi pi-plus" 
-                outlined
-                severity="success"
-                @click="addToLibrary(video)"
-                class="action-btn"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+          :video="video"
+          :get-vimeo-thumbnail="getVimeoThumbnail"
+          @play="playVideo"
+          @copy-link="copyLink"
+          @show-menu="showVideoMenu"
+        />
+      </transition-group>
 
       <!-- Empty state -->
-      <div v-if="(activeTab === 'library' && filteredVideos.length === 0) || (activeTab === 'vimeo' && filteredVimeoVideos.length === 0)" class="empty-state">
+      <div v-if="filteredVimeoVideos.length === 0" class="empty-state">
         <i class="pi pi-video"></i>
         <h3>Aucune vidéo trouvée</h3>
-        <p v-if="activeTab === 'library'">Les vidéos des tickets terminés apparaîtront automatiquement ici</p>
-        <p v-else>Cliquez sur "Charger Vimeo" pour afficher vos vidéos</p>
+        <p v-if="loadingVimeo">Chargement des vidéos Vimeo en cours...</p>
+        <p v-else>Aucune vidéo Vimeo disponible. Vérifiez votre token d'accès.</p>
       </div>
     </div>
 
@@ -446,8 +283,8 @@
     >
       <div class="stats-content">
         <div class="stat-item">
-          <span class="stat-label">Vidéos totales</span>
-          <span class="stat-value-large">{{ videos.length }}</span>
+          <span class="stat-label">Vidéos Vimeo</span>
+          <span class="stat-value-large">{{ vimeoVideos.length }}</span>
         </div>
         <div class="stat-item">
           <span class="stat-label">Durée totale</span>
@@ -511,10 +348,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import Navbar from '@/components/common/utils/Navbar.vue'
+import VideoCard from '@/components/video/VideoCard.vue'
+import ModuleSection from '@/components/video/ModuleSection.vue'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import Dropdown from 'primevue/dropdown'
@@ -523,51 +362,38 @@ import Dialog from 'primevue/dialog'
 import Menu from 'primevue/menu'
 import Divider from 'primevue/divider'
 import Toast from 'primevue/toast'
-import { getAllVideos, deleteVideo, getVimeoThumbnailUrl, getVimeoEmbedUrl, getVimeoVideos, checkVimeoVideosInLibrary } from '@/service/videoLibraryService'
-import { getAllModules } from '@/service/mediaService'
+import { getVimeoThumbnailUrl, getVimeoEmbedUrl, getVimeoVideos, checkVimeoVideosInLibrary } from '@/service/videoLibraryService'
 
 const router = useRouter()
 const toast = useToast()
 
-const videos = ref([])
 const vimeoVideos = ref([])
 const modules = ref([])
-const years = ref([])
 const selectedVideo = ref(null)
 const showPlayer = ref(false)
 const showStatsDialog = ref(false)
 const videoMenu = ref(null)
-const loading = ref(false)
 const loadingVimeo = ref(false)
 const loadingProgress = ref('')
-const activeTab = ref('library')
 const libraryView = ref('grid') // 'grid' ou 'modules'
 const showAddToModuleDialog = ref(false)
 const selectedModule = ref(null)
+const cacheAge = ref('')
+const allModulesExpanded = ref(true)
 
 // Filtres
 const searchQuery = ref('')
-const filterYear = ref(null)
+const debouncedSearchQuery = ref('')
 const filterModule = ref(null)
-const filterType = ref(null)
 const sortBy = ref('date_desc')
 
-const typeOptions = computed(() => {
-  if (activeTab.value === 'library') {
-    return [
-      { label: 'Cours', value: 'cours' },
-      { label: 'TP', value: 'tp' },
-      { label: 'Démonstration', value: 'demo' },
-      { label: 'Simulation', value: 'simulation' },
-      { label: 'Autre', value: 'autre' }
-    ]
-  } else {
-    return [
-      { label: 'Toutes', value: null },
-      { label: 'Dans la bibliothèque', value: 'in_library' },
-      { label: 'Pas dans la bibliothèque', value: 'not_in_library' }
-    ]
-  }
+// Debounce pour la recherche (500ms)
+let searchTimeout = null
+watch(searchQuery, (newValue) => {
+  if (searchTimeout) clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(() => {
+    debouncedSearchQuery.value = newValue
+  }, 300)
 })
 
 const sortOptions = [
@@ -579,99 +405,31 @@ const sortOptions = [
   { label: 'Durée décroissante', value: 'duration_desc' }
 ]
 
-// Options dynamiques
-const yearOptions = computed(() => {
-  const uniqueYears = [...new Set(videos.value.map(v => v.years?.id).filter(Boolean))]
-  return [
-    { label: 'Toutes les années', value: null },
-    ...uniqueYears.map(id => {
-      const year = videos.value.find(v => v.years?.id === id)?.years
-      return { label: year?.name || 'Année inconnue', value: id }
-    })
-  ]
-})
-
+// Options modules
 const moduleOptions = computed(() => {
-  const uniqueModules = [...new Set(videos.value.map(v => v.modules?.id).filter(Boolean))]
   return [
     { label: 'Tous les modules', value: null },
-    ...uniqueModules.map(id => {
-      const module = videos.value.find(v => v.modules?.id === id)?.modules
-      return { label: module?.title || 'Module inconnu', value: id }
-    })
+    ...modules.value.map(m => ({ label: m.title || 'Module inconnu', value: m.id }))
   ]
-})
-
-// Vidéos filtrées - Bibliothèque
-const filteredVideos = computed(() => {
-  let filtered = [...videos.value]
-  
-  // Recherche
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    filtered = filtered.filter(v => 
-      v.title.toLowerCase().includes(query) ||
-      v.description?.toLowerCase().includes(query) ||
-      v.person_filmed?.toLowerCase().includes(query)
-    )
-  }
-  
-  // Filtres
-  if (filterYear.value) {
-    filtered = filtered.filter(v => v.year_id === filterYear.value)
-  }
-  
-  if (filterModule.value) {
-    filtered = filtered.filter(v => v.module_id === filterModule.value)
-  }
-  
-  if (filterType.value) {
-    filtered = filtered.filter(v => v.type === filterType.value)
-  }
-  
-  // Tri
-  switch (sortBy.value) {
-    case 'date_desc':
-      filtered.sort((a, b) => new Date(b.published_date || b.created_at) - new Date(a.published_date || a.created_at))
-      break
-    case 'date_asc':
-      filtered.sort((a, b) => new Date(a.published_date || a.created_at) - new Date(b.published_date || b.created_at))
-      break
-    case 'title_asc':
-      filtered.sort((a, b) => a.title.localeCompare(b.title))
-      break
-    case 'title_desc':
-      filtered.sort((a, b) => b.title.localeCompare(a.title))
-      break
-    case 'duration_asc':
-      filtered.sort((a, b) => (a.duration || 0) - (b.duration || 0))
-      break
-    case 'duration_desc':
-      filtered.sort((a, b) => (b.duration || 0) - (a.duration || 0))
-      break
-  }
-  
-  return filtered
 })
 
 // Vidéos filtrées - Vimeo
 const filteredVimeoVideos = computed(() => {
   let filtered = [...vimeoVideos.value]
   
-  // Recherche
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
+  // Recherche avec debounce
+  if (debouncedSearchQuery.value) {
+    const query = debouncedSearchQuery.value.toLowerCase()
     filtered = filtered.filter(v => 
       v.title.toLowerCase().includes(query) ||
-      v.description?.toLowerCase().includes(query)
+      v.description?.toLowerCase().includes(query) ||
+      v.vimeo_tags?.some(tag => tag.toLowerCase().includes(query))
     )
   }
   
-  // Filtre par statut dans bibliothèque
-  if (filterType.value === 'in_library') {
-    filtered = filtered.filter(v => v.in_library)
-  } else if (filterType.value === 'not_in_library') {
-    filtered = filtered.filter(v => !v.in_library)
+  // Filtre par module
+  if (filterModule.value) {
+    filtered = filtered.filter(v => v.module_id === filterModule.value)
   }
   
   // Tri
@@ -699,17 +457,15 @@ const filteredVimeoVideos = computed(() => {
   return filtered
 })
 
-// Vidéos affichées selon l'onglet actif
-const displayedVideos = computed(() => {
-  return activeTab.value === 'library' ? filteredVideos.value : filteredVimeoVideos.value
-})
+// Vidéos affichées
+const displayedVideos = computed(() => filteredVimeoVideos.value)
 
 // Vidéos groupées par module
 const videosByModule = computed(() => {
   const grouped = {}
   
   // Créer un groupe pour chaque module_id unique
-  filteredVideos.value.forEach(video => {
+  filteredVimeoVideos.value.forEach(video => {
     const moduleId = video.module_id || 'non_assignees'
     if (!grouped[moduleId]) {
       // Trouver le nom du module dans modules.value
@@ -733,12 +489,12 @@ const videosByModule = computed(() => {
 
 // Stats
 const totalDuration = computed(() => {
-  const total = videos.value.reduce((sum, v) => sum + (v.duration || 0), 0)
+  const total = vimeoVideos.value.reduce((sum, v) => sum + (v.duration || 0), 0)
   return Math.round(total / 60) // Convertir en heures
 })
 
 const uniqueModules = computed(() => {
-  return new Set(videos.value.map(v => v.module_id).filter(Boolean)).size
+  return new Set(vimeoVideos.value.filter(v => v.in_library).map(v => v.module_id).filter(Boolean)).size
 })
 
 // Menu contextuel
@@ -757,14 +513,6 @@ const menuItems = computed(() => [
     label: 'Ouvrir dans Vimeo',
     icon: 'pi pi-external-link',
     command: () => openInVimeo(selectedVideo.value.vimeo_url)
-  },
-  {
-    separator: true
-  },
-  {
-    label: 'Supprimer',
-    icon: 'pi pi-trash',
-    command: () => deleteVideoConfirm(selectedVideo.value.id)
   }
 ])
 
@@ -835,57 +583,75 @@ function goToTicket(ticketId) {
   router.push(`/admin/academic/tickets?ticket=${ticketId}`)
 }
 
-async function deleteVideoConfirm(videoId) {
-  // TODO: Ajouter confirmation
-  try {
-    await deleteVideo(videoId)
-    toast.add({ 
-      severity: 'success', 
-      summary: 'Vidéo supprimée', 
-      detail: 'La vidéo a été retirée de la bibliothèque',
-      life: 3000 
-    })
-    await loadVideos()
-  } catch (error) {
-    console.error('[VideoLibrary] Erreur suppression:', error)
-    toast.add({ 
-      severity: 'error', 
-      summary: 'Erreur', 
-      detail: 'Impossible de supprimer la vidéo',
-      life: 3000 
-    })
-  }
-}
 
-async function loadVideos() {
-  loading.value = true
-  try {
-    videos.value = await getAllVideos()
-  } catch (error) {
-    console.error('[VideoLibrary] Erreur chargement:', error)
-    toast.add({ 
-      severity: 'error', 
-      summary: 'Erreur', 
-      detail: 'Impossible de charger les vidéos',
-      life: 4000 
-    })
-  } finally {
-    loading.value = false
-  }
-}
 
-async function loadVimeoVideos() {
+async function loadVimeoVideos(forceRefresh = false) {
   loadingVimeo.value = true
   loadingProgress.value = 'Chargement...'
   
   try {
-    // Charger avec callback de progression
+    // Clé du cache
+    const CACHE_KEY = 'vimeo_videos_cache'
+    const CACHE_TIMESTAMP_KEY = 'vimeo_videos_timestamp'
+    const CACHE_DURATION = 60 * 60 * 1000 // 1 heure en millisecondes
+    
+    // Vérifier si on a un cache valide
+    if (!forceRefresh) {
+      const cachedData = localStorage.getItem(CACHE_KEY)
+      const cachedTimestamp = localStorage.getItem(CACHE_TIMESTAMP_KEY)
+      
+      if (cachedData && cachedTimestamp) {
+        const timestamp = parseInt(cachedTimestamp)
+        const now = Date.now()
+        
+        // Si le cache a moins d'1 heure
+        if (now - timestamp < CACHE_DURATION) {
+          console.log('[VideoLibrary] 📦 Chargement depuis le cache')
+          vimeoVideos.value = JSON.parse(cachedData)
+          
+          // Refaire le matching avec les modules (au cas où ils ont changé)
+          matchVimeoTagsWithModules()
+          
+          loadingProgress.value = ''
+          loadingVimeo.value = false
+          
+          // Calculer l'âge du cache
+          const ageMinutes = Math.floor((now - timestamp) / 60000)
+          cacheAge.value = ageMinutes < 1 ? 'à l\'instant' : `il y a ${ageMinutes}min`
+          
+          toast.add({ 
+            severity: 'info', 
+            summary: 'Cache utilisé', 
+            detail: `${vimeoVideos.value.length} vidéos chargées depuis le cache`,
+            life: 2000 
+          })
+          return
+        }
+      }
+    }
+    
+    // Réinitialiser l'âge du cache si on recharge
+    cacheAge.value = ''
+    
+    // Sinon, charger depuis Vimeo
+    console.log('[VideoLibrary] 🌐 Chargement depuis Vimeo...')
+    loadingProgress.value = 'Connexion à Vimeo...'
+    
     const vimeoList = await getVimeoVideos((count, page) => {
       loadingProgress.value = `${count} vidéos (page ${page})`
     })
     
     loadingProgress.value = 'Vérification dans la bibliothèque...'
     vimeoVideos.value = await checkVimeoVideosInLibrary(vimeoList)
+    
+    // Matching automatique des tags Vimeo avec les modules
+    loadingProgress.value = 'Matching avec les modules...'
+    matchVimeoTagsWithModules()
+    
+    // Sauvegarder dans le cache
+    localStorage.setItem(CACHE_KEY, JSON.stringify(vimeoVideos.value))
+    localStorage.setItem(CACHE_TIMESTAMP_KEY, Date.now().toString())
+    console.log('[VideoLibrary] 💾 Cache mis à jour')
     
     toast.add({ 
       severity: 'success', 
@@ -907,37 +673,6 @@ async function loadVimeoVideos() {
   }
 }
 
-async function addToLibrary(video) {
-  try {
-    const { addVideoToLibrary } = await import('@/service/videoLibraryService')
-    await addVideoToLibrary({
-      vimeo_url: video.vimeo_url,
-      title: video.title,
-      description: video.description,
-      thumbnail_url: video.thumbnail_url,
-      duration: video.duration,
-      type: 'cours'
-    })
-    
-    video.in_library = true
-    toast.add({ 
-      severity: 'success', 
-      summary: 'Vidéo ajoutée', 
-      detail: 'La vidéo a été ajoutée à la bibliothèque',
-      life: 3000 
-    })
-    
-    await loadVideos() // Recharger la bibliothèque
-  } catch (error) {
-    console.error('[VideoLibrary] Erreur ajout:', error)
-    toast.add({ 
-      severity: 'error', 
-      summary: 'Erreur', 
-      detail: 'Impossible d\'ajouter la vidéo',
-      life: 4000 
-    })
-  }
-}
 
 async function loadModules() {
   try {
@@ -953,6 +688,106 @@ async function loadModules() {
     console.log('[VideoLibrary] Modules Supabase chargés:', modules.value.length)
   } catch (error) {
     console.error('[VideoLibrary] Erreur chargement modules:', error)
+  }
+}
+
+function toggleAllModules() {
+  allModulesExpanded.value = !allModulesExpanded.value
+}
+
+// Forcer le re-matching des vidéos
+function rematchVideos() {
+  // Réinitialiser les assignations automatiques
+  vimeoVideos.value.forEach(video => {
+    if (video.matched_by_tag) {
+      video.module_id = null
+      video.in_library = false
+      video.matched_by_tag = false
+    }
+  })
+  
+  // Refaire le matching
+  matchVimeoTagsWithModules()
+  
+  // Mettre à jour le cache
+  const CACHE_KEY = 'vimeo_videos_cache'
+  localStorage.setItem(CACHE_KEY, JSON.stringify(vimeoVideos.value))
+}
+
+// Normaliser une chaîne pour le matching (enlever accents, caractères spéciaux, espaces, etc.)
+function normalizeString(str) {
+  return str
+    .toLowerCase()
+    .trim()
+    .normalize('NFD') // Décomposer les caractères accentués
+    .replace(/[\u0300-\u036f]/g, '') // Supprimer les diacritiques
+    .replace(/[-_\s]+/g, '') // Supprimer TOUS les tirets, underscores et espaces
+}
+
+// Matching automatique des tags Vimeo avec les modules
+function matchVimeoTagsWithModules() {
+  if (!modules.value || modules.value.length === 0) {
+    console.log('[VideoLibrary] Aucun module chargé pour le matching')
+    return
+  }
+
+  let matchCount = 0
+  
+  vimeoVideos.value.forEach(video => {
+    // Skip si déjà assigné
+    if (video.in_library && video.module_id) {
+      return
+    }
+    
+    // Si la vidéo a des tags Vimeo
+    if (video.vimeo_tags && Array.isArray(video.vimeo_tags)) {
+      // Chercher un match avec les modules
+      for (const tag of video.vimeo_tags) {
+        const normalizedTag = normalizeString(tag)
+        
+        // Skip les tags trop courts (moins de 3 caractères après normalisation)
+        if (normalizedTag.length < 3) {
+          continue
+        }
+        
+        // Chercher un module correspondant
+        const matchedModule = modules.value.find(module => {
+          const normalizedModuleName = normalizeString(module.title)
+          
+          // Match exact
+          if (normalizedModuleName === normalizedTag) {
+            return true
+          }
+          
+          // Inclusion mutuelle (seulement si les deux font au moins 5 caractères)
+          if (normalizedTag.length >= 5 && normalizedModuleName.length >= 5) {
+            return normalizedModuleName.includes(normalizedTag) ||
+                   normalizedTag.includes(normalizedModuleName)
+          }
+          
+          return false
+        })
+        
+        if (matchedModule) {
+          video.module_id = matchedModule.id
+          video.in_library = true
+          video.matched_by_tag = true // Indicateur pour savoir que c'est un match auto
+          matchCount++
+          console.log(`[VideoLibrary] ✅ Match: "${video.title}" → Module "${matchedModule.title}" (tag: "${tag}")`)
+          break // Sortir de la boucle une fois qu'un match est trouvé
+        }
+      }
+    }
+  })
+  
+  if (matchCount > 0) {
+    console.log(`[VideoLibrary] 🎯 ${matchCount} vidéo(s) matchée(s) automatiquement avec les modules`)
+    toast.add({ 
+      severity: 'info', 
+      summary: 'Matching automatique', 
+      detail: `${matchCount} vidéo(s) assignée(s) automatiquement via les tags`,
+      life: 4000 
+    })
   }
 }
 
@@ -996,7 +831,8 @@ async function addVimeoToLibraryAndModule(video, moduleId) {
       thumbnail_url: video.thumbnail_url,
       duration: video.duration,
       module_id: moduleId, // Assigner directement au module
-      type: 'cours'
+      type: 'cours',
+      tags: video.vimeo_tags || [] // Sauvegarder les tags Vimeo
     })
     
     video.in_library = true
@@ -1021,10 +857,11 @@ async function addVimeoToLibraryAndModule(video, moduleId) {
 }
 
 onMounted(async () => {
-  await Promise.all([
-    loadVideos(),
-    loadModules()
-  ])
+  // Charger les modules
+  await loadModules()
+  
+  // Charger automatiquement les vidéos Vimeo
+  await loadVimeoVideos()
 })
 </script>
 
@@ -1076,6 +913,12 @@ onMounted(async () => {
   font-size: 0.938rem;
 }
 
+.cache-info {
+  color: var(--primary-color);
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
 .header-actions {
   display: flex;
   gap: 1rem;
@@ -1121,117 +964,56 @@ onMounted(async () => {
 .modules-view {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
 }
 
-.module-section {
-  background: white;
-  border-radius: 12px;
+.modules-header {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-600));
+  color: white;
   padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
-
-.module-header {
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid var(--surface-border);
-}
-
-.module-info h2 {
-  margin: 0 0 0.5rem 0;
-  color: var(--primary-color);
-  font-size: 1.5rem;
-}
-
-.module-description {
-  margin: 0.5rem 0;
-  color: var(--text-color-secondary);
-  font-size: 0.938rem;
-}
-
-.video-count {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  background: var(--primary-50);
-  color: var(--primary-color);
-  border-radius: 20px;
-  font-size: 0.875rem;
-  font-weight: 600;
-}
-
-.module-videos-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  align-items: center;
   gap: 1rem;
 }
 
-.video-card-small {
-  background: var(--surface-50);
-  border-radius: 8px;
-  overflow: hidden;
-  transition: transform 0.2s, box-shadow 0.2s;
-  cursor: pointer;
-}
-
-.video-card-small:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-.video-thumbnail-small {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 16/9;
-  overflow: hidden;
-  background: var(--surface-200);
-}
-
-.video-thumbnail-small img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.play-overlay-small {
-  position: absolute;
-  inset: 0;
+.modules-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
   display: flex;
   align-items: center;
-  justify-content: center;
-  background: rgba(0,0,0,0.3);
-  opacity: 0;
-  transition: opacity 0.2s;
+  gap: 0.75rem;
 }
 
-.video-thumbnail-small:hover .play-overlay-small {
-  opacity: 1;
+.modules-header h3 i {
+  font-size: 1.75rem;
 }
 
-.play-overlay-small i {
-  font-size: 2rem;
-  color: white;
+.modules-subtitle {
+  margin: 0.5rem 0 0 0;
+  opacity: 0.9;
+  font-size: 0.938rem;
 }
 
-.video-info-small {
-  padding: 0.75rem;
+.modules-header :deep(.p-button) {
+  background: white;
+  color: var(--primary-color);
+  border-color: white;
 }
 
-.video-title-small {
-  margin: 0 0 0.5rem 0;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-color);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.modules-header :deep(.p-button:hover) {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: white;
 }
 
-.video-actions-small {
-  display: flex;
-  gap: 0.25rem;
+@media (max-width: 768px) {
+  .modules-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 /* Dialog ajouter vidéo */
@@ -1365,6 +1147,26 @@ onMounted(async () => {
   gap: 1.5rem;
 }
 
+/* Transitions pour les vidéos */
+.video-list-enter-active,
+.video-list-leave-active {
+  transition: all 0.3s ease;
+}
+
+.video-list-enter-from {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.video-list-leave-to {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+
+.video-list-move {
+  transition: transform 0.3s ease;
+}
+
 .video-card {
   background: var(--surface-card);
   border-radius: 12px;
@@ -1474,6 +1276,25 @@ onMounted(async () => {
   font-size: 0.875rem;
   color: var(--text-color-secondary);
   line-height: 1.5;
+}
+
+.video-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+  align-items: center;
+}
+
+.tag-small {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.more-tags {
+  color: var(--text-color-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 
 .video-details {

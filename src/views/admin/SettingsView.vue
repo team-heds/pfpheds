@@ -37,6 +37,14 @@
               <i class="pi pi-video"></i>
               <span>Vimeo</span>
             </div>
+            <div
+              class="menu-item"
+              :class="{ active: activeTab === 'videolibrary' }"
+              @click="activeTab = 'videolibrary'"
+            >
+              <i class="pi pi-play-circle"></i>
+              <span>Bibliothèque Vidéo</span>
+            </div>
           </div>
 
           <div class="menu-section">
@@ -51,6 +59,14 @@
             </div>
             <div
               class="menu-item"
+              :class="{ active: activeTab === 'appearance' }"
+              @click="activeTab = 'appearance'"
+            >
+              <i class="pi pi-palette"></i>
+              <span>Apparence</span>
+            </div>
+            <div
+              class="menu-item"
               :class="{ active: activeTab === 'notifications' }"
               @click="activeTab = 'notifications'"
             >
@@ -61,6 +77,14 @@
 
           <div class="menu-section">
             <span class="menu-section-title">Système</span>
+            <div
+              class="menu-item"
+              :class="{ active: activeTab === 'data' }"
+              @click="activeTab = 'data'"
+            >
+              <i class="pi pi-database"></i>
+              <span>Données</span>
+            </div>
             <div
               class="menu-item"
               :class="{ active: activeTab === 'advanced' }"
@@ -91,9 +115,195 @@
               </div>
             </div>
             <Divider />
-            <Message severity="info" :closable="false">
-              La configuration Vimeo est gérée dans la section Admin → Modules
-            </Message>
+            
+            <div class="vimeo-config">
+              <div class="config-item">
+                <label>Token d'accès Vimeo</label>
+                <div class="input-group">
+                  <InputText 
+                    v-model="vimeoToken" 
+                    :type="showToken ? 'text' : 'password'"
+                    placeholder="Entrez votre token Vimeo"
+                    class="flex-1"
+                  />
+                  <Button 
+                    :icon="showToken ? 'pi pi-eye-slash' : 'pi pi-eye'"
+                    @click="showToken = !showToken"
+                    text
+                  />
+                </div>
+                <small class="text-secondary">Token requis pour charger les vidéos depuis Vimeo</small>
+              </div>
+
+              <div class="mt-4">
+                <Button 
+                  label="Sauvegarder le token" 
+                  icon="pi pi-save"
+                  @click="saveVimeoToken"
+                />
+                <Button 
+                  label="Tester la connexion" 
+                  icon="pi pi-check"
+                  @click="testVimeoConnection"
+                  outlined
+                  class="ml-2"
+                />
+              </div>
+
+              <Message severity="info" :closable="false" class="mt-3">
+                Pour obtenir un token Vimeo, visitez : 
+                <a href="https://developer.vimeo.com/apps" target="_blank" class="link">developer.vimeo.com</a>
+              </Message>
+            </div>
+          </div>
+
+          <!-- Video Library Settings -->
+          <div v-else-if="activeTab === 'videolibrary'" class="settings-section">
+            <div class="section-header">
+              <div class="header-icon library">
+                <i class="pi pi-play-circle"></i>
+              </div>
+              <div>
+                <h3>Bibliothèque Vidéo</h3>
+                <p class="text-secondary">Configuration de l'affichage et du comportement</p>
+              </div>
+            </div>
+            <Divider />
+
+            <div class="library-settings">
+              <div class="setting-item">
+                <div class="setting-info">
+                  <strong>Vue par défaut</strong>
+                  <p>Choisir entre vue grille ou vue par modules</p>
+                </div>
+                <Dropdown 
+                  v-model="librarySettings.defaultView" 
+                  :options="viewOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  class="w-12rem"
+                />
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-info">
+                  <strong>Vidéos par page</strong>
+                  <p>Nombre de vidéos affichées par page</p>
+                </div>
+                <Dropdown 
+                  v-model="librarySettings.itemsPerPage" 
+                  :options="[12, 24, 48, 96]"
+                  class="w-8rem"
+                />
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-info">
+                  <strong>Auto-archivage depuis tickets</strong>
+                  <p>Archiver automatiquement les vidéos des tickets terminés</p>
+                </div>
+                <InputSwitch v-model="librarySettings.autoArchive" />
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-info">
+                  <strong>Afficher les tags Vimeo</strong>
+                  <p>Afficher les tags sur les cards vidéo</p>
+                </div>
+                <InputSwitch v-model="librarySettings.showTags" />
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-info">
+                  <strong>Lecture automatique</strong>
+                  <p>Lire automatiquement la vidéo au clic</p>
+                </div>
+                <InputSwitch v-model="librarySettings.autoPlay" />
+              </div>
+            </div>
+
+            <div class="mt-4">
+              <Button 
+                label="Sauvegarder les préférences" 
+                icon="pi pi-save"
+                @click="saveLibrarySettings"
+              />
+            </div>
+          </div>
+
+          <!-- Appearance Settings -->
+          <div v-else-if="activeTab === 'appearance'" class="settings-section">
+            <div class="section-header">
+              <div class="header-icon appearance">
+                <i class="pi pi-palette"></i>
+              </div>
+              <div>
+                <h3>Apparence</h3>
+                <p class="text-secondary">Personnalisez l'interface de l'application</p>
+              </div>
+            </div>
+            <Divider />
+
+            <div class="appearance-settings">
+              <div class="setting-item">
+                <div class="setting-info">
+                  <strong>Thème</strong>
+                  <p>Mode clair ou mode sombre</p>
+                </div>
+                <Dropdown 
+                  v-model="appearanceSettings.theme" 
+                  :options="themeOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  @change="applyTheme"
+                  class="w-12rem"
+                />
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-info">
+                  <strong>Densité d'affichage</strong>
+                  <p>Espacement entre les éléments</p>
+                </div>
+                <Dropdown 
+                  v-model="appearanceSettings.density" 
+                  :options="densityOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  class="w-12rem"
+                />
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-info">
+                  <strong>Taille de police</strong>
+                  <p>Ajuster la taille du texte</p>
+                </div>
+                <Dropdown 
+                  v-model="appearanceSettings.fontSize" 
+                  :options="fontSizeOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  class="w-12rem"
+                />
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-info">
+                  <strong>Animations</strong>
+                  <p>Activer les animations de l'interface</p>
+                </div>
+                <InputSwitch v-model="appearanceSettings.animations" />
+              </div>
+            </div>
+
+            <div class="mt-4">
+              <Button 
+                label="Appliquer les changements" 
+                icon="pi pi-check"
+                @click="saveAppearanceSettings"
+              />
+            </div>
           </div>
 
           <!-- Profile Settings -->
@@ -174,6 +384,80 @@
                 </div>
           </div>
 
+          <!-- Data Settings -->
+          <div v-else-if="activeTab === 'data'" class="settings-section">
+            <div class="section-header">
+              <div class="header-icon data">
+                <i class="pi pi-database"></i>
+              </div>
+              <div>
+                <h3>Gestion des données</h3>
+                <p class="text-secondary">Export, import et sauvegarde de vos données</p>
+              </div>
+            </div>
+            <Divider />
+
+            <div class="data-settings">
+              <h4>Export de données</h4>
+              <p class="text-secondary mb-3">Téléchargez vos données aux formats CSV ou JSON</p>
+              
+              <div class="export-actions">
+                <Button 
+                  label="Exporter la bibliothèque vidéo" 
+                  icon="pi pi-download"
+                  @click="exportVideoLibrary"
+                  outlined
+                />
+                <Button 
+                  label="Exporter les modules" 
+                  icon="pi pi-download"
+                  @click="exportModules"
+                  outlined
+                />
+                <Button 
+                  label="Exporter les préférences" 
+                  icon="pi pi-download"
+                  @click="exportPreferences"
+                  outlined
+                />
+              </div>
+
+              <Divider />
+
+              <h4>Statistiques</h4>
+              <div class="stats-grid">
+                <div class="stat-box">
+                  <i class="pi pi-video"></i>
+                  <div>
+                    <span class="stat-value">{{ dataStats.videos }}</span>
+                    <span class="stat-label">Vidéos</span>
+                  </div>
+                </div>
+                <div class="stat-box">
+                  <i class="pi pi-book"></i>
+                  <div>
+                    <span class="stat-value">{{ dataStats.modules }}</span>
+                    <span class="stat-label">Modules</span>
+                  </div>
+                </div>
+                <div class="stat-box">
+                  <i class="pi pi-tag"></i>
+                  <div>
+                    <span class="stat-value">{{ dataStats.tags }}</span>
+                    <span class="stat-label">Tags</span>
+                  </div>
+                </div>
+                <div class="stat-box">
+                  <i class="pi pi-ticket"></i>
+                  <div>
+                    <span class="stat-value">{{ dataStats.tickets }}</span>
+                    <span class="stat-label">Tickets</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Advanced Settings -->
           <div v-else-if="activeTab === 'advanced'" class="settings-section">
                 <div class="section-header">
@@ -246,6 +530,8 @@ import Button from 'primevue/button'
 import Message from 'primevue/message'
 import Divider from 'primevue/divider'
 import InputSwitch from 'primevue/inputswitch'
+import InputText from 'primevue/inputtext'
+import Dropdown from 'primevue/dropdown'
 import Toast from 'primevue/toast'
 import { supabase } from '@/supabase'
 
@@ -254,6 +540,58 @@ const toast = useToast()
 
 const activeTab = ref('github')
 const currentUser = ref(null)
+
+// Vimeo
+const vimeoToken = ref('')
+const showToken = ref(false)
+
+// Bibliothèque vidéo
+const librarySettings = ref({
+  defaultView: 'grid',
+  itemsPerPage: 24,
+  autoArchive: true,
+  showTags: true,
+  autoPlay: false
+})
+
+const viewOptions = [
+  { label: 'Vue grille', value: 'grid' },
+  { label: 'Vue par modules', value: 'modules' }
+]
+
+// Apparence
+const appearanceSettings = ref({
+  theme: 'light',
+  density: 'normal',
+  fontSize: 'medium',
+  animations: true
+})
+
+const themeOptions = [
+  { label: 'Clair', value: 'light' },
+  { label: 'Sombre', value: 'dark' },
+  { label: 'Auto (système)', value: 'auto' }
+]
+
+const densityOptions = [
+  { label: 'Compact', value: 'compact' },
+  { label: 'Normal', value: 'normal' },
+  { label: 'Confortable', value: 'comfortable' }
+]
+
+const fontSizeOptions = [
+  { label: 'Petit', value: 'small' },
+  { label: 'Moyen', value: 'medium' },
+  { label: 'Grand', value: 'large' }
+]
+
+// Statistiques
+const dataStats = ref({
+  videos: 0,
+  modules: 0,
+  tags: 0,
+  tickets: 0
+})
 
 // Paramètres de notifications
 const notifSettings = ref({
@@ -275,19 +613,239 @@ onMounted(async () => {
 
   // Charger les préférences depuis localStorage
   loadSettings()
+  
+  // Charger les statistiques
+  await loadDataStats()
 })
 
 // Charger les paramètres
 function loadSettings() {
+  // Vimeo
+  const savedToken = import.meta.env.VITE_VIMEO_ACCESS_TOKEN || localStorage.getItem('vimeo_token')
+  if (savedToken) {
+    vimeoToken.value = savedToken
+  }
+
+  // Bibliothèque
+  const savedLibrary = localStorage.getItem('library_settings')
+  if (savedLibrary) {
+    librarySettings.value = JSON.parse(savedLibrary)
+  }
+
+  // Apparence
+  const savedAppearance = localStorage.getItem('appearance_settings')
+  if (savedAppearance) {
+    appearanceSettings.value = JSON.parse(savedAppearance)
+  }
+
+  // Notifications
   const savedNotif = localStorage.getItem('notification_settings')
   if (savedNotif) {
     notifSettings.value = JSON.parse(savedNotif)
   }
 
+  // Avancé
   const savedAdvanced = localStorage.getItem('advanced_settings')
   if (savedAdvanced) {
     advancedSettings.value = JSON.parse(savedAdvanced)
   }
+}
+
+// Charger les statistiques
+async function loadDataStats() {
+  try {
+    // Compter les vidéos
+    const { count: videoCount } = await supabase
+      .from('video_library')
+      .select('*', { count: 'exact', head: true })
+    
+    // Compter les modules
+    const { count: moduleCount } = await supabase
+      .from('modules')
+      .select('*', { count: 'exact', head: true })
+    
+    dataStats.value.videos = videoCount || 0
+    dataStats.value.modules = moduleCount || 0
+    dataStats.value.tags = 0 // À calculer si nécessaire
+    dataStats.value.tickets = 0 // À calculer si nécessaire
+  } catch (error) {
+    console.error('Erreur chargement stats:', error)
+  }
+}
+
+// === VIMEO ===
+function saveVimeoToken() {
+  localStorage.setItem('vimeo_token', vimeoToken.value)
+  
+  toast.add({
+    severity: 'success',
+    summary: 'Token sauvegardé',
+    detail: 'Le token Vimeo a été enregistré',
+    life: 3000
+  })
+}
+
+async function testVimeoConnection() {
+  try {
+    const response = await fetch('https://api.vimeo.com/me', {
+      headers: {
+        'Authorization': `Bearer ${vimeoToken.value}`,
+        'Accept': 'application/vnd.vimeo.*+json;version=3.4'
+      }
+    })
+
+    if (response.ok) {
+      const data = await response.json()
+      toast.add({
+        severity: 'success',
+        summary: 'Connexion réussie',
+        detail: `Connecté en tant que ${data.name}`,
+        life: 3000
+      })
+    } else {
+      throw new Error('Token invalide')
+    }
+  } catch (error) {
+    toast.add({
+      severity: 'error',
+      summary: 'Échec de la connexion',
+      detail: 'Vérifiez votre token Vimeo',
+      life: 4000
+    })
+  }
+}
+
+// === BIBLIOTHÈQUE VIDÉO ===
+function saveLibrarySettings() {
+  localStorage.setItem('library_settings', JSON.stringify(librarySettings.value))
+  
+  toast.add({
+    severity: 'success',
+    summary: 'Paramètres sauvegardés',
+    detail: 'Vos préférences de bibliothèque ont été enregistrées',
+    life: 3000
+  })
+}
+
+// === APPARENCE ===
+function saveAppearanceSettings() {
+  localStorage.setItem('appearance_settings', JSON.stringify(appearanceSettings.value))
+  applyTheme()
+  
+  toast.add({
+    severity: 'success',
+    summary: 'Apparence mise à jour',
+    detail: 'Vos préférences d\'apparence ont été appliquées',
+    life: 3000
+  })
+}
+
+function applyTheme() {
+  const theme = appearanceSettings.value.theme
+  
+  if (theme === 'dark') {
+    document.documentElement.classList.add('dark-mode')
+  } else if (theme === 'light') {
+    document.documentElement.classList.remove('dark-mode')
+  } else if (theme === 'auto') {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    if (prefersDark) {
+      document.documentElement.classList.add('dark-mode')
+    } else {
+      document.documentElement.classList.remove('dark-mode')
+    }
+  }
+}
+
+// === EXPORT DE DONNÉES ===
+async function exportVideoLibrary() {
+  try {
+    const { data, error } = await supabase
+      .from('video_library')
+      .select('*')
+    
+    if (error) throw error
+    
+    const json = JSON.stringify(data, null, 2)
+    const blob = new Blob([json], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `video_library_${new Date().toISOString().split('T')[0]}.json`
+    a.click()
+    
+    toast.add({
+      severity: 'success',
+      summary: 'Export réussi',
+      detail: 'Bibliothèque vidéo exportée',
+      life: 3000
+    })
+  } catch (error) {
+    console.error('Erreur export:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: 'Impossible d\'exporter les données',
+      life: 4000
+    })
+  }
+}
+
+async function exportModules() {
+  try {
+    const { data, error } = await supabase
+      .from('modules')
+      .select('*')
+    
+    if (error) throw error
+    
+    const json = JSON.stringify(data, null, 2)
+    const blob = new Blob([json], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `modules_${new Date().toISOString().split('T')[0]}.json`
+    a.click()
+    
+    toast.add({
+      severity: 'success',
+      summary: 'Export réussi',
+      detail: 'Modules exportés',
+      life: 3000
+    })
+  } catch (error) {
+    console.error('Erreur export:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: 'Impossible d\'exporter les modules',
+      life: 4000
+    })
+  }
+}
+
+function exportPreferences() {
+  const prefs = {
+    library: librarySettings.value,
+    appearance: appearanceSettings.value,
+    notifications: notifSettings.value,
+    advanced: advancedSettings.value
+  }
+  
+  const json = JSON.stringify(prefs, null, 2)
+  const blob = new Blob([json], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `preferences_${new Date().toISOString().split('T')[0]}.json`
+  a.click()
+  
+  toast.add({
+    severity: 'success',
+    summary: 'Export réussi',
+    detail: 'Préférences exportées',
+    life: 3000
+  })
 }
 
 // Sauvegarder les paramètres de notifications
@@ -492,6 +1050,18 @@ function getInitials(email) {
   background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
 }
 
+.header-icon.library {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+.header-icon.appearance {
+  background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+}
+
+.header-icon.data {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
 .section-header h3 {
   margin: 0;
   font-size: 1.25rem;
@@ -605,6 +1175,126 @@ function getInitials(email) {
   flex-wrap: wrap;
 }
 
+/* Vimeo config */
+.vimeo-config {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.config-item label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--text-color);
+}
+
+.input-group {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.link {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+/* Library & Appearance settings */
+.library-settings,
+.appearance-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Data settings */
+.data-settings h4 {
+  margin: 1.5rem 0 0.5rem 0;
+  font-size: 1rem;
+  color: var(--text-color);
+}
+
+.export-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.stat-box {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: var(--surface-50);
+  border-radius: 12px;
+  border: 1px solid var(--surface-border);
+}
+
+.stat-box i {
+  font-size: 2rem;
+  color: var(--primary-color);
+}
+
+.stat-box > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-color);
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: var(--text-color-secondary);
+  margin-top: 0.25rem;
+}
+
+/* Utility classes */
+.flex-1 {
+  flex: 1;
+}
+
+.w-8rem {
+  width: 8rem;
+}
+
+.w-12rem {
+  width: 12rem;
+}
+
+.ml-2 {
+  margin-left: 0.5rem;
+}
+
+.mt-3 {
+  margin-top: 1rem;
+}
+
+.mt-4 {
+  margin-top: 1.5rem;
+}
+
+.mb-3 {
+  margin-bottom: 1rem;
+}
+
 /* Responsive */
 @media (max-width: 992px) {
   .settings-content {
@@ -613,6 +1303,14 @@ function getInitials(email) {
 
   .settings-menu {
     position: static;
+  }
+
+  .export-actions {
+    flex-direction: column;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>
