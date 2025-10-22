@@ -50,7 +50,7 @@
     </div>
   </div>
 
-  <!-- Nouvelle card Messagerie détachée -->
+  <!-- Nouvelle card Messagerie détachée
   <div class="messaging-card">
     <div class="flex justify-content-between align-items-center mb-3">
       <h4 class="m-0">Messagerie</h4>
@@ -74,6 +74,8 @@
       />
     </div>
   </div>
+
+  -->
 
   <!-- Section Événements à venir -->
   <div class="upcoming-events-section">

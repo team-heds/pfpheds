@@ -39,7 +39,7 @@
           class="mx-3"
           />
 
-          <!-- ­ƒô® Messages -->
+          <!-- ­ƒô® Messages
           <ButtonNavbar
             v-if="user"
             icon="pi pi-inbox"
@@ -50,6 +50,7 @@
             class="mx-3"
             title="Message"
           />
+          -->
 
           <!-- ­ƒöö Notifications -->
           <ButtonNavbar
