@@ -10,14 +10,17 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 5172,
-    hmr: {
-      port: 5172,
-      host: 'localhost',
-      clientPort: 5172
-    },
+    hmr: false, // DÉSACTIVER COMPLÈTEMENT LE HMR (rechargement manuel uniquement)
     watch: {
-      usePolling: true,
-      interval: 100
+      usePolling: false,
+      ignored: [
+        '**/node_modules/**', 
+        '**/.git/**', 
+        '**/dist/**', 
+        '**/backend/**',
+        '**/.env/**',
+        '**/public/**'
+      ]
     },
     proxy: {
       '/api': {
@@ -33,6 +36,7 @@ export default defineConfig({
       launchEditor: 'phpstorm',
     }),
     VitePWA({
+      disable: process.env.NODE_ENV === 'development', // Désactiver en dev
       registerType: 'autoUpdate',
       workbox: {
         runtimeCaching: [

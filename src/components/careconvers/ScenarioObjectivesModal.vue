@@ -1,8 +1,9 @@
 <template>
-  <div v-if="modelValue" class="modal-overlay" @click.self="close">
+  <Transition name="modal-fade">
+  <div v-if="modelValue" class="modal-overlay" @click.self="close" role="dialog" aria-labelledby="objectives-title" aria-modal="true">
     <div class="modal">
       <header class="modal-header">
-        <h2>Objectifs du scénario</h2>
+        <h2 id="objectives-title">🎯 Objectifs du scénario</h2>
       </header>
       <section class="modal-content">
         <p class="intro">Il est attendu que l’étudiant·e :</p>
@@ -23,6 +24,7 @@
       </footer>
     </div>
   </div>
+  </Transition>
 </template>
 
 <script>
@@ -91,4 +93,38 @@ export default {
 .btn-primary:hover { background: #0284c7; }
 .btn-secondary { background: #f3f4f6; color: #111827; border-color: #e5e7eb; }
 .btn-secondary:hover { background: #e5e7eb; }
+
+/* Transitions */
+.modal-fade-enter-active, .modal-fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.modal-fade-enter-from, .modal-fade-leave-to {
+  opacity: 0;
+}
+.modal-fade-enter-active .modal {
+  animation: modal-slide-in 0.3s ease;
+}
+.modal-fade-leave-active .modal {
+  animation: modal-slide-out 0.3s ease;
+}
+@keyframes modal-slide-in {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+@keyframes modal-slide-out {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+}
 </style>

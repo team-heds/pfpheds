@@ -211,13 +211,10 @@ function registerCareConversStoreRoutes(app) {
     // --- Conversation Logic ---
     const intent = await getIntent(prompt, currentStep);
 
-    console.log(`[DEBUG] Step ${currentStep}, intent: "${intent}"`);
-
     switch (currentStep) {  
  
       case 1:
-        if (intent.includes("Bonjour") && intent.includes("appelle") && intent.includes("étudiant") && intent.includes("infirmier")) {
-          console.log('[DEBUG] Case 1 matched! Moving to step 2');
+        if (intent === "Bonjour, je m'appelle nom, prénom et je suis étudiant infirmier, actuellement en 1ère année Bachelor") {
           responseText = '--';
           nextStep = 2;
           media = {
@@ -426,61 +423,22 @@ Agitation ou agressivité, agrippement.
       }
 
       case 10: {
-        // Transmission ISBAR - 4 phrases requises
-        // Initialize progress tracker for this user if not exists
-        if (!isbarProgress[currentUser]) {
-          isbarProgress[currentUser] = new Set();
-        }
+        // Transmission ISBAR - étape finale
+        const isbarIntents = [
+          "Transmission ISBAR",
+          "Je vais transmettre à ma référente",
+          "ISBAR"
+        ];
 
-        // Check which ISBAR part matches the user input
-        let matchedPart = null;
-        
-        if (intent.includes("Madame Aubrey présente") || intent.includes("signes") || intent.includes("évoquer une douleur")) {
-          matchedPart = 'S';
-        } else if (intent.includes("habituellement calme") || intent.includes("participe aux repas")) {
-          matchedPart = 'B';
-        } else if (intent.includes("changement dans son comportement") || intent.includes("échelle ALGOPLUS") || intent.includes("score de 4") || intent.includes("observé")) {
-          matchedPart = 'A';
-        } else if (intent.includes("évaluation clinique") || intent.includes("prise en charge") || intent.includes("recommande")) {
-          matchedPart = 'R';
-        }
-
-        if (matchedPart) {
-          // Add the matched part to the user's progress
-          isbarProgress[currentUser].add(matchedPart);
-          
-          const completedCount = isbarProgress[currentUser].size;
-          console.log(`[DEBUG] ISBAR part ${matchedPart} matched! Progress: ${completedCount}/4`);
-          
-          if (completedCount < 4) {
-            responseText = "Merci, continue...";
-            nextStep = 10; // Reste à l'étape 10
-            media = {
-              imageUrl: '',
-              caption: `📝 Progression ISBAR : ${completedCount}/4 parties validées\n\n${
-                isbarProgress[currentUser].has('S') ? '✅ S - Situation\n' : '❌ S - Situation\n'
-              }${
-                isbarProgress[currentUser].has('B') ? '✅ B - Background\n' : '❌ B - Background\n'
-              }${
-                isbarProgress[currentUser].has('A') ? '✅ A - Assessment\n' : '❌ A - Assessment\n'
-              }${
-                isbarProgress[currentUser].has('R') ? '✅ R - Recommendation' : '❌ R - Recommendation'
-              }`
-            };
-          } else {
-            // All 4 parts completed
-            responseText = "Merci...";
-            nextStep = 10; // Fin de la simulation
-            media = {
-              imageUrl: '',
-              caption: '✅ Simulation terminée. Vous avez complété toutes les étapes avec succès !\n\n🎉 Transmission ISBAR complète : 4/4 parties validées'
-            };
-            // Clean up progress
-            delete isbarProgress[currentUser];
-          }
+        if (isbarIntents.includes(intent)) {
+          responseText = "Merci...";
+          nextStep = 10; // Reste à l'étape 10 (fin)
+          media = {
+            imageUrl: '',
+            caption: '✅ Simulation terminée. Vous avez complété toutes les étapes avec succès !'
+          };
         } else {
-          responseText = "S'il vous plaît, continuez votre transmission ISBAR...";
-          nextStep = 10;
+          responseText = "S'il vous plaît...";
         }
         break;
       }
@@ -488,10 +446,6 @@ Agitation ou agressivité, agrippement.
       default:
         responseText = 'Une erreur est survenue, réinitialisation de la conversation.';
         nextStep = 1; // Reset
-        // Clean up ISBAR progress if exists
-        if (isbarProgress[currentUser]) {
-          delete isbarProgress[currentUser];
-        }
         break;
     }
 
