@@ -307,10 +307,10 @@ const routes = [
   { path: '/admin/planning/semester', component: () => import('@/views/admin/planning/SemesterPlanningAdminView.vue'), name: 'SemesterPlanningAdminView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
   { path: '/admin/planning/annual', component: () => import('@/views/admin/planning/AnnualPlanningView.vue'), name: 'AnnualPlanningView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
   // Gestion académique (Kanban & Contenu)
-  { path: '/admin/academic/tickets', component: () => import('@/views/admin/academic/TicketListView.vue'), name: 'TicketListView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
-  { path: '/admin/academic/kanban', component: AcademicKanbanView, name: 'AcademicKanbanView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
-  { path: '/admin/academic/calendar', component: () => import('@/views/admin/academic/AcademicCalendarView.vue'), name: 'AcademicCalendarView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
-  { path: '/admin/academic/video-library', component: () => import('@/views/admin/academic/VideoLibraryView.vue'), name: 'VideoLibraryView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
+  { path: '/admin/academic/tickets', component: () => import('@/views/admin/academic/TicketListView.vue'), name: 'TicketListView' },
+  { path: '/admin/academic/kanban', component: AcademicKanbanView, name: 'AcademicKanbanView' },
+  { path: '/admin/academic/calendar', component: () => import('@/views/admin/academic/AcademicCalendarView.vue'), name: 'AcademicCalendarView' },
+  { path: '/admin/academic/video-library', component: () => import('@/views/admin/academic/VideoLibraryView.vue'), name: 'VideoLibraryView' },
   // Redirection de media-content vers video-library (composant obsolète)
   { path: '/admin/academic/media-content', redirect: '/admin/academic/video-library' },
   
