@@ -233,8 +233,10 @@ import { ref as firebaseRef, get } from 'firebase/database';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
+import { useInstitutionsStore } from '@/stores/institutionsStore';
 
 const router = useRouter();
+const institutionsStore = useInstitutionsStore();
 const showSearchBar = ref(false);
 const searchQuery = ref('');
 const searchInput = ref(null);
@@ -335,7 +337,7 @@ const toggleSearchBar = async () => {
     loadSearchHistory();
   } else {
     searchQuery.value = '';
-    categorizedResults.value = { users: [], institutions: [], posts: [], modules: [] };
+    categorizedResults.value = { pages: [], users: [], institutions: [], modules: [] };
     selectedIndex.value = 0;
   }
 };
@@ -494,15 +496,14 @@ const fetchSearchResults = async () => {
     
     categorizedResults.value.pages = pages;
     
-    // References Firebase
+    // References Firebase pour Users et Modules (institutions depuis Supabase)
     const usersRef = firebaseRef(db, 'Users');
-    const institutionsRef = firebaseRef(db, 'institutions');
     const modulesRef = firebaseRef(db, 'Media/Modules');
 
-    // Recuperer toutes les donnees en parallele
-    const [usersSnap, institutionsSnap, modulesSnap] = await Promise.all([
+    // Recuperer institutions depuis Supabase + autres depuis Firebase en parallele
+    const [usersSnap, supabaseInstitutions, modulesSnap] = await Promise.all([
       get(usersRef).catch(() => null),
-      get(institutionsRef).catch(() => null),
+      institutionsStore.fetchInstitutions().then(() => institutionsStore.institutions).catch(() => []),
       get(modulesRef).catch(() => null),
     ]);
 
@@ -539,25 +540,27 @@ const fetchSearchResults = async () => {
     users.sort((a, b) => b.score - a.score);
     categorizedResults.value.users = users.slice(0, 10);
 
-    // === INSTITUTIONS ===
+    // === INSTITUTIONS (depuis Supabase) ===
     const institutions = [];
-    if (institutionsSnap && institutionsSnap.exists()) {
-      Object.entries(institutionsSnap.val()).forEach(([id, inst]) => {
+    if (supabaseInstitutions && Array.isArray(supabaseInstitutions)) {
+      supabaseInstitutions.forEach((inst) => {
         const name = inst.Name || inst.nom || '';
         const ville = inst.Locality || inst.Ville || '';
         const canton = inst.Canton || '';
+        const address = inst.Address || '';
         
         const nameScore = calculateRelevanceScore(name, query);
         const villeScore = calculateRelevanceScore(ville, query) * 0.8;
         const cantonScore = calculateRelevanceScore(canton, query) * 0.6;
-        const totalScore = Math.max(nameScore, villeScore, cantonScore);
+        const addressScore = calculateRelevanceScore(address, query) * 0.5;
+        const totalScore = Math.max(nameScore, villeScore, cantonScore, addressScore);
         
         if (totalScore > 0) {
           institutions.push({
-            id,
+            id: inst.InstitutionId || inst.id,
             name,
             location: [ville, canton].filter(Boolean).join(', '),
-            link: `/institution/${id}`,
+            link: `/institution/${inst.InstitutionId || inst.id}`,
             score: totalScore,
             type: 'institution'
           });
