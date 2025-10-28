@@ -88,6 +88,10 @@ import DiagnosticGamificationView from '@/views/DiagnosticGamificationView.vue'
 // DASHBOARD & ADMINISTRATION
 // ========================================
 import DashboardView from '@/views/admin/DashboardView.vue'
+import AdminDashboardGeneral from '@/components/admin/AdminDashboardGeneral.vue'
+import AdminDashboardPFP from '@/components/admin/AdminDashboardPFP.vue'
+import AdminDashboardAcademique from '@/components/admin/AdminDashboardAcademique.vue'
+import AdminDashboardGamification from '@/components/admin/AdminDashboardGamification.vue'
 import PlanningView from '@/views/admin/planning/PlanningView.vue'
 import PlanningAdminView from '@/views/admin/planning/PlanningAdminView.vue'
 import AcademicYearManagement from '@/views/admin/AcademicYearManagement.vue'
@@ -303,9 +307,10 @@ const routes = [
   // DASHBOARD & ADMINISTRATION
   // ========================================
   { path: '/admin', component: DashboardView, name: 'DashboardView', meta: { requiresAuth: true,  need: 'page2.access'  } },
-
-
-
+  { path: '/admin/dashboard-general', component: AdminDashboardGeneral, name: 'AdminDashboardGeneral', meta: { requiresAuth: true, need: 'admin' } },
+  { path: '/admin/dashboard-pfp', component: AdminDashboardPFP, name: 'AdminDashboardPFP', meta: { requiresAuth: true } },
+  { path: '/admin/dashboard-academique', component: AdminDashboardAcademique, name: 'AdminDashboardAcademique', meta: { requiresAuth: true } },
+  { path: '/admin/dashboard-gamification', component: AdminDashboardGamification, name: 'AdminDashboardGamification', meta: { requiresAuth: true } },
   { path: '/admin/settings', component: AdminSettingsView, name: 'AdminSettingsView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
   { path: '/admin/defis', component: AdminDefisView, name: 'AdminDefisView', meta: { requiresAuth: true, requiredRole: ['admin', 'house_coach'] } },
   // Planning académique

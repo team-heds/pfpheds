@@ -1,5 +1,9 @@
 <template>
-  <div class="router-inspector">
+  <div>
+    <Navbar />
+    <div class="page-layout">
+      <AdminSidebar />
+      <div class="router-inspector">
     <h2>📚 Catalogue des routes</h2>
 
     <div class="toolbar">
@@ -47,12 +51,16 @@
         </tr>
       </tbody>
     </table>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import Navbar from '@/components/common/utils/Navbar.vue';
+import AdminSidebar from '@/components/admin/lists/AdminSidebar.vue';
 import { useRoleStore } from '@/stores/role';
 
 const router = useRouter();
@@ -125,7 +133,19 @@ function rolesFor(need) {
 </script>
 
 <style scoped>
-.router-inspector { padding: 1.25rem; }
+.page-layout {
+  display: flex;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background: var(--surface-ground);
+  min-height: calc(100vh - 80px);
+}
+
+.router-inspector {
+  flex: 1;
+  min-width: 0;
+  padding: 1.25rem;
+}
 .toolbar { display: flex; gap: .75rem; align-items: center; margin: .75rem 0 1rem; }
 .toolbar input { flex: 1; padding: .5rem .75rem; border: 1px solid var(--surface-border); border-radius: .5rem; background: var(--surface-card); color: var(--text-color); }
 .toggle { display: flex; align-items: center; gap: .5rem; color: var(--text-color-secondary); }

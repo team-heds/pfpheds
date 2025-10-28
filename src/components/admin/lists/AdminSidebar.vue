@@ -1,11 +1,11 @@
 <template>
   <aside class="admin-sidebar card sidebar">
     <!-- Permissions: n'afficher que la liste possédée -->
-    <div v-if="isSupabaseUser" class="permissions-info-card">
+    <div v-if="isSupabaseUser && roleStore.initialized" class="permissions-info-card">
       <h4>🔐 Permissions</h4>
       <ul class="perms-list">
-        <li v-for="perm in permsToShow" :key="perm">🔹 {{ perm }}</li>
-        <li v-if="!permsToShow || permsToShow.length === 0" class="permission-item">Aucune permission</li>
+        <li v-for="perm in roleStore.perms" :key="perm">🔹 {{ perm }}</li>
+        <li v-if="!roleStore.perms || roleStore.perms.length === 0" class="permission-item">Aucune permission</li>
       </ul>
     </div>
 
@@ -22,11 +22,12 @@
       <nav class="sidebar-nav">
         <ul class="sidebar-menu">
           <li class="sidebar-section">
-            <div class="sidebar-section-label">
+            <div class="sidebar-section-label" @click="toggleSection(section.label)" style="cursor: pointer;">
               <i :class="section.icon" />
               <span>{{ section.label }}</span>
-            </div>
-            <ul v-if="section.items && section.items.length > 0" class="sidebar-submenu">
+              <i class="pi" :class="isSectionOpen(section.label) ? 'pi-chevron-down' : 'pi-chevron-right'" style="margin-left: auto; font-size: 0.875rem;"></i>
+            </div>  
+            <ul v-if="section.items && section.items.length > 0 && isSectionOpen(section.label)" class="sidebar-submenu">
               <SidebarMenuItems :items="section.items" />
             </ul>
           </li>
@@ -47,20 +48,46 @@ const router = useRouter();
 const roleStore = useRoleStore();
 const authStore = useAuthStore();
 
+// État des sections ouvertes/fermées (persisté dans localStorage)
+const loadSectionsState = () => {
+  try {
+    const saved = localStorage.getItem('adminSidebarSections');
+    if (saved) {
+      return new Set(JSON.parse(saved));
+    }
+  } catch (e) {
+    console.warn('Erreur chargement état sections:', e);
+  }
+  // Par défaut, toutes ouvertes
+  return new Set(['Admin Général', 'PFP', 'Académique', 'Gamification']);
+};
+
+const openSections = ref(loadSectionsState());
+
+function toggleSection(label) {
+  if (openSections.value.has(label)) {
+    openSections.value.delete(label);
+  } else {
+    openSections.value.add(label);
+  }
+  openSections.value = new Set(openSections.value);
+  
+  // Sauvegarder dans localStorage
+  try {
+    localStorage.setItem('adminSidebarSections', JSON.stringify([...openSections.value]));
+  } catch (e) {
+    console.warn('Erreur sauvegarde état sections:', e);
+  }
+}
+
+function isSectionOpen(label) {
+  return openSections.value.has(label);
+}
+
 // Vérifier si l'utilisateur est connecté avec Supabase
 const isSupabaseUser = computed(() => authStore.isSupabaseUser && authStore.session);
 
-// Permissions à afficher: roleStore.perms sinon fallback métadonnées Supabase
-// Normalise: supprime suffixe .access et dédoublonne
-const permsToShow = computed(() => {
-  const normalize = (p) => (typeof p === 'string' && p.endsWith('.access')) ? p.slice(0, -7) : p;
-  const fromStore = Array.isArray(roleStore.perms) ? roleStore.perms : [];
-  const fromMeta = Array.isArray(authStore.user?.user_metadata?.permissions)
-    ? authStore.user.user_metadata.permissions
-    : [];
-  const merged = (fromStore.length > 0 ? fromStore : fromMeta).map(normalize);
-  return Array.from(new Set(merged));
-});
+// Plus de fallback ici: on n'affiche que roleStore.perms pour une source unique et cohérente
 
 // Debug computed pour l'affichage des sections
 const showPFPSection = computed(() => isSupabaseUser.value && roleStore.can('page1.access'));
@@ -80,31 +107,41 @@ watch([showPFPSection, showAcademicSection, showGamificationSection], (newValues
 // Fonction pour vérifier si un item du menu peut être affiché
 function canAccessRoute(route) {
   if (!route || !route.to) return true;
-  const normalize = (p) => (typeof p === 'string' && p.endsWith('.access')) ? p.slice(0, -7) : p;
 
   const resolved = router.resolve(route.to);
 
-  // Agréger tous les 'need' des records matchés
-  const needs = resolved.matched
-    .map(r => r.meta?.need)
-    .filter(Boolean)
-    .map(normalize);
+  // Ne regarder que la dernière record (la vraie page), pas les ancêtres
+  const last = resolved.matched.at(-1);
+  // Aliases pour supporter anciens et nouveaux noms
+  const alias = (p) => {
+    if (!p || typeof p !== 'string') return p;
+    if (p === 'page1') return 'page1.access';
+    if (p === 'page2') return 'page2.access';
+    if (p.endsWith('.access')) return p.slice(0, -7); // AdminPhysio.access -> AdminPhysio
+    return p;
+  };
 
-  // Gérer requiredRole (string ou array) sur la dernière record (ou meta direct)
-  let reqRoles = resolved.meta?.requiredRole ?? resolved.matched.at(-1)?.meta?.requiredRole;
+  const need = alias(last?.meta?.need ?? resolved.meta?.need);
+  let reqRoles = last?.meta?.requiredRole ?? resolved.meta?.requiredRole;
   reqRoles = Array.isArray(reqRoles) ? reqRoles : (reqRoles ? [reqRoles] : []);
-  reqRoles = reqRoles.map(normalize);
+  reqRoles = reqRoles.map(alias);
 
-  // Vérifier permissions 'need'
-  if (needs.length > 0) {
-    const okNeeds = needs.every(n => roleStore.can(n));
-    if (!okNeeds && !roleStore.isSuper) return false;
+  // S'il n'y a aucune contrainte explicite, laisser visible
+  if (!need && reqRoles.length === 0) return true;
+
+  // Vérifier need
+  if (need && !roleStore.isSuper && !roleStore.can(need)) {
+    console.debug('⬇️ Menu masqué (need non satisfait):', { to: route.to, need });
+    return false;
   }
 
-  // Vérifier rôles requis
+  // Vérifier requiredRole
   if (reqRoles.length > 0) {
     const okRole = roleStore.isSuper || reqRoles.some(r => roleStore.can(r));
-    if (!okRole) return false;
+    if (!okRole) {
+      console.debug('⬇️ Menu masqué (requiredRole non satisfait):', { to: route.to, reqRoles });
+      return false;
+    }
   }
 
   return true;
@@ -153,12 +190,14 @@ function shouldShowSection(section, index) {
       return roleStore.isSuper || roleStore.can('super.all') || roleStore.can('admin')|| roleStore.can('page1.access');
     case 1: // PFP - page1.access OU rôles Physio
       return (
+        roleStore.can('page1.access') ||
         roleStore.can('AdminPhysio') ||
         roleStore.can('EnseignantPhysio') ||
         roleStore.isSuper
       );
     case 2: // Académique - page2.access OU rôles Soins
       return (
+        roleStore.can('page2.access') ||
         roleStore.can('AdminSoins') ||
         roleStore.can('EnseignantSoins') ||
         roleStore.can('RMSoins') ||
@@ -201,6 +240,7 @@ const menu = ref([
     label: 'Admin Général',
     icon: 'pi pi-cog',
     items: [
+      { label: 'Dashboard', icon: 'pi pi-chart-bar', to: '/admin/dashboard-general' },
       { label: 'Gestion des Rôles', icon: 'pi pi-user-edit', to: '/role-management' },
       { label: 'Permissions', icon: 'pi pi-lock', to: '/permissions' },
       { label: 'Routes & Accès', icon: 'pi pi-sitemap', to: '/router-inspector' },
@@ -216,6 +256,7 @@ const menu = ref([
     label: 'PFP',
     icon: 'pi pi-briefcase',
     items: [
+      { label: 'Dashboard PFP', icon: 'pi pi-chart-bar', to: '/admin/dashboard-pfp' },
       // Listes et utilisateurs
       { label: 'Étudiants', icon: 'pi pi-users', to: '/etudiant_list' },
       { label: 'Institutions', icon: 'pi pi-building', to: '/institution_list' },
@@ -272,6 +313,7 @@ const menu = ref([
     label: 'Académique',
     icon: 'pi pi-book',
     items: [
+      { label: 'Dashboard Académique', icon: 'pi pi-chart-bar', to: '/admin/dashboard-academique' },
       // Dashboards
       {
         label: 'Dashboards',
@@ -309,6 +351,7 @@ const menu = ref([
     label: 'Gamification',
     icon: 'pi pi-star-fill',
     items: [
+      { label: 'Dashboard Gamification', icon: 'pi pi-chart-bar', to: '/admin/dashboard-gamification' },
       { label: 'Gestion Défis', icon: 'pi pi-flag-fill', to: '/admin/gamification/challenges' },
       { label: 'Gestion Quêtes', icon: 'pi pi-compass', to: '/admin/gamification/quests' },
       { label: 'Gestion Badges', icon: 'pi pi-shield', to: '/admin/gamification/badges' },
@@ -339,6 +382,14 @@ const menu = ref([
   align-self: flex-start;
   z-index: 10;
   overflow-y: auto;
+  
+  /* Masquer la scrollbar */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE et Edge */
+}
+
+.admin-sidebar.card.sidebar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari et Opera */
 }
 
 .admin-sidebar {

@@ -29,6 +29,8 @@ export const useRoleStore = defineStore('role', () => {
         'EtudiantSoins.access',
         'RMSoins.access',
       ]);
+      if (p === 'page1') return 'page1.access';
+      if (p === 'page2') return 'page2.access';
       if (mapAccess.has(p)) return p.replace('.access', '');
       return p;
     };

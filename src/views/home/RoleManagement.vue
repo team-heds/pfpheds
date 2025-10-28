@@ -1,6 +1,9 @@
 <template>
-  <div class="role-management">
+  <div>
     <Navbar />
+    <div class="page-layout">
+      <AdminSidebar />
+      <div class="role-management">
     
     <div class="role-management-container">
       <div class="role-header">
@@ -262,12 +265,15 @@
         {{ message.text }}
       </div>
     </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onActivated, onBeforeUnmount, watch } from 'vue';
 import Navbar from '@/components/common/utils/Navbar.vue';
+import AdminSidebar from '@/components/admin/lists/AdminSidebar.vue';
 import { useAuthStore } from '@/stores/authStore';
 import { useRoleStore } from '@/stores/role';
 import { supabase } from '@/supabase';
@@ -302,6 +308,8 @@ const hasChanges = computed(() => {
   return ![...currentSet].every(item => newSet.has(item));
 });
 
+// (supprimé) displayPermissions désormais non utilisé, l'encart montre l'état persisté
+
 // Charger les permissions actuelles (rafraîchies depuis Supabase)
 async function loadCurrentPermissions() {
   try {
@@ -312,15 +320,25 @@ async function loadCurrentPermissions() {
     if (uerr) throw uerr;
     const freshUser = ures?.user ?? authStore.user;
 
-    // Permissions via métadonnées utilisateur (source principale)
-    const userMetadata = freshUser?.user_metadata || {};
-    const normalize = (p) => (typeof p === 'string' && p.endsWith('.access')) ? p.slice(0, -7) : p;
-    const permissions = (userMetadata.permissions || []).map(normalize);
-
-    // Fallback éventuel sur roleStore si vide
-    const fallback = Array.isArray(roleStore.perms) ? roleStore.perms.map(normalize) : [];
-    const merged = Array.from(new Set((Array.isArray(permissions) && permissions.length > 0 ? permissions : fallback)));
-    currentPermissions.value = merged;
+    // Source de vérité: roleStore.perms (fusion RPC + metadata), sinon fallback metadata
+    const normalize = (p) => {
+      if (!p || typeof p !== 'string') return p;
+      if (p === 'page1') return 'page1.access';
+      if (p === 'page2') return 'page2.access';
+      // Pour les rôles métiers, certaines sources ajoutent .access: on l'enlève
+      if (p.endsWith('.access')) {
+        const base = p.slice(0, -7);
+        const prefixes = ['Admin', 'Enseignant', 'Etudiant', 'RM'];
+        if (prefixes.some(pr => base.startsWith(pr))) return base;
+      }
+      return p;
+    };
+    const storePerms = Array.isArray(roleStore.perms) ? roleStore.perms.map(normalize) : [];
+    const metaPerms = Array.isArray(freshUser?.user_metadata?.permissions)
+      ? freshUser.user_metadata.permissions.map(normalize)
+      : [];
+    const picked = (storePerms.length > 0) ? storePerms : metaPerms;
+    currentPermissions.value = Array.from(new Set(picked));
     console.log('✅ Permissions chargées:', currentPermissions.value);
     
     // Mettre à jour les checkboxes
@@ -448,10 +466,19 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.role-management {
-  min-height: 100vh;
+.page-layout {
+  display: flex;
+  gap: 1.5rem;
+  padding: 1.5rem;
   background: var(--surface-ground);
+  min-height: calc(100vh - 80px);
+}
+
+.role-management {
+  flex: 1;
+  min-width: 0;
   padding: 2rem;
+  background: var(--surface-ground);
 }
 
 .role-management-container {

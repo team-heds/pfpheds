@@ -8,9 +8,9 @@
         >
           <i :class="item.icon" />
           <span>{{ item.label }}</span>
-          <i class="pi" :class="openItems.has(item) ? 'pi-chevron-down' : 'pi-chevron-right'" style="margin-left:auto;" />
+          <i class="pi" :class="isOpen(item) ? 'pi-chevron-down' : 'pi-chevron-right'" style="margin-left:auto;" />
         </div>
-        <SidebarMenuItems v-if="openItems.has(item)" :items="item.items" />
+        <SidebarMenuItems v-if="isOpen(item)" :items="item.items" />
       </template>
       <template v-else>
         <router-link v-if="item.to" :to="item.to" class="sidebar-link sidebar-btn">
@@ -23,22 +23,67 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-defineProps(['items']);
+import { ref, onMounted, watch } from 'vue';
+import { useRoute } from 'vue-router';
+const props = defineProps({
+  items: {
+    type: Array,
+    required: true,
+    default: () => []
+  }
+});
 import SidebarMenuItems from './SidebarMenuItems.vue'; // récursif
 
-// State for open/close
+// State for open/close: use labels as keys instead of object references
 const openItems = ref(new Set());
+const route = useRoute();
+
+function isOpen(item) {
+  return openItems.value.has(item.label);
+}
 
 function toggle(item) {
-  if (openItems.value.has(item)) {
-    openItems.value.delete(item);
+  if (openItems.value.has(item.label)) {
+    openItems.value.delete(item.label);
   } else {
-    openItems.value.add(item);
+    openItems.value.add(item.label);
   }
   // trigger reactivity
   openItems.value = new Set(openItems.value);
 }
+
+// Helper: est-ce que un groupe contient la route active ?
+function groupContainsActive(item, path) {
+  if (!item || !item.items) return false;
+  for (const sub of item.items) {
+    if (sub.to && typeof sub.to === 'string' && path.startsWith(sub.to)) return true;
+    if (sub.items && groupContainsActive(sub, path)) return true;
+  }
+  return false;
+}
+
+function expandGroupsForPath(path, items) {
+  let changed = false;
+  for (const it of items) {
+    if (it.items && groupContainsActive(it, path)) {
+      if (!openItems.value.has(it.label)) {
+        openItems.value.add(it.label);
+        changed = true;
+      }
+      // continuer à descendre
+      expandGroupsForPath(path, it.items);
+    }
+  }
+  if (changed) openItems.value = new Set(openItems.value);
+}
+
+onMounted(() => {
+  expandGroupsForPath(route.path, Array.isArray(props.items) ? props.items : []);
+});
+
+watch(() => route.path, (p) => {
+  expandGroupsForPath(p, Array.isArray(props.items) ? props.items : []);
+});
 </script>
 
 <style scoped>
