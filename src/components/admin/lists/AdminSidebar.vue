@@ -1,30 +1,33 @@
 <template>
   <aside class="admin-sidebar card sidebar">
-    <div class="sidebar-card-listes">
-      <nav class="sidebar-nav">
-        <ul class="sidebar-menu">
-          <li class="sidebar-section">
-            <div class="sidebar-section-label">
-              <i :class="menu[0].icon" />
-              <span>{{ menu[0].label }}</span>
-            </div>
-            <ul v-if="menu[0].items" class="sidebar-submenu">
-              <SidebarMenuItems :items="menu[0].items" />
-            </ul>
-          </li>
-        </ul>
-      </nav>
+    <!-- Permissions: n'afficher que la liste possédée -->
+    <div v-if="isSupabaseUser" class="permissions-info-card">
+      <h4>🔐 Permissions</h4>
+      <ul class="perms-list">
+        <li v-for="perm in permsToShow" :key="perm">🔹 {{ perm }}</li>
+        <li v-if="!permsToShow || permsToShow.length === 0" class="permission-item">Aucune permission</li>
+      </ul>
     </div>
-    <div class="sidebar-card-outils">
+
+    <!-- Sections dynamiques basées sur le menu filtré -->
+    <div 
+      v-for="(section, index) in filteredMenu" 
+      :key="section.label"
+      :class="[
+        'sidebar-section-card',
+        getSectionClass(index)
+      ]"
+      v-show="shouldShowSection(section, index)"
+    >
       <nav class="sidebar-nav">
         <ul class="sidebar-menu">
           <li class="sidebar-section">
             <div class="sidebar-section-label">
-              <i :class="menu[1].icon" />
-              <span>{{ menu[1].label }}</span>
+              <i :class="section.icon" />
+              <span>{{ section.label }}</span>
             </div>
-            <ul v-if="menu[1].items" class="sidebar-submenu">
-              <SidebarMenuItems :items="menu[1].items" />
+            <ul v-if="section.items && section.items.length > 0" class="sidebar-submenu">
+              <SidebarMenuItems :items="section.items" />
             </ul>
           </li>
         </ul>
@@ -34,88 +37,284 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
+import { useRouter } from 'vue-router';
 import SidebarMenuItems from './SidebarMenuItems.vue';
+import { useRoleStore } from '@/stores/role';
+import { useAuthStore } from '@/stores/authStore';
+
+const router = useRouter();
+const roleStore = useRoleStore();
+const authStore = useAuthStore();
+
+// Vérifier si l'utilisateur est connecté avec Supabase
+const isSupabaseUser = computed(() => authStore.isSupabaseUser && authStore.session);
+
+// Permissions à afficher: roleStore.perms sinon fallback métadonnées Supabase
+// Normalise: supprime suffixe .access et dédoublonne
+const permsToShow = computed(() => {
+  const normalize = (p) => (typeof p === 'string' && p.endsWith('.access')) ? p.slice(0, -7) : p;
+  const fromStore = Array.isArray(roleStore.perms) ? roleStore.perms : [];
+  const fromMeta = Array.isArray(authStore.user?.user_metadata?.permissions)
+    ? authStore.user.user_metadata.permissions
+    : [];
+  const merged = (fromStore.length > 0 ? fromStore : fromMeta).map(normalize);
+  return Array.from(new Set(merged));
+});
+
+// Debug computed pour l'affichage des sections
+const showPFPSection = computed(() => isSupabaseUser.value && roleStore.can('page1.access'));
+const showAcademicSection = computed(() => isSupabaseUser.value && roleStore.can('page2.access'));
+const showGamificationSection = computed(() => isSupabaseUser.value);
+
+// Watch pour voir en temps réel les changements
+watch([showPFPSection, showAcademicSection, showGamificationSection], (newValues) => {
+  console.log('📊 AdminSidebar - État des sections:', {
+    isSupabaseUser: isSupabaseUser.value,
+    showPFP: showPFPSection.value,
+    showAcademic: showAcademicSection.value,
+    showGamification: showGamificationSection.value
+  });
+}, { immediate: true });
+
+// Fonction pour vérifier si un item du menu peut être affiché
+function canAccessRoute(route) {
+  if (!route || !route.to) return true;
+  const normalize = (p) => (typeof p === 'string' && p.endsWith('.access')) ? p.slice(0, -7) : p;
+
+  const resolved = router.resolve(route.to);
+
+  // Agréger tous les 'need' des records matchés
+  const needs = resolved.matched
+    .map(r => r.meta?.need)
+    .filter(Boolean)
+    .map(normalize);
+
+  // Gérer requiredRole (string ou array) sur la dernière record (ou meta direct)
+  let reqRoles = resolved.meta?.requiredRole ?? resolved.matched.at(-1)?.meta?.requiredRole;
+  reqRoles = Array.isArray(reqRoles) ? reqRoles : (reqRoles ? [reqRoles] : []);
+  reqRoles = reqRoles.map(normalize);
+
+  // Vérifier permissions 'need'
+  if (needs.length > 0) {
+    const okNeeds = needs.every(n => roleStore.can(n));
+    if (!okNeeds && !roleStore.isSuper) return false;
+  }
+
+  // Vérifier rôles requis
+  if (reqRoles.length > 0) {
+    const okRole = roleStore.isSuper || reqRoles.some(r => roleStore.can(r));
+    if (!okRole) return false;
+  }
+
+  return true;
+}
+
+// Fonction récursive pour filtrer les items du menu
+function filterMenuItems(items) {
+  return items.filter(item => {
+    // Si l'item a une route, vérifier les permissions
+    if (item.to && !canAccessRoute(item)) {
+      return false;
+    }
+    
+    // Si l'item a des sous-items, les filtrer récursivement
+    if (item.items) {
+      const filteredItems = filterMenuItems(item.items);
+      // Ne garder l'item que s'il a des sous-items visibles
+      item.items = filteredItems;
+      return filteredItems.length > 0;
+    }
+    
+    return true;
+  });
+}
+
+// Menu filtré selon les permissions
+const filteredMenu = computed(() => filterMenuItems(JSON.parse(JSON.stringify(menu.value))));
+
+// Obtenir la classe CSS pour une section selon son index
+function getSectionClass(index) {
+  const classes = {
+    0: 'admin-general-section',    // Admin Général
+    1: 'pfp-section',              // PFP
+    2: 'academic-section',         // Académique
+    3: 'gamification-section'      // Gamification
+  };
+  return classes[index] || '';
+}
+
+// Déterminer si une section doit être affichée
+function shouldShowSection(section, index) {
+  if (!isSupabaseUser.value) return false;
+  
+  switch (index) {
+    case 0: // Admin Général - super.all OU admin
+      return roleStore.isSuper || roleStore.can('super.all') || roleStore.can('admin')|| roleStore.can('page1.access');
+    case 1: // PFP - page1.access OU rôles Physio
+      return (
+        roleStore.can('AdminPhysio') ||
+        roleStore.can('EnseignantPhysio') ||
+        roleStore.isSuper
+      );
+    case 2: // Académique - page2.access OU rôles Soins
+      return (
+        roleStore.can('AdminSoins') ||
+        roleStore.can('EnseignantSoins') ||
+        roleStore.can('RMSoins') ||
+        roleStore.isSuper
+      );
+    case 3: // Gamification - accessible aux rôles Physio (et super)
+      return (
+        roleStore.can('AdminPhysio') ||
+        roleStore.can('EnseignantPhysio') ||
+        roleStore.isSuper
+      );
+    default:
+      return true;
+  }
+}
+
+// Initialiser le roleStore au montage du composant
+onMounted(async () => {
+  if (!roleStore.initialized) {
+    await roleStore.init();
+  }
+  
+  // Debug pour voir si l'utilisateur est bien détecté comme SupabaseUser
+  console.log('🎯 AdminSidebar - Debug connexion:', {
+    user: authStore.user,
+    isSupabaseUser: authStore.isSupabaseUser,
+    session: authStore.session,
+    isSuper: roleStore.isSuper,
+    canPage1: roleStore.can('page1.access'),
+    canPage2: roleStore.can('page2.access'),
+    perms: roleStore.perms
+  });
+});
 
 const menu = ref([
+  // ========================================
+  // SECTION 1: ADMIN GÉNÉRAL
+  // ========================================
   {
-    label: 'Listes',
-    icon: 'pi pi-home',
+    label: 'Admin Général',
+    icon: 'pi pi-cog',
     items: [
-      { label: 'Étudiant', icon: 'pi pi-users', to: '/etudiant_list' },
-      { label: 'Institution', icon: 'pi pi-home', to: '/institution_list' },
-      { label: 'Enseignant', icon: 'pi pi-flag', to: '/enseignent_list' },
-      { label: 'Praticien formateur', icon: 'pi pi-check-circle', to: '/praticien_formateur_list' },
-      { label: 'Profil Users Admin', icon: 'pi pi-users', to: '/profilAdmin/4qoWztDujictoqTEJvJK6xF1Zcr1' },
-      { label: 'Push Test', icon: 'pi pi-users', to: '/push' },
+      { label: 'Gestion des Rôles', icon: 'pi pi-user-edit', to: '/role-management' },
+      { label: 'Permissions', icon: 'pi pi-lock', to: '/permissions' },
+      { label: 'Routes & Accès', icon: 'pi pi-sitemap', to: '/router-inspector' },
+      { label: 'Utilisateurs', icon: 'pi pi-users', to: '/admin/users' },
+      { label: 'Paramètres', icon: 'pi pi-wrench', to: '/admin/settings' }
     ]
   },
+  
+  // ========================================
+  // SECTION 2: PFP
+  // ========================================
   {
-    label: 'Outils',
-    icon: 'pi pi-fw pi-cog',
+    label: 'PFP',
+    icon: 'pi pi-briefcase',
     items: [
+      // Listes et utilisateurs
+      { label: 'Étudiants', icon: 'pi pi-users', to: '/etudiant_list' },
+      { label: 'Institutions', icon: 'pi pi-building', to: '/institution_list' },
+      { label: 'Enseignants PHY', icon: 'pi pi-graduation-cap', to: '/enseignent_list' },
+      { label: 'Praticiens Formateurs', icon: 'pi pi-user-plus', to: '/praticien_formateur_list' },
+      { label: 'Profil Utilisateur', icon: 'pi pi-id-card', to: '/profilAdmin/4qoWztDujictoqTEJvJK6xF1Zcr1' },
+      { label: 'Profil 2', icon: 'pi pi-id-card', to: '/push' },
+      { label: 'Profil 1', icon: 'pi pi-id-card', to: '/push2' },
+      
+      // Répondants HES
       {
-        label: 'Votation',
+        label: 'Répondants HES',
+        icon: 'pi pi-comments',
+        items: [
+          { label: 'Gestion Répondants', icon: 'pi pi-cog', to: '/management_repondant' },
+          { label: 'Informations', icon: 'pi pi-info-circle', to: '/info_repondant' }
+        ]
+      },
+      
+      // Votations
+      {
+        label: 'Votations',
         icon: 'pi pi-check-square',
         items: [
-          { label: 'Management Offres', icon: 'pi pi-cog', to: '/management_offre' },
-          { label: 'Management Votation Lese', icon: 'pi pi-cog', to: '/management_votation_prioritaire' },
-          { label: 'Management Votation Etudiant', icon: 'pi pi-cog', to: '/management_votation_etudiants' },
-          { label: 'Places assigned', icon: 'pi pi-fw pi-image', to: '/places_asssigned' },
-          { label: 'Places Assignement', icon: 'pi pi-fw pi-image', to: '/places_assignment' },
-          { label: 'Result Votation Preview', icon: 'pi pi-cog', to: '/result_preview_votation' }
+          { label: 'Gestion Offres', icon: 'pi pi-cog', to: '/management_offre' },
+          { label: 'Votation Lese', icon: 'pi pi-sliders-h', to: '/management_votation_prioritaire' },
+          { label: 'Votation Étudiants', icon: 'pi pi-users', to: '/management_votation_etudiants' },
+          { label: 'Places Assignées', icon: 'pi pi-map-marker', to: '/places_asssigned' },
+          { label: 'Assignement Places', icon: 'pi pi-sitemap', to: '/places_assignment' },
+          { label: 'Résultats Votation', icon: 'pi pi-chart-pie', to: '/result_preview_votation' }
         ]
       },
+      
+      // Gestion PFP
       {
-        label: 'PFP',
-        icon: 'pi pi-fw pi-comment',
+        label: 'Gestion PFP',
+        icon: 'pi pi-folder-open',
         items: [
-          { label: 'Management PFP EN cours', icon: 'pi pi-fw pi-image', to: '/management_pfpencours' },
-          { label: 'Gantt PFP', icon: 'pi pi-fw pi-image', to: '/gantt' },
-          { label: 'Management Places', icon: 'pi pi-cog', to: '/management_places' },
-          { label: 'Management Places Safe', icon: 'pi pi-cog', to: '/management_places_safe' },
-          { label: 'Stage Repartition', icon: 'pi pi-cog', to: '/stage_repartition' },
-          { label: 'Validation PFP1A', icon: 'pi pi-cog', to: '/validate-pfp1a' }
+          { label: 'PFP en Cours', icon: 'pi pi-clock', to: '/management_pfpencours' },
+          { label: 'Gantt PFP', icon: 'pi pi-chart-line', to: '/gantt' },
+          { label: 'Gestion Places', icon: 'pi pi-map', to: '/management_places' },
+          { label: 'Gestion Places Safe', icon: 'pi pi-shield', to: '/management_places_safe' },
+          { label: 'Répartition Stages', icon: 'pi pi-percentage', to: '/stage_repartition' },
+          { label: 'Validation PFP1A', icon: 'pi pi-check-circle', to: '/validate-pfp1a' }
+        ]
+      }
+    ]
+  },
+  
+  // ========================================
+  // SECTION 2: ACADÉMIQUE
+  // ========================================
+  {
+    label: 'Académique',
+    icon: 'pi pi-book',
+    items: [
+      // Dashboards
+      {
+        label: 'Dashboards',
+        icon: 'pi pi-chart-bar',
+        items: [
+          { label: 'Dashboard Admin SI', icon: 'pi pi-desktop', to: '/admin' },
+          { label: 'Dashboard RM', icon: 'pi pi-users', to: '/admin/dashboard-rm' },
+          { label: 'Dashboard Enseignants', icon: 'pi pi-graduation-cap', to: '/admin/dashboard-teachers' }
         ]
       },
+      
+      // Enseignants SI
+      { label: 'Enseignants SI', icon: 'pi pi-user-edit', to: '/admin/teachers-si' },
+      
+      // Planning
       {
-        label: 'Planning Académique',
+        label: 'Planning',
         icon: 'pi pi-calendar',
         items: [
           { label: 'Voir Planning', icon: 'pi pi-eye', to: '/admin/planning' },
           { label: 'Gérer Planning', icon: 'pi pi-pencil', to: '/admin/planning/manage' }
         ]
       },
-      {
-        label: 'Gestion Académique',
-        icon: 'pi pi-box',
-        items: [
-          { label: 'Tableau Kanban', icon: 'pi pi-th-large', to: '/admin/academic/kanban' },
-          { label: 'Gestion Contenu Multimédia', icon: 'pi pi-video', to: '/admin/academic/media-content' }
-        ]
-      },
-      {
-        label: 'Gamification',
-        icon: 'pi pi-star',
-        items: [
-          { label: 'Gestion des Défis', icon: 'pi pi-flag-fill', to: '/admin/gamification/challenges' },
-          { label: 'Gestion des Quêtes', icon: 'pi pi-flag', to: '/admin/gamification/quests' },
-          { label: 'Gestion des Badges', icon: 'pi pi-star', to: '/admin/gamification/badges' },
-          { label: 'Gestion des Utilisateurs', icon: 'pi pi-users', to: '/admin/gamification/users' },
-          { label: 'Gestion des Maisons', icon: 'pi pi-home', to: '/admin/gamification/houses' },
-          { label: 'Analytics & Statistiques', icon: 'pi pi-chart-bar', to: '/admin/gamification/analytics' }
-        ]
-      },
-      {
-        label: 'Répondant HES',
-        icon: 'pi pi-fw pi-comment',
-        items: [
-          { label: 'Management Répondant HES', icon: 'pi pi-fw pi-image', to: '/management_repondant' },
-          { label: 'Informations Répondant HES', icon: 'pi pi-fw pi-image', to: '/info_repondant' }
-        ]
-      },
-      { label: 'Export Excel', icon: 'pi pi-file-excel', to: '/export_excel' },
-      { label: 'Rapports', icon: 'pi pi-chart-bar', to: '/rapports' },
+      
+      // Gestion académique
+      { label: 'Tableau Kanban', icon: 'pi pi-th-large', to: '/admin/academic/kanban' },
+      { label: 'Gestion Contenu Multimédia', icon: 'pi pi-video', to: '/admin/academic/media-content' }
+    ]
+  },
+  
+  // ========================================
+  // SECTION 3: GAMIFICATION
+  // ========================================
+  {
+    label: 'Gamification',
+    icon: 'pi pi-star-fill',
+    items: [
+      { label: 'Gestion Défis', icon: 'pi pi-flag-fill', to: '/admin/gamification/challenges' },
+      { label: 'Gestion Quêtes', icon: 'pi pi-compass', to: '/admin/gamification/quests' },
+      { label: 'Gestion Badges', icon: 'pi pi-shield', to: '/admin/gamification/badges' },
+      { label: 'Gestion Utilisateurs', icon: 'pi pi-users', to: '/admin/gamification/users' },
+      { label: 'Gestion Maisons', icon: 'pi pi-home', to: '/admin/gamification/houses' },
+      { label: 'Analytics & Statistiques', icon: 'pi pi-chart-line', to: '/admin/gamification/analytics' }
     ]
   }
 ]);
@@ -141,7 +340,6 @@ const menu = ref([
   z-index: 10;
   overflow-y: auto;
 }
-
 
 .admin-sidebar {
   width: 340px;
@@ -186,8 +384,7 @@ const menu = ref([
   margin-left: 1.5rem;
 }
 
-.sidebar-card-listes,
-.sidebar-card-outils {
+.sidebar-section-card {
   background: var(--surface-card);
   border-radius: 1.2rem;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
@@ -195,7 +392,50 @@ const menu = ref([
   width: 100%;
 }
 
-.sidebar-card-outils {
-  margin-top: 1.5rem;
+.admin-general-section,
+.pfp-section,
+.academic-section {
+  margin-bottom: 1.5rem;
+}
+
+/* Section d'information des permissions */
+.permissions-info-card {
+  background: var(--surface-card);
+  border-radius: 1.2rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  padding: 1rem;
+  width: 100%;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--surface-border, #e0e0e0);
+}
+
+.permissions-info-card h4 {
+  margin: 0 0 1rem 0;
+  color: var(--text-color);
+  font-size: 1.1rem;
+  border-bottom: 1px solid var(--surface-border, #e0e0e0);
+  padding-bottom: 0.5rem;
+}
+
+.permission-item {
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-color-secondary);
+}
+
+.permission-item strong {
+  color: var(--text-color);
+}
+
+.perms-list {
+  margin: 0.5rem 0 0 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.perms-list li {
+  font-size: 0.85rem;
+  margin-bottom: 0.25rem;
+  color: var(--text-color);
 }
 </style>
