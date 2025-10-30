@@ -271,9 +271,13 @@ async function save() {
       is_active: form.value.is_active,
       updated_at: new Date().toISOString()
     }
+    
+    const selectedPermissions = Object.keys(permissions.value).filter(k => permissions.value[k])
+    
     if (hasPermissionsColumn.value) {
-      payload.permissions = Object.keys(permissions.value).filter(k => permissions.value[k])
+      payload.permissions = selectedPermissions
     }
+    
     let updateError = null
     // Try update with permissions (if column exists)
     try {
@@ -297,19 +301,45 @@ async function save() {
           .update(withoutPerms)
           .eq('user_id', form.value.user_id)
         if (e2) updateError = e2; else updateError = null
-        // Facultatif: si tu as une Edge Function/RPC admin pour MAJ metadata, on peut l'appeler ici
       } else {
         updateError = e
       }
     }
+    
     if (updateError) throw updateError
+    
+    // Mettre à jour les permissions via RPC pour synchroniser avec auth.users
+    try {
+      const { data: rpcData, error: rpcError } = await supabase.rpc('update_user_permissions', {
+        target_user_id: form.value.user_id,
+        new_permissions: selectedPermissions
+      })
+      
+      if (rpcError) {
+        console.warn('Avertissement: Impossible de mettre à jour les permissions dans auth.users:', rpcError)
+        // On continue même si la RPC échoue, car user_profiles a été mis à jour
+      } else if (rpcData && !rpcData.success) {
+        console.warn('Avertissement RPC:', rpcData.error)
+      } else {
+        console.log('✅ Permissions mises à jour avec succès dans user_profiles et auth.users')
+      }
+    } catch (rpcErr) {
+      console.warn('Erreur lors de l\'appel RPC update_user_permissions:', rpcErr)
+      // On continue même si la RPC échoue
+    }
+    
+    // Mettre à jour la liste locale
     const idx = users.value.findIndex(u => u.user_id === form.value.user_id)
     if (idx !== -1) users.value[idx] = { ...users.value[idx], ...payload }
+    
+    // Fermer le dialog et afficher un message de succès
+    editorVisible.value = false
+    console.log('✅ Utilisateur mis à jour avec succès')
   } catch (e) {
-    console.error('save error', e)
+    console.error('❌ Erreur lors de la sauvegarde:', e)
+    alert('Erreur lors de la sauvegarde: ' + (e.message || 'Erreur inconnue'))
   } finally {
     saving.value = false
-    if (!saving.value) editorVisible.value = false
   }
 }
 
