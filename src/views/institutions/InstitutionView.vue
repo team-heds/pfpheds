@@ -120,6 +120,7 @@ import Navbar from '@/components/common/utils/Navbar.vue'
 import TabView from 'primevue/tabview'
 import TabPanel from 'primevue/tabpanel'
 import { useInstitutionsStore } from '@/stores/institutionsStore'
+import { usePlacesStore } from '@/stores/placesStore'
 import { db, auth } from '../../../firebase.js'
 import schoolLogo from '../../..//public/assets/images/markerheds.png'
 
@@ -137,6 +138,7 @@ const schoolLogoIcon = L.icon({
 const route = useRoute()
 const router = useRouter()
 const institutionsStore = useInstitutionsStore()
+const placesStore = usePlacesStore()
 
 const institutionDetails = ref(null)
 const institutionFiles = ref([])
@@ -209,30 +211,27 @@ async function loadInstitution() {
   }
 }
 
-function fetchInstitutionFiles(id) {
+async function fetchInstitutionFiles(id) {
   if (!id) return
   detachPlacesListener()
-  const refPlaces = firebaseDbRef(db, 'Places')
-  placesRefInstance = refPlaces
-  placesCallback = (snapshot) => {
-    if (!snapshot.exists()) {
-      institutionFiles.value = []
-      return
-    }
-    const placesData = snapshot.val()
-    const files = []
-    Object.values(placesData).forEach((place) => {
-      const placeId = place.IDPlace || place.InstitutionId || place.key
-      if (placeId === id) {
-        files.push({
-          name: place.NomPlace || place.title || 'Document',
-          url: place.fileURL,
-        })
-      }
-    })
-    institutionFiles.value = files
+  
+  try {
+    // Charger les places depuis Supabase pour cette institution
+    const places = await placesStore.fetchPlacesByInstitution(id)
+    
+    // Transformer en format pour l'affichage
+    institutionFiles.value = places
+      .filter(place => place.fileURL) // Seulement celles avec un fichier
+      .map(place => ({
+        name: place.NomPlace || 'Document',
+        url: place.fileURL,
+      }))
+    
+    console.log(`✅ ${institutionFiles.value.length} fichiers chargés depuis Supabase pour l'institution ${id}`)
+  } catch (error) {
+    console.error('❌ Erreur chargement fichiers places depuis Supabase:', error)
+    institutionFiles.value = []
   }
-  onValue(refPlaces, placesCallback)
 }
 
 function setupMap(inst) {

@@ -1,4 +1,6 @@
-# 📊 Migration Institutions vers Supabase - État d'avancement
+# 📊 Migration Institutions vers Supabase - ✅ COMPLÉTÉE
+
+## 🎉 Migration 100% terminée - Tous les fichiers migrés vers Supabase
 
 ## ✅ Fichiers créés et migrés
 
@@ -58,35 +60,65 @@
   - Limite 10 résultats institutions triés par pertinence
   - Liens directs vers `/institution/:id`
 
-## 📂 Fichiers à migrer (prochaines étapes)
+#### ✅ `InstitutionDetailsView.vue` (admin)
+- **Avant** : `onValue(ref(db, 'institutions/${id}'))` Firebase
+- **Après** : `institutionsStore.fetchInstitutionById(id)` Supabase
+- **Composition API** : Script setup complet
+- **Fonctionnalités** :
+  - Détails institution avec carte Leaflet
+  - Gestion images responsive
+  - Navigation propre avec destroy de la carte
+  - Redirection vers Error404 si institution non trouvée
 
-### 🔄 Priorité 1 - Formulaires CRUD
-- ⏳ `src/components/admin/forms/InstitutionForm.vue`
-  - Actuellement : Création via `institutionsStore.createInstitution()` (✅ déjà Supabase)
-  - Upload image : Firebase Storage (à conserver temporairement)
-  
-- ⏳ `src/components/admin/forms/InstitutionFormModif.vue`
-  - Actuellement : Récupération depuis `institutionsStore.fetchInstitutions()` (✅ déjà Supabase)
-  - Update via `institutionsStore.updateInstitution()` (✅ déjà Supabase)
-  - Upload image : Firebase Storage (à conserver)
+#### ✅ `PlaceDetails.vue`
+- **Avant** : `onValue(ref(db, 'institutions/'))` Firebase
+- **Après** : `institutionsStore.fetchInstitutions()` Supabase
+- **Conversion** : Tableau Supabase → Objet indexé pour compatibilité
+- **Fonctionnalités** :
+  - Affichage nom institution dans DataTable PFP
+  - Gestion stages par année académique (Firebase conservé)
+  - Checkboxes secteurs (AIGU, REA, MSQ, etc.)
 
-### 🔄 Priorité 2 - Admin
-- ⏳ `src/views/admin/institutions/InstitutionDetailsView.vue`
-  - Actuellement : Lecture directe Firebase
-  - Migrer vers : `institutionsStore.fetchInstitutionById()`
+#### ✅ `Votation_preview.vue`
+- **Avant** : `onValue(ref(db, 'institutions/'))` Firebase
+- **Après** : `institutionsStore.fetchInstitutions()` Supabase
+- **Composition API** : Setup avec store Supabase
+- **Fonctionnalités** :
+  - Preview votations étudiants (Firebase conservé)
+  - Affichage nom institution pour chaque choix
+  - Conversion array → object pour compatibilité
 
-- ⏳ `src/views/admin/institutions/InstitutionListView.vue`
-  - Actuellement : Firebase
-  - Migrer vers : `institutionsStore.fetchInstitutions()` + suppression
+#### ✅ `FilterInstitution.vue`
+- **Avant** : `onValue(ref(db, 'institutions/'))` Firebase
+- **Après** : `institutionsStore.fetchInstitutions()` Supabase
+- **Fonctionnalités** :
+  - Filtres par catégories et cantons
+  - Carte Leaflet avec marqueurs institutions
+  - Dialog détails institution au clic
+  - Recherche temps réel
 
-### 🔄 Priorité 3 - Autres pages
-- ✅ `src/views/institutions/Institution.vue` (page listing public)
-  - Utilise `institutionsStore` (✅ déjà Supabase)
-  - ✅ Testé et validé
+## 📂 ✅ Récapitulatif complet de la migration (10/10 fichiers)
 
-- ✅ `src/components/common/utils/GlobalSearch.vue`
-  - ✅ Migré vers Supabase pour les institutions
-  - Recherche hybride : Institutions (Supabase) + Users/Modules (Firebase)
+### **Vues publiques** (3/3)
+1. ✅ `src/views/institutions/InstitutionView.vue` - Détails institution
+2. ✅ `src/views/institutions/InstitutionListView.vue` - Liste publique
+3. ✅ `src/views/institutions/Institution.vue` - Listing public avec filtres
+
+### **Vues admin** (2/2)
+4. ✅ `src/views/admin/institutions/InstitutionDetailsView.vue` - Détails admin
+5. ✅ `src/views/admin/institutions/InstitutionListView.vue` - Liste admin (déjà Supabase)
+
+### **Composants admin** (2/2)
+6. ✅ `src/components/admin/details/PlaceDetails.vue` - Gestion PFP
+7. ✅ `src/components/admin/details/Votation_preview.vue` - Preview votations
+
+### **Composants communs** (2/2)
+8. ✅ `src/components/common/utils/GlobalSearch.vue` - Recherche globale
+9. ✅ `src/components/common/filters/FilterInstitution.vue` - Filtres + carte
+
+### **Formulaires** (déjà Supabase)
+10. ✅ `src/components/admin/forms/InstitutionForm.vue` - Création
+11. ✅ `src/components/admin/forms/InstitutionFormModif.vue` - Modification
 
 ## 🔧 Actions nécessaires avant déploiement
 
