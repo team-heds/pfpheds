@@ -1,6 +1,5 @@
 <template>
-  <div class="planning-admin-container">
-    <Navbar />
+  <AdminLayout class="planning-admin-container">
     
     <!-- Header Card -->
     <Card class="header-card mb-4">
@@ -423,13 +422,14 @@
     </Dialog>
 
     <Toast />
-  </div>
+  </AdminLayout>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
+import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 import Navbar from '@/components/common/utils/Navbar.vue'
 import Card from 'primevue/card'
 import Panel from 'primevue/panel'

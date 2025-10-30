@@ -1,5 +1,5 @@
 <template>
-  <Navbar />
+  <AdminLayout>
   <div class="page-wrapper">
     <div class="profile-admin-page">
       <!-- Indicateur de chargement -->
@@ -22,16 +22,15 @@
       </div>
     </div>
   </div>
-
-
+  </AdminLayout>
 </template>
 
 <script>
+import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 import { ref, reactive, onMounted, watch, computed } from 'vue';
 import { getDatabase, ref as dbRef, get } from 'firebase/database';
 import { useRoute, useRouter } from 'vue-router';
 
-import Navbar from '@/components/common/utils/Navbar.vue';
 import ProfileInfoAdmin from '@/components/user/details/ProfileInfoAdmin.vue'
 import ResumStageUserProfile from '@/components/user/details/ResumStageUserProfile.vue'
 import DocumentsUserProfile from '@/components/user/details/DocumentsUserProfile.vue'
@@ -40,7 +39,7 @@ import ChatProfil from '@/components/user/details/ChatProfil.vue'
 export default {
   name: 'ProfilAdmin',
   components: {
-    Navbar,
+    AdminLayout,
     ProfileInfoAdmin,
     ResumStageUserProfile,
     DocumentsUserProfile,

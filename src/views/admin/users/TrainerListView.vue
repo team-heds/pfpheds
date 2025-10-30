@@ -1,6 +1,5 @@
 <template>
-  <div class="admin-scrollable">
-    <Navbar />
+  <AdminLayout>
  
     <div class="filter-menu">
       <DataTable
@@ -65,7 +64,7 @@
         </Column>
       </DataTable>
     </div>
-  </div>
+  </AdminLayout>
 </template>
  
 <script setup>
@@ -80,7 +79,8 @@ import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
 import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
-import Navbar from '@/components/common/utils/Navbar.vue'
+import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
+// import Navbar from '@/components/common/utils/Navbar.vue'
 import { FilterMatchMode } from 'primevue/api'
  
 const router = useRouter()

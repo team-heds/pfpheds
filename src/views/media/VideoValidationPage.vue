@@ -1,5 +1,5 @@
 <template>
-  <div class="video-validation-page">
+  <AdminLayout class="video-validation-page">
     <!-- Header -->
     <div class="page-header">
       <Button 
@@ -219,10 +219,11 @@
 
     <!-- Toast pour notifications -->
     <Toast />
-  </div>
+  </AdminLayout>
 </template>
 
 <script setup>
+import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useToast } from 'primevue/usetoast'

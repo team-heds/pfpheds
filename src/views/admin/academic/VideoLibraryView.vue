@@ -1,7 +1,6 @@
 <template>
+  <AdminLayout>
   <div class="video-library-view">
-    <Navbar />
-    
     <div class="library-container">
       <!-- Header -->
       <div class="library-header">
@@ -345,13 +344,14 @@
 
     <Toast />
   </div>
+  </AdminLayout>
 </template>
 
 <script setup>
+import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
-import Navbar from '@/components/common/utils/Navbar.vue'
 import VideoCard from '@/components/video/VideoCard.vue'
 import ModuleSection from '@/components/video/ModuleSection.vue'
 import Button from 'primevue/button'

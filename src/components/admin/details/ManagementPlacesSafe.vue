@@ -1,7 +1,6 @@
-﻿<!-- src/components/Social/ManagementPlaceSafe.vue -->
+<!-- src/components/Social/ManagementPlaceSafe.vue -->
 <template>
-  <div>
-    <Navbar />
+  <AdminLayout>
     <div class="page-title">
       <h1>Offre en place de stages</h1>
     </div>
@@ -181,11 +180,11 @@
         </ul>
       </div>
     </div>
-  </div>
+  </AdminLayout>
 </template>
 
 <script>
-import Navbar from '@/components/common/utils/Navbar.vue';
+import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 import { db, auth, storage } from '../../../../firebase.js';
 import { ref as dbRef, onValue, update } from 'firebase/database';
 
@@ -196,7 +195,7 @@ import Column from 'primevue/column';
 export default {
   name: 'ManagementPlacesSafe',
   components: {
-    Navbar,
+    AdminLayout,
     InputText,
     DataTable,
     Column

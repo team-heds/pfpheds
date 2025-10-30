@@ -1,10 +1,5 @@
 <template>
-  <div>
-    <Navbar />
-    
-    <div class="dashboard-layout">
-      <AdminSidebar />
-      <div class="dashboard-content">
+  <AdminLayout>
       <div v-if="loading" class="flex flex-column align-items-center justify-content-center p-8">
         <ProgressSpinner />
         <p class="mt-3 text-600">Chargement du tableau de bord...</p>
@@ -140,16 +135,13 @@
           </div>
         </div>
       </div>
-    </div>
-    </div>
-  </div>
+  </AdminLayout>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import Navbar from '../common/utils/Navbar.vue'
-import AdminSidebar from './lists/AdminSidebar.vue'
+import AdminLayout from './layouts/AdminLayout.vue'
 import Button from 'primevue/button'
 import ProgressSpinner from 'primevue/progressspinner'
 
@@ -182,18 +174,3 @@ onMounted(() => {
   loading.value = false
 })
 </script>
-
-<style scoped>
-.dashboard-layout {
-  display: flex;
-  gap: 1.5rem;
-  padding: 1.5rem;
-  background: var(--surface-ground);
-  min-height: calc(100vh - 80px);
-}
-
-.dashboard-content {
-  flex: 1;
-  min-width: 0;
-}
-</style>

@@ -1,6 +1,6 @@
 <template>
+  <AdminLayout>
   <div class="admin-scrollable">
-    <Navbar />
     <h1 style="margin: 2rem 0 1rem 0; text-align: center;" class="m-8">Liste des institutions</h1>
     <div style="margin: 0 2rem;">
       <DataTable
@@ -39,6 +39,7 @@
       </DataTable>
     </div>
   </div>
+  </AdminLayout>
 </template>
 
 <script setup>
@@ -52,7 +53,7 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
-import Navbar from '@/components/common/utils/Navbar.vue';
+import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 
 // Setup
 const router = useRouter();

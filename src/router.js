@@ -33,6 +33,26 @@ import HistoriquePFP from '@/views/home/HistoryView.vue'
 import DocumentsPFP from '@/views/home/DocumentsView.vue'
 import RoleManagement from '@/views/home/RoleManagement.vue'
 import RouterView from '@/views/home/RouterView.vue'
+import PermissionsView from '@/views/home/PermissionsView.vue'
+
+// PFP MANAGEMENT
+import ManagementPFPEnCoursView from '@/views/admin/pfp/ManagementPFPEnCoursView.vue'
+import ManagementVotationPrioritaireView from '@/views/admin/pfp/ManagementVotationPrioritaireView.vue'
+import ManagementOffreView from '@/views/admin/pfp/ManagementOffreView.vue'
+import VotationEtudiantsView from '@/views/admin/pfp/VotationEtudiantsView.vue'
+import PlacesAssignedView from '@/views/admin/pfp/PlacesAssignedView.vue'
+import ManagementPlacesView from '@/views/admin/pfp/ManagementPlacesView.vue'
+import ManagementRepondantView from '@/views/admin/pfp/ManagementRepondantView.vue'
+import PlacesAssignmentView from '@/views/admin/pfp/PlacesAssignmentView.vue'
+import GanttPFPView from '@/views/admin/pfp/GanttPFPView.vue'
+import ValidatePFP1AView from '@/views/admin/pfp/ValidatePFP1AView.vue'
+import InfoRepondantView from '@/views/admin/pfp/InfoRepondantView.vue'
+import ResultPreviewVotationView from '@/views/admin/pfp/ResultPreviewVotationView.vue'
+
+// ADMIN LISTS
+import ProgramListView from '@/views/admin/lists/ProgramListView.vue'
+import ModuleListView from '@/views/admin/lists/ModuleListView.vue'
+import UserRoleListView from '@/views/admin/lists/UserRoleListView.vue'
 
 // ASSOCIATIONS
 import AlpinPhysioView from '@/views/associations/AlpinPhysioView.vue'
@@ -128,6 +148,8 @@ import StudentListView from "@/views/admin/users/StudentListView.vue";
 import TeacherListView from "@/views/admin/users/TeacherListView.vue";
 import TrainerListView from "@/views/admin/users/TrainerListView.vue";
 import InstitutionListView from "@/views/admin/institutions/InstitutionListView.vue";
+import TeachersSIView from '@/views/admin/users/TeachersSIView.vue'
+import ManageUserRoles from '@/views/admin/users/ManageUserRoles.vue'
 
 // ========================================
 // FORMULAIRES DE CRÉATION/MODIFICATION
@@ -255,6 +277,7 @@ const routes = [
 { path: '/push2', component: PushView, name: 'PushView2', meta: { requiresAuth: true, need: 'page2.access' } },
 { path: '/role-management', component: RoleManagement, name: 'RoleManagement', meta: { requiresAuth: true } },
 { path: '/router-inspector', component: RouterView, name: 'RouterInspector', meta: { requiresAuth: true, need: 'admin' } },
+{ path: '/permissions', component: PermissionsView, name: 'PermissionsView', meta: { requiresAuth: true, need: 'admin' } },
 
   // ASSOCIATIONS
   { path: '/alpinphysio', component: AlpinPhysioView, name: 'AlpinPhysio', meta: { requiresAuth: false } },
@@ -313,6 +336,28 @@ const routes = [
   { path: '/admin/dashboard-gamification', component: AdminDashboardGamification, name: 'AdminDashboardGamification', meta: { requiresAuth: true } },
   { path: '/admin/settings', component: AdminSettingsView, name: 'AdminSettingsView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
   { path: '/admin/defis', component: AdminDefisView, name: 'AdminDefisView', meta: { requiresAuth: true, requiredRole: ['admin', 'house_coach'] } },
+  
+  // PFP Management Routes
+  { path: '/management_pfpencours', component: ManagementPFPEnCoursView, name: 'ManagementPFPEnCoursView', meta: { requiresAuth: true , requiredRole: 'admin'} },
+  { path: '/management_votation_prioritaire', component: ManagementVotationPrioritaireView, name: 'ManagementVotationPrioritaire', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/management_offre', component: ManagementOffreView, name: 'ManagementOffre', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/management_votation_etudiants', component: VotationEtudiantsView, name: 'VotationEtudiants', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/places_asssigned', component: PlacesAssignedView, name: 'PlacesAssigned', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/management_place', component: ManagementPlacesView, name: 'ManagementPlaces', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/management_repondant', component: ManagementRepondantView, name: 'ManagementRepondant', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/places_assignment', component: PlacesAssignmentView, name: 'PlacesAssignment', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/gantt', component: GanttPFPView, name: 'GanttPFP', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/validate-pfp1a', component: ValidatePFP1AView, name: 'ValidatePFP1A', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/info_repondant', component: InfoRepondantView, name: 'InfoRepondant', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/result_preview_votation', component: ResultPreviewVotationView, name: 'ResultPreviewVotation', meta: { requiresAuth: true, need: 'page1.access' } },
+  
+  // Admin Lists Routes
+  { path: '/admin/programs', component: ProgramListView, name: 'ProgramList', meta: { requiresAuth: true, need: 'admin' } },
+  { path: '/admin/modules', component: ModuleListView, name: 'ModuleList', meta: { requiresAuth: true, need: 'admin' } },
+  { path: '/admin/user-roles', component: UserRoleListView, name: 'UserRoleList', meta: { requiresAuth: true, need: 'admin' } },
+  { path: '/admin/teachers-si', component: TeachersSIView, name: 'TeachersSIView', meta: { requiresAuth: true, need: 'admin' } },
+  { path: '/admin/manage-user-roles', component: ManageUserRoles, name: 'ManageUserRoles', meta: { requiresAuth: true, need: 'admin' } },
+  
   // Planning académique
   { path: '/admin/planning', component: PlanningView, name: 'PlanningView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
   { path: '/admin/planning/manage', component: PlanningAdminView, name: 'PlanningAdminView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
@@ -401,13 +446,12 @@ const routes = [
   // ========================================
   // GESTION DES PLACES & STAGES
   // ========================================
-  { path: '/management_places', component: PlaceManagementView, name: 'PlaceManagementView', meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/management_places_safe', component: ManagementPlacesSafe, name: 'ManagementPlacesSafe', meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/management_offre', component: OffreDePlace, name: 'Management_offre', meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/places_assignment', component: PlaceAssignmentView, name: 'PlaceAssignmentView', meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/places_assigned', component: PlacesAssigned, name: 'PlacesAssigned', meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/stage_repartition', component: StageRepartitionBA2, name: 'StageRepartitionBA2', meta: { requiresAuth: true, requiredRole: 'admin' } },
-  { path: '/management_pfpencours', component: ManagementPFPEnCours, name: 'ManagementPFPEnCours', meta: { requiresAuth: true, requiredRole: 'admin' } },
+  { path: '/management_pfpencours2', component: ManagementPFPEnCours, name: 'ManagementPFPEnCours', meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/historique_pfp', component: HistoriquePFP, name: 'HistoriquePFP', meta: { requiresAuth: true } },
   { path: '/documents_pfp', component: DocumentsPFP, name: 'DocumentsPFP', meta: { requiresAuth: true } },
 

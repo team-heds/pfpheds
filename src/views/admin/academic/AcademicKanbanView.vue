@@ -1,196 +1,198 @@
 <template>
-  <Navbar />
-  <div class="page-wrapper">
-    <div class="academic-kanban-page">
-      <!-- Header -->
-      <div class="page-header">
-        <div class="header-content">
-          <div class="title-section">
-            <h1>
-              <i class="pi pi-box text-primary"></i>
-              Tableau Kanban - Gestion Académique
-            </h1>
-            <p class="text-600">Suivi de la production de contenu académique</p>
-          </div>
-          
-          <div class="header-actions">
-            <Button 
-              label="Vue Liste"
-              icon="pi pi-list"
-              @click="$router.push('/admin/academic/tickets')"
-              outlined
-            />
-            <Button 
-              label="Vue Calendrier"
-              icon="pi pi-calendar"
-              @click="$router.push('/admin/academic/calendar')"
-              outlined
-            />
-            <Button 
-              label="Bibliothèque"
-              icon="pi pi-video"
-              @click="$router.push('/admin/academic/video-library')"
-              outlined
-            />
-            <Button 
-              label="Statistiques"
-              icon="pi pi-chart-bar"
-              @click="showStatsDialog = true"
-              outlined
-            />
-            <Button 
-              label="Nouveau ticket"
-              icon="pi pi-plus"
-              @click="showCreateDialog = true"
-              severity="success"
-            />
-          </div>
-        </div>
-
-        <!-- Filtres -->
-        <div class="filters-section mt-4">
-          <div class="grid">
-            <div class="col-12 md:col-3">
-              <Dropdown
-                v-model="filterType"
-                :options="typeOptions"
-                optionLabel="label"
-                optionValue="value"
-                placeholder="Tous les types"
-                class="w-full"
-                showClear
-              />
+  <AdminLayout>
+    <Navbar />
+    <div class="page-wrapper">
+      <div class="academic-kanban-page">
+        <!-- Header -->
+        <div class="page-header">
+          <div class="header-content">
+            <div class="title-section">
+              <h1>
+                <i class="pi pi-box text-primary"></i>
+                Tableau Kanban - Gestion Académique
+              </h1>
+              <p class="text-600">Suivi de la production de contenu académique</p>
             </div>
-            <div class="col-12 md:col-3">
-              <Dropdown
-                v-model="filterModule"
-                :options="moduleOptions"
-                optionLabel="title"
-                optionValue="id"
-                placeholder="Tous les modules"
-                class="w-full"
-                showClear
-                filter
-              />
-            </div>
-            <div class="col-12 md:col-3">
-              <InputText
-                v-model="searchQuery"
-                placeholder="Rechercher..."
-                class="w-full"
-                @input="debouncedSearch"
-              >
-                <template #prepend>
-                  <i class="pi pi-search"></i>
-                </template>
-              </InputText>
-            </div>
-            <div class="col-12 md:col-3 flex gap-2">
+            
+            <div class="header-actions">
               <Button 
-                label="Rafraîchir"
-                icon="pi pi-refresh"
-                @click="loadTickets"
-                :loading="loading"
+                label="Vue Liste"
+                icon="pi pi-list"
+                @click="$router.push('/admin/academic/tickets')"
                 outlined
               />
+              <Button 
+                label="Vue Calendrier"
+                icon="pi pi-calendar"
+                @click="$router.push('/admin/academic/calendar')"
+                outlined
+              />
+              <Button 
+                label="Bibliothèque"
+                icon="pi pi-video"
+                @click="$router.push('/admin/academic/video-library')"
+                outlined
+              />
+              <Button 
+                label="Statistiques"
+                icon="pi pi-chart-bar"
+                @click="showStatsDialog = true"
+                outlined
+              />
+              <Button 
+                label="Nouveau ticket"
+                icon="pi pi-plus"
+                @click="showCreateDialog = true"
+                severity="success"
+              />
             </div>
           </div>
-        </div>
-      </div>
 
-      <!-- Kanban Board -->
-      <div v-if="loading" class="loading-state">
-        <ProgressSpinner />
-        <p>Chargement des tickets...</p>
-      </div>
-
-      <KanbanBoard
-        v-else
-        :tickets="filteredTickets"
-        @ticket-click="openTicketDetails"
-        @status-change="handleStatusChange"
-        @ticket-action="handleTicketAction"
-      />
-
-      <!-- Dialog de création de ticket -->
-      <Dialog
-        v-model:visible="showCreateDialog"
-        modal
-        :header="editingTicket ? 'Modifier le ticket' : 'Nouveau ticket'"
-        :style="{ width: '900px' }"
-        :closable="true"
-      >
-        <TicketForm
-          :ticket="editingTicket"
-          :modules="moduleOptions"
-          @save="saveTicket"
-          @cancel="closeCreateDialog"
-        />
-      </Dialog>
-
-      <!-- Dialog de détails du ticket -->
-      <Dialog
-        v-model:visible="showDetailsDialog"
-        modal
-        header="Détails du ticket"
-        :style="{ width: '800px' }"
-        :closable="true"
-      >
-        <TicketDetails
-          v-if="selectedTicket"
-          :ticket="selectedTicket"
-          @edit="editTicket"
-          @delete="deleteTicketConfirm"
-          @publish="publishToVimeo"
-          @close="showDetailsDialog = false"
-          @update="handleTicketUpdate"
-        />
-      </Dialog>
-
-      <!-- Dialog de statistiques -->
-      <Dialog
-        v-model:visible="showStatsDialog"
-        modal
-        header="Statistiques"
-        :style="{ width: '600px' }"
-      >
-        <div v-if="stats" class="stats-content">
-          <div class="stat-card">
-            <span class="stat-label">Total de tickets</span>
-            <span class="stat-value">{{ stats.total }}</span>
-          </div>
-
-          <Divider />
-
-          <h3>Par statut</h3>
-          <div class="grid">
-            <div v-for="(count, status) in stats.by_status" :key="status" class="col-6">
-              <div class="stat-item">
-                <span>{{ getStatusLabel(status) }}</span>
-                <Tag :value="count" severity="secondary" />
+          <!-- Filtres -->
+          <div class="filters-section mt-4">
+            <div class="grid">
+              <div class="col-12 md:col-3">
+                <Dropdown
+                  v-model="filterType"
+                  :options="typeOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  placeholder="Tous les types"
+                  class="w-full"
+                  showClear
+                />
               </div>
-            </div>
-          </div>
-
-          <Divider />
-
-          <h3>Par type</h3>
-          <div class="grid">
-            <div v-for="(count, type) in stats.by_type" :key="type" class="col-6">
-              <div class="stat-item">
-                <span>{{ getTypeLabel(type) }}</span>
-                <Tag :value="count" severity="info" />
+              <div class="col-12 md:col-3">
+                <Dropdown
+                  v-model="filterModule"
+                  :options="moduleOptions"
+                  optionLabel="title"
+                  optionValue="id"
+                  placeholder="Tous les modules"
+                  class="w-full"
+                  showClear
+                  filter
+                />
+              </div>
+              <div class="col-12 md:col-3">
+                <InputText
+                  v-model="searchQuery"
+                  placeholder="Rechercher..."
+                  class="w-full"
+                  @input="debouncedSearch"
+                >
+                  <template #prepend>
+                    <i class="pi pi-search"></i>
+                  </template>
+                </InputText>
+              </div>
+              <div class="col-12 md:col-3 flex gap-2">
+                <Button 
+                  label="Rafraîchir"
+                  icon="pi pi-refresh"
+                  @click="loadTickets"
+                  :loading="loading"
+                  outlined
+                />
               </div>
             </div>
           </div>
         </div>
-      </Dialog>
 
-      <!-- Confirmation de suppression -->
-      <ConfirmDialog />
-      <Toast />
+        <!-- Kanban Board -->
+        <div v-if="loading" class="loading-state">
+          <ProgressSpinner />
+          <p>Chargement des tickets...</p>
+        </div>
+
+        <KanbanBoard
+          v-else
+          :tickets="filteredTickets"
+          @ticket-click="openTicketDetails"
+          @status-change="handleStatusChange"
+          @ticket-action="handleTicketAction"
+        />
+
+        <!-- Dialog de création de ticket -->
+        <Dialog
+          v-model:visible="showCreateDialog"
+          modal
+          :header="editingTicket ? 'Modifier le ticket' : 'Nouveau ticket'"
+          :style="{ width: '900px' }"
+          :closable="true"
+        >
+          <TicketForm
+            :ticket="editingTicket"
+            :modules="moduleOptions"
+            @save="saveTicket"
+            @cancel="closeCreateDialog"
+          />
+        </Dialog>
+
+        <!-- Dialog de détails du ticket -->
+        <Dialog
+          v-model:visible="showDetailsDialog"
+          modal
+          header="Détails du ticket"
+          :style="{ width: '800px' }"
+          :closable="true"
+        >
+          <TicketDetails
+            v-if="selectedTicket"
+            :ticket="selectedTicket"
+            @edit="editTicket"
+            @delete="deleteTicketConfirm"
+            @publish="publishToVimeo"
+            @close="showDetailsDialog = false"
+            @update="handleTicketUpdate"
+          />
+        </Dialog>
+
+        <!-- Dialog de statistiques -->
+        <Dialog
+          v-model:visible="showStatsDialog"
+          modal
+          header="Statistiques"
+          :style="{ width: '600px' }"
+        >
+          <div v-if="stats" class="stats-content">
+            <div class="stat-card">
+              <span class="stat-label">Total de tickets</span>
+              <span class="stat-value">{{ stats.total }}</span>
+            </div>
+
+            <Divider />
+
+            <h3>Par statut</h3>
+            <div class="grid">
+              <div v-for="(count, status) in stats.by_status" :key="status" class="col-6">
+                <div class="stat-item">
+                  <span>{{ getStatusLabel(status) }}</span>
+                  <Tag :value="count" severity="secondary" />
+                </div>
+              </div>
+            </div>
+
+            <Divider />
+
+            <h3>Par type</h3>
+            <div class="grid">
+              <div v-for="(count, type) in stats.by_type" :key="type" class="col-6">
+                <div class="stat-item">
+                  <span>{{ getTypeLabel(type) }}</span>
+                  <Tag :value="count" severity="info" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </Dialog>
+
+        <!-- Confirmation de suppression -->
+        <ConfirmDialog />
+        <Toast />
+      </div>
     </div>
-  </div>
+  </AdminLayout>
 </template>
 
 <script setup>
@@ -198,6 +200,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
+import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 import Navbar from '@/components/common/utils/Navbar.vue'
 import KanbanBoard from '@/components/academic/KanbanBoard.vue'
 import TicketForm from '@/components/academic/TicketForm.vue'
