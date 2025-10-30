@@ -3,7 +3,7 @@ import { ref as dbRef, get as dbGet } from 'firebase/database';
 import { db } from '@/firebase'; // Import your Firebase configuration
 import { useAuthStore } from '@/stores/authStore';
 import rolesService from '@/service/rolesService';
-
+import { useRoleStore } from '@/stores/role';
 // ========================================
 // AUTHENTIFICATION & ACCUEIL // View
 // ========================================
@@ -27,9 +27,12 @@ import Place from "@/views/institutions/PlaceListView.vue";
 import Faq from "@/views/home/FaqView.vue";
 import TermsOfUse from "@/views/home/TermsView.vue";
 import PushView from "@/views/home/Pushview.vue";
+import PushView2 from "@/views/home/Pushview2.vue";
 import InfoExterne from "@/views/home/InfoExterneView.vue";
 import HistoriquePFP from '@/views/home/HistoryView.vue'
 import DocumentsPFP from '@/views/home/DocumentsView.vue'
+import RoleManagement from '@/views/home/RoleManagement.vue'
+import RouterView from '@/views/home/RouterView.vue'
 
 // ASSOCIATIONS
 import AlpinPhysioView from '@/views/associations/AlpinPhysioView.vue'
@@ -85,6 +88,10 @@ import DiagnosticGamificationView from '@/views/DiagnosticGamificationView.vue'
 // DASHBOARD & ADMINISTRATION
 // ========================================
 import DashboardView from '@/views/admin/DashboardView.vue'
+import AdminDashboardGeneral from '@/components/admin/AdminDashboardGeneral.vue'
+import AdminDashboardPFP from '@/components/admin/AdminDashboardPFP.vue'
+import AdminDashboardAcademique from '@/components/admin/AdminDashboardAcademique.vue'
+import AdminDashboardGamification from '@/components/admin/AdminDashboardGamification.vue'
 import PlanningView from '@/views/admin/planning/PlanningView.vue'
 import PlanningAdminView from '@/views/admin/planning/PlanningAdminView.vue'
 import AcademicYearManagement from '@/views/admin/AcademicYearManagement.vue'
@@ -244,7 +251,10 @@ const routes = [
   { path: '/info_externe', component: InfoExterne, name: 'InfoExterne', meta: { requiresAuth: true } },
   { path: '/history', component: HistoriquePFP, name: 'HistoriquePFP', meta: { requiresAuth: true } },
   { path: '/documents', component: DocumentsPFP, name: 'DocumentsPFP', meta: { requiresAuth: true } },
-  { path: '/push', component: PushView, name: 'PushView', meta: { requiresAuth: true } },
+{ path: '/push', component: PushView, name: 'PushView', meta: { requiresAuth: true, need: 'page1.access' } },
+{ path: '/push2', component: PushView, name: 'PushView2', meta: { requiresAuth: true, need: 'page2.access' } },
+{ path: '/role-management', component: RoleManagement, name: 'RoleManagement', meta: { requiresAuth: true } },
+{ path: '/router-inspector', component: RouterView, name: 'RouterInspector', meta: { requiresAuth: true, need: 'admin' } },
 
   // ASSOCIATIONS
   { path: '/alpinphysio', component: AlpinPhysioView, name: 'AlpinPhysio', meta: { requiresAuth: false } },
@@ -296,7 +306,11 @@ const routes = [
   // ========================================
   // DASHBOARD & ADMINISTRATION
   // ========================================
-  { path: '/admin', component: DashboardView, name: 'DashboardView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor', 'house_coach'] } },
+  { path: '/admin', component: DashboardView, name: 'DashboardView', meta: { requiresAuth: true,  need: 'page2.access'  } },
+  { path: '/admin/dashboard-general', component: AdminDashboardGeneral, name: 'AdminDashboardGeneral', meta: { requiresAuth: true, need: 'admin' } },
+  { path: '/admin/dashboard-pfp', component: AdminDashboardPFP, name: 'AdminDashboardPFP', meta: { requiresAuth: true } },
+  { path: '/admin/dashboard-academique', component: AdminDashboardAcademique, name: 'AdminDashboardAcademique', meta: { requiresAuth: true } },
+  { path: '/admin/dashboard-gamification', component: AdminDashboardGamification, name: 'AdminDashboardGamification', meta: { requiresAuth: true } },
   { path: '/admin/settings', component: AdminSettingsView, name: 'AdminSettingsView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
   { path: '/admin/defis', component: AdminDefisView, name: 'AdminDefisView', meta: { requiresAuth: true, requiredRole: ['admin', 'house_coach'] } },
   // Planning académique
@@ -471,7 +485,7 @@ let isAuthStateChecked = false;
 
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
-  
+  const roleStore = useRoleStore();
   console.log(`🧭 Navigation vers: ${to.path} depuis: ${from.path}`);
   
   // Vérifiez si l'état d'authentification est déjà récupéré
@@ -480,7 +494,11 @@ router.beforeEach(async (to, from, next) => {
     await authStore.checkAuthState();
     isAuthStateChecked = true;
   }
-
+  // Initialiser le roleStore si nécessaire
+if (!roleStore.initialized) {
+  await roleStore.init();
+}
+  
   const user = authStore.user;
   console.log('👤 Utilisateur actuel:', user ? `${user.email} (${authStore.authProvider})` : 'Aucun');
   console.log('🔍 Debug authStore:', {
@@ -489,6 +507,17 @@ router.beforeEach(async (to, from, next) => {
     isLoggedIn: authStore.isLoggedIn,
     isSupabaseUser: authStore.isSupabaseUser,
     isFirebaseUser: authStore.isFirebaseUser
+  });
+  
+  // Afficher les permissions depuis Supabase
+  console.log('🔐 Permissions Supabase:', {
+    initialized: roleStore.initialized,
+    session: roleStore.session,
+    perms: roleStore.perms,
+    isSuper: roleStore.isSuper,
+    canPage1: roleStore.can('page1.access'),
+    canPage2: roleStore.can('page2.access'),
+    allPermissions: roleStore.perms
   });
 
   // Gestion spécifique pour la route "/"
@@ -499,6 +528,36 @@ router.beforeEach(async (to, from, next) => {
     }
     // Sinon, continuez vers la page de login ("/")
     return next('/home');
+  }
+
+  // Vérification des permissions basées sur le roleStore
+const need = to.meta.need;
+if (need && user) {
+  console.log(`🔍 Vérification permission pour ${to.path}:`, {
+    need: need,
+    user: user.email,
+    perms: roleStore.perms,
+    canAccess: roleStore.can(need),
+    isSuper: roleStore.isSuper
+  });
+  
+  if (!roleStore.can(need)) {
+    console.warn(`❌ Accès refusé: permission requise "${need}" manquante`);
+    return next({ path: '/access' });
+  }
+  console.log(`✅ Accès autorisé pour ${need}`);
+}
+
+  // Vérification des rôles (schéma historique) via meta.requiredRole
+  const requiredRoles = to.meta.requiredRole;
+  if (requiredRoles && user) {
+    const rolesArray = Array.isArray(requiredRoles) ? requiredRoles : [requiredRoles];
+    const hasRequired = roleStore.isSuper || rolesArray.some(r => roleStore.can(r));
+    console.log('🔑 Vérification requiredRole:', { requiredRoles: rolesArray, hasRequired, user: user.email });
+    if (!hasRequired) {
+      console.warn(`❌ Accès refusé: rôle requis manquant parmi [${rolesArray.join(', ')}]`);
+      return next({ path: '/access' });
+    }
   }
 
   // Gestion des routes nécessitant une authentification
