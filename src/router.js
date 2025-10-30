@@ -118,6 +118,7 @@ import AcademicYearManagement from '@/views/admin/AcademicYearManagement.vue'
 import AcademicKanbanView from '@/views/admin/academic/AcademicKanbanView.vue'
 // MediaContentView est obsolète - redirigé vers VideoLibraryView
 import AdminDefisView from '@/views/admin/institutions/gamification/AdminDefisView.vue';
+import SupabaseDiagnosticView from '@/views/admin/SupabaseDiagnosticView.vue';
 
 // ========================================
 // GAMIFICATION ADMIN VIEWS
@@ -329,12 +330,13 @@ const routes = [
   // ========================================
   // DASHBOARD & ADMINISTRATION
   // ========================================
-  { path: '/admin', component: DashboardView, name: 'DashboardView', meta: { requiresAuth: true,  need: 'page2.access'  } },
+  { path: '/admin', component: DashboardView, name: 'DashboardView', meta: { requiresAuth: true,  need: 'super.all'  } },
   { path: '/admin/dashboard-general', component: AdminDashboardGeneral, name: 'AdminDashboardGeneral', meta: { requiresAuth: true, need: 'admin' } },
   { path: '/admin/dashboard-pfp', component: AdminDashboardPFP, name: 'AdminDashboardPFP', meta: { requiresAuth: true } },
   { path: '/admin/dashboard-academique', component: AdminDashboardAcademique, name: 'AdminDashboardAcademique', meta: { requiresAuth: true } },
   { path: '/admin/dashboard-gamification', component: AdminDashboardGamification, name: 'AdminDashboardGamification', meta: { requiresAuth: true } },
   { path: '/admin/settings', component: AdminSettingsView, name: 'AdminSettingsView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
+  { path: '/admin/supabase-diagnostic', component: SupabaseDiagnosticView, name: 'SupabaseDiagnosticView', meta: { requiresAuth: true, requiredRole: ['admin'] } },
   { path: '/admin/defis', component: AdminDefisView, name: 'AdminDefisView', meta: { requiresAuth: true, requiredRole: ['admin', 'house_coach'] } },
   
   // PFP Management Routes
@@ -576,8 +578,11 @@ if (!roleStore.initialized) {
 
   // Vérification des permissions basées sur le roleStore
 const need = to.meta.need;
+  console.log("Vérification permission");
+  console.log("Vérification permission need", need);
+  console.log(" Vérification permission user", user);
 if (need && user) {
-  console.log(`🔍 Vérification permission pour ${to.path}:`, {
+    console.log(`🔍 Vérification permission pour ${to.path}:`, {
     need: need,
     user: user.email,
     perms: roleStore.perms,

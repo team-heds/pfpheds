@@ -21,7 +21,6 @@ import AdminSidebar from '../lists/AdminSidebar.vue';
   display: flex;
   gap: 1.5rem;
   padding: 1.5rem;
-  background: var(--surface-ground);
   min-height: calc(100vh - 80px);
 }
 
