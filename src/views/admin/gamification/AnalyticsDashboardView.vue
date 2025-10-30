@@ -1,5 +1,5 @@
 <template>
-  <Navbar />
+  <AdminLayout>
   <div class="page-wrapper">
     <div class="analytics-dashboard-page">
       
@@ -28,10 +28,12 @@
       
     </div>
   </div>
+  </AdminLayout>
 </template>
 
 <script setup>
-import Navbar from '@/components/common/utils/Navbar.vue'
+import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
+// import Navbar from '@/components/common/utils/Navbar.vue'
 import AnalyticsDashboard from '@/components/admin/AnalyticsDashboard.vue'
 // Permissions gérées par le router - pas besoin de vérification supplémentaire ici
 </script>

@@ -1,5 +1,5 @@
 <template>
-  <Navbar />
+  <AdminLayout>
   <div class="media-hub">
     <div class="header">
       <h2 class="title">Bibliothèque Multimédia</h2>
@@ -188,9 +188,11 @@
      <!-- Anchor for scroll-to-bottom with small margin -->
     <div ref="pageEnd" style="height: 24px;"></div>
   </div>
+  </AdminLayout>
 </template>
 
 <script setup>
+import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 import { ref, watch, computed, onMounted, nextTick } from 'vue'
 import { getAuth, onAuthStateChanged } from 'firebase/auth'
 import { getDatabase, ref as dbRef, get } from 'firebase/database'

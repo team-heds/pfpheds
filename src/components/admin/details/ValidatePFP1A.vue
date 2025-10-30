@@ -1,371 +1,323 @@
 <template>
-  <Navbar />
-  <div>
-    <div>
-      <h1>Validation PFP1A</h1>
-      <div>
-        <span>Nombre d'étudiants : {{ pfp1aResults.length }}</span>
-        <Button label="Mettre en réussi tous les étudiants" class="p-button-primary" @click="validateAll" />
-        <Button label="Valider les résultats de la PFP1A" class="p-button-success" @click="showValidationAlert" />
+  <AdminLayout>
+    <div class="validate-pfp-page p-4">
+      <div class="surface-card p-4 border-round shadow-2 mb-4">
+        <div class="flex align-items-center justify-content-between">
+          <div class="flex align-items-center gap-3">
+            <i class="pi pi-check-circle text-primary text-3xl"></i>
+            <div>
+              <h1 class="text-2xl font-bold text-900 m-0">Validation PFP1A</h1>
+              <p class="text-600 m-0 mt-1">Validation des pratiques de formation professionnelle 1A</p>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <Button icon="pi pi-download" label="Rapport" outlined />
+            <Button icon="pi pi-envelope" label="Notifier" severity="warning" outlined />
+          </div>
+        </div>
       </div>
+
+      <!-- Statistiques -->
+      <div class="grid mb-4">
+        <div class="col-12 md:col-3">
+          <div class="surface-card p-4 border-round shadow-2">
+            <div class="flex align-items-center gap-3">
+              <div class="bg-blue-100 border-circle p-3">
+                <i class="pi pi-users text-blue-500 text-2xl"></i>
+              </div>
+              <div>
+                <h3 class="text-2xl font-bold text-900 m-0">{{ stats.total }}</h3>
+                <p class="text-600 m-0">Total PFP1A</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-12 md:col-3">
+          <div class="surface-card p-4 border-round shadow-2">
+            <div class="flex align-items-center gap-3">
+              <div class="bg-orange-100 border-circle p-3">
+                <i class="pi pi-clock text-orange-500 text-2xl"></i>
+              </div>
+              <div>
+                <h3 class="text-2xl font-bold text-900 m-0">{{ stats.pending }}</h3>
+                <p class="text-600 m-0">En attente</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-12 md:col-3">
+          <div class="surface-card p-4 border-round shadow-2">
+            <div class="flex align-items-center gap-3">
+              <div class="bg-green-100 border-circle p-3">
+                <i class="pi pi-check text-green-500 text-2xl"></i>
+              </div>
+              <div>
+                <h3 class="text-2xl font-bold text-900 m-0">{{ stats.validated }}</h3>
+                <p class="text-600 m-0">Validés</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-12 md:col-3">
+          <div class="surface-card p-4 border-round shadow-2">
+            <div class="flex align-items-center gap-3">
+              <div class="bg-red-100 border-circle p-3">
+                <i class="pi pi-times text-red-500 text-2xl"></i>
+              </div>
+              <div>
+                <h3 class="text-2xl font-bold text-900 m-0">{{ stats.rejected }}</h3>
+                <p class="text-600 m-0">Refusés</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filtres -->
+      <div class="surface-card p-3 border-round shadow-2 mb-4">
+        <div class="grid">
+          <div class="col-12 md:col-3">
+            <Dropdown v-model="filterStatus" :options="statusOptions" placeholder="Tous les statuts" class="w-full" showClear />
+          </div>
+          <div class="col-12 md:col-3">
+            <Dropdown v-model="filterClasse" :options="classes" placeholder="Toutes les classes" class="w-full" showClear />
+          </div>
+          <div class="col-12 md:col-3">
+            <Dropdown v-model="filterInstitution" :options="institutions" optionLabel="nom" placeholder="Institution" class="w-full" showClear />
+          </div>
+          <div class="col-12 md:col-3">
+            <InputText v-model="searchQuery" placeholder="Rechercher étudiant..." class="w-full" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Table PFP -->
+      <div class="surface-card p-4 border-round shadow-2">
+        <DataTable :value="pfpList" :loading="loading" responsiveLayout="scroll" :paginator="true" :rows="15">
+          <template #header>
+            <div class="flex justify-content-between align-items-center">
+              <span class="text-xl text-900 font-bold">Liste PFP1A à valider</span>
+              <div class="flex gap-2">
+                <Button label="Tout valider" icon="pi pi-check" severity="success" outlined @click="validateAll" />
+                <Button label="Tout refuser" icon="pi pi-times" severity="danger" outlined @click="rejectAll" />
+              </div>
+            </div>
+          </template>
+          <template #empty>
+            <div class="text-center p-4">
+              <i class="pi pi-inbox text-4xl text-400 mb-3"></i>
+              <p class="text-600">Aucun PFP1A à valider</p>
+            </div>
+          </template>
+          <Column field="etudiant" header="Étudiant" sortable>
+            <template #body="slotProps">
+              <div class="flex align-items-center gap-2">
+                <Avatar :label="slotProps.data.etudiant.charAt(0)" shape="circle" />
+                <span class="font-semibold">{{ slotProps.data.etudiant }}</span>
+              </div>
+            </template>
+          </Column>
+          <Column field="classe" header="Classe" sortable></Column>
+          <Column field="institution" header="Institution" sortable></Column>
+          <Column field="dateDebut" header="Date Début" sortable></Column>
+          <Column field="dateFin" header="Date Fin" sortable></Column>
+          <Column field="duree" header="Durée" sortable>
+            <template #body="slotProps">
+              <Tag :value="`${slotProps.data.duree} semaines`" />
+            </template>
+          </Column>
+          <Column field="status" header="Statut">
+            <template #body="slotProps">
+              <Tag :value="slotProps.data.status" :severity="getStatusSeverity(slotProps.data.status)" />
+            </template>
+          </Column>
+          <Column field="documents" header="Documents">
+            <template #body="slotProps">
+              <div class="flex gap-1">
+                <i v-if="slotProps.data.hasConvention" class="pi pi-file-check text-green-500"></i>
+                <i v-if="slotProps.data.hasRapport" class="pi pi-file-pdf text-red-500"></i>
+                <i v-if="slotProps.data.hasEvaluation" class="pi pi-star text-yellow-500"></i>
+              </div>
+            </template>
+          </Column>
+          <Column header="Actions">
+            <template #body="slotProps">
+              <div class="flex gap-1">
+                <Button 
+                  icon="pi pi-eye" 
+                  class="p-button-text p-button-sm" 
+                  v-tooltip.top="'Voir détails'"
+                  @click="viewDetails(slotProps.data)" 
+                />
+                <Button 
+                  icon="pi pi-check" 
+                  class="p-button-text p-button-sm" 
+                  severity="success"
+                  v-tooltip.top="'Valider'"
+                  @click="validate(slotProps.data)" 
+                />
+                <Button 
+                  icon="pi pi-times" 
+                  class="p-button-text p-button-sm" 
+                  severity="danger"
+                  v-tooltip.top="'Refuser'"
+                  @click="reject(slotProps.data)" 
+                />
+                <Button 
+                  icon="pi pi-comment" 
+                  class="p-button-text p-button-sm"
+                  v-tooltip.top="'Commentaire'"
+                  @click="addComment(slotProps.data)" 
+                />
+              </div>
+            </template>
+          </Column>
+        </DataTable>
+      </div>
+
+      <!-- Dialog Détails -->
+      <Dialog v-model:visible="showDetailsDialog" :header="`Détails PFP - ${selectedPFP?.etudiant}`" :style="{ width: '800px' }" modal>
+        <div v-if="selectedPFP" class="p-4">
+          <div class="grid">
+            <div class="col-6">
+              <p><strong>Étudiant:</strong> {{ selectedPFP.etudiant }}</p>
+              <p><strong>Classe:</strong> {{ selectedPFP.classe }}</p>
+              <p><strong>Institution:</strong> {{ selectedPFP.institution }}</p>
+            </div>
+            <div class="col-6">
+              <p><strong>Période:</strong> {{ selectedPFP.dateDebut }} - {{ selectedPFP.dateFin }}</p>
+              <p><strong>Durée:</strong> {{ selectedPFP.duree }} semaines</p>
+              <p><strong>Statut:</strong> <Tag :value="selectedPFP.status" :severity="getStatusSeverity(selectedPFP.status)" /></p>
+            </div>
+          </div>
+          <Divider />
+          <h4>Documents</h4>
+          <div class="flex flex-column gap-2">
+            <div class="flex align-items-center gap-2">
+              <i class="pi pi-file-check"></i>
+              <span>Convention de stage</span>
+              <Button icon="pi pi-download" text size="small" />
+            </div>
+            <div class="flex align-items-center gap-2">
+              <i class="pi pi-file-pdf"></i>
+              <span>Rapport de stage</span>
+              <Button icon="pi pi-download" text size="small" />
+            </div>
+            <div class="flex align-items-center gap-2">
+              <i class="pi pi-star"></i>
+              <span>Évaluation praticien</span>
+              <Button icon="pi pi-download" text size="small" />
+            </div>
+          </div>
+        </div>
+        <template #footer>
+          <Button label="Fermer" @click="showDetailsDialog = false" text />
+          <Button label="Valider" @click="validateFromDialog" severity="success" />
+        </template>
+      </Dialog>
+
+      <!-- Dialog Commentaire -->
+      <Dialog v-model:visible="showCommentDialog" header="Ajouter un commentaire" :style="{ width: '500px' }" modal>
+        <Textarea v-model="comment" rows="5" class="w-full" placeholder="Votre commentaire..." />
+        <template #footer>
+          <Button label="Annuler" @click="showCommentDialog = false" text />
+          <Button label="Enregistrer" @click="saveComment" />
+        </template>
+      </Dialog>
     </div>
-    <div>
-      <DataTable :value="pfp1aResults" :loading="loading" responsiveLayout="scroll" v-if="!loading">
-        <Column field="nom" header="Nom" />
-        <Column field="Name" header="Institution" />
-        <Column field="Domaine" header="Domaine" />
-        <Column field="IdInstitution" header="idInstitution" />
-        <Column field="placeKey" header="idPlace" />
-        <Column header="Nom PF">
-          <template #body="slotProps">{{ getPraticienName(slotProps.data.IdInstitution) }}</template>
-        </Column>
-        <Column header="Remarques place">
-          <template #body="slotProps">
-            <InputText v-model="slotProps.data.remarquesPlace" @change="saveRow(slotProps.data)" placeholder="Remarques place..." />
-          </template>
-        </Column>
-        <Column header="Remarques étudiant">
-          <template #body="slotProps">
-            <InputText v-model="slotProps.data.remarquesEtudiant" @change="saveRow(slotProps.data)" placeholder="Remarques étudiant..." />
-          </template>
-        </Column>
-        <Column header="Remarques Stages">
-          <template #body="slotProps">
-            <Textarea v-model="slotProps.data.remarquesStages" autoResize rows="2" @change="saveRow(slotProps.data)" placeholder="Remarques..." />
-          </template>
-        </Column>
-        <Column header="Réussi">
-          <template #body="slotProps">
-            <Checkbox v-model="slotProps.data.status" :binary="true" true-value="reussi" false-value="" @change="selectStatus(slotProps.data, 'reussi')" :checked="slotProps.data.status === 'reussi'" />
-          </template>
-        </Column>
-        <Column header="Échec">
-          <template #body="slotProps">
-            <Checkbox v-model="slotProps.data.status" :binary="true" true-value="echec" false-value="" @change="selectStatus(slotProps.data, 'echec')" :checked="slotProps.data.status === 'echec'" />
-          </template>
-        </Column>
-        <Column header="Cas particulier">
-          <template #body="slotProps">
-            <Checkbox v-model="slotProps.data.status" :binary="true" true-value="arret" false-value="" @change="selectStatus(slotProps.data, 'arret')" :checked="slotProps.data.status === 'arret'" />
-          </template>
-        </Column>
-        <Column header="ID ligne Validation">
-          <template #body="slotProps">{{ (slotProps.data.studentId || '') + '_' + (slotProps.data.placeKey || '') }}</template>
-        </Column>
-        <Column header="Éditer place">
-          <template #body="slotProps">
-            <Button label="Éditer place" class="p-button-info" @click="openPlaceSelector(pfp1aResults.indexOf(slotProps.data))" />
-          </template>
-        </Column>
-      </DataTable>
-      <div v-if="pfp1aResults.length === 0">Aucun résultat trouvé.</div>
-    </div>
-  </div>
-  <Dialog v-model:visible="showPlaceModal" header="Choisir une nouvelle place" :modal="true" :closable="true" @hide="closePlaceSelector">
-    <div style="margin-bottom: 1rem;">
-      <InputText v-model="searchPlace" placeholder="Rechercher une place ou une institution..." style="width: 100%;" />
-    </div>
-    <ul>
-      <li v-for="(place, key) in filteredPlaces" :key="key">
-        <Button label="Sélectionner" class="p-button-text" @click="selectPlace(selectedRowIdx, key)" />
-        {{ place }}
-      </li>
-    </ul>
-  </Dialog>
+  </AdminLayout>
 </template>
 
 <script setup>
-import Navbar from '@/components/common/utils/Navbar.vue';
-import { ref, onMounted, watch, computed } from 'vue';
-import { ref as dbRef, onValue, set, get, child, update } from 'firebase/database';
-import { db } from 'root/firebase';
-import Button from 'primevue/button';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-import InputText from 'primevue/inputtext';
-import Textarea from 'primevue/textarea';
-import Checkbox from 'primevue/checkbox';
-import Dialog from 'primevue/dialog';
+import { ref, onMounted } from 'vue'
+import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
+import Button from 'primevue/button'
+import DataTable from 'primevue/datatable'
+import Column from 'primevue/column'
+import InputText from 'primevue/inputtext'
+import Tag from 'primevue/tag'
+import Dropdown from 'primevue/dropdown'
+import Dialog from 'primevue/dialog'
+import Avatar from 'primevue/avatar'
+import Divider from 'primevue/divider'
+import Textarea from 'primevue/textarea'
 
-const pfp1aResults = ref([]);
-const loading = ref(true);
-const usersMap = ref({});
-const placesMap = ref({});
-const praticiensMap = ref({});
-const validationPath = '/ValidationEnAttente/BA24/PFP1A';
-let initialLoad = true;
-const showPlaceModal = ref(false);
-const selectedRowIdx = ref(null);
-const institutionsNameCache = ref({});
-const institutionsNames = ref({});
-const searchPlace = ref('');
+const loading = ref(false)
+const searchQuery = ref('')
+const filterStatus = ref(null)
+const filterClasse = ref(null)
+const filterInstitution = ref(null)
+const showDetailsDialog = ref(false)
+const showCommentDialog = ref(false)
+const selectedPFP = ref(null)
+const comment = ref('')
+const pfpList = ref([])
 
-onMounted(async () => {
-  const usersRef = dbRef(db, '/Users');
-  onValue(usersRef, (snapshot) => {
-    const usersData = snapshot.val() || {};
-    usersMap.value = usersData;
-  });
+const statusOptions = ref(['En attente', 'Validé', 'Refusé', 'En révision'])
+const classes = ref(['BA22', 'BA23', 'BA24'])
+const institutions = ref([])
 
-  const placesRef = dbRef(db, '/Places');
-  onValue(placesRef, (snapshot) => {
-    const placesData = snapshot.val() || {};
-    placesMap.value = placesData;
-  });
+const stats = ref({
+  total: 0,
+  pending: 0,
+  validated: 0,
+  rejected: 0
+})
 
-  const praticiensRef = dbRef(db, '/PraticienFormateurs');
-  onValue(praticiensRef, (snapshot) => {
-    const praticiensData = snapshot.val() || {};
-    praticiensMap.value = praticiensData;
-  });
-
-  const validationRef = dbRef(db, validationPath);
-  const validationSnap = await get(validationRef);
-  let validationData = validationSnap.exists() ? validationSnap.val() : {};
-
-  const resultRef = dbRef(db, '/VotationResult/BA24/PFP1A');
-  onValue(resultRef, (snapshot) => {
-    const data = snapshot.val();
-    let arr = [];
-    if (Array.isArray(data)) {
-      arr = data;
-    } else if (data && typeof data === 'object') {
-      arr = Object.values(data);
-    }
-    pfp1aResults.value = arr.map(result => {
-      const key = result.studentId + '_' + (result.placeKey || '');
-      const val = validationData[key] || {};
-      return {
-        ...result,
-        status: val.status || '',
-        remarquesStages: val.remarquesStages || '',
-        nom: val.nom || getStudentName(result.studentId),
-        Name: val.Name || result.Name,
-        Domaine: val.Domaine || result.Domaine,
-        IdInstitution: val.IdInstitution || result.IdInstitution,
-        placeKey: val.placeKey || result.placeKey,
-        remarquesPlace: val.remarquesPlace || getPlaceRemark(result.IdInstitution),
-        remarquesEtudiant: val.remarquesEtudiant || getStudentRemark(result.studentId)
-      };
-    });
-    loading.value = false;
-    initialLoad = false;
-  });
-});
-
-watch(pfp1aResults, (newVal) => {
-  if (initialLoad) return;
-  const updates = {};
-  newVal.forEach(result => {
-    const key = result.studentId + '_' + (result.placeKey || '');
-    updates[key] = {
-      status: result.status || '',
-      remarquesStages: result.remarquesStages || '',
-      nom: result.nom || '',
-      Name: result.Name || '',
-      Domaine: result.Domaine || '',
-      IdInstitution: result.IdInstitution || '',
-      placeKey: result.placeKey || '',
-      remarquesPlace: result.remarquesPlace || '',
-      remarquesEtudiant: result.remarquesEtudiant || ''
-    };
-  });
-  update(dbRef(db, validationPath), updates);
-}, { deep: true });
-
-async function preloadInstitutionNames() {
-  const allPlaces = Object.values(placesMap.value);
-  for (const place of allPlaces) {
-    const institutionId = place.InstitutionId || place.idInstitution || place.IDPlace;
-    if (institutionId && !institutionsNames.value[place.IDPlace]  ) {
-      try {
-        const snap = await get(dbRef(db, `/Institutions/${institutionId}`));
-        if (snap.exists()) {
-          const institution = snap.val();
-          institutionsNames.value[place.IDPlace] = institution.Name || institution.NomInstitution || institution.Nom || institutionId;
-        } else {
-          institutionsNames.value[place.IDPlace] = institutionId;
-        }
-      } catch (e) {
-        institutionsNames.value[place.IDPlace] = institutionId;
-      }
-    }
+const getStatusSeverity = (status) => {
+  const severities = {
+    'En attente': 'warning',
+    'Validé': 'success',
+    'Refusé': 'danger',
+    'En révision': 'info'
   }
+  return severities[status] || 'secondary'
 }
 
-function getStudentName(studentId) {
-  const user = usersMap.value[studentId];
-  if (user) {
-    return `${user.Prenom || ''} ${user.Nom || ''}`.trim();
-  }
-  return studentId;
+const viewDetails = (pfp) => {
+  selectedPFP.value = pfp
+  showDetailsDialog.value = true
 }
 
-function getIdPlace(idInstitution) {
-  const places = Object.values(placesMap.value);
-  const place = places.find(p => p.IDPlace === idInstitution);
-  return place && place.IDPlace ? place.IDPlace : '';
+const validate = (pfp) => {
+  console.log('Validate PFP:', pfp)
 }
 
-function getIdPraticien(idInstitution) {
-  const places = Object.values(placesMap.value);
-  const place = places.find(p => p.IDPlace === idInstitution);
-  return place && place.praticiensFormateurs && place.praticiensFormateurs.length > 0 ? place.praticiensFormateurs[0] : '';
+const reject = (pfp) => {
+  console.log('Reject PFP:', pfp)
 }
 
-function getPraticienName(idInstitution) {
-  const places = Object.values(placesMap.value);
-  const place = places.find(p => p.IDPlace === idInstitution);
-  if (place && place.praticiensFormateurs && place.praticiensFormateurs.length > 0) {
-    const idPF = place.praticiensFormateurs[0];
-    const pf = praticiensMap.value[idPF];
-    if (pf) {
-      return `${pf.Prenom || ''} ${pf.Nom || ''}`.trim();
-    }
-  }
-  return '';
+const validateAll = () => {
+  console.log('Validate all')
 }
 
-async function getInstitutionNameFromPlace(placeKey) {
-  if (!placeKey) return '';
-  // Trouver la place correspondante dans placesMap
-  const place = Object.values(placesMap.value).find(p => p.IDPlace === placeKey || p.key === placeKey);
-  if (!place) return '';
-  // Récupérer l'ID de l'institution liée à la place
-  const institutionId = place.IDInstitution || place.idInstitution || place.IDPlace;
-  if (!institutionId) return '';
-  // Vérifier le cache local
-  if (institutionsNameCache.value[institutionId]) {
-    return institutionsNameCache.value[institutionId].Name;
-  }
-  // Fetch depuis Firebase si pas en cache
-  try {
-    const snap = await get(dbRef(db, `/Institutions/${institutionId}`));
-    if (snap.exists()) {
-      const institution = snap.val();
-      const name = institution.Name || institution.NomInstitution || institution.Nom || institutionId;
-      institutionsNameCache.value[institutionId] = name;
-      return name;
-    } else {
-      institutionsNameCache.value[institutionId] = institutionId;
-      return institutionId;
-    }
-  } catch (e) {
-    return institutionId;
-  }
+const rejectAll = () => {
+  console.log('Reject all')
 }
 
-function getPlaceRemark(idInstitution) {
-  const places = Object.values(placesMap.value);
-  const place = places.find(p => p.IDPlace === idInstitution);
-  return place && place.Remarques ? place.Remarques : '';
+const addComment = (pfp) => {
+  selectedPFP.value = pfp
+  showCommentDialog.value = true
 }
 
-function getStudentRemark(studentId) {
-  const user = usersMap.value[studentId];
-  return user && user.Bio ? user.Bio : '';
+const saveComment = () => {
+  console.log('Save comment:', comment.value)
+  showCommentDialog.value = false
+  comment.value = ''
 }
 
-function validateAll() {
-  pfp1aResults.value.forEach(result => {
-    result.status = 'reussi';
-  });
+const validateFromDialog = () => {
+  validate(selectedPFP.value)
+  showDetailsDialog.value = false
 }
 
-function showValidationAlert() {
-  alert('Validation des résultats de la PFP1A !');
-}
-
-function saveRow(result) {
-  // La clé d'identification ne doit jamais être modifiée ni sauvegardée comme champ
-  const key = result.studentId + '_' + (result.placeKey || '');
-  // On extrait uniquement les champs à sauvegarder
-  const {
-    status,
-    remarquesStages,
-    nom,
-    Name,
-    Domaine,
-    IdInstitution,
-    placeKey,
-    remarquesPlace,
-    remarquesEtudiant
-  } = result;
-  // On met à jour la base sous la clé calculée, sans jamais inclure l'ID ligne Validation
-  update(dbRef(db, validationPath), {
-    [key]: {
-      status: status || '',
-      remarquesStages: remarquesStages || '',
-      nom: nom || '',
-      Name: Name || '',
-      Domaine: Domaine || '',
-      IdInstitution: IdInstitution || '',
-      placeKey: placeKey || '',
-      remarquesPlace: remarquesPlace || '',
-      remarquesEtudiant: remarquesEtudiant || ''
-    }
-  })
-    .then(() => {
-      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: 'Sauvegarde réussie', type: 'success' } }));
-    })
-    .catch((error) => {
-      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: 'Erreur lors de la sauvegarde', type: 'error' } }));
-      console.error('Erreur lors de la sauvegarde :', error);
-    });
-}
-
-function selectStatus(result, value) {
-  result.status = value;
-  saveRow(result);
-}
-
-function openPlaceSelector(idx) {
-  selectedRowIdx.value = idx;
-  showPlaceModal.value = true;
-  preloadInstitutionNames();
-}
-
-function closePlaceSelector() {
-  showPlaceModal.value = false;
-  selectedRowIdx.value = null;
-}
-
-function selectPlace(rowIdx, placeKey) {
-  const oldResult = pfp1aResults.value[rowIdx];
-  const nomInstitution = institutionsNames.value[placesMap.value[placeKey]?.IDPlace] || institutionsNames.value[placesMap.value[placeKey]?.InstitutionId] || '';
-  const nomPlace = placesMap.value[placeKey]?.NomPlace || '';
-  const confirmation = window.confirm(
-    `Voulez-vous vraiment modifier la place de cet étudiant ?\n\nNouvelle place : ${nomPlace}\nInstitution : ${nomInstitution}`
-  );
-  if (!confirmation) {
-    closePlaceSelector();
-    return;
-  }
-  // Clé de validation AVANT modification (toujours la même, même si placeKey change)
-  const validationKey = (oldResult.studentId || '') + '_' + (oldResult.placeKey || '');
-  // Met à jour tous les champs dépendants de la nouvelle place
-  oldResult.placeKey = placeKey;
-  const newPlace = placesMap.value[placeKey];
-  oldResult.idPlace = newPlace.IDPlace || newPlace.idPlace || placeKey;
-  oldResult.Domaine = newPlace.Domaine || '';
-  oldResult.IdInstitution = newPlace.InstitutionId || newPlace.IDInstitution || newPlace.idInstitution || '';
-  oldResult.idInstitution = newPlace.InstitutionId || newPlace.IDInstitution || newPlace.idInstitution || '';
-  oldResult.praticienName = newPlace.praticiensFormateurs && newPlace.praticiensFormateurs[0]
-    ? (praticiensMap.value[newPlace.praticiensFormateurs[0]]?.Nom || '')
-    : '';
-  // Sauvegarde sous la clé d'origine, jamais une nouvelle clé
-  // update(dbRef(db, validationPath), { [validationKey]: oldResult });
-  closePlaceSelector();
-}
-
-const filteredPlaces = computed(() => {
-  const term = searchPlace.value.trim().toLowerCase();
-  if (!term) return Object.values(placesMap.value);
-  return Object.values(placesMap.value).filter(place => {
-    const nomPlace = (place.NomPlace || '').toLowerCase();
-    const nomInstitution = (institutionsNames.value[place.IDPlace] || institutionsNames.value[place.InstitutionId] || '').toLowerCase();
-    return nomPlace.includes(term) || nomInstitution.includes(term);
-  });
-});
-
+onMounted(() => {
+  loading.value = false
+})
 </script>
+
+<style scoped>
+.validate-pfp-page {
+  min-height: calc(100vh - 100px);
+}
+</style>

@@ -1,15 +1,12 @@
 <template>
-  <div>
-    <Navbar />
-    <div class="page-layout">
-      <AdminSidebar />
-      <div class="role-management">
+  <AdminLayout>
+    <template #header>
+      <PageHeader title="Gestion des Rôles" subtitle="Gérez les permissions de votre compte Supabase" icon="pi pi-user-edit" />
+    </template>
+    <div class="role-management">
     
     <div class="role-management-container">
-      <div class="role-header">
-        <h2>🔐 Gestion des Rôles</h2>
-        <p>Gérez les permissions de votre compte Supabase</p>
-      </div>
+      
 
       <!-- Informations utilisateur -->
       <div class="user-info-card">
@@ -265,15 +262,14 @@
         {{ message.text }}
       </div>
     </div>
-      </div>
     </div>
-  </div>
+  </AdminLayout>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onActivated, onBeforeUnmount, watch } from 'vue';
-import Navbar from '@/components/common/utils/Navbar.vue';
-import AdminSidebar from '@/components/admin/lists/AdminSidebar.vue';
+import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
+import PageHeader from '@/components/admin/common/PageHeader.vue';
 import { useAuthStore } from '@/stores/authStore';
 import { useRoleStore } from '@/stores/role';
 import { supabase } from '@/supabase';
@@ -466,17 +462,7 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.page-layout {
-  display: flex;
-  gap: 1.5rem;
-  padding: 1.5rem;
-  background: var(--surface-ground);
-  min-height: calc(100vh - 80px);
-}
-
 .role-management {
-  flex: 1;
-  min-width: 0;
   padding: 2rem;
   background: var(--surface-ground);
 }

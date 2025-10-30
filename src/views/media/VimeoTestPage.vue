@@ -1,5 +1,5 @@
 <template>
-  <div class="vimeo-test-page">
+  <AdminLayout class="vimeo-test-page">
     <div class="test-header">
       <h1>Test de connexion Vimeo</h1>
       <p>Vérification de l'API Vimeo</p>
@@ -100,10 +100,11 @@
 
     <!-- Toast -->
     <Toast />
-  </div>
+  </AdminLayout>
 </template>
 
 <script setup>
+import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 import { ref, computed, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import Button from 'primevue/button'

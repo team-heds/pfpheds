@@ -1,6 +1,5 @@
 <template>
-        <Navbar />
-
+    <AdminLayout>
     <div class="places-list">
         <h2>Liste des Places</h2>
 
@@ -48,12 +47,13 @@
             </tbody>
         </table>
     </div>
+    </AdminLayout>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { getDatabase, ref as dbRef, get } from 'firebase/database';
-import Navbar from '@/components/common/utils/Navbar.vue';
+import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 
 // Références pour stocker les données
 const places = ref([]);

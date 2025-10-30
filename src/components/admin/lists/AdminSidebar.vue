@@ -242,9 +242,10 @@ const menu = ref([
     items: [
       { label: 'Dashboard', icon: 'pi pi-chart-bar', to: '/admin/dashboard-general' },
       { label: 'Gestion des Rôles', icon: 'pi pi-user-edit', to: '/role-management' },
+      { label: 'Rôles Utilisateurs', icon: 'pi pi-users', to: '/admin/manage-user-roles' },
       { label: 'Permissions', icon: 'pi pi-lock', to: '/permissions' },
       { label: 'Routes & Accès', icon: 'pi pi-sitemap', to: '/router-inspector' },
-      { label: 'Utilisateurs', icon: 'pi pi-users', to: '/admin/users' },
+      { label: 'Utilisateurs', icon: 'pi pi-users', to: '/user_list' },
       { label: 'Paramètres', icon: 'pi pi-wrench', to: '/admin/settings' }
     ]
   },
@@ -256,25 +257,17 @@ const menu = ref([
     label: 'PFP',
     icon: 'pi pi-briefcase',
     items: [
-      { label: 'Dashboard PFP', icon: 'pi pi-chart-bar', to: '/admin/dashboard-pfp' },
+      { label: 'Dashboards PFP', icon: 'pi pi-chart-bar', to: '/admin/dashboard-pfp' },
       // Listes et utilisateurs
       { label: 'Étudiants', icon: 'pi pi-users', to: '/etudiant_list' },
       { label: 'Institutions', icon: 'pi pi-building', to: '/institution_list' },
-      { label: 'Enseignants PHY', icon: 'pi pi-graduation-cap', to: '/enseignent_list' },
+      { label: 'Enseignants PHY', icon: 'pi pi-book', to: '/enseignent_list' },
       { label: 'Praticiens Formateurs', icon: 'pi pi-user-plus', to: '/praticien_formateur_list' },
       { label: 'Profil Utilisateur', icon: 'pi pi-id-card', to: '/profilAdmin/4qoWztDujictoqTEJvJK6xF1Zcr1' },
-      { label: 'Profil 2', icon: 'pi pi-id-card', to: '/push' },
-      { label: 'Profil 1', icon: 'pi pi-id-card', to: '/push2' },
+      { label: 'Répondant HES', icon: 'pi pi-id-card', to: '/management_repondant' },
+      { label: 'Management Places', icon: 'pi pi-id-card', to: '/management_place' },
       
-      // Répondants HES
-      {
-        label: 'Répondants HES',
-        icon: 'pi pi-comments',
-        items: [
-          { label: 'Gestion Répondants', icon: 'pi pi-cog', to: '/management_repondant' },
-          { label: 'Informations', icon: 'pi pi-info-circle', to: '/info_repondant' }
-        ]
-      },
+    
       
       // Votations
       {
@@ -297,7 +290,6 @@ const menu = ref([
         items: [
           { label: 'PFP en Cours', icon: 'pi pi-clock', to: '/management_pfpencours' },
           { label: 'Gantt PFP', icon: 'pi pi-chart-line', to: '/gantt' },
-          { label: 'Gestion Places', icon: 'pi pi-map', to: '/management_places' },
           { label: 'Gestion Places Safe', icon: 'pi pi-shield', to: '/management_places_safe' },
           { label: 'Répartition Stages', icon: 'pi pi-percentage', to: '/stage_repartition' },
           { label: 'Validation PFP1A', icon: 'pi pi-check-circle', to: '/validate-pfp1a' }
@@ -315,32 +307,22 @@ const menu = ref([
     items: [
       { label: 'Dashboard Académique', icon: 'pi pi-chart-bar', to: '/admin/dashboard-academique' },
       // Dashboards
-      {
-        label: 'Dashboards',
-        icon: 'pi pi-chart-bar',
-        items: [
-          { label: 'Dashboard Admin SI', icon: 'pi pi-desktop', to: '/admin' },
-          { label: 'Dashboard RM', icon: 'pi pi-users', to: '/admin/dashboard-rm' },
-          { label: 'Dashboard Enseignants', icon: 'pi pi-graduation-cap', to: '/admin/dashboard-teachers' }
-        ]
-      },
+    
       
       // Enseignants SI
       { label: 'Enseignants SI', icon: 'pi pi-user-edit', to: '/admin/teachers-si' },
       
       // Planning
-      {
-        label: 'Planning',
-        icon: 'pi pi-calendar',
-        items: [
-          { label: 'Voir Planning', icon: 'pi pi-eye', to: '/admin/planning' },
-          { label: 'Gérer Planning', icon: 'pi pi-pencil', to: '/admin/planning/manage' }
-        ]
-      },
+      
+          { label: 'Planning', icon: 'pi pi-eye', to: '/admin/planning' },
+          { label: 'Gestion Planning', icon: 'pi pi-pencil', to: '/admin/planning/manage' },
+      
       
       // Gestion académique
-      { label: 'Tableau Kanban', icon: 'pi pi-th-large', to: '/admin/academic/kanban' },
-      { label: 'Gestion Contenu Multimédia', icon: 'pi pi-video', to: '/admin/academic/media-content' }
+      { label: 'Tâches', icon: 'pi pi-th-large', to: '/admin/academic/kanban' },
+      { label: 'Contenu Multimédia', icon: 'pi pi-video', to: '/admin/academic/media-content' },
+      { label: 'Feedbacka', icon: 'pi pi-video', to: '/admin/academic/media-content' },
+      { label: 'Care-Convers', icon: 'pi pi-video', to: '/care-convers' }
     ]
   },
   

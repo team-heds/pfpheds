@@ -1,5 +1,5 @@
 <template>
-  <Navbar />
+  <AdminLayout>
   <div class="page-wrapper">
     <div class="quest-management-page">
       <!-- Header de la page -->
@@ -32,11 +32,13 @@
       </div>
     </div>
   </div>
+  </AdminLayout>
 </template>
 
 <script setup>
 import QuestManagement from '@/components/admin/QuestManagement.vue'
-import Navbar from '@/components/common/utils/Navbar.vue'
+import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
+// import Navbar from '@/components/common/utils/Navbar.vue'
 </script>
 
 <style scoped>

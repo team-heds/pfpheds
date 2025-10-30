@@ -113,7 +113,9 @@ watch(() => route.path, (p) => {
   cursor: pointer;
   transition: background 0.14s, color 0.14s, border 0.14s;
 }
-.sidebar-btn:hover, .sidebar-link.router-link-active {
+.sidebar-btn:hover,
+.sidebar-link.router-link-active,
+.sidebar-link.router-link-exact-active {
   background: #232c3d18;
   color: var(--primary-color, #3b82f6);
   border: 1px solid var(--primary-color, #3b82f6);

@@ -1,6 +1,5 @@
 <template>
-  <div class="planning-container">
-    <Navbar />
+  <AdminLayout class="planning-container">
     
     <!-- Header Card -->
     <Card class="planning-header-card">
@@ -291,13 +290,14 @@
         </div>
       </Panel>
     </div>
-  </div>
+  </AdminLayout>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import Navbar from '@/components/common/utils/Navbar.vue'
+import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
+// import Navbar from '@/components/common/utils/Navbar.vue'
 import Card from 'primevue/card'
 import Panel from 'primevue/panel'
 import Toolbar from 'primevue/toolbar'

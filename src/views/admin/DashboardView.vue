@@ -1,317 +1,316 @@
 <template>
-  <Navbar />
-  <div class="layout-container">
-    <!-- Sidebar gauche (fixe) -->
-    <AdminSidebar class="layout-sidebar" />
-    <!-- Zone principale -->
-    <div class="layout-content-wrapper">
-      <div v-if="isDefaultDashboard">
-        <div class="grid">
-          <!-- Places de stages card -->
-          <div class="col-12 md:col-6 xl:col-3">
-            <div class="card h-full">
-              <span class="font-semibold text-lg">Places de stages</span>
-              <div class="flex justify-content-between align-items-start mt-3">
-                <div class="w-6">
-                  <span class="text-6xl font-bold text-900">{{ totalPlaces }}</span>
-                </div>
-                <div class="w-6">
-                  <!-- SVG icon (optionnel) -->
-                  <svg width="100%" viewBox="0 0 258 96" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                      d="M1 93.9506L4.5641 94.3162C8.12821 94.6817 15.2564 95.4128 22.3846 89.6451C29.5128 83.8774 36.641 71.6109 43.7692 64.4063C50.8974 57.2018 58.0256 55.0592 65.1538 58.9268C72.2821 62.7945 79.4103 72.6725 86.5385 73.5441C93.6667 74.4157 100.795 66.2809 107.923 65.9287C115.051 65.5765 122.179 73.0068 129.308 66.8232C136.436 60.6396 143.564 40.8422 150.692 27.9257C157.821 15.0093 164.949 8.97393 172.077 6.43766C179.205 3.9014 186.333 4.86425 193.462 12.0629C200.59 19.2616 207.718 32.696 214.846 31.0487C221.974 29.4014 229.103 12.6723 236.231 5.64525C243.359 -1.38178 250.487 1.29325 254.051 2.63076L257.615 3.96827"
-                      :style="{ strokeWidth: '2px', stroke: 'var(--primary-color)' }"
-                      stroke="10"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- institutions partenaires card -->
-          <div class="col-12 md:col-6 xl:col-3">
-            <div class="card h-full">
-              <span class="font-semibold text-lg">Institutions partenaires</span>
-              <div class="flex justify-content-between align-items-start mt-3">
-                <div class="w-6">
-                  <span class="text-6xl font-bold text-900">{{ totalInstitutions }}</span>
-                </div>
-                <div class="w-6">
-                  <!-- SVG icon (optionnel) -->
-                  <svg width="100%" viewBox="0 0 115 41" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                      d="M1 35.6498L2.24444 32.4319C3.48889 29.214 5.97778 22.7782 8.46667 20.3627C11.4556 17.9473 13.9444 19.5522 15.9333 21.7663C18.4222 23.9803 20.9111 26.8035 23.4 30.6606C25.8889 34.5176 28.3778 39.4085 30.8667 37.2137C33.3556 35.0189 35.8444 25.7383 38.3333 26.3765C40.8222 27.0146 43.3111 37.5714 45.8 38.9013C48.2889 40.2311 50.7778 32.3341 53.2667 31.692C55.7556 31.0499 58.2444 37.6628 60.7333 39.4617C63.2222 41.2607 65.7111 38.2458 68.2 34.9205C70.6889 31.5953 73.1778 27.9597 75.6667 23.5955C78.1556 19.2313 80.6444 14.1385 83.1333 13.8875C85.6222 13.6365 88.1111 18.2272 90.6 20.2425C93.0889 22.2578 95.5778 21.6977 98.0667 18.8159C100.556 15.9341 103.044 10.7306 105.533 7.37432C108.022 4.01806 110.511 2.50903 111.756 1.75451L113 1"
-                      :style="{ strokeWidth: '1px', stroke: 'var(--primary-color)' }"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Étudiants card -->
-          <div class="col-12 md:col-6 xl:col-3">
-            <div class="card h-full">
-              <span class="font-semibold text-lg">Étudiants</span>
-              <div class="flex justify-content-between align-items-start mt-3">
-                <div class="w-6">
-                  <span class="text-6xl font-bold text-900">{{ totalStudents }}</span>
-                </div>
-                <div class="w-6">
-                  <!-- SVG icon (optionnel) -->
-                  <svg width="100%" viewBox="0 0 115 41" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                      d="M1.5 1L2.74444 2.61495C3.98889 4.2299 6.47778 7.4598 8.96667 9.07151C11.4556 10.6832 13.9444 10.6767 16.4333 11.6127C18.9222 12.5487 21.4111 14.4271 23.9 16.6724C26.3889 18.9178 28.8778 21.5301 31.3667 20.1977C33.8556 18.8652 36.3444 13.5878 38.8333 11.3638C41.3222 9.13969 43.8111 9.96891 46.3 11.9894C48.7889 14.0099 51.2778 17.2217 53.7667 16.2045C56.2556 15.1873 58.7444 9.9412 61.2333 11.2783C63.7222 12.6155 66.2111 20.5359 68.7 21.4684C71.1889 22.401 73.6778 16.3458 76.1667 16.0009C78.6556 15.6561 81.1444 21.0217 83.6333 24.2684C86.1222 27.515 88.6111 28.6428 91.1 27.4369C93.5889 26.2311 96.0778 22.6916 98.5667 22.7117C101.056 22.7317 103.544 26.3112 106.033 29.7859C108.522 33.2605 111.011 36.6302 112.256 38.3151L113.5 40"
-                      :style="{ strokeWidth: '1px', stroke: 'var(--primary-color)' }"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Praticiens Formateurs card -->
-          <div class="col-12 md:col-6 xl:col-3">
-            <div class="card h-full">
-              <span class="font-semibold text-lg">Praticiens Formateurs</span>
-              <div class="flex justify-content-between align-items-start mt-3">
-                <div class="w-6">
-                  <span class="text-6xl font-bold text-900">{{ totalFormateurs }}</span>
-                </div>
-                <div class="w-6">
-                  <!-- SVG icon (optionnel) -->
-                  <svg width="100%" viewBox="0 0 115 41" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                      d="M1.5 1L2.74444 2.61495C3.98889 4.2299 6.47778 7.4598 8.96667 9.07151C11.4556 10.6832 13.9444 10.6767 16.4333 11.6127C18.9222 12.5487 21.4111 14.4271 23.9 16.6724C26.3889 18.9178 28.8778 21.5301 31.3667 20.1977C33.8556 18.8652 36.3444 13.5878 38.8333 11.3638C41.3222 9.13969 43.8111 9.96891 46.3 11.9894C48.7889 14.0099 51.2778 17.2217 53.7667 16.2045C56.2556 15.1873 58.7444 9.9412 61.2333 11.2783C63.7222 12.6155 66.2111 20.5359 68.7 21.4684C71.1889 22.401 73.6778 16.3458 76.1667 16.0009C78.6556 15.6561 81.1444 21.0217 83.6333 24.2684C86.1222 27.515 88.6111 28.6428 91.1 27.4369C93.5889 26.2311 96.0778 22.6916 98.5667 22.7117C101.056 22.7317 103.544 26.3112 106.033 29.7859C108.522 33.2605 111.011 36.6302 112.256 38.3151L113.5 40"
-                      :style="{ strokeWidth: '1px', stroke: 'var(--primary-color)' }"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Section Gamification -->
-          <div class="col-12">
-            <div class="card">
-              <div class="flex align-items-center justify-content-between mb-4">
-                <span class="text-900 text-xl font-semibold">
-                  <i class="pi pi-trophy mr-2" style="color: var(--primary-color)"></i>
-                  Système de Gamification
-                </span>
-                <div class="flex align-items-center gap-2 px-3 py-2 border-round-3xl font-semibold text-white text-sm"
-                     :class="getRoleBadgeClass(currentUserRole)" v-if="currentUserRole">
-                  <i :class="getRoleIcon(currentUserRole)"></i>
-                  <span>{{ getRoleName(currentUserRole) }}</span>
-                </div>
-              </div>
-
-              <!-- Statistiques Gamification -->
-              <div class="grid mb-4">
-                <div class="col-12 md:col-3">
-                  <div class="surface-card p-4 border-round shadow-2 h-full flex align-items-center gap-3 hover:shadow-4 transition-all transition-duration-200">
-                    <div class="w-4rem h-4rem border-round flex align-items-center justify-content-center text-white text-xl" style="background-color: #2E8B57;">
-                      <i class="pi pi-trophy"></i>
-                    </div>
-                    <div class="flex-1">
-                      <div class="text-900 font-bold text-2xl m-0">{{ gamificationStats.challenges?.total || 0 }}</div>
-                      <div class="text-600 font-medium mb-1">Défis Totaux</div>
-                      <div class="text-500 text-sm">{{ gamificationStats.challenges?.active || 0 }} actifs</div>
-                    </div>
+  <AdminLayout>
+    <div class="layout-container">
+      <!-- Zone principale -->
+      <div class="layout-content-wrapper">
+        <div v-if="isDefaultDashboard">
+          <div class="grid">
+            <!-- Places de stages card -->
+            <div class="col-12 md:col-6 xl:col-3">
+              <div class="card h-full">
+                <span class="font-semibold text-lg">Places de stages</span>
+                <div class="flex justify-content-between align-items-start mt-3">
+                  <div class="w-6">
+                    <span class="text-6xl font-bold text-900">{{ totalPlaces }}</span>
                   </div>
-                </div>
-
-                <div class="col-12 md:col-3">
-                  <div class="surface-card p-4 border-round shadow-2 h-full flex align-items-center gap-3 hover:shadow-4 transition-all transition-duration-200">
-                    <div class="w-4rem h-4rem border-round flex align-items-center justify-content-center text-white text-xl" style="background-color: #4169E1;">
-                      <i class="pi pi-flag"></i>
-                    </div>
-                    <div class="flex-1">
-                      <div class="text-900 font-bold text-2xl m-0">{{ gamificationStats.quests?.total || 0 }}</div>
-                      <div class="text-600 font-medium mb-1">Quêtes Totales</div>
-                      <div class="text-500 text-sm">{{ gamificationStats.quests?.active || 0 }} actives</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="col-12 md:col-3">
-                  <div class="surface-card p-4 border-round shadow-2 h-full flex align-items-center gap-3 hover:shadow-4 transition-all transition-duration-200">
-                    <div class="w-4rem h-4rem border-round flex align-items-center justify-content-center text-white text-xl" style="background-color: #DC143C;">
-                      <i class="pi pi-star"></i>
-                    </div>
-                    <div class="flex-1">
-                      <div class="text-900 font-bold text-2xl m-0">{{ gamificationStats.badges?.total || 0 }}</div>
-                      <div class="text-600 font-medium mb-1">Badges Totaux</div>
-                      <div class="text-500 text-sm">{{ gamificationStats.badges?.unlocked || 0 }} débloqués</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="col-12 md:col-3">
-                  <div class="surface-card p-4 border-round shadow-2 h-full flex align-items-center gap-3 hover:shadow-4 transition-all transition-duration-200">
-                    <div class="w-4rem h-4rem border-round flex align-items-center justify-content-center text-white text-xl" style="background-color: #FFD700;">
-                      <i class="pi pi-users"></i>
-                    </div>
-                    <div class="flex-1">
-                      <div class="text-900 font-bold text-2xl m-0">{{ gamificationStats.users?.active || 0 }}</div>
-                      <div class="text-600 font-medium mb-1">Utilisateurs Actifs</div>
-                      <div class="text-500 text-sm">7 derniers jours</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Actions Rapides Gamification -->
-              <div class="grid">
-                <div class="col-12 md:col-4" v-if="hasPermission('CREATE_CHALLENGES')">
-                  <div class="surface-card p-4 border-round shadow-2 cursor-pointer transition-all transition-duration-300 hover:shadow-4 hover:surface-hover h-full flex flex-column gap-3"
-                       @click="navigateToGamification('/admin/challenges')">
-                    <div class="w-3rem h-3rem border-round flex align-items-center justify-content-center text-white" style="background-color: #2E8B57;">
-                      <i class="pi pi-trophy text-lg"></i>
-                    </div>
-                    <h4 class="text-900 font-semibold text-lg m-0">Gérer les Défis</h4>
-                    <p class="text-600 line-height-3 m-0 flex-1">Créer, modifier et supprimer des défis</p>
-                    <Button
-                      label="Accéder"
-                      icon="pi pi-arrow-right"
-                      class="p-button-sm p-button-outlined w-full"
-                    />
-                  </div>
-                </div>
-
-                <div class="col-12 md:col-4" v-if="hasPermission('CREATE_QUESTS')">
-                  <div class="surface-card p-4 border-round shadow-2 cursor-pointer transition-all transition-duration-300 hover:shadow-4 hover:surface-hover h-full flex flex-column gap-3"
-                       @click="navigateToGamification('/admin/quests')">
-                    <div class="w-3rem h-3rem border-round flex align-items-center justify-content-center text-white" style="background-color: #4169E1;">
-                      <i class="pi pi-flag text-lg"></i>
-                    </div>
-                    <h4 class="text-900 font-semibold text-lg m-0">Gérer les Quêtes</h4>
-                    <p class="text-600 line-height-3 m-0 flex-1">Créer, modifier et supprimer des quêtes</p>
-                    <Button
-                      label="Accéder"
-                      icon="pi pi-arrow-right"
-                      class="p-button-sm p-button-outlined w-full"
-                    />
-                  </div>
-                </div>
-
-                <div class="col-12 md:col-4" v-if="hasPermission('CREATE_BADGES')">
-                  <div class="surface-card p-4 border-round shadow-2 cursor-pointer transition-all transition-duration-300 hover:shadow-4 hover:surface-hover h-full flex flex-column gap-3"
-                       @click="navigateToGamification('/admin/badges')">
-                    <div class="w-3rem h-3rem border-round flex align-items-center justify-content-center text-white" style="background-color: #DC143C;">
-                      <i class="pi pi-star text-lg"></i>
-                    </div>
-                    <h4 class="text-900 font-semibold text-lg m-0">Gérer les Badges</h4>
-                    <p class="text-600 line-height-3 m-0 flex-1">Créer, modifier et supprimer des badges</p>
-                    <Button
-                      label="Accéder"
-                      icon="pi pi-arrow-right"
-                      class="p-button-sm p-button-outlined w-full"
-                    />
-                  </div>
-                </div>
-
-                <div class="col-12 md:col-4" v-if="hasPermission('MANAGE_USERS')">
-                  <div class="surface-card p-4 border-round shadow-2 cursor-pointer transition-all transition-duration-300 hover:shadow-4 hover:surface-hover h-full flex flex-column gap-3"
-                       @click="navigateToGamification('/admin/users')">
-                    <div class="w-3rem h-3rem border-round flex align-items-center justify-content-center text-white" style="background-color: #FFD700;">
-                      <i class="pi pi-users text-lg"></i>
-                    </div>
-                    <h4 class="text-900 font-semibold text-lg m-0">Gérer les Utilisateurs</h4>
-                    <p class="text-600 line-height-3 m-0 flex-1">Attribuer des rôles et permissions</p>
-                    <Button
-                      label="Accéder"
-                      icon="pi pi-arrow-right"
-                      class="p-button-sm p-button-outlined w-full"
-                    />
-                  </div>
-                </div>
-
-                <div class="col-12 md:col-4" v-if="hasPermission('MANAGE_HOUSES')">
-                  <div class="surface-card p-4 border-round shadow-2 cursor-pointer transition-all transition-duration-300 hover:shadow-4 hover:surface-hover h-full flex flex-column gap-3"
-                       @click="navigateToGamification('/admin/houses')">
-                    <div class="w-3rem h-3rem border-round flex align-items-center justify-content-center text-white bg-blue-500">
-                      <i class="pi pi-home text-lg"></i>
-                    </div>
-                    <h4 class="text-900 font-semibold text-lg m-0">Gérer les Maisons</h4>
-                    <p class="text-600 line-height-3 m-0 flex-1">Points des maisons et statistiques</p>
-                    <Button
-                      label="Accéder"
-                      icon="pi pi-arrow-right"
-                      class="p-button-sm p-button-outlined w-full"
-                    />
-                  </div>
-                </div>
-
-                <div class="col-12 md:col-4" v-if="hasPermission('VIEW_ANALYTICS')">
-                  <div class="surface-card p-4 border-round shadow-2 cursor-pointer transition-all transition-duration-300 hover:shadow-4 hover:surface-hover h-full flex flex-column gap-3"
-                       @click="navigateToGamification('/admin/analytics')">
-                    <div class="w-3rem h-3rem border-round flex align-items-center justify-content-center text-white bg-indigo-500">
-                      <i class="pi pi-chart-line text-lg"></i>
-                    </div>
-                    <h4 class="text-900 font-semibold text-lg m-0">Analytics</h4>
-                    <p class="text-600 line-height-3 m-0 flex-1">Statistiques détaillées et rapports</p>
-                    <Button
-                      label="Accéder"
-                      icon="pi pi-arrow-right"
-                      class="p-button-sm p-button-outlined w-full"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <!-- Activité Récente -->
-              <div class="mt-4" v-if="recentGamificationLogs.length > 0">
-                <h4 class="text-900 mb-3 font-semibold">Activité Récente - Gamification</h4>
-                <div class="flex flex-column gap-3">
-                  <div
-                    v-for="log in recentGamificationLogs.slice(0, 5)"
-                    :key="log.id"
-                    class="flex align-items-center gap-3 p-3 border-round surface-50 border-left-3 border-primary"
-                  >
-                    <div class="w-2rem h-2rem border-round bg-primary flex align-items-center justify-content-center text-white">
-                      <i :class="getActionIcon(log.action)"></i>
-                    </div>
-                    <div class="flex-1">
-                      <p class="text-900 font-medium m-0 mb-1">
-                        {{ getActionDescription(log.action, log.targetId) }}
-                      </p>
-                      <span class="text-600 text-sm">
-                        {{ formatTime(log.timestamp) }}
-                      </span>
-                    </div>
+                  <div class="w-6">
+                    <!-- SVG icon (optionnel) -->
+                    <svg width="100%" viewBox="0 0 258 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path
+                        d="M1 93.9506L4.5641 94.3162C8.12821 94.6817 15.2564 95.4128 22.3846 89.6451C29.5128 83.8774 36.641 71.6109 43.7692 64.4063C50.8974 57.2018 58.0256 55.0592 65.1538 58.9268C72.2821 62.7945 79.4103 72.6725 86.5385 73.5441C93.6667 74.4157 100.795 66.2809 107.923 65.9287C115.051 65.5765 122.179 73.0068 129.308 66.8232C136.436 60.6396 143.564 40.8422 150.692 27.9257C157.821 15.0093 164.949 8.97393 172.077 6.43766C179.205 3.9014 186.333 4.86425 193.462 12.0629C200.59 19.2616 207.718 32.696 214.846 31.0487C221.974 29.4014 229.103 12.6723 236.231 5.64525C243.359 -1.38178 250.487 1.29325 254.051 2.63076L257.615 3.96827"
+                        :style="{ strokeWidth: '2px', stroke: 'var(--primary-color)' }"
+                        stroke="10"
+                      />
+                    </svg>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Carte pour le Line Chart (Offre en formation) -->
-          <div class="col-12 xl:col-9">
-            <div class="card h-full">
-              <div class="flex align-items-start justify-content-between mb-6">
-                <span class="text-900 text-xl font-semibold">Offre en formation</span>
+            <!-- institutions partenaires card -->
+            <div class="col-12 md:col-6 xl:col-3">
+              <div class="card h-full">
+                <span class="font-semibold text-lg">Institutions partenaires</span>
+                <div class="flex justify-content-between align-items-start mt-3">
+                  <div class="w-6">
+                    <span class="text-6xl font-bold text-900">{{ totalInstitutions }}</span>
+                  </div>
+                  <div class="w-6">
+                    <!-- SVG icon (optionnel) -->
+                    <svg width="100%" viewBox="0 0 115 41" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path
+                        d="M1 35.6498L2.24444 32.4319C3.48889 29.214 5.97778 22.7782 8.46667 20.3627C11.4556 17.9473 13.9444 19.5522 15.9333 21.7663C18.4222 23.9803 20.9111 26.8035 23.4 30.6606C25.8889 34.5176 28.3778 39.4085 30.8667 37.2137C33.3556 35.0189 35.8444 25.7383 38.3333 26.3765C40.8222 27.0146 43.3111 37.5714 45.8 38.9013C48.2889 40.2311 50.7778 32.3341 53.2667 31.692C55.7556 31.0499 58.2444 37.6628 60.7333 39.4617C63.2222 41.2607 65.7111 38.2458 68.2 34.9205C70.6889 31.5953 73.1778 27.9597 75.6667 23.5955C78.1556 19.2313 80.6444 14.1385 83.1333 13.8875C85.6222 13.6365 88.1111 18.2272 90.6 20.2425C93.0889 22.2578 95.5778 21.6977 98.0667 18.8159C100.556 15.9341 103.044 10.7306 105.533 7.37432C108.022 4.01806 110.511 2.50903 111.756 1.75451L113 1"
+                        :style="{ strokeWidth: '1px', stroke: 'var(--primary-color)' }"
+                      />
+                    </svg>
+                  </div>
+                </div>
               </div>
-              <Chart type="line" :data="lineData" :options="lineOptions" :height="300" />
             </div>
-          </div>
 
-          <!-- Graphique Pie Chart pour les Statistiques PFP1A -->
-          <div class="col-12 xl:col-3">
-            <div class="card h-full">
-              <div class="text-900 text-xl font-semibold mb-6">Nombres d'étudiants par volée</div>
-              <Chart type="pie" :data="pieData" :height="300" :options="pieOptions"></Chart>
+            <!-- Étudiants card -->
+            <div class="col-12 md:col-6 xl:col-3">
+              <div class="card h-full">
+                <span class="font-semibold text-lg">Étudiants</span>
+                <div class="flex justify-content-between align-items-start mt-3">
+                  <div class="w-6">
+                    <span class="text-6xl font-bold text-900">{{ totalStudents }}</span>
+                  </div>
+                  <div class="w-6">
+                    <!-- SVG icon (optionnel) -->
+                    <svg width="100%" viewBox="0 0 115 41" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path
+                        d="M1.5 1L2.74444 2.61495C3.98889 4.2299 6.47778 7.4598 8.96667 9.07151C11.4556 10.6832 13.9444 10.6767 16.4333 11.6127C18.9222 12.5487 21.4111 14.4271 23.9 16.6724C26.3889 18.9178 28.8778 21.5301 31.3667 20.1977C33.8556 18.8652 36.3444 13.5878 38.8333 11.3638C41.3222 9.13969 43.8111 9.96891 46.3 11.9894C48.7889 14.0099 51.2778 17.2217 53.7667 16.2045C56.2556 15.1873 58.7444 9.9412 61.2333 11.2783C63.7222 12.6155 66.2111 20.5359 68.7 21.4684C71.1889 22.401 73.6778 16.3458 76.1667 16.0009C78.6556 15.6561 81.1444 21.0217 83.6333 24.2684C86.1222 27.515 88.6111 28.6428 91.1 27.4369C93.5889 26.2311 96.0778 22.6916 98.5667 22.7117C101.056 22.7317 103.544 26.3112 106.033 29.7859C108.522 33.2605 111.011 36.6302 112.256 38.3151L113.5 40"
+                        :style="{ strokeWidth: '1px', stroke: 'var(--primary-color)' }"
+                      />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Praticiens Formateurs card -->
+            <div class="col-12 md:col-6 xl:col-3">
+              <div class="card h-full">
+                <span class="font-semibold text-lg">Praticiens Formateurs</span>
+                <div class="flex justify-content-between align-items-start mt-3">
+                  <div class="w-6">
+                    <span class="text-6xl font-bold text-900">{{ totalFormateurs }}</span>
+                  </div>
+                  <div class="w-6">
+                    <!-- SVG icon (optionnel) -->
+                    <svg width="100%" viewBox="0 0 115 41" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path
+                        d="M1.5 1L2.74444 2.61495C3.98889 4.2299 6.47778 7.4598 8.96667 9.07151C11.4556 10.6832 13.9444 10.6767 16.4333 11.6127C18.9222 12.5487 21.4111 14.4271 23.9 16.6724C26.3889 18.9178 28.8778 21.5301 31.3667 20.1977C33.8556 18.8652 36.3444 13.5878 38.8333 11.3638C41.3222 9.13969 43.8111 9.96891 46.3 11.9894C48.7889 14.0099 51.2778 17.2217 53.7667 16.2045C56.2556 15.1873 58.7444 9.9412 61.2333 11.2783C63.7222 12.6155 66.2111 20.5359 68.7 21.4684C71.1889 22.401 73.6778 16.3458 76.1667 16.0009C78.6556 15.6561 81.1444 21.0217 83.6333 24.2684C86.1222 27.515 88.6111 28.6428 91.1 27.4369C93.5889 26.2311 96.0778 22.6916 98.5667 22.7117C101.056 22.7317 103.544 26.3112 106.033 29.7859C108.522 33.2605 111.011 36.6302 112.256 38.3151L113.5 40"
+                        :style="{ strokeWidth: '1px', stroke: 'var(--primary-color)' }"
+                      />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Section Gamification -->
+            <div class="col-12">
+              <div class="card">
+                <div class="flex align-items-center justify-content-between mb-4">
+                  <span class="text-900 text-xl font-semibold">
+                    <i class="pi pi-trophy mr-2" style="color: var(--primary-color)"></i>
+                    Système de Gamification
+                  </span>
+                  <div class="flex align-items-center gap-2 px-3 py-2 border-round-3xl font-semibold text-white text-sm"
+                       :class="getRoleBadgeClass(currentUserRole)" v-if="currentUserRole">
+                    <i :class="getRoleIcon(currentUserRole)"></i>
+                    <span>{{ getRoleName(currentUserRole) }}</span>
+                  </div>
+                </div>
+
+                <!-- Statistiques Gamification -->
+                <div class="grid mb-4">
+                  <div class="col-12 md:col-3">
+                    <div class="surface-card p-4 border-round shadow-2 h-full flex align-items-center gap-3 hover:shadow-4 transition-all transition-duration-200">
+                      <div class="w-4rem h-4rem border-round flex align-items-center justify-content-center text-white text-xl" style="background-color: #2E8B57;">
+                        <i class="pi pi-trophy"></i>
+                      </div>
+                      <div class="flex-1">
+                        <div class="text-900 font-bold text-2xl m-0">{{ gamificationStats.challenges?.total || 0 }}</div>
+                        <div class="text-600 font-medium mb-1">Défis Totaux</div>
+                        <div class="text-500 text-sm">{{ gamificationStats.challenges?.active || 0 }} actifs</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-12 md:col-3">
+                    <div class="surface-card p-4 border-round shadow-2 h-full flex align-items-center gap-3 hover:shadow-4 transition-all transition-duration-200">
+                      <div class="w-4rem h-4rem border-round flex align-items-center justify-content-center text-white text-xl" style="background-color: #4169E1;">
+                        <i class="pi pi-flag"></i>
+                      </div>
+                      <div class="flex-1">
+                        <div class="text-900 font-bold text-2xl m-0">{{ gamificationStats.quests?.total || 0 }}</div>
+                        <div class="text-600 font-medium mb-1">Quêtes Totales</div>
+                        <div class="text-500 text-sm">{{ gamificationStats.quests?.active || 0 }} actives</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-12 md:col-3">
+                    <div class="surface-card p-4 border-round shadow-2 h-full flex align-items-center gap-3 hover:shadow-4 transition-all transition-duration-200">
+                      <div class="w-4rem h-4rem border-round flex align-items-center justify-content-center text-white text-xl" style="background-color: #DC143C;">
+                        <i class="pi pi-star"></i>
+                      </div>
+                      <div class="flex-1">
+                        <div class="text-900 font-bold text-2xl m-0">{{ gamificationStats.badges?.total || 0 }}</div>
+                        <div class="text-600 font-medium mb-1">Badges Totaux</div>
+                        <div class="text-500 text-sm">{{ gamificationStats.badges?.unlocked || 0 }} débloqués</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-12 md:col-3">
+                    <div class="surface-card p-4 border-round shadow-2 h-full flex align-items-center gap-3 hover:shadow-4 transition-all transition-duration-200">
+                      <div class="w-4rem h-4rem border-round flex align-items-center justify-content-center text-white text-xl" style="background-color: #FFD700;">
+                        <i class="pi pi-users"></i>
+                      </div>
+                      <div class="flex-1">
+                        <div class="text-900 font-bold text-2xl m-0">{{ gamificationStats.users?.active || 0 }}</div>
+                        <div class="text-600 font-medium mb-1">Utilisateurs Actifs</div>
+                        <div class="text-500 text-sm">7 derniers jours</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Actions Rapides Gamification -->
+                <div class="grid">
+                  <div class="col-12 md:col-4" v-if="hasPermission('CREATE_CHALLENGES')">
+                    <div class="surface-card p-4 border-round shadow-2 cursor-pointer transition-all transition-duration-300 hover:shadow-4 hover:surface-hover h-full flex flex-column gap-3"
+                         @click="navigateToGamification('/admin/challenges')">
+                      <div class="w-3rem h-3rem border-round flex align-items-center justify-content-center text-white" style="background-color: #2E8B57;">
+                        <i class="pi pi-trophy text-lg"></i>
+                      </div>
+                      <h4 class="text-900 font-semibold text-lg m-0">Gérer les Défis</h4>
+                      <p class="text-600 line-height-3 m-0 flex-1">Créer, modifier et supprimer des défis</p>
+                      <Button
+                        label="Accéder"
+                        icon="pi pi-arrow-right"
+                        class="p-button-sm p-button-outlined w-full"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="col-12 md:col-4" v-if="hasPermission('CREATE_QUESTS')">
+                    <div class="surface-card p-4 border-round shadow-2 cursor-pointer transition-all transition-duration-300 hover:shadow-4 hover:surface-hover h-full flex flex-column gap-3"
+                         @click="navigateToGamification('/admin/quests')">
+                      <div class="w-3rem h-3rem border-round flex align-items-center justify-content-center text-white" style="background-color: #4169E1;">
+                        <i class="pi pi-flag text-lg"></i>
+                      </div>
+                      <h4 class="text-900 font-semibold text-lg m-0">Gérer les Quêtes</h4>
+                      <p class="text-600 line-height-3 m-0 flex-1">Créer, modifier et supprimer des quêtes</p>
+                      <Button
+                        label="Accéder"
+                        icon="pi pi-arrow-right"
+                        class="p-button-sm p-button-outlined w-full"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="col-12 md:col-4" v-if="hasPermission('CREATE_BADGES')">
+                    <div class="surface-card p-4 border-round shadow-2 cursor-pointer transition-all transition-duration-300 hover:shadow-4 hover:surface-hover h-full flex flex-column gap-3"
+                         @click="navigateToGamification('/admin/badges')">
+                      <div class="w-3rem h-3rem border-round flex align-items-center justify-content-center text-white" style="background-color: #DC143C;">
+                        <i class="pi pi-star text-lg"></i>
+                      </div>
+                      <h4 class="text-900 font-semibold text-lg m-0">Gérer les Badges</h4>
+                      <p class="text-600 line-height-3 m-0 flex-1">Créer, modifier et supprimer des badges</p>
+                      <Button
+                        label="Accéder"
+                        icon="pi pi-arrow-right"
+                        class="p-button-sm p-button-outlined w-full"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="col-12 md:col-4" v-if="hasPermission('MANAGE_USERS')">
+                    <div class="surface-card p-4 border-round shadow-2 cursor-pointer transition-all transition-duration-300 hover:shadow-4 hover:surface-hover h-full flex flex-column gap-3"
+                         @click="navigateToGamification('/admin/users')">
+                      <div class="w-3rem h-3rem border-round flex align-items-center justify-content-center text-white" style="background-color: #FFD700;">
+                        <i class="pi pi-users text-lg"></i>
+                      </div>
+                      <h4 class="text-900 font-semibold text-lg m-0">Gérer les Utilisateurs</h4>
+                      <p class="text-600 line-height-3 m-0 flex-1">Attribuer des rôles et permissions</p>
+                      <Button
+                        label="Accéder"
+                        icon="pi pi-arrow-right"
+                        class="p-button-sm p-button-outlined w-full"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="col-12 md:col-4" v-if="hasPermission('MANAGE_HOUSES')">
+                    <div class="surface-card p-4 border-round shadow-2 cursor-pointer transition-all transition-duration-300 hover:shadow-4 hover:surface-hover h-full flex flex-column gap-3"
+                         @click="navigateToGamification('/admin/houses')">
+                      <div class="w-3rem h-3rem border-round flex align-items-center justify-content-center text-white bg-blue-500">
+                        <i class="pi pi-home text-lg"></i>
+                      </div>
+                      <h4 class="text-900 font-semibold text-lg m-0">Gérer les Maisons</h4>
+                      <p class="text-600 line-height-3 m-0 flex-1">Points des maisons et statistiques</p>
+                      <Button
+                        label="Accéder"
+                        icon="pi pi-arrow-right"
+                        class="p-button-sm p-button-outlined w-full"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="col-12 md:col-4" v-if="hasPermission('VIEW_ANALYTICS')">
+                    <div class="surface-card p-4 border-round shadow-2 cursor-pointer transition-all transition-duration-300 hover:shadow-4 hover:surface-hover h-full flex flex-column gap-3"
+                         @click="navigateToGamification('/admin/analytics')">
+                      <div class="w-3rem h-3rem border-round flex align-items-center justify-content-center text-white bg-indigo-500">
+                        <i class="pi pi-chart-line text-lg"></i>
+                      </div>
+                      <h4 class="text-900 font-semibold text-lg m-0">Analytics</h4>
+                      <p class="text-600 line-height-3 m-0 flex-1">Statistiques détaillées et rapports</p>
+                      <Button
+                        label="Accéder"
+                        icon="pi pi-arrow-right"
+                        class="p-button-sm p-button-outlined w-full"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Activité Récente -->
+                <div class="mt-4" v-if="recentGamificationLogs.length > 0">
+                  <h4 class="text-900 mb-3 font-semibold">Activité Récente - Gamification</h4>
+                  <div class="flex flex-column gap-3">
+                    <div
+                      v-for="log in recentGamificationLogs.slice(0, 5)"
+                      :key="log.id"
+                      class="flex align-items-center gap-3 p-3 border-round surface-50 border-left-3 border-primary"
+                    >
+                      <div class="w-2rem h-2rem border-round bg-primary flex align-items-center justify-content-center text-white">
+                        <i :class="getActionIcon(log.action)"></i>
+                      </div>
+                      <div class="flex-1">
+                        <p class="text-900 font-medium m-0 mb-1">
+                          {{ getActionDescription(log.action, log.targetId) }}
+                        </p>
+                        <span class="text-600 text-sm">
+                          {{ formatTime(log.timestamp) }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Carte pour le Line Chart (Offre en formation) -->
+            <div class="col-12 xl:col-9">
+              <div class="card h-full">
+                <div class="flex align-items-start justify-content-between mb-6">
+                  <span class="text-900 text-xl font-semibold">Offre en formation</span>
+                </div>
+                <Chart type="line" :data="lineData" :options="lineOptions" :height="300" />
+              </div>
+            </div>
+
+            <!-- Graphique Pie Chart pour les Statistiques PFP1A -->
+            <div class="col-12 xl:col-3">
+              <div class="card h-full">
+                <div class="text-900 text-xl font-semibold mb-6">Nombres d'étudiants par volée</div>
+                <Chart type="pie" :data="pieData" :height="300" :options="pieOptions"></Chart>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-      <!-- Si l'utilisateur navigue via les liens de la sidebar, le composant enfant est injecté ici -->
-      <div v-else>
-        <router-view />
+        <!-- Si l'utilisateur navigue via les liens de la sidebar, le composant enfant est injecté ici -->
+        <div v-else>
+          <router-view />
+        </div>
       </div>
     </div>
-  </div>
+  </AdminLayout>
 </template>
 
 <script setup>
@@ -319,7 +318,7 @@ import { onMounted, ref, watch, computed } from 'vue';
 import { FilterMatchMode } from 'primevue/api';
 import { useLayout } from '@/layout/composables/layout';
 import { useRoute, useRouter } from 'vue-router';
-import AdminSidebar from '@/components/admin/lists/AdminSidebar.vue';
+import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 import Navbar from '@/components/common/utils/Navbar.vue';
 import Chart from 'primevue/chart';
 import Dropdown from 'primevue/dropdown';

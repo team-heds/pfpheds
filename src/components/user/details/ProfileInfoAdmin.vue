@@ -1,10 +1,5 @@
-﻿<template>
+<template>
   <div class="filter-layout">
-    <!-- Sidebar Gauche -->
-    <div class="sidebar-left">
-      <LeftSidebar />
-    </div>
-
     <!-- Contenu Principal -->
     <div class="main-content profileinfo-scrollable">
       <div class="filter-menu p-fluid p-pt-4 p-pb-4">
@@ -67,7 +62,6 @@ import CardNameProfile from '@/components/user/library/CardNameProfile.vue'
 import ResumStageUserProfile from '@/components/user/details/ResumStageUserProfile.vue'
 import VotationResultProfil from '@/components/user/details/VotationResultProfil.vue'
 import ProfileAdminRightSidebar from '@/components/user/library/ProfileAdminRightSidebar.vue'
-import LeftSidebar from '@/components/social/library/LeftSidebar.vue'
 import RadarProfil from '@/components/user/details/RadarProfil.vue'
 
 const defaultAvatar = '../../../public/assets/images/avatar/01.jpg';
@@ -187,14 +181,13 @@ onMounted(async () => {
 /* Layout global avec sidebars et contenu central */
 .filter-layout {
   display: grid;
-  grid-template-columns: 1fr 3fr 1fr;
-  /* Sidebar gauche, contenu central, sidebar droite */
+  grid-template-columns: 3fr 1fr;
+  /* Contenu principal, sidebar droite */
   gap: 1.5rem;
   min-height: 100vh;
 }
 
-/* Sidebar Gauche et Droite */
-.sidebar-left,
+/* Sidebar Droite */
 .sidebar-right {
   overflow-y: auto;
 }
@@ -218,7 +211,7 @@ onMounted(async () => {
 /* Responsive pour le layout global */
 @media (max-width: 1024px) {
   .filter-layout {
-    grid-template-columns: 1fr 2fr;
+    grid-template-columns: 1fr;
   }
 
   .sidebar-right {
@@ -230,10 +223,6 @@ onMounted(async () => {
   .filter-layout {
     grid-template-columns: 1fr;
     gap: 1rem;
-  }
-
-  .sidebar-left {
-    display: none;
   }
 }
 

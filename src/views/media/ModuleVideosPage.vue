@@ -1,5 +1,5 @@
 <template>
-  <Navbar />
+  <AdminLayout>
   <div class="module-videos-page">
     <!-- Header du module -->
     <div class="module-header">
@@ -204,9 +204,11 @@
     <!-- Toast pour notifications -->
     <Toast />
   </div>
+  </AdminLayout>
 </template>
 
 <script setup>
+import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useToast } from 'primevue/usetoast'

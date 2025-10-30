@@ -1,5 +1,5 @@
 <template>
-  <Navbar />
+  <AdminLayout>
   <div class="page-wrapper">
     <div class="badge-management-page">
       <!-- Header de la page -->
@@ -29,11 +29,13 @@
       </div>
     </div>
   </div>
+  </AdminLayout>
 </template>
 
 <script setup>
 import BadgeManagement from '@/components/admin/BadgeManagement.vue'
-import Navbar from '@/components/common/utils/Navbar.vue'
+import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
+// import Navbar from '@/components/common/utils/Navbar.vue'
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import rolesService, { PERMISSIONS } from '@/service/rolesService'
