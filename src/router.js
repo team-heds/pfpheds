@@ -112,6 +112,8 @@ import AdminDashboardGeneral from '@/components/admin/AdminDashboardGeneral.vue'
 import AdminDashboardPFP from '@/components/admin/AdminDashboardPFP.vue'
 import AdminDashboardAcademique from '@/components/admin/AdminDashboardAcademique.vue'
 import AdminDashboardGamification from '@/components/admin/AdminDashboardGamification.vue'
+import DashboardRMView from '@/views/admin/DashboardRMView.vue'
+import DashboardEnseignantView from '@/views/admin/DashboardEnseignantView.vue'
 import PlanningView from '@/views/admin/planning/PlanningView.vue'
 import PlanningAdminView from '@/views/admin/planning/PlanningAdminView.vue'
 import AcademicYearManagement from '@/views/admin/AcademicYearManagement.vue'
@@ -332,6 +334,8 @@ const routes = [
   // ========================================
   { path: '/admin', component: DashboardView, name: 'DashboardView', meta: { requiresAuth: true,  need: 'super.all'  } },
   { path: '/admin/dashboard-general', component: AdminDashboardGeneral, name: 'AdminDashboardGeneral', meta: { requiresAuth: true, need: 'admin' } },
+  { path: '/admin/dashboard-rm', component: DashboardRMView, name: 'DashboardRM', meta: { requiresAuth: true, requiredRole: ['admin', 'RMSoins'] } },
+  { path: '/admin/dashboard-enseignant', component: DashboardEnseignantView, name: 'DashboardEnseignant', meta: { requiresAuth: true, requiredRole: ['admin', 'EnseignantSoins', 'EnseignantPhysio'] } },
   { path: '/admin/dashboard-pfp', component: AdminDashboardPFP, name: 'AdminDashboardPFP', meta: { requiresAuth: true } },
   { path: '/admin/dashboard-academique', component: AdminDashboardAcademique, name: 'AdminDashboardAcademique', meta: { requiresAuth: true } },
   { path: '/admin/dashboard-gamification', component: AdminDashboardGamification, name: 'AdminDashboardGamification', meta: { requiresAuth: true } },
@@ -374,6 +378,19 @@ const routes = [
   { path: '/admin/academic/video-library', component: () => import('@/views/admin/academic/VideoLibraryView.vue'), name: 'VideoLibraryView' },
   // Redirection de media-content vers video-library (composant obsolète)
   { path: '/admin/academic/media-content', redirect: '/admin/academic/video-library' },
+  
+  // ========================================
+  // GESTION DES COURS
+  // ========================================
+  { path: '/admin/courses/list', component: () => import('@/views/admin/courses/CourseListView.vue'), name: 'CourseListView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
+  { path: '/admin/courses/create', component: () => import('@/views/admin/courses/CourseCreateView.vue'), name: 'CourseCreateView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
+  { path: '/admin/courses/:id', component: () => import('@/views/admin/courses/CourseDetailView.vue'), name: 'CourseDetailView', props: true, meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
+  { path: '/admin/courses/:id/edit', component: () => import('@/views/admin/courses/CourseEditView.vue'), name: 'CourseEditView', props: true, meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
+  
+  // ========================================
+  // OUTILS ADMIN
+  // ========================================
+  { path: '/admin/tools/feedbacka', component: () => import('@/views/admin/tools/FeedbackaView.vue'), name: 'FeedbackaView', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
   
   // ========================================
   // GAMIFICATION ADMIN ROUTES
