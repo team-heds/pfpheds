@@ -274,11 +274,11 @@ const routes = [
   { path: '/info_externe', component: InfoExterne, name: 'InfoExterne', meta: { requiresAuth: true } },
   { path: '/history', component: HistoriquePFP, name: 'HistoriquePFP', meta: { requiresAuth: true } },
   { path: '/documents', component: DocumentsPFP, name: 'DocumentsPFP', meta: { requiresAuth: true } },
-{ path: '/push', component: PushView, name: 'PushView', meta: { requiresAuth: true, need: 'page1.access' } },
-{ path: '/push2', component: PushView, name: 'PushView2', meta: { requiresAuth: true, need: 'page2.access' } },
-{ path: '/role-management', component: RoleManagement, name: 'RoleManagement', meta: { requiresAuth: true } },
-{ path: '/router-inspector', component: RouterView, name: 'RouterInspector', meta: { requiresAuth: true, need: 'admin' } },
-{ path: '/permissions', component: PermissionsView, name: 'PermissionsView', meta: { requiresAuth: true, need: 'admin' } },
+  { path: '/push', component: PushView, name: 'PushView', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/push2', component: PushView, name: 'PushView2', meta: { requiresAuth: true, need: 'page2.access' } },
+  { path: '/role-management', component: RoleManagement, name: 'RoleManagement', meta: { requiresAuth: true } },
+  { path: '/router-inspector', component: RouterView, name: 'RouterInspector', meta: { requiresAuth: true, need: 'admin' } },
+  { path: '/permissions', component: PermissionsView, name: 'PermissionsView', meta: { requiresAuth: true, need: 'admin' } },
 
   // ASSOCIATIONS
   { path: '/alpinphysio', component: AlpinPhysioView, name: 'AlpinPhysio', meta: { requiresAuth: false } },

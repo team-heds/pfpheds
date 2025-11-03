@@ -314,7 +314,7 @@ const menu = ref([
       
       // Planning
       
-          { label: 'Planning', icon: 'pi pi-eye', to: '/admin/planning' },
+          { label: 'Planning Hebdomadaire', icon: 'pi pi-eye', to: '/admin/planning/weekly' },
           { label: 'Gestion Planning', icon: 'pi pi-pencil', to: '/admin/planning/manage' },
       
       

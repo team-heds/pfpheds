@@ -464,7 +464,6 @@ onBeforeUnmount(() => {
 <style scoped>
 .role-management {
   padding: 2rem;
-  background: var(--surface-ground);
 }
 
 .role-management-container {
