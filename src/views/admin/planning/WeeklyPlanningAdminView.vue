@@ -1,31 +1,30 @@
 <template>
-  <Navbar />
-  <div class="page-wrapper">
+  <AdminLayout>
+    <template #header>
+      <PageHeader 
+        title="Planification Hebdomadaire" 
+        subtitle="Gestion des horaires, enseignants et activités par semaine" 
+        icon="pi pi-calendar" 
+      />
+    </template>
+
     <div class="weekly-planning-admin">
-      <!-- Header -->
+      <!-- Actions rapides -->
       <Card>
         <template #content>
-          <div class="flex justify-content-between align-items-center flex-wrap gap-3">
-            <div>
-              <h1 class="text-3xl font-bold text-primary m-0">📅 Planification Hebdomadaire Détaillée</h1>
-              <p class="text-600 mt-2">Gestion des horaires, enseignants et activités par semaine</p>
-            </div>
-            
-            <div class="flex gap-2 flex-wrap">
-
-              <Button
-                label="Retour Planning"
-                icon="pi pi-arrow-left"
-                @click="goToAnnualPlanning"
-                outlined
-              />
-              <Button 
-                label="Vue Public"
-                icon="pi pi-eye"
-                @click="goToPublicView"
-                severity="secondary"
-              />
-            </div>
+          <div class="flex gap-2 flex-wrap justify-content-end">
+            <Button
+              label="Retour Planning"
+              icon="pi pi-arrow-left"
+              @click="goToAnnualPlanning"
+              outlined
+            />
+            <Button 
+              label="Vue Public"
+              icon="pi pi-eye"
+              @click="goToPublicView"
+              severity="secondary"
+            />
           </div>
         </template>
       </Card>
@@ -514,7 +513,7 @@
         </template>
       </Dialog>
     </div>
-  </div>
+  </AdminLayout>
 </template>
 
 <script setup>
@@ -524,7 +523,8 @@ import { useToast } from 'primevue/usetoast'
 import Tag from 'primevue/tag'
 import Badge from 'primevue/badge'
 import Chip from 'primevue/chip'
-import Navbar from '@/components/common/utils/Navbar.vue'
+import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
+import PageHeader from '@/components/admin/common/PageHeader.vue'
 import planningService from '@/service/planningService'
 import academicYearService from '@/service/academicYearService'
 
@@ -1659,23 +1659,8 @@ const fillWeekDataToSheetContinuous = async (worksheet, weekSlots, startRow) => 
 </script>
 
 <style scoped>
-.page-wrapper {
-  width: 100%;
-  height: 100vh;
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.page-wrapper::-webkit-scrollbar {
-  display: none;
-}
-
 .weekly-planning-admin {
-  min-height: 100vh;
   padding: 2rem;
-  padding-bottom: 8rem;
   display: grid;
   grid-template-columns: 1fr;
   gap: 2rem;

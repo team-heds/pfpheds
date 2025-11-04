@@ -1,7 +1,8 @@
 <template>
-  <aside class="admin-sidebar card sidebar">
+  <aside :class="['admin-sidebar card sidebar', { 'collapsed': isCollapsed }]">
+
     <!-- Permissions: n'afficher que la liste possédée -->
-    <div v-if="isSupabaseUser && roleStore.initialized" class="permissions-info-card">
+    <div v-if="isSupabaseUser && roleStore.initialized && !isCollapsed" class="permissions-info-card">
       <h4>🔐 Permissions</h4>
       <ul class="perms-list">
         <li v-for="perm in roleStore.perms" :key="perm">🔹 {{ perm }}</li>
@@ -24,10 +25,10 @@
           <li class="sidebar-section">
             <div class="sidebar-section-label" @click="toggleSection(section.label)" style="cursor: pointer;">
               <i :class="section.icon" />
-              <span>{{ section.label }}</span>
-              <i class="pi" :class="isSectionOpen(section.label) ? 'pi-chevron-down' : 'pi-chevron-right'" style="margin-left: auto; font-size: 0.875rem;"></i>
+              <span v-if="!isCollapsed">{{ section.label }}</span>
+              <i v-if="!isCollapsed" class="pi" :class="isSectionOpen(section.label) ? 'pi-chevron-down' : 'pi-chevron-right'" style="margin-left: auto; font-size: 0.875rem;"></i>
             </div>  
-            <ul v-if="section.items && section.items.length > 0 && isSectionOpen(section.label)" class="sidebar-submenu">
+            <ul v-if="section.items && section.items.length > 0 && isSectionOpen(section.label) && !isCollapsed" class="sidebar-submenu">
               <SidebarMenuItems :items="section.items" />
             </ul>
           </li>
@@ -48,6 +49,18 @@ const router = useRouter();
 const roleStore = useRoleStore();
 const authStore = useAuthStore();
 
+// État de collapse
+const isCollapsed = ref(false);
+
+function toggleCollapse() {
+  isCollapsed.value = !isCollapsed.value;
+  try {
+    localStorage.setItem('adminSidebarCollapsed', isCollapsed.value.toString());
+  } catch (e) {
+    console.warn('Erreur sauvegarde état collapse:', e);
+  }
+}
+
 // État des sections ouvertes/fermées (persisté dans localStorage)
 const loadSectionsState = () => {
   try {
@@ -59,8 +72,18 @@ const loadSectionsState = () => {
     console.warn('Erreur chargement état sections:', e);
   }
   // Par défaut, toutes ouvertes
-  return new Set(['Admin Général', 'PFP', 'Académique', 'Gamification']);
+  return new Set(['Admin Général', 'PFP', 'Académique', 'Gamification', 'Outils']);
 };
+
+// Charger l'état de collapse
+try {
+  const savedCollapse = localStorage.getItem('adminSidebarCollapsed');
+  if (savedCollapse !== null) {
+    isCollapsed.value = savedCollapse === 'true';
+  }
+} catch (e) {
+  console.warn('Erreur chargement état collapse:', e);
+}
 
 const openSections = ref(loadSectionsState());
 
@@ -176,7 +199,8 @@ function getSectionClass(index) {
     0: 'admin-general-section',    // Admin Général
     1: 'pfp-section',              // PFP
     2: 'academic-section',         // Académique
-    3: 'gamification-section'      // Gamification
+    3: 'gamification-section',     // Gamification
+    4: 'tools-section'             // Outils
   };
   return classes[index] || '';
 }
@@ -209,6 +233,8 @@ function shouldShowSection(section, index) {
         roleStore.can('EnseignantPhysio') ||
         roleStore.isSuper
       );
+    case 4: // Outils - accessible à tous les utilisateurs authentifiés
+      return true;
     default:
       return true;
   }
@@ -240,7 +266,9 @@ const menu = ref([
     label: 'Admin Général',
     icon: 'pi pi-cog',
     items: [
-      { label: 'Dashboard', icon: 'pi pi-chart-bar', to: '/admin/dashboard-general' },
+      { label: 'Dashboard Admin', icon: 'pi pi-chart-bar', to: '/admin/dashboard-general' },
+      { label: 'Dashboard RM', icon: 'pi pi-chart-line', to: '/admin/dashboard-rm' },
+      { label: 'Dashboard Enseignant', icon: 'pi pi-graduation-cap', to: '/admin/dashboard-enseignant' },
       { label: 'Gestion des Rôles', icon: 'pi pi-user-edit', to: '/role-management' },
       { label: 'Rôles Utilisateurs', icon: 'pi pi-users', to: '/admin/manage-user-roles' },
       { label: 'Permissions', icon: 'pi pi-lock', to: '/permissions' },
@@ -306,23 +334,33 @@ const menu = ref([
     icon: 'pi pi-book',
     items: [
       { label: 'Dashboard Académique', icon: 'pi pi-chart-bar', to: '/admin/dashboard-academique' },
-      // Dashboards
-    
       
-      // Enseignants SI
-      { label: 'Enseignants SI', icon: 'pi pi-user-edit', to: '/admin/teachers-si' },
+      // Enseignants
+      { label: 'Enseignants SI', icon: 'pi pi-users', to: '/admin/teachers-si' },
       
       // Planning
-      
-          { label: 'Planning Hebdomadaire', icon: 'pi pi-eye', to: '/admin/planning/weekly' },
+      {
+        label: 'Planning',
+        icon: 'pi pi-calendar',
+        items: [
+          { label: 'Vue Hebdomadaire', icon: 'pi pi-calendar-plus', to: '/admin/planning/weekly' },
           { label: 'Gestion Planning', icon: 'pi pi-pencil', to: '/admin/planning/manage' },
+        ]
+      },
       
+      // Cours
+      {
+        label: 'Cours',
+        icon: 'pi pi-book',
+        items: [
+          { label: 'Liste des Cours', icon: 'pi pi-list', to: '/admin/courses/list' },
+          { label: 'Créer un Cours', icon: 'pi pi-plus-circle', to: '/admin/courses/create' },
+        ]
+      },
       
       // Gestion académique
       { label: 'Tâches', icon: 'pi pi-th-large', to: '/admin/academic/kanban' },
       { label: 'Contenu Multimédia', icon: 'pi pi-video', to: '/admin/academic/media-content' },
-      { label: 'Feedbacka', icon: 'pi pi-video', to: '/admin/academic/media-content' },
-      { label: 'Care-Convers', icon: 'pi pi-video', to: '/care-convers' }
     ]
   },
   
@@ -340,6 +378,18 @@ const menu = ref([
       { label: 'Gestion Utilisateurs', icon: 'pi pi-users', to: '/admin/gamification/users' },
       { label: 'Gestion Maisons', icon: 'pi pi-home', to: '/admin/gamification/houses' },
       { label: 'Analytics & Statistiques', icon: 'pi pi-chart-line', to: '/admin/gamification/analytics' }
+    ]
+  },
+  
+  // ========================================
+  // SECTION 4: OUTILS
+  // ========================================
+  {
+    label: 'Outils',
+    icon: 'pi pi-wrench',
+    items: [
+      { label: 'Feedbacka', icon: 'pi pi-comments', to: '/admin/tools/feedbacka' },
+      { label: 'Care-Convers', icon: 'pi pi-heart', to: '/care-convers' }
     ]
   }
 ]);
@@ -470,5 +520,59 @@ const menu = ref([
   font-size: 0.85rem;
   margin-bottom: 0.25rem;
   color: var(--text-color);
+}
+
+/* Bouton de collapse */
+.collapse-toggle {
+  position: absolute;
+  right: -15px;
+  top: 20px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  color: white;
+  border: 2px solid var(--surface-card);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.collapse-toggle:hover {
+  background: var(--primary-color-dark);
+  transform: scale(1.1);
+}
+
+.collapse-toggle i {
+  font-size: 1rem;
+}
+
+/* État collapsed */
+.admin-sidebar.collapsed {
+  width: 80px !important;
+  min-width: 80px !important;
+  max-width: 80px !important;
+  padding: 1rem 0.5rem;
+}
+
+.admin-sidebar.collapsed .sidebar-section-label {
+  justify-content: center;
+}
+
+.admin-sidebar.collapsed .sidebar-section-label i:first-child {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.admin-sidebar.collapsed .sidebar-submenu {
+  display: none;
+}
+
+.admin-sidebar.collapsed .permissions-info-card {
+  display: none;
 }
 </style>
