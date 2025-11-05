@@ -47,12 +47,18 @@ const config = {
       title: 'HEdS Docs',
       logo: {
         alt: 'HEdS',
-        src: 'img/logo.svg'
+        src: 'img/hespicto.png'
       },
       items: [
         {
+          type: 'doc',
+          docId: 'intro',
+          position: 'left',
+          label: 'Accueil'
+        },
+        {
           type: 'docSidebar',
-          sidebarId: 'tutorialSidebar',
+          sidebarId: 'docs',
           position: 'left',
           label: 'Documentation'
         },
