@@ -271,6 +271,8 @@ const menu = ref([
       { label: 'Dashboard Enseignant', icon: 'pi pi-graduation-cap', to: '/admin/dashboard-enseignant' },
       { label: 'Gestion des Rôles', icon: 'pi pi-user-edit', to: '/role-management' },
       { label: 'Rôles Utilisateurs', icon: 'pi pi-users', to: '/admin/manage-user-roles' },
+      { label: 'RBAC (Rôles & Permissions)', icon: 'pi pi-shield', to: '/admin/security/rbac' },
+      { label: 'Éditeur de Routes', icon: 'pi pi-sitemap', to: '/admin/routes-editor' },
       { label: 'Permissions', icon: 'pi pi-lock', to: '/permissions' },
       { label: 'Routes & Accès', icon: 'pi pi-sitemap', to: '/router-inspector' },
       { label: 'Utilisateurs', icon: 'pi pi-users', to: '/user_list' },
