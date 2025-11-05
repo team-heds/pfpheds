@@ -1,0 +1,14 @@
+{
+  "id": "planning-enseignants-gantt",
+  "title": "📅 Planning Gestion Enseignants 2024-2025",
+  "description": "🎯 Vue d'ensemble du projet",
+  "source": "@site/../docs/planning-enseignants-gantt.md",
+  "sourceDirName": ".",
+  "slug": "/planning-enseignants-gantt",
+  "permalink": "/extras/planning-enseignants-gantt",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {}
+}

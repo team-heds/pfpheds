@@ -1,0 +1,14 @@
+{
+  "id": "roles-permissions-router",
+  "title": "roles-permissions-router",
+  "description": "",
+  "source": "@site/../docs/roles-permissions-router.md",
+  "sourceDirName": ".",
+  "slug": "/roles-permissions-router",
+  "permalink": "/extras/roles-permissions-router",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {}
+}

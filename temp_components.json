@@ -1,0 +1,902 @@
+﻿[
+    {
+        "Path":  "src\\components\\TheNavbar.vue",
+        "Size":  6706,
+        "Name":  "TheNavbar.vue"
+    },
+    {
+        "Path":  "src\\components\\academic\\KanbanBoard.vue",
+        "Size":  21228,
+        "Name":  "KanbanBoard.vue"
+    },
+    {
+        "Path":  "src\\components\\academic\\TicketDetails.vue",
+        "Size":  45548,
+        "Name":  "TicketDetails.vue"
+    },
+    {
+        "Path":  "src\\components\\academic\\TicketForm.vue",
+        "Size":  24418,
+        "Name":  "TicketForm.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\AdminDashboard.vue",
+        "Size":  13726,
+        "Name":  "AdminDashboard.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\AdminDashboardAcademique.vue",
+        "Size":  7533,
+        "Name":  "AdminDashboardAcademique.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\AdminDashboardGamification.vue",
+        "Size":  7816,
+        "Name":  "AdminDashboardGamification.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\AdminDashboardGeneral.vue",
+        "Size":  7554,
+        "Name":  "AdminDashboardGeneral.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\AdminDashboardPFP.vue",
+        "Size":  7545,
+        "Name":  "AdminDashboardPFP.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\AnalyticsDashboard.vue",
+        "Size":  20792,
+        "Name":  "AnalyticsDashboard.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\BadgeManagement.vue",
+        "Size":  17704,
+        "Name":  "BadgeManagement.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\ChallengeManagement.vue",
+        "Size":  17735,
+        "Name":  "ChallengeManagement.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\GitHubSettings.vue",
+        "Size":  11048,
+        "Name":  "GitHubSettings.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\HouseManagement.vue",
+        "Size":  20830,
+        "Name":  "HouseManagement.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\QuestManagement.vue",
+        "Size":  42270,
+        "Name":  "QuestManagement.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\UserManagement.vue",
+        "Size":  31911,
+        "Name":  "UserManagement.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\common\\PageHeader.vue",
+        "Size":  1336,
+        "Name":  "PageHeader.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\details\\AlertModal.vue",
+        "Size":  1502,
+        "Name":  "AlertModal.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\details\\EtudiantDetails.vue",
+        "Size":  8591,
+        "Name":  "EtudiantDetails.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\details\\InfoRepondantEtudiants.vue",
+        "Size":  489,
+        "Name":  "InfoRepondantEtudiants.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\details\\InfoRepondantSignature.vue",
+        "Size":  4240,
+        "Name":  "InfoRepondantSignature.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\details\\Info_repondant.vue",
+        "Size":  7175,
+        "Name":  "Info_repondant.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\details\\ManagementPFPEnCours.vue",
+        "Size":  21384,
+        "Name":  "ManagementPFPEnCours.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\details\\ManagementPlacesSafe.vue",
+        "Size":  15601,
+        "Name":  "ManagementPlacesSafe.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\details\\Management_repondant.vue",
+        "Size":  12861,
+        "Name":  "Management_repondant.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\details\\Management_votation_etudiants.vue",
+        "Size":  11583,
+        "Name":  "Management_votation_etudiants.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\details\\Management_votation_prioritaire.vue",
+        "Size":  6092,
+        "Name":  "Management_votation_prioritaire.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\details\\OffreDePlac3BA22PFP4.vue",
+        "Size":  27597,
+        "Name":  "OffreDePlac3BA22PFP4.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\details\\OffreDePlace copy.vue",
+        "Size":  29366,
+        "Name":  "OffreDePlace copy.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\details\\OffreDePlace.vue",
+        "Size":  27592,
+        "Name":  "OffreDePlace.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\details\\OffreDePlaceBA24PFP2.vue",
+        "Size":  49321,
+        "Name":  "OffreDePlaceBA24PFP2.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\details\\OverCreatePlace.vue",
+        "Size":  9601,
+        "Name":  "OverCreatePlace.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\details\\PFPDetails.vue",
+        "Size":  8127,
+        "Name":  "PFPDetails.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\details\\PlaceDetails.vue",
+        "Size":  11338,
+        "Name":  "PlaceDetails.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\details\\PlaceDetails_SUPABASE.vue",
+        "Size":  11338,
+        "Name":  "PlaceDetails_SUPABASE.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\details\\PlacesAssigned.vue",
+        "Size":  21303,
+        "Name":  "PlacesAssigned.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\details\\StageRepartitionBA2 copy.vue",
+        "Size":  7208,
+        "Name":  "StageRepartitionBA2 copy.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\details\\StageRepartitionBA2.vue",
+        "Size":  9451,
+        "Name":  "StageRepartitionBA2.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\details\\UserProfile.vue",
+        "Size":  7185,
+        "Name":  "UserProfile.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\details\\ValidatePFP1A.vue",
+        "Size":  12535,
+        "Name":  "ValidatePFP1A.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\details\\VotaitonDiviséCritere.vue",
+        "Size":  22204,
+        "Name":  "VotaitonDiviséCritere.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\details\\Votation copy 2.vue",
+        "Size":  39297,
+        "Name":  "Votation copy 2.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\details\\Votation copy.vue",
+        "Size":  14562,
+        "Name":  "Votation copy.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\details\\VotationLese copy.vue",
+        "Size":  13936,
+        "Name":  "VotationLese copy.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\details\\VotationPrioritaire.vue",
+        "Size":  20161,
+        "Name":  "VotationPrioritaire.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\details\\VotationView copy 2.vue",
+        "Size":  39406,
+        "Name":  "VotationView copy 2.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\details\\VotationView copy.vue",
+        "Size":  38987,
+        "Name":  "VotationView copy.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\details\\VotationView2.vue",
+        "Size":  29773,
+        "Name":  "VotationView2.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\details\\VotationView33.vue",
+        "Size":  34262,
+        "Name":  "VotationView33.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\details\\Votation_preview.vue",
+        "Size":  4597,
+        "Name":  "Votation_preview.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\details\\Votation_preview_SUPABASE.vue",
+        "Size":  4597,
+        "Name":  "Votation_preview_SUPABASE.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\forms\\AffectationStageEtudiant.vue",
+        "Size":  13165,
+        "Name":  "AffectationStageEtudiant.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\forms\\EnseignentForm.vue",
+        "Size":  2884,
+        "Name":  "EnseignentForm.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\forms\\EnseignentFormModif.vue",
+        "Size":  3367,
+        "Name":  "EnseignentFormModif.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\forms\\EtudiantForm.vue",
+        "Size":  4757,
+        "Name":  "EtudiantForm.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\forms\\EtudiantFormModif.vue",
+        "Size":  6559,
+        "Name":  "EtudiantFormModif.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\forms\\InstitutionForm.vue",
+        "Size":  12526,
+        "Name":  "InstitutionForm.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\forms\\InstitutionFormModif.vue",
+        "Size":  14228,
+        "Name":  "InstitutionFormModif.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\forms\\NewUserForm.vue",
+        "Size":  3248,
+        "Name":  "NewUserForm.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\forms\\NewUserFormModif.vue",
+        "Size":  3725,
+        "Name":  "NewUserFormModif.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\forms\\PraticienFormateurForm.vue",
+        "Size":  2277,
+        "Name":  "PraticienFormateurForm.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\forms\\PraticienFormateurFormModif.vue",
+        "Size":  4436,
+        "Name":  "PraticienFormateurFormModif.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\items\\CounterBoxes.vue",
+        "Size":  1629,
+        "Name":  "CounterBoxes.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\items\\FaqBox.vue",
+        "Size":  7806,
+        "Name":  "FaqBox.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\items\\StatsBox.vue",
+        "Size":  1132,
+        "Name":  "StatsBox.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\items\\TeamSection.vue",
+        "Size":  2468,
+        "Name":  "TeamSection.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\layouts\\AdminLayout.vue",
+        "Size":  529,
+        "Name":  "AdminLayout.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\lists\\AdminSidebar.vue",
+        "Size":  17903,
+        "Name":  "AdminSidebar.vue"
+    },
+    {
+        "Path":  "src\\components\\admin\\lists\\SidebarMenuItems.vue",
+        "Size":  3621,
+        "Name":  "SidebarMenuItems.vue"
+    },
+    {
+        "Path":  "src\\components\\careconvers\\ConsigneModal.vue",
+        "Size":  2779,
+        "Name":  "ConsigneModal.vue"
+    },
+    {
+        "Path":  "src\\components\\careconvers\\PdfViewerModal.vue",
+        "Size":  3638,
+        "Name":  "PdfViewerModal.vue"
+    },
+    {
+        "Path":  "src\\components\\careconvers\\ScenarioObjectivesModal.vue",
+        "Size":  3680,
+        "Name":  "ScenarioObjectivesModal.vue"
+    },
+    {
+        "Path":  "src\\components\\common\\filters\\FilterInstitution.vue",
+        "Size":  7915,
+        "Name":  "FilterInstitution.vue"
+    },
+    {
+        "Path":  "src\\components\\common\\filters\\FilterInstitution_SUPABASE.vue",
+        "Size":  7915,
+        "Name":  "FilterInstitution_SUPABASE.vue"
+    },
+    {
+        "Path":  "src\\components\\common\\filters\\FilterSidebar.vue",
+        "Size":  4476,
+        "Name":  "FilterSidebar.vue"
+    },
+    {
+        "Path":  "src\\components\\common\\filters\\FiltreMap.vue",
+        "Size":  11197,
+        "Name":  "FiltreMap.vue"
+    },
+    {
+        "Path":  "src\\components\\common\\utils\\Error404.vue",
+        "Size":  2822,
+        "Name":  "Error404.vue"
+    },
+    {
+        "Path":  "src\\components\\common\\utils\\Footer.vue",
+        "Size":  626,
+        "Name":  "Footer.vue"
+    },
+    {
+        "Path":  "src\\components\\common\\utils\\GlobalSearch.vue",
+        "Size":  33416,
+        "Name":  "GlobalSearch.vue"
+    },
+    {
+        "Path":  "src\\components\\common\\utils\\HeaderIcons.vue",
+        "Size":  1552,
+        "Name":  "HeaderIcons.vue"
+    },
+    {
+        "Path":  "src\\components\\common\\utils\\Loader.vue",
+        "Size":  2888,
+        "Name":  "Loader.vue"
+    },
+    {
+        "Path":  "src\\components\\common\\utils\\LoginHome2.vue",
+        "Size":  4312,
+        "Name":  "LoginHome2.vue"
+    },
+    {
+        "Path":  "src\\components\\common\\utils\\MobileBottomNav.vue",
+        "Size":  3831,
+        "Name":  "MobileBottomNav.vue"
+    },
+    {
+        "Path":  "src\\components\\common\\utils\\Navbar.vue",
+        "Size":  7833,
+        "Name":  "Navbar.vue"
+    },
+    {
+        "Path":  "src\\components\\common\\utils\\PwaInstallPrompt.vue",
+        "Size":  3118,
+        "Name":  "PwaInstallPrompt.vue"
+    },
+    {
+        "Path":  "src\\components\\common\\utils\\SearchResults.vue",
+        "Size":  4129,
+        "Name":  "SearchResults.vue"
+    },
+    {
+        "Path":  "src\\components\\common\\utils\\VersionningComponent.vue",
+        "Size":  1037,
+        "Name":  "VersionningComponent.vue"
+    },
+    {
+        "Path":  "src\\components\\editor\\notes\\NotebookSidebar.vue",
+        "Size":  2216,
+        "Name":  "NotebookSidebar.vue"
+    },
+    {
+        "Path":  "src\\components\\editor\\notes\\NoteEditor.vue",
+        "Size":  7924,
+        "Name":  "NoteEditor.vue"
+    },
+    {
+        "Path":  "src\\components\\editor\\notes\\PageList.vue",
+        "Size":  2965,
+        "Name":  "PageList.vue"
+    },
+    {
+        "Path":  "src\\components\\editor\\notes\\TiptapSimpleEditor.vue",
+        "Size":  6653,
+        "Name":  "TiptapSimpleEditor.vue"
+    },
+    {
+        "Path":  "src\\components\\events\\EventCard.vue",
+        "Size":  8413,
+        "Name":  "EventCard.vue"
+    },
+    {
+        "Path":  "src\\components\\events\\EventDetail.vue",
+        "Size":  10585,
+        "Name":  "EventDetail.vue"
+    },
+    {
+        "Path":  "src\\components\\events\\EventForm.vue",
+        "Size":  8389,
+        "Name":  "EventForm.vue"
+    },
+    {
+        "Path":  "src\\components\\games\\GameHub.vue",
+        "Size":  3164,
+        "Name":  "GameHub.vue"
+    },
+    {
+        "Path":  "src\\components\\games\\Ventriglisse3D.vue",
+        "Size":  22188,
+        "Name":  "Ventriglisse3D.vue"
+    },
+    {
+        "Path":  "src\\components\\gamification\\AchievementNotification.vue",
+        "Size":  11058,
+        "Name":  "AchievementNotification.vue"
+    },
+    {
+        "Path":  "src\\components\\gamification\\AchievementsPage.vue",
+        "Size":  15764,
+        "Name":  "AchievementsPage.vue"
+    },
+    {
+        "Path":  "src\\components\\gamification\\BadgeCard.vue",
+        "Size":  12205,
+        "Name":  "BadgeCard.vue"
+    },
+    {
+        "Path":  "src\\components\\gamification\\BandeauGameMaster.vue",
+        "Size":  8421,
+        "Name":  "BandeauGameMaster.vue"
+    },
+    {
+        "Path":  "src\\components\\gamification\\BandeauMaison.vue",
+        "Size":  11027,
+        "Name":  "BandeauMaison.vue"
+    },
+    {
+        "Path":  "src\\components\\gamification\\ChallengeCard.vue",
+        "Size":  14300,
+        "Name":  "ChallengeCard.vue"
+    },
+    {
+        "Path":  "src\\components\\gamification\\ChallengesPage.vue",
+        "Size":  18769,
+        "Name":  "ChallengesPage.vue"
+    },
+    {
+        "Path":  "src\\components\\gamification\\CreationToolsCard.vue",
+        "Size":  5903,
+        "Name":  "CreationToolsCard.vue"
+    },
+    {
+        "Path":  "src\\components\\gamification\\DetailModal.vue",
+        "Size":  14522,
+        "Name":  "DetailModal.vue"
+    },
+    {
+        "Path":  "src\\components\\gamification\\GamificationProfilePage.vue",
+        "Size":  70603,
+        "Name":  "GamificationProfilePage.vue"
+    },
+    {
+        "Path":  "src\\components\\gamification\\GamificationToast.vue",
+        "Size":  5588,
+        "Name":  "GamificationToast.vue"
+    },
+    {
+        "Path":  "src\\components\\gamification\\HousesRankingPage.vue",
+        "Size":  17628,
+        "Name":  "HousesRankingPage.vue"
+    },
+    {
+        "Path":  "src\\components\\gamification\\HouseStatsPage.vue",
+        "Size":  17158,
+        "Name":  "HouseStatsPage.vue"
+    },
+    {
+        "Path":  "src\\components\\gamification\\LevelDisplay.vue",
+        "Size":  7890,
+        "Name":  "LevelDisplay.vue"
+    },
+    {
+        "Path":  "src\\components\\gamification\\QuestCard.vue",
+        "Size":  58083,
+        "Name":  "QuestCard.vue"
+    },
+    {
+        "Path":  "src\\components\\gamification\\QuestsPage.vue",
+        "Size":  29894,
+        "Name":  "QuestsPage.vue"
+    },
+    {
+        "Path":  "src\\components\\gamification\\QuestsProfileCard.vue",
+        "Size":  11484,
+        "Name":  "QuestsProfileCard.vue"
+    },
+    {
+        "Path":  "src\\components\\gamification\\QuestsSidebarCard.vue",
+        "Size":  10625,
+        "Name":  "QuestsSidebarCard.vue"
+    },
+    {
+        "Path":  "src\\components\\gamification\\XPBar.vue",
+        "Size":  6251,
+        "Name":  "XPBar.vue"
+    },
+    {
+        "Path":  "src\\components\\gamification\\notifications\\GamificationNotification.vue",
+        "Size":  12981,
+        "Name":  "GamificationNotification.vue"
+    },
+    {
+        "Path":  "src\\components\\gamification\\widgets\\GamificationActivityWidget.vue",
+        "Size":  10051,
+        "Name":  "GamificationActivityWidget.vue"
+    },
+    {
+        "Path":  "src\\components\\gamification\\widgets\\GamificationStatsWidget.vue",
+        "Size":  9180,
+        "Name":  "GamificationStatsWidget.vue"
+    },
+    {
+        "Path":  "src\\components\\gamification\\widgets\\UserGamificationWidget.vue",
+        "Size":  14711,
+        "Name":  "UserGamificationWidget.vue"
+    },
+    {
+        "Path":  "src\\components\\home\\AddFileDocPFP.vue",
+        "Size":  4217,
+        "Name":  "AddFileDocPFP.vue"
+    },
+    {
+        "Path":  "src\\components\\home\\EditFileDocPFP.vue",
+        "Size":  3583,
+        "Name":  "EditFileDocPFP.vue"
+    },
+    {
+        "Path":  "src\\components\\home\\InformationUtilisation.vue",
+        "Size":  7120,
+        "Name":  "InformationUtilisation.vue"
+    },
+    {
+        "Path":  "src\\components\\home\\InformationView.vue",
+        "Size":  35461,
+        "Name":  "InformationView.vue"
+    },
+    {
+        "Path":  "src\\components\\home\\VideoHomePage.vue",
+        "Size":  4752,
+        "Name":  "VideoHomePage.vue"
+    },
+    {
+        "Path":  "src\\components\\institutions\\InstitutionView.vue",
+        "Size":  12464,
+        "Name":  "InstitutionView.vue"
+    },
+    {
+        "Path":  "src\\components\\media\\VideoPlayerVimeo.vue",
+        "Size":  839,
+        "Name":  "VideoPlayerVimeo.vue"
+    },
+    {
+        "Path":  "src\\components\\media\\audio\\ListComponent.vue",
+        "Size":  19727,
+        "Name":  "ListComponent.vue"
+    },
+    {
+        "Path":  "src\\components\\Profile\\BandeauMaison.vue",
+        "Size":  2348,
+        "Name":  "BandeauMaison.vue"
+    },
+    {
+        "Path":  "src\\components\\Profile\\XPBar.vue",
+        "Size":  1680,
+        "Name":  "XPBar.vue"
+    },
+    {
+        "Path":  "src\\components\\push\\PushControls.vue",
+        "Size":  4923,
+        "Name":  "PushControls.vue"
+    },
+    {
+        "Path":  "src\\components\\social\\library\\AddStory.vue",
+        "Size":  10226,
+        "Name":  "AddStory.vue"
+    },
+    {
+        "Path":  "src\\components\\social\\library\\AddStoryCore.vue",
+        "Size":  11549,
+        "Name":  "AddStoryCore.vue"
+    },
+    {
+        "Path":  "src\\components\\social\\library\\CommunitiesList.vue",
+        "Size":  5402,
+        "Name":  "CommunitiesList.vue"
+    },
+    {
+        "Path":  "src\\components\\social\\library\\CommunityFeed.vue",
+        "Size":  14268,
+        "Name":  "CommunityFeed.vue"
+    },
+    {
+        "Path":  "src\\components\\social\\library\\CreateContentMobile.vue",
+        "Size":  9659,
+        "Name":  "CreateContentMobile.vue"
+    },
+    {
+        "Path":  "src\\components\\social\\library\\CreateNewCommunity.vue",
+        "Size":  5114,
+        "Name":  "CreateNewCommunity.vue"
+    },
+    {
+        "Path":  "src\\components\\social\\library\\CreatePostDialog.vue",
+        "Size":  5476,
+        "Name":  "CreatePostDialog.vue"
+    },
+    {
+        "Path":  "src\\components\\social\\library\\FilterComponent.vue",
+        "Size":  2704,
+        "Name":  "FilterComponent.vue"
+    },
+    {
+        "Path":  "src\\components\\social\\library\\ImageCropper.vue",
+        "Size":  8139,
+        "Name":  "ImageCropper.vue"
+    },
+    {
+        "Path":  "src\\components\\social\\library\\InfinityScroll.vue",
+        "Size":  1050,
+        "Name":  "InfinityScroll.vue"
+    },
+    {
+        "Path":  "src\\components\\social\\library\\LeftSidebar.vue",
+        "Size":  25348,
+        "Name":  "LeftSidebar.vue"
+    },
+    {
+        "Path":  "src\\components\\social\\library\\MainFeed.vue",
+        "Size":  25302,
+        "Name":  "MainFeed.vue"
+    },
+    {
+        "Path":  "src\\components\\social\\library\\PostItem.vue",
+        "Size":  23955,
+        "Name":  "PostItem.vue"
+    },
+    {
+        "Path":  "src\\components\\social\\library\\PostTextarea.vue",
+        "Size":  7161,
+        "Name":  "PostTextarea.vue"
+    },
+    {
+        "Path":  "src\\components\\social\\library\\PublicCommunitiesList.vue",
+        "Size":  4135,
+        "Name":  "PublicCommunitiesList.vue"
+    },
+    {
+        "Path":  "src\\components\\social\\library\\RightSidebar.vue",
+        "Size":  9307,
+        "Name":  "RightSidebar.vue"
+    },
+    {
+        "Path":  "src\\components\\social\\library\\StoriesBar.vue",
+        "Size":  9819,
+        "Name":  "StoriesBar.vue"
+    },
+    {
+        "Path":  "src\\components\\social\\library\\StoryAudio.vue",
+        "Size":  747,
+        "Name":  "StoryAudio.vue"
+    },
+    {
+        "Path":  "src\\components\\social\\library\\StoryCarousel.vue",
+        "Size":  2923,
+        "Name":  "StoryCarousel.vue"
+    },
+    {
+        "Path":  "src\\components\\social\\library\\StoryEditor.vue",
+        "Size":  20966,
+        "Name":  "StoryEditor.vue"
+    },
+    {
+        "Path":  "src\\components\\social\\library\\StoryModal.vue",
+        "Size":  23652,
+        "Name":  "StoryModal.vue"
+    },
+    {
+        "Path":  "src\\components\\social\\library\\StoryQuiz.vue",
+        "Size":  4977,
+        "Name":  "StoryQuiz.vue"
+    },
+    {
+        "Path":  "src\\components\\social\\library\\StoryStats.vue",
+        "Size":  4753,
+        "Name":  "StoryStats.vue"
+    },
+    {
+        "Path":  "src\\components\\social\\library\\StoryStickerPoll.vue",
+        "Size":  1707,
+        "Name":  "StoryStickerPoll.vue"
+    },
+    {
+        "Path":  "src\\components\\social\\library\\TextAreaComponent.vue",
+        "Size":  3020,
+        "Name":  "TextAreaComponent.vue"
+    },
+    {
+        "Path":  "src\\components\\social\\library\\WebcamCapture.vue",
+        "Size":  1469,
+        "Name":  "WebcamCapture.vue"
+    },
+    {
+        "Path":  "src\\components\\tournois\\BracketView.vue",
+        "Size":  12077,
+        "Name":  "BracketView.vue"
+    },
+    {
+        "Path":  "src\\components\\tournois\\TournoiDetails.vue",
+        "Size":  59146,
+        "Name":  "TournoiDetails.vue"
+    },
+    {
+        "Path":  "src\\components\\ui\\BlockViewer.vue",
+        "Size":  2309,
+        "Name":  "BlockViewer.vue"
+    },
+    {
+        "Path":  "src\\components\\ui\\ConvaiWidget.vue",
+        "Size":  690,
+        "Name":  "ConvaiWidget.vue"
+    },
+    {
+        "Path":  "src\\components\\ui\\QrCodeGenerator.vue",
+        "Size":  5268,
+        "Name":  "QrCodeGenerator.vue"
+    },
+    {
+        "Path":  "src\\components\\ui\\buttons\\ButtonNavbar.vue",
+        "Size":  1696,
+        "Name":  "ButtonNavbar.vue"
+    },
+    {
+        "Path":  "src\\components\\ui\\buttons\\SearchButton.vue",
+        "Size":  709,
+        "Name":  "SearchButton.vue"
+    },
+    {
+        "Path":  "src\\components\\ui\\buttons\\SwitchColor.vue",
+        "Size":  2902,
+        "Name":  "SwitchColor.vue"
+    },
+    {
+        "Path":  "src\\components\\ui\\templates\\PageTemplate.vue",
+        "Size":  2128,
+        "Name":  "PageTemplate.vue"
+    },
+    {
+        "Path":  "src\\components\\user\\details\\ChatProfil.vue",
+        "Size":  2356,
+        "Name":  "ChatProfil.vue"
+    },
+    {
+        "Path":  "src\\components\\user\\details\\DocumentsUserProfile.vue",
+        "Size":  7215,
+        "Name":  "DocumentsUserProfile.vue"
+    },
+    {
+        "Path":  "src\\components\\user\\details\\ProfileInfo.vue",
+        "Size":  9643,
+        "Name":  "ProfileInfo.vue"
+    },
+    {
+        "Path":  "src\\components\\user\\details\\ProfileInfoAdmin.vue",
+        "Size":  7220,
+        "Name":  "ProfileInfoAdmin.vue"
+    },
+    {
+        "Path":  "src\\components\\user\\details\\RadarProfil.vue",
+        "Size":  6114,
+        "Name":  "RadarProfil.vue"
+    },
+    {
+        "Path":  "src\\components\\user\\details\\ResumStageUserProfile.vue",
+        "Size":  24340,
+        "Name":  "ResumStageUserProfile.vue"
+    },
+    {
+        "Path":  "src\\components\\user\\details\\ValidatedCriteriaSection.vue",
+        "Size":  3258,
+        "Name":  "ValidatedCriteriaSection.vue"
+    },
+    {
+        "Path":  "src\\components\\user\\details\\VotationResultProfil.vue",
+        "Size":  16870,
+        "Name":  "VotationResultProfil.vue"
+    },
+    {
+        "Path":  "src\\components\\user\\library\\CardNameProfile.vue",
+        "Size":  24357,
+        "Name":  "CardNameProfile.vue"
+    },
+    {
+        "Path":  "src\\components\\user\\library\\ProfileAdminRightSidebar.vue",
+        "Size":  8331,
+        "Name":  "ProfileAdminRightSidebar.vue"
+    },
+    {
+        "Path":  "src\\components\\user\\profile\\BandeauMaison.vue",
+        "Size":  2429,
+        "Name":  "BandeauMaison.vue"
+    },
+    {
+        "Path":  "src\\components\\user\\profile\\HESHouseQuiz.vue",
+        "Size":  24491,
+        "Name":  "HESHouseQuiz.vue"
+    },
+    {
+        "Path":  "src\\components\\user\\profile\\XPBar.vue",
+        "Size":  1742,
+        "Name":  "XPBar.vue"
+    },
+    {
+        "Path":  "src\\components\\video\\ModuleSection.vue",
+        "Size":  4897,
+        "Name":  "ModuleSection.vue"
+    },
+    {
+        "Path":  "src\\components\\video\\VideoCard.vue",
+        "Size":  5382,
+        "Name":  "VideoCard.vue"
+    }
+]

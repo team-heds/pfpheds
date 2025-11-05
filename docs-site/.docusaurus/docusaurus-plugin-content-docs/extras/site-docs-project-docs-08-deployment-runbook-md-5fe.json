@@ -1,0 +1,15 @@
+{
+  "id": "project-docs/Deployment_Runbook",
+  "title": "08 — Runbook de Déploiement",
+  "description": "Environnements",
+  "source": "@site/../docs/project-docs/08_Deployment_Runbook.md",
+  "sourceDirName": "project-docs",
+  "slug": "/project-docs/Deployment_Runbook",
+  "permalink": "/extras/project-docs/Deployment_Runbook",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 8,
+  "frontMatter": {}
+}

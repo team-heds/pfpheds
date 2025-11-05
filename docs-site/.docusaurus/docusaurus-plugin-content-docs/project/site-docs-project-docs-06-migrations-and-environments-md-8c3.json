@@ -1,0 +1,24 @@
+{
+  "id": "Migrations_and_Environments",
+  "title": "06 — Migrations & Environnements",
+  "description": "Migrations",
+  "source": "@site/../docs/project-docs/06_Migrations_and_Environments.md",
+  "sourceDirName": ".",
+  "slug": "/Migrations_and_Environments",
+  "permalink": "/Migrations_and_Environments",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 6,
+  "frontMatter": {},
+  "sidebar": "projectSidebar",
+  "previous": {
+    "title": "05 — Modèle de Données",
+    "permalink": "/Data_Model"
+  },
+  "next": {
+    "title": "07 — Tests & Qualité",
+    "permalink": "/Testing_and_Quality"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "id": "project-docs/Executive_Summary",
+  "title": "00 — Executive Summary",
+  "description": "La Plateforme HEdS est une application Vue 3 + Firebase/Supabase pour la gestion des stages (PFP), la collaboration (social, chat, notes), l'administration (utilisateurs, institutions, places) et la gamification.",
+  "source": "@site/../docs/project-docs/00_Executive_Summary.md",
+  "sourceDirName": "project-docs",
+  "slug": "/project-docs/Executive_Summary",
+  "permalink": "/extras/project-docs/Executive_Summary",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 0,
+  "frontMatter": {}
+}

@@ -10,7 +10,11 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore",
     "format": "prettier --write src/",
     "clean": "rm -rf node_modules package-lock.json && npm install",
-    "test:supabase": "node test-supabase-connection.js"
+    "test:supabase": "node test-supabase-connection.js",
+    "docs:dev": "npm --prefix documentation run start",
+    "docs:build": "npm --prefix documentation run build",
+    "docs:serve": "npm --prefix documentation run serve",
+    "build:all": "vite build && npm run docs:build && node scripts/copy-docs-to-dist.js"
   },
   "dependencies": {
     "@elevenlabs/elevenlabs-js": "^2.4.1",

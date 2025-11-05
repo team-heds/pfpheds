@@ -1,0 +1,14 @@
+{
+  "id": "project-docs/index",
+  "title": "Documentation Projet — Plateforme HEdS",
+  "description": "Ce dossier contient la documentation modulaire du projet, exportable en un seul document.",
+  "source": "@site/../docs/project-docs/index.md",
+  "sourceDirName": "project-docs",
+  "slug": "/project-docs/",
+  "permalink": "/extras/project-docs/",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {}
+}

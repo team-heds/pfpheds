@@ -1,0 +1,14 @@
+{
+  "id": "routes",
+  "title": "Routes, Guards & Permissions (generated)",
+  "description": "| Path | Name | requiresAuth | requiredRole | need |",
+  "source": "@site/../docs/derived/routes.md",
+  "sourceDirName": ".",
+  "slug": "/routes",
+  "permalink": "/derived/routes",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {}
+}
