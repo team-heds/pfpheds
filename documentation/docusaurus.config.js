@@ -40,14 +40,14 @@ const config = {
   ],
   themeConfig: /** @type {import('@docusaurus/preset-classic').ThemeConfig} */ ({
     colorMode: {
-      defaultMode: 'light',
+      defaultMode: 'dark',
       respectPrefersColorScheme: true
     },
     navbar: {
       title: 'HEdS Docs',
       logo: {
         alt: 'HEdS',
-        src: 'img/hespicto.png'
+        src: 'img/logo.svg'
       },
       items: [
         {
@@ -71,21 +71,7 @@ const config = {
     },
     footer: {
       style: 'dark',
-      links: [
-        {
-          title: 'Docs',
-          items: [
-            {
-              label: 'Introduction',
-              to: '/'
-            },
-            {
-              label: 'Prise en main',
-              to: '/getting-started'
-            }
-          ]
-        }
-      ],
+      links: [],
       copyright: `Copyright © ${new Date().getFullYear()} HEdS.`
     },
     prism: {
