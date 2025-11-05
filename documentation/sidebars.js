@@ -4,6 +4,7 @@ const sidebars = {
     'intro',
     'getting-started',
     'architecture',
+    'stack',
     {
       type: 'category',
       label: 'Frontend (Vue 3)',
@@ -131,6 +132,19 @@ const sidebars = {
         'devops/docker-dev',
         'devops/ci-cd',
         'devops/large-files',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Gestion de projet',
+      collapsed: false,
+      items: [
+        'project/overview',
+        'project/roadmap',
+        'project/sprints',
+        'project/releases',
+        'project/migrations',
+        'project/template-gantt',
       ],
     },
     {

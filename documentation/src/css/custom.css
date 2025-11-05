@@ -311,6 +311,14 @@ kbd {
   margin: 1rem auto 1.25rem;
   max-width: var(--ifm-container-width-xl);
 }
+.docs-hero--split { display: flex; gap: 1.5rem; align-items: center; }
+.docs-hero__content { flex: 1; }
+.docs-hero__visual { flex: 1; display: flex; justify-content: center; }
+.docs-hero__img { max-width: 100%; height: auto; border-radius: 16px; border: 1px solid var(--doc-border-color); box-shadow: var(--doc-card-shadow); }
+@media (max-width: 996px) {
+  .docs-hero--split { flex-direction: column; }
+  .docs-hero__visual { order: -1; }
+}
 .docs-hero__title { font-size: 2.4rem; margin: 0 0 0.5rem; }
 .docs-hero__subtitle { margin: 0 0 1rem; opacity: 0.9; }
 .docs-hero__cta { display: flex; gap: .75rem; flex-wrap: wrap; margin: .5rem 0 1rem; }
@@ -343,6 +351,51 @@ kbd {
 }
 .docs-card h3 { margin: .1rem 0 .35rem; font-size: 1.05rem; color: #fff; }
 .docs-card p { margin: 0; opacity: .9; }
+
+/* Landing: stats & features */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+  margin: 0.75rem auto 1.25rem;
+  max-width: var(--ifm-container-width-xl);
+}
+.stat-card {
+  background: #0B213F;
+  border: 1px solid var(--doc-border-color);
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  text-align: center;
+}
+.stat-value { color: #fff; font-weight: 700; font-size: 1.05rem; }
+.stat-label { opacity: 0.8; font-size: .9rem; }
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 0.9rem;
+  margin: 0.5rem auto 1.25rem;
+  max-width: var(--ifm-container-width-xl);
+}
+.feature-item {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  background: #0B213F;
+  border: 1px solid var(--doc-border-color);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+}
+.feature-icon {
+  width: 40px; height: 40px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: rgba(255, 216, 77, 0.12);
+  border: 1px solid rgba(255, 216, 77, 0.25);
+  border-radius: 10px;
+  font-size: 1.2rem;
+}
+.feature-item h4 { margin: 0 0 0.2rem; color: #fff; }
+.feature-item p { margin: 0; opacity: 0.9; }
 
 /* Badges in hero */
 .docs-hero__meta .badge {
