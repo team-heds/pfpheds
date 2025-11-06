@@ -16,6 +16,7 @@
         </div>
       </div>
 
+
       <div class="surface-card fp-dark p-3 border-round shadow-2">
         <div class="flex align-items-center justify-content-between mb-2">
           <div class="text-color-secondary">{{ total }} praticien(s)</div>
