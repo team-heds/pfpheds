@@ -12,7 +12,7 @@
         </h1>
         <h2 class="text-900 font-bold text-2xl md:text-3xl mb-4 mt-2">
           <strong>{{ institutionDetails ? institutionDetails.Locality : '' }}</strong> - {{ institutionDetails ?
-            institutionDetails.Address : '' }}
+          institutionDetails.Address : '' }}
         </h2>
         <div class="flex flex-wrap justify-content-center md:justify-content-start gap-3 mt-2">
           <span class="inline-flex align-items-center py-2 px-3 font-medium border-1 surface-border border-round">
@@ -36,7 +36,7 @@
     <!-- Contenu inférieur : TabView et Map -->
     <div class="content-lower grid justify-content-center">
       <div class="col-12 md:col-8 lg:col-5">
-        <TabView v-model:activeIndex="activeIndex"> 
+        <TabView v-model:activeIndex="activeIndex">
           <TabPanel header="Informations générales de l'institution">
             <div v-if="institutionDetails?.Description" class="text-900 font-bold text-3xl mb-4 mt-2">Description</div>
             <p v-if="institutionDetails?.Description" class="line-height-3 text-600 p-0 mx-0 mt-0 mb-4">
@@ -52,7 +52,7 @@
                   <p class="card-text"><i class="bi bi-globe"></i> <strong>Canton:</strong> {{ institutionDetails ?
                     institutionDetails.Canton : '' }}</p>
                   <p class="card-text"><i class="bi bi-geo-alt-fill"></i> <strong>Adresse:</strong> {{
-                    institutionDetails ? institutionDetails.Address : '' }}</p>
+                      institutionDetails ? institutionDetails.Address : '' }}</p>
                   <p class="card-text"><i class="bi bi-geo-alt-fill"></i> <strong>Lieu:</strong> {{ institutionDetails ?
                     institutionDetails.Locality : '' }}</p>
                   <p class="card-text"><i class="bi bi-geo-alt-fill"></i> <strong>Site Web: </strong>
@@ -77,13 +77,13 @@
                       <i class="bi bi-envelope-fill"></i>
                       <strong>Email du responsable physio: </strong>
                       <a :href="`mailto:${institutionDetails?.MailChef}`" class="text-primary">{{
-                        institutionDetails?.MailChef }}</a>
+                          institutionDetails?.MailChef }}</a>
                     </p>
                     <p class="card-text">
                       <i class="bi bi-telephone-fill"></i>
                       <strong>Téléphone du responsable physio: </strong>
                       <a :href="`tel:${institutionDetails?.PhoneChef}`" class="text-primary">{{
-                        institutionDetails?.PhoneChef }}</a>
+                          institutionDetails?.PhoneChef }}</a>
                     </p>
                   </div>
                   <div v-else>
@@ -99,8 +99,8 @@
                       <li v-for="file in institutionFiles" :key="file.url">
                         <a :href="file.url" target="_blank" class="text-primary">
                           📄 {{ file.name }}
-                      
-                          
+
+
                         </a>
                       </li>
                     </ul>
@@ -215,7 +215,7 @@ export default {
     fetchInstitutionFiles() {
       console.log(this.institutionDetails)
       if (!this.institutionDetails || !this.institutionDetails.InstitutionId  ) return;
-        console.log("xaa");
+      console.log("xaa");
       const placesRef = firebaseRef(db, 'Places');
 
       onValue(placesRef, (snapshot) => {
@@ -224,8 +224,8 @@ export default {
           console.log("xa" + placesData);
           const matchingFiles = [];
           Object.values(placesData).forEach(place => {
-            const temp = place.IDPlace || place.InstitutionId || place.key; 
-        
+            const temp = place.IDPlace || place.InstitutionId || place.key;
+
             console.log(place.IDPlace + " --"  +  place.InstitutionId+ "---" + this.institutionDetails.InstitutionId)
             if ( temp === this.institutionDetails.InstitutionId) {
               matchingFiles.push({ name: place.NomPlace, url: place.fileURL });

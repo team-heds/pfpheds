@@ -366,3 +366,4 @@ watch(selectedYear, () => {
   .search-input { min-width: 180px; width: 100%; }
 }
 </style>
+

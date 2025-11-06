@@ -116,7 +116,6 @@ import { onAuthStateChanged } from 'firebase/auth'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
-
 import Navbar from '@/components/common/utils/Navbar.vue'
 import TabView from 'primevue/tabview'
 import TabPanel from 'primevue/tabpanel'
@@ -215,11 +214,11 @@ async function loadInstitution() {
 async function fetchInstitutionFiles(id) {
   if (!id) return
   detachPlacesListener()
-  
+
   try {
     // Charger les places depuis Supabase pour cette institution
     const places = await placesStore.fetchPlacesByInstitution(id)
-    
+
     // Transformer en format pour l'affichage
     institutionFiles.value = places
       .filter(place => place.fileURL) // Seulement celles avec un fichier
@@ -227,7 +226,7 @@ async function fetchInstitutionFiles(id) {
         name: place.NomPlace || 'Document',
         url: place.fileURL,
       }))
-    
+
     console.log(`✅ ${institutionFiles.value.length} fichiers chargés depuis Supabase pour l'institution ${id}`)
   } catch (error) {
     console.error('❌ Erreur chargement fichiers places depuis Supabase:', error)

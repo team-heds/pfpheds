@@ -178,11 +178,12 @@ async function onDelete(row) {
 </script>
 
 <style scoped>
-.search-input { 
-  padding: 0.5rem 0.75rem; 
-  border: 1px solid var(--surface-border,#e0e0e0); 
-  border-radius: 8px; 
+.search-input {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--surface-border,#e0e0e0);
+  border-radius: 8px;
   min-width: 320px;
 }
 .form-grid { margin-top: 0.5rem; }
 </style>
+
