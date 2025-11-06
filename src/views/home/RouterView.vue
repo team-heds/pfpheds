@@ -1,7 +1,7 @@
 <template>
   <AdminLayout>
     <template #header>
-      <PageHeader title="Gestion des Routes Dynamiques" subtitle="Éditez les routes de l'application stockées dans Supabase" icon="pi pi-sitemap" />
+      <PageHeader title="Gestion des Routes View" subtitle="Éditez les routes de l'application stockées dans Supabase" icon="pi pi-sitemap" />
     </template>
     <div class="router-manager">
 
