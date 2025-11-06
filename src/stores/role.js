@@ -18,50 +18,14 @@ export const useRoleStore = defineStore('role', () => {
     const { data } = await supabase.auth.getSession();
     session.value = data.session ?? null;
 
-    // helper: normalize specific permission naming differences from RPC
-    const normalizePerm = (p) => {
-      const mapAccess = new Set([
-        'AdminPhysio.access',
-        'AdminSoins.access',
-        'EnseignantPhysio.access',
-        'EnseignantSoins.access',
-        'EtudiantPhysio.access',
-        'EtudiantSoins.access',
-        'RMSoins.access',
-      ]);
-      if (p === 'page1') return 'page1.access';
-      if (p === 'page2') return 'page2.access';
-      if (mapAccess.has(p)) return p.replace('.access', '');
-      return p;
-    };
+    // Charger permissions depuis DB via RPC (source unique de vérité)
+    await loadPermissions();
 
-    if (session.value) {
-      // Récupérer les deux sources
-      const { data: rows, error } = await supabase.rpc('api_my_permissions');
-      const rpcPerms = (!error && rows) ? (rows ?? []).map((r) => normalizePerm(r.perm)) : [];
-      const mdPerms = session.value?.user?.user_metadata?.permissions;
-      const metaPerms = Array.isArray(mdPerms) ? mdPerms.map(normalizePerm) : [];
-
-      // Fusionner et dédupliquer
-      const merged = Array.from(new Set([ ...rpcPerms, ...metaPerms ]));
-      perms.value = merged;
-    }
-
+    // Écouter les changements d'auth pour recharger
     supabase.auth.onAuthStateChange(async (_e, s) => {
       session.value = s;
       if (s) {
-        // Recharger et fusionner les permissions
-        try {
-          const { data: rows, error } = await supabase.rpc('api_my_permissions');
-          const rpcPerms = (!error && rows) ? (rows ?? []).map((r) => normalizePerm(r.perm)) : [];
-          const mdPerms = s.user?.user_metadata?.permissions;
-          const metaPerms = Array.isArray(mdPerms) ? mdPerms.map(normalizePerm) : [];
-          perms.value = Array.from(new Set([ ...rpcPerms, ...metaPerms ]));
-        } catch {
-          const mdPerms = s.user?.user_metadata?.permissions;
-          const metaPerms = Array.isArray(mdPerms) ? mdPerms.map(normalizePerm) : [];
-          perms.value = Array.from(new Set(metaPerms));
-        }
+        await loadPermissions();
       } else {
         perms.value = [];
       }
@@ -70,7 +34,30 @@ export const useRoleStore = defineStore('role', () => {
     initialized.value = true;
   }
 
+  async function loadPermissions() {
+    try {
+      const { data: rows, error } = await supabase.rpc('api_my_permissions');
+      if (error) {
+        console.error('Erreur chargement permissions:', error);
+        perms.value = [];
+        return;
+      }
+      perms.value = (rows || []).map(r => r.perm);
+      console.log('✅ Permissions chargées depuis DB:', perms.value);
+    } catch (e) {
+      console.error('Erreur RPC api_my_permissions:', e);
+      perms.value = [];
+    }
+  }
+
   function can(perm) {
+    if (Array.isArray(perm)) {
+      if (perm.includes('public') || perm.includes('anonymous')) return true;
+      if (perm.includes('authenticated')) return !!session.value;
+      return isSuper.value || perm.some(p => perms.value.includes(p));
+    }
+    if (perm === 'public' || perm === 'anonymous') return true;
+    if (perm === 'authenticated') return !!session.value;
     return isSuper.value || perms.value.includes(perm);
   }
 

@@ -7,6 +7,7 @@
       <div class="bg-circle_violet"></div>
     </div>
 
+
     <!-- Layout de l'application -->
     <div class="content">
       <Toast />

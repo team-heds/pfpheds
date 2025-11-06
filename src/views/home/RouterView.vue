@@ -1,9 +1,9 @@
 <template>
   <AdminLayout>
     <template #header>
-      <PageHeader title="Catalogue des routes" subtitle="Aperçu des routes, protections et rôles" icon="pi pi-sitemap" />
+      <PageHeader title="Gestion des Routes View" subtitle="Éditez les routes de l'application stockées dans Supabase" icon="pi pi-sitemap" />
     </template>
-    <div class="router-inspector">
+    <div class="router-manager">
 
     <div class="toolbar">
       <input v-model="q" placeholder="Filtrer par nom, chemin ou permission (need)" />
