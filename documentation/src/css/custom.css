@@ -410,3 +410,152 @@ kbd {
 .footer { padding: 8px 0 !important; }
 .footer__links { display: none; }
 .footer__bottom { border-top: 1px solid var(--doc-border-color); padding-top: 8px; }
+
+/* ==========================================
+   App-style background circles for docs
+   Mirrors src/App.vue: .bg-circle_jaune & .bg-circle_violet
+   Applied via pseudo-elements so no DOM change is needed
+   ========================================== */
+
+  /* Ensure docs content is above background shapes */
+  html[data-theme] body,
+  html[data-theme] .main-wrapper {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Yellow circle (top-left) */
+  html[data-theme='dark'] body::before {
+    content: "";
+    position: fixed;
+    width: 800px;
+    height: 800px;
+    border-radius: 50%;
+    background: linear-gradient(129.96deg, #f1d063, #eff3f8);
+    top: -35%;
+    left: -200px;
+    opacity: 0.5;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Violet circle (bottom-right) */
+  html[data-theme='dark'] body::after {
+    content: "";
+    position: fixed;
+    width: 800px;
+    height: 800px;
+    border-radius: 50%;
+    background: linear-gradient(129.96deg, #6366f1, #eff3f8);
+    bottom: -15%;
+    right: -50%;
+    transform: rotate(60deg);
+    transform-origin: 0 0;
+    opacity: 0.25;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Light theme circles (subtle) */
+  html[data-theme='light'] body::before {
+    content: "";
+    position: fixed;
+    width: 800px;
+    height: 800px;
+    border-radius: 50%;
+    background: linear-gradient(129.96deg, #f1d063, #eff3f8);
+    top: -35%;
+    left: -200px;
+    opacity: 0.35;
+    pointer-events: none;
+    z-index: 0;
+  }
+  html[data-theme='light'] body::after {
+    content: "";
+    position: fixed;
+    width: 800px;
+    height: 800px;
+    border-radius: 50%;
+    background: linear-gradient(129.96deg, #6366f1, #eff3f8);
+    bottom: -15%;
+    right: -50%;
+    transform: rotate(60deg);
+    transform-origin: 0 0;
+    opacity: 0.18;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Hide circles on small screens like the app does */
+@media (max-width: 768px) {
+  html[data-theme] body::before,
+  html[data-theme] body::after,
+  html[data-theme] .main-wrapper::before,
+  html[data-theme] .main-wrapper::after {
+    content: none !important;
+  }
+}
+
+/* Keep both body and .main-wrapper circles enabled */
+
+/* Use .main-wrapper to layer circles above page background but under content */
+html[data-theme] .main-wrapper { position: relative; }
+html[data-theme] .main-wrapper > * { position: relative; z-index: 1; }
+html[data-theme='dark'] .main-wrapper::before {
+  content: "";
+  position: fixed;
+  width: 800px;
+  height: 800px;
+  border-radius: 50%;
+  background: linear-gradient(129.96deg, #f1d063, #eff3f8);
+  top: -35%;
+  left: -200px;
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 0;
+}
+html[data-theme='dark'] .main-wrapper::after {
+  content: "";
+  position: fixed;
+  width: 800px;
+  height: 800px;
+  border-radius: 50%;
+  background: linear-gradient(129.96deg, #6366f1, #eff3f8);
+  bottom: -15%;
+  right: -50%;
+  transform: rotate(60deg);
+  transform-origin: 0 0;
+  opacity: 0.25;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Light theme circles */
+html[data-theme='light'] .main-wrapper::before {
+  content: "";
+  position: fixed;
+  width: 800px;
+  height: 800px;
+  border-radius: 50%;
+  background: linear-gradient(129.96deg, #f1d063, #eff3f8);
+  top: -35%;
+  left: -200px;
+  opacity: 0.35;
+  pointer-events: none;
+  z-index: 0;
+}
+html[data-theme='light'] .main-wrapper::after {
+  content: "";
+  position: fixed;
+  width: 800px;
+  height: 800px;
+  border-radius: 50%;
+  background: linear-gradient(129.96deg, #6366f1, #eff3f8);
+  bottom: -15%;
+  right: -50%;
+  transform: rotate(60deg);
+  transform-origin: 0 0;
+  opacity: 0.18;
+  pointer-events: none;
+  z-index: 0;
+}
