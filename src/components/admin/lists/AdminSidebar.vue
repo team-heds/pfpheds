@@ -1,6 +1,11 @@
 <template>
   <aside :class="['admin-sidebar card sidebar', { 'collapsed': isCollapsed }]">
 
+    <!-- Bouton pour réduire/étendre la sidebar -->
+    <button class="collapse-toggle" type="button" @click="toggleCollapse" :aria-pressed="isCollapsed" :title="isCollapsed ? 'Agrandir' : 'Réduire'">
+      <i class="pi" :class="isCollapsed ? 'pi-angle-double-right' : 'pi-angle-double-left'"></i>
+    </button>
+
     <!-- Permissions: n'afficher que la liste possédée -->
     <div v-if="isSupabaseUser && roleStore.initialized && !isCollapsed" class="permissions-info-card">
       <h4>🔐 Permissions</h4>
@@ -595,11 +600,11 @@ const menu = ref([
   color: var(--text-color);
 }
 
-/* Bouton de collapse */
+/* Bouton de collapse (en haut à gauche) */
 .collapse-toggle {
   position: absolute;
-  right: -15px;
-  top: 20px;
+  left: 10px;
+  top: 10px;
   width: 30px;
   height: 30px;
   border-radius: 50%;
