@@ -1,0 +1,25 @@
+{
+  "id": "testing/firebase-test",
+  "title": "Test Firebase",
+  "description": "Brouillon de documentation pour testing/firebase-test.",
+  "source": "@site/docs/testing/firebase-test.md",
+  "sourceDirName": "testing",
+  "slug": "/testing/firebase-test",
+  "permalink": "/docs/testing/firebase-test",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "Test Firebase"
+  },
+  "sidebar": "docs",
+  "previous": {
+    "title": "Test Supabase",
+    "permalink": "/docs/testing/supabase-test"
+  },
+  "next": {
+    "title": "Outils de Diagnostic",
+    "permalink": "/docs/testing/diagnostic-tools"
+  }
+}

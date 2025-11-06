@@ -1,0 +1,25 @@
+{
+  "id": "apps/calendar",
+  "title": "App Calendar",
+  "description": "Brouillon de documentation pour apps/calendar.",
+  "source": "@site/docs/apps/calendar.md",
+  "sourceDirName": "apps",
+  "slug": "/apps/calendar",
+  "permalink": "/docs/apps/calendar",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "App Calendar"
+  },
+  "sidebar": "docs",
+  "previous": {
+    "title": "App Tasklist",
+    "permalink": "/docs/apps/tasklist"
+  },
+  "next": {
+    "title": "App Files",
+    "permalink": "/docs/apps/files"
+  }
+}

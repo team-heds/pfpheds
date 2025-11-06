@@ -1,0 +1,25 @@
+{
+  "id": "social/messaging",
+  "title": "Messagerie",
+  "description": "Brouillon de documentation pour social/messaging.",
+  "source": "@site/docs/social/messaging.md",
+  "sourceDirName": "social",
+  "slug": "/social/messaging",
+  "permalink": "/docs/social/messaging",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "Messagerie"
+  },
+  "sidebar": "docs",
+  "previous": {
+    "title": "Communautés",
+    "permalink": "/docs/social/communities"
+  },
+  "next": {
+    "title": "Carte & Institutions - Vue d'ensemble",
+    "permalink": "/docs/map/overview"
+  }
+}

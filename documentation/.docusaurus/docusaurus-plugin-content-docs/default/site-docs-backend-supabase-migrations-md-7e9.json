@@ -1,0 +1,25 @@
+{
+  "id": "backend/supabase/migrations",
+  "title": "Migrations Supabase",
+  "description": "Brouillon de documentation pour backend/supabase/migrations.",
+  "source": "@site/docs/backend/supabase/migrations.md",
+  "sourceDirName": "backend/supabase",
+  "slug": "/backend/supabase/migrations",
+  "permalink": "/docs/backend/supabase/migrations",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "Migrations Supabase"
+  },
+  "sidebar": "docs",
+  "previous": {
+    "title": "Supabase RLS & Sécurité",
+    "permalink": "/docs/backend/supabase/rls"
+  },
+  "next": {
+    "title": "Migration Firebase → Supabase",
+    "permalink": "/docs/data/migration-firebase-supabase"
+  }
+}

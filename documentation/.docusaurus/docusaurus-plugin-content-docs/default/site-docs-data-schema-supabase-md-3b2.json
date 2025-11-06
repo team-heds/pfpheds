@@ -1,0 +1,25 @@
+{
+  "id": "data/schema-supabase",
+  "title": "Schéma Supabase",
+  "description": "Brouillon de documentation pour data/schema-supabase.",
+  "source": "@site/docs/data/schema-supabase.md",
+  "sourceDirName": "data",
+  "slug": "/data/schema-supabase",
+  "permalink": "/docs/data/schema-supabase",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "Schéma Supabase"
+  },
+  "sidebar": "docs",
+  "previous": {
+    "title": "Migration Firebase → Supabase",
+    "permalink": "/docs/data/migration-firebase-supabase"
+  },
+  "next": {
+    "title": "Routeur Multi-Systèmes",
+    "permalink": "/docs/data/multi-system-router"
+  }
+}

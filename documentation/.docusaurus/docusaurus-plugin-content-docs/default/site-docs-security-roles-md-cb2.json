@@ -1,0 +1,25 @@
+{
+  "id": "security/roles",
+  "title": "Rôles & Permissions",
+  "description": "Brouillon de documentation pour security/roles.",
+  "source": "@site/docs/security/roles.md",
+  "sourceDirName": "security",
+  "slug": "/security/roles",
+  "permalink": "/docs/security/roles",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "Rôles & Permissions"
+  },
+  "sidebar": "docs",
+  "previous": {
+    "title": "Service Médias",
+    "permalink": "/docs/media/media-service"
+  },
+  "next": {
+    "title": "Route Guards",
+    "permalink": "/docs/security/route-guards"
+  }
+}

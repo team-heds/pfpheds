@@ -1,0 +1,25 @@
+{
+  "id": "apps/notes",
+  "title": "App Notes",
+  "description": "Brouillon de documentation pour apps/notes.",
+  "source": "@site/docs/apps/notes.md",
+  "sourceDirName": "apps",
+  "slug": "/apps/notes",
+  "permalink": "/docs/apps/notes",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "App Notes"
+  },
+  "sidebar": "docs",
+  "previous": {
+    "title": "App Files",
+    "permalink": "/docs/apps/files"
+  },
+  "next": {
+    "title": "App Events",
+    "permalink": "/docs/apps/events"
+  }
+}

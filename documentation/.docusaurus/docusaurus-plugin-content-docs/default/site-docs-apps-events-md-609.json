@@ -1,0 +1,25 @@
+{
+  "id": "apps/events",
+  "title": "App Events",
+  "description": "Brouillon de documentation pour apps/events.",
+  "source": "@site/docs/apps/events.md",
+  "sourceDirName": "apps",
+  "slug": "/apps/events",
+  "permalink": "/docs/apps/events",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "App Events"
+  },
+  "sidebar": "docs",
+  "previous": {
+    "title": "App Notes",
+    "permalink": "/docs/apps/notes"
+  },
+  "next": {
+    "title": "Outils",
+    "permalink": "/docs/apps/tools"
+  }
+}

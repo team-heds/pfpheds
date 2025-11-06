@@ -1,0 +1,25 @@
+{
+  "id": "backend/supabase/overview",
+  "title": "Supabase - Vue d'ensemble",
+  "description": "Brouillon de documentation pour backend/supabase/overview.",
+  "source": "@site/docs/backend/supabase/overview.md",
+  "sourceDirName": "backend/supabase",
+  "slug": "/backend/supabase/overview",
+  "permalink": "/docs/backend/supabase/overview",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "Supabase - Vue d'ensemble"
+  },
+  "sidebar": "docs",
+  "previous": {
+    "title": "Firebase Auth",
+    "permalink": "/docs/backend/firebase/auth"
+  },
+  "next": {
+    "title": "Supabase Services",
+    "permalink": "/docs/backend/supabase/services"
+  }
+}

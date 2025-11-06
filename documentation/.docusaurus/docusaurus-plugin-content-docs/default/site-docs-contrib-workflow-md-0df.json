@@ -1,0 +1,25 @@
+{
+  "id": "contrib/workflow",
+  "title": "Workflow de Contribution",
+  "description": "Brouillon de documentation pour contrib/workflow.",
+  "source": "@site/docs/contrib/workflow.md",
+  "sourceDirName": "contrib",
+  "slug": "/contrib/workflow",
+  "permalink": "/docs/contrib/workflow",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "Workflow de Contribution"
+  },
+  "sidebar": "docs",
+  "previous": {
+    "title": "Conventions",
+    "permalink": "/docs/contrib/conventions"
+  },
+  "next": {
+    "title": "Roadmap",
+    "permalink": "/docs/roadmap"
+  }
+}

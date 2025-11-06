@@ -1,0 +1,21 @@
+{
+  "id": "changelog",
+  "title": "Changelog",
+  "description": "Brouillon de documentation pour changelog.",
+  "source": "@site/docs/changelog.md",
+  "sourceDirName": ".",
+  "slug": "/changelog",
+  "permalink": "/docs/changelog",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "Changelog"
+  },
+  "sidebar": "docs",
+  "previous": {
+    "title": "Roadmap",
+    "permalink": "/docs/roadmap"
+  }
+}

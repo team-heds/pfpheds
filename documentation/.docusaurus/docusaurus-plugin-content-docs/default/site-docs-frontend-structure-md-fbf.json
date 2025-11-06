@@ -1,0 +1,25 @@
+{
+  "id": "frontend/structure",
+  "title": "Structure du frontend",
+  "description": "Brouillon de documentation pour frontend/structure.",
+  "source": "@site/docs/frontend/structure.md",
+  "sourceDirName": "frontend",
+  "slug": "/frontend/structure",
+  "permalink": "/docs/frontend/structure",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "Structure du frontend"
+  },
+  "sidebar": "docs",
+  "previous": {
+    "title": "Stack technique",
+    "permalink": "/docs/stack"
+  },
+  "next": {
+    "title": "Routing",
+    "permalink": "/docs/frontend/routing"
+  }
+}

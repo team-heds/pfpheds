@@ -1,0 +1,25 @@
+{
+  "id": "devops/firebase-hosting",
+  "title": "Firebase Hosting",
+  "description": "Brouillon de documentation pour devops/firebase-hosting.",
+  "source": "@site/docs/devops/firebase-hosting.md",
+  "sourceDirName": "devops",
+  "slug": "/devops/firebase-hosting",
+  "permalink": "/docs/devops/firebase-hosting",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "Firebase Hosting"
+  },
+  "sidebar": "docs",
+  "previous": {
+    "title": "Supabase RLS",
+    "permalink": "/docs/security/supabase-rls"
+  },
+  "next": {
+    "title": "VPS: Caddy vs Nginx",
+    "permalink": "/docs/devops/vps-caddy-nginx"
+  }
+}
