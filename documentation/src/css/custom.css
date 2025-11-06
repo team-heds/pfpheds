@@ -237,6 +237,63 @@ html[data-theme='dark'] .navbar-sidebar__items {
 }
 .theme-code-block:hover .clean-btn { opacity: 1; }
 
+/* ==========================================
+   Code blocks: differentiate commands vs code
+   - Commands (bash/sh/shell/powershell): gold accent
+   - Other code: violet accent
+   Works in both themes; minimal use of !important
+   ========================================== */
+
+/* Default accent for all code blocks */
+.theme-doc-markdown pre.prism-code {
+  border-left: 3px solid rgba(99, 102, 241, 0.45); /* violet */
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+.theme-doc-markdown pre.prism-code code {
+  display: block;
+  border-radius: 0 12px 12px 0;
+}
+
+/* Commands: bash/sh/shell/powershell */
+.theme-doc-markdown pre.prism-code.language-bash,
+.theme-doc-markdown pre.prism-code.language-sh,
+.theme-doc-markdown pre.prism-code.language-shell,
+.theme-doc-markdown pre.prism-code.language-powershell,
+.theme-doc-markdown pre.prism-code[data-language="bash"],
+.theme-doc-markdown pre.prism-code[data-language="sh"],
+.theme-doc-markdown pre.prism-code[data-language="shell"],
+.theme-doc-markdown pre.prism-code[data-language="powershell"] {
+  border-left-color: #f3c300; /* gold */
+  box-shadow: inset 0 0 0 1px rgba(243, 195, 0, 0.10);
+}
+.theme-doc-markdown pre.prism-code.language-bash code,
+.theme-doc-markdown pre.prism-code.language-sh code,
+.theme-doc-markdown pre.prism-code.language-shell code,
+.theme-doc-markdown pre.prism-code.language-powershell code,
+.theme-doc-markdown pre.prism-code[data-language="bash"] code,
+.theme-doc-markdown pre.prism-code[data-language="sh"] code,
+.theme-doc-markdown pre.prism-code[data-language="shell"] code,
+.theme-doc-markdown pre.prism-code[data-language="powershell"] code {
+  background: linear-gradient(180deg, rgba(243, 195, 0, 0.06), rgba(243, 195, 0, 0.02)) !important;
+}
+
+/* Light theme tweaks */
+html[data-theme='light'] .theme-doc-markdown pre.prism-code {
+  border-left-color: rgba(99, 102, 241, 0.35);
+}
+html[data-theme='light'] .theme-doc-markdown pre.prism-code.language-bash,
+html[data-theme='light'] .theme-doc-markdown pre.prism-code.language-sh,
+html[data-theme='light'] .theme-doc-markdown pre.prism-code.language-shell,
+html[data-theme='light'] .theme-doc-markdown pre.prism-code.language-powershell,
+html[data-theme='light'] .theme-doc-markdown pre.prism-code[data-language="bash"],
+html[data-theme='light'] .theme-doc-markdown pre.prism-code[data-language="sh"],
+html[data-theme='light'] .theme-doc-markdown pre.prism-code[data-language="shell"],
+html[data-theme='light'] .theme-doc-markdown pre.prism-code[data-language="powershell"] {
+  border-left-color: #f3c300;
+  box-shadow: inset 0 0 0 1px rgba(243, 195, 0, 0.12);
+}
+
 /* Horizontal rule */
 .theme-doc-markdown hr { border: none; border-top: 1px solid var(--doc-border-color); margin: 1.5rem 0; }
 
