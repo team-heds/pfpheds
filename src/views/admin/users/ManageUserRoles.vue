@@ -25,20 +25,36 @@
           :paginator="true"
           :rows="12"
           :rowHover="true"
+          :scrollable="true"
+          scrollHeight="60vh"
+          scrollDirection="both"
+          tableStyle="min-width: 1200px"
+          :style="{ '--frozen-left-width': '780px' }"
           @rowDblclick="onOpenDialog"
         >
-          <Column field="display_name" header="Nom" sortable></Column>
-          <Column field="email" header="Email" sortable></Column>
-          <Column header="Rôle" sortable>
+          <Column field="display_name" header="Nom" sortable frozen alignFrozen="left" style="min-width: 220px"></Column>
+          <Column field="email" header="Email" sortable frozen alignFrozen="left" style="min-width: 260px"></Column>
+          <Column header="Rôle" sortable frozen alignFrozen="left" style="min-width: 180px">
             <template #body="{ data }">
-              <Tag :value="data.role || 'user'" :severity="roleSeverity(data.role)" />
+              <Dropdown v-model="data.role" :options="roleOptions" class="w-12rem" @change="updateRole(data, data.role)" />
             </template>
           </Column>
-          <Column header="Actif" sortable>
+          <Column header="Actif" sortable frozen alignFrozen="left" style="min-width: 120px; text-align:center;">
             <template #body="{ data }">
-              <Tag :value="data.is_active ? 'Actif' : 'Inactif'" :severity="data.is_active ? 'success' : 'warning'" />
+              <input type="checkbox" :checked="data.is_active" @change="updateActive(data, $event.target.checked)" />
             </template>
           </Column>
+          <template v-if="hasPermissionsColumn">
+            <Column
+              v-for="key in permissionKeys"
+              :key="'perm-col-'+key"
+              :header="key"
+            >
+              <template #body="{ data }">
+                <input type="checkbox" :checked="rowHasPerm(data, key)" @change="togglePerm(data, key, $event.target.checked)" />
+              </template>
+            </Column>
+          </template>
           <Column header="Actions">
             <template #body="{ data }">
               <Button label="Éditer" size="small" @click="onOpenDialog({ data })" />
@@ -120,7 +136,6 @@ import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
 import Dropdown from 'primevue/dropdown'
 import Button from 'primevue/button'
-import Tag from 'primevue/tag'
 import Dialog from 'primevue/dialog'
 
 const loading = ref(false)
@@ -173,14 +188,74 @@ const permissions = ref({
   'EnseignantPhysio': false,
   'EtudiantSoins': false,
   'EtudiantPhysio': false,
-  'RMSoins': false
+  'RMSoins': false,
+  'BA24-PHY': false,
+  'BA23-PHY': false,
+  'BA25-PHY': false,
+  'B25-SI': false,
+  'B24-SI': false,
+  'B23-SI': false
 })
 const permissionKeys = Object.keys(permissions.value)
 
-function roleSeverity(r) {
-  if (r === 'admin') return 'danger'
-  if (!r || r === 'user') return 'info'
-  return 'secondary'
+async function updateRole(u, role) {
+  const prev = u.role
+  u.role = role
+  try {
+    const { error } = await supabase
+      .from('user_profiles')
+      .update({ role, updated_at: new Date().toISOString() })
+      .eq('user_id', u.user_id)
+    if (error) throw error
+  } catch (e) {
+    u.role = prev
+    alert('Erreur mise à jour rôle: ' + (e.message || ''))
+  }
+}
+
+async function updateActive(u, val) {
+  const prev = u.is_active
+  u.is_active = val
+  try {
+    const { error } = await supabase
+      .from('user_profiles')
+      .update({ is_active: val, updated_at: new Date().toISOString() })
+      .eq('user_id', u.user_id)
+    if (error) throw error
+  } catch (e) {
+    u.is_active = prev
+    alert('Erreur mise à jour actif: ' + (e.message || ''))
+  }
+}
+
+function rowHasPerm(u, key) {
+  const arr = Array.isArray(u.permissions) ? u.permissions : []
+  return arr.includes(key)
+}
+
+async function togglePerm(u, key, checked) {
+  if (!hasPermissionsColumn.value) return
+  const prev = Array.isArray(u.permissions) ? [...u.permissions] : []
+  const next = [...prev]
+  const idx = next.indexOf(key)
+  if (checked && idx === -1) next.push(key)
+  if (!checked && idx !== -1) next.splice(idx, 1)
+  u.permissions = next
+  try {
+    const { error } = await supabase
+      .from('user_profiles')
+      .update({ permissions: next, updated_at: new Date().toISOString() })
+      .eq('user_id', u.user_id)
+    if (error) throw error
+    const { error: rpcError } = await supabase.rpc('update_user_permissions', {
+      target_user_id: u.user_id,
+      new_permissions: next
+    })
+    if (rpcError) console.warn('RPC update_user_permissions', rpcError)
+  } catch (e) {
+    u.permissions = prev
+    alert('Erreur mise à jour permissions: ' + (e.message || ''))
+  }
 }
 
 function hydrateForm(u) {
@@ -380,4 +455,59 @@ onMounted(loadUsers)
 .toggle-label::after { content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; background: white; border-radius: 50%; transition: transform 0.2s; }
 .permission-toggle input[type="checkbox"]:checked + .toggle-label { background: var(--primary-color); }
 .permission-toggle input[type="checkbox"]:checked + .toggle-label::after { transform: translateX(24px); }
+
+/* Masquer le contenu (checkbox permissions) sous la zone gelée */
+:deep(.p-datatable-scrollable .p-datatable-frozen-view) {
+  background: var(--surface-card);
+  z-index: 3;
+}
+
+:deep(.p-datatable-scrollable .p-datatable-unfrozen-view .p-datatable-wrapper) {
+  position: relative;
+}
+
+/* Largeur cumulée des 4 colonnes gelées: 220 + 260 + 180 + 120 = 780px */
+:deep(.p-datatable-scrollable .p-datatable-unfrozen-view .p-datatable-wrapper::before) {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--frozen-left-width, 780px);
+  height: 100%;
+  background: var(--surface-card);
+  /* Option: gradient pour une transition douce */
+  /* background: linear-gradient(90deg, var(--surface-card) 70%, transparent 100%); */
+  z-index: 2;
+  pointer-events: auto; /* bloque les clics sous la zone gelée */
+}
+
+/* S'assurer que le contenu défilant des permissions passe sous l'overlay */
+:deep(.p-datatable-scrollable .p-datatable-unfrozen-view .p-datatable-scrollable-body) {
+  position: relative;
+  z-index: 1;
+}
+
+/* Overlay aussi pour l'en-tête non gelé */
+:deep(.p-datatable-scrollable .p-datatable-unfrozen-view .p-datatable-scrollable-header-box) {
+  position: relative;
+}
+
+:deep(.p-datatable-scrollable .p-datatable-unfrozen-view .p-datatable-scrollable-header-box::before) {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--frozen-left-width, 780px);
+  height: 100%;
+  background: var(--surface-card);
+  z-index: 2;
+  pointer-events: auto; /* bloque les clics sous la zone gelée */
+}
+
+/* S'assurer que les cellules gelées recouvrent bien ce qui défile */
+:deep(.p-datatable .p-frozen-column),
+:deep(.p-datatable .p-datatable-tbody > tr > td[style*="position: sticky"]) {
+  z-index: 4 !important;
+  background: var(--surface-card) !important;
+}
 </style>
