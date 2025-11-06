@@ -1,0 +1,17 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#f3c300"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="720" rx="20" fill="#0B213F"/>
+  <rect x="40" y="40" width="1200" height="80" rx="12" fill="#0f2a4e" stroke="#273a55"/>
+  <rect x="40" y="140" width="280" height="520" rx="14" fill="#0f2a4e" stroke="#273a55"/>
+  <rect x="340" y="140" width="900" height="520" rx="14" fill="#0f2a4e" stroke="#273a55"/>
+  <rect x="360" y="160" width="860" height="80" rx="10" fill="#14345f"/>
+  <rect x="360" y="260" width="410" height="380" rx="12" fill="#14345f"/>
+  <rect x="790" y="260" width="430" height="180" rx="12" fill="#14345f"/>
+  <rect x="790" y="460" width="430" height="180" rx="12" fill="#14345f"/>
+  <text x="60" y="95" font-size="28" fill="#ffe680" font-family="Poppins, Arial">Admin - Dashboard (placeholder)</text>
+</svg>
