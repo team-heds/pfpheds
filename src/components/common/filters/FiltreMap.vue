@@ -87,6 +87,7 @@
                 label="Détails"
                 class="p-button-text mr-3"
               ></Button>
+
               <Button
                 icon="pi pi-globe"
                 @click="openWebsite(selectedInstitution.URL)"

@@ -51,6 +51,27 @@ import ValidatePFP1AView from '@/views/admin/pfp/ValidatePFP1AView.vue'
 import InfoRepondantView from '@/views/admin/pfp/InfoRepondantView.vue'
 import ResultPreviewVotationView from '@/views/admin/pfp/ResultPreviewVotationView.vue'
 
+// FORMATION PRATIQUE PHYSIO
+import DashboardFormationPratiqueView from '@/views/admin/formation-pratique/DashboardFormationPratiqueView.vue'
+import FPEtudiantsView from '@/views/admin/formation-pratique/EtudiantsView.vue'
+import FPInstitutionsView from '@/views/admin/formation-pratique/InstitutionsView.vue'
+import FPPraticiensFormateurView from '@/views/admin/formation-pratique/PraticiensFormateurView.vue'
+import FPPlacesView from '@/views/admin/formation-pratique/PlacesView.vue'
+import FPProfilEtudiantsView from '@/views/admin/formation-pratique/ProfilEtudiantsView.vue'
+import FPProfilRepondantEnseignantView from '@/views/admin/formation-pratique/ProfilRepondantEnseignantView.vue'
+import FPGanttPFPFormationView from '@/views/admin/formation-pratique/GanttPFPFormationView.vue'
+import FPAdminSecretariatView from '@/views/admin/formation-pratique/AdminSecretariatView.vue'
+import FPManagementRepondantCPTView from '@/views/admin/formation-pratique/ManagementRepondantCPTView.vue'
+import FPManagementFeuilleDeChargeRepondantCPTView from '@/views/admin/formation-pratique/ManagementFeuilleDeChargeRepondantCPTView.vue'
+import FPOffreDePlaceView from '@/views/admin/formation-pratique/OffreDePlaceView.vue'
+import FPPreviewPFPView from '@/views/admin/formation-pratique/PreviewPFPView.vue'
+import FPResultatVotationPrioritaireView from '@/views/admin/formation-pratique/ResultatVotationPrioritaireView.vue'
+import FPResultatVotationPFPView from '@/views/admin/formation-pratique/ResultatVotationPFPView.vue'
+import FPManagementRepondantVotationView from '@/views/admin/formation-pratique/ManagementRepondantVotationView.vue'
+import FPValiderEchecPFPView from '@/views/admin/formation-pratique/ValiderEchecPFPView.vue'
+import FPVotationPrioritaireView from '@/views/admin/formation-pratique/VotationPrioritaireView.vue'
+import FPVotationPFPView from '@/views/admin/formation-pratique/VotationPFPView.vue'
+
 // ADMIN LISTS
 import ProgramListView from '@/views/admin/lists/ProgramListView.vue'
 import ModuleListView from '@/views/admin/lists/ModuleListView.vue'
@@ -361,6 +382,37 @@ const routes = [
   { path: '/validate-pfp1a', component: ValidatePFP1AView, name: 'ValidatePFP1A', meta: { requiresAuth: true, need: 'page1.access' } },
   { path: '/info_repondant', component: InfoRepondantView, name: 'InfoRepondant', meta: { requiresAuth: true, need: 'page1.access' } },
   { path: '/result_preview_votation', component: ResultPreviewVotationView, name: 'ResultPreviewVotation', meta: { requiresAuth: true, need: 'page1.access' } },
+  
+  // ========================================
+  // FORMATION PRATIQUE PHYSIO ROUTES
+  // ========================================
+  { path: '/admin/formation-pratique/dashboard', component: DashboardFormationPratiqueView, name: 'DashboardFormationPratique', meta: { requiresAuth: true, need: 'page1.access' } },
+  
+  // Section Données
+  { path: '/admin/formation-pratique/etudiants', component: FPEtudiantsView, name: 'FPEtudiants', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/admin/formation-pratique/institutions', component: FPInstitutionsView, name: 'FPInstitutions', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/admin/formation-pratique/praticiens-formateur', component: FPPraticiensFormateurView, name: 'FPPraticiensFormateur', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/admin/formation-pratique/places', component: FPPlacesView, name: 'FPPlaces', meta: { requiresAuth: true, need: 'page1.access' } },
+  
+  // Section Admin
+  { path: '/admin/formation-pratique/profil-etudiants', component: FPProfilEtudiantsView, name: 'FPProfilEtudiants', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/admin/formation-pratique/profil-repondant-enseignant', component: FPProfilRepondantEnseignantView, name: 'FPProfilRepondantEnseignant', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/admin/formation-pratique/gantt-pfp', component: FPGanttPFPFormationView, name: 'FPGanttPFP', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/admin/formation-pratique/admin-secretariat', component: FPAdminSecretariatView, name: 'FPAdminSecretariat', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/admin/formation-pratique/management-repondant-cpt', component: FPManagementRepondantCPTView, name: 'FPManagementRepondantCPT', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/admin/formation-pratique/management-feuille-charge-cpt', component: FPManagementFeuilleDeChargeRepondantCPTView, name: 'FPManagementFeuilleChargeCPT', meta: { requiresAuth: true, need: 'page1.access' } },
+  
+  // Section Période de Formation pratique
+  { path: '/admin/formation-pratique/offre-place', component: FPOffreDePlaceView, name: 'FPOffrePlace', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/admin/formation-pratique/preview-pfp', component: FPPreviewPFPView, name: 'FPPreviewPFP', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/admin/formation-pratique/resultat-votation-prioritaire', component: FPResultatVotationPrioritaireView, name: 'FPResultatVotationPrioritaire', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/admin/formation-pratique/resultat-votation-pfp', component: FPResultatVotationPFPView, name: 'FPResultatVotationPFP', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/admin/formation-pratique/management-repondant-votation', component: FPManagementRepondantVotationView, name: 'FPManagementRepondantVotation', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/admin/formation-pratique/valider-echec-pfp', component: FPValiderEchecPFPView, name: 'FPValiderEchecPFP', meta: { requiresAuth: true, need: 'page1.access' } },
+  
+  // Section Votations
+  { path: '/admin/formation-pratique/votation-prioritaire', component: FPVotationPrioritaireView, name: 'FPVotationPrioritaire', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/admin/formation-pratique/votation-pfp', component: FPVotationPFPView, name: 'FPVotationPFP', meta: { requiresAuth: true, need: 'page1.access' } },
   
   // Admin Lists Routes
   { path: '/admin/programs', component: ProgramListView, name: 'ProgramList', meta: { requiresAuth: true, need: 'admin' } },

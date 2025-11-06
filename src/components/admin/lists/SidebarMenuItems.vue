@@ -5,15 +5,16 @@
         <div
           class="sidebar-subsection-label submenu-toggle sidebar-btn"
           @click="toggle(item)"
+          :style="{ paddingLeft: (12 + level * 12) + 'px' }"
         >
           <i :class="item.icon" />
           <span>{{ item.label }}</span>
           <i class="pi" :class="isOpen(item) ? 'pi-chevron-down' : 'pi-chevron-right'" style="margin-left:auto;" />
         </div>
-        <SidebarMenuItems v-if="isOpen(item)" :items="item.items" />
+        <SidebarMenuItems v-if="isOpen(item)" :items="item.items" :level="level + 1" />
       </template>
       <template v-else>
-        <router-link v-if="item.to" :to="item.to" class="sidebar-link sidebar-btn">
+        <router-link v-if="item.to" :to="item.to" class="sidebar-link sidebar-btn" :style="{ paddingLeft: (12 + level * 12) + 'px' }">
           <i :class="item.icon" />
           <span>{{ item.label }}</span>
         </router-link>
@@ -30,6 +31,10 @@ const props = defineProps({
     type: Array,
     required: true,
     default: () => []
+  },
+  level: {
+    type: Number,
+    default: 0
   }
 });
 import SidebarMenuItems from './SidebarMenuItems.vue'; // récursif

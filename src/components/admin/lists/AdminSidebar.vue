@@ -72,7 +72,7 @@ const loadSectionsState = () => {
     console.warn('Erreur chargement état sections:', e);
   }
   // Par défaut, toutes ouvertes
-  return new Set(['Admin Général', 'PFP', 'Académique', 'Gamification', 'Outils']);
+  return new Set(['Admin Général', 'PFP', 'Formation Pratique Physio', 'Académique', 'Gamification', 'Outils']);
 };
 
 // Charger l'état de collapse
@@ -196,11 +196,12 @@ const filteredMenu = computed(() => filterMenuItems(JSON.parse(JSON.stringify(me
 // Obtenir la classe CSS pour une section selon son index
 function getSectionClass(index) {
   const classes = {
-    0: 'admin-general-section',    // Admin Général
-    1: 'pfp-section',              // PFP
-    2: 'academic-section',         // Académique
-    3: 'gamification-section',     // Gamification
-    4: 'tools-section'             // Outils
+    0: 'admin-general-section',          // Admin Général
+    1: 'pfp-section',                    // PFP
+    2: 'formation-pratique-section',     // Formation Pratique Physio
+    3: 'academic-section',               // Académique
+    4: 'gamification-section',           // Gamification
+    5: 'tools-section'                   // Outils
   };
   return classes[index] || '';
 }
@@ -214,12 +215,20 @@ function shouldShowSection(section, index) {
       return roleStore.isSuper || roleStore.can('super.all') || roleStore.can('admin')|| roleStore.can('page1.access');
     case 1: // PFP - page1.access OU rôles Physio
       return (
+       // roleStore.can('page1.access') ||
+        roleStore.can('admin') // ||
+       // roleStore.can('EnseignantPhysio') ||
+      //  roleStore.isSuper
+      );
+    case 2: // Formation Pratique Physio - page1.access OU rôles Physio
+      return (
         roleStore.can('page1.access') ||
-        roleStore.can('AdminPhysio') ||
+        roleStore.can('super.all') ||
         roleStore.can('EnseignantPhysio') ||
+        roleStore.can('FormationPratique') ||
         roleStore.isSuper
       );
-    case 2: // Académique - page2.access OU rôles Soins
+    case 3: // Académique - page2.access OU rôles Soins
       return (
         roleStore.can('page2.access') ||
         roleStore.can('AdminSoins') ||
@@ -227,13 +236,14 @@ function shouldShowSection(section, index) {
         roleStore.can('RMSoins') ||
         roleStore.isSuper
       );
-    case 3: // Gamification - accessible aux rôles Physio (et super)
+    case 4: // Gamification - accessible aux rôles Physio (et super)
       return (
         roleStore.can('AdminPhysio') ||
         roleStore.can('EnseignantPhysio') ||
+        roleStore.can('admin') ||
         roleStore.isSuper
       );
-    case 4: // Outils - accessible à tous les utilisateurs authentifiés
+    case 5: // Outils - accessible à tous les utilisateurs authentifiés
       return true;
     default:
       return true;
@@ -323,6 +333,67 @@ const menu = ref([
           { label: 'Gestion Places Safe', icon: 'pi pi-shield', to: '/management_places_safe' },
           { label: 'Répartition Stages', icon: 'pi pi-percentage', to: '/stage_repartition' },
           { label: 'Validation PFP1A', icon: 'pi pi-check-circle', to: '/validate-pfp1a' }
+        ]
+      }
+    ]
+  },
+
+  // ========================================
+  // SECTION 5: FORMATION PRATIQUE PHYSIO
+  // ========================================
+  {
+    label: 'Formation Pratique Physio',
+    icon: 'pi pi-briefcase',
+    items: [
+      { label: 'Dashboard Formation Pratique', icon: 'pi pi-chart-bar', to: '/admin/formation-pratique/dashboard' },
+      
+      // Section Données
+      {
+        label: 'Données',
+        icon: 'pi pi-database',
+        items: [
+          { label: 'Étudiants', icon: 'pi pi-users', to: '/admin/formation-pratique/etudiants' },
+          { label: 'Institutions', icon: 'pi pi-building', to: '/admin/formation-pratique/institutions' },
+          { label: 'Praticiens Formateur', icon: 'pi pi-user-plus', to: '/admin/formation-pratique/praticiens-formateur' },
+          { label: 'Places', icon: 'pi pi-map-marker', to: '/admin/formation-pratique/places' }
+        ]
+      },
+      
+      // Section Admin
+      {
+        label: 'Admin',
+        icon: 'pi pi-cog',
+        items: [
+          { label: 'Profil Étudiants', icon: 'pi pi-id-card', to: '/admin/formation-pratique/profil-etudiants' },
+          { label: 'Profil Répondant Enseignant', icon: 'pi pi-user', to: '/admin/formation-pratique/profil-repondant-enseignant' },
+          { label: 'Gantt PFP', icon: 'pi pi-chart-line', to: '/admin/formation-pratique/gantt-pfp' },
+          { label: 'Admin Secrétariat', icon: 'pi pi-briefcase', to: '/admin/formation-pratique/admin-secretariat' },
+          { label: 'Management Répondant CPT', icon: 'pi pi-users', to: '/admin/formation-pratique/management-repondant-cpt' },
+          { label: 'Management Feuille De Charge Répondant CPT', icon: 'pi pi-file', to: '/admin/formation-pratique/management-feuille-charge-cpt' }
+        ]
+      },
+      
+      // Section Période de Formation pratique
+      {
+        label: 'Période de Formation pratique',
+        icon: 'pi pi-calendar',
+        items: [
+          { label: 'Offre De Place', icon: 'pi pi-list', to: '/admin/formation-pratique/offre-place' },
+          { label: 'Preview PFP', icon: 'pi pi-eye', to: '/admin/formation-pratique/preview-pfp' },
+          { label: 'Résultat Votation Prioritaire', icon: 'pi pi-chart-pie', to: '/admin/formation-pratique/resultat-votation-prioritaire' },
+          { label: 'Résultat Votation PFP', icon: 'pi pi-chart-bar', to: '/admin/formation-pratique/resultat-votation-pfp' },
+          { label: 'Management Répondant Votation', icon: 'pi pi-user-edit', to: '/admin/formation-pratique/management-repondant-votation' },
+          { label: 'Valider Échec PFP', icon: 'pi pi-check-circle', to: '/admin/formation-pratique/valider-echec-pfp' }
+        ]
+      },
+      
+      // Section Votations
+      {
+        label: 'Votations',
+        icon: 'pi pi-check-square',
+        items: [
+          { label: 'Votation Prioritaire', icon: 'pi pi-star', to: '/admin/formation-pratique/votation-prioritaire' },
+          { label: 'Votation PFP', icon: 'pi pi-check-square', to: '/admin/formation-pratique/votation-pfp' }
         ]
       }
     ]
