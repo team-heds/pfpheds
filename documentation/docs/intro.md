@@ -23,7 +23,7 @@ slug: /
     <div class="docs-hero__hint">Astuce: utilisez la navigation de gauche pour explorer les sections.</div>
   </div>
   <div class="docs-hero__visual">
-    <img class="docs-hero__img" src="/docs/img/hero-heds.svg" alt="HEdS Platform Overview" />
+    <img class="docs-hero__img" src="/img/hero-heds.svg" alt="HEdS Platform Overview" />
   </div>
 </div>
 

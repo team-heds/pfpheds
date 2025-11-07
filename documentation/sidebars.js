@@ -5,21 +5,24 @@ const sidebars = {
       type: 'category',
       label: 'Getting Started',
       collapsed: false,
-      link: { type: 'generated-index', slug: '/getting-started', description: 'Prise en main du projet, introduction et prérequis.' },
+      link: { type: 'doc', id: 'getting-started' },
       items: [
         'intro',
-        'getting-started',
         {
           type: 'category',
           label: 'Environment Setup',
           link: { type: 'generated-index', slug: '/getting-started/environment', description: "Configuration de l’environnement de dev." },
-          items: []
+          items: [
+            'getting-started/environment/setup',
+          ]
         },
         {
           type: 'category',
           label: 'CLI & Extensions',
           link: { type: 'generated-index', slug: '/getting-started/cli-extensions', description: 'CLI, outils et extensions (ex: Vue DevTools).' },
-          items: []
+          items: [
+            'getting-started/cli-extensions/overview',
+          ]
         }
       ],
     },
@@ -29,8 +32,10 @@ const sidebars = {
       collapsed: false,
       link: { type: 'generated-index', slug: '/developing', description: 'Architecture, stack et modules de développement.' },
       items: [
+        'developing/starting',
         'architecture',
         'stack',
+        'developing/architecture-diagrams',
         {
           type: 'category',
           label: 'Frontend',
@@ -85,6 +90,9 @@ const sidebars = {
       collapsed: false,
       link: { type: 'generated-index', slug: '/layout', description: 'Design system, thèmes et typographie.' },
       items: [
+        'layout/design-system',
+        'layout/themes',
+        'layout/typography',
         'frontend/ui',
       ],
     },
@@ -121,6 +129,7 @@ const sidebars = {
           label: 'DevOps & Deployment',
           collapsed: true,
           items: [
+            'devops/overview',
             'devops/docker-dev',
             'devops/firebase-hosting',
             'devops/vps-caddy-nginx',
@@ -156,6 +165,8 @@ const sidebars = {
       collapsed: false,
       link: { type: 'generated-index', slug: '/physiotherapie', description: 'Formation pratique et gamification.' },
       items: [
+        'physiotherapie/overview',
+        'physiotherapie/processus',
         {
           type: 'category',
           label: 'Formation pratique',
@@ -186,6 +197,8 @@ const sidebars = {
       collapsed: false,
       link: { type: 'generated-index', slug: '/soins-infirmiers', description: 'Administration et processus SI.' },
       items: [
+        'soins-infirmiers/overview',
+        'soins-infirmiers/processus',
         {
           type: 'category',
           label: 'Administration',
@@ -238,6 +251,8 @@ const sidebars = {
       label: 'Qualité & Contribution',
       collapsed: true,
       items: [
+        'contrib/docs-style-guide',
+        'contrib/github',
         'contrib/eslint-prettier',
         'contrib/conventions',
         'contrib/workflow',
@@ -251,6 +266,7 @@ const sidebars = {
         'project/overview',
         'project/roadmap',
         'project/sprints',
+        'project/jira-github-workflow',
         'project/releases',
         'project/migrations',
         'project/template-gantt',
