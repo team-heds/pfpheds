@@ -52,6 +52,7 @@
   -webkit-backdrop-filter: saturate(120%) blur(10px);
   border-bottom: 1px solid var(--doc-border-color);
   box-shadow: 0 8px 24px rgba(243, 195, 0, 0.12);
+  z-index: 1000;
 }
 
 .navbar--fixed-top {
@@ -68,11 +69,19 @@
   color: #fff !important;
   font-weight: 700;
   letter-spacing: 0.2px;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
 }
 
 .navbar__title, .navbar__link {
   color: #fff !important;
 }
+
+/* Navbar brand: logo + titre visibles */
+.navbar__title { display: inline; }
+.navbar__logo { display: inline-flex; align-items: center; }
+.navbar__logo img { height: 22px; width: auto; display: block; }
 
 .navbar__items { gap: .25rem; }
 
@@ -107,8 +116,14 @@
   border-radius: 10px;
 }
 .menu__link--active, .menu__link:hover {
-  background: rgba(245, 158, 11, 0.16);
+  background: transparent; /* plus sobre */
   color: #ffd84d !important;
+}
+/* Active page link: accent à gauche, discret */
+.theme-doc-sidebar-menu .menu__link--active:not(.menu__link--sublist) {
+  border-left: 3px solid var(--ifm-color-primary);
+  padding-left: calc(.45rem - 3px);
+  background: rgba(255, 216, 77, 0.06);
 }
 
 /* Sidebar typography hierarchy */
@@ -181,6 +196,9 @@
   background: #0B213F;
   width: var(--doc-sidebar-width);
 }
+
+/* Logo en haut de la sidebar — désactivé pour éviter doublon et chevauchements */
+.theme-doc-sidebar-container::before { display: none !important; }
 [data-theme='dark'] .theme-code-block,
 [data-theme='dark'] pre code {
   background: #0B213F !important; /* app --surface-a */
@@ -575,7 +593,7 @@ kbd {
     background: linear-gradient(129.96deg, #f1d063, #eff3f8);
     top: -35%;
     left: -200px;
-    opacity: 0.5;
+    opacity: 0.22;
     pointer-events: none;
     z-index: 0;
   }
@@ -592,7 +610,7 @@ kbd {
     right: -50%;
     transform: rotate(60deg);
     transform-origin: 0 0;
-    opacity: 0.25;
+    opacity: 0.12;
     pointer-events: none;
     z-index: 0;
   }
@@ -607,7 +625,7 @@ kbd {
     background: linear-gradient(129.96deg, #f1d063, #eff3f8);
     top: -35%;
     left: -200px;
-    opacity: 0.35;
+    opacity: 0.20;
     pointer-events: none;
     z-index: 0;
   }
@@ -622,7 +640,7 @@ kbd {
     right: -50%;
     transform: rotate(60deg);
     transform-origin: 0 0;
-    opacity: 0.18;
+    opacity: 0.10;
   pointer-events: none;
   z-index: 0;
 }

@@ -1,46 +1,59 @@
 import { supabase } from '@/supabase';
 
-// Cache des composants importés dynamiquement
-const componentCache = new Map();
+// Vite va scanner et bundler tous les .vue dans /src/views
+const viewModules = import.meta.glob('@/views/**/*.vue');
+
+const DEFAULT_NEED = 'public';
 
 /**
- * Charge un composant Vue dynamiquement depuis son path
- * @param {string} componentPath - Ex: '@/views/admin/DashboardView.vue'
- * @returns {Promise<Component>}
+ * Normalise le component_path venant de la DB
+ * pour matcher les clés de import.meta.glob.
+ *
+ * Ex DB possibles :
+ *  "@/views/auth/LoginHome2.vue"
+ *  "/views/auth/LoginHome2.vue"
+ *  "views/auth/LoginHome2.vue"
+ *  "/src/views/auth/LoginHome2.vue"
  */
-async function loadComponent(componentPath) {
-  // Si déjà en cache, retourner directement
-  if (componentCache.has(componentPath)) {
-    return componentCache.get(componentPath);
+function normalizeComponentPath(pathFromDb) {
+  if (!pathFromDb) {
+    throw new Error('component_path manquant pour une route dynamique');
   }
 
-  try {
-    // Transformer '@/views/...' en chemin relatif depuis src
-    const relativePath = componentPath.replace('@/', '../');
-    
-    // Import dynamique
-    const module = await import(/* @vite-ignore */ relativePath);
-    const component = module.default || module;
-    
-    // Mettre en cache
-    componentCache.set(componentPath, component);
-    
-    return component;
-  } catch (error) {
-    console.error(`❌ Erreur chargement composant ${componentPath}:`, error);
-    // Retourner un composant par défaut en cas d'erreur
-    return {
-      template: `<div class="error-component">
-        <h2>Erreur de chargement</h2>
-        <p>Le composant <code>${componentPath}</code> n'a pas pu être chargé.</p>
-        <p class="error-message">${error.message}</p>
-      </div>`,
-      style: `
-        .error-component { padding: 2rem; background: #fee; border: 1px solid #f00; border-radius: 0.5rem; }
-        .error-message { color: #c00; font-family: monospace; }
-      `
-    };
+  let p = String(pathFromDb).trim();
+
+  if (p.startsWith('@/')) {
+    // "@/views/..." -> "/src/views/..."
+    p = p.replace(/^@/, '/src');
+  } else if (p.startsWith('/views/')) {
+    // "/views/..." -> "/src/views/..."
+    p = p.replace(/^\/views/, '/src/views');
+  } else if (p.startsWith('views/')) {
+    // "views/..." -> "/src/views/..."
+    p = '/src/' + p;
   }
+  // Si tu stockes déjà "/src/views/..." en DB, ça passe tel quel
+
+  return p;
+}
+
+/**
+ * Retourne la fonction de chargement de vue correspondant à component_path.
+ * Vue Router accepte directement cette fonction (lazy load).
+ */
+function resolveView(componentPathFromDb) {
+  const key = normalizeComponentPath(componentPathFromDb);
+  const loader = viewModules[key];
+
+  if (!loader) {
+    console.error('❌ View non trouvée pour component_path =', componentPathFromDb);
+    console.error('🔑 Clé normalisée =', key);
+    console.error('📚 Clés disponibles =', Object.keys(viewModules));
+    throw new Error(`View not found for component_path: ${componentPathFromDb}`);
+  }
+
+  // loader est une fonction () => import('...') déjà gérée par Vite
+  return loader;
 }
 
 /**
@@ -50,7 +63,7 @@ async function loadComponent(componentPath) {
 export async function loadDynamicRoutes() {
   try {
     console.log('🔄 Chargement des routes dynamiques depuis Supabase...');
-    
+
     const { data, error } = await supabase
       .from('dynamic_routes')
       .select('*')
@@ -69,25 +82,35 @@ export async function loadDynamicRoutes() {
 
     console.log(`✅ ${data.length} routes dynamiques récupérées`);
 
-    // Transformer les données Supabase en définitions de routes Vue Router
-    const routes = await Promise.all(
-      data.map(async (route) => {
-        const component = await loadComponent(route.component_path);
+    const routes = data
+      .map((route) => {
+        if (!route.path || !route.name || !route.component_path) {
+          console.warn('⚠️ Route dynamique ignorée (incomplète):', route);
+          return null;
+        }
 
-        // Construire l'objet meta
+        let component;
+        try {
+          component = resolveView(route.component_path);
+        } catch (e) {
+          console.error('❌ Impossible de résoudre le composant pour route dynamique:', route, e);
+          // On laisse tomber cette route individuelle
+          return null;
+        }
+
         const meta = {
-          requiresAuth: route.requires_auth || false,
-          dynamic: true
+          requiresAuth: route.requires_auth ?? false,
+          dynamic: true,
         };
 
-        // need explicite ou défaut aligné avec le router local
+        // need explicite ou défaut aligné avec ton router
         if (route.need !== null && route.need !== undefined) {
           meta.need = route.need;
         } else {
-          meta.need = meta.requiresAuth ? 'authenticated' : 'public';
+          meta.need = meta.requiresAuth ? DEFAULT_NEED : 'public';
         }
 
-        // Ajouter les infos de menu pour le sidebar
+        // Infos de menu
         if (route.menu_section) {
           meta.menuSection = route.menu_section;
           meta.menuLabel = route.menu_label;
@@ -98,14 +121,17 @@ export async function loadDynamicRoutes() {
         return {
           path: route.path,
           name: route.name,
-          component,
+          component, // lazy loader glob
           meta,
-          props: route.props || false
+          props: route.props || false,
         };
       })
-    );
+      .filter(Boolean); // supprime les null
 
-    console.log('✅ Routes dynamiques chargées et transformées:', routes.map(r => r.path));
+    console.log(
+      '✅ Routes dynamiques transformées:',
+      routes.map((r) => r.path)
+    );
 
     return routes;
   } catch (error) {
@@ -121,14 +147,15 @@ export async function loadDynamicRoutes() {
 export async function addDynamicRoutesToRouter(router) {
   const dynamicRoutes = await loadDynamicRoutes();
 
-  dynamicRoutes.forEach(route => {
+  dynamicRoutes.forEach((route) => {
+    if (!route) return;
+
     // Vérifier si la route existe déjà
     if (router.hasRoute(route.name)) {
       console.warn(`⚠️ Route "${route.name}" existe déjà, elle sera remplacée`);
       router.removeRoute(route.name);
     }
 
-    // Ajouter la route
     router.addRoute(route);
     console.log(`✅ Route ajoutée: ${route.path} (${route.name})`);
   });
@@ -137,29 +164,25 @@ export async function addDynamicRoutesToRouter(router) {
 }
 
 /**
- * Recharge les routes dynamiques (utile après modification dans l'admin)
- * @param {Router} router - Instance du router Vue
+ * Reloader toutes les routes dynamiques (après modif dans l’admin)
  */
 export async function reloadDynamicRoutes(router) {
   console.log('🔄 Rechargement des routes dynamiques...');
-  
-  // Supprimer toutes les routes dynamiques existantes
+
   const allRoutes = router.getRoutes();
-  allRoutes.forEach(route => {
-    if (route.meta?.dynamic) {
+  allRoutes.forEach((route) => {
+    if (route.meta && route.meta.dynamic) {
       router.removeRoute(route.name);
     }
   });
 
-  // Recharger depuis Supabase
   await addDynamicRoutesToRouter(router);
-  
+
   console.log('✅ Routes dynamiques rechargées');
 }
 
 /**
  * Récupère les routes dynamiques pour l'affichage dans le menu
- * @returns {Promise<Array>} Routes organisées par section
  */
 export async function getDynamicRoutesForMenu() {
   try {
@@ -172,9 +195,8 @@ export async function getDynamicRoutesForMenu() {
 
     if (error) throw error;
 
-    // Grouper par section
     const sections = {};
-    (data || []).forEach(route => {
+    (data || []).forEach((route) => {
       const section = route.menu_section || 'Autre';
       if (!sections[section]) {
         sections[section] = [];
@@ -183,7 +205,7 @@ export async function getDynamicRoutesForMenu() {
         label: route.menu_label || route.name,
         icon: route.menu_icon || 'pi pi-circle',
         to: route.path,
-        need: route.need
+        need: route.need,
       });
     });
 
@@ -193,3 +215,4 @@ export async function getDynamicRoutesForMenu() {
     return {};
   }
 }
+

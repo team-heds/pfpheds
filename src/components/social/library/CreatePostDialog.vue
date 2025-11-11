@@ -134,7 +134,7 @@ function emitPublish() {
 </script>
 
 <style scoped>
-.create-post-dialog >>> .p-dialog-content {
+.create-post-dialog :deep(.p-dialog-content) {
   padding: 1.2rem 1.1rem 1.1rem 1.1rem;
   max-width: 880px;
 }
@@ -162,7 +162,7 @@ function emitPublish() {
   justify-content: flex-end;
 }
 @media (max-width: 900px) {
-  .create-post-dialog >>> .p-dialog-content {
+  .create-post-dialog :deep(.p-dialog-content) {
     max-width: 100vw !important;
   }
   .actions-row {
@@ -175,7 +175,7 @@ function emitPublish() {
   }
 }
 @media (max-width: 768px) {
-  .create-post-dialog >>> .p-dialog-content {
+  .create-post-dialog :deep(.p-dialog-content) {
     padding: 0.7rem 0.2rem 0.7rem 0.2rem;
   }
   :deep(.p-dialog),

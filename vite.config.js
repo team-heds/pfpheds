@@ -9,11 +9,11 @@ import { VitePWA } from 'vite-plugin-pwa';
 export default defineConfig({
   server: {
     host: '0.0.0.0',
-    port: 5162,
+    port: 5172,
     hmr: {
-      port: 5162,
+      port: 5172,
       host: 'localhost',
-      clientPort: 5162
+      clientPort: 5172
     },
     watch: {
       usePolling: true,
@@ -55,7 +55,7 @@ export default defineConfig({
             },
           },
         ],
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // Limite augmentée à 5 Mo
+        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // Limite augmentée à 10 MB pour couvrir les gros bundles
       },
       manifest: {
         name: 'HEdS',
