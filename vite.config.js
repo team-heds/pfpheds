@@ -9,11 +9,11 @@ import { VitePWA } from 'vite-plugin-pwa';
 export default defineConfig({
   server: {
     host: '0.0.0.0',
-    port: 5182,
+    port: 5192,
     hmr: {
-      port: 5182,
+      port: 5192,
       host: 'localhost',
-      clientPort: 5182
+      clientPort: 5192
     },
     watch: {
       usePolling: true,
