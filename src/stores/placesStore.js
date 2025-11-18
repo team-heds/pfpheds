@@ -2,9 +2,7 @@
  * Store Pinia pour la gestion des Places (PFP) via Supabase
  */
 import { defineStore } from 'pinia';
-
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY;
+import { supabase } from '@/supabase';
 
 export const usePlacesStore = defineStore('places', {
   state: () => ({
@@ -63,18 +61,13 @@ export const usePlacesStore = defineStore('places', {
       this.error = null;
 
       try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/places?select=*`, {
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-          },
-        });
+        const { data, error } = await supabase
+          .from('places')
+          .select('*');
 
-        if (!response.ok) {
-          throw new Error(`Erreur HTTP: ${response.status}`);
-        }
+        if (error) throw error;
 
-        this.places = await response.json();
+        this.places = data || [];
         console.log('✅ Places chargées depuis Supabase:', this.places.length);
         return this.places;
       } catch (error) {
@@ -94,34 +87,25 @@ export const usePlacesStore = defineStore('places', {
       this.error = null;
 
       try {
-        const response = await fetch(
-          `${SUPABASE_URL}/rest/v1/places?PlaceId=eq.${id}&select=*`,
-          {
-            headers: {
-              'apikey': SUPABASE_KEY,
-              'Authorization': `Bearer ${SUPABASE_KEY}`,
-            },
-          }
-        );
+        const { data, error } = await supabase
+          .from('places')
+          .select('*')
+          .eq('PlaceId', id)
+          .single();
 
-        if (!response.ok) {
-          throw new Error(`Erreur HTTP: ${response.status}`);
-        }
+        if (error) throw error;
 
-        const data = await response.json();
-        const place = data[0];
-
-        if (place) {
+        if (data) {
           // Mettre à jour le store si la place existe déjà
           const index = this.places.findIndex(p => p.PlaceId === id);
           if (index !== -1) {
-            this.places[index] = place;
+            this.places[index] = data;
           } else {
-            this.places.push(place);
+            this.places.push(data);
           }
         }
 
-        return place;
+        return data;
       } catch (error) {
         console.error('❌ Erreur fetch place by ID:', error);
         this.error = error.message;
@@ -139,21 +123,14 @@ export const usePlacesStore = defineStore('places', {
       this.error = null;
 
       try {
-        const response = await fetch(
-          `${SUPABASE_URL}/rest/v1/places?InstitutionId=eq.${institutionId}&select=*`,
-          {
-            headers: {
-              'apikey': SUPABASE_KEY,
-              'Authorization': `Bearer ${SUPABASE_KEY}`,
-            },
-          }
-        );
+        const { data, error } = await supabase
+          .from('places')
+          .select('*')
+          .eq('InstitutionId', institutionId);
 
-        if (!response.ok) {
-          throw new Error(`Erreur HTTP: ${response.status}`);
-        }
+        if (error) throw error;
 
-        return await response.json();
+        return data || [];
       } catch (error) {
         console.error('❌ Erreur fetch places by institution:', error);
         this.error = error.message;
@@ -171,26 +148,17 @@ export const usePlacesStore = defineStore('places', {
       this.error = null;
 
       try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/places`, {
-          method: 'POST',
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=representation',
-          },
-          body: JSON.stringify(placeData),
-        });
+        const { data, error } = await supabase
+          .from('places')
+          .insert(placeData)
+          .select()
+          .single();
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || `Erreur HTTP: ${response.status}`);
-        }
+        if (error) throw error;
 
-        const newPlace = await response.json();
-        this.places.push(newPlace[0]);
-        console.log('✅ Place créée:', newPlace[0].PlaceId);
-        return newPlace[0];
+        this.places.push(data);
+        console.log('✅ Place créée:', data.PlaceId);
+        return data;
       } catch (error) {
         console.error('❌ Erreur création place:', error);
         this.error = error.message;
@@ -208,35 +176,33 @@ export const usePlacesStore = defineStore('places', {
       this.error = null;
 
       try {
-        const response = await fetch(
-          `${SUPABASE_URL}/rest/v1/places?PlaceId=eq.${id}`,
-          {
-            method: 'PATCH',
-            headers: {
-              'apikey': SUPABASE_KEY,
-              'Authorization': `Bearer ${SUPABASE_KEY}`,
-              'Content-Type': 'application/json',
-              'Prefer': 'return=representation',
-            },
-            body: JSON.stringify(updates),
-          }
-        );
+        console.log('📤 Envoi de la mise à jour à Supabase:', { id, updates });
+        
+        const { data, error } = await supabase
+          .from('places')
+          .update(updates)
+          .eq('PlaceId', id)
+          .select()
+          .single();
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || `Erreur HTTP: ${response.status}`);
+        if (error) {
+          console.error('❌ Erreur Supabase:', error);
+          throw error;
         }
 
-        const updatedPlace = await response.json();
+        console.log('📦 Réponse Supabase:', data);
         
         // Mettre à jour le store local
         const index = this.places.findIndex(p => p.PlaceId === id);
         if (index !== -1) {
-          this.places[index] = { ...this.places[index], ...updatedPlace[0] };
+          this.places[index] = { ...this.places[index], ...data };
+          console.log('✅ Place mise à jour localement:', this.places[index]);
+        } else {
+          console.warn('⚠️ Place non trouvée dans le store local:', id);
         }
 
         console.log('✅ Place mise à jour:', id);
-        return updatedPlace[0];
+        return data;
       } catch (error) {
         console.error('❌ Erreur mise à jour place:', error);
         this.error = error.message;
@@ -254,20 +220,12 @@ export const usePlacesStore = defineStore('places', {
       this.error = null;
 
       try {
-        const response = await fetch(
-          `${SUPABASE_URL}/rest/v1/places?PlaceId=eq.${id}`,
-          {
-            method: 'DELETE',
-            headers: {
-              'apikey': SUPABASE_KEY,
-              'Authorization': `Bearer ${SUPABASE_KEY}`,
-            },
-          }
-        );
+        const { error } = await supabase
+          .from('places')
+          .delete()
+          .eq('PlaceId', id);
 
-        if (!response.ok) {
-          throw new Error(`Erreur HTTP: ${response.status}`);
-        }
+        if (error) throw error;
 
         // Retirer du store local
         this.places = this.places.filter(p => p.PlaceId !== id);

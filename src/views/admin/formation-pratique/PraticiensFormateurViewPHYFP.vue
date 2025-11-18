@@ -7,7 +7,7 @@
             <i class="pi pi-user-plus text-primary text-4xl"></i>
             <div>
               <h1 class="text-3xl font-bold text-900 m-0">Praticiens Formateurs</h1>
-              <p class="text-600 m-0 mt-2">Référentiel des praticiens formateurs (Supabase)</p>
+              <p class="text-600 m-0 mt-2">Référentiel des praticiens formateurs</p>
             </div>
           </div>
           <div class="flex align-items-center gap-2">
@@ -53,30 +53,74 @@
         </DataTable>
       </div>
 
-      <Dialog v-model:visible="editorVisible" :modal="true" header="Praticien formateur" class="w-30rem">
-        <div class="grid form-grid">
-          <div class="col-12">
-            <label class="block mb-2">Prénom</label>
-            <InputText v-model="form.prenom" class="w-full" />
+      <Dialog 
+        v-model:visible="editorVisible" 
+        :modal="true" 
+        :header="form.id ? 'Modifier un praticien formateur' : 'Ajouter un praticien formateur'" 
+        :style="{ width: '450px' }"
+      >
+        <div class="p-fluid">
+          <div class="field mb-3">
+            <label for="prenom" class="font-semibold">Prénom *</label>
+            <InputText 
+              id="prenom" 
+              v-model="form.prenom" 
+              placeholder="Ex: Jean"
+              :class="{ 'p-invalid': submitted && !form.prenom }"
+            />
+            <small v-if="submitted && !form.prenom" class="p-error">Le prénom est requis</small>
           </div>
-          <div class="col-12">
-            <label class="block mb-2">Nom</label>
-            <InputText v-model="form.nom" class="w-full" />
+          
+          <div class="field mb-3">
+            <label for="nom" class="font-semibold">Nom *</label>
+            <InputText 
+              id="nom" 
+              v-model="form.nom" 
+              placeholder="Ex: Dupont"
+              :class="{ 'p-invalid': submitted && !form.nom }"
+            />
+            <small v-if="submitted && !form.nom" class="p-error">Le nom est requis</small>
           </div>
-          <div class="col-12">
-            <label class="block mb-2">Email</label>
-            <InputText v-model="form.mail" class="w-full" />
+          
+          <div class="field mb-3">
+            <label for="mail" class="font-semibold">Email *</label>
+            <InputText 
+              id="mail" 
+              v-model="form.mail" 
+              type="email"
+              placeholder="Ex: jean.dupont@email.ch"
+              :class="{ 'p-invalid': submitted && !form.mail }"
+            />
+            <small v-if="submitted && !form.mail" class="p-error">L'email est requis</small>
           </div>
-          <div class="col-12">
-            <label class="block mb-2">Institution</label>
-            <Dropdown v-model="form.institution_id" :options="institutionOptions" optionLabel="label" optionValue="value" filter class="w-full" placeholder="Sélectionner une institution" />
+          
+          <div class="field mb-3">
+            <label for="institution" class="font-semibold">Institution</label>
+            <Dropdown 
+              id="institution"
+              v-model="form.institution_id" 
+              :options="institutionOptions" 
+              optionLabel="label" 
+              optionValue="value" 
+              filter 
+              filterPlaceholder="Rechercher une institution..."
+              placeholder="Sélectionner une institution" 
+              :loading="instStore.loading"
+              showClear
+              class="w-full"
+            />
+            <small class="text-500">Optionnel - Lien vers l'institution associée</small>
           </div>
         </div>
+        
         <template #footer>
-          <div class="flex gap-2">
-            <Button label="Annuler" class="p-button-secondary" @click="closeDialog" />
-            <Button label="Enregistrer" icon="pi pi-save" :loading="saving" @click="save" />
-          </div>
+          <Button label="Annuler" icon="pi pi-times" text @click="closeDialog" />
+          <Button 
+            :label="form.id ? 'Mettre à jour' : 'Créer'" 
+            icon="pi pi-check" 
+            :loading="saving" 
+            @click="save" 
+          />
         </template>
       </Dialog>
     </div>
@@ -104,6 +148,7 @@ const items = computed(() => store.praticiensFormateurs)
 const total = computed(() => items.value.length)
 const saving = ref(false)
 const editorVisible = ref(false)
+const submitted = ref(false)
 const form = ref({ id: null, prenom: '', nom: '', mail: '', institution_id: null })
 
 function fullName(u) {
@@ -118,7 +163,19 @@ function getInstitutionName(u) {
 
 const institutionOptions = computed(() => {
   const arr = Array.isArray(instStore.institutions) ? instStore.institutions : []
-  return arr.map(i => ({ label: i.Name || i.name || `#${i.InstitutionId ?? i.id}`, value: i.InstitutionId ?? i.id }))
+  return arr
+    .filter(i => i.InstitutionId || i.id) // Filtrer celles qui ont un ID
+    .map(i => {
+      const id = i.InstitutionId ?? i.id
+      const name = i.Name || i.name || `#${id}`
+      const locality = i.Locality || i.localite || ''
+      const label = locality ? `${name} (${locality})` : name
+      return { 
+        label, 
+        value: id 
+      }
+    })
+    .sort((a, b) => a.label.localeCompare(b.label))
 })
 
 let debounceId = null
@@ -136,32 +193,71 @@ watch(search, (v) => {
 
 function openCreate() {
   form.value = { id: null, prenom: '', nom: '', mail: '', institution_id: null }
+  submitted.value = false
   editorVisible.value = true
 }
 
 function openEdit(row) {
   form.value = { id: row.id, prenom: row.prenom || '', nom: row.nom || '', mail: row.mail || '', institution_id: row.institution_id ?? null }
+  submitted.value = false
   editorVisible.value = true
 }
 
 function closeDialog() {
   editorVisible.value = false
+  submitted.value = false
 }
 
 async function save() {
+  submitted.value = true
+  
+  // Validation
+  if (!form.value.prenom || !form.value.nom || !form.value.mail) {
+    return
+  }
+  
   try {
     saving.value = true
-    const payload = { prenom: form.value.prenom, nom: form.value.nom, mail: form.value.mail, institution_id: form.value.institution_id }
-    const instName = getInstitutionName({ institution_id: form.value.institution_id, institution: '' })
-    if (instName) payload.institution = instName
+    const payload = { 
+      prenom: form.value.prenom.trim(), 
+      nom: form.value.nom.trim(), 
+      mail: form.value.mail.trim(), 
+      institution_id: form.value.institution_id 
+    }
+    
+    // Récupérer le nom et la localité de l'institution si disponible
+    if (payload.institution_id) {
+      // Note: institution_id dans praticiens_formateurs est UUID
+      // mais InstitutionId dans institutions est TEXT
+      // On compare en string
+      const instId = String(payload.institution_id)
+      const inst = instStore.institutions?.find(i => {
+        const iId = String(i.InstitutionId || i.id || '')
+        return iId === instId
+      })
+      
+      if (inst) {
+        payload.institution = inst.Name || inst.name || ''
+        payload.localite = inst.Locality || inst.localite || ''
+        console.log('🏥 Institution trouvée:', payload.institution, '-', payload.localite)
+      } else {
+        console.warn('⚠️ Institution non trouvée pour ID:', instId)
+      }
+    }
+    
     if (!form.value.id) {
       await store.createPraticienFormateur(payload)
+      console.log('✅ Praticien formateur créé avec succès')
     } else {
       await store.updatePraticienFormateur(form.value.id, payload)
+      console.log('✅ Praticien formateur mis à jour avec succès')
     }
+    
     editorVisible.value = false
+    submitted.value = false
   } catch (e) {
-    console.error(e)
+    console.error('❌ Erreur lors de la sauvegarde:', e)
+    alert('Erreur lors de la sauvegarde: ' + e.message)
   } finally {
     saving.value = false
   }
