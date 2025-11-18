@@ -1,8 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue';
-import { ref as storageRef, listAll, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { storage} from '../../../../firebase.js';
+import { supabase } from '@/supabase';
 import { useToast } from 'primevue/usetoast';
 
 // Initialisation des données
@@ -18,26 +16,54 @@ const subFolders = ref([]);  // Sous-dossiers dans le dossier sélectionné
 const uploadFiles = ref([]);  // Fichiers à uploader
 const currentUser = ref(null);  // Utilisateur courant
 const userFolderPath = ref('');  // Chemin de stockage spécifique à l'utilisateur
+const fileUploaderRef = ref(null);  // Référence au composant FileUpload
 const toast = useToast();
 
-// Fonction pour charger les fichiers et sous-dossiers à partir du Storage Firebase
+// Fonction pour charger les fichiers et sous-dossiers à partir du Storage Supabase
 const loadFilesAndSubFoldersFromFolder = async (folderPath) => {
-  const folderRef = storageRef(storage, `${userFolderPath.value}${folderPath}`);
-  const result = await listAll(folderRef);
+  try {
+    const fullPath = `${userFolderPath.value}${folderPath}`;
+    
+    // Nettoyer les fichiers et sous-dossiers actuels
+    files.value = [];
+    subFolders.value = [];
 
-  // Nettoyer les fichiers et sous-dossiers actuels
-  files.value = [];
-  subFolders.value = [];
+    // Lister les fichiers dans le dossier
+    const { data: filesList, error } = await supabase.storage
+      .from('user-documents')
+      .list(fullPath, {
+        limit: 100,
+        offset: 0,
+      });
 
-  // Parcourir les fichiers et les sous-dossiers
-  result.items.forEach(async (itemRef) => {
-    const fileUrl = await getDownloadURL(itemRef);
-    files.value.push({ name: itemRef.name, url: fileUrl });
-  });
+    if (error) throw error;
 
-  result.prefixes.forEach((subFolderRef) => {
-    subFolders.value.push({ name: subFolderRef.name, path: subFolderRef.fullPath });
-  });
+    if (filesList) {
+      // Séparer fichiers et dossiers
+      filesList.forEach((item) => {
+        if (item.id) {
+          // C'est un fichier
+          const { data: urlData } = supabase.storage
+            .from('user-documents')
+            .getPublicUrl(`${fullPath}${item.name}`);
+          
+          files.value.push({ 
+            name: item.name, 
+            url: urlData.publicUrl 
+          });
+        } else {
+          // C'est un dossier
+          subFolders.value.push({ 
+            name: item.name, 
+            path: `${fullPath}${item.name}/` 
+          });
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Erreur lors du chargement des fichiers:', error);
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur lors du chargement des fichiers', life: 4000 });
+  }
 };
 
 // Gérer le clic sur un dossier
@@ -61,11 +87,30 @@ const onSelectedFiles = async (event) => {
       continue;
     }
 
-    // Utiliser le chemin spécifique de l'utilisateur pour stocker le fichier
-    const fileRef = storageRef(storage, `${userFolderPath.value}${selectedFolder.value.path}${file.name}`);
-    await uploadBytes(fileRef, file);  // Uploader le fichier dans Firebase Storage
-    const fileUrl = await getDownloadURL(fileRef);
-    files.value.push({ name: file.name, url: fileUrl });  // Ajouter à la liste des fichiers affichés
+    try {
+      // Utiliser le chemin spécifique de l'utilisateur pour stocker le fichier
+      const filePath = `${userFolderPath.value}${selectedFolder.value.path}${file.name}`;
+      
+      // Uploader le fichier dans Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('user-documents')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // Obtenir l'URL publique
+      const { data: urlData } = supabase.storage
+        .from('user-documents')
+        .getPublicUrl(filePath);
+
+      const fileUrl = urlData.publicUrl;
+      files.value.push({ name: file.name, url: fileUrl });
+      
+      toast.add({ severity: 'success', summary: 'Succès', detail: `Fichier "${file.name}" uploadé avec succès`, life: 3000 });
+    } catch (error) {
+      console.error('Erreur d\'upload pour le fichier', file.name, error);
+      toast.add({ severity: 'error', summary: 'Erreur', detail: `Erreur lors de l'upload de "${file.name}"`, life: 4000 });
+    }
   }
 };
 
@@ -75,18 +120,37 @@ const onChooseUploadFiles = () => {
 };
 
 // Surveiller l'état de connexion de l'utilisateur
-onMounted(() => {
-  const auth = getAuth();
-  onAuthStateChanged(auth, (user) => {
+onMounted(async () => {
+  try {
+    // Récupérer l'utilisateur connecté depuis Supabase
+    const { data: { user }, error } = await supabase.auth.getUser();
+    
+    if (error) throw error;
+    
     if (user) {
       currentUser.value = user;
-      userFolderPath.value = `users/${user.uid}/`;  // Utiliser l'ID utilisateur pour son chemin dans Storage
+      userFolderPath.value = `users/${user.id}/`;  // Utiliser l'ID utilisateur pour son chemin dans Storage
       console.log(`Chemin de stockage pour cet utilisateur : ${userFolderPath.value}`);
     } else {
       currentUser.value = null;
       userFolderPath.value = '';
     }
-  });
+    
+    // Écouter les changements d'authentification
+    supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        currentUser.value = session.user;
+        userFolderPath.value = `users/${session.user.id}/`;
+      } else {
+        currentUser.value = null;
+        userFolderPath.value = '';
+      }
+    });
+  } catch (error) {
+    console.error('Erreur lors de la récupération de l\'utilisateur:', error);
+    currentUser.value = null;
+    userFolderPath.value = '';
+  }
 });
 </script>
 
