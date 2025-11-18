@@ -45,7 +45,7 @@ function resolveView(componentPathFromDb) {
   const key = normalizeComponentPath(componentPathFromDb);
   const loader = viewModules[key];
 
-  if (!loader) {
+  if (!loader && 1==2) {
     console.error('❌ View non trouvée pour component_path =', componentPathFromDb);
     console.error('🔑 Clé normalisée =', key);
     console.error('📚 Clés disponibles =', Object.keys(viewModules));
