@@ -44,7 +44,6 @@
 .hero--primary {
   background: linear-gradient(90deg, #f59e0b 0%, #f3c300 100%);
 }
-
 /* Navbar */
 .navbar {
   background: rgba(11, 33, 63, 0.6) !important; /* glass/dim */
