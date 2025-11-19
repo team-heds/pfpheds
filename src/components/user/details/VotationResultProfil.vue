@@ -349,6 +349,7 @@ const fetchInstitutions = async () => {
     })
   }
 }
+
 const fetchPlaces = () => {
   const placesRef = firebaseRef(db, 'Places')
   onValue(placesRef, (snapshot) => {

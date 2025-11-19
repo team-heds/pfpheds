@@ -1,7 +1,7 @@
 <template>
-  <div>
+
   <!-- Critères Validés (Agrégation) -->
-  <h5 class="mb-4 m-2">Critères Validéss</h5>
+  <h5 class="mb-4 m-2">Critères Validés</h5>
   <div class="grid m-2" v-if="aggregatedCriteria && Object.keys(aggregatedCriteria).length">
     <div
       v-for="(value, key) in aggregatedCriteria"
@@ -77,42 +77,37 @@
   </div>
 
 
-  <div v-if="assignedPlaces && assignedPlaces.length">
+  <div v-if="institutionsList && institutionsList.length">
     <div
-      v-for="(place, index) in assignedPlaces"
-      :key="place._key"
+      v-for="(inst, index) in institutionsList"
+      :key="inst.InstitutionId"
       class="surfaces-card mb-4 shadow-2 flex flex-column gap-2"
       style="min-height: 200px;"
     >
       <!-- Ligne du titre + bouton "Voir les détails" aligné à droite -->
-      <div class="flex align-items-center justify-content-between mb-2" style="height: 32px;">
-        <h4 class="m-0">Formation Pratique {{ index + 1 }}</h4>
-        <Button
-          label="Voir les détails"
-          icon="pi pi-arrow-right"
-          class="text-sm p-button-outlined p-button-primary details-btn"
-          style="height: 32px; width: 200px; min-width: 200px;"
-          @click="navigateToInstitution(place.IDPlace)"
-        />
+      <div class="flex align-items-center ">
+        <h4 class="m-2 w-2">Formation Pratique {{ index + 1 }}</h4>
+        <Tag v-if="inst.State === 'Echec'" value="Non Validé" severity="danger" class="ml-2"></Tag>
+        <div class="flex align-items-center m-2">
+          <Button
+            label="Voir les détails"
+            icon="pi pi-arrow-right"
+            class="text-sm p-button-outlined p-button-primary"
+            @click="navigateToInstitution(inst.InstitutionId)"
+          />
+        </div>
+
       </div>
 
       <!-- Nom de l'institution + Domaine -->
       <div>
         <h6 class="m-2 font-bold">
-          {{ getInstitutionNameById(place.IDPlace) }}
+          {{ inst.Name || inst.NomInstitution }}
         </h6>
-        <p class="m-2">
-          Domaine : {{ place.NomPlace }}<br />
-          Critères : {{ getValidCriterias(place).join(', ') }}<br />
-          <span v-if="getPraticienFormateurInfos(place)">
-            Praticien formateur :
-            <b>{{ getPraticienFormateurInfos(place) }}</b><br />
-            <span v-if="getPraticienFormateurContact(place)">
-              Contact :
-              <a :href="'mailto:' + getPraticienFormateurContact(place)" class="text-primary font-bold" style="text-decoration: underline;">
-                {{ getPraticienFormateurContact(place) }}
-              </a>
-            </span>
+        <p v-if="inst.Domaines && inst.Domaines.length" class="m-2">
+          Domaine : {{ inst.Domaines.join(", ") }}
+          <span v-if="inst.CriteriaValides && inst.CriteriaValides.length">
+            | Critères validés : {{ inst.CriteriaValides.join(", ") }}
           </span>
         </p>
       </div>
@@ -123,13 +118,13 @@
         <div
           class="mt-2"
           v-if="
-            uploads[institutionsKey(place.IDPlace)] &&
-            uploads[institutionsKey(place.IDPlace)].docs.length > 0
+            uploads[institutionsKey(inst.InstitutionId)] &&
+            uploads[institutionsKey(inst.InstitutionId)].docs.length > 0
           "
         >
           <ul class="list-none p-0">
             <li
-              v-for="(doc, docIndex) in uploads[institutionsKey(place.IDPlace)].docs"
+              v-for="(doc, docIndex) in uploads[institutionsKey(inst.InstitutionId)].docs"
               :key="doc.docId"
               class="flex align-items-center mb-2 gap-2"
             >
@@ -142,7 +137,7 @@
                 <Button
                   label="Enregistrer"
                   class="text-sm p-button-success"
-                  @click="saveDocName(place.IDPlace, index + 1, doc)"
+                  @click="saveDocName(inst.InstitutionId, index + 1, doc)"
                 />
                 <Button
                   label="Annuler"
@@ -164,7 +159,7 @@
                   icon="pi pi-trash"
                   class="text-sm p-button-danger"
                   @click="confirmDelete(
-                    place.IDPlace,
+                    inst.InstitutionId,
                     index + 1,
                     doc.docId,
                     doc.fileName
@@ -188,40 +183,28 @@
           customUpload
           multiple
           chooseLabel="Sélectionner"
-          @select="($event) => handleFileSelection($event, place.IDPlace)"
+          @select="($event) => handleFileSelection($event, inst.InstitutionId)"
         />
         <Button
           label="Envoyer documents"
           class="text-sm p-button-outlined p-button-primary"
-          @click="uploadDocuments(place.IDPlace, index + 1)"
+          @click="uploadDocuments(inst.InstitutionId, index + 1)"
         />
       </div>
     </div>
   </div>
   <div v-else>
     <p class="text-secondary">
-      Aucune affectation PFP disponible pour cet utilisateur.
+      Aucune institution disponible pour cet utilisateur.
     </p>
-  </div>
   </div>
 </template>
 
 
 <script setup>
-import { ref, onMounted, computed, watch } from "vue";
-import { supabase } from '@/supabase';
-
-// Props reçues du parent
-const props = defineProps({
-  userProfile: {
-    type: Object,
-    default: null
-  },
-  userId: {
-    type: String,
-    required: true
-  }
-});
+import { ref, onMounted, computed } from "vue";
+import { db, auth } from '../../../../firebase.js'; // adapte le chemin si besoin
+import { onAuthStateChanged } from "firebase/auth";
 
 // Variable pour vérifier le rôle de l'utilisateur
 const isAdmin = ref(false);
@@ -262,116 +245,56 @@ function getPlaceName(place) {
   return label;
 }
 
-// Récupère toutes les Places depuis Supabase
+// Récupère toutes les Places depuis Firebase
 async function fetchPlaces() {
-  try {
-    const { data, error } = await supabase
-      .from('places')
-      .select('*');
-    
-    if (error) throw error;
-    
-    if (data) {
-      placesList.value = data.map((place) => ({
-        ...place,
-        IDPlace: place.id || place.place_id,
-        NomPlace: place.name || place.nom_place,
-        InstitutionId: place.institution_id,
-        key: place.id
-      }));
-    }
-  } catch (error) {
-    console.error('Erreur lors de la récupération des places:', error);
+  const placesRef = dbRef(db, "Places");
+  const snapshot = await get(placesRef);
+  if (snapshot.exists()) {
+    const data = snapshot.val();
+    placesList.value = Object.entries(data).map(([key, value]) => ({
+      ...value,
+      key,
+    }));
   }
 }
 
 // Récupère l'utilisateur connecté, sa PFP1 et vérifie s'il est admin
-async function fetchCurrentUser() {
-  try {
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
-    if (authError) throw authError;
-    
+function fetchCurrentUser() {
+  onAuthStateChanged(auth, async (user) => {
     if (user) {
-      currentUserId.value = user.id;
-      
-      // Récupère les données de l'utilisateur connecté depuis user_profiles
-      const { data: profileData, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      if (profileError) throw profileError;
-      
-      if (profileData) {
-        selectedPFP1.value = profileData.pfp1 || "";
-        // Vérifie si l'utilisateur est un admin via le rôle
-        isAdmin.value = profileData.role === 'admin';
+      currentUserId.value = user.uid;
+      // Récupère les données de l'utilisateur connecté, y compris les rôles
+      const userRef = dbRef(db, `Users/${user.uid}`);
+      const snapshot = await get(userRef);
+      if (snapshot.exists()) {
+        const userData = snapshot.val();
+        selectedPFP1.value = userData.PFP1 || "";
+        // Vérifie si l'utilisateur est un admin
+        isAdmin.value = !!(userData.Roles && userData.Roles.admin);
       } else {
         isAdmin.value = false;
       }
     } else {
+      // Gérer le cas où l'utilisateur est déconnecté
       isAdmin.value = false;
       currentUserId.value = "";
     }
-  } catch (error) {
-    console.error('Erreur lors de la récupération de l\'utilisateur:', error);
-    isAdmin.value = false;
-    currentUserId.value = "";
-  }
+  });
 }
 
-// Watcher pour détecter les changements de userProfile
-watch(() => props.userProfile, (newVal) => {
-  if (newVal) {
-    console.log('👀 userProfile changé, retraitement...')
-    processUserProfile()
-  }
-}, { immediate: true })
-
-onMounted(async () => {
-  console.log('🚀 ResumStageUserProfile monté')
-  // Charger les places disponibles et l'utilisateur courant (pour l'édition)
-  await fetchPlaces();
-  await fetchCurrentUser();
-  await fetchAllInstitutions();
-  // Charger les institutions depuis le store
-  await institutionsStore.fetchInstitutions();
-  // Charger les praticiens formateurs
-  await fetchPraticienFormateurs();
-  // Charger la liste PFP de l'étudiant
-  await fetchStudentPfpList();
-  // Charger les documents pour toutes les places
-  await loadUploadedDocsForAll();
-  // Traiter le profil utilisateur
-  if (props.userProfile) {
-    await processUserProfile();
-  }
+onMounted(() => {
+  fetchPlaces();
+  fetchCurrentUser();
+  fetchInstitutions();
 });
 
-// Récupère toutes les institutions depuis Supabase
-async function fetchAllInstitutions() {
-  try {
-    const { data, error } = await supabase
-      .from('institutions')
-      .select('*');
-    
-    if (error) throw error;
-    
-    if (data) {
-      // Convertir le tableau en map avec l'ID comme clé
-      institutionsMap.value = data.reduce((acc, inst) => {
-        const instId = inst.id || inst.institution_id;
-        acc[instId] = {
-          ...inst,
-          Name: inst.name || inst.nom_institution
-        };
-        return acc;
-      }, {});
-    }
-  } catch (error) {
-    console.error('Erreur lors de la récupération des institutions:', error);
+// Récupère toutes les institutions depuis Firebase
+async function fetchInstitutions() {
+  const institutionsRef = dbRef(db, "institutions");
+  const snapshot = await get(institutionsRef);
+  if (snapshot.exists()) {
+    const data = snapshot.val();
+    institutionsMap.value = data;
   }
 }
 
@@ -385,98 +308,103 @@ async function updatePFP1() {
 
   console.log("id " + currentUserId.value);
 
-  try {
-    // Récupérer l'étudiant depuis Supabase
-    const { data: studentData, error: fetchError } = await supabase
-      .from('StudentsPhysio')
-      .select('*')
-      .eq('user_id', currentUserId.value)
-      .maybeSingle();
+  // Correction de la référence pour utiliser currentUserId.value
+  const studentRef = dbRef(db, `Students/${userId}`);
+  console.log('updatePFP1: studentRef path', `Students/${currentUserId.value}`);
 
-    if (fetchError) throw fetchError;
+  // On récupère la place sélectionnée pour en extraire le nom
+  const selectedPlace = placesList.value.find(p => p.IDPlace === selectedPFP1.value);
+  const selectedPlaceName = getPlaceName(selectedPlace);
+  console.log('updatePFP1: selectedPlace', selectedPlace);
+  console.log('updatePFP1: selectedPlaceName', selectedPlaceName);
 
-    if (studentData) {
-      console.log('updatePFP1: studentData avant modification', studentData);
+  // On récupère les données actuelles pour ne pas écraser le tableau PFP_valided
+  const snapshot = await get(studentRef);
+  if (snapshot.exists()) {
+    const studentData = snapshot.val();
+    console.log('updatePFP1: studentData avant modification', studentData);
 
-      // On récupère la place sélectionnée pour en extraire le nom
-      const selectedPlace = placesList.value.find(p => p.IDPlace === selectedPFP1.value);
-      const selectedPlaceName = getPlaceName(selectedPlace);
-      console.log('updatePFP1: selectedPlace', selectedPlace);
-      console.log('updatePFP1: selectedPlaceName', selectedPlaceName);
+    // --- Modification des données en local ---
+    studentData.PFP1A = true;
 
-      // --- Modification des données en local ---
-      const fieldsToCopy = ['DE', 'FR', 'MSQ', 'REHAB', 'SYSINT', 'NEUROGER', 'AMBU', 'AIGU'];
-      const placeCharacteristics = {};
-      for (const field of fieldsToCopy) {
-        placeCharacteristics[field] = selectedPlace[field] === 'true' || selectedPlace[field] === true;
-      }
+    // S'assurer que PFPinfo et PFPinfo.PFP1 existent pour éviter les erreurs
+    if (!studentData.PFPinfo) studentData.PFPinfo = {};
+    if (!studentData.PFPinfo.PFP1) studentData.PFPinfo.PFP1 = {};
+    studentData.PFPinfo.PFP1.selectedStageId = selectedPFP1.value;
+    studentData.PFPinfo.PFP1.selectedStageName = selectedPlaceName;
 
-      const newPfpEntry = {
-        id_pfp: selectedPFP1.value,
-        nom_pfp: selectedPlace.NomPlace,
-        selected_places: selectedPlace.key,
-        nom_complet_pfp: selectedPlaceName,
-        ...placeCharacteristics
-      };
-
-      // Préparer les données à mettre à jour
-      let pfpValided = studentData.pfp_valided || [];
-      if (!Array.isArray(pfpValided)) {
-        pfpValided = [];
-      }
-
-      // Mettre à jour ou ajouter la nouvelle entrée
-      const oldEntry = pfpValided[0] || {};
-      pfpValided[0] = {
-        ...oldEntry,
-        ...newPfpEntry
-      };
-
-      const pfpInfo = studentData.pfpinfo || {};
-      if (!pfpInfo.pfp1) pfpInfo.pfp1 = {};
-      pfpInfo.pfp1.selected_stage_id = selectedPFP1.value;
-      pfpInfo.pfp1.selected_stage_name = selectedPlaceName;
-
-      // Mettre à jour dans Supabase
-      const { error: updateError } = await supabase
-        .from('StudentsPhysio')
-        .update({
-          pfp1a: true,
-          pfpinfo: pfpInfo,
-          pfp_valided: pfpValided,
-          updated_at: new Date().toISOString()
-        })
-        .eq('user_id', currentUserId.value);
-
-      if (updateError) throw updateError;
-
-      console.log('updatePFP1: Mise à jour terminée avec succès.');
-    } else {
-      console.warn('updatePFP1: Aucun étudiant trouvé pour cet utilisateur !');
+    // Mise à jour ou création du tableau PFP_valided
+    const institutionName = institutionsMap.value[selectedPlace.IDInstitution] || 'Institution inconnue';
+    const fieldsToCopy = ['DE', 'FR', 'MSQ', 'REHAB', 'SYSINT', 'NEUROGER', 'AMBU', 'AIGU'];
+    const placeCharacteristics = {};
+    for (const field of fieldsToCopy) {
+      placeCharacteristics[field] = selectedPlace[field] === 'true' || selectedPlace[field] === true;
     }
-  } catch (error) {
-    console.error('updatePFP1: Erreur lors de la mise à jour:', error);
+
+    const newPfpEntry = {
+      ID_PFP: selectedPFP1.value,
+      Nom_PFP: selectedPlace.NomPlace,
+      Selected_Places: selectedPlace.key,
+      Nom_Complet_PFP: selectedPlaceName,
+      ...placeCharacteristics
+    };
+
+    // Logique de création/mise à jour de PFP_valided[0] simplifiée et plus robuste
+    if (!studentData.PFP_valided || !Array.isArray(studentData.PFP_valided)) {
+      studentData.PFP_valided = []; // Initialise le tableau s'il n'existe pas
+    }
+
+    // Prépare la nouvelle entrée en la fusionnant avec l'ancienne si elle existe
+    const oldEntry = studentData.PFP_valided[0] || {};
+    studentData.PFP_valided[0] = {
+      ...oldEntry,
+      ...newPfpEntry
+    };
+    console.log('updatePFP1: PFP_valided[0] créé/mis à jour.');
+    // --- Fin des modifications ---
+
+    console.log('updatePFP1: Données prêtes pour le "set"', studentData);
+    console.log('updatePFP1: Données prêtes pour le "set"', studentRef);
+
+    try {
+      // TEST FINAL : Écrire sur un nœud complètement nouveau pour vérifier la connexion
+      const testRef = dbRef(db, `test-writes/${currentUserId.value}`);
+      await set(testRef, { timestamp: new Date().toISOString(), status: 'test-write-successful' });
+      console.log('TEST FINAL: Écriture sur /test-writes réussie !');
+
+      // On utilise "set" pour réécrire l'intégralité des données de l'étudiant
+      await set(studentRef, studentData);
+      console.log('updatePFP1: "set" terminé avec succès.');
+    } catch (error) {
+      console.error('updatePFP1: Erreur lors du "set" Firebase', error);
+    }
+  } else {
+    console.warn('updatePFP1: Aucun étudiant trouvé à ce chemin !');
   }
 }
 
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useToast } from 'primevue/usetoast';
+import { getDatabase, ref as dbRef, get, set } from "firebase/database";
 import Button from "primevue/button";
+import Card from "primevue/card";
 import InputText from "primevue/inputtext";
 import FileUpload from "primevue/fileupload";
-import { useInstitutionsStore } from '@/stores/institutionsStore';
+import Tag from 'primevue/tag';
+import { storage } from "root/firebase"; // Assurez-vous que le chemin est correct
+import {
+  ref as storageRef,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject
+} from "firebase/storage";
 
 const toast = useToast();
+const route = useRoute();
 const router = useRouter();
-const institutionsStore = useInstitutionsStore();
+const userId = route.params.id;
+const userProfile = ref(null);
 const institutionsList = ref([]);
-
-// Variables pour les praticiens formateurs
-const praticienFormateurs = ref({});
-const praticiensByInstitution = ref({});
-
-// Liste PFP validées pour l'étudiant (depuis StudentsPhysio)
-const studentPfpList = ref([]);
 
 // Liste des critères pour l'agrégation
 const criteriaList = [
@@ -490,266 +418,81 @@ const criteriaList = [
   "DE"
 ];
 
-// Construit la liste des places attribuées depuis StudentsPhysio.pfp_valided
-const assignedPlaces = computed(() => {
-  const results = []
-  const criteriaMap = {
-    AMBU: 'ambu',
-    DE: 'de',
-    FR: 'fr',
-    MSQ: 'msq',
-    NEUROGER: 'neuroger',
-    REHAB: 'rehab',
-    SYSINT: 'sysint',
-    AIGU: 'aigu',
-  }
-  ;(studentPfpList.value || []).forEach((pfp, idx) => {
-    const item = {
-      _key: `pfp_${idx}`,
-      IDPlace: pfp.id_pfp || pfp.ID_PFP || '',
-      NomPlace: pfp.nom_pfp || pfp.Nom_PFP || pfp.domaine || pfp.Domaine || '',
-      seatIndex: pfp.seat || null,
-    }
-    // Appliquer critères en UPPERCASE attendus par getValidCriterias
-    Object.entries(criteriaMap).forEach(([up, low]) => {
-      item[up] = pfp[low] === true || pfp[up] === true
-    })
-    results.push(item)
-  })
-  console.log('🎯 assignedPlaces calculé:', results.length, 'places', results)
-  return results
-})
-
-const getInstitutionNameById = (idInstitution) => {
-  console.log("ID inst" + idInstitution);
-  return institutionsStore.getInstitutionNameById(idInstitution);
-};
-
-// Retourne la liste des critères à true pour une place donnée
-function getValidCriterias(place) {
-  const criteriaKeys = ['AMBU', 'DE', 'FR', 'MSQ', 'NEUROGER', 'REHAB', 'SYSINT', 'AIGU'];
-  return criteriaKeys.filter(key => {
-    const val = place[key];
-    return val === true || (typeof val === 'string' && val.toLowerCase() === 'true');
-  });
-}
-
-// Retourne "Prénom Nom" du praticien formateur lié à l'institution
-function getPraticienFormateurInfos(place) {
-  const instId = place.IDPlace || place.InstitutionId
-  const list = praticiensByInstitution.value[instId] || []
-  if (list.length > 0) {
-    const p = list[0]
-    const prenom = p.Prenom ? p.Prenom.trim() : ''
-    const nom = p.Nom ? p.Nom.trim() : ''
-    return `${prenom} ${nom}`.trim()
-  }
-  return ''
-}
-
-// Retourne le contact (email) du praticien formateur
-function getPraticienFormateurContact(place) {
-  const instId = place.IDPlace || place.InstitutionId
-  const list = praticiensByInstitution.value[instId] || []
-  if (list.length > 0) {
-    return list[0].Mail || ''
-  }
-  return ''
-}
-
-const fetchPraticienFormateurs = async () => {
+const fetchUserProfileById = async (userId) => {
+  const db = getDatabase();
   try {
-    const { data, error } = await supabase
-      .from('praticiens_formateurs')
-      .select('id, institution_id, prenom, nom, mail')
-    if (error) throw error
-    const map = {}
-    const byInst = {}
-    ;(data || []).forEach(p => {
-      map[p.id] = { Prenom: p.prenom || '', Nom: p.nom || '', Mail: p.mail || '' }
-      const instId = p.institution_id
-      if (instId) {
-        if (!byInst[instId]) byInst[instId] = []
-        byInst[instId].push({ Prenom: p.prenom || '', Nom: p.nom || '', Mail: p.mail || '', id: p.id })
-      }
-    })
-    praticienFormateurs.value = map
-    praticiensByInstitution.value = byInst
-  } catch (e) {
-    console.warn('Erreur chargement praticiens formateurs (Supabase):', e.message)
-    praticienFormateurs.value = {}
-    praticiensByInstitution.value = {}
-  }
-}
-
-const fetchStudentPfpList = async () => {
-  try {
-    console.log('🔍 Chargement PFP pour userId:', props.userId)
-    const { data, error } = await supabase
-      .from('StudentsPhysio')
-      .select('pfp_valided')
-      .eq('user_id', props.userId)
-      .maybeSingle()
-    if (error) throw error
-    console.log('✅ Données StudentsPhysio:', data)
-    
-    if (!data) {
-      console.warn('⚠️ Aucune entrée StudentsPhysio pour cet utilisateur')
-      studentPfpList.value = []
-      return
-    }
-
-    let arr = []
-    const pfpVal = data.pfp_valided
-    
-    // Cas 1: pfp_valided est déjà un tableau
-    if (Array.isArray(pfpVal)) {
-      arr = pfpVal
-    }
-    // Cas 2: pfp_valided est une string JSON (ex: "[]" ou "[{...}]")
-    else if (typeof pfpVal === 'string') {
-      try {
-        const parsed = JSON.parse(pfpVal)
-        arr = Array.isArray(parsed) ? parsed : []
-      } catch (parseError) {
-        console.warn('⚠️ Impossible de parser pfp_valided:', pfpVal)
-        arr = []
-      }
-    }
-    // Cas 3: pfp_valided est un objet (legacy Firebase)
-    else if (pfpVal && typeof pfpVal === 'object') {
-      arr = Object.values(pfpVal)
-    }
-    
-    studentPfpList.value = arr
-    console.log('✅ PFP list chargée:', arr.length, 'entrées', arr)
-  } catch (e) {
-    console.warn('⚠️ Erreur chargement PFP étudiant (Supabase):', e.message)
-    studentPfpList.value = []
-  }
-}
-
-// Fonction pour traiter les données du profil utilisateur
-const processUserProfile = async () => {
-  if (!props.userProfile) {
-    console.warn('⚠️ Aucun userProfile fourni en prop');
-    institutionsList.value = [];
-    return;
-  }
-
-  try {
-    console.log('🔍 ResumStage: Traitement profil pour userId:', props.userId)
-    console.log('✅ Données userProfile reçues:', props.userProfile)
-    
-    const studentData = props.userProfile;
-    
-    if (studentData.pfp_valided) {
-      // Parser pfp_valided (peut être string JSON, array ou objet)
-      let pfpArray = []
-      const pfpVal = studentData.pfp_valided
-      
-      if (Array.isArray(pfpVal)) {
-        pfpArray = pfpVal
-      } else if (typeof pfpVal === 'string') {
-        try {
-          const parsed = JSON.parse(pfpVal)
-          pfpArray = Array.isArray(parsed) ? parsed : []
-        } catch (parseError) {
-          console.warn('⚠️ Impossible de parser pfp_valided:', pfpVal)
-          pfpArray = []
-        }
-      } else if (pfpVal && typeof pfpVal === 'object') {
-        pfpArray = Object.values(pfpVal)
-      }
-      
-      console.log('✅ PFP array parsé:', pfpArray.length, 'entrées')
-      const validPfpEntries = pfpArray.filter((place) => place.id_pfp || place.ID_PFP);
-      console.log('✅ Entrées PFP valides:', validPfpEntries.length)
-        
-      // Agrégation des domaines et critères
-      const domainsByInstitution = {};
-      const criteriaByInstitution = {};
-      validPfpEntries.forEach((place) => {
-        const instId = place.id_pfp || place.ID_PFP;
-        if (place.domaine || place.nom_pfp || place.Domaine || place.Nom_PFP) {
-          if (!domainsByInstitution[instId]) {
-            domainsByInstitution[instId] = new Set();
+    const studentRef = dbRef(db, `Students/${userId}`);
+    const snapshotStudent = await get(studentRef);
+    if (snapshotStudent.exists()) {
+      const studentData = snapshotStudent.val();
+      userProfile.value = { ...studentData };
+      if (studentData.PFP_valided) {
+        const pfpEntries = Object.values(studentData.PFP_valided);
+        const validPfpEntries = pfpEntries.filter((place) => place.ID_PFP);
+        // Agrégation des domaines et critères
+        const domainsByInstitution = {};
+        const criteriaByInstitution = {};
+        validPfpEntries.forEach((place) => {
+          const instId = place.ID_PFP;
+          if (place.Domaine || place.Nom_PFP  ) {
+            if (!domainsByInstitution[instId]) {
+              domainsByInstitution[instId] = new Set();
+            }
+            domainsByInstitution[instId].add(place.Domaine || place.Nom_PFP);
           }
-          domainsByInstitution[instId].add(place.domaine || place.nom_pfp || place.Domaine || place.Nom_PFP);
-        }
-        if (!criteriaByInstitution[instId]) {
-          criteriaByInstitution[instId] = new Set();
-        }
-        criteriaList.forEach((crit) => {
-          if (place[crit] === true) {
-            criteriaByInstitution[instId].add(crit);
+          if (!criteriaByInstitution[instId]) {
+            criteriaByInstitution[instId] = new Set();
           }
+          criteriaList.forEach((crit) => {
+            if (place[crit] === true) {
+              criteriaByInstitution[instId].add(crit);
+            }
+          });
         });
-      });
-      
-      // Récupération des institutions depuis Supabase
-      const instIds = validPfpEntries.map((place) => place.id_pfp || place.ID_PFP).filter(Boolean);
-      console.log('🔍 Chargement institutions pour IDs:', instIds)
-      if (instIds.length > 0) {
-        const { data: institutions, error: instError } = await supabase
-          .from('institutions')
-          .select('*')
-          .in('id', instIds);
-
-        if (instError) throw instError;
-        console.log('✅ Institutions chargées:', institutions?.length || 0)
-
-        institutionsList.value = (institutions || [])
+        // Récupération des institutions
+        const dbPromises = validPfpEntries.map((place) => {
+          const instId = place.ID_PFP;
+          return get(dbRef(db, `Institutions/${instId}`)).then((snapshot) =>
+            snapshot.exists() ? { ...snapshot.val(), InstitutionId: instId } : null
+          );
+        });
+        const fetchedInstitutions = await Promise.all(dbPromises);
+        institutionsList.value = fetchedInstitutions
+          .filter((inst) => inst !== null)
           .map((inst) => {
-            const instId = inst.id || inst.institution_id;
-            const domainSet = domainsByInstitution[instId];
-            const criteriaSet = criteriaByInstitution[instId];
-            const originalPfp = validPfpEntries.find(p => (p.id_pfp || p.ID_PFP) === instId);
+            const domainSet = domainsByInstitution[inst.InstitutionId];
+            const criteriaSet = criteriaByInstitution[inst.InstitutionId];
+            const originalPfp = validPfpEntries.find(p => p.ID_PFP === inst.InstitutionId);
             return {
               ...inst,
-              InstitutionId: instId,
-              Name: inst.name || inst.nom_institution,
               Domaines: domainSet ? Array.from(domainSet) : [],
               CriteriaValides: criteriaSet ? Array.from(criteriaSet) : [],
-              State: originalPfp ? (originalPfp.state || originalPfp.State) : undefined
+              State: originalPfp ? originalPfp.State : undefined
             };
           });
-        console.log('✅ Liste institutions finale:', institutionsList.value.length, 'entrées')
+        // Charger ensuite les documents pour chaque institution
+        loadUploadedDocsForAll();
       }
+    } else {
+      console.error("Aucun profil trouvé pour l'ID :", userId);
     }
   } catch (error) {
-    console.warn('Erreur traitement profil étudiant:', error.message);
-    institutionsList.value = [];
+    console.error("Erreur lors de la récupération des données :", error);
   }
 };
 
 const aggregatedCriteria = computed(() => {
   const result = {};
   criteriaList.forEach((crit) => (result[crit] = false));
-  if (props.userProfile && props.userProfile.pfp_valided) {
-    let pfpArray = []
-    const pfpVal = props.userProfile.pfp_valided
-    
-    if (Array.isArray(pfpVal)) {
-      pfpArray = pfpVal
-    } else if (typeof pfpVal === 'string') {
-      try {
-        const parsed = JSON.parse(pfpVal)
-        pfpArray = Array.isArray(parsed) ? parsed : []
-      } catch (e) {
-        pfpArray = []
-      }
-    } else if (pfpVal && typeof pfpVal === 'object') {
-      pfpArray = Object.values(pfpVal)
-    }
-    
-    pfpArray.forEach((pfp) => {
+  if (userProfile.value && userProfile.value.PFP_valided) {
+    for (const place in userProfile.value.PFP_valided) {
+      const pfp = userProfile.value.PFP_valided[place];
       criteriaList.forEach((crit) => {
         if (pfp[crit] === true) {
           result[crit] = true;
         }
       });
-    });
+    }
   }
   return result;
 });
@@ -759,35 +502,22 @@ const uploads = ref({});
 const institutionsKey = (instId) => `inst_${instId}`;
 
 const loadUploadedDocsForAll = async () => {
-  const places = assignedPlaces.value;
-  for (let index = 0; index < places.length; index++) {
-    const place = places[index];
+  institutionsList.value.forEach(async (inst, index) => {
     const formationNumber = index + 1;
-    const key = institutionsKey(place.IDPlace);
+    const key = institutionsKey(inst.InstitutionId);
     if (!uploads.value[key]) {
       uploads.value[key] = { docs: [], newFiles: [] };
     }
-    
+    const db = getDatabase();
+    const dbPath = `Students/${userId}/document/PFP${formationNumber}`;
     try {
-      // Récupérer les documents depuis Supabase
-      const { data, error } = await supabase
-        .from('student_documents')
-        .select('*')
-        .eq('user_id', props.userId)
-        .eq('pfp_number', formationNumber)
-        .order('created_at', { ascending: true });
-
-      if (error) throw error;
-
-      if (data && data.length > 0) {
-        const docsArray = data.map(doc => ({
-          docId: doc.id,
-          fileName: doc.file_name,
-          documentURL: doc.document_url,
-          timestamp: new Date(doc.created_at).getTime(),
-          isRenaming: false,
-          tempName: doc.file_name
-        }));
+      const snapshot = await get(dbRef(db, dbPath));
+      if (snapshot.exists()) {
+        const docsArray = snapshot.val();
+        docsArray.forEach((doc) => {
+          doc.isRenaming = false;
+          doc.tempName = doc.fileName;
+        });
         uploads.value[key].docs = docsArray;
       } else {
         uploads.value[key].docs = [];
@@ -799,7 +529,7 @@ const loadUploadedDocsForAll = async () => {
         error
       );
     }
-  }
+  });
 };
 
 const handleFileSelection = (event, institutionId) => {
@@ -820,59 +550,28 @@ const uploadDocuments = async (institutionId, formationNumber) => {
     toast.add({ severity: 'warn', summary: 'Avertissement', detail: 'Aucun nouveau fichier sélectionné.', life: 4000 });
     return;
   }
-  
+  const db = getDatabase();
   const existingDocs = uploads.value[key].docs || [];
   for (const file of newFiles) {
     try {
-      const timestamp = Date.now();
-      const fileName = `${props.userId}/${institutionId}/${timestamp}_${file.name}`;
-      
-      // Upload vers Supabase Storage
-      const { error: uploadError } = await supabase.storage
-        .from('student-documents')
-        .upload(fileName, file);
-
-      if (uploadError) throw uploadError;
-
-      // Obtenir l'URL publique
-      const { data: urlData } = supabase.storage
-        .from('student-documents')
-        .getPublicUrl(fileName);
-
-      const downloadURL = urlData.publicUrl;
-
-      // Créer une entrée dans la table student_documents
-      const { data: docData, error: docError } = await supabase
-        .from('student_documents')
-        .insert({
-          user_id: props.userId,
-          institution_id: institutionId,
-          pfp_number: formationNumber,
-          file_name: file.name,
-          document_url: downloadURL,
-          created_at: new Date().toISOString()
-        })
-        .select()
-        .single();
-
-      if (docError) throw docError;
-
+      const docId = Date.now().toString() + "_" + file.name;
+      const fileRef = storageRef(storage, `documents/${institutionId}/${docId}`);
+      await uploadBytes(fileRef, file);
+      const downloadURL = await getDownloadURL(fileRef);
       existingDocs.push({
-        docId: docData.id,
+        docId: docId,
         fileName: file.name,
         documentURL: downloadURL,
-        timestamp: timestamp,
+        timestamp: Date.now(),
         isRenaming: false,
         tempName: file.name
       });
-      
-      toast.add({ severity: 'success', summary: 'Succès', detail: `Document "${file.name}" uploadé avec succès`, life: 3000 });
     } catch (error) {
       console.error("Erreur d'upload pour le fichier", file.name, error);
-      toast.add({ severity: 'error', summary: 'Erreur', detail: `Erreur lors de l'upload de "${file.name}"`, life: 4000 });
     }
   }
-  
+  const dbPath = `Students/${userId}/document/PFP${formationNumber}`;
+  await set(dbRef(db, dbPath), existingDocs);
   uploads.value[key].docs = existingDocs;
   uploads.value[key].newFiles = [];
 };
@@ -892,23 +591,15 @@ const saveDocName = async (institutionId, formationNumber, doc) => {
     toast.add({ severity: 'error', summary: 'Erreur', detail: 'Le nom du fichier ne peut être vide.', life: 4000 });
     return;
   }
-  
+  doc.fileName = doc.tempName;
+  doc.isRenaming = false;
+  const key = institutionsKey(institutionId);
+  const existingDocs = uploads.value[key].docs;
+  const dbPath = `Students/${userId}/document/PFP${formationNumber}`;
   try {
-    // Mettre à jour le nom du fichier dans Supabase
-    const { error } = await supabase
-      .from('student_documents')
-      .update({ file_name: doc.tempName })
-      .eq('id', doc.docId);
-
-    if (error) throw error;
-
-    doc.fileName = doc.tempName;
-    doc.isRenaming = false;
-    
-    toast.add({ severity: 'success', summary: 'Succès', detail: 'Nom du document mis à jour', life: 3000 });
+    await set(dbRef(getDatabase(), dbPath), existingDocs);
   } catch (error) {
     console.error("Erreur lors de la sauvegarde du nouveau nom :", error);
-    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur lors de la sauvegarde', life: 4000 });
   }
 };
 
@@ -925,50 +616,17 @@ const deleteDocument = async (institutionId, formationNumber, docId) => {
   const existingDocs = uploads.value[key].docs;
   const docToRemove = existingDocs.find((doc) => doc.docId === docId);
   if (!docToRemove) return;
-
+  const fileRef = storageRef(storage, `documents/${institutionId}/${docId}`);
   try {
-    // Récupérer le document pour obtenir l'URL de stockage
-    const { data: docData, error: fetchError } = await supabase
-      .from('student_documents')
-      .select('document_url')
-      .eq('id', docId)
-      .single();
-
-    if (fetchError) throw fetchError;
-
-    // Extraire le chemin du fichier depuis l'URL
-    if (docData && docData.document_url) {
-      const urlParts = docData.document_url.split('/student-documents/');
-      if (urlParts.length > 1) {
-        const filePath = urlParts[1].split('?')[0]; // Enlever les query params
-        
-        // Supprimer du Storage
-        const { error: storageError } = await supabase.storage
-          .from('student-documents')
-          .remove([filePath]);
-
-        if (storageError) {
-          console.warn("Erreur lors de la suppression Storage:", storageError);
-        }
-      }
-    }
-
-    // Supprimer l'entrée de la base de données
-    const { error: deleteError } = await supabase
-      .from('student_documents')
-      .delete()
-      .eq('id', docId);
-
-    if (deleteError) throw deleteError;
-
-    const updatedDocs = existingDocs.filter((doc) => doc.docId !== docId);
-    uploads.value[key].docs = updatedDocs;
-    
-    toast.add({ severity: 'success', summary: 'Succès', detail: 'Document supprimé', life: 3000 });
+    await deleteObject(fileRef);
   } catch (error) {
-    console.error("Erreur lors de la suppression du document:", error);
-    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur lors de la suppression', life: 4000 });
+    console.error("Erreur lors de la suppression Storage pour docId =", docId, error);
   }
+  const updatedDocs = existingDocs.filter((doc) => doc.docId !== docId);
+  const db = getDatabase();
+  const dbPath = `Students/${userId}/document/PFP${formationNumber}`;
+  await set(dbRef(db, dbPath), updatedDocs);
+  uploads.value[key].docs = updatedDocs;
 };
 
 const openDocument = (url) => {
@@ -982,6 +640,14 @@ const navigateToInstitution = (instId) => {
     router.push({ name: "InstitutionView", params: { id: instId } });
   }
 };
+
+onMounted(() => {
+  if (userId) {
+    fetchUserProfileById(userId);
+  } else {
+    console.error("Aucun ID d'utilisateur fourni dans l'URL");
+  }
+});
 </script>
 
 <style scoped>
@@ -989,18 +655,6 @@ const navigateToInstitution = (instId) => {
   background-color: var(--surface-card);
   padding: 2rem;
   border-radius: 2rem;
-}
-
-.details-btn {
-  min-width: 200px;
-  width: 200px;
-  height: 32px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  padding: 0.5rem 1.25rem;
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
 }
 
 /* --- Responsive Mobile Styles --- */
@@ -1038,8 +692,9 @@ const navigateToInstitution = (instId) => {
     gap: 0.7rem;
     width: 100%;
   }
-  h4.m-0 {
-    margin: 0 !important;
+  h4.m-2.w-2 {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
     width: 100% !important;
     text-align: center;
     font-size: 1.2rem;
