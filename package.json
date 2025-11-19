@@ -16,6 +16,7 @@
     "docs:serve": "npm --prefix documentation run serve",
     "build:all": "vite build && npm run docs:build && node scripts/copy-docs-to-dist.js"
   },
+
   "dependencies": {
     "@elevenlabs/elevenlabs-js": "^2.4.1",
     "@floating-ui/react": "^0.27.12",
