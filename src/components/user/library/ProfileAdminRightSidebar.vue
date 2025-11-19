@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="profile-admin-right-sidebar">
     <h4>Rechercher un étudiant</h4>
     <div class="field">
@@ -86,8 +86,7 @@ import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import { useRouter } from 'vue-router';
-import { db } from 'root/firebase';
-import { ref as firebaseRef, onValue } from 'firebase/database';
+import { supabase } from '@/supabase';
 
 const router = useRouter();
 
@@ -99,7 +98,7 @@ const roleSearchTerm = ref('');
 const currentPage = ref(0);
 const itemsPerPage = 15;
 
-// Liste des utilisateurs depuis /Users
+// Liste des utilisateurs depuis StudentsPhysio
 const usersList = ref([]);
 
 // Liste des rôles BA disponibles
@@ -109,20 +108,34 @@ const rolesBA = ref([
   { label: 'BA24', value: 'BA24' }
 ]);
 
-// Récupération des utilisateurs depuis Firebase (/Users)
-const fetchUsers = () => {
-  const usersRef = firebaseRef(db, 'Users');
-  onValue(usersRef, (snapshot) => {
-    if (snapshot.exists()) {
-      usersList.value = Object.entries(snapshot.val()).map(([uid, user]) => ({
-        uid,
-        prenom: user.Prenom || 'Inconnu',
-        nom: user.Nom || 'Inconnu',
-        prenomNom: `${user.Prenom || 'Inconnu'} ${user.Nom || 'Inconnu'}`,
-        Roles: user.Roles || {}
+// Récupération des utilisateurs étudiants depuis Supabase (StudentsPhysio)
+const fetchUsers = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('studentsphysio_with_profiles')
+      .select('user_id, prenom, nom, class')
+      .order('nom', { ascending: true });
+
+    if (error) throw error;
+
+    if (data) {
+      usersList.value = data.map((user) => ({
+        uid: user.user_id,
+        prenom: user.prenom || 'Inconnu',
+        nom: user.nom || 'Inconnu',
+        prenomNom: `${user.prenom || 'Inconnu'} ${user.nom || 'Inconnu'}`,
+        class: user.class || '',
+        // Pour compatibilité avec l'ancien système de rôles
+        Roles: {
+          BA22: user.class === 'BA22',
+          BA23: user.class === 'BA23',
+          BA24: user.class === 'BA24'
+        }
       }));
     }
-  });
+  } catch (error) {
+    console.error('Erreur lors de la récupération des étudiants:', error);
+  }
 };
 
 onMounted(fetchUsers);

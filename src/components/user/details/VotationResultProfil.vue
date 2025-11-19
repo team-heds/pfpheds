@@ -66,6 +66,7 @@ import {
 } from 'firebase/storage';
 import { useToast } from 'primevue/usetoast';
 import { useInstitutionsStore } from '@/stores/institutionsStore';
+import { supabase } from '@/supabase';
 
 const toast = useToast();
 const institutionsStore = useInstitutionsStore();
@@ -96,6 +97,10 @@ const fetchVotationData = async () => {
 onMounted(async () => {
   fetchVotationData()
   await fetchInstitutions() // Charger les institutions depuis le store
+  await Promise.all([
+    fetchPlacesFromSupabase(), // Charger les places depuis Supabase
+    fetchPraticiensFromSupabase() // Charger les praticiens depuis Supabase
+  ])
 })
 const filteredVotationData = computed(() => {
   const result = {}
@@ -128,8 +133,99 @@ const users = ref({})
 const students = ref({})
 const praticienFormateurs = ref({})
 
-// Ajout : computed pour trouver toutes les places où l'utilisateur courant est affecté via les clés selectedEtudiant...
+// Supabase places data
+const supabasePlaces = ref([])
+const supabasePraticiens = ref({})
+
+// Fonction pour récupérer les places depuis Supabase
+const fetchPlacesFromSupabase = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('places')
+      .select('*')
+    
+    if (error) {
+      console.error('Erreur lors de la récupération des places depuis Supabase:', error)
+      return
+    }
+    
+    supabasePlaces.value = data || []
+    console.log(`✅ ${data?.length || 0} places récupérées depuis Supabase`)
+  } catch (err) {
+    console.error('Erreur inattendue lors de la récupération des places:', err)
+  }
+}
+
+// Fonction pour récupérer les praticiens formateurs depuis Supabase
+const fetchPraticiensFromSupabase = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('praticiens_formateurs')
+      .select('*')
+    
+    if (error) {
+      console.error('Erreur lors de la récupération des praticiens depuis Supabase:', error)
+      return
+    }
+    
+    // Convertir en map avec l'ID comme clé
+    const praticiensMap = {}
+    data?.forEach(praticien => {
+      // Utiliser PraticienId ou id comme clé
+      const key = praticien.PraticienId || praticien.id
+      if (key) {
+        praticiensMap[key] = praticien
+      }
+    })
+    
+    supabasePraticiens.value = praticiensMap
+    console.log(`✅ ${data?.length || 0} praticiens formateurs récupérés depuis Supabase`)
+  } catch (err) {
+    console.error('Erreur inattendue lors de la récupération des praticiens:', err)
+  }
+}
+
+// Ajout : computed pour trouver toutes les places où l'utilisateur courant est affecté depuis Supabase
+const assignedPlacesFromSupabase = computed(() => {
+  const userId = props.userId
+  const results = []
+  
+  supabasePlaces.value.forEach(place => {
+    // Chercher dans les assignations JSONB des différentes PFP
+    const pfpFields = ['PFP1A', 'PFP1B', 'PFP2', 'PFP3', 'PFP4']
+    
+    pfpFields.forEach(pfpField => {
+      const pfpData = place[pfpField]
+      
+      if (pfpData && pfpData.assignations) {
+        // Parcourir les assignations (ex: BA24-1, BA23-1, etc.)
+        Object.entries(pfpData.assignations).forEach(([key, assignment]) => {
+          if (assignment.active && assignment.etudiant === userId) {
+            results.push({
+              ...place,
+              seatIndex: key.split('-').pop(),
+              assignmentKey: key,
+              pfpLevel: pfpField,
+              praticienId: assignment.praticien || null
+            })
+          }
+        })
+      }
+    })
+  })
+  
+  console.log(`🎯 ${results.length} places trouvées pour l'étudiant ${userId}`)
+  return results
+})
+
+// Ajout : computed pour trouver toutes les places où l'utilisateur courant est affecté via les clés selectedEtudiant... (Firebase)
 const assignedPlaces = computed(() => {
+  // Priorité aux données Supabase
+  if (supabasePlaces.value.length > 0) {
+    return assignedPlacesFromSupabase.value
+  }
+  
+  // Fallback sur Firebase si pas de données Supabase
   const userId = props.userId;
   const results = [];
   Object.values(placesData.value || {}).forEach(place => {
@@ -166,6 +262,11 @@ function getValidCriterias(place) {
 
 // Retourne l'ID du praticien formateur lié à la place et au seat (ex: selectedPraticiensBA23PFP3-1)
 function getPraticienFormateurId(place) {
+  // Si c'est une place Supabase avec praticienId dans l'assignation
+  if (place.praticienId) {
+    return place.praticienId;
+  }
+  
   // On essaie de déterminer la clé du praticien selon le seatIndex
   // Correction : fallback sur place.praticiensFormateurs[0] si rien trouvé
   const seat = place.seatIndex;
@@ -194,7 +295,15 @@ function getPraticienFormateurId(place) {
 function getPraticienFormateurInfos(place) {
   const id = getPraticienFormateurId(place);
   if (!id) return '';
-  const pract = praticienFormateurs.value && praticienFormateurs.value[id];
+  
+  // Chercher d'abord dans Supabase
+  let pract = supabasePraticiens.value && supabasePraticiens.value[id];
+  
+  // Fallback sur Firebase
+  if (!pract) {
+    pract = praticienFormateurs.value && praticienFormateurs.value[id];
+  }
+  
   if (!pract) return '';
   const prenom = pract.Prenom ? pract.Prenom.trim() : '';
   const nom = pract.Nom ? pract.Nom.trim() : '';
@@ -207,6 +316,13 @@ function getPraticienFormateurContact(place) {
     return place.praticienMail;
   }
   const praticienId = getPraticienFormateurId(place);
+  
+  // Chercher d'abord dans Supabase
+  if (praticienId && supabasePraticiens.value[praticienId]) {
+    return supabasePraticiens.value[praticienId].Mail || supabasePraticiens.value[praticienId].mail || '';
+  }
+  
+  // Fallback sur Firebase
   if (praticienId && praticienFormateurs.value[praticienId]) {
     return praticienFormateurs.value[praticienId].Mail || praticienFormateurs.value[praticienId].mail || '';
   }
@@ -435,13 +551,17 @@ const navigateToInstitution = (instId) => {
   }
 };
 
-onMounted(() => {
+onMounted(async () => {
   fetchInstitutions()
   fetchPlaces()
   fetchUsers()
   fetchStudents()
   fetchPraticienFormateurs()
   fetchAssignmentsData()
+  await Promise.all([
+    fetchPlacesFromSupabase(), // Charger les places depuis Supabase
+    fetchPraticiensFromSupabase() // Charger les praticiens depuis Supabase
+  ])
 })
 </script>
 
