@@ -9,6 +9,7 @@
       style="height: 77px;"
       class="col-2 sm:col-4 lg:col-2 flex flex-column align-items-center justify-content-center w-3 card criteria-card"
     >
+
       <span class="font-bold text-center">{{ key }}</span>
       <i
         :class="{
