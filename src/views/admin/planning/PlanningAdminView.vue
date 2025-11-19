@@ -1078,22 +1078,143 @@ const exportPlanningExcel = async () => {
       academicYear: activeAcademicYear.value,
       classes: sortedClasses.value
     }
-    
-    // TODO: Réimplémenter l'export Excel avec Supabase
-    toast.add({
-      severity: 'info',
-      summary: 'Export temporairement désactivé',
-      detail: 'L\'export Excel sera réimplémenté avec Supabase',
-      life: 3000
+
+    const ExcelJS = await import('exceljs')
+    const workbook = new ExcelJS.Workbook()
+
+    const autumnWeeks = [...Array.from({ length: 15 }, (_, i) => i + 38), ...Array.from({ length: 7 }, (_, i) => i + 1)]
+    const springWeeks = Array.from({ length: 30 }, (_, i) => i + 8)
+    const allWeeks = [...autumnWeeks, ...springWeeks]
+
+    const ws = workbook.addWorksheet('Planning Annuel')
+
+    // Titre principal et structure
+    ws.mergeCells('A1:D1')
+    ws.getCell('A1').value = 'Bachelor of science in nursing.'
+    ws.getCell('A1').font = { size: 14, bold: true }
+    ws.mergeCells('E1:F1')
+    ws.getCell('E1').value = 'PROJET'
+    ws.getCell('E1').font = { size: 14, bold: true, color: { argb: 'FFFF0000' } }
+
+    ws.mergeCells('A2:D2')
+    ws.getCell('A2').value = 'Structure de programme'
+    ws.getCell('A2').font = { size: 12, bold: true }
+    ws.mergeCells('E2:F2')
+    ws.getCell('E2').value = activeAcademicYear.value?.name || '2025-2026'
+    ws.getCell('E2').font = { size: 12, bold: true }
+
+    // Préparer colonnes
+    ws.getColumn(1).width = 12
+    for (let i = 0; i < allWeeks.length; i++) ws.getColumn(2 + i).width = 6
+
+    // Ligne 4: bandeau semestre automne + printemps
+    const headerRowIdx = 4
+    const autumnStartCol = 2
+    const autumnEndCol = autumnStartCol + autumnWeeks.length - 1
+    const springStartCol = autumnEndCol + 1
+    const springEndCol = springStartCol + springWeeks.length - 1
+    ws.mergeCells(headerRowIdx, autumnStartCol, headerRowIdx, autumnEndCol)
+    const autumnHeader = ws.getCell(headerRowIdx, autumnStartCol)
+    autumnHeader.value = "Semestre d'automne"
+    autumnHeader.font = { bold: true }
+    autumnHeader.alignment = { horizontal: 'center', vertical: 'middle' }
+    autumnHeader.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF00CED1' } }
+    ws.mergeCells(headerRowIdx, springStartCol, headerRowIdx, springEndCol)
+    const springHeader = ws.getCell(headerRowIdx, springStartCol)
+    springHeader.value = 'Semestre de printemps'
+    springHeader.font = { bold: true }
+    springHeader.alignment = { horizontal: 'center', vertical: 'middle' }
+    springHeader.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF00CED1' } }
+
+    // Ligne 5: numéros de semaines
+    const weeksRowIdx = 5
+    ws.getCell(weeksRowIdx, 1).value = ''
+    allWeeks.forEach((w, i) => {
+      const c = ws.getCell(weeksRowIdx, 2 + i)
+      c.value = w
+      c.alignment = { horizontal: 'center' }
+      c.font = { bold: true }
+      c.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } }
     })
-    return
-    
-    const blob = null // await planningService.exportAllYearsToExcel(mergeCells.value, exportData)
+
+    // Jours (5 lignes)
+    const dayOrder = ['lu', 'ma', 'me', 'je', 've']
+    const dayNames = { lu: 'Lu', ma: 'Ma', me: 'Me', je: 'Je', ve: 'Ve' }
+    let rowIdx = 6
+    for (const d of dayOrder) {
+      const row = ws.getRow(rowIdx)
+      row.getCell(1).value = dayNames[d]
+      row.getCell(1).font = { bold: true }
+      for (let i = 0; i < allWeeks.length; i++) {
+        const w = allWeeks[i]
+        const key = `${d}_${w}`
+        const col = 2 + i
+        const cell = row.getCell(col)
+        const c = planningCells.value[key]
+        if (c && c.courseCode) {
+          const code = c.courseCode
+          const cc = courseCodes.value[code] || {}
+          const label = (cc.moduleNumber ? cc.moduleNumber : code?.toUpperCase()) || ''
+          cell.value = label
+          if (cc.color) {
+            const hex = cc.color.replace('#', '')
+            const argb = `FF${hex.toUpperCase()}`
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb } }
+            cell.font = { bold: true, color: { argb: '000000' } }
+          }
+        } else {
+          cell.value = ''
+        }
+        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
+        cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } }
+      }
+      if (mergeCells.value) {
+        const lastCol = 1 + allWeeks.length
+        let startCol = 2
+        let prevVal = row.getCell(2).value || ''
+        for (let col = 3; col <= lastCol + 1; col++) {
+          const val = col <= lastCol ? (row.getCell(col).value || '') : null
+          if (val !== prevVal) {
+            if (prevVal && startCol < col - 1) {
+              ws.mergeCells(rowIdx, startCol, rowIdx, col - 1)
+            }
+            startCol = col
+            prevVal = val || ''
+          }
+        }
+      }
+      rowIdx++
+    }
+
+    // Légende (sous la grille)
+    rowIdx += 1
+    ws.getCell(rowIdx, 1).value = 'Légende:'
+    ws.getCell(rowIdx, 1).font = { bold: true }
+    rowIdx++
+    ws.addRow(['Code', 'Description', 'Couleur', 'Année'])
+    const legendStart = rowIdx + 1
+    Object.entries(courseCodes.value).forEach(([code, data], idx) => {
+      const r = ws.getRow(legendStart + idx)
+      r.getCell(1).value = code.toUpperCase()
+      r.getCell(2).value = data.label
+      r.getCell(3).value = ''
+      r.getCell(4).value = data.year || '-'
+      if (data.color) {
+        const hex = data.color.replace('#', '')
+        r.getCell(3).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: `FF${hex.toUpperCase()}` } }
+      }
+    })
+    ws.getColumn(1).width = Math.max(ws.getColumn(1).width, 12)
+    ws.getColumn(2).width = 40
+    ws.getColumn(3).width = 10
+    ws.getColumn(4).width = 8
+
+    const yearName = activeAcademicYear.value?.name || '2025-2026'
+    const blob = new Blob([await workbook.xlsx.writeBuffer()], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
     
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    const yearName = activeAcademicYear.value?.name || '2025-2026'
     link.download = `Planning_BScN_${yearName}_${new Date().toISOString().split('T')[0]}.xlsx`
     link.click()
     URL.revokeObjectURL(url)
