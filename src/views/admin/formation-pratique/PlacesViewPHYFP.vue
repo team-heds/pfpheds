@@ -37,12 +37,69 @@
             </div>
             <span class="flex-1"></span>
             <div class="flex align-items-center gap-2">
+              <Button icon="pi pi-eye" outlined @click="toggleColumnsPanel" v-tooltip.top="'Afficher/Masquer colonnes'" />
+              <Button icon="pi pi-plus" label="Nouvelle place" @click="showCreateDialog = true" severity="success" />
               <InputText v-model="search" placeholder="Rechercher (nom, institution, canton)" class="search-input" />
               <Button icon="pi pi-refresh" outlined @click="reload" />
             </div>
           </div>
         </div>
       </div>
+
+      <!-- Panel de sélection des colonnes -->
+      <OverlayPanel ref="columnsPanel" :style="{ width: '300px' }">
+        <div class="p-3">
+          <h3 class="text-lg font-semibold mb-3">Afficher les colonnes</h3>
+          
+          <div class="field-checkbox mb-2">
+            <Checkbox v-model="showCriteresColumns" inputId="show-criteres" :binary="true" @change="toggleAllCriteres" />
+            <label for="show-criteres" class="font-semibold">Critères (tous)</label>
+          </div>
+          
+          <div class="ml-4 mb-3">
+            <div class="field-checkbox mb-2">
+              <Checkbox v-model="visibleColumns.MSQ" inputId="col-msq" :binary="true" />
+              <label for="col-msq">MSQ</label>
+            </div>
+            <div class="field-checkbox mb-2">
+              <Checkbox v-model="visibleColumns.SYSINT" inputId="col-sysint" :binary="true" />
+              <label for="col-sysint">SYSINT</label>
+            </div>
+            <div class="field-checkbox mb-2">
+              <Checkbox v-model="visibleColumns.NEUROGER" inputId="col-neuroger" :binary="true" />
+              <label for="col-neuroger">NEUROGER</label>
+            </div>
+            <div class="field-checkbox mb-2">
+              <Checkbox v-model="visibleColumns.AIGU" inputId="col-aigu" :binary="true" />
+              <label for="col-aigu">AIGU</label>
+            </div>
+            <div class="field-checkbox mb-2">
+              <Checkbox v-model="visibleColumns.REHAB" inputId="col-rehab" :binary="true" />
+              <label for="col-rehab">REHAB</label>
+            </div>
+            <div class="field-checkbox mb-2">
+              <Checkbox v-model="visibleColumns.AMBU" inputId="col-ambu" :binary="true" />
+              <label for="col-ambu">AMBU</label>
+            </div>
+          </div>
+          
+          <div class="field-checkbox mb-2">
+            <Checkbox v-model="showLanguesColumns" inputId="show-langues" :binary="true" @change="toggleAllLangues" />
+            <label for="show-langues" class="font-semibold">Langues (toutes)</label>
+          </div>
+          
+          <div class="ml-4">
+            <div class="field-checkbox mb-2">
+              <Checkbox v-model="visibleColumns.FR" inputId="col-fr" :binary="true" />
+              <label for="col-fr">FR</label>
+            </div>
+            <div class="field-checkbox mb-2">
+              <Checkbox v-model="visibleColumns.DE" inputId="col-de" :binary="true" />
+              <label for="col-de">DE</label>
+            </div>
+          </div>
+        </div>
+      </OverlayPanel>
 
       <div class="surface-card fp-dark p-3 border-round shadow-2">
         <div class="text-600 mb-2">{{ rows.length }} résultat(s)</div>
@@ -72,42 +129,42 @@
           <Column header="Institution Name" sortable>
             <template #body="{ data }">{{ institutionNameById[data.InstitutionId] || data.InstitutionName || '-' }}</template>
           </Column>
-          <Column header="MSQ">
+          <Column header="MSQ" v-if="visibleColumns.MSQ">
             <template #body="{ data }">
               <InputSwitch :modelValue="!!data.MSQ" @update:modelValue="v => onChangeBool(data, 'MSQ', v)" />
             </template>
           </Column>
-          <Column header="SYSINT">
+          <Column header="SYSINT" v-if="visibleColumns.SYSINT">
             <template #body="{ data }">
               <InputSwitch :modelValue="!!data.SYSINT" @update:modelValue="v => onChangeBool(data, 'SYSINT', v)" />
             </template>
           </Column>
-          <Column header="NEUROGER">
+          <Column header="NEUROGER" v-if="visibleColumns.NEUROGER">
             <template #body="{ data }">
               <InputSwitch :modelValue="!!data.NEUROGER" @update:modelValue="v => onChangeBool(data, 'NEUROGER', v)" />
             </template>
           </Column>
-          <Column header="AIGU">
+          <Column header="AIGU" v-if="visibleColumns.AIGU">
             <template #body="{ data }">
               <InputSwitch :modelValue="!!data.AIGU" @update:modelValue="v => onChangeBool(data, 'AIGU', v)" />
             </template>
           </Column>
-          <Column header="REHAB">
+          <Column header="REHAB" v-if="visibleColumns.REHAB">
             <template #body="{ data }">
               <InputSwitch :modelValue="!!data.REHAB" @update:modelValue="v => onChangeBool(data, 'REHAB', v)" />
             </template>
           </Column>
-          <Column header="AMBU">
+          <Column header="AMBU" v-if="visibleColumns.AMBU">
             <template #body="{ data }">
               <InputSwitch :modelValue="!!data.AMBU" @update:modelValue="v => onChangeBool(data, 'AMBU', v)" />
             </template>
           </Column>
-          <Column header="FR">
+          <Column header="FR" v-if="visibleColumns.FR">
             <template #body="{ data }">
               <InputSwitch :modelValue="!!data.FR" @update:modelValue="v => onChangeBool(data, 'FR', v)" />
             </template>
           </Column>
-          <Column header="DE">
+          <Column header="DE" v-if="visibleColumns.DE">
             <template #body="{ data }">
               <InputSwitch :modelValue="!!data.DE" @update:modelValue="v => onChangeBool(data, 'DE', v)" />
             </template>
@@ -137,8 +194,12 @@
               <InputText :value="(data.PFP3 && data.PFP3[selectedYear]) || ''" @change="e => onChangePFP(data, 'PFP3', e.target.value)" class="p-inputtext-sm" />
             </template>
           </Column>
-          <Column field="Canton" header="Canton" sortable></Column>
-          <Column header="Spécialités">
+          <Column header="Canton" sortable>
+            <template #body="{ data }">
+              {{ institutionCantonById[data.InstitutionId] || data.Canton || '-' }}
+            </template>
+          </Column>
+          <Column header="Critères">
             <template #body="{ data }">
               <div class="flex gap-2 flex-wrap">
                 <Tag v-if="data.MSQ" value="MSQ" />
@@ -176,9 +237,70 @@
               <span v-else>-</span>
             </template>
           </Column>
+          <Column header="Actions"  alignFrozen="right">
+            <template #body="{ data }">
+              <Button 
+                icon="pi pi-trash" 
+                severity="danger" 
+                text 
+                rounded 
+                @click="confirmDelete(data)"
+                v-tooltip.top="'Supprimer la place'"
+              />
+            </template>
+          </Column>
         </DataTable>
       </div>
     </div>
+
+    <!-- Dialog de création de place -->
+    <CreatePlaceDialog
+      v-model:visible="showCreateDialog"
+      :selected-year="selectedYear"
+      @created="onPlaceCreated"
+    />
+
+    <!-- Dialog de confirmation de suppression -->
+    <Dialog
+      v-model:visible="showDeleteDialog"
+      modal
+      header="Confirmer la suppression"
+      :style="{ width: '450px' }"
+    >
+      <div class="flex align-items-center gap-3 mb-3">
+        <i class="pi pi-exclamation-triangle text-orange-500" style="font-size: 2rem"></i>
+        <div>
+          <p class="m-0 font-semibold">Êtes-vous sûr de vouloir supprimer cette place ?</p>
+          <p class="m-0 mt-2 text-600" v-if="placeToDelete">
+            <strong>{{ placeToDelete.NomPlace }}</strong>
+            <span v-if="placeToDelete.InstitutionName"> - {{ placeToDelete.InstitutionName }}</span>
+          </p>
+        </div>
+      </div>
+      
+      <div class="surface-card p-3 border-round mb-3" style="background: rgba(234, 179, 8, 0.1); border: 1px solid rgba(234, 179, 8, 0.3);">
+        <p class="m-0 text-sm">
+          <i class="pi pi-info-circle mr-2"></i>
+          Cette action est <strong>irréversible</strong>. Toutes les données associées à cette place seront définitivement supprimées.
+        </p>
+      </div>
+
+      <template #footer>
+        <Button 
+          label="Annuler" 
+          icon="pi pi-times" 
+          text 
+          @click="showDeleteDialog = false" 
+        />
+        <Button 
+          label="Supprimer" 
+          icon="pi pi-trash" 
+          severity="danger" 
+          @click="deletePlace" 
+          :loading="deleting"
+        />
+      </template>
+    </Dialog>
   </AdminLayout>
 </template>
 
@@ -197,14 +319,19 @@ import MultiSelect from 'primevue/multiselect'
 import Textarea from 'primevue/textarea'
 import { usePraticiensFormateursStore } from '@/stores/praticiensFormateursStore'
 import Dropdown from 'primevue/dropdown'
+import { checkSupabaseAuth } from '@/utils/checkAuth'
+import CreatePlaceDialog from '@/components/admin/places/CreatePlaceDialog.vue'
+import Dialog from 'primevue/dialog'
+import OverlayPanel from 'primevue/overlaypanel'
+import Checkbox from 'primevue/checkbox'
 
 const store = usePlacesStore()
 const institutionsStore = useInstitutionsStore()
 const praticiensStore = usePraticiensFormateursStore()
 const loading = computed(() => store.loading)
 const search = ref('')
-const years = ref(['2025','2026'])
-const selectedYear = ref('2025')
+const years = ref(['2026','2027','2025'])
+const selectedYear = ref('2026')
 const institutionNameById = computed(() => {
   const m = {}
   for (const inst of institutionsStore.institutions || []) {
@@ -212,15 +339,29 @@ const institutionNameById = computed(() => {
   }
   return m
 })
+
+// Récupérer le Canton depuis l'institution
+const institutionCantonById = computed(() => {
+  const m = {}
+  for (const inst of institutionsStore.institutions || []) {
+    if (inst?.InstitutionId) m[inst.InstitutionId] = inst?.Canton || ''
+  }
+  return m
+})
+
 const rows = computed(() => {
   const s = (search.value || '').trim().toLowerCase()
   let list = [...(store.places || [])]
   if (s) {
-    list = list.filter(p => (
-      (p.NomPlace || '').toLowerCase().includes(s) ||
-      (p.InstitutionName || institutionNameById.value[p.InstitutionId] || '').toLowerCase().includes(s) ||
-      (p.Canton || '').toLowerCase().includes(s)
-    ))
+    list = list.filter(p => {
+      const institutionName = p.InstitutionName || institutionNameById.value[p.InstitutionId] || ''
+      const canton = institutionCantonById.value[p.InstitutionId] || p.Canton || ''
+      return (
+        (p.NomPlace || '').toLowerCase().includes(s) ||
+        institutionName.toLowerCase().includes(s) ||
+        canton.toLowerCase().includes(s)
+      )
+    })
   }
   if (withPdfOnly.value) list = list.filter(p => !!p.fileURL)
   if (showHalf.value) list = list.slice(0, Math.ceil(list.length / 2))
@@ -247,6 +388,46 @@ const showAll = ref(false)
 const showHalf = ref(false)
 const withPdfOnly = ref(false)
 const compact = ref(false)
+const showCreateDialog = ref(false)
+const showDeleteDialog = ref(false)
+const placeToDelete = ref(null)
+const deleting = ref(false)
+const columnsPanel = ref(null)
+
+// Visibilité des colonnes
+const visibleColumns = ref({
+  MSQ: false,
+  SYSINT: false,
+  NEUROGER: false,
+  AIGU: false,
+  REHAB: false,
+  AMBU: false,
+  FR: false,
+  DE: false
+})
+
+// Computed pour les checkboxes "tous"
+const showCriteresColumns = computed({
+  get: () => visibleColumns.value.MSQ && visibleColumns.value.SYSINT && 
+             visibleColumns.value.NEUROGER && visibleColumns.value.AIGU && 
+             visibleColumns.value.REHAB && visibleColumns.value.AMBU,
+  set: (val) => {
+    visibleColumns.value.MSQ = val
+    visibleColumns.value.SYSINT = val
+    visibleColumns.value.NEUROGER = val
+    visibleColumns.value.AIGU = val
+    visibleColumns.value.REHAB = val
+    visibleColumns.value.AMBU = val
+  }
+})
+
+const showLanguesColumns = computed({
+  get: () => visibleColumns.value.FR && visibleColumns.value.DE,
+  set: (val) => {
+    visibleColumns.value.FR = val
+    visibleColumns.value.DE = val
+  }
+})
 
 async function onChangeSimple(row, field, value) {
   if (!row?.PlaceId) return
@@ -257,7 +438,14 @@ async function onChangeSimple(row, field, value) {
 
 async function onChangeBool(row, field, value) {
   if (!row?.PlaceId) return
-  await store.updatePlace(row.PlaceId, { [field]: !!value })
+  console.log('📝 Modification Bool:', { field, value, rowId: row.PlaceId })
+  try {
+    await store.updatePlace(row.PlaceId, { [field]: !!value })
+    await store.fetchPlaceById(row.PlaceId)
+  } catch (error) {
+    console.error('❌ Erreur lors de la modification Bool:', error)
+    alert('Erreur lors de la sauvegarde')
+  }
 }
 
 async function onChangePFP(row, field, vYear) {
@@ -265,7 +453,15 @@ async function onChangePFP(row, field, vYear) {
   const current = row[field] || {}
   const yr = selectedYear.value
   const updates = { ...current, [yr]: String(vYear ?? '') }
-  await store.updatePlace(row.PlaceId, { [field]: updates })
+  console.log('📝 Modification PFP:', { field, yr, current, updates, rowId: row.PlaceId })
+  try {
+    await store.updatePlace(row.PlaceId, { [field]: updates })
+    // Recharger la place pour s'assurer d'avoir les dernières données
+    await store.fetchPlaceById(row.PlaceId)
+  } catch (error) {
+    console.error('❌ Erreur lors de la modification PFP:', error)
+    alert('Erreur lors de la sauvegarde')
+  }
 }
 
 async function onChangeRemarques(row, text) {
@@ -273,20 +469,86 @@ async function onChangeRemarques(row, text) {
   const current = row.Remarques || {}
   const yr = selectedYear.value
   const updates = { ...current, [yr]: String(text || '') }
-  await store.updatePlace(row.PlaceId, { Remarques: updates })
+  console.log('📝 Modification Remarques:', { yr, current, updates, rowId: row.PlaceId })
+  try {
+    await store.updatePlace(row.PlaceId, { Remarques: updates })
+    // Recharger la place pour s'assurer d'avoir les dernières données
+    await store.fetchPlaceById(row.PlaceId)
+  } catch (error) {
+    console.error('❌ Erreur lors de la modification Remarques:', error)
+    alert('Erreur lors de la sauvegarde')
+  }
 }
 
 async function onChangeArray(row, field, arr) {
   if (!row?.PlaceId) return
   const value = Array.isArray(arr) ? arr : []
-  await store.updatePlace(row.PlaceId, { [field]: value })
+  console.log('📝 Modification Array:', { field, value, rowId: row.PlaceId })
+  try {
+    await store.updatePlace(row.PlaceId, { [field]: value })
+    await store.fetchPlaceById(row.PlaceId)
+  } catch (error) {
+    console.error('❌ Erreur lors de la modification Array:', error)
+    alert('Erreur lors de la sauvegarde')
+  }
 }
 
 function reload() {
   store.fetchPlaces()
 }
 
-onMounted(() => {
+function onPlaceCreated(place) {
+  console.log('✅ Nouvelle place créée:', place)
+  // Recharger la liste des places
+  reload()
+}
+
+function toggleColumnsPanel(event) {
+  columnsPanel.value.toggle(event)
+}
+
+function toggleAllCriteres() {
+  // Géré par le computed
+}
+
+function toggleAllLangues() {
+  // Géré par le computed
+}
+
+function confirmDelete(place) {
+  placeToDelete.value = place
+  showDeleteDialog.value = true
+  console.log('🗑️ Demande de suppression:', place.PlaceId, place.NomPlace)
+}
+
+async function deletePlace() {
+  if (!placeToDelete.value?.PlaceId) return
+  
+  deleting.value = true
+  
+  try {
+    console.log('🗑️ Suppression de la place:', placeToDelete.value.PlaceId)
+    await store.deletePlace(placeToDelete.value.PlaceId)
+    console.log('✅ Place supprimée avec succès')
+    
+    // Fermer le dialog
+    showDeleteDialog.value = false
+    placeToDelete.value = null
+    
+    // Recharger la liste
+    reload()
+  } catch (error) {
+    console.error('❌ Erreur lors de la suppression:', error)
+    alert('Erreur lors de la suppression de la place: ' + error.message)
+  } finally {
+    deleting.value = false
+  }
+}
+
+onMounted(async () => {
+  // Vérifier l'authentification Supabase au chargement
+  await checkSupabaseAuth()
+  
   if (!store.places?.length) store.fetchPlaces()
   if (!institutionsStore.institutions?.length) institutionsStore.fetchInstitutions()
   if (!praticiensStore.praticiensFormateurs?.length) praticiensStore.fetchPraticiensFormateurs()
@@ -364,6 +626,18 @@ watch(selectedYear, () => {
 }
 @media (max-width: 768px) {
   .search-input { min-width: 180px; width: 100%; }
+}
+
+/* Styles pour le panel de sélection de colonnes */
+.field-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.field-checkbox label {
+  cursor: pointer;
+  user-select: none;
 }
 </style>
 

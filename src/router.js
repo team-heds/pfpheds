@@ -250,6 +250,7 @@ import MailIndex from '@/views/apps/mail/Index.vue';
 import NotesWorkspaceView from '@/views/apps/notes/NotesWorkspaceView.vue';
 import EventManagementView from '@/views/apps/events/EventManagementView.vue';
 import ToolsView from '@/views/apps/tools/ToolsView.vue';
+import FTPUploadTestView from '@/views/apps/tools/FTPUploadTestView.vue';
 import GameView from '@/views/apps/tools/GameView.vue';
 import ChatBotView from '@/views/apps/tools/ChatBotView.vue';
 import TournoisView from '@/views/apps/tools/TournoisView.vue';
@@ -565,6 +566,7 @@ const routes = [
   { path: '/events', component: EventManagementView, name: 'EventManagementView', meta: { requiresAuth: true } },
   { path: '/event-management', component: EventManagementView, name: 'EventManagement', meta: { requiresAuth: true } },
   { path: '/tools', component: ToolsView, name: 'ToolsView', meta: { requiresAuth: true } },
+  { path: '/tools/ftp-upload', component: FTPUploadTestView, name: 'FTPUploadTest', meta: { requiresAuth: true } },
   { path: '/game', component: GameView, name: 'GameView', meta: { requiresAuth: true } },
   { path: '/chatbot', component: ChatBotView, name: 'ChatBotView', meta: { requiresAuth: true } },
   { path: '/tournois', component: TournoisView, name: 'TournoisView', meta: { requiresAuth: true } },

@@ -2,10 +2,10 @@ require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 const supabase = require('./supabaseClient');
- 
+
 const OpenAI = require('openai');
 const app = express()
- 
+
 //const userStoreRoutes = require('./supabase/userStoreBackend')
 const institutionsStoreRoutes = require('./supabase/institutionsStoreBackend')
 const enseignantsStoreRoutes = require('./supabase/enseignantsStoreBackend.js');
@@ -15,7 +15,8 @@ const filePhysioRoutes = require('./supabase/filePhysioBackendStore');
 const postsStoreRoutes = require('./supabase/postsBackendStore.js');
 //const praticiensFormateursStoreRoutes = require('./supabase/praticiensFormateursBackendStore.js');
 const praticiensStoreRoutes = require('./supabase/praticiensStoreBackend.js');
- 
+const ftpRoutes = require('./uploads/ftpRoutes');
+
 // push
 const pushRoutes = require('./supabase/pushBackend');
 
@@ -54,6 +55,12 @@ app.use('/api/hashtags', hashtagStoreRoutes);
 app.use('/api/posts', postsStoreRoutes);
 //app.use('/api/praticiens-formateurs', praticiensFormateursStoreRoutes);
 app.use('/api/praticiens', praticiensStoreRoutes);
+// Direct diagnostic route (dup with uploads/ftpRoutes /diagnostic) to ensure availability
+app.get('/api/ftp/diagnostic', (req, res) => {
+  const configured = !!(process.env.FTP_HOST && process.env.FTP_USER && process.env.FTP_PASSWORD)
+  res.json({ ok: true, configured, host: process.env.FTP_HOST || null, baseDir: process.env.FTP_BASE_DIR || null })
+})
+app.use('/api/ftp', ftpRoutes);
 // General /api route DISABLED for debugging
 // app.use('/api', userStoreRoutes);
 app.use('/api/push', pushRoutes);
