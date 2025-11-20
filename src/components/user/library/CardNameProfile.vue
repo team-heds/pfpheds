@@ -1,18 +1,17 @@
 
 <template>
 
-  <!-- DISABLED: Gamification components - gamification_data table not available -->
   <!-- Bandeau Maison (inclut Game Master) -->
-  <!-- <BandeauMaison
+  <BandeauMaison
     v-if="hasValidHouse"
     :maison="userGamification.maison"
     :niveau="userGamification.niveau"
     :loginStreak="userGamification.loginStreak"
     class="mb-4"
-  /> -->
+  />
 
   <!-- PROMPT POUR QUIZ HES si pas de maison (sauf Game Master) -->
-  <!-- <div v-if="!hasValidHouse && !isGameMaster" class="house-quiz-prompt mb-4">
+  <div v-if="!hasValidHouse && !isGameMaster" class="house-quiz-prompt mb-4">
     <div class="quiz-prompt-card">
       <div class="quiz-prompt-content">
         <i class="pi pi-graduation-cap quiz-prompt-icon"></i>
@@ -24,18 +23,18 @@
         </button>
       </div>
     </div>
-  </div> -->
+  </div>
 
 
   <!-- XP Bar (sauf pour Game Master qui a déjà tout dans son bandeau) -->
-  <!-- <XPBar
+  <XPBar
     v-if="hasValidHouse && !isGameMaster"
     :xp="userGamification.xp"
     :xp-to-next="userGamification.xpToNext"
     :niveau="userGamification.niveau"
     :maison="userGamification.maison"
     class="mb-4"
-  /> -->
+  />
 
   <!-- FIN BANDEAU MAISON + XP -->
   <div class="mb-4 card-profile-responsive">
@@ -43,7 +42,7 @@
       <img :src="user.photoURL || defaultAvatar" alt="Avatar" style="border-radius: 3rem;" />
       <h1 class="pl-4">{{ displayFullName }}</h1>
     </div>
-    <h5 class="mb-4">Informations personnellesss</h5>
+    <h5 class="mb-4">Informations personnelles</h5>
     <div class="surfaces-card info-grid">
       <div class="info-item">
         <i class="pi pi-envelope info-icon"></i>
@@ -55,7 +54,7 @@
         <span class="info-label">Nom, Prénom :</span>
         <span class="info-value">{{ displayFullName }}</span>
       </div>
-      <div class="info-item" v-if="user.classe">
+      <div class="info-item">
         <i class="pi pi-briefcase info-icon"></i>
         <span class="info-label">Classe :</span>
         <span class="info-value">{{ user.classe }}</span>
@@ -70,7 +69,7 @@
         <span class="info-label">Id :</span>
         <span class="info-value id">{{ user.uid }}</span>
       </div>
-      <div class="info-item info-item-respondant" v-if="user.repondantHES">
+      <div class="info-item info-item-respondant">
         <i class="pi pi-users info-icon"></i>
         <span class="info-label">Répondant HES :</span>
         <br class="show-on-overflow"/>
@@ -103,13 +102,11 @@ import { useAuthStore } from '@/stores/authStore';
 import { supabase } from '@/supabase.js';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
-// DISABLED: Gamification components not needed
-// import BandeauMaison from '@/components/gamification/BandeauMaison.vue';
-// import XPBar from '@/components/gamification/XPBar.vue';
-// DISABLED: Tables not available
-// import gamificationServiceSupabase from '@/service/gamificationServiceSupabase'
-// import gamificationIntegration from '@/service/gamificationIntegration'
-// import supabaseStorageService from '@/service/supabaseStorageService'
+import BandeauMaison from '@/components/gamification/BandeauMaison.vue';
+import XPBar from '@/components/gamification/XPBar.vue';
+import gamificationServiceSupabase from '@/service/gamificationServiceSupabase'
+import gamificationIntegration from '@/service/gamificationIntegration'
+import supabaseStorageService from '@/service/supabaseStorageService'
 
 const defaultAvatar = '@/assets/images/avatar/01.jpg';
 
@@ -188,27 +185,24 @@ const displayFullName = computed(() => {
   // Sinon utiliser les données du profil consulté avec capitalisation
   const nom = capitalize(user.value.nom)
   const prenom = capitalize(user.value.prenom)
-  const combined = `${nom} ${prenom}`.trim()
-  if (combined) return combined
-  if (user.value.displayName) return user.value.displayName
-  return 'Utilisateur'
+  return `${nom} ${prenom}`.trim() || 'Utilisateur';
 });
 
 // Récupération du profil consulté depuis user_profiles Supabase
 const fetchUserProfileById = async (userId) => {
   console.log('📥 Chargement profil depuis user_profiles pour:', userId)
-  
+
   const { data: profileData, error } = await supabase
     .from('user_profiles')
     .select('*')
     .eq('user_id', userId)
     .maybeSingle()
-  
+
   if (error) {
     console.error('❌ Erreur chargement profil:', error)
     return
   }
-  
+
   if (profileData) {
     console.log('✅ Profil chargé:', profileData)
     user.value = {
@@ -220,12 +214,12 @@ const fetchUserProfileById = async (userId) => {
       ville: profileData.city || '',
       bio: profileData.bio || '',
       photoURL: profileData.avatar_url || profileData.profile_picture_url || defaultAvatar,
-      classe: '',
-      repondantHES: '',
-      displayName: profileData.display_name || ''
+      classe: profileData.class || '',
+      repondantHES: profileData.hes_referent || ''
     };
+  } else {
+    console.warn("⚠️ Aucun profil trouvé pour l'ID :", userId);
   }
-  // Profil non trouvé - géré silencieusement
 };
 
 // Note: Les données étudiant sont maintenant incluses dans user_profiles
@@ -238,46 +232,58 @@ const fetchStudentProfileById = async (userId) => {
 // Récupération du profil de l'utilisateur connecté depuis user_profiles Supabase
 const fetchCurrentUserProfile = async (currentUserId) => {
   console.log('👤 Chargement profil utilisateur connecté:', currentUserId)
-  
-  // Charger le rôle depuis user_profiles
-  const { data: profile, error } = await supabase
-    .from('user_profiles')
+
+  // Charger les rôles depuis user_roles
+  const { data: rolesData } = await supabase
+    .from('user_roles')
     .select('role')
     .eq('user_id', currentUserId)
-    .maybeSingle()
-  
-  if (error) {
-    console.warn('Erreur récupération rôle utilisateur:', error.message)
-  }
-  const roles = { admin: profile?.role === 'admin' }
-  
+
+  const roles = {}
+  rolesData?.forEach(r => {
+    roles[r.role] = true
+  })
+
   currentUserProfile.value = {
     uid: currentUserId,
     Roles: roles
   }
-  
-  console.log('✅ Rôle utilisateur:', profile?.role)
-  
-  // DISABLED: gamification_data table not available
-  // await fetchGamificationData(currentUserId);
+
+  console.log('✅ Rôles utilisateur:', roles)
+
+  // Récupérer aussi les données de gamification pour l'utilisateur connecté
+  await fetchGamificationData(currentUserId);
 };
 
 // Importation des enseignants depuis user_profiles (filtrés par rôle)
 const teachers = ref([]);
 const fetchTeachers = async () => {
   console.log('👨‍🏫 Chargement des enseignants depuis Supabase...')
-  
+
+  // Charger les utilisateurs avec le rôle 'professor' depuis user_roles
+  const { data: teacherRoles } = await supabase
+    .from('user_roles')
+    .select('user_id')
+    .eq('role', 'professor')
+
+  if (!teacherRoles || teacherRoles.length === 0) {
+    console.log('⚠️ Aucun enseignant trouvé')
+    return
+  }
+
+  const teacherIds = teacherRoles.map(r => r.user_id)
+
+  // Charger les profils des enseignants
   const { data: teachersData, error } = await supabase
     .from('user_profiles')
     .select('user_id, display_name, forname, family_name, email')
-    .eq('role', 'professor')
-  
+    .in('user_id', teacherIds)
+
   if (error) {
-    console.warn('Erreur chargement enseignants:', error.message)
-    teachers.value = []
+    console.error('❌ Erreur chargement enseignants:', error)
     return
   }
-  
+
   teachers.value = teachersData || []
   console.log(`✅ ${teachers.value.length} enseignants chargés`)
 };
@@ -286,9 +292,9 @@ const fetchTeachers = async () => {
 const teachersOptions = computed(() => {
   return teachers.value.map(teacher => {
     const displayName = teacher.display_name || `${teacher.forname} ${teacher.family_name}`
-    return { 
+    return {
       label: displayName,
-      value: teacher.user_id 
+      value: teacher.user_id
     };
   });
 });
@@ -307,26 +313,26 @@ watch(teachersOptions, (newOptions) => {
 
 // Fonction de sauvegarde du profil : met à jour user_profiles dans Supabase
 const saveProfile = async () => {
-  
+
   try {
     console.log('💾 Sauvegarde du profil dans Supabase...')
-    
-    // DISABLED: Storage bucket not available
-    // if (selectedAvatarFile.value) {
-    //   try {
-    //     console.log('📸 Upload avatar vers Supabase Storage...');
-    //     const uploadResult = await supabaseStorageService.uploadAvatar(
-    //       user.value.uid, 
-    //       selectedAvatarFile.value
-    //     );
-    //     user.value.photoURL = uploadResult.url;
-    //     console.log('✅ Avatar uploadé sur Supabase:', uploadResult.url);
-    //   } catch (error) {
-    //     console.error("❌ Erreur lors de l'upload de l'avatar sur Supabase:", error);
-    //     alert("Erreur lors de l'upload de l'avatar");
-    //     return;
-    //   }
-    // }
+
+    // Si un nouvel avatar a été sélectionné, on l'upload sur Supabase Storage
+    if (selectedAvatarFile.value) {
+      try {
+        console.log('📸 Upload avatar vers Supabase Storage...');
+        const uploadResult = await supabaseStorageService.uploadAvatar(
+          user.value.uid,
+          selectedAvatarFile.value
+        );
+        user.value.photoURL = uploadResult.url;
+        console.log('✅ Avatar uploadé sur Supabase:', uploadResult.url);
+      } catch (error) {
+        console.error("❌ Erreur lors de l'upload de l'avatar sur Supabase:", error);
+        alert("Erreur lors de l'upload de l'avatar");
+        return;
+      }
+    }
 
     // Trouver le label de l'enseignant si un est sélectionné
     let hesReferent = user.value.repondantHES
@@ -345,33 +351,35 @@ const saveProfile = async () => {
         city: user.value.ville,
         bio: user.value.bio,
         avatar_url: user.value.photoURL,
+        class: user.value.classe,
+        hes_referent: hesReferent,
         updated_at: new Date().toISOString()
       })
       .eq('user_id', user.value.uid)
-    
+
     if (updateError) {
       console.error('❌ Erreur mise à jour profil:', updateError)
       alert('Erreur lors de la sauvegarde du profil')
       return
     }
-    
+
     user.value.repondantHES = hesReferent
     console.log('✅ Profil mis à jour dans Supabase')
 
-    // DISABLED: gamification_data table not available
-    // await gamificationIntegration.onProfileUpdate(user.value.uid, {
-    //   profileCompleted: true,
-    //   hasAvatar: !!user.value.photoURL,
-    //   hasBio: !!user.value.bio,
-    //   hasCity: !!user.value.ville,
-    //   timestamp: Date.now()
-    // });
+    // NOUVEAU : Déclencher l'intégration gamification pour mise à jour profil
+    await gamificationIntegration.onProfileUpdate(user.value.uid, {
+      profileCompleted: true,
+      hasAvatar: !!user.value.photoURL,
+      hasBio: !!user.value.bio,
+      hasCity: !!user.value.ville,
+      timestamp: Date.now()
+    });
 
     alert("Profil mis à jour avec succès");
-    
-    // DISABLED: gamification_data table not available
-    // await fetchGamificationData(user.value.uid);
-    
+
+    // Recharger les données de gamification pour afficher les nouveaux badges/XP
+    await fetchGamificationData(user.value.uid);
+
   } catch (error) {
     console.error("Erreur lors de la sauvegarde du profil :", error);
     alert("Erreur lors de la sauvegarde du profil");
@@ -390,46 +398,77 @@ const router = useRouter();
 const authStore = useAuthStore();
 
 onMounted(async () => {
-  // DISABLED: Storage bucket check - buckets table doesn't exist
-  // await supabaseStorageService.ensureAvatarsBucket();
-  
+  // Vérifier et créer le bucket avatars si nécessaire
+  await supabaseStorageService.ensureAvatarsBucket();
+
   // Récupérer l'ID de l'utilisateur dont le profil est consulté (depuis l'URL)
   const userId = route.params.id;
   if (userId) {
     await fetchUserProfileById(userId);
     await fetchStudentProfileById(userId);
-    // DISABLED: gamification_data table not available
-    // await fetchGamificationData(userId);
+    await fetchGamificationData(userId);
   } else {
     console.error("Aucun ID d'utilisateur fourni dans l'URL");
   }
-  
+
   // Utiliser authStore au lieu de Firebase Auth pour l'utilisateur connecté
   if (authStore.user?.id) {
     await fetchCurrentUserProfile(authStore.user.id);
   }
-  
+
   // Charger la liste des enseignants
   await fetchTeachers();
 });
 
 // Récupération des données de gamification avec le service Supabase
-// DISABLED: gamification_data table not available
 const fetchGamificationData = async (userId) => {
-  console.log('⚠️ Gamification désactivée - gamification_data table not available');
-  // Set default values
-  userGamification.value = {
-    maison: null,
-    niveau: 1,
-    xp: 0,
-    totalXP: 0,
-    xpToNext: 100,
-    lastXPGain: null,
-    loginStreak: 0,
-    badges: [],
-    quests: [],
-    challenges: []
-  };
+  try {
+    // Utiliser le service Supabase pour récupérer les données
+    const gamificationData = await gamificationServiceSupabase.getUserGamificationData(userId);
+
+    if (gamificationData) {
+      userGamification.value = {
+        maison: gamificationData.maison || null,
+        niveau: gamificationData.niveau || 1,
+        xp: gamificationData.xp || 0,
+        totalXP: gamificationData.totalXP || 0,
+        xpToNext: gamificationData.xpToNext || 100,
+        lastXPGain: gamificationData.lastXPGain || null,
+        loginStreak: gamificationData.loginStreak || 0,
+        badges: gamificationData.badges || [],
+        quests: gamificationData.quests || [],
+        challenges: gamificationData.challenges || []
+      };
+    } else {
+      // Données par défaut si aucune donnée trouvée
+      userGamification.value = {
+        maison: null,
+        niveau: 1,
+        xp: 0,
+        totalXP: 0,
+        xpToNext: 100,
+        lastXPGain: null,
+        loginStreak: 0,
+        badges: [],
+        quests: [],
+        challenges: []
+      };
+    }
+  } catch (error) {
+    console.error('Erreur lors de la récupération des données de gamification:', error)
+    userGamification.value = {
+      maison: null,
+      niveau: 1,
+      xp: 0,
+      totalXP: 0,
+      xpToNext: 100,
+      lastXPGain: null,
+      loginStreak: 0,
+      badges: [],
+      quests: [],
+      challenges: []
+    }
+  }
 };
 
 // Données gamification unifiées avec badges, quêtes et défis
@@ -446,79 +485,97 @@ const userGamification = ref({
   challenges: []
 });
 
-// DISABLED: Gamification-related computed properties not needed
-// const xpPercent = computed(() => {
-//   if (!userGamification.value.xpToNext) return 0;
-//   return Math.round((userGamification.value.xp / userGamification.value.xpToNext) * 100);
-// });
-// const xpColor = computed(() => {
-//   switch ((userGamification.value.maison || '').toLowerCase()) {
-//     case 'harmonis': return '#608E62';
-//     case 'elaris': return '#B15E56';
-//     case 'doloris': return '#D4B25B';
-//     case 'solencia': return '#668DA3';
-//     default: return '#6366F1';
-//   }
-// });
+const xpPercent = computed(() => {
+  if (!userGamification.value.xpToNext) return 0;
+  return Math.round((userGamification.value.xp / userGamification.value.xpToNext) * 100);
+});
+const xpColor = computed(() => {
+  switch ((userGamification.value.maison || '').toLowerCase()) {
+    case 'harmonis': return '#608E62';
+    case 'elaris': return '#B15E56';
+    case 'doloris': return '#D4B25B';
+    case 'solencia': return '#668DA3';
+    default: return '#6366F1';
+  }
+});
 
 // Computed pour détecter si c'est un Game Master
-// const isGameMaster = computed(() => {
-//   if (!userGamification.value || !userGamification.value.maison) {
-//     return false;
-//   }
-//   return userGamification.value.maison.toLowerCase() === 'gamemaster';
-// });
+const isGameMaster = computed(() => {
+  if (!userGamification.value || !userGamification.value.maison) {
+    return false;
+  }
+  return userGamification.value.maison.toLowerCase() === 'gamemaster';
+});
 
 // Computed pour valider si l'utilisateur a une maison valide
-// const hasValidHouse = computed(() => {
-//   if (!userGamification.value || !userGamification.value.maison) {
-//     return false;
-//   }
-//   const validHouses = ['harmonis', 'elaris', 'doloris', 'solencia', 'gamemaster'];
-//   return validHouses.includes(userGamification.value.maison.toLowerCase());
-// });
+const hasValidHouse = computed(() => {
+  if (!userGamification.value || !userGamification.value.maison) {
+    return false;
+  }
+  const validHouses = ['harmonis', 'elaris', 'doloris', 'solencia', 'gamemaster'];
+  return validHouses.includes(userGamification.value.maison.toLowerCase());
+});
 
 // Méthode pour démarrer le quiz HES
-// const startHESQuiz = () => {
-//   router.push('/hes-house-quiz');
-// };
+const startHESQuiz = () => {
+  router.push('/hes-house-quiz');
+};
 
 // Fonction pour ajouter de l'XP à l'utilisateur avec le service Supabase
-// DISABLED: gamification_data table not available
-// const giveUserXP = async (action, customXP = null) => {
-//   try {
-//     const userId = route.params.id || currentUserProfile.value?.uid
-//     if (!userId) return
-//     const xpAmount = customXP || 10;
-//     const newData = await gamificationServiceSupabase.addUserXP(userId, action, xpAmount);
-//     if (newData) {
-//       userGamification.value = {
-//         ...userGamification.value,
-//         maison: newData.maison || userGamification.value.maison,
-//         niveau: newData.niveau || 1,
-//         xp: newData.xp || 0,
-//         totalXP: newData.totalXP || 0,
-//         xpToNext: newData.xpToNext || 100,
-//         lastXPGain: newData.lastXPGain || null,
-//         loginStreak: newData.loginStreak || userGamification.value.loginStreak || 0
-//       };
-//       if (newData.lastXPGain) {
-//         console.log(`+${newData.lastXPGain.amount} XP - ${newData.lastXPGain.description}`);
-//       }
-//     }
-//   } catch (error) {
-//     console.error('Erreur lors de l\'ajout d\'XP:', error)
-//   }
-// }
+const giveUserXP = async (action, customXP = null) => {
+  try {
+    const userId = route.params.id || currentUserProfile.value?.uid
+    if (!userId) return
+
+    // Utiliser le service Supabase pour ajouter de l'XP
+    const xpAmount = customXP || 10;
+    const newData = await gamificationServiceSupabase.addUserXP(userId, action, xpAmount);
+
+    // Mettre à jour les données locales avec les nouvelles données
+    if (newData) {
+      userGamification.value = {
+        ...userGamification.value,
+        maison: newData.maison || userGamification.value.maison,
+        niveau: newData.niveau || 1,
+        xp: newData.xp || 0,
+        totalXP: newData.totalXP || 0,
+        xpToNext: newData.xpToNext || 100,
+        lastXPGain: newData.lastXPGain || null,
+        loginStreak: newData.loginStreak || userGamification.value.loginStreak || 0
+      };
+
+      // Afficher une notification de gain d'XP
+      if (newData.lastXPGain) {
+        console.log(`+${newData.lastXPGain.amount} XP - ${newData.lastXPGain.description}`);
+      }
+    }
+
+  } catch (error) {
+    console.error('Erreur lors de l\'ajout d\'XP:', error)
+  }
+}
 
 // Fonction appelée lors de la sauvegarde du profil (pour donner de l'XP)
-// DISABLED: gamification_data table not available
 const saveProfileWithXP = async () => {
   try {
     await saveProfile()
-    // Gamification integration disabled
+
+    // NOUVEAU : Utiliser gamificationIntegration pour déclencher tous les événements
+    const userId = route.params.id || currentUserProfile.value?.uid
+    if (userId) {
+      await gamificationIntegration.onProfileUpdate(userId, {
+        profileCompleted: true,
+        hasAvatar: !!user.value.photoURL,
+        hasBio: !!user.value.bio,
+        hasCity: !!user.value.ville,
+        timestamp: Date.now()
+      })
+
+      // Recharger les données gamification pour voir les nouveaux badges/XP
+      await fetchGamificationData(userId)
+    }
   } catch (error) {
-    console.error('Erreur lors de la sauvegarde:', error)
+    console.error('Erreur lors de la sauvegarde avec gamification:', error)
   }
 }
 </script>
@@ -807,15 +864,15 @@ const saveProfileWithXP = async () => {
   .quiz-prompt-card {
     padding: 1.5rem;
   }
-  
+
   .quiz-prompt-icon {
     font-size: 2.5rem;
   }
-  
+
   .quiz-prompt-card h3 {
     font-size: 1.3rem;
   }
-  
+
   .quiz-prompt-button {
     padding: 0.8rem 1.5rem;
     font-size: 0.9rem;

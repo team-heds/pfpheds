@@ -10,6 +10,7 @@
     <div class="main-content profileinfo-scrollable ">
       <div class="filter-menu p-fluid p-pt-4 p-pb-4">
         <div>
+
           <!-- Affichage du composant CardNameProfile -->
           <CardNameProfile />
           <VotationResultProfil :userId="user.uid" class="w-full" />
