@@ -61,6 +61,7 @@ import FPProfilEtudiantsView from '@/views/admin/formation-pratique/ProfilEtudia
 import FPProfilRepondantEnseignantView from '@/views/admin/formation-pratique/ProfilRepondantEnseignantViewPHYFP.vue'
 import FPGanttPFPFormationView from '@/views/admin/formation-pratique/GanttPFPFormationViewPHYFP.vue'
 import FPAdminSecretariatView from '@/views/admin/formation-pratique/AdminSecretariatViewPHYFP.vue'
+import FPAdminSecretariatGeneralView from '@/views/admin/formation-pratique/AdminSecretariatGeneralViewPHYFP.vue'
 import FPManagementRepondantCPTView from '@/views/admin/formation-pratique/ManagementRepondantCPTViewPHYFP.vue'
 import FPManagementFeuilleDeChargeRepondantCPTView from '@/views/admin/formation-pratique/ManagementFeuilleDeChargeRepondantCPTViewPHYFP.vue'
 import FPOffreDePlaceView from '@/views/admin/formation-pratique/OffreDePlaceViewPHYFP.vue'
@@ -400,6 +401,7 @@ const routes = [
   { path: '/admin/formation-pratique/profil-repondant-enseignant', component: FPProfilRepondantEnseignantView, name: 'FPProfilRepondantEnseignant', meta: { requiresAuth: true, need: 'page1.access' } },
   { path: '/admin/formation-pratique/gantt-pfp', component: FPGanttPFPFormationView, name: 'FPGanttPFP', meta: { requiresAuth: true, need: 'page1.access' } },
   { path: '/admin/formation-pratique/admin-secretariat', component: FPAdminSecretariatView, name: 'FPAdminSecretariat', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/admin/formation-pratique/admin-secretariat-general', component: FPAdminSecretariatGeneralView, name: 'FPAdminSecretariatGeneral', meta: { requiresAuth: true, need: 'page1.access' } },
   { path: '/admin/formation-pratique/management-repondant-cpt', component: FPManagementRepondantCPTView, name: 'FPManagementRepondantCPT', meta: { requiresAuth: true, need: 'page1.access' } },
   { path: '/admin/formation-pratique/management-feuille-charge-cpt', component: FPManagementFeuilleDeChargeRepondantCPTView, name: 'FPManagementFeuilleChargeCPT', meta: { requiresAuth: true, need: 'page1.access' } },
   

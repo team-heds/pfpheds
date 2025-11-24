@@ -100,6 +100,7 @@
 
 <script>
 import { useInstitutionsStore } from '@/stores/institutionsStore'
+import { usePlacesStore } from '@/stores/placesStore'
 import Navbar from '@/components/common/utils/Navbar.vue'
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
@@ -108,12 +109,7 @@ import Tag from 'primevue/tag';
 import LeftSidebar from '@/components/social/library/LeftSidebar.vue'
 import FilterSidebar from '@/components/common/filters/FilterSidebar.vue'
 import HeaderIcons from '@/components/common/utils/HeaderIcons.vue'
-
-// Données de filtrage temporaires - à remplacer par vos vraies données
-const filterData = [
-  // Exemple de structure de données pour les filtres
-  // { IDPlace: 'institution_id', criteria: ['critere1', 'critere2', 'langue1', 'pfp1'] }
-];
+import filterData from '@/components/common/filters/filter.json'
 
 export default {
   name: 'Institution',
@@ -137,18 +133,36 @@ export default {
         pfp: [],
         languages: []
       },
-      cantonsList: [], // <-- Liste dynamique des cantons
+      cantonsList: [], // Liste dynamique des cantons
       isMobile: window.innerWidth < 768,
-      filterData: filterData // Ajout des données de filtre
+      filterData: filterData
     };
   },
   setup() {
     const institutionsStore = useInstitutionsStore();
-    return { institutionsStore };
+    const placesStore = usePlacesStore();
+    return { institutionsStore, placesStore };
   },
   computed: {
     allInstitutions() {
       return this.institutionsStore.institutions;
+    },
+    criteriaByInstitution() {
+      const map = new Map();
+      const places = this.placesStore?.places || [];
+      places.forEach(p => {
+        const instId = p?.InstitutionId;
+        const placeId = p?.PlaceId;
+        if (!instId || !placeId) return;
+        const entry = this.filterData.find(it => it.IDPlace === placeId);
+        if (!entry || !Array.isArray(entry.criteria)) return;
+        const key = String(instId);
+        if (!map.has(key)) map.set(key, new Set());
+        entry.criteria.forEach(c => map.get(key).add(c));
+      });
+      const obj = {};
+      for (const [k, set] of map.entries()) obj[k] = Array.from(set);
+      return obj;
     },
     filteredInstitutions() {
       return this.allInstitutions.filter(inst => {
@@ -164,29 +178,23 @@ export default {
             return false;
           }
         }
-        // Recherche l'entrée correspondante dans filterData
-        const entry = this.filterData.find(item => item.IDPlace === inst.InstitutionId);
         // Filtre par canton
         if (this.activeFilters.cantons.length > 0 && (!inst.Canton || !this.activeFilters.cantons.includes(inst.Canton))) {
           return false;
         }
+        const key = String(inst?.InstitutionId ?? inst?.id ?? '');
+        const crit = this.criteriaByInstitution[key] || [];
         // Filtre par critères généraux
-        if (this.activeFilters.criter.length > 0) {
-          if (!entry || !this.activeFilters.criter.every(c => entry.criteria.includes(c))) {
-            return false;
-          }
+        if (this.activeFilters.criter.length > 0 && !this.activeFilters.criter.every(c => crit.includes(c))) {
+          return false;
         }
         // Filtre par langue (l'institution doit avoir toutes les langues sélectionnées)
-        if (this.activeFilters.languages.length > 0) {
-          if (!entry || !this.activeFilters.languages.every(lang => entry.criteria.includes(lang))) {
-            return false;
-          }
+        if (this.activeFilters.languages.length > 0 && !this.activeFilters.languages.every(lang => crit.includes(lang))) {
+          return false;
         }
         // Filtre par PFP
-        if (this.activeFilters.pfp.length > 0) {
-          if (!entry || !this.activeFilters.pfp.every(pfp => entry.criteria.includes(pfp))) {
-            return false;
-          }
+        if (this.activeFilters.pfp.length > 0 && !this.activeFilters.pfp.some(p => crit.includes(p))) {
+          return false;
         }
         return true;
       });
@@ -250,6 +258,7 @@ export default {
   },
   mounted() {
     this.fetchInstitutions();
+    this.placesStore.fetchPlaces();
     // Gestion responsive
     window.addEventListener('resize', () => {
       this.isMobile = window.innerWidth < 768;

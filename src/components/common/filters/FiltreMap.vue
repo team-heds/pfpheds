@@ -121,6 +121,7 @@ import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 import FilterSidebare from './FilterSidebar.vue';
 import HeaderIcons from '@/components/common/utils/HeaderIcons.vue'
+import { usePlacesStore } from '@/stores/placesStore';
 
 // Import du fichier filter.json (contenant les IDPlace et leurs §s)
 import filterData from './filter.json';
@@ -143,6 +144,7 @@ const schoolLogoIcon = L.icon({
 const map = ref(null);
 const markers = ref([]);
 const institutionsStore = useInstitutionsStore();
+const placesStore = usePlacesStore();
 const { institutions, loading: institutionsLoading, error: institutionsError } = storeToRefs(institutionsStore);
 const selectedInstitution = ref(null);
 const dialogVisible = ref(false);
@@ -168,6 +170,25 @@ const availableCantons = computed(() => {
 });
 
 // Calcul des institutions filtrées en fonction des filtres sélectionnés
+// Agrégation des critères par Institution via les places
+const criteriaByInstitution = computed(() => {
+  const mapObj = new Map();
+  const allPlaces = placesStore.places || [];
+  allPlaces.forEach(place => {
+    const instId = place?.InstitutionId;
+    const placeId = place?.PlaceId;
+    if (!instId || !placeId) return;
+    const entry = filterData.find(item => item.IDPlace === placeId);
+    if (!entry || !Array.isArray(entry.criteria)) return;
+    const key = String(instId);
+    if (!mapObj.has(key)) mapObj.set(key, new Set());
+    entry.criteria.forEach(c => mapObj.get(key).add(c));
+  });
+  const obj = {};
+  for (const [k, set] of mapObj.entries()) obj[k] = Array.from(set);
+  return obj;
+});
+
 const filteredInstitutions = computed(() => {
   return institutions.value.filter(inst => {
     // Filtre par canton
@@ -177,25 +198,20 @@ const filteredInstitutions = computed(() => {
     ) {
       return false;
     }
-    // Recherche l'entrée correspondante dans filterData (pour critères généraux, langues et PFP)
-    const entry = filterData.find(item => item.IDPlace === inst.id);
-    // Filtre par critères généraux
-    if (selectedFilters.value.criter.length > 0) {
-      if (!entry || !selectedFilters.value.criter.every(c => entry.criteria.includes(c))) {
-        return false;
-      }
+    // Récupère les critères agrégés pour l'institution
+    const key = String(inst?.InstitutionId ?? inst?.id ?? '');
+    const crit = criteriaByInstitution.value[key] || [];
+    // Filtre par critères généraux (tous requis)
+    if (selectedFilters.value.criter.length > 0 && !selectedFilters.value.criter.every(c => crit.includes(c))) {
+      return false;
     }
-    // Filtre par langue (l'institution doit avoir toutes les langues sélectionnées)
-    if (selectedFilters.value.languages.length > 0) {
-      if (!entry || !selectedFilters.value.languages.every(lang => entry.criteria.includes(lang))) {
-        return false;
-      }
+    // Filtre par langues (toutes requises)
+    if (selectedFilters.value.languages.length > 0 && !selectedFilters.value.languages.every(lang => crit.includes(lang))) {
+      return false;
     }
-    // Filtre par PFP
-    if (selectedFilters.value.pfp.length > 0) {
-      if (!entry || !entry.criteria.some(c => selectedFilters.value.pfp.includes(c))) {
-        return false;
-      }
+    // Filtre par PFP (au moins un requis)
+    if (selectedFilters.value.pfp.length > 0 && !selectedFilters.value.pfp.some(p => crit.includes(p))) {
+      return false;
     }
     return true;
   });
@@ -213,6 +229,7 @@ const initMap = () => {
 // Récupération des institutions depuis le store
 onMounted(() => {
   institutionsStore.fetchInstitutions();
+  placesStore.fetchPlaces();
 });
 
 watch(institutionsLoading, (newLoading, oldLoading) => {

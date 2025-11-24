@@ -159,8 +159,11 @@ function canAccessRoute(route) {
 
   // Vérifier need
   if (need && !roleStore.isSuper && !roleStore.can(need)) {
-    console.debug('⬇️ Menu masqué (need non satisfait):', { to: route.to, need });
-    return false;
+    const needAccess = need.endsWith('.access') ? need : `${need}.access`;
+    if (!roleStore.can(needAccess)) {
+      console.debug('⬇️ Menu masqué (need non satisfait):', { to: route.to, need });
+      return false;
+    }
   }
 
   // Vérifier requiredRole
@@ -371,6 +374,7 @@ const menu = ref([
         items: [
           { label: 'Profil Étudiants', icon: 'pi pi-id-card', to: '/admin/formation-pratique/profil-etudiants' },
           { label: 'Profil Répondant Enseignant', icon: 'pi pi-user', to: '/admin/formation-pratique/profil-repondant-enseignant' },
+          { label: 'Admin Secrétariat Général', icon: 'pi pi-file', to: '/admin/formation-pratique/admin-secretariat-general' },
           { label: 'Gantt PFP', icon: 'pi pi-chart-line', to: '/admin/formation-pratique/gantt-pfp' },
           { label: 'Admin Secrétariat', icon: 'pi pi-briefcase', to: '/admin/formation-pratique/admin-secretariat' },
           { label: 'Management Répondant CPT', icon: 'pi pi-users', to: '/admin/formation-pratique/management-repondant-cpt' },
