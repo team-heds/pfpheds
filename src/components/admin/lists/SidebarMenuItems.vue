@@ -8,15 +8,16 @@
           :style="{ paddingLeft: (12 + level * 12) + 'px' }"
         >
           <i :class="item.icon" />
-          <span>{{ item.label }}</span>
+          <span v-html="renderLabel(item.label)"></span>
           <i class="pi" :class="isOpen(item) ? 'pi-chevron-down' : 'pi-chevron-right'" style="margin-left:auto;" />
         </div>
-        <SidebarMenuItems v-if="isOpen(item)" :items="item.items" :level="level + 1" />
+        <SidebarMenuItems v-if="isOpen(item)" :items="item.items" :level="level + 1" :highlight="highlight" :counts="counts" />
       </template>
       <template v-else>
         <router-link v-if="item.to" :to="item.to" class="sidebar-link sidebar-btn" :style="{ paddingLeft: (12 + level * 12) + 'px' }">
           <i :class="item.icon" />
-          <span>{{ item.label }}</span>
+          <span class="sidebar-item-label" v-html="renderLabel(item.label)"></span>
+          <span v-if="counts && counts[item.to] > 0" class="menu-badge">{{ counts[item.to] }}</span>
         </router-link>
       </template>
     </li>
@@ -35,6 +36,14 @@ const props = defineProps({
   level: {
     type: Number,
     default: 0
+  },
+  highlight: {
+    type: String,
+    default: ''
+  },
+  counts: {
+    type: Object,
+    default: () => ({})
   }
 });
 import SidebarMenuItems from './SidebarMenuItems.vue'; // récursif
@@ -89,6 +98,19 @@ onMounted(() => {
 watch(() => route.path, (p) => {
   expandGroupsForPath(p, Array.isArray(props.items) ? props.items : []);
 });
+
+function escapeRegExp(s) {
+  return String(s || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+function renderLabel(text) {
+  if (!props.highlight) return String(text ?? '');
+  try {
+    const re = new RegExp('(' + escapeRegExp(props.highlight) + ')', 'ig');
+    return String(text ?? '').replace(re, '<mark>$1</mark>');
+  } catch (e) {
+    return String(text ?? '');
+  }
+}
 </script>
 
 <style scoped>
@@ -117,6 +139,22 @@ watch(() => route.path, (p) => {
   box-shadow: none;
   cursor: pointer;
   transition: background 0.14s, color 0.14s, border 0.14s;
+}
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.sidebar-item-label {
+  flex: 1;
+}
+.menu-badge {
+  background: var(--primary-color, #3b82f6);
+  color: white;
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.75rem;
+  line-height: 1;
 }
 .sidebar-btn:hover,
 .sidebar-link.router-link-active,

@@ -134,6 +134,32 @@
             </div>
           </div>
         </div>
+
+        <!-- Activités récentes -->
+        <div class="mb-4">
+          <h2 class="text-xl font-semibold text-900 mb-3">Activités récentes</h2>
+          <div class="surface-card p-4 border-round shadow-2">
+            <div v-if="!activities.length" class="text-600">Aucune activité récente</div>
+            <div v-else class="flex flex-column gap-2">
+              <div
+                v-for="(a, i) in activities"
+                :key="i"
+                class="flex align-items-center justify-content-between border-1 surface-border border-round p-3"
+              >
+                <div class="flex align-items-center gap-3">
+                  <div class="flex align-items-center justify-content-center w-2rem h-2rem bg-blue-50 border-circle">
+                    <i :class="activityIcon(a.type)" class="text-blue-500 text-sm"></i>
+                  </div>
+                  <div>
+                    <div class="text-900 font-medium">{{ a.title }}</div>
+                    <small class="text-500">{{ a.time }}</small>
+                  </div>
+                </div>
+                <Button v-if="a.to" label="Voir" class="p-button-text p-button-sm" @click="navigateTo(a.to)" />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
   </AdminLayout>
 </template>
@@ -155,6 +181,8 @@ const stats = ref({
   permissions: 11
 })
 
+const activities = ref([])
+
 const loadDashboardData = async () => {
   refreshing.value = true
   // Simuler chargement
@@ -167,7 +195,24 @@ const navigateTo = (path) => {
   router.push(path)
 }
 
+const activityIcon = (type) => {
+  switch (type) {
+    case 'user': return 'pi pi-user';
+    case 'vote': return 'pi pi-check-square';
+    case 'place': return 'pi pi-map-marker';
+    case 'role': return 'pi pi-lock';
+    case 'route': return 'pi pi-sitemap';
+    default: return 'pi pi-info-circle';
+  }
+}
+
 onMounted(() => {
   loading.value = false
+  // Placeholder activities (peuvent être remplacées par des données réelles)
+  activities.value = [
+    { type: 'user', title: 'Nouvel utilisateur créé', time: 'il y a 10 min', to: '/admin/users' },
+    { type: 'vote', title: 'Votation prioritaire publiée', time: 'il y a 30 min', to: '/management_votation_prioritaire' },
+    { type: 'place', title: 'Nouvelle place ajoutée', time: 'il y a 1 h', to: '/management_place' },
+  ]
 })
 </script>
