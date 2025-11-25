@@ -527,47 +527,35 @@ export default {
           this.$refs.toast.add({ severity: 'success', summary: 'Succès', detail: 'Photo de profil mise à jour !', life: 4000 });
           
         } else if (this.authStore.isSupabaseUser) {
-          // Solution alternative : Convertir l'image en base64 et stocker dans user_profiles
+          // Upload vers Supabase Storage (bucket "avatars")
           const userId = currentUser.id;
-          
-          console.log('📤 Conversion de l\'image en base64...');
-          
-          // Lire le fichier et le convertir en base64
-          const reader = new FileReader();
-          
-          const photoURL = await new Promise((resolve, reject) => {
-            reader.onload = (e) => {
-              resolve(e.target.result);
-            };
-            reader.onerror = (error) => {
-              reject(error);
-            };
-            reader.readAsDataURL(file);
-          });
-          
-          console.log('✅ Image convertie en base64 (taille:', photoURL.length, 'caractères)');
-          
-          // Mettre à jour user_profiles avec l'image base64
-          const { data: updateData, error: updateError } = await supabase
+          const path = `users/${userId}/profile-picture.jpg`;
+
+          const { error: upErr } = await supabase.storage
+            .from('avatars')
+            .upload(path, file, { upsert: true, cacheControl: '3600' });
+          if (upErr) {
+            console.error('❌ Erreur upload Storage:', upErr);
+            throw upErr;
+          }
+
+          const { data: pub } = supabase.storage.from('avatars').getPublicUrl(path);
+          const photoURL = pub?.publicUrl || '';
+
+          // Mettre à jour le profil utilisateur avec l'URL publique
+          const { error: updateError } = await supabase
             .from('user_profiles')
             .update({ 
               avatar_url: photoURL,
               updated_at: new Date().toISOString()
             })
-            .eq('user_id', userId)
-            .select();
-          
+            .eq('user_id', userId);
           if (updateError) {
             console.error('❌ Erreur mise à jour profile:', updateError);
             throw updateError;
           }
-          
-          console.log('✅ Profil mis à jour dans user_profiles');
-          console.log('📊 Données mises à jour:', updateData);
-          console.log('📷 Avatar stocké:', updateData?.[0]?.avatar_url ? 'Oui (' + updateData[0].avatar_url.length + ' caractères)' : 'Non');
-          
-          // Mettre à jour l'UI
-          this.user.PhotoURL = photoURL;
+
+          this.user.PhotoURL = photoURL || this.user.PhotoURL;
           this.$refs.toast.add({ severity: 'success', summary: 'Succès', detail: 'Photo de profil mise à jour !', life: 4000 });
         }
         

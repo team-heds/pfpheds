@@ -34,6 +34,8 @@ import { db } from '../../../../firebase';
 import { getAuth } from 'firebase/auth';
 import { ref as dbRef, push, set } from 'firebase/database';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { supabase } from '@/supabase.js';
+import { useAuthStore } from '@/stores/authStore';
 
 export default {
   name: 'CreateContentMobile',
@@ -54,6 +56,7 @@ export default {
       touchStartX: 0,
       touchEndX: 0,
       selectedMedia: [], // Ajout pour stocker les médias sélectionnés
+      authStore: null,
     };
   },
   computed: {
@@ -66,6 +69,8 @@ export default {
     // Masquer la navbar globale sur cette page
     const navbar = document.querySelector('.navbar, .nav-bar, nav, .main-navbar');
     if (navbar) navbar.style.display = 'none';
+    this.authStore = useAuthStore();
+    this.authStore && this.authStore.checkAuthState && this.authStore.checkAuthState();
   },
   beforeUnmount() {
     // Réafficher la navbar quand on quitte la page
@@ -139,37 +144,62 @@ export default {
       postData.media = this.selectedMedia;
       this.loading = true;
       try {
-        let mediaUrls = [];
-        const auth = getAuth();
-        const user = auth.currentUser;
-        const authorName = (user && (user.displayName || user.email.split('@')[0])) || postData.userName || postData.Author || '';
-        // DEBUG: log pour vérifier la structure reçue
-        if (postData.media && postData.media.length > 0) {
-          const storage = getStorage();
-          for (const fileMeta of postData.media) {
-            if (fileMeta.file instanceof File) {
-              const ext = fileMeta.name ? fileMeta.name.split('.').pop() : 'bin';
-              const fileName = `post_${user.uid}_${Date.now()}_${Math.random().toString(36).substring(2,8)}.${ext}`;
-              const storageReference = storageRef(storage, `posts/${user.uid}/${fileName}`);
-              await uploadBytes(storageReference, fileMeta.file);
-              const url = await getDownloadURL(storageReference);
-              mediaUrls.push({ url, type: fileMeta.type, name: fileMeta.name });
-            } else {
-              console.warn('[DEBUG] Média ignoré (pas de .file):', fileMeta);
+        if (this.authStore && this.authStore.isSupabaseUser) {
+          const user = this.authStore.user;
+          const authorName = (user && (user.user_metadata?.full_name || user.email?.split('@')[0])) || postData.userName || postData.Author || '';
+
+          const tags = (postData.content || '').match(/([#@][\w\-]+)/g) || [];
+          const hashtags = tags.filter(t => t.startsWith('#')).reduce((acc, t) => { acc[t.substring(1)] = true; return acc; }, {});
+          const mentions = tags.filter(t => t.startsWith('@')).reduce((acc, t) => { acc[t.substring(1)] = true; return acc; }, {});
+
+          const { data: inserted, error: insErr } = await supabase
+            .from('posts')
+            .insert([{ user_id: user.id, author_name: authorName, content: postData.content, hashtags, mentions }])
+            .select('id')
+            .single();
+          if (insErr) throw insErr;
+
+          let rows = [];
+          if (postData.media && postData.media.length > 0) {
+            for (const m of postData.media) {
+              if (!(m.file instanceof File)) continue;
+              const path = `posts/${user.id}/${Date.now()}_${m.name || 'media'}`;
+              const { error: upErr } = await supabase.storage.from('post-media').upload(path, m.file, { upsert: true });
+              if (upErr) throw upErr;
+              const { data: pub } = supabase.storage.from('post-media').getPublicUrl(path);
+              rows.push({ post_id: inserted.id, url: pub.publicUrl, type: m.type });
+            }
+            if (rows.length > 0) {
+              const { error: mErr } = await supabase.from('post_media').insert(rows);
+              if (mErr) throw mErr;
             }
           }
+          this.$toast && this.$toast.add({severity:'success', summary:'Post publié', life: 2000});
+          this.goBack();
+        } else {
+          let mediaUrls = [];
+          const auth = getAuth();
+          const user = auth.currentUser;
+          const authorName = (user && (user.displayName || user.email.split('@')[0])) || postData.userName || postData.Author || '';
+          if (postData.media && postData.media.length > 0) {
+            const storage = getStorage();
+            for (const fileMeta of postData.media) {
+              if (fileMeta.file instanceof File) {
+                const ext = fileMeta.name ? fileMeta.name.split('.').pop() : 'bin';
+                const fileName = `post_${user.uid}_${Date.now()}_${Math.random().toString(36).substring(2,8)}.${ext}`;
+                const storageReference = storageRef(storage, `posts/${user.uid}/${fileName}`);
+                await uploadBytes(storageReference, fileMeta.file);
+                const url = await getDownloadURL(storageReference);
+                mediaUrls.push({ url, type: fileMeta.type, name: fileMeta.name });
+              }
+            }
+          }
+          const postRef = push(dbRef(db, 'Posts'));
+          const firebaseData = { Author: authorName, Content: postData.content, IdUser: postData.userId, Timestamp: Date.now(), media: mediaUrls };
+          await set(postRef, firebaseData);
+          this.$toast && this.$toast.add({severity:'success', summary:'Post publié', life: 2000});
+          this.goBack();
         }
-        const postRef = push(dbRef(db, 'Posts'));
-        const firebaseData = {
-          Author: authorName,
-          Content: postData.content,
-          IdUser: postData.userId,
-          Timestamp: Date.now(),
-          media: mediaUrls,
-        };
-        await set(postRef, firebaseData);
-        this.$toast && this.$toast.add({severity:'success', summary:'Post publié', life: 2000});
-        this.goBack();
       } catch (e) {
         alert('Erreur lors de la publication du post: ' + e.message);
       } finally {

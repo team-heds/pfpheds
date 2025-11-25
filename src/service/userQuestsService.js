@@ -324,19 +324,24 @@ class UserQuestsService {
    */
   subscribeToQuestUpdates(userId, callback) {
     console.log('🔔 Abonnement temps réel aux quêtes pour:', userId)
-    
-    return supabase
-      .channel(`user-quests-${userId}`)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'user_quest_progress',
-        filter: `user_id=eq.${userId}`
-      }, (payload) => {
-        console.log('🔄 Changement détecté:', payload)
-        callback(payload)
-      })
-      .subscribe()
+    try {
+      const channel = supabase
+        .channel(`user-quests-${userId}`)
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'user_quest_progress',
+          filter: `user_id=eq.${userId}`
+        }, (payload) => {
+          console.log('🔄 Changement détecté:', payload)
+          callback(payload)
+        })
+        .subscribe()
+      return channel
+    } catch (e) {
+      console.warn('⚠️ Abonnement temps réel indisponible:', e)
+      return null
+    }
   }
   
   /**
@@ -345,7 +350,11 @@ class UserQuestsService {
    */
   unsubscribeFromQuestUpdates(channel) {
     if (channel) {
-      supabase.removeChannel(channel)
+      if (typeof channel.unsubscribe === 'function') {
+        channel.unsubscribe()
+      } else {
+        try { supabase.removeChannel(channel) } catch {}
+      }
       console.log('🔕 Désabonnement temps réel')
     }
   }

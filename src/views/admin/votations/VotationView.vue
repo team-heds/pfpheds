@@ -12,7 +12,13 @@
               class="p-button-outlined m-2 align-content-end justify-content-end" @click="goBackToProfile" />
 
       <!-- Affichage du profil étudiant -->
-      <div v-if="userProfile && Object.keys(userProfile).length">
+      <div v-if="demoMode">
+        <div class="profile-info">
+          <h3>Profil étudiant (démo)</h3>
+          <p>Critères déjà validés: {{ Object.keys(aggregatedPFP).filter(k => aggregatedPFP[k]).join(', ') || 'aucun' }}</p>
+        </div>
+      </div>
+      <div v-else-if="userProfile && Object.keys(userProfile).length">
         <ValidatedCriteriaSection :userId="currentUserId" />
       </div>
 
@@ -347,6 +353,9 @@ import CardNameProfile from '@/components/user/library/CardNameProfile.vue';
 import { ref, onValue, update, set, remove } from "firebase/database";
 import { db } from 'root/firebase';
 import { getAuth } from "firebase/auth";
+import { useInstitutionsStore } from '@/stores/institutionsStore'
+import { usePlacesStore } from '@/stores/placesStore'
+import filterData from '@/components/common/filters/filter.json'
 
 export default {
   name: 'VotationView',
@@ -375,6 +384,7 @@ export default {
       votesAggregation: {},
       alreadyAssigned: false, // Propriété ajoutée
 
+      demoMode: true,
     };
   },
   watch: {
@@ -442,6 +452,7 @@ export default {
     },
     // Vérifie que tous les critères sont validés
     allCriteriaValidated() {
+      if (this.demoMode) return true;
       return Object.values(this.aggregatedPFP).every(value => value === true);
     },
     // Utilise la donnée pré-calculée pour les places
@@ -489,6 +500,114 @@ export default {
     }
   },
   methods: {
+    goBackToProfile() {
+      try {
+        this.$router.back();
+      } catch (e) {
+        this.$router.push('/feed');
+      }
+    },
+
+    async loadDemoData() {
+      this.currentUserId = 'demo-user';
+      this.userProfile = {
+        PFP_valided: [
+          { AIGU: false, AMBU: true, DE: false, FR: true, MSQ: false, NEUROGER: false, REHAB: true, SYSINT: false }
+        ]
+      };
+      const baseUrl = window.location.origin;
+      // Tenter d'utiliser les institutions du store (mêmes noms que la page Institutions)
+      try {
+        const store = useInstitutionsStore();
+        if (typeof store.fetchInstitutions === 'function') {
+          await store.fetchInstitutions();
+        }
+        const insts = Array.isArray(store.institutions) ? store.institutions.slice(0, 10) : [];
+        if (insts.length > 0) {
+          const placesStore = usePlacesStore();
+          if (typeof placesStore.fetchPlaces === 'function') {
+            await placesStore.fetchPlaces();
+          }
+          const criteriaMap = new Map();
+          const pList = Array.isArray(placesStore.places) ? placesStore.places : [];
+          pList.forEach(p => {
+            const instKey = String(p?.InstitutionId ?? p?.institutionId ?? '');
+            const placeKey = p?.PlaceId ?? p?.placeId ?? p?.IdPlace ?? p?.id;
+            if (!instKey || !placeKey) return;
+            const entry = filterData.find(it => it.IDPlace === placeKey);
+            if (!entry || !Array.isArray(entry.criteria)) return;
+            if (!criteriaMap.has(instKey)) criteriaMap.set(instKey, new Set());
+            entry.criteria.forEach(c => criteriaMap.get(instKey).add(c));
+          });
+          this.places = insts.map((inst, idx) => {
+            const id = String(inst?.InstitutionId ?? inst?.id ?? `inst-${idx+1}`);
+            const crit = criteriaMap.get(id) || new Set();
+            const flags = {
+              AIGU: crit.has('AIGU'),
+              REHAB: crit.has('REHAB'),
+              AMBU: crit.has('AMBU'),
+              SYSINT: crit.has('SYSINT'),
+              NEUROGER: crit.has('NEUROGER'),
+            };
+            const FR = crit.has('FR') || (!crit.has('DE'));
+            const DE = crit.has('DE');
+            const MSQ = crit.has('MSQ');
+            const P = (idx % 3) + 1;
+            const majorCat = flags.AIGU ? 'AIGU' : flags.REHAB ? 'REHAB' : flags.AMBU ? 'AMBU' : flags.SYSINT ? 'SYSINT' : flags.NEUROGER ? 'NEUROGER' : 'AIGU';
+            return {
+              IdPlace: `pl-${idx+1}`,
+              IDPlace: id,
+              InstitutionId: id,
+              InstitutionName: inst?.Name || `Institution ${idx+1}`,
+              InstitutionCategory: majorCat,
+              NomPlace: 'Unité de Stage',
+              MSQ,
+              SYSINT: flags.SYSINT,
+              NEUROGER: flags.NEUROGER,
+              AIGU: flags.AIGU,
+              REHAB: flags.REHAB,
+              AMBU: flags.AMBU,
+              FR,
+              DE,
+              PFP2: String(P),
+              url: `${baseUrl}/institution/${id}`,
+            };
+          });
+        } else {
+          // Fallback statique réaliste si le store est vide
+          this.places = [
+            { IdPlace: 'pl-1', IDPlace: 'hug', InstitutionId: 'hug', InstitutionName: 'Hôpitaux Universitaires de Genève (HUG)', InstitutionCategory: 'AIGU', NomPlace: 'Médecine Interne - Unité D', MSQ: true, SYSINT: true, NEUROGER: false, AIGU: true, REHAB: false, AMBU: false, FR: true, DE: false, PFP2: '3', url: `${baseUrl}/institution/hug` },
+            { IdPlace: 'pl-2', IDPlace: 'chuv', InstitutionId: 'chuv', InstitutionName: 'CHUV (Lausanne)', InstitutionCategory: 'AIGU', NomPlace: 'Chirurgie - Unité de Soins', MSQ: false, SYSINT: false, NEUROGER: false, AIGU: true, REHAB: false, AMBU: false, FR: true, DE: false, PFP2: '2', url: `${baseUrl}/institution/chuv` },
+            { IdPlace: 'pl-3', IDPlace: 'crr', InstitutionId: 'crr', InstitutionName: 'Clinique Romande de Réadaptation (CRR)', InstitutionCategory: 'REHAB', NomPlace: 'Plateau de Rééducation Neuro', MSQ: true, SYSINT: false, NEUROGER: true, AIGU: false, REHAB: true, AMBU: false, FR: true, DE: false, PFP2: '2', url: `${baseUrl}/institution/crr` },
+            { IdPlace: 'pl-4', IDPlace: 'grangettes', InstitutionId: 'grangettes', InstitutionName: 'Clinique des Grangettes', InstitutionCategory: 'AMBU', NomPlace: 'Centre Ambulatoire - Chêne-Bougeries', MSQ: false, SYSINT: false, NEUROGER: false, AIGU: false, REHAB: false, AMBU: true, FR: true, DE: false, PFP2: '1', url: `${baseUrl}/institution/grangettes` },
+            { IdPlace: 'pl-5', IDPlace: 'insel', InstitutionId: 'insel', InstitutionName: 'Inselspital Bern', InstitutionCategory: 'SYSINT', NomPlace: 'Innere Medizin - Station', MSQ: false, SYSINT: true, NEUROGER: false, AIGU: true, REHAB: false, AMBU: false, FR: false, DE: true, PFP2: '1', url: `${baseUrl}/institution/insel` },
+            { IdPlace: 'pl-6', IDPlace: 'valais-rehab', InstitutionId: 'valais-rehab', InstitutionName: "Hôpital du Valais - Réadaptation", InstitutionCategory: 'REHAB', NomPlace: 'Sion - Unité Rééducation', MSQ: true, SYSINT: false, NEUROGER: true, AIGU: false, REHAB: true, AMBU: false, FR: true, DE: false, PFP2: '2', url: `${baseUrl}/institution/valais-rehab` },
+            { IdPlace: 'pl-7', IDPlace: 'ems-amandiers', InstitutionId: 'ems-amandiers', InstitutionName: 'EMS Les Amandiers', InstitutionCategory: 'NEUROGER', NomPlace: 'Gériatrie - Long Séjour', MSQ: false, SYSINT: false, NEUROGER: true, AIGU: false, REHAB: false, AMBU: false, FR: true, DE: false, PFP2: '1', url: `${baseUrl}/institution/ems-amandiers` },
+            { IdPlace: 'pl-8', IDPlace: 'latour', InstitutionId: 'latour', InstitutionName: 'Hôpital de La Tour', InstitutionCategory: 'AIGU', NomPlace: 'Orthopédie - Unité de Soins', MSQ: false, SYSINT: false, NEUROGER: false, AIGU: true, REHAB: true, AMBU: false, FR: true, DE: false, PFP2: '1', url: `${baseUrl}/institution/latour` },
+            { IdPlace: 'pl-9', IDPlace: 'beaulieu', InstitutionId: 'beaulieu', InstitutionName: 'Clinique Générale-Beaulieu', InstitutionCategory: 'AMBU', NomPlace: 'Bloc ambulatoire', MSQ: false, SYSINT: false, NEUROGER: false, AIGU: true, REHAB: false, AMBU: true, FR: true, DE: false, PFP2: '1', url: `${baseUrl}/institution/beaulieu` },
+            { IdPlace: 'pl-10', IDPlace: 'hfr', InstitutionId: 'hfr', InstitutionName: 'Hôpital fribourgeois (HFR)', InstitutionCategory: 'SYSINT', NomPlace: 'Médecine Interne - Fribourg', MSQ: true, SYSINT: true, NEUROGER: false, AIGU: true, REHAB: false, AMBU: false, FR: true, DE: false, PFP2: '2', url: `${baseUrl}/institution/hfr` },
+          ];
+        }
+      } catch (e) {
+        // En cas d'erreur, garder une liste vide (les sections s'adaptent)
+        console.warn('Demo institutions store fallback:', e);
+        if (!Array.isArray(this.places)) this.places = [];
+      }
+      this.votesAggregation = {
+        'pl-1': { top1: 5, top2: 2, top3: 1, top4: 0, top5: 0, total: 8 },
+        'pl-2': { top1: 1, top2: 3, top3: 1, top4: 0, top5: 0, total: 5 },
+        'pl-3': { top1: 0, top2: 1, top3: 2, top4: 1, top5: 0, total: 4 }
+      };
+      // Marquer tous les sièges comme actifs pour l'affichage "toutes les places disponibles"
+      this.places.forEach(p => {
+        const count = parseInt(p.PFP2 || '0');
+        for (let i = 1; i <= count; i++) {
+          p[`selectedActiveBA24PFP2-${i}`] = true;
+        }
+      });
+      this.selectedPlaces = [null, null, null, null, null];
+      this.votedPlaces = [null, null, null, null, null];
+    },
 
     async getNameInstitutionById(institutionId) {
       const institutionData = await this.fetchInstitutionData(institutionId);
@@ -634,6 +753,14 @@ export default {
 
     updateSelection(place, seatIndex, value) {
       const dynamicKey = `selectedActiveBA24PFP2-${seatIndex}`;
+      if (this.demoMode) {
+        const idx = this.places.findIndex(p => p.IdPlace === place.IdPlace);
+        if (idx !== -1) {
+          this.places[idx][dynamicKey] = value;
+          this.updateExpandedPFP2Data();
+        }
+        return;
+      }
       const placeRef = ref(db, `Places/${place.IdPlace}`);
       update(placeRef, { [dynamicKey]: value })
         .catch((error) => {
@@ -697,6 +824,13 @@ export default {
         this.dialogVisible = true;
         return;
       }
+      if (this.demoMode) {
+        this.dialogMessage = "Vous avez voté pour les places : " +
+          this.selectedPlaces.map((place, index) => `Choix ${index + 1}: ${place.NomPlace} (${place.InstitutionName})`).join(' | ');
+        this.dialogVisible = true;
+        this.votedPlaces = this.selectedPlaces.slice();
+        return;
+      }
       const auth = getAuth();
       const user = auth.currentUser;
       if (!user) {
@@ -731,6 +865,11 @@ export default {
         });
     },
     revote() {
+      if (this.demoMode) {
+        this.votedPlaces = [null, null, null, null, null];
+        this.selectedPlaces = [null, null, null, null, null];
+        return;
+      }
       const auth = getAuth();
       const user = auth.currentUser;
       if (user) {
@@ -844,9 +983,11 @@ export default {
     }
   },
   mounted() {
-
+    if (this.demoMode) {
+      this.loadDemoData();
+      return;
+    }
     this.fetchUserProfile();
-
     this.fetchPlacesData();
     this.fetchVotesAggregation();
   }
