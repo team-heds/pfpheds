@@ -278,18 +278,22 @@ export default {
   display: grid;
   grid-template-columns: 1fr 3fr 1fr; /* Sidebar gauche, contenu central, sidebar droite */
   gap: 1.5rem;
-  min-height: 100vh;
+  height: calc(100vh - var(--navbar-h) - (2 * var(--content-pad)));
+  max-height: calc(100vh - var(--navbar-h) - (2 * var(--content-pad)));
+  overflow: hidden;
 }
 
 /* Sidebar Gauche et Droite */
 .sidebar-left,
 .sidebar-right {
-  overflow-y: auto;
+  height: 100%;
+  overflow-y: hidden; /* Sidebars statiques */
 }
 
 /* Contenu Principal */
 .main-content {
-  overflow-y: auto;
+  height: 100%;
+  overflow-y: auto; /* Scroll central uniquement */
 }
 
 /* Responsive pour le layout global */
@@ -458,7 +462,7 @@ export default {
 }
 
 .institution-center-scrollable {
-  height: 100vh;
+  height: 100%;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding: 2rem;

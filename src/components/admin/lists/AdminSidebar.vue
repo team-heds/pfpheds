@@ -49,6 +49,7 @@ import { useRouter } from 'vue-router';
 import SidebarMenuItems from './SidebarMenuItems.vue';
 import { useRoleStore } from '@/stores/role';
 import { useAuthStore } from '@/stores/authStore';
+import adminMenu from '@/config/adminMenu.js';
 
 const router = useRouter();
 const roleStore = useRoleStore();
@@ -76,8 +77,8 @@ const loadSectionsState = () => {
   } catch (e) {
     console.warn('Erreur chargement état sections:', e);
   }
-  // Par défaut, toutes ouvertes
-  return new Set(['Admin Général', 'PFP', 'Formation Pratique Physio', 'Académique', 'Gamification', 'Outils']);
+  // Par défaut: toutes FERMÉES
+  return new Set();
 };
 
 // Charger l'état de collapse
@@ -180,26 +181,22 @@ function canAccessRoute(route) {
 
 // Fonction récursive pour filtrer les items du menu
 function filterMenuItems(items) {
-  return items.filter(item => {
-    // Si l'item a une route, vérifier les permissions
-    if (item.to && !canAccessRoute(item)) {
-      return false;
-    }
-    
-    // Si l'item a des sous-items, les filtrer récursivement
+  const result = [];
+  for (const item of items) {
+    if (item.to && !canAccessRoute(item)) continue;
+    const newItem = { ...item };
     if (item.items) {
       const filteredItems = filterMenuItems(item.items);
-      // Ne garder l'item que s'il a des sous-items visibles
-      item.items = filteredItems;
-      return filteredItems.length > 0;
+      if (filteredItems.length === 0) continue;
+      newItem.items = filteredItems;
     }
-    
-    return true;
-  });
+    result.push(newItem);
+  }
+  return result;
 }
 
-// Menu filtré selon les permissions
-const filteredMenu = computed(() => filterMenuItems(JSON.parse(JSON.stringify(menu.value))));
+// Menu filtré selon les permissions (sans mutation ni deep-copy coûteuse)
+const filteredMenu = computed(() => filterMenuItems(menu.value));
 
 // Obtenir la classe CSS pour une section selon son index
 function getSectionClass(index) {
@@ -276,223 +273,25 @@ onMounted(async () => {
   });
 });
 
-const menu = ref([
-  // ========================================
-  // SECTION 1: ADMIN GÉNÉRAL
-  // ========================================
-  {
-    label: 'Admin Général',
-    icon: 'pi pi-cog',
-    items: [
-      { label: 'Dashboard Admin', icon: 'pi pi-chart-bar', to: '/admin/dashboard-general' },
-      { label: 'Dashboard RM', icon: 'pi pi-chart-line', to: '/admin/dashboard-rm' },
-      { label: 'Dashboard Enseignant', icon: 'pi pi-graduation-cap', to: '/admin/dashboard-enseignant' },
-      { label: 'Gestion des Rôles', icon: 'pi pi-user-edit', to: '/role-management' },
-      { label: 'Rôles Utilisateurs', icon: 'pi pi-users', to: '/admin/manage-user-roles' },
-      { label: 'RBAC (Rôles & Permissions)', icon: 'pi pi-shield', to: '/admin/security/rbac' },
-      { label: 'Éditeur de Routes', icon: 'pi pi-sitemap', to: '/admin/routes-editor' },
-      { label: 'Permissions', icon: 'pi pi-lock', to: '/permissions' },
-      { label: 'Routes & Accès', icon: 'pi pi-sitemap', to: '/router-inspector' },
-      { label: 'Utilisateurs', icon: 'pi pi-users', to: '/user_list' },
-      { label: 'Paramètres', icon: 'pi pi-wrench', to: '/admin/settings' }
-    ]
-  },
-  
-  // ========================================
-  // SECTION 2: PFP
-  // ========================================
-  {
-    label: 'PFP',
-    icon: 'pi pi-briefcase',
-    items: [
-      { label: 'Dashboards PFP', icon: 'pi pi-chart-bar', to: '/admin/dashboard-pfp' },
-      // Listes et utilisateurs
-      { label: 'Étudiants', icon: 'pi pi-users', to: '/etudiant_list' },
-      { label: 'Institutions', icon: 'pi pi-building', to: '/institution_list' },
-      { label: 'Enseignants PHY', icon: 'pi pi-book', to: '/enseignent_list' },
-      { label: 'Praticiens Formateurs', icon: 'pi pi-user-plus', to: '/praticien_formateur_list' },
-      { label: 'Profil Utilisateur', icon: 'pi pi-id-card', to: '/profilAdmin/4qoWztDujictoqTEJvJK6xF1Zcr1' },
-      { label: 'Répondant HES', icon: 'pi pi-id-card', to: '/management_repondant' },
-      { label: 'Management Places', icon: 'pi pi-id-card', to: '/management_place' },
-      
-    
-      
-      // Votations
-      {
-        label: 'Votations',
-        icon: 'pi pi-check-square',
-        items: [
-          { label: 'Gestion Offres', icon: 'pi pi-cog', to: '/management_offre' },
-          { label: 'Votation Lese', icon: 'pi pi-sliders-h', to: '/management_votation_prioritaire' },
-          { label: 'Votation Étudiants', icon: 'pi pi-users', to: '/management_votation_etudiants' },
-          { label: 'Places Assignées', icon: 'pi pi-map-marker', to: '/places_asssigned' },
-          { label: 'Assignement Places', icon: 'pi pi-sitemap', to: '/places_assignment' },
-          { label: 'Résultats Votation', icon: 'pi pi-chart-pie', to: '/result_preview_votation' }
-        ]
-      },
-      
-      // Gestion PFP
-      {
-        label: 'Gestion PFP',
-        icon: 'pi pi-folder-open',
-        items: [
-          { label: 'PFP en Cours', icon: 'pi pi-clock', to: '/management_pfpencours' },
-          { label: 'Gantt PFP', icon: 'pi pi-chart-line', to: '/gantt' },
-          { label: 'Gestion Places Safe', icon: 'pi pi-shield', to: '/management_places_safe' },
-          { label: 'Répartition Stages', icon: 'pi pi-percentage', to: '/stage_repartition' },
-          { label: 'Validation PFP1A', icon: 'pi pi-check-circle', to: '/validate-pfp1a' }
-        ]
-      }
-    ]
-  },
-
-  // ========================================
-  // SECTION 5: FORMATION PRATIQUE PHYSIO
-  // ========================================
-  {
-    label: 'Formation Pratique Physio',
-    icon: 'pi pi-briefcase',
-    items: [
-      { label: 'Dashboard Formation Pratique', icon: 'pi pi-chart-bar', to: '/admin/formation-pratique/dashboard' },
-      
-      // Section Données
-      {
-        label: 'Données',
-        icon: 'pi pi-database',
-        items: [
-          { label: 'Étudiants', icon: 'pi pi-users', to: '/admin/formation-pratique/etudiants' },
-          { label: 'Institutions', icon: 'pi pi-building', to: '/admin/formation-pratique/institutions' },
-          { label: 'Praticiens Formateur', icon: 'pi pi-user-plus', to: '/admin/formation-pratique/praticiens-formateur' },
-          { label: 'Places', icon: 'pi pi-map-marker', to: '/admin/formation-pratique/places' }
-        ]
-      },
-      
-      // Section Admin
-      {
-        label: 'Admin',
-        icon: 'pi pi-cog',
-        items: [
-          { label: 'Profil Étudiants', icon: 'pi pi-id-card', to: '/admin/formation-pratique/profil-etudiants' },
-          { label: 'Profil Répondant Enseignant', icon: 'pi pi-user', to: '/admin/formation-pratique/profil-repondant-enseignant' },
-          { label: 'Admin Secrétariat Général', icon: 'pi pi-file', to: '/admin/formation-pratique/admin-secretariat-general' },
-          { label: 'Gantt PFP', icon: 'pi pi-chart-line', to: '/admin/formation-pratique/gantt-pfp' },
-          { label: 'Admin Secrétariat', icon: 'pi pi-briefcase', to: '/admin/formation-pratique/admin-secretariat' },
-          { label: 'Management Répondant CPT', icon: 'pi pi-users', to: '/admin/formation-pratique/management-repondant-cpt' },
-          { label: 'Management Feuille De Charge Répondant CPT', icon: 'pi pi-file', to: '/admin/formation-pratique/management-feuille-charge-cpt' }
-        ]
-      },
-      
-      // Section Période de Formation pratique
-      {
-        label: 'Période de Formation pratique',
-        icon: 'pi pi-calendar',
-        items: [
-          { label: 'Offre De Place', icon: 'pi pi-list', to: '/admin/formation-pratique/offre-place' },
-          { label: 'Preview PFP', icon: 'pi pi-eye', to: '/admin/formation-pratique/preview-pfp' },
-          { label: 'Résultat Votation Prioritaire', icon: 'pi pi-chart-pie', to: '/admin/formation-pratique/resultat-votation-prioritaire' },
-          { label: 'Résultat Votation PFP', icon: 'pi pi-chart-bar', to: '/admin/formation-pratique/resultat-votation-pfp' },
-          { label: 'Management Répondant Votation', icon: 'pi pi-user-edit', to: '/admin/formation-pratique/management-repondant-votation' },
-          { label: 'Valider Échec PFP', icon: 'pi pi-check-circle', to: '/admin/formation-pratique/valider-echec-pfp' }
-        ]
-      },
-      
-      // Section Votations
-      {
-        label: 'Votations',
-        icon: 'pi pi-check-square',
-        items: [
-          { label: 'Votation Prioritaire', icon: 'pi pi-star', to: '/admin/formation-pratique/votation-prioritaire' },
-          { label: 'Votation PFP', icon: 'pi pi-check-square', to: '/admin/formation-pratique/votation-pfp' }
-        ]
-      }
-    ]
-  },
-  
-  // ========================================
-  // SECTION 2: ACADÉMIQUE
-  // ========================================
-  {
-    label: 'Académique',
-    icon: 'pi pi-book',
-    items: [
-      { label: 'Dashboard Académique', icon: 'pi pi-chart-bar', to: '/admin/dashboard-academique' },
-      
-      // Enseignants
-      { label: 'Enseignants SI', icon: 'pi pi-users', to: '/admin/teachers-si' },
-      
-      // Planning
-      {
-        label: 'Planning',
-        icon: 'pi pi-calendar',
-        items: [
-          { label: 'Vue Hebdomadaire', icon: 'pi pi-calendar-plus', to: '/admin/planning/weekly' },
-          { label: 'Gestion Planning', icon: 'pi pi-pencil', to: '/admin/planning/manage' },
-        ]
-      },
-      
-      // Cours
-      {
-        label: 'Cours',
-        icon: 'pi pi-book',
-        items: [
-          { label: 'Liste des Cours', icon: 'pi pi-list', to: '/admin/courses/list' },
-          { label: 'Créer un Cours', icon: 'pi pi-plus-circle', to: '/admin/courses/create' },
-        ]
-      },
-      
-      // Gestion académique
-      { label: 'Tâches', icon: 'pi pi-th-large', to: '/admin/academic/kanban' },
-      { label: 'Contenu Multimédia', icon: 'pi pi-video', to: '/admin/academic/media-content' },
-    ]
-  },
-  
-  // ========================================
-  // SECTION 3: GAMIFICATION
-  // ========================================
-  {
-    label: 'Gamification',
-    icon: 'pi pi-star-fill',
-    items: [
-      { label: 'Dashboard Gamification', icon: 'pi pi-chart-bar', to: '/admin/dashboard-gamification' },
-      { label: 'Gestion Défis', icon: 'pi pi-flag-fill', to: '/admin/gamification/challenges' },
-      { label: 'Gestion Quêtes', icon: 'pi pi-compass', to: '/admin/gamification/quests' },
-      { label: 'Gestion Badges', icon: 'pi pi-shield', to: '/admin/gamification/badges' },
-      { label: 'Gestion Utilisateurs', icon: 'pi pi-users', to: '/admin/gamification/users' },
-      { label: 'Gestion Maisons', icon: 'pi pi-home', to: '/admin/gamification/houses' },
-      { label: 'Analytics & Statistiques', icon: 'pi pi-chart-line', to: '/admin/gamification/analytics' }
-    ]
-  },
-  
-  // ========================================
-  // SECTION 4: OUTILS
-  // ========================================
-  {
-    label: 'Outils',
-    icon: 'pi pi-wrench',
-    items: [
-      { label: 'Feedbacka', icon: 'pi pi-comments', to: '/admin/tools/feedbacka' },
-      { label: 'Care-Convers', icon: 'pi pi-heart', to: '/care-convers' }
-    ]
-  }
-]);
+const menu = ref(adminMenu);
 </script>
 
 <style scoped>
 .admin-sidebar.card.sidebar {
   display: flex;
   flex-direction: column;
-  height: auto;
-  max-height: 100vh;
+  height: calc(100vh - var(--navbar-h) - (2 * var(--content-pad)) - (2 * var(--layout-pad)));
+  max-height: none;
   min-height: 0;
   background: var(--surface-card);
   padding: 1.5rem;
   border-radius: 1.2rem;
-  width: 400px;
-  min-width: 300px;
-  max-width: 400px;
+  width: 300px;
+  min-width: 260px;
+  max-width: 320px;
   box-sizing: border-box;
-  position: sticky;
-  top: 0;
+  position: relative;
+  top: auto;
   align-self: flex-start;
   z-index: 10;
   overflow-y: auto;
@@ -507,9 +306,9 @@ const menu = ref([
 }
 
 .admin-sidebar {
-  width: 340px;
-  min-width: 300px;
-  max-width: 400px;
+  width: 300px;
+  min-width: 260px;
+  max-width: 320px;
 }
 
 /* Pour garantir que le parent ne décale pas la sidebar */

@@ -1,6 +1,6 @@
 <template>
-  <div class="ticket-list-view">
-    <Navbar />
+  <AdminLayout>
+    <div class="ticket-list-view">
     
     <div class="list-container">
       <!-- Header -->
@@ -254,14 +254,15 @@
     </Dialog>
 
     <Toast />
-  </div>
+    </div>
+  </AdminLayout>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
-import Navbar from '@/components/common/utils/Navbar.vue'
+import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import TicketDetails from '@/components/academic/TicketDetails.vue'
 import TicketForm from '@/components/academic/TicketForm.vue'
 import Button from 'primevue/button'
@@ -598,8 +599,6 @@ onMounted(async () => {
 
 <style scoped>
 .ticket-list-view {
-  min-height: 100vh;
-
 }
 
 .list-container {

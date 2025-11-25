@@ -1,10 +1,11 @@
 <template>
 
   <Navbar />
-      <!-- Sidebar Gauche -->
-      <div class="sidebar-left">
-      <LeftSidebar />
-    </div>
+
+  <!-- Sidebar Gauche -->
+  <div class="sidebar-left">
+    <LeftSidebar />
+  </div>
 
   <div class="min-h-screen flex relative lg:static">
     <div class="min-h-screen flex flex-column relative flex-auto profile-center-scrollable">
@@ -17,10 +18,10 @@
     </div>
   </div>
 
-      <!-- Sidebar Droite -->
-      <div class="sidebar-right">
-      <RightSidebar />
-    </div>
+  <!-- Sidebar Droite -->
+  <div class="sidebar-right">
+    <RightSidebar />
+  </div>
 </template>
 
 <script>
@@ -140,6 +141,10 @@ export default {
   background-color: #f59e0b;
 }
 
+/* Désactive le scroll de page pour cette vue; seul le centre scrolle */
+:global(.content) {
+  overflow: hidden;
+}
 .border-circle {
   border-radius: 50%;
   object-fit: cover;
