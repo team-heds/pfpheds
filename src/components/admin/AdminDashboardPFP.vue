@@ -134,6 +134,32 @@
             </div>
           </div>
         </div>
+
+        <!-- Activités récentes -->
+        <div class="mb-4">
+          <h2 class="text-xl font-semibold text-900 mb-3">Activités récentes</h2>
+          <div class="surface-card p-4 border-round shadow-2">
+            <div v-if="!activities.length" class="text-600">Aucune activité récente</div>
+            <div v-else class="flex flex-column gap-2">
+              <div
+                v-for="(a, i) in activities"
+                :key="i"
+                class="flex align-items-center justify-content-between border-1 surface-border border-round p-3"
+              >
+                <div class="flex align-items-center gap-3">
+                  <div class="flex align-items-center justify-content-center w-2rem h-2rem bg-blue-50 border-circle">
+                    <i :class="activityIcon(a.type)" class="text-blue-500 text-sm"></i>
+                  </div>
+                  <div>
+                    <div class="text-900 font-medium">{{ a.title }}</div>
+                    <small class="text-500">{{ a.time }}</small>
+                  </div>
+                </div>
+                <Button v-if="a.to" label="Voir" class="p-button-text p-button-sm" @click="navigateTo(a.to)" />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
   </AdminLayout>
 </template>
@@ -144,6 +170,7 @@ import { useRouter } from 'vue-router'
 import AdminLayout from './layouts/AdminLayout.vue'
 import Button from 'primevue/button'
 import ProgressSpinner from 'primevue/progressspinner'
+import { fetchPfpKpis } from '@/service/dashboardService'
 
 const router = useRouter()
 const loading = ref(true)
@@ -155,18 +182,39 @@ const stats = ref({
   pfpEnCours: 0
 })
 
+const activities = ref([])
+
 const loadDashboardData = async () => {
   refreshing.value = true
-  setTimeout(() => {
+  try {
+    const res = await fetchPfpKpis()
+    stats.value = { ...stats.value, ...res }
+  } finally {
     refreshing.value = false
-  }, 500)
+  }
 }
 
 const navigateTo = (path) => {
   router.push(path)
 }
 
-onMounted(() => {
+const activityIcon = (type) => {
+  switch (type) {
+    case 'etudiant': return 'pi pi-user';
+    case 'votation': return 'pi pi-check-square';
+    case 'place': return 'pi pi-map-marker';
+    case 'pfp': return 'pi pi-calendar';
+    default: return 'pi pi-info-circle';
+  }
+}
+
+onMounted(async () => {
+  await loadDashboardData()
+  activities.value = [
+    { type: 'votation', title: 'Votation prioritaire lancée', time: 'il y a 20 min', to: '/management_votation_prioritaire' },
+    { type: 'place', title: 'Nouvelle place ajoutée', time: 'il y a 1 h', to: '/management_place' },
+    { type: 'pfp', title: 'PFP en cours mis à jour', time: 'hier', to: '/management_pfpencours' },
+  ]
   loading.value = false
 })
 </script>

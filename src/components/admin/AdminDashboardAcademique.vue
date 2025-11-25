@@ -144,6 +144,7 @@ import { useRouter } from 'vue-router'
 import AdminLayout from './layouts/AdminLayout.vue'
 import Button from 'primevue/button'
 import ProgressSpinner from 'primevue/progressspinner'
+import { fetchAcademiqueKpis } from '@/service/dashboardService'
 
 const router = useRouter()
 const loading = ref(true)
@@ -154,19 +155,39 @@ const stats = ref({
   media: 0,
   modules: 0
 })
+const activities = ref([])
 
 const loadDashboardData = async () => {
   refreshing.value = true
-  setTimeout(() => {
+  try {
+    const res = await fetchAcademiqueKpis()
+    stats.value = { ...stats.value, ...res }
+  } finally {
     refreshing.value = false
-  }, 500)
+  }
 }
 
 const navigateTo = (path) => {
   router.push(path)
 }
 
-onMounted(() => {
+const activityIcon = (type) => {
+  switch (type) {
+    case 'enseignant': return 'pi pi-user';
+    case 'cours': return 'pi pi-calendar';
+    case 'media': return 'pi pi-video';
+    case 'module': return 'pi pi-th-large';
+    default: return 'pi pi-info-circle';
+  }
+}
+
+onMounted(async () => {
+  await loadDashboardData()
+  activities.value = [
+    { type: 'enseignant', title: 'Nouvel enseignant ajouté', time: 'il y a 25 min', to: '/admin/teachers-si' },
+    { type: 'cours', title: 'Cours planifié', time: 'il y a 2 h', to: '/admin/planning/manage' },
+    { type: 'media', title: 'Vidéo importée', time: 'hier', to: '/admin/academic/video-library' },
+  ]
   loading.value = false
 })
 </script>

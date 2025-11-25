@@ -716,6 +716,14 @@ if (need && !user) {
   return next('/');
 }
 
+// Autoriser tous les utilisateurs connectés pour le besoin par défaut 'authenticated'
+const allowAuth = Array.isArray(need)
+  ? need.includes('authenticated')
+  : need === 'authenticated';
+if (allowAuth) {
+  return next();
+}
+
 if (need) {
   const canAccess = Array.isArray(need)
     ? (roleStore.isSuper || need.some(n => roleStore.can(n)))

@@ -170,8 +170,11 @@ import { useRouter } from 'vue-router'
 import AdminLayout from './layouts/AdminLayout.vue'
 import Button from 'primevue/button'
 import ProgressSpinner from 'primevue/progressspinner'
+import { fetchGeneralKpis } from '@/service/dashboardService'
+import { useRoleStore } from '@/stores/role'
 
 const router = useRouter()
+const roleStore = useRoleStore()
 const loading = ref(true)
 const refreshing = ref(false)
 const stats = ref({
@@ -185,10 +188,15 @@ const activities = ref([])
 
 const loadDashboardData = async () => {
   refreshing.value = true
-  // Simuler chargement
-  setTimeout(() => {
+  try {
+    if (!roleStore.initialized && roleStore.init) {
+      await roleStore.init()
+    }
+    const res = await fetchGeneralKpis({ router, roleStore })
+    stats.value = { ...stats.value, ...res }
+  } finally {
     refreshing.value = false
-  }, 500)
+  }
 }
 
 const navigateTo = (path) => {
@@ -206,13 +214,14 @@ const activityIcon = (type) => {
   }
 }
 
-onMounted(() => {
-  loading.value = false
+onMounted(async () => {
+  await loadDashboardData()
   // Placeholder activities (peuvent être remplacées par des données réelles)
   activities.value = [
     { type: 'user', title: 'Nouvel utilisateur créé', time: 'il y a 10 min', to: '/admin/users' },
     { type: 'vote', title: 'Votation prioritaire publiée', time: 'il y a 30 min', to: '/management_votation_prioritaire' },
     { type: 'place', title: 'Nouvelle place ajoutée', time: 'il y a 1 h', to: '/management_place' },
   ]
+  loading.value = false
 })
 </script>

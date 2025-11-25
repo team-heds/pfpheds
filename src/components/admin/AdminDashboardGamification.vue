@@ -134,6 +134,32 @@
             </div>
           </div>
         </div>
+
+        <!-- Activités récentes -->
+        <div class="mb-4">
+          <h2 class="text-xl font-semibold text-900 mb-3">Activités récentes</h2>
+          <div class="surface-card p-4 border-round shadow-2">
+            <div v-if="!activities.length" class="text-600">Aucune activité récente</div>
+            <div v-else class="flex flex-column gap-2">
+              <div
+                v-for="(a, i) in activities"
+                :key="i"
+                class="flex align-items-center justify-content-between border-1 surface-border border-round p-3"
+              >
+                <div class="flex align-items-center gap-3">
+                  <div class="flex align-items-center justify-content-center w-2rem h-2rem bg-blue-50 border-circle">
+                    <i :class="activityIcon(a.type)" class="text-blue-500 text-sm"></i>
+                  </div>
+                  <div>
+                    <div class="text-900 font-medium">{{ a.title || a.description || 'Activité' }}</div>
+                    <small class="text-500">{{ a.time || formatTime(a.timestamp) }}</small>
+                  </div>
+                </div>
+                <Button v-if="a.to" label="Voir" class="p-button-text p-button-sm" @click="navigateTo(a.to)" />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
   </AdminLayout>
 </template>
@@ -144,6 +170,8 @@ import { useRouter } from 'vue-router'
 import AdminLayout from './layouts/AdminLayout.vue'
 import Button from 'primevue/button'
 import ProgressSpinner from 'primevue/progressspinner'
+import { fetchGamificationKpis } from '@/service/dashboardService'
+import gamificationAdminService from '@/service/gamificationAdminService'
 
 const router = useRouter()
 const loading = ref(true)
@@ -158,19 +186,55 @@ const stats = ref({
   users: 0,
   usersActive: 0
 })
+const activities = ref([])
 
 const loadDashboardData = async () => {
   refreshing.value = true
-  setTimeout(() => {
+  try {
+    const res = await fetchGamificationKpis()
+    stats.value = { ...stats.value, ...res }
+  } finally {
     refreshing.value = false
-  }, 500)
+  }
+}
+
+const loadActivities = async () => {
+  try {
+    const logs = await gamificationAdminService.getRecentLogs(10)
+    activities.value = (logs || []).map(l => ({
+      type: l.action || 'activity',
+      title: l.title || l.description || 'Action gamification',
+      timestamp: l.timestamp || Date.now(),
+      to: null
+    }))
+  } catch (_) {
+    activities.value = []
+  }
 }
 
 const navigateTo = (path) => {
   router.push(path)
 }
 
-onMounted(() => {
+const activityIcon = (type) => {
+  switch (type) {
+    case 'challenge': return 'pi pi-trophy'
+    case 'quest': return 'pi pi-flag'
+    case 'badge': return 'pi pi-star'
+    case 'house': return 'pi pi-home'
+    default: return 'pi pi-info-circle'
+  }
+}
+
+function formatTime(ts) {
+  try {
+    const d = new Date(ts)
+    return d.toLocaleString()
+  } catch { return '' }
+}
+
+onMounted(async () => {
+  await Promise.all([loadDashboardData(), loadActivities()])
   loading.value = false
 })
 </script>
