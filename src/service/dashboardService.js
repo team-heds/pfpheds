@@ -16,7 +16,9 @@ async function countTable(table, filter = null) {
   }
 }
 
-export async function fetchGeneralKpis({ router, roleStore }) {
+export async function fetchGeneralKpis(params = {}) {
+  const { router, roleStore } = params
+  
   const [users, rolesList] = await Promise.all([
     countTable('user_profiles'),
     (async () => {

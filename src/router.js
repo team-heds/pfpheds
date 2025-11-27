@@ -135,6 +135,7 @@ import DashboardView from '@/views/admin/DashboardView.vue'
 import AdminDashboardGeneral from '@/components/admin/AdminDashboardGeneral.vue'
 import AdminDashboardPFP from '@/components/admin/AdminDashboardPFP.vue'
 import AdminDashboardAcademique from '@/components/admin/AdminDashboardAcademique.vue'
+import AlertsDashboard from '@/views/admin/AlertsDashboard.vue'
 import AdminDashboardGamification from '@/components/admin/AdminDashboardGamification.vue'
 import DashboardRMView from '@/views/admin/DashboardRMView.vue'
 import DashboardEnseignantView from '@/views/admin/DashboardEnseignantView.vue'
@@ -365,6 +366,7 @@ const routes = [
   { path: '/admin/dashboard-pfp', component: AdminDashboardPFP, name: 'AdminDashboardPFP', meta: { requiresAuth: true } },
   { path: '/admin/dashboard-academique', component: AdminDashboardAcademique, name: 'AdminDashboardAcademique', meta: { requiresAuth: true } },
   { path: '/admin/dashboard-gamification', component: AdminDashboardGamification, name: 'AdminDashboardGamification', meta: { requiresAuth: true } },
+  { path: '/admin/alerts', component: AlertsDashboard, name: 'AlertsDashboard', meta: { requiresAuth: true, need: ['super.all', 'admin', 'AdminPhysio', 'EnseignantPhysio'] } },
   { path: '/admin/settings', component: AdminSettingsView, name: 'AdminSettingsView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
   { path: '/admin/supabase-diagnostic', component: SupabaseDiagnosticView, name: 'SupabaseDiagnosticView', meta: { requiresAuth: true, need: 'admin' } },
   { path: '/admin/defis', component: AdminDefisView, name: 'AdminDefisView', meta: { requiresAuth: true, need: ['admin', 'house_coach'] } },

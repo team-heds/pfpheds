@@ -17,77 +17,48 @@
               </div>
             </div>
             
-            <Button 
-              icon="pi pi-refresh" 
-              label="Actualiser" 
-              @click="loadDashboardData"
-              :loading="refreshing"
-              class="p-button-primary"
-            />
+            <div class="flex gap-3">
+              <ButtonGroup>
+                <Button
+                  label="7j"
+                  :outlined="period !== '7d'"
+                  :severity="period === '7d' ? 'primary' : 'secondary'"
+                  @click="period = '7d'"
+                  size="small"
+                />
+                <Button
+                  label="30j"
+                  :outlined="period !== '30d'"
+                  :severity="period === '30d' ? 'primary' : 'secondary'"
+                  @click="period = '30d'"
+                  size="small"
+                />
+                <Button
+                  label="90j"
+                  :outlined="period !== '90d'"
+                  :severity="period === '90d' ? 'primary' : 'secondary'"
+                  @click="period = '90d'"
+                  size="small"
+                />
+              </ButtonGroup>
+              <Button 
+                icon="pi pi-refresh" 
+                @click="refresh"
+                :loading="refreshing"
+                outlined
+              />
+            </div>
           </div>
         </div>
 
-        <!-- Statistics Overview -->
-        <div class="grid mb-4">
-          <div class="col-12 md:col-6 lg:col-3">
-            <div class="surface-card p-4 border-round shadow-2 hover:shadow-4 transition-all transition-duration-300">
-              <div class="flex align-items-center gap-3">
-                <div class="flex align-items-center justify-content-center w-4rem h-4rem bg-blue-100 border-circle">
-                  <i class="pi pi-graduation-cap text-blue-500 text-2xl"></i>
-                </div>
-                <div class="flex-1">
-                  <h3 class="text-2xl font-bold text-900 m-0">{{ stats.enseignants || 0 }}</h3>
-                  <p class="text-600 font-medium m-0">Enseignants</p>
-                  <span class="text-sm text-500">Total</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-12 md:col-6 lg:col-3">
-            <div class="surface-card p-4 border-round shadow-2 hover:shadow-4 transition-all transition-duration-300">
-              <div class="flex align-items-center gap-3">
-                <div class="flex align-items-center justify-content-center w-4rem h-4rem bg-green-100 border-circle">
-                  <i class="pi pi-calendar text-green-500 text-2xl"></i>
-                </div>
-                <div class="flex-1">
-                  <h3 class="text-2xl font-bold text-900 m-0">{{ stats.cours || 0 }}</h3>
-                  <p class="text-600 font-medium m-0">Cours</p>
-                  <span class="text-sm text-500">Planifiés</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-12 md:col-6 lg:col-3">
-            <div class="surface-card p-4 border-round shadow-2 hover:shadow-4 transition-all transition-duration-300">
-              <div class="flex align-items-center gap-3">
-                <div class="flex align-items-center justify-content-center w-4rem h-4rem bg-orange-100 border-circle">
-                  <i class="pi pi-video text-orange-500 text-2xl"></i>
-                </div>
-                <div class="flex-1">
-                  <h3 class="text-2xl font-bold text-900 m-0">{{ stats.media || 0 }}</h3>
-                  <p class="text-600 font-medium m-0">Contenu Média</p>
-                  <span class="text-sm text-500">Disponible</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-12 md:col-6 lg:col-3">
-            <div class="surface-card p-4 border-round shadow-2 hover:shadow-4 transition-all transition-duration-300">
-              <div class="flex align-items-center gap-3">
-                <div class="flex align-items-center justify-content-center w-4rem h-4rem bg-purple-100 border-circle">
-                  <i class="pi pi-th-large text-purple-500 text-2xl"></i>
-                </div>
-                <div class="flex-1">
-                  <h3 class="text-2xl font-bold text-900 m-0">{{ stats.modules || 0 }}</h3>
-                  <p class="text-600 font-medium m-0">Modules</p>
-                  <span class="text-sm text-500">Actifs</span>
-                </div>
-              </div>
-            </div>
-          </div>
+        <!-- KPI Cards modulables -->
+        <div class="kpi-grid mb-4">
+          <KpiCard
+            v-for="kpi in kpisWithData"
+            :key="kpi.id"
+            v-bind="kpi"
+            @action="handleKpiAction(kpi)"
+          />
         </div>
 
         <!-- Quick Actions -->
@@ -142,33 +113,40 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import AdminLayout from './layouts/AdminLayout.vue'
+import KpiCard from './widgets/KpiCard.vue'
 import Button from 'primevue/button'
+import ButtonGroup from 'primevue/buttongroup'
 import ProgressSpinner from 'primevue/progressspinner'
-import { fetchAcademiqueKpis } from '@/service/dashboardService'
+import { useKpiManager } from '@/composables/useKpiManager'
 
 const router = useRouter()
-const loading = ref(true)
-const refreshing = ref(false)
-const stats = ref({
-  enseignants: 0,
-  cours: 0,
-  media: 0,
-  modules: 0
-})
-const activities = ref([])
 
-const loadDashboardData = async () => {
-  refreshing.value = true
-  try {
-    const res = await fetchAcademiqueKpis()
-    stats.value = { ...stats.value, ...res }
-  } finally {
-    refreshing.value = false
-  }
-}
+// Utiliser le système KPI modulable
+const {
+  kpisWithData,
+  loading,
+  refreshing,
+  period,
+  loadKpis,
+  refresh
+} = useKpiManager('academique')
+
+const activities = ref([])
 
 const navigateTo = (path) => {
   router.push(path)
+}
+
+const handleKpiAction = (kpi) => {
+  const routes = {
+    teachers_count: '/admin/teachers-si',
+    courses_count: '/admin/planning/manage',
+    media_count: '/admin/academic/video-library',
+    modules_count: '/admin/modules'
+  }
+  if (routes[kpi.id]) {
+    router.push(routes[kpi.id])
+  }
 }
 
 const activityIcon = (type) => {
@@ -182,12 +160,19 @@ const activityIcon = (type) => {
 }
 
 onMounted(async () => {
-  await loadDashboardData()
+  await loadKpis()
   activities.value = [
     { type: 'enseignant', title: 'Nouvel enseignant ajouté', time: 'il y a 25 min', to: '/admin/teachers-si' },
     { type: 'cours', title: 'Cours planifié', time: 'il y a 2 h', to: '/admin/planning/manage' },
     { type: 'media', title: 'Vidéo importée', time: 'hier', to: '/admin/academic/video-library' },
   ]
-  loading.value = false
 })
 </script>
+
+<style scoped>
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+</style>

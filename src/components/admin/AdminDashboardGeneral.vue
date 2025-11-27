@@ -17,77 +17,48 @@
               </div>
             </div>
             
-            <Button 
-              icon="pi pi-refresh" 
-              label="Actualiser" 
-              @click="loadDashboardData"
-              :loading="refreshing"
-              class="p-button-primary"
-            />
+            <div class="flex gap-3">
+              <ButtonGroup>
+                <Button
+                  label="7j"
+                  :outlined="period !== '7d'"
+                  :severity="period === '7d' ? 'primary' : 'secondary'"
+                  @click="period = '7d'"
+                  size="small"
+                />
+                <Button
+                  label="30j"
+                  :outlined="period !== '30d'"
+                  :severity="period === '30d' ? 'primary' : 'secondary'"
+                  @click="period = '30d'"
+                  size="small"
+                />
+                <Button
+                  label="90j"
+                  :outlined="period !== '90d'"
+                  :severity="period === '90d' ? 'primary' : 'secondary'"
+                  @click="period = '90d'"
+                  size="small"
+                />
+              </ButtonGroup>
+              <Button 
+                icon="pi pi-refresh" 
+                @click="refresh"
+                :loading="refreshing"
+                outlined
+              />
+            </div>
           </div>
         </div>
 
-        <!-- Statistics Overview -->
-        <div class="grid mb-4">
-          <div class="col-12 md:col-6 lg:col-3">
-            <div class="surface-card p-4 border-round shadow-2 hover:shadow-4 transition-all transition-duration-300">
-              <div class="flex align-items-center gap-3">
-                <div class="flex align-items-center justify-content-center w-4rem h-4rem bg-blue-100 border-circle">
-                  <i class="pi pi-users text-blue-500 text-2xl"></i>
-                </div>
-                <div class="flex-1">
-                  <h3 class="text-2xl font-bold text-900 m-0">{{ stats.users || 0 }}</h3>
-                  <p class="text-600 font-medium m-0">Utilisateurs</p>
-                  <span class="text-sm text-500">Total système</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-12 md:col-6 lg:col-3">
-            <div class="surface-card p-4 border-round shadow-2 hover:shadow-4 transition-all transition-duration-300">
-              <div class="flex align-items-center gap-3">
-                <div class="flex align-items-center justify-content-center w-4rem h-4rem bg-green-100 border-circle">
-                  <i class="pi pi-lock text-green-500 text-2xl"></i>
-                </div>
-                <div class="flex-1">
-                  <h3 class="text-2xl font-bold text-900 m-0">{{ stats.roles || 0 }}</h3>
-                  <p class="text-600 font-medium m-0">Rôles</p>
-                  <span class="text-sm text-500">Configurés</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-12 md:col-6 lg:col-3">
-            <div class="surface-card p-4 border-round shadow-2 hover:shadow-4 transition-all transition-duration-300">
-              <div class="flex align-items-center gap-3">
-                <div class="flex align-items-center justify-content-center w-4rem h-4rem bg-orange-100 border-circle">
-                  <i class="pi pi-sitemap text-orange-500 text-2xl"></i>
-                </div>
-                <div class="flex-1">
-                  <h3 class="text-2xl font-bold text-900 m-0">{{ stats.routes || 0 }}</h3>
-                  <p class="text-600 font-medium m-0">Routes</p>
-                  <span class="text-sm text-500">Dans le système</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-12 md:col-6 lg:col-3">
-            <div class="surface-card p-4 border-round shadow-2 hover:shadow-4 transition-all transition-duration-300">
-              <div class="flex align-items-center gap-3">
-                <div class="flex align-items-center justify-content-center w-4rem h-4rem bg-purple-100 border-circle">
-                  <i class="pi pi-key text-purple-500 text-2xl"></i>
-                </div>
-                <div class="flex-1">
-                  <h3 class="text-2xl font-bold text-900 m-0">{{ stats.permissions || 0 }}</h3>
-                  <p class="text-600 font-medium m-0">Permissions</p>
-                  <span class="text-sm text-500">Actives</span>
-                </div>
-              </div>
-            </div>
-          </div>
+        <!-- KPI Cards modulables -->
+        <div class="kpi-grid mb-4">
+          <KpiCard
+            v-for="kpi in kpisWithData"
+            :key="kpi.id"
+            v-bind="kpi"
+            @action="handleKpiAction(kpi)"
+          />
         </div>
 
         <!-- Quick Actions -->
@@ -168,39 +139,111 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import AdminLayout from './layouts/AdminLayout.vue'
+import KpiCard from './widgets/KpiCard.vue'
 import Button from 'primevue/button'
+import ButtonGroup from 'primevue/buttongroup'
 import ProgressSpinner from 'primevue/progressspinner'
-import { fetchGeneralKpis } from '@/service/dashboardService'
-import { useRoleStore } from '@/stores/role'
+import { getAllAdminKpis } from '@/services/adminKpiService'
 
 const router = useRouter()
-const roleStore = useRoleStore()
+
+// État local
 const loading = ref(true)
 const refreshing = ref(false)
-const stats = ref({
-  users: 0,
-  roles: 10,
-  routes: 0,
-  permissions: 11
-})
+const period = ref('30d')
+
+// KPIs avec vraies données
+const kpisWithData = ref([
+  {
+    id: 'total_users',
+    label: 'Utilisateurs Totaux',
+    value: 0,
+    icon: 'pi pi-users',
+    color: '#3B82F6',
+    trend: 0,
+    subtitle: 'Tous les profils utilisateurs'
+  },
+  {
+    id: 'total_roles',
+    label: 'Rôles Configurés',
+    value: 0,
+    icon: 'pi pi-shield',
+    color: '#10B981',
+    trend: 0,
+    subtitle: 'Rôles RBAC actifs'
+  },
+  {
+    id: 'active_permissions',
+    label: 'Permissions Actives',
+    value: 0,
+    icon: 'pi pi-lock',
+    color: '#F59E0B',
+    trend: 0,
+    subtitle: 'Permissions système'
+  },
+  {
+    id: 'route_count',
+    label: 'Routes',
+    value: 0,
+    icon: 'pi pi-sitemap',
+    color: '#8B5CF6',
+    trend: 0,
+    subtitle: 'Routes Vue Router'
+  },
+  {
+    id: 'total_institutions',
+    label: 'Institutions',
+    value: 0,
+    icon: 'pi pi-building',
+    color: '#EC4899',
+    trend: 0,
+    subtitle: 'Institutions partenaires'
+  },
+  {
+    id: 'total_places',
+    label: 'Places de Stage',
+    value: 0,
+    icon: 'pi pi-map-marker',
+    color: '#14B8A6',
+    trend: 0,
+    subtitle: 'Places disponibles/totales'
+  },
+  {
+    id: 'active_votations',
+    label: 'Votations Actives',
+    value: 0,
+    icon: 'pi pi-check-square',
+    color: '#F97316',
+    trend: 0,
+    subtitle: 'Votations en cours'
+  },
+  {
+    id: 'total_modules',
+    label: 'Modules Académiques',
+    value: 0,
+    icon: 'pi pi-book',
+    color: '#6366F1',
+    trend: 0,
+    subtitle: 'Modules de cours'
+  }
+])
 
 const activities = ref([])
 
-const loadDashboardData = async () => {
-  refreshing.value = true
-  try {
-    if (!roleStore.initialized && roleStore.init) {
-      await roleStore.init()
-    }
-    const res = await fetchGeneralKpis({ router, roleStore })
-    stats.value = { ...stats.value, ...res }
-  } finally {
-    refreshing.value = false
-  }
-}
-
 const navigateTo = (path) => {
   router.push(path)
+}
+
+const handleKpiAction = (kpi) => {
+  const routes = {
+    total_users: '/user_list',
+    total_roles: '/admin/user-roles',
+    active_permissions: '/permissions',
+    route_count: '/router-inspector'
+  }
+  if (routes[kpi.id]) {
+    router.push(routes[kpi.id])
+  }
 }
 
 const activityIcon = (type) => {
@@ -214,14 +257,86 @@ const activityIcon = (type) => {
   }
 }
 
-onMounted(async () => {
-  await loadDashboardData()
-  // Placeholder activities (peuvent être remplacées par des données réelles)
-  activities.value = [
-    { type: 'user', title: 'Nouvel utilisateur créé', time: 'il y a 10 min', to: '/admin/users' },
-    { type: 'vote', title: 'Votation prioritaire publiée', time: 'il y a 30 min', to: '/management_votation_prioritaire' },
-    { type: 'place', title: 'Nouvelle place ajoutée', time: 'il y a 1 h', to: '/management_place' },
-  ]
-  loading.value = false
+/**
+ * Charge les vraies données KPI depuis Supabase
+ */
+const loadKpiData = async () => {
+  loading.value = true
+  try {
+    console.log('🔄 Chargement des KPIs depuis Supabase...')
+    
+    const data = await getAllAdminKpis(router)
+    
+    console.log('✅ Données KPI reçues:', data)
+    
+    // Mettre à jour les valeurs des KPIs
+    kpisWithData.value.forEach(kpi => {
+      switch (kpi.id) {
+        case 'total_users':
+          kpi.value = data.totalUsers
+          break
+        case 'total_roles':
+          kpi.value = data.totalRoles
+          break
+        case 'active_permissions':
+          kpi.value = data.activePermissions
+          break
+        case 'route_count':
+          kpi.value = data.totalRoutes
+          break
+        case 'total_institutions':
+          kpi.value = data.totalInstitutions
+          break
+        case 'total_places':
+          kpi.value = data.totalPlaces
+          if (data.availablePlaces > 0) {
+            kpi.subtitle = `${data.availablePlaces} disponibles / ${data.totalPlaces} totales`
+          }
+          break
+        case 'active_votations':
+          kpi.value = data.activeVotations
+          break
+        case 'total_modules':
+          kpi.value = data.totalModules
+          break
+      }
+    })
+    
+    console.log('✅ KPIs mis à jour:', kpisWithData.value)
+    
+  } catch (error) {
+    console.error('❌ Erreur chargement KPIs:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+/**
+ * Rafraîchit les données
+ */
+const refresh = async () => {
+  refreshing.value = true
+  await loadKpiData()
+  refreshing.value = false
+}
+
+// Initialiser les activités
+activities.value = [
+  { type: 'user', title: 'Nouvel utilisateur créé', time: 'il y a 10 min', to: '/user_list' },
+  { type: 'vote', title: 'Votation prioritaire publiée', time: 'il y a 30 min', to: '/votation_management' },
+  { type: 'place', title: 'Nouvelle place ajoutée', time: 'il y a 1 h', to: '/management_places' },
+]
+
+// Charger les données au montage
+onMounted(() => {
+  loadKpiData()
 })
 </script>
+
+<style scoped>
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+</style>

@@ -17,77 +17,48 @@
               </div>
             </div>
             
-            <Button 
-              icon="pi pi-refresh" 
-              label="Actualiser" 
-              @click="loadDashboardData"
-              :loading="refreshing"
-              class="p-button-primary"
-            />
+            <div class="flex gap-3">
+              <ButtonGroup>
+                <Button
+                  label="7j"
+                  :outlined="period !== '7d'"
+                  :severity="period === '7d' ? 'primary' : 'secondary'"
+                  @click="period = '7d'"
+                  size="small"
+                />
+                <Button
+                  label="30j"
+                  :outlined="period !== '30d'"
+                  :severity="period === '30d' ? 'primary' : 'secondary'"
+                  @click="period = '30d'"
+                  size="small"
+                />
+                <Button
+                  label="90j"
+                  :outlined="period !== '90d'"
+                  :severity="period === '90d' ? 'primary' : 'secondary'"
+                  @click="period = '90d'"
+                  size="small"
+                />
+              </ButtonGroup>
+              <Button 
+                icon="pi pi-refresh" 
+                @click="refresh"
+                :loading="refreshing"
+                outlined
+              />
+            </div>
           </div>
         </div>
 
-        <!-- Statistics Overview -->
-        <div class="grid mb-4">
-          <div class="col-12 md:col-6 lg:col-3">
-            <div class="surface-card p-4 border-round shadow-2 hover:shadow-4 transition-all transition-duration-300">
-              <div class="flex align-items-center gap-3">
-                <div class="flex align-items-center justify-content-center w-4rem h-4rem bg-orange-100 border-circle">
-                  <i class="pi pi-trophy text-orange-500 text-2xl"></i>
-                </div>
-                <div class="flex-1">
-                  <h3 class="text-2xl font-bold text-900 m-0">{{ stats.challenges || 0 }}</h3>
-                  <p class="text-600 font-medium m-0">Défis Totaux</p>
-                  <span class="text-sm text-500">{{ stats.challengesActive || 0 }} actifs</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-12 md:col-6 lg:col-3">
-            <div class="surface-card p-4 border-round shadow-2 hover:shadow-4 transition-all transition-duration-300">
-              <div class="flex align-items-center gap-3">
-                <div class="flex align-items-center justify-content-center w-4rem h-4rem bg-purple-100 border-circle">
-                  <i class="pi pi-flag text-purple-500 text-2xl"></i>
-                </div>
-                <div class="flex-1">
-                  <h3 class="text-2xl font-bold text-900 m-0">{{ stats.quests || 0 }}</h3>
-                  <p class="text-600 font-medium m-0">Quêtes Totales</p>
-                  <span class="text-sm text-500">{{ stats.questsActive || 0 }} actives</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-12 md:col-6 lg:col-3">
-            <div class="surface-card p-4 border-round shadow-2 hover:shadow-4 transition-all transition-duration-300">
-              <div class="flex align-items-center gap-3">
-                <div class="flex align-items-center justify-content-center w-4rem h-4rem bg-red-100 border-circle">
-                  <i class="pi pi-star text-red-500 text-2xl"></i>
-                </div>
-                <div class="flex-1">
-                  <h3 class="text-2xl font-bold text-900 m-0">{{ stats.badges || 0 }}</h3>
-                  <p class="text-600 font-medium m-0">Badges Totaux</p>
-                  <span class="text-sm text-500">{{ stats.badgesUnlocked || 0 }} débloqués</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-12 md:col-6 lg:col-3">
-            <div class="surface-card p-4 border-round shadow-2 hover:shadow-4 transition-all transition-duration-300">
-              <div class="flex align-items-center gap-3">
-                <div class="flex align-items-center justify-content-center w-4rem h-4rem bg-green-100 border-circle">
-                  <i class="pi pi-users text-green-500 text-2xl"></i>
-                </div>
-                <div class="flex-1">
-                  <h3 class="text-2xl font-bold text-900 m-0">{{ stats.users || 0 }}</h3>
-                  <p class="text-600 font-medium m-0">Utilisateurs</p>
-                  <span class="text-sm text-500">{{ stats.usersActive || 0 }} actifs</span>
-                </div>
-              </div>
-            </div>
-          </div>
+        <!-- KPI Cards modulables -->
+        <div class="kpi-grid mb-4">
+          <KpiCard
+            v-for="kpi in kpisWithData"
+            :key="kpi.id"
+            v-bind="kpi"
+            @action="handleKpiAction(kpi)"
+          />
         </div>
 
         <!-- Quick Actions -->
@@ -168,35 +139,26 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import AdminLayout from './layouts/AdminLayout.vue'
+import KpiCard from './widgets/KpiCard.vue'
 import Button from 'primevue/button'
+import ButtonGroup from 'primevue/buttongroup'
 import ProgressSpinner from 'primevue/progressspinner'
-import { fetchGamificationKpis } from '@/service/dashboardService'
+import { useKpiManager } from '@/composables/useKpiManager'
 import gamificationAdminService from '@/service/gamificationAdminService'
 
 const router = useRouter()
-const loading = ref(true)
-const refreshing = ref(false)
-const stats = ref({
-  challenges: 0,
-  challengesActive: 0,
-  quests: 0,
-  questsActive: 0,
-  badges: 0,
-  badgesUnlocked: 0,
-  users: 0,
-  usersActive: 0
-})
-const activities = ref([])
 
-const loadDashboardData = async () => {
-  refreshing.value = true
-  try {
-    const res = await fetchGamificationKpis()
-    stats.value = { ...stats.value, ...res }
-  } finally {
-    refreshing.value = false
-  }
-}
+// Utiliser le système KPI modulable
+const {
+  kpisWithData,
+  loading,
+  refreshing,
+  period,
+  loadKpis,
+  refresh
+} = useKpiManager('gamification')
+
+const activities = ref([])
 
 const loadActivities = async () => {
   try {
@@ -214,6 +176,18 @@ const loadActivities = async () => {
 
 const navigateTo = (path) => {
   router.push(path)
+}
+
+const handleKpiAction = (kpi) => {
+  const routes = {
+    challenges_active: '/admin/gamification/challenges',
+    quests_completed: '/admin/gamification/quests',
+    badges_total: '/admin/gamification/badges',
+    users_active: '/admin/gamification/users'
+  }
+  if (routes[kpi.id]) {
+    router.push(routes[kpi.id])
+  }
 }
 
 const activityIcon = (type) => {
@@ -234,7 +208,14 @@ function formatTime(ts) {
 }
 
 onMounted(async () => {
-  await Promise.all([loadDashboardData(), loadActivities()])
-  loading.value = false
+  await Promise.all([loadKpis(), loadActivities()])
 })
 </script>
+
+<style scoped>
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+</style>

@@ -17,77 +17,48 @@
               </div>
             </div>
             
-            <Button 
-              icon="pi pi-refresh" 
-              label="Actualiser" 
-              @click="loadDashboardData"
-              :loading="refreshing"
-              class="p-button-primary"
-            />
+            <div class="flex gap-3">
+              <ButtonGroup>
+                <Button
+                  label="7j"
+                  :outlined="period !== '7d'"
+                  :severity="period === '7d' ? 'primary' : 'secondary'"
+                  @click="period = '7d'"
+                  size="small"
+                />
+                <Button
+                  label="30j"
+                  :outlined="period !== '30d'"
+                  :severity="period === '30d' ? 'primary' : 'secondary'"
+                  @click="period = '30d'"
+                  size="small"
+                />
+                <Button
+                  label="90j"
+                  :outlined="period !== '90d'"
+                  :severity="period === '90d' ? 'primary' : 'secondary'"
+                  @click="period = '90d'"
+                  size="small"
+                />
+              </ButtonGroup>
+              <Button 
+                icon="pi pi-refresh" 
+                @click="refresh"
+                :loading="refreshing"
+                outlined
+              />
+            </div>
           </div>
         </div>
 
-        <!-- Statistics Overview -->
-        <div class="grid mb-4">
-          <div class="col-12 md:col-6 lg:col-3">
-            <div class="surface-card p-4 border-round shadow-2 hover:shadow-4 transition-all transition-duration-300">
-              <div class="flex align-items-center gap-3">
-                <div class="flex align-items-center justify-content-center w-4rem h-4rem bg-blue-100 border-circle">
-                  <i class="pi pi-users text-blue-500 text-2xl"></i>
-                </div>
-                <div class="flex-1">
-                  <h3 class="text-2xl font-bold text-900 m-0">{{ stats.etudiants || 0 }}</h3>
-                  <p class="text-600 font-medium m-0">Étudiants</p>
-                  <span class="text-sm text-500">Total</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-12 md:col-6 lg:col-3">
-            <div class="surface-card p-4 border-round shadow-2 hover:shadow-4 transition-all transition-duration-300">
-              <div class="flex align-items-center gap-3">
-                <div class="flex align-items-center justify-content-center w-4rem h-4rem bg-green-100 border-circle">
-                  <i class="pi pi-building text-green-500 text-2xl"></i>
-                </div>
-                <div class="flex-1">
-                  <h3 class="text-2xl font-bold text-900 m-0">{{ stats.institutions || 0 }}</h3>
-                  <p class="text-600 font-medium m-0">Institutions</p>
-                  <span class="text-sm text-500">Partenaires</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-12 md:col-6 lg:col-3">
-            <div class="surface-card p-4 border-round shadow-2 hover:shadow-4 transition-all transition-duration-300">
-              <div class="flex align-items-center gap-3">
-                <div class="flex align-items-center justify-content-center w-4rem h-4rem bg-orange-100 border-circle">
-                  <i class="pi pi-map-marker text-orange-500 text-2xl"></i>
-                </div>
-                <div class="flex-1">
-                  <h3 class="text-2xl font-bold text-900 m-0">{{ stats.places || 0 }}</h3>
-                  <p class="text-600 font-medium m-0">Places</p>
-                  <span class="text-sm text-500">Disponibles</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-12 md:col-6 lg:col-3">
-            <div class="surface-card p-4 border-round shadow-2 hover:shadow-4 transition-all transition-duration-300">
-              <div class="flex align-items-center gap-3">
-                <div class="flex align-items-center justify-content-center w-4rem h-4rem bg-purple-100 border-circle">
-                  <i class="pi pi-calendar text-purple-500 text-2xl"></i>
-                </div>
-                <div class="flex-1">
-                  <h3 class="text-2xl font-bold text-900 m-0">{{ stats.pfpEnCours || 0 }}</h3>
-                  <p class="text-600 font-medium m-0">PFP en Cours</p>
-                  <span class="text-sm text-500">Actifs</span>
-                </div>
-              </div>
-            </div>
-          </div>
+        <!-- KPI Cards modulables -->
+        <div class="kpi-grid mb-4">
+          <KpiCard
+            v-for="kpi in kpisWithData"
+            :key="kpi.id"
+            v-bind="kpi"
+            @action="handleKpiAction(kpi)"
+          />
         </div>
 
         <!-- Quick Actions -->
@@ -168,34 +139,40 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import AdminLayout from './layouts/AdminLayout.vue'
+import KpiCard from './widgets/KpiCard.vue'
 import Button from 'primevue/button'
+import ButtonGroup from 'primevue/buttongroup'
 import ProgressSpinner from 'primevue/progressspinner'
-import { fetchPfpKpis } from '@/service/dashboardService'
+import { useKpiManager } from '@/composables/useKpiManager'
 
 const router = useRouter()
-const loading = ref(true)
-const refreshing = ref(false)
-const stats = ref({
-  etudiants: 0,
-  institutions: 0,
-  places: 0,
-  pfpEnCours: 0
-})
+
+// Utiliser le système KPI modulable
+const {
+  kpisWithData,
+  loading,
+  refreshing,
+  period,
+  loadKpis,
+  refresh
+} = useKpiManager('pfp')
 
 const activities = ref([])
 
-const loadDashboardData = async () => {
-  refreshing.value = true
-  try {
-    const res = await fetchPfpKpis()
-    stats.value = { ...stats.value, ...res }
-  } finally {
-    refreshing.value = false
-  }
-}
-
 const navigateTo = (path) => {
   router.push(path)
+}
+
+const handleKpiAction = (kpi) => {
+  const routes = {
+    students_count: '/etudiant_list',
+    institutions_count: '/institution_list',
+    places_count: '/management_place',
+    pfp_ongoing: '/management_pfpencours'
+  }
+  if (routes[kpi.id]) {
+    router.push(routes[kpi.id])
+  }
 }
 
 const activityIcon = (type) => {
@@ -209,12 +186,19 @@ const activityIcon = (type) => {
 }
 
 onMounted(async () => {
-  await loadDashboardData()
+  await loadKpis()
   activities.value = [
     { type: 'votation', title: 'Votation prioritaire lancée', time: 'il y a 20 min', to: '/management_votation_prioritaire' },
     { type: 'place', title: 'Nouvelle place ajoutée', time: 'il y a 1 h', to: '/management_place' },
     { type: 'pfp', title: 'PFP en cours mis à jour', time: 'hier', to: '/management_pfpencours' },
   ]
-  loading.value = false
 })
 </script>
+
+<style scoped>
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+</style>
