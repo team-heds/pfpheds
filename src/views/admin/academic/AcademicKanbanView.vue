@@ -1,6 +1,5 @@
 <template>
   <AdminLayout>
-    <Navbar />
     <div class="page-wrapper">
       <div class="academic-kanban-page">
         <!-- Header -->
@@ -201,7 +200,6 @@ import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
-import Navbar from '@/components/common/utils/Navbar.vue'
 import KanbanBoard from '@/components/academic/KanbanBoard.vue'
 import TicketForm from '@/components/academic/TicketForm.vue'
 import TicketDetails from '@/components/academic/TicketDetails.vue'
@@ -544,14 +542,6 @@ onMounted(async () => {
 <style scoped>
 .page-wrapper {
   width: 100%;
-  height: 100vh;
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-width: none;
-}
-
-.page-wrapper::-webkit-scrollbar {
-  display: none;
 }
 
 .academic-kanban-page {

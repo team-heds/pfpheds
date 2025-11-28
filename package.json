@@ -1,6 +1,6 @@
 {
   "name": "Plateforme_FP",
-  "version": "0.1.0.41",
+  "version": "0.1.0.42",
   "private": true,
   "type": "module",
   "scripts": {
@@ -16,7 +16,6 @@
     "docs:serve": "npm --prefix documentation run serve",
     "build:all": "vite build && npm run docs:build && node scripts/copy-docs-to-dist.js"
   },
-
   "dependencies": {
     "@elevenlabs/elevenlabs-js": "^2.4.1",
     "@floating-ui/react": "^0.27.12",
@@ -25,6 +24,7 @@
     "@fullcalendar/interaction": "^6.1.19",
     "@fullcalendar/timegrid": "^6.1.8",
     "@fullcalendar/vue3": "^6.1.19",
+    "@modelcontextprotocol/sdk": "^1.23.0",
     "@supabase/supabase-js": "^2.52.0",
     "@tiptap/extension-code-block-lowlight": "^2.22.3",
     "@tiptap/extension-highlight": "^2.22.3",
@@ -57,10 +57,13 @@
     "firebase": "^10.6.0",
     "font-awesome": "^4.7.0",
     "json2csv": "^6.0.0-alpha.2",
+    "jspdf": "^3.0.4",
+    "jspdf-autotable": "^5.0.2",
     "leaflet": "^1.9.4",
     "lowlight": "^2.9.0",
     "marked": "^4.3.0",
     "mermaid": "^11.4.1",
+    "pg": "^8.16.3",
     "pinia": "^3.0.3",
     "primeflex": "^3.3.1",
     "primeicons": "^6.0.1",
@@ -72,6 +75,7 @@
     "three-stdlib": "^2.35.7",
     "vue": "^3.4.21",
     "vue-chartjs": "^5.3.2",
+    "vue-countup-v3": "^1.4.2",
     "vue-router": "^4.3.0",
     "xlsx": "^0.18.5"
   },

@@ -1,6 +1,6 @@
 <template>
   <AdminLayout>
-    <div class="p-4 admin-scrollable">
+    <div class="p-4">
       <div class="surface-card fp-dark p-4 border-round shadow-2 mb-3">
         <div class="flex align-items-center justify-content-between gap-3">
           <div class="flex align-items-center gap-3">
@@ -145,14 +145,4 @@ const goToDetails = (id) => router.push({ name: 'InstitutionView', params: { id 
 }
 .fp-dark :deep(.p-inputtext::placeholder),
 .fp-dark :deep(textarea::placeholder) { color: #cbd5e1; }
-.admin-scrollable {
-  height: 100vh;
-  overflow-y: auto;
-  padding-bottom: 2rem;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.admin-scrollable::-webkit-scrollbar {
-  display: none;
-}
 </style>

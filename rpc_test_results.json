@@ -1,0 +1,101 @@
+{
+  "timestamp": "2025-11-28T08:51:08.050Z",
+  "summary": {
+    "total": 10,
+    "success": 10,
+    "error": 0,
+    "exception": 0
+  },
+  "results": [
+    {
+      "rpc": "add_user_xp",
+      "status": "success",
+      "result": {
+        "success": true,
+        "user_id": "d11a178a-853f-455d-80c6-438c2a1b18a1",
+        "action": "test_action",
+        "xp_gained": 10,
+        "total_xp": 60,
+        "old_level": 1,
+        "new_level": 1,
+        "level_up": false
+      }
+    },
+    {
+      "rpc": "calculate_level_from_xp",
+      "status": "success",
+      "result": 2
+    },
+    {
+      "rpc": "check_and_unlock_badges",
+      "status": "success",
+      "result": []
+    },
+    {
+      "rpc": "get_all_gamification_users",
+      "status": "success",
+      "count": 198
+    },
+    {
+      "rpc": "get_leaderboard",
+      "status": "success",
+      "count": 10
+    },
+    {
+      "rpc": "get_leaderboard_house",
+      "status": "success",
+      "count": 5
+    },
+    {
+      "rpc": "get_video_library_stats",
+      "status": "success",
+      "result": {
+        "total_videos": 0,
+        "total_duration_minutes": 0,
+        "videos_by_type": null,
+        "unique_modules": 0,
+        "unique_years": 0
+      }
+    },
+    {
+      "rpc": "get_capsule_analytics",
+      "status": "success",
+      "result": {
+        "success": true,
+        "capsule_id": "1c286bf7-80ac-44f0-ba7b-bc230f7f960a",
+        "user_stats": {
+          "total_xp": 50,
+          "current_level": 1
+        },
+        "house_stats": {
+          "house_id": "550e8400-e29b-41d4-a716-446655440001",
+          "house_name": "Harmonis",
+          "house_total_xp": 2400,
+          "member_count": 49,
+          "house_rank": 3
+        },
+        "generated_at": "2025-11-28T08:51:08.631139+00:00"
+      }
+    },
+    {
+      "rpc": "whoami",
+      "status": "success",
+      "result": {
+        "db_user": "service_role",
+        "jwt_claims": {
+          "aud": "authenticated",
+          "exp": 2072859206,
+          "iat": 1757499206,
+          "iss": "supabase",
+          "sub": "f20a1ef5-fd2b-46bf-8ba7-ac99d2943ab2",
+          "role": "service_role"
+        }
+      }
+    },
+    {
+      "rpc": "is_superadmin",
+      "status": "success",
+      "result": false
+    }
+  ]
+}

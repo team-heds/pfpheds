@@ -147,8 +147,30 @@ export async function loadDynamicRoutes() {
 export async function addDynamicRoutesToRouter(router) {
   const dynamicRoutes = await loadDynamicRoutes();
 
+  // Liste des routes admin à ignorer (définies statiquement dans router.js)
+  const protectedRoutes = [
+    'AdminDashboardGeneral',
+    'DashboardRM',
+    'DashboardEnseignant',
+    'AdminDashboardPFP',
+    'AdminDashboardAcademique',
+    'AdminDashboardGamification',
+    'AlertsDashboard',
+    'AdminSettingsView',
+    'SupabaseDiagnosticView',
+    'AdminDefisView',
+    'RBACAdmin',
+    'DynamicRoutesEditor'
+  ];
+
   dynamicRoutes.forEach((route) => {
     if (!route) return;
+
+    // Ignorer les routes admin protégées
+    if (protectedRoutes.includes(route.name)) {
+      console.log(`⏩ Route protégée ignorée: ${route.path} (${route.name})`);
+      return;
+    }
 
     // Vérifier si la route existe déjà
     if (router.hasRoute(route.name)) {

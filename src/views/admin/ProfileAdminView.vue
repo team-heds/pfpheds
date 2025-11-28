@@ -270,19 +270,12 @@ export default {
 <style scoped>
 .page-wrapper {
   width: 100%;
-  height: 100vh;
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.page-wrapper::-webkit-scrollbar {
-  display: none;
+  height: 100%;
+  overflow: visible;
 }
 
 .profile-admin-page {
-  min-height: 100vh;
+  min-height: auto;
   padding: 2rem;
   padding-bottom: 8rem;
   display: grid;

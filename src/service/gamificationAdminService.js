@@ -3,7 +3,7 @@
  * Fournit les statistiques et données d'administration pour le système de gamification HEdS
  */
 
-import { ref as dbRef, get, query, orderByChild, limitToLast } from 'firebase/database';
+import { ref as dbRef, get } from 'firebase/database';
 import { db, auth } from '../../firebase.js';
 
 /**
@@ -16,12 +16,12 @@ export const getGamificationStats = async () => {
 
     // Récupérer les données en parallèle
     const [usersSnapshot, challengesSnapshot, questsSnapshot, badgesSnapshot, housesSnapshot, logsSnapshot] = await Promise.all([
-      get(dbRef(db, 'users')),
-      get(dbRef(db, 'gamification/challenges')),
-      get(dbRef(db, 'gamification/quests')),
-      get(dbRef(db, 'gamification/badges')),
-      get(dbRef(db, 'gamification/houses')),
-      get(query(dbRef(db, 'gamification/logs'), orderByChild('timestamp'), limitToLast(10)))
+      get(dbRef(db, 'users')).catch(() => ({ val: () => ({}) })),
+      get(dbRef(db, 'gamification/challenges')).catch(() => ({ val: () => ({}) })),
+      get(dbRef(db, 'gamification/quests')).catch(() => ({ val: () => ({}) })),
+      get(dbRef(db, 'gamification/badges')).catch(() => ({ val: () => ({}) })),
+      get(dbRef(db, 'gamification/houses')).catch(() => ({ val: () => ({}) })),
+      get(dbRef(db, 'gamification/logs')).catch(() => ({ val: () => ({}) })) // Sans orderByChild pour éviter l'erreur d'index
     ]);
 
     // Traitement des utilisateurs
@@ -67,10 +67,11 @@ export const getGamificationStats = async () => {
       };
     });
 
-    // Traitement des logs
+    // Traitement des logs (récupérer les 10 plus récents manuellement)
     const logs = logsSnapshot.val() || {};
     const recentLogs = Object.entries(logs)
       .map(([id, log]) => ({ id, ...log }))
+      .filter(log => log.timestamp) // Filtrer ceux qui ont un timestamp
       .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
       .slice(0, 10);
 

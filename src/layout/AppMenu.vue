@@ -63,7 +63,7 @@ const model = ref([
                 {
                   label: 'Places assigned',
                   icon: 'pi pi-fw pi-image',
-                  to: '/places_asssigned'
+                  to: '/places_assigned'
                 },
                 {
                   label: 'Places Assignement',
@@ -101,7 +101,7 @@ const model = ref([
                 {
                   label: 'Management Places',
                   icon: 'pi pi-cog',
-                  to: '/management_places'
+                  to: '/management_place'
                 },
               
                 {

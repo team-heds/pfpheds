@@ -1,6 +1,6 @@
 <template>
-  <div class="calendar-view">
-    <Navbar />
+  <AdminLayout>
+    <div class="calendar-view">
     
     <div class="calendar-container">
       <!-- Header -->
@@ -151,7 +151,8 @@
     </Dialog>
 
     <Toast />
-  </div>
+    </div>
+  </AdminLayout>
 </template>
 
 <script setup>
@@ -162,7 +163,7 @@ import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import frLocale from '@fullcalendar/core/locales/fr'
-import Navbar from '@/components/common/utils/Navbar.vue'
+import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import TicketDetails from '@/components/academic/TicketDetails.vue'
 import TicketForm from '@/components/academic/TicketForm.vue'
 import Button from 'primevue/button'

@@ -1,11 +1,10 @@
 <template>
-  <div class="votation-scrollable">
-    <Navbar />
-
-    <!-- Titre et bouton de retour -->
-    <div class="page-title p-d-flex p-jc-between">
-      <h1>Votation BA24 - PFP2</h1>
-    </div>
+  <AdminLayout :noSidebar="true">
+    <template #header>
+      <div class="page-title p-d-flex p-jc-between">
+        <h1>Votation BA24 - PFP2</h1>
+      </div>
+    </template>
 
     <div class="container">
       <Button label="Retour Profil" icon="pi pi-arrow-left"
@@ -338,16 +337,16 @@
         <button class="p-button p-component" @click="closeDialog">OK</button>
       </template>
     </Dialog>
-  </div>
+  </AdminLayout>
 </template>
 
 <script>
-import Navbar from '@/components/common/utils/Navbar.vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import RadioButton from 'primevue/radiobutton';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
+import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 import ValidatedCriteriaSection from '@/components/user/details/ValidatedCriteriaSection.vue'
 import CardNameProfile from '@/components/user/library/CardNameProfile.vue';
 import { ref, onValue, update, set, remove } from "firebase/database";
@@ -360,12 +359,12 @@ import filterData from '@/components/common/filters/filter.json'
 export default {
   name: 'VotationView',
   components: {
-    Navbar,
     DataTable,
     Column,
     RadioButton,
     Dialog,
     Button,
+    AdminLayout,
     ValidatedCriteriaSection,
     CardNameProfile
   },
@@ -995,17 +994,6 @@ export default {
 </script>
 
 <style scoped>
-.votation-scrollable {
-  overflow-y: auto;
-  max-height: 100vh;
-}
-
-html, body, #app {
-  height: 100%;
-  min-height: 100%;
-  overflow-y: auto;
-}
-
 .page-title {
   margin-bottom: 20px;
   text-align: center;

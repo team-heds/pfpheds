@@ -174,7 +174,7 @@ export default {
   z-index: 1; /* S'assurer que le contenu est au-dessus */
   flex-grow: 1; /* Take remaining space */
   overflow-y: auto; /* Allow scrolling */
-  padding: 1rem;
+  padding: var(--content-pad);
 }
 
 /* Responsive : masquer les cercles sur mobile */

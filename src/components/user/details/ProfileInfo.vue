@@ -52,7 +52,7 @@
     </div>
 
     <!-- Sidebar Droite -->
-    <div class="sidebar-right">
+    <div class="sidebar-right" v-if="!props.embed">
       <RightSidebar />
     </div>
   </div>
@@ -71,6 +71,10 @@ import RightSidebar from '@/components/social/library/RightSidebar.vue';
 import VotationResultProfil from '@/components/user/details/VotationResultProfil.vue'
 import RadarProfil from '@/components/user/details/RadarProfil.vue'
 import QuestsProfileCard from '@/components/gamification/QuestsProfileCard.vue'
+
+const props = defineProps({
+  embed: { type: Boolean, default: false }
+})
 
 // Définition d'un avatar par défaut
 const defaultAvatar = '@/assets/images/avatar/01.jpg';

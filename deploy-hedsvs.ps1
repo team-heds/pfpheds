@@ -60,6 +60,9 @@ $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
 $archiveName = "pfp-frontend-v$Version-$timestamp.tar.gz"
 
 if (Test-Path "dist") {
+    # Nettoyage des dossiers lourds non nécessaires en production
+    if (Test-Path "dist/demo") { Write-Info "Suppression dist/demo..."; Remove-Item -Recurse -Force "dist/demo" }
+    if (Test-Path "dist/layout") { Write-Info "Suppression dist/layout..."; Remove-Item -Recurse -Force "dist/layout" }
     # Utilisation de tar pour créer une archive compatible Linux
     Write-Info "Création de l'archive tar.gz..."
     Push-Location "dist"
@@ -135,6 +138,18 @@ fi
 
 echo '[DEPLOY] Sauvegarde de l ancienne version...'
 sudo cp -r `$APP_PATH `${APP_PATH}.backup-`$TIMESTAMP 2>/dev/null || echo '[INFO] Pas de version precedente a sauvegarder'
+
+echo '[DEPLOY] Nettoyage des anciens backups (conservation des 2 plus récents)...'
+sudo bash -c "ls -dt \`${APP_PATH}.backup-* 2>/dev/null | tail -n +3 | xargs -r rm -rf"
+
+echo '[DEPLOY] Vérification espace disque...'
+FREE_MB=$(df -m / | tail -1 | awk '{print `$4}')
+echo "[INFO] Espace libre: `$FREE_MB MB"
+if [ "`$FREE_MB" -lt 1500 ]; then
+  echo '[DEPLOY] Espace faible, nettoyage /tmp et anciens backups...'
+  sudo find /tmp -name 'pfp-frontend-*.tar.gz' -delete 2>/dev/null || true
+  sudo bash -c "ls -dt \`${APP_PATH}.backup-* 2>/dev/null | tail -n +2 | xargs -r rm -rf"
+fi
 
 echo '[DEPLOY] Extraction de la nouvelle version...'
 sudo mkdir -p `$APP_PATH

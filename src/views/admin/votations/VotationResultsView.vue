@@ -1,10 +1,11 @@
 <template>
-  <div>
-    <Navbar />
-    <div class="page-title">
-      <h1>Résultats Votation BA22 - PFP4</h1>
-    </div>
-    <div class="container scroll-table-container">
+  <AdminLayout>
+    <template #header>
+      <div class="page-title">
+        <h1>Résultats Votation BA22 - PFP4</h1>
+      </div>
+    </template>
+    <div class="container">
       <!-- Tableau récapitulatif des votes -->
       <DataTable :value="votesArray" responsiveLayout="scroll" class="p-datatable-sm">
         <!-- Colonne Étudiant -->
@@ -96,12 +97,12 @@
         </table>
       </div>
     </div>
-  </div>
+  </AdminLayout>
 
 </template>
 
 <script>
-import Navbar from '@/components/common/utils/Navbar.vue';
+import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
@@ -112,7 +113,7 @@ import { db } from 'root/firebase';
 export default {
   name: 'ResultPreviewVotation',
   components: {
-    Navbar,
+    AdminLayout,
     DataTable,
     Column,
 
@@ -196,18 +197,6 @@ export default {
 <style scoped>
 .container {
   padding: 20px;
-}
-
-.scroll-table-container {
-  padding: 20px;
-  height: 100vh;
-  overflow-y: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.scroll-table-container::-webkit-scrollbar {
-  display: none;
 }
 
 .p-datatable-sm {
