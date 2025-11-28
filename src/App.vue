@@ -37,6 +37,7 @@ import MobileBottomNav from '@/components/common/utils/MobileBottomNav.vue';
 import PwaInstallPrompt from '@/components/common/utils/PwaInstallPrompt.vue';
 import GamificationNotification from '@/components/gamification/notifications/GamificationNotification.vue';
 // import notificationService from '@/service/notificationService';
+import questExpirationService from '@/service/questExpirationService';
 
 export default {
   name: "App",

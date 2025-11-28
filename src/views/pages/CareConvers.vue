@@ -169,8 +169,7 @@
       
   
   </div>
-  </AdminLayout>
-  </template>
+</template>
   
   <script>
   import { ref, onMounted, onBeforeUnmount, watch, computed, nextTick } from "vue";
