@@ -9,7 +9,13 @@
     </template>
 
     <div class="dashboard-rm">
-      <div class="dashboard-grid">
+      <!-- Loading spinner -->
+      <div v-if="loading" class="loading-container">
+        <ProgressSpinner />
+        <p>Chargement des données...</p>
+      </div>
+
+      <div v-else class="dashboard-grid">
         
         <!-- Statistiques rapides -->
         <div class="stats-cards">
@@ -109,11 +115,18 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/stores/authStore';
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 import PageHeader from '@/components/admin/common/PageHeader.vue';
 import Button from 'primevue/button';
+import ProgressSpinner from 'primevue/progressspinner';
+import { getAllRMData } from '@/services/academicKpiService';
 
 const router = useRouter();
+const authStore = useAuthStore();
+
+// Loading
+const loading = ref(true);
 
 // Stats
 const modulesCount = ref(0);
@@ -125,29 +138,50 @@ const studentsCount = ref(0);
 const modules = ref([]);
 const teachers = ref([]);
 
-onMounted(async () => {
-  // TODO: Charger les données réelles depuis Supabase
-  modulesCount.value = 3;
-  teachersCount.value = 8;
-  totalHours.value = 120;
-  studentsCount.value = 45;
+/**
+ * Charge les données RM depuis Supabase/Firebase
+ */
+async function loadRMData() {
+  loading.value = true;
   
-  // Données de démo
-  modules.value = [
-    { id: 1, name: 'Anatomie', code: 'ANA101', hours: 40 },
-    { id: 2, name: 'Physiologie', code: 'PHY101', hours: 50 },
-    { id: 3, name: 'Pathologie', code: 'PAT101', hours: 30 }
-  ];
-  
-  teachers.value = [
-    { id: 1, name: 'Dr. Martin Dubois', email: 'martin.dubois@heds.ch', hours: 20 },
-    { id: 2, name: 'Prof. Sophie Renaud', email: 'sophie.renaud@heds.ch', hours: 30 }
-  ];
+  try {
+    const userId = authStore.user?.id || authStore.user?.uid;
+    
+    if (!userId) {
+      console.warn('⚠️ Aucun utilisateur connecté');
+      loading.value = false;
+      return;
+    }
+    
+    console.log('🔄 Chargement données RM pour:', userId);
+    
+    const data = await getAllRMData(userId);
+    
+    // Mettre à jour les stats
+    modulesCount.value = data.stats.modulesCount;
+    teachersCount.value = data.stats.teachersCount;
+    totalHours.value = data.stats.totalHours;
+    studentsCount.value = data.stats.studentsCount;
+    
+    // Mettre à jour les données
+    modules.value = data.modules;
+    teachers.value = data.teachers;
+    
+    console.log('✅ Données RM chargées');
+  } catch (error) {
+    console.error('❌ Erreur chargement données RM:', error);
+  } finally {
+    loading.value = false;
+  }
+}
+
+onMounted(() => {
+  loadRMData();
 });
 
 function manageModule(module) {
   console.log('Gérer module:', module);
-  // TODO: Navigation vers la gestion du module
+  router.push(`/admin/courses/${module.id}`);
 }
 </script>
 
@@ -271,5 +305,19 @@ function manageModule(module) {
   font-size: 3rem;
   margin-bottom: 1rem;
   opacity: 0.5;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 1rem;
+}
+
+.loading-container p {
+  color: var(--text-color-secondary);
+  font-size: 1.1rem;
 }
 </style>

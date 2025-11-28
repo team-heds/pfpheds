@@ -1,8 +1,8 @@
 /**
  * Service pour récupérer les KPI administratifs depuis Supabase
+ * TABLES RÉELLES: user_profiles, roles, permissions, institutions, places, etc.
  */
 import { supabase } from '@/supabase'
-import { getDatabase, ref as dbRef, get } from 'firebase/database'
 
 /**
  * Récupère le nombre total d'utilisateurs
@@ -28,57 +28,80 @@ export async function getTotalUsers() {
 }
 
 /**
- * Récupère le nombre de rôles configurés
+ * Récupère les utilisateurs par rôle (étudiants, profs, etc.)
+ */
+export async function getUsersByRole() {
+  try {
+    console.log('👥 [getUsersByRole] Requête utilisateurs par rôle...')
+    
+    const { data: profiles, error } = await supabase
+      .from('user_profiles')
+      .select('role')
+    
+    if (error) {
+      console.error('❌ [getUsersByRole] Erreur:', error)
+      return {}
+    }
+    
+    // Compter par rôle
+    const roleCount = {}
+    profiles?.forEach(profile => {
+      const role = profile.role || 'unknown'
+      roleCount[role] = (roleCount[role] || 0) + 1
+    })
+    
+    console.log('✅ [getUsersByRole] Répartition:', roleCount)
+    return roleCount
+  } catch (error) {
+    console.error('❌ [getUsersByRole] Erreur:', error)
+    return {}
+  }
+}
+
+/**
+ * Récupère le nombre de rôles configurés (depuis la table roles)
  */
 export async function getTotalRoles() {
   try {
-    // Option 1: Si table rbac_roles existe
-    const { data, error } = await supabase
-      .from('rbac_roles')
-      .select('id')
+    console.log('🎭 [getTotalRoles] Requête vers roles...')
+    
+    const { count, error } = await supabase
+      .from('roles')
+      .select('*', { count: 'exact', head: true })
     
     if (error) {
-      // Option 2: Compter les rôles distincts dans user_profiles
-      const { data: profiles } = await supabase
-        .from('user_profiles')
-        .select('role')
-      
-      if (profiles) {
-        const uniqueRoles = [...new Set(profiles.map(p => p.role).filter(Boolean))]
-        return uniqueRoles.length
-      }
+      console.error('❌ [getTotalRoles] Erreur:', error)
       return 0
     }
     
-    return data?.length || 0
+    console.log('✅ [getTotalRoles] Nombre de rôles:', count)
+    return count || 0
   } catch (error) {
-    console.error('Erreur getTotalRoles:', error)
+    console.error('❌ [getTotalRoles] Erreur:', error)
     return 0
   }
 }
 
 /**
- * Récupère le nombre de permissions actives
+ * Récupère le nombre de permissions actives (depuis la table permissions)
  */
 export async function getActivePermissions() {
   try {
+    console.log('🔑 [getActivePermissions] Requête vers permissions...')
+    
     const { count, error } = await supabase
-      .from('rbac_permissions')
+      .from('permissions')
       .select('*', { count: 'exact', head: true })
-      .eq('is_active', true)
     
     if (error) {
-      // Fallback: compter toutes les permissions si pas de colonne is_active
-      const { count: totalCount } = await supabase
-        .from('rbac_permissions')
-        .select('*', { count: 'exact', head: true })
-      
-      return totalCount || 0
+      console.error('❌ [getActivePermissions] Erreur:', error)
+      return 0
     }
     
+    console.log('✅ [getActivePermissions] Nombre de permissions:', count)
     return count || 0
   } catch (error) {
-    console.error('Erreur getActivePermissions:', error)
+    console.error('❌ [getActivePermissions] Erreur:', error)
     return 0
   }
 }
@@ -145,84 +168,71 @@ export async function getTotalPlaces() {
  */
 export async function getAvailablePlaces() {
   try {
+    console.log('📍 [getAvailablePlaces] Requête places disponibles...')
+    
     const { count, error } = await supabase
       .from('places')
       .select('*', { count: 'exact', head: true })
-      .eq('status', 'available')
+      .eq('active', true)
     
     if (error) {
-      // Fallback: essayer avec is_available
-      const { count: availCount } = await supabase
-        .from('places')
-        .select('*', { count: 'exact', head: true })
-        .eq('is_available', true)
-      
-      return availCount || 0
+      console.error('❌ [getAvailablePlaces] Erreur:', error)
+      return 0
     }
     
+    console.log('✅ [getAvailablePlaces] Places disponibles:', count)
     return count || 0
   } catch (error) {
-    console.error('Erreur getAvailablePlaces:', error)
+    console.error('❌ [getAvailablePlaces] Erreur:', error)
     return 0
   }
 }
 
 /**
- * Récupère le nombre de votations actives
- */
-export async function getActiveVotations() {
-  try {
-    const { count, error } = await supabase
-      .from('votations')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'active')
-    
-    if (error) throw error
-    return count || 0
-  } catch (error) {
-    console.error('Erreur getActiveVotations:', error)
-    return 0
-  }
-}
-
-/**
- * Récupère le nombre de modules académiques (Firebase)
+ * Récupère le nombre de modules académiques
  */
 export async function getTotalModules() {
   try {
-    const db = getDatabase()
-    const snapshot = await get(dbRef(db, 'Media/Modules'))
-    const modules = snapshot.val()
+    console.log('📚 [getTotalModules] Requête vers modules...')
     
-    if (!modules) return 0
-    return Object.keys(modules).length
+    const { count, error } = await supabase
+      .from('modules')
+      .select('*', { count: 'exact', head: true })
+    
+    if (error) {
+      console.error('❌ [getTotalModules] Erreur:', error)
+      return 0
+    }
+    
+    console.log('✅ [getTotalModules] Nombre de modules:', count)
+    return count || 0
   } catch (error) {
-    console.error('Erreur getTotalModules:', error)
+    console.error('❌ [getTotalModules] Erreur:', error)
     return 0
   }
 }
 
 /**
- * Récupère le nombre d'utilisateurs par rôle
+ * Récupère le nombre de capsules pédagogiques
  */
-export async function getUsersByRole() {
+export async function getTotalCapsules() {
   try {
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .select('role')
+    console.log('💊 [getTotalCapsules] Requête vers capsules...')
     
-    if (error) throw error
+    const { count, error } = await supabase
+      .from('capsules')
+      .select('*', { count: 'exact', head: true })
     
-    const counts = {}
-    data?.forEach(profile => {
-      const role = profile.role || 'unknown'
-      counts[role] = (counts[role] || 0) + 1
-    })
+    if (error) {
+      console.error('❌ [getTotalCapsules] Erreur:', error)
+      return 0
+    }
     
-    return counts
+    console.log('✅ [getTotalCapsules] Nombre de capsules:', count)
+    return count || 0
   } catch (error) {
-    console.error('Erreur getUsersByRole:', error)
-    return {}
+    console.error('❌ [getTotalCapsules] Erreur:', error)
+    return 0
   }
 }
 
@@ -240,8 +250,8 @@ export async function getAllAdminKpis(router) {
       totalInstitutions,
       totalPlaces,
       availablePlaces,
-      activeVotations,
       totalModules,
+      totalCapsules,
       usersByRole
     ] = await Promise.all([
       getTotalUsers(),
@@ -250,8 +260,8 @@ export async function getAllAdminKpis(router) {
       getTotalInstitutions(),
       getTotalPlaces(),
       getAvailablePlaces(),
-      getActiveVotations(),
       getTotalModules(),
+      getTotalCapsules(),
       getUsersByRole()
     ])
     
@@ -265,15 +275,15 @@ export async function getAllAdminKpis(router) {
       totalInstitutions,
       totalPlaces,
       availablePlaces,
-      activeVotations,
       totalModules,
+      totalCapsules,
       usersByRole
     }
     
     console.log('✅ [getAllAdminKpis] Résultat final:', result)
     return result
   } catch (error) {
-    console.error('Erreur getAllAdminKpis:', error)
+    console.error('❌ [getAllAdminKpis] Erreur:', error)
     return {
       totalUsers: 0,
       totalRoles: 0,
@@ -282,8 +292,8 @@ export async function getAllAdminKpis(router) {
       totalInstitutions: 0,
       totalPlaces: 0,
       availablePlaces: 0,
-      activeVotations: 0,
       totalModules: 0,
+      totalCapsules: 0,
       usersByRole: {}
     }
   }

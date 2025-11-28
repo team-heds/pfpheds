@@ -9,7 +9,13 @@
     </template>
 
     <div class="dashboard-enseignant">
-      <div class="dashboard-grid">
+      <!-- Loading spinner -->
+      <div v-if="loading" class="loading-container">
+        <ProgressSpinner />
+        <p>Chargement des données...</p>
+      </div>
+
+      <div v-else class="dashboard-grid">
         
         <!-- Statistiques rapides -->
         <div class="stats-cards">
@@ -108,11 +114,18 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/stores/authStore';
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 import PageHeader from '@/components/admin/common/PageHeader.vue';
 import Button from 'primevue/button';
+import ProgressSpinner from 'primevue/progressspinner';
+import { getAllTeacherData } from '@/services/academicKpiService';
 
 const router = useRouter();
+const authStore = useAuthStore();
+
+// Loading
+const loading = ref(true);
 
 // Stats
 const coursesCount = ref(0);
@@ -124,53 +137,50 @@ const studentsCount = ref(0);
 const myCourses = ref([]);
 const weekSchedule = ref([]);
 
-onMounted(async () => {
-  // TODO: Charger les données réelles
-  coursesCount.value = 5;
-  weeklyHours.value = 18;
-  nextCourse.value = 'Lundi 08:00';
-  studentsCount.value = 120;
+/**
+ * Charge les données enseignant depuis Supabase/Firebase
+ */
+async function loadTeacherData() {
+  loading.value = true;
   
-  // Données de démo
-  myCourses.value = [
-    { id: 1, name: 'Anatomie Générale', code: 'ANA101', hours: 40, students: 30, color: '#3b82f6' },
-    { id: 2, name: 'Physiologie', code: 'PHY101', hours: 30, students: 28, color: '#10b981' },
-    { id: 3, name: 'Pathologie', code: 'PAT101', hours: 25, students: 25, color: '#f59e0b' }
-  ];
-  
-  weekSchedule.value = [
-    {
-      name: 'Lundi',
-      courses: [
-        { id: 1, time: '08:00-10:00', name: 'Anatomie', room: 'B201', color: '#3b82f620' }
-      ]
-    },
-    {
-      name: 'Mardi',
-      courses: [
-        { id: 2, time: '10:00-12:00', name: 'Physiologie', room: 'A105', color: '#10b98120' }
-      ]
-    },
-    {
-      name: 'Mercredi',
-      courses: []
-    },
-    {
-      name: 'Jeudi',
-      courses: [
-        { id: 3, time: '14:00-16:00', name: 'Pathologie', room: 'C303', color: '#f59e0b20' }
-      ]
-    },
-    {
-      name: 'Vendredi',
-      courses: []
+  try {
+    const userId = authStore.user?.id || authStore.user?.uid;
+    
+    if (!userId) {
+      console.warn('⚠️ Aucun utilisateur connecté');
+      loading.value = false;
+      return;
     }
-  ];
+    
+    console.log('🔄 Chargement données enseignant pour:', userId);
+    
+    const data = await getAllTeacherData(userId);
+    
+    // Mettre à jour les stats
+    coursesCount.value = data.stats.coursesCount;
+    weeklyHours.value = data.stats.weeklyHours;
+    nextCourse.value = data.stats.nextCourse;
+    studentsCount.value = data.stats.studentsCount;
+    
+    // Mettre à jour les données
+    myCourses.value = data.courses;
+    weekSchedule.value = data.weekSchedule;
+    
+    console.log('✅ Données enseignant chargées');
+  } catch (error) {
+    console.error('❌ Erreur chargement données enseignant:', error);
+  } finally {
+    loading.value = false;
+  }
+}
+
+onMounted(() => {
+  loadTeacherData();
 });
 
 function viewCourse(course) {
   console.log('View course:', course);
-  // TODO: Navigation vers les détails du cours
+  router.push(`/admin/courses/${course.id}`);
 }
 </script>
 
@@ -351,5 +361,19 @@ function viewCourse(course) {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1rem;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 1rem;
+}
+
+.loading-container p {
+  color: var(--text-color-secondary);
+  font-size: 1.1rem;
 }
 </style>
