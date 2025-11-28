@@ -36,13 +36,37 @@
         </div>
       </div>
 
-      <!-- Mini chart optionnel -->
-      <MiniChart 
-        v-if="showChart && chartData && chartData.length" 
-        :data="chartData" 
-        :color="color"
-        :height="40"
-      />
+      <!-- Charts optionnels -->
+      <template v-if="showChart && chartData && chartData.length">
+        <!-- Mini chart pour les KPI compacts -->
+        <MiniChart 
+          v-if="chartType === 'mini'"
+          :data="chartData" 
+          :color="color"
+          :height="40"
+        />
+        
+        <!-- Chart Selector pour les KPI avec graphiques interactifs -->
+        <div v-else-if="enableChartSelector" class="kpi-chart-selector">
+          <ChartSelector
+            :data="chartData"
+            :default-type="chartType || 'pie'"
+            :height="chartHeight || 200"
+            :chart-color="color"
+            :show-refresh="false"
+          />
+        </div>
+        
+        <!-- Graphique simple fixe -->
+        <component
+          v-else
+          :is="getChartComponent(chartType)"
+          :data="chartData"
+          :height="chartHeight || 200"
+          :color="color"
+          v-bind="chartProps"
+        />
+      </template>
 
       <!-- Footer avec comparaison -->
       <div v-if="comparison || clickable" class="kpi-footer">
@@ -64,6 +88,11 @@ import { computed } from 'vue'
 import Skeleton from 'primevue/skeleton'
 import Button from 'primevue/button'
 import MiniChart from './MiniChart.vue'
+import ChartSelector from './ChartSelector.vue'
+import PieChart from './charts/PieChart.vue'
+import DoughnutChart from './charts/DoughnutChart.vue'
+import BarChart from './charts/BarChart.vue'
+import LineChart from './charts/LineChart.vue'
 
 const props = defineProps({
   label: { type: String, required: true },
@@ -75,6 +104,10 @@ const props = defineProps({
   comparison: String,
   chartData: Array,
   showChart: { type: Boolean, default: false },
+  chartType: { type: String, default: 'mini' }, // mini, pie, doughnut, bar, line, ou enableChartSelector
+  chartHeight: Number,
+  chartProps: Object,
+  enableChartSelector: { type: Boolean, default: false },
   animated: { type: Boolean, default: true },
   clickable: { type: Boolean, default: false },
   actionLabel: String,
@@ -103,6 +136,17 @@ const trendIcon = computed(() => {
   if (props.trend < 0) return 'pi pi-arrow-down'
   return 'pi pi-minus'
 })
+
+function getChartComponent(type) {
+  const components = {
+    pie: PieChart,
+    doughnut: DoughnutChart,
+    bar: BarChart,
+    line: LineChart,
+    mini: MiniChart
+  }
+  return components[type] || MiniChart
+}
 </script>
 
 <style scoped>
@@ -110,15 +154,17 @@ const trendIcon = computed(() => {
   background: var(--surface-card);
   border-radius: 12px;
   padding: 1.25rem;
-  border-left: 4px solid var(--primary-color);
+  border-left: 4px solid;
   transition: all 0.3s ease;
   height: 100%;
-  min-height: 100%; /* S'assurer de prendre toute la hauteur */
+  min-height: 100%;
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  border: 1px solid rgba(0, 0, 0, 0.08);
 }
+
 
 .kpi-card:hover {
   box-shadow: 0 4px 16px rgba(0,0,0,0.08);
@@ -297,8 +343,22 @@ const trendIcon = computed(() => {
   gap: 0.5rem;
 }
 
+.kpi-size-compact {
+  padding: 1rem;
+  min-height: 110px;
+}
+
 .kpi-size-compact .kpi-label {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
+}
+
+.kpi-size-compact .kpi-value {
+  font-size: 1.75rem;
+}
+
+.kpi-size-compact .kpi-icon {
+  width: 40px;
+  height: 40px;
 }
 
 .kpi-size-small .kpi-value {
@@ -314,6 +374,11 @@ const trendIcon = computed(() => {
   font-size: 2rem;
 }
 
+.kpi-size-large {
+  padding: 1.5rem;
+  min-height: 160px;
+}
+
 .kpi-size-large .kpi-value {
   font-size: 2.5rem;
 }
@@ -321,6 +386,10 @@ const trendIcon = computed(() => {
 .kpi-size-large .kpi-icon {
   width: 56px;
   height: 56px;
+}
+
+.kpi-size-large .kpi-label {
+  font-size: 1rem;
 }
 
 .kpi-size-xlarge {
@@ -343,6 +412,12 @@ const trendIcon = computed(() => {
 
 .kpi-size-xlarge .kpi-label {
   font-size: 1.1rem;
+}
+
+.kpi-chart-selector {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--surface-border);
 }
 
 /* Responsive */
