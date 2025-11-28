@@ -2,8 +2,9 @@ require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 const supabase = require('./supabaseClient');
-
-const OpenAI = require('openai');
+ 
+// CareConvers stateful chat routes
+const registerCareConversStoreRoutes = require('./supabase/careconversStoreBackend');
 const app = express()
 
 //const userStoreRoutes = require('./supabase/userStoreBackend')
@@ -63,15 +64,8 @@ app.get('/api/ftp/diagnostic', (req, res) => {
 app.use('/api/ftp', ftpRoutes);
 // General /api route DISABLED for debugging
 // app.use('/api', userStoreRoutes);
-app.use('/api/push', pushRoutes);
-
-// OpenAI Client Initialization
-if (!process.env.OPENAI_API_KEY) {
-  console.warn("WARNING: OPENAI_API_KEY is not set. The /api/chat endpoint will not work.");
-}
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+ 
+// (OpenAI not required for CareConvers stateful routes)
  
  
 app.get('/api/ping', (req, res) => {
@@ -110,96 +104,8 @@ app.get('/api/chapters', async (req, res) => {
   res.json(data);
 });
  
-// In-memory store for conversation state (for demonstration purposes)
-const conversationStates = {};
- 
-// Helper function to check semantic similarity with OpenAI
-async function getIntent(userInput) {
-  if (!process.env.OPENAI_API_KEY) {
-    console.error("OpenAI API key not found.");
-    return 'unknown';
-  }
- 
-  const systemPrompt = `You are an intent classification assistant. Classify the user's phrase into one of the following categories: 'ask_name', 'ask_how_are_you', 'say_goodbye', or 'unknown'. 'say_goodbye' includes phrases like 'au revoir', 'bonne journée', or 'passez une belle journée'. Respond with only the category name.`;
- 
-  try {
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userInput }
-      ],
-      temperature: 0,
-      max_tokens: 10
-    });
- 
-    const intent = completion.choices[0].message.content.trim();
-    console.log(`User says: "${userInput}", Intent classified as: "${intent}"`); // Debugging log
-    return intent;
-  } catch (error) {
-    console.error('Error getting intent from OpenAI:', error);
-    return 'unknown';
-  }
-}
- 
-// Stateful Chat Endpoint
-app.post('/api/chat', async (req, res) => {
-    const { prompt, userId } = req.body; // Assuming a userId will be sent, defaulting to 'demo_user'
-  const currentUser = userId || 'demo_user';
- 
-  if (!prompt) {
-    return res.status(400).json({ error: 'Prompt is missing.' });
-  }
- 
-  // Get current step for the user, default to 1
-  let currentStep = conversationStates[currentUser] || 1;
-  let responseText = '';
-  let nextStep = currentStep;
- 
-  // --- Conversation Logic ---
-  const intent = await getIntent(prompt);
- 
-  switch (currentStep) {
-    case 1:
-      if (intent === 'ask_name') {
-        responseText = "Je m'appelle Paul";
-        nextStep = 2;
-      } else {
-        responseText = "Pour commencer, veuillez me demander mon nom.";
-      }
-      break;
- 
-    case 2:
-      if (intent === 'ask_how_are_you') {
-        responseText = "Oui je vais bien";
-        nextStep = 3;
-      } else {
-        responseText = "Maintenant, demandez-moi comment je vais.";
-      }
-      break;
- 
-    case 3:
-      if (intent === 'say_goodbye') {
-        responseText = "Merci à vous aussi";
-        nextStep = 1; // Reset for a new conversation
-      } else {
-        responseText = "Pour finir, dites-moi au revoir.";
-      }
-      break;
- 
-    default:
-      responseText = "Une erreur est survenue, réinitialisation de la conversation.";
-      nextStep = 1; // Reset
-      break;
-  }
- 
-  // Update the user's state
-  conversationStates[currentUser] = nextStep;
- 
-  // Send the response
-  res.json({ response: responseText, nextStep: nextStep });
- 
-  });
+// Mount CareConvers stateful /api/chat routes
+registerCareConversStoreRoutes(app);
  
 // Lancement du serveur sur toutes les interfaces réseau
 const PORT = process.env.PORT || 3000;

@@ -1,0 +1,25 @@
+{
+  "id": "project/migrations",
+  "title": "Migrations - Firebase → Supabase",
+  "description": "Suivi des chantiers de migration et cutovers.",
+  "source": "@site/docs/project/migrations.md",
+  "sourceDirName": "project",
+  "slug": "/project/migrations",
+  "permalink": "/docs/project/migrations",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "Migrations - Firebase → Supabase"
+  },
+  "sidebar": "docs",
+  "previous": {
+    "title": "Releases & Versions",
+    "permalink": "/docs/project/releases"
+  },
+  "next": {
+    "title": "Template Gantt (Mermaid)",
+    "permalink": "/docs/project/template-gantt"
+  }
+}

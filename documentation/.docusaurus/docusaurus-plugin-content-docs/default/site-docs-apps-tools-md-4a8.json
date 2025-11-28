@@ -1,0 +1,25 @@
+{
+  "id": "apps/tools",
+  "title": "Outils",
+  "description": "Brouillon de documentation pour apps/tools.",
+  "source": "@site/docs/apps/tools.md",
+  "sourceDirName": "apps",
+  "slug": "/apps/tools",
+  "permalink": "/docs/apps/tools",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "Outils"
+  },
+  "sidebar": "docs",
+  "previous": {
+    "title": "App Events",
+    "permalink": "/docs/apps/events"
+  },
+  "next": {
+    "title": "Profil Gamification",
+    "permalink": "/docs/gamification/profile"
+  }
+}

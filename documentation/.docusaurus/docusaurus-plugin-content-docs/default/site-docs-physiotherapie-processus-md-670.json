@@ -1,0 +1,26 @@
+{
+  "id": "physiotherapie/processus",
+  "title": "Processus — Formation pratique",
+  "description": "Ce guide décrit le processus de gestion des lieux de formation pratique pour la filière Physiothérapie.",
+  "source": "@site/docs/physiotherapie/processus.md",
+  "sourceDirName": "physiotherapie",
+  "slug": "/physiotherapie/processus",
+  "permalink": "/docs/physiotherapie/processus",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "Processus — Formation pratique",
+    "sidebar_label": "Processus FP"
+  },
+  "sidebar": "docs",
+  "previous": {
+    "title": "Overview",
+    "permalink": "/docs/physiotherapie/overview"
+  },
+  "next": {
+    "title": "Formation pratique",
+    "permalink": "/docs/physiotherapie/formation-pratique"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "id": "apps/chat",
+  "title": "App Chat",
+  "description": "Brouillon de documentation pour apps/chat.",
+  "source": "@site/docs/apps/chat.md",
+  "sourceDirName": "apps",
+  "slug": "/apps/chat",
+  "permalink": "/docs/apps/chat",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "App Chat"
+  },
+  "sidebar": "docs",
+  "previous": {
+    "title": "Politique de scroll Admin",
+    "permalink": "/docs/admin/scroll-policy"
+  },
+  "next": {
+    "title": "App Mail",
+    "permalink": "/docs/apps/mail"
+  }
+}

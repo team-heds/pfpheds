@@ -9,15 +9,18 @@ import { VitePWA } from 'vite-plugin-pwa';
 export default defineConfig({
   server: {
     host: '0.0.0.0',
-    port: 5192,
-    hmr: {
-      port: 5192,
-      host: 'localhost',
-      clientPort: 5192
-    },
+    port: 5172,
+    hmr: false, // DÉSACTIVER COMPLÈTEMENT LE HMR (rechargement manuel uniquement)
     watch: {
-      usePolling: true,
-      interval: 100
+      usePolling: false,
+      ignored: [
+        '**/node_modules/**', 
+        '**/.git/**', 
+        '**/dist/**', 
+        '**/backend/**',
+        '**/.env/**',
+        '**/public/**'
+      ]
     },
     proxy: {
       '/api': {
@@ -33,6 +36,7 @@ export default defineConfig({
       launchEditor: 'phpstorm',
     }),
     VitePWA({
+      disable: process.env.NODE_ENV === 'development', // Désactiver en dev
       registerType: 'autoUpdate',
       workbox: {
         runtimeCaching: [
@@ -55,7 +59,7 @@ export default defineConfig({
             },
           },
         ],
-        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // Limite augmentée à 10 MB pour couvrir les gros bundles
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // Limite augmentée à 5 Mo
       },
       manifest: {
         name: 'HEdS',

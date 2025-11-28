@@ -1,0 +1,25 @@
+{
+  "id": "admin/dashboard",
+  "title": "Dashboard Administration",
+  "description": "Brouillon de documentation pour admin/dashboard.",
+  "source": "@site/docs/admin/dashboard.md",
+  "sourceDirName": "admin",
+  "slug": "/admin/dashboard",
+  "permalink": "/docs/admin/dashboard",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "Dashboard Administration"
+  },
+  "sidebar": "docs",
+  "previous": {
+    "title": "Notifications",
+    "permalink": "/docs/features/notifications"
+  },
+  "next": {
+    "title": "Gestion Utilisateurs",
+    "permalink": "/docs/admin/users"
+  }
+}

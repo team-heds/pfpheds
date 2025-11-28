@@ -16,6 +16,7 @@
   </Transition>
 </template>
 
+
 <script>
 export default {
   name: 'ConsigneModal',

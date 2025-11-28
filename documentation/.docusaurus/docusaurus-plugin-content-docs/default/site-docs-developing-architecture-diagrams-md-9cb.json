@@ -1,0 +1,26 @@
+{
+  "id": "developing/architecture-diagrams",
+  "title": "Schémas d’architecture (Mermaid)",
+  "description": "Cette page présente des schémas Mermaid illustrant l’architecture globale et les flux clés (Frontend, Backends, Déploiement, Sécurité).",
+  "source": "@site/docs/developing/architecture-diagrams.md",
+  "sourceDirName": "developing",
+  "slug": "/developing/architecture-diagrams",
+  "permalink": "/docs/developing/architecture-diagrams",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "Schémas d’architecture (Mermaid)",
+    "sidebar_label": "Architecture (schémas)"
+  },
+  "sidebar": "docs",
+  "previous": {
+    "title": "Stack technique",
+    "permalink": "/docs/stack"
+  },
+  "next": {
+    "title": "Structure du frontend",
+    "permalink": "/docs/frontend/structure"
+  }
+}

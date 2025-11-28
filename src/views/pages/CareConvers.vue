@@ -1,6 +1,5 @@
 <!-- src/components/LeftAvatar.vue -->
 <template>
-  <AdminLayout>
   <div class="care-convers-container">
     <!-- Scenario Objectives Modal -->
     <ScenarioObjectivesModal
@@ -175,14 +174,13 @@
   
   <script>
   import { ref, onMounted, onBeforeUnmount, watch, computed, nextTick } from "vue";
-  import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
   import ScenarioObjectivesModal from "@/components/careconvers/ScenarioObjectivesModal.vue";
   import PdfViewerModal from "@/components/careconvers/PdfViewerModal.vue";
   import ConsigneModal from "@/components/careconvers/ConsigneModal.vue";
   
   export default {
     name: "LeftAvatar",
-    components: { AdminLayout, ScenarioObjectivesModal, PdfViewerModal, ConsigneModal },
+    components: { ScenarioObjectivesModal, PdfViewerModal, ConsigneModal },
     props: {
       language: { type: String, default: "fr" },
       mood: { type: String, default: "neutral" },

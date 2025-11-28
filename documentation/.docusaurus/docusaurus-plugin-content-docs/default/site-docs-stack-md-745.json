@@ -1,0 +1,25 @@
+{
+  "id": "stack",
+  "title": "Stack technique",
+  "description": "Cette page présente la stack technique complète utilisée par la plateforme HEdS.",
+  "source": "@site/docs/stack.md",
+  "sourceDirName": ".",
+  "slug": "/stack",
+  "permalink": "/docs/stack",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "Stack technique"
+  },
+  "sidebar": "docs",
+  "previous": {
+    "title": "Architecture",
+    "permalink": "/docs/architecture"
+  },
+  "next": {
+    "title": "Structure du frontend",
+    "permalink": "/docs/frontend/structure"
+  }
+}

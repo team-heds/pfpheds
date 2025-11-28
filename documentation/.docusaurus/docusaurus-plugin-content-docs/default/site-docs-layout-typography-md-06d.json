@@ -1,0 +1,26 @@
+{
+  "id": "layout/typography",
+  "title": "Typographie",
+  "description": "Cette page documente l’échelle typographique et les règles utilisées.",
+  "source": "@site/docs/layout/typography.md",
+  "sourceDirName": "layout",
+  "slug": "/layout/typography",
+  "permalink": "/docs/layout/typography",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "Typographie",
+    "sidebar_label": "Typographie"
+  },
+  "sidebar": "docs",
+  "previous": {
+    "title": "Thèmes",
+    "permalink": "/docs/layout/themes"
+  },
+  "next": {
+    "title": "UI & Design System",
+    "permalink": "/docs/frontend/ui"
+  }
+}

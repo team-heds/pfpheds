@@ -1,0 +1,25 @@
+{
+  "id": "admin/validation-reception",
+  "title": "Validation & Réception",
+  "description": "Brouillon de documentation pour admin/validation-reception.",
+  "source": "@site/docs/admin/validation-reception.md",
+  "sourceDirName": "admin",
+  "slug": "/admin/validation-reception",
+  "permalink": "/docs/admin/validation-reception",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "Validation & Réception"
+  },
+  "sidebar": "docs",
+  "previous": {
+    "title": "Votations",
+    "permalink": "/docs/admin/votations"
+  },
+  "next": {
+    "title": "Politique de scroll Admin",
+    "permalink": "/docs/admin/scroll-policy"
+  }
+}

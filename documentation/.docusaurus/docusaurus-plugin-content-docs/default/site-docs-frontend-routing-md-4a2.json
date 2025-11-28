@@ -1,0 +1,25 @@
+{
+  "id": "frontend/routing",
+  "title": "Routing",
+  "description": "Brouillon de documentation pour frontend/routing.",
+  "source": "@site/docs/frontend/routing.md",
+  "sourceDirName": "frontend",
+  "slug": "/frontend/routing",
+  "permalink": "/docs/frontend/routing",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "Routing"
+  },
+  "sidebar": "docs",
+  "previous": {
+    "title": "Structure du frontend",
+    "permalink": "/docs/frontend/structure"
+  },
+  "next": {
+    "title": "Gestion d'état (Pinia)",
+    "permalink": "/docs/frontend/state"
+  }
+}
