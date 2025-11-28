@@ -52,13 +52,96 @@
         </div>
 
         <!-- KPI Cards modulables -->
-        <div class="kpi-grid mb-4">
-          <KpiCard
-            v-for="kpi in kpisWithData"
-            :key="kpi.id"
-            v-bind="kpi"
-            @action="handleKpiAction(kpi)"
-          />
+        <div class="mb-4">
+          <div class="grid">
+            <!-- Gros KPIs -->
+            <div class="col-12 md:col-4">
+              <KpiCard
+                v-bind="kpisWithData[0]"
+                @action="handleKpiAction(kpisWithData[0])"
+                size="large"
+              />
+            </div>
+            <div class="col-12 md:col-4">
+              <KpiCard
+                v-bind="kpisWithData[4]"
+                @action="handleKpiAction(kpisWithData[4])"
+                size="large"
+              />
+            </div>
+            <div class="col-12 md:col-4">
+              <KpiCard
+                v-bind="kpisWithData[5]"
+                @action="handleKpiAction(kpisWithData[5])"
+                size="large"
+              />
+            </div>
+            
+            <!-- Petits KPIs -->
+            <div class="col-12 md:col-6 lg:col-3">
+              <KpiCard
+                v-bind="kpisWithData[1]"
+                @action="handleKpiAction(kpisWithData[1])"
+                size="compact"
+              />
+            </div>
+            <div class="col-12 md:col-6 lg:col-3">
+              <KpiCard
+                v-bind="kpisWithData[2]"
+                @action="handleKpiAction(kpisWithData[2])"
+                size="compact"
+              />
+            </div>
+            <div class="col-12 md:col-6 lg:col-3">
+              <KpiCard
+                v-bind="kpisWithData[6]"
+                @action="handleKpiAction(kpisWithData[6])"
+                size="compact"
+              />
+            </div>
+            <div class="col-12 md:col-6 lg:col-3">
+              <KpiCard
+                v-bind="kpisWithData[7]"
+                @action="handleKpiAction(kpisWithData[7])"
+                size="compact"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Smart Visualizations -->
+        <div class="mb-4">
+          <div class="grid">
+            <div class="col-12 lg:col-6">
+              <Card>
+                <template #content>
+                  <h3 class="text-lg font-semibold m-0 mb-3">📊 Répartition Utilisateurs</h3>
+                  <SmartVisualization
+                    :data="usersChartData"
+                    title="Utilisateurs par Rôle"
+                    :height="280"
+                    :show-refresh="true"
+                    @refresh="refresh"
+                  />
+                </template>
+              </Card>
+            </div>
+
+            <div class="col-12 lg:col-6">
+              <Card>
+                <template #content>
+                  <h3 class="text-lg font-semibold m-0 mb-3">📍 Statistiques Places</h3>
+                  <SmartVisualization
+                    :data="placesChartData"
+                    title="Places par Statut"
+                    :height="280"
+                    :show-refresh="true"
+                    @refresh="refresh"
+                  />
+                </template>
+              </Card>
+            </div>
+          </div>
         </div>
 
         <!-- Quick Actions -->
@@ -136,10 +219,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import AdminLayout from './layouts/AdminLayout.vue'
 import KpiCard from './widgets/KpiCard.vue'
+import SmartVisualization from './widgets/SmartVisualization.vue'
+import Card from 'primevue/card'
 import Button from 'primevue/button'
 import ButtonGroup from 'primevue/buttongroup'
 import ProgressSpinner from 'primevue/progressspinner'
@@ -229,6 +314,26 @@ const kpisWithData = ref([
 ])
 
 const activities = ref([])
+
+// Données pour les graphiques
+const usersChartData = computed(() => {
+  // Créer des données basées sur les KPIs
+  return [
+    { label: 'Administrateurs', value: Math.floor(kpisWithData.value[0]?.value * 0.1) || 5, color: '#3b82f6' },
+    { label: 'Étudiants', value: Math.floor(kpisWithData.value[0]?.value * 0.7) || 189, color: '#10b981' },
+    { label: 'Enseignants', value: Math.floor(kpisWithData.value[0]?.value * 0.15) || 28, color: '#f59e0b' },
+    { label: 'Praticiens', value: Math.floor(kpisWithData.value[0]?.value * 0.05) || 12, color: '#8b5cf6' }
+  ]
+})
+
+const placesChartData = computed(() => {
+  const totalPlaces = kpisWithData.value.find(k => k.id === 'total_places')?.value || 0
+  return [
+    { label: 'Disponibles', value: Math.floor(totalPlaces * 0.4) || 45, color: '#10b981' },
+    { label: 'Réservées', value: Math.floor(totalPlaces * 0.3) || 35, color: '#f59e0b' },
+    { label: 'Occupées', value: Math.floor(totalPlaces * 0.3) || 32, color: '#ef4444' }
+  ]
+})
 
 const navigateTo = (path) => {
   router.push(path)

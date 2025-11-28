@@ -24,35 +24,35 @@
         </template>
         <template #empty> Aucun étudiant trouvé. </template>
         <template #loading> Chargement des données des étudiants. Veuillez patienter. </template>
-
+ 
         <!-- Colonne pour le nom -->
         <Column field="Nom" header="Nom" style="min-width: 12rem" class="text-center" />
-
+ 
         <!-- Colonne pour le prénom -->
         <Column field="Prenom" header="Prénom" style="min-width: 12rem" class="text-center" />
-
+ 
         <!-- Colonne pour la classe -->
         <Column field="Classe" header="Classe" style="min-width: 8rem" class="text-center">
           <template #filter="{ filterModel }">
             <Dropdown :options="classeOptions" v-model="filterModel.value" class="p-column-filter" placeholder="Rechercher par classe" />
           </template>
         </Column>
-
+ 
         <!-- Colonne pour l'email -->
         <Column field="Mail" header="Email" style="min-width: 16rem" class="text-center" />
-
+ 
         <!-- Colonne pour indiquer si l'étudiant est un SAE -->
         <Column field="SAE" header="SAE" style="min-width: 8rem" class="text-center">
           <template #body="{ data }">
             <input type="checkbox" :checked="data.SAE" disabled />
           </template>
         </Column>
-
+ 
         <!-- Colonne affichage cohorte PFP (Badge visible) -->
         <Column field="pfp_cohort" header="Cohorte" style="min-width: 10rem" class="text-center">
           <template #body="{ data }">
-            <span 
-              v-if="data.pfp_cohort" 
+            <span
+              v-if="data.pfp_cohort"
               :class="['pfp-badge-large', `pfp-badge-${data.pfp_cohort.toLowerCase()}`]"
             >
               {{ data.pfp_cohort }}
@@ -60,13 +60,13 @@
             <span v-else class="text-gray-400 italic">Aucune</span>
           </template>
         </Column>
-
+ 
         <!-- Colonne édition cohorte PFP (Dropdown) -->
         <Column header="Modifier Cohorte" style="min-width: 12rem" class="text-center">
           <template #body="{ data }">
-            <Dropdown 
-              v-model="data.pfp_cohort" 
-              :options="pfpCohortOptions" 
+            <Dropdown
+              v-model="data.pfp_cohort"
+              :options="pfpCohortOptions"
               optionLabel="label"
               optionValue="value"
               placeholder="Sélectionner"
@@ -75,7 +75,7 @@
             />
           </template>
         </Column>
-
+ 
         <!-- Colonne des actions -->
         <Column header="Actions" style="min-width: 12rem" class="text-center">
           <template #body="{ data }">
@@ -88,8 +88,7 @@
     </div>
   </AdminLayout>
 </template>
-
-
+ 
 <script>
 import studentsService from '@/service/studentsService';
 import DataTable from 'primevue/datatable';
@@ -101,7 +100,7 @@ import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
 import { supabase } from '@/supabase';
-
+ 
 export default {
   name: "EtudiantList",
   components: {
@@ -134,13 +133,13 @@ export default {
       return this.etudiants.filter(etudiant => {
         const matchesClass = this.filters['Classe'].value ? this.filters['Classe'].value.includes(etudiant.Classe) : true;
         const searchLower = this.globalFilter.toLowerCase();
-
+ 
         const matchesSearch =
           (etudiant.Nom ? etudiant.Nom.toLowerCase().includes(searchLower) : false)
           || (etudiant.Prenom ? etudiant.Prenom.toLowerCase().includes(searchLower) : false)
           || (etudiant.Classe ? etudiant.Classe.toLowerCase().includes(searchLower) : false)
           || (etudiant.Mail ? etudiant.Mail.toLowerCase().includes(searchLower) : false);
-
+ 
         return matchesClass && matchesSearch;
       });
     }
@@ -325,7 +324,7 @@ export default {
   }
 };
 </script>
-
+ 
 <style scoped>
 .admin-scrollable {
   overflow-y: auto;
@@ -339,7 +338,7 @@ export default {
 .filter-menu {
   padding: 20px;
 }
-
+ 
 /* Badges PFP Cohort */
 .pfp-badge,
 .pfp-badge-large {
@@ -354,35 +353,36 @@ export default {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   transition: all 0.3s ease;
 }
-
+ 
 .pfp-badge {
   padding: 0.25rem 0.75rem;
   font-size: 0.75rem;
 }
-
+ 
 .pfp-badge-large {
   padding: 0.5rem 1.25rem;
   font-size: 0.875rem;
   min-width: 100px;
 }
-
+ 
 .pfp-badge-large:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
-
+ 
 .pfp-badge-pfp1a {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
 }
-
+ 
 .pfp-badge-pfp1b {
   background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
   color: white;
 }
-
+ 
 .text-gray-400 {
   color: #9ca3af;
 }
 </style>
+ 
  

@@ -16,15 +16,11 @@
 
         <!-- Sélection du système d'authentification -->
         <div class="w-full max-w-25rem">
-          <div class="mb-6">
-            <h2 class="text-2xl font-semibold text-center mb-4">Choisissez votre système de connexion</h2>
-            <p class="text-center text-gray-600 mb-6">Sélectionnez la plateforme correspondant à votre promotion</p>
-          </div>
-          
-          <!-- Bouton BA23-24 (Firebase) -->
+
+          <!-- Bouton BA23-24 (Firebase)
           <div class="mb-4">
-            <Button 
-              @click="navigateToFirebaseLogin" 
+            <Button
+              @click="navigateToFirebaseLogin"
               class="w-full p-button-raised firebase-button flex align-items-center justify-content-center"
               style="height: 4rem;"
             >
@@ -35,29 +31,31 @@
               </div>
             </Button>
           </div>
-          
+          -->
+
           <!-- Bouton BA25 (Supabase) -->
           <div class="mb-4">
-            <Button 
-              @click="navigateToSupabaseLogin" 
+            <Button
+              @click="navigateToSupabaseLogin"
               class="w-full p-button-raised supabase-button flex align-items-center justify-content-center"
               style="height: 4rem;"
             >
               <i class="pi pi-users mr-3" style="font-size: 1.5rem;"></i>
               <div class="text-left">
-                <div class="font-bold text-lg">BA23-24-25</div>
+                <div class="font-bold text-lg">Connexion</div>
                 <div class="text-sm opacity-90">Connexion  pour la gamification</div>
               </div>
             </Button>
           </div>
-          
-          <!-- Information supplémentaire -->
+
+          <!-- Information supplémentaire
           <div class="mt-6 p-3 bg-blue-50 border-round text-center">
             <small class="text-blue-800">
               <i class="pi pi-info-circle mr-1"></i>
               Choisissez le système correspondant à votre besoin
             </small>
           </div>
+          -->
         </div>
 
       </div>

@@ -174,6 +174,7 @@ import CommunityInfoView from '@/views/social/CommunityInfoView.vue';
 
 import UserListView from "@/views/admin/users/UserListView.vue";
 import StudentListView from "@/views/admin/users/StudentListView.vue";
+import StudentStatsView from "@/views/admin/users/StudentStatsView.vue";
 import TeacherListView from "@/views/admin/users/TeacherListView.vue";
 import TrainerListView from "@/views/admin/users/TrainerListView.vue";
 import InstitutionListView from "@/views/admin/institutions/InstitutionListView.vue";
@@ -495,6 +496,7 @@ const routes = [
 
   { path: '/user_list', component: UserListView, name: 'UserListView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
   { path: '/etudiant_list', component: StudentListView, name: 'StudentListView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
+  { path: '/etudiant_stats', component: StudentStatsView, name: 'StudentStatsView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
   { path: '/enseignent_list', component: TeacherListView, name: 'TeacherListView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
   { path: '/praticien_formateur_list', component: TrainerListView, name: 'TrainerListView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
   { path: '/institution_list', component: InstitutionListView, name: 'InstitutionListView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },

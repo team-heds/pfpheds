@@ -4,6 +4,7 @@
  */
 
 import { supabase } from '@/supabase'
+import studentsService from './studentsService'
 
 /**
  * Compte les éléments d'une table avec filtre optionnel
@@ -29,6 +30,7 @@ async function countTable(table, filter = null) {
 
 /**
  * Récupère toutes les stats rapides en une seule fois
+ * Utilise les vraies données Supabase validées
  */
 export async function fetchQuickStats() {
   try {
@@ -39,25 +41,21 @@ export async function fetchQuickStats() {
       // Institutions partenaires
       countTable('institutions'),
       
-      // Étudiants (essayer plusieurs noms de tables possibles)
-      (async () => {
-        // Essayer 'students' puis 'user_profiles' avec filtre
-        let count = await countTable('students')
-        if (count === 0) {
-          count = await countTable('user_profiles', [['role', 'eq', 'student']])
-        }
-        return count
-      })(),
+      // Étudiants - SOURCE UNIQUE (inclut BA22, BA23, BA24, BA25)
+      studentsService.countStudents(),
       
-      // Praticiens formateurs
+      // Formateurs (enseignants + praticiens)
       (async () => {
-        let count = await countTable('praticien_formateurs')
-        if (count === 0) {
-          count = await countTable('user_profiles', [['role', 'eq', 'formateur']])
+        const roles = ['enseignant', 'teacher', 'formateur', 'Enseignant', 'Teacher', 'Formateur']
+        let total = 0
+        for (const role of roles) {
+          total += await countTable('user_profiles', [['role', 'eq', role]])
         }
-        return count
+        return total
       })()
     ])
+
+    console.log('⚡ Quick Stats:', { places, institutions, students, formateurs })
 
     return {
       places,
@@ -67,7 +65,7 @@ export async function fetchQuickStats() {
       timestamp: new Date().toISOString()
     }
   } catch (error) {
-    console.error('Error fetching quick stats:', error)
+    console.error('❌ Error fetching quick stats:', error)
     return {
       places: 0,
       institutions: 0,
