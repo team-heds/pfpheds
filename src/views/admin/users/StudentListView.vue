@@ -89,6 +89,7 @@
   </AdminLayout>
 </template>
 
+
 <script>
 import studentsService from '@/service/studentsService';
 import DataTable from 'primevue/datatable';
