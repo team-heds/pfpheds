@@ -1,5 +1,5 @@
 <template>
-  <Navbar />
+  <AdminLayout>
   <div class="page-wrapper">
     <div class="profile-admin-page">
       <!-- Indicateur de chargement -->
@@ -16,34 +16,34 @@
       <div v-else class="col-12">
         <!-- On utilise "profileKey" comme clé afin de forcer la recréation des composants -->
         <ProfileInfoAdmin v-if="activeTab === 0" :user="user" :key="profileKey" />
-        <DocumentsUserProfile v-if="activeTab === 1" :key="profileKey" />
+        <!-- DocumentsUserProfile désactivé (utilise Storage) -->
+        <!-- <DocumentsUserProfile v-if="activeTab === 1" :key="profileKey" /> -->
         <ResumStageUserProfile v-if="activeTab === 2" :user="user" :key="profileKey" />
         <ChatProfil v-if="activeTab === 3" :key="profileKey" />
       </div>
     </div>
   </div>
-
-
+  </AdminLayout>
 </template>
 
 <script>
+import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 import { ref, reactive, onMounted, watch, computed } from 'vue';
-import { getDatabase, ref as dbRef, get } from 'firebase/database';
+import { supabase } from '@/supabase';
 import { useRoute, useRouter } from 'vue-router';
 
-import Navbar from '@/components/common/utils/Navbar.vue';
 import ProfileInfoAdmin from '@/components/user/details/ProfileInfoAdmin.vue'
 import ResumStageUserProfile from '@/components/user/details/ResumStageUserProfile.vue'
-import DocumentsUserProfile from '@/components/user/details/DocumentsUserProfile.vue'
+// import DocumentsUserProfile from '@/components/user/details/DocumentsUserProfile.vue' // Désactivé (utilise Storage)
 import ChatProfil from '@/components/user/details/ChatProfil.vue'
 
 export default {
   name: 'ProfilAdmin',
   components: {
-    Navbar,
+    AdminLayout,
     ProfileInfoAdmin,
     ResumStageUserProfile,
-    DocumentsUserProfile,
+    // DocumentsUserProfile, // Désactivé
     ChatProfil
     },
   setup() {
@@ -92,51 +92,116 @@ export default {
     });
 
     /**
-     * Récupère le profil d'un utilisateur depuis Firebase à partir de son ID.
+     * Récupère le profil d'un utilisateur depuis Supabase à partir de son ID.
+     * Combine user_profiles (infos de base) et StudentsPhysio (infos étudiant) côté client
      */
     const fetchUserProfileById = async (userId) => {
       try {
-        const db = getDatabase();
-        const userRef = dbRef(db, `Users/${userId}`);
-        const snapshot = await get(userRef);
-        if (snapshot.exists()) {
-          const userData = snapshot.val();
-          user.uid = userId;
-          user.nom = userData.Nom || '';
-          user.prenom = userData.Prenom || '';
-          user.email = userData.Mail || '';
-          user.ville = userData.Ville || '';
-          user.bio = userData.Biography || '';
-          user.photoURL = userData.PhotoURL || defaultAvatar;
-          // Incrémente la clé pour forcer le rechargement des composants
-          profileKey.value++;
-        } else {
-          console.error("Aucun profil trouvé pour l'ID :", userId);
+        // 1) user_profiles
+        const { data: profile, error: profileError } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        if (profileError) {
+          console.warn('user_profiles introuvable:', profileError.message);
         }
+
+        if (profile) {
+          user.uid = userId;
+          user.nom = profile.family_name || '';
+          user.prenom = profile.forname || '';
+          user.email = profile.email || '';
+          user.ville = profile.city || '';
+          user.bio = profile.bio || '';
+          user.photoURL = profile.avatar_url || defaultAvatar;
+        }
+
+        // 2) StudentsPhysio
+        const { data: student, error: studentError } = await supabase
+          .from('StudentsPhysio')
+          .select('*')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        if (studentError) {
+          console.warn('StudentsPhysio introuvable:', studentError.message);
+        }
+
+        if (student) {
+          user.canton = student.canton || '';
+          user.studentData = {
+            class: student.class,
+            pfp1a: student.pfp1a,
+            pfp_valided: student.pfp_valided,
+            pfpinfo: student.pfpinfo,
+            aigu: student.aigu,
+            ambu: student.ambu,
+            msq: student.msq,
+            neuroger: student.neuroger,
+            rehab: student.rehab,
+            sysint: student.sysint,
+            sae: student.sae,
+            fr: student.fr,
+            de: student.de,
+            it: student.it,
+            eng: student.eng,
+            all_lang: student.all_lang
+          };
+        } else {
+          user.studentData = undefined;
+        }
+
+        // Incrémente la clé pour forcer le rechargement des composants
+        profileKey.value++;
       } catch (error) {
         console.error("Erreur lors de la récupération du profil :", error);
       }
     };
 
     /**
-     * Récupère la liste de tous les utilisateurs depuis Firebase.
+     * Récupère la liste des utilisateurs depuis user_profiles
+     * et complète avec la classe depuis StudentsPhysio si disponible
      */
     const fetchAllUsers = async () => {
       try {
-        const db = getDatabase();
-        const usersRef = dbRef(db, 'Users');
-        const snapshot = await get(usersRef);
-        if (snapshot.exists()) {
-          const usersData = snapshot.val();
-          const allUsers = Object.keys(usersData).map((uid) => {
-            const uData = usersData[uid];
-            return {
-              uid,
-              prenom: uData.Prenom || '',
-              nom: uData.Nom || '',
-              email: uData.Mail || '',
-            };
-          });
+        // 1) user_profiles (liste de base)
+        const { data: profiles, error: profilesError } = await supabase
+          .from('user_profiles')
+          .select('user_id, forname, family_name, email')
+          .order('forname', { ascending: true });
+
+        if (profilesError) throw profilesError;
+
+        if (profiles && profiles.length > 0) {
+          const allUsers = profiles.map((uData) => ({
+            uid: uData.user_id,
+            prenom: uData.forname || '',
+            nom: uData.family_name || '',
+            email: uData.email || '',
+            class: ''
+          }));
+
+          // 2) Compléter avec StudentsPhysio (classe)
+          const ids = profiles.map((p) => p.user_id);
+          if (ids.length > 0) {
+            const { data: spList, error: spError } = await supabase
+              .from('StudentsPhysio')
+              .select('user_id, class')
+              .in('user_id', ids);
+
+            if (!spError && spList) {
+              const classMap = spList.reduce((acc, row) => {
+                acc[row.user_id] = row.class || '';
+                return acc;
+              }, {});
+              allUsers.forEach((u) => {
+                u.class = classMap[u.uid] || '';
+              });
+            }
+          }
+
           usersList.value = allUsers;
 
           // Vérifier si un ID est fourni dans l'URL
@@ -151,7 +216,7 @@ export default {
           await fetchUserProfileById(selectedUserId.value);
           isLoading.value = false;
         } else {
-          console.error("Aucun utilisateur trouvé.");
+          console.warn("Aucun utilisateur trouvé (user_profiles).");
         }
       } catch (error) {
         console.error("Erreur lors de la récupération des utilisateurs :", error);
@@ -205,19 +270,12 @@ export default {
 <style scoped>
 .page-wrapper {
   width: 100%;
-  height: 100vh;
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.page-wrapper::-webkit-scrollbar {
-  display: none;
+  height: 100%;
+  overflow: visible;
 }
 
 .profile-admin-page {
-  min-height: 100vh;
+  min-height: auto;
   padding: 2rem;
   padding-bottom: 8rem;
   display: grid;

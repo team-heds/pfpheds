@@ -1,6 +1,5 @@
 <template>
-  <Navbar />
-  <div class="page-wrapper">
+  <AdminLayout>
     <div class="user-list-page">
       <!-- Header de la page -->
       <div class="col-12">
@@ -54,6 +53,8 @@
                 <InputIcon class="pi pi-search" />
                 <InputText v-model="globalFilter" placeholder="Rechercher..." class="w-20rem" />
               </IconField>
+              <Dropdown v-model="selectedRole" :options="availableRoles" placeholder="Filtrer par rôle" showClear class="w-16rem" />
+              <Dropdown v-model="selectedPermission" :options="availablePermissions" placeholder="Filtrer par permission" showClear class="w-20rem" />
               <Button label="Ajouter" icon="pi pi-plus" class="p-button-success" @click="goToUserForm" />
             </div>
           </div>
@@ -76,12 +77,18 @@
             <InputText type="text" v-model="filterModel.value" class="p-column-filter" placeholder="Rechercher par prénom" />
           </template>
         </Column>
-        <Column field="Role" header="Rôle" style="min-width: 12rem" class="text-center">
+        <Column field="Roles" header="Rôles" style="min-width: 14rem" class="text-center">
           <template #body="{ data }">
-            {{ data.Roles }}
+            <div class="flex gap-1 justify-content-center flex-wrap">
+              <Tag v-for="r in (data.rolesList || [])" :key="r" :value="r" :severity="r === 'admin' ? 'danger' : 'info'" />
+            </div>
           </template>
-          <template #filter="{ filterModel }">
-            <InputText type="text" v-model="filterModel.value" class="p-column-filter" placeholder="Rechercher par rôle" />
+        </Column>
+        <Column field="Permissions" header="Permissions" style="min-width: 16rem" class="text-center">
+          <template #body="{ data }">
+            <div class="flex gap-1 justify-content-center flex-wrap">
+              <Tag v-for="p in (data.permsList || [])" :key="p" :value="p" severity="secondary" />
+            </div>
           </template>
         </Column>
         <Column field="Email" header="Email" style="min-width: 12rem" class="text-center">
@@ -101,19 +108,21 @@
       </DataTable>
       </div>
     </div>
-  </div>
+  </AdminLayout>
 </template>
 
 <script>
-import { db } from '../../../../firebase.js';
-import { ref, onValue, set } from "firebase/database";
+import { supabase } from '@/supabase';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
-import Navbar from '@/components/common/utils/Navbar.vue';
+import Dropdown from 'primevue/dropdown';
+import Tag from 'primevue/tag';
+import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
+// import Navbar from '@/components/common/utils/Navbar.vue';
 
 export default {
   name: "UserList",
@@ -124,7 +133,9 @@ export default {
     Button,
     IconField,
     InputIcon,
-    Navbar
+    Dropdown,
+    Tag,
+    AdminLayout
   },
   data() {
     return {
@@ -133,46 +144,117 @@ export default {
       loading: true,
       globalFilter: '',
       search: '',
+      selectedRole: null,
+      selectedPermission: null,
+      availableRoles: [],
+      availablePermissions: [],
     };
   },
   computed: {
     filteredUtilisateurs() {
-      const searchLower = this.globalFilter.toLowerCase();
-      return this.utilisateurs.filter(utilisateur => {
-        return utilisateur.Name.toLowerCase().includes(searchLower)
-          || utilisateur.Forname.toLowerCase().includes(searchLower)
-          || utilisateur.Roles.toLowerCase().includes(searchLower)
-          || utilisateur.Mail.toLowerCase().includes(searchLower);
-      });
+      const term = (this.globalFilter || '').toLowerCase();
+      return this.utilisateurs
+        .filter(u => {
+          // role filter
+          if (this.selectedRole) {
+            const rolesList = u.rolesList || [];
+            if (!rolesList.includes(this.selectedRole)) return false;
+          }
+          // permission filter
+          if (this.selectedPermission) {
+            const permsList = u.permsList || [];
+            if (!permsList.includes(this.selectedPermission)) return false;
+          }
+          return true;
+        })
+        .filter(u => {
+          if (!term) return true;
+          const rolesJoined = (u.rolesList || []).join(' ').toLowerCase();
+          const permsJoined = (u.permsList || []).join(' ').toLowerCase();
+          return (
+            (u.Name || '').toLowerCase().includes(term) ||
+            (u.Forname || '').toLowerCase().includes(term) ||
+            (u.Mail || '').toLowerCase().includes(term) ||
+            rolesJoined.includes(term) ||
+            permsJoined.includes(term)
+          );
+        });
     }
   },
   async mounted() {
     try {
-      const usersRef = ref(db, 'Users/');
-      onValue(usersRef, (snapshot) => {
-        const usersData = snapshot.val();
-        if (usersData) {
-          this.utilisateurs = Object.keys(usersData).map(key => ({
-            id: key,
-            ...usersData[key]
-          }));
+
+      const roleSet = new Set();
+      const permSet = new Set();
+
+      // Normalisation des permissions comme dans RoleManagement.vue
+      const normalize = (p) => {
+        if (!p || typeof p !== 'string') return p;
+        if (p === 'page1') return 'page1.access';
+        if (p === 'page2') return 'page2.access';
+        if (p.endsWith('.access')) {
+          const base = p.slice(0, -7);
+          const prefixes = ['Admin', 'Enseignant', 'Etudiant', 'RM'];
+          if (prefixes.some(pr => base.startsWith(pr))) return base;
         }
-        this.loading = false;
+        return p;
+      };
+
+      // Read from user_profiles including permissions array if present
+      let rows = [];
+      try {
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .select('user_id,email,display_name,forname,family_name,role,is_active,permissions');
+        if (error) throw error;
+        rows = data || [];
+      } catch (e) {
+        // If permissions column is missing, retry without it
+        if (e?.code === '42703' || /column\s+.*permissions.*\s+does not exist/i.test(e?.message || '')) {
+          const { data, error } = await supabase
+            .from('user_profiles')
+            .select('user_id,email,display_name,forname,family_name,role,is_active');
+          if (error) throw error;
+          rows = data || [];
+        } else {
+          throw e;
+        }
+      }
+
+      // Map to UI model
+      this.utilisateurs = (rows || []).map(u => {
+        const permsArr = Array.isArray(u?.permissions) ? u.permissions.map(normalize) : [];
+        const permsList = Array.from(new Set(permsArr));
+        permsList.forEach(p => permSet.add(p));
+        const roleFromCol = u.role ? [String(u.role)] : [];
+        const rolesFromPerms = permsList.filter(p => !p.endsWith('.access'));
+        const rolesList = Array.from(new Set([...roleFromCol, ...rolesFromPerms].filter(Boolean)));
+        rolesList.forEach(r => roleSet.add(r));
+        const Name = u.family_name || '';
+        const Forname = u.forname || '';
+        const display = u.display_name || `${Forname} ${Name}`.trim();
+        return {
+          id: u.user_id,
+          Mail: u.email || '',
+          Name: Name || display || '',
+          Forname: Forname || '',
+          rolesList,
+          permsList,
+          is_active: u.is_active,
+        };
       });
+
+      this.availableRoles = Array.from(roleSet).sort();
+      this.availablePermissions = Array.from(permSet).sort();
+      this.loading = false;
     } catch (error) {
       console.error('Erreur de récupération des données', error);
+      this.loading = false;
     }
   },
   methods: {
-    async deleteUser(userId) {
-      if (confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) {
-        try {
-          const userRef = ref(db, 'Users/' + userId);
-          await set(userRef, null);
-        } catch (error) {
-          console.error('Erreur de suppression de l’utilisateur', error);
-        }
-      }
+    async deleteUser() {
+      alert('Suppression côté Supabase non implémentée ici.');
     },
     goToUserFormModif(userId) {
       this.$router.push({ name: 'NewUserFormModif', params: { userId } });

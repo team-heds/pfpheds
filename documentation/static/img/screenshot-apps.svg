@@ -1,0 +1,13 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="720" rx="20" fill="#0B213F"/>
+  <rect x="40" y="40" width="1200" height="80" rx="12" fill="#0f2a4e" stroke="#273a55"/>
+  <g>
+    <rect x="60" y="160" width="340" height="220" rx="14" fill="#14345f"/>
+    <rect x="420" y="160" width="340" height="220" rx="14" fill="#14345f"/>
+    <rect x="780" y="160" width="340" height="220" rx="14" fill="#14345f"/>
+    <rect x="60" y="400" width="340" height="220" rx="14" fill="#14345f"/>
+    <rect x="420" y="400" width="340" height="220" rx="14" fill="#14345f"/>
+    <rect x="780" y="400" width="340" height="220" rx="14" fill="#14345f"/>
+  </g>
+  <text x="60" y="95" font-size="28" fill="#ffe680" font-family="Poppins, Arial">Apps - Aperçu (placeholder)</text>
+</svg>

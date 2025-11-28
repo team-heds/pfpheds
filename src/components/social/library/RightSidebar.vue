@@ -48,7 +48,7 @@ import Chip from "primevue/chip";
 import { onValue, ref as dbRef, get } from "firebase/database";
 import { db } from "../../../../firebase.js";
 import { useAuthStore } from '@/stores/authStore';
-// import { supabase } from '@/supabase'; // Décommentez si vous implémentez des requêtes Supabase
+import { supabase } from '@/supabase.js';
 
 export default {
   name: "RightSidebar",
@@ -62,6 +62,7 @@ export default {
       hashtags: ["#BA22", "#BA23", "#BA24", "#BA25", "#ALL", "#PFP1A", "#PFP1B", "#PFP2", "#PFP3", "#PFP4", "#PHYSIO", "#LLB", '#HEdS'], // Hashtags à afficher
       unsubscribeUserCommunities: null, // Fonction de désabonnement
       authStore: null, // Store d'authentification
+      supabaseChannel: null,
     };
   },
   created() {
@@ -135,43 +136,24 @@ export default {
     
     async loadSupabaseCommunities(user) {
       try {
-        console.log('Chargement des communautés Supabase pour:', user.email);
-        
-        // Ici vous pouvez implémenter la logique Supabase pour récupérer les communautés
-        // Par exemple, depuis une table 'user_communities' dans Supabase
-        
-        // Pour l'instant, on simule des communautés basées sur l'email de l'utilisateur
-        const defaultCommunities = [
-          {
-            id: 'supabase-general-ba25',
-            name: 'Général BA25',
-            initial: 'G'
-          },
-          {
-            id: 'supabase-physio-ba25',
-            name: 'Physiothérapie BA25',
-            initial: 'P'
-          }
-        ];
-        
-        // Si l'utilisateur est un étudiant en physio (exemple de logique)
-        if (user.email && user.email.includes('physio')) {
-          defaultCommunities.push({
-            id: 'supabase-physio-advanced',
-            name: 'Physio Avancée',
-            initial: 'A'
-          });
+        // Étape 1: récupérer les IDs des communautés de l'utilisateur
+        const { data: ucRows, error: ucErr } = await supabase
+          .from('user_communities')
+          .select('community_id')
+          .eq('user_id', user.id);
+        if (ucErr) throw ucErr;
+        const ids = (ucRows || []).map(r => r.community_id).filter(Boolean);
+        if (!ids.length) {
+          this.userCommunities = [];
+          return;
         }
-        
-        // Vous pouvez aussi faire une requête Supabase ici :
-        // const { data, error } = await supabase
-        //   .from('user_communities')
-        //   .select('community_id, communities(name)')
-        //   .eq('user_id', user.id);
-        
-        this.userCommunities = defaultCommunities;
-        console.log('Communautés Supabase chargées:', this.userCommunities);
-        
+        // Étape 2: récupérer les communautés par IDs
+        const { data: comms, error: cErr } = await supabase
+          .from('communities')
+          .select('id, name')
+          .in('id', ids);
+        if (cErr) throw cErr;
+        this.userCommunities = (comms || []).map(c => ({ id: c.id, name: c.name, initial: c.name?.charAt(0)?.toUpperCase() || '?' }));
       } catch (error) {
         console.error('Erreur lors du chargement des communautés Supabase:', error);
         this.loadFallbackCommunities();
@@ -207,6 +189,12 @@ export default {
       else if (this.authStore.isSupabaseUser) {
         console.log('RightSidebar - Utilisateur Supabase détecté:', user.email);
         await this.loadSupabaseCommunities(user);
+        const channel = supabase
+          .channel(`user-communities-${user.id}`)
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'user_communities', filter: `user_id=eq.${user.id}` }, () => this.loadSupabaseCommunities(user))
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'communities' }, () => this.loadSupabaseCommunities(user))
+          .subscribe();
+        this.supabaseChannel = channel;
       }
     } else {
       console.log("RightSidebar - Aucun utilisateur authentifié détecté.");
@@ -215,6 +203,10 @@ export default {
   beforeUnmount() {
     if (this.unsubscribeUserCommunities) {
       this.unsubscribeUserCommunities();
+    }
+    if (this.supabaseChannel) {
+      supabase.removeChannel(this.supabaseChannel);
+      this.supabaseChannel = null;
     }
   },
 };

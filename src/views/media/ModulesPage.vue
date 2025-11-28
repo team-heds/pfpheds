@@ -1,5 +1,5 @@
 <template>
-  <Navbar />
+  <AdminLayout>
   <div class="modules-page">
     <div class="page-header">
       <h1>Modules Vidéo</h1>
@@ -138,9 +138,11 @@
       <p>Aucun module ne correspond à vos critères de recherche.</p>
     </div>
   </div>
+  </AdminLayout>
 </template>
 
 <script setup>
+import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import InputText from 'primevue/inputtext'

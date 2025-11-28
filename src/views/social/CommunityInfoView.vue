@@ -128,16 +128,19 @@ export default {
   display: grid;
   grid-template-columns: 1fr 3fr 1fr; /* Sidebar gauche, contenu central, Sidebar droite */
   gap: 1.5rem;
-  height: 100vh;
+  height: calc(100vh - var(--navbar-h) - (2 * var(--content-pad)));
+  max-height: calc(100vh - var(--navbar-h) - (2 * var(--content-pad)));
   overflow: hidden;
 }
 
 .sidebar-left {
-  overflow-y: auto;
+  height: 100%;
+  overflow-y: hidden; /* Sidebar statique */
 }
 
 .main-feed {
-  overflow-y: scroll;
+  height: 100%;
+  overflow-y: auto; /* Scroll uniquement au centre */
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -154,7 +157,8 @@ export default {
 }
 
 .sidebar-right {
-  overflow-y: auto;
+  height: 100%;
+  overflow-y: hidden; /* Sidebar statique */
 }
 
 /* Responsiveness */

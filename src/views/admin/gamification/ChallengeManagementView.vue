@@ -1,6 +1,6 @@
 <template>
-  <Navbar />
-  <div class="page-wrapper">
+  <AdminLayout>
+    <div class="page-wrapper">
     <div class="challenge-management-page">
       <!-- Header de la page -->
       <div class="col-12">
@@ -31,12 +31,13 @@
         <ChallengeManagement />
       </div>
     </div>
-  </div>
+    </div>
+  </AdminLayout>
 </template>
 
 <script setup>
 import ChallengeManagement from '@/components/admin/ChallengeManagement.vue'
-import Navbar from '@/components/common/utils/Navbar.vue'
+import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 </script>
 
 <style scoped>

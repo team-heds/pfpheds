@@ -50,7 +50,7 @@
     </div>
   </div>
 
-  <!-- Nouvelle card Messagerie détachée -->
+  <!-- Nouvelle card Messagerie détachée
   <div class="messaging-card">
     <div class="flex justify-content-between align-items-center mb-3">
       <h4 class="m-0">Messagerie</h4>
@@ -74,6 +74,8 @@
       />
     </div>
   </div>
+
+  -->
 
   <!-- Section Événements à venir -->
   <div class="upcoming-events-section">
@@ -114,7 +116,7 @@
           </div>
           <!-- Badge du type d'événement -->
           <div class="event-type-badge mr-3">
-            <span class="event-type-text">{{ event.type || 'Événement' }}</span>
+            <span class="event-type-text">{{ getEventTypeLabel(event.type) }}</span>
           </div>
         </div>
         
@@ -138,11 +140,16 @@
     <EventDetail 
       v-if="selectedEvent"
       :event="selectedEvent"
+      :user-id="user.id"
+      :user-profile="user"
       @register="handleRegister"
       @edit="handleEdit"
       @delete="handleDelete"
     />
   </Dialog>
+
+  <!-- 🆕 Section Nouvelles Quêtes -->
+  <QuestsSidebarCard />
 
 </template>
 
@@ -150,10 +157,12 @@
 import Toast from "primevue/toast";
 import { getDatabase, ref as dbRef, get, update, onValue } from "firebase/database";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import { supabase } from '@/supabase.js';
 import UserCard from '@/views/apps/chat/UserCard.vue';
 import { useEventStore } from '@/stores/eventStore';
 import { useAuthStore } from '@/stores/authStore';
 import EventDetail from '@/components/events/EventDetail.vue';
+import QuestsSidebarCard from '@/components/gamification/QuestsSidebarCard.vue';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 
@@ -161,7 +170,7 @@ const defaultAvatar = '@/assets/images/avatar/01.jpg';
 
 export default {
   name: "LeftSidebar",
-  components: { UserCard, Toast, EventDetail, Dialog, Button }, 
+  components: { UserCard, Toast, EventDetail, QuestsSidebarCard, Dialog, Button }, 
   setup() {
     const eventStore = useEventStore();
     const authStore = useAuthStore();
@@ -186,7 +195,13 @@ export default {
   },
   computed: {
     userFullName() {
-      return `${this.user.prenom} ${this.user.nom}`.trim() || "Utilisateur";
+      const capitalize = (str) => {
+        if (!str) return ''
+        return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
+      }
+      const prenom = capitalize(this.user.prenom)
+      const nom = capitalize(this.user.nom)
+      return `${nom}.${prenom}`.trim() || "Utilisateur";
     },
     userPhotoURL() {
       return this.user.PhotoURL || defaultAvatar;
@@ -228,6 +243,17 @@ export default {
     },
   },
   methods: {
+    getEventTypeLabel(type) {
+      switch (type) {
+        case 'private':
+          return 'Privé';
+        case 'alpinphysio':
+          return "Alp'in Physio";
+        case 'public':
+        default:
+          return 'Public';
+      }
+    },
     formatEventDate(date) {
       if (!date) return '';
       if (typeof date === 'string') date = new Date(date);
@@ -283,17 +309,41 @@ export default {
         // Pour Supabase, on utilise les données disponibles
         else if (this.authStore.isSupabaseUser) {
           userInfo = {
-            nom: currentUser.user_metadata?.nom || 'Utilisateur',
-            prenom: currentUser.user_metadata?.prenom || '',
-            photoURL: currentUser.user_metadata?.photoURL || ''
+            nom: currentUser.user_metadata?.nom || this.user.nom || 'Utilisateur',
+            prenom: currentUser.user_metadata?.prenom || this.user.prenom || '',
+            photoURL: currentUser.user_metadata?.photoURL || this.user.PhotoURL || ''
           };
         }
 
         // Appeler la fonction d'inscription du store
         await this.eventStore.toggleRegistration(event.id, userInfo);
-        console.log('Inscription réussie');
+        console.log('✅ Inscription réussie - L\'événement apparaîtra dans "Événements à venir"');
+        
+        // Rafraîchir les événements pour mettre à jour la liste
+        await this.eventStore.fetchEvents();
+        
+        // Fermer le dialog après inscription
+        this.showEventDetail = false;
+        
+        // Afficher un toast de succès
+        if (this.$refs.toast) {
+          this.$refs.toast.add({ 
+            severity: 'success', 
+            summary: 'Inscription réussie !', 
+            detail: 'L\'événement apparaît maintenant dans vos événements à venir', 
+            life: 4000 
+          });
+        }
       } catch (error) {
         console.error('Erreur lors de l\'inscription:', error);
+        if (this.$refs.toast) {
+          this.$refs.toast.add({ 
+            severity: 'error', 
+            summary: 'Erreur', 
+            detail: 'Impossible de s\'inscrire à l\'événement', 
+            life: 4000 
+          });
+        }
       }
     },
     handleEdit(eventData) {
@@ -324,6 +374,62 @@ export default {
           PhotoURL: userData.PhotoURL || defaultAvatar,
           email: userData.Mail || "",
           id: uid
+        };
+      }
+    },
+    async fetchUserProfileSupabase(userId) {
+      console.log('📥 Chargement profil Supabase depuis user_profiles pour:', userId);
+      
+      const { data: profileData, error } = await supabase
+        .from('user_profiles')
+        .select('forname, family_name, avatar_url, email')
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      if (error) {
+        console.error('❌ Erreur chargement profil:', error);
+        // Fallback sur l'email de l'utilisateur connecté
+        const currentUser = this.authStore.user;
+        const email = currentUser?.email || '';
+        const parts = email.split('@')[0].split('.');
+        this.user = {
+          prenom: parts[0] || 'Utilisateur',
+          nom: parts[1] || '',
+          PhotoURL: defaultAvatar,
+          email: email,
+          id: userId
+        };
+        return;
+      }
+      
+      if (profileData) {
+        console.log('✅ Profil Supabase chargé:', profileData);
+        
+        const photoURL = profileData.avatar_url || defaultAvatar;
+        console.log('📷 Avatar URL récupéré:', photoURL && photoURL !== defaultAvatar ? photoURL.substring(0, 50) + '...' : 'avatar par défaut');
+        
+        this.user = {
+          prenom: profileData.forname || '',
+          nom: profileData.family_name || '',
+          PhotoURL: photoURL,
+          email: profileData.email || '',
+          id: userId
+        };
+        
+        // Forcer la mise à jour de l'UI
+        this.$forceUpdate();
+      } else {
+        console.warn('⚠️ Aucun profil trouvé dans user_profiles');
+        // Fallback sur l'email
+        const currentUser = this.authStore.user;
+        const email = currentUser?.email || '';
+        const parts = email.split('@')[0].split('.');
+        this.user = {
+          prenom: parts[0] || 'Utilisateur',
+          nom: parts[1] || '',
+          PhotoURL: defaultAvatar,
+          email: email,
+          id: userId
         };
       }
     },
@@ -389,26 +495,78 @@ export default {
         return;
       }
       
-      // Upload d'avatar disponible uniquement pour Firebase pour l'instant
-      if (!this.authStore.isFirebaseUser) {
-        this.$refs.toast.add({ severity: 'info', summary: 'Info', detail: 'Upload d\'avatar disponible uniquement pour Firebase.', life: 4000 });
+      // Vérifier que c'est une image
+      if (!file.type.startsWith('image/')) {
+        this.$refs.toast.add({ severity: 'error', summary: 'Erreur', detail: 'Veuillez sélectionner une image.', life: 4000 });
         return;
       }
       
-      const userId = currentUser.uid;
-      const storage = getStorage();
-      const avatarRef = storageRef(storage, `users/${userId}/profile-picture.jpg`);
+      // Vérifier la taille (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        this.$refs.toast.add({ severity: 'error', summary: 'Erreur', detail: 'L\'image ne doit pas dépasser 5MB.', life: 4000 });
+        return;
+      }
+      
+      this.$refs.toast.add({ severity: 'info', summary: 'Upload en cours', detail: 'Upload de votre photo...', life: 2000 });
+      
       try {
-        await uploadBytes(avatarRef, file);
-        const photoURL = await getDownloadURL(avatarRef);
-        const db = getDatabase();
-        const userRef = dbRef(db, `Users/${userId}`);
-        await update(userRef, { PhotoURL: photoURL });
-        this.user.PhotoURL = photoURL;
-        this.$refs.toast.add({ severity: 'success', summary: 'Succès', detail: 'Photo de profil mise à jour avec succès', life: 4000 });
+        if (this.authStore.isFirebaseUser) {
+          // Upload vers Firebase Storage
+          const userId = currentUser.uid;
+          const storage = getStorage();
+          const avatarRef = storageRef(storage, `users/${userId}/profile-picture.jpg`);
+          
+          await uploadBytes(avatarRef, file);
+          const photoURL = await getDownloadURL(avatarRef);
+          
+          const db = getDatabase();
+          const userRef = dbRef(db, `Users/${userId}`);
+          await update(userRef, { PhotoURL: photoURL });
+          
+          this.user.PhotoURL = photoURL;
+          this.$refs.toast.add({ severity: 'success', summary: 'Succès', detail: 'Photo de profil mise à jour !', life: 4000 });
+          
+        } else if (this.authStore.isSupabaseUser) {
+          // Upload vers Supabase Storage (bucket "avatars")
+          const userId = currentUser.id;
+          const path = `users/${userId}/profile-picture.jpg`;
+
+          const { error: upErr } = await supabase.storage
+            .from('avatars')
+            .upload(path, file, { upsert: true, cacheControl: '3600' });
+          if (upErr) {
+            console.error('❌ Erreur upload Storage:', upErr);
+            throw upErr;
+          }
+
+          const { data: pub } = supabase.storage.from('avatars').getPublicUrl(path);
+          const photoURL = pub?.publicUrl || '';
+
+          // Mettre à jour le profil utilisateur avec l'URL publique
+          const { error: updateError } = await supabase
+            .from('user_profiles')
+            .update({ 
+              avatar_url: photoURL,
+              updated_at: new Date().toISOString()
+            })
+            .eq('user_id', userId);
+          if (updateError) {
+            console.error('❌ Erreur mise à jour profile:', updateError);
+            throw updateError;
+          }
+
+          this.user.PhotoURL = photoURL || this.user.PhotoURL;
+          this.$refs.toast.add({ severity: 'success', summary: 'Succès', detail: 'Photo de profil mise à jour !', life: 4000 });
+        }
+        
       } catch (error) {
-        console.error("Erreur lors de l'upload de l'avatar :", error);
-        this.$refs.toast.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur lors de l\'upload de l\'avatar : ' + (error && error.message ? error.message : error), life: 6000 });
+        console.error("❌ Erreur lors de l'upload de l'avatar :", error);
+        this.$refs.toast.add({ 
+          severity: 'error', 
+          summary: 'Erreur', 
+          detail: 'Erreur lors de l\'upload : ' + (error?.message || error), 
+          life: 6000 
+        });
       }
     },
     goToProfile() {
@@ -458,11 +616,9 @@ export default {
         await this.fetchUserProfile(currentUser.uid);
         this.fetchRecentConversations();
       } else if (this.authStore.isSupabaseUser) {
-        // Logique Supabase simplifiée
+        // Logique Supabase - charger depuis user_profiles
         this.user.id = currentUser.id;
-        this.user.prenom = currentUser.user_metadata?.prenom || currentUser.email?.split('@')[0] || 'Utilisateur';
-        this.user.nom = currentUser.user_metadata?.nom || '';
-        this.user.PhotoURL = currentUser.user_metadata?.photoURL || defaultAvatar;
+        await this.fetchUserProfileSupabase(currentUser.id);
         console.log('LeftSidebar - Utilisateur Supabase configuré:', this.user);
       }
     } else {

@@ -8,8 +8,8 @@
             <div v-else class="event-image-placeholder">
               <i class="pi pi-calendar"></i>
             </div>
-            <Tag class="event-type-badge" :severity="event.type === 'private' ? 'danger' : 'warning'">
-              {{ event.type === 'private' ? 'Privé' : 'Public' }}
+            <Tag class="event-type-badge" :severity="eventTypeSeverity">
+              {{ eventTypeLabel }}
             </Tag>
           </div>
         </div>
@@ -60,6 +60,32 @@ const props = defineProps({
   userId: { type: String, required: false }
 });
 const hover = ref(false);
+
+// Label et sévérité selon le type d'événement
+const eventTypeLabel = computed(() => {
+  switch (props.event.type) {
+    case 'private':
+      return 'Privé';
+    case 'alpinphysio':
+      return "Alp'in Physio";
+    case 'public':
+    default:
+      return 'Public';
+  }
+});
+
+const eventTypeSeverity = computed(() => {
+  switch (props.event.type) {
+    case 'private':
+      return 'danger';
+    case 'alpinphysio':
+      return 'info';
+    case 'public':
+    default:
+      return 'success';
+  }
+});
+
 const isUserRegistered = computed(() => {
   if (props.event.registered && props.event.registered.includes(props.userId)) return true;
   if (props.event.registered && props.event.registered.find(user => user.uid === props.userId)) return true;

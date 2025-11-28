@@ -7,7 +7,9 @@
     </div>
 
     <!-- Fil d'actualité avec Infinity Scroll -->
-    <div class="main-feed" ref="mainFeed">
+    <div class="main-feed" ref="mainFeedRef">
+    <!-- <MainFeedSupabase v-if="isSupabaseUser" />
+      <MainFeed v-else /> -->
       <MainFeed />
     </div>
 
@@ -20,24 +22,32 @@
 </template>
 
 <script>
-import { ref } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import LeftSidebar from '@/components/social/library/LeftSidebar.vue'
 import MainFeed from '@/components/social/library/MainFeed.vue'
+import MainFeedSupabase from '@/components/social/library/MainFeedSupabase.vue'
 import RightSidebar from '@/components/social/library/RightSidebar.vue'
 import Navbar from '@/components/common/utils/Navbar.vue'
 import MobileBottomNav from '@/components/common/utils/MobileBottomNav.vue'
+import { useAuthStore } from '@/stores/authStore'
 
 export default {
   components: {
     Navbar,
     LeftSidebar,
     MainFeed,
+    MainFeedSupabase,
     RightSidebar,
     MobileBottomNav
   },
   setup() {
     const mainFeedRef = ref(null);
-    return { mainFeedRef };
+    const authStore = useAuthStore();
+    onMounted(() => {
+      authStore.checkAuthState();
+    });
+    const isSupabaseUser = computed(() => authStore.isSupabaseUser);
+    return { mainFeedRef, isSupabaseUser };
   }
 };
 </script>
@@ -48,19 +58,20 @@ export default {
   display: grid;
   grid-template-columns: 1fr 3fr 1fr; /* Sidebar gauche, MainFeed, Sidebar droite */
   gap: 1.5rem; /* Espace entre les colonnes */
-  height: 100vh;
-  max-height: 100vh;
+  height: calc(100vh - var(--navbar-h) - (2 * var(--content-pad)));
+  max-height: calc(100vh - var(--navbar-h) - (2 * var(--content-pad)));
   overflow: hidden;
 }
 
 /* Sidebar Gauche */
 .sidebar-left {
-  overflow-y: auto; /* Permet de scroller si le contenu dépasse */
+  height: 100%;
+  overflow-y: hidden; /* Sidebar statique */
 }
 
 /* MainFeed (Infinity Scroll) */
 .main-feed {
-  height: 90vh;
+  height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
   flex-direction: column;
@@ -81,7 +92,8 @@ export default {
 
 /* Sidebar Droite */
 .sidebar-right {
-  overflow-y: auto; /* Permet de scroller si nécessaire */
+  height: 100%;
+  overflow-y: hidden; /* Sidebar statique */
 }
 
 /* RESPONSIVE DESIGN */
@@ -152,13 +164,5 @@ export default {
   }
 }
 
-/* Ajout du bloc CSS global pour html, body, #app */
-html, body, #app {
-  height: 100vh !important;
-  min-height: 100vh !important;
-  max-height: 100vh !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  box-sizing: border-box;
-}
+/* Le scroll global est géré par #app (App.vue) et la zone centrale */
 </style>

@@ -1,7 +1,7 @@
 ﻿<template>
   <div class="access-container">
     <h2>Access</h2>
-    <p>Composant en cours de dÃ©veloppement</p>
+    <p>Composant en cours de développement</p>
   </div>
 </template>
 

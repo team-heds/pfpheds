@@ -7,6 +7,7 @@
       <div class="bg-circle_violet"></div>
     </div>
 
+
     <!-- Layout de l'application -->
     <div class="content">
       <Toast />
@@ -52,6 +53,7 @@ export default {
     return {
       isLoading: true, // État de chargement
       showMobileBottomNav: true,
+      expirationCheckInterval: null, // ID de l'intervalle d'expiration
     };
   },
   computed: {
@@ -93,6 +95,16 @@ export default {
     
     // Le service de notifications est déjà initialisé automatiquement
     // via l'instance singleton dans notificationService.js
+    
+    // 🕐 Démarrer la vérification automatique des quêtes expirées (toutes les 5 min)
+    console.log('🚀 Démarrage service d\'expiration des quêtes...')
+    this.expirationCheckInterval = questExpirationService.startPeriodicCheck(5)
+  },
+  beforeUnmount() {
+    // 🛑 Arrêter proprement la vérification à la fermeture de l'app
+    if (this.expirationCheckInterval) {
+      questExpirationService.stopPeriodicCheck(this.expirationCheckInterval)
+    }
   },
 };
 </script>
@@ -161,7 +173,7 @@ export default {
   z-index: 1; /* S'assurer que le contenu est au-dessus */
   flex-grow: 1; /* Take remaining space */
   overflow-y: auto; /* Allow scrolling */
-  padding: 1rem;
+  padding: var(--content-pad);
 }
 
 /* Responsive : masquer les cercles sur mobile */

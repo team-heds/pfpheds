@@ -1,5 +1,5 @@
 <template>
-  <Navbar />
+  <AdminLayout>
   <div class="page-wrapper">
     <div class="quest-management-page">
       <!-- Header de la page -->
@@ -16,7 +16,7 @@
           </div>
           
           <!-- Titre et description -->
-          <div class="flex align-items-center gap-3 mb-3">
+          <div class="flex align-items-center gap-3 mb-1">
             <i class="pi pi-flag text-purple-500 text-3xl"></i>
             <h1 class="text-3xl font-bold text-900 m-0">Créer une Quête</h1>
           </div>
@@ -32,11 +32,13 @@
       </div>
     </div>
   </div>
+  </AdminLayout>
 </template>
 
 <script setup>
 import QuestManagement from '@/components/admin/QuestManagement.vue'
-import Navbar from '@/components/common/utils/Navbar.vue'
+import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
+// import Navbar from '@/components/common/utils/Navbar.vue'
 </script>
 
 <style scoped>

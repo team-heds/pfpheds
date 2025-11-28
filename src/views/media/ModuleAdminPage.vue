@@ -1,8 +1,11 @@
 <template>
-  <!-- ... (no changes) -->
+  <AdminLayout>
+    <!-- ... (no changes) -->
+  </AdminLayout>
 </template>
 
 <script setup>
+import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'

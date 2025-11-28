@@ -1,0 +1,12 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="720" rx="20" fill="#0B213F"/>
+  <rect x="40" y="40" width="1200" height="80" rx="12" fill="#0f2a4e" stroke="#273a55"/>
+  <rect x="40" y="140" width="1200" height="520" rx="14" fill="#0f2a4e" stroke="#273a55"/>
+  <g opacity="0.35">
+    <circle cx="220" cy="260" r="80" fill="#f3c300"/>
+    <circle cx="540" cy="300" r="60" fill="#f59e0b"/>
+    <circle cx="980" cy="360" r="90" fill="#f3c300"/>
+  </g>
+  <rect x="80" y="180" width="1120" height="440" rx="12" fill="#14345f"/>
+  <text x="60" y="95" font-size="28" fill="#ffe680" font-family="Poppins, Arial">Carte & Institutions (placeholder)</text>
+</svg>

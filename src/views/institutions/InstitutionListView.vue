@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="admin-scrollable">
     <Navbar />
     <h1 style="margin: 2rem 0 1rem 0; text-align: center;" class="m-8">Liste des institutions</h1>
@@ -24,7 +24,7 @@
             </span>
           </div>
         </template>
-        <template #empty> Aucun institution trouvée. </template>
+        <template #empty> Aucune institution trouvée. </template>
         <template #loading> Chargement des données des institutions. Veuillez patienter. </template>
         <Column field="InstitutionId" header="ID">
           <template #body="{ data }">{{ data.InstitutionId }}</template>
@@ -63,107 +63,92 @@
   </div>
 </template>
 
-<script>
-import { db } from '../../../firebase.js';
-import { ref, onValue, remove } from "firebase/database";
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-import InputText from 'primevue/inputtext';
-import Button from 'primevue/button';
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useToast } from 'primevue/usetoast'
+import DataTable from 'primevue/datatable'
+import Column from 'primevue/column'
+import InputText from 'primevue/inputtext'
+import Button from 'primevue/button'
 import Navbar from '@/components/common/utils/Navbar.vue'
-import { useToast } from 'primevue/usetoast';
+import { useInstitutionsStore } from '@/stores/institutionsStore'
 
-export default {
-  name: "InstitutionList",
-  components: {
-    DataTable,
-    Column,
-    InputText,
-    Button,
-    Navbar
-  },
-  data() {
-    return {
-      institutions: [],  // Contient les données d'institutions de Firebase
-      filters: {},
-      loading: true,
-      globalFilter: '',
-      searchTerm: '',
-      toast: null
-    };
-  },
-  computed: {
-    filteredInstitutions() {
-      if (!this.searchTerm) {
-        return this.institutions;
-      }
-      return this.institutions.filter(institutions =>
-        institutions.Name && institutions.Name.toLowerCase().includes(this.searchTerm.toLowerCase())
-      );
-    }
-  },
-  mounted() {
-    try {
-      const institutionsRef = ref(db, 'Institutions/');
-      onValue(institutionsRef, (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-          this.institutions = Object.keys(data).map(key => ({
-            InstitutionId: key,
-            ...data[key]
-          }));
-          console.log(this.institutions); // <-- Debugging ici pour vérifier les données récupérées
-        } else {
-          this.institutions = [];
-        }
-        this.loading = false;
-      });
-      this.toast = useToast();
-    } catch (error) {
-      console.error('Erreur de récupération des données', error);
-      this.loading = false;
-    }
-  },
-  methods: {
-    supprimerInstitution(InstitutionId) {
-      if (!InstitutionId) {
-        this.toast.add({ severity: 'error', summary: 'Erreur', detail: "ID de l'institution est manquant ou incorrect.", life: 4000 });
-        return;
-      }
+const router = useRouter()
+const toast = useToast()
+const institutionsStore = useInstitutionsStore()
 
-      if (window.confirm("Êtes-vous sûr de vouloir supprimer cette institution ?")) {
-        const instRef = ref(db, 'Institutions/' + InstitutionId);
-        remove(instRef)
-          .then(() => {
-            this.toast.add({ severity: 'success', summary: 'Succès', detail: "L'institution a été supprimée avec succès.", life: 4000 });
-            this.institutions = this.institutions.filter(inst => inst.InstitutionId !== InstitutionId);
-          })
-          .catch((error) => {
-            console.error("Erreur lors de la suppression de l'institution:", error);
-            this.toast.add({ severity: 'error', summary: 'Erreur', detail: "Une erreur est survenue lors de la suppression de l'institution.", life: 4000 });
-          });
-      }
-    },
-    goToInstitutionForm() {
-      this.$router.push({ name: 'InstitutionForm' });
-    },
-    goToInstitutionFormModif(id) {
-      this.$router.push({ name: 'InstitutionFormModif', params: { id } });
-    },
-    goToDetails(id) {
-      if (id) {
-        this.$router.push({ name: 'InstitutionView', params: { id: id } });
-      } else {
-        console.error("ID is undefined for this institution.");
-      }
-    },
-    formatDateFr(dateStr) {
-      if (!dateStr) return '';
-      const [year, month, day] = dateStr.split('-');
-      return `${day}-${month}-${year}`;
-    },
+const institutions = ref([])
+const filters = ref({})
+const loading = ref(true)
+const searchTerm = ref('')
+
+const filteredInstitutions = computed(() => {
+  if (!searchTerm.value) {
+    return institutions.value
   }
-};
+  return institutions.value.filter(institution =>
+    institution.Name && institution.Name.toLowerCase().includes(searchTerm.value.toLowerCase())
+  )
+})
+
+onMounted(async () => {
+  await fetchInstitutions()
+})
+
+async function fetchInstitutions() {
+  loading.value = true
+  try {
+    await institutionsStore.fetchInstitutions()
+    institutions.value = institutionsStore.institutions
+    console.log('✅ Institutions chargées depuis Supabase:', institutions.value.length)
+  } catch (error) {
+    console.error('❌ Erreur de récupération des institutions:', error)
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les institutions.', life: 4000 })
+  } finally {
+    loading.value = false
+  }
+}
+
+async function supprimerInstitution(InstitutionId) {
+  if (!InstitutionId) {
+    toast.add({ severity: 'error', summary: 'Erreur', detail: "ID de l'institution est manquant ou incorrect.", life: 4000 })
+    return
+  }
+
+  if (window.confirm("Êtes-vous sûr de vouloir supprimer cette institution ?")) {
+    try {
+      await institutionsStore.deleteInstitution(InstitutionId)
+      toast.add({ severity: 'success', summary: 'Succès', detail: "L'institution a été supprimée avec succès.", life: 4000 })
+      institutions.value = institutions.value.filter(inst => inst.InstitutionId !== InstitutionId)
+    } catch (error) {
+      console.error("Erreur lors de la suppression de l'institution:", error)
+      toast.add({ severity: 'error', summary: 'Erreur', detail: "Une erreur est survenue lors de la suppression de l'institution.", life: 4000 })
+    }
+  }
+}
+
+function goToInstitutionForm() {
+  router.push({ name: 'InstitutionForm' })
+}
+
+function goToInstitutionFormModif(id) {
+  router.push({ name: 'InstitutionFormModif', params: { id } })
+}
+
+function goToDetails(id) {
+  if (id) {
+    router.push({ name: 'InstitutionView', params: { id: id } })
+  } else {
+    console.error("ID is undefined for this institution.")
+  }
+}
+
+function formatDateFr(dateStr) {
+  if (!dateStr) return ''
+  const [year, month, day] = dateStr.split('-')
+  return `${day}-${month}-${year}`
+}
 </script>
 
 <style scoped>

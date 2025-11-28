@@ -1,0 +1,443 @@
+{
+  "timestamp": "2025-11-28T08:37:45.770Z",
+  "schema": {
+    "user_profiles": {
+      "columns": [
+        {
+          "name": "user_id",
+          "type": "string",
+          "sample": "d11a178a-853f-455d-80c6-438c2a1b18a1"
+        },
+        {
+          "name": "avatar_url",
+          "type": "object",
+          "sample": "null"
+        },
+        {
+          "name": "updated_at",
+          "type": "string",
+          "sample": "2025-11-13T13:19:54.24656+00:00"
+        },
+        {
+          "name": "house_id",
+          "type": "object",
+          "sample": "null"
+        },
+        {
+          "name": "last_login",
+          "type": "object",
+          "sample": "null"
+        },
+        {
+          "name": "login_streak",
+          "type": "number",
+          "sample": "0"
+        },
+        {
+          "name": "created_at",
+          "type": "string",
+          "sample": "2025-10-08T12:18:16.793857"
+        },
+        {
+          "name": "email",
+          "type": "string",
+          "sample": "adelie.dacampo@students.hevs.ch"
+        },
+        {
+          "name": "forname",
+          "type": "string",
+          "sample": "Adelie"
+        },
+        {
+          "name": "family_name",
+          "type": "string",
+          "sample": "Dacampo"
+        },
+        {
+          "name": "display_name",
+          "type": "string",
+          "sample": "Adelie Dacampo"
+        },
+        {
+          "name": "bio",
+          "type": "object",
+          "sample": "null"
+        },
+        {
+          "name": "is_active",
+          "type": "boolean",
+          "sample": "true"
+        },
+        {
+          "name": "is_verified",
+          "type": "boolean",
+          "sample": "false"
+        },
+        {
+          "name": "role",
+          "type": "string",
+          "sample": "EtudiantPhysio"
+        },
+        {
+          "name": "phone",
+          "type": "object",
+          "sample": "null"
+        },
+        {
+          "name": "city",
+          "type": "object",
+          "sample": "null"
+        },
+        {
+          "name": "permissions",
+          "type": "object",
+          "sample": "EtudiantPhysio,BA24-PHY"
+        },
+        {
+          "name": "preferences",
+          "type": "object",
+          "sample": "[object Object]"
+        },
+        {
+          "name": "firebase_id",
+          "type": "string",
+          "sample": "zuDEj907RZSu7BvOZPRhvG4k94D2"
+        }
+      ],
+      "sampleData": {
+        "user_id": "d11a178a-853f-455d-80c6-438c2a1b18a1",
+        "avatar_url": null,
+        "updated_at": "2025-11-13T13:19:54.24656+00:00",
+        "house_id": null,
+        "last_login": null,
+        "login_streak": 0,
+        "created_at": "2025-10-08T12:18:16.793857",
+        "email": "adelie.dacampo@students.hevs.ch",
+        "forname": "Adelie",
+        "family_name": "Dacampo",
+        "display_name": "Adelie Dacampo",
+        "bio": null,
+        "is_active": true,
+        "is_verified": false,
+        "role": "EtudiantPhysio",
+        "phone": null,
+        "city": null,
+        "permissions": [
+          "EtudiantPhysio",
+          "BA24-PHY"
+        ],
+        "preferences": {},
+        "firebase_id": "zuDEj907RZSu7BvOZPRhvG4k94D2"
+      }
+    },
+    "gamification_data": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "string",
+          "sample": "1c286bf7-80ac-44f0-ba7b-bc230f7f960a"
+        },
+        {
+          "name": "user_id",
+          "type": "string",
+          "sample": "cfc00b1a-eef3-411c-9a16-3b8b17571b3f"
+        },
+        {
+          "name": "email",
+          "type": "string",
+          "sample": "kezia.lenzser@students.hevs.ch"
+        },
+        {
+          "name": "total_xp",
+          "type": "number",
+          "sample": "50"
+        },
+        {
+          "name": "current_level",
+          "type": "number",
+          "sample": "1"
+        },
+        {
+          "name": "house_id",
+          "type": "string",
+          "sample": "550e8400-e29b-41d4-a716-446655440001"
+        },
+        {
+          "name": "house_points",
+          "type": "number",
+          "sample": "50"
+        },
+        {
+          "name": "gamification_metadata",
+          "type": "object",
+          "sample": "[object Object]"
+        },
+        {
+          "name": "created_at",
+          "type": "string",
+          "sample": "2025-10-01T15:36:52.700846+00:00"
+        },
+        {
+          "name": "updated_at",
+          "type": "string",
+          "sample": "2025-10-01T15:36:52.514+00:00"
+        }
+      ],
+      "sampleData": {
+        "id": "1c286bf7-80ac-44f0-ba7b-bc230f7f960a",
+        "user_id": "cfc00b1a-eef3-411c-9a16-3b8b17571b3f",
+        "email": "kezia.lenzser@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T15:36:52.514Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T15:36:52.700846+00:00",
+        "updated_at": "2025-10-01T15:36:52.514+00:00"
+      }
+    },
+    "houses": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "string",
+          "sample": "550e8400-e29b-41d4-a716-446655440004"
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "sample": "Solencia"
+        },
+        {
+          "name": "motto",
+          "type": "string",
+          "sample": "Force et détermination professionnelle"
+        },
+        {
+          "name": "color",
+          "type": "string",
+          "sample": "#3B82F6"
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "sample": "La maison Solencia symbolise la force, la détermin"
+        },
+        {
+          "name": "total_xp",
+          "type": "number",
+          "sample": "2340"
+        },
+        {
+          "name": "member_count",
+          "type": "number",
+          "sample": "47"
+        },
+        {
+          "name": "created_at",
+          "type": "string",
+          "sample": "2025-09-25T11:57:14.156402"
+        },
+        {
+          "name": "updated_at",
+          "type": "string",
+          "sample": "2025-09-25T11:57:14.156402"
+        },
+        {
+          "name": "level",
+          "type": "number",
+          "sample": "1"
+        }
+      ],
+      "sampleData": {
+        "id": "550e8400-e29b-41d4-a716-446655440004",
+        "name": "Solencia",
+        "motto": "Force et détermination professionnelle",
+        "color": "#3B82F6",
+        "description": "La maison Solencia symbolise la force, la détermination et le leadership. Ses membres font preuve de courage et de persévérance.",
+        "total_xp": 2340,
+        "member_count": 47,
+        "created_at": "2025-09-25T11:57:14.156402",
+        "updated_at": "2025-09-25T11:57:14.156402",
+        "level": 1
+      }
+    },
+    "badges": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "string",
+          "sample": "61a8c8e7-b804-4c33-922e-15b5b81f8afb"
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "sample": "Novice Confirmé"
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "sample": "Atteindre le niveau 2 - Vos premiers pas dans l'av"
+        },
+        {
+          "name": "icon",
+          "type": "string",
+          "sample": "🌱"
+        },
+        {
+          "name": "rarity",
+          "type": "string",
+          "sample": "common"
+        },
+        {
+          "name": "xp_bonus",
+          "type": "number",
+          "sample": "25"
+        },
+        {
+          "name": "conditions",
+          "type": "object",
+          "sample": "[object Object]"
+        },
+        {
+          "name": "is_active",
+          "type": "boolean",
+          "sample": "true"
+        },
+        {
+          "name": "created_at",
+          "type": "string",
+          "sample": "2025-09-25T06:37:52.785941"
+        }
+      ],
+      "sampleData": {
+        "id": "61a8c8e7-b804-4c33-922e-15b5b81f8afb",
+        "name": "Novice Confirmé",
+        "description": "Atteindre le niveau 2 - Vos premiers pas dans l'aventure !",
+        "icon": "🌱",
+        "rarity": "common",
+        "xp_bonus": 25,
+        "conditions": {
+          "level": 2
+        },
+        "is_active": true,
+        "created_at": "2025-09-25T06:37:52.785941"
+      }
+    },
+    "challenges": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "string",
+          "sample": "db08a3fd-f521-4513-8d79-7b2df0245248"
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "sample": "Connexion Quotidienne"
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "sample": "Connectez-vous 5 fois cette semaine pour maintenir"
+        },
+        {
+          "name": "target_value",
+          "type": "number",
+          "sample": "5"
+        },
+        {
+          "name": "action_type",
+          "type": "string",
+          "sample": "LOGIN"
+        },
+        {
+          "name": "xp_reward",
+          "type": "number",
+          "sample": "100"
+        },
+        {
+          "name": "badge_reward",
+          "type": "object",
+          "sample": "null"
+        },
+        {
+          "name": "week_number",
+          "type": "number",
+          "sample": "39"
+        },
+        {
+          "name": "year",
+          "type": "number",
+          "sample": "2025"
+        },
+        {
+          "name": "start_date",
+          "type": "string",
+          "sample": "2025-09-21"
+        },
+        {
+          "name": "end_date",
+          "type": "string",
+          "sample": "2025-09-27"
+        },
+        {
+          "name": "is_active",
+          "type": "boolean",
+          "sample": "true"
+        },
+        {
+          "name": "created_at",
+          "type": "string",
+          "sample": "2025-09-25T06:37:52.785941"
+        }
+      ],
+      "sampleData": {
+        "id": "db08a3fd-f521-4513-8d79-7b2df0245248",
+        "name": "Connexion Quotidienne",
+        "description": "Connectez-vous 5 fois cette semaine pour maintenir votre progression !",
+        "target_value": 5,
+        "action_type": "LOGIN",
+        "xp_reward": 100,
+        "badge_reward": null,
+        "week_number": 39,
+        "year": 2025,
+        "start_date": "2025-09-21",
+        "end_date": "2025-09-27",
+        "is_active": true,
+        "created_at": "2025-09-25T06:37:52.785941"
+      }
+    }
+  },
+  "relations": [
+    {
+      "from": "user_profiles",
+      "fromColumn": "house_id",
+      "to": "houses",
+      "toColumn": "id",
+      "type": "many-to-one",
+      "verified": false
+    },
+    {
+      "from": "gamification_data",
+      "fromColumn": "user_id",
+      "to": "user_profiles",
+      "toColumn": "user_id",
+      "type": "many-to-one",
+      "verified": true
+    },
+    {
+      "from": "gamification_data",
+      "fromColumn": "house_id",
+      "to": "houses",
+      "toColumn": "id",
+      "type": "many-to-one",
+      "verified": true
+    }
+  ],
+  "mermaidDiagram": "```mermaid\nerDiagram\n    user_profiles {\n        string user_id\n        object avatar_url\n        string updated_at\n        object house_id\n        object last_login\n        number login_streak\n        string created_at\n        string email\n        ... 12 more\n    }\n    gamification_data {\n        string id\n        string user_id\n        string email\n        number total_xp\n        number current_level\n        string house_id\n        number house_points\n        object gamification_metadata\n        ... 2 more\n    }\n    houses {\n        string id\n        string name\n        string motto\n        string color\n        string description\n        number total_xp\n        number member_count\n        string created_at\n        ... 2 more\n    }\n    badges {\n        string id\n        string name\n        string description\n        string icon\n        string rarity\n        number xp_bonus\n        object conditions\n        boolean is_active\n        ... 1 more\n    }\n    challenges {\n        string id\n        string name\n        string description\n        number target_value\n        string action_type\n        number xp_reward\n        object badge_reward\n        number week_number\n        ... 5 more\n    }\n\n    user_profiles ||--o{ houses : \"house_id\"\n    gamification_data ||--o{ user_profiles : \"user_id\"\n    gamification_data ||--o{ houses : \"house_id\"\n```\n"
+}

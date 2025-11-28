@@ -7,7 +7,7 @@
     
     <div class="house-content">
       <div class="house-info">
-        <h3 class="house-name clickable" @click="navigateToHouseStats" title="Cliquer pour voir les statistiques de la maison">{{ maison }}</h3>
+        <h3 class="house-name clickable" @click="navigateToHouseStats" :title="props.maison.toLowerCase() === 'gamemaster' ? 'Voir le classement' : 'Cliquer pour voir les statistiques de la maison'">{{ houseDisplayName }}</h3>
         <p class="house-motto">"{{ houseMotto }}"</p>
         
         <div class="level-section">
@@ -52,6 +52,7 @@ import FondHarmonis from '@/assets/maisons/FondHarmonis.png'
 import FondElaris from '@/assets/maisons/FondElaris.png'
 import FondDoloris from '@/assets/maisons/FondDoloris.png'
 import FondSolencia from '@/assets/maisons/FondSolencia.png'
+import MaitreDuJeuFond from '@/assets/maisons/MaitreDuJeuFond.png'
 
 const props = defineProps({
   maison: {
@@ -76,7 +77,11 @@ const router = useRouter()
 const navigateToProfile = () => {
   console.log('Navigating to gamification profile...')
   try {
-    router.push({ name: 'GamificationProfilePage' })
+    // Navigation vers le profil de l'utilisateur connecté (sans userId)
+    router.push({ 
+      name: 'GamificationProfilePage'
+      // Pas de params.userId → charge le profil de l'utilisateur connecté
+    })
   } catch (error) {
     console.error('Navigation error:', error)
   }
@@ -85,8 +90,13 @@ const navigateToProfile = () => {
 const navigateToHouseStats = () => {
   console.log('Navigating to house stats...')
   try {
-    // Navigation vers les statistiques de la maison avec le nom de la maison
-    router.push(`/houses/${props.maison}/stats`)
+    // Pour Game Master, aller vers le classement au lieu des stats
+    if (props.maison.toLowerCase() === 'gamemaster') {
+      router.push('/houses/ranking')
+    } else {
+      // Navigation vers les statistiques de la maison avec le nom de la maison
+      router.push(`/houses/${props.maison}/stats`)
+    }
   } catch (error) {
     console.error('Navigation error:', error)
   }
@@ -126,6 +136,12 @@ const houseConfig = {
     icon: 'pi pi-moon',
     motto: 'Apaiser pour mieux guérir',
     background: FondSolencia
+  },
+  gamemaster: {
+    color: '#9333ea',
+    icon: 'pi pi-crown',
+    motto: 'Voir tout, gérer tout',
+    background: MaitreDuJeuFond
   }
 }
 
@@ -139,6 +155,15 @@ const houseMotto = computed(() => {
 
 const houseBackground = computed(() => {
   return houseConfig[props.maison.toLowerCase()]?.background || ''
+})
+
+const houseDisplayName = computed(() => {
+  const house = props.maison.toLowerCase()
+  if (house === 'gamemaster') {
+    return '🎮 Maître du Jeu 🎮'
+  }
+  // Capitaliser la première lettre pour les autres maisons
+  return props.maison.charAt(0).toUpperCase() + props.maison.slice(1)
 })
 
 const streakText = computed(() => {

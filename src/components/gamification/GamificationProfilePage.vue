@@ -1,7 +1,9 @@
 <template>
-  <div class="page-wrapper">
-    <Navbar />
-    <div class="gamification-profile-page" :style="{ '--house-color': houseColor }">
+  <Navbar />
+  
+  <div class="min-h-screen flex relative lg:static">
+    <div class="min-h-screen flex flex-column relative flex-auto profile-center-scrollable">
+      <div class="gamification-profile-page" :style="{ '--house-color': houseColor }">
     
     <!-- Loading State -->
     <div v-if="loading" class="loading-container">
@@ -68,7 +70,7 @@
                 </div>
                 <div class="card-content">
                   <span class="card-label">XP Total</span>
-                  <span class="card-value">{{ formatNumber(userStats.xp || 0) }}</span>
+                  <span class="card-value">{{ formatNumber(userStats.xp || userStats.totalXP || 0) }}</span>
                 </div>
               </div>
             </div>
@@ -117,8 +119,8 @@
                 ></div>
               </div>
               <div class="xp-text">
-                <span>{{ formatNumber(userStats.xp || 0) }} XP</span>
-                <span>{{ formatNumber(getNextLevelXP(userStats.niveau || 1)) }} XP pour le niveau suivant</span>
+                <span>{{ formatNumber(userStats.xp || 0) }} / {{ formatNumber(getNextLevelXP(userStats.niveau || 1)) }} XP</span>
+                <span>{{ formatNumber(calculateXPToNext(userStats.niveau || 1, userStats.xp || 0)) }} XP pour le niveau suivant</span>
               </div>
             </div>
           </div>
@@ -157,10 +159,12 @@
           </div>
         </div>
 
-        <!-- Outils de création -->
+        <!-- Outils de création
         <CreationToolsCard :userCreationStats="userCreationStats" />
 
-        <!-- Prochaines quêtes / défis -->
+        -->
+
+        <!-- Prochaines quêtes / défis
         <div class="members-ranking">
           <div class="card-header">
             <h3><i class="pi pi-flag"></i> Prochaines Quêtes & Défis</h3>
@@ -204,7 +208,139 @@
           </div>
         </div>
 
-        <!-- Badges -->
+        -->
+
+        <!-- 1. QUÊTES DYNAMIQUES EN PREMIER -->
+        <div class="members-ranking">
+          <div class="card-header">
+            <h3><i class="pi pi-compass"></i> Mes Quêtes</h3>
+            <div class="quest-stats">
+              <span class="count-chip">{{ completedQuestsCount }}/{{ activeQuests.length }}</span>
+              <span class="completion-chip" :style="{ backgroundColor: houseColor }">
+                {{ questCompletionRate }}% complété
+              </span>
+            </div>
+          </div>
+          
+          <!-- Quest Statistics -->
+          <div class="quest-summary" v-if="questStats.totalCompleted > 0">
+            <div class="quest-overview-stats">
+              <div class="stat-item">
+                <i class="pi pi-check-circle"></i>
+                <span>{{ questStats.totalCompleted }} quêtes complétées</span>
+              </div>
+              <div class="stat-item">
+                <i class="pi pi-star-fill"></i>
+                <span>{{ formatNumber(totalXPFromQuests) }} XP des quêtes</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Quests Grid -->
+          <div v-if="activeQuests.length > 0" class="modern-quest-grid">
+            <QuestCard
+              v-for="quest in displayedQuests"
+              :key="quest.id"
+              :quest="quest"
+              :house-color="houseColor"
+              @click="showQuestDetails(quest)"
+            />
+          </div>
+          
+          <!-- Show More Button -->
+          <div v-if="activeQuests.length > questDisplayLimit" class="show-more-section">
+            <Button 
+              @click="showAllQuests = !showAllQuests" 
+              class="show-more-btn"
+              :style="{ backgroundColor: houseColor }"
+            >
+              <i class="pi" :class="showAllQuests ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+              {{ showAllQuests ? 'Voir moins' : `Voir toutes les quêtes (${activeQuests.length})` }}
+            </Button>
+          </div>
+          
+          <!-- Empty State -->
+          <div v-if="activeQuests.length === 0" class="empty-badge-state">
+            <div class="empty-badge-icon">🗺️</div>
+            <h4>Aucune quête active</h4>
+            <p>Explorez de nouvelles aventures et débloquez des quêtes !</p>
+            <Button 
+              @click="router.push('/quests')" 
+              class="check-quests-btn"
+              :style="{ backgroundColor: houseColor }"
+            >
+              <i class="pi pi-external-link"></i>
+              Voir toutes les quêtes
+            </Button>
+          </div>
+        </div>
+
+        <!-- 2. DÉFIS DE LA SEMAINE EN DEUXIÈME -->
+        <div class="members-ranking">
+          <div class="card-header">
+            <h3><i class="pi pi-flag"></i> Défis de la Semaine</h3>
+            <div class="challenge-stats">
+              <span class="count-chip">{{ completedChallengesCount }}/{{ activeChallenges.length }}</span>
+              <span class="completion-chip" :style="{ backgroundColor: houseColor }">
+                {{ challengeCompletionRate }}% complété
+              </span>
+            </div>
+          </div>
+          
+          <!-- Challenge Statistics -->
+          <div class="challenge-summary" v-if="challengeStats.totalCompleted > 0">
+            <div class="challenge-overview-stats">
+              <div class="stat-item">
+                <i class="pi pi-trophy"></i>
+                <span>{{ challengeStats.totalCompleted }} défis complétés</span>
+              </div>
+              <div class="stat-item">
+                <i class="pi pi-star-fill"></i>
+                <span>{{ formatNumber(challengeStats.totalXPFromChallenges) }} XP des défis</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Challenges Grid -->
+          <div v-if="activeChallenges.length > 0" class="modern-challenge-grid">
+            <ChallengeCard
+              v-for="challenge in displayedChallenges"
+              :key="challenge.id"
+              :challenge="challenge"
+              :house-color="houseColor"
+              @click="showChallengeDetails(challenge)"
+            />
+          </div>
+          
+          <!-- Show More Button -->
+          <div v-if="activeChallenges.length > challengeDisplayLimit" class="show-more-section">
+            <Button 
+              @click="showAllChallenges = !showAllChallenges" 
+              class="show-more-btn"
+              :style="{ backgroundColor: houseColor }"
+            >
+              <i class="pi" :class="showAllChallenges ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+              {{ showAllChallenges ? 'Voir moins' : `Voir tous les défis (${activeChallenges.length})` }}
+            </Button>
+          </div>
+          
+          <!-- Empty State -->
+          <div v-if="activeChallenges.length === 0" class="empty-badge-state">
+            <div class="empty-badge-icon">🎯</div>
+            <h4>Aucun défi actif</h4>
+            <p>Les nouveaux défis arrivent chaque lundi !</p>
+            <Button 
+              @click="router.push('/challenges')" 
+              class="check-challenges-btn"
+              :style="{ backgroundColor: houseColor }"
+            >
+              <i class="pi pi-external-link"></i>
+              Voir tous les défis
+            </Button>
+          </div>
+        </div>
+
+        <!-- 3. BADGES EN DERNIER -->
         <div class="members-ranking">
           <div class="card-header">
             <h3><i class="pi pi-shield"></i> Mes Badges</h3>
@@ -259,7 +395,7 @@
           </div>
         </div>
 
-        <!-- Achievements / Hauts faits -->
+        <!-- Achievements / Hauts faits
         <div class="members-ranking">
           <div class="card-header">
             <h3><i class="pi pi-trophy"></i> Mes Hauts Faits</h3>
@@ -294,137 +430,11 @@
             <p>Aucun haut fait enregistré.</p>
           </div>
         </div>
+        -->
       </div>
+
+
       
-      <!-- Défis Hebdomadaires -->
-      <div class="members-ranking">
-        <div class="card-header">
-          <h3><i class="pi pi-flag"></i> Défis de la Semaine</h3>
-          <div class="challenge-stats">
-            <span class="count-chip">{{ completedChallengesCount }}/{{ activeChallenges.length }}</span>
-            <span class="completion-chip" :style="{ backgroundColor: houseColor }">
-              {{ challengeCompletionRate }}% complété
-            </span>
-          </div>
-        </div>
-        
-        <!-- Challenge Statistics -->
-        <div class="challenge-summary" v-if="challengeStats.totalCompleted > 0">
-          <div class="challenge-overview-stats">
-            <div class="stat-item">
-              <i class="pi pi-trophy"></i>
-              <span>{{ challengeStats.totalCompleted }} défis complétés</span>
-            </div>
-            <div class="stat-item">
-              <i class="pi pi-star-fill"></i>
-              <span>{{ formatNumber(challengeStats.totalXPFromChallenges) }} XP des défis</span>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Challenges Grid -->
-        <div v-if="activeChallenges.length > 0" class="modern-challenge-grid">
-          <ChallengeCard
-            v-for="challenge in displayedChallenges"
-            :key="challenge.id"
-            :challenge="challenge"
-            :house-color="houseColor"
-            @click="showChallengeDetails(challenge)"
-          />
-        </div>
-        
-        <!-- Show More Button -->
-        <div v-if="activeChallenges.length > challengeDisplayLimit" class="show-more-section">
-          <Button 
-            @click="showAllChallenges = !showAllChallenges" 
-            class="show-more-btn"
-            :style="{ backgroundColor: houseColor }"
-          >
-            <i class="pi" :class="showAllChallenges ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
-            {{ showAllChallenges ? 'Voir moins' : `Voir tous les défis (${activeChallenges.length})` }}
-          </Button>
-        </div>
-        
-        <!-- Empty State -->
-        <div v-if="activeChallenges.length === 0" class="empty-badge-state">
-          <div class="empty-badge-icon">🎯</div>
-          <h4>Aucun défi actif</h4>
-          <p>Les nouveaux défis arrivent chaque lundi !</p>
-          <Button 
-            @click="router.push('/challenges')" 
-            class="check-challenges-btn"
-            :style="{ backgroundColor: houseColor }"
-          >
-            <i class="pi pi-external-link"></i>
-            Voir tous les défis
-          </Button>
-        </div>
-      </div>
-      
-      <!-- Quêtes Dynamiques -->
-      <div class="members-ranking">
-        <div class="card-header">
-          <h3><i class="pi pi-compass"></i> Mes Quêtes</h3>
-          <div class="quest-stats">
-            <span class="count-chip">{{ completedQuestsCount }}/{{ activeQuests.length }}</span>
-            <span class="completion-chip" :style="{ backgroundColor: houseColor }">
-              {{ questCompletionRate }}% complété
-            </span>
-          </div>
-        </div>
-        
-        <!-- Quest Statistics -->
-        <div class="quest-summary" v-if="questStats.totalCompleted > 0">
-          <div class="quest-overview-stats">
-            <div class="stat-item">
-              <i class="pi pi-check-circle"></i>
-              <span>{{ questStats.totalCompleted }} quêtes complétées</span>
-            </div>
-            <div class="stat-item">
-              <i class="pi pi-star-fill"></i>
-              <span>{{ formatNumber(totalXPFromQuests) }} XP des quêtes</span>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Quests Grid -->
-        <div v-if="activeQuests.length > 0" class="modern-quest-grid">
-          <QuestCard
-            v-for="quest in displayedQuests"
-            :key="quest.id"
-            :quest="quest"
-            :house-color="houseColor"
-            @click="showQuestDetails(quest)"
-          />
-        </div>
-        
-        <!-- Show More Button -->
-        <div v-if="activeQuests.length > questDisplayLimit" class="show-more-section">
-          <Button 
-            @click="showAllQuests = !showAllQuests" 
-            class="show-more-btn"
-            :style="{ backgroundColor: houseColor }"
-          >
-            <i class="pi" :class="showAllQuests ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
-            {{ showAllQuests ? 'Voir moins' : `Voir toutes les quêtes (${activeQuests.length})` }}
-          </Button>
-        </div>
-        
-        <!-- Empty State -->
-        <div v-if="activeQuests.length === 0" class="empty-badge-state">
-          <div class="empty-badge-icon">🗺️</div>
-          <h4>Aucune quête active</h4>
-          <p>Explorez de nouvelles aventures et débloquez des quêtes !</p>
-          <Button 
-            @click="router.push('/quests')" 
-            class="check-quests-btn"
-            :style="{ backgroundColor: houseColor }"
-          >
-            <i class="pi pi-external-link"></i>
-            Voir toutes les quêtes
-          </Button>
-        </div>
-      </div>
     </div>
     
     <!-- Section de test pour forcer le scroll -->
@@ -432,42 +442,87 @@
       <div class="scroll-spacer"></div>
     </div>
     
+      </div>
     </div>
-
-    <!-- Achievement Notification -->
-    <AchievementNotification
-      v-if="showNotification && currentNotification"
-      :badge="currentNotification"
-      @close="onNotificationClose"
-    />
   </div>
+
+  <!-- Achievement Notification -->
+  <AchievementNotification
+    v-if="showNotification && currentNotification"
+    :badge="currentNotification"
+    @close="onNotificationClose"
+  />
+
+  <!-- Detail Modal -->
+  <DetailModal
+    v-model="showDetailModal"
+    :type="modalType"
+    :item="modalItem"
+    @start="handleStart"
+  />
+
+  <!-- Toast Notification -->
+  <GamificationToast
+    v-model="showToast"
+    :type="toastData.type"
+    :title="toastData.title"
+    :message="toastData.message"
+    :xp="toastData.xp"
+  />
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
+import TabView from 'primevue/tabview'
+import TabPanel from 'primevue/tabpanel'
+import InputText from 'primevue/inputtext'
+import Dropdown from 'primevue/dropdown'
+import Paginator from 'primevue/paginator'
+import Toast from 'primevue/toast'
+import Chip from 'primevue/chip'
+import Skeleton from 'primevue/skeleton'
+import Divider from 'primevue/divider'
+import ProgressBar from 'primevue/progressbar'
 import { useRouter } from 'vue-router'
-import { getAuth } from 'firebase/auth'
-import { getUserGamificationStats } from '@/service/hesHousesService'
-import { getActiveDefis, subscribeActiveDefis } from '@/service/defisService'
-import badgesService from '@/service/badgesService'
-import challengesService from '@/service/challengesService'
-import questsService from '@/service/questsService'
-import gamificationService from '@/service/gamificationService'
+import { useToast } from 'primevue/usetoast'
+import { useAuthStore } from '@/stores/authStore'
+import { supabase } from '@/supabase.js'
+import gamificationServiceSupabase from '@/service/gamificationServiceSupabase'
+import levelsConfig from '@/config/levelsConfig'
+import userQuestsService from '@/service/userQuestsService'
 import Navbar from '@/components/common/utils/Navbar.vue'
 import BadgeCard from '@/components/gamification/BadgeCard.vue'
 import ChallengeCard from '@/components/gamification/ChallengeCard.vue'
 import QuestCard from '@/components/gamification/QuestCard.vue'
 import AchievementNotification from '@/components/gamification/AchievementNotification.vue'
 import CreationToolsCard from '@/components/gamification/CreationToolsCard.vue'
+import DetailModal from '@/components/gamification/DetailModal.vue'
+import GamificationToast from '@/components/gamification/GamificationToast.vue'
+import Button from 'primevue/button'
+import Dialog from 'primevue/dialog'
 // Background images per house (align with HouseStatsPage)
 import FondHarmonis from '@/assets/maisons/FondHarmonis.png'
 import FondElaris from '@/assets/maisons/FondElaris.png'
 import FondDoloris from '@/assets/maisons/FondDoloris.png'
 import FondSolencia from '@/assets/maisons/FondSolencia.png'
+import MaitreDuJeuFond from '@/assets/maisons/MaitreDuJeuFond.png'
+
+// Props - Receive optional user ID from route params
+const props = defineProps({
+  id: {
+    type: String,
+    default: null
+  }
+})
 
 // Router and auth
 const router = useRouter()
-const auth = getAuth()
+const toast = useToast()
+const authStore = useAuthStore()
+
+// Computed: ID de l'utilisateur à afficher (prop.id ou utilisateur connecté)
+const displayUserId = computed(() => props.id || authStore.user?.id)
+const isViewingOtherUser = computed(() => !!props.id && props.id !== authStore.user?.id)
 
 // Reactive state
 const loading = ref(true)
@@ -490,11 +545,30 @@ const challengeStats = ref({})
 const showAllChallenges = ref(false)
 const challengeDisplayLimit = ref(3)
 
-// Quest system state
+// Quest system state (ENRICHI depuis QuestsPage)
 const activeQuests = ref([])
-const questStats = ref({})
+const questStats = ref({
+  totalQuests: 0,
+  completedQuests: 0,
+  totalXPFromQuests: 0,
+  averageProgress: 0
+})
 const showAllQuests = ref(false)
 const questDisplayLimit = ref(3)
+
+// NOUVEAU: Filtres et recherche des quêtes (depuis QuestsPage)
+const userQuests = ref([])
+const searchQuery = ref('')
+const selectedDifficulty = ref('all')
+const selectedType = ref('all')
+const sortBy = ref('progress_desc')
+const currentPage = ref(0)
+const questsPerPage = 12
+const showQuestModal = ref(false)
+const selectedQuestDetail = ref(null)
+const activeQuestTab = ref('active') // 'active', 'completed', 'all'
+const activeQuestTabIndex = ref(0)
+const viewMode = ref('grid') // 'grid' ou 'list'
 
 // Creation tools stats
 const userCreationStats = ref({
@@ -503,12 +577,48 @@ const userCreationStats = ref({
   totalEngagement: 0
 })
 
+// NOUVEAU: Constantes pour les filtres et options (depuis QuestsPage)
+const QUEST_DIFFICULTIES = {
+  EASY: { name: 'Facile', color: '#10b981', order: 1 },
+  MEDIUM: { name: 'Moyen', color: '#f59e0b', order: 2 },
+  HARD: { name: 'Difficile', color: '#ef4444', order: 3 },
+  EPIC: { name: 'Épique', color: '#8b5cf6', order: 4 },
+  LEGENDARY: { name: 'Légendaire', color: '#f97316', order: 5 }
+}
+
+const difficultyOptions = [
+  { label: 'Toutes', value: 'all' },
+  { label: 'Facile', value: 'EASY' },
+  { label: 'Moyen', value: 'MEDIUM' },
+  { label: 'Difficile', value: 'HARD' },
+  { label: 'Épique', value: 'EPIC' },
+  { label: 'Légendaire', value: 'LEGENDARY' }
+]
+
+const typeOptions = [
+  { label: 'Tous', value: 'all' },
+  { label: 'Multi-étapes', value: 'multi_step' },
+  { label: 'Quotidienne', value: 'daily' },
+  { label: 'Hebdomadaire', value: 'weekly' },
+  { label: 'Achievement', value: 'achievement' }
+]
+
+const sortOptions = [
+  { label: 'Progression (desc)', value: 'progress_desc' },
+  { label: 'Progression (asc)', value: 'progress_asc' },
+  { label: 'Difficulté (asc)', value: 'difficulty_asc' },
+  { label: 'Difficulté (desc)', value: 'difficulty_desc' },
+  { label: 'Nom (A-Z)', value: 'name_asc' },
+  { label: 'Nom (Z-A)', value: 'name_desc' }
+]
+
 // House configuration
 const houseConfig = {
   'Harmonis': { name: 'Harmonis', color: '#2E8B57' }, // Vert - "L'équilibre soigne"
   'Elaris': { name: 'Elaris', color: '#DC143C' }, // Rouge - "Clarifier, guider, apaiser"
   'Doloris': { name: 'Doloris', color: '#FFD700' }, // Jaune/Or - "Comprendre la douleur, c'est soigner"
-  'Solencia': { name: 'Solencia', color: '#4169E1' } // Bleu - "Apaiser pour mieux guérir"
+  'Solencia': { name: 'Solencia', color: '#4169E1' }, // Bleu - "Apaiser pour mieux guérir"
+  'Gamemaster': { name: 'Gamemaster', color: '#9333ea' } // Violet - "Voir tout, gérer tout"
 }
 
 // Computed properties
@@ -519,21 +629,143 @@ const normalizeHouse = (val) => {
   if (s.startsWith('ela')) return 'Elaris'
   if (s.startsWith('dol')) return 'Doloris'
   if (s.startsWith('sol')) return 'Solencia'
+  if (s.startsWith('game') || s.startsWith('maitre')) return 'Gamemaster'
   return null
 }
 
 const houseColor = computed(() => {
   const h = normalizeHouse(userStats.value?.maison)
-  if (!h) return '#6B7280'
-  return houseConfig[h]?.color || '#6B7280'
+  if (!h) return '#6B7280' // Gris par défaut si pas de maison
+  return houseConfig[h]?.color || '#9333ea' // Violet par défaut pour Game Master
 })
+
+// Calcul automatique du niveau basé sur l'XP (nouveau système 20 niveaux)
+const calculateLevel = (totalXP) => {
+  return levelsConfig.getLevelFromXP(totalXP)
+}
+
+const calculateXPToNext = (currentLevel, currentXP) => {
+  return levelsConfig.getXPToNextLevel(currentLevel, currentXP)
+}
+
+const getLevelProgress = (currentLevel, currentXP) => {
+  return levelsConfig.getLevelProgress(currentLevel, currentXP)
+}
+
+const getLevelInfo = (level) => {
+  return levelsConfig.getLevelInfo(level)
+}
+
+const updateLevelFromXP = async (newTotalXP) => {
+  if (!userStats.value) return
+  
+  const newLevel = calculateLevel(newTotalXP)
+  const oldLevel = userStats.value.niveau
+  const levelInfo = getLevelInfo(newLevel)
+  
+  // Si niveau a changé, mettre à jour la base de données
+  if (newLevel !== oldLevel) {
+    console.log(`🎉 NIVEAU UP ! ${oldLevel} (${getLevelInfo(oldLevel).name}) → ${newLevel} (${levelInfo.name})`)
+    
+    try {
+      // Mettre à jour dans Supabase
+      const { error } = await supabase
+        .from('gamification_data')
+        .update({ 
+          current_level: newLevel,
+          total_xp: newTotalXP
+        })
+        .eq('user_id', authStore.user.id)
+      
+      if (error) {
+        console.error('Erreur mise à jour niveau:', error)
+      } else {
+        // Mettre à jour localement
+        userStats.value.niveau = newLevel
+        userStats.value.xp = newTotalXP
+        userStats.value.xpToNext = calculateXPToNext(newLevel, newTotalXP)
+        
+        // Vérifier si c'est un palier (5, 10, 15, 20)
+        const isPalierLevel = levelsConfig.isPalier(newLevel)
+        
+        // Afficher notification
+        showToast.value = true
+        toastData.value = {
+          type: 'levelup',
+          title: isPalierLevel ? `🎊 PALIER ${newLevel} ATTEINT !` : 'Niveau Supérieur !',
+          message: `Tu es maintenant ${levelInfo.name} (niveau ${newLevel}) !`,
+          xp: isPalierLevel ? levelInfo.palierBonus : 0
+        }
+        
+        // Si c'est un palier, ajouter les points à la maison
+        if (isPalierLevel && levelInfo.palierBonus && userStats.value.maison) {
+          await addHousePoints(userStats.value.maison, levelInfo.palierBonus)
+          console.log(`✨ +${levelInfo.palierBonus} points pour ${userStats.value.maison} !`)
+        }
+      }
+    } catch (err) {
+      console.error('Erreur:', err)
+    }
+  }
+}
+
+const addHousePoints = async (houseName, points) => {
+  try {
+    // Récupérer la maison
+    const { data: house, error: fetchError } = await supabase
+      .from('houses')
+      .select('*')
+      .eq('name', houseName)
+      .single()
+    
+    if (fetchError || !house) {
+      console.error('Erreur récupération maison:', fetchError)
+      return
+    }
+    
+    const newTotalXP = (house.total_xp || 0) + points
+    const oldLevel = house.level || 1
+    const newLevel = Math.max(1, Math.floor(Math.sqrt(newTotalXP / 10000)) + 1)
+    
+    // Ajouter les points XP (le trigger mettra à jour le niveau automatiquement)
+    const { error: updateError } = await supabase
+      .from('houses')
+      .update({ 
+        total_xp: newTotalXP
+      })
+      .eq('name', houseName)
+    
+    if (updateError) {
+      console.error('Erreur ajout XP maison:', updateError)
+    } else {
+      console.log(`✅ +${points} XP ajoutés à ${houseName} (Total: ${newTotalXP} XP)`)
+      
+      // Si la maison a changé de niveau
+      if (newLevel > oldLevel) {
+        console.log(`🏆 ${houseName} est passée au niveau ${newLevel} !`)
+        
+        // Notification optionnelle pour toute la maison
+        showToast.value = true
+        toastData.value = {
+          type: 'success',
+          title: `🏆 ${houseName} niveau ${newLevel} !`,
+          message: `Votre maison progresse grâce à vous !`,
+          xp: 0
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Erreur addHousePoints:', err)
+  }
+}
 
 // Map background image by normalized house
 const houseImages = {
   harmonis: FondHarmonis,
   elaris: FondElaris,
   doloris: FondDoloris,
-  solencia: FondSolencia
+  solencia: FondSolencia,
+  gamemaster: MaitreDuJeuFond
 }
 
 const houseBackgroundImage = computed(() => {
@@ -544,10 +776,9 @@ const houseBackgroundImage = computed(() => {
 
 const xpProgress = computed(() => {
   if (!userStats.value) return 0
-  const currentXP = userStats.value.xp || 0
-  const nextLevelXP = getNextLevelXP(userStats.value.niveau || 1)
-  const currentLevelXP = getCurrentLevelXP(userStats.value.niveau || 1)
-  return Math.min(100, ((currentXP - currentLevelXP) / (nextLevelXP - currentLevelXP)) * 100)
+  const currentLevel = userStats.value.niveau || 1
+  const totalXP = userStats.value.xp || 0
+  return getLevelProgress(currentLevel, totalXP)
 })
 
 // Collections (safe fallbacks)
@@ -640,6 +871,89 @@ const totalXPFromQuests = computed(() => {
   return questStats.value.totalXPFromQuests || 0
 })
 
+// NOUVEAU: Computed properties avancées pour filtrage des quêtes (depuis QuestsPage)
+const questsArray = computed(() => userQuests.value || [])
+
+const activeQuestsCount = computed(() => {
+  return questsArray.value.filter(q => 
+    q.userProgress?.status === 'not_started' || q.userProgress?.status === 'in_progress'
+  ).length
+})
+
+const tabFilteredQuests = computed(() => {
+  if (activeQuestTab.value === 'active') {
+    return questsArray.value.filter(q => 
+      q.userProgress?.status === 'not_started' || q.userProgress?.status === 'in_progress'
+    )
+  } else if (activeQuestTab.value === 'completed') {
+    return questsArray.value.filter(q => q.userProgress?.status === 'completed')
+  }
+  return questsArray.value // 'all'
+})
+
+const filteredQuests = computed(() => {
+  let filtered = tabFilteredQuests.value
+
+  // Recherche
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase()
+    filtered = filtered.filter(quest => 
+      quest.title.toLowerCase().includes(query) ||
+      quest.description.toLowerCase().includes(query)
+    )
+  }
+
+  // Filtres
+  if (selectedDifficulty.value !== 'all') {
+    filtered = filtered.filter(quest => quest.difficulty === selectedDifficulty.value)
+  }
+
+  if (selectedType.value !== 'all') {
+    filtered = filtered.filter(quest => quest.type === selectedType.value)
+  }
+
+  // Tri
+  filtered.sort((a, b) => {
+    switch (sortBy.value) {
+      case 'progress_desc':
+        return (b.progress || 0) - (a.progress || 0)
+      case 'progress_asc':
+        return (a.progress || 0) - (b.progress || 0)
+      case 'difficulty_asc':
+        return getDifficultyOrder(a.difficulty) - getDifficultyOrder(b.difficulty)
+      case 'difficulty_desc':
+        return getDifficultyOrder(b.difficulty) - getDifficultyOrder(a.difficulty)
+      case 'name_asc':
+        return a.title.localeCompare(b.title)
+      case 'name_desc':
+        return b.title.localeCompare(a.title)
+      default:
+        return 0
+    }
+  })
+
+  return filtered
+})
+
+const paginatedQuests = computed(() => {
+  const start = currentPage.value
+  const end = start + questsPerPage
+  return filteredQuests.value.slice(start, end)
+})
+
+const totalQuestPages = computed(() => Math.ceil(filteredQuests.value.length / questsPerPage))
+
+const completionRate = computed(() => {
+  if (questStats.value.totalQuests === 0) return 0
+  return Math.round((questStats.value.completedQuests / questStats.value.totalQuests) * 100)
+})
+
+const hasFilters = computed(() => {
+  return searchQuery.value || 
+         selectedDifficulty.value !== 'all' || 
+         selectedType.value !== 'all'
+})
+
 // Helper: status for a challenge
 const challengeStatus = (q) => {
   if (q?.completed || q?.status === 'completed') return 'validé'
@@ -657,12 +971,14 @@ const formatNumber = (num) => {
 }
 
 const getCurrentLevelXP = (level) => {
-  if (level <= 1) return 0
-  return Math.floor(50 * Math.pow(1.5, level - 2))
+  const levelInfo = getLevelInfo(level)
+  return levelInfo.xpRequired
 }
 
 const getNextLevelXP = (level) => {
-  return Math.floor(50 * Math.pow(1.5, level - 1))
+  if (level >= 20) return 0 // Niveau maximum
+  const nextLevelInfo = getLevelInfo(level + 1)
+  return nextLevelInfo.xpRequired
 }
 
 const getDaysSinceJoined = () => {
@@ -688,9 +1004,22 @@ const isNewlyUnlocked = (badge) => {
   return newlyUnlockedBadges.value.has(badge.id)
 }
 
+// Modal and Toast states
+const showDetailModal = ref(false)
+const modalType = ref('badge')
+const modalItem = ref(null)
+const showToast = ref(false)
+const toastData = ref({
+  type: 'info',
+  title: '',
+  message: '',
+  xp: 0
+})
+
 const showBadgeDetails = (badge) => {
-  // TODO: Implémenter modal de détails du badge
-  console.log('Badge details:', badge)
+  modalType.value = 'badge'
+  modalItem.value = badge
+  showDetailModal.value = true
 }
 
 const getBadgeProgressHint = (badge) => {
@@ -699,48 +1028,65 @@ const getBadgeProgressHint = (badge) => {
 }
 
 const checkForNewBadges = async () => {
-  if (!auth.currentUser?.uid) return
+  if (!authStore.user?.id) return
   
   try {
-    const newBadges = await badgesService.autoCheckAndUnlockBadges(
-      auth.currentUser.uid, 
-      userStats.value
-    )
-    
-    if (newBadges.length > 0) {
-      // Ajouter les nouveaux badges à la liste
-      userBadges.value.push(...newBadges)
-      
-      // Marquer comme nouvellement débloqués
-      newBadges.forEach(badge => {
-        newlyUnlockedBadges.value.add(badge.id)
-      })
-      
-      // Afficher notification pour le premier badge
-      if (newBadges.length > 0) {
-        currentNotification.value = newBadges[0]
-        showNotification.value = true
-      }
-    }
+    console.log('🔍 Vérification des nouveaux badges...')
+    // TODO: Implémenter la vérification automatique des badges
+    console.log('✅ Vérification badges terminée (système à implémenter)')
   } catch (error) {
-    console.error('Erreur lors de la vérification des badges:', error)
+    console.error('❌ Erreur lors de la vérification des badges:', error)
   }
 }
 
 const loadBadgesData = async () => {
-  if (!auth.currentUser?.uid) return
+  const userId = displayUserId.value
+  if (!userId) return
   
   try {
-    // Utiliser le service unifié pour charger les badges
-    const [allBadgesData, userBadgesData] = await Promise.all([
-      gamificationService.getAllBadges(),
-      gamificationService.getUserBadges(auth.currentUser.uid)
-    ])
+    console.log('🏆 Chargement des badges depuis Supabase pour:', userId)
     
+    // Récupérer les badges de l'utilisateur depuis Supabase
+    const { data: userBadgesData, error: userBadgesError } = await supabase
+      .from('user_badges')
+      .select(`
+        *,
+        badge:badges(*)
+      `)
+      .eq('user_id', userId)
+    
+    if (userBadgesError && userBadgesError.code !== 'PGRST116') {
+      console.error('Erreur chargement badges utilisateur:', userBadgesError)
+    }
+    
+    // Récupérer tous les badges disponibles
+    const { data: allBadgesData, error: allBadgesError } = await supabase
+      .from('badges')
+      .select('*')
+      .order('rarity', { ascending: true })
+    
+    if (allBadgesError) {
+      console.error('Erreur chargement badges:', allBadgesError)
+    }
+    
+    // Formatter les données
     allBadges.value = allBadgesData || []
-    userBadges.value = userBadgesData || []
+    
+    // Formatter les badges de l'utilisateur
+    if (userBadgesData && userBadgesData.length > 0) {
+      userBadges.value = userBadgesData.map(ub => ({
+        ...ub.badge,
+        unlocked_at: ub.unlocked_at,
+        progress: ub.progress || 100
+      }))
+    } else {
+      userBadges.value = []
+    }
+    
+    console.log(`✅ ${userBadges.value.length} badges débloqués sur ${allBadges.value.length}`)
+    
   } catch (error) {
-    console.error('Erreur lors du chargement des badges:', error)
+    console.error('❌ Erreur lors du chargement des badges:', error)
     allBadges.value = []
     userBadges.value = []
   }
@@ -753,113 +1099,273 @@ const onNotificationClose = () => {
 
 // Challenge system methods
 const loadChallengesData = async () => {
-  if (!auth.currentUser?.uid) return
+  const userId = displayUserId.value
+  if (!userId) return
   
   try {
-    // Utiliser le service unifié pour charger les défis
-    const [challenges, stats] = await Promise.all([
-      gamificationService.getUserChallenges(auth.currentUser.uid),
-      challengesService.getUserChallengeStats(auth.currentUser.uid)
-    ])
+    console.log('🎯 Chargement des défis depuis Supabase pour:', userId)
     
-    activeChallenges.value = challenges || []
-    challengeStats.value = stats || {}
+    // Récupérer les défis actifs (non expirés)
+    const { data: challengesData, error: challengesError } = await supabase
+      .from('challenges')
+      .select('*')
+      .or('end_date.is.null,end_date.gte.' + new Date().toISOString())
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+    
+    if (challengesError && challengesError.code !== 'PGRST116') {
+      console.error('Erreur chargement défis:', challengesError)
+    }
+    
+    // Récupérer les progressions de l'utilisateur
+    const { data: userProgressData, error: progressError } = await supabase
+      .from('user_challenge_progress')
+      .select('*')
+      .eq('user_id', userId)
+    
+    if (progressError && progressError.code !== 'PGRST116') {
+      console.error('Erreur chargement progression défis:', progressError)
+    }
+    
+    // Combiner les données
+    if (challengesData && challengesData.length > 0) {
+      activeChallenges.value = challengesData.map(challenge => {
+        const userProgress = userProgressData?.find(p => p.challenge_id === challenge.id)
+        return {
+          ...challenge,
+          progress: userProgress?.progress || 0,
+          completed: userProgress?.completed || false,
+          completed_at: userProgress?.completed_at || null
+        }
+      })
+    } else {
+      activeChallenges.value = []
+    }
+    
+    // Calculer les stats
+    const completed = activeChallenges.value.filter(c => c.completed)
+    challengeStats.value = {
+      totalCompleted: completed.length,
+      totalXPFromChallenges: completed.reduce((sum, c) => sum + (c.points || c.xp_reward || 0), 0)
+    }
+    
+    console.log(`✅ ${activeChallenges.value.length} défis chargés (${completed.length} complétés)`)
+    
   } catch (error) {
-    console.error('Erreur lors du chargement des défis:', error)
+    console.error('❌ Erreur lors du chargement des défis:', error)
     activeChallenges.value = []
-    challengeStats.value = {}
+    challengeStats.value = { totalCompleted: 0, totalXPFromChallenges: 0 }
   }
 }
 
 const showChallengeDetails = (challenge) => {
-  // Rediriger vers la page des défis avec le défi sélectionné
-  router.push('/challenges')
+  modalType.value = 'challenge'
+  modalItem.value = challenge
+  showDetailModal.value = true
 }
 
-// Quest system methods
+const handleStart = ({ type, item }) => {
+  showToast.value = true
+  toastData.value = {
+    type: type,
+    title: `${type === 'challenge' ? 'Défi' : 'Quête'} commencé !`,
+    message: `Tu as commencé : ${item.title}`,
+    xp: 0
+  }
+}
+
+// Quest system methods (ENRICHI depuis QuestsPage)
 const loadQuestsData = async () => {
-  if (!auth.currentUser?.uid) return
+  const userId = displayUserId.value
+  if (!userId) return
   
   try {
-    // Utiliser le service unifié pour charger les quêtes
-    const [quests, stats] = await Promise.all([
-      gamificationService.getUserQuests(auth.currentUser.uid),
-      questsService.getUserQuestStats(auth.currentUser.uid)
-    ])
+    console.log('🗺️ Chargement des quêtes avec userQuestsService pour:', userId)
     
-    activeQuests.value = quests || []
-    questStats.value = stats || {}
+    // Charger les quêtes utilisateur depuis Supabase via le service
+    const quests = await userQuestsService.getUserQuests(userId)
+    userQuests.value = quests
+    activeQuests.value = quests.filter(q => 
+      q.userProgress?.status === 'not_started' || q.userProgress?.status === 'in_progress'
+    )
+    
+    console.log(`✅ ${quests.length} quêtes chargées depuis Supabase`)
+
+    // Charger les statistiques
+    questStats.value = await userQuestsService.getQuestStats(userId)
+    
+    console.log('📊 Stats quêtes:', questStats.value)
+    
   } catch (error) {
-    console.error('Erreur lors du chargement des quêtes:', error)
+    console.error('❌ Erreur lors du chargement des quêtes:', error)
+    userQuests.value = []
     activeQuests.value = []
-    questStats.value = {}
+    questStats.value = {
+      totalQuests: 0,
+      completedQuests: 0,
+      totalXPFromQuests: 0,
+      averageProgress: 0
+    }
   }
 }
 
 const showQuestDetails = (quest) => {
-  // Rediriger vers la page des quêtes avec la quête sélectionnée
-  router.push('/quests')
+  selectedQuestDetail.value = quest
+  showQuestModal.value = true
 }
 
-// Data loading
+const startQuest = async (questId) => {
+  try {
+    const user = authStore.user
+    if (!user) return
+    const userId = authStore.isFirebaseUser ? user.uid : user.id
+    if (!userId) return
+
+    await userQuestsService.startQuest(userId, questId)
+    
+    // Recharger les données
+    await loadQuestsData()
+    
+    toast.add({
+      severity: 'success',
+      summary: 'Quête démarrée!',
+      detail: 'Votre aventure commence maintenant 🎯',
+      life: 3000
+    })
+  } catch (error) {
+    console.error('❌ Erreur lors du démarrage de la quête:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: 'Impossible de démarrer la quête',
+      life: 3000
+    })
+  }
+}
+
+const startQuestFromModal = async (questId) => {
+  showQuestModal.value = false
+  await startQuest(questId)
+}
+
+const onTabChange = (event) => {
+  const tabs = ['active', 'completed', 'all']
+  activeQuestTab.value = tabs[event.index]
+  activeQuestTabIndex.value = event.index
+  currentPage.value = 0
+}
+
+const clearFilters = () => {
+  searchQuery.value = ''
+  selectedDifficulty.value = 'all'
+  selectedType.value = 'all'
+  sortBy.value = 'progress_desc'
+  currentPage.value = 0
+}
+
+const onPageChange = (event) => {
+  currentPage.value = event.first
+}
+
+const getDifficultyOrder = (difficulty) => {
+  const order = { EASY: 1, MEDIUM: 2, HARD: 3, EPIC: 4, LEGENDARY: 5 }
+  return order[difficulty] || 0
+}
+
+// Data loading - Connexion Supabase comme CardNameProfile
 const loadUserStats = async () => {
   try {
     loading.value = true
     error.value = null
     
-    if (!auth.currentUser?.uid) {
-      throw new Error('Utilisateur non connecté')
+    // Utiliser displayUserId (prop.id ou user connecté)
+    const userId = displayUserId.value
+    
+    if (!userId) {
+      throw new Error('Aucun ID utilisateur disponible')
     }
     
-    const stats = await getUserGamificationStats(auth.currentUser.uid)
+    console.log('🔍 Chargement des stats gamification Supabase pour:', userId)
+    console.log('👀 Mode consultation:', isViewingOtherUser.value ? 'Autre utilisateur' : 'Mon profil')
     
-    if (!stats) {
-      throw new Error('Aucune donnée trouvée pour cet utilisateur')
+    // Récupérer les données de gamification depuis Supabase
+    const gamificationData = await gamificationServiceSupabase.getUserGamificationData(userId)
+    
+    if (!gamificationData) {
+      console.warn('⚠️ Aucune donnée gamification trouvée, création de données par défaut')
+      userStats.value = {
+        uid: userId,
+        displayName: authStore.user.email?.split('@')[0] || 'Utilisateur',
+        niveau: 1,
+        xp: 0,
+        maison: null,
+        streak: 0,
+        streakMax: 0
+      }
+      loading.value = false
+      return
     }
     
-    // Améliorer le nom d'affichage avec les données Firebase Auth si nécessaire
-    if (!stats.displayName || stats.displayName === 'Utilisateur') {
-      stats.displayName = auth.currentUser.displayName || 
-                          auth.currentUser.email?.split('@')[0] || 
-                          'Utilisateur'
+    console.log('✅ Données gamification Supabase chargées:', gamificationData)
+    
+    // Récupérer les infos du profil utilisateur depuis user_profiles
+    const { data: profileData, error: profileError } = await supabase
+      .from('user_profiles')
+      .select('display_name, forname, family_name, email')
+      .eq('user_id', userId)
+      .maybeSingle() // Utiliser maybeSingle() au lieu de single() pour éviter l'erreur si pas de résultat
+    
+    if (profileError && profileError.code !== 'PGRST116') {
+      console.warn('⚠️ Erreur chargement profil utilisateur:', profileError)
     }
     
-    // Fetch upcoming active challenges and also subscribe for real-time updates
-    let house = stats?.maison || null
-    let activeDefis = []
-    try {
-      activeDefis = await getActiveDefis(house)
-    } catch (e) {
-      console.warn('Impossible de charger les défis actifs:', e)
-    }
-    userStats.value = { ...stats, upcomingChallenges: activeDefis }
-
-    // Charger les données des badges
-    await loadBadgesData()
+    console.log('👤 Données profil utilisateur:', profileData)
     
-    // Charger les données des défis
-    await loadChallengesData()
+    // Formater le nom d'affichage (priorité: display_name, puis family_name + forname, puis email)
+    let displayName = profileData?.display_name
+    if (!displayName && profileData?.family_name && profileData?.forname) {
+      // Format: Nom Prénom (comme dans CardNameProfile)
+      displayName = `${profileData.family_name} ${profileData.forname}`
+    }
+    if (!displayName && profileData?.email) {
+      displayName = profileData.email.split('@')[0]
+    }
+    if (!displayName && gamificationData.email) {
+      displayName = gamificationData.email.split('@')[0]
+    }
+    displayName = displayName || 'Utilisateur'
     
-    // Charger les données des quêtes
-    await loadQuestsData()
-
-    // Setup realtime subscription
-    if (unsubscribeDefis) {
-      try { unsubscribeDefis() } catch {}
-      unsubscribeDefis = null
+    console.log('✅ Nom formaté:', displayName)
+    
+    // Adapter les données Supabase au format du composant
+    userStats.value = {
+      uid: userId,
+      displayName: displayName,
+      niveau: gamificationData.current_level || gamificationData.niveau || 1,
+      xp: gamificationData.total_xp || gamificationData.xp || 0,
+      xpToNext: gamificationData.xpToNext || gamificationData.xp_to_next || 100,
+      maison: gamificationData.house_name || gamificationData.maison || null,
+      loginStreak: gamificationData.loginStreak || gamificationData.login_streak || 0,
+      streak: gamificationData.loginStreak || gamificationData.login_streak || 0,
+      streakMax: gamificationData.streakMax || gamificationData.streak_max || 0,
+      totalXP: gamificationData.totalXP || gamificationData.total_xp || 0,
+      lastXPGain: gamificationData.lastXPGain || gamificationData.last_xp_gain || null,
+      lastLogin: gamificationData.lastLogin || gamificationData.last_login || null,
+      createdAt: gamificationData.created_at || gamificationData.createdAt || null
     }
-    try {
-      unsubscribeDefis = subscribeActiveDefis(house, (list) => {
-        if (userStats.value) {
-          userStats.value = { ...userStats.value, upcomingChallenges: list }
-        }
-      })
-    } catch (e) {
-      console.warn('Subscription défis actifs échouée:', e)
-    }
+    
+    // Charger les données supplémentaires (badges, défis, quêtes)
+    await Promise.all([
+      loadBadgesData(),
+      loadChallengesData(),
+      loadQuestsData()
+    ])
+    
+    console.log('✅ Toutes les données gamification chargées avec succès')
+    
   } catch (err) {
-    console.error('Erreur lors du chargement des stats:', err)
-    error.value = err.message || 'Erreur lors du chargement des données'
+    console.error('❌ Erreur lors du chargement des stats gamification:', err)
+    error.value = err.message || 'Erreur lors du chargement des données de gamification'
   } finally {
     loading.value = false
   }
@@ -868,6 +1374,25 @@ const loadUserStats = async () => {
 const goBack = () => {
   router.go(-1)
 }
+
+// Watcher pour recalculer le niveau automatiquement quand l'XP change
+watch(
+  () => userStats.value?.xp,
+  (newXP, oldXP) => {
+    if (newXP !== undefined && newXP !== oldXP && userStats.value) {
+      const expectedLevel = calculateLevel(newXP)
+      if (expectedLevel !== userStats.value.niveau) {
+        console.log(`🔄 XP changé: ${oldXP} → ${newXP}, recalcul du niveau...`)
+        updateLevelFromXP(newXP)
+      }
+    }
+  }
+)
+
+// NOUVEAU: Watchers pour les filtres de quêtes (depuis QuestsPage)
+watch([searchQuery, selectedDifficulty, selectedType], () => {
+  currentPage.value = 0 // Réinitialiser la pagination quand les filtres changent
+})
 
 // Initialization
 onMounted(() => {
@@ -883,24 +1408,55 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.page-wrapper {
-  width: 100%;
+/* ProfileView.vue structure CSS */
+.profile-center-scrollable {
   height: 100vh;
   overflow-y: auto;
-  overflow-x: hidden;
-  /* Masquer la scrollbar */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE et Edge */
-}
-
-.page-wrapper::-webkit-scrollbar {
-  display: none; /* Chrome, Safari et Opera */
+  -webkit-overflow-scrolling: touch;
 }
 
 .gamification-profile-page {
   width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
   position: relative;
-  padding-bottom: 4rem;
+  padding: 2rem;
+}
+
+/* Responsive Mobile Styles */
+@media (max-width: 1200px) {
+  .gamification-profile-page {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 991px) {
+  .sidebar-left, .sidebar-right {
+    display: none !important;
+  }
+  .min-h-screen.flex.relative.lg\:static {
+    flex-direction: column !important;
+    padding: 0;
+    min-height: 0;
+  }
+  .min-h-screen.flex.flex-column.relative.flex-auto {
+    min-height: 0;
+    width: 100%;
+    padding: 0;
+  }
+  .gamification-profile-page {
+    padding: 1rem;
+  }
+  .flex.flex-column.flex-auto {
+    width: 100% !important;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .gamification-profile-page {
+    padding: 0.75rem;
+  }
 }
 
 /* Loading and Error States */
@@ -946,7 +1502,7 @@ onBeforeUnmount(() => {
 
 /* Profile Header */
 .profile-header {
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .profile-banner-wrapper {
@@ -1405,19 +1961,11 @@ onBeforeUnmount(() => {
   text-align: center;
 }
 
-/* Stats container - même style que HouseStatsPage */
+/* Stats container */
 .stats-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
-}
-
-.house-level-card {
-  background: var(--surface-card);
-  border-radius: 16px;
-  padding: 2rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 .level-info {
@@ -1444,7 +1992,7 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1.5rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .stat-card {
@@ -1485,13 +2033,37 @@ onBeforeUnmount(() => {
   font-size: 0.9rem;
 }
 
-/* Members ranking style - exactement comme HouseStatsPage */
-.members-ranking {
+/* Unified Card Styles */
+.members-ranking,
+.house-level-card {
   background: var(--surface-card);
   border-radius: 16px;
   padding: 2rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  height: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.members-ranking .empty-badge-state,
+.members-ranking .empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 250px;
+  padding: 2rem;
+}
+
+/* Adaptive responsiveness for cards */
+@media (max-width: 768px) {
+  .members-ranking,
+  .house-level-card {
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
 }
 
 .card-header {
@@ -1758,9 +2330,9 @@ onBeforeUnmount(() => {
 
 .modern-badge-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .show-more-section {
@@ -1891,7 +2463,7 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 1.5rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .check-challenges-btn {
@@ -1935,7 +2507,7 @@ onBeforeUnmount(() => {
 
 .modern-quest-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 1.5rem;
   margin-bottom: 1rem;
 }
@@ -1977,5 +2549,99 @@ onBeforeUnmount(() => {
   .challenge-overview-stats {
     justify-content: center;
   }
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+/* Appliquer les animations aux cards */
+.members-ranking,
+.house-level-card {
+  animation: fadeIn 0.6s ease-out;
+  animation-fill-mode: both;
+}
+
+.members-ranking:nth-child(1) { animation-delay: 0.1s; }
+.members-ranking:nth-child(2) { animation-delay: 0.2s; }
+.members-ranking:nth-child(3) { animation-delay: 0.3s; }
+.members-ranking:nth-child(4) { animation-delay: 0.4s; }
+.members-ranking:nth-child(5) { animation-delay: 0.5s; }
+
+/* Hover effects améliorés */
+.members-ranking:hover,
+.house-level-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Transitions fluides */
+.members-ranking,
+.house-level-card,
+.stat-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Animation pour les badges */
+.modern-badge-grid > *,
+.modern-challenge-grid > *,
+.modern-quest-grid > * {
+  animation: slideInUp 0.5s ease-out;
+  animation-fill-mode: both;
+}
+
+.modern-badge-grid > *:nth-child(1) { animation-delay: 0.05s; }
+.modern-badge-grid > *:nth-child(2) { animation-delay: 0.1s; }
+.modern-badge-grid > *:nth-child(3) { animation-delay: 0.15s; }
+.modern-badge-grid > *:nth-child(4) { animation-delay: 0.2s; }
+.modern-badge-grid > *:nth-child(5) { animation-delay: 0.25s; }
+.modern-badge-grid > *:nth-child(6) { animation-delay: 0.3s; }
+
+/* Loading shimmer effect */
+.loading-spinner {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Smooth scroll behavior */
+.profile-center-scrollable {
+  scroll-behavior: smooth;
 }
 </style>

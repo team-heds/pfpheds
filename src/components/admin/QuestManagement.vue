@@ -143,133 +143,552 @@
     </div>
   </div>
 
-    <!-- Dialog de création/édition -->
+    <!-- Dialog de création/édition moderne -->
     <Dialog 
       v-model:visible="showCreateDialog" 
-      :header="editingQuest ? 'Modifier la Quête' : 'Nouvelle Quête'"
+      :header="editingQuest ? 'Modifier la Quête' : 'Créer une Nouvelle Quête'"
       :modal="true"
       :closable="true"
-      :style="{ width: '700px' }"
+      maximizable
+      :style="{ width: '95vw', maxWidth: '1200px' }"
+      class="quest-creation-dialog"
     >
-      <div class="quest-form">
-        <div class="form-group">
-          <label for="title">Titre *</label>
-          <InputText 
-            id="title"
-            v-model="questForm.title" 
-            placeholder="Titre de la quête"
-            :class="{ 'p-invalid': errors.title }"
-          />
-          <small v-if="errors.title" class="p-error">{{ errors.title }}</small>
-        </div>
-        
-        <div class="form-group">
-          <label for="description">Description *</label>
-          <Textarea 
-            id="description"
-            v-model="questForm.description" 
-            placeholder="Description détaillée de la quête"
-            rows="4"
-            :class="{ 'p-invalid': errors.description }"
-          />
-          <small v-if="errors.description" class="p-error">{{ errors.description }}</small>
-        </div>
-        
-        <div class="form-row">
-          <div class="form-group">
-            <label for="type">Type *</label>
-            <Dropdown 
-              id="type"
-              v-model="questForm.type" 
-              :options="typeOptions.filter(t => t.value)" 
-              optionLabel="label" 
-              optionValue="value"
-              placeholder="Sélectionner"
-              :class="{ 'p-invalid': errors.type }"
-            />
-            <small v-if="errors.type" class="p-error">{{ errors.type }}</small>
-          </div>
+      <!-- Tabs modernes pour organiser le formulaire -->
+      <TabView v-model:activeIndex="activeFormTab">
+        <!-- 📋 ONGLET 1: Informations de base -->
+        <TabPanel>
+          <template #header>
+            <div class="flex align-items-center gap-2">
+              <i class="pi pi-info-circle"></i>
+              <span class="font-semibold">Informations</span>
+            </div>
+          </template>
           
-          <div class="form-group">
-            <label for="difficulty">Difficulté *</label>
-            <Dropdown 
-              id="difficulty"
-              v-model="questForm.difficulty" 
-              :options="difficultyOptions" 
-              optionLabel="label" 
-              optionValue="value"
-              placeholder="Sélectionner"
-              :class="{ 'p-invalid': errors.difficulty }"
-            />
-            <small v-if="errors.difficulty" class="p-error">{{ errors.difficulty }}</small>
+          <div class="p-4">
+            <div class="grid">
+              <!-- Titre -->
+              <div class="col-12">
+                <div class="mb-4">
+                  <label for="title" class="block text-900 font-bold mb-2">
+                    <i class="pi pi-pencil text-purple-500 mr-2"></i>Titre de la Quête *
+                  </label>
+                  <InputText 
+                    id="title"
+                    v-model="questForm.title" 
+                    placeholder="Ex: Explorez les mystères de la bibliothèque..."
+                    class="w-full p-inputtext-lg"
+                    :class="{ 'p-invalid': errors.title }"
+                  />
+                  <small v-if="errors.title" class="p-error block mt-1">{{ errors.title }}</small>
+                  <small class="text-500 block mt-1">
+                    <i class="pi pi-info-circle mr-1"></i>{{ questForm.title.length }}/100 caractères
+                  </small>
+                </div>
+              </div>
+              
+              <!-- Description -->
+              <div class="col-12">
+                <div class="mb-4">
+                  <label for="description" class="block text-900 font-bold mb-2">
+                    <i class="pi pi-align-left text-purple-500 mr-2"></i>Description Détaillée *
+                  </label>
+                  <Textarea 
+                    id="description"
+                    v-model="questForm.description" 
+                    placeholder="Décrivez l'objectif, le contexte et les actions requises..."
+                    rows="4"
+                    class="w-full"
+                    :class="{ 'p-invalid': errors.description }"
+                  />
+                  <small v-if="errors.description" class="p-error block mt-1">{{ errors.description }}</small>
+                  <small class="text-500 block mt-1">
+                    <i class="pi pi-info-circle mr-1"></i>{{ questForm.description.length }}/500 caractères
+                  </small>
+                </div>
+              </div>
+              
+              <!-- Icône -->
+              <div class="col-12 md:col-4">
+                <div class="mb-4">
+                  <label class="block text-900 font-bold mb-2">
+                    <i class="pi pi-star text-purple-500 mr-2"></i>Icône
+                  </label>
+                  <div class="flex flex-wrap gap-2">
+                    <Button 
+                      v-for="icon in iconOptions" 
+                      :key="icon"
+                      :label="icon"
+                      @click="questForm.icon = icon"
+                      :outlined="questForm.icon !== icon"
+                      :severity="questForm.icon === icon ? 'success' : 'secondary'"
+                      size="large"
+                      class="icon-btn"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Type, Difficulté, Statut -->
+              <div class="col-12 md:col-8">
+                <div class="grid">
+                  <div class="col-12 md:col-4">
+                    <div class="mb-4">
+                      <label for="type" class="block text-900 font-bold mb-2">Type *</label>
+                      <Dropdown 
+                        id="type"
+                        v-model="questForm.type" 
+                        :options="typeOptions.filter(t => t.value)" 
+                        optionLabel="label" 
+                        optionValue="value"
+                        placeholder="Sélectionner"
+                        class="w-full"
+                        :class="{ 'p-invalid': errors.type }"
+                      />
+                      <small v-if="errors.type" class="p-error block mt-1">{{ errors.type }}</small>
+                    </div>
+                  </div>
+                  
+                  <div class="col-12 md:col-4">
+                    <div class="mb-4">
+                      <label for="difficulty" class="block text-900 font-bold mb-2">Difficulté *</label>
+                      <Dropdown 
+                        id="difficulty"
+                        v-model="questForm.difficulty" 
+                        :options="difficultyOptions" 
+                        optionLabel="label" 
+                        optionValue="value"
+                        placeholder="Sélectionner"
+                        class="w-full"
+                        :class="{ 'p-invalid': errors.difficulty }"
+                      />
+                      <small v-if="errors.difficulty" class="p-error block mt-1">{{ errors.difficulty }}</small>
+                    </div>
+                  </div>
+                  
+                  <div class="col-12 md:col-4">
+                    <div class="mb-4">
+                      <label for="status" class="block text-900 font-bold mb-2">Statut</label>
+                      <Dropdown 
+                        id="status"
+                        v-model="questForm.status" 
+                        :options="statusOptions.filter(s => s.value)" 
+                        optionLabel="label" 
+                        optionValue="value"
+                        placeholder="Sélectionner"
+                        class="w-full"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 📅 DATES DE DÉBUT ET FIN (avec heure - Fuseau horaire Berne) -->
+              <div class="col-12">
+                <div class="surface-section p-4 border-round mb-3">
+                  <h4 class="text-900 font-bold mb-3">
+                    <i class="pi pi-calendar text-purple-500 mr-2"></i>Période de la Quête (Fuseau horaire: Europe/Zurich)
+                  </h4>
+                  <div class="grid">
+                    <div class="col-12 md:col-6">
+                      <div class="mb-4">
+                        <label for="startDate" class="block text-900 font-bold mb-2">
+                          <i class="pi pi-clock mr-2"></i>Date et Heure de Début
+                        </label>
+                        <Calendar 
+                          id="startDate"
+                          v-model="questForm.startDate" 
+                          showTime
+                          hourFormat="24"
+                          dateFormat="dd/mm/yy"
+                          placeholder="Sélectionner la date et l'heure"
+                          class="w-full"
+                          showIcon
+                          :showButtonBar="true"
+                        />
+                        <small class="text-500 block mt-1">
+                          <i class="pi pi-info-circle mr-1"></i>La quête sera disponible à partir de cette date/heure
+                        </small>
+                      </div>
+                    </div>
+                    
+                    <div class="col-12 md:col-6">
+                      <div class="mb-4">
+                        <label for="endDate" class="block text-900 font-bold mb-2">
+                          <i class="pi pi-clock mr-2"></i>Date et Heure de Fin
+                        </label>
+                        <Calendar 
+                          id="endDate"
+                          v-model="questForm.endDate" 
+                          showTime
+                          hourFormat="24"
+                          dateFormat="dd/mm/yy"
+                          placeholder="Sélectionner la date et l'heure"
+                          class="w-full"
+                          showIcon
+                          :showButtonBar="true"
+                          :minDate="questForm.startDate"
+                        />
+                        <small class="text-500 block mt-1">
+                          <i class="pi pi-info-circle mr-1"></i>La quête expirera automatiquement après cette date/heure
+                        </small>
+                      </div>
+                    </div>
+
+                    <!-- Récapitulatif durée -->
+                    <div class="col-12" v-if="questForm.startDate && questForm.endDate">
+                      <div class="bg-purple-50 border-1 border-purple-200 border-round p-3">
+                        <div class="flex align-items-center gap-2 text-purple-900">
+                          <i class="pi pi-calendar-times text-xl"></i>
+                          <strong>Durée totale:</strong>
+                          <span>{{ calculateQuestDuration() }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          
-          <div class="form-group">
-            <label for="points">Points *</label>
-            <InputNumber 
-              id="points"
-              v-model="questForm.points" 
-              :min="1"
-              :max="1000"
-              placeholder="Points"
-              :class="{ 'p-invalid': errors.points }"
-            />
-            <small v-if="errors.points" class="p-error">{{ errors.points }}</small>
-          </div>
-        </div>
+        </TabPanel>
         
-        <div class="form-row">
-          <div class="form-group">
-            <label for="category">Catégorie</label>
-            <InputText 
-              id="category"
-              v-model="questForm.category" 
-              placeholder="Catégorie de la quête"
-            />
-          </div>
+        <!-- 🏆 ONGLET 2: Récompenses -->
+        <TabPanel>
+          <template #header>
+            <div class="flex align-items-center gap-2">
+              <i class="pi pi-gift"></i>
+              <span class="font-semibold">Récompenses</span>
+            </div>
+          </template>
           
-          <div class="form-group">
-            <label for="status">Statut</label>
-            <Dropdown 
-              id="status"
-              v-model="questForm.status" 
-              :options="statusOptions.filter(s => s.value)" 
-              optionLabel="label" 
-              optionValue="value"
-              placeholder="Sélectionner"
-            />
+          <div class="p-4">
+            <div class="grid">
+              <div class="col-12 md:col-6">
+                <div class="mb-4">
+                  <label for="points" class="block text-900 font-bold mb-2">
+                    <i class="pi pi-flag text-orange-500 mr-2"></i>Points (Classement) *
+                  </label>
+                  <InputNumber 
+                    id="points"
+                    v-model="questForm.points" 
+                    :min="1"
+                    :max="1000"
+                    :step="10"
+                    showButtons
+                    buttonLayout="horizontal"
+                    incrementButtonIcon="pi pi-plus"
+                    decrementButtonIcon="pi pi-minus"
+                    class="w-full"
+                    :class="{ 'p-invalid': errors.points }"
+                  />
+                  <small v-if="errors.points" class="p-error block mt-1">{{ errors.points }}</small>
+                  <small class="text-500 block mt-1">Points pour le classement inter-maisons</small>
+                </div>
+              </div>
+              
+              <div class="col-12 md:col-6">
+                <div class="mb-4">
+                  <label for="xp" class="block text-900 font-bold mb-2">
+                    <i class="pi pi-star-fill text-yellow-500 mr-2"></i>XP (Progression)
+                  </label>
+                  <InputNumber 
+                    id="xp"
+                    v-model="questForm.xp_reward" 
+                    :min="0"
+                    :max="5000"
+                    :step="50"
+                    showButtons
+                    buttonLayout="horizontal"
+                    incrementButtonIcon="pi pi-plus"
+                    decrementButtonIcon="pi pi-minus"
+                    class="w-full"
+                  />
+                  <small class="text-500 block mt-1">XP pour monter de niveau</small>
+                </div>
+              </div>
+              
+              <div class="col-12">
+                <div class="mb-4">
+                  <label for="badges" class="block text-900 font-bold mb-2">
+                    <i class="pi pi-trophy text-purple-500 mr-2"></i>Badges Récompenses
+                  </label>
+                  <MultiSelect 
+                    id="badges"
+                    v-model="questForm.rewardBadges" 
+                    :options="badgeOptions" 
+                    optionLabel="label"
+                    optionValue="value"
+                    placeholder="Sélectionner des badges..."
+                    display="chip"
+                    class="w-full"
+                  />
+                  <small class="text-500 block mt-1">Badges débloqués à la complétion</small>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        </TabPanel>
         
-        <div class="form-group">
-          <label>Étapes de la quête</label>
-          <div class="steps-container">
-            <div 
-              v-for="(step, index) in questForm.steps" 
-              :key="index"
-              class="step-item"
-            >
-              <div class="step-number">{{ index + 1 }}</div>
-              <InputText 
-                v-model="step.title" 
-                placeholder="Titre de l'étape"
-                class="step-input"
-              />
+        <!-- ⚙️ ONGLET 3: Paramètres Avancés -->
+        <TabPanel>
+          <template #header>
+            <div class="flex align-items-center gap-2">
+              <i class="pi pi-cog"></i>
+              <span class="font-semibold">Paramètres</span>
+            </div>
+          </template>
+          
+          <div class="p-4">
+            <div class="grid">
+              <div class="col-12 md:col-6">
+                <div class="mb-4">
+                  <label for="minLevel" class="block text-900 font-bold mb-2">
+                    <i class="pi pi-angle-up text-green-500 mr-2"></i>Niveau Minimum
+                  </label>
+                  <InputNumber 
+                    id="minLevel"
+                    v-model="questForm.minLevel" 
+                    :min="1"
+                    :max="100"
+                    showButtons
+                    class="w-full"
+                  />
+                  <small class="text-500 block mt-1">Niveau requis pour débloquer</small>
+                </div>
+              </div>
+              
+              <div class="col-12 md:col-6">
+                <div class="mb-4">
+                  <label for="duration" class="block text-900 font-bold mb-2">
+                    <i class="pi pi-clock text-blue-500 mr-2"></i>Durée Limite (heures)
+                  </label>
+                  <InputNumber 
+                    id="duration"
+                    v-model="questForm.duration" 
+                    :min="1"
+                    :max="720"
+                    placeholder="Optionnel"
+                    class="w-full"
+                  />
+                  <small class="text-500 block mt-1">Temps limité pour compléter</small>
+                </div>
+              </div>
+              
+              <div class="col-12">
+                <div class="mb-4">
+                  <label class="block text-900 font-bold mb-2">
+                    <i class="pi pi-users text-purple-500 mr-2"></i>Maisons Ciblées
+                  </label>
+                  <MultiSelect 
+                    v-model="questForm.targetHouses" 
+                    :options="houseOptions" 
+                    optionLabel="label"
+                    optionValue="value"
+                    placeholder="Toutes les maisons (par défaut)"
+                    display="chip"
+                    class="w-full"
+                  >
+                    <template #option="slotProps">
+                      <div class="flex align-items-center gap-2">
+                        <div 
+                          class="w-1rem h-1rem border-circle" 
+                          :style="{ backgroundColor: slotProps.option.color }"
+                        ></div>
+                        <span>{{ slotProps.option.label }}</span>
+                      </div>
+                    </template>
+                  </MultiSelect>
+                  <small class="text-500 block mt-1">Laissez vide pour toutes les maisons</small>
+                </div>
+              </div>
+              
+              <div class="col-12">
+                <div class="mb-4">
+                  <div class="flex align-items-center gap-3 mb-3">
+                    <InputSwitch v-model="questForm.isRecurring" inputId="recurring" />
+                    <label for="recurring" class="text-900 font-bold cursor-pointer">
+                      <i class="pi pi-refresh text-cyan-500 mr-2"></i>Quête Récurrente
+                    </label>
+                  </div>
+                  
+                  <Dropdown 
+                    v-if="questForm.isRecurring"
+                    v-model="questForm.recurringType" 
+                    :options="recurringOptions" 
+                    optionLabel="label"
+                    optionValue="value"
+                    placeholder="Fréquence de récurrence"
+                    class="w-full"
+                  />
+                  <small v-if="questForm.isRecurring" class="text-500 block mt-1">
+                    La quête se réinitialise automatiquement
+                  </small>
+                </div>
+              </div>
+              
+              <div class="col-12 md:col-6">
+                <div class="mb-4">
+                  <label for="startDate" class="block text-900 font-bold mb-2">
+                    <i class="pi pi-calendar text-green-500 mr-2"></i>Date de Début
+                  </label>
+                  <Calendar 
+                    id="startDate"
+                    v-model="questForm.startDate" 
+                    dateFormat="dd/mm/yy"
+                    showIcon
+                    placeholder="Optionnel"
+                    class="w-full"
+                  />
+                  <small class="text-500 block mt-1">Pour quêtes événement</small>
+                </div>
+              </div>
+              
+              <div class="col-12 md:col-6">
+                <div class="mb-4">
+                  <label for="endDate" class="block text-900 font-bold mb-2">
+                    <i class="pi pi-calendar text-red-500 mr-2"></i>Date de Fin
+                  </label>
+                  <Calendar 
+                    id="endDate"
+                    v-model="questForm.endDate" 
+                    dateFormat="dd/mm/yy"
+                    showIcon
+                    placeholder="Optionnel"
+                    class="w-full"
+                  />
+                  <small class="text-500 block mt-1">Expiration automatique</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </TabPanel>
+        
+        <!-- 🪜 ONGLET 4: Étapes -->
+        <TabPanel>
+          <template #header>
+            <div class="flex align-items-center gap-2">
+              <i class="pi pi-list"></i>
+              <span class="font-semibold">Étapes</span>
+              <Chip :label="questForm.steps.length.toString()" class="ml-2" />
+            </div>
+          </template>
+          
+          <div class="p-4">
+            <div class="mb-4">
               <Button 
-                @click="removeStep(index)"
-                icon="pi pi-times"
-                class="p-button-text p-button-danger p-button-sm"
+                @click="addStep"
+                icon="pi pi-plus"
+                label="Ajouter une étape"
+                class="p-button-success"
               />
             </div>
-            <Button 
-              @click="addStep"
-              icon="pi pi-plus"
-              label="Ajouter une étape"
-              class="p-button-text"
-            />
+            
+            <div class="flex flex-column gap-3">
+              <div 
+                v-for="(step, index) in questForm.steps" 
+                :key="index"
+                class="surface-border border-1 border-round p-4"
+              >
+                <div class="flex align-items-center justify-content-between mb-3">
+                  <h4 class="text-900 font-bold m-0">
+                    <span class="inline-flex align-items-center justify-content-center bg-purple-100 text-purple-900 border-circle mr-2" 
+                          style="width: 2rem; height: 2rem; font-size: 0.875rem;">
+                      {{ index + 1 }}
+                    </span>
+                    Étape {{ index + 1 }}
+                  </h4>
+                  <Button 
+                    @click="removeStep(index)"
+                    icon="pi pi-trash"
+                    class="p-button-rounded p-button-text p-button-danger"
+                    v-tooltip="'Supprimer'"
+                  />
+                </div>
+                
+                <div class="grid">
+                  <div class="col-12">
+                    <InputText 
+                      v-model="step.title" 
+                      placeholder="Titre de l'étape..."
+                      class="w-full mb-2"
+                    />
+                  </div>
+                  
+                  <div class="col-12">
+                    <Textarea 
+                      v-model="step.description" 
+                      placeholder="Description détaillée (optionnel)..."
+                      rows="2"
+                      class="w-full mb-2"
+                    />
+                  </div>
+                  
+                  <div class="col-12 md:col-4">
+                    <div class="flex align-items-center gap-2">
+                      <Checkbox v-model="step.required" :binary="true" inputId="`required${index}`" />
+                      <label :for="`required${index}`" class="text-900">Étape requise</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </TabPanel>
+        
+        <!-- 💡 ONGLET 5: Aide & Prérequis -->
+        <TabPanel>
+          <template #header>
+            <div class="flex align-items-center gap-2">
+              <i class="pi pi-lightbulb"></i>
+              <span class="font-semibold">Aide</span>
+            </div>
+          </template>
+          
+          <div class="p-4">
+            <div class="mb-4">
+              <label class="block text-900 font-bold mb-2">
+                <i class="pi pi-lightbulb text-yellow-500 mr-2"></i>Indices pour les Joueurs
+              </label>
+              <div class="flex flex-column gap-2">
+                <div v-for="(hint, index) in questForm.hints" :key="index" class="flex gap-2">
+                  <InputText 
+                    v-model="questForm.hints[index]" 
+                    placeholder="Ex: Cherchez dans la section histoire..."
+                    class="flex-1"
+                  />
+                  <Button 
+                    @click="questForm.hints.splice(index, 1)"
+                    icon="pi pi-times"
+                    class="p-button-rounded p-button-text p-button-danger"
+                  />
+                </div>
+                <Button 
+                  @click="questForm.hints.push('')"
+                  icon="pi pi-plus"
+                  label="Ajouter un indice"
+                  class="p-button-text"
+                />
+              </div>
+            </div>
+            
+            <div class="mb-4">
+              <label class="block text-900 font-bold mb-2">
+                <i class="pi pi-link text-blue-500 mr-2"></i>Quêtes Prérequises
+              </label>
+              <MultiSelect 
+                v-model="questForm.prerequisites" 
+                :options="quests" 
+                optionLabel="title"
+                optionValue="id"
+                placeholder="Aucun prérequis"
+                display="chip"
+                class="w-full"
+                filter
+              />
+              <small class="text-500 block mt-1">Quêtes à compléter avant de débloquer celle-ci</small>
+            </div>
+          </div>
+        </TabPanel>
+      </TabView>
       
       <template #footer>
         <Button 
@@ -317,7 +736,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, reactive } from 'vue'
+import { ref, computed, onMounted, reactive, watch } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useRouter } from 'vue-router'
 import Button from 'primevue/button'
@@ -328,7 +747,15 @@ import Dropdown from 'primevue/dropdown'
 import Dialog from 'primevue/dialog'
 import ProgressSpinner from 'primevue/progressspinner'
 import Tag from 'primevue/tag'
-import adminService from '../../service/adminService'
+import TabView from 'primevue/tabview'
+import TabPanel from 'primevue/tabpanel'
+import Calendar from 'primevue/calendar'
+import Checkbox from 'primevue/checkbox'
+import MultiSelect from 'primevue/multiselect'
+import Slider from 'primevue/slider'
+import Chip from 'primevue/chip'
+import InputSwitch from 'primevue/inputswitch'
+import adminQuestsService from '../../service/adminQuestsService'
 import rolesService, { PERMISSIONS } from '../../service/rolesService'
 
 const toast = useToast()
@@ -351,17 +778,49 @@ const showCreateDialog = ref(false)
 const showDeleteDialog = ref(false)
 const editingQuest = ref(null)
 const questToDelete = ref(null)
+const activeFormTab = ref(0)
 
-// Formulaire
+// Formulaire enrichi
 const questForm = reactive({
+  // Basique
   title: '',
   description: '',
   type: '',
   difficulty: 'easy',
-  points: 50,
-  category: '',
   status: 'active',
-  steps: [{ title: '' }]
+  icon: '🗺️',
+  
+  // Récompenses
+  points: 50,
+  xp_reward: 100,
+  rewardBadges: [],
+  
+  // Paramètres avancés
+  minLevel: 1,
+  maxLevel: null,
+  targetHouses: [],
+  
+  // Timing
+  duration: null, // en heures
+  startDate: null,
+  endDate: null,
+  isRecurring: false,
+  recurringType: null,
+  
+  // Prérequis
+  prerequisites: [],
+  
+  // Étapes
+  steps: [{ 
+    title: '', 
+    description: '',
+    required: true,
+    target: 1,
+    current: 0
+  }],
+  
+  // Aide
+  hints: ['']
 })
 
 const errors = ref({})
@@ -389,6 +848,31 @@ const typeOptions = [
   { label: 'Quotidienne', value: 'daily' }
 ]
 
+const recurringOptions = [
+  { label: 'Quotidienne', value: 'daily' },
+  { label: 'Hebdomadaire', value: 'weekly' },
+  { label: 'Mensuelle', value: 'monthly' }
+]
+
+const houseOptions = [
+  { label: 'Harmonis', value: 'Harmonis', color: '#2E8B57' },
+  { label: 'Elaris', value: 'Elaris', color: '#DC143C' },
+  { label: 'Doloris', value: 'Doloris', color: '#FFD700' },
+  { label: 'Solencia', value: 'Solencia', color: '#4169E1' }
+]
+
+const iconOptions = [
+  '🗺️', '⚔️', '🏆', '📚', '🔮', '⭐', '🎯', '🌟', 
+  '💎', '🏅', '🎖️', '👑', '🛡️', '🗡️', '📜', '🔥'
+]
+
+const badgeOptions = ref([
+  { label: 'Premier Pas', value: 'first_step' },
+  { label: 'Explorateur', value: 'explorer' },
+  { label: 'Sage', value: 'sage' },
+  { label: 'Combattant', value: 'fighter' }
+])
+
 // Permissions supprimées - accès libre pour le développement
 const canCreateQuests = computed(() => true)
 const canEditQuests = computed(() => true)
@@ -398,14 +882,13 @@ const canDeleteQuests = computed(() => true)
 const loadQuests = async () => {
   try {
     loading.value = true
-    const data = await adminService.getQuests()
-    quests.value = Object.keys(data || {}).map(key => ({
-      id: key,
-      ...data[key]
-    }))
+    // Récupération depuis Supabase
+    const data = await adminQuestsService.getQuests()
+    quests.value = data || []
     filterQuests()
+    console.log('✅ Quêtes chargées:', quests.value.length)
   } catch (error) {
-    console.error('Erreur lors du chargement des quêtes:', error)
+    console.error('❌ Erreur lors du chargement des quêtes:', error)
     toast.add({
       severity: 'error',
       summary: 'Erreur',
@@ -446,7 +929,6 @@ const resetForm = () => {
     type: '',
     difficulty: 'easy',
     points: 50,
-    category: '',
     status: 'active',
     steps: [{ title: '' }]
   })
@@ -502,21 +984,39 @@ const saveQuest = async () => {
       type: questForm.type,
       difficulty: questForm.difficulty,
       points: questForm.points,
-      category: questForm.category.trim(),
       status: questForm.status,
+      xp_reward: questForm.xp_reward,
+      icon: questForm.icon,
+      // Dates avec fuseau horaire Berne (Europe/Zurich)
+      startDate: questForm.startDate ? formatDateTimeForBerne(questForm.startDate) : null,
+      endDate: questForm.endDate ? formatDateTimeForBerne(questForm.endDate) : null,
+      duration: questForm.duration,
+      isRecurring: questForm.isRecurring,
+      recurringType: questForm.recurringType,
+      minLevel: questForm.minLevel,
+      maxLevel: questForm.maxLevel,
+      targetHouses: questForm.targetHouses,
+      prerequisites: questForm.prerequisites,
+      rewardBadges: questForm.rewardBadges,
       steps: questForm.steps.filter(step => step.title.trim()).map(step => ({
         title: step.title.trim(),
-        completed: false
+        description: step.description || null,
+        required: step.required !== false,
+        target: step.target || 1,
+        current: step.current || 0
       })),
+      hints: questForm.hints.filter(hint => hint.trim()),
       rewards: {
-        xp: questForm.points,
-        badges: [],
+        xp: questForm.xp_reward,
+        badges: questForm.rewardBadges || [],
         items: []
-      }
+      },
+      createdAt: Date.now(),
+      updatedAt: Date.now()
     }
     
     if (editingQuest.value) {
-      await adminService.updateQuest(editingQuest.value.id, questData)
+      await adminQuestsService.updateQuest(editingQuest.value.id, questData)
       toast.add({
         severity: 'success',
         summary: 'Succès',
@@ -524,12 +1024,14 @@ const saveQuest = async () => {
         life: 3000
       })
     } else {
-      await adminService.createQuest(questData)
+      await adminQuestsService.createQuest(questData)
       toast.add({
         severity: 'success',
         summary: 'Succès',
-        detail: 'Quête créée avec succès',
-        life: 3000
+        detail: questData.status === 'active' 
+          ? 'Quête créée et assignée à tous les utilisateurs !'
+          : 'Quête créée avec succès',
+        life: 4000
       })
     }
     
@@ -538,7 +1040,7 @@ const saveQuest = async () => {
     await loadQuests()
     
   } catch (error) {
-    console.error('Erreur lors de la sauvegarde:', error)
+    console.error('❌ Erreur lors de la sauvegarde:', error)
     toast.add({
       severity: 'error',
       summary: 'Erreur',
@@ -558,9 +1060,22 @@ const editQuest = (quest) => {
     type: quest.type || '',
     difficulty: quest.difficulty || 'easy',
     points: quest.points || 50,
-    category: quest.category || '',
+    xp_reward: quest.xp_reward || 100,
     status: quest.status || 'active',
-    steps: quest.steps?.length ? [...quest.steps] : [{ title: '' }]
+    icon: quest.icon || '🗺️',
+    // Charger les dates (converties depuis ISO vers Date object)
+    startDate: quest.startDate ? new Date(quest.startDate) : null,
+    endDate: quest.endDate ? new Date(quest.endDate) : null,
+    duration: quest.duration || null,
+    isRecurring: quest.isRecurring || false,
+    recurringType: quest.recurringType || null,
+    minLevel: quest.minLevel || 1,
+    maxLevel: quest.maxLevel || null,
+    targetHouses: quest.targetHouses || [],
+    prerequisites: quest.prerequisites || [],
+    rewardBadges: quest.rewardBadges || [],
+    steps: quest.steps?.length ? [...quest.steps] : [{ title: '', description: '', required: true, target: 1, current: 0 }],
+    hints: quest.hints?.length ? [...quest.hints] : ['']
   })
   showCreateDialog.value = true
 }
@@ -575,7 +1090,7 @@ const deleteQuest = async () => {
   
   try {
     deleting.value = true
-    await adminService.deleteQuest(questToDelete.value.id)
+    await adminQuestsService.deleteQuest(questToDelete.value.id)
     
     toast.add({
       severity: 'success',
@@ -589,7 +1104,7 @@ const deleteQuest = async () => {
     await loadQuests()
     
   } catch (error) {
-    console.error('Erreur lors de la suppression:', error)
+    console.error('❌ Erreur lors de la suppression:', error)
     toast.add({
       severity: 'error',
       summary: 'Erreur',
@@ -607,7 +1122,7 @@ const viewQuestDetails = (quest) => {
 
 // Navigation vers la vue de création publique
 const navigateToPublicCreation = () => {
-  router.push('/gamification/create-quest')
+  router.push('/gamification-profile')
 }
 
 // Utilitaires de rôles supprimés - système désactivé
@@ -653,6 +1168,37 @@ const getTypeSeverity = (type) => {
 const formatDate = (timestamp) => {
   if (!timestamp) return 'N/A'
   return new Date(timestamp).toLocaleDateString('fr-FR')
+}
+
+// Calculer la durée entre la date de début et fin (fuseau horaire Berne)
+const calculateQuestDuration = () => {
+  if (!questForm.startDate || !questForm.endDate) return 'Non définie'
+  
+  const start = new Date(questForm.startDate)
+  const end = new Date(questForm.endDate)
+  const diffMs = end - start
+  
+  if (diffMs < 0) return 'Date de fin antérieure au début'
+  
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+  const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+  const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
+  
+  let duration = []
+  if (diffDays > 0) duration.push(`${diffDays} jour${diffDays > 1 ? 's' : ''}`)
+  if (diffHours > 0) duration.push(`${diffHours} heure${diffHours > 1 ? 's' : ''}`)
+  if (diffMinutes > 0) duration.push(`${diffMinutes} minute${diffMinutes > 1 ? 's' : ''}`)
+  
+  return duration.length > 0 ? duration.join(', ') : 'Moins d\'une minute'
+}
+
+// Formater date avec heure pour Supabase (TIMESTAMPTZ)
+const formatDateTimeForBerne = (date) => {
+  if (!date) return null
+  
+  // Simplement retourner la date en format ISO
+  // PostgreSQL TIMESTAMPTZ gère automatiquement le timezone
+  return date.toISOString()
 }
 
 // Lifecycle

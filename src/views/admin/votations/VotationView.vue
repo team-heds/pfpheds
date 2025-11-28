@@ -1,18 +1,23 @@
 <template>
-  <div class="votation-scrollable">
-    <Navbar />
-
-    <!-- Titre et bouton de retour -->
-    <div class="page-title p-d-flex p-jc-between">
-      <h1>Votation BA23 - PFP3</h1>
-    </div>
+  <AdminLayout :noSidebar="true">
+    <template #header>
+      <div class="page-title p-d-flex p-jc-between">
+        <h1>Votation BA24 - PFP2</h1>
+      </div>
+    </template>
 
     <div class="container">
       <Button label="Retour Profil" icon="pi pi-arrow-left"
-        class="p-button-outlined m-2 align-content-end justify-content-end" @click="goBackToProfile" />
+              class="p-button-outlined m-2 align-content-end justify-content-end" @click="goBackToProfile" />
 
       <!-- Affichage du profil étudiant -->
-      <div v-if="userProfile && Object.keys(userProfile).length">
+      <div v-if="demoMode">
+        <div class="profile-info">
+          <h3>Profil étudiant (démo)</h3>
+          <p>Critères déjà validés: {{ Object.keys(aggregatedPFP).filter(k => aggregatedPFP[k]).join(', ') || 'aucun' }}</p>
+        </div>
+      </div>
+      <div v-else-if="userProfile && Object.keys(userProfile).length">
         <ValidatedCriteriaSection :userId="currentUserId" />
       </div>
 
@@ -92,31 +97,31 @@
           <Column header="Choix 1">
             <template #body="slotProps">
               <RadioButton v-model="selectedPlaces[0]" :value="slotProps.data"
-                :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 0)" />
+                           :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 0)" />
             </template>
           </Column>
           <Column header="Choix 2">
             <template #body="slotProps">
               <RadioButton v-model="selectedPlaces[1]" :value="slotProps.data"
-                :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 1)" />
+                           :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 1)" />
             </template>
           </Column>
           <Column header="Choix 3">
             <template #body="slotProps">
               <RadioButton v-model="selectedPlaces[2]" :value="slotProps.data"
-                :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 2)" />
+                           :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 2)" />
             </template>
           </Column>
           <Column header="Choix 4">
             <template #body="slotProps">
               <RadioButton v-model="selectedPlaces[3]" :value="slotProps.data"
-                :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 3)" />
+                           :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 3)" />
             </template>
           </Column>
           <Column header="Choix 5">
             <template #body="slotProps">
               <RadioButton v-model="selectedPlaces[4]" :value="slotProps.data"
-                :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 4)" />
+                           :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 4)" />
             </template>
           </Column>
 
@@ -165,7 +170,7 @@
               ({{ group.places.length }} places)
             </h2>
             <DataTable :value="group.places" class="p-datatable-sm custom-datatable text-center"
-              responsiveLayout="scroll">
+                       responsiveLayout="scroll">
               <Column header="Institution">
                 <template #body="slotProps">
 
@@ -236,31 +241,31 @@
               <Column header="Choix 1">
                 <template #body="slotProps">
                   <RadioButton v-model="selectedPlaces[0]" :value="slotProps.data"
-                    :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 0)" />
+                               :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 0)" />
                 </template>
               </Column>
               <Column header="Choix 2">
                 <template #body="slotProps">
                   <RadioButton v-model="selectedPlaces[1]" :value="slotProps.data"
-                    :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 1)" />
+                               :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 1)" />
                 </template>
               </Column>
               <Column header="Choix 3">
                 <template #body="slotProps">
                   <RadioButton v-model="selectedPlaces[2]" :value="slotProps.data"
-                    :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 2)" />
+                               :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 2)" />
                 </template>
               </Column>
               <Column header="Choix 4">
                 <template #body="slotProps">
                   <RadioButton v-model="selectedPlaces[3]" :value="slotProps.data"
-                    :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 3)" />
+                               :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 3)" />
                 </template>
               </Column>
               <Column header="Choix 5">
                 <template #body="slotProps">
                   <RadioButton v-model="selectedPlaces[4]" :value="slotProps.data"
-                    :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 4)" />
+                               :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 4)" />
                 </template>
               </Column>
               <!-- Colonnes d'agrégation des votes répétées -->
@@ -312,48 +317,61 @@
           <Button @click="revote">Revoter</Button>
         </div>
       </div>
+
+      <!-- Export des places disponibles
+      <div class="export-section">
+        <Button
+          @click="exportPlacesToCSV"
+          icon="pi pi-download"
+          label="Exporter toutes les places disponibles"
+          class="p-button-success"
+        />
+      </div>-->
     </div>
 
     <!-- Dialogue de confirmation -->
     <Dialog v-model:visible="dialogVisible" header="Confirmation de Vote" :modal="true" :closable="false"
-      class="custom-dialog">
+            class="custom-dialog">
       <p>{{ dialogMessage }}</p>
       <template #footer>
         <button class="p-button p-component" @click="closeDialog">OK</button>
       </template>
     </Dialog>
-  </div>
+  </AdminLayout>
 </template>
 
 <script>
-import Navbar from '@/components/common/utils/Navbar.vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import RadioButton from 'primevue/radiobutton';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
+import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 import ValidatedCriteriaSection from '@/components/user/details/ValidatedCriteriaSection.vue'
 import CardNameProfile from '@/components/user/library/CardNameProfile.vue';
 import { ref, onValue, update, set, remove } from "firebase/database";
 import { db } from 'root/firebase';
 import { getAuth } from "firebase/auth";
+import { useInstitutionsStore } from '@/stores/institutionsStore'
+import { usePlacesStore } from '@/stores/placesStore'
+import filterData from '@/components/common/filters/filter.json'
 
 export default {
   name: 'VotationView',
   components: {
-    Navbar,
     DataTable,
     Column,
     RadioButton,
     Dialog,
     Button,
+    AdminLayout,
     ValidatedCriteriaSection,
     CardNameProfile
   },
   data() {
     return {
       places: [],
-      expandedPFP3Data: [],
+      expandedPFP2Data: [],
       userProfile: {},
       // Tableau réactif pour 5 choix de vote
       selectedPlaces: [null, null, null, null, null],
@@ -365,12 +383,13 @@ export default {
       votesAggregation: {},
       alreadyAssigned: false, // Propriété ajoutée
 
+      demoMode: true,
     };
   },
   watch: {
     places: {
       handler() {
-        this.updateExpandedPFP3Data();
+        this.updateExpandedPFP2Data();
       },
       immediate: true,
       deep: true
@@ -397,16 +416,8 @@ export default {
     },
 
     displayedGroups() {
-      // Si le premier groupe contient plus de 5 places, on affiche uniquement ce groupe,
-      // sinon on affiche tous les groupes.
-      if (
-        this.groupedByCriteriaCount.length > 0 &&
-        this.groupedByCriteriaCount[0].places.length > 5
-      ) {
-        return [this.groupedByCriteriaCount[0]];
-      } else {
-        return this.groupedByCriteriaCount;
-      }
+      // Afficher tous les groupes (1, 2, 3, 4, 5 critères)
+      return this.groupedByCriteriaCount;
     },
     // Agrégation des critères validés selon le profil utilisateur
     aggregatedPFP() {
@@ -440,41 +451,46 @@ export default {
     },
     // Vérifie que tous les critères sont validés
     allCriteriaValidated() {
+      if (this.demoMode) return true;
       return Object.values(this.aggregatedPFP).every(value => value === true);
     },
     // Utilise la donnée pré-calculée pour les places
     availablePlaces() {
-      let places = this.allCriteriaValidated
-        ? this.expandedPFP3Data
-        : this.expandedPFP3Data.filter(place => this.getNewValidatedCriteria(place).length > 0);
-      if (this.missingCriteria.includes('DE')) {
-        places = places.filter(place => place.DE === true);
+      let places = this.expandedPFP2Data;
+
+      // Si tous les critères sont validés, afficher toutes les places
+      if (this.allCriteriaValidated) {
+        return places.filter(place => place[`selectedActiveBA24PFP2-${place.seatIndex}`] === true);
       }
-      return places.filter(place => place[`selectedActiveBA23PFP3-${place.seatIndex}`] === true);
-    },
-    // Regroupe les places par nombre de critères non validés
-    groupedByCriteriaCount() {
-      const groups = {};
-      this.availablePlaces.forEach(place => {
-        const count = this.getNewValidatedCriteria(place).length;
-        if (groups[count]) {
-          groups[count].push(place);
-        } else {
-          groups[count] = [place];
-        }
+
+      // Afficher uniquement les places qui valident AU MOINS UN critère manquant
+      places = places.filter(place => {
+        const newCriteria = this.getNewValidatedCriteria(place);
+        return newCriteria.length > 0;
       });
-      const allGroups = Object.keys(groups)
-        .map(count => ({
-          criteriaCount: parseInt(count),
-          places: groups[count]
-        }))
-        .sort((a, b) => b.criteriaCount - a.criteriaCount);
-      return allGroups;
+
+      // Filtrage : si l'étudiant a validé DE ou SYSINT, exclure les places avec ces critères
+      const hasValidatedDE = this.aggregatedPFP.DE;
+      const hasValidatedSYSINT = this.aggregatedPFP.SYSINT;
+
+      places = places.filter(place => {
+        // Si l'étudiant a validé DE, exclure TOUTES les places qui ont le critère DE
+        if (hasValidatedDE && place.DE) {
+          return false;
+        }
+        // Si l'étudiant a validé SYSINT, exclure TOUTES les places qui ont le critère SYSINT
+        if (hasValidatedSYSINT && place.SYSINT) {
+          return false;
+        }
+        return true;
+      });
+
+      return places.filter(place => place[`selectedActiveBA24PFP2-${place.seatIndex}`] === true);
     },
     // Nombre de places sélectionnées
     totalSelectedOut() {
       return this.availablePlaces.filter(
-        row => row[`selectedActiveBA23PFP3-${row.seatIndex}`] === true
+        row => row[`selectedActiveBA24PFP2-${row.seatIndex}`] === true
       ).length;
     },
     // Le vote est considéré validé si le premier choix est renseigné
@@ -483,6 +499,114 @@ export default {
     }
   },
   methods: {
+    goBackToProfile() {
+      try {
+        this.$router.back();
+      } catch (e) {
+        this.$router.push('/feed');
+      }
+    },
+
+    async loadDemoData() {
+      this.currentUserId = 'demo-user';
+      this.userProfile = {
+        PFP_valided: [
+          { AIGU: false, AMBU: true, DE: false, FR: true, MSQ: false, NEUROGER: false, REHAB: true, SYSINT: false }
+        ]
+      };
+      const baseUrl = window.location.origin;
+      // Tenter d'utiliser les institutions du store (mêmes noms que la page Institutions)
+      try {
+        const store = useInstitutionsStore();
+        if (typeof store.fetchInstitutions === 'function') {
+          await store.fetchInstitutions();
+        }
+        const insts = Array.isArray(store.institutions) ? store.institutions.slice(0, 10) : [];
+        if (insts.length > 0) {
+          const placesStore = usePlacesStore();
+          if (typeof placesStore.fetchPlaces === 'function') {
+            await placesStore.fetchPlaces();
+          }
+          const criteriaMap = new Map();
+          const pList = Array.isArray(placesStore.places) ? placesStore.places : [];
+          pList.forEach(p => {
+            const instKey = String(p?.InstitutionId ?? p?.institutionId ?? '');
+            const placeKey = p?.PlaceId ?? p?.placeId ?? p?.IdPlace ?? p?.id;
+            if (!instKey || !placeKey) return;
+            const entry = filterData.find(it => it.IDPlace === placeKey);
+            if (!entry || !Array.isArray(entry.criteria)) return;
+            if (!criteriaMap.has(instKey)) criteriaMap.set(instKey, new Set());
+            entry.criteria.forEach(c => criteriaMap.get(instKey).add(c));
+          });
+          this.places = insts.map((inst, idx) => {
+            const id = String(inst?.InstitutionId ?? inst?.id ?? `inst-${idx+1}`);
+            const crit = criteriaMap.get(id) || new Set();
+            const flags = {
+              AIGU: crit.has('AIGU'),
+              REHAB: crit.has('REHAB'),
+              AMBU: crit.has('AMBU'),
+              SYSINT: crit.has('SYSINT'),
+              NEUROGER: crit.has('NEUROGER'),
+            };
+            const FR = crit.has('FR') || (!crit.has('DE'));
+            const DE = crit.has('DE');
+            const MSQ = crit.has('MSQ');
+            const P = (idx % 3) + 1;
+            const majorCat = flags.AIGU ? 'AIGU' : flags.REHAB ? 'REHAB' : flags.AMBU ? 'AMBU' : flags.SYSINT ? 'SYSINT' : flags.NEUROGER ? 'NEUROGER' : 'AIGU';
+            return {
+              IdPlace: `pl-${idx+1}`,
+              IDPlace: id,
+              InstitutionId: id,
+              InstitutionName: inst?.Name || `Institution ${idx+1}`,
+              InstitutionCategory: majorCat,
+              NomPlace: 'Unité de Stage',
+              MSQ,
+              SYSINT: flags.SYSINT,
+              NEUROGER: flags.NEUROGER,
+              AIGU: flags.AIGU,
+              REHAB: flags.REHAB,
+              AMBU: flags.AMBU,
+              FR,
+              DE,
+              PFP2: String(P),
+              url: `${baseUrl}/institution/${id}`,
+            };
+          });
+        } else {
+          // Fallback statique réaliste si le store est vide
+          this.places = [
+            { IdPlace: 'pl-1', IDPlace: 'hug', InstitutionId: 'hug', InstitutionName: 'Hôpitaux Universitaires de Genève (HUG)', InstitutionCategory: 'AIGU', NomPlace: 'Médecine Interne - Unité D', MSQ: true, SYSINT: true, NEUROGER: false, AIGU: true, REHAB: false, AMBU: false, FR: true, DE: false, PFP2: '3', url: `${baseUrl}/institution/hug` },
+            { IdPlace: 'pl-2', IDPlace: 'chuv', InstitutionId: 'chuv', InstitutionName: 'CHUV (Lausanne)', InstitutionCategory: 'AIGU', NomPlace: 'Chirurgie - Unité de Soins', MSQ: false, SYSINT: false, NEUROGER: false, AIGU: true, REHAB: false, AMBU: false, FR: true, DE: false, PFP2: '2', url: `${baseUrl}/institution/chuv` },
+            { IdPlace: 'pl-3', IDPlace: 'crr', InstitutionId: 'crr', InstitutionName: 'Clinique Romande de Réadaptation (CRR)', InstitutionCategory: 'REHAB', NomPlace: 'Plateau de Rééducation Neuro', MSQ: true, SYSINT: false, NEUROGER: true, AIGU: false, REHAB: true, AMBU: false, FR: true, DE: false, PFP2: '2', url: `${baseUrl}/institution/crr` },
+            { IdPlace: 'pl-4', IDPlace: 'grangettes', InstitutionId: 'grangettes', InstitutionName: 'Clinique des Grangettes', InstitutionCategory: 'AMBU', NomPlace: 'Centre Ambulatoire - Chêne-Bougeries', MSQ: false, SYSINT: false, NEUROGER: false, AIGU: false, REHAB: false, AMBU: true, FR: true, DE: false, PFP2: '1', url: `${baseUrl}/institution/grangettes` },
+            { IdPlace: 'pl-5', IDPlace: 'insel', InstitutionId: 'insel', InstitutionName: 'Inselspital Bern', InstitutionCategory: 'SYSINT', NomPlace: 'Innere Medizin - Station', MSQ: false, SYSINT: true, NEUROGER: false, AIGU: true, REHAB: false, AMBU: false, FR: false, DE: true, PFP2: '1', url: `${baseUrl}/institution/insel` },
+            { IdPlace: 'pl-6', IDPlace: 'valais-rehab', InstitutionId: 'valais-rehab', InstitutionName: "Hôpital du Valais - Réadaptation", InstitutionCategory: 'REHAB', NomPlace: 'Sion - Unité Rééducation', MSQ: true, SYSINT: false, NEUROGER: true, AIGU: false, REHAB: true, AMBU: false, FR: true, DE: false, PFP2: '2', url: `${baseUrl}/institution/valais-rehab` },
+            { IdPlace: 'pl-7', IDPlace: 'ems-amandiers', InstitutionId: 'ems-amandiers', InstitutionName: 'EMS Les Amandiers', InstitutionCategory: 'NEUROGER', NomPlace: 'Gériatrie - Long Séjour', MSQ: false, SYSINT: false, NEUROGER: true, AIGU: false, REHAB: false, AMBU: false, FR: true, DE: false, PFP2: '1', url: `${baseUrl}/institution/ems-amandiers` },
+            { IdPlace: 'pl-8', IDPlace: 'latour', InstitutionId: 'latour', InstitutionName: 'Hôpital de La Tour', InstitutionCategory: 'AIGU', NomPlace: 'Orthopédie - Unité de Soins', MSQ: false, SYSINT: false, NEUROGER: false, AIGU: true, REHAB: true, AMBU: false, FR: true, DE: false, PFP2: '1', url: `${baseUrl}/institution/latour` },
+            { IdPlace: 'pl-9', IDPlace: 'beaulieu', InstitutionId: 'beaulieu', InstitutionName: 'Clinique Générale-Beaulieu', InstitutionCategory: 'AMBU', NomPlace: 'Bloc ambulatoire', MSQ: false, SYSINT: false, NEUROGER: false, AIGU: true, REHAB: false, AMBU: true, FR: true, DE: false, PFP2: '1', url: `${baseUrl}/institution/beaulieu` },
+            { IdPlace: 'pl-10', IDPlace: 'hfr', InstitutionId: 'hfr', InstitutionName: 'Hôpital fribourgeois (HFR)', InstitutionCategory: 'SYSINT', NomPlace: 'Médecine Interne - Fribourg', MSQ: true, SYSINT: true, NEUROGER: false, AIGU: true, REHAB: false, AMBU: false, FR: true, DE: false, PFP2: '2', url: `${baseUrl}/institution/hfr` },
+          ];
+        }
+      } catch (e) {
+        // En cas d'erreur, garder une liste vide (les sections s'adaptent)
+        console.warn('Demo institutions store fallback:', e);
+        if (!Array.isArray(this.places)) this.places = [];
+      }
+      this.votesAggregation = {
+        'pl-1': { top1: 5, top2: 2, top3: 1, top4: 0, top5: 0, total: 8 },
+        'pl-2': { top1: 1, top2: 3, top3: 1, top4: 0, top5: 0, total: 5 },
+        'pl-3': { top1: 0, top2: 1, top3: 2, top4: 1, top5: 0, total: 4 }
+      };
+      // Marquer tous les sièges comme actifs pour l'affichage "toutes les places disponibles"
+      this.places.forEach(p => {
+        const count = parseInt(p.PFP2 || '0');
+        for (let i = 1; i <= count; i++) {
+          p[`selectedActiveBA24PFP2-${i}`] = true;
+        }
+      });
+      this.selectedPlaces = [null, null, null, null, null];
+      this.votedPlaces = [null, null, null, null, null];
+    },
 
     async getNameInstitutionById(institutionId) {
       const institutionData = await this.fetchInstitutionData(institutionId);
@@ -493,13 +617,13 @@ export default {
       console.log("yes1")
       for (const key in placesData) {
         const place = placesData[key];
-        // Récupère le nombre de places (stocké dans PFP3, ici supposé être un nombre ou une chaîne numérique)
+        // Récupère le nombre de places (stocké dans PFP2, ici supposé être un nombre ou une chaîne numérique)
         console.log("yes13")
 
-        const count = parseInt(place.PFP3 || '0');
-        // Pour chaque siège, vérifie si la clé "selectedEtudiantBA23PFP3-i" correspond à l'ID utilisateur
+        const count = parseInt(place.PFP2 || '0');
+        // Pour chaque siège, vérifie si la clé "selectedEtudiantBA24PFP2-i" correspond à l'ID utilisateur
         for (let i = 1; i <= count; i++) {
-          if (place[`selectedEtudiantBA23PFP3-${i}`] === this.currentUserId) {
+          if (place[`selectedEtudiantBA24PFP2-${i}`] === this.currentUserId) {
             console.log("yes122")
 
             return place; // Retourne la place trouvée
@@ -508,21 +632,24 @@ export default {
       }
       return null; // Aucun assignement trouvé
     },
-    updateExpandedPFP3Data() {
+    updateExpandedPFP2Data() {
       const rows = [];
       const sorted = this.places.slice().sort((a, b) =>
         a.NomPlace.localeCompare(b.NomPlace)
       );
       sorted.forEach(place => {
-        const count = parseInt(place.PFP3 || '0');
+        const count = parseInt(place['PFP2-2026'] || place.PFP2 || '0');
         if (!isNaN(count) && count >= 1) {
           for (let i = 1; i <= count; i++) {
-            const studentKey = `selectedEtudiantBA23PFP3-${i}`;
+            // Vérifier si un étudiant est déjà assigné à cette place
+            const studentKey = `selectedEtudiantBA24PFP2-${i}`;
             const alreadySelected =
               (i === 1 && place.selectedEtudiant && place.selectedEtudiant.trim() !== "") ||
               (place[studentKey] && place[studentKey].trim() !== "");
+
+            // N'afficher que les places sans étudiant assigné
             if (!alreadySelected) {
-              const dynamicKey = `selectedActiveBA23PFP3-${i}`;
+              const dynamicKey = `selectedActiveBA24PFP2-${i}`;
               rows.push({
                 ...place,
                 seatIndex: i,
@@ -532,16 +659,13 @@ export default {
           }
         }
       });
-      this.expandedPFP3Data = rows;
-    },
-    goBackToProfile() {
-      this.$router.push({ name: 'HistoriquePFP' });
+      this.expandedPFP2Data = rows;
     },
     checkExistingVote() {
       const auth = getAuth();
       const user = auth.currentUser;
       if (user) {
-        const voteRef = ref(db, `VotationBA23PFP3/${user.uid}`);
+        const voteRef = ref(db, `VotationBA24PFP2/${user.uid}`);
         onValue(voteRef, (snapshot) => {
           const vote = snapshot.val();
           if (vote && vote.votes) {
@@ -607,7 +731,7 @@ export default {
                     AMBU: place.AMBU === 'true' || place.AMBU === true,
                     FR: place.FR === 'true' || place.FR === true,
                     DE: place.DE === 'true' || place.DE === true,
-                    PFP3: place.PFP3 || '0',
+                    PFP2: place.PFP2 || '0',
                     url: url,
                     InstitutionName: institutionData.Name ||
                       institutionData.NomPlace ||
@@ -627,7 +751,15 @@ export default {
 
 
     updateSelection(place, seatIndex, value) {
-      const dynamicKey = `selectedActiveBA23PFP3-${seatIndex}`;
+      const dynamicKey = `selectedActiveBA24PFP2-${seatIndex}`;
+      if (this.demoMode) {
+        const idx = this.places.findIndex(p => p.IdPlace === place.IdPlace);
+        if (idx !== -1) {
+          this.places[idx][dynamicKey] = value;
+          this.updateExpandedPFP2Data();
+        }
+        return;
+      }
       const placeRef = ref(db, `Places/${place.IdPlace}`);
       update(placeRef, { [dynamicKey]: value })
         .catch((error) => {
@@ -649,7 +781,7 @@ export default {
       });
     },
     fetchVotesAggregation() {
-      const votesRef = ref(db, 'VotationBA23PFP3');
+      const votesRef = ref(db, 'VotationBA24PFP2');
       onValue(votesRef, (snapshot) => {
         const votesData = snapshot.val() || {};
         const aggregation = {};
@@ -691,6 +823,13 @@ export default {
         this.dialogVisible = true;
         return;
       }
+      if (this.demoMode) {
+        this.dialogMessage = "Vous avez voté pour les places : " +
+          this.selectedPlaces.map((place, index) => `Choix ${index + 1}: ${place.NomPlace} (${place.InstitutionName})`).join(' | ');
+        this.dialogVisible = true;
+        this.votedPlaces = this.selectedPlaces.slice();
+        return;
+      }
       const auth = getAuth();
       const user = auth.currentUser;
       if (!user) {
@@ -710,7 +849,7 @@ export default {
         })),
         timestamp: Date.now()
       };
-      const voteRef = ref(db, `VotationBA23PFP3/${user.uid}`);
+      const voteRef = ref(db, `VotationBA24PFP2/${user.uid}`);
       set(voteRef, voteData)
         .then(() => {
           this.dialogMessage = "Vous avez voté pour les places : " +
@@ -725,10 +864,15 @@ export default {
         });
     },
     revote() {
+      if (this.demoMode) {
+        this.votedPlaces = [null, null, null, null, null];
+        this.selectedPlaces = [null, null, null, null, null];
+        return;
+      }
       const auth = getAuth();
       const user = auth.currentUser;
       if (user) {
-        const voteRef = ref(db, `VotationBA23PFP3/${user.uid}`);
+        const voteRef = ref(db, `VotationBA24PFP2/${user.uid}`);
         remove(voteRef)
           .then(() => {
             this.votedPlaces = [null, null, null, null, null];
@@ -755,12 +899,94 @@ export default {
     },
     getVoteCount(place) {
       return this.votesAggregation[place.IdPlace] || { top1: 0, top2: 0, top3: 0, top4: 0, top5: 0, total: 0 };
+    },
+    exportPlacesToCSV() {
+      try {
+        // Entêtes du CSV
+        const headers = [
+          'Institution',
+          'Nom Place',
+          'Catégorie',
+          'MSQ',
+          'SYSINT',
+          'NEUROGER',
+          'AIGU',
+          'REHAB',
+          'AMBU',
+          'FR',
+          'DE',
+          'Nouveaux Critères',
+          'Votes Top 1',
+          'Votes Top 2',
+          'Votes Top 3',
+          'Votes Top 4',
+          'Votes Top 5',
+          'Total Votes',
+          'URL'
+        ];
+
+        // Données des places
+        const rows = this.availablePlaces.map(place => {
+          const voteCounts = this.getVoteCount(place);
+          const newCriteria = this.getNewValidatedCriteria(place).join(', ');
+
+          return [
+            place.InstitutionName || 'Non spécifié',
+            place.NomPlace || '',
+            place.InstitutionCategory || 'Non spécifié',
+            place.MSQ ? 'Oui' : 'Non',
+            place.SYSINT ? 'Oui' : 'Non',
+            place.NEUROGER ? 'Oui' : 'Non',
+            place.AIGU ? 'Oui' : 'Non',
+            place.REHAB ? 'Oui' : 'Non',
+            place.AMBU ? 'Oui' : 'Non',
+            place.FR ? 'Oui' : 'Non',
+            place.DE ? 'Oui' : 'Non',
+            newCriteria,
+            voteCounts.top1 || 0,
+            voteCounts.top2 || 0,
+            voteCounts.top3 || 0,
+            voteCounts.top4 || 0,
+            voteCounts.top5 || 0,
+            voteCounts.total || 0,
+            place.url || ''
+          ];
+        });
+
+        // Création du contenu CSV
+        const csvContent = [
+          headers.join(';'),
+          ...rows.map(row => row.map(cell => `"${cell}"`).join(';'))
+        ].join('\n');
+
+        // Création du blob et téléchargement
+        const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+
+        link.setAttribute('href', url);
+        link.setAttribute('download', `places_disponibles_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        this.dialogMessage = `Export réussi ! ${this.availablePlaces.length} places exportées.`;
+        this.dialogVisible = true;
+      } catch (error) {
+        console.error('Erreur lors de l\'export:', error);
+        this.dialogMessage = "Erreur lors de l'export. Veuillez réessayer.";
+        this.dialogVisible = true;
+      }
     }
   },
   mounted() {
-
+    if (this.demoMode) {
+      this.loadDemoData();
+      return;
+    }
     this.fetchUserProfile();
-
     this.fetchPlacesData();
     this.fetchVotesAggregation();
   }
@@ -768,17 +994,6 @@ export default {
 </script>
 
 <style scoped>
-.votation-scrollable {
-  overflow-y: auto;
-  max-height: 100vh;
-}
-
-html, body, #app {
-  height: 100%;
-  min-height: 100%;
-  overflow-y: auto;
-}
-
 .page-title {
   margin-bottom: 20px;
   text-align: center;
@@ -823,8 +1038,16 @@ html, body, #app {
   font-size: 16px;
 }
 
+.export-section {
+  margin-top: 30px;
+  margin-bottom: 30px;
+  text-align: center;
+  padding: 20px;
+  border-top: 2px solid var(--surface-border);
+}
+
 .custom-dialog {
   width: 400px;
 }
 </style>
-  
+

@@ -205,8 +205,18 @@ const pdfError = ref(false);
 const defaultAvatar = new URL('@/assets/avatar/avatar1.jpg', import.meta.url).href;
 
 // Computed properties from prop
-const authorName = computed(() => props.post.author?.username || 'Utilisateur inconnu');
-const authorAvatarUrl = computed(() => props.post.author?.avatar_url || defaultAvatar);
+const authorName = computed(() =>
+  props.post.Author ||
+  props.post.author_name ||
+  props.post.author?.username ||
+  'Utilisateur inconnu'
+);
+const authorAvatarUrl = computed(() =>
+  props.post.PhotoURL ||
+  props.post.avatar_url ||
+  props.post.author?.avatar_url ||
+  defaultAvatar
+);
 const likeCount = computed(() => props.post.likes_count || 0);
 const commentCount = computed(() => props.post.replies_count || 0);
 
@@ -232,7 +242,7 @@ const submitReply = async () => {
     await postsStore.createPost(newReply);
     
     // NOUVEAU : Déclencher l'intégration gamification pour commentaire
-    await gamificationIntegration.onSocialInteraction(currentUser.value.uid, {
+    await gamificationIntegration.onSocialInteraction(currentUser.value.uid || currentUser.value.id, {
       action: 'comment',
       targetType: 'post',
       targetId: props.post.id,
@@ -260,7 +270,7 @@ const submitReplyTo = async (parentReplyId) => {
     await postsStore.createPost(newReply);
     
     // NOUVEAU : Déclencher l'intégration gamification pour réponse à commentaire
-    await gamificationIntegration.onSocialInteraction(currentUser.value.uid, {
+    await gamificationIntegration.onSocialInteraction(currentUser.value.uid || currentUser.value.id, {
       action: 'reply',
       targetType: 'comment',
       targetId: parentReplyId,
@@ -289,7 +299,7 @@ const toggleLike = async () => {
     
     // NOUVEAU : Déclencher l'intégration gamification pour like
     if (!wasLiked) { // Seulement si c'est un nouveau like (pas un unlike)
-      await gamificationIntegration.onSocialInteraction(currentUser.value.uid, {
+      await gamificationIntegration.onSocialInteraction(currentUser.value.uid || currentUser.value.id, {
         action: 'like',
         targetType: 'post',
         targetId: props.post.id,

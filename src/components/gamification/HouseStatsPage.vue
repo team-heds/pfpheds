@@ -28,10 +28,58 @@
         <div class="header-title-container">
           <h2 class="page-title">Statistiques de la Maison</h2>
         </div>
+        <Button 
+          v-if="houseStats && !loading" 
+          icon="pi pi-refresh" 
+          @click="refreshStats" 
+          :loading="loading"
+          class="refresh-btn"
+          text
+          rounded
+        />
       </div>
     </div>
 
-    <div class="stats-container" v-if="houseStats">
+    <!-- État d'erreur -->
+    <div v-if="error && !loading" class="error-state">
+      <i class="pi pi-exclamation-circle"></i>
+      <h3>{{ error }}</h3>
+      <Button label="Réessayer" icon="pi pi-refresh" @click="loadHouseStats" />
+    </div>
+
+    <!-- Skeleton loaders -->
+    <div v-else-if="loading" class="stats-container">
+      <div class="house-level-card">
+        <Skeleton width="120px" height="30px" class="mb-3" />
+        <Skeleton width="60%" height="40px" class="mb-4" />
+        <Skeleton width="100%" height="12px" class="mb-2" />
+        <Skeleton width="80%" height="20px" />
+      </div>
+      
+      <div class="stats-grid">
+        <div class="stat-card" v-for="i in 3" :key="i">
+          <Skeleton shape="circle" size="50px" class="mr-3" />
+          <div style="flex: 1;">
+            <Skeleton width="60px" height="30px" class="mb-2" />
+            <Skeleton width="80px" height="20px" />
+          </div>
+        </div>
+      </div>
+      
+      <div class="members-ranking">
+        <Skeleton width="200px" height="30px" class="mb-4" />
+        <div v-for="i in 5" :key="i" class="member-item">
+          <Skeleton width="60px" height="40px" class="mr-3" />
+          <div style="flex: 1;">
+            <Skeleton width="150px" height="24px" class="mb-2" />
+            <Skeleton width="200px" height="18px" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contenu principal -->
+    <div class="stats-container" v-else-if="houseStats">
       <!-- Niveau de la maison -->
       <div class="house-level-card">
         <div class="level-info">
@@ -125,12 +173,6 @@
         </div>
       </div>
     </div>
-
-
-    <div v-else class="loading">
-      <i class="pi pi-spin pi-spinner"></i>
-      <p>Chargement des statistiques...</p>
-    </div>
     </div>
   </div>
 </template>
@@ -138,8 +180,11 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { getHouseDetailedStats, getHouseInfo } from '@/service/hesHousesService'
+import { useToast } from 'primevue/usetoast'
+import gamificationServiceSupabase from '@/service/gamificationServiceSupabase'
 import Navbar from '@/components/common/utils/Navbar.vue'
+import Button from 'primevue/button'
+import Skeleton from 'primevue/skeleton'
 
 // Import des images de fond des maisons
 import FondHarmonis from '@/assets/maisons/FondHarmonis.png'
@@ -148,9 +193,11 @@ import FondDoloris from '@/assets/maisons/FondDoloris.png'
 import FondSolencia from '@/assets/maisons/FondSolencia.png'
 
 const route = useRoute()
+const toast = useToast()
 const houseStats = ref(null)
 const houseInfo = ref(null)
 const loading = ref(true)
+const error = ref(null)
 
 const houseName = route.params.houseName || 'harmonis'
 
@@ -188,17 +235,94 @@ const formatNumber = (num) => {
   return num.toString()
 }
 
-// Chargement des données
-const loadHouseStats = async () => {
+// Cache localStorage
+const CACHE_KEY = `house_stats_${houseName}`
+const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+
+const loadFromCache = () => {
   try {
+    const cached = localStorage.getItem(CACHE_KEY)
+    if (!cached) return null
+    
+    const { data, timestamp } = JSON.parse(cached)
+    const now = Date.now()
+    
+    if (now - timestamp < CACHE_DURATION) {
+      console.log('📦 Chargement depuis le cache')
+      return data
+    } else {
+      console.log('⏰ Cache expiré')
+      localStorage.removeItem(CACHE_KEY)
+      return null
+    }
+  } catch (err) {
+    console.error('❌ Erreur lecture cache:', err)
+    return null
+  }
+}
+
+const saveToCache = (data) => {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({
+      data,
+      timestamp: Date.now()
+    }))
+  } catch (err) {
+    console.error('❌ Erreur sauvegarde cache:', err)
+  }
+}
+
+// Chargement des données
+const loadHouseStats = async (showToast = false) => {
+  try {
+    console.log(`🔄 Chargement des stats pour la maison ${houseName}...`)
     loading.value = true
-    houseInfo.value = getHouseInfo(houseName)
-    houseStats.value = await getHouseDetailedStats(houseName)
-  } catch (error) {
-    console.error('Erreur lors du chargement des statistiques:', error)
+    error.value = null
+    
+    // Charger depuis le cache d'abord
+    const cachedData = loadFromCache()
+    if (cachedData && !showToast) {
+      houseStats.value = cachedData
+      houseInfo.value = gamificationServiceSupabase.getHouseInfo(houseName)
+      loading.value = false
+      return
+    }
+    
+    houseInfo.value = gamificationServiceSupabase.getHouseInfo(houseName)
+    const stats = await gamificationServiceSupabase.getHouseDetailedStats(houseName)
+    houseStats.value = stats
+    
+    // Sauvegarder dans le cache
+    saveToCache(stats)
+    
+    console.log(`✅ Stats chargées pour ${houseName}:`, stats)
+    
+    if (showToast) {
+      toast.add({
+        severity: 'success',
+        summary: 'Mis à jour !',
+        detail: 'Les statistiques ont été actualisées',
+        life: 3000
+      })
+    }
+  } catch (err) {
+    console.error('❌ Erreur lors du chargement des statistiques:', err)
+    error.value = 'Impossible de charger les statistiques de la maison'
+    
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur de chargement',
+      detail: 'Impossible de charger les statistiques',
+      life: 5000
+    })
   } finally {
     loading.value = false
   }
+}
+
+const refreshStats = () => {
+  localStorage.removeItem(CACHE_KEY)
+  loadHouseStats(true)
 }
 
 onMounted(() => {
@@ -535,18 +659,35 @@ onMounted(() => {
   font-weight: bold;
 }
 
-.loading {
+/* États de chargement et erreur */
+.error-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 400px;
+  padding: 4rem 2rem;
+  text-align: center;
   color: white;
 }
 
-.loading i {
-  font-size: 2rem;
+.error-state i {
+  font-size: 3rem;
+  color: #e74c3c;
   margin-bottom: 1rem;
+}
+
+.error-state h3 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.2rem;
+  font-weight: normal;
+}
+
+.refresh-btn {
+  color: white !important;
+}
+
+.refresh-btn:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
 }
 
 

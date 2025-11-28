@@ -1,6 +1,7 @@
 import { db } from '../../firebase.js'
 import { ref as dbRef, get, set, update, push, remove } from 'firebase/database'
 import { getAuth } from 'firebase/auth'
+import { supabase } from '@/supabase'
 
 // Définition des rôles et permissions
 export const ROLES = {
@@ -129,7 +130,84 @@ export const ROLE_PERMISSIONS = {
 // Service de gestion des rôles
 class RolesService {
   
-  // Obtenir le rôle d'un utilisateur
+  /**
+   * Obtenir les rôles depuis Firebase (format legacy { admin: true, editor: false })
+   * @param {string} userId - ID utilisateur Firebase
+   * @returns {Object} Objet avec les rôles actifs
+   */
+  async getUserRolesFirebase(userId) {
+    try {
+      const rolesRef = dbRef(db, `Users/${userId}/Roles`)
+      const snapshot = await get(rolesRef)
+      return snapshot.val() || {}
+    } catch (error) {
+      console.error('Erreur lors de la récupération des rôles Firebase:', error)
+      return {}
+    }
+  }
+  
+  /**
+   * Obtenir les rôles depuis Supabase
+   * Option 1: user_metadata (stocké directement sur l'utilisateur)
+   * Option 2: table user_roles (recommandé pour production)
+   * @param {string} userId - ID utilisateur Supabase
+   * @returns {Object} Objet avec les rôles actifs
+   */
+  async getUserRolesSupabase(userId) {
+    try {
+      // OPTION 1: Récupérer depuis user_metadata (rapide, stocké sur auth)
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      if (userError) throw userError
+      
+      // Si les rôles sont dans user_metadata
+      if (user?.user_metadata?.roles) {
+        console.log('✅ Rôles trouvés dans user_metadata:', user.user_metadata.roles)
+        return user.user_metadata.roles
+      }
+      
+      // OPTION 2: Récupérer depuis une table user_roles (recommandé)
+      const { data: rolesData, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('role_name, is_active')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+      
+      if (rolesError) {
+        console.warn('Pas de table user_roles trouvée, utilisation rôle par défaut')
+        return { user: true }
+      }
+      
+      // Convertir en format { admin: true, editor: true, ... }
+      const rolesObject = {}
+      rolesData.forEach(role => {
+        if (role.is_active) {
+          rolesObject[role.role_name] = true
+        }
+      })
+      
+      console.log('✅ Rôles trouvés dans table user_roles:', rolesObject)
+      return Object.keys(rolesObject).length > 0 ? rolesObject : { user: true }
+      
+    } catch (error) {
+      console.error('Erreur lors de la récupération des rôles Supabase:', error)
+      return { user: true } // Rôle par défaut
+    }
+  }
+  
+  /**
+   * Obtenir les rôles d'un utilisateur (Firebase ou Supabase)
+   * @param {string} userId - ID utilisateur
+   * @param {string} provider - 'firebase' ou 'supabase'
+   * @returns {Object} Objet avec les rôles actifs { admin: true, editor: false, ... }
+   */
+  async getUserRoles(userId, provider = 'firebase') {
+    if (provider === 'supabase') {
+      return await this.getUserRolesSupabase(userId)
+    }
+    return await this.getUserRolesFirebase(userId)
+  }
+  
+  // LEGACY: Maintien de la compatibilité avec l'ancien système
   async getUserRole(userId) {
     try {
       const roleRef = dbRef(db, `users/${userId}/role`)

@@ -1,18 +1,13 @@
 <template>
   <Navbar />
   <div class="p-4 border-round scrollable-with-padding">
-    <!-- Conteneur principal de l'institution -->
-    <div class="institution-container" >
-      <!-- Image de l'institution -->
-
-      <!-- Informations institution -->
+    <div class="institution-container">
       <div class="institution-info px-2 mb-2">
         <h1 class="text-900 font-medium text-4xl md:text-6xl mb-2">
           {{ institutionDetails ? institutionDetails.Name : 'Chargement...' }}
         </h1>
         <h2 class="text-900 font-bold text-2xl md:text-3xl mb-4 mt-2">
-          <strong>{{ institutionDetails ? institutionDetails.Locality : '' }}</strong> - {{ institutionDetails ?
-          institutionDetails.Address : '' }}
+          <strong>{{ institutionDetails ? institutionDetails.Locality : '' }}</strong> - {{ institutionDetails ? institutionDetails.Address : '' }}
         </h2>
         <div class="flex flex-wrap justify-content-center md:justify-content-start gap-3 mt-2">
           <span class="inline-flex align-items-center py-2 px-3 font-medium border-1 surface-border border-round">
@@ -20,7 +15,7 @@
             <span class="text-900">Langue : {{ institutionDetails ? institutionDetails.Language : '' }}</span>
           </span>
           <span class="inline-flex align-items-center py-2 px-3 font-medium border-1 surface-border border-round">
-            <i class="pi pi-comments text-primary mr-2"></i>
+            <i class="pi pi-compass text-primary mr-2"></i>
             <span class="text-900">Canton : {{ institutionDetails ? institutionDetails.Canton : '' }}</span>
           </span>
         </div>
@@ -28,12 +23,9 @@
     </div>
 
     <div class="institution-image-wrapper institution-image text-center my-4">
-      <img
-        :src="institutionDetails ? institutionDetails.ImageURL : 'https://eduport.webestica.com/assets/images/courses/4by3/21.jpg'"
-        alt="Institution Image" class="institution-image w-100px" />
+      <img :src="primaryImage" alt="Institution" class="institution-image w-100px" />
     </div>
 
-    <!-- Contenu inférieur : TabView et Map -->
     <div class="content-lower grid justify-content-center">
       <div class="col-12 md:col-8 lg:col-5">
         <TabView v-model:activeIndex="activeIndex">
@@ -44,20 +36,15 @@
             </p>
 
             <div class="grid">
-              <div class="col-12 lg:col-12">
-                <p class="text-900 underline mb-3 font-bold">Informations générales de l'institution </p>
+              <div class="col-12">
+                <p class="text-900 underline mb-3 font-bold">Informations générales</p>
                 <div class="py-0 p-0 m-0 text-600 mb-3">
-                  <p class="card-text"><i class="bi bi-globe"></i> <strong>Langue:</strong> {{ institutionDetails ?
-                    institutionDetails.Language : '' }}</p>
-                  <p class="card-text"><i class="bi bi-globe"></i> <strong>Canton:</strong> {{ institutionDetails ?
-                    institutionDetails.Canton : '' }}</p>
-                  <p class="card-text"><i class="bi bi-geo-alt-fill"></i> <strong>Adresse:</strong> {{
-                      institutionDetails ? institutionDetails.Address : '' }}</p>
-                  <p class="card-text"><i class="bi bi-geo-alt-fill"></i> <strong>Lieu:</strong> {{ institutionDetails ?
-                    institutionDetails.Locality : '' }}</p>
-                  <p class="card-text"><i class="bi bi-geo-alt-fill"></i> <strong>Site Web: </strong>
-                    <a :href="institutionDetails?.URL" target="_blank" class="text-primary ">{{ institutionDetails?.URL
-                      }}</a>
+                  <p class="card-text"><i class="bi bi-globe"></i> <strong>Langue:</strong> {{ institutionDetails?.Language }}</p>
+                  <p class="card-text"><i class="bi bi-geo-alt-fill"></i> <strong>Canton:</strong> {{ institutionDetails?.Canton }}</p>
+                  <p class="card-text"><i class="bi bi-geo-alt-fill"></i> <strong>Adresse:</strong> {{ institutionDetails?.Address }}</p>
+                  <p class="card-text"><i class="bi bi-geo-alt-fill"></i> <strong>Lieu:</strong> {{ institutionDetails?.Locality }}</p>
+                  <p class="card-text" v-if="institutionDetails?.URL"><i class="bi bi-link-45deg"></i> <strong>Site Web:</strong>
+                    <a :href="institutionDetails.URL" target="_blank" class="text-primary">{{ institutionDetails.URL }}</a>
                   </p>
                 </div>
               </div>
@@ -65,33 +52,36 @@
           </TabPanel>
           <TabPanel header="Encadrement étudiant">
             <div class="grid">
-              <div class="col-12 lg:col-12">
+              <div class="col-12">
                 <div class="text-900 font-bold text-3xl mb-4 mt-2">Encadrement étudiant</div>
-                <div class="list-none p-0 m-0 text-600 mb-4 text-600">
+                <div class="list-none p-0 m-0 text-600 mb-4">
                   <div v-if="institutionDetails">
                     <p class="card-text">
                       <i class="bi bi-person-badge-fill"></i>
-                      <strong>Nom, Prénom du responsable physio: </strong> {{ institutionDetails?.NomChef }}
+                      <strong>Nom, Prénom du responsable physio:</strong> {{ institutionDetails.NomChef || '—' }}
                     </p>
                     <p class="card-text">
                       <i class="bi bi-envelope-fill"></i>
-                      <strong>Email du responsable physio: </strong>
-                      <a :href="`mailto:${institutionDetails?.MailChef}`" class="text-primary">{{
-                          institutionDetails?.MailChef }}</a>
+                      <strong>Email du responsable physio:</strong>
+                      <a v-if="institutionDetails.MailChef" :href="`mailto:${institutionDetails.MailChef}`" class="text-primary">
+                        {{ institutionDetails.MailChef }}
+                      </a>
+                      <span v-else>—</span>
                     </p>
                     <p class="card-text">
                       <i class="bi bi-telephone-fill"></i>
-                      <strong>Téléphone du responsable physio: </strong>
-                      <a :href="`tel:${institutionDetails?.PhoneChef}`" class="text-primary">{{
-                          institutionDetails?.PhoneChef }}</a>
+                      <strong>Téléphone du responsable physio:</strong>
+                      <a v-if="institutionDetails.PhoneChef" :href="`tel:${institutionDetails.PhoneChef}`" class="text-primary">
+                        {{ institutionDetails.PhoneChef }}
+                      </a>
+                      <span v-else>—</span>
                     </p>
                   </div>
                   <div v-else>
-                    <p class="card-text">Aucun praticien.ne formateur.trice.s disponible.</p>
+                    <p class="card-text">Aucun praticien formateur disponible.</p>
                   </div>
-                  <br>
 
-                  <div v-if="institutionFiles.length > 0">
+                  <div v-if="institutionFiles.length > 0" class="mt-4">
                     <h3 class="text-900 font-bold text-xl mb-3">
                       {{ institutionFiles.length === 1 ? 'Descriptif lieu de formation pratique' : 'Descriptifs lieux de formation pratique' }}
                     </h3>
@@ -99,16 +89,11 @@
                       <li v-for="file in institutionFiles" :key="file.url">
                         <a :href="file.url" target="_blank" class="text-primary">
                           📄 {{ file.name }}
-
-
                         </a>
                       </li>
                     </ul>
                   </div>
-
-
-                  <p v-else>Aucun PDF disponible pour cette institution.</p>
-
+                  <p v-else class="mt-3">Aucun PDF disponible pour cette institution.</p>
                 </div>
               </div>
             </div>
@@ -117,170 +102,189 @@
       </div>
 
       <div class="col-12 md:col-4 lg:col-5 py-3 lg:pl-6">
-        <div class="text-900 font-bold text-3xl mb-5 mt-2"></div>
-        <div id="map" class="shadow map-container" ></div>
+        <div id="map" class="shadow map-container"></div>
       </div>
     </div>
-    <br>
-    <br>
-    <br>
-    <br>
-    <br>
-    <br>
-    <br>
   </div>
 </template>
 
+<script setup>
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { ref as firebaseDbRef, onValue, off } from 'firebase/database'
+import { onAuthStateChanged } from 'firebase/auth'
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
 
-<script>
-import { db, auth } from '../../../firebase.js';
-import { ref as firebaseRef, onValue } from "firebase/database";
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
 import Navbar from '@/components/common/utils/Navbar.vue'
-import { onAuthStateChanged } from "firebase/auth";
+import TabView from 'primevue/tabview'
+import TabPanel from 'primevue/tabpanel'
+import { useInstitutionsStore } from '@/stores/institutionsStore'
+import { usePlacesStore } from '@/stores/placesStore'
+import { db, auth } from '../../../firebase.js'
+import schoolLogo from '../../..//public/assets/images/markerheds.png'
 
+const originalWidth = 25
+const originalHeight = 30
+const markerScale = 1
 
-// Importez le logo de l'école (ajustez le chemin si nécessaire)
-import schoolLogo from '../../..//public/assets/images/markerheds.png';
-
-/*
-  Définition des dimensions naturelles de l'image du logo.
-  Vous devez ajuster originalWidth et originalHeight selon les dimensions réelles de votre image.
-*/
-const originalWidth = 25;  // largeur naturelle (en pixels)
-const originalHeight = 30; // hauteur naturelle (en pixels)
-
-/*
-  markerScale permet de réduire ou agrandir l'image.
-  - 1 : taille réelle
-  - 0.5 : la moitié de la taille réelle
-  - 2 : le double de la taille réelle
-*/
-const markerScale = 1;
-
-// Création du marqueur personnalisé avec le logo de l'école
 const schoolLogoIcon = L.icon({
   iconUrl: schoolLogo,
   iconSize: [originalWidth * markerScale, originalHeight * markerScale],
   iconAnchor: [(originalWidth * markerScale) / 2, originalHeight * markerScale],
-  popupAnchor: [0, -(originalHeight * markerScale)]
-});
+  popupAnchor: [0, -(originalHeight * markerScale)],
+})
 
+const route = useRoute()
+const router = useRouter()
+const institutionsStore = useInstitutionsStore()
+const placesStore = usePlacesStore()
 
-export default {
-  name: 'InstitutionView',
-  components: { Navbar },
-  data() {
-    return {
-      institutionDetails: null,
-      institutionFiles: [],
+const institutionDetails = ref(null)
+const institutionFiles = ref([])
+const activeIndex = ref(route.query.tab === 'encadrement' ? 1 : 0)
+const userRole = ref(null)
+const mapInstance = ref(null)
+const mapMarker = ref(null)
 
-      map: null,
-      marker: null,
-      userRole: null,
-      activeIndex: 0,
-    };
-  },
-  mounted() {
-    this.fetchInstitutionDetailsFromFirebase();
-    this.checkUserRole();
-    if (this.$route.query.tab === 'encadrement') {
-      this.activeIndex = 1; // "Encadrement étudiant" (le 2e TabPanel)
+let placesRefInstance = null
+let placesCallback = null
+let roleRefInstance = null
+let roleCallback = null
+let unsubscribeAuth = null
+
+const institutionId = computed(() => route.params.id)
+
+const primaryImage = computed(() => {
+  const images = institutionDetails.value?.ImageURL
+  if (Array.isArray(images) && images.length > 0) return images[0]
+  if (typeof images === 'string' && images.trim().length > 0) return images
+  return 'https://eduport.webestica.com/assets/images/courses/4by3/21.jpg'
+})
+
+onMounted(() => {
+  loadInstitution()
+  listenUserRole()
+})
+
+onBeforeUnmount(() => {
+  detachPlacesListener()
+  detachRoleListener()
+  if (typeof unsubscribeAuth === 'function') unsubscribeAuth()
+  destroyMap()
+})
+
+watch(institutionId, () => {
+  loadInstitution()
+})
+
+function detachPlacesListener() {
+  if (placesRefInstance && placesCallback) {
+    off(placesRefInstance, 'value', placesCallback)
+    placesRefInstance = null
+    placesCallback = null
+  }
+}
+
+function detachRoleListener() {
+  if (roleRefInstance && roleCallback) {
+    off(roleRefInstance, 'value', roleCallback)
+    roleRefInstance = null
+    roleCallback = null
+  }
+}
+
+async function loadInstitution() {
+  if (!institutionId.value) return
+  try {
+    const inst = await institutionsStore.fetchInstitutionById(institutionId.value)
+    if (!inst) {
+      router.push({ name: 'Error404' })
+      return
     }
-  },
-  methods: {
-    initMap(lat, lng) {
-      if (this.map) {
-        this.map.remove();
-        this.map.remove();
-      }
-      this.map = L.map('map', {
-        center: [lat, lng],
-        zoom: 13,
-        scrollWheelZoom: false,
-      });
+    institutionDetails.value = inst
+    fetchInstitutionFiles(inst.InstitutionId ?? inst.id ?? institutionId.value)
+    setupMap(inst)
+  } catch (error) {
+    console.error("Erreur lors du chargement de l'institution:", error)
+    router.push({ name: 'Error404' })
+  }
+}
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-      }).addTo(this.map);
+async function fetchInstitutionFiles(id) {
+  if (!id) return
+  detachPlacesListener()
 
-      this.marker = L.marker([lat, lng], {
-        icon: schoolLogoIcon,
-        title: 'Localisation de l\'institution',
-        riseOnHover: true,
-      }).addTo(this.map);
-    },
+  try {
+    // Charger les places depuis Supabase pour cette institution
+    const places = await placesStore.fetchPlacesByInstitution(id)
 
-    fetchInstitutionFiles() {
-      console.log(this.institutionDetails)
-      if (!this.institutionDetails || !this.institutionDetails.InstitutionId  ) return;
-      console.log("xaa");
-      const placesRef = firebaseRef(db, 'Places');
+    // Transformer en format pour l'affichage
+    institutionFiles.value = places
+      .filter(place => place.fileURL) // Seulement celles avec un fichier
+      .map(place => ({
+        name: place.NomPlace || 'Document',
+        url: place.fileURL,
+      }))
 
-      onValue(placesRef, (snapshot) => {
-        if (snapshot.exists()) {
-          const placesData = snapshot.val();
-          console.log("xa" + placesData);
-          const matchingFiles = [];
-          Object.values(placesData).forEach(place => {
-            const temp = place.IDPlace || place.InstitutionId || place.key;
+    console.log(`✅ ${institutionFiles.value.length} fichiers chargés depuis Supabase pour l'institution ${id}`)
+  } catch (error) {
+    console.error('❌ Erreur chargement fichiers places depuis Supabase:', error)
+    institutionFiles.value = []
+  }
+}
 
-            console.log(place.IDPlace + " --"  +  place.InstitutionId+ "---" + this.institutionDetails.InstitutionId)
-            if ( temp === this.institutionDetails.InstitutionId) {
-              matchingFiles.push({ name: place.NomPlace, url: place.fileURL });
-            }
-          });
+function setupMap(inst) {
+  const lat = Number(inst?.Latitude)
+  const lng = Number(inst?.Longitude)
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    destroyMap()
+    return
+  }
 
-          this.institutionFiles = matchingFiles;
-        }
-      });
-    },
+  destroyMap()
 
+  mapInstance.value = L.map('map', {
+    center: [lat, lng],
+    zoom: 13,
+    scrollWheelZoom: false,
+  })
 
-    fetchInstitutionDetailsFromFirebase() {
-      const institutionId = this.$route.params.id;
-      const institutionRef = firebaseRef(db, `Institutions/${institutionId}`);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors',
+  }).addTo(mapInstance.value)
 
-      onValue(institutionRef, (snapshot) => {
-        if (snapshot.exists()) {
-          const data = snapshot.val();
-          this.institutionDetails = data;
-          this.fetchInstitutionFiles(); // Récupérer les fichiers liés
+  mapMarker.value = L.marker([lat, lng], {
+    icon: schoolLogoIcon,
+    title: "Localisation de l'institution",
+    riseOnHover: true,
+  }).addTo(mapInstance.value)
+}
 
-          if (data.Latitude && data.Longitude) {
-            this.initMap(parseFloat(data.Latitude), parseFloat(data.Longitude));
-          }
-        } else {
-          this.$router.push({ name: 'Error404' });
-        }
-      });
-    },
+function destroyMap() {
+  if (mapInstance.value) {
+    mapInstance.value.remove()
+    mapInstance.value = null
+  }
+  mapMarker.value = null
+}
 
-    checkUserRole() {
-      onAuthStateChanged(auth, (user) => {
-        if (user) {
-          const userRef = firebaseRef(db, `Users/${user.uid}/Roles`);
-          onValue(userRef, (snapshot) => {
-            if (snapshot.exists()) {
-              if (snapshot.val().BA22) {
-                this.userRole = "BA22";
-              }
-            }
-          });
-        } else {
-          this.userRole = null;
-        }
-      });
-    },
-
-    openPDF() {
-      if (this.institutionDetails?.CyberleanURL) {
-        window.open(this.institutionDetails.CyberleanURL, '_blank');
-      }
-    },
-  },
-};
+function listenUserRole() {
+  unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+    detachRoleListener()
+    if (!user) {
+      userRole.value = null
+      return
+    }
+    const refRole = firebaseDbRef(db, `Users/${user.uid}/Roles`)
+    roleRefInstance = refRole
+    roleCallback = (snapshot) => {
+      const roles = snapshot.val()
+      userRole.value = roles?.BA22 ? 'BA22' : null
+    }
+    onValue(refRole, roleCallback)
+  })
+}
 </script>
 
 <style scoped>
@@ -310,7 +314,6 @@ export default {
   border-radius: 0.5rem;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
-
 
 .shadow {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);

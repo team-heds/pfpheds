@@ -52,7 +52,7 @@ const model = ref([
                 {
                   label: 'Management Votation Lese',
                   icon: 'pi pi-cog',
-                  to: '/management_votation_lese'
+                  to: '/management_votation_prioritaire'
                 },
 
                 {
@@ -63,7 +63,7 @@ const model = ref([
                 {
                   label: 'Places assigned',
                   icon: 'pi pi-fw pi-image',
-                  to: '/places_asssigned'
+                  to: '/places_assigned'
                 },
                 {
                   label: 'Places Assignement',
@@ -101,7 +101,7 @@ const model = ref([
                 {
                   label: 'Management Places',
                   icon: 'pi pi-cog',
-                  to: '/management_places'
+                  to: '/management_place'
                 },
               
                 {

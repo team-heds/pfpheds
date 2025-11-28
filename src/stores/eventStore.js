@@ -1,213 +1,487 @@
 import { defineStore } from 'pinia';
-import { db } from '../../firebase.js';
-import { ref as dbRef, onValue, push, set, update, remove } from 'firebase/database';
-import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { ref } from 'vue';
+import { supabase } from '@/supabase';
 
 export const useEventStore = defineStore('event', () => {
   const events = ref([]);
+  const loading = ref(false);
+  const error = ref(null);
 
-  // Charger les événements en temps réel
-  function listenEvents() {
-    const eventsRef = dbRef(db, 'events');
-    onValue(eventsRef, (snapshot) => {
-      const data = snapshot.val();
-      events.value = data
-        ? Object.entries(data).map(([id, ev]) => ({
-            id,
-            title: ev.title || '',
-            description: ev.description || '',
-            startDate: ev.startDate || '',
-            endDate: ev.endDate || '',
-            type: ev.type || 'public',
-            role: ev.role || '',
-            likes: ev.likes || 0,
-            liked: ev.liked || false,
-            registered: Array.isArray(ev.registered) ? ev.registered : (ev.registered && typeof ev.registered === 'object' ? Object.values(ev.registered) : []),
-            image: ev.image || null,
-            lieu: ev.lieu || ''
-          }))
-        : [];
-    });
-  }
-
-  // Ajouter un événement
-  async function addEvent(event) {
-    const eventsRef = dbRef(db, 'events');
-    const newEventRef = push(eventsRef);
-
-    // Conversion en ISO si ce sont des objets Date
-    const startDate = event.startDate instanceof Date ? event.startDate.toISOString() : event.startDate;
-    const endDate = event.endDate instanceof Date ? event.endDate.toISOString() : event.endDate;
-
-    let imageUrl = null;
-    if (event.image) {
-      console.log('Image détectée pour upload:', event.image);
-      console.log('Type de fichier:', event.image.type);
-      console.log('Taille du fichier:', event.image.size, 'bytes');
-      
-      try {
-        const storage = getStorage();
-        console.log('Storage initialisé');
-        
-        const imageRef = storageRef(storage, `events/${newEventRef.key}/image`);
-        console.log('Référence créée:', `events/${newEventRef.key}/image`);
-        
-        console.log('Début upload...');
-        const uploadTask = await uploadBytes(imageRef, event.image);
-        console.log('Upload terminé:', uploadTask);
-        
-        imageUrl = await getDownloadURL(uploadTask.ref);
-        console.log('Image uploadée avec succès:', imageUrl);
-      } catch (error) {
-        console.error('Erreur lors de l\'upload de l\'image:', error);
-        console.error('Code erreur:', error.code);
-        console.error('Message erreur:', error.message);
-        console.log('L\'événement sera créé sans image');
-        // On continue sans image plutôt que de faire échouer toute la création
-      }
-    } else {
-      console.log('Aucune image fournie pour cet événement');
-    }
-    
-    await set(newEventRef, {
-      title: event.title,
-      description: event.description,
-      startDate,
-      endDate,
-      lieu: event.lieu || '',
-      type: event.type,
-      role: event.type === 'private' ? event.role : '',
-      admin: event.admin,
-      likes: 0,
-      liked: false,
-      registered: [],
-      image: imageUrl
-    });
-  }
-
-  // Exemple pour mettre à jour un événement (like/register)
-  async function updateEvent(id, updates) {
-    const eventRef = dbRef(db, `events/${id}`);
-    await update(eventRef, updates);
-  }
-
-  // Fonction pour mettre à jour un événement complet
-  async function updateEventComplete(eventId, updatedData) {
+  /**
+   * Charger tous les événements avec leurs comptes d'inscrits et likes
+   */
+  async function fetchEvents() {
     try {
-      const eventRef = dbRef(db, `events/${eventId}`);
+      loading.value = true;
+      error.value = null;
+
+      console.log('📥 Chargement des événements depuis Supabase...');
+
+      // Essayer d'abord avec la vue, sinon fallback sur la table events
+      let data, fetchError;
       
-      // Gestion de l'image si elle est fournie
-      let imageUrl = updatedData.image;
-      if (updatedData.image && typeof updatedData.image !== 'string') {
-        console.log('Nouvelle image détectée pour update:', updatedData.image);
-        try {
-          const storage = getStorage();
-          const imageRef = storageRef(storage, `events/${eventId}/image`);
-          const uploadTask = await uploadBytes(imageRef, updatedData.image);
-          imageUrl = await getDownloadURL(uploadTask.ref);
-          console.log('Image mise à jour avec succès:', imageUrl);
-        } catch (error) {
-          console.error('Erreur lors de l\'upload de la nouvelle image:', error);
-          imageUrl = updatedData.existingImage || null; // Garde l'ancienne URL si l'upload échoue
-        }
-      } else if (typeof updatedData.image === 'string') {
-        imageUrl = updatedData.image; // URL existante
-      } else if (updatedData.existingImage) {
-        imageUrl = updatedData.existingImage; // Image existante conservée
+      const result = await supabase
+        .from('events_with_counts')
+        .select('*')
+        .order('start_date', { ascending: true });
+
+      data = result.data;
+      fetchError = result.error;
+
+      // Si la vue n'existe pas, utiliser la table directe
+      if (fetchError && fetchError.message?.includes('does not exist')) {
+        console.log('⚠️ Vue events_with_counts introuvable, utilisation de la table events');
+        const result2 = await supabase
+          .from('events')
+          .select('*')
+          .order('start_date', { ascending: true });
+        
+        data = result2.data;
+        fetchError = result2.error;
       }
 
-      const updateData = {
-        title: updatedData.title,
-        description: updatedData.description,
-        startDate: updatedData.startDate instanceof Date ? updatedData.startDate.toISOString() : updatedData.startDate,
-        endDate: updatedData.endDate instanceof Date ? updatedData.endDate.toISOString() : updatedData.endDate,
-        lieu: updatedData.lieu || '',
-        type: updatedData.type,
-        role: updatedData.role || null
+      if (fetchError) {
+        console.error('❌ Erreur lors du chargement:', fetchError);
+        throw fetchError;
+      }
+
+      console.log(`✅ ${data?.length || 0} événements chargés`);
+      events.value = data || [];
+      return data;
+    } catch (err) {
+      console.error('Erreur lors du chargement des événements:', err);
+      error.value = err.message;
+      return [];
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  /**
+   * Écouter les changements en temps réel sur la table events
+   */
+  function listenEvents() {
+    // Charger les événements initiaux
+    fetchEvents();
+
+    // S'abonner aux changements en temps réel (avec gestion d'erreur)
+    try {
+      const subscription = supabase
+        .channel('events-channel')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'events' },
+          (payload) => {
+            console.log('🔄 Changement temps réel détecté:', payload);
+            // Recharger les événements quand il y a un changement
+            fetchEvents();
+          }
+        )
+        .subscribe((status, err) => {
+          if (status === 'SUBSCRIBED') {
+            console.log('✅ Abonnement temps réel actif');
+          }
+          if (err) {
+            console.warn('⚠️ Erreur abonnement temps réel (non bloquant):', err);
+          }
+        });
+
+      // Retourner la fonction de désabonnement
+      return () => {
+        console.log('🔌 Désabonnement du temps réel');
+        supabase.removeChannel(subscription);
+      };
+    } catch (err) {
+      console.warn('⚠️ Temps réel non disponible (non bloquant):', err);
+      // Retourner une fonction vide si le temps réel échoue
+      return () => {};
+    }
+  }
+
+  /**
+   * Ajouter un événement
+   */
+  async function addEvent(event) {
+    try {
+      loading.value = true;
+      error.value = null;
+
+      // 1. Upload de l'image si présente
+      let imageUrl = null;
+      if (event.image) {
+        console.log('Upload de l\'image...');
+        const fileExt = event.image.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `events/${fileName}`;
+
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('events')
+          .upload(filePath, event.image, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) {
+          console.error('Erreur upload image:', uploadError);
+        } else {
+          // Obtenir l'URL publique
+          const { data: { publicUrl } } = supabase.storage
+            .from('events')
+            .getPublicUrl(filePath);
+          imageUrl = publicUrl;
+          console.log('Image uploadée:', imageUrl);
+        }
+      }
+
+      // 2. Créer l'événement dans la base de données
+      const eventData = {
+        title: event.title,
+        description: event.description || '',
+        start_date: event.startDate,
+        end_date: event.endDate,
+        lieu: event.lieu || '',
+        type: event.type || 'public',
+        role: event.type === 'private' ? (event.role || null) : null,
+        admin_uid: event.admin,  // ✅ Utilise admin_uid (contrainte NOT NULL)
+        image_url: imageUrl
       };
 
-      // Ajouter l'image seulement si elle existe
-      if (imageUrl) {
-        updateData.image = imageUrl;
+      console.log('📤 Données envoyées à Supabase:', eventData);
+
+      const { data, error: insertError } = await supabase
+        .from('events')
+        .insert([eventData])
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error('❌ Erreur Supabase insert:', insertError);
+        throw insertError;
       }
 
-      await update(eventRef, updateData);
-      console.log('Événement mis à jour avec succès');
-      return true;
-    } catch (error) {
-      console.error('Erreur lors de la mise à jour de l\'événement:', error);
-      throw error;
+      console.log('Événement créé avec succès:', data);
+      
+      // Recharger les événements
+      await fetchEvents();
+      
+      return data;
+    } catch (err) {
+      console.error('Erreur lors de la création de l\'événement:', err);
+      error.value = err.message;
+      throw err;
+    } finally {
+      loading.value = false;
     }
   }
 
-  // Fonction pour corriger les événements existants sans champ admin
-  async function fixEventAdmin(eventId, adminUserId) {
+  /**
+   * Mettre à jour un événement complet
+   */
+  async function updateEventComplete(eventId, updatedData) {
     try {
-      const eventRef = dbRef(db, `events/${eventId}`);
-      await update(eventRef, { admin: adminUserId });
-      console.log(`Événement ${eventId} mis à jour avec admin: ${adminUserId}`);
-      return true;
-    } catch (error) {
-      console.error('Erreur lors de la correction de l\'événement:', error);
-      throw error;
+      loading.value = true;
+      error.value = null;
+
+      // 1. Gestion de l'image si nouvelle image fournie
+      let imageUrl = updatedData.image_url || updatedData.existingImage;
+      
+      if (updatedData.image && typeof updatedData.image !== 'string') {
+        console.log('Nouvelle image détectée pour update');
+        
+        // Supprimer l'ancienne image si elle existe
+        if (updatedData.existingImage) {
+          const oldPath = updatedData.existingImage.split('/events/')[1];
+          if (oldPath) {
+            await supabase.storage.from('events').remove([`events/${oldPath}`]);
+          }
+        }
+
+        // Upload de la nouvelle image
+        const fileExt = updatedData.image.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `events/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('events')
+          .upload(filePath, updatedData.image);
+
+        if (uploadError) {
+          console.error('Erreur upload nouvelle image:', uploadError);
+        } else {
+          const { data: { publicUrl } } = supabase.storage
+            .from('events')
+            .getPublicUrl(filePath);
+          imageUrl = publicUrl;
+          console.log('Nouvelle image uploadée:', imageUrl);
+        }
+      }
+
+      // 2. Mettre à jour l'événement
+      const { data, error: updateError } = await supabase
+        .from('events')
+        .update({
+          title: updatedData.title,
+          description: updatedData.description,
+          start_date: updatedData.startDate,
+          end_date: updatedData.endDate,
+          lieu: updatedData.lieu || '',
+          type: updatedData.type,
+          role: updatedData.role || null,
+          image_url: imageUrl
+        })
+        .eq('id', eventId)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+
+      console.log('Événement mis à jour avec succès:', data);
+      
+      // Recharger les événements
+      await fetchEvents();
+      
+      return data;
+    } catch (err) {
+      console.error('Erreur lors de la mise à jour de l\'événement:', err);
+      error.value = err.message;
+      throw err;
+    } finally {
+      loading.value = false;
     }
   }
 
-  // Fonction pour supprimer un événement
+  /**
+   * Supprimer un événement
+   */
   async function deleteEvent(eventId) {
     try {
-      const eventRef = dbRef(db, `events/${eventId}`);
-      
-      // Supprimer l'image de Firebase Storage si elle existe
-      try {
-        const storage = getStorage();
-        const imageRef = storageRef(storage, `events/${eventId}/image`);
-        await deleteObject(imageRef);
-        console.log('Image supprimée de Firebase Storage');
-      } catch (error) {
-        console.log('Aucune image à supprimer ou erreur:', error.message);
+      loading.value = true;
+      error.value = null;
+
+      // 1. Récupérer l'événement pour avoir l'URL de l'image
+      const { data: event } = await supabase
+        .from('events')
+        .select('image_url')
+        .eq('id', eventId)
+        .single();
+
+      // 2. Supprimer l'image du storage si elle existe
+      if (event?.image_url) {
+        const imagePath = event.image_url.split('/events/')[1];
+        if (imagePath) {
+          await supabase.storage.from('events').remove([`events/${imagePath}`]);
+          console.log('Image supprimée du storage');
+        }
       }
 
-      // Supprimer l'événement de la base de données
-      await remove(eventRef);
+      // 3. Supprimer l'événement (les inscriptions et likes seront supprimés en cascade)
+      const { error: deleteError } = await supabase
+        .from('events')
+        .delete()
+        .eq('id', eventId);
+
+      if (deleteError) throw deleteError;
+
       console.log('Événement supprimé avec succès');
-      return true;
-    } catch (error) {
-      console.error('Erreur lors de la suppression de l\'événement:', error);
-      throw error;
-    }
-  }
-
-  // Inscription/désinscription d'un utilisateur à un événement
-  async function toggleRegistration(eventId, userId, registeredList = [], userInfo = null) {
-    let newList;
-    
-    // Vérifier si l'utilisateur est déjà inscrit (par UID)
-    const isRegistered = registeredList.some(item => 
-      typeof item === 'string' ? item === userId : item.uid === userId
-    );
-    
-    if (isRegistered) {
-      // Désinscription - retirer l'utilisateur
-      newList = registeredList.filter(item => 
-        typeof item === 'string' ? item !== userId : item.uid !== userId
-      );
-    } else {
-      // Inscription - ajouter l'utilisateur avec ses infos complètes
-      const userEntry = userInfo ? {
-        uid: userId,
-        nom: userInfo.nom || '',
-        prenom: userInfo.prenom || '',
-        photoURL: userInfo.photoURL || 'https://ui-avatars.com/api/?name=Utilisateur'
-      } : userId; // Fallback vers UID simple si pas d'infos
       
-      newList = [...registeredList, userEntry];
+      // Recharger les événements
+      await fetchEvents();
+      
+      return true;
+    } catch (err) {
+      console.error('Erreur lors de la suppression de l\'événement:', err);
+      error.value = err.message;
+      throw err;
+    } finally {
+      loading.value = false;
     }
-    
-    const eventRef = dbRef(db, `events/${eventId}`);
-    await update(eventRef, { registered: newList });
   }
 
-  return { events, listenEvents, addEvent, updateEvent, updateEventComplete, deleteEvent, toggleRegistration, fixEventAdmin };
+  /**
+   * Corriger l'admin d'un événement
+   */
+  async function fixEventAdmin(eventId, adminUserId) {
+    try {
+      const { error: updateError } = await supabase
+        .from('events')
+        .update({ admin_uid: adminUserId })  // ✅ Utilise admin_uid
+        .eq('id', eventId);
+
+      if (updateError) throw updateError;
+
+      console.log(`Événement ${eventId} mis à jour avec admin: ${adminUserId}`);
+      await fetchEvents();
+      return true;
+    } catch (err) {
+      console.error('Erreur lors de la correction de l\'événement:', err);
+      throw err;
+    }
+  }
+
+  /**
+   * Toggle inscription utilisateur à un événement
+   */
+  async function toggleRegistration(eventId, userId, registeredList = [], userInfo = null) {
+    try {
+      // Vérifier si l'utilisateur est déjà inscrit
+      const { data: existing } = await supabase
+        .from('event_registrations')
+        .select('id')
+        .eq('event_id', eventId)
+        .eq('user_uid', userId)
+        .single();
+
+      if (existing) {
+        // Désinscription
+        const { error: deleteError } = await supabase
+          .from('event_registrations')
+          .delete()
+          .eq('event_id', eventId)
+          .eq('user_uid', userId);
+
+        if (deleteError) throw deleteError;
+        console.log('Utilisateur désinscrit');
+      } else {
+        // Inscription
+        const { error: insertError } = await supabase
+          .from('event_registrations')
+          .insert([
+            {
+              event_id: eventId,
+              user_uid: userId,
+              user_nom: userInfo?.nom || '',
+              user_prenom: userInfo?.prenom || '',
+              user_photo_url: userInfo?.photoURL || 'https://ui-avatars.com/api/?name=Utilisateur'
+            }
+          ]);
+
+        if (insertError) throw insertError;
+        console.log('Utilisateur inscrit');
+      }
+
+      // Recharger les événements pour mettre à jour les comptes
+      await fetchEvents();
+    } catch (err) {
+      console.error('Erreur lors de l\'inscription/désinscription:', err);
+      throw err;
+    }
+  }
+
+  /**
+   * Toggle like sur un événement
+   */
+  async function toggleLike(eventId, userId) {
+    try {
+      // Vérifier si l'utilisateur a déjà liké
+      const { data: existing } = await supabase
+        .from('event_likes')
+        .select('id')
+        .eq('event_id', eventId)
+        .eq('user_uid', userId)
+        .single();
+
+      if (existing) {
+        // Unlike
+        const { error: deleteError } = await supabase
+          .from('event_likes')
+          .delete()
+          .eq('event_id', eventId)
+          .eq('user_uid', userId);
+
+        if (deleteError) throw deleteError;
+        console.log('Like retiré');
+      } else {
+        // Like
+        const { error: insertError } = await supabase
+          .from('event_likes')
+          .insert([
+            {
+              event_id: eventId,
+              user_uid: userId
+            }
+          ]);
+
+        if (insertError) throw insertError;
+        console.log('Like ajouté');
+      }
+
+      // Recharger les événements pour mettre à jour les comptes
+      await fetchEvents();
+    } catch (err) {
+      console.error('Erreur lors du like/unlike:', err);
+      throw err;
+    }
+  }
+
+  /**
+   * Récupérer les inscrits d'un événement
+   */
+  async function getEventRegistrations(eventId) {
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('event_registrations')
+        .select('*')
+        .eq('event_id', eventId)
+        .order('registered_at', { ascending: false });
+
+      if (fetchError) throw fetchError;
+      return data || [];
+    } catch (err) {
+      console.error('Erreur lors de la récupération des inscrits:', err);
+      return [];
+    }
+  }
+
+  /**
+   * Vérifier si un utilisateur est inscrit à un événement
+   */
+  async function isUserRegistered(eventId, userId) {
+    try {
+      const { data } = await supabase
+        .from('event_registrations')
+        .select('id')
+        .eq('event_id', eventId)
+        .eq('user_uid', userId)
+        .single();
+
+      return !!data;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Vérifier si un utilisateur a liké un événement
+   */
+  async function hasUserLiked(eventId, userId) {
+    try {
+      const { data } = await supabase
+        .from('event_likes')
+        .select('id')
+        .eq('event_id', eventId)
+        .eq('user_uid', userId)
+        .single();
+
+      return !!data;
+    } catch {
+      return false;
+    }
+  }
+
+  return {
+    events,
+    loading,
+    error,
+    fetchEvents,
+    listenEvents,
+    addEvent,
+    updateEventComplete,
+    deleteEvent,
+    fixEventAdmin,
+    toggleRegistration,
+    toggleLike,
+    getEventRegistrations,
+    isUserRegistered,
+    hasUserLiked
+  };
 });

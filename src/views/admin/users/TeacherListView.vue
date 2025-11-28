@@ -1,6 +1,5 @@
 <template>
-  <div class="admin-scrollable">
-    <Navbar />
+  <AdminLayout>
     <div class="filter-menu">
       <DataTable
         :value="filteredEnseignants"
@@ -43,7 +42,7 @@
         </Column>
       </DataTable>
     </div>
-  </div>
+  </AdminLayout>
 </template>
 
 <script>
@@ -51,7 +50,7 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
-import Navbar from '@/components/common/utils/Navbar.vue';
+import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 import { useEnseignantsStore } from '@/stores/enseignantsStore';
 
 export default {
@@ -61,7 +60,7 @@ export default {
     Column,
     InputText,
     Button,
-    Navbar
+    AdminLayout
   },
   data() {
     return {

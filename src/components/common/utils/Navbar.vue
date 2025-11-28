@@ -39,7 +39,7 @@
           class="mx-3"
           />
 
-          <!-- ­ƒô® Messages -->
+          <!-- ­ƒô® Messages
           <ButtonNavbar
             v-if="user"
             icon="pi pi-inbox"
@@ -50,6 +50,7 @@
             class="mx-3"
             title="Message"
           />
+          -->
 
           <!-- ­ƒöö Notifications -->
           <ButtonNavbar
@@ -83,11 +84,12 @@
     </div>
 
     <!-- Ô£à Fen├¬tre de dialogue Param├¿tres -->
-    <Dialog v-model:visible="isSettingsDialogVisible" modal header="Param├¿tre" :style="{ width: '20rem' }">
+    <Dialog v-model:visible="isSettingsDialogVisible" modal header="Paramètre" :style="{ width: '20rem' }">
       <div class="flex flex-column gap-3">
         <Button label="Profil" icon="pi pi-user" class="w-full p-button-outlined" @click="navigateToProfile" />
-        <Button label="Paramètres" icon="pi pi-cog" class="w-full p-button-outlined" @click="navigateTo('/settings')" />
+        <Button label="Paramètres" icon="pi pi-cog" class="w-full p-button-outlined" @click="navigateTo('/admin/settings')" />
         <Button label="Se déconnecter" icon="pi pi-power-off" class="w-full p-button-danger" @click="logout" />
+
       </div>
       <br>
       @Copyright HEdS

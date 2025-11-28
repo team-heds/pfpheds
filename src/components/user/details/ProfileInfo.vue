@@ -10,15 +10,16 @@
     <div class="main-content profileinfo-scrollable ">
       <div class="filter-menu p-fluid p-pt-4 p-pb-4">
         <div>
+
           <!-- Affichage du composant CardNameProfile -->
           <CardNameProfile />
-          <!-- Affichage du nom et prénom de l'utilisateur -->
-          <VotationResultProfil :userId="user.uid" class="w-full "  />
-
+          <VotationResultProfil :userId="user.uid" class="w-full" />
           <!-- Radar profil stage + critères validés -->
           <RadarProfil :scores="radarScores" :totalStages="totalStages" />
           <!-- Résumé du stage utilisateur -->
-          <ResumStageUserProfile class="w-full" />
+          <ResumStageUserProfile :userProfile="userProfile" :userId="user.uid" class="w-full" />
+          <!-- On passe l'ID de l'utilisateur au composant -->
+
 
 
           <!-- Section pour changer la photo de profil
@@ -51,7 +52,7 @@
     </div>
 
     <!-- Sidebar Droite -->
-    <div class="sidebar-right">
+    <div class="sidebar-right" v-if="!props.embed">
       <RightSidebar />
     </div>
   </div>
@@ -60,10 +61,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
-import { getDatabase, ref as dbRef, get, update } from "firebase/database";
-import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
-import Button from 'primevue/button';
-import { useToast } from 'primevue/usetoast';
+import { supabase } from '@/supabase';
 
 // Importation des composants utilisés
 import CardNameProfile from '@/components/user/library/CardNameProfile.vue';
@@ -72,8 +70,11 @@ import LeftSidebar from '@/components/social/library/LeftSidebar.vue';
 import RightSidebar from '@/components/social/library/RightSidebar.vue';
 import VotationResultProfil from '@/components/user/details/VotationResultProfil.vue'
 import RadarProfil from '@/components/user/details/RadarProfil.vue'
+import QuestsProfileCard from '@/components/gamification/QuestsProfileCard.vue'
 
-const toast = useToast();
+const props = defineProps({
+  embed: { type: Boolean, default: false }
+})
 
 // Définition d'un avatar par défaut
 const defaultAvatar = '@/assets/images/avatar/01.jpg';
@@ -90,6 +91,44 @@ const user = ref({
 });
 
 const selectedAvatarFile = ref(null);
+
+// Couleur de la maison de l'utilisateur (pour le composant Quêtes)
+const userHouseColor = ref('#2E8B57'); // Harmonis par défaut
+
+const houseColors = {
+  harmonis: '#2E8B57',
+  elaris: '#DC143C',
+  doloris: '#FFD700',
+  solencia: '#4169E1',
+  gamemaster: '#9333ea'
+};
+
+// Fonction pour récupérer la couleur de la maison de l'utilisateur
+const fetchUserHouseColor = async (userId) => {
+  try {
+    const { data, error } = await supabase
+      .from('gamification_data')
+      .select('house_id')
+      .eq('user_id', userId)
+      .single();
+    
+    if (data && data.house_id) {
+      // Récupérer le nom de la maison
+      const { data: houseData } = await supabase
+        .from('houses')
+        .select('name')
+        .eq('id', data.house_id)
+        .single();
+      
+      if (houseData) {
+        const houseName = houseData.name.toLowerCase();
+        userHouseColor.value = houseColors[houseName] || '#2E8B57';
+      }
+    }
+  } catch (err) {
+    console.error('Erreur récupération couleur maison:', err);
+  }
+};
 
 // --- Ajout récupération profil étudiant et scores radar ---
 const userProfile = ref(null);
@@ -108,19 +147,29 @@ const route = useRoute();
 const userId = route?.params?.id || null;
 
 const fetchUserProfileById = async (userId) => {
-  const db = getDatabase();
   try {
-    const studentRef = dbRef(db, `Students/${userId}`);
-    const snapshotStudent = await get(studentRef);
-    if (snapshotStudent.exists()) {
-      userProfile.value = { ...snapshotStudent.val() };
-    } else {
+    // Récupérer le profil étudiant depuis Supabase
+    const { data, error } = await supabase
+      .from('StudentsPhysio')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (error) {
+      console.warn('Profil StudentsPhysio non trouvé:', error.message);
       userProfile.value = null;
-      console.error("Aucun profil trouvé pour l'ID :", userId);
+      return;
+    }
+
+    if (data) {
+      userProfile.value = { ...data };
+    } else {
+      // Profil pas encore créé dans StudentsPhysio - c'est normal pour certains utilisateurs
+      userProfile.value = null;
     }
   } catch (error) {
     userProfile.value = null;
-    console.error("Erreur lors de la récupération des données :", error);
+    console.warn('Erreur chargement profil étudiant:', error.message);
   }
 };
 
@@ -128,14 +177,33 @@ onMounted(async () => {
   if (userId) {
     user.value.uid = userId;
     await fetchUserProfileById(userId);
+    await fetchUserHouseColor(userId);
   }
 });
+
+// Parser pfp_valided (peut être string JSON, array ou objet)
+const parsePfpValided = (pfpVal) => {
+  if (!pfpVal) return []
+  if (Array.isArray(pfpVal)) return pfpVal
+  if (typeof pfpVal === 'string') {
+    try {
+      const parsed = JSON.parse(pfpVal)
+      return Array.isArray(parsed) ? parsed : []
+    } catch (e) {
+      return []
+    }
+  }
+  if (typeof pfpVal === 'object') return Object.values(pfpVal)
+  return []
+}
 
 // Agrégation des scores radar par critère (nombre de validations)
 const radarScores = computed(() => {
   const scores = Object.fromEntries(criteriaLabels.map(k => [k, 0]));
-  if (userProfile.value?.PFP_valided) {
-    Object.values(userProfile.value.PFP_valided).forEach(place => {
+  if (userProfile.value?.pfp_valided) {
+    const pfpArray = parsePfpValided(userProfile.value.pfp_valided)
+    
+    pfpArray.forEach(place => {
       criteriaLabels.forEach(crit => {
         if (place[crit] === true) scores[crit]++;
       });
@@ -145,58 +213,92 @@ const radarScores = computed(() => {
 });
 
 const totalStages = computed(() => {
-  if (userProfile.value?.PFP_valided) {
-    return Object.keys(userProfile.value.PFP_valided).length;
+  if (userProfile.value?.pfp_valided) {
+    const pfpArray = parsePfpValided(userProfile.value.pfp_valided)
+    return pfpArray.length
   }
   return 0;
 });
 
-// Fonction pour charger un profil utilisateur via son ID
+// Fonction pour charger un profil utilisateur via son ID depuis Supabase
 const fetchUserProfile = async (userId) => {
-  const db = getDatabase();
-  const userRef = dbRef(db, `Users/${userId}`);
-  const snapshot = await get(userRef);
-  if (snapshot.exists()) {
-    const userData = snapshot.val();
-    user.value = {
-      uid: userId,
-      prenom: userData.Prenom || '',
-      nom: userData.Nom || '',
-      email: userData.Mail || '',
-      ville: userData.Ville || '',
-      bio: userData.Biography || '',
-      photoURL: userData.PhotoURL || defaultAvatar
-    };
-  } else {
-    console.error("Aucun profil trouvé pour l'ID :", userId);
+  try {
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    if (error) {
+      console.error('Erreur Supabase:', error);
+      return;
+    }
+    
+    if (data) {
+      user.value = {
+        uid: userId,
+        prenom: data.forname || '',
+        nom: data.family_name || '',
+        email: data.email || '',
+        ville: data.city || '',
+        bio: data.bio || '',
+        photoURL: data.avatar_url || data.profile_picture_url || defaultAvatar
+      };
+    } else {
+      console.warn("Aucun profil trouvé pour l'ID :", userId);
+    }
+  } catch (error) {
+    console.error("Erreur lors de la récupération du profil:", error);
   }
 };
 
-// Fonction pour sauvegarder la nouvelle photo de profil
+// Fonction pour sauvegarder la nouvelle photo de profil avec Supabase Storage
 const saveProfile = async () => {
   if (selectedAvatarFile.value) {
     const userId = user.value.uid;
     if (!userId) {
-      toast.add({ severity: 'error', summary: 'Erreur', detail: 'Aucun utilisateur chargé, impossible de sauvegarder.', life: 4000 });
+      console.error('Aucun utilisateur chargé, impossible de sauvegarder.');
       return;
     }
-    const avatarRef = storageRef(storage, `users/${userId}/profile-picture.jpg`);
+    
     try {
-      await uploadBytes(avatarRef, selectedAvatarFile.value);
-      const photoURL = await getDownloadURL(avatarRef);
-      const db = getDatabase();
-      const userRef = dbRef(db, `Users/${userId}`);
-      await update(userRef, {
-        PhotoURL: photoURL
-      });
+      const fileName = `${userId}/profile-picture-${Date.now()}.jpg`;
+      
+      // Upload vers Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, selectedAvatarFile.value, {
+          cacheControl: '3600',
+          upsert: true
+        });
+      
+      if (uploadError) throw uploadError;
+      
+      // Obtenir l'URL publique
+      const { data: urlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+      
+      const photoURL = urlData.publicUrl;
+      
+      // Mettre à jour le profil dans user_profiles
+      const { error: updateError } = await supabase
+        .from('user_profiles')
+        .update({
+          avatar_url: photoURL,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', userId);
+      
+      if (updateError) throw updateError;
+      
       user.value.photoURL = photoURL;
-      toast.add({ severity: 'success', summary: 'Succès', detail: 'Photo de profil mise à jour avec succès', life: 4000 });
+      console.log('✅ Photo de profil mise à jour avec succès');
     } catch (error) {
-      console.error("Erreur lors de l'upload de l'avatar :", error);
-      toast.add({ severity: 'error', summary: 'Erreur', detail: "Erreur lors de l'upload de l'avatar", life: 4000 });
+      console.error("❌ Erreur lors de l'upload de l'avatar :", error);
     }
   } else {
-    toast.add({ severity: 'warn', summary: 'Avertissement', detail: 'Veuillez sélectionner une photo avant de sauvegarder.', life: 4000 });
+    console.warn('Veuillez sélectionner une photo avant de sauvegarder.');
   }
 };
 

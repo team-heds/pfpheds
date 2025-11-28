@@ -30,8 +30,8 @@
             >
               <i class="pi pi-graduation-cap mr-3" style="font-size: 1.5rem;"></i>
               <div class="text-left">
-                <div class="font-bold text-lg">BA23-24</div>
-                <div class="text-sm opacity-90">Connexion via Firebase</div>
+                <div class="font-bold text-lg">BA24</div>
+                <div class="text-sm opacity-90">Connexion pour la votation</div>
               </div>
             </Button>
           </div>
@@ -45,8 +45,8 @@
             >
               <i class="pi pi-users mr-3" style="font-size: 1.5rem;"></i>
               <div class="text-left">
-                <div class="font-bold text-lg">BA25</div>
-                <div class="text-sm opacity-90">Connexion via Supabase</div>
+                <div class="font-bold text-lg">BA23-24-25</div>
+                <div class="text-sm opacity-90">Connexion  pour la gamification</div>
               </div>
             </Button>
           </div>
@@ -55,7 +55,7 @@
           <div class="mt-6 p-3 bg-blue-50 border-round text-center">
             <small class="text-blue-800">
               <i class="pi pi-info-circle mr-1"></i>
-              Choisissez le système correspondant à votre année d'études
+              Choisissez le système correspondant à votre besoin
             </small>
           </div>
         </div>

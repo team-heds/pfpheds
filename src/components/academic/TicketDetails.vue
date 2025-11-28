@@ -1,0 +1,1799 @@
+<template>
+  <div class="ticket-details-jira">
+    <!-- Header compact -->
+    <div class="ticket-header-bar">
+      <div class="header-left">
+        <div class="ticket-type-chip" :class="`type-${ticket.type}`">
+          <i :class="getTypeIcon(ticket.type)"></i>
+          <span>{{ getTypeLabel(ticket.type) }}</span>
+        </div>
+        <span class="ticket-id">#{{ ticket.id?.substring(0, 8) }}</span>
+      </div>
+      
+      <div class="header-actions">
+        <Button 
+          label="Modifier" 
+          icon="pi pi-pencil"
+          @click="$emit('edit', ticket)"
+          text
+          size="small"
+        />
+        <Button 
+          icon="pi pi-ellipsis-v"
+          @click="toggleMenu"
+          text
+          size="small"
+        />
+      </div>
+    </div>
+
+    <!-- Layout 2 colonnes -->
+    <div class="jira-layout">
+      <!-- Colonne principale (gauche) -->
+      <div class="main-column">
+        <!-- Titre -->
+        <h1 class="ticket-title-main">{{ ticket.title }}</h1>
+
+        <!-- Description -->
+        <div class="description-section">
+          <h3 class="section-label">Description</h3>
+          <div v-if="ticket.description" class="description-content markdown-rendered" v-html="renderedDescription"></div>
+          <div v-else class="empty-description">
+            <span class="text-500">Aucune description</span>
+          </div>
+        </div>
+
+        <!-- Détails spécifiques au type -->
+        <div v-if="ticket.type === 'video' && ticket.metadata" class="details-section video-section">
+          <div class="section-header">
+            <div class="section-icon video-icon">
+              <i class="pi pi-video"></i>
+            </div>
+            <h3 class="section-label">Détails Vidéo</h3>
+          </div>
+          <div class="metadata-grid">
+            <div v-if="ticket.metadata.person_filmed" class="metadata-card">
+              <i class="pi pi-user metadata-card-icon"></i>
+              <div>
+                <span class="meta-label">Personne filmée</span>
+                <span class="meta-value">{{ ticket.metadata.person_filmed }}</span>
+              </div>
+            </div>
+            <div v-if="ticket.metadata.filming_date" class="metadata-card">
+              <i class="pi pi-calendar metadata-card-icon"></i>
+              <div>
+                <span class="meta-label">Date de tournage</span>
+                <span class="meta-value">{{ formatDate(ticket.metadata.filming_date) }}</span>
+              </div>
+            </div>
+            <div v-if="ticket.metadata.modality" class="metadata-card">
+              <i class="pi pi-th-large metadata-card-icon"></i>
+              <div>
+                <span class="meta-label">Modalité</span>
+                <Tag :value="ticket.metadata.modality" severity="info" />
+              </div>
+            </div>
+            <div v-if="ticket.metadata.duration_minutes" class="metadata-card">
+              <i class="pi pi-clock metadata-card-icon"></i>
+              <div>
+                <span class="meta-label">Durée</span>
+                <span class="meta-value">{{ ticket.metadata.duration_minutes }} min</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Liens Vidéo -->
+          <div class="video-links-section">
+            <div class="links-header">
+              <h4>Liens Vidéo</h4>
+              <Button 
+                label="Ajouter un lien"
+                icon="pi pi-plus"
+                @click="showAddVideoLink = true"
+                size="small"
+                text
+              />
+            </div>
+            <div v-if="videoLinks.length" class="links-list">
+              <div v-for="(link, index) in videoLinks" :key="index" class="link-item">
+                <div class="link-info">
+                  <i class="pi pi-link"></i>
+                  <div class="link-details">
+                    <span class="link-title">{{ link.title }}</span>
+                    <a :href="link.url" target="_blank" class="link-url">{{ link.url }}</a>
+                  </div>
+                </div>
+                <Button 
+                  icon="pi pi-trash"
+                  @click="removeVideoLink(index)"
+                  text
+                  severity="danger"
+                  size="small"
+                />
+              </div>
+            </div>
+            <div v-else class="empty-links">
+              <i class="pi pi-link"></i>
+              <span>Aucun lien vidéo ajouté</span>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="ticket.type === 'development' && ticket.metadata" class="details-section dev-section">
+          <div class="section-header">
+            <div class="section-icon dev-icon">
+              <i class="pi pi-code"></i>
+            </div>
+            <h3 class="section-label">Détails Développement</h3>
+          </div>
+          <div class="metadata-grid">
+            <div v-if="ticket.metadata.dev_type" class="metadata-card">
+              <i class="pi pi-cog metadata-card-icon"></i>
+              <div>
+                <span class="meta-label">Type</span>
+                <span class="meta-value">{{ ticket.metadata.dev_type }}</span>
+              </div>
+            </div>
+            <div v-if="ticket.metadata.technologies" class="metadata-card">
+              <i class="pi pi-wrench metadata-card-icon"></i>
+              <div>
+                <span class="meta-label">Technologies</span>
+                <span class="meta-value">{{ ticket.metadata.technologies }}</span>
+              </div>
+            </div>
+            <div v-if="ticket.metadata.repository_url" class="metadata-card full-width">
+              <i class="pi pi-github metadata-card-icon"></i>
+              <div>
+                <span class="meta-label">Repository</span>
+                <a :href="ticket.metadata.repository_url" target="_blank" class="repo-link">
+                  <span>{{ ticket.metadata.repository_url }}</span>
+                  <i class="pi pi-external-link"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions GitHub -->
+          <div class="github-actions-section">
+            <div class="actions-header">
+              <i class="pi pi-github"></i>
+              <h4>Actions GitHub</h4>
+            </div>
+            <div class="action-cards">
+              <div class="action-card" @click="showCreateBranch = true">
+                <div class="action-icon">
+                  <i class="pi pi-sitemap"></i>
+                </div>
+                <div class="action-content">
+                  <span class="action-title">Créer une branche</span>
+                  <span class="action-description">Nouvelle branche pour ce ticket</span>
+                </div>
+                <i class="pi pi-chevron-right"></i>
+              </div>
+              <div class="action-card" @click="openRepository">
+                <div class="action-icon">
+                  <i class="pi pi-external-link"></i>
+                </div>
+                <div class="action-content">
+                  <span class="action-title">Ouvrir le repo</span>
+                  <span class="action-description">Voir sur GitHub</span>
+                </div>
+                <i class="pi pi-chevron-right"></i>
+              </div>
+            </div>
+            <div v-if="currentBranch" class="current-branch">
+              <i class="pi pi-code-branch"></i>
+              <div>
+                <span class="branch-label">Branche actuelle</span>
+                <span class="branch-name">{{ currentBranch }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="ticket.type === 'simulation' && ticket.metadata" class="details-section sim-section">
+          <div class="section-header">
+            <div class="section-icon sim-icon">
+              <i class="pi pi-desktop"></i>
+            </div>
+            <h3 class="section-label">Détails Simulation</h3>
+          </div>
+          <div class="metadata-grid">
+            <div v-if="ticket.metadata.sim_type" class="metadata-card">
+              <i class="pi pi-th-large metadata-card-icon"></i>
+              <div>
+                <span class="meta-label">Type</span>
+                <span class="meta-value">{{ ticket.metadata.sim_type }}</span>
+              </div>
+            </div>
+            <div v-if="ticket.metadata.participants_count" class="metadata-card">
+              <i class="pi pi-users metadata-card-icon"></i>
+              <div>
+                <span class="meta-label">Participants</span>
+                <span class="meta-value">{{ ticket.metadata.participants_count }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div v-if="ticket.notes" class="details-section">
+          <h3 class="section-label">Notes</h3>
+          <div class="notes-content">{{ ticket.notes }}</div>
+        </div>
+      </div>
+
+      <!-- Sidebar droite (Détails) -->
+      <div class="sidebar-column">
+        <div class="sidebar-header">
+          <h3>Détails</h3>
+        </div>
+
+        <!-- Status -->
+        <div class="detail-item">
+          <span class="detail-label">Statut</span>
+          <Tag :value="getStatusLabel(ticket.status)" :severity="getStatusSeverity(ticket.status)" class="w-full" />
+        </div>
+
+        <!-- Priorité -->
+        <div class="detail-item">
+          <span class="detail-label">Priorité</span>
+          <div class="priority-badge" :class="`priority-${ticket.priority}`">
+            <i :class="getPriorityIcon(ticket.priority)"></i>
+            <span>{{ getPriorityLabel(ticket.priority) }}</span>
+          </div>
+        </div>
+
+        <!-- Module -->
+        <div v-if="ticket.module_id" class="detail-item">
+          <span class="detail-label">Module</span>
+          <span class="detail-value">{{ ticket.module_id }}</span>
+        </div>
+
+        <!-- Date de rendu -->
+        <div v-if="ticket.due_date" class="detail-item">
+          <span class="detail-label">Date de rendu</span>
+          <div class="date-value" :class="{ 'overdue': isOverdue(ticket.due_date) }">
+            <i class="pi pi-calendar"></i>
+            <span>{{ formatDate(ticket.due_date) }}</span>
+          </div>
+          <span v-if="isOverdue(ticket.due_date)" class="overdue-badge">
+            <i class="pi pi-exclamation-triangle"></i> En retard
+          </span>
+          <span v-else class="time-left">{{ getDaysUntil(ticket.due_date) }}</span>
+        </div>
+
+        <!-- Créateur -->
+        <div v-if="ticket.created_by" class="detail-item">
+          <span class="detail-label">Créé par</span>
+          <div class="user-info-enhanced">
+            <img 
+              v-if="creatorProfile?.avatar_url" 
+              :src="creatorProfile.avatar_url" 
+              :alt="creatorProfile.full_name"
+              class="user-avatar-image"
+              @error="handleAvatarError"
+            />
+            <div v-else class="user-avatar-fallback">
+              {{ getInitials(creatorProfile?.full_name || creatorProfile?.email || ticket.created_by) }}
+            </div>
+            <div class="user-details">
+              <span class="user-name">{{ creatorProfile?.full_name || 'Utilisateur' }}</span>
+              <span class="user-email" v-if="creatorProfile?.email">{{ creatorProfile.email }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Assigné à -->
+        <div v-if="ticket.assigned_to" class="detail-item">
+          <span class="detail-label">Assigné à</span>
+          <div class="user-info-enhanced">
+            <img 
+              v-if="assignedUser?.avatar_url" 
+              :src="assignedUser.avatar_url" 
+              :alt="assignedUser.full_name"
+              class="user-avatar-image"
+              @error="handleAvatarError"
+            />
+            <div v-else class="user-avatar-fallback">
+              {{ getInitials(assignedUser?.full_name || assignedUser?.email) }}
+            </div>
+            <div class="user-details">
+              <span class="user-name">{{ assignedUser?.full_name || 'Utilisateur' }}</span>
+              <span class="user-email" v-if="assignedUser?.email">{{ assignedUser.email }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dates -->
+        <div class="detail-item">
+          <span class="detail-label">Créé le</span>
+          <span class="detail-value text-sm">{{ formatDateTime(ticket.created_at) }}</span>
+        </div>
+
+        <div v-if="ticket.updated_at" class="detail-item">
+          <span class="detail-label">Modifié le</span>
+          <span class="detail-value text-sm">{{ getTimeAgo(ticket.updated_at) }}</span>
+        </div>
+
+        <!-- Assets -->
+        <div v-if="ticket.has_assets" class="detail-item">
+          <span class="detail-label">Assets</span>
+          <div class="assets-badge">
+            <i class="pi pi-paperclip"></i>
+            <span>Disponibles</span>
+          </div>
+        </div>
+
+        <!-- Actions rapides -->
+        <div class="sidebar-actions">
+          <Button 
+            label="Supprimer" 
+            icon="pi pi-trash"
+            @click="$emit('delete', ticket)"
+            outlined
+            severity="danger"
+            class="w-full"
+            size="small"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Dialog: Ajouter un lien vidéo -->
+    <Dialog v-model:visible="showAddVideoLink" header="Ajouter un lien vidéo" :modal="true" :style="{ width: '450px' }">
+      <div class="dialog-content">
+        <div class="field">
+          <label for="link-title">Titre du lien</label>
+          <InputText 
+            id="link-title"
+            v-model="newVideoLink.title" 
+            placeholder="Ex: Vidéo brute, Montage final..."
+            class="w-full"
+          />
+        </div>
+        <div class="field">
+          <label for="link-url">URL</label>
+          <InputText 
+            id="link-url"
+            v-model="newVideoLink.url" 
+            placeholder="https://..."
+            class="w-full"
+          />
+        </div>
+      </div>
+      <template #footer>
+        <Button label="Annuler" @click="showAddVideoLink = false" text />
+        <Button label="Ajouter" @click="addVideoLink" :disabled="!newVideoLink.title || !newVideoLink.url" />
+      </template>
+    </Dialog>
+
+    <!-- Dialog: Créer une branche GitHub -->
+    <Dialog v-model:visible="showCreateBranch" header="Créer une branche GitHub" :modal="true" :style="{ width: '500px' }">
+      <div class="dialog-content">
+        <div class="field">
+          <label for="branch-name">Nom de la branche</label>
+          <InputText 
+            id="branch-name"
+            v-model="newBranchName" 
+            :placeholder="suggestedBranchName"
+            class="w-full"
+          />
+          <small class="text-muted">Suggestion : {{ suggestedBranchName }}</small>
+        </div>
+        <div class="field">
+          <label for="base-branch">Branche de base</label>
+          <Dropdown 
+            id="base-branch"
+            v-model="baseBranch" 
+            :options="['prod', 'develop', 'main']"
+            placeholder="Sélectionner..."
+            class="w-full"
+          />
+        </div>
+        <Message severity="info" :closable="false">
+          Cette action créera une nouvelle branche pour ce ticket dans votre repository GitHub.
+        </Message>
+      </div>
+      <template #footer>
+        <Button label="Annuler" @click="showCreateBranch = false" text />
+        <Button 
+          label="Créer la branche" 
+          icon="pi pi-github"
+          @click="createGitHubBranch" 
+          :disabled="!newBranchName"
+        />
+      </template>
+    </Dialog>
+  </div>
+</template>
+
+<script setup>
+import { ref, reactive, computed, watch } from 'vue'
+import { marked } from 'marked'
+import DOMPurify from 'dompurify'
+import Tag from 'primevue/tag'
+import Button from 'primevue/button'
+import Dialog from 'primevue/dialog'
+import InputText from 'primevue/inputtext'
+import Dropdown from 'primevue/dropdown'
+import Message from 'primevue/message'
+import { TICKET_STATUS, TICKET_TYPES } from '@/service/ticketService'
+import { useToast } from 'primevue/usetoast'
+
+const toast = useToast()
+
+// Configuration Markdown
+marked.setOptions({
+  breaks: true,
+  gfm: true
+})
+
+const props = defineProps({
+  ticket: {
+    type: Object,
+    required: true
+  }
+})
+
+const emit = defineEmits(['edit', 'delete', 'publish', 'close', 'update'])
+
+const showMenu = ref(false)
+const showAddVideoLink = ref(false)
+const showCreateBranch = ref(false)
+
+// Video links
+const videoLinks = ref([])
+const newVideoLink = reactive({
+  title: '',
+  url: ''
+})
+
+// GitHub branch
+const currentBranch = ref('')
+const newBranchName = ref('')
+const baseBranch = ref('prod')
+
+// Profil du créateur
+const creatorProfile = ref(null)
+
+// Utilisateur assigné
+const assignedUser = ref(null)
+
+// Rendu Markdown sécurisé de la description
+const renderedDescription = computed(() => {
+  if (!props.ticket.description) return ''
+  try {
+    const rawHtml = marked(props.ticket.description)
+    return DOMPurify.sanitize(rawHtml)
+  } catch (error) {
+    console.error('[TicketDetails] Erreur Markdown:', error)
+    return props.ticket.description
+  }
+})
+
+// Fonction pour charger le profil du créateur
+async function loadCreatorProfile() {
+  if (!props.ticket.created_by) return
+  
+  try {
+    const { supabase } = await import('@/supabase')
+    
+    // Récupérer le profil depuis la table profiles
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, email, full_name, avatar_url')
+      .eq('id', props.ticket.created_by)
+      .single()
+    
+    if (error) {
+      console.error('[TicketDetails] Erreur chargement profil:', error)
+      return
+    }
+    
+    if (data) {
+      creatorProfile.value = data
+      console.log('[TicketDetails] Profil créateur chargé:', data)
+    }
+  } catch (error) {
+    console.error('[TicketDetails] Erreur:', error)
+  }
+}
+
+// Fonction pour charger l'utilisateur assigné
+async function loadAssignedUser() {
+  if (!props.ticket.assigned_to) return
+  
+  try {
+    const { supabase } = await import('@/supabase')
+    
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, email, full_name, avatar_url')
+      .eq('id', props.ticket.assigned_to)
+      .single()
+    
+    if (error) {
+      console.error('[TicketDetails] Erreur chargement utilisateur assigné:', error)
+      return
+    }
+    
+    if (data) {
+      assignedUser.value = data
+      console.log('[TicketDetails] Utilisateur assigné chargé:', data)
+    }
+  } catch (error) {
+    console.error('[TicketDetails] Erreur:', error)
+  }
+}
+
+// Fonction pour charger les données du ticket
+function loadTicketData() {
+  console.log('[TicketDetails] Chargement des données du ticket:', props.ticket.id)
+  
+  // Réinitialiser
+  videoLinks.value = []
+  currentBranch.value = ''
+  creatorProfile.value = null
+  assignedUser.value = null
+  
+  // Charger le profil du créateur
+  loadCreatorProfile()
+  
+  // Charger l'utilisateur assigné
+  loadAssignedUser()
+  
+  // Charger depuis metadata
+  if (props.ticket.metadata) {
+    if (props.ticket.metadata.video_links && Array.isArray(props.ticket.metadata.video_links)) {
+      videoLinks.value = [...props.ticket.metadata.video_links]
+      console.log('[TicketDetails] Liens vidéo chargés:', videoLinks.value)
+    }
+    if (props.ticket.metadata.github_branch) {
+      currentBranch.value = props.ticket.metadata.github_branch
+      console.log('[TicketDetails] Branche GitHub chargée:', currentBranch.value)
+    }
+  }
+}
+
+// Charger les données au montage
+loadTicketData()
+
+// Recharger les données quand le ticket change (surveiller l'ID)
+watch(() => props.ticket.id, (newId, oldId) => {
+  console.log('[TicketDetails] Changement de ticket détecté:', oldId, '→', newId)
+  loadTicketData()
+})
+
+// Recharger aussi quand les metadata changent
+watch(() => props.ticket.metadata, () => {
+  console.log('[TicketDetails] Metadata mis à jour')
+  loadTicketData()
+}, { deep: true })
+
+const suggestedBranchName = computed(() => {
+  const ticketId = props.ticket.id?.substring(0, 8) || 'ticket'
+  const title = props.ticket.title?.toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .substring(0, 30) || 'feature'
+  return `feature/${ticketId}-${title}`
+})
+
+function toggleMenu() {
+  showMenu.value = !showMenu.value
+}
+
+async function addVideoLink() {
+  if (newVideoLink.title && newVideoLink.url) {
+    videoLinks.value.push({
+      title: newVideoLink.title,
+      url: newVideoLink.url
+    })
+    
+    // Sauvegarder dans la base de données
+    await saveMetadata()
+    
+    toast.add({ 
+      severity: 'success', 
+      summary: 'Lien ajouté', 
+      detail: 'Le lien vidéo a été ajouté avec succès',
+      life: 3000 
+    })
+    newVideoLink.title = ''
+    newVideoLink.url = ''
+    showAddVideoLink.value = false
+  }
+}
+
+async function removeVideoLink(index) {
+  videoLinks.value.splice(index, 1)
+  
+  // Sauvegarder dans la base de données
+  await saveMetadata()
+  
+  toast.add({ 
+    severity: 'info', 
+    summary: 'Lien supprimé', 
+    detail: 'Le lien vidéo a été supprimé',
+    life: 3000 
+  })
+}
+
+async function createGitHubBranch() {
+  const branchName = newBranchName.value || suggestedBranchName.value
+  
+  try {
+    // Vérifier qu'on a une URL de repository
+    if (!props.ticket.metadata?.repository_url) {
+      toast.add({ 
+        severity: 'warn', 
+        summary: 'Repository manquant', 
+        detail: 'Ajoutez l\'URL du repository GitHub dans les métadonnées du ticket',
+        life: 4000 
+      })
+      return
+    }
+    
+    // Importer le service GitHub
+    const { createBranch, getGitHubToken } = await import('@/service/githubService')
+    
+    // Récupérer le token
+    const token = getGitHubToken()
+    if (!token) {
+      toast.add({ 
+        severity: 'warn', 
+        summary: 'Token GitHub manquant', 
+        detail: 'Configurez votre token GitHub dans les paramètres',
+        life: 5000 
+      })
+      showCreateBranch.value = false
+      return
+    }
+    
+    // Créer la branche sur GitHub
+    toast.add({ 
+      severity: 'info', 
+      summary: 'Création en cours...', 
+      detail: 'Création de la branche sur GitHub',
+      life: 2000 
+    })
+    
+    const result = await createBranch(
+      props.ticket.metadata.repository_url,
+      branchName,
+      baseBranch.value,
+      token
+    )
+    
+    // Sauvegarder la branche dans la base de données
+    currentBranch.value = branchName
+    await saveMetadata()
+    
+    toast.add({ 
+      severity: 'success', 
+      summary: 'Branche créée sur GitHub !', 
+      detail: `La branche "${branchName}" est disponible`,
+      life: 4000 
+    })
+    
+    console.log('[TicketDetails] ✅ Branche créée:', result)
+    
+    showCreateBranch.value = false
+    newBranchName.value = ''
+  } catch (error) {
+    console.error('[TicketDetails] ❌ Erreur création branche:', error)
+    toast.add({ 
+      severity: 'error', 
+      summary: 'Erreur GitHub', 
+      detail: error.message || 'Impossible de créer la branche sur GitHub',
+      life: 5000 
+    })
+  }
+}
+
+function openRepository() {
+  if (props.ticket.metadata?.repository_url) {
+    window.open(props.ticket.metadata.repository_url, '_blank')
+  }
+}
+
+// Sauvegarder les métadonnées dans le ticket
+async function saveMetadata() {
+  try {
+    const updatedMetadata = {
+      ...props.ticket.metadata,
+      video_links: videoLinks.value,
+      github_branch: currentBranch.value
+    }
+    
+    // Utiliser le service pour mettre à jour le ticket
+    const { updateTicket } = await import('@/service/ticketService')
+    await updateTicket(props.ticket.id, {
+      metadata: updatedMetadata
+    })
+    
+    console.log('[TicketDetails] Métadonnées sauvegardées:', updatedMetadata)
+    
+    // Émettre un événement pour dire au parent de recharger les données
+    emit('update')
+  } catch (error) {
+    console.error('[TicketDetails] Erreur lors de la sauvegarde:', error)
+    toast.add({ 
+      severity: 'error', 
+      summary: 'Erreur', 
+      detail: 'Impossible de sauvegarder les modifications',
+      life: 4000 
+    })
+  }
+}
+
+function getTypeLabel(type) {
+  const labels = {
+    [TICKET_TYPES.VIDEO]: 'Vidéo',
+    [TICKET_TYPES.DEVELOPMENT]: 'Développement',
+    [TICKET_TYPES.SIMULATION]: 'Simulation',
+    [TICKET_TYPES.OTHER]: 'Autre'
+  }
+  return labels[type] || type
+}
+
+function getTypeIcon(type) {
+  const icons = {
+    [TICKET_TYPES.VIDEO]: 'pi pi-video',
+    [TICKET_TYPES.DEVELOPMENT]: 'pi pi-code',
+    [TICKET_TYPES.SIMULATION]: 'pi pi-desktop',
+    [TICKET_TYPES.OTHER]: 'pi pi-file'
+  }
+  return icons[type] || 'pi pi-file'
+}
+
+function getStatusLabel(status) {
+  const labels = {
+    [TICKET_STATUS.BACKLOG]: 'Backlog',
+    [TICKET_STATUS.TODO]: 'À faire',
+    [TICKET_STATUS.IN_PROGRESS]: 'En cours',
+    [TICKET_STATUS.VALIDATION]: 'Validation',
+    [TICKET_STATUS.PROBLEMS]: 'Problèmes',
+    [TICKET_STATUS.DONE]: 'Terminé'
+  }
+  return labels[status] || status
+}
+
+function getStatusSeverity(status) {
+  const severities = {
+    [TICKET_STATUS.BACKLOG]: 'secondary',
+    [TICKET_STATUS.TODO]: 'info',
+    [TICKET_STATUS.IN_PROGRESS]: 'warning',
+    [TICKET_STATUS.VALIDATION]: null,
+    [TICKET_STATUS.PROBLEMS]: 'danger',
+    [TICKET_STATUS.DONE]: 'success'
+  }
+  return severities[status]
+}
+
+function getPriorityLabel(priority) {
+  const labels = {
+    low: 'Basse',
+    normal: 'Normale',
+    high: 'Haute',
+    urgent: 'Urgente'
+  }
+  return labels[priority] || priority
+}
+
+function getPriorityIcon(priority) {
+  const icons = {
+    low: 'pi pi-arrow-down',
+    normal: 'pi pi-minus',
+    high: 'pi pi-arrow-up',
+    urgent: 'pi pi-exclamation-triangle'
+  }
+  return icons[priority] || 'pi pi-minus'
+}
+
+function formatDate(dateString) {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })
+}
+
+function formatDateTime(dateString) {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  return date.toLocaleDateString('fr-FR', { 
+    day: '2-digit', 
+    month: 'long', 
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+function isOverdue(dueDate) {
+  if (!dueDate) return false
+  return new Date(dueDate) < new Date()
+}
+
+function getTimeAgo(date) {
+  if (!date) return ''
+  const now = new Date()
+  const created = new Date(date)
+  const diffMs = now - created
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+  
+  if (diffDays === 0) return "aujourd'hui"
+  if (diffDays === 1) return 'hier'
+  if (diffDays < 7) return `il y a ${diffDays}j`
+  if (diffDays < 30) return `il y a ${Math.floor(diffDays / 7)}sem`
+  return `il y a ${Math.floor(diffDays / 30)}mois`
+}
+
+function getDaysUntil(date) {
+  if (!date) return ''
+  const now = new Date()
+  const target = new Date(date)
+  const diffMs = target - now
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+  
+  if (diffDays === 0) return "Aujourd'hui"
+  if (diffDays === 1) return 'Demain'
+  if (diffDays < 7) return `Dans ${diffDays}j`
+  if (diffDays < 30) return `Dans ${Math.floor(diffDays / 7)}sem`
+  return `Dans ${Math.floor(diffDays / 30)}mois`
+}
+
+function getInitials(name) {
+  if (!name) return 'U'
+  if (typeof name === 'string') {
+    // Si c'est un email
+    if (name.includes('@')) {
+      return name.substring(0, 2).toUpperCase()
+    }
+    // Si c'est un nom complet
+    const parts = name.split(' ')
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase()
+    }
+    return name.substring(0, 2).toUpperCase()
+  }
+  return 'U'
+}
+
+function handleAvatarError(event) {
+  // En cas d'erreur de chargement de l'image, on cache l'élément
+  event.target.style.display = 'none'
+  creatorProfile.value.avatar_url = null
+}
+</script>
+
+<style scoped>
+/* Container principal */
+.ticket-details-jira {
+  background: var(--surface-ground);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header Bar */
+.ticket-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--surface-border);
+  background: var(--surface-card);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.ticket-type-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: white;
+}
+
+.ticket-type-chip.type-video {
+  background: #ef4444;
+}
+
+.ticket-type-chip.type-development {
+  background: #3b82f6;
+}
+
+.ticket-type-chip.type-simulation {
+  background: #f59e0b;
+}
+
+.ticket-type-chip.type-other {
+  background: #6b7280;
+}
+
+.ticket-id {
+  font-size: 0.875rem;
+  color: var(--text-color-secondary);
+  font-family: monospace;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Layout 2 colonnes */
+.jira-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Colonne principale */
+.main-column {
+  padding: 2rem;
+  overflow-y: auto;
+  border-right: 1px solid var(--surface-border);
+}
+
+.ticket-title-main {
+  margin: 0 0 2rem 0;
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--text-color);
+  line-height: 1.3;
+}
+
+/* Sections */
+.description-section {
+  margin-bottom: 2rem;
+}
+
+.details-section {
+  margin-bottom: 2rem;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  transition: all 0.3s ease;
+}
+
+.video-section {
+  /* Pas de style spécial */
+}
+
+.dev-section {
+  /* Pas de style spécial */
+}
+
+.sim-section {
+  /* Pas de style spécial */
+}
+
+.section-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0 0 0.75rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.description-content {
+  padding: 1rem;
+  background: var(--surface-50);
+  border-radius: 8px;
+  border: 1px solid var(--surface-border);
+  line-height: 1.6;
+}
+
+/* Style du Markdown rendu */
+.markdown-rendered :deep(h1),
+.markdown-rendered :deep(h2),
+.markdown-rendered :deep(h3) {
+  margin: 1rem 0 0.5rem 0;
+  color: var(--text-color);
+  font-weight: 600;
+}
+
+.markdown-rendered :deep(h1) {
+  font-size: 1.5rem;
+  border-bottom: 2px solid var(--surface-border);
+  padding-bottom: 0.5rem;
+}
+
+.markdown-rendered :deep(h2) {
+  font-size: 1.25rem;
+}
+
+.markdown-rendered :deep(h3) {
+  font-size: 1.1rem;
+}
+
+.markdown-rendered :deep(p) {
+  margin: 0.75rem 0;
+}
+
+.markdown-rendered :deep(ul),
+.markdown-rendered :deep(ol) {
+  margin: 0.75rem 0;
+  padding-left: 2rem;
+}
+
+.markdown-rendered :deep(li) {
+  margin: 0.25rem 0;
+}
+
+.markdown-rendered :deep(code) {
+  background: rgba(0,0,0,0.1);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 0.875rem;
+}
+
+.markdown-rendered :deep(pre) {
+  background: rgba(0,0,0,0.05);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  border-left: 4px solid var(--primary-color);
+  margin: 1rem 0;
+}
+
+.markdown-rendered :deep(pre code) {
+  background: none;
+  padding: 0;
+}
+
+.markdown-rendered :deep(a) {
+  color: var(--primary-color);
+  text-decoration: underline;
+}
+
+.markdown-rendered :deep(a:hover) {
+  text-decoration: none;
+}
+
+.markdown-rendered :deep(blockquote) {
+  margin: 1rem 0;
+  padding-left: 1rem;
+  border-left: 4px solid var(--surface-border);
+  color: var(--text-color-secondary);
+  font-style: italic;
+}
+
+.markdown-rendered :deep(strong) {
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.markdown-rendered :deep(em) {
+  font-style: italic;
+}
+
+.markdown-rendered :deep(hr) {
+  border: none;
+  border-top: 2px solid var(--surface-border);
+  margin: 1.5rem 0;
+}
+
+.markdown-rendered :deep(table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+
+.markdown-rendered :deep(th),
+.markdown-rendered :deep(td) {
+  padding: 0.5rem;
+  border: 1px solid var(--surface-border);
+  text-align: left;
+}
+
+.markdown-rendered :deep(th) {
+  background: var(--surface-100);
+  font-weight: 600;
+}
+
+.description-content p {
+  margin: 0;
+}
+
+.empty-description {
+  padding: 1rem;
+  text-align: center;
+  color: var(--text-color-secondary);
+  font-style: italic;
+}
+
+/* Section Headers with Icons */
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  padding: 0;
+  border: none;
+}
+
+.section-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.video-icon {
+  background: #ef4444;
+}
+
+.dev-icon {
+  background: #3b82f6;
+}
+
+.sim-icon {
+  background: #f59e0b;
+}
+
+.section-label {
+  font-size: 0.938rem !important;
+  font-weight: 600 !important;
+  color: var(--text-color) !important;
+  margin: 0 !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+}
+
+/* Metadata Grid & Cards */
+.metadata-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.metadata-card {
+  display: flex;
+  gap: 0.875rem;
+  padding: 1rem 1.25rem;
+  background: var(--surface-card);
+  border-radius: 10px;
+  border: 1px solid var(--surface-border);
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: visible;
+}
+
+.metadata-card:hover {
+  background: var(--surface-hover);
+  border-color: var(--primary-color);
+  transform: translateX(2px);
+}
+
+.video-section .metadata-card:hover {
+  border-color: #ef4444;
+}
+
+.dev-section .metadata-card:hover {
+  border-color: #3b82f6;
+}
+
+.sim-section .metadata-card:hover {
+  border-color: #f59e0b;
+}
+
+.metadata-card.full-width {
+  grid-column: 1 / -1;
+}
+
+.metadata-card-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  transition: color 0.2s ease;
+}
+
+.video-section .metadata-card-icon {
+  color: #ef4444;
+}
+
+.dev-section .metadata-card-icon {
+  color: #3b82f6;
+}
+
+.sim-section .metadata-card-icon {
+  color: #f59e0b;
+}
+
+.metadata-card > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  flex: 1;
+}
+
+.meta-label {
+  font-size: 0.75rem;
+  color: var(--text-color-secondary);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
+}
+
+.meta-value {
+  font-size: 0.938rem;
+  color: var(--text-color);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.repo-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #60a5fa;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+.repo-link:hover {
+  color: #93c5fd;
+  gap: 0.75rem;
+  text-decoration: underline;
+}
+
+.notes-content {
+  padding: 1rem;
+  background: var(--surface-50);
+  border-radius: 8px;
+  border: 1px solid var(--surface-border);
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+
+/* Video Links Section */
+.video-links-section {
+  margin-top: 1.5rem;
+}
+
+.links-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.875rem;
+}
+
+.links-header h4 {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-color);
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.links-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.link-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.875rem 1rem;
+  background: var(--surface-card);
+  border-radius: 8px;
+  border: 1px solid var(--surface-border);
+  transition: all 0.2s ease;
+}
+
+.link-item:hover {
+  background: var(--surface-hover);
+  border-color: #ef4444;
+  transform: translateX(2px);
+}
+
+.link-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.link-info > i {
+  font-size: 1.125rem;
+  color: #ef4444;
+}
+
+.link-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.link-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.link-url {
+  font-size: 0.75rem;
+  color: #60a5fa;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.link-url:hover {
+  color: #93c5fd;
+  text-decoration: underline;
+}
+
+.empty-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  padding: 2rem 1rem;
+  color: var(--text-color-secondary);
+  font-size: 0.875rem;
+  font-style: italic;
+}
+
+.empty-links i {
+  font-size: 1.25rem;
+  opacity: 0.4;
+}
+
+/* GitHub Actions Section */
+.github-actions-section {
+  margin-top: 1.5rem;
+}
+
+.actions-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.875rem;
+}
+
+.actions-header i {
+  font-size: 1.125rem;
+  color: var(--text-color-secondary);
+}
+
+.actions-header h4 {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-color);
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.action-cards {
+  display: grid;
+  gap: 0.625rem;
+}
+
+.action-card {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.875rem 1rem;
+  background: var(--surface-card);
+  border-radius: 8px;
+  border: 1px solid var(--surface-border);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-card:hover {
+  background: var(--surface-hover);
+  border-color: #3b82f6;
+  transform: translateX(2px);
+}
+
+.action-icon {
+  width: 36px;
+  height: 36px;
+  background: #3b82f6;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.action-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.action-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.action-description {
+  font-size: 0.75rem;
+  color: var(--text-color-secondary);
+}
+
+.action-card > i {
+  color: var(--text-color-secondary);
+  font-size: 0.875rem;
+  transition: transform 0.2s ease;
+}
+
+.action-card:hover > i {
+  transform: translateX(2px);
+}
+
+.current-branch {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.875rem;
+  padding: 0.75rem 1rem;
+  background: var(--surface-card);
+  border-radius: 8px;
+  border: 1px solid var(--green-200);
+}
+
+.current-branch > i {
+  font-size: 1.125rem;
+  color: var(--green-600);
+}
+
+.current-branch > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.branch-label {
+  font-size: 0.688rem;
+  color: var(--text-color-secondary);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.branch-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--green-700);
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+/* Dialog Styles */
+.dialog-content {
+  padding: 1rem 0;
+}
+
+.field {
+  margin-bottom: 1.25rem;
+}
+
+.field label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--text-color);
+  font-size: 0.875rem;
+}
+
+.text-muted {
+  color: var(--text-color-secondary);
+  font-size: 0.813rem;
+  margin-top: 0.375rem;
+  display: block;
+}
+
+/* Sidebar */
+.sidebar-column {
+  background: var(--surface-section);
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.sidebar-header {
+  margin-bottom: 1.5rem;
+}
+
+.sidebar-header h3 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.detail-item {
+  margin-bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.detail-label {
+  font-size: 0.813rem;
+  color: var(--text-color-secondary);
+  font-weight: 500;
+}
+
+.detail-value {
+  font-size: 0.938rem;
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+/* Priority Badge */
+.priority-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.priority-badge.priority-urgent {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--red-700);
+}
+
+.priority-badge.priority-high {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--orange-700);
+}
+
+.priority-badge.priority-normal {
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--blue-700);
+}
+
+.priority-badge.priority-low {
+  background: rgba(107, 114, 128, 0.1);
+  color: var(--gray-700);
+}
+
+/* Date Value */
+.date-value {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.938rem;
+  color: var(--text-color);
+}
+
+.date-value.overdue {
+  color: var(--red-600);
+}
+
+.time-left {
+  font-size: 0.813rem;
+  color: var(--text-color-secondary);
+}
+
+.overdue-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  color: var(--red-600);
+  font-weight: 600;
+}
+
+/* User Info */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.user-name {
+  font-size: 0.938rem;
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+/* Enhanced User Info */
+.user-info-enhanced {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  background: var(--surface-50);
+  border-radius: 10px;
+  border: 1px solid var(--surface-border);
+  transition: all 0.2s ease;
+}
+
+.user-info-enhanced:hover {
+  background: var(--surface-100);
+  border-color: var(--primary-color);
+}
+
+.user-avatar-image {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--primary-color);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.user-avatar-fallback {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-600) 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.user-details .user-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.user-email {
+  font-size: 0.813rem;
+  color: var(--text-color-secondary);
+}
+
+/* Assets Badge */
+.assets-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--green-700);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Sidebar Actions */
+.sidebar-actions {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--surface-border);
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .jira-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .main-column {
+    border-right: none;
+    border-bottom: 1px solid var(--surface-border);
+  }
+}
+
+@media (max-width: 768px) {
+  .ticket-header-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .main-column,
+  .sidebar-column {
+    padding: 1rem;
+  }
+
+  .ticket-title-main {
+    font-size: 1.5rem;
+  }
+
+  .metadata-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .action-card {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .action-card > i {
+    display: none;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .links-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+}
+
+/* Animations */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.details-section {
+  animation: slideIn 0.3s ease-out;
+}
+
+.link-item,
+.action-card {
+  animation: slideIn 0.2s ease-out;
+}
+</style>

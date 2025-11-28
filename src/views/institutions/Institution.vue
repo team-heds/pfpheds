@@ -45,7 +45,7 @@
                   >
                     <template #header>
                       <div class="card-header">
-                        <img :src="institution.ImageURL" alt="institution" class="card-image" />
+                        <img :src="getInstitutionImage(institution)" alt="institution" class="card-image" />
                         <Tag class="card-tag">{{ institution.Canton }}</Tag>
                       </div>
                       <p ref="institutionName" class="card-title">{{ institution.Name }}</p>
@@ -57,7 +57,7 @@
                           <Tag severity="primary">{{ institution.Language }}</Tag>
                         </p>
                         <p :class="descriptionClass" class="card-description">
-                          {{ truncateText(institution.Description, 100) }}
+                          {{ truncateText(institution.Description || 'Pas de description disponible', 100) }}
                         </p>
                       </div>
                     </template>
@@ -99,8 +99,8 @@
 </template>
 
 <script>
-import { db } from '../../../firebase.js';
-import { ref as dbRef, onValue } from "firebase/database";
+import { useInstitutionsStore } from '@/stores/institutionsStore'
+import { usePlacesStore } from '@/stores/placesStore'
 import Navbar from '@/components/common/utils/Navbar.vue'
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
@@ -109,12 +109,7 @@ import Tag from 'primevue/tag';
 import LeftSidebar from '@/components/social/library/LeftSidebar.vue'
 import FilterSidebar from '@/components/common/filters/FilterSidebar.vue'
 import HeaderIcons from '@/components/common/utils/HeaderIcons.vue'
-
-// Données de filtrage temporaires - à remplacer par vos vraies données
-const filterData = [
-  // Exemple de structure de données pour les filtres
-  // { IDPlace: 'institution_id', criteria: ['critere1', 'critere2', 'langue1', 'pfp1'] }
-];
+import filterData from '@/components/common/filters/filter.json'
 
 export default {
   name: 'Institution',
@@ -130,7 +125,6 @@ export default {
   },
   data() {
     return {
-      allInstitutions: [],
       descriptionClass: 'description',
       searchTerm: '',
       activeFilters: {
@@ -139,12 +133,37 @@ export default {
         pfp: [],
         languages: []
       },
-      cantonsList: [], // <-- Liste dynamique des cantons
+      cantonsList: [], // Liste dynamique des cantons
       isMobile: window.innerWidth < 768,
-      filterData: filterData // Ajout des données de filtre
+      filterData: filterData
     };
   },
+  setup() {
+    const institutionsStore = useInstitutionsStore();
+    const placesStore = usePlacesStore();
+    return { institutionsStore, placesStore };
+  },
   computed: {
+    allInstitutions() {
+      return this.institutionsStore.institutions;
+    },
+    criteriaByInstitution() {
+      const map = new Map();
+      const places = this.placesStore?.places || [];
+      places.forEach(p => {
+        const instId = p?.InstitutionId;
+        const placeId = p?.PlaceId;
+        if (!instId || !placeId) return;
+        const entry = this.filterData.find(it => it.IDPlace === placeId);
+        if (!entry || !Array.isArray(entry.criteria)) return;
+        const key = String(instId);
+        if (!map.has(key)) map.set(key, new Set());
+        entry.criteria.forEach(c => map.get(key).add(c));
+      });
+      const obj = {};
+      for (const [k, set] of map.entries()) obj[k] = Array.from(set);
+      return obj;
+    },
     filteredInstitutions() {
       return this.allInstitutions.filter(inst => {
         // Recherche textuelle
@@ -159,71 +178,60 @@ export default {
             return false;
           }
         }
-        // Recherche l'entrée correspondante dans filterData
-        const entry = this.filterData.find(item => item.IDPlace === inst.InstitutionId);
         // Filtre par canton
         if (this.activeFilters.cantons.length > 0 && (!inst.Canton || !this.activeFilters.cantons.includes(inst.Canton))) {
           return false;
         }
+        const key = String(inst?.InstitutionId ?? inst?.id ?? '');
+        const crit = this.criteriaByInstitution[key] || [];
         // Filtre par critères généraux
-        if (this.activeFilters.criter.length > 0) {
-          if (!entry || !this.activeFilters.criter.every(c => entry.criteria.includes(c))) {
-            return false;
-          }
+        if (this.activeFilters.criter.length > 0 && !this.activeFilters.criter.every(c => crit.includes(c))) {
+          return false;
         }
         // Filtre par langue (l'institution doit avoir toutes les langues sélectionnées)
-        if (this.activeFilters.languages.length > 0) {
-          if (!entry || !this.activeFilters.languages.every(lang => entry.criteria.includes(lang))) {
-            return false;
-          }
+        if (this.activeFilters.languages.length > 0 && !this.activeFilters.languages.every(lang => crit.includes(lang))) {
+          return false;
         }
         // Filtre par PFP
-        if (this.activeFilters.pfp.length > 0) {
-          if (!entry || !this.activeFilters.pfp.every(pfp => entry.criteria.includes(pfp))) {
-            return false;
-          }
+        if (this.activeFilters.pfp.length > 0 && !this.activeFilters.pfp.some(p => crit.includes(p))) {
+          return false;
         }
         return true;
       });
     },
   },
   methods: {
+    getInstitutionImage(institution) {
+      // Le store normalise ImageURL en array, on prend le premier élément
+      if (Array.isArray(institution.ImageURL) && institution.ImageURL.length > 0) {
+        return institution.ImageURL[0];
+      }
+      // Image par défaut si pas d'image disponible
+      return 'https://eduport.webestica.com/assets/images/courses/4by3/21.jpg';
+    },
     truncateText(text, length) {
       if (text && text.length > length) {
         return text.substring(0, length) + '...';
       }
       return text;
     },
-    fetchInstitutionsFromFirebase() {
-      console.log('Fetching institutions from Firebase...');
-      const institutionsRef = dbRef(db, 'Institutions/');
-      onValue(institutionsRef, (snapshot) => {
-        console.log('Firebase snapshot received:', snapshot.exists());
-        if (snapshot.exists()) {
-          const data = snapshot.val();
-          console.log('Institutions data:', data);
-          this.allInstitutions = Object.keys(data).map(key => ({
-            InstitutionId: key,
-            ...data[key],
-            ImageURL: data[key].ImageURL || 'https://eduport.webestica.com/assets/images/courses/4by3/21.jpg',
-            Description: data[key].Description || 'Pas de description disponible'
-          }));
-          console.log('Processed institutions:', this.allInstitutions.length);
-          // Génère la liste unique des cantons présents
-          const allCantons = this.allInstitutions.map(inst => inst.Canton).filter(Boolean);
-          this.cantonsList = [...new Set(allCantons)].sort();
-          console.log('Available cantons:', this.cantonsList);
-          this.$nextTick(() => {
-            this.adjustDescriptionHeight();
-          });
-        } else {
-          console.log('No institutions data found in Firebase');
-          this.allInstitutions = [];
-          this.cantonsList = [];
-        }
-      }, (error) => {
-        console.error('Firebase error:', error);
-      });
+    async fetchInstitutions() {
+      try {
+        console.log('📥 Fetching institutions from store...');
+        await this.institutionsStore.fetchInstitutions();
+        console.log('✅ Institutions loaded:', this.allInstitutions.length);
+        
+        // Génère la liste unique des cantons présents
+        const allCantons = this.allInstitutions.map(inst => inst.Canton).filter(Boolean);
+        this.cantonsList = [...new Set(allCantons)].sort();
+        console.log('📍 Available cantons:', this.cantonsList);
+        
+        this.$nextTick(() => {
+          this.adjustDescriptionHeight();
+        });
+      } catch (error) {
+        console.error('❌ Error fetching institutions:', error);
+      }
     },
     adjustDescriptionHeight() {
       const nameElements = this.$refs.institutionName;
@@ -249,7 +257,8 @@ export default {
     }
   },
   mounted() {
-    this.fetchInstitutionsFromFirebase();
+    this.fetchInstitutions();
+    this.placesStore.fetchPlaces();
     // Gestion responsive
     window.addEventListener('resize', () => {
       this.isMobile = window.innerWidth < 768;
@@ -269,18 +278,22 @@ export default {
   display: grid;
   grid-template-columns: 1fr 3fr 1fr; /* Sidebar gauche, contenu central, sidebar droite */
   gap: 1.5rem;
-  min-height: 100vh;
+  height: calc(100vh - var(--navbar-h) - (2 * var(--content-pad)));
+  max-height: calc(100vh - var(--navbar-h) - (2 * var(--content-pad)));
+  overflow: hidden;
 }
 
 /* Sidebar Gauche et Droite */
 .sidebar-left,
 .sidebar-right {
-  overflow-y: auto;
+  height: 100%;
+  overflow-y: hidden; /* Sidebars statiques */
 }
 
 /* Contenu Principal */
 .main-content {
-  overflow-y: auto;
+  height: 100%;
+  overflow-y: auto; /* Scroll central uniquement */
 }
 
 /* Responsive pour le layout global */
@@ -449,7 +462,7 @@ export default {
 }
 
 .institution-center-scrollable {
-  height: 100vh;
+  height: 100%;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding: 2rem;

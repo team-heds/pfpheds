@@ -1,0 +1,792 @@
+﻿[
+    {
+        "Path":  "src\\views\\DiagnosticGamificationView.vue",
+        "Size":  11560,
+        "Name":  "DiagnosticGamificationView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\AcademicYearManagement.vue",
+        "Size":  10199,
+        "Name":  "AcademicYearManagement.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\DashboardEnseignantView.vue",
+        "Size":  8841,
+        "Name":  "DashboardEnseignantView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\DashboardRMView.vue",
+        "Size":  7320,
+        "Name":  "DashboardRMView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\DashboardView.vue",
+        "Size":  34499,
+        "Name":  "DashboardView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\ModuleAdminPage.vue",
+        "Size":  30230,
+        "Name":  "ModuleAdminPage.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\ModuleAdminPageSimple.vue",
+        "Size":  21764,
+        "Name":  "ModuleAdminPageSimple.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\ModulesManagementView.vue",
+        "Size":  0,
+        "Name":  "ModulesManagementView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\ProfileAdminView.vue",
+        "Size":  7322,
+        "Name":  "ProfileAdminView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\SettingsView.vue",
+        "Size":  35227,
+        "Name":  "SettingsView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\SupabaseDiagnosticView.vue",
+        "Size":  14290,
+        "Name":  "SupabaseDiagnosticView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\academic\\AcademicCalendarView.vue",
+        "Size":  14289,
+        "Name":  "AcademicCalendarView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\academic\\AcademicKanbanView.vue",
+        "Size":  17173,
+        "Name":  "AcademicKanbanView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\academic\\TicketListView.vue",
+        "Size":  21936,
+        "Name":  "TicketListView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\academic\\VideoLibraryView.vue",
+        "Size":  35758,
+        "Name":  "VideoLibraryView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\courses\\CourseCreateView.vue",
+        "Size":  10416,
+        "Name":  "CourseCreateView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\courses\\CourseDetailView.vue",
+        "Size":  16970,
+        "Name":  "CourseDetailView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\courses\\CourseEditView.vue",
+        "Size":  10691,
+        "Name":  "CourseEditView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\courses\\CourseListView.vue",
+        "Size":  7621,
+        "Name":  "CourseListView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\gamification\\AnalyticsDashboardView.vue",
+        "Size":  2599,
+        "Name":  "AnalyticsDashboardView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\gamification\\BadgeManagementView.vue",
+        "Size":  2336,
+        "Name":  "BadgeManagementView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\gamification\\ChallengeManagementView.vue",
+        "Size":  2014,
+        "Name":  "ChallengeManagementView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\gamification\\HouseManagementView.vue",
+        "Size":  2532,
+        "Name":  "HouseManagementView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\gamification\\QuestManagementView.vue",
+        "Size":  2082,
+        "Name":  "QuestManagementView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\gamification\\UserManagementView.vue",
+        "Size":  2038,
+        "Name":  "UserManagementView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\institutions\\InstitutionDetailsView.vue",
+        "Size":  5956,
+        "Name":  "InstitutionDetailsView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\institutions\\InstitutionDetailsView_SUPABASE.vue",
+        "Size":  5956,
+        "Name":  "InstitutionDetailsView_SUPABASE.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\institutions\\InstitutionListView.vue",
+        "Size":  3978,
+        "Name":  "InstitutionListView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\institutions\\gamification\\AdminDefisView.vue",
+        "Size":  11424,
+        "Name":  "AdminDefisView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\lists\\ModuleListView.vue",
+        "Size":  8451,
+        "Name":  "ModuleListView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\lists\\ProgramListView.vue",
+        "Size":  8709,
+        "Name":  "ProgramListView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\lists\\UserRoleListView.vue",
+        "Size":  5350,
+        "Name":  "UserRoleListView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\pfp\\GanttPFPView.vue",
+        "Size":  9006,
+        "Name":  "GanttPFPView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\pfp\\InfoRepondantView.vue",
+        "Size":  8424,
+        "Name":  "InfoRepondantView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\pfp\\ManagementOffreView.vue",
+        "Size":  6743,
+        "Name":  "ManagementOffreView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\pfp\\ManagementPFPEnCoursView.vue",
+        "Size":  2954,
+        "Name":  "ManagementPFPEnCoursView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\pfp\\ManagementPlacesView.vue",
+        "Size":  9677,
+        "Name":  "ManagementPlacesView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\pfp\\ManagementRepondantView.vue",
+        "Size":  10385,
+        "Name":  "ManagementRepondantView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\pfp\\ManagementVotationPrioritaireView.vue",
+        "Size":  5501,
+        "Name":  "ManagementVotationPrioritaireView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\pfp\\PlacesAssignedView.vue",
+        "Size":  7506,
+        "Name":  "PlacesAssignedView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\pfp\\PlacesAssignmentView.vue",
+        "Size":  9401,
+        "Name":  "PlacesAssignmentView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\pfp\\ResultPreviewVotationView.vue",
+        "Size":  9936,
+        "Name":  "ResultPreviewVotationView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\pfp\\ValidatePFP1AView.vue",
+        "Size":  12212,
+        "Name":  "ValidatePFP1AView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\pfp\\VotationEtudiantsView.vue",
+        "Size":  6487,
+        "Name":  "VotationEtudiantsView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\places\\PlaceAssignmentView.vue",
+        "Size":  17119,
+        "Name":  "PlaceAssignmentView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\places\\PlaceManagementView.vue",
+        "Size":  14743,
+        "Name":  "PlaceManagementView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\places\\PlaceManagementView_SUPABASE.vue",
+        "Size":  14743,
+        "Name":  "PlaceManagementView_SUPABASE.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\places\\PlaceStatsView.vue",
+        "Size":  9920,
+        "Name":  "PlaceStatsView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\planning\\AnnualPlanningView.vue",
+        "Size":  21976,
+        "Name":  "AnnualPlanningView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\planning\\PlanningAdminView.vue",
+        "Size":  36928,
+        "Name":  "PlanningAdminView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\planning\\PlanningView.vue",
+        "Size":  24781,
+        "Name":  "PlanningView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\planning\\SemesterPlanningAdminView.vue",
+        "Size":  17858,
+        "Name":  "SemesterPlanningAdminView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\planning\\WeeklyPlanningAdminView.vue",
+        "Size":  63435,
+        "Name":  "WeeklyPlanningAdminView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\tools\\FeedbackaView.vue",
+        "Size":  22717,
+        "Name":  "FeedbackaView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\users\\ManageUserRoles.vue",
+        "Size":  14358,
+        "Name":  "ManageUserRoles.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\users\\StudentListView.vue",
+        "Size":  7067,
+        "Name":  "StudentListView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\users\\TeacherListView.vue",
+        "Size":  4198,
+        "Name":  "TeacherListView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\users\\TeachersSIView.vue",
+        "Size":  17906,
+        "Name":  "TeachersSIView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\users\\TrainerListView.vue",
+        "Size":  3857,
+        "Name":  "TrainerListView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\users\\UserListView.vue",
+        "Size":  11024,
+        "Name":  "UserListView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\validation\\ReceptionView.vue",
+        "Size":  2241,
+        "Name":  "ReceptionView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\validation\\ValidationView.vue",
+        "Size":  10883,
+        "Name":  "ValidationView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\votations\\VotationManagementView.vue",
+        "Size":  26015,
+        "Name":  "VotationManagementView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\votations\\VotationResultsView.vue",
+        "Size":  6941,
+        "Name":  "VotationResultsView.vue"
+    },
+    {
+        "Path":  "src\\views\\admin\\votations\\VotationView.vue",
+        "Size":  34166,
+        "Name":  "VotationView.vue"
+    },
+    {
+        "Path":  "src\\views\\apps\\blog\\Detail.vue",
+        "Size":  7792,
+        "Name":  "Detail.vue"
+    },
+    {
+        "Path":  "src\\views\\apps\\blog\\Edit.vue",
+        "Size":  6067,
+        "Name":  "Edit.vue"
+    },
+    {
+        "Path":  "src\\views\\apps\\blog\\List.vue",
+        "Size":  9794,
+        "Name":  "List.vue"
+    },
+    {
+        "Path":  "src\\views\\apps\\calendar\\CalendarView.vue",
+        "Size":  9334,
+        "Name":  "CalendarView.vue"
+    },
+    {
+        "Path":  "src\\views\\apps\\chat\\ChatBox.vue",
+        "Size":  16702,
+        "Name":  "ChatBox.vue"
+    },
+    {
+        "Path":  "src\\views\\apps\\chat\\ChatSidebar.vue",
+        "Size":  7431,
+        "Name":  "ChatSidebar.vue"
+    },
+    {
+        "Path":  "src\\views\\apps\\chat\\IndexChat.vue",
+        "Size":  6478,
+        "Name":  "IndexChat.vue"
+    },
+    {
+        "Path":  "src\\views\\apps\\chat\\UserCard.vue",
+        "Size":  2440,
+        "Name":  "UserCard.vue"
+    },
+    {
+        "Path":  "src\\views\\apps\\chat\\mobile\\MobileChatBox.vue",
+        "Size":  997,
+        "Name":  "MobileChatBox.vue"
+    },
+    {
+        "Path":  "src\\views\\apps\\chat\\mobile\\MobileChatLayout.vue",
+        "Size":  1691,
+        "Name":  "MobileChatLayout.vue"
+    },
+    {
+        "Path":  "src\\views\\apps\\chat\\mobile\\MobileChatSidebar.vue",
+        "Size":  759,
+        "Name":  "MobileChatSidebar.vue"
+    },
+    {
+        "Path":  "src\\views\\apps\\events\\EventManagementView.vue",
+        "Size":  17498,
+        "Name":  "EventManagementView.vue"
+    },
+    {
+        "Path":  "src\\views\\apps\\files\\FilesView.vue",
+        "Size":  1069,
+        "Name":  "FilesView.vue"
+    },
+    {
+        "Path":  "src\\views\\apps\\mail\\ComposeNew.vue",
+        "Size":  2864,
+        "Name":  "ComposeNew.vue"
+    },
+    {
+        "Path":  "src\\views\\apps\\mail\\Detail.vue",
+        "Size":  3569,
+        "Name":  "Detail.vue"
+    },
+    {
+        "Path":  "src\\views\\apps\\mail\\Index.vue",
+        "Size":  5395,
+        "Name":  "Index.vue"
+    },
+    {
+        "Path":  "src\\views\\apps\\mail\\MailSidebar.vue",
+        "Size":  1784,
+        "Name":  "MailSidebar.vue"
+    },
+    {
+        "Path":  "src\\views\\apps\\mail\\MailTypes.vue",
+        "Size":  7125,
+        "Name":  "MailTypes.vue"
+    },
+    {
+        "Path":  "src\\views\\apps\\mail\\Reply.vue",
+        "Size":  4252,
+        "Name":  "Reply.vue"
+    },
+    {
+        "Path":  "src\\views\\apps\\notes\\NotesWorkspaceView.vue",
+        "Size":  15144,
+        "Name":  "NotesWorkspaceView.vue"
+    },
+    {
+        "Path":  "src\\views\\apps\\tasklist\\CreateTaskDialog.vue",
+        "Size":  5274,
+        "Name":  "CreateTaskDialog.vue"
+    },
+    {
+        "Path":  "src\\views\\apps\\tasklist\\Index.vue",
+        "Size":  4002,
+        "Name":  "Index.vue"
+    },
+    {
+        "Path":  "src\\views\\apps\\tasklist\\List.vue",
+        "Size":  4642,
+        "Name":  "List.vue"
+    },
+    {
+        "Path":  "src\\views\\apps\\tools\\ChatBotView.vue",
+        "Size":  1497,
+        "Name":  "ChatBotView.vue"
+    },
+    {
+        "Path":  "src\\views\\apps\\tools\\GameView.vue",
+        "Size":  1311,
+        "Name":  "GameView.vue"
+    },
+    {
+        "Path":  "src\\views\\apps\\tools\\MobileLangAppsView.vue",
+        "Size":  5183,
+        "Name":  "MobileLangAppsView.vue"
+    },
+    {
+        "Path":  "src\\views\\apps\\tools\\MobileSearchView.vue",
+        "Size":  10212,
+        "Name":  "MobileSearchView.vue"
+    },
+    {
+        "Path":  "src\\views\\apps\\tools\\MobileToolsView.vue",
+        "Size":  343,
+        "Name":  "MobileToolsView.vue"
+    },
+    {
+        "Path":  "src\\views\\apps\\tools\\ToolsView.vue",
+        "Size":  7464,
+        "Name":  "ToolsView.vue"
+    },
+    {
+        "Path":  "src\\views\\apps\\tools\\TournoiDetailsView.vue",
+        "Size":  2524,
+        "Name":  "TournoiDetailsView.vue"
+    },
+    {
+        "Path":  "src\\views\\apps\\tools\\TournoisView.vue",
+        "Size":  30656,
+        "Name":  "TournoisView.vue"
+    },
+    {
+        "Path":  "src\\views\\associations\\AlpinPhysioAdminView.vue",
+        "Size":  12489,
+        "Name":  "AlpinPhysioAdminView.vue"
+    },
+    {
+        "Path":  "src\\views\\associations\\AlpinPhysioView.vue",
+        "Size":  72714,
+        "Name":  "AlpinPhysioView.vue"
+    },
+    {
+        "Path":  "src\\views\\auth\\AccessView.vue",
+        "Size":  282,
+        "Name":  "AccessView.vue"
+    },
+    {
+        "Path":  "src\\views\\auth\\AuthErrorView.vue",
+        "Size":  297,
+        "Name":  "AuthErrorView.vue"
+    },
+    {
+        "Path":  "src\\views\\auth\\ForgotPasswordView.vue",
+        "Size":  6481,
+        "Name":  "ForgotPasswordView.vue"
+    },
+    {
+        "Path":  "src\\views\\auth\\LockScreenView.vue",
+        "Size":  3028,
+        "Name":  "LockScreenView.vue"
+    },
+    {
+        "Path":  "src\\views\\auth\\LoginHome.vue",
+        "Size":  5154,
+        "Name":  "LoginHome.vue"
+    },
+    {
+        "Path":  "src\\views\\auth\\LoginHome2.vue",
+        "Size":  4456,
+        "Name":  "LoginHome2.vue"
+    },
+    {
+        "Path":  "src\\views\\auth\\LoginView.vue",
+        "Size":  5204,
+        "Name":  "LoginView.vue"
+    },
+    {
+        "Path":  "src\\views\\auth\\NewPasswordView.vue",
+        "Size":  3466,
+        "Name":  "NewPasswordView.vue"
+    },
+    {
+        "Path":  "src\\views\\auth\\RegisterView.vue",
+        "Size":  4027,
+        "Name":  "RegisterView.vue"
+    },
+    {
+        "Path":  "src\\views\\auth\\VerificationView.vue",
+        "Size":  3988,
+        "Name":  "VerificationView.vue"
+    },
+    {
+        "Path":  "src\\views\\home\\DocumentsView.vue",
+        "Size":  8795,
+        "Name":  "DocumentsView.vue"
+    },
+    {
+        "Path":  "src\\views\\home\\FaqView.vue",
+        "Size":  8301,
+        "Name":  "FaqView.vue"
+    },
+    {
+        "Path":  "src\\views\\home\\HistoryView.vue",
+        "Size":  8143,
+        "Name":  "HistoryView.vue"
+    },
+    {
+        "Path":  "src\\views\\home\\InfoExterneView.vue",
+        "Size":  6988,
+        "Name":  "InfoExterneView.vue"
+    },
+    {
+        "Path":  "src\\views\\home\\MapView.vue",
+        "Size":  514,
+        "Name":  "MapView.vue"
+    },
+    {
+        "Path":  "src\\views\\home\\PermissionsView.vue",
+        "Size":  4387,
+        "Name":  "PermissionsView.vue"
+    },
+    {
+        "Path":  "src\\views\\home\\PushView.vue",
+        "Size":  544,
+        "Name":  "PushView.vue"
+    },
+    {
+        "Path":  "src\\views\\home\\PushView2.vue",
+        "Size":  544,
+        "Name":  "PushView2.vue"
+    },
+    {
+        "Path":  "src\\views\\home\\RoleManagement.vue",
+        "Size":  20196,
+        "Name":  "RoleManagement.vue"
+    },
+    {
+        "Path":  "src\\views\\home\\RouterView.vue",
+        "Size":  5304,
+        "Name":  "RouterView.vue"
+    },
+    {
+        "Path":  "src\\views\\home\\TermsView.vue",
+        "Size":  2648,
+        "Name":  "TermsView.vue"
+    },
+    {
+        "Path":  "src\\views\\institutions\\Institution.vue",
+        "Size":  12932,
+        "Name":  "Institution.vue"
+    },
+    {
+        "Path":  "src\\views\\institutions\\InstitutionListView.vue",
+        "Size":  5992,
+        "Name":  "InstitutionListView.vue"
+    },
+    {
+        "Path":  "src\\views\\institutions\\InstitutionListView_SUPABASE.vue",
+        "Size":  5992,
+        "Name":  "InstitutionListView_SUPABASE.vue"
+    },
+    {
+        "Path":  "src\\views\\institutions\\InstitutionView.vue",
+        "Size":  12127,
+        "Name":  "InstitutionView.vue"
+    },
+    {
+        "Path":  "src\\views\\institutions\\InstitutionView_SUPABASE.vue",
+        "Size":  11985,
+        "Name":  "InstitutionView_SUPABASE.vue"
+    },
+    {
+        "Path":  "src\\views\\institutions\\PlaceListView.vue",
+        "Size":  12495,
+        "Name":  "PlaceListView.vue"
+    },
+    {
+        "Path":  "src\\views\\media\\MediaHubPage.vue",
+        "Size":  23527,
+        "Name":  "MediaHubPage.vue"
+    },
+    {
+        "Path":  "src\\views\\media\\ModuleAdminPage.vue",
+        "Size":  10147,
+        "Name":  "ModuleAdminPage.vue"
+    },
+    {
+        "Path":  "src\\views\\media\\ModulesPage.vue",
+        "Size":  10623,
+        "Name":  "ModulesPage.vue"
+    },
+    {
+        "Path":  "src\\views\\media\\ModuleVideosPage.vue",
+        "Size":  16174,
+        "Name":  "ModuleVideosPage.vue"
+    },
+    {
+        "Path":  "src\\views\\media\\VideoValidationPage.vue",
+        "Size":  18065,
+        "Name":  "VideoValidationPage.vue"
+    },
+    {
+        "Path":  "src\\views\\media\\VimeoTestPage.vue",
+        "Size":  18472,
+        "Name":  "VimeoTestPage.vue"
+    },
+    {
+        "Path":  "src\\views\\pages\\CareConvers.vue",
+        "Size":  29073,
+        "Name":  "CareConvers.vue"
+    },
+    {
+        "Path":  "src\\views\\pages\\Faq.vue",
+        "Size":  15562,
+        "Name":  "Faq.vue"
+    },
+    {
+        "Path":  "src\\views\\pages\\ResetPassword.vue",
+        "Size":  3057,
+        "Name":  "ResetPassword.vue"
+    },
+    {
+        "Path":  "src\\views\\pages\\Supabase copy.vue",
+        "Size":  14861,
+        "Name":  "Supabase copy.vue"
+    },
+    {
+        "Path":  "src\\views\\pages\\Supabase.vue",
+        "Size":  11062,
+        "Name":  "Supabase.vue"
+    },
+    {
+        "Path":  "src\\views\\planning\\CalendarCourseView.vue",
+        "Size":  1085,
+        "Name":  "CalendarCourseView.vue"
+    },
+    {
+        "Path":  "src\\views\\planning\\CalendarModulesList.vue",
+        "Size":  2662,
+        "Name":  "CalendarModulesList.vue"
+    },
+    {
+        "Path":  "src\\views\\planning\\CalendarModuleView.vue",
+        "Size":  1953,
+        "Name":  "CalendarModuleView.vue"
+    },
+    {
+        "Path":  "src\\views\\planning\\CalendarMyCourses.vue",
+        "Size":  1479,
+        "Name":  "CalendarMyCourses.vue"
+    },
+    {
+        "Path":  "src\\views\\planning\\CalendarMyModules.vue",
+        "Size":  1396,
+        "Name":  "CalendarMyModules.vue"
+    },
+    {
+        "Path":  "src\\views\\planning\\CalendrierEnseignant.vue",
+        "Size":  2665,
+        "Name":  "CalendrierEnseignant.vue"
+    },
+    {
+        "Path":  "src\\views\\planning\\CalendrierFormationPlein.vue",
+        "Size":  4091,
+        "Name":  "CalendrierFormationPlein.vue"
+    },
+    {
+        "Path":  "src\\views\\planning\\CalendrierFormationPleinEdit.vue",
+        "Size":  9542,
+        "Name":  "CalendrierFormationPleinEdit.vue"
+    },
+    {
+        "Path":  "src\\views\\planning\\CalendrierModule.vue",
+        "Size":  2041,
+        "Name":  "CalendrierModule.vue"
+    },
+    {
+        "Path":  "src\\views\\planning\\CalendrierModuleEdit.vue",
+        "Size":  5239,
+        "Name":  "CalendrierModuleEdit.vue"
+    },
+    {
+        "Path":  "src\\views\\planning\\CalendrierSemestriel.vue",
+        "Size":  2836,
+        "Name":  "CalendrierSemestriel.vue"
+    },
+    {
+        "Path":  "src\\views\\planning\\HomePlanning.vue",
+        "Size":  18145,
+        "Name":  "HomePlanning.vue"
+    },
+    {
+        "Path":  "src\\views\\social\\CommunitiesView.vue",
+        "Size":  8437,
+        "Name":  "CommunitiesView.vue"
+    },
+    {
+        "Path":  "src\\views\\social\\CommunityInfoView.vue",
+        "Size":  4938,
+        "Name":  "CommunityInfoView.vue"
+    },
+    {
+        "Path":  "src\\views\\social\\CommunityView.vue",
+        "Size":  21035,
+        "Name":  "CommunityView.vue"
+    },
+    {
+        "Path":  "src\\views\\social\\FeedView.vue",
+        "Size":  3591,
+        "Name":  "FeedView.vue"
+    },
+    {
+        "Path":  "src\\views\\social\\HashtagView.vue",
+        "Size":  289,
+        "Name":  "HashtagView.vue"
+    },
+    {
+        "Path":  "src\\views\\social\\MentionView.vue",
+        "Size":  1748,
+        "Name":  "MentionView.vue"
+    },
+    {
+        "Path":  "src\\views\\template\\TemplateTest.vue",
+        "Size":  844,
+        "Name":  "TemplateTest.vue"
+    },
+    {
+        "Path":  "src\\views\\users\\HESHouseQuizView.vue",
+        "Size":  2109,
+        "Name":  "HESHouseQuizView.vue"
+    },
+    {
+        "Path":  "src\\views\\users\\ProfileView.vue",
+        "Size":  4972,
+        "Name":  "ProfileView.vue"
+    },
+    {
+        "Path":  "src\\views\\users\\SettingsView.vue",
+        "Size":  10588,
+        "Name":  "SettingsView.vue"
+    }
+]

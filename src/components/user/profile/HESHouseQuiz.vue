@@ -3,13 +3,30 @@
     <!-- Message si l'utilisateur a déjà une maison -->
     <div v-if="existingHouse" class="existing-house-message">
       <div class="message-card">
-        <i class="pi pi-info-circle"></i>
-        <h3>Vous avez déjà une maison !</h3>
-        <p>Vous êtes actuellement dans la maison <strong>{{ existingHouse }}</strong>.</p>
-        <p>Vous pouvez refaire le quiz pour changer de maison si vous le souhaitez.</p>
-        <button @click="existingHouse = null" class="continue-button">
-          Refaire le quiz
-        </button>
+        <div class="house-icon-container">
+          <i :class="getHouseIcon(existingHouse)" class="house-main-icon" :style="{ color: getHouseColor(existingHouse) }"></i>
+        </div>
+        <h2 class="house-name" :style="{ color: getHouseColor(existingHouse) }">{{ existingHouse }}</h2>
+        <p class="house-motto">"{{ getHouseMotto(existingHouse) }}"</p>
+        <div class="house-description">
+          <p>{{ getHouseDescription(existingHouse) }}</p>
+        </div>
+        <div class="confirmation-message">
+          <i class="pi pi-check-circle success-icon"></i>
+          <h3>Votre maison est confirmée !</h3>
+          <p>Vous faites partie de la maison <strong>{{ existingHouse }}</strong>.</p>
+          <p>Le quiz ne peut être effectué qu'une seule fois pour maintenir l'équilibre entre les maisons.</p>
+        </div>
+        <div class="action-buttons">
+          <button @click="goToProfile" class="profile-button">
+            <i class="pi pi-user"></i>
+            Voir mon profil
+          </button>
+          <button @click="goToHouseStats" class="house-button" :style="{ backgroundColor: getHouseColor(existingHouse) }">
+            <i class="pi pi-home"></i>
+            Statistiques de ma maison
+          </button>
+        </div>
       </div>
     </div>
 
@@ -73,10 +90,6 @@
               <i class="pi pi-check"></i>
               Accepter ma maison
             </button>
-            <button @click="restartQuiz" class="restart-button">
-              <i class="pi pi-refresh"></i>
-              Refaire le test
-            </button>
           </div>
         </div>
       </div>
@@ -95,15 +108,14 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { getAuth } from 'firebase/auth'
-import { getDatabase, ref as dbRef, get, update } from "firebase/database"
 import { useToast } from 'primevue/usetoast'
-import { initializeUserGamification, addUserXP } from '@/service/hesHousesService'
+import gamificationServiceSupabase from '@/service/gamificationServiceSupabase'
 import gamificationIntegration from '@/service/gamificationIntegration'
+import { useAuthStore } from '@/stores/authStore'
 
 const router = useRouter()
 const toast = useToast()
-const auth = getAuth()
+const authStore = useAuthStore()
 
 // Props
 const props = defineProps({
@@ -332,10 +344,10 @@ const nextQuestion = () => {
   }
 }
 
-const calculateHouse = () => {
+const calculateHouse = async () => {
   isCalculating.value = true
   
-  setTimeout(() => {
+  try {
     // Compter les réponses pour chaque maison
     const houseScores = {
       harmonis: 0,
@@ -348,20 +360,53 @@ const calculateHouse = () => {
       houseScores[answer.house]++
     })
     
-    // Trouver la maison avec le score le plus élevé
-    const winningHouse = Object.keys(houseScores).reduce((a, b) => 
-      houseScores[a] > houseScores[b] ? a : b
-    )
+    console.log('📊 Scores du quiz:', houseScores)
     
-    selectedHouse.value = houses[winningHouse]
-    isCalculating.value = false
-    quizCompleted.value = true
-  }, 2000)
+    // 🎯 NOUVEAU: Utiliser le système d'équilibrage automatique
+    const bestAvailableHouse = await gamificationServiceSupabase.findBestAvailableHouse(houseScores, 50)
+    
+    console.log(`🏠 Maison assignée: ${bestAvailableHouse}`)
+    
+    // Attendre 2 secondes pour l'effet dramatique
+    setTimeout(() => {
+      selectedHouse.value = houses[bestAvailableHouse]
+      isCalculating.value = false
+      quizCompleted.value = true
+      
+      // Afficher un message si la maison a été changée pour équilibrage
+      const originalWinner = Object.keys(houseScores).reduce((a, b) => 
+        houseScores[a] > houseScores[b] ? a : b
+      )
+      
+      if (originalWinner !== bestAvailableHouse) {
+        toast.add({
+          severity: 'info',
+          summary: 'Équilibrage des Maisons',
+          detail: `Tu as été assigné à ${houses[bestAvailableHouse].name} pour maintenir l'équilibre entre les maisons !`,
+          life: 5000
+        })
+      }
+    }, 2000)
+    
+  } catch (error) {
+    console.error('❌ Erreur lors du calcul de la maison:', error)
+    
+    // Fallback: méthode originale en cas d'erreur
+    setTimeout(() => {
+      const winningHouse = Object.keys(houseScores).reduce((a, b) => 
+        houseScores[a] > houseScores[b] ? a : b
+      )
+      
+      selectedHouse.value = houses[winningHouse]
+      isCalculating.value = false
+      quizCompleted.value = true
+    }, 2000)
+  }
 }
 
 const saveHouseSelection = async () => {
   try {
-    const userId = props.userId || auth.currentUser?.uid
+    const userId = props.userId || authStore.user?.id
     if (!userId) {
       toast.add({
         severity: 'error',
@@ -372,8 +417,41 @@ const saveHouseSelection = async () => {
       return
     }
 
-    // Utiliser le nouveau service de gamification pour initialiser l'utilisateur
-    await initializeUserGamification(userId, selectedHouse.value.name)
+    // Sauvegarder la maison directement dans gamification_data
+    try {
+      const houseId = getHouseIdByName(selectedHouse.value.name)
+      
+      // Insertion directe dans gamification_data avec colonnes correctes
+      const { data, error } = await gamificationServiceSupabase.supabase
+        .from('gamification_data')
+        .upsert({
+          user_id: userId,
+          email: authStore.user?.email || 'unknown@email.com',
+          house_id: houseId,
+          current_level: 1,
+          total_xp: 50, // Bonus quiz
+          house_points: 50, // Points initiaux pour la maison
+          gamification_metadata: {
+            quiz_completed: true,
+            house_assigned: selectedHouse.value.name,
+            quiz_date: new Date().toISOString()
+          },
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id' })
+        .select()
+        .single()
+
+      if (error) {
+        console.error('❌ Erreur sauvegarde gamification_data:', error)
+        throw error
+      }
+
+      console.log('✅ Maison sauvegardée dans gamification_data:', selectedHouse.value.name, 'pour utilisateur:', userId)
+      console.log('Données sauvegardées:', data)
+    } catch (error) {
+      console.error('❌ Erreur sauvegarde Supabase:', error)
+      // Continuer même en cas d'erreur de sauvegarde
+    }
 
     // NOUVEAU : Déclencher l'intégration gamification pour quiz terminé
     await gamificationIntegration.onQuizComplete(userId, {
@@ -417,21 +495,67 @@ const restartQuiz = () => {
   selectedHouse.value = null
 }
 
-// Vérifier si l'utilisateur a déjà une maison
+// Helper pour obtenir l'ID de la maison par son nom
+const getHouseIdByName = (houseName) => {
+  const houseMapping = {
+    'Harmonis': '550e8400-e29b-41d4-a716-446655440001',
+    'Elaris': '550e8400-e29b-41d4-a716-446655440002', 
+    'Doloris': '550e8400-e29b-41d4-a716-446655440003',
+    'Solencia': '550e8400-e29b-41d4-a716-446655440004'
+  }
+  return houseMapping[houseName] || houseMapping['Harmonis'] // Fallback
+}
+
+// Helpers pour obtenir les informations des maisons existantes
+const getHouseColor = (houseName) => {
+  const house = Object.values(houses).find(h => h.name === houseName)
+  return house?.color || '#2E8B57'
+}
+
+const getHouseIcon = (houseName) => {
+  const house = Object.values(houses).find(h => h.name === houseName)
+  return house?.icon || 'pi pi-circle'
+}
+
+const getHouseMotto = (houseName) => {
+  const house = Object.values(houses).find(h => h.name === houseName)
+  return house?.motto || 'L\'équilibre soigne'
+}
+
+const getHouseDescription = (houseName) => {
+  const house = Object.values(houses).find(h => h.name === houseName)
+  return house?.description || 'Votre maison vous correspond parfaitement.'
+}
+
+// Actions de navigation
+const goToProfile = () => {
+  const userId = props.userId || authStore.user?.id
+  if (userId) {
+    router.push(`/profile/${userId}`)
+  }
+}
+
+const goToHouseStats = () => {
+  const houseName = existingHouse.value?.toLowerCase()
+  if (houseName) {
+    router.push(`/houses/${houseName}/stats`)
+  }
+}
+
+// Vérifier si l'utilisateur a déjà une maison avec Supabase
 onMounted(async () => {
   try {
-    const userId = props.userId || auth.currentUser?.uid
+    const userId = props.userId || authStore.user?.id
     if (userId) {
-      const userRef = dbRef(getDatabase(), `Users/${userId}`)
-      const snapshot = await get(userRef)
-      const userData = snapshot.val()
-      if (userData?.gamification?.maison) {
-        existingHouse.value = userData.gamification.maison
-        // router.push('/profile/' + userId) // commented to allow quiz retake
+      // Utiliser le service Supabase pour vérifier la maison existante
+      const gamificationData = await gamificationServiceSupabase.getUserGamificationData(userId)
+      if (gamificationData?.maison) {
+        existingHouse.value = gamificationData.maison
+        // Permettre de refaire le quiz même avec une maison existante
       }
     }
   } catch (error) {
-    console.error('Erreur lors de la vérification:', error)
+    console.error('Erreur lors de la vérification Supabase:', error)
   }
 })
 </script>
@@ -698,47 +822,79 @@ onMounted(async () => {
 .message-card {
   background: var(--surface-card);
   border-radius: 12px;
-  padding: 2rem;
+  padding: 3rem;
   box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  max-width: 600px;
+  margin: 0 auto;
 }
 
-.message-card i {
-  font-size: 2rem;
-  color: var(--primary-color);
+.confirmation-message {
+  background: #f0f9ff;
+  border: 2px solid #22c55e;
+  border-radius: 12px;
+  padding: 2rem;
+  margin: 2rem 0;
+}
+
+.success-icon {
+  font-size: 3rem;
+  color: #22c55e;
   margin-bottom: 1rem;
 }
 
-.message-card h3 {
+.confirmation-message h3 {
   font-size: 1.5rem;
+  color: #22c55e;
   margin: 1rem 0;
   font-weight: 700;
 }
 
-.message-card p {
+.confirmation-message p {
   font-size: 1.1rem;
   line-height: 1.6;
-  color: var(--text-color);
+  color: #374151;
   margin-bottom: 1rem;
 }
 
-.continue-button {
-  background: var(--primary-color);
-  color: white;
-  border: none;
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 2rem;
+}
+
+.profile-button,
+.house-button {
   padding: 1rem 2rem;
   border-radius: 25px;
-  font-size: 1.2rem;
+  border: none;
   font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin: 0 auto;
-  transition: background 0.3s ease;
+  transition: all 0.3s ease;
+  font-size: 1rem;
 }
 
-.continue-button:hover {
-  background: var(--primary-color-dark);
+.profile-button {
+  background: var(--surface-border);
+  color: var(--text-color);
+}
+
+.profile-button:hover {
+  background: var(--surface-hover);
+  transform: translateY(-2px);
+}
+
+.house-button {
+  color: white;
+}
+
+.house-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
 /* Responsive */

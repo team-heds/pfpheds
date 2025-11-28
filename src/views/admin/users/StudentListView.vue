@@ -1,6 +1,5 @@
 <template>
-  <div class="admin-scrollable">
-    <Navbar />
+  <AdminLayout>
     <div class="filter-menu">
       <DataTable
         :value="filteredEtudiants"
@@ -58,7 +57,7 @@
         </Column>
       </DataTable>
     </div>
-  </div>
+  </AdminLayout>
 </template>
 
 <script>
@@ -68,7 +67,7 @@ import Column from 'primevue/column';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
-import Navbar from '@/components/common/utils/Navbar.vue';
+import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 
 export default {
   name: "EtudiantList",
@@ -78,7 +77,7 @@ export default {
     InputText,
     Button,
     Dropdown,
-    Navbar
+    AdminLayout
   },
   data() {
     return {

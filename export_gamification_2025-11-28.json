@@ -1,0 +1,3614 @@
+{
+  "gamification_data": {
+    "count": 198,
+    "data": [
+      {
+        "id": "1c286bf7-80ac-44f0-ba7b-bc230f7f960a",
+        "user_id": "cfc00b1a-eef3-411c-9a16-3b8b17571b3f",
+        "email": "kezia.lenzser@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T15:36:52.514Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T15:36:52.700846+00:00",
+        "updated_at": "2025-10-01T15:36:52.514+00:00"
+      },
+      {
+        "id": "e66bc967-08ac-4474-baf8-ab08cec5ded7",
+        "user_id": "fc71dc1f-d29f-41c1-823e-96fd558da28c",
+        "email": "pauline.betrisey@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T15:36:53.268Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T15:36:53.383067+00:00",
+        "updated_at": "2025-10-01T15:36:53.268+00:00"
+      },
+      {
+        "id": "e85f5268-0bb2-4981-a923-edda80863b7f",
+        "user_id": "827c6bb1-b8cb-4279-abb9-defecbb83fc7",
+        "email": "anae.meister@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T16:05:18.593Z",
+          "house_assigned": "Harmonis",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T16:05:18.741207+00:00",
+        "updated_at": "2025-10-01T16:05:18.593+00:00"
+      },
+      {
+        "id": "c5ac4bd4-e676-4ee1-b1d9-f98aae4a82ed",
+        "user_id": "8d0e0e1f-ab63-4b4a-9d00-702f0b85a573",
+        "email": "jessica.duchoud@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T16:07:58.252Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T16:07:59.101332+00:00",
+        "updated_at": "2025-10-01T16:07:58.252+00:00"
+      },
+      {
+        "id": "5a1914cc-f1b1-4ccc-a330-d60027502e32",
+        "user_id": "083d796d-94c8-4898-bc52-605edc503d29",
+        "email": "nathan.imboden@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T16:12:20.572Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T16:12:20.672527+00:00",
+        "updated_at": "2025-10-01T16:12:20.572+00:00"
+      },
+      {
+        "id": "54887c01-d4a1-4932-a7f3-7a5cfa173528",
+        "user_id": "1c0d29ca-66e7-4ecc-92f5-7dcf4ee757ca",
+        "email": "elodie.savary@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T16:09:19.236Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T16:09:19.531101+00:00",
+        "updated_at": "2025-10-01T16:09:19.236+00:00"
+      },
+      {
+        "id": "49a87d48-2eb9-48aa-9e1c-9a2e8dad8ff1",
+        "user_id": "6a791e48-fca4-482f-bed4-a16effad0800",
+        "email": "sacha.caron@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T15:57:35.692Z",
+          "house_assigned": "Harmonis",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T15:57:35.836806+00:00",
+        "updated_at": "2025-10-01T15:57:35.692+00:00"
+      },
+      {
+        "id": "e9f13dcf-59fb-415c-924f-25cfa7ca4b51",
+        "user_id": "1d3259be-3aee-4884-a2bb-0a773cc64e6e",
+        "email": "julie.aymon@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T16:21:10.024Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T16:21:10.111895+00:00",
+        "updated_at": "2025-10-01T16:21:10.024+00:00"
+      },
+      {
+        "id": "0256361d-ef63-4e5b-8696-987a898b9f72",
+        "user_id": "4b59a2d1-76ee-4a31-8b89-abfe1847e4af",
+        "email": "aurelie.trummer@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T16:33:10.523Z",
+          "house_assigned": "Harmonis",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T16:33:10.557781+00:00",
+        "updated_at": "2025-10-01T16:33:10.523+00:00"
+      },
+      {
+        "id": "cfb16118-49dc-4482-80aa-3ea5e377cd73",
+        "user_id": "dbb3e05b-8e6c-43b9-8544-d3b625436037",
+        "email": "coraline.eschmann@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T16:43:56.946Z",
+          "house_assigned": "Harmonis",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T16:43:56.085871+00:00",
+        "updated_at": "2025-10-01T16:43:56.946+00:00"
+      },
+      {
+        "id": "ad678394-148a-4461-a371-28e4713cc341",
+        "user_id": "17973475-8d7e-4d50-882d-7b1085d0aa43",
+        "email": "gauthier.martig@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T07:18:35.641Z",
+          "house_assigned": "Harmonis",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T07:18:35.733705+00:00",
+        "updated_at": "2025-10-02T07:18:35.641+00:00"
+      },
+      {
+        "id": "a8d3d3a6-c882-4ce1-8d0b-62e257a6112f",
+        "user_id": "c395fb8f-350e-4a64-b619-2a57ca194070",
+        "email": "axelle.genoud@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T16:46:00.113Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T16:45:55.461619+00:00",
+        "updated_at": "2025-10-01T16:46:00.113+00:00"
+      },
+      {
+        "id": "3d6f3495-3699-4f86-83a4-ab7e363e3d88",
+        "user_id": "b0375ac8-2795-460b-b5ab-c92ce7520a84",
+        "email": "yasmine.roduit@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T16:27:25.082Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T16:27:24.896954+00:00",
+        "updated_at": "2025-10-01T16:27:25.082+00:00"
+      },
+      {
+        "id": "ebad55a4-1feb-440e-93d1-cf48125427f8",
+        "user_id": "c6bbc518-e543-4760-b4cf-d9b40e3241a6",
+        "email": "elisa.moulin@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T17:17:41.889Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T17:17:40.181839+00:00",
+        "updated_at": "2025-10-01T17:17:41.889+00:00"
+      },
+      {
+        "id": "078b9734-7958-4c36-9c9b-e610ea23780f",
+        "user_id": "178cda4e-1ffa-48ae-a558-17b4657b7ab8",
+        "email": "maude.bersier@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T17:20:11.521Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T17:20:12.218311+00:00",
+        "updated_at": "2025-10-01T17:20:11.521+00:00"
+      },
+      {
+        "id": "4c453e3d-5c5c-4276-8825-c0039cb7b468",
+        "user_id": "6843c003-397d-45ca-97f7-d3a30d243f20",
+        "email": "laure.courtine@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T17:25:45.569Z",
+          "house_assigned": "Harmonis",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T17:25:46.055984+00:00",
+        "updated_at": "2025-10-01T17:25:45.569+00:00"
+      },
+      {
+        "id": "458bf5d5-47bb-4741-ad2d-e1c8f1ee0828",
+        "user_id": "f3b49405-292d-4b59-9874-b314aefe9399",
+        "email": "maximilien.cattier@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T17:30:05.377Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T17:30:05.555413+00:00",
+        "updated_at": "2025-10-01T17:30:05.377+00:00"
+      },
+      {
+        "id": "a5308ec0-2855-4688-a38e-10bc30f185af",
+        "user_id": "f850d669-218e-45d3-83c8-2e9814b67660",
+        "email": "sevane.verly@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T17:40:27.409Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T17:40:27.891424+00:00",
+        "updated_at": "2025-10-01T17:40:27.409+00:00"
+      },
+      {
+        "id": "81d7a98d-7386-4d3c-8d8d-d673d856f691",
+        "user_id": "6490cf26-18f7-447e-8c78-dfa3ebde4012",
+        "email": "thomas.montanari@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T18:03:03.383Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T18:03:03.489813+00:00",
+        "updated_at": "2025-10-01T18:03:03.383+00:00"
+      },
+      {
+        "id": "2b7a1dc4-f972-4348-9a02-4da236af29a8",
+        "user_id": "c885635a-2860-4b55-a116-558657d44426",
+        "email": "naomi.carrel@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T18:08:14.171Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T18:08:13.113024+00:00",
+        "updated_at": "2025-10-01T18:08:14.171+00:00"
+      },
+      {
+        "id": "1094532b-4f04-4683-8925-d711729f8f67",
+        "user_id": "d3e396f3-324b-49ae-9675-560818af585f",
+        "email": "solenne.mariethoz@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T18:14:37.673Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T18:14:37.894649+00:00",
+        "updated_at": "2025-10-01T18:14:37.673+00:00"
+      },
+      {
+        "id": "ae801b13-ceb6-4004-bb73-2f2a4e1da9d6",
+        "user_id": "8eb9f275-b79f-47db-abb5-c7aece4bf78d",
+        "email": "marie-laure.probst@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T18:20:31.932Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T18:20:32.076296+00:00",
+        "updated_at": "2025-10-01T18:20:31.932+00:00"
+      },
+      {
+        "id": "c4fbbcef-16bb-4858-b946-2975d478dd18",
+        "user_id": "aba6db04-489b-4ec5-a370-2cbae9387fea",
+        "email": "chiara.denervaud@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T18:33:11.687Z",
+          "house_assigned": "Harmonis",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T18:33:11.816066+00:00",
+        "updated_at": "2025-10-01T18:33:11.687+00:00"
+      },
+      {
+        "id": "0cb7c861-879e-4c58-9a67-62100008f4cd",
+        "user_id": "0515d6b6-efbb-451c-9356-6f7df27b0c5e",
+        "email": "maelle.ruf@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T19:28:18.836Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T19:28:19.023039+00:00",
+        "updated_at": "2025-10-01T19:28:18.836+00:00"
+      },
+      {
+        "id": "2332a306-7d6b-4252-8e39-a9d4f43668ba",
+        "user_id": "21467daf-1dd7-4e23-b357-28277a46a62d",
+        "email": "gregory.wahl@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T19:35:11.330Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T19:35:11.385685+00:00",
+        "updated_at": "2025-10-01T19:35:11.33+00:00"
+      },
+      {
+        "id": "2ad98e51-b9c4-4740-a354-1a3ac04bb0b4",
+        "user_id": "77cf989a-04d3-43d2-9305-e8325864c804",
+        "email": "lucie.droux@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T19:41:25.116Z",
+          "house_assigned": "Harmonis",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T19:41:25.185778+00:00",
+        "updated_at": "2025-10-01T19:41:25.116+00:00"
+      },
+      {
+        "id": "c56ed530-af8d-4766-8ea2-0d1ee2619cdf",
+        "user_id": "0a3ff93e-a398-451e-81b0-b83998233701",
+        "email": "jessica.jungo@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T20:01:29.030Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T20:01:29.340379+00:00",
+        "updated_at": "2025-10-01T20:01:29.03+00:00"
+      },
+      {
+        "id": "782e19cc-86ed-4314-ba2a-63c476c5274a",
+        "user_id": "b6c631fc-5b9e-4eee-99f3-e0e6f7a0f29c",
+        "email": "lucie.gaudin@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T21:01:24.057Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T21:01:23.905437+00:00",
+        "updated_at": "2025-10-01T21:01:24.057+00:00"
+      },
+      {
+        "id": "fc8ea4c0-4f6f-4863-abf4-6858039ca93e",
+        "user_id": "5134d6ff-f3b2-4cd2-8eae-74c1a0f76c20",
+        "email": "naomi.barmaz@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T05:41:09.705Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T05:41:09.708599+00:00",
+        "updated_at": "2025-10-02T05:41:09.705+00:00"
+      },
+      {
+        "id": "754192b8-6eda-44ed-b3a5-8b885736b5a3",
+        "user_id": "bdeae8f5-26a4-40c5-863f-aa2cfe422b2e",
+        "email": "luca.fleury@students.hevs.ch",
+        "total_xp": 150,
+        "current_level": 2,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T17:21:00.475Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T17:20:43.689037+00:00",
+        "updated_at": "2025-10-08T11:08:48.708+00:00"
+      },
+      {
+        "id": "94fdbd66-c553-47dd-b53f-20b5f70d7bf3",
+        "user_id": "a21b45ff-68fd-43df-a438-a4029e10a1dc",
+        "email": "margarida.pereiradasilva@students.hevs.ch",
+        "total_xp": 75,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T05:18:39.312Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T05:18:38.415231+00:00",
+        "updated_at": "2025-10-08T15:01:48.536+00:00"
+      },
+      {
+        "id": "0364b21c-e888-4c29-9e3a-01242cdba58c",
+        "user_id": "1a5093ba-c3ec-4eeb-b503-89c03d8507b5",
+        "email": "ruben.cunhadesa@students.hevs.ch",
+        "total_xp": 200,
+        "current_level": 3,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T17:04:32.368Z",
+          "house_assigned": "Harmonis",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T17:04:32.453762+00:00",
+        "updated_at": "2025-10-28T07:13:27.312+00:00"
+      },
+      {
+        "id": "7dd4149f-03b7-4a05-8287-274e64351075",
+        "user_id": "8a7a88a9-2158-4cf9-9254-5a73fb018499",
+        "email": "tom.rieubon@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T15:40:21.983Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T15:40:22.087618+00:00",
+        "updated_at": "2025-10-01T15:40:21.983+00:00"
+      },
+      {
+        "id": "224a94b5-6e14-4c74-b7c3-df21e75f8cb0",
+        "user_id": "4f453896-81dd-4e4c-b686-c593a8bb6401",
+        "email": "marine.droz@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T06:30:27.584Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T06:30:27.748487+00:00",
+        "updated_at": "2025-10-02T06:30:27.584+00:00"
+      },
+      {
+        "id": "d903b5f0-587e-4fce-b847-3d1e77bd8707",
+        "user_id": "a6d3e762-0003-41f4-9b45-db49d2eeef11",
+        "email": "jane.berclaz@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T06:31:18.114Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T06:31:18.57879+00:00",
+        "updated_at": "2025-10-02T06:31:18.114+00:00"
+      },
+      {
+        "id": "47bd2063-10b9-478b-9384-0076c9a39053",
+        "user_id": "02284a9b-80d0-4abf-9e53-adec05a3cdcc",
+        "email": "tabea.blatter@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T06:38:37.691Z",
+          "house_assigned": "Harmonis",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T06:38:37.836484+00:00",
+        "updated_at": "2025-10-02T06:38:37.691+00:00"
+      },
+      {
+        "id": "9ee7dd42-9e22-4b68-a401-5b5468f52afb",
+        "user_id": "9f6a26a1-932f-4a60-938b-89ecac39b772",
+        "email": "tiago.oliveiracarvalho@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T06:47:21.891Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T06:47:21.935592+00:00",
+        "updated_at": "2025-10-02T06:47:21.891+00:00"
+      },
+      {
+        "id": "3a1941a6-98d6-435e-85cb-1a525025b761",
+        "user_id": "d974ba02-985b-4c54-9f26-9ef2ff6613a7",
+        "email": "clemence.masserey@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T07:09:08.796Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T07:09:08.127789+00:00",
+        "updated_at": "2025-10-02T07:09:08.796+00:00"
+      },
+      {
+        "id": "d24977ea-ea35-47e8-8ba6-f2bddbcfc35b",
+        "user_id": "efa89936-8bfc-40f3-8926-d65e8ac4cede",
+        "email": "stella.bonvin@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T07:09:07.549Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T07:09:08.366751+00:00",
+        "updated_at": "2025-10-02T07:09:07.549+00:00"
+      },
+      {
+        "id": "2d4f9d5b-c013-4843-8ec1-34fe638a5bfd",
+        "user_id": "9456cdf7-2222-4a29-84a0-50044b43619f",
+        "email": "noah.imboden@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T07:18:43.217Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T07:18:43.457062+00:00",
+        "updated_at": "2025-10-02T07:18:43.217+00:00"
+      },
+      {
+        "id": "f89ae2bb-205b-4d4e-b092-a3931b1ec235",
+        "user_id": "8dacf36a-3176-4025-bcbe-3c2d78e4fc3f",
+        "email": "theo.mayoraz@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T07:20:16.801Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T07:20:16.973117+00:00",
+        "updated_at": "2025-10-02T07:20:16.801+00:00"
+      },
+      {
+        "id": "4d03db85-57c3-43e6-9402-45f579d810ad",
+        "user_id": "0a10d752-7bdb-4552-b04c-326dbac1dbac",
+        "email": "barbara.palthey@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T07:29:22.197Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T07:29:24.372535+00:00",
+        "updated_at": "2025-10-02T07:29:22.197+00:00"
+      },
+      {
+        "id": "e6f8364d-2e88-473e-9b74-cd53900f81ab",
+        "user_id": "011c43bc-8efc-459d-b2b9-7667f5f6bf21",
+        "email": "camille.monnier@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T07:37:15.783Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T07:37:15.940263+00:00",
+        "updated_at": "2025-10-02T07:37:15.783+00:00"
+      },
+      {
+        "id": "121c3e06-2393-4482-a5cd-439bb8e615f7",
+        "user_id": "415b4605-81de-4428-a92a-1a51fa847855",
+        "email": "rilana.hutter@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T07:51:55.009Z",
+          "house_assigned": "Harmonis",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T07:51:55.051589+00:00",
+        "updated_at": "2025-10-02T07:51:55.009+00:00"
+      },
+      {
+        "id": "5a2a1606-00b1-49d4-a0cb-21e4e02a260b",
+        "user_id": "2ab99c77-8ec7-4abe-b187-b5d47dc3e7a9",
+        "email": "alexandre.arrobas@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T07:54:32.403Z",
+          "house_assigned": "Harmonis",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T07:54:30.716159+00:00",
+        "updated_at": "2025-10-02T07:54:32.403+00:00"
+      },
+      {
+        "id": "3c88f921-0e7e-4b6a-9b19-925df07876be",
+        "user_id": "08066358-82a1-4e96-ab71-3352b928f409",
+        "email": "fleur.greffet@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T07:55:57.939Z",
+          "house_assigned": "Harmonis",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T07:56:02.020252+00:00",
+        "updated_at": "2025-10-02T07:55:57.939+00:00"
+      },
+      {
+        "id": "6e53c525-9a2f-4216-a4ad-f8c8bd4684f8",
+        "user_id": "ff439ae1-7000-4d40-bb30-4ee89b21f84b",
+        "email": "nina.escher@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T07:34:05.885Z",
+          "house_assigned": "Harmonis",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T07:34:06.562956+00:00",
+        "updated_at": "2025-10-02T07:34:05.885+00:00"
+      },
+      {
+        "id": "da3081e0-6be9-4290-af2c-f852c8d5122b",
+        "user_id": "c609052e-f147-4155-a4c2-0438bfd16038",
+        "email": "quentin.egger@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T08:55:02.817Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T08:54:58.372524+00:00",
+        "updated_at": "2025-10-02T08:55:02.817+00:00"
+      },
+      {
+        "id": "6221467f-aa31-4031-8c7c-ee3ee1cbd7d0",
+        "user_id": "95d32551-66a2-4c81-a62f-2c3ad59417d0",
+        "email": "audrey.pedroletti@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T07:56:11.916Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T07:56:10.227775+00:00",
+        "updated_at": "2025-10-02T07:56:11.916+00:00"
+      },
+      {
+        "id": "a8d95286-0e1f-4008-b434-9c8652242c08",
+        "user_id": "e69d4c9d-a4c9-42f9-a1fa-8806277d40a4",
+        "email": "steve.bagnoud@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T08:02:17.733Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T08:02:17.704912+00:00",
+        "updated_at": "2025-10-02T08:02:17.733+00:00"
+      },
+      {
+        "id": "bdef6641-5d0c-465a-9757-a5944c30d69e",
+        "user_id": "93fbfd7e-daa1-4b07-a8c3-61e4157ad8ac",
+        "email": "caroline.gapany@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T08:11:13.154Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T08:11:13.399093+00:00",
+        "updated_at": "2025-10-02T08:11:13.154+00:00"
+      },
+      {
+        "id": "232e6e01-844a-4bd2-a62e-da93b42fcec5",
+        "user_id": "0bc2e0a1-c98b-43dd-89bf-d79acd1ab2d0",
+        "email": "celine.frossard1@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T08:12:10.280Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T08:12:10.350709+00:00",
+        "updated_at": "2025-10-02T08:12:10.28+00:00"
+      },
+      {
+        "id": "b3aa503e-08a2-497d-8b0c-1f25e4a4565f",
+        "user_id": "f668e054-a0e0-43a7-93c5-0cb7ce47289c",
+        "email": "nadine.corminboeuf@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T08:12:13.522Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T08:12:12.609105+00:00",
+        "updated_at": "2025-10-02T08:12:13.522+00:00"
+      },
+      {
+        "id": "11066c8a-0353-416e-8e32-e0a53f8e9ad0",
+        "user_id": "14033392-1733-46e4-8806-0b3ad86e10dd",
+        "email": "lara.limacruzsousa@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T08:13:21.396Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T08:13:21.546772+00:00",
+        "updated_at": "2025-10-02T08:13:21.396+00:00"
+      },
+      {
+        "id": "8221081a-a5e9-45d3-8875-4b527e56fb5f",
+        "user_id": "6278321b-1afc-401e-b2d8-55cb7fd85ff6",
+        "email": "alexis.coty@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T08:17:53.755Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T08:17:53.919159+00:00",
+        "updated_at": "2025-10-02T08:17:53.755+00:00"
+      },
+      {
+        "id": "49a532d7-db2c-4d6c-ac67-1edbb791f60b",
+        "user_id": "5ee55512-b05c-48ef-a27d-0d3f536f6fc5",
+        "email": "rebecca.fryand@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T08:20:51.763Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T08:20:51.451299+00:00",
+        "updated_at": "2025-10-02T08:20:51.764+00:00"
+      },
+      {
+        "id": "339ea774-670c-41cb-8e9d-b34fc77ce7a5",
+        "user_id": "6b816e37-cf4d-4b35-b9e6-6a9d1afea6b5",
+        "email": "zoe.duvoisin@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T08:21:16.355Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T08:21:16.424526+00:00",
+        "updated_at": "2025-10-02T08:21:16.355+00:00"
+      },
+      {
+        "id": "e82abb3b-e09c-4a3b-bd7f-afe15165529c",
+        "user_id": "b27b5476-444e-49c2-a207-1a328f66b653",
+        "email": "sarah.robyr@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T08:21:16.428Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T08:21:16.475107+00:00",
+        "updated_at": "2025-10-02T08:21:16.428+00:00"
+      },
+      {
+        "id": "9ed25643-612b-4641-aa7c-72aaf137cd68",
+        "user_id": "83f9b6f7-0da3-47a1-9185-82aa554f5620",
+        "email": "fiona.nanchen@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T08:21:14.803Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T08:21:17.697639+00:00",
+        "updated_at": "2025-10-02T08:21:14.803+00:00"
+      },
+      {
+        "id": "2f52827c-a63f-4b10-9ec5-db4a50cc2980",
+        "user_id": "9a4a7df2-e391-4108-ba4e-b729ff767810",
+        "email": "hannah.theler@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T08:23:53.389Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T08:23:53.786748+00:00",
+        "updated_at": "2025-10-02T08:23:53.389+00:00"
+      },
+      {
+        "id": "46094c66-30e0-4242-8d11-63f273a4c538",
+        "user_id": "fe966e9d-20f8-4788-93fa-9502514451db",
+        "email": "maxime.schaer@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T08:28:05.485Z",
+          "house_assigned": "Harmonis",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T08:28:05.861443+00:00",
+        "updated_at": "2025-10-02T08:28:05.485+00:00"
+      },
+      {
+        "id": "8ca49c94-86a0-4204-9398-1275592a653d",
+        "user_id": "554ba8f4-4eb8-49a9-a1e4-932cea80d6ab",
+        "email": "alexandre.lavanchy@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T08:28:41.736Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T08:28:41.759548+00:00",
+        "updated_at": "2025-10-02T08:28:41.736+00:00"
+      },
+      {
+        "id": "9a77720f-f8ee-4b21-bc2d-305cf8b75d99",
+        "user_id": "429b6372-d78c-478c-91e0-61fba31e8167",
+        "email": "denise.urban@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T08:30:36.111Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T08:30:35.862986+00:00",
+        "updated_at": "2025-10-02T08:30:36.111+00:00"
+      },
+      {
+        "id": "afb87fa1-3f76-45ce-9fe1-d7cadfd03dce",
+        "user_id": "49eb6e9c-0e4e-4b79-a585-8e12759b9652",
+        "email": "morgan.rey@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T08:35:10.552Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T08:35:09.481099+00:00",
+        "updated_at": "2025-10-02T08:35:10.552+00:00"
+      },
+      {
+        "id": "9e9cd1d0-1638-48a1-859b-49d55b648b52",
+        "user_id": "5777307d-c84a-4cc6-a5d8-40c90a22cdac",
+        "email": "kristie.morard@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T08:42:47.164Z",
+          "house_assigned": "Harmonis",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T08:42:46.310145+00:00",
+        "updated_at": "2025-10-02T08:42:47.164+00:00"
+      },
+      {
+        "id": "878af67f-9a65-465a-82e9-3c91be5869a0",
+        "user_id": "aaf2059f-f489-4605-9557-d1c121802631",
+        "email": "benoit.bontempe@hes-so.ch",
+        "total_xp": 0,
+        "current_level": 20,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 0,
+        "gamification_metadata": {},
+        "created_at": "2025-10-08T13:40:40.023554+00:00",
+        "updated_at": "2025-10-08T13:40:40.023554+00:00"
+      },
+      {
+        "id": "6c84437f-263c-4576-82e0-c91a2a37dd48",
+        "user_id": "1a4692db-3b35-4f13-bafc-bf797a73f08c",
+        "email": "noemie.carruzzo@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T16:00:24.886Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T16:00:25.034738+00:00",
+        "updated_at": "2025-10-01T16:00:24.886+00:00"
+      },
+      {
+        "id": "fa948a8d-87c4-4bac-b6b4-d08a7e9adc5d",
+        "user_id": "9d08a521-4d0d-4c4f-881d-06dd68b9acb9",
+        "email": "alessandra.corsten@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T08:44:11.878Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T08:44:11.980791+00:00",
+        "updated_at": "2025-10-02T08:44:11.878+00:00"
+      },
+      {
+        "id": "2dc1a312-8694-439a-ad66-13d8650821da",
+        "user_id": "eb05d4cf-a564-4780-af0d-c37f6630b448",
+        "email": "timothee.sridharan@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T09:07:01.306Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T09:07:02.177405+00:00",
+        "updated_at": "2025-10-02T09:07:01.306+00:00"
+      },
+      {
+        "id": "cc18eaad-895a-4bf8-82bb-f1b1d27706c8",
+        "user_id": "3c6a3191-dd8c-4f42-a8fa-2a1af69a26a1",
+        "email": "laetitia.lugon-moulin@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T09:07:17.451Z",
+          "house_assigned": "Harmonis",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T09:07:17.440671+00:00",
+        "updated_at": "2025-10-02T09:07:17.451+00:00"
+      },
+      {
+        "id": "aafda1c6-24c3-401e-b0ed-746132f1f0f4",
+        "user_id": "00782a82-6986-4792-b2c1-8a2d67043a50",
+        "email": "guillaume.schosser@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T09:13:47.928Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T09:13:47.071245+00:00",
+        "updated_at": "2025-10-02T09:13:47.928+00:00"
+      },
+      {
+        "id": "755a11fe-65a5-43e2-9efb-aaef161a094e",
+        "user_id": "e58a9e71-cc83-49f2-9e48-618be8d0fd1f",
+        "email": "mael.corthay@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T09:08:31.862Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T09:08:30.82481+00:00",
+        "updated_at": "2025-10-02T09:08:31.862+00:00"
+      },
+      {
+        "id": "7a050eec-2abf-4fee-a3b7-fd325fc7b193",
+        "user_id": "d33ecfb9-2b4b-49f2-8b00-acc1cfc31e91",
+        "email": "andreieric.dubois@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T09:08:32.612Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T09:08:33.861769+00:00",
+        "updated_at": "2025-10-02T09:08:32.612+00:00"
+      },
+      {
+        "id": "dd38075c-2e9c-43f2-a639-402365454f1c",
+        "user_id": "c9f3f99b-8f7e-46fc-a37a-fc4a0f75865b",
+        "email": "samira.achoumi@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T09:22:53.286Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T09:22:53.451917+00:00",
+        "updated_at": "2025-10-02T09:22:53.286+00:00"
+      },
+      {
+        "id": "add8657f-83ab-4454-909d-20b92dbc46a1",
+        "user_id": "1e66d332-752d-41b4-b907-956cdb4ee880",
+        "email": "marion.schlub@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T09:24:59.809Z",
+          "house_assigned": "Harmonis",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T09:24:59.926192+00:00",
+        "updated_at": "2025-10-02T09:24:59.809+00:00"
+      },
+      {
+        "id": "833642f1-68c9-4da0-9802-5a2919e6c41e",
+        "user_id": "b5d170e0-857b-40e2-8692-b3d1230ef453",
+        "email": "martin.verhulst@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T09:26:00.440Z",
+          "house_assigned": "Harmonis",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T09:25:58.657165+00:00",
+        "updated_at": "2025-10-02T09:26:00.44+00:00"
+      },
+      {
+        "id": "821e436e-07ad-41ea-ad92-d4d7867ccaa4",
+        "user_id": "af3d5418-45d4-402e-a359-1d5d8c701ae6",
+        "email": "laura.behrens@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T08:20:39.041Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T08:20:38.523156+00:00",
+        "updated_at": "2025-10-02T08:20:39.041+00:00"
+      },
+      {
+        "id": "b88a0f70-f90d-4b6c-a7fa-eb9714c0abe3",
+        "user_id": "c11dbf39-38a8-43ca-999c-0f75b2d61ec7",
+        "email": "flora.brasil@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T09:27:53.571Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T09:27:53.645549+00:00",
+        "updated_at": "2025-10-02T09:27:53.571+00:00"
+      },
+      {
+        "id": "c3388575-7d9f-4f44-8355-3a5387110db5",
+        "user_id": "73b8f4c5-28c3-435d-96f2-379998c42632",
+        "email": "loric.defferrard@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T09:28:07.006Z",
+          "house_assigned": "Harmonis",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T09:28:07.072968+00:00",
+        "updated_at": "2025-10-02T09:28:07.006+00:00"
+      },
+      {
+        "id": "7c63951e-a60b-4dfa-a6b1-4cb03faf5861",
+        "user_id": "caa6688b-bbf2-44fd-8c1f-a2d0a4d91366",
+        "email": "megane.cherbuin@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T09:30:11.422Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T09:30:13.65529+00:00",
+        "updated_at": "2025-10-02T09:30:11.422+00:00"
+      },
+      {
+        "id": "dd35f5c0-0915-44ca-ba83-95c18f6ff01b",
+        "user_id": "05c4b2ca-07ea-420a-9811-c50947ab51c3",
+        "email": "tiffany.murisier@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T10:07:33.880Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T10:07:34.715489+00:00",
+        "updated_at": "2025-10-02T10:07:33.88+00:00"
+      },
+      {
+        "id": "2e805636-b55f-492f-8128-7be8f848195b",
+        "user_id": "c814d2d6-4e0f-4fc0-bfad-9c2435c8106e",
+        "email": "noemie.ioset@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T09:26:40.472Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T09:26:38.926158+00:00",
+        "updated_at": "2025-10-02T09:26:40.472+00:00"
+      },
+      {
+        "id": "3c58222c-a9c0-49b1-b21b-bd48c63cbbbb",
+        "user_id": "de32e4a0-6e04-42ce-b197-c4ce57df2bf4",
+        "email": "amaelle.scala@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T09:31:05.727Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T09:31:01.715438+00:00",
+        "updated_at": "2025-10-02T09:31:05.727+00:00"
+      },
+      {
+        "id": "ee700c10-1c99-4dec-8d84-f9b333c32ae8",
+        "user_id": "8ccc9e3e-7a0c-410f-9639-2ec7384c70f7",
+        "email": "nina.liengme@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T09:31:05.956Z",
+          "house_assigned": "Harmonis",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T09:31:06.106241+00:00",
+        "updated_at": "2025-10-02T09:31:05.956+00:00"
+      },
+      {
+        "id": "492d28b7-8edc-42a9-b841-e6b3ca37e259",
+        "user_id": "74e03c39-4a87-442e-a5a3-8e2e97620428",
+        "email": "aurelie.romy@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T09:31:24.301Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T09:31:24.335824+00:00",
+        "updated_at": "2025-10-02T09:31:24.301+00:00"
+      },
+      {
+        "id": "30fdcffb-ed12-4f8b-bfab-31c69a081cdc",
+        "user_id": "bf864f7c-242b-4e5a-bcea-ef1cf0052b42",
+        "email": "theo.dejean@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T09:32:34.643Z",
+          "house_assigned": "Harmonis",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T09:32:34.446954+00:00",
+        "updated_at": "2025-10-02T09:32:34.643+00:00"
+      },
+      {
+        "id": "31ee36e6-bde9-4f06-9263-712e5a78ef5e",
+        "user_id": "083c4d7c-9ff7-46ec-af23-41ffbe7d5bb4",
+        "email": "nicolas.gullotta@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T09:33:07.851Z",
+          "house_assigned": "Harmonis",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T09:33:09.934164+00:00",
+        "updated_at": "2025-10-02T09:33:07.851+00:00"
+      },
+      {
+        "id": "62613698-55c9-48f0-b687-afc26f8a2d98",
+        "user_id": "1a804a21-a6b7-4835-8c73-4f4de19c965c",
+        "email": "romain.beney@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T09:33:58.920Z",
+          "house_assigned": "Harmonis",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T09:34:00.682176+00:00",
+        "updated_at": "2025-10-02T09:33:58.92+00:00"
+      },
+      {
+        "id": "84c19377-cf28-46cf-bdff-666b75930974",
+        "user_id": "b887485d-6e41-4588-815d-d292d28eacc6",
+        "email": "frederic.hull@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T09:35:40.368Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T09:35:40.428126+00:00",
+        "updated_at": "2025-10-02T09:35:40.368+00:00"
+      },
+      {
+        "id": "a902926f-a78e-4e56-a7bb-2395dfb9a7e9",
+        "user_id": "f285420d-996b-475c-8862-2afefc935ae4",
+        "email": "thibert.joray@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T09:36:59.413Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T09:36:59.491603+00:00",
+        "updated_at": "2025-10-02T09:36:59.413+00:00"
+      },
+      {
+        "id": "db005adc-2e5a-4c55-bd54-f5eea539f780",
+        "user_id": "e51af2c2-54c2-4be9-adeb-29701c10e348",
+        "email": "ines.rivier@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T09:30:12.339Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T09:30:12.413089+00:00",
+        "updated_at": "2025-10-02T09:30:12.339+00:00"
+      },
+      {
+        "id": "4ad7b2f1-afa6-4a36-a0ed-a188f4a44b9b",
+        "user_id": "2fc7026c-1b0e-46f1-82bc-4d5eabee84e6",
+        "email": "jennifer.azevedoascensao@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T10:07:50.207Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T10:07:47.364192+00:00",
+        "updated_at": "2025-10-02T10:07:50.207+00:00"
+      },
+      {
+        "id": "a41582de-2848-4037-bf86-9fe813aca8ad",
+        "user_id": "74c2ffa3-e760-4d4c-9011-b5083156b262",
+        "email": "loic.ornigg@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T09:41:05.931Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T09:41:08.842206+00:00",
+        "updated_at": "2025-10-02T09:41:05.931+00:00"
+      },
+      {
+        "id": "115c5c92-0fbf-45d4-b9d2-7e71dac618bf",
+        "user_id": "d4c52563-e1fa-4ce3-8ffe-ee3b8cab422a",
+        "email": "nicolas.dussex@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T10:09:41.199Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T10:09:42.16081+00:00",
+        "updated_at": "2025-10-02T10:09:41.199+00:00"
+      },
+      {
+        "id": "6bee8cdf-16f1-4a87-bbc3-b406b901d53f",
+        "user_id": "a32854d6-6c09-4cd5-b3f1-4cd3675fb8bc",
+        "email": "chloe.abbet@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T09:08:31.552Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T09:08:31.656776+00:00",
+        "updated_at": "2025-10-02T09:08:31.552+00:00"
+      },
+      {
+        "id": "9f58fcfb-9160-41e7-a7bc-f0409089c3fc",
+        "user_id": "89746049-a908-4069-8ad0-38f341e0c68a",
+        "email": "celine.guex1@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T09:42:04.251Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T09:42:04.318481+00:00",
+        "updated_at": "2025-10-02T09:42:04.251+00:00"
+      },
+      {
+        "id": "70ceeebe-952b-4564-97b5-788eebd0dc3b",
+        "user_id": "a1cec42f-d1bf-4983-be9c-02499c7af637",
+        "email": "jonathan.tam@hevs.ch",
+        "total_xp": 0,
+        "current_level": 20,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 0,
+        "gamification_metadata": {},
+        "created_at": "2025-10-08T13:53:30.873031+00:00",
+        "updated_at": "2025-10-08T13:53:30.873031+00:00"
+      },
+      {
+        "id": "4c206235-28ba-49fb-88b3-6621b35459bc",
+        "user_id": "7ba08969-dcae-435c-9fb7-eb40c87282f4",
+        "email": "anne-lucie.chautems@students.hevs.ch",
+        "total_xp": 75,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T09:34:22.695Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T09:34:22.508916+00:00",
+        "updated_at": "2025-10-08T15:00:16.118+00:00"
+      },
+      {
+        "id": "277897bf-c8b6-4fca-974c-c39b4bdf4cd3",
+        "user_id": "f0a60196-bf88-4f3a-b5b2-7f238c5bae45",
+        "email": "emma.vonlanthen@students.hevs.ch",
+        "total_xp": 200,
+        "current_level": 3,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T09:35:52.343Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T09:35:52.355299+00:00",
+        "updated_at": "2025-11-11T10:28:03.874+00:00"
+      },
+      {
+        "id": "5ed1c0bb-1001-451b-be9d-c8ac135abc23",
+        "user_id": "30e654e7-288f-44f6-9c6f-6cc54f448750",
+        "email": "leane.balet@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T15:52:58.234Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T15:52:58.39864+00:00",
+        "updated_at": "2025-10-01T15:52:58.234+00:00"
+      },
+      {
+        "id": "61970696-0fe7-4a74-94b1-566e3eb42c29",
+        "user_id": "507b1850-a855-49c4-a432-9f06cdd49fc5",
+        "email": "arnaud.douchez@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T09:42:44.281Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T09:38:27.263191+00:00",
+        "updated_at": "2025-10-02T09:42:44.281+00:00"
+      },
+      {
+        "id": "fcc2fd51-c308-4535-8946-8751d94b09b0",
+        "user_id": "f95b3d3c-bd13-4a29-a8b3-caf6bec3de09",
+        "email": "lucas.fauchere@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T09:44:46.526Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T09:44:49.139965+00:00",
+        "updated_at": "2025-10-02T09:44:46.526+00:00"
+      },
+      {
+        "id": "12cac3be-05ea-4364-a5fa-47e51d099079",
+        "user_id": "9c1246ed-04c8-4964-a3f4-5dbd38438cfc",
+        "email": "romane.bourquard@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T09:56:13.124Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T09:56:12.02274+00:00",
+        "updated_at": "2025-10-02T09:56:13.124+00:00"
+      },
+      {
+        "id": "68a047b5-3f7c-49fc-a6bb-37d80c2af7f0",
+        "user_id": "f9591fe0-d4ad-413a-ae70-6872ce2cf2ee",
+        "email": "matheo.rochat@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T10:05:00.343Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T10:05:01.435043+00:00",
+        "updated_at": "2025-10-02T10:05:00.343+00:00"
+      },
+      {
+        "id": "eb2fe423-41ce-4f2e-b350-eede35619c2f",
+        "user_id": "6da3bbb6-a333-47cb-93c4-afef3b3e8896",
+        "email": "baptiste.neuhaus@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T10:35:50.425Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T10:35:50.548544+00:00",
+        "updated_at": "2025-10-02T10:35:50.425+00:00"
+      },
+      {
+        "id": "63d3442d-f9bd-413d-85f9-d4dcbd624078",
+        "user_id": "c34bd2b3-04f4-4762-9b33-7dcdb7d679bb",
+        "email": "leanne.murith@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T10:37:31.658Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T10:37:31.82226+00:00",
+        "updated_at": "2025-10-02T10:37:31.658+00:00"
+      },
+      {
+        "id": "bb6d56fc-31bb-4d4c-9545-7b6764df85c8",
+        "user_id": "a3ec1914-7001-415a-a2e7-6099cb6b55c6",
+        "email": "bryan.oliveirateixeira@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T10:45:09.474Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T10:45:09.504183+00:00",
+        "updated_at": "2025-10-02T10:45:09.474+00:00"
+      },
+      {
+        "id": "5b017251-51c7-47c5-9f90-976f5c023c21",
+        "user_id": "0fddf7c0-5727-4ed7-95f7-285495b18254",
+        "email": "tanya.alberti@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T10:53:11.788Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T10:53:11.829538+00:00",
+        "updated_at": "2025-10-02T10:53:11.788+00:00"
+      },
+      {
+        "id": "9657e60e-f5a0-43e6-a7e8-3b1dae73d52d",
+        "user_id": "d11a178a-853f-455d-80c6-438c2a1b18a1",
+        "email": "adelie.dacampo@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:12:59.933Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T11:12:59.945959+00:00",
+        "updated_at": "2025-10-02T11:12:59.933+00:00"
+      },
+      {
+        "id": "b0aaad58-179f-414b-bd80-a31ae7d012b2",
+        "user_id": "05b49c85-183f-4289-9ef9-67b4d1a0b483",
+        "email": "noah.in-albon@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:31:02.854Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T11:31:02.889036+00:00",
+        "updated_at": "2025-10-02T11:31:02.854+00:00"
+      },
+      {
+        "id": "b8ef9a07-f822-4c91-b4ba-a978a7a96b21",
+        "user_id": "f4728d72-311b-469c-96b3-f3199a49c47f",
+        "email": "arthur.brun@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:31:19.410Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T11:31:15.291259+00:00",
+        "updated_at": "2025-10-02T11:31:19.41+00:00"
+      },
+      {
+        "id": "08649da2-e497-4aa7-acbb-61a418fe00f0",
+        "user_id": "03ab6407-cc68-4f8b-930b-ddac7e6e8b97",
+        "email": "eden.mahiet@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:33:37.335Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T11:33:36.633356+00:00",
+        "updated_at": "2025-10-02T11:33:37.335+00:00"
+      },
+      {
+        "id": "9f462bb5-f269-4eff-b37a-7f00552a0357",
+        "user_id": "30564f4a-e730-4bde-b957-f2430922cb6d",
+        "email": "emma.enggist@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T12:50:22.795Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T12:50:22.991745+00:00",
+        "updated_at": "2025-10-02T12:50:22.795+00:00"
+      },
+      {
+        "id": "0efc6759-e87f-4c5f-a969-27823188cb37",
+        "user_id": "e01ed92b-3709-411b-b126-c3979b0d4823",
+        "email": "alec.bogdanski@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:23:04.770Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T11:23:06.670255+00:00",
+        "updated_at": "2025-10-02T11:23:04.77+00:00"
+      },
+      {
+        "id": "92cfd2b4-f2fa-4e14-8e95-a92551e19278",
+        "user_id": "d05f819b-f580-45a2-9e4b-c256f53c5cfb",
+        "email": "alessio.dealmeida@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T13:28:02.154Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T13:28:01.51225+00:00",
+        "updated_at": "2025-10-02T13:28:02.154+00:00"
+      },
+      {
+        "id": "5d6acdcd-d09f-4770-957e-88f063dabc63",
+        "user_id": "413e36bf-03d6-49cc-b793-6db80eaa62af",
+        "email": "arthur.python@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T13:29:24.736Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T13:29:24.821536+00:00",
+        "updated_at": "2025-10-02T13:29:24.736+00:00"
+      },
+      {
+        "id": "62431143-d07b-42d7-b778-3bccf910a43e",
+        "user_id": "5f74137b-0423-4481-93c3-30efd6d20964",
+        "email": "romain.depury@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T13:30:49.699Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T13:30:49.721224+00:00",
+        "updated_at": "2025-10-02T13:30:49.699+00:00"
+      },
+      {
+        "id": "d1ac3b9f-f871-42d9-b22e-e2f61470f2ec",
+        "user_id": "3faf83ac-368b-4e87-a187-46e54ba3bd12",
+        "email": "debora.hutter@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T13:31:26.409Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T13:31:26.425732+00:00",
+        "updated_at": "2025-10-02T13:31:26.409+00:00"
+      },
+      {
+        "id": "b994ebd9-2d3a-4add-8447-9de06d95a9b5",
+        "user_id": "f412fe86-e662-4fb3-89e4-3939aa08edcf",
+        "email": "zoe.lochmatter@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T13:31:39.485Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T13:31:39.582135+00:00",
+        "updated_at": "2025-10-02T13:31:39.485+00:00"
+      },
+      {
+        "id": "913e863e-677c-4eaa-976c-131edf23f8e8",
+        "user_id": "cfa2041d-d9b3-4633-89f5-5de61c43d99a",
+        "email": "celine.claivaz@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T13:38:00.084Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T13:38:00.293247+00:00",
+        "updated_at": "2025-10-02T13:38:00.085+00:00"
+      },
+      {
+        "id": "7f0c7d66-8380-404d-9789-06b7086c4c3d",
+        "user_id": "f6b335b2-04cf-47a6-9b43-371371cd78b8",
+        "email": "quentin.sarrasin@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T13:42:48.774Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T13:42:48.736471+00:00",
+        "updated_at": "2025-10-02T13:42:48.774+00:00"
+      },
+      {
+        "id": "5ed3f096-d99c-4190-bedc-19dddc61d784",
+        "user_id": "dc36e577-09ac-4d71-87ae-0d90e6d42fdb",
+        "email": "michelle.schar@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T13:47:17.630Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T13:47:18.089148+00:00",
+        "updated_at": "2025-10-02T13:47:17.63+00:00"
+      },
+      {
+        "id": "431a0442-8215-4294-9615-11de1affad0c",
+        "user_id": "9fd8f53c-6608-48e0-bdb1-8e1a4c75ca6a",
+        "email": "jana.geier@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T13:47:19.781Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T13:47:19.894265+00:00",
+        "updated_at": "2025-10-02T13:47:19.781+00:00"
+      },
+      {
+        "id": "fdb393c3-a5f8-4688-a222-e1bef2d2972d",
+        "user_id": "7fc3563c-7aaa-4186-9ff3-4e3eabe79af2",
+        "email": "jose.espinchocarneiro@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T13:57:43.044Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T13:57:43.131325+00:00",
+        "updated_at": "2025-10-02T13:57:43.044+00:00"
+      },
+      {
+        "id": "7e9fd39b-7cff-4d0a-a08e-f40845567b1b",
+        "user_id": "f8cc45ba-0304-4675-8ebf-f31d4f1a3dd9",
+        "email": "nicolas.beguin@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T14:03:03.260Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T14:03:03.424417+00:00",
+        "updated_at": "2025-10-02T14:03:03.26+00:00"
+      },
+      {
+        "id": "f146f33e-3e46-4f52-8055-a989379e2bdc",
+        "user_id": "334d4c58-617a-4ae4-a087-67579cca9fbe",
+        "email": "lena.zaugg@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T14:30:26.333Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T14:30:26.525955+00:00",
+        "updated_at": "2025-10-02T14:30:26.333+00:00"
+      },
+      {
+        "id": "5c83b234-2945-461e-9f4f-5a1b5509dffb",
+        "user_id": "ad7b95ed-5df8-4b5c-aa3a-09e57a4ad6ed",
+        "email": "delia.kuonen@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T16:52:32.883Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T16:52:33.098103+00:00",
+        "updated_at": "2025-10-02T16:52:32.883+00:00"
+      },
+      {
+        "id": "0eb42265-42be-4357-a2bc-75b6554ebb5f",
+        "user_id": "10f35053-6cc9-4273-8f3a-aa0b83984e33",
+        "email": "leonie.dennda@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-03T06:25:45.117Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-03T06:25:45.133539+00:00",
+        "updated_at": "2025-10-03T06:25:45.117+00:00"
+      },
+      {
+        "id": "e0f399a5-0413-40a4-9973-f49a79981f30",
+        "user_id": "b798446c-f125-470d-a8c1-50c2df25e223",
+        "email": "liam.madrid@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-03T08:18:31.253Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-03T08:18:31.11846+00:00",
+        "updated_at": "2025-10-03T08:18:31.253+00:00"
+      },
+      {
+        "id": "8d07783b-4a8f-4315-888b-196f45c18ee7",
+        "user_id": "0a13b062-9189-4281-a9e5-5b438d62db3d",
+        "email": "antoine.quarroz@hevs.ch",
+        "total_xp": 40000,
+        "current_level": 20,
+        "house_id": "550e8400-e29b-41d4-a716-446655440000",
+        "house_points": 50,
+        "gamification_metadata": {
+          "test": true,
+          "timestamp": "2025-11-04T15:59:48.229Z"
+        },
+        "created_at": "2025-10-02T10:15:44.277826+00:00",
+        "updated_at": "2025-10-06T12:01:10.114+00:00"
+      },
+      {
+        "id": "b75a60be-1e39-4357-b622-9faf570604ce",
+        "user_id": "a9db2fd0-e640-406d-a2db-0bd2b9437608",
+        "email": "christophe.baur@hevs.ch",
+        "total_xp": 0,
+        "current_level": 20,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 0,
+        "gamification_metadata": {},
+        "created_at": "2025-10-08T13:55:12.064762+00:00",
+        "updated_at": "2025-10-08T13:55:12.064762+00:00"
+      },
+      {
+        "id": "5a3e226e-8f5b-4ed9-9c15-6333f14c13b4",
+        "user_id": "4dbd324c-3007-4d7a-8e24-48c7e59aa1c3",
+        "email": "guillaume.hamann@students.hevs.ch",
+        "total_xp": 200,
+        "current_level": 3,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:07:53.297Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T11:07:08.988035+00:00",
+        "updated_at": "2025-11-11T10:27:51.543+00:00"
+      },
+      {
+        "id": "536bbcdd-b15b-48a7-b48e-028955678ba9",
+        "user_id": "5ddde468-d2b1-4b64-bd86-9caa76d8ba6d",
+        "email": "emilie.dayer@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T15:43:17.891Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T15:43:17.515167+00:00",
+        "updated_at": "2025-10-01T15:43:17.891+00:00"
+      },
+      {
+        "id": "460cfdb5-44da-4d96-bee4-6c5322949df6",
+        "user_id": "98e5184b-98dd-4d5c-89fa-226740075096",
+        "email": "leane.metroz@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-03T08:28:24.507Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-03T08:28:24.59936+00:00",
+        "updated_at": "2025-10-03T08:28:24.507+00:00"
+      },
+      {
+        "id": "0bda6840-1760-4f8c-ae9a-ad63817c7749",
+        "user_id": "2a0a5b96-91f8-4313-ac29-dcc7f9ff052f",
+        "email": "fanny.mathieu@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-03T09:11:20.352Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-03T09:11:20.478923+00:00",
+        "updated_at": "2025-10-03T09:11:20.352+00:00"
+      },
+      {
+        "id": "d28754f5-6371-4163-9831-f5c1e92ebfbb",
+        "user_id": "42da35d4-3edc-421e-861a-974a583bb018",
+        "email": "felix.duc@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:23:02.243Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T11:23:02.295713+00:00",
+        "updated_at": "2025-10-02T11:23:02.243+00:00"
+      },
+      {
+        "id": "68a86f1f-dd7a-4d68-8546-a84d7fa83f82",
+        "user_id": "24ebbfae-4ce9-4606-b37b-65a988599355",
+        "email": "sarah.lealcastanheira@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-04T12:26:29.564Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-04T12:26:29.548764+00:00",
+        "updated_at": "2025-10-04T12:26:29.564+00:00"
+      },
+      {
+        "id": "756a199b-f194-494a-92ab-4c583270f3ed",
+        "user_id": "e90418ba-35eb-4a8c-b0ab-a572bb09a400",
+        "email": "evan.berrut@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-03T20:35:46.312Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-03T20:35:45.479575+00:00",
+        "updated_at": "2025-10-03T20:35:46.312+00:00"
+      },
+      {
+        "id": "8c46df95-a657-4fe8-a779-959011d90f52",
+        "user_id": "cb622d8b-cad6-47e7-a926-9edc10ee672d",
+        "email": "damien.catillaz@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:12:59.933Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-06T11:00:00+00:00",
+        "updated_at": "2025-10-06T11:00:00+00:00"
+      },
+      {
+        "id": "546a617c-9f46-4d7c-8689-f80b60cde5e5",
+        "user_id": "fe8e88f9-1fb0-4672-8be7-997d302181d7",
+        "email": "noelle.dubois@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:12:59.933Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-06T11:00:00+00:00",
+        "updated_at": "2025-10-06T11:00:00+00:00"
+      },
+      {
+        "id": "c4fad907-bf9a-4f63-8737-cc4fb73dd942",
+        "user_id": "36341466-e4eb-4df9-8090-c92628a18145",
+        "email": "svenja.fux@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:12:59.933Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-06T11:00:00+00:00",
+        "updated_at": "2025-10-06T11:00:00+00:00"
+      },
+      {
+        "id": "36d67e40-d5d6-4d89-aa3f-a743d0e23c66",
+        "user_id": "ec8fdd8f-8efd-42e5-ad0b-100010cbc881",
+        "email": "elie.pelot@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:12:59.933Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-06T11:00:00+00:00",
+        "updated_at": "2025-10-06T11:00:00+00:00"
+      },
+      {
+        "id": "da6a19aa-e9eb-4245-80e0-e12bce56ba91",
+        "user_id": "449d738f-119b-4a78-8a51-739783229d25",
+        "email": "isabel.schmid@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:12:59.933Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-06T11:00:00+00:00",
+        "updated_at": "2025-10-06T11:00:00+00:00"
+      },
+      {
+        "id": "dea0d4de-4773-4cba-a18f-4f55daca8e95",
+        "user_id": "1c4342a5-c8f2-486e-a7f3-ebf197bc1bac",
+        "email": "manuel.stoffel@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:12:59.933Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-06T11:00:00+00:00",
+        "updated_at": "2025-10-06T11:00:00+00:00"
+      },
+      {
+        "id": "d4b1525e-2a84-4b41-85cb-b6d5dd1ff2d6",
+        "user_id": "bdeab822-3d86-4315-a9a6-8949ef80f079",
+        "email": "elias.torbay@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:12:59.933Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-06T11:00:00+00:00",
+        "updated_at": "2025-10-06T11:00:00+00:00"
+      },
+      {
+        "id": "ea0d76cc-0270-4597-9732-8a987b058517",
+        "user_id": "e4848a6f-6cfd-4e63-a821-f986cfb41301",
+        "email": "rosalie.menoud@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:12:59.933Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-06T11:00:00+00:00",
+        "updated_at": "2025-10-06T11:00:00+00:00"
+      },
+      {
+        "id": "10f9163f-5a4c-451f-b043-6df1eaf17381",
+        "user_id": "06ba262c-e8d6-4c11-9330-9290ee382d74",
+        "email": "amandine.michellod@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:12:59.933Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-06T11:00:00+00:00",
+        "updated_at": "2025-10-06T11:00:00+00:00"
+      },
+      {
+        "id": "0514c089-8228-42fa-bc5e-eeda9f5084df",
+        "user_id": "6b51e089-9656-46fd-9827-adbf039f0841",
+        "email": "mandy.narbel@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:12:59.933Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-06T11:00:00+00:00",
+        "updated_at": "2025-10-06T11:00:00+00:00"
+      },
+      {
+        "id": "20461902-57d9-49f3-baec-ed85915b1b68",
+        "user_id": "03067fc3-1312-416b-b064-9a65455284ed",
+        "email": "mickael.paciotti@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:12:59.933Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-06T11:00:00+00:00",
+        "updated_at": "2025-10-06T11:00:00+00:00"
+      },
+      {
+        "id": "69fd5aa6-992e-42e9-8f2b-3a39882954fc",
+        "user_id": "8a81f2b6-7854-47e2-83d4-286fbfdd0510",
+        "email": "chenoa.peris@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:12:59.933Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-06T11:00:00+00:00",
+        "updated_at": "2025-10-06T11:00:00+00:00"
+      },
+      {
+        "id": "862b6d72-9fce-4506-b6fd-aae4f12a7134",
+        "user_id": "441b47c5-0a8a-41d9-af21-6130160c1527",
+        "email": "cynthia.peronetti@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:12:59.933Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-06T11:00:00+00:00",
+        "updated_at": "2025-10-06T11:00:00+00:00"
+      },
+      {
+        "id": "8ae2e7e1-b376-4ec0-94bc-a1e295ec9a7e",
+        "user_id": "dc663584-db49-477e-89cc-d5735cfcc484",
+        "email": "fabien.gerber@hevs.ch",
+        "total_xp": 0,
+        "current_level": 20,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 0,
+        "gamification_metadata": {},
+        "created_at": "2025-10-08T13:56:19.169052+00:00",
+        "updated_at": "2025-10-08T13:56:19.169052+00:00"
+      },
+      {
+        "id": "c1d79083-a5f9-4aa1-847d-18f188b34963",
+        "user_id": "f3d6876e-37c6-4558-8f11-eabf4583257b",
+        "email": "emilie.constantin@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T15:49:02.466Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T15:49:02.649311+00:00",
+        "updated_at": "2025-10-01T15:49:02.466+00:00"
+      },
+      {
+        "id": "e34f718b-25df-4086-80fb-2c4aea87dcea",
+        "user_id": "bee79e85-e5b6-46d8-b934-1e72984bb11e",
+        "email": "milena.imfeld@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T10:04:22.045Z",
+          "house_assigned": "Harmonis",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T10:04:22.136537+00:00",
+        "updated_at": "2025-10-01T10:04:22.045+00:00"
+      },
+      {
+        "id": "b1cea81c-a5c4-4053-8b71-3ea7327c2065",
+        "user_id": "c9a11f43-b5ff-4c69-b4fc-4be09a5e9792",
+        "email": "elena.lengen@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T10:08:01.677Z",
+          "house_assigned": "Harmonis",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T10:08:01.785723+00:00",
+        "updated_at": "2025-10-01T10:08:01.677+00:00"
+      },
+      {
+        "id": "d8fa2b22-56d6-4ca4-8af1-1b7783dfca4a",
+        "user_id": "ac803509-644f-43ee-8140-e81276408880",
+        "email": "corentin.naga@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T13:30:05.920Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T13:30:05.987091+00:00",
+        "updated_at": "2025-10-01T13:30:05.921+00:00"
+      },
+      {
+        "id": "e971d579-72f3-465a-b00e-b18cead703a1",
+        "user_id": "6bdf8073-14a0-4622-b3aa-634413856158",
+        "email": "karen.wulf@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T13:36:05.999Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T13:36:06.098016+00:00",
+        "updated_at": "2025-10-01T13:36:05.999+00:00"
+      },
+      {
+        "id": "984d0585-aa4e-4db5-b72e-6e9aebcc4851",
+        "user_id": "b34a0aff-0d3d-4d1c-a5ef-42a398b2ac0a",
+        "email": "alex.moreno@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T15:31:11.749Z",
+          "house_assigned": "Harmonis",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T15:30:44.674454+00:00",
+        "updated_at": "2025-10-01T15:31:11.749+00:00"
+      },
+      {
+        "id": "3e78b786-ac8c-417a-b85f-6d2bf6b3bd3a",
+        "user_id": "3b99afbe-003d-4b91-bb28-b77c91938cd5",
+        "email": "alix.tache@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T15:32:15.383Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T15:32:15.424463+00:00",
+        "updated_at": "2025-10-01T15:32:15.383+00:00"
+      },
+      {
+        "id": "62e81967-f778-486e-88de-47b97a51cd67",
+        "user_id": "bf6dd6a1-33b3-495f-9317-656f69b77e50",
+        "email": "dario.coletta@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T15:33:50.453Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T15:33:32.953475+00:00",
+        "updated_at": "2025-10-01T15:33:50.453+00:00"
+      },
+      {
+        "id": "28d3717b-2ecb-45ee-ba0f-77169c8c4fbb",
+        "user_id": "b7d06439-00fb-43b8-ba51-5b0c29669b75",
+        "email": "clara.thorens@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T15:33:59.378Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T15:33:59.690387+00:00",
+        "updated_at": "2025-10-01T15:33:59.378+00:00"
+      },
+      {
+        "id": "c4fc2756-8a2a-453d-82ff-cc58905a115f",
+        "user_id": "413c7c6f-eae2-4d01-a789-9fb2d24752f4",
+        "email": "elsa.luisier@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T15:35:38.700Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T15:35:38.764223+00:00",
+        "updated_at": "2025-10-01T15:35:38.7+00:00"
+      },
+      {
+        "id": "238eb295-46af-4708-9225-dbb7f16369b1",
+        "user_id": "dd8612c0-6f10-49b7-9fa9-0fd1657eb8f8",
+        "email": "pernelle.cavalera@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T15:36:49.035Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T15:36:49.373385+00:00",
+        "updated_at": "2025-10-01T15:36:49.035+00:00"
+      },
+      {
+        "id": "764d3f75-a2b2-4066-b9c2-add9a035059d",
+        "user_id": "8c52a9b5-499a-4a69-aea6-1b1c6c6fbc10",
+        "email": "camille.rouiller-monay@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T15:36:50.408Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T15:36:50.508996+00:00",
+        "updated_at": "2025-10-01T15:36:50.408+00:00"
+      },
+      {
+        "id": "ded1ed84-1bd3-4af9-b67f-861df4d4d7bd",
+        "user_id": "a4a1bc16-86c9-49f4-806d-a17a3b218958",
+        "email": "anthony.damato@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T15:36:51.180Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T15:36:51.324528+00:00",
+        "updated_at": "2025-10-01T15:36:51.18+00:00"
+      },
+      {
+        "id": "1d78a0de-f5f8-483f-b289-4aa7fd4f2a07",
+        "user_id": "29747a9b-7094-445f-a688-ecc124474846",
+        "email": "mael.benedetti@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T15:58:55.727Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T15:58:55.909476+00:00",
+        "updated_at": "2025-10-01T15:58:55.727+00:00"
+      },
+      {
+        "id": "d663a828-d0f8-4357-8447-f818268ba5b1",
+        "user_id": "87db06ae-8145-4e47-a08d-77e447fc786e",
+        "email": "romy.savioz@students.hevs.ch",
+        "total_xp": 60,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 60,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T15:19:48.844Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T15:19:50.3566+00:00",
+        "updated_at": "2025-10-01T15:19:48.844+00:00"
+      },
+      {
+        "id": "da2618ab-fd96-42b5-bb97-e13f0a48788c",
+        "user_id": "4726a434-c044-4126-bbb8-04534ea45d2f",
+        "email": "louis.rahmani@students.hevs.ch",
+        "total_xp": 75,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440003",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T09:32:49.777Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T09:32:48.920312+00:00",
+        "updated_at": "2025-10-08T14:59:24.62+00:00"
+      },
+      {
+        "id": "e48ed125-e78b-4f86-9275-7fbdf88a86d2",
+        "user_id": "5c4c1d03-77fd-442b-8765-8b504542616b",
+        "email": "oceane.fornay@students.hevs.ch",
+        "total_xp": 150,
+        "current_level": 2,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T15:35:29.986Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T15:35:29.455251+00:00",
+        "updated_at": "2025-10-28T07:13:56.417+00:00"
+      },
+      {
+        "id": "36fa9657-bcb2-413f-9221-7fbd0d2bd21a",
+        "user_id": "1a6c3533-baeb-4044-9620-90a510b251ea",
+        "email": "leonie.maurer@students.hevs.ch",
+        "total_xp": 100,
+        "current_level": 2,
+        "house_id": "550e8400-e29b-41d4-a716-446655440002",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T13:39:45.847Z",
+          "house_assigned": "Elaris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T13:39:46.018643+00:00",
+        "updated_at": "2025-10-08T15:01:22.382+00:00"
+      },
+      {
+        "id": "5fcc452f-deae-4110-b4d5-adc1c2221230",
+        "user_id": "5c031123-810c-4150-b8d5-178b35e8d13a",
+        "email": "norine.vonlanthen@students.hevs.ch",
+        "total_xp": 150,
+        "current_level": 2,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:12:59.933Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-06T11:00:00+00:00",
+        "updated_at": "2025-10-08T11:11:13.497+00:00"
+      },
+      {
+        "id": "a8cbfa2c-88fc-4e16-bbf9-9cae62c0d403",
+        "user_id": "533336e4-babc-4428-a2e6-f5804074b021",
+        "email": "lea.volpe@students.hevs.ch",
+        "total_xp": 100,
+        "current_level": 2,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:12:59.933Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-06T11:00:00+00:00",
+        "updated_at": "2025-10-08T14:59:57.441+00:00"
+      },
+      {
+        "id": "9bfe2fd1-5a5e-47cc-afe5-fa459109a7e5",
+        "user_id": "151a763a-31f1-4708-807b-b5cbe31bc745",
+        "email": "isaline.baechler@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:12:59.933Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-06T11:00:00+00:00",
+        "updated_at": "2025-10-06T11:00:00+00:00"
+      },
+      {
+        "id": "6cb0e2dc-6c1c-49c1-a6cc-28453f8e766b",
+        "user_id": "e1b35647-bf3f-4eb0-a605-ff5d80e8efc4",
+        "email": "meline.brix@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:12:59.933Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-06T11:00:00+00:00",
+        "updated_at": "2025-10-06T11:00:00+00:00"
+      },
+      {
+        "id": "96988936-1c5a-4a5f-a82c-d86a365de1d2",
+        "user_id": "6f78d3af-0203-4868-ad15-958c81e954d4",
+        "email": "carlos.desousasilva@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T15:36:55.066Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T15:36:55.218055+00:00",
+        "updated_at": "2025-10-01T15:36:55.066+00:00"
+      },
+      {
+        "id": "d6ffe43f-da31-4c34-a856-1e20809dd73a",
+        "user_id": "2e06a081-4489-4658-84a5-4cd673672b8b",
+        "email": "elia.donati@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T15:36:56.829Z",
+          "house_assigned": "Harmonis",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T15:36:57.542415+00:00",
+        "updated_at": "2025-10-01T15:36:56.832+00:00"
+      },
+      {
+        "id": "fd7c640e-8c7e-40ff-88a6-cbf76c871d6b",
+        "user_id": "a56e2d28-b44a-423b-b99b-f9748f1f02ae",
+        "email": "ines.garcia@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T15:37:11.501Z",
+          "house_assigned": "Harmonis",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T15:37:12.163647+00:00",
+        "updated_at": "2025-10-01T15:37:11.501+00:00"
+      },
+      {
+        "id": "65c042a3-dd24-4978-a54a-f3764e13ca06",
+        "user_id": "52158188-7f24-46bc-b321-d45e252a3457",
+        "email": "charlotte.kelly@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440001",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-01T15:38:06.238Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-01T15:38:06.087071+00:00",
+        "updated_at": "2025-10-01T15:38:06.238+00:00"
+      },
+      {
+        "id": "794f3b31-d592-42b6-976e-c18ee002613b",
+        "user_id": "3232ae14-0a93-442c-bf05-8804025b7977",
+        "email": "karen.crettenand@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:12:59.933Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-06T11:00:00+00:00",
+        "updated_at": "2025-10-06T11:00:00+00:00"
+      },
+      {
+        "id": "e89ce0a3-ca97-4919-8cf1-20a068e1e8bc",
+        "user_id": "14ad71d7-5992-4d55-8f2d-c91cd09598cf",
+        "email": "diane.doyen@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:12:59.933Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-06T11:00:00+00:00",
+        "updated_at": "2025-10-06T11:00:00+00:00"
+      },
+      {
+        "id": "0ccfb15a-717b-4fda-a1c5-1f4535c8ffcc",
+        "user_id": "70ceeb1c-9439-4d9b-a8e3-cfdec240ed7a",
+        "email": "theo.filippini@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:12:59.933Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-06T11:00:00+00:00",
+        "updated_at": "2025-10-06T11:00:00+00:00"
+      },
+      {
+        "id": "5b47ce01-8605-4950-b784-286c0d955cd1",
+        "user_id": "b5b39f65-c76b-48f4-bd5c-22e1b7e80617",
+        "email": "nina.fuhrer@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:12:59.933Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-06T11:00:00+00:00",
+        "updated_at": "2025-10-06T11:00:00+00:00"
+      },
+      {
+        "id": "2dab8c04-dc74-4253-b644-e94681309de7",
+        "user_id": "e86f1bb9-5c19-4835-89bf-8aa1ba04df69",
+        "email": "aude.maret@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:12:59.933Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-06T11:00:00+00:00",
+        "updated_at": "2025-10-06T11:00:00+00:00"
+      },
+      {
+        "id": "cfee911c-48ca-4e23-8ea2-cced6ecd8d04",
+        "user_id": "ea725c03-5bfd-4743-83c5-9a1278bc6e83",
+        "email": "alexis.markianos@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:12:59.933Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-06T11:00:00+00:00",
+        "updated_at": "2025-10-06T11:00:00+00:00"
+      },
+      {
+        "id": "f7c2831c-cf9c-4df9-8a84-e70726d1d2ce",
+        "user_id": "9d87b094-4274-4779-811d-c1be4e38a551",
+        "email": "justine.pollmann@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:12:59.933Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-06T11:00:00+00:00",
+        "updated_at": "2025-10-06T11:00:00+00:00"
+      },
+      {
+        "id": "4443f3fa-c7b5-4c0c-823e-3e24f9b280fa",
+        "user_id": "d8d2d07e-fddc-4c0f-97ff-5813ee59904f",
+        "email": "sebastien.pretre@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:12:59.933Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-06T11:00:00+00:00",
+        "updated_at": "2025-10-06T11:00:00+00:00"
+      },
+      {
+        "id": "e807263e-6f8d-4f11-bff2-3534317f8ad1",
+        "user_id": "b533793f-6879-4883-acb6-a79c4106eda4",
+        "email": "lou.pugin@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:12:59.933Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-06T11:00:00+00:00",
+        "updated_at": "2025-10-06T11:00:00+00:00"
+      },
+      {
+        "id": "f852d62a-aca6-4470-9139-5ee6ffc328e4",
+        "user_id": "2f187780-9a10-40cb-8b46-fe32d6142dfd",
+        "email": "lucie.rey@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:12:59.933Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-06T11:00:00+00:00",
+        "updated_at": "2025-10-06T11:00:00+00:00"
+      },
+      {
+        "id": "643d8f84-6094-46c9-a6e2-24bfe83692d2",
+        "user_id": "7e61c0e2-b808-4e07-a646-19317d33218d",
+        "email": "hugues.savioz@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:12:59.933Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-06T11:00:00+00:00",
+        "updated_at": "2025-10-06T11:00:00+00:00"
+      },
+      {
+        "id": "edcf4a9d-63e8-4093-8285-feb11fb47825",
+        "user_id": "b2c4db50-f9d2-427a-8e67-f55f5bee816b",
+        "email": "emma.sebastian@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:12:59.933Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-06T11:00:00+00:00",
+        "updated_at": "2025-10-06T11:00:00+00:00"
+      },
+      {
+        "id": "938ce517-2824-44f3-9b43-aac1ceba9aa0",
+        "user_id": "9881df72-e999-4c9b-beea-4ac4504316b7",
+        "email": "leane.wagner@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:12:59.933Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-06T11:00:00+00:00",
+        "updated_at": "2025-10-06T11:00:00+00:00"
+      },
+      {
+        "id": "46e988c6-e732-4b73-86f4-5f9badc77ac4",
+        "user_id": "74bd32ef-f1dd-4706-9113-8724d66b9d40",
+        "email": "salome.clemons@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:12:59.933Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-06T11:00:00+00:00",
+        "updated_at": "2025-10-06T11:00:00+00:00"
+      },
+      {
+        "id": "6f12fb28-0cf7-4dcf-aeaf-7ce8047be594",
+        "user_id": "2e7b7911-c271-4b3f-8249-ed1c5726a01a",
+        "email": "tiphaine.mabillard@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:12:59.933Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-06T11:00:00+00:00",
+        "updated_at": "2025-10-06T11:00:00+00:00"
+      },
+      {
+        "id": "59fd330e-6da3-47fb-b763-11181695fe68",
+        "user_id": "15a693c4-b291-4b89-803d-0dee75c98c53",
+        "email": "anthony.michel@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:12:59.933Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-06T11:00:00+00:00",
+        "updated_at": "2025-10-06T11:00:00+00:00"
+      },
+      {
+        "id": "68b42d26-b8e1-4e5a-9285-f2002f1d367b",
+        "user_id": "c9a8fceb-b312-49b9-82a8-4c5d8d01252f",
+        "email": "nolan.rubattel@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:12:59.933Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-06T11:00:00+00:00",
+        "updated_at": "2025-10-06T11:00:00+00:00"
+      },
+      {
+        "id": "e4f339c7-50fa-4fb1-96a7-7e6f7ec402fa",
+        "user_id": "23ebe09e-ba34-4d16-b62d-74c6b411f7a8",
+        "email": "celine.schurr@students.hevs.ch",
+        "total_xp": 50,
+        "current_level": 1,
+        "house_id": "550e8400-e29b-41d4-a716-446655440004",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T11:12:59.933Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-06T11:00:00+00:00",
+        "updated_at": "2025-10-06T11:00:00+00:00"
+      },
+      {
+        "id": "ca294714-d28e-4f6e-9c77-1d4725f8b952",
+        "user_id": "cc0164fd-9fd6-4576-a97a-18077dcb1837",
+        "email": "rebecca.blum@hevs.ch",
+        "total_xp": 40000,
+        "current_level": 20,
+        "house_id": "550e8400-e29b-41d4-a716-446655440000",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-02T10:55:02.102Z",
+          "house_assigned": "Doloris",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-02T10:55:02.772101+00:00",
+        "updated_at": "2025-10-02T10:55:02.102+00:00"
+      },
+      {
+        "id": "4a02e5cc-e242-4e57-8a95-312d0b2ce95b",
+        "user_id": "99e74cb0-9528-40a2-93bf-e4b56d1f9fed",
+        "email": "yohan.houlmann@hevs.ch",
+        "total_xp": 40010,
+        "current_level": 20,
+        "house_id": "550e8400-e29b-41d4-a716-446655440000",
+        "house_points": 50,
+        "gamification_metadata": {
+          "quiz_date": "2025-10-07T07:08:10.075Z",
+          "house_assigned": "Solencia",
+          "quiz_completed": true
+        },
+        "created_at": "2025-10-07T07:08:10.10793+00:00",
+        "updated_at": "2025-11-03T15:21:00.271+00:00"
+      }
+    ],
+    "schema": [
+      "id",
+      "user_id",
+      "email",
+      "total_xp",
+      "current_level",
+      "house_id",
+      "house_points",
+      "gamification_metadata",
+      "created_at",
+      "updated_at"
+    ]
+  },
+  "houses": {
+    "count": 5,
+    "data": [
+      {
+        "id": "550e8400-e29b-41d4-a716-446655440004",
+        "name": "Solencia",
+        "motto": "Force et détermination professionnelle",
+        "color": "#3B82F6",
+        "description": "La maison Solencia symbolise la force, la détermination et le leadership. Ses membres font preuve de courage et de persévérance.",
+        "total_xp": 2340,
+        "member_count": 47,
+        "created_at": "2025-09-25T11:57:14.156402",
+        "updated_at": "2025-09-25T11:57:14.156402",
+        "level": 1
+      },
+      {
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "name": "gamemaster",
+        "motto": "Voir tout, gérer tout",
+        "color": "#9333ea",
+        "description": "Maison spéciale réservée aux maîtres du jeu et administrateurs",
+        "total_xp": 160000,
+        "member_count": 4,
+        "created_at": "2025-10-07T08:48:28.58007",
+        "updated_at": "2025-10-07T08:48:28.58007",
+        "level": 5
+      },
+      {
+        "id": "550e8400-e29b-41d4-a716-446655440002",
+        "name": "Elaris",
+        "motto": "Excellence et innovation pédagogique",
+        "color": "#EF4444",
+        "description": "La maison Elaris représente l'excellence académique et l'innovation. Ses membres sont reconnus pour leur rigueur intellectuelle.",
+        "total_xp": 2400,
+        "member_count": 49,
+        "created_at": "2025-09-25T11:57:14.156402",
+        "updated_at": "2025-09-25T11:57:14.156402",
+        "level": 1
+      },
+      {
+        "id": "550e8400-e29b-41d4-a716-446655440003",
+        "name": "Doloris",
+        "motto": "Compassion et empathie thérapeutique",
+        "color": "#F59E0B",
+        "description": "La maison Doloris incarne la compassion et l'empathie dans les soins. Ses membres se distinguent par leur bienveillance.",
+        "total_xp": 2410,
+        "member_count": 49,
+        "created_at": "2025-09-25T11:57:14.156402",
+        "updated_at": "2025-09-25T11:57:14.156402",
+        "level": 1
+      },
+      {
+        "id": "550e8400-e29b-41d4-a716-446655440001",
+        "name": "Harmonis",
+        "motto": "Harmonie et équilibre dans l'apprentissage",
+        "color": "#10B981",
+        "description": "La maison Harmonis valorise l'équilibre, la collaboration et l'harmonie dans les relations interpersonnelles.",
+        "total_xp": 2400,
+        "member_count": 49,
+        "created_at": "2025-09-25T11:57:14.156402",
+        "updated_at": "2025-09-25T11:57:14.156402",
+        "level": 1
+      }
+    ],
+    "schema": [
+      "id",
+      "name",
+      "motto",
+      "color",
+      "description",
+      "total_xp",
+      "member_count",
+      "created_at",
+      "updated_at",
+      "level"
+    ]
+  },
+  "badges": {
+    "count": 18,
+    "data": [
+      {
+        "id": "61a8c8e7-b804-4c33-922e-15b5b81f8afb",
+        "name": "Novice Confirmé",
+        "description": "Atteindre le niveau 2 - Vos premiers pas dans l'aventure !",
+        "icon": "🌱",
+        "rarity": "common",
+        "xp_bonus": 25,
+        "conditions": {
+          "level": 2
+        },
+        "is_active": true,
+        "created_at": "2025-09-25T06:37:52.785941"
+      },
+      {
+        "id": "7d2d2446-b62f-4e9f-9ca8-7c92ecd56aa2",
+        "name": "Apprenti Déterminé",
+        "description": "Atteindre le niveau 3 - Vous progressez avec constance !",
+        "icon": "📚",
+        "rarity": "uncommon",
+        "xp_bonus": 50,
+        "conditions": {
+          "level": 3
+        },
+        "is_active": true,
+        "created_at": "2025-09-25T06:37:52.785941"
+      },
+      {
+        "id": "8fc6d537-0239-470f-99a4-9a720e959826",
+        "name": "Compagnon Expérimenté",
+        "description": "Atteindre le niveau 4 - Votre expertise se développe !",
+        "icon": "⚡",
+        "rarity": "rare",
+        "xp_bonus": 75,
+        "conditions": {
+          "level": 4
+        },
+        "is_active": true,
+        "created_at": "2025-09-25T06:37:52.785941"
+      },
+      {
+        "id": "e0fd2979-78c5-4e38-8650-55868e2f9e36",
+        "name": "Expert Reconnu",
+        "description": "Atteindre le niveau 5 - Vous êtes un modèle pour les autres !",
+        "icon": "👑",
+        "rarity": "epic",
+        "xp_bonus": 100,
+        "conditions": {
+          "level": 5
+        },
+        "is_active": true,
+        "created_at": "2025-09-25T06:37:52.785941"
+      },
+      {
+        "id": "147d3b24-3a0d-42e4-8059-aee3939e8498",
+        "name": "Première Étape",
+        "description": "Accumuler 100 XP - Le début d'un long voyage !",
+        "icon": "🎯",
+        "rarity": "common",
+        "xp_bonus": 20,
+        "conditions": {
+          "total_xp": 100
+        },
+        "is_active": true,
+        "created_at": "2025-09-25T06:37:52.785941"
+      },
+      {
+        "id": "3b9b3bae-205e-417b-b1ff-6f68537ef5fc",
+        "name": "Montée en Puissance",
+        "description": "Accumuler 500 XP - Vous prenez de l'élan !",
+        "icon": "🚀",
+        "rarity": "uncommon",
+        "xp_bonus": 50,
+        "conditions": {
+          "total_xp": 500
+        },
+        "is_active": true,
+        "created_at": "2025-09-25T06:37:52.785941"
+      },
+      {
+        "id": "b5df625a-38f7-4b40-8e60-9446f3c5c649",
+        "name": "Force Montante",
+        "description": "Accumuler 1000 XP - Votre détermination porte ses fruits !",
+        "icon": "💪",
+        "rarity": "rare",
+        "xp_bonus": 100,
+        "conditions": {
+          "total_xp": 1000
+        },
+        "is_active": true,
+        "created_at": "2025-09-25T06:37:52.785941"
+      },
+      {
+        "id": "d6535c2a-b76a-445e-9f2a-7df872effe13",
+        "name": "Maître de l'XP",
+        "description": "Accumuler 2500 XP - Vous êtes une légende vivante !",
+        "icon": "🏆",
+        "rarity": "legendary",
+        "xp_bonus": 250,
+        "conditions": {
+          "total_xp": 2500
+        },
+        "is_active": true,
+        "created_at": "2025-09-25T06:37:52.785941"
+      },
+      {
+        "id": "6b6e75d9-3bca-4fcc-bd5e-83cc19677161",
+        "name": "Premier Post",
+        "description": "Créer votre premier post - Partagez vos idées avec la communauté !",
+        "icon": "✍️",
+        "rarity": "common",
+        "xp_bonus": 15,
+        "conditions": {
+          "action_count": {
+            "count": 1,
+            "action_type": "POST_CREATE"
+          }
+        },
+        "is_active": true,
+        "created_at": "2025-09-25T06:37:52.785941"
+      },
+      {
+        "id": "80d458e4-299b-412b-a9d5-d5a712704241",
+        "name": "Contributeur Actif",
+        "description": "Créer 10 posts - Vous enrichissez la communauté !",
+        "icon": "📝",
+        "rarity": "uncommon",
+        "xp_bonus": 50,
+        "conditions": {
+          "action_count": {
+            "count": 10,
+            "action_type": "POST_CREATE"
+          }
+        },
+        "is_active": true,
+        "created_at": "2025-09-25T06:37:52.785941"
+      },
+      {
+        "id": "647fc3c6-c9c6-4fe6-8730-04f8916e7709",
+        "name": "Créateur de Contenu",
+        "description": "Créer 25 posts - Votre créativité inspire les autres !",
+        "icon": "🎨",
+        "rarity": "rare",
+        "xp_bonus": 100,
+        "conditions": {
+          "action_count": {
+            "count": 25,
+            "action_type": "POST_CREATE"
+          }
+        },
+        "is_active": true,
+        "created_at": "2025-09-25T06:37:52.785941"
+      },
+      {
+        "id": "a0e44c80-1fec-4269-b1eb-e045d93a81dc",
+        "name": "Premier Commentaire",
+        "description": "Écrire votre premier commentaire - L'échange commence !",
+        "icon": "💬",
+        "rarity": "common",
+        "xp_bonus": 10,
+        "conditions": {
+          "action_count": {
+            "count": 1,
+            "action_type": "COMMENT_CREATE"
+          }
+        },
+        "is_active": true,
+        "created_at": "2025-09-25T06:37:52.785941"
+      },
+      {
+        "id": "6e81f454-9947-4e31-bea7-6e1f04654fcd",
+        "name": "Commentateur Assidu",
+        "description": "Écrire 50 commentaires - Vos contributions enrichissent les discussions !",
+        "icon": "🗣️",
+        "rarity": "uncommon",
+        "xp_bonus": 75,
+        "conditions": {
+          "action_count": {
+            "count": 50,
+            "action_type": "COMMENT_CREATE"
+          }
+        },
+        "is_active": true,
+        "created_at": "2025-09-25T06:37:52.785941"
+      },
+      {
+        "id": "6319040c-c8f8-4e88-bf88-304cb13b35fe",
+        "name": "Fidèle Étudiant",
+        "description": "Se connecter 7 jours consécutifs - La régularité est la clé du succès !",
+        "icon": "📅",
+        "rarity": "uncommon",
+        "xp_bonus": 50,
+        "conditions": {
+          "login_streak": {
+            "days": 7
+          }
+        },
+        "is_active": true,
+        "created_at": "2025-09-25T06:37:52.785941"
+      },
+      {
+        "id": "9732b471-036e-4ed3-b963-93ac58c8988f",
+        "name": "Assidu Exemplaire",
+        "description": "Se connecter 30 jours consécutifs - Votre engagement est remarquable !",
+        "icon": "🔥",
+        "rarity": "rare",
+        "xp_bonus": 150,
+        "conditions": {
+          "login_streak": {
+            "days": 30
+          }
+        },
+        "is_active": true,
+        "created_at": "2025-09-25T06:37:52.785941"
+      },
+      {
+        "id": "f283e5af-1264-4036-94c2-b6b9586a37d9",
+        "name": "Légende de la Persévérance",
+        "description": "Se connecter 100 jours consécutifs - Rien ne peut arrêter votre détermination !",
+        "icon": "💎",
+        "rarity": "mythic",
+        "xp_bonus": 500,
+        "conditions": {
+          "login_streak": {
+            "days": 100
+          }
+        },
+        "is_active": true,
+        "created_at": "2025-09-25T06:37:52.785941"
+      },
+      {
+        "id": "6aa822e1-0ea0-4565-81ac-e2f7dcadab08",
+        "name": "Membre de Maison",
+        "description": "Rejoindre une maison HES - Bienvenue dans votre nouvelle famille !",
+        "icon": "🏠",
+        "rarity": "common",
+        "xp_bonus": 25,
+        "conditions": {
+          "quiz_complete": true
+        },
+        "is_active": true,
+        "created_at": "2025-09-25T06:37:52.785941"
+      },
+      {
+        "id": "acd5648d-5d85-447d-9bbc-a24083bd76f0",
+        "name": "Ambassadeur de Maison",
+        "description": "Représenter fièrement votre maison avec 500 XP",
+        "icon": "🎖️",
+        "rarity": "rare",
+        "xp_bonus": 100,
+        "conditions": {
+          "total_xp": 500,
+          "has_house": true
+        },
+        "is_active": true,
+        "created_at": "2025-09-25T06:37:52.785941"
+      }
+    ],
+    "schema": [
+      "id",
+      "name",
+      "description",
+      "icon",
+      "rarity",
+      "xp_bonus",
+      "conditions",
+      "is_active",
+      "created_at"
+    ]
+  },
+  "challenges": {
+    "count": 5,
+    "data": [
+      {
+        "id": "db08a3fd-f521-4513-8d79-7b2df0245248",
+        "name": "Connexion Quotidienne",
+        "description": "Connectez-vous 5 fois cette semaine pour maintenir votre progression !",
+        "target_value": 5,
+        "action_type": "LOGIN",
+        "xp_reward": 100,
+        "badge_reward": null,
+        "week_number": 39,
+        "year": 2025,
+        "start_date": "2025-09-21",
+        "end_date": "2025-09-27",
+        "is_active": true,
+        "created_at": "2025-09-25T06:37:52.785941"
+      },
+      {
+        "id": "5bcf8f1d-4b9c-440a-98c9-1772946abf38",
+        "name": "Créateur de Contenu",
+        "description": "Créez 3 posts cette semaine pour partager vos connaissances !",
+        "target_value": 3,
+        "action_type": "POST_CREATE",
+        "xp_reward": 150,
+        "badge_reward": null,
+        "week_number": 39,
+        "year": 2025,
+        "start_date": "2025-09-21",
+        "end_date": "2025-09-27",
+        "is_active": true,
+        "created_at": "2025-09-25T06:37:52.785941"
+      },
+      {
+        "id": "18fe1601-368d-4879-9d89-f0ad10d7140c",
+        "name": "Engagement Social",
+        "description": "Commentez 10 fois cette semaine pour enrichir les discussions !",
+        "target_value": 10,
+        "action_type": "COMMENT_CREATE",
+        "xp_reward": 120,
+        "badge_reward": null,
+        "week_number": 39,
+        "year": 2025,
+        "start_date": "2025-09-21",
+        "end_date": "2025-09-27",
+        "is_active": true,
+        "created_at": "2025-09-25T06:37:52.785941"
+      },
+      {
+        "id": "a6a9092c-4b15-4edf-8e10-c98590f0b4b8",
+        "name": "Explorateur Assidu",
+        "description": "Connectez-vous 7 fois la semaine prochaine pour explorer toutes les fonctionnalités !",
+        "target_value": 7,
+        "action_type": "LOGIN",
+        "xp_reward": 120,
+        "badge_reward": null,
+        "week_number": 40,
+        "year": 2025,
+        "start_date": "2025-09-28",
+        "end_date": "2025-10-04",
+        "is_active": true,
+        "created_at": "2025-09-25T06:37:52.785941"
+      },
+      {
+        "id": "a766b378-2e9f-46ff-b603-c8f2932d5e72",
+        "name": "Maître du Partage",
+        "description": "Créez 5 posts la semaine prochaine pour devenir un pilier de la communauté !",
+        "target_value": 5,
+        "action_type": "POST_CREATE",
+        "xp_reward": 200,
+        "badge_reward": null,
+        "week_number": 40,
+        "year": 2025,
+        "start_date": "2025-09-28",
+        "end_date": "2025-10-04",
+        "is_active": true,
+        "created_at": "2025-09-25T06:37:52.785941"
+      }
+    ],
+    "schema": [
+      "id",
+      "name",
+      "description",
+      "target_value",
+      "action_type",
+      "xp_reward",
+      "badge_reward",
+      "week_number",
+      "year",
+      "start_date",
+      "end_date",
+      "is_active",
+      "created_at"
+    ]
+  }
+}

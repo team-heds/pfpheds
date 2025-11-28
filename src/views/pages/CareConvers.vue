@@ -169,6 +169,7 @@
       
   
   </div>
+  </AdminLayout>
   </template>
   
   <script>
