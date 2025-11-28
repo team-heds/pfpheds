@@ -1,0 +1,26 @@
+{
+  "id": "soins-infirmiers/overview",
+  "title": "Soins-infirmiers — Overview",
+  "description": "Cette page présente la section Soins-infirmiers et ses sous-parties.",
+  "source": "@site/docs/soins-infirmiers/overview.md",
+  "sourceDirName": "soins-infirmiers",
+  "slug": "/soins-infirmiers/overview",
+  "permalink": "/docs/soins-infirmiers/overview",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "Soins-infirmiers — Overview",
+    "sidebar_label": "Overview"
+  },
+  "sidebar": "docs",
+  "previous": {
+    "title": "Soins-infirmiers",
+    "permalink": "/docs/soins-infirmiers"
+  },
+  "next": {
+    "title": "Processus SI",
+    "permalink": "/docs/soins-infirmiers/processus"
+  }
+}

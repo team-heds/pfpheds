@@ -1,0 +1,26 @@
+{
+  "id": "physiotherapie/overview",
+  "title": "Physiothérapie — Overview",
+  "description": "Cette page présente la section Physiothérapie et ses sous-parties.",
+  "source": "@site/docs/physiotherapie/overview.md",
+  "sourceDirName": "physiotherapie",
+  "slug": "/physiotherapie/overview",
+  "permalink": "/docs/physiotherapie/overview",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "Physiothérapie — Overview",
+    "sidebar_label": "Overview"
+  },
+  "sidebar": "docs",
+  "previous": {
+    "title": "Physiothérapie",
+    "permalink": "/docs/physiotherapie"
+  },
+  "next": {
+    "title": "Processus FP",
+    "permalink": "/docs/physiotherapie/processus"
+  }
+}

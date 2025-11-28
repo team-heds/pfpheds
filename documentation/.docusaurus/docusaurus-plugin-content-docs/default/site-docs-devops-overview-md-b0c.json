@@ -1,0 +1,26 @@
+{
+  "id": "devops/overview",
+  "title": "DevOps — Overview",
+  "description": "Vue d’ensemble des options de déploiement et outillages DevOps utilisés dans la plateforme.",
+  "source": "@site/docs/devops/overview.md",
+  "sourceDirName": "devops",
+  "slug": "/devops/overview",
+  "permalink": "/docs/devops/overview",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "DevOps — Overview",
+    "sidebar_label": "Overview"
+  },
+  "sidebar": "docs",
+  "previous": {
+    "title": "Migrations Supabase",
+    "permalink": "/docs/backend/supabase/migrations"
+  },
+  "next": {
+    "title": "Docker Dev",
+    "permalink": "/docs/devops/docker-dev"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "id": "developing/starting",
+  "title": "Démarrer le développement",
+  "description": "Cette page explique comment lancer un environnement de développement complet, ainsi que les conventions générales.",
+  "source": "@site/docs/developing/starting.md",
+  "sourceDirName": "developing",
+  "slug": "/developing/starting",
+  "permalink": "/docs/developing/starting",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "id": "starting",
+    "title": "Démarrer le développement",
+    "sidebar_label": "Starting"
+  },
+  "sidebar": "docs",
+  "previous": {
+    "title": "Developing",
+    "permalink": "/docs/developing"
+  },
+  "next": {
+    "title": "Architecture",
+    "permalink": "/docs/architecture"
+  }
+}
