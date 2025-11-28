@@ -1,16 +1,16 @@
-/**
- * Service Étudi ants - Source unique Supabase
- * Gère TOUS les étudiants depuis user_profiles
- * Date: 28/11/2025
- */
-
+    /**
+* Service Étudi ants - Source unique Supabase
+* Gère TOUS les étudiants depuis user_profiles
+* Date: 28/11/2025
+*/
+ 
 import { supabase } from '@/supabase'
-
+ 
 /**
- * Récupère TOUS les étudiants depuis user_profiles (source unique)
- * Inclut BA22, BA23, BA24, BA25 et tous les futurs
- * @returns {Promise<Array>} Liste des étudiants avec infos complètes
- */
+* Récupère TOUS les étudiants depuis user_profiles (source unique)
+* Inclut BA22, BA23, BA24, BA25 et tous les futurs
+* @returns {Promise<Array>} Liste des étudiants avec infos complètes
+*/
 export async function getAllStudents() {
   try {
     // 1. Récupérer depuis user_profiles
@@ -83,9 +83,9 @@ export async function getAllStudents() {
     })
     
     physioStudents.forEach(student => {
-      const classe = student.class 
-        || student.Class 
-        || student.Classe 
+      const classe = student.class
+        || student.Class
+        || student.Classe
         || student.classe
         || student.promotion
         || student.year
@@ -141,7 +141,7 @@ export async function getAllStudents() {
       const classeFromPhysioByFirebaseId = user.firebase_id ? userIdToClassMap.get(user.firebase_id) : null
       const classeFromUserProfiles = user.classe || user.class || user.promotion
       
-      const classe = classeFromPhysioById 
+      const classe = classeFromPhysioById
         || classeFromPhysioByFirebaseId
         || classeFromUserProfiles
         || 'BA25'  // Valeur par défaut si rien n'est trouvé
@@ -168,6 +168,7 @@ export async function getAllStudents() {
         avatar_url: user.avatar_url,
         house_id: user.house_id,
         created_at: user.created_at,
+        pfp_cohort: user.pfp_cohort || null, // IMPORTANT: Cohorte PFP
         // Flag pour identifier la source
         source: 'user_profiles',
         // Source de la classe pour debug
@@ -196,9 +197,9 @@ export async function getAllStudents() {
     // Mapper studentPhysio vers le format attendu
     const studentsFromPhysio = physioStudents.map(student => {
       // Essayer toutes les variantes possibles pour la classe
-      const classe = student.Class 
-        || student.Classe 
-        || student.classe 
+      const classe = student.Class
+        || student.Classe
+        || student.classe
         || student.class
         || student.promotion
         || student.year
@@ -239,7 +240,7 @@ export async function getAllStudents() {
     // Ajouter les étudiants de StudentsPhysio qui ne sont pas déjà dans user_profiles
     studentsFromPhysio.forEach(student => {
       // Vérifier si l'étudiant existe déjà (par user_id OU firebase_id)
-      const alreadyExists = existingIds.has(student.id) || 
+      const alreadyExists = existingIds.has(student.id) ||
                            (student.firebase_id && existingIds.has(student.firebase_id))
       
       if (!alreadyExists) {
@@ -255,12 +256,12 @@ export async function getAllStudents() {
     return []
   }
 }
-
+ 
 /**
- * Récupère un étudiant par son ID
- * @param {string} userId - ID de l'étudiant
- * @returns {Promise<Object|null>} Étudiant ou null
- */
+* Récupère un étudiant par son ID
+* @param {string} userId - ID de l'étudiant
+* @returns {Promise<Object|null>} Étudiant ou null
+*/
 export async function getStudentById(userId) {
   try {
     const { data, error } = await supabase
@@ -291,13 +292,13 @@ export async function getStudentById(userId) {
     return null
   }
 }
-
+ 
 /**
- * Met à jour un étudiant
- * @param {string} userId - ID de l'étudiant
- * @param {Object} updates - Champs à mettre à jour
- * @returns {Promise<boolean>} Succès ou échec
- */
+* Met à jour un étudiant
+* @param {string} userId - ID de l'étudiant
+* @param {Object} updates - Champs à mettre à jour
+* @returns {Promise<boolean>} Succès ou échec
+*/
 export async function updateStudent(userId, updates) {
   try {
     // Préparer les données pour Supabase
@@ -326,12 +327,12 @@ export async function updateStudent(userId, updates) {
     return false
   }
 }
-
+ 
 /**
- * Supprime un étudiant (soft delete - change le rôle)
- * @param {string} userId - ID de l'étudiant
- * @returns {Promise<boolean>} Succès ou échec
- */
+* Supprime un étudiant (soft delete - change le rôle)
+* @param {string} userId - ID de l'étudiant
+* @returns {Promise<boolean>} Succès ou échec
+*/
 export async function deleteStudent(userId) {
   try {
     // Soft delete: changer le rôle au lieu de supprimer
@@ -355,13 +356,13 @@ export async function deleteStudent(userId) {
     return false
   }
 }
-
+ 
 /**
- * Ajoute une classe à un étudiant
- * @param {string} userId - ID de l'étudiant
- * @param {string} classe - Classe (BA22, BA23, BA24, BA25, etc.)
- * @returns {Promise<boolean>} Succès ou échec
- */
+* Ajoute une classe à un étudiant
+* @param {string} userId - ID de l'étudiant
+* @param {string} classe - Classe (BA22, BA23, BA24, BA25, etc.)
+* @returns {Promise<boolean>} Succès ou échec
+*/
 export async function assignClass(userId, classe) {
   try {
     const { error } = await supabase
@@ -384,11 +385,11 @@ export async function assignClass(userId, classe) {
     return false
   }
 }
-
+ 
 /**
- * Récupère les statistiques par classe
- * @returns {Promise<Object>} Stats par classe
- */
+* Récupère les statistiques par classe
+* @returns {Promise<Object>} Stats par classe
+*/
 export async function getClassStats() {
   try {
     const students = await getAllStudents()
@@ -406,12 +407,12 @@ export async function getClassStats() {
     return {}
   }
 }
-
+ 
 /**
- * Récupère les étudiants d'une classe spécifique
- * @param {string} classe - Classe (BA22, BA23, BA24, BA25)
- * @returns {Promise<Array>} Étudiants de la classe
- */
+* Récupère les étudiants d'une classe spécifique
+* @param {string} classe - Classe (BA22, BA23, BA24, BA25)
+* @returns {Promise<Array>} Étudiants de la classe
+*/
 export async function getStudentsByClass(classe) {
   try {
     const allStudents = await getAllStudents()
@@ -421,12 +422,12 @@ export async function getStudentsByClass(classe) {
     return []
   }
 }
-
+ 
 /**
- * Synchronise un étudiant Firebase vers Supabase
- * @param {Object} firebaseStudent - Données Firebase
- * @returns {Promise<boolean>} Succès ou échec
- */
+* Synchronise un étudiant Firebase vers Supabase
+* @param {Object} firebaseStudent - Données Firebase
+* @returns {Promise<boolean>} Succès ou échec
+*/
 export async function syncFirebaseStudent(firebaseStudent) {
   try {
     // Vérifier si l'étudiant existe déjà
@@ -449,11 +450,11 @@ export async function syncFirebaseStudent(firebaseStudent) {
     return false
   }
 }
-
+ 
 /**
- * Compte le nombre total d'étudiants
- * @returns {Promise<number>} Nombre d'étudiants
- */
+* Compte le nombre total d'étudiants
+* @returns {Promise<number>} Nombre d'étudiants
+*/
 export async function countStudents() {
   try {
     // Utiliser getAllStudents qui a le filtre flexible
@@ -464,11 +465,11 @@ export async function countStudents() {
     return 0
   }
 }
-
+ 
 /**
- * Fonction de diagnostic pour analyser les tables et les correspondances
- * À appeler depuis la console: window.diagnosticTables()
- */
+* Fonction de diagnostic pour analyser les tables et les correspondances
+* À appeler depuis la console: window.diagnosticTables()
+*/
 export async function diagnosticTables() {
   console.log('🔍 === DIAGNOSTIC DES TABLES SUPABASE ===\n')
   
@@ -553,13 +554,13 @@ export async function diagnosticTables() {
   
   if (allProfiles && allPhysio) {
     // Test correspondance par user_id
-    const matchByUserId = allProfiles.filter(p => 
+    const matchByUserId = allProfiles.filter(p =>
       allPhysio.some(ph => ph.user_id === p.user_id)
     )
     console.log(`\n✅ Correspondances par user_id: ${matchByUserId.length}/${allProfiles.length}`)
     
     // Test correspondance par firebase_id
-    const matchByFirebaseId = allProfiles.filter(p => 
+    const matchByFirebaseId = allProfiles.filter(p =>
       p.firebase_id && allPhysio.some(ph => ph.firebase_id === p.firebase_id)
     )
     console.log(`✅ Correspondances par firebase_id: ${matchByFirebaseId.length}/${allProfiles.length}`)
@@ -587,23 +588,23 @@ export async function diagnosticTables() {
   return {
     profilesCount: profilesData?.length || 0,
     physioCount: physioData?.length || 0,
-    matchByUserId: allProfiles && allPhysio ? allProfiles.filter(p => 
+    matchByUserId: allProfiles && allPhysio ? allProfiles.filter(p =>
       allPhysio.some(ph => ph.user_id === p.user_id)
     ).length : 0,
-    matchByFirebaseId: allProfiles && allPhysio ? allProfiles.filter(p => 
+    matchByFirebaseId: allProfiles && allPhysio ? allProfiles.filter(p =>
       p.firebase_id && allPhysio.some(ph => ph.firebase_id === p.firebase_id)
     ).length : 0
   }
 }
-
+ 
 // Exposer la fonction de diagnostic globalement
 if (typeof window !== 'undefined') {
   window.diagnosticTables = diagnosticTables
 }
-
+ 
 /**
- * Export par défaut
- */
+* Export par défaut
+*/
 export default {
   getAllStudents,
   getStudentById,
@@ -616,3 +617,5 @@ export default {
   countStudents,
   diagnosticTables
 }
+ 
+ 
