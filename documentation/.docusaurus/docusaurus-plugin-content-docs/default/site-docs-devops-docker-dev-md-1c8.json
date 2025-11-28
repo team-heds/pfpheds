@@ -1,0 +1,25 @@
+{
+  "id": "devops/docker-dev",
+  "title": "Docker Dev",
+  "description": "Brouillon de documentation pour devops/docker-dev.",
+  "source": "@site/docs/devops/docker-dev.md",
+  "sourceDirName": "devops",
+  "slug": "/devops/docker-dev",
+  "permalink": "/docs/devops/docker-dev",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "Docker Dev"
+  },
+  "sidebar": "docs",
+  "previous": {
+    "title": "VPS: Caddy vs Nginx",
+    "permalink": "/docs/devops/vps-caddy-nginx"
+  },
+  "next": {
+    "title": "CI/CD",
+    "permalink": "/docs/devops/ci-cd"
+  }
+}

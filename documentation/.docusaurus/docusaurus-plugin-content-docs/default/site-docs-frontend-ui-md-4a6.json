@@ -1,0 +1,25 @@
+{
+  "id": "frontend/ui",
+  "title": "UI & Design System",
+  "description": "Brouillon de documentation pour frontend/ui.",
+  "source": "@site/docs/frontend/ui.md",
+  "sourceDirName": "frontend",
+  "slug": "/frontend/ui",
+  "permalink": "/docs/frontend/ui",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "UI & Design System"
+  },
+  "sidebar": "docs",
+  "previous": {
+    "title": "Gestion d'état (Pinia)",
+    "permalink": "/docs/frontend/state"
+  },
+  "next": {
+    "title": "PWA et Performance",
+    "permalink": "/docs/frontend/pwa"
+  }
+}

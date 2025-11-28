@@ -1,0 +1,25 @@
+{
+  "id": "backend/firebase/auth",
+  "title": "Firebase Auth",
+  "description": "Brouillon de documentation pour backend/firebase/auth.",
+  "source": "@site/docs/backend/firebase/auth.md",
+  "sourceDirName": "backend/firebase",
+  "slug": "/backend/firebase/auth",
+  "permalink": "/docs/backend/firebase/auth",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "Firebase Auth"
+  },
+  "sidebar": "docs",
+  "previous": {
+    "title": "Firebase Storage",
+    "permalink": "/docs/backend/firebase/storage"
+  },
+  "next": {
+    "title": "Supabase - Vue d'ensemble",
+    "permalink": "/docs/backend/supabase/overview"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "type": "mdx",
+  "permalink": "/docs/landing",
+  "source": "@site/src/pages/index.md",
+  "title": "Documentation HEdS",
+  "description": "Plateforme HEdS — Documentation",
+  "frontMatter": {
+    "title": "Documentation HEdS",
+    "slug": "/landing",
+    "hide_table_of_contents": true
+  },
+  "unlisted": false
+}

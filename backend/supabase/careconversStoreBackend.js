@@ -4,15 +4,15 @@
 
 var temp = 0;
 
-// Optional OpenAI client (lazy-init, non-fatal if missing)
-let openai = null;
+// Optional Gemini client (lazy-init, non-fatal if missing)
+let geminiAI = null;
 try {
-  if (process.env.OPENAI_API_KEY) {
-    const OpenAI = require('openai');
-    openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  if (process.env.GEMINI_API_KEY) {
+    const { GoogleGenAI } = require('@google/genai');
+    geminiAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   }
 } catch (e) {
-  console.warn('[CareConvers] OpenAI SDK not available, falling back to regex intents.');
+  console.warn('[CareConvers] Gemini SDK not available, falling back to regex intents.');
 }
 
 // Regex-based fallback intent matcher (kept from previous implementation)
@@ -57,10 +57,10 @@ function getIntentRegex(userInput) {
   return 'unknown';
 }
 
-// OpenAI-assisted semantic intent matcher (context-aware)
+// Gemini-assisted semantic intent matcher (context-aware)
 async function getIntent(userInput, currentStep = 1) {
-  // If OpenAI not configured, fallback to regex
-  if (!openai) return getIntentRegex(userInput);
+  // If Gemini not configured, fallback to regex
+  if (!geminiAI) return getIntentRegex(userInput);
 
   // Map ASCII or variant labels to the canonical labels used in the switch
   const canonicalMap = new Map([
@@ -158,25 +158,21 @@ async function getIntent(userInput, currentStep = 1) {
   const relevantIntents = getRelevantIntents(currentStep);
   const intentList = relevantIntents.map(intent => `- ${intent}`).join('\n');
 
-  const systemPrompt = `Tu es un assistant de classification d'intentions.\n\nClassifie la phrase de l'utilisateur dans UNE SEULE des etiquettes SUIVANTES (reponds STRICTEMENT par l'ETIQUETTE EXACTE, sans autre texte). Voici les options possibles pour cette etape :\n${intentList}\n- unknown\n\nAccepte les variantes orthographiques, l'absence d'accents et les reformulations proches. Reponds UNIQUEMENT par une des etiquettes ci-dessus, sans ponctuation additionnelle.`;
+  const prompt = `Tu es un assistant de classification d'intentions.\n\nClassifie la phrase de l'utilisateur dans UNE SEULE des etiquettes SUIVANTES (reponds STRICTEMENT par l'ETIQUETTE EXACTE, sans autre texte). Voici les options possibles pour cette etape :\n${intentList}\n- unknown\n\nAccepte les variantes orthographiques, l'absence d'accents et les reformulations proches. Reponds UNIQUEMENT par une des etiquettes ci-dessus, sans ponctuation additionnelle.\n\nPhrase de l'utilisateur: "${String(userInput || '')}"`;
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-5-nano-2025-08-07',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: String(userInput || '') }
-      ],
-   
+    const response = await geminiAI.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
     });
-    console.log(systemPrompt);
-    const rawIntent = (completion.choices?.[0]?.message?.content || '').trim();
+    console.log(prompt);
+    const rawIntent = (response.text || '').trim();
     const mapped = canonicalMap.get(rawIntent) || (relevantIntents.includes(rawIntent) ? rawIntent : 'unknown');
     const canonical = canonicalMap.get(mapped) || mapped;
     console.log(`[CareConvers][Intent] step=${currentStep} input="${userInput}" -> intent(raw)="${rawIntent}" -> intent(canonical)="${canonical}"`);
     return canonical === 'unknown' ? getIntentRegex(userInput) : canonical;
   } catch (error) {
-    console.error('[CareConvers] OpenAI classification failed, using regex fallback:', error?.message || error);
+    console.error('[CareConvers] Gemini classification failed, using regex fallback:', error?.message || error);
     return getIntentRegex(userInput);
   }
 }

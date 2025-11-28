@@ -1,0 +1,25 @@
+{
+  "id": "media/vimeo-config",
+  "title": "Configuration Vimeo",
+  "description": "Brouillon de documentation pour media/vimeo-config.",
+  "source": "@site/docs/media/vimeo-config.md",
+  "sourceDirName": "media",
+  "slug": "/media/vimeo-config",
+  "permalink": "/docs/media/vimeo-config",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "Configuration Vimeo"
+  },
+  "sidebar": "docs",
+  "previous": {
+    "title": "Modules & Médias",
+    "permalink": "/docs/media/modules"
+  },
+  "next": {
+    "title": "Service Médias",
+    "permalink": "/docs/media/media-service"
+  }
+}

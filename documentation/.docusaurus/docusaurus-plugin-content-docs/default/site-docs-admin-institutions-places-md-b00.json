@@ -1,0 +1,25 @@
+{
+  "id": "admin/institutions-places",
+  "title": "Institutions & Places",
+  "description": "Brouillon de documentation pour admin/institutions-places.",
+  "source": "@site/docs/admin/institutions-places.md",
+  "sourceDirName": "admin",
+  "slug": "/admin/institutions-places",
+  "permalink": "/docs/admin/institutions-places",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "Institutions & Places"
+  },
+  "sidebar": "docs",
+  "previous": {
+    "title": "Gestion Utilisateurs",
+    "permalink": "/docs/admin/users"
+  },
+  "next": {
+    "title": "Votations",
+    "permalink": "/docs/admin/votations"
+  }
+}

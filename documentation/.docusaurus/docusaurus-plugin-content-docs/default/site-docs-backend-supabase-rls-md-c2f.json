@@ -1,0 +1,25 @@
+{
+  "id": "backend/supabase/rls",
+  "title": "Supabase RLS & Sécurité",
+  "description": "Brouillon de documentation pour backend/supabase/rls.",
+  "source": "@site/docs/backend/supabase/rls.md",
+  "sourceDirName": "backend/supabase",
+  "slug": "/backend/supabase/rls",
+  "permalink": "/docs/backend/supabase/rls",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "title": "Supabase RLS & Sécurité"
+  },
+  "sidebar": "docs",
+  "previous": {
+    "title": "Supabase Services",
+    "permalink": "/docs/backend/supabase/services"
+  },
+  "next": {
+    "title": "Migrations Supabase",
+    "permalink": "/docs/backend/supabase/migrations"
+  }
+}
