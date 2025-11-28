@@ -5,6 +5,7 @@
  */
 
 import { supabase } from '@/supabase'
+import studentsService from './studentsService'
 
 /**
  * Compter les lignes d'une table Supabase
@@ -78,13 +79,8 @@ export async function fetchGeneralKpis() {
  */
 export async function fetchPfpKpis() {
   try {
-    // Étudiants (tous rôles student-like)
-    const studentRoles = ['student', 'etudiant', 'Student', 'Etudiant']
-    let etudiants = 0
-    
-    for (const role of studentRoles) {
-      etudiants += await countTable('user_profiles', [['role', 'eq', role]])
-    }
+    // Étudiants - SOURCE UNIQUE depuis studentsService (inclut BA22, BA23, BA24, BA25)
+    const etudiants = await studentsService.countStudents()
     
     // Institutions partenaires
     const institutions = await countTable('institutions')

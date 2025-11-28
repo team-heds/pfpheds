@@ -1,5 +1,6 @@
 <template>
   <AdminLayout>
+    <Toast />
     <div class="filter-menu">
       <DataTable
         :value="filteredEtudiants"
@@ -50,7 +51,7 @@
         <!-- Colonne des actions -->
         <Column header="Actions" style="min-width: 12rem" class="text-center">
           <template #body="{ data }">
-            <Button label="Profil" class="mb-2 mr-2" size="small"  outlined @click="goToEtudiantDetails(data.id)" />
+            <Button label="Profil" class="mb-2 mr-2" size="small" outlined @click="goToEtudiantDetails(data.id)" />
             <Button label="Modifier" class="mb-2 mr-2" size="small" outlined severity="success" @click="goToEtudiantFormModif(data.id)" />
             <Button label="Supprimer" class="mb-2 mr-2" size="small" outlined severity="danger" @click="deleteStudent(data.id)" />
           </template>
@@ -61,13 +62,15 @@
 </template>
 
 <script>
-import { getDatabase, ref as dbRef, get, set } from "firebase/database";
+import studentsService from '@/service/studentsService';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
+import Toast from 'primevue/toast';
+import { useToast } from 'primevue/usetoast';
 
 export default {
   name: "EtudiantList",
@@ -77,7 +80,8 @@ export default {
     InputText,
     Button,
     Dropdown,
-    AdminLayout
+    AdminLayout,
+    Toast
   },
   data() {
     return {
@@ -87,7 +91,7 @@ export default {
       },
       loading: true,
       globalFilter: '',
-      classeOptions: ['BA22', 'BA23', 'BA24']
+      classeOptions: ['BA22', 'BA23', 'BA24', 'BA25', 'Non défini']
     };
   },
   computed: {
@@ -106,74 +110,85 @@ export default {
       });
     }
   },
+  setup() {
+    const toast = useToast();
+    return { toast };
+  },
   async mounted() {
-    await this.fetchEtudiantsAndUsers();
+    await this.fetchEtudiantsFromSupabase();
   },
   methods: {
-    async fetchEtudiantsAndUsers() {
+    /**
+     * Récupère TOUS les étudiants depuis Supabase (source unique)
+     * Inclut BA22, BA23, BA24, BA25 et futurs
+     */
+    async fetchEtudiantsFromSupabase() {
+      this.loading = true;
       try {
-        const db = getDatabase();
-        const studentsData = [];
-        const usersData = {};
-
-        // Récupérer les étudiants de la base `Students`
-        const studentsRef = dbRef(db, `Students`);
-        const snapshotStudents = await get(studentsRef);
-        if (snapshotStudents.exists()) {
-          const dataStudents = snapshotStudents.val();
-          for (const key in dataStudents) {
-            const student = {
-              id: key, // Utilisation de la clé comme identifiant
-              ...dataStudents[key],
-              SAE: dataStudents[key].CasParticulier === 'true', // Ajout du champ SAE
-            };
-            studentsData.push(student);
-          }
-        }
-
-        // Récupérer les informations personnelles des étudiants depuis la base `Users`
-        const usersRef = dbRef(db, `Users`);
-        const snapshotUsers = await get(usersRef);
-        if (snapshotUsers.exists()) {
-          Object.assign(usersData, snapshotUsers.val());
-        }
-
-        // Fusionner les données des étudiants avec celles des utilisateurs en utilisant la clé comme identifiant
-        this.etudiants = studentsData.map(student => {
-          const user = usersData[student.id] || {}; // Utiliser la clé pour récupérer les données correspondantes dans Users
-          return {
-            ...student,
-            Nom: user.Nom || 'Nom non disponible',
-            Prenom: user.Prenom || 'Prénom non disponible',
-            Mail: user.Mail || 'Email non disponible',
-            Classe: student.Class || 'Classe non disponible',
-            SAE: student.SAE || false,
-          };
+        // Récupérer depuis le service Supabase unifié
+        this.etudiants = await studentsService.getAllStudents();
+        
+        console.log(`✅ ${this.etudiants.length} étudiants chargés depuis Supabase`);
+        
+        // Afficher les stats par classe
+        const stats = await studentsService.getClassStats();
+        console.log('📊 Répartition par classe:', stats);
+        
+        this.toast.add({
+          severity: 'success',
+          summary: 'Étudiants chargés',
+          detail: `${this.etudiants.length} étudiants récupérés`,
+          life: 3000
         });
-
-        this.loading = false;
       } catch (error) {
-        console.error('Erreur lors de la récupération des données :', error);
+        console.error('❌ Erreur fetchEtudiantsFromSupabase:', error);
+        this.toast.add({
+          severity: 'error',
+          summary: 'Erreur',
+          detail: 'Impossible de charger les étudiants',
+          life: 5000
+        });
+      } finally {
+        this.loading = false;
       }
     },
+    
     async deleteStudent(etuId) {
-      if (confirm('Êtes-vous sûr de vouloir supprimer cet étudiant ?')) {
+      if (confirm('Êtes-vous sûr de vouloir archiver cet étudiant ?')) {
         try {
-          const db = getDatabase();
-          const studentRef = dbRef(db, `Students/${etuId}`);
-          await set(studentRef, null);
-          await this.fetchEtudiantsAndUsers(); // Re-fetch students after deletion
+          const success = await studentsService.deleteStudent(etuId);
+          
+          if (success) {
+            this.toast.add({
+              severity: 'success',
+              summary: 'Étudiant archivé',
+              detail: 'L\'étudiant a été archivé avec succès',
+              life: 3000
+            });
+            await this.fetchEtudiantsFromSupabase();
+          } else {
+            throw new Error('Échec de l\'archivage');
+          }
         } catch (error) {
-          console.error('Erreur de suppression de l’étudiant :', error);
+          console.error('❌ Erreur deleteStudent:', error);
+          this.toast.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail: 'Impossible d\'archiver l\'étudiant',
+            life: 5000
+          });
         }
       }
     },
+    
     goToEtudiantForm() {
       this.$router.push({ name: 'EtudiantForm' });
     },
+    
     goToEtudiantDetails(etuId) {
       this.$router.push({ name: 'Profile', params: { id: etuId } });
     },
+    
     goToEtudiantFormModif(etuId) {
       this.$router.push({ name: 'EtudiantFormModif', params: { etuId } });
     }

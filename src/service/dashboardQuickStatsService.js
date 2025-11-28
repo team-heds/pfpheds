@@ -4,6 +4,7 @@
  */
 
 import { supabase } from '@/supabase'
+import studentsService from './studentsService'
 
 /**
  * Compte les éléments d'une table avec filtre optionnel
@@ -40,15 +41,8 @@ export async function fetchQuickStats() {
       // Institutions partenaires
       countTable('institutions'),
       
-      // Étudiants (tous rôles student-like)
-      (async () => {
-        const roles = ['student', 'etudiant', 'Student', 'Etudiant']
-        let total = 0
-        for (const role of roles) {
-          total += await countTable('user_profiles', [['role', 'eq', role]])
-        }
-        return total
-      })(),
+      // Étudiants - SOURCE UNIQUE (inclut BA22, BA23, BA24, BA25)
+      studentsService.countStudents(),
       
       // Formateurs (enseignants + praticiens)
       (async () => {
