@@ -206,7 +206,7 @@ export default {
       dialogMessage: "",
       votesAggregation: {},
       selectedYear: '2026',
-      targetPFP: 'PFP1A',
+      targetPFP: 'PFP1B',
       isSubmitting: false
     };
   },
@@ -278,7 +278,6 @@ export default {
         console.log('📊 Statistiques de votes chargées:', aggregation);
         
         // Transformer en objet pour accès rapide
-        // Structure: votesAggregation[placeId] = { rank1: count, rank2: count, ... }
         this.votesAggregation = {};
         
         aggregation.forEach(agg => {
@@ -292,7 +291,6 @@ export default {
             };
           }
           
-          // Ajouter le compteur pour ce rang
           this.votesAggregation[placeId][`top${rank}`] = count;
           this.votesAggregation[placeId].total += count;
         });

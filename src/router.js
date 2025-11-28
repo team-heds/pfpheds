@@ -208,6 +208,7 @@ import PFPDetails from "@/components/admin/details/PFPDetails.vue";
 // VOTATIONS & GESTION
 // ========================================
 import VotationView from "@/views/admin/votations/VotationView.vue";
+import VotationViewPFP1B from "@/views/admin/votations/VotationViewPFP1B.vue";
 import VotationPreview from "@/components/admin/details/Votation_preview.vue";
 import VotationPrioritaire from '@/components/admin/details/VotationPrioritaire.vue';
 import VotationManagementView from '@/views/admin/votations/VotationManagementView.vue';
@@ -525,7 +526,8 @@ const routes = [
   // ========================================
   // VOTATIONS & GESTION
   // ========================================
-  { path: '/votation', component: VotationView, name: 'VotationView', meta: { requiresAuth: true, need: 'BA24' } },
+  { path: '/votation', component: VotationView, name: 'VotationView', meta: { requiresAuth: true, need: 'BA25' } },
+  { path: '/votation_pfp1b', component: VotationViewPFP1B, name: 'VotationViewPFP1B', meta: { requiresAuth: true } },
   { path: '/votation_preview', component: VotationPreview, name: 'VotationPreview', meta: { requiresAuth: true, need: 'admin' } },
   { path: '/votation_prioritaire', component: VotationPrioritaire, name: 'VotationPrioritaire', meta: { requiresAuth: true, need: 'prioritaire' } },
   { path: '/votation_management', component: VotationManagementView, name: 'VotationManagementView', meta: { requiresAuth: true, need: 'admin' } },

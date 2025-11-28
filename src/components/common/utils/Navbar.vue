@@ -18,7 +18,7 @@
         <!-- Ô£à Menu principal (centre) -->
         <div class="flex-auto flex justify-content-center align-items-center">
           <ul class="list-none p-3 m-0 flex align-items-center select-none flex-row cursor-pointer center-menu">
-            <li class="mx-3" v-for="item in menuItems" :key="item.title">
+            <li class="mx-3" v-for="item in filteredMenuItems" :key="item.title">
               <ButtonNavbar
                 :icon="item.icon"
                 :bgColor="'var(--surface-overlay)'"
@@ -98,30 +98,68 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, computed, watch, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { ref as dbRef, get } from "firebase/database";
 import { db } from '../../../../firebase.js';
 import { useAuthStore } from '@/stores/authStore';
+import { useUserStore } from '@/stores/userStore';
 import SwitchColor from '@/components/ui/buttons/SwitchColor.vue';
 import ButtonNavbar from '@/components/ui/buttons/ButtonNavbar.vue';
 import Dialog from 'primevue/dialog';
 import GlobalSearch from '@/components/common/utils/GlobalSearch.vue';
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
+const userStore = useUserStore();
 const user = ref(null);
 const isSettingsDialogVisible = ref(false);
 const userRoles = ref(null);
 const hasAdminAccess = ref(false);
 
-const menuItems = [
+const allMenuItems = [
   { icon: "pi pi-home", link: "/feed", title: "Accueil" },
   { icon: "pi pi-bookmark", link: "/institution", title: "institutions" },
-  { icon: "pi pi-check", link: "/votation", title: "Votation" },
+  { icon: "pi pi-moon", link: "/votation", title: "Votation PFP1A", pfpCohort: "PFP1A" },
+  { icon: "pi pi-sun", link: "/votation_pfp1b", title: "Votation PFP1B", pfpCohort: "PFP1B" },
   { icon: "pi pi-map-marker", link: "/map", title: "Map" },
   { icon: "pi pi-user-plus", link: "/admin", title: "Admin", adminOnly: true }
 ];
+
+// Computed property pour filtrer les items selon le profil de l'utilisateur
+const filteredMenuItems = computed(() => {
+  return allMenuItems.filter(item => {
+    // Si l'item nécessite un accès admin
+    if (item.adminOnly && !hasAdminAccess.value) {
+      return false;
+    }
+    
+    // Si l'item a une restriction pfpCohort
+    if (item.pfpCohort) {
+      // Récupérer le pfp_cohort du profil utilisateur
+      const userProfile = userStore.profile;
+      const userPfpCohort = userProfile?.pfp_cohort;
+      
+      console.log('🔍 Filtrage votation:', {
+        itemTitle: item.title,
+        itemPfpCohort: item.pfpCohort,
+        userPfpCohort: userPfpCohort
+      });
+      
+      // Si l'utilisateur n'a pas de pfp_cohort défini, afficher les deux par défaut
+      if (!userPfpCohort) {
+        return true;
+      }
+      
+      // Sinon, afficher uniquement si ça correspond
+      return item.pfpCohort === userPfpCohort;
+    }
+    
+    // Afficher tous les autres items
+    return true;
+  });
+});
 
 const openSettingsDialog = () => isSettingsDialogVisible.value = true;
 const navigateTo = (path) => router.push(path);
@@ -150,54 +188,67 @@ const logout = async () => {
   }
 };
 
+// Fonction pour charger/recharger le profil utilisateur
+const updateUserState = async () => {
+  const currentUser = authStore.user;
+  user.value = currentUser;
+  
+  if (currentUser) {
+    console.log('Navbar - Utilisateur connecté:', currentUser.email || currentUser.uid);
+    console.log('Navbar - Provider:', authStore.authProvider);
+    
+    // Pour les utilisateurs Firebase, charger les rôles depuis Firebase
+    if (authStore.isFirebaseUser) {
+      const userId = currentUser.uid;
+      try {
+        const userRef = dbRef(db, `Users/${userId}`);
+        const snapshot = await get(userRef);
+        if (snapshot.exists()) {
+          const userData = snapshot.val();
+          userRoles.value = userData.Roles || {};
+          hasAdminAccess.value = userData.Roles?.admin || userData.Roles?.editor || false;
+        } else {
+          console.warn('Aucune donnée utilisateur trouvée dans Firebase.');
+        }
+      } catch (error) {
+        console.error('Erreur lors de la récupération des données utilisateur:', error);
+      }
+    }
+    // Pour les utilisateurs Supabase, charger le profil
+    else if (authStore.isSupabaseUser) {
+      console.log('Navbar - Utilisateur Supabase, chargement du profil');
+      
+      // Charger le profil utilisateur depuis Supabase
+      await userStore.fetchProfile();
+      
+      const userProfile = userStore.profile;
+      console.log('Navbar - Profil Supabase chargé:', userProfile);
+      console.log('Navbar - PFP Cohort:', userProfile?.pfp_cohort);
+      
+      userRoles.value = { user: true }; // Rôle par défaut
+      hasAdminAccess.value = userProfile?.role === 'admin' || false;
+    }
+  } else {
+    console.log('Navbar - Aucun utilisateur connecté');
+    userRoles.value = null;
+    hasAdminAccess.value = false;
+  }
+};
+
+// Watcher pour recharger le profil quand la route change
+watch(() => route.path, async () => {
+  if (authStore.isSupabaseUser && authStore.user) {
+    console.log('🔄 Route changée, rechargement du profil...');
+    await userStore.fetchProfile();
+  }
+});
+
 onMounted(async () => {
   // Initialiser l'état d'authentification
   await authStore.checkAuthState();
   
-  // Écouter les changements d'état d'authentification
-  const updateUserState = async () => {
-    const currentUser = authStore.user;
-    user.value = currentUser;
-    
-    if (currentUser) {
-      console.log('Navbar - Utilisateur connecté:', currentUser.email || currentUser.uid);
-      console.log('Navbar - Provider:', authStore.authProvider);
-      
-      // Pour les utilisateurs Firebase, charger les rôles depuis Firebase
-      if (authStore.isFirebaseUser) {
-        const userId = currentUser.uid;
-        try {
-          const userRef = dbRef(db, `Users/${userId}`);
-          const snapshot = await get(userRef);
-          if (snapshot.exists()) {
-            const userData = snapshot.val();
-            userRoles.value = userData.Roles || {};
-            hasAdminAccess.value = userData.Roles?.admin || userData.Roles?.editor || false;
-          } else {
-            console.warn('Aucune donnée utilisateur trouvée dans Firebase.');
-          }
-        } catch (error) {
-          console.error('Erreur lors de la récupération des données utilisateur:', error);
-        }
-      }
-      // Pour les utilisateurs Supabase, on peut définir des rôles par défaut
-      else if (authStore.isSupabaseUser) {
-        console.log('Navbar - Utilisateur Supabase, rôles par défaut');
-        userRoles.value = { user: true }; // Rôle par défaut
-        hasAdminAccess.value = false; // Pas d'accès admin par défaut pour Supabase
-      }
-    } else {
-      console.log('Navbar - Aucun utilisateur connecté');
-      userRoles.value = null;
-      hasAdminAccess.value = false;
-    }
-  };
-  
   // Appel initial
   await updateUserState();
-  
-  // Écouter les changements (vous pouvez implémenter un watcher si nécessaire)
-  // Pour l'instant, on se contente de l'appel initial
 });
 </script>
 
