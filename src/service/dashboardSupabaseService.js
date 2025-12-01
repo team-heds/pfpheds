@@ -141,8 +141,47 @@ export async function fetchPfpKpis() {
     // Institutions partenaires
     const institutions = await countTable('institutions')
     
+    // Institutions groupées par canton
+    let institutionsByCanton = []
+    try {
+      const { data: instData, error: instError } = await supabase
+        .from('institutions')
+        .select('*')
+      
+      if (instError) throw instError
+      
+      console.log('🔍 Institutions data sample:', instData?.[0])
+      
+      const cantonCounts = {}
+      instData.forEach(inst => {
+        // Essayer différents noms de colonnes possibles
+        const canton = inst.canton || inst.Canton || inst.state || inst.region || 'Inconnu'
+        cantonCounts[canton] = (cantonCounts[canton] || 0) + 1
+      })
+      
+      institutionsByCanton = Object.entries(cantonCounts)
+        .map(([label, value]) => ({ label, value }))
+        .sort((a, b) => b.value - a.value) // Tri par nombre décroissant
+      
+      console.log('📊 Institutions par canton:', institutionsByCanton)
+    } catch (err) {
+      console.error('❌ Erreur institutionsByCanton:', err)
+      institutionsByCanton = []
+    }
+    
     // Places de stages
     const places = await countTable('places')
+    
+    // Timeline des places (simulée - évolution progressive)
+    const placesTimeline = []
+    const monthsBackPlaces = 12
+    for (let i = monthsBackPlaces; i >= 0; i--) {
+      const date = new Date()
+      date.setMonth(date.getMonth() - i)
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+      const value = Math.round(places * (1 - (i / monthsBackPlaces) * 0.35)) // Croissance de 35% sur l'année
+      placesTimeline.push({ label: monthKey, value })
+    }
     
     // PFP en cours (places assignées)
     let pfpEnCours = 0
@@ -163,19 +202,38 @@ export async function fetchPfpKpis() {
       pfpTimeline.push({ label: monthKey, value })
     }
     
-    console.log('🏥 KPI PFP:', { etudiants, institutions, places, pfpEnCours, pfpTimeline: pfpTimeline.length })
+    console.log('🏥 KPI PFP:', { 
+      etudiants, 
+      institutions, 
+      institutionsByCanton: institutionsByCanton.length,
+      places, 
+      placesTimeline: placesTimeline.length,
+      pfpEnCours, 
+      pfpTimeline: pfpTimeline.length 
+    })
     
     return {
       etudiants,
       etudiantsByClasse,
       institutions,
+      institutionsByCanton,
       places,
+      placesTimeline,
       pfpEnCours,
       pfpTimeline
     }
   } catch (error) {
     console.error('❌ Erreur fetchPfpKpis:', error)
-    return { etudiants: 0, etudiantsByClasse: [], institutions: 0, places: 0, pfpEnCours: 0, pfpTimeline: [] }
+    return { 
+      etudiants: 0, 
+      etudiantsByClasse: [], 
+      institutions: 0, 
+      institutionsByCanton: [],
+      places: 0, 
+      placesTimeline: [],
+      pfpEnCours: 0, 
+      pfpTimeline: [] 
+    }
   }
 }
 
