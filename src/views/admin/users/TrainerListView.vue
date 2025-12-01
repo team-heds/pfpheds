@@ -1,8 +1,20 @@
 <template>
   <AdminLayout>
- 
-    <div class="filter-menu">
+    <template #header>
+      <AdminPageHeader title="Liste des praticiens" subtitle="Gérez la liste des praticiens formateurs">
+        <template #breadcrumbs>
+          <div class="flex align-items-center gap-2 text-sm text-600">
+            <router-link to="/admin" class="text-600 no-underline hover:text-primary">Dashboard</router-link>
+            <i class="pi pi-angle-right text-300" aria-hidden="true"></i>
+            <span class="text-900">Praticiens</span>
+          </div>
+        </template>
+      </AdminPageHeader>
+    </template>
+    <div class="filter-menu is-compact">
+      <AppSkeleton v-if="loading" variant="table" :rows="8" :cols="5" />
       <DataTable
+        v-else
         :value="items"
         :paginator="true"
         :rows="20"
@@ -10,7 +22,6 @@
         :rowHover="true"
         v-model:filters="filters"
         filterDisplay="menu"
-        :loading="loading"
         :globalFilterFields="['nom', 'prenom', 'mail', 'institution']"
         showGridlines
       >
@@ -34,8 +45,15 @@
           </div>
         </template>
  
-        <template #empty>Aucun praticien trouvé.</template>
-        <template #loading>Chargement des données...</template>
+        <template #empty>
+          <EmptyState
+            title="Aucun praticien trouvé"
+            description="Ajustez les filtres ou ajoutez un praticien."
+            icon="pi-users"
+            actionLabel="Ajouter un praticien"
+            @action="goToPraticienForm"
+          />
+        </template>
  
         <Column field="nom" header="Nom" style="min-width:12rem" sortable />
         <Column field="prenom" header="Prénom" style="min-width:12rem" sortable />
@@ -72,7 +90,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { usePraticiensStore } from '@/stores/praticiensStore'
- 
+
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import InputText from 'primevue/inputtext'
@@ -80,6 +98,9 @@ import Button from 'primevue/button'
 import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
+import AdminPageHeader from '@/components/admin/common/AdminPageHeader.vue';
+import AppSkeleton from '@/components/common/feedback/AppSkeleton.vue';
+import EmptyState from '@/components/common/feedback/EmptyState.vue';
 // import Navbar from '@/components/common/utils/Navbar.vue'
 import { FilterMatchMode } from 'primevue/api'
  
@@ -113,6 +134,16 @@ const goToPraticienForm = () => {
   router.push({ name: 'PraticienFormateurForm' })
 }
 </script>
+
+<style scoped>
+.filter-menu { padding: 20px; }
+.is-compact :deep(.p-datatable .p-datatable-header) { padding: .75rem 1rem; }
+.is-compact :deep(.p-datatable .p-datatable-thead > tr > th) { padding: .5rem .75rem; }
+.is-compact :deep(.p-datatable .p-datatable-tbody > tr > td) { padding: .5rem .75rem; font-size: .95rem; }
+.is-compact :deep(.p-inputtext),
+.is-compact :deep(.p-dropdown),
+.is-compact :deep(.p-button) { height: 2.5rem; }
+</style>
  
 <style scoped>
 .admin-scrollable {

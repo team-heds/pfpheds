@@ -1,8 +1,21 @@
 <template>
   <AdminLayout>
+    <template #header>
+      <AdminPageHeader title="Liste des étudiants" subtitle="Gérez la liste des étudiants">
+        <template #breadcrumbs>
+          <div class="flex align-items-center gap-2 text-sm text-600">
+            <router-link to="/admin" class="text-600 no-underline hover:text-primary">Dashboard</router-link>
+            <i class="pi pi-angle-right text-300" aria-hidden="true"></i>
+            <span class="text-900">Étudiants</span>
+          </div>
+        </template>
+      </AdminPageHeader>
+    </template>
     <Toast />
-    <div class="filter-menu">
+    <div class="filter-menu is-compact">
+      <AppSkeleton v-if="loading" variant="table" :rows="8" :cols="8" />
       <DataTable
+        v-else
         :value="filteredEtudiants"
         :paginator="true"
         :rows="10"
@@ -10,7 +23,6 @@
         :rowHover="true"
         v-model:filters="filters"
         filterDisplay="menu"
-        :loading="loading"
         :globalFilterFields="['Nom', 'Prenom', 'Classe', 'Mail']"
         showGridlines
       >
@@ -22,8 +34,15 @@
             </span>
           </div>
         </template>
-        <template #empty> Aucun étudiant trouvé. </template>
-        <template #loading> Chargement des données des étudiants. Veuillez patienter. </template>
+        <template #empty>
+          <EmptyState
+            title="Aucun étudiant trouvé"
+            description="Ajustez les filtres ou ajoutez un étudiant."
+            icon="pi-users"
+            actionLabel="Ajouter un étudiant"
+            @action="goToEtudiantForm"
+          />
+        </template>
  
         <!-- Colonne pour le nom -->
         <Column field="Nom" header="Nom" style="min-width: 12rem" class="text-center" />
@@ -64,24 +83,31 @@
         <!-- Colonne édition cohorte PFP (Dropdown) -->
         <Column header="Modifier Cohorte" style="min-width: 12rem" class="text-center">
           <template #body="{ data }">
-            <Dropdown
-              v-model="data.pfp_cohort"
-              :options="pfpCohortOptions"
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Sélectionner"
-              @change="updatePfpCohort(data)"
-              :loading="data.updating"
-            />
+            <div class="flex align-items-center justify-content-center gap-2">
+              <Dropdown
+                v-model="data.pfp_cohort"
+                :options="pfpCohortOptions"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Sélectionner"
+                @change="updatePfpCohort(data)"
+                :loading="data.updating"
+                :disabled="data.updating"
+              />
+              <AppSpinner v-if="data.updating" size="sm" />
+            </div>
           </template>
         </Column>
  
         <!-- Colonne des actions -->
         <Column header="Actions" style="min-width: 12rem" class="text-center">
           <template #body="{ data }">
-            <Button label="Profil" class="mb-2 mr-2" size="small" outlined @click="goToEtudiantDetails(data.id)" />
-            <Button label="Modifier" class="mb-2 mr-2" size="small" outlined severity="success" @click="goToEtudiantFormModif(data.id)" />
-            <Button label="Supprimer" class="mb-2 mr-2" size="small" outlined severity="danger" @click="deleteStudent(data.id)" />
+            <div class="flex align-items-center justify-content-center gap-2">
+              <Button label="Profil" class="mb-2 mr-2" size="small" outlined @click="goToEtudiantDetails(data.id)" />
+              <Button label="Modifier" class="mb-2 mr-2" size="small" outlined severity="success" @click="goToEtudiantFormModif(data.id)" />
+              <Button label="Supprimer" class="mb-2 mr-2" size="small" outlined severity="danger" :disabled="deletingId === data.id" @click="deleteStudent(data.id)" />
+              <AppSpinner v-if="deletingId === data.id" size="sm" />
+            </div>
           </template>
         </Column>
       </DataTable>
@@ -90,6 +116,10 @@
 </template>
  
 <script>
+import AdminPageHeader from '@/components/admin/common/AdminPageHeader.vue';
+import AppSkeleton from '@/components/common/feedback/AppSkeleton.vue';
+import EmptyState from '@/components/common/feedback/EmptyState.vue';
+import AppSpinner from '@/components/common/feedback/AppSpinner.vue';
 import studentsService from '@/service/studentsService';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
@@ -104,6 +134,10 @@ import { supabase } from '@/supabase';
 export default {
   name: "EtudiantList",
   components: {
+    AdminPageHeader,
+    AppSkeleton,
+    EmptyState,
+    AppSpinner,
     DataTable,
     Column,
     InputText,
@@ -125,7 +159,8 @@ export default {
         { label: 'Aucun', value: null },
         { label: 'PFP1A', value: 'PFP1A' },
         { label: 'PFP1B', value: 'PFP1B' }
-      ]
+      ],
+      deletingId: null
     };
   },
   computed: {
@@ -200,6 +235,7 @@ export default {
     async deleteStudent(etuId) {
       if (confirm('Êtes-vous sûr de vouloir archiver cet étudiant ?')) {
         try {
+          this.deletingId = etuId;
           const success = await studentsService.deleteStudent(etuId);
           
           if (success) {
@@ -221,6 +257,8 @@ export default {
             detail: 'Impossible d\'archiver l\'étudiant',
             life: 5000
           });
+        } finally {
+          this.deletingId = null;
         }
       }
     },
@@ -337,6 +375,23 @@ export default {
 }
 .filter-menu {
   padding: 20px;
+}
+
+/* Variante compacte locale */
+.is-compact :deep(.p-datatable .p-datatable-header) {
+  padding: .75rem 1rem;
+}
+.is-compact :deep(.p-datatable .p-datatable-thead > tr > th) {
+  padding: .5rem .75rem;
+}
+.is-compact :deep(.p-datatable .p-datatable-tbody > tr > td) {
+  padding: .5rem .75rem;
+  font-size: .95rem;
+}
+.is-compact :deep(.p-inputtext),
+.is-compact :deep(.p-dropdown),
+.is-compact :deep(.p-button) {
+  height: 2.5rem;
 }
  
 /* Badges PFP Cohort */

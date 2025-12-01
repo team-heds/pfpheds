@@ -42,3 +42,20 @@
   overflow: hidden; clip: rect(0, 0, 0, 0);
   white-space: nowrap; border: 0;
 }
+
+/* Typography utilities */
+.h1 {
+  margin: 0;
+  font-weight: var(--font-weight-extrabold, 800);
+  letter-spacing: -0.015em;
+  line-height: var(--line-tight, 1.15);
+  font-size: clamp(1.5rem, 1.2rem + 1.5vw, 2.25rem);
+}
+
+.h2 {
+  margin: 0;
+  font-weight: var(--font-weight-bold, 700);
+  letter-spacing: -0.01em;
+  line-height: var(--line-tight, 1.15);
+  font-size: clamp(1.25rem, 1rem + 1vw, 1.75rem);
+}
