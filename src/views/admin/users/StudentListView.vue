@@ -16,7 +16,17 @@
       >
         <template #header>
           <div class="flex justify-content-between flex-column sm:flex-row">
-            <Button label="Ajouter un étudiant" icon="pi pi-plus" class="mb-2 mr-2" outlined @click="goToEtudiantForm" />
+            <div class="flex gap-2">
+              <Button label="Ajouter un étudiant" icon="pi pi-plus" class="mb-2" outlined @click="goToEtudiantForm" />
+              <Button 
+                :label="sortOrder === 'asc' ? 'Tri A-Z' : 'Tri Z-A'" 
+                :icon="sortOrder === 'asc' ? 'pi pi-sort-alpha-down' : 'pi pi-sort-alpha-up'" 
+                class="mb-2" 
+                outlined 
+                severity="secondary"
+                @click="toggleSortOrder" 
+              />
+            </div>
             <span class="p-input-icon-left">
               <InputText v-model="globalFilter" placeholder="Recherche" style="width: 100%" />
             </span>
@@ -120,6 +130,7 @@ export default {
       },
       loading: true,
       globalFilter: '',
+      sortOrder: 'asc', // 'asc' pour A-Z, 'desc' pour Z-A
       classeOptions: ['BA22', 'BA23', 'BA24', 'BA25', 'Non défini'],
       pfpCohortOptions: [
         { label: 'Aucun', value: null },
@@ -130,7 +141,7 @@ export default {
   },
   computed: {
     filteredEtudiants() {
-      return this.etudiants.filter(etudiant => {
+      const filtered = this.etudiants.filter(etudiant => {
         const matchesClass = this.filters['Classe'].value ? this.filters['Classe'].value.includes(etudiant.Classe) : true;
         const searchLower = this.globalFilter.toLowerCase();
 
@@ -141,6 +152,18 @@ export default {
           || (etudiant.Mail ? etudiant.Mail.toLowerCase().includes(searchLower) : false);
 
         return matchesClass && matchesSearch;
+      });
+
+      // Appliquer le tri alphabétique par nom
+      return filtered.sort((a, b) => {
+        const nameA = (a.Nom || '').toLowerCase();
+        const nameB = (b.Nom || '').toLowerCase();
+        
+        if (this.sortOrder === 'asc') {
+          return nameA.localeCompare(nameB);
+        } else {
+          return nameB.localeCompare(nameA);
+        }
       });
     }
   },
@@ -223,6 +246,11 @@ export default {
           });
         }
       }
+    },
+    
+    toggleSortOrder() {
+      this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
+      console.log(`📋 Tri alphabétique: ${this.sortOrder === 'asc' ? 'A-Z' : 'Z-A'}`);
     },
     
     goToEtudiantForm() {

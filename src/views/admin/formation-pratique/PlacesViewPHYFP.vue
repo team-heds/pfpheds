@@ -127,7 +127,26 @@
             </template>
           </Column>
           <Column header="Institution Name" sortable>
-            <template #body="{ data }">{{ institutionNameById[data.InstitutionId] || data.InstitutionName || '-' }}</template>
+            <template #body="{ data }">
+              <div v-if="data.InstitutionId" class="institution-assigned">
+                <span class="font-semibold">{{ institutionNameById[data.InstitutionId] || data.InstitutionName || '-' }}</span>
+                <Tag severity="success" value="Assignée" class="ml-2" />
+              </div>
+              <Dropdown 
+                v-else
+                :modelValue="data.InstitutionId || null" 
+                @update:modelValue="v => onChangeInstitution(data, v)" 
+                :options="institutionsOptions" 
+                optionLabel="label" 
+                optionValue="value"
+                placeholder="🔍 Rechercher et sélectionner..."
+                class="w-full no-institution"
+                filter
+                filterPlaceholder="Taper pour rechercher"
+                :filterMatchMode="'contains'"
+                showClear
+              />
+            </template>
           </Column>
           <Column header="MSQ" v-if="visibleColumns.MSQ">
             <template #body="{ data }">
@@ -375,6 +394,13 @@ const praticiensOptions = computed(() => {
   }))
 })
 
+const institutionsOptions = computed(() => {
+  return (institutionsStore.institutions || []).map(inst => ({
+    value: inst.InstitutionId,
+    label: `${inst.Name || 'Sans nom'} ${inst.Canton ? `(${inst.Canton})` : ''}`.trim()
+  }))
+})
+
 // UI/UX controls
 const rowsOptions = ref([
   { label: '15 par page', value: 15 },
@@ -434,6 +460,39 @@ async function onChangeSimple(row, field, value) {
   const ok = window.confirm(`Modifier ${field} ?`)
   if (!ok) return
   await store.updatePlace(row.PlaceId, { [field]: value })
+}
+
+async function onChangeInstitution(row, institutionId) {
+  if (!row?.PlaceId) return
+  
+  const institutionName = institutionId 
+    ? institutionsOptions.value.find(inst => inst.value === institutionId)?.label || ''
+    : 'Aucune'
+  
+  const ok = window.confirm(`Assigner l'institution "${institutionName}" à cette place ?`)
+  if (!ok) return
+  
+  console.log('🏥 Assignation institution:', { 
+    placeId: row.PlaceId, 
+    placeName: row.NomPlace,
+    institutionId, 
+    institutionName 
+  })
+  
+  try {
+    await store.updatePlace(row.PlaceId, { 
+      InstitutionId: institutionId || null,
+      InstitutionName: institutionNameById.value[institutionId] || null
+    })
+    
+    // Recharger la place pour avoir les données à jour
+    await store.fetchPlaceById(row.PlaceId)
+    
+    console.log('✅ Institution assignée avec succès')
+  } catch (error) {
+    console.error('❌ Erreur lors de l\'assignation de l\'institution:', error)
+    alert('Erreur lors de la sauvegarde: ' + error.message)
+  }
 }
 
 async function onChangeBool(row, field, value) {
@@ -638,6 +697,28 @@ watch(selectedYear, () => {
 .field-checkbox label {
   cursor: pointer;
   user-select: none;
+}
+
+/* Mise en évidence des places sans institution */
+.no-institution :deep(.p-dropdown) {
+  border: 2px solid #f59e0b !important;
+  background: rgba(245, 158, 11, 0.1) !important;
+}
+
+.no-institution :deep(.p-dropdown .p-placeholder) {
+  color: #f59e0b !important;
+  font-weight: 600;
+}
+
+/* Affichage des institutions assignées */
+.institution-assigned {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 6px;
+  color: #059669;
 }
 </style>
 

@@ -2,7 +2,7 @@
   <AdminLayout :noSidebar="true">
     <template #header>
       <div class="page-title p-d-flex p-jc-between">
-        <h1>Votation PFP1sA - Année {{ selectedYear }}</h1>
+        <h1>Votation PFP1B - {{ selectedYear }}</h1>
       </div>
     </template>
 
@@ -384,10 +384,13 @@ export default {
     },
 
     isPlaceDisabled(place, choiceIndex) {
-      // Empêcher de sélectionner la même place plusieurs fois
+      // Empêcher de sélectionner plusieurs sièges de la même place (même PlaceId)
       for (let i = 0; i < this.selectedPlaces.length; i++) {
-        if (i !== choiceIndex && this.selectedPlaces[i] && this.selectedPlaces[i].uniqueKey === place.uniqueKey) {
-          return true;
+        if (i !== choiceIndex && this.selectedPlaces[i]) {
+          // Comparer les PlaceId pour bloquer tous les sièges de la même place
+          if (this.selectedPlaces[i].PlaceId === place.PlaceId) {
+            return true;
+          }
         }
       }
       return false;
