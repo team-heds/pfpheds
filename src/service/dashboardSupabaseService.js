@@ -53,8 +53,52 @@ export async function fetchGeneralKpis() {
     
     const roles = rolesData ? Array.from(new Set(rolesData.map(r => r.role))).length : 0
     
+    // Liste des rôles avec comptage d'utilisateurs
+    let rolesList = []
+    if (rolesData && rolesData.length > 0) {
+      const roleCounts = {}
+      rolesData.forEach(item => {
+        const role = item.role || 'Non défini'
+        roleCounts[role] = (roleCounts[role] || 0) + 1
+      })
+      
+      rolesList = Object.entries(roleCounts)
+        .map(([nom, utilisateurs]) => ({ 
+          nom, 
+          utilisateurs,
+          type: nom.toLowerCase().includes('admin') ? 'Administrateur' : 
+                nom.toLowerCase().includes('enseignant') ? 'Enseignant' : 
+                nom.toLowerCase().includes('etudiant') ? 'Étudiant' : 'Autre'
+        }))
+        .sort((a, b) => b.utilisateurs - a.utilisateurs) // Tri par nombre d'utilisateurs
+    }
+    
     // Permissions (basé sur rôles système)
     const permissions = roles * 5 // Estimation: ~5 permissions par rôle
+    
+    // Liste des permissions système
+    const permissionsList = [
+      { nom: 'admin', description: 'Accès administrateur complet', catégorie: 'Administration' },
+      { nom: 'super.all', description: 'Super administrateur', catégorie: 'Administration' },
+      { nom: 'page1.access', description: 'Accès Dashboard PFP', catégorie: 'PFP' },
+      { nom: 'page2.access', description: 'Accès Dashboard Académique', catégorie: 'Académique' },
+      { nom: 'users.read', description: 'Consulter utilisateurs', catégorie: 'Utilisateurs' },
+      { nom: 'users.write', description: 'Modifier utilisateurs', catégorie: 'Utilisateurs' },
+      { nom: 'users.delete', description: 'Supprimer utilisateurs', catégorie: 'Utilisateurs' },
+      { nom: 'roles.manage', description: 'Gérer rôles et permissions', catégorie: 'Sécurité' },
+      { nom: 'students.read', description: 'Consulter étudiants', catégorie: 'PFP' },
+      { nom: 'students.write', description: 'Modifier étudiants', catégorie: 'PFP' },
+      { nom: 'institutions.read', description: 'Consulter institutions', catégorie: 'PFP' },
+      { nom: 'institutions.write', description: 'Modifier institutions', catégorie: 'PFP' },
+      { nom: 'places.read', description: 'Consulter places', catégorie: 'PFP' },
+      { nom: 'places.write', description: 'Modifier places', catégorie: 'PFP' },
+      { nom: 'courses.read', description: 'Consulter cours', catégorie: 'Académique' },
+      { nom: 'courses.write', description: 'Modifier cours', catégorie: 'Académique' },
+      { nom: 'media.read', description: 'Consulter médias', catégorie: 'Académique' },
+      { nom: 'media.write', description: 'Modifier médias', catégorie: 'Académique' },
+      { nom: 'gamification.read', description: 'Consulter gamification', catégorie: 'Gamification' },
+      { nom: 'gamification.write', description: 'Modifier gamification', catégorie: 'Gamification' }
+    ]
     
     // Routes (estimation système)
     const routes = 120 // Routes totales de l'application
@@ -94,19 +138,21 @@ export async function fetchGeneralKpis() {
       usersTimeline.push({ label: monthKey, value })
     }
     
-    console.log('📊 KPI Généraux:', { users, roles, permissions, routes, routesList: routesList.length, usersTimeline: usersTimeline.length })
+    console.log('📊 KPI Généraux:', { users, roles, rolesList: rolesList.length, permissions, permissionsList: permissionsList.length, routes, routesList: routesList.length, usersTimeline: usersTimeline.length })
     
     return {
       users,
       usersTimeline,
       roles,
+      rolesList,
       permissions,
+      permissionsList,
       routes,
       routesList
     }
   } catch (error) {
     console.error('❌ Erreur fetchGeneralKpis:', error)
-    return { users: 0, usersTimeline: [], roles: 0, permissions: 0, routes: 0, routesList: [] }
+    return { users: 0, usersTimeline: [], roles: 0, rolesList: [], permissions: 0, permissionsList: [], routes: 0, routesList: [] }
   }
 }
 
