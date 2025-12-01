@@ -558,10 +558,14 @@ import Toast from 'primevue/toast'
 import ConfirmDialog from 'primevue/confirmdialog'
 import Tooltip from 'primevue/tooltip'
 import { useKpiManager } from '@/composables/useKpiManager'
+import { useRouteErrors } from '@/composables/useRouteErrors'
 
 const router = useRouter()
 const toast = useToast()
 const confirm = useConfirm()
+
+// Gérer l'affichage des erreurs de navigation (ex: accès refusé PFP)
+useRouteErrors()
 
 // User info
 const user = computed(() => auth.currentUser)

@@ -160,7 +160,10 @@ export async function addDynamicRoutesToRouter(router) {
     'SupabaseDiagnosticView',
     'AdminDefisView',
     'RBACAdmin',
-    'DynamicRoutesEditor'
+    'DynamicRoutesEditor',
+    // Routes de votation avec guards PFP
+    'VotationView',
+    'VotationViewPFP1B'
   ];
 
   dynamicRoutes.forEach((route) => {
