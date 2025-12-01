@@ -144,6 +144,36 @@
           </div>
         </div>
 
+        <!-- Section PFP par Cohorte -->
+        <div class="mb-4">
+          <div class="flex align-items-center justify-content-between mb-3">
+            <div>
+              <h2 class="text-xl font-semibold text-900 m-0">Statistiques PFP par Cohorte</h2>
+              <p class="text-600 text-sm mt-1">Places de stages PFP1A et PFP1B par canton</p>
+            </div>
+            <Button
+              label="Vue détaillée"
+              icon="pi pi-external-link"
+              @click="navigateTo('/admin/pfp/cohort-stats')"
+              severity="secondary"
+              outlined
+              size="small"
+            />
+          </div>
+
+          <div class="grid">
+            <!-- Widget PFP1A -->
+            <div class="col-12 lg:col-6">
+              <PfpCohortKpiWidget cohort="PFP1A" />
+            </div>
+
+            <!-- Widget PFP1B -->
+            <div class="col-12 lg:col-6">
+              <PfpCohortKpiWidget cohort="PFP1B" />
+            </div>
+          </div>
+        </div>
+
         <!-- Quick Actions -->
         <div class="mb-4">
           <h2 class="text-xl font-semibold text-900 mb-3">Actions Rapides</h2>
@@ -224,6 +254,7 @@ import { useRouter } from 'vue-router'
 import AdminLayout from './layouts/AdminLayout.vue'
 import KpiCard from './widgets/KpiCard.vue'
 import SmartVisualization from './widgets/SmartVisualization.vue'
+import PfpCohortKpiWidget from './widgets/PfpCohortKpiWidget.vue'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import ButtonGroup from 'primevue/buttongroup'

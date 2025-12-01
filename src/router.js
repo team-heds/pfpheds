@@ -48,6 +48,7 @@ import GanttPFPView from '@/views/admin/pfp/GanttPFPView.vue'
 import ValidatePFP1AView from '@/views/admin/pfp/ValidatePFP1AView.vue'
 import InfoRepondantView from '@/views/admin/pfp/InfoRepondantView.vue'
 import ResultPreviewVotationView from '@/views/admin/pfp/ResultPreviewVotationView.vue'
+import PfpCohortStatsView from '@/views/admin/pfp/PfpCohortStatsView.vue'
 
 // FORMATION PRATIQUE PHYSIO
 import DashboardFormationPratiqueView from '@/views/admin/formation-pratique/DashboardFormationPratiqueViewPHYFP.vue'
@@ -385,6 +386,7 @@ const routes = [
   { path: '/validate-pfp1a', component: ValidatePFP1AView, name: 'ValidatePFP1A', meta: { requiresAuth: true, need: 'page1.access' } },
   { path: '/info_repondant', component: InfoRepondantView, name: 'InfoRepondant', meta: { requiresAuth: true, need: 'page1.access' } },
   { path: '/result_preview_votation', component: ResultPreviewVotationView, name: 'ResultPreviewVotation', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/admin/pfp/cohort-stats', component: PfpCohortStatsView, name: 'PfpCohortStats', meta: { requiresAuth: true, need: ['admin', 'page1.access'] } },
   
   // ========================================
   // FORMATION PRATIQUE PHYSIO ROUTES
