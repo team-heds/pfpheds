@@ -46,12 +46,12 @@ export async function fetchGeneralKpis() {
     const users = await countTable('user_profiles')
     
     // Compter les rôles uniques
-    const { data: rolesData, error: rolesError } = await supabase
+    const { data: rolesData } = await supabase
       .from('user_profiles')
       .select('role')
       .not('role', 'is', null)
     
-    const roles = rolesError ? 0 : Array.from(new Set((rolesData || []).map(r => r.role))).length
+    const roles = rolesData ? Array.from(new Set(rolesData.map(r => r.role))).length : 0
     
     // Permissions (basé sur rôles système)
     const permissions = roles * 5 // Estimation: ~5 permissions par rôle
@@ -108,7 +108,12 @@ export async function fetchPfpKpis() {
     const places = await countTable('places')
     
     // PFP en cours (places assignées)
-    const pfpEnCours = await countTable('places', [['status', 'eq', 'assigned']])
+    let pfpEnCours = 0
+    try {
+      pfpEnCours = await countTable('places', [['status', 'eq', 'assigned']])
+    } catch (err) {
+      console.warn('⚠️ Erreur pfpEnCours:', err)
+    }
     
     console.log('🏥 KPI PFP:', { etudiants, institutions, places, pfpEnCours })
     
@@ -220,8 +225,8 @@ export async function fetchAcademiqueKpis() {
       }
     }
     
-    // Modules pédagogiques depuis Supabase
-    const modules = await countTable('modules')
+    // Modules pédagogiques depuis Supabase (table n'existe pas - commenté temporairement)
+    const modules = 0 // await countTable('modules')
     
     console.log('📚 KPI Académique:', { enseignants, cours, media, modules, mediaTimeline: mediaTimeline.length })
     
@@ -257,8 +262,13 @@ export async function fetchGamificationKpis() {
     // Compter les badges disponibles
     const badges = await countTable('badges')
     
-    // Compter les défis actifs (active = true)
-    const challengesActive = await countTable('challenges', [['active', 'is', true]])
+    // Compter les défis actifs (table challenges peut ne pas exister)
+    let challengesActive = 0
+    try {
+      challengesActive = await countTable('challenges', [['active', 'is', true]])
+    } catch (err) {
+      console.warn('⚠️ Table challenges n\'existe pas:', err)
+    }
     
     // Compter les défis complétés (estimé à partir de gamification_data)
     const { data: gamData, error: gamError } = await supabase
