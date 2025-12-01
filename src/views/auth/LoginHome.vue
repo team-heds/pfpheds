@@ -19,60 +19,19 @@
           <div class="px-1">
             <!-- Contenu - Formulaire Supabase -->
             <div v-if="activeTab === 'supabase'" class="tab-content">
-              <form @submit.prevent="submitFormSupabase" class="w-full">
-                <!-- Champ Email -->
-                <div class="mb-4">
-                  <InputText
-                    id="email-supabase"
-                    type="email"
-                    v-model="email"
-                    placeholder="Email"
-                    class="w-full"
-                    :class="{ 'p-invalid': emailError }"
-                  />
-                  <small v-if="emailError" class="p-error">L'email est requis.</small>
-                </div>
-
-                <!-- Champ Mot de passe -->
-                <div class="mb-4">
-                  <Password
-                    id="password-supabase"
-                    v-model="password"
-                    placeholder="Mot de passe"
-                    inputClass="w-full"
-                    :feedback="false"
-                    class="w-full"
-                    :class="{ 'p-invalid': passwordError }"
-                    toggleMask
-                  />
-                  <small v-if="passwordError" class="p-error">Le mot de passe est requis.</small>
-                </div>
-
-                <!-- Remember me -->
-                <div class="flex align-items-center mb-4">
-                  <Checkbox v-model="rememberMe" inputId="remember-me-supabase" binary class="mr-2" />
-                  <label for="remember-me-supabase" class="text-sm">Se souvenir de moi</label>
-                </div>
-
-                <!-- Bouton de connexion Supabase -->
-                <Button 
-                  label="Se connecter" 
-                  type="submit" 
-                  class="w-full p-button-raised supabase-button" 
-                  :loading="loading"
-                />
-              </form>
-
-              <!-- Lien mot de passe oublié -->
-              <p class="mt-3 text-sm text-right">
-                <a 
-                  type="button" 
-                  @click="resetPassword" 
-                  class="text-primary font-bold hover:underline cursor-pointer"
-                >
-                  Mot de passe oublié ?
-                </a>
-              </p>
+              <AuthForm
+                :email="email"
+                :password="password"
+                :remember="rememberMe"
+                :loading="loading"
+                :emailError="emailError"
+                :passwordError="passwordError"
+                @update:email="val => (email = val)"
+                @update:password="val => (password = val)"
+                @update:remember="val => (rememberMe = val)"
+                @submit="submitFormSupabase"
+                @reset-password="resetPassword"
+              />
             </div>
 
             <!-- Contenu - Bouton Firebase -->
@@ -86,6 +45,7 @@
                   class="w-full p-button-raised firebase-button"
                   label="Connexion Firebase"
                   icon="pi pi-sign-in"
+                  aria-label="Se connecter avec Firebase (votation)"
                   :loading="loadingFirebase"
                 />
               </div>
@@ -109,6 +69,7 @@ import Password from 'primevue/password'
 import Button from 'primevue/button'
 import Checkbox from 'primevue/checkbox'
 import Toast from 'primevue/toast'
+import AuthForm from '@/components/common/forms/AuthForm.vue'
 
 // Variables réactives
 const activeTab = ref('supabase') // Onglet actif par défaut
@@ -264,7 +225,7 @@ const navigateToFirebaseLogin = () => {
 /* Bouton Supabase - Connexion principale */
 .supabase-button {
   background: linear-gradient(135deg, #F3C300 0%, #D49F3F 100%);
-  color: white;
+  color: #222;
   border: none;
   transition: all 0.3s ease;
   font-weight: 600;
@@ -274,6 +235,11 @@ const navigateToFirebaseLogin = () => {
 
 .supabase-button:hover {
   transform: translateY(-2px);
+}
+
+.supabase-button:focus-visible {
+  outline: 2px solid #111; /* contraste élevé */
+  outline-offset: 2px;
 }
 
 /* Bouton Firebase */
@@ -291,6 +257,11 @@ const navigateToFirebaseLogin = () => {
 .firebase-button:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(243, 195, 0, 0.4);
+}
+
+.firebase-button:focus-visible {
+  outline: 2px solid #111;
+  outline-offset: 2px;
 }
 
 /* Styles pour les champs de formulaire */

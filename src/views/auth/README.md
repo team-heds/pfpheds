@@ -10,9 +10,8 @@ Toutes les pages d'authentification sont maintenant centralisées dans `views/au
 
 ### 🔐 **views/auth/** - Pages d'authentification complètes
 ```
-├── LoginHome.vue            # 🏠 Page d'accueil avec login (Firebase)
-├── LoginHome2.vue           # 🏠 Page d'accueil avec login (Supabase)
-├── LoginView.vue            # 🔐 Page de connexion standard
+├── LoginHome.vue            # 🏠 Page de connexion unifiée (Supabase)
+├── LoginView.vue            # 🔐 Page de connexion legacy (Firebase)
 ├── RegisterView.vue         # 📝 Page d'inscription
 ├── ForgotPasswordView.vue   # 🔑 Mot de passe oublié
 ├── NewPasswordView.vue      # 🔑 Nouveau mot de passe
@@ -43,12 +42,12 @@ Toutes les pages d'authentification sont maintenant centralisées dans `views/au
 
 ## 🔧 **TECHNOLOGIES UTILISÉES**
 
-### 🔥 **Firebase Authentication**
-- **LoginHome.vue** : Authentification Firebase principale
+### 🔥 **Firebase Authentication (legacy)**
+- **LoginView.vue** : Authentification Firebase legacy
 - **NewPasswordView.vue** : Réinitialisation avec Firebase
 
 ### 🚀 **Supabase Authentication**
-- **LoginHome2.vue** : Authentification Supabase alternative
+- **LoginHome.vue** : Authentification Supabase (unifiée)
 - Intégration avec base de données Supabase
 
 ### 🎨 **Interface**

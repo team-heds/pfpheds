@@ -2,6 +2,7 @@
 
 /* All @import rules must be at the top of the file */
 @import '@/assets/layout/layout.scss';
+@import '@/assets/styles/tokens.scss';
 @import 'primevue/resources/primevue.min.css';
 @import 'primeflex/primeflex.scss';
 @import "primeicons/primeicons.css";
