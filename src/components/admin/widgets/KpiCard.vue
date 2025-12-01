@@ -97,6 +97,7 @@ import PieChart from './charts/PieChart.vue'
 import DoughnutChart from './charts/DoughnutChart.vue'
 import BarChart from './charts/BarChart.vue'
 import LineChart from './charts/LineChart.vue'
+import SimpleTable from './charts/SimpleTable.vue'
 
 const props = defineProps({
   label: { type: String, required: true },
@@ -147,7 +148,8 @@ function getChartComponent(type) {
     doughnut: DoughnutChart,
     bar: BarChart,
     line: LineChart,
-    mini: MiniChart
+    mini: MiniChart,
+    table: SimpleTable
   }
   return components[type] || MiniChart
 }

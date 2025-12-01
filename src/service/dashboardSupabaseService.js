@@ -59,6 +59,30 @@ export async function fetchGeneralKpis() {
     // Routes (estimation système)
     const routes = 120 // Routes totales de l'application
     
+    // Liste des routes principales (exemple)
+    const routesList = [
+      { nom: 'Dashboard Admin', path: '/admin', catégorie: 'Admin' },
+      { nom: 'Utilisateurs', path: '/admin/users', catégorie: 'Admin' },
+      { nom: 'Rôles & Permissions', path: '/admin/security/rbac', catégorie: 'Sécurité' },
+      { nom: 'Dashboard PFP', path: '/admin/formation-pratique/dashboard', catégorie: 'PFP' },
+      { nom: 'Étudiants', path: '/admin/formation-pratique/etudiants', catégorie: 'PFP' },
+      { nom: 'Institutions', path: '/admin/formation-pratique/institutions', catégorie: 'PFP' },
+      { nom: 'Places de stage', path: '/admin/formation-pratique/places', catégorie: 'PFP' },
+      { nom: 'Votation PFP', path: '/admin/formation-pratique/votation-pfp', catégorie: 'PFP' },
+      { nom: 'Dashboard Académique', path: '/admin/dashboard-academique', catégorie: 'Académique' },
+      { nom: 'Cours', path: '/admin/courses/list', catégorie: 'Académique' },
+      { nom: 'Calendrier', path: '/admin/academic/calendar', catégorie: 'Académique' },
+      { nom: 'Bibliothèque Vidéo', path: '/admin/academic/video-library', catégorie: 'Académique' },
+      { nom: 'Modules', path: '/admin/modules', catégorie: 'Média' },
+      { nom: 'Hub Multimédia', path: '/media', catégorie: 'Média' },
+      { nom: 'Dashboard Gamification', path: '/admin/dashboard-gamification', catégorie: 'Gamification' },
+      { nom: 'Défis', path: '/admin/defis', catégorie: 'Gamification' },
+      { nom: 'Maisons HES', path: '/houses/ranking', catégorie: 'Gamification' },
+      { nom: 'Profil', path: '/settings', catégorie: 'Utilisateur' },
+      { nom: 'Diagnostic', path: '/admin/supabase-diagnostic', catégorie: 'Système' },
+      { nom: 'Éditeur Routes', path: '/admin/routes-editor', catégorie: 'Système' }
+    ]
+    
     // Timeline des utilisateurs (simulée - évolution progressive)
     const usersTimeline = []
     const monthsBack = 12
@@ -70,18 +94,19 @@ export async function fetchGeneralKpis() {
       usersTimeline.push({ label: monthKey, value })
     }
     
-    console.log('📊 KPI Généraux:', { users, roles, permissions, routes, usersTimeline: usersTimeline.length })
+    console.log('📊 KPI Généraux:', { users, roles, permissions, routes, routesList: routesList.length, usersTimeline: usersTimeline.length })
     
     return {
       users,
       usersTimeline,
       roles,
       permissions,
-      routes
+      routes,
+      routesList
     }
   } catch (error) {
     console.error('❌ Erreur fetchGeneralKpis:', error)
-    return { users: 0, usersTimeline: [], roles: 0, permissions: 0, routes: 0 }
+    return { users: 0, usersTimeline: [], roles: 0, permissions: 0, routes: 0, routesList: [] }
   }
 }
 
@@ -249,8 +274,31 @@ export async function fetchAcademiqueKpis() {
       }
     }
     
-    // Modules pédagogiques depuis Supabase (table n'existe pas - commenté temporairement)
-    const modules = 0 // await countTable('modules')
+    // Modules pédagogiques depuis Supabase
+    const modules = await countTable('modules')
+    
+    // Liste des modules avec détails depuis Supabase
+    let modulesList = []
+    try {
+      const { data: modulesData, error: modulesError } = await supabase
+        .from('modules')
+        .select('id, title, description, created_at, updated_at')
+        .order('created_at', { ascending: false })
+      
+      if (modulesError) throw modulesError
+      
+      if (modulesData && modulesData.length > 0) {
+        modulesList = modulesData.map(mod => ({
+          nom: mod.title || 'Sans titre',
+          description: mod.description || '-',
+          créé: mod.created_at ? new Date(mod.created_at).toLocaleDateString('fr-FR') : '-',
+          modifié: mod.updated_at ? new Date(mod.updated_at).toLocaleDateString('fr-FR') : '-'
+        }))
+      }
+    } catch (err) {
+      console.warn('⚠️ Erreur récupération modules:', err)
+      modulesList = []
+    }
     
     // Timeline des cours (simulée - évolution programmation)
     const coursesTimeline = []
@@ -263,7 +311,7 @@ export async function fetchAcademiqueKpis() {
       coursesTimeline.push({ label: monthKey, value })
     }
     
-    console.log('📚 KPI Académique:', { enseignants, cours, media, modules, mediaTimeline: mediaTimeline.length, coursesTimeline: coursesTimeline.length })
+    console.log('📚 KPI Académique:', { enseignants, cours, media, modules, modulesList: modulesList.length, mediaTimeline: mediaTimeline.length, coursesTimeline: coursesTimeline.length })
     
     return {
       enseignants,
@@ -271,11 +319,12 @@ export async function fetchAcademiqueKpis() {
       coursesTimeline,
       media,
       mediaTimeline,
-      modules
+      modules,
+      modulesList
     }
   } catch (error) {
     console.error('❌ Erreur fetchAcademiqueKpis:', error)
-    return { enseignants: 0, cours: 0, coursesTimeline: [], media: 0, mediaTimeline: [], modules: 0 }
+    return { enseignants: 0, cours: 0, coursesTimeline: [], media: 0, mediaTimeline: [], modules: 0, modulesList: [] }
   }
 }
 
@@ -328,6 +377,18 @@ export async function fetchGamificationKpis() {
     // Total utilisateurs (depuis user_profiles)
     const totalUsers = await countTable('user_profiles')
     
+    // Liste des badges (exemple - à récupérer depuis Supabase quand disponible)
+    const badgesList = [
+      { nom: 'Première Connexion', rareté: 'Commun', points: 10, obtenu: 198 },
+      { nom: 'Explorateur', rareté: 'Commun', points: 25, obtenu: 145 },
+      { nom: 'Assidu', rareté: 'Rare', points: 50, obtenu: 89 },
+      { nom: 'Expert', rareté: 'Rare', points: 100, obtenu: 45 },
+      { nom: 'Maître', rareté: 'Épique', points: 250, obtenu: 23 },
+      { nom: 'Champion', rareté: 'Épique', points: 500, obtenu: 12 },
+      { nom: 'Légende', rareté: 'Légendaire', points: 1000, obtenu: 5 },
+      { nom: 'Mentor', rareté: 'Rare', points: 150, obtenu: 34 }
+    ]
+    
     // Timeline des défis actifs (simulée - évolution challenges)
     const challengesTimeline = []
     const monthsBack = 6
@@ -344,6 +405,7 @@ export async function fetchGamificationKpis() {
       totalGamificationUsers,
       houses,
       badges,
+      badgesList: badgesList.length,
       challengesActive,
       challengesCompleted,
       quests,
@@ -356,6 +418,7 @@ export async function fetchGamificationKpis() {
       gamificationUsers: totalGamificationUsers,
       houses,
       badges,
+      badgesList,
       challengesActive,
       challengesTimeline,
       challenges: challengesActive + challengesCompleted,
@@ -369,6 +432,7 @@ export async function fetchGamificationKpis() {
       gamificationUsers: 0,
       houses: 0,
       badges: 0,
+      badgesList: [],
       challengesActive: 0,
       challengesTimeline: [],
       challenges: 0,
