@@ -10,7 +10,6 @@ import { addDynamicRoutesToRouter } from '@/composables/useDynamicRoutes';
 // ========================================
 import LoginHome from '@/views/auth/LoginHome.vue'; // Page de connexion unifiée (Supabase)
 import NewPasswordView from '@/views/auth/NewPasswordView.vue' // avec supabase
-import LoginView from '@/views/auth/LoginView.vue';
 import RegisterView from '@/views/auth/RegisterView.vue';
 
 import VerificationView from '@/views/auth/VerificationView.vue';
@@ -283,7 +282,7 @@ const routes = [
   { path: '/', component: LoginHome, name: 'LoginHome', props: true },
   { path: '/home', component: LoginHome, name: 'LoginHome', props: true },
   { path: '/new-password', component: NewPasswordView, name: 'NewPassword' },
-  { path: '/login', component: LoginView, name: 'LoginView' },
+  { path: '/login', redirect: '/home' },
   { path: '/register', component: RegisterView, name: 'RegisterView' },
   { path: '/reset-password', component: ResetPassword, name: 'ResetPassword', meta: { requiresAuth: false } },
 

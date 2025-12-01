@@ -38,6 +38,11 @@ export function useKpiManager(dashboardType) {
         ? periodComparison.compare(period.value, { [kpi.dataKey]: value }, { [kpi.dataKey]: previous })[kpi.dataKey]
         : null
 
+      // Préparer les données de graphique
+      const breakdownData = kpi.breakdownKey && Array.isArray(kpiData.value[kpi.breakdownKey])
+        ? kpiData.value[kpi.breakdownKey]
+        : null
+
       return {
         ...kpi,
         value,
@@ -45,7 +50,7 @@ export function useKpiManager(dashboardType) {
         trend: comparison?.percentageChange ?? calculateTrend(kpi.dataKey),
         comparison: comparison ? periodComparison.generateReport(kpi.label, comparison) : buildComparison(kpi.dataKey),
         comparisonData: comparison,
-        chartData: getChartData(kpi.dataKey),
+        chartData: (breakdownData && breakdownData.length) ? breakdownData : getChartData(kpi.dataKey),
         alerts: alerts.value.filter(a => a.kpiId === kpi.id)
       }
     })

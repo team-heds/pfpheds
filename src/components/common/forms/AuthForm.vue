@@ -14,7 +14,7 @@
         :aria-invalid="emailError ? 'true' : 'false'"
         :aria-describedby="emailError ? ids.emailError : null"
       />
-      <small v-if="emailError" :id="ids.emailError" class="p-error" aria-live="polite">{{ emailErrorText }}</small>
+      <ErrorInline v-if="emailError" :id="ids.emailError" :message="emailErrorText" />
     </div>
 
     <div class="mb-4">
@@ -32,7 +32,7 @@
         :aria-invalid="passwordError ? 'true' : 'false'"
         :aria-describedby="passwordError ? ids.passwordError : null"
       />
-      <small v-if="passwordError" :id="ids.passwordError" class="p-error" aria-live="polite">{{ passwordErrorText }}</small>
+      <ErrorInline v-if="passwordError" :id="ids.passwordError" :message="passwordErrorText" />
     </div>
 
     <div class="flex align-items-center justify-content-between mb-4">
@@ -62,6 +62,7 @@ import InputText from 'primevue/inputtext'
 import Password from 'primevue/password'
 import Checkbox from 'primevue/checkbox'
 import Button from 'primevue/button'
+import ErrorInline from '@/components/common/feedback/ErrorInline.vue'
 
 const props = defineProps({
   email: { type: String, default: '' },

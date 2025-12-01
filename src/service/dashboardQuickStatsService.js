@@ -11,19 +11,17 @@ import studentsService from './studentsService'
  */
 async function countTable(table, filter = null) {
   try {
-    let query = supabase.from(table).select('*', { count: 'exact', head: true })
-    
+    // Use GET instead of HEAD to avoid 400 on some PostgREST setups
+    let query = supabase.from(table).select('*', { count: 'exact', head: false })
     if (filter && Array.isArray(filter)) {
       for (const [col, op, val] of filter) {
         query = query.filter(col, op, val)
       }
     }
-    
-    const { count, error } = await query
-    if (error) throw error
-    return count || 0
-  } catch (error) {
-    console.error(`Error counting ${table}:`, error)
+    const { count, error } = await query.limit(1)
+    if (!error) return count || 0
+    return 0
+  } catch (_e) {
     return 0
   }
 }

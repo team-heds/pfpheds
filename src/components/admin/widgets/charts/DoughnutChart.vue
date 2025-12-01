@@ -9,7 +9,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, markRaw } from 'vue'
 import { Doughnut } from 'vue-chartjs'
 import {
   Chart as ChartJS,
@@ -43,7 +43,8 @@ const props = defineProps({
   cutout: {
     type: String,
     default: '70%'
-  }
+  },
+  textColor: String
 })
 
 const chartData = computed(() => {
@@ -61,20 +62,53 @@ const chartData = computed(() => {
   }
 })
 
-const chartOptions = computed(() => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  cutout: props.cutout,
-  plugins: {
-    legend: {
-      display: props.showLegend,
-      position: 'bottom',
-      labels: {
-        padding: 20,
-        font: {
-          size: 12,
-          family: 'Inter, system-ui, sans-serif'
-        },
+function pickTextColor() {
+  const css = getComputedStyle(document.documentElement)
+  const varText = css.getPropertyValue('--text-color')?.trim()
+  const surface = css.getPropertyValue('--surface-card')?.trim() || css.getPropertyValue('--surface-ground')?.trim()
+  function parse(c) {
+    if (!c) return null
+    if (c.startsWith('#')) {
+      const n = c.replace('#','')
+      const bigint = parseInt(n.length === 3 ? n.split('').map(x=>x+x).join('') : n, 16)
+      const r = (bigint >> 16) & 255, g = (bigint >> 8) & 255, b = bigint & 255
+      return {r,g,b}
+    }
+    const m = c.match(/rgb\((\d+)\s*,\s*(\d+)\s*,\s*(\d+)\)/i)
+    if (m) return { r: +m[1], g: +m[2], b: +m[3] }
+    return null
+  }
+  function luminance({r,g,b}) {
+    const a = [r,g,b].map(v => { v/=255; return v<=0.03928? v/12.92 : Math.pow(((v+0.055)/1.055),2.4) })
+    return 0.2126*a[0] + 0.7152*a[1] + 0.0722*a[2]
+  }
+  const p = parse(surface)
+  if (p) return luminance(p) < 0.5 ? '#e5e7eb' : '#111827'
+  const bodyBg = getComputedStyle(document.body).backgroundColor
+  const pb = parse(bodyBg)
+  if (pb) return luminance(pb) < 0.5 ? '#e5e7eb' : '#111827'
+  return varText || '#e5e7eb'
+}
+
+const chartOptions = computed(() => {
+  // Utiliser props.textColor s'il est fourni, sinon détecter automatiquement
+  const textColorToUse = props.textColor || pickTextColor()
+  
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: props.cutout,
+    plugins: {
+      legend: {
+        display: props.showLegend,
+        position: 'bottom',
+        labels: {
+          padding: 20,
+          font: {
+            size: 12,
+            family: 'Inter, system-ui, sans-serif'
+          },
+          color: textColorToUse,
         generateLabels: (chart) => {
           const data = chart.data
           if (data.labels.length && data.datasets.length) {
@@ -105,6 +139,8 @@ const chartOptions = computed(() => ({
       bodyFont: {
         size: 13
       },
+      titleColor: '#fff',
+      bodyColor: '#fff',
       callbacks: {
         label: (context) => {
           const label = context.label || ''
@@ -116,7 +152,8 @@ const chartOptions = computed(() => ({
       }
     }
   }
-}))
+  }
+})
 
 function generateColor() {
   const colors = [

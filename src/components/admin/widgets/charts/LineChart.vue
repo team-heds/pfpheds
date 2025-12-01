@@ -75,31 +75,56 @@ const chartData = computed(() => {
   }
 })
 
-const chartOptions = computed(() => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      display: !!props.label,
-      position: 'top',
-      labels: {
-        padding: 15,
-        font: {
-          size: 12
+function pickTextColor() {
+  const css = getComputedStyle(document.documentElement)
+  const varText = css.getPropertyValue('--text-color')?.trim()
+  const surface = css.getPropertyValue('--surface-card')?.trim() || css.getPropertyValue('--surface-ground')?.trim()
+  function parse(c) {
+    if (!c) return null
+    if (c.startsWith('#')) {
+      const n = c.replace('#','')
+      const bigint = parseInt(n.length === 3 ? n.split('').map(x=>x+x).join('') : n, 16)
+      const r = (bigint >> 16) & 255, g = (bigint >> 8) & 255, b = bigint & 255
+      return {r,g,b}
+    }
+    const m = c.match(/rgb\((\d+)\s*,\s*(\d+)\s*,\s*(\d+)\)/i)
+    if (m) return { r: +m[1], g: +m[2], b: +m[3] }
+    return null
+  }
+  function luminance({r,g,b}) {
+    const a = [r,g,b].map(v => { v/=255; return v<=0.03928? v/12.92 : Math.pow(((v+0.055)/1.055),2.4) })
+    return 0.2126*a[0] + 0.7152*a[1] + 0.0722*a[2]
+  }
+  const p = parse(surface)
+  if (p) return luminance(p) < 0.5 ? '#e5e7eb' : '#111827'
+  return varText || '#e5e7eb'
+}
+
+const chartOptions = computed(() => {
+  // Utiliser props.textColor s'il est fourni, sinon détecter automatiquement
+  const textColorToUse = props.textColor || pickTextColor()
+  
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: !!props.label,
+        position: 'top',
+        labels: {
+          padding: 15,
+          color: textColorToUse,
+          font: { size: 12 }
         }
-      }
-    },
+      },
     tooltip: {
       backgroundColor: 'rgba(0, 0, 0, 0.8)',
       padding: 12,
       cornerRadius: 8,
-      titleFont: {
-        size: 14,
-        weight: 'bold'
-      },
-      bodyFont: {
-        size: 13
-      },
+      titleFont: { size: 14, weight: 'bold' },
+      bodyFont: { size: 13 },
+      titleColor: '#fff',
+      bodyColor: '#fff',
       mode: 'index',
       intersect: false
     }
@@ -111,21 +136,19 @@ const chartOptions = computed(() => ({
         drawBorder: false
       },
       ticks: {
-        font: {
-          size: 12
-        }
+        color: textColorToUse,
+        font: { size: 12 }
       }
     },
     y: {
       beginAtZero: true,
       grid: {
-        color: 'rgba(0, 0, 0, 0.05)',
+        color: 'rgba(255, 255, 255, 0.06)',
         drawBorder: false
       },
       ticks: {
-        font: {
-          size: 12
-        }
+        color: textColorToUse,
+        font: { size: 12 }
       }
     }
   },
@@ -133,7 +156,8 @@ const chartOptions = computed(() => ({
     mode: 'index',
     intersect: false
   }
-}))
+  }
+})
 </script>
 
 <style scoped>

@@ -39,33 +39,37 @@
       <!-- Charts optionnels -->
       <template v-if="showChart && chartData && chartData.length">
         <!-- Mini chart pour les KPI compacts -->
-        <MiniChart 
-          v-if="chartType === 'mini'"
-          :data="chartData" 
-          :color="color"
-          :height="40"
-        />
+        <div v-if="chartType === 'mini'" class="kpi-mini-chart" @click.stop>
+          <MiniChart 
+            :data="chartData" 
+            :color="color"
+            :height="40"
+          />
+        </div>
         
-        <!-- Chart Selector pour les KPI avec graphiques interactifs -->
-        <div v-else-if="enableChartSelector" class="kpi-chart-selector">
+        <!-- Chart Selector TEMPORAIREMENT DÉSACTIVÉ - Bug Chart.js/Vue3 -->
+        <!-- TODO: Réactiver quand Chart.js sera compatible ou migration vers ECharts -->
+        <div v-else-if="false && enableChartSelector" class="kpi-chart-selector" @click.stop>
           <ChartSelector
-            :data="chartData"
-            :default-type="chartType || 'pie'"
-            :height="chartHeight || 200"
+            :data="normalizedChartData"
+            :default-type="chartType || 'auto'"
+            :height="effectiveChartHeight"
             :chart-color="color"
             :show-refresh="false"
           />
         </div>
         
         <!-- Graphique simple fixe -->
-        <component
-          v-else
-          :is="getChartComponent(chartType)"
-          :data="chartData"
-          :height="chartHeight || 200"
-          :color="color"
-          v-bind="chartProps"
-        />
+        <div v-else class="kpi-chart" @click.stop>
+          <component
+            :is="getChartComponent(resolvedChartType)"
+            :data="normalizedChartData"
+            :height="effectiveChartHeight"
+            :color="color"
+            :text-color="themeTextColor"
+            v-bind="chartProps"
+          />
+        </div>
       </template>
 
       <!-- Footer avec comparaison -->
@@ -84,7 +88,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import Skeleton from 'primevue/skeleton'
 import Button from 'primevue/button'
 import MiniChart from './MiniChart.vue'
@@ -104,7 +108,7 @@ const props = defineProps({
   comparison: String,
   chartData: Array,
   showChart: { type: Boolean, default: false },
-  chartType: { type: String, default: 'mini' }, // mini, pie, doughnut, bar, line, ou enableChartSelector
+  chartType: { type: String, default: 'mini' }, // mini, pie, doughnut, bar, line, auto
   chartHeight: Number,
   chartProps: Object,
   enableChartSelector: { type: Boolean, default: false },
@@ -147,13 +151,98 @@ function getChartComponent(type) {
   }
   return components[type] || MiniChart
 }
+
+// Couleurs cohérentes par label (BAxx, Non défini)
+const CATEGORY_COLOR_MAP = {
+  BA22: '#0ea5e9',
+  BA23: '#3b82f6',
+  BA24: '#8b5cf6',
+  BA25: '#10b981',
+  'NON DÉFINI': '#9ca3af',
+  'NON DEFINI': '#9ca3af'
+}
+
+function getLabelColor(label) {
+  const key = String(label || '').toUpperCase().trim()
+  if (CATEGORY_COLOR_MAP[key]) return CATEGORY_COLOR_MAP[key]
+  const match = key.match(/BA\s?(\d{2})/)
+  if (match) {
+    const ba = `BA${match[1]}`
+    if (CATEGORY_COLOR_MAP[ba]) return CATEGORY_COLOR_MAP[ba]
+  }
+  return undefined
+}
+
+const normalizedChartData = computed(() => {
+  const data = Array.isArray((/** @type {any} */(props)).chartData) ? (props.chartData) : []
+  return data.map(d => ({
+    ...d,
+    color: d?.color || getLabelColor(d?.label)
+  }))
+})
+
+// Variable réactive pour suivre les changements de thème
+const isDarkMode = ref(false)
+
+// Détecter le thème au montage
+onMounted(() => {
+  const updateTheme = () => {
+    const root = document.documentElement
+    const body = document.body
+    isDarkMode.value = root.classList.contains('dark') || 
+                       root.classList.contains('p-dark') || 
+                       body.classList.contains('dark') || 
+                       body.classList.contains('p-dark')
+  }
+  
+  // Détecter le thème initial
+  updateTheme()
+  
+  // Observer les changements de classes
+  const observer = new MutationObserver(updateTheme)
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+  observer.observe(document.body, { attributes: true, attributeFilter: ['class'] })
+  
+  // Nettoyer l'observer
+  onUnmounted(() => observer.disconnect())
+})
+
+const themeTextColor = computed(() => {
+  // Forcer la mise à jour en fonction du mode sombre
+  return isDarkMode.value ? '#e5e7eb' : '#111827'
+})
+
+function detectType(data) {
+  if (!Array.isArray(data) || data.length === 0) return 'pie'
+  const first = data[0]
+  const isNumberArray = typeof first === 'number'
+  const isTimeLikeObj = typeof first === 'object' && first !== null && (
+    'date' in first || 'timestamp' in first || 'time' in first || 'x' in first
+  )
+  if (isNumberArray || isTimeLikeObj) return 'line'
+  const categories = data.length
+  if (categories <= 4) return 'doughnut'
+  if (categories <= 7) return 'pie'
+  return 'bar'
+}
+
+const resolvedChartType = computed(() => {
+  if (props.chartType === 'auto') return detectType(props.chartData || [])
+  return props.chartType
+})
+
+const effectiveChartHeight = computed(() => {
+  if (props.chartHeight) return props.chartHeight
+  const map = { compact: 110, small: 140, medium: 180, large: 220, xlarge: 280 }
+  return map[props.size] || 180
+})
 </script>
 
 <style scoped>
 .kpi-card {
   background: var(--surface-card);
   border-radius: 12px;
-  padding: 1.25rem;
+  padding: 1rem;
   border-left: 4px solid;
   transition: all 0.3s ease;
   height: 100%;
@@ -192,8 +281,8 @@ function getChartComponent(type) {
 }
 
 .kpi-icon {
-  width: 48px;
-  height: 48px;
+  width: 42px;
+  height: 42px;
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -237,7 +326,7 @@ function getChartComponent(type) {
 }
 
 .kpi-value {
-  font-size: 2rem;
+  font-size: 1.875rem;
   font-weight: 700;
   color: var(--text-color);
   line-height: 1;
@@ -291,7 +380,7 @@ function getChartComponent(type) {
   justify-content: space-between;
   gap: 0.5rem;
   margin-top: auto;
-  padding-top: 0.75rem;
+  padding-top: 0.5rem;
   border-top: 1px solid var(--surface-border);
 }
 
@@ -353,39 +442,39 @@ function getChartComponent(type) {
 }
 
 .kpi-size-compact .kpi-value {
-  font-size: 1.75rem;
+  font-size: 1.6rem;
 }
 
 .kpi-size-compact .kpi-icon {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
 }
 
 .kpi-size-small .kpi-value {
-  font-size: 1.5rem;
+  font-size: 1.4rem;
 }
 
 .kpi-size-small .kpi-icon {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
 }
 
 .kpi-size-medium .kpi-value {
-  font-size: 2rem;
+  font-size: 1.75rem;
 }
 
 .kpi-size-large {
-  padding: 1.5rem;
-  min-height: 160px;
+  padding: 1.25rem;
+  min-height: 140px;
 }
 
 .kpi-size-large .kpi-value {
-  font-size: 2.5rem;
+  font-size: 2.2rem;
 }
 
 .kpi-size-large .kpi-icon {
-  width: 56px;
-  height: 56px;
+  width: 50px;
+  height: 50px;
 }
 
 .kpi-size-large .kpi-label {
@@ -397,13 +486,13 @@ function getChartComponent(type) {
 }
 
 .kpi-size-xlarge .kpi-value {
-  font-size: 3.5rem;
+  font-size: 3rem;
   font-weight: 800;
 }
 
 .kpi-size-xlarge .kpi-icon {
-  width: 72px;
-  height: 72px;
+  width: 64px;
+  height: 64px;
 }
 
 .kpi-size-xlarge .kpi-header {
@@ -415,8 +504,8 @@ function getChartComponent(type) {
 }
 
 .kpi-chart-selector {
-  margin-top: 1rem;
-  padding-top: 1rem;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
   border-top: 1px solid var(--surface-border);
 }
 

@@ -170,7 +170,7 @@ const navigateToFirebaseLogin = () => {
     life: 2000,
   })
   setTimeout(() => {
-    router.push("/login")
+    router.push("/login-firebase")
     loadingFirebase.value = false
   }, 1000)
 }
