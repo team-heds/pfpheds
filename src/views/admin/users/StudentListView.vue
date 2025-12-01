@@ -2,6 +2,7 @@
   <AdminLayout>
     <Toast />
     <div class="filter-menu">
+      <AppSkeleton v-if="loading" variant="table" :rows="8" :cols="7" />
       <DataTable
         v-else
         :value="filteredEtudiants"
@@ -105,6 +106,9 @@ import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
+import AdminPageHeader from '@/components/admin/common/AdminPageHeader.vue';
+import AppSkeleton from '@/components/common/feedback/AppSkeleton.vue';
+import EmptyState from '@/components/common/feedback/EmptyState.vue';
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
 import { supabase } from '@/supabase';
@@ -115,7 +119,6 @@ export default {
     AdminPageHeader,
     AppSkeleton,
     EmptyState,
-    AppSpinner,
     DataTable,
     Column,
     InputText,
