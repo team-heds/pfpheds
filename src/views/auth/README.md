@@ -28,10 +28,9 @@ Toutes les pages d'authentification sont maintenant centralisées dans `views/au
 
 | Route | Composant | Description | Usage |
 |-------|-----------|-------------|-------|
-| `/` | LoginHome | Page d'accueil principale (Firebase) | Route par défaut |
-| `/home` | LoginHome | Page d'accueil alternative (Firebase) | Redirection |
-| `/home2` | LoginHome2 | Page d'accueil (Supabase) | Version alternative |
-| `/login` | LoginView | Connexion standard | Formulaire de login |
+| `/` | LoginHome | Page de connexion unifiée (Supabase) | Route par défaut |
+| `/home` | LoginHome | Page de connexion unifiée (Supabase) | Redirection |
+| `/login` | LoginView | Connexion Firebase (ancienne) | Formulaire de login |
 | `/register` | RegisterView | Inscription | Création de compte |
 | `/forgot-password` | ForgotPasswordView | Mot de passe oublié | Récupération |
 | `/new-password` | NewPasswordView | Nouveau mot de passe | Réinitialisation |
@@ -97,7 +96,7 @@ Toutes les pages d'authentification sont maintenant centralisées dans `views/au
 ### 🔧 **Parcours administrateur** :
 1. **`/access`** → Contrôle d'accès spécial
 2. **`/lock-screen`** → Sécurité renforcée
-3. **`/home2`** → Interface Supabase si nécessaire
+3. **`/home`** → Interface de connexion unifiée
 
 ---
 

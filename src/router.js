@@ -8,8 +8,7 @@ import { addDynamicRoutesToRouter } from '@/composables/useDynamicRoutes';
 // ========================================
 // AUTHENTIFICATION & ACCUEIL // View
 // ========================================
-import LoginHome from '@/views/auth/LoginHome.vue'; // avec firebase
-import LoginHome2 from '@/views/auth/LoginHome2.vue' // avec supabase
+import LoginHome from '@/views/auth/LoginHome.vue'; // Page de connexion unifiée (Supabase)
 import NewPasswordView from '@/views/auth/NewPasswordView.vue' // avec supabase
 import LoginView from '@/views/auth/LoginView.vue';
 import RegisterView from '@/views/auth/RegisterView.vue';
@@ -283,7 +282,6 @@ const routes = [
   // ========================================
   { path: '/', component: LoginHome, name: 'LoginHome', props: true },
   { path: '/home', component: LoginHome, name: 'LoginHome', props: true },
-  { path: '/home2', component: LoginHome2, name: 'LoginHome2', props: true },
   { path: '/new-password', component: NewPasswordView, name: 'NewPassword' },
   { path: '/login', component: LoginView, name: 'LoginView' },
   { path: '/register', component: RegisterView, name: 'RegisterView' },
