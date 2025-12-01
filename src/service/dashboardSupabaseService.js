@@ -59,17 +59,29 @@ export async function fetchGeneralKpis() {
     // Routes (estimation système)
     const routes = 120 // Routes totales de l'application
     
-    console.log('📊 KPI Généraux:', { users, roles, permissions, routes })
+    // Timeline des utilisateurs (simulée - évolution progressive)
+    const usersTimeline = []
+    const monthsBack = 12
+    for (let i = monthsBack; i >= 0; i--) {
+      const date = new Date()
+      date.setMonth(date.getMonth() - i)
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+      const value = Math.round(users * (1 - (i / monthsBack) * 0.3)) // Croissance de 30% sur l'année
+      usersTimeline.push({ label: monthKey, value })
+    }
+    
+    console.log('📊 KPI Généraux:', { users, roles, permissions, routes, usersTimeline: usersTimeline.length })
     
     return {
       users,
+      usersTimeline,
       roles,
       permissions,
       routes
     }
   } catch (error) {
     console.error('❌ Erreur fetchGeneralKpis:', error)
-    return { users: 0, roles: 0, permissions: 0, routes: 0 }
+    return { users: 0, usersTimeline: [], roles: 0, permissions: 0, routes: 0 }
   }
 }
 
@@ -115,18 +127,30 @@ export async function fetchPfpKpis() {
       console.warn('⚠️ Erreur pfpEnCours:', err)
     }
     
-    console.log('🏥 KPI PFP:', { etudiants, institutions, places, pfpEnCours })
+    // Timeline PFP en cours (simulée - évolution des stages)
+    const pfpTimeline = []
+    const monthsBack = 6
+    for (let i = monthsBack; i >= 0; i--) {
+      const date = new Date()
+      date.setMonth(date.getMonth() - i)
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+      const value = Math.round(pfpEnCours * (1 - (i / monthsBack) * 0.2)) // Croissance de 20%
+      pfpTimeline.push({ label: monthKey, value })
+    }
+    
+    console.log('🏥 KPI PFP:', { etudiants, institutions, places, pfpEnCours, pfpTimeline: pfpTimeline.length })
     
     return {
       etudiants,
       etudiantsByClasse,
       institutions,
       places,
-      pfpEnCours
+      pfpEnCours,
+      pfpTimeline
     }
   } catch (error) {
     console.error('❌ Erreur fetchPfpKpis:', error)
-    return { etudiants: 0, etudiantsByClasse: [], institutions: 0, places: 0, pfpEnCours: 0 }
+    return { etudiants: 0, etudiantsByClasse: [], institutions: 0, places: 0, pfpEnCours: 0, pfpTimeline: [] }
   }
 }
 
@@ -228,18 +252,30 @@ export async function fetchAcademiqueKpis() {
     // Modules pédagogiques depuis Supabase (table n'existe pas - commenté temporairement)
     const modules = 0 // await countTable('modules')
     
-    console.log('📚 KPI Académique:', { enseignants, cours, media, modules, mediaTimeline: mediaTimeline.length })
+    // Timeline des cours (simulée - évolution programmation)
+    const coursesTimeline = []
+    const monthsBack = 6
+    for (let i = monthsBack; i >= 0; i--) {
+      const date = new Date()
+      date.setMonth(date.getMonth() - i)
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+      const value = Math.max(1, Math.round(cours * (1 - (i / monthsBack) * 0.4))) // Croissance de 40%
+      coursesTimeline.push({ label: monthKey, value })
+    }
+    
+    console.log('📚 KPI Académique:', { enseignants, cours, media, modules, mediaTimeline: mediaTimeline.length, coursesTimeline: coursesTimeline.length })
     
     return {
       enseignants,
       cours,
+      coursesTimeline,
       media,
       mediaTimeline,
       modules
     }
   } catch (error) {
     console.error('❌ Erreur fetchAcademiqueKpis:', error)
-    return { enseignants: 0, cours: 0, media: 0, mediaTimeline: [], modules: 0 }
+    return { enseignants: 0, cours: 0, coursesTimeline: [], media: 0, mediaTimeline: [], modules: 0 }
   }
 }
 
@@ -292,6 +328,17 @@ export async function fetchGamificationKpis() {
     // Total utilisateurs (depuis user_profiles)
     const totalUsers = await countTable('user_profiles')
     
+    // Timeline des défis actifs (simulée - évolution challenges)
+    const challengesTimeline = []
+    const monthsBack = 6
+    for (let i = monthsBack; i >= 0; i--) {
+      const date = new Date()
+      date.setMonth(date.getMonth() - i)
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+      const value = Math.max(1, Math.round(challengesActive * (1 - (i / monthsBack) * 0.3))) // Croissance de 30%
+      challengesTimeline.push({ label: monthKey, value })
+    }
+    
     console.log('🎮 KPI Gamification:', {
       totalUsers,
       totalGamificationUsers,
@@ -300,7 +347,8 @@ export async function fetchGamificationKpis() {
       challengesActive,
       challengesCompleted,
       quests,
-      usersActive
+      usersActive,
+      challengesTimeline: challengesTimeline.length
     })
     
     return {
@@ -309,6 +357,7 @@ export async function fetchGamificationKpis() {
       houses,
       badges,
       challengesActive,
+      challengesTimeline,
       challenges: challengesActive + challengesCompleted,
       quests,
       usersActive
@@ -321,6 +370,7 @@ export async function fetchGamificationKpis() {
       houses: 0,
       badges: 0,
       challengesActive: 0,
+      challengesTimeline: [],
       challenges: 0,
       quests: 0,
       usersActive: 0
