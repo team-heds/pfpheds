@@ -105,6 +105,7 @@ const trendIcon = computed(() => {
 })
 </script>
 
+
 <style scoped>
 .kpi-card {
   background: var(--surface-card);
