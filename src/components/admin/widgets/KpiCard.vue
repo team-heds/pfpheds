@@ -36,13 +36,41 @@
         </div>
       </div>
 
-      <!-- Mini chart optionnel -->
-      <MiniChart 
-        v-if="showChart && chartData && chartData.length" 
-        :data="chartData" 
-        :color="color"
-        :height="40"
-      />
+      <!-- Charts optionnels -->
+      <template v-if="showChart && chartData && chartData.length">
+        <!-- Mini chart pour les KPI compacts -->
+        <div v-if="chartType === 'mini'" class="kpi-mini-chart" @click.stop>
+          <MiniChart 
+            :data="chartData" 
+            :color="color"
+            :height="40"
+          />
+        </div>
+        
+        <!-- Chart Selector TEMPORAIREMENT DÉSACTIVÉ - Bug Chart.js/Vue3 -->
+        <!-- TODO: Réactiver quand Chart.js sera compatible ou migration vers ECharts -->
+        <div v-else-if="false && enableChartSelector" class="kpi-chart-selector" @click.stop>
+          <ChartSelector
+            :data="normalizedChartData"
+            :default-type="chartType || 'auto'"
+            :height="effectiveChartHeight"
+            :chart-color="color"
+            :show-refresh="false"
+          />
+        </div>
+        
+        <!-- Graphique simple fixe -->
+        <div v-else class="kpi-chart" @click.stop>
+          <component
+            :is="getChartComponent(resolvedChartType)"
+            :data="normalizedChartData"
+            :height="effectiveChartHeight"
+            :color="color"
+            :text-color="themeTextColor"
+            v-bind="chartProps"
+          />
+        </div>
+      </template>
 
       <!-- Footer avec comparaison -->
       <div v-if="comparison || clickable" class="kpi-footer">
@@ -60,10 +88,16 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import Skeleton from 'primevue/skeleton'
 import Button from 'primevue/button'
 import MiniChart from './MiniChart.vue'
+import ChartSelector from './ChartSelector.vue'
+import PieChart from './charts/PieChart.vue'
+import DoughnutChart from './charts/DoughnutChart.vue'
+import BarChart from './charts/BarChart.vue'
+import LineChart from './charts/LineChart.vue'
+import SimpleTable from './charts/SimpleTable.vue'
 
 const props = defineProps({
   label: { type: String, required: true },
@@ -75,6 +109,10 @@ const props = defineProps({
   comparison: String,
   chartData: Array,
   showChart: { type: Boolean, default: false },
+  chartType: { type: String, default: 'mini' }, // mini, pie, doughnut, bar, line, auto
+  chartHeight: Number,
+  chartProps: Object,
+  enableChartSelector: { type: Boolean, default: false },
   animated: { type: Boolean, default: true },
   clickable: { type: Boolean, default: false },
   actionLabel: String,
@@ -103,6 +141,103 @@ const trendIcon = computed(() => {
   if (props.trend < 0) return 'pi pi-arrow-down'
   return 'pi pi-minus'
 })
+
+function getChartComponent(type) {
+  const components = {
+    pie: PieChart,
+    doughnut: DoughnutChart,
+    bar: BarChart,
+    line: LineChart,
+    mini: MiniChart,
+    table: SimpleTable
+  }
+  return components[type] || MiniChart
+}
+
+// Couleurs cohérentes par label (BAxx, Non défini)
+const CATEGORY_COLOR_MAP = {
+  BA22: '#0ea5e9',
+  BA23: '#3b82f6',
+  BA24: '#8b5cf6',
+  BA25: '#10b981',
+  'NON DÉFINI': '#9ca3af',
+  'NON DEFINI': '#9ca3af'
+}
+
+function getLabelColor(label) {
+  const key = String(label || '').toUpperCase().trim()
+  if (CATEGORY_COLOR_MAP[key]) return CATEGORY_COLOR_MAP[key]
+  const match = key.match(/BA\s?(\d{2})/)
+  if (match) {
+    const ba = `BA${match[1]}`
+    if (CATEGORY_COLOR_MAP[ba]) return CATEGORY_COLOR_MAP[ba]
+  }
+  return undefined
+}
+
+const normalizedChartData = computed(() => {
+  const data = Array.isArray((/** @type {any} */(props)).chartData) ? (props.chartData) : []
+  return data.map(d => ({
+    ...d,
+    color: d?.color || getLabelColor(d?.label)
+  }))
+})
+
+// Variable réactive pour suivre les changements de thème
+const isDarkMode = ref(false)
+
+// Détecter le thème au montage
+onMounted(() => {
+  const updateTheme = () => {
+    const root = document.documentElement
+    const body = document.body
+    isDarkMode.value = root.classList.contains('dark') || 
+                       root.classList.contains('p-dark') || 
+                       body.classList.contains('dark') || 
+                       body.classList.contains('p-dark')
+  }
+  
+  // Détecter le thème initial
+  updateTheme()
+  
+  // Observer les changements de classes
+  const observer = new MutationObserver(updateTheme)
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+  observer.observe(document.body, { attributes: true, attributeFilter: ['class'] })
+  
+  // Nettoyer l'observer
+  onUnmounted(() => observer.disconnect())
+})
+
+const themeTextColor = computed(() => {
+  // Forcer la mise à jour en fonction du mode sombre
+  return isDarkMode.value ? '#e5e7eb' : '#111827'
+})
+
+function detectType(data) {
+  if (!Array.isArray(data) || data.length === 0) return 'pie'
+  const first = data[0]
+  const isNumberArray = typeof first === 'number'
+  const isTimeLikeObj = typeof first === 'object' && first !== null && (
+    'date' in first || 'timestamp' in first || 'time' in first || 'x' in first
+  )
+  if (isNumberArray || isTimeLikeObj) return 'line'
+  const categories = data.length
+  if (categories <= 4) return 'doughnut'
+  if (categories <= 7) return 'pie'
+  return 'bar'
+}
+
+const resolvedChartType = computed(() => {
+  if (props.chartType === 'auto') return detectType(props.chartData || [])
+  return props.chartType
+})
+
+const effectiveChartHeight = computed(() => {
+  if (props.chartHeight) return props.chartHeight
+  const map = { compact: 110, small: 140, medium: 180, large: 220, xlarge: 280 }
+  return map[props.size] || 180
+})
 </script>
 
 
@@ -110,16 +245,18 @@ const trendIcon = computed(() => {
 .kpi-card {
   background: var(--surface-card);
   border-radius: 12px;
-  padding: 1.25rem;
-  border-left: 4px solid var(--primary-color);
+  padding: 1rem;
+  border-left: 4px solid;
   transition: all 0.3s ease;
   height: 100%;
-  min-height: 100%; /* S'assurer de prendre toute la hauteur */
+  min-height: 100%;
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  border: 1px solid rgba(0, 0, 0, 0.08);
 }
+
 
 .kpi-card:hover {
   box-shadow: 0 4px 16px rgba(0,0,0,0.08);
@@ -147,8 +284,8 @@ const trendIcon = computed(() => {
 }
 
 .kpi-icon {
-  width: 48px;
-  height: 48px;
+  width: 42px;
+  height: 42px;
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -192,7 +329,7 @@ const trendIcon = computed(() => {
 }
 
 .kpi-value {
-  font-size: 2rem;
+  font-size: 1.875rem;
   font-weight: 700;
   color: var(--text-color);
   line-height: 1;
@@ -246,7 +383,7 @@ const trendIcon = computed(() => {
   justify-content: space-between;
   gap: 0.5rem;
   margin-top: auto;
-  padding-top: 0.75rem;
+  padding-top: 0.5rem;
   border-top: 1px solid var(--surface-border);
 }
 
@@ -298,30 +435,53 @@ const trendIcon = computed(() => {
   gap: 0.5rem;
 }
 
+.kpi-size-compact {
+  padding: 1rem;
+  min-height: 110px;
+}
+
 .kpi-size-compact .kpi-label {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
+}
+
+.kpi-size-compact .kpi-value {
+  font-size: 1.6rem;
+}
+
+.kpi-size-compact .kpi-icon {
+  width: 36px;
+  height: 36px;
 }
 
 .kpi-size-small .kpi-value {
-  font-size: 1.5rem;
+  font-size: 1.4rem;
 }
 
 .kpi-size-small .kpi-icon {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
 }
 
 .kpi-size-medium .kpi-value {
-  font-size: 2rem;
+  font-size: 1.75rem;
+}
+
+.kpi-size-large {
+  padding: 1.25rem;
+  min-height: 140px;
 }
 
 .kpi-size-large .kpi-value {
-  font-size: 2.5rem;
+  font-size: 2.2rem;
 }
 
 .kpi-size-large .kpi-icon {
-  width: 56px;
-  height: 56px;
+  width: 50px;
+  height: 50px;
+}
+
+.kpi-size-large .kpi-label {
+  font-size: 1rem;
 }
 
 .kpi-size-xlarge {
@@ -329,13 +489,13 @@ const trendIcon = computed(() => {
 }
 
 .kpi-size-xlarge .kpi-value {
-  font-size: 3.5rem;
+  font-size: 3rem;
   font-weight: 800;
 }
 
 .kpi-size-xlarge .kpi-icon {
-  width: 72px;
-  height: 72px;
+  width: 64px;
+  height: 64px;
 }
 
 .kpi-size-xlarge .kpi-header {
@@ -344,6 +504,12 @@ const trendIcon = computed(() => {
 
 .kpi-size-xlarge .kpi-label {
   font-size: 1.1rem;
+}
+
+.kpi-chart-selector {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--surface-border);
 }
 
 /* Responsive */

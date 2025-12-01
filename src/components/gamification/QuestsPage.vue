@@ -599,7 +599,7 @@ const loadQuestsData = async () => {
     // Utiliser authStore qui supporte Firebase ET Supabase
     const user = authStore.user
     if (!user) {
-      router.push('/login')
+      router.push('/home')
       return
     }
     

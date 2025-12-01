@@ -1,7 +1,20 @@
 <template>
   <AdminLayout>
-    <div class="filter-menu">
+    <template #header>
+      <AdminPageHeader title="Liste des enseignants" subtitle="Gérez la liste des enseignants">
+        <template #breadcrumbs>
+          <div class="flex align-items-center gap-2 text-sm text-600">
+            <router-link to="/admin" class="text-600 no-underline hover:text-primary">Dashboard</router-link>
+            <i class="pi pi-angle-right text-300" aria-hidden="true"></i>
+            <span class="text-900">Enseignants</span>
+          </div>
+        </template>
+      </AdminPageHeader>
+    </template>
+    <div class="filter-menu is-compact">
+      <AppSkeleton v-if="loading" variant="table" :rows="8" :cols="4" />
       <DataTable
+        v-else
         :value="filteredEnseignants"
         :paginator="true"
         :rows="10"
@@ -9,7 +22,6 @@
         :rowHover="true"
         v-model:filters="filters"
         filterDisplay="menu"
-        :loading="loading"
         :globalFilterFields="['last_name', 'first_name', 'email']"
         showGridlines
       >
@@ -21,8 +33,15 @@
             </span>
           </div>
         </template>
-        <template #empty> Aucun enseignant trouvé. </template>
-        <template #loading> Chargement des données des enseignants. Veuillez patienter. </template>
+        <template #empty>
+          <EmptyState
+            title="Aucun enseignant trouvé"
+            description="Ajustez les filtres ou ajoutez un enseignant."
+            icon="pi-users"
+            actionLabel="Ajouter un enseignant"
+            @action="goToEnseignantForm"
+          />
+        </template>
 
         <Column field="last_name" header="Nom" style="min-width: 12rem" class="text-center">
           <template #body="{ data }">{{ data.last_name }}</template>
@@ -46,6 +65,9 @@
 </template>
 
 <script>
+import AdminPageHeader from '@/components/admin/common/AdminPageHeader.vue';
+import AppSkeleton from '@/components/common/feedback/AppSkeleton.vue';
+import EmptyState from '@/components/common/feedback/EmptyState.vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import InputText from 'primevue/inputtext';
@@ -56,6 +78,9 @@ import { useEnseignantsStore } from '@/stores/enseignantsStore';
 export default {
   name: "EnseignantList",
   components: {
+    AdminPageHeader,
+    AppSkeleton,
+    EmptyState,
     DataTable,
     Column,
     InputText,
@@ -123,7 +148,11 @@ export default {
 .admin-scrollable::-webkit-scrollbar {
   display: none;
 }
-.filter-menu {
-  padding: 20px;
-}
+.filter-menu { padding: 20px; }
+.is-compact :deep(.p-datatable .p-datatable-header) { padding: .75rem 1rem; }
+.is-compact :deep(.p-datatable .p-datatable-thead > tr > th) { padding: .5rem .75rem; }
+.is-compact :deep(.p-datatable .p-datatable-tbody > tr > td) { padding: .5rem .75rem; font-size: .95rem; }
+.is-compact :deep(.p-inputtext),
+.is-compact :deep(.p-dropdown),
+.is-compact :deep(.p-button) { height: 2.5rem; }
 </style>

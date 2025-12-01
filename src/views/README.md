@@ -34,9 +34,8 @@ auth/
 ├── 📄 AuthErrorView.vue        # Gestion des erreurs d'auth
 ├── 📄 ForgotPasswordView.vue   # Mot de passe oublié
 ├── 📄 LockScreenView.vue       # Écran de verrouillage
-├── 📄 LoginHome.vue            # Accueil avec login Firebase
-├── 📄 LoginHome2.vue           # Accueil avec login Supabase
-├── 📄 LoginView.vue            # Page de connexion standard
+├── 📄 LoginHome.vue            # Page de connexion unifiée (Supabase)
+├── 📄 LoginView.vue            # Page de connexion legacy (Firebase)
 ├── 📄 NewPasswordView.vue      # Définition nouveau mot de passe
 ├── 📄 RegisterView.vue         # Page d'inscription
 ├── 📄 VerificationView.vue     # Vérification email/SMS

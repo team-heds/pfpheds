@@ -60,27 +60,6 @@
             <span>Mes KPI</span>
           </template>
 
-          <!-- Grid KPI personnalisable -->
-          <DashboardKpiGrid
-            ref="kpiGridRef"
-            :kpis="userKpis"
-            title="Mes indicateurs"
-            subtitle="Personnalisez votre vue avec drag & drop"
-            :storage-key="userStorageKey"
-            @kpi-action="handleKpiAction"
-            @config-changed="onConfigChanged"
-            class="mb-4"
-          />
-
-          <!-- Widget Alertes KPI -->
-          <div class="mb-4">
-            <AlertsWidget 
-              :max-items="5" 
-              :auto-refresh="true"
-              :refresh-interval="30000"
-            />
-          </div>
-
           <!-- Quick Stats - Widgets Redimensionnables -->
           <div class="mb-4">
             <div class="flex align-items-center justify-content-between mb-3">
@@ -94,7 +73,7 @@
                 size="small"
               />
             </div>
-            
+
             <ResizableWidgetGrid
               :widgets="quickStatsWidgets"
               :edit-mode="widgetEditMode"
@@ -122,7 +101,7 @@
                   </template>
                 </Card>
               </template>
-              
+
               <template #widget_institutions="{ widget, size }">
                 <Card class="stat-card h-full">
                   <template #content>
@@ -143,7 +122,7 @@
                   </template>
                 </Card>
               </template>
-              
+
               <template #widget_students="{ widget, size }">
                 <Card class="stat-card h-full">
                   <template #content>
@@ -164,7 +143,7 @@
                   </template>
                 </Card>
               </template>
-              
+
               <template #widget_formateurs="{ widget, size }">
                 <Card class="stat-card h-full">
                   <template #content>
@@ -187,6 +166,27 @@
               </template>
             </ResizableWidgetGrid>
           </div>
+          <!-- Grid KPI personnalisable -->
+          <DashboardKpiGrid
+            ref="kpiGridRef"
+            :kpis="userKpis"
+            title="Mes indicateurs"
+            subtitle="Personnalisez votre vue avec drag & drop"
+            :storage-key="userStorageKey"
+            @kpi-action="handleKpiAction"
+            @config-changed="onConfigChanged"
+            class="mb-4"
+          />
+
+          <!-- Widget Alertes KPI -->
+          <div class="mb-4">
+            <AlertsWidget 
+              :max-items="5" 
+              :auto-refresh="true"
+              :refresh-interval="30000"
+            />
+          </div>
+
         </TabPanel>
 
         <!-- Tab 2: Comparaison -->

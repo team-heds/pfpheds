@@ -8,10 +8,8 @@ import { addDynamicRoutesToRouter } from '@/composables/useDynamicRoutes';
 // ========================================
 // AUTHENTIFICATION & ACCUEIL // View
 // ========================================
-import LoginHome from '@/views/auth/LoginHome.vue'; // avec firebase
-import LoginHome2 from '@/views/auth/LoginHome2.vue' // avec supabase
+import LoginHome from '@/views/auth/LoginHome.vue'; // Page de connexion unifiée (Supabase)
 import NewPasswordView from '@/views/auth/NewPasswordView.vue' // avec supabase
-import LoginView from '@/views/auth/LoginView.vue';
 import RegisterView from '@/views/auth/RegisterView.vue';
 
 import VerificationView from '@/views/auth/VerificationView.vue';
@@ -174,6 +172,7 @@ import CommunityInfoView from '@/views/social/CommunityInfoView.vue';
 
 import UserListView from "@/views/admin/users/UserListView.vue";
 import StudentListView from "@/views/admin/users/StudentListView.vue";
+import StudentStatsView from "@/views/admin/users/StudentStatsView.vue";
 import TeacherListView from "@/views/admin/users/TeacherListView.vue";
 import TrainerListView from "@/views/admin/users/TrainerListView.vue";
 import InstitutionListView from "@/views/admin/institutions/InstitutionListView.vue";
@@ -282,9 +281,8 @@ const routes = [
   // ========================================
   { path: '/', component: LoginHome, name: 'LoginHome', props: true },
   { path: '/home', component: LoginHome, name: 'LoginHome', props: true },
-  { path: '/home2', component: LoginHome2, name: 'LoginHome2', props: true },
   { path: '/new-password', component: NewPasswordView, name: 'NewPassword' },
-  { path: '/login', component: LoginView, name: 'LoginView' },
+  { path: '/login', redirect: '/home' },
   { path: '/register', component: RegisterView, name: 'RegisterView' },
   { path: '/reset-password', component: ResetPassword, name: 'ResetPassword', meta: { requiresAuth: false } },
 
@@ -495,6 +493,7 @@ const routes = [
 
   { path: '/user_list', component: UserListView, name: 'UserListView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
   { path: '/etudiant_list', component: StudentListView, name: 'StudentListView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
+  { path: '/etudiant_stats', component: StudentStatsView, name: 'StudentStatsView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
   { path: '/enseignent_list', component: TeacherListView, name: 'TeacherListView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
   { path: '/praticien_formateur_list', component: TrainerListView, name: 'TrainerListView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
   { path: '/institution_list', component: InstitutionListView, name: 'InstitutionListView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },

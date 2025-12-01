@@ -3,6 +3,7 @@
     <Toast />
     <div class="filter-menu">
       <DataTable
+        v-else
         :value="filteredEtudiants"
         :paginator="true"
         :rows="10"
@@ -10,7 +11,6 @@
         :rowHover="true"
         v-model:filters="filters"
         filterDisplay="menu"
-        :loading="loading"
         :globalFilterFields="['Nom', 'Prenom', 'Classe', 'Mail']"
         showGridlines
       >
@@ -22,25 +22,32 @@
             </span>
           </div>
         </template>
-        <template #empty> Aucun étudiant trouvé. </template>
-        <template #loading> Chargement des données des étudiants. Veuillez patienter. </template>
-
+        <template #empty>
+          <EmptyState
+            title="Aucun étudiant trouvé"
+            description="Ajustez les filtres ou ajoutez un étudiant."
+            icon="pi-users"
+            actionLabel="Ajouter un étudiant"
+            @action="goToEtudiantForm"
+          />
+        </template>
+ 
         <!-- Colonne pour le nom -->
         <Column field="Nom" header="Nom" style="min-width: 12rem" class="text-center" />
-
+ 
         <!-- Colonne pour le prénom -->
         <Column field="Prenom" header="Prénom" style="min-width: 12rem" class="text-center" />
-
+ 
         <!-- Colonne pour la classe -->
         <Column field="Classe" header="Classe" style="min-width: 8rem" class="text-center">
           <template #filter="{ filterModel }">
             <Dropdown :options="classeOptions" v-model="filterModel.value" class="p-column-filter" placeholder="Rechercher par classe" />
           </template>
         </Column>
-
+ 
         <!-- Colonne pour l'email -->
         <Column field="Mail" header="Email" style="min-width: 16rem" class="text-center" />
-
+ 
         <!-- Colonne pour indiquer si l'étudiant est un SAE -->
         <Column field="SAE" header="SAE" style="min-width: 8rem" class="text-center">
           <template #body="{ data }">
@@ -105,6 +112,10 @@ import { supabase } from '@/supabase';
 export default {
   name: "EtudiantList",
   components: {
+    AdminPageHeader,
+    AppSkeleton,
+    EmptyState,
+    AppSpinner,
     DataTable,
     Column,
     InputText,
@@ -134,13 +145,13 @@ export default {
       return this.etudiants.filter(etudiant => {
         const matchesClass = this.filters['Classe'].value ? this.filters['Classe'].value.includes(etudiant.Classe) : true;
         const searchLower = this.globalFilter.toLowerCase();
-
+ 
         const matchesSearch =
           (etudiant.Nom ? etudiant.Nom.toLowerCase().includes(searchLower) : false)
           || (etudiant.Prenom ? etudiant.Prenom.toLowerCase().includes(searchLower) : false)
           || (etudiant.Classe ? etudiant.Classe.toLowerCase().includes(searchLower) : false)
           || (etudiant.Mail ? etudiant.Mail.toLowerCase().includes(searchLower) : false);
-
+ 
         return matchesClass && matchesSearch;
       });
     }
@@ -325,7 +336,7 @@ export default {
   }
 };
 </script>
-
+ 
 <style scoped>
 .admin-scrollable {
   overflow-y: auto;

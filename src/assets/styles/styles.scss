@@ -1,7 +1,22 @@
+/* Global fallback for Chart.js text color in light/dark */
+canvas, canvas * {
+  color: var(--text-color) !important;
+}
+
+/* Chart.js built-in tooltip uses body font color; enforce */
+.chartjs-tooltip, .chartjs-size-monitor, .chart-wrapper, .chart-display {
+  color: var(--text-color) !important;
+}
+
+/* PrimeVue card/containers hosting charts */
+.surface-card .chart-display, .surface-card .chart-wrapper {
+  color: var(--text-color) !important;
+}
 /* You can add global styles to this file, and also import other style files */
 
 /* All @import rules must be at the top of the file */
 @import '@/assets/layout/layout.scss';
+@import '@/assets/styles/tokens.scss';
 @import 'primevue/resources/primevue.min.css';
 @import 'primeflex/primeflex.scss';
 @import "primeicons/primeicons.css";

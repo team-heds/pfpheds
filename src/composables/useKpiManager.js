@@ -27,26 +27,25 @@ export function useKpiManager(dashboardType) {
     return getKpisForRole(dashboardType, roleStore.perms || [], roleStore.isSuper)
   })
   
-  // KPI avec leurs données enrichies
+  // KPI avec leurs données enrichies (SIMPLIFIÉ pour éviter boucle infinie)
   const kpisWithData = computed(() => {
     return availableKpis.value.map(kpi => {
       const value = kpiData.value[kpi.dataKey] ?? 0
-      const previous = previousPeriodData.value[kpi.dataKey]
       
-      // Générer la comparaison
-      const comparison = compareMode.value && previous !== undefined
-        ? periodComparison.compare(period.value, { [kpi.dataKey]: value }, { [kpi.dataKey]: previous })[kpi.dataKey]
-        : null
+      // Préparer les données de graphique (SIMPLIFIÉ)
+      const breakdownData = kpi.breakdownKey && kpiData.value[kpi.breakdownKey]
+        ? kpiData.value[kpi.breakdownKey]
+        : []
 
       return {
         ...kpi,
         value,
         loading: loading.value || refreshing.value,
-        trend: comparison?.percentageChange ?? calculateTrend(kpi.dataKey),
-        comparison: comparison ? periodComparison.generateReport(kpi.label, comparison) : buildComparison(kpi.dataKey),
-        comparisonData: comparison,
-        chartData: getChartData(kpi.dataKey),
-        alerts: alerts.value.filter(a => a.kpiId === kpi.id)
+        trend: null, // Désactivé temporairement
+        comparison: '', // Désactivé temporairement
+        comparisonData: null,
+        chartData: breakdownData,
+        alerts: [] // Désactivé temporairement
       }
     })
   })
@@ -56,6 +55,7 @@ export function useKpiManager(dashboardType) {
    */
   async function loadKpis() {
     loading.value = true
+    console.log('🔄 [useKpiManager] Début loadKpis')
     try {
       // Grouper les KPI par fetchFn pour minimiser les appels
       const fetchGroups = {}
@@ -68,38 +68,49 @@ export function useKpiManager(dashboardType) {
         }
       })
       
+      console.log('📋 [useKpiManager] FetchGroups:', Object.keys(fetchGroups))
+      
       // Appeler chaque service unique
       const promises = Object.keys(fetchGroups).map(async (fetchFn) => {
         try {
+          console.log(`⚙️ [useKpiManager] Appel ${fetchFn}`)
           const data = await dashboardService[fetchFn]()
+          console.log(`✅ [useKpiManager] ${fetchFn} retourné:`, data)
           return data || {}
         } catch (error) {
-          console.error(`Erreur fetchFn ${fetchFn}:`, error)
+          console.error(`❌ [useKpiManager] Erreur fetchFn ${fetchFn}:`, error)
           return {}
         }
       })
       
       const results = await Promise.all(promises)
+      console.log('📦 [useKpiManager] Tous les résultats:', results)
       
-      // Merger les résultats
+      // Merger les résultats de manière SAFE - construire un nouveau objet simple
       const oldKpiData = { ...kpiData.value }
-      kpiData.value = {}
+      const mergedData = {}
       results.forEach(result => {
-        kpiData.value = { ...kpiData.value, ...result }
-      })
-      
-      // Analyser chaque KPI pour détecter des alertes
-      availableKpis.value.forEach(kpi => {
-        const currentValue = kpiData.value[kpi.dataKey]
-        const previousValue = oldKpiData[kpi.dataKey]
-        
-        if (currentValue !== undefined) {
-          const kpiAlerts = intelligentAlerts.analyzeKPI(kpi, currentValue, previousValue)
-          if (kpiAlerts.length > 0) {
-            alerts.value.push(...kpiAlerts)
-          }
+        if (result && typeof result === 'object') {
+          Object.keys(result).forEach(key => {
+            mergedData[key] = result[key]
+          })
         }
       })
+      kpiData.value = mergedData
+      console.log('✨ [useKpiManager] kpiData final:', kpiData.value)
+      
+      // Désactiver l'analyse d'alertes temporairement (cause boucle infinie)
+      // availableKpis.value.forEach(kpi => {
+      //   const currentValue = kpiData.value[kpi.dataKey]
+      //   const previousValue = oldKpiData[kpi.dataKey]
+      //   
+      //   if (currentValue !== undefined) {
+      //     const kpiAlerts = intelligentAlerts.analyzeKPI(kpi, currentValue, previousValue)
+      //     if (kpiAlerts.length > 0) {
+      //       alerts.value.push(...kpiAlerts)
+      //     }
+      //   }
+      // })
       
     } catch (error) {
       console.error('Erreur chargement KPI:', error)
