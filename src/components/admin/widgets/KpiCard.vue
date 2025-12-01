@@ -240,6 +240,7 @@ const effectiveChartHeight = computed(() => {
 })
 </script>
 
+
 <style scoped>
 .kpi-card {
   background: var(--surface-card);
