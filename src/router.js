@@ -73,6 +73,9 @@ import FPValiderEchecPFPView from '@/views/admin/formation-pratique/ValiderEchec
 import FPVotationPrioritaireView from '@/views/admin/formation-pratique/VotationPrioritaireViewPHYFP.vue'
 import FPVotationPFPView from '@/views/admin/formation-pratique/VotationPFPViewPHYFP.vue'
 
+// ASSIGNATION RÉPONDANTS
+import AssignRepondantsView from '@/views/admin/AssignRepondantsView.vue'
+
 // ADMIN LISTS
 import ProgramListView from '@/views/admin/lists/ProgramListView.vue'
 import ModuleListView from '@/views/admin/lists/ModuleListView.vue'
@@ -403,6 +406,7 @@ const routes = [
   // Section Admin
   { path: '/admin/formation-pratique/profil-etudiants', component: FPProfilEtudiantsView, name: 'FPProfilEtudiants', meta: { requiresAuth: true, need: 'page1.access' } },
   { path: '/admin/formation-pratique/profil-repondant-enseignant', component: FPProfilRepondantEnseignantView, name: 'FPProfilRepondantEnseignant', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/admin/formation-pratique/assign-repondants-ba25', component: AssignRepondantsView, name: 'AssignRepondantsBA25Static', meta: { requiresAuth: true, need: 'admin' } },
   { path: '/admin/formation-pratique/gantt-pfp', component: FPGanttPFPFormationView, name: 'FPGanttPFP', meta: { requiresAuth: true, need: 'page1.access' } },
   { path: '/admin/formation-pratique/admin-secretariat', component: FPAdminSecretariatView, name: 'FPAdminSecretariat', meta: { requiresAuth: true, need: 'page1.access' } },
   { path: '/admin/formation-pratique/admin-secretariat-general', component: FPAdminSecretariatGeneralView, name: 'FPAdminSecretariatGeneral', meta: { requiresAuth: true, need: 'page1.access' } },
