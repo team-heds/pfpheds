@@ -21,17 +21,26 @@
       <div class="documents-grid">
         <div v-for="folder in folders" :key="folder.id" class="folder-container">
           <div class="folder-content-card">
-            <!-- Folder Header -->
-            <div class="folder-header-row">
+            <!-- Folder Header (cliquable) -->
+            <div 
+              class="folder-header-row clickable" 
+              @click="toggleFolder(folder.id)"
+              :class="{ 'folder-open': isFolderOpen(folder.id) }"
+            >
               <div class="folder-icon-title">
                 <div class="folder-icon-container">
                   <i :class="[folder.icon]"></i>
                 </div>
                 <h3 class="folder-title-text">{{ folder.name }}</h3>
               </div>
+              <i 
+                class="pi toggle-icon" 
+                :class="isFolderOpen(folder.id) ? 'pi-chevron-up' : 'pi-chevron-down'"
+              ></i>
             </div>
 
             <!-- CAS 1 : Dossier avec sous-sections -->
+            <div v-show="isFolderOpen(folder.id)" class="folder-content-wrapper">
             <template v-if="folder.subFolders && folder.subFolders.length > 0">
               <div class="subfolders-container">
                 <div v-for="sub in folder.subFolders" :key="sub.id" class="subfolder-section">
@@ -138,6 +147,7 @@
                 Ajouter un fichier
               </button>
             </template>
+            </div>
           </div>
         </div>
       </div>
@@ -182,6 +192,21 @@ const editForm = ref({
   name: '',
   url: ''
 })
+
+// Gestion de l'accordéon (dossiers ouverts/fermés)
+const openFolders = ref(new Set())
+
+const toggleFolder = (folderId) => {
+  if (openFolders.value.has(folderId)) {
+    openFolders.value.delete(folderId)
+  } else {
+    openFolders.value.add(folderId)
+  }
+}
+
+const isFolderOpen = (folderId) => {
+  return openFolders.value.has(folderId)
+}
 
 // Variables pour stocker la cible d'ajout (folder et sous-dossier éventuel)
 const targetFolderId = ref(null)
@@ -361,8 +386,25 @@ const saveNewFile = async (newFile) => {
 
 /* Folder Header */
 .folder-header-row {
-  margin-bottom: 1.25rem;
-  padding-bottom: 1rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.2s ease;
+}
+
+.folder-header-row.clickable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.folder-header-row.clickable:hover {
+  background: var(--surface-hover);
+}
+
+.folder-header-row.folder-open {
+  margin-bottom: 1rem;
 }
 
 .folder-icon-title {
@@ -388,6 +430,28 @@ const saveNewFile = async (newFile) => {
   font-weight: 600;
   margin: 0;
   color: var(--text-color);
+}
+
+.toggle-icon {
+  color: var(--text-color-secondary);
+  font-size: 1rem;
+  transition: transform 0.3s ease;
+}
+
+/* Folder Content Wrapper */
+.folder-content-wrapper {
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Subfolders */
@@ -611,7 +675,11 @@ const saveNewFile = async (newFile) => {
   }
 
   .folder-content-card {
-    padding: 1.25rem;
+    padding: 1rem;
+  }
+
+  .folder-header-row {
+    padding: 0.625rem;
   }
 
   .file-item-row {
@@ -619,6 +687,10 @@ const saveNewFile = async (newFile) => {
   }
 
   .file-name-text {
+    font-size: 0.875rem;
+  }
+
+  .toggle-icon {
     font-size: 0.875rem;
   }
 }
