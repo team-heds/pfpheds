@@ -536,7 +536,7 @@ const routes = [
     path: '/votation', 
     component: VotationView, 
     name: 'VotationView', 
-    meta: { requiresAuth: true, need: 'BA25', pfpRequired: 'PFP1A' },
+    meta: { requiresAuth: true, pfpRequired: 'PFP1A' },
     beforeEnter: async (to, from, next) => {
       const userStore = useUserStore();
       
