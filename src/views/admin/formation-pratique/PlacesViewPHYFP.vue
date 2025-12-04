@@ -47,102 +47,57 @@
       </div>
 
       <!-- Panel de sélection des colonnes -->
-      <OverlayPanel ref="columnsPanel" :style="{ width: '320px' }">
+      <OverlayPanel ref="columnsPanel" :style="{ width: '300px' }">
         <div class="p-3">
           <h3 class="text-lg font-semibold mb-3">Afficher les colonnes</h3>
           
-          <Accordion :multiple="true" :activeIndex="[0, 1, 2]">
-            <!-- Section PFP -->
-            <AccordionTab>
-              <template #header>
-                <div class="flex align-items-center gap-2">
-                  <i class="pi pi-calendar"></i>
-                  <span class="font-semibold">Colonnes PFP</span>
-                  <Checkbox v-model="showAllPfpColumns" :binary="true" @click.stop @change="toggleAllPfp" class="ml-2" />
-                </div>
-              </template>
-              <div class="ml-2">
-                <div class="field-checkbox mb-2">
-                  <Checkbox v-model="visibleColumns.PFP1A" inputId="col-pfp1a" :binary="true" />
-                  <label for="col-pfp1a">PFP1A</label>
-                </div>
-                <div class="field-checkbox mb-2">
-                  <Checkbox v-model="visibleColumns.PFP1B" inputId="col-pfp1b" :binary="true" />
-                  <label for="col-pfp1b">PFP1B</label>
-                </div>
-                <div class="field-checkbox mb-2">
-                  <Checkbox v-model="visibleColumns.PFP2" inputId="col-pfp2" :binary="true" />
-                  <label for="col-pfp2">PFP2</label>
-                </div>
-                <div class="field-checkbox mb-2">
-                  <Checkbox v-model="visibleColumns.PFP3" inputId="col-pfp3" :binary="true" />
-                  <label for="col-pfp3">PFP3</label>
-                </div>
-                <div class="field-checkbox mb-2">
-                  <Checkbox v-model="visibleColumns.PFP4" inputId="col-pfp4" :binary="true" />
-                  <label for="col-pfp4">PFP4</label>
-                </div>
-              </div>
-            </AccordionTab>
-
-            <!-- Section Critères -->
-            <AccordionTab>
-              <template #header>
-                <div class="flex align-items-center gap-2">
-                  <i class="pi pi-list"></i>
-                  <span class="font-semibold">Critères</span>
-                  <Checkbox v-model="showCriteresColumns" :binary="true" @click.stop @change="toggleAllCriteres" class="ml-2" />
-                </div>
-              </template>
-              <div class="ml-2">
-                <div class="field-checkbox mb-2">
-                  <Checkbox v-model="visibleColumns.MSQ" inputId="col-msq" :binary="true" />
-                  <label for="col-msq">MSQ</label>
-                </div>
-                <div class="field-checkbox mb-2">
-                  <Checkbox v-model="visibleColumns.SYSINT" inputId="col-sysint" :binary="true" />
-                  <label for="col-sysint">SYSINT</label>
-                </div>
-                <div class="field-checkbox mb-2">
-                  <Checkbox v-model="visibleColumns.NEUROGER" inputId="col-neuroger" :binary="true" />
-                  <label for="col-neuroger">NEUROGER</label>
-                </div>
-                <div class="field-checkbox mb-2">
-                  <Checkbox v-model="visibleColumns.AIGU" inputId="col-aigu" :binary="true" />
-                  <label for="col-aigu">AIGU</label>
-                </div>
-                <div class="field-checkbox mb-2">
-                  <Checkbox v-model="visibleColumns.REHAB" inputId="col-rehab" :binary="true" />
-                  <label for="col-rehab">REHAB</label>
-                </div>
-                <div class="field-checkbox mb-2">
-                  <Checkbox v-model="visibleColumns.AMBU" inputId="col-ambu" :binary="true" />
-                  <label for="col-ambu">AMBU</label>
-                </div>
-              </div>
-            </AccordionTab>
-
-            <!-- Section Langues -->
-            <AccordionTab>
-              <template #header>
-                <div class="flex align-items-center gap-2">
-                  <i class="pi pi-globe"></i>
-                  <span class="font-semibold">Langues</span>
-                  <Checkbox v-model="showLanguesColumns" :binary="true" @click.stop @change="toggleAllLangues" class="ml-2" />
-                </div>
-              </template>
-              <div class="ml-2">
-                <div class="field-checkbox mb-2">
-                  <Checkbox v-model="visibleColumns.FR" inputId="col-fr" :binary="true" />
-                  <label for="col-fr">FR</label>
-                </div>
-                <div class="field-checkbox mb-2">
-                  <Checkbox v-model="visibleColumns.DE" inputId="col-de" :binary="true" />
-                  <label for="col-de">DE</label>
-                </div>
-              </div>
-            </AccordionTab>
-          </Accordion>
+          <div class="field-checkbox mb-2">
+            <Checkbox v-model="showCriteresColumns" inputId="show-criteres" :binary="true" @change="toggleAllCriteres" />
+            <label for="show-criteres" class="font-semibold">Critères (tous)</label>
+          </div>
+          
+          <div class="ml-4 mb-3">
+            <div class="field-checkbox mb-2">
+              <Checkbox v-model="visibleColumns.MSQ" inputId="col-msq" :binary="true" />
+              <label for="col-msq">MSQ</label>
+            </div>
+            <div class="field-checkbox mb-2">
+              <Checkbox v-model="visibleColumns.SYSINT" inputId="col-sysint" :binary="true" />
+              <label for="col-sysint">SYSINT</label>
+            </div>
+            <div class="field-checkbox mb-2">
+              <Checkbox v-model="visibleColumns.NEUROGER" inputId="col-neuroger" :binary="true" />
+              <label for="col-neuroger">NEUROGER</label>
+            </div>
+            <div class="field-checkbox mb-2">
+              <Checkbox v-model="visibleColumns.AIGU" inputId="col-aigu" :binary="true" />
+              <label for="col-aigu">AIGU</label>
+            </div>
+            <div class="field-checkbox mb-2">
+              <Checkbox v-model="visibleColumns.REHAB" inputId="col-rehab" :binary="true" />
+              <label for="col-rehab">REHAB</label>
+            </div>
+            <div class="field-checkbox mb-2">
+              <Checkbox v-model="visibleColumns.AMBU" inputId="col-ambu" :binary="true" />
+              <label for="col-ambu">AMBU</label>
+            </div>
+          </div>
+          
+          <div class="field-checkbox mb-2">
+            <Checkbox v-model="showLanguesColumns" inputId="show-langues" :binary="true" @change="toggleAllLangues" />
+            <label for="show-langues" class="font-semibold">Langues (toutes)</label>
+          </div>
+          
+          <div class="ml-4">
+            <div class="field-checkbox mb-2">
+              <Checkbox v-model="visibleColumns.FR" inputId="col-fr" :binary="true" />
+              <label for="col-fr">FR</label>
+            </div>
+            <div class="field-checkbox mb-2">
+              <Checkbox v-model="visibleColumns.DE" inputId="col-de" :binary="true" />
+              <label for="col-de">DE</label>
+            </div>
+          </div>
         </div>
       </OverlayPanel>
 
@@ -166,20 +121,30 @@
           <template #empty>
             <div class="text-center p-4 text-600">Aucune place trouvée</div>
           </template>
-
-          <Column header="Institution Name" sortable :style="{ minWidth: '180px', maxWidth: '250px' }">
+          <Column header="Nom" sortable>
             <template #body="{ data }">
-              <div class="text-wrap-multiline">
-                {{ institutionNameById[data.InstitutionId] || data.InstitutionName || '-' }}
-              </div>
+              <InputText :value="data.NomPlace || ''" @change="e => onChangeSimple(data, 'NomPlace', e.target.value)" />
             </template>
           </Column>
-          <Column header="Nom" sortable :style="{ minWidth: '180px', maxWidth: '250px' }">
+          <Column header="Institution Name" sortable>
             <template #body="{ data }">
-              <InputText 
-                :value="data.NomPlace || ''" 
-                @change="e => onChangeSimple(data, 'NomPlace', e.target.value)" 
-                class="input-multiline"
+              <div v-if="data.InstitutionId" class="institution-assigned">
+                <span class="font-semibold">{{ institutionNameById[data.InstitutionId] || data.InstitutionName || '-' }}</span>
+                <Tag severity="success" value="Assignée" class="ml-2" />
+              </div>
+              <Dropdown 
+                v-else
+                :modelValue="data.InstitutionId || null" 
+                @update:modelValue="v => onChangeInstitution(data, v)" 
+                :options="institutionsOptions" 
+                optionLabel="label" 
+                optionValue="value"
+                placeholder="🔍 Rechercher et sélectionner..."
+                class="w-full no-institution"
+                filter
+                filterPlaceholder="Taper pour rechercher"
+                :filterMatchMode="'contains'"
+                showClear
               />
             </template>
           </Column>
@@ -223,27 +188,27 @@
               <InputSwitch :modelValue="!!data.DE" @update:modelValue="v => onChangeBool(data, 'DE', v)" />
             </template>
           </Column>
-          <Column header="PFP2" v-if="visibleColumns.PFP2">
+          <Column header="PFP2">
             <template #body="{ data }">
               <InputText :value="(data.PFP2 && data.PFP2[selectedYear]) || ''" @change="e => onChangePFP(data, 'PFP2', e.target.value)" class="p-inputtext-sm" />
             </template>
           </Column>
-          <Column header="PFP1A" v-if="visibleColumns.PFP1A">
+          <Column header="PFP1A">
             <template #body="{ data }">
               <InputText :value="(data.PFP1A && data.PFP1A[selectedYear]) || ''" @change="e => onChangePFP(data, 'PFP1A', e.target.value)" class="p-inputtext-sm" />
             </template>
           </Column>
-          <Column header="PFP1B" v-if="visibleColumns.PFP1B">
+          <Column header="PFP1B">
             <template #body="{ data }">
               <InputText :value="(data.PFP1B && data.PFP1B[selectedYear]) || ''" @change="e => onChangePFP(data, 'PFP1B', e.target.value)" class="p-inputtext-sm" />
             </template>
           </Column>
-          <Column header="PFP4" v-if="visibleColumns.PFP4">
+          <Column header="PFP4">
             <template #body="{ data }">
               <InputText :value="(data.PFP4 && data.PFP4[selectedYear]) || ''" @change="e => onChangePFP(data, 'PFP4', e.target.value)" class="p-inputtext-sm" />
             </template>
           </Column>
-          <Column header="PFP3" v-if="visibleColumns.PFP3">
+          <Column header="PFP3">
             <template #body="{ data }">
               <InputText :value="(data.PFP3 && data.PFP3[selectedYear]) || ''" @change="e => onChangePFP(data, 'PFP3', e.target.value)" class="p-inputtext-sm" />
             </template>
@@ -275,21 +240,9 @@
               </div>
             </template>
           </Column>
-          <Column header="Praticien Formateur" :style="{ minWidth: '250px' }">
+          <Column header="Praticien Formateur">
             <template #body="{ data }">
-              <MultiSelect 
-                :modelValue="data.praticiensFormateurs || []" 
-                @update:modelValue="v => onChangeArray(data, 'praticiensFormateurs', v)" 
-                :options="praticiensOptions" 
-                optionLabel="label" 
-                optionValue="id" 
-                display="chip" 
-                filter
-                filterPlaceholder="Rechercher un praticien..."
-                :filterFields="['label']"
-                class="w-full md:w-16rem" 
-                placeholder="Sélectionner..."
-              />
+              <MultiSelect :modelValue="data.praticiensFormateurs || []" @update:modelValue="v => onChangeArray(data, 'praticiensFormateurs', v)" :options="praticiensOptions" optionLabel="label" optionValue="id" display="chip" class="w-full md:w-14rem" />
             </template>
           </Column>
           <Column header="Remarques">
@@ -390,8 +343,6 @@ import CreatePlaceDialog from '@/components/admin/places/CreatePlaceDialog.vue'
 import Dialog from 'primevue/dialog'
 import OverlayPanel from 'primevue/overlaypanel'
 import Checkbox from 'primevue/checkbox'
-import Accordion from 'primevue/accordion'
-import AccordionTab from 'primevue/accordiontab'
 
 const store = usePlacesStore()
 const institutionsStore = useInstitutionsStore()
@@ -443,6 +394,13 @@ const praticiensOptions = computed(() => {
   }))
 })
 
+const institutionsOptions = computed(() => {
+  return (institutionsStore.institutions || []).map(inst => ({
+    value: inst.InstitutionId,
+    label: `${inst.Name || 'Sans nom'} ${inst.Canton ? `(${inst.Canton})` : ''}`.trim()
+  }))
+})
+
 // UI/UX controls
 const rowsOptions = ref([
   { label: '15 par page', value: 15 },
@@ -471,12 +429,7 @@ const visibleColumns = ref({
   REHAB: false,
   AMBU: false,
   FR: false,
-  DE: false,
-  PFP1A: true,
-  PFP1B: true,
-  PFP2: true,
-  PFP3: true,
-  PFP4: true
+  DE: false
 })
 
 // Computed pour les checkboxes "tous"
@@ -502,24 +455,44 @@ const showLanguesColumns = computed({
   }
 })
 
-const showAllPfpColumns = computed({
-  get: () => visibleColumns.value.PFP1A && visibleColumns.value.PFP1B && 
-             visibleColumns.value.PFP2 && visibleColumns.value.PFP3 && 
-             visibleColumns.value.PFP4,
-  set: (val) => {
-    visibleColumns.value.PFP1A = val
-    visibleColumns.value.PFP1B = val
-    visibleColumns.value.PFP2 = val
-    visibleColumns.value.PFP3 = val
-    visibleColumns.value.PFP4 = val
-  }
-})
-
 async function onChangeSimple(row, field, value) {
   if (!row?.PlaceId) return
   const ok = window.confirm(`Modifier ${field} ?`)
   if (!ok) return
   await store.updatePlace(row.PlaceId, { [field]: value })
+}
+
+async function onChangeInstitution(row, institutionId) {
+  if (!row?.PlaceId) return
+  
+  const institutionName = institutionId 
+    ? institutionsOptions.value.find(inst => inst.value === institutionId)?.label || ''
+    : 'Aucune'
+  
+  const ok = window.confirm(`Assigner l'institution "${institutionName}" à cette place ?`)
+  if (!ok) return
+  
+  console.log('🏥 Assignation institution:', { 
+    placeId: row.PlaceId, 
+    placeName: row.NomPlace,
+    institutionId, 
+    institutionName 
+  })
+  
+  try {
+    await store.updatePlace(row.PlaceId, { 
+      InstitutionId: institutionId || null,
+      InstitutionName: institutionNameById.value[institutionId] || null
+    })
+    
+    // Recharger la place pour avoir les données à jour
+    await store.fetchPlaceById(row.PlaceId)
+    
+    console.log('✅ Institution assignée avec succès')
+  } catch (error) {
+    console.error('❌ Erreur lors de l\'assignation de l\'institution:', error)
+    alert('Erreur lors de la sauvegarde: ' + error.message)
+  }
 }
 
 async function onChangeBool(row, field, value) {
@@ -598,10 +571,6 @@ function toggleAllCriteres() {
 }
 
 function toggleAllLangues() {
-  // Géré par le computed
-}
-
-function toggleAllPfp() {
   // Géré par le computed
 }
 
@@ -730,47 +699,26 @@ watch(selectedYear, () => {
   user-select: none;
 }
 
-/* Styles pour les noms multiligne */
-.text-wrap-multiline {
-  white-space: normal;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  line-height: 1.4;
-  max-width: 250px;
+/* Mise en évidence des places sans institution */
+.no-institution :deep(.p-dropdown) {
+  border: 2px solid #f59e0b !important;
+  background: rgba(245, 158, 11, 0.1) !important;
 }
 
-.input-multiline :deep(input) {
-  white-space: normal;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  min-height: 2.5rem;
-  height: auto;
-  line-height: 1.4;
+.no-institution :deep(.p-dropdown .p-placeholder) {
+  color: #f59e0b !important;
+  font-weight: 600;
 }
 
-/* Amélioration des colonnes */
-:deep(.p-datatable-tbody > tr > td) {
-  vertical-align: top;
-  padding: 0.75rem 0.5rem;
-}
-
-/* Styles pour l'accordion dans le panel */
-:deep(.p-accordion .p-accordion-header) {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  margin-bottom: 0.5rem;
-}
-
-:deep(.p-accordion .p-accordion-header:not(.p-disabled).p-highlight) {
-  background: rgba(99, 102, 241, 0.1);
-  border-color: rgba(99, 102, 241, 0.3);
-}
-
-:deep(.p-accordion .p-accordion-content) {
-  padding: 0.75rem;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-top: none;
+/* Affichage des institutions assignées */
+.institution-assigned {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 6px;
+  color: #059669;
 }
 </style>
 

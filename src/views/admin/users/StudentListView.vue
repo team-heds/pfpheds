@@ -2,9 +2,7 @@
   <AdminLayout>
     <Toast />
     <div class="filter-menu">
-      <AppSkeleton v-if="loading" variant="table" :rows="8" :cols="7" />
       <DataTable
-        v-else
         :value="filteredEtudiants"
         :paginator="true"
         :rows="10"
@@ -12,43 +10,47 @@
         :rowHover="true"
         v-model:filters="filters"
         filterDisplay="menu"
+        :loading="loading"
         :globalFilterFields="['Nom', 'Prenom', 'Classe', 'Mail']"
         showGridlines
       >
         <template #header>
           <div class="flex justify-content-between flex-column sm:flex-row">
-            <Button label="Ajouter un étudiant" icon="pi pi-plus" class="mb-2 mr-2" outlined @click="goToEtudiantForm" />
+            <div class="flex gap-2">
+              <Button label="Ajouter un étudiant" icon="pi pi-plus" class="mb-2" outlined @click="goToEtudiantForm" />
+              <Button 
+                :label="sortOrder === 'asc' ? 'Tri A-Z' : 'Tri Z-A'" 
+                :icon="sortOrder === 'asc' ? 'pi pi-sort-alpha-down' : 'pi pi-sort-alpha-up'" 
+                class="mb-2" 
+                outlined 
+                severity="secondary"
+                @click="toggleSortOrder" 
+              />
+            </div>
             <span class="p-input-icon-left">
               <InputText v-model="globalFilter" placeholder="Recherche" style="width: 100%" />
             </span>
           </div>
         </template>
-        <template #empty>
-          <EmptyState
-            title="Aucun étudiant trouvé"
-            description="Ajustez les filtres ou ajoutez un étudiant."
-            icon="pi-users"
-            actionLabel="Ajouter un étudiant"
-            @action="goToEtudiantForm"
-          />
-        </template>
- 
+        <template #empty> Aucun étudiant trouvé. </template>
+        <template #loading> Chargement des données des étudiants. Veuillez patienter. </template>
+
         <!-- Colonne pour le nom -->
         <Column field="Nom" header="Nom" style="min-width: 12rem" class="text-center" />
- 
+
         <!-- Colonne pour le prénom -->
         <Column field="Prenom" header="Prénom" style="min-width: 12rem" class="text-center" />
- 
+
         <!-- Colonne pour la classe -->
         <Column field="Classe" header="Classe" style="min-width: 8rem" class="text-center">
           <template #filter="{ filterModel }">
             <Dropdown :options="classeOptions" v-model="filterModel.value" class="p-column-filter" placeholder="Rechercher par classe" />
           </template>
         </Column>
- 
+
         <!-- Colonne pour l'email -->
         <Column field="Mail" header="Email" style="min-width: 16rem" class="text-center" />
- 
+
         <!-- Colonne pour indiquer si l'étudiant est un SAE -->
         <Column field="SAE" header="SAE" style="min-width: 8rem" class="text-center">
           <template #body="{ data }">
@@ -97,7 +99,6 @@
   </AdminLayout>
 </template>
 
-
 <script>
 import studentsService from '@/service/studentsService';
 import DataTable from 'primevue/datatable';
@@ -106,9 +107,6 @@ import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
-import AdminPageHeader from '@/components/admin/common/AdminPageHeader.vue';
-import AppSkeleton from '@/components/common/feedback/AppSkeleton.vue';
-import EmptyState from '@/components/common/feedback/EmptyState.vue';
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
 import { supabase } from '@/supabase';
@@ -116,9 +114,6 @@ import { supabase } from '@/supabase';
 export default {
   name: "EtudiantList",
   components: {
-    AdminPageHeader,
-    AppSkeleton,
-    EmptyState,
     DataTable,
     Column,
     InputText,
@@ -135,6 +130,7 @@ export default {
       },
       loading: true,
       globalFilter: '',
+      sortOrder: 'asc', // 'asc' pour A-Z, 'desc' pour Z-A
       classeOptions: ['BA22', 'BA23', 'BA24', 'BA25', 'Non défini'],
       pfpCohortOptions: [
         { label: 'Aucun', value: null },
@@ -145,17 +141,29 @@ export default {
   },
   computed: {
     filteredEtudiants() {
-      return this.etudiants.filter(etudiant => {
+      const filtered = this.etudiants.filter(etudiant => {
         const matchesClass = this.filters['Classe'].value ? this.filters['Classe'].value.includes(etudiant.Classe) : true;
         const searchLower = this.globalFilter.toLowerCase();
- 
+
         const matchesSearch =
           (etudiant.Nom ? etudiant.Nom.toLowerCase().includes(searchLower) : false)
           || (etudiant.Prenom ? etudiant.Prenom.toLowerCase().includes(searchLower) : false)
           || (etudiant.Classe ? etudiant.Classe.toLowerCase().includes(searchLower) : false)
           || (etudiant.Mail ? etudiant.Mail.toLowerCase().includes(searchLower) : false);
- 
+
         return matchesClass && matchesSearch;
+      });
+
+      // Appliquer le tri alphabétique par nom
+      return filtered.sort((a, b) => {
+        const nameA = (a.Nom || '').toLowerCase();
+        const nameB = (b.Nom || '').toLowerCase();
+        
+        if (this.sortOrder === 'asc') {
+          return nameA.localeCompare(nameB);
+        } else {
+          return nameB.localeCompare(nameA);
+        }
       });
     }
   },
@@ -238,6 +246,11 @@ export default {
           });
         }
       }
+    },
+    
+    toggleSortOrder() {
+      this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
+      console.log(`📋 Tri alphabétique: ${this.sortOrder === 'asc' ? 'A-Z' : 'Z-A'}`);
     },
     
     goToEtudiantForm() {
@@ -339,7 +352,7 @@ export default {
   }
 };
 </script>
- 
+
 <style scoped>
 .admin-scrollable {
   overflow-y: auto;
