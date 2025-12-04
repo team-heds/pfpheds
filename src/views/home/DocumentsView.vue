@@ -187,6 +187,7 @@ onMounted(async () => {
   }
 })
 
+
 // --- Gestion de la modale d'édition ---
 const openEditModal = (file) => {
   editForm.value = { ...file }
