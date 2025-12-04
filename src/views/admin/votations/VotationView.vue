@@ -1,172 +1,214 @@
 <template>
   <AdminLayout :noSidebar="true">
-    <template #header>
-      <div class="page-title p-d-flex p-jc-between">
-        <h1>Votation PFP1A -  {{ selectedYear }}</h1>
+    <div class="votation-container">
+      <!-- En-tête moderne -->
+      <div class="votation-header">
+        <div class="header-content">
+          <div class="header-left">
+            <i class="pi pi-check-square header-icon"></i>
+            <div>
+              <h1 class="header-title">Votation PFP1A</h1>
+              <p class="header-subtitle">Année {{ selectedYear }} • {{ availablePlaces.length }} places disponibles</p>
+            </div>
+          </div>
+          <Button label="Retour" icon="pi pi-arrow-left" outlined @click="goBackToProfile" class="back-button" />
+        </div>
       </div>
-    </template>
-
-    <div class="container">
-      <Button label="Retour Profil" icon="pi pi-arrow-left"
-              class="p-button-outlined m-2 align-content-end justify-content-end" @click="goBackToProfile" />
 
       <!-- Affichage des places disponibles -->
-      <div v-if="availablePlaces.length > 0">
-        <h2>Toutes les places disponibles ( {{ availablePlaces.length }} places )</h2>
-        <DataTable :value="availablePlaces" class="p-datatable-sm custom-datatable" responsiveLayout="scroll">
+      <div v-if="availablePlaces.length > 0" class="content-wrapper">
+        <DataTable
+          :value="availablePlaces"
+          class="modern-votation-table"
+          responsiveLayout="scroll"
+          :scrollable="true"
+          scrollHeight="65vh"
+          :rowHover="true"
+          stripedRows
+        >
           <!-- Colonne Institution avec lien -->
-          <Column header="Institution" sortable field="InstitutionName">
+          <Column header="Institution" sortable field="InstitutionName" :style="{ minWidth: '200px' }">
             <template #body="slotProps">
-              <a target="_blank" :href="`${slotProps.data.url}`">
+              <a target="_blank" :href="`${slotProps.data.url}`" class="institution-link">
+                <i class="pi pi-building mr-2"></i>
                 <span>{{ slotProps.data.InstitutionName || 'Non spécifié' }}</span>
               </a>
             </template>
           </Column>
 
           <!-- Autres colonnes d'informations -->
-          <Column header="Nom de la Place" sortable field="NomPlace">
+          <Column header="Nom de la Place" sortable field="NomPlace" :style="{ minWidth: '180px' }">
             <template #body="slotProps">
-              <span>{{ slotProps.data.NomPlace }}</span>
+              <div class="place-name">{{ slotProps.data.NomPlace }}</div>
             </template>
           </Column>
 
-          <Column header="Catégorie " sortable field="InstitutionCategory">
+          <Column header="Catégorie" sortable field="InstitutionCategory">
             <template #body="slotProps">
-              <span>{{ slotProps.data.InstitutionCategory }}</span>
+              <Tag :value="slotProps.data.InstitutionCategory" severity="info" />
             </template>
           </Column>
-          <Column header="MSQ">
+
+          <Column header="Critères" :style="{ minWidth: '200px' }">
             <template #body="slotProps">
-              <span>{{ slotProps.data.MSQ ? 'MSQ' : '-' }}</span>
+              <div class="criteria-tags">
+                <Tag v-if="slotProps.data.MSQ" value="MSQ" severity="success" class="mr-1 mb-1" />
+                <Tag v-if="slotProps.data.SYSINT" value="SYSINT" severity="success" class="mr-1 mb-1" />
+                <Tag v-if="slotProps.data.NEUROGER" value="NEUROGER" severity="success" class="mr-1 mb-1" />
+                <Tag v-if="slotProps.data.AIGU" value="AIGU" severity="success" class="mr-1 mb-1" />
+                <Tag v-if="slotProps.data.REHAB" value="REHAB" severity="success" class="mr-1 mb-1" />
+                <Tag v-if="slotProps.data.AMBU" value="AMBU" severity="success" class="mr-1 mb-1" />
+                <span v-if="!slotProps.data.MSQ && !slotProps.data.SYSINT && !slotProps.data.NEUROGER && !slotProps.data.AIGU && !slotProps.data.REHAB && !slotProps.data.AMBU" class="text-500">-</span>
+              </div>
             </template>
           </Column>
-          <Column header="SYSINT">
+
+          <Column header="Langues">
             <template #body="slotProps">
-              <span>{{ slotProps.data.SYSINT ? 'SYSINT' : '-' }}</span>
-            </template>
-          </Column>
-          <Column header="NEUROGER">
-            <template #body="slotProps">
-              <span>{{ slotProps.data.NEUROGER ? 'NEUROGER' : '-' }}</span>
-            </template>
-          </Column>
-          <Column header="AIGU">
-            <template #body="slotProps">
-              <span>{{ slotProps.data.AIGU ? 'AIGU' : '-' }}</span>
-            </template>
-          </Column>
-          <Column header="REHAB">
-            <template #body="slotProps">
-              <span>{{ slotProps.data.REHAB ? 'REHAB' : '-' }}</span>
-            </template>
-          </Column>
-          <Column header="AMBU">
-            <template #body="slotProps">
-              <span>{{ slotProps.data.AMBU ? 'AMBU' : '-' }}</span>
-            </template>
-          </Column>
-          <Column header="FR">
-            <template #body="slotProps">
-              <span>{{ slotProps.data.FR ? 'FR' : '-' }}</span>
-            </template>
-          </Column>
-          <Column header="DE">
-            <template #body="slotProps">
-              <span>{{ slotProps.data.DE ? 'DE' : '-' }}</span>
+              <div class="language-tags">
+                <Tag v-if="slotProps.data.FR" value="FR" severity="warning" class="mr-1" />
+                <Tag v-if="slotProps.data.DE" value="DE" severity="warning" class="mr-1" />
+                <span v-if="!slotProps.data.FR && !slotProps.data.DE" class="text-500">-</span>
+              </div>
             </template>
           </Column>
 
           <!-- Colonnes de vote (Choix 1 à 5) -->
-          <Column header="Choix 1">
+          <Column v-for="i in 5" :key="'choice-'+i" :header="'Choix ' + i" :style="{ textAlign: 'center', width: '80px' }">
             <template #body="slotProps">
-              <RadioButton v-model="selectedPlaces[0]" :value="slotProps.data"
-                           :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 0)" />
-            </template>
-          </Column>
-          <Column header="Choix 2">
-            <template #body="slotProps">
-              <RadioButton v-model="selectedPlaces[1]" :value="slotProps.data"
-                           :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 1)" />
-            </template>
-          </Column>
-          <Column header="Choix 3">
-            <template #body="slotProps">
-              <RadioButton v-model="selectedPlaces[2]" :value="slotProps.data"
-                           :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 2)" />
-            </template>
-          </Column>
-          <Column header="Choix 4">
-            <template #body="slotProps">
-              <RadioButton v-model="selectedPlaces[3]" :value="slotProps.data"
-                           :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 3)" />
-            </template>
-          </Column>
-          <Column header="Choix 5">
-            <template #body="slotProps">
-              <RadioButton v-model="selectedPlaces[4]" :value="slotProps.data"
-                           :disabled="voteAlreadyCast || isPlaceDisabled(slotProps.data, 4)" />
+              <div class="radio-wrapper">
+                <RadioButton
+                  v-model="selectedPlaces[i-1]"
+                  :value="slotProps.data"
+                  :disabled="isPlaceDisabled(slotProps.data, i-1)"
+                />
+              </div>
             </template>
           </Column>
 
           <!-- Colonnes d'agrégation des votes -->
-          <Column header="Votes Top 1">
+          <Column v-for="i in 5" :key="'votes-'+i" :header="'Top ' + i" :style="{ textAlign: 'center', width: '70px' }">
             <template #body="slotProps">
-              <span>{{ getVoteCount(slotProps.data).top1 || 0 }}</span>
+              <Tag
+                :value="getVoteCount(slotProps.data)['top'+i] || 0"
+                :severity="getVoteCount(slotProps.data)['top'+i] > 0 ? 'primary' : 'secondary'"
+                rounded
+              />
             </template>
           </Column>
-          <Column header="Votes Top 2">
+          <Column header="Total" :style="{ textAlign: 'center', width: '80px' }">
             <template #body="slotProps">
-              <span>{{ getVoteCount(slotProps.data).top2 || 0 }}</span>
-            </template>
-          </Column>
-          <Column header="Votes Top 3">
-            <template #body="slotProps">
-              <span>{{ getVoteCount(slotProps.data).top3 || 0 }}</span>
-            </template>
-          </Column>
-          <Column header="Votes Top 4">
-            <template #body="slotProps">
-              <span>{{ getVoteCount(slotProps.data).top4 || 0 }}</span>
-            </template>
-          </Column>
-          <Column header="Votes Top 5">
-            <template #body="slotProps">
-              <span>{{ getVoteCount(slotProps.data).top5 || 0 }}</span>
-            </template>
-          </Column>
-          <Column header="Total Votes">
-            <template #body="slotProps">
-              <span>{{ getVoteCount(slotProps.data).total || 0 }}</span>
+              <Tag
+                :value="getVoteCount(slotProps.data).total || 0"
+                severity="contrast"
+                rounded
+                class="font-semibold"
+              />
             </template>
           </Column>
         </DataTable>
       </div>
-      <div v-else class="p-4 text-center">
-        <p>Aucune place disponible pour les critères sélectionnés ({{ targetPFP }} - {{ selectedYear }}).</p>
+      <div v-else class="empty-state">
+        <i class="pi pi-inbox empty-icon"></i>
+        <h3>Aucune place disponible</h3>
+        <p class="text-600">Aucune place n'est disponible pour {{ targetPFP }} - {{ selectedYear }}</p>
+      </div>
+
+      <!-- Tableau récapitulatif des choix -->
+      <div class="recap-section" v-if="availablePlaces.length > 0 && selectedPlaces.some(p => p !== null)">
+        <div class="recap-header">
+          <i class="pi pi-list-check"></i>
+          <h3>Récapitulatif de vos choix</h3>
+        </div>
+        <DataTable :value="selectedPlacesForRecap" class="recap-table" :rowHover="true">
+          <Column header="Rang" :style="{ width: '80px', textAlign: 'center' }">
+            <template #body="slotProps">
+              <Tag :value="slotProps.data.rank" severity="primary" rounded class="font-semibold" />
+            </template>
+          </Column>
+          <Column header="Institution" :style="{ minWidth: '200px' }">
+            <template #body="slotProps">
+              <div class="recap-institution">
+                <i class="pi pi-building mr-2"></i>
+                <span>{{ slotProps.data.InstitutionName }}</span>
+              </div>
+            </template>
+          </Column>
+          <Column header="Nom de la Place" :style="{ minWidth: '180px' }">
+            <template #body="slotProps">
+              <strong class="recap-place-name">{{ slotProps.data.NomPlace }}</strong>
+            </template>
+          </Column>
+          <Column header="Catégorie">
+            <template #body="slotProps">
+              <Tag :value="slotProps.data.InstitutionCategory" severity="info" />
+            </template>
+          </Column>
+          <Column header="Critères" :style="{ minWidth: '180px' }">
+            <template #body="slotProps">
+              <div class="criteria-tags">
+                <Tag v-if="slotProps.data.MSQ" value="MSQ" severity="success" class="mr-1" />
+                <Tag v-if="slotProps.data.SYSINT" value="SYSINT" severity="success" class="mr-1" />
+                <Tag v-if="slotProps.data.NEUROGER" value="NEUROGER" severity="success" class="mr-1" />
+                <Tag v-if="slotProps.data.AIGU" value="AIGU" severity="success" class="mr-1" />
+                <Tag v-if="slotProps.data.REHAB" value="REHAB" severity="success" class="mr-1" />
+                <Tag v-if="slotProps.data.AMBU" value="AMBU" severity="success" class="mr-1" />
+              </div>
+            </template>
+          </Column>
+          <Column header="Action" :style="{ width: '100px', textAlign: 'center' }">
+            <template #body="slotProps">
+              <Button
+                icon="pi pi-times"
+                severity="danger"
+                text
+                rounded
+                @click="removeChoice(slotProps.data.index)"
+                v-tooltip.top="'Retirer ce choix'"
+              />
+            </template>
+          </Column>
+        </DataTable>
       </div>
 
       <!-- Action de vote -->
-      <div class="vote-action" v-if="availablePlaces.length > 0">
-        <Button v-if="!voteAlreadyCast" @click="sendVote">Envoyer</Button>
-        <div v-else>
-          <p>Votre vote :</p>
-          <ul>
-            <li v-for="(vote, index) in votedPlaces" :key="index">
-              Choix {{ index + 1 }} : {{ vote.placeName }} ({{ vote.InstitutionName }})
-            </li>
-          </ul>
-          <Button @click="revote">Revoter</Button>
+      <div class="vote-action-section" v-if="availablePlaces.length > 0">
+        <div class="vote-submit">
+          <div class="vote-info" :class="{ 'vote-info-updated': voteAlreadyCast }">
+            <i :class="voteAlreadyCast ? 'pi pi-check-circle' : 'pi pi-info-circle'"></i>
+            <span v-if="!voteAlreadyCast">Sélectionnez jusqu'à 5 places par ordre de préférence</span>
+            <span v-else>Modifiez vos choix et cliquez sur "Mettre à jour" pour enregistrer les changements</span>
+          </div>
+          <Button
+            :label="voteAlreadyCast ? 'Mettre à jour mon vote' : 'Envoyer mon vote'"
+            :icon="voteAlreadyCast ? 'pi pi-refresh' : 'pi pi-send'"
+            @click="sendVote"
+            size="large"
+            :disabled="!selectedPlaces.some(p => p !== null)"
+            :severity="voteAlreadyCast ? 'warning' : 'primary'"
+          />
         </div>
       </div>
 
     </div>
 
-    <!-- Dialogue de confirmation -->
-    <Dialog v-model:visible="dialogVisible" header="Confirmation de Vote" :modal="true" :closable="false"
-            class="custom-dialog">
-      <p>{{ dialogMessage }}</p>
+    <!-- Dialogue de confirmation moderne -->
+    <Dialog
+      v-model:visible="dialogVisible"
+      :modal="true"
+      :closable="false"
+      :style="{ width: '450px' }"
+      class="modern-dialog"
+    >
+      <template #header>
+        <div class="dialog-header">
+          <i class="pi pi-check-circle" style="color: var(--green-500); font-size: 1.5rem;"></i>
+          <span class="font-semibold">Confirmation</span>
+        </div>
+      </template>
+      <p class="dialog-message">{{ dialogMessage }}</p>
       <template #footer>
-        <button class="p-button p-component" @click="closeDialog">OK</button>
+        <Button label="OK" icon="pi pi-check" @click="closeDialog" autofocus />
       </template>
     </Dialog>
   </AdminLayout>
@@ -178,6 +220,7 @@ import Column from 'primevue/column';
 import RadioButton from 'primevue/radiobutton';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
+import Tag from 'primevue/tag';
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 import { useInstitutionsStore } from '@/stores/institutionsStore'
 import { usePlacesStore } from '@/stores/placesStore'
@@ -212,12 +255,26 @@ export default {
   },
   computed: {
     ...mapStores(usePlacesStore, useInstitutionsStore, useUserStore, useVotesStore),
-    
+
     availablePlaces() {
       return this.expandedPFPData;
     },
     voteAlreadyCast() {
       return this.votedPlaces[0] !== null;
+    },
+    selectedPlacesForRecap() {
+      return this.selectedPlaces
+        .map((place, index) => {
+          if (place) {
+            return {
+              ...place,
+              rank: index + 1,
+              index: index
+            }
+          }
+          return null
+        })
+        .filter(p => p !== null)
     }
   },
   methods: {
@@ -228,22 +285,19 @@ export default {
         this.$router.push('/feed');
       }
     },
-    
+
     async fetchData() {
       // Charger les données depuis Supabase via les stores
       await this.institutionsStore.fetchInstitutions();
       await this.placesStore.fetchPlaces();
-      
+
       // Charger les statistiques de votes
       await this.loadVoteStatistics();
-      
-      // Vérifier si l'utilisateur a déjà voté
-      await this.checkExistingVote();
-      
+
       const rawPlaces = this.placesStore.places;
       const institutionNameById = {};
       const institutionCategoryById = {};
-      
+
       this.institutionsStore.institutions.forEach(inst => {
         institutionNameById[inst.InstitutionId] = inst.Name;
         institutionCategoryById[inst.InstitutionId] = inst.Category || 'Non spécifié';
@@ -266,37 +320,40 @@ export default {
           DE: !!p.DE
         };
       });
-      
+
       this.updateExpandedData();
+
+      // Vérifier si l'utilisateur a déjà voté (APRÈS updateExpandedData)
+      await this.checkExistingVote();
     },
 
     async loadVoteStatistics() {
       try {
         // Récupérer l'agrégation des votes pour ce PFP et cette année
         const aggregation = await votesBackendService.getVotePlaceAggregation(this.targetPFP, this.selectedYear);
-        
+
         console.log('📊 Statistiques de votes chargées:', aggregation);
-        
+
         // Transformer en objet pour accès rapide
         // Structure: votesAggregation[placeId] = { rank1: count, rank2: count, ... }
         this.votesAggregation = {};
-        
+
         aggregation.forEach(agg => {
           const placeId = agg.place_id;
           const rank = agg.rank;
           const count = agg.vote_count;
-          
+
           if (!this.votesAggregation[placeId]) {
             this.votesAggregation[placeId] = {
               top1: 0, top2: 0, top3: 0, top4: 0, top5: 0, total: 0
             };
           }
-          
+
           // Ajouter le compteur pour ce rang
           this.votesAggregation[placeId][`top${rank}`] = count;
           this.votesAggregation[placeId].total += count;
         });
-        
+
         console.log('✅ Votes agrégés:', this.votesAggregation);
       } catch (error) {
         console.error('❌ Erreur lors du chargement des statistiques:', error);
@@ -309,27 +366,42 @@ export default {
 
       try {
         const existingVote = await this.votesStore.fetchVote(this.targetPFP, this.selectedYear);
-        
+
         console.log('🔍 Vote existant récupéré:', existingVote);
 
         if (existingVote && existingVote.choices) {
           console.log('📋 Choices du vote:', existingVote.choices);
-          
-          // Restaurer le vote
+
+          // Restaurer le vote pour l'affichage
           this.votedPlaces = [null, null, null, null, null];
-          
+          this.selectedPlaces = [null, null, null, null, null];
+
           if (Array.isArray(existingVote.choices)) {
             this.votedPlaces = existingVote.choices.map(c => ({
               placeName: c.placeName || 'Inconnu',
               InstitutionName: c.InstitutionName || 'Inconnu'
             }));
-            
+
+            // Restaurer aussi selectedPlaces pour les radio buttons
+            existingVote.choices.forEach((choice, index) => {
+              // Trouver la place correspondante dans expandedPFPData
+              const matchingPlace = this.expandedPFPData.find(p =>
+                p.PlaceId === choice.placeId && p.seatIndex === choice.seatIndex
+              );
+
+              if (matchingPlace) {
+                this.selectedPlaces[index] = matchingPlace;
+                console.log(`🔘 Choix ${index + 1} restauré:`, matchingPlace.NomPlace);
+              }
+            });
+
             // Remplir jusqu'à 5 si nécessaire
             while(this.votedPlaces.length < 5) {
               this.votedPlaces.push(null);
             }
-            
+
             console.log('✅ Vote restauré dans l\'UI:', this.votedPlaces);
+            console.log('✅ Sélections restaurées:', this.selectedPlaces);
           }
         } else {
           console.log('ℹ️ Aucun vote existant trouvé');
@@ -353,7 +425,7 @@ export default {
         if (place[this.targetPFP] && place[this.targetPFP][this.selectedYear]) {
           count = parseInt(place[this.targetPFP][this.selectedYear]);
         }
-        
+
         if (!isNaN(count) && count >= 1) {
           for (let i = 1; i <= count; i++) {
             rows.push({
@@ -371,11 +443,11 @@ export default {
     getVoteCount(place) {
       // Récupérer les stats pour cette place depuis l'agrégation
       const placeId = place.PlaceId;
-      
+
       if (this.votesAggregation[placeId]) {
         return this.votesAggregation[placeId];
       }
-      
+
       // Valeurs par défaut si aucun vote
       return { top1: 0, top2: 0, top3: 0, top4: 0, top5: 0, total: 0 };
     },
@@ -386,11 +458,12 @@ export default {
     },
 
     isPlaceDisabled(place, choiceIndex) {
-      // Empêcher de sélectionner plusieurs sièges de la même place (même PlaceId)
+      // Empêcher de sélectionner plusieurs places de la même institution
+      // Si l'utilisateur a déjà choisi une place de cette institution, bloquer toutes les autres places de cette institution
       for (let i = 0; i < this.selectedPlaces.length; i++) {
         if (i !== choiceIndex && this.selectedPlaces[i]) {
-          // Comparer les PlaceId pour bloquer tous les sièges de la même place
-          if (this.selectedPlaces[i].PlaceId === place.PlaceId) {
+          // Comparer les InstitutionId pour bloquer toutes les places de la même institution
+          if (this.selectedPlaces[i].InstitutionId === place.InstitutionId) {
             return true;
           }
         }
@@ -400,7 +473,7 @@ export default {
 
     async sendVote() {
       if (this.isSubmitting) return;
-      
+
       if (!this.userStore.user) {
         this.dialogMessage = "Vous devez être connecté pour voter.";
         this.dialogVisible = true;
@@ -408,7 +481,7 @@ export default {
       }
 
       this.isSubmitting = true;
-      
+
       const choices = this.selectedPlaces.map((p, index) => {
         if (!p) return null;
         return {
@@ -436,7 +509,7 @@ export default {
           placeName: p.NomPlace,
           InstitutionName: p.InstitutionName
         }) : null);
-        
+
         this.dialogMessage = "Votre vote a été enregistré avec succès !";
         this.dialogVisible = true;
       } catch (error) {
@@ -448,26 +521,13 @@ export default {
       }
     },
 
-    async revote() {
-      if (!confirm("Êtes-vous sûr de vouloir modifier votre vote ?")) return;
-      
-      console.log('🔄 Révocation du vote...');
-      
-      // Réinitialiser complètement l'état
-      this.votedPlaces = [null, null, null, null, null];
-      this.selectedPlaces = [null, null, null, null, null];
-      
-      // Réinitialiser le vote dans le store
-      this.votesStore.currentVote = null;
-      
-      // Forcer la mise à jour de l'UI
-      this.$forceUpdate();
-      
-      console.log('✅ État réinitialisé, prêt à revoter');
-    },
-    
     closeDialog() {
       this.dialogVisible = false;
+    },
+
+    removeChoice(index) {
+      this.selectedPlaces[index] = null
+      this.$forceUpdate()
     }
   },
   async mounted() {
@@ -477,32 +537,394 @@ export default {
 </script>
 
 <style scoped>
-.page-title h1 {
-  margin: 0;
-  font-size: 2rem;
-}
-
-.container {
-  padding: 1rem;
-}
-
-.custom-datatable {
-  margin-top: 1rem;
-}
-
-.vote-action {
-  margin-top: 2rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.vote-action ul {
-  list-style-type: none;
+.votation-container {
+  min-height: 100vh;
   padding: 0;
 }
 
-.vote-action li {
-  margin-bottom: 0.5rem;
+/* En-tête moderne */
+.votation-header {
+  border-bottom: 2px solid rgba(99, 102, 241, 0.3);
+  padding: 2rem;
+  backdrop-filter: blur(10px);
+}
+
+.header-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.header-icon {
+  font-size: 3rem;
+  color: var(--primary-color);
+  background: rgba(99, 102, 241, 0.1);
+  padding: 1rem;
+  border-radius: 12px;
+}
+
+.header-title {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #f8fafc;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.header-subtitle {
+  margin: 0.25rem 0 0 0;
+  color: #cbd5e1;
+  font-size: 1rem;
+}
+
+.back-button {
+  border-color: rgba(255,255,255,0.2);
+  color: #cbd5e1;
+}
+
+.back-button:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  background: rgba(99, 102, 241, 0.1);
+}
+
+/* Contenu */
+.content-wrapper {
+  max-width: 1400px;
+  margin: 2rem auto;
+  padding: 0 2rem;
+}
+
+/* Tableau moderne */
+.modern-votation-table {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+}
+
+.modern-votation-table :deep(.p-datatable-header) {
+  background: rgba(255,255,255,0.03);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  padding: 1rem;
+}
+
+.modern-votation-table :deep(.p-datatable-thead > tr > th) {
+  background: rgba(99, 102, 241, 0.1);
+  color: #cbd5e1;
+  border-color: rgba(255,255,255,0.1);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+  padding: 1rem 0.75rem;
+}
+
+.modern-votation-table :deep(.p-datatable-tbody > tr) {
+  background: rgba(255,255,255,0.02);
+  transition: all 0.2s ease;
+}
+
+.modern-votation-table :deep(.p-datatable-tbody > tr:hover) {
+  background: rgba(99, 102, 241, 0.08) !important;
+  transform: translateY(-1px);
+}
+
+.modern-votation-table :deep(.p-datatable-tbody > tr > td) {
+  border-color: rgba(255,255,255,0.06);
+  color: #e5e7eb;
+  padding: 0.85rem 0.75rem;
+}
+
+.modern-votation-table :deep(.p-datatable-tbody > tr.p-row-odd) {
+  background: rgba(255,255,255,0.01);
+}
+
+/* Styles pour les liens et contenus */
+.institution-link {
+  color: var(--primary-color);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.institution-link:hover {
+  color: #818cf8;
+  text-decoration: underline;
+}
+
+.place-name {
+  font-weight: 500;
+  color: #f8fafc;
+}
+
+.criteria-tags,
+.language-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+/* Radio buttons */
+.radio-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modern-votation-table :deep(.p-radiobutton) {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.modern-votation-table :deep(.p-radiobutton .p-radiobutton-box) {
+  border-width: 2px;
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+/* État vide */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #cbd5e1;
+  max-width: 600px;
+  margin: 2rem auto;
+  background: rgba(255,255,255,0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.empty-icon {
+  font-size: 4rem;
+  color: rgba(255,255,255,0.3);
+  margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+  color: #f8fafc;
+  margin: 1rem 0 0.5rem 0;
+}
+
+/* Section récapitulatif */
+.recap-section {
+  max-width: 1400px;
+  margin: 2rem auto;
+  padding: 0 2rem;
+}
+
+.recap-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: rgba(99, 102, 241, 0.1);
+  border-radius: 8px 8px 0 0;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-bottom: none;
+}
+
+.recap-header i {
+  font-size: 1.5rem;
+  color: var(--primary-color);
+}
+
+.recap-header h3 {
+  margin: 0;
+  color: #f8fafc;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.recap-table {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 0 0 8px 8px;
+  overflow: hidden;
+}
+
+.recap-table :deep(.p-datatable-thead > tr > th) {
+  background: rgba(99, 102, 241, 0.15);
+  color: #cbd5e1;
+  border-color: rgba(255,255,255,0.1);
+  font-weight: 600;
+  padding: 0.75rem;
+}
+
+.recap-table :deep(.p-datatable-tbody > tr > td) {
+  border-color: rgba(255,255,255,0.06);
+  color: #e5e7eb;
+  padding: 1rem 0.75rem;
+}
+
+.recap-table :deep(.p-datatable-tbody > tr:hover) {
+  background: rgba(99, 102, 241, 0.08) !important;
+}
+
+.recap-institution {
+  display: flex;
+  align-items: center;
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+.recap-place-name {
+  color: #f8fafc;
+  font-size: 1.05rem;
+}
+
+/* Section de vote */
+.vote-action-section {
+  max-width: 1400px;
+  margin: 2rem auto;
+  padding: 0 2rem;
+}
+
+.vote-submit {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.vote-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #cbd5e1;
+  background: rgba(99, 102, 241, 0.1);
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.vote-info i {
+  color: var(--primary-color);
+  font-size: 1.25rem;
+}
+
+.vote-info-updated {
+  background: rgba(234, 179, 8, 0.1);
+  border-color: rgba(234, 179, 8, 0.3);
+}
+
+.vote-info-updated i {
+  color: var(--yellow-500);
+}
+
+.vote-summary {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 12px;
+  padding: 2rem;
+}
+
+.summary-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.summary-header i {
+  font-size: 2rem;
+  color: var(--green-500);
+}
+
+.summary-header h3 {
+  margin: 0;
+  color: #f8fafc;
+  font-size: 1.5rem;
+}
+
+.summary-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.vote-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(255,255,255,0.03);
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.vote-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.vote-details strong {
+  color: #f8fafc;
+  font-size: 1.05rem;
+}
+
+.vote-details .text-600 {
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+/* Dialog moderne */
+.modern-dialog :deep(.p-dialog-header) {
+  background: rgba(255,255,255,0.03);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.dialog-message {
+  font-size: 1.05rem;
+  color: #cbd5e1;
+  line-height: 1.6;
+  margin: 1.5rem 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .votation-header {
+    padding: 1.5rem 1rem;
+  }
+
+  .header-content {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .content-wrapper,
+  .vote-action-section {
+    padding: 0 1rem;
+  }
+
+  .header-title {
+    font-size: 1.5rem;
+  }
 }
 </style>
