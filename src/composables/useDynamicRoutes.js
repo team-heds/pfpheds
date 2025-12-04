@@ -1,7 +1,11 @@
 import { supabase } from '@/supabase';
 
-// Vite va scanner et bundler tous les .vue dans /src/views
-const viewModules = import.meta.glob('@/views/**/*.vue');
+// Vite va scanner et bundler toutes les vues et composants .vue utilisés par les routes dynamiques
+// Inclure à la fois /views et /components pour supporter des chemins comme "@/components/games/Ventriglisse3D.vue"
+const viewModules = {
+  ...import.meta.glob('@/views/**/*.vue'),
+  ...import.meta.glob('@/components/**/*.vue')
+};
 
 const DEFAULT_NEED = 'public';
 
@@ -30,6 +34,12 @@ function normalizeComponentPath(pathFromDb) {
     p = p.replace(/^\/views/, '/src/views');
   } else if (p.startsWith('views/')) {
     // "views/..." -> "/src/views/..."
+    p = '/src/' + p;
+  } else if (p.startsWith('/components/')) {
+    // "/components/..." -> "/src/components/..."
+    p = p.replace(/^\/components/, '/src/components');
+  } else if (p.startsWith('components/')) {
+    // "components/..." -> "/src/components/..."
     p = '/src/' + p;
   }
   // Si tu stockes déjà "/src/views/..." en DB, ça passe tel quel
@@ -163,7 +173,9 @@ export async function addDynamicRoutesToRouter(router) {
     'DynamicRoutesEditor',
     // Routes de votation avec guards PFP
     'VotationView',
-    'VotationViewPFP1B'
+    'VotationViewPFP1B',
+    // Empêcher l'écrasement des routes publiques importantes
+    'Ventriglisse3D'
   ];
 
   dynamicRoutes.forEach((route) => {
@@ -172,6 +184,20 @@ export async function addDynamicRoutesToRouter(router) {
     // Ignorer les routes admin protégées
     if (protectedRoutes.includes(route.name)) {
       console.log(`⏩ Route protégée ignorée: ${route.path} (${route.name})`);
+      return;
+    }
+
+    // Sécurité: n'ajouter que si le composant est résolu correctement
+    const hasValidComponent = typeof route.component === 'function';
+    if (!hasValidComponent) {
+      console.warn('⚠️ Route dynamique ignorée (component introuvable):', route);
+      return;
+    }
+
+    // Ne pas ajouter si un enregistrement avec le même path existe déjà
+    const pathAlreadyExists = router.getRoutes().some(r => r.path === route.path);
+    if (pathAlreadyExists) {
+      console.warn(`⚠️ Route dynamique ignorée (path déjà présent): ${route.path}`);
       return;
     }
 

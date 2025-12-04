@@ -62,6 +62,7 @@
     "mermaid": "^11.4.1",
     "pg": "^8.16.3",
     "pinia": "^3.0.3",
+    "plyr": "^3.8.3",
     "primeflex": "^3.3.1",
     "primeicons": "^6.0.1",
     "primevue": "^3.52.0",

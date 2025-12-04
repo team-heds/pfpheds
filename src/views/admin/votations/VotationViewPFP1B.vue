@@ -81,6 +81,7 @@
                   v-model="selectedPlaces[i-1]"
                   :value="slotProps.data"
                   :disabled="isPlaceDisabled(slotProps.data, i-1)"
+                  @click="onRadioClick(slotProps.data, i-1, $event)"
                 />
               </div>
             </template>
@@ -458,10 +459,13 @@ export default {
     isPlaceDisabled(place, choiceIndex) {
       // Empêcher de sélectionner plusieurs places de la même institution
       // Si l'utilisateur a déjà choisi une place de cette institution, bloquer toutes les autres places de cette institution
+      const normalize = v => (v || '').toString().trim().toLowerCase();
       for (let i = 0; i < this.selectedPlaces.length; i++) {
         if (i !== choiceIndex && this.selectedPlaces[i]) {
-          // Comparer les InstitutionId pour bloquer toutes les places de la même institution
-          if (this.selectedPlaces[i].InstitutionId === place.InstitutionId) {
+          const s = this.selectedPlaces[i];
+          const samePlaceId = s.PlaceId && place.PlaceId && s.PlaceId === place.PlaceId;
+          const sameInstAndName = s.InstitutionId === place.InstitutionId && normalize(s.NomPlace) === normalize(place.NomPlace);
+          if (samePlaceId || sameInstAndName) {
             return true;
           }
         }
@@ -526,6 +530,25 @@ export default {
     removeChoice(index) {
       this.selectedPlaces[index] = null
       this.$forceUpdate()
+    },
+
+    onRadioClick(place, choiceIndex, event) {
+      try {
+        const current = this.selectedPlaces[choiceIndex]
+        if (
+          current &&
+          ((current.PlaceId && place.PlaceId && current.PlaceId === place.PlaceId && current.seatIndex === place.seatIndex) ||
+            (current.InstitutionId === place.InstitutionId &&
+              (current.NomPlace || '').toString().trim().toLowerCase() === (place.NomPlace || '').toString().trim().toLowerCase()))
+        ) {
+          this.selectedPlaces[choiceIndex] = null
+          if (event && typeof event.preventDefault === 'function') event.preventDefault()
+          if (event && typeof event.stopPropagation === 'function') event.stopPropagation()
+          this.$forceUpdate()
+        }
+      } catch (e) {
+        // no-op
+      }
     }
   },
   async mounted() {

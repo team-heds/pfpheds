@@ -1,17 +1,18 @@
 <template>
-  <Navbar />
-  <div class="landing-bg">
-    <div class="landing-container">
-      <h1 class="p-text-center">Générateur de QR Code</h1>
-      <p class="p-text-center p-mb-4">Créez facilement des QR codes personnalisés et téléchargez-les en un clic.</p>
-      <div class="p-grid p-justify-center">
-        <div class="p-col-12 p-md-6 p-lg-4">
-          <div class="qr-card p-card">
-            <canvas ref="canvas" :width="size" :height="size"></canvas>
+  <div class="qr-page-wrapper">
+    <Navbar v-if="navbarAvailable" />
+    <div class="landing-bg">
+      <div class="landing-container">
+        <h1 class="p-text-center">Générateur de QR Code</h1>
+        <p class="p-text-center p-mb-4">Créez facilement des QR codes personnalisés et téléchargez-les en un clic.</p>
+        <div class="p-grid p-justify-center">
+          <div class="p-col-12 p-md-6 p-lg-4">
+            <div class="qr-card p-card">
+              <canvas ref="canvas" :width="size" :height="size"></canvas>
+            </div>
           </div>
-        </div>
-        <div class="p-col-12 p-md-6 p-lg-4">
-          <div class="p-fluid p-formgrid p-grid form-card">
+          <div class="p-col-12 p-md-6 p-lg-4">
+            <div class="p-fluid p-formgrid p-grid form-card">
             <div class="p-field p-col-12">
               <label for="url">Lien à encoder</label>
               <InputText id="url" v-model="url" placeholder="https://..." class="p-inputtext-lg" />
@@ -47,6 +48,7 @@
       </div>
     </div>
   </div>
+  </div>
 </template>
 
 <script setup>
@@ -59,12 +61,14 @@ import InputNumber from 'primevue/inputnumber'
 import Button from 'primevue/button'
 import Navbar from '@/components/common/utils/Navbar.vue';
 
-const url = ref('https://')
+// Variables réactives
+const url = ref('https://example.com')
 const size = ref(240)
 const canvas = ref(null)
 const fgColor = ref('#000000')
 const bgColor = ref('#ffffff')
 const transparentBg = ref(false)
+const navbarAvailable = ref(true)
 
 const renderQr = async () => {
   if (!canvas.value) return
@@ -98,22 +102,43 @@ function downloadPng() {
 </script>
 
 <style scoped>
+.qr-page-wrapper {
+  min-height: 100vh;
+  width: 100%;
+  background: var(--surface-ground, #1a1a2e);
+}
+
 .landing-bg {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 2rem 1rem;
 }
+
 .landing-container {
-  background: var(--surface-card);
+  background: var(--surface-card, #232946);
   border-radius: 18px;
-  box-shadow: 0 8px 24px #0002;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   padding: 2.5rem 2rem;
   max-width: 900px;
   width: 100%;
+  color: var(--text-color, #ffffff);
+}
+
+.landing-container h1 {
+  color: var(--text-color, #ffffff);
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+}
+
+.landing-container p {
+  color: var(--text-color-secondary, #cbd5e1);
+  font-size: 1rem;
 }
 .qr-card {
-  background: var(--surface-overlay);
+  background: var(--surface-overlay, #2a2f4f);
   border-radius: 12px;
   padding: 2rem;
   display: flex;
@@ -121,26 +146,41 @@ function downloadPng() {
   justify-content: center;
   min-height: 320px;
   position: relative;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
+
 canvas {
-  background: transparent;
+  background: #ffffff;
   width: 240px;
   height: 240px;
   max-width: 100%;
+  border-radius: 8px;
 }
+
 .form-card {
-  background: var(--surface-card);
+  background: var(--surface-card, #232946);
   border-radius: 12px;
   padding: 2rem 1rem 1rem 1rem;
-  box-shadow: 0 2px 8px #0001;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   margin-top: 1rem;
 }
 .p-field {
   margin-bottom: 1.5rem;
 }
+
+.p-field label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--text-color, #ffffff);
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
 .color-field label {
   display: block;
   margin-bottom: 0.5rem;
+  color: var(--text-color, #ffffff);
+  font-weight: 500;
 }
 .color-picker-wrapper {
   display: flex;
@@ -158,8 +198,15 @@ canvas {
   padding: 0.2rem 0.5rem;
   border-radius: 6px;
   border: 1px solid #ddd;
-  background: var(--surface-overlay);
+  background: var(--surface-overlay, #2a2f4f);
   color: #fff;
+}
+
+.p-field-checkbox label {
+  color: var(--text-color, #ffffff);
+  margin-left: 0.5rem;
+  font-weight: 500;
+  cursor: pointer;
 }
 .p-button-lg {
   font-size: 1.15rem;
