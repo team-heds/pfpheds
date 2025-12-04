@@ -252,22 +252,82 @@ const fetchStudentProfileById = async (userId) => {
     
     if (physioData) {
       console.log('✅ Données StudentsPhysio trouvées:', physioData)
+      console.log('📊 Données brutes StudentsPhysio:', {
+        class: physioData.class,
+        classe: physioData.classe,
+        ville: physioData.ville || physioData.city,
+        repondant: physioData.respondant_hes || physioData.repondant_hes
+      })
       
-      // Enrichir user.value avec les données de StudentsPhysio si manquantes
-      if (!user.value.classe && physioData.class) {
-        user.value.classe = physioData.class
-        console.log('📝 Classe enrichie depuis StudentsPhysio:', physioData.class)
+      const enrichedFields = []
+      
+      // 1. CLASSE - Priorité: user_profiles.class > StudentsPhysio.class
+      if (!user.value.classe) {
+        const classePhysio = physioData.class || physioData.classe
+        if (classePhysio) {
+          user.value.classe = classePhysio
+          enrichedFields.push('classe')
+          console.log('📝 Classe enrichie depuis StudentsPhysio:', classePhysio)
+        }
+      } else {
+        console.log('✅ Classe déjà présente depuis user_profiles:', user.value.classe)
       }
       
+      // 2. RÉPONDANT HES - Priorité: user_profiles.hes_referent > StudentsPhysio
       const repondantPhysio = physioData.respondant_hes || physioData.repondant_hes || physioData.repondanthes || physioData.RepondantHES
       if (!user.value.repondantHES && repondantPhysio) {
         user.value.repondantHES = repondantPhysio
+        enrichedFields.push('repondantHES')
         console.log('📝 Répondant HES enrichi depuis StudentsPhysio:', repondantPhysio)
+      } else if (user.value.repondantHES) {
+        console.log('✅ Répondant HES déjà présent depuis user_profiles:', user.value.repondantHES)
+      }
+      
+      // 3. VILLE - Priorité: user_profiles.city > StudentsPhysio
+      const villePhysio = physioData.ville || physioData.city
+      if (!user.value.ville && villePhysio) {
+        user.value.ville = villePhysio
+        enrichedFields.push('ville')
+        console.log('📝 Ville enrichie depuis StudentsPhysio:', villePhysio)
+      } else if (user.value.ville) {
+        console.log('✅ Ville déjà présente depuis user_profiles:', user.value.ville)
+      }
+      
+      // 4. EMAIL - Priorité: user_profiles.email > StudentsPhysio
+      if (!user.value.email && physioData.email) {
+        user.value.email = physioData.email
+        enrichedFields.push('email')
+        console.log('📝 Email enrichi depuis StudentsPhysio:', physioData.email)
+      } else if (user.value.email) {
+        console.log('✅ Email déjà présent depuis user_profiles:', user.value.email)
+      }
+      
+      // 5. NOM/PRÉNOM - Priorité: user_profiles > StudentsPhysio
+      if (!user.value.nom && physioData.family_name) {
+        user.value.nom = physioData.family_name
+        enrichedFields.push('nom')
+        console.log('📝 Nom enrichi depuis StudentsPhysio:', physioData.family_name)
+      }
+      if (!user.value.prenom && physioData.forname) {
+        user.value.prenom = physioData.forname
+        enrichedFields.push('prenom')
+        console.log('📝 Prénom enrichi depuis StudentsPhysio:', physioData.forname)
+      }
+      
+      // Résumé de l'enrichissement
+      if (enrichedFields.length > 0) {
+        console.log(`🎯 ${enrichedFields.length} champs enrichis depuis StudentsPhysio:`, enrichedFields)
+      } else {
+        console.log('ℹ️ Aucun champ à enrichir - user_profiles complet')
       }
       
       console.log('👤 User.value après enrichissement:', {
         classe: user.value.classe,
-        repondantHES: user.value.repondantHES
+        repondantHES: user.value.repondantHES,
+        ville: user.value.ville,
+        email: user.value.email,
+        nom: user.value.nom,
+        prenom: user.value.prenom
       })
     } else {
       console.log('ℹ️ Pas de données StudentsPhysio pour cet utilisateur')
