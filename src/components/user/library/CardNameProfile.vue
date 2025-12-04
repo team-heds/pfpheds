@@ -57,12 +57,12 @@
       <div class="info-item">
         <i class="pi pi-briefcase info-icon"></i>
         <span class="info-label">Classe :</span>
-        <span class="info-value">{{ user.classe }}</span>
+        <span class="info-value">{{ user.classe || 'Non définie' }}</span>
       </div>
       <div class="info-item">
         <i class="pi pi-map-marker info-icon"></i>
         <span class="info-label">Ville :</span>
-        <span class="info-value">{{ user.ville }}</span>
+        <span class="info-value">{{ user.ville || 'Non renseignée' }}</span>
       </div>
       <div class="info-item">
         <i class="pi pi-id-card info-icon"></i>
@@ -81,10 +81,11 @@
               optionLabel="label"
               optionValue="value"
               placeholder="Sélectionnez un enseignant"
+              showClear
             />
           </template>
           <template v-else>
-            {{ user.repondantHES }}
+            {{ user.repondantHES || 'Non assigné' }}
           </template>
         </span>
       </div>
@@ -205,6 +206,12 @@ const fetchUserProfileById = async (userId) => {
 
   if (profileData) {
     console.log('✅ Profil chargé:', profileData)
+    console.log('📋 Données extraites:', {
+      classe: profileData.class || profileData.classe,
+      repondantHES: profileData.hes_referent || profileData.respondant_hes,
+      allKeys: Object.keys(profileData)
+    })
+    
     user.value = {
       ...user.value,
       uid: userId,
@@ -214,19 +221,120 @@ const fetchUserProfileById = async (userId) => {
       ville: profileData.city || '',
       bio: profileData.bio || '',
       photoURL: profileData.avatar_url || profileData.profile_picture_url || defaultAvatar,
-      classe: profileData.class || '',
-      repondantHES: profileData.hes_referent || ''
+      classe: profileData.class || profileData.classe || '',
+      repondantHES: profileData.hes_referent || profileData.respondant_hes || ''
     };
+    
+    console.log('👤 User.value mis à jour:', {
+      classe: user.value.classe,
+      repondantHES: user.value.repondantHES
+    })
   } else {
     console.warn("⚠️ Aucun profil trouvé pour l'ID :", userId);
   }
 };
 
-// Note: Les données étudiant sont maintenant incluses dans user_profiles
-// Cette fonction n'est plus nécessaire mais gardée pour compatibilité
+// Enrichir avec les données de StudentsPhysio si disponibles
 const fetchStudentProfileById = async (userId) => {
-  console.log('ℹ️ fetchStudentProfileById: données déjà chargées depuis user_profiles')
-  // Les données sont déjà chargées dans fetchUserProfileById
+  console.log('📚 Enrichissement avec StudentsPhysio pour:', userId)
+  
+  try {
+    const { data: physioData, error } = await supabase
+      .from('StudentsPhysio')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle()
+    
+    if (error) {
+      console.warn('⚠️ StudentsPhysio non accessible:', error.message)
+      return
+    }
+    
+    if (physioData) {
+      console.log('✅ Données StudentsPhysio trouvées:', physioData)
+      console.log('📊 Données brutes StudentsPhysio:', {
+        class: physioData.class,
+        classe: physioData.classe,
+        ville: physioData.ville || physioData.city,
+        repondant: physioData.respondant_hes || physioData.repondant_hes
+      })
+      
+      const enrichedFields = []
+      
+      // 1. CLASSE - Priorité: user_profiles.class > StudentsPhysio.class
+      if (!user.value.classe) {
+        const classePhysio = physioData.class || physioData.classe
+        if (classePhysio) {
+          user.value.classe = classePhysio
+          enrichedFields.push('classe')
+          console.log('📝 Classe enrichie depuis StudentsPhysio:', classePhysio)
+        }
+      } else {
+        console.log('✅ Classe déjà présente depuis user_profiles:', user.value.classe)
+      }
+      
+      // 2. RÉPONDANT HES - Priorité: user_profiles.hes_referent > StudentsPhysio
+      const repondantPhysio = physioData.respondant_hes || physioData.repondant_hes || physioData.repondanthes || physioData.RepondantHES
+      if (!user.value.repondantHES && repondantPhysio) {
+        user.value.repondantHES = repondantPhysio
+        enrichedFields.push('repondantHES')
+        console.log('📝 Répondant HES enrichi depuis StudentsPhysio:', repondantPhysio)
+      } else if (user.value.repondantHES) {
+        console.log('✅ Répondant HES déjà présent depuis user_profiles:', user.value.repondantHES)
+      }
+      
+      // 3. VILLE - Priorité: user_profiles.city > StudentsPhysio
+      const villePhysio = physioData.ville || physioData.city
+      if (!user.value.ville && villePhysio) {
+        user.value.ville = villePhysio
+        enrichedFields.push('ville')
+        console.log('📝 Ville enrichie depuis StudentsPhysio:', villePhysio)
+      } else if (user.value.ville) {
+        console.log('✅ Ville déjà présente depuis user_profiles:', user.value.ville)
+      }
+      
+      // 4. EMAIL - Priorité: user_profiles.email > StudentsPhysio
+      if (!user.value.email && physioData.email) {
+        user.value.email = physioData.email
+        enrichedFields.push('email')
+        console.log('📝 Email enrichi depuis StudentsPhysio:', physioData.email)
+      } else if (user.value.email) {
+        console.log('✅ Email déjà présent depuis user_profiles:', user.value.email)
+      }
+      
+      // 5. NOM/PRÉNOM - Priorité: user_profiles > StudentsPhysio
+      if (!user.value.nom && physioData.family_name) {
+        user.value.nom = physioData.family_name
+        enrichedFields.push('nom')
+        console.log('📝 Nom enrichi depuis StudentsPhysio:', physioData.family_name)
+      }
+      if (!user.value.prenom && physioData.forname) {
+        user.value.prenom = physioData.forname
+        enrichedFields.push('prenom')
+        console.log('📝 Prénom enrichi depuis StudentsPhysio:', physioData.forname)
+      }
+      
+      // Résumé de l'enrichissement
+      if (enrichedFields.length > 0) {
+        console.log(`🎯 ${enrichedFields.length} champs enrichis depuis StudentsPhysio:`, enrichedFields)
+      } else {
+        console.log('ℹ️ Aucun champ à enrichir - user_profiles complet')
+      }
+      
+      console.log('👤 User.value après enrichissement:', {
+        classe: user.value.classe,
+        repondantHES: user.value.repondantHES,
+        ville: user.value.ville,
+        email: user.value.email,
+        nom: user.value.nom,
+        prenom: user.value.prenom
+      })
+    } else {
+      console.log('ℹ️ Pas de données StudentsPhysio pour cet utilisateur')
+    }
+  } catch (error) {
+    console.error('❌ Erreur enrichissement StudentsPhysio:', error)
+  }
 };
 
 // Récupération du profil de l'utilisateur connecté depuis user_profiles Supabase
@@ -260,53 +368,171 @@ const teachers = ref([]);
 const fetchTeachers = async () => {
   console.log('👨‍🏫 Chargement des enseignants depuis Supabase...')
 
-  // Charger les utilisateurs avec le rôle 'professor' depuis user_roles
-  const { data: teacherRoles } = await supabase
-    .from('user_roles')
-    .select('user_id')
-    .eq('role', 'professor')
+  try {
+    // Charger les utilisateurs avec le rôle 'professor' depuis user_roles
+    const { data: teacherRoles, error: rolesError } = await supabase
+      .from('user_roles')
+      .select('user_id')
+      .eq('role', 'professor')
 
-  if (!teacherRoles || teacherRoles.length === 0) {
-    console.log('⚠️ Aucun enseignant trouvé')
-    return
+    if (rolesError) {
+      console.warn('⚠️ Erreur chargement user_roles:', rolesError.message)
+      // Continuer quand même pour charger depuis StudentsPhysio
+    } else if (teacherRoles && teacherRoles.length > 0) {
+      const teacherIds = teacherRoles.map(r => r.user_id)
+
+      // Charger les profils des enseignants
+      const { data: teachersData, error } = await supabase
+        .from('user_profiles')
+        .select('user_id, display_name, forname, family_name, email')
+        .in('user_id', teacherIds)
+
+      if (error) {
+        console.error('❌ Erreur chargement enseignants:', error)
+      } else {
+        teachers.value = teachersData || []
+        console.log(`✅ ${teachers.value.length} enseignants chargés depuis user_profiles`)
+      }
+    } else {
+      console.log('ℹ️ Aucun enseignant trouvé dans user_roles')
+    }
+  } catch (error) {
+    console.error('❌ Erreur dans fetchTeachers:', error)
   }
 
-  const teacherIds = teacherRoles.map(r => r.user_id)
+  // TOUJOURS enrichir avec les répondants HES depuis StudentsPhysio
+  await fetchRepondantsFromStudentsPhysio()
+};
 
-  // Charger les profils des enseignants
-  const { data: teachersData, error } = await supabase
-    .from('user_profiles')
-    .select('user_id, display_name, forname, family_name, email')
-    .in('user_id', teacherIds)
+// Récupérer les répondants HES depuis StudentsPhysio
+const fetchRepondantsFromStudentsPhysio = async () => {
+  console.log('📋 Chargement des répondants HES depuis StudentsPhysio...')
+  
+  try {
+    const { data: physioData, error } = await supabase
+      .from('StudentsPhysio')
+      .select('respondant_hes, respondant_hes_id, repondant_hes, repondanthes, RepondantHES, class, classe')
 
-  if (error) {
-    console.error('❌ Erreur chargement enseignants:', error)
-    return
+    if (error) {
+      console.warn('⚠️ StudentsPhysio non accessible ou vide:', error.message)
+      return
+    }
+
+    if (!physioData || physioData.length === 0) {
+      console.log('ℹ️ Aucun répondant trouvé dans StudentsPhysio')
+      return
+    }
+
+    // Regrouper les répondants avec leurs classes
+    const repondantsMap = new Map()
+    physioData.forEach(row => {
+      const repondant = row.respondant_hes || row.repondant_hes || row.repondanthes || row.RepondantHES
+      const classe = row.class || row.classe
+      
+      if (repondant && typeof repondant === 'string' && repondant.trim()) {
+        const repondantName = repondant.trim()
+        
+        // Ajouter la classe associée au répondant
+        if (!repondantsMap.has(repondantName)) {
+          repondantsMap.set(repondantName, new Set())
+        }
+        if (classe) {
+          repondantsMap.get(repondantName).add(classe)
+        }
+      }
+    })
+
+    // Ajouter les répondants qui ne sont pas déjà dans la liste des teachers
+    const existingNames = teachers.value.map(t => 
+      t.display_name || `${t.forname} ${t.family_name}`.trim()
+    )
+
+    repondantsMap.forEach((classes, repondantName) => {
+      if (!existingNames.includes(repondantName)) {
+        const classesArray = Array.from(classes)
+        const classesText = classesArray.length > 0 ? classesArray.join(', ') : ''
+        
+        // Ajouter comme entrée sans user_id (uniquement par nom)
+        teachers.value.push({
+          user_id: `physio_${repondantName}`, // ID fictif pour le dropdown
+          display_name: repondantName,
+          forname: '',
+          family_name: '',
+          email: '',
+          classes: classesArray,
+          classesText: classesText,
+          fromStudentsPhysio: true
+        })
+      }
+    })
+
+    console.log(`✅ ${repondantsMap.size} répondants HES trouvés dans StudentsPhysio`)
+    console.log(`📊 Total: ${teachers.value.length} options disponibles`)
+    
+    // Log détaillé des répondants avec leurs classes
+    repondantsMap.forEach((classes, name) => {
+      console.log(`  - ${name}: ${Array.from(classes).join(', ') || 'pas de classe'}`)
+    })
+  } catch (error) {
+    console.error('❌ Erreur récupération répondants StudentsPhysio:', error)
   }
-
-  teachers.value = teachersData || []
-  console.log(`✅ ${teachers.value.length} enseignants chargés`)
 };
 
 // Construction des options pour le dropdown des enseignants
 const teachersOptions = computed(() => {
   return teachers.value.map(teacher => {
     const displayName = teacher.display_name || `${teacher.forname} ${teacher.family_name}`
+    
+    // Ajouter les classes si c'est un répondant de StudentsPhysio
+    let label = displayName
+    if (teacher.fromStudentsPhysio && teacher.classesText) {
+      label = `${displayName} (Classes: ${teacher.classesText})`
+    } else if (teacher.fromStudentsPhysio) {
+      label = `${displayName} (StudentsPhysio)`
+    }
+    
     return {
-      label: displayName,
-      value: teacher.user_id
+      label: label,
+      value: teacher.user_id,
+      classes: teacher.classes || [],
+      fromStudentsPhysio: teacher.fromStudentsPhysio || false
     };
   });
 });
 
-// Pré-remplissage du dropdown si un répondeant est déjà présent et si l'utilisateur connecté est admin
+// Pré-remplissage du dropdown si un répondant est déjà présent et si l'utilisateur connecté est admin
 watch(teachersOptions, (newOptions) => {
   if (user.value.repondantHES && isAdmin.value) {
-    const teacherMatch = newOptions.find(opt => opt.label === user.value.repondantHES);
+    const repondantName = user.value.repondantHES.trim();
+    
+    // Chercher d'abord une correspondance exacte par label complet
+    let teacherMatch = newOptions.find(opt => opt.label === repondantName);
+    
+    // Si pas trouvé, extraire le nom de base du label (avant les parenthèses)
+    if (!teacherMatch) {
+      teacherMatch = newOptions.find(opt => {
+        const baseName = opt.label.split(' (')[0].trim()
+        return baseName === repondantName || baseName.toLowerCase() === repondantName.toLowerCase()
+      });
+    }
+    
+    // Si toujours pas trouvé, chercher une correspondance partielle (insensible à la casse)
+    if (!teacherMatch) {
+      teacherMatch = newOptions.find(opt => 
+        opt.label.toLowerCase().includes(repondantName.toLowerCase())
+      );
+    }
+    
     if (teacherMatch) {
       selectedTeacher.value = teacherMatch.value;
+      console.log(`✅ Répondant HES pré-sélectionné: ${teacherMatch.label}`, {
+        value: teacherMatch.value,
+        classes: teacherMatch.classes,
+        fromStudentsPhysio: teacherMatch.fromStudentsPhysio
+      });
     } else {
       selectedTeacher.value = "";
+      console.log(`⚠️ Répondant HES actuel non trouvé dans les options: "${repondantName}"`);
     }
   }
 }, { immediate: true });
@@ -338,7 +564,23 @@ const saveProfile = async () => {
     let hesReferent = user.value.repondantHES
     if (isAdmin.value && selectedTeacher.value) {
       const teacherOpt = teachersOptions.value.find(opt => opt.value === selectedTeacher.value);
-      hesReferent = teacherOpt ? teacherOpt.label : '';
+      
+      // Extraire le nom de base (sans les classes entre parenthèses)
+      if (teacherOpt) {
+        const baseName = teacherOpt.label.split(' (')[0].trim()
+        hesReferent = baseName
+        
+        // Log pour debug
+        console.log('💾 Sauvegarde répondant HES:', {
+          selectedValue: selectedTeacher.value,
+          fullLabel: teacherOpt.label,
+          savedName: hesReferent,
+          classes: teacherOpt.classes,
+          isFromStudentsPhysio: teacherOpt.fromStudentsPhysio
+        })
+      } else {
+        hesReferent = ''
+      }
     }
 
     // Mise à jour du profil dans user_profiles Supabase

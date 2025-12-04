@@ -1,31 +1,40 @@
 <template>
   <div>
+    <a href="#admin-content" class="skip-link">Aller au contenu</a>
     <Navbar />
     <div class="admin-layout" :class="{ 'has-feed': hasFeed }">
       <template v-if="hasFeed">
         <div class="feed-left">
           <slot name="left" />
         </div>
-        <div class="admin-content">
-          <slot name="header" />
+        <main id="admin-content" class="admin-content" role="main">
+          <div class="admin-header">
+            <slot name="header" />
+          </div>
           <slot />
-        </div>
+        </main>
         <div class="feed-right">
           <slot name="right" />
         </div>
       </template>
       <template v-else-if="noSidebar">
-        <div class="admin-content">
-          <slot name="header" />
+        <main id="admin-content" class="admin-content" role="main">
+          <div class="admin-header">
+            <slot name="header" />
+          </div>
           <slot />
-        </div>
+        </main>
       </template>
       <template v-else>
-        <AdminSidebar />
-        <div class="admin-content">
-          <slot name="header" />
+        <aside aria-label="Navigation admin">
+          <AdminSidebar />
+        </aside>
+        <main id="admin-content" class="admin-content" role="main">
+          <div class="admin-header">
+            <slot name="header" />
+          </div>
           <slot />
-        </div>
+        </main>
       </template>
     </div>
   </div>
@@ -42,24 +51,59 @@ const hasFeed = computed(() => !!slots.left || !!slots.right)
 </script>
 
 <style scoped>
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+.skip-link:focus {
+  left: var(--space-4, 1rem);
+  top: var(--space-4, 1rem);
+  width: auto;
+  height: auto;
+  background: #fff;
+  color: #111;
+  padding: var(--space-2, .5rem) var(--space-3, .75rem);
+  border-radius: var(--radius-sm, 8px);
+  box-shadow: 0 0 0 2px #111;
+  z-index: 1000;
+}
+
 .admin-layout {
   display: flex;
-  gap: 1.5rem;
-  padding: 1.5rem;
-  height: calc(100vh - var(--navbar-h) - (2 * var(--content-pad)));
+  gap: var(--space-6, 1.5rem);
+  padding: var(--space-6, 1.5rem);
+  height: calc(100dvh - var(--navbar-h, 64px) - (2 * var(--space-6, 1.5rem)));
   overflow: hidden;
 }
 
 .admin-layout.has-feed {
   display: grid;
-  grid-template-columns: 1fr 3fr 1fr;
+  grid-template-columns: 280px 1fr 320px;
+  gap: var(--space-6, 1.5rem);
+}
+
+@media (max-width: 1279px) {
+  .admin-layout.has-feed {
+    grid-template-columns: 280px 1fr;
+  }
+  .feed-right { display: none; }
+}
+@media (max-width: 959px) {
+  .admin-layout.has-feed {
+    display: block;
+  }
+  .feed-left, .feed-right { display: none; }
 }
 
 .admin-content {
   flex: 1;
   min-width: 0;
   /* Centralise le scroll pour toutes les pages admin */
-  height: calc(100vh - var(--navbar-h) - (2 * var(--content-pad)) - (2 * var(--layout-pad)));
+  height: 100%;
   overflow-y: auto;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE et Edge */
@@ -67,6 +111,14 @@ const hasFeed = computed(() => !!slots.left || !!slots.right)
 
 .admin-content::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera */
+}
+
+.admin-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  padding-bottom: var(--space-3, .75rem);
+  margin-bottom: var(--space-3, .75rem);
 }
 
 .feed-left,

@@ -387,7 +387,7 @@ export const requirePermission = (permission) => {
       const currentUser = auth.currentUser
       
       if (!currentUser) {
-        next('/login')
+        next('/home')
         return
       }
       
@@ -413,7 +413,7 @@ export const requireRole = (role) => {
       const currentUser = auth.currentUser
       
       if (!currentUser) {
-        next('/login')
+        next('/home')
         return
       }
       

@@ -10,10 +10,10 @@ const DEFAULT_NEED = 'public';
  * pour matcher les clés de import.meta.glob.
  *
  * Ex DB possibles :
- *  "@/views/auth/LoginHome2.vue"
- *  "/views/auth/LoginHome2.vue"
- *  "views/auth/LoginHome2.vue"
- *  "/src/views/auth/LoginHome2.vue"
+ *  "@/views/auth/LoginHome.vue"
+ *  "/views/auth/LoginHome.vue"
+ *  "views/auth/LoginHome.vue"
+ *  "/src/views/auth/LoginHome.vue"
  */
 function normalizeComponentPath(pathFromDb) {
   if (!pathFromDb) {
@@ -160,7 +160,10 @@ export async function addDynamicRoutesToRouter(router) {
     'SupabaseDiagnosticView',
     'AdminDefisView',
     'RBACAdmin',
-    'DynamicRoutesEditor'
+    'DynamicRoutesEditor',
+    // Routes de votation avec guards PFP
+    'VotationView',
+    'VotationViewPFP1B'
   ];
 
   dynamicRoutes.forEach((route) => {

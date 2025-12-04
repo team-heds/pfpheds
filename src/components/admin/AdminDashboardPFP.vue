@@ -103,6 +103,19 @@
                 <p class="text-600 text-sm m-0 mb-3 line-height-3">Suivre les PFP actifs</p>
               </div>
             </div>
+
+            <div class="col-12 md:col-6 lg:col-4">
+              <div 
+                class="surface-card p-4 border-round shadow-2 cursor-pointer hover:shadow-4 transition-all transition-duration-300 border-2 border-transparent hover:border-primary h-full"
+                @click="navigateTo('/admin/pfp/cohort-stats')"
+              >
+                <div class="flex align-items-center justify-content-center w-3rem h-3rem bg-purple-100 border-circle mb-3">
+                  <i class="pi pi-chart-pie text-purple-500 text-xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-900 m-0 mb-2">Stats par Cohorte</h3>
+                <p class="text-600 text-sm m-0 mb-3 line-height-3">PFP1A & PFP1B par canton</p>
+              </div>
+            </div>
           </div>
         </div>
 

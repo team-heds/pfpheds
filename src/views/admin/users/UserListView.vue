@@ -1,30 +1,21 @@
 <template>
   <AdminLayout>
-    <div class="user-list-page">
-      <!-- Header de la page -->
-      <div class="col-12">
-        <div class="card">
-          <div class="flex align-items-center gap-2 mb-3 text-sm text-600">
-            <router-link to="/admin" class="text-600 no-underline hover:text-primary transition-colors">
-              <i class="pi pi-home mr-1"></i>
-              Dashboard
-            </router-link>
-            <i class="pi pi-angle-right text-300"></i>
-            <span class="text-900 font-medium">Liste des Utilisateurs</span>
+    <template #header>
+      <AdminPageHeader title="Liste des utilisateurs" subtitle="Consultez et gérez la liste complète des utilisateurs">
+        <template #breadcrumbs>
+          <div class="flex align-items-center gap-2 text-sm text-600">
+            <router-link to="/admin" class="text-600 no-underline hover:text-primary">Dashboard</router-link>
+            <i class="pi pi-angle-right text-300" aria-hidden="true"></i>
+            <span class="text-900">Utilisateurs</span>
           </div>
-          <h1 class="text-3xl font-bold text-900 m-0 mb-2 flex align-items-center gap-3">
-            <i class="pi pi-users text-blue-500 text-3xl"></i>
-            Liste des Utilisateurs
-          </h1>
-          <p class="text-600 text-lg line-height-3 m-0">
-            Consultez et gérez la liste complète des utilisateurs de la plateforme.
-          </p>
-        </div>
-      </div>
-
-      <!-- Contenu principal -->
+        </template>
+      </AdminPageHeader>
+    </template>
+    <div class="user-list-page is-compact">
       <div class="col-12">
+      <AppSkeleton v-if="loading" variant="table" :rows="8" :cols="6" />
       <DataTable
+        v-else
         :value="filteredUtilisateurs"
         :paginator="true"
         :rows="10"
@@ -32,7 +23,6 @@
         :rowHover="true"
         v-model:filters="filters"
         filterDisplay="menu"
-        :loading="loading"
         :globalFilterFields="['Nom', 'Prenom', 'Role', 'Email']"
         showGridlines
         class="surface-card border-round shadow-2"
@@ -59,8 +49,15 @@
             </div>
           </div>
         </template>
-        <template #empty> Aucun utilisateur trouvé. </template>
-        <template #loading> Chargement des données des utilisateurs. Veuillez patienter. </template>
+        <template #empty>
+          <EmptyState
+            title="Aucun utilisateur trouvé"
+            description="Ajustez les filtres ou ajoutez un utilisateur."
+            icon="pi-users"
+            actionLabel="Ajouter"
+            @action="goToUserForm"
+          />
+        </template>
         <Column field="Nom" header="Nom" style="min-width: 12rem" class="text-center">
           <template #body="{ data }">
             {{ data.Name }}
@@ -112,6 +109,9 @@
 </template>
 
 <script>
+import AdminPageHeader from '@/components/admin/common/AdminPageHeader.vue';
+import AppSkeleton from '@/components/common/feedback/AppSkeleton.vue';
+import EmptyState from '@/components/common/feedback/EmptyState.vue';
 import { supabase } from '@/supabase';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
@@ -127,6 +127,9 @@ import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 export default {
   name: "UserList",
   components: {
+    AdminPageHeader,
+    AppSkeleton,
+    EmptyState,
     DataTable,
     Column,
     InputText,
@@ -294,6 +297,23 @@ export default {
   display: grid;
   grid-template-columns: 1fr;
   gap: 2rem;
+}
+
+/* Variante compacte locale */
+.is-compact :deep(.p-datatable .p-datatable-header) {
+  padding: .75rem 1rem;
+}
+.is-compact :deep(.p-datatable .p-datatable-thead > tr > th) {
+  padding: .5rem .75rem;
+}
+.is-compact :deep(.p-datatable .p-datatable-tbody > tr > td) {
+  padding: .5rem .75rem;
+  font-size: .95rem;
+}
+.is-compact :deep(.p-inputtext),
+.is-compact :deep(.p-dropdown),
+.is-compact :deep(.p-button) {
+  height: 2.5rem;
 }
 
 @media (max-width: 768px) {

@@ -1,6 +1,6 @@
 {
   "name": "Plateforme_FP",
-  "version": "0.1.0.42",
+  "version": "0.1.0.46",
   "private": true,
   "type": "module",
   "scripts": {
@@ -48,6 +48,7 @@
     "csv-stringify": "^6.5.0",
     "csv-writer": "^1.6.0",
     "dompurify": "^3.3.0",
+    "echarts": "^6.0.0",
     "elevenlabs": "^1.50.2",
     "exceljs": "^4.4.0",
     "firebase": "^10.6.0",
@@ -72,6 +73,7 @@
     "vue": "^3.4.21",
     "vue-chartjs": "^5.3.2",
     "vue-countup-v3": "^1.4.2",
+    "vue-echarts": "^8.0.1",
     "vue-router": "^4.3.0",
     "xlsx": "^0.18.5"
   },

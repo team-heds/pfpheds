@@ -60,27 +60,6 @@
             <span>Mes KPI</span>
           </template>
 
-          <!-- Grid KPI personnalisable -->
-          <DashboardKpiGrid
-            ref="kpiGridRef"
-            :kpis="userKpis"
-            title="Mes indicateurs"
-            subtitle="Personnalisez votre vue avec drag & drop"
-            :storage-key="userStorageKey"
-            @kpi-action="handleKpiAction"
-            @config-changed="onConfigChanged"
-            class="mb-4"
-          />
-
-          <!-- Widget Alertes KPI -->
-          <div class="mb-4">
-            <AlertsWidget 
-              :max-items="5" 
-              :auto-refresh="true"
-              :refresh-interval="30000"
-            />
-          </div>
-
           <!-- Quick Stats - Widgets Redimensionnables -->
           <div class="mb-4">
             <div class="flex align-items-center justify-content-between mb-3">
@@ -94,7 +73,7 @@
                 size="small"
               />
             </div>
-            
+
             <ResizableWidgetGrid
               :widgets="quickStatsWidgets"
               :edit-mode="widgetEditMode"
@@ -122,7 +101,7 @@
                   </template>
                 </Card>
               </template>
-              
+
               <template #widget_institutions="{ widget, size }">
                 <Card class="stat-card h-full">
                   <template #content>
@@ -143,7 +122,7 @@
                   </template>
                 </Card>
               </template>
-              
+
               <template #widget_students="{ widget, size }">
                 <Card class="stat-card h-full">
                   <template #content>
@@ -164,7 +143,7 @@
                   </template>
                 </Card>
               </template>
-              
+
               <template #widget_formateurs="{ widget, size }">
                 <Card class="stat-card h-full">
                   <template #content>
@@ -187,6 +166,57 @@
               </template>
             </ResizableWidgetGrid>
           </div>
+          <!-- Grid KPI personnalisable -->
+          <DashboardKpiGrid
+            ref="kpiGridRef"
+            :kpis="userKpis"
+            title="Mes indicateurs"
+            subtitle="Personnalisez votre vue avec drag & drop"
+            :storage-key="userStorageKey"
+            @kpi-action="handleKpiAction"
+            @config-changed="onConfigChanged"
+            class="mb-4"
+          />
+
+          <!-- Section PFP Cohorts -->
+          <div class="mb-4">
+            <div class="flex align-items-center justify-content-between mb-3">
+              <div>
+                <h3 class="text-xl font-semibold m-0">Statistiques PFP par Cohorte</h3>
+                <p class="text-600 text-sm mt-1">Places de stages PFP1A et PFP1B par canton</p>
+              </div>
+              <Button
+                label="Vue détaillée"
+                icon="pi pi-external-link"
+                @click="router.push('/admin/pfp/cohort-stats')"
+                severity="secondary"
+                outlined
+                size="small"
+              />
+            </div>
+
+            <div class="grid">
+              <!-- Widget PFP1A -->
+              <div class="col-12 lg:col-6">
+                <PfpCohortKpiWidget cohort="PFP1A" />
+              </div>
+
+              <!-- Widget PFP1B -->
+              <div class="col-12 lg:col-6">
+                <PfpCohortKpiWidget cohort="PFP1B" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Widget Alertes KPI -->
+          <div class="mb-4">
+            <AlertsWidget 
+              :max-items="5" 
+              :auto-refresh="true"
+              :refresh-interval="30000"
+            />
+          </div>
+
         </TabPanel>
 
         <!-- Tab 2: Comparaison -->
@@ -512,6 +542,7 @@ import PeriodComparisonPanel from '@/components/admin/widgets/PeriodComparisonPa
 import KpiAlertManager from '@/components/admin/widgets/KpiAlertManager.vue'
 import PeriodSelector from '@/components/admin/widgets/PeriodSelector.vue'
 import AlertsWidget from '@/components/admin/widgets/AlertsWidget.vue'
+import PfpCohortKpiWidget from '@/components/admin/widgets/PfpCohortKpiWidget.vue'
 import { fetchQuickStats, subscribeToQuickStats } from '@/service/dashboardQuickStatsService'
 import TabView from 'primevue/tabview'
 import TabPanel from 'primevue/tabpanel'
@@ -527,10 +558,14 @@ import Toast from 'primevue/toast'
 import ConfirmDialog from 'primevue/confirmdialog'
 import Tooltip from 'primevue/tooltip'
 import { useKpiManager } from '@/composables/useKpiManager'
+import { useRouteErrors } from '@/composables/useRouteErrors'
 
 const router = useRouter()
 const toast = useToast()
 const confirm = useConfirm()
+
+// Gérer l'affichage des erreurs de navigation (ex: accès refusé PFP)
+useRouteErrors()
 
 // User info
 const user = computed(() => auth.currentUser)

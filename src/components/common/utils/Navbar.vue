@@ -121,8 +121,8 @@ const hasAdminAccess = ref(false);
 const allMenuItems = [
   { icon: "pi pi-home", link: "/feed", title: "Accueil" },
   { icon: "pi pi-bookmark", link: "/institution", title: "institutions" },
-  { icon: "pi pi-moon", link: "/votation", title: "Votation PFP1A", pfpCohort: "PFP1A" },
-  { icon: "pi pi-sun", link: "/votation_pfp1b", title: "Votation PFP1B", pfpCohort: "PFP1B" },
+  { icon: "pi pi-check", link: "/votation", title: "Votation PFP1A", pfpCohort: "PFP1A" },
+  { icon: "pi pi-check", link: "/votation_pfp1b", title: "Votation PFP1B", pfpCohort: "PFP1B" },
   { icon: "pi pi-map-marker", link: "/map", title: "Map" },
   { icon: "pi pi-user-plus", link: "/admin", title: "Admin", adminOnly: true }
 ];

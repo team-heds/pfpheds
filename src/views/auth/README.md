@@ -10,9 +10,8 @@ Toutes les pages d'authentification sont maintenant centralisées dans `views/au
 
 ### 🔐 **views/auth/** - Pages d'authentification complètes
 ```
-├── LoginHome.vue            # 🏠 Page d'accueil avec login (Firebase)
-├── LoginHome2.vue           # 🏠 Page d'accueil avec login (Supabase)
-├── LoginView.vue            # 🔐 Page de connexion standard
+├── LoginHome.vue            # 🏠 Page de connexion unifiée (Supabase)
+├── LoginView.vue            # 🔐 Page de connexion legacy (Firebase)
 ├── RegisterView.vue         # 📝 Page d'inscription
 ├── ForgotPasswordView.vue   # 🔑 Mot de passe oublié
 ├── NewPasswordView.vue      # 🔑 Nouveau mot de passe
@@ -28,10 +27,9 @@ Toutes les pages d'authentification sont maintenant centralisées dans `views/au
 
 | Route | Composant | Description | Usage |
 |-------|-----------|-------------|-------|
-| `/` | LoginHome | Page d'accueil principale (Firebase) | Route par défaut |
-| `/home` | LoginHome | Page d'accueil alternative (Firebase) | Redirection |
-| `/home2` | LoginHome2 | Page d'accueil (Supabase) | Version alternative |
-| `/login` | LoginView | Connexion standard | Formulaire de login |
+| `/` | LoginHome | Page de connexion unifiée (Supabase) | Route par défaut |
+| `/home` | LoginHome | Page de connexion unifiée (Supabase) | Redirection |
+| `/login` | LoginView | Connexion Firebase (ancienne) | Formulaire de login |
 | `/register` | RegisterView | Inscription | Création de compte |
 | `/forgot-password` | ForgotPasswordView | Mot de passe oublié | Récupération |
 | `/new-password` | NewPasswordView | Nouveau mot de passe | Réinitialisation |
@@ -44,12 +42,12 @@ Toutes les pages d'authentification sont maintenant centralisées dans `views/au
 
 ## 🔧 **TECHNOLOGIES UTILISÉES**
 
-### 🔥 **Firebase Authentication**
-- **LoginHome.vue** : Authentification Firebase principale
+### 🔥 **Firebase Authentication (legacy)**
+- **LoginView.vue** : Authentification Firebase legacy
 - **NewPasswordView.vue** : Réinitialisation avec Firebase
 
 ### 🚀 **Supabase Authentication**
-- **LoginHome2.vue** : Authentification Supabase alternative
+- **LoginHome.vue** : Authentification Supabase (unifiée)
 - Intégration avec base de données Supabase
 
 ### 🎨 **Interface**
@@ -97,7 +95,7 @@ Toutes les pages d'authentification sont maintenant centralisées dans `views/au
 ### 🔧 **Parcours administrateur** :
 1. **`/access`** → Contrôle d'accès spécial
 2. **`/lock-screen`** → Sécurité renforcée
-3. **`/home2`** → Interface Supabase si nécessaire
+3. **`/home`** → Interface de connexion unifiée
 
 ---
 

@@ -1,14 +1,25 @@
 <template>
   <AdminLayout>
-    <h1 style="margin: 2rem 0 1rem 0; text-align: center;" class="m-8">Liste des institutions</h1>
-    <div style="margin: 0 2rem;">
+    <template #header>
+      <AdminPageHeader title="Liste des institutions" subtitle="Gérez les institutions partenaires">
+        <template #breadcrumbs>
+          <div class="flex align-items-center gap-2 text-sm text-600">
+            <router-link to="/admin" class="text-600 no-underline hover:text-primary">Dashboard</router-link>
+            <i class="pi pi-angle-right text-300" aria-hidden="true"></i>
+            <span class="text-900">Institutions</span>
+          </div>
+        </template>
+      </AdminPageHeader>
+    </template>
+    <div class="filter-menu is-compact">
+      <AppSkeleton v-if="loading" variant="table" :rows="8" :cols="5" />
       <DataTable
+        v-else
         :value="filteredInstitutions"
         :paginator="true"
         :rows="10"
         dataKey="InstitutionId"
         :rowHover="true"
-        :loading="loading"
       >
         <template #header>
           <div style="display: flex; justify-content: space-between; align-items: center;" class="mr-5">
@@ -19,8 +30,15 @@
             </span>
           </div>
         </template>
-        <template #empty> Aucune institution trouvée. </template>
-        <template #loading> Chargement des données... </template>
+        <template #empty>
+          <EmptyState
+            title="Aucune institution trouvée"
+            description="Ajustez les filtres ou ajoutez une institution."
+            icon="pi-building"
+            actionLabel="Ajouter une institution"
+            @action="goToInstitutionForm"
+          />
+        </template>
         
         <Column field="InstitutionId" header="ID" :sortable="true"></Column>
         <Column field="Name" header="Nom" :sortable="true"></Column>
@@ -52,6 +70,9 @@ import Column from 'primevue/column';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
+import AdminPageHeader from '@/components/admin/common/AdminPageHeader.vue';
+import AppSkeleton from '@/components/common/feedback/AppSkeleton.vue';
+import EmptyState from '@/components/common/feedback/EmptyState.vue';
 
 // Setup
 const router = useRouter();
@@ -98,4 +119,11 @@ const goToDetails = (id) => router.push({ name: 'InstitutionView', params: { id 
 </script>
 
 <style scoped>
+.filter-menu { padding: 20px; }
+.is-compact :deep(.p-datatable .p-datatable-header) { padding: .75rem 1rem; }
+.is-compact :deep(.p-datatable .p-datatable-thead > tr > th) { padding: .5rem .75rem; }
+.is-compact :deep(.p-datatable .p-datatable-tbody > tr > td) { padding: .5rem .75rem; font-size: .95rem; }
+.is-compact :deep(.p-inputtext),
+.is-compact :deep(.p-dropdown),
+.is-compact :deep(.p-button) { height: 2.5rem; }
 </style>

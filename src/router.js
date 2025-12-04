@@ -5,13 +5,12 @@ import { useAuthStore } from '@/stores/authStore';
 import rolesService from '@/service/rolesService';
 import { useRoleStore } from '@/stores/role';
 import { addDynamicRoutesToRouter } from '@/composables/useDynamicRoutes';
+import { useUserStore } from '@/stores/userStore';
 // ========================================
 // AUTHENTIFICATION & ACCUEIL // View
 // ========================================
-import LoginHome from '@/views/auth/LoginHome.vue'; // avec firebase
-import LoginHome2 from '@/views/auth/LoginHome2.vue' // avec supabase
+import LoginHome from '@/views/auth/LoginHome.vue'; // Page de connexion unifiée (Supabase)
 import NewPasswordView from '@/views/auth/NewPasswordView.vue' // avec supabase
-import LoginView from '@/views/auth/LoginView.vue';
 import RegisterView from '@/views/auth/RegisterView.vue';
 
 import VerificationView from '@/views/auth/VerificationView.vue';
@@ -50,6 +49,7 @@ import GanttPFPView from '@/views/admin/pfp/GanttPFPView.vue'
 import ValidatePFP1AView from '@/views/admin/pfp/ValidatePFP1AView.vue'
 import InfoRepondantView from '@/views/admin/pfp/InfoRepondantView.vue'
 import ResultPreviewVotationView from '@/views/admin/pfp/ResultPreviewVotationView.vue'
+import PfpCohortStatsView from '@/views/admin/pfp/PfpCohortStatsView.vue'
 
 // FORMATION PRATIQUE PHYSIO
 import DashboardFormationPratiqueView from '@/views/admin/formation-pratique/DashboardFormationPratiqueViewPHYFP.vue'
@@ -73,6 +73,9 @@ import FPValiderEchecPFPView from '@/views/admin/formation-pratique/ValiderEchec
 import FPVotationPrioritaireView from '@/views/admin/formation-pratique/VotationPrioritaireViewPHYFP.vue'
 import FPVotationPFPView from '@/views/admin/formation-pratique/VotationPFPViewPHYFP.vue'
 
+// ASSIGNATION RÉPONDANTS
+import AssignRepondantsView from '@/views/admin/AssignRepondantsView.vue'
+
 // ADMIN LISTS
 import ProgramListView from '@/views/admin/lists/ProgramListView.vue'
 import ModuleListView from '@/views/admin/lists/ModuleListView.vue'
@@ -80,6 +83,9 @@ import UserRoleListView from '@/views/admin/lists/UserRoleListView.vue'
 
 // ASSOCIATIONS
 import AlpinPhysioView from '@/views/associations/AlpinPhysioView.vue'
+
+// DOCUMENTATION
+import PrimeVueDocsView from '@/views/documentation/PrimeVueDocsView.vue'
 
 // MEDIA
 import MediaHubPage from '@/views/media/MediaHubPage.vue'
@@ -174,6 +180,7 @@ import CommunityInfoView from '@/views/social/CommunityInfoView.vue';
 
 import UserListView from "@/views/admin/users/UserListView.vue";
 import StudentListView from "@/views/admin/users/StudentListView.vue";
+import StudentStatsView from "@/views/admin/users/StudentStatsView.vue";
 import TeacherListView from "@/views/admin/users/TeacherListView.vue";
 import TrainerListView from "@/views/admin/users/TrainerListView.vue";
 import InstitutionListView from "@/views/admin/institutions/InstitutionListView.vue";
@@ -282,9 +289,8 @@ const routes = [
   // ========================================
   { path: '/', component: LoginHome, name: 'LoginHome', props: true },
   { path: '/home', component: LoginHome, name: 'LoginHome', props: true },
-  { path: '/home2', component: LoginHome2, name: 'LoginHome2', props: true },
   { path: '/new-password', component: NewPasswordView, name: 'NewPassword' },
-  { path: '/login', component: LoginView, name: 'LoginView' },
+  { path: '/login', redirect: '/home' },
   { path: '/register', component: RegisterView, name: 'RegisterView' },
   { path: '/reset-password', component: ResetPassword, name: 'ResetPassword', meta: { requiresAuth: false } },
 
@@ -312,6 +318,9 @@ const routes = [
 
   // ASSOCIATIONS
   { path: '/alpinphysio', component: AlpinPhysioView, name: 'AlpinPhysio', meta: { requiresAuth: false } },
+
+  // DOCUMENTATION
+  { path: '/docs/primevue', component: PrimeVueDocsView, name: 'PrimeVueDocs', meta: { requiresAuth: true, need: ['admin'] } },
 
   // Planning / Calendar
   { path: '/home-calendar', component: HomePlanning, name: 'HomeCalendar', meta: { requiresAuth: false } },
@@ -387,6 +396,7 @@ const routes = [
   { path: '/validate-pfp1a', component: ValidatePFP1AView, name: 'ValidatePFP1A', meta: { requiresAuth: true, need: 'page1.access' } },
   { path: '/info_repondant', component: InfoRepondantView, name: 'InfoRepondant', meta: { requiresAuth: true, need: 'page1.access' } },
   { path: '/result_preview_votation', component: ResultPreviewVotationView, name: 'ResultPreviewVotation', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/admin/pfp/cohort-stats', component: PfpCohortStatsView, name: 'PfpCohortStats', meta: { requiresAuth: true, need: ['admin', 'page1.access'] } },
   
   // ========================================
   // FORMATION PRATIQUE PHYSIO ROUTES
@@ -402,6 +412,7 @@ const routes = [
   // Section Admin
   { path: '/admin/formation-pratique/profil-etudiants', component: FPProfilEtudiantsView, name: 'FPProfilEtudiants', meta: { requiresAuth: true, need: 'page1.access' } },
   { path: '/admin/formation-pratique/profil-repondant-enseignant', component: FPProfilRepondantEnseignantView, name: 'FPProfilRepondantEnseignant', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/admin/formation-pratique/assign-repondants-ba25', component: AssignRepondantsView, name: 'AssignRepondantsBA25Static', meta: { requiresAuth: true, need: 'admin' } },
   { path: '/admin/formation-pratique/gantt-pfp', component: FPGanttPFPFormationView, name: 'FPGanttPFP', meta: { requiresAuth: true, need: 'page1.access' } },
   { path: '/admin/formation-pratique/admin-secretariat', component: FPAdminSecretariatView, name: 'FPAdminSecretariat', meta: { requiresAuth: true, need: 'page1.access' } },
   { path: '/admin/formation-pratique/admin-secretariat-general', component: FPAdminSecretariatGeneralView, name: 'FPAdminSecretariatGeneral', meta: { requiresAuth: true, need: 'page1.access' } },
@@ -495,6 +506,7 @@ const routes = [
 
   { path: '/user_list', component: UserListView, name: 'UserListView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
   { path: '/etudiant_list', component: StudentListView, name: 'StudentListView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
+  { path: '/etudiant_stats', component: StudentStatsView, name: 'StudentStatsView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
   { path: '/enseignent_list', component: TeacherListView, name: 'TeacherListView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
   { path: '/praticien_formateur_list', component: TrainerListView, name: 'TrainerListView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
   { path: '/institution_list', component: InstitutionListView, name: 'InstitutionListView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
@@ -526,8 +538,122 @@ const routes = [
   // ========================================
   // VOTATIONS & GESTION
   // ========================================
-  { path: '/votation', component: VotationView, name: 'VotationView', meta: { requiresAuth: true, need: 'BA25' } },
-  { path: '/votation_pfp1b', component: VotationViewPFP1B, name: 'VotationViewPFP1B', meta: { requiresAuth: true } },
+  { 
+    path: '/votation', 
+    component: VotationView, 
+    name: 'VotationView', 
+    meta: { requiresAuth: true, pfpRequired: 'PFP1A' },
+    beforeEnter: async (to, from, next) => {
+      const userStore = useUserStore();
+      
+      // Attendre que le profil soit chargé si nécessaire
+      if (!userStore.profile && userStore.user) {
+        await userStore.fetchProfile();
+      }
+      
+      const profile = userStore.profile;
+      
+      // DEBUG: Afficher le profil complet
+      console.log('🔍 [PFP1A Guard] Profil utilisateur:', profile);
+      console.log('🔍 [PFP1A Guard] Champs PFP:', {
+        pfp1a: profile?.pfp1a,
+        pfp1b: profile?.pfp1b,
+        pfp: profile?.pfp,
+        pfp_cohort: profile?.pfp_cohort,
+        cohort: profile?.cohort
+      });
+      
+      // Vérifier si l'utilisateur a accès à PFP1A
+      const hasPfp1aAccess = 
+        profile?.pfp1a === true || 
+        profile?.pfp1a === 1 || 
+        profile?.pfp === 'PFP1A' || 
+        profile?.pfp_cohort === 'PFP1A' ||
+        profile?.cohort === 'PFP1A';
+      
+      // Vérifier EXPLICITEMENT que l'utilisateur n'est PAS PFP1B
+      const isPfp1b = 
+        profile?.pfp1b === true || 
+        profile?.pfp1b === 1 || 
+        profile?.pfp === 'PFP1B' || 
+        profile?.pfp_cohort === 'PFP1B' ||
+        profile?.cohort === 'PFP1B';
+      
+      console.log('🔍 [PFP1A Guard] Résultats:', { hasPfp1aAccess, isPfp1b });
+      
+      if (!hasPfp1aAccess || isPfp1b) {
+        console.warn('❌ Accès refusé à la votation PFP1A - Profil:', profile?.pfp || profile?.pfp_cohort || profile?.cohort || 'non défini');
+        // Stocker le message d'erreur dans sessionStorage pour l'afficher
+        sessionStorage.setItem('routeError', JSON.stringify({
+          message: 'Accès refusé',
+          detail: 'Vous n\'avez pas l\'autorisation d\'accéder à la votation PFP1A. Votre profil ne correspond pas à cette cohorte.',
+          type: 'pfp_access_denied'
+        }));
+        next({ name: 'DashboardView', replace: true });
+      } else {
+        console.log('✅ Accès autorisé à la votation PFP1A');
+        next();
+      }
+    }
+  },
+  { 
+    path: '/votation_pfp1b', 
+    component: VotationViewPFP1B, 
+    name: 'VotationViewPFP1B', 
+    meta: { requiresAuth: true, pfpRequired: 'PFP1B' },
+    beforeEnter: async (to, from, next) => {
+      const userStore = useUserStore();
+      
+      // Attendre que le profil soit chargé si nécessaire
+      if (!userStore.profile && userStore.user) {
+        await userStore.fetchProfile();
+      }
+      
+      const profile = userStore.profile;
+      
+      // DEBUG: Afficher le profil complet
+      console.log('🔍 [PFP1B Guard] Profil utilisateur:', profile);
+      console.log('🔍 [PFP1B Guard] Champs PFP:', {
+        pfp1a: profile?.pfp1a,
+        pfp1b: profile?.pfp1b,
+        pfp: profile?.pfp,
+        pfp_cohort: profile?.pfp_cohort,
+        cohort: profile?.cohort
+      });
+      
+      // Vérifier si l'utilisateur a accès à PFP1B
+      const hasPfp1bAccess = 
+        profile?.pfp1b === true || 
+        profile?.pfp1b === 1 || 
+        profile?.pfp === 'PFP1B' || 
+        profile?.pfp_cohort === 'PFP1B' ||
+        profile?.cohort === 'PFP1B';
+      
+      // Vérifier EXPLICITEMENT que l'utilisateur n'est PAS PFP1A
+      const isPfp1a = 
+        profile?.pfp1a === true || 
+        profile?.pfp1a === 1 || 
+        profile?.pfp === 'PFP1A' || 
+        profile?.pfp_cohort === 'PFP1A' ||
+        profile?.cohort === 'PFP1A';
+      
+      console.log('🔍 [PFP1B Guard] Résultats:', { hasPfp1bAccess, isPfp1a });
+      
+      if (!hasPfp1bAccess || isPfp1a) {
+        console.warn('❌ Accès refusé à la votation PFP1B - Profil:', profile?.pfp || profile?.pfp_cohort || profile?.cohort || 'non défini');
+        // Stocker le message d'erreur dans sessionStorage pour l'afficher
+        sessionStorage.setItem('routeError', JSON.stringify({
+          message: 'Accès refusé',
+          detail: 'Vous n\'avez pas l\'autorisation d\'accéder à la votation PFP1B. Votre profil ne correspond pas à cette cohorte.',
+          type: 'pfp_access_denied'
+        }));
+        next({ name: 'DashboardView', replace: true });
+      } else {
+        console.log('✅ Accès autorisé à la votation PFP1B');
+        next();
+      }
+    }
+  },
   { path: '/votation_preview', component: VotationPreview, name: 'VotationPreview', meta: { requiresAuth: true, need: 'admin' } },
   { path: '/votation_prioritaire', component: VotationPrioritaire, name: 'VotationPrioritaire', meta: { requiresAuth: true, need: 'prioritaire' } },
   { path: '/votation_management', component: VotationManagementView, name: 'VotationManagementView', meta: { requiresAuth: true, need: 'admin' } },

@@ -59,7 +59,7 @@ export default defineConfig({
             },
           },
         ],
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // Limite augmentée à 5 Mo
+        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // Limite augmentée à 10 MB pour fichiers volumineux
       },
       manifest: {
         name: 'HEdS',
