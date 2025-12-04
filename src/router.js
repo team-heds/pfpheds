@@ -84,6 +84,9 @@ import UserRoleListView from '@/views/admin/lists/UserRoleListView.vue'
 // ASSOCIATIONS
 import AlpinPhysioView from '@/views/associations/AlpinPhysioView.vue'
 
+// DOCUMENTATION
+import PrimeVueDocsView from '@/views/documentation/PrimeVueDocsView.vue'
+
 // MEDIA
 import MediaHubPage from '@/views/media/MediaHubPage.vue'
 import ModulesPage from '@/views/media/ModulesPage.vue'
@@ -315,6 +318,9 @@ const routes = [
 
   // ASSOCIATIONS
   { path: '/alpinphysio', component: AlpinPhysioView, name: 'AlpinPhysio', meta: { requiresAuth: false } },
+
+  // DOCUMENTATION
+  { path: '/docs/primevue', component: PrimeVueDocsView, name: 'PrimeVueDocs', meta: { requiresAuth: true, need: ['admin'] } },
 
   // Planning / Calendar
   { path: '/home-calendar', component: HomePlanning, name: 'HomeCalendar', meta: { requiresAuth: false } },
