@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="surface-section px-4 py-8 md:px-6 lg:px-8">
     <section class="text-white text-center py-5 rounded-lg mb-5">
       <h1 class="text-5xl font-bold">Nouvel utilisateur</h1>
@@ -6,57 +6,124 @@
 
     <div class="card p-4 shadow-lg">
       <form @submit.prevent="addNewUser" class="p-fluid grid">
-        <div class="p-field col-6">
-          <label for="prenom">Prénom</label>
-          <InputText id="prenom" v-model="prenom" required />
+        <div class="p-field col-12 md:col-6">
+          <label for="email" class="font-semibold">Email *</label>
+          <InputText 
+            id="email" 
+            v-model="email" 
+            type="email" 
+            placeholder="exemple@hedsvs.ch"
+            :class="{ 'p-invalid': emailError }" 
+            required 
+          />
+          <small v-if="emailError" class="p-error">Veuillez entrer un email valide</small>
         </div>
-        <div class="p-field col-6">
-          <label for="nom">Nom</label>
-          <InputText id="nom" v-model="nom" required />
+
+        <div class="p-field col-12 md:col-6">
+          <label for="password" class="font-semibold">Mot de passe *</label>
+          <Password 
+            id="password" 
+            v-model="password" 
+            placeholder="Minimum 6 caractères" 
+            toggleMask 
+            :feedback="true"
+            :class="{ 'p-invalid': passwordError }" 
+            required 
+          />
+          <small v-if="passwordError" class="p-error">Le mot de passe doit contenir au moins 6 caractères</small>
         </div>
-        <div class="p-field col-6">
-          <label for="role">Rôle</label>
-          <Dropdown id="role" v-model="role" :options="roles" optionLabel="label" placeholder="Sélectionner un rôle" required />
+
+        <div class="p-field col-12 md:col-6">
+          <label for="prenom" class="font-semibold">Prénom</label>
+          <InputText id="prenom" v-model="prenom" placeholder="Prénom" />
         </div>
-        <div class="p-field col-6">
-          <label for="email">Email</label>
-          <InputText id="email" v-model="email" type="email" required />
+
+        <div class="p-field col-12 md:col-6">
+          <label for="nom" class="font-semibold">Nom de famille</label>
+          <InputText id="nom" v-model="nom" placeholder="Nom de famille" />
         </div>
-        <div class="p-field col-6">
-          <label for="institution">Institution</label>
-          <InputText id="institution" v-model="institution" />
+
+        <div class="p-field col-12 md:col-6">
+          <label for="role" class="font-semibold">Rôle</label>
+          <Dropdown 
+            id="role" 
+            v-model="role" 
+            :options="roles" 
+            optionLabel="label" 
+            optionValue="value"
+            placeholder="Sélectionner un rôle" 
+          />
         </div>
-        <Button type="submit" label="Ajouter" class="p-button-primary" />
+
+        <div v-if="createUserError" class="col-12">
+          <Message severity="error" :closable="false">{{ createUserError }}</Message>
+        </div>
+
+        <div class="col-12 flex gap-3 justify-content-end">
+          <Button 
+            label="Annuler" 
+            icon="pi pi-times" 
+            @click="goBack" 
+            type="button"
+            outlined 
+            severity="secondary" 
+          />
+          <Button 
+            type="submit" 
+            label="Créer l'utilisateur" 
+            icon="pi pi-check" 
+            :loading="creatingUser" 
+          />
+        </div>
       </form>
     </div>
+
+    <Toast />
   </div>
 </template>
 
 <script>
-import { db } from '../../../../firebase.js';
-import { ref, get, set } from "firebase/database";
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
+import Password from 'primevue/password';
+import Message from 'primevue/message';
+import Toast from 'primevue/toast';
+import { useToast } from 'primevue/usetoast';
+import { useAuthStore } from '@/stores/authStore';
 
 export default {
   name: 'NewUserForm',
   components: {
     InputText,
     Dropdown,
-    Button
+    Button,
+    Password,
+    Message,
+    Toast
+  },
+  setup() {
+    const toast = useToast();
+    const authStore = useAuthStore();
+    return { toast, authStore };
   },
   data() {
     return {
       prenom: '',
       nom: '',
-      role: '',
+      role: 'student',
       email: '',
-      institution: '',
+      password: '',
+      creatingUser: false,
+      emailError: false,
+      passwordError: false,
+      createUserError: '',
       roles: [
-        { label: 'Admin', value: 'admin' },
-        { label: 'PF', value: 'PF' },
-        { label: 'Prof', value: 'Prof' }
+        { label: 'Étudiant', value: 'student' },
+        { label: 'Enseignant', value: 'teacher' },
+        { label: 'Administrateur', value: 'admin' },
+        { label: 'Modérateur', value: 'moderator' },
+        { label: 'Praticien', value: 'practitioner' }
       ]
     };
   },

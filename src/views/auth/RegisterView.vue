@@ -3,20 +3,94 @@ import { useLayout } from '@/layout/composables/layout';
 import { computed, ref } from 'vue';
 import AppConfig from '@/layout/AppConfig.vue';
 import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/stores/authStore';
+import { useToast } from 'primevue/usetoast';
+import Toast from 'primevue/toast';
 
-const value = ref(null);
+const username = ref('');
+const email = ref('');
+const password = ref('');
+const confirmed = ref(false);
+const loading = ref(false);
 
 const router = useRouter();
+const authStore = useAuthStore();
+const toast = useToast();
 
 const { layoutConfig } = useLayout();
 
-const confirmed = ref(false);
 const darkMode = computed(() => {
     return layoutConfig.colorScheme.value !== 'light';
 });
 
 const navigateToLogin = () => {
     router.push({ name: 'login' });
+};
+
+const handleSignUp = async () => {
+    // Validation
+    if (!email.value || !email.value.includes('@')) {
+        toast.add({ 
+            severity: 'warn', 
+            summary: 'Email invalide', 
+            detail: 'Veuillez entrer un email valide.', 
+            life: 3000 
+        });
+        return;
+    }
+
+    if (!password.value || password.value.length < 6) {
+        toast.add({ 
+            severity: 'warn', 
+            summary: 'Mot de passe trop court', 
+            detail: 'Le mot de passe doit contenir au moins 6 caractères.', 
+            life: 3000 
+        });
+        return;
+    }
+
+    if (!confirmed.value) {
+        toast.add({ 
+            severity: 'warn', 
+            summary: 'Conditions requises', 
+            detail: 'Vous devez accepter les conditions d\'utilisation.', 
+            life: 3000 
+        });
+        return;
+    }
+
+    loading.value = true;
+    
+    try {
+        await authStore.signUpSupabase({ 
+            email: email.value.trim().toLowerCase(), 
+            password: password.value,
+            options: {
+                data: {
+                    username: username.value || email.value.split('@')[0]
+                }
+            }
+        });
+        
+        toast.add({ 
+            severity: 'success', 
+            summary: 'Inscription réussie', 
+            detail: 'Votre compte a été créé ! Vous pouvez maintenant vous connecter.', 
+            life: 4000 
+        });
+        
+        setTimeout(() => router.push('/'), 2000);
+    } catch (error) {
+        console.error('Supabase signup error:', error);
+        toast.add({ 
+            severity: 'error', 
+            summary: 'Erreur d\'inscription', 
+            detail: error.message || 'Une erreur est survenue lors de l\'inscription.', 
+            life: 4000 
+        });
+    } finally {
+        loading.value = false;
+    }
 };
 </script>
 
@@ -47,25 +121,26 @@ const navigateToLogin = () => {
             <div class="flex flex-column">
                 <IconField iconPosition="left" class="w-full mb-4">
                     <InputIcon class="pi pi-user" />
-                    <InputText id="username" type="text" class="w-full md:w-25rem" placeholder="Username" />
+                    <InputText id="username" type="text" v-model="username" class="w-full md:w-25rem" placeholder="Username (optionnel)" />
                 </IconField>
                 <IconField iconPosition="left" class="w-full mb-4">
                     <InputIcon class="pi pi-envelope" />
-                    <InputText id="email" type="text" class="w-full md:w-25rem" placeholder="Email" />
+                    <InputText id="email" type="email" v-model="email" class="w-full md:w-25rem" placeholder="Email" required />
                 </IconField>
                 <IconField iconPosition="left" class="w-full mb-4">
                     <InputIcon class="pi pi-lock z-2" />
-                    <Password id="password" placeholder="Password" v-model="value" class="w-full" :inputStyle="{ paddingLeft: '2.5rem' }" inputClass="w-full md:w-25rem" toggleMask></Password>
+                    <Password id="password" placeholder="Mot de passe (min. 6 caractères)" v-model="password" class="w-full" :inputStyle="{ paddingLeft: '2.5rem' }" inputClass="w-full md:w-25rem" toggleMask></Password>
                 </IconField>
                 <div class="mb-4 flex flex-wrap">
                     <Checkbox name="checkbox" v-model="confirmed" class="mr-2" binary></Checkbox>
-                    <label for="checkbox" class="text-900 font-medium mr-2"> I have read the </label>
-                    <a class="text-600 cursor-pointer hover:text-primary cursor-pointer">Terms and Conditions</a>
+                    <label for="checkbox" class="text-900 font-medium mr-2"> J'ai lu et j'accepte les </label>
+                    <a class="text-600 cursor-pointer hover:text-primary cursor-pointer">Conditions d'utilisation</a>
                 </div>
-                <Button label="Sign Up" class="w-full mb-4"></Button>
-                <span class="font-medium text-600"> Already have an account? <a class="font-semibold cursor-pointer text-900 hover:text-primary transition-colors transition-duration-300" @click="navigateToLogin">Login</a> </span>
+                <Button label="Créer mon compte" @click="handleSignUp" :loading="loading" class="w-full mb-4"></Button>
+                <span class="font-medium text-600"> Vous avez déjà un compte ? <a class="font-semibold cursor-pointer text-900 hover:text-primary transition-colors transition-duration-300" @click="navigateToLogin">Se connecter</a> </span>
             </div>
         </div>
     </div>
     <AppConfig simple />
+    <Toast />
 </template>

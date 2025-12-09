@@ -7,12 +7,12 @@
         <div class="row mt-4 mt-md-0">
           <!-- Image 1 -->
           <div class="col-6">
-            <img class="rounded" src="../../assets/images/heds/image/LLB2.jpg" alt="">
+            <img class="rounded" :src="image1" alt="">
           </div>
 
           <!-- Image 2 -->
           <div class="col-6 mt-5 position-relative">
-            <img class="rounded" src="../../assets/images/heds/image/llbetudiant.png" style="width: 67%" alt="">
+            <img class="rounded" :src="image2" style="width: 67%" alt="">
             <!-- SVG decoration -->
             <figure class="position-absolute top-0 end-0 mb-5 mt-n4 d-none d-lg-block">
               <svg	width="192.5px" height="89.4px" viewBox="0 0 192.5 89.4">
@@ -70,10 +70,14 @@
 </template>
 
 <script>
+import LBB_batiment from '@/assets/images/heds/image/LBB_batiment.jpg'
+import nurseHomePage from '@/assets/images/heds/image/nurseHomePage.png'
 export default {
   name: 'InformationUtilisation',
   data() {
     return {
+      image1: LBB_batiment,
+      image2: nurseHomePage,
       items: [
         {
           title: 'Undergraduate',

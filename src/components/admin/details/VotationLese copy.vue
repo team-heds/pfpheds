@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div>
     <Navbar />
     <UserProfile />
@@ -88,7 +88,7 @@
 import { db, auth } from '../../../../firebase.js';
 import { ref, onValue, set, get } from "firebase/database";
 import { onAuthStateChanged } from "firebase/auth";
-import Navbar from '@/components/Utils/Navbar.vue';
+import Navbar from '@/components/common/utils/Navbar.vue';
 import UserProfile from './UserProfile.vue';
 
 //aa

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div>
     <Navbar />
     <div class="page-title">
@@ -203,7 +203,7 @@
 </template>
 
 <script>
-import Navbar from '@/components/Utils/Navbar.vue';
+import Navbar from '@/components/common/utils/Navbar.vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Dropdown from 'primevue/dropdown';

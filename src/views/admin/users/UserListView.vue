@@ -105,6 +105,52 @@
       </DataTable>
       </div>
     </div>
+
+    <!-- Dialog d'ajout d'utilisateur -->
+    <Dialog v-model:visible="showAddUserDialog" modal header="Ajouter un nouvel utilisateur" :style="{ width: '40rem' }" :breakpoints="{ '1199px': '75vw', '575px': '90vw' }">
+      <div class="flex flex-column gap-3 pt-3">
+        <div class="flex flex-column gap-2">
+          <label for="newUserEmail" class="font-semibold">Email *</label>
+          <InputText id="newUserEmail" v-model="newUser.email" type="email" placeholder="exemple@hedsvs.ch" :class="{ 'p-invalid': emailError }" />
+          <small v-if="emailError" class="p-error">Veuillez entrer un email valide</small>
+        </div>
+        
+        <div class="flex flex-column gap-2">
+          <label for="newUserPassword" class="font-semibold">Mot de passe *</label>
+          <Password id="newUserPassword" v-model="newUser.password" placeholder="Minimum 6 caractères" toggleMask :feedback="false" :class="{ 'p-invalid': passwordError }" />
+          <small v-if="passwordError" class="p-error">Le mot de passe doit contenir au moins 6 caractères</small>
+        </div>
+
+        <div class="flex flex-column gap-2">
+          <label for="newUserForname" class="font-semibold">Prénom</label>
+          <InputText id="newUserForname" v-model="newUser.forname" placeholder="Prénom" />
+        </div>
+
+        <div class="flex flex-column gap-2">
+          <label for="newUserFamilyName" class="font-semibold">Nom de famille</label>
+          <InputText id="newUserFamilyName" v-model="newUser.familyName" placeholder="Nom de famille" />
+        </div>
+
+        <div class="flex flex-column gap-2">
+          <label for="newUserRole" class="font-semibold">Rôle</label>
+          <Dropdown id="newUserRole" v-model="newUser.role" :options="roleOptions" placeholder="Sélectionner un rôle" />
+        </div>
+
+        <div v-if="createUserError" class="p-message p-message-error mt-2">
+          <div class="p-message-wrapper">
+            <span class="p-message-icon pi pi-times-circle"></span>
+            <span class="p-message-detail">{{ createUserError }}</span>
+          </div>
+        </div>
+      </div>
+
+      <template #footer>
+        <Button label="Annuler" icon="pi pi-times" @click="closeAddUserDialog" text />
+        <Button label="Créer l'utilisateur" icon="pi pi-check" @click="createNewUser" :loading="creatingUser" />
+      </template>
+    </Dialog>
+
+    <Toast />
   </AdminLayout>
 </template>
 
@@ -122,6 +168,11 @@ import InputIcon from 'primevue/inputicon';
 import Dropdown from 'primevue/dropdown';
 import Tag from 'primevue/tag';
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
+import Dialog from 'primevue/dialog';
+import Password from 'primevue/password';
+import Toast from 'primevue/toast';
+import { useToast } from 'primevue/usetoast';
+import { useAuthStore } from '@/stores/authStore';
 // import Navbar from '@/components/common/utils/Navbar.vue';
 
 export default {
@@ -138,7 +189,15 @@ export default {
     InputIcon,
     Dropdown,
     Tag,
-    AdminLayout
+    AdminLayout,
+    Dialog,
+    Password,
+    Toast
+  },
+  setup() {
+    const toast = useToast();
+    const authStore = useAuthStore();
+    return { toast, authStore };
   },
   data() {
     return {
@@ -151,6 +210,19 @@ export default {
       selectedPermission: null,
       availableRoles: [],
       availablePermissions: [],
+      showAddUserDialog: false,
+      creatingUser: false,
+      emailError: false,
+      passwordError: false,
+      createUserError: '',
+      newUser: {
+        email: '',
+        password: '',
+        forname: '',
+        familyName: '',
+        role: 'student'
+      },
+      roleOptions: ['student', 'teacher', 'admin', 'moderator', 'practitioner']
     };
   },
   computed: {
@@ -256,14 +328,147 @@ export default {
     }
   },
   methods: {
-    async deleteUser() {
-      alert('Suppression côté Supabase non implémentée ici.');
+    async deleteUser(userId) {
+      // Confirmation de suppression
+      const confirmed = confirm('⚠️ ATTENTION : Voulez-vous vraiment supprimer cet utilisateur ?\n\nCela supprimera :\n- Son profil utilisateur\n- Toutes ses données associées\n\nCette action est IRRÉVERSIBLE !');
+      
+      if (!confirmed) return;
+
+      try {
+        // 1. Supprimer de user_profiles
+        const { error: profileError } = await supabase
+          .from('user_profiles')
+          .delete()
+          .eq('user_id', userId);
+
+        if (profileError) throw profileError;
+
+        // 2. Supprimer l'authentification (nécessite une fonction RPC côté serveur)
+        const { error: authError } = await supabase.rpc('delete_user', { 
+          user_id: userId 
+        });
+
+        if (authError) {
+          console.warn('Impossible de supprimer l\'authentification:', authError);
+          this.toast.add({ 
+            severity: 'warn', 
+            summary: 'Suppression partielle', 
+            detail: 'Le profil a été supprimé mais l\'authentification reste active. Contactez un super admin.', 
+            life: 6000 
+          });
+        } else {
+          this.toast.add({ 
+            severity: 'success', 
+            summary: 'Utilisateur supprimé', 
+            detail: 'L\'utilisateur a été complètement supprimé (profil + authentification).', 
+            life: 4000 
+          });
+        }
+
+        // 3. Retirer de la liste locale
+        this.utilisateurs = this.utilisateurs.filter(u => u.id !== userId);
+
+      } catch (error) {
+        console.error('Erreur lors de la suppression:', error);
+        this.toast.add({ 
+          severity: 'error', 
+          summary: 'Erreur de suppression', 
+          detail: error.message || 'Impossible de supprimer l\'utilisateur.', 
+          life: 5000 
+        });
+      }
     },
     goToUserFormModif(userId) {
       this.$router.push({ name: 'NewUserFormModif', params: { userId } });
     },
     goToUserForm() {
-      this.$router.push({ name: 'NewUserForm' });
+      this.showAddUserDialog = true;
+      this.resetNewUserForm();
+    },
+    closeAddUserDialog() {
+      this.showAddUserDialog = false;
+      this.resetNewUserForm();
+    },
+    resetNewUserForm() {
+      this.newUser = {
+        email: '',
+        password: '',
+        forname: '',
+        familyName: '',
+        role: 'student'
+      };
+      this.emailError = false;
+      this.passwordError = false;
+      this.createUserError = '';
+    },
+    async createNewUser() {
+      this.emailError = false;
+      this.passwordError = false;
+      this.createUserError = '';
+
+      // Validation
+      if (!this.newUser.email || !this.newUser.email.includes('@')) {
+        this.emailError = true;
+        this.toast.add({ 
+          severity: 'warn', 
+          summary: 'Email invalide', 
+          detail: 'Veuillez entrer un email valide.', 
+          life: 3000 
+        });
+        return;
+      }
+
+      if (!this.newUser.password || this.newUser.password.length < 6) {
+        this.passwordError = true;
+        this.toast.add({ 
+          severity: 'warn', 
+          summary: 'Mot de passe trop court', 
+          detail: 'Le mot de passe doit contenir au moins 6 caractères.', 
+          life: 3000 
+        });
+        return;
+      }
+
+      this.creatingUser = true;
+      
+      try {
+        const signUpData = await this.authStore.signUpSupabase({
+          email: this.newUser.email.trim().toLowerCase(),
+          password: this.newUser.password,
+          options: {
+            data: {
+              forname: this.newUser.forname,
+              family_name: this.newUser.familyName,
+              role: this.newUser.role
+            }
+          }
+        });
+        
+        this.toast.add({ 
+          severity: 'success', 
+          summary: 'Utilisateur créé', 
+          detail: `L'utilisateur ${this.newUser.email} a été créé avec succès.`, 
+          life: 4000 
+        });
+        
+        this.closeAddUserDialog();
+        
+        // Recharger la liste pour afficher le nouvel utilisateur
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } catch (error) {
+        console.error('Erreur lors de la création de l\'utilisateur:', error);
+        this.createUserError = error.message || 'Une erreur est survenue lors de la création de l\'utilisateur.';
+        this.toast.add({ 
+          severity: 'error', 
+          summary: 'Erreur', 
+          detail: this.createUserError, 
+          life: 5000 
+        });
+      } finally {
+        this.creatingUser = false;
+      }
     },
     goToAdminDashboard() {
       this.$router.push({ name: 'DashboardAdmin' });

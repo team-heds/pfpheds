@@ -105,7 +105,6 @@ function downloadPng() {
 .qr-page-wrapper {
   min-height: 100vh;
   width: 100%;
-  background: var(--surface-ground, #1a1a2e);
 }
 
 .landing-bg {

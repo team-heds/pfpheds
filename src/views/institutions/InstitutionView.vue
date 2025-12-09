@@ -219,13 +219,19 @@ async function fetchInstitutionFiles(id) {
     // Charger les places depuis Supabase pour cette institution
     const places = await placesStore.fetchPlacesByInstitution(id)
 
+    const inst = institutionDetails.value
+    const conceptUrl = inst?.CyberleanURL || inst?.CyberlearnURL
+
     // Transformer en format pour l'affichage
-    institutionFiles.value = places
-      .filter(place => place.fileURL) // Seulement celles avec un fichier
+    // Utiliser le lien global (Concept) sur les places si disponible, sinon le lien spécifique
+    const files = places
       .map(place => ({
         name: place.NomPlace || 'Document',
-        url: place.fileURL,
+        url: conceptUrl || place.fileURL,
       }))
+      .filter(item => item.url) // Garder uniquement ceux qui ont un lien
+
+    institutionFiles.value = files
 
     console.log(`✅ ${institutionFiles.value.length} fichiers chargés depuis Supabase pour l'institution ${id}`)
   } catch (error) {

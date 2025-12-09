@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div>
     <Navbar />
     <div class="flex w-full">
@@ -103,7 +103,7 @@
 import { db, auth } from '../../../../firebase.js';
 import { ref, onValue, set, get, update } from "firebase/database";
 import { onAuthStateChanged } from "firebase/auth";
-import Navbar from '@/components/Utils/Navbar.vue';
+import Navbar from '@/components/common/utils/Navbar.vue';
 import UserProfile from './UserProfile.vue';
 
 export default {
