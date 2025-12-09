@@ -6,9 +6,20 @@
         <i class="pi pi-star text-3xl text-primary mr-3" />
         <h2 class="game-title">Espace Jeux</h2>
       </div>
-      <div class="game-placeholder">
-        <p>Bienvenue dans l'espace jeux !<br>Des jeux pédagogiques et ludiques seront bientôt disponibles ici.</p>
-        <i class="pi pi-spin pi-spinner text-4xl text-primary mt-4" />
+
+      <div class="grid">
+        <!-- Daily Wheel Widget -->
+        <div class="col-12 md:col-6 lg:col-6">
+          <DailyWheelWidget />
+        </div>
+
+        <!-- Placeholder for future games -->
+        <div class="col-12 md:col-6 lg:col-6">
+          <div class="game-placeholder h-full flex flex-column justify-content-center">
+            <p>D'autres jeux pédagogiques et ludiques seront bientôt disponibles ici.</p>
+            <i class="pi pi-spin pi-spinner text-4xl text-primary mt-4" />
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -16,6 +27,7 @@
 
 <script setup>
 import Navbar from '@/components/common/utils/Navbar.vue';
+import DailyWheelWidget from '@/components/gamification/daily/DailyWheelWidget.vue';
 </script>
 
 <style scoped>
