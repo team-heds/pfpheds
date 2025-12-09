@@ -262,6 +262,7 @@ import EventManagementView from '@/views/apps/events/EventManagementView.vue';
 import ToolsView from '@/views/apps/tools/ToolsView.vue';
 import FTPUploadTestView from '@/views/apps/tools/FTPUploadTestView.vue';
 import GameView from '@/views/apps/tools/GameView.vue';
+import RomRunnerView from '@/views/apps/rom-runner/RomRunnerView.vue';
 import ChatBotView from '@/views/apps/tools/ChatBotView.vue';
 import TournoisView from '@/views/apps/tools/TournoisView.vue';
 import TournoiDetailsView from '@/views/apps/tools/TournoiDetailsView.vue';
@@ -700,6 +701,7 @@ const routes = [
   { path: '/tools', component: ToolsView, name: 'ToolsView', meta: { requiresAuth: true } },
   { path: '/tools/ftp-upload', component: FTPUploadTestView, name: 'FTPUploadTest', meta: { requiresAuth: true } },
   { path: '/game', component: GameView, name: 'GameView', meta: { requiresAuth: true } },
+  { path: '/rom-runner', component: RomRunnerView, name: 'RomRunnerView', meta: { requiresAuth: true } },
   { path: '/chatbot', component: ChatBotView, name: 'ChatBotView', meta: { requiresAuth: true } },
   { path: '/tournois', component: TournoisView, name: 'TournoisView', meta: { requiresAuth: true } },
   { path: '/tournois/:id', component: TournoiDetailsView, name: 'TournoiDetailsView', meta: { requiresAuth: true } },

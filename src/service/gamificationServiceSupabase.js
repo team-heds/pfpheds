@@ -366,7 +366,12 @@ class GamificationServiceSupabase {
         // Utiliser les données de la table houses (source de vérité)
         const totalXP = houseDB.total_xp || 0
         const totalMembers = houseDB.member_count || stats.totalMembers || 0
-        const houseLevel = houseDB.level || 1
+        
+        // Recalculer le niveau dynamiquement pour être sûr qu'il correspond à l'XP
+        const calculatedLevelInfo = this.calculateHouseLevel(totalXP)
+        const houseLevel = calculatedLevelInfo.niveau
+        
+        console.log(`🏠 ${houseName}: ${totalXP} XP -> Niveau calculé: ${houseLevel}`)
         
         // Calculer moyennes depuis gamification_data
         const averageXP = totalMembers > 0 ? Math.round(totalXP / totalMembers) : 0
