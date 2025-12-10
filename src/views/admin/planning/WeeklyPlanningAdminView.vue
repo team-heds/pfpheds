@@ -359,7 +359,7 @@
             <label class="block mb-2 font-bold">Jour :</label>
             <Dropdown 
               v-model="slotForm.day"
-              :options="['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi']"
+              :options="['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'distance']"
               placeholder="Sélectionner un jour"
               class="w-full"
             />
@@ -438,13 +438,30 @@
           
           <div class="col-12">
             <label class="block mb-2 font-bold">Enseignants (max 6) :</label>
-            <Chips 
+            <AutoComplete 
               v-model="slotForm.teachers"
-              :max="6"
-              placeholder="Ajouter un enseignant (Entrée pour valider)"
+              :suggestions="filteredTeachers"
+              @complete="searchTeachers"
+              optionLabel="name"
+              placeholder="Saisissez un nom (Entrée pour valider) ou sélectionnez"
+              multiple
+              :forceSelection="false"
               class="w-full"
-            />
-            <small class="text-500">Appuyez sur Entrée après chaque nom. Maximum 6 enseignants par créneau.</small>
+            >
+              <template #option="slotProps">
+                <div class="flex align-items-center">
+                  <i v-if="slotProps.option.isNew" class="pi pi-plus mr-2 text-green-500"></i>
+                  <span :class="{ 'font-bold': slotProps.option.isNew }">
+                    {{ slotProps.option.isNew ? 'Ajouter : ' : '' }}{{ slotProps.option.name }}
+                  </span>
+                  <span v-if="slotProps.option.email" class="text-xs text-500 ml-2">({{ slotProps.option.email }})</span>
+                </div>
+              </template>
+            </AutoComplete>
+            <small class="text-500">
+              Sélectionnez jusqu'à 6 enseignants. Appuyez sur Entrée pour valider un nouveau nom.
+              <span v-if="siTeachers.length > 0">({{ siTeachers.length }} disponibles)</span>
+            </small>
           </div>
           
           <div class="col-12 md:col-6">
@@ -523,10 +540,13 @@ import { useToast } from 'primevue/usetoast'
 import Tag from 'primevue/tag'
 import Badge from 'primevue/badge'
 import Chip from 'primevue/chip'
+import AutoComplete from 'primevue/autocomplete'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import PageHeader from '@/components/admin/common/PageHeader.vue'
 import planningService from '@/service/planningService'
 import academicYearService from '@/service/academicYearService'
+import { getSITeachers } from '@/services/academicKpiService'
+import { supabase } from '@/supabase'
 
 const router = useRouter()
 const toast = useToast()
@@ -537,7 +557,9 @@ const selectedWeek = ref(null)
 const viewMode = ref('week') // 'week', 'semester1', 'semester2'
 const timeSlots = ref([])
 const courseModules = ref([])
-const expandedDays = ref(['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi'])
+const siTeachers = ref([])
+const filteredTeachers = ref([])
+const expandedDays = ref(['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'distance'])
 const yearOptions = ref([])
 
 const showSlotDialog = ref(false)
@@ -594,7 +616,7 @@ const moduleOptions = computed(() => {
 
 // Computed
 const sortedTimeSlots = computed(() => {
-  const dayOrder = { lundi: 1, mardi: 2, mercredi: 3, jeudi: 4, vendredi: 5 }
+  const dayOrder = { lundi: 1, mardi: 2, mercredi: 3, jeudi: 4, vendredi: 5, distance: 6 }
   
   // Fonction pour obtenir l'ordre académique d'une semaine
   const getAcademicWeekOrder = (week) => {
@@ -645,6 +667,56 @@ const onViewModeChange = async () => {
     await loadSemesterPlanning('autumn')
   }
 }
+
+onMounted(async () => {
+  // Charger les années académiques
+  try {
+    const years = await academicYearService.getAcademicYears()
+    yearOptions.value = years.map(y => ({
+      label: y.name,
+      value: y.id // id est le code de la classe, ex: "bac25"
+    }))
+    
+    // Sélectionner l'année active par défaut
+    const activeYear = years.find(y => y.is_active)
+    if (activeYear) {
+      selectedYear.value = activeYear.id
+      // Charger les modules pour cette année (fonction manquante dans le composant d'origine, on charge juste le planning si possible)
+    }
+    
+    // Charger les modules de cours
+    courseModules.value = await planningService.getAllCourseModules()
+    
+    // Charger les enseignants SI (avec fallback direct)
+    const teachers = await getSITeachers()
+    if (teachers && teachers.length > 0) {
+      siTeachers.value = teachers
+    } else {
+      console.warn('⚠️ Aucun enseignant via service, tentative chargement direct...')
+      // Fallback: requête directe
+      const { data } = await supabase.from('user_profiles').select('*').eq('role', 'EnseignantSoins')
+      if (data && data.length > 0) {
+        siTeachers.value = data.map(t => ({
+          id: t.user_id,
+          name: t.display_name || `${t.forname} ${t.family_name}`,
+          email: t.email
+        }))
+        console.log('✅ Enseignants chargés via fallback direct:', siTeachers.value.length)
+      } else {
+        console.error('❌ Aucun enseignant trouvé même en direct')
+      }
+    }
+    
+  } catch (error) {
+    console.error('Erreur initialisation:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: 'Impossible de charger les données initiales',
+      life: 3000
+    })
+  }
+})
 
 const loadWeekPlanning = async () => {
   if (!selectedWeek.value || !selectedYear.value) return
@@ -741,7 +813,7 @@ const loadSemesterPlanning = async (semester) => {
 }
 
 const getRowClass = (data) => {
-  const dayOrder = { lundi: 1, mardi: 2, mercredi: 3, jeudi: 4, vendredi: 5 }
+  const dayOrder = { lundi: 1, mardi: 2, mercredi: 3, jeudi: 4, vendredi: 5, distance: 6 }
   const prevIndex = sortedTimeSlots.value.indexOf(data) - 1
   if (prevIndex >= 0) {
     const prevSlot = sortedTimeSlots.value[prevIndex]
@@ -758,7 +830,8 @@ const getDaySeverity = (day) => {
     mardi: 'success',
     mercredi: 'warning',
     jeudi: 'danger',
-    vendredi: 'secondary'
+    vendredi: 'secondary',
+    distance: 'contrast'
   }
   return severities[day] || 'info'
 }
@@ -820,7 +893,22 @@ const getDayMainModule = (day) => {
   }
 }
 
-const openSlotDialog = (slot = null) => {
+const openSlotDialog = async (slot = null) => {
+  // Vérifier si les enseignants sont chargés
+  if (siTeachers.value.length === 0) {
+    console.log('Liste enseignants vide, tentative de rechargement...')
+    try {
+      const loaded = await getSITeachers()
+      if (loaded && loaded.length > 0) {
+        siTeachers.value = loaded
+      } else {
+        console.warn('Toujours aucun enseignant trouvé après rechargement')
+      }
+    } catch (e) {
+      console.error('Erreur rechargement enseignants:', e)
+    }
+  }
+
   if (slot) {
     editingSlot.value = slot.id
     slotForm.value = { ...slot }
@@ -854,6 +942,11 @@ const onModuleChange = () => {
 
 const saveSlot = async () => {
   try {
+    // Normaliser la liste des enseignants (garder uniquement les noms)
+    const normalizedTeachers = (slotForm.value.teachers || []).map(t => {
+      return typeof t === 'object' && t !== null ? t.name : t
+    })
+
     const slotData = {
       id: editingSlot.value || null,
       classCode: selectedYear.value,
@@ -865,9 +958,42 @@ const saveSlot = async () => {
       moduleCode: slotForm.value.moduleCode,
       courseTitle: slotForm.value.courseTitle,
       activity: slotForm.value.activity,
-      teachers: slotForm.value.teachers,
+      teachers: normalizedTeachers,
       room: slotForm.value.room,
       notes: slotForm.value.notes
+    }
+
+    // Validation basique
+    if (!slotData.startTime || !slotData.endTime) {
+      if (slotData.day === 'distance') {
+        // Valeurs par défaut pour distance si non spécifié
+        slotData.startTime = slotData.startTime || '08:00'
+        slotData.endTime = slotData.endTime || '17:00'
+      } else {
+        toast.add({
+          severity: 'warn',
+          summary: 'Attention',
+          detail: 'Veuillez renseigner les horaires de début et de fin',
+          life: 3000
+        })
+        return
+      }
+    }
+    
+    // Si date manquante pour distance, on essaie de la calculer (Samedi de la semaine)
+    if (slotData.day === 'distance' && !slotData.date) {
+      // Logique simplifiée : on laisse le backend ou planningService gérer la date si possible,
+      // ou on force une date bidon valide si le backend l'exige impérativement.
+      // Le service planningService.saveTimeSlot utilise this.getDateForWeekAndDay mais l'attend en paramètre si on passe un objet complet.
+      // On va laisser le service gérer si c'est null, mais le service attend slotData.date.
+      // On va essayer de récupérer la date du samedi via le service s'il est accessible, sinon on laisse null
+      // et on espère que le service le gère.
+      // UPDATE: le service planningService a une méthode getDateForWeekAndDay.
+      try {
+        slotData.date = planningService.getDateForWeekAndDay(slotData.weekNumber, 5) // 5 = Samedi/Distance
+      } catch (e) {
+        console.warn('Impossible de calculer la date pour distance', e)
+      }
     }
     
     await planningService.saveTimeSlot(slotData)
@@ -949,6 +1075,28 @@ const performDuplicate = async () => {
       life: 3000
     })
   }
+}
+
+const searchTeachers = (event) => {
+  const query = event.query.toLowerCase()
+  
+  // Filtrer les enseignants existants
+  let filtered = []
+  if (!query.trim()) {
+    filtered = [...siTeachers.value]
+  } else {
+    filtered = siTeachers.value.filter(teacher => 
+      teacher.name.toLowerCase().includes(query)
+    )
+  }
+  
+  // Ajouter l'option de création si le texte n'existe pas exactement
+  if (query.trim() && !filtered.some(t => t.name.toLowerCase() === query)) {
+    // On ajoute un objet temporaire qui sera normalisé à la sauvegarde
+    filtered.unshift({ name: event.query, isNew: true })
+  }
+  
+  filteredTeachers.value = filtered
 }
 
 const getModuleColor = (moduleCode) => {

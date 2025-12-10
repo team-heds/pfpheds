@@ -172,21 +172,34 @@ class RolesService {
         .eq('user_id', userId)
         .eq('is_active', true)
       
-      if (rolesError) {
-        console.warn('Pas de table user_roles trouvée, utilisation rôle par défaut')
-        return { user: true }
+      if (!rolesError && rolesData && rolesData.length > 0) {
+        // Convertir en format { admin: true, editor: true, ... }
+        const rolesObject = {}
+        rolesData.forEach(role => {
+          if (role.is_active) {
+            rolesObject[role.role_name] = true
+          }
+        })
+        
+        console.log('✅ Rôles trouvés dans table user_roles:', rolesObject)
+        return rolesObject
+      }
+
+      // OPTION 3: Récupérer depuis la table user_profiles (utilisée par l'admin panel)
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('role')
+        .eq('user_id', userId)
+        .single()
+      
+      if (!profileError && profileData?.role) {
+        console.log('✅ Rôle trouvé dans user_profiles:', profileData.role)
+        // Convertir le rôle unique en format objet compatible { [role]: true }
+        return { [profileData.role]: true }
       }
       
-      // Convertir en format { admin: true, editor: true, ... }
-      const rolesObject = {}
-      rolesData.forEach(role => {
-        if (role.is_active) {
-          rolesObject[role.role_name] = true
-        }
-      })
-      
-      console.log('✅ Rôles trouvés dans table user_roles:', rolesObject)
-      return Object.keys(rolesObject).length > 0 ? rolesObject : { user: true }
+      console.warn('Pas de rôles trouvés, utilisation rôle par défaut')
+      return { user: true }
       
     } catch (error) {
       console.error('Erreur lors de la récupération des rôles Supabase:', error)
@@ -282,13 +295,23 @@ class RolesService {
   // Vérifier si l'utilisateur actuel est admin
   async isCurrentUserAdmin() {
     try {
+      // 1. Vérifier Firebase
       const auth = getAuth()
-      const currentUser = auth.currentUser
+      const firebaseUser = auth.currentUser
       
-      if (!currentUser) return false
+      if (firebaseUser) {
+        const userRole = await this.getUserRole(firebaseUser.uid)
+        return userRole === ROLES.GAME_MASTER || userRole === ROLES.ADMIN
+      }
+
+      // 2. Vérifier Supabase
+      const { data: { user: supabaseUser } } = await supabase.auth.getUser()
+      if (supabaseUser) {
+        const roles = await this.getUserRolesSupabase(supabaseUser.id)
+        return roles[ROLES.ADMIN] === true || roles[ROLES.GAME_MASTER] === true
+      }
       
-      const userRole = await this.getUserRole(currentUser.uid)
-      return userRole === ROLES.GAME_MASTER || userRole === ROLES.ADMIN
+      return false
     } catch (error) {
       console.error('Erreur lors de la vérification admin:', error)
       return false

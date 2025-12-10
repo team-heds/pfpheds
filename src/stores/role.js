@@ -36,16 +36,44 @@ export const useRoleStore = defineStore('role', () => {
 
   async function loadPermissions() {
     try {
-      const { data: rows, error } = await supabase.rpc('api_my_permissions');
-      if (error) {
-        console.error('Erreur chargement permissions:', error);
-        perms.value = [];
-        return;
+      const permsSet = new Set();
+
+      // 1. Tenter via RPC (source principale idéale)
+      try {
+        const { data: rows, error } = await supabase.rpc('api_my_permissions');
+        if (!error && rows) {
+          rows.forEach(r => permsSet.add(r.perm));
+        }
+      } catch (e) {
+        console.warn('RPC api_my_permissions failed or empty', e);
       }
-      perms.value = (rows || []).map(r => r.perm);
-      console.log('✅ Permissions chargées depuis DB:', perms.value);
+
+      // 2. Fallback / Complément : Lire depuis user_profiles
+      // C'est ici que l'Admin Panel écrit (colonnes 'role' et 'permissions')
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile, error: profileError } = await supabase
+          .from('user_profiles')
+          .select('role, permissions')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (!profileError && profile) {
+          // Ajouter le rôle comme permission (ex: 'admin')
+          if (profile.role) {
+            permsSet.add(profile.role);
+          }
+          // Ajouter les permissions explicites stockées en JSON/Array
+          if (Array.isArray(profile.permissions)) {
+            profile.permissions.forEach(p => permsSet.add(p));
+          }
+        }
+      }
+
+      perms.value = Array.from(permsSet);
+      console.log('✅ Permissions consolidées (RPC + user_profiles):', perms.value);
     } catch (e) {
-      console.error('Erreur RPC api_my_permissions:', e);
+      console.error('Erreur globale loadPermissions:', e);
       perms.value = [];
     }
   }

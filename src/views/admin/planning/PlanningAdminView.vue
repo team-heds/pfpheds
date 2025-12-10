@@ -165,23 +165,31 @@
 
         <!-- Lignes -->
         <div 
-          v-for="day in days" 
-          :key="day" 
+          v-for="row in computedRows" 
+          :key="row" 
           class="grid-row"
+          :class="{ 'distance-row': row === 'dist' }"
         >
-          <div class="day-label">{{ dayLabels[day] }}</div>
+          <div class="day-label" :class="{ 'distance-label': row === 'dist' }">
+            {{ getRowLabel(row) }}
+          </div>
           
           <div 
             v-for="week in currentWeeks" 
-            :key="`${day}-${week}`" 
+            :key="`${row}-${week}`" 
             class="grid-cell editable-cell"
-            :style="getCellStyle(day, week)"
-            :class="{ selected: isCellSelected(day, week), 'autumn-cell': week >= 38 || week <= 7, 'spring-cell': week >= 8 && week <= 37 }"
-            @click="handleCellClick(day, week)"
-            :title="getCellTooltip(day, week)"
+            :style="getCellStyle(row, week)"
+            :class="{ 
+              selected: isCellSelected(row, week), 
+              'autumn-cell': week >= 38 || week <= 7, 
+              'spring-cell': week >= 8 && week <= 37,
+              'distance-cell': row === 'dist'
+            }"
+            @click="handleCellClick(row, week)"
+            :title="getCellTooltip(row, week)"
           >
-            <span v-if="getCellLabel(day, week)" class="cell-label">
-              {{ getCellLabel(day, week) }}
+            <span v-if="getCellLabel(row, week)" class="cell-label">
+              {{ getCellLabel(row, week) }}
             </span>
           </div>
         </div>
@@ -540,10 +548,27 @@ const dayLabels = {
   ma: 'Mar',
   me: 'Mer',
   je: 'Jeu',
-  ve: 'Ven'
+  ve: 'Ven',
+  dist: 'Dist'
 }
 
 // Computed
+const isTP = computed(() => {
+  return selectedYear.value && selectedYear.value.toLowerCase().includes('tp')
+})
+
+const computedRows = computed(() => {
+  const rows = [...days]
+  if (isTP.value) {
+    rows.push('dist')
+  }
+  return rows
+})
+
+const getRowLabel = (row) => {
+  return dayLabels[row] || row
+}
+
 const currentWeeks = computed(() => {
   // Ordre académique : Automne (S38-S52, S1-S7) puis Printemps (S8-S37)
   const weeks = []
@@ -1346,6 +1371,11 @@ onMounted(async () => {
   border-bottom: 1px solid #ddd;
 }
 
+.distance-row .grid-cell {
+  background-color: #f8f9fa;
+  border-top: 1px dashed #dee2e6;
+}
+
 .day-label {
   min-width: 60px;
   width: 60px;
@@ -1357,6 +1387,16 @@ onMounted(async () => {
   justify-content: center;
   border-right: 1px solid #ddd;
   font-size: 0.9rem;
+  position: sticky;
+  left: 0;
+  z-index: 2;
+}
+
+.distance-label {
+  font-size: 0.8rem;
+  color: #6c757d;
+  font-style: italic;
+  background-color: #f8f9fa;
 }
 
 .grid-cell {
