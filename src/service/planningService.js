@@ -115,6 +115,9 @@ class PlanningService {
       }
     } catch (error) {
       console.error('[PlanningService] Erreur saveTimeSlot:', error)
+      console.error('[PlanningService] Message:', error?.message)
+      console.error('[PlanningService] Code:', error?.code)
+      console.error('[PlanningService] Details:', JSON.stringify(error, null, 2))
       throw error
     }
   }
@@ -534,8 +537,8 @@ class PlanningService {
 
   /**
    * Convertit le nom du jour court en jour complet
-   * @param {string} day - Nom du jour court ('lu', 'ma', etc.)
-   * @returns {string} Nom du jour complet ('lundi', 'mardi', etc.)
+   * @param {string} day - Nom du jour court ('lu', 'ma', etc.) ou 'dist'
+   * @returns {string} Nom du jour complet ('lundi', 'mardi', etc.) ou 'distance'
    */
   getDayFullName(day) {
     const mapping = {
@@ -543,15 +546,16 @@ class PlanningService {
       ma: 'mardi',
       me: 'mercredi',
       je: 'jeudi',
-      ve: 'vendredi'
+      ve: 'vendredi',
+      dist: 'distance'
     }
     return mapping[day] || day // Si déjà en format long, retourner tel quel
   }
 
   /**
    * Convertit le nom du jour complet en jour court
-   * @param {string} day - Nom du jour complet ('lundi', 'mardi', etc.)
-   * @returns {string} Nom du jour court ('lu', 'ma', etc.)
+   * @param {string} day - Nom du jour complet ('lundi', 'mardi', etc.) ou 'distance'
+   * @returns {string} Nom du jour court ('lu', 'ma', etc.) ou 'dist'
    */
   getDayShortName(day) {
     const mapping = {
@@ -559,20 +563,21 @@ class PlanningService {
       mardi: 'ma',
       mercredi: 'me',
       jeudi: 'je',
-      vendredi: 've'
+      vendredi: 've',
+      distance: 'dist'
     }
     return mapping[day] || day // Si déjà en format court, retourner tel quel
   }
 
   /**
    * Convertit le nom du jour en index
-   * @param {string} day - Nom du jour ('lu', 'ma', 'lundi', 'mardi', etc.)
-   * @returns {number} Index du jour (0-4)
+   * @param {string} day - Nom du jour ('lu', 'ma', 'lundi', 'mardi', etc.) ou 'distance'
+   * @returns {number} Index du jour (0-4, 5 pour distance)
    */
   getDayIndex(day) {
     const days = { 
-      lu: 0, ma: 1, me: 2, je: 3, ve: 4,
-      lundi: 0, mardi: 1, mercredi: 2, jeudi: 3, vendredi: 4 
+      lu: 0, ma: 1, me: 2, je: 3, ve: 4, dist: 5,
+      lundi: 0, mardi: 1, mercredi: 2, jeudi: 3, vendredi: 4, distance: 5
     }
     return days[day] ?? 0
   }

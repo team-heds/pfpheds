@@ -588,7 +588,7 @@ const fetchStudentPfpList = async () => {
     console.log('🔍 Chargement PFP pour userId:', props.userId)
     const { data, error } = await supabase
       .from('StudentsPhysio')
-      .select('pfp_valided')
+      .select('pfp_valided, pfp2_data')
       .eq('user_id', props.userId)
       .maybeSingle()
     if (error) throw error
@@ -601,9 +601,9 @@ const fetchStudentPfpList = async () => {
     }
 
     let arr = []
-    const pfpVal = data.pfp_valided
     
-    // Cas 1: pfp_valided est déjà un tableau
+    // Traiter pfp_valided (PFP1)
+    const pfpVal = data.pfp_valided
     if (Array.isArray(pfpVal)) {
       arr = pfpVal
     }
@@ -622,8 +622,18 @@ const fetchStudentPfpList = async () => {
       arr = Object.values(pfpVal)
     }
     
+    // Traiter pfp2_data (PFP2 BA24)
+    const pfp2Val = data.pfp2_data
+    if (pfp2Val) {
+      if (Array.isArray(pfp2Val)) {
+        arr = [...arr, ...pfp2Val]
+      } else if (typeof pfp2Val === 'object') {
+        arr.push(pfp2Val)
+      }
+    }
+    
     studentPfpList.value = arr
-    console.log('✅ PFP list chargée:', arr.length, 'entrées', arr)
+    console.log('✅ PFP list chargée:', arr.length, 'entrées (pfp_valided + pfp2_data)', arr)
   } catch (e) {
     console.warn('⚠️ Erreur chargement PFP étudiant (Supabase):', e.message)
     studentPfpList.value = []
@@ -644,7 +654,7 @@ const processUserProfile = async () => {
     
     const studentData = props.userProfile;
     
-    if (studentData.pfp_valided) {
+    if (studentData.pfp_valided || studentData.pfp2_data) {
       // Parser pfp_valided (peut être string JSON, array ou objet)
       let pfpArray = []
       const pfpVal = studentData.pfp_valided
@@ -663,8 +673,18 @@ const processUserProfile = async () => {
         pfpArray = Object.values(pfpVal)
       }
       
-      console.log('✅ PFP array parsé:', pfpArray.length, 'entrées')
-      const validPfpEntries = pfpArray.filter((place) => place.id_pfp || place.ID_PFP);
+      // Traiter pfp2_data (PFP2 BA24)
+      const pfp2Val = studentData.pfp2_data
+      if (pfp2Val) {
+        if (Array.isArray(pfp2Val)) {
+          pfpArray = [...pfpArray, ...pfp2Val]
+        } else if (typeof pfp2Val === 'object') {
+          pfpArray.push(pfp2Val)
+        }
+      }
+      
+      console.log('✅ PFP array parsé:', pfpArray.length, 'entrées (pfp_valided + pfp2_data)')
+      const validPfpEntries = pfpArray.filter((place) => place.id_pfp || place.ID_PFP || place.ID_Place);
       console.log('✅ Entrées PFP valides:', validPfpEntries.length)
         
       // Agrégation des domaines et critères
@@ -727,10 +747,11 @@ const processUserProfile = async () => {
 const aggregatedCriteria = computed(() => {
   const result = {};
   criteriaList.forEach((crit) => (result[crit] = false));
-  if (props.userProfile && props.userProfile.pfp_valided) {
+  if (props.userProfile && (props.userProfile.pfp_valided || props.userProfile.pfp2_data)) {
     let pfpArray = []
-    const pfpVal = props.userProfile.pfp_valided
     
+    // Traiter pfp_valided
+    const pfpVal = props.userProfile.pfp_valided
     if (Array.isArray(pfpVal)) {
       pfpArray = pfpVal
     } else if (typeof pfpVal === 'string') {
@@ -742,6 +763,16 @@ const aggregatedCriteria = computed(() => {
       }
     } else if (pfpVal && typeof pfpVal === 'object') {
       pfpArray = Object.values(pfpVal)
+    }
+    
+    // Traiter pfp2_data
+    const pfp2Val = props.userProfile.pfp2_data
+    if (pfp2Val) {
+      if (Array.isArray(pfp2Val)) {
+        pfpArray = [...pfpArray, ...pfp2Val]
+      } else if (typeof pfp2Val === 'object') {
+        pfpArray.push(pfp2Val)
+      }
     }
     
     pfpArray.forEach((pfp) => {

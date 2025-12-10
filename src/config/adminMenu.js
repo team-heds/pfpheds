@@ -68,6 +68,7 @@ export default [
               { label: 'Répondant HES', icon: 'pi pi-user', to: '/management_repondant' },
               { label: 'Profil Répondant Enseignant', icon: 'pi pi-user', to: '/admin/formation-pratique/profil-repondant-enseignant' },
               { label: 'Management Places', icon: 'pi pi-map-marker', to: '/management_place' },
+              { label: 'Affectation PFP2 BA24', icon: 'pi pi-user-plus', to: '/affectation_stage_etudiant_ba24' },
               { label: 'Management Répondant CPT', icon: 'pi pi-users', to: '/admin/formation-pratique/management-repondant-cpt' },
               { label: 'Feuille Charge CPT', icon: 'pi pi-file', to: '/admin/formation-pratique/management-feuille-charge-cpt' },
               { label: 'Admin Secrétariat', icon: 'pi pi-briefcase', to: '/admin/formation-pratique/admin-secretariat' }

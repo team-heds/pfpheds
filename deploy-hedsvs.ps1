@@ -139,16 +139,24 @@ fi
 echo '[DEPLOY] Sauvegarde de l ancienne version...'
 sudo cp -r `$APP_PATH `${APP_PATH}.backup-`$TIMESTAMP 2>/dev/null || echo '[INFO] Pas de version precedente a sauvegarder'
 
-echo '[DEPLOY] Nettoyage des anciens backups (conservation des 2 plus récents)...'
-sudo bash -c "ls -dt \`${APP_PATH}.backup-* 2>/dev/null | tail -n +3 | xargs -r rm -rf"
+echo '[DEPLOY] Nettoyage des anciens backups (conservation du plus recent)...'
+sudo bash -c "ls -dt \`${APP_PATH}.backup-* 2>/dev/null | tail -n +2 | xargs -r rm -rf"
 
 echo '[DEPLOY] Vérification espace disque...'
-FREE_MB=$(df -m / | tail -1 | awk '{print `$4}')
+FREE_MB=`$(df -m / | tail -1 | awk '{print `$4}')
 echo "[INFO] Espace libre: `$FREE_MB MB"
-if [ "`$FREE_MB" -lt 1500 ]; then
-  echo '[DEPLOY] Espace faible, nettoyage /tmp et anciens backups...'
-  sudo find /tmp -name 'pfp-frontend-*.tar.gz' -delete 2>/dev/null || true
-  sudo bash -c "ls -dt \`${APP_PATH}.backup-* 2>/dev/null | tail -n +2 | xargs -r rm -rf"
+
+if [ "`$FREE_MB" -lt 2000 ]; then
+  echo '[DEPLOY] Espace critique (< 2GB), nettoyage agressif...'
+  # Identifier l'archive courante pour ne pas la supprimer
+  CURRENT_ARCHIVE=`$(basename "`$ARCHIVE_PATH")
+  sudo find /tmp -name 'pfp-frontend-*.tar.gz' ! -name "`$CURRENT_ARCHIVE" -delete 2>/dev/null || true
+  
+  # Suppression de TOUS les backups si espace critique (via xargs pour eviter erreurs si vide)
+  ls -d "`$APP_PATH".backup-* 2>/dev/null | xargs -r sudo rm -rf
+  
+  # Nettoyage Docker
+  sudo docker system prune -f 2>/dev/null || true
 fi
 
 echo '[DEPLOY] Extraction de la nouvelle version...'

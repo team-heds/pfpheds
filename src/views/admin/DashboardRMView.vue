@@ -96,6 +96,35 @@
           </div>
         </div>
 
+        <!-- Tous les Enseignants SI -->
+        <div class="section-card">
+          <div class="section-header">
+            <h3>
+              <i class="pi pi-id-card"></i> 
+              Liste des Enseignants SI
+              <Badge :value="filteredSITeachers.length" severity="info" class="ml-2" />
+            </h3>
+            <span class="p-input-icon-left search-box">
+              <i class="pi pi-search" />
+              <InputText v-model="searchSI" placeholder="Rechercher..." class="p-inputtext-sm" />
+            </span>
+          </div>
+          
+          <div class="teachers-list scrollable-list">
+            <div v-for="teacher in filteredSITeachers" :key="teacher.id" class="teacher-item">
+              <div class="teacher-info">
+                <h4>{{ teacher.name }}</h4>
+                <p>{{ teacher.email }}</p>
+              </div>
+              <Button icon="pi pi-envelope" class="p-button-rounded p-button-text p-button-sm" @click="contactTeacher(teacher)" />
+            </div>
+            <div v-if="filteredSITeachers.length === 0" class="empty-state">
+              <i class="pi pi-users"></i>
+              <p>Aucun enseignant trouvé</p>
+            </div>
+          </div>
+        </div>
+
         <!-- Actions rapides -->
         <div class="section-card">
           <h3><i class="pi pi-bolt"></i> Actions Rapides</h3>
@@ -113,13 +142,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/authStore';
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 import PageHeader from '@/components/admin/common/PageHeader.vue';
 import Button from 'primevue/button';
 import ProgressSpinner from 'primevue/progressspinner';
+import InputText from 'primevue/inputtext';
+import Badge from 'primevue/badge';
 import { getAllRMData } from '@/services/academicKpiService';
 
 const router = useRouter();
@@ -137,6 +168,17 @@ const studentsCount = ref(0);
 // Données
 const modules = ref([]);
 const teachers = ref([]);
+const siTeachers = ref([]);
+const searchSI = ref('');
+
+const filteredSITeachers = computed(() => {
+  if (!searchSI.value) return siTeachers.value;
+  const term = searchSI.value.toLowerCase();
+  return siTeachers.value.filter(t => 
+    t.name.toLowerCase().includes(term) || 
+    t.email.toLowerCase().includes(term)
+  );
+});
 
 /**
  * Charge les données RM depuis Supabase/Firebase
@@ -166,6 +208,7 @@ async function loadRMData() {
     // Mettre à jour les données
     modules.value = data.modules;
     teachers.value = data.teachers;
+    siTeachers.value = data.siTeachers || [];
     
     console.log('✅ Données RM chargées');
   } catch (error) {
@@ -182,6 +225,10 @@ onMounted(() => {
 function manageModule(module) {
   console.log('Gérer module:', module);
   router.push(`/admin/courses/${module.id}`);
+}
+
+function contactTeacher(teacher) {
+  window.location.href = `mailto:${teacher.email}`;
 }
 </script>
 
@@ -260,6 +307,12 @@ function manageModule(module) {
   gap: 1rem;
 }
 
+.scrollable-list {
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
 .module-item, .teacher-item {
   display: flex;
   justify-content: space-between;
@@ -319,5 +372,26 @@ function manageModule(module) {
 .loading-container p {
   color: var(--text-color-secondary);
   font-size: 1.1rem;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.section-header h3 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+}
+
+.search-box {
+  width: 250px;
+}
+
+.ml-2 {
+  margin-left: 0.5rem;
 }
 </style>
