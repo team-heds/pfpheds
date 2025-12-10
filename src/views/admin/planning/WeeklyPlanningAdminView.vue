@@ -1161,7 +1161,7 @@ const exportToExcel = async () => {
     let currentRow = 5
 
     // Grouper par jour
-    const dayOrder = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi']
+    const dayOrder = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'distance']
     const groupedByDay = {}
     
     sortedTimeSlots.value.forEach(slot => {
@@ -1188,9 +1188,11 @@ const exportToExcel = async () => {
         mardi: 'FFCCCCFF',
         mercredi: 'FFFFCCCC',
         jeudi: 'FFCCCCFF',
-        vendredi: 'FFFFCCCC'
+        vendredi: 'FFFFCCCC',
+        distance: 'FFEEEEEE' // Gris clair pour distance
       }
       const dayBgColor = dayColors[day] || 'FFFFCCCC'
+      const dayLabel = day === 'distance' ? 'DISTANCE' : (day.charAt(0).toUpperCase() + day.slice(1))
 
       // Compteur de lignes avant le module
       const moduleStartRow = currentRow
@@ -1300,7 +1302,7 @@ const exportToExcel = async () => {
         // Colonne Jour (1) - depuis le début du module jusqu'à la fin des créneaux
         worksheet.mergeCells(moduleStartRow, 1, endRow, 1)
         const dayCell = worksheet.getCell(moduleStartRow, 1)
-        dayCell.value = `${day.charAt(0).toUpperCase() + day.slice(1)}\n\n${dayDate || ''}`
+        dayCell.value = `${dayLabel}\n\n${dayDate || ''}`
         dayCell.font = { size: 10, bold: true }
         dayCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
         dayCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: dayBgColor } }
@@ -1501,7 +1503,7 @@ const exportSemesterToExcel = async (workbook, ExcelJS) => {
 const fillWeekDataToSheet = async (worksheet, weekSlots) => {
   let currentRow = 5
   
-  const dayOrder = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi']
+  const dayOrder = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'distance']
   const groupedByDay = {}
   
   weekSlots.forEach(slot => {
@@ -1516,7 +1518,8 @@ const fillWeekDataToSheet = async (worksheet, weekSlots) => {
     mardi: 'FFCCCCFF',
     mercredi: 'FFFFCCCC',
     jeudi: 'FFCCCCFF',
-    vendredi: 'FFFFCCCC'
+    vendredi: 'FFFFCCCC',
+    distance: 'FFEEEEEE'
   }
   
   dayOrder.forEach(day => {
@@ -1524,6 +1527,7 @@ const fillWeekDataToSheet = async (worksheet, weekSlots) => {
     if (!daySlots || daySlots.length === 0) return
     
     const dayBgColor = dayColors[day] || 'FFFFCCCC'
+    const dayLabel = day === 'distance' ? 'DISTANCE' : (day.charAt(0).toUpperCase() + day.slice(1))
     const moduleStartRow = currentRow
     
     // Module principal (trouver le module le plus fréquent)
@@ -1624,9 +1628,8 @@ const fillWeekDataToSheet = async (worksheet, weekSlots) => {
       const dayCell = worksheet.getCell(moduleStartRow, 1)
       
       // Formater jour et date
-      const dayName = day.charAt(0).toUpperCase() + day.slice(1)
       const dateStr = daySlots[0].date || ''
-      dayCell.value = dateStr ? `${dayName}\n\n${dateStr}` : dayName
+      dayCell.value = dateStr ? `${dayLabel}\n\n${dateStr}` : dayLabel
       
       dayCell.font = { size: 11, bold: true }
       dayCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
@@ -1653,7 +1656,7 @@ const fillWeekDataToSheet = async (worksheet, weekSlots) => {
 const fillWeekDataToSheetContinuous = async (worksheet, weekSlots, startRow) => {
   let currentRow = startRow
   
-  const dayOrder = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi']
+  const dayOrder = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'distance']
   const groupedByDay = {}
   
   weekSlots.forEach(slot => {
@@ -1668,7 +1671,8 @@ const fillWeekDataToSheetContinuous = async (worksheet, weekSlots, startRow) => 
     mardi: 'FFCCCCFF',
     mercredi: 'FFFFCCCC',
     jeudi: 'FFCCCCFF',
-    vendredi: 'FFFFCCCC'
+    vendredi: 'FFFFCCCC',
+    distance: 'FFEEEEEE'
   }
   
   dayOrder.forEach(day => {
@@ -1676,6 +1680,7 @@ const fillWeekDataToSheetContinuous = async (worksheet, weekSlots, startRow) => 
     if (!daySlots || daySlots.length === 0) return
     
     const dayBgColor = dayColors[day] || 'FFFFCCCC'
+    const dayLabel = day === 'distance' ? 'DISTANCE' : (day.charAt(0).toUpperCase() + day.slice(1))
     const moduleStartRow = currentRow
     
     // Trouver le module principal

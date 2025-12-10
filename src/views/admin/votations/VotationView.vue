@@ -185,7 +185,7 @@
             :icon="voteAlreadyCast ? 'pi pi-refresh' : 'pi pi-send'"
             @click="sendVote"
             size="large"
-            :disabled="!selectedPlaces.some(p => p !== null)"
+            :disabled="selectedPlaces.filter(p => p !== null).length !== 5"
             :severity="voteAlreadyCast ? 'warning' : 'primary'"
           />
         </div>
@@ -497,8 +497,8 @@ export default {
         };
       }).filter(c => c !== null);
 
-      if (choices.length === 0) {
-        this.dialogMessage = "Veuillez sélectionner au moins une place.";
+      if (choices.length !== 5) {
+        this.dialogMessage = "Veuillez sélectionner exactement 5 places par ordre de préférence avant de voter.";
         this.dialogVisible = true;
         this.isSubmitting = false;
         return;
