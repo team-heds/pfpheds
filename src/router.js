@@ -201,6 +201,7 @@ import PraticienFormateurFormModif from "@/components/admin/forms/PraticienForma
 import InstitutionForm from "@/components/admin/forms/InstitutionForm.vue";
 import InstitutionFormModif from "@/components/admin/forms/InstitutionFormModif.vue";
 import AffectationStageEtudiant from '@/components/admin/forms/AffectationStageEtudiant.vue'
+import AffectationStageEtudiantBA24 from '@/components/admin/forms/AffectationStageEtudiantBA24.vue'
 
 // ========================================
 // INSTITUTIONS & DÉTAILS
@@ -526,6 +527,7 @@ const routes = [
   { path: '/institution_form', component: InstitutionForm, name: 'InstitutionForm', props: true, meta: { requiresAuth: true, need: ['admin', 'editor'] } },
   { path: '/institution_form_modif/:id', component: InstitutionFormModif, name: 'InstitutionFormModif', props: true, meta: { requiresAuth: true, need: ['admin', 'editor'] } },
   { path: '/affectation_stage_etudiant', component: AffectationStageEtudiant, name: 'AffectationStageEtudiant', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
+  { path: '/affectation_stage_etudiant_ba24', component: AffectationStageEtudiantBA24, name: 'AffectationStageEtudiantBA24', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
 
   // ========================================
   // INSTITUTIONS & DÉTAILS
