@@ -61,14 +61,58 @@ export const usePlacesStore = defineStore('places', {
       this.error = null;
 
       try {
-        const { data, error } = await supabase
+        // 1. Récupérer toutes les places
+        const { data: placesData, error: placesError } = await supabase
           .from('places')
           .select('*');
 
-        if (error) throw error;
+        if (placesError) throw placesError;
 
-        this.places = data || [];
+        // 2. Récupérer toutes les institutions
+        const { data: institutionsData, error: institutionsError } = await supabase
+          .from('institutions')
+          .select('*');
+
+        if (institutionsError) {
+          console.warn('⚠️ Impossible de charger les institutions:', institutionsError);
+          // Continue sans les institutions
+          this.places = placesData || [];
+          return this.places;
+        }
+
+        // 3. Créer un map des institutions par ID
+        const institutionsMap = {};
+        (institutionsData || []).forEach(inst => {
+          institutionsMap[inst.InstitutionId] = inst;
+        });
+
+        console.log('📊 Institutions map:', institutionsMap);
+
+        // 4. Enrichir les places avec le nom de l'institution
+        this.places = (placesData || []).map(place => {
+          const institution = institutionsMap[place.InstitutionId];
+          
+          if (!institution && place.InstitutionId) {
+            console.warn(`⚠️ Institution non trouvée pour place ${place.NomPlace || place.PlaceId}, InstitutionId: ${place.InstitutionId}`);
+          }
+          
+          // Le champ dans la table institutions s'appelle "Name" pas "InstitutionName"
+          const institutionName = institution?.Name || place.Institution || 'N/A';
+          
+          console.log(`📍 Place: ${place.NomPlace || place.PlaceId} → Institution: ${institutionName} (InstitutionId: ${place.InstitutionId})`);
+          
+          return {
+            ...place,
+            Institution_name: institutionName,
+            institution_data: institution
+          };
+        });
+        
         console.log('✅ Places chargées depuis Supabase:', this.places.length);
+        console.log('✅ Institutions chargées:', Object.keys(institutionsMap).length);
+        if (this.places.length > 0) {
+          console.log('✅ Exemple de place:', this.places[0]);
+        }
         return this.places;
       } catch (error) {
         console.error('❌ Erreur fetch places:', error);

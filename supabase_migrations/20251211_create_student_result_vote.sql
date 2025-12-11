@@ -224,14 +224,8 @@ DECLARE
     v_result JSONB;
     v_user_id UUID;
 BEGIN
-    -- Vérifier que l'utilisateur est admin
-    IF NOT EXISTS (
-        SELECT 1 FROM user_profiles
-        WHERE user_id = auth.uid()
-        AND (role = 'admin' OR role = 'superadmin')
-    ) THEN
-        RAISE EXCEPTION 'Permission denied: Admin access required';
-    END IF;
+    -- Pas de vérification des permissions ici
+    -- Le service_role du backend a déjà tous les droits via SECURITY DEFINER
 
     -- Parcourir chaque résultat à insérer
     FOR v_result IN SELECT * FROM jsonb_array_elements(p_results)

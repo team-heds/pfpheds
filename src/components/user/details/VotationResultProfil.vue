@@ -17,12 +17,12 @@
               icon="pi pi-arrow-right"
               class="text-sm p-button-outlined p-button-primary details-btn ml-3"
               style="height: 32px; width: 200px; min-width: 200px;"
-              @click="navigateToInstitution(place.IDPlace)"
+              @click="navigateToInstitution(place.InstitutionId || place.IDPlace)"
             />
           </div>
           <div>
             <h6 class="m-2 font-bold">
-              {{ getInstitutionNameById(place.IDPlace) }}
+              {{ place.Institution_name || place.Institution || getInstitutionNameById(place.InstitutionId) }}
             </h6>
             <p class="m-2">
               Domaine : {{ place.NomPlace }}<br />
@@ -75,6 +75,31 @@ const router = useRouter()
 // Supabase places data
 const supabasePlaces = ref([])
 const supabasePraticiens = ref({})
+const publishedAssignments = ref([])
+
+// Fonction pour récupérer les assignations publiées depuis student_result_vote
+const fetchPublishedAssignments = async () => {
+  try {
+    console.log('[FETCH] Récupération des assignations publiées pour userId:', props.userId)
+    
+    const { data, error } = await supabase
+      .from('student_result_vote')
+      .select('*')
+      .eq('user_id', props.userId)
+      .eq('status', 'published')
+    
+    if (error) {
+      console.error('Erreur lors de la récupération des assignations:', error)
+      return
+    }
+    
+    publishedAssignments.value = data || []
+    console.log(`✅ ${data?.length || 0} assignations publiées trouvées pour l'étudiant`)
+    console.log('Assignations:', publishedAssignments.value)
+  } catch (err) {
+    console.error('Erreur inattendue lors de la récupération des assignations:', err)
+  }
+}
 
 // Fonction pour récupérer les places depuis Supabase
 const fetchPlacesFromSupabase = async () => {
@@ -124,7 +149,83 @@ const fetchPraticiensFromSupabase = async () => {
   }
 }
 
-// Ajout : computed pour trouver toutes les places où l'utilisateur courant est affecté depuis Supabase
+// Computed pour les assignations publiées enrichies avec les données des places
+const assignedPlacesFromPublished = computed(() => {
+  if (publishedAssignments.value.length === 0) {
+    console.log('[INFO] Aucune assignation publiée trouvée')
+    return []
+  }
+
+  // Enrichir chaque assignation avec les données de la place
+  const enrichedAssignments = publishedAssignments.value.map(assignment => {
+    console.log('[ENRICH] Traitement assignation:', {
+      assigned_place_id: assignment.assigned_place_id,
+      assigned_place_name: assignment.assigned_place_name,
+      assigned_institution_name: assignment.assigned_institution_name
+    })
+    
+    // Trouver la place correspondante
+    const place = supabasePlaces.value.find(p => p.PlaceId === assignment.assigned_place_id)
+    
+    if (!place) {
+      console.warn('[WARN] Place non trouvée pour PlaceId:', assignment.assigned_place_id)
+      // Retourner quand même l'assignation avec les infos basiques depuis student_result_vote
+      console.log('[ENRICH] Place NON trouvée, utilisation données student_result_vote')
+      return {
+        IDPlace: assignment.assigned_place_id,
+        InstitutionId: null,
+        NomPlace: assignment.assigned_place_name || 'Place inconnue',
+        Institution: assignment.assigned_institution_name || 'Institution inconnue',
+        Institution_name: assignment.assigned_institution_name || 'Institution inconnue',
+        pfpLevel: assignment.pfp_type,
+        assigned_rank: assignment.assigned_rank,
+        _key: assignment.id
+      }
+    }
+
+    // Retourner l'assignation enrichie avec les données de la place
+    console.log('[ENRICH] Place trouvée:', {
+      PlaceId: place.PlaceId,
+      NomPlace: place.NomPlace,
+      InstitutionId: place.InstitutionId,
+      Institution: place.Institution,
+      Institution_name: place.Institution_name,
+      assigned_institution_name_from_result: assignment.assigned_institution_name
+    })
+    
+    // PRIORITÉ: assigned_institution_name de student_result_vote (valeur sauvegardée lors de l'attribution)
+    // FALLBACK 1: Institution_name enrichi depuis places
+    // FALLBACK 2: Institution (ancien champ texte dans places)
+    const institutionName = assignment.assigned_institution_name || 
+                           place.Institution_name || 
+                           place.Institution || 
+                           'Institution inconnue'
+    
+    const enriched = {
+      ...place,
+      IDPlace: place.PlaceId,
+      InstitutionId: place.InstitutionId,
+      Institution: institutionName,
+      Institution_name: institutionName,
+      pfpLevel: assignment.pfp_type,
+      assigned_rank: assignment.assigned_rank,
+      _key: assignment.id
+    }
+    
+    console.log('[ENRICH] Résultat enrichi - Institution_name:', enriched.Institution_name)
+    return enriched
+  })
+
+  console.log(`🎯 ${enrichedAssignments.length} assignations publiées enrichies`)
+  if (enrichedAssignments.length > 0) {
+    console.log('[DEBUG] Première assignation enrichie:', enrichedAssignments[0])
+    console.log('[DEBUG] InstitutionId:', enrichedAssignments[0].InstitutionId)
+    console.log('[DEBUG] Institution_name:', enrichedAssignments[0].Institution_name)
+  }
+  return enrichedAssignments
+})
+
+// Ajout : computed pour trouver toutes les places où l'utilisateur courant est affecté depuis Supabase (ANCIEN SYSTÈME - FALLBACK)
 const assignedPlacesFromSupabase = computed(() => {
   const userId = props.userId
   const results = []
@@ -153,12 +254,20 @@ const assignedPlacesFromSupabase = computed(() => {
     })
   })
   
-  console.log(`🎯 ${results.length} places trouvées pour l'étudiant ${userId}`)
+  console.log(`🎯 ${results.length} places trouvées pour l'étudiant ${userId} (ancien système)`)
   return results
 })
 
-// Computed pour trouver toutes les places où l'utilisateur courant est affecté depuis Supabase
+// Computed pour afficher les assignations - NOUVEAU SYSTÈME EN PRIORITÉ
 const assignedPlaces = computed(() => {
+  // Prioriser les assignations publiées depuis student_result_vote
+  if (publishedAssignments.value.length > 0) {
+    console.log('[NEW] Utilisation des assignations depuis student_result_vote')
+    return assignedPlacesFromPublished.value
+  }
+  
+  // Fallback sur l'ancien système si aucune assignation publiée
+  console.log('[OLD] Fallback sur ancien système d\'assignations')
   return assignedPlacesFromSupabase.value
 });
 
@@ -262,6 +371,7 @@ const navigateToInstitution = (instId) => {
 onMounted(async () => {
   await fetchInstitutions()
   await Promise.all([
+    fetchPublishedAssignments(),  // NOUVEAU : Charger les assignations publiées
     fetchPlacesFromSupabase(),
     fetchPraticiensFromSupabase()
   ])

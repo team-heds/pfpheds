@@ -117,102 +117,110 @@
         </div>
       </div>
 
-      <!-- Résultats de l'algorithme -->
-      <div v-if="canShowResults && algorithmResults.length > 0" class="results-card p-4 border-round mb-4">
+      <!-- Résultats de l'algorithme - Version compacte -->
+      <div v-if="canShowResults && algorithmResults.length > 0" class="results-card p-3 border-round mb-3">
         <div class="flex justify-content-between align-items-center mb-3">
-          <h3 class="text-xl font-bold text-900 m-0">
-            <i class="pi pi-check-circle text-green-600 mr-2"></i>
-            Résultats de l'Attribution
-          </h3>
+          <div>
+            <h3 class="text-lg font-bold text-900 m-0 mb-1">
+              <i class="pi pi-check-circle text-green-600 mr-2"></i>
+              Résultats de l'Attribution
+            </h3>
+            <!-- Statistiques en ligne compacte -->
+            <div v-if="algorithmStats" class="flex gap-4 flex-wrap">
+              <div class="flex align-items-center gap-2">
+                <i class="pi pi-users text-green-600"></i>
+                <span class="text-sm"><strong>{{ algorithmStats.totalStudents || 0 }}</strong> étudiants</span>
+              </div>
+              <div class="flex align-items-center gap-2">
+                <i class="pi pi-star text-blue-600"></i>
+                <span class="text-sm"><strong>{{ algorithmStats.firstChoiceCount || 0 }}</strong> en 1er choix</span>
+              </div>
+              <div v-if="algorithmStats.randomAssignmentCount > 0" class="flex align-items-center gap-2">
+                <i class="pi pi-question-circle text-red-600"></i>
+                <span class="text-sm"><strong>{{ algorithmStats.randomAssignmentCount || 0 }}</strong> aléatoires</span>
+              </div>
+              <div class="flex align-items-center gap-2">
+                <i class="pi pi-building text-purple-600"></i>
+                <span class="text-sm"><strong>{{ algorithmStats.placesUsed || 0 }}</strong> places utilisées</span>
+              </div>
+              <div class="flex align-items-center gap-2">
+                <i class="pi pi-chart-line text-orange-600"></i>
+                <span class="text-sm">Rang moyen: <strong>{{ algorithmStats.averageRank || '0' }}</strong></span>
+              </div>
+            </div>
+          </div>
           <Tag :value="`${algorithmResults.length} attributions`" severity="success" />
         </div>
 
-        <!-- Statistiques résumées -->
-        <div v-if="algorithmStats" class="grid mb-3">
-          <div class="col-12 md:col-3">
-            <div class="stats-box bg-green-50 p-3 border-round">
-              <div class="flex align-items-center gap-2">
-                <i class="pi pi-users text-green-600 text-2xl"></i>
-                <div>
-                  <p class="text-600 text-sm m-0">Étudiants traités</p>
-                  <h4 class="text-900 text-xl font-bold m-0">{{ algorithmStats.totalStudents || 0 }}</h4>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="col-12 md:col-3">
-            <div class="stats-box bg-blue-50 p-3 border-round">
-              <div class="flex align-items-center gap-2">
-                <i class="pi pi-star text-blue-600 text-2xl"></i>
-                <div>
-                  <p class="text-600 text-sm m-0">1er choix</p>
-                  <h4 class="text-900 text-xl font-bold m-0">{{ algorithmStats.firstChoiceCount || 0 }}</h4>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="col-12 md:col-3">
-            <div class="stats-box bg-purple-50 p-3 border-round">
-              <div class="flex align-items-center gap-2">
-                <i class="pi pi-building text-purple-600 text-2xl"></i>
-                <div>
-                  <p class="text-600 text-sm m-0">Places utilisées</p>
-                  <h4 class="text-900 text-xl font-bold m-0">{{ algorithmStats.placesUsed || 0 }}</h4>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="col-12 md:col-3">
-            <div class="stats-box bg-orange-50 p-3 border-round">
-              <div class="flex align-items-center gap-2">
-                <i class="pi pi-chart-line text-orange-600 text-2xl"></i>
-                <div>
-                  <p class="text-600 text-sm m-0">Rang moyen</p>
-                  <h4 class="text-900 text-xl font-bold m-0">{{ algorithmStats.averageRank || '0' }}</h4>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Tableau des résultats -->
+        <!-- Tableau des résultats - Compact et complet -->
         <DataTable 
           :value="algorithmResults" 
           responsiveLayout="scroll"
           :paginator="true"
-          :rows="10"
-          paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink"
+          :rows="100"
+          :rowsPerPageOptions="[25, 50, 100, 200]"
+          paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+          currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} étudiants"
+          sortField="assigned_rank"
+          :sortOrder="1"
           class="results-table"
+          stripedRows
         >
-          <Column field="user_id" header="Étudiant" sortable>
-            <template #body="slotProps">
+          <template #header>
+            <div class="flex justify-content-between align-items-center flex-wrap gap-2">
               <div>
-                <strong>{{ getStudentName(slotProps.data.user_id) }}</strong>
+                <span class="text-lg font-semibold">Liste complète des attributions</span>
                 <br/>
-                <small class="text-500">{{ slotProps.data.user_id.substring(0, 8) }}...</small>
+                <span class="text-sm text-500">{{ algorithmResults.length }} étudiants assignés • Triés par rang de choix</span>
               </div>
+              <div class="flex gap-2">
+                <Button 
+                  icon="pi pi-file-excel" 
+                  label="Exporter" 
+                  size="small" 
+                  severity="success" 
+                  outlined
+                  @click="exportResults"
+                  v-tooltip.top="'Exporter les résultats en CSV'"
+                />
+              </div>
+            </div>
+          </template>
+
+          <Column field="user_id" header="Étudiant" sortable :style="{ width: '220px' }">
+            <template #body="slotProps">
+              <strong>{{ getStudentName(slotProps.data.user_id) }}</strong>
             </template>
           </Column>
-          <Column field="assigned_place_name" header="Place Attribuée" sortable>
+          
+          <Column field="assigned_place_name" header="Place Attribuée" sortable :style="{ minWidth: '250px' }">
             <template #body="slotProps">
               <div>
-                <strong>{{ slotProps.data.assigned_place_name }}</strong>
-                <br/>
+                <div class="font-semibold">{{ slotProps.data.assigned_place_name }}</div>
                 <small class="text-500">{{ slotProps.data.assigned_institution_name }}</small>
               </div>
             </template>
           </Column>
-          <Column field="assigned_rank" header="Choix" sortable>
+          
+          <Column field="assigned_rank" header="Choix" sortable :style="{ width: '150px', textAlign: 'center' }">
             <template #body="slotProps">
               <Tag 
+                v-if="slotProps.data.assigned_rank === 99"
+                value="🎲 Aléatoire" 
+                severity="danger"
+                v-tooltip.top="'Place attribuée aléatoirement (non dans les choix)'"
+              />
+              <Tag 
+                v-else
                 :value="`${slotProps.data.assigned_rank}er choix`" 
                 :severity="slotProps.data.assigned_rank === 1 ? 'success' : slotProps.data.assigned_rank === 2 ? 'info' : 'warning'"
               />
             </template>
           </Column>
-          <Column field="priority_score" header="Score" sortable>
+          
+          <Column field="priority_score" header="Score" sortable :style="{ width: '100px', textAlign: 'center' }">
             <template #body="slotProps">
-              {{ slotProps.data.priority_score ? slotProps.data.priority_score.toFixed(1) : 'N/A' }}
+              <span class="font-medium">{{ slotProps.data.priority_score ? slotProps.data.priority_score.toFixed(1) : 'N/A' }}</span>
             </template>
           </Column>
         </DataTable>
@@ -546,6 +554,136 @@
               </Column>
             </DataTable>
           </TabPanel>
+
+          <!-- Onglet 3: Attribution des Places (après algorithme) -->
+          <TabPanel header="Attribution des Places" :disabled="placesWithAssignments.length === 0">
+            <div v-if="placesWithAssignments.length === 0" class="bg-blue-50 border-round p-4">
+              <div class="flex align-items-center gap-2">
+                <i class="pi pi-info-circle text-blue-600 text-2xl"></i>
+                <div>
+                  <h4 class="m-0 text-blue-900">Aucune attribution</h4>
+                  <p class="m-0 mt-2 text-blue-800">
+                    Lancez l'algorithme d'attribution pour voir les résultats ici.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <DataTable 
+              v-else
+              :value="placesWithAssignments" 
+              responsiveLayout="scroll"
+              :paginator="true"
+              :rows="50"
+              :rowsPerPageOptions="[25, 50, 100]"
+              paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+              currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} places"
+              sortField="institutionName"
+              :sortOrder="1"
+              class="places-attribution-table"
+              stripedRows
+            >
+              <template #header>
+                <div class="flex justify-content-between align-items-center flex-wrap gap-2">
+                  <div>
+                    <span class="text-xl text-900 font-bold">
+                      <i class="pi pi-building text-primary mr-2"></i>
+                      Toutes les Places du {{ filterPFP }}
+                    </span>
+                    <br/>
+                    <span class="text-sm text-600">
+                      <strong class="text-green-600">{{ placesWithAssignments.filter(p => p.assignedCount > 0).length }}</strong> places avec étudiants • 
+                      <strong class="text-orange-600">{{ placesWithAssignments.filter(p => p.assignedCount === 0).length }}</strong> places vides • 
+                      <strong>{{ placesWithAssignments.length }}</strong> au total
+                    </span>
+                  </div>
+                </div>
+              </template>
+
+              <Column header="Institution" sortable field="institutionName" :style="{ minWidth: '200px' }">
+                <template #body="slotProps">
+                  <div class="flex align-items-center gap-2">
+                    <i class="pi pi-building text-primary"></i>
+                    <span class="font-medium">{{ slotProps.data.institutionName }}</span>
+                  </div>
+                </template>
+              </Column>
+
+              <Column header="Nom de la Place" sortable field="placeName" :style="{ minWidth: '180px' }">
+                <template #body="slotProps">
+                  <span class="font-medium">{{ slotProps.data.placeName }}</span>
+                </template>
+              </Column>
+
+              <Column header="Capacité Totale" sortable field="totalCapacity" :style="{ textAlign: 'center', width: '120px' }">
+                <template #body="slotProps">
+                  <Tag :value="slotProps.data.totalCapacity" severity="info" />
+                </template>
+              </Column>
+
+              <Column header="Assignés" sortable field="assignedCount" :style="{ textAlign: 'center', width: '100px' }">
+                <template #body="slotProps">
+                  <Tag 
+                    :value="slotProps.data.assignedCount" 
+                    :severity="slotProps.data.assignedCount > 0 ? 'success' : 'secondary'"
+                  />
+                </template>
+              </Column>
+
+              <Column header="Restant" sortable field="remainingCapacity" :style="{ textAlign: 'center', width: '100px' }">
+                <template #body="slotProps">
+                  <Tag 
+                    :value="slotProps.data.remainingCapacity" 
+                    :severity="slotProps.data.remainingCapacity > 0 ? 'warning' : 'success'"
+                  />
+                </template>
+              </Column>
+
+              <Column header="Étudiants Assignés" :style="{ minWidth: '350px' }">
+                <template #body="slotProps">
+                  <!-- Place vide -->
+                  <div v-if="slotProps.data.assignedStudents.length === 0" class="flex align-items-center gap-2 p-2 bg-orange-50 border-round">
+                    <i class="pi pi-exclamation-triangle text-orange-500"></i>
+                    <span class="text-orange-700 font-medium">Aucun étudiant assigné ({{ slotProps.data.totalCapacity }} place(s) disponible(s))</span>
+                  </div>
+                  <!-- Place avec étudiants -->
+                  <div v-else class="assigned-students-list">
+                    <div 
+                      v-for="(assignment, idx) in slotProps.data.assignedStudents" 
+                      :key="assignment.userId"
+                      class="mb-1 p-2 bg-green-50 border-round"
+                    >
+                      <div class="flex align-items-center gap-2">
+                        <Tag 
+                          :value="`${idx + 1}`" 
+                          severity="success"
+                          rounded
+                        />
+                        <span class="font-semibold">{{ getStudentName(assignment.userId) }}</span>
+                        <Tag 
+                          v-if="assignment.rank === 99"
+                          value="🎲 Aléatoire" 
+                          severity="danger"
+                          class="ml-auto"
+                          v-tooltip.top="'Assignation aléatoire (place non dans les choix)'"
+                        />
+                        <Tag 
+                          v-else
+                          :value="`${assignment.rank}er choix`" 
+                          :severity="assignment.rank === 1 ? 'success' : assignment.rank === 2 ? 'info' : 'warning'"
+                          class="ml-auto"
+                        />
+                      </div>
+                    </div>
+                    <!-- Indication si place complète -->
+                    <div v-if="slotProps.data.remainingCapacity === 0" class="mt-1">
+                      <Tag value="Place complète" severity="success" class="w-full" />
+                    </div>
+                  </div>
+                </template>
+              </Column>
+            </DataTable>
+          </TabPanel>
         </TabView>
 
         <!-- Bouton Algorithme -->
@@ -612,6 +750,7 @@ const placesStore = usePlacesStore()
 const institutionsStore = useInstitutionsStore()
 const algorithmResults = ref([]) // Résultats de l'algorithme
 const algorithmStats = ref(null) // Statistiques de l'algorithme
+const placesWithAssignments = ref([]) // Places avec étudiants assignés
 
 // ============================================
 // CONFIGURATION POUR BA25 - PFP1A et PFP1B
@@ -803,16 +942,31 @@ const startAlgorithm = async () => {
       institutionMap.set(inst.InstitutionId, inst)
     })
 
-    const placesData = placesStore.places.map(place => {
-      const institution = institutionMap.get(place.InstitutionId)
-      return {
-        PlaceId: place.PlaceId,
-        NomPlace: place.NomPlace,
-        InstitutionId: place.InstitutionId,
-        InstitutionName: institution?.Name || 'Inconnu',
-        Capacity: place.Capacity || 1
-      }
-    })
+    // 🎯 Filtrer les places selon le PFP sélectionné
+    const placesData = placesStore.places
+      .map(place => {
+        const institution = institutionMap.get(place.InstitutionId)
+        
+        // Récupérer la capacité pour ce PFP et cette année
+        let capacity = 0
+        if (place[filterPFP.value] && place[filterPFP.value][filterYear.value]) {
+          capacity = parseInt(place[filterPFP.value][filterYear.value])
+        }
+        
+        // Si pas de capacité définie, ignorer cette place
+        if (!capacity || isNaN(capacity) || capacity < 1) {
+          return null
+        }
+        
+        return {
+          PlaceId: place.PlaceId,
+          NomPlace: place.NomPlace,
+          InstitutionId: place.InstitutionId,
+          InstitutionName: institution?.Name || 'Inconnu',
+          Capacity: capacity // Utiliser la capacité spécifique au PFP
+        }
+      })
+      .filter(Boolean) // Retirer les null
 
     console.log('📊 Données préparées:', {
       students: studentsData.length,
@@ -832,6 +986,7 @@ const startAlgorithm = async () => {
     // Stocker les résultats et statistiques
     algorithmResults.value = result.results || []
     algorithmStats.value = result.stats || {}
+    placesWithAssignments.value = result.placesWithAssignments || []
 
     // Afficher les statistiques
     const stats = result.stats || {}
@@ -879,11 +1034,73 @@ const startAlgorithm = async () => {
 }
 
 const getStudentName = (userId) => {
-  const student = allStudents.value.find(s => s.user_id === userId)
+  const student = allStudents.value.find(s => s.user_id === userId || s.id === userId)
   if (student) {
-    return `${student.Prenom || ''} ${student.Nom || ''}`.trim() || 'Inconnu'
+    // 1. Essayer display_name
+    if (student.display_name) return student.display_name
+    
+    // 2. Essayer Nom + Prenom (format: NOM Prénom)
+    const nom = student.Nom || student.nom || student.family_name || ''
+    const prenom = student.Prenom || student.prenom || student.forname || ''
+    
+    if (nom || prenom) {
+      // Format: NOM Prénom (nom en majuscules)
+      return `${nom.toUpperCase()} ${prenom}`.trim()
+    }
+    
+    // 3. Fallback sur email
+    if (student.email || student.Mail) {
+      const email = student.email || student.Mail
+      return email.split('@')[0]
+    }
   }
   return 'Inconnu'
+}
+
+const exportResults = () => {
+  if (algorithmResults.value.length === 0) {
+    toast.add({
+      severity: 'warn',
+      summary: 'Aucune donnée',
+      detail: 'Pas de résultats à exporter',
+      life: 3000
+    })
+    return
+  }
+
+  // Préparer les données CSV
+  const headers = ['Étudiant', 'Place Attribuée', 'Institution', 'Rang du Choix', 'Score de Priorité']
+  const rows = algorithmResults.value.map(result => [
+    getStudentName(result.user_id),
+    result.assigned_place_name,
+    result.assigned_institution_name,
+    result.assigned_rank === 99 ? 'Aléatoire' : `${result.assigned_rank}er choix`,
+    result.priority_score ? result.priority_score.toFixed(1) : 'N/A'
+  ])
+
+  // Créer le CSV
+  const csvContent = [
+    headers.join(';'),
+    ...rows.map(row => row.join(';'))
+  ].join('\n')
+
+  // Télécharger le fichier
+  const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' })
+  const link = document.createElement('a')
+  const url = URL.createObjectURL(blob)
+  link.setAttribute('href', url)
+  link.setAttribute('download', `attributions_${filterPFP.value}_${filterYear.value}_${new Date().toISOString().split('T')[0]}.csv`)
+  link.style.visibility = 'hidden'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+
+  toast.add({
+    severity: 'success',
+    summary: 'Export réussi',
+    detail: `${algorithmResults.value.length} attributions exportées`,
+    life: 3000
+  })
 }
 
 const getVoteCountForPlace = (placeId) => {
@@ -1063,8 +1280,27 @@ const loadData = async () => {
     // 1. Charger tous les étudiants et filtrer par BA25
     console.log('📚 Chargement des étudiants BA25...')
     const allStudentsData = await getAllStudents()
-    allStudents.value = allStudentsData.filter(student => student.Classe === ACTIVE_CONFIG.targetClass)
+    allStudents.value = allStudentsData.filter(student => {
+      // Gérer différentes conventions de nommage pour la classe
+      const classe = student.Classe || student.classe || student.class || student.Class || ''
+      return classe === ACTIVE_CONFIG.targetClass
+    })
     console.log(`✅ ${allStudents.value.length} étudiants BA25 chargés`)
+    
+    // Debug: Vérifier un échantillon d'étudiants
+    if (allStudents.value.length > 0) {
+      const sample = allStudents.value[0]
+      console.log('🔍 Échantillon étudiant (TOUS les champs):', sample)
+      console.log('🔍 Noms possibles:', {
+        'display_name': sample.display_name,
+        'Prenom': sample.Prenom,
+        'Nom': sample.Nom,
+        'forname': sample.forname,
+        'family_name': sample.family_name,
+        'email': sample.email,
+        'Mail': sample.Mail
+      })
+    }
     
     // 2. Charger les places
     console.log('🏥 Chargement des places...')
@@ -1104,9 +1340,13 @@ const loadData = async () => {
 
     // Ajouter les votes existants pour les étudiants BA25
     allVotes.value.forEach((vote, index) => {
-      const student = allStudents.value.find(s => s.id === vote.user_id)
+      const student = allStudents.value.find(s => 
+        s.id === vote.user_id || s.user_id === vote.user_id
+      )
       
-      if (student && student.Classe === ACTIVE_CONFIG.targetClass) {
+      const studentClasse = student ? (student.Classe || student.classe || student.class || student.Class) : null
+      
+      if (student && studentClasse === ACTIVE_CONFIG.targetClass) {
         let choices = []
         if (typeof vote.choices === 'string') {
           try {
@@ -1124,7 +1364,13 @@ const loadData = async () => {
         if (index < 3) {
           console.log(`🔍 Vote BA25 ${index + 1}:`, {
             userId: vote.user_id,
-            student: `${student.Prenom} ${student.Nom}`,
+            student_ALL_FIELDS: student,
+            Nom: student.Nom,
+            nom: student.nom,
+            family_name: student.family_name,
+            Prenom: student.Prenom,
+            prenom: student.prenom,
+            forname: student.forname,
             classe: student.Classe,
             pfpType: vote.pfp_type,
             year: vote.year,
@@ -1144,9 +1390,9 @@ const loadData = async () => {
         votationsMap.set(key, {
           id: vote.id,
           userId: vote.user_id,
-          nom: student.Nom || 'N/A',
-          prenom: student.Prenom || 'N/A',
-          classe: student.Classe || 'N/A',
+          nom: student.Nom || student.nom || student.family_name || 'N/A',
+          prenom: student.Prenom || student.prenom || student.forname || 'N/A',
+          classe: student.Classe || student.classe || student.class || 'N/A',
           pfpType: vote.pfp_type,
           year: vote.year,
           choix1: getPlaceName(choices[0]),
@@ -1185,10 +1431,10 @@ const loadData = async () => {
           if (!votationsMap.has(key)) {
             votationsMap.set(key, {
               id: null,
-              userId: student.id,
-              nom: student.Nom || 'N/A',
-              prenom: student.Prenom || 'N/A',
-              classe: student.Classe || 'N/A',
+              userId: student.id || student.user_id,
+              nom: student.Nom || student.nom || student.family_name || 'N/A',
+              prenom: student.Prenom || student.prenom || student.forname || 'N/A',
+              classe: student.Classe || student.classe || student.class || 'N/A',
               pfpType: pfpType,
               year: year,
               choix1: null,

@@ -76,89 +76,165 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
       placesMap.set(place.PlaceId, {
         ...place,
         remainingCapacity: place.Capacity || 1,
-        assignedStudents: []
+        assignedStudents: [],
+        voteCount: 0 // Compteur de votes pour cette place
       })
     })
 
-    // 🎯 OPTIMISATION: Tri intelligent des étudiants
-    // 1. Priorité aux étudiants avec moins de choix (plus difficile à placer)
-    // 2. Puis par score de priorité si disponible
-    // 3. Puis aléatoire pour équité
-    const sortedStudents = [...students].sort((a, b) => {
-      const aChoicesCount = (a.choices || []).length
-      const bChoicesCount = (b.choices || []).length
-      
-      // Priorité aux étudiants avec moins de choix
-      if (aChoicesCount !== bChoicesCount) {
-        return aChoicesCount - bChoicesCount
-      }
-      
-      // Ensuite par score de priorité
-      if (a.priorityScore && b.priorityScore) {
-        return b.priorityScore - a.priorityScore
-      }
-      
-      // Sinon aléatoire
-      return Math.random() - 0.5
+    // 🎯 ÉTAPE 1: Calculer la popularité de chaque place (nombre de fois qu'elle apparaît dans les votes)
+    students.forEach(student => {
+      const choices = student.choices || []
+      choices.forEach(choice => {
+        const placeData = placesMap.get(choice.placeId)
+        if (placeData) {
+          placeData.voteCount++
+        }
+      })
+    })
+
+    console.log('📊 Popularité des places calculée:')
+    const sortedPlacesByPopularity = Array.from(placesMap.values())
+      .sort((a, b) => a.voteCount - b.voteCount) // Tri croissant = places MOINS populaires d'abord
+    
+    console.log('   🟢 Top 5 places MOINS populaires (traitées en premier):')
+    sortedPlacesByPopularity.slice(0, 5).forEach(p => {
+      console.log(`      - ${p.NomPlace}: ${p.voteCount} votes, capacité: ${p.Capacity}`)
+    })
+    
+    console.log('   🔴 Top 5 places PLUS populaires (traitées en dernier):')
+    sortedPlacesByPopularity.slice(-5).reverse().forEach(p => {
+      console.log(`      - ${p.NomPlace}: ${p.voteCount} votes, capacité: ${p.Capacity}`)
     })
 
     // 🚀 OPTIMISATION: Collecter tous les résultats puis faire un batch insert
     const resultsToInsert = []
+    const assignedStudents = new Set() // Suivre les étudiants déjà assignés
+
+    // 🎯 ÉTAPE 2: Traiter les places par ordre de popularité croissante (moins demandées d'abord)
+    console.log('🔄 Attribution par places (moins populaires → plus populaires)...')
     
-    // Attribution des places
-    for (const student of sortedStudents) {
-      try {
+    for (const placeData of sortedPlacesByPopularity) {
+      // Trouver tous les étudiants qui ont choisi cette place et qui ne sont pas encore assignés
+      const candidatesForPlace = []
+      
+      students.forEach(student => {
+        // Ignorer si déjà assigné
+        if (assignedStudents.has(student.userId)) return
+        
         const choices = student.choices || []
-        let assigned = false
-        let assignedRank = null
-        let assignedPlace = null
-
-        // Parcourir les choix de l'étudiant dans l'ordre
-        for (let i = 0; i < choices.length && !assigned; i++) {
-          const choice = choices[i]
-          const placeData = placesMap.get(choice.placeId)
-
-          if (placeData && placeData.remainingCapacity > 0) {
-            // Place disponible, on l'attribue
-            assignedPlace = placeData
-            assignedRank = i + 1
-            assigned = true
-
-            // Décrémenter la capacité
-            placeData.remainingCapacity--
-            placeData.assignedStudents.push(student.userId)
-
-            // Ajouter à la liste pour batch insert
-            resultsToInsert.push({
-              user_id: student.userId,
-              pfp_type: pfpType,
-              year: year,
-              assigned_place_id: assignedPlace.PlaceId,
-              assigned_place_name: assignedPlace.NomPlace,
-              assigned_institution_name: assignedPlace.InstitutionName || '',
-              assigned_rank: assignedRank,
-              algorithm_run_id: algorithmRunId,
-              original_choices: choices,
-              priority_score: student.priorityScore || null,
-              notes: `Attributed by algorithm v2.0 (batch) on ${new Date().toISOString()}`
-            })
-          }
-        }
-
-        if (!assigned) {
-          console.warn(`⚠️ Aucune place disponible pour ${student.userId}`)
-          errors.push({
-            userId: student.userId,
-            error: 'No available place matching student choices'
+        const choiceRank = choices.findIndex(c => c.placeId === placeData.PlaceId)
+        
+        if (choiceRank !== -1) {
+          candidatesForPlace.push({
+            student,
+            rank: choiceRank + 1,
+            priorityScore: student.priorityScore || 0
           })
         }
-      } catch (studentError) {
-        console.error(`❌ Erreur traitement étudiant ${student.userId}:`, studentError)
-        errors.push({
-          userId: student.userId,
-          error: studentError.message
+      })
+
+      if (candidatesForPlace.length === 0) continue
+
+      // Trier les candidats : 
+      // 1. Par rang de choix (1er choix prioritaire)
+      // 2. Par score de priorité
+      // 3. Aléatoire
+      candidatesForPlace.sort((a, b) => {
+        if (a.rank !== b.rank) return a.rank - b.rank
+        if (a.priorityScore !== b.priorityScore) return b.priorityScore - a.priorityScore
+        return Math.random() - 0.5
+      })
+
+      // Assigner jusqu'à la capacité de la place
+      const toAssign = Math.min(candidatesForPlace.length, placeData.Capacity)
+      
+      for (let i = 0; i < toAssign; i++) {
+        const candidate = candidatesForPlace[i]
+        const student = candidate.student
+        
+        // Marquer comme assigné
+        assignedStudents.add(student.userId)
+        placeData.remainingCapacity--
+        placeData.assignedStudents.push(student.userId)
+
+        // Ajouter à la liste pour batch insert
+        resultsToInsert.push({
+          user_id: student.userId,
+          pfp_type: pfpType,
+          year: year,
+          assigned_place_id: placeData.PlaceId,
+          assigned_place_name: placeData.NomPlace,
+          assigned_institution_name: placeData.InstitutionName || '',
+          assigned_rank: candidate.rank,
+          algorithm_run_id: algorithmRunId,
+          original_choices: student.choices || [],
+          priority_score: student.priorityScore || null,
+          notes: `Attributed by algorithm v3.0 (optimized by place popularity) on ${new Date().toISOString()}`
         })
       }
+
+      if (toAssign > 0) {
+        console.log(`   ✅ ${placeData.NomPlace}: ${toAssign}/${candidatesForPlace.length} candidats assignés (${placeData.voteCount} votes totaux)`)
+      }
+    }
+
+    // 🎯 ÉTAPE 3: Assigner aléatoirement les étudiants restants aux places vides
+    console.log('🎲 Attribution aléatoire des étudiants restants aux places vides...')
+    
+    // Trouver les places avec capacité restante
+    const placesAvecCapacite = Array.from(placesMap.values())
+      .filter(p => p.remainingCapacity > 0)
+      .sort(() => Math.random() - 0.5) // Mélanger aléatoirement
+    
+    // Trouver les étudiants non assignés
+    const studentsNonAssignes = students
+      .filter(s => !assignedStudents.has(s.userId))
+      .sort(() => Math.random() - 0.5) // Mélanger aléatoirement
+    
+    console.log(`   📊 ${placesAvecCapacite.length} places avec capacité restante`)
+    console.log(`   📊 ${studentsNonAssignes.length} étudiants non assignés`)
+    
+    let randomAssignmentCount = 0
+    
+    // Assigner aléatoirement
+    for (const student of studentsNonAssignes) {
+      // Trouver une place disponible
+      const placeDisponible = placesAvecCapacite.find(p => p.remainingCapacity > 0)
+      
+      if (placeDisponible) {
+        // Assigner
+        assignedStudents.add(student.userId)
+        placeDisponible.remainingCapacity--
+        placeDisponible.assignedStudents.push(student.userId)
+        randomAssignmentCount++
+        
+        resultsToInsert.push({
+          user_id: student.userId,
+          pfp_type: pfpType,
+          year: year,
+          assigned_place_id: placeDisponible.PlaceId,
+          assigned_place_name: placeDisponible.NomPlace,
+          assigned_institution_name: placeDisponible.InstitutionName || '',
+          assigned_rank: 99, // Rang spécial pour attribution aléatoire
+          algorithm_run_id: algorithmRunId,
+          original_choices: student.choices || [],
+          priority_score: student.priorityScore || null,
+          notes: `⚠️ ATTRIBUTION ALÉATOIRE (place non dans les choix) - Algorithm v3.0 on ${new Date().toISOString()}`
+        })
+        
+        console.log(`   🎲 Attribution aléatoire: ${student.userId} → ${placeDisponible.NomPlace}`)
+      } else {
+        // Vraiment aucune place disponible
+        console.warn(`⚠️ Aucune place disponible pour ${student.userId} (même en aléatoire)`)
+        errors.push({
+          userId: student.userId,
+          error: 'No available place (including random assignment)'
+        })
+      }
+    }
+    
+    if (randomAssignmentCount > 0) {
+      console.log(`   ✅ ${randomAssignmentCount} étudiants assignés aléatoirement`)
     }
 
     // 🚀 BATCH INSERT: Insérer tous les résultats en une seule transaction
@@ -187,6 +263,9 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
 
     // Statistiques finales optimisées
     const placesUsedCount = Array.from(placesMap.values()).filter(p => p.assignedStudents.length > 0).length
+    const randomAssignments = resultsToInsert.filter(r => r.assigned_rank === 99)
+    const normalAssignments = resultsToInsert.filter(r => r.assigned_rank < 99)
+    
     const stats = {
       totalStudents: students.length,
       successfulAssignments: resultsToInsert.length,
@@ -195,17 +274,46 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
       firstChoiceCount: resultsToInsert.filter(r => r.assigned_rank === 1).length,
       secondChoiceCount: resultsToInsert.filter(r => r.assigned_rank === 2).length,
       thirdChoiceCount: resultsToInsert.filter(r => r.assigned_rank === 3).length,
-      averageRank: resultsToInsert.length > 0 
-        ? (resultsToInsert.reduce((sum, r) => sum + r.assigned_rank, 0) / resultsToInsert.length).toFixed(2)
+      randomAssignmentCount: randomAssignments.length, // 🆕 Attributions aléatoires
+      averageRank: normalAssignments.length > 0 
+        ? (normalAssignments.reduce((sum, r) => sum + r.assigned_rank, 0) / normalAssignments.length).toFixed(2)
         : 0
     }
 
+    // 📋 Construire la liste des places avec leurs assignations
+    const placesWithAssignments = Array.from(placesMap.values()).map(place => {
+      const assignments = resultsToInsert.filter(r => r.assigned_place_id === place.PlaceId)
+      
+      return {
+        placeId: place.PlaceId,
+        placeName: place.NomPlace,
+        institutionId: place.InstitutionId,
+        institutionName: place.InstitutionName,
+        totalCapacity: place.Capacity,
+        remainingCapacity: place.remainingCapacity,
+        assignedCount: assignments.length,
+        assignedStudents: assignments.map(a => ({
+          userId: a.user_id,
+          rank: a.assigned_rank,
+          priorityScore: a.priority_score
+        }))
+      }
+    }).sort((a, b) => {
+      // Trier par nombre d'assignations (décroissant), puis par nom de place
+      if (b.assignedCount !== a.assignedCount) {
+        return b.assignedCount - a.assignedCount
+      }
+      return (a.placeName || '').localeCompare(b.placeName || '')
+    })
+
     console.log(`✅ Algorithme terminé:`, stats)
+    console.log(`📋 Places avec assignations: ${placesWithAssignments.filter(p => p.assignedCount > 0).length}/${placesWithAssignments.length}`)
 
     return res.json({ 
       ok: true, 
       algorithmRunId,
       results: resultsToInsert,
+      placesWithAssignments, // 🆕 Liste des places avec étudiants assignés
       errors,
       stats
     })
