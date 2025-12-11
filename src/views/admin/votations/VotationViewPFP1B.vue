@@ -512,7 +512,13 @@ export default {
           InstitutionName: p.InstitutionName
         }) : null);
 
-        this.dialogMessage = "Votre vote a été enregistré avec succès !";
+        // RECHARGER les statistiques de votes pour mettre à jour les compteurs
+        console.log('🔄 Rechargement des statistiques après sauvegarde...');
+        await this.loadVoteStatistics();
+
+        this.dialogMessage = this.voteAlreadyCast 
+          ? "Votre vote a été mis à jour avec succès !" 
+          : "Votre vote a été enregistré avec succès !";
         this.dialogVisible = true;
       } catch (error) {
         console.error('❌ Erreur lors de l\'enregistrement du vote:', error);

@@ -85,13 +85,28 @@
                     <h3 class="text-900 font-bold text-xl mb-3">
                       {{ institutionFiles.length === 1 ? 'Descriptif lieu de formation pratique' : 'Descriptifs lieux de formation pratique' }}
                     </h3>
-                    <ul>
-                      <li v-for="file in institutionFiles" :key="file.url">
-                        <a :href="file.url" target="_blank" class="text-primary">
+                    <ul class="list-none pl-0">
+                      <li v-for="file in institutionFiles" :key="file.url" class="mb-2 flex align-items-center gap-2">
+                        <a 
+                          :href="file.url" 
+                          target="_blank" 
+                          class="text-primary hover:underline flex-1"
+                          @click="handleFileClick(file)"
+                        >
                           📄 {{ file.name }}
                         </a>
+                        <span v-if="file.isGlobal" class="text-xs text-500 bg-blue-50 px-2 py-1 border-round">
+                          Document global
+                        </span>
+                        <span v-if="file.warning" class="text-xs text-orange-600">
+                          ⚠️ {{ file.warning }}
+                        </span>
                       </li>
                     </ul>
+                  </div>
+                  <div v-else-if="loadingFiles" class="mt-3">
+                    <i class="pi pi-spin pi-spinner mr-2"></i>
+                    <span>Chargement des documents...</span>
                   </div>
                   <p v-else class="mt-3">Aucun PDF disponible pour cette institution.</p>
                 </div>
@@ -142,6 +157,7 @@ const placesStore = usePlacesStore()
 
 const institutionDetails = ref(null)
 const institutionFiles = ref([])
+const loadingFiles = ref(false)
 const activeIndex = ref(route.query.tab === 'encadrement' ? 1 : 0)
 const userRole = ref(null)
 const mapInstance = ref(null)
@@ -174,9 +190,27 @@ onBeforeUnmount(() => {
   destroyMap()
 })
 
-watch(institutionId, () => {
-  loadInstitution()
+watch(institutionId, (newId, oldId) => {
+  console.log('👀 Watch: institutionId changé de', oldId, 'vers', newId)
+  if (newId) {
+    loadInstitution()
+  }
 })
+
+// S'assurer que les fichiers sont rechargés quand institutionDetails change
+watch(institutionDetails, (newDetails) => {
+  if (newDetails) {
+    console.log('👀 Watch: institutionDetails disponible:', newDetails.Name)
+  }
+}, { deep: true })
+
+// Watch pour voir quand institutionFiles change
+watch(institutionFiles, (newVal, oldVal) => {
+  console.log(`📊 Watch: institutionFiles changé: ${oldVal?.length || 0} → ${newVal.length}`)
+  if (newVal.length > 0) {
+    console.log('📄 Fichiers actuels:', newVal.map(f => f.name))
+  }
+}, { deep: true })
 
 function detachPlacesListener() {
   if (placesRefInstance && placesCallback) {
@@ -196,48 +230,152 @@ function detachRoleListener() {
 
 async function loadInstitution() {
   if (!institutionId.value) return
+  
+  console.log('🔄 Chargement institution:', institutionId.value)
+  
   try {
     const inst = await institutionsStore.fetchInstitutionById(institutionId.value)
     if (!inst) {
+      console.error('❌ Institution non trouvée')
       router.push({ name: 'Error404' })
       return
     }
+    
+    console.log('✅ Institution chargée:', inst.Name)
     institutionDetails.value = inst
-    fetchInstitutionFiles(inst.InstitutionId ?? inst.id ?? institutionId.value)
+    
+    const instId = inst.InstitutionId ?? inst.id ?? institutionId.value
+    console.log('📂 RECHARGEMENT FORCÉ des fichiers pour institution ID:', instId)
+    
+    // TOUJOURS recharger depuis Supabase (pas de cache)
+    await fetchInstitutionFiles(instId)
+    
     setupMap(inst)
   } catch (error) {
-    console.error("Erreur lors du chargement de l'institution:", error)
+    console.error("❌ Erreur lors du chargement de l'institution:", error)
     router.push({ name: 'Error404' })
   }
 }
 
 async function fetchInstitutionFiles(id) {
-  if (!id) return
+  if (!id) {
+    console.warn('⚠️ Pas d\'ID institution fourni pour charger les fichiers')
+    return
+  }
+  
   detachPlacesListener()
+  
+  loadingFiles.value = true
+  institutionFiles.value = []
 
   try {
+    console.log(`🔍 Début chargement fichiers pour institution ID: ${id}`)
+    
+    // S'assurer que institutionDetails est disponible
+    if (!institutionDetails.value) {
+      console.error('❌ institutionDetails.value est null, impossible de charger les fichiers')
+      return
+    }
+
     // Charger les places depuis Supabase pour cette institution
     const places = await placesStore.fetchPlacesByInstitution(id)
 
+    if (!places || places.length === 0) {
+      console.warn(`⚠️ Aucune place trouvée pour l'institution ${id}`)
+      institutionFiles.value = []
+      return
+    }
+
     const inst = institutionDetails.value
-    const conceptUrl = inst?.CyberleanURL || inst?.CyberlearnURL
+    const globalConceptUrl = inst?.CyberleanURL || inst?.CyberlearnURL
 
-    // Transformer en format pour l'affichage
-    // Utiliser le lien global (Concept) sur les places si disponible, sinon le lien spécifique
-    const files = places
-      .map(place => ({
-        name: place.NomPlace || 'Document',
-        url: conceptUrl || place.fileURL,
-      }))
-      .filter(item => item.url) // Garder uniquement ceux qui ont un lien
+    console.log(`📋 ${places.length} places trouvées pour l'institution ${id}`)
+    console.log('🔗 URL globale institution:', globalConceptUrl || 'Aucune')
+    console.log('📊 Détails institution:', {
+      Name: inst?.Name,
+      InstitutionId: inst?.InstitutionId,
+      CyberleanURL: inst?.CyberleanURL,
+      CyberlearnURL: inst?.CyberlearnURL
+    })
 
-    institutionFiles.value = files
+    // Map pour dédupliquer les URLs
+    const urlMap = new Map()
 
-    console.log(`✅ ${institutionFiles.value.length} fichiers chargés depuis Supabase pour l'institution ${id}`)
+    // Parcourir chaque place
+    for (const place of places) {
+      const placeName = place.NomPlace || 'Document sans nom'
+      
+      console.log(`🔎 Traitement place: ${placeName}`, {
+        fileURL: place.fileURL || 'N/A',
+        CyberleanURL: place.CyberleanURL || 'N/A',
+        CyberlearnURL: place.CyberlearnURL || 'N/A'
+      })
+      
+      // Priorité 1 : Lien spécifique de la place (fileURL, CyberleanURL, CyberlearnURL)
+      let fileUrl = place.fileURL || place.CyberleanURL || place.CyberlearnURL
+      let isGlobal = false
+      
+      // Priorité 2 : Lien global de l'institution si pas de lien spécifique
+      if (!fileUrl && globalConceptUrl) {
+        fileUrl = globalConceptUrl
+        isGlobal = true
+      }
+
+      // Si on a une URL et qu'elle n'est pas déjà dans la map
+      if (fileUrl && !urlMap.has(fileUrl)) {
+        // Nettoyer l'URL (enlever espaces, etc.)
+        const cleanUrl = fileUrl.trim()
+        
+        // Vérifier si l'URL semble valide
+        const isValidUrl = cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://')
+        
+        urlMap.set(cleanUrl, {
+          name: placeName,
+          url: cleanUrl,
+          isGlobal: isGlobal,
+          warning: !isValidUrl ? 'URL invalide' : null,
+        })
+        
+        console.log(`📎 Ajouté: ${placeName} - ${isGlobal ? '[Global]' : '[Spécifique]'} - ${cleanUrl}`)
+      } else if (!fileUrl) {
+        console.log(`⚠️ Place "${placeName}" sans lien PDF`)
+      }
+    }
+
+    // Convertir la map en array et trier (documents spécifiques en premier)
+    const files = Array.from(urlMap.values()).sort((a, b) => {
+      if (a.isGlobal === b.isGlobal) return 0
+      return a.isGlobal ? 1 : -1 // Documents spécifiques avant globaux
+    })
+
+    // Mettre à jour les refs (spread pour forcer la réactivité)
+    institutionFiles.value = [...files]
+
+    console.log(`✅ ${institutionFiles.value.length} fichiers uniques trouvés`)
+    console.log(`   - ${institutionFiles.value.filter(f => !f.isGlobal).length} spécifiques`)
+    console.log(`   - ${institutionFiles.value.filter(f => f.isGlobal).length} globaux`)
+    
+    // Log final de l'état
+    console.log('📦 État final institutionFiles:', institutionFiles.value)
   } catch (error) {
     console.error('❌ Erreur chargement fichiers places depuis Supabase:', error)
+    console.error('   Stack:', error.stack)
     institutionFiles.value = []
+  } finally {
+    loadingFiles.value = false
+    console.log('🏁 Fin chargement fichiers, loadingFiles:', loadingFiles.value)
   }
+}
+
+/**
+ * Gère le clic sur un fichier PDF
+ */
+function handleFileClick(file) {
+  console.log(`🖱️ Clic sur fichier: ${file.name}`)
+  console.log(`   URL: ${file.url}`)
+  console.log(`   Type: ${file.isGlobal ? 'Document global' : 'Document spécifique'}`)
+  
+  // Le lien s'ouvrira normalement via le href, on log juste pour le debug
 }
 
 function setupMap(inst) {
