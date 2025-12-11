@@ -306,13 +306,13 @@ async function fetchInstitutionFiles(id) {
       const placeName = place.NomPlace || 'Document sans nom'
       
       console.log(`🔎 Traitement place: ${placeName}`, {
-        fileURL: place.fileURL || 'N/A',
+        fileurl: place.fileurl || place.fileURL || 'N/A',
         CyberleanURL: place.CyberleanURL || 'N/A',
         CyberlearnURL: place.CyberlearnURL || 'N/A'
       })
       
-      // Priorité 1 : Lien spécifique de la place (fileURL, CyberleanURL, CyberlearnURL)
-      let fileUrl = place.fileURL || place.CyberleanURL || place.CyberlearnURL
+      // Priorité 1 : Lien spécifique de la place (fileurl, CyberleanURL, CyberlearnURL)
+      let fileUrl = place.fileurl || place.fileURL || place.CyberleanURL || place.CyberlearnURL
       let isGlobal = false
       
       // Priorité 2 : Lien global de l'institution si pas de lien spécifique

@@ -272,8 +272,20 @@
           </Column>
           <Column header="Fiche">
             <template #body="{ data }">
-              <a v-if="data.fileURL" :href="data.fileURL" target="_blank" class="text-primary">PDF</a>
-              <span v-else>-</span>
+              <div class="flex align-items-center gap-2">
+                <a v-if="data.fileurl || data.fileURL" :href="data.fileurl || data.fileURL" target="_blank" class="text-primary">
+                  <i class="pi pi-file-pdf"></i> PDF
+                </a>
+                <span v-else class="text-500">Aucun fichier</span>
+                <Button 
+                  icon="pi pi-upload" 
+                  text 
+                  rounded 
+                  size="small"
+                  @click="openFileUpload(data)"
+                  v-tooltip.top="'Ajouter/Modifier le document'"
+                />
+              </div>
             </template>
           </Column>
           <Column header="Actions"  alignFrozen="right">
@@ -333,6 +345,59 @@
           label="Enregistrer" 
           icon="pi pi-check" 
           @click="savePraticiens" 
+        />
+      </template>
+    </Dialog>
+
+    <!-- Dialog d'upload de fichier -->
+    <Dialog
+      v-model:visible="showFileDialog"
+      modal
+      header="Ajouter un document"
+      :style="{ width: '500px' }"
+    >
+      <div class="mb-3">
+        <label class="block text-sm font-semibold mb-2">Sélectionner un fichier PDF</label>
+        <input 
+          type="file" 
+          ref="fileInput"
+          accept=".pdf"
+          @change="onFileSelected"
+          class="w-full p-2 border-1 surface-border border-round"
+        />
+        <small class="text-500 block mt-2">Formats acceptés : PDF uniquement</small>
+      </div>
+
+      <div v-if="selectedFile" class="surface-card p-3 border-round mb-3">
+        <div class="flex align-items-center gap-2">
+          <i class="pi pi-file-pdf text-primary text-2xl"></i>
+          <div class="flex-1">
+            <div class="font-semibold">{{ selectedFile.name }}</div>
+            <div class="text-sm text-500">{{ formatFileSize(selectedFile.size) }}</div>
+          </div>
+          <Button 
+            icon="pi pi-times" 
+            text 
+            rounded 
+            severity="danger"
+            @click="clearFile"
+          />
+        </div>
+      </div>
+
+      <template #footer>
+        <Button 
+          label="Annuler" 
+          icon="pi pi-times" 
+          text 
+          @click="showFileDialog = false" 
+        />
+        <Button 
+          label="Uploader" 
+          icon="pi pi-upload" 
+          @click="uploadFile" 
+          :disabled="!selectedFile"
+          :loading="uploading"
         />
       </template>
     </Dialog>
@@ -401,6 +466,8 @@ import CreatePlaceDialog from '@/components/admin/places/CreatePlaceDialog.vue'
 import Dialog from 'primevue/dialog'
 import OverlayPanel from 'primevue/overlaypanel'
 import Checkbox from 'primevue/checkbox'
+import { storage } from '@/firebase'
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 
 const store = usePlacesStore()
 const institutionsStore = useInstitutionsStore()
@@ -494,11 +561,15 @@ const compact = ref(false)
 const showCreateDialog = ref(false)
 const showDeleteDialog = ref(false)
 const showPraticienDialog = ref(false)
+const showFileDialog = ref(false)
 const placeToDelete = ref(null)
 const deleting = ref(false)
 const columnsPanel = ref(null)
 const currentPlace = ref(null)
 const selectedPraticiens = ref([])
+const selectedFile = ref(null)
+const fileInput = ref(null)
+const uploading = ref(false)
 
 // Visibilité des colonnes
 const visibleColumns = ref({
@@ -701,6 +772,108 @@ async function savePraticiens() {
   } catch (error) {
     console.error('❌ Erreur lors de la sauvegarde des praticiens:', error)
     alert('Erreur lors de la sauvegarde')
+  }
+}
+
+function openFileUpload(place) {
+  currentPlace.value = place
+  selectedFile.value = null
+  showFileDialog.value = true
+}
+
+function onFileSelected(event) {
+  const file = event.target.files[0]
+  if (file && file.type === 'application/pdf') {
+    selectedFile.value = file
+  } else if (file) {
+    alert('Veuillez sélectionner un fichier PDF')
+    event.target.value = ''
+  }
+}
+
+function clearFile() {
+  selectedFile.value = null
+  if (fileInput.value) {
+    fileInput.value.value = ''
+  }
+}
+
+function formatFileSize(bytes) {
+  if (bytes === 0) return '0 Bytes'
+  const k = 1024
+  const sizes = ['Bytes', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
+}
+
+async function uploadFile() {
+  if (!selectedFile.value || !currentPlace.value?.PlaceId) return
+  
+  uploading.value = true
+  
+  try {
+    console.log('📤 Upload du fichier:', selectedFile.value.name, 'pour la place:', currentPlace.value.PlaceId)
+    
+    // Créer un nom de fichier unique avec timestamp
+    const timestamp = Date.now()
+    const fileName = `${timestamp}_${selectedFile.value.name}`
+    const filePath = `places/${currentPlace.value.PlaceId}/${fileName}`
+    
+    console.log('📁 Upload vers Firebase Storage:', filePath)
+    
+    // Créer la référence Firebase Storage
+    const fileRef = storageRef(storage, filePath)
+    
+    // Upload le fichier vers Firebase Storage
+    const snapshot = await uploadBytes(fileRef, selectedFile.value, {
+      contentType: 'application/pdf',
+      customMetadata: {
+        placeId: String(currentPlace.value.PlaceId),
+        placeName: currentPlace.value.NomPlace || 'unknown',
+        uploadedAt: new Date().toISOString()
+      }
+    })
+    
+    console.log('✅ Fichier uploadé:', snapshot.metadata.fullPath)
+    
+    // Obtenir l'URL de téléchargement avec token
+    const downloadURL = await getDownloadURL(fileRef)
+    
+    console.log('🔗 URL du fichier:', downloadURL)
+    
+    // Mettre à jour la place avec l'URL du fichier
+    console.log('🔄 Tentative de mise à jour Supabase:', {
+      placeId: currentPlace.value.PlaceId,
+      fileurl: downloadURL,
+      filename: selectedFile.value.name
+    })
+    
+    const updatedPlace = await store.updatePlace(currentPlace.value.PlaceId, { 
+      fileurl: downloadURL,
+      filename: selectedFile.value.name
+    })
+    
+    console.log('✅ Place mise à jour avec le lien du fichier:', updatedPlace)
+    
+    // Mettre à jour l'objet currentPlace pour que la vue se rafraîchisse
+    if (updatedPlace) {
+      Object.assign(currentPlace.value, updatedPlace)
+    }
+    
+    // Recharger toutes les places pour être sûr
+    await store.fetchPlaces()
+    
+    alert('✅ Document uploadé avec succès !')
+    
+    showFileDialog.value = false
+    selectedFile.value = null
+    currentPlace.value = null
+    
+  } catch (error) {
+    console.error('❌ Erreur lors de l\'upload:', error)
+    alert('Erreur lors de l\'upload du fichier: ' + error.message)
+  } finally {
+    uploading.value = false
   }
 }
 
