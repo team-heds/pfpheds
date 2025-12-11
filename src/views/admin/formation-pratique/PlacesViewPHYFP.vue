@@ -128,9 +128,8 @@
           </Column>
           <Column header="Institution Name" sortable>
             <template #body="{ data }">
-              <div v-if="data.InstitutionId" class="institution-assigned">
-                <span class="font-semibold">{{ institutionNameById[data.InstitutionId] || data.InstitutionName || '-' }}</span>
-                <Tag severity="success" value="Assignée" class="ml-2" />
+              <div v-if="data.InstitutionId">
+                <span>{{ institutionNameById[data.InstitutionId] || data.InstitutionName || '-' }}</span>
               </div>
               <Dropdown 
                 v-else
@@ -242,7 +241,28 @@
           </Column>
           <Column header="Praticien Formateur">
             <template #body="{ data }">
-              <MultiSelect :modelValue="data.praticiensFormateurs || []" @update:modelValue="v => onChangeArray(data, 'praticiensFormateurs', v)" :options="praticiensOptions" optionLabel="label" optionValue="id" display="chip" class="w-full md:w-14rem" />
+              <div class="praticiens-container">
+                <div v-if="!data.praticiensFormateurs || data.praticiensFormateurs.length === 0" class="text-500 text-sm mb-2">
+                  Aucun praticien
+                </div>
+                <div v-else class="praticiens-names mb-2">
+                  <div 
+                    v-for="pfId in data.praticiensFormateurs" 
+                    :key="pfId"
+                    class="praticien-name"
+                  >
+                    {{ getPraticienDisplayName(pfId) }}
+                  </div>
+                </div>
+                <Button 
+                  icon="pi pi-pencil" 
+                  label="Modifier"
+                  text 
+                  size="small"
+                  @click="openPraticienSelector(data)"
+                  class="p-button-sm"
+                />
+              </div>
             </template>
           </Column>
           <Column header="Remarques">
@@ -278,6 +298,44 @@
       :selected-year="selectedYear"
       @created="onPlaceCreated"
     />
+
+    <!-- Dialog de sélection des praticiens -->
+    <Dialog
+      v-model:visible="showPraticienDialog"
+      modal
+      header="Sélectionner les praticiens formateurs"
+      :style="{ width: '600px' }"
+    >
+      <div class="mb-3">
+        <label class="block text-sm font-semibold mb-2">Rechercher et sélectionner</label>
+        <MultiSelect 
+          v-model="selectedPraticiens" 
+          :options="praticiensOptions" 
+          optionLabel="label" 
+          optionValue="id" 
+          display="chip" 
+          class="w-full"
+          filter
+          filterPlaceholder="🔍 Rechercher un praticien..."
+          :filterMatchMode="'contains'"
+          placeholder="Sélectionner des praticiens..."
+        />
+      </div>
+
+      <template #footer>
+        <Button 
+          label="Annuler" 
+          icon="pi pi-times" 
+          text 
+          @click="showPraticienDialog = false" 
+        />
+        <Button 
+          label="Enregistrer" 
+          icon="pi pi-check" 
+          @click="savePraticiens" 
+        />
+      </template>
+    </Dialog>
 
     <!-- Dialog de confirmation de suppression -->
     <Dialog
@@ -336,7 +394,7 @@ import { useInstitutionsStore } from '@/stores/institutionsStore'
 import InputSwitch from 'primevue/inputswitch'
 import MultiSelect from 'primevue/multiselect'
 import Textarea from 'primevue/textarea'
-import { usePraticiensFormateursStore } from '@/stores/praticiensFormateursStore'
+import { usePraticiensStore } from '@/stores/praticiensStore'
 import Dropdown from 'primevue/dropdown'
 import { checkSupabaseAuth } from '@/utils/checkAuth'
 import CreatePlaceDialog from '@/components/admin/places/CreatePlaceDialog.vue'
@@ -346,7 +404,7 @@ import Checkbox from 'primevue/checkbox'
 
 const store = usePlacesStore()
 const institutionsStore = useInstitutionsStore()
-const praticiensStore = usePraticiensFormateursStore()
+const praticiensStore = usePraticiensStore()
 const loading = computed(() => store.loading)
 const search = ref('')
 const years = ref(['2026','2027','2025'])
@@ -388,10 +446,29 @@ const rows = computed(() => {
 })
 
 const praticiensOptions = computed(() => {
-  return (praticiensStore.praticiensFormateurs || []).map(p => ({
-    id: p.id,
-    label: `${p.prenom || ''} ${p.nom || ''}`.trim() || p.mail || p.id,
-  }))
+  const items = praticiensStore.items || []
+  console.log('🔍 Praticiens Store Items:', items.length)
+  if (items.length > 0) {
+    console.log('📋 Premier praticien:', items[0])
+  }
+  
+  const options = items.map(p => {
+    const prenom = p.prenom || p.Prenom || ''
+    const nom = p.nom || p.Nom || ''
+    const fullName = `${prenom} ${nom}`.trim()
+    const label = fullName || p.mail || p.Mail || `PF-${p.id}`
+    
+    return {
+      id: p.id,
+      label: label
+    }
+  })
+  
+  if (options.length > 0) {
+    console.log('✅ Première option:', options[0])
+  }
+  
+  return options
 })
 
 const institutionsOptions = computed(() => {
@@ -416,9 +493,12 @@ const withPdfOnly = ref(false)
 const compact = ref(false)
 const showCreateDialog = ref(false)
 const showDeleteDialog = ref(false)
+const showPraticienDialog = ref(false)
 const placeToDelete = ref(null)
 const deleting = ref(false)
 const columnsPanel = ref(null)
+const currentPlace = ref(null)
+const selectedPraticiens = ref([])
 
 // Visibilité des colonnes
 const visibleColumns = ref({
@@ -574,6 +654,56 @@ function toggleAllLangues() {
   // Géré par le computed
 }
 
+function getPraticienDisplayName(praticienId) {
+  // Chercher dans les options
+  const praticien = praticiensOptions.value.find(p => 
+    p.id === praticienId || 
+    p.id === String(praticienId) ||
+    String(p.id) === String(praticienId)
+  )
+  
+  if (praticien?.label) {
+    return praticien.label
+  }
+  
+  // Si on ne trouve pas dans les options, chercher directement dans le store
+  const pf = (praticiensStore.items || []).find(p => 
+    p.id === praticienId || 
+    p.id === String(praticienId) ||
+    String(p.id) === String(praticienId)
+  )
+  
+  if (pf) {
+    const prenom = pf.prenom || pf.Prenom || ''
+    const nom = pf.nom || pf.Nom || ''
+    const fullName = `${prenom} ${nom}`.trim()
+    return fullName || pf.mail || pf.Mail || `PF-${praticienId}`
+  }
+  
+  // Fallback: afficher l'ID
+  return `PF-${praticienId}`
+}
+
+function openPraticienSelector(place) {
+  currentPlace.value = place
+  selectedPraticiens.value = [...(place.praticiensFormateurs || [])]
+  showPraticienDialog.value = true
+}
+
+async function savePraticiens() {
+  if (!currentPlace.value?.PlaceId) return
+  
+  try {
+    await onChangeArray(currentPlace.value, 'praticiensFormateurs', selectedPraticiens.value)
+    showPraticienDialog.value = false
+    currentPlace.value = null
+    selectedPraticiens.value = []
+  } catch (error) {
+    console.error('❌ Erreur lors de la sauvegarde des praticiens:', error)
+    alert('Erreur lors de la sauvegarde')
+  }
+}
+
 function confirmDelete(place) {
   placeToDelete.value = place
   showDeleteDialog.value = true
@@ -608,9 +738,25 @@ onMounted(async () => {
   // Vérifier l'authentification Supabase au chargement
   await checkSupabaseAuth()
   
-  if (!store.places?.length) store.fetchPlaces()
-  if (!institutionsStore.institutions?.length) institutionsStore.fetchInstitutions()
-  if (!praticiensStore.praticiensFormateurs?.length) praticiensStore.fetchPraticiensFormateurs()
+  console.log('🚀 [PlacesView] Chargement initial...')
+  
+  if (!store.places?.length) {
+    console.log('📍 Chargement des places...')
+    await store.fetchPlaces()
+  }
+  
+  if (!institutionsStore.institutions?.length) {
+    console.log('🏥 Chargement des institutions...')
+    await institutionsStore.fetchInstitutions()
+  }
+  
+  console.log('👥 Chargement des praticiens...')
+  await praticiensStore.fetchPraticiens()
+  console.log('✅ Praticiens chargés:', praticiensStore.items?.length)
+  
+  if (praticiensStore.items && praticiensStore.items.length > 0) {
+    console.log('📋 Exemple de praticien:', praticiensStore.items[0])
+  }
 })
 
 watch(search, () => { /* filtering is computed */ })
@@ -618,6 +764,14 @@ watch(selectedYear, () => {
   // Optionnel: recharger si vous souhaitez recalculer côté backend
   reload()
 })
+
+// Watch pour forcer la mise à jour des options quand les praticiens sont chargés
+watch(() => praticiensStore.items, (newItems) => {
+  console.log('🔄 [PlacesView] Praticiens store mis à jour:', newItems?.length)
+  if (newItems && newItems.length > 0) {
+    console.log('📋 Premier praticien après update:', newItems[0])
+  }
+}, { immediate: true, deep: true })
 </script>
 
 <style scoped>
@@ -719,6 +873,36 @@ watch(selectedYear, () => {
   border: 1px solid rgba(34, 197, 94, 0.3);
   border-radius: 6px;
   color: #059669;
+}
+
+/* Styles pour les noms des praticiens */
+.praticiens-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.praticiens-names {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.praticien-name {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.2;
+}
+
+.fp-dark .praticien-name {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #f3f4f6;
 }
 </style>
 

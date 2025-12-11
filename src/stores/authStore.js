@@ -195,22 +195,29 @@ export const useAuthStore = defineStore('auth', () => {
   supabase.auth.onAuthStateChange(async (event, newSession) => {
     console.log('Supabase auth state change:', event, newSession?.user?.email);
 
-    if (event === 'SIGNED_IN' && newSession) {
+    // Gérer tous les événements qui indiquent une session active
+    if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION' || event === 'USER_UPDATED') && newSession) {
       // Ne pas écraser si Firebase est déjà connecté
       if (authProvider.value !== 'firebase') {
         session.value = newSession;
         user.value = newSession.user;
         authProvider.value = 'supabase';
         
-        // 🆕 CRÉATION AUTOMATIQUE DU PROFIL (DÉSACTIVÉ TEMPORAIREMENT)
-        try {
-          console.log('🔄 Création automatique du profil pour:', newSession.user.email);
-          // await userProfileAutoCreation.createUserProfileFromAuth(newSession.user, 'supabase');
-          // await userProfileAutoCreation.updateLastLogin(newSession.user.id);
-          console.log('✅ Profil créé/mis à jour automatiquement (désactivé)');
-        } catch (error) {
-          console.error('❌ Erreur création automatique profil:', error);
-          // L\'erreur ne bloque pas la connexion
+        if (event === 'SIGNED_IN') {
+          // 🆕 CRÉATION AUTOMATIQUE DU PROFIL (DÉSACTIVÉ TEMPORAIREMENT)
+          try {
+            console.log('🔄 Création automatique du profil pour:', newSession.user.email);
+            // await userProfileAutoCreation.createUserProfileFromAuth(newSession.user, 'supabase');
+            // await userProfileAutoCreation.updateLastLogin(newSession.user.id);
+            console.log('✅ Profil créé/mis à jour automatiquement (désactivé)');
+          } catch (error) {
+            console.error('❌ Erreur création automatique profil:', error);
+            // L\'erreur ne bloque pas la connexion
+          }
+        } else if (event === 'TOKEN_REFRESHED') {
+          console.log('🔄 Token Supabase rafraîchi automatiquement');
+        } else if (event === 'INITIAL_SESSION') {
+          console.log('🔄 Session Supabase restaurée depuis le localStorage');
         }
       }
     } else if (event === 'SIGNED_OUT') {

@@ -25,5 +25,8 @@
         persistSession: true,       // garde la session même après refresh
         autoRefreshToken: true,     // refresh automatique des tokens
         detectSessionInUrl: true,   // utile pour login OAuth et reset password
+        storage: window.localStorage, // Force l'utilisation de localStorage (par défaut mais explicite)
+        storageKey: 'supabase.auth.token', // Clé de stockage personnalisée
+        flowType: 'pkce',           // Plus sécurisé pour les SPAs
     },
     })
