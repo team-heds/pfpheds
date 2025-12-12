@@ -26,6 +26,11 @@
             <div class="stat-info">
               <span class="stat-label">Modules gérés</span>
               <span class="stat-value">{{ modulesCount }}</span>
+              <div class="stat-details">
+                <span class="stat-badge active">{{ activeModulesCount }} 1ère année</span>
+                <span class="stat-badge draft">{{ draftModulesCount }} 2ème année</span>
+                <span class="stat-badge archived">{{ archivedModulesCount }} 3ème année</span>
+              </div>
             </div>
           </div>
 
@@ -34,8 +39,8 @@
               <i class="pi pi-users"></i>
             </div>
             <div class="stat-info">
-              <span class="stat-label">Enseignants</span>
-              <span class="stat-value">{{ teachersCount }}</span>
+              <span class="stat-label">Enseignants SI</span>
+              <span class="stat-value">{{ siTeachersCount }}</span>
             </div>
           </div>
 
@@ -152,6 +157,7 @@ import ProgressSpinner from 'primevue/progressspinner';
 import InputText from 'primevue/inputtext';
 import Badge from 'primevue/badge';
 import { getAllRMData } from '@/services/academicKpiService';
+import { useModules } from '@/composables/useModules';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -165,11 +171,22 @@ const teachersCount = ref(0);
 const totalHours = ref(0);
 const studentsCount = ref(0);
 
+// Stats modules détaillées
+const activeModulesCount = ref(0);
+const draftModulesCount = ref(0);
+const archivedModulesCount = ref(0);
+
+// Stats enseignants détaillées
+const siTeachersCount = ref(0);
+
 // Données
 const modules = ref([]);
 const teachers = ref([]);
 const siTeachers = ref([]);
 const searchSI = ref('');
+
+// Modules Supabase
+const { modules: supabaseModules, loadModules } = useModules();
 
 const filteredSITeachers = computed(() => {
   if (!searchSI.value) return siTeachers.value;
@@ -197,20 +214,43 @@ async function loadRMData() {
     
     console.log('🔄 Chargement données RM pour:', userId);
     
-    const data = await getAllRMData(userId);
+    // Charger les modules depuis Supabase
+    await loadModules();
     
-    // Mettre à jour les stats
-    modulesCount.value = data.stats.modulesCount;
-    teachersCount.value = data.stats.teachersCount;
-    totalHours.value = data.stats.totalHours;
-    studentsCount.value = data.stats.studentsCount;
+    // Calculer les stats par année (pour les modules Supabase)
+    // Les modules Supabase ont une propriété 'year' (1, 2, 3)
+    const year1Modules = supabaseModules.value.filter(m => m.year === 1).length;
+    const year2Modules = supabaseModules.value.filter(m => m.year === 2).length;
+    const year3Modules = supabaseModules.value.filter(m => m.year === 3).length;
+    
+    activeModulesCount.value = year1Modules;
+    draftModulesCount.value = year2Modules;
+    archivedModulesCount.value = year3Modules;
+    
+    const data = await getAllRMData(userId);
     
     // Mettre à jour les données
     modules.value = data.modules;
     teachers.value = data.teachers;
     siTeachers.value = data.siTeachers || [];
     
+    // Calculer les stats enseignants
+    siTeachersCount.value = siTeachers.value.length;
+    
+    // Mettre à jour les stats
+    modulesCount.value = supabaseModules.value.length; // Utiliser le comptage réel des modules
+    teachersCount.value = data.stats.teachersCount;
+    totalHours.value = data.stats.totalHours;
+    studentsCount.value = data.stats.studentsCount;
+    
     console.log('✅ Données RM chargées');
+    console.log('📚 Modules:', {
+      total: modulesCount.value,
+      active: activeModulesCount.value,
+      draft: draftModulesCount.value,
+      archived: archivedModulesCount.value
+    });
+    console.log('👥 Enseignants SI:', siTeachersCount.value);
   } catch (error) {
     console.error('❌ Erreur chargement données RM:', error);
   } finally {
@@ -284,6 +324,41 @@ function contactTeacher(teacher) {
   font-size: 1.75rem;
   font-weight: 700;
   color: var(--text-color);
+}
+
+.stat-details {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.stat-badge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.stat-badge.active {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.stat-badge.draft {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.stat-badge.archived {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.stat-badge.si {
+  background: #dbeafe;
+  color: #2563eb;
 }
 
 .section-card {
