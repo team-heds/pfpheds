@@ -339,12 +339,61 @@
       <!-- Fichier PDF -->
       <div class="surface-card fp-dark p-3 border-round mb-3">
         <h3 class="text-lg font-semibold mb-3">Fichier PDF (optionnel)</h3>
+        
+        <!-- Upload de fichier -->
+        <div class="field mb-3">
+          <label class="font-semibold mb-2 block">Uploader un fichier PDF</label>
+          <div class="flex gap-2 align-items-center">
+            <input
+              ref="fileInput"
+              type="file"
+              accept="application/pdf"
+              @change="onFileSelected"
+              style="display: none"
+            />
+            <Button
+              label="Choisir un fichier"
+              icon="pi pi-upload"
+              @click="$refs.fileInput.click()"
+              outlined
+              :disabled="uploading"
+            />
+            <Button
+              v-if="selectedFile"
+              :label="uploading ? 'Upload en cours...' : 'Uploader'"
+              icon="pi pi-cloud-upload"
+              @click="uploadFile"
+              :loading="uploading"
+              :disabled="!selectedFile || uploading"
+            />
+            <Button
+              v-if="selectedFile && !uploading"
+              icon="pi pi-times"
+              text
+              severity="danger"
+              @click="clearFile"
+              v-tooltip.top="'Annuler'"
+            />
+          </div>
+          
+          <!-- Aperçu du fichier sélectionné -->
+          <div v-if="selectedFile" class="mt-2 p-2 surface-100 border-round">
+            <div class="flex align-items-center gap-2">
+              <i class="pi pi-file-pdf text-red-500"></i>
+              <span class="flex-1">{{ selectedFile.name }}</span>
+              <span class="text-500 text-sm">{{ formatFileSize(selectedFile.size) }}</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- OU champ texte pour URL -->
         <div class="field">
-          <label for="fileUrl" class="font-semibold">URL du fichier PDF</label>
+          <label for="fileUrl" class="font-semibold">Ou entrer l'URL manuellement</label>
           <InputText
             id="fileUrl"
             v-model="formData.fileURL"
             placeholder="https://..."
+            :disabled="uploading"
           />
           <small class="text-500">URL du fichier PDF descriptif de la place</small>
         </div>
@@ -376,7 +425,9 @@ import TabView from 'primevue/tabview'
 import TabPanel from 'primevue/tabpanel'
 import { usePlacesStore } from '@/stores/placesStore'
 import { useInstitutionsStore } from '@/stores/institutionsStore'
-import { usePraticiensFormateursStore } from '@/stores/praticiensFormateursStore'
+import { usePraticiensStore } from '@/stores/praticiensStore'
+import { storage } from '@/firebase'
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 
 const props = defineProps({
   visible: {
@@ -393,7 +444,7 @@ const emit = defineEmits(['update:visible', 'created'])
 
 const placesStore = usePlacesStore()
 const institutionsStore = useInstitutionsStore()
-const praticiensStore = usePraticiensFormateursStore()
+const praticiensStore = usePraticiensStore()
 
 const isVisible = computed({
   get: () => props.visible,
@@ -402,6 +453,9 @@ const isVisible = computed({
 
 const loading = ref(false)
 const submitted = ref(false)
+const uploading = ref(false)
+const selectedFile = ref(null)
+const fileInput = ref(null)
 
 // Options pour les institutions
 const institutionsOptions = computed(() => {
@@ -443,14 +497,19 @@ const institutionsOptions = computed(() => {
 
 // Options pour les praticiens formateurs
 const praticiensOptions = computed(() => {
-  const praticiens = praticiensStore.praticiensFormateurs || []
+  const praticiens = praticiensStore.items || []
   console.log('👨‍⚕️ Praticiens formateurs disponibles:', praticiens.length, praticiens)
   return praticiens
     .filter(p => p.id) // Filtrer ceux qui ont un ID
-    .map(p => ({
-      id: p.id,
-      label: `${p.prenom || ''} ${p.nom || ''}`.trim() || p.mail || p.id,
-    }))
+    .map(p => {
+      const prenom = p.prenom || p.Prenom || ''
+      const nom = p.nom || p.Nom || ''
+      const mail = p.mail || p.Mail || ''
+      return {
+        id: p.id,
+        label: `${prenom} ${nom}`.trim() || mail || p.id,
+      }
+    })
     .sort((a, b) => a.label.localeCompare(b.label)) // Trier alphabétiquement
 })
 
@@ -616,10 +675,100 @@ async function onCreate() {
   }
 }
 
+// Gestion du fichier
+function onFileSelected(event) {
+  const file = event.target.files[0]
+  if (!file) return
+
+  // Vérifier le type
+  if (file.type !== 'application/pdf') {
+    alert('Veuillez sélectionner un fichier PDF')
+    return
+  }
+
+  // Vérifier la taille (max 10MB)
+  if (file.size > 10 * 1024 * 1024) {
+    alert('Le fichier est trop volumineux (max 10MB)')
+    return
+  }
+
+  selectedFile.value = file
+  console.log('📎 Fichier sélectionné:', file.name, formatFileSize(file.size))
+}
+
+function clearFile() {
+  selectedFile.value = null
+  if (fileInput.value) {
+    fileInput.value.value = ''
+  }
+}
+
+function formatFileSize(bytes) {
+  if (bytes === 0) return '0 Bytes'
+  const k = 1024
+  const sizes = ['Bytes', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
+}
+
+async function uploadFile() {
+  if (!selectedFile.value) return
+
+  // Générer un ID temporaire pour le path si pas encore de PlaceId
+  const tempPlaceId = generatePlaceId()
+  
+  uploading.value = true
+
+  try {
+    console.log('📤 Upload du fichier:', selectedFile.value.name)
+
+    // Créer un nom de fichier unique avec timestamp
+    const timestamp = Date.now()
+    const fileName = `${timestamp}_${selectedFile.value.name}`
+    const filePath = `places/${tempPlaceId}/${fileName}`
+
+    console.log('📁 Upload vers Firebase Storage:', filePath)
+
+    // Créer la référence Firebase Storage
+    const fileRef = storageRef(storage, filePath)
+
+    // Upload le fichier vers Firebase Storage
+    const snapshot = await uploadBytes(fileRef, selectedFile.value, {
+      contentType: 'application/pdf',
+      customMetadata: {
+        uploadedAt: new Date().toISOString()
+      }
+    })
+
+    console.log('✅ Fichier uploadé:', snapshot.metadata.fullPath)
+
+    // Obtenir l'URL de téléchargement avec token
+    const downloadURL = await getDownloadURL(fileRef)
+
+    console.log('🔗 URL du fichier:', downloadURL)
+
+    // Mettre à jour le champ fileURL du formulaire
+    formData.value.fileURL = downloadURL
+
+    alert('✅ Fichier uploadé avec succès !')
+    
+    // Nettoyer
+    clearFile()
+
+  } catch (error) {
+    console.error('❌ Erreur lors de l\'upload:', error)
+    alert('Erreur lors de l\'upload du fichier: ' + error.message)
+  } finally {
+    uploading.value = false
+  }
+}
+
 // Fermer le dialog
 function onClose() {
   isVisible.value = false
   submitted.value = false
+  // Nettoyer le fichier sélectionné
+  clearFile()
   // Réinitialiser le formulaire
   setTimeout(() => {
     formData.value = {
@@ -661,8 +810,8 @@ function onClose() {
 async function reloadPraticiens() {
   try {
     console.log('🔄 Rechargement manuel des praticiens...')
-    await praticiensStore.fetchPraticiensFormateurs()
-    console.log('✅ Praticiens rechargés:', praticiensStore.praticiensFormateurs.length)
+    await praticiensStore.fetchPraticiens()
+    console.log('✅ Praticiens rechargés:', praticiensStore.items.length)
   } catch (error) {
     console.error('❌ Erreur lors du rechargement des praticiens:', error)
     alert('Erreur lors du rechargement des praticiens: ' + error.message)
@@ -693,10 +842,10 @@ watch(() => props.visible, async (newVal) => {
       } else {
         console.log('✅ Institutions déjà en cache:', institutionsStore.institutions.length)
       }
-      if (!praticiensStore.praticiensFormateurs?.length) {
+      if (!praticiensStore.items?.length) {
         console.log('📥 Chargement des praticiens formateurs...')
-        await praticiensStore.fetchPraticiensFormateurs()
-        console.log('✅ Praticiens chargés:', praticiensStore.praticiensFormateurs.length)
+        await praticiensStore.fetchPraticiens()
+        console.log('✅ Praticiens chargés:', praticiensStore.items.length)
       }
     } catch (error) {
       console.error('❌ Erreur lors du chargement des données:', error)

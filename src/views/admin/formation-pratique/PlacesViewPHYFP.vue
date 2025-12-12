@@ -121,12 +121,7 @@
           <template #empty>
             <div class="text-center p-4 text-600">Aucune place trouvée</div>
           </template>
-          <Column header="Nom" sortable>
-            <template #body="{ data }">
-              <InputText :value="data.NomPlace || ''" @change="e => onChangeSimple(data, 'NomPlace', e.target.value)" />
-            </template>
-          </Column>
-          <Column header="Institution Name" sortable>
+          <Column header="Institution Name" sortable sortField="InstitutionName">
             <template #body="{ data }">
               <div v-if="data.InstitutionId">
                 <span>{{ institutionNameById[data.InstitutionId] || data.InstitutionName || '-' }}</span>
@@ -145,6 +140,11 @@
                 :filterMatchMode="'contains'"
                 showClear
               />
+            </template>
+          </Column>
+          <Column header="Nom" sortable sortField="NomPlace">
+            <template #body="{ data }">
+              <InputText :value="data.NomPlace || ''" @change="e => onChangeSimple(data, 'NomPlace', e.target.value)" />
             </template>
           </Column>
           <Column header="MSQ" v-if="visibleColumns.MSQ">
