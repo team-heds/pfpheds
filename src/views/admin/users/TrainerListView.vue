@@ -82,6 +82,94 @@
         </Column>
       </DataTable>
     </div>
+
+    <!-- Dialog de création -->
+    <Dialog
+      v-model:visible="showCreateDialog"
+      modal
+      header="Nouveau praticien formateur"
+      :style="{ width: '30rem' }"
+      :breakpoints="{ '1199px': '75vw', '575px': '90vw' }"
+    >
+      <form @submit.prevent="submitCreate" class="p-fluid">
+        <div class="field mb-3">
+          <label for="create-prenom" class="font-semibold">Prénom *</label>
+          <InputText id="create-prenom" v-model="newPraticien.prenom" required />
+        </div>
+        <div class="field mb-3">
+          <label for="create-nom" class="font-semibold">Nom *</label>
+          <InputText id="create-nom" v-model="newPraticien.nom" required />
+        </div>
+        <div class="field mb-3">
+          <label for="create-mail" class="font-semibold">Mail *</label>
+          <InputText id="create-mail" v-model="newPraticien.mail" type="email" required />
+        </div>
+        <div class="field mb-3">
+          <label for="create-institution" class="font-semibold">Institution</label>
+          <InputText id="create-institution" v-model="newPraticien.institution" />
+        </div>
+        <div class="field mb-3">
+          <label for="create-localite" class="font-semibold">Localité</label>
+          <InputText id="create-localite" v-model="newPraticien.localite" />
+        </div>
+      </form>
+      <template #footer>
+        <Button label="Annuler" icon="pi pi-times" text @click="showCreateDialog = false" />
+        <Button label="Créer" icon="pi pi-check" @click="submitCreate" :loading="creating" />
+      </template>
+    </Dialog>
+
+    <!-- Dialog de modification -->
+    <Dialog
+      v-model:visible="showEditDialog"
+      modal
+      header="Modifier le praticien formateur"
+      :style="{ width: '30rem' }"
+      :breakpoints="{ '1199px': '75vw', '575px': '90vw' }"
+    >
+      <form v-if="editPraticien" @submit.prevent="submitUpdate" class="p-fluid">
+        <div class="field mb-3">
+          <label for="edit-prenom" class="font-semibold">Prénom *</label>
+          <InputText 
+            id="edit-prenom" 
+            v-model="editPraticien.prenom" 
+            required 
+            @input="validateNameField('prenom')"
+          />
+          <small v-if="hasNumbers(editPraticien.prenom)" class="p-error">
+            ⚠️ Les chiffres seront automatiquement supprimés du prénom
+          </small>
+        </div>
+        <div class="field mb-3">
+          <label for="edit-nom" class="font-semibold">Nom *</label>
+          <InputText 
+            id="edit-nom" 
+            v-model="editPraticien.nom" 
+            required 
+            @input="validateNameField('nom')"
+          />
+          <small v-if="hasNumbers(editPraticien.nom)" class="p-error">
+            ⚠️ Les chiffres seront automatiquement supprimés du nom
+          </small>
+        </div>
+        <div class="field mb-3">
+          <label for="edit-mail" class="font-semibold">Mail *</label>
+          <InputText id="edit-mail" v-model="editPraticien.mail" type="email" required />
+        </div>
+        <div class="field mb-3">
+          <label for="edit-institution" class="font-semibold">Institution</label>
+          <InputText id="edit-institution" v-model="editPraticien.institution" />
+        </div>
+        <div class="field mb-3">
+          <label for="edit-localite" class="font-semibold">Localité</label>
+          <InputText id="edit-localite" v-model="editPraticien.localite" />
+        </div>
+      </form>
+      <template #footer>
+        <Button label="Annuler" icon="pi pi-times" text @click="showEditDialog = false" />
+        <Button label="Mettre à jour" icon="pi pi-check" @click="submitUpdate" :loading="updating" />
+      </template>
+    </Dialog>
   </AdminLayout>
 </template>
  
@@ -97,11 +185,11 @@ import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
 import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
+import Dialog from 'primevue/dialog'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 import AdminPageHeader from '@/components/admin/common/AdminPageHeader.vue';
 import AppSkeleton from '@/components/common/feedback/AppSkeleton.vue';
 import EmptyState from '@/components/common/feedback/EmptyState.vue';
-// import Navbar from '@/components/common/utils/Navbar.vue'
 import { FilterMatchMode } from 'primevue/api'
  
 const router = useRouter()
@@ -113,6 +201,24 @@ const { items, loading } = storeToRefs(store)
 const filters = ref({
   global: { value: null, matchMode: FilterMatchMode.CONTAINS },
 })
+
+// Dialogs
+const showCreateDialog = ref(false)
+const showEditDialog = ref(false)
+const creating = ref(false)
+const updating = ref(false)
+
+// Formulaire de création
+const newPraticien = ref({
+  prenom: '',
+  nom: '',
+  mail: '',
+  institution: '',
+  localite: '',
+})
+
+// Formulaire de modification
+const editPraticien = ref(null)
  
 onMounted(() => {
   store.fetchPraticiens()
@@ -123,15 +229,99 @@ const confirmDelete = async (id) => {
     await store.deletePraticien(id)
   }
 }
- 
-const goToPraticienFormModif = (id) => {
-  // adapte le nom de route selon ton router
-  router.push({ name: 'PraticienFormateurFormModif', params: { praticienFormateurId: id } })
+
+// Validation pour les noms
+const hasNumbers = (value) => value && /\d/.test(value)
+
+const validateNameField = (fieldName) => {
+  console.log(`🔍 [VALIDATION] Checking field ${fieldName}:`, editPraticien.value?.[fieldName])
 }
- 
+
+// Création
 const goToPraticienForm = () => {
-  // adapte le nom de route selon ton router
-  router.push({ name: 'PraticienFormateurForm' })
+  newPraticien.value = {
+    prenom: '',
+    nom: '',
+    mail: '',
+    institution: '',
+    localite: '',
+  }
+  showCreateDialog.value = true
+}
+
+const submitCreate = async () => {
+  if (!newPraticien.value.prenom || !newPraticien.value.nom || !newPraticien.value.mail) {
+    alert('Veuillez remplir tous les champs requis')
+    return
+  }
+
+  if (confirm('Êtes-vous sûr de vouloir ajouter ce nouveau praticien formateur ?')) {
+    creating.value = true
+    try {
+      console.log('➕ Creating new praticien:', newPraticien.value)
+      await store.createPraticien(newPraticien.value)
+      console.log('✅ Praticien created successfully')
+      showCreateDialog.value = false
+      newPraticien.value = {
+        prenom: '',
+        nom: '',
+        mail: '',
+        institution: '',
+        localite: '',
+      }
+    } catch (error) {
+      console.error('❌ Error creating praticien:', error)
+      alert('Erreur lors de la création: ' + error.message)
+    } finally {
+      creating.value = false
+    }
+  }
+}
+
+// Modification
+const goToPraticienFormModif = async (id) => {
+  try {
+    console.log('🔍 Loading praticien with ID:', id)
+    
+    const foundPraticien = await store.getPraticienById(id)
+    
+    if (foundPraticien) {
+      editPraticien.value = { ...foundPraticien }
+      console.log('✅ Praticien loaded:', editPraticien.value)
+      showEditDialog.value = true
+    } else {
+      console.warn('⚠️ Praticien non trouvé avec ID:', id)
+      alert('Praticien non trouvé')
+    }
+  } catch (error) {
+    console.error('❌ Error loading praticien:', error)
+    alert('Erreur lors du chargement: ' + error.message)
+  }
+}
+
+const submitUpdate = async () => {
+  if (!editPraticien.value) return
+
+  let confirmMessage = 'Êtes-vous sûr de vouloir mettre à jour ce praticien formateur ?'
+  if (hasNumbers(editPraticien.value.nom) || hasNumbers(editPraticien.value.prenom)) {
+    confirmMessage += '\n\n⚠️ ATTENTION: Les chiffres dans le nom et/ou prénom seront automatiquement supprimés.'
+  }
+
+  if (confirm(confirmMessage)) {
+    updating.value = true
+    try {
+      console.log('📝 Updating praticien:', editPraticien.value)
+      await store.updatePraticien(editPraticien.value.id, editPraticien.value)
+      console.log('✅ Praticien updated successfully')
+      showEditDialog.value = false
+      editPraticien.value = null
+    } catch (error) {
+      console.error('❌ Error updating praticien:', error)
+      alert('Erreur lors de la mise à jour: ' + error.message)
+    } finally {
+      updating.value = false
+    }
+  }
 }
 </script>
 
@@ -143,9 +333,7 @@ const goToPraticienForm = () => {
 .is-compact :deep(.p-inputtext),
 .is-compact :deep(.p-dropdown),
 .is-compact :deep(.p-button) { height: 2.5rem; }
-</style>
- 
-<style scoped>
+
 .admin-scrollable {
   overflow-y: auto;
   height: 100vh;
@@ -155,8 +343,9 @@ const goToPraticienForm = () => {
 .admin-scrollable::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera */
 }
-.filter-menu {
-  padding: 20px;
+
+.field {
+  margin-bottom: 1.5rem;
 }
 </style>
  
