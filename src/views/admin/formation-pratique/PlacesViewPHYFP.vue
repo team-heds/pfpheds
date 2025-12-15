@@ -50,12 +50,12 @@
       <OverlayPanel ref="columnsPanel" :style="{ width: '300px' }">
         <div class="p-3">
           <h3 class="text-lg font-semibold mb-3">Afficher les colonnes</h3>
-          
+
           <div class="field-checkbox mb-2">
             <Checkbox v-model="showCriteresColumns" inputId="show-criteres" :binary="true" @change="toggleAllCriteres" />
             <label for="show-criteres" class="font-semibold">Critères (tous)</label>
           </div>
-          
+
           <div class="ml-4 mb-3">
             <div class="field-checkbox mb-2">
               <Checkbox v-model="visibleColumns.MSQ" inputId="col-msq" :binary="true" />
@@ -82,12 +82,12 @@
               <label for="col-ambu">AMBU</label>
             </div>
           </div>
-          
+
           <div class="field-checkbox mb-2">
             <Checkbox v-model="showLanguesColumns" inputId="show-langues" :binary="true" @change="toggleAllLangues" />
             <label for="show-langues" class="font-semibold">Langues (toutes)</label>
           </div>
-          
+
           <div class="ml-4">
             <div class="field-checkbox mb-2">
               <Checkbox v-model="visibleColumns.FR" inputId="col-fr" :binary="true" />
@@ -126,12 +126,12 @@
               <div v-if="data.InstitutionId">
                 <span>{{ institutionNameById[data.InstitutionId] || data.InstitutionName || '-' }}</span>
               </div>
-              <Dropdown 
+              <Dropdown
                 v-else
-                :modelValue="data.InstitutionId || null" 
-                @update:modelValue="v => onChangeInstitution(data, v)" 
-                :options="institutionsOptions" 
-                optionLabel="label" 
+                :modelValue="data.InstitutionId || null"
+                @update:modelValue="v => onChangeInstitution(data, v)"
+                :options="institutionsOptions"
+                optionLabel="label"
                 optionValue="value"
                 placeholder="🔍 Rechercher et sélectionner..."
                 class="w-full no-institution"
@@ -246,18 +246,18 @@
                   Aucun praticien
                 </div>
                 <div v-else class="praticiens-names mb-2">
-                  <div 
-                    v-for="pfId in data.praticiensFormateurs" 
+                  <div
+                    v-for="pfId in data.praticiensFormateurs"
                     :key="pfId"
                     class="praticien-name"
                   >
                     {{ getPraticienDisplayName(pfId) }}
                   </div>
                 </div>
-                <Button 
-                  icon="pi pi-pencil" 
+                <Button
+                  icon="pi pi-pencil"
                   label="Modifier"
-                  text 
+                  text
                   size="small"
                   @click="openPraticienSelector(data)"
                   class="p-button-sm"
@@ -277,10 +277,10 @@
                   <i class="pi pi-file-pdf"></i> PDF
                 </a>
                 <span v-else class="text-500">Aucun fichier</span>
-                <Button 
-                  icon="pi pi-upload" 
-                  text 
-                  rounded 
+                <Button
+                  icon="pi pi-upload"
+                  text
+                  rounded
                   size="small"
                   @click="openFileUpload(data)"
                   v-tooltip.top="'Ajouter/Modifier le document'"
@@ -290,11 +290,11 @@
           </Column>
           <Column header="Actions"  alignFrozen="right">
             <template #body="{ data }">
-              <Button 
-                icon="pi pi-trash" 
-                severity="danger" 
-                text 
-                rounded 
+              <Button
+                icon="pi pi-trash"
+                severity="danger"
+                text
+                rounded
                 @click="confirmDelete(data)"
                 v-tooltip.top="'Supprimer la place'"
               />
@@ -320,12 +320,12 @@
     >
       <div class="mb-3">
         <label class="block text-sm font-semibold mb-2">Rechercher et sélectionner</label>
-        <MultiSelect 
-          v-model="selectedPraticiens" 
-          :options="praticiensOptions" 
-          optionLabel="label" 
-          optionValue="id" 
-          display="chip" 
+        <MultiSelect
+          v-model="selectedPraticiens"
+          :options="praticiensOptions"
+          optionLabel="label"
+          optionValue="id"
+          display="chip"
           class="w-full"
           filter
           filterPlaceholder="🔍 Rechercher un praticien..."
@@ -335,16 +335,16 @@
       </div>
 
       <template #footer>
-        <Button 
-          label="Annuler" 
-          icon="pi pi-times" 
-          text 
-          @click="showPraticienDialog = false" 
+        <Button
+          label="Annuler"
+          icon="pi pi-times"
+          text
+          @click="showPraticienDialog = false"
         />
-        <Button 
-          label="Enregistrer" 
-          icon="pi pi-check" 
-          @click="savePraticiens" 
+        <Button
+          label="Enregistrer"
+          icon="pi pi-check"
+          @click="savePraticiens"
         />
       </template>
     </Dialog>
@@ -358,8 +358,8 @@
     >
       <div class="mb-3">
         <label class="block text-sm font-semibold mb-2">Sélectionner un fichier PDF</label>
-        <input 
-          type="file" 
+        <input
+          type="file"
           ref="fileInput"
           accept=".pdf"
           @change="onFileSelected"
@@ -375,10 +375,10 @@
             <div class="font-semibold">{{ selectedFile.name }}</div>
             <div class="text-sm text-500">{{ formatFileSize(selectedFile.size) }}</div>
           </div>
-          <Button 
-            icon="pi pi-times" 
-            text 
-            rounded 
+          <Button
+            icon="pi pi-times"
+            text
+            rounded
             severity="danger"
             @click="clearFile"
           />
@@ -386,16 +386,16 @@
       </div>
 
       <template #footer>
-        <Button 
-          label="Annuler" 
-          icon="pi pi-times" 
-          text 
-          @click="showFileDialog = false" 
+        <Button
+          label="Annuler"
+          icon="pi pi-times"
+          text
+          @click="showFileDialog = false"
         />
-        <Button 
-          label="Uploader" 
-          icon="pi pi-upload" 
-          @click="uploadFile" 
+        <Button
+          label="Uploader"
+          icon="pi pi-upload"
+          @click="uploadFile"
           :disabled="!selectedFile"
           :loading="uploading"
         />
@@ -419,7 +419,7 @@
           </p>
         </div>
       </div>
-      
+
       <div class="surface-card p-3 border-round mb-3" style="background: rgba(234, 179, 8, 0.1); border: 1px solid rgba(234, 179, 8, 0.3);">
         <p class="m-0 text-sm">
           <i class="pi pi-info-circle mr-2"></i>
@@ -428,17 +428,17 @@
       </div>
 
       <template #footer>
-        <Button 
-          label="Annuler" 
-          icon="pi pi-times" 
-          text 
-          @click="showDeleteDialog = false" 
+        <Button
+          label="Annuler"
+          icon="pi pi-times"
+          text
+          @click="showDeleteDialog = false"
         />
-        <Button 
-          label="Supprimer" 
-          icon="pi pi-trash" 
-          severity="danger" 
-          @click="deletePlace" 
+        <Button
+          label="Supprimer"
+          icon="pi pi-trash"
+          severity="danger"
+          @click="deletePlace"
           :loading="deleting"
         />
       </template>
@@ -518,23 +518,23 @@ const praticiensOptions = computed(() => {
   if (items.length > 0) {
     console.log('📋 Premier praticien:', items[0])
   }
-  
+
   const options = items.map(p => {
     const prenom = p.prenom || p.Prenom || ''
     const nom = p.nom || p.Nom || ''
     const fullName = `${prenom} ${nom}`.trim()
     const label = fullName || p.mail || p.Mail || `PF-${p.id}`
-    
+
     return {
       id: p.id,
       label: label
     }
   })
-  
+
   if (options.length > 0) {
     console.log('✅ Première option:', options[0])
   }
-  
+
   return options
 })
 
@@ -585,9 +585,9 @@ const visibleColumns = ref({
 
 // Computed pour les checkboxes "tous"
 const showCriteresColumns = computed({
-  get: () => visibleColumns.value.MSQ && visibleColumns.value.SYSINT && 
-             visibleColumns.value.NEUROGER && visibleColumns.value.AIGU && 
-             visibleColumns.value.REHAB && visibleColumns.value.AMBU,
+  get: () => visibleColumns.value.MSQ && visibleColumns.value.SYSINT &&
+    visibleColumns.value.NEUROGER && visibleColumns.value.AIGU &&
+    visibleColumns.value.REHAB && visibleColumns.value.AMBU,
   set: (val) => {
     visibleColumns.value.MSQ = val
     visibleColumns.value.SYSINT = val
@@ -615,30 +615,30 @@ async function onChangeSimple(row, field, value) {
 
 async function onChangeInstitution(row, institutionId) {
   if (!row?.PlaceId) return
-  
-  const institutionName = institutionId 
+
+  const institutionName = institutionId
     ? institutionsOptions.value.find(inst => inst.value === institutionId)?.label || ''
     : 'Aucune'
-  
+
   const ok = window.confirm(`Assigner l'institution "${institutionName}" à cette place ?`)
   if (!ok) return
-  
-  console.log('🏥 Assignation institution:', { 
-    placeId: row.PlaceId, 
+
+  console.log('🏥 Assignation institution:', {
+    placeId: row.PlaceId,
     placeName: row.NomPlace,
-    institutionId, 
-    institutionName 
+    institutionId,
+    institutionName
   })
-  
+
   try {
-    await store.updatePlace(row.PlaceId, { 
+    await store.updatePlace(row.PlaceId, {
       InstitutionId: institutionId || null,
       InstitutionName: institutionNameById.value[institutionId] || null
     })
-    
+
     // Recharger la place pour avoir les données à jour
     await store.fetchPlaceById(row.PlaceId)
-    
+
     console.log('✅ Institution assignée avec succès')
   } catch (error) {
     console.error('❌ Erreur lors de l\'assignation de l\'institution:', error)
@@ -727,30 +727,30 @@ function toggleAllLangues() {
 
 function getPraticienDisplayName(praticienId) {
   // Chercher dans les options
-  const praticien = praticiensOptions.value.find(p => 
-    p.id === praticienId || 
+  const praticien = praticiensOptions.value.find(p =>
+    p.id === praticienId ||
     p.id === String(praticienId) ||
     String(p.id) === String(praticienId)
   )
-  
+
   if (praticien?.label) {
     return praticien.label
   }
-  
+
   // Si on ne trouve pas dans les options, chercher directement dans le store
-  const pf = (praticiensStore.items || []).find(p => 
-    p.id === praticienId || 
+  const pf = (praticiensStore.items || []).find(p =>
+    p.id === praticienId ||
     p.id === String(praticienId) ||
     String(p.id) === String(praticienId)
   )
-  
+
   if (pf) {
     const prenom = pf.prenom || pf.Prenom || ''
     const nom = pf.nom || pf.Nom || ''
     const fullName = `${prenom} ${nom}`.trim()
     return fullName || pf.mail || pf.Mail || `PF-${praticienId}`
   }
-  
+
   // Fallback: afficher l'ID
   return `PF-${praticienId}`
 }
@@ -763,7 +763,7 @@ function openPraticienSelector(place) {
 
 async function savePraticiens() {
   if (!currentPlace.value?.PlaceId) return
-  
+
   try {
     await onChangeArray(currentPlace.value, 'praticiensFormateurs', selectedPraticiens.value)
     showPraticienDialog.value = false
@@ -808,22 +808,22 @@ function formatFileSize(bytes) {
 
 async function uploadFile() {
   if (!selectedFile.value || !currentPlace.value?.PlaceId) return
-  
+
   uploading.value = true
-  
+
   try {
     console.log('📤 Upload du fichier:', selectedFile.value.name, 'pour la place:', currentPlace.value.PlaceId)
-    
+
     // Créer un nom de fichier unique avec timestamp
     const timestamp = Date.now()
     const fileName = `${timestamp}_${selectedFile.value.name}`
     const filePath = `places/${currentPlace.value.PlaceId}/${fileName}`
-    
+
     console.log('📁 Upload vers Firebase Storage:', filePath)
-    
+
     // Créer la référence Firebase Storage
     const fileRef = storageRef(storage, filePath)
-    
+
     // Upload le fichier vers Firebase Storage
     const snapshot = await uploadBytes(fileRef, selectedFile.value, {
       contentType: 'application/pdf',
@@ -833,42 +833,42 @@ async function uploadFile() {
         uploadedAt: new Date().toISOString()
       }
     })
-    
+
     console.log('✅ Fichier uploadé:', snapshot.metadata.fullPath)
-    
+
     // Obtenir l'URL de téléchargement avec token
     const downloadURL = await getDownloadURL(fileRef)
-    
+
     console.log('🔗 URL du fichier:', downloadURL)
-    
+
     // Mettre à jour la place avec l'URL du fichier
     console.log('🔄 Tentative de mise à jour Supabase:', {
       placeId: currentPlace.value.PlaceId,
       fileurl: downloadURL,
       filename: selectedFile.value.name
     })
-    
-    const updatedPlace = await store.updatePlace(currentPlace.value.PlaceId, { 
+
+    const updatedPlace = await store.updatePlace(currentPlace.value.PlaceId, {
       fileurl: downloadURL,
       filename: selectedFile.value.name
     })
-    
+
     console.log('✅ Place mise à jour avec le lien du fichier:', updatedPlace)
-    
+
     // Mettre à jour l'objet currentPlace pour que la vue se rafraîchisse
     if (updatedPlace) {
       Object.assign(currentPlace.value, updatedPlace)
     }
-    
+
     // Recharger toutes les places pour être sûr
     await store.fetchPlaces()
-    
+
     alert('✅ Document uploadé avec succès !')
-    
+
     showFileDialog.value = false
     selectedFile.value = null
     currentPlace.value = null
-    
+
   } catch (error) {
     console.error('❌ Erreur lors de l\'upload:', error)
     alert('Erreur lors de l\'upload du fichier: ' + error.message)
@@ -885,18 +885,18 @@ function confirmDelete(place) {
 
 async function deletePlace() {
   if (!placeToDelete.value?.PlaceId) return
-  
+
   deleting.value = true
-  
+
   try {
     console.log('🗑️ Suppression de la place:', placeToDelete.value.PlaceId)
     await store.deletePlace(placeToDelete.value.PlaceId)
     console.log('✅ Place supprimée avec succès')
-    
+
     // Fermer le dialog
     showDeleteDialog.value = false
     placeToDelete.value = null
-    
+
     // Recharger la liste
     reload()
   } catch (error) {
@@ -910,23 +910,23 @@ async function deletePlace() {
 onMounted(async () => {
   // Vérifier l'authentification Supabase au chargement
   await checkSupabaseAuth()
-  
+
   console.log('🚀 [PlacesView] Chargement initial...')
-  
+
   if (!store.places?.length) {
     console.log('📍 Chargement des places...')
     await store.fetchPlaces()
   }
-  
+
   if (!institutionsStore.institutions?.length) {
     console.log('🏥 Chargement des institutions...')
     await institutionsStore.fetchInstitutions()
   }
-  
+
   console.log('👥 Chargement des praticiens...')
   await praticiensStore.fetchPraticiens()
   console.log('✅ Praticiens chargés:', praticiensStore.items?.length)
-  
+
   if (praticiensStore.items && praticiensStore.items.length > 0) {
     console.log('📋 Exemple de praticien:', praticiensStore.items[0])
   }
@@ -1047,37 +1047,6 @@ watch(() => praticiensStore.items, (newItems) => {
   border-radius: 6px;
   color: #059669;
 }
-
-/* Styles pour les noms des praticiens */
-.praticiens-container {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.praticiens-names {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.praticien-name {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #1f2937;
-  line-height: 1.2;
-}
-
-.fp-dark .praticien-name {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.15);
-  color: #f3f4f6;
-}
-</style>
 
 /* Styles pour les noms des praticiens */
 .praticiens-container {
