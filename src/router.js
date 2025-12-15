@@ -6,6 +6,7 @@ import rolesService from '@/service/rolesService';
 import { useRoleStore } from '@/stores/role';
 import { addDynamicRoutesToRouter } from '@/composables/useDynamicRoutes';
 import { useUserStore } from '@/stores/userStore';
+import { modulePermissionGuard } from '@/router/guards/modulePermissionGuard';
 // ========================================
 // AUTHENTIFICATION & ACCUEIL // View
 // ========================================
@@ -145,6 +146,7 @@ import AlertsDashboard from '@/views/admin/AlertsDashboard.vue'
 import AdminDashboardGamification from '@/components/admin/AdminDashboardGamification.vue'
 import DashboardRMView from '@/views/admin/DashboardRMView.vue'
 import DashboardEnseignantView from '@/views/admin/DashboardEnseignantView.vue'
+import ModuleManageView from '@/views/admin/modules/ModuleManageView.vue'
 import PlanningView from '@/views/admin/planning/PlanningView.vue'
 import PlanningAdminView from '@/views/admin/planning/PlanningAdminView.vue'
 import AcademicYearManagement from '@/views/admin/AcademicYearManagement.vue'
@@ -374,6 +376,17 @@ const routes = [
   { path: '/admin', component: DashboardView, name: 'DashboardView', meta: { requiresAuth: true,  need: ['super.all', 'admin' , 'AdminPhysio',  'EnseignantPhysio' ] } },
   { path: '/admin/dashboard-general', component: AdminDashboardGeneral, name: 'AdminDashboardGeneral', meta: { requiresAuth: true, need: 'admin' } },
   { path: '/admin/dashboard-rm', component: DashboardRMView, name: 'DashboardRM', meta: { requiresAuth: true, need: ['admin', 'RMSoins.access'] } },
+  { 
+    path: '/admin/modules/:id/manage', 
+    component: ModuleManageView, 
+    name: 'ModuleManage', 
+    meta: { 
+      requiresAuth: true, 
+      requiresModuleOwnership: true,
+      need: ['admin', 'RMSoins.access']
+    },
+    beforeEnter: modulePermissionGuard
+  },
   { path: '/admin/dashboard-enseignant', component: DashboardEnseignantView, name: 'DashboardEnseignant', meta: { requiresAuth: true, need: ['admin', 'EnseignantSoins.access', 'EnseignantPhysio.access'] } },
   { path: '/admin/dashboard-pfp', component: AdminDashboardPFP, name: 'AdminDashboardPFP', meta: { requiresAuth: true } },
   { path: '/admin/dashboard-academique', component: AdminDashboardAcademique, name: 'AdminDashboardAcademique', meta: { requiresAuth: true } },
