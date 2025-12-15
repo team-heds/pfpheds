@@ -1078,3 +1078,34 @@ watch(() => praticiensStore.items, (newItems) => {
   color: #f3f4f6;
 }
 </style>
+
+/* Styles pour les noms des praticiens */
+.praticiens-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.praticiens-names {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.praticien-name {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.2;
+}
+
+.fp-dark .praticien-name {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #f3f4f6;
+}
+</style>

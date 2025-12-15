@@ -1,30 +1,30 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { supabase } from '@/supabase'
-
+ 
 export const useRoleStore = defineStore('role', () => {
   // State
   const session = ref(null)
   const perms = ref([])
   const initialized = ref(false)
   const _unsubscribeAuth = ref(null)
-
+ 
   // Getters
   const isAuthenticated = computed(() => !!session.value)
   const isSuper = computed(() => perms.value.includes('super.all'))
-
+ 
   // Actions
   async function init() {
     if (initialized.value) return
-
+ 
     // 1) session initiale
     const { data, error } = await supabase.auth.getSession()
     if (error) console.warn('getSession error:', error)
     session.value = data?.session ?? null
-
+ 
     // 2) perms initiales
     await loadPermissions()
-
+ 
     // 3) listener unique (évite les doublons)
     const { data: sub } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
       session.value = newSession ?? null
@@ -34,15 +34,15 @@ export const useRoleStore = defineStore('role', () => {
         perms.value = []
       }
     })
-
+ 
     _unsubscribeAuth.value = () => sub?.subscription?.unsubscribe?.()
     initialized.value = true
   }
-
+ 
   async function loadPermissions() {
     try {
       const permsSet = new Set()
-
+ 
       // A) RPC (source principale)
       const { data: rows, error: rpcError } = await supabase.rpc('api_my_permissions')
       if (!rpcError && Array.isArray(rows)) {
@@ -52,11 +52,11 @@ export const useRoleStore = defineStore('role', () => {
       } else if (rpcError) {
         console.warn('RPC api_my_permissions error:', rpcError)
       }
-
+ 
       // B) fallback user_profiles (si Admin Panel écrit ici)
       const { data: userData, error: userErr } = await supabase.auth.getUser()
       if (userErr) console.warn('getUser error:', userErr)
-
+ 
       const user = userData?.user
       if (user) {
         const { data: profile, error: profileError } = await supabase
@@ -64,10 +64,10 @@ export const useRoleStore = defineStore('role', () => {
           .select('role, permissions')
           .eq('user_id', user.id)
           .maybeSingle()
-
+ 
         if (!profileError && profile) {
           if (profile.role) permsSet.add(profile.role)
-
+ 
           // permissions peut être array OU json (selon ta colonne)
           let p = profile.permissions
           if (typeof p === 'string') {
@@ -81,7 +81,7 @@ export const useRoleStore = defineStore('role', () => {
           console.warn('user_profiles read error:', profileError)
         }
       }
-
+ 
       perms.value = Array.from(permsSet)
       console.log('✅ Permissions consolidées:', perms.value)
     } catch (e) {
@@ -89,7 +89,7 @@ export const useRoleStore = defineStore('role', () => {
       perms.value = []
     }
   }
-
+ 
   function can(perm) {
     // arrays de permissions acceptées
     if (Array.isArray(perm)) {
@@ -97,13 +97,13 @@ export const useRoleStore = defineStore('role', () => {
       if (perm.includes('authenticated')) return isAuthenticated.value
       return isSuper.value || perm.some(p => perms.value.includes(p))
     }
-
+ 
     // single permission
     if (perm === 'public' || perm === 'anonymous') return true
     if (perm === 'authenticated') return isAuthenticated.value
     return isSuper.value || perms.value.includes(perm)
   }
-
+ 
   function destroy() {
     // optionnel: si tu veux cleanup (tests, hot reload, etc.)
     if (_unsubscribeAuth.value) _unsubscribeAuth.value()
@@ -112,7 +112,7 @@ export const useRoleStore = defineStore('role', () => {
     session.value = null
     perms.value = []
   }
-
+ 
   return {
     session,
     perms,
@@ -125,3 +125,5 @@ export const useRoleStore = defineStore('role', () => {
     destroy,
   }
 })
+ 
+ 

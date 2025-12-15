@@ -321,22 +321,73 @@ function generateEmptyWeek() {
 }
 
 /**
+ * Récupère tous les enseignants SI (Soins Infirmiers)
+ * Table: user_profiles (via role ou permissions)
+ */
+export async function getSITeachers() {
+  try {
+    console.log('👨‍⚕️ [getSITeachers] Requête enseignants SI...')
+    
+    // Récupérer les utilisateurs avec le rôle ou la permission EnseignantSoins
+    // On utilise une requête brute pour être sûr de tout attraper
+    // .or() permet de combiner des conditions
+    const { data: teachers, error } = await supabase
+      .from('user_profiles')
+      .select('user_id, email, forname, family_name, display_name, role, permissions')
+      .or('role.eq.EnseignantSoins,permissions.cs.{"EnseignantSoins"}')
+    
+    if (error) {
+      // Si erreur avec permissions (ex: type mismatch), on fallback sur role uniquement
+      console.warn('⚠️ [getSITeachers] Erreur requête complexe, tentative repli sur role uniquement:', error.message)
+      const { data: teachersRole, error: errorRole } = await supabase
+        .from('user_profiles')
+        .select('user_id, email, forname, family_name, display_name, role')
+        .eq('role', 'EnseignantSoins')
+        
+      if (errorRole) {
+         console.error('❌ [getSITeachers] Erreur Supabase:', errorRole)
+         return []
+      }
+      return formatTeachers(teachersRole)
+    }
+    
+    return formatTeachers(teachers)
+  } catch (error) {
+    console.error('❌ [getSITeachers] Erreur:', error)
+    return []
+  }
+}
+
+function formatTeachers(teachersList) {
+  const formatted = (teachersList || []).map(t => ({
+    id: t.user_id,
+    name: t.display_name || `${t.forname || ''} ${t.family_name || ''}`.trim() || t.email,
+    email: t.email,
+    role: 'Enseignant SI'
+  }))
+  console.log('✅ [getSITeachers] Enseignants SI trouvés:', formatted.length)
+  return formatted
+}
+
+/**
  * Récupère toutes les stats RM d'un coup
  */
 export async function getAllRMData(userId) {
   try {
     console.log('🚀 [getAllRMData] Chargement complet données RM...')
     
-    const [stats, modules, teachers] = await Promise.all([
+    const [stats, modules, teachers, siTeachers] = await Promise.all([
       getRMStats(userId),
       getRMModules(userId),
-      getRMTeachers(userId)
+      getRMTeachers(userId),
+      getSITeachers()
     ])
     
     const result = {
       stats,
       modules,
-      teachers
+      teachers, // Enseignants liés aux modules du RM
+      siTeachers // Tous les enseignants SI
     }
     
     console.log('✅ [getAllRMData] Données RM chargées:', result)
@@ -351,7 +402,8 @@ export async function getAllRMData(userId) {
         studentsCount: 0
       },
       modules: [],
-      teachers: []
+      teachers: [],
+      siTeachers: []
     }
   }
 }

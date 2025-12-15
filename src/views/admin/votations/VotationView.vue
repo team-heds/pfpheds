@@ -185,7 +185,7 @@
             :icon="voteAlreadyCast ? 'pi pi-refresh' : 'pi pi-send'"
             @click="sendVote"
             size="large"
-            :disabled="!selectedPlaces.some(p => p !== null)"
+            :disabled="selectedPlaces.filter(p => p !== null).length !== 5"
             :severity="voteAlreadyCast ? 'warning' : 'primary'"
           />
         </div>
@@ -497,8 +497,8 @@ export default {
         };
       }).filter(c => c !== null);
 
-      if (choices.length === 0) {
-        this.dialogMessage = "Veuillez sélectionner au moins une place.";
+      if (choices.length !== 5) {
+        this.dialogMessage = "Veuillez sélectionner exactement 5 places par ordre de préférence avant de voter.";
         this.dialogVisible = true;
         this.isSubmitting = false;
         return;
@@ -514,7 +514,13 @@ export default {
           InstitutionName: p.InstitutionName
         }) : null);
 
-        this.dialogMessage = "Votre vote a été enregistré avec succès !";
+        // RECHARGER les statistiques de votes pour mettre à jour les compteurs
+        console.log('🔄 Rechargement des statistiques après sauvegarde...');
+        await this.loadVoteStatistics();
+
+        this.dialogMessage = this.voteAlreadyCast 
+          ? "Votre vote a été mis à jour avec succès !" 
+          : "Votre vote a été enregistré avec succès !";
         this.dialogVisible = true;
       } catch (error) {
         console.error('❌ Erreur lors de l\'enregistrement du vote:', error);
