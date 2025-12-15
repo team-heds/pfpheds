@@ -194,7 +194,8 @@ export default [
             ]
           },
           { label: 'Feedbacka', icon: 'pi pi-comments', to: '/admin/tools/feedbacka' },
-          { label: 'Care-Convers', icon: 'pi pi-heart', to: '/care-convers' }
+          { label: 'Care-Convers', icon: 'pi pi-heart', to: '/care-convers' },
+          { label: 'Capsules Insuffisance Rhénale', icon: 'pi pi-book', to: '/capsules-insuffisance-renale' }
         ]
       }
     ]

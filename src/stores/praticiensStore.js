@@ -1,7 +1,6 @@
 // stores/praticiensStore.js
 import { defineStore } from 'pinia'
-import { db } from '../../firebase.js'
-import { ref, push, set, update, remove, onValue, off } from 'firebase/database'
+import { supabase } from '@/supabase'
 
 export const usePraticiensStore = defineStore('praticiens', {
   state: () => ({
@@ -17,94 +16,57 @@ export const usePraticiensStore = defineStore('praticiens', {
       this.error = null
       
       try {
-        console.log('🔍 [PRATICIENS STORE] Fetching praticiens from Firebase...')
+        console.log('🔍 [PRATICIENS STORE] Fetching praticiens from Supabase...')
         
-        const praticiensRef = ref(db, 'PraticienFormateurs')
+        let query = supabase
+          .from('praticiens_formateurs')
+          .select('*', { count: 'exact' })
+          .order('nom', { ascending: true })
+          .order('prenom', { ascending: true })
         
-        return new Promise((resolve, reject) => {
-          onValue(praticiensRef, (snapshot) => {
-            try {
-              const data = snapshot.val()
-              let praticiens = []
-              
-              if (data) {
-                // Convertir l'objet Firebase en array avec les IDs et normaliser les noms de champs
-                praticiens = Object.keys(data).map(key => {
-                  const item = data[key]
-                  return {
-                    id: key,
-                    // Normaliser les noms de champs pour la compatibilité avec les composants
-                    nom: item.Nom || item.nom || '',
-                    prenom: item.Prenom || item.prenom || '',
-                    mail: item.Mail || item.mail || '',
-                    institution: item.Institution || item.institution || '',
-                    localite: item.Localite || item.localite || '',
-                    // Garder aussi les versions avec majuscules pour référence
-                    Nom: item.Nom || item.nom || '',
-                    Prenom: item.Prenom || item.prenom || '',
-                    Mail: item.Mail || item.mail || '',
-                    Institution: item.Institution || item.institution || '',
-                    Localite: item.Localite || item.localite || '',
-                    // Timestamps
-                    createdAt: item.createdAt,
-                    updatedAt: item.updatedAt
-                  }
-                })
-              }
-              
-              // Filtrage par recherche si nécessaire
-              if (searchQuery && searchQuery.trim()) {
-                const query = searchQuery.toLowerCase().trim()
-                praticiens = praticiens.filter(p => 
-                  (p.nom && p.nom.toLowerCase().includes(query)) ||
-                  (p.prenom && p.prenom.toLowerCase().includes(query)) ||
-                  (p.mail && p.mail.toLowerCase().includes(query)) ||
-                  (p.institution && p.institution.toLowerCase().includes(query)) ||
-                  (p.localite && p.localite.toLowerCase().includes(query))
-                )
-              }
-              
-              // Tri par nom puis prénom
-              praticiens.sort((a, b) => {
-                const nomA = (a.nom || '').toLowerCase()
-                const nomB = (b.nom || '').toLowerCase()
-                if (nomA !== nomB) return nomA.localeCompare(nomB)
-                
-                const prenomA = (a.prenom || '').toLowerCase()
-                const prenomB = (b.prenom || '').toLowerCase()
-                return prenomA.localeCompare(prenomB)
-              })
-              
-              // Pagination
-              const start = offset
-              const end = offset + limit
-              const paginatedItems = praticiens.slice(start, end)
-              
-              this.items = paginatedItems
-              this.total = praticiens.length
-              
-              console.log(`✅ [PRATICIENS STORE] Loaded ${paginatedItems.length}/${praticiens.length} praticiens`)
-              
-              resolve({ items: this.items, total: this.total })
-            } catch (error) {
-              console.error('❌ [PRATICIENS STORE] Error processing Firebase data:', error)
-              this.error = error.message
-              reject(error)
-            } finally {
-              this.loading = false
-            }
-          }, (error) => {
-            console.error('❌ [PRATICIENS STORE] Firebase read error:', error)
-            this.error = error.message
-            this.loading = false
-            reject(error)
-          })
-        })
+        // Filtrage par recherche si nécessaire
+        if (searchQuery && searchQuery.trim()) {
+          const searchTerm = `%${searchQuery.trim()}%`
+          query = query.or(`nom.ilike.${searchTerm},prenom.ilike.${searchTerm},mail.ilike.${searchTerm},institution.ilike.${searchTerm},localite.ilike.${searchTerm}`)
+        }
+        
+        // Pagination
+        query = query.range(offset, offset + limit - 1)
+        
+        const { data, error, count } = await query
+        
+        if (error) throw error
+        
+        // Normaliser les données pour compatibilité
+        const praticiens = (data || []).map(item => ({
+          id: item.id,
+          nom: item.nom || '',
+          prenom: item.prenom || '',
+          mail: item.mail || '',
+          institution: item.institution || '',
+          localite: item.localite || '',
+          // Versions avec majuscules pour compatibilité
+          Nom: item.nom || '',
+          Prenom: item.prenom || '',
+          Mail: item.mail || '',
+          Institution: item.institution || '',
+          Localite: item.localite || '',
+          createdAt: item.created_at,
+          updatedAt: item.updated_at
+        }))
+        
+        this.items = praticiens
+        this.total = count || 0
+        
+        console.log(`✅ [PRATICIENS STORE] Loaded ${praticiens.length}/${this.total} praticiens from Supabase`)
+        
+        return { items: this.items, total: this.total }
       } catch (error) {
         console.error('❌ [PRATICIENS STORE] Fetch error:', error)
         this.error = error.message
-        this.loading = false
         throw error
+      } finally {
+        this.loading = false
       }
     },
 
@@ -113,33 +75,59 @@ export const usePraticiensStore = defineStore('praticiens', {
       this.error = null
       
       try {
-        console.log('➕ [PRATICIENS STORE] Creating new praticien:', data)
-        
-        const praticiensRef = ref(db, 'PraticienFormateurs')
-        const newPraticienRef = push(praticiensRef)
+        console.log('➕ [PRATICIENS STORE] Creating new praticien in Supabase:', data)
         
         const praticienData = {
-          Nom: data.nom || data.Nom || '',
-          Prenom: data.prenom || data.Prenom || '',
-          Mail: data.mail || data.Mail || null,
-          Institution: data.institution || data.Institution || null,
-          Localite: data.localite || data.Localite || null,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
+          nom: data.nom || data.Nom || '',
+          prenom: data.prenom || data.Prenom || '',
+          mail: data.mail || data.Mail || null,
+          institution: data.institution || data.Institution || null,
+          localite: data.localite || data.Localite || null,
         }
         
-        await set(newPraticienRef, praticienData)
+        console.log('📤 [PRATICIENS STORE] Données à insérer:', praticienData)
+        
+        // Ne pas envoyer l'ID, Supabase va le générer automatiquement
+        const { data: newData, error } = await supabase
+          .from('praticiens_formateurs')
+          .insert([praticienData])
+          .select()
+          .single()
+        
+        if (error) {
+          console.error('❌ [PRATICIENS STORE] Erreur Supabase détaillée:', error)
+          
+          // Messages d'erreur plus explicites
+          if (error.code === '42P01') {
+            throw new Error('La table praticiens_formateurs n\'existe pas dans Supabase. Veuillez exécuter le script SQL de migration : supabase_migrations/create_praticiens_formateurs_table.sql')
+          } else if (error.code === '42501') {
+            throw new Error('Permissions insuffisantes. Vérifiez que vous êtes admin ou editor.')
+          } else {
+            throw new Error(`Erreur Supabase: ${error.message || error.hint || 'Erreur inconnue'}`)
+          }
+        }
         
         const newPraticien = {
-          id: newPraticienRef.key,
-          ...praticienData
+          id: newData.id,
+          nom: newData.nom,
+          prenom: newData.prenom,
+          mail: newData.mail,
+          institution: newData.institution,
+          localite: newData.localite,
+          Nom: newData.nom,
+          Prenom: newData.prenom,
+          Mail: newData.mail,
+          Institution: newData.institution,
+          Localite: newData.localite,
+          createdAt: newData.created_at,
+          updatedAt: newData.updated_at
         }
         
         // Ajouter au début de la liste locale
         this.items.unshift(newPraticien)
         this.total += 1
         
-        console.log('✅ [PRATICIENS STORE] Praticien created successfully:', newPraticien.id)
+        console.log('✅ [PRATICIENS STORE] Praticien created successfully in Supabase:', newPraticien.id)
         
         return newPraticien
       } catch (error) {
@@ -155,31 +143,46 @@ export const usePraticiensStore = defineStore('praticiens', {
       this.error = null
       
       try {
-        console.log('📝 [PRATICIENS STORE] Updating praticien:', id, form)
-        
-        const praticienRef = ref(db, `PraticienFormateurs/${id}`)
+        console.log('📝 [PRATICIENS STORE] Updating praticien in Supabase:', id, form)
         
         const updateData = {
-          Nom: form.nom || form.Nom || '',
-          Prenom: form.prenom || form.Prenom || '',
-          Mail: form.mail || form.Mail || null,
-          Institution: form.institution || form.Institution || null,
-          Localite: form.localite || form.Localite || null,
-          updatedAt: new Date().toISOString()
+          nom: form.nom || form.Nom || '',
+          prenom: form.prenom || form.Prenom || '',
+          mail: form.mail || form.Mail || null,
+          institution: form.institution || form.Institution || null,
+          localite: form.localite || form.Localite || null,
         }
         
-        await update(praticienRef, updateData)
+        const { data, error } = await supabase
+          .from('praticiens_formateurs')
+          .update(updateData)
+          .eq('id', id)
+          .select()
+          .single()
+        
+        if (error) throw error
         
         // Mettre à jour dans la liste locale
         const index = this.items.findIndex(p => p.id === id)
         if (index !== -1) {
           this.items[index] = {
-            ...this.items[index],
-            ...updateData
+            id: data.id,
+            nom: data.nom,
+            prenom: data.prenom,
+            mail: data.mail,
+            institution: data.institution,
+            localite: data.localite,
+            Nom: data.nom,
+            Prenom: data.prenom,
+            Mail: data.mail,
+            Institution: data.institution,
+            Localite: data.localite,
+            createdAt: data.created_at,
+            updatedAt: data.updated_at
           }
         }
         
-        console.log('✅ [PRATICIENS STORE] Praticien updated successfully:', id)
+        console.log('✅ [PRATICIENS STORE] Praticien updated successfully in Supabase:', id)
         
         return this.items[index]
       } catch (error) {
@@ -194,16 +197,20 @@ export const usePraticiensStore = defineStore('praticiens', {
       this.error = null
       
       try {
-        console.log('🗑️ [PRATICIENS STORE] Deleting praticien:', id)
+        console.log('🗑️ [PRATICIENS STORE] Deleting praticien from Supabase:', id)
         
-        const praticienRef = ref(db, `PraticienFormateurs/${id}`)
-        await remove(praticienRef)
+        const { error } = await supabase
+          .from('praticiens_formateurs')
+          .delete()
+          .eq('id', id)
+        
+        if (error) throw error
         
         // Supprimer de la liste locale
         this.items = this.items.filter(p => p.id !== id)
         this.total = Math.max(0, this.total - 1)
         
-        console.log('✅ [PRATICIENS STORE] Praticien deleted successfully:', id)
+        console.log('✅ [PRATICIENS STORE] Praticien deleted successfully from Supabase:', id)
       } catch (error) {
         console.error('❌ [PRATICIENS STORE] Delete error:', error)
         this.error = error.message
@@ -216,53 +223,49 @@ export const usePraticiensStore = defineStore('praticiens', {
     // Méthode pour récupérer un praticien par ID
     async getPraticienById(id) {
       try {
-        console.log('🔍 [PRATICIENS STORE] Getting praticien by ID:', id)
+        console.log('🔍 [PRATICIENS STORE] Getting praticien by ID from Supabase:', id)
         
-        const praticienRef = ref(db, `PraticienFormateurs/${id}`)
+        const { data, error } = await supabase
+          .from('praticiens_formateurs')
+          .select('*')
+          .eq('id', id)
+          .single()
         
-        return new Promise((resolve, reject) => {
-          onValue(praticienRef, (snapshot) => {
-            const data = snapshot.val()
-            if (data) {
-              const praticien = {
-                id: id,
-                // Normaliser les noms de champs pour la compatibilité avec les composants
-                nom: data.Nom || data.nom || '',
-                prenom: data.Prenom || data.prenom || '',
-                mail: data.Mail || data.mail || '',
-                institution: data.Institution || data.institution || '',
-                localite: data.Localite || data.localite || '',
-                // Garder aussi les versions avec majuscules pour référence
-                Nom: data.Nom || data.nom || '',
-                Prenom: data.Prenom || data.prenom || '',
-                Mail: data.Mail || data.mail || '',
-                Institution: data.Institution || data.institution || '',
-                Localite: data.Localite || data.localite || '',
-                // Timestamps
-                createdAt: data.createdAt,
-                updatedAt: data.updatedAt
-              }
-              console.log('✅ [PRATICIENS STORE] Praticien found:', praticien)
-              resolve(praticien)
-            } else {
-              console.log('❌ [PRATICIENS STORE] Praticien not found:', id)
-              resolve(null)
-            }
-          }, (error) => {
-            console.error('❌ [PRATICIENS STORE] Error getting praticien:', error)
-            reject(error)
-          })
-        })
+        if (error) {
+          if (error.code === 'PGRST116') {
+            // Pas trouvé
+            console.log('❌ [PRATICIENS STORE] Praticien not found:', id)
+            return null
+          }
+          throw error
+        }
+        
+        if (data) {
+          const praticien = {
+            id: data.id,
+            nom: data.nom || '',
+            prenom: data.prenom || '',
+            mail: data.mail || '',
+            institution: data.institution || '',
+            localite: data.localite || '',
+            // Versions avec majuscules pour compatibilité
+            Nom: data.nom || '',
+            Prenom: data.prenom || '',
+            Mail: data.mail || '',
+            Institution: data.institution || '',
+            Localite: data.localite || '',
+            createdAt: data.created_at,
+            updatedAt: data.updated_at
+          }
+          console.log('✅ [PRATICIENS STORE] Praticien found in Supabase:', praticien)
+          return praticien
+        }
+        
+        return null
       } catch (error) {
         console.error('❌ [PRATICIENS STORE] Get praticien error:', error)
         throw error
       }
     },
-
-    // Méthode pour nettoyer les listeners Firebase
-    cleanup() {
-      const praticiensRef = ref(db, 'PraticienFormateurs')
-      off(praticiensRef)
-    }
   },
 })

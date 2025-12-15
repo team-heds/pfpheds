@@ -121,16 +121,10 @@
           <template #empty>
             <div class="text-center p-4 text-600">Aucune place trouvée</div>
           </template>
-          <Column header="Nom" sortable>
+          <Column header="Institution Name" sortable sortField="InstitutionName">
             <template #body="{ data }">
-              <InputText :value="data.NomPlace || ''" @change="e => onChangeSimple(data, 'NomPlace', e.target.value)" />
-            </template>
-          </Column>
-          <Column header="Institution Name" sortable>
-            <template #body="{ data }">
-              <div v-if="data.InstitutionId" class="institution-assigned">
-                <span class="font-semibold">{{ institutionNameById[data.InstitutionId] || data.InstitutionName || '-' }}</span>
-                <Tag severity="success" value="Assignée" class="ml-2" />
+              <div v-if="data.InstitutionId">
+                <span>{{ institutionNameById[data.InstitutionId] || data.InstitutionName || '-' }}</span>
               </div>
               <Dropdown 
                 v-else
@@ -146,6 +140,11 @@
                 :filterMatchMode="'contains'"
                 showClear
               />
+            </template>
+          </Column>
+          <Column header="Nom" sortable sortField="NomPlace">
+            <template #body="{ data }">
+              <InputText :value="data.NomPlace || ''" @change="e => onChangeSimple(data, 'NomPlace', e.target.value)" />
             </template>
           </Column>
           <Column header="MSQ" v-if="visibleColumns.MSQ">
@@ -242,7 +241,28 @@
           </Column>
           <Column header="Praticien Formateur">
             <template #body="{ data }">
-              <MultiSelect :modelValue="data.praticiensFormateurs || []" @update:modelValue="v => onChangeArray(data, 'praticiensFormateurs', v)" :options="praticiensOptions" optionLabel="label" optionValue="id" display="chip" class="w-full md:w-14rem" />
+              <div class="praticiens-container">
+                <div v-if="!data.praticiensFormateurs || data.praticiensFormateurs.length === 0" class="text-500 text-sm mb-2">
+                  Aucun praticien
+                </div>
+                <div v-else class="praticiens-names mb-2">
+                  <div 
+                    v-for="pfId in data.praticiensFormateurs" 
+                    :key="pfId"
+                    class="praticien-name"
+                  >
+                    {{ getPraticienDisplayName(pfId) }}
+                  </div>
+                </div>
+                <Button 
+                  icon="pi pi-pencil" 
+                  label="Modifier"
+                  text 
+                  size="small"
+                  @click="openPraticienSelector(data)"
+                  class="p-button-sm"
+                />
+              </div>
             </template>
           </Column>
           <Column header="Remarques">
@@ -252,8 +272,20 @@
           </Column>
           <Column header="Fiche">
             <template #body="{ data }">
-              <a v-if="data.fileURL" :href="data.fileURL" target="_blank" class="text-primary">PDF</a>
-              <span v-else>-</span>
+              <div class="flex align-items-center gap-2">
+                <a v-if="data.fileurl || data.fileURL" :href="data.fileurl || data.fileURL" target="_blank" class="text-primary">
+                  <i class="pi pi-file-pdf"></i> PDF
+                </a>
+                <span v-else class="text-500">Aucun fichier</span>
+                <Button 
+                  icon="pi pi-upload" 
+                  text 
+                  rounded 
+                  size="small"
+                  @click="openFileUpload(data)"
+                  v-tooltip.top="'Ajouter/Modifier le document'"
+                />
+              </div>
             </template>
           </Column>
           <Column header="Actions"  alignFrozen="right">
@@ -278,6 +310,97 @@
       :selected-year="selectedYear"
       @created="onPlaceCreated"
     />
+
+    <!-- Dialog de sélection des praticiens -->
+    <Dialog
+      v-model:visible="showPraticienDialog"
+      modal
+      header="Sélectionner les praticiens formateurs"
+      :style="{ width: '600px' }"
+    >
+      <div class="mb-3">
+        <label class="block text-sm font-semibold mb-2">Rechercher et sélectionner</label>
+        <MultiSelect 
+          v-model="selectedPraticiens" 
+          :options="praticiensOptions" 
+          optionLabel="label" 
+          optionValue="id" 
+          display="chip" 
+          class="w-full"
+          filter
+          filterPlaceholder="🔍 Rechercher un praticien..."
+          :filterMatchMode="'contains'"
+          placeholder="Sélectionner des praticiens..."
+        />
+      </div>
+
+      <template #footer>
+        <Button 
+          label="Annuler" 
+          icon="pi pi-times" 
+          text 
+          @click="showPraticienDialog = false" 
+        />
+        <Button 
+          label="Enregistrer" 
+          icon="pi pi-check" 
+          @click="savePraticiens" 
+        />
+      </template>
+    </Dialog>
+
+    <!-- Dialog d'upload de fichier -->
+    <Dialog
+      v-model:visible="showFileDialog"
+      modal
+      header="Ajouter un document"
+      :style="{ width: '500px' }"
+    >
+      <div class="mb-3">
+        <label class="block text-sm font-semibold mb-2">Sélectionner un fichier PDF</label>
+        <input 
+          type="file" 
+          ref="fileInput"
+          accept=".pdf"
+          @change="onFileSelected"
+          class="w-full p-2 border-1 surface-border border-round"
+        />
+        <small class="text-500 block mt-2">Formats acceptés : PDF uniquement</small>
+      </div>
+
+      <div v-if="selectedFile" class="surface-card p-3 border-round mb-3">
+        <div class="flex align-items-center gap-2">
+          <i class="pi pi-file-pdf text-primary text-2xl"></i>
+          <div class="flex-1">
+            <div class="font-semibold">{{ selectedFile.name }}</div>
+            <div class="text-sm text-500">{{ formatFileSize(selectedFile.size) }}</div>
+          </div>
+          <Button 
+            icon="pi pi-times" 
+            text 
+            rounded 
+            severity="danger"
+            @click="clearFile"
+          />
+        </div>
+      </div>
+
+      <template #footer>
+        <Button 
+          label="Annuler" 
+          icon="pi pi-times" 
+          text 
+          @click="showFileDialog = false" 
+        />
+        <Button 
+          label="Uploader" 
+          icon="pi pi-upload" 
+          @click="uploadFile" 
+          :disabled="!selectedFile"
+          :loading="uploading"
+        />
+      </template>
+    </Dialog>
 
     <!-- Dialog de confirmation de suppression -->
     <Dialog
@@ -336,17 +459,19 @@ import { useInstitutionsStore } from '@/stores/institutionsStore'
 import InputSwitch from 'primevue/inputswitch'
 import MultiSelect from 'primevue/multiselect'
 import Textarea from 'primevue/textarea'
-import { usePraticiensFormateursStore } from '@/stores/praticiensFormateursStore'
+import { usePraticiensStore } from '@/stores/praticiensStore'
 import Dropdown from 'primevue/dropdown'
 import { checkSupabaseAuth } from '@/utils/checkAuth'
 import CreatePlaceDialog from '@/components/admin/places/CreatePlaceDialog.vue'
 import Dialog from 'primevue/dialog'
 import OverlayPanel from 'primevue/overlaypanel'
 import Checkbox from 'primevue/checkbox'
+import { storage } from '@/firebase'
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 
 const store = usePlacesStore()
 const institutionsStore = useInstitutionsStore()
-const praticiensStore = usePraticiensFormateursStore()
+const praticiensStore = usePraticiensStore()
 const loading = computed(() => store.loading)
 const search = ref('')
 const years = ref(['2026','2027','2025'])
@@ -388,10 +513,29 @@ const rows = computed(() => {
 })
 
 const praticiensOptions = computed(() => {
-  return (praticiensStore.praticiensFormateurs || []).map(p => ({
-    id: p.id,
-    label: `${p.prenom || ''} ${p.nom || ''}`.trim() || p.mail || p.id,
-  }))
+  const items = praticiensStore.items || []
+  console.log('🔍 Praticiens Store Items:', items.length)
+  if (items.length > 0) {
+    console.log('📋 Premier praticien:', items[0])
+  }
+  
+  const options = items.map(p => {
+    const prenom = p.prenom || p.Prenom || ''
+    const nom = p.nom || p.Nom || ''
+    const fullName = `${prenom} ${nom}`.trim()
+    const label = fullName || p.mail || p.Mail || `PF-${p.id}`
+    
+    return {
+      id: p.id,
+      label: label
+    }
+  })
+  
+  if (options.length > 0) {
+    console.log('✅ Première option:', options[0])
+  }
+  
+  return options
 })
 
 const institutionsOptions = computed(() => {
@@ -416,9 +560,16 @@ const withPdfOnly = ref(false)
 const compact = ref(false)
 const showCreateDialog = ref(false)
 const showDeleteDialog = ref(false)
+const showPraticienDialog = ref(false)
+const showFileDialog = ref(false)
 const placeToDelete = ref(null)
 const deleting = ref(false)
 const columnsPanel = ref(null)
+const currentPlace = ref(null)
+const selectedPraticiens = ref([])
+const selectedFile = ref(null)
+const fileInput = ref(null)
+const uploading = ref(false)
 
 // Visibilité des colonnes
 const visibleColumns = ref({
@@ -574,6 +725,158 @@ function toggleAllLangues() {
   // Géré par le computed
 }
 
+function getPraticienDisplayName(praticienId) {
+  // Chercher dans les options
+  const praticien = praticiensOptions.value.find(p => 
+    p.id === praticienId || 
+    p.id === String(praticienId) ||
+    String(p.id) === String(praticienId)
+  )
+  
+  if (praticien?.label) {
+    return praticien.label
+  }
+  
+  // Si on ne trouve pas dans les options, chercher directement dans le store
+  const pf = (praticiensStore.items || []).find(p => 
+    p.id === praticienId || 
+    p.id === String(praticienId) ||
+    String(p.id) === String(praticienId)
+  )
+  
+  if (pf) {
+    const prenom = pf.prenom || pf.Prenom || ''
+    const nom = pf.nom || pf.Nom || ''
+    const fullName = `${prenom} ${nom}`.trim()
+    return fullName || pf.mail || pf.Mail || `PF-${praticienId}`
+  }
+  
+  // Fallback: afficher l'ID
+  return `PF-${praticienId}`
+}
+
+function openPraticienSelector(place) {
+  currentPlace.value = place
+  selectedPraticiens.value = [...(place.praticiensFormateurs || [])]
+  showPraticienDialog.value = true
+}
+
+async function savePraticiens() {
+  if (!currentPlace.value?.PlaceId) return
+  
+  try {
+    await onChangeArray(currentPlace.value, 'praticiensFormateurs', selectedPraticiens.value)
+    showPraticienDialog.value = false
+    currentPlace.value = null
+    selectedPraticiens.value = []
+  } catch (error) {
+    console.error('❌ Erreur lors de la sauvegarde des praticiens:', error)
+    alert('Erreur lors de la sauvegarde')
+  }
+}
+
+function openFileUpload(place) {
+  currentPlace.value = place
+  selectedFile.value = null
+  showFileDialog.value = true
+}
+
+function onFileSelected(event) {
+  const file = event.target.files[0]
+  if (file && file.type === 'application/pdf') {
+    selectedFile.value = file
+  } else if (file) {
+    alert('Veuillez sélectionner un fichier PDF')
+    event.target.value = ''
+  }
+}
+
+function clearFile() {
+  selectedFile.value = null
+  if (fileInput.value) {
+    fileInput.value.value = ''
+  }
+}
+
+function formatFileSize(bytes) {
+  if (bytes === 0) return '0 Bytes'
+  const k = 1024
+  const sizes = ['Bytes', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
+}
+
+async function uploadFile() {
+  if (!selectedFile.value || !currentPlace.value?.PlaceId) return
+  
+  uploading.value = true
+  
+  try {
+    console.log('📤 Upload du fichier:', selectedFile.value.name, 'pour la place:', currentPlace.value.PlaceId)
+    
+    // Créer un nom de fichier unique avec timestamp
+    const timestamp = Date.now()
+    const fileName = `${timestamp}_${selectedFile.value.name}`
+    const filePath = `places/${currentPlace.value.PlaceId}/${fileName}`
+    
+    console.log('📁 Upload vers Firebase Storage:', filePath)
+    
+    // Créer la référence Firebase Storage
+    const fileRef = storageRef(storage, filePath)
+    
+    // Upload le fichier vers Firebase Storage
+    const snapshot = await uploadBytes(fileRef, selectedFile.value, {
+      contentType: 'application/pdf',
+      customMetadata: {
+        placeId: String(currentPlace.value.PlaceId),
+        placeName: currentPlace.value.NomPlace || 'unknown',
+        uploadedAt: new Date().toISOString()
+      }
+    })
+    
+    console.log('✅ Fichier uploadé:', snapshot.metadata.fullPath)
+    
+    // Obtenir l'URL de téléchargement avec token
+    const downloadURL = await getDownloadURL(fileRef)
+    
+    console.log('🔗 URL du fichier:', downloadURL)
+    
+    // Mettre à jour la place avec l'URL du fichier
+    console.log('🔄 Tentative de mise à jour Supabase:', {
+      placeId: currentPlace.value.PlaceId,
+      fileurl: downloadURL,
+      filename: selectedFile.value.name
+    })
+    
+    const updatedPlace = await store.updatePlace(currentPlace.value.PlaceId, { 
+      fileurl: downloadURL,
+      filename: selectedFile.value.name
+    })
+    
+    console.log('✅ Place mise à jour avec le lien du fichier:', updatedPlace)
+    
+    // Mettre à jour l'objet currentPlace pour que la vue se rafraîchisse
+    if (updatedPlace) {
+      Object.assign(currentPlace.value, updatedPlace)
+    }
+    
+    // Recharger toutes les places pour être sûr
+    await store.fetchPlaces()
+    
+    alert('✅ Document uploadé avec succès !')
+    
+    showFileDialog.value = false
+    selectedFile.value = null
+    currentPlace.value = null
+    
+  } catch (error) {
+    console.error('❌ Erreur lors de l\'upload:', error)
+    alert('Erreur lors de l\'upload du fichier: ' + error.message)
+  } finally {
+    uploading.value = false
+  }
+}
+
 function confirmDelete(place) {
   placeToDelete.value = place
   showDeleteDialog.value = true
@@ -608,9 +911,25 @@ onMounted(async () => {
   // Vérifier l'authentification Supabase au chargement
   await checkSupabaseAuth()
   
-  if (!store.places?.length) store.fetchPlaces()
-  if (!institutionsStore.institutions?.length) institutionsStore.fetchInstitutions()
-  if (!praticiensStore.praticiensFormateurs?.length) praticiensStore.fetchPraticiensFormateurs()
+  console.log('🚀 [PlacesView] Chargement initial...')
+  
+  if (!store.places?.length) {
+    console.log('📍 Chargement des places...')
+    await store.fetchPlaces()
+  }
+  
+  if (!institutionsStore.institutions?.length) {
+    console.log('🏥 Chargement des institutions...')
+    await institutionsStore.fetchInstitutions()
+  }
+  
+  console.log('👥 Chargement des praticiens...')
+  await praticiensStore.fetchPraticiens()
+  console.log('✅ Praticiens chargés:', praticiensStore.items?.length)
+  
+  if (praticiensStore.items && praticiensStore.items.length > 0) {
+    console.log('📋 Exemple de praticien:', praticiensStore.items[0])
+  }
 })
 
 watch(search, () => { /* filtering is computed */ })
@@ -618,6 +937,14 @@ watch(selectedYear, () => {
   // Optionnel: recharger si vous souhaitez recalculer côté backend
   reload()
 })
+
+// Watch pour forcer la mise à jour des options quand les praticiens sont chargés
+watch(() => praticiensStore.items, (newItems) => {
+  console.log('🔄 [PlacesView] Praticiens store mis à jour:', newItems?.length)
+  if (newItems && newItems.length > 0) {
+    console.log('📋 Premier praticien après update:', newItems[0])
+  }
+}, { immediate: true, deep: true })
 </script>
 
 <style scoped>
@@ -720,5 +1047,34 @@ watch(selectedYear, () => {
   border-radius: 6px;
   color: #059669;
 }
-</style>
 
+/* Styles pour les noms des praticiens */
+.praticiens-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.praticiens-names {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.praticien-name {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.2;
+}
+
+.fp-dark .praticien-name {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #f3f4f6;
+}
+</style>
