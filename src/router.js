@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import { ref as dbRef, get as dbGet } from 'firebase/database';
-import { db } from '@/firebase'; // Import your Firebase configuration
+import '@/firebase'; // Import your Firebase configuration
 import { useAuthStore } from '@/stores/authStore';
 import rolesService from '@/service/rolesService';
 import { useRoleStore } from '@/stores/role';
@@ -27,8 +26,7 @@ import Institution from '@/views/institutions/Institution.vue'
 import Place from "@/views/institutions/PlaceListView.vue";
 import Faq from "@/views/home/FaqView.vue";
 import TermsOfUse from "@/views/home/TermsView.vue";
-import PushView from "@/views/home/Pushview.vue";
-import PushView2 from "@/views/home/Pushview2.vue";
+import PushView from "@/views/home/PushView.vue";
 import InfoExterne from "@/views/home/InfoExterneView.vue";
 import HistoriquePFP from '@/views/home/HistoryView.vue'
 import DocumentsPFP from '@/views/home/DocumentsView.vue'
@@ -108,12 +106,9 @@ import CalendarModuleView from '@/views/planning/CalendarModuleView.vue'
 import CalendarCourseView from '@/views/planning/CalendarCourseView.vue'
 
 import VideoValidationPage from '@/views/media/VideoValidationPage.vue'
-import ModuleAdminPage from '@/views/media/ModuleAdminPage.vue'
+import ModuleAdminPage from '@/views/admin/ModuleAdminPage.vue'
 import ModuleAdminPageSimple from '@/views/admin/ModuleAdminPageSimple.vue'
 import VimeoTestPage from '@/views/media/VimeoTestPage.vue'
-
-import QrCodeGenerator from '@/components/ui/QrCodeGenerator.vue'
-
 
 // ========================================
 // PROFILS & UTILISATEURS
@@ -151,7 +146,6 @@ import PlanningView from '@/views/admin/planning/PlanningView.vue'
 import PlanningAdminView from '@/views/admin/planning/PlanningAdminView.vue'
 import AcademicYearManagement from '@/views/admin/AcademicYearManagement.vue'
 import AcademicKanbanView from '@/views/admin/academic/AcademicKanbanView.vue'
-// MediaContentView est obsolète - redirigé vers VideoLibraryView
 import AdminDefisView from '@/views/admin/institutions/gamification/AdminDefisView.vue';
 import SupabaseDiagnosticView from '@/views/admin/SupabaseDiagnosticView.vue';
 import RBACAdminView from '@/views/admin/security/RBACAdminView.vue'
@@ -228,11 +222,10 @@ import Management_votation_etudiants from '@/components/admin/details/Management
 // ========================================
 // GESTION DES PLACES & STAGES
 // ========================================
-import PlaceManagementView from '@/views/admin/places/PlaceManagementView.vue';
 import ManagementPlacesSafe from '@/components/admin/details/ManagementPlacesSafe.vue';
 import OffreDePlace from '@/components/admin/details/OffreDePlaceBA24PFP2.vue';
 import PlaceAssignmentView from '@/views/admin/places/PlaceAssignmentView.vue';
-import PlacesAssigned from '@/components/admin/details/PlacesAssigned.vue';
+import PlacesAssigned from '@/views/admin/pfp/PlacesAssignedView.vue'
 import StageRepartitionBA2 from '@/components/admin/details/StageRepartitionBA2.vue';
 import ManagementPFPEnCours from '@/components/admin/details/ManagementPFPEnCours.vue';
 
@@ -274,8 +267,6 @@ import MobileLangAppsView from '@/views/apps/tools/MobileLangAppsView.vue';
 //import MobiprioritairearchView from '@/views/apps/tools/MobiprioritairearchView.vue'
 import CreateContentMobile from '@/components/social/library/CreateContentMobile.vue';
 import ListComponent from '@/components/media/audio/ListComponent.vue'
-
-import SearchResults from '@/components/common/utils/SearchResults.vue'
 import Ventriglisse3D from '@/components/games/Ventriglisse3D.vue'
 import CareConvers from '@/views/pages/CareConvers.vue'
 
@@ -726,6 +717,17 @@ const routes = [
 //  { path: '/template-test', component: () => import('@/views/template/TemplateTest.vue'), name: 'TemplateTest' },
   { path: '/supabase-demo', component: () => import('@/views/pages/Supabase.vue'), name: 'SupabaseDemo', meta: { requiresAuth: true } },
   { path: '/care-convers', component: CareConvers, name: 'CareConvers', meta: { requiresAuth: true } },
+  { path: '/capsules-insuffisance-renale', component: () => import('@/views/capsulesInsuffiance/CapsulesInsuffisanceRenaleTableDesMatieresView.vue'), name: 'CapsulesInsuffisanceRenale', meta: { requiresAuth: true } },
+  { path: '/capsules-insuffisance-renale/introduction', component: () => import('@/views/capsulesInsuffiance/CapsulesInsuffisanceRenaleIntroductionView.vue'), name: 'CapsulesInsuffisanceRenaleIntroduction', meta: { requiresAuth: true } },
+  { path: '/capsules-insuffisance-renale/anatomie-physiologie', component: () => import('@/views/capsulesInsuffiance/CapsulesInsuffisanceRenaleAnatomiePhysiologieView.vue'), name: 'CapsulesInsuffisanceRenaleAnatomiePhysiologie', meta: { requiresAuth: true } },
+  { path: '/capsules-insuffisance-renale/comprendre-ira-irc', component: () => import('@/views/capsulesInsuffiance/CapsulesInsuffisanceRenaleComprendreIraIrcView.vue'), name: 'CapsulesInsuffisanceRenaleComprendreIraIrc', meta: { requiresAuth: true } },
+  { path: '/capsules-insuffisance-renale/chatbot', component: () => import('@/views/capsulesInsuffiance/CapsulesInsuffisanceRenaleChatbotView.vue'), name: 'CapsulesInsuffisanceRenaleChatbot', meta: { requiresAuth: true } },
+  { path: '/capsules-insuffisance-renale/activites-ira', component: () => import('@/views/capsulesInsuffiance/CapsulesInsuffisanceRenaleActivitesIraView.vue'), name: 'CapsulesInsuffisanceRenaleActivitesIra', meta: { requiresAuth: true } },
+  { path: '/capsules-insuffisance-renale/activite-irc', component: () => import('@/views/capsulesInsuffiance/CapsulesInsuffisanceRenaleActiviteIrcView.vue'), name: 'CapsulesInsuffisanceRenaleActiviteIrc', meta: { requiresAuth: true } },
+  { path: '/capsules-insuffisance-renale/validation-acquis-ira', component: () => import('@/views/capsulesInsuffiance/CapsulesInsuffisanceRenaleValidationAcquisIraView.vue'), name: 'CapsulesInsuffisanceRenaleValidationAcquisIra', meta: { requiresAuth: true } },
+  { path: '/capsules-insuffisance-renale/validation-acquis-irc', component: () => import('@/views/capsulesInsuffiance/CapsulesInsuffisanceRenaleValidationAcquisIrcView.vue'), name: 'CapsulesInsuffisanceRenaleValidationAcquisIrc', meta: { requiresAuth: true } },
+  { path: '/capsules-insuffisance-renale/synthese', component: () => import('@/views/capsulesInsuffiance/CapsulesInsuffisanceRenaleSyntheseView.vue'), name: 'CapsulesInsuffisanceRenaleSynthese', meta: { requiresAuth: true } },
+  { path: '/capsules-insuffisance-renale/qcm-evaluatif', component: () => import('@/views/capsulesInsuffiance/CapsulesInsuffisanceRenaleQcmEvaluatifView.vue'), name: 'CapsulesInsuffisanceRenaleQcmEvaluatif', meta: { requiresAuth: true } },
   //{ path: '/template-test', component: () => import('@/views/template/TemplateTest.vue'), name: 'TemplateTest' },
 
   // ========================================

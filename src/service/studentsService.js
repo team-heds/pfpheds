@@ -7,6 +7,68 @@
 import { supabase } from '@/supabase'
 
 /**
+ * Récupère les étudiants UNIQUEMENT depuis user_profiles (sans fusion avec studentPhysio)
+ * Source unique et fiable pour les noms d'étudiants
+ * @returns {Promise<Array>} Liste des étudiants avec infos complètes
+ */
+export async function getStudentsFromUserProfiles() {
+  try {
+    // Récupérer UNIQUEMENT depuis user_profiles
+    const { data: userProfilesData, error: profilesError } = await supabase
+      .from('user_profiles')
+      .select('*')
+    
+    if (profilesError) throw profilesError
+    
+    // Filtrer les étudiants
+    const studentUsers = (userProfilesData || []).filter(user => {
+      const role = (user.role || '').toLowerCase()
+      const email = (user.email || '').toLowerCase()
+      
+      return (
+        role.includes('student') ||
+        role.includes('etudiant') ||
+        role.includes('étudiant') ||
+        email.includes('@students.hevs.ch')
+      )
+    })
+    
+    console.log(`✅ ${studentUsers.length} étudiants chargés depuis user_profiles (source unique)`)
+    
+    // Retourner directement les données de user_profiles
+    return studentUsers.map(user => ({
+      // Champs de base (compatibilité)
+      id: user.user_id,
+      user_id: user.user_id,
+      
+      // Noms depuis user_profiles (colonnes officielles)
+      display_name: user.display_name,
+      forname: user.forname,
+      family_name: user.family_name,
+      
+      // Classe
+      Classe: user.classe,
+      classe: user.classe,
+      
+      // Autres infos
+      email: user.email,
+      avatar_url: user.avatar_url,
+      house_id: user.house_id,
+      created_at: user.created_at,
+      pfp_cohort: user.pfp_cohort,
+      role: user.role,
+      permissions: user.permissions,
+      
+      // Flag source
+      source: 'user_profiles_only'
+    }))
+  } catch (error) {
+    console.error('❌ Erreur lors du chargement depuis user_profiles:', error)
+    return []
+  }
+}
+
+/**
  * Récupère TOUS les étudiants depuis user_profiles (source unique)
  * Inclut BA22, BA23, BA24, BA25 et tous les futurs
  * @returns {Promise<Array>} Liste des étudiants avec infos complètes
@@ -131,8 +193,6 @@ export async function getAllStudents() {
     
     // Mapper user_profiles vers le format attendu
     const studentsFromProfiles = studentUsers.map(user => {
-      const userEmail = (user.email || '').toLowerCase()
-      
       // Essayer de récupérer la classe depuis (ORDRE DE PRIORITÉ) :
       // 1. StudentsPhysio via user_id (source fiable avec BA23/BA24/BA25)
       // 2. StudentsPhysio via firebase_id (fallback)

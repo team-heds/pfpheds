@@ -98,7 +98,7 @@ export const useInstitutionsStore = defineStore('institutions', {
         i.InstitutionId === parseInt(id) ||
         i.id === parseInt(id)
       )
-      return inst?.Name || inst?.name || 'Institution inconnue'
+      return inst?.Name || inst?.name || 'Institution inconnueee'
     },
   },
 

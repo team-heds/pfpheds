@@ -16,6 +16,7 @@ const filePhysioRoutes = require('./supabase/filePhysioBackendStore');
 const postsStoreRoutes = require('./supabase/postsBackendStore.js');
 //const praticiensFormateursStoreRoutes = require('./supabase/praticiensFormateursBackendStore.js');
 const praticiensStoreRoutes = require('./supabase/praticiensStoreBackend.js');
+const resultatVotationRoutes = require('./supabase/resultatVotationStoreBackend.js');
 const ftpRoutes = require('./uploads/ftpRoutes');
 
 // push
@@ -56,6 +57,7 @@ app.use('/api/hashtags', hashtagStoreRoutes);
 app.use('/api/posts', postsStoreRoutes);
 //app.use('/api/praticiens-formateurs', praticiensFormateursStoreRoutes);
 app.use('/api/praticiens', praticiensStoreRoutes);
+app.use('/api/resultat-votation', resultatVotationRoutes);
 // Direct diagnostic route (dup with uploads/ftpRoutes /diagnostic) to ensure availability
 app.get('/api/ftp/diagnostic', (req, res) => {
   const configured = !!(process.env.FTP_HOST && process.env.FTP_USER && process.env.FTP_PASSWORD)

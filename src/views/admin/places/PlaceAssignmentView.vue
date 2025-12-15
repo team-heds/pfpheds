@@ -3,6 +3,106 @@
     <Navbar />
     <h1>Assignment des Places Disponibles</h1>
 
+    <!-- Section : Votes PFP1A -->
+    <div class="container scroll-table-container" style="margin-bottom: 40px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2>Votes des Étudiants PFP1A - Année 2026 ({{ pfp1aVotesCount }})</h2>
+        <div style="display: flex; gap: 10px;">
+          <Button icon="pi pi-refresh" label="Actualiser" @click="loadPFP1AVotes" size="small" />
+          <Button icon="pi pi-download" label="Export CSV" severity="success" @click="exportPFP1AToCSV" size="small" />
+        </div>
+      </div>
+      
+      <DataTable 
+        :value="pfp1aVotes" 
+        :loading="loadingPFP1A"
+        responsiveLayout="scroll"
+        :paginator="true"
+        :rows="25"
+        :rowsPerPageOptions="[25, 50, 100]"
+        sortField="nom"
+        :sortOrder="1"
+      >
+        <Column header="#" style="width: 50px;">
+          <template #body="slotProps">
+            {{ slotProps.index + 1 }}
+          </template>
+        </Column>
+        
+        <Column field="nom" header="Nom" sortable style="min-width: 120px;" />
+        <Column field="prenom" header="Prénom" sortable style="min-width: 120px;" />
+        <Column field="classe" header="Classe" sortable style="width: 100px;" />
+        
+        <Column header="Choix 1" style="min-width: 250px;">
+          <template #body="slotProps">
+            <div v-if="slotProps.data.choix1" style="padding: 8px; background: #e3f2fd; border-left: 4px solid #2196F3; border-radius: 4px;">
+              <div style="font-weight: 600; color: #1976d2;">{{ slotProps.data.choix1 }}</div>
+              <div v-if="slotProps.data.choix1Institution" style="font-size: 0.85em; color: #666; margin-top: 4px;">
+                {{ slotProps.data.choix1Institution }}
+              </div>
+            </div>
+            <span v-else style="color: #999;">-</span>
+          </template>
+        </Column>
+        
+        <Column header="Choix 2" style="min-width: 250px;">
+          <template #body="slotProps">
+            <div v-if="slotProps.data.choix2" style="padding: 8px; background: #e0f2f1; border-left: 4px solid #00bcd4; border-radius: 4px;">
+              <div style="font-weight: 600; color: #00838f;">{{ slotProps.data.choix2 }}</div>
+              <div v-if="slotProps.data.choix2Institution" style="font-size: 0.85em; color: #666; margin-top: 4px;">
+                {{ slotProps.data.choix2Institution }}
+              </div>
+            </div>
+            <span v-else style="color: #999;">-</span>
+          </template>
+        </Column>
+        
+        <Column header="Choix 3" style="min-width: 250px;">
+          <template #body="slotProps">
+            <div v-if="slotProps.data.choix3" style="padding: 8px; background: #fff3e0; border-left: 4px solid #ff9800; border-radius: 4px;">
+              <div style="font-weight: 600; color: #e65100;">{{ slotProps.data.choix3 }}</div>
+              <div v-if="slotProps.data.choix3Institution" style="font-size: 0.85em; color: #666; margin-top: 4px;">
+                {{ slotProps.data.choix3Institution }}
+              </div>
+            </div>
+            <span v-else style="color: #999;">-</span>
+          </template>
+        </Column>
+        
+        <Column header="Choix 4" style="min-width: 250px;">
+          <template #body="slotProps">
+            <div v-if="slotProps.data.choix4" style="padding: 8px; background: #f5f5f5; border-left: 4px solid #9e9e9e; border-radius: 4px;">
+              <div style="font-weight: 600; color: #424242;">{{ slotProps.data.choix4 }}</div>
+              <div v-if="slotProps.data.choix4Institution" style="font-size: 0.85em; color: #666; margin-top: 4px;">
+                {{ slotProps.data.choix4Institution }}
+              </div>
+            </div>
+            <span v-else style="color: #999;">-</span>
+          </template>
+        </Column>
+        
+        <Column header="Choix 5" style="min-width: 250px;">
+          <template #body="slotProps">
+            <div v-if="slotProps.data.choix5" style="padding: 8px; background: #f5f5f5; border-left: 4px solid #757575; border-radius: 4px;">
+              <div style="font-weight: 600; color: #424242;">{{ slotProps.data.choix5 }}</div>
+              <div v-if="slotProps.data.choix5Institution" style="font-size: 0.85em; color: #666; margin-top: 4px;">
+                {{ slotProps.data.choix5Institution }}
+              </div>
+            </div>
+            <span v-else style="color: #999;">-</span>
+          </template>
+        </Column>
+        
+        <Column header="Statut" style="width: 120px;">
+          <template #body="slotProps">
+            <span v-if="slotProps.data.nbChoix === 5" style="color: green; font-weight: bold;">✓ Complet</span>
+            <span v-else-if="slotProps.data.nbChoix > 0" style="color: orange; font-weight: bold;">⚠ {{ slotProps.data.nbChoix }}/5</span>
+            <span v-else style="color: red; font-weight: bold;">✗ Aucun</span>
+          </template>
+        </Column>
+      </DataTable>
+    </div>
+
     <!-- Section : Affichage des places disponibles avec assignation manuelle -->
     <div class="container scroll-table-container">
       <h2>Liste des Places Disponibles</h2>
