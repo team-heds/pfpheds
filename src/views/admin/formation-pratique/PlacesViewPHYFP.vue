@@ -107,6 +107,8 @@
           :value="rows"
           :loading="loading"
           dataKey="PlaceId"
+          sortField="InstitutionNameSort"
+          :sortOrder="1"
           :paginator="!showAll"
           :rows="rowsPerPage"
           :rowsPerPageOptions="rawRowsPerPageOptions"
@@ -121,7 +123,7 @@
           <template #empty>
             <div class="text-center p-4 text-600">Aucune place trouvée</div>
           </template>
-          <Column header="Institution Name" sortable sortField="InstitutionName">
+          <Column header="Institution Name" sortable sortField="InstitutionNameSort">
             <template #body="{ data }">
               <div v-if="data.InstitutionId">
                 <span>{{ institutionNameById[data.InstitutionId] || data.InstitutionName || '-' }}</span>
@@ -507,9 +509,14 @@ const rows = computed(() => {
       )
     })
   }
-  if (withPdfOnly.value) list = list.filter(p => !!p.fileURL)
-  if (showHalf.value) list = list.slice(0, Math.ceil(list.length / 2))
-  return list
+  // Champ de tri stable sur le texte réellement affiché
+  return list.map(p => {
+    const institutionName = p.InstitutionName || institutionNameById.value[p.InstitutionId] || ''
+    return {
+      ...p,
+      InstitutionNameSort: institutionName
+    }
+  })
 })
 
 const praticiensOptions = computed(() => {
