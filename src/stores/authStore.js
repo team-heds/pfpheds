@@ -12,6 +12,8 @@ export const useAuthStore = defineStore('auth', () => {
   const loading = ref(false);
   const error = ref(null);
   const authProvider = ref(null); // 'firebase' ou 'supabase'
+  const sessionCheckInterval = ref(null);
+  const lastSessionCheck = ref(null);
 
   // Getters
   const isLoggedIn = computed(() => !!user.value);
@@ -147,7 +149,8 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function checkAuthState() {
-    console.log('🔍 Vérification de l\'état d\'authentification...');
+    const timestamp = new Date().toLocaleTimeString();
+    console.log(`🔍 [${timestamp}] Vérification de l'état d'authentification...`);
 
     // Vérifier Firebase avec une promesse pour attendre la restauration de session
     const firebaseUser = await new Promise((resolve) => {
@@ -158,35 +161,126 @@ export const useAuthStore = defineStore('auth', () => {
     });
 
     if (firebaseUser) {
-      console.log('✅ Utilisateur Firebase trouvé:', firebaseUser.email);
+      console.log(`✅ [${timestamp}] Utilisateur Firebase trouvé:`, firebaseUser.email);
       user.value = firebaseUser;
       authProvider.value = 'firebase';
       session.value = null;
+      lastSessionCheck.value = Date.now();
       return;
     }
 
-    // Vérifier Supabase
-    const { data } = await supabase.auth.getUser();
-    if (data.user) {
-      console.log('✅ Utilisateur Supabase trouvé:', data.user.email);
-      user.value = data.user;
-      authProvider.value = 'supabase';
-      const { data: sessionData } = await supabase.auth.getSession();
-      session.value = sessionData.session;
+    // Vérifier Supabase avec gestion d'erreur
+    try {
+      const { data, error: getUserError } = await supabase.auth.getUser();
+      
+      if (getUserError) {
+        console.error(`❌ [${timestamp}] Erreur getUser:`, getUserError.message);
+        // Si le token est invalide, essayer de rafraîchir la session
+        if (getUserError.message?.includes('invalid') || getUserError.message?.includes('expired')) {
+          console.log(`🔄 [${timestamp}] Tentative de refresh de la session...`);
+          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+          if (!refreshError && refreshData?.session) {
+            console.log(`✅ [${timestamp}] Session rafraîchie avec succès`);
+            user.value = refreshData.session.user;
+            session.value = refreshData.session;
+            authProvider.value = 'supabase';
+            lastSessionCheck.value = Date.now();
+            return;
+          } else {
+            console.error(`❌ [${timestamp}] Échec du refresh:`, refreshError?.message);
+            throw refreshError || new Error('Session refresh failed');
+          }
+        }
+        throw getUserError;
+      }
+      
+      if (data.user) {
+        console.log(`✅ [${timestamp}] Utilisateur Supabase trouvé:`, data.user.email);
+        user.value = data.user;
+        authProvider.value = 'supabase';
+        const { data: sessionData } = await supabase.auth.getSession();
+        session.value = sessionData.session;
+        lastSessionCheck.value = Date.now();
+        
+        // Vérifier si le token va bientôt expirer (< 5 minutes)
+        if (sessionData.session) {
+          const expiresAt = sessionData.session.expires_at;
+          const now = Math.floor(Date.now() / 1000);
+          const timeUntilExpiry = expiresAt - now;
+          
+          if (timeUntilExpiry < 300) { // Moins de 5 minutes
+            console.warn(`⚠️ [${timestamp}] Token expire bientôt (${Math.floor(timeUntilExpiry / 60)} min), refresh préventif...`);
+            await supabase.auth.refreshSession();
+          }
+        }
+        return;
+      }
+    } catch (err) {
+      console.error(`❌ [${timestamp}] Erreur lors de la vérification Supabase:`, err);
+      // En cas d'erreur, nettoyer l'état
+      user.value = null;
+      authProvider.value = null;
+      session.value = null;
+      lastSessionCheck.value = Date.now();
       return;
     }
 
-    console.log('❌ Aucun utilisateur connecté trouvé');
+    console.log(`❌ [${timestamp}] Aucun utilisateur connecté trouvé`);
     user.value = null;
     authProvider.value = null;
     session.value = null;
+    lastSessionCheck.value = Date.now();
+  }
+
+  // Vérification périodique de la session (toutes les 2 minutes)
+  function startSessionMonitoring() {
+    if (sessionCheckInterval.value) {
+      clearInterval(sessionCheckInterval.value);
+    }
+    
+    sessionCheckInterval.value = setInterval(async () => {
+      // Ne vérifier que si un utilisateur est connecté
+      if (user.value && authProvider.value === 'supabase') {
+        console.log('🔄 Vérification périodique de la session...');
+        try {
+          const { data, error } = await supabase.auth.getSession();
+          if (error || !data.session) {
+            console.warn('⚠️ Session invalide détectée, tentative de reconnexion...');
+            await checkAuthState();
+          } else {
+            // Vérifier l'expiration
+            const expiresAt = data.session.expires_at;
+            const now = Math.floor(Date.now() / 1000);
+            const timeUntilExpiry = expiresAt - now;
+            
+            if (timeUntilExpiry < 600) { // Moins de 10 minutes
+              console.log(`🔄 Refresh préventif du token (expire dans ${Math.floor(timeUntilExpiry / 60)} min)`);
+              await supabase.auth.refreshSession();
+            }
+          }
+        } catch (err) {
+          console.error('❌ Erreur lors de la vérification périodique:', err);
+        }
+      }
+    }, 120000); // Toutes les 2 minutes
+    
+    console.log('✅ Monitoring de session démarré (vérification toutes les 2 min)');
+  }
+  
+  function stopSessionMonitoring() {
+    if (sessionCheckInterval.value) {
+      clearInterval(sessionCheckInterval.value);
+      sessionCheckInterval.value = null;
+      console.log('🛑 Monitoring de session arrêté');
+    }
   }
 
   // Initialisation du store
   async function initializeAuth() {
     console.log('🚀 Initialisation du store d\'authentification...');
     await checkAuthState();
-    console.log('✅ Store d\'authentification initialisé');
+    startSessionMonitoring();
+    console.log('✅ Store d\'authentification initialisé avec monitoring');
   }
 
   // Gérer les changements d'état d'authentification pour les deux systèmes
@@ -257,6 +351,7 @@ export const useAuthStore = defineStore('auth', () => {
     isLoggedIn,
     isFirebaseUser,
     isSupabaseUser,
+    lastSessionCheck,
     // Firebase methods
     signUpFirebase,
     signInFirebase,
@@ -269,5 +364,7 @@ export const useAuthStore = defineStore('auth', () => {
     signOut,
     checkAuthState,
     initializeAuth,
+    startSessionMonitoring,
+    stopSessionMonitoring,
   };
 });
