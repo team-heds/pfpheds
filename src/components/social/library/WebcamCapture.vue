@@ -15,7 +15,7 @@ export default {
   mounted() {
     this.startWebcam();
   },
-  beforeDestroy() {
+  beforeUnmount() {
     this.stopWebcam();
   },
   methods: {

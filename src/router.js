@@ -311,6 +311,9 @@ const routes = [
   { path: '/router-inspector', component: RouterView, name: 'RouterInspector', meta: { requiresAuth: true, need: 'admin' } },
   { path: '/permissions', component: PermissionsView, name: 'PermissionsView', meta: { requiresAuth: true, need: 'admin' } },
 
+  // Feedbacka (étudiant)
+  { path: '/feedbacka/:id', component: () => import('@/views/pages/FeedbackaStudentView.vue'), name: 'FeedbackaStudentView', props: true, meta: { requiresAuth: true } },
+
   // ASSOCIATIONS
   { path: '/alpinphysio', component: AlpinPhysioView, name: 'AlpinPhysio', meta: { requiresAuth: false } },
 
@@ -471,6 +474,9 @@ const routes = [
   // OUTILS ADMIN
   // ========================================
   { path: '/admin/tools/feedbacka', component: () => import('@/views/admin/tools/FeedbackaView.vue'), name: 'FeedbackaView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
+  { path: '/admin/tools/feedbacka/list', component: () => import('@/views/admin/tools/FeedbackaListView.vue'), name: 'FeedbackaListView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
+  { path: '/admin/tools/feedbacka/create', component: () => import('@/views/admin/tools/FeedbackaCreateView.vue'), name: 'FeedbackaCreateView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
+  { path: '/admin/tools/feedbacka/:id/edit', component: () => import('@/views/admin/tools/FeedbackaEditView.vue'), name: 'FeedbackaEditView', props: true, meta: { requiresAuth: true, need: ['admin', 'editor'] } },
   
   // ========================================
   // GAMIFICATION ADMIN ROUTES
