@@ -14,6 +14,12 @@
             <h1 class="page-main-title">Documents PFP</h1>
             <p class="page-description">Accédez à tous vos documents officiels organisés par catégorie</p>
           </div>
+          <!-- Badge DEBUG admin -->
+          <div class="admin-debug-badge" :class="{ 'is-admin': isAdmin }">
+            <i class="pi" :class="isAdmin ? 'pi-check-circle' : 'pi-times-circle'"></i>
+            <span>{{ isAdmin ? 'Mode Admin' : 'Mode Lecture' }}</span>
+            <small v-if="debugInfo">{{ debugInfo }}</small>
+          </div>
         </div>
       </div>
 
@@ -171,20 +177,21 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
-import { db, auth } from 'root/firebase.js'
-import { ref as dbRef, onValue } from 'firebase/database'
-import { onAuthStateChanged } from 'firebase/auth'
+import { ref, onMounted, computed, watch } from 'vue'
+import { supabase } from '@/supabase'
+import { useAuthStore } from '@/stores/authStore'
 import { useDocumentStore } from '@/stores/documentStore'
 import Navbar from '@/components/common/utils/Navbar.vue'
 import EditFileDocPFP from '@/components/home/EditFileDocPFP.vue'
 import AddFileDocPFP from '@/components/home/AddFileDocPFP.vue'
 
-// Store Pinia pour les documents
+// Stores Pinia
 const documentStore = useDocumentStore()
+const authStore = useAuthStore()
 
 // Variables réactives pour l'auth et l'affichage des modales
 const isAdmin = ref(false)
+const debugInfo = ref('')
 const showEditModal = ref(false)
 const showAddModal = ref(false)
 const editForm = ref({
@@ -215,24 +222,92 @@ const targetSubFolderId = ref(null)
 // Computed pour utiliser les folders du store
 const folders = computed(() => documentStore.folders)
 
-// Vérification du profil utilisateur (chemin "Users/{uid}")
-onAuthStateChanged(auth, (user) => {
-  if (user) {
-    const userProfileRef = dbRef(db, `Users/${user.uid}`)
-    onValue(userProfileRef, (snapshot) => {
-      const profile = snapshot.val()
-      isAdmin.value = profile && profile.Roles && profile.Roles.admin === true
-      console.log("✅ [DocumentsView] isAdmin =", isAdmin.value)
-    })
-  } else {
+// Vérification des droits admin depuis Supabase
+const checkAdminRights = async () => {
+  try {
+    console.log('🔍 [DocumentsView] === DÉBUT VÉRIFICATION ADMIN ===')
+    console.log('🔍 [DocumentsView] authStore.user:', authStore.user)
+    console.log('🔍 [DocumentsView] authStore.isSupabaseUser:', authStore.isSupabaseUser)
+    
+    const user = authStore.user
+    
+    if (!user) {
+      console.log('❌ [DocumentsView] Aucun utilisateur connecté')
+      debugInfo.value = 'Pas connecté'
+      isAdmin.value = false
+      return
+    }
+
+    console.log('👤 [DocumentsView] Utilisateur:', user.email, 'ID:', user.id)
+    debugInfo.value = `User: ${user.email}`
+    
+    // Vérifier si l'utilisateur est admin dans user_profiles
+    console.log('📊 [DocumentsView] Requête Supabase user_profiles...')
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .select('role, email')
+      .eq('user_id', user.id)
+      .single()
+    
+    console.log('📊 [DocumentsView] Réponse Supabase:', { data, error })
+    
+    if (error) {
+      console.error('❌ [DocumentsView] Erreur récupération profil:', error)
+      debugInfo.value = `Erreur: ${error.message}`
+      isAdmin.value = false
+      return
+    }
+    
+    if (!data) {
+      console.warn('⚠️ [DocumentsView] Aucun profil trouvé dans user_profiles')
+      debugInfo.value = 'Profil introuvable'
+      isAdmin.value = false
+      return
+    }
+    
+    // Vérifier si le rôle est admin ou editor
+    const hasAdminRights = data.role === 'admin' || data.role === 'editor'
+    isAdmin.value = hasAdminRights
+    debugInfo.value = `Role: ${data.role}`
+    
+    console.log('✅ [DocumentsView] isAdmin =', isAdmin.value)
+    console.log('✅ [DocumentsView] Role:', data.role)
+    console.log('🔍 [DocumentsView] === FIN VÉRIFICATION ADMIN ===')
+    
+  } catch (err) {
+    console.error('❌ [DocumentsView] Erreur vérification admin:', err)
+    debugInfo.value = `Exception: ${err.message}`
     isAdmin.value = false
   }
-})
+}
+
+// Watcher sur authStore.user pour vérifier les droits quand l'utilisateur est chargé
+watch(
+  () => authStore.user,
+  async (newUser) => {
+    console.log('👁️ [DocumentsView] Watcher authStore.user:', newUser?.email)
+    if (newUser) {
+      await checkAdminRights()
+    } else {
+      isAdmin.value = false
+      debugInfo.value = 'Déconnecté'
+    }
+  },
+  { immediate: true }
+)
 
 // Récupérer les dossiers depuis Firebase via le store
 onMounted(async () => {
   try {
+    console.log('🚀 [DocumentsView] onMounted - Début')
+    
+    // Vérifier les droits admin depuis Supabase
+    await checkAdminRights()
+    
+    // Charger les documents
     await documentStore.loadFoldersTree()
+    
+    console.log('✅ [DocumentsView] onMounted - Terminé')
   } catch (error) {
     console.error('❌ [DocumentsView] Erreur chargement:', error)
   }
@@ -644,6 +719,34 @@ const saveNewFile = async (newFile) => {
 
 .scrollable-container::-webkit-scrollbar {
   display: none;
+}
+
+/* Badge DEBUG Admin */
+.admin-debug-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  background: #fee2e2;
+  border: 2px solid #dc2626;
+  color: #dc2626;
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin-left: auto;
+}
+
+.admin-debug-badge.is-admin {
+  background: #dcfce7;
+  border-color: #16a34a;
+  color: #16a34a;
+}
+
+.admin-debug-badge small {
+  display: block;
+  font-size: 0.75rem;
+  opacity: 0.8;
+  margin-top: 0.25rem;
 }
 
 /* Responsive */

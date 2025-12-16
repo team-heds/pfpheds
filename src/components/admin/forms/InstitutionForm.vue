@@ -215,6 +215,8 @@ const removeImage = () => {
 const handleCreateInstitution = async () => {
   loading.value = true;
   try {
+    console.log('🏥 [InstitutionForm] Début création institution:', institution.value.Name);
+    
     // Format data before sending
     const dataToSend = {
         ...institution.value,
@@ -226,25 +228,35 @@ const handleCreateInstitution = async () => {
     };
 
     // 1. Create institution record without image URL
+    console.log('💾 [InstitutionForm] Création dans Supabase...');
     const newInstitution = await institutionsStore.createInstitution(dataToSend);
+    console.log('✅ [InstitutionForm] Institution créée, ID:', newInstitution.InstitutionId);
 
     // If creation is successful, proceed with image upload if any
     if (newInstitution && newInstitution.InstitutionId) {
       if (imageFile.value) {
-      const imageRef = storageRef(storage, `Institutions/${newInstitution.InstitutionId}/${imageFile.value.name}`);
-      const snapshot = await uploadBytes(imageRef, imageFile.value);
-      const downloadURL = await getDownloadURL(snapshot.ref);
-      
-      // 3. Update the institution with the image URL
-      await institutionsStore.updateInstitution(newInstitution.InstitutionId, { ...newInstitution, ImageURL: [downloadURL] });
+        console.log('🖼️ [InstitutionForm] Upload image Firebase...');
+        const imageRef = storageRef(storage, `Institutions/${newInstitution.InstitutionId}/${imageFile.value.name}`);
+        const snapshot = await uploadBytes(imageRef, imageFile.value);
+        const downloadURL = await getDownloadURL(snapshot.ref);
+        
+        // 3. Update the institution with the image URL
+        console.log('🔄 [InstitutionForm] Mise à jour avec URL image...');
+        await institutionsStore.updateInstitution(newInstitution.InstitutionId, { ...newInstitution, ImageURL: [downloadURL] });
+        console.log('✅ [InstitutionForm] Image enregistrée');
       }
     }
 
+    // Petit délai pour propagation Supabase
+    console.log('⏱️ [InstitutionForm] Attente propagation Supabase...');
+    await new Promise(resolve => setTimeout(resolve, 300));
+
     toast.add({ severity: 'success', summary: 'Succès', detail: 'Institution créée avec succès!', life: 3000 });
+    console.log('✅ [InstitutionForm] Redirection vers liste...');
     router.push({ name: 'InstitutionListView' });
 
   } catch (error) {
-    console.error("Erreur détaillée:", error.message);
+    console.error("❌ [InstitutionForm] Erreur détaillée:", error.message);
     toast.add({ severity: 'error', summary: 'Erreur de Création', detail: error.message || 'Une erreur est survenue.', life: 5000 });
   } finally {
     loading.value = false;

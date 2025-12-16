@@ -925,14 +925,33 @@ async function onChangeArray(row, field, arr) {
   }
 }
 
-function reload() {
-  store.fetchPlaces()
+async function reload() {
+  console.log('🔄 [PlacesView] Début du rechargement des places...')
+  await store.fetchPlaces()
+  console.log('✅ [PlacesView] Places rechargées:', store.places?.length || 0)
 }
 
-function onPlaceCreated(place) {
-  console.log('✅ Nouvelle place créée:', place)
+async function onPlaceCreated(place) {
+  console.log('📢 [PlacesView] Événement reçu - Nouvelle place créée:', place?.PlaceId)
+  
+  // Petit délai pour laisser Supabase se synchroniser
+  await new Promise(resolve => setTimeout(resolve, 200))
+  
   // Recharger la liste des places
-  reload()
+  console.log('🔄 [PlacesView] Rechargement de la liste complète...')
+  await reload()
+  
+  // Double vérification - recharger une seconde fois si nécessaire
+  if (place?.PlaceId) {
+    await new Promise(resolve => setTimeout(resolve, 300))
+    const placeExists = store.places?.some(p => p.PlaceId === place.PlaceId)
+    if (!placeExists) {
+      console.warn('⚠️ [PlacesView] Place non trouvée après refresh, rechargement supplémentaire...')
+      await reload()
+    }
+  }
+  
+  console.log('✅ [PlacesView] Handler onPlaceCreated terminé')
 }
 
 function toggleColumnsPanel(event) {
@@ -1115,12 +1134,19 @@ async function deletePlace() {
     await store.deletePlace(placeToDelete.value.PlaceId)
     console.log('✅ Place supprimée avec succès')
 
+    // Attendre que Supabase propage la suppression
+    console.log('⏱️ Attente de propagation de la suppression...')
+    await new Promise(resolve => setTimeout(resolve, 300))
+
+    // Recharger la liste (AVEC await)
+    console.log('🔄 Rechargement de la liste après suppression...')
+    await reload()
+
     // Fermer le dialog
     showDeleteDialog.value = false
     placeToDelete.value = null
 
-    // Recharger la liste
-    reload()
+    console.log('✅ Suppression terminée et liste mise à jour')
   } catch (error) {
     console.error('❌ Erreur lors de la suppression:', error)
     alert('Erreur lors de la suppression de la place: ' + error.message)
