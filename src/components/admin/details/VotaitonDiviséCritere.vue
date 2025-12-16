@@ -198,7 +198,7 @@ export default {
     getMissingCriteria(stage) {
       const missing = [];
       this.criteriaKeys.forEach(key => {
-        if (!Boolean(stage[key])) {
+        if (!stage[key]) {
           missing.push(key);
         }
       });

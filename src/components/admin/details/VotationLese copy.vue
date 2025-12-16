@@ -128,7 +128,7 @@ export default {
         .map(stage => {
           // Count how many of the validation elements are true for this stage
           const validationCount = validationElements.reduce((count, element) => {
-            if (Boolean(stage[element])) {
+            if (stage[element]) {
               count++;
             }
             return count;

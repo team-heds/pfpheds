@@ -18,6 +18,7 @@ const postsStoreRoutes = require('./supabase/postsBackendStore.js');
 const praticiensStoreRoutes = require('./supabase/praticiensStoreBackend.js');
 const resultatVotationRoutes = require('./supabase/resultatVotationStoreBackend.js');
 const ftpRoutes = require('./uploads/ftpRoutes');
+const feedbackaRoutes = require('./supabase/feedbackaBackend.js');
 
 // push
 const pushRoutes = require('./supabase/pushBackend');
@@ -47,7 +48,6 @@ if (process.env.NODE_ENV !== 'production') {
  
 // Routes - specific routes FIRST, then general ones
 console.log('[ROUTES] Mounting routes...');
-console.log('[ROUTES] praticiensFormateursStoreRoutes type:', typeof praticiensFormateursStoreRoutes);
  
 app.use('/api/institutions', institutionsStoreRoutes);
 app.use('/api/communities', communitiesStoreRoutes);
@@ -58,6 +58,8 @@ app.use('/api/posts', postsStoreRoutes);
 //app.use('/api/praticiens-formateurs', praticiensFormateursStoreRoutes);
 app.use('/api/praticiens', praticiensStoreRoutes);
 app.use('/api/resultat-votation', resultatVotationRoutes);
+app.use('/api/feedbacka', feedbackaRoutes);
+app.use('/api/push', pushRoutes);
 // Direct diagnostic route (dup with uploads/ftpRoutes /diagnostic) to ensure availability
 app.get('/api/ftp/diagnostic', (req, res) => {
   const configured = !!(process.env.FTP_HOST && process.env.FTP_USER && process.env.FTP_PASSWORD)
