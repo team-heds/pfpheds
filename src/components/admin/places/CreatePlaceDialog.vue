@@ -689,9 +689,14 @@ async function onCreate() {
       console.log('✅ Praticiens enregistrés')
     }
 
+    // Forcer un rechargement de la place pour s'assurer d'avoir toutes les données
+    console.log('🔄 Rechargement de la place pour vérification...')
+    await placesStore.fetchPlaceById(placeId)
+    console.log('✅ Place rechargée')
+
     // Attendre un peu pour que Supabase propage les changements
     console.log('⏱️ Attente de propagation des changements dans Supabase...')
-    await new Promise(resolve => setTimeout(resolve, 300))
+    await new Promise(resolve => setTimeout(resolve, 800))
 
     console.log('🔄 Émission de l\'événement created et attente du refresh parent...')
     
