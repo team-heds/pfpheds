@@ -39,7 +39,7 @@
             <div class="flex align-items-center gap-2">
               <Button icon="pi pi-eye" outlined @click="toggleColumnsPanel" v-tooltip.top="'Afficher/Masquer colonnes'" />
               <Button icon="pi pi-plus" label="Nouvelle place" @click="showCreateDialog = true" severity="success" />
-              <InputText v-model="search" placeholder="Rechercher (nom, institution, canton)" class="search-input" />
+              <InputText v-model="searchInput" placeholder="Rechercher (nom, institution, canton)" class="search-input" />
               <Button icon="pi pi-refresh" outlined @click="reload" />
             </div>
           </div>
@@ -102,9 +102,12 @@
       </OverlayPanel>
 
       <div class="surface-card fp-dark p-3 border-round shadow-2">
-        <div class="text-600 mb-2">{{ rows.length }} résultat(s)</div>
+        <div class="text-600 mb-2">
+          {{ displayedRows.length }} résultat(s)
+          <span v-if="isTruncated" class="text-orange-500">(affichage limité: {{ displayedRows.length }} / {{ totalMatchingRows }})</span>
+        </div>
         <DataTable
-          :value="rows"
+          :value="displayedRows"
           :loading="loading"
           dataKey="PlaceId"
           sortField="InstitutionNameSort"
@@ -115,6 +118,7 @@
           :rowHover="true"
           :scrollable="true"
           scrollHeight="68vh"
+          :virtualScrollerOptions="displayedRows.length > 200 ? { itemSize: 46, delay: 0 } : null"
           :resizableColumns="true"
           columnResizeMode="fit"
           :reorderableColumns="true"
@@ -123,15 +127,42 @@
           <template #empty>
             <div class="text-center p-4 text-600">Aucune place trouvée</div>
           </template>
+          <Column header="" style="width: 8rem">
+            <template #body="{ data }">
+              <div class="flex gap-2">
+                <Button
+                  v-if="!isEditingRow(data)"
+                  icon="pi pi-pencil"
+                  size="small"
+                  outlined
+                  @click="startEditRow(data)"
+                />
+                <Button
+                  v-else
+                  icon="pi pi-check"
+                  size="small"
+                  severity="success"
+                  outlined
+                  :loading="savingRowId === data.PlaceId"
+                  @click="saveEditRow(data)"
+                />
+                <Button
+                  v-if="isEditingRow(data)"
+                  icon="pi pi-times"
+                  size="small"
+                  severity="secondary"
+                  outlined
+                  :disabled="savingRowId === data.PlaceId"
+                  @click="cancelEditRow()"
+                />
+              </div>
+            </template>
+          </Column>
           <Column header="Institution Name" sortable sortField="InstitutionNameSort">
             <template #body="{ data }">
-              <div v-if="data.InstitutionId">
-                <span>{{ institutionNameById[data.InstitutionId] || data.InstitutionName || '-' }}</span>
-              </div>
               <Dropdown
-                v-else
-                :modelValue="data.InstitutionId || null"
-                @update:modelValue="v => onChangeInstitution(data, v)"
+                v-if="isEditingRow(data)"
+                v-model="editBuffer.InstitutionId"
                 :options="institutionsOptions"
                 optionLabel="label"
                 optionValue="value"
@@ -142,76 +173,94 @@
                 :filterMatchMode="'contains'"
                 showClear
               />
+              <span v-else>{{ institutionNameById[data.InstitutionId] || data.InstitutionName || '-' }}</span>
             </template>
           </Column>
           <Column header="Nom" sortable sortField="NomPlace">
             <template #body="{ data }">
-              <InputText :value="data.NomPlace || ''" @change="e => onChangeSimple(data, 'NomPlace', e.target.value)" />
+              <InputText
+                v-if="isEditingRow(data)"
+                v-model="editBuffer.NomPlace"
+              />
+              <span v-else>{{ data.NomPlace || '-' }}</span>
             </template>
           </Column>
           <Column header="MSQ" v-if="visibleColumns.MSQ">
             <template #body="{ data }">
-              <InputSwitch :modelValue="!!data.MSQ" @update:modelValue="v => onChangeBool(data, 'MSQ', v)" />
+              <InputSwitch v-if="isEditingRow(data)" v-model="editBuffer.MSQ" />
+              <Tag v-else :value="data.MSQ ? 'Oui' : 'Non'" :severity="data.MSQ ? 'success' : 'secondary'" />
             </template>
           </Column>
           <Column header="SYSINT" v-if="visibleColumns.SYSINT">
             <template #body="{ data }">
-              <InputSwitch :modelValue="!!data.SYSINT" @update:modelValue="v => onChangeBool(data, 'SYSINT', v)" />
+              <InputSwitch v-if="isEditingRow(data)" v-model="editBuffer.SYSINT" />
+              <Tag v-else :value="data.SYSINT ? 'Oui' : 'Non'" :severity="data.SYSINT ? 'success' : 'secondary'" />
             </template>
           </Column>
           <Column header="NEUROGER" v-if="visibleColumns.NEUROGER">
             <template #body="{ data }">
-              <InputSwitch :modelValue="!!data.NEUROGER" @update:modelValue="v => onChangeBool(data, 'NEUROGER', v)" />
+              <InputSwitch v-if="isEditingRow(data)" v-model="editBuffer.NEUROGER" />
+              <Tag v-else :value="data.NEUROGER ? 'Oui' : 'Non'" :severity="data.NEUROGER ? 'success' : 'secondary'" />
             </template>
           </Column>
           <Column header="AIGU" v-if="visibleColumns.AIGU">
             <template #body="{ data }">
-              <InputSwitch :modelValue="!!data.AIGU" @update:modelValue="v => onChangeBool(data, 'AIGU', v)" />
+              <InputSwitch v-if="isEditingRow(data)" v-model="editBuffer.AIGU" />
+              <Tag v-else :value="data.AIGU ? 'Oui' : 'Non'" :severity="data.AIGU ? 'success' : 'secondary'" />
             </template>
           </Column>
           <Column header="REHAB" v-if="visibleColumns.REHAB">
             <template #body="{ data }">
-              <InputSwitch :modelValue="!!data.REHAB" @update:modelValue="v => onChangeBool(data, 'REHAB', v)" />
+              <InputSwitch v-if="isEditingRow(data)" v-model="editBuffer.REHAB" />
+              <Tag v-else :value="data.REHAB ? 'Oui' : 'Non'" :severity="data.REHAB ? 'success' : 'secondary'" />
             </template>
           </Column>
           <Column header="AMBU" v-if="visibleColumns.AMBU">
             <template #body="{ data }">
-              <InputSwitch :modelValue="!!data.AMBU" @update:modelValue="v => onChangeBool(data, 'AMBU', v)" />
+              <InputSwitch v-if="isEditingRow(data)" v-model="editBuffer.AMBU" />
+              <Tag v-else :value="data.AMBU ? 'Oui' : 'Non'" :severity="data.AMBU ? 'success' : 'secondary'" />
             </template>
           </Column>
           <Column header="FR" v-if="visibleColumns.FR">
             <template #body="{ data }">
-              <InputSwitch :modelValue="!!data.FR" @update:modelValue="v => onChangeBool(data, 'FR', v)" />
+              <InputSwitch v-if="isEditingRow(data)" v-model="editBuffer.FR" />
+              <Tag v-else :value="data.FR ? 'Oui' : 'Non'" :severity="data.FR ? 'success' : 'secondary'" />
             </template>
           </Column>
           <Column header="DE" v-if="visibleColumns.DE">
             <template #body="{ data }">
-              <InputSwitch :modelValue="!!data.DE" @update:modelValue="v => onChangeBool(data, 'DE', v)" />
+              <InputSwitch v-if="isEditingRow(data)" v-model="editBuffer.DE" />
+              <Tag v-else :value="data.DE ? 'Oui' : 'Non'" :severity="data.DE ? 'success' : 'secondary'" />
             </template>
           </Column>
           <Column header="PFP2">
             <template #body="{ data }">
-              <InputText :value="(data.PFP2 && data.PFP2[selectedYear]) || ''" @change="e => onChangePFP(data, 'PFP2', e.target.value)" class="p-inputtext-sm" />
+              <InputText v-if="isEditingRow(data)" v-model="editBuffer.PFP2" class="p-inputtext-sm" />
+              <span v-else>{{ (data.PFP2 && data.PFP2[selectedYear]) || '-' }}</span>
             </template>
           </Column>
           <Column header="PFP1A">
             <template #body="{ data }">
-              <InputText :value="(data.PFP1A && data.PFP1A[selectedYear]) || ''" @change="e => onChangePFP(data, 'PFP1A', e.target.value)" class="p-inputtext-sm" />
+              <InputText v-if="isEditingRow(data)" v-model="editBuffer.PFP1A" class="p-inputtext-sm" />
+              <span v-else>{{ (data.PFP1A && data.PFP1A[selectedYear]) || '-' }}</span>
             </template>
           </Column>
           <Column header="PFP1B">
             <template #body="{ data }">
-              <InputText :value="(data.PFP1B && data.PFP1B[selectedYear]) || ''" @change="e => onChangePFP(data, 'PFP1B', e.target.value)" class="p-inputtext-sm" />
+              <InputText v-if="isEditingRow(data)" v-model="editBuffer.PFP1B" class="p-inputtext-sm" />
+              <span v-else>{{ (data.PFP1B && data.PFP1B[selectedYear]) || '-' }}</span>
             </template>
           </Column>
           <Column header="PFP4">
             <template #body="{ data }">
-              <InputText :value="(data.PFP4 && data.PFP4[selectedYear]) || ''" @change="e => onChangePFP(data, 'PFP4', e.target.value)" class="p-inputtext-sm" />
+              <InputText v-if="isEditingRow(data)" v-model="editBuffer.PFP4" class="p-inputtext-sm" />
+              <span v-else>{{ (data.PFP4 && data.PFP4[selectedYear]) || '-' }}</span>
             </template>
           </Column>
           <Column header="PFP3">
             <template #body="{ data }">
-              <InputText :value="(data.PFP3 && data.PFP3[selectedYear]) || ''" @change="e => onChangePFP(data, 'PFP3', e.target.value)" class="p-inputtext-sm" />
+              <InputText v-if="isEditingRow(data)" v-model="editBuffer.PFP3" class="p-inputtext-sm" />
+              <span v-else>{{ (data.PFP3 && data.PFP3[selectedYear]) || '-' }}</span>
             </template>
           </Column>
           <Column header="Canton" sortable>
@@ -475,9 +524,22 @@ const store = usePlacesStore()
 const institutionsStore = useInstitutionsStore()
 const praticiensStore = usePraticiensStore()
 const loading = computed(() => store.loading)
+const searchInput = ref('')
 const search = ref('')
 const years = ref(['2026','2027','2025'])
 const selectedYear = ref('2026')
+
+const debug = (...args) => {
+  if (import.meta.env.DEV) console.log(...args)
+}
+
+let searchDebounceTimer = null
+watch(searchInput, (val) => {
+  if (searchDebounceTimer) clearTimeout(searchDebounceTimer)
+  searchDebounceTimer = setTimeout(() => {
+    search.value = val
+  }, 300)
+})
 const institutionNameById = computed(() => {
   const m = {}
   for (const inst of institutionsStore.institutions || []) {
@@ -495,9 +557,138 @@ const institutionCantonById = computed(() => {
   return m
 })
 
-const rows = computed(() => {
-  const s = (search.value || '').trim().toLowerCase()
+const MAX_SHOW_ALL_ROWS = 500
+
+const editingRowId = ref(null)
+const savingRowId = ref(null)
+const editBuffer = ref({
+  PlaceId: null,
+  InstitutionId: null,
+  NomPlace: '',
+  MSQ: false,
+  SYSINT: false,
+  NEUROGER: false,
+  AIGU: false,
+  REHAB: false,
+  AMBU: false,
+  FR: false,
+  DE: false,
+  PFP2: '',
+  PFP1A: '',
+  PFP1B: '',
+  PFP3: '',
+  PFP4: ''
+})
+
+const isEditingRow = (row) => {
+  return !!row?.PlaceId && editingRowId.value === row.PlaceId
+}
+
+const startEditRow = (row) => {
+  if (!row?.PlaceId) return
+  const yearKey = selectedYear.value
+  editingRowId.value = row.PlaceId
+  editBuffer.value = {
+    PlaceId: row.PlaceId,
+    InstitutionId: row.InstitutionId || null,
+    NomPlace: row.NomPlace || '',
+    MSQ: !!row.MSQ,
+    SYSINT: !!row.SYSINT,
+    NEUROGER: !!row.NEUROGER,
+    AIGU: !!row.AIGU,
+    REHAB: !!row.REHAB,
+    AMBU: !!row.AMBU,
+    FR: !!row.FR,
+    DE: !!row.DE,
+    PFP2: (row.PFP2 && row.PFP2[yearKey]) || '',
+    PFP1A: (row.PFP1A && row.PFP1A[yearKey]) || '',
+    PFP1B: (row.PFP1B && row.PFP1B[yearKey]) || '',
+    PFP3: (row.PFP3 && row.PFP3[yearKey]) || '',
+    PFP4: (row.PFP4 && row.PFP4[yearKey]) || ''
+  }
+}
+
+const cancelEditRow = () => {
+  editingRowId.value = null
+  editBuffer.value = {
+    PlaceId: null,
+    InstitutionId: null,
+    NomPlace: '',
+    MSQ: false,
+    SYSINT: false,
+    NEUROGER: false,
+    AIGU: false,
+    REHAB: false,
+    AMBU: false,
+    FR: false,
+    DE: false,
+    PFP2: '',
+    PFP1A: '',
+    PFP1B: '',
+    PFP3: '',
+    PFP4: ''
+  }
+}
+
+const saveEditRow = async (row) => {
+  if (!row?.PlaceId) return
+  if (savingRowId.value) return
+  savingRowId.value = row.PlaceId
+  try {
+    const yearKey = selectedYear.value
+    const institutionId = editBuffer.value.InstitutionId || null
+    const institutionName = institutionId ? (institutionNameById.value[institutionId] || null) : null
+
+    const pfp2 = { ...(row.PFP2 || {}) }
+    pfp2[yearKey] = editBuffer.value.PFP2 || ''
+    const pfp1a = { ...(row.PFP1A || {}) }
+    pfp1a[yearKey] = editBuffer.value.PFP1A || ''
+    const pfp1b = { ...(row.PFP1B || {}) }
+    pfp1b[yearKey] = editBuffer.value.PFP1B || ''
+    const pfp3 = { ...(row.PFP3 || {}) }
+    pfp3[yearKey] = editBuffer.value.PFP3 || ''
+    const pfp4 = { ...(row.PFP4 || {}) }
+    pfp4[yearKey] = editBuffer.value.PFP4 || ''
+
+    await store.updatePlace(row.PlaceId, {
+      InstitutionId: institutionId,
+      InstitutionName: institutionName,
+      NomPlace: editBuffer.value.NomPlace || '',
+      MSQ: !!editBuffer.value.MSQ,
+      SYSINT: !!editBuffer.value.SYSINT,
+      NEUROGER: !!editBuffer.value.NEUROGER,
+      AIGU: !!editBuffer.value.AIGU,
+      REHAB: !!editBuffer.value.REHAB,
+      AMBU: !!editBuffer.value.AMBU,
+      FR: !!editBuffer.value.FR,
+      DE: !!editBuffer.value.DE,
+      PFP2: pfp2,
+      PFP1A: pfp1a,
+      PFP1B: pfp1b,
+      PFP3: pfp3,
+      PFP4: pfp4
+    })
+
+    cancelEditRow()
+  } finally {
+    savingRowId.value = null
+  }
+}
+
+const baseRows = computed(() => {
+  // Liste brute depuis le store
   let list = [...(store.places || [])]
+
+  // Filtre PDF
+  if (withPdfOnly.value) {
+    list = list.filter(p => {
+      const fileUrl = p.fileURL || p.FileURL || p.pdfUrl || p.PdfUrl || p.fileUrl
+      return !!fileUrl
+    })
+  }
+
+  // Filtre recherche
+  const s = (search.value || '').trim().toLowerCase()
   if (s) {
     list = list.filter(p => {
       const institutionName = p.InstitutionName || institutionNameById.value[p.InstitutionId] || ''
@@ -509,6 +700,7 @@ const rows = computed(() => {
       )
     })
   }
+
   // Champ de tri stable sur le texte réellement affiché
   return list.map(p => {
     const institutionName = p.InstitutionName || institutionNameById.value[p.InstitutionId] || ''
@@ -519,11 +711,34 @@ const rows = computed(() => {
   })
 })
 
+const totalMatchingRows = computed(() => baseRows.value.length)
+
+const displayedRows = computed(() => {
+  let list = baseRows.value
+
+  // Moitié
+  if (showHalf.value) {
+    list = list.slice(0, Math.ceil(list.length / 2))
+  }
+
+  // "Tout" = pas de paginator, mais on garde une limite de sécurité
+  if (showAll.value && list.length > MAX_SHOW_ALL_ROWS) {
+    list = list.slice(0, MAX_SHOW_ALL_ROWS)
+  }
+
+  return list
+})
+
+const isTruncated = computed(() => {
+  if (!showAll.value) return false
+  return displayedRows.value.length < totalMatchingRows.value
+})
+
 const praticiensOptions = computed(() => {
   const items = praticiensStore.items || []
-  console.log('🔍 Praticiens Store Items:', items.length)
+  debug('🔍 Praticiens Store Items:', items.length)
   if (items.length > 0) {
-    console.log('📋 Premier praticien:', items[0])
+    debug('📋 Premier praticien:', items[0])
   }
 
   const options = items.map(p => {
@@ -539,7 +754,7 @@ const praticiensOptions = computed(() => {
   })
 
   if (options.length > 0) {
-    console.log('✅ Première option:', options[0])
+    debug('✅ Première option:', options[0])
   }
 
   return options

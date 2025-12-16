@@ -17,7 +17,15 @@
         <template #header>
           <div class="flex justify-content-between flex-column sm:flex-row">
             <div class="flex gap-2">
-              <Button label="Ajouter un étudiant" icon="pi pi-plus" class="mb-2" outlined @click="goToEtudiantForm" />
+              <Button label="Ajouter un étudiant" icon="pi pi-plus" class="mb-2" outlined @click="showCreateDialog = true" />
+              <Button
+                :label="showCohortColumns ? 'Masquer Cohortes' : 'Afficher Cohortes'"
+                :icon="showCohortColumns ? 'pi pi-eye-slash' : 'pi pi-eye'"
+                class="mb-2"
+                outlined
+                severity="secondary"
+                @click="toggleCohortColumns"
+              />
               <Button 
                 :label="sortOrder === 'asc' ? 'Tri A-Z' : 'Tri Z-A'" 
                 :icon="sortOrder === 'asc' ? 'pi pi-sort-alpha-down' : 'pi pi-sort-alpha-up'" 
@@ -28,7 +36,7 @@
               />
             </div>
             <span class="p-input-icon-left">
-              <InputText v-model="globalFilter" placeholder="Recherche" style="width: 100%" />
+              <InputText v-model="globalFilterInput" placeholder="Recherche" style="width: 100%" />
             </span>
           </div>
         </template>
@@ -59,7 +67,7 @@
         </Column>
 
         <!-- Colonne affichage cohorte PFP (Badge visible) -->
-        <Column field="pfp_cohort" header="Cohorte" style="min-width: 10rem" class="text-center">
+        <Column v-if="showCohortColumns" field="pfp_cohort" header="Cohorte" style="min-width: 10rem" class="text-center">
           <template #body="{ data }">
             <span 
               v-if="data.pfp_cohort" 
@@ -72,17 +80,43 @@
         </Column>
 
         <!-- Colonne édition cohorte PFP (Dropdown) -->
-        <Column header="Modifier Cohorte" style="min-width: 12rem" class="text-center">
+        <Column v-if="showCohortColumns" header="Modifier Cohorte" style="min-width: 12rem" class="text-center">
           <template #body="{ data }">
-            <Dropdown 
-              v-model="data.pfp_cohort" 
-              :options="pfpCohortOptions" 
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Sélectionner"
-              @change="updatePfpCohort(data)"
-              :loading="data.updating"
-            />
+            <div class="flex align-items-center justify-content-center gap-2">
+              <Button
+                v-if="!isEditingCohort(data)"
+                icon="pi pi-pencil"
+                size="small"
+                outlined
+                @click="startEditCohort(data)"
+              />
+              <template v-else>
+                <Dropdown
+                  v-model="cohortEditValue"
+                  :options="pfpCohortOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  placeholder="Sélectionner"
+                  :loading="data.updating || savingCohortId === data.id"
+                />
+                <Button
+                  icon="pi pi-check"
+                  size="small"
+                  severity="success"
+                  outlined
+                  :loading="savingCohortId === data.id"
+                  @click="saveEditCohort(data)"
+                />
+                <Button
+                  icon="pi pi-times"
+                  size="small"
+                  severity="secondary"
+                  outlined
+                  :disabled="savingCohortId === data.id"
+                  @click="cancelEditCohort()"
+                />
+              </template>
+            </div>
           </template>
         </Column>
 
@@ -90,12 +124,25 @@
         <Column header="Actions" style="min-width: 12rem" class="text-center">
           <template #body="{ data }">
             <Button label="Profil" class="mb-2 mr-2" size="small" outlined @click="goToEtudiantDetails(data.id)" />
-            <Button label="Modifier" class="mb-2 mr-2" size="small" outlined severity="success" @click="goToEtudiantFormModif(data.id)" />
+            <Button label="Modifier" class="mb-2 mr-2" size="small" outlined severity="success" @click="openEditDialog(data.id)" />
             <Button label="Supprimer" class="mb-2 mr-2" size="small" outlined severity="danger" @click="deleteStudent(data.id)" />
           </template>
         </Column>
       </DataTable>
     </div>
+
+    <!-- Dialog de modification étudiant -->
+    <StudentEditDialog
+      v-model:visible="showEditDialog"
+      :studentId="selectedStudentId"
+      @student-updated="onStudentUpdated"
+    />
+
+    <!-- Dialog de création étudiant -->
+    <StudentCreateDialog
+      v-model:visible="showCreateDialog"
+      @student-created="onStudentCreated"
+    />
   </AdminLayout>
 </template>
 
@@ -110,6 +157,8 @@ import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
 import { supabase } from '@/supabase';
+import StudentEditDialog from '@/components/admin/forms/StudentEditDialog.vue';
+import StudentCreateDialog from '@/components/admin/forms/StudentCreateDialog.vue';
 
 export default {
   name: "EtudiantList",
@@ -120,7 +169,9 @@ export default {
     Button,
     Dropdown,
     AdminLayout,
-    Toast
+    Toast,
+    StudentEditDialog,
+    StudentCreateDialog
   },
   data() {
     return {
@@ -129,41 +180,55 @@ export default {
         'Classe': { value: '', matchMode: 'equals' },
       },
       loading: true,
+      globalFilterInput: '',
       globalFilter: '',
+      globalFilterDebounceTimer: null,
       sortOrder: 'asc', // 'asc' pour A-Z, 'desc' pour Z-A
+      showCohortColumns: false,
       classeOptions: ['BA22', 'BA23', 'BA24', 'BA25', 'Non défini'],
       pfpCohortOptions: [
         { label: 'Aucun', value: null },
         { label: 'PFP1A', value: 'PFP1A' },
         { label: 'PFP1B', value: 'PFP1B' }
-      ]
+      ],
+      cohortEditingStudentId: null,
+      cohortEditValue: null,
+      savingCohortId: null,
+      showEditDialog: false,
+      selectedStudentId: null,
+      showCreateDialog: false,
     };
+  },
+  watch: {
+    globalFilterInput(val) {
+      if (this.globalFilterDebounceTimer) {
+        clearTimeout(this.globalFilterDebounceTimer);
+      }
+      this.globalFilterDebounceTimer = setTimeout(() => {
+        this.globalFilter = val || '';
+      }, 300);
+    }
   },
   computed: {
     filteredEtudiants() {
-      const filtered = this.etudiants.filter(etudiant => {
-        const matchesClass = this.filters['Classe'].value ? this.filters['Classe'].value.includes(etudiant.Classe) : true;
-        const searchLower = this.globalFilter.toLowerCase();
+      const searchLower = (this.globalFilter || '').toLowerCase();
 
-        const matchesSearch =
-          (etudiant.Nom ? etudiant.Nom.toLowerCase().includes(searchLower) : false)
-          || (etudiant.Prenom ? etudiant.Prenom.toLowerCase().includes(searchLower) : false)
-          || (etudiant.Classe ? etudiant.Classe.toLowerCase().includes(searchLower) : false)
-          || (etudiant.Mail ? etudiant.Mail.toLowerCase().includes(searchLower) : false);
+      const filtered = this.etudiants.filter(etudiant => {
+        const matchesClass = this.filters['Classe'].value ? this.filters['Classe'].value === etudiant.Classe : true;
+
+        const haystack = etudiant.__searchKey || '';
+        const matchesSearch = !searchLower ? true : haystack.includes(searchLower);
 
         return matchesClass && matchesSearch;
       });
 
       // Appliquer le tri alphabétique par nom
-      return filtered.sort((a, b) => {
-        const nameA = (a.Nom || '').toLowerCase();
-        const nameB = (b.Nom || '').toLowerCase();
-        
-        if (this.sortOrder === 'asc') {
-          return nameA.localeCompare(nameB);
-        } else {
-          return nameB.localeCompare(nameA);
-        }
+      const collator = new Intl.Collator('fr', { sensitivity: 'base' });
+      return [...filtered].sort((a, b) => {
+        const nameA = a.Nom || '';
+        const nameB = b.Nom || '';
+        const res = collator.compare(nameA, nameB);
+        return this.sortOrder === 'asc' ? res : -res;
       });
     }
   },
@@ -175,10 +240,23 @@ export default {
     await this.fetchEtudiantsFromSupabase();
   },
   methods: {
+    debug(...args) {
+      if (import.meta.env && import.meta.env.DEV) {
+        console.log(...args);
+      }
+    },
     /**
      * Récupère TOUS les étudiants depuis Supabase (source unique)
      * Inclut BA22, BA23, BA24, BA25 et futurs
      */
+    toggleCohortColumns() {
+      this.showCohortColumns = !this.showCohortColumns;
+      // Si on masque pendant une édition, on annule pour éviter un état incohérent
+      if (!this.showCohortColumns) {
+        this.cancelEditCohort();
+      }
+    },
+
     async fetchEtudiantsFromSupabase() {
       this.loading = true;
       try {
@@ -187,19 +265,26 @@ export default {
         
         // Charger les pfp_cohort depuis user_profiles
         await this.loadPfpCohorts(students);
+
+        // Pré-calcul d'une clé de recherche normalisée pour accélérer le filtrage
+        students.forEach(s => {
+          const parts = [s.Nom, s.Prenom, s.Classe, s.Mail].filter(Boolean);
+          s.__searchKey = parts.join(' ').toLowerCase();
+        });
         
         // Assigner les étudiants APRÈS avoir chargé les cohortes
         this.etudiants = students;
         
-        // Forcer la mise à jour du DOM pour que les dropdowns se rafraîchissent
-        await this.$nextTick();
-        
-        console.log(`✅ ${this.etudiants.length} étudiants chargés depuis Supabase`);
-        console.log('🔍 Exemple étudiant:', this.etudiants[0]);
-        
-        // Afficher les stats par classe
-        const stats = await studentsService.getClassStats();
-        console.log('📊 Répartition par classe:', stats);
+        // Pas besoin de nextTick ici: on n'a plus un Dropdown par ligne
+
+        this.debug(`✅ ${this.etudiants.length} étudiants chargés depuis Supabase`);
+        this.debug('🔍 Exemple étudiant:', this.etudiants[0]);
+
+        // Stats par classe uniquement en DEV (appel réseau non essentiel)
+        if (import.meta.env && import.meta.env.DEV) {
+          const stats = await studentsService.getClassStats();
+          this.debug('📊 Répartition par classe:', stats);
+        }
         
         this.toast.add({
           severity: 'success',
@@ -250,7 +335,7 @@ export default {
     
     toggleSortOrder() {
       this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
-      console.log(`📋 Tri alphabétique: ${this.sortOrder === 'asc' ? 'A-Z' : 'Z-A'}`);
+      this.debug(`📋 Tri alphabétique: ${this.sortOrder === 'asc' ? 'A-Z' : 'Z-A'}`);
     },
     
     goToEtudiantForm() {
@@ -261,8 +346,19 @@ export default {
       this.$router.push({ name: 'Profile', params: { id: etuId } });
     },
     
-    goToEtudiantFormModif(etuId) {
-      this.$router.push({ name: 'EtudiantFormModif', params: { etuId } });
+    openEditDialog(studentId) {
+      this.selectedStudentId = studentId;
+      this.showEditDialog = true;
+    },
+    
+    async onStudentUpdated() {
+      // Recharger la liste des étudiants après modification
+      await this.fetchEtudiantsFromSupabase();
+    },
+    
+    async onStudentCreated() {
+      // Recharger la liste des étudiants après création
+      await this.fetchEtudiantsFromSupabase();
     },
     
     async loadPfpCohorts(students) {
@@ -277,6 +373,10 @@ export default {
         students.forEach(student => {
           // Initialiser le flag pour le loading du dropdown
           student.updating = false;
+          // Reset édition cohorte si jamais
+          if (student.id === this.cohortEditingStudentId) {
+            this.cancelEditCohort();
+          }
           
           // Statistiques
           if (student.pfp_cohort === 'PFP1A') pfp1aCount++;
@@ -285,23 +385,58 @@ export default {
           
           // Debug: afficher les 3 premiers étudiants avec cohorte
           if ((pfp1aCount + pfp1bCount) <= 3 && student.pfp_cohort) {
-            console.log(`🔍 Étudiant avec cohorte:`, {
+            this.debug(`🔍 Étudiant avec cohorte:`, {
               nom: student.Nom,
               prenom: student.Prenom,
               pfp_cohort: student.pfp_cohort
             });
           }
         });
-        
-        console.log('✅ PFP Cohorts chargés:');
-        console.log(`   🟣 PFP1A: ${pfp1aCount} étudiants`);
-        console.log(`   🌸 PFP1B: ${pfp1bCount} étudiants`);
-        console.log(`   ⚪ Sans cohorte: ${noCohortCount} étudiants`);
+
+        this.debug('✅ PFP Cohorts chargés:');
+        this.debug(`   🟣 PFP1A: ${pfp1aCount} étudiants`);
+        this.debug(`   🌸 PFP1B: ${pfp1bCount} étudiants`);
+        this.debug(`   ⚪ Sans cohorte: ${noCohortCount} étudiants`);
       } catch (error) {
         console.error('❌ Erreur loadPfpCohorts:', error);
       }
     },
     
+    isEditingCohort(student) {
+      return !!student?.id && this.cohortEditingStudentId === student.id;
+    },
+
+    startEditCohort(student) {
+      if (!student?.id) return;
+      this.cohortEditingStudentId = student.id;
+      this.cohortEditValue = student.pfp_cohort ?? null;
+    },
+
+    cancelEditCohort() {
+      this.cohortEditingStudentId = null;
+      this.cohortEditValue = null;
+    },
+
+    async saveEditCohort(student) {
+      if (!student?.id) return;
+      if (this.savingCohortId) return;
+      this.savingCohortId = student.id;
+
+      // Appliquer localement la nouvelle valeur et réutiliser la méthode existante
+      const prev = student.pfp_cohort;
+      student.pfp_cohort = this.cohortEditValue;
+      try {
+        await this.updatePfpCohort(student);
+        this.cancelEditCohort();
+      } catch (e) {
+        // rollback
+        student.pfp_cohort = prev;
+        throw e;
+      } finally {
+        this.savingCohortId = null;
+      }
+    },
+
     async updatePfpCohort(student) {
       try {
         student.updating = true;
@@ -309,7 +444,7 @@ export default {
         // Avec optionValue, on reçoit directement la string value
         const cohortValue = student.pfp_cohort;
         
-        console.log('📝 Mise à jour PFP Cohort:', {
+        this.debug('📝 Mise à jour PFP Cohort:', {
           studentId: student.id,
           newCohort: cohortValue
         });
@@ -328,7 +463,7 @@ export default {
             life: 5000
           });
         } else {
-          console.log('✅ PFP Cohort mis à jour');
+          this.debug('✅ PFP Cohort mis à jour');
           
           this.toast.add({
             severity: 'success',

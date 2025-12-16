@@ -33,7 +33,7 @@ export async function getStudentsFromUserProfiles() {
       )
     })
     
-    console.log(`✅ ${studentUsers.length} étudiants chargés depuis user_profiles (source unique)`)
+    if (import.meta.env && import.meta.env.DEV) console.log(`✅ ${studentUsers.length} étudiants chargés depuis user_profiles (source unique)`)
     
     // Retourner directement les données de user_profiles
     return studentUsers.map(user => ({
@@ -74,46 +74,97 @@ export async function getStudentsFromUserProfiles() {
  * @returns {Promise<Array>} Liste des étudiants avec infos complètes
  */
 export async function getAllStudents() {
-  try {
-    // 1. Récupérer depuis user_profiles
-    const { data: userProfilesData, error: profilesError } = await supabase
-      .from('user_profiles')
-      .select('*')
-    
-    if (profilesError) throw profilesError
-    
-    // 2. Récupérer depuis studentPhysio (données spécifiques physio)
-    // Essayer plusieurs variantes de noms de table
-    let studentPhysioData = null
-    let physioError = null
-    
-    const tableVariants = ['studentPhysio', 'student_physio', 'students_physio', 'StudentsPhysio']
-    
-    for (const tableName of tableVariants) {
-      const { data, error } = await supabase
-        .from(tableName)
-        .select('*')
-      
-      if (!error) {
-        studentPhysioData = data
-        console.log(`✅ Table trouvée: ${tableName}`)
-        break
-      } else if (error.message.includes('does not exist')) {
-        console.log(`❌ Table ${tableName} n'existe pas`)
-      } else {
-        physioError = error
-        break
+  // Cache simple + déduplication (évite les re-fetch en navigation)
+  // NOTE: variables statiques sur le module
+  if (!getAllStudents.__cache) {
+    // Option A: on sait que la table physio correcte est StudentsPhysio
+    getAllStudents.__cache = { at: 0, data: null, inFlight: null, physioTable: 'StudentsPhysio' }
+  }
+
+  const debug = (...args) => {
+    if (import.meta.env && import.meta.env.DEV) console.log(...args)
+  }
+
+  const CACHE_TTL_MS = 5 * 60 * 1000
+  const now = Date.now()
+
+  if (getAllStudents.__cache.inFlight) {
+    return await getAllStudents.__cache.inFlight
+  }
+
+  if (getAllStudents.__cache.data && (now - getAllStudents.__cache.at) < CACHE_TTL_MS) {
+    return getAllStudents.__cache.data
+  }
+
+  getAllStudents.__cache.inFlight = (async () => {
+    try {
+      // 1. Récupérer depuis user_profiles (colonnes minimales avec fallbacks)
+      const trySelectProfiles = async (selectStr) => {
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .select(selectStr)
+        return { data, error }
       }
-    }
-    
-    // Ne pas throw si la table n'existe pas, juste logger
-    if (physioError) {
-      console.warn('⚠️ Table studentPhysio non accessible:', physioError.message)
-    }
-    
-    // Fusionner les deux sources
-    const allUsers = userProfilesData || []
-    const physioStudents = studentPhysioData || []
+
+      let userProfilesData = null
+      let profilesError = null
+
+      // Select "optimisé" (peut casser si colonnes absentes)
+      // NOTE: seules ces colonnes existent dans user_profiles. sae et cas_particulier sont dans StudentsPhysio uniquement.
+      const profilesSelectPreferred = 'user_id,firebase_id,email,role,family_name,forname,classe,pfp_cohort,display_name,avatar_url,house_id,created_at'
+      const profilesSelectFallback = 'user_id,email,role,family_name,forname,classe,pfp_cohort'
+
+      let resProfiles = await trySelectProfiles(profilesSelectPreferred)
+      if (resProfiles.error) {
+        debug('⚠️ user_profiles select preferred failed, retrying fallback fields:', resProfiles.error)
+        resProfiles = await trySelectProfiles(profilesSelectFallback)
+      }
+      if (resProfiles.error) {
+        debug('⚠️ user_profiles select fallback failed, retrying select(*)', resProfiles.error)
+        resProfiles = await trySelectProfiles('*')
+      }
+
+      userProfilesData = resProfiles.data
+      profilesError = resProfiles.error
+      if (profilesError) throw profilesError
+
+      // 2. Récupérer depuis studentPhysio (données spécifiques physio)
+      let studentPhysioData = null
+      let physioError = null
+
+      // Option A: on ne probe plus, on utilise directement StudentsPhysio.
+      // Select minimal basé sur les colonnes réellement présentes (vu dans les logs)
+      const physioSelectPreferred = 'user_id,firebase_id,class,sae,cas_particulier,msq,sysint,neuroger,aigu,rehab,ambu,fr,de,canton'
+      const physioSelectFallback = '*'
+
+      const tryLoadPhysio = async (tableName) => {
+        // Même logique: colonnes minimales si possible, sinon fallback *
+        let res = await supabase.from(tableName).select(physioSelectPreferred)
+        if (res.error) {
+          debug(`⚠️ ${tableName} select preferred failed, retrying select(*)`, res.error)
+          res = await supabase.from(tableName).select(physioSelectFallback)
+        }
+        return { data: res.data, error: res.error }
+      }
+
+      // Option A: usage direct de StudentsPhysio
+      if (getAllStudents.__cache.physioTable) {
+        const res = await tryLoadPhysio(getAllStudents.__cache.physioTable)
+        if (!res.error) {
+          studentPhysioData = res.data
+        } else {
+          // En Option A, si la table est indisponible, on continue sans physio
+          physioError = res.error
+        }
+      }
+
+      if (physioError) {
+        debug('⚠️ Table StudentsPhysio non accessible:', physioError.message)
+      }
+
+      // Fusionner les deux sources
+      const allUsers = userProfilesData || []
+      const physioStudents = studentPhysioData || []
     
     // Filtrer les étudiants depuis user_profiles
     const studentUsers = allUsers.filter(user => {
@@ -131,18 +182,12 @@ export async function getAllStudents() {
       )
     })
     
-    console.log(`🔍 ${allUsers.length} users totaux, ${studentUsers.length} étudiants user_profiles`)
-    console.log(`🏥 ${physioStudents.length} étudiants dans studentPhysio`)
+      debug(`🔍 ${allUsers.length} users totaux, ${studentUsers.length} étudiants user_profiles`)
+      debug(`🏥 ${physioStudents.length} étudiants dans studentPhysio`)
     
     // Créer un mapping user_id -> classe depuis StudentsPhysio pour enrichir user_profiles
     const userIdToClassMap = new Map()
     const emailToClassMap = new Map()
-    
-    // DEBUG : vérifier les emails disponibles
-    console.log(`🔍 Échantillon étudiants StudentsPhysio (premiers 3):`)
-    physioStudents.slice(0, 3).forEach(student => {
-      console.log(`   - Mail: "${student.Mail}", email: "${student.email}", mail: "${student.mail}", class: "${student.class}"`)
-    })
     
     physioStudents.forEach(student => {
       const classe = student.class 
@@ -172,24 +217,8 @@ export async function getAllStudents() {
       }
     })
     
-    console.log(`🔑 ${userIdToClassMap.size} étudiants avec classe (par ID) dans StudentsPhysio`)
-    console.log(`📧 ${emailToClassMap.size} étudiants avec classe (par email) dans StudentsPhysio`)
-    
-    // DEBUG : Afficher un échantillon pour comprendre le format des IDs
-    if (userIdToClassMap.size > 0) {
-      const sampleIdsWithClasse = Array.from(userIdToClassMap.entries()).slice(0, 3)
-      console.log(`🔍 Échantillon IDs dans StudentsPhysio (ID → Classe):`)
-      sampleIdsWithClasse.forEach(([id, classe]) => {
-        console.log(`   - ID: "${id}" (type: ${typeof id}) → Classe: ${classe}`)
-      })
-    }
-    if (studentUsers.length > 0) {
-      const sampleUsers = studentUsers.slice(0, 3)
-      console.log(`🔍 Échantillon IDs dans user_profiles:`)
-      sampleUsers.forEach(u => {
-        console.log(`   - ID: "${u.user_id}" (type: ${typeof u.user_id}), Email: ${u.email}`)
-      })
-    }
+      debug(`🔑 ${userIdToClassMap.size} étudiants avec classe (par ID) dans StudentsPhysio`)
+      debug(`📧 ${emailToClassMap.size} étudiants avec classe (par email) dans StudentsPhysio`)
     
     // Mapper user_profiles vers le format attendu
     const studentsFromProfiles = studentUsers.map(user => {
@@ -236,22 +265,19 @@ export async function getAllStudents() {
       }
     })
     
-    // Log statistiques des sources de classes
-    const classesSources = {
-      fromStudentsPhysioById: studentsFromProfiles.filter(s => s.classeSource === 'StudentsPhysio (user_id)').length,
-      fromStudentsPhysioByFirebaseId: studentsFromProfiles.filter(s => s.classeSource === 'StudentsPhysio (firebase_id)').length,
-      fromUserProfiles: studentsFromProfiles.filter(s => s.classeSource === 'user_profiles').length,
-      nonDefini: studentsFromProfiles.filter(s => s.classeSource === 'Non défini').length
-    }
-    console.log(`📊 Sources des classes :`)
-    console.log(`   - ${classesSources.fromStudentsPhysioById} depuis StudentsPhysio (par user_id)`)
-    console.log(`   - ${classesSources.fromStudentsPhysioByFirebaseId} depuis StudentsPhysio (par firebase_id)`)
-    console.log(`   - ${classesSources.fromUserProfiles} depuis user_profiles`)
-    console.log(`   - ${classesSources.nonDefini} non défini`)
-    
-    // Log pour debug : voir les colonnes disponibles dans studentPhysio
-    if (physioStudents.length > 0) {
-      console.log('🔍 Colonnes dans studentPhysio:', Object.keys(physioStudents[0]))
+    // Log statistiques des sources de classes (dev only)
+    if (import.meta.env && import.meta.env.DEV) {
+      const classesSources = {
+        fromStudentsPhysioById: studentsFromProfiles.filter(s => s.classeSource === 'StudentsPhysio (user_id)').length,
+        fromStudentsPhysioByFirebaseId: studentsFromProfiles.filter(s => s.classeSource === 'StudentsPhysio (firebase_id)').length,
+        fromUserProfiles: studentsFromProfiles.filter(s => s.classeSource === 'user_profiles').length,
+        nonDefini: studentsFromProfiles.filter(s => s.classeSource === 'Non défini').length
+      }
+      debug(`📊 Sources des classes :`)
+      debug(`   - ${classesSources.fromStudentsPhysioById} depuis StudentsPhysio (par user_id)`)
+      debug(`   - ${classesSources.fromStudentsPhysioByFirebaseId} depuis StudentsPhysio (par firebase_id)`)
+      debug(`   - ${classesSources.fromUserProfiles} depuis user_profiles`)
+      debug(`   - ${classesSources.nonDefini} non défini`)
     }
     
     // Mapper studentPhysio vers le format attendu
@@ -308,13 +334,21 @@ export async function getAllStudents() {
       }
     })
     
-    console.log(`📚 ${allStudents.length} étudiants au total (${studentsFromProfiles.length} user_profiles + ${allStudents.length - studentsFromProfiles.length} studentPhysio uniques)`)
-    
-    return allStudents
-  } catch (error) {
-    console.error('❌ Erreur getAllStudents:', error)
-    return []
-  }
+      debug(`📚 ${allStudents.length} étudiants au total (${studentsFromProfiles.length} user_profiles + ${allStudents.length - studentsFromProfiles.length} studentPhysio uniques)`)
+
+      getAllStudents.__cache.at = Date.now()
+      getAllStudents.__cache.data = allStudents
+      return allStudents
+    } catch (error) {
+      // Erreurs critiques toujours visibles
+      console.error('❌ Erreur getAllStudents:', error)
+      return []
+    } finally {
+      getAllStudents.__cache.inFlight = null
+    }
+  })()
+
+  return await getAllStudents.__cache.inFlight
 }
 
 /**
@@ -380,7 +414,7 @@ export async function updateStudent(userId, updates) {
     
     if (error) throw error
     
-    console.log(`✅ Étudiant ${userId} mis à jour`)
+    if (import.meta.env && import.meta.env.DEV) console.log(`✅ Étudiant ${userId} mis à jour`)
     return true
   } catch (error) {
     console.error('❌ Erreur updateStudent:', error)
@@ -409,7 +443,7 @@ export async function deleteStudent(userId) {
     
     if (error) throw error
     
-    console.log(`✅ Étudiant ${userId} archivé`)
+    if (import.meta.env && import.meta.env.DEV) console.log(`✅ Étudiant ${userId} archivé`)
     return true
   } catch (error) {
     console.error('❌ Erreur deleteStudent:', error)
@@ -438,7 +472,7 @@ export async function assignClass(userId, classe) {
     
     if (error) throw error
     
-    console.log(`✅ Classe ${classe} assignée à ${userId}`)
+    if (import.meta.env && import.meta.env.DEV) console.log(`✅ Classe ${classe} assignée à ${userId}`)
     return true
   } catch (error) {
     console.error('❌ Erreur assignClass:', error)
@@ -460,7 +494,7 @@ export async function getClassStats() {
       stats[classe] = (stats[classe] || 0) + 1
     })
     
-    console.log('📊 Stats par classe:', stats)
+    if (import.meta.env && import.meta.env.DEV) console.log('📊 Stats par classe:', stats)
     return stats
   } catch (error) {
     console.error('❌ Erreur getClassStats:', error)
@@ -502,7 +536,7 @@ export async function syncFirebaseStudent(firebaseStudent) {
       return await updateStudent(existing.user_id, firebaseStudent)
     } else {
       // Créer (nécessite authentification Firebase/Supabase)
-      console.warn('⚠️ Création d\'utilisateur nécessite auth complète')
+      if (import.meta.env && import.meta.env.DEV) console.warn('⚠️ Création d\'utilisateur nécessite auth complète')
       return false
     }
   } catch (error) {
