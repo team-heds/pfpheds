@@ -1,7 +1,7 @@
 ﻿<template>
   <div>
     <Navbar />
-    <h1>Places assignées</h1>
+    <h1>Places assignéess</h1>
 
     <!-- Tableau des affectations finales enrichies -->
     <div style="margin-top: 40px;">
