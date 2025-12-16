@@ -100,7 +100,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import Dialog from 'primevue/dialog'
 import InputText from 'primevue/inputtext'
@@ -197,6 +197,13 @@ const createStudent = async () => {
       return
     }
 
+    // Émettre l'événement AVANT de fermer (même si création non complète)
+    emit('student-created')
+    
+    // Attendre que le parent traite l'événement
+    await nextTick()
+    await new Promise(resolve => setTimeout(resolve, 100))
+    
     // Pour créer un nouvel étudiant, il faut passer par Supabase Auth
     // Afficher un message informatif
     toast.add({

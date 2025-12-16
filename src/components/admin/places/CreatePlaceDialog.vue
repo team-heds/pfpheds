@@ -426,6 +426,7 @@ import TabPanel from 'primevue/tabpanel'
 import { usePlacesStore } from '@/stores/placesStore'
 import { useInstitutionsStore } from '@/stores/institutionsStore'
 import { usePraticiensStore } from '@/stores/praticiensStore'
+import { useDataRefresh } from '@/composables/useDataRefresh'
 import { storage } from '@/firebase'
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 
@@ -445,6 +446,7 @@ const emit = defineEmits(['update:visible', 'created'])
 const placesStore = usePlacesStore()
 const institutionsStore = useInstitutionsStore()
 const praticiensStore = usePraticiensStore()
+const { emitAndWait } = useDataRefresh()
 
 const isVisible = computed({
   get: () => props.visible,
@@ -621,49 +623,49 @@ async function onCreate() {
     if (formData.value.remarques2025) remarques['2025'] = formData.value.remarques2025
     if (formData.value.remarques2026) remarques['2026'] = formData.value.remarques2026
 
-    // Données de la nouvelle place
+    // Données de la nouvelle place (UNIQUEMENT les colonnes de la table places)
     const newPlaceData = {
       PlaceId: generatePlaceId(),
       NomPlace: formData.value.NomPlace,
       InstitutionId: formData.value.InstitutionId,
-      // Champs de l'institution (copiés depuis l'institution sélectionnée)
-      InstitutionName: institution?.Name || '',
-      // Canton: Récupéré dynamiquement depuis l'institution via InstitutionId (non stocké ici)
-      Lieu: institution?.Locality || '', // Lieu dans places, Locality dans institutions
-      Categorie: institution?.Category || null, // Categorie dans places, Category dans institutions
-      AccordCadreDate: institution?.AccordCadreDate || null,
-      ConventionDate: institution?.ConventionDate || null,
-      // Fichier PDF
-      fileURL: formData.value.fileURL || null,
-      // Critères
-      MSQ: formData.value.MSQ,
-      SYSINT: formData.value.SYSINT,
-      AIGU: formData.value.AIGU,
-      REHAB: formData.value.REHAB,
-      AMBU: formData.value.AMBU,
-      NEUROGER: formData.value.NEUROGER,
-      // Langues
-      FR: formData.value.FR,
-      DE: formData.value.DE,
-      IT: formData.value.IT,
-      ENG: formData.value.ENG,
-      // PFP
-      ...pfpData,
-      // Remarques
-      Remarques: remarques,
-      // Praticiens formateurs
-      praticiensFormateurs: formData.value.praticiensFormateurs || [],
+      // NOTE: fileURL n'existe pas dans la table places - le PDF est géré ailleurs
+      // Critères booléens
+      MSQ: formData.value.MSQ || false,
+      SYSINT: formData.value.SYSINT || false,
+      AIGU: formData.value.AIGU || false,
+      REHAB: formData.value.REHAB || false,
+      AMBU: formData.value.AMBU || false,
+      NEUROGER: formData.value.NEUROGER || false,
+      // Langues booléennes
+      FR: formData.value.FR || false,
+      DE: formData.value.DE || false,
+      IT: formData.value.IT || false,
+      ENG: formData.value.ENG || false,
+      // PFP (strings vides par défaut)
+      PFP1A: pfpData.PFP1A || '',
+      PFP1B: pfpData.PFP1B || '',
+      PFP2: pfpData.PFP2 || '',
+      PFP3: pfpData.PFP3 || '',
+      PFP4: pfpData.PFP4 || '',
+      // Remarques (objet JSON)
+      Remarques: remarques
+      // NOTE: praticiensFormateurs est une relation many-to-many, pas une colonne directe
+      // NOTE: InstitutionName, Lieu, Categorie, etc. sont récupérés via JOIN avec institutions
     }
 
     console.log('📝 Création de la place:', newPlaceData)
+    console.log('📝 Clés de l\'objet:', Object.keys(newPlaceData))
+    console.log('📝 JSON stringifié:', JSON.stringify(newPlaceData, null, 2))
 
     // Créer la place via le store
     const createdPlace = await placesStore.createPlace(newPlaceData)
 
     console.log('✅ Place créée avec succès:', createdPlace)
 
-    // Émettre l'événement de création
-    emit('created', createdPlace)
+    // Émettre l'événement ET attendre que le parent refresh
+    await emitAndWait(emit, 'created', createdPlace)
+
+    alert('✅ Place créée avec succès!')
 
     // Fermer le dialog
     onClose()

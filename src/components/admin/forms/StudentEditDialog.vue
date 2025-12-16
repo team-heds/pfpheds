@@ -106,7 +106,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import Dialog from 'primevue/dialog'
 import InputText from 'primevue/inputtext'
@@ -277,6 +277,13 @@ const saveStudent = async () => {
       throw updateError
     }
 
+    // Émettre l'événement AVANT de fermer le dialog
+    emit('student-updated')
+    
+    // Attendre que le parent traite l'événement (nextTick + délai)
+    await nextTick()
+    await new Promise(resolve => setTimeout(resolve, 100))
+    
     toast.add({
       severity: 'success',
       summary: 'Succès',
@@ -284,7 +291,6 @@ const saveStudent = async () => {
       life: 3000
     })
 
-    emit('student-updated')
     closeDialog()
 
   } catch (error) {

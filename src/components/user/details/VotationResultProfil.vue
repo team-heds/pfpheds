@@ -38,6 +38,14 @@
                 </span>
               </span>
             </p>
+            <div class="mt-2" v-if="getVotationType(place)">
+              <span class="text-sm font-semibold">
+                Type d'attribution :
+                <span :class="getVotationTypeClass(place)">
+                  {{ getVotationType(place) }}
+                </span>
+              </span>
+            </div>
           </div>
           <!-- Documents -->
         </div>
@@ -81,18 +89,18 @@ const publishedAssignments = ref([])
 const fetchPublishedAssignments = async () => {
   try {
     console.log('[FETCH] Récupération des assignations publiées pour userId:', props.userId)
-    
+
     const { data, error } = await supabase
       .from('student_result_vote')
       .select('*')
       .eq('user_id', props.userId)
       .eq('status', 'published')
-    
+
     if (error) {
       console.error('Erreur lors de la récupération des assignations:', error)
       return
     }
-    
+
     publishedAssignments.value = data || []
     console.log(`✅ ${data?.length || 0} assignations publiées trouvées pour l'étudiant`)
     console.log('Assignations:', publishedAssignments.value)
@@ -107,12 +115,12 @@ const fetchPlacesFromSupabase = async () => {
     const { data, error } = await supabase
       .from('places')
       .select('*')
-    
+
     if (error) {
       console.error('Erreur lors de la récupération des places depuis Supabase:', error)
       return
     }
-    
+
     supabasePlaces.value = data || []
     console.log(`✅ ${data?.length || 0} places récupérées depuis Supabase`)
   } catch (err) {
@@ -126,12 +134,12 @@ const fetchPraticiensFromSupabase = async () => {
     const { data, error } = await supabase
       .from('praticiens_formateurs')
       .select('*')
-    
+
     if (error) {
       console.error('Erreur lors de la récupération des praticiens depuis Supabase:', error)
       return
     }
-    
+
     // Convertir en map avec l'ID comme clé
     const praticiensMap = {}
     data?.forEach(praticien => {
@@ -141,7 +149,7 @@ const fetchPraticiensFromSupabase = async () => {
         praticiensMap[key] = praticien
       }
     })
-    
+
     supabasePraticiens.value = praticiensMap
     console.log(`✅ ${data?.length || 0} praticiens formateurs récupérés depuis Supabase`)
   } catch (err) {
@@ -163,10 +171,10 @@ const assignedPlacesFromPublished = computed(() => {
       assigned_place_name: assignment.assigned_place_name,
       assigned_institution_name: assignment.assigned_institution_name
     })
-    
+
     // Trouver la place correspondante
     const place = supabasePlaces.value.find(p => p.PlaceId === assignment.assigned_place_id)
-    
+
     if (!place) {
       console.warn('[WARN] Place non trouvée pour PlaceId:', assignment.assigned_place_id)
       // Retourner quand même l'assignation avec les infos basiques depuis student_result_vote
@@ -192,15 +200,15 @@ const assignedPlacesFromPublished = computed(() => {
       Institution_name: place.Institution_name,
       assigned_institution_name_from_result: assignment.assigned_institution_name
     })
-    
+
     // PRIORITÉ: assigned_institution_name de student_result_vote (valeur sauvegardée lors de l'attribution)
     // FALLBACK 1: Institution_name enrichi depuis places
     // FALLBACK 2: Institution (ancien champ texte dans places)
-    const institutionName = assignment.assigned_institution_name || 
-                           place.Institution_name || 
-                           place.Institution || 
-                           'Institution inconnue'
-    
+    const institutionName = assignment.assigned_institution_name ||
+      place.Institution_name ||
+      place.Institution ||
+      'Institution inconnue'
+
     const enriched = {
       ...place,
       IDPlace: place.PlaceId,
@@ -211,7 +219,7 @@ const assignedPlacesFromPublished = computed(() => {
       assigned_rank: assignment.assigned_rank,
       _key: assignment.id
     }
-    
+
     console.log('[ENRICH] Résultat enrichi - Institution_name:', enriched.Institution_name)
     return enriched
   })
@@ -229,14 +237,14 @@ const assignedPlacesFromPublished = computed(() => {
 const assignedPlacesFromSupabase = computed(() => {
   const userId = props.userId
   const results = []
-  
+
   supabasePlaces.value.forEach(place => {
     // Chercher dans les assignations JSONB des différentes PFP
     const pfpFields = ['PFP1A', 'PFP1B', 'PFP2', 'PFP3', 'PFP4']
-    
+
     pfpFields.forEach(pfpField => {
       const pfpData = place[pfpField]
-      
+
       if (pfpData && pfpData.assignations) {
         // Parcourir les assignations (ex: BA24-1, BA23-1, etc.)
         Object.entries(pfpData.assignations).forEach(([key, assignment]) => {
@@ -253,7 +261,7 @@ const assignedPlacesFromSupabase = computed(() => {
       }
     })
   })
-  
+
   console.log(`🎯 ${results.length} places trouvées pour l'étudiant ${userId} (ancien système)`)
   return results
 })
@@ -265,7 +273,7 @@ const assignedPlaces = computed(() => {
     console.log('[NEW] Utilisation des assignations depuis student_result_vote')
     return assignedPlacesFromPublished.value
   }
-  
+
   // Fallback sur l'ancien système si aucune assignation publiée
   console.log('[OLD] Fallback sur ancien système d\'assignations')
   return assignedPlacesFromSupabase.value
@@ -293,7 +301,7 @@ function getPraticienFormateurId(place) {
   if (place.praticienId) {
     return place.praticienId;
   }
-  
+
   // On essaie de déterminer la clé du praticien selon le seatIndex
   // Correction : fallback sur place.praticiensFormateurs[0] si rien trouvé
   const seat = place.seatIndex;
@@ -322,10 +330,10 @@ function getPraticienFormateurId(place) {
 function getPraticienFormateurInfos(place) {
   const id = getPraticienFormateurId(place);
   if (!id) return '';
-  
+
   // Chercher dans Supabase
   const pract = supabasePraticiens.value && supabasePraticiens.value[id];
-  
+
   if (!pract) return '';
   const prenom = pract.prenom || pract.Prenom || '';
   const nom = pract.nom || pract.Nom || '';
@@ -338,12 +346,48 @@ function getPraticienFormateurContact(place) {
     return place.praticienMail;
   }
   const praticienId = getPraticienFormateurId(place);
-  
+
   // Chercher dans Supabase
   if (praticienId && supabasePraticiens.value[praticienId]) {
     return supabasePraticiens.value[praticienId].mail || supabasePraticiens.value[praticienId].Mail || '';
   }
   return '';
+}
+
+// Fonction pour déterminer le type de votation
+function getVotationType(place) {
+  // Vérifier si c'est depuis le nouveau système student_result_vote
+  if (place._key) {
+    const assignment = publishedAssignments.value.find(a => a.id === place._key);
+    if (assignment) {
+      // Si assigned_rank est un nombre entre 1 et 5, c'est un choix
+      if (assignment.assigned_rank && assignment.assigned_rank >= 1 && assignment.assigned_rank <= 5) {
+        return `Choix ${assignment.assigned_rank}`;
+      }
+      // Sinon, c'est un tirage aléatoire
+      return 'Tirage aléatoire';
+    }
+  }
+
+  // Pour l'ancien système, on peut déterminer par le seatIndex
+  if (place.seatIndex) {
+    const seatNum = parseInt(place.seatIndex);
+    if (seatNum >= 1 && seatNum <= 5) {
+      return `Choix ${seatNum}`;
+    }
+  }
+
+  // Par défaut, on considère que c'est un tirage aléatoire
+  return 'Tirage aléatoire';
+}
+
+// Fonction pour obtenir la classe CSS selon le type de votation
+function getVotationTypeClass(place) {
+  const type = getVotationType(place);
+  if (type.startsWith('Choix')) {
+    return 'text-blue-600 font-bold'; // Bleu pour les choix
+  }
+  return 'text-green-600 font-bold'; // Vert pour le tirage aléatoire
 }
 
 const fetchInstitutions = async () => {

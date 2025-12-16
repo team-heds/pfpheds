@@ -925,14 +925,15 @@ async function onChangeArray(row, field, arr) {
   }
 }
 
-function reload() {
-  store.fetchPlaces()
+async function reload() {
+  await store.fetchPlaces()
 }
 
-function onPlaceCreated(place) {
+async function onPlaceCreated(place) {
   console.log('✅ Nouvelle place créée:', place)
   // Recharger la liste des places
-  reload()
+  await reload()
+  console.log('✅ Liste des places rechargée automatiquement')
 }
 
 function toggleColumnsPanel(event) {
