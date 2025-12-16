@@ -9,6 +9,8 @@ export const usePlacesStore = defineStore('places', {
     places: [],
     loading: false,
     error: null,
+    lastFetchedAt: 0,
+    fetchPromise: null,
   }),
 
   getters: {
@@ -56,11 +58,29 @@ export const usePlacesStore = defineStore('places', {
     /**
      * Récupérer toutes les places
      */
-    async fetchPlaces() {
+    async fetchPlaces(options = {}) {
       this.loading = true;
       this.error = null;
 
+      const debug = (...args) => {
+        if (import.meta.env.DEV) console.log(...args);
+      };
+
       try {
+        const cacheTtlMs = 5 * 60 * 1000;
+        const force = !!options.force;
+
+        // Si une requête est déjà en cours, réutiliser la promesse
+        if (this.fetchPromise) {
+          return await this.fetchPromise;
+        }
+
+        // Cache simple: si on a déjà des données récentes, ne pas re-fetch
+        if (!force && Array.isArray(this.places) && this.places.length > 0 && (Date.now() - this.lastFetchedAt) < cacheTtlMs) {
+          return this.places;
+        }
+
+        this.fetchPromise = (async () => {
         // 1. Récupérer toutes les places
         const { data: placesData, error: placesError } = await supabase
           .from('places')
@@ -77,6 +97,7 @@ export const usePlacesStore = defineStore('places', {
           console.warn('⚠️ Impossible de charger les institutions:', institutionsError);
           // Continue sans les institutions
           this.places = placesData || [];
+          this.lastFetchedAt = Date.now();
           return this.places;
         }
 
@@ -86,7 +107,7 @@ export const usePlacesStore = defineStore('places', {
           institutionsMap[inst.InstitutionId] = inst;
         });
 
-        console.log('📊 Institutions map:', institutionsMap);
+        debug('📊 Institutions map:', institutionsMap);
 
         // 4. Enrichir les places avec le nom de l'institution
         this.places = (placesData || []).map(place => {
@@ -98,8 +119,8 @@ export const usePlacesStore = defineStore('places', {
           
           // Le champ dans la table institutions s'appelle "Name" pas "InstitutionName"
           const institutionName = institution?.Name || place.Institution || 'N/A';
-          
-          console.log(`📍 Place: ${place.NomPlace || place.PlaceId} → Institution: ${institutionName} (InstitutionId: ${place.InstitutionId})`);
+
+          debug(`📍 Place: ${place.NomPlace || place.PlaceId} → Institution: ${institutionName} (InstitutionId: ${place.InstitutionId})`);
           
           return {
             ...place,
@@ -107,18 +128,23 @@ export const usePlacesStore = defineStore('places', {
             institution_data: institution
           };
         });
-        
-        console.log('✅ Places chargées depuis Supabase:', this.places.length);
-        console.log('✅ Institutions chargées:', Object.keys(institutionsMap).length);
+
+        debug('✅ Places chargées depuis Supabase:', this.places.length);
+        debug('✅ Institutions chargées:', Object.keys(institutionsMap).length);
         if (this.places.length > 0) {
-          console.log('✅ Exemple de place:', this.places[0]);
+          debug('✅ Exemple de place:', this.places[0]);
         }
+        this.lastFetchedAt = Date.now();
         return this.places;
+        })();
+
+        return await this.fetchPromise;
       } catch (error) {
         console.error('❌ Erreur fetch places:', error);
         this.error = error.message;
         throw error;
       } finally {
+        this.fetchPromise = null;
         this.loading = false;
       }
     },

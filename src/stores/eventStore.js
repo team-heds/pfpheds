@@ -3,6 +3,10 @@ import { ref } from 'vue';
 import { supabase } from '@/supabase';
 
 export const useEventStore = defineStore('event', () => {
+  const debug = (...args) => {
+    if (import.meta.env.DEV) console.log(...args);
+  };
+
   const events = ref([]);
   const loading = ref(false);
   const error = ref(null);
@@ -15,7 +19,7 @@ export const useEventStore = defineStore('event', () => {
       loading.value = true;
       error.value = null;
 
-      console.log('📥 Chargement des événements depuis Supabase...');
+      debug('📥 Chargement des événements depuis Supabase...');
 
       // Essayer d'abord avec la vue, sinon fallback sur la table events
       let data, fetchError;
@@ -30,7 +34,7 @@ export const useEventStore = defineStore('event', () => {
 
       // Si la vue n'existe pas, utiliser la table directe
       if (fetchError && fetchError.message?.includes('does not exist')) {
-        console.log('⚠️ Vue events_with_counts introuvable, utilisation de la table events');
+        debug('⚠️ Vue events_with_counts introuvable, utilisation de la table events');
         const result2 = await supabase
           .from('events')
           .select('*')
@@ -45,7 +49,7 @@ export const useEventStore = defineStore('event', () => {
         throw fetchError;
       }
 
-      console.log(`✅ ${data?.length || 0} événements chargés`);
+      debug(`✅ ${data?.length || 0} événements chargés`);
       events.value = data || [];
       return data;
     } catch (err) {
@@ -64,6 +68,8 @@ export const useEventStore = defineStore('event', () => {
     // Charger les événements initiaux
     fetchEvents();
 
+    let refreshTimer = null;
+
     // S'abonner aux changements en temps réel (avec gestion d'erreur)
     try {
       const subscription = supabase
@@ -72,14 +78,21 @@ export const useEventStore = defineStore('event', () => {
           'postgres_changes',
           { event: '*', schema: 'public', table: 'events' },
           (payload) => {
-            console.log('🔄 Changement temps réel détecté:', payload);
-            // Recharger les événements quand il y a un changement
-            fetchEvents();
+            debug('🔄 Changement temps réel détecté:', payload);
+
+            if (refreshTimer) {
+              clearTimeout(refreshTimer);
+            }
+
+            refreshTimer = setTimeout(() => {
+              refreshTimer = null;
+              fetchEvents();
+            }, 500);
           }
         )
         .subscribe((status, err) => {
           if (status === 'SUBSCRIBED') {
-            console.log('✅ Abonnement temps réel actif');
+            debug('✅ Abonnement temps réel actif');
           }
           if (err) {
             console.warn('⚠️ Erreur abonnement temps réel (non bloquant):', err);
@@ -88,7 +101,12 @@ export const useEventStore = defineStore('event', () => {
 
       // Retourner la fonction de désabonnement
       return () => {
-        console.log('🔌 Désabonnement du temps réel');
+        debug('🔌 Désabonnement du temps réel');
+
+        if (refreshTimer) {
+          clearTimeout(refreshTimer);
+          refreshTimer = null;
+        }
         supabase.removeChannel(subscription);
       };
     } catch (err) {

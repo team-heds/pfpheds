@@ -6,276 +6,276 @@ import { useRoleStore } from '@/stores/role';
 import { addDynamicRoutesToRouter } from '@/composables/useDynamicRoutes';
 import { useUserStore } from '@/stores/userStore';
 import { modulePermissionGuard } from '@/router/guards/modulePermissionGuard';
+
 // ========================================
 // AUTHENTIFICATION & ACCUEIL // View
 // ========================================
-import LoginHome from '@/views/auth/LoginHome.vue'; // Page de connexion unifiée (Supabase)
-import NewPasswordView from '@/views/auth/NewPasswordView.vue' // avec supabase
-import RegisterView from '@/views/auth/RegisterView.vue';
-
-import VerificationView from '@/views/auth/VerificationView.vue';
-import LockScreenView from '@/views/auth/LockScreenView.vue';
-import AccessView from '@/views/auth/AccessView.vue';
-import AuthErrorView from '@/views/auth/AuthErrorView.vue';
+const LoginHome = () => import('@/views/auth/LoginHome.vue');
+const NewPasswordView = () => import('@/views/auth/NewPasswordView.vue');
+const RegisterView = () => import('@/views/auth/RegisterView.vue');
+const VerificationView = () => import('@/views/auth/VerificationView.vue');
+const LockScreenView = () => import('@/views/auth/LockScreenView.vue');
+const AccessView = () => import('@/views/auth/AccessView.vue');
+const AuthErrorView = () => import('@/views/auth/AuthErrorView.vue');
 
 // ========================================
 // PAGES PRINCIPALES & NAVIGATION
 // ========================================
-import Map from "@/views/home/MapView.vue";
-import Institution from '@/views/institutions/Institution.vue'
-import Place from "@/views/institutions/PlaceListView.vue";
-import Faq from "@/views/home/FaqView.vue";
-import TermsOfUse from "@/views/home/TermsView.vue";
-import PushView from "@/views/home/PushView.vue";
-import InfoExterne from "@/views/home/InfoExterneView.vue";
-import HistoriquePFP from '@/views/home/HistoryView.vue'
-import DocumentsPFP from '@/views/home/DocumentsView.vue'
-import RoleManagement from '@/views/home/RoleManagement.vue'
-import RouterView from '@/views/home/RouterView.vue'
-import PermissionsView from '@/views/home/PermissionsView.vue'
-import DynamicRoutesEditorView from '@/views/home/DynamicRoutesEditorView.vue'
+const Map = () => import('@/views/home/MapView.vue');
+const Institution = () => import('@/views/institutions/Institution.vue');
+const Place = () => import('@/views/institutions/PlaceListView.vue');
+const Faq = () => import('@/views/home/FaqView.vue');
+const TermsOfUse = () => import('@/views/home/TermsView.vue');
+const PushView = () => import('@/views/home/PushView.vue');
+const InfoExterne = () => import('@/views/home/InfoExterneView.vue');
+const HistoriquePFP = () => import('@/views/home/HistoryView.vue');
+const DocumentsPFP = () => import('@/views/home/DocumentsView.vue');
+const RoleManagement = () => import('@/views/home/RoleManagement.vue');
+const RouterView = () => import('@/views/home/RouterView.vue');
+const PermissionsView = () => import('@/views/home/PermissionsView.vue');
+const DynamicRoutesEditorView = () => import('@/views/home/DynamicRoutesEditorView.vue');
 
 // PFP MANAGEMENT
-import ManagementPFPEnCoursView from '@/views/admin/pfp/ManagementPFPEnCoursView.vue'
-import ManagementVotationPrioritaireView from '@/views/admin/pfp/ManagementVotationPrioritaireView.vue'
-import ManagementOffreView from '@/views/admin/pfp/ManagementOffreView.vue'
-import VotationEtudiantsView from '@/views/admin/pfp/VotationEtudiantsView.vue'
-import PlacesAssignedView from '@/views/admin/pfp/PlacesAssignedView.vue'
-import ManagementPlacesView from '@/views/admin/pfp/ManagementPlacesView.vue'
-import ManagementRepondantView from '@/views/admin/pfp/ManagementRepondantView.vue'
-import PlacesAssignmentView from '@/views/admin/pfp/PlacesAssignmentView.vue'
-import GanttPFPView from '@/views/admin/pfp/GanttPFPView.vue'
-import ValidatePFP1AView from '@/views/admin/pfp/ValidatePFP1AView.vue'
-import InfoRepondantView from '@/views/admin/pfp/InfoRepondantView.vue'
-import ResultPreviewVotationView from '@/views/admin/pfp/ResultPreviewVotationView.vue'
-import PfpCohortStatsView from '@/views/admin/pfp/PfpCohortStatsView.vue'
+const ManagementPFPEnCoursView = () => import('@/views/admin/pfp/ManagementPFPEnCoursView.vue');
+const ManagementVotationPrioritaireView = () => import('@/views/admin/pfp/ManagementVotationPrioritaireView.vue');
+const ManagementOffreView = () => import('@/views/admin/pfp/ManagementOffreView.vue');
+const VotationEtudiantsView = () => import('@/views/admin/pfp/VotationEtudiantsView.vue');
+const PlacesAssignedView = () => import('@/views/admin/pfp/PlacesAssignedView.vue');
+const ManagementPlacesView = () => import('@/views/admin/pfp/ManagementPlacesView.vue');
+const ManagementRepondantView = () => import('@/views/admin/pfp/ManagementRepondantView.vue');
+const PlacesAssignmentView = () => import('@/views/admin/pfp/PlacesAssignmentView.vue');
+const GanttPFPView = () => import('@/views/admin/pfp/GanttPFPView.vue');
+const ValidatePFP1AView = () => import('@/views/admin/pfp/ValidatePFP1AView.vue');
+const InfoRepondantView = () => import('@/views/admin/pfp/InfoRepondantView.vue');
+const ResultPreviewVotationView = () => import('@/views/admin/pfp/ResultPreviewVotationView.vue');
+const PfpCohortStatsView = () => import('@/views/admin/pfp/PfpCohortStatsView.vue');
 
 // FORMATION PRATIQUE PHYSIO
-import DashboardFormationPratiqueView from '@/views/admin/formation-pratique/DashboardFormationPratiqueViewPHYFP.vue'
-import FPEtudiantsView from '@/views/admin/formation-pratique/EtudiantsViewPHYFP.vue'
-import FPInstitutionsView from '@/views/admin/formation-pratique/InstitutionsViewPHYFP.vue'
-import FPPraticiensFormateurView from '@/views/admin/formation-pratique/PraticiensFormateurViewPHYFP.vue'
-import FPPlacesView from '@/views/admin/formation-pratique/PlacesViewPHYFP.vue'
-import FPProfilEtudiantsView from '@/views/admin/formation-pratique/ProfilEtudiantsViewPHYFP.vue'
-import FPProfilRepondantEnseignantView from '@/views/admin/formation-pratique/ProfilRepondantEnseignantViewPHYFP.vue'
-import FPGanttPFPFormationView from '@/views/admin/formation-pratique/GanttPFPFormationViewPHYFP.vue'
-import FPAdminSecretariatView from '@/views/admin/formation-pratique/AdminSecretariatViewPHYFP.vue'
-import FPAdminSecretariatGeneralView from '@/views/admin/formation-pratique/AdminSecretariatGeneralViewPHYFP.vue'
-import FPManagementRepondantCPTView from '@/views/admin/formation-pratique/ManagementRepondantCPTViewPHYFP.vue'
-import FPManagementFeuilleDeChargeRepondantCPTView from '@/views/admin/formation-pratique/ManagementFeuilleDeChargeRepondantCPTViewPHYFP.vue'
-import FPOffreDePlaceView from '@/views/admin/formation-pratique/OffreDePlaceViewPHYFP.vue'
-import FPPreviewPFPView from '@/views/admin/formation-pratique/PreviewPFPViewPHYFP.vue'
-import FPResultatVotationPrioritaireView from '@/views/admin/formation-pratique/ResultatVotationPrioritaireViewPHYFP.vue'
-import FPResultatVotationPFPView from '@/views/admin/formation-pratique/ResultatVotationPFPViewPHYFP.vue'
-import FPManagementRepondantVotationView from '@/views/admin/formation-pratique/ManagementRepondantVotationViewPHYFP.vue'
-import FPValiderEchecPFPView from '@/views/admin/formation-pratique/ValiderEchecPFPViewPHYFP.vue'
-import FPVotationPrioritaireView from '@/views/admin/formation-pratique/VotationPrioritaireViewPHYFP.vue'
-import FPVotationPFPView from '@/views/admin/formation-pratique/VotationPFPViewPHYFP.vue'
+const DashboardFormationPratiqueView = () => import('@/views/admin/formation-pratique/DashboardFormationPratiqueViewPHYFP.vue');
+const FPEtudiantsView = () => import('@/views/admin/formation-pratique/EtudiantsViewPHYFP.vue');
+const FPInstitutionsView = () => import('@/views/admin/formation-pratique/InstitutionsViewPHYFP.vue');
+const FPPraticiensFormateurView = () => import('@/views/admin/formation-pratique/PraticiensFormateurViewPHYFP.vue');
+const FPPlacesView = () => import('@/views/admin/formation-pratique/PlacesViewPHYFP.vue');
+const FPProfilEtudiantsView = () => import('@/views/admin/formation-pratique/ProfilEtudiantsViewPHYFP.vue');
+const FPProfilRepondantEnseignantView = () => import('@/views/admin/formation-pratique/ProfilRepondantEnseignantViewPHYFP.vue');
+const FPGanttPFPFormationView = () => import('@/views/admin/formation-pratique/GanttPFPFormationViewPHYFP.vue');
+const FPAdminSecretariatView = () => import('@/views/admin/formation-pratique/AdminSecretariatViewPHYFP.vue');
+const FPAdminSecretariatGeneralView = () => import('@/views/admin/formation-pratique/AdminSecretariatGeneralViewPHYFP.vue');
+const FPManagementRepondantCPTView = () => import('@/views/admin/formation-pratique/ManagementRepondantCPTViewPHYFP.vue');
+const FPManagementFeuilleDeChargeRepondantCPTView = () => import('@/views/admin/formation-pratique/ManagementFeuilleDeChargeRepondantCPTViewPHYFP.vue');
+const FPOffreDePlaceView = () => import('@/views/admin/formation-pratique/OffreDePlaceViewPHYFP.vue');
+const FPPreviewPFPView = () => import('@/views/admin/formation-pratique/PreviewPFPViewPHYFP.vue');
+const FPResultatVotationPrioritaireView = () => import('@/views/admin/formation-pratique/ResultatVotationPrioritaireViewPHYFP.vue');
+const FPResultatVotationPFPView = () => import('@/views/admin/formation-pratique/ResultatVotationPFPViewPHYFP.vue');
+const FPManagementRepondantVotationView = () => import('@/views/admin/formation-pratique/ManagementRepondantVotationViewPHYFP.vue');
+const FPValiderEchecPFPView = () => import('@/views/admin/formation-pratique/ValiderEchecPFPViewPHYFP.vue');
+const FPVotationPrioritaireView = () => import('@/views/admin/formation-pratique/VotationPrioritaireViewPHYFP.vue');
+const FPVotationPFPView = () => import('@/views/admin/formation-pratique/VotationPFPViewPHYFP.vue');
 
 // ASSIGNATION RÉPONDANTS
-import AssignRepondantsView from '@/views/admin/AssignRepondantsView.vue'
+const AssignRepondantsView = () => import('@/views/admin/AssignRepondantsView.vue');
 
 // ADMIN LISTS
-import ProgramListView from '@/views/admin/lists/ProgramListView.vue'
-import ModuleListView from '@/views/admin/lists/ModuleListView.vue'
-import UserRoleListView from '@/views/admin/lists/UserRoleListView.vue'
+const ProgramListView = () => import('@/views/admin/lists/ProgramListView.vue');
+const ModuleListView = () => import('@/views/admin/lists/ModuleListView.vue');
+const UserRoleListView = () => import('@/views/admin/lists/UserRoleListView.vue');
 
 // ASSOCIATIONS
-import AlpinPhysioView from '@/views/associations/AlpinPhysioView.vue'
+const AlpinPhysioView = () => import('@/views/associations/AlpinPhysioView.vue');
 
 // DOCUMENTATION
-import PrimeVueDocsView from '@/views/documentation/PrimeVueDocsView.vue'
+const PrimeVueDocsView = () => import('@/views/documentation/PrimeVueDocsView.vue');
 
 // MEDIA
-import MediaHubPage from '@/views/media/MediaHubPage.vue'
-import ModulesPage from '@/views/media/ModulesPage.vue'
-import ModuleVideosPage from '@/views/media/ModuleVideosPage.vue'
+const MediaHubPage = () => import('@/views/media/MediaHubPage.vue');
+const ModulesPage = () => import('@/views/media/ModulesPage.vue');
+const ModuleVideosPage = () => import('@/views/media/ModuleVideosPage.vue');
 
 // PLANNING / CALENDAR
-import HomePlanning from '@/views/planning/HomePlanning.vue'
-import CalendrierFormationPlein from '@/views/planning/CalendrierFormationPlein.vue'
-import CalendrierFormationPleinEdit from '@/views/planning/CalendrierFormationPleinEdit.vue'
-import CalendrierSemestriel from '@/views/planning/CalendrierSemestriel.vue'
-import CalendrierModule from '@/views/planning/CalendrierModule.vue'
-import CalendrierModuleEdit from '@/views/planning/CalendrierModuleEdit.vue'
-import CalendrierEnseignant from '@/views/planning/CalendrierEnseignant.vue'
-import CalendarMyCourses from '@/views/planning/CalendarMyCourses.vue'
-import CalendarMyModules from '@/views/planning/CalendarMyModules.vue'
-import CalendarModulesList from '@/views/planning/CalendarModulesList.vue'
-import CalendarModuleView from '@/views/planning/CalendarModuleView.vue'
-import CalendarCourseView from '@/views/planning/CalendarCourseView.vue'
+const HomePlanning = () => import('@/views/planning/HomePlanning.vue');
+const CalendrierFormationPlein = () => import('@/views/planning/CalendrierFormationPlein.vue');
+const CalendrierFormationPleinEdit = () => import('@/views/planning/CalendrierFormationPleinEdit.vue');
+const CalendrierSemestriel = () => import('@/views/planning/CalendrierSemestriel.vue');
+const CalendrierModule = () => import('@/views/planning/CalendrierModule.vue');
+const CalendrierModuleEdit = () => import('@/views/planning/CalendrierModuleEdit.vue');
+const CalendrierEnseignant = () => import('@/views/planning/CalendrierEnseignant.vue');
+const CalendarMyCourses = () => import('@/views/planning/CalendarMyCourses.vue');
+const CalendarMyModules = () => import('@/views/planning/CalendarMyModules.vue');
+const CalendarModulesList = () => import('@/views/planning/CalendarModulesList.vue');
+const CalendarModuleView = () => import('@/views/planning/CalendarModuleView.vue');
+const CalendarCourseView = () => import('@/views/planning/CalendarCourseView.vue');
 
-import VideoValidationPage from '@/views/media/VideoValidationPage.vue'
-import ModuleAdminPage from '@/views/admin/ModuleAdminPage.vue'
-import ModuleAdminPageSimple from '@/views/admin/ModuleAdminPageSimple.vue'
-import VimeoTestPage from '@/views/media/VimeoTestPage.vue'
+const VideoValidationPage = () => import('@/views/media/VideoValidationPage.vue');
+const ModuleAdminPage = () => import('@/views/admin/ModuleAdminPage.vue');
+const ModuleAdminPageSimple = () => import('@/views/admin/ModuleAdminPageSimple.vue');
+const VimeoTestPage = () => import('@/views/media/VimeoTestPage.vue');
 
 // ========================================
 // PROFILS & UTILISATEURS
 // ========================================
-import Profile from "@/views/users/ProfileView.vue";
-import ProfileAdmin from '@/views/admin/ProfileAdminView.vue'
-import SettingView from '@/views/users/SettingsView.vue'
-import AdminSettingsView from '@/views/admin/SettingsView.vue'
-import HESHouseQuizView from '@/views/users/HESHouseQuizView.vue'
+const Profile = () => import('@/views/users/ProfileView.vue');
+const ProfileAdmin = () => import('@/views/admin/ProfileAdminView.vue');
+const SettingView = () => import('@/views/users/SettingsView.vue');
+const AdminSettingsView = () => import('@/views/admin/SettingsView.vue');
+const HESHouseQuizView = () => import('@/views/users/HESHouseQuizView.vue');
 
 // ========================================
 // GAMIFICATION & MAISONS HES
 // ========================================
-import HouseStatsPage from '@/components/gamification/HouseStatsPage.vue'
-import HousesRankingPage from '@/components/gamification/HousesRankingPage.vue'
-import GamificationProfilePage from '@/components/gamification/GamificationProfilePage.vue'
-import AchievementsPage from '@/components/gamification/AchievementsPage.vue'
-import ChallengesPage from '@/components/gamification/ChallengesPage.vue'
-import QuestsPage from '@/components/gamification/QuestsPage.vue'
-import DiagnosticGamificationView from '@/views/DiagnosticGamificationView.vue'
+const HouseStatsPage = () => import('@/components/gamification/HouseStatsPage.vue');
+const HousesRankingPage = () => import('@/components/gamification/HousesRankingPage.vue');
+const GamificationProfilePage = () => import('@/components/gamification/GamificationProfilePage.vue');
+const AchievementsPage = () => import('@/components/gamification/AchievementsPage.vue');
+const ChallengesPage = () => import('@/components/gamification/ChallengesPage.vue');
+const QuestsPage = () => import('@/components/gamification/QuestsPage.vue');
+const DiagnosticGamificationView = () => import('@/views/DiagnosticGamificationView.vue');
 
 // ========================================
 // DASHBOARD & ADMINISTRATION
 // ========================================
-import DashboardView from '@/views/admin/DashboardView.vue'
-import AdminDashboardGeneral from '@/components/admin/AdminDashboardGeneral.vue'
-import AdminDashboardPFP from '@/components/admin/AdminDashboardPFP.vue'
-import AdminDashboardAcademique from '@/components/admin/AdminDashboardAcademique.vue'
-import AlertsDashboard from '@/views/admin/AlertsDashboard.vue'
-import AdminDashboardGamification from '@/components/admin/AdminDashboardGamification.vue'
-import DashboardRMView from '@/views/admin/DashboardRMView.vue'
-import DashboardEnseignantView from '@/views/admin/DashboardEnseignantView.vue'
-import ModuleManageView from '@/views/admin/modules/ModuleManageView.vue'
-import PlanningView from '@/views/admin/planning/PlanningView.vue'
-import PlanningAdminView from '@/views/admin/planning/PlanningAdminView.vue'
-import AcademicYearManagement from '@/views/admin/AcademicYearManagement.vue'
-import AcademicKanbanView from '@/views/admin/academic/AcademicKanbanView.vue'
-import AdminDefisView from '@/views/admin/institutions/gamification/AdminDefisView.vue';
-import SupabaseDiagnosticView from '@/views/admin/SupabaseDiagnosticView.vue';
-import RBACAdminView from '@/views/admin/security/RBACAdminView.vue'
+const DashboardView = () => import('@/views/admin/DashboardView.vue');
+const AdminDashboardGeneral = () => import('@/components/admin/AdminDashboardGeneral.vue');
+const AdminDashboardPFP = () => import('@/components/admin/AdminDashboardPFP.vue');
+const AdminDashboardAcademique = () => import('@/components/admin/AdminDashboardAcademique.vue');
+const AlertsDashboard = () => import('@/views/admin/AlertsDashboard.vue');
+const AdminDashboardGamification = () => import('@/components/admin/AdminDashboardGamification.vue');
+const DashboardRMView = () => import('@/views/admin/DashboardRMView.vue');
+const DashboardEnseignantView = () => import('@/views/admin/DashboardEnseignantView.vue');
+const ModuleManageView = () => import('@/views/admin/modules/ModuleManageView.vue');
+const PlanningView = () => import('@/views/admin/planning/PlanningView.vue');
+const PlanningAdminView = () => import('@/views/admin/planning/PlanningAdminView.vue');
+const AcademicYearManagement = () => import('@/views/admin/AcademicYearManagement.vue');
+const AcademicKanbanView = () => import('@/views/admin/academic/AcademicKanbanView.vue');
+const AdminDefisView = () => import('@/views/admin/institutions/gamification/AdminDefisView.vue');
+const SupabaseDiagnosticView = () => import('@/views/admin/SupabaseDiagnosticView.vue');
+const RBACAdminView = () => import('@/views/admin/security/RBACAdminView.vue');
 
 // ========================================
 // GAMIFICATION ADMIN VIEWS
 // ========================================
-import ChallengeManagementView from '@/views/admin/gamification/ChallengeManagementView.vue';
-import QuestManagementView from '@/views/admin/gamification/QuestManagementView.vue';
-import BadgeManagementView from '@/views/admin/gamification/BadgeManagementView.vue';
-import UserManagementView from '@/views/admin/gamification/UserManagementView.vue';
-import HouseManagementView from '@/views/admin/gamification/HouseManagementView.vue';
-import AnalyticsDashboardView from '@/views/admin/gamification/AnalyticsDashboardView.vue';
+const ChallengeManagementView = () => import('@/views/admin/gamification/ChallengeManagementView.vue');
+const QuestManagementView = () => import('@/views/admin/gamification/QuestManagementView.vue');
+const BadgeManagementView = () => import('@/views/admin/gamification/BadgeManagementView.vue');
+const UserManagementView = () => import('@/views/admin/gamification/UserManagementView.vue');
+const HouseManagementView = () => import('@/views/admin/gamification/HouseManagementView.vue');
+const AnalyticsDashboardView = () => import('@/views/admin/gamification/AnalyticsDashboardView.vue');
 
 // ========================================
 // SOCIAL & COMMUNICATION
 // ========================================
-import FeedView from '@/views/social/FeedView.vue';
-import MentionView from '@/views/social/MentionView.vue';
-import HashtagView from '@/views/social/HashtagView.vue';
-import CommunitiesView from '@/views/social/CommunitiesView.vue';
-import CommunityView from '@/views/social/CommunityView.vue';
-import CommunityInfoView from '@/views/social/CommunityInfoView.vue';
+const FeedView = () => import('@/views/social/FeedView.vue');
+const MentionView = () => import('@/views/social/MentionView.vue');
+const HashtagView = () => import('@/views/social/HashtagView.vue');
+const CommunitiesView = () => import('@/views/social/CommunitiesView.vue');
+const CommunityView = () => import('@/views/social/CommunityView.vue');
+const CommunityInfoView = () => import('@/views/social/CommunityInfoView.vue');
 
 // ========================================
 // GESTION UTILISATEURS - LISTES
 // ========================================
 
-import UserListView from "@/views/admin/users/UserListView.vue";
-import StudentListView from "@/views/admin/users/StudentListView.vue";
-import StudentStatsView from "@/views/admin/users/StudentStatsView.vue";
-import TeacherListView from "@/views/admin/users/TeacherListView.vue";
-import TrainerListView from "@/views/admin/users/TrainerListView.vue";
-import InstitutionListView from "@/views/admin/institutions/InstitutionListView.vue";
-import TeachersSIView from '@/views/admin/users/TeachersSIView.vue'
-import ManageUserRoles from '@/views/admin/users/ManageUserRoles.vue'
+const UserListView = () => import('@/views/admin/users/UserListView.vue');
+const StudentListView = () => import('@/views/admin/users/StudentListView.vue');
+const StudentStatsView = () => import('@/views/admin/users/StudentStatsView.vue');
+const TeacherListView = () => import('@/views/admin/users/TeacherListView.vue');
+const TrainerListView = () => import('@/views/admin/users/TrainerListView.vue');
+const InstitutionListView = () => import('@/views/admin/institutions/InstitutionListView.vue');
+const TeachersSIView = () => import('@/views/admin/users/TeachersSIView.vue');
+const ManageUserRoles = () => import('@/views/admin/users/ManageUserRoles.vue');
 
 // ========================================
 // FORMULAIRES DE CRÉATION/MODIFICATION
 // ========================================
-import NewUserForm from "@/components/admin/forms/NewUserForm.vue";
-import NewUserFormModif from "@/components/admin/forms/NewUserFormModif.vue";
-import EtudiantForm from "@/components/admin/forms/EtudiantForm.vue";
-import EtudiantFormModif from "@/components/admin/forms/EtudiantFormModif.vue";
-import EnseignentForm from "@/components/admin/forms/EnseignentForm.vue";
-import EnseignentFormModif from "@/components/admin/forms/EnseignentFormModif.vue";
-import PraticienFormateurForm from "@/components/admin/forms/PraticienFormateurForm.vue";
-import PraticienFormateurFormModif from "@/components/admin/forms/PraticienFormateurFormModif.vue";
-import InstitutionForm from "@/components/admin/forms/InstitutionForm.vue";
-import InstitutionFormModif from "@/components/admin/forms/InstitutionFormModif.vue";
-import AffectationStageEtudiant from '@/components/admin/forms/AffectationStageEtudiant.vue'
-import AffectationStageEtudiantBA24 from '@/components/admin/forms/AffectationStageEtudiantBA24.vue'
+const NewUserForm = () => import('@/components/admin/forms/NewUserForm.vue');
+const NewUserFormModif = () => import('@/components/admin/forms/NewUserFormModif.vue');
+const EtudiantForm = () => import('@/components/admin/forms/EtudiantForm.vue');
+const EtudiantFormModif = () => import('@/components/admin/forms/EtudiantFormModif.vue');
+const EnseignentForm = () => import('@/components/admin/forms/EnseignentForm.vue');
+const EnseignentFormModif = () => import('@/components/admin/forms/EnseignentFormModif.vue');
+const PraticienFormateurForm = () => import('@/components/admin/forms/PraticienFormateurForm.vue');
+const PraticienFormateurFormModif = () => import('@/components/admin/forms/PraticienFormateurFormModif.vue');
+const InstitutionForm = () => import('@/components/admin/forms/InstitutionForm.vue');
+const InstitutionFormModif = () => import('@/components/admin/forms/InstitutionFormModif.vue');
+const AffectationStageEtudiant = () => import('@/components/admin/forms/AffectationStageEtudiant.vue');
+const AffectationStageEtudiantBA24 = () => import('@/components/admin/forms/AffectationStageEtudiantBA24.vue');
 
 // ========================================
 // INSTITUTIONS & DÉTAILS
 // ========================================
-import InstitutionView from '@/views/institutions/InstitutionView.vue';
-import InstitutionDetailsView from "@/views/admin/institutions/InstitutionDetailsView.vue";
-import EtudiantDetails from "@/components/admin/details/EtudiantDetails.vue";
-import PlaceDetails from "@/components/admin/details/PlaceDetails.vue";
-import PFPDetails from "@/components/admin/details/PFPDetails.vue";
+const InstitutionView = () => import('@/views/institutions/InstitutionView.vue');
+const InstitutionDetailsView = () => import('@/views/admin/institutions/InstitutionDetailsView.vue');
+const EtudiantDetails = () => import('@/components/admin/details/EtudiantDetails.vue');
+const PlaceDetails = () => import('@/components/admin/details/PlaceDetails.vue');
+const PFPDetails = () => import('@/components/admin/details/PFPDetails.vue');
 
 // ========================================
 // VOTATIONS & GESTION
 // ========================================
-import VotationView from "@/views/admin/votations/VotationView.vue";
-import VotationViewPFP1B from "@/views/admin/votations/VotationViewPFP1B.vue";
-import VotationPreview from "@/components/admin/details/Votation_preview.vue";
-import VotationPrioritaire from '@/components/admin/details/VotationPrioritaire.vue';
-import VotationManagementView from '@/views/admin/votations/VotationManagementView.vue';
-import Management_votation_prioritaire from '@/components/admin/details/Management_votation_prioritaire.vue';
-import Management_votation_etudiants from '@/components/admin/details/Management_votation_etudiants.vue';
+const VotationView = () => import('@/views/admin/votations/VotationView.vue');
+const VotationViewPFP1B = () => import('@/views/admin/votations/VotationViewPFP1B.vue');
+const VotationPreview = () => import('@/components/admin/details/Votation_preview.vue');
+const VotationPrioritaire = () => import('@/components/admin/details/VotationPrioritaire.vue');
+const VotationManagementView = () => import('@/views/admin/votations/VotationManagementView.vue');
+const Management_votation_prioritaire = () => import('@/components/admin/details/Management_votation_prioritaire.vue');
+const Management_votation_etudiants = () => import('@/components/admin/details/Management_votation_etudiants.vue');
 
 // ========================================
 // GESTION DES PLACES & STAGES
 // ========================================
-import ManagementPlacesSafe from '@/components/admin/details/ManagementPlacesSafe.vue';
-import OffreDePlace from '@/components/admin/details/OffreDePlaceBA24PFP2.vue';
-import PlaceAssignmentView from '@/views/admin/places/PlaceAssignmentView.vue';
-import PlacesAssigned from '@/views/admin/pfp/PlacesAssignedView.vue'
-import StageRepartitionBA2 from '@/components/admin/details/StageRepartitionBA2.vue';
-import ManagementPFPEnCours from '@/components/admin/details/ManagementPFPEnCours.vue';
+const ManagementPlacesSafe = () => import('@/components/admin/details/ManagementPlacesSafe.vue');
+const OffreDePlace = () => import('@/components/admin/details/OffreDePlaceBA24PFP2.vue');
+const PlaceAssignmentView = () => import('@/views/admin/places/PlaceAssignmentView.vue');
+const PlacesAssigned = () => import('@/views/admin/pfp/PlacesAssignedView.vue');
+const StageRepartitionBA2 = () => import('@/components/admin/details/StageRepartitionBA2.vue');
+const ManagementPFPEnCours = () => import('@/components/admin/details/ManagementPFPEnCours.vue');
 
 // ========================================
 // VALIDATION & RÉCEPTION
 // ========================================
-import ValidationView from "@/views/admin/validation/ValidationView.vue";
-import ReceptionView from "@/views/admin/validation/ReceptionView.vue";
-import InfoRepondant from "@/components/admin/details/Info_repondant.vue";
-import ManagementRepondant from "@/components/admin/details/Management_repondant.vue";
+const ValidationView = () => import('@/views/admin/validation/ValidationView.vue');
+const ReceptionView = () => import('@/views/admin/validation/ReceptionView.vue');
+const InfoRepondant = () => import('@/components/admin/details/Info_repondant.vue');
+const ManagementRepondant = () => import('@/components/admin/details/Management_repondant.vue');
 // import StatsPlacePFP from '@/components/admin/details/StatsPlacePFP.vue';
 // import ResultPreviewVotation from '@/components/admin/details/ResultPreviewVotation.vue';
 
 // ========================================
 // STATISTIQUES & RÉSULTATS
 // ========================================
-import VotationResultsView from '@/views/admin/votations/VotationResultsView.vue';
-import PlaceStatsView from '@/views/admin/places/PlaceStatsView.vue';
+const VotationResultsView = () => import('@/views/admin/votations/VotationResultsView.vue');
+const PlaceStatsView = () => import('@/views/admin/places/PlaceStatsView.vue');
 
 // ========================================
 // APPLICATIONS & OUTILS
 // ========================================
-import Index from '@/views/apps/tasklist/Index.vue'
-import IndexChat from "@/views/apps/chat/IndexChat.vue";
-import CalendarView from '@/views/apps/calendar/CalendarView.vue';
-import FilesView from '@/views/apps/files/FilesView.vue';
-import MailIndex from '@/views/apps/mail/Index.vue';
-import NotesWorkspaceView from '@/views/apps/notes/NotesWorkspaceView.vue';
-import EventManagementView from '@/views/apps/events/EventManagementView.vue';
-import ToolsView from '@/views/apps/tools/ToolsView.vue';
-import FTPUploadTestView from '@/views/apps/tools/FTPUploadTestView.vue';
-import GameView from '@/views/apps/tools/GameView.vue';
-import RomRunnerView from '@/views/apps/rom-runner/RomRunnerView.vue';
-import ChatBotView from '@/views/apps/tools/ChatBotView.vue';
-import TournoisView from '@/views/apps/tools/TournoisView.vue';
-import TournoiDetailsView from '@/views/apps/tools/TournoiDetailsView.vue';
-import MobileToolsView from '@/views/apps/tools/MobileToolsView.vue';
-import MobileLangAppsView from '@/views/apps/tools/MobileLangAppsView.vue';
+const Index = () => import('@/views/apps/tasklist/Index.vue');
+const IndexChat = () => import('@/views/apps/chat/IndexChat.vue');
+const CalendarView = () => import('@/views/apps/calendar/CalendarView.vue');
+const FilesView = () => import('@/views/apps/files/FilesView.vue');
+const MailIndex = () => import('@/views/apps/mail/Index.vue');
+const NotesWorkspaceView = () => import('@/views/apps/notes/NotesWorkspaceView.vue');
+const EventManagementView = () => import('@/views/apps/events/EventManagementView.vue');
+const ToolsView = () => import('@/views/apps/tools/ToolsView.vue');
+const FTPUploadTestView = () => import('@/views/apps/tools/FTPUploadTestView.vue');
+const GameView = () => import('@/views/apps/tools/GameView.vue');
+const RomRunnerView = () => import('@/views/apps/rom-runner/RomRunnerView.vue');
+const ChatBotView = () => import('@/views/apps/tools/ChatBotView.vue');
+const TournoisView = () => import('@/views/apps/tools/TournoisView.vue');
+const TournoiDetailsView = () => import('@/views/apps/tools/TournoiDetailsView.vue');
+const MobileToolsView = () => import('@/views/apps/tools/MobileToolsView.vue');
+const MobileLangAppsView = () => import('@/views/apps/tools/MobileLangAppsView.vue');
 //import MobiprioritairearchView from '@/views/apps/tools/MobiprioritairearchView.vue'
-import CreateContentMobile from '@/components/social/library/CreateContentMobile.vue';
-import ListComponent from '@/components/media/audio/ListComponent.vue'
-import Ventriglisse3D from '@/components/games/Ventriglisse3D.vue'
-import CareConvers from '@/views/pages/CareConvers.vue'
+const CreateContentMobile = () => import('@/components/social/library/CreateContentMobile.vue');
+const ListComponent = () => import('@/components/media/audio/ListComponent.vue');
+const Ventriglisse3D = () => import('@/components/games/Ventriglisse3D.vue');
+const CareConvers = () => import('@/views/pages/CareConvers.vue');
 
 
 // ========================================
 // ERREURS & CATCH-ALL
 // ========================================
-import Error404 from "@/components/common/utils/Error404.vue";
-import ResetPassword from '@/views/pages/ResetPassword.vue';
+const Error404 = () => import('@/components/common/utils/Error404.vue');
+const ResetPassword = () => import('@/views/pages/ResetPassword.vue');
 
 // Define your routes
 const routes = [
@@ -778,22 +778,26 @@ const router = createRouter({
 let isAuthStateChecked = false;
 let dynamicRoutesLoaded = false;
 
+const debugRouter = (...args) => {
+  if (import.meta.env.DEV) console.log(...args);
+};
+
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
   const roleStore = useRoleStore();
-  console.log(`🧭 Navigation vers: ${to.path} depuis: ${from.path}`);
+  debugRouter(`🧭 Navigation vers: ${to.path} depuis: ${from.path}`);
   
   // 🔥 Charger les routes dynamiques depuis Supabase au premier appel
   if (!dynamicRoutesLoaded) {
-    console.log('🔄 Chargement des routes dynamiques depuis Supabase...');
+    debugRouter('🔄 Chargement des routes dynamiques depuis Supabase...');
     try {
       await addDynamicRoutesToRouter(router);
       dynamicRoutesLoaded = true;
-      console.log('✅ Routes dynamiques chargées');
+      debugRouter('✅ Routes dynamiques chargées');
       
       // Si la route demandée existe maintenant, y naviguer
       if (router.hasRoute(to.name) && to.name !== from.name) {
-        console.log(`🔄 Re-navigation vers ${to.path} après chargement des routes`);
+        debugRouter(`🔄 Re-navigation vers ${to.path} après chargement des routes`);
         return next({ ...to, replace: true });
       }
     } catch (error) {
