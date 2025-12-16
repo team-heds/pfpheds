@@ -173,6 +173,7 @@ import Password from 'primevue/password';
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
 import { useAuthStore } from '@/stores/authStore';
+import { nextTick } from 'vue';
 // import Navbar from '@/components/common/utils/Navbar.vue';
 
 export default {
@@ -257,77 +258,86 @@ export default {
     }
   },
   async mounted() {
-    try {
-
-      const roleSet = new Set();
-      const permSet = new Set();
-
-      // Normalisation des permissions comme dans RoleManagement.vue
-      const normalize = (p) => {
-        if (!p || typeof p !== 'string') return p;
-        if (p === 'page1') return 'page1.access';
-        if (p === 'page2') return 'page2.access';
-        if (p.endsWith('.access')) {
-          const base = p.slice(0, -7);
-          const prefixes = ['Admin', 'Enseignant', 'Etudiant', 'RM'];
-          if (prefixes.some(pr => base.startsWith(pr))) return base;
-        }
-        return p;
-      };
-
-      // Read from user_profiles including permissions array if present
-      let rows = [];
-      try {
-        const { data, error } = await supabase
-          .from('user_profiles')
-          .select('user_id,email,display_name,forname,family_name,role,is_active,permissions');
-        if (error) throw error;
-        rows = data || [];
-      } catch (e) {
-        // If permissions column is missing, retry without it
-        if (e?.code === '42703' || /column\s+.*permissions.*\s+does not exist/i.test(e?.message || '')) {
-          const { data, error } = await supabase
-            .from('user_profiles')
-            .select('user_id,email,display_name,forname,family_name,role,is_active');
-          if (error) throw error;
-          rows = data || [];
-        } else {
-          throw e;
-        }
-      }
-
-      // Map to UI model
-      this.utilisateurs = (rows || []).map(u => {
-        const permsArr = Array.isArray(u?.permissions) ? u.permissions.map(normalize) : [];
-        const permsList = Array.from(new Set(permsArr));
-        permsList.forEach(p => permSet.add(p));
-        const roleFromCol = u.role ? [String(u.role)] : [];
-        const rolesFromPerms = permsList.filter(p => !p.endsWith('.access'));
-        const rolesList = Array.from(new Set([...roleFromCol, ...rolesFromPerms].filter(Boolean)));
-        rolesList.forEach(r => roleSet.add(r));
-        const Name = u.family_name || '';
-        const Forname = u.forname || '';
-        const display = u.display_name || `${Forname} ${Name}`.trim();
-        return {
-          id: u.user_id,
-          Mail: u.email || '',
-          Name: Name || display || '',
-          Forname: Forname || '',
-          rolesList,
-          permsList,
-          is_active: u.is_active,
-        };
-      });
-
-      this.availableRoles = Array.from(roleSet).sort();
-      this.availablePermissions = Array.from(permSet).sort();
-      this.loading = false;
-    } catch (error) {
-      console.error('Erreur de récupération des données', error);
-      this.loading = false;
-    }
+    await this.fetchUsers();
   },
   methods: {
+    async fetchUsers() {
+      this.loading = true;
+      try {
+        const roleSet = new Set();
+        const permSet = new Set();
+
+        // Normalisation des permissions comme dans RoleManagement.vue
+        const normalize = (p) => {
+          if (!p || typeof p !== 'string') return p;
+          if (p === 'page1') return 'page1.access';
+          if (p === 'page2') return 'page2.access';
+          if (p.endsWith('.access')) {
+            const base = p.slice(0, -7);
+            const prefixes = ['Admin', 'Enseignant', 'Etudiant', 'RM'];
+            if (prefixes.some(pr => base.startsWith(pr))) return base;
+          }
+          return p;
+        };
+
+        // Read from user_profiles including permissions array if present
+        let rows = [];
+        try {
+          const { data, error } = await supabase
+            .from('user_profiles')
+            .select('user_id,email,display_name,forname,family_name,role,is_active,permissions');
+          if (error) throw error;
+          rows = data || [];
+        } catch (e) {
+          // If permissions column is missing, retry without it
+          if (e?.code === '42703' || /column\s+.*permissions.*\s+does not exist/i.test(e?.message || '')) {
+            const { data, error } = await supabase
+              .from('user_profiles')
+              .select('user_id,email,display_name,forname,family_name,role,is_active');
+            if (error) throw error;
+            rows = data || [];
+          } else {
+            throw e;
+          }
+        }
+
+        // Map to UI model
+        this.utilisateurs = (rows || []).map(u => {
+          const permsArr = Array.isArray(u?.permissions) ? u.permissions.map(normalize) : [];
+          const permsList = Array.from(new Set(permsArr));
+          permsList.forEach(p => permSet.add(p));
+          const roleFromCol = u.role ? [String(u.role)] : [];
+          const rolesFromPerms = permsList.filter(p => !p.endsWith('.access'));
+          const rolesList = Array.from(new Set([...roleFromCol, ...rolesFromPerms].filter(Boolean)));
+          rolesList.forEach(r => roleSet.add(r));
+          const Name = u.family_name || '';
+          const Forname = u.forname || '';
+          const display = u.display_name || `${Forname} ${Name}`.trim();
+          return {
+            id: u.user_id,
+            Mail: u.email || '',
+            Name: Name || display || '',
+            Forname: Forname || '',
+            rolesList,
+            permsList,
+            is_active: u.is_active,
+          };
+        });
+
+        this.availableRoles = Array.from(roleSet).sort();
+        this.availablePermissions = Array.from(permSet).sort();
+      } catch (error) {
+        console.error('Erreur de récupération des données', error);
+        this.toast.add({ 
+          severity: 'error', 
+          summary: 'Erreur de chargement', 
+          detail: 'Impossible de charger les utilisateurs.', 
+          life: 3000 
+        });
+      } finally {
+        this.loading = false;
+      }
+    },
     async deleteUser(userId) {
       // Confirmation de suppression
       const confirmed = confirm('⚠️ ATTENTION : Voulez-vous vraiment supprimer cet utilisateur ?\n\nCela supprimera :\n- Son profil utilisateur\n- Toutes ses données associées\n\nCette action est IRRÉVERSIBLE !');
@@ -348,6 +358,11 @@ export default {
           user_id: userId 
         });
 
+        // 3. Attendre et recharger la liste automatiquement
+        await nextTick();
+        await new Promise(resolve => setTimeout(resolve, 100));
+        await this.fetchUsers();
+
         if (authError) {
           console.warn('Impossible de supprimer l\'authentification:', authError);
           this.toast.add({ 
@@ -364,9 +379,6 @@ export default {
             life: 4000 
           });
         }
-
-        // 3. Retirer de la liste locale
-        this.utilisateurs = this.utilisateurs.filter(u => u.id !== userId);
 
       } catch (error) {
         console.error('Erreur lors de la suppression:', error);
@@ -444,6 +456,13 @@ export default {
           }
         });
         
+        // Attendre que Supabase propage les changements
+        await nextTick();
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Recharger la liste automatiquement (sans F5)
+        await this.fetchUsers();
+        
         this.toast.add({ 
           severity: 'success', 
           summary: 'Utilisateur créé', 
@@ -452,11 +471,6 @@ export default {
         });
         
         this.closeAddUserDialog();
-        
-        // Recharger la liste pour afficher le nouvel utilisateur
-        setTimeout(() => {
-          window.location.reload();
-        }, 1500);
       } catch (error) {
         console.error('Erreur lors de la création de l\'utilisateur:', error);
         this.createUserError = error.message || 'Une erreur est survenue lors de la création de l\'utilisateur.';

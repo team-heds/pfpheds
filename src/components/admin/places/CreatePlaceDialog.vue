@@ -575,6 +575,13 @@ async function onCreate() {
   loading.value = true
 
   try {
+    // Si un fichier est sélectionné mais pas encore uploadé, l'uploader automatiquement
+    if (selectedFile.value && !formData.value.fileURL) {
+      console.log('📤 Upload automatique du fichier avant création...')
+      await uploadFile()
+      console.log('✅ Fichier uploadé automatiquement, URL:', formData.value.fileURL)
+    }
+
     // Récupérer les infos de l'institution pour les champs dupliqués
     const institution = institutionsStore.institutions.find(
       inst => inst.InstitutionId === formData.value.InstitutionId
@@ -661,9 +668,37 @@ async function onCreate() {
     const createdPlace = await placesStore.createPlace(newPlaceData)
 
     console.log('✅ Place créée avec succès:', createdPlace)
+    const placeId = createdPlace?.PlaceId || newPlaceData.PlaceId
 
+    // Si un fichier PDF a été uploadé, mettre à jour la place avec l'URL
+    if (formData.value.fileURL) {
+      console.log('📄 Mise à jour du PDF pour la place:', placeId)
+      await placesStore.updatePlace(placeId, {
+        fileurl: formData.value.fileURL,
+        filename: selectedFile.value?.name || 'document.pdf'
+      })
+      console.log('✅ PDF enregistré')
+    }
+
+    // Si des praticiens formateurs ont été sélectionnés, les sauvegarder
+    if (formData.value.praticiensFormateurs && formData.value.praticiensFormateurs.length > 0) {
+      console.log('👥 Mise à jour des praticiens pour la place:', placeId, formData.value.praticiensFormateurs)
+      await placesStore.updatePlace(placeId, {
+        praticiensFormateurs: formData.value.praticiensFormateurs
+      })
+      console.log('✅ Praticiens enregistrés')
+    }
+
+    // Attendre un peu pour que Supabase propage les changements
+    console.log('⏱️ Attente de propagation des changements dans Supabase...')
+    await new Promise(resolve => setTimeout(resolve, 300))
+
+    console.log('🔄 Émission de l\'événement created et attente du refresh parent...')
+    
     // Émettre l'événement ET attendre que le parent refresh
     await emitAndWait(emit, 'created', createdPlace)
+
+    console.log('✅ Refresh parent terminé')
 
     alert('✅ Place créée avec succès!')
 
