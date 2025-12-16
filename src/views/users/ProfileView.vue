@@ -1,27 +1,9 @@
 <template>
-
   <Navbar />
-
-  <!-- Sidebar Gauche -->
-  <div class="sidebar-left">
-    <LeftSidebar />
-  </div>
-
-  <div class="min-h-screen flex relative lg:static">
-    <div class="min-h-screen flex flex-column relative flex-auto profile-center-scrollable">
-      <div class="flex flex-column flex-auto">
-        <ProfileInfo v-if="activeTab === 0" :user="user" />
-        <DocumentsUserProfile v-if="activeTab === 1" />
-        <ResumStageUserProfile v-if="activeTab === 2" />
-        <ChatProfil v-if="activeTab === 3" />
-      </div>
-    </div>
-  </div>
-
-  <!-- Sidebar Droite -->
-  <div class="sidebar-right">
-    <RightSidebar />
-  </div>
+  <ProfileInfo v-if="activeTab === 0" :user="user" />
+  <DocumentsUserProfile v-if="activeTab === 1" />
+  <ResumStageUserProfile v-if="activeTab === 2" />
+  <ChatProfil v-if="activeTab === 3" />
 </template>
 
 <script>
@@ -137,53 +119,6 @@ export default {
 </script>
 
 <style scoped>
-.bg-jaune-500 {
-  background-color: #f59e0b;
-}
-
-/* Désactive le scroll de page pour cette vue; seul le centre scrolle */
-:global(.content) {
-  overflow: hidden;
-}
-.border-circle {
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-/* --- Responsive Mobile Styles --- */
-@media (max-width: 991px) {
-  .sidebar-left, .sidebar-right {
-    display: none !important;
-  }
-  .min-h-screen.flex.relative.lg\:static {
-    flex-direction: column !important;
-    padding: 0 0.5rem;
-    min-height: 0;
-  }
-  .min-h-screen.flex.flex-column.relative.flex-auto {
-    min-height: 0;
-    width: 100%;
-    padding: 0;
-  }
-}
-
-@media (max-width: 600px) {
-  .min-h-screen.flex.relative.lg\:static {
-    padding: 0 0.2rem;
-  }
-}
-
-/* Optionnel : améliore l'affichage des tabs ou du contenu central sur mobile */
-@media (max-width: 991px) {
-  .flex.flex-column.flex-auto {
-    width: 100% !important;
-    min-width: 0;
-  }
-}
-
-.profile-center-scrollable {
-  height: 100vh;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
+/* ProfileView est maintenant juste un wrapper simple */
+/* Le layout avec sidebars est géré par ProfileInfo.vue */
 </style>
