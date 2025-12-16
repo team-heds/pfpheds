@@ -59,7 +59,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onActivated } from 'vue';
 import { useRouter } from 'vue-router';
 import { useInstitutionsStore } from '@/stores/institutionsStore';
 import { useToast } from 'primevue/usetoast';
@@ -96,17 +96,37 @@ const filteredInstitutions = computed(() => {
 });
 
 // Lifecycle hooks
-onMounted(() => {
-  institutionsStore.fetchInstitutions();
+onMounted(async () => {
+  console.log('🔄 [InstitutionListView] Chargement initial des institutions...');
+  await institutionsStore.fetchInstitutions();
+  console.log('✅ [InstitutionListView] Institutions chargées:', institutionsStore.institutions.length);
+});
+
+// Recharger quand on revient sur cette page (après création/modification)
+onActivated(async () => {
+  console.log('🔄 [InstitutionListView] Page activée, rechargement des institutions...');
+  await institutionsStore.fetchInstitutions();
+  console.log('✅ [InstitutionListView] Institutions actualisées:', institutionsStore.institutions.length);
 });
 
 // Methods
 const handleDelete = async (id) => {
   if (window.confirm("Êtes-vous sûr de vouloir supprimer cette institution ?")) {
     try {
+      console.log('🗑️ [InstitutionListView] Suppression institution:', id);
       await institutionsStore.deleteInstitution(id);
+      
+      // Petit délai pour propagation Supabase
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Recharger la liste
+      console.log('🔄 [InstitutionListView] Rechargement après suppression...');
+      await institutionsStore.fetchInstitutions();
+      
       toast.add({ severity: 'success', summary: 'Succès', detail: 'Institution supprimée.', life: 3000 });
+      console.log('✅ [InstitutionListView] Suppression terminée');
     } catch (error) {
+      console.error('❌ [InstitutionListView] Erreur suppression:', error);
       toast.add({ severity: 'error', summary: 'Erreur', detail: 'La suppression a échoué.', life: 3000 });
     }
   }

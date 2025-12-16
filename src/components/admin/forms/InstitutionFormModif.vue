@@ -145,6 +145,7 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useInstitutionsStore } from '@/stores/institutionsStore';
+import { useToast } from 'primevue/usetoast';
 import { storage } from "../../../../firebase.js";
 import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 
@@ -164,6 +165,7 @@ import Divider from "primevue/divider";
 const route = useRoute();
 const router = useRouter();
 const institutionsStore = useInstitutionsStore();
+const toast = useToast();
 const institutionId = route.params.id;
 
 // --- Reactive State ---
@@ -291,7 +293,12 @@ const handleUpdateInstitution = async () => {
     // 4. Update data via Pinia Store
     await institutionsStore.updateInstitution(institutionId, dataToUpdate);
 
-    alert("Institution mise à jour avec succès.");
+    // Petit délai pour propagation Supabase
+    console.log('⏱️ [InstitutionFormModif] Attente propagation Supabase...');
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    toast.add({ severity: 'success', summary: 'Succès', detail: 'Institution mise à jour avec succès!', life: 3000 });
+    console.log('✅ [InstitutionFormModif] Redirection vers liste...');
     router.push({ name: 'InstitutionListView' });
 
   } catch (error) {
