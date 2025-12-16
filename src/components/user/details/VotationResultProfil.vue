@@ -38,6 +38,14 @@
                 </span>
               </span>
             </p>
+            <div class="mt-2" v-if="getVotationType(place)">
+              <span class="text-sm font-semibold">
+                Type d'attribution : 
+                <span :class="getVotationTypeClass(place)">
+                  {{ getVotationType(place) }}
+                </span>
+              </span>
+            </div>
           </div>
           <!-- Documents -->
         </div>
@@ -344,6 +352,42 @@ function getPraticienFormateurContact(place) {
     return supabasePraticiens.value[praticienId].mail || supabasePraticiens.value[praticienId].Mail || '';
   }
   return '';
+}
+
+// Fonction pour déterminer le type de votation
+function getVotationType(place) {
+  // Vérifier si c'est depuis le nouveau système student_result_vote
+  if (place._key) {
+    const assignment = publishedAssignments.value.find(a => a.id === place._key);
+    if (assignment) {
+      // Si assigned_rank est un nombre entre 1 et 5, c'est un choix
+      if (assignment.assigned_rank && assignment.assigned_rank >= 1 && assignment.assigned_rank <= 5) {
+        return `Choix ${assignment.assigned_rank}`;
+      }
+      // Sinon, c'est un tirage aléatoire
+      return 'Tirage aléatoire';
+    }
+  }
+  
+  // Pour l'ancien système, on peut déterminer par le seatIndex
+  if (place.seatIndex) {
+    const seatNum = parseInt(place.seatIndex);
+    if (seatNum >= 1 && seatNum <= 5) {
+      return `Choix ${seatNum}`;
+    }
+  }
+  
+  // Par défaut, on considère que c'est un tirage aléatoire
+  return 'Tirage aléatoire';
+}
+
+// Fonction pour obtenir la classe CSS selon le type de votation
+function getVotationTypeClass(place) {
+  const type = getVotationType(place);
+  if (type.startsWith('Choix')) {
+    return 'text-blue-600 font-bold'; // Bleu pour les choix
+  }
+  return 'text-green-600 font-bold'; // Vert pour le tirage aléatoire
 }
 
 const fetchInstitutions = async () => {

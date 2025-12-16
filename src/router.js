@@ -679,7 +679,7 @@ const routes = [
   { path: '/management_places_safe', component: ManagementPlacesSafe, name: 'ManagementPlacesSafe', meta: { requiresAuth: true, need: 'admin' } },
   { path: '/management_offre', component: OffreDePlace, name: 'Management_offre', meta: { requiresAuth: true, need: 'admin' } },
   { path: '/places_assignment', component: PlaceAssignmentView, name: 'PlaceAssignmentView', meta: { requiresAuth: true, need: 'admin' } },
-  { path: '/places_assigned', component: PlacesAssigned, name: 'PlacesAssigned', meta: { requiresAuth: true, need: 'admin' } },
+  { path: '/places_assigned', component: PlacesAssignedView, name: 'PlacesAssigned', meta: { requiresAuth: true, need: 'admin' } },
   { path: '/stage_repartition', component: StageRepartitionBA2, name: 'StageRepartitionBA2', meta: { requiresAuth: true, need: 'admin' } },
   { path: '/management_pfpencours2', component: ManagementPFPEnCours, name: 'ManagementPFPEnCours', meta: { requiresAuth: true, need: 'admin' } },
   { path: '/historique_pfp', component: HistoriquePFP, name: 'HistoriquePFP', meta: { requiresAuth: true } },

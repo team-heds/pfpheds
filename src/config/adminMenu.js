@@ -85,7 +85,7 @@ export default [
               { label: 'Votation Lese', icon: 'pi pi-sliders-h', to: '/management_votation_prioritaire' },
               { label: 'Votation Étudiants', icon: 'pi pi-users', to: '/management_votation_etudiants' },
               { label: 'Votation PFP', icon: 'pi pi-check-square', to: '/admin/formation-pratique/votation-pfp' },
-              { label: 'Places Assignées', icon: 'pi pi-map-marker', to: '/places_assigned' },
+              { label: 'Places Assignées', icon: 'pi pi-map-marker', to: '/places_asssigned' },
               { label: 'Assignement Places', icon: 'pi pi-sitemap', to: '/places_assignment' },
               { label: 'Résultat Votation Prioritaire', icon: 'pi pi-chart-pie', to: '/admin/formation-pratique/resultat-votation-prioritaire' },
               { label: 'Résultat Votation PFP', icon: 'pi pi-chart-bar', to: '/result_preview_votation' },
