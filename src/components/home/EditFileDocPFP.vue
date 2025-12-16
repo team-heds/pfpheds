@@ -85,18 +85,41 @@ const handleSave = async () => {
   // Si un nouveau fichier a été sélectionné, on l'upload pour récupérer une nouvelle URL
   if (selectedFile.value) {
     try {
-      const filePath = `documentPFP/${Date.now()}_${selectedFile.value.name}`
-      const storageReference = storageRef(storage, filePath)
-
-      // 1) Upload dans Firebase Storage
-      const snapshot = await uploadBytes(storageReference, selectedFile.value)
-      // 2) Récupérer l'URL de téléchargement
-      const downloadURL = await getDownloadURL(snapshot.ref)
+      console.log('📤 [EditFileDocPFP] Upload vers Firebase Storage...')
+      
+      // Créer un nom de fichier unique avec timestamp
+      const timestamp = Date.now()
+      const fileName = `${timestamp}_${selectedFile.value.name}`
+      const filePath = `documentPFP/${fileName}`
+      
+      console.log('📁 [EditFileDocPFP] Upload vers:', filePath)
+      
+      // Créer la référence Firebase Storage
+      const fileRef = storageRef(storage, filePath)
+      
+      // Upload le fichier vers Firebase Storage
+      const snapshot = await uploadBytes(fileRef, selectedFile.value, {
+        contentType: selectedFile.value.type,
+        customMetadata: {
+          originalName: selectedFile.value.name,
+          uploadedAt: new Date().toISOString()
+        }
+      })
+      
+      console.log('✅ [EditFileDocPFP] Fichier uploadé:', snapshot.metadata.fullPath)
+      
+      // Obtenir l'URL de téléchargement
+      const downloadURL = await getDownloadURL(fileRef)
+      
+      console.log('🔗 [EditFileDocPFP] URL du fichier:', downloadURL)
 
       // On met à jour l'URL dans localFile
       localFile.url = downloadURL
+      
     } catch (error) {
-      console.error("Erreur lors de l'upload du fichier :", error)
+      console.error("❌ [EditFileDocPFP] Erreur lors de l'upload du fichier :", error)
+      alert(`Erreur d'upload: ${error.message || error}`)
+      return
     }
   }
 
