@@ -102,20 +102,34 @@
           </div>
         </div>
 
-        <!-- Enseignants du module -->
+        <!-- Enseignants de mes modules -->
         <div class="section-card">
-          <h3><i class="pi pi-users"></i> Mes Enseignants</h3>
+          <div class="section-header">
+            <h3>
+              <i class="pi pi-users"></i> 
+              Enseignants de mes modules
+              <Badge :value="myTeachers.length" severity="info" class="ml-2" />
+            </h3>
+          </div>
           <div class="teachers-list">
-            <div v-for="teacher in teachers" :key="teacher.id" class="teacher-item">
+            <div v-for="teacher in myTeachers" :key="teacher.id" class="teacher-item">
+              <div class="teacher-avatar">
+                <img v-if="teacher.avatar" :src="teacher.avatar" :alt="teacher.name" />
+                <i v-else class="pi pi-user"></i>
+              </div>
               <div class="teacher-info">
                 <h4>{{ teacher.name }}</h4>
                 <p>{{ teacher.email }}</p>
+                <small class="text-500">{{ teacher.modulesCount }} module(s)</small>
               </div>
-              <span class="hours-badge">{{ teacher.hours }}h</span>
+              <div class="teacher-hours">
+                <span class="hours-badge">{{ teacher.totalHours }}h</span>
+                <Button icon="pi pi-envelope" class="p-button-rounded p-button-text p-button-sm" @click="contactTeacher(teacher)" />
+              </div>
             </div>
-            <div v-if="teachers.length === 0" class="empty-state">
+            <div v-if="myTeachers.length === 0" class="empty-state">
               <i class="pi pi-inbox"></i>
-              <p>Aucun enseignant assigné</p>
+              <p>Aucun enseignant assigné à vos modules</p>
             </div>
           </div>
         </div>
@@ -239,7 +253,7 @@ import ProgressSpinner from 'primevue/progressspinner';
 import InputText from 'primevue/inputtext';
 import Badge from 'primevue/badge';
 import Tag from 'primevue/tag';
-import { getAllRMData } from '@/services/academicKpiService';
+import { getMyModules, getModulesTeachers, calculateStats } from '@/services/rmDashboardService';
 import { useModules } from '@/composables/useModules';
 
 const router = useRouter();
@@ -286,17 +300,11 @@ const teachers = ref([]);
 const siTeachers = ref([]);
 const searchSI = ref('');
 
-// Modules de l'utilisateur connecté (filtrés par responsable)
-const myModules = computed(() => {
-  const userEmail = authStore.user?.email;
-  if (!userEmail) return [];
-  
-  return supabaseModules.value.filter(module => {
-    // Matcher par email du responsable OU par nom (pour compatibilité)
-    return module.responsable_email === userEmail || 
-           module.responsable?.toLowerCase().includes(userEmail.split('@')[0].toLowerCase());
-  });
-});
+// Modules dont l'utilisateur est responsable (chargés depuis le service)
+const myModules = ref([]);
+
+// Enseignants de mes modules
+const myTeachers = ref([]);
 
 // Modules Supabase
 const { modules: supabaseModules, loadModules } = useModules();
@@ -348,13 +356,14 @@ const filteredSITeachers = computed(() => {
 });
 
 /**
- * Charge les données RM depuis Supabase/Firebase
+ * Charge les données RM depuis Supabase
  */
 async function loadRMData() {
   loading.value = true;
   
   try {
     const userId = authStore.user?.id || authStore.user?.uid;
+    const userEmail = authStore.user?.email;
     
     if (!userId) {
       console.warn('⚠️ Aucun utilisateur connecté');
@@ -362,45 +371,36 @@ async function loadRMData() {
       return;
     }
     
-    console.log('🔄 Chargement données RM pour:', userId);
+    console.log('🔄 Chargement données RM pour:', userEmail);
     
-    // Charger les modules depuis Supabase
+    // 1. Charger tous les modules (pour la vue d'ensemble)
     await loadModules();
     
-    // Calculer les stats par année (pour les modules Supabase)
-    // Les modules Supabase ont une propriété 'year' (1, 2, 3)
-    const year1Modules = supabaseModules.value.filter(m => m.year === 1).length;
-    const year2Modules = supabaseModules.value.filter(m => m.year === 2).length;
-    const year3Modules = supabaseModules.value.filter(m => m.year === 3).length;
+    // 2. Charger MES modules (dont je suis responsable)
+    myModules.value = await getMyModules(userId, userEmail);
+    console.log('📚 Mes modules:', myModules.value.length);
     
-    activeModulesCount.value = year1Modules;
-    draftModulesCount.value = year2Modules;
-    archivedModulesCount.value = year3Modules;
+    // 3. Charger les enseignants de mes modules
+    if (myModules.value.length > 0) {
+      const moduleIds = myModules.value.map(m => m.id);
+      myTeachers.value = await getModulesTeachers(moduleIds);
+      console.log('👨‍🏫 Mes enseignants:', myTeachers.value.length);
+    }
     
-    const data = await getAllRMData(userId);
+    // 4. Calculer les stats de mes modules
+    const stats = calculateStats(myModules.value, myTeachers.value);
+    modulesCount.value = stats.modulesCount;
+    totalHours.value = stats.totalHours;
+    activeModulesCount.value = stats.modulesByYear[1] || 0;
+    draftModulesCount.value = stats.modulesByYear[2] || 0;
+    archivedModulesCount.value = stats.modulesByYear[3] || 0;
     
-    // Mettre à jour les données
-    modules.value = data.modules;
-    teachers.value = data.teachers;
-    siTeachers.value = data.siTeachers || [];
-    
-    // Calculer les stats enseignants
-    siTeachersCount.value = siTeachers.value.length;
-    
-    // Mettre à jour les stats
-    modulesCount.value = supabaseModules.value.length; // Utiliser le comptage réel des modules
-    teachersCount.value = data.stats.teachersCount;
-    totalHours.value = data.stats.totalHours;
-    studentsCount.value = data.stats.studentsCount;
+    // 5. Stats enseignants
+    siTeachersCount.value = myTeachers.value.length;
+    teachers.value = myTeachers.value;
+    siTeachers.value = myTeachers.value;
     
     console.log('✅ Données RM chargées');
-    console.log('📚 Modules:', {
-      total: modulesCount.value,
-      active: activeModulesCount.value,
-      draft: draftModulesCount.value,
-      archived: archivedModulesCount.value
-    });
-    console.log('👥 Enseignants SI:', siTeachersCount.value);
   } catch (error) {
     console.error('❌ Erreur chargement données RM:', error);
   } finally {
@@ -859,6 +859,49 @@ function dismissAlert(alert) {
 
 .no-alerts i {
   font-size: 1.25rem;
+}
+
+/* Teacher avatar et heures */
+.teacher-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--surface-200);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.teacher-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.teacher-avatar i {
+  font-size: 1.2rem;
+  color: var(--text-color-secondary);
+}
+
+.teacher-hours {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.teacher-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  transition: background 0.2s;
+}
+
+.teacher-item:hover {
+  background: var(--surface-100);
 }
 
 /* Header avec sélecteur de filière */
