@@ -1,7 +1,7 @@
 <template>
   <AdminLayout>
     <template #header>
-      <AdminPageHeader title="Liste des enseignants physio" subtitle="Gérez la liste des enseignants">
+      <AdminPageHeader title="Liste des répondants physio" subtitle="Gérez la liste des enseignants">
         <template #breadcrumbs>
           <div class="flex align-items-center gap-2 text-sm text-600">
             <router-link to="/admin" class="text-600 no-underline hover:text-primary">Dashboard</router-link>
@@ -27,7 +27,7 @@
       >
         <template #header>
           <div class="flex justify-content-between flex-column sm:flex-row">
-            <Button label="Ajouter un enseignant" icon="pi pi-plus" class="mb-2 mr-2" outlined @click="openCreateDialog" />
+            <Button label="Ajouter un répondant" icon="pi pi-plus" class="mb-2 mr-2" outlined @click="openCreateDialog" />
             <IconField iconPosition="left">
               <InputIcon class="pi pi-search" />
               <InputText
@@ -40,10 +40,10 @@
         </template>
         <template #empty>
           <EmptyState
-            title="Aucun enseignant trouvé"
-            description="Ajustez les filtres ou ajoutez un enseignant."
+            title="Aucun répondant trouvé"
+            description="Ajustez les filtres ou ajoutez un répondant."
             icon="pi-users"
-            actionLabel="Ajouter un enseignant"
+            actionLabel="Ajouter un répondant"
             @action="openCreateDialog"
           />
         </template>
@@ -71,7 +71,7 @@
     <Dialog
       v-model:visible="showCreateDialog"
       modal
-      header="Nouvel enseignant physio"
+      header="Nouveau répondant physio"
       :style="{ width: '30rem' }"
       :breakpoints="{ '1199px': '75vw', '575px': '90vw' }"
     >
@@ -99,7 +99,7 @@
     <Dialog
       v-model:visible="showEditDialog"
       modal
-      header="Modifier l'enseignant physio"
+      header="Modifier le répondant physio"
       :style="{ width: '30rem' }"
       :breakpoints="{ '1199px': '75vw', '575px': '90vw' }"
     >
@@ -128,7 +128,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useEnseignantsStore } from '@/stores/enseignantsStore'
+import { useRepondantPhysioHESStore } from '@/stores/repondantPhysioHESStore'
 
 import AdminPageHeader from '@/components/admin/common/AdminPageHeader.vue'
 import AppSkeleton from '@/components/common/feedback/AppSkeleton.vue'
@@ -143,8 +143,8 @@ import Dialog from 'primevue/dialog'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import { FilterMatchMode } from 'primevue/api'
 
-const store = useEnseignantsStore()
-const { enseignants: items, loading } = storeToRefs(store)
+const store = useRepondantPhysioHESStore()
+const { repondants: items, loading } = storeToRefs(store)
 
 const filters = ref({
   global: { value: null, matchMode: FilterMatchMode.CONTAINS },
@@ -164,12 +164,12 @@ const newEnseignant = ref({
 const editEnseignant = ref(null)
 
 onMounted(async () => {
-  await store.fetchEnseignants()
+  await store.fetchRepondants()
 })
 
 const confirmDelete = async (id) => {
-  if (confirm('Êtes-vous sûr de vouloir supprimer cet enseignant ?')) {
-    await store.deleteEnseignant(id)
+  if (confirm('Êtes-vous sûr de vouloir supprimer ce répondant ?')) {
+    await store.deleteRepondant(id)
   }
 }
 
@@ -188,14 +188,14 @@ const submitCreate = async () => {
     return
   }
 
-  if (confirm('Êtes-vous sûr de vouloir ajouter ce nouvel enseignant ?')) {
+  if (confirm('Êtes-vous sûr de vouloir ajouter ce nouveau répondant ?')) {
     creating.value = true
     try {
-      await store.createEnseignant(newEnseignant.value)
+      await store.createRepondant(newEnseignant.value)
       showCreateDialog.value = false
       newEnseignant.value = { first_name: '', last_name: '', email: '' }
     } catch (error) {
-      console.error('❌ Error creating enseignant:', error)
+      console.error('❌ Error creating repondant:', error)
       alert('Erreur lors de la création: ' + error.message)
     } finally {
       creating.value = false
@@ -205,15 +205,15 @@ const submitCreate = async () => {
 
 const openEditDialog = async (id) => {
   try {
-    const foundEnseignant = await store.getEnseignantById(id)
-    if (foundEnseignant) {
-      editEnseignant.value = { ...foundEnseignant }
+    const foundRepondant = await store.getRepondantByIdAsync(id)
+    if (foundRepondant) {
+      editEnseignant.value = { ...foundRepondant }
       showEditDialog.value = true
     } else {
-      alert('Enseignant non trouvé')
+      alert('Répondant non trouvé')
     }
   } catch (error) {
-    console.error('❌ Error loading enseignant:', error)
+    console.error('❌ Error loading repondant:', error)
     alert('Erreur lors du chargement: ' + error.message)
   }
 }
@@ -221,14 +221,14 @@ const openEditDialog = async (id) => {
 const submitUpdate = async () => {
   if (!editEnseignant.value) return
 
-  if (confirm('Êtes-vous sûr de vouloir mettre à jour cet enseignant ?')) {
+  if (confirm('Êtes-vous sûr de vouloir mettre à jour ce répondant ?')) {
     updating.value = true
     try {
-      await store.updateEnseignant(editEnseignant.value.id, editEnseignant.value)
+      await store.updateRepondant(editEnseignant.value.id, editEnseignant.value)
       showEditDialog.value = false
       editEnseignant.value = null
     } catch (error) {
-      console.error('❌ Error updating enseignant:', error)
+      console.error('❌ Error updating repondant:', error)
       alert('Erreur lors de la mise à jour: ' + error.message)
     } finally {
       updating.value = false

@@ -120,6 +120,52 @@
           </template>
         </Column>
 
+        <!-- Colonne Répondant HES -->
+        <Column field="repondant_hes" header="Répondant HES" style="min-width: 14rem" class="text-center">
+          <template #body="{ data }">
+            <div class="flex align-items-center justify-content-center gap-2">
+              <template v-if="!isEditingRepondant(data)">
+                <span v-if="data.repondant_hes" class="text-primary font-medium">{{ data.repondant_hes }}</span>
+                <span v-else class="text-gray-400 italic">Non assigné</span>
+                <Button
+                  icon="pi pi-pencil"
+                  size="small"
+                  outlined
+                  @click="startEditRepondant(data)"
+                />
+              </template>
+              <template v-else>
+                <Dropdown
+                  v-model="repondantEditValue"
+                  :options="repondantsHESList"
+                  optionLabel="label"
+                  optionValue="value"
+                  placeholder="Sélectionner"
+                  class="w-full"
+                  showClear
+                  :loading="savingRepondantId === data.id"
+                />
+                <Button
+                  icon="pi pi-check"
+                  size="small"
+                  severity="success"
+                  outlined
+                  :loading="savingRepondantId === data.id"
+                  @click="saveEditRepondant(data)"
+                />
+                <Button
+                  icon="pi pi-times"
+                  size="small"
+                  severity="secondary"
+                  outlined
+                  :disabled="savingRepondantId === data.id"
+                  @click="cancelEditRepondant()"
+                />
+              </template>
+            </div>
+          </template>
+        </Column>
+
         <!-- Colonne des actions -->
         <Column header="Actions" style="min-width: 12rem" class="text-center">
           <template #body="{ data }">
@@ -197,6 +243,10 @@ export default {
       showEditDialog: false,
       selectedStudentId: null,
       showCreateDialog: false,
+      repondantsHESList: [],
+      repondantEditingStudentId: null,
+      repondantEditValue: null,
+      savingRepondantId: null,
     };
   },
   watch: {
@@ -237,7 +287,11 @@ export default {
     return { toast };
   },
   async mounted() {
-    await this.fetchEtudiantsFromSupabase();
+    // Charger en parallèle pour accélérer
+    await Promise.all([
+      this.loadRepondantsHES(),
+      this.fetchEtudiantsFromSupabase()
+    ]);
   },
   methods: {
     debug(...args) {
@@ -260,37 +314,36 @@ export default {
     async fetchEtudiantsFromSupabase() {
       this.loading = true;
       try {
-        // Récupérer depuis le service Supabase unifié
-        const students = await studentsService.getAllStudents();
-        
-        // Charger les pfp_cohort depuis user_profiles
-        await this.loadPfpCohorts(students);
+        // Requêtes parallèles pour accélérer le chargement
+        const [students, { data: physioData }] = await Promise.all([
+          studentsService.getAllStudents(),
+          supabase.from('StudentsPhysio').select('user_id, repondant_hes')
+        ]);
 
-        // Pré-calcul d'une clé de recherche normalisée pour accélérer le filtrage
+        // Map pour lookup rapide
+        const physioByUserId = new Map((physioData || []).map(sp => [sp.user_id, sp]));
+
+        // Pré-calcul en une seule passe
         students.forEach(s => {
+          // Clé de recherche
           const parts = [s.Nom, s.Prenom, s.Classe, s.Mail].filter(Boolean);
           s.__searchKey = parts.join(' ').toLowerCase();
+          // Flag pour loading
+          s.updating = false;
+          // Répondant HES
+          const physio = physioByUserId.get(s.id);
+          s.repondant_hes = physio?.repondant_hes || null;
         });
         
-        // Assigner les étudiants APRÈS avoir chargé les cohortes
         this.etudiants = students;
         
-        // Pas besoin de nextTick ici: on n'a plus un Dropdown par ligne
-
-        this.debug(`✅ ${this.etudiants.length} étudiants chargés depuis Supabase`);
-        this.debug('🔍 Exemple étudiant:', this.etudiants[0]);
-
-        // Stats par classe uniquement en DEV (appel réseau non essentiel)
-        if (import.meta.env && import.meta.env.DEV) {
-          const stats = await studentsService.getClassStats();
-          this.debug('📊 Répartition par classe:', stats);
-        }
+        this.debug(`✅ ${this.etudiants.length} étudiants chargés`);
         
         this.toast.add({
           severity: 'success',
           summary: 'Étudiants chargés',
           detail: `${this.etudiants.length} étudiants récupérés`,
-          life: 3000
+          life: 2000
         });
       } catch (error) {
         console.error('❌ Erreur fetchEtudiantsFromSupabase:', error);
@@ -482,6 +535,140 @@ export default {
         });
       } finally {
         student.updating = false;
+      }
+    },
+
+    // ===== Méthodes Répondant HES =====
+    async loadRepondantsHES() {
+      try {
+        const { data, error } = await supabase
+          .from('RepondantPhysioHES')
+          .select('id, first_name, last_name, email')
+          .eq('is_active', true)
+          .order('last_name', { ascending: true });
+
+        if (error) throw error;
+        this.repondantsHESList = (data || []).map(r => ({
+          id: r.id,
+          label: `${r.first_name} ${r.last_name}`,
+          value: `${r.first_name} ${r.last_name}`,
+          email: r.email
+        }));
+        this.debug('✅ RepondantsHES chargés:', this.repondantsHESList.length);
+      } catch (e) {
+        console.error('❌ Erreur loadRepondantsHES:', e);
+        this.repondantsHESList = [];
+      }
+    },
+
+    async loadStudentsPhysioData(students) {
+      try {
+        const { data, error } = await supabase
+          .from('StudentsPhysio')
+          .select('user_id, repondant_hes');
+
+        if (error) throw error;
+        
+        const physioByUserId = new Map((data || []).map(sp => [sp.user_id, sp]));
+        
+        students.forEach(student => {
+          const physioData = physioByUserId.get(student.id);
+          student.repondant_hes = physioData?.repondant_hes || null;
+        });
+        
+        this.debug('✅ StudentsPhysio chargés pour', data?.length || 0, 'étudiants');
+      } catch (e) {
+        console.error('❌ Erreur loadStudentsPhysioData:', e);
+      }
+    },
+
+    isEditingRepondant(student) {
+      return !!student?.id && this.repondantEditingStudentId === student.id;
+    },
+
+    startEditRepondant(student) {
+      if (!student?.id) return;
+      this.repondantEditingStudentId = student.id;
+      this.repondantEditValue = student.repondant_hes || null;
+    },
+
+    cancelEditRepondant() {
+      this.repondantEditingStudentId = null;
+      this.repondantEditValue = null;
+    },
+
+    async saveEditRepondant(student) {
+      if (!student?.id) return;
+      if (this.savingRepondantId) return;
+      this.savingRepondantId = student.id;
+
+      const prev = student.repondant_hes;
+      student.repondant_hes = this.repondantEditValue;
+      
+      try {
+        await this.updateRepondantHES(student);
+        this.cancelEditRepondant();
+      } catch (e) {
+        student.repondant_hes = prev;
+        console.error('❌ Erreur saveEditRepondant:', e);
+      } finally {
+        this.savingRepondantId = null;
+      }
+    },
+
+    async updateRepondantHES(student) {
+      try {
+        const repondantValue = student.repondant_hes;
+        
+        this.debug('📝 Mise à jour Répondant HES:', {
+          studentId: student.id,
+          newRepondant: repondantValue
+        });
+
+        // Vérifier si l'étudiant existe dans StudentsPhysio
+        const { data: existing } = await supabase
+          .from('StudentsPhysio')
+          .select('user_id')
+          .eq('user_id', student.id)
+          .single();
+
+        let error;
+        if (existing) {
+          // Update
+          const result = await supabase
+            .from('StudentsPhysio')
+            .update({ repondant_hes: repondantValue })
+            .eq('user_id', student.id);
+          error = result.error;
+        } else {
+          // Insert
+          const result = await supabase
+            .from('StudentsPhysio')
+            .insert({ user_id: student.id, repondant_hes: repondantValue });
+          error = result.error;
+        }
+
+        if (error) {
+          console.error('❌ Erreur Supabase:', error);
+          this.toast.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail: 'Impossible de mettre à jour le Répondant HES',
+            life: 5000
+          });
+          throw error;
+        } else {
+          this.debug('✅ Répondant HES mis à jour');
+          this.toast.add({
+            severity: 'success',
+            summary: 'Mis à jour',
+            detail: `Répondant HES ${repondantValue || 'supprimé'} pour ${student.Prenom} ${student.Nom}`,
+            life: 3000
+          });
+        }
+      } catch (error) {
+        console.error('❌ Exception updateRepondantHES:', error);
+        throw error;
       }
     }
   }
