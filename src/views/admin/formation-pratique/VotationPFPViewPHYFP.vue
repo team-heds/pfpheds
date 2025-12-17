@@ -880,6 +880,17 @@ const sortAlphabetically = () => {
 }
 
 const startAlgorithm = async () => {
+ // eslint-disable-next-line no-constant-condition
+ if ("a" === "a") {
+    toast.add({
+      severity: 'warning',
+      summary: 'Stop',
+      detail: 'Refais pas un algo',
+      life: 3000
+    })
+    return
+  }
+
   if (!canShowResults.value) {
     toast.add({
       severity: 'warning',

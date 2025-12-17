@@ -13,7 +13,7 @@
         </div>
       </div>
 
-      <!-- Statistiques -->
+      <!-- Statistiquess -->
       <div class="grid mb-4">
         <div class="col-12 md:col-4">
           <div class="surface-card p-4 border-round shadow-2">
@@ -174,6 +174,13 @@
           <Column field="Institution_name" header="Institution" sortable class="w-20rem"></Column>
           <Column field="NomPlace" header="Nom de la place" sortable class="w-25rem"></Column>
           <!-- Colonnes Offre (données de PlacesViewPHYFP.vue) -->
+               <Column v-if="shouldShowPFPColumn('PFP2')" header="Offre PFP2" class="w-8rem">
+            <template #body="slotProps">
+              <div class="flex justify-content-center">
+                <span class="font-semibold text-green-600">{{ (slotProps.data.PFP2 && slotProps.data.PFP2[selectedYear]) || '-' }}</span>
+              </div>
+            </template>
+          </Column>
           <Column v-if="shouldShowPFPColumn('PFP1A')" header="Offre PFP1A" class="w-8rem">
             <template #body="slotProps">
               <div class="flex justify-content-center">
@@ -188,10 +195,10 @@
               </div>
             </template>
           </Column>
-          <Column v-if="shouldShowPFPColumn('PFP2')" header="Offre PFP2" class="w-8rem">
+         <Column v-if="shouldShowPFPColumn('PFP4')" header="Offre PFP4" class="w-8rem">
             <template #body="slotProps">
               <div class="flex justify-content-center">
-                <span class="font-semibold text-green-600">{{ (slotProps.data.PFP2 && slotProps.data.PFP2[selectedYear]) || '-' }}</span>
+                <span class="font-semibold text-green-600">{{ (slotProps.data.PFP4 && slotProps.data.PFP4[selectedYear]) || '-' }}</span>
               </div>
             </template>
           </Column>
@@ -202,14 +209,16 @@
               </div>
             </template>
           </Column>
-          <Column v-if="shouldShowPFPColumn('PFP4')" header="Offre PFP4" class="w-8rem">
+       
+          <!-- Colonnes Proposition (champs séparés) -->
+                 <Column v-if="shouldShowPFPColumn('PFP2')" header="Proposition PFP2" class="w-6rem text-center">
             <template #body="slotProps">
               <div class="flex justify-content-center">
-                <span class="font-semibold text-green-600">{{ (slotProps.data.PFP4 && slotProps.data.PFP4[selectedYear]) || '-' }}</span>
+                <InputText v-if="isEditingRow(slotProps.data)" v-model="editBuffer.pfp2_proposition" class="p-inputtext-sm w-6rem text-center" placeholder="0" />
+                <span v-else class="font-semibold text-blue-600">{{ getPropositionValue(slotProps.data, 'PFP2') }}</span>
               </div>
             </template>
           </Column>
-          <!-- Colonnes Proposition (champs séparés) -->
           <Column v-if="shouldShowPFPColumn('PFP1A')" header="Proposition PFP1A" class="w-6rem text-center">
             <template #body="slotProps">
               <div class="flex justify-content-center">
@@ -226,22 +235,8 @@
               </div>
             </template>
           </Column>
-          <Column v-if="shouldShowPFPColumn('PFP2')" header="Proposition PFP2" class="w-6rem text-center">
-            <template #body="slotProps">
-              <div class="flex justify-content-center">
-                <InputText v-if="isEditingRow(slotProps.data)" v-model="editBuffer.pfp2_proposition" class="p-inputtext-sm w-6rem text-center" placeholder="0" />
-                <span v-else class="font-semibold text-blue-600">{{ getPropositionValue(slotProps.data, 'PFP2') }}</span>
-              </div>
-            </template>
-          </Column>
-          <Column v-if="shouldShowPFPColumn('PFP3')" header="Proposition PFP3" class="w-6rem text-center">
-            <template #body="slotProps">
-              <div class="flex justify-content-center">
-                <InputText v-if="isEditingRow(slotProps.data)" v-model="editBuffer.pfp3_proposition" class="p-inputtext-sm w-6rem text-center" placeholder="0" />
-                <span v-else class="font-semibold text-blue-600">{{ getPropositionValue(slotProps.data, 'PFP3') }}</span>
-              </div>
-            </template>
-          </Column>
+    
+
           <Column v-if="shouldShowPFPColumn('PFP4')" header="Proposition PFP4" class="w-6rem text-center">
             <template #body="slotProps">
               <div class="flex justify-content-center">
@@ -250,11 +245,11 @@
               </div>
             </template>
           </Column>
-          <!-- Colonne Analyse (Proposition - Offre) -->
-          <Column header="Analyse" class="w-6rem text-center">
+          <Column v-if="shouldShowPFPColumn('PFP3')" header="Proposition PFP3" class="w-6rem text-center">
             <template #body="slotProps">
               <div class="flex justify-content-center">
-                <span :class="getTotalAnalysisClass(slotProps.data)">{{ getTotalAnalysisValue(slotProps.data) }}</span>
+                <InputText v-if="isEditingRow(slotProps.data)" v-model="editBuffer.pfp3_proposition" class="p-inputtext-sm w-6rem text-center" placeholder="0" />
+                <span v-else class="font-semibold text-blue-600">{{ getPropositionValue(slotProps.data, 'PFP3') }}</span>
               </div>
             </template>
           </Column>
@@ -311,6 +306,15 @@
               <div class="text-center">
                 <span :class="getAssignmentAnalysisClass(getAssignmentAnalysis(slotProps.data, 'PFP4').status)">
                   {{ getAssignmentAnalysis(slotProps.data, 'PFP4').display }}
+                </span>
+              </div>
+            </template>
+          </Column>
+          <Column header="Analyse Total" class="w-8rem">
+            <template #body="slotProps">
+              <div class="text-center">
+                <span :class="getTotalAnalysisClass(getTotalAnalysisValue(slotProps.data))">
+                  {{ getTotalAnalysisValue(slotProps.data) }}
                 </span>
               </div>
             </template>
@@ -447,12 +451,6 @@ const placesData = computed(() => {
   return placesStore.places || []
 })
 
-// Fonction pour récupérer la valeur PFP selon l'année (pour les Offres)
-const getPfpValue = (place, pfpType) => {
-  if (!place || !place[pfpType]) return '-'
-  return place[pfpType][selectedYear.value] || '-'
-}
-
 // Fonction pour récupérer la valeur Proposition selon l'année
 const getPropositionValue = (place, pfpType) => {
   if (!place || !place[`${pfpType.toLowerCase()}_proposition`]) return '-'
@@ -466,25 +464,26 @@ const getTotalAnalysisValue = (place) => {
   let totalProposition = 0
   
   pfpTypes.forEach(pfpType => {
-    const offre = getPfpValue(place, pfpType)
-    const proposition = getPropositionValue(place, pfpType)
+    // Offre = place.PFP1A[year], place.PFP1B[year], etc.
+    const offre = parseInt(place[pfpType]?.[selectedYear.value]) || 0
+    // Proposition = place.pfp1a_proposition[year], place.pfp1b_proposition[year], etc.
+    const propositionKey = `${pfpType.toLowerCase()}_proposition`
+    const proposition = parseInt(place[propositionKey]?.[selectedYear.value]) || 0
     
-    if (offre !== '-') totalOffre += parseInt(offre) || 0
-    if (proposition !== '-') totalProposition += parseInt(proposition) || 0
+    totalOffre += offre
+    totalProposition += proposition
   })
   
   const result = totalProposition - totalOffre
-  return result.toString()
+  return result === 0 ? '0' : (result > 0 ? `+${result}` : result.toString())
 }
 
 // Fonction pour obtenir la classe CSS selon le résultat de l'analyse totale
-const getTotalAnalysisClass = (place) => {
-  const value = getTotalAnalysisValue(place)
-  
+const getTotalAnalysisClass = (value) => {
   const num = parseInt(value) || 0
-  if (num < 0) return 'font-semibold text-red-600'
-  if (num > 0) return 'font-semibold text-green-600'
-  return 'font-semibold text-gray-600'
+  if (num === 0) return 'text-green-600 font-semibold'
+  if (num > 0) return 'text-orange-600 font-semibold'
+  return 'text-red-600 font-semibold'
 }
 
 // Editing functions
@@ -579,49 +578,27 @@ const loadPublishedAssignments = async () => {
   }
 }
 
-// Function to get assignment analysis for a place
+// Function to get assignment analysis for a place (Proposition - Offre)
 const getAssignmentAnalysis = (place, pfpType) => {
   const year = selectedYear.value
-  const propositions = parseInt(place[pfpType]?.[year]) || 0
-  const offres = parseInt(place[`Offre${pfpType}`]?.[year]) || 0
   
-  // Count assigned students for this specific place and PFP type
-  const assignes = publishedAssignments.value.filter(assignment => 
-    assignment.assigned_place_id === place.PlaceId &&
-    assignment.pfp_type === pfpType &&
-    assignment.year === year &&
-    assignment.status === 'published'
-  ).length
+  // Offre = place.PFP1A[year], place.PFP1B[year], etc.
+  const offre = parseInt(place[pfpType]?.[year]) || 0
   
-  // Changed calculation: Propositions - Offres (not Propositions - Assignés)
-  const difference = propositions - offres
-  const status = difference === 0 ? 'balanced' : difference > 0 ? 'under-assigned' : 'over-assigned'
+  // Proposition = place.pfp1a_proposition[year], place.pfp1b_proposition[year], etc.
+  const propositionKey = `${pfpType.toLowerCase()}_proposition`
+  const proposition = parseInt(place[propositionKey]?.[year]) || 0
   
-  // Debug logging for troubleshooting
-  if (place.PlaceId === 'debug-place-id' || Math.abs(difference) > 0) {
-    console.log(`[DEBUG] ${place.NomPlace} - ${pfpType}:`, {
-      placeId: place.PlaceId,
-      pfpType,
-      year,
-      propositions,
-      offres,
-      assignes,
-      difference,
-      status,
-      pfpValue: place[pfpType],
-      pfpYearValue: place[pfpType]?.[year],
-      offreValue: place[`Offre${pfpType}`],
-      offreYearValue: place[`Offre${pfpType}`]?.[year]
-    })
-  }
+  // Analyse = Proposition - Offre
+  const difference = proposition - offre
+  const status = difference === 0 ? 'balanced' : difference > 0 ? 'over' : 'under'
   
   return {
-    propositions,
-    offres,
-    assignes,
+    proposition,
+    offre,
     difference,
     status,
-    display: difference.toString()
+    display: difference === 0 ? '0' : (difference > 0 ? `+${difference}` : difference.toString())
   }
 }
 
@@ -635,9 +612,9 @@ const getAssignmentAnalysisClass = (status) => {
   switch (status) {
     case 'balanced':
       return 'text-green-600 font-semibold'
-    case 'under-assigned':
+    case 'over':
       return 'text-orange-600 font-semibold'
-    case 'over-assigned':
+    case 'under':
       return 'text-red-600 font-semibold'
     default:
       return 'text-600'
