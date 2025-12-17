@@ -140,7 +140,18 @@
               <span v-else class="text-400">-</span>
             </template>
           </Column>
-          <Column field="institution_name" header="Institution" sortable></Column>
+          <Column field="institution_name" header="Institution" sortable>
+            <template #body="slotProps">
+              <span v-if="slotProps.data.institution_name">{{ slotProps.data.institution_name }}</span>
+              <span v-else class="text-400">-</span>
+            </template>
+          </Column>
+          <Column field="place_name" header="Nom Place" sortable>
+            <template #body="slotProps">
+              <span v-if="slotProps.data.place_name">{{ slotProps.data.place_name }}</span>
+              <span v-else class="text-400">-</span>
+            </template>
+          </Column>
           <Column field="praticien_formateur" header="Praticien formateur" sortable></Column>
           <Column field="repondant_hes" header="Répondant HES" sortable>
             <template #body="slotProps">
@@ -431,10 +442,10 @@ const filteredList = computed(() => {
 const loadPublishedAssignments = async () => {
   loading.value = true
   try {
-    // 1. D'abord récupérer les assignations (rapide)
+    // 1. Récupérer les assignations avec toutes les infos directement
     const { data: assignments, error } = await supabase
       .from('student_result_vote')
-      .select('id,user_id,pfp_type,year,assigned_place_id,assigned_rank,status,assigned_praticien_id,repondant_hes,signataire_hes,lieu_signature,is_validated')
+      .select('id,user_id,pfp_type,year,assigned_place_id,assigned_place_name,assigned_institution_name,assigned_rank,status,assigned_praticien_id,repondant_hes,signataire_hes,lieu_signature,is_validated')
       .eq('status', 'published')
 
     if (error) throw error
@@ -443,29 +454,23 @@ const loadPublishedAssignments = async () => {
       return
     }
 
-    // 2. Extraire les IDs nécessaires
+    // 2. Extraire les IDs nécessaires pour étudiants et praticiens
     const userIds = [...new Set(assignments.map(a => a.user_id).filter(Boolean))]
-    const placeIds = [...new Set(assignments.map(a => a.assigned_place_id).filter(Boolean))]
 
-    // 3. Requêtes parallèles pour les données liées (seulement ce dont on a besoin)
+    // 3. Requêtes parallèles uniquement pour étudiants et praticiens
     const [
       { data: userProfiles },
       { data: studentsPhysio },
-      { data: places },
       { data: praticiens }
     ] = await Promise.all([
       supabase.from('user_profiles').select('user_id,family_name,forname,classe').in('user_id', userIds),
       supabase.from('StudentsPhysio').select('user_id,repondant_hes').in('user_id', userIds),
-      placeIds.length > 0 
-        ? supabase.from('places').select('PlaceId,NomPlace,InstitutionName').in('PlaceId', placeIds)
-        : Promise.resolve({ data: [] }),
       supabase.from('praticiens_formateurs').select('id,prenom,nom')
     ])
 
     // 4. Créer les maps pour lookup rapide
     const studentsById = new Map((userProfiles || []).map(s => [s.user_id, s]))
     const physioByUserId = new Map((studentsPhysio || []).map(sp => [sp.user_id, sp]))
-    const placesById = new Map((places || []).map(p => [p.PlaceId, p]))
     
     const praticiensById = new Map()
     ;(praticiens || []).forEach(p => {
@@ -476,15 +481,11 @@ const loadPublishedAssignments = async () => {
       }
     })
 
-    // 5. Construire la liste finale
+    // 5. Construire la liste finale (place_name et institution_name depuis student_result_vote)
     placesList.value = assignments.map(a => {
       const s = studentsById.get(a.user_id)
       const studentName = s ? `${(s.family_name || '').toUpperCase()} ${s.forname || ''}`.trim() : 'N/A'
       const studentClass = s?.classe || null
-
-      const place = placesById.get(a.assigned_place_id)
-      const placeName = place?.NomPlace || 'N/A'
-      const institutionName = place?.InstitutionName || null
 
       const praticienFormateur = a.assigned_praticien_id 
         ? praticiensById.get(a.assigned_praticien_id) || praticiensById.get(String(a.assigned_praticien_id)) 
@@ -497,8 +498,8 @@ const loadPublishedAssignments = async () => {
         student_name: studentName,
         student_class: studentClass,
         votation_type: getVotationTypeLabel(a),
-        place_name: placeName,
-        institution_name: institutionName,
+        place_name: a.assigned_place_name || null,
+        institution_name: a.assigned_institution_name || null,
         praticien_formateur: praticienFormateur,
         repondant_hes: studentPhysio?.repondant_hes || a?.repondant_hes || null,
         signataire_hes: a?.signataire_hes || null,

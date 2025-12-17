@@ -265,6 +265,15 @@
             </template>
           </Column>
           <!-- Colonnes Analyse -->
+                <Column v-if="shouldShowPFPColumn('PFP2')" header="Analyse PFP2" class="w-8rem">
+            <template #body="slotProps">
+              <div class="text-center">
+                <span :class="getAssignmentAnalysisClass(getAssignmentAnalysis(slotProps.data, 'PFP2').status)">
+                  {{ getAssignmentAnalysis(slotProps.data, 'PFP2').display }}
+                </span>
+              </div>
+            </template>
+          </Column>
           <Column v-if="shouldShowPFPColumn('PFP1A')" header="Analyse PFP1A" class="w-8rem">
             <template #body="slotProps">
               <div class="text-center">
@@ -283,11 +292,11 @@
               </div>
             </template>
           </Column>
-          <Column v-if="shouldShowPFPColumn('PFP2')" header="Analyse PFP2" class="w-8rem">
+               <Column v-if="shouldShowPFPColumn('PFP4')" header="Analyse PFP4" class="w-8rem">
             <template #body="slotProps">
               <div class="text-center">
-                <span :class="getAssignmentAnalysisClass(getAssignmentAnalysis(slotProps.data, 'PFP2').status)">
-                  {{ getAssignmentAnalysis(slotProps.data, 'PFP2').display }}
+                <span :class="getAssignmentAnalysisClass(getAssignmentAnalysis(slotProps.data, 'PFP4').status)">
+                  {{ getAssignmentAnalysis(slotProps.data, 'PFP4').display }}
                 </span>
               </div>
             </template>
@@ -301,15 +310,7 @@
               </div>
             </template>
           </Column>
-          <Column v-if="shouldShowPFPColumn('PFP4')" header="Analyse PFP4" class="w-8rem">
-            <template #body="slotProps">
-              <div class="text-center">
-                <span :class="getAssignmentAnalysisClass(getAssignmentAnalysis(slotProps.data, 'PFP4').status)">
-                  {{ getAssignmentAnalysis(slotProps.data, 'PFP4').display }}
-                </span>
-              </div>
-            </template>
-          </Column>
+
           <Column header="Analyse Total" class="w-8rem">
             <template #body="slotProps">
               <div class="text-center">
