@@ -83,15 +83,62 @@
 
         <!-- Mes cours -->
         <div class="section-card">
-          <h3><i class="pi pi-book"></i> Mes Cours</h3>
+          <div class="section-header">
+            <h3>
+              <i class="pi pi-book"></i> 
+              Mes Cours
+              <Badge :value="myCourses.length" severity="info" class="ml-2" />
+            </h3>
+          </div>
           <div class="courses-grid">
             <div v-for="course in myCourses" :key="course.id" class="course-card">
               <div class="course-header">
                 <h4>{{ course.name }}</h4>
-                <span class="course-badge" :style="{ backgroundColor: course.color }">{{ course.code }}</span>
+                <span class="course-badge" :style="{ backgroundColor: course.color || '#3b82f6' }">{{ course.code }}</span>
               </div>
-              <p>{{ course.hours }}h - {{ course.students }} étudiants</p>
-              <Button label="Détails" icon="pi pi-eye" class="p-button-sm p-button-text" @click="viewCourse(course)" />
+              <div class="course-meta">
+                <span><i class="pi pi-clock"></i> {{ course.hours }}h</span>
+                <span><i class="pi pi-folder"></i> {{ course.moduleName }}</span>
+              </div>
+              <div class="course-footer">
+                <Tag :value="course.type || 'CM'" severity="secondary" />
+                <Button label="Détails" icon="pi pi-eye" class="p-button-sm p-button-text" @click="viewCourse(course)" />
+              </div>
+            </div>
+            <div v-if="myCourses.length === 0" class="empty-state">
+              <i class="pi pi-inbox"></i>
+              <p>Aucun cours assigné</p>
+              <small>Contactez le responsable de module pour être assigné</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mes Modules -->
+        <div class="section-card">
+          <div class="section-header">
+            <h3>
+              <i class="pi pi-th-large"></i> 
+              Modules où j'interviens
+              <Badge :value="myModules.length" severity="success" class="ml-2" />
+            </h3>
+          </div>
+          <div class="modules-list">
+            <div v-for="module in myModules" :key="module.id" class="module-item">
+              <div class="module-icon">
+                <i class="pi pi-folder"></i>
+              </div>
+              <div class="module-info">
+                <h4>{{ module.title }}</h4>
+                <p>{{ module.code }} - {{ module.credits }} ECTS</p>
+                <small class="text-500">RM: {{ module.responsable || module.responsable_email }}</small>
+              </div>
+              <div class="module-year">
+                <Tag :value="'BA' + module.year" severity="info" />
+              </div>
+            </div>
+            <div v-if="myModules.length === 0" class="empty-state">
+              <i class="pi pi-inbox"></i>
+              <p>Aucun module</p>
             </div>
           </div>
         </div>
@@ -135,7 +182,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/authStore';
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
@@ -145,7 +192,7 @@ import ProgressSpinner from 'primevue/progressspinner';
 import Badge from 'primevue/badge';
 import Tag from 'primevue/tag';
 import Checkbox from 'primevue/checkbox';
-import { getAllTeacherData } from '@/services/academicKpiService';
+import { loadEnseignantDashboard } from '@/services/enseignantDashboardService';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -154,14 +201,25 @@ const authStore = useAuthStore();
 const loading = ref(true);
 
 // Stats
-const coursesCount = ref(0);
-const weeklyHours = ref(0);
-const nextCourse = ref('');
-const studentsCount = ref(0);
+const stats = ref({
+  coursesCount: 0,
+  weeklyHours: 0,
+  nextCourse: 'N/A',
+  studentsCount: 0,
+  modulesCount: 0,
+  totalHours: 0
+});
 
 // Données
 const myCourses = ref([]);
+const myModules = ref([]);
 const weekSchedule = ref([]);
+
+// Computed pour stats
+const coursesCount = computed(() => stats.value.coursesCount);
+const weeklyHours = computed(() => stats.value.weeklyHours);
+const nextCourse = computed(() => stats.value.nextCourse);
+const studentsCount = computed(() => stats.value.studentsCount);
 
 // Tâches
 const pendingTasks = ref([
@@ -171,35 +229,37 @@ const pendingTasks = ref([
 ]);
 
 /**
- * Charge les données enseignant depuis Supabase/Firebase
+ * Charge les données enseignant depuis Supabase
  */
 async function loadTeacherData() {
   loading.value = true;
   
   try {
     const userId = authStore.user?.id || authStore.user?.uid;
+    const userEmail = authStore.user?.email;
     
-    if (!userId) {
+    if (!userId && !userEmail) {
       console.warn('⚠️ Aucun utilisateur connecté');
       loading.value = false;
       return;
     }
     
-    console.log('🔄 Chargement données enseignant pour:', userId);
+    console.log('🔄 Chargement données enseignant pour:', userEmail);
     
-    const data = await getAllTeacherData(userId);
+    const data = await loadEnseignantDashboard(userId, userEmail);
     
     // Mettre à jour les stats
-    coursesCount.value = data.stats.coursesCount;
-    weeklyHours.value = data.stats.weeklyHours;
-    nextCourse.value = data.stats.nextCourse;
-    studentsCount.value = data.stats.studentsCount;
+    stats.value = data.stats;
     
     // Mettre à jour les données
     myCourses.value = data.courses;
-    weekSchedule.value = data.weekSchedule;
+    myModules.value = data.modules;
+    weekSchedule.value = data.weekPlanning;
     
-    console.log('✅ Données enseignant chargées');
+    console.log('✅ Données enseignant chargées:', {
+      courses: myCourses.value.length,
+      modules: myModules.value.length
+    });
   } catch (error) {
     console.error('❌ Erreur chargement données enseignant:', error);
   } finally {
@@ -496,6 +556,123 @@ function getPrioritySeverity(priority) {
 
 .no-tasks i {
   font-size: 1.25rem;
+}
+
+/* Course meta et footer */
+.course-meta {
+  display: flex;
+  gap: 1rem;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+  color: var(--text-color-secondary);
+}
+
+.course-meta span {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.course-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.75rem;
+}
+
+/* Modules list */
+.modules-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.module-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--surface-ground);
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+}
+
+.module-item:hover {
+  background: var(--surface-100);
+}
+
+.module-icon {
+  width: 45px;
+  height: 45px;
+  border-radius: 0.75rem;
+  background: var(--primary-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.module-icon i {
+  font-size: 1.25rem;
+  color: var(--primary-color);
+}
+
+.module-info {
+  flex: 1;
+}
+
+.module-info h4 {
+  margin: 0 0 0.25rem 0;
+  color: var(--text-color);
+  font-size: 1rem;
+}
+
+.module-info p {
+  margin: 0;
+  color: var(--text-color-secondary);
+  font-size: 0.9rem;
+}
+
+.module-year {
+  flex-shrink: 0;
+}
+
+/* Empty state */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-color-secondary);
+}
+
+.empty-state i {
+  font-size: 2.5rem;
+  opacity: 0.3;
+  margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+  margin: 0;
+  font-weight: 500;
+}
+
+.empty-state small {
+  margin-top: 0.25rem;
+}
+
+/* Section header */
+.section-header {
+  margin-bottom: 1rem;
+}
+
+.section-header h3 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 /* Header avec sélecteur de filière */
