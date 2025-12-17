@@ -497,4 +497,33 @@ function getPrioritySeverity(priority) {
 .no-tasks i {
   font-size: 1.25rem;
 }
+
+/* Header avec sélecteur de filière */
+.header-with-track {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.track-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.track-selector :deep(.p-selectbutton) {
+  border-radius: 0.5rem;
+}
+
+.track-selector :deep(.p-selectbutton .p-button) {
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+}
+
+.track-selector :deep(.p-selectbutton .p-button.p-highlight) {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+}
 </style>
