@@ -141,6 +141,7 @@ const AlertsDashboard = () => import('@/views/admin/AlertsDashboard.vue');
 const AdminDashboardGamification = () => import('@/components/admin/AdminDashboardGamification.vue');
 const DashboardRMView = () => import('@/views/admin/DashboardRMView.vue');
 const DashboardEnseignantView = () => import('@/views/admin/DashboardEnseignantView.vue');
+const TeacherAssignmentView = () => import('@/views/admin/TeacherAssignmentView.vue');
 const ModuleManageView = () => import('@/views/admin/modules/ModuleManageView.vue');
 const PlanningView = () => import('@/views/admin/planning/PlanningView.vue');
 const PlanningAdminView = () => import('@/views/admin/planning/PlanningAdminView.vue');
@@ -369,7 +370,7 @@ const routes = [
   // ========================================
   { path: '/admin', component: DashboardView, name: 'DashboardView', meta: { requiresAuth: true,  need: ['super.all', 'admin' , 'AdminPhysio',  'EnseignantPhysio' ] } },
   { path: '/admin/dashboard-general', component: AdminDashboardGeneral, name: 'AdminDashboardGeneral', meta: { requiresAuth: true, need: 'admin' } },
-  { path: '/admin/dashboard-rm', component: DashboardRMView, name: 'DashboardRM', meta: { requiresAuth: true, need: ['admin', 'RMSoins.access'] } },
+  { path: '/admin/dashboard-rm', component: DashboardRMView, name: 'DashboardRM', meta: { requiresAuth: true, need: ['admin', 'RMSoins'] } },
   { 
     path: '/admin/modules/:id/manage', 
     component: ModuleManageView, 
@@ -377,11 +378,12 @@ const routes = [
     meta: { 
       requiresAuth: true, 
       requiresModuleOwnership: true,
-      need: ['admin', 'RMSoins.access']
+      need: ['admin', 'RMSoins']
     },
     beforeEnter: modulePermissionGuard
   },
-  { path: '/admin/dashboard-enseignant', component: DashboardEnseignantView, name: 'DashboardEnseignant', meta: { requiresAuth: true, need: ['admin', 'EnseignantSoins.access', 'EnseignantPhysio.access'] } },
+  { path: '/admin/dashboard-enseignant', component: DashboardEnseignantView, name: 'DashboardEnseignant', meta: { requiresAuth: true, need: ['admin', 'EnseignantSoins', 'EnseignantPhysio'] } },
+  { path: '/admin/teachers-assignment', component: TeacherAssignmentView, name: 'TeacherAssignment', meta: { requiresAuth: true, need: ['admin', 'RMSoins', 'PlanificateurHoraires'] } },
   { path: '/admin/dashboard-pfp', component: AdminDashboardPFP, name: 'AdminDashboardPFP', meta: { requiresAuth: true } },
   { path: '/admin/dashboard-academique', component: AdminDashboardAcademique, name: 'AdminDashboardAcademique', meta: { requiresAuth: true } },
   { path: '/admin/dashboard-gamification', component: AdminDashboardGamification, name: 'AdminDashboardGamification', meta: { requiresAuth: true } },

@@ -2,8 +2,8 @@
   <AdminLayout>
     <template #header>
       <PageHeader 
-        title="Dashboard Responsable Module" 
-        subtitle="Vue d'ensemble de vos modules et enseignements" 
+        title="Dashboard RM Soins Infirmiers" 
+        subtitle="Vue d'ensemble de vos modules et enseignements SI" 
         icon="pi pi-chart-line" 
       />
     </template>
@@ -195,10 +195,31 @@
         <div class="section-card">
           <h3><i class="pi pi-bolt"></i> Actions Rapides</h3>
           <div class="quick-actions">
-            <Button label="Gérer les Enseignants" icon="pi pi-users" class="p-button-outlined" @click="$router.push('/admin/teachers-si')" />
-            <Button label="Planning" icon="pi pi-calendar" class="p-button-outlined" @click="$router.push('/admin/planning/weekly')" />
-            <Button label="Liste des Cours" icon="pi pi-list" class="p-button-outlined" @click="$router.push('/admin/courses/list')" />
-            <Button label="Créer un Cours" icon="pi pi-plus" @click="$router.push('/admin/courses/create')" />
+            <Button label="Attribution Enseignants" icon="pi pi-users" severity="primary" @click="$router.push('/admin/teachers-assignment')" />
+            <Button label="Planning Hebdomadaire" icon="pi pi-calendar" class="p-button-outlined" @click="$router.push('/admin/planning/weekly')" />
+            <Button label="Gestion Modules" icon="pi pi-book" class="p-button-outlined" @click="$router.push('/admin/modules')" />
+            <Button label="Calendrier Semestriel" icon="pi pi-calendar-plus" class="p-button-outlined" @click="$router.push('/admin/planning/semester')" />
+          </div>
+        </div>
+
+        <!-- Alertes et Notifications -->
+        <div class="section-card alerts-section">
+          <h3><i class="pi pi-bell"></i> Alertes & Notifications</h3>
+          <div class="alerts-list">
+            <div v-if="alerts.length > 0">
+              <div v-for="alert in alerts" :key="alert.id" class="alert-item" :class="alert.type">
+                <i :class="alert.icon"></i>
+                <div class="alert-content">
+                  <span class="alert-title">{{ alert.title }}</span>
+                  <span class="alert-message">{{ alert.message }}</span>
+                </div>
+                <Button icon="pi pi-times" class="p-button-rounded p-button-text p-button-sm" @click="dismissAlert(alert)" />
+              </div>
+            </div>
+            <div v-else class="no-alerts">
+              <i class="pi pi-check-circle"></i>
+              <span>Aucune alerte en cours</span>
+            </div>
           </div>
         </div>
 
@@ -240,6 +261,24 @@ const archivedModulesCount = ref(0);
 
 // Stats enseignants détaillées
 const siTeachersCount = ref(0);
+
+// Alertes
+const alerts = ref([
+  {
+    id: 1,
+    type: 'warning',
+    icon: 'pi pi-exclamation-triangle',
+    title: 'Modules sans enseignant',
+    message: 'Certains modules n\'ont pas encore d\'enseignant assigné'
+  },
+  {
+    id: 2,
+    type: 'info',
+    icon: 'pi pi-info-circle',
+    title: 'Planning à valider',
+    message: 'Le planning du semestre prochain est prêt pour validation'
+  }
+]);
 
 // Données
 const modules = ref([]);
@@ -387,6 +426,10 @@ function viewPlanning(module) {
 
 function contactTeacher(teacher) {
   window.location.href = `mailto:${teacher.email}`;
+}
+
+function dismissAlert(alert) {
+  alerts.value = alerts.value.filter(a => a.id !== alert.id);
 }
 </script>
 
@@ -729,5 +772,92 @@ function contactTeacher(teacher) {
   font-size: 0.9rem;
   margin-top: 0.5rem;
   display: block;
+}
+
+/* Alertes */
+.alerts-section {
+  border-left: 4px solid var(--primary-color);
+}
+
+.alerts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.alert-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background: var(--surface-ground);
+}
+
+.alert-item.warning {
+  background: #fef3c7;
+  border-left: 3px solid #f59e0b;
+}
+
+.alert-item.warning i {
+  color: #f59e0b;
+}
+
+.alert-item.info {
+  background: #dbeafe;
+  border-left: 3px solid #3b82f6;
+}
+
+.alert-item.info i {
+  color: #3b82f6;
+}
+
+.alert-item.error {
+  background: #fee2e2;
+  border-left: 3px solid #ef4444;
+}
+
+.alert-item.error i {
+  color: #ef4444;
+}
+
+.alert-item.success {
+  background: #dcfce7;
+  border-left: 3px solid #10b981;
+}
+
+.alert-item.success i {
+  color: #10b981;
+}
+
+.alert-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.alert-title {
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.alert-message {
+  font-size: 0.9rem;
+  color: var(--text-color-secondary);
+}
+
+.no-alerts {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #dcfce7;
+  border-radius: 0.5rem;
+  color: #16a34a;
+}
+
+.no-alerts i {
+  font-size: 1.25rem;
 }
 </style>

@@ -230,6 +230,57 @@
           </div>
         </div>
 
+        <!-- RMPhysio -->
+        <div class="permission-control">
+          <div class="permission-info">
+            <span class="permission-label">RMPhysio</span>
+            <span class="permission-desc">Responsable de module Physiothérapie</span>
+          </div>
+          <div class="permission-toggle">
+            <input 
+              type="checkbox" 
+              id="RMPhysio" 
+              v-model="newPermissions['RMPhysio']"
+              :disabled="loading"
+            />
+            <label for="RMPhysio" class="toggle-label"></label>
+          </div>
+        </div>
+
+        <!-- CoordinateurStages -->
+        <div class="permission-control">
+          <div class="permission-info">
+            <span class="permission-label">CoordinateurStages</span>
+            <span class="permission-desc">Coordinateur des stages pratiques</span>
+          </div>
+          <div class="permission-toggle">
+            <input 
+              type="checkbox" 
+              id="CoordinateurStages" 
+              v-model="newPermissions['CoordinateurStages']"
+              :disabled="loading"
+            />
+            <label for="CoordinateurStages" class="toggle-label"></label>
+          </div>
+        </div>
+
+        <!-- PlanificateurHoraires -->
+        <div class="permission-control">
+          <div class="permission-info">
+            <span class="permission-label">PlanificateurHoraires</span>
+            <span class="permission-desc">Gestion des plannings et horaires</span>
+          </div>
+          <div class="permission-toggle">
+            <input 
+              type="checkbox" 
+              id="PlanificateurHoraires" 
+              v-model="newPermissions['PlanificateurHoraires']"
+              :disabled="loading"
+            />
+            <label for="PlanificateurHoraires" class="toggle-label"></label>
+          </div>
+        </div>
+
         <!-- Boutons d'action -->
         <div class="action-buttons">
           <button 
@@ -291,7 +342,10 @@ const newPermissions = ref({
   'EnseignantPhysio': false,
   'EtudiantSoins': false,
   'EtudiantPhysio': false,
-  'RMSoins': false
+  'RMSoins': false,
+  'RMPhysio': false,
+  'CoordinateurStages': false,
+  'PlanificateurHoraires': false
 });
 
 // Vérifier si des changements ont été faits
@@ -349,6 +403,9 @@ async function loadCurrentPermissions() {
     newPermissions.value['EtudiantSoins'] = currentPermissions.value.includes('EtudiantSoins');
     newPermissions.value['EtudiantPhysio'] = currentPermissions.value.includes('EtudiantPhysio');
     newPermissions.value['RMSoins'] = currentPermissions.value.includes('RMSoins');
+    newPermissions.value['RMPhysio'] = currentPermissions.value.includes('RMPhysio');
+    newPermissions.value['CoordinateurStages'] = currentPermissions.value.includes('CoordinateurStages');
+    newPermissions.value['PlanificateurHoraires'] = currentPermissions.value.includes('PlanificateurHoraires');
     
   } catch (error) {
     console.error('❌ Erreur chargement permissions:', error);
@@ -409,6 +466,9 @@ function resetPermissions() {
   newPermissions.value['EtudiantSoins'] = currentPermissions.value.includes('EtudiantSoins');
   newPermissions.value['EtudiantPhysio'] = currentPermissions.value.includes('EtudiantPhysio');
   newPermissions.value['RMSoins'] = currentPermissions.value.includes('RMSoins');
+  newPermissions.value['RMPhysio'] = currentPermissions.value.includes('RMPhysio');
+  newPermissions.value['CoordinateurStages'] = currentPermissions.value.includes('CoordinateurStages');
+  newPermissions.value['PlanificateurHoraires'] = currentPermissions.value.includes('PlanificateurHoraires');
   showMessage('Permissions réinitialisées', 'info');
 }
 

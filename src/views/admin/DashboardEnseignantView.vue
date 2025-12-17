@@ -100,9 +100,32 @@
         <div class="section-card">
           <h3><i class="pi pi-bolt"></i> Actions Rapides</h3>
           <div class="quick-actions">
-            <Button label="Mon Planning" icon="pi pi-calendar" class="p-button-outlined" @click="$router.push('/admin/planning/weekly')" />
-            <Button label="Mes Cours" icon="pi pi-book" class="p-button-outlined" @click="$router.push('/admin/courses/list')" />
-            <Button label="Feedback Étudiants" icon="pi pi-comments" class="p-button-outlined" @click="$router.push('/admin/tools/feedbacka')" />
+            <Button label="Mon Planning" icon="pi pi-calendar" severity="primary" @click="$router.push('/admin/planning/weekly')" />
+            <Button label="Calendrier Semestriel" icon="pi pi-calendar-plus" class="p-button-outlined" @click="$router.push('/admin/planning/semester')" />
+            <Button label="Liste des Modules" icon="pi pi-book" class="p-button-outlined" @click="$router.push('/admin/modules')" />
+            <Button label="Ressources Pédagogiques" icon="pi pi-folder" class="p-button-outlined" @click="$router.push('/media')" />
+          </div>
+        </div>
+
+        <!-- Tâches à faire -->
+        <div class="section-card tasks-section">
+          <div class="section-header-row">
+            <h3><i class="pi pi-check-square"></i> Tâches à Faire</h3>
+            <Badge :value="pendingTasks.length" severity="warning" />
+          </div>
+          <div class="tasks-list">
+            <div v-for="task in pendingTasks" :key="task.id" class="task-item">
+              <Checkbox v-model="task.completed" :binary="true" @change="toggleTask(task)" />
+              <div class="task-content">
+                <span class="task-title" :class="{ completed: task.completed }">{{ task.title }}</span>
+                <span class="task-due">{{ task.dueDate }}</span>
+              </div>
+              <Tag :value="task.priority" :severity="getPrioritySeverity(task.priority)" />
+            </div>
+            <div v-if="pendingTasks.length === 0" class="no-tasks">
+              <i class="pi pi-check-circle"></i>
+              <span>Toutes les tâches sont terminées !</span>
+            </div>
           </div>
         </div>
 
@@ -119,6 +142,9 @@ import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 import PageHeader from '@/components/admin/common/PageHeader.vue';
 import Button from 'primevue/button';
 import ProgressSpinner from 'primevue/progressspinner';
+import Badge from 'primevue/badge';
+import Tag from 'primevue/tag';
+import Checkbox from 'primevue/checkbox';
 import { getAllTeacherData } from '@/services/academicKpiService';
 
 const router = useRouter();
@@ -136,6 +162,13 @@ const studentsCount = ref(0);
 // Données
 const myCourses = ref([]);
 const weekSchedule = ref([]);
+
+// Tâches
+const pendingTasks = ref([
+  { id: 1, title: 'Préparer le cours de M1', dueDate: 'Aujourd\'hui', priority: 'Haute', completed: false },
+  { id: 2, title: 'Corriger les examens', dueDate: 'Demain', priority: 'Moyenne', completed: false },
+  { id: 3, title: 'Réunion pédagogique', dueDate: 'Vendredi', priority: 'Basse', completed: false }
+]);
 
 /**
  * Charge les données enseignant depuis Supabase/Firebase
@@ -181,6 +214,19 @@ onMounted(() => {
 function viewCourse(course) {
   console.log('View course:', course);
   router.push(`/admin/courses/${course.id}`);
+}
+
+function toggleTask(task) {
+  console.log('Toggle task:', task);
+}
+
+function getPrioritySeverity(priority) {
+  switch (priority) {
+    case 'Haute': return 'danger';
+    case 'Moyenne': return 'warning';
+    case 'Basse': return 'info';
+    default: return 'secondary';
+  }
 }
 </script>
 
@@ -375,5 +421,80 @@ function viewCourse(course) {
 .loading-container p {
   color: var(--text-color-secondary);
   font-size: 1.1rem;
+}
+
+/* Tâches */
+.tasks-section {
+  border-left: 4px solid var(--primary-color);
+}
+
+.section-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.section-header-row h3 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  background: var(--surface-ground);
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+}
+
+.task-item:hover {
+  background: var(--surface-100);
+}
+
+.task-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.task-title {
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.task-title.completed {
+  text-decoration: line-through;
+  color: var(--text-color-secondary);
+}
+
+.task-due {
+  font-size: 0.8rem;
+  color: var(--text-color-secondary);
+}
+
+.no-tasks {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #dcfce7;
+  border-radius: 0.5rem;
+  color: #16a34a;
+}
+
+.no-tasks i {
+  font-size: 1.25rem;
 }
 </style>
