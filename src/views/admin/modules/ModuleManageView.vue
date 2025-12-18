@@ -269,15 +269,93 @@
         <TabPanel header="Planning">
           <Card>
             <template #content>
-              <div class="text-center p-5">
-                <i class="pi pi-calendar text-6xl text-primary mb-3"></i>
-                <h3>Planning du module</h3>
-                <p class="text-600 mb-4">Visualisez et modifiez le planning de votre module</p>
+              <!-- Header avec filtre année -->
+              <div class="flex justify-content-between align-items-center mb-4">
+                <div class="flex align-items-center gap-3">
+                  <h3 class="m-0">Planning du module</h3>
+                  <Tag :value="`${modulePlanning.length} séances`" severity="info" />
+                </div>
+                <div class="flex align-items-center gap-2">
+                  <Dropdown 
+                    v-model="selectedYear"
+                    :options="yearOptions"
+                    optionLabel="label"
+                    optionValue="value"
+                    placeholder="Année"
+                    class="w-10rem"
+                    @change="loadModulePlanning"
+                  />
+                  <Button 
+                    icon="pi pi-refresh" 
+                    severity="secondary" 
+                    outlined
+                    @click="loadModulePlanning"
+                    :loading="loadingPlanning"
+                  />
+                  <Button 
+                    label="Gérer le planning" 
+                    icon="pi pi-external-link" 
+                    @click="$router.push(`/admin/modules/${moduleId}/planning`)"
+                  />
+                </div>
+              </div>
+
+              <!-- Liste des séances -->
+              <div v-if="loadingPlanning" class="text-center p-4">
+                <ProgressSpinner style="width: 40px; height: 40px" />
+              </div>
+              
+              <div v-else-if="modulePlanning.length === 0" class="text-center p-5">
+                <i class="pi pi-calendar-times text-6xl text-400 mb-3"></i>
+                <h4>Aucune séance planifiée</h4>
+                <p class="text-600 mb-3">Ce module n'a pas encore de séances dans le planning</p>
                 <Button 
-                  label="Voir le planning complet" 
-                  icon="pi pi-external-link" 
-                  @click="$router.push(`/admin/planning?module=${moduleId}`)"
+                  label="Ajouter des séances" 
+                  icon="pi pi-plus" 
+                  @click="$router.push(`/admin/modules/${moduleId}/planning`)"
                 />
+              </div>
+
+              <div v-else class="planning-list">
+                <DataTable 
+                  :value="modulePlanning" 
+                  responsiveLayout="scroll"
+                  :paginator="modulePlanning.length > 10"
+                  :rows="10"
+                  stripedRows
+                >
+                  <Column field="week_number" header="Semaine" sortable style="width: 100px">
+                    <template #body="{ data }">
+                      <Tag :value="`S${data.week_number}`" severity="secondary" />
+                    </template>
+                  </Column>
+                  <Column field="day" header="Jour" sortable style="width: 120px">
+                    <template #body="{ data }">
+                      {{ formatDay(data.day) }}
+                    </template>
+                  </Column>
+                  <Column field="date" header="Date" sortable style="width: 120px" />
+                  <Column header="Horaire" style="width: 140px">
+                    <template #body="{ data }">
+                      <span class="font-semibold">{{ data.start_time?.substring(0,5) }} - {{ data.end_time?.substring(0,5) }}</span>
+                    </template>
+                  </Column>
+                  <Column field="activity" header="Activité" style="width: 120px">
+                    <template #body="{ data }">
+                      <Tag :value="data.activity || 'Cours'" :severity="getActivitySeverity(data.activity)" />
+                    </template>
+                  </Column>
+                  <Column field="room" header="Salle" style="width: 120px">
+                    <template #body="{ data }">
+                      {{ data.room || '—' }}
+                    </template>
+                  </Column>
+                  <Column field="class_code" header="Classe" style="width: 100px">
+                    <template #body="{ data }">
+                      <Tag :value="data.class_code" size="small" />
+                    </template>
+                  </Column>
+                </DataTable>
               </div>
             </template>
           </Card>
@@ -385,6 +463,8 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Dialog from 'primevue/dialog'
 import ProgressSpinner from 'primevue/progressspinner'
+import Tag from 'primevue/tag'
+import { supabase } from '@/supabase'
 
 const route = useRoute()
 const router = useRouter()
@@ -430,6 +510,16 @@ const moduleStats = ref({
   totalHours: 0
 })
 
+// Planning du module
+const modulePlanning = ref([])
+const loadingPlanning = ref(false)
+const selectedYear = ref('2024-2025')
+const yearOptions = [
+  { label: '2024-2025', value: '2024-2025' },
+  { label: '2023-2024', value: '2023-2024' },
+  { label: '2025-2026', value: '2025-2026' }
+]
+
 // Charger le module
 onMounted(async () => {
   try {
@@ -473,9 +563,11 @@ onMounted(async () => {
       coordinateur: module.value.coordinateur || ''
     }
     
-    // TODO: Charger les enseignants depuis Supabase
-    // Pour l'instant, données de démo
-    moduleTeachers.value = []
+    // Charger le planning du module
+    await loadModulePlanning()
+    
+    // Charger les enseignants du module
+    await loadModuleTeachers()
     
   } catch (error) {
     console.error('Erreur chargement module:', error)
@@ -562,6 +654,109 @@ const removeTeacher = (teacher) => {
       life: 3000
     })
   }
+}
+
+// Charger le planning du module depuis planning_time_slots
+const loadModulePlanning = async () => {
+  if (!module.value?.code) return
+  
+  loadingPlanning.value = true
+  try {
+    const { data, error } = await supabase
+      .from('planning_time_slots')
+      .select('*')
+      .eq('module_code', module.value.code)
+      .order('week_number', { ascending: true })
+      .order('day_index', { ascending: true })
+      .order('start_time', { ascending: true })
+    
+    if (error) {
+      console.warn('Erreur chargement planning:', error)
+      modulePlanning.value = []
+      return
+    }
+    
+    modulePlanning.value = data || []
+    console.log('📅 Planning chargé:', modulePlanning.value.length, 'séances')
+  } catch (error) {
+    console.error('Erreur planning:', error)
+    modulePlanning.value = []
+  } finally {
+    loadingPlanning.value = false
+  }
+}
+
+// Charger les enseignants du module
+const loadModuleTeachers = async () => {
+  if (!module.value?.code) return
+  
+  try {
+    // Récupérer les enseignants via course_teachers
+    const { data, error } = await supabase
+      .from('course_teachers')
+      .select(`
+        teacher_id,
+        hours,
+        user_profiles(
+          user_id,
+          email,
+          forname,
+          family_name,
+          display_name,
+          avatar_url
+        )
+      `)
+    
+    if (error) {
+      console.warn('Erreur chargement enseignants:', error)
+      moduleTeachers.value = []
+      return
+    }
+    
+    // Grouper par enseignant
+    const teachersMap = new Map()
+    ;(data || []).forEach(ct => {
+      const id = ct.teacher_id
+      if (!teachersMap.has(id)) {
+        teachersMap.set(id, {
+          id,
+          name: ct.user_profiles?.display_name || 
+                `${ct.user_profiles?.forname || ''} ${ct.user_profiles?.family_name || ''}`.trim() || 'Inconnu',
+          email: ct.user_profiles?.email || '',
+          avatar: ct.user_profiles?.avatar_url,
+          hours: 0
+        })
+      }
+      teachersMap.get(id).hours += ct.hours || 0
+    })
+    
+    moduleTeachers.value = Array.from(teachersMap.values())
+    console.log('👥 Enseignants chargés:', moduleTeachers.value.length)
+  } catch (error) {
+    console.error('Erreur enseignants:', error)
+    moduleTeachers.value = []
+  }
+}
+
+// Formater le jour
+const formatDay = (day) => {
+  const days = {
+    lundi: 'Lundi', mardi: 'Mardi', mercredi: 'Mercredi',
+    jeudi: 'Jeudi', vendredi: 'Vendredi', distance: 'Distance'
+  }
+  return days[day?.toLowerCase()] || day || '—'
+}
+
+// Couleur selon l'activité
+const getActivitySeverity = (activity) => {
+  const map = {
+    'Cours': 'info',
+    'TP': 'success',
+    'TD': 'warning',
+    'Examen': 'danger',
+    'Atelier': 'secondary'
+  }
+  return map[activity] || 'info'
 }
 </script>
 
