@@ -557,7 +557,7 @@ const routes = [
     path: '/votation', 
     component: VotationView, 
     name: 'VotationView', 
-    meta: { requiresAuth: true, pfpRequired: 'PFP1A' },
+    meta: { requiresAuth: true, pfpRequired: '' },
     beforeEnter: async (to, from, next) => {
       const userStore = useUserStore();
       
@@ -569,8 +569,8 @@ const routes = [
       const profile = userStore.profile;
       
       // DEBUG: Afficher le profil complet
-      console.log('🔍 [PFP1A Guard] Profil utilisateur:', profile);
-      console.log('🔍 [PFP1A Guard] Champs PFP:', {
+      console.log('🔍 [Votation Guard] Profil utilisateur:', profile);
+      console.log('🔍 [Votation Guard] Champs PFP:', {
         pfp1a: profile?.pfp1a,
         pfp1b: profile?.pfp1b,
         pfp: profile?.pfp,
@@ -578,15 +578,14 @@ const routes = [
         cohort: profile?.cohort
       });
       
-      // Vérifier si l'utilisateur a accès à PFP1A
-      const hasPfp1aAccess = 
+      // Vérifier si l'utilisateur est PFP1A ou PFP1B (accès BLOQUÉ)
+      const isPfp1a = 
         profile?.pfp1a === true || 
         profile?.pfp1a === 1 || 
         profile?.pfp === 'PFP1A' || 
         profile?.pfp_cohort === 'PFP1A' ||
         profile?.cohort === 'PFP1A';
       
-      // Vérifier EXPLICITEMENT que l'utilisateur n'est PAS PFP1B
       const isPfp1b = 
         profile?.pfp1b === true || 
         profile?.pfp1b === 1 || 
@@ -594,19 +593,19 @@ const routes = [
         profile?.pfp_cohort === 'PFP1B' ||
         profile?.cohort === 'PFP1B';
       
-      console.log('🔍 [PFP1A Guard] Résultats:', { hasPfp1aAccess, isPfp1b });
+      console.log('🔍 [Votation Guard] Résultats:', { isPfp1a, isPfp1b });
       
-      if (!hasPfp1aAccess || isPfp1b) {
-        console.warn('❌ Accès refusé à la votation PFP1A - Profil:', profile?.pfp || profile?.pfp_cohort || profile?.cohort || 'non défini');
-        // Stocker le message d'erreur dans sessionStorage pour l'afficher
+      // BLOQUER l'accès aux cohortes PFP1A et PFP1B
+      if (isPfp1a || isPfp1b) {
+        console.warn('❌ Accès refusé à la votation - Cohorte bloquée:', profile?.pfp || profile?.pfp_cohort || profile?.cohort || 'non défini');
         sessionStorage.setItem('routeError', JSON.stringify({
           message: 'Accès refusé',
-          detail: 'Vous n\'avez pas l\'autorisation d\'accéder à la votation PFP1A. Votre profil ne correspond pas à cette cohorte.',
+          detail: 'Les cohortes PFP1A et PFP1B n\'ont pas accès à cette page de votation.',
           type: 'pfp_access_denied'
         }));
         next({ name: 'DashboardView', replace: true });
       } else {
-        console.log('✅ Accès autorisé à la votation PFP1A');
+        console.log('✅ Accès autorisé à la votation');
         next();
       }
     }
@@ -615,7 +614,7 @@ const routes = [
     path: '/votation_pfp1b', 
     component: VotationViewPFP1B, 
     name: 'VotationViewPFP1B', 
-    meta: { requiresAuth: true, pfpRequired: 'PFP1B' },
+    meta: { requiresAuth: true, pfpRequired: '' },
     beforeEnter: async (to, from, next) => {
       const userStore = useUserStore();
       
@@ -627,8 +626,8 @@ const routes = [
       const profile = userStore.profile;
       
       // DEBUG: Afficher le profil complet
-      console.log('🔍 [PFP1B Guard] Profil utilisateur:', profile);
-      console.log('🔍 [PFP1B Guard] Champs PFP:', {
+      console.log('🔍 [Votation PFP1B Guard] Profil utilisateur:', profile);
+      console.log('🔍 [Votation PFP1B Guard] Champs PFP:', {
         pfp1a: profile?.pfp1a,
         pfp1b: profile?.pfp1b,
         pfp: profile?.pfp,
@@ -636,15 +635,7 @@ const routes = [
         cohort: profile?.cohort
       });
       
-      // Vérifier si l'utilisateur a accès à PFP1B
-      const hasPfp1bAccess = 
-        profile?.pfp1b === true || 
-        profile?.pfp1b === 1 || 
-        profile?.pfp === 'PFP1B' || 
-        profile?.pfp_cohort === 'PFP1B' ||
-        profile?.cohort === 'PFP1B';
-      
-      // Vérifier EXPLICITEMENT que l'utilisateur n'est PAS PFP1A
+      // Vérifier si l'utilisateur est PFP1A ou PFP1B (accès BLOQUÉ)
       const isPfp1a = 
         profile?.pfp1a === true || 
         profile?.pfp1a === 1 || 
@@ -652,14 +643,21 @@ const routes = [
         profile?.pfp_cohort === 'PFP1A' ||
         profile?.cohort === 'PFP1A';
       
-      console.log('🔍 [PFP1B Guard] Résultats:', { hasPfp1bAccess, isPfp1a });
+      const isPfp1b = 
+        profile?.pfp1b === true || 
+        profile?.pfp1b === 1 || 
+        profile?.pfp === 'PFP1B' || 
+        profile?.pfp_cohort === 'PFP1B' ||
+        profile?.cohort === 'PFP1B';
       
-      if (!hasPfp1bAccess || isPfp1a) {
-        console.warn('❌ Accès refusé à la votation PFP1B - Profil:', profile?.pfp || profile?.pfp_cohort || profile?.cohort || 'non défini');
-        // Stocker le message d'erreur dans sessionStorage pour l'afficher
+      console.log('🔍 [Votation PFP1B Guard] Résultats:', { isPfp1a, isPfp1b });
+      
+      // BLOQUER l'accès aux cohortes PFP1A et PFP1B
+      if (isPfp1a || isPfp1b) {
+        console.warn('❌ Accès refusé à la votation PFP1B - Cohorte bloquée:', profile?.pfp || profile?.pfp_cohort || profile?.cohort || 'non défini');
         sessionStorage.setItem('routeError', JSON.stringify({
           message: 'Accès refusé',
-          detail: 'Vous n\'avez pas l\'autorisation d\'accéder à la votation PFP1B. Votre profil ne correspond pas à cette cohorte.',
+          detail: 'Les cohortes PFP1A et PFP1B n\'ont pas accès à cette page de votation.',
           type: 'pfp_access_denied'
         }));
         next({ name: 'DashboardView', replace: true });
