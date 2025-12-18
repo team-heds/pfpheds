@@ -227,6 +227,7 @@
         </TabPanel>
 
         <!-- Tab 2: Comparaison -->
+
         <TabPanel>
           <template #header>
             <i class="pi pi-chart-line mr-2"></i>
