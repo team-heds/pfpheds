@@ -17,7 +17,7 @@ export default [
     icon: 'pi pi-cog',
     items: [
       { label: 'Dashboard Général', icon: 'pi pi-chart-bar', to: '/admin' },
-      { label: 'Gestion des Rôles', icon: 'pi pi-user-edit', to: '/role-management' },
+      { label: 'Gestion Rôles par Filière', icon: 'pi pi-id-card', to: '/admin/role-management' },
       { label: 'Rôles Utilisateurs', icon: 'pi pi-users', to: '/admin/manage-user-roles' },
       { label: 'RBAC (Rôles & Permissions)', icon: 'pi pi-shield', to: '/admin/security/rbac' },
       { label: 'Éditeur de Routes', icon: 'pi pi-sitemap', to: '/admin/routes-editor' },
@@ -137,6 +137,7 @@ export default [
       // Dashboard Soins Infirmiers
       { label: 'Dashboard RM', icon: 'pi pi-chart-line', to: '/admin/dashboard-rm' },
       { label: 'Dashboard Enseignant', icon: 'pi pi-graduation-cap', to: '/admin/dashboard-enseignant' },
+      { label: 'Gestion Rôles SI/PHY', icon: 'pi pi-id-card', to: '/admin/role-management' },
       
       // Académique
       {
