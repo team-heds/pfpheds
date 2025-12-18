@@ -150,6 +150,7 @@ const AcademicKanbanView = () => import('@/views/admin/academic/AcademicKanbanVi
 const AdminDefisView = () => import('@/views/admin/institutions/gamification/AdminDefisView.vue');
 const SupabaseDiagnosticView = () => import('@/views/admin/SupabaseDiagnosticView.vue');
 const RBACAdminView = () => import('@/views/admin/security/RBACAdminView.vue');
+const RoleManagementView = () => import('@/views/admin/RoleManagementView.vue');
 
 // ========================================
 // GAMIFICATION ADMIN VIEWS
@@ -371,6 +372,7 @@ const routes = [
   { path: '/admin', component: DashboardView, name: 'DashboardView', meta: { requiresAuth: true,  need: ['super.all', 'admin' , 'AdminPhysio',  'EnseignantPhysio' ] } },
   { path: '/admin/dashboard-general', component: AdminDashboardGeneral, name: 'AdminDashboardGeneral', meta: { requiresAuth: true, need: 'admin' } },
   { path: '/admin/dashboard-rm', component: DashboardRMView, name: 'DashboardRM', meta: { requiresAuth: true, need: ['admin', 'RMSoins'] } },
+  { path: '/admin/role-management', component: RoleManagementView, name: 'RoleManagement', meta: { requiresAuth: true, need: ['super.all', 'admin'] } },
   { 
     path: '/admin/modules/:id/manage', 
     component: ModuleManageView, 
