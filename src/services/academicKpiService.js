@@ -6,16 +6,17 @@ import { supabase } from '@/supabase'
 
 /**
  * Récupère les modules d'un responsable module
- * Table: modules (responsable_id)
+ * Table: modules (responsable_email)
  */
-export async function getRMModules(userId) {
+export async function getRMModules(userId, userEmail) {
   try {
-    console.log('📚 [getRMModules] Requête modules pour RM:', userId)
+    console.log('📚 [getRMModules] Requête modules pour RM:', userEmail || userId)
     
+    // Utiliser responsable_email car responsable_id n'existe pas
     const { data: modules, error } = await supabase
       .from('modules')
       .select('*')
-      .eq('responsable_id', userId)
+      .eq('responsable_email', userEmail)
     
     if (error) {
       console.error('❌ [getRMModules] Erreur Supabase:', error)
@@ -33,11 +34,11 @@ export async function getRMModules(userId) {
 /**
  * Récupère les statistiques RM
  */
-export async function getRMStats(userId) {
+export async function getRMStats(userId, userEmail) {
   try {
-    console.log('📊 [getRMStats] Calcul stats RM pour:', userId)
+    console.log('📊 [getRMStats] Calcul stats RM pour:', userEmail || userId)
     
-    const modules = await getRMModules(userId)
+    const modules = await getRMModules(userId, userEmail)
     
     // Calculer les statistiques
     let totalHours = 0
@@ -80,12 +81,12 @@ export async function getRMStats(userId) {
  * Récupère les enseignants d'un RM avec leurs heures
  * Table: course_teachers (relation cours-enseignants)
  */
-export async function getRMTeachers(userId) {
+export async function getRMTeachers(userId, userEmail) {
   try {
-    console.log('👨‍🏫 [getRMTeachers] Requête enseignants pour RM:', userId)
+    console.log('👨‍🏫 [getRMTeachers] Requête enseignants pour RM:', userEmail || userId)
     
     // Récupérer les cours des modules du RM
-    const modules = await getRMModules(userId)
+    const modules = await getRMModules(userId, userEmail)
     if (modules.length === 0) return []
     
     const moduleIds = modules.map(m => m.id)
@@ -372,14 +373,14 @@ function formatTeachers(teachersList) {
 /**
  * Récupère toutes les stats RM d'un coup
  */
-export async function getAllRMData(userId) {
+export async function getAllRMData(userId, userEmail) {
   try {
-    console.log('🚀 [getAllRMData] Chargement complet données RM...')
+    console.log('🚀 [getAllRMData] Chargement complet données RM pour:', userEmail || userId)
     
     const [stats, modules, teachers, siTeachers] = await Promise.all([
-      getRMStats(userId),
-      getRMModules(userId),
-      getRMTeachers(userId),
+      getRMStats(userId, userEmail),
+      getRMModules(userId, userEmail),
+      getRMTeachers(userId, userEmail),
       getSITeachers()
     ])
     

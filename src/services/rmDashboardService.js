@@ -24,12 +24,11 @@ export async function getMyModules(userId, userEmail) {
         heures_contact,
         responsable,
         responsable_email,
-        responsable_id,
         track_id,
         description,
         created_at
       `)
-      .or(`responsable_id.eq.${userId},responsable_email.eq.${userEmail}`)
+      .eq('responsable_email', userEmail)
       .order('number')
     
     if (error) {
@@ -106,32 +105,35 @@ export async function getModuleCourses(moduleId) {
 
 /**
  * Récupère tous les enseignants intervenant dans les modules du RM
- * @param {string[]} moduleIds - IDs des modules
+ * @param {Array} modules - Objets modules complets (avec id et code)
  */
-export async function getModulesTeachers(moduleIds) {
+export async function getModulesTeachers(modules) {
   try {
-    if (!moduleIds || moduleIds.length === 0) return []
+    if (!modules || modules.length === 0) return []
     
-    console.log('👥 [rmDashboardService] Chargement enseignants pour modules:', moduleIds.length)
+    console.log('👥 [rmDashboardService] Chargement enseignants pour modules:', modules.length)
     
-    // Récupérer les cours des modules
-    const { data: courses, error: coursesError } = await supabase
-      .from('courses')
-      .select('id')
-      .in('module_id', moduleIds)
+    // Récupérer les cours via course_teachers directement avec les codes de modules
+    // La table courses utilise des UUID, on va chercher via course_teachers
+    const moduleCodes = modules.map(m => m.code).filter(Boolean)
     
-    if (coursesError || !courses?.length) return []
+    if (moduleCodes.length === 0) {
+      console.log('ℹ️ [rmDashboardService] Aucun code de module disponible')
+      return []
+    }
     
-    const courseIds = courses.map(c => c.id)
-    
-    // Récupérer les enseignants
+    // Récupérer les enseignants directement via course_teachers avec jointure
     const { data, error } = await supabase
       .from('course_teachers')
       .select(`
         teacher_id,
         hours,
         course_id,
-        courses(module_id, title),
+        courses!inner(
+          id,
+          title,
+          module_id
+        ),
         user_profiles(
           user_id,
           email,
@@ -141,10 +143,14 @@ export async function getModulesTeachers(moduleIds) {
           avatar_url
         )
       `)
-      .in('course_id', courseIds)
     
     if (error) {
-      console.error('❌ [rmDashboardService] Erreur enseignants:', error)
+      console.warn('⚠️ [rmDashboardService] Erreur course_teachers:', error.message)
+      return []
+    }
+    
+    if (!data?.length) {
+      console.log('ℹ️ [rmDashboardService] Aucun enseignant trouvé')
       return []
     }
     

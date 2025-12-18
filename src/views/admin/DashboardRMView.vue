@@ -379,8 +379,7 @@ async function loadRMData() {
     
     // 3. Charger les enseignants de mes modules
     if (myModules.value.length > 0) {
-      const moduleIds = myModules.value.map(m => m.id);
-      myTeachers.value = await getModulesTeachers(moduleIds);
+      myTeachers.value = await getModulesTeachers(myModules.value);
       console.log('👨‍🏫 Mes enseignants:', myTeachers.value.length);
     }
     

@@ -39,6 +39,23 @@
     <!-- Contenu principal -->
     <div v-else class="module-manage-container">
       
+      <!-- Actions rapides -->
+      <div class="module-actions-bar">
+        <Button 
+          icon="pi pi-calendar" 
+          label="Planning du module" 
+          severity="info"
+          @click="$router.push(`/admin/modules/${moduleId}/planning`)"
+        />
+        <Button 
+          icon="pi pi-users" 
+          label="Enseignants" 
+          severity="secondary"
+          outlined
+          @click="activeTab = 1"
+        />
+      </div>
+      
       <!-- Onglets de gestion -->
       <TabView>
         
@@ -376,7 +393,7 @@ const toast = useToast()
 const { modules, loadModules, updateModule: updateModuleInStore } = useModules()
 const { canEditModule, isAdmin, getPermissionErrorMessage } = useModulePermissions()
 
-const moduleId = route.params.id
+const moduleId = parseInt(route.params.id)
 const loading = ref(true)
 const saving = ref(false)
 const module = ref(null)
@@ -551,6 +568,16 @@ const removeTeacher = (teacher) => {
 <style scoped>
 .module-manage-container {
   padding: 2rem;
+}
+
+.module-actions-bar {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: var(--surface-card);
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .loading-container,
