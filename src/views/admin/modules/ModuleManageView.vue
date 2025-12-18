@@ -303,6 +303,32 @@
                     v-tooltip="'Actualiser'"
                   />
                   <Button 
+                    icon="pi pi-file-excel" 
+                    severity="success" 
+                    outlined
+                    @click="exportPlanningToExcel"
+                    :disabled="filteredPlanning.length === 0"
+                    v-tooltip="'Exporter en Excel'"
+                  />
+                  <div class="flex border-round overflow-hidden">
+                    <Button 
+                      icon="pi pi-list" 
+                      :severity="planningView === 'list' ? 'primary' : 'secondary'"
+                      :outlined="planningView !== 'list'"
+                      @click="planningView = 'list'"
+                      v-tooltip="'Vue liste'"
+                      class="border-noround-right"
+                    />
+                    <Button 
+                      icon="pi pi-calendar" 
+                      :severity="planningView === 'calendar' ? 'primary' : 'secondary'"
+                      :outlined="planningView !== 'calendar'"
+                      @click="planningView = 'calendar'"
+                      v-tooltip="'Vue calendrier'"
+                      class="border-noround-left"
+                    />
+                  </div>
+                  <Button 
                     label="Gérer le planning" 
                     icon="pi pi-external-link" 
                     @click="$router.push(`/admin/modules/${moduleId}/planning`)"
@@ -475,6 +501,7 @@ import Dialog from 'primevue/dialog'
 import ProgressSpinner from 'primevue/progressspinner'
 import Tag from 'primevue/tag'
 import { supabase } from '@/supabase'
+import * as XLSX from 'xlsx'
 
 const route = useRoute()
 const router = useRouter()
@@ -787,6 +814,60 @@ const getActivitySeverity = (activity) => {
     'Atelier': 'secondary'
   }
   return map[activity] || 'info'
+}
+
+// Export du planning en Excel
+const exportPlanningToExcel = () => {
+  if (filteredPlanning.value.length === 0) return
+  
+  // Préparer les données pour Excel
+  const data = filteredPlanning.value.map(slot => ({
+    'Semaine': slot.week_number,
+    'Jour': formatDay(slot.day),
+    'Date': slot.date || '',
+    'Horaire': `${slot.start_time || ''} - ${slot.end_time || ''}`,
+    'Activité': slot.activity_type || '',
+    'Classe': slot.class_code || '',
+    'Salle': slot.room || '',
+    'Enseignant': slot.teacher_name || '',
+    'Commentaire': slot.comment || ''
+  }))
+  
+  // Créer le workbook
+  const ws = XLSX.utils.json_to_sheet(data)
+  const wb = XLSX.utils.book_new()
+  
+  // Définir les largeurs de colonnes
+  ws['!cols'] = [
+    { wch: 10 }, // Semaine
+    { wch: 12 }, // Jour
+    { wch: 12 }, // Date
+    { wch: 15 }, // Horaire
+    { wch: 12 }, // Activité
+    { wch: 12 }, // Classe
+    { wch: 15 }, // Salle
+    { wch: 20 }, // Enseignant
+    { wch: 30 }  // Commentaire
+  ]
+  
+  // Nom de la feuille
+  const sheetName = selectedClass.value || 'Toutes classes'
+  XLSX.utils.book_append_sheet(wb, ws, sheetName.substring(0, 31))
+  
+  // Générer le nom du fichier
+  const moduleCode = module.value?.code || 'module'
+  const classLabel = selectedClass.value || 'all'
+  const fileName = `Planning_${moduleCode}_${classLabel}_${selectedYear.value}.xlsx`
+  
+  // Télécharger le fichier
+  XLSX.writeFile(wb, fileName)
+  
+  toast.add({
+    severity: 'success',
+    summary: 'Export réussi',
+    detail: `${filteredPlanning.value.length} séances exportées`,
+    life: 3000
+  })
 }
 </script>
 
