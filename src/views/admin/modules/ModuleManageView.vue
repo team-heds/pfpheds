@@ -352,7 +352,8 @@
                 />
               </div>
 
-              <div v-else class="planning-list">
+              <!-- Vue Liste -->
+              <div v-else-if="planningView === 'list'" class="planning-list">
                 <DataTable 
                   :value="filteredPlanning" 
                   responsiveLayout="scroll"
@@ -360,38 +361,119 @@
                   :rows="10"
                   stripedRows
                 >
-                  <Column field="week_number" header="Semaine" sortable style="width: 100px">
+                  <Column field="week_number" header="Semaine" sortable style="width: 80px">
                     <template #body="{ data }">
                       <Tag :value="`S${data.week_number}`" severity="secondary" />
                     </template>
                   </Column>
-                  <Column field="day" header="Jour" sortable style="width: 120px">
+                  <Column field="day" header="Jour" sortable style="width: 100px">
                     <template #body="{ data }">
                       {{ formatDay(data.day) }}
                     </template>
                   </Column>
-                  <Column field="date" header="Date" sortable style="width: 120px" />
-                  <Column header="Horaire" style="width: 140px">
+                  <Column field="date" header="Date" sortable style="width: 100px" />
+                  <Column header="Horaire" style="width: 120px">
                     <template #body="{ data }">
                       <span class="font-semibold">{{ data.start_time?.substring(0,5) }} - {{ data.end_time?.substring(0,5) }}</span>
                     </template>
                   </Column>
-                  <Column field="activity" header="Activité" style="width: 120px">
+                  <Column field="course_title" header="Cours" style="width: 180px">
+                    <template #body="{ data }">
+                      <span class="font-medium">{{ data.course_title || module?.title || '—' }}</span>
+                    </template>
+                  </Column>
+                  <Column field="teacher_name" header="Enseignant" style="width: 150px">
+                    <template #body="{ data }">
+                      <div class="flex align-items-center gap-2">
+                        <i class="pi pi-user text-500"></i>
+                        <span>{{ data.teacher_name || '—' }}</span>
+                      </div>
+                    </template>
+                  </Column>
+                  <Column field="activity" header="Type" style="width: 100px">
                     <template #body="{ data }">
                       <Tag :value="data.activity || 'Cours'" :severity="getActivitySeverity(data.activity)" />
                     </template>
                   </Column>
-                  <Column field="room" header="Salle" style="width: 120px">
+                  <Column field="room" header="Salle" style="width: 100px">
                     <template #body="{ data }">
                       {{ data.room || '—' }}
                     </template>
                   </Column>
-                  <Column field="class_code" header="Classe" style="width: 100px">
+                  <Column field="class_code" header="Classe" style="width: 80px">
                     <template #body="{ data }">
-                      <Tag :value="data.class_code" size="small" />
+                      <Tag 
+                        :value="normalizeClass(data.class_code)" 
+                        size="small"
+                        :style="{ backgroundColor: '#' + getClassDisplayColor(data.class_code), color: getClassTextColor(data.class_code) }"
+                      />
                     </template>
                   </Column>
                 </DataTable>
+              </div>
+
+              <!-- Vue Calendrier -->
+              <div v-else class="planning-calendar">
+                <div v-for="week in calendarWeeks" :key="week.number" class="calendar-week mb-4">
+                  <div class="week-header flex align-items-center gap-2 mb-3 pb-2 border-bottom-1 surface-border">
+                    <Tag :value="`Semaine ${week.number}`" severity="info" />
+                    <span class="text-600 text-sm">{{ week.dateRange }}</span>
+                  </div>
+                  
+                  <div class="grid">
+                    <div v-for="day in ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi']" 
+                         :key="day" 
+                         class="col-12 md:col"
+                    >
+                      <div class="day-column surface-card border-round p-3 h-full" 
+                           :class="{ 'surface-100': !getDaySlots(week.number, day).length }">
+                        <div class="day-header font-semibold mb-2 text-primary">
+                          {{ formatDay(day) }}
+                        </div>
+                        
+                        <div v-if="getDaySlots(week.number, day).length === 0" 
+                             class="text-400 text-sm text-center py-3">
+                          —
+                        </div>
+                        
+                        <div v-for="slot in getDaySlots(week.number, day)" 
+                             :key="slot.id" 
+                             class="calendar-slot mb-2 p-2 border-round border-left-3"
+                             :style="{ 
+                               borderLeftColor: '#' + getClassDisplayColor(slot.class_code),
+                               backgroundColor: '#' + getClassDisplayColor(slot.class_code) + '20'
+                             }">
+                          <div class="flex justify-content-between align-items-center mb-1">
+                            <span class="text-xs text-600">
+                              {{ slot.start_time?.substring(0,5) }} - {{ slot.end_time?.substring(0,5) }}
+                            </span>
+                            <Tag 
+                              :value="normalizeClass(slot.class_code)" 
+                              size="small"
+                              class="text-xs"
+                              :style="{ backgroundColor: '#' + getClassDisplayColor(slot.class_code), color: getClassTextColor(slot.class_code) }"
+                            />
+                          </div>
+                          <div class="font-medium text-sm mb-1">
+                            {{ slot.course_title || module?.title || 'Cours' }}
+                          </div>
+                          <div v-if="slot.teacher_name" class="flex align-items-center gap-1 text-xs text-600">
+                            <i class="pi pi-user" style="font-size: 0.7rem"></i>
+                            {{ slot.teacher_name }}
+                          </div>
+                          <div class="flex gap-1 mt-2 flex-wrap">
+                            <Tag :value="slot.activity || 'Cours'" :severity="getActivitySeverity(slot.activity)" class="text-xs" />
+                            <Tag v-if="slot.room" :value="slot.room" severity="secondary" class="text-xs" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div v-if="calendarWeeks.length === 0" class="text-center p-4 text-600">
+                  Aucune semaine à afficher
+                </div>
               </div>
             </template>
           </Card>
@@ -552,6 +634,7 @@ const modulePlanning = ref([])
 const loadingPlanning = ref(false)
 const selectedYear = ref('2024-2025')
 const selectedClass = ref(null)
+const planningView = ref('list') // 'list' ou 'calendar'
 
 const yearOptions = [
   { label: '2024-2025', value: '2024-2025' },
@@ -559,11 +642,17 @@ const yearOptions = [
   { label: '2025-2026', value: '2025-2026' }
 ]
 
-// Options de classes (calculées à partir des données)
+// Normaliser le code classe (B25-tp = B25-TP) - utilisé partout
+const normalizeClass = (code) => {
+  if (!code) return ''
+  return code.toUpperCase().trim()
+}
+
+// Options de classes (calculées et normalisées)
 const classOptions = computed(() => {
   const classes = new Set()
   modulePlanning.value.forEach(slot => {
-    if (slot.class_code) classes.add(slot.class_code)
+    if (slot.class_code) classes.add(normalizeClass(slot.class_code))
   })
   return [
     { label: 'Toutes les classes', value: null },
@@ -571,11 +660,61 @@ const classOptions = computed(() => {
   ]
 })
 
-// Planning filtré par classe
+// Planning filtré par classe (comparaison normalisée)
 const filteredPlanning = computed(() => {
   if (!selectedClass.value) return modulePlanning.value
-  return modulePlanning.value.filter(slot => slot.class_code === selectedClass.value)
+  const normalizedFilter = normalizeClass(selectedClass.value)
+  return modulePlanning.value.filter(slot => normalizeClass(slot.class_code) === normalizedFilter)
 })
+
+// Semaines pour la vue calendrier
+const calendarWeeks = computed(() => {
+  const weeks = new Map()
+  filteredPlanning.value.forEach(slot => {
+    if (!weeks.has(slot.week_number)) {
+      weeks.set(slot.week_number, {
+        number: slot.week_number,
+        dateRange: getWeekDateRange(slot.week_number, slot.date)
+      })
+    }
+  })
+  return Array.from(weeks.values()).sort((a, b) => a.number - b.number)
+})
+
+// Obtenir la plage de dates d'une semaine
+const getWeekDateRange = (weekNumber, sampleDate) => {
+  if (!sampleDate) return ''
+  try {
+    const date = new Date(sampleDate)
+    const day = date.getDay()
+    const monday = new Date(date)
+    monday.setDate(date.getDate() - (day === 0 ? 6 : day - 1))
+    const friday = new Date(monday)
+    friday.setDate(monday.getDate() + 4)
+    return `${monday.toLocaleDateString('fr-CH')} - ${friday.toLocaleDateString('fr-CH')}`
+  } catch {
+    return ''
+  }
+}
+
+// Obtenir les créneaux d'un jour spécifique
+const getDaySlots = (weekNumber, day) => {
+  return filteredPlanning.value
+    .filter(slot => slot.week_number === weekNumber && slot.day?.toLowerCase() === day.toLowerCase())
+    .sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''))
+}
+
+// Couleur selon l'activité (pour bordure calendrier)
+const getActivityColor = (activity) => {
+  const colors = {
+    'Cours': '#3B82F6',
+    'TP': '#22C55E',
+    'TD': '#F59E0B',
+    'Examen': '#EF4444',
+    'Atelier': '#6B7280'
+  }
+  return colors[activity] || '#3B82F6'
+}
 
 // Charger le module
 onMounted(async () => {
@@ -743,12 +882,14 @@ const loadModulePlanning = async () => {
   }
 }
 
-// Charger les enseignants du module
+// Charger les enseignants du module (course_teachers + planning)
 const loadModuleTeachers = async () => {
   if (!module.value?.code) return
   
   try {
-    // Récupérer les enseignants via course_teachers
+    const teachersMap = new Map()
+    
+    // 1. Récupérer les enseignants via course_teachers
     const { data, error } = await supabase
       .from('course_teachers')
       .select(`
@@ -764,31 +905,54 @@ const loadModuleTeachers = async () => {
         )
       `)
     
-    if (error) {
-      console.warn('Erreur chargement enseignants:', error)
-      moduleTeachers.value = []
-      return
+    if (!error && data) {
+      data.forEach(ct => {
+        const id = ct.teacher_id
+        if (!teachersMap.has(id)) {
+          teachersMap.set(id, {
+            id,
+            name: ct.user_profiles?.display_name || 
+                  `${ct.user_profiles?.forname || ''} ${ct.user_profiles?.family_name || ''}`.trim() || 'Inconnu',
+            email: ct.user_profiles?.email || '',
+            avatar: ct.user_profiles?.avatar_url,
+            hours: 0,
+            source: 'course_teachers'
+          })
+        }
+        teachersMap.get(id).hours += ct.hours || 0
+      })
     }
     
-    // Grouper par enseignant
-    const teachersMap = new Map()
-    ;(data || []).forEach(ct => {
-      const id = ct.teacher_id
-      if (!teachersMap.has(id)) {
-        teachersMap.set(id, {
-          id,
-          name: ct.user_profiles?.display_name || 
-                `${ct.user_profiles?.forname || ''} ${ct.user_profiles?.family_name || ''}`.trim() || 'Inconnu',
-          email: ct.user_profiles?.email || '',
-          avatar: ct.user_profiles?.avatar_url,
-          hours: 0
-        })
-      }
-      teachersMap.get(id).hours += ct.hours || 0
-    })
+    // 2. Ajouter les enseignants du planning (teacher_name)
+    if (modulePlanning.value.length > 0) {
+      const planningTeachers = new Set()
+      modulePlanning.value.forEach(slot => {
+        if (slot.teacher_name && slot.teacher_name.trim()) {
+          planningTeachers.add(slot.teacher_name.trim())
+        }
+      })
+      
+      planningTeachers.forEach(teacherName => {
+        // Vérifier si pas déjà dans la liste (par nom)
+        const exists = Array.from(teachersMap.values()).some(t => 
+          t.name.toLowerCase() === teacherName.toLowerCase()
+        )
+        if (!exists) {
+          const id = `planning_${teacherName.replace(/\s+/g, '_')}`
+          teachersMap.set(id, {
+            id,
+            name: teacherName,
+            email: '',
+            avatar: null,
+            hours: 0,
+            source: 'planning'
+          })
+        }
+      })
+    }
     
     moduleTeachers.value = Array.from(teachersMap.values())
-    console.log('👥 Enseignants chargés:', moduleTeachers.value.length)
+    console.log('👥 Enseignants chargés:', moduleTeachers.value.length, '(course_teachers + planning)')
   } catch (error) {
     console.error('Erreur enseignants:', error)
     moduleTeachers.value = []
@@ -816,47 +980,171 @@ const getActivitySeverity = (activity) => {
   return map[activity] || 'info'
 }
 
-// Export du planning en Excel
+// Couleurs vives par classe pour l'affichage (plus distinctes)
+const classDisplayColors = {
+  'BA25-TP1': 'E53935', // Rouge
+  'BA25-TP2': '43A047', // Vert
+  'BA25-TP3': '1E88E5', // Bleu
+  'BA25-TP4': 'FB8C00', // Orange
+  'BA25-TP5': '8E24AA', // Violet
+  'BA25-TP6': '00ACC1', // Cyan
+  'BA25-TP7': 'F4511E', // Orange foncé
+  'BA25-TP8': '3949AB', // Indigo
+  'BA24-TP1': '7CB342', // Vert lime
+  'BA24-TP2': 'FFB300', // Ambre
+  'BA24-TP3': '039BE5', // Bleu clair
+  'BA24-TP4': 'D81B60', // Rose
+  'BA24-TP5': '5E35B1', // Violet foncé
+  'BA24-TP6': '00897B', // Teal
+}
+
+// Couleurs pour l'export Excel (plus claires)
+const classColors = {
+  'BA25-TP1': 'FFC7CE', // Rouge clair
+  'BA25-TP2': 'C6EFCE', // Vert clair
+  'BA25-TP3': 'BDD7EE', // Bleu clair
+  'BA25-TP4': 'FFEB9C', // Jaune clair
+  'BA25-TP5': 'E4DFEC', // Violet clair
+  'BA25-TP6': 'FFD9B3', // Orange clair
+  'BA24-TP1': 'D9EAD3', // Vert menthe
+  'BA24-TP2': 'FCE5CD', // Pêche
+  'BA24-TP3': 'D0E0E3', // Cyan clair
+  'BA24-TP4': 'F4CCCC', // Rose clair
+}
+
+// Obtenir couleur pour l'export Excel
+const getClassColor = (classCode) => {
+  const normalized = normalizeClass(classCode)
+  return classColors[normalized] || 'FFFFFF'
+}
+
+// Obtenir couleur vive pour l'affichage
+const getClassDisplayColor = (classCode) => {
+  const normalized = normalizeClass(classCode)
+  // Si pas de couleur définie, générer une couleur basée sur le hash du nom
+  if (!classDisplayColors[normalized]) {
+    const hash = normalized.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+    const colors = ['E53935', '43A047', '1E88E5', 'FB8C00', '8E24AA', '00ACC1', '7CB342', 'FFB300', 'D81B60', '5E35B1']
+    return colors[hash % colors.length]
+  }
+  return classDisplayColors[normalized]
+}
+
+// Obtenir couleur du texte (blanc ou noir selon la luminosité)
+const getClassTextColor = (classCode) => {
+  const color = getClassDisplayColor(classCode)
+  // Calculer la luminosité
+  const r = parseInt(color.substring(0, 2), 16)
+  const g = parseInt(color.substring(2, 4), 16)
+  const b = parseInt(color.substring(4, 6), 16)
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  return luminance > 0.5 ? '#000000' : '#FFFFFF'
+}
+
+// Export du planning en Excel avec feuilles par classe
 const exportPlanningToExcel = () => {
   if (filteredPlanning.value.length === 0) return
   
-  // Préparer les données pour Excel
-  const data = filteredPlanning.value.map(slot => ({
-    'Semaine': slot.week_number,
-    'Jour': formatDay(slot.day),
-    'Date': slot.date || '',
-    'Horaire': `${slot.start_time || ''} - ${slot.end_time || ''}`,
-    'Activité': slot.activity_type || '',
-    'Classe': slot.class_code || '',
-    'Salle': slot.room || '',
-    'Enseignant': slot.teacher_name || '',
-    'Commentaire': slot.comment || ''
-  }))
-  
-  // Créer le workbook
-  const ws = XLSX.utils.json_to_sheet(data)
   const wb = XLSX.utils.book_new()
   
-  // Définir les largeurs de colonnes
-  ws['!cols'] = [
+  // Colonnes définies
+  const colWidths = [
     { wch: 10 }, // Semaine
     { wch: 12 }, // Jour
     { wch: 12 }, // Date
-    { wch: 15 }, // Horaire
-    { wch: 12 }, // Activité
+    { wch: 8 },  // Début
+    { wch: 8 },  // Fin
+    { wch: 25 }, // Cours
+    { wch: 12 }, // Type
+    { wch: 22 }, // Enseignant
     { wch: 12 }, // Classe
     { wch: 15 }, // Salle
-    { wch: 20 }, // Enseignant
     { wch: 30 }  // Commentaire
   ]
   
-  // Nom de la feuille
-  const sheetName = selectedClass.value || 'Toutes classes'
-  XLSX.utils.book_append_sheet(wb, ws, sheetName.substring(0, 31))
+  // Grouper les données par classe (normalisée)
+  const byClass = new Map()
+  filteredPlanning.value.forEach(slot => {
+    const normalizedClass = normalizeClass(slot.class_code) || 'Sans classe'
+    if (!byClass.has(normalizedClass)) {
+      byClass.set(normalizedClass, [])
+    }
+    byClass.get(normalizedClass).push(slot)
+  })
+  
+  // Si une seule classe filtrée, créer une seule feuille
+  if (selectedClass.value || byClass.size === 1) {
+    const data = filteredPlanning.value.map(slot => ({
+      'Semaine': slot.week_number || '',
+      'Jour': formatDay(slot.day),
+      'Date': slot.date || '',
+      'Début': slot.start_time?.substring(0,5) || '',
+      'Fin': slot.end_time?.substring(0,5) || '',
+      'Cours': slot.course_title || module.value?.title || '',
+      'Type': slot.activity || slot.activity_type || 'Cours',
+      'Enseignant': slot.teacher_name || '',
+      'Classe': normalizeClass(slot.class_code),
+      'Salle': slot.room || '',
+      'Commentaire': slot.comment || slot.notes || ''
+    }))
+    
+    const ws = XLSX.utils.json_to_sheet(data)
+    ws['!cols'] = colWidths
+    
+    const sheetName = normalizeClass(selectedClass.value) || 'Planning'
+    XLSX.utils.book_append_sheet(wb, ws, sheetName.substring(0, 31))
+  } else {
+    // Créer une feuille par classe
+    const sortedClasses = Array.from(byClass.keys()).sort()
+    
+    sortedClasses.forEach(classCode => {
+      const slots = byClass.get(classCode)
+      const data = slots.map(slot => ({
+        'Semaine': slot.week_number || '',
+        'Jour': formatDay(slot.day),
+        'Date': slot.date || '',
+        'Début': slot.start_time?.substring(0,5) || '',
+        'Fin': slot.end_time?.substring(0,5) || '',
+        'Cours': slot.course_title || module.value?.title || '',
+        'Type': slot.activity || slot.activity_type || 'Cours',
+        'Enseignant': slot.teacher_name || '',
+        'Classe': classCode,
+        'Salle': slot.room || '',
+        'Commentaire': slot.comment || slot.notes || ''
+      }))
+      
+      const ws = XLSX.utils.json_to_sheet(data)
+      ws['!cols'] = colWidths
+      
+      // Ajouter couleur de fond pour le header (ligne 1)
+      const color = getClassColor(classCode)
+      const range = XLSX.utils.decode_range(ws['!ref'])
+      for (let C = range.s.c; C <= range.e.c; ++C) {
+        const addr = XLSX.utils.encode_cell({ r: 0, c: C })
+        if (!ws[addr]) continue
+        ws[addr].s = {
+          fill: { fgColor: { rgb: color } },
+          font: { bold: true }
+        }
+      }
+      
+      XLSX.utils.book_append_sheet(wb, ws, classCode.substring(0, 31))
+    })
+    
+    // Ajouter une feuille récapitulative
+    const summaryData = sortedClasses.map(classCode => ({
+      'Classe': classCode,
+      'Nb Séances': byClass.get(classCode).length,
+      'Couleur': getClassColor(classCode) === 'FFFFFF' ? 'Blanc' : 'Voir onglet'
+    }))
+    const summaryWs = XLSX.utils.json_to_sheet(summaryData)
+    summaryWs['!cols'] = [{ wch: 15 }, { wch: 12 }, { wch: 15 }]
+    XLSX.utils.book_append_sheet(wb, summaryWs, 'Récapitulatif')
+  }
   
   // Générer le nom du fichier
   const moduleCode = module.value?.code || 'module'
-  const classLabel = selectedClass.value || 'all'
+  const classLabel = normalizeClass(selectedClass.value) || 'all'
   const fileName = `Planning_${moduleCode}_${classLabel}_${selectedYear.value}.xlsx`
   
   // Télécharger le fichier
@@ -865,7 +1153,7 @@ const exportPlanningToExcel = () => {
   toast.add({
     severity: 'success',
     summary: 'Export réussi',
-    detail: `${filteredPlanning.value.length} séances exportées`,
+    detail: `${filteredPlanning.value.length} séances exportées (${byClass.size} classe${byClass.size > 1 ? 's' : ''})`,
     life: 3000
   })
 }
@@ -914,5 +1202,43 @@ const exportPlanningToExcel = () => {
 :deep(.p-tabview-panels) {
   padding: 1.5rem;
   background: transparent;
+}
+
+/* Vue Calendrier */
+.planning-calendar {
+  overflow-x: auto;
+}
+
+.calendar-week {
+  background: var(--surface-ground);
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+.day-column {
+  min-height: 120px;
+  border: 1px solid var(--surface-border);
+}
+
+.calendar-slot {
+  background: var(--surface-0);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.calendar-slot:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* Toggle buttons */
+.border-noround-right {
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+
+.border-noround-left {
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
 }
 </style>
