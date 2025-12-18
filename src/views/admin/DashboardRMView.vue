@@ -49,18 +49,24 @@
               <i class="pi pi-clock"></i>
             </div>
             <div class="stat-info">
-              <span class="stat-label">Heures totales</span>
+              <span class="stat-label">Heures contact</span>
               <span class="stat-value">{{ totalHours }}h</span>
+              <div class="stat-details">
+                <span class="stat-badge active">{{ hoursAssigned }}h assignées</span>
+              </div>
             </div>
           </div>
 
-          <div class="stat-card">
-            <div class="stat-icon" style="background: #8b5cf6;">
-              <i class="pi pi-user-edit"></i>
+          <div class="stat-card completion-card">
+            <div class="stat-icon" :style="{ background: completionPercent >= 80 ? '#10b981' : completionPercent >= 50 ? '#f59e0b' : '#ef4444' }">
+              <i class="pi pi-chart-pie"></i>
             </div>
             <div class="stat-info">
-              <span class="stat-label">Responsables de modules</span>
-              <span class="stat-value">{{ responsablesCount }}</span>
+              <span class="stat-label">Taux d'assignation</span>
+              <span class="stat-value">{{ completionPercent }}%</span>
+              <div class="progress-bar">
+                <div class="progress-fill" :style="{ width: completionPercent + '%', background: completionPercent >= 80 ? '#10b981' : completionPercent >= 50 ? '#f59e0b' : '#ef4444' }"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -276,23 +282,14 @@ const archivedModulesCount = ref(0);
 // Stats enseignants détaillées
 const siTeachersCount = ref(0);
 
-// Alertes
-const alerts = ref([
-  {
-    id: 1,
-    type: 'warning',
-    icon: 'pi pi-exclamation-triangle',
-    title: 'Modules sans enseignant',
-    message: 'Certains modules n\'ont pas encore d\'enseignant assigné'
-  },
-  {
-    id: 2,
-    type: 'info',
-    icon: 'pi pi-info-circle',
-    title: 'Planning à valider',
-    message: 'Le planning du semestre prochain est prêt pour validation'
-  }
-]);
+// Alertes dynamiques (calculées à partir des données)
+const alerts = ref([]);
+
+// Stats avancées
+const modulesWithoutTeachers = ref([]);
+const hoursAssigned = ref(0);
+const hoursPlanned = ref(0);
+const completionPercent = ref(0);
 
 // Données
 const modules = ref([]);
@@ -400,6 +397,24 @@ async function loadRMData() {
     teachers.value = myTeachers.value;
     siTeachers.value = myTeachers.value;
     
+    // 6. Calculer heures assignées
+    hoursAssigned.value = myTeachers.value.reduce((sum, t) => sum + (t.totalHours || 0), 0);
+    hoursPlanned.value = totalHours.value;
+    completionPercent.value = hoursPlanned.value > 0 
+      ? Math.round((hoursAssigned.value / hoursPlanned.value) * 100) 
+      : 0;
+    
+    // 7. Identifier modules sans enseignants
+    modulesWithoutTeachers.value = myModules.value.filter(m => {
+      const moduleTeachers = myTeachers.value.filter(t => 
+        t.courses?.some(c => c.moduleId === m.id)
+      );
+      return moduleTeachers.length === 0;
+    });
+    
+    // 8. Générer alertes dynamiques
+    generateAlerts();
+    
     console.log('✅ Données RM chargées');
   } catch (error) {
     console.error('❌ Erreur chargement données RM:', error);
@@ -430,6 +445,69 @@ function contactTeacher(teacher) {
 
 function dismissAlert(alert) {
   alerts.value = alerts.value.filter(a => a.id !== alert.id);
+}
+
+/**
+ * Génère les alertes dynamiques basées sur les données
+ */
+function generateAlerts() {
+  const newAlerts = [];
+  let alertId = 1;
+  
+  // Alerte: Modules sans enseignant
+  if (modulesWithoutTeachers.value.length > 0) {
+    newAlerts.push({
+      id: alertId++,
+      type: 'warning',
+      icon: 'pi pi-exclamation-triangle',
+      title: `${modulesWithoutTeachers.value.length} module(s) sans enseignant`,
+      message: modulesWithoutTeachers.value.map(m => m.title).slice(0, 3).join(', ') + 
+               (modulesWithoutTeachers.value.length > 3 ? '...' : '')
+    });
+  }
+  
+  // Alerte: Faible taux d'assignation
+  if (completionPercent.value < 50 && myModules.value.length > 0) {
+    newAlerts.push({
+      id: alertId++,
+      type: 'danger',
+      icon: 'pi pi-times-circle',
+      title: 'Taux d\'assignation faible',
+      message: `Seulement ${completionPercent.value}% des heures sont assignées (${hoursAssigned.value}h / ${hoursPlanned.value}h)`
+    });
+  } else if (completionPercent.value >= 50 && completionPercent.value < 80) {
+    newAlerts.push({
+      id: alertId++,
+      type: 'info',
+      icon: 'pi pi-info-circle',
+      title: 'Assignation en cours',
+      message: `${completionPercent.value}% des heures assignées - continuez !`
+    });
+  }
+  
+  // Alerte: Tous les modules assignés
+  if (completionPercent.value >= 80 && myModules.value.length > 0) {
+    newAlerts.push({
+      id: alertId++,
+      type: 'success',
+      icon: 'pi pi-check-circle',
+      title: 'Bonne progression !',
+      message: `${completionPercent.value}% des heures sont assignées`
+    });
+  }
+  
+  // Alerte: Aucun module
+  if (myModules.value.length === 0) {
+    newAlerts.push({
+      id: alertId++,
+      type: 'info',
+      icon: 'pi pi-info-circle',
+      title: 'Aucun module assigné',
+      message: 'Contactez l\'administrateur pour vous assigner des modules'
+    });
+  }
+  
+  alerts.value = newAlerts;
 }
 </script>
 
@@ -812,12 +890,30 @@ function dismissAlert(alert) {
   color: #3b82f6;
 }
 
-.alert-item.error {
+/* Barre de progression */
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--surface-200);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.alert-item.error,
+.alert-item.danger {
   background: #fee2e2;
   border-left: 3px solid #ef4444;
 }
 
-.alert-item.error i {
+.alert-item.error i,
+.alert-item.danger i {
   color: #ef4444;
 }
 

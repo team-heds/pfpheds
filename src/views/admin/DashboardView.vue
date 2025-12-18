@@ -208,13 +208,20 @@
             </div>
           </div>
 
-          <!-- Widget Alertes KPI -->
+          <!-- Widget Stats SI/PHY -->
           <div class="mb-4">
-            <AlertsWidget 
-              :max-items="5" 
-              :auto-refresh="true"
-              :refresh-interval="30000"
-            />
+            <div class="grid">
+              <div class="col-12 lg:col-6">
+                <TrackStatsWidget />
+              </div>
+              <div class="col-12 lg:col-6">
+                <AlertsWidget 
+                  :max-items="5" 
+                  :auto-refresh="true"
+                  :refresh-interval="30000"
+                />
+              </div>
+            </div>
           </div>
 
         </TabPanel>
@@ -543,6 +550,7 @@ import KpiAlertManager from '@/components/admin/widgets/KpiAlertManager.vue'
 import PeriodSelector from '@/components/admin/widgets/PeriodSelector.vue'
 import AlertsWidget from '@/components/admin/widgets/AlertsWidget.vue'
 import PfpCohortKpiWidget from '@/components/admin/widgets/PfpCohortKpiWidget.vue'
+import TrackStatsWidget from '@/components/admin/widgets/TrackStatsWidget.vue'
 import { fetchQuickStats, subscribeToQuickStats } from '@/service/dashboardQuickStatsService'
 import TabView from 'primevue/tabview'
 import TabPanel from 'primevue/tabpanel'

@@ -246,6 +246,7 @@ declare module 'vue' {
     TiptapSimpleEditor: typeof import('./components/editor/notes/TiptapSimpleEditor.vue')['default']
     ToggleButton: typeof import('primevue/togglebutton')['default']
     TournoiDetails: typeof import('./components/tournois/TournoiDetails.vue')['default']
+    TrackStatsWidget: typeof import('./components/admin/widgets/TrackStatsWidget.vue')['default']
     UserGamificationWidget: typeof import('./components/gamification/widgets/UserGamificationWidget.vue')['default']
     UserManagement: typeof import('./components/admin/UserManagement.vue')['default']
     UserProfile: typeof import('./components/admin/details/UserProfile.vue')['default']
