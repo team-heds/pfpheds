@@ -269,13 +269,13 @@
         <TabPanel header="Planning">
           <Card>
             <template #content>
-              <!-- Header avec filtre année -->
-              <div class="flex justify-content-between align-items-center mb-4">
+              <!-- Header avec filtres -->
+              <div class="flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
                 <div class="flex align-items-center gap-3">
                   <h3 class="m-0">Planning du module</h3>
-                  <Tag :value="`${modulePlanning.length} séances`" severity="info" />
+                  <Tag :value="`${filteredPlanning.length} séances`" severity="info" />
                 </div>
-                <div class="flex align-items-center gap-2">
+                <div class="flex align-items-center gap-2 flex-wrap">
                   <Dropdown 
                     v-model="selectedYear"
                     :options="yearOptions"
@@ -285,12 +285,22 @@
                     class="w-10rem"
                     @change="loadModulePlanning"
                   />
+                  <Dropdown 
+                    v-model="selectedClass"
+                    :options="classOptions"
+                    optionLabel="label"
+                    optionValue="value"
+                    placeholder="Toutes les classes"
+                    class="w-12rem"
+                    showClear
+                  />
                   <Button 
                     icon="pi pi-refresh" 
                     severity="secondary" 
                     outlined
                     @click="loadModulePlanning"
                     :loading="loadingPlanning"
+                    v-tooltip="'Actualiser'"
                   />
                   <Button 
                     label="Gérer le planning" 
@@ -305,7 +315,7 @@
                 <ProgressSpinner style="width: 40px; height: 40px" />
               </div>
               
-              <div v-else-if="modulePlanning.length === 0" class="text-center p-5">
+              <div v-else-if="filteredPlanning.length === 0" class="text-center p-5">
                 <i class="pi pi-calendar-times text-6xl text-400 mb-3"></i>
                 <h4>Aucune séance planifiée</h4>
                 <p class="text-600 mb-3">Ce module n'a pas encore de séances dans le planning</p>
@@ -318,9 +328,9 @@
 
               <div v-else class="planning-list">
                 <DataTable 
-                  :value="modulePlanning" 
+                  :value="filteredPlanning" 
                   responsiveLayout="scroll"
-                  :paginator="modulePlanning.length > 10"
+                  :paginator="filteredPlanning.length > 10"
                   :rows="10"
                   stripedRows
                 >
@@ -514,11 +524,31 @@ const moduleStats = ref({
 const modulePlanning = ref([])
 const loadingPlanning = ref(false)
 const selectedYear = ref('2024-2025')
+const selectedClass = ref(null)
+
 const yearOptions = [
   { label: '2024-2025', value: '2024-2025' },
   { label: '2023-2024', value: '2023-2024' },
   { label: '2025-2026', value: '2025-2026' }
 ]
+
+// Options de classes (calculées à partir des données)
+const classOptions = computed(() => {
+  const classes = new Set()
+  modulePlanning.value.forEach(slot => {
+    if (slot.class_code) classes.add(slot.class_code)
+  })
+  return [
+    { label: 'Toutes les classes', value: null },
+    ...Array.from(classes).sort().map(c => ({ label: c, value: c }))
+  ]
+})
+
+// Planning filtré par classe
+const filteredPlanning = computed(() => {
+  if (!selectedClass.value) return modulePlanning.value
+  return modulePlanning.value.filter(slot => slot.class_code === selectedClass.value)
+})
 
 // Charger le module
 onMounted(async () => {
