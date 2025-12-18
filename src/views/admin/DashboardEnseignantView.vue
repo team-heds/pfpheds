@@ -90,6 +90,7 @@
               <Badge :value="myCourses.length" severity="info" class="ml-2" />
             </h3>
           </div>
+
           <div class="courses-grid">
             <div v-for="course in myCourses" :key="course.id" class="course-card">
               <div class="course-header">
