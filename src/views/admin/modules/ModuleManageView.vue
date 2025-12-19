@@ -236,21 +236,40 @@
                 />
               </div>
 
-              <DataTable :value="moduleTeachers" responsiveLayout="scroll">
-                <Column field="name" header="Nom"></Column>
-                <Column field="email" header="Email"></Column>
-                <Column field="hours" header="Heures">
-                  <template #body="slotProps">
-                    {{ slotProps.data.hours }}h
+              <DataTable :value="teachersWithStats" responsiveLayout="scroll" stripedRows>
+                <Column field="name" header="Nom" sortable>
+                  <template #body="{ data }">
+                    <div class="flex align-items-center gap-2">
+                      <i class="pi pi-user text-primary"></i>
+                      <span class="font-medium">{{ data.name }}</span>
+                      <Tag v-if="data.source === 'planning'" value="Planning" severity="secondary" class="text-xs" />
+                    </div>
+                  </template>
+                </Column>
+                <Column field="email" header="Email">
+                  <template #body="{ data }">
+                    <span v-if="data.email" class="text-600">{{ data.email }}</span>
+                    <span v-else class="text-400">—</span>
+                  </template>
+                </Column>
+                <Column field="planningHours" header="Heures planning" sortable>
+                  <template #body="{ data }">
+                    <Tag :value="`${data.planningHours}h`" :severity="data.planningHours > 0 ? 'success' : 'secondary'" />
+                  </template>
+                </Column>
+                <Column field="sessionsCount" header="Séances" sortable>
+                  <template #body="{ data }">
+                    {{ data.sessionsCount }} séance{{ data.sessionsCount > 1 ? 's' : '' }}
                   </template>
                 </Column>
                 <Column header="Actions">
-                  <template #body="slotProps">
+                  <template #body="{ data }">
                     <Button 
                       icon="pi pi-trash" 
                       severity="danger" 
                       text 
-                      @click="removeTeacher(slotProps.data)"
+                      @click="removeTeacher(data)"
+                      v-tooltip="'Retirer'"
                     />
                   </template>
                 </Column>
@@ -261,6 +280,20 @@
                   </div>
                 </template>
               </DataTable>
+              
+              <!-- Résumé des heures -->
+              <div v-if="teachersWithStats.length > 0" class="mt-4 p-3 surface-100 border-round">
+                <div class="flex justify-content-between align-items-center flex-wrap gap-3">
+                  <div>
+                    <span class="font-bold">Total:</span> 
+                    {{ teachersWithStats.length }} enseignant{{ teachersWithStats.length > 1 ? 's' : '' }}
+                  </div>
+                  <div>
+                    <span class="font-bold">Heures planifiées:</span> 
+                    <Tag :value="`${totalPlanningHours}h`" severity="info" />
+                  </div>
+                </div>
+              </div>
             </template>
           </Card>
         </TabPanel>
@@ -269,11 +302,29 @@
         <TabPanel header="Planning">
           <Card>
             <template #content>
+              <!-- Alerte conflits -->
+              <div v-if="planningConflicts.length > 0" class="mb-3 p-3 border-round bg-red-100 border-left-3 border-red-500">
+                <div class="flex align-items-center gap-2 mb-2">
+                  <i class="pi pi-exclamation-triangle text-red-600"></i>
+                  <span class="font-bold text-red-700">{{ planningConflicts.length }} conflit(s) détecté(s)</span>
+                </div>
+                <div class="text-sm text-red-600">
+                  <div v-for="(conflict, idx) in planningConflicts.slice(0, 3)" :key="idx" class="mb-1">
+                    <strong>{{ conflict.teacher }}</strong> : S{{ conflict.week }} {{ conflict.day }} 
+                    ({{ conflict.slotA.class }} {{ conflict.slotA.time }} / {{ conflict.slotB.class }} {{ conflict.slotB.time }})
+                  </div>
+                  <div v-if="planningConflicts.length > 3" class="text-xs">
+                    ... et {{ planningConflicts.length - 3 }} autre(s)
+                  </div>
+                </div>
+              </div>
+
               <!-- Header avec filtres -->
               <div class="flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
                 <div class="flex align-items-center gap-3">
                   <h3 class="m-0">Planning du module</h3>
                   <Tag :value="`${filteredPlanning.length} séances`" severity="info" />
+                  <Tag v-if="planningConflicts.length > 0" :value="`${planningConflicts.length} conflits`" severity="danger" />
                 </div>
                 <div class="flex align-items-center gap-2 flex-wrap">
                   <Dropdown 
@@ -309,6 +360,14 @@
                     @click="exportPlanningToExcel"
                     :disabled="filteredPlanning.length === 0"
                     v-tooltip="'Exporter en Excel'"
+                  />
+                  <Button 
+                    icon="pi pi-file-pdf" 
+                    severity="danger" 
+                    outlined
+                    @click="exportPlanningToPDF"
+                    :disabled="filteredPlanning.length === 0"
+                    v-tooltip="'Exporter en PDF'"
                   />
                   <div class="flex border-round overflow-hidden">
                     <Button 
@@ -584,6 +643,8 @@ import ProgressSpinner from 'primevue/progressspinner'
 import Tag from 'primevue/tag'
 import { supabase } from '@/supabase'
 import * as XLSX from 'xlsx'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
 const route = useRoute()
 const router = useRouter()
@@ -665,6 +726,96 @@ const filteredPlanning = computed(() => {
   if (!selectedClass.value) return modulePlanning.value
   const normalizedFilter = normalizeClass(selectedClass.value)
   return modulePlanning.value.filter(slot => normalizeClass(slot.class_code) === normalizedFilter)
+})
+
+// Calculer les heures depuis un créneau
+const getSlotHours = (slot) => {
+  if (!slot.start_time || !slot.end_time) return 0
+  const [startH, startM] = slot.start_time.split(':').map(Number)
+  const [endH, endM] = slot.end_time.split(':').map(Number)
+  return (endH + endM / 60) - (startH + startM / 60)
+}
+
+// Enseignants avec statistiques d'heures depuis le planning
+const teachersWithStats = computed(() => {
+  return moduleTeachers.value.map(teacher => {
+    let planningHours = 0
+    let sessionsCount = 0
+    
+    modulePlanning.value.forEach(slot => {
+      const teachers = slot.teachers_list || slot.teachers || []
+      const teacherNames = teachers.map(t => typeof t === 'object' ? t.name : t)
+      
+      if (teacherNames.some(name => name?.toLowerCase() === teacher.name?.toLowerCase())) {
+        sessionsCount++
+        planningHours += getSlotHours(slot)
+      }
+    })
+    
+    return {
+      ...teacher,
+      planningHours: Math.round(planningHours * 10) / 10,
+      sessionsCount
+    }
+  }).sort((a, b) => b.planningHours - a.planningHours)
+})
+
+// Total des heures planifiées
+const totalPlanningHours = computed(() => {
+  return Math.round(modulePlanning.value.reduce((sum, slot) => sum + getSlotHours(slot), 0) * 10) / 10
+})
+
+// Détecter les conflits horaires (même prof planifié 2x au même moment)
+const planningConflicts = computed(() => {
+  const conflicts = []
+  const slots = modulePlanning.value
+  
+  for (let i = 0; i < slots.length; i++) {
+    for (let j = i + 1; j < slots.length; j++) {
+      const slotA = slots[i]
+      const slotB = slots[j]
+      
+      // Même semaine et même jour
+      if (slotA.week_number !== slotB.week_number || slotA.day !== slotB.day) continue
+      
+      // Vérifier chevauchement horaire
+      const startA = slotA.start_time || '00:00'
+      const endA = slotA.end_time || '23:59'
+      const startB = slotB.start_time || '00:00'
+      const endB = slotB.end_time || '23:59'
+      
+      const overlap = startA < endB && startB < endA
+      if (!overlap) continue
+      
+      // Vérifier si même enseignant
+      const teachersA = (slotA.teachers_list || slotA.teachers || []).map(t => 
+        (typeof t === 'object' ? t.name : t)?.toLowerCase()
+      ).filter(Boolean)
+      const teachersB = (slotB.teachers_list || slotB.teachers || []).map(t => 
+        (typeof t === 'object' ? t.name : t)?.toLowerCase()
+      ).filter(Boolean)
+      
+      const commonTeachers = teachersA.filter(t => teachersB.includes(t))
+      
+      if (commonTeachers.length > 0) {
+        conflicts.push({
+          teacher: commonTeachers[0],
+          week: slotA.week_number,
+          day: formatDay(slotA.day),
+          slotA: {
+            time: `${slotA.start_time?.substring(0,5)} - ${slotA.end_time?.substring(0,5)}`,
+            class: normalizeClass(slotA.class_code)
+          },
+          slotB: {
+            time: `${slotB.start_time?.substring(0,5)} - ${slotB.end_time?.substring(0,5)}`,
+            class: normalizeClass(slotB.class_code)
+          }
+        })
+      }
+    }
+  }
+  
+  return conflicts
 })
 
 // Semaines pour la vue calendrier
@@ -872,7 +1023,14 @@ const loadModulePlanning = async () => {
       return
     }
     
-    modulePlanning.value = data || []
+    // Transformer les données pour l'affichage (teachers array -> teacher_name string)
+    modulePlanning.value = (data || []).map(slot => ({
+      ...slot,
+      // Convertir le tableau teachers en string pour l'affichage
+      teacher_name: formatTeachersArray(slot.teachers),
+      // Garder le tableau original pour les stats
+      teachers_list: slot.teachers || []
+    }))
     console.log('📅 Planning chargé:', modulePlanning.value.length, 'séances')
   } catch (error) {
     console.error('Erreur planning:', error)
@@ -923,12 +1081,19 @@ const loadModuleTeachers = async () => {
       })
     }
     
-    // 2. Ajouter les enseignants du planning (teacher_name)
+    // 2. Ajouter les enseignants du planning (tableau teachers)
     if (modulePlanning.value.length > 0) {
       const planningTeachers = new Set()
       modulePlanning.value.forEach(slot => {
-        if (slot.teacher_name && slot.teacher_name.trim()) {
-          planningTeachers.add(slot.teacher_name.trim())
+        // Utiliser teachers_list (tableau) ou teachers directement
+        const teachers = slot.teachers_list || slot.teachers || []
+        if (Array.isArray(teachers)) {
+          teachers.forEach(t => {
+            const name = typeof t === 'object' ? t.name : t
+            if (name && name.trim()) {
+              planningTeachers.add(name.trim())
+            }
+          })
         }
       })
       
@@ -957,6 +1122,14 @@ const loadModuleTeachers = async () => {
     console.error('Erreur enseignants:', error)
     moduleTeachers.value = []
   }
+}
+
+// Formater le tableau des enseignants en string
+const formatTeachersArray = (teachers) => {
+  if (!teachers || !Array.isArray(teachers) || teachers.length === 0) return ''
+  // Si c'est un tableau d'objets avec .name, extraire les noms
+  // Si c'est un tableau de strings, joindre directement
+  return teachers.map(t => typeof t === 'object' ? t.name : t).filter(Boolean).join(', ')
 }
 
 // Formater le jour
@@ -1154,6 +1327,79 @@ const exportPlanningToExcel = () => {
     severity: 'success',
     summary: 'Export réussi',
     detail: `${filteredPlanning.value.length} séances exportées (${byClass.size} classe${byClass.size > 1 ? 's' : ''})`,
+    life: 3000
+  })
+}
+
+// Export du planning en PDF
+const exportPlanningToPDF = () => {
+  if (filteredPlanning.value.length === 0) return
+  
+  const doc = new jsPDF('landscape')
+  
+  // Titre
+  doc.setFontSize(18)
+  doc.text(`Planning - ${module.value?.title || 'Module'}`, 14, 20)
+  
+  // Sous-titre
+  doc.setFontSize(11)
+  doc.setTextColor(100)
+  doc.text(`Code: ${module.value?.code || ''} | Année: ${selectedYear.value} | Classe: ${selectedClass.value || 'Toutes'}`, 14, 28)
+  doc.text(`Total: ${filteredPlanning.value.length} séances | ${totalPlanningHours.value}h planifiées`, 14, 34)
+  doc.setTextColor(0)
+  
+  // Préparer les données pour la table
+  const tableData = filteredPlanning.value.map(slot => [
+    `S${slot.week_number}`,
+    formatDay(slot.day),
+    slot.date || '',
+    `${slot.start_time?.substring(0,5) || ''} - ${slot.end_time?.substring(0,5) || ''}`,
+    slot.course_title || module.value?.title || '',
+    slot.teacher_name || '',
+    slot.activity || 'Cours',
+    normalizeClass(slot.class_code),
+    slot.room || ''
+  ])
+  
+  // Générer la table
+  autoTable(doc, {
+    head: [['Sem.', 'Jour', 'Date', 'Horaire', 'Cours', 'Enseignant', 'Type', 'Classe', 'Salle']],
+    body: tableData,
+    startY: 42,
+    styles: { fontSize: 9 },
+    headStyles: { fillColor: [59, 130, 246] },
+    alternateRowStyles: { fillColor: [245, 247, 250] },
+    columnStyles: {
+      0: { cellWidth: 15 },
+      1: { cellWidth: 22 },
+      2: { cellWidth: 22 },
+      3: { cellWidth: 28 },
+      4: { cellWidth: 50 },
+      5: { cellWidth: 40 },
+      6: { cellWidth: 18 },
+      7: { cellWidth: 25 },
+      8: { cellWidth: 20 }
+    }
+  })
+  
+  // Ajouter le pied de page avec la date
+  const pageCount = doc.internal.getNumberOfPages()
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i)
+    doc.setFontSize(8)
+    doc.setTextColor(150)
+    doc.text(`Généré le ${new Date().toLocaleDateString('fr-CH')} - Page ${i}/${pageCount}`, 14, doc.internal.pageSize.height - 10)
+  }
+  
+  // Télécharger
+  const moduleCode = module.value?.code || 'module'
+  const classLabel = normalizeClass(selectedClass.value) || 'all'
+  doc.save(`Planning_${moduleCode}_${classLabel}_${selectedYear.value}.pdf`)
+  
+  toast.add({
+    severity: 'success',
+    summary: 'Export PDF réussi',
+    detail: `${filteredPlanning.value.length} séances exportées`,
     life: 3000
   })
 }
