@@ -63,6 +63,7 @@ declare module 'vue' {
     CommunityFeed: typeof import('./components/social/library/CommunityFeed.vue')['default']
     ConsigneModal: typeof import('./components/careconvers/ConsigneModal.vue')['default']
     ConvaiWidget: typeof import('./components/ui/ConvaiWidget.vue')['default']
+    copy: typeof import('./components/admin/details/VotationLese copy.vue')['default']
     CounterBoxes: typeof import('./components/admin/items/CounterBoxes.vue')['default']
     CreateContentMobile: typeof import('./components/social/library/CreateContentMobile.vue')['default']
     CreateNewCommunity: typeof import('./components/social/library/CreateNewCommunity.vue')['default']
