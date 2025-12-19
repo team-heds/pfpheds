@@ -211,6 +211,55 @@
           </div>
         </div>
 
+        <!-- Vue globale Planning -->
+        <div class="section-card planning-overview">
+          <div class="section-header">
+            <h3>
+              <i class="pi pi-calendar"></i> 
+              Vue globale du Planning
+            </h3>
+            <Button icon="pi pi-refresh" text @click="loadPlanningOverview" :loading="loadingPlanning" />
+          </div>
+          
+          <div class="planning-stats-grid">
+            <div class="planning-stat-item">
+              <div class="stat-circle" :class="planningStats.validatedPercent >= 80 ? 'success' : planningStats.validatedPercent >= 50 ? 'warning' : 'danger'">
+                {{ planningStats.validatedPercent }}%
+              </div>
+              <span>Validés</span>
+            </div>
+            <div class="planning-stat-item">
+              <div class="stat-circle info">{{ planningStats.pendingCount }}</div>
+              <span>En attente</span>
+            </div>
+            <div class="planning-stat-item">
+              <div class="stat-circle" :class="planningStats.conflictsCount > 0 ? 'danger' : 'success'">{{ planningStats.conflictsCount }}</div>
+              <span>Conflits</span>
+            </div>
+            <div class="planning-stat-item">
+              <div class="stat-circle" :class="planningStats.hoursDiff === 0 ? 'success' : planningStats.hoursDiff > 0 ? 'info' : 'warning'">
+                {{ planningStats.hoursDiff >= 0 ? '+' : '' }}{{ planningStats.hoursDiff }}h
+              </div>
+              <span>Écart heures</span>
+            </div>
+          </div>
+
+          <!-- Modules avec problèmes -->
+          <div v-if="modulesWithIssues.length > 0" class="issues-list mt-3">
+            <h4 class="text-sm text-600 mb-2">Modules nécessitant attention :</h4>
+            <div v-for="issue in modulesWithIssues.slice(0, 5)" :key="issue.moduleId" class="issue-item">
+              <Tag :value="issue.type" :severity="issue.severity" class="text-xs" />
+              <span class="ml-2">{{ issue.moduleName }}</span>
+              <span class="text-500 text-sm ml-auto">{{ issue.details }}</span>
+              <Button icon="pi pi-arrow-right" text size="small" @click="goToModule(issue.moduleId)" />
+            </div>
+          </div>
+          <div v-else class="text-center py-3 text-500">
+            <i class="pi pi-check-circle text-success mr-2"></i>
+            Tous les plannings sont en ordre
+          </div>
+        </div>
+
         <!-- Actions rapides -->
         <div class="section-card">
           <h3><i class="pi pi-bolt"></i> Actions Rapides</h3>
@@ -261,6 +310,7 @@ import Badge from 'primevue/badge';
 import Tag from 'primevue/tag';
 import { getMyModules, getModulesTeachers, calculateStats } from '@/services/rmDashboardService';
 import { useModules } from '@/composables/useModules';
+import { supabase } from '@/supabase';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -284,6 +334,16 @@ const siTeachersCount = ref(0);
 
 // Alertes dynamiques (calculées à partir des données)
 const alerts = ref([]);
+
+// Planning overview
+const loadingPlanning = ref(false);
+const planningStats = ref({
+  validatedPercent: 0,
+  pendingCount: 0,
+  conflictsCount: 0,
+  hoursDiff: 0
+});
+const modulesWithIssues = ref([]);
 
 // Stats avancées
 const modulesWithoutTeachers = ref([]);
@@ -414,6 +474,9 @@ async function loadRMData() {
     // 8. Générer alertes dynamiques
     generateAlerts();
     
+    // 9. Charger la vue d'ensemble du planning
+    await loadPlanningOverview();
+    
     console.log('✅ Données RM chargées');
   } catch (error) {
     console.error('❌ Erreur chargement données RM:', error);
@@ -444,6 +507,135 @@ function contactTeacher(teacher) {
 
 function dismissAlert(alert) {
   alerts.value = alerts.value.filter(a => a.id !== alert.id);
+}
+
+function goToModule(moduleId) {
+  router.push(`/admin/modules/${moduleId}/manage`);
+}
+
+/**
+ * Charge la vue d'ensemble du planning pour tous les modules
+ */
+async function loadPlanningOverview() {
+  if (myModules.value.length === 0) return;
+  
+  loadingPlanning.value = true;
+  try {
+    const moduleCodes = myModules.value.map(m => m.code).filter(Boolean);
+    
+    // 1. Charger les validations
+    const { data: validations } = await supabase
+      .from('planning_validations')
+      .select('*')
+      .in('module_code', moduleCodes);
+    
+    const validatedCount = (validations || []).filter(v => v.status === 'validated').length;
+    const pendingCount = (validations || []).filter(v => v.status === 'pending').length;
+    const totalModules = myModules.value.length;
+    
+    planningStats.value.validatedPercent = totalModules > 0 ? Math.round((validatedCount / totalModules) * 100) : 0;
+    planningStats.value.pendingCount = pendingCount;
+    
+    // 2. Charger les créneaux pour détecter les conflits
+    const { data: slots } = await supabase
+      .from('planning_time_slots')
+      .select('*')
+      .in('module_code', moduleCodes);
+    
+    // Détecter les conflits (même prof, même jour, même heure)
+    let conflictsCount = 0;
+    const slotsList = slots || [];
+    for (let i = 0; i < slotsList.length; i++) {
+      for (let j = i + 1; j < slotsList.length; j++) {
+        const a = slotsList[i], b = slotsList[j];
+        if (a.week_number === b.week_number && a.day === b.day) {
+          const overlap = (a.start_time || '00:00') < (b.end_time || '23:59') && 
+                          (b.start_time || '00:00') < (a.end_time || '23:59');
+          if (overlap) {
+            const teachersA = (a.teachers || []).map(t => typeof t === 'object' ? t.name : t);
+            const teachersB = (b.teachers || []).map(t => typeof t === 'object' ? t.name : t);
+            if (teachersA.some(t => teachersB.includes(t))) {
+              conflictsCount++;
+            }
+          }
+        }
+      }
+    }
+    planningStats.value.conflictsCount = conflictsCount;
+    
+    // 3. Charger les budgets heures
+    const { data: budgets } = await supabase
+      .from('module_hours_budget')
+      .select('*')
+      .in('module_code', moduleCodes);
+    
+    const plannedHours = slotsList.reduce((sum, s) => {
+      if (!s.start_time || !s.end_time) return sum;
+      const [sh, sm] = s.start_time.split(':').map(Number);
+      const [eh, em] = s.end_time.split(':').map(Number);
+      return sum + (eh + em/60) - (sh + sm/60);
+    }, 0);
+    
+    const budgetHours = (budgets || []).reduce((sum, b) => sum + (b.planned_hours || 0), 0) || 
+                        myModules.value.reduce((sum, m) => sum + (m.heures_contact || 0), 0);
+    
+    planningStats.value.hoursDiff = Math.round((plannedHours - budgetHours) * 10) / 10;
+    
+    // 4. Identifier les modules avec problèmes
+    const issues = [];
+    
+    myModules.value.forEach(m => {
+      const moduleSlots = slotsList.filter(s => s.module_code === m.code);
+      const moduleValidation = (validations || []).find(v => v.module_code === m.code);
+      
+      // Pas de planning
+      if (moduleSlots.length === 0) {
+        issues.push({
+          moduleId: m.id,
+          moduleName: m.title,
+          type: 'Sans planning',
+          severity: 'danger',
+          details: 'Aucune séance planifiée'
+        });
+      }
+      
+      // En attente de validation
+      if (moduleValidation?.status === 'pending') {
+        issues.push({
+          moduleId: m.id,
+          moduleName: m.title,
+          type: 'En attente',
+          severity: 'warning',
+          details: 'Validation en attente'
+        });
+      }
+      
+      // Heures insuffisantes
+      const moduleHours = moduleSlots.reduce((sum, s) => {
+        if (!s.start_time || !s.end_time) return sum;
+        const [sh, sm] = s.start_time.split(':').map(Number);
+        const [eh, em] = s.end_time.split(':').map(Number);
+        return sum + (eh + em/60) - (sh + sm/60);
+      }, 0);
+      const expectedHours = m.heures_contact || 0;
+      if (expectedHours > 0 && moduleHours < expectedHours * 0.8) {
+        issues.push({
+          moduleId: m.id,
+          moduleName: m.title,
+          type: 'Heures manquantes',
+          severity: 'info',
+          details: `${Math.round(moduleHours)}h / ${expectedHours}h prévues`
+        });
+      }
+    });
+    
+    modulesWithIssues.value = issues;
+    
+  } catch (error) {
+    console.error('Erreur chargement planning overview:', error);
+  } finally {
+    loadingPlanning.value = false;
+  }
 }
 
 /**
@@ -1026,5 +1218,66 @@ function generateAlerts() {
 .track-selector :deep(.p-selectbutton .p-button.p-highlight) {
   background: var(--primary-color);
   border-color: var(--primary-color);
+}
+
+/* Planning Overview */
+.planning-overview {
+  border-left: 4px solid var(--primary-color);
+}
+
+.planning-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.planning-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stat-circle {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: white;
+}
+
+.stat-circle.success { background: #10b981; }
+.stat-circle.warning { background: #f59e0b; }
+.stat-circle.danger { background: #ef4444; }
+.stat-circle.info { background: #3b82f6; }
+
+.issues-list {
+  border-top: 1px solid var(--surface-border);
+  padding-top: 1rem;
+}
+
+.issue-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  background: var(--surface-50);
+  margin-bottom: 0.5rem;
+}
+
+.issue-item:hover {
+  background: var(--surface-100);
+}
+
+@media (max-width: 768px) {
+  .planning-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 </style>

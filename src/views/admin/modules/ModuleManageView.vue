@@ -591,6 +591,143 @@
           </div>
         </TabPanel>
 
+        <!-- Onglet: Historique & Validation -->
+        <TabPanel header="Historique">
+          <div class="grid">
+            <!-- Validation du planning -->
+            <div class="col-12 lg:col-4">
+              <Card>
+                <template #title>
+                  <div class="flex align-items-center gap-2">
+                    <i class="pi pi-check-circle"></i>
+                    Validation du planning
+                  </div>
+                </template>
+                <template #content>
+                  <div class="mb-3">
+                    <div class="flex align-items-center gap-2 mb-2">
+                      <Tag :value="validationStatus.label" :severity="validationStatus.severity" />
+                      <span class="text-sm text-600">{{ selectedClass || 'Toutes classes' }}</span>
+                    </div>
+                    <div v-if="currentValidation?.validated_at" class="text-sm text-600">
+                      Validé le {{ formatDate(currentValidation.validated_at) }}
+                      <span v-if="currentValidation.validated_by_name">par {{ currentValidation.validated_by_name }}</span>
+                    </div>
+                  </div>
+                  
+                  <div class="flex flex-column gap-2">
+                    <Button 
+                      v-if="validationStatus.status !== 'validated'"
+                      label="Valider le planning" 
+                      icon="pi pi-check" 
+                      severity="success"
+                      @click="validatePlanning"
+                      :disabled="filteredPlanning.length === 0"
+                    />
+                    <Button 
+                      v-if="validationStatus.status === 'validated'"
+                      label="Retirer la validation" 
+                      icon="pi pi-times" 
+                      severity="warning"
+                      outlined
+                      @click="unvalidatePlanning"
+                    />
+                    <Button 
+                      label="Soumettre pour révision" 
+                      icon="pi pi-send" 
+                      severity="info"
+                      outlined
+                      @click="submitForReview"
+                      :disabled="filteredPlanning.length === 0"
+                    />
+                  </div>
+
+                  <!-- Budget heures -->
+                  <div class="mt-4 pt-3 border-top-1 surface-border">
+                    <h4 class="mt-0 mb-3">Budget heures</h4>
+                    <div class="flex flex-column gap-2">
+                      <div class="flex justify-content-between">
+                        <span>Heures prévues:</span>
+                        <InputNumber v-model="hoursBudget.planned_hours" :min="0" :max="999" suffix="h" class="w-6rem" size="small" />
+                      </div>
+                      <div class="flex justify-content-between align-items-center">
+                        <span>Heures planifiées:</span>
+                        <Tag :value="`${totalPlanningHours}h`" :severity="totalPlanningHours >= (hoursBudget.planned_hours || 0) ? 'success' : 'warning'" />
+                      </div>
+                      <div class="flex justify-content-between align-items-center">
+                        <span>Différence:</span>
+                        <Tag 
+                          :value="`${hoursDifference >= 0 ? '+' : ''}${hoursDifference}h`" 
+                          :severity="hoursDifference === 0 ? 'success' : (hoursDifference > 0 ? 'info' : 'danger')" 
+                        />
+                      </div>
+                      <Button label="Sauvegarder budget" icon="pi pi-save" size="small" outlined class="mt-2" @click="saveHoursBudget" />
+                    </div>
+                  </div>
+                </template>
+              </Card>
+            </div>
+
+            <!-- Historique des modifications -->
+            <div class="col-12 lg:col-8">
+              <Card>
+                <template #title>
+                  <div class="flex justify-content-between align-items-center">
+                    <div class="flex align-items-center gap-2">
+                      <i class="pi pi-history"></i>
+                      Historique des modifications
+                    </div>
+                    <Button icon="pi pi-refresh" text @click="loadPlanningHistory" :loading="loadingHistory" />
+                  </div>
+                </template>
+                <template #content>
+                  <DataTable 
+                    :value="planningHistory" 
+                    :loading="loadingHistory"
+                    :rows="10"
+                    :paginator="planningHistory.length > 10"
+                    responsiveLayout="scroll"
+                    stripedRows
+                    class="p-datatable-sm"
+                  >
+                    <Column field="changed_at" header="Date" style="width: 140px">
+                      <template #body="{ data }">
+                        <span class="text-sm">{{ formatDateTime(data.changed_at) }}</span>
+                      </template>
+                    </Column>
+                    <Column field="action" header="Action" style="width: 90px">
+                      <template #body="{ data }">
+                        <Tag 
+                          :value="getActionLabel(data.action)" 
+                          :severity="getActionSeverity(data.action)"
+                          class="text-xs"
+                        />
+                      </template>
+                    </Column>
+                    <Column field="changes_summary" header="Modifications">
+                      <template #body="{ data }">
+                        <span class="text-sm">{{ data.changes_summary || 'Modification' }}</span>
+                      </template>
+                    </Column>
+                    <Column field="changed_by_name" header="Par" style="width: 120px">
+                      <template #body="{ data }">
+                        <span class="text-sm text-600">{{ data.changed_by_name || 'Système' }}</span>
+                      </template>
+                    </Column>
+                    <template #empty>
+                      <div class="text-center p-4">
+                        <i class="pi pi-inbox text-4xl text-400 mb-2"></i>
+                        <p class="text-600">Aucune modification enregistrée</p>
+                        <small class="text-400">L'historique sera enregistré automatiquement</small>
+                      </div>
+                    </template>
+                  </DataTable>
+                </template>
+              </Card>
+            </div>
+          </div>
+        </TabPanel>
+
       </TabView>
     </div>
 
@@ -697,6 +834,17 @@ const selectedYear = ref('2024-2025')
 const selectedClass = ref(null)
 const planningView = ref('list') // 'list' ou 'calendar'
 
+// Historique et validation
+const planningHistory = ref([])
+const loadingHistory = ref(false)
+const currentValidation = ref(null)
+const hoursBudget = ref({
+  planned_hours: 0,
+  lecture_hours: 0,
+  tp_hours: 0,
+  td_hours: 0
+})
+
 const yearOptions = [
   { label: '2024-2025', value: '2024-2025' },
   { label: '2023-2024', value: '2023-2024' },
@@ -763,6 +911,25 @@ const teachersWithStats = computed(() => {
 // Total des heures planifiées
 const totalPlanningHours = computed(() => {
   return Math.round(modulePlanning.value.reduce((sum, slot) => sum + getSlotHours(slot), 0) * 10) / 10
+})
+
+// Différence heures prévues vs planifiées
+const hoursDifference = computed(() => {
+  return Math.round((totalPlanningHours.value - (hoursBudget.value.planned_hours || 0)) * 10) / 10
+})
+
+// Statut de validation
+const validationStatus = computed(() => {
+  if (!currentValidation.value) {
+    return { status: 'draft', label: 'Brouillon', severity: 'secondary' }
+  }
+  const statusMap = {
+    'draft': { label: 'Brouillon', severity: 'secondary' },
+    'pending': { label: 'En attente', severity: 'warning' },
+    'validated': { label: 'Validé', severity: 'success' },
+    'rejected': { label: 'Rejeté', severity: 'danger' }
+  }
+  return { status: currentValidation.value.status, ...statusMap[currentValidation.value.status] }
 })
 
 // Détecter les conflits horaires (même prof planifié 2x au même moment)
@@ -915,6 +1082,11 @@ onMounted(async () => {
     
     // Charger les enseignants du module
     await loadModuleTeachers()
+    
+    // Charger historique, validation et budget
+    await loadPlanningHistory()
+    await loadCurrentValidation()
+    await loadHoursBudget()
     
   } catch (error) {
     console.error('Erreur chargement module:', error)
@@ -1402,6 +1574,237 @@ const exportPlanningToPDF = () => {
     detail: `${filteredPlanning.value.length} séances exportées`,
     life: 3000
   })
+}
+
+// ==================== HISTORIQUE & VALIDATION ====================
+
+// Charger l'historique des modifications
+const loadPlanningHistory = async () => {
+  if (!module.value?.code) return
+  
+  loadingHistory.value = true
+  try {
+    const { data, error } = await supabase
+      .from('planning_history')
+      .select('*')
+      .eq('module_code', module.value.code)
+      .order('changed_at', { ascending: false })
+      .limit(50)
+    
+    if (error) {
+      console.warn('Erreur chargement historique:', error)
+      planningHistory.value = []
+      return
+    }
+    
+    planningHistory.value = data || []
+  } catch (error) {
+    console.error('Erreur historique:', error)
+    planningHistory.value = []
+  } finally {
+    loadingHistory.value = false
+  }
+}
+
+// Charger la validation actuelle
+const loadCurrentValidation = async () => {
+  if (!module.value?.code) return
+  
+  try {
+    const classCode = selectedClass.value || 'ALL'
+    const { data, error } = await supabase
+      .from('planning_validations')
+      .select('*')
+      .eq('module_code', module.value.code)
+      .eq('class_code', classCode)
+      .eq('year', selectedYear.value)
+      .single()
+    
+    if (error && error.code !== 'PGRST116') {
+      console.warn('Erreur chargement validation:', error)
+    }
+    
+    currentValidation.value = data || null
+  } catch (error) {
+    console.error('Erreur validation:', error)
+    currentValidation.value = null
+  }
+}
+
+// Charger le budget heures
+const loadHoursBudget = async () => {
+  if (!module.value?.code) return
+  
+  try {
+    const { data, error } = await supabase
+      .from('module_hours_budget')
+      .select('*')
+      .eq('module_code', module.value.code)
+      .eq('year', selectedYear.value)
+      .single()
+    
+    if (data) {
+      hoursBudget.value = data
+    } else {
+      hoursBudget.value = { planned_hours: module.value?.heures_contact || 0 }
+    }
+  } catch (error) {
+    hoursBudget.value = { planned_hours: module.value?.heures_contact || 0 }
+  }
+}
+
+// Sauvegarder le budget heures
+const saveHoursBudget = async () => {
+  if (!module.value?.code) return
+  
+  try {
+    const { error } = await supabase
+      .from('module_hours_budget')
+      .upsert({
+        module_code: module.value.code,
+        year: selectedYear.value,
+        planned_hours: hoursBudget.value.planned_hours || 0,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'module_code,year' })
+    
+    if (error) throw error
+    
+    toast.add({
+      severity: 'success',
+      summary: 'Budget sauvegardé',
+      detail: `${hoursBudget.value.planned_hours}h prévues`,
+      life: 3000
+    })
+  } catch (error) {
+    console.error('Erreur sauvegarde budget:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: 'Impossible de sauvegarder le budget',
+      life: 3000
+    })
+  }
+}
+
+// Valider le planning
+const validatePlanning = async () => {
+  if (!module.value?.code) return
+  
+  try {
+    const classCode = selectedClass.value || 'ALL'
+    const { error } = await supabase
+      .from('planning_validations')
+      .upsert({
+        module_code: module.value.code,
+        class_code: classCode,
+        year: selectedYear.value,
+        status: 'validated',
+        validated_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'module_code,class_code,year' })
+    
+    if (error) throw error
+    
+    await loadCurrentValidation()
+    
+    toast.add({
+      severity: 'success',
+      summary: 'Planning validé',
+      detail: `${filteredPlanning.value.length} séances validées`,
+      life: 3000
+    })
+  } catch (error) {
+    console.error('Erreur validation:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: 'Impossible de valider le planning',
+      life: 3000
+    })
+  }
+}
+
+// Retirer la validation
+const unvalidatePlanning = async () => {
+  if (!module.value?.code || !currentValidation.value) return
+  
+  try {
+    const { error } = await supabase
+      .from('planning_validations')
+      .update({ 
+        status: 'draft',
+        validated_at: null,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', currentValidation.value.id)
+    
+    if (error) throw error
+    
+    await loadCurrentValidation()
+    
+    toast.add({
+      severity: 'info',
+      summary: 'Validation retirée',
+      detail: 'Le planning est de nouveau en brouillon',
+      life: 3000
+    })
+  } catch (error) {
+    console.error('Erreur:', error)
+  }
+}
+
+// Soumettre pour révision
+const submitForReview = async () => {
+  if (!module.value?.code) return
+  
+  try {
+    const classCode = selectedClass.value || 'ALL'
+    const { error } = await supabase
+      .from('planning_validations')
+      .upsert({
+        module_code: module.value.code,
+        class_code: classCode,
+        year: selectedYear.value,
+        status: 'pending',
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'module_code,class_code,year' })
+    
+    if (error) throw error
+    
+    await loadCurrentValidation()
+    
+    toast.add({
+      severity: 'info',
+      summary: 'Soumis pour révision',
+      detail: 'Le planning est en attente de validation',
+      life: 3000
+    })
+  } catch (error) {
+    console.error('Erreur:', error)
+  }
+}
+
+// Formater date/heure
+const formatDateTime = (dateStr) => {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  return date.toLocaleDateString('fr-CH', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })
+}
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return ''
+  return new Date(dateStr).toLocaleDateString('fr-CH')
+}
+
+// Labels et couleurs pour les actions d'historique
+const getActionLabel = (action) => {
+  const labels = { create: 'Créé', update: 'Modifié', delete: 'Supprimé' }
+  return labels[action] || action
+}
+
+const getActionSeverity = (action) => {
+  const severities = { create: 'success', update: 'info', delete: 'danger' }
+  return severities[action] || 'secondary'
 }
 </script>
 
