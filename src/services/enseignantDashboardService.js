@@ -111,51 +111,185 @@ async function getMyCoursesSimple(userId, userEmail) {
 }
 
 /**
- * Récupère le planning hebdomadaire de l'enseignant
+ * Récupère le planning hebdomadaire de l'enseignant depuis planning_time_slots
  * @param {string} userId - ID de l'enseignant
+ * @param {string} userEmail - Email de l'enseignant
+ * @param {string} teacherName - Nom de l'enseignant (pour recherche dans teachers array)
  */
-export async function getMyWeekPlanning(userId, userEmail) {
+export async function getMyWeekPlanning(userId, userEmail, teacherName = null) {
   try {
-    console.log('📅 [getMyWeekPlanning] Chargement planning pour:', userId)
+    console.log('📅 [getMyWeekPlanning] Chargement planning pour:', userEmail || userId)
     
-    // Récupérer les cellules de planning
-    const { data: cells, error } = await supabase
-      .from('planning_cells')
-      .select(`
-        id,
-        day,
-        time_slot_id,
-        course_id,
-        room,
-        color,
-        planning_time_slots (
-          start_time,
-          end_time
-        ),
-        courses (
-          name,
-          code
-        )
-      `)
-      .or(`teacher_id.eq.${userId},teacher_email.eq.${userEmail}`)
-      .order('day', { ascending: true })
+    // Calculer la semaine courante
+    const now = new Date()
+    const dayOfWeek = now.getDay()
+    const startOfWeek = new Date(now)
+    startOfWeek.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1))
+    const weekNumber = getWeekNumber(startOfWeek)
+    
+    // Récupérer tous les créneaux de la semaine courante
+    const { data: slots, error } = await supabase
+      .from('planning_time_slots')
+      .select('*')
+      .eq('week_number', weekNumber)
+      .order('day_index', { ascending: true })
+      .order('start_time', { ascending: true })
     
     if (error) {
       console.warn('⚠️ [getMyWeekPlanning] Erreur:', error)
-      return generateEmptyWeek()
+      return { week: generateEmptyWeek(), allSlots: [] }
     }
     
-    if (!cells || cells.length === 0) {
-      console.log('ℹ️ [getMyWeekPlanning] Aucun planning trouvé')
-      return generateEmptyWeek()
+    if (!slots || slots.length === 0) {
+      console.log('ℹ️ [getMyWeekPlanning] Aucun planning trouvé pour semaine', weekNumber)
+      return { week: generateEmptyWeek(), allSlots: [] }
     }
+    
+    // Filtrer les créneaux où l'enseignant est présent
+    const mySlots = slots.filter(slot => {
+      const teachers = slot.teachers || []
+      return teachers.some(t => {
+        const name = typeof t === 'object' ? t.name : t
+        if (!name) return false
+        const nameLower = name.toLowerCase().trim()
+        // Comparer avec email ou nom
+        if (userEmail && nameLower.includes(userEmail.split('@')[0].toLowerCase())) return true
+        if (teacherName && nameLower.includes(teacherName.toLowerCase())) return true
+        return false
+      })
+    })
+    
+    console.log('📅 [getMyWeekPlanning] Créneaux trouvés:', mySlots.length, '/', slots.length)
     
     // Convertir en format semaine
-    return formatCellsToWeek(cells)
+    return { week: formatSlotsToWeek(mySlots), allSlots: mySlots }
   } catch (error) {
     console.error('❌ [getMyWeekPlanning] Erreur:', error)
-    return generateEmptyWeek()
+    return { week: generateEmptyWeek(), allSlots: [] }
   }
+}
+
+/**
+ * Récupère toutes les séances à venir de l'enseignant
+ */
+export async function getUpcomingSessions(userEmail, teacherName = null, limit = 10) {
+  try {
+    console.log('📆 [getUpcomingSessions] Chargement séances à venir pour:', userEmail)
+    
+    const today = new Date().toISOString().split('T')[0]
+    const currentWeek = getWeekNumber(new Date())
+    
+    // Récupérer les créneaux à venir
+    const { data: slots, error } = await supabase
+      .from('planning_time_slots')
+      .select('*')
+      .gte('week_number', currentWeek)
+      .order('week_number', { ascending: true })
+      .order('day_index', { ascending: true })
+      .order('start_time', { ascending: true })
+      .limit(200)
+    
+    if (error || !slots) {
+      console.warn('⚠️ [getUpcomingSessions] Erreur:', error)
+      return []
+    }
+    
+    // Filtrer les créneaux de l'enseignant
+    const mySlots = slots.filter(slot => {
+      const teachers = slot.teachers || []
+      return teachers.some(t => {
+        const name = typeof t === 'object' ? t.name : t
+        if (!name) return false
+        const nameLower = name.toLowerCase().trim()
+        if (userEmail && nameLower.includes(userEmail.split('@')[0].toLowerCase())) return true
+        if (teacherName && nameLower.includes(teacherName.toLowerCase())) return true
+        return false
+      })
+    })
+    
+    // Formater les séances
+    const sessions = mySlots.slice(0, limit).map(slot => ({
+      id: slot.id,
+      date: slot.date || `Semaine ${slot.week_number}`,
+      day: slot.day,
+      time: `${slot.start_time?.substring(0, 5) || ''} - ${slot.end_time?.substring(0, 5) || ''}`,
+      course: slot.course_title || slot.module_code || 'Cours',
+      module: slot.module_code,
+      room: slot.room || 'Salle N/A',
+      class: slot.class_code,
+      type: slot.activity || 'Cours',
+      weekNumber: slot.week_number
+    }))
+    
+    console.log('✅ [getUpcomingSessions] Séances à venir:', sessions.length)
+    return sessions
+  } catch (error) {
+    console.error('❌ [getUpcomingSessions] Erreur:', error)
+    return []
+  }
+}
+
+/**
+ * Calcule le numéro de semaine
+ */
+function getWeekNumber(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
+  const dayNum = d.getUTCDay() || 7
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum)
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
+  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7)
+}
+
+/**
+ * Convertit les slots en format semaine
+ */
+function formatSlotsToWeek(slots) {
+  const daysMap = {
+    'Lundi': 0, 'Mardi': 1, 'Mercredi': 2, 'Jeudi': 3, 'Vendredi': 4
+  }
+  
+  const week = [
+    { name: 'Lundi', courses: [] },
+    { name: 'Mardi', courses: [] },
+    { name: 'Mercredi', courses: [] },
+    { name: 'Jeudi', courses: [] },
+    { name: 'Vendredi', courses: [] }
+  ]
+  
+  slots.forEach(slot => {
+    const dayIndex = daysMap[slot.day]
+    if (dayIndex !== undefined && dayIndex < 5) {
+      week[dayIndex].courses.push({
+        id: slot.id,
+        time: `${slot.start_time?.substring(0, 5) || '08:00'}-${slot.end_time?.substring(0, 5) || '10:00'}`,
+        name: slot.course_title || slot.module_code || 'Cours',
+        code: slot.module_code || '',
+        room: slot.room || 'Salle N/A',
+        color: getActivityColor(slot.activity),
+        type: slot.activity || 'Cours',
+        class: slot.class_code
+      })
+    }
+  })
+  
+  // Trier par heure
+  week.forEach(day => {
+    day.courses.sort((a, b) => a.time.localeCompare(b.time))
+  })
+  
+  return week
+}
+
+function getActivityColor(activity) {
+  const colors = {
+    'Cours': '#3b82f6',
+    'CM': '#3b82f6',
+    'TP': '#10b981',
+    'TD': '#f59e0b',
+    'Examen': '#ef4444',
+    'Atelier': '#8b5cf6'
+  }
+  return colors[activity] || '#e0e7ff'
 }
 
 /**
@@ -296,32 +430,39 @@ export function calculateStats(courses, weekPlanning) {
 /**
  * Charge toutes les données du dashboard enseignant
  */
-export async function loadEnseignantDashboard(userId, userEmail) {
+export async function loadEnseignantDashboard(userId, userEmail, teacherName = null) {
   try {
     console.log('🚀 [loadEnseignantDashboard] Chargement complet pour:', userEmail)
     
-    // Charger cours et planning en parallèle
-    const [courses, weekPlanning] = await Promise.all([
+    // Charger cours, planning et séances à venir en parallèle
+    const [courses, planningData, upcomingSessions] = await Promise.all([
       getMyCourses(userId, userEmail),
-      getMyWeekPlanning(userId, userEmail)
+      getMyWeekPlanning(userId, userEmail, teacherName),
+      getUpcomingSessions(userEmail, teacherName, 15)
     ])
+    
+    const weekPlanning = planningData.week || planningData
+    const allSlots = planningData.allSlots || []
     
     // Charger les modules
     const modules = await getMyModules(courses)
     
-    // Calculer les stats
-    const stats = calculateStats(courses, weekPlanning)
+    // Calculer les stats améliorées
+    const stats = calculateStatsEnhanced(courses, weekPlanning, allSlots, upcomingSessions)
     
     const result = {
       courses,
       weekPlanning,
       modules,
+      upcomingSessions,
+      allSlots,
       stats
     }
     
     console.log('✅ [loadEnseignantDashboard] Données chargées:', {
       coursesCount: courses.length,
       modulesCount: modules.length,
+      upcomingCount: upcomingSessions.length,
       stats
     })
     
@@ -332,14 +473,69 @@ export async function loadEnseignantDashboard(userId, userEmail) {
       courses: [],
       weekPlanning: generateEmptyWeek(),
       modules: [],
+      upcomingSessions: [],
+      allSlots: [],
       stats: {
         coursesCount: 0,
         totalHours: 0,
         weeklyHours: 0,
         nextCourse: 'N/A',
         modulesCount: 0,
-        studentsCount: 0
+        studentsCount: 0,
+        upcomingCount: 0
       }
     }
+  }
+}
+
+/**
+ * Calcule les stats améliorées avec les vraies données de planning
+ */
+function calculateStatsEnhanced(courses, weekPlanning, allSlots, upcomingSessions) {
+  const totalHours = courses.reduce((sum, c) => sum + (c.hours || 0), 0)
+  
+  // Calculer les heures de la semaine depuis les vrais slots
+  let weeklyHours = 0
+  allSlots.forEach(slot => {
+    if (slot.start_time && slot.end_time) {
+      const [sh, sm] = slot.start_time.split(':').map(Number)
+      const [eh, em] = slot.end_time.split(':').map(Number)
+      weeklyHours += (eh + em/60) - (sh + sm/60)
+    } else {
+      weeklyHours += 2 // Estimation par défaut
+    }
+  })
+  weeklyHours = Math.round(weeklyHours * 10) / 10
+  
+  // Trouver le prochain cours
+  let nextCourse = 'Aucun'
+  if (upcomingSessions.length > 0) {
+    const next = upcomingSessions[0]
+    nextCourse = `${next.day} ${next.time.split(' - ')[0]}`
+  }
+  
+  // Compter les modules uniques
+  const modulesCount = new Set(courses.map(c => c.moduleId).filter(Boolean)).size
+  
+  // Total heures à venir (prochaines séances)
+  let upcomingHours = 0
+  upcomingSessions.forEach(s => {
+    const timeParts = s.time.split(' - ')
+    if (timeParts.length === 2) {
+      const [sh, sm] = timeParts[0].split(':').map(Number)
+      const [eh, em] = timeParts[1].split(':').map(Number)
+      upcomingHours += (eh + em/60) - (sh + sm/60)
+    }
+  })
+  
+  return {
+    coursesCount: courses.length,
+    totalHours,
+    weeklyHours,
+    nextCourse,
+    modulesCount,
+    studentsCount: modulesCount * 25,
+    upcomingCount: upcomingSessions.length,
+    upcomingHours: Math.round(upcomingHours * 10) / 10
   }
 }
