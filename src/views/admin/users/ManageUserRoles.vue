@@ -98,6 +98,35 @@
             </div>
           </div>
 
+          <!-- Rôles par Filière (SI/PHY) -->
+          <div class="col-12">
+            <h4 class="mt-3 mb-2">Rôles par Filière</h4>
+            <div class="track-roles-section">
+              <!-- Liste des rôles existants -->
+              <div v-if="userTrackRoles.length > 0" class="track-roles-list mb-3">
+                <div v-for="tr in userTrackRoles" :key="tr.id" class="track-role-item">
+                  <Tag :value="tr.track_id" :severity="tr.track_id === 'SI' ? 'info' : 'success'" />
+                  <Tag :value="getTrackRoleLabel(tr.role)" severity="secondary" class="ml-2" />
+                  <Button icon="pi pi-times" class="p-button-rounded p-button-text p-button-danger p-button-sm ml-2" @click="deleteTrackRole(tr.id)" />
+                </div>
+              </div>
+              <div v-else class="text-500 text-sm mb-3">Aucun rôle par filière</div>
+              
+              <!-- Ajouter un rôle -->
+              <div class="add-track-role flex gap-2 align-items-end">
+                <div class="flex-1">
+                  <label class="block mb-1 text-sm">Filière</label>
+                  <Dropdown v-model="newTrackRole.trackId" :options="trackOptions" optionLabel="label" optionValue="value" placeholder="Choisir" class="w-full" />
+                </div>
+                <div class="flex-1">
+                  <label class="block mb-1 text-sm">Rôle</label>
+                  <Dropdown v-model="newTrackRole.role" :options="trackRoleOptions" optionLabel="label" optionValue="value" placeholder="Choisir" class="w-full" />
+                </div>
+                <Button icon="pi pi-plus" label="Ajouter" size="small" @click="addTrackRole" :disabled="!newTrackRole.trackId || !newTrackRole.role" />
+              </div>
+            </div>
+          </div>
+
           <div class="col-12" v-if="hasPermissionsColumn">
             <h4 class="mt-3">Permissions</h4>
             <div class="permissions-grid">
@@ -137,7 +166,11 @@ import InputIcon from 'primevue/inputicon'
 import Dropdown from 'primevue/dropdown'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
+import Tag from 'primevue/tag'
+import { assignTrackRole, removeTrackRole } from '@/services/adminDashboardService'
+import { useAuthStore } from '@/stores/authStore'
 
+const authStore = useAuthStore()
 const loading = ref(false)
 const saving = ref(false)
 const users = ref([])
@@ -164,6 +197,19 @@ const activeOptions = [
   { label: 'Inactifs', value: false }
 ]
 
+// Options filières et rôles
+const trackOptions = [
+  { label: 'Soins Infirmiers', value: 'SI' },
+  { label: 'Physiothérapie', value: 'PHY' }
+]
+
+const trackRoleOptions = [
+  { label: 'Administrateur', value: 'ADMIN' },
+  { label: 'Responsable Module', value: 'RM' },
+  { label: 'Enseignant', value: 'TEACHER' },
+  { label: 'Secrétariat', value: 'SECRETARIAT' }
+]
+
 const quickRoles = roleOptions
 
 const filteredUsers = computed(() => {
@@ -177,6 +223,10 @@ const filteredUsers = computed(() => {
 })
 
 const form = ref({ user_id: null, email: '', display_name: '', forname: '', family_name: '', role: 'user', is_active: true })
+
+// Rôles par filière de l'utilisateur en édition
+const userTrackRoles = ref([])
+const newTrackRole = ref({ trackId: null, role: null })
 const permissions = ref({
   'page1.access': false,
   'page2.access': false,
@@ -319,14 +369,66 @@ async function loadUsers() {
   }
 }
 
-function onOpenDialog(e) {
+async function onOpenDialog(e) {
   const u = e?.data || e
   hydrateForm(u)
   // Si le champ permissions n'est pas présent sur la ligne, tenter une RPC pour récupérer les permissions depuis auth.metadata
   if (!Array.isArray(u.permissions)) {
     fetchUserPermissions(u.user_id)
   }
+  // Charger les rôles par filière
+  await loadUserTrackRoles(u.user_id)
   editorVisible.value = true
+}
+
+// Charger les rôles par filière d'un utilisateur
+async function loadUserTrackRoles(userId) {
+  try {
+    const { data, error } = await supabase
+      .from('user_track_roles')
+      .select('id, track_id, role, is_active')
+      .eq('user_id', userId)
+      .eq('is_active', true)
+    
+    if (error) throw error
+    userTrackRoles.value = data || []
+  } catch (e) {
+    console.warn('Erreur chargement rôles filière:', e)
+    userTrackRoles.value = []
+  }
+}
+
+// Ajouter un rôle par filière
+async function addTrackRole() {
+  if (!newTrackRole.value.trackId || !newTrackRole.value.role || !form.value.user_id) return
+  
+  const result = await assignTrackRole(
+    form.value.user_id,
+    newTrackRole.value.trackId,
+    newTrackRole.value.role,
+    authStore.user?.id
+  )
+  
+  if (result.success) {
+    await loadUserTrackRoles(form.value.user_id)
+    newTrackRole.value = { trackId: null, role: null }
+  } else {
+    alert('Erreur: ' + result.message)
+  }
+}
+
+// Supprimer un rôle par filière
+async function deleteTrackRole(roleId) {
+  const result = await removeTrackRole(roleId)
+  if (result.success) {
+    await loadUserTrackRoles(form.value.user_id)
+  }
+}
+
+// Label du rôle
+function getTrackRoleLabel(role) {
+  const labels = { ADMIN: 'Admin', RM: 'RM', TEACHER: 'Enseignant', SECRETARIAT: 'Secrétariat' }
+  return labels[role] || role
 }
 
 function onCloseDialog() {
@@ -455,6 +557,29 @@ onMounted(loadUsers)
 .toggle-label::after { content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; background: white; border-radius: 50%; transition: transform 0.2s; }
 .permission-toggle input[type="checkbox"]:checked + .toggle-label { background: var(--primary-color); }
 .permission-toggle input[type="checkbox"]:checked + .toggle-label::after { transform: translateX(24px); }
+
+/* Rôles par filière */
+.track-roles-section {
+  background: var(--surface-ground);
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+.track-roles-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.track-role-item {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem;
+  background: var(--surface-card);
+  border-radius: 0.25rem;
+}
+.add-track-role {
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--surface-border);
+}
 
 /* Masquer le contenu (checkbox permissions) sous la zone gelée */
 :deep(.p-datatable-scrollable .p-datatable-frozen-view) {

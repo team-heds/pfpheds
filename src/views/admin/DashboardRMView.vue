@@ -49,18 +49,24 @@
               <i class="pi pi-clock"></i>
             </div>
             <div class="stat-info">
-              <span class="stat-label">Heures totales</span>
+              <span class="stat-label">Heures contact</span>
               <span class="stat-value">{{ totalHours }}h</span>
+              <div class="stat-details">
+                <span class="stat-badge active">{{ hoursAssigned }}h assignées</span>
+              </div>
             </div>
           </div>
 
-          <div class="stat-card">
-            <div class="stat-icon" style="background: #8b5cf6;">
-              <i class="pi pi-user-edit"></i>
+          <div class="stat-card completion-card">
+            <div class="stat-icon" :style="{ background: completionPercent >= 80 ? '#10b981' : completionPercent >= 50 ? '#f59e0b' : '#ef4444' }">
+              <i class="pi pi-chart-pie"></i>
             </div>
             <div class="stat-info">
-              <span class="stat-label">Responsables de modules</span>
-              <span class="stat-value">{{ responsablesCount }}</span>
+              <span class="stat-label">Taux d'assignation</span>
+              <span class="stat-value">{{ completionPercent }}%</span>
+              <div class="progress-bar">
+                <div class="progress-fill" :style="{ width: completionPercent + '%', background: completionPercent >= 80 ? '#10b981' : completionPercent >= 50 ? '#f59e0b' : '#ef4444' }"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -102,20 +108,34 @@
           </div>
         </div>
 
-        <!-- Enseignants du module -->
+        <!-- Enseignants de mes modules -->
         <div class="section-card">
-          <h3><i class="pi pi-users"></i> Mes Enseignants</h3>
+          <div class="section-header">
+            <h3>
+              <i class="pi pi-users"></i> 
+              Enseignants de mes modules
+              <Badge :value="myTeachers.length" severity="info" class="ml-2" />
+            </h3>
+          </div>
           <div class="teachers-list">
-            <div v-for="teacher in teachers" :key="teacher.id" class="teacher-item">
+            <div v-for="teacher in myTeachers" :key="teacher.id" class="teacher-item">
+              <div class="teacher-avatar">
+                <img v-if="teacher.avatar" :src="teacher.avatar" :alt="teacher.name" />
+                <i v-else class="pi pi-user"></i>
+              </div>
               <div class="teacher-info">
                 <h4>{{ teacher.name }}</h4>
                 <p>{{ teacher.email }}</p>
+                <small class="text-500">{{ teacher.modulesCount }} module(s)</small>
               </div>
-              <span class="hours-badge">{{ teacher.hours }}h</span>
+              <div class="teacher-hours">
+                <span class="hours-badge">{{ teacher.totalHours }}h</span>
+                <Button icon="pi pi-envelope" class="p-button-rounded p-button-text p-button-sm" @click="contactTeacher(teacher)" />
+              </div>
             </div>
-            <div v-if="teachers.length === 0" class="empty-state">
+            <div v-if="myTeachers.length === 0" class="empty-state">
               <i class="pi pi-inbox"></i>
-              <p>Aucun enseignant assigné</p>
+              <p>Aucun enseignant assigné à vos modules</p>
             </div>
           </div>
         </div>
@@ -191,6 +211,55 @@
           </div>
         </div>
 
+        <!-- Vue globale Planning -->
+        <div class="section-card planning-overview">
+          <div class="section-header">
+            <h3>
+              <i class="pi pi-calendar"></i> 
+              Vue globale du Planning
+            </h3>
+            <Button icon="pi pi-refresh" text @click="loadPlanningOverview" :loading="loadingPlanning" />
+          </div>
+          
+          <div class="planning-stats-grid">
+            <div class="planning-stat-item">
+              <div class="stat-circle" :class="planningStats.validatedPercent >= 80 ? 'success' : planningStats.validatedPercent >= 50 ? 'warning' : 'danger'">
+                {{ planningStats.validatedPercent }}%
+              </div>
+              <span>Validés</span>
+            </div>
+            <div class="planning-stat-item">
+              <div class="stat-circle info">{{ planningStats.pendingCount }}</div>
+              <span>En attente</span>
+            </div>
+            <div class="planning-stat-item">
+              <div class="stat-circle" :class="planningStats.conflictsCount > 0 ? 'danger' : 'success'">{{ planningStats.conflictsCount }}</div>
+              <span>Conflits</span>
+            </div>
+            <div class="planning-stat-item">
+              <div class="stat-circle" :class="planningStats.hoursDiff === 0 ? 'success' : planningStats.hoursDiff > 0 ? 'info' : 'warning'">
+                {{ planningStats.hoursDiff >= 0 ? '+' : '' }}{{ planningStats.hoursDiff }}h
+              </div>
+              <span>Écart heures</span>
+            </div>
+          </div>
+
+          <!-- Modules avec problèmes -->
+          <div v-if="modulesWithIssues.length > 0" class="issues-list mt-3">
+            <h4 class="text-sm text-600 mb-2">Modules nécessitant attention :</h4>
+            <div v-for="issue in modulesWithIssues.slice(0, 5)" :key="issue.moduleId" class="issue-item">
+              <Tag :value="issue.type" :severity="issue.severity" class="text-xs" />
+              <span class="ml-2">{{ issue.moduleName }}</span>
+              <span class="text-500 text-sm ml-auto">{{ issue.details }}</span>
+              <Button icon="pi pi-arrow-right" text size="small" @click="goToModule(issue.moduleId)" />
+            </div>
+          </div>
+          <div v-else class="text-center py-3 text-500">
+            <i class="pi pi-check-circle text-success mr-2"></i>
+            Tous les plannings sont en ordre
+          </div>
+        </div>
+
         <!-- Actions rapides -->
         <div class="section-card">
           <h3><i class="pi pi-bolt"></i> Actions Rapides</h3>
@@ -239,8 +308,9 @@ import ProgressSpinner from 'primevue/progressspinner';
 import InputText from 'primevue/inputtext';
 import Badge from 'primevue/badge';
 import Tag from 'primevue/tag';
-import { getAllRMData } from '@/services/academicKpiService';
+import { getMyModules, getModulesTeachers, calculateStats } from '@/services/rmDashboardService';
 import { useModules } from '@/composables/useModules';
+import { supabase } from '@/supabase';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -262,23 +332,24 @@ const archivedModulesCount = ref(0);
 // Stats enseignants détaillées
 const siTeachersCount = ref(0);
 
-// Alertes
-const alerts = ref([
-  {
-    id: 1,
-    type: 'warning',
-    icon: 'pi pi-exclamation-triangle',
-    title: 'Modules sans enseignant',
-    message: 'Certains modules n\'ont pas encore d\'enseignant assigné'
-  },
-  {
-    id: 2,
-    type: 'info',
-    icon: 'pi pi-info-circle',
-    title: 'Planning à valider',
-    message: 'Le planning du semestre prochain est prêt pour validation'
-  }
-]);
+// Alertes dynamiques (calculées à partir des données)
+const alerts = ref([]);
+
+// Planning overview
+const loadingPlanning = ref(false);
+const planningStats = ref({
+  validatedPercent: 0,
+  pendingCount: 0,
+  conflictsCount: 0,
+  hoursDiff: 0
+});
+const modulesWithIssues = ref([]);
+
+// Stats avancées
+const modulesWithoutTeachers = ref([]);
+const hoursAssigned = ref(0);
+const hoursPlanned = ref(0);
+const completionPercent = ref(0);
 
 // Données
 const modules = ref([]);
@@ -286,17 +357,11 @@ const teachers = ref([]);
 const siTeachers = ref([]);
 const searchSI = ref('');
 
-// Modules de l'utilisateur connecté (filtrés par responsable)
-const myModules = computed(() => {
-  const userEmail = authStore.user?.email;
-  if (!userEmail) return [];
-  
-  return supabaseModules.value.filter(module => {
-    // Matcher par email du responsable OU par nom (pour compatibilité)
-    return module.responsable_email === userEmail || 
-           module.responsable?.toLowerCase().includes(userEmail.split('@')[0].toLowerCase());
-  });
-});
+// Modules dont l'utilisateur est responsable (chargés depuis le service)
+const myModules = ref([]);
+
+// Enseignants de mes modules
+const myTeachers = ref([]);
 
 // Modules Supabase
 const { modules: supabaseModules, loadModules } = useModules();
@@ -348,13 +413,14 @@ const filteredSITeachers = computed(() => {
 });
 
 /**
- * Charge les données RM depuis Supabase/Firebase
+ * Charge les données RM depuis Supabase
  */
 async function loadRMData() {
   loading.value = true;
   
   try {
     const userId = authStore.user?.id || authStore.user?.uid;
+    const userEmail = authStore.user?.email;
     
     if (!userId) {
       console.warn('⚠️ Aucun utilisateur connecté');
@@ -362,45 +428,56 @@ async function loadRMData() {
       return;
     }
     
-    console.log('🔄 Chargement données RM pour:', userId);
+    console.log('🔄 Chargement données RM pour:', userEmail);
     
-    // Charger les modules depuis Supabase
+    // 1. Charger tous les modules (pour la vue d'ensemble)
     await loadModules();
     
-    // Calculer les stats par année (pour les modules Supabase)
-    // Les modules Supabase ont une propriété 'year' (1, 2, 3)
-    const year1Modules = supabaseModules.value.filter(m => m.year === 1).length;
-    const year2Modules = supabaseModules.value.filter(m => m.year === 2).length;
-    const year3Modules = supabaseModules.value.filter(m => m.year === 3).length;
+    // 2. Charger MES modules (dont je suis responsable)
+    myModules.value = await getMyModules(userId, userEmail);
+    console.log('📚 Mes modules:', myModules.value.length);
     
-    activeModulesCount.value = year1Modules;
-    draftModulesCount.value = year2Modules;
-    archivedModulesCount.value = year3Modules;
+    // 3. Charger les enseignants de mes modules
+    if (myModules.value.length > 0) {
+      myTeachers.value = await getModulesTeachers(myModules.value);
+      console.log('👨‍🏫 Mes enseignants:', myTeachers.value.length);
+    }
     
-    const data = await getAllRMData(userId);
+    // 4. Calculer les stats de mes modules
+    const stats = calculateStats(myModules.value, myTeachers.value);
+    modulesCount.value = stats.modulesCount;
+    totalHours.value = stats.totalHours;
+    activeModulesCount.value = stats.modulesByYear[1] || 0;
+    draftModulesCount.value = stats.modulesByYear[2] || 0;
+    archivedModulesCount.value = stats.modulesByYear[3] || 0;
     
-    // Mettre à jour les données
-    modules.value = data.modules;
-    teachers.value = data.teachers;
-    siTeachers.value = data.siTeachers || [];
+    // 5. Stats enseignants
+    siTeachersCount.value = myTeachers.value.length;
+    teachers.value = myTeachers.value;
+    siTeachers.value = myTeachers.value;
     
-    // Calculer les stats enseignants
-    siTeachersCount.value = siTeachers.value.length;
+    // 6. Calculer heures assignées
+    hoursAssigned.value = myTeachers.value.reduce((sum, t) => sum + (t.totalHours || 0), 0);
+    hoursPlanned.value = totalHours.value;
+    completionPercent.value = hoursPlanned.value > 0 
+      ? Math.round((hoursAssigned.value / hoursPlanned.value) * 100) 
+      : 0;
     
-    // Mettre à jour les stats
-    modulesCount.value = supabaseModules.value.length; // Utiliser le comptage réel des modules
-    teachersCount.value = data.stats.teachersCount;
-    totalHours.value = data.stats.totalHours;
-    studentsCount.value = data.stats.studentsCount;
+    // 7. Identifier modules sans enseignants
+    modulesWithoutTeachers.value = myModules.value.filter(m => {
+      const moduleTeachers = myTeachers.value.filter(t => 
+        t.courses?.some(c => c.moduleId === m.id)
+      );
+      return moduleTeachers.length === 0;
+    });
+    
+    // 8. Générer alertes dynamiques
+    generateAlerts();
+    
+    // 9. Charger la vue d'ensemble du planning
+    await loadPlanningOverview();
     
     console.log('✅ Données RM chargées');
-    console.log('📚 Modules:', {
-      total: modulesCount.value,
-      active: activeModulesCount.value,
-      draft: draftModulesCount.value,
-      archived: archivedModulesCount.value
-    });
-    console.log('👥 Enseignants SI:', siTeachersCount.value);
   } catch (error) {
     console.error('❌ Erreur chargement données RM:', error);
   } finally {
@@ -430,6 +507,198 @@ function contactTeacher(teacher) {
 
 function dismissAlert(alert) {
   alerts.value = alerts.value.filter(a => a.id !== alert.id);
+}
+
+function goToModule(moduleId) {
+  router.push(`/admin/modules/${moduleId}/manage`);
+}
+
+/**
+ * Charge la vue d'ensemble du planning pour tous les modules
+ */
+async function loadPlanningOverview() {
+  if (myModules.value.length === 0) return;
+  
+  loadingPlanning.value = true;
+  try {
+    const moduleCodes = myModules.value.map(m => m.code).filter(Boolean);
+    
+    // 1. Charger les validations
+    const { data: validations } = await supabase
+      .from('planning_validations')
+      .select('*')
+      .in('module_code', moduleCodes);
+    
+    const validatedCount = (validations || []).filter(v => v.status === 'validated').length;
+    const pendingCount = (validations || []).filter(v => v.status === 'pending').length;
+    const totalModules = myModules.value.length;
+    
+    planningStats.value.validatedPercent = totalModules > 0 ? Math.round((validatedCount / totalModules) * 100) : 0;
+    planningStats.value.pendingCount = pendingCount;
+    
+    // 2. Charger les créneaux pour détecter les conflits
+    const { data: slots } = await supabase
+      .from('planning_time_slots')
+      .select('*')
+      .in('module_code', moduleCodes);
+    
+    // Détecter les conflits (même prof, même jour, même heure)
+    let conflictsCount = 0;
+    const slotsList = slots || [];
+    for (let i = 0; i < slotsList.length; i++) {
+      for (let j = i + 1; j < slotsList.length; j++) {
+        const a = slotsList[i], b = slotsList[j];
+        if (a.week_number === b.week_number && a.day === b.day) {
+          const overlap = (a.start_time || '00:00') < (b.end_time || '23:59') && 
+                          (b.start_time || '00:00') < (a.end_time || '23:59');
+          if (overlap) {
+            const teachersA = (a.teachers || []).map(t => typeof t === 'object' ? t.name : t);
+            const teachersB = (b.teachers || []).map(t => typeof t === 'object' ? t.name : t);
+            if (teachersA.some(t => teachersB.includes(t))) {
+              conflictsCount++;
+            }
+          }
+        }
+      }
+    }
+    planningStats.value.conflictsCount = conflictsCount;
+    
+    // 3. Charger les budgets heures
+    const { data: budgets } = await supabase
+      .from('module_hours_budget')
+      .select('*')
+      .in('module_code', moduleCodes);
+    
+    const plannedHours = slotsList.reduce((sum, s) => {
+      if (!s.start_time || !s.end_time) return sum;
+      const [sh, sm] = s.start_time.split(':').map(Number);
+      const [eh, em] = s.end_time.split(':').map(Number);
+      return sum + (eh + em/60) - (sh + sm/60);
+    }, 0);
+    
+    const budgetHours = (budgets || []).reduce((sum, b) => sum + (b.planned_hours || 0), 0) || 
+                        myModules.value.reduce((sum, m) => sum + (m.heures_contact || 0), 0);
+    
+    planningStats.value.hoursDiff = Math.round((plannedHours - budgetHours) * 10) / 10;
+    
+    // 4. Identifier les modules avec problèmes
+    const issues = [];
+    
+    myModules.value.forEach(m => {
+      const moduleSlots = slotsList.filter(s => s.module_code === m.code);
+      const moduleValidation = (validations || []).find(v => v.module_code === m.code);
+      
+      // Pas de planning
+      if (moduleSlots.length === 0) {
+        issues.push({
+          moduleId: m.id,
+          moduleName: m.title,
+          type: 'Sans planning',
+          severity: 'danger',
+          details: 'Aucune séance planifiée'
+        });
+      }
+      
+      // En attente de validation
+      if (moduleValidation?.status === 'pending') {
+        issues.push({
+          moduleId: m.id,
+          moduleName: m.title,
+          type: 'En attente',
+          severity: 'warning',
+          details: 'Validation en attente'
+        });
+      }
+      
+      // Heures insuffisantes
+      const moduleHours = moduleSlots.reduce((sum, s) => {
+        if (!s.start_time || !s.end_time) return sum;
+        const [sh, sm] = s.start_time.split(':').map(Number);
+        const [eh, em] = s.end_time.split(':').map(Number);
+        return sum + (eh + em/60) - (sh + sm/60);
+      }, 0);
+      const expectedHours = m.heures_contact || 0;
+      if (expectedHours > 0 && moduleHours < expectedHours * 0.8) {
+        issues.push({
+          moduleId: m.id,
+          moduleName: m.title,
+          type: 'Heures manquantes',
+          severity: 'info',
+          details: `${Math.round(moduleHours)}h / ${expectedHours}h prévues`
+        });
+      }
+    });
+    
+    modulesWithIssues.value = issues;
+    
+  } catch (error) {
+    console.error('Erreur chargement planning overview:', error);
+  } finally {
+    loadingPlanning.value = false;
+  }
+}
+
+/**
+ * Génère les alertes dynamiques basées sur les données
+ */
+function generateAlerts() {
+  const newAlerts = [];
+  let alertId = 1;
+  
+  // Alerte: Modules sans enseignant
+  if (modulesWithoutTeachers.value.length > 0) {
+    newAlerts.push({
+      id: alertId++,
+      type: 'warning',
+      icon: 'pi pi-exclamation-triangle',
+      title: `${modulesWithoutTeachers.value.length} module(s) sans enseignant`,
+      message: modulesWithoutTeachers.value.map(m => m.title).slice(0, 3).join(', ') + 
+               (modulesWithoutTeachers.value.length > 3 ? '...' : '')
+    });
+  }
+  
+  // Alerte: Faible taux d'assignation
+  if (completionPercent.value < 50 && myModules.value.length > 0) {
+    newAlerts.push({
+      id: alertId++,
+      type: 'danger',
+      icon: 'pi pi-times-circle',
+      title: 'Taux d\'assignation faible',
+      message: `Seulement ${completionPercent.value}% des heures sont assignées (${hoursAssigned.value}h / ${hoursPlanned.value}h)`
+    });
+  } else if (completionPercent.value >= 50 && completionPercent.value < 80) {
+    newAlerts.push({
+      id: alertId++,
+      type: 'info',
+      icon: 'pi pi-info-circle',
+      title: 'Assignation en cours',
+      message: `${completionPercent.value}% des heures assignées - continuez !`
+    });
+  }
+  
+  // Alerte: Tous les modules assignés
+  if (completionPercent.value >= 80 && myModules.value.length > 0) {
+    newAlerts.push({
+      id: alertId++,
+      type: 'success',
+      icon: 'pi pi-check-circle',
+      title: 'Bonne progression !',
+      message: `${completionPercent.value}% des heures sont assignées`
+    });
+  }
+  
+  // Alerte: Aucun module
+  if (myModules.value.length === 0) {
+    newAlerts.push({
+      id: alertId++,
+      type: 'info',
+      icon: 'pi pi-info-circle',
+      title: 'Aucun module assigné',
+      message: 'Contactez l\'administrateur pour vous assigner des modules'
+    });
+  }
+  
+  alerts.value = newAlerts;
 }
 </script>
 
@@ -812,12 +1081,30 @@ function dismissAlert(alert) {
   color: #3b82f6;
 }
 
-.alert-item.error {
+/* Barre de progression */
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--surface-200);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.alert-item.error,
+.alert-item.danger {
   background: #fee2e2;
   border-left: 3px solid #ef4444;
 }
 
-.alert-item.error i {
+.alert-item.error i,
+.alert-item.danger i {
   color: #ef4444;
 }
 
@@ -859,5 +1146,138 @@ function dismissAlert(alert) {
 
 .no-alerts i {
   font-size: 1.25rem;
+}
+
+/* Teacher avatar et heures */
+.teacher-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--surface-200);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.teacher-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.teacher-avatar i {
+  font-size: 1.2rem;
+  color: var(--text-color-secondary);
+}
+
+.teacher-hours {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.teacher-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  transition: background 0.2s;
+}
+
+.teacher-item:hover {
+  background: var(--surface-100);
+}
+
+/* Header avec sélecteur de filière */
+.header-with-track {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.track-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.track-selector :deep(.p-selectbutton) {
+  border-radius: 0.5rem;
+}
+
+.track-selector :deep(.p-selectbutton .p-button) {
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+}
+
+.track-selector :deep(.p-selectbutton .p-button.p-highlight) {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+/* Planning Overview */
+.planning-overview {
+  border-left: 4px solid var(--primary-color);
+}
+
+.planning-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.planning-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stat-circle {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: white;
+}
+
+.stat-circle.success { background: #10b981; }
+.stat-circle.warning { background: #f59e0b; }
+.stat-circle.danger { background: #ef4444; }
+.stat-circle.info { background: #3b82f6; }
+
+.issues-list {
+  border-top: 1px solid var(--surface-border);
+  padding-top: 1rem;
+}
+
+.issue-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  background: var(--surface-50);
+  margin-bottom: 0.5rem;
+}
+
+.issue-item:hover {
+  background: var(--surface-100);
+}
+
+@media (max-width: 768px) {
+  .planning-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 </style>
