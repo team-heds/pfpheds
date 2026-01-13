@@ -32,7 +32,7 @@
         <ul>
           <li @click="goToDocumentPFP">
             <i class="pi pi-file link-icon"></i>
-            <span>Documents PFP</span>
+            <span>Documents pour les PFP</span>
           </li>
         </ul>
         <ul>
