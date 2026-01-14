@@ -96,15 +96,30 @@
                   <i class="pi pi-clock"></i>
                   {{ session.displayTime }}
                 </div>
-                <div class="session-info">
-                  <span class="activity">{{ session.activity || 'Cours' }}</span>
-                  <span class="room" v-if="session.room">
-                    <i class="pi pi-map-marker"></i> {{ session.room }}
-                  </span>
+                <div class="session-course-info">
+                  <div class="course-title" v-if="session.courseTitle">
+                    {{ session.courseTitle }}
+                  </div>
+                  <div class="course-details">
+                    <Tag v-if="session.classCode" :value="session.classCode.toUpperCase()" severity="info" class="mr-2" />
+                    <span class="activity">{{ session.activity || 'Cours' }}</span>
+                    <span class="room" v-if="session.room">
+                      <i class="pi pi-map-marker"></i> {{ session.room }}
+                    </span>
+                  </div>
                 </div>
                 <div class="session-teachers" v-if="session.teachers?.length">
                   <i class="pi pi-users"></i>
-                  {{ session.teachers.join(', ') }}
+                  <div class="teachers-list">
+                    <Chip 
+                      v-for="(teacher, idx) in session.teachers.slice(0, 3)" 
+                      :key="idx"
+                      :label="teacher" 
+                      icon="pi pi-user"
+                      class="teacher-chip"
+                    />
+                    <Badge v-if="session.teachers.length > 3" :value="`+${session.teachers.length - 3}`" severity="warning" />
+                  </div>
                 </div>
                 <div class="session-actions">
                   <Button 
@@ -128,23 +143,22 @@
       <Dialog 
         v-model:visible="showDialog" 
         :header="editingSession?.id ? 'Modifier la séance' : 'Ajouter une séance'"
-        :style="{ width: '500px' }"
+        :style="{ width: '700px' }"
         modal
       >
         <div class="session-form" v-if="editingSession">
-          <div class="field">
-            <label>Classe</label>
-            <Dropdown 
-              v-model="editingSession.classCode" 
-              :options="classOptions" 
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Sélectionner une classe"
-              class="w-full"
-            />
-          </div>
-          
           <div class="field-row">
+            <div class="field">
+              <label>Classe / Volée</label>
+              <Dropdown 
+                v-model="editingSession.classCode" 
+                :options="classOptions" 
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Sélectionner une classe"
+                class="w-full"
+              />
+            </div>
             <div class="field">
               <label>Semaine</label>
               <InputNumber v-model="editingSession.weekNumber" :min="1" :max="52" class="w-full" />
@@ -161,35 +175,77 @@
             </div>
           </div>
           
+          <div class="field">
+            <label>Date</label>
+            <InputText v-model="editingSession.date" placeholder="Ex: 16.02.2026" class="w-full" />
+          </div>
+          
           <div class="field-row">
             <div class="field">
               <label>Heure début</label>
-              <InputText v-model="editingSession.startTime" placeholder="08:00" class="w-full" />
+              <InputText v-model="editingSession.startTime" placeholder="09:00" class="w-full" />
             </div>
             <div class="field">
               <label>Heure fin</label>
-              <InputText v-model="editingSession.endTime" placeholder="10:00" class="w-full" />
+              <InputText v-model="editingSession.endTime" placeholder="11:00" class="w-full" />
             </div>
           </div>
           
           <div class="field">
-            <label>Activité</label>
+            <label>Nom du cours (affiché dans le planning)</label>
+            <Textarea 
+              v-model="editingSession.courseTitle" 
+              placeholder="Ex: Introduction Module: questions-réponses en lien avec la vidéo"
+              :rows="2"
+              class="w-full"
+            />
+            <small class="text-500">Ce texte apparaîtra comme titre principal du cours</small>
+          </div>
+          
+          <div class="field">
+            <label>Détails / Activité complémentaire</label>
             <Dropdown 
               v-model="editingSession.activity" 
               :options="activityOptions"
               editable
+              placeholder="Type d'activité"
               class="w-full"
             />
           </div>
           
           <div class="field">
-            <label>Salle</label>
-            <InputText v-model="editingSession.room" placeholder="Salle 101" class="w-full" />
+            <label>Enseignants (max 6)</label>
+            <AutoComplete 
+              v-model="editingSession.teachers"
+              :suggestions="filteredTeachers"
+              @complete="searchTeachers"
+              optionLabel="name"
+              placeholder="Saisissez un nom (Entrée pour valider)"
+              multiple
+              :forceSelection="false"
+              class="w-full"
+            >
+              <template #option="slotProps">
+                <div class="flex align-items-center">
+                  <i v-if="slotProps.option.isNew" class="pi pi-plus mr-2 text-green-500"></i>
+                  <span :class="{ 'font-bold': slotProps.option.isNew }">
+                    {{ slotProps.option.isNew ? 'Ajouter : ' : '' }}{{ slotProps.option.name }}
+                  </span>
+                </div>
+              </template>
+            </AutoComplete>
+            <small class="text-500">Sélectionnez jusqu'à 6 enseignants</small>
           </div>
           
-          <div class="field">
-            <label>Notes</label>
-            <Textarea v-model="editingSession.notes" rows="2" class="w-full" />
+          <div class="field-row">
+            <div class="field">
+              <label>Salle</label>
+              <InputText v-model="editingSession.room" placeholder="Salle 101" class="w-full" />
+            </div>
+            <div class="field">
+              <label>Notes</label>
+              <InputText v-model="editingSession.notes" placeholder="Notes additionnelles" class="w-full" />
+            </div>
           </div>
         </div>
 
@@ -208,24 +264,26 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import PageHeader from '@/components/admin/common/PageHeader.vue'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
+import Badge from 'primevue/badge'
+import Chip from 'primevue/chip'
 import Dialog from 'primevue/dialog'
 import Dropdown from 'primevue/dropdown'
 import InputText from 'primevue/inputtext'
 import InputNumber from 'primevue/inputnumber'
 import Textarea from 'primevue/textarea'
+import AutoComplete from 'primevue/autocomplete'
 import ProgressSpinner from 'primevue/progressspinner'
 import ConfirmDialog from 'primevue/confirmdialog'
 import Toast from 'primevue/toast'
 import { supabase } from '@/supabase'
 import { 
-  getModulePlanning, 
   getModulePlanningStats,
   saveModuleTimeSlot,
   deleteModuleTimeSlot,
@@ -233,7 +291,6 @@ import {
 } from '@/services/modulePlanningService'
 
 const route = useRoute()
-const router = useRouter()
 const confirm = useConfirm()
 const toast = useToast()
 
@@ -246,6 +303,8 @@ const module = ref(null)
 const sessions = ref([])
 const stats = ref({ totalSessions: 0, totalHours: 0, weeksCount: 0 })
 const classes = ref([])
+const teachers = ref([])
+const filteredTeachers = ref([])
 
 // Dialog
 const showDialog = ref(false)
@@ -305,6 +364,24 @@ async function loadData() {
     if (classes.value.length === 0) {
       classes.value = ['bac26', 'bac25', 'bac24']
     }
+    
+    // Load teachers
+    try {
+      const { data: teacherData } = await supabase
+        .from('user_profiles')
+        .select('user_id, display_name, forname, family_name, email')
+        .in('role', ['EnseignantSoins', 'EnseignantPhysio', 'AdminSoins', 'AdminPhysio'])
+      
+      if (teacherData && teacherData.length > 0) {
+        teachers.value = teacherData.map(t => ({
+          id: t.user_id,
+          name: t.display_name || `${t.forname} ${t.family_name}`,
+          email: t.email
+        }))
+      }
+    } catch (error) {
+      console.error('Erreur chargement enseignants:', error)
+    }
   } catch (error) {
     console.error('Erreur chargement:', error)
     toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger le planning', life: 3000 })
@@ -319,10 +396,13 @@ function openAddDialog() {
     classCode: classes.value[0] || 'bac26',
     weekNumber: getCurrentWeek(),
     day: 'lundi',
+    date: '',
     startTime: '09:00',
     endTime: '11:00',
     moduleCode: module.value?.code,
+    courseTitle: '',
     activity: 'Cours',
+    teachers: [],
     room: '',
     notes: ''
   }
@@ -330,15 +410,26 @@ function openAddDialog() {
 }
 
 function openEditDialog(session) {
+  // Normaliser les enseignants en objets pour AutoComplete
+  const normalizedTeachers = (session.teachers || []).map(t => {
+    if (typeof t === 'string') {
+      return { name: t }
+    }
+    return t
+  })
+  
   editingSession.value = {
     id: session.id,
     classCode: session.classCode,
     weekNumber: session.weekNumber,
     day: session.day?.toLowerCase(),
+    date: session.date || '',
     startTime: session.startTime,
     endTime: session.endTime,
     moduleCode: session.moduleCode,
+    courseTitle: session.courseTitle || '',
     activity: session.activity,
+    teachers: normalizedTeachers,
     room: session.room,
     notes: session.notes
   }
@@ -350,15 +441,23 @@ async function saveSession() {
   
   saving.value = true
   try {
+    // Normaliser les enseignants (extraire uniquement les noms)
+    const normalizedTeachers = (editingSession.value.teachers || []).map(t => {
+      return typeof t === 'object' && t !== null ? t.name : t
+    })
+    
     await saveModuleTimeSlot({
       id: editingSession.value.id,
       class_code: editingSession.value.classCode,
       week_number: editingSession.value.weekNumber,
       day: editingSession.value.day,
+      date: editingSession.value.date,
       start_time: editingSession.value.startTime,
       end_time: editingSession.value.endTime,
       module_code: module.value?.code,
+      course_title: editingSession.value.courseTitle,
       activity: editingSession.value.activity,
+      teachers: normalizedTeachers,
       room: editingSession.value.room,
       notes: editingSession.value.notes
     })
@@ -397,6 +496,27 @@ function getCurrentWeek() {
   const diff = now - start
   const oneWeek = 604800000
   return Math.ceil(diff / oneWeek)
+}
+
+function searchTeachers(event) {
+  const query = event.query.toLowerCase()
+  
+  // Filtrer les enseignants existants
+  let filtered = []
+  if (!query.trim()) {
+    filtered = [...teachers.value]
+  } else {
+    filtered = teachers.value.filter(teacher => 
+      teacher.name.toLowerCase().includes(query)
+    )
+  }
+  
+  // Ajouter l'option de création si le texte n'existe pas exactement
+  if (query.trim() && !filtered.some(t => t.name.toLowerCase() === query)) {
+    filtered.unshift({ name: event.query, isNew: true })
+  }
+  
+  filteredTeachers.value = filtered
 }
 
 onMounted(loadData)
@@ -518,19 +638,21 @@ onMounted(loadData)
 
 .session-item {
   display: grid;
-  grid-template-columns: 100px 120px 1fr auto auto;
+  grid-template-columns: 120px 140px 1fr auto;
   align-items: center;
   gap: 1rem;
-  padding: 0.75rem 1rem;
+  padding: 1rem;
   background: var(--surface-ground);
   border-radius: 0.5rem;
   cursor: pointer;
   transition: all 0.2s;
+  border: 1px solid var(--surface-border);
 }
 
 .session-item:hover {
   background: var(--surface-100);
   transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .session-day {
@@ -540,6 +662,7 @@ onMounted(loadData)
 
 .day-name {
   font-weight: 600;
+  text-transform: capitalize;
 }
 
 .day-date {
@@ -555,14 +678,30 @@ onMounted(loadData)
   font-weight: 500;
 }
 
-.session-info {
+.session-course-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.course-title {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text-color);
+  margin-bottom: 0.25rem;
+}
+
+.course-details {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .activity {
   font-weight: 500;
+  font-size: 0.9rem;
 }
 
 .room {
@@ -570,15 +709,32 @@ onMounted(loadData)
   align-items: center;
   gap: 0.25rem;
   color: var(--text-color-secondary);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 .session-teachers {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.5rem;
   font-size: 0.85rem;
   color: var(--text-color-secondary);
+  min-width: 200px;
+}
+
+.session-teachers i {
+  margin-top: 0.3rem;
+}
+
+.teachers-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.teacher-chip {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
 }
 
 .session-actions {
@@ -612,7 +768,12 @@ onMounted(loadData)
 @media (max-width: 768px) {
   .session-item {
     grid-template-columns: 1fr;
-    gap: 0.5rem;
+    gap: 0.75rem;
+  }
+  
+  .session-teachers {
+    min-width: auto;
+    width: 100%;
   }
   
   .stats-row {

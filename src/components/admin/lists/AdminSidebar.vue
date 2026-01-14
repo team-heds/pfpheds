@@ -159,8 +159,31 @@ function isSectionOpen(label) {
   return openSections.value.has(label);
 }
 
+// Liste des emails qui n'ont pas accès à la section Académique
+const restrictedAcademicEmails = [
+  'lucienne.darbellay-fumeaux@hevs.ch',
+  'filipa.pereira@hevs.ch',
+  'aline.chappuis@hevs.ch',
+  'maude.epiney-perruchoud@hevs.ch',
+  'isabelle.salamin-plaschy@hevs.ch',
+  'rafael.weissbrodt@hevs.ch',
+  'valerie.caloz-albrecht@hevs.ch',
+  'tiffany.rapillard@hevs.ch',
+  'omar.porteladossantos@hevs.ch',
+  'jesse.curchod@hevs.ch',
+  'line.martin@hevs.ch',
+  'isabelle.rey@hevs.ch',
+  'carla.gomesdarocha@hevs.ch'
+];
+
 // Vérifier si l'utilisateur est connecté avec Supabase
 const isSupabaseUser = computed(() => authStore.isSupabaseUser && authStore.session);
+
+// Vérifier si l'utilisateur est restreint pour la section Académique
+const isRestrictedUser = computed(() => {
+  const userEmail = authStore.user?.email?.toLowerCase();
+  return userEmail && restrictedAcademicEmails.includes(userEmail);
+});
 
 // Plus de fallback ici: on n'affiche que roleStore.perms pour une source unique et cohérente
 
@@ -229,6 +252,11 @@ function canAccessRoute(route) {
 function filterMenuItems(items) {
   const result = [];
   for (const item of items) {
+    // Exclure la section "Académique" pour les utilisateurs restreints
+    if (isRestrictedUser.value && item.label === 'Académique') {
+      continue;
+    }
+    
     if (item.to && !canAccessRoute(item)) continue;
     const newItem = { ...item };
     if (item.items) {
@@ -352,6 +380,29 @@ function getSectionClass(index) {
 // Déterminer si une section doit être affichée
 function shouldShowSection(section, index) {
   if (!isSupabaseUser.value) return false;
+  
+  // Restriction spécifique pour certains utilisateurs qui ne peuvent accéder qu'à la section d'index 2
+  const userEmail = authStore.user?.email;
+  const restrictedUsers = [
+    'lucienne.darbellay-fumeaux@hevs.ch',
+    'filipa.pereira@hevs.ch',
+    'aline.chappuis@hevs.ch',
+    'maude.epiney-perruchoud@hevs.ch',
+    'isabelle.salamin-plaschy@hevs.ch',
+    'rafael.weissbrodt@hevs.ch',
+    'valerie.caloz-albrecht@hevs.ch',
+    'tiffany.rapillard@hevs.ch',
+    'omar.porteladossantos@hevs.ch',
+    'jesse.curchod@hevs.ch',
+    'line.martin@hevs.ch',
+    'isabelle.rey@hevs.ch',
+    'carla.gomesdarocha@hevs.ch'
+  ];
+  
+  if (restrictedUsers.includes(userEmail)) {
+    // Ces utilisateurs ne peuvent accéder qu'à la section d'index 2
+    return index === 2;
+  }
   
   switch (index) {
     case 0: // Admin Général - super.all OU admin

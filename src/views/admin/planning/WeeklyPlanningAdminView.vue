@@ -10,7 +10,7 @@
 
     <div class="weekly-planning-admin">
       <!-- Actions rapides -->
-      <Card>
+      <Card v-if="!isReadOnly">
         <template #content>
           <div class="flex gap-2 flex-wrap justify-content-end">
             <Button
@@ -146,7 +146,7 @@
             -->
             
             <Button 
-              v-if="viewMode === 'week'"
+              v-if="viewMode === 'week' && !isReadOnly"
               label="Dupliquer Semaine"
               icon="pi pi-copy"
               @click="showDuplicateDialog = true"
@@ -180,7 +180,7 @@
               </p>
             </div>
             <Button 
-              v-if="viewMode === 'week'"
+              v-if="viewMode === 'week' && !isReadOnly"
               label="Ajouter un créneau"
               icon="pi pi-plus"
               @click="openSlotDialog()"
@@ -316,7 +316,7 @@
               </template>
             </Column>
             
-            <Column v-if="viewMode === 'week'" header="Actions" :frozen="true" alignFrozen="right" style="width: 8rem">
+            <Column v-if="viewMode === 'week' && !isReadOnly" header="Actions" :frozen="true" alignFrozen="right" style="width: 8rem">
               <template #body="slotProps">
                 <div class="flex gap-2">
                   <Button 
@@ -550,13 +550,38 @@ import planningService from '@/service/planningService'
 import academicYearService from '@/service/academicYearService'
 import { getSITeachers } from '@/services/academicKpiService'
 import { supabase } from '@/supabase'
+import { useAuthStore } from '@/stores/authStore'
 
 const router = useRouter()
 const toast = useToast()
+const authStore = useAuthStore()
+
+// Liste des emails en lecture seule (sans accès aux modifications)
+const readOnlyEmails = [
+  'lucienne.darbellay-fumeaux@hevs.ch',
+  'filipa.pereira@hevs.ch',
+  'aline.chappuis@hevs.ch',
+  'maude.epiney-perruchoud@hevs.ch',
+  'isabelle.salamin-plaschy@hevs.ch',
+  'rafael.weissbrodt@hevs.ch',
+  'valerie.caloz-albrecht@hevs.ch',
+  'tiffany.rapillard@hevs.ch',
+  'omar.porteladossantos@hevs.ch',
+  'jesse.curchod@hevs.ch',
+  'line.martin@hevs.ch',
+  'isabelle.rey@hevs.ch',
+  'carla.gomesdarocha@hevs.ch'
+]
+
+// Vérifier si l'utilisateur est en mode lecture seule
+const isReadOnly = computed(() => {
+  const userEmail = authStore.user?.email?.toLowerCase()
+  return userEmail && readOnlyEmails.includes(userEmail)
+})
 
 // État
 const selectedYear = ref(null)
-const selectedWeek = ref(null)
+const selectedWeek = ref(null) // Pas de semaine par défaut, l'utilisateur doit choisir
 const viewMode = ref('week') // 'week', 'semester1', 'semester2'
 const timeSlots = ref([])
 const courseModules = ref([])
@@ -672,25 +697,25 @@ const onViewModeChange = async () => {
 }
 
 onMounted(async () => {
-  // Charger les années académiques
+  // Charger les données nécessaires dans le bon ordre
   try {
+    // 1. Charger les modules de cours en PREMIER
+    courseModules.value = await planningService.getAllCourseModules()
+    
+    // 2. Charger les années académiques
     const years = await academicYearService.getAcademicYears()
     yearOptions.value = years.map(y => ({
       label: y.name,
       value: y.id // id est le code de la classe, ex: "bac25"
     }))
     
-    // Sélectionner l'année active par défaut
+    // 3. Sélectionner l'année active par défaut
     const activeYear = years.find(y => y.is_active)
     if (activeYear) {
       selectedYear.value = activeYear.id
-      // Charger les modules pour cette année (fonction manquante dans le composant d'origine, on charge juste le planning si possible)
     }
     
-    // Charger les modules de cours
-    courseModules.value = await planningService.getAllCourseModules()
-    
-    // Charger les enseignants SI (avec fallback direct)
+    // 4. Charger les enseignants SI (avec fallback direct)
     const teachers = await getSITeachers()
     if (teachers && teachers.length > 0) {
       siTeachers.value = teachers
@@ -710,6 +735,9 @@ onMounted(async () => {
       }
     }
     
+    // L'utilisateur doit sélectionner manuellement l'année et la semaine
+    console.log('✅ Initialisation terminée. En attente de sélection utilisateur.')
+    
   } catch (error) {
     console.error('Erreur initialisation:', error)
     toast.add({
@@ -722,10 +750,23 @@ onMounted(async () => {
 })
 
 const loadWeekPlanning = async () => {
-  if (!selectedWeek.value || !selectedYear.value) return
+  if (!selectedWeek.value || !selectedYear.value) {
+    console.warn('⚠️ Impossible de charger le planning:', { 
+      selectedWeek: selectedWeek.value, 
+      selectedYear: selectedYear.value 
+    })
+    return
+  }
   
   try {
+    console.log('🔄 Chargement planning pour:', { 
+      year: selectedYear.value, 
+      week: selectedWeek.value 
+    })
+    
     const slots = await planningService.getWeekTimeSlots(selectedYear.value, selectedWeek.value)
+    
+    console.log('✅ Créneaux reçus:', slots.length)
     
     // Convertir snake_case en camelCase pour compatibilité avec le template
     timeSlots.value = slots.map(slot => ({
@@ -744,8 +785,19 @@ const loadWeekPlanning = async () => {
       notes: slot.notes,
       weekNumber: slot.week_number
     }))
+    
+    console.log('✅ Planning chargé avec', timeSlots.value.length, 'créneaux')
+    
+    if (timeSlots.value.length === 0) {
+      toast.add({
+        severity: 'info',
+        summary: 'Information',
+        detail: 'Aucun créneau trouvé pour cette semaine',
+        life: 3000
+      })
+    }
   } catch (error) {
-    console.error('Erreur chargement planning:', error)
+    console.error('❌ Erreur chargement planning:', error)
     toast.add({
       severity: 'error',
       summary: 'Erreur',

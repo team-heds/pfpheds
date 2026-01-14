@@ -64,12 +64,32 @@ const password = ref('');
 const { layoutConfig } = useLayout();
 const darkMode = ref(layoutConfig.colorScheme.value !== 'light');
 
+// Liste des emails qui doivent être redirigés directement vers /admin
+const adminDirectEmails = [
+  'lucienne.darbellay-fumeaux@hevs.ch',
+  'filipa.pereira@hevs.ch',
+  'aline.chappuis@hevs.ch',
+  'maude.epiney-perruchoud@hevs.ch',
+  'isabelle.salamin-plaschy@hevs.ch',
+  'rafael.weissbrodt@hevs.ch',
+  'valerie.caloz-albrecht@hevs.ch',
+  'tiffany.rapillard@hevs.ch',
+  'omar.porteladossantos@hevs.ch',
+  'jesse.curchod@hevs.ch',
+  'line.martin@hevs.ch',
+  'isabelle.rey@hevs.ch',
+  'carla.gomesdarocha@hevs.ch'
+];
+
 const submitForm = async () => {
   try {
     await authStore.signInFirebase({ email: email.value, password: password.value });
     toast.add({ severity: 'success', summary: 'Connexion réussie', detail: 'Vous allez être redirigé vers le feed...', life: 3000 });
+    
+    // Rediriger vers /admin si l'email est dans la liste, sinon vers /feed
+    const redirectPath = adminDirectEmails.includes(email.value.toLowerCase()) ? '/admin/dashboard-rm' : '/feed';
     setTimeout(() => {
-      router.push('/feed');
+      router.push(redirectPath);
     }, 1500);
   } catch (error) {
     console.error('Firebase login error:', error);

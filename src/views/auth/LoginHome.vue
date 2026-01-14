@@ -84,6 +84,23 @@ const router = useRouter()
 const toast = useToast()
 const authStore = useAuthStore()
 
+// Liste des emails qui doivent être redirigés directement vers /admin
+const adminDirectEmails = [
+  'lucienne.darbellay-fumeaux@hevs.ch',
+  'filipa.pereira@hevs.ch',
+  'aline.chappuis@hevs.ch',
+  'maude.epiney-perruchoud@hevs.ch',
+  'isabelle.salamin-plaschy@hevs.ch',
+  'rafael.weissbrodt@hevs.ch',
+  'valerie.caloz-albrecht@hevs.ch',
+  'tiffany.rapillard@hevs.ch',
+  'omar.porteladossantos@hevs.ch',
+  'jesse.curchod@hevs.ch',
+  'line.martin@hevs.ch',
+  'isabelle.rey@hevs.ch',
+  'carla.gomesdarocha@hevs.ch'
+]
+
 // Méthode de connexion Supabase
 const submitFormSupabase = async () => {
   emailError.value = !email.value || !email.value.includes('@')
@@ -113,7 +130,9 @@ const submitFormSupabase = async () => {
       life: 3000 
     })
     
-    setTimeout(() => router.push('/feed'), 1500)
+    // Rediriger vers /admin/dashboard-rm si l'email est dans la liste, sinon vers /feed
+    const redirectPath = adminDirectEmails.includes(email.value.toLowerCase()) ? '/admin/dashboard-rm' : '/feed'
+    setTimeout(() => router.push(redirectPath), 1500)
   } catch (error) {
     console.error('Supabase login error:', error)
     toast.add({ 

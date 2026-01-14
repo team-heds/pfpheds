@@ -136,9 +136,11 @@ export default [
     items: [
       // Dashboard Soins Infirmiers
       { label: 'Dashboard RM', icon: 'pi pi-chart-line', to: '/admin/dashboard-rm' },
-      { label: 'Dashboard Enseignant', icon: 'pi pi-graduation-cap', to: '/admin/dashboard-enseignant' },
-      { label: 'Gestion Rôles SI/PHY', icon: 'pi pi-id-card', to: '/admin/role-management' },
-      
+      { label: 'Dashboard Enseignant', icon: 'pi pi-map', to: '/admin/dashboard-enseignant' },
+              { label: 'Planning Public', icon: 'pi pi-calendar-plus', to: '/admin/planning/weekly' },
+      { label: 'Ticket Tâches', icon: 'pi pi-th-large', to: '/admin/academic/kanban' },
+          { label: 'Contenu Multimédia', icon: 'pi pi-video', to: '/admin/academic/video-library' },
+
       // Académique
       {
         label: 'Académique',
@@ -157,7 +159,8 @@ export default [
             ]
           },
           
-          // Cours
+          // Cours 
+           /*
           {
             label: 'Cours',
             icon: 'pi pi-book',
@@ -166,8 +169,7 @@ export default [
               { label: 'Créer un Cours', icon: 'pi pi-plus-circle', to: '/admin/courses/create' }
             ]
           },
-          
-          { label: 'Tâches', icon: 'pi pi-th-large', to: '/admin/academic/kanban' },
+          */
           { label: 'Contenu Multimédia', icon: 'pi pi-video', to: '/admin/academic/video-library' }
         ]
       }
