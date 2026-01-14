@@ -37,7 +37,7 @@ declare module 'vue' {
     BadgeCard: typeof import('./components/gamification/BadgeCard.vue')['default']
     BadgeManagement: typeof import('./components/admin/BadgeManagement.vue')['default']
     BandeauGameMaster: typeof import('./components/gamification/BandeauGameMaster.vue')['default']
-    BandeauMaison: typeof import('./components/gamification/BandeauMaison.vue')['default']
+    BandeauMaison: typeof import('./components/Profile/BandeauMaison.vue')['default']
     BarChart: typeof import('./components/admin/widgets/charts/BarChart.vue')['default']
     BlockViewer: typeof import('./components/ui/BlockViewer.vue')['default']
     BracketView: typeof import('./components/tournois/BracketView.vue')['default']
@@ -166,7 +166,6 @@ declare module 'vue' {
     OverlayPanel: typeof import('primevue/overlaypanel')['default']
     PageHeader: typeof import('./components/admin/common/PageHeader.vue')['default']
     PageList: typeof import('./components/editor/notes/PageList.vue')['default']
-    PageTemplate: typeof import('./components/ui/templates/PageTemplate.vue')['default']
     Panel: typeof import('primevue/panel')['default']
     Password: typeof import('primevue/password')['default']
     PdfViewerModal: typeof import('./components/careconvers/PdfViewerModal.vue')['default']
@@ -263,6 +262,6 @@ declare module 'vue' {
     VotationPrioritaire: typeof import('./components/admin/details/VotationPrioritaire.vue')['default']
     VotationResultProfil: typeof import('./components/user/details/VotationResultProfil.vue')['default']
     WebcamCapture: typeof import('./components/social/library/WebcamCapture.vue')['default']
-    XPBar: typeof import('./components/gamification/XPBar.vue')['default']
+    XPBar: typeof import('./components/Profile/XPBar.vue')['default']
   }
 }
