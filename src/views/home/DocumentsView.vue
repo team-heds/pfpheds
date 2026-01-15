@@ -225,42 +225,37 @@ const folders = computed(() => documentStore.folders)
 // Vérification des droits admin depuis Supabase
 const checkAdminRights = async () => {
   try {
-    console.log('🔍 [DocumentsView] === DÉBUT VÉRIFICATION ADMIN ===')
-    console.log('🔍 [DocumentsView] authStore.user:', authStore.user)
-    console.log('🔍 [DocumentsView] authStore.isSupabaseUser:', authStore.isSupabaseUser)
+    console.log('🔍 [DocumentsView] Vérification droits admin...')
     
     const user = authStore.user
     
     if (!user) {
-      console.log('❌ [DocumentsView] Aucun utilisateur connecté')
-      debugInfo.value = 'Pas connecté'
+      console.log('ℹ️ [DocumentsView] Aucun utilisateur connecté (mode public)')
+      debugInfo.value = 'Mode Lecture'
       isAdmin.value = false
       return
     }
 
-    console.log('👤 [DocumentsView] Utilisateur:', user.email, 'ID:', user.id)
+    console.log('👤 [DocumentsView] Utilisateur:', user.email)
     debugInfo.value = `User: ${user.email}`
     
     // Vérifier si l'utilisateur est admin dans user_profiles
-    console.log('📊 [DocumentsView] Requête Supabase user_profiles...')
     const { data, error } = await supabase
       .from('user_profiles')
       .select('role, email')
       .eq('user_id', user.id)
-      .single()
-    
-    console.log('📊 [DocumentsView] Réponse Supabase:', { data, error })
+      .maybeSingle()
     
     if (error) {
-      console.error('❌ [DocumentsView] Erreur récupération profil:', error)
-      debugInfo.value = `Erreur: ${error.message}`
+      console.warn('⚠️ [DocumentsView] Erreur profil (mode lecture activé):', error.message)
+      debugInfo.value = 'Mode Lecture'
       isAdmin.value = false
       return
     }
     
     if (!data) {
-      console.warn('⚠️ [DocumentsView] Aucun profil trouvé dans user_profiles')
-      debugInfo.value = 'Profil introuvable'
+      console.log('ℹ️ [DocumentsView] Pas de profil (mode lecture)')
+      debugInfo.value = 'Mode Lecture'
       isAdmin.value = false
       return
     }
@@ -268,15 +263,13 @@ const checkAdminRights = async () => {
     // Vérifier si le rôle est admin ou editor
     const hasAdminRights = data.role === 'admin' || data.role === 'editor'
     isAdmin.value = hasAdminRights
-    debugInfo.value = `Role: ${data.role}`
+    debugInfo.value = hasAdminRights ? `Admin: ${data.role}` : 'Mode Lecture'
     
-    console.log('✅ [DocumentsView] isAdmin =', isAdmin.value)
-    console.log('✅ [DocumentsView] Role:', data.role)
-    console.log('🔍 [DocumentsView] === FIN VÉRIFICATION ADMIN ===')
+    console.log('✅ [DocumentsView] Mode:', hasAdminRights ? 'Admin' : 'Lecture')
     
   } catch (err) {
-    console.error('❌ [DocumentsView] Erreur vérification admin:', err)
-    debugInfo.value = `Exception: ${err.message}`
+    console.warn('⚠️ [DocumentsView] Erreur vérification (mode lecture):', err.message)
+    debugInfo.value = 'Mode Lecture'
     isAdmin.value = false
   }
 }
@@ -299,15 +292,23 @@ watch(
 // Récupérer les dossiers depuis Firebase via le store
 onMounted(async () => {
   try {
-    console.log('🚀 [DocumentsView] onMounted - Début')
+    console.log('🚀 [DocumentsView] Chargement des documents...')
     
-    // Vérifier les droits admin depuis Supabase
-    await checkAdminRights()
-    
-    // Charger les documents
+    // Charger les documents en premier (accessible à tous)
     await documentStore.loadFoldersTree()
     
-    console.log('✅ [DocumentsView] onMounted - Terminé')
+    // Ouvrir tous les dossiers par défaut pour que les documents soient visibles
+    if (documentStore.folders && documentStore.folders.length > 0) {
+      documentStore.folders.forEach(folder => {
+        if (folder.id) openFolders.value.add(folder.id)
+      })
+      console.log('✅ [DocumentsView] Dossiers ouverts:', openFolders.value.size)
+    }
+    
+    // Vérifier les droits admin en parallèle (non bloquant)
+    checkAdminRights()
+    
+    console.log('✅ [DocumentsView] Documents chargés')
   } catch (error) {
     console.error('❌ [DocumentsView] Erreur chargement:', error)
   }

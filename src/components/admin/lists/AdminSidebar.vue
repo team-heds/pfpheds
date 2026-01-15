@@ -212,17 +212,19 @@ function canAccessRoute(route) {
   const last = resolved.matched.at(-1);
   // Aliases pour supporter anciens et nouveaux noms
   const alias = (p) => {
-    if (!p || typeof p !== 'string') return p;
-    if (p === 'page1') return 'page1.access';
-    if (p === 'page2') return 'page2.access';
-    if (p.endsWith('.access')) return p.slice(0, -7); // AdminPhysio.access -> AdminPhysio
-    return p;
+    if (!p) return p;
+    // S'assurer que p est une string
+    const pStr = String(p);
+    if (pStr === 'page1') return 'page1.access';
+    if (pStr === 'page2') return 'page2.access';
+    if (pStr.endsWith('.access')) return pStr.slice(0, -7); // AdminPhysio.access -> AdminPhysio
+    return pStr;
   };
 
   const need = alias(last?.meta?.need ?? resolved.meta?.need);
   let reqRoles = last?.meta?.requiredRole ?? resolved.meta?.requiredRole;
   reqRoles = Array.isArray(reqRoles) ? reqRoles : (reqRoles ? [reqRoles] : []);
-  reqRoles = reqRoles.map(alias);
+  reqRoles = reqRoles.map(alias).filter(r => r && typeof r === 'string');
 
   // S'il n'y a aucune contrainte explicite, laisser visible
   if (!need && reqRoles.length === 0) return true;

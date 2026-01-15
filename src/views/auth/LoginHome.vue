@@ -12,7 +12,7 @@
 
       <!-- Section droite - Sélection de connexion -->
       <div class="flex flex-column justify-content-center align-items-center w-full lg:w-6 p-4 lg:p-7">
-        <h1 class="title-hero text-4xl lg:text-6xl text-left mb-4">La formation pratique c’est par ici</h1>
+        <h1 class="title-hero text-4xl lg:text-6xl text-left mb-4">Veuillez vous connecter :</h1>
 
         <!-- Système d'onglets pour choisir le type de connexion -->
         <div class="w-full" style="max-width: 28rem;">
