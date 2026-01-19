@@ -118,20 +118,50 @@ const isSettingsDialogVisible = ref(false);
 const userRoles = ref(null);
 const hasAdminAccess = ref(false);
 
+const restrictedAcademicEmails = [
+  'lucienne.darbellay-fumeaux@hevs.ch',
+  'filipa.pereira@hevs.ch',
+  'aline.chappuis@hevs.ch',
+  'maude.epiney-perruchoud@hevs.ch',
+  'isabelle.salamin-plaschy@hevs.ch',
+  'rafael.weissbrodt@hevs.ch',
+  'valerie.caloz-albrecht@hevs.ch',
+  'tiffany.rapillard@hevs.ch',
+  'omar.porteladossantos@hevs.ch',
+  'jesse.curchod@hevs.ch',
+  'line.martin@hevs.ch',
+  'isabelle.rey@hevs.ch',
+  'carla.gomesdarocha@hevs.ch'
+];
+
 const allMenuItems = [
   { icon: "pi pi-home", link: "/feed", title: "Accueil" },
   { icon: "pi pi-bookmark", link: "/institution", title: "institutions" },
   { icon: "pi pi-check", link: "/votation", title: "Votation PFP1A", pfpCohort: "PFP1A" },
   { icon: "pi pi-check", link: "/votation_pfp1b", title: "Votation PFP1B", pfpCohort: "PFP1B" },
   { icon: "pi pi-map-marker", link: "/map", title: "Map" },
-  { icon: "pi pi-user-plus", link: "/admin", title: "Admin", adminOnly: true }
+  { icon: "pi pi-user-plus", link: "/admin", title: "Admin", adminOnly: true },
+  { icon: "pi pi-chart-bar", link: "/admin/dashboard-rm", title: "Dashboard", restrictedAcademicOnly: true }
 ];
 
 // Computed property pour filtrer les items selon le profil de l'utilisateur
 const filteredMenuItems = computed(() => {
+  const currentUser = authStore.user;
+  const isRestrictedAcademic = currentUser && restrictedAcademicEmails.includes(currentUser.email);
+
+  // Si l'utilisateur a un email académique restreint, ne montrer que le bouton Dashboard
+  if (isRestrictedAcademic) {
+    return allMenuItems.filter(item => item.title === 'Dashboard');
+  }
+
   return allMenuItems.filter(item => {
     // Si l'item nécessite un accès admin
     if (item.adminOnly && !hasAdminAccess.value) {
+      return false;
+    }
+    
+    // Si l'item a une restriction restrictedAcademicOnly
+    if (item.restrictedAcademicOnly) {
       return false;
     }
     
@@ -206,7 +236,8 @@ const updateUserState = async () => {
         if (snapshot.exists()) {
           const userData = snapshot.val();
           userRoles.value = userData.Roles || {};
-          hasAdminAccess.value = userData.Roles?.admin || userData.Roles?.editor || false;
+          const isRestrictedAcademic = restrictedAcademicEmails.includes(currentUser.email);
+          hasAdminAccess.value = userData.Roles?.admin || userData.Roles?.editor || isRestrictedAcademic;
         } else {
           console.warn('Aucune donnée utilisateur trouvée dans Firebase.');
         }
@@ -226,7 +257,8 @@ const updateUserState = async () => {
       console.log('Navbar - PFP Cohort:', userProfile?.pfp_cohort);
       
       userRoles.value = { user: true }; // Rôle par défaut
-      hasAdminAccess.value = userProfile?.role === 'admin' || false;
+      const isRestrictedAcademic = restrictedAcademicEmails.includes(currentUser.email);
+      hasAdminAccess.value = userProfile?.role === 'admin' || isRestrictedAcademic;
     }
   } else {
     console.log('Navbar - Aucun utilisateur connecté');
