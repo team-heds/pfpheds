@@ -39,7 +39,7 @@
     <!-- Contenu principal -->
     <div v-else class="module-manage-container">
       
-      <!-- Actions rapides -->
+      <!-- Actions rapides 
       <div class="module-actions-bar">
         <Button 
           icon="pi pi-calendar" 
@@ -54,11 +54,204 @@
           outlined
           @click="activeTab = 1"
         />
-      </div>
+      </div>-->
       
       <!-- Onglets de gestion -->
       <TabView>
         
+        <!-- Onglet: Planning -->
+        <TabPanel header="Planning">
+          <Card>
+            <template #content>
+              <!-- Header avec filtres -->
+              <div class="flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+                <div class="flex align-items-center gap-3">
+                  <h3 class="m-0">Planning du module</h3>
+                  <Tag v-if="selectedClass" :value="`${filteredPlanning.length} séances`" severity="info" />
+                </div>
+                <div class="flex align-items-center gap-2 flex-wrap">
+                  <Button 
+                    label="Temps plein BAC 25"
+                    :severity="selectedClass === 'BAC25' ? 'primary' : 'secondary'"
+                    :outlined="selectedClass !== 'BAC25'"
+                    @click="selectedClass = selectedClass === 'BAC25' ? null : 'BAC25'"
+                  />
+                  <Button 
+                    label="Temps partiel BAC24-TP"
+                    :severity="selectedClass === 'BAC24-TP' ? 'primary' : 'secondary'"
+                    :outlined="selectedClass !== 'BAC24-TP'"
+                    @click="selectedClass = selectedClass === 'BAC24-TP' ? null : 'BAC24-TP'"
+                  />
+                  <Button 
+                    icon="pi pi-refresh" 
+                    severity="secondary" 
+                    outlined
+                    @click="loadModulePlanning"
+                    :loading="loadingPlanning"
+                    v-tooltip="'Actualiser'"
+                  />
+                  <Button 
+                    icon="pi pi-file-excel" 
+                    severity="secondary" 
+                    outlined
+                    @click="exportPlanningToExcel"
+                    :disabled="filteredPlanning.length === 0"
+                    v-tooltip="'Exporter en Excel'"
+                  />
+                  <Button 
+                    icon="pi pi-file-pdf" 
+                    severity="secondary" 
+                    outlined
+                    @click="exportPlanningToPDF"
+                    :disabled="filteredPlanning.length === 0"
+                    v-tooltip="'Exporter en PDF'"
+                  />
+                  <div class="flex border-round overflow-hidden">
+                    <Button 
+                      icon="pi pi-list" 
+                      :severity="planningView === 'list' ? 'primary' : 'secondary'"
+                      :outlined="planningView !== 'list'"
+                      @click="planningView = 'list'"
+                      v-tooltip="'Vue liste'"
+                      class="border-noround-right"
+                    />
+                  </div>
+                  <Button 
+                    label="Gérer le planning" 
+                    icon="pi pi-external-link" 
+                    @click="$router.push(`/admin/modules/${moduleId}/planning`)"
+                  />
+                </div>
+              </div>
+
+              <!-- Liste des séances -->
+              <div v-if="loadingPlanning" class="text-center p-4">
+                <ProgressSpinner style="width: 40px; height: 40px" />
+              </div>
+              
+              <div v-else-if="filteredPlanning.length === 0" class="text-center p-5">
+                <i class="pi pi-hand-pointer text-6xl text-400 mb-3"></i>
+                <h4>Sélectionnez une classe</h4>
+                <p class="text-600 mb-4">Sélectionnez temps plein ou temps partiel BAC24-TP pour voir le planning</p>
+                <div class="flex justify-content-center gap-3">
+                  <Button 
+                    label="Temps plein BAC 25"
+                    :severity="selectedClass === 'BAC25' ? 'primary' : 'secondary'"
+                    :outlined="selectedClass !== 'BAC25'"
+                    @click="selectedClass = selectedClass === 'BAC25' ? null : 'BAC25'"
+                    size="large"
+                  />
+                  <Button 
+                    label="Temps partiel BAC24-TP"
+                    :severity="selectedClass === 'BAC24-TP' ? 'primary' : 'secondary'"
+                    :outlined="selectedClass !== 'BAC24-TP'"
+                    @click="selectedClass = selectedClass === 'BAC24-TP' ? null : 'BAC24-TP'"
+                    size="large"
+                  />
+                </div>
+              </div>
+
+              <!-- Vue Liste -->
+              <div v-else-if="planningView === 'list'" class="planning-list">
+                <DataTable 
+                  :value="flatPlanningData" 
+                  responsiveLayout="scroll"
+                  :rowClass="rowClass"
+                  class="planning-datatable"
+                >
+                  <Column field="week_number" header="Semaine" style="width: 120px">
+                    <template #body="{ data }">
+                      <div v-if="data.isFirstSlotOfWeek" class="week-header-cell">
+                        <div class="week-content">
+                          <Button 
+                            icon="pi pi-plus" 
+                            severity="secondary" 
+                            text
+                            rounded
+                            size="small"
+                            @click="addSessionToWeek(data.week_number)"
+                            v-tooltip="'Ajouter une séance'"
+                            class="add-button-inline"
+                          />
+                          <div class="week-badge">
+                            <i class="pi pi-calendar"></i>
+                            <span class="week-text">Semaine {{ data.week_number }}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </template>
+                  </Column>
+                  <Column field="day" header="Jour" style="width: 140px">
+                    <template #body="{ data }">
+                      <div v-if="data.isFirstSlotOfDay" class="day-header-cell">
+                        <div class="day-badge">
+                          <div class="day-circle">
+                            <span class="day-initial">{{ formatDay(data.day).charAt(0) }}</span>
+                          </div>
+                          <div class="day-info">
+                            <span class="day-name">{{ formatDay(data.day) }}</span>
+                            <span class="day-date">{{ data.date || '' }}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </template>
+                  </Column>
+                  <Column field="date" header="Date" sortable style="width: 100px" />
+                  <Column header="Horaire" style="width: 120px">
+                    <template #body="{ data }">
+                      <div class="time-slot">{{ data.start_time?.substring(0,5) }} - {{ data.end_time?.substring(0,5) }}</div>
+                    </template>
+                  </Column>
+                  <Column field="course_title" header="Cours" style="width: 200px" class="course-title-cell">
+                    <template #body="{ data }">
+                      <div class="course-title">{{ data.course_title || module?.title || '—' }}</div>
+                    </template>
+                  </Column>
+                  <Column field="teacher_name" header="Enseignant" style="width: 150px">
+                    <template #body="{ data }">
+                      <div class="flex align-items-center gap-2">
+                        <i class="pi pi-user text-500"></i>
+                        <span>{{ data.teacher_name || '—' }}</span>
+                      </div>
+                    </template>
+                  </Column>
+                  <Column field="activity" header="Type" style="width: 100px">
+                    <template #body="{ data }">
+                      <Tag :value="data.activity || 'Cours'" :severity="getActivitySeverity(data.activity)" />
+                    </template>
+                  </Column>
+                  <Column field="room" header="Salle" style="width: 100px">
+                    <template #body="{ data }">
+                      {{ data.room || '—' }}
+                    </template>
+                  </Column>
+                  <Column field="class_code" header="Classe" style="width: 80px">
+                    <template #body="{ data }">
+                      <Tag 
+                        :value="normalizeClass(data.class_code)" 
+                        size="small"
+                        :style="{ backgroundColor: '#' + getClassDisplayColor(data.class_code), color: getClassTextColor(data.class_code) }"
+                      />
+                    </template>
+                  </Column>
+                  <Column header="Actions" style="width: 80px" bodyStyle="text-align: center">
+                    <template #body="{ data }">
+                      <Button 
+                        icon="pi pi-pencil" 
+                        severity="secondary" 
+                        outlined
+                        size="small"
+                        @click="editSession(data)"
+                        v-tooltip="'Modifier cette séance'"
+                      />
+                    </template>
+                  </Column>
+                </DataTable>
+              </div>
+            </template>
+          </Card>
+        </TabPanel>
+
         <!-- Onglet: Informations générales -->
         <TabPanel header="Informations générales">
           <Card>
@@ -228,21 +421,49 @@
         <TabPanel header="Enseignants">
           <Card>
             <template #content>
-              <div class="mb-3">
-                <Button 
-                  label="Ajouter un enseignant" 
-                  icon="pi pi-plus" 
-                  @click="showAddTeacherDialog = true"
-                />
+              <!-- Filtres et mode -->
+              <div class="flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+                <div class="flex align-items-center gap-3">
+                  <h3 class="m-0">Enseignants</h3>
+                  <Tag :value="`${filteredTeachersList.length} enseignants`" severity="info" />
+                </div>
+                <div class="flex align-items-center gap-2 flex-wrap">
+                  <!-- Filtre par type de classe (comme le planning) -->
+                  <Button 
+                    label="Temps plein BAC 25"
+                    :severity="classFilter === 'BAC25' ? 'primary' : 'secondary'"
+                    :outlined="classFilter !== 'BAC25'"
+                    @click="classFilter = classFilter === 'BAC25' ? null : 'BAC25'"
+                  />
+                  <Button 
+                    label="Temps partiel BAC24-TP"
+                    :severity="classFilter === 'BAC24-TP' ? 'primary' : 'secondary'"
+                    :outlined="classFilter !== 'BAC24-TP'"
+                    @click="classFilter = classFilter === 'BAC24-TP' ? null : 'BAC24-TP'"
+                  />
+                  
+                <!--   <Button 
+                    label="Ajouter un enseignant" 
+                    icon="pi pi-plus" 
+                    @click="showAddTeacherDialog = true"
+                  />-->
+                </div>
               </div>
 
-              <DataTable :value="teachersWithStats" responsiveLayout="scroll" stripedRows>
+              <!-- DataTable Enseignants -->
+              <DataTable 
+                :value="filteredTeachersList" 
+                responsiveLayout="scroll" 
+                stripedRows
+                :loading="loadingGlobalTeachers"
+              >
                 <Column field="name" header="Nom" sortable>
                   <template #body="{ data }">
                     <div class="flex align-items-center gap-2">
                       <i class="pi pi-user text-primary"></i>
                       <span class="font-medium">{{ data.name }}</span>
                       <Tag v-if="data.source === 'planning'" value="Planning" severity="secondary" class="text-xs" />
+                      <Tag v-if="data.modules" :value="`${data.modules.length} modules`" severity="info" class="text-xs" />
                     </div>
                   </template>
                 </Column>
@@ -254,7 +475,10 @@
                 </Column>
                 <Column field="planningHours" header="Heures planning" sortable>
                   <template #body="{ data }">
-                    <Tag :value="`${data.planningHours}h`" :severity="data.planningHours > 0 ? 'success' : 'secondary'" />
+                    <Tag 
+                      :value="`${data.planningHours}h`" 
+                      :severity="getHoursSeverity(data.planningHours)"
+                    />
                   </template>
                 </Column>
                 <Column field="sessionsCount" header="Séances" sortable>
@@ -264,33 +488,48 @@
                 </Column>
                 <Column header="Actions">
                   <template #body="{ data }">
-                    <Button 
-                      icon="pi pi-trash" 
-                      severity="danger" 
-                      text 
-                      @click="removeTeacher(data)"
-                      v-tooltip="'Retirer'"
-                    />
+                    <div class="flex gap-1">
+                      <Button 
+                        icon="pi pi-eye" 
+                        severity="secondary" 
+                        text 
+                        size="small"
+                        @click="showTeacherDetails(data)"
+                        v-tooltip="'Voir les détails'"
+                      />
+                      <Button 
+                        icon="pi pi-trash" 
+                        severity="danger" 
+                        text 
+                        size="small"
+                        @click="removeTeacher(data)"
+                        v-tooltip="'Retirer'"
+                      />
+                    </div>
                   </template>
                 </Column>
                 <template #empty>
                   <div class="text-center p-4">
                     <i class="pi pi-users text-4xl text-400 mb-2"></i>
-                    <p class="text-600">Aucun enseignant assigné</p>
+                    <p class="text-600">Aucun enseignant trouvé</p>
+                    <small class="text-400">
+                      Essayez de changer les filtres
+                    </small>
                   </div>
                 </template>
               </DataTable>
               
               <!-- Résumé des heures -->
-              <div v-if="teachersWithStats.length > 0" class="mt-4 p-3 surface-100 border-round">
+              <div v-if="filteredTeachersList.length > 0" class="mt-4 p-3 surface-100 border-round">
                 <div class="flex justify-content-between align-items-center flex-wrap gap-3">
                   <div>
                     <span class="font-bold">Total:</span> 
-                    {{ teachersWithStats.length }} enseignant{{ teachersWithStats.length > 1 ? 's' : '' }}
+                    {{ filteredTeachersList.length }} enseignant{{ filteredTeachersList.length > 1 ? 's' : '' }}
+                    <span v-if="classFilter">({{ classFilter }})</span>
                   </div>
                   <div>
                     <span class="font-bold">Heures planifiées:</span> 
-                    <Tag :value="`${totalPlanningHours}h`" severity="info" />
+                    <Tag :value="`${totalFilteredHours}h`" severity="info" />
                   </div>
                 </div>
               </div>
@@ -298,245 +537,7 @@
           </Card>
         </TabPanel>
 
-        <!-- Onglet: Planning -->
-        <TabPanel header="Planning">
-          <Card>
-            <template #content>
-              <!-- Alerte conflits -->
-              <div v-if="planningConflicts.length > 0" class="mb-3 p-3 border-round bg-red-100 border-left-3 border-red-500">
-                <div class="flex align-items-center gap-2 mb-2">
-                  <i class="pi pi-exclamation-triangle text-red-600"></i>
-                  <span class="font-bold text-red-700">{{ planningConflicts.length }} conflit(s) détecté(s)</span>
-                </div>
-                <div class="text-sm text-red-600">
-                  <div v-for="(conflict, idx) in planningConflicts.slice(0, 3)" :key="idx" class="mb-1">
-                    <strong>{{ conflict.teacher }}</strong> : S{{ conflict.week }} {{ conflict.day }} 
-                    ({{ conflict.slotA.class }} {{ conflict.slotA.time }} / {{ conflict.slotB.class }} {{ conflict.slotB.time }})
-                  </div>
-                  <div v-if="planningConflicts.length > 3" class="text-xs">
-                    ... et {{ planningConflicts.length - 3 }} autre(s)
-                  </div>
-                </div>
-              </div>
-
-              <!-- Header avec filtres -->
-              <div class="flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-                <div class="flex align-items-center gap-3">
-                  <h3 class="m-0">Planning du module</h3>
-                  <Tag :value="`${filteredPlanning.length} séances`" severity="info" />
-                  <Tag v-if="planningConflicts.length > 0" :value="`${planningConflicts.length} conflits`" severity="danger" />
-                </div>
-                <div class="flex align-items-center gap-2 flex-wrap">
-                  <Dropdown 
-                    v-model="selectedYear"
-                    :options="yearOptions"
-                    optionLabel="label"
-                    optionValue="value"
-                    placeholder="Année"
-                    class="w-10rem"
-                    @change="loadModulePlanning"
-                  />
-                  <Dropdown 
-                    v-model="selectedClass"
-                    :options="classOptions"
-                    optionLabel="label"
-                    optionValue="value"
-                    placeholder="Toutes les classes"
-                    class="w-12rem"
-                    showClear
-                  />
-                  <Button 
-                    icon="pi pi-refresh" 
-                    severity="secondary" 
-                    outlined
-                    @click="loadModulePlanning"
-                    :loading="loadingPlanning"
-                    v-tooltip="'Actualiser'"
-                  />
-                  <Button 
-                    icon="pi pi-file-excel" 
-                    severity="success" 
-                    outlined
-                    @click="exportPlanningToExcel"
-                    :disabled="filteredPlanning.length === 0"
-                    v-tooltip="'Exporter en Excel'"
-                  />
-                  <Button 
-                    icon="pi pi-file-pdf" 
-                    severity="danger" 
-                    outlined
-                    @click="exportPlanningToPDF"
-                    :disabled="filteredPlanning.length === 0"
-                    v-tooltip="'Exporter en PDF'"
-                  />
-                  <div class="flex border-round overflow-hidden">
-                    <Button 
-                      icon="pi pi-list" 
-                      :severity="planningView === 'list' ? 'primary' : 'secondary'"
-                      :outlined="planningView !== 'list'"
-                      @click="planningView = 'list'"
-                      v-tooltip="'Vue liste'"
-                      class="border-noround-right"
-                    />
-                    <Button 
-                      icon="pi pi-calendar" 
-                      :severity="planningView === 'calendar' ? 'primary' : 'secondary'"
-                      :outlined="planningView !== 'calendar'"
-                      @click="planningView = 'calendar'"
-                      v-tooltip="'Vue calendrier'"
-                      class="border-noround-left"
-                    />
-                  </div>
-                  <Button 
-                    label="Gérer le planning" 
-                    icon="pi pi-external-link" 
-                    @click="$router.push(`/admin/modules/${moduleId}/planning`)"
-                  />
-                </div>
-              </div>
-
-              <!-- Liste des séances -->
-              <div v-if="loadingPlanning" class="text-center p-4">
-                <ProgressSpinner style="width: 40px; height: 40px" />
-              </div>
-              
-              <div v-else-if="filteredPlanning.length === 0" class="text-center p-5">
-                <i class="pi pi-calendar-times text-6xl text-400 mb-3"></i>
-                <h4>Aucune séance planifiée</h4>
-                <p class="text-600 mb-3">Ce module n'a pas encore de séances dans le planning</p>
-                <Button 
-                  label="Ajouter des séances" 
-                  icon="pi pi-plus" 
-                  @click="$router.push(`/admin/modules/${moduleId}/planning`)"
-                />
-              </div>
-
-              <!-- Vue Liste -->
-              <div v-else-if="planningView === 'list'" class="planning-list">
-                <DataTable 
-                  :value="filteredPlanning" 
-                  responsiveLayout="scroll"
-                  :paginator="filteredPlanning.length > 10"
-                  :rows="10"
-                  stripedRows
-                >
-                  <Column field="week_number" header="Semaine" sortable style="width: 80px">
-                    <template #body="{ data }">
-                      <Tag :value="`S${data.week_number}`" severity="secondary" />
-                    </template>
-                  </Column>
-                  <Column field="day" header="Jour" sortable style="width: 100px">
-                    <template #body="{ data }">
-                      {{ formatDay(data.day) }}
-                    </template>
-                  </Column>
-                  <Column field="date" header="Date" sortable style="width: 100px" />
-                  <Column header="Horaire" style="width: 120px">
-                    <template #body="{ data }">
-                      <span class="font-semibold">{{ data.start_time?.substring(0,5) }} - {{ data.end_time?.substring(0,5) }}</span>
-                    </template>
-                  </Column>
-                  <Column field="course_title" header="Cours" style="width: 180px">
-                    <template #body="{ data }">
-                      <span class="font-medium">{{ data.course_title || module?.title || '—' }}</span>
-                    </template>
-                  </Column>
-                  <Column field="teacher_name" header="Enseignant" style="width: 150px">
-                    <template #body="{ data }">
-                      <div class="flex align-items-center gap-2">
-                        <i class="pi pi-user text-500"></i>
-                        <span>{{ data.teacher_name || '—' }}</span>
-                      </div>
-                    </template>
-                  </Column>
-                  <Column field="activity" header="Type" style="width: 100px">
-                    <template #body="{ data }">
-                      <Tag :value="data.activity || 'Cours'" :severity="getActivitySeverity(data.activity)" />
-                    </template>
-                  </Column>
-                  <Column field="room" header="Salle" style="width: 100px">
-                    <template #body="{ data }">
-                      {{ data.room || '—' }}
-                    </template>
-                  </Column>
-                  <Column field="class_code" header="Classe" style="width: 80px">
-                    <template #body="{ data }">
-                      <Tag 
-                        :value="normalizeClass(data.class_code)" 
-                        size="small"
-                        :style="{ backgroundColor: '#' + getClassDisplayColor(data.class_code), color: getClassTextColor(data.class_code) }"
-                      />
-                    </template>
-                  </Column>
-                </DataTable>
-              </div>
-
-              <!-- Vue Calendrier -->
-              <div v-else class="planning-calendar">
-                <div v-for="week in calendarWeeks" :key="week.number" class="calendar-week mb-4">
-                  <div class="week-header flex align-items-center gap-2 mb-3 pb-2 border-bottom-1 surface-border">
-                    <Tag :value="`Semaine ${week.number}`" severity="info" />
-                    <span class="text-600 text-sm">{{ week.dateRange }}</span>
-                  </div>
-                  
-                  <div class="grid">
-                    <div v-for="day in ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi']" 
-                         :key="day" 
-                         class="col-12 md:col"
-                    >
-                      <div class="day-column surface-card border-round p-3 h-full" 
-                           :class="{ 'surface-100': !getDaySlots(week.number, day).length }">
-                        <div class="day-header font-semibold mb-2 text-primary">
-                          {{ formatDay(day) }}
-                        </div>
-                        
-                        <div v-if="getDaySlots(week.number, day).length === 0" 
-                             class="text-400 text-sm text-center py-3">
-                          —
-                        </div>
-                        
-                        <div v-for="slot in getDaySlots(week.number, day)" 
-                             :key="slot.id" 
-                             class="calendar-slot mb-2 p-2 border-round border-left-3"
-                             :style="{ 
-                               borderLeftColor: '#' + getClassDisplayColor(slot.class_code),
-                               backgroundColor: '#' + getClassDisplayColor(slot.class_code) + '20'
-                             }">
-                          <div class="flex justify-content-between align-items-center mb-1">
-                            <span class="text-xs text-600">
-                              {{ slot.start_time?.substring(0,5) }} - {{ slot.end_time?.substring(0,5) }}
-                            </span>
-                            <Tag 
-                              :value="normalizeClass(slot.class_code)" 
-                              size="small"
-                              class="text-xs"
-                              :style="{ backgroundColor: '#' + getClassDisplayColor(slot.class_code), color: getClassTextColor(slot.class_code) }"
-                            />
-                          </div>
-                          <div class="font-medium text-sm mb-1">
-                            {{ slot.course_title || module?.title || 'Cours' }}
-                          </div>
-                          <div v-if="slot.teacher_name" class="flex align-items-center gap-1 text-xs text-600">
-                            <i class="pi pi-user" style="font-size: 0.7rem"></i>
-                            {{ slot.teacher_name }}
-                          </div>
-                          <div class="flex gap-1 mt-2 flex-wrap">
-                            <Tag :value="slot.activity || 'Cours'" :severity="getActivitySeverity(slot.activity)" class="text-xs" />
-                            <Tag v-if="slot.room" :value="slot.room" severity="secondary" class="text-xs" />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div v-if="calendarWeeks.length === 0" class="text-center p-4 text-600">
-                  Aucune semaine à afficher
-                </div>
-              </div>
-            </template>
-          </Card>
-        </TabPanel>
+ 
 
         <!-- Onglet: Statistiques -->
         <TabPanel header="Statistiques">
@@ -753,35 +754,280 @@
       </template>
     </Dialog>
 
+    <!-- Dialogue: Détails enseignant -->
+    <Dialog 
+      v-model:visible="showTeacherDetailsDialog" 
+      :header="`Détails - ${selectedTeacher?.name || 'Enseignant'}`"
+      :style="{ width: '800px' }"
+      modal
+    >
+      <div v-if="selectedTeacher" class="teacher-details">
+        <!-- Informations générales -->
+        <div class="grid mb-4">
+          <div class="col-12 md:col-6">
+            <div class="p-3 surface-100 border-round">
+              <h4 class="m-0 mb-2">Informations</h4>
+              <p><strong>Nom:</strong> {{ selectedTeacher.name }}</p>
+              <p><strong>Email:</strong> {{ selectedTeacher.email || '—' }}</p>
+              <p><strong>Total heures:</strong> {{ selectedTeacher.planningHours }}h</p>
+              <p><strong>Séances:</strong> {{ selectedTeacher.sessionsCount }}</p>
+            </div>
+          </div>
+          <div class="col-12 md:col-6">
+            <div class="p-3 surface-100 border-round">
+              <h4 class="m-0 mb-2">Statistiques</h4>
+              <Tag :value="`${selectedTeacher.planningHours}h total`" :severity="getHoursSeverity(selectedTeacher.planningHours)" class="mb-2" />
+              <p><strong>Modules:</strong> {{ selectedTeacher.modules?.length || 0 }}</p>
+              <p><strong>Source:</strong> {{ selectedTeacher.source || 'Planning' }}</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Séances groupées par semaine -->
+        <div v-if="selectedTeacher">
+          <h4 class="m-0 mb-3">Planning par semaine - {{ selectedTeacher.name }}</h4>
+          
+          <div v-if="getTeacherGroupedSessions(selectedTeacher.name).length > 0">
+            <div class="space-y-3">
+              <div 
+                v-for="week in getTeacherGroupedSessions(selectedTeacher.name)" 
+                :key="week.week_number"
+                class="p-3 surface-50 border-round border-1 border-200"
+              >
+                <!-- En-tête de semaine -->
+                <div class="flex justify-content-between align-items-center mb-3">
+                  <div class="flex align-items-center gap-2">
+                    <Tag :value="`Semaine ${week.week_number}`" severity="info" />
+                    <Tag :value="`${week.totalHours}h`" severity="success" />
+                    <Tag :value="`${week.sessions.length} séance${week.sessions.length > 1 ? 's' : ''}`" severity="secondary" />
+                  </div>
+                  <div class="flex gap-1">
+                    <Tag 
+                      v-for="cls in week.classes" 
+                      :key="cls"
+                      :value="normalizeClass(cls)" 
+                      size="small"
+                      :style="{ backgroundColor: '#' + getClassDisplayColor(cls), color: getClassTextColor(cls) }"
+                    />
+                  </div>
+                </div>
+                
+                <!-- Détail des séances de la semaine -->
+                <div class="grid gap-2">
+                  <div 
+                    v-for="session in week.sessions" 
+                    :key="`${session.week_number}-${session.day}-${session.start_time}`"
+                    class="flex align-items-center gap-3 p-2 bg-white border-round"
+                  >
+                    <!-- Jour et Date -->
+                    <div class="flex flex-column" style="min-width: 80px">
+                      <span class="font-medium text-sm">{{ session.day }}</span>
+                      <span class="text-500 text-xs" v-if="session.date">
+                        {{ new Date(session.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) }}
+                      </span>
+                    </div>
+                    
+                    <!-- Heures -->
+                    <div class="flex align-items-center gap-1">
+                      <Tag :value="session.start_time" severity="secondary" size="small" />
+                      <span class="text-400">-</span>
+                      <Tag :value="session.end_time" severity="secondary" size="small" />
+                    </div>
+                    
+                    <!-- Classe -->
+                    <Tag 
+                      :value="normalizeClass(session.class_code)" 
+                      size="small"
+                      :style="{ backgroundColor: '#' + getClassDisplayColor(session.class_code), color: getClassTextColor(session.class_code) }"
+                    />
+                    
+                    <!-- Cours -->
+                    <div class="flex-1">
+                      <span class="text-sm line-clamp-1">{{ session.course_title || '—' }}</span>
+                    </div>
+                    
+                    <!-- Durée -->
+                    <Tag :value="`${getSlotHours(session)}h`" severity="success" size="small" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div v-else class="text-center p-4">
+            <i class="pi pi-calendar text-3xl text-400 mb-2"></i>
+            <p class="text-600">Aucune séance planifiée pour cet enseignant</p>
+          </div>
+        </div>
+      </div>
+      
+      <template #footer>
+        <Button 
+          label="Fermer" 
+          icon="pi pi-times" 
+          @click="showTeacherDetailsDialog = false" 
+          class="p-button-text"
+        />
+      </template>
+    </Dialog>
+
+    <!-- Dialogue d'édition/ajout de séance (même format que ModulePlanningView) -->
+    <Dialog 
+      v-model:visible="showDialog" 
+      :header="editingSession?.id ? 'Modifier la séance' : 'Ajouter une séance'"
+      :style="{ width: '700px' }"
+      modal
+    >
+      <div class="session-form" v-if="editingSession">
+        <div class="field-row">
+          <div class="field">
+            <label>Classe / Volée</label>
+            <Dropdown 
+              v-model="editingSession.classCode" 
+              :options="classOptions" 
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Sélectionner une classe"
+              class="w-full"
+            />
+          </div>
+          <div class="field">
+            <label>Semaine</label>
+            <InputNumber v-model="editingSession.weekNumber" :min="1" :max="52" class="w-full" />
+          </div>
+          <div class="field">
+            <label>Jour</label>
+            <Dropdown 
+              v-model="editingSession.day" 
+              :options="dayOptions" 
+              optionLabel="label"
+              optionValue="value"
+              class="w-full"
+            />
+          </div>
+        </div>
+        
+        <div class="field">
+          <label>Date</label>
+          <InputText v-model="editingSession.date" placeholder="Ex: 16.02.2026" class="w-full" />
+        </div>
+        
+        <div class="field-row">
+          <div class="field">
+            <label>Heure début</label>
+            <InputText v-model="editingSession.startTime" placeholder="09:00" class="w-full" />
+          </div>
+          <div class="field">
+            <label>Heure fin</label>
+            <InputText v-model="editingSession.endTime" placeholder="11:00" class="w-full" />
+          </div>
+        </div>
+        
+        <div class="field">
+          <label>Nom du cours (affiché dans le planning)</label>
+          <Textarea 
+            v-model="editingSession.courseTitle" 
+            placeholder="Ex: Introduction Module: questions-réponses en lien avec la vidéo"
+            :rows="2"
+            class="w-full"
+          />
+          <small class="text-500">Ce texte apparaîtra comme titre principal du cours</small>
+        </div>
+        
+        <div class="field">
+          <label>Détails / Activité complémentaire</label>
+          <Dropdown 
+            v-model="editingSession.activity" 
+            :options="activityOptions"
+            editable
+            placeholder="Type d'activité"
+            class="w-full"
+          />
+        </div>
+        
+        <div class="field">
+          <label>Enseignants (max 6)</label>
+          <AutoComplete 
+            v-model="editingSession.teachers"
+            :suggestions="filteredTeachers"
+            @complete="searchTeachers"
+            optionLabel="name"
+            placeholder="Saisissez un nom (Entrée pour valider)"
+            multiple
+            :forceSelection="false"
+            class="w-full"
+          >
+            <template #option="slotProps">
+              <div class="flex align-items-center">
+                <i v-if="slotProps.option.isNew" class="pi pi-plus mr-2 text-green-500"></i>
+                <span :class="{ 'font-bold': slotProps.option.isNew }">
+                  {{ slotProps.option.isNew ? 'Ajouter : ' : '' }}{{ slotProps.option.name }}
+                </span>
+              </div>
+            </template>
+          </AutoComplete>
+          <small class="text-500">Sélectionnez jusqu'à 6 enseignants</small>
+        </div>
+        
+        <div class="field-row">
+          <div class="field">
+            <label>Salle</label>
+            <InputText v-model="editingSession.room" placeholder="Salle 101" class="w-full" />
+          </div>
+          <div class="field">
+            <label>Notes</label>
+            <InputText v-model="editingSession.notes" placeholder="Notes additionnelles" class="w-full" />
+          </div>
+        </div>
+      </div>
+
+      <template #footer>
+        <Button label="Annuler" icon="pi pi-times" class="p-button-text" @click="showDialog = false" />
+        <Button label="Enregistrer" icon="pi pi-check" @click="saveSession" :loading="saving" />
+      </template>
+    </Dialog>
+
   </AdminLayout>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import { useModules } from '@/composables/useModules'
 import { useModulePermissions } from '@/composables/useModulePermissions'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import PageHeader from '@/components/admin/common/PageHeader.vue'
+import Button from 'primevue/button'
+import Tag from 'primevue/tag'
+import Badge from 'primevue/badge'
+import Chip from 'primevue/chip'
+import Dialog from 'primevue/dialog'
+import Dropdown from 'primevue/dropdown'
+import InputText from 'primevue/inputtext'
+import InputNumber from 'primevue/inputnumber'
+import Textarea from 'primevue/textarea'
+import AutoComplete from 'primevue/autocomplete'
+import ProgressSpinner from 'primevue/progressspinner'
+import ConfirmDialog from 'primevue/confirmdialog'
+import Toast from 'primevue/toast'
 import Card from 'primevue/card'
 import TabView from 'primevue/tabview'
 import TabPanel from 'primevue/tabpanel'
-import InputText from 'primevue/inputtext'
-import Textarea from 'primevue/textarea'
-import InputNumber from 'primevue/inputnumber'
-import Dropdown from 'primevue/dropdown'
 import ColorPicker from 'primevue/colorpicker'
-import Button from 'primevue/button'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
-import Dialog from 'primevue/dialog'
-import ProgressSpinner from 'primevue/progressspinner'
-import Tag from 'primevue/tag'
 import { supabase } from '@/supabase'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+import { 
+  getModulePlanningStats,
+  saveModuleTimeSlot,
+  deleteModuleTimeSlot,
+  getAvailableClasses
+} from '@/services/modulePlanningService'
+import { v4 as uuidv4 } from 'uuid'
 
 const route = useRoute()
 const router = useRouter()
@@ -812,6 +1058,13 @@ const moduleForm = ref({
   coordinateur: ''
 })
 
+// Filtres par classe (même valeurs que le planning)
+const classFilter = ref(null) // 'BAC25', 'BAC24-TP', or null
+const loadingGlobalTeachers = ref(false)
+const globalTeachers = ref([])
+const selectedTeacher = ref(null)
+const showTeacherDetailsDialog = ref(false)
+
 // Enseignants du module
 const moduleTeachers = ref([])
 const showAddTeacherDialog = ref(false)
@@ -830,7 +1083,6 @@ const moduleStats = ref({
 // Planning du module
 const modulePlanning = ref([])
 const loadingPlanning = ref(false)
-const selectedYear = ref('2024-2025')
 const selectedClass = ref(null)
 const planningView = ref('list') // 'list' ou 'calendar'
 
@@ -845,35 +1097,21 @@ const hoursBudget = ref({
   td_hours: 0
 })
 
-const yearOptions = [
-  { label: '2024-2025', value: '2024-2025' },
-  { label: '2023-2024', value: '2023-2024' },
-  { label: '2025-2026', value: '2025-2026' }
-]
-
 // Normaliser le code classe (B25-tp = B25-TP) - utilisé partout
 const normalizeClass = (code) => {
   if (!code) return ''
   return code.toUpperCase().trim()
 }
 
-// Options de classes (calculées et normalisées)
-const classOptions = computed(() => {
-  const classes = new Set()
-  modulePlanning.value.forEach(slot => {
-    if (slot.class_code) classes.add(normalizeClass(slot.class_code))
-  })
-  return [
-    { label: 'Toutes les classes', value: null },
-    ...Array.from(classes).sort().map(c => ({ label: c, value: c }))
-  ]
-})
-
 // Planning filtré par classe (comparaison normalisée)
 const filteredPlanning = computed(() => {
-  if (!selectedClass.value) return modulePlanning.value
+  if (!selectedClass.value) return []
   const normalizedFilter = normalizeClass(selectedClass.value)
-  return modulePlanning.value.filter(slot => normalizeClass(slot.class_code) === normalizedFilter)
+  return modulePlanning.value.filter(slot => {
+    const normalizedClassCode = normalizeClass(slot.class_code)
+    // Filtrer par classe exacte
+    return normalizedClassCode === normalizedFilter
+  })
 })
 
 // Calculer les heures depuis un créneau
@@ -886,27 +1124,159 @@ const getSlotHours = (slot) => {
 
 // Enseignants avec statistiques d'heures depuis le planning
 const teachersWithStats = computed(() => {
-  return moduleTeachers.value.map(teacher => {
+  // Utiliser un Map pour éviter les doublons et garantir l'unicité par nom
+  const teachersMap = new Map()
+  
+  // D'abord ajouter les enseignants de moduleTeachers (priorité)
+  moduleTeachers.value.forEach(teacher => {
+    if (teacher.name) {
+      const normalizedName = teacher.name.toLowerCase()
+      teachersMap.set(normalizedName, {
+        ...teacher,
+        planningHours: 0,
+        sessionsCount: 0,
+        source: teacher.source || 'module'
+      })
+    }
+  })
+  
+  // Ensuite ajouter les enseignants du planning qui ne sont pas déjà dans moduleTeachers
+  modulePlanning.value.forEach(slot => {
+    const teachers = slot.teachers_list || slot.teachers || []
+    teachers.forEach(t => {
+      const name = typeof t === 'object' ? t.name : t
+      if (name) {
+        const normalizedName = name.toLowerCase()
+        
+        // Si cet enseignant n'est pas déjà dans moduleTeachers, l'ajouter
+        if (!teachersMap.has(normalizedName)) {
+          teachersMap.set(normalizedName, {
+            id: Date.now() + Math.random(),
+            name: name,
+            email: '',
+            hours: 0,
+            source: 'planning',
+            planningHours: 0,
+            sessionsCount: 0
+          })
+        }
+      }
+    })
+  })
+  
+  // Maintenant calculer les heures pour tous les enseignants uniques
+  teachersMap.forEach(teacher => {
     let planningHours = 0
     let sessionsCount = 0
+    let hasValidHours = false
     
     modulePlanning.value.forEach(slot => {
       const teachers = slot.teachers_list || slot.teachers || []
       const teacherNames = teachers.map(t => typeof t === 'object' ? t.name : t)
       
-      if (teacherNames.some(name => name?.toLowerCase() === teacher.name?.toLowerCase())) {
+      if (teacherNames.some(name => name?.toLowerCase() === teacher.name.toLowerCase())) {
         sessionsCount++
-        planningHours += getSlotHours(slot)
+        const slotHours = getSlotHours(slot)
+        
+        // Si c'est un enseignant manuel et qu'on trouve des heures valides
+        if (teacher.source === 'manual' && slotHours > 0) {
+          planningHours += slotHours
+          hasValidHours = true
+        } else if (teacher.source !== 'manual') {
+          // Pour les enseignants non manuels, calculer normalement
+          planningHours += slotHours
+          hasValidHours = true
+        }
       }
     })
     
-    return {
-      ...teacher,
-      planningHours: Math.round(planningHours * 10) / 10,
-      sessionsCount
+    // Pour les enseignants manuels sans heures valides, garder NaN
+    let finalHours = planningHours
+    if (teacher.source === 'manual' && !hasValidHours) {
+      finalHours = NaN
     }
-  }).sort((a, b) => b.planningHours - a.planningHours)
+    
+    // Mettre à jour les heures dans le Map
+    teacher.planningHours = hasValidHours ? Math.round(finalHours * 10) / 10 : NaN
+    teacher.sessionsCount = sessionsCount
+  })
+  
+  // Convertir le Map en tableau et trier
+  return Array.from(teachersMap.values()).sort((a, b) => {
+    // Mettre les NaN à la fin
+    if (isNaN(a.planningHours) && !isNaN(b.planningHours)) return 1
+    if (!isNaN(a.planningHours) && isNaN(b.planningHours)) return -1
+    return b.planningHours - a.planningHours
+  })
 })
+
+// Liste filtrée des enseignants (avec filtre automatique >0h ou NaN)
+const filteredTeachersList = computed(() => {
+  let teachers = teachersWithStats.value
+  
+  // Si filtre de classe, utiliser les enseignants du planning filtré par classe
+  if (classFilter.value) {
+    // Filtrer les enseignants selon les classes du planning
+    const filteredPlanning = modulePlanning.value.filter(slot => {
+      const normalizedClass = normalizeClass(slot.class_code)
+      const normalizedFilter = normalizeClass(classFilter.value)
+      return normalizedClass === normalizedFilter
+    })
+    
+    // Extraire les enseignants uniques du planning filtré
+    const teacherNames = new Set()
+    filteredPlanning.forEach(slot => {
+      const teachers = slot.teachers_list || slot.teachers || []
+      teachers.forEach(t => {
+        const name = typeof t === 'object' ? t.name : t
+        if (name && name.trim()) {
+          teacherNames.add(name.trim())
+        }
+      })
+    })
+    
+    // Filtrer teachersWithStats pour ne garder que ceux du planning filtré
+    teachers = teachersWithStats.value.filter(teacher => 
+      teacherNames.has(teacher.name)
+    )
+  }
+  
+  // Filtrer automatiquement pour n'afficher que >0h ou NaN, SAUF pour les nouveaux enseignants manuels
+  let filtered = teachers.filter(teacher => {
+    const hours = teacher.planningHours
+    
+    // Toujours inclure les enseignants ajoutés manuellement (source: 'manual')
+    if (teacher.source === 'manual') {
+      return true
+    }
+    
+    // Pour les autres, n'afficher que >0h ou NaN
+    return hours > 0 || isNaN(hours) || hours === null || hours === undefined
+  })
+  
+  return filtered.sort((a, b) => b.planningHours - a.planningHours)
+})
+
+// Total des heures filtrées
+const totalFilteredHours = computed(() => {
+  return Math.round(filteredTeachersList.value.reduce((sum, teacher) => sum + (teacher.planningHours || 0), 0) * 10) / 10
+})
+
+// Sévérité des heures
+const getHoursSeverity = (hours) => {
+  if (isNaN(hours) || hours === null || hours === undefined) return 'warning'
+  if (hours > 0) return 'success'
+  return 'secondary'
+}
+
+// Label du filtre de classe (plus nécessaire car on utilise directement la valeur)
+// const getClassFilterLabel = () => {
+//   switch (classFilter.value) {
+//     case 'BAC25': return 'Temps plein BAC 25'
+//     case 'BAC24-TP': return 'Temps partiel BAC24-TP'
+//     default: return ''
+//   }
+// }
 
 // Total des heures planifiées
 const totalPlanningHours = computed(() => {
@@ -1034,10 +1404,427 @@ const getActivityColor = (activity) => {
   return colors[activity] || '#3B82F6'
 }
 
+// Couleurs pour les semaines (cycle de couleurs)
+const weekColors = [
+  { bg: '#3B82F6', border: '#1D4ED8' },  // Bleu
+  { bg: '#10B981', border: '#047857' },  // Vert
+  { bg: '#F59E0B', border: '#B45309' },  // Orange
+  { bg: '#8B5CF6', border: '#6D28D9' },  // Violet
+  { bg: '#EC4899', border: '#BE185D' },  // Rose
+  { bg: '#06B6D4', border: '#0891B2' },  // Cyan
+  { bg: '#EF4444', border: '#B91C1C' },  // Rouge
+  { bg: '#84CC16', border: '#4D7C0F' },  // Lime
+]
+
+const getWeekColor = (weekIndex) => {
+  return weekColors[weekIndex % weekColors.length]?.bg || '#3B82F6'
+}
+
+const getWeekBorderColor = (weekIndex) => {
+  return weekColors[weekIndex % weekColors.length]?.border || '#1D4ED8'
+}
+
+// Couleurs pour les jours
+const dayColors = [
+  '#3B82F6',  // Lundi - Bleu
+  '#10B981',  // Mardi - Vert
+  '#F59E0B',  // Mercredi - Orange
+  '#8B5CF6',  // Jeudi - Violet
+  '#EC4899'   // Vendredi - Rose
+]
+
+const dayBackgroundColors = [
+  '#EFF6FF',  // Lundi - Bleu clair
+  '#ECFDF5',  // Mardi - Vert clair
+  '#FFFBEB',  // Mercredi - Orange clair
+  '#F5F3FF',  // Jeudi - Violet clair
+  '#FDF2F8'   // Vendredi - Rose clair
+]
+
+const getDayColor = (dayIndex) => {
+  return dayColors[dayIndex] || '#3B82F6'
+}
+
+const getDayBackgroundColor = (dayIndex) => {
+  return dayBackgroundColors[dayIndex] || '#EFF6FF'
+}
+
+// Données groupées par semaine et jour pour un meilleur affichage
+const groupedPlanningData = computed(() => {
+  if (!filteredPlanning.value.length) return []
+  
+  const grouped = []
+  let currentWeek = null
+  let currentDay = null
+  let weekGroup = null
+  let dayGroup = null
+  
+  filteredPlanning.value.forEach((slot) => {
+    const weekNum = slot.week_number
+    const dayName = slot.day
+    
+    // Nouvelle semaine
+    if (weekNum !== currentWeek) {
+      currentWeek = weekNum
+      weekGroup = {
+        weekNumber: weekNum,
+        days: [],
+        weekSpan: 0
+      }
+      grouped.push(weekGroup)
+      currentDay = null
+    }
+    
+    // Nouveau jour dans la même semaine
+    if (dayName !== currentDay) {
+      currentDay = dayName
+      dayGroup = {
+        dayName: dayName,
+        slots: [],
+        daySpan: 0
+      }
+      weekGroup.days.push(dayGroup)
+    }
+    
+    dayGroup.slots.push(slot)
+    weekGroup.weekSpan++
+    dayGroup.daySpan++
+  })
+  
+  return grouped
+})
+
+// Données plates pour DataTable avec rowSpan (sans lignes d'ajout)
+const flatPlanningData = computed(() => {
+  const flat = []
+  groupedPlanningData.value.forEach(weekGroup => {
+    weekGroup.days.forEach((dayGroup, dayIndex) => {
+      dayGroup.slots.forEach((slot, slotIndex) => {
+        flat.push({
+          ...slot,
+          weekSpan: dayIndex === 0 ? weekGroup.weekSpan : 0,
+          daySpan: slotIndex === 0 ? dayGroup.daySpan : 0,
+          isFirstSlotOfWeek: dayIndex === 0 && slotIndex === 0,
+          isFirstSlotOfDay: slotIndex === 0
+        })
+      })
+    })
+  })
+  return flat
+})
+
+// Style des lignes pour grouper par semaine et jour
+const rowClass = (data) => {
+  const classes = [];
+  
+  // Alternance de couleur par semaine (bleu très clair / blanc)
+  classes.push(data.week_number % 2 === 0 ? 'week-even' : 'week-odd');
+
+  // Bordure supérieure si c'est une nouvelle semaine
+  if (data.isFirstSlotOfWeek) {
+    classes.push('new-week-row');
+  } 
+  // Bordure supérieure légère si c'est un nouveau jour dans la même semaine
+  else if (data.isFirstSlotOfDay) {
+    classes.push('new-day-row');
+  } else {
+    classes.push('same-day-row');
+  }
+
+  return classes;
+};
+
+// Variables pour l'édition de séance - utilise le même format que ModulePlanningView
+const showDialog = ref(false)
+const editingSession = ref(null)
+
+// Variables pour les enseignants (même format que ModulePlanningView)
+const teachers = ref([])
+const filteredTeachers = ref([])
+
+// Options pour les formulaires (même format que ModulePlanningView)
+const classOptions = ref([
+  { label: 'BAC25', value: 'BAC25' },
+  { label: 'BAC24-TP', value: 'BAC24-TP' }
+])
+
+const dayOptions = [
+  { label: 'Lundi', value: 'lundi' },
+  { label: 'Mardi', value: 'mardi' },
+  { label: 'Mercredi', value: 'mercredi' },
+  { label: 'Jeudi', value: 'jeudi' },
+  { label: 'Vendredi', value: 'vendredi' }
+]
+
+const activityOptions = ['Cours', 'TP', 'TD', 'Examen', 'Atelier', 'Conférence', 'Stage']
+
+// Éditer une séance - utiliser le dialogue local (même logique que ModulePlanningView)
+const editSession = (session) => {
+  // Normaliser les enseignants en objets pour AutoComplete (comme dans ModulePlanningView)
+  const normalizedTeachers = []
+  if (session.teacher_name) {
+    // Si teacher_name est une chaîne avec plusieurs noms séparés par des virgules
+    const teacherNames = session.teacher_name.split(',').map(name => name.trim()).filter(name => name)
+    normalizedTeachers.push(...teacherNames.map(name => ({ name })))
+  } else if (session.teachers_list && Array.isArray(session.teachers_list)) {
+    // Si teachers_list est un tableau d'objets ou de chaînes
+    session.teachers_list.forEach(t => {
+      if (typeof t === 'string') {
+        normalizedTeachers.push({ name: t })
+      } else if (t && t.name) {
+        normalizedTeachers.push({ name: t.name })
+      }
+    })
+  }
+  
+  editingSession.value = {
+    id: session.id,
+    classCode: session.class_code,
+    weekNumber: session.week_number,
+    day: session.day?.toLowerCase(),
+    date: session.date || '',
+    startTime: session.start_time,
+    endTime: session.end_time,
+    moduleCode: module.value?.code,
+    courseTitle: session.course_title || '',
+    activity: session.activity,
+    teachers: normalizedTeachers,
+    room: session.room,
+    notes: session.notes || ''
+  }
+  showDialog.value = true
+}
+
+// Ajouter une séance à une semaine - utiliser le dialogue local
+const addSessionToWeek = (weekNumber) => {
+  editingSession.value = {
+    id: null,
+    classCode: selectedClass.value || 'BAC25',
+    weekNumber: weekNumber,
+    day: 'lundi',
+    date: '',
+    startTime: '09:00',
+    endTime: '11:00',
+    moduleCode: module.value?.code,
+    courseTitle: '',
+    activity: 'Cours',
+    teachers: [],
+    room: '',
+    notes: ''
+  }
+  showDialog.value = true
+}
+
+// Sauvegarder la séance (même logique que ModulePlanningView)
+const saveSession = async () => {
+  if (!editingSession.value) return
+  
+  saving.value = true
+  try {
+    // Normaliser les enseignants et identifier les nouveaux
+    const normalizedTeachers = []
+    const newTeachers = []
+    
+    const teachersArray = Array.isArray(editingSession.value.teachers) 
+      ? editingSession.value.teachers 
+      : (editingSession.value.teachers ? [editingSession.value.teachers] : [])
+    
+    teachersArray.forEach(t => {
+      const teacherName = typeof t === 'object' && t !== null ? t.name : t
+      normalizedTeachers.push(teacherName)
+      
+      // Si c'est un nouvel enseignant (isNew flag), l'ajouter à la liste du module
+      if (typeof t === 'object' && t.isNew) {
+        newTeachers.push({
+          name: teacherName,
+          email: t.email || '',
+          hours: 0,
+          source: 'manual'
+        })
+      }
+    })
+    
+    // Enregistrer les nouveaux enseignants dans la liste du module
+    if (newTeachers.length > 0) {
+      for (const newTeacher of newTeachers) {
+        // Vérifier si l'enseignant n'existe pas déjà
+        const exists = moduleTeachers.value.some(t => 
+          t.name.toLowerCase() === newTeacher.name.toLowerCase()
+        )
+        
+        if (!exists) {
+          // Ajouter directement à moduleTeachers (sans email requis pour les enseignants de séance)
+          const newTeacherObj = {
+            id: Date.now() + Math.random(), // ID temporaire
+            name: newTeacher.name,
+            email: newTeacher.email || '',
+            hours: 0,
+            source: 'manual'
+          }
+          
+          moduleTeachers.value.push(newTeacherObj)
+          
+          // Forcer la mise à jour immédiate des stats en ajoutant à teachersWithStats
+          // teachersWithStats est une computed property, donc elle se mettra à jour automatiquement
+          // quand moduleTeachers change
+        }
+      }
+      
+      // Pas besoin de recharger car teachersWithStats est une computed property
+      // Elle se mettra à jour automatiquement quand moduleTeachers change
+      // await loadModuleTeachers() // Commenté pour éviter le rechargement inutile
+    }
+    
+    await saveModuleTimeSlot({
+      id: editingSession.value.id,
+      class_code: editingSession.value.classCode,
+      week_number: editingSession.value.weekNumber,
+      day: editingSession.value.day,
+      date: editingSession.value.date,
+      start_time: editingSession.value.startTime,
+      end_time: editingSession.value.endTime,
+      module_code: module.value?.code,
+      course_title: editingSession.value.courseTitle,
+      activity: editingSession.value.activity,
+      teachers: normalizedTeachers,
+      room: editingSession.value.room,
+      notes: editingSession.value.notes
+    })
+    
+    toast.add({ severity: 'success', summary: 'Succès', detail: 'Séance enregistrée', life: 2000 })
+    showDialog.value = false
+    await loadModulePlanning()
+  } catch (error) {
+    console.error('Erreur save:', error)
+    toast.add({ severity: 'error', summary: 'Erreur', detail: error.message, life: 3000 })
+  } finally {
+    saving.value = false
+  }
+}
+
+// Charger les enseignants globaux (tous les modules)
+const loadGlobalTeachers = async () => {
+  loadingGlobalTeachers.value = true
+  try {
+    const { data: allPlanning, error: planningError } = await supabase
+      .from('planning_time_slots')
+      .select('module_code, teachers, class_code, start_time, end_time')
+      .not('teachers', 'is', null)
+      .not('teachers', 'eq', '[]')
+    
+    if (planningError) throw planningError
+    
+    // Grouper par enseignant
+    const teachersMap = new Map()
+    
+    allPlanning?.forEach(slot => {
+      const teachers = slot.teachers || []
+      teachers.forEach(teacher => {
+        const teacherName = typeof teacher === 'object' ? teacher.name : teacher
+        if (!teacherName) return
+        
+        if (!teachersMap.has(teacherName)) {
+          teachersMap.set(teacherName, {
+            name: teacherName,
+            email: '',
+            planningHours: 0,
+            sessionsCount: 0,
+            modules: new Set()
+          })
+        }
+        
+        const teacherData = teachersMap.get(teacherName)
+        teacherData.planningHours += getSlotHours(slot)
+        teacherData.sessionsCount += 1
+        teacherData.modules.add({
+          module_code: slot.module_code,
+          class_code: slot.class_code
+        })
+      })
+    })
+    
+    // Convertir les Sets en Arrays
+    globalTeachers.value = Array.from(teachersMap.values()).map(teacher => ({
+      ...teacher,
+      modules: Array.from(teacher.modules),
+      planningHours: Math.round(teacher.planningHours * 10) / 10
+    }))
+    
+  } catch (error) {
+    console.error('Erreur chargement enseignants globaux:', error)
+    globalTeachers.value = []
+  } finally {
+    loadingGlobalTeachers.value = false
+  }
+}
+
+// Obtenir les séances groupées d'un enseignant
+const getTeacherGroupedSessions = (teacherName) => {
+  const sessions = getTeacherSessions(teacherName)
+  
+  // Grouper par semaine
+  const groupedByWeek = {}
+  
+  sessions.forEach(session => {
+    const weekKey = `Semaine ${session.week_number}`
+    if (!groupedByWeek[weekKey]) {
+      groupedByWeek[weekKey] = {
+        week_number: session.week_number,
+        sessions: [],
+        totalHours: 0,
+        classes: new Set()
+      }
+    }
+    
+    groupedByWeek[weekKey].sessions.push(session)
+    groupedByWeek[weekKey].totalHours += getSlotHours(session)
+    if (session.class_code) {
+      groupedByWeek[weekKey].classes.add(session.class_code)
+    }
+  })
+  
+  // Convertir en tableau et trier
+  return Object.values(groupedByWeek)
+    .map(week => ({
+      ...week,
+      classes: Array.from(week.classes),
+      totalHours: Math.round(week.totalHours * 10) / 10
+    }))
+    .sort((a, b) => a.week_number - b.week_number)
+}
+const getTeacherSessions = (teacherName) => {
+  return modulePlanning.value.filter(slot => {
+    const teachers = slot.teachers_list || slot.teachers || []
+    const teacherNames = teachers.map(t => typeof t === 'object' ? t.name : t)
+    return teacherNames.some(name => name?.toLowerCase() === teacherName?.toLowerCase())
+  }).sort((a, b) => {
+    // Trier par semaine puis par jour
+    if (a.week_number !== b.week_number) {
+      return a.week_number - b.week_number
+    }
+    const dayOrder = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
+    return dayOrder.indexOf(a.day) - dayOrder.indexOf(b.day)
+  })
+}
+
+// Afficher les détails d'un enseignant
+const showTeacherDetails = (teacher) => {
+  selectedTeacher.value = teacher
+  showTeacherDetailsDialog.value = true
+}
+
+// Watcher pour le filtre de classe (plus nécessaire car on utilise le planning local)
+// watch(classFilter, (newValue) => {
+//   if (newValue) {
+//     loadGlobalTeachers()
+//   }
+// })
+
 // Charger le module
 onMounted(async () => {
   try {
     await loadModules()
+    await loadTeachers()
     
     // Trouver le module
     module.value = modules.value.find(m => m.id === moduleId)
@@ -1077,29 +1864,100 @@ onMounted(async () => {
       coordinateur: module.value.coordinateur || ''
     }
     
-    // Charger le planning du module
-    await loadModulePlanning()
+    // Charger les données du module
+    await Promise.all([
+      loadModuleTeachers(),
+      loadModulePlanning(),
+      loadHoursBudget(),
+      loadCurrentValidation(),
+      loadPlanningHistory()
+    ])
     
-    // Charger les enseignants du module
-    await loadModuleTeachers()
-    
-    // Charger historique, validation et budget
-    await loadPlanningHistory()
-    await loadCurrentValidation()
-    await loadHoursBudget()
-    
+    loading.value = false
   } catch (error) {
-    console.error('Erreur chargement module:', error)
+    console.error('Erreur lors du chargement:', error)
     toast.add({
       severity: 'error',
       summary: 'Erreur',
       detail: 'Impossible de charger le module',
       life: 3000
     })
-  } finally {
     loading.value = false
   }
 })
+
+// Charger les enseignants (adapté de ModulePlanningView)
+const loadTeachers = async () => {
+  try {
+    const { data: teacherData } = await supabase
+      .from('user_profiles')
+      .select('user_id, display_name, forname, family_name, email')
+      .in('role', ['EnseignantSoins', 'EnseignantPhysio', 'AdminSoins', 'AdminPhysio'])
+    
+    if (teacherData && teacherData.length > 0) {
+      teachers.value = teacherData.map(t => ({
+        id: t.user_id,
+        name: t.display_name || `${t.forname} ${t.family_name}`,
+        email: t.email
+      }))
+    }
+  } catch (error) {
+    console.error('Erreur chargement enseignants:', error)
+  }
+}
+
+// Fonction de recherche d'enseignants pour l'autocomplétion
+const searchTeachers = (event) => {
+  const query = event.query.toLowerCase().trim()
+  if (!query) {
+    filteredTeachers.value = []
+    return
+  }
+  
+  // Combiner les enseignants de la DB et les enseignants du module
+  const allTeachers = [
+    ...teachers.value,  // Enseignants de la base de données
+    ...moduleTeachers.value  // Enseignants du module (incluant ceux ajoutés manuellement)
+  ]
+  
+  // Éliminer les doublons par nom
+  const uniqueTeachers = []
+  const seenNames = new Set()
+  
+  allTeachers.forEach(teacher => {
+    const normalizedName = teacher.name.toLowerCase()
+    if (!seenNames.has(normalizedName)) {
+      seenNames.add(normalizedName)
+      uniqueTeachers.push(teacher)
+    }
+  })
+  
+  // Filtrer par la requête de recherche
+  const matchingTeachers = uniqueTeachers.filter(teacher => 
+    teacher.name.toLowerCase().includes(query) ||
+    (teacher.email && teacher.email.toLowerCase().includes(query))
+  )
+  
+  // Vérifier si la requête correspond exactement à un enseignant existant
+  const exactMatch = uniqueTeachers.find(teacher => 
+    teacher.name.toLowerCase() === query
+  )
+  
+  // Si pas de correspondance exacte, proposer de créer un nouvel enseignant
+  if (!exactMatch && query.length > 2) {
+    const newTeacher = {
+      name: event.query,  // Garder la casse originale
+      isNew: true,
+      email: '',
+      source: 'manual'
+    }
+    
+    // Ajouter le nouvel enseignant au début des suggestions
+    filteredTeachers.value = [newTeacher, ...matchingTeachers]
+  } else {
+    filteredTeachers.value = matchingTeachers
+  }
+}
 
 // Sauvegarder le module
 const saveModule = async () => {
@@ -1132,7 +1990,7 @@ const saveModule = async () => {
 }
 
 // Ajouter un enseignant
-const addTeacher = () => {
+const addTeacher = async () => {
   if (!newTeacher.value.name || !newTeacher.value.email) {
     toast.add({
       severity: 'warn',
@@ -1143,35 +2001,125 @@ const addTeacher = () => {
     return
   }
   
-  moduleTeachers.value.push({ ...newTeacher.value, id: Date.now() })
-  
-  newTeacher.value = {
-    name: '',
-    email: '',
-    hours: 0
-  }
-  
-  showAddTeacherDialog.value = false
-  
-  toast.add({
-    severity: 'success',
-    summary: 'Succès',
-    detail: 'Enseignant ajouté',
-    life: 3000
-  })
-}
-
-// Retirer un enseignant
-const removeTeacher = (teacher) => {
-  if (confirm(`Retirer ${teacher.name} de ce module ?`)) {
-    moduleTeachers.value = moduleTeachers.value.filter(t => t.id !== teacher.id)
+  try {
+    // 0. Vérifier si l'enseignant existe déjà dans le module
+    const existingTeacher = moduleTeachers.value.find(t => 
+      t.name.toLowerCase() === newTeacher.value.name.toLowerCase() ||
+      t.email?.toLowerCase() === newTeacher.value.email.toLowerCase()
+    )
+    
+    if (existingTeacher) {
+      toast.add({
+        severity: 'warn',
+        summary: 'Attention',
+        detail: 'Cet enseignant existe déjà dans ce module',
+        life: 3000
+      })
+      return
+    }
+    
+    // 1. Ajouter l'enseignant dans la base de données (table course_teachers)
+    const { data: teacherData, error: teacherError } = await supabase
+      .from('user_profiles')
+      .select('user_id')
+      .eq('email', newTeacher.value.email)
+      .single()
+    
+    let teacherId
+    if (teacherError || !teacherData) {
+      // Si l'enseignant n'existe pas dans user_profiles, créer uniquement l'association
+      // dans course_teachers avec un ID temporaire, sans créer de profil
+      
+      // Utiliser un timestamp comme ID temporaire pour éviter les conflits
+      teacherId = Date.now()
+      
+      // Ne pas créer de profil user_profiles pour éviter la contrainte FK
+      // L'enseignant sera disponible dans le module mais n'aura pas de profil complet
+      
+      console.log('Création enseignant temporaire sans profil user_profiles:', newTeacher.value.name)
+    } else {
+      teacherId = teacherData.user_id
+    }
+    
+    // 2. Ajouter l'association dans course_teachers
+    const { error: courseTeacherError } = await supabase
+      .from('course_teachers')
+      .insert({
+        course_code: module.value?.code,
+        teacher_id: teacherId,
+        hours: newTeacher.value.hours || 0
+      })
+    
+    if (courseTeacherError) throw courseTeacherError
+    
+    // 3. Ajouter localement pour l'affichage immédiat
+    moduleTeachers.value.push({ 
+      ...newTeacher.value, 
+      id: teacherId,
+      source: 'course_teachers'
+    })
+    
+    newTeacher.value = {
+      name: '',
+      email: '',
+      hours: 0
+    }
+    
+    showAddTeacherDialog.value = false
     
     toast.add({
       severity: 'success',
       summary: 'Succès',
-      detail: 'Enseignant retiré',
+      detail: 'Enseignant ajouté et sauvegardé',
       life: 3000
     })
+  } catch (error) {
+    console.error('Erreur ajout enseignant:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: 'Impossible d\'ajouter l\'enseignant',
+      life: 3000
+    })
+  }
+}
+
+// Retirer un enseignant
+const removeTeacher = async (teacher) => {
+  if (confirm(`Retirer ${teacher.name} de ce module ?`)) {
+    try {
+      // 1. Supprimer de la base de données (table course_teachers)
+      if (teacher.source === 'course_teachers' && typeof teacher.id === 'number') {
+        const { error } = await supabase
+          .from('course_teachers')
+          .delete()
+          .eq('course_code', module.value?.code)
+          .eq('teacher_id', teacher.id)
+        
+        if (error) {
+          console.warn('Erreur suppression DB:', error)
+          // Continuer quand même pour la suppression locale
+        }
+      }
+      
+      // 2. Supprimer localement pour l'affichage immédiat
+      moduleTeachers.value = moduleTeachers.value.filter(t => t.id !== teacher.id)
+      
+      toast.add({
+        severity: 'success',
+        summary: 'Succès',
+        detail: 'Enseignant retiré',
+        life: 3000
+      })
+    } catch (error) {
+      console.error('Erreur suppression enseignant:', error)
+      toast.add({
+        severity: 'error',
+        summary: 'Erreur',
+        detail: 'Impossible de retirer l\'enseignant',
+        life: 3000
+      })
+    }
   }
 }
 
@@ -1212,7 +2160,7 @@ const loadModulePlanning = async () => {
   }
 }
 
-// Charger les enseignants du module (course_teachers + planning)
+// Charger les enseignants du module (course_teachers + planning) - MODIFIÉ pour utiliser les enseignants de la DB
 const loadModuleTeachers = async () => {
   if (!module.value?.code) return
   
@@ -1288,8 +2236,36 @@ const loadModuleTeachers = async () => {
       })
     }
     
+    // 3. AJOUT: Charger tous les enseignants disponibles depuis la DB et les ajouter s'ils ne sont pas déjà présents
+    const { data: allTeachers, error: teachersError } = await supabase
+      .from('user_profiles')
+      .select('user_id, display_name, forname, family_name, email')
+      .in('role', ['EnseignantSoins', 'EnseignantPhysio', 'AdminSoins', 'AdminPhysio'])
+    
+    if (!teachersError && allTeachers) {
+      allTeachers.forEach(teacher => {
+        const teacherName = teacher.display_name || `${teacher.forname || ''} ${teacher.family_name || ''}`.trim()
+        if (teacherName) {
+          // Vérifier si cet enseignant n'est pas déjà dans teachersMap
+          const exists = Array.from(teachersMap.values()).some(t => 
+            t.name.toLowerCase() === teacherName.toLowerCase()
+          )
+          if (!exists) {
+            teachersMap.set(teacher.user_id, {
+              id: teacher.user_id,
+              name: teacherName,
+              email: teacher.email || '',
+              avatar: null,
+              hours: 0,
+              source: 'database'
+            })
+          }
+        }
+      })
+    }
+    
     moduleTeachers.value = Array.from(teachersMap.values())
-    console.log('👥 Enseignants chargés:', moduleTeachers.value.length, '(course_teachers + planning)')
+    console.log('👥 Enseignants chargés:', moduleTeachers.value.length, '(course_teachers + planning + database)')
   } catch (error) {
     console.error('Erreur enseignants:', error)
     moduleTeachers.value = []
@@ -1490,7 +2466,7 @@ const exportPlanningToExcel = () => {
   // Générer le nom du fichier
   const moduleCode = module.value?.code || 'module'
   const classLabel = normalizeClass(selectedClass.value) || 'all'
-  const fileName = `Planning_${moduleCode}_${classLabel}_${selectedYear.value}.xlsx`
+  const fileName = `Planning_${moduleCode}_${classLabel}.xlsx`
   
   // Télécharger le fichier
   XLSX.writeFile(wb, fileName)
@@ -1516,7 +2492,7 @@ const exportPlanningToPDF = () => {
   // Sous-titre
   doc.setFontSize(11)
   doc.setTextColor(100)
-  doc.text(`Code: ${module.value?.code || ''} | Année: ${selectedYear.value} | Classe: ${selectedClass.value || 'Toutes'}`, 14, 28)
+  doc.text(`Code: ${module.value?.code || ''} | Classe: ${selectedClass.value || 'Toutes'}`, 14, 28)
   doc.text(`Total: ${filteredPlanning.value.length} séances | ${totalPlanningHours.value}h planifiées`, 14, 34)
   doc.setTextColor(0)
   
@@ -1566,7 +2542,7 @@ const exportPlanningToPDF = () => {
   // Télécharger
   const moduleCode = module.value?.code || 'module'
   const classLabel = normalizeClass(selectedClass.value) || 'all'
-  doc.save(`Planning_${moduleCode}_${classLabel}_${selectedYear.value}.pdf`)
+  doc.save(`Planning_${moduleCode}_${classLabel}.pdf`)
   
   toast.add({
     severity: 'success',
@@ -1612,17 +2588,12 @@ const loadCurrentValidation = async () => {
   
   try {
     const classCode = selectedClass.value || 'ALL'
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('planning_validations')
       .select('*')
       .eq('module_code', module.value.code)
       .eq('class_code', classCode)
-      .eq('year', selectedYear.value)
-      .single()
-    
-    if (error && error.code !== 'PGRST116') {
-      console.warn('Erreur chargement validation:', error)
-    }
+      .maybeSingle()
     
     currentValidation.value = data || null
   } catch (error) {
@@ -1636,12 +2607,11 @@ const loadHoursBudget = async () => {
   if (!module.value?.code) return
   
   try {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('module_hours_budget')
       .select('*')
       .eq('module_code', module.value.code)
-      .eq('year', selectedYear.value)
-      .single()
+      .maybeSingle()
     
     if (data) {
       hoursBudget.value = data
@@ -1662,10 +2632,9 @@ const saveHoursBudget = async () => {
       .from('module_hours_budget')
       .upsert({
         module_code: module.value.code,
-        year: selectedYear.value,
         planned_hours: hoursBudget.value.planned_hours || 0,
         updated_at: new Date().toISOString()
-      }, { onConflict: 'module_code,year' })
+      }, { onConflict: 'module_code' })
     
     if (error) throw error
     
@@ -1697,11 +2666,10 @@ const validatePlanning = async () => {
       .upsert({
         module_code: module.value.code,
         class_code: classCode,
-        year: selectedYear.value,
         status: 'validated',
         validated_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
-      }, { onConflict: 'module_code,class_code,year' })
+      }, { onConflict: 'module_code,class_code' })
     
     if (error) throw error
     
@@ -1764,10 +2732,9 @@ const submitForReview = async () => {
       .upsert({
         module_code: module.value.code,
         class_code: classCode,
-        year: selectedYear.value,
         status: 'pending',
         updated_at: new Date().toISOString()
-      }, { onConflict: 'module_code,class_code,year' })
+      }, { onConflict: 'module_code,class_code' })
     
     if (error) throw error
     
@@ -1796,6 +2763,15 @@ const formatDate = (dateStr) => {
   return new Date(dateStr).toLocaleDateString('fr-CH')
 }
 
+// Obtenir les heures par classe
+const getClassHours = (classCode) => {
+  return Math.round(
+    modulePlanning.value
+      .filter(slot => normalizeClass(slot.class_code) === classCode)
+      .reduce((sum, slot) => sum + getSlotHours(slot), 0) * 10
+  ) / 10
+}
+
 // Labels et couleurs pour les actions d'historique
 const getActionLabel = (action) => {
   const labels = { create: 'Créé', update: 'Modifié', delete: 'Supprimé' }
@@ -1806,6 +2782,8 @@ const getActionSeverity = (action) => {
   const severities = { create: 'success', update: 'info', delete: 'danger' }
   return severities[action] || 'secondary'
 }
+
+// Exposition des fonctions nécessaires
 </script>
 
 <style scoped>
@@ -1889,5 +2867,232 @@ const getActionSeverity = (action) => {
 .border-noround-left {
   border-top-left-radius: 0 !important;
   border-bottom-left-radius: 0 !important;
+}
+
+/* Styles pour le groupement de la DataTable par semaine/jour */
+:deep(.planning-datatable .week-even) {
+  background-color: rgba(59, 130, 246, 0.08) !important;
+}
+
+:deep(.planning-datatable .week-odd) {
+  background-color: transparent !important;
+}
+
+:deep(.planning-datatable .new-week-row) {
+  border-top: 3px solid var(--primary-color) !important;
+}
+
+:deep(.planning-datatable .new-day-row) {
+  border-top: 1px solid var(--primary-400) !important;
+}
+
+:deep(.planning-datatable .same-day-row) {
+  border-top: 1px dashed var(--surface-700) !important;
+}
+
+:deep(.planning-datatable tr) {
+  color: var(--text-color) !important;
+  background-color: transparent;
+}
+
+:deep(.planning-datatable td) {
+  color: var(--text-color) !important;
+  padding: 1rem 0.5rem !important;
+}
+
+:deep(.planning-datatable .p-tag) {
+  font-weight: 600;
+}
+
+:deep(.planning-datatable tr:hover) {
+  background-color: var(--surface-hover) !important;
+}
+
+/* Styles pour les badges de semaine et jour optimisés */
+:deep(.planning-datatable .week-header-cell) {
+  padding: 0.5rem 0.25rem;
+}
+
+:deep(.planning-datatable .week-content) {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+:deep(.planning-datatable .add-button-inline) {
+  width: 1.5rem !important;
+  height: 1.5rem !important;
+  opacity: 0.5;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+:deep(.planning-datatable .add-button-inline:hover) {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+:deep(.planning-datatable .week-badge) {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.75rem 1rem;
+  border-radius: 1rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  flex: 1;
+}
+
+:deep(.planning-datatable .week-badge:hover) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
+}
+
+:deep(.planning-datatable .week-badge i) {
+  font-size: 1rem;
+}
+
+:deep(.planning-datatable .week-text) {
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+:deep(.planning-datatable .day-header-cell) {
+  padding: 0.5rem 0.25rem;
+}
+
+:deep(.planning-datatable .day-badge) {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  padding: 0.75rem 1rem;
+  border-radius: 1.25rem;
+  box-shadow: 0 4px 6px rgba(240, 147, 251, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  min-width: 120px;
+}
+
+:deep(.planning-datatable .day-badge:hover) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(240, 147, 251, 0.4);
+}
+
+:deep(.planning-datatable .day-circle) {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+:deep(.planning-datatable .day-initial) {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #f5576c;
+  line-height: 1;
+}
+
+:deep(.planning-datatable .day-info) {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+:deep(.planning-datatable .day-name) {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: white;
+  line-height: 1.2;
+  text-transform: capitalize;
+}
+
+:deep(.planning-datatable .day-date) {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+  margin-top: 0.125rem;
+}
+
+/* Espacement amélioré entre les groupes */
+:deep(.planning-datatable .new-week-row td) {
+  padding-top: 2rem !important;
+  border-top: 3px solid #667eea !important;
+}
+
+:deep(.planning-datatable .new-day-row td) {
+  padding-top: 1.5rem !important;
+  border-top: 2px solid #f093fb !important;
+}
+
+:deep(.planning-datatable .same-day-row td) {
+  padding-top: 0.75rem !important;
+  border-top: 1px dashed var(--surface-300) !important;
+}
+
+/* Amélioration des cellules de contenu */
+:deep(.planning-datatable td.course-title-cell) {
+  vertical-align: top;
+  padding-top: 1rem !important;
+}
+
+:deep(.planning-datatable .course-title) {
+  font-weight: 600;
+  color: var(--text-color);
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+:deep(.planning-datatable .time-slot) {
+  background: var(--surface-100);
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  border: 1px solid var(--primary-200);
+  font-size: 0.875rem;
+}
+
+/* Styles pour le formulaire de séance (même format que ModulePlanningView) */
+.session-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.field-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.field-row .field {
+  flex: 1;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.field label {
+  font-weight: 600;
+  color: var(--text-color);
+  font-size: 0.875rem;
+}
+
+.field .w-full {
+  width: 100%;
 }
 </style>
