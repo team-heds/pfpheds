@@ -1,0 +1,288 @@
+﻿0,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,Numero de l'étape,Etape 1,Etape 2,Etape 3
+,,,,,,,,,,,,,,Nom de l'étape,Présentaition,Npm du patien,Etat du patien
+,,,,,,,,,,,,,,Savoir si des étapes peuvent être facultative ,non,non,non
+,,,,,,,,,,,,,,Savoir si des étapes peuvent changer de places dans le scénario,,3,2
+,,,,,,,,,,,,,,Texte idéal de l’étudiant soignant,"Bonjour, je suis ""nom, orénom"", étudiant en soins infirmiers",Quel est votre nom et prlnom,Comment allez vous
+,,,,,,,,,,,,,,Critère de réussite de la réponse pour passer à l’étape suivante,avoir nom prenom + mot infirmier,demande précise du nom et prénom,
+,,,,,,,,,,,,,,Image visualisante de l’étape (dictionnaire d’image ),patient dans un lit,patient dans lit,patient lit
+,,,,,,,,,,,,,,Consignes “ instruction aide pour l’étudiant”,"Vous vous etes pas présentlé, qui êtes vous?",,
+,,,,,,,,,,,,,,,,Demander au patient son nom et prénom,Demandez au patient comment il va
+,,,,,,,,,,,,,,,,,
+N° Etape,Nom Etape,Obligatoire,Facultative,Autres étapes possibles,Texte idéal,Critères de réussite,Image,Réponse Chatbat,"Infos étape ""Réflexive""","Infos étape ""Directive""",Consigne Aide,Feed-back possible,,,,,
+1,Objectifs scénario,X,,Non,Il est attendu que l’étudiant·e :,Objectifs à inclure dans le prompt initial,Non,,,,,,,,,,
+,,,,,1.       Se présente à la résident·e,,,,,,,,,,,,
+,,,,,2.       Explique sa présence en chambre (apporter le petit-déjeuner),,,,,,,,,,,,
+,,,,,3.       Dépose le plateau repas à table,,,,,,,,,,,,
+,,,,,"4.       Repère les signes de douleur (gémissements, refus de manger – comportement inhabituel)",,,,,,,,,,,,
+,,,,,"5.       Évalue la douleur (OPQRSTUI, échelle de la douleur)",,,,,,,,,,,,
+,,,,,6.       Adapte son mode de communication à la résidente (troubles sensoriels et cognitifs),,,,,,,,,,,,
+,,,,,7.       Transmet l’information à son·sa référent·e (ISBAR).,,,,,,,,,,,,
+2,Résumé de la situation,X,,Non,"Madame Aubrey, Denise, 14.05.1940, est une résidente de l’EMS Harmonia. Il est 08h30 du matin et Madame est dans sa chambre. L’étudiant·e a comme consigne de lui apporter le plateau avec le petit-déjeuner. Dès l’entrée de l’étudiant·e en chambre, Madame gémie. Elle refuse de prendre son petit-déjeuner, comportement qui n’est pas habituel.",Résumé à inclure dans le prompt initial,Non,,"Faire apparaitre après 30 sec.
+""Avant de vous rendre auprès de la patiente, prenez le temps de consulter le dossier médical""","En même temps que l'info ""réflexive"", faire apparaitre :
+""Pour cela, appuyer sur l'îcône DOSSIER MEDICAL""",,,,,,,
+3,Dossier médical,X,,Non,-Placement dans établissement médico-social (EMS) l’Harmonia depuis un an.,Valide la lecture du dossier médical,"
+- Photo patiente de 1940 souriante pour dossier médical
+
+Voir Dossier ""Dictionnaire Images"" :
+ https://hessoit.sharepoint.com/:p:/r/sites/MXColloborationHES-SOSantinformatique/Documents%20partages/CPP%20-%20CareConverse/Projet%20Chatbot/3.%20Dictionnaire%20d%E2%80%99images.pptx?d=wf5d1a83c4c364d459f6d5002fc718304&csf=1&web=1&e=i2uF9I
+
+ PDF ""Dossier médical"" qui s'affichera en dessous de la photo AVATAR en début de session
+
+Voir Dossier ""Dictionnaire Images""
++ PDF déposé sur équipe ""TEAMS MX Colloboration HES-SO Santé"": Fichiers : Projet Chatbot",,"Faire apparaitre après 1 minute
+""En fin de lecture, réfléchissez aux éventuelles problématiques auxquelles vous pourriez être confronté-es en visitant Mme Aubrey""","Une fois la lecture du dossier médical terminé:
+cliquer sur l'icône CONSIGNES"" ",,,,,,,
+,,,,,"-Madame a été placé en institution en raison d’une perte d’autonomie importante pour les activités de vie quotidienne et domestiques (AVQ-D) et des chutes à répétition, liées aux troubles neurocognitifs modérés.",,,,,,,,,,,,
+,,,,,"-Sans réseau familiale, Madame a demandé d’être placé en EMS car sa sécurité à domicile n’était plus assurée.",,,,,,,,,,,,
+,,,,,"-Madame est veuve depuis 10 ans, sans enfants.",,,,,,,,,,,,
+,,,,,"-Madame Denise présente des troubles neurocognitifs modérés, une coxarthrose au niveau des deux hanches et un déficit auditif qui n’est pas compensé. Elle se déplace avec un rolator.",,,,,,,,,,,,
+,,,,,"-Les troubles neurocognitifs ce manifestent chez Madame par une répétition fréquente des mêmes questions « À quelle heure on mange ?», par des oublis des événements récents tels que la prise des repas, une désorientation temporelle, une communication perturbée notamment par des phrases parfois confuses et une difficulté à finaliser une tâche comme se vêtir.",,,,,,,,,,,,
+4,Consigne étudiant-e,X,,Non,"""Il est 08h30. Vous devez apporter le plateau du petit déjeuner et le déposer sur la table à manger de Madame Aubry à la chambre 101 """,Valide la lecture de la consigne,Afficher la consigne sous l'avatar,,,"Inclure d'emblée sur image:
+""Une fois la consigne lue, cliquer sur l'icône ENTREE EN CHAMBRE",,,,,,,
+5,Présentation (1/2),X,,À l’étape 6,"« Bonjour, je m’appelle nom, prénom et je suis étudiant-e infirmier-ère, actuellement en 1ère année Bachelor »","Se présenter à la résidente (nom, prénom, fonction)","Patiente de 1940 assise dans un grand fauteuil pour personne âgée et qui se tient la tête avec une main
+
+Voir Dossier ""Dictionnaire Images""",Pas de réponse,"Après la première tentative de présentation: 
+""La patiente ne réagit pas à avotre sollicitation, une information présente dans le dossier médical pourrait vous donner une explication.
+Essayer à nouveau""","Après la deuxième tentative de présentation: 
+Ecrire sous l'image : 
+""La patiente ne vous a pas entendu, car elle a un déficit auditif non-compensé
+
+ Cliquez sur « J’ai compris » pour passer à l’étape suivante",Faire apparaitre l’image « Patiente assise au fauteuil »,,,,,,
+6,Présentation (2/2),X,,A l’étape 5,"« Je m’assieds en face de vous, comme ça vous me voyez bien »","Doit aborder la résidente de face, lentement et calmement, en se mettant à sa hauteur.",Non,"Ne répond que si l’étudiant-e à verbalisé qu’il/elle se mettait à sa hauteur et en face d’elle pour lui parler, si OK « Bonjour, vous ressemblez à ma voisine, c’est bien vous ? »","1er essai :
+""Si la réponse de l'étudiant est soit :
+- Je parle plus fort ou
+- Si il ne verbalise pas qu'il se met à hauteur de la patiente ou
+- Si  il ne verbalise pas qu'il s'assied en face de la patiente
+
+""Faire apparaitre le texte suivant  :
+
+""De quelle manière le/la soignante peut-il/elle ajuster sa posture et son attitude pour établir un contact et maintenir l’attention de la patiente ?""","si après le 2ème essai :
+"" Si il ne verbalise toujours pas qu'il se met à hauteur de la patiente ou
+- Si  il ne verbalise tounours pas qu'il s'assied en face de la patiente
+
+""Faire apparaitre le texte suivant  :
+
+""Pour capter l’attention d’une personne âgée présentant des troubles cognitifs, pensez à vous asseoir face à elle, à sa hauteur.
+Cette position montre votre disponibilité et facilite la communication. »
+
+ Cliquez sur « J’ai compris » pour passer à l’étape suivante",,,,,,,
+,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,
+7,Vérifie identité,,X,A l’étape 5 ou 6,"« Vous êtes bien Madame Aubry, Denise, du 14.05.1940 ? »",,"Patiente de 1940 qui a les yeux fermés
+
+Voir Dossier ""Dictionnaire Images""","Réponse uniquement si l’étudiant-e a verbalisé s’être mis à sa hauteur et en face d’elle pour lui parler, si OK « Oui c’est moi »","1er essai :
+- Si écrit dans le chat ""Madame Aubry, Denise, du 14.05.1940"" ==> passer à l'étape suivante
+- Si n'introduit PAS dans le chat les infos ci-dessus
+
+Faire apparaitre le texte suivant :
+
+""Comment pouvez-vous vous assurer que vous vous adressez bien à la bonne patiente?""","Si après 2ème essai :
+- Ecrit dans le chat ""Madame Aubry, Denise, du 14.05.1940"" ==> passer à l'étape suivante
+
+- Si n'introduit PAS dans le chat les infos ci-dessus
+
+Faire apparaitre le texte suivant :
+
+""Pour identifier correctement la patiente, vous devez lui demander son nom - prénom et sa date de naissance complète (JJ(MM/AA)""
+
+Cliquez sur « J’ai compris » pour passer à l’étape suivante",Faire apparaitre l’image « Patiente yeux fermés »,,,,,,
+,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,
+8,Application de la tâche,X,,,« Je vous apporte votre petit déjeuner » ,Doit signaler qu’elle/il apporte le plateau du petit déjeuner,"Patiente de 1940 qui a les yeux fermés et qui grimace à cause de la douleur
+
+Voir Dossier ""Dictionnaire Images",Normalement la patiente émettrait des gémissements comme : Mmmmh – aaaaah,,"Après les gémissements
+""Pour passer à l'étape suivante, vous pouvez verbaliser/écrire que vous poser le plateau repas et que vous engager la discussion avec Mme Aubry"" = TRIGGER pour poursuivre le scéanrio","Faire apparaitre l’image « Patiente grimace » avec si possible un audio ""gémissement""",,,,,,
+,,,,,,,,,,,,,,,,,
+,,,,,« Vous avez faim ? » (FACULTATIF),,,"« Oh non, je n’ai vraiment pas envie de manger »",,,,,,,,,
+9,Identification de la situation,X,,,"« C’est étonnant, d’habitude vous demander régulièrement à quelle heure vous allez manger, vous n’êtes pas en forme ce matin ? »","Doit repérer les possibles signes de douleur : comportement inhabituel (refus de manger), gémissements et grimasses.","Patiente de 1940 se penche légèrement en avant sur le fauteuil en se tenant le bassin avec les mains, toujours en grimaçant 
+
+
+Voir Dossier ""Dictionnaire Images",Répond uniquement si les questions sont courtes (max 35 mots) et dans un langage simple,"Si après 2ème essai :
+- Ne demande pas si la personne à mal ou ne s'inquiète pas du manque d'appétit:
+
+Faire apparaitre le texte suivant :
+
+""C'est étonnant, dans le dossier médical, il est mentionné que Mme Aubry réclamme régulièrement ses repas. Quelle pourrait être la cause de son inappétence ?""","Si après 3ème essai :
+- Ne demande toujours pas si la personne à mal ou ne s'inquiète pas du manque d'appétit
+
+Faire apparaitre le texte suivant :
+
+""Chez la personne âgée présentant des troubles cognitifs, la diminution ou la perte d’appétit peut fréquemment être le signe indirect d’une douleur non exprimée ou mal évaluée.
+En raison des altérations de la communication verbale, la douleur peut se manifester par des changements comportementaux (refus de s’alimenter, apathie, agitation, grimaces, repli sur soi).
+Il est donc essentiel que le soignant identifie et explore cette hypothèse en réalisant une évaluation systématique de la douleur en posant des questions courtes et dans un langage simple""
+
+Cliquez sur « J’ai compris » pour passer à l’étape suivante",Faire apparaitre l’image « Patiente penchée en avant »,"RAG:
+Résumé de la communication spécifique avec des rrésident-es présentants des troubles sensoriels et cognitifs (verbale - non-verbale)
+
+Rappel des manifestations cliniques de la douleur chez les personnes présentants des troubles cognitifs
+
+Résumé des alertes cliniques gériatriques",,,,,
+,,,,,,,,,,,,,,,,,
+,,,,,,,,"« S'il vous plait, dites à mon mari de venir, il faut appeler la police avant qu'il fasse nuit ! »",,,,,,,,,
+,,,,,"« Je constate que vous avez l’air d’avoir mal, c’est exact ? »",Doit utiliser des phrases courtes et un langage simple.,,,,,,,,,,,
+,,,,,,Doit parler lentement et prononcer clairement.,,,,,,,,,,,
+9,Evaluation clinique,X,,,Tente d’effectuer un OPQRSTUI :,"Tente un recueil de données OPQRSTUI, mais constate que la présence de troubles cognitifs ne permet pas l’utilisation de cet outil è doit verbaliser que l’OPQRSTUI n’est pas efficace dans cette situation",,"Dans ce contexte de tr neurocognitifs, la patiente répond à toutes les questions :","Après le 10 ème essai (=OPQRSTUI):
+- Etudiant-e devrait avoir posé l'ensemble des questions incluent dans l'OPQRSTUI, donc après le 10ème essai.OU si Ensemble de l'OPQRSTUI a été traité dans une seule question
+
+Faire apparaitre le texte suivant :
+
+""Avez-vous obtenu toutes les informationns attendue après l'utilisation du OPQRSTUI ?""
+
+Si tel est le cas : ""Cliquer sur l'icône JE CONTINUE
+
+Si ce n'est pas le cas : ""Compléter les informations manquantes, puis Cliquer sur l'icône MAINTENANT J'AI TERMINE",,"Consigne: Après 3 questions de l'OPQRSTUI, signaler que la patiente n'arrive pas à répondre correctement à vos questions","Rappel de l'OPQRSTUI 
+
+P:Provoqué / Pallier
+Q :Qualité / Quantité
+R:Région / Irradiation
+S:Signes et symptômes associés
+T:Temps
+U:Understand / Signification
+I: Impact fonctionnel",,,,,
+,,,,,Exemples de questions,,,,,,,,,,,,
+,,,,,,,,"« S'il vous plait, dites à mon mari de venir, il faut appeler la police avant qu'il fasse nuit ! »",,,,,,,,,
+,,,,,« O : Avez-vous mal/des douleurs ?,,,,,,,,,,,,
+,,,,,Provoquer : Qu’est ce qui provoque votre douleur ?,,,Dans un contexte « normal » les réponses auraient été :,,,,,,,,,
+,,,,,Pallier : Qu’est ce qui aide à soulager votre douleur ?,,,,,,,,,,,,
+,,,,,Qualité : Que ressentez-vous ?,,,O : J’ai mal / J’ai des douleurs,,,,,,,,,
+,,,,,Quantité : l’étudiant·e doit préciser l’utilisation de l’échelle Algoplus,,,Provoquer : Quand je bouge ,,,,,,,,,
+,,,,,R : Ou avez-vous mal/des douleur ? Pointez avec votre doigt. Est-ce que vous ressentez de la douleur ailleurs ?,,,Pallier : Rester tranquille,,,,,,,,,
+,,,,,S : -,,,Qualité : C’est raide. ,,,,,,,,,
+,,,,,T : Depuis quand avez-vous mal/des douleurs ? Est-ce que votre douleur est continu ou disparait par moments ?,,,R : Les deux hanches ,,,,,,,,,
+,,,,,U : De quel problème croyez-vous qu’il s’agît ? Avez-vous déjà eu cette douleur dans le passé ?,,,S : -,,,,,,,,,
+,,,,,I : Quel est l’impact de cette douleur sur votre quotidien ? »,,,T : Au réveil.,,,,,,,,,
+,,,,,,,,U : C’est l’arthrose.,,,,,,,,,
+,,,,,"«L’OPQRSTUI n’est pas efficace dans cette situation, je vais devoir utiliser une autre méthode d’évaluation de la douleur » ",,,I : Refus de s’alimenter,,,,,,,,,
+10,Signes vitaux,,X,Etape 9,« Je vais faire quelques examens supplémentaires » ou,Décide de prendre au minimum la pression artérielle – la pulsation et la température tympanique,"Images pour résultat :
+
+Voir Dossier ""Dictionnaire Images",Résultats des paramètres vitaux :,"Une fois les paramêtres pris (min 4 sur 5)
+
+Faire apparaitre le texte suivant :
+
+""L'ensemble des paramêtres vitaux sont normaux chez Mme Aubry""
+
+""Cliquer sur l'icône : OUI (= passe à l'étape suivante)
+
+ou
+
+""Cliquer sur l'icône : NON (= passe à l'étape suivante)","Etape facultative
+Donc si étudiant n'a pas demandé spontanément les paramêtres, faire apparaitre les valeurs à la fin de l'étape 12 (= averitr la référente) en faisant apparaitre le texte suivant :
+
+""Si vous aviez pris les paramêtres vitaux, voici les valeurs que vous auriez obtenues : TA 138/79, FC 90 bpm, régulier, FR 20 rpm, SpO2 97%, T° 36.7""
+
+Cliquez sur « J’ai compris » pour passer à l’étape suivante","Si les paramètres ne sont pas pris, la patiente dit « Donnez-moi ce téléphone pour que j’appelle mon mari ! » è Faire apparaitre une image d’un thermomètre tympanique éteint",,,,,,
+,,,,,« Je vais contrôler vos signes vitaux » ou,,Pulsation avec photo d’une main qui prend la pulsation au niveau de l'artère radiale,TA 138/79 mmHg ,,,"Si décide de prendre les signes vitaux, consigne à afficher :",,,,,,
+,,,,,« Je vais mesurer vos paramètres vitaux »,,SpO2 avec un saturomètre,FC 90 bpm ; régulière,,,"Consigne : « Ecrivez les paramètres vitaux que vous désirez prendre"" et en fonction des paramètres demandés faire apparaitre les différentes images « Paramètres vitaux »",,,,,,
+,,,,,"pas le but d'avoir la refelcion, donc des que l'etudiant a dit ""signe vitaux prendre etc.."" ca affiche tout",,T° avec un thermomètre tympanique SANS affichage de la température,FR 20 rpm ,,,,,,,,,
+,,,,,,,T° avec un thermomètre tympanique AVEC affichage de la température,SpO2 97% AA ,,,,,,,,,
+,,,,,,,,T° 36.7°C,,,,,,,,,
+11,Echelle Algoplus,X,,Etape 9 ou 10 ,"« Au vu de la situation, Madame n’est pas en mesure d’évaluer sa douleur, je vais donc utiliser une échelle  d’observation comportementale de la douleur aiguë , dans ce cas, Algoplus.",Verbalise la nécessité d’utiliser une échelle adaptée à la situation et cite l’échelle Algoplus,"Image Echelle Algoplus
+
+Voir Dossier ""Dictionnaire Images
++ PDF déposé sur équipe ""TEAMS MX Colloboration HES-SO Santé"": Fichiers : Projet Chatbot",Réponse aux items de l’échelle :,"Si l'étudiant-e écrit/verbalise l'utilisation d'une autre échelle que l'ALGOPLUS (p.ex : échelle DOLOPLUS, ECPA, QDSA), faire apparaitre le texte suivant :
+
+""L’échelle ALGOPLUS a été spécifiquement développée
+pour évaluer et permettre la prise en charge
+des douleurs aiguës chez un patient âgé pour tous
+les cas où une auto évaluation fiable n’est pas
+praticable (troubles de la communication verbale).
+L’utilisation d’ALGOPLUS est ainsi particulièrement
+recommandée pour le dépistage et l’évaluation des :
+• pathologies douloureuses aiguës (ex : fractures, zona,
+post-op, ischémie, lumbago, rétentions urinaires…),
+• accès douloureux transitoires (ex : névralgies
+faciales, poussées douloureuses sur cancer…),
+• douleurs provoquées par les soins ou les actes
+médicaux diagnostiques.
+
+Cliquez sur « J’ai compris, je vais utiliser cette échelle et je vais calculer le score ALGOPLUS, afin de pouvoir passer à l'étape suivante » 
+
+Calcul du Score ALGOPLUS
+- Si indique que le score est à 1/5 ==> doit recommencer l'évaluation
+- Si indique que le score est à 2/5 ==> doit recommencer l'évaluation
+- Si indique que le score est à 3/5 ==> doit recommencer l'évaluation
+- Si indique que le score est à 4/5 ==> Afficher ""le score est exact - Cliquez sur cet icône pour continuer""
+- Si indique que le score est à 5/5 ==> doit recommencer l'évaluation","Après toujours échaec après la 4ème tentative pour attribuer un score, Affciher le texte suivant :
+
+""le score ALGOPLUS est de 4/5""
+
+Cliquez sur « J’ai compris » pour passer à l’étape suivante",Afficher l’échelle Algoplus lorsque l’étudiant-e cite l’outil.,"RAG:
+Rappel de l'approche (journaliste/enquêteur)",,,,,
+,,,,,Chez la personne âgée non communicante. Pour cela je vais utiliser l’échelle Algoplus »,,echelle_algoplus_outils.pdf,1 Visage,,,"Consigne : ""Compléter les différents items de l'échelle ALGOPLUS en posant directement les questions au chatbot""",,,,,,
+,,,,,"faut le mot algolplus poru faire afficher, et ca affiche tout , si définir d'une autre echelle, mettre un texte en caption pour dire que l'echelle choisie n'est pas la désirée et faut reproposer une",,,"Froncement des sourcils, grimaces, crispation,",,,,"Expliquer pourquoi les autres échelles d’hétéroévaluation ne sont pas indiquées dans cette situation : 
+o Doloplus – évaluation à faire en équipe sur une observation des comportements des dernières 24 heures 
+o PACSLAC-F – échelle qui doit être complétée sur une période de 8h00
+o ECPA – évaluation d’une douleur liée à un soin (dans ce cas Madame est encore installée dans son lit) ",,,,,
+,,,,,,,,"mâchoires serrées, visage figé.",,,,,,,,,
+,,,,,,,,Réponse : patiente grimace ou remontrer image « Patiente grimace »,,,,,,,,,
+,,,,,,,,,,,,,,,,,
+,,,,,,,,2 Regard,,,,,,,,,
+,,,,,,,,"Regard inattentif, fixe, lointain ou suppliant, pleurs,",,,,,,,,,
+,,,,,,,,yeux fermés.,,,,,,,,,
+,,,,,,,,Réponse : patiente à les yeux fermées ou remontrer image « Patiente grimace »,,,,,,,,,
+,,,,,,,,,,,,,,,,,
+,,,,,,,,3 Plaintes,,,,,,,,,
+,,,,,,,,"« Aie », « Ouille », « J’ai mal », gémissements, cris.",,,,,,,,,
+,,,,,,,,Réponse :,,,,,,,,,
+,,,,,,,,« la patiente gémit » ou faire réécouter l’audio « gémissement »,,,,,,,,,
+,,,,,,,,,,,,,,,,,
+,,,,,,,,4 Corps,,,,,,,,,
+,,,,,,,,"Retrait ou protection d’une zone, refus de",,,,,,,,,
+,,,,,,,,"mobilisation, attitudes figées.",,,,,,,,,
+,,,,,,,,Réponse : « la patiente ne se laisse pas toucher les hanches » ou remontrer l’image « Patiente penchée en avant »,,,,,,,,,
+,,,,,,,,,,,,,,,,,
+,,,,,,,,5 Comportements,,,,,,,,,
+,,,,,,,,"Agitation ou agressivité, agrippement",,,,,,,,,
+,,,,,,,,"Réponse : « la patiente n’est pas agitée ou agressive, elle ne s’agrippe pas »",,,,,,,,,
+,,,,,,,,,,,,,,,,,
+,,,,,,,,Score Algoplus : 4 sur 5,,,,,,,,,
+12,Prise de décision,X,,,« Je constate que vous avez mal. Je vais informer ma référente et je reviens ensuite vous voir »,Identifie que la patiente est algique et décide d’Informer la patiente qu’elle revient la voir après avoir échanger avec sa référente de la situation,"Image d’une infirmière 40 ans entrant dans une chambre d’un home
+
+Voir Dossier ""Dictionnaire Images",« S’il vous plait aidez-moi »,"Après la phrase ""S'il vous plait aidez-moi"", Affciher le texte suivant :
+
+""le score ALGOPLUS est de 4/5 vous devez :
+
+1. Administrer un Panadol® à Mme Aubry : Cliquez sur « Panadol®» pour passer à l’étape suivante ==> Si clique sur icône ==> Afficher ""Les médicaments sont préscrit pas le médecin, vous devez en discuter avec votre référente""
+
+2. Coucher Mme Aubry dans son lit pour la soulager : Cliquer sur ""Couché Mme Aubry"" ==> si clique sur icône ==> Afficher ""Il est nécessaire de faire vos transmissions à votre référente avant de mobiliser la patiente""
+
+3. Avertir votre référente : Cliquez sur ""Appel Référente"" ==> peut passer à l'étape suivante qui fait apparaitre la référente","Après la 2ème tentative, si l'éutidant-e n'a pas avertit la référente 
+Affciher le texte suivant :
+
+""En avertissant votre référente, vous pourrez échanger sur la meileure stratégie à adopter dans l'intérêt de Mme Aubry""
+
+Cliquez sur « J’ai compris » pour passer à l’étape suivante","Après la réponse « S’il vous plait aidez-moi », 
+l’infirmière référente entre dans la chambre pour vérifier si l’étudiant-e a besoin d’aide :
+« Alors, comment va Mme Aubrey ce matin ? »",,,,,,
+13,Transmissions,X,,12,Utilisation de l’outil de transmission ISBAR,Utilise l’acronyme ISBAR (Identité - Situation-Contexte-Évaluation-Recommandation),Non,"1. Si utilisation de l’outil ISBAR, l’infirmière reformule le SBAR 1x terminé « Donc, je résume pour m’assurer d’avoir bien compris : «Madame Aubrey semble être algique. D’habitude elle est calme et participe aux repas sans difficulté.","Afficher d'emblée :
+
+""Après avoir effectuer vos transmissions, veuillez cliquer sur l'icône ""Transmissions terminées""
+
+Une fois que l'étudiant-e a cliqué sur l'icone ""Transmissions terminées"": 
+1. Comme décrit à G, La référente reformule les transmissions, si l'outil SBAR a été correctement utilisé ==> Fin scénario, la référente dit ""Merci pour ton rapport, je vais poursiuvre avec l'examen pyhsique et transmettrai notre recueil de connées au medecin""
+
+OU
+
+2. Comme décrit à G, La référente signale ne pas avoir bien compris le rapport et demande l'utilisation du SBAR ==> Afficher le texte suivant : ""Vous devez comopléter les lettres manquantes, puis cliquez sur l'icône ""Amélioration des transmissions terminées"" = fin du scénario, la référente dit ""Merci pour ton rapport, je vais poursiuvre avec l'examen pyhsique et transmettrai notre recueil de connées au medecin""","Après la fin de la 2ème tentative, 
+afficher le texte suivant :
+
+""L’utilisation de la méthode ISBAR (Identifier, Situation, Background, Assessment, Recommendation) permet d’assurer une communication structurée, claire et sécurisée entre professionnels de santé. Elle favorise la transmission d’informations pertinentes et réduit les risques d’omission ou de malentendu, particulièrement dans les situations critiques ou lors des relais de soins. En standardisant le langage, l’ISBAR améliore la coordination interprofessionnelle, soutient la prise de décision clinique rapide et contribue à la sécurité du patient. Elle développe également la pensée clinique du soignant en l’incitant à synthétiser et prioriser les données essentielles avant toute communication.""
+
+Cliquez sur « J’ai compris » pour clore le scénario","En dessous de l’image « infirmière 40 ans » 
+Consigne : ""Effectuer les transmissions à votre référente""",Rappel des éléments à évoquer dans chaque étape de la transmission avec l'acronyme SBAR (Situation-Contexte-Évaluation-Recommandation) ,,,,,
+,,,,,pas imoortatn si c'est pas dans l'ordre.  et ca peut etre que un seil bloc texte conent plusieurs points du ISBAR,,,"Mais depuis ce matin, tu as constaté qu’elle refuse de s’alimenter, qu’elle grimace régulièrement et émet des gémissements.",,,,,,,,,
+,,,,,« S : Madame Aubrey présente actuellement des signes pouvant évoquer une douleur.,Doit citer à minima :,,Le score de l’échelle ALGOPLUS est de 4/5. Ce qui nécessite que l’on investigue plus l’origine de sa douleur et que l’on tente de la soulager. C’est bien ça ? »,,,,,,,,,
+,,,,,B : Madame est habituellement calme et participe aux repas sans difficulté.,"Que la patiente est algique, qu’elle a un comportement différent à ses habitudes (ne veut pas manger, grimace et gémit). Si l’échelle algoplus a été réalisée, l’étudiant-e doit indiquer le score de 4/5. L’étudiant-e doit demander à sa référente qu’est-ce qui pourrait être fait pour soulager la patiente ou émettre des propositions visant à identifier et soulager la douleur de Mme Aubrey",,Réponse de l’étudiant-e : OUI è fin du scénario,,,,,,,,,
+,,,,,"A : Depuis ce matin, j’ai observé un changement dans son comportement : elle refuse de s’alimenter, grimace régulièrement et émet des gémissements.",,,,,,,,,,,,
+,,,,,"J’ai effectué une évaluation de la douleur à l’aide de l’échelle ALGOPLUS, qui a donné un score de 4, ce qui indique la présence probable de douleur aiguë.",,,,,,,,,,,,
+,,,,,R : Je recommande une évaluation clinique plus approfondie afin d’identifier la cause de cette douleur et d’envisager une prise en charge adaptée. »,,,"2. S’il n’y pas d’utilisation de l’outil SBAR, l’infirmière référente dit « Je n’ai pas bien compris ton rapport, peux-tu me le faire en utilisant le SBAR », une fois le ISBAR effectué è Effectuer le point 1. de cette section",,,,,,,,,
+,QUIIZ,,,,,,,,,,,,,,,,
+,POURQUOI ALGOPLUS,,,,,,,,,,,,,,,,
+,POURQUOI QPERSUT EST PERTINENT OU NON,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,
+,FAITES TRANSMISSION ECRITE POUR VOTRE PATIENTE,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,
+,ATTRAKDIF QUESTIONNAIRE  UTILISALITE,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,
+,PRE / POST TEST CONNAISSANCE METIER,,,,,,,,,,,,,,,,

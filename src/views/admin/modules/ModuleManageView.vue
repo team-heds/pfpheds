@@ -190,13 +190,16 @@
                           </div>
                           <div class="day-info">
                             <span class="day-name">{{ formatDay(data.day) }}</span>
-                            <span class="day-date">{{ data.date || '' }}</span>
                           </div>
                         </div>
                       </div>
                     </template>
                   </Column>
-                  <Column field="date" header="Date" sortable style="width: 100px" />
+                  <Column field="dateX" header="DateX" style="width: 120px">
+                    <template #body="{ data }">
+                      <span class="text-sm font-medium text-600">{{ formatDateForDisplay(data.week_number, data.day) }}</span>
+                    </template>
+                  </Column>
                   <Column header="Horaire" style="width: 120px">
                     <template #body="{ data }">
                       <div class="time-slot">{{ data.start_time?.substring(0,5) }} - {{ data.end_time?.substring(0,5) }}</div>
@@ -234,16 +237,26 @@
                       />
                     </template>
                   </Column>
-                  <Column header="Actions" style="width: 80px" bodyStyle="text-align: center">
+                  <Column header="Actions" style="width: 120px">
                     <template #body="{ data }">
-                      <Button 
-                        icon="pi pi-pencil" 
-                        severity="secondary" 
-                        outlined
-                        size="small"
-                        @click="editSession(data)"
-                        v-tooltip="'Modifier cette séance'"
-                      />
+                      <div class="flex gap-1">
+                        <Button 
+                          icon="pi pi-pencil" 
+                          severity="secondary" 
+                          outlined
+                          size="small"
+                          @click="editSession(data)"
+                          v-tooltip="'Modifier cette séance'"
+                        />
+                        <Button 
+                          icon="pi pi-trash" 
+                          severity="danger" 
+                          text 
+                          size="small"
+                          @click="deleteSession(data)"
+                          v-tooltip="'Supprimer cette séance'"
+                        />
+                      </div>
                     </template>
                   </Column>
                 </DataTable>
@@ -705,6 +718,11 @@
                         />
                       </template>
                     </Column>
+                    <Column field="dateX" header="DateX" style="width: 120px">
+                      <template #body="{ data }">
+                        <Tag :value="formatDateForDisplay(data.week_number, data.day)" severity="success" size="small" />
+                      </template>
+                    </Column>
                     <Column field="changes_summary" header="Modifications">
                       <template #body="{ data }">
                         <span class="text-sm">{{ data.changes_summary || 'Modification' }}</span>
@@ -819,12 +837,10 @@
                     :key="`${session.week_number}-${session.day}-${session.start_time}`"
                     class="flex align-items-center gap-3 p-2 bg-white border-round"
                   >
-                    <!-- Jour et Date -->
+                    <!-- Jour et Semaine -->
                     <div class="flex flex-column" style="min-width: 80px">
                       <span class="font-medium text-sm">{{ session.day }}</span>
-                      <span class="text-500 text-xs" v-if="session.date">
-                        {{ new Date(session.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) }}
-                      </span>
+                      <span class="text-500 text-xs">S{{ session.week_number }}</span>
                     </div>
                     
                     <!-- Heures -->
@@ -904,12 +920,10 @@
               optionValue="value"
               class="w-full"
             />
+            <small class="text-500" v-if="editingSession.weekNumber && editingSession.day">
+              {{ formatDateForDisplay(editingSession.weekNumber, editingSession.day) }}
+            </small>
           </div>
-        </div>
-        
-        <div class="field">
-          <label>Date</label>
-          <InputText v-model="editingSession.date" placeholder="Ex: 16.02.2026" class="w-full" />
         </div>
         
         <div class="field-row">
@@ -982,8 +996,20 @@
       </div>
 
       <template #footer>
-        <Button label="Annuler" icon="pi pi-times" class="p-button-text" @click="showDialog = false" />
-        <Button label="Enregistrer" icon="pi pi-check" @click="saveSession" :loading="saving" />
+        <div class="flex justify-content-between">
+          <Button 
+            v-if="editingSession?.id" 
+            label="Supprimer" 
+            icon="pi pi-trash" 
+            severity="danger" 
+            class="p-button-text"
+            @click="deleteCurrentSession"
+          />
+          <div class="flex gap-2">
+            <Button label="Annuler" icon="pi pi-times" class="p-button-text" @click="showDialog = false" />
+            <Button label="Enregistrer" icon="pi pi-check" @click="saveSession" :loading="saving" />
+          </div>
+        </div>
       </template>
     </Dialog>
 
@@ -1409,11 +1435,11 @@ const weekColors = [
   { bg: '#3B82F6', border: '#1D4ED8' },  // Bleu
   { bg: '#10B981', border: '#047857' },  // Vert
   { bg: '#F59E0B', border: '#B45309' },  // Orange
-  { bg: '#8B5CF6', border: '#6D28D9' },  // Violet
-  { bg: '#EC4899', border: '#BE185D' },  // Rose
   { bg: '#06B6D4', border: '#0891B2' },  // Cyan
-  { bg: '#EF4444', border: '#B91C1C' },  // Rouge
   { bg: '#84CC16', border: '#4D7C0F' },  // Lime
+  { bg: '#F97316', border: '#C2410C' },  // Orange foncé
+  { bg: '#3B82F6', border: '#1D4ED8' },  // Bleu
+  { bg: '#10B981', border: '#047857' },  // Vert
 ]
 
 const getWeekColor = (weekIndex) => {
@@ -1429,16 +1455,16 @@ const dayColors = [
   '#3B82F6',  // Lundi - Bleu
   '#10B981',  // Mardi - Vert
   '#F59E0B',  // Mercredi - Orange
-  '#8B5CF6',  // Jeudi - Violet
-  '#EC4899'   // Vendredi - Rose
+  '#06B6D4',  // Jeudi - Cyan
+  '#F97316'   // Vendredi - Orange foncé
 ]
 
 const dayBackgroundColors = [
   '#EFF6FF',  // Lundi - Bleu clair
   '#ECFDF5',  // Mardi - Vert clair
   '#FFFBEB',  // Mercredi - Orange clair
-  '#F5F3FF',  // Jeudi - Violet clair
-  '#FDF2F8'   // Vendredi - Rose clair
+  '#E0F2FE',  // Jeudi - Cyan clair
+  '#FED7AA'   // Vendredi - Orange clair
 ]
 
 const getDayColor = (dayIndex) => {
@@ -1558,6 +1584,93 @@ const dayOptions = [
 
 const activityOptions = ['Cours', 'TP', 'TD', 'Examen', 'Atelier', 'Conférence', 'Stage']
 
+// Supprimer la séance en cours de modification
+const deleteCurrentSession = async () => {
+  if (!editingSession.value?.id) return
+  
+  try {
+    // Demander confirmation
+    const confirmed = await new Promise((resolve) => {
+      const result = confirm(`Êtes-vous sûr de vouloir supprimer cette séance ?\n\n${editingSession.value.course_title || 'Sans titre'}\n${editingSession.value.day} ${editingSession.value.startTime}-${editingSession.value.endTime}\n\nCette action est irréversible.`)
+      resolve(result)
+    })
+    
+    if (!confirmed) return
+    
+    // Supprimer la séance
+    const { error } = await supabase
+      .from('module_time_slots')
+      .delete()
+      .eq('id', editingSession.value.id)
+    
+    if (error) throw error
+    
+    toast.add({
+      severity: 'success',
+      summary: 'Séance supprimée',
+      detail: 'La séance a été supprimée avec succès',
+      life: 3000
+    })
+    
+    // Fermer le dialogue
+    showDialog.value = false
+    
+    // Recharger le planning
+    await loadModulePlanning()
+    
+  } catch (error) {
+    console.error('Erreur suppression séance:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: 'Impossible de supprimer la séance',
+      life: 3000
+    })
+  }
+}
+
+// Supprimer une séance
+const deleteSession = async (session) => {
+  if (!session?.id) return
+  
+  try {
+    // Demander confirmation
+    const confirmed = await new Promise((resolve) => {
+      const result = confirm(`Êtes-vous sûr de vouloir supprimer cette séance ?\n\n${session.course_title || 'Sans titre'}\n${session.day} ${session.start_time}-${session.end_time}\n\nCette action est irréversible.`)
+      resolve(result)
+    })
+    
+    if (!confirmed) return
+    
+    // Supprimer la séance
+    const { error } = await supabase
+      .from('module_time_slots')
+      .delete()
+      .eq('id', session.id)
+    
+    if (error) throw error
+    
+    toast.add({
+      severity: 'success',
+      summary: 'Séance supprimée',
+      detail: 'La séance a été supprimée avec succès',
+      life: 3000
+    })
+    
+    // Recharger le planning
+    await loadModulePlanning()
+    
+  } catch (error) {
+    console.error('Erreur suppression séance:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: 'Impossible de supprimer la séance',
+      life: 3000
+    })
+  }
+}
+
 // Éditer une séance - utiliser le dialogue local (même logique que ModulePlanningView)
 const editSession = (session) => {
   // Normaliser les enseignants en objets pour AutoComplete (comme dans ModulePlanningView)
@@ -1582,7 +1695,6 @@ const editSession = (session) => {
     classCode: session.class_code,
     weekNumber: session.week_number,
     day: session.day?.toLowerCase(),
-    date: session.date || '',
     startTime: session.start_time,
     endTime: session.end_time,
     moduleCode: module.value?.code,
@@ -1602,7 +1714,6 @@ const addSessionToWeek = (weekNumber) => {
     classCode: selectedClass.value || 'BAC25',
     weekNumber: weekNumber,
     day: 'lundi',
-    date: '',
     startTime: '09:00',
     endTime: '11:00',
     moduleCode: module.value?.code,
@@ -1680,7 +1791,7 @@ const saveSession = async () => {
       class_code: editingSession.value.classCode,
       week_number: editingSession.value.weekNumber,
       day: editingSession.value.day,
-      date: editingSession.value.date,
+      date: getDateFromWeekAndDay(editingSession.value.weekNumber, editingSession.value.day),
       start_time: editingSession.value.startTime,
       end_time: editingSession.value.endTime,
       module_code: module.value?.code,
@@ -2307,16 +2418,16 @@ const classDisplayColors = {
   'BA25-TP2': '43A047', // Vert
   'BA25-TP3': '1E88E5', // Bleu
   'BA25-TP4': 'FB8C00', // Orange
-  'BA25-TP5': '8E24AA', // Violet
-  'BA25-TP6': '00ACC1', // Cyan
-  'BA25-TP7': 'F4511E', // Orange foncé
-  'BA25-TP8': '3949AB', // Indigo
+  'BA25-TP5': '00897B', // Teal
+  'BA25-TP6': 'F4511E', // Orange foncé
+  'BA25-TP7': '3949AB', // Indigo
+  'BA25-TP8': '0277BD', // Bleu clair
   'BA24-TP1': '7CB342', // Vert lime
   'BA24-TP2': 'FFB300', // Ambre
   'BA24-TP3': '039BE5', // Bleu clair
-  'BA24-TP4': 'D81B60', // Rose
-  'BA24-TP5': '5E35B1', // Violet foncé
-  'BA24-TP6': '00897B', // Teal
+  'BA24-TP4': '00897B', // Teal
+  'BA24-TP5': '5E35B1', // Indigo
+  'BA24-TP6': '00695C', // Vert foncé
 }
 
 // Couleurs pour l'export Excel (plus claires)
@@ -2325,12 +2436,13 @@ const classColors = {
   'BA25-TP2': 'C6EFCE', // Vert clair
   'BA25-TP3': 'BDD7EE', // Bleu clair
   'BA25-TP4': 'FFEB9C', // Jaune clair
-  'BA25-TP5': 'E4DFEC', // Violet clair
+  'BA25-TP5': 'E0F2FE', // Cyan clair
   'BA25-TP6': 'FFD9B3', // Orange clair
   'BA24-TP1': 'D9EAD3', // Vert menthe
   'BA24-TP2': 'FCE5CD', // Pêche
   'BA24-TP3': 'D0E0E3', // Cyan clair
-  'BA24-TP4': 'F4CCCC', // Rose clair
+  'BA24-TP4': 'E0F2FE', // Cyan clair
+  'BA24-TP5': 'E0F2FE', // Cyan clair
 }
 
 // Obtenir couleur pour l'export Excel
@@ -2751,16 +2863,117 @@ const submitForReview = async () => {
   }
 }
 
-// Formater date/heure
+// Formater la date pour l'affichage (jour + date)
+const formatDateForDisplay = (weekNumber, dayName) => {
+  console.log('formatDateForDisplay appelé avec:', { weekNumber, dayName })
+  
+  const dateStr = getDateFromWeekAndDay(weekNumber, dayName)
+  console.log('Date calculée:', dateStr)
+  
+  if (!dateStr) return ''
+  
+  const date = new Date(dateStr)
+  const dateNum = date.getDate().toString().padStart(2, '0')
+  const month = (date.getMonth() + 1).toString().padStart(2, '0')
+  const year = date.getFullYear().toString()
+  
+  const result = `${dateNum}/${month}/${year}`
+  console.log('Résultat formaté:', result)
+  
+  return result
+}
+
+// Calculer la date précise à partir du numéro de semaine et du jour
+const getDateFromWeekAndDay = (weekNumber, dayName) => {
+  console.log('getDateFromWeekAndDay appelé avec:', { weekNumber, dayName })
+  
+  if (!weekNumber || !dayName) {
+    console.log('Paramètres manquants')
+    return ''
+  }
+  
+  try {
+    // Logique académique simplifiée
+    let targetDate
+    
+    if (weekNumber >= 38 && weekNumber <= 53) {
+      // Automne 2026 : la semaine 38 commence le lundi 14 septembre 2026
+      const week38Monday = new Date(2026, 8, 14) // 14 septembre 2026 (lundi)
+      const dayMap = {
+        'lundi': 0, 'mardi': 1, 'mercredi': 2, 'jeudi': 3, 'vendredi': 4, 'samedi': 5, 'dimanche': 6
+      }
+      
+      // Calculer depuis le lundi de la semaine 38
+      const targetDay = dayMap[dayName.toLowerCase()]
+      const daysFromWeek38 = (weekNumber - 38) * 7 + targetDay
+      targetDate = new Date(week38Monday)
+      targetDate.setDate(week38Monday.getDate() + daysFromWeek38)
+      
+      console.log('Lundi semaine 38:', week38Monday)
+      console.log('Jour cible:', dayName.toLowerCase(), '->', targetDay)
+      console.log('Jours depuis semaine 38:', daysFromWeek38)
+      console.log('Calcul: week38Monday.getDate() + daysFromWeek38 =', week38Monday.getDate(), '+', daysFromWeek38)
+      
+    } else if (weekNumber >= 1 && weekNumber <= 37) {
+      // Printemps 2027 : la semaine 1 commence le lundi 4 janvier 2027
+      const week1Monday = new Date(2027, 0, 4) // 4 janvier 2027 (lundi)
+      const dayMap = {
+        'lundi': 0, 'mardi': 1, 'mercredi': 2, 'jeudi': 3, 'vendredi': 4, 'samedi': 5, 'dimanche': 6
+      }
+      
+      // Calculer depuis le lundi de la semaine 1
+      const targetDay = dayMap[dayName.toLowerCase()]
+      const daysFromWeek1 = (weekNumber - 1) * 7 + targetDay
+      targetDate = new Date(week1Monday)
+      targetDate.setDate(week1Monday.getDate() + daysFromWeek1)
+      
+      console.log('Lundi semaine 1:', week1Monday)
+      console.log('Jours depuis semaine 1:', daysFromWeek1)
+      
+    } else {
+      console.log('Numéro de semaine invalide:', weekNumber)
+      return ''
+    }
+    
+    console.log('Date cible calculée:', targetDate)
+    
+    // Formater la date en YYYY-MM-DD pour la base de données (sans problème de fuseau horaire)
+    const year = targetDate.getFullYear()
+    const month = (targetDate.getMonth() + 1).toString().padStart(2, '0')
+    const day = targetDate.getDate().toString().padStart(2, '0')
+    const result = `${year}-${month}-${day}`
+    console.log('Date formatée (sans fuseau):', result)
+    
+    return result
+  } catch (error) {
+    console.error('Erreur calcul date:', error)
+    return ''
+  }
+}
+
+// Obtenir le numéro de semaine actuel
+const getCurrentWeekNumber = () => {
+  const now = new Date()
+  const start = new Date(now.getFullYear(), 0, 1)
+  const days = Math.floor((now - start) / (24 * 60 * 60 * 1000))
+  return Math.ceil((days + start.getDay() + 1) / 7)
+}
+
+// Formater date/heure - version simplifiée
 const formatDateTime = (dateStr) => {
   if (!dateStr) return ''
   const date = new Date(dateStr)
-  return date.toLocaleDateString('fr-CH', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })
+  const days = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
+  const dayName = days[date.getDay()]
+  return `${dayName}`
 }
 
 const formatDate = (dateStr) => {
   if (!dateStr) return ''
-  return new Date(dateStr).toLocaleDateString('fr-CH')
+  const date = new Date(dateStr)
+  const days = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
+  const dayName = days[date.getDay()]
+  return `${dayName}`
 }
 
 // Obtenir les heures par classe
@@ -2920,154 +3133,128 @@ const getActionSeverity = (action) => {
 }
 
 :deep(.planning-datatable .add-button-inline) {
-  width: 1.5rem !important;
-  height: 1.5rem !important;
-  opacity: 0.5;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
+width: 1.5rem !important;
+height: 1.5rem !important;
+opacity: 0.5;
+flex-shrink: 0;
 }
 
 :deep(.planning-datatable .add-button-inline:hover) {
-  opacity: 1;
-  transform: scale(1.1);
+opacity: 1;
 }
 
 :deep(.planning-datatable .week-badge) {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 0.75rem 1rem;
-  border-radius: 1rem;
-  font-weight: 600;
-  font-size: 0.875rem;
-  box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
-  flex: 1;
-}
-
-:deep(.planning-datatable .week-badge:hover) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
-}
-
-:deep(.planning-datatable .week-badge i) {
-  font-size: 1rem;
+display: flex;
+align-items: center;
+gap: 0.5rem;
+background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+color: white;
+padding: 0.5rem 0.75rem;
+border-radius: 0.75rem;
+flex: 1;
 }
 
 :deep(.planning-datatable .week-text) {
-  font-weight: 700;
-  letter-spacing: 0.5px;
+font-weight: 700;
+letter-spacing: 0.5px;
 }
 
 :deep(.planning-datatable .day-header-cell) {
-  padding: 0.5rem 0.25rem;
+padding: 0.5rem 0.25rem;
 }
 
 :deep(.planning-datatable .day-badge) {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  color: white;
-  padding: 0.75rem 1rem;
-  border-radius: 1.25rem;
-  box-shadow: 0 4px 6px rgba(240, 147, 251, 0.3);
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
-  min-width: 120px;
-}
-
-:deep(.planning-datatable .day-badge:hover) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(240, 147, 251, 0.4);
+display: flex;
+align-items: center;
+gap: 0.75rem;
+background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+color: white;
+padding: 0.75rem 1rem;
+border-radius: 1.25rem;
+min-width: 120px;
 }
 
 :deep(.planning-datatable .day-circle) {
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.9);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+width: 2.5rem;
+height: 2.5rem;
+border-radius: 50%;
+display: flex;
+align-items: center;
+justify-content: center;
+flex-shrink: 0;
 }
 
 :deep(.planning-datatable .day-initial) {
-  font-size: 1.25rem;
-  font-weight: 800;
-  color: #f5576c;
-  line-height: 1;
+font-size: 1.25rem;
+font-weight: 800;
+color: #10B981;
+line-height: 1;
 }
 
 :deep(.planning-datatable .day-info) {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+display: flex;
+flex-direction: column;
+align-items: flex-start;
 }
 
 :deep(.planning-datatable .day-name) {
-  font-size: 0.875rem;
-  font-weight: 700;
-  color: white;
-  line-height: 1.2;
-  text-transform: capitalize;
+font-size: 0.875rem;
+font-weight: 700;
+color: white;
+line-height: 1.2;
+text-transform: capitalize;
 }
 
 :deep(.planning-datatable .day-date) {
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.9);
-  font-weight: 500;
-  margin-top: 0.125rem;
+font-size: 0.75rem;
+color: rgba(255, 255, 255, 0.9);
+font-weight: 500;
+margin-top: 0.125rem;
 }
 
 /* Espacement amélioré entre les groupes */
 :deep(.planning-datatable .new-week-row td) {
-  padding-top: 2rem !important;
-  border-top: 3px solid #667eea !important;
+padding-top: 2rem !important;
+border-top: 3px solid #667eea !important;
 }
 
 :deep(.planning-datatable .new-day-row td) {
-  padding-top: 1.5rem !important;
-  border-top: 2px solid #f093fb !important;
+padding-top: 1.5rem !important;
+border-top: 2px solid #3B82F6 !important;
 }
 
 :deep(.planning-datatable .same-day-row td) {
-  padding-top: 0.75rem !important;
-  border-top: 1px dashed var(--surface-300) !important;
+padding-top: 0.75rem !important;
+border-top: 1px dashed var(--surface-300) !important;
 }
 
 /* Amélioration des cellules de contenu */
 :deep(.planning-datatable td.course-title-cell) {
-  vertical-align: top;
-  padding-top: 1rem !important;
+vertical-align: top;
+padding-top: 1rem !important;
 }
 
 :deep(.planning-datatable .course-title) {
-  font-weight: 600;
-  color: var(--text-color);
-  font-size: 0.95rem;
-  line-height: 1.4;
+font-weight: 600;
+color: var(--text-color);
+font-size: 0.95rem;
+line-height: 1.4;
 }
 
 :deep(.planning-datatable .time-slot) {
-  background: var(--surface-100);
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  color: var(--primary-color);
-  border: 1px solid var(--primary-200);
-  font-size: 0.875rem;
+background: var(--surface-100);
+padding: 0.5rem 0.75rem;
+border-radius: 0.5rem;
+font-weight: 500;
+color: var(--text-color);
+font-size: 0.875rem;
 }
 
 /* Styles pour le formulaire de séance (même format que ModulePlanningView) */
 .session-form {
-  display: flex;
-  flex-direction: column;
+display: flex;
+flex-direction: column;
+gap: 1rem;
   gap: 1rem;
 }
 
