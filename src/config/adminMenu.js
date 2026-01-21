@@ -87,6 +87,7 @@ export default [
               { label: 'Votation PFP', icon: 'pi pi-check-square', to: '/admin/formation-pratique/votation-pfp' },
               { label: 'Places Assignées', icon: 'pi pi-map-marker', to: '/places_asssigned' },
               { label: 'Assignement Places', icon: 'pi pi-sitemap', to: '/places_assignment' },
+              { label: 'Validation PFP', icon: 'pi pi-check-circle', to: '/validation-pfp' },
               { label: 'Résultat Votation Prioritaire', icon: 'pi pi-chart-pie', to: '/admin/formation-pratique/resultat-votation-prioritaire' },
               { label: 'Résultat Votation PFP', icon: 'pi pi-chart-bar', to: '/result_preview_votation' },
               { label: 'Management Répondant Votation', icon: 'pi pi-user-edit', to: '/admin/formation-pratique/management-repondant-votation' }

@@ -41,6 +41,7 @@ const ManagementVotationPrioritaireView = () => import('@/views/admin/pfp/Manage
 const ManagementOffreView = () => import('@/views/admin/pfp/ManagementOffreView.vue');
 const VotationEtudiantsView = () => import('@/views/admin/pfp/VotationEtudiantsView.vue');
 const PlacesAssignedView = () => import('@/views/admin/pfp/PlacesAssignedView.vue');
+const ValidationPFPView = () => import('@/views/admin/pfp/ValidationPFP.vue');
 const ManagementPlacesView = () => import('@/views/admin/pfp/ManagementPlacesView.vue');
 const ManagementRepondantView = () => import('@/views/admin/pfp/ManagementRepondantView.vue');
 const PlacesAssignmentView = () => import('@/views/admin/pfp/PlacesAssignmentView.vue');
@@ -415,6 +416,7 @@ const routes = [
   { path: '/management_place', component: ManagementPlacesView, name: 'ManagementPlaces', meta: { requiresAuth: true, need: 'page1.access' } },
   { path: '/management_repondant', component: ManagementRepondantView, name: 'ManagementRepondant', meta: { requiresAuth: true, need: 'page1.access' } },
   { path: '/places_assignment', component: PlacesAssignmentView, name: 'PlacesAssignment', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/validation-pfp', component: ValidationPFPView, name: 'ValidationPFP', meta: { requiresAuth: true, need: 'page1.access' } },
   { path: '/gantt', component: GanttPFPView, name: 'GanttPFP', meta: { requiresAuth: true, need: 'page1.access' } },
   { path: '/validate-pfp1a', component: ValidatePFP1AView, name: 'ValidatePFP1A', meta: { requiresAuth: true, need: 'page1.access' } },
   { path: '/info_repondant', component: InfoRepondantView, name: 'InfoRepondant', meta: { requiresAuth: true, need: 'page1.access' } },

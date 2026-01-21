@@ -1,0 +1,14 @@
+Préview PFP en cours (valider, échec PFP et lien avec profil e critères) >> besoin ++ PFP2 (+ PFP1 à venir)
+Bouton pour passer de PFP finie et plus en cours
+
+
+
+Basé sur la page 
+http://localhost:5172/places_asssigned
+
+valider / echec PFP
+Si valider - va dans profil validé et ca valide tous critpre PFP
+si echec - va dans profil que valider critère de la langue
+si arret - rajouter commentaire et ca valide rien
+
+dans profil mettre bandeau valider , echec, arret

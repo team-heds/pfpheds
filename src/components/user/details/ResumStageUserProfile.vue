@@ -27,55 +27,7 @@
   <!-- institutions pour lesquelles l'étudiant a validé des critères -->
   <h5 class="mb-4 m-2">Anciennes places</h5>
 
-  <!-- Bloc d'édition de la PFP1 -->
-  <div v-if="isAdmin" class="card my-4 p-3">
-    <h5>Modifier ma PFP1</h5>
-    <div v-if="placesList.length">
-      <!-- Recherche et sélection de la place -->
-      <input
-        v-model="searchQuery"
-        class="form-control"
-        type="text"
-        placeholder="Rechercher une place..."
-        autocomplete="off"
-      />
-      <ul v-if="searchQuery && filteredPlaces.length" class="list-group" style="max-height:200px;overflow:auto;">
-        <li
-          v-for="place in filteredPlaces"
-          :key="place.IDPlace"
-          class="list-group-item list-group-item-action"
-          style="cursor:pointer"
-          @click="selectPlace(place)"
-        >
-          {{ getPlaceLabel(place) }}
-        </li>
-      </ul>
-      <div v-if="searchQuery && !filteredPlaces.length" class="text-secondary p-2">
-        Aucun résultat.
-      </div>
-      <div v-if="selectedPFP1" class="mt-2">
-        <strong>Place sélectionnée :</strong>
-        <span>
-    {{
-            getPlaceLabel(
-              placesList.find(p => p.IDPlace === selectedPFP1) || {}
-            )
-          }}
-  </span>
-      </div>
-      <button
-        class="btn btn-primary mt-2"
-        @click="updatePFP1"
-        :disabled="!selectedPFP1"
-      >
-        Enregistrer
-      </button>
 
-    </div>
-    <div v-else>
-      Chargement des places....
-    </div>
-  </div>
 
 
   <div v-if="assignedPlaces && assignedPlaces.length">
@@ -87,7 +39,11 @@
     >
       <!-- Ligne du titre + bouton "Voir les détails" aligné à droite -->
       <div class="flex align-items-center justify-content-between mb-2" style="height: 32px;">
-        <h4 class="m-0">Formation Pratique {{ index + 1 }}</h4>
+        <h4 class="m-0">
+          Formation Pratique {{ index + 1 }}
+          <span v-if="place.status === 'echec'" class="text-red-600 font-bold ml-2">- ÉCHEC</span>
+          <span v-if="place.status === 'arret'" class="text-yellow-700 font-bold ml-2">- ARRÊT</span>
+        </h4>
         <Button
           label="Voir les détails"
           icon="pi pi-arrow-right"
@@ -97,10 +53,37 @@
         />
       </div>
 
+      <!-- Bandeau d'échec -->
+      <div v-if="place.status === 'echec'" class="p-2 mb-2" style="background-color: #fee2e2; border-left: 4px solid #ef4444; border-radius: 4px;">
+        <div class="flex align-items-center gap-2">
+          <i class="pi pi-times-circle text-red-600 text-xl"></i>
+          <div>
+            <span class="font-bold text-red-600">Échec de la formation</span>
+            <span class="text-sm text-red-600 ml-2">
+              Uniquement critère de langue : 
+              <span class="font-bold">{{ place.DE ? 'DE (Allemand)' : (place.FR ? 'FR (Français)' : '') }}</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bandeau d'arrêt -->
+      <div v-if="place.status === 'arret'" class="p-2 mb-2" style="background-color: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 4px;">
+        <div class="flex align-items-center gap-2">
+          <i class="pi pi-pause-circle text-yellow-600 text-xl"></i>
+          <div>
+            <span class="font-bold text-yellow-700">Arrêt de la formation</span>
+            <span v-if="place.commentaire_arret" class="text-sm text-yellow-600 ml-2">
+              : {{ place.commentaire_arret }}
+            </span>
+          </div>
+        </div>
+      </div>
+
       <!-- Nom de l'institution + Domaine -->
       <div>
         <h6 class="m-2 font-bold">
-          {{ getInstitutionNameById(place.IDPlace) }}
+          {{place.Institutionname}} f
         </h6>
         <p class="m-2">
           Domaine : {{ place.NomPlace }}<br />
@@ -209,7 +192,7 @@
 
 
 <script setup>
-import { ref, onMounted, computed, watch } from "vue";
+import { ref, onMounted, computed, watch, onUnmounted } from "vue";
 import { supabase } from '@/supabase';
 
 // Props reçues du parent
@@ -331,6 +314,25 @@ watch(() => props.userProfile, (newVal) => {
   }
 }, { immediate: true })
 
+// Watcher pour rafraîchir les PFP quand les validations changent
+watch(() => props.userId, (newUserId) => {
+  if (newUserId) {
+    console.log('👀 userId changé, rechargement PFP...')
+    fetchStudentPfpList()
+  }
+}, { immediate: true })
+
+// Watcher pour détecter les changements dans les données de l'utilisateur
+watch(() => props.userProfile, (newProfile) => {
+  if (newProfile) {
+    console.log('👀 userProfile changé, retraitement...')
+    processUserProfile()
+  }
+}, { immediate: true, deep: true })
+
+// Watcher pour recharger les données périodiquement (toutes les 15 secondes)
+let refreshInterval = null
+
 onMounted(async () => {
   console.log('🚀 ResumStageUserProfile monté')
   // Charger les places disponibles et l'utilisateur courant (pour l'édition)
@@ -349,7 +351,22 @@ onMounted(async () => {
   if (props.userProfile) {
     await processUserProfile();
   }
-});
+
+  // Rafraîchissement automatique toutes les 15 secondes
+  refreshInterval = setInterval(async () => {
+    console.log('🔄 Rafraîchissement automatique des PFP...')
+    await fetchStudentPfpList()
+    if (props.userProfile) {
+      await processUserProfile()
+    }
+  }, 15000)
+})
+
+onUnmounted(() => {
+  if (refreshInterval) {
+    clearInterval(refreshInterval)
+  }
+})
 
 // Récupère toutes les institutions depuis Supabase
 async function fetchAllInstitutions() {
@@ -466,6 +483,7 @@ import Button from "primevue/button";
 import InputText from "primevue/inputtext";
 import FileUpload from "primevue/fileupload";
 import { useInstitutionsStore } from '@/stores/institutionsStore';
+import Institution from "@/views/institutions/Institution.vue";
 
 const toast = useToast();
 const router = useRouter();
@@ -508,8 +526,11 @@ const assignedPlaces = computed(() => {
     const item = {
       _key: `pfp_${idx}`,
       IDPlace: pfp.id_pfp || pfp.ID_PFP || '',
-      NomPlace: pfp.nom_pfp || pfp.Nom_PFP || pfp.domaine || pfp.Domaine || '',
+      InstitutionId: pfp.InstitutionId || pfp.Institution_id || pfp.institution_id || '', // Ajouter InstitutionId
+      NomPlace: pfp.NomPlace || pfp.nom_pfp || pfp.Nom_PFP || pfp.domaine || pfp.Domaine || 'raads',
       seatIndex: pfp.seat || null,
+      Institutionname:    pfp.InstitutionName || getInstitutionNameById(pfp.ID_PFP) || 'raa',
+      status: pfp.status || 'validee' // Ajouter le status
     }
     // Appliquer critères en UPPERCASE attendus par getValidCriterias
     Object.entries(criteriaMap).forEach(([up, low]) => {
@@ -522,7 +543,7 @@ const assignedPlaces = computed(() => {
 })
 
 const getInstitutionNameById = (idInstitution) => {
-  console.log("ID inst" + idInstitution);
+  console.log("ID inst" + idInstitution + " - " + institutionsStore.getInstitutionNameById(idInstitution));
   return institutionsStore.getInstitutionNameById(idInstitution);
 };
 
@@ -665,7 +686,7 @@ const processUserProfile = async () => {
         try {
           const parsed = JSON.parse(pfpVal)
           pfpArray = Array.isArray(parsed) ? parsed : []
-        } catch (parseError) {
+        } catch (e) {
           console.warn('⚠️ Impossible de parser pfp_valided:', pfpVal)
           pfpArray = []
         }
@@ -683,20 +704,20 @@ const processUserProfile = async () => {
         }
       }
       
-      console.log('✅ PFP array parsé:', pfpArray.length, 'entrées (pfp_valided + pfp2_data)')
-      const validPfpEntries = pfpArray.filter((place) => place.id_pfp || place.ID_PFP || place.ID_Place);
+      console.log('✅ PFP array parsé:', pfpArray.length, 'entrées (pfp_valided + pfp2_data)', pfpArray)
+      const validPfpEntries = pfpArray.filter((place) => place.id_pfp || place.ID_PFP || place.PlaceId);
       console.log('✅ Entrées PFP valides:', validPfpEntries.length)
         
       // Agrégation des domaines et critères
       const domainsByInstitution = {};
       const criteriaByInstitution = {};
       validPfpEntries.forEach((place) => {
-        const instId = place.id_pfp || place.ID_PFP;
-        if (place.domaine || place.nom_pfp || place.Domaine || place.Nom_PFP) {
+        const instId = place.id_pfp || place.ID_PFP || place.PlaceId;
+        if (place.domaine || place.NomPlace) {
           if (!domainsByInstitution[instId]) {
             domainsByInstitution[instId] = new Set();
           }
-          domainsByInstitution[instId].add(place.domaine || place.nom_pfp || place.Domaine || place.Nom_PFP);
+          domainsByInstitution[instId].add(place.domaine || place.NomPlace);
         }
         if (!criteriaByInstitution[instId]) {
           criteriaByInstitution[instId] = new Set();
@@ -708,8 +729,8 @@ const processUserProfile = async () => {
         });
       });
       
-      // Récupération des institutions depuis Supabase
-      const instIds = validPfpEntries.map((place) => place.id_pfp || place.ID_PFP).filter(Boolean);
+      console.log('✅ Agrégation terminée:', Object.keys(domainsByInstitution).length, 'institutions');
+      const instIds = validPfpEntries.map((place) => place.id_pfp || place.ID_PFP || place.PlaceId).filter(Boolean);
       console.log('🔍 Chargement institutions pour IDs:', instIds)
       if (instIds.length > 0) {
         const { data: institutions, error: instError } = await supabase
@@ -749,7 +770,7 @@ const aggregatedCriteria = computed(() => {
   criteriaList.forEach((crit) => (result[crit] = false));
   if (props.userProfile && (props.userProfile.pfp_valided || props.userProfile.pfp2_data)) {
     let pfpArray = []
-    
+
     // Traiter pfp_valided
     const pfpVal = props.userProfile.pfp_valided
     if (Array.isArray(pfpVal)) {
@@ -764,7 +785,7 @@ const aggregatedCriteria = computed(() => {
     } else if (pfpVal && typeof pfpVal === 'object') {
       pfpArray = Object.values(pfpVal)
     }
-    
+
     // Traiter pfp2_data
     const pfp2Val = props.userProfile.pfp2_data
     if (pfp2Val) {
@@ -774,7 +795,7 @@ const aggregatedCriteria = computed(() => {
         pfpArray.push(pfp2Val)
       }
     }
-    
+
     pfpArray.forEach((pfp) => {
       criteriaList.forEach((crit) => {
         if (pfp[crit] === true) {
@@ -784,6 +805,14 @@ const aggregatedCriteria = computed(() => {
     });
   }
   return result;
+});
+
+// Vérifie si l'étudiant a une PFP1 validée
+const hasPFP1 = computed(() => {
+  return (studentPfpList.value || []).some(pfp => {
+    const pfpType = pfp.pfp_type || pfp.type_pfp || ''
+    return pfpType === 'PFP1A' || pfpType === 'PFP1B' || pfpType === 'PFP1'
+  })
 });
 
 // Gestion des documents par institution
