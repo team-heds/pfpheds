@@ -4,6 +4,139 @@
 
 var temp = 0;
 
+// Quiz data loaded from CSV
+const quizQuestions = [
+  {
+    id: 1,
+    type: 'MCQ',
+    question: "Comment peut-on aider une personne atteinte de la maladie d'Alzheimer à mieux comprendre?",
+    correct: 4,
+    options: [
+      "En évitant de lui parler pour ne pas la fatiguer.",
+      "En lui posant des questions ouvertes",
+      "En lui parlant rapidement pour qu'elle comprenne vite.",
+      "En utilisant des phrases courtes et des termes simples."
+    ]
+  },
+  {
+    id: 2,
+    type: 'MCQ',
+    question: "Quelle est une bonne pratique lors de la communication avec la personne présentant des troubles cognitifs ?",
+    correct: 4,
+    options: [
+      "Ne pas répéter les informations si elle ne comprend pas.",
+      "Se mettre de côté et lui parler proche de son oreille",
+      "Utiliser des questions ouvertes pour encourager la discussion.",
+      "Se mettre face à elle pour être dans son champ de vision."
+    ]
+  },
+  {
+    id: 3,
+    type: 'MCQ',
+    question: "Que faire si la personne atteinte de la maladie d'Alzheimer ne répond pas à votre présence?",
+    correct: 2,
+    options: [
+      "Parler plus fort",
+      "Attirer son attention en effleurant son épaule ou sa main.",
+      "Taper dans ses mains pour qu'elle réagisse.",
+      "L'ignorer jusqu'à ce qu'elle réponde."
+    ]
+  },
+  {
+    id: 4,
+    type: 'MCQ',
+    question: "Comment doit-on adapter l'environnement pour faciliter la communication?",
+    correct: 4,
+    options: [
+      "Mettre beaucoup de bruit pour stimuler la personne.",
+      "Allumer la télévision",
+      "Allumer toutes les lumières",
+      "Éviter la musique de fond et les lieux bruyants."
+    ]
+  },
+  {
+    id: 5,
+    type: 'MCQ',
+    question: "Quelle est une conséquence des troubles du langage chez la personne présentant des troubles cognitifs ?",
+    correct: 4,
+    options: [
+      "Elle apprécie beaucoup plus de parler.",
+      "Elle n'a plus besoin d'aide pour communiquer.",
+      "Elle est plus attentive aux discussions de son entourage.",
+      "Elle peut devenir incohérente dans ses discours."
+    ]
+  },
+  {
+    id: 6,
+    type: 'MCQ',
+    question: "Comment la communication non verbale peut-elle aider dans l'échange avec la personne présentant des troubles cognitifs ?",
+    correct: 2,
+    options: [
+      "Elle complique la compréhension.",
+      "Elle permet de transmettre des messages malgré la diminution de la parole.",
+      "Elle doit être évitée pour ne pas distraire la personne.",
+      "Elle n'a pas d'importance dans la communication."
+    ]
+  },
+  {
+    id: 7,
+    type: 'MCQ',
+    question: "Que doit-on faire si la personne atteinte de la maladie d'Alzheimer refuse de parler?",
+    correct: 2,
+    options: [
+      "Inciter la personne à parler, afin d'obtenir des réponses et ainsi éviter une perte du langage.",
+      "Respecter son silence et continuer à lui parler doucement.",
+      "Parler plus fort pour qu'elle réponde.",
+      "Lui poser plus de questions pour la faire parler."
+    ]
+  },
+  {
+    id: 8,
+    type: 'MCQ',
+    question: "Pourquoi est-il important de faire preuve de patience lors de la communication avec la personne présentant des troubles de la mémoire ?",
+    correct: 2,
+    options: [
+      "Parce qu'elle ne veut pas communiquer.",
+      "Parce qu'elle a souvent besoin de plus de temps pour comprendre et répondre.",
+      "Parce qu'elle doit apprendre à parler plus vite pour entretenir sa capacité à interagir.",
+      "Parce qu'elle doit être régulièrement encourgée à répondre rapidement."
+    ]
+  },
+  {
+    id: 9,
+    type: 'MCQ',
+    question: "Que doit-on faire si la personne malade exprime un comportement inapproprié?",
+    correct: 1,
+    options: [
+      "Ignorer ses propos et ne pas relever ses insultes.",
+      "Lui demander de se calmer immédiatement.",
+      "Réagir violemment pour lui faire comprendre.",
+      "Répondre en utilisant des propos vulgaires."
+    ]
+  },
+  {
+    id: 10,
+    type: 'MCQ',
+    question: "Une des règles pour communiquer efficacement avec une personne atteinte de démence est de :",
+    correct: 1,
+    options: [
+      "Parler clairement et se présenter",
+      "Parler rapidement pour capter l'attention",
+      "Ne pas utiliser de gestes",
+      "Éviter de lui poser des questions"
+    ]
+  }
+];
+
+// Utility function to shuffle array
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
 // Optional Gemini client (lazy-init, non-fatal if missing)
 let geminiAI = null;
 try {
@@ -102,17 +235,26 @@ async function getIntent(userInput, currentStep = 1) {
       case 1:
         return ["Bonjour, je m’appelle nom, prénom et je suis étudiant infirmier, actuellement en 1ère année Bachelor"];
       case 2:
-        return ["Je m'assieds en face de vous, comme ca vous me voyez bien"];
+        return ["Je m'assieds en face de vous, comme ça vous me voyez bien"];
       case 3:
-        return ["Vous etes bien Madame Aubry, Denise, du 14.05.1940"];
+        return ["Vous êtes bien Madame Aubry, Denise, du 14.05.1940"];
       case 4:
-        return ["Je vous apporte votre petit dejeuner", "Vous avez faim"];
+        return ["Je vous apporte votre petit déjeuner", "Vous avez faim"];
       case 5:
         return [
-            "C’est étonnant, d’habitude vous demander régulièrement à quelle heure vous allez manger, vous n’êtes pas en forme ce matin",
-            "e constate que vous avez l air d’avoir mal, c est exact ",
+            "C'est étonnant, d'habitude vous demander régulièrement à quelle heure vous allez manger, vous n'êtes pas en forme ce matin",
+            "Je constate que vous avez l'air d'avoir mal, c'est exact",
+            "Avez-vous mal/des douleurs ?",
+            "Qu'est ce qui provoque votre douleur ?",
+            "Qu'est ce qui aide à soulager votre douleur ?",
+            "Que ressentez-vous ?",
+            "Depuis quand avez-vous mal/des douleurs ?",
+            "Est-ce que votre douleur est continu ou disparait par moments ?",
+            "De quel problème croyez-vous qu'il s'agît",
+            "Avez-vous déjà eu cette douleur dans le passé ?",
+            "Quel est l'impact de cette douleur sur votre quotidien ?"
         ];
-        case 6:
+      case 6:
         return [
           "C'est etonnant, d'habitude vous demander regulierement a quelle heure vous allez manger, vous n'etes pas en forme ce matin",
           "Avez-vous mal/des douleurs ?",
@@ -182,9 +324,12 @@ function registerCareConversStoreRoutes(app) {
 
   // In-memory state: maps user identifier -> step
   const conversationStates = {};
-  
+
   // Track ISBAR progress for step 10: maps user identifier -> set of completed ISBAR parts
   const isbarProgress = {};
+
+  // Track quiz progress for step 11: maps user identifier -> quiz state
+  const quizProgress = {};
 
   // Stateful Chat Endpoint
   app.post('/api/chat', async (req, res) => {
@@ -212,7 +357,7 @@ function registerCareConversStoreRoutes(app) {
     switch (currentStep) {  
  
       case 1:
-        if (intent.includes("Bonjour") && intent.includes("appelle") && intent.includes("étudiant") && intent.includes("infirmier")) {
+        if (intent === "Bonjour, je m'appelle nom, prénom et je suis étudiant infirmier, actuellement en 1ère année Bachelor") {
           console.log('[DEBUG] Case 1 matched! Moving to step 2');
           responseText = '--';
           nextStep = 2;
@@ -227,13 +372,13 @@ function registerCareConversStoreRoutes(app) {
         break;
 
       case 2:
-        if (intent === "Je m'assieds en face de vous, comme ca vous me voyez bien") {
-          responseText = 'Bonjour, vous ressemblez à ma voisine, c’est bien vous ?';
+        if (intent === "Je m'assieds en face de vous, comme ça vous me voyez bien") {
+          responseText = 'Bonjour, vous ressemblez à ma voisine, c\'est bien vous ?';
           nextStep = 3;
-       
+
         } else {
           // Make an image appear in the UI: img1_canape.png
-         
+
           responseText = '2b';
         }
         break;
@@ -247,7 +392,7 @@ function registerCareConversStoreRoutes(app) {
             caption: ': "La patiente a les yeux fermés'
           };
         } else {
-          responseText = '- - - ';
+          responseText = '- - - ';
         }
         break;
 
@@ -276,7 +421,7 @@ function registerCareConversStoreRoutes(app) {
           }
         break;
 
-        case 5:
+               case 5:
             if (intent === 'C’est étonnant, d’habitude vous demander régulièrement à quelle heure vous allez manger, vous n’êtes pas en forme ce matin') {
               responseText = "S'il vous plait, dites à mon mari de venir, il faut appeler la police avant qu'il fasse nuit !  ";
               nextStep = 6; // Reset for a new conversation
@@ -430,7 +575,7 @@ Agitation ou agressivité, agrippement.
 
         // Check which ISBAR part matches the user input
         let matchedPart = null;
-        
+
         if (intent.includes("Madame Aubrey présente") || intent.includes("signes") || intent.includes("évoquer une douleur")) {
           matchedPart = 'S';
         } else if (intent.includes("habituellement calme") || intent.includes("participe aux repas")) {
@@ -444,10 +589,10 @@ Agitation ou agressivité, agrippement.
         if (matchedPart) {
           // Add the matched part to the user's progress
           isbarProgress[currentUser].add(matchedPart);
-          
+
           const completedCount = isbarProgress[currentUser].size;
           console.log(`[DEBUG] ISBAR part ${matchedPart} matched! Progress: ${completedCount}/4`);
-          
+
           if (completedCount < 4) {
             responseText = "Merci, continue...";
             nextStep = 10; // Reste à l'étape 10
@@ -464,9 +609,9 @@ Agitation ou agressivité, agrippement.
               }`
             };
           } else {
-            // All 4 parts completed
-            responseText = "Merci...";
-            nextStep = 10; // Fin de la simulation
+            // All 4 parts completed - move to quiz
+            responseText = "✅ Transmission ISBAR complète !\n\n📚 Passons maintenant au quiz de connaissances pour évaluer votre compréhension du scénario.";
+            nextStep = 11; // Move to quiz
             media = {
               imageUrl: '',
               caption: '✅ Simulation terminée. Vous avez complété toutes les étapes avec succès !\n\n🎉 Transmission ISBAR complète : 4/4 parties validées'
@@ -477,6 +622,60 @@ Agitation ou agressivité, agrippement.
         } else {
           responseText = "S'il vous plaît, continuez votre transmission ISBAR...";
           nextStep = 10;
+        }
+        break;
+      }
+
+      case 11: {
+        // Quiz de connaissances
+        if (!quizProgress[currentUser]) {
+          quizProgress[currentUser] = {
+            currentQuestion: 0,
+            answers: [],
+            score: 0,
+            questions: shuffleArray([...quizQuestions]).slice(0, 5) // 5 questions aléatoires
+          };
+        }
+
+        const progress = quizProgress[currentUser];
+        const currentQ = progress.questions[progress.currentQuestion];
+
+        if (!currentQ) {
+          // Quiz terminé
+          const finalScore = Math.round((progress.score / progress.questions.length) * 100);
+          responseText = `📊 Quiz terminé !\n\nScore: ${finalScore}%\n${progress.score}/${progress.questions.length} réponses correctes\n\n✅ Formation complétée avec succès !`;
+          nextStep = 12; // Étape terminale
+          media = {
+            imageUrl: '',
+            caption: `🎉 RÉSULTATS FINAUX\n━━━━━━━━━━━━━━━━━━━━\n📚 Quiz: ${finalScore}%\n✅ Questions correctes: ${progress.score}/${progress.questions.length}\n📈 Score global: ${finalScore}%\n━━━━━━━━━━━━━━━━━━━━`
+          };
+          // Clean up quiz progress
+          delete quizProgress[currentUser];
+        } else {
+          // Validation réponse
+          let isCorrect = false;
+          const answerNumber = parseInt(prompt.trim());
+
+          if (currentQ.type === 'MCQ' && !isNaN(answerNumber)) {
+            isCorrect = answerNumber === currentQ.correct;
+          }
+
+          if (isCorrect) {
+            progress.score++;
+            progress.answers.push({ questionId: currentQ.id, correct: true, userAnswer: prompt });
+          } else {
+            progress.answers.push({ questionId: currentQ.id, correct: false, userAnswer: prompt });
+          }
+
+          progress.currentQuestion++;
+
+          // Question suivante
+          const nextQ = progress.questions[progress.currentQuestion];
+          if (nextQ) {
+            responseText = `Question ${progress.currentQuestion + 1}/${progress.questions.length}:\n\n${nextQ.question}\n\n`;
+            responseText += nextQ.options.map((opt, idx) => `${idx + 1}. ${opt}`).join('\n');
+            nextStep = 11;
+          }
         }
         break;
       }

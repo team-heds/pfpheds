@@ -110,7 +110,7 @@
 
         <div class="conversation-status">
           <h4>Progression de la conversation</h4>
-          <p class="current-step"><b>Étape actuelle :</b> {{ conversationStep }}/10</p>
+          <p class="current-step"><b>Étape actuelle :</b> {{ conversationStep }}/11</p>
           <ul class="step-tracker">
             <li :class="{ 'active-step': conversationStep === 1, 'completed-step': conversationStep > 1 }">1. Se présenter</li>
             <li :class="{ 'active-step': conversationStep === 2, 'completed-step': conversationStep > 2 }">2. S'asseoir en face</li>
@@ -122,6 +122,7 @@
             <li :class="{ 'active-step': conversationStep === 8, 'completed-step': conversationStep > 8 }">8. Échelle Algoplus</li>
             <li :class="{ 'active-step': conversationStep === 9, 'completed-step': conversationStep > 9 }">9. Prise de décision</li>
             <li :class="{ 'active-step': conversationStep === 10, 'completed-step': conversationStep > 10 }">10. Transmission ISBAR</li>
+            <li :class="{ 'active-step': conversationStep === 11, 'completed-step': conversationStep > 11 }">11. Quiz de connaissances</li>
           </ul>
           <p class="instructions"><b>Instruction actuelle :</b> {{ conversationInstructions }}</p>
         </div>
@@ -145,16 +146,16 @@
         </div>
 
         <div class="controls" v-if="hasStartedConversation">
-          <textarea 
-            v-model="textToSpeak" 
-            placeholder="Écrivez votre message ici..." 
+          <textarea
+            v-model="textToSpeak"
+            placeholder="Écrivez votre message ici..."
             @keydown.enter.exact.prevent="speak"
             @keydown.enter.shift.exact="textToSpeak += '\n'"
             :disabled="isLoading"
             aria-label="Champ de saisie du message"
           ></textarea>
-          <button 
-            @click="speak" 
+          <button
+            @click="speak"
             :disabled="isLoading || !textToSpeak.trim()"
             :class="{ 'btn-loading': isLoading }"
             aria-label="Envoyer le message"
@@ -162,6 +163,39 @@
             <span v-if="!isLoading">Envoyer</span>
             <span v-else>Envoi...</span>
           </button>
+        </div>
+
+        <!-- Quiz Interface -->
+        <div v-if="conversationStep === 11 && currentQuizQuestion" class="quiz-container">
+          <div class="quiz-header">
+            <h3>📚 Quiz de Connaissances</h3>
+            <div class="quiz-progress">
+              Question {{ currentQuizQuestionNumber }}/{{ totalQuizQuestions }}
+            </div>
+          </div>
+
+          <div class="quiz-question">
+            <p class="question-text">{{ currentQuizQuestion.question }}</p>
+
+            <div v-if="currentQuizQuestion.type === 'MCQ'" class="quiz-options">
+              <button
+                v-for="(option, index) in currentQuizQuestion.options"
+                :key="index"
+                @click="textToSpeak = (index + 1).toString(); speak()"
+                :class="['quiz-option', { 'selected': selectedAnswer === index + 1 }]"
+              >
+                {{ index + 1 }}. {{ option }}
+              </button>
+            </div>
+          </div>
+
+          <div v-if="quizResults" class="quiz-results">
+            <h4>📊 Résultats du Quiz</h4>
+            <div class="score-display">
+              <span class="score-number">{{ quizResults.score }}%</span>
+              <span class="score-details">{{ quizResults.correct }}/{{ quizResults.total }} correct</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -195,6 +229,13 @@
       const errorMessage = ref("");
       const chatHistory = ref(null);
       const selectedStartStep = ref(1);
+
+      // Quiz state
+      const currentQuizQuestion = ref(null);
+      const currentQuizQuestionNumber = ref(0);
+      const totalQuizQuestions = ref(0);
+      const selectedAnswer = ref(null);
+      const quizResults = ref(null);
 
       // Modal and slides state
       const showObjectivesModal = ref(false); // Start closed to allow quick start
@@ -348,8 +389,10 @@
             return "Prenez une décision : 'Je constate que vous avez mal. Je vais informer ma référente et je reviens ensuite vous voir'.";
           case 10:
             return "Transmettez l'information à votre référent·e (ISBAR).";
+          case 11:
+            return "📚 Quiz de connaissances : Répondez aux questions en tapant le numéro de votre réponse (1, 2, 3, ou 4).";
           default:
-            return "Conversation terminée. Excellent travail !";
+            return "Formation terminée. Excellent travail !";
         }
       });
 
@@ -398,6 +441,11 @@
           // Update conversation step from backend response
           if (data.nextStep !== undefined) {
             conversationStep.value = data.nextStep;
+          }
+
+          // Update quiz state if in step 11
+          if (data.nextStep === 11 || conversationStep.value === 11) {
+            updateQuizFromResponse(botResponse);
           }
 
           // Display media if provided by backend
@@ -480,17 +528,64 @@
         showSlidesPanel.value = false;
         showConsigneModal.value = false;
         showStartButton.value = false;
-        
+
         // Set the conversation step
         conversationStep.value = selectedStartStep.value;
-        
+
         // Enable conversation immediately
         hasStartedConversation.value = true;
-        
+
         // Show initial media if starting at step 1
         if (selectedStartStep.value === 1) {
           mediaImageUrl.value = '';
           mediaCaption.value = '';
+        }
+      };
+
+      // Quiz helper functions
+      const parseQuizQuestion = (responseText) => {
+        const lines = responseText.split('\n');
+        const match = lines.find(line => line.includes('Question'));
+        if (!match) return null;
+
+        const questionText = match.replace(/Question \d+\/\d+:\s*/, '').trim();
+
+        // Extract options if QCM
+        const options = lines
+          .filter(line => /^\d+\./.test(line))
+          .map(line => line.replace(/^\d+\.\s*/, '').trim());
+
+        return {
+          question: questionText,
+          type: options.length > 0 ? 'MCQ' : 'Open',
+          options: options
+        };
+      };
+
+      const updateQuizFromResponse = (responseText) => {
+        const parsed = parseQuizQuestion(responseText);
+        if (parsed) {
+          currentQuizQuestion.value = parsed;
+
+          // Extract question number
+          const match = responseText.match(/Question (\d+)\/(\d+):/);
+          if (match) {
+            currentQuizQuestionNumber.value = parseInt(match[1]);
+            totalQuizQuestions.value = parseInt(match[2]);
+          }
+        }
+
+        // Check for quiz completion
+        if (responseText.includes('Quiz terminé') || responseText.includes('Formation complétée')) {
+          const scoreMatch = responseText.match(/Score:\s*(\d+)%/);
+          const correctMatch = responseText.match(/(\d+)\/(\d+)\s*réponses correctes/);
+          if (scoreMatch && correctMatch) {
+            quizResults.value = {
+              score: parseInt(scoreMatch[1]),
+              correct: parseInt(correctMatch[1]),
+              total: parseInt(correctMatch[2])
+            };
+          }
         }
       };
 
@@ -886,6 +981,112 @@
   .media-panel { margin-top: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
   .media-image { max-width: 360px; width: 100%; border-radius: 8px; border: 1px solid #e5e7eb; }
   .media-caption { color: #111827; background: rgba(255,255,255,0.9); padding: 8px 12px; border-radius: 6px; font-size: 14px; text-align: center; font-weight: 500; }
-   
+
+  /* Quiz Container */
+  .quiz-container {
+    background: white;
+    padding: 24px;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    margin: 20px 0;
+    border: 2px solid #e5e7eb;
+  }
+
+  .quiz-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .quiz-header h3 {
+    margin: 0;
+    color: #111827;
+    font-size: 18px;
+  }
+
+  .quiz-progress {
+    background: #f3f4f6;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    color: #374151;
+    font-size: 14px;
+  }
+
+  .quiz-question {
+    margin-bottom: 24px;
+  }
+
+  .question-text {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    line-height: 1.5;
+    color: #111827;
+  }
+
+  .quiz-options {
+    display: grid;
+    gap: 12px;
+  }
+
+  .quiz-option {
+    padding: 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    background: #f9fafb;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+    font-size: 14px;
+    color: #111827;
+  }
+
+  .quiz-option:hover {
+    border-color: #0ea5e9;
+    background: #f0f9ff;
+    transform: translateY(-2px);
+  }
+
+  .quiz-option.selected {
+    border-color: #0ea5e9;
+    background: #0ea5e9;
+    color: white;
+  }
+
+  .quiz-results {
+    text-align: center;
+    padding: 20px;
+    background: #f0f9ff;
+    border-radius: 12px;
+    border: 2px solid #0ea5e9;
+    margin-top: 20px;
+  }
+
+  .quiz-results h4 {
+    margin: 0 0 16px 0;
+    color: #111827;
+    font-size: 16px;
+  }
+
+  .score-display {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .score-number {
+    font-size: 48px;
+    font-weight: bold;
+    color: #0ea5e9;
+  }
+
+  .score-details {
+    font-size: 18px;
+    color: #6b7280;
+    font-weight: 500;
+  }
+
   </style>
   
