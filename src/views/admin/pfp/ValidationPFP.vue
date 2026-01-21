@@ -613,7 +613,7 @@ const baseRows = computed(() => {
 
 const filteredPlacesList = computed(() => {
   const q = (searchQuery.value || '').trim().toLowerCase()
-  return (baseRows.value || []).filter((row) => {
+  let filtered = (baseRows.value || []).filter((row) => {
     if (filterYear.value && row.year !== filterYear.value) return false
     if (filterType.value && row.pfp_type !== filterType.value) return false
     if (filterClasse.value && row.student_class !== filterClasse.value) return false
@@ -624,6 +624,50 @@ const filteredPlacesList = computed(() => {
       (row.place_name || '').toLowerCase().includes(q) ||
       (row.institution_name || '').toLowerCase().includes(q)
     )
+  })
+  
+  // Trier par ordre alphabétique du nom de famille puis prénom
+  return filtered.sort((a, b) => {
+    // Extraire le nom de famille et prénom en gérant le format avec initiale
+    const splitName = (fullName) => {
+      if (!fullName) return { lastName: '', firstName: '' }
+      
+      // Gérer le format "S Samira" (initiale + espace + nom)
+      const trimmed = fullName.trim()
+      const parts = trimmed.split(' ')
+      
+      // Si le premier élément est une seule lettre, l'ignorer pour le tri
+      if (parts.length > 1 && parts[0].length === 1) {
+        const restName = parts.slice(1).join(' ')
+        const restParts = restName.split(' ')
+        if (restParts.length === 1) {
+          return { lastName: restParts[0], firstName: '' }
+        }
+        return {
+          lastName: restParts[restParts.length - 1] || '',
+          firstName: restParts.slice(0, -1).join(' ') || ''
+        }
+      }
+      
+      // Format normal "Prénom Nom"
+      if (parts.length === 1) {
+        return { lastName: parts[0], firstName: '' }
+      }
+      return {
+        lastName: parts[parts.length - 1] || '',
+        firstName: parts.slice(0, -1).join(' ') || ''
+      }
+    }
+    
+    const nameA = splitName(a.student_name)
+    const nameB = splitName(b.student_name)
+    
+    // D'abord comparer le nom de famille
+    const lastNameCompare = nameA.lastName.localeCompare(nameB.lastName, 'fr')
+    if (lastNameCompare !== 0) return lastNameCompare
+    
+    // Si même nom de famille, comparer le prénom
+    return nameA.firstName.localeCompare(nameB.firstName, 'fr')
   })
 })
 
