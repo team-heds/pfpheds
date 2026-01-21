@@ -8,7 +8,7 @@
             <i class="pi pi-check-circle text-primary text-3xl"></i>
             <div>
               <h1 class="text-2xl font-bold text-900 m-0">Résultats d'Attribution PFP</h1>
-              <p class="text-600 m-0 mt-1">Visualisation des résultats de l'algorithme d'attribution</p>
+              <p class="text-600 m-0 mt-1">Visualisation des résultats de l'algorithme d'attributions</p>
             </div>
           </div>
         </div>
@@ -121,6 +121,14 @@
                 @click="publishAssignments"
                 :loading="publishing"
                 v-tooltip.top="'Rendre les assignations visibles dans le profil des étudiants'"
+              />
+              <Button 
+                icon="pi pi-times-circle" 
+                label="Annuler la publication" 
+                severity="warning" 
+                @click="unpublishAssignments"
+                :loading="publishing"
+                v-tooltip.top="'Remettre en brouillon pour permettre les modifications'"
               />
               <Button 
                 icon="pi pi-download" 
@@ -245,20 +253,23 @@
               </template>
             </Column>
 
-            <Column header="Actions" :style="{ width: '180px', textAlign: 'center' }">
+            <Column header="Actions" :style="{ width: '200px', textAlign: 'center' }">
               <template #body="slotProps">
                 <div class="flex gap-1 justify-content-center">
                   <Button 
                     icon="pi pi-pencil" 
+                    label="Éditer"
                     severity="info" 
                     text 
                     rounded
+                    :disabled="slotProps.data.status === 'published'"
                     @click="openEditDialog(slotProps.data)"
-                    v-tooltip.top="'Modifier la place'"
+                    v-tooltip.top="slotProps.data.status === 'published' ? 'Dépublier pour modifier' : 'Modifier la place'"
                   />
                   <Button 
                     v-if="slotProps.data.status !== 'published'"
                     icon="pi pi-check-circle" 
+                    label="Publier"
                     severity="success" 
                     text 
                     rounded
@@ -268,6 +279,7 @@
                   <Button 
                     v-else
                     icon="pi pi-times-circle" 
+                    label="Unpublish"
                     severity="warning" 
                     text 
                     rounded
@@ -1003,6 +1015,94 @@ const unpublishSingleAssignment = async (assignment) => {
       detail: 'Impossible de dépublier l\'assignation: ' + error.message,
       life: 5000
     })
+  }
+}
+
+// Dépublier toutes les assignations
+const unpublishAssignments = async () => {
+  if (!selectedPFP.value || !selectedYear.value) {
+    toast.add({
+      severity: 'warn',
+      summary: 'Attention',
+      detail: 'Veuillez sélectionner un PFP et une année',
+      life: 3000
+    })
+    return
+  }
+
+  if (results.value.length === 0) {
+    toast.add({
+      severity: 'warn',
+      summary: 'Aucune assignation',
+      detail: 'Il n\'y a aucune assignation à dépublier',
+      life: 3000
+    })
+    return
+  }
+
+  const publishedCount = results.value.filter(r => r.status === 'published').length
+  
+  if (publishedCount === 0) {
+    toast.add({
+      severity: 'info',
+      summary: 'Déjà en brouillon',
+      detail: 'Toutes les assignations sont déjà en brouillon',
+      life: 3000
+    })
+    return
+  }
+
+  // Demander confirmation
+  if (!confirm(`Voulez-vous annuler la publication de ${publishedCount} assignations pour ${selectedPFP.value} ${selectedYear.value}?\n\nCes assignations ne seront plus visibles dans le profil des étudiants et pourront être modifiées.`)) {
+    return
+  }
+
+  publishing.value = true
+  try {
+    console.log('[UNPUBLISH_ALL] Dépublication des assignations...')
+    console.log(`PFP: ${selectedPFP.value}, Année: ${selectedYear.value}`)
+    console.log(`Nombre d'assignations à dépublier: ${publishedCount}`)
+
+    // Mettre à jour le statut des assignations publiées
+    const { error } = await supabase
+      .from('student_result_vote')
+      .update({ 
+        status: 'draft',
+        updated_at: new Date().toISOString()
+      })
+      .eq('pfp_type', selectedPFP.value)
+      .eq('year', selectedYear.value)
+      .eq('status', 'published')
+
+    if (error) {
+      console.error('[ERROR] Erreur dépublication:', error)
+      throw error
+    }
+
+    console.log('[SUCCESS] Assignations dépubliées avec succès')
+
+    // Mettre à jour localement
+    results.value = results.value.map(r => ({
+      ...r,
+      status: 'draft'
+    }))
+
+    toast.add({
+      severity: 'info',
+      summary: 'Dépublication réussie',
+      detail: `${publishedCount} assignations sont repassées en brouillon et peuvent être modifiées`,
+      life: 5000
+    })
+  } catch (error) {
+    console.error('[ERROR] Erreur lors de la dépublication:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: 'Impossible de dépublier les assignations: ' + error.message,
+      life: 5000
+    })
+  } finally {
+    publishing.value = false
   }
 }
 

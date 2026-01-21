@@ -41,8 +41,8 @@
       <div class="flex align-items-center justify-content-between mb-2" style="height: 32px;">
         <h4 class="m-0">
           Formation Pratique {{ index + 1 }}
-          <span v-if="place.status === 'echec'" class="text-red-600 font-bold ml-2">- ÉCHEC</span>
-          <span v-if="place.status === 'arret'" class="text-yellow-700 font-bold ml-2">- ARRÊT</span>
+          <span v-if="place.status === 'echec'" class="text-red-600 font-bold ml-2">- ÉCHEC PFP</span>
+          <span v-if="place.status === 'arret'" class="text-yellow-700 font-bold ml-2">- ARRÊT PFP</span>
         </h4>
         <Button
           label="Voir les détails"
@@ -73,9 +73,9 @@
           <i class="pi pi-pause-circle text-yellow-600 text-xl"></i>
           <div>
             <span class="font-bold text-yellow-700">Arrêt de la formation</span>
-            <span v-if="place.commentaire_arret" class="text-sm text-yellow-600 ml-2">
-              : {{ place.commentaire_arret }}
-            </span>
+            <div v-if="place.commentaire_arret" class="text-base text-yellow-600 mt-1">
+              {{ place.commentaire_arret }}
+            </div>
           </div>
         </div>
       </div>
@@ -83,7 +83,7 @@
       <!-- Nom de l'institution + Domaine -->
       <div>
         <h6 class="m-2 font-bold">
-          {{place.Institutionname}} f
+          {{place.Institutionname}}
         </h6>
         <p class="m-2">
           Domaine : {{ place.NomPlace }}<br />
@@ -530,7 +530,8 @@ const assignedPlaces = computed(() => {
       NomPlace: pfp.NomPlace || pfp.nom_pfp || pfp.Nom_PFP || pfp.domaine || pfp.Domaine || 'raads',
       seatIndex: pfp.seat || null,
       Institutionname:    pfp.InstitutionName || getInstitutionNameById(pfp.ID_PFP) || 'raa',
-      status: pfp.status || 'validee' // Ajouter le status
+      status: pfp.status || 'validee', // Ajouter le status
+      commentaire_arret: pfp.commentaire_arret || pfp.commentaireArret || pfp.CommentaireArret || null // Ajouter le commentaire d'arrêt
     }
     // Appliquer critères en UPPERCASE attendus par getValidCriterias
     Object.entries(criteriaMap).forEach(([up, low]) => {
