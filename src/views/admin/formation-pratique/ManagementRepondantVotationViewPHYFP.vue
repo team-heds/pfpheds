@@ -11,6 +11,13 @@
             </div>
           </div>
           <div class="flex gap-2">
+            <SplitButton 
+              label="Assignation de masse" 
+              icon="pi pi-check-square" 
+              :model="bulkActions" 
+              severity="warning"
+              :disabled="!filteredList.length"
+            />
             <Button icon="pi pi-download" label="Exporter PDF" outlined />
             <Button icon="pi pi-file-excel" label="Excel" severity="success" outlined @click="exportExcel" />
           </div>
@@ -242,6 +249,8 @@
         </template>
       </Dialog>
     </div>
+    <ConfirmDialog></ConfirmDialog>
+    <Toast />
   </AdminLayout>
 </template>
 
@@ -261,9 +270,16 @@ import Dialog from 'primevue/dialog'
 import Avatar from 'primevue/avatar'
 import InputSwitch from 'primevue/inputswitch'
 import Checkbox from 'primevue/checkbox'
+import SplitButton from 'primevue/splitbutton'
+import ConfirmDialog from 'primevue/confirmdialog'
+import { useConfirm } from 'primevue/useconfirm'
+import { useToast } from 'primevue/usetoast'
+import Toast from 'primevue/toast'
 import * as XLSX from 'xlsx'
 
 const router = useRouter()
+const confirm = useConfirm()
+const toast = useToast()
 
 const loading = ref(false)
 const showDialog = ref(false)
@@ -520,6 +536,76 @@ const loadPublishedAssignments = async () => {
   } catch (e) {
     console.error('Erreur loadPublishedAssignments:', e)
     placesList.value = []
+  } finally {
+    loading.value = false
+  }
+}
+
+const bulkActions = computed(() => [
+  {
+    label: 'Tout mettre en Présence',
+    icon: 'pi pi-map-marker',
+    command: () => confirmMassiveAssignment('Présence')
+  },
+  {
+    label: 'Tout mettre en Visio-conférence',
+    icon: 'pi pi-video',
+    command: () => confirmMassiveAssignment('Visio-conférence')
+  },
+  {
+    label: 'Tout mettre en Étudiant',
+    icon: 'pi pi-user',
+    command: () => confirmMassiveAssignment('Étudiant')
+  }
+])
+
+const confirmMassiveAssignment = (lieu) => {
+  const count = filteredList.value.filter(r => r.id).length
+  if (count === 0) {
+    toast.add({ severity: 'warn', summary: 'Attention', detail: 'Aucune assignation valide à mettre à jour.', life: 3000 })
+    return
+  }
+
+  confirm.require({
+    message: `Voulez-vous assigner le lieu "${lieu}" à ces ${count} assignations filtrées ?`,
+    header: 'Confirmation d\'assignation massive',
+    icon: 'pi pi-exclamation-triangle',
+    acceptLabel: 'Confirmer',
+    rejectLabel: 'Annuler',
+    accept: () => assignMassiveLieu(lieu)
+  })
+}
+
+const assignMassiveLieu = async (lieu) => {
+  const targets = filteredList.value.filter(r => r.id)
+  const ids = targets.map(r => r.id)
+
+  loading.value = true
+  try {
+    const { error } = await supabase
+      .from('student_result_vote')
+      .update({ lieu_signature: lieu })
+      .in('id', ids)
+
+    if (error) throw error
+
+    // Mise à jour locale
+    placesList.value = placesList.value.map(p => {
+      if (ids.includes(p.id)) {
+        return { ...p, lieu_signature: lieu }
+      }
+      return p
+    })
+
+    toast.add({ 
+      severity: 'success', 
+      summary: 'Succès', 
+      detail: `${ids.length} assignations mises à jour en "${lieu}".`, 
+      life: 3000 
+    })
+  } catch (e) {
+    console.error('Erreur assignMassiveLieu:', e)
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Une erreur est survenue lors de la mise à jour massive.', life: 3000 })
   } finally {
     loading.value = false
   }

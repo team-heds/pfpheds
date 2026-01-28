@@ -22,6 +22,7 @@
                 style="height: 32px; width: 200px; min-width: 200px;"
                 @click="navigateToInstitution(place.InstitutionId || place.IDPlace)"
               />
+
               <Button
                 v-if="isAdmin"
                 label="Supprimer"
@@ -30,6 +31,7 @@
                 style="height: 32px; width: 120px; min-width: 120px;"
                 @click="confirmDeleteAssignment(place)"
               />
+              
             </div>
           </div>
           <div>
