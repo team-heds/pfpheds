@@ -58,7 +58,8 @@ const FPInstitutionsView = () => import('@/views/admin/formation-pratique/Instit
 const FPPraticiensFormateurView = () => import('@/views/admin/formation-pratique/PraticiensFormateurViewPHYFP.vue');
 const FPPlacesView = () => import('@/views/admin/formation-pratique/PlacesViewPHYFP.vue');
 const FPProfilEtudiantsView = () => import('@/views/admin/formation-pratique/ProfilEtudiantsViewPHYFP.vue');
-const FPProfilRepondantEnseignantView = () => import('@/views/admin/formation-pratique/ProfilRepondantEnseignantViewPHYFP.vue');
+const ProfileRepondantView = () => import('@/views/admin/formation-pratique/ProfileRepondantView.vue');
+const ManagementRepondantSignature = () => import('@/views/admin/formation-pratique/ManagementRepondantSignature.vue');
 const FPGanttPFPFormationView = () => import('@/views/admin/formation-pratique/GanttPFPFormationViewPHYFP.vue');
 const FPAdminSecretariatView = () => import('@/views/admin/formation-pratique/AdminSecretariatViewPHYFP.vue');
 const FPAdminSecretariatGeneralView = () => import('@/views/admin/formation-pratique/AdminSecretariatGeneralViewPHYFP.vue');
@@ -72,6 +73,14 @@ const FPManagementRepondantVotationView = () => import('@/views/admin/formation-
 const FPValiderEchecPFPView = () => import('@/views/admin/formation-pratique/ValiderEchecPFPViewPHYFP.vue');
 const FPVotationPrioritaireView = () => import('@/views/admin/formation-pratique/VotationPrioritaireViewPHYFP.vue');
 const FPVotationPFPView = () => import('@/views/admin/formation-pratique/VotationPFPViewPHYFP.vue');
+
+// SECRÉTARIAT FP
+const VerificationCriteresEtudiants = () => import('@/views/admin/formation-pratique/secretariat/VerificationCriteresEtudiants.vue');
+const SuiviInstitutions = () => import('@/views/admin/formation-pratique/secretariat/SuiviInstitutions.vue');
+const TableauRecapitulatifOffres = () => import('@/views/admin/formation-pratique/secretariat/TableauRecapitulatifOffres.vue');
+const RecapPFPNotes = () => import('@/views/admin/formation-pratique/secretariat/RecapPFPNotes.vue');
+const RecapCPTEvaluation = () => import('@/views/admin/formation-pratique/secretariat/RecapCPTEvaluation.vue');
+const SuiviCasParticuliers = () => import('@/views/admin/formation-pratique/secretariat/SuiviCasParticuliers.vue');
 
 // ASSIGNATION RÉPONDANTS
 const AssignRepondantsView = () => import('@/views/admin/AssignRepondantsView.vue');
@@ -436,7 +445,8 @@ const routes = [
   
   // Section Admin
   { path: '/admin/formation-pratique/profil-etudiants', component: FPProfilEtudiantsView, name: 'FPProfilEtudiants', meta: { requiresAuth: true, need: 'page1.access' } },
-  { path: '/admin/formation-pratique/profil-repondant-enseignant', component: FPProfilRepondantEnseignantView, name: 'FPProfilRepondantEnseignant', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/admin/formation-pratique/profil-repondant', component: ProfileRepondantView, name: 'ProfileRepondant', meta: { requiresAuth: true } },
+  { path: '/admin/formation-pratique/management-repondant-signature', component: ManagementRepondantSignature, name: 'ManagementRepondantSignature', meta: { requiresAuth: true, need: 'page1.access' } },
   { path: '/admin/formation-pratique/assign-repondants-ba25', component: AssignRepondantsView, name: 'AssignRepondantsBA25Static', meta: { requiresAuth: true, need: 'admin' } },
   { path: '/admin/formation-pratique/gantt-pfp', component: FPGanttPFPFormationView, name: 'FPGanttPFP', meta: { requiresAuth: true, need: 'page1.access' } },
   { path: '/admin/formation-pratique/admin-secretariat', component: FPAdminSecretariatView, name: 'FPAdminSecretariat', meta: { requiresAuth: true, need: 'page1.access' } },
@@ -455,6 +465,14 @@ const routes = [
   // Section Votations
   { path: '/admin/formation-pratique/votation-prioritaire', component: FPVotationPrioritaireView, name: 'FPVotationPrioritaire', meta: { requiresAuth: true, need: 'page1.access' } },
   { path: '/admin/formation-pratique/votation-pfp', component: FPVotationPFPView, name: 'FPVotationPFP', meta: { requiresAuth: true, need: 'page1.access' } },
+  
+  // Secrétariat FP
+  { path: '/admin/formation-pratique/secretariat/verification-criteres', component: VerificationCriteresEtudiants, name: 'VerificationCriteresEtudiants', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/admin/formation-pratique/secretariat/suivi-institutions', component: SuiviInstitutions, name: 'SuiviInstitutions', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/admin/formation-pratique/secretariat/tableau-offres', component: TableauRecapitulatifOffres, name: 'TableauRecapitulatifOffres', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/admin/formation-pratique/secretariat/recap-pfp-notes', component: RecapPFPNotes, name: 'RecapPFPNotes', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/admin/formation-pratique/secretariat/recap-cpt-evaluation', component: RecapCPTEvaluation, name: 'RecapCPTEvaluation', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/admin/formation-pratique/secretariat/suivi-cas-particuliers', component: SuiviCasParticuliers, name: 'SuiviCasParticuliers', meta: { requiresAuth: true, need: 'page1.access' } },
   
   // Admin Lists Routes
   { path: '/admin/programs', component: ProgramListView, name: 'ProgramList', meta: { requiresAuth: true, need: 'admin' } },

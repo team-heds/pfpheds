@@ -66,7 +66,8 @@ export default [
             items: [
               { label: 'Profil Étudiants', icon: 'pi pi-id-card', to: '/admin/formation-pratique/profil-etudiants' },
               { label: 'Répondant HES', icon: 'pi pi-user', to: '/management_repondant' },
-              { label: 'Profil Répondant Enseignant', icon: 'pi pi-user', to: '/admin/formation-pratique/profil-repondant-enseignant' },
+              { label: 'Mon Profil Répondant', icon: 'pi pi-user', to: '/admin/formation-pratique/profil-repondant' },
+              { label: 'Management Signature', icon: 'pi pi-user', to: '/admin/formation-pratique/management-repondant-signature' },
               { label: 'Management Places', icon: 'pi pi-map-marker', to: '/management_place' },
               { label: 'Affectation PFP2 BA24', icon: 'pi pi-user-plus', to: '/affectation_stage_etudiant_ba24' },
               { label: 'Management Répondant CPT', icon: 'pi pi-users', to: '/admin/formation-pratique/management-repondant-cpt' },
@@ -106,6 +107,20 @@ export default [
               { label: 'Répartition Stages', icon: 'pi pi-percentage', to: '/stage_repartition' },
               { label: 'Validation PFP1A', icon: 'pi pi-check-circle', to: '/validate-pfp1a' },
               { label: 'Valider Échec PFP', icon: 'pi pi-check-circle', to: '/admin/formation-pratique/valider-echec-pfp' }
+            ]
+          },
+          
+          // Secrétariat FP
+          {
+            label: 'Secrétariat FP',
+            icon: 'pi pi-folder',
+            items: [
+              { label: 'Vérification Critères Étudiants', icon: 'pi pi-check-circle', to: '/admin/formation-pratique/secretariat/verification-criteres' },
+              { label: 'Suivi Institutions', icon: 'pi pi-building', to: '/admin/formation-pratique/secretariat/suivi-institutions' },
+              { label: 'Tableau Récapitulatif Offres', icon: 'pi pi-table', to: '/admin/formation-pratique/secretariat/tableau-offres' },
+              { label: 'Récap PFP Notes', icon: 'pi pi-file', to: '/admin/formation-pratique/secretariat/recap-pfp-notes' },
+              { label: 'Récap CPT Évaluation', icon: 'pi pi-star', to: '/admin/formation-pratique/secretariat/recap-cpt-evaluation' },
+              { label: 'Suivi Cas Particuliers', icon: 'pi pi-exclamation-triangle', to: '/admin/formation-pratique/secretariat/suivi-cas-particuliers' }
             ]
           }
         ]

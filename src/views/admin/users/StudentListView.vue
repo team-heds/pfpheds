@@ -205,6 +205,7 @@ import { useToast } from 'primevue/usetoast';
 import { supabase } from '@/supabase';
 import StudentEditDialog from '@/components/admin/forms/StudentEditDialog.vue';
 import StudentCreateDialog from '@/components/admin/forms/StudentCreateDialog.vue';
+import { useUserStore } from '@/stores/userStore';
 
 export default {
   name: "EtudiantList",
@@ -213,11 +214,11 @@ export default {
     Column,
     InputText,
     Button,
-    Dropdown,
     AdminLayout,
     Toast,
     StudentEditDialog,
-    StudentCreateDialog
+    StudentCreateDialog,
+    Dropdown
   },
   data() {
     return {
@@ -247,6 +248,7 @@ export default {
       repondantEditingStudentId: null,
       repondantEditValue: null,
       savingRepondantId: null,
+      currentRepondantProfile: null,
     };
   },
   watch: {
@@ -260,11 +262,22 @@ export default {
     }
   },
   computed: {
+    currentRepondantName() {
+      return this.currentRepondantProfile ? `${this.currentRepondantProfile.first_name} ${this.currentRepondantProfile.last_name}` : null;
+    },
+    isAdmin() {
+      return this.userStore.profile?.roles?.includes('admin');
+    },
     filteredEtudiants() {
       const searchLower = (this.globalFilter || '').toLowerCase();
 
       const filtered = this.etudiants.filter(etudiant => {
         const matchesClass = this.filters['Classe'].value ? this.filters['Classe'].value === etudiant.Classe : true;
+
+        // Filtrage par répondant si l'utilisateur n'est pas admin
+        if (!this.isAdmin && this.currentRepondantName) {
+          if (etudiant.repondant_hes !== this.currentRepondantName) return false;
+        }
 
         const haystack = etudiant.__searchKey || '';
         const matchesSearch = !searchLower ? true : haystack.includes(searchLower);
@@ -284,9 +297,11 @@ export default {
   },
   setup() {
     const toast = useToast();
-    return { toast };
+    const userStore = useUserStore();
+    return { toast, userStore };
   },
   async mounted() {
+    await this.loadCurrentRepondantProfile();
     // Charger en parallèle pour accélérer
     await Promise.all([
       this.loadRepondantsHES(),
@@ -294,6 +309,22 @@ export default {
     ]);
   },
   methods: {
+    async loadCurrentRepondantProfile() {
+      if (!this.userStore.user?.id) return;
+      try {
+        const { data, error } = await supabase
+          .from('RepondantPhysioHES')
+          .select('*')
+          .eq('user_id', this.userStore.user.id)
+          .eq('is_active', true)
+          .maybeSingle();
+
+        if (error) throw error;
+        this.currentRepondantProfile = data;
+      } catch (e) {
+        console.error('Erreur loadCurrentRepondantProfile:', e);
+      }
+    },
     debug(...args) {
       if (import.meta.env && import.meta.env.DEV) {
         console.log(...args);
@@ -313,36 +344,45 @@ export default {
 
     async fetchEtudiantsFromSupabase() {
       this.loading = true;
+      const startTime = performance.now();
+      
       try {
-        // Requêtes parallèles pour accélérer le chargement
+        // ⚡ OPTIMISATION: Requêtes parallèles pour accélérer le chargement
         const [students, { data: physioData }] = await Promise.all([
           studentsService.getAllStudents(),
           supabase.from('StudentsPhysio').select('user_id, repondant_hes')
         ]);
 
-        // Map pour lookup rapide
+        // ⚡ OPTIMISATION: Map pour lookup rapide O(1)
         const physioByUserId = new Map((physioData || []).map(sp => [sp.user_id, sp]));
 
-        // Pré-calcul en une seule passe
-        students.forEach(s => {
-          // Clé de recherche
-          const parts = [s.Nom, s.Prenom, s.Classe, s.Mail].filter(Boolean);
+        // ⚡ OPTIMISATION: Pré-calcul en une seule passe avec mutation directe
+        const len = students.length;
+        for (let i = 0; i < len; i++) {
+          const s = students[i];
+          // Clé de recherche (optimisé: évite filter et map intermédiaires)
+          const parts = [];
+          if (s.Nom) parts.push(s.Nom);
+          if (s.Prenom) parts.push(s.Prenom);
+          if (s.Classe) parts.push(s.Classe);
+          if (s.Mail) parts.push(s.Mail);
           s.__searchKey = parts.join(' ').toLowerCase();
           // Flag pour loading
           s.updating = false;
           // Répondant HES
           const physio = physioByUserId.get(s.id);
           s.repondant_hes = physio?.repondant_hes || null;
-        });
+        }
         
         this.etudiants = students;
         
-        this.debug(`✅ ${this.etudiants.length} étudiants chargés`);
+        const loadTime = Math.round(performance.now() - startTime);
+        this.debug(`✅ ${this.etudiants.length} étudiants chargés en ${loadTime}ms`);
         
         this.toast.add({
           severity: 'success',
           summary: 'Étudiants chargés',
-          detail: `${this.etudiants.length} étudiants récupérés`,
+          detail: `${this.etudiants.length} étudiants en ${loadTime}ms`,
           life: 2000
         });
       } catch (error) {

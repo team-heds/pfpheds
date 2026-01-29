@@ -6,8 +6,8 @@
           <div class="flex align-items-center gap-3">
             <i class="pi pi-user text-primary text-4xl"></i>
             <div>
-              <h1 class="text-3xl font-bold text-900 m-0">Profil Répondant Enseignant</h1>
-              <p class="text-600 m-0 mt-2">Gestion des profils des répondants enseignants et de leurs étudiants assignés</p>
+              <h1 class="text-3xl font-bold text-900 m-0">Management Répondant Signature</h1>
+              <p class="text-600 m-0 mt-2">Gestion des signatures des répondants et de la validation des assignations</p>
             </div>
           </div>
           <div class="flex align-items-center gap-3">
@@ -121,11 +121,22 @@
           <Column field="pfp_type" header="PFP" sortable></Column>
           <Column field="year" header="Année" sortable></Column>
           <Column field="assigned_place_name" header="Lieu de stage" sortable></Column>
-          <Column field="role" header="Rôle HES" sortable>
+          <Column field="praticien_details" header="Praticien Formateur" sortable></Column>
+          <Column field="praticien_mail" header="Mail Praticien" sortable>
             <template #body="slotProps">
-              <Tag :value="slotProps.data.role" :severity="slotProps.data.role === 'Répondant' ? 'primary' : 'info'" />
+              <span 
+                v-if="slotProps.data.praticien_mail !== '-'"
+                @click="copyToClipboard(slotProps.data.praticien_mail)"
+                class="cursor-pointer text-primary hover:underline"
+                :title="'Copier: ' + slotProps.data.praticien_mail"
+              >
+                {{ slotProps.data.praticien_mail }}
+              </span>
+              <span v-else>-</span>
             </template>
           </Column>
+          <Column field="repondant_details" header="Répondant HES" sortable></Column>
+          <Column field="signataire_details" header="Signataire HES" sortable></Column>
           <Column field="lieu_signature" header="Lieu signature" sortable>
             <template #body="slotProps">
               <Tag v-if="slotProps.data.lieu_signature" :value="slotProps.data.lieu_signature" :severity="getLieuSignatureSeverity(slotProps.data.lieu_signature)" />
@@ -243,7 +254,8 @@ const fetchAssignedStudents = async (repondantName) => {
         repondant_hes, 
         signataire_hes, 
         lieu_signature, 
-        is_validated
+        is_validated,
+        assigned_praticien_id
       `)
       .or(`repondant_hes.eq."${repondantName}",signataire_hes.eq."${repondantName}"`)
       .eq('status', 'published')
@@ -262,15 +274,42 @@ const fetchAssignedStudents = async (repondantName) => {
       .select('user_id, family_name, forname, classe')
       .in('user_id', userIds)
 
+    // 3. Récupérer les détails des praticiens formateurs
+    const praticienIds = [...new Set(assignments.map(a => a.assigned_praticien_id).filter(id => id))]
+    const { data: praticiens } = await supabase
+      .from('praticiens_formateurs')
+      .select('id, nom, prenom, mail, institution, localite')
+      .in('id', praticienIds)
+
+    // 4. Récupérer les détails des répondants/signataires HES
+    const repondantNames = [...new Set(assignments.flatMap(a => [a.repondant_hes, a.signataire_hes].filter(name => name)))]
+    const { data: repondantsDetails } = await supabase
+      .from('RepondantPhysioHES')
+      .select('first_name, last_name')
+      .in('CONCAT(first_name, \' \', last_name)', repondantNames)
+
     const profilesMap = new Map((profiles || []).map(p => [p.user_id, p]))
+    const praticiensMap = new Map((praticiens || []).map(p => [p.id, p]))
+    const repondantsMap = new Map((repondantsDetails || []).map(r => [`${r.first_name} ${r.last_name}`, r]))
 
     assignedStudents.value = assignments.map(a => {
       const p = profilesMap.get(a.user_id)
+      const praticien = praticiensMap.get(a.assigned_praticien_id)
       return {
         ...a,
         student_name: p ? `${(p.family_name || '').toUpperCase()} ${p.forname || ''}`.trim() : 'Inconnu',
         student_class: p?.classe || '-',
-        role: a.repondant_hes === repondantName ? 'Répondant' : 'Signataire'
+        role: a.repondant_hes === repondantName ? 'Répondant' : 'Signataire',
+        praticien_details: praticien ? `${praticien.prenom} ${praticien.nom}` : 'Non assigné',
+        praticien_mail: praticien?.mail || '-',
+        signataire_details: (() => {
+          const signataire = repondantsMap.get(a.signataire_hes)
+          return signataire ? `${signataire.first_name} ${signataire.last_name}` : a.signataire_hes || '-'
+        })(),
+        repondant_details: (() => {
+          const repondant = repondantsMap.get(a.repondant_hes)
+          return repondant ? `${repondant.first_name} ${repondant.last_name}` : a.repondant_hes || '-'
+        })()
       }
     })
   } catch (e) {
@@ -287,6 +326,16 @@ const getLieuSignatureSeverity = (lieu) => {
     'Étudiant': 'warning'
   }
   return severities[lieu] || 'secondary'
+}
+
+const copyToClipboard = async (text) => {
+  try {
+    await navigator.clipboard.writeText(text)
+    // Optionnel: afficher une notification de succès
+    console.log('Email copié:', text)
+  } catch (err) {
+    console.error('Erreur lors de la copie:', err)
+  }
 }
 
 const toggleValidation = async (row) => {
