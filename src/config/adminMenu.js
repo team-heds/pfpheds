@@ -152,16 +152,18 @@ export default [
     items: [
       // Dashboard Soins Infirmiers
       { label: 'Dashboard RM', icon: 'pi pi-chart-line', to: '/admin/dashboard-rm' },
-      { label: 'Dashboard Enseignant', icon: 'pi pi-map', to: '/admin/dashboard-enseignant' },
+     // { label: 'Dashboard Enseignant', icon: 'pi pi-map', to: '/admin/dashboard-enseignant' },
+              { label: 'Structure Mini Brique', icon: 'pi pi-calendar-plus', to: '/admin/planning' },
               { label: 'Planning Public', icon: 'pi pi-calendar-plus', to: '/admin/planning/weekly' },
       { label: 'Ticket Tâches', icon: 'pi pi-th-large', to: '/admin/academic/kanban' },
           { label: 'Contenu Multimédia', icon: 'pi pi-video', to: '/admin/academic/video-library' },
-
       // Académique
       {
         label: 'Académique',
         icon: 'pi pi-book',
         items: [
+                        { label: 'Structure Mini Brique', icon: 'pi pi-calendar-plus', to: '/admin/planning' },
+
           { label: 'Dashboard Académique', icon: 'pi pi-chart-bar', to: '/admin/dashboard-academique' },
           { label: 'Enseignants SI', icon: 'pi pi-users', to: '/admin/teachers-si' },
           

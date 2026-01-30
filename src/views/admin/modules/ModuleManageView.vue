@@ -71,16 +71,52 @@
                 </div>
                 <div class="flex align-items-center gap-2 flex-wrap">
                   <Button 
-                    label="Temps plein BAC 25"
-                    :severity="selectedClass === 'BAC25' ? 'primary' : 'secondary'"
-                    :outlined="selectedClass !== 'BAC25'"
-                    @click="selectedClass = selectedClass === 'BAC25' ? null : 'BAC25'"
+                    v-if="availableClasses.includes('BAC24')"
+                    label="BAC24"
+                    :severity="selectedClass === 'BAC24' ? 'primary' : 'secondary'"
+                    :outlined="selectedClass !== 'BAC24'"
+                    @click="selectedClass = selectedClass === 'BAC24' ? null : 'BAC24'"
+                    size="small"
                   />
                   <Button 
-                    label="Temps partiel BAC24-TP"
+                    v-if="availableClasses.includes('BAC24-TP')"
+                    label="BAC24-TP"
                     :severity="selectedClass === 'BAC24-TP' ? 'primary' : 'secondary'"
                     :outlined="selectedClass !== 'BAC24-TP'"
                     @click="selectedClass = selectedClass === 'BAC24-TP' ? null : 'BAC24-TP'"
+                    size="small"
+                  />
+                  <Button 
+                    v-if="availableClasses.includes('BAC25')"
+                    label="BAC25"
+                    :severity="selectedClass === 'BAC25' ? 'primary' : 'secondary'"
+                    :outlined="selectedClass !== 'BAC25'"
+                    @click="selectedClass = selectedClass === 'BAC25' ? null : 'BAC25'"
+                    size="small"
+                  />
+                  <Button 
+                    v-if="availableClasses.includes('BAC25-TP')"
+                    label="BAC25-TP"
+                    :severity="selectedClass === 'BAC25-TP' ? 'primary' : 'secondary'"
+                    :outlined="selectedClass !== 'BAC25-TP'"
+                    @click="selectedClass = selectedClass === 'BAC25-TP' ? null : 'BAC25-TP'"
+                    size="small"
+                  />
+                  <Button 
+                    v-if="availableClasses.includes('BAC26')"
+                    label="BAC26"
+                    :severity="selectedClass === 'BAC26' ? 'primary' : 'secondary'"
+                    :outlined="selectedClass !== 'BAC26'"
+                    @click="selectedClass = selectedClass === 'BAC26' ? null : 'BAC26'"
+                    size="small"
+                  />
+                  <Button 
+                    v-if="availableClasses.includes('BAC26-TP')"
+                    label="BAC26-TP"
+                    :severity="selectedClass === 'BAC26-TP' ? 'primary' : 'secondary'"
+                    :outlined="selectedClass !== 'BAC26-TP'"
+                    @click="selectedClass = selectedClass === 'BAC26-TP' ? null : 'BAC26-TP'"
+                    size="small"
                   />
                   <Button 
                     icon="pi pi-refresh" 
@@ -116,11 +152,7 @@
                       class="border-noround-right"
                     />
                   </div>
-                  <Button 
-                    label="Gérer le planning" 
-                    icon="pi pi-external-link" 
-                    @click="$router.push(`/admin/modules/${moduleId}/planning`)"
-                  />
+                  
                 </div>
               </div>
 
@@ -132,21 +164,49 @@
               <div v-else-if="filteredPlanning.length === 0" class="text-center p-5">
                 <i class="pi pi-hand-pointer text-6xl text-400 mb-3"></i>
                 <h4>Sélectionnez une classe</h4>
-                <p class="text-600 mb-4">Sélectionnez temps plein ou temps partiel BAC24-TP pour voir le planning</p>
-                <div class="flex justify-content-center gap-3">
+                <p class="text-600 mb-4">Sélectionnez une classe pour voir le planning</p>
+                <div class="flex justify-content-center gap-2 flex-wrap">
                   <Button 
-                    label="Temps plein BAC 25"
-                    :severity="selectedClass === 'BAC25' ? 'primary' : 'secondary'"
-                    :outlined="selectedClass !== 'BAC25'"
-                    @click="selectedClass = selectedClass === 'BAC25' ? null : 'BAC25'"
-                    size="large"
+                    v-if="availableClasses.includes('BAC24')"
+                    label="BAC24"
+                    :severity="selectedClass === 'BAC24' ? 'primary' : 'secondary'"
+                    :outlined="selectedClass !== 'BAC24'"
+                    @click="selectedClass = selectedClass === 'BAC24' ? null : 'BAC24'"
                   />
                   <Button 
-                    label="Temps partiel BAC24-TP"
+                    v-if="availableClasses.includes('BAC24-TP')"
+                    label="BAC24-TP"
                     :severity="selectedClass === 'BAC24-TP' ? 'primary' : 'secondary'"
                     :outlined="selectedClass !== 'BAC24-TP'"
                     @click="selectedClass = selectedClass === 'BAC24-TP' ? null : 'BAC24-TP'"
-                    size="large"
+                  />
+                  <Button 
+                    v-if="availableClasses.includes('BAC25')"
+                    label="BAC25"
+                    :severity="selectedClass === 'BAC25' ? 'primary' : 'secondary'"
+                    :outlined="selectedClass !== 'BAC25'"
+                    @click="selectedClass = selectedClass === 'BAC25' ? null : 'BAC25'"
+                  />
+                  <Button 
+                    v-if="availableClasses.includes('BAC25-TP')"
+                    label="BAC25-TP"
+                    :severity="selectedClass === 'BAC25-TP' ? 'primary' : 'secondary'"
+                    :outlined="selectedClass !== 'BAC25-TP'"
+                    @click="selectedClass = selectedClass === 'BAC25-TP' ? null : 'BAC25-TP'"
+                  />
+                  <Button 
+                    v-if="availableClasses.includes('BAC26')"
+                    label="BAC26"
+                    :severity="selectedClass === 'BAC26' ? 'primary' : 'secondary'"
+                    :outlined="selectedClass !== 'BAC26'"
+                    @click="selectedClass = selectedClass === 'BAC26' ? null : 'BAC26'"
+                  />
+                  <Button 
+                    v-if="availableClasses.includes('BAC26-TP')"
+                    label="BAC26-TP"
+                    :severity="selectedClass === 'BAC26-TP' ? 'primary' : 'secondary'"
+                    :outlined="selectedClass !== 'BAC26-TP'"
+                    @click="selectedClass = selectedClass === 'BAC26-TP' ? null : 'BAC26-TP'"
                   />
                 </div>
               </div>
@@ -183,7 +243,10 @@
                   </Column>
                   <Column field="day" header="Jour" style="width: 140px">
                     <template #body="{ data }">
-                      <div v-if="data.isFirstSlotOfDay" class="day-header-cell">
+                      <div v-if="data.is_async || data.day === 'distance'" class="day-header-cell">
+                        <Tag value="Cours Asynchrone" severity="info" />
+                      </div>
+                      <div v-else-if="data.isFirstSlotOfDay" class="day-header-cell">
                         <div class="day-badge">
                           <div class="day-circle">
                             <span class="day-initial">{{ formatDay(data.day).charAt(0) }}</span>
@@ -197,12 +260,16 @@
                   </Column>
                   <Column field="dateX" header="DateX" style="width: 120px">
                     <template #body="{ data }">
-                      <span class="text-sm font-medium text-600">{{ formatDateForDisplay(data.week_number, data.day) }}</span>
+                      <span v-if="!data.is_async && data.day !== 'distance'" class="text-sm font-medium text-600">{{ formatDateForDisplay(data.week_number, data.day) }}</span>
                     </template>
                   </Column>
-                  <Column header="Horaire" style="width: 120px">
+                  <Column header="Horaire / Périodes" style="width: 140px">
                     <template #body="{ data }">
-                      <div class="time-slot">{{ data.start_time?.substring(0,5) }} - {{ data.end_time?.substring(0,5) }}</div>
+                      <div v-if="data.is_async" class="flex align-items-center gap-2">
+                        <i class="pi pi-clock text-500"></i>
+                        <Tag :value="`${data.periods || 2} période(s)`" severity="warning" />
+                      </div>
+                      <div v-else class="time-slot">{{ data.start_time?.substring(0,5) }} - {{ data.end_time?.substring(0,5) }}</div>
                     </template>
                   </Column>
                   <Column field="course_title" header="Cours" style="width: 200px" class="course-title-cell">
@@ -228,13 +295,17 @@
                       {{ data.room || '—' }}
                     </template>
                   </Column>
-                  <Column field="class_code" header="Classe" style="width: 80px">
+                  <Column field="class_code" header="Classes" style="width: 150px">
                     <template #body="{ data }">
-                      <Tag 
-                        :value="normalizeClass(data.class_code)" 
-                        size="small"
-                        :style="{ backgroundColor: '#' + getClassDisplayColor(data.class_code), color: getClassTextColor(data.class_code) }"
-                      />
+                      <div class="flex gap-1 flex-wrap">
+                        <Tag 
+                          v-for="classCode in (data.class_codes && data.class_codes.length > 0 ? data.class_codes : [data.class_code])"
+                          :key="classCode"
+                          :value="normalizeClass(classCode)" 
+                          size="small"
+                          :style="{ backgroundColor: '#' + getClassDisplayColor(classCode), color: getClassTextColor(classCode) }"
+                        />
+                      </div>
                     </template>
                   </Column>
                   <Column header="Actions" style="width: 120px">
@@ -443,16 +514,52 @@
                 <div class="flex align-items-center gap-2 flex-wrap">
                   <!-- Filtre par type de classe (comme le planning) -->
                   <Button 
-                    label="Temps plein BAC 25"
-                    :severity="classFilter === 'BAC25' ? 'primary' : 'secondary'"
-                    :outlined="classFilter !== 'BAC25'"
-                    @click="classFilter = classFilter === 'BAC25' ? null : 'BAC25'"
+                    v-if="availableClasses.includes('BAC24')"
+                    label="BAC24"
+                    :severity="classFilter === 'BAC24' ? 'primary' : 'secondary'"
+                    :outlined="classFilter !== 'BAC24'"
+                    @click="classFilter = classFilter === 'BAC24' ? null : 'BAC24'"
+                    size="small"
                   />
                   <Button 
-                    label="Temps partiel BAC24-TP"
+                    v-if="availableClasses.includes('BAC24-TP')"
+                    label="BAC24-TP"
                     :severity="classFilter === 'BAC24-TP' ? 'primary' : 'secondary'"
                     :outlined="classFilter !== 'BAC24-TP'"
                     @click="classFilter = classFilter === 'BAC24-TP' ? null : 'BAC24-TP'"
+                    size="small"
+                  />
+                  <Button 
+                    v-if="availableClasses.includes('BAC25')"
+                    label="BAC25"
+                    :severity="classFilter === 'BAC25' ? 'primary' : 'secondary'"
+                    :outlined="classFilter !== 'BAC25'"
+                    @click="classFilter = classFilter === 'BAC25' ? null : 'BAC25'"
+                    size="small"
+                  />
+                  <Button 
+                    v-if="availableClasses.includes('BAC25-TP')"
+                    label="BAC25-TP"
+                    :severity="classFilter === 'BAC25-TP' ? 'primary' : 'secondary'"
+                    :outlined="classFilter !== 'BAC25-TP'"
+                    @click="classFilter = classFilter === 'BAC25-TP' ? null : 'BAC25-TP'"
+                    size="small"
+                  />
+                  <Button 
+                    v-if="availableClasses.includes('BAC26')"
+                    label="BAC26"
+                    :severity="classFilter === 'BAC26' ? 'primary' : 'secondary'"
+                    :outlined="classFilter !== 'BAC26'"
+                    @click="classFilter = classFilter === 'BAC26' ? null : 'BAC26'"
+                    size="small"
+                  />
+                  <Button 
+                    v-if="availableClasses.includes('BAC26-TP')"
+                    label="BAC26-TP"
+                    :severity="classFilter === 'BAC26-TP' ? 'primary' : 'secondary'"
+                    :outlined="classFilter !== 'BAC26-TP'"
+                    @click="classFilter = classFilter === 'BAC26-TP' ? null : 'BAC26-TP'"
+                    size="small"
                   />
                   
                 <!--   <Button 
@@ -850,12 +957,16 @@
                       <Tag :value="session.end_time" severity="secondary" size="small" />
                     </div>
                     
-                    <!-- Classe -->
-                    <Tag 
-                      :value="normalizeClass(session.class_code)" 
-                      size="small"
-                      :style="{ backgroundColor: '#' + getClassDisplayColor(session.class_code), color: getClassTextColor(session.class_code) }"
-                    />
+                    <!-- Classes -->
+                    <div class="flex gap-1">
+                      <Tag 
+                        v-for="classCode in (session.class_codes && session.class_codes.length > 0 ? session.class_codes : [session.class_code])"
+                        :key="classCode"
+                        :value="normalizeClass(classCode)" 
+                        size="small"
+                        :style="{ backgroundColor: '#' + getClassDisplayColor(classCode), color: getClassTextColor(classCode) }"
+                      />
+                    </div>
                     
                     <!-- Cours -->
                     <div class="flex-1">
@@ -895,22 +1006,77 @@
       modal
     >
       <div class="session-form" v-if="editingSession">
-        <div class="field-row">
-          <div class="field">
-            <label>Classe / Volée</label>
-            <Dropdown 
-              v-model="editingSession.classCode" 
-              :options="classOptions" 
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Sélectionner une classe"
-              class="w-full"
+        <!-- Sélection des classes (multi-sélection) -->
+        <div class="field">
+          <label class="mb-2 block">Classes / Volées <span class="text-400 text-sm">(Sélectionnez une ou plusieurs classes)</span></label>
+          
+          <!-- Affichage des classes déjà sélectionnées -->
+          <div v-if="editingSession.classCodes && editingSession.classCodes.length > 0" class="mb-2" :key="editingSession.classCodes.length">
+            <small class="text-600">Classes sélectionnées :</small>
+            <div class="flex gap-1 flex-wrap mt-1">
+              <Tag 
+                v-for="classCode in editingSession.classCodes" 
+                :key="`${classCode}-${editingSession.classCodes.length}`"
+                :value="normalizeClass(classCode)" 
+                size="small"
+                :style="{ backgroundColor: '#' + getClassDisplayColor(classCode), color: getClassTextColor(classCode) }"
+              />
+            </div>
+          </div>
+          
+          <div class="flex gap-2 flex-wrap">
+            <Button 
+              v-for="option in classOptions" 
+              :key="option.value"
+              :label="option.label"
+              :severity="editingSession.classCodes.includes(option.value) ? 'primary' : 'secondary'"
+              :outlined="!editingSession.classCodes.includes(option.value)"
+              @click="toggleClass(option.value)"
+              size="small"
+              :icon="editingSession.classCodes.includes(option.value) ? 'pi pi-check' : ''"
             />
           </div>
-          <div class="field">
-            <label>Semaine</label>
-            <InputNumber v-model="editingSession.weekNumber" :min="1" :max="52" class="w-full" />
+          <small class="text-500 mt-1 block">
+            {{ editingSession.classCodes.length }} classe{{ editingSession.classCodes.length > 1 ? 's' : '' }} sélectionnée{{ editingSession.classCodes.length > 1 ? 's' : '' }}
+          </small>
+        </div>
+        
+        <!-- Type d'activité (en haut maintenant) -->
+        <div class="field">
+          <label class="font-semibold">Type d'activité / Format</label>
+          <div class="flex gap-2 flex-wrap mt-2">
+            <Button 
+              v-for="option in activityOptions" 
+              :key="option"
+              :label="option"
+              :severity="editingSession.activity === option ? 'primary' : 'secondary'"
+              :outlined="editingSession.activity !== option"
+              @click="editingSession.activity = option"
+              size="large"
+              :icon="editingSession.activity === option ? 'pi pi-check' : ''"
+            />
           </div>
+          <small class="text-500 mt-1 block">
+            Sélectionnez "Cours Asynchrone" pour un cours sans horaire fixe (défini en périodes)
+          </small>
+        </div>
+        
+        <!-- Champ Semaine (pour tous les types de cours) -->
+        <div class="field">
+          <label>Semaine</label>
+          <InputNumber v-model="editingSession.weekNumber" :min="1" :max="52" class="w-full" />
+          <small class="text-500">Semaine académique (1-52)</small>
+        </div>
+        
+        <!-- Champs pour cours asynchrone: seulement périodes -->
+        <div v-if="editingSession.activity === 'Cours Asynchrone'" class="field">
+          <label>Nombre de périodes</label>
+          <InputNumber v-model="editingSession.periods" :min="1" :max="100" suffix=" période(s)" class="w-full" />
+          <small class="text-500">Nombre de périodes de travail pour ce cours asynchrone</small>
+        </div>
+        
+        <!-- Champs pour cours synchrone: jour et horaires -->
+        <div v-if="editingSession.activity !== 'Cours Asynchrone'">
           <div class="field">
             <label>Jour</label>
             <Dropdown 
@@ -924,16 +1090,16 @@
               {{ formatDateForDisplay(editingSession.weekNumber, editingSession.day) }}
             </small>
           </div>
-        </div>
-        
-        <div class="field-row">
-          <div class="field">
-            <label>Heure début</label>
-            <InputText v-model="editingSession.startTime" placeholder="09:00" class="w-full" />
-          </div>
-          <div class="field">
-            <label>Heure fin</label>
-            <InputText v-model="editingSession.endTime" placeholder="11:00" class="w-full" />
+          
+          <div class="field-row">
+            <div class="field">
+              <label>Heure début</label>
+              <InputText v-model="editingSession.startTime" placeholder="09:00" class="w-full" />
+            </div>
+            <div class="field">
+              <label>Heure fin</label>
+              <InputText v-model="editingSession.endTime" placeholder="11:00" class="w-full" />
+            </div>
           </div>
         </div>
         
@@ -946,17 +1112,6 @@
             class="w-full"
           />
           <small class="text-500">Ce texte apparaîtra comme titre principal du cours</small>
-        </div>
-        
-        <div class="field">
-          <label>Détails / Activité complémentaire</label>
-          <Dropdown 
-            v-model="editingSession.activity" 
-            :options="activityOptions"
-            editable
-            placeholder="Type d'activité"
-            class="w-full"
-          />
         </div>
         
         <div class="field">
@@ -1049,7 +1204,6 @@ import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { 
   getModulePlanningStats,
-  saveModuleTimeSlot,
   deleteModuleTimeSlot,
   getAvailableClasses
 } from '@/services/modulePlanningService'
@@ -1129,14 +1283,48 @@ const normalizeClass = (code) => {
   return code.toUpperCase().trim()
 }
 
+// Classes disponibles dans le planning (pour n'afficher que les boutons pertinents)
+const availableClasses = computed(() => {
+  const classesSet = new Set()
+  modulePlanning.value.forEach(slot => {
+    if (slot.class_code) {
+      const normalized = normalizeClass(slot.class_code)
+      // Ajouter la classe principale (ex: BAC25, BAC25-TP, etc.)
+      classesSet.add(normalized)
+      
+      // Si c'est un sous-groupe (ex: BA25-TP1), ajouter aussi la classe parent
+      const match = normalized.match(/^(BAC\d{2})(-TP)?/)
+      if (match) {
+        const base = match[1] // BAC24, BAC25, BAC26
+        const tp = match[2] // -TP ou undefined
+        if (tp) {
+          classesSet.add(`${base}${tp}`) // Ajouter BAC25-TP si c'est BA25-TP1
+        } else {
+          classesSet.add(base) // Ajouter BAC25 si c'est BAC25
+        }
+      }
+    }
+  })
+  return Array.from(classesSet).sort()
+})
+
 // Planning filtré par classe (comparaison normalisée)
 const filteredPlanning = computed(() => {
   if (!selectedClass.value) return []
   const normalizedFilter = normalizeClass(selectedClass.value)
+  
+  // Filtrer pour n'afficher que les séances qui correspondent exactement à la classe sélectionnée
   return modulePlanning.value.filter(slot => {
-    const normalizedClassCode = normalizeClass(slot.class_code)
-    // Filtrer par classe exacte
-    return normalizedClassCode === normalizedFilter
+    // Utiliser class_codes si disponible, sinon fallback sur class_code
+    const classCodes = slot.class_codes && slot.class_codes.length > 0 
+      ? slot.class_codes 
+      : (slot.class_code ? [slot.class_code] : [])
+    
+    // Vérifier si une des classes correspond exactement au filtre
+    return classCodes.some(classCode => {
+      const normalizedClassCode = normalizeClass(classCode)
+      return normalizedClassCode === normalizedFilter
+    })
   })
 })
 
@@ -1244,9 +1432,18 @@ const filteredTeachersList = computed(() => {
   if (classFilter.value) {
     // Filtrer les enseignants selon les classes du planning
     const filteredPlanning = modulePlanning.value.filter(slot => {
-      const normalizedClass = normalizeClass(slot.class_code)
       const normalizedFilter = normalizeClass(classFilter.value)
-      return normalizedClass === normalizedFilter
+      
+      // Utiliser class_codes si disponible, sinon fallback sur class_code
+      const classCodes = slot.class_codes && slot.class_codes.length > 0 
+        ? slot.class_codes 
+        : (slot.class_code ? [slot.class_code] : [])
+      
+      // Vérifier si une des classes correspond exactement au filtre
+      return classCodes.some(classCode => {
+        const normalizedClass = normalizeClass(classCode)
+        return normalizedClass === normalizedFilter
+      })
     })
     
     // Extraire les enseignants uniques du planning filtré
@@ -1570,8 +1767,12 @@ const filteredTeachers = ref([])
 
 // Options pour les formulaires (même format que ModulePlanningView)
 const classOptions = ref([
+  { label: 'BAC24', value: 'BAC24' },
+  { label: 'BAC24-TP', value: 'BAC24-TP' },
   { label: 'BAC25', value: 'BAC25' },
-  { label: 'BAC24-TP', value: 'BAC24-TP' }
+  { label: 'BAC25-TP', value: 'BAC25-TP' },
+  { label: 'BAC26', value: 'BAC26' },
+  { label: 'BAC26-TP', value: 'BAC26-TP' }
 ])
 
 const dayOptions = [
@@ -1582,7 +1783,7 @@ const dayOptions = [
   { label: 'Vendredi', value: 'vendredi' }
 ]
 
-const activityOptions = ['Cours', 'TP', 'TD', 'Examen', 'Atelier', 'Conférence', 'Stage']
+const activityOptions = ['Cours', 'Cours Asynchrone', 'Examen']
 
 // Supprimer la séance en cours de modification
 const deleteCurrentSession = async () => {
@@ -1599,7 +1800,7 @@ const deleteCurrentSession = async () => {
     
     // Supprimer la séance
     const { error } = await supabase
-      .from('module_time_slots')
+      .from('planning_time_slots')
       .delete()
       .eq('id', editingSession.value.id)
     
@@ -1644,7 +1845,7 @@ const deleteSession = async (session) => {
     
     // Supprimer la séance
     const { error } = await supabase
-      .from('module_time_slots')
+      .from('planning_time_slots')
       .delete()
       .eq('id', session.id)
     
@@ -1692,14 +1893,18 @@ const editSession = (session) => {
   
   editingSession.value = {
     id: session.id,
-    classCode: session.class_code,
+    // Utiliser class_codes si disponible, sinon fallback sur class_code
+    classCodes: session.class_codes && session.class_codes.length > 0 
+      ? session.class_codes 
+      : (session.class_code ? [session.class_code] : []),
+    periods: session.periods || 2,
     weekNumber: session.week_number,
     day: session.day?.toLowerCase(),
     startTime: session.start_time,
     endTime: session.end_time,
     moduleCode: module.value?.code,
     courseTitle: session.course_title || '',
-    activity: session.activity,
+    activity: session.activity || 'Cours',
     teachers: normalizedTeachers,
     room: session.room,
     notes: session.notes || ''
@@ -1711,7 +1916,8 @@ const editSession = (session) => {
 const addSessionToWeek = (weekNumber) => {
   editingSession.value = {
     id: null,
-    classCode: selectedClass.value || 'BAC25',
+    classCodes: selectedClass.value ? [selectedClass.value] : [], // Array pour multi-sélection
+    periods: 2,
     weekNumber: weekNumber,
     day: 'lundi',
     startTime: '09:00',
@@ -1726,9 +1932,60 @@ const addSessionToWeek = (weekNumber) => {
   showDialog.value = true
 }
 
+// Fonction pour toggle une classe dans la sélection multiple
+const toggleClass = (classCode) => {
+  if (!editingSession.value) return
+  
+  const index = editingSession.value.classCodes.indexOf(classCode)
+  const newClassCodes = [...editingSession.value.classCodes]
+  
+  if (index > -1) {
+    // Retirer la classe
+    newClassCodes.splice(index, 1)
+    
+    // Si on supprime BACXX, supprimer aussi BACXX-TP
+    if (classCode && !classCode.includes('-tp')) {
+      const tpVariant = `${classCode}-tp`
+      const tpIndex = newClassCodes.indexOf(tpVariant)
+      if (tpIndex > -1) {
+        newClassCodes.splice(tpIndex, 1)
+      }
+    }
+    
+    // Si on supprime BACXX-TP, supprimer aussi BACXX
+    if (classCode && classCode.includes('-tp')) {
+      const baseClass = classCode.replace('-tp', '')
+      const baseIndex = newClassCodes.indexOf(baseClass)
+      if (baseIndex > -1) {
+        newClassCodes.splice(baseIndex, 1)
+      }
+    }
+  } else {
+    // Ajouter la classe
+    newClassCodes.push(classCode)
+  }
+  
+  // Forcer la réactivité en créant une nouvelle référence
+  editingSession.value.classCodes = newClassCodes
+}
+
 // Sauvegarder la séance (même logique que ModulePlanningView)
 const saveSession = async () => {
   if (!editingSession.value) return
+  
+  // Vérifier qu'au moins une classe est sélectionnée
+  if (!editingSession.value.classCodes || editingSession.value.classCodes.length === 0) {
+    toast.add({ 
+      severity: 'warn', 
+      summary: 'Attention', 
+      detail: 'Veuillez sélectionner au moins une classe', 
+      life: 3000 
+    })
+    return
+  }
+  
+  // Sauvegarder la position de scroll actuelle
+  const scrollPosition = window.scrollY || document.documentElement.scrollTop
   
   saving.value = true
   try {
@@ -1758,53 +2015,108 @@ const saveSession = async () => {
     // Enregistrer les nouveaux enseignants dans la liste du module
     if (newTeachers.length > 0) {
       for (const newTeacher of newTeachers) {
-        // Vérifier si l'enseignant n'existe pas déjà
         const exists = moduleTeachers.value.some(t => 
           t.name.toLowerCase() === newTeacher.name.toLowerCase()
         )
         
         if (!exists) {
-          // Ajouter directement à moduleTeachers (sans email requis pour les enseignants de séance)
           const newTeacherObj = {
-            id: Date.now() + Math.random(), // ID temporaire
+            id: Date.now() + Math.random(),
             name: newTeacher.name,
             email: newTeacher.email || '',
             hours: 0,
             source: 'manual'
           }
-          
           moduleTeachers.value.push(newTeacherObj)
-          
-          // Forcer la mise à jour immédiate des stats en ajoutant à teachersWithStats
-          // teachersWithStats est une computed property, donc elle se mettra à jour automatiquement
-          // quand moduleTeachers change
         }
       }
-      
-      // Pas besoin de recharger car teachersWithStats est une computed property
-      // Elle se mettra à jour automatiquement quand moduleTeachers change
-      // await loadModuleTeachers() // Commenté pour éviter le rechargement inutile
     }
     
-    await saveModuleTimeSlot({
-      id: editingSession.value.id,
-      class_code: editingSession.value.classCode,
-      week_number: editingSession.value.weekNumber,
-      day: editingSession.value.day,
-      date: getDateFromWeekAndDay(editingSession.value.weekNumber, editingSession.value.day),
-      start_time: editingSession.value.startTime,
-      end_time: editingSession.value.endTime,
+    // Détecter si c'est un cours à Cours Asynchrone
+    const isAsync = editingSession.value.activity === 'Cours Asynchrone'
+    
+    // Créer UNE seule séance avec toutes les classes dans class_codes
+    // Ne pas inclure 'id' car il est auto-généré pour les nouvelles séances
+    const sessionData = {
+      class_codes: editingSession.value.classCodes, // Array de classes
+      class_code: editingSession.value.classCodes[0], // Garder la première pour compatibilité
+      is_async: isAsync,
       module_code: module.value?.code,
       course_title: editingSession.value.courseTitle,
       activity: editingSession.value.activity,
       teachers: normalizedTeachers,
       room: editingSession.value.room,
       notes: editingSession.value.notes
-    })
+    }
     
-    toast.add({ severity: 'success', summary: 'Succès', detail: 'Séance enregistrée', life: 2000 })
+    // Mapper jour vers day_index
+    const dayIndexMap = {
+      'lundi': 0,
+      'mardi': 1,
+      'mercredi': 2,
+      'jeudi': 3,
+      'vendredi': 4,
+      'samedi': 5,
+      'dimanche': 6,
+      'distance': 6
+    }
+    
+    // Ajouter les champs spécifiques selon le type de cours
+    if (isAsync) {
+      // Cours asynchrone: sauvegarder le nombre de périodes
+      // Utiliser 'distance' pour respecter la contrainte CHECK de la base de données
+      sessionData.periods = editingSession.value.periods || 2
+      sessionData.week_number = editingSession.value.weekNumber || 1
+      sessionData.day = 'distance'
+      sessionData.day_index = 6
+      sessionData.date = null
+      sessionData.start_time = null
+      sessionData.end_time = null
+    } else {
+      // Cours synchrone: sauvegarder jour et horaires
+      sessionData.week_number = editingSession.value.weekNumber
+      sessionData.day = editingSession.value.day
+      sessionData.day_index = dayIndexMap[editingSession.value.day?.toLowerCase()] || 0
+      sessionData.date = getDateFromWeekAndDay(editingSession.value.weekNumber, editingSession.value.day)
+      sessionData.start_time = editingSession.value.startTime
+      sessionData.end_time = editingSession.value.endTime
+      sessionData.periods = null
+    }
+    
+    if (editingSession.value.id) {
+      // Mise à jour
+      const { error } = await supabase
+        .from('planning_time_slots')
+        .update(sessionData)
+        .eq('id', editingSession.value.id)
+      
+      if (error) throw error
+    } else {
+      // Création
+      const { error } = await supabase
+        .from('planning_time_slots')
+        .insert([sessionData])
+      
+      if (error) throw error
+    }
+    
+    const classCount = editingSession.value.classCodes.length
+    toast.add({ 
+      severity: 'success', 
+      summary: 'Succès', 
+      detail: `Séance enregistrée pour ${classCount} classe${classCount > 1 ? 's' : ''}`, 
+      life: 2000 
+    })
     showDialog.value = false
     await loadModulePlanning()
+    
+    // Restaurer la position de scroll après le rechargement
+    setTimeout(() => {
+      window.scrollTo({
+        top: scrollPosition,
+        behavior: 'smooth'
+      })
+    }, 100)
   } catch (error) {
     console.error('Erreur save:', error)
     toast.add({ severity: 'error', summary: 'Erreur', detail: error.message, life: 3000 })
@@ -1889,9 +2201,17 @@ const getTeacherGroupedSessions = (teacherName) => {
     
     groupedByWeek[weekKey].sessions.push(session)
     groupedByWeek[weekKey].totalHours += getSlotHours(session)
-    if (session.class_code) {
-      groupedByWeek[weekKey].classes.add(session.class_code)
-    }
+    
+    // Ajouter toutes les classes (class_codes array) ou class_code pour compatibilité
+    const classCodes = session.class_codes && session.class_codes.length > 0 
+      ? session.class_codes 
+      : (session.class_code ? [session.class_code] : [])
+    
+    classCodes.forEach(classCode => {
+      if (classCode) {
+        groupedByWeek[weekKey].classes.add(classCode)
+      }
+    })
   })
   
   // Convertir en tableau et trier

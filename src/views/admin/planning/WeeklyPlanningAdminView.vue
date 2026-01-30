@@ -710,12 +710,15 @@ onMounted(async () => {
     }))
     
     // 3. Sélectionner l'année active par défaut
-    const activeYear = years.find(y => y.is_active)
+    const activeYear = years.find(y => y.id === 'bac25') || years.find(y => y.is_active)
     if (activeYear) {
       selectedYear.value = activeYear.id
     }
     
-    // 4. Charger les enseignants SI (avec fallback direct)
+    // 4. Sélectionner la semaine 39 par défaut
+    selectedWeek.value = 39
+    
+    // 5. Charger les enseignants SI (avec fallback direct)
     const teachers = await getSITeachers()
     if (teachers && teachers.length > 0) {
       siTeachers.value = teachers
@@ -735,8 +738,12 @@ onMounted(async () => {
       }
     }
     
-    // L'utilisateur doit sélectionner manuellement l'année et la semaine
-    console.log('✅ Initialisation terminée. En attente de sélection utilisateur.')
+    // 6. Charger automatiquement le planning si l'année et la semaine sont définies
+    if (selectedYear.value && selectedWeek.value) {
+      await loadWeekPlanning()
+    }
+    
+    console.log('✅ Initialisation terminée.')
     
   } catch (error) {
     console.error('Erreur initialisation:', error)

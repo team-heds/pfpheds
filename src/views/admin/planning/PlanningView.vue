@@ -6,33 +6,37 @@
       <template #header>
         <Toolbar class="border-noround">
           <template #start>
-            <div class="flex align-items-center gap-2">
-              <i class="pi pi-calendar text-4xl text-primary"></i>
-              <div>
-                <h1 class="m-0 text-2xl font-bold">Planning Académique</h1>
-                <p class="m-0 text-sm text-500">Bachelor of Science in Nursing</p>
+            <div class="flex align-items-center gap-3">
+              <i class="pi pi-calendar text-3xl text-primary"></i>
+              <div class="flex flex-column">
+                <div class="flex align-items-center gap-2">
+                  <h1 class="m-0 text-xl font-bold">Planning Académique</h1>
+                  <Tag v-if="activeAcademicYear" :value="activeAcademicYear.name" severity="secondary" class="text-xs"></Tag>
+                </div>
+                <p class="m-0 text-xs text-500">Bachelor of Science in Nursing</p>
               </div>
             </div>
           </template>
           
           <template #end>
-            <div class="flex gap-2">
-              <Dropdown 
+            <div class="flex gap-2 align-items-center">
+              <span class="text-sm font-semibold text-500 mr-2 uppercase hidden md:inline">Année :</span>
+              <SelectButton 
                 v-model="selectedYear" 
                 :options="yearOptions" 
-                optionLabel="label" 
+                optionLabel="labelShort" 
                 optionValue="value"
-                placeholder="Sélectionner une année"
                 @change="loadPlanning"
-                class="w-full md:w-20rem"
-              />
-              
-              <Button 
-                label="Mode Admin" 
-                icon="pi pi-pencil" 
-                @click="goToAdmin" 
-                severity="info"
-              />
+                aria-labelledby="basic"
+                class="year-select-button"
+              >
+                <template #option="slotProps">
+                  <div class="flex flex-column align-items-center px-2">
+                    <span class="font-bold">{{ slotProps.option.labelShort }}</span>
+                    <span class="text-xs opacity-70">{{ slotProps.option.classCode }}</span>
+                  </div>
+                </template>
+              </SelectButton>
             </div>
           </template>
         </Toolbar>
@@ -46,30 +50,9 @@
     </div>
 
     <!-- Planning Grid -->
-    <div v-else class="planning-content mt-4">
+    <div v-else class="planning-content">
+      <!-- Année académique Info (DÉPLACÉE DANS LE HEADER) -->
       
-      <!-- Année académique Info -->
-      <Card v-if="activeAcademicYear" class="mb-4">
-        <template #content>
-          <div class="text-center">
-            <Tag :value="selectedYear" severity="info" class="text-xl px-4 py-2"></Tag>
-            <p class="mt-2 mb-0 text-600 text-lg">{{ activeAcademicYear.name }}</p>
-            
-            <!-- Indicateur modules Supabase -->
-            <div v-if="supabaseModules.length > 0" class="mt-3 flex justify-content-center gap-3">
-              <Tag severity="success" class="px-3">
-                <i class="pi pi-database mr-2"></i>
-                {{ supabaseModules.length }} modules Supabase chargés
-              </Tag>
-              <Tag severity="info" class="px-3">
-                <i class="pi pi-link mr-2"></i>
-                {{ Object.keys(courseCodes).filter(id => courseCodes[id].supabaseData).length }} enrichis
-              </Tag>
-            </div>
-          </div>
-        </template>
-      </Card>
-
       <!-- Planning complet année académique -->
       <Panel :toggleable="true" class="mb-4">
         <template #header>
@@ -97,7 +80,17 @@
               class="week-header"
               :class="{ 'autumn-week': week >= 38 || week <= 7, 'spring-week': week >= 8 && week <= 37 }"
             >
-              <span class="week-number">S{{ week }}</span>
+              <div class="week-header-content">
+                <span class="week-number">S{{ week }}</span>
+                <div v-if="getWeekModules(week).length > 0" class="week-colors">
+                  <div 
+                    v-for="moduleColor in getWeekModules(week)" 
+                    :key="moduleColor"
+                    class="week-color-indicator"
+                    :style="{ backgroundColor: moduleColor }"
+                  ></div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -125,170 +118,148 @@
         </div>
       </Panel>
 
-      <!-- Légende des codes de cours -->
-      <Panel :toggleable="true">
+      <!-- Légende des cours -->
+      <Panel :toggleable="true" class="mt-4 compact-legend">
         <template #header>
           <div class="flex align-items-center gap-2">
-            <i class="pi pi-palette text-pink-500 text-xl"></i>
-            <span class="font-bold text-xl">Légende des cours</span>
-            <Tag :value="`${Object.keys(courseCodes).length} codes`" class="ml-2"></Tag>
+            <i class="pi pi-palette text-primary text-xl"></i>
+            <span class="font-bold text-lg">Légende des cours</span>
+            <Tag :value="`${Object.keys(courseCodes).length} modules`" severity="secondary" class="ml-2"></Tag>
           </div>
         </template>
         
-        <!-- 1ère année -->
-        <div v-if="coursesByYear[1] && coursesByYear[1].length > 0" class="mb-4">
-          <div class="text-xl font-bold text-primary mb-3">
-            <i class="pi pi-graduation-cap mr-2"></i>1ère année
-          </div>
-          <div class="grid">
-            <div 
-              v-for="code in coursesByYear[1]" 
-              :key="code.id" 
-              class="col-12 md:col-6 lg:col-4"
-            >
-              <div class="flex align-items-center gap-3 p-3 border-round surface-100 hover:surface-200 transition-colors transition-duration-150 module-card">
-                <div 
-                  class="legend-color-badge"
-                  :style="{ backgroundColor: code.color }"
-                ></div>
-                <div class="flex-1">
-                  <div class="font-bold text-900 text-lg">{{ code.moduleNumber || code.id.toUpperCase() }}</div>
-                  <div class="text-sm text-600 mb-2">{{ code.supabaseData?.titre || code.label }}</div>
-                  
-                  <!-- Données Supabase enrichies -->
-                  <div v-if="code.supabaseData" class="module-details">
-                    <div v-if="code.supabaseData.responsable" class="text-xs text-500 mb-1">
-                      <i class="pi pi-user mr-1"></i>
-                      <strong>Responsable:</strong> {{ code.supabaseData.responsable }}
-                    </div>
-                    <div class="flex gap-3 text-xs text-500">
-                      <span v-if="code.supabaseData.credits">
-                        <i class="pi pi-star-fill mr-1"></i>
-                        <strong>{{ code.supabaseData.credits }}</strong> crédits
-                      </span>
-                      <span v-if="code.supabaseData.heures_contact">
-                        <i class="pi pi-clock mr-1"></i>
-                        <strong>{{ code.supabaseData.heures_contact }}h</strong> contact
-                      </span>
-                    </div>
-                  </div>
+        <div class="legend-grid-container">
+          <!-- 1ère année -->
+          <div v-if="coursesByYear[1] && coursesByYear[1].length > 0" class="legend-section">
+            <div class="legend-section-header">1ère année</div>
+            <div class="legend-items-grid">
+              <div 
+                v-for="code in coursesByYear[1]" 
+                :key="code.id" 
+                class="legend-item" 
+                v-tooltip.bottom="code.supabaseData?.titre || code.label"
+                @click="showModuleDetails(code)"
+              >
+                <div class="legend-color-strip" :style="{ backgroundColor: code.color }"></div>
+                <div class="legend-item-content">
+                  <span class="legend-item-code">{{ code.moduleNumber || code.id.toUpperCase() }}</span>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- 2ème année -->
-        <div v-if="coursesByYear[2] && coursesByYear[2].length > 0" class="mb-4">
-          <div class="text-xl font-bold text-primary mb-3">
-            <i class="pi pi-graduation-cap mr-2"></i>2ème année
-          </div>
-          <div class="grid">
-            <div 
-              v-for="code in coursesByYear[2]" 
-              :key="code.id" 
-              class="col-12 md:col-6 lg:col-4"
-            >
-              <div class="flex align-items-center gap-3 p-3 border-round surface-100 hover:surface-200 transition-colors transition-duration-150 module-card">
-                <div 
-                  class="legend-color-badge"
-                  :style="{ backgroundColor: code.color }"
-                ></div>
-                <div class="flex-1">
-                  <div class="font-bold text-900 text-lg">{{ code.moduleNumber || code.id.toUpperCase() }}</div>
-                  <div class="text-sm text-600 mb-2">{{ code.supabaseData?.titre || code.label }}</div>
-                  
-                  <!-- Données Supabase enrichies -->
-                  <div v-if="code.supabaseData" class="module-details">
-                    <div v-if="code.supabaseData.responsable" class="text-xs text-500 mb-1">
-                      <i class="pi pi-user mr-1"></i>
-                      <strong>Responsable:</strong> {{ code.supabaseData.responsable }}
-                    </div>
-                    <div class="flex gap-3 text-xs text-500">
-                      <span v-if="code.supabaseData.credits">
-                        <i class="pi pi-star-fill mr-1"></i>
-                        <strong>{{ code.supabaseData.credits }}</strong> crédits
-                      </span>
-                      <span v-if="code.supabaseData.heures_contact">
-                        <i class="pi pi-clock mr-1"></i>
-                        <strong>{{ code.supabaseData.heures_contact }}h</strong> contact
-                      </span>
-                    </div>
-                  </div>
+          <!-- 2ème année -->
+          <div v-if="coursesByYear[2] && coursesByYear[2].length > 0" class="legend-section">
+            <div class="legend-section-header">2ème année</div>
+            <div class="legend-items-grid">
+              <div 
+                v-for="code in coursesByYear[2]" 
+                :key="code.id" 
+                class="legend-item" 
+                v-tooltip.bottom="code.supabaseData?.titre || code.label"
+                @click="showModuleDetails(code)"
+              >
+                <div class="legend-color-strip" :style="{ backgroundColor: code.color }"></div>
+                <div class="legend-item-content">
+                  <span class="legend-item-code">{{ code.moduleNumber || code.id.toUpperCase() }}</span>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- 3ème année -->
-        <div v-if="coursesByYear[3] && coursesByYear[3].length > 0" class="mb-4">
-          <div class="text-xl font-bold text-primary mb-3">
-            <i class="pi pi-graduation-cap mr-2"></i>3ème année
-          </div>
-          <div class="grid">
-            <div 
-              v-for="code in coursesByYear[3]" 
-              :key="code.id" 
-              class="col-12 md:col-6 lg:col-4"
-            >
-              <div class="flex align-items-center gap-3 p-3 border-round surface-100 hover:surface-200 transition-colors transition-duration-150 module-card">
-                <div 
-                  class="legend-color-badge"
-                  :style="{ backgroundColor: code.color }"
-                ></div>
-                <div class="flex-1">
-                  <div class="font-bold text-900 text-lg">{{ code.moduleNumber || code.id.toUpperCase() }}</div>
-                  <div class="text-sm text-600 mb-2">{{ code.supabaseData?.titre || code.label }}</div>
-                  
-                  <!-- Données Supabase enrichies -->
-                  <div v-if="code.supabaseData" class="module-details">
-                    <div v-if="code.supabaseData.responsable" class="text-xs text-500 mb-1">
-                      <i class="pi pi-user mr-1"></i>
-                      <strong>Responsable:</strong> {{ code.supabaseData.responsable }}
-                    </div>
-                    <div class="flex gap-3 text-xs text-500">
-                      <span v-if="code.supabaseData.credits">
-                        <i class="pi pi-star-fill mr-1"></i>
-                        <strong>{{ code.supabaseData.credits }}</strong> crédits
-                      </span>
-                      <span v-if="code.supabaseData.heures_contact">
-                        <i class="pi pi-clock mr-1"></i>
-                        <strong>{{ code.supabaseData.heures_contact }}h</strong> contact
-                      </span>
-                    </div>
-                  </div>
+          <!-- 3ème année -->
+          <div v-if="coursesByYear[3] && coursesByYear[3].length > 0" class="legend-section">
+            <div class="legend-section-header">3ème année</div>
+            <div class="legend-items-grid">
+              <div 
+                v-for="code in coursesByYear[3]" 
+                :key="code.id" 
+                class="legend-item" 
+                v-tooltip.bottom="code.supabaseData?.titre || code.label"
+                @click="showModuleDetails(code)"
+              >
+                <div class="legend-color-strip" :style="{ backgroundColor: code.color }"></div>
+                <div class="legend-item-content">
+                  <span class="legend-item-code">{{ code.moduleNumber || code.id.toUpperCase() }}</span>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Autres (sans année) -->
-        <div v-if="coursesByYear[0] && coursesByYear[0].length > 0">
-          <div class="text-xl font-bold text-600 mb-3">
-            <i class="pi pi-calendar mr-2"></i>Autres événements
-          </div>
-          <div class="grid">
-            <div 
-              v-for="code in coursesByYear[0]" 
-              :key="code.id" 
-              class="col-12 md:col-6 lg:col-4"
-            >
-              <div class="flex align-items-center gap-3 p-3 border-round surface-100 hover:surface-200 transition-colors transition-duration-150">
-                <div 
-                  class="legend-color-badge"
-                  :style="{ backgroundColor: code.color }"
-                ></div>
-                <div class="flex-1">
-                  <div class="font-semibold text-900">{{ code.id.toUpperCase() }}</div>
-                  <div class="text-sm text-600">{{ code.label }}</div>
+          <!-- Autres -->
+          <div v-if="coursesByYear[0] && coursesByYear[0].length > 0" class="legend-section">
+            <div class="legend-section-header">Événements</div>
+            <div class="legend-items-grid">
+              <div 
+                v-for="code in coursesByYear[0]" 
+                :key="code.id" 
+                class="legend-item" 
+                v-tooltip.bottom="code.label"
+                @click="showModuleDetails(code)"
+              >
+                <div class="legend-color-strip" :style="{ backgroundColor: code.color }"></div>
+                <div class="legend-item-content">
+                  <span class="legend-item-code">{{ code.id.toUpperCase() }}</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </Panel>
+
+      <!-- Dialog Détails Module -->
+      <Dialog 
+        v-model:visible="displayModuleDetails" 
+        :header="selectedModule?.moduleNumber ? `Module ${selectedModule.moduleNumber}` : selectedModule?.id.toUpperCase()" 
+        :style="{ width: '450px' }" 
+        :modal="true"
+        dismissableMask
+      >
+        <div v-if="selectedModule" class="p-2">
+          <div class="flex align-items-center gap-3 mb-4">
+            <div class="w-2rem h-2rem border-round" :style="{ backgroundColor: selectedModule.color }"></div>
+            <h2 class="m-0 text-xl">{{ selectedModule.label }}</h2>
+          </div>
+          
+          <div v-if="selectedModule.supabaseData" class="flex flex-column gap-3">
+            <div v-if="selectedModule.supabaseData.responsable" class="flex align-items-center gap-2">
+              <i class="pi pi-user text-primary"></i>
+              <div>
+                <div class="text-xs text-500">Responsable</div>
+                <div class="font-semibold">{{ selectedModule.supabaseData.responsable }}</div>
+              </div>
+            </div>
+            
+            <div class="flex gap-4">
+              <div v-if="selectedModule.supabaseData.credits" class="flex align-items-center gap-2">
+                <i class="pi pi-star-fill text-yellow-500"></i>
+                <div>
+                  <div class="text-xs text-500">Crédits ECTS</div>
+                  <div class="font-semibold">{{ selectedModule.supabaseData.credits }}</div>
+                </div>
+              </div>
+              
+              <div v-if="selectedModule.supabaseData.heures_contact" class="flex align-items-center gap-2">
+                <i class="pi pi-clock text-blue-500"></i>
+                <div>
+                  <div class="text-xs text-500">Heures contact</div>
+                  <div class="font-semibold">{{ selectedModule.supabaseData.heures_contact }}h</div>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="selectedModule.supabaseData.description" class="mt-2">
+              <div class="text-xs text-500 mb-1">Description</div>
+              <div class="text-sm line-height-3 surface-100 p-3 border-round">
+                {{ selectedModule.supabaseData.description }}
+              </div>
+            </div>
+          </div>
+        </div>
+        <template #footer>
+          <Button label="Fermer" icon="pi pi-times" @click="displayModuleDetails = false" class="p-button-text" />
+        </template>
+      </Dialog>
     </div>
   </AdminLayout>
 </template>
@@ -301,9 +272,10 @@ import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 import Card from 'primevue/card'
 import Panel from 'primevue/panel'
 import Toolbar from 'primevue/toolbar'
-import Dropdown from 'primevue/dropdown'
 import Button from 'primevue/button'
+import SelectButton from 'primevue/selectbutton'
 import Tag from 'primevue/tag'
+import Dialog from 'primevue/dialog'
 import ProgressSpinner from 'primevue/progressspinner'
 import planningService from '@/service/planningService'
 import { useModules } from '@/composables/useModules'
@@ -316,6 +288,15 @@ const loading = ref(true)
 const selectedYear = ref('bac25')
 const courseCodes = ref({})
 const planningCells = ref([])
+
+// Détails module
+const displayModuleDetails = ref(false)
+const selectedModule = ref(null)
+
+const showModuleDetails = (module) => {
+  selectedModule.value = module
+  displayModuleDetails.value = true
+}
 
 // Modules Supabase
 const { modules: supabaseModules, loadModules, loading: modulesLoading } = useModules()
@@ -334,13 +315,17 @@ const yearOptions = computed(() => {
     ]
   }
   
-  return sortedClasses.value.map(classItem => {
-    const yearLevel = classItem.year_level === 1 ? '1ère' : classItem.year_level === 2 ? '2ème' : '3ème'
-    return {
-      label: `${yearLevel} année ${activeAcademicYear.value.name} / ${classItem.code}`,
-      value: 'bac' + classItem.code.substring(1) // B25 -> bac25
-    }
-  })
+  return sortedClasses.value
+    .filter(classItem => !classItem.code.endsWith('-EE'))
+    .map(classItem => {
+      const yearLevel = classItem.year_level === 1 ? '1ère' : classItem.year_level === 2 ? '2ème' : '3ème'
+      return {
+        label: `${yearLevel} année ${activeAcademicYear.value.name} / ${classItem.code}`,
+        labelShort: `${yearLevel} année`,
+        classCode: classItem.code,
+        value: 'bac' + classItem.code.substring(1) // B25 -> bac25
+      }
+    })
 })
 
 // Jours de la semaine
@@ -428,7 +413,7 @@ const coursesByYear = computed(() => {
   
   // Trier chaque année par numéro de module
   Object.keys(byYear).forEach(year => {
-    byYear[year].sort((a, b) => {
+    byYear[year].sort((a, b) => { 
       if (a.moduleNumber && b.moduleNumber) {
         return a.moduleNumber.localeCompare(b.moduleNumber, undefined, { numeric: true })
       }
@@ -451,9 +436,12 @@ const loadPlanning = async () => {
     courseCodes.value = {}
     
     supabaseModules.value.forEach((module) => {
-      const courseCodeId = module.number?.toString() || module.short_code?.toString() || `module_${module.id}`
+      // Nettoyage des codes pour le mapping
+      const cleanShortCode = module.short_code ? module.short_code.toString().trim().toLowerCase() : null
+      const cleanNumber = module.number ? module.number.toString().trim().toLowerCase() : null
+      const courseCodeId = (cleanShortCode || cleanNumber || `module_${module.id}`).toString()
       
-      courseCodes.value[courseCodeId] = {
+      const moduleData = {
         id: courseCodeId,
         moduleNumber: module.number,
         label: module.title,
@@ -464,12 +452,31 @@ const loadPlanning = async () => {
           responsable: module.responsable,
           credits: module.credits,
           description: module.description,
-          year: module.year
+          year: module.year,
+          short_code: module.short_code
         }
+      }
+      
+      // Ajouter avec le short_code comme clé principale
+      if (cleanShortCode) {
+        courseCodes.value[cleanShortCode] = moduleData
+      }
+      
+      // Ajouter aussi avec le numéro
+      if (cleanNumber) {
+        courseCodes.value[cleanNumber] = moduleData
+      }
+
+      // Ajouter une clé "S.XX.XXXX" si possible pour matcher les codes de planning
+      if (cleanShortCode && cleanShortCode.includes('.')) {
+        // Déjà au format S.XX.XXXX
+      } else if (cleanNumber && /^\d+$/.test(cleanNumber)) {
+        // Si c'est juste un numéro, on ne peut pas deviner le préfixe
       }
     })
     
     console.log('[PlanningView] ✅ Codes de cours créés:', Object.keys(courseCodes.value).length)
+    console.log('[PlanningView] 🔍 Liste des clés courseCodes:', Object.keys(courseCodes.value))
     
     // Charger les cellules depuis Supabase (automne + printemps)
     const autumnCells = await planningService.getPlanningCells(selectedYear.value, 'autumn')
@@ -480,13 +487,24 @@ const loadPlanning = async () => {
     
     // Convertir les objets en array
     if (autumnCells) {
-      Object.values(autumnCells).forEach(cell => planningCells.value.push(cell))
+      Object.values(autumnCells).forEach(cell => {
+        planningCells.value.push(cell)
+      })
     }
     if (springCells) {
-      Object.values(springCells).forEach(cell => planningCells.value.push(cell))
+      Object.values(springCells).forEach(cell => {
+        planningCells.value.push(cell)
+      })
     }
     
     console.log('[PlanningView] 🎯 Cellules chargées:', planningCells.value.length)
+    if (planningCells.value.length > 0) {
+      console.log('[PlanningView] 🔍 Exemple cellules:', planningCells.value.slice(0, 3).map(c => ({ 
+        day: c.day, 
+        week: c.week_number, 
+        module_code: c.module_code 
+      })))
+    }
   } catch (error) {
     console.error('[PlanningView] ❌ Erreur chargement:', error)
   } finally {
@@ -512,7 +530,47 @@ const getCellStyle = (day, week) => {
     return { backgroundColor: '#ffffff' }
   }
   
-  const courseCode = courseCodes.value[cell.module_code]
+  const mCode = cell.module_code.toString().trim().toLowerCase()
+  
+  // 1. Recherche directe (clé exacte ou normalisée)
+  let courseCode = courseCodes.value[mCode]
+  
+  // 2. Recherche par moduleNumber
+  if (!courseCode) {
+    courseCode = Object.values(courseCodes.value).find(c => 
+      c.moduleNumber?.toString().toLowerCase() === mCode
+    )
+  }
+
+  // 3. Recherche floue (si mCode contient le short_code ou vice-versa)
+  if (!courseCode) {
+    courseCode = Object.values(courseCodes.value).find(c => {
+      const shortCode = c.supabaseData?.short_code?.toString().toLowerCase()
+      if (!shortCode) return false
+      return mCode.includes(shortCode) || shortCode.includes(mCode)
+    })
+  }
+
+  // 4. Si c'est un événement spécial (Vacances, Examen, etc.)
+  if (!courseCode) {
+    const specialColors = {
+      'vacances': '#FFFF00', // Jaune comme sur l'image
+      'examen': '#FF0000',   // Rouge comme sur l'image
+      'interrup': '#FF9800', // Orange comme sur l'image
+      'ferie': '#E0E0E0',
+      'férié': '#E0E0E0'
+    }
+    
+    for (const [key, color] of Object.entries(specialColors)) {
+      if (mCode.includes(key)) {
+        return {
+          backgroundColor: color,
+          color: isLightColor(color) ? '#000000' : '#ffffff'
+        }
+      }
+    }
+  }
+
   return {
     backgroundColor: courseCode?.color || '#CCCCCC',
     color: isLightColor(courseCode?.color) ? '#000000' : '#ffffff'
@@ -530,8 +588,24 @@ const getCellLabel = (day, week) => {
     return cell.display_label
   }
   
-  // Afficher le numéro de module
-  const courseCode = courseCodes.value[cell.module_code]
+  const mCode = cell.module_code.toString().trim().toLowerCase()
+  
+  // Recherche du module
+  let courseCode = courseCodes.value[mCode]
+  if (!courseCode) {
+    courseCode = Object.values(courseCodes.value).find(c => 
+      c.moduleNumber?.toString().toLowerCase() === mCode
+    )
+  }
+  
+  if (!courseCode) {
+    courseCode = Object.values(courseCodes.value).find(c => {
+      const shortCode = c.supabaseData?.short_code?.toString().toLowerCase()
+      if (!shortCode) return false
+      return mCode.includes(shortCode) || shortCode.includes(mCode)
+    })
+  }
+
   if (courseCode && courseCode.moduleNumber) {
     return courseCode.moduleNumber
   }
@@ -543,13 +617,62 @@ const getCellLabel = (day, week) => {
 const getCellTooltip = (day, week) => {
   const cell = planningCells.value.find(c => c.day === day && c.week_number === week)
   
-  if (!cell || !cell.module_code) return ''
+  // Calcul de la date
+  let dateStr = ''
+  try {
+    const dayMap = { 'lu': 1, 'ma': 2, 'me': 3, 'je': 4, 've': 5 }
+    const dayNum = dayMap[day] || 1
+    
+    // Année académique 2026-2027
+    // Semaines >= 38 : 2026
+    // Semaines < 38 : 2027
+    const year = (week >= 38) ? 2026 : 2027
+    
+    // Créer une date basée sur le numéro de semaine ISO
+    const simple = new Date(year, 0, 1 + (week - 1) * 7)
+    const dow = simple.getDay()
+    const isoWeekStart = simple
+    if (dow <= 4)
+      isoWeekStart.setDate(simple.getDate() - simple.getDay() + 1)
+    else
+      isoWeekStart.setDate(simple.getDate() + 8 - simple.getDay())
+    
+    // Ajouter les jours pour arriver au jour de la semaine (dayNum - 1 car lu=1)
+    const targetDate = new Date(isoWeekStart)
+    targetDate.setDate(isoWeekStart.getDate() + (dayNum - 1))
+    
+    const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }
+    dateStr = targetDate.toLocaleDateString('fr-FR', options)
+    dateStr = dateStr.charAt(0).toUpperCase() + dateStr.slice(1) // Capitalize
+  } catch (e) {
+    console.error('Error calculating date:', e)
+  }
+
+  if (!cell || !cell.module_code) return dateStr || ''
   
-  const courseCode = courseCodes.value[cell.module_code]
-  if (!courseCode) return cell.module_code
+  const mCode = cell.module_code.toString().trim().toLowerCase()
+  
+  let courseCode = courseCodes.value[mCode]
+  if (!courseCode) {
+    courseCode = Object.values(courseCodes.value).find(c => 
+      c.moduleNumber?.toString().toLowerCase() === mCode
+    )
+  }
+  
+  if (!courseCode) {
+    courseCode = Object.values(courseCodes.value).find(c => {
+      const shortCode = c.supabaseData?.short_code?.toString().toLowerCase()
+      if (!shortCode) return false
+      return mCode.includes(shortCode) || shortCode.includes(mCode)
+    })
+  }
+
+  let tooltip = dateStr ? `${dateStr}\n-------------------\n` : ''
+
+  if (!courseCode) return tooltip + cell.module_code
   
   // Tooltip enrichi avec données Supabase
-  let tooltip = courseCode.label
+  tooltip += courseCode.label
   
   if (courseCode.supabaseData) {
     const data = courseCode.supabaseData
@@ -559,6 +682,41 @@ const getCellTooltip = (day, week) => {
   }
   
   return tooltip
+}
+
+// Obtenir les modules présents dans une semaine donnée
+const getWeekModules = (week) => {
+  const modulesInWeek = new Set()
+  
+  // Parcourir toutes les cellules de cette semaine
+  days.forEach(day => {
+    const cell = planningCells.value.find(c => c.day === day && c.week_number === week)
+    if (cell && cell.module_code) {
+      const mCode = cell.module_code.toString().trim().toLowerCase()
+      
+      let courseCode = courseCodes.value[mCode]
+      if (!courseCode) {
+        courseCode = Object.values(courseCodes.value).find(c => 
+          c.moduleNumber?.toString().toLowerCase() === mCode
+        )
+      }
+      
+      if (!courseCode) {
+        courseCode = Object.values(courseCodes.value).find(c => {
+          const shortCode = c.supabaseData?.short_code?.toString().toLowerCase()
+          if (!shortCode) return false
+          return mCode.includes(shortCode) || shortCode.includes(mCode)
+        })
+      }
+
+      if (courseCode && courseCode.color) {
+        modulesInWeek.add(courseCode.color)
+      }
+    }
+  })
+  
+  const colors = Array.from(modulesInWeek)
+  return colors
 }
 
 // Vérifier si une couleur est claire (pour le contraste du texte)
@@ -599,6 +757,96 @@ onMounted(async () => {
 
 .planning-header-card {
   margin-bottom: 1.5rem;
+}
+
+.year-select-button :deep(.p-button) {
+  padding: 0.75rem 1.25rem;
+  transition: all 0.2s;
+}
+
+.year-select-button :deep(.p-button.p-highlight) {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: var(--primary-color-text);
+  box-shadow: 0 4px 12px rgba(var(--primary-color-rgb), 0.3);
+}
+
+.year-select-button :deep(.p-button:not(.p-highlight):hover) {
+  background: var(--surface-200);
+}
+
+/* Légende compacte */
+.compact-legend :deep(.p-panel-content) {
+  padding: 0.75rem;
+}
+
+.legend-grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.legend-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.legend-section-header {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-color-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--surface-border);
+  padding-bottom: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.legend-items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  gap: 0.4rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: 4px;
+  overflow: hidden;
+  transition: all 0.2s;
+  cursor: pointer;
+  height: 32px;
+}
+
+.legend-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border-color: var(--primary-color);
+}
+
+.legend-color-strip {
+  width: 6px;
+  height: 100%;
+  flex-shrink: 0;
+}
+
+.legend-item-content {
+  padding: 0 0.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.legend-item-code {
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Module card enrichi */
@@ -647,12 +895,40 @@ onMounted(async () => {
   min-width: 40px;
   width: 40px;
   text-align: center;
-  padding: 0.75rem 0;
+  padding: 0.4rem 0.2rem;
   border-right: 1px solid rgba(255, 255, 255, 0.3);
   font-size: 0.875rem;
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 65px;
+}
+
+.week-header-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  width: 100%;
+}
+
+.week-colors {
+  display: flex;
+  gap: 1px;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  max-width: 34px;
+  min-height: 10px;
+}
+
+.week-color-indicator {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .week-number {
