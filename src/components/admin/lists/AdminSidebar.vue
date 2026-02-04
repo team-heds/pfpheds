@@ -173,7 +173,8 @@ const restrictedAcademicEmails = [
   'jesse.curchod@hevs.ch',
   'line.martin@hevs.ch',
   'isabelle.rey@hevs.ch',
-  'carla.gomesdarocha@hevs.ch'
+  'carla.gomesdarocha@hevs.ch',
+  'elodie.perruchoud@hevs.ch'
 ];
 
 // Vérifier si l'utilisateur est connecté avec Supabase
@@ -398,7 +399,8 @@ function shouldShowSection(section, index) {
     'jesse.curchod@hevs.ch',
     'line.martin@hevs.ch',
     'isabelle.rey@hevs.ch',
-    'carla.gomesdarocha@hevs.ch'
+    'carla.gomesdarocha@hevs.ch',
+  'elodie.perruchoud@hevs.ch'
   ];
   
   if (restrictedUsers.includes(userEmail)) {

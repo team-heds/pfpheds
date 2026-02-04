@@ -78,7 +78,8 @@ const adminDirectEmails = [
   'jesse.curchod@hevs.ch',
   'line.martin@hevs.ch',
   'isabelle.rey@hevs.ch',
-  'carla.gomesdarocha@hevs.ch'
+  'carla.gomesdarocha@hevs.ch',
+  'elodie.perruchoud@hevs.ch'
 ];
 
 const submitForm = async () => {

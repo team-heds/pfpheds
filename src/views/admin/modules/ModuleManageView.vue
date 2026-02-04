@@ -221,7 +221,7 @@
                 >
                   <Column field="week_number" header="Semaine" style="width: 120px">
                     <template #body="{ data }">
-                      <div v-if="data.isFirstSlotOfWeek" class="week-header-cell">
+                      <div v-if="data.isFirstSlotOfWeek" class="week-header-cell" :id="`week-${data.week_number}`">
                         <div class="week-content">
                           <Button 
                             icon="pi pi-plus" 
@@ -258,7 +258,7 @@
                       </div>
                     </template>
                   </Column>
-                  <Column field="dateX" header="DateX" style="width: 120px">
+                  <Column field="dateX" style="width: 120px">
                     <template #body="{ data }">
                       <span v-if="!data.is_async && data.day !== 'distance'" class="text-sm font-medium text-600">{{ formatDateForDisplay(data.week_number, data.day) }}</span>
                     </template>
@@ -1071,34 +1071,40 @@
         <!-- Champs pour cours asynchrone: seulement périodes -->
         <div v-if="editingSession.activity === 'Cours Asynchrone'" class="field">
           <label>Nombre de périodes</label>
-          <InputNumber v-model="editingSession.periods" :min="1" :max="100" suffix=" période(s)" class="w-full" />
+          <InputNumber v-model="editingSession.periods" :min="1" :max="100"  class="w-full" />
           <small class="text-500">Nombre de périodes de travail pour ce cours asynchrone</small>
         </div>
         
         <!-- Champs pour cours synchrone: jour et horaires -->
         <div v-if="editingSession.activity !== 'Cours Asynchrone'">
           <div class="field">
-            <label>Jour</label>
-            <Dropdown 
-              v-model="editingSession.day" 
-              :options="dayOptions" 
-              optionLabel="label"
-              optionValue="value"
-              class="w-full"
-            />
-            <small class="text-500" v-if="editingSession.weekNumber && editingSession.day">
-              {{ formatDateForDisplay(editingSession.weekNumber, editingSession.day) }}
-            </small>
-          </div>
-          
-          <div class="field-row">
-            <div class="field">
-              <label>Heure début</label>
-              <InputText v-model="editingSession.startTime" placeholder="09:00" class="w-full" />
+            <label class="font-semibold">Jour</label>
+            <div class="flex flex-wrap gap-2 mt-2">
+              <Button 
+                v-for="opt in dayOptions" 
+                :key="opt.value"
+                :label="opt.label"
+                :severity="editingSession.day === opt.value ? 'primary' : 'secondary'"
+                :outlined="editingSession.day !== opt.value"
+                size="small"
+                @click="editingSession.day = opt.value"
+                type="button"
+              />
             </div>
-            <div class="field">
-              <label>Heure fin</label>
-              <InputText v-model="editingSession.endTime" placeholder="11:00" class="w-full" />
+          </div>
+          <div class="grid">
+
+            <div class="col-12 md:col-4">
+              <div class="field">
+                <label class="font-semibold">Heure début</label>
+                <InputMask v-model="editingSession.startTime" mask="99:99" placeholder="09:00" class="w-full" />
+              </div>
+            </div>
+            <div class="col-12 md:col-4">
+              <div class="field">
+                <label class="font-semibold">Heure fin</label>
+                <InputMask v-model="editingSession.endTime" mask="99:99" placeholder="11:00" class="w-full" />
+              </div>
             </div>
           </div>
         </div>
@@ -1195,6 +1201,7 @@ import Toast from 'primevue/toast'
 import Card from 'primevue/card'
 import TabView from 'primevue/tabview'
 import TabPanel from 'primevue/tabpanel'
+import InputMask from 'primevue/inputmask'
 import ColorPicker from 'primevue/colorpicker'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
@@ -1682,7 +1689,26 @@ const groupedPlanningData = computed(() => {
   let weekGroup = null
   let dayGroup = null
   
-  filteredPlanning.value.forEach((slot) => {
+  // Trier par semaine académique (38-53 puis 1-37)
+  const sortedPlanning = [...filteredPlanning.value].sort((a, b) => {
+    const getAcademicOrder = (w) => (w >= 38 ? w - 38 : w + 16);
+    const orderA = getAcademicOrder(a.week_number);
+    const orderB = getAcademicOrder(b.week_number);
+    
+    if (orderA !== orderB) return orderA - orderB;
+    
+    // Même semaine, trier par jour
+    const dayOrder = { 'lundi': 0, 'mardi': 1, 'mercredi': 2, 'jeudi': 3, 'vendredi': 4, 'samedi': 5, 'dimanche': 6, 'distance': 7 };
+    const dayA = dayOrder[a.day?.toLowerCase()] ?? 8;
+    const dayB = dayOrder[b.day?.toLowerCase()] ?? 8;
+    
+    if (dayA !== dayB) return dayA - dayB;
+    
+    // Même jour, trier par heure
+    return (a.start_time || '').localeCompare(b.start_time || '');
+  });
+
+  sortedPlanning.forEach((slot) => {
     const weekNum = slot.week_number
     const dayName = slot.day
     
@@ -1851,15 +1877,24 @@ const deleteSession = async (session) => {
     
     if (error) throw error
     
+    const weekNum = session.week_number
     toast.add({
       severity: 'success',
       summary: 'Séance supprimée',
-      detail: 'La séance a été supprimée avec succès',
+      detail: `La séance de la semaine ${weekNum} a été supprimée`,
       life: 3000
     })
     
     // Recharger le planning
     await loadModulePlanning()
+
+    // Scroller vers la semaine après suppression
+    setTimeout(() => {
+      const element = document.getElementById(`week-${weekNum}`)
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }, 100)
     
   } catch (error) {
     console.error('Erreur suppression séance:', error)
@@ -2101,21 +2136,27 @@ const saveSession = async () => {
     }
     
     const classCount = editingSession.value.classCodes.length
+    const weekNum = editingSession.value.weekNumber
     toast.add({ 
       severity: 'success', 
       summary: 'Succès', 
-      detail: `Séance enregistrée pour ${classCount} classe${classCount > 1 ? 's' : ''}`, 
+      detail: `Séance semaine ${weekNum} enregistrée pour ${classCount} classe${classCount > 1 ? 's' : ''}`, 
       life: 2000 
     })
     showDialog.value = false
     await loadModulePlanning()
     
-    // Restaurer la position de scroll après le rechargement
+    // Restaurer la position de scroll fluidement vers la semaine éditée
     setTimeout(() => {
-      window.scrollTo({
-        top: scrollPosition,
-        behavior: 'smooth'
-      })
+      const element = document.getElementById(`week-${weekNum}`)
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      } else {
+        window.scrollTo({
+          top: scrollPosition,
+          behavior: 'smooth'
+        })
+      }
     }, 100)
   } catch (error) {
     console.error('Erreur save:', error)

@@ -75,7 +75,7 @@
             <Button label="Ajouter une séance" icon="pi pi-plus" @click="openAddDialog" />
           </div>
 
-          <div v-for="week in groupedSessions" :key="week.weekNumber" class="week-card">
+          <div v-for="week in groupedSessions" :key="week.weekNumber" :id="`week-${week.weekNumber}`" class="week-card">
             <div class="week-header">
               <h3>Semaine {{ week.weekNumber }}</h3>
               <Tag :value="`${week.sessions.length} séance(s)`" severity="info" />
@@ -165,29 +165,36 @@
             </div>
             <div class="field">
               <label>Jour</label>
-              <Dropdown 
-                v-model="editingSession.day" 
-                :options="dayOptions" 
-                optionLabel="label"
-                optionValue="value"
-                class="w-full"
-              />
+              <div class="flex flex-wrap gap-2 mt-1">
+                <Button 
+                  v-for="opt in dayOptions" 
+                  :key="opt.value"
+                  :label="opt.label"
+                  :severity="editingSession.day === opt.value ? 'primary' : 'secondary'"
+                  :outlined="editingSession.day !== opt.value"
+                  size="small"
+                  @click="editingSession.day = opt.value"
+                  type="button"
+                />
+              </div>
             </div>
           </div>
           
-          <div class="field">
-            <label>Date</label>
-            <InputText v-model="editingSession.date" placeholder="Ex: 16.02.2026" class="w-full" />
+          <div class="field-row">
+            <div class="field">
+              <label>Date</label>
+              <InputMask v-model="editingSession.date" mask="99.99.9999" placeholder="16.02.2026" class="w-full" />
+            </div>
           </div>
           
           <div class="field-row">
             <div class="field">
               <label>Heure début</label>
-              <InputText v-model="editingSession.startTime" placeholder="09:00" class="w-full" />
+              <InputMask v-model="editingSession.startTime" mask="99:99" placeholder="09:00" class="w-full" />
             </div>
             <div class="field">
               <label>Heure fin</label>
-              <InputText v-model="editingSession.endTime" placeholder="11:00" class="w-full" />
+              <InputMask v-model="editingSession.endTime" mask="99:99" placeholder="11:00" class="w-full" />
             </div>
           </div>
           
@@ -280,6 +287,7 @@ import InputNumber from 'primevue/inputnumber'
 import Textarea from 'primevue/textarea'
 import AutoComplete from 'primevue/autocomplete'
 import ProgressSpinner from 'primevue/progressspinner'
+import InputMask from 'primevue/inputmask'
 import ConfirmDialog from 'primevue/confirmdialog'
 import Toast from 'primevue/toast'
 import { supabase } from '@/supabase'
@@ -337,8 +345,15 @@ const groupedSessions = computed(() => {
     byWeek[week].sessions.push(s)
   })
   
-  return Object.values(byWeek).sort((a, b) => a.weekNumber - b.weekNumber)
+  return Object.values(byWeek).sort((a, b) => {
+    const getAcademicOrder = (w) => (w >= 38 ? w - 38 : w + 16);
+    const orderA = getAcademicOrder(a.weekNumber);
+    const orderB = getAcademicOrder(b.weekNumber);
+    return orderA - orderB;
+  })
 })
+
+const lastEditedWeek = ref(null)
 
 // Load data
 async function loadData() {
@@ -381,6 +396,16 @@ async function loadData() {
       }
     } catch (error) {
       console.error('Erreur chargement enseignants:', error)
+    }
+
+    // Scroll to last edited week if exists
+    if (lastEditedWeek.value) {
+      setTimeout(() => {
+        const element = document.getElementById(`week-${lastEditedWeek.value}`)
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
+      }, 100)
     }
   } catch (error) {
     console.error('Erreur chargement:', error)
@@ -462,7 +487,13 @@ async function saveSession() {
       notes: editingSession.value.notes
     })
     
-    toast.add({ severity: 'success', summary: 'Succès', detail: 'Séance enregistrée', life: 2000 })
+    lastEditedWeek.value = editingSession.value.weekNumber
+    toast.add({ 
+      severity: 'success', 
+      summary: 'Succès', 
+      detail: `Séance semaine ${editingSession.value.weekNumber} enregistrée`, 
+      life: 2000 
+    })
     showDialog.value = false
     await loadData()
   } catch (error) {
@@ -479,9 +510,15 @@ function confirmDelete(session) {
     header: 'Confirmation',
     icon: 'pi pi-exclamation-triangle',
     accept: async () => {
+      lastEditedWeek.value = session.weekNumber
       const result = await deleteModuleTimeSlot(session.id)
       if (result.success) {
-        toast.add({ severity: 'success', summary: 'Supprimé', life: 2000 })
+        toast.add({ 
+          severity: 'success', 
+          summary: 'Supprimé', 
+          detail: `Séance semaine ${session.weekNumber} supprimée`,
+          life: 2000 
+        })
         await loadData()
       } else {
         toast.add({ severity: 'error', summary: 'Erreur', detail: result.message, life: 3000 })
