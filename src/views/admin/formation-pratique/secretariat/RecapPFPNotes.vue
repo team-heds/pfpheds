@@ -12,6 +12,10 @@
           </div>
           <div class="flex align-items-center gap-3">
             <div class="flex flex-column gap-1">
+              <label class="font-semibold text-sm">Recherche :</label>
+              <InputText v-model="filterName" placeholder="Nom" class="w-full md:w-10rem" />
+            </div>
+            <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Année :</label>
               <Dropdown 
                 v-model="filterYear" 
@@ -328,9 +332,11 @@ import InputNumber from 'primevue/inputnumber'
 import Textarea from 'primevue/textarea'
 import Dialog from 'primevue/dialog'
 import Button from 'primevue/button'
+import InputText from 'primevue/inputtext'
 
 const loading = ref(false)
 const notes = ref([])
+const filterName = ref('')
 const filterYear = ref(null)
 const filterClass = ref(null)
 const filterStatus = ref(null)
@@ -389,6 +395,11 @@ const filteredNotes = computed(() => {
 
   if (filterClass.value) {
     list = list.filter(n => n.classe === filterClass.value)
+  }
+
+  if (filterName.value) {
+    const query = filterName.value.trim().toLowerCase()
+    list = list.filter(n => String(n.etudiant ?? '').toLowerCase().includes(query))
   }
 
   if (filterStatus.value) {
