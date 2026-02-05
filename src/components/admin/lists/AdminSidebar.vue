@@ -3,6 +3,7 @@
     :class="['admin-sidebar card sidebar', { 'collapsed': isCollapsed }]"
     @mouseenter="isHovering = true"
     @mouseleave="isHovering = false"
+    @scroll.passive="saveSidebarScroll"
     ref="sidebarEl"
   >
     <!-- Topbar: bouton collapse + recherche -->
@@ -22,28 +23,6 @@
           <i class="pi pi-times"></i>
         </button>
       </div>
-    </div>
-
-    <!-- Permissions: affichage compact en chips -->
-    <div v-if="isSupabaseUser && roleStore.initialized && isExpandedContent" class="permissions-info-card">
-      <div class="perms-header">
-        <h4>🔐 Permissions</h4>
-        <small v-if="roleStore.perms && roleStore.perms.length">{{ roleStore.perms.length }}</small>
-      </div>
-      <div v-if="roleStore.perms && roleStore.perms.length" class="perms-chips">
-        <span
-          v-for="perm in displayPerms"
-          :key="perm"
-          class="perm-chip"
-          :class="permClass(perm)"
-        >{{ perm }}</span>
-      </div>
-      <div v-else class="permission-item">Aucune permission</div>
-      <button
-        v-if="roleStore.perms && roleStore.perms.length > 8"
-        class="perms-toggle"
-        @click="permsExpanded = !permsExpanded"
-      >{{ permsExpanded ? 'Afficher moins' : 'Afficher plus' }}</button>
     </div>
 
     <!-- Sections dynamiques basées sur le menu filtré (permissions + recherche) -->
@@ -86,7 +65,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch, nextTick, onBeforeUnmount } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import SidebarMenuItems from './SidebarMenuItems.vue';
 import { useRoleStore } from '@/stores/role';
@@ -103,6 +82,29 @@ const isCollapsed = ref(false);
 const isHovering = ref(false);
 const isExpandedContent = computed(() => !isCollapsed.value);
 const sidebarEl = ref(null);
+const sidebarScrollKey = 'adminSidebarScrollTop';
+
+function saveSidebarScroll() {
+  try {
+    if (sidebarEl.value) {
+      sessionStorage.setItem(sidebarScrollKey, String(sidebarEl.value.scrollTop));
+    }
+  } catch (e) {
+    console.warn('Erreur sauvegarde scroll sidebar:', e);
+  }
+}
+
+async function restoreSidebarScroll() {
+  try {
+    await nextTick();
+    const saved = sessionStorage.getItem(sidebarScrollKey);
+    if (saved && sidebarEl.value) {
+      sidebarEl.value.scrollTop = Number(saved);
+    }
+  } catch (e) {
+    console.warn('Erreur restauration scroll sidebar:', e);
+  }
+}
 
 function toggleCollapse() {
   isCollapsed.value = !isCollapsed.value;
@@ -351,22 +353,6 @@ function handleSectionLeave() {
   // On garde le flyout ouvert tant que la souris est dans la sidebar (isHovering)
 }
 
-// Permissions: affichage chips avec "voir plus"
-const permsExpanded = ref(false);
-const displayPerms = computed(() => {
-  const perms = roleStore.perms || [];
-  return permsExpanded.value ? perms : perms.slice(0, 8);
-});
-
-function permClass(p) {
-  const v = String(p || '').toLowerCase();
-  if (v.includes('super')) return 'perm-super';
-  if (v.includes('admin')) return 'perm-admin';
-  if (v.includes('physio') || v.includes('page1')) return 'perm-physio';
-  if (v.includes('soins') || v.includes('page2')) return 'perm-soins';
-  return 'perm-generic';
-}
-
 // Obtenir la classe CSS pour une section selon son index
 function getSectionClass(index) {
   const classes = {
@@ -464,6 +450,12 @@ onMounted(async () => {
     canPage2: roleStore.can('page2.access'),
     perms: roleStore.perms
   });
+
+  await restoreSidebarScroll();
+});
+
+onBeforeUnmount(() => {
+  saveSidebarScroll();
 });
 
 const menu = ref(adminMenu);
@@ -594,108 +586,6 @@ const menu = ref(adminMenu);
   margin-bottom: 1.5rem;
 }
 
-/* Section d'information des permissions */
-.permissions-info-card {
-  background: var(--surface-card);
-  border-radius: 1.2rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  padding: 1rem;
-  width: 100%;
-  margin-bottom: 1.5rem;
-  border: 1px solid var(--surface-border, #e0e0e0);
-}
-
-.perms-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-}
-
-.perms-header h4 {
-  margin: 0;
-  color: var(--text-color);
-  font-size: 1.05rem;
-}
-
-.perms-header small {
-  background: var(--surface-ground);
-  border: 1px solid var(--surface-border, #e0e0e0);
-  padding: 0.1rem 0.5rem;
-  border-radius: 0.5rem;
-  font-size: 0.75rem;
-  color: var(--text-color-secondary);
-}
-
-.permission-item {
-  margin-bottom: 0.5rem;
-  font-size: 0.9rem;
-  color: var(--text-color-secondary);
-}
-
-.permission-item strong {
-  color: var(--text-color);
-}
-
-.perms-list {
-  margin: 0.5rem 0 0 1rem;
-  padding: 0;
-  list-style: none;
-}
-
-.perms-list li {
-  font-size: 0.85rem;
-  margin-bottom: 0.25rem;
-  color: var(--text-color);
-}
-
-.perms-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-}
-
-.perm-chip {
-  font-size: 0.75rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.6rem;
-  border: 1px solid var(--surface-border, #e0e0e0);
-  background: var(--surface-ground);
-  color: var(--text-color);
-}
-
-.perms-toggle {
-  margin-top: 0.5rem;
-  background: transparent;
-  border: none;
-  color: var(--primary-color);
-  cursor: pointer;
-  font-size: 0.8rem;
-  padding: 0;
-}
-
-/* Coloration légère selon catégories */
-.perm-super {
-  border-color: #8b5cf6;
-  color: #8b5cf6;
-  background: rgba(139, 92, 246, 0.08);
-}
-.perm-admin {
-  border-color: #0ea5e9;
-  color: #0ea5e9;
-  background: rgba(14, 165, 233, 0.08);
-}
-.perm-physio {
-  border-color: #22c55e;
-  color: #22c55e;
-  background: rgba(34, 197, 94, 0.08);
-}
-.perm-soins {
-  border-color: #f59e0b;
-  color: #f59e0b;
-  background: rgba(245, 158, 11, 0.08);
-}
-.perm-generic {}
 
 /* Bouton de collapse dans la topbar */
 .collapse-toggle {
@@ -750,11 +640,6 @@ const menu = ref(adminMenu);
 .admin-sidebar.collapsed .sidebar-submenu {
   display: none;
 }
-
-.admin-sidebar.collapsed .permissions-info-card {
-  display: none;
-}
-
 .sidebar-flyout {
   position: absolute;
   left: calc(100% + 8px);
