@@ -43,10 +43,16 @@ export function useModulePermissions() {
     // Admin a accès à tout
     if (isAdmin.value) return true
     
-    // Vérifier si l'email correspond
+    // Vérifier si l'email correspond (responsable)
     if (module.responsable_email === userEmail.value) return true
     
-    // Fallback: vérifier par nom (moins fiable)
+    // Vérifier si l'email correspond (coordinateur - supporte plusieurs emails séparés par des virgules)
+    if (module.coordinateur && typeof module.coordinateur === 'string') {
+      const coordinators = module.coordinateur.split(',').map(e => e.trim().toLowerCase());
+      if (coordinators.includes(userEmail.value.toLowerCase())) return true;
+    }
+    
+    // Fallback: vérifier par nom si responsable_email n'est pas défini
     if (module.responsable && userEmail.value) {
       const emailName = userEmail.value.split('@')[0].toLowerCase()
       const responsableName = module.responsable.toLowerCase()
@@ -147,7 +153,7 @@ export function useModulePermissions() {
     // Admin voit tout
     if (isAdmin.value) return modules
     
-    // Filtrer par responsable
+    // Filtrer par responsable ou coordinateur
     return modules.filter(module => isModuleOwner(module))
   }
 

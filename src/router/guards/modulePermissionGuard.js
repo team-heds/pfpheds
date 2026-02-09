@@ -57,6 +57,13 @@ export async function modulePermissionGuard(to, from, next) {
       // Vérifier si l'utilisateur est le responsable du module
       const isOwner = module.responsable_email === userEmail
       
+      // Vérifier si l'utilisateur est le coordinateur du module (peut être une liste séparée par des virgules)
+      let isCoordinateur = false
+      if (module.coordinateur && typeof module.coordinateur === 'string') {
+        const coordinators = module.coordinateur.split(',').map(e => e.trim().toLowerCase())
+        isCoordinateur = coordinators.includes(userEmail.toLowerCase())
+      }
+      
       // Fallback: vérifier par nom si responsable_email n'est pas défini
       let matchByName = false
       if (!module.responsable_email && module.responsable) {
@@ -65,7 +72,7 @@ export async function modulePermissionGuard(to, from, next) {
         matchByName = responsableName.includes(emailName)
       }
       
-      if (isAdmin || isOwner || matchByName) {
+      if (isAdmin || isOwner || isCoordinateur || matchByName) {
         console.log('✅ [ModuleGuard] Accès autorisé')
         next()
       } else {
