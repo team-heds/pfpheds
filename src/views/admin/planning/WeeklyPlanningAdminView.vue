@@ -44,7 +44,7 @@
                   :options="yearOptions"
                   optionLabel="label"
                   optionValue="value"
-                  @change="loadWeekPlanning"
+                  @change="loadPlanningForCurrentView"
                   class="w-full selection-dropdown"
                 />
               </div>
@@ -102,7 +102,7 @@
                     :options="weekOptions"
                     optionLabel="label"
                     optionValue="value"
-                    @change="loadWeekPlanning"
+                    @change="loadPlanningForCurrentView"
                     filter
                     class="flex-1 selection-dropdown"
                   />
@@ -537,7 +537,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import Tag from 'primevue/tag'
@@ -683,18 +683,7 @@ const sortedTimeSlots = computed(() => {
 
 // Fonctions
 const onViewModeChange = async () => {
-  if (viewMode.value === 'week') {
-    // Charger une seule semaine
-    if (selectedWeek.value) {
-      await loadWeekPlanning()
-    }
-  } else if (viewMode.value === 'semester1') {
-    // Charger semestre de printemps (semaines 8-37)
-    await loadSemesterPlanning('spring')
-  } else if (viewMode.value === 'semester2') {
-    // Charger semestre d'automne (semaines 38-52 puis 1-7)
-    await loadSemesterPlanning('autumn')
-  }
+  await loadPlanningForCurrentView()
 }
 
 onMounted(async () => {
@@ -703,21 +692,13 @@ onMounted(async () => {
     // 1. Charger les modules de cours en PREMIER
     courseModules.value = await planningService.getAllCourseModules()
     
-    // 2. Charger les années académiques
-    const years = await academicYearService.getAcademicYears()
-    yearOptions.value = years.map(y => ({
-      label: y.name,
-      value: y.id // id est le code de la classe, ex: "bac25"
-    }))
+    // 2. Charger les classes de l'année académique active
+    await loadYearOptions()
     
-    // 3. Sélectionner l'année active par défaut
-    const activeYear = years.find(y => y.id === 'bac25') || years.find(y => y.is_active)
-    if (activeYear) {
-      selectedYear.value = activeYear.id
+    // 3. Sélectionner la semaine 39 par défaut
+    if (!selectedWeek.value) {
+      selectedWeek.value = 39
     }
-    
-    // 4. Sélectionner la semaine 39 par défaut
-    selectedWeek.value = 39
     
     // 5. Charger les enseignants SI (avec fallback direct)
     const teachers = await getSITeachers()
@@ -739,9 +720,9 @@ onMounted(async () => {
       }
     }
     
-    // 6. Charger automatiquement le planning si l'année et la semaine sont définies
-    if (selectedYear.value && selectedWeek.value) {
-      await loadWeekPlanning()
+    // 6. Charger automatiquement le planning si l'année est définie
+    if (selectedYear.value) {
+      await loadPlanningForCurrentView()
     }
     
     console.log('✅ Initialisation terminée.')
@@ -814,6 +795,36 @@ const loadWeekPlanning = async () => {
     })
   }
 }
+
+const loadPlanningForCurrentView = async () => {
+  if (viewMode.value === 'week') {
+    if (selectedWeek.value) {
+      await loadWeekPlanning()
+    }
+    return
+  }
+
+  if (viewMode.value === 'semester1') {
+    await loadSemesterPlanning('spring')
+    return
+  }
+
+  if (viewMode.value === 'semester2') {
+    await loadSemesterPlanning('autumn')
+  }
+}
+
+watch([selectedYear, viewMode, selectedWeek], async ([newYear, newMode, newWeek], [oldYear, oldMode, oldWeek]) => {
+  if (!newYear) {
+    return
+  }
+
+  if (newYear === oldYear && newMode === oldMode && newWeek === oldWeek) {
+    return
+  }
+
+  await loadPlanningForCurrentView()
+})
 
 // Navigation entre semaines
 const previousWeek = () => {
@@ -930,14 +941,14 @@ const getDayDate = (day) => {
 }
 
 const getDayMainModule = (day) => {
-  const daySlots = timeSlots.value.filter(slot => slot.day === day && slot.module_code)
+  const daySlots = timeSlots.value.filter(slot => slot.day === day && slot.moduleCode)
   if (daySlots.length === 0) return null
   
   // Trouver le module le plus fréquent du jour
   const moduleCounts = {}
   daySlots.forEach(slot => {
-    if (slot.module_code) {
-      moduleCounts[slot.module_code] = (moduleCounts[slot.module_code] || 0) + 1
+    if (slot.moduleCode) {
+      moduleCounts[slot.moduleCode] = (moduleCounts[slot.moduleCode] || 0) + 1
     }
   })
   
@@ -945,7 +956,7 @@ const getDayMainModule = (day) => {
     moduleCounts[a] > moduleCounts[b] ? a : b
   )
   
-  const firstSlot = daySlots.find(s => s.module_code === mainModuleCode)
+  const firstSlot = daySlots.find(s => s.moduleCode === mainModuleCode)
   const moduleData = courseModules.value.find(m => m.code === mainModuleCode)
   
   return {
@@ -1171,6 +1182,28 @@ const getSemesterLabel = (week) => {
   return (week >= 38 || week <= 7) ? 'Semestre d\'Automne' : 'Semestre de Printemps'
 }
 
+const getSelectedYearLabel = () => {
+  const selectedOption = yearOptions.value.find(option => option.value === selectedYear.value)
+  if (!selectedOption?.label) {
+    return selectedYear.value || ''
+  }
+
+  const parts = selectedOption.label.split('/')
+  return (parts[1] || selectedOption.label).trim()
+}
+
+const getCourseRowHeight = (courseTitle) => {
+  const text = (courseTitle || '').toString()
+  const baseHeight = 20
+  const lineHeight = 15
+  const charsPerLine = 90
+  const lines = text
+    .split('\n')
+    .map(line => Math.max(1, Math.ceil(line.length / charsPerLine)))
+    .reduce((sum, count) => sum + count, 0)
+  return Math.max(baseHeight, lines * lineHeight)
+}
+
 const goToAnnualPlanning = () => {
   router.push('/admin/planning/manage')
 }
@@ -1206,7 +1239,7 @@ const exportToExcel = async () => {
     // Titre principal
     worksheet.mergeCells('A1:I1')
     const titleCell = worksheet.getCell('A1')
-    titleCell.value = `BACHELOR 25 (1ère) / ${getSemesterLabel(selectedWeek.value).toUpperCase()}`
+    titleCell.value = `${getSelectedYearLabel()} / ${getSemesterLabel(selectedWeek.value).toUpperCase()}`
     titleCell.font = { size: 16, bold: true, color: { argb: 'FFFF6600' } }
     titleCell.alignment = { horizontal: 'center', vertical: 'middle' }
     titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } }
@@ -1310,7 +1343,7 @@ const exportToExcel = async () => {
         const courseTitleCell = row1.getCell(3)
         courseTitleCell.value = slot.courseTitle || slot.activity || ''
         courseTitleCell.font = { size: 9, bold: false }
-        courseTitleCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
+        courseTitleCell.alignment = { horizontal: 'center', vertical: 'top', wrapText: true }
         courseTitleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgColor } }
         courseTitleCell.border = {
           top: { style: 'thin' },
@@ -1333,7 +1366,7 @@ const exportToExcel = async () => {
           right: { style: 'medium' }
         }
 
-        row1.height = 20
+        row1.height = getCourseRowHeight(courseTitleCell.value)
         currentRow++
         
         // LIGNE 2: Enseignants
@@ -1449,9 +1482,11 @@ const loadYearOptions = async () => {
           value: codeValue
         }
       })
-    
-    // Sélectionner la première option par défaut
-    if (yearOptions.value.length > 0 && !selectedYear.value) {
+
+    const availableYears = yearOptions.value.map(option => option.value)
+
+    // Sélectionner la première option par défaut ou corriger une valeur invalide
+    if (yearOptions.value.length > 0 && (!selectedYear.value || !availableYears.includes(selectedYear.value))) {
       selectedYear.value = yearOptions.value[0].value
     }
   } catch (error) {
@@ -1464,18 +1499,6 @@ const loadYearOptions = async () => {
     })
   }
 }
-
-onMounted(async () => {
-  try {
-    // Charger les classes disponibles
-    await loadYearOptions()
-    
-    // Charger les modules de cours
-    courseModules.value = await planningService.getAllCourseModules()
-  } catch (error) {
-    console.error('Erreur chargement données:', error)
-  }
-})
 
 const exportSemesterToExcel = async (workbook, ExcelJS) => {
   // Récupérer les semaines uniques
@@ -1506,7 +1529,7 @@ const exportSemesterToExcel = async (workbook, ExcelJS) => {
   // Titre principal
   worksheet.mergeCells('A1:J1')
   const titleCell = worksheet.getCell('A1')
-  titleCell.value = `BACHELOR 25 (1ère) / ${semesterLabel} ${semesterNum}`
+  titleCell.value = `${getSelectedYearLabel()} / ${semesterLabel} ${semesterNum}`
   titleCell.font = { size: 16, bold: true, color: { argb: 'FFFF6600' } }
   titleCell.alignment = { horizontal: 'center', vertical: 'middle' }
   titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } }
@@ -1655,7 +1678,7 @@ const fillWeekDataToSheet = async (worksheet, weekSlots) => {
       const courseCell = row1.getCell(3)
       courseCell.value = slot.courseTitle || slot.activity || ''
       courseCell.font = { size: 9 }
-      courseCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
+      courseCell.alignment = { horizontal: 'center', vertical: 'top', wrapText: true }
       courseCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgColor } }
       courseCell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } }
       
@@ -1667,7 +1690,7 @@ const fillWeekDataToSheet = async (worksheet, weekSlots) => {
       moduleNumCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgColor } }
       moduleNumCell.border = { top: { style: 'medium' }, left: { style: 'medium' }, bottom: { style: 'medium' }, right: { style: 'medium' } }
       
-      row1.height = 20
+      row1.height = getCourseRowHeight(courseCell.value)
       currentRow++
       
       // Ligne 2
@@ -1816,7 +1839,7 @@ const fillWeekDataToSheetContinuous = async (worksheet, weekSlots, startRow) => 
       const courseCell = row1.getCell(3)
       courseCell.value = slot.courseTitle || slot.activity || ''
       courseCell.font = { size: 9 }
-      courseCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
+      courseCell.alignment = { horizontal: 'center', vertical: 'top', wrapText: true }
       courseCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgColor } }
       courseCell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } }
       
@@ -1828,7 +1851,7 @@ const fillWeekDataToSheetContinuous = async (worksheet, weekSlots, startRow) => 
       moduleNumCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgColor } }
       moduleNumCell.border = { top: { style: 'medium' }, left: { style: 'medium' }, bottom: { style: 'medium' }, right: { style: 'medium' } }
       
-      row1.height = 20
+      row1.height = getCourseRowHeight(courseCell.value)
       currentRow++
       
       // Ligne 2: Enseignants

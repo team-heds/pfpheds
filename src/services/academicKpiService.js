@@ -335,7 +335,7 @@ export async function getSITeachers() {
     const { data: teachers, error } = await supabase
       .from('user_profiles')
       .select('user_id, email, forname, family_name, display_name, role, permissions')
-      .or('role.eq.EnseignantSoins,permissions.cs.{"EnseignantSoins"}')
+      .or('role.eq.EnseignantSoins,permissions.cs.["EnseignantSoins"]')
     
     if (error) {
       // Si erreur avec permissions (ex: type mismatch), on fallback sur role uniquement
