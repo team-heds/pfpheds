@@ -92,6 +92,10 @@
                       <span v-if="module.credits">{{ module.credits }} crédits ECTS</span>
                       <span v-if="module.heures_contact"> • {{ module.heures_contact }}h contact</span>
                     </p>
+                    <p class="module-roles mt-1">
+                      <Tag v-if="module.responsable_email === authStore.user?.email" value="Responsable" severity="success" class="mr-1" />
+                      <Tag v-if="module.coordinateur?.split(',').map(e => e.trim().toLowerCase()).includes(authStore.user?.email?.toLowerCase())" value="Coordinateur" severity="warning" />
+                    </p>
                   </div>
                 </div>
               </div>
@@ -102,7 +106,7 @@
             </div>
             <div v-if="myModules.length === 0" class="empty-state">
               <i class="pi pi-inbox"></i>
-              <p>Aucun module dont vous êtes responsable</p>
+              <p>Aucun module dont vous êtes responsable ou coordinateur</p>
               <small class="text-500">Contactez l'administrateur pour vous assigner des modules</small>
             </div>
           </div>
@@ -694,7 +698,7 @@ function generateAlerts() {
       type: 'info',
       icon: 'pi pi-info-circle',
       title: 'Aucun module assigné',
-      message: 'Contactez l\'administrateur pour vous assigner des modules'
+      message: 'Contactez l\'administrateur pour vous assigner des modules en tant que responsable ou coordinateur'
     });
   }
   

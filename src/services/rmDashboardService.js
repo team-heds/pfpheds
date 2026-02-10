@@ -24,11 +24,12 @@ export async function getMyModules(userId, userEmail) {
         heures_contact,
         responsable,
         responsable_email,
+        coordinateur,
         track_id,
         description,
         created_at
       `)
-      .eq('responsable_email', userEmail)
+      .or(`responsable_email.eq.${userEmail},coordinateur.ilike.%${userEmail}%`)
       .order('number')
     
     if (error) {
