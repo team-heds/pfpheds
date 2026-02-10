@@ -64,15 +64,15 @@ export default [
             label: 'Administration',
             icon: 'pi pi-cog',
             items: [
-              { label: 'Profil Étudiants', icon: 'pi pi-id-card', to: '/admin/formation-pratique/profil-etudiants' },
-              { label: 'Répondant HES', icon: 'pi pi-user', to: '/management_repondant' },
+              { label: 'Profil Étudiants', icon: 'pi pi-id-card', to: '/admin/formation-pratique/profil-etudiants', hidden: true },
+              { label: 'Répondant HES', icon: 'pi pi-user', to: '/management_repondant', hidden: true },
               { label: 'Mon Profil Répondant', icon: 'pi pi-user', to: '/admin/formation-pratique/profil-repondant' },
               { label: 'Management Signature', icon: 'pi pi-user', to: '/admin/formation-pratique/management-repondant-signature' },
               { label: 'Management Places', icon: 'pi pi-map-marker', to: '/management_place' },
-              { label: 'Affectation PFP2 BA24', icon: 'pi pi-user-plus', to: '/affectation_stage_etudiant_ba24' },
-              { label: 'Management Répondant CPT', icon: 'pi pi-users', to: '/admin/formation-pratique/management-repondant-cpt' },
-              { label: 'Feuille Charge CPT', icon: 'pi pi-file', to: '/admin/formation-pratique/management-feuille-charge-cpt' },
-              { label: 'Admin Secrétariat', icon: 'pi pi-briefcase', to: '/admin/formation-pratique/admin-secretariat' }
+              { label: 'Affectation PFP2 BA24', icon: 'pi pi-user-plus', to: '/affectation_stage_etudiant_ba24', hidden: true },
+              { label: 'Management Répondant CPT', icon: 'pi pi-users', to: '/admin/formation-pratique/management-repondant-cpt', hidden: true },
+              { label: 'Feuille Charge CPT', icon: 'pi pi-file', to: '/admin/formation-pratique/management-feuille-charge-cpt', hidden: true },
+              { label: 'Admin Secrétariat', icon: 'pi pi-briefcase', to: '/admin/formation-pratique/admin-secretariat', hidden: true }
             ]
           },
           
@@ -82,14 +82,14 @@ export default [
             icon: 'pi pi-check-square',
             items: [
               { label: 'Gestion Offres', icon: 'pi pi-cog', to: '/management_offre' },
-              { label: 'Votation Prioritaire', icon: 'pi pi-star', to: '/admin/formation-pratique/votation-prioritaire' },
-              { label: 'Votation Lese', icon: 'pi pi-sliders-h', to: '/management_votation_prioritaire' },
-              { label: 'Votation Étudiants', icon: 'pi pi-users', to: '/management_votation_etudiants' },
+              { label: 'Votation Prioritaire', icon: 'pi pi-star', to: '/admin/formation-pratique/votation-prioritaire', hidden: true },
+              { label: 'Votation lésé', icon: 'pi pi-sliders-h', to: '/management_votation_prioritaire' },
+              { label: 'Votation Étudiants', icon: 'pi pi-users', to: '/management_votation_etudiants', hidden: true },
               { label: 'Votation PFP', icon: 'pi pi-check-square', to: '/admin/formation-pratique/votation-pfp' },
               { label: 'Places Assignées', icon: 'pi pi-map-marker', to: '/places_asssigned' },
               { label: 'Assignement Places', icon: 'pi pi-sitemap', to: '/places_assignment' },
               { label: 'Validation PFP', icon: 'pi pi-check-circle', to: '/validation-pfp' },
-              { label: 'Résultat Votation Prioritaire', icon: 'pi pi-chart-pie', to: '/admin/formation-pratique/resultat-votation-prioritaire' },
+              { label: 'Résultat Votation Prioritaire', icon: 'pi pi-chart-pie', to: '/admin/formation-pratique/resultat-votation-prioritaire', hidden: true },
               { label: 'Résultat Votation PFP', icon: 'pi pi-chart-bar', to: '/result_preview_votation' },
               { label: 'Management Répondant Votation', icon: 'pi pi-user-edit', to: '/admin/formation-pratique/management-repondant-votation' }
             ]
@@ -99,6 +99,7 @@ export default [
           {
             label: 'Gestion PFP',
             icon: 'pi pi-folder-open',
+            hidden: true,
             items: [
               { label: 'PFP en Cours', icon: 'pi pi-clock', to: '/management_pfpencours' },
               { label: 'Preview PFP', icon: 'pi pi-eye', to: '/admin/formation-pratique/preview-pfp' },

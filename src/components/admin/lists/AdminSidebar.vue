@@ -257,6 +257,7 @@ function canAccessRoute(route) {
 function filterMenuItems(items) {
   const result = [];
   for (const item of items) {
+    if (item.hidden) continue;
     // Exclure la section "Académique" pour les utilisateurs restreints
     if (isRestrictedUser.value && item.label === 'Académique') {
       continue;

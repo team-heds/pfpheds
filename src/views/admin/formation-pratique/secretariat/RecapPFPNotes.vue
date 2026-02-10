@@ -18,7 +18,7 @@
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Année :</label>
               <Dropdown 
-                v-model="filterYear" 
+                v-model="filterYear"
                 :options="years" 
                 placeholder="Année" 
                 class="w-full md:w-8rem"
@@ -57,6 +57,16 @@
                 showClear
               />
             </div>
+            <div class="flex flex-column gap-1">
+              <label class="font-semibold text-sm">&nbsp;</label>
+              <Button
+                label="Enregistrer"
+                icon="pi pi-save"
+                class="p-button-sm"
+                :loading="isSavingAll"
+                @click="saveAllNotes"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -90,7 +100,7 @@
           <Column header="PFP1A">
             <template #body="{ data }">
               <div :class="['note-cell', { 'is-disabled': isPfp1aLocked(data) }]">
-                <Dropdown v-model="data.pfp1a" :options="gradeOptions" optionLabel="label" optionValue="value" placeholder="Note" class="note-dropdown" :disabled="isPfp1aLocked(data)" />
+                <Dropdown v-model="data.pfp1a" :options="gradeOptions" optionLabel="label" optionValue="value" placeholder="Note" class="note-dropdown" :disabled="isPfp1aLocked(data)" @update:modelValue="queueSave(data)" />
                 <span class="status-badge status-compact" :class="statusClass(getPfpFinalStatus(data.pfp1a, data.pfp1a_retake))">
                   {{ getPfpFinalStatus(data.pfp1a, data.pfp1a_retake) }}
                 </span>
@@ -108,6 +118,7 @@
                   optionValue="value"
                   placeholder="Rattrap."
                   class="note-dropdown"
+                  @update:modelValue="queueSave(data)"
                 />
                 <span v-else class="text-600">-</span>
                 <span
@@ -123,7 +134,7 @@
           <Column header="PFP1B">
             <template #body="{ data }">
               <div :class="['note-cell', { 'is-disabled': isPfp1bLocked(data) }]">
-                <Dropdown v-model="data.pfp1b" :options="gradeOptions" optionLabel="label" optionValue="value" placeholder="Note" class="note-dropdown" :disabled="isPfp1bLocked(data)" />
+                <Dropdown v-model="data.pfp1b" :options="gradeOptions" optionLabel="label" optionValue="value" placeholder="Note" class="note-dropdown" :disabled="isPfp1bLocked(data)" @update:modelValue="queueSave(data)" />
                 <span class="status-badge status-compact" :class="statusClass(getPfpFinalStatus(data.pfp1b, data.pfp1b_retake))">
                   {{ getPfpFinalStatus(data.pfp1b, data.pfp1b_retake) }}
                 </span>
@@ -141,6 +152,7 @@
                   optionValue="value"
                   placeholder="Rattrap."
                   class="note-dropdown"
+                  @update:modelValue="queueSave(data)"
                 />
                 <span v-else class="text-600">-</span>
                 <span
@@ -156,7 +168,7 @@
           <Column header="PFP2">
             <template #body="{ data }">
               <div class="note-cell">
-                <Dropdown v-model="data.pfp2" :options="gradeOptions" optionLabel="label" optionValue="value" placeholder="Note" class="note-dropdown" />
+                <Dropdown v-model="data.pfp2" :options="gradeOptions" optionLabel="label" optionValue="value" placeholder="Note" class="note-dropdown" @update:modelValue="queueSave(data)" />
                 <span class="status-badge status-compact" :class="statusClass(getPfpFinalStatus(data.pfp2, data.pfp2_retake))">
                   {{ getPfpFinalStatus(data.pfp2, data.pfp2_retake) }}
                 </span>
@@ -174,6 +186,7 @@
                   optionValue="value"
                   placeholder="Rattrap."
                   class="note-dropdown"
+                  @update:modelValue="queueSave(data)"
                 />
                 <span v-else class="text-600">-</span>
                 <span
@@ -189,7 +202,7 @@
           <Column header="PFP3">
             <template #body="{ data }">
               <div class="note-cell">
-                <Dropdown v-model="data.pfp3" :options="gradeOptions" optionLabel="label" optionValue="value" placeholder="Note" class="note-dropdown" />
+                <Dropdown v-model="data.pfp3" :options="gradeOptions" optionLabel="label" optionValue="value" placeholder="Note" class="note-dropdown" @update:modelValue="queueSave(data)" />
                 <span class="status-badge status-compact" :class="statusClass(getPfpFinalStatus(data.pfp3, data.pfp3_retake))">
                   {{ getPfpFinalStatus(data.pfp3, data.pfp3_retake) }}
                 </span>
@@ -207,6 +220,7 @@
                   optionValue="value"
                   placeholder="Rattrap."
                   class="note-dropdown"
+                  @update:modelValue="queueSave(data)"
                 />
                 <span v-else class="text-600">-</span>
                 <span
@@ -222,7 +236,7 @@
           <Column header="PFP4">
             <template #body="{ data }">
               <div class="note-cell">
-                <Dropdown v-model="data.pfp4" :options="gradeOptions" optionLabel="label" optionValue="value" placeholder="Note" class="note-dropdown" />
+                <Dropdown v-model="data.pfp4" :options="gradeOptions" optionLabel="label" optionValue="value" placeholder="Note" class="note-dropdown" @update:modelValue="queueSave(data)" />
                 <span class="status-badge status-compact" :class="statusClass(getPfpFinalStatus(data.pfp4, data.pfp4_retake))">
                   {{ getPfpFinalStatus(data.pfp4, data.pfp4_retake) }}
                 </span>
@@ -240,6 +254,7 @@
                   optionValue="value"
                   placeholder="Rattrap."
                   class="note-dropdown"
+                  @update:modelValue="queueSave(data)"
                 />
                 <span v-else class="text-600">-</span>
                 <span
@@ -301,6 +316,7 @@
                   :disabled="isPfpLocked(pfp.key, selectedStudent)"
                   placeholder="Jours"
                   class="pfp-absence"
+                  @update:modelValue="queueSave(selectedStudent)"
                 />
                 <Textarea
                   v-model="selectedStudent[pfpRemarkKey(pfp.key)]"
@@ -308,6 +324,7 @@
                   placeholder="Remarques"
                   autoResize
                   class="pfp-remark"
+                  @update:modelValue="queueSave(selectedStudent)"
                 />
               </div>
             </div>
@@ -322,7 +339,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { supabase } from '@/supabase'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import Dropdown from 'primevue/dropdown'
@@ -333,6 +350,7 @@ import Textarea from 'primevue/textarea'
 import Dialog from 'primevue/dialog'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
+import { useToast } from 'primevue/usetoast'
 
 const loading = ref(false)
 const notes = ref([])
@@ -343,6 +361,11 @@ const filterStatus = ref(null)
 const filterStatusPfp = ref('pfp1a')
 const showPfpDialog = ref(false)
 const selectedStudent = ref(null)
+const isHydrating = ref(false)
+const saveTimers = new Map()
+const lastSaveToastAt = ref(0)
+const toast = useToast()
+const isSavingAll = ref(false)
 const gradeOptions = ref([
   { label: 'A', value: 'A' },
   { label: 'B', value: 'B' },
@@ -367,6 +390,7 @@ const statusOptions = ref([
 ])
 
 const years = ref(['2025', '2026'])
+const activeYear = computed(() => filterYear.value || years.value[0])
 
 const classOptions = computed(() => {
   const values = notes.value
@@ -374,6 +398,40 @@ const classOptions = computed(() => {
     .filter(Boolean)
   return [...new Set(values)].sort((a, b) => String(a).localeCompare(String(b)))
 })
+
+const parseBachelorYear = (value) => {
+  const match = String(value ?? '').toUpperCase().match(/BA\s*(\d{2})/)
+  if (!match) return null
+  const year = Number(match[1])
+  return Number.isFinite(year) ? year : null
+}
+
+const getBachelorYearFromPermissions = (permissions) => {
+  if (!Array.isArray(permissions)) return null
+  for (const perm of permissions) {
+    const year = parseBachelorYear(perm)
+    if (year !== null) return year
+  }
+  return null
+}
+
+const getBachelorYearForProfile = (profile) => (
+  parseBachelorYear(profile?.classe)
+  ?? parseBachelorYear(profile?.pfp_cohort)
+  ?? getBachelorYearFromPermissions(profile?.permissions)
+)
+
+const isEligibleBachelorProfile = (profile) => {
+  const year = getBachelorYearForProfile(profile)
+  return year !== null && year >= 23
+}
+
+const getDisplayClass = (profile) => {
+  if (profile?.classe) return profile.classe
+  if (profile?.pfp_cohort) return profile.pfp_cohort
+  const year = getBachelorYearFromPermissions(profile?.permissions)
+  return year ? `BA${String(year).padStart(2, '0')}` : '-'
+}
 
 const pfpMeta = [
   { key: 'pfp1a', label: 'PFP1A' },
@@ -418,8 +476,9 @@ const showAbsencesIndicator = computed(() => filteredNotes.value.some(note => ha
 const showRemarksIndicator = computed(() => filteredNotes.value.some(note => hasAnyRemark(note)))
 
 const hasGrade = (value) => {
-  const normalized = String(value ?? '').trim()
-  return normalized !== '' && normalized !== '-'
+  if (typeof value === 'boolean') return false
+  const normalized = String(value ?? '').trim().toLowerCase()
+  return normalized !== '' && normalized !== '-' && normalized !== 'false' && normalized !== 'true'
 }
 
 const isPfp1aLocked = (note) => hasGrade(note?.pfp1b) && !hasGrade(note?.pfp1a)
@@ -445,6 +504,90 @@ const hasAnyRemark = (note) => {
 const openPfpDialog = (row) => {
   selectedStudent.value = row
   showPfpDialog.value = true
+}
+
+const notifySaved = () => {
+  const now = Date.now()
+  if (now - lastSaveToastAt.value < 4000) return
+  lastSaveToastAt.value = now
+  toast.add({ severity: 'success', summary: 'Sauvegardé', detail: 'Modifications enregistrées', life: 1500 })
+}
+
+const buildPayload = (note) => ({
+  user_id: note.user_id,
+  year: note.year || activeYear.value,
+  pfp1a: note.pfp1a ?? null,
+  pfp1b: note.pfp1b ?? null,
+  pfp2: note.pfp2 ?? null,
+  pfp3: note.pfp3 ?? null,
+  pfp4: note.pfp4 ?? null,
+  pfp1a_retake: note.pfp1a_retake ?? null,
+  pfp1b_retake: note.pfp1b_retake ?? null,
+  pfp2_retake: note.pfp2_retake ?? null,
+  pfp3_retake: note.pfp3_retake ?? null,
+  pfp4_retake: note.pfp4_retake ?? null,
+  pfp1a_absences: note.pfp1a_absences ?? null,
+  pfp1b_absences: note.pfp1b_absences ?? null,
+  pfp2_absences: note.pfp2_absences ?? null,
+  pfp3_absences: note.pfp3_absences ?? null,
+  pfp4_absences: note.pfp4_absences ?? null,
+  pfp1a_remarques: (note.pfp1a_remarques || '').trim() || null,
+  pfp1b_remarques: (note.pfp1b_remarques || '').trim() || null,
+  pfp2_remarques: (note.pfp2_remarques || '').trim() || null,
+  pfp3_remarques: (note.pfp3_remarques || '').trim() || null,
+  pfp4_remarques: (note.pfp4_remarques || '').trim() || null,
+  absences: note.absences ?? 0,
+  remarques: (note.remarques || '').trim() || null,
+  updated_at: new Date().toISOString()
+})
+
+const queueSave = (note) => {
+  if (!note?.user_id || isHydrating.value) return
+  const key = note.user_id
+  if (saveTimers.has(key)) {
+    clearTimeout(saveTimers.get(key))
+  }
+  const timeoutId = setTimeout(() => {
+    saveTimers.delete(key)
+    saveNote(note)
+  }, 600)
+  saveTimers.set(key, timeoutId)
+}
+
+const saveNote = async (note) => {
+  try {
+    const payload = buildPayload(note)
+
+    const { error } = await supabase
+      .from('StudentsPhysio')
+      .upsert(payload, { onConflict: 'user_id,year' })
+
+    if (error) throw error
+    notifySaved()
+  } catch (e) {
+    console.error('Erreur sauvegarde note:', e)
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Sauvegarde impossible', life: 3000 })
+  }
+}
+
+const saveAllNotes = async () => {
+  if (isSavingAll.value) return
+  isSavingAll.value = true
+  try {
+    const payloads = notes.value
+      .filter(note => note?.user_id)
+      .map(buildPayload)
+    const { error } = await supabase
+      .from('StudentsPhysio')
+      .upsert(payloads, { onConflict: 'user_id,year' })
+    if (error) throw error
+    toast.add({ severity: 'success', summary: 'Sauvegardé', detail: 'Toutes les lignes sont enregistrées', life: 2000 })
+  } catch (e) {
+    console.error('Erreur sauvegarde globale:', e)
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Sauvegarde globale impossible', life: 3000 })
+  } finally {
+    isSavingAll.value = false
+  }
 }
 
 const getNoteStatusByValue = (rawValue) => {
@@ -501,50 +644,72 @@ const statusClass = (status) => {
 
 const fetchNotes = async () => {
   loading.value = true
+  isHydrating.value = true
   try {
-    const { data: profiles, error } = await supabase
-      .from('user_profiles')
-      .select('user_id, family_name, forname, classe')
-      .order('family_name')
+    const year = activeYear.value
+    const [{ data: profiles, error: profileError }, { data: physio, error: physioError }] = await Promise.all([
+      supabase
+        .from('user_profiles')
+        .select('user_id, family_name, forname, classe, permissions, pfp_cohort')
+        .or('role.eq.EtudiantPhysio,permissions.cs.["EtudiantPhysio"]')
+        .order('family_name'),
+      supabase
+        .from('StudentsPhysio')
+        .select('*')
+        .eq('year', year)
+    ])
 
-    if (error) throw error
+    if (profileError) throw profileError
+    if (physioError) throw physioError
 
-    notes.value = (profiles || []).map(p => ({
+    const physioMap = new Map((physio || []).map(row => [row.user_id, row]))
+
+    const filteredProfiles = (profiles || []).filter(p => isEligibleBachelorProfile(p))
+
+    notes.value = filteredProfiles.map(p => {
+      const entry = physioMap.get(p.user_id)
+      return {
       user_id: p.user_id,
       etudiant: `${(p.family_name || '').toUpperCase()} ${p.forname || ''}`.trim(),
-      classe: p.classe || '-',
-      year: '2025',
-      pfp1a: null,
-      pfp1b: null,
-      pfp2: null,
-      pfp3: null,
-      pfp4: null,
-      pfp1a_retake: null,
-      pfp1b_retake: null,
-      pfp2_retake: null,
-      pfp3_retake: null,
-      pfp4_retake: null,
-      pfp1a_absences: null,
-      pfp1b_absences: null,
-      pfp2_absences: null,
-      pfp3_absences: null,
-      pfp4_absences: null,
-      pfp1a_remarques: '',
-      pfp1b_remarques: '',
-      pfp2_remarques: '',
-      pfp3_remarques: '',
-      pfp4_remarques: '',
-      absences: 0,
-      remarques: ''
-    }))
+      classe: getDisplayClass(p),
+      year,
+      pfp1a: entry?.pfp1a ?? null,
+      pfp1b: entry?.pfp1b ?? null,
+      pfp2: entry?.pfp2 ?? null,
+      pfp3: entry?.pfp3 ?? null,
+      pfp4: entry?.pfp4 ?? null,
+      pfp1a_retake: entry?.pfp1a_retake ?? null,
+      pfp1b_retake: entry?.pfp1b_retake ?? null,
+      pfp2_retake: entry?.pfp2_retake ?? null,
+      pfp3_retake: entry?.pfp3_retake ?? null,
+      pfp4_retake: entry?.pfp4_retake ?? null,
+      pfp1a_absences: entry?.pfp1a_absences ?? null,
+      pfp1b_absences: entry?.pfp1b_absences ?? null,
+      pfp2_absences: entry?.pfp2_absences ?? null,
+      pfp3_absences: entry?.pfp3_absences ?? null,
+      pfp4_absences: entry?.pfp4_absences ?? null,
+      pfp1a_remarques: entry?.pfp1a_remarques ?? '',
+      pfp1b_remarques: entry?.pfp1b_remarques ?? '',
+      pfp2_remarques: entry?.pfp2_remarques ?? '',
+      pfp3_remarques: entry?.pfp3_remarques ?? '',
+      pfp4_remarques: entry?.pfp4_remarques ?? '',
+      absences: entry?.absences ?? 0,
+      remarques: entry?.remarques ?? ''
+      }
+    })
   } catch (e) {
     console.error('Erreur fetchNotes:', e)
   } finally {
     loading.value = false
+    isHydrating.value = false
   }
 }
 
 onMounted(() => {
+  fetchNotes()
+})
+
+watch(filterYear, () => {
   fetchNotes()
 })
 </script>
