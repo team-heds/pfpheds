@@ -293,6 +293,16 @@ const stats = ref({
   stopped: 0
 })
 
+const refreshTimeout = ref(null)
+const scheduleRefresh = (delay = 400) => {
+  if (refreshTimeout.value) {
+    clearTimeout(refreshTimeout.value)
+  }
+  refreshTimeout.value = setTimeout(() => {
+    loadPublishedAssignments()
+  }, delay)
+}
+
 const getVotationTypeLabel = (assignment) => {
   if (!assignment) return 'Tirage aléatoire'
   if (assignment.assigned_rank && assignment.assigned_rank >= 1 && assignment.assigned_rank <= 5) {
@@ -341,6 +351,7 @@ const handleValidationChange = async (row, type) => {
     await removeFromStudentsPhysio(row)
   }
   updateStats()
+  scheduleRefresh()
 }
 
 // Sauvegarder la validation dans student_result_vote
@@ -518,6 +529,7 @@ const handleArretChange = async (row) => {
     await saveValidation(row)
     await removeFromStudentsPhysio(row)
     updateStats()
+    scheduleRefresh()
   }
 }
 
@@ -533,6 +545,7 @@ const cancelArret = async () => {
   arretComment.value = ''
   currentRow.value = null
   updateStats()
+  scheduleRefresh()
 }
 
 const confirmArret = async () => {
@@ -550,6 +563,7 @@ const confirmArret = async () => {
   arretComment.value = ''
   currentRow.value = null
   updateStats()
+  scheduleRefresh()
 }
 
 const updateStats = () => {

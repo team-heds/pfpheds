@@ -219,6 +219,16 @@ import Toast from 'primevue/toast';
 
 const toast = useToast();
 
+const refreshTimeout = ref(null);
+const scheduleRefresh = (delay = 400) => {
+  if (refreshTimeout.value) {
+    clearTimeout(refreshTimeout.value);
+  }
+  refreshTimeout.value = setTimeout(async () => {
+    await Promise.all([loadRepondants(), loadStudents()]);
+  }, delay);
+};
+
 // States
 const loading = ref(false);
 const saving = ref(false);
@@ -477,6 +487,8 @@ const saveStudent = async (student) => {
       detail: `Répondant sauvegardé pour ${student.prenom} ${student.nom}`,
       life: 3000
     });
+
+    scheduleRefresh();
 
     console.log('✅ Sauvegarde réussie');
   } catch (error) {

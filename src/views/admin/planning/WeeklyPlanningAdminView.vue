@@ -260,7 +260,6 @@
                 <div 
                   v-if="slotProps.data.moduleCode"
                   class="module-cell"
-                  
                 >
                   <div class="course-title-text">{{ slotProps.data.courseTitle || slotProps.data.activity || slotProps.data.moduleTitle }}</div>
                 </div>
@@ -277,7 +276,7 @@
               </template>
             </Column>
             
-            <Column field="teachers" header="Enseignants / Groupes (max 6)" style="min-width: 20rem">
+            <Column field="teachers" header="Enseignants / Groupes (6 affichés)" style="min-width: 20rem">
               <template #body="slotProps">
                 <div v-if="slotProps.data.teachers && slotProps.data.teachers.length > 0" class="teachers-cell">
                   <div v-for="(teacher, index) in slotProps.data.teachers.slice(0, 6)" :key="index" class="teacher-group">
@@ -440,7 +439,7 @@
           </div>
           
           <div class="col-12">
-            <label class="block mb-2 font-bold">Enseignants (max 6) :</label>
+            <label class="block mb-2 font-bold">Enseignants :</label>
             <AutoComplete 
               v-model="slotForm.teachers"
               :suggestions="filteredTeachers"
@@ -462,7 +461,7 @@
               </template>
             </AutoComplete>
             <small class="text-500">
-              Sélectionnez jusqu'à 6 enseignants. Appuyez sur Entrée pour valider un nouveau nom.
+              Vous pouvez ajouter plusieurs enseignants. Appuyez sur Entrée pour valider un nouveau nom.
               <span v-if="siTeachers.length > 0">({{ siTeachers.length }} disponibles)</span>
             </small>
           </div>
@@ -1204,6 +1203,27 @@ const getCourseRowHeight = (courseTitle) => {
   return Math.max(baseHeight, lines * lineHeight)
 }
 
+const splitTeachers = (teachers, chunkSize = 6) => {
+  const list = Array.isArray(teachers) ? teachers : []
+  if (list.length === 0) {
+    return [[]]
+  }
+
+  const chunks = []
+  for (let i = 0; i < list.length; i += chunkSize) {
+    chunks.push(list.slice(i, i + chunkSize))
+  }
+  return chunks
+}
+
+const getTeachersRowHeight = (teacherChunk) => {
+  const longestName = (teacherChunk || []).reduce((max, teacher) => {
+    if (typeof teacher !== 'string') return max
+    return teacher.length > max.length ? teacher : max
+  }, '')
+  return getCourseRowHeight(longestName)
+}
+
 const goToAnnualPlanning = () => {
   router.push('/admin/planning/manage')
 }
@@ -1321,11 +1341,15 @@ const exportToExcel = async () => {
           moduleBgColor = dayModule.color.replace('#', 'FF')
         }
         
+        const teacherChunks = splitTeachers(slot.teachers)
+        const teacherRowCount = teacherChunks.length
+        const endRow = currentRow + teacherRowCount
+
         // LIGNE 1: Horaire + Nom du cours + Numéro de module
         const row1 = worksheet.getRow(currentRow)
         
         // Horaire (Colonne 2) - fusionné sur 2 lignes
-        worksheet.mergeCells(currentRow, 2, currentRow + 1, 2)
+        worksheet.mergeCells(currentRow, 2, endRow, 2)
         const timeCell = row1.getCell(2)
         timeCell.value = `${slot.startTime} - ${slot.endTime}`
         timeCell.font = { size: 9, bold: true }
@@ -1353,7 +1377,7 @@ const exportToExcel = async () => {
         }
 
         // Numéro de module (Colonne 9) - fusionné sur 2 lignes
-        worksheet.mergeCells(currentRow, 9, currentRow + 1, 9)
+        worksheet.mergeCells(currentRow, 9, endRow, 9)
         const moduleNumCell = row1.getCell(9)
         moduleNumCell.value = slot.moduleNumber || ''
         moduleNumCell.font = { size: 10, bold: true }
@@ -1369,26 +1393,26 @@ const exportToExcel = async () => {
         row1.height = getCourseRowHeight(courseTitleCell.value)
         currentRow++
         
-        // LIGNE 2: Enseignants
-        const row2 = worksheet.getRow(currentRow)
-        
-        // Enseignants (Colonnes 3-8 pour 6 enseignants)
-        for (let i = 0; i < 6; i++) {
-          const teacherCell = row2.getCell(3 + i)
-          teacherCell.value = slot.teachers?.[i] || ''
-          teacherCell.font = { size: 9 }
-          teacherCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
-          teacherCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgColor } }
-          teacherCell.border = {
-            top: { style: 'thin' },
-            left: { style: 'thin' },
-            bottom: { style: 'thin' },
-            right: { style: 'thin' }
+        // LIGNE 2+: Enseignants (6 colonnes, lignes supplémentaires si besoin)
+        teacherChunks.forEach(chunk => {
+          const row2 = worksheet.getRow(currentRow)
+          for (let i = 0; i < 6; i++) {
+            const teacherCell = row2.getCell(3 + i)
+            teacherCell.value = chunk[i] || ''
+            teacherCell.font = { size: 9 }
+            teacherCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
+            teacherCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgColor } }
+            teacherCell.border = {
+              top: { style: 'thin' },
+              left: { style: 'thin' },
+              bottom: { style: 'thin' },
+              right: { style: 'thin' }
+            }
           }
-        }
 
-        row2.height = 20
-        currentRow++
+          row2.height = getTeachersRowHeight(chunk)
+          currentRow++
+        })
       })
       
       // Fusionner la colonne Jour/Date verticalement
@@ -1693,17 +1717,17 @@ const fillWeekDataToSheet = async (worksheet, weekSlots) => {
       row1.height = getCourseRowHeight(courseCell.value)
       currentRow++
       
-      // Ligne 2
+      // Ligne 2: Enseignants (tous concaténés)
       const row2 = worksheet.getRow(currentRow)
-      for (let i = 0; i < 6; i++) {
-        const teacherCell = row2.getCell(3 + i)
-        teacherCell.value = slot.teachers?.[i] || ''
-        teacherCell.font = { size: 9 }
-        teacherCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
-        teacherCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgColor } }
-        teacherCell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } }
-      }
-      row2.height = 20
+      worksheet.mergeCells(currentRow, 3, currentRow, 8)
+      const teachersCell = row2.getCell(3)
+      const teachersText = (slot.teachers || []).join(', ')
+      teachersCell.value = teachersText
+      teachersCell.font = { size: 9 }
+      teachersCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
+      teachersCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgColor } }
+      teachersCell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } }
+      row2.height = getCourseRowHeight(teachersText)
       currentRow++
     })
     
@@ -1854,17 +1878,17 @@ const fillWeekDataToSheetContinuous = async (worksheet, weekSlots, startRow) => 
       row1.height = getCourseRowHeight(courseCell.value)
       currentRow++
       
-      // Ligne 2: Enseignants
+      // Ligne 2: Enseignants (tous concaténés)
       const row2 = worksheet.getRow(currentRow)
-      for (let i = 0; i < 6; i++) {
-        const teacherCell = row2.getCell(3 + i)
-        teacherCell.value = slot.teachers?.[i] || ''
-        teacherCell.font = { size: 9 }
-        teacherCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
-        teacherCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgColor } }
-        teacherCell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } }
-      }
-      row2.height = 20
+      worksheet.mergeCells(currentRow, 3, currentRow, 8)
+      const teachersCell = row2.getCell(3)
+      const teachersText = (slot.teachers || []).join(', ')
+      teachersCell.value = teachersText
+      teachersCell.font = { size: 9 }
+      teachersCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
+      teachersCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgColor } }
+      teachersCell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } }
+      row2.height = getCourseRowHeight(teachersText)
       currentRow++
     })
     

@@ -401,6 +401,16 @@ import { usePlacesStore } from '@/stores/placesStore'
 const toast = useToast()
 const placesStore = usePlacesStore()
 
+const refreshTimeout = ref(null)
+const scheduleRefresh = (delay = 400) => {
+  if (refreshTimeout.value) {
+    clearTimeout(refreshTimeout.value)
+  }
+  refreshTimeout.value = setTimeout(() => {
+    loadResults()
+  }, delay)
+}
+
 // Filtres
 const selectedPFP = ref(null)
 const selectedYear = ref(null)
@@ -923,6 +933,8 @@ const saveNewPlace = async () => {
   } finally {
     savingPlace.value = false
   }
+
+  scheduleRefresh()
 }
 
 // Publier une seule assignation
@@ -957,6 +969,8 @@ const publishSingleAssignment = async (assignment) => {
       detail: `L'assignation de ${assignment.student_name} est maintenant visible`,
       life: 3000
     })
+
+    scheduleRefresh()
   } catch (error) {
     console.error('[ERROR] Erreur lors de la publication:', error)
     toast.add({
@@ -1007,6 +1021,8 @@ const unpublishSingleAssignment = async (assignment) => {
       detail: `L'assignation de ${assignment.student_name} est repassée en brouillon`,
       life: 3000
     })
+
+    scheduleRefresh()
   } catch (error) {
     console.error('[ERROR] Erreur lors de la dépublication:', error)
     toast.add({
@@ -1093,6 +1109,8 @@ const unpublishAssignments = async () => {
       detail: `${publishedCount} assignations sont repassées en brouillon et peuvent être modifiées`,
       life: 5000
     })
+
+    scheduleRefresh()
   } catch (error) {
     console.error('[ERROR] Erreur lors de la dépublication:', error)
     toast.add({
@@ -1182,6 +1200,8 @@ const publishAssignments = async () => {
       detail: `${unpublishedCount} assignations sont maintenant visibles par les étudiants`,
       life: 5000
     })
+
+    scheduleRefresh()
   } catch (error) {
     console.error('[ERROR] Erreur lors de la publication:', error)
     toast.add({
@@ -1255,6 +1275,8 @@ const autoAssignPraticiens = async () => {
         r.needsAutoAssignment = false
       }
     })
+
+    scheduleRefresh()
   } catch (error) {
     console.error('[AUTO-ASSIGN] Erreur lors de l\'auto-assignation:', error)
   }
@@ -1338,6 +1360,8 @@ const assignPraticien = async (assignment, praticienId) => {
         : `Praticien retiré pour ${assignment.student_name}`,
       life: 3000
     })
+
+    scheduleRefresh()
   } catch (error) {
     console.error('[ERROR] Erreur lors de l\'assignation du praticien:', error)
     toast.add({

@@ -302,7 +302,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/authStore';
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
@@ -319,8 +319,12 @@ import { supabase } from '@/supabase';
 const router = useRouter();
 const authStore = useAuthStore();
 
+const AUTO_REFRESH_MS = 120000;
+let refreshIntervalId = null;
+
 // Loading
 const loading = ref(true);
+const refreshInProgress = ref(false);
 
 // Stats
 const modulesCount = ref(0);
@@ -489,8 +493,40 @@ async function loadRMData() {
   }
 }
 
+const refreshDashboard = async () => {
+  if (refreshInProgress.value) return;
+  refreshInProgress.value = true;
+  try {
+    await loadRMData();
+  } finally {
+    refreshInProgress.value = false;
+  }
+};
+
+const handleVisibilityChange = () => {
+  if (document.visibilityState === 'visible') {
+    refreshDashboard();
+  }
+};
+
+const handleWindowFocus = () => {
+  refreshDashboard();
+};
+
 onMounted(() => {
-  loadRMData();
+  refreshDashboard();
+  refreshIntervalId = window.setInterval(refreshDashboard, AUTO_REFRESH_MS);
+  window.addEventListener('focus', handleWindowFocus);
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+});
+
+onUnmounted(() => {
+  if (refreshIntervalId) {
+    clearInterval(refreshIntervalId);
+    refreshIntervalId = null;
+  }
+  window.removeEventListener('focus', handleWindowFocus);
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
 });
 
 function manageModule(module) {

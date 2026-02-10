@@ -343,6 +343,16 @@ import { useInstitutionsStore } from '@/stores/institutionsStore'
 
 const placesStore = usePlacesStore()
 const institutionsStore = useInstitutionsStore()
+
+const refreshTimeout = ref(null)
+const scheduleRefresh = (delay = 400) => {
+  if (refreshTimeout.value) {
+    clearTimeout(refreshTimeout.value)
+  }
+  refreshTimeout.value = setTimeout(() => {
+    refreshPlaces()
+  }, delay)
+}
 const selectedYear = ref('2026')
 const years = ref(['2025', '2026'])
 const selectedPFP = ref('all')
@@ -550,6 +560,7 @@ const saveEditRow = async (row) => {
     })
     
     cancelEditRow()
+    scheduleRefresh()
   } finally {
     savingRowId.value = null
   }

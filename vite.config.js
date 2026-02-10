@@ -111,4 +111,11 @@ export default defineConfig({
     },
     chunkSizeWarningLimit: 1000, // Optionnel : augmente la limite d'avertissement pour les chunks
   },
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./tests/setup.js'],
+    include: ['tests/unit/**/*.spec.js'],
+    css: true
+  }
 })
