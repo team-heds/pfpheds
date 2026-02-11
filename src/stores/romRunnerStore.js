@@ -96,7 +96,7 @@ export const useRomRunnerStore = defineStore('romRunner', {
            const xpEarned = Math.floor(this.score / 10) 
            
            // TODO: Appel service gamification pour ajouter XP
-           console.log(`Partie terminée. Score: ${this.score}, XP: ${xpEarned}`)
+           // Game over - score and XP calculated
         }
       } catch (e) {
         console.error("Erreur sauvegarde score", e)

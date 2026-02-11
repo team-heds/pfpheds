@@ -227,7 +227,6 @@ export const usePlacesStore = defineStore('places', {
         if (error) throw error;
 
         this.places.push(data);
-        console.log('✅ Place créée:', data.PlaceId);
         return data;
       } catch (error) {
         console.error('❌ Erreur création place:', error);
@@ -246,8 +245,6 @@ export const usePlacesStore = defineStore('places', {
       this.error = null;
 
       try {
-        console.log('📤 Envoi de la mise à jour à Supabase:', { id, updates });
-        
         const { data, error } = await supabase
           .from('places')
           .update(updates)
@@ -260,18 +257,11 @@ export const usePlacesStore = defineStore('places', {
           throw error;
         }
 
-        console.log('📦 Réponse Supabase:', data);
-        
         // Mettre à jour le store local
         const index = this.places.findIndex(p => p.PlaceId === id);
         if (index !== -1) {
           this.places[index] = { ...this.places[index], ...data };
-          console.log('✅ Place mise à jour localement:', this.places[index]);
-        } else {
-          console.warn('⚠️ Place non trouvée dans le store local:', id);
         }
-
-        console.log('✅ Place mise à jour:', id);
         return data;
       } catch (error) {
         console.error('❌ Erreur mise à jour place:', error);
@@ -299,7 +289,6 @@ export const usePlacesStore = defineStore('places', {
 
         // Retirer du store local
         this.places = this.places.filter(p => p.PlaceId !== id);
-        console.log('✅ Place supprimée:', id);
       } catch (error) {
         console.error('❌ Erreur suppression place:', error);
         this.error = error.message;

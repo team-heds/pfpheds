@@ -150,7 +150,6 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function checkAuthState() {
     const timestamp = new Date().toLocaleTimeString();
-    console.log(`🔍 [${timestamp}] Vérification de l'état d'authentification...`);
 
     // Vérifier Firebase avec une promesse pour attendre la restauration de session
     const firebaseUser = await new Promise((resolve) => {
@@ -161,7 +160,6 @@ export const useAuthStore = defineStore('auth', () => {
     });
 
     if (firebaseUser) {
-      console.log(`✅ [${timestamp}] Utilisateur Firebase trouvé:`, firebaseUser.email);
       user.value = firebaseUser;
       authProvider.value = 'firebase';
       session.value = null;
@@ -177,10 +175,8 @@ export const useAuthStore = defineStore('auth', () => {
         console.error(`❌ [${timestamp}] Erreur getUser:`, getUserError.message);
         // Si le token est invalide, essayer de rafraîchir la session
         if (getUserError.message?.includes('invalid') || getUserError.message?.includes('expired')) {
-          console.log(`🔄 [${timestamp}] Tentative de refresh de la session...`);
           const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
           if (!refreshError && refreshData?.session) {
-            console.log(`✅ [${timestamp}] Session rafraîchie avec succès`);
             user.value = refreshData.session.user;
             session.value = refreshData.session;
             authProvider.value = 'supabase';
@@ -195,7 +191,6 @@ export const useAuthStore = defineStore('auth', () => {
       }
       
       if (data.user) {
-        console.log(`✅ [${timestamp}] Utilisateur Supabase trouvé:`, data.user.email);
         user.value = data.user;
         authProvider.value = 'supabase';
         const { data: sessionData } = await supabase.auth.getSession();
@@ -225,7 +220,6 @@ export const useAuthStore = defineStore('auth', () => {
       return;
     }
 
-    console.log(`❌ [${timestamp}] Aucun utilisateur connecté trouvé`);
     user.value = null;
     authProvider.value = null;
     session.value = null;
@@ -241,7 +235,6 @@ export const useAuthStore = defineStore('auth', () => {
     sessionCheckInterval.value = setInterval(async () => {
       // Ne vérifier que si un utilisateur est connecté
       if (user.value && authProvider.value === 'supabase') {
-        console.log('🔄 Vérification périodique de la session...');
         try {
           const { data, error } = await supabase.auth.getSession();
           if (error || !data.session) {
@@ -254,7 +247,6 @@ export const useAuthStore = defineStore('auth', () => {
             const timeUntilExpiry = expiresAt - now;
             
             if (timeUntilExpiry < 600) { // Moins de 10 minutes
-              console.log(`🔄 Refresh préventif du token (expire dans ${Math.floor(timeUntilExpiry / 60)} min)`);
               await supabase.auth.refreshSession();
             }
           }
@@ -264,31 +256,25 @@ export const useAuthStore = defineStore('auth', () => {
       }
     }, 120000); // Toutes les 2 minutes
     
-    console.log('✅ Monitoring de session démarré (vérification toutes les 2 min)');
   }
   
   function stopSessionMonitoring() {
     if (sessionCheckInterval.value) {
       clearInterval(sessionCheckInterval.value);
       sessionCheckInterval.value = null;
-      console.log('🛑 Monitoring de session arrêté');
     }
   }
 
   // Initialisation du store
   async function initializeAuth() {
-    console.log('🚀 Initialisation du store d\'authentification...');
     await checkAuthState();
     startSessionMonitoring();
-    console.log('✅ Store d\'authentification initialisé avec monitoring');
   }
 
   // Gérer les changements d'état d'authentification pour les deux systèmes
 
   // Supabase auth state change
   supabase.auth.onAuthStateChange(async (event, newSession) => {
-    console.log('Supabase auth state change:', event, newSession?.user?.email);
-
     // Gérer tous les événements qui indiquent une session active
     if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION' || event === 'USER_UPDATED') && newSession) {
       // Ne pas écraser si Firebase est déjà connecté
@@ -300,18 +286,12 @@ export const useAuthStore = defineStore('auth', () => {
         if (event === 'SIGNED_IN') {
           // 🆕 CRÉATION AUTOMATIQUE DU PROFIL (DÉSACTIVÉ TEMPORAIREMENT)
           try {
-            console.log('🔄 Création automatique du profil pour:', newSession.user.email);
-            // await userProfileAutoCreation.createUserProfileFromAuth(newSession.user, 'supabase');
+              // await userProfileAutoCreation.createUserProfileFromAuth(newSession.user, 'supabase');
             // await userProfileAutoCreation.updateLastLogin(newSession.user.id);
-            console.log('✅ Profil créé/mis à jour automatiquement (désactivé)');
           } catch (error) {
             console.error('❌ Erreur création automatique profil:', error);
             // L\'erreur ne bloque pas la connexion
           }
-        } else if (event === 'TOKEN_REFRESHED') {
-          console.log('🔄 Token Supabase rafraîchi automatiquement');
-        } else if (event === 'INITIAL_SESSION') {
-          console.log('🔄 Session Supabase restaurée depuis le localStorage');
         }
       }
     } else if (event === 'SIGNED_OUT') {
@@ -325,8 +305,6 @@ export const useAuthStore = defineStore('auth', () => {
 
   // Firebase auth state change
   onAuthStateChanged(auth, (firebaseUser) => {
-    console.log('Firebase auth state change:', firebaseUser?.email);
-
     if (firebaseUser) {
       // Ne pas écraser si Supabase est déjà connecté
       if (authProvider.value !== 'supabase') {

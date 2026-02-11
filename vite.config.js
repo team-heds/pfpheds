@@ -105,7 +105,10 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ['vue', 'vue-router'], // Par exemple, regrouper les dépendances tierces
+          vendor: ['vue', 'vue-router', 'pinia'],
+          primevue: ['primevue'],
+          supabase: ['@supabase/supabase-js'],
+          firebase: ['firebase/app', 'firebase/auth', 'firebase/database', 'firebase/storage'],
         },
       },
     },

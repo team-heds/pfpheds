@@ -100,7 +100,6 @@ export async function createTicket(ticketData) {
       .single()
 
     if (error) throw error
-    console.log('[ticketService] ✅ Ticket créé:', data.id)
     return data
   } catch (error) {
     console.error('[ticketService] ❌ Erreur createTicket:', error)
@@ -144,20 +143,16 @@ export async function updateTicket(ticketId, updates) {
       .single()
 
     if (error) throw error
-    console.log('[ticketService] ✅ Ticket mis à jour:', ticketId)
     
     // Si le ticket passe en "done" et a des vidéos, les ajouter à la bibliothèque
     if (oldTicket && oldTicket.status !== TICKET_STATUS.DONE && 
         cleanUpdates.status === TICKET_STATUS.DONE && 
         data.metadata?.video_links && data.metadata.video_links.length > 0) {
       
-      console.log('[ticketService] 🎬 Ticket terminé avec vidéos, ajout à la bibliothèque...')
-      
       // Import dynamique pour éviter les dépendances circulaires
       try {
         const { addTicketVideosToLibrary } = await import('./videoLibraryService')
         await addTicketVideosToLibrary(data)
-        console.log('[ticketService] ✅ Vidéos ajoutées à la bibliothèque')
       } catch (libError) {
         console.error('[ticketService] ⚠️ Erreur ajout bibliothèque (non bloquant):', libError)
       }
@@ -196,7 +191,6 @@ export async function changeTicketStatus(ticketId, newStatus, orderIndex = null)
       .single()
 
     if (error) throw error
-    console.log('[ticketService] ✅ Statut changé:', ticketId, '→', newStatus)
     return data
   } catch (error) {
     console.error('[ticketService] ❌ Erreur changeTicketStatus:', error)
@@ -217,7 +211,6 @@ export async function deleteTicket(ticketId) {
       .eq('id', ticketId)
 
     if (error) throw error
-    console.log('[ticketService] ✅ Ticket supprimé:', ticketId)
   } catch (error) {
     console.error('[ticketService] ❌ Erreur deleteTicket:', error)
     throw error
@@ -247,7 +240,6 @@ export async function publishToVimeo(ticketId, vimeoId, vimeoUrl) {
       .single()
 
     if (error) throw error
-    console.log('[ticketService] ✅ Vidéo publiée sur Vimeo:', vimeoId)
     return data
   } catch (error) {
     console.error('[ticketService] ❌ Erreur publishToVimeo:', error)

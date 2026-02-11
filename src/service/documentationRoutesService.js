@@ -19,7 +19,6 @@ export const getActiveDocumentationRoutes = async () => {
 
     if (error) throw error
 
-    console.log('[DocumentationRoutes] Routes actives récupérées:', data?.length || 0)
     return data || []
   } catch (error) {
     console.error('[DocumentationRoutes] Erreur lors de la récupération des routes:', error)
@@ -47,7 +46,6 @@ export const getUserDocumentationRoutes = async () => {
 
     if (error) throw error
 
-    console.log('[DocumentationRoutes] Routes accessibles pour l\'utilisateur:', data?.length || 0)
     return data || []
   } catch (error) {
     console.error('[DocumentationRoutes] Erreur lors de la récupération des routes utilisateur:', error)
@@ -77,7 +75,6 @@ export const canAccessDocumentationRoute = async (routePath) => {
 
     if (error) throw error
 
-    console.log(`[DocumentationRoutes] Accès à ${routePath}:`, data)
     return data === true
   } catch (error) {
     console.error('[DocumentationRoutes] Erreur lors de la vérification d\'accès:', error)
@@ -107,7 +104,6 @@ export const getDocumentationRouteByPath = async (routePath) => {
       throw error
     }
 
-    console.log('[DocumentationRoutes] Route récupérée:', data?.title)
     return data
   } catch (error) {
     console.error('[DocumentationRoutes] Erreur lors de la récupération de la route:', error)
@@ -130,7 +126,6 @@ export const getDocumentationRoutesByCategory = async (category) => {
 
     if (error) throw error
 
-    console.log(`[DocumentationRoutes] Routes de la catégorie ${category}:`, data?.length || 0)
     return data || []
   } catch (error) {
     console.error('[DocumentationRoutes] Erreur lors de la récupération par catégorie:', error)
@@ -158,7 +153,6 @@ export const createDocumentationRoute = async (routeData) => {
 
     if (error) throw error
 
-    console.log('[DocumentationRoutes] Route créée:', data?.title)
     return data
   } catch (error) {
     console.error('[DocumentationRoutes] Erreur lors de la création de la route:', error)
@@ -183,7 +177,6 @@ export const updateDocumentationRoute = async (routeId, updates) => {
 
     if (error) throw error
 
-    console.log('[DocumentationRoutes] Route mise à jour:', data?.title)
     return data
   } catch (error) {
     console.error('[DocumentationRoutes] Erreur lors de la mise à jour de la route:', error)
@@ -205,7 +198,6 @@ export const deleteDocumentationRoute = async (routeId) => {
 
     if (error) throw error
 
-    console.log('[DocumentationRoutes] Route supprimée:', routeId)
     return true
   } catch (error) {
     console.error('[DocumentationRoutes] Erreur lors de la suppression de la route:', error)
@@ -230,7 +222,6 @@ export const toggleDocumentationRouteActive = async (routeId, isActive) => {
 
     if (error) throw error
 
-    console.log(`[DocumentationRoutes] Route ${isActive ? 'activée' : 'désactivée'}:`, data?.title)
     return data
   } catch (error) {
     console.error('[DocumentationRoutes] Erreur lors du changement d\'état de la route:', error)
@@ -270,7 +261,6 @@ export const getDocumentationRoutesStats = async () => {
       }
     })
 
-    console.log('[DocumentationRoutes] Statistiques:', stats)
     return stats
   } catch (error) {
     console.error('[DocumentationRoutes] Erreur lors de la récupération des statistiques:', error)

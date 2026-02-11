@@ -138,8 +138,6 @@ export async function fetchGeneralKpis() {
       usersTimeline.push({ label: monthKey, value })
     }
     
-    console.log('📊 KPI Généraux:', { users, roles, rolesList: rolesList.length, permissions, permissionsList: permissionsList.length, routes, routesList: routesList.length, usersTimeline: usersTimeline.length })
-    
     return {
       users,
       usersTimeline,
@@ -196,8 +194,6 @@ export async function fetchPfpKpis() {
       
       if (instError) throw instError
       
-      console.log('🔍 Institutions data sample:', instData?.[0])
-      
       const cantonCounts = {}
       instData.forEach(inst => {
         // Essayer différents noms de colonnes possibles
@@ -209,7 +205,6 @@ export async function fetchPfpKpis() {
         .map(([label, value]) => ({ label, value }))
         .sort((a, b) => b.value - a.value) // Tri par nombre décroissant
       
-      console.log('📊 Institutions par canton:', institutionsByCanton)
     } catch (err) {
       console.error('❌ Erreur institutionsByCanton:', err)
       institutionsByCanton = []
@@ -247,16 +242,6 @@ export async function fetchPfpKpis() {
       const value = Math.round(pfpEnCours * (1 - (i / monthsBack) * 0.2)) // Croissance de 20%
       pfpTimeline.push({ label: monthKey, value })
     }
-    
-    console.log('🏥 KPI PFP:', { 
-      etudiants, 
-      institutions, 
-      institutionsByCanton: institutionsByCanton.length,
-      places, 
-      placesTimeline: placesTimeline.length,
-      pfpEnCours, 
-      pfpTimeline: pfpTimeline.length 
-    })
     
     return {
       etudiants,
@@ -415,8 +400,6 @@ export async function fetchAcademiqueKpis() {
       coursesTimeline.push({ label: monthKey, value })
     }
     
-    console.log('📚 KPI Académique:', { enseignants, cours, media, modules, modulesList: modulesList.length, mediaTimeline: mediaTimeline.length, coursesTimeline: coursesTimeline.length })
-    
     return {
       enseignants,
       cours,
@@ -503,19 +486,6 @@ export async function fetchGamificationKpis() {
       const value = Math.max(1, Math.round(challengesActive * (1 - (i / monthsBack) * 0.3))) // Croissance de 30%
       challengesTimeline.push({ label: monthKey, value })
     }
-    
-    console.log('🎮 KPI Gamification:', {
-      totalUsers,
-      totalGamificationUsers,
-      houses,
-      badges,
-      badgesList: badgesList.length,
-      challengesActive,
-      challengesCompleted,
-      quests,
-      usersActive,
-      challengesTimeline: challengesTimeline.length
-    })
     
     return {
       users: totalUsers,
@@ -617,8 +587,6 @@ export async function fetchHousesStats() {
         }
       })
     )
-    
-    console.log('🏠 Stats Maisons:', housesWithStats)
     
     return housesWithStats
   } catch (error) {

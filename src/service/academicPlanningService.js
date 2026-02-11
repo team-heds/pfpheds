@@ -51,7 +51,6 @@ class AcademicPlanningService {
         ...yearData,
         lastUpdated: new Date().toISOString()
       })
-      console.log('[AcademicPlanningService] Année académique sauvegardée:', yearId)
       return true
     } catch (error) {
       console.error('[AcademicPlanningService] Erreur saveAcademicYear:', error)
@@ -446,7 +445,6 @@ class AcademicPlanningService {
         })
       }
 
-      console.log('[AcademicPlanningService] Planning par défaut initialisé')
       return true
     } catch (error) {
       console.error('[AcademicPlanningService] Erreur initializeDefaultPlanning:', error)
@@ -532,7 +530,6 @@ class AcademicPlanningService {
         }
       }
       
-      console.log('[AcademicPlanningService] Numéros de module migrés avec succès')
       return true
     } catch (error) {
       console.error('[AcademicPlanningService] Erreur migrateModuleNumbers:', error)
@@ -568,7 +565,6 @@ class AcademicPlanningService {
         id: toYearId
       })
 
-      console.log(`[AcademicPlanningService] Planning cloné de ${fromYearId} vers ${toYearId}`)
       return true
     } catch (error) {
       console.error('[AcademicPlanningService] Erreur clonePlanning:', error)
@@ -1176,7 +1172,6 @@ class AcademicPlanningService {
         await this.saveAcademicYear(yearId, data.year)
       }
 
-      console.log('[AcademicPlanningService] Planning importé avec succès')
       return true
     } catch (error) {
       console.error('[AcademicPlanningService] Erreur importPlanningFromJSON:', error)

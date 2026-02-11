@@ -348,8 +348,7 @@ export async function updateChallengeProgress(userId, challengeType, increment =
             const badgesService = await import('./badgesService')
             const actionBadges = await badgesService.default.checkAndUnlockActionBadges(userId, 'CHALLENGE_COMPLETED', {})
             if (actionBadges.length > 0) {
-              console.log(`🏆 ${actionBadges.length} badge(s) débloqué(s) après complétion de défi:`, 
-                actionBadges.map(b => b.name).join(', '))
+              // Badges unlocked after challenge completion
             }
           } catch (badgeError) {
             console.warn('Erreur lors de la vérification des badges défi:', badgeError)

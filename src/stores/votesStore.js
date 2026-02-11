@@ -51,7 +51,6 @@ export const useVotesStore = defineStore('votes', {
         if (error) throw error
 
         this.votes = data || []
-        console.log('✅ Votes chargés:', this.votes.length)
         
         return data
       } catch (err) {
@@ -88,7 +87,6 @@ export const useVotesStore = defineStore('votes', {
         if (error) throw error
 
         this.currentVote = data
-        console.log('✅ Vote récupéré:', data ? 'trouvé' : 'non trouvé')
         
         return data
       } catch (err) {
@@ -120,19 +118,10 @@ export const useVotesStore = defineStore('votes', {
           throw new Error('Utilisateur non connecté')
         }
 
-        console.log('💾 Enregistrement du vote:', { 
-          user: user.id, 
-          pfpType, 
-          year, 
-          choicesCount: choices.length,
-          method: shouldUseRPC ? 'RPC' : 'Direct'
-        })
-
         let data
 
         if (shouldUseRPC) {
           // Utiliser la fonction RPC backend (plus sécurisé)
-          console.log('🔧 Utilisation de la fonction RPC backend')
           data = await votesBackendService.upsertStudentVote(user.id, pfpType, year, choices)
         } else {
           // Approche directe (comme avant)
@@ -151,7 +140,6 @@ export const useVotesStore = defineStore('votes', {
 
           if (existingVote) {
             // UPDATE
-            console.log('🔄 Mise à jour du vote existant')
             result = await supabase
               .from('student_votes')
               .update({
@@ -165,7 +153,6 @@ export const useVotesStore = defineStore('votes', {
               .single()
           } else {
             // INSERT
-            console.log('➕ Création d\'un nouveau vote')
             result = await supabase
               .from('student_votes')
               .insert(payload)
@@ -186,8 +173,6 @@ export const useVotesStore = defineStore('votes', {
 
           data = resultData
         }
-
-        console.log('✅ Vote enregistré avec succès:', data)
 
         // Mettre à jour le state
         this.currentVote = data
@@ -244,8 +229,6 @@ export const useVotesStore = defineStore('votes', {
           this.currentVote = null
         }
 
-        console.log('✅ Vote supprimé')
-        
         return true
       } catch (err) {
         console.error('❌ Erreur deleteVote:', err)

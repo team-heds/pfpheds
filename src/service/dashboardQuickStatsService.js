@@ -53,8 +53,6 @@ export async function fetchQuickStats() {
       })()
     ])
 
-    console.log('⚡ Quick Stats:', { places, institutions, students, formateurs })
-
     return {
       places,
       institutions,

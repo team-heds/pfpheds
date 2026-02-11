@@ -104,7 +104,7 @@ class GamificationIntegration {
     try {
       // Les quêtes seront mises à jour automatiquement par les services existants
       // Cette méthode peut être étendue selon les besoins spécifiques
-      console.log(`Mise à jour des quêtes pour l'action ${action}`)
+      // Quest update for action handled by existing services
     } catch (error) {
       console.error('Erreur lors de la mise à jour des quêtes:', error)
     }

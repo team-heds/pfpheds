@@ -48,7 +48,7 @@ export const usePostsStore = defineStore('posts', {
         } else {
             // If it's a reply, you might want to update the parent post's reply count
             // or handle it differently depending on your UI needs.
-            console.log('Reply created:', response.data[0]);
+            // Reply created successfully
         }
         return response.data[0];
       } catch (error) {

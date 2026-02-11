@@ -9,78 +9,40 @@ import { supabase } from '@/supabase'
  */
 export async function getGlobalStats() {
   try {
-    console.log('📊 [adminDashboard] Chargement stats globales...')
-    
-    // Stats modules par filière
-    const { data: modules, error: modulesError } = await supabase
-      .from('modules')
-      .select('id, track_id, responsable_email, year, credits')
-    
-    if (modulesError) throw modulesError
-    
-    // Compter par filière
-    const modulesBySI = (modules || []).filter(m => m.track_id === 'SI').length
-    const modulesByPHY = (modules || []).filter(m => m.track_id === 'PHY').length
-    const modulesNoTrack = (modules || []).filter(m => !m.track_id).length
-    
-    // Stats enseignants par filière (via user_track_roles)
-    const { data: teacherRoles, error: teacherError } = await supabase
-      .from('user_track_roles')
-      .select('user_id, track_id, role')
-      .eq('role', 'TEACHER')
-      .eq('is_active', true)
-    
-    const teachersSI = new Set((teacherRoles || []).filter(r => r.track_id === 'SI').map(r => r.user_id)).size
-    const teachersPHY = new Set((teacherRoles || []).filter(r => r.track_id === 'PHY').map(r => r.user_id)).size
-    
-    // Stats RM par filière
-    const { data: rmRoles } = await supabase
-      .from('user_track_roles')
-      .select('user_id, track_id, role')
-      .eq('role', 'RM')
-      .eq('is_active', true)
-    
-    const rmSI = new Set((rmRoles || []).filter(r => r.track_id === 'SI').map(r => r.user_id)).size
-    const rmPHY = new Set((rmRoles || []).filter(r => r.track_id === 'PHY').map(r => r.user_id)).size
-    
-    // Total cours
-    const { count: coursesCount } = await supabase
-      .from('courses')
-      .select('*', { count: 'exact', head: true })
-    
-    // Total utilisateurs avec rôles
-    const { data: allRoles } = await supabase
-      .from('user_track_roles')
-      .select('user_id')
-      .eq('is_active', true)
-    
-    const totalUsersWithRoles = new Set((allRoles || []).map(r => r.user_id)).size
-    
+    // Requêtes parallélisées pour de meilleures performances
+    const [modulesResult, teacherRolesResult, rmRolesResult, coursesResult, allRolesResult] = await Promise.all([
+      supabase.from('modules').select('id, track_id, responsable_email, year, credits'),
+      supabase.from('user_track_roles').select('user_id, track_id, role').eq('role', 'TEACHER').eq('is_active', true),
+      supabase.from('user_track_roles').select('user_id, track_id, role').eq('role', 'RM').eq('is_active', true),
+      supabase.from('courses').select('*', { count: 'exact', head: true }),
+      supabase.from('user_track_roles').select('user_id').eq('is_active', true),
+    ])
+
+    const modules = modulesResult.data || []
+    if (modulesResult.error) throw modulesResult.error
+
+    const teacherRoles = teacherRolesResult.data || []
+    const rmRoles = rmRolesResult.data || []
+    const allRoles = allRolesResult.data || []
+
     const stats = {
-      // Totaux
-      totalModules: modules?.length || 0,
-      totalCourses: coursesCount || 0,
-      totalUsersWithRoles,
-      
-      // Par filière - SI
+      totalModules: modules.length,
+      totalCourses: coursesResult.count || 0,
+      totalUsersWithRoles: new Set(allRoles.map(r => r.user_id)).size,
       si: {
-        modules: modulesBySI,
-        teachers: teachersSI,
-        rm: rmSI
+        modules: modules.filter(m => m.track_id === 'SI').length,
+        teachers: new Set(teacherRoles.filter(r => r.track_id === 'SI').map(r => r.user_id)).size,
+        rm: new Set(rmRoles.filter(r => r.track_id === 'SI').map(r => r.user_id)).size
       },
-      
-      // Par filière - PHY
       phy: {
-        modules: modulesByPHY,
-        teachers: teachersPHY,
-        rm: rmPHY
+        modules: modules.filter(m => m.track_id === 'PHY').length,
+        teachers: new Set(teacherRoles.filter(r => r.track_id === 'PHY').map(r => r.user_id)).size,
+        rm: new Set(rmRoles.filter(r => r.track_id === 'PHY').map(r => r.user_id)).size
       },
-      
-      // Modules sans filière
-      modulesNoTrack
+      modulesNoTrack: modules.filter(m => !m.track_id).length
     }
-    
-    console.log('✅ [adminDashboard] Stats globales:', stats)
+
+    return stats
     return stats
   } catch (error) {
     console.error('❌ [adminDashboard] Erreur stats globales:', error)

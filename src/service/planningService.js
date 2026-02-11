@@ -115,9 +115,6 @@ class PlanningService {
       }
     } catch (error) {
       console.error('[PlanningService] Erreur saveTimeSlot:', error)
-      console.error('[PlanningService] Message:', error?.message)
-      console.error('[PlanningService] Code:', error?.code)
-      console.error('[PlanningService] Details:', JSON.stringify(error, null, 2))
       throw error
     }
   }
@@ -366,11 +363,8 @@ class PlanningService {
    */
   async savePlanningCell(classCode, weekNumber, day, moduleCode) {
     try {
-      console.log('[PlanningService] savePlanningCell appelé:', { classCode, weekNumber, day, moduleCode })
-      
       // Convertir le jour court en jour complet (lu -> lundi)
       const fullDay = this.getDayFullName(day)
-      console.log('[PlanningService] Conversion jour:', day, '→', fullDay)
       
       if (!moduleCode) {
         // Supprimer la cellule si module vide
@@ -396,8 +390,6 @@ class PlanningService {
         module_code: moduleCode
       }
       
-      console.log('[PlanningService] Payload UPSERT:', payload)
-      
       const { data, error } = await supabase
         .from('planning_cells')
         .upsert(payload, {
@@ -408,20 +400,15 @@ class PlanningService {
       // Vérifier si c'est une vraie erreur (pas juste un objet vide {})
       if (error?.message) {
         console.error('[PlanningService] Erreur UPSERT:', error)
-        console.error('[PlanningService] Détails:', JSON.stringify(error, null, 2))
         throw error
       }
       
       // Si upsert retourne un tableau, prendre le premier élément
       const cellData = Array.isArray(data) ? data[0] : data
       
-      console.log('[PlanningService] ✅ Cellule sauvegardée:', cellData)
       return cellData
     } catch (error) {
       console.error('[PlanningService] Erreur savePlanningCell:', error)
-      console.error('[PlanningService] Type erreur:', typeof error)
-      console.error('[PlanningService] Message:', error?.message)
-      console.error('[PlanningService] Code:', error?.code)
       throw error
     }
   }
@@ -457,11 +444,8 @@ class PlanningService {
    */
   async generateTimeSlotsFromCell(cell) {
     try {
-      console.log('[PlanningService] generateTimeSlotsFromCell appelé:', cell)
-      
       // Convertir le jour court en jour complet
       const fullDay = this.getDayFullName(cell.day)
-      console.log('[PlanningService] Conversion jour pour time_slots:', cell.day, '→', fullDay)
       
       // Supprimer les créneaux existants pour ce jour
       const { error: deleteError } = await supabase
@@ -477,7 +461,6 @@ class PlanningService {
       }
 
       if (!cell.module_code) {
-        console.log('[PlanningService] ⏭️ Pas de module, pas de créneaux à générer')
         return // Pas de module = pas de créneaux
       }
 
@@ -513,8 +496,6 @@ class PlanningService {
         }
       ]
       
-      console.log('[PlanningService] Créneaux à insérer:', slots)
-
       const { error: insertError } = await supabase
         .from('planning_time_slots')
         .insert(slots)
@@ -524,11 +505,8 @@ class PlanningService {
         throw insertError
       }
       
-      console.log('[PlanningService] ✅ Créneaux générés avec succès')
     } catch (error) {
       console.error('[PlanningService] Erreur generateTimeSlotsFromCell:', error)
-      console.error('[PlanningService] Message:', error?.message)
-      console.error('[PlanningService] Code:', error?.code)
       throw error
     }
   }

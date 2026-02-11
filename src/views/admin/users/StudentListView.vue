@@ -249,6 +249,7 @@ export default {
       repondantEditValue: null,
       savingRepondantId: null,
       currentRepondantProfile: null,
+      refreshTimeout: null,
     };
   },
   watch: {
@@ -521,6 +522,7 @@ export default {
       try {
         await this.updatePfpCohort(student);
         this.cancelEditCohort();
+        this.scheduleRefresh();
       } catch (e) {
         // rollback
         student.pfp_cohort = prev;
@@ -648,12 +650,22 @@ export default {
       try {
         await this.updateRepondantHES(student);
         this.cancelEditRepondant();
+        this.scheduleRefresh();
       } catch (e) {
         student.repondant_hes = prev;
         console.error('❌ Erreur saveEditRepondant:', e);
       } finally {
         this.savingRepondantId = null;
       }
+    },
+
+    scheduleRefresh(delay = 400) {
+      if (this.refreshTimeout) {
+        clearTimeout(this.refreshTimeout);
+      }
+      this.refreshTimeout = setTimeout(() => {
+        this.fetchEtudiantsFromSupabase();
+      }, delay);
     },
 
     async updateRepondantHES(student) {

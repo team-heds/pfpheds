@@ -161,7 +161,6 @@ class RolesService {
       
       // Si les rôles sont dans user_metadata
       if (user?.user_metadata?.roles) {
-        console.log('✅ Rôles trouvés dans user_metadata:', user.user_metadata.roles)
         return user.user_metadata.roles
       }
       
@@ -181,7 +180,6 @@ class RolesService {
           }
         })
         
-        console.log('✅ Rôles trouvés dans table user_roles:', rolesObject)
         return rolesObject
       }
 
@@ -193,7 +191,6 @@ class RolesService {
         .single()
       
       if (!profileError && profileData?.role) {
-        console.log('✅ Rôle trouvé dans user_profiles:', profileData.role)
         // Convertir le rôle unique en format objet compatible { [role]: true }
         return { [profileData.role]: true }
       }

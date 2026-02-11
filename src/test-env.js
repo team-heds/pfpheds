@@ -64,8 +64,8 @@ export function testViteEnv() {
   }
 }
 
-// Test automatique au chargement du module
-if (typeof window !== 'undefined') {
+// Test automatique au chargement du module (DEV only)
+if (import.meta.env.DEV && typeof window !== 'undefined') {
   // Attendre que la page soit chargée
   window.addEventListener('load', () => {
     setTimeout(() => {

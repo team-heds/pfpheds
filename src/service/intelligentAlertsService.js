@@ -194,7 +194,7 @@ export class IntelligentAlertsService {
    */
   notifyAlerts(alerts) {
     alerts.forEach(alert => {
-      console.log(`[ALERTE ${alert.severity.toUpperCase()}]`, alert.title, alert.message)
+      // Alert notification handled by toast if available
       
       // Ici, intégrer avec PrimeVue Toast si disponible
       if (typeof window !== 'undefined' && window.$toast) {

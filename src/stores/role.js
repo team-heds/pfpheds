@@ -83,7 +83,7 @@ export const useRoleStore = defineStore('role', () => {
       }
  
       perms.value = Array.from(permsSet)
-      console.log('✅ Permissions consolidées:', perms.value)
+      
     } catch (e) {
       console.error('loadPermissions fatal:', e)
       perms.value = []

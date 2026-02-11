@@ -104,26 +104,20 @@ class AdminQuestsService {
       if (questData.maxLevel !== undefined) questPayload.max_level = questData.maxLevel
       if (questData.targetHouses) questPayload.target_houses = questData.targetHouses
 
-      console.log('📤 Payload envoyé à Supabase:', questPayload)
-
       const { data: quest, error: questError } = await supabase
         .from('quests')
         .insert(questPayload)
         .select()
         .single()
       
-      console.log('📥 Réponse Supabase:', { data: quest, error: questError })
-      
       if (questError) {
-        console.error('❌ Erreur Supabase détaillée:', questError)
+        console.error('❌ Erreur Supabase:', questError)
         throw questError
       }
       
       if (!quest) {
         throw new Error('Aucune quête retournée par Supabase')
       }
-      
-      console.log('✅ Quête créée avec succès:', quest.id)
       
       // 2. Créer les étapes si présentes
       if (questData.steps && questData.steps.length > 0) {
@@ -142,16 +136,12 @@ class AdminQuestsService {
         if (stepsError) {
           console.error('⚠️ Erreur création étapes:', stepsError)
           // On ne lance pas d'erreur car la quête est créée
-        } else {
-          console.log(`✅ ${stepsToInsert.length} étapes créées`)
         }
       }
       
       // 3. Si statut = active, assigner automatiquement à tous les utilisateurs
       if (quest.status === 'active') {
-        console.log('🎯 Quête active détectée, lancement attribution avec ID:', quest.id)
-        const assignCount = await this.assignQuestToAllUsers(quest.id)
-        console.log('📊 Résultat attribution:', assignCount, 'utilisateur(s)')
+        await this.assignQuestToAllUsers(quest.id)
       }
       
       return quest
@@ -198,8 +188,6 @@ class AdminQuestsService {
         .single()
       
       if (questError) throw questError
-      
-      console.log('✅ Quête mise à jour:', questId)
       
       // 2. Gérer les étapes (supprimer et recréer)
       if (questData.steps) {
@@ -253,7 +241,6 @@ class AdminQuestsService {
       
       if (error) throw error
       
-      console.log('✅ Quête supprimée:', questId)
       return true
       
     } catch (error) {
@@ -269,8 +256,6 @@ class AdminQuestsService {
    */
   async assignQuestToAllUsers(questId) {
     try {
-      console.log(`📢 Attribution automatique de la quête ${questId}...`)
-      
       // Appeler la fonction PostgreSQL côté serveur
       const { data, error } = await supabase.rpc('assign_quest_to_all_users', {
         p_quest_id: questId
@@ -278,7 +263,6 @@ class AdminQuestsService {
       
       if (error) throw error
       
-      console.log(`✅ Quête assignée à ${data} utilisateur(s)`)
       return data
       
     } catch (error) {
@@ -344,7 +328,6 @@ class AdminQuestsService {
         await this.assignQuestToAllUsers(questId)
       }
       
-      console.log(`✅ Statut quête ${questId} changé en ${newStatus}`)
       return data
       
     } catch (error) {

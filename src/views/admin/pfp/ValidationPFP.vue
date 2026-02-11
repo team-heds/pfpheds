@@ -204,6 +204,7 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { supabase } from '@/supabase'
 import { getAllStudents } from '@/service/studentsService'
+import { useAutoRefresh } from '@/composables/useAutoRefresh'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import Button from 'primevue/button'
 import DataTable from 'primevue/datatable'
@@ -293,15 +294,7 @@ const stats = ref({
   stopped: 0
 })
 
-const refreshTimeout = ref(null)
-const scheduleRefresh = (delay = 400) => {
-  if (refreshTimeout.value) {
-    clearTimeout(refreshTimeout.value)
-  }
-  refreshTimeout.value = setTimeout(() => {
-    loadPublishedAssignments()
-  }, delay)
-}
+const { scheduleRefresh } = useAutoRefresh(() => loadPublishedAssignments())
 
 const getVotationTypeLabel = (assignment) => {
   if (!assignment) return 'Tirage aléatoire'
@@ -469,7 +462,6 @@ const syncWithStudentsPhysio = async (row) => {
 
     if (updateError) throw updateError
 
-    console.log('✅ Validation synchronisée avec StudentsPhysio (status:', status, ')')
   } catch (error) {
     console.error('Erreur synchronisation StudentsPhysio:', error)
   }
@@ -512,7 +504,6 @@ const removeFromStudentsPhysio = async (row) => {
 
     if (updateError) throw updateError
 
-    console.log('✅ Validation supprimée de StudentsPhysio')
   } catch (error) {
     console.error('Erreur suppression StudentsPhysio:', error)
   }

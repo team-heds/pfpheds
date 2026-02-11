@@ -468,10 +468,6 @@ export async function addUserXP(userId, action, customXP = null) {
       const generalBadges = await badgesService.default.autoCheckAndUnlockBadges(userId, userStats)
       
       const allNewBadges = [...actionBadges, ...generalBadges]
-      if (allNewBadges.length > 0) {
-        console.log(`🏆 ${allNewBadges.length} nouveau(x) badge(s) débloqué(s) pour ${userId}:`, 
-          allNewBadges.map(b => b.name).join(', '))
-      }
     } catch (badgeError) {
       console.warn('Erreur lors de la vérification des badges:', badgeError)
     }
@@ -502,10 +498,6 @@ export async function addUserXP(userId, action, customXP = null) {
           { action, xpGained: xpToAdd }
         )
         
-        if (completedChallenges.length > 0) {
-          console.log(`🎯 ${completedChallenges.length} défi(s) complété(s) pour ${userId}:`, 
-            completedChallenges.map(c => c.name).join(', '))
-        }
       }
     } catch (challengeError) {
       console.warn('Erreur lors de la mise à jour des défis:', challengeError)
@@ -559,7 +551,6 @@ export async function addUserXP(userId, action, customXP = null) {
               // Vérifier si la quête est complétée
               if (updatedQuest && updatedQuest.status === 'completed') {
                 const completion = await questsService.default.completeQuest(userId, questId)
-                console.log(`🏆 Quête complétée pour ${userId}: ${completion.quest.title}`)
                 
                 // Débloquer de nouvelles quêtes
                 const userHouse = newData.house || 'gryffindor'
@@ -574,8 +565,6 @@ export async function addUserXP(userId, action, customXP = null) {
           }
         }
       }
-      
-      console.log(`🗺️ Quêtes mises à jour pour ${userId} (action: ${action})`)
       
     } catch (questError) {
       console.warn('Erreur lors de la mise à jour des quêtes:', questError)

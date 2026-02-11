@@ -36,7 +36,6 @@ export async function addVideoToLibrary(videoData) {
 
     if (error) throw error
 
-    console.log('[VideoLibrary] Vidéo ajoutée:', data)
     return data
   } catch (error) {
     console.error('[VideoLibrary] Erreur ajout vidéo:', error)
@@ -73,7 +72,6 @@ export async function getAllVideos(filters = {}) {
 
     if (error) throw error
 
-    console.log('[VideoLibrary] Vidéos chargées:', data?.length)
     return data || []
   } catch (error) {
     console.error('[VideoLibrary] Erreur chargement vidéos:', error)
@@ -116,7 +114,6 @@ export async function updateVideo(videoId, updates) {
 
     if (error) throw error
 
-    console.log('[VideoLibrary] Vidéo mise à jour:', data)
     return data
   } catch (error) {
     console.error('[VideoLibrary] Erreur mise à jour vidéo:', error)
@@ -134,7 +131,6 @@ export async function deleteVideo(videoId) {
 
     if (error) throw error
 
-    console.log('[VideoLibrary] Vidéo supprimée:', videoId)
   } catch (error) {
     console.error('[VideoLibrary] Erreur suppression vidéo:', error)
     throw error
@@ -145,7 +141,6 @@ export async function deleteVideo(videoId) {
 export async function addTicketVideosToLibrary(ticket) {
   try {
     if (!ticket.metadata?.video_links || ticket.metadata.video_links.length === 0) {
-      console.log('[VideoLibrary] Pas de vidéos à ajouter pour le ticket:', ticket.id)
       return []
     }
 
@@ -160,7 +155,6 @@ export async function addTicketVideosToLibrary(ticket) {
         .single()
 
       if (existing) {
-        console.log('[VideoLibrary] Vidéo déjà dans la bibliothèque:', videoLink.url)
         continue
       }
 
@@ -184,7 +178,6 @@ export async function addTicketVideosToLibrary(ticket) {
       addedVideos.push(video)
     }
 
-    console.log('[VideoLibrary] Vidéos ajoutées depuis ticket:', addedVideos.length)
     return addedVideos
   } catch (error) {
     console.error('[VideoLibrary] Erreur ajout vidéos du ticket:', error)
@@ -262,8 +255,6 @@ export async function getVimeoVideos(onProgress = null) {
     let hasMore = true
     const perPage = 100 // Maximum autorisé par Vimeo
 
-    console.log('[VideoLibrary] 🔄 Début du chargement des vidéos Vimeo...')
-
     while (hasMore) {
       const response = await fetch(`https://api.vimeo.com/me/videos?per_page=${perPage}&page=${page}`, {
         headers: {
@@ -293,8 +284,6 @@ export async function getVimeoVideos(onProgress = null) {
 
       allVideos = [...allVideos, ...videos]
       
-      console.log(`[VideoLibrary] 📄 Page ${page}: ${videos.length} vidéos chargées (Total: ${allVideos.length})`)
-
       // Callback de progression
       if (onProgress) {
         onProgress(allVideos.length, page)
@@ -311,7 +300,6 @@ export async function getVimeoVideos(onProgress = null) {
       }
     }
 
-    console.log('[VideoLibrary] ✅ Toutes les vidéos Vimeo chargées:', allVideos.length)
     return allVideos
   } catch (error) {
     console.error('[VideoLibrary] ❌ Erreur chargement Vimeo:', error)

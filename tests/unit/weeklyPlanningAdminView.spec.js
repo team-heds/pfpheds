@@ -378,3 +378,95 @@ describe('WeeklyPlanningAdminView', () => {
     expect(badge.text()).toBe('+2')
   })
 })
+
+// ── Export Excel helpers (pure functions) ──────────────────────
+
+const getCourseRowHeight = (courseTitle) => {
+  const text = (courseTitle || '').toString()
+  const baseHeight = 20
+  const lineHeight = 15
+  const charsPerLine = 90
+  const lines = text
+    .split('\n')
+    .map(line => Math.max(1, Math.ceil(line.length / charsPerLine)))
+    .reduce((sum, count) => sum + count, 0)
+  return Math.max(baseHeight, lines * lineHeight)
+}
+
+const getTeachersRowHeight = (teacherChunk) => {
+  const longestName = (teacherChunk || []).reduce((max, teacher) => {
+    if (typeof teacher !== 'string') return max
+    return teacher.length > max.length ? teacher : max
+  }, '')
+  return getCourseRowHeight(longestName)
+}
+
+const getSemesterLabel = (week) => {
+  return (week >= 38 || week <= 7) ? 'Semestre d\'Automne' : 'Semestre de Printemps'
+}
+
+describe('getCourseRowHeight', () => {
+  it('returns baseHeight (20) for empty or short text', () => {
+    expect(getCourseRowHeight('')).toBe(20)
+    expect(getCourseRowHeight(null)).toBe(20)
+    expect(getCourseRowHeight('Short')).toBe(20)
+  })
+
+  it('increases height for text longer than 90 chars', () => {
+    const longText = 'A'.repeat(180)
+    expect(getCourseRowHeight(longText)).toBe(30) // 2 lines * 15
+  })
+
+  it('handles multiline text with newlines', () => {
+    const text = 'Line 1\nLine 2\nLine 3'
+    expect(getCourseRowHeight(text)).toBe(45) // 3 lines * 15
+  })
+
+  it('handles mixed long lines and newlines', () => {
+    const text = 'A'.repeat(100) + '\nShort'
+    // Line 1: ceil(100/90)=2, Line 2: ceil(5/90)=1 → 3 lines * 15 = 45
+    expect(getCourseRowHeight(text)).toBe(45)
+  })
+})
+
+describe('getTeachersRowHeight', () => {
+  it('returns baseHeight for short teacher names', () => {
+    expect(getTeachersRowHeight(['Alice', 'Bob'])).toBe(20)
+  })
+
+  it('returns baseHeight for empty array', () => {
+    expect(getTeachersRowHeight([])).toBe(20)
+  })
+
+  it('returns baseHeight for null', () => {
+    expect(getTeachersRowHeight(null)).toBe(20)
+  })
+
+  it('ignores non-string entries', () => {
+    expect(getTeachersRowHeight([{ name: 'Alice' }, 42])).toBe(20)
+  })
+
+  it('uses the longest teacher name for height calculation', () => {
+    const longName = 'A'.repeat(100)
+    expect(getTeachersRowHeight(['Short', longName])).toBe(30) // ceil(100/90)=2 → 2*15=30
+  })
+})
+
+describe('getSemesterLabel', () => {
+  it('returns Automne for weeks 38-52', () => {
+    expect(getSemesterLabel(38)).toBe('Semestre d\'Automne')
+    expect(getSemesterLabel(45)).toBe('Semestre d\'Automne')
+    expect(getSemesterLabel(52)).toBe('Semestre d\'Automne')
+  })
+
+  it('returns Automne for weeks 1-7', () => {
+    expect(getSemesterLabel(1)).toBe('Semestre d\'Automne')
+    expect(getSemesterLabel(7)).toBe('Semestre d\'Automne')
+  })
+
+  it('returns Printemps for weeks 8-37', () => {
+    expect(getSemesterLabel(8)).toBe('Semestre de Printemps')
+    expect(getSemesterLabel(20)).toBe('Semestre de Printemps')
+    expect(getSemesterLabel(37)).toBe('Semestre de Printemps')
+  })
+})

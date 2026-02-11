@@ -16,8 +16,6 @@ export const usePraticiensStore = defineStore('praticiens', {
       this.error = null
       
       try {
-        console.log('🔍 [PRATICIENS STORE] Fetching praticiens from Supabase...')
-        
         let query = supabase
           .from('praticiens_formateurs')
           .select('*', { count: 'exact' })
@@ -58,8 +56,6 @@ export const usePraticiensStore = defineStore('praticiens', {
         this.items = praticiens
         this.total = count || 0
         
-        console.log(`✅ [PRATICIENS STORE] Loaded ${praticiens.length}/${this.total} praticiens from Supabase`)
-        
         return { items: this.items, total: this.total }
       } catch (error) {
         console.error('❌ [PRATICIENS STORE] Fetch error:', error)
@@ -75,8 +71,6 @@ export const usePraticiensStore = defineStore('praticiens', {
       this.error = null
       
       try {
-        console.log('➕ [PRATICIENS STORE] Creating new praticien in Supabase:', data)
-        
         const praticienData = {
           nom: data.nom || data.Nom || '',
           prenom: data.prenom || data.Prenom || '',
@@ -84,8 +78,6 @@ export const usePraticiensStore = defineStore('praticiens', {
           institution: data.institution || data.Institution || null,
           localite: data.localite || data.Localite || null,
         }
-        
-        console.log('📤 [PRATICIENS STORE] Données à insérer:', praticienData)
         
         // Ne pas envoyer l'ID, Supabase va le générer automatiquement
         const { data: newData, error } = await supabase
@@ -127,8 +119,6 @@ export const usePraticiensStore = defineStore('praticiens', {
         this.items.unshift(newPraticien)
         this.total += 1
         
-        console.log('✅ [PRATICIENS STORE] Praticien created successfully in Supabase:', newPraticien.id)
-        
         return newPraticien
       } catch (error) {
         console.error('❌ [PRATICIENS STORE] Create error:', error)
@@ -143,8 +133,6 @@ export const usePraticiensStore = defineStore('praticiens', {
       this.error = null
       
       try {
-        console.log('📝 [PRATICIENS STORE] Updating praticien in Supabase:', id, form)
-        
         const updateData = {
           nom: form.nom || form.Nom || '',
           prenom: form.prenom || form.Prenom || '',
@@ -182,8 +170,6 @@ export const usePraticiensStore = defineStore('praticiens', {
           }
         }
         
-        console.log('✅ [PRATICIENS STORE] Praticien updated successfully in Supabase:', id)
-        
         return this.items[index]
       } catch (error) {
         console.error('❌ [PRATICIENS STORE] Update error:', error)
@@ -197,8 +183,6 @@ export const usePraticiensStore = defineStore('praticiens', {
       this.error = null
       
       try {
-        console.log('🗑️ [PRATICIENS STORE] Deleting praticien from Supabase:', id)
-        
         const { error } = await supabase
           .from('praticiens_formateurs')
           .delete()
@@ -210,7 +194,6 @@ export const usePraticiensStore = defineStore('praticiens', {
         this.items = this.items.filter(p => p.id !== id)
         this.total = Math.max(0, this.total - 1)
         
-        console.log('✅ [PRATICIENS STORE] Praticien deleted successfully from Supabase:', id)
       } catch (error) {
         console.error('❌ [PRATICIENS STORE] Delete error:', error)
         this.error = error.message
@@ -223,8 +206,6 @@ export const usePraticiensStore = defineStore('praticiens', {
     // Méthode pour récupérer un praticien par ID
     async getPraticienById(id) {
       try {
-        console.log('🔍 [PRATICIENS STORE] Getting praticien by ID from Supabase:', id)
-        
         const { data, error } = await supabase
           .from('praticiens_formateurs')
           .select('*')
@@ -234,7 +215,6 @@ export const usePraticiensStore = defineStore('praticiens', {
         if (error) {
           if (error.code === 'PGRST116') {
             // Pas trouvé
-            console.log('❌ [PRATICIENS STORE] Praticien not found:', id)
             return null
           }
           throw error
@@ -257,7 +237,6 @@ export const usePraticiensStore = defineStore('praticiens', {
             createdAt: data.created_at,
             updatedAt: data.updated_at
           }
-          console.log('✅ [PRATICIENS STORE] Praticien found in Supabase:', praticien)
           return praticien
         }
         

@@ -109,7 +109,6 @@ export const useUserStore = defineStore('user', {
               filter: `user_id=eq.${this.user.id}`,
             },
             (payload) => {
-              console.log('📡 [UserStore] Profile update received:', payload.eventType)
               if (payload.eventType === 'DELETE') {
                 this.profile = null
               } else {
@@ -119,21 +118,14 @@ export const useUserStore = defineStore('user', {
             }
           )
           .subscribe((status, err) => {
-            if (status === 'SUBSCRIBED') {
-              console.log('✅ [UserStore] Profile realtime subscription active')
-            } else if (status === 'CHANNEL_ERROR') {
+            if (status === 'CHANNEL_ERROR') {
               console.warn('⚠️ [UserStore] Realtime subscription error:', err)
-              console.log('ℹ️ [UserStore] App will continue without realtime updates')
             } else if (status === 'TIMED_OUT') {
               console.warn('⚠️ [UserStore] Realtime subscription timed out')
-              console.log('ℹ️ [UserStore] App will continue without realtime updates')
-            } else if (status === 'CLOSED') {
-              console.log('🔌 [UserStore] Realtime subscription closed')
             }
           })
       } catch (error) {
         console.error('❌ [UserStore] Failed to subscribe to profile updates:', error)
-        console.log('ℹ️ [UserStore] App will continue without realtime updates')
         this.profileChannel = null
       }
     },

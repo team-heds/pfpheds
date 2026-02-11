@@ -93,8 +93,6 @@ export const useTrackStore = defineStore('track', () => {
     error.value = null
     
     try {
-      console.log('🔄 [trackStore] Initialisation...')
-      
       // 1. Charger toutes les filières
       await loadTracks()
       
@@ -107,12 +105,6 @@ export const useTrackStore = defineStore('track', () => {
       }
       
       initialized.value = true
-      console.log('✅ [trackStore] Initialisé:', {
-        tracks: tracks.value.length,
-        userRoles: userTrackRoles.value.length,
-        activeTrack: activeTrackId.value,
-        isSuperAdmin: isSuperAdmin.value
-      })
     } catch (e) {
       error.value = e.message
       console.error('❌ [trackStore] Erreur init:', e)
@@ -133,7 +125,6 @@ export const useTrackStore = defineStore('track', () => {
     
     if (err) throw err
     tracks.value = data || []
-    console.log('📋 [trackStore] Tracks chargées:', tracks.value.map(t => t.id))
   }
 
   /**
@@ -145,7 +136,6 @@ export const useTrackStore = defineStore('track', () => {
     
     if (!rpcError && rpcData) {
       userTrackRoles.value = rpcData
-      console.log('👤 [trackStore] Rôles chargés via RPC:', userTrackRoles.value)
       return
     }
     
@@ -184,15 +174,12 @@ export const useTrackStore = defineStore('track', () => {
       granted_at: r.granted_at
     }))
     
-    console.log('👤 [trackStore] Rôles chargés:', userTrackRoles.value)
   }
 
   /**
    * Fallback: charger les rôles depuis user_profiles (ancien système)
    */
   async function loadLegacyRoles(userId) {
-    console.log('🔄 [trackStore] Chargement rôles legacy...')
-    
     const { data: profile, error: err } = await supabase
       .from('user_profiles')
       .select('role, permissions')
@@ -246,7 +233,6 @@ export const useTrackStore = defineStore('track', () => {
     }
 
     userTrackRoles.value = roles
-    console.log('👤 [trackStore] Rôles legacy mappés:', roles)
   }
 
   /**
@@ -255,7 +241,6 @@ export const useTrackStore = defineStore('track', () => {
   function setActiveTrack(trackId) {
     if (canAccessTrack(trackId)) {
       activeTrackId.value = trackId
-      console.log('🔄 [trackStore] Filière active changée:', trackId)
     } else {
       console.warn('⚠️ [trackStore] Accès refusé à la filière:', trackId)
     }
@@ -325,7 +310,6 @@ export const useTrackStore = defineStore('track', () => {
     loading.value = false
     error.value = null
     initialized.value = false
-    console.log('🔄 [trackStore] Reset')
   }
 
   // ============================================

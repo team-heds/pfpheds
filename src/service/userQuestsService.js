@@ -197,7 +197,6 @@ class UserQuestsService {
       
       if (error) throw error
       
-      console.log('✅ Quête démarrée:', questId)
       return data
       
     } catch (error) {
@@ -238,7 +237,6 @@ class UserQuestsService {
       
       if (error) throw error
       
-      console.log(`✅ Progression mise à jour: ${progress}%`)
       return data
       
     } catch (error) {
@@ -263,7 +261,6 @@ class UserQuestsService {
       
       if (error) throw error
       
-      console.log('🎉 Quête complétée:', questId)
       return data
       
     } catch (error) {
@@ -323,7 +320,6 @@ class UserQuestsService {
    * @returns {RealtimeChannel} Canal Supabase
    */
   subscribeToQuestUpdates(userId, callback) {
-    console.log('🔔 Abonnement temps réel aux quêtes pour:', userId)
     try {
       const channel = supabase
         .channel(`user-quests-${userId}`)
@@ -333,7 +329,6 @@ class UserQuestsService {
           table: 'user_quest_progress',
           filter: `user_id=eq.${userId}`
         }, (payload) => {
-          console.log('🔄 Changement détecté:', payload)
           callback(payload)
         })
         .subscribe()
@@ -355,7 +350,6 @@ class UserQuestsService {
       } else {
         try { supabase.removeChannel(channel) } catch {}
       }
-      console.log('🔕 Désabonnement temps réel')
     }
   }
 }

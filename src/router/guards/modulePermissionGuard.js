@@ -28,7 +28,7 @@ export async function modulePermissionGuard(to, from, next) {
     const moduleId = to.params.id
     
     try {
-      console.log(`🔍 [ModuleGuard] Vérification accès module ${moduleId} pour ${userEmail}`)
+      if (import.meta.env.DEV) console.log(`🔍 [ModuleGuard] Vérification accès module ${moduleId} pour ${userEmail}`)
       
       // Récupérer le module depuis Supabase
       const { data: module, error } = await supabase
@@ -73,7 +73,7 @@ export async function modulePermissionGuard(to, from, next) {
       }
       
       if (isAdmin || isOwner || isCoordinateur || matchByName) {
-        console.log('✅ [ModuleGuard] Accès autorisé')
+        if (import.meta.env.DEV) console.log('✅ [ModuleGuard] Accès autorisé')
         next()
       } else {
         console.warn('❌ [ModuleGuard] Accès refusé - Pas le responsable')
