@@ -104,11 +104,33 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['vue', 'vue-router', 'pinia'],
-          primevue: ['primevue'],
-          supabase: ['@supabase/supabase-js'],
-          firebase: ['firebase/app', 'firebase/auth', 'firebase/database', 'firebase/storage'],
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('vue') && !id.includes('primevue') && !id.includes('devtools')) {
+              return 'vendor'
+            }
+            if (id.includes('primevue') || id.includes('primeicons')) {
+              return 'primevue'
+            }
+            if (id.includes('@supabase')) {
+              return 'supabase'
+            }
+            if (id.includes('firebase')) {
+              return 'firebase'
+            }
+            if (id.includes('three') || id.includes('cannon')) {
+              return 'three'
+            }
+            if (id.includes('chart.js') || id.includes('chartjs')) {
+              return 'charts'
+            }
+            if (id.includes('@tiptap') || id.includes('prosemirror')) {
+              return 'editor'
+            }
+            if (id.includes('xlsx') || id.includes('jspdf') || id.includes('exceljs')) {
+              return 'export-libs'
+            }
+          }
         },
       },
     },

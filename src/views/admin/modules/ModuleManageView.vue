@@ -1202,9 +1202,6 @@ import ColorPicker from 'primevue/colorpicker'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import { supabase } from '@/supabase'
-import * as XLSX from 'xlsx'
-import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable'
 
 const route = useRoute()
 const router = useRouter()
@@ -2826,9 +2823,10 @@ const getClassTextColor = (classCode) => {
 }
 
 // Export du planning en Excel avec feuilles par classe
-const exportPlanningToExcel = () => {
+const exportPlanningToExcel = async () => {
   if (filteredPlanning.value.length === 0) return
   
+  const XLSX = await import('xlsx')
   const wb = XLSX.utils.book_new()
   
   // Colonnes définies
@@ -2943,9 +2941,13 @@ const exportPlanningToExcel = () => {
 }
 
 // Export du planning en PDF
-const exportPlanningToPDF = () => {
+const exportPlanningToPDF = async () => {
   if (filteredPlanning.value.length === 0) return
   
+  const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+    import('jspdf'),
+    import('jspdf-autotable')
+  ])
   const doc = new jsPDF('landscape')
   
   // Titre

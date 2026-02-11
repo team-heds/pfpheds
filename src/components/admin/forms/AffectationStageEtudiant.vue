@@ -104,7 +104,7 @@ import Navbar from '@/components/common/utils/Navbar.vue';
 import InputText from 'primevue/inputtext';
 import Checkbox from 'primevue/checkbox';
 import Button from 'primevue/button';
-import { db, getUserNameById } from 'root/firebase.js';
+import { db } from 'root/firebase.js';
 import { ref, onValue, update } from 'firebase/database';
 
 export default {

@@ -275,7 +275,6 @@ import ConfirmDialog from 'primevue/confirmdialog'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import Toast from 'primevue/toast'
-import * as XLSX from 'xlsx'
 import { useAutoRefresh } from '@/composables/useAutoRefresh'
 
 const router = useRouter()
@@ -697,7 +696,8 @@ const viewDetails = (row) => {
   router.push({ name: 'ProfileAdmin', params: { id: row.user_id } })
 }
 
-const exportExcel = () => {
+const exportExcel = async () => {
+  const XLSX = await import('xlsx')
   const rows = (filteredList.value || []).map((r) => ({
     etudiant: r.student_name || '',
     classe: r.student_class || '',

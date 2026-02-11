@@ -565,7 +565,6 @@ import Dialog from 'primevue/dialog'
 import Textarea from 'primevue/textarea'
 import Toast from 'primevue/toast'
 import ConfirmDialog from 'primevue/confirmdialog'
-import Tooltip from 'primevue/tooltip'
 import { useKpiManager } from '@/composables/useKpiManager'
 import { useRouteErrors } from '@/composables/useRouteErrors'
 

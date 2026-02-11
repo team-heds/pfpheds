@@ -185,7 +185,7 @@
 
 <script>
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
-import { db, auth, storage } from '../../../../firebase.js';
+import { db } from '../../../../firebase.js';
 import { ref as dbRef, onValue, update } from 'firebase/database';
 
 import InputText from 'primevue/inputtext';

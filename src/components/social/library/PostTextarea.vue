@@ -44,9 +44,7 @@
 </template>
 
 <script>
-import { db } from '../../../../firebase';
 import { getAuth } from 'firebase/auth';
-import { ref as dbRef, push, set } from 'firebase/database';
 
 export default {
   name: "PostTextarea",

@@ -70,7 +70,6 @@ import LeftSidebar from '@/components/social/library/LeftSidebar.vue';
 import RightSidebar from '@/components/social/library/RightSidebar.vue';
 import VotationResultProfil from '@/components/user/details/VotationResultProfil.vue'
 import RadarProfil from '@/components/user/details/RadarProfil.vue'
-import QuestsProfileCard from '@/components/gamification/QuestsProfileCard.vue'
 
 const props = defineProps({
   embed: { type: Boolean, default: false }

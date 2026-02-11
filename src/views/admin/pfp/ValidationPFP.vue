@@ -217,7 +217,6 @@ import InputSwitch from 'primevue/inputswitch'
 import Checkbox from 'primevue/checkbox'
 import Dialog from 'primevue/dialog'
 import Textarea from 'primevue/textarea'
-import * as XLSX from 'xlsx'
 import Row from 'primevue/row'
 
 const loading = ref(false)
@@ -245,7 +244,8 @@ const typesPFP = ref([
   { label: 'PFP4', value: 'PFP4' }
 ])
 
-const exportExcel = () => {
+const exportExcel = async () => {
+  const XLSX = await import('xlsx')
   const rows = (filteredPlacesList.value || []).map((r) => ({
     etudiant: r.student_name || '',
     classe: r.student_class || '',

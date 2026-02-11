@@ -294,9 +294,7 @@ import Dropdown from 'primevue/dropdown'
 import Dialog from 'primevue/dialog'
 import ProgressSpinner from 'primevue/progressspinner'
 import Tag from 'primevue/tag'
-import Navbar from '../common/utils/Navbar.vue'
 import adminService from '../../service/adminService'
-import rolesService, { PERMISSIONS } from '../../service/rolesService'
 
 const toast = useToast()
 const router = useRouter()

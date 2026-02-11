@@ -175,7 +175,6 @@ import Tag from 'primevue/tag'
 import Dropdown from 'primevue/dropdown'
 import Avatar from 'primevue/avatar'
 import InputSwitch from 'primevue/inputswitch'
-import * as XLSX from 'xlsx'
 
 const router = useRouter()
 
@@ -200,7 +199,8 @@ const typesPFP = ref([
 
 ])
 
-const exportExcel = () => {
+const exportExcel = async () => {
+  const XLSX = await import('xlsx')
   const rows = (filteredPlacesList.value || []).map((r) => ({
     etudiant: r.student_name || '',
     classe: r.student_class || '',

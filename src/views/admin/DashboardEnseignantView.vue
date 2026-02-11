@@ -346,9 +346,6 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import { loadEnseignantDashboard } from '@/services/enseignantDashboardService';
 import { useToast } from 'primevue/usetoast';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -458,7 +455,7 @@ function getTypeSeverity(type) {
   return severities[type] || 'secondary';
 }
 
-function exportMyPlanning() {
+async function exportMyPlanning() {
   if (upcomingSessions.value.length === 0) {
     toast.add({
       severity: 'warn',
@@ -468,6 +465,11 @@ function exportMyPlanning() {
     });
     return;
   }
+  
+  const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+    import('jspdf'),
+    import('jspdf-autotable')
+  ]);
   
   const userName = authStore.user?.displayName || authStore.user?.email?.split('@')[0] || 'enseignant';
   
@@ -518,8 +520,10 @@ function exportMyPlanning() {
   });
 }
 
-function exportMyPlanningExcel() {
+async function exportMyPlanningExcel() {
   if (upcomingSessions.value.length === 0) return;
+  
+  const XLSX = await import('xlsx');
   
   const userName = authStore.user?.displayName || authStore.user?.email?.split('@')[0] || 'enseignant';
   
