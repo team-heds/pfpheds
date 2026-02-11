@@ -11,7 +11,7 @@ import { supabase } from '@/supabase'
  */
 export async function getMyCourses(userId, userEmail) {
   try {
-    console.log('📚 [getMyCourses] Chargement cours pour enseignant:', userId)
+    if (import.meta.env.DEV) console.log('📚 [getMyCourses] Chargement cours pour enseignant:', userId)
     
     // Récupérer les assignations via course_teachers
     const { data: assignments, error: assignError } = await supabase
@@ -64,7 +64,7 @@ export async function getMyCourses(userId, userEmail) {
         trackId: a.courses.modules?.track_id || null
       }))
     
-    console.log('✅ [getMyCourses] Cours trouvés:', courses.length)
+    if (import.meta.env.DEV) console.log('✅ [getMyCourses] Cours trouvés:', courses.length)
     return courses
   } catch (error) {
     console.error('❌ [getMyCourses] Erreur:', error)
@@ -118,7 +118,7 @@ async function getMyCoursesSimple(userId, userEmail) {
  */
 export async function getMyWeekPlanning(userId, userEmail, teacherName = null) {
   try {
-    console.log('📅 [getMyWeekPlanning] Chargement planning pour:', userEmail || userId)
+    if (import.meta.env.DEV) console.log('📅 [getMyWeekPlanning] Chargement planning pour:', userEmail || userId)
     
     // Calculer la semaine courante
     const now = new Date()
@@ -141,7 +141,7 @@ export async function getMyWeekPlanning(userId, userEmail, teacherName = null) {
     }
     
     if (!slots || slots.length === 0) {
-      console.log('ℹ️ [getMyWeekPlanning] Aucun planning trouvé pour semaine', weekNumber)
+      if (import.meta.env.DEV) console.log('ℹ️ [getMyWeekPlanning] Aucun planning trouvé pour semaine', weekNumber)
       return { week: generateEmptyWeek(), allSlots: [] }
     }
     
@@ -159,7 +159,7 @@ export async function getMyWeekPlanning(userId, userEmail, teacherName = null) {
       })
     })
     
-    console.log('📅 [getMyWeekPlanning] Créneaux trouvés:', mySlots.length, '/', slots.length)
+    if (import.meta.env.DEV) console.log('📅 [getMyWeekPlanning] Créneaux trouvés:', mySlots.length, '/', slots.length)
     
     // Convertir en format semaine
     return { week: formatSlotsToWeek(mySlots), allSlots: mySlots }
@@ -174,7 +174,7 @@ export async function getMyWeekPlanning(userId, userEmail, teacherName = null) {
  */
 export async function getUpcomingSessions(userEmail, teacherName = null, limit = 10) {
   try {
-    console.log('📆 [getUpcomingSessions] Chargement séances à venir pour:', userEmail)
+    if (import.meta.env.DEV) console.log('📆 [getUpcomingSessions] Chargement séances à venir pour:', userEmail)
     
     const today = new Date().toISOString().split('T')[0]
     const currentWeek = getWeekNumber(new Date())
@@ -221,7 +221,7 @@ export async function getUpcomingSessions(userEmail, teacherName = null, limit =
       weekNumber: slot.week_number
     }))
     
-    console.log('✅ [getUpcomingSessions] Séances à venir:', sessions.length)
+    if (import.meta.env.DEV) console.log('✅ [getUpcomingSessions] Séances à venir:', sessions.length)
     return sessions
   } catch (error) {
     console.error('❌ [getUpcomingSessions] Erreur:', error)
@@ -432,7 +432,7 @@ export function calculateStats(courses, weekPlanning) {
  */
 export async function loadEnseignantDashboard(userId, userEmail, teacherName = null) {
   try {
-    console.log('🚀 [loadEnseignantDashboard] Chargement complet pour:', userEmail)
+    if (import.meta.env.DEV) console.log('🚀 [loadEnseignantDashboard] Chargement complet pour:', userEmail)
     
     // Charger cours, planning et séances à venir en parallèle
     const [courses, planningData, upcomingSessions] = await Promise.all([
@@ -459,7 +459,7 @@ export async function loadEnseignantDashboard(userId, userEmail, teacherName = n
       stats
     }
     
-    console.log('✅ [loadEnseignantDashboard] Données chargées:', {
+    if (import.meta.env.DEV) console.log('✅ [loadEnseignantDashboard] Données chargées:', {
       coursesCount: courses.length,
       modulesCount: modules.length,
       upcomingCount: upcomingSessions.length,

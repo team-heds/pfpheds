@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import { sanitizeHtml } from '@/composables/useSanitize';
 
 const emit = defineEmits(['send:message']);
 const props = defineProps({
@@ -85,7 +86,7 @@ const goBack = () => {
         </div>
         <div class="surface-border border-1 border-round p-4">
             <div class="text-900 font-semibold text-lg mb-3">{{ mail?.title }}</div>
-            <div class="line-height-3 mt-0 mb-3" v-html="mail?.message"></div>
+            <div class="line-height-3 mt-0 mb-3" v-html="sanitizeHtml(mail?.message)"></div>
 
             <Editor
                 v-model="newMail.message"

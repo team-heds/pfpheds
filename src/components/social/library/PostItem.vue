@@ -21,7 +21,7 @@
     <div class="post-content p-3">
       <!-- Texte du post -->
       <div v-if="post.Content" class="post-text">
-        <div v-html="post.Content"></div>
+        <div v-html="sanitizeHtml(post.Content)"></div>
         <!-- YouTube Embed -->
         <div v-for="(yt, i) in extractYouTubeLinks(post.Content)" :key="'yt-'+i" class="youtube-responsive">
           <iframe :src="getYouTubeEmbedUrl(yt)" frameborder="0" allowfullscreen></iframe>
@@ -181,6 +181,7 @@ import { usePostsStore } from '@/stores/postsStore';
 import { useAuthStore } from '@/stores/authStore'; // Assurez-vous que ce store existe et expose l'utilisateur
 import Textarea from 'primevue/textarea';
 import gamificationIntegration from '@/service/gamificationIntegration';
+import { sanitizeHtml } from '@/composables/useSanitize';
 
 const props = defineProps({
   post: {

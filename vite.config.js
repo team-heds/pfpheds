@@ -119,6 +119,13 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./tests/setup.js'],
     include: ['tests/unit/**/*.spec.js'],
-    css: true
+    css: true,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'text-summary', 'html'],
+      reportsDirectory: './coverage',
+      include: ['src/stores/**', 'src/service/**', 'src/services/**', 'src/composables/**'],
+      exclude: ['node_modules/', 'tests/', 'src/**/*.vue'],
+    },
   }
 })

@@ -11,7 +11,7 @@ import { supabase } from '@/supabase'
  */
 export async function getModulePlanning(moduleId) {
   try {
-    console.log('📅 [modulePlanning] Chargement planning pour module:', moduleId)
+    if (import.meta.env.DEV) console.log('📅 [modulePlanning] Chargement planning pour module:', moduleId)
     
     // Récupérer le code du module
     const { data: module, error: moduleError } = await supabase
@@ -72,7 +72,7 @@ export async function getModulePlanning(moduleId) {
     // Combiner les données
     const planning = formatPlanningData(timeSlots || [], cells || [], module)
     
-    console.log('✅ [modulePlanning] Planning chargé:', planning.length, 'séances')
+    if (import.meta.env.DEV) console.log('✅ [modulePlanning] Planning chargé:', planning.length, 'séances')
     return planning
   } catch (error) {
     console.error('❌ [modulePlanning] Erreur:', error)
@@ -108,7 +108,7 @@ export async function getModulePlanningByCode(moduleCode) {
  */
 export async function saveModuleTimeSlot(slotData) {
   try {
-    console.log('💾 [modulePlanning] Sauvegarde créneau:', slotData)
+    if (import.meta.env.DEV) console.log('💾 [modulePlanning] Sauvegarde créneau:', slotData)
     
     const payload = {
       class_code: slotData.classCode || slotData.class_code,
@@ -137,7 +137,7 @@ export async function saveModuleTimeSlot(slotData) {
         .single()
       
       if (error) throw error
-      console.log('✅ [modulePlanning] Créneau mis à jour')
+      if (import.meta.env.DEV) console.log('✅ [modulePlanning] Créneau mis à jour')
       return data
     } else {
       // Insert
@@ -150,7 +150,7 @@ export async function saveModuleTimeSlot(slotData) {
         .single()
       
       if (error) throw error
-      console.log('✅ [modulePlanning] Créneau créé')
+      if (import.meta.env.DEV) console.log('✅ [modulePlanning] Créneau créé')
       return data
     }
   } catch (error) {
@@ -165,7 +165,7 @@ export async function saveModuleTimeSlot(slotData) {
  */
 export async function deleteModuleTimeSlot(slotId) {
   try {
-    console.log('🗑️ [modulePlanning] Suppression créneau:', slotId)
+    if (import.meta.env.DEV) console.log('🗑️ [modulePlanning] Suppression créneau:', slotId)
     
     const { error } = await supabase
       .from('planning_time_slots')
@@ -173,7 +173,7 @@ export async function deleteModuleTimeSlot(slotId) {
       .eq('id', slotId)
     
     if (error) throw error
-    console.log('✅ [modulePlanning] Créneau supprimé')
+    if (import.meta.env.DEV) console.log('✅ [modulePlanning] Créneau supprimé')
     return { success: true }
   } catch (error) {
     console.error('❌ [modulePlanning] Erreur delete:', error)

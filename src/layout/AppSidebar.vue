@@ -31,19 +31,17 @@ const anchor = () => {
 </script>
 
 <template>
-  <div @mouseenter="onMouseEnter" @mouseleave="onMouseLeave">
+  <nav @mouseenter="onMouseEnter" @mouseleave="onMouseLeave" aria-label="Menu principal">
     <div class="sidebar-header">
-      <router-link :to="{ name: 'DashbordAdmin' }" class="app-logo">
-        <a href="/">
-        <img class="img-heds" src="@/assets/images/FR-DE_HEdS_rvb_neg.png" alt="Description">
-        </a>
+      <router-link :to="{ name: 'DashbordAdmin' }" class="app-logo" aria-label="Accueil - Plateforme HEdS">
+        <img class="img-heds" src="@/assets/images/FR-DE_HEdS_rvb_neg.png" alt="Logo HEdS - Haute École de Santé">
       </router-link>
-      <button class="layout-sidebar-anchor p-link z-2 mb-2" type="button" @click="anchor()"></button>
+      <button class="layout-sidebar-anchor p-link z-2 mb-2" type="button" @click="anchor()" aria-label="Épingler le menu latéral"></button>
     </div>
     <div class="layout-menu-container">
       <AppMenu />
     </div>
-  </div>
+  </nav>
 </template>
 <style lang="scss" scoped>
 

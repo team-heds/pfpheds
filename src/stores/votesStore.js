@@ -1,3 +1,19 @@
+/**
+ * @module votesStore
+ * @description Store Pinia pour la gestion des votes étudiants (PFP).
+ * Utilise Supabase avec support RPC backend pour contourner les restrictions RLS.
+ *
+ * @state {Array} votes - Liste des votes de l'utilisateur
+ * @state {Object|null} currentVote - Vote en cours de consultation
+ * @state {boolean} loading - Indicateur de chargement
+ * @state {string|null} error - Dernier message d'erreur
+ *
+ * @action fetchUserVotes(userId) - Récupère tous les votes d'un utilisateur
+ * @action fetchVote(voteId) - Récupère un vote spécifique
+ * @action saveVote(voteData) - Crée ou met à jour un vote (via RPC ou direct)
+ * @action deleteVote(voteId) - Supprime un vote
+ * @action reset() - Réinitialise le store
+ */
 import { defineStore } from 'pinia'
 import { supabase } from '@/supabase'
 import votesBackendService from './votesBackendService'

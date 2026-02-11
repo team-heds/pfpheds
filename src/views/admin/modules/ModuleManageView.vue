@@ -1178,7 +1178,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import { useModules } from '@/composables/useModules'
@@ -1187,8 +1187,6 @@ import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import PageHeader from '@/components/admin/common/PageHeader.vue'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
-import Badge from 'primevue/badge'
-import Chip from 'primevue/chip'
 import Dialog from 'primevue/dialog'
 import Dropdown from 'primevue/dropdown'
 import InputText from 'primevue/inputtext'
@@ -1196,8 +1194,6 @@ import InputNumber from 'primevue/inputnumber'
 import Textarea from 'primevue/textarea'
 import AutoComplete from 'primevue/autocomplete'
 import ProgressSpinner from 'primevue/progressspinner'
-import ConfirmDialog from 'primevue/confirmdialog'
-import Toast from 'primevue/toast'
 import Card from 'primevue/card'
 import TabView from 'primevue/tabview'
 import TabPanel from 'primevue/tabpanel'
@@ -1209,12 +1205,6 @@ import { supabase } from '@/supabase'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
-import { 
-  getModulePlanningStats,
-  deleteModuleTimeSlot,
-  getAvailableClasses
-} from '@/services/modulePlanningService'
-import { v4 as uuidv4 } from 'uuid'
 
 const route = useRoute()
 const router = useRouter()

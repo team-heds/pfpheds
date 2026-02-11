@@ -1,3 +1,19 @@
+/**
+ * @module userStore
+ * @description Store Pinia pour la gestion du profil utilisateur Supabase.
+ * Gère la session, le profil et les abonnements temps réel.
+ *
+ * @state {Object|null} session - Session Supabase active
+ * @state {Object|null} user - Utilisateur Supabase connecté
+ * @state {Object|null} profile - Profil complet depuis user_profiles
+ * @state {boolean} authLoading - Chargement de l'authentification
+ * @state {boolean} profileLoading - Chargement du profil
+ *
+ * @action init() - Initialise la session et écoute les changements d'auth
+ * @action fetchProfile() - Charge le profil depuis Supabase
+ * @action updateProfile(data) - Met à jour le profil utilisateur
+ * @action signOut() - Déconnexion et nettoyage
+ */
 import { defineStore } from 'pinia'
 import { supabase } from '@/supabase.js'
 

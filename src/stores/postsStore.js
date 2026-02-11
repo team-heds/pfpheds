@@ -1,7 +1,20 @@
+/**
+ * @module postsStore
+ * @description Store Pinia pour la gestion des posts du réseau social éducatif.
+ * Communique avec l'API backend via Axios.
+ *
+ * @state {Array} posts - Liste des posts chargés
+ * @state {boolean} loading - Indicateur de chargement
+ * @state {string|null} error - Dernier message d'erreur
+ *
+ * @action fetchPosts() - Récupère tous les posts depuis l'API
+ * @action createPost(postData) - Crée un nouveau post
+ * @action updatePost(id, postData) - Met à jour un post existant
+ * @action deletePost(id) - Supprime un post
+ */
 import { defineStore } from 'pinia';
 import axios from 'axios';
 
-// Ensure you have a VITE_API_URL in your .env file, e.g., VITE_API_URL=http://localhost:3000/api
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 export const usePostsStore = defineStore('posts', {

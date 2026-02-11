@@ -1,7 +1,7 @@
 # 🏥 Plateforme HEdS - Formation Pratique Physiothérapie
 
 > **Plateforme éducative et collaborative pour la Haute École de Santé (HEdS) du Valais**  
-> Version 0.1.0.21 | Vue.js 3 + Firebase + PrimeVue
+> Version 0.1.60 | Vue.js 3 + Firebase + Supabase + PrimeVue
 
 [![Vue.js](https://img.shields.io/badge/Vue.js-3.x-4FC08D?style=flat-square&logo=vue.js)](https://vuejs.org/)
 [![Firebase](https://img.shields.io/badge/Firebase-Latest-FFCA28?style=flat-square&logo=firebase)](https://firebase.google.com/)
@@ -55,12 +55,17 @@ npm run dev
 ### Scripts Disponibles
 
 ```bash
-npm run dev          # Serveur de développement
-npm run build        # Build de production
-npm run preview      # Prévisualisation du build
-npm run lint         # Linting du code
-npm run format       # Formatage du code
-npm run clean        # Nettoyage et réinstallation
+npm run dev              # Serveur de développement (port 5172)
+npm run build            # Build de production
+npm run preview          # Prévisualisation du build
+npm run lint             # Linting du code
+npm run format           # Formatage du code
+npm run clean            # Nettoyage et réinstallation
+npm run test:unit        # Tests unitaires (Vitest)
+npm run test:unit:watch  # Tests unitaires en mode watch
+npm run test:coverage    # Tests avec rapport de couverture
+npm run test:e2e         # Tests E2E (Playwright)
+npm run test:e2e:ui      # Tests E2E avec interface graphique
 ```
 
 ---
@@ -79,13 +84,13 @@ npm run clean        # Nettoyage et réinstallation
 
 ### Stack Backend
 
-- **🔐 Authentication** : Firebase Auth
-- **🗄️ Database** : Firebase Realtime Database
+- **🔐 Authentication** : Firebase Auth + Supabase Auth (PKCE flow)
+- **🗄️ Database** : Firebase Realtime Database + Supabase (PostgreSQL)
 - **📁 Storage** : Firebase Storage
 - **☁️ Hosting** : Firebase Hosting
-- **⚡ Functions** : Firebase Cloud Functions
+- **⚡ Functions** : Firebase Cloud Functions + Supabase RPC
 
-*Cela va être modifié avec Supabase et Supabase Auth*
+> Migration progressive de Firebase vers Supabase en cours.
 
 ### Technologies Complémentaires
 
@@ -106,31 +111,49 @@ npm run clean        # Nettoyage et réinstallation
 pfpheds/
 ├── 📁 public/                    # Assets statiques
 │   ├── assets/images/           # Images publiques
-│   ├── manifest.json           # PWA manifest
-│   └── sw.js                   # Service Worker
+│   └── manifest.json           # PWA manifest
 ├── 📁 src/
-│   ├── 📁 assets/              # Assets sources
-│   ├── 📁 components/          # Composants Vue
+│   ├── 📁 assets/              # Assets sources (images, styles, thèmes)
+│   ├── 📁 components/          # Composants Vue (~335 fichiers)
 │   │   ├── admin/              # Interface d'administration
-│   │   ├── social/             # Réseau social
-│   │   ├── editor/             # Éditeurs (TipTap, notes)
-│   │   ├── games/              # Gamification
+│   │   ├── social/             # Réseau social (feed, posts)
+│   │   ├── gamification/       # Maisons HES, quêtes, badges
 │   │   ├── common/             # Composants réutilisables
+│   │   ├── tournois/           # Système de tournois
+│   │   ├── video/              # Lecteur vidéo Vimeo
 │   │   └── ...
-│   ├── 📁 views/               # Pages principales
-│   │   ├── auth/               # Authentification
-│   │   ├── admin/              # Administration
-│   │   ├── apps/               # Applications intégrées
-│   │   ├── social/             # Pages sociales
+│   ├── 📁 views/               # Pages principales (~228 fichiers)
+│   │   ├── auth/               # LoginHome, LoginView, Register
+│   │   ├── admin/              # Dashboard, modules, planning
+│   │   ├── apps/               # Chat, notes, calendrier, mail
+│   │   ├── social/             # Feed, communautés, hashtags
+│   │   ├── planning/           # Calendriers académiques
 │   │   └── ...
-│   ├── 📁 service/             # Services API
-│   ├── 📁 stores/              # Stores Pinia
-│   ├── 📁 hooks/               # Composables Vue
+│   ├── 📁 composables/         # Composables Vue réutilisables
+│   │   ├── useRateLimit.js     # Protection brute-force
+│   │   ├── useInputValidation.js # Validation des entrées
+│   │   ├── useDebounce.js      # Debounce pour recherches
+│   │   ├── useSanitize.js      # Sanitization HTML (DOMPurify)
+│   │   ├── useAutoRefresh.js   # Auto-refresh des données
+│   │   └── ...
+│   ├── 📁 config/              # Configuration centralisée
+│   │   └── adminRedirects.js   # Redirections post-login
+│   ├── 📁 service/             # Services API (Firebase)
+│   ├── 📁 services/            # Services API (Supabase)
+│   ├── 📁 stores/              # Stores Pinia (~27 stores)
+│   ├── 📁 layout/              # Layout principal (sidebar, topbar)
+│   ├── 📁 router/              # Guards de navigation
 │   ├── App.vue                 # Composant racine
 │   ├── main.js                 # Point d'entrée
-│   └── router.js               # Configuration routing
-├── firebase.js                 # Configuration Firebase
-├── vite.config.js              # Configuration Vite
+│   ├── router.js               # Configuration routing (~290 routes)
+│   ├── firebase.js             # Configuration Firebase
+│   └── supabase.js             # Configuration Supabase
+├── 📁 tests/
+│   ├── 📁 unit/                # Tests unitaires Vitest (25 fichiers, 591 tests)
+│   ├── 📁 e2e/                 # Tests E2E Playwright
+│   └── setup.js                # Configuration des tests
+├── vite.config.js              # Configuration Vite + Vitest
+├── playwright.config.js        # Configuration Playwright
 └── package.json                # Dépendances
 ```
 
@@ -430,18 +453,22 @@ export default defineConfig({
 - **Husky** : Git hooks
 - **Commitizen** : Commits conventionnels
 
-### Tests (À implémenter)
+### Tests
 
-```bash
-# Tests unitaires
-npm run test:unit
+| Type | Outil | Fichiers | Tests | Commande |
+|------|-------|----------|-------|----------|
+| **Unitaires** | Vitest + jsdom | 25 | 591 | `npm run test:unit` |
+| **Couverture** | @vitest/coverage-v8 | — | — | `npm run test:coverage` |
+| **E2E** | Playwright | 3 | ~30 | `npm run test:e2e` |
 
-# Tests de composants
-npm run test:components
+#### Stores testés
+- `authStore`, `votesStore`, `trackStore`, `postsStore`, `documentStore`
 
-# Tests E2E
-npm run test:e2e
-```
+#### Composables testés
+- `useRateLimit`, `useInputValidation`, `useDebounce`, `useAutoRefresh`
+
+#### Sécurité testée
+- Sanitization XSS (DOMPurify), rate limiting, validation inputs, guards de navigation
 
 ---
 
@@ -566,5 +593,5 @@ Ce projet est sous licence MIT. Voir le fichier [LICENSE](./LICENSE) pour plus d
 
 ---
 
-*Dernière mise à jour : 30 juillet 2025*  
-*Version : 0.2.0.0*
+*Dernière mise à jour : 11 février 2026*  
+*Version : 0.1.60*

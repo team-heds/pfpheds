@@ -9,7 +9,7 @@ import { supabase } from '@/supabase'
  */
 export async function getTotalUsers() {
   try {
-    console.log('📊 [getTotalUsers] Requête vers user_profiles...')
+    if (import.meta.env.DEV) console.log('📊 [getTotalUsers] Requête vers user_profiles...')
     const { count, error } = await supabase
       .from('user_profiles')
       .select('*', { count: 'exact', head: true })
@@ -19,7 +19,7 @@ export async function getTotalUsers() {
       throw error
     }
     
-    console.log('✅ [getTotalUsers] Nombre d\'utilisateurs:', count)
+    if (import.meta.env.DEV) console.log('✅ [getTotalUsers] Nombre d\'utilisateurs:', count)
     return count || 0
   } catch (error) {
     console.error('❌ [getTotalUsers] Erreur:', error)
@@ -32,7 +32,7 @@ export async function getTotalUsers() {
  */
 export async function getUsersByRole() {
   try {
-    console.log('👥 [getUsersByRole] Requête utilisateurs par rôle...')
+    if (import.meta.env.DEV) console.log('👥 [getUsersByRole] Requête utilisateurs par rôle...')
     
     const { data: profiles, error } = await supabase
       .from('user_profiles')
@@ -50,7 +50,7 @@ export async function getUsersByRole() {
       roleCount[role] = (roleCount[role] || 0) + 1
     })
     
-    console.log('✅ [getUsersByRole] Répartition:', roleCount)
+    if (import.meta.env.DEV) console.log('✅ [getUsersByRole] Répartition:', roleCount)
     return roleCount
   } catch (error) {
     console.error('❌ [getUsersByRole] Erreur:', error)
@@ -63,7 +63,7 @@ export async function getUsersByRole() {
  */
 export async function getTotalRoles() {
   try {
-    console.log('🎭 [getTotalRoles] Requête vers roles...')
+    if (import.meta.env.DEV) console.log('🎭 [getTotalRoles] Requête vers roles...')
     
     const { count, error } = await supabase
       .from('roles')
@@ -74,7 +74,7 @@ export async function getTotalRoles() {
       return 0
     }
     
-    console.log('✅ [getTotalRoles] Nombre de rôles:', count)
+    if (import.meta.env.DEV) console.log('✅ [getTotalRoles] Nombre de rôles:', count)
     return count || 0
   } catch (error) {
     console.error('❌ [getTotalRoles] Erreur:', error)
@@ -87,7 +87,7 @@ export async function getTotalRoles() {
  */
 export async function getActivePermissions() {
   try {
-    console.log('🔑 [getActivePermissions] Requête vers permissions...')
+    if (import.meta.env.DEV) console.log('🔑 [getActivePermissions] Requête vers permissions...')
     
     const { count, error } = await supabase
       .from('permissions')
@@ -98,7 +98,7 @@ export async function getActivePermissions() {
       return 0
     }
     
-    console.log('✅ [getActivePermissions] Nombre de permissions:', count)
+    if (import.meta.env.DEV) console.log('✅ [getActivePermissions] Nombre de permissions:', count)
     return count || 0
   } catch (error) {
     console.error('❌ [getActivePermissions] Erreur:', error)
@@ -124,7 +124,7 @@ export function getTotalRoutes(router) {
  */
 export async function getTotalInstitutions() {
   try {
-    console.log('🏥 [getTotalInstitutions] Requête vers institutions...')
+    if (import.meta.env.DEV) console.log('🏥 [getTotalInstitutions] Requête vers institutions...')
     const { count, error } = await supabase
       .from('institutions')
       .select('*', { count: 'exact', head: true })
@@ -133,7 +133,7 @@ export async function getTotalInstitutions() {
       console.error('❌ [getTotalInstitutions] Erreur:', error)
       throw error
     }
-    console.log('✅ [getTotalInstitutions] Nombre:', count)
+    if (import.meta.env.DEV) console.log('✅ [getTotalInstitutions] Nombre:', count)
     return count || 0
   } catch (error) {
     console.error('❌ [getTotalInstitutions] Erreur catch:', error)
@@ -146,7 +146,7 @@ export async function getTotalInstitutions() {
  */
 export async function getTotalPlaces() {
   try {
-    console.log('📍 [getTotalPlaces] Requête vers places...')
+    if (import.meta.env.DEV) console.log('📍 [getTotalPlaces] Requête vers places...')
     const { count, error } = await supabase
       .from('places')
       .select('*', { count: 'exact', head: true })
@@ -155,7 +155,7 @@ export async function getTotalPlaces() {
       console.error('❌ [getTotalPlaces] Erreur:', error)
       throw error
     }
-    console.log('✅ [getTotalPlaces] Nombre:', count)
+    if (import.meta.env.DEV) console.log('✅ [getTotalPlaces] Nombre:', count)
     return count || 0
   } catch (error) {
     console.error('❌ [getTotalPlaces] Erreur catch:', error)
@@ -168,7 +168,7 @@ export async function getTotalPlaces() {
  */
 export async function getAvailablePlaces() {
   try {
-    console.log('📍 [getAvailablePlaces] Requête places disponibles...')
+    if (import.meta.env.DEV) console.log('📍 [getAvailablePlaces] Requête places disponibles...')
     
     const { count, error } = await supabase
       .from('places')
@@ -180,7 +180,7 @@ export async function getAvailablePlaces() {
       return 0
     }
     
-    console.log('✅ [getAvailablePlaces] Places disponibles:', count)
+    if (import.meta.env.DEV) console.log('✅ [getAvailablePlaces] Places disponibles:', count)
     return count || 0
   } catch (error) {
     console.error('❌ [getAvailablePlaces] Erreur:', error)
@@ -193,7 +193,7 @@ export async function getAvailablePlaces() {
  */
 export async function getTotalModules() {
   try {
-    console.log('📚 [getTotalModules] Requête vers modules...')
+    if (import.meta.env.DEV) console.log('📚 [getTotalModules] Requête vers modules...')
     
     const { count, error } = await supabase
       .from('modules')
@@ -204,7 +204,7 @@ export async function getTotalModules() {
       return 0
     }
     
-    console.log('✅ [getTotalModules] Nombre de modules:', count)
+    if (import.meta.env.DEV) console.log('✅ [getTotalModules] Nombre de modules:', count)
     return count || 0
   } catch (error) {
     console.error('❌ [getTotalModules] Erreur:', error)
@@ -217,7 +217,7 @@ export async function getTotalModules() {
  */
 export async function getTotalCapsules() {
   try {
-    console.log('💊 [getTotalCapsules] Requête vers capsules...')
+    if (import.meta.env.DEV) console.log('💊 [getTotalCapsules] Requête vers capsules...')
     
     const { count, error } = await supabase
       .from('capsules')
@@ -228,7 +228,7 @@ export async function getTotalCapsules() {
       return 0
     }
     
-    console.log('✅ [getTotalCapsules] Nombre de capsules:', count)
+    if (import.meta.env.DEV) console.log('✅ [getTotalCapsules] Nombre de capsules:', count)
     return count || 0
   } catch (error) {
     console.error('❌ [getTotalCapsules] Erreur:', error)
@@ -241,7 +241,7 @@ export async function getTotalCapsules() {
  */
 export async function getAllAdminKpis(router) {
   try {
-    console.log('🚀 [getAllAdminKpis] Démarrage récupération KPIs...')
+    if (import.meta.env.DEV) console.log('🚀 [getAllAdminKpis] Démarrage récupération KPIs...')
     
     const [
       totalUsers,
@@ -280,7 +280,7 @@ export async function getAllAdminKpis(router) {
       usersByRole
     }
     
-    console.log('✅ [getAllAdminKpis] Résultat final:', result)
+    if (import.meta.env.DEV) console.log('✅ [getAllAdminKpis] Résultat final:', result)
     return result
   } catch (error) {
     console.error('❌ [getAllAdminKpis] Erreur:', error)

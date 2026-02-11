@@ -1,11 +1,18 @@
-// Service d'intégration gamification
-// Point central pour toutes les actions utilisateur et déclenchement des événements gamification
-
-import { autoCheckAndUnlockBadges, checkAndUnlockActionBadges } from './badgesService'
+/**
+ * @module gamificationIntegration
+ * @description Service central de gamification. Orchestre les actions utilisateur
+ * (login, post, quiz, etc.) et déclenche l'attribution d'XP, badges et quêtes.
+ *
+ * @class GamificationIntegration
+ * @method trackAction(userId, action, data) - Enregistre une action et attribue l'XP
+ * @method checkBadges(userId) - Vérifie et débloque les badges éligibles
+ * @method checkChallenges(userId) - Vérifie la progression des défis
+ *
+ * @exports {GamificationIntegration} gamificationIntegration - Instance singleton
+ */
+import { checkAndUnlockActionBadges } from './badgesService'
 import gamificationService from './gamificationService'
-import * as questsService from './questsService'
 import * as challengesService from './challengesService'
-import notificationService from './notificationService'
 
 class GamificationIntegration {
   constructor() {

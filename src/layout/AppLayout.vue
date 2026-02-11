@@ -83,9 +83,9 @@ const isOutsideClicked = (event) => {
         <div class="layout-content-wrapper">
             <AppTopbar ref="topbarRef" />
             <AppBreadCrumb class="content-breadcrumb"></AppBreadCrumb>
-            <div class="layout-content">
+            <main class="layout-content" role="main">
                 <router-view></router-view>
-            </div>
+            </main>
         </div>
 
         <AppProfileSidebar />

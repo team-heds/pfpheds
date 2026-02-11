@@ -357,7 +357,6 @@ import ModuleSection from '@/components/video/ModuleSection.vue'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import Dropdown from 'primevue/dropdown'
-import Tag from 'primevue/tag'
 import Dialog from 'primevue/dialog'
 import Menu from 'primevue/menu'
 import Divider from 'primevue/divider'
@@ -808,7 +807,7 @@ async function assignVideoToModule(video, moduleId) {
       life: 3000 
     })
     
-    await loadVideos()
+    await loadVimeoVideos()
     showAddToModuleDialog.value = false
   } catch (error) {
     console.error('[VideoLibrary] Erreur assignation:', error)
@@ -843,7 +842,7 @@ async function addVimeoToLibraryAndModule(video, moduleId) {
       life: 3000 
     })
     
-    await loadVideos()
+    await loadVimeoVideos()
     showAddToModuleDialog.value = false
   } catch (error) {
     console.error('[VideoLibrary] Erreur ajout:', error)

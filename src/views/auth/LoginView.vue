@@ -16,32 +16,34 @@
     />
     <path :fill="darkMode ? 'var(--primary-500)' : 'var(--primary-100)'" d="M1397.5 154.8c47.2-10.6 93.6-25.3 138.6-43.8c21.7-8.9 43-18.8 63.9-29.5V0H643.4c62.9 41.7 129.7 78.2 202.1 107.4C1020.4 178.1 1214.2 196.1 1397.5 154.8z" />
   </svg>
-  <div class="surface-section px-4 py-8 md:px-6 lg:px-8">
+  <div class="surface-section px-4 py-8 md:px-6 lg:px-8" role="main">
     <div class="px-5 min-h-screen flex justify-content-center align-items-center">
       <div class="border-1 surface-border surface-card border-round py-7 px-4 md:px-7 z-1">
         <div class="mb-4">
-          <div class="text-900 text-xl font-bold mb-2">Se connecter</div>
-          <span class="text-600 font-medium">Veuillez vous connecter avec votre compte.</span>
+          <h1 class="text-900 text-xl font-bold mb-2">Se connecter</h1>
+          <p class="text-600 font-medium">Veuillez vous connecter avec votre compte.</p>
         </div>
-        <div class="flex flex-column">
+        <form class="flex flex-column" @submit.prevent="submitForm" aria-label="Formulaire de connexion">
+          <label for="email" class="sr-only">Adresse email</label>
           <IconField iconPosition="left" class="w-full mb-4">
             <InputIcon class="pi pi-envelope" />
-            <InputText id="email" type="text" v-model="email" class="w-full md:w-25rem" placeholder="Email" />
+            <InputText id="email" type="email" v-model="email" class="w-full md:w-25rem" placeholder="Email" autocomplete="email" aria-label="Adresse email" />
           </IconField>
 
+          <label for="password" class="sr-only">Mot de passe</label>
           <IconField iconPosition="left" class="w-full mb-4">
             <InputIcon class="pi pi-lock" />
-            <InputText id="password" type="password" v-model="password" class="w-full md:w-25rem" placeholder="Password" />
+            <InputText id="password" type="password" v-model="password" class="w-full md:w-25rem" placeholder="Mot de passe" autocomplete="current-password" aria-label="Mot de passe" />
           </IconField>
 
           <div class="mb-4 flex flex-wrap gap-3">
-            <Checkbox name="checkbox" v-model="rememberMe" binary class="mr-2"></Checkbox>
-            <label for="checkbox" class="text-900 font-medium mr-8">Remember Me</label>
-            <a class="text-600 cursor-pointer hover:text-primary cursor-pointer ml-auto transition-colors transition-duration-300" @click="resetPassword">Reset password</a>
+            <Checkbox inputId="rememberMe" name="rememberMe" v-model="rememberMe" binary class="mr-2"></Checkbox>
+            <label for="rememberMe" class="text-900 font-medium mr-8">Se souvenir de moi</label>
+            <a class="text-600 cursor-pointer hover:text-primary cursor-pointer ml-auto transition-colors transition-duration-300" role="button" tabindex="0" @click="resetPassword" @keydown.enter="resetPassword">Mot de passe oublié ?</a>
           </div>
 
-          <Button label="Se connecter" class="w-full" @click="submitForm" @keydown.enter="submitForm" />
-        </div>
+          <Button type="submit" label="Se connecter" class="w-full" aria-label="Se connecter" :loading="isSubmitting" :disabled="isSubmitting" />
+        </form>
       </div>
     </div>
     <AppDarkAndLightMode simple />
@@ -55,40 +57,55 @@ import { useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import { useLayout } from '@/layout/composables/layout';
 import { useAuthStore } from '@/stores/authStore';
+import { useRateLimit } from '@/composables/useRateLimit';
+import { validateEmail, validatePassword } from '@/composables/useInputValidation';
+import { getPostLoginRedirect } from '@/config/adminRedirects';
 
 const router = useRouter();
 const authStore = useAuthStore();
 const toast = useToast();
 const email = ref('');
 const password = ref('');
+const rememberMe = ref(false);
+const isSubmitting = ref(false);
+const loginLimiter = useRateLimit({ maxAttempts: 5, lockoutDuration: 60_000 });
+const resetLimiter = useRateLimit({ maxAttempts: 3, lockoutDuration: 120_000 });
 const { layoutConfig } = useLayout();
 const darkMode = ref(layoutConfig.colorScheme.value !== 'light');
 
-// Liste des emails qui doivent être redirigés directement vers /admin
-const adminDirectEmails = [
-  'lucienne.darbellay-fumeaux@hevs.ch',
-  'filipa.pereira@hevs.ch',
-  'aline.chappuis@hevs.ch',
-  'maude.epiney-perruchoud@hevs.ch',
-  'isabelle.salamin-plaschy@hevs.ch',
-  'rafael.weissbrodt@hevs.ch',
-  'valerie.caloz-albrecht@hevs.ch',
-  'tiffany.rapillard@hevs.ch',
-  'omar.porteladossantos@hevs.ch',
-  'jesse.curchod@hevs.ch',
-  'line.martin@hevs.ch',
-  'isabelle.rey@hevs.ch',
-  'carla.gomesdarocha@hevs.ch',
-  'elodie.perruchoud@hevs.ch'
-];
 
 const submitForm = async () => {
+  // Validation des inputs
+  const emailCheck = validateEmail(email.value);
+  if (!emailCheck.valid) {
+    toast.add({ severity: 'warn', summary: 'Email invalide', detail: emailCheck.message, life: 4000 });
+    return;
+  }
+  const pwdCheck = validatePassword(password.value);
+  if (!pwdCheck.valid) {
+    toast.add({ severity: 'warn', summary: 'Mot de passe invalide', detail: pwdCheck.message, life: 4000 });
+    return;
+  }
+
+  // Rate limiting
+  if (loginLimiter.isLocked()) {
+    const sec = loginLimiter.getLockoutRemaining();
+    toast.add({ severity: 'error', summary: 'Trop de tentatives', detail: `Veuillez patienter ${sec}s avant de réessayer.`, life: 5000 });
+    return;
+  }
+  if (!loginLimiter.recordAttempt()) {
+    const sec = loginLimiter.getLockoutRemaining();
+    toast.add({ severity: 'error', summary: 'Trop de tentatives', detail: `Compte temporairement bloqué. Réessayez dans ${sec}s.`, life: 5000 });
+    return;
+  }
+
+  isSubmitting.value = true;
   try {
     await authStore.signInFirebase({ email: email.value, password: password.value });
+    loginLimiter.reset();
     toast.add({ severity: 'success', summary: 'Connexion réussie', detail: 'Vous allez être redirigé vers le feed...', life: 3000 });
     
-    // Rediriger vers /admin si l'email est dans la liste, sinon vers /feed
-    const redirectPath = adminDirectEmails.includes(email.value.toLowerCase()) ? '/admin/dashboard-rm' : '/feed';
+    const redirectPath = getPostLoginRedirect(email.value);
     setTimeout(() => {
       router.push(redirectPath);
     }, 1500);
@@ -103,14 +120,24 @@ const submitForm = async () => {
     };
     const errorMessage = messages[error.code] || 'Une erreur est survenue lors de la connexion.';
     toast.add({ severity: 'error', summary: 'Erreur de connexion', detail: errorMessage, life: 5000 });
+  } finally {
+    isSubmitting.value = false;
   }
 };
 
 const resetPassword = async () => {
-  if (!email.value) {
-    toast.add({ severity: 'warn', summary: 'Email requis', detail: 'Veuillez entrer votre email pour réinitialiser le mot de passe.', life: 5000 });
+  const emailCheck = validateEmail(email.value);
+  if (!emailCheck.valid) {
+    toast.add({ severity: 'warn', summary: 'Email requis', detail: emailCheck.message, life: 5000 });
     return;
   }
+
+  if (resetLimiter.isLocked()) {
+    const sec = resetLimiter.getLockoutRemaining();
+    toast.add({ severity: 'error', summary: 'Trop de tentatives', detail: `Veuillez patienter ${sec}s avant de réessayer.`, life: 5000 });
+    return;
+  }
+  resetLimiter.recordAttempt();
 
   try {
     await authStore.resetPasswordFirebase(email.value);

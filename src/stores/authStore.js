@@ -1,9 +1,31 @@
+/**
+ * @module authStore
+ * @description Store Pinia pour l'authentification multi-provider (Firebase + Supabase).
+ *
+ * @state {Object|null} user - Utilisateur connecté (Firebase User ou Supabase User)
+ * @state {Object|null} session - Session Supabase active
+ * @state {boolean} loading - Indicateur de chargement
+ * @state {string|null} error - Dernier message d'erreur
+ * @state {string|null} authProvider - Provider actif ('firebase' | 'supabase')
+ *
+ * @getter {boolean} isLoggedIn - true si un utilisateur est connecté
+ * @getter {boolean} isFirebaseUser - true si connecté via Firebase
+ * @getter {boolean} isSupabaseUser - true si connecté via Supabase
+ *
+ * @action signUpFirebase(credentials) - Inscription Firebase
+ * @action signInFirebase(credentials) - Connexion Firebase
+ * @action resetPasswordFirebase(email) - Réinitialisation mot de passe Firebase
+ * @action signUpSupabase(credentials) - Inscription Supabase
+ * @action signInSupabase(credentials) - Connexion Supabase
+ * @action resetPasswordSupabase(email) - Réinitialisation mot de passe Supabase
+ * @action signOut() - Déconnexion (les deux providers)
+ * @action monitorSession() - Surveillance de la session active
+ */
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { supabase } from '@/supabase';
-import { auth } from '@/firebase'; // Import Firebase auth
+import { auth } from '@/firebase';
 import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
-// import userProfileAutoCreation from '@/service/userProfileAutoCreation';
 
 export const useAuthStore = defineStore('auth', () => {
   // State

@@ -9,24 +9,13 @@ import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
-import TabView from 'primevue/tabview'
-import TabPanel from 'primevue/tabpanel'
-import InputText from 'primevue/inputtext'
-import Textarea from 'primevue/textarea'
-import Button from 'primevue/button'
-import Dropdown from 'primevue/dropdown'
-import Dialog from 'primevue/dialog'
-import Toast from 'primevue/toast'
-
 // Services
 import { listAllVideos } from '@/service/vimeoService'
 import { 
   getAllModules, 
   createModule as createModuleService,
   deleteModule as deleteModuleService,
-  addVideoToModule,
-  getModuleVideos,
-  isVideoAssignedToModule
+  addVideoToModule
 } from '@/service/moduleService'
 
 const router = useRouter()

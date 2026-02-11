@@ -527,7 +527,7 @@ export async function addUserXP(userId, action, customXP = null) {
       }
       
       // Ajouter les mises à jour basées sur le niveau
-      if (newData.level !== oldLevel) {
+      if (newData.level !== previousLevel) {
         questUpdates.push({ stepType: 'level_reach', increment: newData.level })
       }
       
