@@ -81,6 +81,7 @@ const TableauRecapitulatifOffres = () => import('@/views/admin/formation-pratiqu
 const RecapPFPNotes = () => import('@/views/admin/formation-pratique/secretariat/RecapPFPNotes.vue');
 const RecapCPTEvaluation = () => import('@/views/admin/formation-pratique/secretariat/RecapCPTEvaluation.vue');
 const SuiviCasParticuliers = () => import('@/views/admin/formation-pratique/secretariat/SuiviCasParticuliers.vue');
+const AlertesDashboard = () => import('@/views/admin/formation-pratique/secretariat/AlertesDashboard.vue');
 
 // ASSIGNATION RÉPONDANTS
 const AssignRepondantsView = () => import('@/views/admin/AssignRepondantsView.vue');
@@ -473,6 +474,7 @@ const routes = [
   { path: '/admin/formation-pratique/secretariat/recap-pfp-notes', component: RecapPFPNotes, name: 'RecapPFPNotes', meta: { requiresAuth: true, need: 'page1.access' } },
   { path: '/admin/formation-pratique/secretariat/recap-cpt-evaluation', component: RecapCPTEvaluation, name: 'RecapCPTEvaluation', meta: { requiresAuth: true, need: 'page1.access' } },
   { path: '/admin/formation-pratique/secretariat/suivi-cas-particuliers', component: SuiviCasParticuliers, name: 'SuiviCasParticuliers', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/admin/formation-pratique/secretariat/alertes', component: AlertesDashboard, name: 'AlertesDashboard', meta: { requiresAuth: true, need: 'page1.access' } },
   
   // Admin Lists Routes
   { path: '/admin/programs', component: ProgramListView, name: 'ProgramList', meta: { requiresAuth: true, need: 'admin' } },
@@ -600,15 +602,6 @@ const routes = [
       
       const profile = userStore.profile;
       
-      // DEBUG: Afficher le profil complet
-      console.log('🔍 [Votation Guard] Profil utilisateur:', profile);
-      console.log('🔍 [Votation Guard] Champs PFP:', {
-        pfp1a: profile?.pfp1a,
-        pfp1b: profile?.pfp1b,
-        pfp: profile?.pfp,
-        pfp_cohort: profile?.pfp_cohort,
-        cohort: profile?.cohort
-      });
       
       // Vérifier si l'utilisateur est PFP1A ou PFP1B (accès BLOQUÉ)
       const isPfp1a = 
@@ -625,7 +618,6 @@ const routes = [
         profile?.pfp_cohort === 'PFP1B' ||
         profile?.cohort === 'PFP1B';
       
-      console.log('🔍 [Votation Guard] Résultats:', { isPfp1a, isPfp1b });
       
       // BLOQUER l'accès aux cohortes PFP1A et PFP1B
       if (isPfp1a || isPfp1b) {
@@ -637,7 +629,6 @@ const routes = [
         }));
         next({ name: 'DashboardView', replace: true });
       } else {
-        console.log('✅ Accès autorisé à la votation');
         next();
       }
     }
@@ -657,15 +648,6 @@ const routes = [
       
       const profile = userStore.profile;
       
-      // DEBUG: Afficher le profil complet
-      console.log('🔍 [Votation PFP1B Guard] Profil utilisateur:', profile);
-      console.log('🔍 [Votation PFP1B Guard] Champs PFP:', {
-        pfp1a: profile?.pfp1a,
-        pfp1b: profile?.pfp1b,
-        pfp: profile?.pfp,
-        pfp_cohort: profile?.pfp_cohort,
-        cohort: profile?.cohort
-      });
       
       // Vérifier si l'utilisateur est PFP1A ou PFP1B (accès BLOQUÉ)
       const isPfp1a = 
@@ -682,7 +664,6 @@ const routes = [
         profile?.pfp_cohort === 'PFP1B' ||
         profile?.cohort === 'PFP1B';
       
-      console.log('🔍 [Votation PFP1B Guard] Résultats:', { isPfp1a, isPfp1b });
       
       // BLOQUER l'accès aux cohortes PFP1A et PFP1B
       if (isPfp1a || isPfp1b) {
@@ -694,7 +675,6 @@ const routes = [
         }));
         next({ name: 'DashboardView', replace: true });
       } else {
-        console.log('✅ Accès autorisé à la votation PFP1B');
         next();
       }
     }
@@ -846,7 +826,6 @@ router.beforeEach(async (to, from, next) => {
   
   // Vérifiez si l'état d'authentification est déjà récupéré
   if (!isAuthStateChecked) {
-    console.log('🔄 Première vérification de l\'état d\'authentification...');
     await authStore.checkAuthState();
     isAuthStateChecked = true;
   }
@@ -856,25 +835,6 @@ if (!roleStore.initialized) {
 }
   
   const user = authStore.user;
-  console.log('👤 Utilisateur actuel:', user ? `${user.email} (${authStore.authProvider})` : 'Aucun');
-  console.log('🔍 Debug authStore:', {
-    user: authStore.user,
-    provider: authStore.authProvider,
-    isLoggedIn: authStore.isLoggedIn,
-    isSupabaseUser: authStore.isSupabaseUser,
-    isFirebaseUser: authStore.isFirebaseUser
-  });
-  
-  // Afficher les permissions depuis Supabase
-  console.log('🔐 Permissions Supabase:', {
-    initialized: roleStore.initialized,
-    session: roleStore.session,
-    perms: roleStore.perms,
-    isSuper: roleStore.isSuper,
-    canPage1: roleStore.can('page1.access'),
-    canPage2: roleStore.can('page2.access'),
-    allPermissions: roleStore.perms
-  });
 
   // Gestion spécifique pour la route "/"
   if (to.path === '/') {
@@ -888,10 +848,6 @@ if (!roleStore.initialized) {
 
   // Vérification des permissions basées sur le roleStore
 const need = to.meta.need;
-console.log("check", need);
-  console.log("Vérification permission");
-  console.log("Vérification permission need", need);
-  console.log(" Vérification permission user", user);
 
 // Autoriser immédiatement si 'public' ou 'anonymous'
 const allowAnon = Array.isArray(need)
@@ -920,20 +876,10 @@ if (need) {
     ? (roleStore.isSuper || need.some(n => roleStore.can(n)))
     : (roleStore.isSuper || roleStore.can(need));
 
-  console.log(`🔍 Vérification permission pour ${to.path}:`, {
-    need,
-    user: user ? user.email : null,
-    perms: roleStore.perms,
-    canAccess,
-    isSuper: roleStore.isSuper
-  });
-
-  console.log("check" + (Array.isArray(need) ? need.join(',') : need));
   if (!canAccess) {
     console.warn(`❌ Accès refusé: permission requise "${Array.isArray(need) ? need.join(',') : need}" manquante`);
     return next({ path: '/access' });
   }
-  console.log(`✅ Accès autorisé pour ${Array.isArray(need) ? need.join(',') : need}`);
 }
 
   // Vérification des rôles (schéma historique) via meta.requiredRole
@@ -941,7 +887,6 @@ if (need) {
   if (requiredRoles && user) {
     const rolesArray = Array.isArray(requiredRoles) ? requiredRoles : [requiredRoles];
     const hasRequired = roleStore.isSuper || rolesArray.some(r => roleStore.can(r));
-    console.log('🔑 Vérification requiredRole:', { requiredRoles: rolesArray, hasRequired, user: user.email });
     if (!hasRequired) {
       console.warn(`❌ Accès refusé: rôle requis manquant parmi [${rolesArray.join(', ')}]`);
       return next({ path: '/access' });
@@ -953,7 +898,6 @@ if (need) {
     if (user) {
       // Si pas de rôle requis, autoriser directement l'accès
       if (!to.meta.requiredRole) {
-        console.log('✅ Accès autorisé: utilisateur connecté, aucun rôle spécifique requis');
         return next();
       }
       
@@ -961,11 +905,9 @@ if (need) {
       const userId = authStore.isFirebaseUser ? user.uid : user.id;
       const provider = authStore.authProvider;
       
-      console.log(`🔑 Vérification des rôles pour ${provider} user ID:`, userId);
       
       // Récupération des rôles via le service unifié
       const roles = await rolesService.getUserRoles(userId, provider);
-      console.log(`📋 Rôles récupérés (${provider}):`, roles);
 
       if (roles && Object.keys(roles).length > 0) {
         const userRoles = Object.keys(roles).filter(role => roles[role]); // Récupération des rôles actifs de l'utilisateur
@@ -976,7 +918,6 @@ if (need) {
 
         // Vérifiez si l'utilisateur a au moins un des rôles requis
         if (requiredRoles.some(role => userRoles.includes(role))) {
-          console.log(`✅ Accès autorisé: utilisateur a le(s) rôle(s) requis`);
           return next();
         } else {
           console.warn(`❌ Accès refusé: rôles requis ${requiredRoles.join(', ')}, rôles utilisateur: ${userRoles.join(', ')}`);

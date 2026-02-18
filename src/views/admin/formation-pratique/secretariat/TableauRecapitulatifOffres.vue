@@ -1,305 +1,249 @@
 <template>
   <AdminLayout>
     <div class="offre-page p-4">
+      <!-- Header -->
       <div class="surface-card p-4 border-round shadow-2 mb-4">
-        <div class="flex align-items-center justify-content-between">
+        <div class="flex align-items-center justify-content-between flex-wrap gap-3">
           <div class="flex align-items-center gap-3">
             <i class="pi pi-briefcase text-primary text-3xl"></i>
             <div>
-              <h1 class="text-2xl font-bold text-900 m-0">Tableau Récapitulatif des Offres</h1>
-              <p class="text-600 m-0 mt-1">Vue d'ensemble des offres de places - Lecture seule</p>
+              <h1 class="text-2xl font-bold text-900 m-0">Récapitulatif des Offres</h1>
+              <p class="text-600 m-0 mt-1">Offres et propositions par place de formation — {{ selectedYear }}</p>
+            </div>
+          </div>
+          <div class="flex align-items-center gap-3 flex-wrap">
+            <div class="flex flex-column gap-1">
+              <label class="font-semibold text-sm">Recherche :</label>
+              <span class="p-input-icon-left">
+                <i class="pi pi-search" />
+                <InputText v-model="searchText" placeholder="Institution ou place..." class="w-full md:w-14rem" />
+              </span>
+            </div>
+            <div class="flex flex-column gap-1">
+              <label class="font-semibold text-sm">Année :</label>
+              <Dropdown :options="years" v-model="selectedYear" class="w-full md:w-6rem" />
+            </div>
+            <div class="flex flex-column gap-1">
+              <label class="font-semibold text-sm">Type PFP :</label>
+              <Dropdown :options="pfpOptions" optionLabel="label" optionValue="value" v-model="selectedPFP" class="w-full md:w-8rem" />
+            </div>
+            <div class="flex flex-column gap-1">
+              <label class="font-semibold text-sm">Affichage :</label>
+              <Dropdown :options="displayOptions" optionLabel="label" optionValue="value" v-model="filterDisplay" class="w-full md:w-10rem" />
+            </div>
+            <div class="flex flex-column gap-1">
+              <label class="font-semibold text-sm">&nbsp;</label>
+              <div class="flex gap-2">
+                <Button icon="pi pi-download" label="Export" outlined class="p-button-sm" @click="exportCSV" />
+                <Button icon="pi pi-refresh" outlined class="p-button-sm" @click="refreshPlaces" v-tooltip="'Rafraîchir'" :loading="placesStore.loading" />
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Statistiques -->
-      <div class="grid mb-4">
-        <div class="col-12 md:col-4">
-          <div class="surface-card p-4 border-round shadow-2">
+      <!-- Statistiques principales -->
+      <div class="grid mb-3">
+        <div class="col-12 md:col-3">
+          <div class="surface-card p-3 border-round shadow-2">
             <div class="flex align-items-center gap-3">
               <div class="bg-blue-100 border-circle p-3">
                 <i class="pi pi-briefcase text-blue-500 text-2xl"></i>
               </div>
               <div>
                 <h3 class="text-2xl font-bold text-900 m-0">{{ stats.total }}</h3>
-                <p class="text-600 m-0">Places Totales</p>
+                <p class="text-600 m-0">Places totales</p>
               </div>
             </div>
           </div>
         </div>
-        <div class="col-12 md:col-4">
-          <div class="surface-card p-4 border-round shadow-2">
+        <div class="col-12 md:col-3">
+          <div class="surface-card p-3 border-round shadow-2">
             <div class="flex align-items-center gap-3">
               <div class="bg-green-100 border-circle p-3">
-                <i class="pi pi-check text-green-500 text-2xl"></i>
+                <i class="pi pi-check-circle text-green-500 text-2xl"></i>
               </div>
               <div>
                 <h3 class="text-2xl font-bold text-900 m-0">{{ stats.actives }}</h3>
-                <p class="text-600 m-0">Places avec Offres</p>
+                <p class="text-600 m-0">Avec offres</p>
               </div>
             </div>
           </div>
         </div>
-        <div class="col-12 md:col-4">
-          <div class="surface-card p-4 border-round shadow-2">
+        <div class="col-12 md:col-3">
+          <div class="surface-card p-3 border-round shadow-2">
             <div class="flex align-items-center gap-3">
               <div class="bg-orange-100 border-circle p-3">
                 <i class="pi pi-map-marker text-orange-500 text-2xl"></i>
               </div>
               <div>
-                <h3 class="text-2xl font-bold text-900 m-0">{{ stats.places }}</h3>
-                <p class="text-600 m-0">Offres Disponibles</p>
+                <h3 class="text-2xl font-bold text-900 m-0">{{ stats.totalOffers }}</h3>
+                <p class="text-600 m-0">Offres totales</p>
               </div>
             </div>
           </div>
         </div>
-      </div>
-      
-      <!-- Statistiques PFP -->
-      <div class="flex gap-2 mb-4 flex-wrap">
-        <div class="flex-1 min-w-0">
+        <div class="col-12 md:col-3">
           <div class="surface-card p-3 border-round shadow-2">
-            <div class="flex align-items-center gap-2">
-              <div class="bg-purple-100 border-circle p-2">
-                <i class="pi pi-book text-purple-500 text-xl"></i>
+            <div class="flex align-items-center gap-3">
+              <div class="bg-purple-100 border-circle p-3">
+                <i class="pi pi-building text-purple-500 text-2xl"></i>
               </div>
-              <div class="flex-1">
-                <h4 class="text-xl font-bold text-900 m-0">{{ stats.pfpStats.PFP1A.propositions }} / {{ stats.pfpStats.PFP1A.offres }}</h4>
-                <p class="text-600 m-0 text-sm">PFP1A</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="flex-1 min-w-0">
-          <div class="surface-card p-3 border-round shadow-2">
-            <div class="flex align-items-center gap-2">
-              <div class="bg-cyan-100 border-circle p-2">
-                <i class="pi pi-book text-cyan-500 text-xl"></i>
-              </div>
-              <div class="flex-1">
-                <h4 class="text-xl font-bold text-900 m-0">{{ stats.pfpStats.PFP1B.propositions }} / {{ stats.pfpStats.PFP1B.offres }}</h4>
-                <p class="text-600 m-0 text-sm">PFP1B</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="flex-1 min-w-0">
-          <div class="surface-card p-3 border-round shadow-2">
-            <div class="flex align-items-center gap-2">
-              <div class="bg-indigo-100 border-circle p-2">
-                <i class="pi pi-book text-indigo-500 text-xl"></i>
-              </div>
-              <div class="flex-1">
-                <h4 class="text-xl font-bold text-900 m-0">{{ stats.pfpStats.PFP2.propositions }} / {{ stats.pfpStats.PFP2.offres }}</h4>
-                <p class="text-600 m-0 text-sm">PFP2</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="flex-1 min-w-0">
-          <div class="surface-card p-3 border-round shadow-2">
-            <div class="flex align-items-center gap-2">
-              <div class="bg-pink-100 border-circle p-2">
-                <i class="pi pi-book text-pink-500 text-xl"></i>
-              </div>
-              <div class="flex-1">
-                <h4 class="text-xl font-bold text-900 m-0">{{ stats.pfpStats.PFP3.propositions }} / {{ stats.pfpStats.PFP3.offres }}</h4>
-                <p class="text-600 m-0 text-sm">PFP3</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="flex-1 min-w-0">
-          <div class="surface-card p-3 border-round shadow-2">
-            <div class="flex align-items-center gap-2">
-              <div class="bg-amber-100 border-circle p-2">
-                <i class="pi pi-book text-amber-500 text-xl"></i>
-              </div>
-              <div class="flex-1">
-                <h4 class="text-xl font-bold text-900 m-0">{{ stats.pfpStats.PFP4.propositions }} / {{ stats.pfpStats.PFP4.offres }}</h4>
-                <p class="text-600 m-0 text-sm">PFP4</p>
+              <div>
+                <h3 class="text-2xl font-bold text-900 m-0">{{ stats.institutions }}</h3>
+                <p class="text-600 m-0">Institutions</p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Table des places -->
+      <!-- Statistiques PFP avec barres de progression -->
+      <div class="flex gap-2 mb-3 flex-wrap">
+        <div v-for="pfp in pfpStatsList" :key="pfp.key" class="flex-1 min-w-0">
+          <div class="surface-card p-3 border-round shadow-2 pfp-stat-card" :style="{ borderTop: `3px solid ${pfp.color}` }">
+            <div class="flex align-items-center justify-content-between mb-2">
+              <span class="font-bold text-800 text-sm">{{ pfp.key }}</span>
+              <span class="text-xs text-500">prop / offre</span>
+            </div>
+            <div class="flex align-items-baseline gap-1 mb-2">
+              <span class="text-xl font-bold" :style="{ color: pfp.color }">{{ stats.pfpStats[pfp.key].propositions }}</span>
+              <span class="text-400 text-sm">/</span>
+              <span class="text-xl font-bold text-900">{{ stats.pfpStats[pfp.key].offres }}</span>
+            </div>
+            <div class="progress-bar-bg">
+              <div
+                class="progress-bar-fill"
+                :style="{
+                  width: getProgressWidth(stats.pfpStats[pfp.key].propositions, stats.pfpStats[pfp.key].offres) + '%',
+                  background: pfp.color
+                }"
+              ></div>
+            </div>
+            <div class="flex justify-content-between mt-1">
+              <span class="text-xs" :style="{ color: pfp.color }">
+                {{ getProgressLabel(stats.pfpStats[pfp.key].propositions, stats.pfpStats[pfp.key].offres) }}
+              </span>
+              <span class="text-xs text-400">{{ getProgressPercent(stats.pfpStats[pfp.key].propositions, stats.pfpStats[pfp.key].offres) }}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Légende -->
+      <div class="flex gap-3 align-items-center mb-3 px-1">
+        <span class="text-sm text-600 font-semibold">Légende :</span>
+        <span class="flex align-items-center gap-1">
+          <span class="legend-dot bg-green-500"></span>
+          <span class="text-xs text-600">Équilibré (0)</span>
+        </span>
+        <span class="flex align-items-center gap-1">
+          <span class="legend-dot bg-orange-500"></span>
+          <span class="text-xs text-600">Surproposition (+)</span>
+        </span>
+        <span class="flex align-items-center gap-1">
+          <span class="legend-dot bg-red-500"></span>
+          <span class="text-xs text-600">Sous-proposition (−)</span>
+        </span>
+        <span class="flex align-items-center gap-1 ml-2">
+          <span class="offre-pill offre-has-value" style="font-size:0.65rem;height:18px;min-width:20px;padding:0 5px">3</span>
+          <span class="text-xs text-600">Offre</span>
+        </span>
+        <span class="flex align-items-center gap-1">
+          <span class="prop-pill prop-has-value" style="font-size:0.65rem;height:18px;min-width:20px;padding:0 5px">2</span>
+          <span class="text-xs text-600">Proposition</span>
+        </span>
+      </div>
+
+      <!-- Table -->
       <div class="surface-card p-4 border-round shadow-2">
-        <DataTable 
-          :value="placesData" 
-          :loading="placesStore.loading" 
-          responsiveLayout="scroll" 
-          :paginator="!showAll" 
-          :rows="rowsPerPage"
-          :globalFilterFields="['Institution_name', 'NomPlace']"
-          v-model:filters="filters"
-          filterDisplay="row"
+        <DataTable
+          :value="filteredPlaces"
+          :loading="placesStore.loading"
+          responsiveLayout="scroll"
+          :paginator="true"
+          :rows="50"
+          :rowsPerPageOptions="[20, 50, 100, 500]"
+          :rowHover="true"
+          dataKey="PlaceId"
           scrollable
           scrollHeight="flex"
-          class="p-datatable-sm"
+          class="offre-table p-datatable-sm"
+          :sortField="'Institution_name'"
+          :sortOrder="1"
         >
           <template #header>
             <div class="flex justify-content-between align-items-center">
-              <span class="text-xl text-900 font-bold">Liste des Places de Formation</span>
-              <div class="flex gap-2 align-items-center">
-                <div class="flex align-items-center gap-2">
-                  <span class="text-600">Année</span>
-                  <Dropdown :options="years" v-model="selectedYear" class="w-6rem" />
-                </div>
-                <div class="flex align-items-center gap-2">
-                  <span class="text-600">PFP</span>
-                  <Dropdown :options="pfpOptions" optionLabel="label" optionValue="value" v-model="selectedPFP" class="w-8rem" />
-                </div>
-                <div class="flex align-items-center gap-2">
-                  <span class="text-600">Afficher</span>
-                  <Dropdown :options="rowsOptions" optionLabel="label" optionValue="value" v-model="rowsPerPage" class="w-8rem" />
-                  <div class="flex align-items-center gap-2">
-                    <InputSwitch v-model="showAll" />
-                    <span class="text-600">Tout</span>
-                  </div>
-                </div>
-                <InputText v-model="filters['global'].value" placeholder="Rechercher..." />
-                <Button icon="pi pi-refresh" outlined @click="refreshPlaces" />
-              </div>
+              <span class="text-xl text-900 font-bold">Places de Formation ({{ filteredPlaces.length }})</span>
             </div>
           </template>
           <template #empty>
             <div class="text-center p-4">
               <i class="pi pi-inbox text-4xl text-400 mb-3"></i>
-              <p class="text-600">Aucune place disponible</p>
+              <p class="text-600">Aucune place trouvée</p>
             </div>
           </template>
-          <Column field="Institution_name" header="Institution" sortable class="w-20rem"></Column>
-          <Column field="NomPlace" header="Nom de la place" sortable class="w-25rem"></Column>
-          
-          <!-- Colonnes Offre -->
-          <Column v-if="shouldShowPFPColumn('PFP2')" header="Offre PFP2" class="w-8rem">
-            <template #body="slotProps">
-              <div class="flex justify-content-center">
-                <span class="font-semibold text-green-600">{{ (slotProps.data.PFP2 && slotProps.data.PFP2[selectedYear]) || '-' }}</span>
-              </div>
-            </template>
-          </Column>
-          <Column v-if="shouldShowPFPColumn('PFP1A')" header="Offre PFP1A" class="w-8rem">
-            <template #body="slotProps">
-              <div class="flex justify-content-center">
-                <span class="font-semibold text-green-600">{{ (slotProps.data.PFP1A && slotProps.data.PFP1A[selectedYear]) || '-' }}</span>
-              </div>
-            </template>
-          </Column>
-          <Column v-if="shouldShowPFPColumn('PFP1B')" header="Offre PFP1B" class="w-8rem">
-            <template #body="slotProps">
-              <div class="flex justify-content-center">
-                <span class="font-semibold text-green-600">{{ (slotProps.data.PFP1B && slotProps.data.PFP1B[selectedYear]) || '-' }}</span>
-              </div>
-            </template>
-          </Column>
-          <Column v-if="shouldShowPFPColumn('PFP4')" header="Offre PFP4" class="w-8rem">
-            <template #body="slotProps">
-              <div class="flex justify-content-center">
-                <span class="font-semibold text-green-600">{{ (slotProps.data.PFP4 && slotProps.data.PFP4[selectedYear]) || '-' }}</span>
-              </div>
-            </template>
-          </Column>
-          <Column v-if="shouldShowPFPColumn('PFP3')" header="Offre PFP3" class="w-8rem">
-            <template #body="slotProps">
-              <div class="flex justify-content-center">
-                <span class="font-semibold text-green-600">{{ (slotProps.data.PFP3 && slotProps.data.PFP3[selectedYear]) || '-' }}</span>
-              </div>
-            </template>
-          </Column>
-       
-          <!-- Colonnes Proposition (lecture seule) -->
-          <Column v-if="shouldShowPFPColumn('PFP2')" header="Proposition PFP2" class="w-6rem text-center">
-            <template #body="slotProps">
-              <div class="flex justify-content-center">
-                <span class="font-semibold text-blue-600">{{ getPropositionValue(slotProps.data, 'PFP2') }}</span>
-              </div>
-            </template>
-          </Column>
-          <Column v-if="shouldShowPFPColumn('PFP1A')" header="Proposition PFP1A" class="w-6rem text-center">
-            <template #body="slotProps">
-              <div class="flex justify-content-center">
-                <span class="font-semibold text-blue-600">{{ getPropositionValue(slotProps.data, 'PFP1A') }}</span>
-              </div>
-            </template>
-          </Column>
-          <Column v-if="shouldShowPFPColumn('PFP1B')" header="Proposition PFP1B" class="w-6rem text-center">
-            <template #body="slotProps">
-              <div class="flex justify-content-center">
-                <span class="font-semibold text-blue-600">{{ getPropositionValue(slotProps.data, 'PFP1B') }}</span>
-              </div>
-            </template>
-          </Column>
-          <Column v-if="shouldShowPFPColumn('PFP4')" header="Proposition PFP4" class="w-6rem text-center">
-            <template #body="slotProps">
-              <div class="flex justify-content-center">
-                <span class="font-semibold text-blue-600">{{ getPropositionValue(slotProps.data, 'PFP4') }}</span>
-              </div>
-            </template>
-          </Column>
-          <Column v-if="shouldShowPFPColumn('PFP3')" header="Proposition PFP3" class="w-6rem text-center">
-            <template #body="slotProps">
-              <div class="flex justify-content-center">
-                <span class="font-semibold text-blue-600">{{ getPropositionValue(slotProps.data, 'PFP3') }}</span>
-              </div>
-            </template>
-          </Column>
-          
-          <!-- Colonnes Analyse -->
-          <Column v-if="shouldShowPFPColumn('PFP2')" header="Analyse PFP2" class="w-8rem">
-            <template #body="slotProps">
-              <div class="text-center">
-                <span :class="getAssignmentAnalysisClass(getAssignmentAnalysis(slotProps.data, 'PFP2').status)">
-                  {{ getAssignmentAnalysis(slotProps.data, 'PFP2').display }}
-                </span>
-              </div>
-            </template>
-          </Column>
-          <Column v-if="shouldShowPFPColumn('PFP1A')" header="Analyse PFP1A" class="w-8rem">
-            <template #body="slotProps">
-              <div class="text-center">
-                <span :class="getAssignmentAnalysisClass(getAssignmentAnalysis(slotProps.data, 'PFP1A').status)">
-                  {{ getAssignmentAnalysis(slotProps.data, 'PFP1A').display }}
-                </span>
-              </div>
-            </template>
-          </Column>
-          <Column v-if="shouldShowPFPColumn('PFP1B')" header="Analyse PFP1B" class="w-8rem">
-            <template #body="slotProps">
-              <div class="text-center">
-                <span :class="getAssignmentAnalysisClass(getAssignmentAnalysis(slotProps.data, 'PFP1B').status)">
-                  {{ getAssignmentAnalysis(slotProps.data, 'PFP1B').display }}
-                </span>
-              </div>
-            </template>
-          </Column>
-          <Column v-if="shouldShowPFPColumn('PFP4')" header="Analyse PFP4" class="w-8rem">
-            <template #body="slotProps">
-              <div class="text-center">
-                <span :class="getAssignmentAnalysisClass(getAssignmentAnalysis(slotProps.data, 'PFP4').status)">
-                  {{ getAssignmentAnalysis(slotProps.data, 'PFP4').display }}
-                </span>
-              </div>
-            </template>
-          </Column>
-          <Column v-if="shouldShowPFPColumn('PFP3')" header="Analyse PFP3" class="w-8rem">
-            <template #body="slotProps">
-              <div class="text-center">
-                <span :class="getAssignmentAnalysisClass(getAssignmentAnalysis(slotProps.data, 'PFP3').status)">
-                  {{ getAssignmentAnalysis(slotProps.data, 'PFP3').display }}
-                </span>
+
+          <!-- Institution -->
+          <Column field="Institution_name" header="Institution" sortable :frozen="true" style="min-width: 210px">
+            <template #body="{ data }">
+              <div class="flex align-items-center gap-2">
+                <div class="institution-avatar">
+                  <i class="pi pi-building text-xs"></i>
+                </div>
+                <span class="font-semibold text-900 text-sm">{{ data.Institution_name || '-' }}</span>
               </div>
             </template>
           </Column>
 
-          <Column header="Analyse Total" class="w-8rem">
-            <template #body="slotProps">
-              <div class="text-center">
-                <span :class="getTotalAnalysisClass(getTotalAnalysisValue(slotProps.data))">
-                  {{ getTotalAnalysisValue(slotProps.data) }}
+          <!-- Place -->
+          <Column field="NomPlace" header="Place de formation" sortable style="min-width: 230px">
+            <template #body="{ data }">
+              <span class="text-700 text-sm">{{ data.NomPlace || '-' }}</span>
+            </template>
+          </Column>
+
+          <!-- Grouped PFP columns: Offre + Prop + Δ per PFP -->
+          <template v-for="(pfp, idx) in visiblePfpTypes" :key="pfp">
+            <Column :header="pfp + ' Offre'" :class="'col-pfp-' + (idx % 2)" style="min-width: 75px">
+              <template #body="{ data }">
+                <div class="flex justify-content-center">
+                  <span v-if="getOffreValue(data, pfp) !== '-'" class="offre-pill offre-has-value">
+                    {{ getOffreValue(data, pfp) }}
+                  </span>
+                  <span v-else class="offre-pill offre-empty">—</span>
+                </div>
+              </template>
+            </Column>
+
+            <Column :header="pfp + ' Prop.'" :class="'col-pfp-' + (idx % 2)" style="min-width: 75px">
+              <template #body="{ data }">
+                <div class="flex justify-content-center">
+                  <span v-if="getPropositionValue(data, pfp) !== '-'" class="prop-pill prop-has-value">
+                    {{ getPropositionValue(data, pfp) }}
+                  </span>
+                  <span v-else class="prop-pill prop-empty">—</span>
+                </div>
+              </template>
+            </Column>
+
+            <Column :header="pfp + ' Δ'" :class="'col-pfp-' + (idx % 2)" style="min-width: 65px">
+              <template #body="{ data }">
+                <div class="flex justify-content-center">
+                  <span :class="['analysis-badge', getAnalysisBadgeClass(getAssignmentAnalysis(data, pfp).status)]">
+                    {{ getAssignmentAnalysis(data, pfp).display }}
+                  </span>
+                </div>
+              </template>
+            </Column>
+          </template>
+
+          <!-- Total -->
+          <Column header="Δ Total" style="min-width: 80px">
+            <template #body="{ data }">
+              <div class="flex justify-content-center">
+                <span :class="['total-badge', getTotalBadgeClass(getTotalAnalysisValue(data))]">
+                  {{ getTotalAnalysisValue(data) }}
                 </span>
               </div>
             </template>
@@ -318,85 +262,144 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import InputText from 'primevue/inputtext'
 import Dropdown from 'primevue/dropdown'
-import InputSwitch from 'primevue/inputswitch'
 import { usePlacesStore } from '@/stores/placesStore'
 import { useInstitutionsStore } from '@/stores/institutionsStore'
 
 const placesStore = usePlacesStore()
 const institutionsStore = useInstitutionsStore()
+
 const selectedYear = ref('2026')
 const years = ref(['2025', '2026'])
 const selectedPFP = ref('all')
-const pfpOptions = ref([
-  { label: 'Tous', value: 'all' },
+const searchText = ref('')
+const filterDisplay = ref('all')
+
+const pfpOptions = [
+  { label: 'Tous les PFP', value: 'all' },
   { label: 'PFP1A', value: 'PFP1A' },
   { label: 'PFP1B', value: 'PFP1B' },
   { label: 'PFP2', value: 'PFP2' },
   { label: 'PFP3', value: 'PFP3' },
   { label: 'PFP4', value: 'PFP4' }
-])
+]
 
-const rowsPerPage = ref(1000)
-const rowsOptions = ref([
-  { label: '10', value: 10 },
-  { label: '25', value: 25 },
-  { label: '50', value: 50 },
-  { label: '100', value: 100 },
-  { label: 'Toutes', value: 1000 }
-])
-const showAll = ref(true)
+const displayOptions = [
+  { label: 'Toutes les places', value: 'all' },
+  { label: 'Avec offres', value: 'with_offers' },
+  { label: 'Sans offres', value: 'no_offers' }
+]
+
+const allPfpTypes = ['PFP1A', 'PFP1B', 'PFP2', 'PFP3', 'PFP4']
+
+const pfpColorMap = {
+  PFP1A: '#8B5CF6',
+  PFP1B: '#06B6D4',
+  PFP2: '#6366F1',
+  PFP3: '#EC4899',
+  PFP4: '#F59E0B'
+}
+
+const pfpStatsList = [
+  { key: 'PFP1A', color: '#8B5CF6' },
+  { key: 'PFP1B', color: '#06B6D4' },
+  { key: 'PFP2', color: '#6366F1' },
+  { key: 'PFP3', color: '#EC4899' },
+  { key: 'PFP4', color: '#F59E0B' }
+]
+
+const visiblePfpTypes = computed(() => {
+  if (selectedPFP.value === 'all') return allPfpTypes
+  return [selectedPFP.value]
+})
+
+const placesData = computed(() => placesStore.places || [])
+
+const hasOffers = (place) => {
+  const year = selectedYear.value
+  return allPfpTypes.some(pfp => {
+    const val = place[pfp]?.[year]
+    return val && val !== '' && val !== '0'
+  })
+}
 
 const stats = computed(() => {
   const places = placesData.value
-  const totalPlaces = places.length
   const year = selectedYear.value
-  
-  const placesWithOffers = places.filter(place => {
-    return (
-      (place.OffrePFP1A && place.OffrePFP1A[year] && place.OffrePFP1A[year] !== '') ||
-      (place.OffrePFP1B && place.OffrePFP1B[year] && place.OffrePFP1B[year] !== '') ||
-      (place.OffrePFP2 && place.OffrePFP2[year] && place.OffrePFP2[year] !== '') ||
-      (place.OffrePFP3 && place.OffrePFP3[year] && place.OffrePFP3[year] !== '') ||
-      (place.OffrePFP4 && place.OffrePFP4[year] && place.OffrePFP4[year] !== '')
-    )
-  }).length
-  
-  const pfpStats = {
-    PFP1A: {
-      propositions: places.reduce((total, place) => total + (parseInt(place.PFP1A?.[year]) || 0), 0),
-      offres: places.reduce((total, place) => total + (parseInt(place.OffrePFP1A?.[year]) || 0), 0)
-    },
-    PFP1B: {
-      propositions: places.reduce((total, place) => total + (parseInt(place.PFP1B?.[year]) || 0), 0),
-      offres: places.reduce((total, place) => total + (parseInt(place.OffrePFP1B?.[year]) || 0), 0)
-    },
-    PFP2: {
-      propositions: places.reduce((total, place) => total + (parseInt(place.PFP2?.[year]) || 0), 0),
-      offres: places.reduce((total, place) => total + (parseInt(place.OffrePFP2?.[year]) || 0), 0)
-    },
-    PFP3: {
-      propositions: places.reduce((total, place) => total + (parseInt(place.PFP3?.[year]) || 0), 0),
-      offres: places.reduce((total, place) => total + (parseInt(place.OffrePFP3?.[year]) || 0), 0)
-    },
-    PFP4: {
-      propositions: places.reduce((total, place) => total + (parseInt(place.PFP4?.[year]) || 0), 0),
-      offres: places.reduce((total, place) => total + (parseInt(place.OffrePFP4?.[year]) || 0), 0)
+
+  const placesWithOffers = places.filter(p => hasOffers(p)).length
+
+  const pfpStats = {}
+  allPfpTypes.forEach(pfp => {
+    pfpStats[pfp] = {
+      propositions: places.reduce((t, p) => t + (parseInt(p[pfp]?.[year]) || 0), 0),
+      offres: places.reduce((t, p) => t + (parseInt(p[`Offre${pfp}`]?.[year]) || 0), 0)
     }
-  }
-  
-  const totalOffers = Object.values(pfpStats).reduce((sum, pfp) => sum + pfp.offres, 0)
-  
+  })
+
+  const totalOffers = Object.values(pfpStats).reduce((s, p) => s + p.offres, 0)
+  const institutionSet = new Set(places.map(p => p.Institution_name).filter(Boolean))
+
   return {
-    total: totalPlaces,
+    total: places.length,
     actives: placesWithOffers,
-    places: totalOffers,
+    totalOffers,
+    institutions: institutionSet.size,
     pfpStats
   }
 })
 
-const placesData = computed(() => {
-  return placesStore.places || []
+const getProgressWidth = (prop, offre) => {
+  if (offre === 0 && prop === 0) return 0
+  const max = Math.max(prop, offre, 1)
+  return Math.min((prop / max) * 100, 100)
+}
+
+const getProgressColor = (prop, offre) => {
+  if (offre === 0 && prop === 0) return '#94A3B8'
+  if (prop === offre) return '#22C55E'
+  if (prop > offre) return '#F97316'
+  return '#EF4444'
+}
+
+const getProgressLabel = (prop, offre) => {
+  const diff = prop - offre
+  if (diff === 0) return 'Équilibré'
+  if (diff > 0) return `+${diff} sur`
+  return `${diff} sous`
+}
+
+const getProgressPercent = (prop, offre) => {
+  if (offre === 0) return prop > 0 ? '∞' : '0'
+  return Math.round((prop / offre) * 100)
+}
+
+const filteredPlaces = computed(() => {
+  let list = [...placesData.value]
+
+  if (searchText.value && searchText.value.trim()) {
+    const q = searchText.value.toLowerCase().trim()
+    list = list.filter(p =>
+      (p.Institution_name || '').toLowerCase().includes(q) ||
+      (p.NomPlace || '').toLowerCase().includes(q)
+    )
+  }
+
+  if (filterDisplay.value === 'with_offers') {
+    list = list.filter(p => hasOffers(p))
+  } else if (filterDisplay.value === 'no_offers') {
+    list = list.filter(p => !hasOffers(p))
+  }
+
+  const collator = new Intl.Collator('fr', { sensitivity: 'base' })
+  list.sort((a, b) => collator.compare(a.Institution_name || '', b.Institution_name || ''))
+
+  return list
 })
+
+const getOffreValue = (place, pfpType) => {
+  const val = place[pfpType]?.[selectedYear.value]
+  return (val && val !== '') ? val : '-'
+}
 
 const getPropositionValue = (place, pfpType) => {
   if (!place || !place[`${pfpType.toLowerCase()}_proposition`]) return '-'
@@ -404,39 +407,26 @@ const getPropositionValue = (place, pfpType) => {
 }
 
 const getTotalAnalysisValue = (place) => {
-  const pfpTypes = ['PFP1A', 'PFP1B', 'PFP2', 'PFP3', 'PFP4']
   let totalOffre = 0
   let totalProposition = 0
-  
-  pfpTypes.forEach(pfpType => {
-    const offre = parseInt(place[pfpType]?.[selectedYear.value]) || 0
-    const propositionKey = `${pfpType.toLowerCase()}_proposition`
-    const proposition = parseInt(place[propositionKey]?.[selectedYear.value]) || 0
-    
-    totalOffre += offre
-    totalProposition += proposition
+
+  allPfpTypes.forEach(pfp => {
+    totalOffre += parseInt(place[pfp]?.[selectedYear.value]) || 0
+    totalProposition += parseInt(place[`${pfp.toLowerCase()}_proposition`]?.[selectedYear.value]) || 0
   })
-  
+
   const result = totalProposition - totalOffre
   return result === 0 ? '0' : (result > 0 ? `+${result}` : result.toString())
-}
-
-const getTotalAnalysisClass = (value) => {
-  const num = parseInt(value) || 0
-  if (num === 0) return 'text-green-600 font-semibold'
-  if (num > 0) return 'text-orange-600 font-semibold'
-  return 'text-red-600 font-semibold'
 }
 
 const getAssignmentAnalysis = (place, pfpType) => {
   const year = selectedYear.value
   const offre = parseInt(place[pfpType]?.[year]) || 0
-  const propositionKey = `${pfpType.toLowerCase()}_proposition`
-  const proposition = parseInt(place[propositionKey]?.[year]) || 0
-  
+  const proposition = parseInt(place[`${pfpType.toLowerCase()}_proposition`]?.[year]) || 0
+
   const difference = proposition - offre
   const status = difference === 0 ? 'balanced' : difference > 0 ? 'over' : 'under'
-  
+
   return {
     proposition,
     offre,
@@ -446,30 +436,52 @@ const getAssignmentAnalysis = (place, pfpType) => {
   }
 }
 
-const shouldShowPFPColumn = (pfpType) => {
-  return selectedPFP.value === 'all' || selectedPFP.value === pfpType
-}
-
-const getAssignmentAnalysisClass = (status) => {
+const getAnalysisBadgeClass = (status) => {
   switch (status) {
-    case 'balanced':
-      return 'text-green-600 font-semibold'
-    case 'over':
-      return 'text-orange-600 font-semibold'
-    case 'under':
-      return 'text-red-600 font-semibold'
-    default:
-      return 'text-600'
+    case 'balanced': return 'analysis-balanced'
+    case 'over': return 'analysis-over'
+    case 'under': return 'analysis-under'
+    default: return ''
   }
 }
 
-const refreshPlaces = async () => {
-  await placesStore.fetchPlaces()
+const getTotalBadgeClass = (value) => {
+  const num = parseInt(value) || 0
+  if (num === 0) return 'total-balanced'
+  if (num > 0) return 'total-over'
+  return 'total-under'
 }
 
-const filters = ref({
-  global: { value: null, matchMode: 'contains' }
-})
+const exportCSV = () => {
+  const pfps = visiblePfpTypes.value
+  const headers = [
+    'Institution', 'Place',
+    ...pfps.flatMap(p => [`Offre ${p}`, `Proposition ${p}`, `Analyse ${p}`]),
+    'Analyse Total'
+  ]
+  const rows = filteredPlaces.value.map(place => [
+    place.Institution_name || '',
+    place.NomPlace || '',
+    ...pfps.flatMap(p => [
+      getOffreValue(place, p),
+      getPropositionValue(place, p),
+      getAssignmentAnalysis(place, p).display
+    ]),
+    getTotalAnalysisValue(place)
+  ])
+  const csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(';')).join('\n')
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `recap-offres-${selectedYear.value}-${new Date().toISOString().slice(0, 10)}.csv`
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
+const refreshPlaces = async () => {
+  await placesStore.fetchPlaces({ force: true })
+}
 
 onMounted(async () => {
   await Promise.all([
@@ -484,44 +496,163 @@ onMounted(async () => {
   min-height: calc(100vh - 100px);
 }
 
-.p-datatable .p-datatable-tbody > tr > td {
-  padding: 0.5rem !important;
-  vertical-align: middle !important;
+/* PFP stat cards */
+.pfp-stat-card {
+  transition: transform 0.2s ease;
 }
 
-.p-datatable .p-datatable-thead > tr > th {
-  padding: 0.75rem 0.5rem !important;
+.pfp-stat-card:hover {
+  transform: translateY(-1px);
+}
+
+.progress-bar-bg {
+  height: 6px;
+  background: #E2E8F0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s ease;
+}
+
+/* Institution avatar */
+.institution-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #EEF2FF, #E0E7FF);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #6366F1;
+}
+
+/* Pill badges for offre/proposition */
+.offre-pill, .prop-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
-  background-color: var(--surface-100);
+}
+
+.offre-has-value {
+  background: #DCFCE7;
+  color: #166534;
+}
+
+.offre-empty {
+  background: #F1F5F9;
+  color: #94A3B8;
+}
+
+.prop-has-value {
+  background: #DBEAFE;
+  color: #1E40AF;
+}
+
+.prop-empty {
+  background: #F1F5F9;
+  color: #94A3B8;
+}
+
+/* Analysis badges */
+.analysis-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.analysis-balanced {
+  background: #DCFCE7;
+  color: #166534;
+}
+
+.analysis-over {
+  background: #FFF7ED;
+  color: #C2410C;
+}
+
+.analysis-under {
+  background: #FEF2F2;
+  color: #DC2626;
+}
+
+/* Total badge */
+.total-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 26px;
+  padding: 0 8px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.total-balanced {
+  background: #22C55E;
+  color: white;
+}
+
+.total-over {
+  background: #F97316;
+  color: white;
+}
+
+.total-under {
+  background: #EF4444;
+  color: white;
+}
+
+/* Legend dot */
+.legend-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+/* Table styling */
+.offre-table :deep(.p-datatable-thead > tr > th) {
+  background: var(--surface-100);
+  padding: 0.75rem 0.5rem;
+  font-weight: 600;
   border-bottom: 2px solid var(--primary-color);
-}
-
-.p-datatable .p-datatable-tbody > tr:hover {
-  background-color: var(--surface-50);
-}
-
-.text-center {
+  white-space: nowrap;
   text-align: center;
 }
 
-@media (max-width: 1400px) {
-  .w-25rem {
-    width: 18rem !important;
-  }
-  .w-20rem {
-    width: 15rem !important;
-  }
+.offre-table :deep(.p-datatable-tbody > tr > td) {
+  padding: 0.4rem 0.3rem;
+  vertical-align: middle;
 }
 
-@media (max-width: 1200px) {
-  .w-25rem {
-    width: 14rem !important;
-  }
-  .w-20rem {
-    width: 12rem !important;
-  }
-  .w-8rem {
-    width: 6rem !important;
-  }
+.offre-table :deep(.p-datatable-tbody > tr) {
+  transition: background 0.2s ease;
+}
+
+.offre-table :deep(.p-datatable-tbody > tr:hover) {
+  background: var(--surface-50);
+}
+
+/* Alternating column group backgrounds */
+.offre-table :deep(.col-pfp-1) {
+  background: rgba(99, 102, 241, 0.03);
 }
 </style>

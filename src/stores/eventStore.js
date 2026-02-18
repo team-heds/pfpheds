@@ -127,7 +127,6 @@ export const useEventStore = defineStore('event', () => {
       // 1. Upload de l'image si présente
       let imageUrl = null;
       if (event.image) {
-        console.log('Upload de l\'image...');
         const fileExt = event.image.name.split('.').pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
         const filePath = `events/${fileName}`;
@@ -147,7 +146,6 @@ export const useEventStore = defineStore('event', () => {
             .from('events')
             .getPublicUrl(filePath);
           imageUrl = publicUrl;
-          console.log('Image uploadée:', imageUrl);
         }
       }
 
@@ -164,8 +162,6 @@ export const useEventStore = defineStore('event', () => {
         image_url: imageUrl
       };
 
-      console.log('📤 Données envoyées à Supabase:', eventData);
-
       const { data, error: insertError } = await supabase
         .from('events')
         .insert([eventData])
@@ -177,8 +173,6 @@ export const useEventStore = defineStore('event', () => {
         throw insertError;
       }
 
-      console.log('Événement créé avec succès:', data);
-      
       // Recharger les événements
       await fetchEvents();
       
@@ -204,8 +198,6 @@ export const useEventStore = defineStore('event', () => {
       let imageUrl = updatedData.image_url || updatedData.existingImage;
       
       if (updatedData.image && typeof updatedData.image !== 'string') {
-        console.log('Nouvelle image détectée pour update');
-        
         // Supprimer l'ancienne image si elle existe
         if (updatedData.existingImage) {
           const oldPath = updatedData.existingImage.split('/events/')[1];
@@ -230,7 +222,6 @@ export const useEventStore = defineStore('event', () => {
             .from('events')
             .getPublicUrl(filePath);
           imageUrl = publicUrl;
-          console.log('Nouvelle image uploadée:', imageUrl);
         }
       }
 
@@ -253,8 +244,6 @@ export const useEventStore = defineStore('event', () => {
 
       if (updateError) throw updateError;
 
-      console.log('Événement mis à jour avec succès:', data);
-      
       // Recharger les événements
       await fetchEvents();
       
@@ -288,7 +277,6 @@ export const useEventStore = defineStore('event', () => {
         const imagePath = event.image_url.split('/events/')[1];
         if (imagePath) {
           await supabase.storage.from('events').remove([`events/${imagePath}`]);
-          console.log('Image supprimée du storage');
         }
       }
 
@@ -300,8 +288,6 @@ export const useEventStore = defineStore('event', () => {
 
       if (deleteError) throw deleteError;
 
-      console.log('Événement supprimé avec succès');
-      
       // Recharger les événements
       await fetchEvents();
       
@@ -327,7 +313,6 @@ export const useEventStore = defineStore('event', () => {
 
       if (updateError) throw updateError;
 
-      console.log(`Événement ${eventId} mis à jour avec admin: ${adminUserId}`);
       await fetchEvents();
       return true;
     } catch (err) {
@@ -358,7 +343,6 @@ export const useEventStore = defineStore('event', () => {
           .eq('user_uid', userId);
 
         if (deleteError) throw deleteError;
-        console.log('Utilisateur désinscrit');
       } else {
         // Inscription
         const { error: insertError } = await supabase
@@ -374,7 +358,6 @@ export const useEventStore = defineStore('event', () => {
           ]);
 
         if (insertError) throw insertError;
-        console.log('Utilisateur inscrit');
       }
 
       // Recharger les événements pour mettre à jour les comptes
@@ -407,7 +390,6 @@ export const useEventStore = defineStore('event', () => {
           .eq('user_uid', userId);
 
         if (deleteError) throw deleteError;
-        console.log('Like retiré');
       } else {
         // Like
         const { error: insertError } = await supabase
@@ -420,7 +402,6 @@ export const useEventStore = defineStore('event', () => {
           ]);
 
         if (insertError) throw insertError;
-        console.log('Like ajouté');
       }
 
       // Recharger les événements pour mettre à jour les comptes

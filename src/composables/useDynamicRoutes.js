@@ -72,8 +72,6 @@ function resolveView(componentPathFromDb) {
  */
 export async function loadDynamicRoutes() {
   try {
-    console.log('🔄 Chargement des routes dynamiques depuis Supabase...');
-
     const { data, error } = await supabase
       .from('dynamic_routes')
       .select('*')
@@ -89,8 +87,6 @@ export async function loadDynamicRoutes() {
       console.warn('⚠️ Aucune route dynamique trouvée dans Supabase');
       return [];
     }
-
-    console.log(`✅ ${data.length} routes dynamiques récupérées`);
 
     const routes = data
       .map((route) => {
@@ -138,10 +134,6 @@ export async function loadDynamicRoutes() {
       })
       .filter(Boolean); // supprime les null
 
-    console.log(
-      '✅ Routes dynamiques transformées:',
-      routes.map((r) => r.path)
-    );
 
     return routes;
   } catch (error) {
@@ -183,7 +175,6 @@ export async function addDynamicRoutesToRouter(router) {
 
     // Ignorer les routes admin protégées
     if (protectedRoutes.includes(route.name)) {
-      console.log(`⏩ Route protégée ignorée: ${route.path} (${route.name})`);
       return;
     }
 
@@ -208,18 +199,14 @@ export async function addDynamicRoutesToRouter(router) {
     }
 
     router.addRoute(route);
-    console.log(`✅ Route ajoutée: ${route.path} (${route.name})`);
   });
 
-  console.log(`✅ ${dynamicRoutes.length} routes dynamiques ajoutées au router`);
 }
 
 /**
  * Reloader toutes les routes dynamiques (après modif dans l’admin)
  */
 export async function reloadDynamicRoutes(router) {
-  console.log('🔄 Rechargement des routes dynamiques...');
-
   const allRoutes = router.getRoutes();
   allRoutes.forEach((route) => {
     if (route.meta && route.meta.dynamic) {
@@ -229,7 +216,6 @@ export async function reloadDynamicRoutes(router) {
 
   await addDynamicRoutesToRouter(router);
 
-  console.log('✅ Routes dynamiques rechargées');
 }
 
 /**

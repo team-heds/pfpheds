@@ -37,10 +37,8 @@ import BadgeManagement from '@/components/admin/BadgeManagement.vue'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 // import Navbar from '@/components/common/utils/Navbar.vue'
 import { onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import rolesService, { PERMISSIONS } from '@/service/rolesService'
 
-const router = useRouter()
+
 
 // Permissions simplifiées - accès libre pour le développement
 onMounted(() => {

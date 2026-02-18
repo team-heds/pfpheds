@@ -193,14 +193,13 @@
 
 <script setup>
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
-import { ref, watch, computed, onMounted, nextTick } from 'vue'
+import { ref, watch, computed, onMounted } from 'vue'
 import { getAuth, onAuthStateChanged } from 'firebase/auth'
 import { getDatabase, ref as dbRef, get } from 'firebase/database'
-import { listYears, listModules, listVideos, getVideo, publishVideo, createTicket, listTickets, updateTicketStatus } from '@/service/mediaService'
+import { listYears, listModules, listVideos, publishVideo, createTicket, listTickets, updateTicketStatus } from '@/service/mediaService'
 import VideoPlayerVimeo from '@/components/media/VideoPlayerVimeo.vue'
 import { listAllVideos, testVimeoAuth } from '@/service/vimeoService'
 import { envTest } from '@/utils/envTest'
-import Navbar from '@/components/common/utils/Navbar.vue'
 
 // Auth & roles (local)
 const userUid = ref(null)

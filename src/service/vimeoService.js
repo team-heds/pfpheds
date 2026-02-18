@@ -6,9 +6,8 @@ const VIMEO_API_BASE = 'https://api.vimeo.com';
 
 function getToken() {
   // Allow a localStorage override for development/debug
-  const override = typeof window !== 'undefined' ? window.localStorage?.getItem('VIMEO_TOKEN_OVERRIDE') : null;
+  const override = import.meta?.env?.DEV && typeof window !== 'undefined' ? window.localStorage?.getItem('VIMEO_TOKEN_OVERRIDE') : null;
   if (override) {
-    console.log('[vimeoService] Using token from localStorage override');
     return override;
   }
   
@@ -32,11 +31,8 @@ async function fetchVideosFromEndpoint(baseUrl, { perPage, maxPages, query, toke
   const results = [];
   let pages = 0;
   
-  console.log(`[vimeoService] Début récupération depuis: ${currentUrl}`);
-  
   while (currentUrl && pages < maxPages) {
     pages += 1;
-    console.log(`[vimeoService] Page ${pages}: ${currentUrl}`);
     
     try {
       const res = await fetch(currentUrl, {
@@ -63,7 +59,6 @@ async function fetchVideosFromEndpoint(baseUrl, { perPage, maxPages, query, toke
         privacy: v.privacy?.view || 'unknown',
       }));
       
-      console.log(`[vimeoService] Page ${pages}: ${items.length} vidéos récupérées`);
       results.push(...items);
       
       // URL suivante pour la pagination
@@ -80,7 +75,6 @@ async function fetchVideosFromEndpoint(baseUrl, { perPage, maxPages, query, toke
     }
   }
   
-  console.log(`[vimeoService] Total récupéré: ${results.length} vidéos en ${pages} pages`);
   return results;
 }
 
@@ -93,12 +87,8 @@ export async function listAllVideos({ perPage = 50, maxPages = 10, query = '', t
     return [];
   }
   
-  console.log('[vimeoService] Récupération des vidéos depuis /me/videos...');
-  
   // SIMPLIFICATION: Utiliser uniquement l'endpoint principal qui fonctionne
   const mainEndpoint = `${VIMEO_API_BASE}/me/videos`;
-  
-  console.log(`[vimeoService] Récupération depuis: ${mainEndpoint}`);
   
   try {
     const videos = await fetchVideosFromEndpoint(mainEndpoint, { 
@@ -108,15 +98,12 @@ export async function listAllVideos({ perPage = 50, maxPages = 10, query = '', t
       token: finalToken 
     });
     
-    console.log(`[vimeoService] ${videos.length} vidéos récupérées depuis /me/videos`);
-    
     // Récupérer aussi les albums (qui fonctionnent généralement)
     let albumVideos = [];
     try {
       albumVideos = await fetchAlbumsAndVideos({ perPage, maxPages: 2, query, token: finalToken });
-      console.log(`[vimeoService] ${albumVideos.length} vidéos récupérées depuis les albums`);
     } catch (e) {
-      console.log('[vimeoService] Albums non accessibles:', e.message);
+      // Albums non accessibles
     }
     
     // Combiner et dédupliquer
@@ -125,7 +112,6 @@ export async function listAllVideos({ perPage = 50, maxPages = 10, query = '', t
       index === self.findIndex(v => v.id === video.id)
     );
     
-    console.log(`[vimeoService] TOTAL: ${uniqueVideos.length} vidéos uniques récupérées`);
     return uniqueVideos;
     
   } catch (error) {
@@ -163,7 +149,6 @@ async function fetchAlbumsAndVideos({ perPage, maxPages, query, token }) {
       }
     }
     
-    console.log(`[vimeoService] ${albumVideos.length} vidéos récupérées depuis les albums`);
     return albumVideos;
   } catch (e) {
     console.error('[vimeoService] fetchAlbumsAndVideos error', e);
@@ -174,7 +159,6 @@ async function fetchAlbumsAndVideos({ perPage, maxPages, query, token }) {
 // Récupérer les vidéos des dossiers
 async function fetchFoldersAndVideos({ perPage, maxPages, query, token }) {
   try {
-    console.log('[vimeoService] Récupération des dossiers...');
     // D'abord récupérer la liste des dossiers (pas les vidéos directement)
     const foldersResponse = await fetch(`${VIMEO_API_BASE}/me/folders?per_page=100`, {
       headers: {
@@ -190,21 +174,17 @@ async function fetchFoldersAndVideos({ perPage, maxPages, query, token }) {
     
     const foldersData = await foldersResponse.json();
     const folders = foldersData.data || [];
-    console.log(`[vimeoService] ${folders.length} dossiers trouvés:`, folders.map(f => f.name || f.uri));
     const folderVideos = [];
     
     // Pour chaque dossier, récupérer ses vidéos
     for (const folder of folders.slice(0, 20)) { // Limite à 20 dossiers
       const folderId = folder.uri?.split('/').pop();
-      console.log(`[vimeoService] Récupération vidéos du dossier ${folder.name || folderId}...`);
       if (folderId) {
         const videos = await fetchVideosFromEndpoint(`${VIMEO_API_BASE}/folders/${folderId}/videos`, { perPage, maxPages: 5, query, token });
-        console.log(`[vimeoService] ${videos.length} vidéos dans le dossier ${folder.name || folderId}`);
         folderVideos.push(...videos);
       }
     }
     
-    console.log(`[vimeoService] ${folderVideos.length} vidéos récupérées depuis les dossiers`);
     return folderVideos;
   } catch (e) {
     console.error('[vimeoService] fetchFoldersAndVideos error', e);
@@ -241,7 +221,6 @@ async function fetchProjectsAndVideos({ perPage, maxPages, query, token }) {
       }
     }
     
-    console.log(`[vimeoService] ${projectVideos.length} vidéos récupérées depuis les projets`);
     return projectVideos;
   } catch (e) {
     console.error('[vimeoService] fetchProjectsAndVideos error', e);
@@ -252,7 +231,6 @@ async function fetchProjectsAndVideos({ perPage, maxPages, query, token }) {
 // Récupérer les vidéos des dossiers d'équipe
 async function fetchTeamFoldersAndVideos({ perPage, maxPages, query, token }) {
   try {
-    console.log('[vimeoService] Récupération des dossiers d\'équipe...');
     // D'abord récupérer la liste des dossiers d'équipe (pas les vidéos directement)
     const teamFoldersResponse = await fetch(`${VIMEO_API_BASE}/me/team/folders?per_page=100`, {
       headers: {
@@ -268,21 +246,17 @@ async function fetchTeamFoldersAndVideos({ perPage, maxPages, query, token }) {
     
     const teamFoldersData = await teamFoldersResponse.json();
     const teamFolders = teamFoldersData.data || [];
-    console.log(`[vimeoService] ${teamFolders.length} dossiers d'équipe trouvés:`, teamFolders.map(f => f.name || f.uri));
     const teamFolderVideos = [];
     
     // Pour chaque dossier d'équipe, récupérer ses vidéos
     for (const teamFolder of teamFolders.slice(0, 20)) { // Limite à 20 dossiers d'équipe
       const teamFolderId = teamFolder.uri?.split('/').pop();
-      console.log(`[vimeoService] Récupération vidéos du dossier d'équipe ${teamFolder.name || teamFolderId}...`);
       if (teamFolderId) {
         const videos = await fetchVideosFromEndpoint(`${VIMEO_API_BASE}/team/folders/${teamFolderId}/videos`, { perPage, maxPages: 5, query, token });
-        console.log(`[vimeoService] ${videos.length} vidéos dans le dossier d'équipe ${teamFolder.name || teamFolderId}`);
         teamFolderVideos.push(...videos);
       }
     }
     
-    console.log(`[vimeoService] ${teamFolderVideos.length} vidéos récupérées depuis les dossiers d'équipe`);
     return teamFolderVideos;
   } catch (e) {
     console.error('[vimeoService] fetchTeamFoldersAndVideos error', e);

@@ -187,14 +187,12 @@ async function sendTest(payload = {}) {
  
 async function getAdminCount() {
   try {
-    console.log('🔍 [PushStore] Début getAdminCount...')
     
     // Test 1: Essai de récupérer TOUS les profils (sans filtre)
     const { data: allData, error: allError } = await sb
       .from('user_profiles')
       .select('user_id, email, role, is_active')
     
-    console.log('🔍 [PushStore] Test 1 - TOUS les profils:', allData?.length || 0, 'profils')
     if (allError) console.error('❌ Test 1 Error:', allError)
     
     // Test 2: Compter uniquement les admins
@@ -203,12 +201,6 @@ async function getAdminCount() {
       .select('user_id, email, role, is_active', { count: 'exact' })
       .eq('role', 'admin')
     
-    console.log('🔍 [PushStore] Test 2 - Admins (avec données):', {
-      count: adminCount,
-      data: adminData,
-      error: adminError
-    })
-    
     // Test 3: Compter les admins actifs
     const { count, error } = await sb
       .from('user_profiles')
@@ -216,30 +208,19 @@ async function getAdminCount() {
       .eq('role', 'admin')
       .eq('is_active', true)
  
-    console.log('🔍 [PushStore] Test 3 - Admins actifs (count only):', {
-      count,
-      error
-    })
  
     if (error) {
-      console.error('❌ [PushStore] Erreur getAdminCount:', error)
-      console.error('❌ [PushStore] Error code:', error.code)
-      console.error('❌ [PushStore] Error message:', error.message)
-      console.error('❌ [PushStore] Error details:', error.details)
       // Fallback: utiliser les données du test 2
       if (adminData && !adminError) {
         const activeAdmins = adminData.filter(a => a.is_active === true)
-        console.log(`⚠️ [PushStore] Fallback count: ${activeAdmins.length} admin(s) actif(s)`)
         return activeAdmins.length
       }
       return 0
     }
  
-    console.log(`✅ [PushStore] ${count} administrateur(s) actif(s) dans la DB`)
     return count || 0
   } catch (e) {
     console.error('❌ [PushStore] Exception getAdminCount:', e)
-    console.error('❌ [PushStore] Exception details:', e.message)
     return 0
   }
 }
@@ -281,21 +262,6 @@ async function sendToAllAdmins(payload = {}) {
       throw new Error('Aucun administrateur trouvé')
     }
  
-    console.log(` [PushStore] Envoi de notifications à ${admins.length} admin(s)`)
- 
- 
-    // Vérifie si l'utilisateur actuel est dans la liste
-    const currentUserInList = admins.find(a => a.user_id === session.user.id)
-    const currentUserEmail = currentUserInList?.email || session.user.email
- 
-    console.log(`📢 [PushStore] Envoi de notifications à ${admins.length} admin(s)`)
-    console.log(`📧 [PushStore] Liste des admins:`, admins.map(a => a.email || a.user_id))
-    
-    if (currentUserInList) {
-      console.log(`✅ [PushStore] Vous (${currentUserEmail}) recevrez aussi la notification`)
-    } else {
-      console.warn(`⚠️ [PushStore] Attention: Vous (${currentUserEmail}) n'êtes pas dans la liste des admins`)
-    }
  
     // 3. Headers avec authentification
     const headers = {
@@ -315,7 +281,6 @@ async function sendToAllAdmins(payload = {}) {
         url
       }
  
-      console.log(` Envoi à ${admin.email || admin.user_id}`)
  
       return fetch(`${REST}/push_outbox`, {
         method: 'POST',
@@ -331,7 +296,6 @@ async function sendToAllAdmins(payload = {}) {
           return { success: false, admin, error: detail }
         }
         
-        console.log(` Notification envoyée à ${admin.email || admin.user_id}`)
         return { success: true, admin, data: Array.isArray(json) ? json[0] : json }
       })
     })
@@ -341,7 +305,6 @@ async function sendToAllAdmins(payload = {}) {
     const successCount = results.filter(r => r.success).length
     const failCount = results.filter(r => !r.success).length
  
-    console.log(` [PushStore] ${successCount} notification(s) envoyée(s), ${failCount} échec(s)`)
  
     return {
       total: admins.length,

@@ -49,7 +49,6 @@ export const votesBackendService = {
 
       if (error) throw error
       
-      console.log('✅ Vote enregistré via RPC:', data)
       return data
     } catch (err) {
       console.error('❌ Erreur upsertStudentVote RPC:', err)

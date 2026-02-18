@@ -206,6 +206,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { supabase } from '@/supabase.js';
+import { useAutoRefresh } from '@/composables/useAutoRefresh';
 import { useToast } from 'primevue/usetoast';
 import { FilterMatchMode } from 'primevue/api';
 import Navbar from '@/components/common/utils/Navbar.vue';
@@ -218,6 +219,8 @@ import Tag from 'primevue/tag';
 import Toast from 'primevue/toast';
 
 const toast = useToast();
+
+const { scheduleRefresh } = useAutoRefresh(() => Promise.all([loadRepondants(), loadStudents()]));
 
 // States
 const loading = ref(false);
@@ -241,7 +244,6 @@ const studentsWithoutRepondant = computed(() => {
 
 // Charger les répondants HES depuis StudentsPhysio
 const loadRepondants = async () => {
-  console.log('📋 Chargement des répondants HES...');
   
   try {
     // Récupérer toutes les colonnes pour voir ce qui existe
@@ -257,11 +259,6 @@ const loadRepondants = async () => {
 
     // Regrouper les répondants avec leurs classes
     const repondantsMap = new Map();
-    
-    // Log pour voir les colonnes disponibles
-    if (physioData && physioData.length > 0) {
-      console.log('📋 Colonnes disponibles dans StudentsPhysio:', Object.keys(physioData[0]));
-    }
     
     physioData?.forEach(row => {
       // Utiliser la colonne exacte : repondant_hes
@@ -295,7 +292,6 @@ const loadRepondants = async () => {
     // Trier par nom
     repondantsOptions.value.sort((a, b) => a.label.localeCompare(b.label));
 
-    console.log(`✅ ${repondantsOptions.value.length} répondants chargés`);
   } catch (error) {
     console.error('❌ Erreur chargement répondants:', error);
     toast.add({
@@ -312,8 +308,6 @@ const loadStudents = async () => {
   loading.value = true;
   
   try {
-    console.log('📥 Chargement des étudiants BA25...');
-    
     // Charger TOUS les champs pour voir ce qui existe
     const { data: profiles, error: profilesError } = await supabase
       .from('user_profiles')
@@ -327,13 +321,6 @@ const loadStudents = async () => {
       const classe = p.classe || '';
       return classe === 'BA25';
     }) || [];
-
-    console.log(`✅ ${filteredProfiles.length} profils BA25 trouvés dans user_profiles (total: ${profiles?.length || 0})`);
-    
-    // Log pour voir les colonnes disponibles
-    if (filteredProfiles.length > 0) {
-      console.log('📋 Colonnes disponibles dans user_profiles:', Object.keys(filteredProfiles[0]));
-    }
 
     // Enrichir avec les données de StudentsPhysio
     const enrichedStudents = [];
@@ -373,8 +360,6 @@ const loadStudents = async () => {
 
     students.value = enrichedStudents;
     
-    console.log(`✅ ${students.value.length} étudiants chargés`);
-    
     toast.add({
       severity: 'success',
       summary: 'Succès',
@@ -398,7 +383,6 @@ const loadStudents = async () => {
 const onRepondantChange = (student) => {
   student.modified = true;
   student.saved = false;
-  console.log('📝 Modification pour:', student.nom, student.prenom, '→', student.nouveau_repondant);
 };
 
 // Sauvegarder un étudiant
@@ -416,8 +400,6 @@ const saveStudent = async (student) => {
   student.saving = true;
 
   try {
-    console.log('💾 Sauvegarde UNIQUEMENT dans StudentsPhysio pour:', student.nom, student.prenom);
-
     // Sauvegarder UNIQUEMENT dans StudentsPhysio
     if (student.exists_in_physio) {
       // UPDATE de l'enregistrement existant
@@ -433,10 +415,7 @@ const saveStudent = async (student) => {
         throw new Error(`Erreur mise à jour StudentsPhysio: ${updateError.message}`);
       }
       
-      console.log('✅ StudentsPhysio mis à jour pour:', student.nom, student.prenom);
     } else {
-      // INSERT d'un nouvel enregistrement dans StudentsPhysio
-      console.log('🆕 Création nouvelle ligne StudentsPhysio pour:', student.nom, student.prenom);
       
       const newRecord = {
         user_id: student.user_id,
@@ -444,8 +423,6 @@ const saveStudent = async (student) => {
         repondant_hes: student.nouveau_repondant,
         sae: 0  // 0 = false (colonne de type integer)
       };
-      
-      console.log('📝 Données à insérer:', newRecord);
       
       const { data: insertData, error: insertError } = await supabase
         .from('StudentsPhysio')
@@ -461,8 +438,6 @@ const saveStudent = async (student) => {
       }
       
       student.exists_in_physio = true;
-      console.log('✅ Nouvelle ligne StudentsPhysio créée avec succès !');
-      console.log('✅ Données insérées:', insertData);
     }
 
     // Mettre à jour l'état local
@@ -478,7 +453,7 @@ const saveStudent = async (student) => {
       life: 3000
     });
 
-    console.log('✅ Sauvegarde réussie');
+    scheduleRefresh();
   } catch (error) {
     console.error('❌ Erreur sauvegarde:', error);
     toast.add({

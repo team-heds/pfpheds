@@ -11,7 +11,7 @@ import { supabase } from '@/supabase'
  */
 export async function getMyModules(userId, userEmail) {
   try {
-    console.log('📚 [rmDashboardService] Chargement modules pour RM:', userEmail)
+    if (import.meta.env.DEV) console.log('📚 [rmDashboardService] Chargement modules pour RM:', userEmail)
     
     const { data, error } = await supabase
       .from('modules')
@@ -37,7 +37,7 @@ export async function getMyModules(userId, userEmail) {
       return []
     }
     
-    console.log('✅ [rmDashboardService] Modules trouvés:', data?.length || 0)
+    if (import.meta.env.DEV) console.log('✅ [rmDashboardService] Modules trouvés:', data?.length || 0)
     return data || []
   } catch (error) {
     console.error('❌ [rmDashboardService] Erreur getMyModules:', error)
@@ -51,7 +51,7 @@ export async function getMyModules(userId, userEmail) {
  */
 export async function getModuleCourses(moduleId) {
   try {
-    console.log('📖 [rmDashboardService] Chargement cours pour module:', moduleId)
+    if (import.meta.env.DEV) console.log('📖 [rmDashboardService] Chargement cours pour module:', moduleId)
     
     const { data, error } = await supabase
       .from('courses')
@@ -96,7 +96,7 @@ export async function getModuleCourses(moduleId) {
       }))
     }))
     
-    console.log('✅ [rmDashboardService] Cours trouvés:', courses.length)
+    if (import.meta.env.DEV) console.log('✅ [rmDashboardService] Cours trouvés:', courses.length)
     return courses
   } catch (error) {
     console.error('❌ [rmDashboardService] Erreur getModuleCourses:', error)
@@ -112,14 +112,14 @@ export async function getModulesTeachers(modules) {
   try {
     if (!modules || modules.length === 0) return []
     
-    console.log('👥 [rmDashboardService] Chargement enseignants pour modules:', modules.length)
+    if (import.meta.env.DEV) console.log('👥 [rmDashboardService] Chargement enseignants pour modules:', modules.length)
     
     // Récupérer les cours via course_teachers directement avec les codes de modules
     // La table courses utilise des UUID, on va chercher via course_teachers
     const moduleCodes = modules.map(m => m.code).filter(Boolean)
     
     if (moduleCodes.length === 0) {
-      console.log('ℹ️ [rmDashboardService] Aucun code de module disponible')
+      if (import.meta.env.DEV) console.log('ℹ️ [rmDashboardService] Aucun code de module disponible')
       return []
     }
     
@@ -151,7 +151,7 @@ export async function getModulesTeachers(modules) {
     }
     
     if (!data?.length) {
-      console.log('ℹ️ [rmDashboardService] Aucun enseignant trouvé')
+      if (import.meta.env.DEV) console.log('ℹ️ [rmDashboardService] Aucun enseignant trouvé')
       return []
     }
     
@@ -191,7 +191,7 @@ export async function getModulesTeachers(modules) {
       modules: undefined
     }))
     
-    console.log('✅ [rmDashboardService] Enseignants trouvés:', teachers.length)
+    if (import.meta.env.DEV) console.log('✅ [rmDashboardService] Enseignants trouvés:', teachers.length)
     return teachers.sort((a, b) => b.totalHours - a.totalHours)
   } catch (error) {
     console.error('❌ [rmDashboardService] Erreur getModulesTeachers:', error)
@@ -207,7 +207,7 @@ export async function getModulesPlanning(moduleIds) {
   try {
     if (!moduleIds || moduleIds.length === 0) return []
     
-    console.log('📅 [rmDashboardService] Chargement planning pour modules:', moduleIds.length)
+    if (import.meta.env.DEV) console.log('📅 [rmDashboardService] Chargement planning pour modules:', moduleIds.length)
     
     // Vérifier si la table planning_cells existe
     const { data, error } = await supabase
@@ -238,7 +238,7 @@ export async function getModulesPlanning(moduleIds) {
       return []
     }
     
-    console.log('✅ [rmDashboardService] Séances planning trouvées:', data?.length || 0)
+    if (import.meta.env.DEV) console.log('✅ [rmDashboardService] Séances planning trouvées:', data?.length || 0)
     return data || []
   } catch (error) {
     console.error('❌ [rmDashboardService] Erreur getModulesPlanning:', error)

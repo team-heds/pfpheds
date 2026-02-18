@@ -1,222 +1,221 @@
 <template>
   <AdminLayout>
-    <div class="p-4">
+    <div class="cas-page p-4">
+      <!-- Header -->
       <div class="surface-card p-4 border-round shadow-2 mb-4">
         <div class="flex align-items-center justify-content-between flex-wrap gap-3">
           <div class="flex align-items-center gap-3">
-            <i class="pi pi-exclamation-triangle text-primary text-4xl"></i>
+            <i class="pi pi-exclamation-triangle text-primary text-3xl"></i>
             <div>
-              <h1 class="text-3xl font-bold text-900 m-0">Suivi Cas Particuliers</h1>
-              <p class="text-600 m-0 mt-2">Cliquez sur chaque cellule PFP pour ajouter commentaire et couleur</p>
+              <h1 class="text-2xl font-bold text-900 m-0">Suivi Cas Particuliers</h1>
+              <p class="text-600 m-0 mt-1">Cliquez sur chaque cellule PFP pour ajouter commentaire et couleur</p>
             </div>
           </div>
-          
           <div class="flex align-items-center gap-3 flex-wrap">
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Recherche :</label>
-              <InputText 
-                v-model="searchTerm" 
-                placeholder="Nom ou prénom..." 
-                class="w-full md:w-12rem"
-              />
+              <span class="p-input-icon-left">
+                <i class="pi pi-search" />
+                <InputText v-model="searchTerm" placeholder="Nom ou prénom..." class="w-full md:w-14rem" />
+              </span>
             </div>
-            
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Classe :</label>
-              <Dropdown 
-                v-model="filterClasse" 
-                :options="classesList" 
-                placeholder="Toutes les classes" 
-                class="w-full md:w-10rem"
+              <Dropdown
+                v-model="filterClasse"
+                :options="classesList"
+                placeholder="Toutes"
+                class="w-full md:w-8rem"
                 showClear
               />
             </div>
-            
             <div class="flex flex-column gap-1">
-              <label class="font-semibold text-sm">Tri :</label>
-              <SelectButton 
-                v-model="sortOrder" 
-                :options="sortOptions" 
-                optionLabel="label" 
-                optionValue="value" 
+              <label class="font-semibold text-sm">Couleur :</label>
+              <Dropdown
+                v-model="filterColor"
+                :options="colorFilterOptions"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Toutes"
+                class="w-full md:w-8rem"
+                showClear
               />
             </div>
-            
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Affichage :</label>
-              <SelectButton 
-                v-model="filterDisplay" 
-                :options="displayOptions" 
-                optionLabel="label" 
-                optionValue="value" 
+              <Dropdown
+                v-model="filterDisplay"
+                :options="displayOptions"
+                optionLabel="label"
+                optionValue="value"
+                class="w-full md:w-12rem"
               />
+            </div>
+            <div class="flex flex-column gap-1">
+              <label class="font-semibold text-sm">&nbsp;</label>
+              <div class="flex gap-2">
+                <Button icon="pi pi-download" label="Export" outlined class="p-button-sm" @click="exportCSV" />
+                <Button icon="pi pi-refresh" outlined class="p-button-sm" @click="fetchCases" v-tooltip="'Rafraîchir'" :loading="loading" />
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="surface-card p-4 border-round shadow-2">
-        <DataTable :value="filteredCases" :loading="loading" responsiveLayout="scroll" :paginator="true" :rows="50">
-          <template #header>
-            <div class="flex justify-content-between align-items-center">
-              <span class="text-xl text-900 font-bold">Cas Particuliers ({{ filteredCases.length }} étudiants)</span>
-              <div class="flex gap-2">
-                <span class="text-sm">Légende:</span>
-                <Tag value="Vert" severity="success" />
-                <Tag value="Orange" severity="warning" />
-                <Tag value="Rouge" severity="danger" />
-                <Tag value="Noir" severity="secondary" />
-                <Tag value="Blanc" />
+      <!-- Statistiques -->
+      <div class="grid mb-4">
+        <div class="col-12 md:col-3">
+          <div class="surface-card p-3 border-round shadow-2">
+            <div class="flex align-items-center gap-3">
+              <div class="bg-blue-100 border-circle p-3">
+                <i class="pi pi-users text-blue-500 text-2xl"></i>
+              </div>
+              <div>
+                <h3 class="text-2xl font-bold text-900 m-0">{{ stats.total }}</h3>
+                <p class="text-600 m-0">Étudiants</p>
               </div>
             </div>
+          </div>
+        </div>
+        <div class="col-12 md:col-3">
+          <div class="surface-card p-3 border-round shadow-2">
+            <div class="flex align-items-center gap-3">
+              <div class="bg-orange-100 border-circle p-3">
+                <i class="pi pi-flag text-orange-500 text-2xl"></i>
+              </div>
+              <div>
+                <h3 class="text-2xl font-bold text-900 m-0">{{ stats.withComments }}</h3>
+                <p class="text-600 m-0">Avec suivi</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-12 md:col-3">
+          <div class="surface-card p-3 border-round shadow-2">
+            <div class="flex align-items-center gap-3">
+              <div class="bg-red-100 border-circle p-3">
+                <i class="pi pi-exclamation-circle text-red-500 text-2xl"></i>
+              </div>
+              <div>
+                <h3 class="text-2xl font-bold text-900 m-0">{{ stats.redCount }}</h3>
+                <p class="text-600 m-0">Alertes rouges</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-12 md:col-3">
+          <div class="surface-card p-3 border-round shadow-2">
+            <div class="flex align-items-center gap-3">
+              <div class="bg-green-100 border-circle p-3">
+                <i class="pi pi-check-circle text-green-500 text-2xl"></i>
+              </div>
+              <div>
+                <h3 class="text-2xl font-bold text-900 m-0">{{ stats.greenCount }}</h3>
+                <p class="text-600 m-0">Cas résolus</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Légende couleurs -->
+      <div class="flex gap-2 align-items-center mb-3 px-1">
+        <span class="text-sm text-600 font-semibold">Légende :</span>
+        <span class="legend-dot legend-vert"></span><span class="text-xs text-600">Vert</span>
+        <span class="legend-dot legend-orange"></span><span class="text-xs text-600">Orange</span>
+        <span class="legend-dot legend-rouge"></span><span class="text-xs text-600">Rouge</span>
+        <span class="legend-dot legend-noir"></span><span class="text-xs text-600">Noir</span>
+        <span class="legend-dot legend-blanc"></span><span class="text-xs text-600">Blanc</span>
+      </div>
+
+      <!-- Table -->
+      <div class="surface-card p-4 border-round shadow-2">
+        <DataTable
+          :value="filteredCases"
+          :loading="loading"
+          responsiveLayout="scroll"
+          :paginator="true"
+          :rows="50"
+          :rowsPerPageOptions="[20, 50, 100]"
+          :rowHover="true"
+          dataKey="user_id"
+          scrollable
+          scrollHeight="flex"
+          class="cas-table p-datatable-sm"
+          :sortField="'etudiant'"
+          :sortOrder="1"
+        >
+          <template #header>
+            <div class="flex justify-content-between align-items-center">
+              <span class="text-xl text-900 font-bold">Cas Particuliers ({{ filteredCases.length }})</span>
+            </div>
           </template>
-          
-          <Column field="etudiant" header="Étudiant" :frozen="true" sortable style="min-width: 200px"></Column>
-          <Column field="classe" header="Classe" sortable style="min-width: 100px"></Column>
-                 <Column header="Commentaire" style="min-width: 150px">
-            <template #body="slotProps">
-              <div 
-                @click="openInfoDialog(slotProps.data)"
-                :style="getInfoStyle(slotProps.data.info_etudiant)"
-                class="cursor-pointer p-2 border-round text-center"
-                :title="slotProps.data.info_etudiant?.commentaire || 'Cliquez pour éditer'"
+          <template #empty>
+            <div class="text-center p-4">
+              <i class="pi pi-inbox text-4xl text-400 mb-3"></i>
+              <p class="text-600">Aucun cas trouvé</p>
+            </div>
+          </template>
+
+          <Column field="etudiant" header="Étudiant" :frozen="true" sortable style="min-width: 180px">
+            <template #body="{ data }">
+              <span class="font-semibold text-900">{{ data.etudiant }}</span>
+            </template>
+          </Column>
+          <Column field="classe" header="Classe" sortable style="min-width: 80px">
+            <template #body="{ data }">
+              <Tag :value="data.classe" severity="info" class="text-xs" />
+            </template>
+          </Column>
+          <Column header="Info" style="min-width: 130px">
+            <template #body="{ data }">
+              <div
+                @click="openInfoDialog(data)"
+                :class="['cell-box', 'cell-info', { 'cell-has-content': data.info_etudiant?.commentaire }]"
+                :title="data.info_etudiant?.commentaire || 'Cliquez pour éditer'"
               >
-                <div v-if="slotProps.data.info_etudiant?.commentaire" class="text-xs">
-                  {{ slotProps.data.info_etudiant.commentaire.length > 12 ? slotProps.data.info_etudiant.commentaire.substring(0, 12) + '...' : slotProps.data.info_etudiant.commentaire }}
+                <div v-if="data.info_etudiant?.commentaire" class="cell-text">
+                  {{ truncate(data.info_etudiant.commentaire, 14) }}
                 </div>
-                <span v-else class="text-400">Cliquez pour ajouter...</span>
+                <i v-else class="pi pi-plus text-400 text-xs"></i>
               </div>
             </template>
           </Column>
-          <Column header="PFP1" style="min-width: 100px">
-            <template #body="slotProps">
-              <div 
-                @click="openCellDialog(slotProps.data, 'pfp1')"
-                :style="getCellStyle(slotProps.data.pfp1)"
-                class="cursor-pointer p-2 border-round text-center"
-                :title="slotProps.data.pfp1?.commentaire || 'Cliquez pour éditer'"
-              >
-                <div v-if="slotProps.data.pfp1?.commentaire" class="text-xs">
-                  {{ slotProps.data.pfp1.commentaire.length > 10 ? slotProps.data.pfp1.commentaire.substring(0, 10) + '...' : slotProps.data.pfp1.commentaire }}
+          <template v-for="group in pfpGroups" :key="group.base">
+            <Column :header="group.label" style="min-width: 90px">
+              <template #body="{ data }">
+                <div
+                  @click="openCellDialog(data, group.base)"
+                  :style="getCellStyle(data[group.base])"
+                  class="cell-box"
+                  :title="data[group.base]?.commentaire || 'Cliquez pour éditer'"
+                >
+                  <div v-if="data[group.base]?.commentaire" class="cell-text">
+                    {{ truncate(data[group.base].commentaire, 10) }}
+                  </div>
+                  <i v-else class="pi pi-minus text-400 text-xs"></i>
                 </div>
-                <span v-else class="text-400">-</span>
-              </div>
-            </template>
-          </Column>
-          
-          <Column header="PFP1'" style="min-width: 100px">
-            <template #body="slotProps">
-              <div 
-                @click="openCellDialog(slotProps.data, 'pfp1_prime')"
-                :style="getCellStyle(slotProps.data.pfp1_prime)"
-                class="cursor-pointer p-2 border-round text-center"
-                :title="slotProps.data.pfp1_prime?.commentaire || 'Cliquez pour éditer'"
-              >
-                <div v-if="slotProps.data.pfp1_prime?.commentaire" class="text-xs">
-                  {{ slotProps.data.pfp1_prime.commentaire.length > 10 ? slotProps.data.pfp1_prime.commentaire.substring(0, 10) + '...' : slotProps.data.pfp1_prime.commentaire }}
+              </template>
+            </Column>
+            <Column :header="group.label + '\''" style="min-width: 90px">
+              <template #body="{ data }">
+                <div v-if="hasEchec(data.user_id, group.echecTypes)"
+                  @click="openCellDialog(data, group.prime)"
+                  :style="getCellStyle(data[group.prime])"
+                  class="cell-box"
+                  :title="data[group.prime]?.commentaire || 'Cliquez pour éditer'"
+                >
+                  <div v-if="data[group.prime]?.commentaire" class="cell-text">
+                    {{ truncate(data[group.prime].commentaire, 10) }}
+                  </div>
+                  <i v-else class="pi pi-minus text-400 text-xs"></i>
                 </div>
-                <span v-else class="text-400">-</span>
-              </div>
-            </template>
-          </Column>
-          
-          <Column header="PFP2" style="min-width: 100px">
-            <template #body="slotProps">
-              <div 
-                @click="openCellDialog(slotProps.data, 'pfp2')"
-                :style="getCellStyle(slotProps.data.pfp2)"
-                class="cursor-pointer p-2 border-round text-center"
-                :title="slotProps.data.pfp2?.commentaire || 'Cliquez pour éditer'"
-              >
-                <div v-if="slotProps.data.pfp2?.commentaire" class="text-xs">
-                  {{ slotProps.data.pfp2.commentaire.length > 10 ? slotProps.data.pfp2.commentaire.substring(0, 10) + '...' : slotProps.data.pfp2.commentaire }}
+                <div v-else class="cell-box cell-disabled" title="PFP non échouée">
+                  <i class="pi pi-lock text-300 text-xs"></i>
                 </div>
-                <span v-else class="text-400">-</span>
-              </div>
-            </template>
-          </Column>
-          
-          <Column header="PFP2'" style="min-width: 100px">
-            <template #body="slotProps">
-              <div 
-                @click="openCellDialog(slotProps.data, 'pfp2_prime')"
-                :style="getCellStyle(slotProps.data.pfp2_prime)"
-                class="cursor-pointer p-2 border-round text-center"
-                :title="slotProps.data.pfp2_prime?.commentaire || 'Cliquez pour éditer'"
-              >
-                <div v-if="slotProps.data.pfp2_prime?.commentaire" class="text-xs">
-                  {{ slotProps.data.pfp2_prime.commentaire.length > 10 ? slotProps.data.pfp2_prime.commentaire.substring(0, 10) + '...' : slotProps.data.pfp2_prime.commentaire }}
-                </div>
-                <span v-else class="text-400">-</span>
-              </div>
-            </template>
-          </Column>
-          
-          <Column header="PFP3" style="min-width: 100px">
-            <template #body="slotProps">
-              <div 
-                @click="openCellDialog(slotProps.data, 'pfp3')"
-                :style="getCellStyle(slotProps.data.pfp3)"
-                class="cursor-pointer p-2 border-round text-center"
-                :title="slotProps.data.pfp3?.commentaire || 'Cliquez pour éditer'"
-              >
-                <div v-if="slotProps.data.pfp3?.commentaire" class="text-xs">
-                  {{ slotProps.data.pfp3.commentaire.length > 10 ? slotProps.data.pfp3.commentaire.substring(0, 10) + '...' : slotProps.data.pfp3.commentaire }}
-                </div>
-                <span v-else class="text-400">-</span>
-              </div>
-            </template>
-          </Column>
-          
-          <Column header="PFP3'" style="min-width: 100px">
-            <template #body="slotProps">
-              <div 
-                @click="openCellDialog(slotProps.data, 'pfp3_prime')"
-                :style="getCellStyle(slotProps.data.pfp3_prime)"
-                class="cursor-pointer p-2 border-round text-center"
-                :title="slotProps.data.pfp3_prime?.commentaire || 'Cliquez pour éditer'"
-              >
-                <div v-if="slotProps.data.pfp3_prime?.commentaire" class="text-xs">
-                  {{ slotProps.data.pfp3_prime.commentaire.length > 10 ? slotProps.data.pfp3_prime.commentaire.substring(0, 10) + '...' : slotProps.data.pfp3_prime.commentaire }}
-                </div>
-                <span v-else class="text-400">-</span>
-              </div>
-            </template>
-          </Column>
-          
-          <Column header="PFP4" style="min-width: 100px">
-            <template #body="slotProps">
-              <div 
-                @click="openCellDialog(slotProps.data, 'pfp4')"
-                :style="getCellStyle(slotProps.data.pfp4)"
-                class="cursor-pointer p-2 border-round text-center"
-                :title="slotProps.data.pfp4?.commentaire || 'Cliquez pour éditer'"
-              >
-                <div v-if="slotProps.data.pfp4?.commentaire" class="text-xs">
-                  {{ slotProps.data.pfp4.commentaire.length > 10 ? slotProps.data.pfp4.commentaire.substring(0, 10) + '...' : slotProps.data.pfp4.commentaire }}
-                </div>
-                <span v-else class="text-400">-</span>
-              </div>
-            </template>
-          </Column>
-          
-          <Column header="PFP4'" style="min-width: 100px">
-            <template #body="slotProps">
-              <div 
-                @click="openCellDialog(slotProps.data, 'pfp4_prime')"
-                :style="getCellStyle(slotProps.data.pfp4_prime)"
-                class="cursor-pointer p-2 border-round text-center"
-                :title="slotProps.data.pfp4_prime?.commentaire || 'Cliquez pour éditer'"
-              >
-                <div v-if="slotProps.data.pfp4_prime?.commentaire" class="text-xs">
-                  {{ slotProps.data.pfp4_prime.commentaire.length > 10 ? slotProps.data.pfp4_prime.commentaire.substring(0, 10) + '...' : slotProps.data.pfp4_prime.commentaire }}
-                </div>
-                <span v-else class="text-400">-</span>
-              </div>
-            </template>
-          </Column>
-          
-   
+              </template>
+            </Column>
+          </template>
         </DataTable>
       </div>
     </div>
@@ -227,8 +226,8 @@
         <div class="flex flex-column gap-2">
           <label class="font-semibold">Couleur :</label>
           <div class="flex gap-2 flex-wrap">
-            <Button 
-              v-for="color in colorOptions" 
+            <Button
+              v-for="color in colorOptions"
               :key="color.value"
               :label="color.label"
               :class="{ 'p-button-outlined': editingCell?.couleur !== color.value }"
@@ -238,17 +237,15 @@
             />
           </div>
         </div>
-        
         <div class="flex flex-column gap-2">
           <label class="font-semibold">Commentaire :</label>
-          <Textarea 
-            v-model="editingCell.commentaire" 
-            rows="5" 
+          <Textarea
+            v-model="editingCell.commentaire"
+            rows="5"
             class="w-full"
             placeholder="Ajoutez un commentaire..."
           />
         </div>
-        
         <div class="flex justify-content-end gap-2 mt-3">
           <Button label="Annuler" severity="secondary" @click="closeCellDialog" />
           <Button label="Enregistrer" @click="saveCellData" />
@@ -261,20 +258,20 @@
       <div class="flex flex-column gap-3 p-3">
         <div class="flex flex-column gap-2">
           <label class="font-semibold">Commentaire sur l'étudiant :</label>
-          <Textarea 
-            v-model="editingInfo.commentaire" 
-            rows="6" 
+          <Textarea
+            v-model="editingInfo.commentaire"
+            rows="6"
             class="w-full"
             placeholder="Ajoutez des informations sur cet étudiant..."
           />
         </div>
-        
         <div class="flex justify-content-end gap-2 mt-3">
           <Button label="Annuler" severity="secondary" @click="closeInfoDialog" />
           <Button label="Enregistrer" @click="saveInfoData" />
         </div>
       </div>
     </Dialog>
+    <Toast />
   </AdminLayout>
 </template>
 
@@ -282,7 +279,6 @@
 import { ref, onMounted, computed } from 'vue'
 import { supabase } from '@/supabase'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
-import SelectButton from 'primevue/selectbutton'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Tag from 'primevue/tag'
@@ -291,12 +287,15 @@ import Dialog from 'primevue/dialog'
 import Button from 'primevue/button'
 import Textarea from 'primevue/textarea'
 import InputText from 'primevue/inputtext'
+import Toast from 'primevue/toast'
+import { useToast } from 'primevue/usetoast'
 
+const toast = useToast()
 const loading = ref(false)
 const cases = ref([])
 const filterDisplay = ref('with_comments')
 const filterClasse = ref(null)
-const sortOrder = ref('alpha')
+const filterColor = ref(null)
 const searchTerm = ref('')
 const classesList = ref(['BA24', 'BA25', 'BA26', 'MA27'])
 
@@ -309,119 +308,131 @@ const editingField = ref(null)
 const dialogTitle = ref('')
 const infoDialogTitle = ref('')
 
-const displayOptions = ref([
-  { label: 'Tous', value: 'all' },
-  { label: 'Avec suivi particulier', value: 'with_comments' },
-  { label: 'Sans', value: 'no_comments' }
-])
+const pfpFields = ['pfp1', 'pfp1_prime', 'pfp2', 'pfp2_prime', 'pfp3', 'pfp3_prime', 'pfp4', 'pfp4_prime']
 
-const sortOptions = ref([
-  { label: 'Alphabétique', value: 'alpha' },
-  { label: 'Classe', value: 'classe' }
-])
+const pfpGroups = [
+  { base: 'pfp1', prime: 'pfp1_prime', label: 'PFP1', echecTypes: ['PFP1A', 'PFP1B'] },
+  { base: 'pfp2', prime: 'pfp2_prime', label: 'PFP2', echecTypes: ['PFP2'] },
+  { base: 'pfp3', prime: 'pfp3_prime', label: 'PFP3', echecTypes: ['PFP3'] },
+  { base: 'pfp4', prime: 'pfp4_prime', label: 'PFP4', echecTypes: ['PFP4'] }
+]
 
-const colorOptions = ref([
+const fieldLabels = {
+  'pfp1': 'PFP1',
+  'pfp1_prime': "PFP1'",
+  'pfp2': 'PFP2',
+  'pfp2_prime': "PFP2'",
+  'pfp3': 'PFP3',
+  'pfp3_prime': "PFP3'",
+  'pfp4': 'PFP4',
+  'pfp4_prime': "PFP4'"
+}
+
+const echecMap = ref(new Map())
+
+const hasEchec = (userId, echecTypes) => {
+  const userEchecs = echecMap.value.get(userId)
+  if (!userEchecs) return false
+  return echecTypes.some(type => userEchecs.has(type))
+}
+
+const displayOptions = [
+  { label: 'Tous les étudiants', value: 'all' },
+  { label: 'Avec suivi', value: 'with_comments' },
+  { label: 'Sans suivi', value: 'no_comments' }
+]
+
+const colorFilterOptions = [
+  { label: 'Vert', value: 'vert' },
+  { label: 'Orange', value: 'orange' },
+  { label: 'Rouge', value: 'rouge' },
+  { label: 'Noir', value: 'noir' }
+]
+
+const colorOptions = [
   { label: 'Blanc', value: 'blanc', severity: 'info' },
   { label: 'Vert', value: 'vert', severity: 'success' },
   { label: 'Orange', value: 'orange', severity: 'warning' },
   { label: 'Rouge', value: 'rouge', severity: 'danger' },
   { label: 'Noir', value: 'noir', severity: 'secondary' }
-])
+]
+
+const truncate = (text, max) => {
+  if (!text) return ''
+  return text.length > max ? text.substring(0, max) + '…' : text
+}
+
+const stats = computed(() => {
+  const all = cases.value
+  const total = all.length
+  const withComments = all.filter(c => hasComments(c)).length
+  const redCount = all.filter(c => pfpFields.some(f => c[f]?.couleur === 'rouge')).length
+  const greenCount = all.filter(c => pfpFields.some(f => c[f]?.couleur === 'vert')).length
+  return { total, withComments, redCount, greenCount }
+})
 
 const filteredCases = computed(() => {
   let list = [...cases.value]
-  
-  // Filtre par recherche (nom ou prénom)
+
   if (searchTerm.value && searchTerm.value.trim()) {
-    const searchLower = searchTerm.value.toLowerCase().trim()
-    list = list.filter(c => 
-      c.etudiant.toLowerCase().includes(searchLower)
-    )
+    const q = searchTerm.value.toLowerCase().trim()
+    list = list.filter(c => c.etudiant.toLowerCase().includes(q))
   }
-  
-  // Filtre par classe
+
   if (filterClasse.value) {
     list = list.filter(c => c.classe === filterClasse.value)
   }
-  
-  // Filtre par affichage (avec/sans commentaires)
+
+  if (filterColor.value) {
+    list = list.filter(c => pfpFields.some(f => c[f]?.couleur === filterColor.value))
+  }
+
   if (filterDisplay.value === 'with_comments') {
     list = list.filter(c => hasComments(c))
   } else if (filterDisplay.value === 'no_comments') {
     list = list.filter(c => !hasComments(c))
   }
-  
-  // Tri
-  if (sortOrder.value === 'alpha') {
-    list.sort((a, b) => a.etudiant.localeCompare(b.etudiant))
-  } else if (sortOrder.value === 'classe') {
-    list.sort((a, b) => {
-      if (a.classe === b.classe) {
-        return a.etudiant.localeCompare(b.etudiant)
-      }
-      return a.classe.localeCompare(b.classe)
-    })
-  }
-  
+
+  const collator = new Intl.Collator('fr', { sensitivity: 'base' })
+  list.sort((a, b) => collator.compare(a.etudiant, b.etudiant))
+
   return list
 })
 
 const hasComments = (student) => {
-  const fields = ['pfp1', 'pfp1_prime', 'pfp2', 'pfp2_prime', 'pfp3', 'pfp3_prime', 'pfp4', 'pfp4_prime']
-  return fields.some(field => student[field]?.commentaire)
+  return pfpFields.some(field => student[field]?.commentaire)
 }
 
 const getCellStyle = (cellData) => {
-  if (!cellData) return { backgroundColor: '#ffffff', border: '1px solid #dee2e6' }
-  
+  if (!cellData || !cellData.couleur || cellData.couleur === 'blanc') {
+    return { backgroundColor: '#ffffff', border: '1px solid #dee2e6' }
+  }
+
   const colors = {
-    'vert': '#28a745',
-    'orange': '#fd7e14', 
-    'rouge': '#dc3545',
-    'noir': '#343a40',
-    'blanc': '#ffffff'
+    'vert': { bg: '#28a745', text: '#ffffff' },
+    'orange': { bg: '#fd7e14', text: '#ffffff' },
+    'rouge': { bg: '#dc3545', text: '#ffffff' },
+    'noir': { bg: '#343a40', text: '#ffffff' }
   }
-  
-  const textColors = {
-    'vert': '#ffffff',
-    'orange': '#ffffff',
-    'rouge': '#ffffff', 
-    'noir': '#ffffff',
-    'blanc': '#000000'
-  }
-  
+
+  const c = colors[cellData.couleur]
   return {
-    backgroundColor: colors[cellData.couleur] || '#ffffff',
-    color: textColors[cellData.couleur] || '#000000',
-    border: '1px solid #dee2e6',
-    transition: 'all 0.3s',
+    backgroundColor: c.bg,
+    color: c.text,
+    border: '1px solid ' + c.bg,
     fontWeight: '600'
   }
 }
 
-
 const openCellDialog = (student, field) => {
   editingStudent.value = student
   editingField.value = field
-  
-  // Initialiser ou récupérer les données de la cellule
+
   if (!student[field]) {
     student[field] = { couleur: 'blanc', commentaire: '' }
   }
-  
+
   editingCell.value = { ...student[field] }
-  
-  const fieldLabels = {
-    'pfp1': 'PFP1',
-    'pfp1_prime': "PFP1'",
-    'pfp2': 'PFP2',
-    'pfp2_prime': "PFP2'",
-    'pfp3': 'PFP3',
-    'pfp3_prime': "PFP3'",
-    'pfp4': 'PFP4',
-    'pfp4_prime': "PFP4'"
-  }
-  
   dialogTitle.value = `${student.etudiant} - ${fieldLabels[field]}`
   showCellDialog.value = true
 }
@@ -435,12 +446,11 @@ const closeCellDialog = () => {
 
 const openInfoDialog = (student) => {
   editingStudent.value = student
-  
-  // Initialiser ou récupérer les données d'info étudiant
+
   if (!student.info_etudiant) {
     student.info_etudiant = { commentaire: '' }
   }
-  
+
   editingInfo.value = { ...student.info_etudiant }
   infoDialogTitle.value = `Informations - ${student.etudiant}`
   showInfoDialog.value = true
@@ -472,29 +482,24 @@ const saveInfoData = async () => {
       })
       .select()
 
-    if (result.error) {
-      throw result.error
-    }
+    if (result.error) throw result.error
 
-    // Mettre à jour localement
     editingStudent.value.info_etudiant = { ...editingInfo.value }
-    
+    toast.add({ severity: 'success', summary: 'Sauvegardé', detail: 'Informations mises à jour', life: 2000 })
   } catch (e) {
     console.error('Erreur saveInfoData:', e)
-    alert('Erreur lors de la sauvegarde: ' + e.message)
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de sauvegarder: ' + e.message, life: 3000 })
   }
-  
+
   closeInfoDialog()
 }
 
 const getInfoStyle = (infoData) => {
-  if (!infoData || !infoData.commentaire) return { backgroundColor: '#f8f9fa', border: '1px solid #dee2e6' }
-  
+  if (!infoData || !infoData.commentaire) return {}
   return {
     backgroundColor: '#e3f2fd',
-    border: '1px solid #2196f3',
-    color: '#1565c0',
-    transition: 'all 0.3s'
+    border: '1px solid #90caf9',
+    color: '#1565c0'
   }
 }
 
@@ -523,52 +528,69 @@ const saveCellData = async () => {
       })
       .select()
 
-    if (result.error) {
-      throw result.error
-    }
+    if (result.error) throw result.error
 
-    // Mettre à jour localement
     editingStudent.value[editingField.value] = { ...cellData }
-    
-
+    toast.add({ severity: 'success', summary: 'Sauvegardé', detail: 'Cellule mise à jour', life: 2000 })
   } catch (e) {
     console.error('Erreur saveCellData:', e)
-    alert('Erreur lors de la sauvegarde: ' + e.message)
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de sauvegarder: ' + e.message, life: 3000 })
   }
-  
+
   closeCellDialog()
 }
 
+const allColumns = pfpGroups.flatMap(g => [{ field: g.base, label: g.label }, { field: g.prime, label: g.label + "'" }])
+
+const exportCSV = () => {
+  const headers = ['Étudiant', 'Classe', 'Info', ...allColumns.map(p => p.label + ' Couleur'), ...allColumns.map(p => p.label + ' Commentaire')]
+  const rows = filteredCases.value.map(c => [
+    c.etudiant,
+    c.classe,
+    c.info_etudiant?.commentaire || '',
+    ...allColumns.map(p => c[p.field]?.couleur || ''),
+    ...allColumns.map(p => c[p.field]?.commentaire || '')
+  ])
+  const csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(';')).join('\n')
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `suivi-cas-particuliers-${new Date().toISOString().slice(0, 10)}.csv`
+  link.click()
+  URL.revokeObjectURL(url)
+}
 
 const fetchCases = async () => {
   loading.value = true
   try {
-    // 1. Récupérer tous les étudiants
-    const { data: profiles, error: profilesError } = await supabase
-      .from('user_profiles')
-      .select('user_id, family_name, forname, classe')
-      .order('family_name')
+    const [{ data: profiles, error: profilesError }, { data: suivis, error: suivisError }, { data: echecs, error: echecsError }] = await Promise.all([
+      supabase.from('user_profiles').select('user_id, family_name, forname, classe').order('family_name'),
+      supabase.from('suivi_cas_particuliers').select('*'),
+      supabase.from('student_result_vote').select('user_id, pfp_type').eq('pfp_echec', true)
+    ])
 
     if (profilesError) throw profilesError
-
-    // 2. Récupérer tous les suivis de cas particuliers
-    const { data: suivis, error: suivisError } = await supabase
-      .from('suivi_cas_particuliers')
-      .select('*')
-
     if (suivisError) throw suivisError
+    if (echecsError) throw echecsError
 
-    // 3. Créer une map des suivis par user_id et pfp_field
+    const newEchecMap = new Map()
+    ;(echecs || []).forEach(e => {
+      if (!newEchecMap.has(e.user_id)) {
+        newEchecMap.set(e.user_id, new Set())
+      }
+      newEchecMap.get(e.user_id).add(e.pfp_type)
+    })
+    echecMap.value = newEchecMap
+
     const suivisMap = new Map()
     ;(suivis || []).forEach(s => {
-      const key = `${s.user_id}_${s.pfp_field}`
-      suivisMap.set(key, {
+      suivisMap.set(`${s.user_id}_${s.pfp_field}`, {
         couleur: s.couleur || 'blanc',
         commentaire: s.commentaire || ''
       })
     })
 
-    // 4. Créer une map de visibilité par user_id
     const visibilityMap = new Map()
     ;(suivis || []).forEach(s => {
       if (!visibilityMap.has(s.user_id)) {
@@ -576,9 +598,7 @@ const fetchCases = async () => {
       }
     })
 
-    // 5. Merger les données
     cases.value = (profiles || []).map(p => {
-      const pfpFields = ['pfp1', 'pfp1_prime', 'pfp2', 'pfp2_prime', 'pfp3', 'pfp3_prime', 'pfp4', 'pfp4_prime']
       const studentData = {
         user_id: p.user_id,
         etudiant: `${(p.family_name || '').toUpperCase()} ${p.forname || ''}`.trim(),
@@ -587,18 +607,15 @@ const fetchCases = async () => {
       }
 
       pfpFields.forEach(field => {
-        const key = `${p.user_id}_${field}`
-        studentData[field] = suivisMap.get(key) || { couleur: 'blanc', commentaire: '' }
+        studentData[field] = suivisMap.get(`${p.user_id}_${field}`) || { couleur: 'blanc', commentaire: '' }
       })
 
-      // Ajouter les infos étudiant
-      const infoKey = `${p.user_id}_info_etudiant`
-      studentData.info_etudiant = suivisMap.get(infoKey) || { commentaire: '' }
-
+      studentData.info_etudiant = suivisMap.get(`${p.user_id}_info_etudiant`) || { commentaire: '' }
       return studentData
     })
   } catch (e) {
     console.error('Erreur fetchCases:', e)
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les données', life: 3000 })
   } finally {
     loading.value = false
   }
@@ -610,8 +627,92 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.cursor-pointer:hover {
-  opacity: 0.8;
-  transform: scale(1.02);
+.cas-page {
+  min-height: calc(100vh - 100px);
 }
+
+.cas-table :deep(.p-datatable-thead > tr > th) {
+  background: var(--surface-100);
+  padding: 0.75rem 0.5rem;
+  font-weight: 600;
+  border-bottom: 2px solid var(--primary-color);
+  white-space: nowrap;
+  text-align: center;
+}
+
+.cas-table :deep(.p-datatable-tbody > tr > td) {
+  padding: 0.35rem 0.25rem;
+  vertical-align: middle;
+}
+
+.cas-table :deep(.p-datatable-tbody > tr) {
+  transition: background 0.2s ease;
+}
+
+.cas-table :deep(.p-datatable-tbody > tr:hover) {
+  background: var(--surface-50);
+}
+
+.cell-box {
+  cursor: pointer;
+  padding: 0.4rem 0.5rem;
+  border-radius: 6px;
+  text-align: center;
+  min-height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #dee2e6;
+  background: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.cell-box:hover {
+  opacity: 0.85;
+  transform: scale(1.03);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.cell-disabled {
+  background: #f1f3f5;
+  border: 1px dashed #dee2e6;
+  cursor: default;
+  opacity: 0.5;
+}
+
+.cell-disabled:hover {
+  transform: none;
+  box-shadow: none;
+  opacity: 0.5;
+}
+
+.cell-info {
+  background: #f8f9fa;
+}
+
+.cell-info.cell-has-content {
+  background: #e3f2fd;
+  border-color: #90caf9;
+  color: #1565c0;
+}
+
+.cell-text {
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-left: 0.5rem;
+}
+
+.legend-vert { background: #28a745; }
+.legend-orange { background: #fd7e14; }
+.legend-rouge { background: #dc3545; }
+.legend-noir { background: #343a40; }
+.legend-blanc { background: #ffffff; border: 1px solid #dee2e6; }
 </style>

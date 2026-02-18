@@ -242,10 +242,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
-import { listYears, getModulesWithVideoCount, createModule as createModuleService, createYear } from '@/service/mediaService'
-import Navbar from '@/components/common/utils/Navbar.vue'
+import { getModulesWithVideoCount, createModule as createModuleService } from '@/service/mediaService'
 
 const toast = useToast()
 

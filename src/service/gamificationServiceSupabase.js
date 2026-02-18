@@ -215,8 +215,6 @@ class GamificationServiceSupabase {
    */
   async getHousesRanking() {
     try {
-      console.log('🏆 Récupération du classement des maisons depuis Supabase...')
-
       // Récupérer les données des maisons directement depuis la table houses
       const { data: housesData, error: housesError } = await this.supabase
         .from('houses')
@@ -228,8 +226,6 @@ class GamificationServiceSupabase {
         throw housesError
       }
 
-      console.log(`🏠 ${housesData?.length || 0} maisons trouvées`)
-
       // Récupérer toutes les données de gamification pour stats détaillées
       const { data: gamificationData, error } = await this.supabase
         .from('gamification_data')
@@ -237,19 +233,8 @@ class GamificationServiceSupabase {
 
       if (error) {
         console.error('❌ Erreur récupération données gamification:', error)
-        console.error('❌ Code erreur:', error.code)
-        console.error('❌ Message:', error.message)
-        console.error('❌ Détails:', error.details)
-        
-        if (error.code === '42501' || error.message?.includes('permission denied')) {
-          console.error('🚨 ERREUR RLS: Les permissions Row Level Security bloquent l\'accès aux données')
-          console.error('🚨 SOLUTION: Exécuter le script fix-rls-gamification.sql dans Supabase')
-        }
-        
         throw error
       }
-
-      console.log(`📊 ${gamificationData?.length || 0} utilisateurs trouvés`)
 
       // Grouper par maison et calculer les statistiques
       const houses = ['harmonis', 'elaris', 'doloris', 'solencia']
@@ -270,8 +255,6 @@ class GamificationServiceSupabase {
 
       // Calculer les statistiques par maison
       if (gamificationData && gamificationData.length > 0) {
-        console.log('📊 Données gamification trouvées:', gamificationData)
-        
         // Mapping house_id vers nom de maison (avec tous les formats possibles)
         const houseIdToName = {
           // Format UUID complet
@@ -300,8 +283,6 @@ class GamificationServiceSupabase {
         }
         
         gamificationData.forEach(user => {
-          console.log('👤 Utilisateur complet:', user)
-          
           // Extraire les données avec mapping house_id
           const houseId = user.house_id
           const house = houseIdToName[houseId] || user.house || user.house_name || user.maison
@@ -310,25 +291,12 @@ class GamificationServiceSupabase {
           const userEmail = user.email || user.user_email || 'email_inconnu'
           const userId = user.user_id || user.id || 'id_inconnu'
           
-          console.log('🔍 DIAGNOSTIC DÉTAILLÉ:', {
-            userId: userId,
-            email: userEmail,
-            houseId_brut: houseId,
-            houseId_type: typeof houseId,
-            house_mappé: house,
-            xp: userXP,
-            level: userLevel,
-            mapping_disponible: Object.keys(houseIdToName)
-          })
-          
           // 🔧 CORRECTION FORCÉE: Antoine doit être dans Elaris (correction du house_id incorrect)
           let finalHouse = house
           if (userEmail === 'antoine.quarroz@hevs.ch') {
             finalHouse = 'elaris'
-            console.log('🔧 CORRECTION ANTOINE: Forcé vers Elaris (house_id correct maintenant: 550e8400-e29b-41d4-a716-446655440002)')
           } else if (!house && userEmail === 'antoine.quarroz@hevs.ch') {
             finalHouse = 'elaris'
-            console.log('🔧 CORRECTION: Antoine assigné à Elaris par défaut')
           }
           
           if (finalHouse && housesStats[finalHouse]) {
@@ -340,19 +308,8 @@ class GamificationServiceSupabase {
               xp: userXP,
               level: userLevel
             })
-            console.log(`✅ Ajouté à ${finalHouse}: ${userEmail} (${userXP} XP)`)
-          } else {
-            console.warn(`⚠️ Maison inconnue ou manquante pour ${userEmail}:`)
-            console.warn(`   - house_id brut: "${houseId}"`)
-            console.warn(`   - house mappé: "${house}"`)
-            console.warn(`   - finalHouse: "${finalHouse}"`)
-            console.warn('⚠️ Maisons disponibles:', Object.keys(housesStats))
-            console.warn('⚠️ Mapping house_id disponible:', Object.keys(houseIdToName))
-            console.warn('⚠️ Données utilisateur complètes:', user)
           }
         })
-      } else {
-        console.warn('⚠️ Aucune donnée de gamification trouvée ou erreur de permissions RLS')
       }
 
       // Filtrer Game Master (hors compétition)
@@ -370,8 +327,6 @@ class GamificationServiceSupabase {
         // Recalculer le niveau dynamiquement pour être sûr qu'il correspond à l'XP
         const calculatedLevelInfo = this.calculateHouseLevel(totalXP)
         const houseLevel = calculatedLevelInfo.niveau
-        
-        console.log(`🏠 ${houseName}: ${totalXP} XP -> Niveau calculé: ${houseLevel}`)
         
         // Calculer moyennes depuis gamification_data
         const averageXP = totalMembers > 0 ? Math.round(totalXP / totalMembers) : 0
@@ -425,7 +380,6 @@ class GamificationServiceSupabase {
         totalUsers: housesRanking.reduce((sum, house) => sum + house.totalMembers, 0)
       }
 
-      console.log('✅ Classement des maisons calculé:', result)
       return result
 
     } catch (error) {
@@ -527,8 +481,6 @@ class GamificationServiceSupabase {
       // L'ajout d'XP sera géré par le service principal
       this.invalidateCache(userId)
       
-      console.log(`XP ajouté pour ${userId}: ${action} (+${customXP || 10} XP)`)
-      
       // Retourner les nouvelles données
       return await this.getUserGamificationData(userId)
     } catch (error) {
@@ -543,8 +495,6 @@ class GamificationServiceSupabase {
    */
   async getHouseMemberCounts() {
     try {
-      console.log('🏠 Vérification du nombre de membres par maison...')
-      
       // Récupérer toutes les données de gamification
       const { data: gamificationData, error } = await supabase
         .from('gamification_data')
@@ -586,7 +536,6 @@ class GamificationServiceSupabase {
         })
       }
       
-      console.log('📊 Nombre de membres par maison:', houseCounts)
       return houseCounts
       
     } catch (error) {
@@ -603,9 +552,6 @@ class GamificationServiceSupabase {
    */
   async findBestAvailableHouse(quizResults, maxMembersPerHouse = 50) {
     try {
-      console.log('🎯 Recherche de la meilleure maison disponible...')
-      console.log('📝 Résultats du quiz:', quizResults)
-      
       // Obtenir le nombre actuel de membres par maison
       const houseCounts = await this.getHouseMemberCounts()
       
@@ -614,18 +560,11 @@ class GamificationServiceSupabase {
         .sort(([,a], [,b]) => b - a)
         .map(([house]) => house)
       
-      console.log('🏆 Ordre de préférence du quiz:', sortedHouses)
-      
       // Chercher la première maison disponible selon les préférences du quiz
       for (const house of sortedHouses) {
         const currentMembers = houseCounts[house] || 0
-        console.log(`🏠 ${house}: ${currentMembers}/${maxMembersPerHouse} membres`)
-        
         if (currentMembers < maxMembersPerHouse) {
-          console.log(`✅ Maison ${house} sélectionnée (${currentMembers + 1}/${maxMembersPerHouse})`)
           return house
-        } else {
-          console.log(`❌ Maison ${house} pleine (${currentMembers}/${maxMembersPerHouse})`)
         }
       }
       
@@ -636,7 +575,6 @@ class GamificationServiceSupabase {
       
       if (availableHouses.length > 0) {
         const fallbackHouse = availableHouses[0][0]
-        console.log(`🔄 Redirection vers ${fallbackHouse} (maison avec le moins de membres)`)
         return fallbackHouse
       }
       
@@ -644,7 +582,6 @@ class GamificationServiceSupabase {
       const leastFullHouse = Object.entries(houseCounts)
         .sort(([,a], [,b]) => a - b)[0][0]
       
-      console.log(`⚠️ Toutes les maisons sont pleines, assignation à ${leastFullHouse}`)
       return leastFullHouse
       
     } catch (error) {
@@ -659,14 +596,11 @@ class GamificationServiceSupabase {
    */
   async testDataAccess() {
     try {
-      console.log('🧪 TEST: Vérification accès données gamification...')
-      
       // Test 1: Count total
       const { count, error: countError } = await supabase
         .from('gamification_data')
         .select('*', { count: 'exact', head: true })
       
-      console.log(`📊 Total enregistrements: ${count}`)
       if (countError) console.error('❌ Erreur count:', countError)
       
       // Test 2: Récupération limitée
@@ -675,7 +609,6 @@ class GamificationServiceSupabase {
         .select('user_id, email, house_id')
         .limit(10)
       
-      console.log(`📋 Échantillon (10 premiers):`, limitedData)
       if (limitedError) console.error('❌ Erreur échantillon:', limitedError)
       
       return { count, sample: limitedData }
@@ -692,34 +625,21 @@ class GamificationServiceSupabase {
    */
   async getHouseDetailedStats(houseName) {
     try {
-      console.log(`🏠 Récupération des stats détaillées pour ${houseName}...`)
-      
       // Test d'accès aux données d'abord
       await this.testDataAccess()
-      
-      // Récupérer les données de gamification
-      console.log('🔍 Exécution de la requête Supabase...')
-      
-      // SOLUTION: Récupérer toutes les vraies données via RPC
-      console.log('🔄 Récupération des vraies données via fonction RPC...')
       
       let gamificationData = []
       let error = null
       
       try {
         // Méthode 1: Utiliser la fonction RPC qui contourne RLS
-        console.log('🔑 Appel de la fonction get_all_gamification_users()...')
         const { data: rpcData, error: rpcError } = await supabase
           .rpc('get_all_gamification_users')
         
         if (rpcData && rpcData.length > 0) {
-          console.log('✅ RPC réussi:', rpcData.length, 'utilisateurs récupérés')
           gamificationData = rpcData
           error = rpcError
         } else if (rpcError) {
-          console.log('❌ Erreur RPC:', rpcError.message)
-          console.log('🔄 Fallback sur requête directe...')
-          
           // Méthode 2: Fallback sur requête directe (limitée par RLS)
           const { data: directData, error: directError } = await supabase
             .from('gamification_data')
@@ -728,10 +648,7 @@ class GamificationServiceSupabase {
           gamificationData = directData || []
           error = directError
           
-          if (gamificationData.length <= 1) {
-            console.log('⚠️ RLS actif - seules tes données sont visibles')
-            console.log('📋 Pour voir tous les utilisateurs, exécute le script get-all-gamification-data.sql dans Supabase')
-          }
+          
         }
       } catch (fetchError) {
         console.error('❌ Erreur lors de la récupération RPC:', fetchError)
@@ -744,13 +661,10 @@ class GamificationServiceSupabase {
         gamificationData = fallbackData || []
         error = fallbackError
         
-        console.log('⚠️ Utilisation des données limitées par RLS')
       }
       
       // Si pas de données, essayer avec une approche différente
       if (!gamificationData || gamificationData.length <= 1) {
-        console.log('🔄 Tentative avec requête alternative...')
-        
         // Essayer différentes combinaisons de colonnes
         const queries = [
           'user_id, house_id',
@@ -761,26 +675,21 @@ class GamificationServiceSupabase {
         
         for (const selectQuery of queries) {
           try {
-            console.log(`🔍 Test requête: ${selectQuery}`)
             const { data: altData, error: altError } = await supabase
               .from('gamification_data')
               .select(selectQuery)
             
             if (!altError && altData && altData.length > gamificationData?.length) {
-              console.log(`✅ Requête réussie avec: ${selectQuery}, ${altData.length} résultats`)
               gamificationData = altData
               error = altError
               break
-            } else if (altError) {
-              console.log(`❌ Erreur avec ${selectQuery}:`, altError.message)
             }
           } catch (e) {
-            console.log(`❌ Exception avec ${selectQuery}:`, e.message)
+            // Skip failed query
           }
         }
         
         // Test avec d'autres tables possibles
-        console.log('🔍 Test autres tables...')
         const tables = ['student_data', 'user_profiles', 'users']
         
         for (const table of tables) {
@@ -790,7 +699,7 @@ class GamificationServiceSupabase {
               .select('*', { count: 'exact', head: true })
             
             if (!countError && count > 1) {
-              console.log(`📊 Table ${table}: ${count} enregistrements`)
+              // Table has data
             }
           } catch (e) {
             // Table n'existe pas
@@ -800,27 +709,7 @@ class GamificationServiceSupabase {
       
       if (error) {
         console.error('❌ Erreur récupération données gamification:', error)
-        console.error('❌ Détails erreur:', error.message, error.details, error.hint)
         throw error
-      }
-      
-      console.log(`📊 ${gamificationData?.length || 0} utilisateurs trouvés`)
-      console.log('📋 Données récupérées:', gamificationData)
-      
-      // Vérifier si on a des données
-      if (!gamificationData || gamificationData.length === 0) {
-        console.warn('⚠️ Aucune donnée trouvée dans gamification_data')
-        console.log('🔍 Tentative de requête avec count pour vérifier la table...')
-        
-        const { count, error: countError } = await supabase
-          .from('gamification_data')
-          .select('*', { count: 'exact', head: true })
-        
-        if (countError) {
-          console.error('❌ Erreur count:', countError)
-        } else {
-          console.log(`📊 Total d'enregistrements dans la table: ${count}`)
-        }
       }
       
       // Mapping house_id vers nom de maison (avec tous les formats possibles)
@@ -852,17 +741,13 @@ class GamificationServiceSupabase {
       let totalXP = 0
       
       if (gamificationData && gamificationData.length > 0) {
-        console.log(`🔍 DEBUG: Recherche membres pour ${houseName}`)
         gamificationData.forEach(user => {
           const houseId = user.house_id
           const house = houseIdToName[houseId]
           const userXP = user.total_xp || 0
           const userLevel = user.current_level || 1
           
-          console.log(`👤 User: ${user.email}, house_id: ${houseId}, mapped to: ${house}`)
-          
           if (house === houseName) {
-            console.log(`✅ Membre trouvé pour ${houseName}: ${user.email}`)
             houseMembers.push({
               userId: user.user_id,
               email: user.email,
@@ -874,8 +759,6 @@ class GamificationServiceSupabase {
               loginStreak: 0 // Pas de streak dans Supabase pour l'instant
             })
             totalXP += userXP
-          } else {
-            console.log(`❌ ${user.email} pas dans ${houseName} (house: ${house})`)
           }
         })
       }
@@ -899,13 +782,6 @@ class GamificationServiceSupabase {
         members: houseMembers,
         houseLevel
       }
-      
-      console.log(`✅ Stats ${houseName}:`, {
-        membres: totalMembers,
-        xpTotal: totalXP,
-        xpMoyen: averageXP,
-        niveauMoyen: averageLevel
-      })
       
       return stats
       

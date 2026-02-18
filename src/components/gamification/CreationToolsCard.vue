@@ -73,7 +73,6 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { auth } from '../../../firebase'
 
 // Props
 const props = defineProps({

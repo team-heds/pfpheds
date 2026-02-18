@@ -275,11 +275,13 @@ import ConfirmDialog from 'primevue/confirmdialog'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import Toast from 'primevue/toast'
-import * as XLSX from 'xlsx'
+import { useAutoRefresh } from '@/composables/useAutoRefresh'
 
 const router = useRouter()
 const confirm = useConfirm()
 const toast = useToast()
+
+const { scheduleRefresh } = useAutoRefresh(() => loadPublishedAssignments())
 
 const loading = ref(false)
 const showDialog = ref(false)
@@ -603,6 +605,8 @@ const assignMassiveLieu = async (lieu) => {
       detail: `${ids.length} assignations mises à jour en "${lieu}".`, 
       life: 3000 
     })
+
+    scheduleRefresh()
   } catch (e) {
     console.error('Erreur assignMassiveLieu:', e)
     toast.add({ severity: 'error', summary: 'Erreur', detail: 'Une erreur est survenue lors de la mise à jour massive.', life: 3000 })
@@ -623,6 +627,8 @@ const toggleValidation = async (row) => {
     const validatedCount = placesList.value.filter(p => p.is_validated).length
     stats.value.validated = validatedCount
     stats.value.pending = placesList.value.length - validatedCount
+
+    scheduleRefresh()
   } catch (e) {
     console.error('Erreur toggleValidation:', e)
     row.is_validated = !row.is_validated
@@ -668,6 +674,8 @@ const saveRow = async () => {
     stats.value.pending = placesList.value.length - validatedCount
 
     showDialog.value = false
+
+    scheduleRefresh()
   } catch (e) {
     console.error('Erreur saveRow:', e)
   }
@@ -688,7 +696,8 @@ const viewDetails = (row) => {
   router.push({ name: 'ProfileAdmin', params: { id: row.user_id } })
 }
 
-const exportExcel = () => {
+const exportExcel = async () => {
+  const XLSX = await import('xlsx')
   const rows = (filteredList.value || []).map((r) => ({
     etudiant: r.student_name || '',
     classe: r.student_class || '',

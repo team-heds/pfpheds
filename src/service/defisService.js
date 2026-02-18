@@ -1,5 +1,5 @@
 import { db } from '../../firebase'
-import { ref as dbRef, push, update, remove, get, query, orderByChild, equalTo, onValue } from 'firebase/database'
+import { ref as dbRef, push, update, remove, get, onValue } from 'firebase/database'
 
 // Path constant
 const DEFIS_PATH = 'defis'

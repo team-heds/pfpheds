@@ -51,8 +51,7 @@ class QuestExpirationService {
       })
       
       if (expiredQuests.length === 0) {
-        console.log('✅ Aucune quête expirée à mettre à jour')
-        return 0
+          return 0
       }
       
       // Mettre à jour chaque quête expirée
@@ -68,7 +67,6 @@ class QuestExpirationService {
       
       await Promise.all(updates)
       
-      console.log(`✅ ${expiredQuests.length} quête(s) expirée(s) mise(s) à jour`)
       return expiredQuests.length
       
     } catch (error) {
@@ -116,8 +114,6 @@ class QuestExpirationService {
    * @returns {number} ID de l'intervalle
    */
   startPeriodicCheck(intervalMinutes = 5) {
-    console.log(`🕐 Démarrage vérification périodique des quêtes expirées (${intervalMinutes}min)`)
-    
     // Vérification immédiate
     this.updateExpiredQuests()
     
@@ -134,7 +130,6 @@ class QuestExpirationService {
   stopPeriodicCheck(intervalId) {
     if (intervalId) {
       clearInterval(intervalId)
-      console.log('🛑 Vérification périodique arrêtée')
     }
   }
 }

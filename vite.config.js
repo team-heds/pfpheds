@@ -104,11 +104,50 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['vue', 'vue-router'], // Par exemple, regrouper les dépendances tierces
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('vue') && !id.includes('primevue') && !id.includes('devtools')) {
+              return 'vendor'
+            }
+            if (id.includes('primevue') || id.includes('primeicons')) {
+              return 'primevue'
+            }
+            if (id.includes('@supabase')) {
+              return 'supabase'
+            }
+            if (id.includes('firebase')) {
+              return 'firebase'
+            }
+            if (id.includes('three') || id.includes('cannon')) {
+              return 'three'
+            }
+            if (id.includes('chart.js') || id.includes('chartjs')) {
+              return 'charts'
+            }
+            if (id.includes('@tiptap') || id.includes('prosemirror')) {
+              return 'editor'
+            }
+            if (id.includes('xlsx') || id.includes('jspdf') || id.includes('exceljs')) {
+              return 'export-libs'
+            }
+          }
         },
       },
     },
     chunkSizeWarningLimit: 1000, // Optionnel : augmente la limite d'avertissement pour les chunks
   },
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./tests/setup.js'],
+    include: ['tests/unit/**/*.spec.js'],
+    css: true,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'text-summary', 'html'],
+      reportsDirectory: './coverage',
+      include: ['src/stores/**', 'src/service/**', 'src/services/**', 'src/composables/**'],
+      exclude: ['node_modules/', 'tests/', 'src/**/*.vue'],
+    },
+  }
 })

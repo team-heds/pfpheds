@@ -1,3 +1,19 @@
+/**
+ * @module userStore
+ * @description Store Pinia pour la gestion du profil utilisateur Supabase.
+ * Gère la session, le profil et les abonnements temps réel.
+ *
+ * @state {Object|null} session - Session Supabase active
+ * @state {Object|null} user - Utilisateur Supabase connecté
+ * @state {Object|null} profile - Profil complet depuis user_profiles
+ * @state {boolean} authLoading - Chargement de l'authentification
+ * @state {boolean} profileLoading - Chargement du profil
+ *
+ * @action init() - Initialise la session et écoute les changements d'auth
+ * @action fetchProfile() - Charge le profil depuis Supabase
+ * @action updateProfile(data) - Met à jour le profil utilisateur
+ * @action signOut() - Déconnexion et nettoyage
+ */
 import { defineStore } from 'pinia'
 import { supabase } from '@/supabase.js'
 
@@ -109,7 +125,6 @@ export const useUserStore = defineStore('user', {
               filter: `user_id=eq.${this.user.id}`,
             },
             (payload) => {
-              console.log('📡 [UserStore] Profile update received:', payload.eventType)
               if (payload.eventType === 'DELETE') {
                 this.profile = null
               } else {
@@ -119,21 +134,14 @@ export const useUserStore = defineStore('user', {
             }
           )
           .subscribe((status, err) => {
-            if (status === 'SUBSCRIBED') {
-              console.log('✅ [UserStore] Profile realtime subscription active')
-            } else if (status === 'CHANNEL_ERROR') {
+            if (status === 'CHANNEL_ERROR') {
               console.warn('⚠️ [UserStore] Realtime subscription error:', err)
-              console.log('ℹ️ [UserStore] App will continue without realtime updates')
             } else if (status === 'TIMED_OUT') {
               console.warn('⚠️ [UserStore] Realtime subscription timed out')
-              console.log('ℹ️ [UserStore] App will continue without realtime updates')
-            } else if (status === 'CLOSED') {
-              console.log('🔌 [UserStore] Realtime subscription closed')
             }
           })
       } catch (error) {
         console.error('❌ [UserStore] Failed to subscribe to profile updates:', error)
-        console.log('ℹ️ [UserStore] App will continue without realtime updates')
         this.profileChannel = null
       }
     },

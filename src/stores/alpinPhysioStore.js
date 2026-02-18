@@ -29,7 +29,6 @@ export const useAlpinPhysioStore = defineStore('alpinPhysio', () => {
       if (fetchError) throw fetchError;
 
       members.value = data || [];
-      console.log(`✅ ${members.value.length} membres Alp'in Physio chargés`);
       return data;
     } catch (err) {
       console.error('Erreur lors du chargement des membres:', err);
@@ -95,7 +94,6 @@ export const useAlpinPhysioStore = defineStore('alpinPhysio', () => {
 
       if (insertError) throw insertError;
 
-      console.log('✅ Membre ajouté:', data);
       await fetchMembers(); // Recharger la liste
       return data;
     } catch (err) {
@@ -126,7 +124,6 @@ export const useAlpinPhysioStore = defineStore('alpinPhysio', () => {
 
       if (updateError) throw updateError;
 
-      console.log('✅ Membre mis à jour:', data);
       await fetchMembers(); // Recharger la liste
       return data;
     } catch (err) {
@@ -154,7 +151,6 @@ export const useAlpinPhysioStore = defineStore('alpinPhysio', () => {
 
       if (updateError) throw updateError;
 
-      console.log('✅ Membre désactivé');
       await fetchMembers(); // Recharger la liste
       return true;
     } catch (err) {
@@ -182,7 +178,6 @@ export const useAlpinPhysioStore = defineStore('alpinPhysio', () => {
 
       if (deleteError) throw deleteError;
 
-      console.log('✅ Membre supprimé');
       await fetchMembers(); // Recharger la liste
       return true;
     } catch (err) {

@@ -383,6 +383,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { supabase } from '@/supabase'
+import { useAutoRefresh } from '@/composables/useAutoRefresh'
 import { getAllStudents } from '@/service/studentsService'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import Button from 'primevue/button'
@@ -400,6 +401,8 @@ import { usePlacesStore } from '@/stores/placesStore'
 
 const toast = useToast()
 const placesStore = usePlacesStore()
+
+const { scheduleRefresh } = useAutoRefresh(() => loadResults())
 
 // Filtres
 const selectedPFP = ref(null)
@@ -463,27 +466,20 @@ const filteredAvailablePlaces = computed(() => {
 // Charger les résultats depuis la base de données
 const loadResults = async () => {
   if (!selectedPFP.value || !selectedYear.value) {
-    console.log('[WARN] PFP ou année non sélectionné')
     return
   }
 
-  console.log(`[START] loadResults pour ${selectedPFP.value} ${selectedYear.value}`)
   loading.value = true
   
   try {
-    console.log(`[LOADING] Chargement des résultats...`)
-
     // 1. Charger tous les étudiants
-    console.log('[1/4] Chargement des étudiants...')
     const studentsData = await getAllStudents()
     if (!studentsData) {
       throw new Error('Aucun étudiant retourné')
     }
     allStudents.value = studentsData
-    console.log(`[OK] ${allStudents.value.length} étudiants chargés`)
 
     // 2. Charger les résultats d'attribution depuis student_result_vote
-    console.log('[2/4] Requête Supabase student_result_vote...')
     const { data, error } = await supabase
       .from('student_result_vote')
       .select('*')
@@ -497,15 +493,11 @@ const loadResults = async () => {
     }
 
     if (!data) {
-      console.log('[WARN] Aucune donnée retournée par Supabase')
       results.value = []
       return
     }
 
-    console.log(`[OK] ${data.length} résultats trouvés dans student_result_vote`)
-
     // 3. Charger les praticiens formateurs et les places
-    console.log('[3/6] Chargement des praticiens formateurs...')
     const { data: praticiensData, error: praticiensError } = await supabase
       .from('praticiens_formateurs')
       .select('*')
@@ -515,10 +507,9 @@ const loadResults = async () => {
       allPraticiens.value = []
     } else {
       allPraticiens.value = praticiensData || []
-      console.log(`[OK] ${allPraticiens.value.length} praticiens chargés`)
     }
 
-    console.log('[4/6] Chargement des places...')
+    // 4. Chargement des places
     const { data: placesData, error: placesError } = await supabase
       .from('places')
       .select('*')
@@ -528,11 +519,9 @@ const loadResults = async () => {
       allPlaces.value = []
     } else {
       allPlaces.value = placesData || []
-      console.log(`[OK] ${allPlaces.value.length} places chargées`)
     }
 
     // 5. Enrichir avec les noms des étudiants et praticiens
-    console.log('[5/6] Enrichissement avec les noms et praticiens...')
     results.value = (data || []).map(result => {
       const student = allStudents.value.find(s => 
         s.user_id === result.user_id || s.id === result.user_id
@@ -564,18 +553,6 @@ const loadResults = async () => {
       // Chercher le champ praticiensFormateurs (camelCase avec quotes dans la DB)
       const praticiensIds = place?.praticiensFormateurs || []
       
-      // Debug: afficher la structure pour diagnostiquer
-      if (result === data[0]) {
-        console.log('[PRATICIEN DEBUG] Place:', {
-          PlaceId: place?.PlaceId,
-          NomPlace: place?.NomPlace,
-          praticiensFormateurs: place?.praticiensFormateurs,
-          praticiensIds,
-          allPraticiensCount: allPraticiens.value.length,
-          premierPraticienId: allPraticiens.value[0]?.id
-        })
-      }
-      
       if (place && Array.isArray(praticiensIds) && praticiensIds.length > 0) {
         // Le champ contient un array de TEXT mais les IDs praticiens sont BIGINT
         // Il faut donc comparer en convertissant
@@ -593,10 +570,6 @@ const loadResults = async () => {
                      String(pId) === idStr ||
                      Number(pId) === idNum
             })
-            
-            if (result === data[0]) {
-              console.log(`[PRATICIEN DEBUG] Recherche ID ${praticienId} (str: ${idStr}, num: ${idNum}):`, praticien ? 'TROUVÉ' : 'NON TROUVÉ')
-            }
             
             if (praticien) {
               const pNom = praticien.nom || praticien.Nom || ''
@@ -628,9 +601,6 @@ const loadResults = async () => {
         autoAssignedPraticienId = praticiensFormateurs[0].id
         needsAutoAssignment = true
         
-        if (result === data[0]) {
-          console.log('[AUTO-ASSIGN] 1 seul praticien détecté → auto-assignation:', praticiensFormateurs[0].nom)
-        }
       }
 
       return {
@@ -655,7 +625,6 @@ const loadResults = async () => {
     })
 
     // 6. Mettre à jour les statistiques
-    console.log('[6/6] Mise à jour des statistiques...')
     const ba25Students = allStudents.value.filter(s => {
       const classe = s.Classe || s.classe || s.class
       return classe === 'BA25'
@@ -668,12 +637,6 @@ const loadResults = async () => {
       availablePlaces: 0
     }
 
-    console.log('[SUCCESS] Résultats chargés et enrichis:', {
-      total: stats.value.total,
-      assigned: stats.value.assigned,
-      results: results.value.length
-    })
-    
     // 7. Auto-assigner les praticiens si nécessaire
     await autoAssignPraticiens()
   } catch (error) {
@@ -690,7 +653,6 @@ const loadResults = async () => {
       life: 5000
     })
   } finally {
-    console.log('[END] loadResults - loading = false')
     loading.value = false
   }
 }
@@ -773,7 +735,6 @@ const exportCSV = () => {
 
 // Ouvrir le dialog d'édition
 const openEditDialog = async (assignment) => {
-  console.log('[EDIT] Ouverture dialog pour:', assignment)
   editingAssignment.value = assignment
   selectedNewPlace.value = null
   placeSearchQuery.value = ''
@@ -782,37 +743,18 @@ const openEditDialog = async (assignment) => {
   // Charger toutes les places depuis le store
   loadingPlaces.value = true
   try {
-    console.log('[1/2] Chargement des places depuis placesStore...')
     await placesStore.fetchPlaces()
-    
-    console.log('[DEBUG] Total places chargées:', placesStore.places.length)
-    console.log('[DEBUG] Première place:', placesStore.places[0])
-    console.log('[DEBUG] PFP sélectionné:', selectedPFP.value)
     
     // Filtrer selon le PFP sélectionné
     const pfpField = selectedPFP.value // 'PFP1A' ou 'PFP1B'
     
-    // Afficher toutes les places d'abord sans filtrage
-    console.log('[DEBUG] Toutes les places:', placesStore.places.map(p => ({
-      PlaceId: p.PlaceId,
-      NomPlace: p.NomPlace,
-      PFP1A: p.PFP1A,
-      PFP1B: p.PFP1B,
-      pfpFieldValue: p[pfpField]
-    })))
-    
     availablePlaces.value = placesStore.places.filter(place => {
-      // Vérifier plusieurs variantes
       const hasField = place[pfpField] === true || 
                        place[pfpField] === 1 || 
                        place[pfpField] === '1' ||
                        place[pfpField] === 'true'
-      
-      console.log(`[DEBUG] Place ${place.NomPlace} - ${pfpField}:`, place[pfpField], '-> inclure?', hasField)
       return hasField
     })
-    
-    console.log(`[OK] ${availablePlaces.value.length} places ${selectedPFP.value} disponibles`)
     
     if (availablePlaces.value.length === 0) {
       console.warn('[WARN] Aucune place trouvée après filtrage!')
@@ -843,13 +785,11 @@ const closeEditDialog = () => {
 // Sélectionner une nouvelle place
 const selectNewPlace = (place) => {
   selectedNewPlace.value = place
-  console.log('[SELECT] Place sélectionnée:', place.NomPlace)
 }
 
 // Fonction de filtrage (appelée par @input)
 const filterPlaces = () => {
   // Le filtrage est déjà géré par le computed filteredAvailablePlaces
-  console.log('[FILTER] Recherche:', placeSearchQuery.value)
 }
 
 // Sauvegarder la nouvelle place
@@ -858,10 +798,6 @@ const saveNewPlace = async () => {
 
   savingPlace.value = true
   try {
-    console.log('[SAVE] Mise à jour de student_result_vote...')
-    console.log('Assignment ID:', editingAssignment.value.id)
-    console.log('Nouvelle place:', selectedNewPlace.value.NomPlace)
-
     // Extraire les noms avec fallbacks
     const placeName = selectedNewPlace.value.NomPlace || 
                       selectedNewPlace.value.Nom || 
@@ -874,9 +810,6 @@ const saveNewPlace = async () => {
                            selectedNewPlace.value.Institution || 
                            selectedNewPlace.value.institution || 
                            'Institution inconnue'
-
-    console.log('[SAVE] Nom place:', placeName)
-    console.log('[SAVE] Nom institution:', institutionName)
 
     // Mettre à jour la table student_result_vote
     const { error } = await supabase
@@ -893,8 +826,6 @@ const saveNewPlace = async () => {
       console.error('[ERROR] Erreur Supabase:', error)
       throw error
     }
-
-    console.log('[SUCCESS] Place mise à jour avec succès')
 
     // Mettre à jour localement
     const index = results.value.findIndex(r => r.id === editingAssignment.value.id)
@@ -923,12 +854,13 @@ const saveNewPlace = async () => {
   } finally {
     savingPlace.value = false
   }
+
+  scheduleRefresh()
 }
 
 // Publier une seule assignation
 const publishSingleAssignment = async (assignment) => {
   try {
-    console.log('[PUBLISH_SINGLE] Publication de l\'assignation:', assignment.student_name)
 
     const { error } = await supabase
       .from('student_result_vote')
@@ -943,8 +875,6 @@ const publishSingleAssignment = async (assignment) => {
       throw error
     }
 
-    console.log('[SUCCESS] Assignation publiée avec succès')
-
     // Mettre à jour localement
     const index = results.value.findIndex(r => r.id === assignment.id)
     if (index !== -1) {
@@ -957,6 +887,8 @@ const publishSingleAssignment = async (assignment) => {
       detail: `L'assignation de ${assignment.student_name} est maintenant visible`,
       life: 3000
     })
+
+    scheduleRefresh()
   } catch (error) {
     console.error('[ERROR] Erreur lors de la publication:', error)
     toast.add({
@@ -970,15 +902,11 @@ const publishSingleAssignment = async (assignment) => {
 
 // Dépublier une seule assignation (remettre en brouillon)
 const unpublishSingleAssignment = async (assignment) => {
-  console.log('[UNPUBLISH_SINGLE] Demande de dépublication pour:', assignment.student_name)
-  
   if (!confirm(`Voulez-vous remettre en brouillon l'assignation de ${assignment.student_name}?\n\nL'étudiant ne verra plus cette assignation dans son profil.`)) {
-    console.log('[UNPUBLISH_SINGLE] Dépublication annulée par l\'utilisateur')
     return
   }
 
   try {
-    console.log('[UNPUBLISH_SINGLE] Confirmation reçue, dépublication en cours...')
 
     const { error } = await supabase
       .from('student_result_vote')
@@ -993,8 +921,6 @@ const unpublishSingleAssignment = async (assignment) => {
       throw error
     }
 
-    console.log('[SUCCESS] Assignation dépubliée avec succès')
-
     // Mettre à jour localement
     const index = results.value.findIndex(r => r.id === assignment.id)
     if (index !== -1) {
@@ -1007,6 +933,8 @@ const unpublishSingleAssignment = async (assignment) => {
       detail: `L'assignation de ${assignment.student_name} est repassée en brouillon`,
       life: 3000
     })
+
+    scheduleRefresh()
   } catch (error) {
     console.error('[ERROR] Erreur lors de la dépublication:', error)
     toast.add({
@@ -1059,10 +987,6 @@ const unpublishAssignments = async () => {
 
   publishing.value = true
   try {
-    console.log('[UNPUBLISH_ALL] Dépublication des assignations...')
-    console.log(`PFP: ${selectedPFP.value}, Année: ${selectedYear.value}`)
-    console.log(`Nombre d'assignations à dépublier: ${publishedCount}`)
-
     // Mettre à jour le statut des assignations publiées
     const { error } = await supabase
       .from('student_result_vote')
@@ -1079,8 +1003,6 @@ const unpublishAssignments = async () => {
       throw error
     }
 
-    console.log('[SUCCESS] Assignations dépubliées avec succès')
-
     // Mettre à jour localement
     results.value = results.value.map(r => ({
       ...r,
@@ -1093,6 +1015,8 @@ const unpublishAssignments = async () => {
       detail: `${publishedCount} assignations sont repassées en brouillon et peuvent être modifiées`,
       life: 5000
     })
+
+    scheduleRefresh()
   } catch (error) {
     console.error('[ERROR] Erreur lors de la dépublication:', error)
     toast.add({
@@ -1148,10 +1072,6 @@ const publishAssignments = async () => {
 
   publishing.value = true
   try {
-    console.log('[PUBLISH_ALL] Publication des assignations non publiées...')
-    console.log(`PFP: ${selectedPFP.value}, Année: ${selectedYear.value}`)
-    console.log(`Nombre d'assignations à publier: ${unpublishedCount}`)
-
     // Mettre à jour le statut des assignations non publiées
     const { error } = await supabase
       .from('student_result_vote')
@@ -1168,8 +1088,6 @@ const publishAssignments = async () => {
       throw error
     }
 
-    console.log('[SUCCESS] Assignations publiées avec succès')
-
     // Mettre à jour localement
     results.value = results.value.map(r => ({
       ...r,
@@ -1182,6 +1100,8 @@ const publishAssignments = async () => {
       detail: `${unpublishedCount} assignations sont maintenant visibles par les étudiants`,
       life: 5000
     })
+
+    scheduleRefresh()
   } catch (error) {
     console.error('[ERROR] Erreur lors de la publication:', error)
     toast.add({
@@ -1205,11 +1125,8 @@ const autoAssignPraticiens = async () => {
   const toAutoAssign = results.value.filter(r => r.needsAutoAssignment)
   
   if (toAutoAssign.length === 0) {
-    console.log('[AUTO-ASSIGN] Aucune auto-assignation nécessaire')
     return
   }
-  
-  console.log(`[AUTO-ASSIGN] ${toAutoAssign.length} praticien(s) à auto-assigner`)
   
   try {
     // Sauvegarder en batch
@@ -1237,8 +1154,6 @@ const autoAssignPraticiens = async () => {
       }
     }
     
-    console.log(`[AUTO-ASSIGN] ✅ ${successCount}/${toAutoAssign.length} praticien(s) auto-assigné(s)`)
-    
     // Notification discrète
     if (successCount > 0) {
       toast.add({
@@ -1255,6 +1170,8 @@ const autoAssignPraticiens = async () => {
         r.needsAutoAssignment = false
       }
     })
+
+    scheduleRefresh()
   } catch (error) {
     console.error('[AUTO-ASSIGN] Erreur lors de l\'auto-assignation:', error)
   }
@@ -1297,12 +1214,6 @@ const getPraticienName = (praticienId) => {
 
 // Assigner un praticien formateur à une assignation
 const assignPraticien = async (assignment, praticienId) => {
-  console.log('[ASSIGN_PRATICIEN] Assignation praticien:', {
-    assignment: assignment.student_name,
-    praticienId,
-    praticienName: praticienId ? getPraticienName(praticienId) : 'Aucun'
-  })
-  
   // Marquer comme en cours de sauvegarde
   assignment.savingPraticien = true
   
@@ -1321,8 +1232,6 @@ const assignPraticien = async (assignment, praticienId) => {
       throw error
     }
     
-    console.log('[SUCCESS] Praticien assigné avec succès')
-    
     // Mettre à jour localement
     const index = results.value.findIndex(r => r.id === assignment.id)
     if (index !== -1) {
@@ -1338,6 +1247,8 @@ const assignPraticien = async (assignment, praticienId) => {
         : `Praticien retiré pour ${assignment.student_name}`,
       life: 3000
     })
+
+    scheduleRefresh()
   } catch (error) {
     console.error('[ERROR] Erreur lors de l\'assignation du praticien:', error)
     toast.add({

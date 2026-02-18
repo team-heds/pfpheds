@@ -73,8 +73,6 @@ async function githubRequest(endpoint, options = {}, token) {
  */
 export async function getBranchSHA(owner, repo, branch, token) {
   try {
-    console.log(`[githubService] 🔍 Récupération du SHA de ${branch}...`)
-    
     const data = await githubRequest(
       `/repos/${owner}/${repo}/git/ref/heads/${branch}`,
       {},
@@ -82,7 +80,6 @@ export async function getBranchSHA(owner, repo, branch, token) {
     )
     
     const sha = data.object.sha
-    console.log(`[githubService] ✅ SHA récupéré: ${sha}`)
     return sha
   } catch (error) {
     console.error('[githubService] ❌ Erreur getBranchSHA:', error)
@@ -104,11 +101,8 @@ export async function createBranch(repoUrl, branchName, baseBranch = 'main', tok
       throw new Error('GitHub token manquant. Configurez-le dans les paramètres.')
     }
     
-    console.log(`[githubService] 🌿 Création de la branche: ${branchName}`)
-    
     // Parser l'URL
     const { owner, repo } = parseGitHubUrl(repoUrl)
-    console.log(`[githubService] 📦 Repository: ${owner}/${repo}`)
     
     // 1. Récupérer le SHA de la branche de base
     const sha = await getBranchSHA(owner, repo, baseBranch, token)
@@ -125,8 +119,6 @@ export async function createBranch(repoUrl, branchName, baseBranch = 'main', tok
       },
       token
     )
-    
-    console.log(`[githubService] ✅ Branche créée avec succès!`)
     
     return {
       success: true,

@@ -1,3 +1,19 @@
+/**
+ * @module votesStore
+ * @description Store Pinia pour la gestion des votes étudiants (PFP).
+ * Utilise Supabase avec support RPC backend pour contourner les restrictions RLS.
+ *
+ * @state {Array} votes - Liste des votes de l'utilisateur
+ * @state {Object|null} currentVote - Vote en cours de consultation
+ * @state {boolean} loading - Indicateur de chargement
+ * @state {string|null} error - Dernier message d'erreur
+ *
+ * @action fetchUserVotes(userId) - Récupère tous les votes d'un utilisateur
+ * @action fetchVote(voteId) - Récupère un vote spécifique
+ * @action saveVote(voteData) - Crée ou met à jour un vote (via RPC ou direct)
+ * @action deleteVote(voteId) - Supprime un vote
+ * @action reset() - Réinitialise le store
+ */
 import { defineStore } from 'pinia'
 import { supabase } from '@/supabase'
 import votesBackendService from './votesBackendService'
@@ -51,7 +67,6 @@ export const useVotesStore = defineStore('votes', {
         if (error) throw error
 
         this.votes = data || []
-        console.log('✅ Votes chargés:', this.votes.length)
         
         return data
       } catch (err) {
@@ -88,7 +103,6 @@ export const useVotesStore = defineStore('votes', {
         if (error) throw error
 
         this.currentVote = data
-        console.log('✅ Vote récupéré:', data ? 'trouvé' : 'non trouvé')
         
         return data
       } catch (err) {
@@ -120,19 +134,10 @@ export const useVotesStore = defineStore('votes', {
           throw new Error('Utilisateur non connecté')
         }
 
-        console.log('💾 Enregistrement du vote:', { 
-          user: user.id, 
-          pfpType, 
-          year, 
-          choicesCount: choices.length,
-          method: shouldUseRPC ? 'RPC' : 'Direct'
-        })
-
         let data
 
         if (shouldUseRPC) {
           // Utiliser la fonction RPC backend (plus sécurisé)
-          console.log('🔧 Utilisation de la fonction RPC backend')
           data = await votesBackendService.upsertStudentVote(user.id, pfpType, year, choices)
         } else {
           // Approche directe (comme avant)
@@ -151,7 +156,6 @@ export const useVotesStore = defineStore('votes', {
 
           if (existingVote) {
             // UPDATE
-            console.log('🔄 Mise à jour du vote existant')
             result = await supabase
               .from('student_votes')
               .update({
@@ -165,7 +169,6 @@ export const useVotesStore = defineStore('votes', {
               .single()
           } else {
             // INSERT
-            console.log('➕ Création d\'un nouveau vote')
             result = await supabase
               .from('student_votes')
               .insert(payload)
@@ -186,8 +189,6 @@ export const useVotesStore = defineStore('votes', {
 
           data = resultData
         }
-
-        console.log('✅ Vote enregistré avec succès:', data)
 
         // Mettre à jour le state
         this.currentVote = data
@@ -244,8 +245,6 @@ export const useVotesStore = defineStore('votes', {
           this.currentVote = null
         }
 
-        console.log('✅ Vote supprimé')
-        
         return true
       } catch (err) {
         console.error('❌ Erreur deleteVote:', err)

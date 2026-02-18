@@ -12,8 +12,6 @@ import { db, auth } from '../../firebase.js';
  */
 export const getGamificationStats = async () => {
   try {
-    console.log('[GamificationAdminService] Chargement des statistiques gamification...');
-
     // Récupérer les données en parallèle
     const [usersSnapshot, challengesSnapshot, questsSnapshot, badgesSnapshot, housesSnapshot, logsSnapshot] = await Promise.all([
       get(dbRef(db, 'users')).catch(() => ({ val: () => ({}) })),
@@ -86,7 +84,6 @@ export const getGamificationStats = async () => {
       lastUpdated: new Date().toISOString()
     };
 
-    console.log('[GamificationAdminService] Statistiques chargées:', stats);
     return stats;
 
   } catch (error) {

@@ -276,7 +276,6 @@ export const unlockBadge = async (userId, badge) => {
       console.warn('Erreur lors de l\'envoi de la notification badge:', notificationError)
     }
     
-    console.log(`🏆 Badge débloqué pour ${userId}: ${badge.name} (+${badge.xpBonus} XP)`)
     return true
   } catch (error) {
     console.error('Erreur lors du déblocage du badge:', error)

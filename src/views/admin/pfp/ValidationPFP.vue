@@ -204,6 +204,7 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { supabase } from '@/supabase'
 import { getAllStudents } from '@/service/studentsService'
+import { useAutoRefresh } from '@/composables/useAutoRefresh'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import Button from 'primevue/button'
 import DataTable from 'primevue/datatable'
@@ -216,7 +217,6 @@ import InputSwitch from 'primevue/inputswitch'
 import Checkbox from 'primevue/checkbox'
 import Dialog from 'primevue/dialog'
 import Textarea from 'primevue/textarea'
-import * as XLSX from 'xlsx'
 import Row from 'primevue/row'
 
 const loading = ref(false)
@@ -244,7 +244,8 @@ const typesPFP = ref([
   { label: 'PFP4', value: 'PFP4' }
 ])
 
-const exportExcel = () => {
+const exportExcel = async () => {
+  const XLSX = await import('xlsx')
   const rows = (filteredPlacesList.value || []).map((r) => ({
     etudiant: r.student_name || '',
     classe: r.student_class || '',
@@ -292,6 +293,8 @@ const stats = ref({
   failed: 0,
   stopped: 0
 })
+
+const { scheduleRefresh } = useAutoRefresh(() => loadPublishedAssignments())
 
 const getVotationTypeLabel = (assignment) => {
   if (!assignment) return 'Tirage aléatoire'
@@ -341,6 +344,7 @@ const handleValidationChange = async (row, type) => {
     await removeFromStudentsPhysio(row)
   }
   updateStats()
+  scheduleRefresh()
 }
 
 // Sauvegarder la validation dans student_result_vote
@@ -458,7 +462,6 @@ const syncWithStudentsPhysio = async (row) => {
 
     if (updateError) throw updateError
 
-    console.log('✅ Validation synchronisée avec StudentsPhysio (status:', status, ')')
   } catch (error) {
     console.error('Erreur synchronisation StudentsPhysio:', error)
   }
@@ -501,7 +504,6 @@ const removeFromStudentsPhysio = async (row) => {
 
     if (updateError) throw updateError
 
-    console.log('✅ Validation supprimée de StudentsPhysio')
   } catch (error) {
     console.error('Erreur suppression StudentsPhysio:', error)
   }
@@ -518,6 +520,7 @@ const handleArretChange = async (row) => {
     await saveValidation(row)
     await removeFromStudentsPhysio(row)
     updateStats()
+    scheduleRefresh()
   }
 }
 
@@ -533,6 +536,7 @@ const cancelArret = async () => {
   arretComment.value = ''
   currentRow.value = null
   updateStats()
+  scheduleRefresh()
 }
 
 const confirmArret = async () => {
@@ -550,6 +554,7 @@ const confirmArret = async () => {
   arretComment.value = ''
   currentRow.value = null
   updateStats()
+  scheduleRefresh()
 }
 
 const updateStats = () => {

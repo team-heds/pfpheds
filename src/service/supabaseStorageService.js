@@ -14,8 +14,6 @@ class SupabaseStorageService {
    */
   async uploadAvatar(userId, file) {
     try {
-      console.log('🔄 Upload avatar vers Supabase Storage...', { userId, fileName: file.name })
-
       // Générer un nom de fichier unique avec timestamp
       const fileExt = file.name.split('.').pop()
       const fileName = `${userId}/avatar-${Date.now()}.${fileExt}`
@@ -34,16 +32,12 @@ class SupabaseStorageService {
         throw error
       }
 
-      console.log('✅ Fichier uploadé:', data)
-
       // Récupérer l'URL publique
       const { data: urlData } = this.supabase.storage
         .from('avatars')
         .getPublicUrl(filePath)
 
       const publicUrl = urlData.publicUrl
-
-      console.log('✅ URL publique générée:', publicUrl)
 
       return {
         url: publicUrl,
@@ -63,8 +57,6 @@ class SupabaseStorageService {
    */
   async deleteAvatar(filePath) {
     try {
-      console.log('🗑️ Suppression ancien avatar:', filePath)
-
       const { error } = await this.supabase.storage
         .from('avatars')
         .remove([filePath])
@@ -72,8 +64,6 @@ class SupabaseStorageService {
       if (error) {
         console.warn('⚠️ Erreur suppression ancien avatar:', error)
         // Ne pas faire échouer l'opération si la suppression échoue
-      } else {
-        console.log('✅ Ancien avatar supprimé')
       }
     } catch (error) {
       console.warn('⚠️ Erreur lors de la suppression:', error)
@@ -122,8 +112,6 @@ class SupabaseStorageService {
       const avatarsBucket = buckets.find(bucket => bucket.name === 'avatars')
       
       if (!avatarsBucket) {
-        console.log('📁 Création du bucket avatars...')
-        
         // Créer le bucket
         const { data, error: createError } = await this.supabase.storage.createBucket('avatars', {
           public: true,
@@ -136,9 +124,6 @@ class SupabaseStorageService {
           return false
         }
 
-        console.log('✅ Bucket avatars créé:', data)
-      } else {
-        console.log('✅ Bucket avatars existe déjà')
       }
 
       return true

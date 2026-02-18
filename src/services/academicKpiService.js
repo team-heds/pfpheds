@@ -10,7 +10,7 @@ import { supabase } from '@/supabase'
  */
 export async function getRMModules(userId, userEmail) {
   try {
-    console.log('📚 [getRMModules] Requête modules pour RM:', userEmail || userId)
+    if (import.meta.env.DEV) console.log('📚 [getRMModules] Requête modules pour RM:', userEmail || userId)
     
     // Utiliser responsable_email car responsable_id n'existe pas
     const { data: modules, error } = await supabase
@@ -23,7 +23,7 @@ export async function getRMModules(userId, userEmail) {
       return []
     }
     
-    console.log('✅ [getRMModules] Modules trouvés:', modules?.length || 0)
+    if (import.meta.env.DEV) console.log('✅ [getRMModules] Modules trouvés:', modules?.length || 0)
     return modules || []
   } catch (error) {
     console.error('❌ [getRMModules] Erreur:', error)
@@ -36,7 +36,7 @@ export async function getRMModules(userId, userEmail) {
  */
 export async function getRMStats(userId, userEmail) {
   try {
-    console.log('📊 [getRMStats] Calcul stats RM pour:', userEmail || userId)
+    if (import.meta.env.DEV) console.log('📊 [getRMStats] Calcul stats RM pour:', userEmail || userId)
     
     const modules = await getRMModules(userId, userEmail)
     
@@ -64,7 +64,7 @@ export async function getRMStats(userId, userEmail) {
       studentsCount
     }
     
-    console.log('✅ [getRMStats] Stats calculées:', stats)
+    if (import.meta.env.DEV) console.log('✅ [getRMStats] Stats calculées:', stats)
     return stats
   } catch (error) {
     console.error('❌ [getRMStats] Erreur:', error)
@@ -83,7 +83,7 @@ export async function getRMStats(userId, userEmail) {
  */
 export async function getRMTeachers(userId, userEmail) {
   try {
-    console.log('👨‍🏫 [getRMTeachers] Requête enseignants pour RM:', userEmail || userId)
+    if (import.meta.env.DEV) console.log('👨‍🏫 [getRMTeachers] Requête enseignants pour RM:', userEmail || userId)
     
     // Récupérer les cours des modules du RM
     const modules = await getRMModules(userId, userEmail)
@@ -136,7 +136,7 @@ export async function getRMTeachers(userId, userEmail) {
     })
     
     const teachers = Array.from(teachersMap.values())
-    console.log('✅ [getRMTeachers] Enseignants trouvés:', teachers.length)
+    if (import.meta.env.DEV) console.log('✅ [getRMTeachers] Enseignants trouvés:', teachers.length)
     return teachers
   } catch (error) {
     console.error('❌ [getRMTeachers] Erreur:', error)
@@ -150,7 +150,7 @@ export async function getRMTeachers(userId, userEmail) {
  */
 export async function getTeacherCourses(userId) {
   try {
-    console.log('📖 [getTeacherCourses] Requête cours pour enseignant:', userId)
+    if (import.meta.env.DEV) console.log('📖 [getTeacherCourses] Requête cours pour enseignant:', userId)
     
     // Récupérer les assignations de l'enseignant
     const { data: assignments, error: assignError } = await supabase
@@ -159,7 +159,7 @@ export async function getTeacherCourses(userId) {
       .eq('teacher_id', userId)
     
     if (assignError || !assignments || assignments.length === 0) {
-      console.log('⚠️ [getTeacherCourses] Aucune assignation trouvée')
+      if (import.meta.env.DEV) console.log('⚠️ [getTeacherCourses] Aucune assignation trouvée')
       return []
     }
     
@@ -176,7 +176,7 @@ export async function getTeacherCourses(userId) {
       return []
     }
     
-    console.log('✅ [getTeacherCourses] Cours trouvés:', courses?.length || 0)
+    if (import.meta.env.DEV) console.log('✅ [getTeacherCourses] Cours trouvés:', courses?.length || 0)
     return courses || []
   } catch (error) {
     console.error('❌ [getTeacherCourses] Erreur:', error)
@@ -189,7 +189,7 @@ export async function getTeacherCourses(userId) {
  */
 export async function getTeacherStats(userId) {
   try {
-    console.log('📊 [getTeacherStats] Calcul stats enseignant pour:', userId)
+    if (import.meta.env.DEV) console.log('📊 [getTeacherStats] Calcul stats enseignant pour:', userId)
     
     const courses = await getTeacherCourses(userId)
     
@@ -215,7 +215,7 @@ export async function getTeacherStats(userId) {
       studentsCount
     }
     
-    console.log('✅ [getTeacherStats] Stats calculées:', stats)
+    if (import.meta.env.DEV) console.log('✅ [getTeacherStats] Stats calculées:', stats)
     return stats
   } catch (error) {
     console.error('❌ [getTeacherStats] Erreur:', error)
@@ -234,7 +234,7 @@ export async function getTeacherStats(userId) {
  */
 export async function getTeacherWeekSchedule(userId) {
   try {
-    console.log('📅 [getTeacherWeekSchedule] Requête planning pour:', userId)
+    if (import.meta.env.DEV) console.log('📅 [getTeacherWeekSchedule] Requête planning pour:', userId)
     
     // Récupérer toutes les cellules de planning de l'enseignant
     const { data: cells, error } = await supabase
@@ -253,14 +253,14 @@ export async function getTeacherWeekSchedule(userId) {
     }
     
     if (!cells || cells.length === 0) {
-      console.log('⚠️ [getTeacherWeekSchedule] Aucun planning trouvé')
+      if (import.meta.env.DEV) console.log('⚠️ [getTeacherWeekSchedule] Aucun planning trouvé')
       return generateEmptyWeek()
     }
     
     // Convertir les cellules en format semaine
     const weekData = formatPlanningCellsToWeek(cells)
     
-    console.log('✅ [getTeacherWeekSchedule] Planning trouvé')
+    if (import.meta.env.DEV) console.log('✅ [getTeacherWeekSchedule] Planning trouvé')
     return weekData
   } catch (error) {
     console.error('❌ [getTeacherWeekSchedule] Erreur:', error)
@@ -327,7 +327,7 @@ function generateEmptyWeek() {
  */
 export async function getSITeachers() {
   try {
-    console.log('👨‍⚕️ [getSITeachers] Requête enseignants SI...')
+    if (import.meta.env.DEV) console.log('👨‍⚕️ [getSITeachers] Requête enseignants SI...')
     
     // Récupérer les utilisateurs avec le rôle ou la permission EnseignantSoins
     // On utilise une requête brute pour être sûr de tout attraper
@@ -335,7 +335,7 @@ export async function getSITeachers() {
     const { data: teachers, error } = await supabase
       .from('user_profiles')
       .select('user_id, email, forname, family_name, display_name, role, permissions')
-      .or('role.eq.EnseignantSoins,permissions.cs.{"EnseignantSoins"}')
+      .or('role.eq.EnseignantSoins,permissions.cs.["EnseignantSoins"]')
     
     if (error) {
       // Si erreur avec permissions (ex: type mismatch), on fallback sur role uniquement
@@ -366,7 +366,7 @@ function formatTeachers(teachersList) {
     email: t.email,
     role: 'Enseignant SI'
   }))
-  console.log('✅ [getSITeachers] Enseignants SI trouvés:', formatted.length)
+  if (import.meta.env.DEV) console.log('✅ [getSITeachers] Enseignants SI trouvés:', formatted.length)
   return formatted
 }
 
@@ -375,7 +375,7 @@ function formatTeachers(teachersList) {
  */
 export async function getAllRMData(userId, userEmail) {
   try {
-    console.log('🚀 [getAllRMData] Chargement complet données RM pour:', userEmail || userId)
+    if (import.meta.env.DEV) console.log('🚀 [getAllRMData] Chargement complet données RM pour:', userEmail || userId)
     
     const [stats, modules, teachers, siTeachers] = await Promise.all([
       getRMStats(userId, userEmail),
@@ -391,7 +391,7 @@ export async function getAllRMData(userId, userEmail) {
       siTeachers // Tous les enseignants SI
     }
     
-    console.log('✅ [getAllRMData] Données RM chargées:', result)
+    if (import.meta.env.DEV) console.log('✅ [getAllRMData] Données RM chargées:', result)
     return result
   } catch (error) {
     console.error('❌ [getAllRMData] Erreur:', error)
@@ -414,7 +414,7 @@ export async function getAllRMData(userId, userEmail) {
  */
 export async function getAllTeacherData(userId) {
   try {
-    console.log('🚀 [getAllTeacherData] Chargement complet données enseignant...')
+    if (import.meta.env.DEV) console.log('🚀 [getAllTeacherData] Chargement complet données enseignant...')
     
     const [stats, courses, weekSchedule] = await Promise.all([
       getTeacherStats(userId),
@@ -428,7 +428,7 @@ export async function getAllTeacherData(userId) {
       weekSchedule
     }
     
-    console.log('✅ [getAllTeacherData] Données enseignant chargées:', result)
+    if (import.meta.env.DEV) console.log('✅ [getAllTeacherData] Données enseignant chargées:', result)
     return result
   } catch (error) {
     console.error('❌ [getAllTeacherData] Erreur:', error)

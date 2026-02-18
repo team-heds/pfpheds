@@ -438,7 +438,6 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
-import Navbar from '@/components/common/utils/Navbar.vue'
 import Card from 'primevue/card'
 import Panel from 'primevue/panel'
 import Toolbar from 'primevue/toolbar'

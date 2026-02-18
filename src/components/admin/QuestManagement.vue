@@ -736,7 +736,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, reactive, watch } from 'vue'
+import { ref, computed, onMounted, reactive } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useRouter } from 'vue-router'
 import Button from 'primevue/button'
@@ -752,11 +752,9 @@ import TabPanel from 'primevue/tabpanel'
 import Calendar from 'primevue/calendar'
 import Checkbox from 'primevue/checkbox'
 import MultiSelect from 'primevue/multiselect'
-import Slider from 'primevue/slider'
 import Chip from 'primevue/chip'
 import InputSwitch from 'primevue/inputswitch'
 import adminQuestsService from '../../service/adminQuestsService'
-import rolesService, { PERMISSIONS } from '../../service/rolesService'
 
 const toast = useToast()
 const router = useRouter()

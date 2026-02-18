@@ -39,7 +39,7 @@ export function useRouteErrors() {
         // Nettoyer le sessionStorage après affichage
         sessionStorage.removeItem('routeError');
         
-        console.log('📢 Erreur de route affichée:', error);
+        
       } catch (e) {
         console.error('❌ Erreur lors du parsing de routeError:', e);
         sessionStorage.removeItem('routeError');

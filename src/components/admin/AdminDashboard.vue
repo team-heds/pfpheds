@@ -208,7 +208,7 @@ import Button from 'primevue/button'
 import ProgressSpinner from 'primevue/progressspinner'
 import Toast from 'primevue/toast'
 import adminService from '../../service/adminService'
-import rolesService, { ROLES, PERMISSIONS } from '../../service/rolesService'
+import rolesService, { PERMISSIONS } from '../../service/rolesService'
 
 // Router
 const router = useRouter()

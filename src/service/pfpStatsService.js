@@ -11,8 +11,6 @@ import { supabase } from '@/supabase'
  */
 export async function getPfpCohortStats() {
   try {
-    console.log('[pfpStatsService] Récupération des places PFP...')
-    
     // Année courante pour le filtre - Teste avec 2025 si 2026 n'a pas de données
     const currentYear = '2026' // Change ici selon tes données (2024, 2025, 2026...)
     
@@ -25,9 +23,6 @@ export async function getPfpCohortStats() {
       console.error('[pfpStatsService] Erreur places:', placesError)
       throw placesError
     }
-    
-    console.log('[pfpStatsService] Places récupérées:', places?.length || 0)
-    console.log('[pfpStatsService] Exemple de place:', places?.[0])
     
     // Si pas de places, retourner des stats vides
     if (!places || places.length === 0) {
@@ -48,8 +43,6 @@ export async function getPfpCohortStats() {
       console.error('[pfpStatsService] Erreur institutions:', instError)
       throw instError
     }
-    
-    console.log('[pfpStatsService] Institutions récupérées:', institutions?.length || 0)
     
     // Créer un map des institutions pour accès rapide
     const institutionsMap = {}
@@ -79,48 +72,14 @@ export async function getPfpCohortStats() {
       }
     }
     
-    console.log('[pfpStatsService] Début du traitement des places...')
-    console.log('[pfpStatsService] Année courante:', currentYear)
-    
     // Traiter chaque place
     places?.forEach((place, index) => {
       const institution = institutionsMap[place.InstitutionId]
       const canton = institution?.Canton || 'Non défini'
       
-      // Log pour les 3 premières places
-      if (index < 3) {
-        console.log(`[pfpStatsService] Place ${index}:`, {
-          PlaceId: place.PlaceId,
-          PFP1A: place.PFP1A,
-          PFP1B: place.PFP1B,
-          canton
-        })
-        
-        // LOG DÉTAILLÉ pour comprendre la structure
-        console.log(`[PFP1A STRUCTURE] Place ${index}:`, {
-          existe: !!place.PFP1A,
-          type: typeof place.PFP1A,
-          keys: place.PFP1A ? Object.keys(place.PFP1A) : 'null',
-          PREMIERE_CLE: place.PFP1A ? Object.keys(place.PFP1A)[0] : 'N/A',
-          VALEUR_DE_CETTE_CLE: place.PFP1A ? place.PFP1A[Object.keys(place.PFP1A)[0]] : 'N/A',
-          valeur2026: place.PFP1A ? place.PFP1A['2026'] : 'N/A',
-          fullObject: place.PFP1A
-        })
-        console.log(`🔑 Place ${index} - QUELLE EST LA CLÉ?:`, Object.keys(place.PFP1A)[0], '=', place.PFP1A[Object.keys(place.PFP1A)[0]])
-      }
-      
       // Traiter PFP1A
       if (place.PFP1A && place.PFP1A[currentYear]) {
         const count = parseInt(place.PFP1A[currentYear])
-        
-        // DEBUG: Log pour les 3 premières places
-        if (index < 3) {
-          console.log(`[PFP1A] Place ${index}:`, {
-            rawValue: place.PFP1A[currentYear],
-            parsedCount: count,
-            isValid: !isNaN(count) && count >= 1
-          })
-        }
         
         if (!isNaN(count) && count >= 1) {
           // Total par cohorte (multiplié par le nombre de places)
@@ -179,7 +138,6 @@ export async function getPfpCohortStats() {
         .sort((a, b) => b.value - a.value)
     })
     
-    console.log('✅ Stats PFP par cohorte:', stats)
     return stats
     
   } catch (error) {
@@ -200,8 +158,6 @@ export async function getPfpCohortStats() {
  */
 export async function getPfpPlacesByCohortAndCanton(cohort, canton = null) {
   try {
-    console.log('[getPfpPlacesByCohortAndCanton] Cohort:', cohort, 'Canton:', canton)
-    
     // TODO: Implémenter le filtrage par cohorte et canton avec la nouvelle structure
     // Pour l'instant, retourner un tableau vide
     return []
@@ -227,7 +183,6 @@ export async function getStudentsByCohort(cohort) {
     
     if (error) throw error
     
-    console.log(`✅ ${data?.length || 0} étudiants trouvés pour ${cohort}`)
     return data || []
     
   } catch (error) {

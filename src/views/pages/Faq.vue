@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import { usePrimeVue } from 'primevue/config';
+import { sanitizeHtml } from '@/composables/useSanitize';
 const $primevue = usePrimeVue();
 
 defineExpose({
@@ -100,7 +101,7 @@ const changeItem = (index) => {
             <div class="card flex-1">
                 <Accordion>
                     <AccordionTab v-for="(question, i) in items[activeIndex].questions" :key="i" :header="question">
-                        <p class="line-height-3 m-0 p-0" v-html="items[activeIndex].answers[i]"></p>
+                        <p class="line-height-3 m-0 p-0" v-html="sanitizeHtml(items[activeIndex].answers[i])"></p>
                     </AccordionTab>
                 </Accordion>
             </div>

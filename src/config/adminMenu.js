@@ -121,7 +121,8 @@ export default [
               { label: 'Tableau Récapitulatif Offres', icon: 'pi pi-table', to: '/admin/formation-pratique/secretariat/tableau-offres' },
               { label: 'Récap PFP Notes', icon: 'pi pi-file', to: '/admin/formation-pratique/secretariat/recap-pfp-notes' },
               { label: 'Récap CPT Évaluation', icon: 'pi pi-star', to: '/admin/formation-pratique/secretariat/recap-cpt-evaluation' },
-              { label: 'Suivi Cas Particuliers', icon: 'pi pi-exclamation-triangle', to: '/admin/formation-pratique/secretariat/suivi-cas-particuliers' }
+              { label: 'Suivi Cas Particuliers', icon: 'pi pi-exclamation-triangle', to: '/admin/formation-pratique/secretariat/suivi-cas-particuliers' },
+              { label: 'Centre d\'Alertes', icon: 'pi pi-bell', to: '/admin/formation-pratique/secretariat/alertes' }
             ]
           }
         ]

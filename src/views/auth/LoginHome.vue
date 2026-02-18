@@ -64,10 +64,10 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import { useAuthStore } from '@/stores/authStore'
-import InputText from 'primevue/inputtext'
-import Password from 'primevue/password'
+import { useRateLimit } from '@/composables/useRateLimit'
+import { validateEmail, validatePassword } from '@/composables/useInputValidation'
+import { getPostLoginRedirect } from '@/config/adminRedirects'
 import Button from 'primevue/button'
-import Checkbox from 'primevue/checkbox'
 import Toast from 'primevue/toast'
 import AuthForm from '@/components/common/forms/AuthForm.vue'
 
@@ -83,37 +83,36 @@ const loadingFirebase = ref(false)
 const router = useRouter()
 const toast = useToast()
 const authStore = useAuthStore()
+const loginLimiter = useRateLimit({ maxAttempts: 5, lockoutDuration: 60_000 })
+const resetLimiter = useRateLimit({ maxAttempts: 3, lockoutDuration: 120_000 })
 
-// Liste des emails qui doivent être redirigés directement vers /admin
-const adminDirectEmails = [
-  'lucienne.darbellay-fumeaux@hevs.ch',
-  'filipa.pereira@hevs.ch',
-  'aline.chappuis@hevs.ch',
-  'maude.epiney-perruchoud@hevs.ch',
-  'isabelle.salamin-plaschy@hevs.ch',
-  'rafael.weissbrodt@hevs.ch',
-  'valerie.caloz-albrecht@hevs.ch',
-  'tiffany.rapillard@hevs.ch',
-  'omar.porteladossantos@hevs.ch',
-  'jesse.curchod@hevs.ch',
-  'line.martin@hevs.ch',
-  'isabelle.rey@hevs.ch',
-  'carla.gomesdarocha@hevs.ch',
-  'elodie.perruchoud@hevs.ch'
-]
 
 // Méthode de connexion Supabase
 const submitFormSupabase = async () => {
-  emailError.value = !email.value || !email.value.includes('@')
-  passwordError.value = !password.value
+  const emailCheck = validateEmail(email.value)
+  const pwdCheck = validatePassword(password.value)
+  emailError.value = !emailCheck.valid
+  passwordError.value = !pwdCheck.valid
   
   if (emailError.value || passwordError.value) {
     toast.add({ 
       severity: 'warn', 
       summary: 'Champs invalides', 
-      detail: 'Veuillez corriger les erreurs pour continuer.', 
+      detail: emailCheck.message || pwdCheck.message || 'Veuillez corriger les erreurs.', 
       life: 3000 
     })
+    return
+  }
+
+  // Rate limiting
+  if (loginLimiter.isLocked()) {
+    const sec = loginLimiter.getLockoutRemaining()
+    toast.add({ severity: 'error', summary: 'Trop de tentatives', detail: `Veuillez patienter ${sec}s avant de réessayer.`, life: 5000 })
+    return
+  }
+  if (!loginLimiter.recordAttempt()) {
+    const sec = loginLimiter.getLockoutRemaining()
+    toast.add({ severity: 'error', summary: 'Trop de tentatives', detail: `Compte temporairement bloqué. Réessayez dans ${sec}s.`, life: 5000 })
     return
   }
 
@@ -123,6 +122,7 @@ const submitFormSupabase = async () => {
       email: email.value, 
       password: password.value 
     })
+    loginLimiter.reset()
     
     toast.add({ 
       severity: 'success', 
@@ -131,8 +131,7 @@ const submitFormSupabase = async () => {
       life: 3000 
     })
     
-    // Rediriger vers /admin/dashboard-rm si l'email est dans la liste, sinon vers /feed
-    const redirectPath = adminDirectEmails.includes(email.value.toLowerCase()) ? '/admin/dashboard-rm' : '/feed'
+    const redirectPath = getPostLoginRedirect(email.value)
     setTimeout(() => router.push(redirectPath), 1500)
   } catch (error) {
     console.error('Supabase login error:', error)
@@ -149,17 +148,25 @@ const submitFormSupabase = async () => {
 
 // Méthode de réinitialisation du mot de passe
 const resetPassword = async () => {
-  emailError.value = !email.value || !email.value.includes('@')
+  const emailCheck = validateEmail(email.value)
+  emailError.value = !emailCheck.valid
   
   if (emailError.value) {
     toast.add({ 
       severity: 'warn', 
       summary: 'Email requis', 
-      detail: 'Veuillez entrer votre email pour recevoir un lien de réinitialisation.', 
+      detail: emailCheck.message, 
       life: 3000 
     })
     return
   }
+
+  if (resetLimiter.isLocked()) {
+    const sec = resetLimiter.getLockoutRemaining()
+    toast.add({ severity: 'error', summary: 'Trop de tentatives', detail: `Veuillez patienter ${sec}s.`, life: 5000 })
+    return
+  }
+  resetLimiter.recordAttempt()
 
   try {
     await authStore.resetPasswordSupabase(email.value)

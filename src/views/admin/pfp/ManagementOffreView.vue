@@ -331,6 +331,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { supabase } from '@/supabase'
+import { useAutoRefresh } from '@/composables/useAutoRefresh'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import Button from 'primevue/button'
 import DataTable from 'primevue/datatable'
@@ -343,6 +344,8 @@ import { useInstitutionsStore } from '@/stores/institutionsStore'
 
 const placesStore = usePlacesStore()
 const institutionsStore = useInstitutionsStore()
+
+const { scheduleRefresh } = useAutoRefresh(() => refreshPlaces())
 const selectedYear = ref('2026')
 const years = ref(['2025', '2026'])
 const selectedPFP = ref('all')
@@ -550,6 +553,7 @@ const saveEditRow = async (row) => {
     })
     
     cancelEditRow()
+    scheduleRefresh()
   } finally {
     savingRowId.value = null
   }

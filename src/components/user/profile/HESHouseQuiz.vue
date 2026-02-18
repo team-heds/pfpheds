@@ -347,14 +347,15 @@ const nextQuestion = () => {
 const calculateHouse = async () => {
   isCalculating.value = true
   
+  // Compter les réponses pour chaque maison
+  const houseScores = {
+    harmonis: 0,
+    elaris: 0,
+    doloris: 0,
+    solencia: 0
+  }
+
   try {
-    // Compter les réponses pour chaque maison
-    const houseScores = {
-      harmonis: 0,
-      elaris: 0,
-      doloris: 0,
-      solencia: 0
-    }
     
     answers.value.forEach(answer => {
       houseScores[answer.house]++

@@ -83,8 +83,6 @@ export const useDocumentStore = defineStore('documents', {
       this.error = null
       
       try {
-        console.log('📂 [DocumentStore] Chargement depuis Firebase...')
-        
         const foldersRef = dbRef(db, 'FilePFPPhysio')
         
         return new Promise((resolve, reject) => {
@@ -94,11 +92,6 @@ export const useDocumentStore = defineStore('documents', {
               const data = snapshot.val()
               this.folders = data || []
               this.topFolders = data || []
-              
-              console.log('✅ [DocumentStore] Arborescence chargée:', {
-                foldersCount: this.folders.length,
-                totalFiles: this.totalFilesCount,
-              })
               
               this.loading = false
               resolve(this.folders)
@@ -127,8 +120,6 @@ export const useDocumentStore = defineStore('documents', {
       this.error = null
       
       try {
-        console.log('📝 [DocumentStore] Mise à jour fichier:', fileId)
-        
         let updated = false
         const newFolders = this.folders.map(folder => {
           // Mise à jour dans folder.files
@@ -169,7 +160,6 @@ export const useDocumentStore = defineStore('documents', {
         this.folders = newFolders
         this.topFolders = newFolders
         
-        console.log('✅ [DocumentStore] Fichier mis à jour')
         return true
       } catch (e) {
         this.error = e.message
@@ -188,8 +178,6 @@ export const useDocumentStore = defineStore('documents', {
       this.error = null
       
       try {
-        console.log('🗑️ [DocumentStore] Suppression fichier:', fileId)
-        
         let deleted = false
         const newFolders = this.folders.map(folder => {
           // Suppression dans folder.files
@@ -234,7 +222,6 @@ export const useDocumentStore = defineStore('documents', {
         this.folders = newFolders
         this.topFolders = newFolders
         
-        console.log('✅ [DocumentStore] Fichier supprimé')
         return true
       } catch (e) {
         this.error = e.message
@@ -253,12 +240,6 @@ export const useDocumentStore = defineStore('documents', {
       this.error = null
       
       try {
-        console.log('➕ [DocumentStore] Ajout fichier:', {
-          file: newFile,
-          folderId: targetFolderId,
-          subFolderId: targetSubFolderId,
-        })
-        
         const newFolders = this.folders.map(folder => {
           if (targetSubFolderId && folder.id === targetFolderId) {
             // Ajout dans un sous-dossier
@@ -287,7 +268,6 @@ export const useDocumentStore = defineStore('documents', {
         this.folders = newFolders
         this.topFolders = newFolders
         
-        console.log('✅ [DocumentStore] Fichier ajouté')
         return true
       } catch (e) {
         this.error = e.message

@@ -6,7 +6,6 @@ class ModulesService {
    */
   async getAllModules() {
     try {
-      console.log('[ModulesService] 🔄 Chargement des modules...')
       const { data, error } = await supabase
         .from('modules')
         .select('*')
@@ -16,8 +15,6 @@ class ModulesService {
         throw error
       }
       
-      console.log('[ModulesService] ✅ Modules récupérés:', data)
-      console.log('[ModulesService] 📊 Nombre:', data?.length || 0)
       return data || []
     } catch (error) {
       console.error('[ModulesService] ❌ Erreur getAllModules:', error)

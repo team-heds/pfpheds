@@ -55,7 +55,6 @@ export function useKpiManager(dashboardType) {
    */
   async function loadKpis() {
     loading.value = true
-    console.log('🔄 [useKpiManager] Début loadKpis')
     try {
       // Grouper les KPI par fetchFn pour minimiser les appels
       const fetchGroups = {}
@@ -68,14 +67,10 @@ export function useKpiManager(dashboardType) {
         }
       })
       
-      console.log('📋 [useKpiManager] FetchGroups:', Object.keys(fetchGroups))
-      
       // Appeler chaque service unique
       const promises = Object.keys(fetchGroups).map(async (fetchFn) => {
         try {
-          console.log(`⚙️ [useKpiManager] Appel ${fetchFn}`)
           const data = await dashboardService[fetchFn]()
-          console.log(`✅ [useKpiManager] ${fetchFn} retourné:`, data)
           return data || {}
         } catch (error) {
           console.error(`❌ [useKpiManager] Erreur fetchFn ${fetchFn}:`, error)
@@ -84,7 +79,6 @@ export function useKpiManager(dashboardType) {
       })
       
       const results = await Promise.all(promises)
-      console.log('📦 [useKpiManager] Tous les résultats:', results)
       
       // Merger les résultats de manière SAFE - construire un nouveau objet simple
       const oldKpiData = { ...kpiData.value }
@@ -97,7 +91,6 @@ export function useKpiManager(dashboardType) {
         }
       })
       kpiData.value = mergedData
-      console.log('✨ [useKpiManager] kpiData final:', kpiData.value)
       
       // Désactiver l'analyse d'alertes temporairement (cause boucle infinie)
       // availableKpis.value.forEach(kpi => {

@@ -467,7 +467,6 @@ export const startQuest = async (userId, questId) => {
     
     await set(questRef, questData)
     
-    console.log(`Quête ${questId} démarrée pour l'utilisateur ${userId}`)
     return questData
   } catch (error) {
     console.error('Erreur lors du démarrage de la quête:', error)
@@ -484,7 +483,6 @@ export const updateQuestProgress = async (userId, questId, stepId, increment = 1
     const snapshot = await get(questRef)
     
     if (!snapshot.exists()) {
-      console.log(`Quête ${questId} non trouvée pour l'utilisateur ${userId}`)
       return null
     }
     
@@ -504,7 +502,6 @@ export const updateQuestProgress = async (userId, questId, stepId, increment = 1
     // Trouver l'étape à mettre à jour
     const stepIndex = questData.steps.findIndex(step => step.id === stepId)
     if (stepIndex === -1) {
-      console.log(`Étape ${stepId} non trouvée dans la quête ${questId}`)
       return questData
     }
     
@@ -545,8 +542,6 @@ export const updateQuestProgress = async (userId, questId, stepId, increment = 1
     await update(questRef, updates)
     
     const updatedQuest = { ...questData, ...updates }
-    
-    console.log(`Quête ${questId} mise à jour: ${progress}% complété`)
     
     return updatedQuest
   } catch (error) {
@@ -608,14 +603,11 @@ export const completeQuest = async (userId, questId) => {
       const badgesService = await import('./badgesService')
       const actionBadges = await badgesService.default.checkAndUnlockActionBadges(userId, 'QUIZ_COMPLETE', {})
       if (actionBadges.length > 0) {
-        console.log(`🏆 ${actionBadges.length} badge(s) débloqué(s) après complétion de quête:`, 
-          actionBadges.map(b => b.name).join(', '))
+        // Badges unlocked after quest completion
       }
     } catch (badgeError) {
       console.warn('Erreur lors de la vérification des badges quête:', badgeError)
     }
-    
-    console.log(`Quête ${questId} complétée! Récompenses:`, rewards)
     
     return {
       quest: { ...questData, status: QUEST_STATUS.COMPLETED },
@@ -656,7 +648,6 @@ export const unlockNewQuests = async (userId, userHouse, completedQuestIds) => {
       const questsRef = dbRef(db, `Users/${userId}/gamification/quests`)
       await update(questsRef, newQuests)
       
-      console.log(`${questsUnlocked} nouvelles quêtes débloquées pour l'utilisateur ${userId}`)
     }
     
     return newQuests

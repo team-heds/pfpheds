@@ -352,9 +352,6 @@ import Divider from 'primevue/divider'
 import Chart from 'primevue/chart'
 import PeriodSelector from '@/components/admin/widgets/PeriodSelector.vue'
 import intelligentAlerts from '@/service/intelligentAlertsService'
-import * as XLSX from 'xlsx'
-import jsPDF from 'jspdf'
-import 'jspdf-autotable'
 
 const router = useRouter()
 
@@ -516,7 +513,8 @@ function viewAlertDetails(alert) {
   console.log('Détails alerte:', alert)
 }
 
-function exportToExcel() {
+async function exportToExcel() {
+  const XLSX = await import('xlsx')
   const data = filteredAlerts.value.map(alert => ({
     'Date': formatDateTime(alert.timestamp),
     'Sévérité': alert.severity.toUpperCase(),
@@ -536,7 +534,11 @@ function exportToExcel() {
   showExportDialog.value = false
 }
 
-function exportToPDF() {
+async function exportToPDF() {
+  const [{ default: jsPDF }] = await Promise.all([
+    import('jspdf'),
+    import('jspdf-autotable')
+  ])
   const doc = new jsPDF()
   
   // Titre

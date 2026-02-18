@@ -42,7 +42,6 @@ export const resultatVotationService = {
         throw new Error(response.data.error || 'Algorithm execution failed')
       }
 
-      console.log('✅ Algorithme exécuté avec succès:', response.data)
       return response.data
     } catch (err) {
       console.error('❌ Erreur runAlgorithm:', err)

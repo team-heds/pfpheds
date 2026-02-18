@@ -13,8 +13,6 @@ export const usePraticiensFormateursStore = defineStore('praticiensFormateurs', 
       this.loading = true;
       this.error = null;
       try {
-        console.log('📥 Chargement des praticiens formateurs...')
-        
         let q = supabase
           .from('praticiens_formateurs')
           .select('id, institution, institution_id, localite, mail, nom, prenom, created_at, updated_at')
@@ -27,7 +25,6 @@ export const usePraticiensFormateursStore = defineStore('praticiensFormateurs', 
           q = q.or(
             `nom.ilike.%${s}%,prenom.ilike.%${s}%,mail.ilike.%${s}%,institution.ilike.%${s}%,localite.ilike.%${s}%`
           );
-          console.log('🔍 Recherche:', s)
         }
 
         const { data, error } = await q;
@@ -37,7 +34,6 @@ export const usePraticiensFormateursStore = defineStore('praticiensFormateurs', 
           throw error;
         }
         
-        console.log('✅ Praticiens chargés:', data?.length || 0)
         this.praticiensFormateurs = data || [];
       } catch (e) {
         console.error('❌ Erreur:', e)
@@ -72,8 +68,6 @@ export const usePraticiensFormateursStore = defineStore('praticiensFormateurs', 
           }
         }
         
-        console.log('📝 Création praticien formateur:', payload)
-
         const { data, error } = await supabase
           .from('praticiens_formateurs')
           .insert([payload])
@@ -85,7 +79,6 @@ export const usePraticiensFormateursStore = defineStore('praticiensFormateurs', 
           throw error
         }
         
-        console.log('✅ Praticien créé:', data)
         const row = data
         this.praticiensFormateurs.push(row)
         return row
@@ -103,7 +96,6 @@ export const usePraticiensFormateursStore = defineStore('praticiensFormateurs', 
       this.error = null;
       try {
         const payload = { ...updateData, updated_at: new Date().toISOString() }
-        console.log('📝 Mise à jour praticien formateur:', praticienId, payload)
         
         const { data, error } = await supabase
           .from('praticiens_formateurs')
@@ -117,7 +109,6 @@ export const usePraticiensFormateursStore = defineStore('praticiensFormateurs', 
           throw error
         }
         
-        console.log('✅ Praticien mis à jour:', data)
         const updated = data
         const index = this.praticiensFormateurs.findIndex(p => p.id === praticienId)
         if (index !== -1) this.praticiensFormateurs[index] = updated
@@ -135,8 +126,6 @@ export const usePraticiensFormateursStore = defineStore('praticiensFormateurs', 
       this.loading = true;
       this.error = null;
       try {
-        console.log('🗑️ Suppression praticien formateur:', praticienId)
-        
         const { error } = await supabase
           .from('praticiens_formateurs')
           .delete()
@@ -147,7 +136,6 @@ export const usePraticiensFormateursStore = defineStore('praticiensFormateurs', 
           throw error
         }
         
-        console.log('✅ Praticien supprimé')
         this.praticiensFormateurs = this.praticiensFormateurs.filter(p => p.id !== praticienId)
       } catch (e) {
         console.error('❌ Erreur lors de la suppression:', e)

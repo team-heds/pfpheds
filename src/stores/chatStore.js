@@ -1,3 +1,14 @@
+/**
+ * @module chatStore
+ * @description Store Pinia pour la messagerie instantanée.
+ * Utilise Supabase pour le stockage et la récupération des messages.
+ *
+ * @state {Array} messages - Liste des messages du chat
+ * @state {boolean} loading - Indicateur de chargement
+ *
+ * @action fetchMessages() - Récupère tous les messages triés par date
+ * @action sendMessage(content) - Envoie un nouveau message
+ */
 import { defineStore } from 'pinia'
 import { supabase } from '../supabase'
 
