@@ -244,4 +244,70 @@ describe('placesStore', () => {
       expect(store.loading).toBe(false)
     })
   })
+
+  // ── Cache et loading dans fetchPlaces ──────────────────────
+
+  describe('fetchPlaces – cache et loading', () => {
+    it('loading passe à false quand le cache est utilisé', async () => {
+      // Simuler un cache valide
+      store.places = [{ PlaceId: 'p1', NomPlace: 'Cached' }]
+      store.lastFetchedAt = Date.now() // Juste maintenant = cache valide
+
+      await store.fetchPlaces()
+      expect(store.loading).toBe(false)
+      expect(store.places).toHaveLength(1)
+    })
+
+    it('force: true ignore le cache', async () => {
+      store.places = [{ PlaceId: 'p1', NomPlace: 'Old' }]
+      store.lastFetchedAt = Date.now()
+
+      const newPlaces = [{ PlaceId: 'p2', NomPlace: 'New', InstitutionId: null }]
+      const institutions = []
+
+      // Premier appel = places, deuxième = institutions
+      let callCount = 0
+      mockFrom.mockImplementation(() => {
+        callCount++
+        if (callCount === 1) {
+          return { select: vi.fn(() => ({ data: newPlaces, error: null })) }
+        }
+        return { select: vi.fn(() => ({ data: institutions, error: null })) }
+      })
+
+      await store.fetchPlaces({ force: true })
+      expect(store.loading).toBe(false)
+      expect(store.places).toHaveLength(1)
+      expect(store.places[0].PlaceId).toBe('p2')
+    })
+
+    it('loading passe à false après une erreur dans fetchPlaces', async () => {
+      mockFrom.mockImplementation(() => ({
+        select: vi.fn(() => ({ data: null, error: { message: 'Network error' } }))
+      }))
+
+      try { await store.fetchPlaces({ force: true }) } catch {}
+      expect(store.loading).toBe(false)
+      expect(store.error).toBe('Network error')
+    })
+
+    it('fetchPromise est nettoyé après fetchPlaces', async () => {
+      store.places = [{ PlaceId: 'p1' }]
+      store.lastFetchedAt = Date.now()
+
+      await store.fetchPlaces()
+      expect(store.fetchPromise).toBeNull()
+    })
+
+    it('lastFetchedAt est mis à jour après un fetch réussi', async () => {
+      const before = Date.now()
+
+      mockFrom.mockImplementation(() => ({
+        select: vi.fn(() => ({ data: [], error: null }))
+      }))
+
+      await store.fetchPlaces({ force: true })
+      expect(store.lastFetchedAt).toBeGreaterThanOrEqual(before)
+    })
+  })
 })

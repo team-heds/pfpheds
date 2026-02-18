@@ -72,11 +72,14 @@ export const usePlacesStore = defineStore('places', {
 
         // Si une requête est déjà en cours, réutiliser la promesse
         if (this.fetchPromise) {
-          return await this.fetchPromise;
+          const result = await this.fetchPromise;
+          this.loading = false;
+          return result;
         }
 
         // Cache simple: si on a déjà des données récentes, ne pas re-fetch
         if (!force && Array.isArray(this.places) && this.places.length > 0 && (Date.now() - this.lastFetchedAt) < cacheTtlMs) {
+          this.loading = false;
           return this.places;
         }
 

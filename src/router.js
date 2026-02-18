@@ -81,6 +81,7 @@ const TableauRecapitulatifOffres = () => import('@/views/admin/formation-pratiqu
 const RecapPFPNotes = () => import('@/views/admin/formation-pratique/secretariat/RecapPFPNotes.vue');
 const RecapCPTEvaluation = () => import('@/views/admin/formation-pratique/secretariat/RecapCPTEvaluation.vue');
 const SuiviCasParticuliers = () => import('@/views/admin/formation-pratique/secretariat/SuiviCasParticuliers.vue');
+const AlertesDashboard = () => import('@/views/admin/formation-pratique/secretariat/AlertesDashboard.vue');
 
 // ASSIGNATION RÉPONDANTS
 const AssignRepondantsView = () => import('@/views/admin/AssignRepondantsView.vue');
@@ -473,6 +474,7 @@ const routes = [
   { path: '/admin/formation-pratique/secretariat/recap-pfp-notes', component: RecapPFPNotes, name: 'RecapPFPNotes', meta: { requiresAuth: true, need: 'page1.access' } },
   { path: '/admin/formation-pratique/secretariat/recap-cpt-evaluation', component: RecapCPTEvaluation, name: 'RecapCPTEvaluation', meta: { requiresAuth: true, need: 'page1.access' } },
   { path: '/admin/formation-pratique/secretariat/suivi-cas-particuliers', component: SuiviCasParticuliers, name: 'SuiviCasParticuliers', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/admin/formation-pratique/secretariat/alertes', component: AlertesDashboard, name: 'AlertesDashboard', meta: { requiresAuth: true, need: 'page1.access' } },
   
   // Admin Lists Routes
   { path: '/admin/programs', component: ProgramListView, name: 'ProgramList', meta: { requiresAuth: true, need: 'admin' } },

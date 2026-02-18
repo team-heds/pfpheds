@@ -45,7 +45,7 @@
               <label class="font-semibold text-sm">&nbsp;</label>
               <div class="flex gap-2">
                 <Button icon="pi pi-download" label="Export" outlined class="p-button-sm" @click="exportCSV" />
-                <Button icon="pi pi-refresh" outlined class="p-button-sm" @click="fetchData" v-tooltip="'Rafraîchir'" />
+                <Button icon="pi pi-refresh" outlined class="p-button-sm" @click="fetchData" v-tooltip="'Rafraîchir'" :loading="loading" />
               </div>
             </div>
           </div>
