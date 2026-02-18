@@ -1,10 +1,10 @@
 <template>
   <AdminLayout>
     <Toast />
-    <div class="votation-etudiants-page p-4">
-      <!-- En-tête avec design moderne -->
-      <div class="header-card p-4 border-round mb-4">
-        <div class="flex align-items-center justify-content-between">
+    <div class="votation-page p-4">
+      <!-- Header -->
+      <div class="surface-card p-4 border-round shadow-2 mb-4">
+        <div class="flex align-items-center justify-content-between flex-wrap gap-3">
           <div class="flex align-items-center gap-3">
             <i class="pi pi-users text-primary text-3xl"></i>
             <div>
@@ -12,147 +12,122 @@
               <p class="text-600 m-0 mt-1">Gestion des choix de stages des étudiants BA25 (PFP1A et PFP1B)</p>
             </div>
           </div>
-          <div class="flex gap-2">
-            <Button icon="pi pi-download" label="Exporter" outlined @click="exportData" />
-            <Button icon="pi pi-envelope" label="Relancer non-votants" severity="warning" @click="remindAllNonVoters" />
+          <div class="flex align-items-center gap-3 flex-wrap">
+            <div class="flex flex-column gap-1">
+              <label class="font-semibold text-sm">Année <span class="text-red-500">*</span></label>
+              <Dropdown v-model="filterYear" :options="years" placeholder="Année" class="w-full md:w-7rem" />
+            </div>
+            <div class="flex flex-column gap-1">
+              <label class="font-semibold text-sm">PFP <span class="text-red-500">*</span></label>
+              <Dropdown v-model="filterPFP" :options="pfpTypes" optionLabel="label" optionValue="value" placeholder="PFP" class="w-full md:w-8rem" />
+            </div>
+            <div class="flex flex-column gap-1">
+              <label class="font-semibold text-sm">Recherche :</label>
+              <span class="p-input-icon-left">
+                <i class="pi pi-search" />
+                <InputText v-model="searchQuery" placeholder="Nom ou prénom..." class="w-full md:w-14rem" :disabled="!canShowResults" />
+              </span>
+            </div>
+            <div class="flex flex-column gap-1">
+              <label class="font-semibold text-sm">&nbsp;</label>
+              <div class="flex gap-2">
+                <Button icon="pi pi-download" label="Export" outlined class="p-button-sm" @click="exportData" />
+                <Button icon="pi pi-envelope" outlined class="p-button-sm" severity="warning" @click="remindAllNonVoters" v-tooltip="'Relancer non-votants'" />
+                <Button icon="pi pi-refresh" outlined class="p-button-sm" @click="loadData" v-tooltip="'Rafraîchir'" :loading="loading" />
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-
-      <!-- Configuration active -->
-      <div class="config-banner p-3 border-round mb-4">
-        <div class="flex align-items-center gap-2">
-          <i class="pi pi-calendar text-sm"></i>
-          <span class="text-sm font-medium">Configuration active :</span>
+        <!-- Config banner inline -->
+        <div class="flex align-items-center gap-2 mt-3 pt-3 border-top-1 surface-border">
+          <i class="pi pi-cog text-500 text-sm"></i>
+          <span class="text-sm text-600">Config active :</span>
           <Tag value="BA25" severity="info" class="text-xs" />
-          <span class="text-sm">•</span>
           <Tag v-for="pfp in ACTIVE_CONFIG.activePFPs" :key="pfp" :value="pfp" severity="success" class="text-xs" />
-          <span class="text-sm">•</span>
-          <Tag v-for="year in ACTIVE_CONFIG.activeYears" :key="year" :value="year" severity="info" class="text-xs" />
+          <Tag v-for="year in ACTIVE_CONFIG.activeYears" :key="year" :value="year" class="text-xs" />
+          <span v-if="canShowResults" class="text-sm text-500 ml-auto">
+            <i class="pi pi-info-circle mr-1"></i>
+            <strong>{{ filteredVotationsList.length }}</strong> votes avec choix
+          </span>
         </div>
       </div>
 
       <!-- Statistiques -->
-      <div class="grid mb-4">
-        <div class="col-12 md:col-3">
-          <div class="stat-card p-4 border-round">
+      <div class="grid mb-3">
+        <div class="col-6 md:col-3">
+          <div class="surface-card p-3 border-round shadow-2">
             <div class="flex align-items-center gap-3">
-              <div class="bg-blue-100 border-circle p-3">
-                <i class="pi pi-users text-blue-500 text-2xl"></i>
+              <div class="border-circle p-3" style="background: #EEF2FF;">
+                <i class="pi pi-users text-2xl" style="color: #6366F1;"></i>
               </div>
               <div>
                 <h3 class="text-2xl font-bold text-900 m-0">{{ stats.total }}</h3>
-                <p class="text-600 m-0">Total Étudiants BA25</p>
+                <p class="text-600 m-0 text-sm">Total BA25</p>
               </div>
             </div>
           </div>
         </div>
-        <div class="col-12 md:col-3">
-          <div class="surface-card p-4 border-round shadow-2">
+        <div class="col-6 md:col-3">
+          <div class="surface-card p-3 border-round shadow-2">
             <div class="flex align-items-center gap-3">
-              <div class="bg-green-100 border-circle p-3">
-                <i class="pi pi-check-circle text-green-500 text-2xl"></i>
+              <div class="border-circle p-3" style="background: #ECFDF5;">
+                <i class="pi pi-check-circle text-2xl" style="color: #10B981;"></i>
               </div>
               <div>
                 <h3 class="text-2xl font-bold text-900 m-0">{{ stats.completed }}</h3>
-                <p class="text-600 m-0">Ont Voté</p>
+                <p class="text-600 m-0 text-sm">Ont voté</p>
               </div>
             </div>
           </div>
         </div>
-        <div class="col-12 md:col-3">
-          <div class="surface-card p-4 border-round shadow-2">
+        <div class="col-6 md:col-3">
+          <div class="surface-card p-3 border-round shadow-2">
             <div class="flex align-items-center gap-3">
-              <div class="bg-orange-100 border-circle p-3">
-                <i class="pi pi-hourglass text-orange-500 text-2xl"></i>
+              <div class="border-circle p-3" style="background: #FFF7ED;">
+                <i class="pi pi-hourglass text-2xl" style="color: #F59E0B;"></i>
               </div>
               <div>
                 <h3 class="text-2xl font-bold text-900 m-0">{{ stats.pending }}</h3>
-                <p class="text-600 m-0">En Attente</p>
+                <p class="text-600 m-0 text-sm">En attente</p>
               </div>
             </div>
           </div>
         </div>
-        <div class="col-12 md:col-3">
-          <div class="surface-card p-4 border-round shadow-2">
+        <div class="col-6 md:col-3">
+          <div class="surface-card p-3 border-round shadow-2">
             <div class="flex align-items-center gap-3">
-              <div class="bg-red-100 border-circle p-3">
-                <i class="pi pi-times-circle text-red-500 text-2xl"></i>
+              <div class="border-circle p-3" style="background: #FEF2F2;">
+                <i class="pi pi-times-circle text-2xl" style="color: #EF4444;"></i>
               </div>
               <div>
                 <h3 class="text-2xl font-bold text-900 m-0">{{ stats.incomplete }}</h3>
-                <p class="text-600 m-0">Incomplets</p>
+                <p class="text-600 m-0 text-sm">Incomplets</p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Filtres -->
-      <div class="filters-card p-4 border-round mb-4">
-        <div class="flex justify-content-between align-items-center mb-3">
-          <span class="text-lg font-semibold">Sélection obligatoire</span>
-          <Tag value="Année + PFP requis" severity="warning" />
-        </div>
-        <div class="grid">
-          <div class="col-12 md:col-4">
-            <label class="block text-sm font-medium mb-2">Année <span class="text-red-500">*</span></label>
-            <Dropdown v-model="filterYear" :options="years" placeholder="Sélectionner une année" class="w-full" />
-          </div>
-          <div class="col-12 md:col-4">
-            <label class="block text-sm font-medium mb-2">PFP <span class="text-red-500">*</span></label>
-            <Dropdown v-model="filterPFP" :options="pfpTypes" optionLabel="label" optionValue="value" placeholder="Sélectionner un PFP" class="w-full" />
-          </div>
-          <div class="col-12 md:col-4">
-            <label class="block text-sm font-medium mb-2">Recherche</label>
-            <InputText v-model="searchQuery" placeholder="Rechercher un étudiant..." class="w-full" :disabled="!canShowResults" />
-          </div>
-          <div class="col-12" v-if="canShowResults">
-            <small class="text-500">
-              <i class="pi pi-info-circle"></i> 
-              Votes avec choix: <strong>{{ filteredVotationsList.length }}</strong> | 
-              Configuration: <strong>{{ filterYear }} - {{ filterPFP }}</strong>
-            </small>
-          </div>
-        </div>
-      </div>
-
-      <!-- Résultats de l'algorithme - Version compacte -->
-      <div v-if="canShowResults && algorithmResults.length > 0" class="results-card p-3 border-round mb-3">
+      <!-- Résultats de l'algorithme -->
+      <div v-if="canShowResults && algorithmResults.length > 0" class="surface-card p-4 border-round shadow-2 mb-3">
         <div class="flex justify-content-between align-items-center mb-3">
           <div>
-            <h3 class="text-lg font-bold text-900 m-0 mb-1">
-              <i class="pi pi-check-circle text-green-600 mr-2"></i>
-              Résultats de l'Attribution
-            </h3>
-            <!-- Statistiques en ligne compacte -->
+            <div class="flex align-items-center gap-2 mb-2">
+              <i class="pi pi-check-circle text-green-500 text-xl"></i>
+              <h3 class="text-lg font-bold text-900 m-0">Résultats de l'Attribution</h3>
+              <Tag :value="`${algorithmResults.length} attributions`" severity="success" class="ml-2" />
+            </div>
             <div v-if="algorithmStats" class="flex gap-4 flex-wrap">
-              <div class="flex align-items-center gap-2">
-                <i class="pi pi-users text-green-600"></i>
-                <span class="text-sm"><strong>{{ algorithmStats.totalStudents || 0 }}</strong> étudiants</span>
-              </div>
-              <div class="flex align-items-center gap-2">
-                <i class="pi pi-star text-blue-600"></i>
-                <span class="text-sm"><strong>{{ algorithmStats.firstChoiceCount || 0 }}</strong> en 1er choix</span>
-              </div>
-              <div v-if="algorithmStats.randomAssignmentCount > 0" class="flex align-items-center gap-2">
-                <i class="pi pi-question-circle text-red-600"></i>
-                <span class="text-sm"><strong>{{ algorithmStats.randomAssignmentCount || 0 }}</strong> aléatoires</span>
-              </div>
-              <div class="flex align-items-center gap-2">
-                <i class="pi pi-building text-purple-600"></i>
-                <span class="text-sm"><strong>{{ algorithmStats.placesUsed || 0 }}</strong> places utilisées</span>
-              </div>
-              <div class="flex align-items-center gap-2">
-                <i class="pi pi-chart-line text-orange-600"></i>
-                <span class="text-sm">Rang moyen: <strong>{{ algorithmStats.averageRank || '0' }}</strong></span>
-              </div>
+              <span class="text-sm text-600"><i class="pi pi-users mr-1" style="color: #10B981;"></i> <strong>{{ algorithmStats.totalStudents || 0 }}</strong> étudiants</span>
+              <span class="text-sm text-600"><i class="pi pi-star mr-1" style="color: #6366F1;"></i> <strong>{{ algorithmStats.firstChoiceCount || 0 }}</strong> en 1er choix</span>
+              <span v-if="algorithmStats.randomAssignmentCount > 0" class="text-sm text-600"><i class="pi pi-question-circle mr-1" style="color: #EF4444;"></i> <strong>{{ algorithmStats.randomAssignmentCount || 0 }}</strong> aléatoires</span>
+              <span class="text-sm text-600"><i class="pi pi-building mr-1" style="color: #8B5CF6;"></i> <strong>{{ algorithmStats.placesUsed || 0 }}</strong> places</span>
+              <span class="text-sm text-600"><i class="pi pi-chart-line mr-1" style="color: #F59E0B;"></i> Rang moyen: <strong>{{ algorithmStats.averageRank || '0' }}</strong></span>
             </div>
           </div>
-          <Tag :value="`${algorithmResults.length} attributions`" severity="success" />
+          <Button icon="pi pi-file-excel" label="Exporter" size="small" severity="success" outlined @click="exportResults" />
         </div>
 
-        <!-- Tableau des résultats - Compact et complet -->
         <DataTable 
           :value="algorithmResults" 
           responsiveLayout="scroll"
@@ -163,52 +138,29 @@
           currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} étudiants"
           sortField="assigned_rank"
           :sortOrder="1"
-          class="results-table"
           stripedRows
+          class="p-datatable-sm"
         >
-          <template #header>
-            <div class="flex justify-content-between align-items-center flex-wrap gap-2">
-              <div>
-                <span class="text-lg font-semibold">Liste complète des attributions</span>
-                <br/>
-                <span class="text-sm text-500">{{ algorithmResults.length }} étudiants assignés • Triés par rang de choix</span>
-              </div>
-              <div class="flex gap-2">
-                <Button 
-                  icon="pi pi-file-excel" 
-                  label="Exporter" 
-                  size="small" 
-                  severity="success" 
-                  outlined
-                  @click="exportResults"
-                  v-tooltip.top="'Exporter les résultats en CSV'"
-                />
-              </div>
-            </div>
-          </template>
-
           <Column field="user_id" header="Étudiant" sortable :style="{ width: '220px' }">
             <template #body="slotProps">
               <strong>{{ getStudentName(slotProps.data.user_id) }}</strong>
             </template>
           </Column>
-          
           <Column field="assigned_place_name" header="Place Attribuée" sortable :style="{ minWidth: '250px' }">
             <template #body="slotProps">
               <div>
-                <div class="font-semibold">{{ slotProps.data.assigned_place_name }}</div>
+                <div class="font-semibold text-900">{{ slotProps.data.assigned_place_name }}</div>
                 <small class="text-500">{{ slotProps.data.assigned_institution_name }}</small>
               </div>
             </template>
           </Column>
-          
           <Column field="assigned_rank" header="Choix" sortable :style="{ width: '150px', textAlign: 'center' }">
             <template #body="slotProps">
               <Tag 
                 v-if="slotProps.data.assigned_rank === 99"
-                value="🎲 Aléatoire" 
+                value="Aléatoire" 
                 severity="danger"
-                v-tooltip.top="'Place attribuée aléatoirement (non dans les choix)'"
+                v-tooltip.top="'Place attribuée aléatoirement'"
               />
               <Tag 
                 v-else
@@ -217,7 +169,6 @@
               />
             </template>
           </Column>
-          
           <Column field="priority_score" header="Score" sortable :style="{ width: '100px', textAlign: 'center' }">
             <template #body="slotProps">
               <span class="font-medium">{{ slotProps.data.priority_score ? slotProps.data.priority_score.toFixed(1) : 'N/A' }}</span>
@@ -227,12 +178,14 @@
       </div>
 
       <!-- Message si sélection incomplète -->
-      <div v-if="!canShowResults" class="bg-blue-50 border-round p-4 mb-4">
-        <div class="flex align-items-center gap-2">
-          <i class="pi pi-info-circle text-blue-600 text-2xl"></i>
+      <div v-if="!canShowResults" class="surface-card p-4 border-round shadow-2 mb-4">
+        <div class="flex align-items-center gap-3">
+          <div class="border-circle p-3" style="background: #EEF2FF;">
+            <i class="pi pi-info-circle text-2xl" style="color: #6366F1;"></i>
+          </div>
           <div>
-            <h4 class="m-0 text-blue-900">Sélection requise</h4>
-            <p class="m-0 mt-2 text-blue-800">
+            <h4 class="m-0 text-900 font-bold">Sélection requise</h4>
+            <p class="m-0 mt-1 text-600">
               Veuillez sélectionner une <strong>année</strong> et un <strong>PFP</strong> pour afficher les résultats des votations.
             </p>
           </div>
@@ -240,18 +193,17 @@
       </div>
 
       <!-- Onglets -->
-      <div v-if="canShowResults" class="tabs-card p-4 border-round">
+      <div v-if="canShowResults" class="surface-card border-round shadow-2">
         <TabView v-model:activeIndex="activeTab">
           <!-- Onglet 1: Vue Étudiants -->
           <TabPanel header="Vue par Étudiants">
-            <div v-if="allVotes.length === 0" class="bg-yellow-50 border-round p-4 mb-3">
-              <div class="flex align-items-center gap-2">
-                <i class="pi pi-exclamation-triangle text-yellow-600 text-2xl"></i>
+            <div v-if="allVotes.length === 0" class="surface-card border-round p-4 mb-3" style="background: #FFFBEB; border: 1px solid #FDE68A;">
+              <div class="flex align-items-center gap-3">
+                <i class="pi pi-exclamation-triangle text-2xl" style="color: #F59E0B;"></i>
                 <div>
-                  <h4 class="m-0 text-yellow-900">Aucun vote chargé</h4>
-                  <p class="m-0 mt-2 text-yellow-800">
-                    Les votes ne peuvent pas être chargés. Vérifiez les permissions RLS (Row Level Security) sur la table <code>student_votes</code>.
-                    Les administrateurs doivent avoir accès en lecture à tous les votes.
+                  <h4 class="m-0 font-bold" style="color: #92400E;">Aucun vote chargé</h4>
+                  <p class="m-0 mt-1 text-sm" style="color: #78350F;">
+                    Vérifiez les permissions RLS sur la table <code>student_votes</code>.
                   </p>
                 </div>
               </div>
@@ -267,14 +219,13 @@
               currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} étudiants"
               sortField="nom"
               :sortOrder="1"
-              class="votations-table"
+              stripedRows
+              class="p-datatable-sm"
             >
               <template #header>
                 <div class="flex justify-content-between align-items-center">
-                  <span class="text-xl text-900 font-bold">Votes des Étudiants BA25 ({{ filteredVotationsList.length }})</span>
-                  <div class="flex gap-2">
-                    <Button icon="pi pi-sort-alpha-down" label="Trier A-Z" outlined size="small" @click="sortAlphabetically" />
-                  </div>
+                  <span class="text-lg text-900 font-bold">Votes des Étudiants BA25 ({{ filteredVotationsList.length }})</span>
+                  <Button icon="pi pi-sort-alpha-down" label="Trier A-Z" outlined size="small" @click="sortAlphabetically" />
                 </div>
               </template>
               <template #empty>
@@ -299,14 +250,12 @@
               <Column field="year" header="Année" sortable :style="{ minWidth: '80px' }"></Column>
               <Column header="Choix 1" :style="{ minWidth: '250px' }">
                 <template #body="slotProps">
-                  <div v-if="slotProps.data.choix1" class="choice-cell p-2 bg-blue-50 border-round">
+                  <div v-if="slotProps.data.choix1" class="choice-cell p-2 border-round" style="background: #EFF6FF; border-left: 4px solid #3B82F6;">
                     <div class="flex align-items-start gap-2">
-                      <span class="choice-badge bg-blue-500">1</span>
+                      <span class="choice-badge" style="background: #3B82F6;">1</span>
                       <div class="flex-1">
-                        <div class="font-semibold text-900 text-sm">{{ slotProps.data.choix1 }}</div>
-                        <div v-if="slotProps.data.choix1Institution" class="text-xs text-600 mt-1">
-                          {{ slotProps.data.choix1Institution }}
-                        </div>
+                        <div class="font-semibold text-sm" style="color: #1E293B;">{{ slotProps.data.choix1 }}</div>
+                        <div v-if="slotProps.data.choix1Institution" class="text-xs mt-1" style="color: #64748B;">{{ slotProps.data.choix1Institution }}</div>
                         <div class="flex gap-1 mt-1" v-if="slotProps.data.choice1PlaceId">
                           <Tag :value="getVoteCountForPlace(slotProps.data.choice1PlaceId).top1" severity="success" class="text-xs px-2 py-0" />
                         </div>
@@ -318,14 +267,12 @@
               </Column>
               <Column header="Choix 2" :style="{ minWidth: '250px' }">
                 <template #body="slotProps">
-                  <div v-if="slotProps.data.choix2" class="choice-cell p-2 bg-cyan-50 border-round">
+                  <div v-if="slotProps.data.choix2" class="choice-cell p-2 border-round" style="background: #ECFEFF; border-left: 4px solid #06B6D4;">
                     <div class="flex align-items-start gap-2">
-                      <span class="choice-badge bg-cyan-500">2</span>
+                      <span class="choice-badge" style="background: #06B6D4;">2</span>
                       <div class="flex-1">
-                        <div class="font-semibold text-900 text-sm">{{ slotProps.data.choix2 }}</div>
-                        <div v-if="slotProps.data.choix2Institution" class="text-xs text-600 mt-1">
-                          {{ slotProps.data.choix2Institution }}
-                        </div>
+                        <div class="font-semibold text-sm" style="color: #1E293B;">{{ slotProps.data.choix2 }}</div>
+                        <div v-if="slotProps.data.choix2Institution" class="text-xs mt-1" style="color: #64748B;">{{ slotProps.data.choix2Institution }}</div>
                         <div class="flex gap-1 mt-1" v-if="slotProps.data.choice2PlaceId">
                           <Tag :value="getVoteCountForPlace(slotProps.data.choice2PlaceId).top2" severity="info" class="text-xs px-2 py-0" />
                         </div>
@@ -337,14 +284,12 @@
               </Column>
               <Column header="Choix 3" :style="{ minWidth: '250px' }">
                 <template #body="slotProps">
-                  <div v-if="slotProps.data.choix3" class="choice-cell p-2 bg-orange-50 border-round">
+                  <div v-if="slotProps.data.choix3" class="choice-cell p-2 border-round" style="background: #FFF7ED; border-left: 4px solid #F59E0B;">
                     <div class="flex align-items-start gap-2">
-                      <span class="choice-badge bg-orange-500">3</span>
+                      <span class="choice-badge" style="background: #F59E0B;">3</span>
                       <div class="flex-1">
-                        <div class="font-semibold text-900 text-sm">{{ slotProps.data.choix3 }}</div>
-                        <div v-if="slotProps.data.choix3Institution" class="text-xs text-600 mt-1">
-                          {{ slotProps.data.choix3Institution }}
-                        </div>
+                        <div class="font-semibold text-sm" style="color: #1E293B;">{{ slotProps.data.choix3 }}</div>
+                        <div v-if="slotProps.data.choix3Institution" class="text-xs mt-1" style="color: #64748B;">{{ slotProps.data.choix3Institution }}</div>
                         <div class="flex gap-1 mt-1" v-if="slotProps.data.choice3PlaceId">
                           <Tag :value="getVoteCountForPlace(slotProps.data.choice3PlaceId).top3" severity="warning" class="text-xs px-2 py-0" />
                         </div>
@@ -356,14 +301,12 @@
               </Column>
               <Column header="Choix 4" :style="{ minWidth: '250px' }">
                 <template #body="slotProps">
-                  <div v-if="slotProps.data.choix4" class="choice-cell p-2 bg-gray-50 border-round">
+                  <div v-if="slotProps.data.choix4" class="choice-cell p-2 border-round" style="background: #F8FAFC; border-left: 4px solid #8B5CF6;">
                     <div class="flex align-items-start gap-2">
-                      <span class="choice-badge bg-gray-500">4</span>
+                      <span class="choice-badge" style="background: #8B5CF6;">4</span>
                       <div class="flex-1">
-                        <div class="font-medium text-900 text-sm">{{ slotProps.data.choix4 }}</div>
-                        <div v-if="slotProps.data.choix4Institution" class="text-xs text-600 mt-1">
-                          {{ slotProps.data.choix4Institution }}
-                        </div>
+                        <div class="font-medium text-sm" style="color: #1E293B;">{{ slotProps.data.choix4 }}</div>
+                        <div v-if="slotProps.data.choix4Institution" class="text-xs mt-1" style="color: #64748B;">{{ slotProps.data.choix4Institution }}</div>
                         <div class="flex gap-1 mt-1" v-if="slotProps.data.choice4PlaceId">
                           <Tag :value="getVoteCountForPlace(slotProps.data.choice4PlaceId).top4" class="text-xs px-2 py-0" />
                         </div>
@@ -375,14 +318,12 @@
               </Column>
               <Column header="Choix 5" :style="{ minWidth: '250px' }">
                 <template #body="slotProps">
-                  <div v-if="slotProps.data.choix5" class="choice-cell p-2 bg-gray-50 border-round">
+                  <div v-if="slotProps.data.choix5" class="choice-cell p-2 border-round" style="background: #F8FAFC; border-left: 4px solid #EC4899;">
                     <div class="flex align-items-start gap-2">
-                      <span class="choice-badge bg-gray-500">5</span>
+                      <span class="choice-badge" style="background: #EC4899;">5</span>
                       <div class="flex-1">
-                        <div class="font-medium text-900 text-sm">{{ slotProps.data.choix5 }}</div>
-                        <div v-if="slotProps.data.choix5Institution" class="text-xs text-600 mt-1">
-                          {{ slotProps.data.choix5Institution }}
-                        </div>
+                        <div class="font-medium text-sm" style="color: #1E293B;">{{ slotProps.data.choix5 }}</div>
+                        <div v-if="slotProps.data.choix5Institution" class="text-xs mt-1" style="color: #64748B;">{{ slotProps.data.choix5Institution }}</div>
                         <div class="flex gap-1 mt-1" v-if="slotProps.data.choice5PlaceId">
                           <Tag :value="getVoteCountForPlace(slotProps.data.choice5PlaceId).top5" class="text-xs px-2 py-0" />
                         </div>
@@ -448,32 +389,16 @@
               currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} places"
               sortField="InstitutionName"
               :sortOrder="1"
-              class="places-stats-table"
+              stripedRows
+              class="p-datatable-sm"
             >
               <template #header>
-                <div class="flex justify-content-between align-items-center mb-3">
-                  <span class="text-xl text-900 font-bold">Statistiques par Places ({{ filteredPlacesByPFP.length }})</span>
+                <div class="flex justify-content-between align-items-center">
+                  <span class="text-lg text-900 font-bold">Statistiques par Places ({{ filteredPlacesByPFP.length }})</span>
                   <div class="flex gap-2">
-                    <Button 
-                      label="Tous" 
-                      :class="{ 'p-button-outlined': filterPlacesPFP !== null }"
-                      size="small"
-                      @click="filterPlacesPFP = null"
-                    />
-                    <Button 
-                      label="PFP1A" 
-                      severity="success"
-                      :class="{ 'p-button-outlined': filterPlacesPFP !== 'PFP1A' }"
-                      size="small"
-                      @click="filterPlacesPFP = 'PFP1A'"
-                    />
-                    <Button 
-                      label="PFP1B" 
-                      severity="info"
-                      :class="{ 'p-button-outlined': filterPlacesPFP !== 'PFP1B' }"
-                      size="small"
-                      @click="filterPlacesPFP = 'PFP1B'"
-                    />
+                    <Button label="Tous" :class="{ 'p-button-outlined': filterPlacesPFP !== null }" size="small" @click="filterPlacesPFP = null" />
+                    <Button label="PFP1A" severity="success" :class="{ 'p-button-outlined': filterPlacesPFP !== 'PFP1A' }" size="small" @click="filterPlacesPFP = 'PFP1A'" />
+                    <Button label="PFP1B" severity="info" :class="{ 'p-button-outlined': filterPlacesPFP !== 'PFP1B' }" size="small" @click="filterPlacesPFP = 'PFP1B'" />
                   </div>
                 </div>
               </template>
@@ -557,14 +482,12 @@
 
           <!-- Onglet 3: Attribution des Places (après algorithme) -->
           <TabPanel header="Attribution des Places" :disabled="placesWithAssignments.length === 0">
-            <div v-if="placesWithAssignments.length === 0" class="bg-blue-50 border-round p-4">
-              <div class="flex align-items-center gap-2">
-                <i class="pi pi-info-circle text-blue-600 text-2xl"></i>
+            <div v-if="placesWithAssignments.length === 0" class="surface-card border-round p-4" style="background: #EEF2FF; border: 1px solid #C7D2FE;">
+              <div class="flex align-items-center gap-3">
+                <i class="pi pi-info-circle text-2xl" style="color: #6366F1;"></i>
                 <div>
-                  <h4 class="m-0 text-blue-900">Aucune attribution</h4>
-                  <p class="m-0 mt-2 text-blue-800">
-                    Lancez l'algorithme d'attribution pour voir les résultats ici.
-                  </p>
+                  <h4 class="m-0 font-bold" style="color: #312E81;">Aucune attribution</h4>
+                  <p class="m-0 mt-1 text-sm" style="color: #4338CA;">Lancez l'algorithme d'attribution pour voir les résultats ici.</p>
                 </div>
               </div>
             </div>
@@ -580,22 +503,18 @@
               currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} places"
               sortField="institutionName"
               :sortOrder="1"
-              class="places-attribution-table"
               stripedRows
+              class="p-datatable-sm"
             >
               <template #header>
                 <div class="flex justify-content-between align-items-center flex-wrap gap-2">
                   <div>
-                    <span class="text-xl text-900 font-bold">
-                      <i class="pi pi-building text-primary mr-2"></i>
-                      Toutes les Places du {{ filterPFP }}
-                    </span>
-                    <br/>
-                    <span class="text-sm text-600">
-                      <strong class="text-green-600">{{ placesWithAssignments.filter(p => p.assignedCount > 0).length }}</strong> places avec étudiants • 
-                      <strong class="text-orange-600">{{ placesWithAssignments.filter(p => p.assignedCount === 0).length }}</strong> places vides • 
+                    <span class="text-lg text-900 font-bold">Toutes les Places du {{ filterPFP }}</span>
+                    <div class="text-sm text-600 mt-1">
+                      <strong style="color: #10B981;">{{ placesWithAssignments.filter(p => p.assignedCount > 0).length }}</strong> avec étudiants • 
+                      <strong style="color: #F59E0B;">{{ placesWithAssignments.filter(p => p.assignedCount === 0).length }}</strong> vides • 
                       <strong>{{ placesWithAssignments.length }}</strong> au total
-                    </span>
+                    </div>
                   </div>
                 </div>
               </template>
@@ -687,26 +606,25 @@
         </TabView>
 
         <!-- Bouton Algorithme -->
-        <div class="algorithm-section p-4 border-round mt-4">
-          <div class="flex justify-content-between align-items-center">
+        <div class="surface-card p-4 border-round shadow-2 mt-4" style="background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%); border: 1px solid #A7F3D0;">
+          <div class="flex justify-content-between align-items-center flex-wrap gap-3">
             <div>
-              <h3 class="text-xl font-bold text-900 m-0">Algorithme d'attribution</h3>
-              <p class="text-600 m-0 mt-1">Lancer l'algorithme d'attribution des places pour {{ filterYear }} - {{ filterPFP }}</p>
+              <div class="flex align-items-center gap-2">
+                <i class="pi pi-play-circle text-xl" style="color: #059669;"></i>
+                <h3 class="text-lg font-bold m-0" style="color: #065F46;">Algorithme d'attribution</h3>
+              </div>
+              <p class="m-0 mt-1 text-sm" style="color: #047857;">
+                Lancer l'algorithme pour {{ filterYear }} - {{ filterPFP }}
+                <span v-if="filteredVotationsList.length > 0"> • <strong>{{ filteredVotationsList.length }}</strong> étudiants à traiter</span>
+              </p>
             </div>
             <Button 
               icon="pi pi-play-circle" 
-              label="Démarrer l'algorithme" 
+              label="Démarrer" 
               severity="success"
-              size="large"
               @click="startAlgorithm"
               :disabled="filteredVotationsList.length === 0"
             />
-          </div>
-          <div class="mt-3" v-if="filteredVotationsList.length > 0">
-            <small class="text-500">
-              <i class="pi pi-info-circle"></i> 
-              L'algorithme traitera <strong>{{ filteredVotationsList.length }}</strong> étudiants BA25 ayant effectué leurs choix.
-            </small>
           </div>
         </div>
       </div>
@@ -1601,116 +1519,36 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* Design cohérent avec le reste de l'application */
-.votation-etudiants-page {
-  min-height: calc(100vh - 100px);
-  background: #e5e7eb;
+.votation-page {
+  max-width: 1600px;
+  margin: 0 auto;
 }
 
-/* En-tête sombre */
-.header-card {
-  background: #1f2937;
+/* Choice badges */
+.choice-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: white;
+  flex-shrink: 0;
 }
 
-.header-card h1 {
-  font-size: 1.5rem;
-  font-weight: 600;
+/* Choice cells */
+.choice-cell {
+  transition: all 0.2s ease;
+  border-radius: 6px;
 }
 
-.header-card p {
-  color: #9ca3af;
+.choice-cell:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.header-card .text-primary {
-  color: #60a5fa !important;
-}
-
-/* Banner de configuration */
-.config-banner {
-  background: rgba(59, 130, 246, 0.1);
-  color: #1e40af;
-  border: 1px solid rgba(59, 130, 246, 0.3);
-}
-
-.config-banner i {
-  color: #3b82f6;
-}
-
-.config-banner span {
-  color: #1e40af;
-}
-
-/* Cartes de statistiques sur fond sombre */
-.stat-card {
-  background: #1f2937;
-  border: 1px solid #374151;
-}
-
-/* Carte des filtres sur fond sombre */
-.filters-card {
-  background: #1f2937;
-  border: 1px solid #374151;
-}
-
-/* Carte des onglets sur fond sombre */
-.tabs-card {
-  background: #1f2937;
-  border: 1px solid #374151;
-}
-
-/* Onglets avec fond sombre */
-:deep(.p-tabview .p-tabview-nav) {
-  background: #111827;
-  border-bottom: 1px solid #374151;
-}
-
-:deep(.p-tabview .p-tabview-nav li .p-tabview-nav-link) {
-  background: transparent;
-  color: #9ca3af;
-  border: none;
-}
-
-:deep(.p-tabview .p-tabview-nav li.p-highlight .p-tabview-nav-link) {
-  background: transparent;
-  color: #fbbf24;
-  border-bottom: 2px solid #fbbf24;
-}
-
-:deep(.p-tabview .p-tabview-panels) {
-  background: #1f2937;
-}
-
-/* Table avec fond sombre */
-:deep(.p-datatable) {
-  background: #1f2937;
-}
-
-:deep(.p-datatable .p-datatable-thead > tr > th) {
-  background: #111827;
-  font-weight: 600;
-  border: 1px solid #374151;
-  padding: 1rem;
-}
-
-:deep(.p-datatable .p-datatable-tbody > tr) {
-  background: #1f2937;
-  border-bottom: 1px solid #374151;
-}
-
-:deep(.p-datatable .p-datatable-tbody > tr:nth-child(even)) {
-  background: #374151;
-}
-
-:deep(.p-datatable .p-datatable-tbody > tr:hover) {
-  background: #4b5563 !important;
-}
-
-:deep(.p-datatable .p-datatable-tbody > tr > td) {
-  border: 1px solid #374151;
-  padding: 0.75rem;
-}
-
-/* Curseur pointer */
+/* Cursor pointer for clickable tags */
 .cursor-pointer {
   cursor: pointer;
   transition: all 0.15s ease;
@@ -1718,141 +1556,40 @@ onMounted(async () => {
 
 .cursor-pointer:hover {
   opacity: 0.85;
-  transform: scale(1.03);
+  transform: scale(1.05);
 }
 
-/* Cellules de choix avec fond blanc pour contraste */
-.choice-cell {
-  background-color: white !important;
-  transition: all 0.2s ease;
+/* Table header styling */
+:deep(.p-datatable .p-datatable-thead > tr > th) {
+  background: #F8FAFC;
+  font-weight: 600;
+  color: #475569;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  padding: 0.75rem 1rem;
+  border-bottom: 2px solid #E2E8F0;
 }
 
-.choice-cell:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+/* TabView styling */
+:deep(.p-tabview .p-tabview-nav) {
+  border-bottom: 2px solid #E2E8F0;
 }
 
-/* Style pour les colonnes de choix */
-.bg-blue-50 {
-  background-color: white !important;
-  border-left: 4px solid #3b82f6;
+:deep(.p-tabview .p-tabview-nav li .p-tabview-nav-link) {
+  border: none;
+  font-weight: 500;
+  color: #64748B;
 }
 
-.bg-cyan-50 {
-  background-color: white !important;
-  border-left: 4px solid #06b6d4;
-}
-
-.bg-orange-50 {
-  background-color: white !important;
-  border-left: 4px solid #f97316;
-}
-
-.bg-gray-50 {
-  background-color: white !important;
-  border-left: 4px solid #6b7280;
-}
-
-/* Badges de choix */
-.choice-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  font-weight: 700;
-  font-size: 0.875rem;
-  flex-shrink: 0;
-}
-
-.bg-blue-500 {
-  background-color: #3b82f6;
-}
-
-.bg-cyan-500 {
-  background-color: #06b6d4;
-}
-
-.bg-orange-500 {
-  background-color: #f97316;
-}
-
-.bg-gray-500 {
-  background-color: #6b7280;
-}
-
-/* Texte dans les choix */
-.choice-cell .text-900 {
-  color: #111827 !important;
-}
-
-.choice-cell .text-600 {
-  color: #4b5563 !important;
-}
-
-/* Warning banner */
-.bg-yellow-50 {
-  background: #fef3c7 !important;
-}
-
-.text-yellow-600 {
-  color: #d97706 !important;
-}
-
-.text-yellow-800,
-.text-yellow-900 {
-  color: #92400e !important;
-}
-
-/* Animation */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.stat-card,
-.filters-card,
-.tabs-card {
-  animation: fadeIn 0.3s ease-out;
-}
-
-/* Section Algorithme */
-.algorithm-section {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  border: 2px solid #047857;
-}
-
-.algorithm-section h3 {
-  color: white;
-}
-
-.algorithm-section p {
-  color: #d1fae5;
-}
-
-/* Message info bleu */
-.bg-blue-50 {
-  background: #dbeafe !important;
-}
-
-.text-blue-600 {
-  color: #2563eb !important;
-}
-
-.text-blue-800,
-.text-blue-900 {
-  color: #1e3a8a !important;
+:deep(.p-tabview .p-tabview-nav li.p-highlight .p-tabview-nav-link) {
+  color: #6366F1;
+  border-bottom: 2px solid #6366F1;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-  .header-card h1 {
+  .votation-page h1 {
     font-size: 1.25rem;
   }
 }

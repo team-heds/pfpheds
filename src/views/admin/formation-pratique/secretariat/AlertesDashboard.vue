@@ -165,7 +165,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import AdminLayout from '@/layout/AdminLayout.vue'
+import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import { PfpAlertsService } from '@/service/pfpAlertsService'
 import { usePlacesStore } from '@/stores/placesStore'
 import { useInstitutionsStore } from '@/stores/institutionsStore'
