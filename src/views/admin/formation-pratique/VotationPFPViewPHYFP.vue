@@ -349,7 +349,7 @@
               <Column field="year" header="Année" sortable :style="{ minWidth: '80px' }"></Column>
               <Column header="Choix 1" :style="{ minWidth: '250px' }">
                 <template #body="slotProps">
-                  <div v-if="slotProps.data.choix1" class="choice-cell p-2 border-round bg-blue-50 border-left-3 border-blue-500">
+                  <div v-if="slotProps.data.choix1" class="choice-cell choice-cell-1 p-2 border-round border-left-3 border-blue-500">
                     <div class="flex align-items-start gap-2">
                       <span class="choice-badge bg-blue-500">1</span>
                       <div class="flex-1">
@@ -357,6 +357,9 @@
                         <div v-if="slotProps.data.choix1Institution" class="text-xs mt-1 text-600">{{ slotProps.data.choix1Institution }}</div>
                         <div class="flex gap-1 mt-1" v-if="slotProps.data.choice1PlaceId">
                           <Tag :value="getVoteCountForPlace(slotProps.data.choice1PlaceId).top1" severity="success" class="text-xs px-2 py-0" />
+                        </div>
+                        <div class="flex flex-wrap gap-1 mt-1" v-if="getPlaceCriteria(slotProps.data.choice1PlaceId).length > 0">
+                          <Tag v-for="c in getPlaceCriteria(slotProps.data.choice1PlaceId)" :key="c" :value="c" class="text-xs px-1 py-0 criteria-tag" />
                         </div>
                       </div>
                     </div>
@@ -366,7 +369,7 @@
               </Column>
               <Column header="Choix 2" :style="{ minWidth: '250px' }">
                 <template #body="slotProps">
-                  <div v-if="slotProps.data.choix2" class="choice-cell p-2 border-round bg-cyan-50 border-left-3 border-cyan-500">
+                  <div v-if="slotProps.data.choix2" class="choice-cell choice-cell-2 p-2 border-round border-left-3 border-cyan-500">
                     <div class="flex align-items-start gap-2">
                       <span class="choice-badge bg-cyan-500">2</span>
                       <div class="flex-1">
@@ -374,6 +377,9 @@
                         <div v-if="slotProps.data.choix2Institution" class="text-xs mt-1 text-600">{{ slotProps.data.choix2Institution }}</div>
                         <div class="flex gap-1 mt-1" v-if="slotProps.data.choice2PlaceId">
                           <Tag :value="getVoteCountForPlace(slotProps.data.choice2PlaceId).top2" severity="info" class="text-xs px-2 py-0" />
+                        </div>
+                        <div class="flex flex-wrap gap-1 mt-1" v-if="getPlaceCriteria(slotProps.data.choice2PlaceId).length > 0">
+                          <Tag v-for="c in getPlaceCriteria(slotProps.data.choice2PlaceId)" :key="c" :value="c" class="text-xs px-1 py-0 criteria-tag" />
                         </div>
                       </div>
                     </div>
@@ -383,7 +389,7 @@
               </Column>
               <Column header="Choix 3" :style="{ minWidth: '250px' }">
                 <template #body="slotProps">
-                  <div v-if="slotProps.data.choix3" class="choice-cell p-2 border-round bg-orange-50 border-left-3 border-orange-500">
+                  <div v-if="slotProps.data.choix3" class="choice-cell choice-cell-3 p-2 border-round border-left-3 border-orange-500">
                     <div class="flex align-items-start gap-2">
                       <span class="choice-badge bg-orange-500">3</span>
                       <div class="flex-1">
@@ -391,6 +397,9 @@
                         <div v-if="slotProps.data.choix3Institution" class="text-xs mt-1 text-600">{{ slotProps.data.choix3Institution }}</div>
                         <div class="flex gap-1 mt-1" v-if="slotProps.data.choice3PlaceId">
                           <Tag :value="getVoteCountForPlace(slotProps.data.choice3PlaceId).top3" severity="warning" class="text-xs px-2 py-0" />
+                        </div>
+                        <div class="flex flex-wrap gap-1 mt-1" v-if="getPlaceCriteria(slotProps.data.choice3PlaceId).length > 0">
+                          <Tag v-for="c in getPlaceCriteria(slotProps.data.choice3PlaceId)" :key="c" :value="c" class="text-xs px-1 py-0 criteria-tag" />
                         </div>
                       </div>
                     </div>
@@ -400,7 +409,7 @@
               </Column>
               <Column header="Choix 4" :style="{ minWidth: '250px' }">
                 <template #body="slotProps">
-                  <div v-if="slotProps.data.choix4" class="choice-cell p-2 border-round bg-purple-50 border-left-3 border-purple-500">
+                  <div v-if="slotProps.data.choix4" class="choice-cell choice-cell-4 p-2 border-round border-left-3 border-purple-500">
                     <div class="flex align-items-start gap-2">
                       <span class="choice-badge bg-purple-500">4</span>
                       <div class="flex-1">
@@ -408,6 +417,9 @@
                         <div v-if="slotProps.data.choix4Institution" class="text-xs mt-1 text-600">{{ slotProps.data.choix4Institution }}</div>
                         <div class="flex gap-1 mt-1" v-if="slotProps.data.choice4PlaceId">
                           <Tag :value="getVoteCountForPlace(slotProps.data.choice4PlaceId).top4" class="text-xs px-2 py-0" />
+                        </div>
+                        <div class="flex flex-wrap gap-1 mt-1" v-if="getPlaceCriteria(slotProps.data.choice4PlaceId).length > 0">
+                          <Tag v-for="c in getPlaceCriteria(slotProps.data.choice4PlaceId)" :key="c" :value="c" class="text-xs px-1 py-0 criteria-tag" />
                         </div>
                       </div>
                     </div>
@@ -417,7 +429,7 @@
               </Column>
               <Column header="Choix 5" :style="{ minWidth: '250px' }">
                 <template #body="slotProps">
-                  <div v-if="slotProps.data.choix5" class="choice-cell p-2 border-round bg-pink-50 border-left-3 border-pink-500">
+                  <div v-if="slotProps.data.choix5" class="choice-cell choice-cell-5 p-2 border-round border-left-3 border-pink-500">
                     <div class="flex align-items-start gap-2">
                       <span class="choice-badge bg-pink-500">5</span>
                       <div class="flex-1">
@@ -425,6 +437,9 @@
                         <div v-if="slotProps.data.choix5Institution" class="text-xs mt-1 text-600">{{ slotProps.data.choix5Institution }}</div>
                         <div class="flex gap-1 mt-1" v-if="slotProps.data.choice5PlaceId">
                           <Tag :value="getVoteCountForPlace(slotProps.data.choice5PlaceId).top5" class="text-xs px-2 py-0" />
+                        </div>
+                        <div class="flex flex-wrap gap-1 mt-1" v-if="getPlaceCriteria(slotProps.data.choice5PlaceId).length > 0">
+                          <Tag v-for="c in getPlaceCriteria(slotProps.data.choice5PlaceId)" :key="c" :value="c" class="text-xs px-1 py-0 criteria-tag" />
                         </div>
                       </div>
                     </div>
@@ -493,12 +508,7 @@
             >
               <template #header>
                 <div class="flex justify-content-between align-items-center">
-                  <span class="text-lg text-900 font-bold">Statistiques par Places ({{ filteredPlacesByPFP.length }})</span>
-                  <div class="flex gap-2">
-                    <Button label="Tous" :class="{ 'p-button-outlined': filterPlacesPFP !== null }" size="small" @click="filterPlacesPFP = null" />
-                    <Button label="PFP1A" severity="success" :class="{ 'p-button-outlined': filterPlacesPFP !== 'PFP1A' }" size="small" @click="filterPlacesPFP = 'PFP1A'" />
-                    <Button label="PFP1B" severity="info" :class="{ 'p-button-outlined': filterPlacesPFP !== 'PFP1B' }" size="small" @click="filterPlacesPFP = 'PFP1B'" />
-                  </div>
+                  <span class="text-lg text-900 font-bold">Statistiques par Places — {{ filterPFP }} {{ filterYear }} ({{ filteredPlacesByPFP.length }})</span>
                 </div>
               </template>
               <template #empty>
@@ -990,7 +1000,6 @@ const formatDuration = (openedAt, closedAt) => {
   return `${minutes}min`
 }
 
-const filterPlacesPFP = ref(null)
 const votationsList = ref([])
 const allStudents = ref([])
 const allVotes = ref([])
@@ -998,6 +1007,15 @@ const votesAggregation = ref({})
 const placesWithStats = ref([])
 const validatedPlaces = ref([])
 const activeTab = ref(0)
+const placesFullMap = ref(new Map())
+
+const CRITERIA_KEYS = ['MSQ', 'SYSINT', 'NEUROGER', 'AIGU', 'REHAB', 'AMBU', 'FR', 'DE']
+
+const getPlaceCriteria = (placeId) => {
+  if (!placeId || !placesFullMap.value.has(placeId)) return []
+  const place = placesFullMap.value.get(placeId)
+  return CRITERIA_KEYS.filter(key => place[key] === true || place[key] === 'true' || place[key] === 1 || place[key] === '1')
+}
 const placesStore = usePlacesStore()
 const institutionsStore = useInstitutionsStore()
 const algorithmResults = ref([])
@@ -1145,15 +1163,15 @@ const filteredVotationsList = computed(() => {
   return filtered
 })
 
-// Computed property pour filtrer les places par PFP
+// Computed property pour filtrer les places par PFP sélectionné en haut
 const filteredPlacesByPFP = computed(() => {
-  if (!filterPlacesPFP.value) {
+  if (!filterPFP.value) {
     return placesWithStats.value
   }
   
   return placesWithStats.value.filter(place => {
     const hasVotesForPFP = allVotes.value.some(vote => {
-      if (vote.pfp_type !== filterPlacesPFP.value) return false
+      if (vote.pfp_type !== filterPFP.value) return false
       
       let choices = []
       if (typeof vote.choices === 'string') {
@@ -1668,9 +1686,12 @@ const loadData = async () => {
     // 2. Charger les places
     await placesStore.fetchPlaces()
     const placesMap = new Map()
+    const fullMap = new Map()
     placesStore.places.forEach(place => {
       placesMap.set(place.PlaceId, place.NomPlace)
+      fullMap.set(place.PlaceId, place)
     })
+    placesFullMap.value = fullMap
 
     // 3. Charger les statistiques de votes
     await loadVoteStatistics()
@@ -1928,11 +1949,27 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-/* Choice cells */
+/* Criteria tags - dark/light mode */
+:deep(.criteria-tag.p-tag) {
+  background: var(--surface-card) !important;
+  color: var(--text-color) !important;
+  font-size: 0.65rem !important;
+  border: 1px solid var(--primary-color) !important;
+  opacity: 0.85;
+}
+
+/* Choice cells - dark/light mode adaptive backgrounds */
 .choice-cell {
   transition: all 0.2s ease;
   border-radius: 6px;
+  background: var(--surface-card);
 }
+
+.choice-cell-1 { background: color-mix(in srgb, var(--blue-500) 10%, var(--surface-card)); }
+.choice-cell-2 { background: color-mix(in srgb, var(--cyan-500) 10%, var(--surface-card)); }
+.choice-cell-3 { background: color-mix(in srgb, var(--orange-500) 10%, var(--surface-card)); }
+.choice-cell-4 { background: color-mix(in srgb, var(--purple-500) 10%, var(--surface-card)); }
+.choice-cell-5 { background: color-mix(in srgb, var(--pink-500) 10%, var(--surface-card)); }
 
 .choice-cell:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
