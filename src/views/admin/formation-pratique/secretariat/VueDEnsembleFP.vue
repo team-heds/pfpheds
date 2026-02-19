@@ -204,6 +204,16 @@
             </template>
           </Column>
 
+          <!-- Critères -->
+          <Column header="Critères" style="min-width: 180px">
+            <template #body="{ data }">
+              <div class="flex flex-wrap gap-1" v-if="data.criteria && Object.values(data.criteria).some(v => v)">
+                <Tag v-for="c in criteriaLabels" :key="c" v-show="data.criteria[c]" :value="c" class="text-xs criteria-tag" severity="info" />
+              </div>
+              <span v-else class="text-400 text-xs">—</span>
+            </template>
+          </Column>
+
           <!-- Praticien -->
           <Column field="praticienName" header="Praticien" sortable style="min-width: 140px">
             <template #body="{ data }">
@@ -273,6 +283,30 @@
               <span v-else class="text-400 text-xs">—</span>
             </template>
           </Column>
+
+          <!-- CPT -->
+          <Column field="cpt" header="CPT" sortable style="min-width: 80px">
+            <template #body="{ data }">
+              <div class="flex align-items-center justify-content-center gap-1">
+                <i v-if="data.cpt === true" class="pi pi-check text-green-500" v-tooltip.top="'Validé'"></i>
+                <i v-else-if="data.cpt === false" class="pi pi-times text-red-500" v-tooltip.top="'Non conforme'"></i>
+                <i v-else class="pi pi-circle text-400" style="opacity:0.6" v-tooltip.top="'Non renseigné'"></i>
+                <i v-if="data.cptComment" class="pi pi-comment text-blue-500 text-xs" v-tooltip.top="data.cptComment"></i>
+              </div>
+            </template>
+          </Column>
+
+          <!-- Évaluation -->
+          <Column field="eval" header="Eval" sortable style="min-width: 80px">
+            <template #body="{ data }">
+              <div class="flex align-items-center justify-content-center gap-1">
+                <i v-if="data.eval === true" class="pi pi-check text-green-500" v-tooltip.top="'Validé'"></i>
+                <i v-else-if="data.eval === false" class="pi pi-times text-red-500" v-tooltip.top="'Non conforme'"></i>
+                <i v-else class="pi pi-circle text-400" style="opacity:0.6" v-tooltip.top="'Non renseigné'"></i>
+                <i v-if="data.evalComment" class="pi pi-comment text-blue-500 text-xs" v-tooltip.top="data.evalComment"></i>
+              </div>
+            </template>
+          </Column>
         </DataTable>
       </div>
     </div>
@@ -307,6 +341,7 @@ const rawPlaces = ref([])
 const rawAssignments = ref([])
 const rawNotes = ref([])
 const rawSuivis = ref([])
+const rawCptEval = ref([])
 
 const criteriaLabels = ['MSQ', 'SYSINT', 'NEUROGER', 'AIGU', 'REHAB', 'AMBU', 'FR', 'DE']
 const pfpTypes = ['PFP1A', 'PFP1B', 'PFP2', 'PFP3', 'PFP4']
@@ -424,7 +459,12 @@ const flatRows = computed(() => {
         statut: d.statut || '—',
         casColor: d.casColor || null,
         casComment: d.casComment || null,
-        attributionType: d.attributionType || null
+        attributionType: d.attributionType || null,
+        cpt: d.cpt ?? null,
+        cptComment: d.cptComment || '',
+        eval: d.eval ?? null,
+        evalComment: d.evalComment || '',
+        criteria: d.criteria || {}
       })
     })
   })
@@ -515,7 +555,8 @@ const fetchAllData = async () => {
       institutionsResult,
       praticiensResult,
       suiviResult,
-      notesResult
+      notesResult,
+      cptEvalResult
     ] = await Promise.all([
       studentsService.getAllStudents(),
       supabase.from('StudentsPhysio').select('user_id, pfp_valided'),
@@ -524,7 +565,8 @@ const fetchAllData = async () => {
       supabase.from('institutions').select('*'),
       supabase.from('praticiens_formateurs').select('id, nom, prenom'),
       supabase.from('suivi_cas_particuliers').select('*'),
-      supabase.from('StudentsPhysio').select('*')
+      supabase.from('StudentsPhysio').select('*'),
+      supabase.from('recap_cpt_evaluation').select('*')
     ])
 
     const instMap = new Map()
@@ -532,7 +574,12 @@ const fetchAllData = async () => {
 
     const placesMap = new Map()
     if (placesResult.data) placesResult.data.forEach(p => {
-      placesMap.set(p.PlaceId, { name: p.NomPlace, institution: instMap.get(p.InstitutionId) || '' })
+      placesMap.set(p.PlaceId, {
+        name: p.NomPlace,
+        institution: instMap.get(p.InstitutionId) || '',
+        MSQ: !!p.MSQ, SYSINT: !!p.SYSINT, NEUROGER: !!p.NEUROGER,
+        AIGU: !!p.AIGU, REHAB: !!p.REHAB, AMBU: !!p.AMBU, FR: !!p.FR, DE: !!p.DE
+      })
     })
 
     const pratMap = new Map()
@@ -560,27 +607,70 @@ const fetchAllData = async () => {
       })
     }
 
+    // Helper: extract normalized criteria from a stage object (supports upper+lower case keys)
+    const extractCriteria = (obj) => {
+      if (!obj) return { MSQ: false, SYSINT: false, NEUROGER: false, AIGU: false, REHAB: false, AMBU: false, FR: false, DE: false }
+      return {
+        MSQ: !!(obj.MSQ || obj.msq), SYSINT: !!(obj.SYSINT || obj.sysint), NEUROGER: !!(obj.NEUROGER || obj.neuroger),
+        AIGU: !!(obj.AIGU || obj.aigu), REHAB: !!(obj.REHAB || obj.rehab), AMBU: !!(obj.AMBU || obj.ambu),
+        FR: !!(obj.FR || obj.fr), DE: !!(obj.DE || obj.de)
+      }
+    }
+
+    // Default PFP type by array index in pfp_valided (legacy Firebase convention)
+    const pfpTypeByIndex = ['PFP1A', 'PFP1B', 'PFP2', 'PFP3', 'PFP4']
+
     const validatedMap = new Map()
+    // Also build a per-user map of ALL stage criteria from pfp_valided (like VerificationCriteresEtudiants)
+    const allStageCriteriaMap = new Map()
     if (physioResult.data) {
       physioResult.data.forEach(physio => {
         if (!physio.pfp_valided) return
-        parsePfpValided(physio.pfp_valided).forEach(stage => {
-          const pfpType = stage.pfp_type || stage.pfpLevel || ''
+        const pfpArray = parsePfpValided(physio.pfp_valided)
+        pfpArray.forEach((stage, idx) => {
+          const pfpType = stage.pfp_type || stage.pfpLevel || pfpTypeByIndex[idx] || ''
           if (!pfpType) return
           const key = `${physio.user_id}__${pfpType}`
           if (!validatedMap.has(key)) validatedMap.set(key, stage)
         })
+        // Store all stages for criteria aggregation
+        allStageCriteriaMap.set(physio.user_id, pfpArray)
+      })
+    }
+
+    // Also process pfp2_data (separate PFP2 data for BA24)
+    if (notesResult.data) {
+      notesResult.data.forEach(physio => {
+        if (!physio.pfp2_data) return
+        let pfp2Arr = []
+        if (Array.isArray(physio.pfp2_data)) pfp2Arr = physio.pfp2_data
+        else if (typeof physio.pfp2_data === 'object') pfp2Arr = [physio.pfp2_data]
+        pfp2Arr.forEach(stage => {
+          const pfpType = stage.pfp_type || 'PFP2'
+          const key = `${physio.user_id}__${pfpType}`
+          if (!validatedMap.has(key)) validatedMap.set(key, stage)
+        })
+        // Merge into allStageCriteriaMap
+        const existing = allStageCriteriaMap.get(physio.user_id) || []
+        allStageCriteriaMap.set(physio.user_id, [...existing, ...pfp2Arr])
       })
     }
 
     const pfpNoteKeys = { 'PFP1A': 'pfp1a', 'PFP1B': 'pfp1b', 'PFP2': 'pfp2', 'PFP3': 'pfp3', 'PFP4': 'pfp4' }
     const pfpSuiviKeys = { 'PFP1A': 'pfp1', 'PFP1B': 'pfp1', 'PFP2': 'pfp2', 'PFP3': 'pfp3', 'PFP4': 'pfp4' }
+    const pfpCptKeys = { 'PFP1A': 'pfp1', 'PFP1B': 'pfp1', 'PFP2': 'pfp2', 'PFP3': 'pfp3', 'PFP4': 'pfp4' }
+
+    const cptMap = new Map()
+    if (cptEvalResult.data) cptEvalResult.data.forEach(c => {
+      cptMap.set(c.user_id, c)
+    })
 
     const rows = []
     studentsData.forEach(s => {
       const userId = s.id
       const notesData = notesMap.get(userId)
       const suiviData = suiviMap.get(userId)
+      const cptData = cptMap.get(userId)
 
       const row = {
         userId,
@@ -608,9 +698,11 @@ const fetchAllData = async () => {
         let year = ''
         let statut = '—'
         let attributionType = null
+        let placeId = null
 
         if (assignment) {
-          const placeInfo = assignment.assigned_place_id ? placesMap.get(assignment.assigned_place_id) : null
+          placeId = assignment.assigned_place_id || null
+          const placeInfo = placeId ? placesMap.get(placeId) : null
           placeName = assignment.assigned_place_name || placeInfo?.name || ''
           institutionName = assignment.assigned_institution_name || placeInfo?.institution || ''
           year = assignment.year || ''
@@ -626,7 +718,7 @@ const fetchAllData = async () => {
           else if (assignment.status === 'draft') statut = 'Brouillon'
 
         } else if (validatedStage) {
-          const placeId = validatedStage.PlaceId || validatedStage.ID_PFP || validatedStage.id_pfp
+          placeId = validatedStage.PlaceId || validatedStage.ID_PFP || validatedStage.id_pfp
           const placeInfo = placeId ? placesMap.get(placeId) : null
           placeName = validatedStage.NomPlace || validatedStage.nom_pfp || placeInfo?.name || ''
           institutionName = validatedStage.Institution || validatedStage.institution_name || placeInfo?.institution || ''
@@ -637,6 +729,23 @@ const fetchAllData = async () => {
         if (hasGrade(noteVal)) {
           const noteStatus = getPfpFinalStatus(noteVal, noteRetake)
           if (noteStatus) statut = noteStatus
+        }
+
+        const cptKey = pfpCptKeys[pfpType]
+        const cptVal = cptData?.[cptKey + '_cpt']
+        const evalVal = cptData?.[cptKey + '_eval']
+        const cptComment = cptData?.[cptKey + '_cpt_comment'] || ''
+        const evalComment = cptData?.[cptKey + '_eval_comment'] || ''
+
+        // Resolve criteria: from places table first, then fallback to embedded criteria in pfp_valided stage object
+        const placeInfo = placeId ? placesMap.get(placeId) : null
+        let criteria
+        if (placeInfo) {
+          criteria = extractCriteria(placeInfo)
+        } else if (validatedStage) {
+          criteria = extractCriteria(validatedStage)
+        } else {
+          criteria = extractCriteria(null)
         }
 
         row[pfpType] = {
@@ -651,7 +760,12 @@ const fetchAllData = async () => {
           statut,
           attributionType,
           casColor: casData?.couleur || null,
-          casComment: casData?.commentaire || null
+          casComment: casData?.commentaire || null,
+          cpt: cptVal,
+          cptComment,
+          eval: evalVal,
+          evalComment,
+          criteria
         }
       })
 
@@ -669,6 +783,7 @@ const fetchAllData = async () => {
     rawAssignments.value = assignmentsResult.data || []
     rawNotes.value = notesResult.data || []
     rawSuivis.value = suiviResult.data || []
+    rawCptEval.value = cptEvalResult.data || []
 
     const uniqueClasses = [...new Set(rows.map(r => r.classe).filter(c => c && c !== '-'))].sort()
     if (uniqueClasses.length > 0) classesList.value = uniqueClasses
@@ -884,21 +999,16 @@ const exportXLSX = async () => {
     })
   })
 
-  // Build criteria counts per student from validated stages + assignments
+  // Build criteria counts per student from row data (already resolved from places + pfp_valided)
   const studentCriteria = new Map()
   allRows.value.forEach(r => {
     const counts = { MSQ: 0, SYSINT: 0, NEUROGER: 0, AIGU: 0, REHAB: 0, AMBU: 0, FR: 0, DE: 0 }
     pfpTypes.forEach(pfp => {
       const d = r[pfp]
       if (!d || d.statut === '—') return
-      // Find the place and add its criteria
-      const assignment = rawAssignments.value.find(a => a.user_id === r.userId && a.pfp_type === pfp)
-      const placeId = assignment?.assigned_place_id
-      if (placeId) {
-        const criteria = placeCriteriaMap.get(placeId)
-        if (criteria) {
-          criteriaLabels.forEach(c => { if (criteria[c]) counts[c]++ })
-        }
+      const crit = d.criteria
+      if (crit) {
+        criteriaLabels.forEach(c => { if (crit[c]) counts[c]++ })
       }
     })
     studentCriteria.set(r.userId, counts)
@@ -1001,6 +1111,12 @@ const exportXLSX = async () => {
   const notesMap = new Map()
   rawNotes.value.forEach(n => notesMap.set(n.user_id, n))
 
+  // Build CPT/Eval lookup
+  const cptEvalMap = new Map()
+  rawCptEval.value.forEach(c => cptEvalMap.set(c.user_id, c))
+  const pfpCptKeysExport = { 'PFP1A': 'pfp1', 'PFP1B': 'pfp1', 'PFP2': 'pfp2', 'PFP3': 'pfp3', 'PFP4': 'pfp4' }
+  const cptLabel = (val) => val === true ? 'Validé' : val === false ? 'Non conforme' : ''
+
   // Build praticiens lookup from assignments
   const pratMap = new Map()
   rawAssignments.value.forEach(a => {
@@ -1044,22 +1160,24 @@ const exportXLSX = async () => {
     const wsPFP = wb.addWorksheet(finalName)
 
     // Row 1: title
+    const pfpSheetColCount = 12
     wsPFP.columns = [
       { header: 'Institution', key: 'institution', width: 30 },
+      { header: 'Critères', key: 'criteres', width: 20 },
       { header: 'Domaine d\'expertise', key: 'domaine', width: 22 },
       { header: 'Nom étudiant·es', key: 'nom', width: 16 },
       { header: 'Prénom étudiant·es', key: 'prenom', width: 14 },
       { header: 'PF', key: 'pf', width: 22 },
       { header: 'Formateur·trice HES', key: 'formateurHES', width: 22 },
-      { header: 'Signature CPT présentiel', key: 'sigPresentiel', width: 18 },
-      { header: 'Signature CPT distance', key: 'sigDistance', width: 18 },
+      { header: 'CPT', key: 'cptStatus', width: 14 },
+      { header: 'Évaluation', key: 'evalStatus', width: 14 },
       { header: 'Particularités', key: 'particularites', width: 18 },
       { header: 'Absences en jours', key: 'absences', width: 14 },
       { header: 'Notes', key: 'notes', width: 8 }
     ]
 
     // Row 1: merged title
-    wsPFP.mergeCells(1, 1, 1, 11)
+    wsPFP.mergeCells(1, 1, 1, pfpSheetColCount)
     const titleCell = wsPFP.getCell(1, 1)
     const pfpLabel = pfpSheetLabels[pfpType] || pfpType
     titleCell.value = `Répartition ${cohortLabel} - ${pfpLabel} - Places de stages ${year}`
@@ -1070,8 +1188,8 @@ const exportXLSX = async () => {
 
     // Row 2: headers
     const hdrRow = wsPFP.getRow(2)
-    hdrRow.values = ['Institution', 'Domaine d\'expertise', 'Nom étudiant·es', 'Prénom étudiant·es', 'PF', 'Formateur·trice HES', 'Signature CPT présentiel', 'Signature CPT distance', 'Particularités', 'Absences en jours', 'Notes']
-    styleHeaderRow(wsPFP, 2, 11)
+    hdrRow.values = ['Institution', 'Critères', 'Domaine d\'expertise', 'Nom étudiant·es', 'Prénom étudiant·es', 'PF', 'Formateur·trice HES', 'CPT', 'Évaluation', 'Particularités', 'Absences en jours', 'Notes']
+    styleHeaderRow(wsPFP, 2, pfpSheetColCount)
 
     // Sort assignments by institution then student name
     const sorted = [...assignments].sort((a, b) => {
@@ -1095,29 +1213,57 @@ const exportXLSX = async () => {
       const suivi = rawSuivis.value.find(s => s.user_id === a.user_id && s.pfp_field === noteKey)
       const particularites = suivi ? `${suivi.couleur || ''}${suivi.commentaire ? ': ' + suivi.commentaire : ''}` : remarques
 
+      // Get CPT/Eval data
+      const cptEvalData = cptEvalMap.get(a.user_id)
+      const cptKey = pfpCptKeysExport[pfpType]
+      const cptVal = cptEvalData?.[cptKey + '_cpt']
+      const evalVal = cptEvalData?.[cptKey + '_eval']
+      const cptCom = cptEvalData?.[cptKey + '_cpt_comment'] || ''
+      const evalCom = cptEvalData?.[cptKey + '_eval_comment'] || ''
+
+      // Resolve place criteria (from places table, fallback to row data)
+      const assignPlaceId = a.assigned_place_id || null
+      const assignPlaceInfo = assignPlaceId ? placeCriteriaMap.get(assignPlaceId) : null
+      const studentRow = studentMap.get(a.user_id)
+      const rowCriteria = studentRow?.[pfpType]?.criteria
+      const critSource = assignPlaceInfo || rowCriteria || {}
+      const assignCriteria = criteriaLabels.filter(c => critSource[c]).join(', ')
+
       const row = wsPFP.addRow({
         institution: a.assigned_institution_name || a.assigned_place_name || '',
+        criteres: assignCriteria,
         domaine: a.assigned_domaine || '',
         nom: student?.nom || '',
         prenom: student?.prenom || '',
         pf: a.assigned_praticien_name || '',
         formateurHES: a.repondant_hes_name || '',
-        sigPresentiel: '',
-        sigDistance: '',
+        cptStatus: cptLabel(cptVal) + (cptCom ? ' (' + cptCom + ')' : ''),
+        evalStatus: cptLabel(evalVal) + (evalCom ? ' (' + evalCom + ')' : ''),
         particularites,
         absences,
         notes: hasGrade(note) ? note : ''
       })
       row.eachCell({ includeEmpty: true }, (cell) => styleDataCell(cell, idx % 2 === 0))
 
-      // Color the note
-      const noteCell = row.getCell(11)
+      // Col indices: 1=Institution, 2=Critères, 3=Domaine, 4=Nom, 5=Prénom, 6=PF, 7=FormateurHES, 8=CPT, 9=Eval, 10=Particularités, 11=Absences, 12=Notes
+      // Color CPT (col 8)
+      const cptCell = row.getCell(8)
+      if (cptVal === true) cptCell.font = { bold: true, size: 9, color: { argb: COL_GREEN_TEXT } }
+      else if (cptVal === false) cptCell.font = { bold: true, size: 9, color: { argb: COL_RED_TEXT } }
+
+      // Color Eval (col 9)
+      const evalCell = row.getCell(9)
+      if (evalVal === true) evalCell.font = { bold: true, size: 9, color: { argb: COL_GREEN_TEXT } }
+      else if (evalVal === false) evalCell.font = { bold: true, size: 9, color: { argb: COL_RED_TEXT } }
+
+      // Color the note (col 12)
+      const noteCell = row.getCell(12)
       const n = String(note).trim().toUpperCase()
       if (n === 'F') noteCell.font = { bold: true, size: 9, color: { argb: COL_RED_TEXT } }
       else if (['A', 'B', 'C', 'D', 'E'].includes(n)) noteCell.font = { bold: true, size: 9, color: { argb: COL_GREEN_TEXT } }
 
-      // Color absences
-      const absCell = row.getCell(10)
+      // Color absences (col 11)
+      const absCell = row.getCell(11)
       if (Number(absences) > 0) absCell.font = { bold: true, size: 9, color: { argb: COL_ORANGE_TEXT } }
     })
 
@@ -1128,7 +1274,7 @@ const exportXLSX = async () => {
   // LAST SHEET: Vue d'ensemble (original flat export)
   // ════════════════════════════════════════════
   const wsVE = wb.addWorksheet('Vue d\'ensemble FP')
-  const pfpSubCols = ['Place', 'Institution', 'Praticien', 'Note', 'Rattrap.', 'Statut', 'Attribution', 'Abs.', 'Remarques', 'Cas part.']
+  const pfpSubCols = ['Place', 'Institution', 'Critères', 'Praticien', 'Note', 'Rattrap.', 'Statut', 'Attribution', 'Abs.', 'Remarques', 'Cas part.', 'CPT', 'Eval']
   const pfpSubCount = pfpSubCols.length
 
   const baseCols = [
@@ -1139,7 +1285,7 @@ const exportXLSX = async () => {
   const allCols = [...baseCols]
   pfpTypes.forEach(pfp => {
     pfpSubCols.forEach(sub => {
-      allCols.push({ header: `${pfp} ${sub}`, key: `${pfp}_${sub}`, width: sub === 'Place' ? 22 : sub === 'Institution' ? 20 : sub === 'Praticien' ? 18 : sub === 'Remarques' ? 20 : sub === 'Cas part.' ? 14 : 10 })
+      allCols.push({ header: `${pfp} ${sub}`, key: `${pfp}_${sub}`, width: sub === 'Place' ? 22 : sub === 'Institution' ? 20 : sub === 'Critères' ? 20 : sub === 'Praticien' ? 18 : sub === 'Remarques' ? 20 : sub === 'Cas part.' ? 14 : sub === 'CPT' ? 14 : sub === 'Eval' ? 14 : 10 })
     })
   })
   wsVE.columns = allCols
@@ -1187,6 +1333,8 @@ const exportXLSX = async () => {
       const d = r[pfp] || {}
       rowData[`${pfp}_Place`] = d.placeName || ''
       rowData[`${pfp}_Institution`] = d.institutionName || ''
+      const crit = d.criteria || {}
+      rowData[`${pfp}_Critères`] = criteriaLabels.filter(c => crit[c]).join(', ')
       rowData[`${pfp}_Praticien`] = d.praticienName || ''
       rowData[`${pfp}_Note`] = d.note || ''
       rowData[`${pfp}_Rattrap.`] = d.noteRetake || ''
@@ -1195,6 +1343,10 @@ const exportXLSX = async () => {
       rowData[`${pfp}_Abs.`] = d.absences || ''
       rowData[`${pfp}_Remarques`] = d.remarques || ''
       rowData[`${pfp}_Cas part.`] = (d.casColor && d.casColor !== 'blanc') ? `${d.casColor}${d.casComment ? ': ' + d.casComment : ''}` : ''
+      const cptText = d.cpt === true ? 'Validé' : d.cpt === false ? 'Non conforme' : ''
+      rowData[`${pfp}_CPT`] = cptText + (d.cptComment ? ' (' + d.cptComment + ')' : '')
+      const evalText = d.eval === true ? 'Validé' : d.eval === false ? 'Non conforme' : ''
+      rowData[`${pfp}_Eval`] = evalText + (d.evalComment ? ' (' + d.evalComment + ')' : '')
     })
 
     const excelRow = wsVE.addRow(rowData)
@@ -1224,24 +1376,35 @@ const exportXLSX = async () => {
         excelRow.getCell(baseCol + i).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: pfpBg } }
       }
 
-      const noteCell = excelRow.getCell(baseCol + 3)
+      // Sub-col indices: 0=Place, 1=Institution, 2=Critères, 3=Praticien, 4=Note, 5=Rattrap, 6=Statut, 7=Attribution, 8=Abs, 9=Remarques, 10=Cas part, 11=CPT, 12=Eval
+      const noteCell = excelRow.getCell(baseCol + 4)
       if (d.note) {
         const n = String(d.note).trim().toUpperCase()
         if (n === 'F') noteCell.font = { bold: true, size: 9, color: { argb: COL_RED_TEXT } }
         else if (['A', 'B', 'C', 'D', 'E'].includes(n)) noteCell.font = { bold: true, size: 9, color: { argb: COL_GREEN_TEXT } }
       }
-      const retakeCell = excelRow.getCell(baseCol + 4)
+      const retakeCell = excelRow.getCell(baseCol + 5)
       if (d.noteRetake) {
         const n = String(d.noteRetake).trim().toUpperCase()
         if (n === 'F') retakeCell.font = { bold: true, size: 9, color: { argb: COL_RED_TEXT } }
         else if (['A', 'B', 'C', 'D', 'E'].includes(n)) retakeCell.font = { bold: true, size: 9, color: { argb: COL_GREEN_TEXT } }
       }
-      const statutCell = excelRow.getCell(baseCol + 5)
+      const statutCell = excelRow.getCell(baseCol + 6)
       if (d.statut === 'Réussi') statutCell.font = { bold: true, size: 9, color: { argb: COL_GREEN_TEXT } }
       else if (d.statut === 'Échec' || d.statut === 'Arrêt') statutCell.font = { bold: true, size: 9, color: { argb: COL_RED_TEXT } }
       else if (d.statut === 'En cours' || d.statut === 'Publié') statutCell.font = { bold: true, size: 9, color: { argb: COL_ORANGE_TEXT } }
 
-      if (d.absences > 0) excelRow.getCell(baseCol + 7).font = { bold: true, size: 9, color: { argb: COL_ORANGE_TEXT } }
+      if (d.absences > 0) excelRow.getCell(baseCol + 8).font = { bold: true, size: 9, color: { argb: COL_ORANGE_TEXT } }
+
+      // CPT color (index 11)
+      const cptCell = excelRow.getCell(baseCol + 11)
+      if (d.cpt === true) cptCell.font = { bold: true, size: 9, color: { argb: COL_GREEN_TEXT } }
+      else if (d.cpt === false) cptCell.font = { bold: true, size: 9, color: { argb: COL_RED_TEXT } }
+
+      // Eval color (index 12)
+      const evalCell = excelRow.getCell(baseCol + 12)
+      if (d.eval === true) evalCell.font = { bold: true, size: 9, color: { argb: COL_GREEN_TEXT } }
+      else if (d.eval === false) evalCell.font = { bold: true, size: 9, color: { argb: COL_RED_TEXT } }
 
       excelRow.getCell(baseCol + pfpSubCount - 1).border = {
         bottom: { style: 'hair', color: { argb: 'FFE0E0E0' } },
@@ -1351,6 +1514,12 @@ onMounted(() => {
 .cas-orange { background: #fd7e14; }
 .cas-rouge { background: #dc3545; }
 .cas-noir { background: #343a40; }
+
+.criteria-tag {
+  font-size: 0.6rem !important;
+  padding: 0.1rem 0.3rem !important;
+  line-height: 1;
+}
 
 .ensemble-table :deep(.p-datatable-thead > tr > th) {
   background: var(--surface-100);
