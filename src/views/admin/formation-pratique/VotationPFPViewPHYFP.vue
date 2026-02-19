@@ -117,7 +117,7 @@
               </div>
               <div>
                 <h3 class="text-2xl font-bold text-900 m-0">{{ stats.total }}</h3>
-                <p class="text-600 m-0 text-sm">Total {{ filterClasse || '—' }}</p>
+                <p class="text-600 m-0 text-sm">Total {{ filterClasse || '—' }} {{ filterPFP || '' }}</p>
               </div>
             </div>
           </div>
@@ -1816,10 +1816,13 @@ const loadData = async () => {
 }
 
 const updateStats = () => {
-  const total = votationsList.value.length
-  const completed = votationsList.value.filter(v => v.status === 'Complet').length
-  const incomplete = votationsList.value.filter(v => v.status === 'Incomplet').length
-  const notVoted = votationsList.value.filter(v => v.status === 'Non voté').length
+  const filtered = votationsList.value.filter(v =>
+    v.pfpType === filterPFP.value && v.year === filterYear.value
+  )
+  const total = filtered.length
+  const completed = filtered.filter(v => v.status === 'Complet').length
+  const incomplete = filtered.filter(v => v.status === 'Incomplet').length
+  const notVoted = filtered.filter(v => v.status === 'Non voté').length
 
   stats.value = {
     total,
