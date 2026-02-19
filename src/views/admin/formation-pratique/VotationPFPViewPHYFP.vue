@@ -729,6 +729,84 @@
       </div>
     </div>
 
+    <!-- Historique des sessions de votation -->
+    <div class="surface-card p-4 border-round shadow-2 mb-3 mt-4">
+      <div class="flex justify-content-between align-items-center mb-3 cursor-pointer" @click="showHistoryPanel = !showHistoryPanel; if(showHistoryPanel && sessionHistory.length === 0) loadSessionHistory()">
+        <div class="flex align-items-center gap-2">
+          <i class="pi pi-history text-xl text-primary"></i>
+          <h3 class="text-lg font-bold text-900 m-0">Historique des sessions</h3>
+          <Tag v-if="sessionHistory.length > 0" :value="sessionHistory.length" severity="secondary" rounded />
+        </div>
+        <Button
+          :icon="showHistoryPanel ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"
+          text
+          rounded
+          size="small"
+        />
+      </div>
+      <div v-if="showHistoryPanel">
+        <div v-if="sessionHistory.length === 0" class="text-center p-4 text-600">
+          <i class="pi pi-spin pi-spinner mr-2"></i> Chargement...
+        </div>
+        <DataTable
+          v-else
+          :value="sessionHistory"
+          responsiveLayout="scroll"
+          :paginator="sessionHistory.length > 10"
+          :rows="10"
+          stripedRows
+          class="p-datatable-sm"
+          sortField="opened_at"
+          :sortOrder="-1"
+        >
+          <Column field="pfp_type" header="PFP" sortable :style="{ width: '100px' }">
+            <template #body="slotProps">
+              <Tag :value="slotProps.data.pfp_type" :style="{ background: pfpColorMap[slotProps.data.pfp_type] || '#6366F1', color: 'white' }" />
+            </template>
+          </Column>
+          <Column field="year" header="Année" sortable :style="{ width: '80px' }">
+            <template #body="slotProps">
+              <span class="font-medium">{{ slotProps.data.year }}</span>
+            </template>
+          </Column>
+          <Column field="target_class" header="Classe" sortable :style="{ width: '100px' }">
+            <template #body="slotProps">
+              <Tag :value="slotProps.data.target_class" severity="info" />
+            </template>
+          </Column>
+          <Column field="status" header="Statut" sortable :style="{ width: '100px' }">
+            <template #body="slotProps">
+              <Tag
+                :value="slotProps.data.status === 'open' ? 'Ouverte' : 'Fermée'"
+                :severity="slotProps.data.status === 'open' ? 'success' : 'secondary'"
+              />
+            </template>
+          </Column>
+          <Column field="opened_at" header="Ouverture" sortable :style="{ minWidth: '150px' }">
+            <template #body="slotProps">
+              <span class="text-sm">{{ formatDate(slotProps.data.opened_at) }}</span>
+            </template>
+          </Column>
+          <Column field="closed_at" header="Fermeture" sortable :style="{ minWidth: '150px' }">
+            <template #body="slotProps">
+              <span v-if="slotProps.data.closed_at" class="text-sm">{{ formatDate(slotProps.data.closed_at) }}</span>
+              <span v-else class="text-400">-</span>
+            </template>
+          </Column>
+          <Column header="Durée" :style="{ width: '120px' }">
+            <template #body="slotProps">
+              <span class="text-sm">{{ formatDuration(slotProps.data.opened_at, slotProps.data.closed_at) }}</span>
+            </template>
+          </Column>
+          <Column field="voteCount" header="Votes" sortable :style="{ width: '80px', textAlign: 'center' }">
+            <template #body="slotProps">
+              <Tag :value="slotProps.data.voteCount" severity="primary" rounded class="font-semibold" />
+            </template>
+          </Column>
+        </DataTable>
+      </div>
+    </div>
+
     <!-- Dialog de confirmation pour lancer la votation -->
     <Dialog
       v-model:visible="showSessionDialog"
@@ -837,6 +915,7 @@ const openVotation = async () => {
     )
     currentSession.value = session
     showSessionDialog.value = false
+    if (showHistoryPanel.value) await loadSessionHistory()
     toast.add({
       severity: 'success',
       summary: 'Votation ouverte',
@@ -857,6 +936,7 @@ const closeVotation = async () => {
   try {
     await votationSessionService.closeSession(filterPFP.value, filterYear.value)
     currentSession.value = null
+    if (showHistoryPanel.value) await loadSessionHistory()
     toast.add({
       severity: 'info',
       summary: 'Votation fermée',
@@ -870,6 +950,46 @@ const closeVotation = async () => {
     sessionLoading.value = false
   }
 }
+// ============================================
+// HISTORIQUE DES SESSIONS
+// ============================================
+const sessionHistory = ref([])
+const showHistoryPanel = ref(false)
+
+const loadSessionHistory = async () => {
+  try {
+    const allSessions = await votationSessionService.fetchAll()
+    // Enrichir avec le nombre de votes pour chaque session
+    const enriched = await Promise.all(allSessions.map(async (session) => {
+      try {
+        const { count } = await supabase
+          .from('student_votes')
+          .select('*', { count: 'exact', head: true })
+          .eq('pfp_type', session.pfp_type)
+          .eq('year', session.year)
+        return { ...session, voteCount: count || 0 }
+      } catch {
+        return { ...session, voteCount: '?' }
+      }
+    }))
+    sessionHistory.value = enriched
+  } catch (error) {
+    console.error('❌ Erreur chargement historique sessions:', error)
+    sessionHistory.value = []
+  }
+}
+
+const formatDuration = (openedAt, closedAt) => {
+  if (!openedAt) return '-'
+  const start = new Date(openedAt)
+  const end = closedAt ? new Date(closedAt) : new Date()
+  const diffMs = end - start
+  const hours = Math.floor(diffMs / 3600000)
+  const minutes = Math.floor((diffMs % 3600000) / 60000)
+  if (hours > 0) return `${hours}h ${minutes}min`
+  return `${minutes}min`
+}
+
 const filterPlacesPFP = ref(null)
 const votationsList = ref([])
 const allStudents = ref([])

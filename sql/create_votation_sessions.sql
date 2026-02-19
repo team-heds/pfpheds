@@ -43,3 +43,6 @@ CREATE POLICY "Students can read open sessions"
   ON votation_sessions
   FOR SELECT
   USING (status = 'open');
+
+-- Activer Supabase Realtime pour cette table
+ALTER PUBLICATION supabase_realtime ADD TABLE votation_sessions;

@@ -225,8 +225,6 @@ const PFPDetails = () => import('@/components/admin/details/PFPDetails.vue');
 // ========================================
 // VOTATIONS & GESTION
 // ========================================
-const VotationView = () => import('@/views/admin/votations/VotationView.vue');
-const VotationViewPFP1B = () => import('@/views/admin/votations/VotationViewPFP1B.vue');
 const VotationGenericView = () => import('@/views/admin/votations/VotationGenericView.vue');
 const VotationPreview = () => import('@/components/admin/details/Votation_preview.vue');
 const VotationPrioritaire = () => import('@/components/admin/details/VotationPrioritaire.vue');

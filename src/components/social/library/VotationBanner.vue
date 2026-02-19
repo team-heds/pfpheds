@@ -30,17 +30,25 @@ import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import votationSessionService from '@/service/votationSessionService'
 import { useUserStore } from '@/stores/userStore'
+import { supabase } from '@/supabase'
 
 export default {
   name: 'VotationBanner',
   components: { Button, Tag },
   data() {
     return {
-      openSessions: []
+      openSessions: [],
+      realtimeChannel: null
     }
   },
   async mounted() {
     await this.checkOpenSessions()
+    this.subscribeRealtime()
+  },
+  beforeUnmount() {
+    if (this.realtimeChannel) {
+      supabase.removeChannel(this.realtimeChannel)
+    }
   },
   methods: {
     async checkOpenSessions() {
@@ -56,6 +64,23 @@ export default {
       } catch (error) {
         console.error('Erreur chargement sessions votation:', error)
         this.openSessions = []
+      }
+    },
+    subscribeRealtime() {
+      try {
+        this.realtimeChannel = supabase
+          .channel('votation-sessions-realtime')
+          .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'votation_sessions'
+          }, () => {
+            // Recharger les sessions quand il y a un changement
+            this.checkOpenSessions()
+          })
+          .subscribe()
+      } catch (error) {
+        console.error('Erreur souscription realtime votation:', error)
       }
     }
   }
