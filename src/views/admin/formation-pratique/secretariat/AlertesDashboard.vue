@@ -183,8 +183,8 @@ const pfpAlertsService = new PfpAlertsService()
 const categories = [
   { value: 'all', label: 'Toutes', icon: 'pi pi-list' },
   { value: 'offres', label: 'Offres', icon: 'pi pi-table' },
-  { value: 'criteres', label: 'Critères', icon: 'pi pi-check-circle' },
-  { value: 'evaluations', label: 'Évaluations', icon: 'pi pi-star' },
+  { value: 'notes', label: 'Notes', icon: 'pi pi-file' },
+  { value: 'attributions', label: 'Attributions', icon: 'pi pi-check-circle' },
   { value: 'cas_particuliers', label: 'Cas Particuliers', icon: 'pi pi-exclamation-triangle' },
   { value: 'institutions', label: 'Institutions', icon: 'pi pi-building' }
 ]
@@ -249,33 +249,22 @@ function formatDataKey(key) {
 async function runAnalysis() {
   loading.value = true
   try {
-    // Fetch all data in parallel
-    const [places, institutions, studentsRes, evalsRes, casesRes] = await Promise.all([
+    const [places, institutions, notesRes, assignmentsRes, suivisRes] = await Promise.all([
       placesStore.fetchPlaces({ force: true }),
       institutionsStore.fetchInstitutions(),
-      supabase.from('physio_result').select('*'),
-      supabase.from('physio_result').select('id, pfp1_cpt, pfp2_cpt, pfp3_cpt, pfp4_cpt, pfp1_eval, pfp2_eval, pfp3_eval, pfp4_eval'),
-      supabase.from('physio_result').select('id, etudiant, pfp1, pfp1_prime, pfp2, pfp2_prime, pfp3, pfp3_prime, pfp4, pfp4_prime')
+      supabase.from('StudentsPhysio').select('*'),
+      supabase.from('student_result_vote').select('user_id, pfp_type, year, assigned_place_id, assigned_place_name, pfp_echec, pfp_validee, pfp_arret, status'),
+      supabase.from('suivi_cas_particuliers').select('user_id, pfp_field, couleur, commentaire')
     ])
 
     const currentYear = new Date().getFullYear().toString()
 
-    // Build student criteria data
-    const criteriaLabels = ['MSQ', 'SYSINT', 'NEUROGER', 'AIGU', 'REHAB', 'AMBU', 'FR', 'DE']
-    const students = (studentsRes?.data || []).map(s => ({
-      scores: Object.fromEntries(criteriaLabels.map(c => [c, s[c] || 0]))
-    }))
-
-    const evaluations = evalsRes?.data || []
-    const cases = casesRes?.data || []
-
-    // Run analysis
     const result = pfpAlertsService.runFullAnalysis({
       places: places || [],
       year: currentYear,
-      students,
-      evaluations,
-      cases,
+      notes: notesRes?.data || [],
+      assignments: assignmentsRes?.data || [],
+      suivis: suivisRes?.data || [],
       institutions: institutions || []
     })
 

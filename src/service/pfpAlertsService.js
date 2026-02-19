@@ -1,6 +1,14 @@
 /**
  * Service d'Alertes PFP pour le Secrétariat
  * Analyse les données de formation pratique et génère des alertes contextuelles
+ *
+ * Tables Supabase utilisées :
+ *   - places              : offres PFP par année (PFP1A.2026, etc.) + critères (MSQ, SYSINT…)
+ *   - StudentsPhysio      : notes (pfp1a…pfp4), retakes, absences, remarques par user_id/year
+ *   - student_result_vote : attributions (user_id, pfp_type, pfp_echec, pfp_validee, pfp_arret…)
+ *   - suivi_cas_particuliers : lignes plates (user_id, pfp_field, couleur, commentaire)
+ *   - institutions        : InstitutionId, Name, ConventionDate, AccordCadreDate
+ *   - user_profiles       : user_id, family_name, forname, classe
  */
 
 export class PfpAlertsService {
@@ -17,46 +25,11 @@ export class PfpAlertsService {
 
     pfpTypes.forEach(pfp => {
       let totalOffres = 0
-      let totalPropositions = 0
 
       places.forEach(place => {
         totalOffres += parseInt(place[pfp]?.[year]) || 0
-        totalPropositions += parseInt(place[`${pfp.toLowerCase()}_proposition`]?.[year]) || 0
       })
 
-      const diff = totalPropositions - totalOffres
-
-      // Alerte si sous-proposition significative (< -5)
-      if (diff < -5) {
-        alerts.push({
-          type: 'offer_deficit',
-          category: 'offres',
-          pfpType: pfp,
-          severity: Math.abs(diff) > 15 ? 'error' : 'warn',
-          title: `Déficit de propositions ${pfp}`,
-          message: `${pfp}: ${totalPropositions} propositions pour ${totalOffres} offres (${diff})`,
-          data: { offres: totalOffres, propositions: totalPropositions, diff },
-          action: `Trouver ${Math.abs(diff)} propositions supplémentaires pour ${pfp}`,
-          timestamp: new Date().toISOString()
-        })
-      }
-
-      // Alerte si surproposition significative (> 10)
-      if (diff > 10) {
-        alerts.push({
-          type: 'offer_surplus',
-          category: 'offres',
-          pfpType: pfp,
-          severity: 'info',
-          title: `Surplus de propositions ${pfp}`,
-          message: `${pfp}: ${totalPropositions} propositions pour ${totalOffres} offres (+${diff})`,
-          data: { offres: totalOffres, propositions: totalPropositions, diff },
-          action: `Rééquilibrer les propositions ${pfp}`,
-          timestamp: new Date().toISOString()
-        })
-      }
-
-      // Alerte si aucune offre
       if (totalOffres === 0) {
         alerts.push({
           type: 'no_offers',
@@ -64,8 +37,8 @@ export class PfpAlertsService {
           pfpType: pfp,
           severity: 'warn',
           title: `Aucune offre ${pfp}`,
-          message: `${pfp}: aucune offre enregistrée pour ${year}`,
-          data: { offres: 0, propositions: totalPropositions },
+          message: `${pfp}: aucune place enregistrée pour ${year}`,
+          data: { offres: 0 },
           action: `Vérifier les offres ${pfp} pour ${year}`,
           timestamp: new Date().toISOString()
         })
@@ -76,167 +49,225 @@ export class PfpAlertsService {
   }
 
   /**
-   * Analyser les critères étudiants et détecter les problèmes
+   * Analyser les notes PFP (StudentsPhysio) et détecter échecs, notes manquantes, retakes
    */
-  analyzeStudentCriteria(students) {
+  analyzeNotes(notes) {
     const alerts = []
-    const criteriaLabels = ['MSQ', 'SYSINT', 'NEUROGER', 'AIGU', 'REHAB', 'AMBU', 'FR', 'DE']
-    const total = students.length
+    if (!notes || notes.length === 0) return alerts
 
-    if (total === 0) return alerts
+    const noteKeys = ['pfp1a', 'pfp1b', 'pfp2', 'pfp3', 'pfp4']
+    const pfpLabels = { pfp1a: 'PFP1A', pfp1b: 'PFP1B', pfp2: 'PFP2', pfp3: 'PFP3', pfp4: 'PFP4' }
+    const total = notes.length
 
-    // Étudiants sans aucun critère validé
-    const noCriteria = students.filter(s =>
-      criteriaLabels.every(c => (s.scores?.[c] || 0) === 0)
-    )
-
-    if (noCriteria.length > 0) {
-      const pct = Math.round((noCriteria.length / total) * 100)
-      alerts.push({
-        type: 'no_criteria',
-        category: 'criteres',
-        severity: pct > 30 ? 'error' : 'warn',
-        title: `${noCriteria.length} étudiants sans critère validé`,
-        message: `${pct}% des étudiants n'ont aucun critère de formation pratique validé`,
-        data: { count: noCriteria.length, total, percent: pct },
-        action: 'Vérifier les données de validation des critères',
-        timestamp: new Date().toISOString()
+    // Échecs (note = F) sans retake
+    const echecsSansRetake = []
+    notes.forEach(n => {
+      noteKeys.forEach(key => {
+        const val = String(n[key] ?? '').trim().toUpperCase()
+        const retake = String(n[key + '_retake'] ?? '').trim().toUpperCase()
+        if (val === 'F' && !retake) {
+          echecsSansRetake.push({ user_id: n.user_id, pfp: pfpLabels[key] })
+        }
       })
-    }
-
-    // Critères avec faible taux de validation (< 30%)
-    criteriaLabels.forEach(crit => {
-      const validated = students.filter(s => (s.scores?.[crit] || 0) > 0).length
-      const pct = Math.round((validated / total) * 100)
-
-      if (pct < 30 && pct > 0) {
-        alerts.push({
-          type: 'low_criteria',
-          category: 'criteres',
-          criteria: crit,
-          severity: 'warn',
-          title: `Critère ${crit} faiblement validé`,
-          message: `Seulement ${pct}% des étudiants ont validé ${crit} (${validated}/${total})`,
-          data: { criteria: crit, validated, total, percent: pct },
-          action: `Vérifier les stages ${crit}`,
-          timestamp: new Date().toISOString()
-        })
-      }
     })
 
-    return alerts
-  }
-
-  /**
-   * Analyser les évaluations CPT et détecter les retards
-   */
-  analyzeCptEvaluations(evaluations) {
-    const alerts = []
-    const total = evaluations.length
-
-    if (total === 0) return alerts
-
-    const cptFields = ['pfp1_cpt', 'pfp2_cpt', 'pfp3_cpt', 'pfp4_cpt']
-    const evalFields = ['pfp1_eval', 'pfp2_eval', 'pfp3_eval', 'pfp4_eval']
-
-    // CPT non renseignés
-    const incompleteCpt = evaluations.filter(e =>
-      cptFields.some(f => e[f] === null)
-    ).length
-
-    if (incompleteCpt > 0) {
-      const pct = Math.round((incompleteCpt / total) * 100)
+    if (echecsSansRetake.length > 0) {
       alerts.push({
-        type: 'incomplete_cpt',
-        category: 'evaluations',
-        severity: pct > 50 ? 'error' : 'warn',
-        title: `${incompleteCpt} CPT incomplets`,
-        message: `${pct}% des étudiants ont des CPT non renseignés`,
-        data: { count: incompleteCpt, total, percent: pct },
-        action: 'Relancer les répondants pour compléter les CPT',
+        type: 'echec_sans_retake',
+        category: 'notes',
+        severity: echecsSansRetake.length > 5 ? 'error' : 'warn',
+        title: `${echecsSansRetake.length} échec(s) sans rattrapage`,
+        message: `${echecsSansRetake.length} note(s) F sans rattrapage renseigné`,
+        data: { count: echecsSansRetake.length },
+        action: 'Vérifier les rattrapages pour les échecs',
         timestamp: new Date().toISOString()
       })
     }
 
-    // Évaluations non renseignées
-    const incompleteEval = evaluations.filter(e =>
-      evalFields.some(f => e[f] === null)
-    ).length
+    // Échecs au rattrapage (retake = F)
+    const echecsRetake = []
+    notes.forEach(n => {
+      noteKeys.forEach(key => {
+        const retake = String(n[key + '_retake'] ?? '').trim().toUpperCase()
+        if (retake === 'F') {
+          echecsRetake.push({ user_id: n.user_id, pfp: pfpLabels[key] })
+        }
+      })
+    })
 
-    if (incompleteEval > 0) {
-      const pct = Math.round((incompleteEval / total) * 100)
+    if (echecsRetake.length > 0) {
       alerts.push({
-        type: 'incomplete_eval',
-        category: 'evaluations',
-        severity: pct > 50 ? 'error' : 'warn',
-        title: `${incompleteEval} évaluations incomplètes`,
-        message: `${pct}% des étudiants ont des évaluations non renseignées`,
-        data: { count: incompleteEval, total, percent: pct },
-        action: 'Relancer pour compléter les évaluations',
+        type: 'echec_retake',
+        category: 'notes',
+        severity: 'error',
+        title: `${echecsRetake.length} échec(s) au rattrapage`,
+        message: `${echecsRetake.length} étudiant(s) ont échoué au rattrapage (note F)`,
+        data: { count: echecsRetake.length },
+        action: 'Action requise : échecs définitifs au rattrapage',
         timestamp: new Date().toISOString()
       })
     }
 
-    // CPT échoués (false)
-    const failedCpt = evaluations.filter(e =>
-      cptFields.some(f => e[f] === false)
-    ).length
+    // Absences élevées (> 2 jours par PFP)
+    const highAbsences = []
+    notes.forEach(n => {
+      noteKeys.forEach(key => {
+        const abs = Number(n[key + '_absences']) || 0
+        if (abs > 2) {
+          highAbsences.push({ user_id: n.user_id, pfp: pfpLabels[key], absences: abs })
+        }
+      })
+    })
 
-    if (failedCpt > 0) {
+    if (highAbsences.length > 0) {
       alerts.push({
-        type: 'failed_cpt',
-        category: 'evaluations',
-        severity: failedCpt > 5 ? 'error' : 'warn',
-        title: `${failedCpt} CPT non conformes`,
-        message: `${failedCpt} étudiants ont au moins un CPT non conforme`,
-        data: { count: failedCpt, total },
-        action: 'Planifier un suivi pour les CPT non conformes',
+        type: 'high_absences',
+        category: 'notes',
+        severity: highAbsences.length > 10 ? 'error' : 'warn',
+        title: `${highAbsences.length} absences élevées`,
+        message: `${highAbsences.length} PFP avec plus de 2 jours d'absence`,
+        data: { count: highAbsences.length },
+        action: 'Vérifier les absences élevées',
         timestamp: new Date().toISOString()
       })
     }
 
-    return alerts
-  }
-
-  /**
-   * Analyser les cas particuliers
-   */
-  analyzeCasParticuliers(cases) {
-    const alerts = []
-    const pfpFields = ['pfp1', 'pfp1_prime', 'pfp2', 'pfp2_prime', 'pfp3', 'pfp3_prime', 'pfp4', 'pfp4_prime']
-
-    // Cas rouges non résolus
-    const redCases = cases.filter(c =>
-      pfpFields.some(f => c[f]?.couleur === 'rouge')
+    // Étudiants sans aucune note
+    const noNotes = notes.filter(n =>
+      noteKeys.every(key => {
+        const val = String(n[key] ?? '').trim()
+        return !val || val === '-'
+      })
     )
 
-    if (redCases.length > 0) {
+    if (noNotes.length > 0) {
+      const pct = Math.round((noNotes.length / total) * 100)
+      alerts.push({
+        type: 'no_notes',
+        category: 'notes',
+        severity: pct > 50 ? 'warn' : 'info',
+        title: `${noNotes.length} étudiants sans note`,
+        message: `${pct}% des étudiants n'ont aucune note PFP renseignée`,
+        data: { count: noNotes.length, total, percent: pct },
+        action: 'Compléter les notes manquantes',
+        timestamp: new Date().toISOString()
+      })
+    }
+
+    return alerts
+  }
+
+  /**
+   * Analyser les attributions (student_result_vote) : échecs, arrêts, non-attribués
+   */
+  analyzeAssignments(assignments) {
+    const alerts = []
+    if (!assignments || assignments.length === 0) return alerts
+
+    const total = assignments.length
+
+    // Échecs PFP
+    const echecs = assignments.filter(a => a.pfp_echec === true)
+    if (echecs.length > 0) {
+      alerts.push({
+        type: 'pfp_echecs',
+        category: 'attributions',
+        severity: echecs.length > 5 ? 'error' : 'warn',
+        title: `${echecs.length} échec(s) PFP`,
+        message: `${echecs.length} attribution(s) marquée(s) en échec`,
+        data: { count: echecs.length, total },
+        action: 'Traiter les échecs PFP et planifier les rattrapages',
+        timestamp: new Date().toISOString()
+      })
+    }
+
+    // Arrêts PFP
+    const arrets = assignments.filter(a => a.pfp_arret === true)
+    if (arrets.length > 0) {
+      alerts.push({
+        type: 'pfp_arrets',
+        category: 'attributions',
+        severity: arrets.length > 3 ? 'error' : 'warn',
+        title: `${arrets.length} arrêt(s) PFP`,
+        message: `${arrets.length} stage(s) interrompu(s)`,
+        data: { count: arrets.length, total },
+        action: 'Réattribuer les stages interrompus',
+        timestamp: new Date().toISOString()
+      })
+    }
+
+    // Attributions sans place assignée
+    const noPlace = assignments.filter(a => !a.assigned_place_id && !a.assigned_place_name)
+    if (noPlace.length > 0) {
+      const pct = Math.round((noPlace.length / total) * 100)
+      alerts.push({
+        type: 'no_place_assigned',
+        category: 'attributions',
+        severity: pct > 30 ? 'error' : 'warn',
+        title: `${noPlace.length} attribution(s) sans place`,
+        message: `${pct}% des attributions n'ont pas de place assignée`,
+        data: { count: noPlace.length, total, percent: pct },
+        action: 'Assigner les places manquantes',
+        timestamp: new Date().toISOString()
+      })
+    }
+
+    return alerts
+  }
+
+  /**
+   * Analyser les cas particuliers (suivi_cas_particuliers)
+   * Structure: lignes plates avec user_id, pfp_field, couleur, commentaire
+   */
+  analyzeCasParticuliers(suivis) {
+    const alerts = []
+    if (!suivis || suivis.length === 0) return alerts
+
+    // Regrouper par couleur
+    const redEntries = suivis.filter(s => s.couleur === 'rouge')
+    const blackEntries = suivis.filter(s => s.couleur === 'noir')
+    const orangeEntries = suivis.filter(s => s.couleur === 'orange')
+
+    // Compter les étudiants uniques par couleur
+    const uniqueRed = new Set(redEntries.map(s => s.user_id)).size
+    const uniqueBlack = new Set(blackEntries.map(s => s.user_id)).size
+    const uniqueOrange = new Set(orangeEntries.map(s => s.user_id)).size
+
+    if (uniqueBlack > 0) {
+      alerts.push({
+        type: 'black_cases',
+        category: 'cas_particuliers',
+        severity: 'error',
+        title: `${uniqueBlack} cas noir(s)`,
+        message: `${uniqueBlack} étudiant(s) avec un PFP marqué en noir (situation critique)`,
+        data: { count: uniqueBlack },
+        action: 'Action immédiate requise pour les cas noirs',
+        timestamp: new Date().toISOString()
+      })
+    }
+
+    if (uniqueRed > 0) {
       alerts.push({
         type: 'red_cases',
         category: 'cas_particuliers',
-        severity: redCases.length > 5 ? 'error' : 'warn',
-        title: `${redCases.length} cas rouges actifs`,
-        message: `${redCases.length} étudiants ont au moins un PFP marqué en rouge`,
-        data: { count: redCases.length, students: redCases.map(c => c.etudiant) },
+        severity: uniqueRed > 5 ? 'error' : 'warn',
+        title: `${uniqueRed} cas rouge(s)`,
+        message: `${uniqueRed} étudiant(s) avec un PFP marqué en rouge`,
+        data: { count: uniqueRed },
         action: 'Traiter les cas rouges en priorité',
         timestamp: new Date().toISOString()
       })
     }
 
-    // Cas noirs (situations critiques)
-    const blackCases = cases.filter(c =>
-      pfpFields.some(f => c[f]?.couleur === 'noir')
-    )
-
-    if (blackCases.length > 0) {
+    if (uniqueOrange > 0) {
       alerts.push({
-        type: 'black_cases',
+        type: 'orange_cases',
         category: 'cas_particuliers',
-        severity: 'error',
-        title: `${blackCases.length} cas noirs`,
-        message: `${blackCases.length} étudiants ont un PFP marqué en noir (situation critique)`,
-        data: { count: blackCases.length, students: blackCases.map(c => c.etudiant) },
-        action: 'Action immédiate requise pour les cas noirs',
+        severity: 'info',
+        title: `${uniqueOrange} cas orange`,
+        message: `${uniqueOrange} étudiant(s) avec un PFP marqué en orange (à surveiller)`,
+        data: { count: uniqueOrange },
+        action: 'Surveiller les cas orange',
         timestamp: new Date().toISOString()
       })
     }
@@ -249,6 +280,7 @@ export class PfpAlertsService {
    */
   analyzeInstitutions(institutions) {
     const alerts = []
+    if (!institutions || institutions.length === 0) return alerts
 
     const noConvention = institutions.filter(i => !i.ConventionDate)
     const noAccord = institutions.filter(i => !i.AccordCadreDate)
@@ -281,26 +313,40 @@ export class PfpAlertsService {
       })
     }
 
+    if (noAccord.length > noDocs.length) {
+      const onlyNoAccord = noAccord.length - noDocs.length
+      alerts.push({
+        type: 'no_accord',
+        category: 'institutions',
+        severity: 'info',
+        title: `${onlyNoAccord} accords cadre manquants`,
+        message: `${onlyNoAccord} institutions ont une convention mais pas d'accord cadre`,
+        data: { count: onlyNoAccord },
+        action: 'Demander les accords cadre manquants',
+        timestamp: new Date().toISOString()
+      })
+    }
+
     return alerts
   }
 
   /**
    * Lancer une analyse complète et stocker les alertes
    */
-  runFullAnalysis({ places, year, students, evaluations, cases, institutions }) {
+  runFullAnalysis({ places, year, notes, assignments, suivis, institutions }) {
     this.alerts = []
 
     if (places && year) {
       this.alerts.push(...this.analyzeOffers(places, year))
     }
-    if (students) {
-      this.alerts.push(...this.analyzeStudentCriteria(students))
+    if (notes) {
+      this.alerts.push(...this.analyzeNotes(notes))
     }
-    if (evaluations) {
-      this.alerts.push(...this.analyzeCptEvaluations(evaluations))
+    if (assignments) {
+      this.alerts.push(...this.analyzeAssignments(assignments))
     }
-    if (cases) {
-      this.alerts.push(...this.analyzeCasParticuliers(cases))
+    if (suivis) {
+      this.alerts.push(...this.analyzeCasParticuliers(suivis))
     }
     if (institutions) {
       this.alerts.push(...this.analyzeInstitutions(institutions))
@@ -331,8 +377,8 @@ export class PfpAlertsService {
       info: this.alerts.filter(a => a.severity === 'info').length,
       byCategory: {
         offres: this.alerts.filter(a => a.category === 'offres').length,
-        criteres: this.alerts.filter(a => a.category === 'criteres').length,
-        evaluations: this.alerts.filter(a => a.category === 'evaluations').length,
+        notes: this.alerts.filter(a => a.category === 'notes').length,
+        attributions: this.alerts.filter(a => a.category === 'attributions').length,
         cas_particuliers: this.alerts.filter(a => a.category === 'cas_particuliers').length,
         institutions: this.alerts.filter(a => a.category === 'institutions').length
       }
