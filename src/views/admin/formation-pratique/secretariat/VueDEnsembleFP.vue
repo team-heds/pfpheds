@@ -301,6 +301,13 @@ const filterStatut = ref(null)
 const filterType = ref(null)
 const classesList = ref([])
 
+// Raw data kept for multi-sheet Excel export
+const rawInstitutions = ref([])
+const rawPlaces = ref([])
+const rawAssignments = ref([])
+const rawNotes = ref([])
+const rawSuivis = ref([])
+
 const criteriaLabels = ['MSQ', 'SYSINT', 'NEUROGER', 'AIGU', 'REHAB', 'AMBU', 'FR', 'DE']
 const pfpTypes = ['PFP1A', 'PFP1B', 'PFP2', 'PFP3', 'PFP4']
 const pfpOptions = ['PFP1A', 'PFP1B', 'PFP2', 'PFP3', 'PFP4']
@@ -513,8 +520,8 @@ const fetchAllData = async () => {
       studentsService.getAllStudents(),
       supabase.from('StudentsPhysio').select('user_id, pfp_valided'),
       supabase.from('student_result_vote').select('*').order('year', { ascending: false }),
-      supabase.from('places').select('PlaceId, NomPlace, InstitutionId, MSQ, SYSINT, NEUROGER, AIGU, REHAB, AMBU, FR, DE'),
-      supabase.from('institutions').select('InstitutionId, Name'),
+      supabase.from('places').select('*'),
+      supabase.from('institutions').select('*'),
       supabase.from('praticiens_formateurs').select('id, nom, prenom'),
       supabase.from('suivi_cas_particuliers').select('*'),
       supabase.from('StudentsPhysio').select('*')
@@ -656,6 +663,13 @@ const fetchAllData = async () => {
 
     allRows.value = rows
 
+    // Store raw data for multi-sheet export
+    rawInstitutions.value = institutionsResult.data || []
+    rawPlaces.value = placesResult.data || []
+    rawAssignments.value = assignmentsResult.data || []
+    rawNotes.value = notesResult.data || []
+    rawSuivis.value = suiviResult.data || []
+
     const uniqueClasses = [...new Set(rows.map(r => r.classe).filter(c => c && c !== '-'))].sort()
     if (uniqueClasses.length > 0) classesList.value = uniqueClasses
 
@@ -666,6 +680,26 @@ const fetchAllData = async () => {
   }
 }
 
+// ─── Helper: style a header row ───
+const styleHeaderRow = (ws, rowNum, colCount, bgArgb = 'FFE0E0E0') => {
+  const row = ws.getRow(rowNum)
+  row.height = 22
+  row.eachCell({ includeEmpty: true }, (cell, c) => {
+    if (c > colCount) return
+    cell.font = { bold: true, size: 9, color: { argb: 'FF333333' } }
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bgArgb } }
+    cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
+    cell.border = { bottom: { style: 'thin', color: { argb: 'FF999999' } } }
+  })
+}
+
+const styleDataCell = (cell, isEven) => {
+  cell.font = { size: 9 }
+  cell.alignment = { vertical: 'middle', wrapText: true }
+  cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: isEven ? 'FFFFFFFF' : 'FFF5F5F5' } }
+  cell.border = { bottom: { style: 'hair', color: { argb: 'FFE0E0E0' } } }
+}
+
 const exportXLSX = async () => {
   const rows = filteredRows.value
   if (rows.length === 0) return
@@ -673,96 +707,482 @@ const exportXLSX = async () => {
   const wb = new ExcelJS.Workbook()
   wb.creator = 'Plateforme HEdS'
   wb.created = new Date()
-  const ws = wb.addWorksheet('Vue d\'ensemble FP')
 
-  // --- Colors ---
+  // ── Shared colors ──
   const COL_BLUE = 'FF1E3A5F'
   const COL_WHITE = 'FFFFFFFF'
-  const COL_LIGHT_BLUE = 'FFE8F0FE'
   const COL_LIGHT_GREEN = 'FFE6F4EA'
   const COL_LIGHT_RED = 'FFFCE8E6'
   const COL_LIGHT_ORANGE = 'FFFFF3E0'
+  const COL_LIGHT_BLUE = 'FFE8F0FE'
   const COL_LIGHT_GRAY = 'FFF5F5F5'
   const COL_GREEN_TEXT = 'FF1B7A3D'
   const COL_RED_TEXT = 'FFC62828'
   const COL_ORANGE_TEXT = 'FFE65100'
+  const pfpColors = { 'PFP1A': 'FF1565C0', 'PFP1B': 'FF1976D2', 'PFP2': 'FFE65100', 'PFP3': 'FF2E7D32', 'PFP4': 'FF6A1B9A' }
 
-  // --- PFP sub-columns ---
+  // ── Maps for lookups ──
+  const instMap = new Map()
+  rawInstitutions.value.forEach(i => instMap.set(i.InstitutionId, i))
+  const placeInstName = (p) => instMap.get(p.InstitutionId)?.Name || ''
+
+  // ════════════════════════════════════════════
+  // SHEET 1: Base données (Institutions + critères)
+  // ════════════════════════════════════════════
+  const wsBD = wb.addWorksheet('Base données')
+  wsBD.columns = [
+    { header: 'ID', key: 'id', width: 6 },
+    { header: 'Institutions', key: 'name', width: 35 },
+    { header: 'Lieu', key: 'lieu', width: 18 },
+    { header: 'MSQ', key: 'MSQ', width: 6 },
+    { header: 'Sys Int', key: 'SYSINT', width: 8 },
+    { header: 'Neuro-Ger', key: 'NEUROGER', width: 10 },
+    { header: 'Aigu', key: 'AIGU', width: 6 },
+    { header: 'Réhab', key: 'REHAB', width: 7 },
+    { header: 'Cabinet', key: 'AMBU', width: 8 },
+    { header: 'Langue', key: 'langue', width: 8 },
+    { header: 'Convention', key: 'convention', width: 14 },
+    { header: 'Accord-Cadre', key: 'accord', width: 14 }
+  ]
+  styleHeaderRow(wsBD, 1, 12, COL_BLUE)
+  wsBD.getRow(1).eachCell(c => { c.font = { bold: true, size: 9, color: { argb: COL_WHITE } } })
+
+  // Build unique institutions from places (one row per place for criteria)
+  const placesForBD = [...rawPlaces.value].sort((a, b) => (placeInstName(a) || '').localeCompare(placeInstName(b) || ''))
+  placesForBD.forEach((p, idx) => {
+    const inst = instMap.get(p.InstitutionId)
+    const fmtDate = (d) => { if (!d) return ''; try { return new Date(d).toLocaleDateString('fr-CH') } catch { return '' } }
+    const row = wsBD.addRow({
+      id: p.PlaceId || idx + 1,
+      name: placeInstName(p) + (p.NomPlace ? ' - ' + p.NomPlace : ''),
+      lieu: inst?.Locality || '',
+      MSQ: p.MSQ ? 1 : '',
+      SYSINT: p.SYSINT ? 1 : '',
+      NEUROGER: p.NEUROGER ? 1 : '',
+      AIGU: p.AIGU ? 1 : '',
+      REHAB: p.REHAB ? 1 : '',
+      AMBU: p.AMBU ? 1 : '',
+      langue: p.FR ? 'FR' : p.DE ? 'ALL' : '',
+      convention: fmtDate(inst?.ConventionDate),
+      accord: fmtDate(inst?.AccordCadreDate)
+    })
+    row.eachCell({ includeEmpty: true }, (cell) => styleDataCell(cell, idx % 2 === 0))
+  })
+  wsBD.views = [{ state: 'frozen', xSplit: 0, ySplit: 1 }]
+
+  // ════════════════════════════════════════════
+  // SHEET 2: Modèle répartition PDS
+  // ════════════════════════════════════════════
+  const wsRP = wb.addWorksheet('Modèle répartition PDS')
+
+  // Determine available years from places PFP data
+  const availableYears = new Set()
+  rawPlaces.value.forEach(p => {
+    pfpTypes.forEach(pfp => {
+      if (p[pfp] && typeof p[pfp] === 'object') {
+        Object.keys(p[pfp]).forEach(y => availableYears.add(y))
+      }
+    })
+  })
+  const years = [...availableYears].sort()
+
+  // Build columns: ID, Institution, Domaine, Nom, Prénom, PF, Formateur HES, then PFP counts per year
+  const rpBaseCols = [
+    { header: 'ID', key: 'id', width: 6 },
+    { header: 'Institution', key: 'institution', width: 30 },
+    { header: 'Domaine d\'expertise', key: 'domaine', width: 22 },
+    { header: 'Nom étudiant·es', key: 'nom', width: 16 },
+    { header: 'Prénom étudiant·es', key: 'prenom', width: 14 },
+    { header: 'PF', key: 'pf', width: 20 },
+    { header: 'Formateur·trice HES', key: 'formateurHES', width: 20 }
+  ]
+  const rpPfpCols = []
+  years.forEach(y => {
+    pfpTypes.forEach(pfp => {
+      rpPfpCols.push({ header: `${pfp} ${y}`, key: `${pfp}_${y}`, width: 8 })
+    })
+  })
+  const rpFactCols = [
+    { header: 'Absences', key: 'absences', width: 10 },
+    { header: 'Notes', key: 'notes', width: 8 }
+  ]
+  wsRP.columns = [...rpBaseCols, ...rpPfpCols, ...rpFactCols]
+
+  // Row 1: merged title
+  const rpTotalCols = rpBaseCols.length + rpPfpCols.length + rpFactCols.length
+  wsRP.mergeCells(1, 1, 1, rpTotalCols)
+  const rpTitle = wsRP.getCell(1, 1)
+  rpTitle.value = 'Répartition Places de Stages - Données Plateforme HEdS'
+  rpTitle.font = { bold: true, size: 12, color: { argb: COL_WHITE } }
+  rpTitle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COL_BLUE } }
+  rpTitle.alignment = { horizontal: 'center', vertical: 'middle' }
+  wsRP.getRow(1).height = 30
+
+  // Row 2: year group headers
+  const rpRow2 = wsRP.getRow(2)
+  rpRow2.height = 20
+  // Base cols merged
+  if (rpBaseCols.length > 1) wsRP.mergeCells(2, 1, 2, rpBaseCols.length)
+  wsRP.getCell(2, 1).value = ''
+  // Year groups
+  let colOffset = rpBaseCols.length + 1
+  years.forEach(y => {
+    const startC = colOffset
+    const endC = colOffset + pfpTypes.length - 1
+    if (endC > startC) wsRP.mergeCells(2, startC, 2, endC)
+    const cell = wsRP.getCell(2, startC)
+    cell.value = `Année ${y}`
+    cell.font = { bold: true, size: 9, color: { argb: COL_WHITE } }
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF37474F' } }
+    cell.alignment = { horizontal: 'center', vertical: 'middle' }
+    colOffset += pfpTypes.length
+  })
+
+  // Row 3: sub-headers
+  const rpRow3 = wsRP.getRow(3)
+  rpRow3.height = 22
+  const rpHeaders = wsRP.columns.map(c => {
+    const parts = (c.header || '').split(' ')
+    if (parts.length === 2 && pfpTypes.includes(parts[0])) return parts[0]
+    return c.header
+  })
+  rpRow3.values = rpHeaders
+  styleHeaderRow(wsRP, 3, rpTotalCols)
+
+  // Data: one row per place
+  const rpPlaces = [...rawPlaces.value].sort((a, b) => (placeInstName(a) || '').localeCompare(placeInstName(b) || ''))
+  rpPlaces.forEach((p, idx) => {
+    const rowData = {
+      id: p.PlaceId,
+      institution: placeInstName(p) + (p.NomPlace ? '\n' + p.NomPlace : ''),
+      domaine: p.Domaine || p.Category || '',
+      nom: '', prenom: '', pf: '', formateurHES: '',
+      absences: '', notes: ''
+    }
+    years.forEach(y => {
+      pfpTypes.forEach(pfp => {
+        rowData[`${pfp}_${y}`] = parseInt(p[pfp]?.[y]) || 0
+      })
+    })
+    const row = wsRP.addRow(rowData)
+    row.eachCell({ includeEmpty: true }, (cell) => styleDataCell(cell, idx % 2 === 0))
+  })
+  wsRP.views = [{ state: 'frozen', xSplit: 3, ySplit: 3 }]
+
+  // ════════════════════════════════════════════
+  // SHEETS: Vérif. BAxx (one per cohort/classe)
+  // ════════════════════════════════════════════
+  const cohorts = [...new Set(allRows.value.map(r => r.classe).filter(c => c && c !== '-'))].sort()
+  const pfpNoteKeys = { 'PFP1A': 'pfp1a', 'PFP1B': 'pfp1b', 'PFP2': 'pfp2', 'PFP3': 'pfp3', 'PFP4': 'pfp4' }
+
+  // Build a map of place criteria by PlaceId
+  const placeCriteriaMap = new Map()
+  rawPlaces.value.forEach(p => {
+    placeCriteriaMap.set(p.PlaceId, {
+      MSQ: !!p.MSQ, SYSINT: !!p.SYSINT, NEUROGER: !!p.NEUROGER,
+      AIGU: !!p.AIGU, REHAB: !!p.REHAB, AMBU: !!p.AMBU, FR: !!p.FR, DE: !!p.DE
+    })
+  })
+
+  // Build criteria counts per student from validated stages + assignments
+  const studentCriteria = new Map()
+  allRows.value.forEach(r => {
+    const counts = { MSQ: 0, SYSINT: 0, NEUROGER: 0, AIGU: 0, REHAB: 0, AMBU: 0, FR: 0, DE: 0 }
+    pfpTypes.forEach(pfp => {
+      const d = r[pfp]
+      if (!d || d.statut === '—') return
+      // Find the place and add its criteria
+      const assignment = rawAssignments.value.find(a => a.user_id === r.userId && a.pfp_type === pfp)
+      const placeId = assignment?.assigned_place_id
+      if (placeId) {
+        const criteria = placeCriteriaMap.get(placeId)
+        if (criteria) {
+          criteriaLabels.forEach(c => { if (criteria[c]) counts[c]++ })
+        }
+      }
+    })
+    studentCriteria.set(r.userId, counts)
+  })
+
+  cohorts.forEach(cohort => {
+    const wsName = `Vérif. ${cohort}`.substring(0, 31)
+    const wsV = wb.addWorksheet(wsName)
+    wsV.columns = [
+      { header: 'Nom', key: 'nom', width: 18 },
+      { header: 'Prénom', key: 'prenom', width: 14 },
+      { header: 'PFP1', key: 'pfp1', width: 8 },
+      { header: 'PFP2', key: 'pfp2', width: 8 },
+      { header: 'PFP3', key: 'pfp3', width: 8 },
+      { header: 'PFP4', key: 'pfp4', width: 8 },
+      { header: 'MSQ', key: 'MSQ', width: 7 },
+      { header: 'SYSINT', key: 'SYSINT', width: 8 },
+      { header: 'NEURO-GER', key: 'NEUROGER', width: 10 },
+      { header: 'AIGU', key: 'AIGU', width: 7 },
+      { header: 'REHAB', key: 'REHAB', width: 8 },
+      { header: 'AMBU', key: 'AMBU', width: 7 },
+      { header: 'FR', key: 'FR', width: 6 },
+      { header: 'ALL', key: 'DE', width: 6 },
+      { header: 'complet ?', key: 'complet', width: 12 }
+    ]
+    styleHeaderRow(wsV, 1, 15)
+
+    const cohortStudents = allRows.value.filter(r => r.classe === cohort)
+    cohortStudents.forEach((r, idx) => {
+      const criteria = studentCriteria.get(r.userId) || {}
+      const allOk = criteriaLabels.every(c => (criteria[c] || 0) > 0)
+      const row = wsV.addRow({
+        nom: r.nom, prenom: r.prenom,
+        pfp1: '', pfp2: '', pfp3: '', pfp4: '',
+        MSQ: criteria.MSQ || 0,
+        SYSINT: criteria.SYSINT || 0,
+        NEUROGER: criteria.NEUROGER || 0,
+        AIGU: criteria.AIGU || 0,
+        REHAB: criteria.REHAB || 0,
+        AMBU: criteria.AMBU || 0,
+        FR: criteria.FR || 0,
+        DE: criteria.DE || 0,
+        complet: allOk ? 'complet' : 'incomplet'
+      })
+      row.eachCell({ includeEmpty: true }, (cell) => styleDataCell(cell, idx % 2 === 0))
+      // Color the "complet" cell
+      const completCell = row.getCell(15)
+      if (allOk) {
+        completCell.font = { bold: true, size: 9, color: { argb: COL_GREEN_TEXT } }
+        completCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COL_LIGHT_GREEN } }
+      } else {
+        completCell.font = { bold: true, size: 9, color: { argb: COL_RED_TEXT } }
+        completCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COL_LIGHT_RED } }
+      }
+    })
+    wsV.views = [{ state: 'frozen', xSplit: 2, ySplit: 1 }]
+  })
+
+  // ════════════════════════════════════════════
+  // SHEETS: PFP xx - BAxx (one per PFP/cohort with assignments)
+  // ════════════════════════════════════════════
+  // Group assignments by pfp_type + year
+  const assignGroups = new Map()
+  rawAssignments.value.forEach(a => {
+    if (!a.pfp_type || !a.year) return
+    const key = `${a.pfp_type}__${a.year}`
+    if (!assignGroups.has(key)) assignGroups.set(key, [])
+    assignGroups.get(key).push(a)
+  })
+
+  // Also add entries from allRows that have notes but no assignment
+  allRows.value.forEach(r => {
+    pfpTypes.forEach(pfp => {
+      const d = r[pfp]
+      if (!d || d.statut === '—') return
+      const year = d.year || ''
+      if (!year) return
+      const key = `${pfp}__${year}`
+      // Check if already in assignments
+      const existing = rawAssignments.value.find(a => a.user_id === r.userId && a.pfp_type === pfp)
+      if (!existing && d.note) {
+        if (!assignGroups.has(key)) assignGroups.set(key, [])
+        assignGroups.get(key).push({
+          user_id: r.userId,
+          pfp_type: pfp,
+          year,
+          assigned_place_name: d.placeName,
+          assigned_institution_name: d.institutionName,
+          _fromNotes: true
+        })
+      }
+    })
+  })
+
+  // Build student lookup
+  const studentMap = new Map()
+  allRows.value.forEach(r => studentMap.set(r.userId, r))
+
+  // Build notes lookup
+  const notesMap = new Map()
+  rawNotes.value.forEach(n => notesMap.set(n.user_id, n))
+
+  // Build praticiens lookup from assignments
+  const pratMap = new Map()
+  rawAssignments.value.forEach(a => {
+    if (a.assigned_praticien_name) pratMap.set(a.assigned_praticien_id, a.assigned_praticien_name)
+  })
+
+  // PFP label mapping for sheet names
+  const pfpSheetLabels = { 'PFP1A': 'PFP 1A', 'PFP1B': 'PFP 1B', 'PFP2': 'PFP 2', 'PFP3': 'PFP 3', 'PFP4': 'PFP 4' }
+
+  // Sort keys for consistent ordering
+  const sortedKeys = [...assignGroups.keys()].sort((a, b) => {
+    const [pfpA, yearA] = a.split('__')
+    const [pfpB, yearB] = b.split('__')
+    if (yearA !== yearB) return yearA.localeCompare(yearB)
+    return pfpTypes.indexOf(pfpA) - pfpTypes.indexOf(pfpB)
+  })
+
+  sortedKeys.forEach(groupKey => {
+    const [pfpType, year] = groupKey.split('__')
+    const assignments = assignGroups.get(groupKey)
+    if (!assignments || assignments.length === 0) return
+
+    // Determine cohort from the students in this group
+    const cohortSet = new Set()
+    assignments.forEach(a => {
+      const s = studentMap.get(a.user_id)
+      if (s?.classe) cohortSet.add(s.classe)
+    })
+    const cohortLabel = cohortSet.size === 1 ? [...cohortSet][0] : year
+
+    const sheetName = `${pfpSheetLabels[pfpType] || pfpType} - ${cohortLabel}`.substring(0, 31)
+    // Avoid duplicate sheet names
+    const existingNames = wb.worksheets.map(w => w.name)
+    let finalName = sheetName
+    let counter = 2
+    while (existingNames.includes(finalName)) {
+      finalName = `${sheetName.substring(0, 28)} ${counter}`
+      counter++
+    }
+
+    const wsPFP = wb.addWorksheet(finalName)
+
+    // Row 1: title
+    wsPFP.columns = [
+      { header: 'Institution', key: 'institution', width: 30 },
+      { header: 'Domaine d\'expertise', key: 'domaine', width: 22 },
+      { header: 'Nom étudiant·es', key: 'nom', width: 16 },
+      { header: 'Prénom étudiant·es', key: 'prenom', width: 14 },
+      { header: 'PF', key: 'pf', width: 22 },
+      { header: 'Formateur·trice HES', key: 'formateurHES', width: 22 },
+      { header: 'Signature CPT présentiel', key: 'sigPresentiel', width: 18 },
+      { header: 'Signature CPT distance', key: 'sigDistance', width: 18 },
+      { header: 'Particularités', key: 'particularites', width: 18 },
+      { header: 'Absences en jours', key: 'absences', width: 14 },
+      { header: 'Notes', key: 'notes', width: 8 }
+    ]
+
+    // Row 1: merged title
+    wsPFP.mergeCells(1, 1, 1, 11)
+    const titleCell = wsPFP.getCell(1, 1)
+    const pfpLabel = pfpSheetLabels[pfpType] || pfpType
+    titleCell.value = `Répartition ${cohortLabel} - ${pfpLabel} - Places de stages ${year}`
+    titleCell.font = { bold: true, size: 11, color: { argb: COL_WHITE } }
+    titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: pfpColors[pfpType] || COL_BLUE } }
+    titleCell.alignment = { horizontal: 'center', vertical: 'middle' }
+    wsPFP.getRow(1).height = 28
+
+    // Row 2: headers
+    const hdrRow = wsPFP.getRow(2)
+    hdrRow.values = ['Institution', 'Domaine d\'expertise', 'Nom étudiant·es', 'Prénom étudiant·es', 'PF', 'Formateur·trice HES', 'Signature CPT présentiel', 'Signature CPT distance', 'Particularités', 'Absences en jours', 'Notes']
+    styleHeaderRow(wsPFP, 2, 11)
+
+    // Sort assignments by institution then student name
+    const sorted = [...assignments].sort((a, b) => {
+      const instA = a.assigned_institution_name || a.assigned_place_name || ''
+      const instB = b.assigned_institution_name || b.assigned_place_name || ''
+      if (instA !== instB) return instA.localeCompare(instB)
+      const sA = studentMap.get(a.user_id)
+      const sB = studentMap.get(b.user_id)
+      return (sA?.nom || '').localeCompare(sB?.nom || '')
+    })
+
+    sorted.forEach((a, idx) => {
+      const student = studentMap.get(a.user_id)
+      const noteData = notesMap.get(a.user_id)
+      const noteKey = pfpNoteKeys[pfpType]
+      const note = noteData?.[noteKey] || ''
+      const absences = Number(noteData?.[noteKey + '_absences']) || ''
+      const remarques = noteData?.[noteKey + '_remarques'] || ''
+
+      // Get suivi cas particulier
+      const suivi = rawSuivis.value.find(s => s.user_id === a.user_id && s.pfp_field === noteKey)
+      const particularites = suivi ? `${suivi.couleur || ''}${suivi.commentaire ? ': ' + suivi.commentaire : ''}` : remarques
+
+      const row = wsPFP.addRow({
+        institution: a.assigned_institution_name || a.assigned_place_name || '',
+        domaine: a.assigned_domaine || '',
+        nom: student?.nom || '',
+        prenom: student?.prenom || '',
+        pf: a.assigned_praticien_name || '',
+        formateurHES: a.repondant_hes_name || '',
+        sigPresentiel: '',
+        sigDistance: '',
+        particularites,
+        absences,
+        notes: hasGrade(note) ? note : ''
+      })
+      row.eachCell({ includeEmpty: true }, (cell) => styleDataCell(cell, idx % 2 === 0))
+
+      // Color the note
+      const noteCell = row.getCell(11)
+      const n = String(note).trim().toUpperCase()
+      if (n === 'F') noteCell.font = { bold: true, size: 9, color: { argb: COL_RED_TEXT } }
+      else if (['A', 'B', 'C', 'D', 'E'].includes(n)) noteCell.font = { bold: true, size: 9, color: { argb: COL_GREEN_TEXT } }
+
+      // Color absences
+      const absCell = row.getCell(10)
+      if (Number(absences) > 0) absCell.font = { bold: true, size: 9, color: { argb: COL_ORANGE_TEXT } }
+    })
+
+    wsPFP.views = [{ state: 'frozen', xSplit: 1, ySplit: 2 }]
+  })
+
+  // ════════════════════════════════════════════
+  // LAST SHEET: Vue d'ensemble (original flat export)
+  // ════════════════════════════════════════════
+  const wsVE = wb.addWorksheet('Vue d\'ensemble FP')
   const pfpSubCols = ['Place', 'Institution', 'Praticien', 'Note', 'Rattrap.', 'Statut', 'Attribution', 'Abs.', 'Remarques', 'Cas part.']
   const pfpSubCount = pfpSubCols.length
 
-  // --- Build columns ---
   const baseCols = [
     { header: 'Nom', key: 'nom', width: 16 },
     { header: 'Prénom', key: 'prenom', width: 14 },
     { header: 'Classe', key: 'classe', width: 10 }
   ]
-
   const allCols = [...baseCols]
   pfpTypes.forEach(pfp => {
     pfpSubCols.forEach(sub => {
       allCols.push({ header: `${pfp} ${sub}`, key: `${pfp}_${sub}`, width: sub === 'Place' ? 22 : sub === 'Institution' ? 20 : sub === 'Praticien' ? 18 : sub === 'Remarques' ? 20 : sub === 'Cas part.' ? 14 : 10 })
     })
   })
+  wsVE.columns = allCols
 
-  ws.columns = allCols
-
-  // --- Row 1: PFP group headers (merged) ---
-  const groupRow = ws.getRow(1)
+  // Row 1: PFP group headers
+  const groupRow = wsVE.getRow(1)
   groupRow.height = 28
-  // Base columns: merge cells 1-3
-  ws.mergeCells(1, 1, 1, 3)
-  const infoCell = ws.getCell(1, 1)
+  wsVE.mergeCells(1, 1, 1, 3)
+  const infoCell = wsVE.getCell(1, 1)
   infoCell.value = 'INFORMATIONS ÉTUDIANT'
   infoCell.font = { bold: true, color: { argb: COL_WHITE }, size: 11 }
   infoCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COL_BLUE } }
   infoCell.alignment = { horizontal: 'center', vertical: 'middle' }
-  infoCell.border = { bottom: { style: 'medium', color: { argb: COL_BLUE } } }
-
-  // PFP group headers
-  const pfpColors = {
-    'PFP1A': 'FF1565C0',
-    'PFP1B': 'FF1976D2',
-    'PFP2': 'FFE65100',
-    'PFP3': 'FF2E7D32',
-    'PFP4': 'FF6A1B9A'
-  }
 
   pfpTypes.forEach((pfp, idx) => {
     const startCol = 4 + idx * pfpSubCount
     const endCol = startCol + pfpSubCount - 1
-    ws.mergeCells(1, startCol, 1, endCol)
-    const cell = ws.getCell(1, startCol)
+    wsVE.mergeCells(1, startCol, 1, endCol)
+    const cell = wsVE.getCell(1, startCol)
     cell.value = pfp
     cell.font = { bold: true, color: { argb: COL_WHITE }, size: 12 }
     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: pfpColors[pfp] } }
     cell.alignment = { horizontal: 'center', vertical: 'middle' }
-    cell.border = { bottom: { style: 'medium', color: { argb: pfpColors[pfp] } } }
   })
 
-  // --- Row 2: Sub-column headers ---
-  const headerRow = ws.getRow(2)
+  // Row 2: sub-headers
+  const headerRow = wsVE.getRow(2)
   headerRow.height = 22
   headerRow.values = allCols.map(c => {
     const parts = c.header.split(' ')
     if (parts.length > 1 && pfpTypes.includes(parts[0])) return parts.slice(1).join(' ')
     return c.header
   })
-
-  headerRow.eachCell((cell, colNumber) => {
+  headerRow.eachCell((cell) => {
     cell.font = { bold: true, size: 9, color: { argb: 'FF333333' } }
     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0E0E0' } }
     cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
-    cell.border = {
-      bottom: { style: 'thin', color: { argb: 'FF999999' } },
-      right: { style: 'hair', color: { argb: 'FFCCCCCC' } }
-    }
+    cell.border = { bottom: { style: 'thin', color: { argb: 'FF999999' } }, right: { style: 'hair', color: { argb: 'FFCCCCCC' } } }
   })
 
-  // --- Data rows ---
+  // Data rows
   rows.forEach((r, rowIndex) => {
     const rowData = { nom: r.nom, prenom: r.prenom, classe: r.classe }
-
     pfpTypes.forEach(pfp => {
       const d = r[pfp] || {}
       rowData[`${pfp}_Place`] = d.placeName || ''
@@ -777,30 +1197,23 @@ const exportXLSX = async () => {
       rowData[`${pfp}_Cas part.`] = (d.casColor && d.casColor !== 'blanc') ? `${d.casColor}${d.casComment ? ': ' + d.casComment : ''}` : ''
     })
 
-    const excelRow = ws.addRow(rowData)
+    const excelRow = wsVE.addRow(rowData)
     const isEven = rowIndex % 2 === 0
     const bgColor = isEven ? COL_WHITE : COL_LIGHT_GRAY
 
-    excelRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+    excelRow.eachCell({ includeEmpty: true }, (cell) => {
       cell.font = { size: 9 }
       cell.alignment = { vertical: 'middle', wrapText: true }
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bgColor } }
-      cell.border = {
-        bottom: { style: 'hair', color: { argb: 'FFE0E0E0' } },
-        right: { style: 'hair', color: { argb: 'FFE0E0E0' } }
-      }
+      cell.border = { bottom: { style: 'hair', color: { argb: 'FFE0E0E0' } }, right: { style: 'hair', color: { argb: 'FFE0E0E0' } } }
     })
 
-    // Style base columns
     excelRow.getCell(1).font = { bold: true, size: 9 }
     excelRow.getCell(2).font = { bold: true, size: 9 }
 
-    // Style PFP sub-columns
     pfpTypes.forEach((pfp, pfpIdx) => {
       const baseCol = 4 + pfpIdx * pfpSubCount
       const d = r[pfp] || {}
-
-      // Background tint per PFP status
       let pfpBg = bgColor
       if (d.statut === 'Réussi') pfpBg = COL_LIGHT_GREEN
       else if (d.statut === 'Échec' || d.statut === 'Arrêt') pfpBg = COL_LIGHT_RED
@@ -808,65 +1221,50 @@ const exportXLSX = async () => {
       else if (d.statut === 'Brouillon') pfpBg = COL_LIGHT_BLUE
 
       for (let i = 0; i < pfpSubCount; i++) {
-        const cell = excelRow.getCell(baseCol + i)
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: pfpBg } }
+        excelRow.getCell(baseCol + i).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: pfpBg } }
       }
 
-      // Note color
       const noteCell = excelRow.getCell(baseCol + 3)
       if (d.note) {
         const n = String(d.note).trim().toUpperCase()
         if (n === 'F') noteCell.font = { bold: true, size: 9, color: { argb: COL_RED_TEXT } }
         else if (['A', 'B', 'C', 'D', 'E'].includes(n)) noteCell.font = { bold: true, size: 9, color: { argb: COL_GREEN_TEXT } }
       }
-
-      // Retake color
       const retakeCell = excelRow.getCell(baseCol + 4)
       if (d.noteRetake) {
         const n = String(d.noteRetake).trim().toUpperCase()
         if (n === 'F') retakeCell.font = { bold: true, size: 9, color: { argb: COL_RED_TEXT } }
         else if (['A', 'B', 'C', 'D', 'E'].includes(n)) retakeCell.font = { bold: true, size: 9, color: { argb: COL_GREEN_TEXT } }
       }
-
-      // Statut color
       const statutCell = excelRow.getCell(baseCol + 5)
       if (d.statut === 'Réussi') statutCell.font = { bold: true, size: 9, color: { argb: COL_GREEN_TEXT } }
       else if (d.statut === 'Échec' || d.statut === 'Arrêt') statutCell.font = { bold: true, size: 9, color: { argb: COL_RED_TEXT } }
       else if (d.statut === 'En cours' || d.statut === 'Publié') statutCell.font = { bold: true, size: 9, color: { argb: COL_ORANGE_TEXT } }
 
-      // Absences color
-      const absCell = excelRow.getCell(baseCol + 7)
-      if (d.absences > 0) absCell.font = { bold: true, size: 9, color: { argb: COL_ORANGE_TEXT } }
+      if (d.absences > 0) excelRow.getCell(baseCol + 7).font = { bold: true, size: 9, color: { argb: COL_ORANGE_TEXT } }
 
-      // Separator border on last sub-col of each PFP
-      const lastCell = excelRow.getCell(baseCol + pfpSubCount - 1)
-      lastCell.border = {
-        ...lastCell.border,
+      excelRow.getCell(baseCol + pfpSubCount - 1).border = {
+        bottom: { style: 'hair', color: { argb: 'FFE0E0E0' } },
         right: { style: 'thin', color: { argb: 'FF999999' } }
       }
     })
   })
 
-  // --- Separator borders on header row 2 ---
   pfpTypes.forEach((pfp, pfpIdx) => {
     const lastCol = 3 + (pfpIdx + 1) * pfpSubCount
-    const cell2 = headerRow.getCell(lastCol)
-    cell2.border = { ...cell2.border, right: { style: 'thin', color: { argb: 'FF999999' } } }
+    headerRow.getCell(lastCol).border = { bottom: { style: 'thin', color: { argb: 'FF999999' } }, right: { style: 'thin', color: { argb: 'FF999999' } } }
   })
 
-  // --- Freeze panes ---
-  ws.views = [{ state: 'frozen', xSplit: 3, ySplit: 2 }]
+  wsVE.views = [{ state: 'frozen', xSplit: 3, ySplit: 2 }]
+  wsVE.autoFilter = { from: { row: 2, column: 1 }, to: { row: 2 + rows.length, column: allCols.length } }
 
-  // --- Auto-filter ---
-  ws.autoFilter = { from: { row: 2, column: 1 }, to: { row: 2 + rows.length, column: allCols.length } }
-
-  // --- Download ---
+  // ── Download ──
   const buffer = await wb.xlsx.writeBuffer()
   const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
-  link.download = `vue-ensemble-fp-${new Date().toISOString().slice(0, 10)}.xlsx`
+  link.download = `Base-donnees-FP-${new Date().toISOString().slice(0, 10)}.xlsx`
   link.click()
   URL.revokeObjectURL(url)
 }
