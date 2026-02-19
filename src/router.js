@@ -227,6 +227,7 @@ const PFPDetails = () => import('@/components/admin/details/PFPDetails.vue');
 // ========================================
 const VotationView = () => import('@/views/admin/votations/VotationView.vue');
 const VotationViewPFP1B = () => import('@/views/admin/votations/VotationViewPFP1B.vue');
+const VotationGenericView = () => import('@/views/admin/votations/VotationGenericView.vue');
 const VotationPreview = () => import('@/components/admin/details/Votation_preview.vue');
 const VotationPrioritaire = () => import('@/components/admin/details/VotationPrioritaire.vue');
 const VotationManagementView = () => import('@/views/admin/votations/VotationManagementView.vue');
@@ -587,97 +588,26 @@ const routes = [
   // ========================================
   // VOTATIONS & GESTION
   // ========================================
+  // Route générique — fonctionne pour tous les PFP (PFP1A, PFP1B, PFP2, PFP3, PFP4)
+  {
+    path: '/votation/:pfpType',
+    component: VotationGenericView,
+    name: 'VotationGeneric',
+    meta: { requiresAuth: true },
+    props: true
+  },
+  // Routes legacy — redirigent vers le composant générique
   { 
     path: '/votation', 
-    component: VotationView, 
+    component: VotationGenericView, 
     name: 'VotationView', 
-    meta: { requiresAuth: true, pfpRequired: '' },
-    beforeEnter: async (to, from, next) => {
-      const userStore = useUserStore();
-      
-      // Attendre que le profil soit chargé si nécessaire
-      if (!userStore.profile && userStore.user) {
-        await userStore.fetchProfile();
-      }
-      
-      const profile = userStore.profile;
-      
-      
-      // Vérifier si l'utilisateur est PFP1A ou PFP1B (accès BLOQUÉ)
-      const isPfp1a = 
-        profile?.pfp1a === true || 
-        profile?.pfp1a === 1 || 
-        profile?.pfp === 'PFP1A' || 
-        profile?.pfp_cohort === 'PFP1A' ||
-        profile?.cohort === 'PFP1A';
-      
-      const isPfp1b = 
-        profile?.pfp1b === true || 
-        profile?.pfp1b === 1 || 
-        profile?.pfp === 'PFP1B' || 
-        profile?.pfp_cohort === 'PFP1B' ||
-        profile?.cohort === 'PFP1B';
-      
-      
-      // BLOQUER l'accès aux cohortes PFP1A et PFP1B
-      if (isPfp1a || isPfp1b) {
-        console.warn('❌ Accès refusé à la votation - Cohorte bloquée:', profile?.pfp || profile?.pfp_cohort || profile?.cohort || 'non défini');
-        sessionStorage.setItem('routeError', JSON.stringify({
-          message: 'Accès refusé',
-          detail: 'Les cohortes PFP1A et PFP1B n\'ont pas accès à cette page de votation.',
-          type: 'pfp_access_denied'
-        }));
-        next({ name: 'DashboardView', replace: true });
-      } else {
-        next();
-      }
-    }
+    meta: { requiresAuth: true }
   },
   { 
     path: '/votation_pfp1b', 
-    component: VotationViewPFP1B, 
+    component: VotationGenericView, 
     name: 'VotationViewPFP1B', 
-    meta: { requiresAuth: true, pfpRequired: '' },
-    beforeEnter: async (to, from, next) => {
-      const userStore = useUserStore();
-      
-      // Attendre que le profil soit chargé si nécessaire
-      if (!userStore.profile && userStore.user) {
-        await userStore.fetchProfile();
-      }
-      
-      const profile = userStore.profile;
-      
-      
-      // Vérifier si l'utilisateur est PFP1A ou PFP1B (accès BLOQUÉ)
-      const isPfp1a = 
-        profile?.pfp1a === true || 
-        profile?.pfp1a === 1 || 
-        profile?.pfp === 'PFP1A' || 
-        profile?.pfp_cohort === 'PFP1A' ||
-        profile?.cohort === 'PFP1A';
-      
-      const isPfp1b = 
-        profile?.pfp1b === true || 
-        profile?.pfp1b === 1 || 
-        profile?.pfp === 'PFP1B' || 
-        profile?.pfp_cohort === 'PFP1B' ||
-        profile?.cohort === 'PFP1B';
-      
-      
-      // BLOQUER l'accès aux cohortes PFP1A et PFP1B
-      if (isPfp1a || isPfp1b) {
-        console.warn('❌ Accès refusé à la votation PFP1B - Cohorte bloquée:', profile?.pfp || profile?.pfp_cohort || profile?.cohort || 'non défini');
-        sessionStorage.setItem('routeError', JSON.stringify({
-          message: 'Accès refusé',
-          detail: 'Les cohortes PFP1A et PFP1B n\'ont pas accès à cette page de votation.',
-          type: 'pfp_access_denied'
-        }));
-        next({ name: 'DashboardView', replace: true });
-      } else {
-        next();
-      }
-    }
+    meta: { requiresAuth: true }
   },
   { path: '/votation_preview', component: VotationPreview, name: 'VotationPreview', meta: { requiresAuth: true, need: 'admin' } },
   { path: '/votation_prioritaire', component: VotationPrioritaire, name: 'VotationPrioritaire', meta: { requiresAuth: true, need: 'prioritaire' } },

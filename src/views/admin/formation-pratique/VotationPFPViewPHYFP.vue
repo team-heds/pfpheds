@@ -8,18 +8,25 @@
           <div class="flex align-items-center gap-3">
             <i class="pi pi-users text-primary text-3xl"></i>
             <div>
-              <h1 class="text-2xl font-bold text-900 m-0">Votation Formation Pratique - BA25</h1>
-              <p class="text-600 m-0 mt-1">Gestion des choix de stages des étudiants BA25 (PFP1A et PFP1B)</p>
+              <h1 class="text-2xl font-bold text-900 m-0">Votation Formation Pratique</h1>
+              <p class="text-600 m-0 mt-1">
+                <span v-if="filterClasse">{{ filterClasse }} — {{ activeConfig?.pfps.join(', ') }}</span>
+                <span v-else>Sélectionnez une classe pour commencer</span>
+              </p>
             </div>
           </div>
           <div class="flex align-items-center gap-3 flex-wrap">
             <div class="flex flex-column gap-1">
-              <label class="font-semibold text-sm">Année <span class="text-red-500">*</span></label>
-              <Dropdown v-model="filterYear" :options="years" placeholder="Année" class="w-full md:w-7rem" />
+              <label class="font-semibold text-sm">Classe <span class="text-red-500">*</span></label>
+              <Dropdown v-model="filterClasse" :options="classeOptions" optionLabel="label" optionValue="value" placeholder="Classe" class="w-full md:w-12rem" />
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">PFP <span class="text-red-500">*</span></label>
-              <Dropdown v-model="filterPFP" :options="pfpTypes" optionLabel="label" optionValue="value" placeholder="PFP" class="w-full md:w-8rem" />
+              <Dropdown v-model="filterPFP" :options="pfpTypes" optionLabel="label" optionValue="value" placeholder="PFP" class="w-full md:w-8rem" :disabled="!filterClasse" />
+            </div>
+            <div class="flex flex-column gap-1">
+              <label class="font-semibold text-sm">Année <span class="text-red-500">*</span></label>
+              <Dropdown v-model="filterYear" :options="years" placeholder="Année" class="w-full md:w-7rem" :disabled="!filterClasse" />
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Recherche :</label>
@@ -31,24 +38,72 @@
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">&nbsp;</label>
               <div class="flex gap-2">
-                <Button icon="pi pi-download" label="Export" outlined class="p-button-sm" @click="exportData" />
-                <Button icon="pi pi-envelope" outlined class="p-button-sm" severity="warning" @click="remindAllNonVoters" v-tooltip="'Relancer non-votants'" />
-                <Button icon="pi pi-refresh" outlined class="p-button-sm" @click="loadData" v-tooltip="'Rafraîchir'" :loading="loading" />
+                <Button icon="pi pi-download" label="Export" outlined class="p-button-sm" @click="exportData" :disabled="!canShowResults" />
+                <Button icon="pi pi-envelope" outlined class="p-button-sm" severity="warning" @click="remindAllNonVoters" v-tooltip="'Relancer non-votants'" :disabled="!canShowResults" />
+                <Button icon="pi pi-refresh" outlined class="p-button-sm" @click="loadData" v-tooltip="'Rafraîchir'" :loading="loading" :disabled="!canShowResults" />
               </div>
             </div>
           </div>
         </div>
         <!-- Config banner inline -->
-        <div class="flex align-items-center gap-2 mt-3 pt-3 border-top-1 surface-border">
+        <div v-if="filterClasse" class="flex align-items-center gap-2 mt-3 pt-3 border-top-1 surface-border">
           <i class="pi pi-cog text-500 text-sm"></i>
-          <span class="text-sm text-600">Config active :</span>
-          <Tag value="BA25" severity="info" class="text-xs" />
-          <Tag v-for="pfp in ACTIVE_CONFIG.activePFPs" :key="pfp" :value="pfp" severity="success" class="text-xs" />
-          <Tag v-for="year in ACTIVE_CONFIG.activeYears" :key="year" :value="year" class="text-xs" />
+          <span class="text-sm text-600">Config :</span>
+          <Tag :value="filterClasse" severity="info" class="text-xs" />
+          <Tag v-if="filterPFP" :value="filterPFP" class="text-xs" :style="{ background: pfpColorMap[filterPFP] || '#6366F1', color: 'white' }" />
+          <Tag v-if="filterYear" :value="filterYear" class="text-xs" />
+          <span v-if="computedValidatedPlaces.length > 0" class="text-sm text-500 ml-2">
+            • <strong>{{ computedValidatedPlaces.length }}</strong> places validées
+            (<strong>{{ computedValidatedPlaces.reduce((s, p) => s + p.Capacity, 0) }}</strong> capacité totale)
+          </span>
           <span v-if="canShowResults" class="text-sm text-500 ml-auto">
             <i class="pi pi-info-circle mr-1"></i>
             <strong>{{ filteredVotationsList.length }}</strong> votes avec choix
           </span>
+        </div>
+      </div>
+
+      <!-- Panneau Session de Votation -->
+      <div v-if="canShowResults" class="surface-card p-4 border-round shadow-2 mb-3">
+        <div class="flex justify-content-between align-items-center flex-wrap gap-3">
+          <div class="flex align-items-center gap-3">
+            <div :class="['border-circle p-3', sessionIsOpen ? 'bg-green-100' : 'bg-orange-100']">
+              <i :class="['text-2xl', sessionIsOpen ? 'pi pi-lock-open text-green-500' : 'pi pi-lock text-orange-500']"></i>
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-900 m-0">
+                Session de votation — {{ filterPFP }} {{ filterYear }}
+              </h3>
+              <p v-if="sessionIsOpen" class="text-600 m-0 mt-1 text-sm">
+                <i class="pi pi-check-circle text-green-500 mr-1"></i>
+                Votation <strong>ouverte</strong> depuis le {{ formatDate(currentSession.opened_at) }}
+                — Les étudiants {{ filterClasse }} peuvent voter
+              </p>
+              <p v-else class="text-600 m-0 mt-1 text-sm">
+                <i class="pi pi-info-circle text-orange-500 mr-1"></i>
+                Votation <strong>fermée</strong> — Les étudiants ne peuvent pas voter pour le moment
+              </p>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <Button
+              v-if="!sessionIsOpen"
+              icon="pi pi-play"
+              label="Lancer la votation"
+              severity="success"
+              @click="showSessionDialog = true"
+              :loading="sessionLoading"
+            />
+            <Button
+              v-else
+              icon="pi pi-stop"
+              label="Fermer la votation"
+              severity="danger"
+              outlined
+              @click="closeVotation"
+              :loading="sessionLoading"
+            />
+          </div>
         </div>
       </div>
 
@@ -57,12 +112,12 @@
         <div class="col-6 md:col-3">
           <div class="surface-card p-3 border-round shadow-2">
             <div class="flex align-items-center gap-3">
-              <div class="border-circle p-3" style="background: #EEF2FF;">
-                <i class="pi pi-users text-2xl" style="color: #6366F1;"></i>
+              <div class="border-circle p-3 bg-indigo-100">
+                <i class="pi pi-users text-2xl text-indigo-500"></i>
               </div>
               <div>
                 <h3 class="text-2xl font-bold text-900 m-0">{{ stats.total }}</h3>
-                <p class="text-600 m-0 text-sm">Total BA25</p>
+                <p class="text-600 m-0 text-sm">Total {{ filterClasse || '—' }}</p>
               </div>
             </div>
           </div>
@@ -70,8 +125,8 @@
         <div class="col-6 md:col-3">
           <div class="surface-card p-3 border-round shadow-2">
             <div class="flex align-items-center gap-3">
-              <div class="border-circle p-3" style="background: #ECFDF5;">
-                <i class="pi pi-check-circle text-2xl" style="color: #10B981;"></i>
+              <div class="border-circle p-3 bg-green-100">
+                <i class="pi pi-check-circle text-2xl text-green-500"></i>
               </div>
               <div>
                 <h3 class="text-2xl font-bold text-900 m-0">{{ stats.completed }}</h3>
@@ -83,8 +138,8 @@
         <div class="col-6 md:col-3">
           <div class="surface-card p-3 border-round shadow-2">
             <div class="flex align-items-center gap-3">
-              <div class="border-circle p-3" style="background: #FFF7ED;">
-                <i class="pi pi-hourglass text-2xl" style="color: #F59E0B;"></i>
+              <div class="border-circle p-3 bg-orange-100">
+                <i class="pi pi-hourglass text-2xl text-orange-500"></i>
               </div>
               <div>
                 <h3 class="text-2xl font-bold text-900 m-0">{{ stats.pending }}</h3>
@@ -96,8 +151,8 @@
         <div class="col-6 md:col-3">
           <div class="surface-card p-3 border-round shadow-2">
             <div class="flex align-items-center gap-3">
-              <div class="border-circle p-3" style="background: #FEF2F2;">
-                <i class="pi pi-times-circle text-2xl" style="color: #EF4444;"></i>
+              <div class="border-circle p-3 bg-red-100">
+                <i class="pi pi-times-circle text-2xl text-red-500"></i>
               </div>
               <div>
                 <h3 class="text-2xl font-bold text-900 m-0">{{ stats.incomplete }}</h3>
@@ -118,11 +173,11 @@
               <Tag :value="`${algorithmResults.length} attributions`" severity="success" class="ml-2" />
             </div>
             <div v-if="algorithmStats" class="flex gap-4 flex-wrap">
-              <span class="text-sm text-600"><i class="pi pi-users mr-1" style="color: #10B981;"></i> <strong>{{ algorithmStats.totalStudents || 0 }}</strong> étudiants</span>
-              <span class="text-sm text-600"><i class="pi pi-star mr-1" style="color: #6366F1;"></i> <strong>{{ algorithmStats.firstChoiceCount || 0 }}</strong> en 1er choix</span>
-              <span v-if="algorithmStats.randomAssignmentCount > 0" class="text-sm text-600"><i class="pi pi-question-circle mr-1" style="color: #EF4444;"></i> <strong>{{ algorithmStats.randomAssignmentCount || 0 }}</strong> aléatoires</span>
-              <span class="text-sm text-600"><i class="pi pi-building mr-1" style="color: #8B5CF6;"></i> <strong>{{ algorithmStats.placesUsed || 0 }}</strong> places</span>
-              <span class="text-sm text-600"><i class="pi pi-chart-line mr-1" style="color: #F59E0B;"></i> Rang moyen: <strong>{{ algorithmStats.averageRank || '0' }}</strong></span>
+              <span class="text-sm text-600"><i class="pi pi-users mr-1 text-green-500"></i> <strong>{{ algorithmStats.totalStudents || 0 }}</strong> étudiants</span>
+              <span class="text-sm text-600"><i class="pi pi-star mr-1 text-indigo-500"></i> <strong>{{ algorithmStats.firstChoiceCount || 0 }}</strong> en 1er choix</span>
+              <span v-if="algorithmStats.randomAssignmentCount > 0" class="text-sm text-600"><i class="pi pi-question-circle mr-1 text-red-500"></i> <strong>{{ algorithmStats.randomAssignmentCount || 0 }}</strong> aléatoires</span>
+              <span class="text-sm text-600"><i class="pi pi-building mr-1 text-purple-500"></i> <strong>{{ algorithmStats.placesUsed || 0 }}</strong> places</span>
+              <span class="text-sm text-600"><i class="pi pi-chart-line mr-1 text-orange-500"></i> Rang moyen: <strong>{{ algorithmStats.averageRank || '0' }}</strong></span>
             </div>
           </div>
           <Button icon="pi pi-file-excel" label="Exporter" size="small" severity="success" outlined @click="exportResults" />
@@ -180,16 +235,60 @@
       <!-- Message si sélection incomplète -->
       <div v-if="!canShowResults" class="surface-card p-4 border-round shadow-2 mb-4">
         <div class="flex align-items-center gap-3">
-          <div class="border-circle p-3" style="background: #EEF2FF;">
-            <i class="pi pi-info-circle text-2xl" style="color: #6366F1;"></i>
+          <div class="border-circle p-3 bg-indigo-100">
+            <i class="pi pi-info-circle text-2xl text-indigo-500"></i>
           </div>
           <div>
             <h4 class="m-0 text-900 font-bold">Sélection requise</h4>
             <p class="m-0 mt-1 text-600">
-              Veuillez sélectionner une <strong>année</strong> et un <strong>PFP</strong> pour afficher les résultats des votations.
+              Veuillez sélectionner une <strong>classe</strong>, un <strong>PFP</strong> et une <strong>année</strong> pour afficher les résultats des votations.
             </p>
           </div>
         </div>
+      </div>
+
+      <!-- Places validées pour le PFP sélectionné -->
+      <div v-if="canShowResults && computedValidatedPlaces.length > 0" class="surface-card p-4 border-round shadow-2 mb-3">
+        <div class="flex justify-content-between align-items-center mb-3">
+          <div class="flex align-items-center gap-2">
+            <i class="pi pi-building text-xl text-primary"></i>
+            <h3 class="text-lg font-bold text-900 m-0">Places validées — {{ filterPFP }} {{ filterYear }}</h3>
+            <Tag :value="`${computedValidatedPlaces.length} places`" class="ml-2" :style="{ background: pfpColorMap[filterPFP] || '#6366F1', color: 'white' }" />
+            <Tag :value="`${computedValidatedPlaces.reduce((s, p) => s + p.Capacity, 0)} places disponibles`" severity="success" class="ml-1" />
+          </div>
+        </div>
+        <DataTable
+          :value="computedValidatedPlaces"
+          responsiveLayout="scroll"
+          :paginator="computedValidatedPlaces.length > 15"
+          :rows="15"
+          stripedRows
+          class="p-datatable-sm"
+        >
+          <Column field="InstitutionName" header="Institution" sortable :style="{ minWidth: '200px' }">
+            <template #body="slotProps">
+              <div class="flex align-items-center gap-2">
+                <i class="pi pi-building text-primary"></i>
+                <span class="font-medium text-900">{{ slotProps.data.InstitutionName }}</span>
+              </div>
+            </template>
+          </Column>
+          <Column field="NomPlace" header="Place" sortable :style="{ minWidth: '200px' }">
+            <template #body="slotProps">
+              <span class="font-medium text-900">{{ slotProps.data.NomPlace }}</span>
+            </template>
+          </Column>
+          <Column field="InstitutionCategory" header="Catégorie" sortable :style="{ minWidth: '120px' }">
+            <template #body="slotProps">
+              <Tag :value="slotProps.data.InstitutionCategory" severity="info" />
+            </template>
+          </Column>
+          <Column field="Capacity" header="Capacité" sortable :style="{ width: '120px', textAlign: 'center' }">
+            <template #body="slotProps">
+              <Tag :value="slotProps.data.Capacity" severity="success" rounded />
+            </template>
+          </Column>
+        </DataTable>
       </div>
 
       <!-- Onglets -->
@@ -197,12 +296,12 @@
         <TabView v-model:activeIndex="activeTab">
           <!-- Onglet 1: Vue Étudiants -->
           <TabPanel header="Vue par Étudiants">
-            <div v-if="allVotes.length === 0" class="surface-card border-round p-4 mb-3" style="background: #FFFBEB; border: 1px solid #FDE68A;">
+            <div v-if="allVotes.length === 0" class="border-round p-4 mb-3 bg-yellow-100 border-1 border-yellow-500">
               <div class="flex align-items-center gap-3">
-                <i class="pi pi-exclamation-triangle text-2xl" style="color: #F59E0B;"></i>
+                <i class="pi pi-exclamation-triangle text-2xl text-yellow-600"></i>
                 <div>
-                  <h4 class="m-0 font-bold" style="color: #92400E;">Aucun vote chargé</h4>
-                  <p class="m-0 mt-1 text-sm" style="color: #78350F;">
+                  <h4 class="m-0 font-bold text-yellow-900">Aucun vote chargé</h4>
+                  <p class="m-0 mt-1 text-sm text-yellow-800">
                     Vérifiez les permissions RLS sur la table <code>student_votes</code>.
                   </p>
                 </div>
@@ -224,7 +323,7 @@
             >
               <template #header>
                 <div class="flex justify-content-between align-items-center">
-                  <span class="text-lg text-900 font-bold">Votes des Étudiants BA25 ({{ filteredVotationsList.length }})</span>
+                  <span class="text-lg text-900 font-bold">Votes des Étudiants {{ filterClasse }} ({{ filteredVotationsList.length }})</span>
                   <Button icon="pi pi-sort-alpha-down" label="Trier A-Z" outlined size="small" @click="sortAlphabetically" />
                 </div>
               </template>
@@ -250,12 +349,12 @@
               <Column field="year" header="Année" sortable :style="{ minWidth: '80px' }"></Column>
               <Column header="Choix 1" :style="{ minWidth: '250px' }">
                 <template #body="slotProps">
-                  <div v-if="slotProps.data.choix1" class="choice-cell p-2 border-round" style="background: #EFF6FF; border-left: 4px solid #3B82F6;">
+                  <div v-if="slotProps.data.choix1" class="choice-cell p-2 border-round bg-blue-50 border-left-3 border-blue-500">
                     <div class="flex align-items-start gap-2">
-                      <span class="choice-badge" style="background: #3B82F6;">1</span>
+                      <span class="choice-badge bg-blue-500">1</span>
                       <div class="flex-1">
-                        <div class="font-semibold text-sm" style="color: #1E293B;">{{ slotProps.data.choix1 }}</div>
-                        <div v-if="slotProps.data.choix1Institution" class="text-xs mt-1" style="color: #64748B;">{{ slotProps.data.choix1Institution }}</div>
+                        <div class="font-semibold text-sm text-900">{{ slotProps.data.choix1 }}</div>
+                        <div v-if="slotProps.data.choix1Institution" class="text-xs mt-1 text-600">{{ slotProps.data.choix1Institution }}</div>
                         <div class="flex gap-1 mt-1" v-if="slotProps.data.choice1PlaceId">
                           <Tag :value="getVoteCountForPlace(slotProps.data.choice1PlaceId).top1" severity="success" class="text-xs px-2 py-0" />
                         </div>
@@ -267,12 +366,12 @@
               </Column>
               <Column header="Choix 2" :style="{ minWidth: '250px' }">
                 <template #body="slotProps">
-                  <div v-if="slotProps.data.choix2" class="choice-cell p-2 border-round" style="background: #ECFEFF; border-left: 4px solid #06B6D4;">
+                  <div v-if="slotProps.data.choix2" class="choice-cell p-2 border-round bg-cyan-50 border-left-3 border-cyan-500">
                     <div class="flex align-items-start gap-2">
-                      <span class="choice-badge" style="background: #06B6D4;">2</span>
+                      <span class="choice-badge bg-cyan-500">2</span>
                       <div class="flex-1">
-                        <div class="font-semibold text-sm" style="color: #1E293B;">{{ slotProps.data.choix2 }}</div>
-                        <div v-if="slotProps.data.choix2Institution" class="text-xs mt-1" style="color: #64748B;">{{ slotProps.data.choix2Institution }}</div>
+                        <div class="font-semibold text-sm text-900">{{ slotProps.data.choix2 }}</div>
+                        <div v-if="slotProps.data.choix2Institution" class="text-xs mt-1 text-600">{{ slotProps.data.choix2Institution }}</div>
                         <div class="flex gap-1 mt-1" v-if="slotProps.data.choice2PlaceId">
                           <Tag :value="getVoteCountForPlace(slotProps.data.choice2PlaceId).top2" severity="info" class="text-xs px-2 py-0" />
                         </div>
@@ -284,12 +383,12 @@
               </Column>
               <Column header="Choix 3" :style="{ minWidth: '250px' }">
                 <template #body="slotProps">
-                  <div v-if="slotProps.data.choix3" class="choice-cell p-2 border-round" style="background: #FFF7ED; border-left: 4px solid #F59E0B;">
+                  <div v-if="slotProps.data.choix3" class="choice-cell p-2 border-round bg-orange-50 border-left-3 border-orange-500">
                     <div class="flex align-items-start gap-2">
-                      <span class="choice-badge" style="background: #F59E0B;">3</span>
+                      <span class="choice-badge bg-orange-500">3</span>
                       <div class="flex-1">
-                        <div class="font-semibold text-sm" style="color: #1E293B;">{{ slotProps.data.choix3 }}</div>
-                        <div v-if="slotProps.data.choix3Institution" class="text-xs mt-1" style="color: #64748B;">{{ slotProps.data.choix3Institution }}</div>
+                        <div class="font-semibold text-sm text-900">{{ slotProps.data.choix3 }}</div>
+                        <div v-if="slotProps.data.choix3Institution" class="text-xs mt-1 text-600">{{ slotProps.data.choix3Institution }}</div>
                         <div class="flex gap-1 mt-1" v-if="slotProps.data.choice3PlaceId">
                           <Tag :value="getVoteCountForPlace(slotProps.data.choice3PlaceId).top3" severity="warning" class="text-xs px-2 py-0" />
                         </div>
@@ -301,12 +400,12 @@
               </Column>
               <Column header="Choix 4" :style="{ minWidth: '250px' }">
                 <template #body="slotProps">
-                  <div v-if="slotProps.data.choix4" class="choice-cell p-2 border-round" style="background: #F8FAFC; border-left: 4px solid #8B5CF6;">
+                  <div v-if="slotProps.data.choix4" class="choice-cell p-2 border-round bg-purple-50 border-left-3 border-purple-500">
                     <div class="flex align-items-start gap-2">
-                      <span class="choice-badge" style="background: #8B5CF6;">4</span>
+                      <span class="choice-badge bg-purple-500">4</span>
                       <div class="flex-1">
-                        <div class="font-medium text-sm" style="color: #1E293B;">{{ slotProps.data.choix4 }}</div>
-                        <div v-if="slotProps.data.choix4Institution" class="text-xs mt-1" style="color: #64748B;">{{ slotProps.data.choix4Institution }}</div>
+                        <div class="font-medium text-sm text-900">{{ slotProps.data.choix4 }}</div>
+                        <div v-if="slotProps.data.choix4Institution" class="text-xs mt-1 text-600">{{ slotProps.data.choix4Institution }}</div>
                         <div class="flex gap-1 mt-1" v-if="slotProps.data.choice4PlaceId">
                           <Tag :value="getVoteCountForPlace(slotProps.data.choice4PlaceId).top4" class="text-xs px-2 py-0" />
                         </div>
@@ -318,12 +417,12 @@
               </Column>
               <Column header="Choix 5" :style="{ minWidth: '250px' }">
                 <template #body="slotProps">
-                  <div v-if="slotProps.data.choix5" class="choice-cell p-2 border-round" style="background: #F8FAFC; border-left: 4px solid #EC4899;">
+                  <div v-if="slotProps.data.choix5" class="choice-cell p-2 border-round bg-pink-50 border-left-3 border-pink-500">
                     <div class="flex align-items-start gap-2">
-                      <span class="choice-badge" style="background: #EC4899;">5</span>
+                      <span class="choice-badge bg-pink-500">5</span>
                       <div class="flex-1">
-                        <div class="font-medium text-sm" style="color: #1E293B;">{{ slotProps.data.choix5 }}</div>
-                        <div v-if="slotProps.data.choix5Institution" class="text-xs mt-1" style="color: #64748B;">{{ slotProps.data.choix5Institution }}</div>
+                        <div class="font-medium text-sm text-900">{{ slotProps.data.choix5 }}</div>
+                        <div v-if="slotProps.data.choix5Institution" class="text-xs mt-1 text-600">{{ slotProps.data.choix5Institution }}</div>
                         <div class="flex gap-1 mt-1" v-if="slotProps.data.choice5PlaceId">
                           <Tag :value="getVoteCountForPlace(slotProps.data.choice5PlaceId).top5" class="text-xs px-2 py-0" />
                         </div>
@@ -482,12 +581,12 @@
 
           <!-- Onglet 3: Attribution des Places (après algorithme) -->
           <TabPanel header="Attribution des Places" :disabled="placesWithAssignments.length === 0">
-            <div v-if="placesWithAssignments.length === 0" class="surface-card border-round p-4" style="background: #EEF2FF; border: 1px solid #C7D2FE;">
+            <div v-if="placesWithAssignments.length === 0" class="border-round p-4 bg-indigo-100 border-1 border-indigo-300">
               <div class="flex align-items-center gap-3">
-                <i class="pi pi-info-circle text-2xl" style="color: #6366F1;"></i>
+                <i class="pi pi-info-circle text-2xl text-indigo-500"></i>
                 <div>
-                  <h4 class="m-0 font-bold" style="color: #312E81;">Aucune attribution</h4>
-                  <p class="m-0 mt-1 text-sm" style="color: #4338CA;">Lancez l'algorithme d'attribution pour voir les résultats ici.</p>
+                  <h4 class="m-0 font-bold text-indigo-900">Aucune attribution</h4>
+                  <p class="m-0 mt-1 text-sm text-indigo-700">Lancez l'algorithme d'attribution pour voir les résultats ici.</p>
                 </div>
               </div>
             </div>
@@ -511,8 +610,8 @@
                   <div>
                     <span class="text-lg text-900 font-bold">Toutes les Places du {{ filterPFP }}</span>
                     <div class="text-sm text-600 mt-1">
-                      <strong style="color: #10B981;">{{ placesWithAssignments.filter(p => p.assignedCount > 0).length }}</strong> avec étudiants • 
-                      <strong style="color: #F59E0B;">{{ placesWithAssignments.filter(p => p.assignedCount === 0).length }}</strong> vides • 
+                      <strong class="text-green-500">{{ placesWithAssignments.filter(p => p.assignedCount > 0).length }}</strong> avec étudiants • 
+                      <strong class="text-orange-500">{{ placesWithAssignments.filter(p => p.assignedCount === 0).length }}</strong> vides • 
                       <strong>{{ placesWithAssignments.length }}</strong> au total
                     </div>
                   </div>
@@ -606,15 +705,15 @@
         </TabView>
 
         <!-- Bouton Algorithme -->
-        <div class="surface-card p-4 border-round shadow-2 mt-4" style="background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%); border: 1px solid #A7F3D0;">
+        <div class="surface-card p-4 border-round shadow-2 mt-4 bg-green-50 border-1 border-green-300">
           <div class="flex justify-content-between align-items-center flex-wrap gap-3">
             <div>
               <div class="flex align-items-center gap-2">
-                <i class="pi pi-play-circle text-xl" style="color: #059669;"></i>
-                <h3 class="text-lg font-bold m-0" style="color: #065F46;">Algorithme d'attribution</h3>
+                <i class="pi pi-play-circle text-xl text-green-600"></i>
+                <h3 class="text-lg font-bold m-0 text-green-900">Algorithme d'attribution</h3>
               </div>
-              <p class="m-0 mt-1 text-sm" style="color: #047857;">
-                Lancer l'algorithme pour {{ filterYear }} - {{ filterPFP }}
+              <p class="m-0 mt-1 text-sm text-green-700">
+                Lancer l'algorithme pour {{ filterClasse }} — {{ filterPFP }} {{ filterYear }}
                 <span v-if="filteredVotationsList.length > 0"> • <strong>{{ filteredVotationsList.length }}</strong> étudiants à traiter</span>
               </p>
             </div>
@@ -629,11 +728,45 @@
         </div>
       </div>
     </div>
+
+    <!-- Dialog de confirmation pour lancer la votation -->
+    <Dialog
+      v-model:visible="showSessionDialog"
+      modal
+      header="Lancer la votation"
+      :style="{ width: '500px' }"
+    >
+      <div class="flex flex-column gap-3">
+        <div class="flex align-items-center gap-3 p-3 border-round bg-green-50 border-1 border-green-300">
+          <i class="pi pi-play text-green-600 text-2xl"></i>
+          <div>
+            <p class="m-0 font-bold text-green-900">Ouvrir la votation {{ filterPFP }} {{ filterYear }}</p>
+            <p class="m-0 mt-1 text-sm text-green-700">Classe : {{ filterClasse }}</p>
+          </div>
+        </div>
+        <p class="text-600 m-0">
+          En lançant la votation, les étudiants de la classe <strong>{{ filterClasse }}</strong>
+          pourront accéder à la page de votation et soumettre leurs choix pour
+          <strong>{{ filterPFP }}</strong> — <strong>{{ filterYear }}</strong>.
+        </p>
+        <div class="flex align-items-center gap-2 p-2 border-round bg-blue-50 border-1 border-blue-300">
+          <i class="pi pi-info-circle text-blue-500"></i>
+          <span class="text-sm text-blue-700">
+            <strong>{{ computedValidatedPlaces.length }}</strong> places validées
+            (<strong>{{ computedValidatedPlaces.reduce((s, p) => s + p.Capacity, 0) }}</strong> capacité totale)
+          </span>
+        </div>
+      </div>
+      <template #footer>
+        <Button label="Annuler" severity="secondary" outlined @click="showSessionDialog = false" />
+        <Button label="Lancer la votation" icon="pi pi-play" severity="success" @click="openVotation" :loading="sessionLoading" />
+      </template>
+    </Dialog>
   </AdminLayout>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import Button from 'primevue/button'
@@ -649,53 +782,167 @@ import { supabase } from '@/supabase'
 import { getAllStudents } from '@/service/studentsService'
 import { usePlacesStore } from '@/stores/placesStore'
 import { useInstitutionsStore } from '@/stores/institutionsStore'
+import { useUserStore } from '@/stores/userStore'
 import votesBackendService from '@/stores/votesBackendService'
 import resultatVotationService from '@/stores/resultatVotationService'
+import votationSessionService from '@/service/votationSessionService'
+import Dialog from 'primevue/dialog'
+import ConfirmDialog from 'primevue/confirmdialog'
 
 const toast = useToast()
+const userStore = useUserStore()
 const loading = ref(false)
 const searchQuery = ref('')
 const filterPFP = ref(null)
 const filterYear = ref(null)
+const filterClasse = ref(null)
+
+// ============================================
+// SESSION DE VOTATION
+// ============================================
+const currentSession = ref(null)
+const showSessionDialog = ref(false)
+const sessionLoading = ref(false)
+
+const sessionIsOpen = computed(() => {
+  return currentSession.value && currentSession.value.status === 'open'
+})
+
+const loadCurrentSession = async () => {
+  if (!filterPFP.value || !filterYear.value) {
+    currentSession.value = null
+    return
+  }
+  try {
+    currentSession.value = await votationSessionService.getActiveSession(filterPFP.value, filterYear.value)
+  } catch (error) {
+    console.error('❌ Erreur chargement session:', error)
+    currentSession.value = null
+  }
+}
+
+const openVotation = async () => {
+  if (!filterClasse.value || !filterPFP.value || !filterYear.value) {
+    toast.add({ severity: 'warn', summary: 'Sélection incomplète', detail: 'Veuillez sélectionner une classe, un PFP et une année', life: 3000 })
+    return
+  }
+  sessionLoading.value = true
+  try {
+    const userId = userStore.user?.id || null
+    const session = await votationSessionService.openSession(
+      filterPFP.value,
+      filterYear.value,
+      filterClasse.value,
+      userId
+    )
+    currentSession.value = session
+    showSessionDialog.value = false
+    toast.add({
+      severity: 'success',
+      summary: 'Votation ouverte',
+      detail: `La votation ${filterPFP.value} ${filterYear.value} est maintenant ouverte pour les étudiants ${filterClasse.value}`,
+      life: 5000
+    })
+  } catch (error) {
+    console.error('❌ Erreur ouverture session:', error)
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible d\'ouvrir la votation: ' + error.message, life: 5000 })
+  } finally {
+    sessionLoading.value = false
+  }
+}
+
+const closeVotation = async () => {
+  if (!filterPFP.value || !filterYear.value) return
+  sessionLoading.value = true
+  try {
+    await votationSessionService.closeSession(filterPFP.value, filterYear.value)
+    currentSession.value = null
+    toast.add({
+      severity: 'info',
+      summary: 'Votation fermée',
+      detail: `La votation ${filterPFP.value} ${filterYear.value} est maintenant fermée`,
+      life: 5000
+    })
+  } catch (error) {
+    console.error('❌ Erreur fermeture session:', error)
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de fermer la votation: ' + error.message, life: 5000 })
+  } finally {
+    sessionLoading.value = false
+  }
+}
 const filterPlacesPFP = ref(null)
 const votationsList = ref([])
 const allStudents = ref([])
 const allVotes = ref([])
 const votesAggregation = ref({})
 const placesWithStats = ref([])
+const validatedPlaces = ref([])
 const activeTab = ref(0)
 const placesStore = usePlacesStore()
 const institutionsStore = useInstitutionsStore()
-const algorithmResults = ref([]) // Résultats de l'algorithme
-const algorithmStats = ref(null) // Statistiques de l'algorithme
-const placesWithAssignments = ref([]) // Places avec étudiants assignés
+const algorithmResults = ref([])
+const algorithmStats = ref(null)
+const placesWithAssignments = ref([])
 
 // ============================================
-// CONFIGURATION POUR BA25 - PFP1A et PFP1B
+// CONFIGURATION DYNAMIQUE - TOUTES LES CLASSES
 // ============================================
-const ACTIVE_CONFIG = {
-  // Classe ciblée
-  targetClass: 'BA25',
-  
-  // Années actives pour les votations
-  activeYears: ['2026'],
-  
-  // Types de PFP actifs pour BA25
-  activePFPs: ['PFP1A', 'PFP1B'],
-  
-  // Configuration complète
-  allPFPs: [
-    { label: 'PFP1A', value: 'PFP1A', active: true },
-    { label: 'PFP1B', value: 'PFP1B', active: true }
-  ]
+// 3 années d'études :
+//   1ère année → PFP1A, PFP1B
+//   2ème année → PFP2
+//   3ème année → PFP3, PFP4
+// Les classes BA changent chaque année : BA{année d'entrée}
+// Ex: en 2025-2026 → 1ère=BA25, 2ème=BA24, 3ème=BA23
+//     en 2026-2027 → 1ère=BA26, 2ème=BA25, 3ème=BA24
+
+const currentAcademicYear = new Date().getMonth() >= 8
+  ? new Date().getFullYear()   // Sept-Déc → année en cours
+  : new Date().getFullYear() - 1 // Jan-Août → année précédente
+
+const academicYearShort = currentAcademicYear % 100 // ex: 25
+
+const buildPfpConfig = () => {
+  const ba1 = `BA${academicYearShort}`      // 1ère année
+  const ba2 = `BA${academicYearShort - 1}`  // 2ème année
+  const ba3 = `BA${academicYearShort - 2}`  // 3ème année
+  const pfpYear = `${currentAcademicYear + 1}` // ex: '2026' pour 2025-2026
+
+  return {
+    [ba1]: { label: `${ba1} (1ère année)`, pfps: ['PFP1A', 'PFP1B'], years: [pfpYear] },
+    [ba2]: { label: `${ba2} (2ème année)`, pfps: ['PFP2'], years: [pfpYear] },
+    [ba3]: { label: `${ba3} (3ème année)`, pfps: ['PFP3', 'PFP4'], years: [pfpYear] }
+  }
 }
 
-// Filtrer pour n'afficher que les PFP actifs
-const pfpTypes = ref(
-  ACTIVE_CONFIG.allPFPs.filter(pfp => pfp.active)
-)
+const PFP_CONFIG = buildPfpConfig()
 
-const years = ref(ACTIVE_CONFIG.activeYears)
+const pfpColorMap = {
+  PFP1A: '#8B5CF6',
+  PFP1B: '#06B6D4',
+  PFP2: '#6366F1',
+  PFP3: '#EC4899',
+  PFP4: '#F59E0B'
+}
+
+const classeOptions = Object.keys(PFP_CONFIG).map(key => ({
+  label: PFP_CONFIG[key].label,
+  value: key
+}))
+
+const activeConfig = computed(() => {
+  if (!filterClasse.value) return null
+  return PFP_CONFIG[filterClasse.value] || null
+})
+
+const pfpTypes = computed(() => {
+  if (!activeConfig.value) return []
+  return activeConfig.value.pfps.map(p => ({ label: p, value: p }))
+})
+
+const years = computed(() => {
+  if (!activeConfig.value) return []
+  return activeConfig.value.years
+})
 
 const stats = ref({
   total: 0,
@@ -706,7 +953,45 @@ const stats = ref({
 
 // Computed property pour vérifier si on peut afficher les résultats
 const canShowResults = computed(() => {
-  return filterYear.value && filterPFP.value
+  return filterClasse.value && filterYear.value && filterPFP.value
+})
+
+// Computed: places validées pour le PFP/année sélectionnés
+const computedValidatedPlaces = computed(() => {
+  if (!filterPFP.value || !filterYear.value) return []
+  return validatedPlaces.value
+})
+
+// Watcher: quand la classe change, reset PFP et année, auto-sélectionner si un seul choix
+watch(filterClasse, (newVal) => {
+  filterPFP.value = null
+  filterYear.value = null
+  algorithmResults.value = []
+  algorithmStats.value = null
+  placesWithAssignments.value = []
+  votationsList.value = []
+  validatedPlaces.value = []
+
+  if (newVal && PFP_CONFIG[newVal]) {
+    const config = PFP_CONFIG[newVal]
+    // Auto-sélectionner l'année si une seule
+    if (config.years.length === 1) {
+      filterYear.value = config.years[0]
+    }
+    // Auto-sélectionner le PFP si un seul
+    if (config.pfps.length === 1) {
+      filterPFP.value = config.pfps[0]
+    }
+  }
+})
+
+// Watcher: quand PFP ou année change, charger les places validées, la session et les données
+watch([filterPFP, filterYear], async ([pfp, year]) => {
+  if (pfp && year && filterClasse.value) {
+    await loadCurrentSession()
+    await loadValidatedPlaces()
+    await loadData()
+  }
 })
 
 // Computed property pour filtrer les votations
@@ -842,7 +1127,7 @@ const startAlgorithm = async () => {
     toast.add({
       severity: 'info',
       summary: 'Algorithme en cours',
-      detail: `Traitement de ${filteredVotationsList.value.length} étudiants BA25...`,
+      detail: `Traitement de ${filteredVotationsList.value.length} étudiants ${filterClasse.value}...`,
       life: 5000
     })
 
@@ -1203,116 +1488,107 @@ const showStudentsForPlace = (place, rank) => {
   searchQuery.value = ''
 }
 
-const loadData = async () => {
-  loading.value = true
+const loadValidatedPlaces = async () => {
+  if (!filterPFP.value || !filterYear.value) return
   try {
-    // 1. Charger tous les étudiants et filtrer par BA25
-    console.log('📚 Chargement des étudiants BA25...')
+    await placesStore.fetchPlaces()
+    await institutionsStore.fetchInstitutions()
+
+    const institutionMap = new Map()
+    institutionsStore.institutions.forEach(inst => {
+      institutionMap.set(inst.InstitutionId, inst)
+    })
+
+    const pfp = filterPFP.value
+    const year = filterYear.value
+
+    validatedPlaces.value = placesStore.places
+      .map(place => {
+        const institution = institutionMap.get(place.InstitutionId)
+        let capacity = 0
+        if (place[pfp] && place[pfp][year]) {
+          capacity = parseInt(place[pfp][year])
+        }
+        if (!capacity || isNaN(capacity) || capacity < 1) return null
+
+        return {
+          PlaceId: place.PlaceId,
+          NomPlace: place.NomPlace,
+          InstitutionName: institution?.Name || 'Inconnu',
+          InstitutionCategory: institution?.Category || '-',
+          Capacity: capacity
+        }
+      })
+      .filter(Boolean)
+      .sort((a, b) => a.InstitutionName.localeCompare(b.InstitutionName))
+
+    console.log(`✅ ${validatedPlaces.value.length} places validées pour ${pfp} ${year}`)
+  } catch (error) {
+    console.error('❌ Erreur chargement places validées:', error)
+    validatedPlaces.value = []
+  }
+}
+
+const loadData = async () => {
+  if (!filterClasse.value || !filterPFP.value || !filterYear.value) return
+  loading.value = true
+  const targetClass = filterClasse.value
+  const config = PFP_CONFIG[targetClass]
+  if (!config) { loading.value = false; return }
+
+  try {
+    // 1. Charger les étudiants de la classe sélectionnée
     const allStudentsData = await getAllStudents()
     allStudents.value = allStudentsData.filter(student => {
-      // Gérer différentes conventions de nommage pour la classe
       const classe = student.Classe || student.classe || student.class || student.Class || ''
-      return classe === ACTIVE_CONFIG.targetClass
+      return classe === targetClass
     })
-    console.log(`✅ ${allStudents.value.length} étudiants BA25 chargés`)
-    
-    // Debug: Vérifier un échantillon d'étudiants
-    if (allStudents.value.length > 0) {
-      const sample = allStudents.value[0]
-      console.log('🔍 Échantillon étudiant (TOUS les champs):', sample)
-      console.log('🔍 Noms possibles:', {
-        'display_name': sample.display_name,
-        'Prenom': sample.Prenom,
-        'Nom': sample.Nom,
-        'forname': sample.forname,
-        'family_name': sample.family_name,
-        'email': sample.email,
-        'Mail': sample.Mail
-      })
-    }
+    console.log(`✅ ${allStudents.value.length} étudiants ${targetClass} chargés`)
     
     // 2. Charger les places
-    console.log('🏥 Chargement des places...')
     await placesStore.fetchPlaces()
     const placesMap = new Map()
     placesStore.places.forEach(place => {
       placesMap.set(place.PlaceId, place.NomPlace)
     })
-    console.log(`✅ ${placesMap.size} places chargées`)
 
     // 3. Charger les statistiques de votes
     await loadVoteStatistics()
 
     // 4. Charger tous les votes
-    console.log('🗳️ Chargement des votes...')
-    
     let { data: votes, error: votesError } = await supabase
       .from('student_votes')
       .select('*')
       .order('updated_at', { ascending: false })
 
-    if (votesError) {
-      console.error('❌ Erreur lors du chargement des votes:', votesError)
-      throw votesError
-    }
+    if (votesError) throw votesError
     
     allVotes.value = votes || []
-    console.log(`✅ ${allVotes.value.length} votes chargés`)
-    
-    if (allVotes.value.length === 0) {
-      console.warn('⚠️ ATTENTION: Aucun vote chargé !')
-      console.warn('⚠️ Vérifiez les permissions RLS sur la table student_votes')
-    }
 
-    // 5. Construire la liste des votations pour BA25
+    // 5. Construire la liste des votations
     const votationsMap = new Map()
 
-    // Ajouter les votes existants pour les étudiants BA25
-    allVotes.value.forEach((vote, index) => {
+    allVotes.value.forEach((vote) => {
       const student = allStudents.value.find(s => 
         s.id === vote.user_id || s.user_id === vote.user_id
       )
       
       const studentClasse = student ? (student.Classe || student.classe || student.class || student.Class) : null
       
-      if (student && studentClasse === ACTIVE_CONFIG.targetClass) {
+      if (student && studentClasse === targetClass) {
         let choices = []
         if (typeof vote.choices === 'string') {
-          try {
-            choices = JSON.parse(vote.choices)
-          } catch (e) {
-            console.error('Erreur parsing choices:', e)
-            choices = []
-          }
+          try { choices = JSON.parse(vote.choices) } catch (e) { choices = [] }
         } else if (Array.isArray(vote.choices)) {
           choices = vote.choices
         }
         
         const key = `${vote.user_id}-${vote.pfp_type}-${vote.year}`
         
-        if (index < 3) {
-          console.log(`🔍 Vote BA25 ${index + 1}:`, {
-            userId: vote.user_id,
-            student_ALL_FIELDS: student,
-            Nom: student.Nom,
-            nom: student.nom,
-            family_name: student.family_name,
-            Prenom: student.Prenom,
-            prenom: student.prenom,
-            forname: student.forname,
-            classe: student.Classe,
-            pfpType: vote.pfp_type,
-            year: vote.year,
-            choicesCount: choices.length
-          })
-        }
-        
         const getPlaceName = (choice) => {
           if (!choice) return null
           if (choice.placeName) return choice.placeName
-          if (choice.placeId && placesMap.has(choice.placeId)) {
-            return placesMap.get(choice.placeId)
-          }
+          if (choice.placeId && placesMap.has(choice.placeId)) return placesMap.get(choice.placeId)
           return null
         }
         
@@ -1348,9 +1624,9 @@ const loadData = async () => {
       }
     })
 
-    // Ajouter les étudiants BA25 qui n'ont pas encore voté
-    const relevantYears = ACTIVE_CONFIG.activeYears
-    const relevantPFPs = ACTIVE_CONFIG.activePFPs
+    // Ajouter les étudiants qui n'ont pas encore voté
+    const relevantPFPs = config.pfps
+    const relevantYears = config.years
 
     allStudents.value.forEach(student => {
       relevantPFPs.forEach(pfpType => {
@@ -1366,11 +1642,7 @@ const loadData = async () => {
               classe: student.Classe || student.classe || student.class || 'N/A',
               pfpType: pfpType,
               year: year,
-              choix1: null,
-              choix2: null,
-              choix3: null,
-              choix4: null,
-              choix5: null,
+              choix1: null, choix2: null, choix3: null, choix4: null, choix5: null,
               nbChoix: 0,
               dateVote: null,
               status: 'Non voté',
@@ -1384,13 +1656,11 @@ const loadData = async () => {
 
     votationsList.value = Array.from(votationsMap.values())
     
-    console.log(`📋 Total votations BA25 créées: ${votationsList.value.length}`)
-    
     sortAlphabetically()
     updateStats()
     await buildPlacesWithStats()
 
-    console.log(`✅ ${votationsList.value.length} lignes de votations BA25 créées`)
+    console.log(`✅ ${votationsList.value.length} votations ${targetClass} créées`)
   } catch (error) {
     console.error('❌ Erreur lors du chargement des données:', error)
     toast.add({
@@ -1489,7 +1759,7 @@ const exportData = () => {
     const url = URL.createObjectURL(blob)
     
     link.setAttribute('href', url)
-    link.setAttribute('download', `votations_ba25_${new Date().toISOString().split('T')[0]}.csv`)
+    link.setAttribute('download', `votations_${filterClasse.value || 'pfp'}_${filterPFP.value || ''}_${new Date().toISOString().split('T')[0]}.csv`)
     link.style.visibility = 'hidden'
     
     document.body.appendChild(link)
@@ -1513,8 +1783,8 @@ const exportData = () => {
   }
 }
 
-onMounted(async () => {
-  await loadData()
+onMounted(() => {
+  // Data loads via watchers when class/pfp/year are selected
 })
 </script>
 
@@ -1545,7 +1815,8 @@ onMounted(async () => {
 }
 
 .choice-cell:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
 }
 
 /* Cursor pointer for clickable tags */
@@ -1559,35 +1830,114 @@ onMounted(async () => {
   transform: scale(1.05);
 }
 
-/* Table header styling */
+/* ========== TABLE STYLING ========== */
+
 :deep(.p-datatable .p-datatable-thead > tr > th) {
-  background: #F8FAFC;
-  font-weight: 600;
-  color: #475569;
-  font-size: 0.85rem;
+  background: var(--surface-ground);
+  font-weight: 700;
+  color: var(--text-color);
+  font-size: 0.8rem;
   text-transform: uppercase;
-  letter-spacing: 0.025em;
+  letter-spacing: 0.04em;
   padding: 0.75rem 1rem;
-  border-bottom: 2px solid #E2E8F0;
+  border-bottom: 2px solid var(--surface-border);
+  border-right: 1px solid var(--surface-border);
+  white-space: nowrap;
 }
 
-/* TabView styling */
+:deep(.p-datatable .p-datatable-thead > tr > th:last-child) {
+  border-right: none;
+}
+
+:deep(.p-datatable .p-datatable-tbody > tr) {
+  background: var(--surface-card);
+  transition: background 0.15s ease;
+}
+
+:deep(.p-datatable .p-datatable-tbody > tr:nth-child(even)) {
+  background: var(--surface-ground);
+}
+
+:deep(.p-datatable .p-datatable-tbody > tr:hover) {
+  background: var(--highlight-bg) !important;
+}
+
+:deep(.p-datatable .p-datatable-tbody > tr > td) {
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--surface-border);
+  border-right: 1px solid var(--surface-border);
+  color: var(--text-color);
+  font-size: 0.9rem;
+}
+
+:deep(.p-datatable .p-datatable-tbody > tr > td:last-child) {
+  border-right: none;
+}
+
+:deep(.p-datatable .p-datatable-wrapper) {
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+:deep(.p-datatable .p-paginator) {
+  background: var(--surface-ground);
+  border-top: 1px solid var(--surface-border);
+  padding: 0.5rem 1rem;
+}
+
+:deep(.p-datatable .p-paginator .p-paginator-current) {
+  color: var(--text-color-secondary);
+  font-size: 0.85rem;
+}
+
+:deep(.p-datatable .p-datatable-header) {
+  background: var(--surface-card);
+  border-bottom: 1px solid var(--surface-border);
+  padding: 1rem;
+}
+
+:deep(.p-datatable .p-sortable-column .p-sortable-column-icon) {
+  color: var(--text-color-secondary);
+  font-size: 0.75rem;
+}
+
+:deep(.p-datatable .p-sortable-column.p-highlight .p-sortable-column-icon) {
+  color: var(--primary-color);
+}
+
+/* ========== TABVIEW STYLING ========== */
+
 :deep(.p-tabview .p-tabview-nav) {
-  border-bottom: 2px solid #E2E8F0;
+  background: var(--surface-card);
+  border-bottom: 2px solid var(--surface-border);
+  padding: 0 1rem;
 }
 
 :deep(.p-tabview .p-tabview-nav li .p-tabview-nav-link) {
   border: none;
-  font-weight: 500;
-  color: #64748B;
+  font-weight: 600;
+  color: var(--text-color-secondary);
+  padding: 0.75rem 1.25rem;
+  font-size: 0.9rem;
+  transition: color 0.15s ease;
+}
+
+:deep(.p-tabview .p-tabview-nav li .p-tabview-nav-link:hover) {
+  color: var(--primary-color);
 }
 
 :deep(.p-tabview .p-tabview-nav li.p-highlight .p-tabview-nav-link) {
-  color: #6366F1;
-  border-bottom: 2px solid #6366F1;
+  color: var(--primary-color);
+  border-bottom: 3px solid var(--primary-color);
 }
 
-/* Responsive */
+:deep(.p-tabview .p-tabview-panels) {
+  padding: 1rem;
+}
+
+/* ========== RESPONSIVE ========== */
+
 @media (max-width: 768px) {
   .votation-page h1 {
     font-size: 1.25rem;

@@ -1,6 +1,9 @@
 <!-- src/components/RightSidebar.vue -->
 <template>
   <div class="right-sidebar">
+    <!-- Bannière Votation ouverte -->
+    <VotationBanner />
+
     <!-- Section Communauté -->
     <div class="profile-section">
       <div class="communities-header">
@@ -45,6 +48,7 @@
 <script>
 import Avatar from "primevue/avatar";
 import Chip from "primevue/chip";
+import VotationBanner from '@/components/social/library/VotationBanner.vue';
 import { onValue, ref as dbRef, get } from "firebase/database";
 import { db } from "../../../../firebase.js";
 import { useAuthStore } from '@/stores/authStore';
@@ -55,6 +59,7 @@ export default {
   components: {
     Avatar,
     Chip,
+    VotationBanner,
   },
   data() {
     return {

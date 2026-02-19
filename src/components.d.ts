@@ -257,6 +257,7 @@ declare module 'vue' {
     'VotaitonDiviséCritere': typeof import('./components/admin/details/VotaitonDiviséCritere.vue')['default']
     Votation_preview: typeof import('./components/admin/details/Votation_preview.vue')['default']
     Votation_preview_SUPABASE: typeof import('./components/admin/details/Votation_preview_SUPABASE.vue')['default']
+    VotationBanner: typeof import('./components/social/library/VotationBanner.vue')['default']
     VotationPrioritaire: typeof import('./components/admin/details/VotationPrioritaire.vue')['default']
     VotationResultProfil: typeof import('./components/user/details/VotationResultProfil.vue')['default']
     WebcamCapture: typeof import('./components/social/library/WebcamCapture.vue')['default']
