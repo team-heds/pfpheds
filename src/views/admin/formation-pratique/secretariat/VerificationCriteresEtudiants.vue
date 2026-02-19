@@ -451,7 +451,7 @@ const fetchStudents = async () => {
       studentsService.getAllStudents(),
       supabase.from('StudentsPhysio').select('user_id, pfp_valided'),
       supabase.from('student_result_vote').select('*').order('year', { ascending: false }),
-      supabase.from('places').select('PlaceId, NomPlace, InstitutionId'),
+      supabase.from('places').select('*'),
       supabase.from('institutions').select('InstitutionId, Name')
     ])
 
@@ -461,7 +461,19 @@ const fetchStudents = async () => {
     const placesMap = new Map()
     const instMap = new Map()
     if (institutionsResult.data) institutionsResult.data.forEach(i => instMap.set(i.InstitutionId, i.Name))
-    if (placesResult.data) placesResult.data.forEach(p => placesMap.set(p.PlaceId, { name: p.NomPlace, institution: instMap.get(p.InstitutionId) || '' }))
+    if (placesResult.data) placesResult.data.forEach(p => placesMap.set(p.PlaceId, {
+      name: p.NomPlace, institution: instMap.get(p.InstitutionId) || '',
+      MSQ: !!p.MSQ, SYSINT: !!p.SYSINT, NEUROGER: !!p.NEUROGER,
+      AIGU: !!p.AIGU, REHAB: !!p.REHAB, AMBU: !!p.AMBU, FR: !!p.FR, DE: !!p.DE
+    }))
+
+    // Helper: extract criteria supporting both upper and lower case
+    const extractCrit = (obj) => {
+      if (!obj) return {}
+      const r = {}
+      criteriaLabels.forEach(c => { r[c] = !!(obj[c] || obj[c.toLowerCase()]) })
+      return r
+    }
 
     const criteriaMap = new Map()
     const stagesMap = new Map()
@@ -472,7 +484,8 @@ const fetchStudents = async () => {
         criteriaLabels.forEach(k => { scores[k] = 0 })
         const pfpArray = parsePfpValided(physio.pfp_valided)
         pfpArray.forEach(place => {
-          criteriaLabels.forEach(crit => { if (place[crit] === true) scores[crit]++ })
+          const crit = extractCrit(place)
+          criteriaLabels.forEach(c => { if (crit[c]) scores[c]++ })
         })
         criteriaMap.set(physio.user_id, { scores, totalStages: pfpArray.length })
         const enrichedStages = pfpArray.map(stage => {
@@ -488,11 +501,33 @@ const fetchStudents = async () => {
       })
     }
 
+    // Also count criteria from validated assignments (pfp_validee=true in student_result_vote)
     const assignmentsMap = new Map()
     if (assignmentsResult.data) {
       assignmentsResult.data.forEach(a => {
         if (!assignmentsMap.has(a.user_id)) assignmentsMap.set(a.user_id, [])
         assignmentsMap.get(a.user_id).push(a)
+
+        // If assignment is validated, count its place criteria
+        if (a.pfp_validee && a.assigned_place_id) {
+          const placeInfo = placesMap.get(a.assigned_place_id)
+          if (placeInfo) {
+            const existing = criteriaMap.get(a.user_id) || { scores: Object.fromEntries(criteriaLabels.map(k => [k, 0])), totalStages: 0 }
+            criteriaLabels.forEach(c => { if (placeInfo[c]) existing.scores[c]++ })
+            existing.totalStages++
+            criteriaMap.set(a.user_id, existing)
+
+            // Also add to stages for display
+            const existingStages = stagesMap.get(a.user_id) || []
+            existingStages.push({
+              NomPlace: a.assigned_place_name || placeInfo.name || '',
+              Institution: a.assigned_institution_name || placeInfo.institution || '',
+              pfp_type: a.pfp_type,
+              ...extractCrit(placeInfo)
+            })
+            stagesMap.set(a.user_id, existingStages)
+          }
+        }
       })
     }
 
@@ -502,7 +537,7 @@ const fetchStudents = async () => {
         nom: student.Nom || '', prenom: student.Prenom || '', classe: student.Classe || '-',
         scores: criteria.scores, totalStages: criteria.totalStages, user_id: student.id,
         stages: stagesMap.get(student.id) || [],
-        currentAssignments: assignmentsMap.get(student.id) || []
+        currentAssignments: (assignmentsMap.get(student.id) || []).filter(a => !a.pfp_validee)
       }
     })
 

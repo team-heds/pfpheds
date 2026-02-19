@@ -396,7 +396,7 @@ const syncWithStudentsPhysio = async (row) => {
 
     const { data: placeData } = await supabase
       .from('places')
-      .select('AMBU, DE, FR, MSQ, NEUROGER, REHAB, SYSINT, AIGU, IT, ENG, NomPlace, InstitutionName')
+      .select('AMBU, DE, FR, MSQ, NEUROGER, REHAB, SYSINT, AIGU, IT, ENG, NomPlace, InstitutionName, InstitutionId')
       .eq('PlaceId', row.assigned_place_id)
       .single()
 
@@ -431,10 +431,17 @@ const syncWithStudentsPhysio = async (row) => {
     }
 
     const validationEntry = {
+      PlaceId: row.assigned_place_id,
       ID_PFP: row.assigned_place_id,
-      Domaine: row.assigned_place_name,
-      InstitutionName: row.assigned_institution_name,
+      id_pfp: row.assigned_place_id,
+      NomPlace: placeData?.NomPlace || row.place_name || row.assigned_place_name || '',
+      nom_pfp: placeData?.NomPlace || row.place_name || row.assigned_place_name || '',
+      Domaine: row.assigned_place_name || placeData?.NomPlace || '',
+      InstitutionName: placeData?.InstitutionName || row.institution_name || row.assigned_institution_name || '',
+      institution_name: placeData?.InstitutionName || row.institution_name || row.assigned_institution_name || '',
+      InstitutionId: placeData?.InstitutionId || null,
       pfp_type: row.pfp_type,
+      pfpLevel: row.pfp_type,
       year: row.year,
       praticien_formateur: row.praticien_formateur,
       status: status,
@@ -443,8 +450,10 @@ const syncWithStudentsPhysio = async (row) => {
       validated_at: new Date().toISOString()
     }
 
+    // Match by pfp_type first, then by PlaceId/ID_PFP
     const existingIndex = pfpValided.findIndex(p => 
-      p.PlaceId === row.assigned_place_id || p.ID_PFP === row.assigned_place_id
+      (p.pfp_type === row.pfp_type || p.pfpLevel === row.pfp_type) ||
+      (p.PlaceId === row.assigned_place_id || p.ID_PFP === row.assigned_place_id || p.id_pfp === row.assigned_place_id)
     )
     if (existingIndex >= 0) {
       pfpValided[existingIndex] = validationEntry
@@ -452,7 +461,8 @@ const syncWithStudentsPhysio = async (row) => {
       pfpValided.push(validationEntry)
     }
 
-    const { error: updateError } = await supabase
+    // Update existing row, or insert if it doesn't exist
+    const { error: updateError, count } = await supabase
       .from('StudentsPhysio')
       .update({
         pfp_valided: JSON.stringify(pfpValided),
@@ -461,6 +471,20 @@ const syncWithStudentsPhysio = async (row) => {
       .eq('user_id', row.user_id)
 
     if (updateError) throw updateError
+
+    // If no row was updated (row doesn't exist), insert a new one
+    if (count === 0 && !studentData) {
+      const { error: insertError } = await supabase
+        .from('StudentsPhysio')
+        .insert({
+          user_id: row.user_id,
+          pfp_valided: JSON.stringify(pfpValided),
+          updated_at: new Date().toISOString()
+        })
+      if (insertError) throw insertError
+    }
+
+    console.log(`✅ pfp_valided synced for ${row.user_id} (${row.pfp_type}): status=${status}`)
 
   } catch (error) {
     console.error('Erreur synchronisation StudentsPhysio:', error)
@@ -489,10 +513,12 @@ const removeFromStudentsPhysio = async (row) => {
       }
     }
 
-    // Filtrer pour supprimer l'entrée correspondante
-    const filteredPfpValided = pfpValided.filter(p => 
-      p.PlaceId !== row.assigned_place_id && p.ID_PFP !== row.assigned_place_id
-    )
+    // Filtrer pour supprimer l'entrée correspondante (match by pfp_type or PlaceId/ID_PFP)
+    const filteredPfpValided = pfpValided.filter(p => {
+      const matchesPfpType = (p.pfp_type === row.pfp_type || p.pfpLevel === row.pfp_type)
+      const matchesPlace = (p.PlaceId === row.assigned_place_id || p.ID_PFP === row.assigned_place_id || p.id_pfp === row.assigned_place_id)
+      return !(matchesPfpType || matchesPlace)
+    })
 
     const { error: updateError } = await supabase
       .from('StudentsPhysio')
