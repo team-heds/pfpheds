@@ -154,6 +154,7 @@
           class="criteres-table p-datatable-sm"
           :sortField="'nom'"
           :sortOrder="1"
+          v-model:expandedRows="expandedRows"
         >
           <template #header>
             <div class="flex justify-content-between align-items-center">
@@ -166,6 +167,8 @@
               <p class="text-600">Aucun étudiant trouvé</p>
             </div>
           </template>
+
+          <Column :expander="true" style="width: 3rem" />
 
           <!-- Étudiant (nom + prénom fusionnés avec avatar) -->
           <Column field="nom" header="Étudiant" sortable :frozen="true" style="min-width: 200px">
@@ -225,6 +228,71 @@
               </div>
             </template>
           </Column>
+
+          <!-- Row expansion: détails des stages -->
+          <template #expansion="{ data }">
+            <div class="p-3">
+              <div class="flex align-items-center gap-2 mb-3">
+                <i class="pi pi-briefcase text-primary"></i>
+                <span class="font-bold text-900">Stages de {{ data.nom }} {{ data.prenom }}</span>
+                <Tag :value="`${data.stages?.length || 0} stage(s) validé(s)`" severity="info" class="text-xs" />
+                <Tag v-if="data.currentAssignments?.length > 0" :value="`${data.currentAssignments.length} en cours`" severity="warning" class="text-xs" />
+              </div>
+
+              <!-- Stages validés -->
+              <div v-if="data.stages && data.stages.length > 0" class="mb-3">
+                <div class="text-sm font-semibold text-600 mb-2"><i class="pi pi-check-circle text-green-500 mr-1"></i>Stages validés</div>
+                <div class="grid">
+                  <div v-for="(stage, idx) in data.stages" :key="'stage-' + idx" class="col-12 md:col-6 lg:col-4">
+                    <div class="stage-card surface-card border-round border-1 surface-border p-3">
+                      <div class="font-semibold text-900 text-sm mb-1">{{ stage.NomPlace || 'Place inconnue' }}</div>
+                      <div v-if="stage.Institution" class="text-xs text-600 mb-2">
+                        <i class="pi pi-building mr-1"></i>{{ stage.Institution }}
+                      </div>
+                      <div v-if="stage.pfp_type" class="text-xs text-500 mb-2">
+                        <Tag :value="stage.pfp_type" class="text-xs" />
+                      </div>
+                      <div class="flex flex-wrap gap-1">
+                        <Tag v-for="crit in criteriaLabels" :key="'s-' + idx + '-' + crit"
+                          :value="crit"
+                          :severity="stage[crit] === true ? 'success' : 'danger'"
+                          class="text-xs px-1 py-0"
+                          style="font-size: 0.6rem"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Assignations en cours -->
+              <div v-if="data.currentAssignments && data.currentAssignments.length > 0">
+                <div class="text-sm font-semibold text-600 mb-2"><i class="pi pi-clock text-orange-500 mr-1"></i>Assignations en cours</div>
+                <div class="grid">
+                  <div v-for="(assign, idx) in data.currentAssignments" :key="'assign-' + idx" class="col-12 md:col-6 lg:col-4">
+                    <div class="stage-card surface-card border-round border-1 border-orange-300 p-3">
+                      <div class="font-semibold text-900 text-sm mb-1">{{ assign.assigned_place_name || 'Place inconnue' }}</div>
+                      <div v-if="assign.assigned_institution_name" class="text-xs text-600 mb-1">
+                        <i class="pi pi-building mr-1"></i>{{ assign.assigned_institution_name }}
+                      </div>
+                      <div class="flex gap-2 align-items-center">
+                        <Tag :value="assign.pfp_type" class="text-xs" />
+                        <Tag :value="assign.year" severity="secondary" class="text-xs" />
+                        <Tag v-if="assign.assigned_rank === 99" value="Aléatoire" severity="danger" class="text-xs" />
+                        <Tag v-else-if="assign.assigned_rank" :value="'Choix ' + assign.assigned_rank" severity="success" class="text-xs" />
+                        <Tag :value="assign.status === 'published' ? 'Publié' : 'Brouillon'" :severity="assign.status === 'published' ? 'success' : 'warning'" class="text-xs" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="(!data.stages || data.stages.length === 0) && (!data.currentAssignments || data.currentAssignments.length === 0)" class="text-center p-3 text-500">
+                <i class="pi pi-inbox text-2xl mb-2"></i>
+                <p class="text-sm">Aucun stage trouvé pour cet étudiant</p>
+              </div>
+            </div>
+          </template>
         </DataTable>
       </div>
     </div>
@@ -245,6 +313,7 @@ import InputText from 'primevue/inputtext'
 
 const loading = ref(false)
 const students = ref([])
+const expandedRows = ref({})
 const filterClasse = ref(null)
 const filterStatus = ref(null)
 const classes = ref(['BA23', 'BA24', 'BA25'])
@@ -378,14 +447,24 @@ const parsePfpValided = (pfpVal) => {
 const fetchStudents = async () => {
   loading.value = true
   try {
-    const [studentsData, physioResult] = await Promise.all([
+    const [studentsData, physioResult, assignmentsResult, placesResult, institutionsResult] = await Promise.all([
       studentsService.getAllStudents(),
-      supabase.from('StudentsPhysio').select('user_id, pfp_valided')
+      supabase.from('StudentsPhysio').select('user_id, pfp_valided'),
+      supabase.from('student_result_vote').select('*').order('year', { ascending: false }),
+      supabase.from('places').select('PlaceId, NomPlace, InstitutionId'),
+      supabase.from('institutions').select('InstitutionId, Name')
     ])
 
     if (physioResult.error) console.warn('Erreur StudentsPhysio:', physioResult.error)
+    if (assignmentsResult.error) console.warn('Erreur student_result_vote:', assignmentsResult.error)
+
+    const placesMap = new Map()
+    const instMap = new Map()
+    if (institutionsResult.data) institutionsResult.data.forEach(i => instMap.set(i.InstitutionId, i.Name))
+    if (placesResult.data) placesResult.data.forEach(p => placesMap.set(p.PlaceId, { name: p.NomPlace, institution: instMap.get(p.InstitutionId) || '' }))
 
     const criteriaMap = new Map()
+    const stagesMap = new Map()
     if (physioResult.data) {
       physioResult.data.forEach(physio => {
         if (!physio.pfp_valided) return
@@ -396,6 +475,24 @@ const fetchStudents = async () => {
           criteriaLabels.forEach(crit => { if (place[crit] === true) scores[crit]++ })
         })
         criteriaMap.set(physio.user_id, { scores, totalStages: pfpArray.length })
+        const enrichedStages = pfpArray.map(stage => {
+          const placeId = stage.PlaceId || stage.ID_PFP || stage.id_pfp
+          const placeInfo = placeId ? placesMap.get(placeId) : null
+          return {
+            ...stage,
+            NomPlace: stage.NomPlace || stage.nom_pfp || placeInfo?.name || null,
+            Institution: stage.Institution || stage.institution_name || placeInfo?.institution || null
+          }
+        })
+        stagesMap.set(physio.user_id, enrichedStages)
+      })
+    }
+
+    const assignmentsMap = new Map()
+    if (assignmentsResult.data) {
+      assignmentsResult.data.forEach(a => {
+        if (!assignmentsMap.has(a.user_id)) assignmentsMap.set(a.user_id, [])
+        assignmentsMap.get(a.user_id).push(a)
       })
     }
 
@@ -403,7 +500,9 @@ const fetchStudents = async () => {
       const criteria = criteriaMap.get(student.id) || { scores: Object.fromEntries(criteriaLabels.map(k => [k, 0])), totalStages: 0 }
       return {
         nom: student.Nom || '', prenom: student.Prenom || '', classe: student.Classe || '-',
-        scores: criteria.scores, totalStages: criteria.totalStages, user_id: student.id
+        scores: criteria.scores, totalStages: criteria.totalStages, user_id: student.id,
+        stages: stagesMap.get(student.id) || [],
+        currentAssignments: assignmentsMap.get(student.id) || []
       }
     })
 
@@ -599,6 +698,15 @@ onMounted(() => { fetchStudents() })
   height: 100%;
   background: #F59E0B;
   border-radius: 3px;
+}
+
+/* Stage cards in expansion */
+.stage-card {
+  transition: box-shadow 0.2s ease;
+}
+
+.stage-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* Table styling */
