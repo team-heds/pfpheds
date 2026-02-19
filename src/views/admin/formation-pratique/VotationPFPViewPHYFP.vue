@@ -741,7 +741,7 @@
 
     <!-- Historique des sessions de votation -->
     <div class="surface-card p-4 border-round shadow-2 mb-3 mt-4">
-      <div class="flex justify-content-between align-items-center mb-3 cursor-pointer" @click="showHistoryPanel = !showHistoryPanel; if(showHistoryPanel && sessionHistory.length === 0) loadSessionHistory()">
+      <div class="flex justify-content-between align-items-center mb-3" style="cursor: pointer" @click="showHistoryPanel = !showHistoryPanel; if(showHistoryPanel && sessionHistory.length === 0) loadSessionHistory()">
         <div class="flex align-items-center gap-2">
           <i class="pi pi-history text-xl text-primary"></i>
           <h3 class="text-lg font-bold text-900 m-0">Historique des sessions</h3>
