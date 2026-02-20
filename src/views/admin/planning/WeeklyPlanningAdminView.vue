@@ -204,39 +204,45 @@
             class="p-datatable-sm weekly-planning-table"
             :rowClass="getRowClass"
             rowGroupMode="subheader"
-            groupRowsBy="day"
+            :groupRowsBy="groupField"
             :expandableRowGroups="true"
-            v-model:expandedRowGroups="expandedDays"
+            v-model:expandedRowGroups="expandedGroups"
           >
             <template #groupheader="slotProps">
               <div class="day-group-header">
                 <div class="day-info">
                   <Tag 
+                    v-if="viewMode !== 'week'"
+                    :value="`S${slotProps.data.weekNumber}`" 
+                    severity="info"
+                    class="font-bold text-lg mr-2"
+                  ></Tag>
+                  <Tag 
                     :value="slotProps.data.day.toUpperCase()" 
                     :severity="getDaySeverity(slotProps.data.day)"
                     class="font-bold text-lg"
                   ></Tag>
-                  <span v-if="getDayDate(slotProps.data.day)" class="date-text">
-                    {{ getDayDate(slotProps.data.day) }}
+                  <span v-if="slotProps.data.date" class="date-text">
+                    {{ slotProps.data.date }}
                   </span>
                 </div>
-                <div class="module-info" v-if="getDayMainModule(slotProps.data.day)">
+                <div class="module-info" v-if="getGroupMainModule(slotProps.data.dayGroup)">
                   <div 
                     class="module-badge-header"
-                    :style="{ backgroundColor: getDayMainModule(slotProps.data.day)?.color || '#CCCCCC' }"
+                    :style="{ backgroundColor: getGroupMainModule(slotProps.data.dayGroup)?.color || '#CCCCCC' }"
                   >
-                    <span class="module-number-header">{{ getDayMainModule(slotProps.data.day)?.number }}</span>
-                    <span class="module-name-header">{{ getDayMainModule(slotProps.data.day)?.title }}</span>
+                    <span class="module-number-header">{{ getGroupMainModule(slotProps.data.dayGroup)?.number }}</span>
+                    <span class="module-name-header">{{ getGroupMainModule(slotProps.data.dayGroup)?.title }}</span>
                   </div>
                 </div>
                 <div class="slots-count">
                   <i class="pi pi-clock mr-2"></i>
-                  <span>{{ getDaySlotCount(slotProps.data.day) }} créneau(x)</span>
+                  <span>{{ getGroupSlotCount(slotProps.data.dayGroup) }} créneau(x)</span>
                 </div>
               </div>
             </template>
             
-            <Column field="day" header="Jour" style="display: none;"></Column>
+            <Column :field="groupField" header="Jour" style="display: none;"></Column>
             
             <Column v-if="viewMode !== 'week'" field="weekNumber" header="Semaine" style="width: 8rem">
               <template #body="slotProps">
@@ -587,9 +593,10 @@ const timeSlots = ref([])
 const courseModules = ref([])
 const siTeachers = ref([])
 const filteredTeachers = ref([])
-const expandedDays = ref(['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'distance'])
+const expandedGroups = ref(['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'distance'])
 const yearOptions = ref([])
 
+const academicStartYear = ref(null) // Ex: 2025 pour l'année académique 2025-2026
 const showSlotDialog = ref(false)
 const editingSlot = ref(null)
 const slotForm = ref({
@@ -618,18 +625,32 @@ const viewModeOptions = [
   { label: 'Semestre de Printemps (S8-S37)', value: 'semester1' }
 ]
 
+// Vérifie si une année ISO a 53 semaines
+// Une année a 53 semaines si le 1er janvier est un jeudi,
+// ou si le 31 décembre est un jeudi (années bissextiles commençant un mercredi)
+const isoWeeksInYear = (year) => {
+  const jan1 = new Date(year, 0, 1)
+  const dec31 = new Date(year, 11, 31)
+  return (jan1.getDay() === 4 || dec31.getDay() === 4) ? 53 : 52
+}
+
 const weekOptions = computed(() => {
   const weeks = []
   
-  // Année académique : S38 → S52, puis S1 → S37
-  // Semestre d'Automne : S38-S52 (2024) + S1-S7 (2025)
-  for (let w = 38; w <= 52; w++) {
-    weeks.push({ label: `Semaine ${w}`, value: w })
+  const aYear = academicStartYear.value || new Date().getFullYear()
+  const maxAutumnWeek = isoWeeksInYear(aYear) // 52 ou 53
+  
+  // Semestre d'Automne : S38 → S52/S53, puis S1 → S7
+  for (let w = 38; w <= maxAutumnWeek; w++) {
+    weeks.push({ label: `Semaine ${w} (Automne)`, value: w })
+  }
+  for (let w = 1; w <= 7; w++) {
+    weeks.push({ label: `Semaine ${w} (Automne)`, value: w })
   }
   
-  // Semestre de Printemps : S1-S37 (2025)
-  for (let w = 1; w <= 37; w++) {
-    weeks.push({ label: `Semaine ${w}`, value: w })
+  // Semestre de Printemps : S8 → S37
+  for (let w = 8; w <= 37; w++) {
+    weeks.push({ label: `Semaine ${w} (Printemps)`, value: w })
   }
   
   return weeks
@@ -648,18 +669,18 @@ const sortedTimeSlots = computed(() => {
   
   // Fonction pour obtenir l'ordre académique d'une semaine
   const getAcademicWeekOrder = (week) => {
-    // Ordre académique : S38-S52 (0-14), S1-S7 (15-21), S8-S37 (22-51)
-    if (week >= 38 && week <= 52) {
-      return week - 38 // 0 à 14
+    // Ordre académique : S38-S53 (0-15), S1-S7 (16-22), S8-S37 (23-52)
+    if (week >= 38) {
+      return week - 38 // 0 à 15 (inclut S53)
     } else if (week >= 1 && week <= 7) {
-      return week + 14 // 15 à 21
+      return week + 15 // 16 à 22
     } else if (week >= 8 && week <= 37) {
-      return week + 14 // 22 à 51
+      return week + 15 // 23 à 52
     }
     return 999 // Valeur par défaut pour semaines invalides
   }
   
-  return [...timeSlots.value].sort((a, b) => {
+  const sorted = [...timeSlots.value].sort((a, b) => {
     // Si mode semestre, trier d'abord par numéro de semaine (ordre académique)
     if (viewMode.value !== 'week') {
       const weekA = a.weekNumber || 0
@@ -678,7 +699,20 @@ const sortedTimeSlots = computed(() => {
     // Puis par heure
     return a.startTime.localeCompare(b.startTime)
   })
+  
+  // En mode semestre, ajouter un champ dayGroup pour grouper par semaine+jour
+  if (viewMode.value !== 'week') {
+    return sorted.map(slot => ({
+      ...slot,
+      dayGroup: `S${slot.weekNumber}_${slot.day}`
+    }))
+  }
+  
+  return sorted.map(slot => ({ ...slot, dayGroup: slot.day }))
 })
+
+// Clé de groupement dynamique
+const groupField = computed(() => 'dayGroup')
 
 // Fonctions
 const onViewModeChange = async () => {
@@ -757,22 +791,31 @@ const loadWeekPlanning = async () => {
     console.log('✅ Créneaux reçus:', slots.length)
     
     // Convertir snake_case en camelCase pour compatibilité avec le template
-    timeSlots.value = slots.map(slot => ({
-      id: slot.id,
-      day: slot.day,
-      date: slot.date,
-      startTime: slot.start_time,
-      endTime: slot.end_time,
-      moduleCode: slot.module_code,
-      moduleNumber: slot.course_module?.number || '',
-      moduleTitle: slot.course_module?.title || '',
-      courseTitle: slot.course_title,
-      activity: slot.activity,
-      teachers: slot.teachers || [],
-      room: slot.room,
-      notes: slot.notes,
-      weekNumber: slot.week_number
-    }))
+    timeSlots.value = slots.map(slot => {
+      const mod = courseModules.value.find(m => m.code === slot.module_code)
+      // Recalculer la date dynamiquement depuis weekNumber + jour (au lieu de la date stockée en base qui peut être obsolète)
+      const dayIndex = planningService.getDayIndex(slot.day)
+      const computedDate = planningService.getDateForWeekAndDay(slot.week_number, dayIndex, academicStartYear.value)
+      return {
+        id: slot.id,
+        day: slot.day,
+        date: computedDate || slot.date,
+        startTime: slot.start_time,
+        endTime: slot.end_time,
+        moduleCode: slot.module_code,
+        moduleNumber: mod?.module_number || '',
+        moduleTitle: mod?.label || '',
+        courseTitle: slot.course_title,
+        activity: slot.activity,
+        teachers: slot.teachers || [],
+        room: slot.room,
+        notes: slot.notes,
+        weekNumber: slot.week_number
+      }
+    })
+    
+    // Reset expanded groups pour le mode semaine
+    expandedGroups.value = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'distance']
     
     console.log('✅ Planning chargé avec', timeSlots.value.length, 'créneaux')
     
@@ -848,23 +891,34 @@ const loadSemesterPlanning = async (semester) => {
   try {
     const slots = await planningService.getSemesterTimeSlots(selectedYear.value, semester)
     
+    console.log('✅ Semestre chargé:', semester, '| slots:', slots.length)
+    
     // Convertir snake_case en camelCase
-    timeSlots.value = slots.map(slot => ({
-      id: slot.id,
-      day: slot.day,
-      date: slot.date,
-      startTime: slot.start_time,
-      endTime: slot.end_time,
-      moduleCode: slot.module_code,
-      moduleNumber: slot.course_module?.number || '',
-      moduleTitle: slot.course_module?.title || '',
-      courseTitle: slot.course_title,
-      activity: slot.activity,
-      teachers: slot.teachers || [],
-      room: slot.room,
-      notes: slot.notes,
-      weekNumber: slot.week_number
-    }))
+    timeSlots.value = slots.map(slot => {
+      const mod = courseModules.value.find(m => m.code === slot.module_code)
+      const dayIndex = planningService.getDayIndex(slot.day)
+      const computedDate = planningService.getDateForWeekAndDay(slot.week_number, dayIndex, academicStartYear.value)
+      return {
+        id: slot.id,
+        day: slot.day,
+        date: computedDate || slot.date,
+        startTime: slot.start_time,
+        endTime: slot.end_time,
+        moduleCode: slot.module_code,
+        moduleNumber: mod?.module_number || '',
+        moduleTitle: mod?.label || '',
+        courseTitle: slot.course_title,
+        activity: slot.activity,
+        teachers: slot.teachers || [],
+        room: slot.room,
+        notes: slot.notes,
+        weekNumber: slot.week_number
+      }
+    })
+    
+    // Auto-expand tous les groupes en mode semestre
+    const allGroups = [...new Set(timeSlots.value.map(s => `S${s.weekNumber}_${s.day}`))]
+    expandedGroups.value = allGroups
     
     const semesterLabel = semester === 'spring' ? 'Printemps (S8-S37)' : 'Automne (S38-S7)'
     
@@ -886,7 +940,6 @@ const loadSemesterPlanning = async (semester) => {
 }
 
 const getRowClass = (data) => {
-  const dayOrder = { lundi: 1, mardi: 2, mercredi: 3, jeudi: 4, vendredi: 5, distance: 6 }
   const prevIndex = sortedTimeSlots.value.indexOf(data) - 1
   if (prevIndex >= 0) {
     const prevSlot = sortedTimeSlots.value[prevIndex]
@@ -907,15 +960,6 @@ const getDaySeverity = (day) => {
     distance: 'contrast'
   }
   return severities[day] || 'info'
-}
-
-const darkenColor = (color) => {
-  if (!color) return '#000000'
-  const hex = color.replace('#', '')
-  const r = Math.max(0, parseInt(hex.substring(0, 2), 16) - 30)
-  const g = Math.max(0, parseInt(hex.substring(2, 4), 16) - 30)
-  const b = Math.max(0, parseInt(hex.substring(4, 6), 16) - 30)
-  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
 }
 
 const duplicateSlot = async (slot) => {
@@ -956,6 +1000,36 @@ const getDayMainModule = (day) => {
   )
   
   const firstSlot = daySlots.find(s => s.moduleCode === mainModuleCode)
+  const moduleData = courseModules.value.find(m => m.code === mainModuleCode)
+  
+  return {
+    code: mainModuleCode,
+    number: moduleData?.module_number || mainModuleCode.toUpperCase(),
+    title: moduleData?.label || 'Module',
+    color: getModuleColor(mainModuleCode)
+  }
+}
+
+// Versions par dayGroup (pour le mode semestre)
+const getGroupSlotCount = (dayGroup) => {
+  return sortedTimeSlots.value.filter(slot => slot.dayGroup === dayGroup).length
+}
+
+const getGroupMainModule = (dayGroup) => {
+  const groupSlots = sortedTimeSlots.value.filter(slot => slot.dayGroup === dayGroup && slot.moduleCode)
+  if (groupSlots.length === 0) return null
+  
+  const moduleCounts = {}
+  groupSlots.forEach(slot => {
+    if (slot.moduleCode) {
+      moduleCounts[slot.moduleCode] = (moduleCounts[slot.moduleCode] || 0) + 1
+    }
+  })
+  
+  const mainModuleCode = Object.keys(moduleCounts).reduce((a, b) => 
+    moduleCounts[a] > moduleCounts[b] ? a : b
+  )
+  
   const moduleData = courseModules.value.find(m => m.code === mainModuleCode)
   
   return {
@@ -1063,7 +1137,7 @@ const saveSlot = async () => {
       // et on espère que le service le gère.
       // UPDATE: le service planningService a une méthode getDateForWeekAndDay.
       try {
-        slotData.date = planningService.getDateForWeekAndDay(slotData.weekNumber, 5) // 5 = Samedi/Distance
+        slotData.date = planningService.getDateForWeekAndDay(slotData.weekNumber, 5, academicStartYear.value) // 5 = Samedi/Distance
       } catch (e) {
         console.warn('Impossible de calculer la date pour distance', e)
       }
@@ -1255,196 +1329,159 @@ const exportToExcel = async () => {
     
     // Sinon, export de la semaine unique
     const worksheet = workbook.addWorksheet(`Semaine ${selectedWeek.value}`)
+    
+    // Couleurs améliorées
+    const dayColors = {
+      lundi: 'FFDBEAFE',      // Bleu pastel
+      mardi: 'FFE0E7FF',      // Indigo pastel
+      mercredi: 'FFEDE9FE',   // Violet pastel
+      jeudi: 'FFFCE7F3',      // Rose pastel
+      vendredi: 'FFFEF3C7',   // Jaune pastel
+      distance: 'FFF1F5F9'    // Gris pastel
+    }
+    const thinBorder = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } }
+    const mediumBorder = { top: { style: 'medium' }, left: { style: 'medium' }, bottom: { style: 'medium' }, right: { style: 'medium' } }
 
-    // Titre principal
-    worksheet.mergeCells('A1:I1')
+    // === TITRE PRINCIPAL ===
+    worksheet.mergeCells('A1:H1')
     const titleCell = worksheet.getCell('A1')
     titleCell.value = `${getSelectedYearLabel()} / ${getSemesterLabel(selectedWeek.value).toUpperCase()}`
-    titleCell.font = { size: 16, bold: true, color: { argb: 'FFFF6600' } }
+    titleCell.font = { size: 14, bold: true, color: { argb: 'FFFFFFFF' } }
     titleCell.alignment = { horizontal: 'center', vertical: 'middle' }
-    titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } }
-    worksheet.getRow(1).height = 30
+    titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } }
+    worksheet.getRow(1).height = 32
 
-    // Sous-titre semaine
-    worksheet.mergeCells('A3:I3')
+    // === SOUS-TITRE SEMAINE ===
+    worksheet.mergeCells('A3:H3')
     const weekCell = worksheet.getCell('A3')
     weekCell.value = `SEMAINE ${selectedWeek.value}`
-    weekCell.font = { size: 14, bold: true, color: { argb: 'FF000000' } }
+    weekCell.font = { size: 13, bold: true, color: { argb: 'FF1E293B' } }
     weekCell.alignment = { horizontal: 'center', vertical: 'middle' }
-    weekCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF00' } }
-    worksheet.getRow(3).height = 25
+    weekCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFBBF24' } }
+    worksheet.getRow(3).height = 26
 
     let currentRow = 5
 
     // Grouper par jour
     const dayOrder = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'distance']
     const groupedByDay = {}
-    
     sortedTimeSlots.value.forEach(slot => {
-      if (!groupedByDay[slot.day]) {
-        groupedByDay[slot.day] = []
-      }
+      if (!groupedByDay[slot.day]) groupedByDay[slot.day] = []
       groupedByDay[slot.day].push(slot)
     })
 
-    // Pour chaque jour
     dayOrder.forEach(day => {
       const daySlots = groupedByDay[day]
       if (!daySlots || daySlots.length === 0) return
 
       const dayDate = getDayDate(day)
       const dayModule = getDayMainModule(day)
-      
-      const startRowForDay = currentRow
-      const numSlots = daySlots.length
-      
-      // Couleur selon le jour
-      const dayColors = {
-        lundi: 'FFFFCCCC',
-        mardi: 'FFCCCCFF',
-        mercredi: 'FFFFCCCC',
-        jeudi: 'FFCCCCFF',
-        vendredi: 'FFFFCCCC',
-        distance: 'FFEEEEEE' // Gris clair pour distance
-      }
-      const dayBgColor = dayColors[day] || 'FFFFCCCC'
-      const dayLabel = day === 'distance' ? 'DISTANCE' : (day.charAt(0).toUpperCase() + day.slice(1))
-
-      // Compteur de lignes avant le module
+      const dayBgColor = dayColors[day] || 'FFDBEAFE'
+      const dayLabel = day === 'distance' ? 'DISTANCE' : day.charAt(0).toUpperCase() + day.slice(1)
       const moduleStartRow = currentRow
-      
-      // Ligne du module principal (fusionné sur toute la largeur)
+
+      // Ligne du module principal
       if (dayModule) {
-        worksheet.mergeCells(currentRow, 2, currentRow, 9)
+        const moduleBgHex = dayModule.color ? dayModule.color.replace('#', 'FF') : 'FF94A3B8'
+        worksheet.mergeCells(currentRow, 2, currentRow, 8)
         const moduleHeaderCell = worksheet.getCell(currentRow, 2)
-        moduleHeaderCell.value = `${dayModule.number} - ${dayModule.title}`
-        moduleHeaderCell.font = { size: 10, bold: true }
+        moduleHeaderCell.value = `${dayModule.number} — ${dayModule.title}`
+        moduleHeaderCell.font = { size: 10, bold: true, color: { argb: 'FFFFFFFF' } }
         moduleHeaderCell.alignment = { horizontal: 'center', vertical: 'middle' }
-        moduleHeaderCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } }
-        moduleHeaderCell.border = {
-          top: { style: 'thin' },
-          left: { style: 'thin' },
-          bottom: { style: 'thin' },
-          right: { style: 'thin' }
-        }
-        worksheet.getRow(currentRow).height = 18
+        moduleHeaderCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgHex } }
+        moduleHeaderCell.border = thinBorder
+        worksheet.getRow(currentRow).height = 20
         currentRow++
       }
-      
-      const slotsStartRow = currentRow
 
       // Créneaux du jour
-      daySlots.forEach((slot, slotIndex) => {
-        // Couleur du module pour cette ligne
+      daySlots.forEach(slot => {
         let moduleBgColor = 'FFFFFFFF'
         if (dayModule && dayModule.color) {
-          moduleBgColor = dayModule.color.replace('#', 'FF')
+          // Version très claire de la couleur du module
+          const hex = dayModule.color.replace('#', '')
+          const r = Math.min(255, parseInt(hex.substring(0, 2), 16) + 80)
+          const g = Math.min(255, parseInt(hex.substring(2, 4), 16) + 80)
+          const b = Math.min(255, parseInt(hex.substring(4, 6), 16) + 80)
+          moduleBgColor = `FF${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
         }
-        
+
         const teacherChunks = splitTeachers(slot.teachers)
         const teacherRowCount = teacherChunks.length
         const endRow = currentRow + teacherRowCount
 
-        // LIGNE 1: Horaire + Nom du cours + Numéro de module
+        // LIGNE 1: Horaire + Nom du cours + N° module
         const row1 = worksheet.getRow(currentRow)
-        
-        // Horaire (Colonne 2) - fusionné sur 2 lignes
+
+        // Horaire (Col B) - fusionné verticalement
         worksheet.mergeCells(currentRow, 2, endRow, 2)
         const timeCell = row1.getCell(2)
         timeCell.value = `${slot.startTime} - ${slot.endTime}`
         timeCell.font = { size: 9, bold: true }
         timeCell.alignment = { horizontal: 'center', vertical: 'middle' }
         timeCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgColor } }
-        timeCell.border = {
-          top: { style: 'thin' },
-          left: { style: 'thin' },
-          bottom: { style: 'thin' },
-          right: { style: 'thin' }
-        }
+        timeCell.border = thinBorder
 
-        // Nom du cours (Colonnes 3-8 fusionnées)
-        worksheet.mergeCells(currentRow, 3, currentRow, 8)
+        // Nom du cours (Col C-G fusionnées)
+        worksheet.mergeCells(currentRow, 3, currentRow, 7)
         const courseTitleCell = row1.getCell(3)
         courseTitleCell.value = slot.courseTitle || slot.activity || ''
-        courseTitleCell.font = { size: 9, bold: false }
-        courseTitleCell.alignment = { horizontal: 'center', vertical: 'top', wrapText: true }
+        courseTitleCell.font = { size: 9 }
+        courseTitleCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
         courseTitleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgColor } }
-        courseTitleCell.border = {
-          top: { style: 'thin' },
-          left: { style: 'thin' },
-          bottom: { style: 'thin' },
-          right: { style: 'thin' }
-        }
+        courseTitleCell.border = thinBorder
 
-        // Numéro de module (Colonne 9) - fusionné sur 2 lignes
-        worksheet.mergeCells(currentRow, 9, endRow, 9)
-        const moduleNumCell = row1.getCell(9)
+        // N° module (Col H) - fusionné verticalement
+        worksheet.mergeCells(currentRow, 8, endRow, 8)
+        const moduleNumCell = row1.getCell(8)
         moduleNumCell.value = slot.moduleNumber || ''
-        moduleNumCell.font = { size: 10, bold: true }
+        const moduleColorHex = getModuleColor(slot.moduleCode)?.replace('#', 'FF') || 'FF94A3B8'
+        moduleNumCell.font = { size: 10, bold: true, color: { argb: 'FFFFFFFF' } }
         moduleNumCell.alignment = { horizontal: 'center', vertical: 'middle' }
-        moduleNumCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgColor } }
-        moduleNumCell.border = {
-          top: { style: 'medium' },
-          left: { style: 'medium' },
-          bottom: { style: 'medium' },
-          right: { style: 'medium' }
-        }
+        moduleNumCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleColorHex } }
+        moduleNumCell.border = mediumBorder
 
         row1.height = getCourseRowHeight(courseTitleCell.value)
         currentRow++
-        
-        // LIGNE 2+: Enseignants (6 colonnes, lignes supplémentaires si besoin)
+
+        // LIGNE 2+: Enseignants (5 colonnes C-G)
         teacherChunks.forEach(chunk => {
           const row2 = worksheet.getRow(currentRow)
-          for (let i = 0; i < 6; i++) {
+          for (let i = 0; i < 5; i++) {
             const teacherCell = row2.getCell(3 + i)
             teacherCell.value = chunk[i] || ''
-            teacherCell.font = { size: 9 }
+            teacherCell.font = { size: 8, italic: true }
             teacherCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
             teacherCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgColor } }
-            teacherCell.border = {
-              top: { style: 'thin' },
-              left: { style: 'thin' },
-              bottom: { style: 'thin' },
-              right: { style: 'thin' }
-            }
+            teacherCell.border = thinBorder
           }
-
           row2.height = getTeachersRowHeight(chunk)
           currentRow++
         })
       })
-      
-      // Fusionner la colonne Jour/Date verticalement
-      if (numSlots > 0) {
+
+      // Fusionner colonne Jour/Date (Col A)
+      if (daySlots.length > 0) {
         const endRow = currentRow - 1
-        
-        // Colonne Jour (1) - depuis le début du module jusqu'à la fin des créneaux
         worksheet.mergeCells(moduleStartRow, 1, endRow, 1)
         const dayCell = worksheet.getCell(moduleStartRow, 1)
         dayCell.value = `${dayLabel}\n\n${dayDate || ''}`
         dayCell.font = { size: 10, bold: true }
         dayCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
         dayCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: dayBgColor } }
-        dayCell.border = {
-          top: { style: 'medium' },
-          left: { style: 'medium' },
-          bottom: { style: 'medium' },
-          right: { style: 'medium' }
-        }
+        dayCell.border = mediumBorder
       }
     })
 
-    // Largeur des colonnes
-    worksheet.getColumn(1).width = 12  // Jour/Date
-    worksheet.getColumn(2).width = 15  // Horaire
-    worksheet.getColumn(3).width = 20  // Enseignant 1 / Nom du cours
-    worksheet.getColumn(4).width = 20  // Enseignant 2
-    worksheet.getColumn(5).width = 20  // Enseignant 3
-    worksheet.getColumn(6).width = 20  // Enseignant 4
-    worksheet.getColumn(7).width = 20  // Enseignant 5
-    worksheet.getColumn(8).width = 20  // Enseignant 6
-    worksheet.getColumn(9).width = 8   // Numéro de module
+    // Largeur des colonnes (A-H, pas de colonne I/J)
+    worksheet.getColumn(1).width = 13  // Jour/Date
+    worksheet.getColumn(2).width = 14  // Horaire
+    worksheet.getColumn(3).width = 20  // Enseignant 1 / Cours
+    worksheet.getColumn(4).width = 20  // Enseignant 2 / Cours
+    worksheet.getColumn(5).width = 20  // Enseignant 3 / Cours
+    worksheet.getColumn(6).width = 20  // Enseignant 4 / Cours
+    worksheet.getColumn(7).width = 20  // Enseignant 5 / Cours
+    worksheet.getColumn(8).width = 9   // N° Module
 
     // Générer le fichier
     const buffer = await workbook.xlsx.writeBuffer()
@@ -1487,6 +1524,16 @@ const loadYearOptions = async () => {
       return
     }
 
+    // Extraire l'année de début depuis le nom (ex: '2025-2026' -> 2025)
+    if (activeYear.name) {
+      const match = activeYear.name.match(/(\d{4})/)
+      if (match) academicStartYear.value = parseInt(match[1])
+    }
+    if (!academicStartYear.value && activeYear.start_date) {
+      academicStartYear.value = new Date(activeYear.start_date).getFullYear()
+    }
+    console.log('📅 Année académique:', activeYear.name, '→ autumnYear:', academicStartYear.value)
+
     const classes = await academicYearService.getClassesByAcademicYear(activeYear.id)
     
     // Convertir les classes en options pour le dropdown
@@ -1525,74 +1572,189 @@ const loadYearOptions = async () => {
 }
 
 const exportSemesterToExcel = async (workbook, ExcelJS) => {
-  // Récupérer les semaines uniques
   let weekNumbers = [...new Set(timeSlots.value.map(slot => slot.weekNumber))]
   
   const semesterNum = viewMode.value === 'semester1' ? 1 : 2
   const semesterLabel = semesterNum === 1 ? 'SEMESTRE DE PRINTEMPS' : 'SEMESTRE D\'AUTOMNE'
   
-  // Trier selon le semestre
   if (semesterNum === 1) {
-    // Printemps: 8-37 (ordre normal)
     weekNumbers.sort((a, b) => a - b)
   } else {
-    // Automne: 38-52 puis 1-7 (ordre spécial)
     weekNumbers.sort((a, b) => {
-      // Les semaines >= 38 viennent en premier
       if (a >= 38 && b >= 38) return a - b
       if (a >= 38 && b < 38) return -1
       if (a < 38 && b >= 38) return 1
-      // Les semaines < 38 viennent après
       return a - b
     })
   }
   
-  // Créer une seule feuille pour tout le semestre
+  const dayColors = {
+    lundi: 'FFDBEAFE',
+    mardi: 'FFE0E7FF',
+    mercredi: 'FFEDE9FE',
+    jeudi: 'FFFCE7F3',
+    vendredi: 'FFFEF3C7',
+    distance: 'FFF1F5F9'
+  }
+  const thinBorder = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } }
+  const mediumBorder = { top: { style: 'medium' }, left: { style: 'medium' }, bottom: { style: 'medium' }, right: { style: 'medium' } }
+  
   const worksheet = workbook.addWorksheet(`Semestre ${semesterNum}`)
   
-  // Titre principal
-  worksheet.mergeCells('A1:J1')
+  // === TITRE ===
+  worksheet.mergeCells('A1:H1')
   const titleCell = worksheet.getCell('A1')
-  titleCell.value = `${getSelectedYearLabel()} / ${semesterLabel} ${semesterNum}`
-  titleCell.font = { size: 16, bold: true, color: { argb: 'FFFF6600' } }
+  titleCell.value = `${getSelectedYearLabel()} / ${semesterLabel}`
+  titleCell.font = { size: 14, bold: true, color: { argb: 'FFFFFFFF' } }
   titleCell.alignment = { horizontal: 'center', vertical: 'middle' }
-  titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } }
-  worksheet.getRow(1).height = 30
+  titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } }
+  worksheet.getRow(1).height = 32
 
   let currentRow = 3
+  const dayOrder = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'distance']
   
-  // Pour chaque semaine
   for (const weekNum of weekNumbers) {
     const weekSlots = timeSlots.value.filter(slot => slot.weekNumber === weekNum)
     if (weekSlots.length === 0) continue
     
-    // En-tête de semaine
-    worksheet.mergeCells(currentRow, 1, currentRow, 10)
+    // === BANDEAU SEMAINE ===
+    worksheet.mergeCells(currentRow, 1, currentRow, 8)
     const weekHeaderCell = worksheet.getCell(currentRow, 1)
     weekHeaderCell.value = `SEMAINE ${weekNum}`
-    weekHeaderCell.font = { size: 14, bold: true, color: { argb: 'FF000000' } }
+    weekHeaderCell.font = { size: 13, bold: true, color: { argb: 'FF1E293B' } }
     weekHeaderCell.alignment = { horizontal: 'center', vertical: 'middle' }
-    weekHeaderCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF00' } }
-    worksheet.getRow(currentRow).height = 25
+    weekHeaderCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFBBF24' } }
+    worksheet.getRow(currentRow).height = 26
     currentRow++
     
-    // Ajouter les données de la semaine
-    currentRow = await fillWeekDataToSheetContinuous(worksheet, weekSlots, currentRow)
+    // === DONNÉES PAR JOUR ===
+    const groupedByDay = {}
+    weekSlots.forEach(slot => {
+      if (!groupedByDay[slot.day]) groupedByDay[slot.day] = []
+      groupedByDay[slot.day].push(slot)
+    })
     
-    // Espace entre les semaines
+    dayOrder.forEach(day => {
+      const daySlots = groupedByDay[day]
+      if (!daySlots || daySlots.length === 0) return
+      
+      const dayBgColor = dayColors[day] || 'FFDBEAFE'
+      const dayLabel = day === 'distance' ? 'DISTANCE' : day.charAt(0).toUpperCase() + day.slice(1)
+      const dayDate = daySlots[0]?.date || ''
+      const moduleStartRow = currentRow
+      
+      // Module principal du jour
+      const moduleCounts = {}
+      daySlots.forEach(slot => {
+        if (slot.moduleCode) moduleCounts[slot.moduleCode] = (moduleCounts[slot.moduleCode] || 0) + 1
+      })
+      let mainModule = null
+      if (Object.keys(moduleCounts).length > 0) {
+        const mainModuleCode = Object.keys(moduleCounts).reduce((a, b) => moduleCounts[a] > moduleCounts[b] ? a : b)
+        const moduleData = courseModules.value.find(m => m.code === mainModuleCode)
+        mainModule = {
+          number: moduleData?.module_number || mainModuleCode.toUpperCase(),
+          title: moduleData?.label || '',
+          color: getModuleColor(mainModuleCode)
+        }
+      }
+      
+      // Ligne module
+      if (mainModule) {
+        const moduleBgHex = mainModule.color ? mainModule.color.replace('#', 'FF') : 'FF94A3B8'
+        worksheet.mergeCells(currentRow, 2, currentRow, 8)
+        const moduleCell = worksheet.getCell(currentRow, 2)
+        moduleCell.value = `${mainModule.number} — ${mainModule.title}`
+        moduleCell.font = { size: 10, bold: true, color: { argb: 'FFFFFFFF' } }
+        moduleCell.alignment = { horizontal: 'center', vertical: 'middle' }
+        moduleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgHex } }
+        moduleCell.border = thinBorder
+        worksheet.getRow(currentRow).height = 20
+        currentRow++
+      }
+      
+      // Créneaux
+      daySlots.forEach(slot => {
+        let moduleBgColor = 'FFFFFFFF'
+        if (mainModule && mainModule.color) {
+          const hex = mainModule.color.replace('#', '')
+          const r = Math.min(255, parseInt(hex.substring(0, 2), 16) + 80)
+          const g = Math.min(255, parseInt(hex.substring(2, 4), 16) + 80)
+          const b = Math.min(255, parseInt(hex.substring(4, 6), 16) + 80)
+          moduleBgColor = `FF${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
+        }
+        
+        // Horaire (Col B) fusionné sur 2 lignes
+        worksheet.mergeCells(currentRow, 2, currentRow + 1, 2)
+        const timeCell = worksheet.getRow(currentRow).getCell(2)
+        timeCell.value = `${slot.startTime} - ${slot.endTime}`
+        timeCell.font = { size: 9, bold: true }
+        timeCell.alignment = { horizontal: 'center', vertical: 'middle' }
+        timeCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgColor } }
+        timeCell.border = thinBorder
+        
+        // Cours (Col C-G fusionnées)
+        worksheet.mergeCells(currentRow, 3, currentRow, 7)
+        const courseCell = worksheet.getRow(currentRow).getCell(3)
+        courseCell.value = slot.courseTitle || slot.activity || ''
+        courseCell.font = { size: 9 }
+        courseCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
+        courseCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgColor } }
+        courseCell.border = thinBorder
+        
+        // N° module (Col H) fusionné sur 2 lignes
+        worksheet.mergeCells(currentRow, 8, currentRow + 1, 8)
+        const moduleNumCell = worksheet.getRow(currentRow).getCell(8)
+        moduleNumCell.value = slot.moduleNumber || ''
+        const moduleColorHex = getModuleColor(slot.moduleCode)?.replace('#', 'FF') || 'FF94A3B8'
+        moduleNumCell.font = { size: 10, bold: true, color: { argb: 'FFFFFFFF' } }
+        moduleNumCell.alignment = { horizontal: 'center', vertical: 'middle' }
+        moduleNumCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleColorHex } }
+        moduleNumCell.border = mediumBorder
+        
+        worksheet.getRow(currentRow).height = getCourseRowHeight(courseCell.value)
+        currentRow++
+        
+        // Enseignants (Col C-G fusionnées)
+        worksheet.mergeCells(currentRow, 3, currentRow, 7)
+        const teachersCell = worksheet.getRow(currentRow).getCell(3)
+        teachersCell.value = (slot.teachers || []).join(', ')
+        teachersCell.font = { size: 8, italic: true }
+        teachersCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
+        teachersCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgColor } }
+        teachersCell.border = thinBorder
+        worksheet.getRow(currentRow).height = getCourseRowHeight(teachersCell.value)
+        currentRow++
+      })
+      
+      // Fusionner colonne Jour (Col A)
+      if (daySlots.length > 0) {
+        const endRow = currentRow - 1
+        if (moduleStartRow < endRow) {
+          worksheet.mergeCells(moduleStartRow, 1, endRow, 1)
+        }
+        const dayCell = worksheet.getCell(moduleStartRow, 1)
+        dayCell.value = dayDate ? `${dayLabel}\n\n${dayDate}` : dayLabel
+        dayCell.font = { size: 10, bold: true }
+        dayCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
+        dayCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: dayBgColor } }
+        dayCell.border = mediumBorder
+      }
+    })
+    
     currentRow++
   }
   
-  // Largeurs des colonnes
-  worksheet.getColumn(1).width = 15  // Jour + Date (plus large)
-  worksheet.getColumn(2).width = 15  // Horaire
-  for (let i = 3; i <= 8; i++) {
-    worksheet.getColumn(i).width = 20
-  }
-  worksheet.getColumn(9).width = 8   // N° Module
-  worksheet.getColumn(10).width = 8  // Extra
+  // Largeurs (A-H)
+  worksheet.getColumn(1).width = 13
+  worksheet.getColumn(2).width = 14
+  worksheet.getColumn(3).width = 20
+  worksheet.getColumn(4).width = 20
+  worksheet.getColumn(5).width = 20
+  worksheet.getColumn(6).width = 20
+  worksheet.getColumn(7).width = 20
+  worksheet.getColumn(8).width = 9
   
-  // Générer le fichier
   const buffer = await workbook.xlsx.writeBuffer()
   const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
   const url = window.URL.createObjectURL(blob)
@@ -1608,314 +1770,6 @@ const exportSemesterToExcel = async (workbook, ExcelJS) => {
     detail: `${weekNumbers.length} semaines exportées dans un seul fichier`,
     life: 3000
   })
-}
-
-const fillWeekDataToSheet = async (worksheet, weekSlots) => {
-  let currentRow = 5
-  
-  const dayOrder = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'distance']
-  const groupedByDay = {}
-  
-  weekSlots.forEach(slot => {
-    if (!groupedByDay[slot.day]) {
-      groupedByDay[slot.day] = []
-    }
-    groupedByDay[slot.day].push(slot)
-  })
-  
-  const dayColors = {
-    lundi: 'FFFFCCCC',
-    mardi: 'FFCCCCFF',
-    mercredi: 'FFFFCCCC',
-    jeudi: 'FFCCCCFF',
-    vendredi: 'FFFFCCCC',
-    distance: 'FFEEEEEE'
-  }
-  
-  dayOrder.forEach(day => {
-    const daySlots = groupedByDay[day]
-    if (!daySlots || daySlots.length === 0) return
-    
-    const dayBgColor = dayColors[day] || 'FFFFCCCC'
-    const dayLabel = day === 'distance' ? 'DISTANCE' : (day.charAt(0).toUpperCase() + day.slice(1))
-    const moduleStartRow = currentRow
-    
-    // Module principal (trouver le module le plus fréquent)
-    const moduleCounts = {}
-    daySlots.forEach(slot => {
-      if (slot.moduleCode) {
-        moduleCounts[slot.moduleCode] = (moduleCounts[slot.moduleCode] || 0) + 1
-      }
-    })
-    
-    let mainModule = null
-    if (Object.keys(moduleCounts).length > 0) {
-      const mainModuleCode = Object.keys(moduleCounts).reduce((a, b) => 
-        moduleCounts[a] > moduleCounts[b] ? a : b
-      )
-      const firstSlot = daySlots.find(s => s.moduleCode === mainModuleCode)
-      
-      // Récupérer le titre depuis courseModules si disponible
-      let moduleTitle = firstSlot.moduleTitle || firstSlot.course_title || ''
-      if (!moduleTitle) {
-        const moduleData = courseModules.value.find(m => m.code === mainModuleCode)
-        if (moduleData) {
-          moduleTitle = moduleData.label || moduleData.title || ''
-        }
-      }
-      
-      mainModule = {
-        number: firstSlot.moduleNumber || mainModuleCode.toUpperCase(),
-        title: moduleTitle,
-        color: getModuleColor(mainModuleCode)
-      }
-    }
-    
-    if (mainModule) {
-      worksheet.mergeCells(currentRow, 2, currentRow, 9)
-      const moduleCell = worksheet.getCell(currentRow, 2)
-      moduleCell.value = `${mainModule.number} - ${mainModule.title}`
-      moduleCell.font = { size: 10, bold: true }
-      moduleCell.alignment = { horizontal: 'center', vertical: 'middle' }
-      moduleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } }
-      moduleCell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } }
-      worksheet.getRow(currentRow).height = 18
-      currentRow++
-    }
-    
-    // Créneaux
-    daySlots.forEach(slot => {
-      const moduleBgColor = mainModule?.color?.replace('#', 'FF') || 'FFFFFFFF'
-      
-      // Ligne 1
-      const row1 = worksheet.getRow(currentRow)
-      
-      worksheet.mergeCells(currentRow, 2, currentRow + 1, 2)
-      const timeCell = row1.getCell(2)
-      timeCell.value = `${slot.startTime} - ${slot.endTime}`
-      timeCell.font = { size: 9, bold: true }
-      timeCell.alignment = { horizontal: 'center', vertical: 'middle' }
-      timeCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgColor } }
-      timeCell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } }
-      
-      worksheet.mergeCells(currentRow, 3, currentRow, 8)
-      const courseCell = row1.getCell(3)
-      courseCell.value = slot.courseTitle || slot.activity || ''
-      courseCell.font = { size: 9 }
-      courseCell.alignment = { horizontal: 'center', vertical: 'top', wrapText: true }
-      courseCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgColor } }
-      courseCell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } }
-      
-      worksheet.mergeCells(currentRow, 9, currentRow + 1, 9)
-      const moduleNumCell = row1.getCell(9)
-      moduleNumCell.value = slot.moduleNumber || ''
-      moduleNumCell.font = { size: 10, bold: true }
-      moduleNumCell.alignment = { horizontal: 'center', vertical: 'middle' }
-      moduleNumCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgColor } }
-      moduleNumCell.border = { top: { style: 'medium' }, left: { style: 'medium' }, bottom: { style: 'medium' }, right: { style: 'medium' } }
-      
-      row1.height = getCourseRowHeight(courseCell.value)
-      currentRow++
-      
-      // Ligne 2: Enseignants (tous concaténés)
-      const row2 = worksheet.getRow(currentRow)
-      worksheet.mergeCells(currentRow, 3, currentRow, 8)
-      const teachersCell = row2.getCell(3)
-      const teachersText = (slot.teachers || []).join(', ')
-      teachersCell.value = teachersText
-      teachersCell.font = { size: 9 }
-      teachersCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
-      teachersCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgColor } }
-      teachersCell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } }
-      row2.height = getCourseRowHeight(teachersText)
-      currentRow++
-    })
-    
-    // Fusionner colonne jour avec date
-    if (daySlots.length > 0) {
-      const endRow = currentRow - 1
-      worksheet.mergeCells(moduleStartRow, 1, endRow, 1)
-      const dayCell = worksheet.getCell(moduleStartRow, 1)
-      
-      // Formater jour et date
-      const dateStr = daySlots[0].date || ''
-      dayCell.value = dateStr ? `${dayLabel}\n\n${dateStr}` : dayLabel
-      
-      dayCell.font = { size: 11, bold: true }
-      dayCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
-      dayCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: dayBgColor } }
-      dayCell.border = { 
-        top: { style: 'medium' }, 
-        left: { style: 'medium' }, 
-        bottom: { style: 'medium' }, 
-        right: { style: 'medium' } 
-      }
-    }
-  })
-  
-  // Largeurs
-  worksheet.getColumn(1).width = 15  // Jour + Date (plus large)
-  worksheet.getColumn(2).width = 15  // Horaire
-  for (let i = 3; i <= 8; i++) {
-    worksheet.getColumn(i).width = 20
-  }
-  worksheet.getColumn(9).width = 8   // N° Module
-  worksheet.getColumn(10).width = 8  // Extra
-}
-
-const fillWeekDataToSheetContinuous = async (worksheet, weekSlots, startRow) => {
-  let currentRow = startRow
-  
-  const dayOrder = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'distance']
-  const groupedByDay = {}
-  
-  weekSlots.forEach(slot => {
-    if (!groupedByDay[slot.day]) {
-      groupedByDay[slot.day] = []
-    }
-    groupedByDay[slot.day].push(slot)
-  })
-  
-  const dayColors = {
-    lundi: 'FFFFCCCC',
-    mardi: 'FFCCCCFF',
-    mercredi: 'FFFFCCCC',
-    jeudi: 'FFCCCCFF',
-    vendredi: 'FFFFCCCC',
-    distance: 'FFEEEEEE'
-  }
-  
-  dayOrder.forEach(day => {
-    const daySlots = groupedByDay[day]
-    if (!daySlots || daySlots.length === 0) return
-    
-    const dayBgColor = dayColors[day] || 'FFFFCCCC'
-    const dayLabel = day === 'distance' ? 'DISTANCE' : (day.charAt(0).toUpperCase() + day.slice(1))
-    const moduleStartRow = currentRow
-    
-    // Trouver le module principal
-    const moduleCounts = {}
-    daySlots.forEach(slot => {
-      if (slot.moduleCode) {
-        moduleCounts[slot.moduleCode] = (moduleCounts[slot.moduleCode] || 0) + 1
-      }
-    })
-    
-    let mainModule = null
-    if (Object.keys(moduleCounts).length > 0) {
-      const mainModuleCode = Object.keys(moduleCounts).reduce((a, b) => 
-        moduleCounts[a] > moduleCounts[b] ? a : b
-      )
-      const firstSlot = daySlots.find(s => s.moduleCode === mainModuleCode)
-      
-      // Récupérer le titre depuis courseModules si disponible
-      let moduleTitle = firstSlot.moduleTitle || firstSlot.course_title || ''
-      if (!moduleTitle) {
-        const moduleData = courseModules.value.find(m => m.code === mainModuleCode)
-        if (moduleData) {
-          moduleTitle = moduleData.label || moduleData.title || ''
-        }
-      }
-      
-      mainModule = {
-        number: firstSlot.moduleNumber || mainModuleCode.toUpperCase(),
-        title: moduleTitle,
-        color: getModuleColor(mainModuleCode)
-      }
-    }
-    
-    // Ligne du module (avec titre complet) - ne pas fusionner colonne 1 (jour)
-    if (mainModule) {
-      worksheet.mergeCells(currentRow, 2, currentRow, 9)
-      const moduleCell = worksheet.getCell(currentRow, 2)
-      moduleCell.value = `${mainModule.number} - ${mainModule.title}`
-      moduleCell.font = { size: 11, bold: true }
-      moduleCell.alignment = { horizontal: 'center', vertical: 'middle' }
-      moduleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } }
-      moduleCell.border = { 
-        top: { style: 'medium' }, 
-        left: { style: 'thin' }, 
-        bottom: { style: 'medium' }, 
-        right: { style: 'medium' } 
-      }
-      worksheet.getRow(currentRow).height = 20
-      currentRow++
-    }
-    
-    const slotsStartRow = currentRow
-    
-    // Créneaux
-    daySlots.forEach(slot => {
-      const moduleBgColor = mainModule?.color?.replace('#', 'FF') || 'FFFFFFFF'
-      
-      // Ligne 1: Horaire + Cours + Numéro module
-      const row1 = worksheet.getRow(currentRow)
-      
-      worksheet.mergeCells(currentRow, 2, currentRow + 1, 2)
-      const timeCell = row1.getCell(2)
-      timeCell.value = `${slot.startTime} - ${slot.endTime}`
-      timeCell.font = { size: 9, bold: true }
-      timeCell.alignment = { horizontal: 'center', vertical: 'middle' }
-      timeCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgColor } }
-      timeCell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } }
-      
-      worksheet.mergeCells(currentRow, 3, currentRow, 8)
-      const courseCell = row1.getCell(3)
-      courseCell.value = slot.courseTitle || slot.activity || ''
-      courseCell.font = { size: 9 }
-      courseCell.alignment = { horizontal: 'center', vertical: 'top', wrapText: true }
-      courseCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgColor } }
-      courseCell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } }
-      
-      worksheet.mergeCells(currentRow, 9, currentRow + 1, 9)
-      const moduleNumCell = row1.getCell(9)
-      moduleNumCell.value = slot.moduleNumber || ''
-      moduleNumCell.font = { size: 10, bold: true }
-      moduleNumCell.alignment = { horizontal: 'center', vertical: 'middle' }
-      moduleNumCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgColor } }
-      moduleNumCell.border = { top: { style: 'medium' }, left: { style: 'medium' }, bottom: { style: 'medium' }, right: { style: 'medium' } }
-      
-      row1.height = getCourseRowHeight(courseCell.value)
-      currentRow++
-      
-      // Ligne 2: Enseignants (tous concaténés)
-      const row2 = worksheet.getRow(currentRow)
-      worksheet.mergeCells(currentRow, 3, currentRow, 8)
-      const teachersCell = row2.getCell(3)
-      const teachersText = (slot.teachers || []).join(', ')
-      teachersCell.value = teachersText
-      teachersCell.font = { size: 9 }
-      teachersCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
-      teachersCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgColor } }
-      teachersCell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } }
-      row2.height = getCourseRowHeight(teachersText)
-      currentRow++
-    })
-    
-    // Fusionner colonne jour avec date
-    if (daySlots.length > 0) {
-      const endRow = currentRow - 1
-      worksheet.mergeCells(moduleStartRow, 1, endRow, 1)
-      const dayCell = worksheet.getCell(moduleStartRow, 1)
-      
-      // Formater jour et date
-      const dayName = day.charAt(0).toUpperCase() + day.slice(1)
-      const dateStr = daySlots[0].date || ''
-      dayCell.value = dateStr ? `${dayName}\n\n${dateStr}` : dayName
-      
-      dayCell.font = { size: 11, bold: true }
-      dayCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
-      dayCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: dayBgColor } }
-      dayCell.border = { 
-        top: { style: 'medium' }, 
-        left: { style: 'medium' }, 
-        bottom: { style: 'medium' }, 
-        right: { style: 'medium' } 
-      }
-    }
-  })
-  
-  return currentRow
 }
 
 // Fonction generateSemesterFromMinibrick supprimée (nécessite migration complète du système minibrick)

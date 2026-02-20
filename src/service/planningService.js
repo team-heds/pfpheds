@@ -562,23 +562,24 @@ class PlanningService {
 
   /**
    * Calcule la date d'un jour à partir du numéro de semaine ISO
-   * @param {number} weekNumber - Numéro de semaine ISO (1-52)
+   * @param {number} weekNumber - Numéro de semaine ISO (1-53)
    * @param {number} dayIndex - Index du jour (0=lundi, 4=vendredi)
+   * @param {number} [autumnYear] - Année civile de l'automne académique (ex: 2025 pour 2025-2026)
    * @returns {string} Date au format DD.MM.YYYY
    */
-  getDateForWeekAndDay(weekNumber, dayIndex) {
-    // 🔧 ANNÉE ACADÉMIQUE 2024-2025
-    // Automne 2024 : S38-S52 (sept-déc 2024)
-    // Hiver 2025  : S1-S7 (jan-fév 2025)
-    // Printemps   : S8-S37 (mars-sept 2025)
-    
-    // Déterminer l'année de référence selon la semaine
-    let year
-    if (weekNumber >= 38) {
-      year = 2024 // S38-S52 → Automne 2024
-    } else {
-      year = 2025 // S1-S37 → 2025
+  getDateForWeekAndDay(weekNumber, dayIndex, autumnYear) {
+    // Si pas d'année fournie, déduire depuis la date courante
+    if (!autumnYear) {
+      const now = new Date()
+      const currentMonth = now.getMonth() + 1
+      autumnYear = currentMonth >= 8 ? now.getFullYear() : now.getFullYear() - 1
     }
+    
+    const springYear = autumnYear + 1
+    
+    // S38-S53 → automne (autumnYear), S1-S37 → printemps (springYear)
+    // Note: certaines années ISO ont 53 semaines (ex: 2020, 2026)
+    const year = weekNumber >= 38 ? autumnYear : springYear
     
     // Trouver le lundi de la semaine 1 de cette année
     const jan4 = new Date(year, 0, 4) // 4 janvier est toujours dans la semaine 1 ISO
