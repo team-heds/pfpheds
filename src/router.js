@@ -152,6 +152,7 @@ const AdminDashboardAcademique = () => import('@/components/admin/AdminDashboard
 const AlertsDashboard = () => import('@/views/admin/AlertsDashboard.vue');
 const AdminDashboardGamification = () => import('@/components/admin/AdminDashboardGamification.vue');
 const DashboardRMView = () => import('@/views/admin/DashboardRMView.vue');
+const DashboardSecretariatSI = () => import('@/views/admin/soins-infirmiers/DashboardSecretariatSI.vue');
 const DashboardEnseignantView = () => import('@/views/admin/DashboardEnseignantView.vue');
 const TeacherAssignmentView = () => import('@/views/admin/TeacherAssignmentView.vue');
 const ModuleManageView = () => import('@/views/admin/modules/ModuleManageView.vue');
@@ -384,6 +385,7 @@ const routes = [
   { path: '/admin', component: DashboardView, name: 'DashboardView', meta: { requiresAuth: true,  need: ['super.all', 'admin' , 'AdminPhysio',  'EnseignantPhysio' ] } },
   { path: '/admin/dashboard-general', component: AdminDashboardGeneral, name: 'AdminDashboardGeneral', meta: { requiresAuth: true, need: 'admin' } },
   { path: '/admin/dashboard-rm', component: DashboardRMView, name: 'DashboardRM', meta: { requiresAuth: true, need: ['admin', 'RMSoins'] } },
+  { path: '/admin/soins-infirmiers/dashboard', component: DashboardSecretariatSI, name: 'DashboardSecretariatSI', meta: { requiresAuth: true, need: ['admin', 'RMSoins'] } },
   { path: '/admin/role-management', component: RoleManagementView, name: 'RoleManagement', meta: { requiresAuth: true, need: ['super.all', 'admin'] } },
   { 
     path: '/admin/modules/:id/manage', 

@@ -153,47 +153,35 @@ export default [
     label: 'Soins Infirmiers',
     icon: 'pi pi-heart-fill',
     items: [
-      // Dashboard Soins Infirmiers
+      // Dashboards
+      { label: 'Dashboard Secrétariat', icon: 'pi pi-th-large', to: '/admin/soins-infirmiers/dashboard' },
       { label: 'Dashboard RM', icon: 'pi pi-chart-line', to: '/admin/dashboard-rm' },
-     // { label: 'Dashboard Enseignant', icon: 'pi pi-map', to: '/admin/dashboard-enseignant' },
-              { label: 'Structure Mini Brique', icon: 'pi pi-calendar-plus', to: '/admin/planning' },
-              { label: 'Planning Public', icon: 'pi pi-calendar-plus', to: '/admin/planning/weekly' },
-      { label: 'Ticket Tâches', icon: 'pi pi-th-large', to: '/admin/academic/kanban' },
-          { label: 'Contenu Multimédia', icon: 'pi pi-video', to: '/admin/academic/video-library' },
-      // Académique
+      
+      // Planning
       {
-        label: 'Académique',
-        icon: 'pi pi-book',
+        label: 'Planning',
+        icon: 'pi pi-calendar',
         items: [
-                        { label: 'Structure Mini Brique', icon: 'pi pi-calendar-plus', to: '/admin/planning' },
-
-          { label: 'Dashboard Académique', icon: 'pi pi-chart-bar', to: '/admin/dashboard-academique' },
+          { label: 'Structure Mini Brique', icon: 'pi pi-th-large', to: '/admin/planning' },
+          { label: 'Vue Hebdomadaire', icon: 'pi pi-calendar', to: '/admin/planning/weekly' },
+          { label: 'Gestion Planning', icon: 'pi pi-pencil', to: '/admin/planning/manage' },
+          { label: 'Années Académiques', icon: 'pi pi-calendar-plus', to: '/admin/planning/years' }
+        ]
+      },
+      
+      // Ressources
+      {
+        label: 'Ressources',
+        icon: 'pi pi-database',
+        items: [
           { label: 'Enseignants SI', icon: 'pi pi-users', to: '/admin/teachers-si' },
-          
-          // Planning
-          {
-            label: 'Planning',
-            icon: 'pi pi-calendar',
-            items: [
-              { label: 'Vue Hebdomadaire', icon: 'pi pi-calendar-plus', to: '/admin/planning/weekly' },
-              { label: 'Gestion Planning', icon: 'pi pi-pencil', to: '/admin/planning/manage' }
-            ]
-          },
-          
-          // Cours 
-           /*
-          {
-            label: 'Cours',
-            icon: 'pi pi-book',
-            items: [
-              { label: 'Liste des Cours', icon: 'pi pi-list', to: '/admin/courses/list' },
-              { label: 'Créer un Cours', icon: 'pi pi-plus-circle', to: '/admin/courses/create' }
-            ]
-          },
-          */
+          { label: 'Modules', icon: 'pi pi-book', to: '/admin/modules' },
           { label: 'Contenu Multimédia', icon: 'pi pi-video', to: '/admin/academic/video-library' }
         ]
-      }
+      },
+      
+      // Outils
+      { label: 'Ticket Tâches', icon: 'pi pi-check-square', to: '/admin/academic/kanban' }
     ]
   },
 
