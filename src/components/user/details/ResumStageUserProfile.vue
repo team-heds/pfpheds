@@ -548,11 +548,15 @@ const assignedPlaces = computed(() => {
     AIGU: 'aigu',
   }
 
+  // Normaliser PFP1A/PFP1B → PFP1
+  const normalizePfp = (t) => (t === 'PFP1A' || t === 'PFP1B') ? 'PFP1' : t
+  const fpNumberMap = { 'PFP1': 1, 'PFP2': 2, 'PFP3': 3, 'PFP4': 4 }
+
   // 1. Source prioritaire : student_result_vote (stages attribués par l'algo)
   ;(studentResultVotes.value || []).forEach((rv, idx) => {
     const placeId = rv.assigned_place_id || ''
     const pfpType = rv.pfp_type || ''
-    const dedupKey = `${placeId}_${pfpType}`
+    const dedupKey = `${placeId}_${normalizePfp(pfpType)}`
     if (seenKeys.has(dedupKey)) return
     seenKeys.add(dedupKey)
 
@@ -560,9 +564,6 @@ const assignedPlaces = computed(() => {
     if (rv.pfp_validee) status = 'validee'
     else if (rv.pfp_echec) status = 'echec'
     else if (rv.pfp_arret) status = 'arret'
-
-    // Déduire le numéro de Formation Pratique depuis le pfp_type
-    const fpNumberMap = { 'PFP1A': 1, 'PFP1B': 1, 'PFP2': 2, 'PFP3': 3, 'PFP4': 4 }
     const item = {
       _key: `rv_${idx}`,
       IDPlace: placeId,
@@ -570,8 +571,8 @@ const assignedPlaces = computed(() => {
       NomPlace: rv.assigned_place_name || '',
       seatIndex: null,
       Institutionname: rv.assigned_institution_name || getInstitutionNameById(placeId) || '',
-      pfp_type: pfpType,
-      _fpNumber: fpNumberMap[pfpType] || null,
+      pfp_type: normalizePfp(pfpType),
+      _fpNumber: fpNumberMap[normalizePfp(pfpType)] || null,
       status,
       commentaire_arret: rv.commentaire_arret || null,
       assigned_rank: rv.assigned_rank || null,
@@ -590,9 +591,11 @@ const assignedPlaces = computed(() => {
   })
 
   // 2. Source backup : pfp_valided (stages historiques/legacy)
+  const pfpTypeByIndex = ['PFP1', 'PFP2', 'PFP3', 'PFP4']
   ;(studentPfpList.value || []).forEach((pfp, idx) => {
     const placeId = pfp.id_pfp || pfp.ID_PFP || pfp.PlaceId || ''
-    const pfpType = pfp.pfp_type || pfp.type_pfp || pfp.PfpType || ''
+    const rawType = pfp.pfp_type || pfp.type_pfp || pfp.PfpType || pfpTypeByIndex[idx] || ''
+    const pfpType = normalizePfp(rawType)
     const dedupKey = `${placeId}_${pfpType}`
     if (seenKeys.has(dedupKey)) return // Déjà présent depuis student_result_vote
     seenKeys.add(dedupKey)
@@ -921,7 +924,7 @@ const aggregatedCriteria = computed(() => {
 const hasPFP1 = computed(() => {
   return (studentPfpList.value || []).some(pfp => {
     const pfpType = pfp.pfp_type || pfp.type_pfp || ''
-    return pfpType === 'PFP1A' || pfpType === 'PFP1B' || pfpType === 'PFP1'
+    return pfpType === 'PFP1A' || pfpType === 'PFP1B' || pfpType === 'PFP1' // legacy data may still have PFP1A/PFP1B
   })
 });
 
@@ -1185,7 +1188,7 @@ const getStageCardClass = (status) => {
 
 
 const getPfpTagSeverity = (pfpType) => {
-  if (pfpType === 'PFP1A' || pfpType === 'PFP1B') return 'info'
+  if (pfpType === 'PFP1' || pfpType === 'PFP1A' || pfpType === 'PFP1B') return 'info'
   if (pfpType === 'PFP2') return 'warning'
   if (pfpType === 'PFP3') return 'success'
   if (pfpType === 'PFP4') return 'secondary'

@@ -475,6 +475,10 @@ const fetchStudents = async () => {
       return r
     }
 
+    // Normaliser PFP1A/PFP1B → PFP1
+    const normalizePfp = (t) => (t === 'PFP1A' || t === 'PFP1B') ? 'PFP1' : t
+    const pfpTypeByIndex = ['PFP1', 'PFP2', 'PFP3', 'PFP4']
+
     const criteriaMap = new Map()
     const stagesMap = new Map()
     if (physioResult.data) {
@@ -488,15 +492,15 @@ const fetchStudents = async () => {
           criteriaLabels.forEach(c => { if (crit[c]) scores[c]++ })
         })
         criteriaMap.set(physio.user_id, { scores, totalStages: pfpArray.length })
-        const pfpTypeByIndex = ['PFP1A', 'PFP1B', 'PFP2', 'PFP3', 'PFP4']
         const enrichedStages = pfpArray.map((stage, idx) => {
           const placeId = stage.PlaceId || stage.ID_PFP || stage.id_pfp
           const placeInfo = placeId ? placesMap.get(placeId) : null
+          const rawType = stage.pfp_type || stage.pfpLevel || pfpTypeByIndex[idx] || null
           return {
             ...stage,
             NomPlace: stage.NomPlace || stage.nom_pfp || placeInfo?.name || null,
             Institution: stage.Institution || stage.institution_name || placeInfo?.institution || null,
-            pfp_type: stage.pfp_type || stage.pfpLevel || pfpTypeByIndex[idx] || null,
+            pfp_type: rawType ? normalizePfp(rawType) : null,
             _placeId: placeId || null
           }
         })

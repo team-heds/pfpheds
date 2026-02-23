@@ -366,8 +366,8 @@ const rawCptEval = ref([])
 const priorityUserIdsMap = ref(new Map())
 
 const criteriaLabels = ['MSQ', 'SYSINT', 'NEUROGER', 'AIGU', 'REHAB', 'AMBU', 'FR', 'DE']
-const pfpTypes = ['PFP1A', 'PFP1B', 'PFP2', 'PFP3', 'PFP4']
-const pfpOptions = ['PFP1A', 'PFP1B', 'PFP2', 'PFP3', 'PFP4']
+const pfpTypes = ['PFP1', 'PFP2', 'PFP3', 'PFP4']
+const pfpOptions = ['PFP1', 'PFP2', 'PFP3', 'PFP4']
 
 const statutOptions = [
   { label: 'Validé / Réussi', value: 'Réussi' },
@@ -408,7 +408,7 @@ const getFlatAvatarClass = (row) => {
 }
 
 const getPfpSeverity = (pfp) => {
-  if (pfp === 'PFP1A' || pfp === 'PFP1B') return 'info'
+  if (pfp === 'PFP1') return 'info'
   if (pfp === 'PFP2') return 'warning'
   if (pfp === 'PFP3') return 'success'
   if (pfp === 'PFP4') return 'secondary'
@@ -598,14 +598,16 @@ const fetchAllData = async () => {
       supabase.from('votation_sessions').select('pfp_type, priority_user_ids').eq('is_priority', true)
     ])
 
-    // Build priority user IDs map (pfp_type -> Set of user_ids)
+    // Build priority user IDs map (pfp_type -> Set of user_ids), normalise PFP1A/PFP1B → PFP1
+    const normPfpType = (t) => (t === 'PFP1A' || t === 'PFP1B') ? 'PFP1' : t
     const prioMap = new Map()
     if (prioSessionsResult.data) {
       prioSessionsResult.data.forEach(s => {
         if (s.pfp_type && Array.isArray(s.priority_user_ids)) {
-          const existing = prioMap.get(s.pfp_type) || new Set()
+          const key = normPfpType(s.pfp_type)
+          const existing = prioMap.get(key) || new Set()
           s.priority_user_ids.forEach(id => existing.add(id))
-          prioMap.set(s.pfp_type, existing)
+          prioMap.set(key, existing)
         }
       })
     }
@@ -640,11 +642,13 @@ const fetchAllData = async () => {
       notesMap.set(n.user_id, n)
     })
 
+    // Normaliser PFP1A/PFP1B → PFP1
+    const normalizePfp = (t) => (t === 'PFP1A' || t === 'PFP1B') ? 'PFP1' : t
     const assignMap = new Map()
     if (assignmentsResult.data) {
       assignmentsResult.data.forEach(a => {
         if (!a.user_id || !a.pfp_type) return
-        const key = `${a.user_id}__${a.pfp_type}`
+        const key = `${a.user_id}__${normalizePfp(a.pfp_type)}`
         if (!assignMap.has(key)) assignMap.set(key, a)
       })
     }
@@ -660,7 +664,8 @@ const fetchAllData = async () => {
     }
 
     // Default PFP type by array index in pfp_valided (legacy Firebase convention)
-    const pfpTypeByIndex = ['PFP1A', 'PFP1B', 'PFP2', 'PFP3', 'PFP4']
+    // index 0 = PFP1, index 1 = PFP2, index 2 = PFP3, index 3 = PFP4
+    const pfpTypeByIndex = ['PFP1', 'PFP2', 'PFP3', 'PFP4']
 
     const validatedMap = new Map()
     // Also build a per-user map of ALL stage criteria from pfp_valided (like VerificationCriteresEtudiants)
@@ -670,7 +675,8 @@ const fetchAllData = async () => {
         if (!physio.pfp_valided) return
         const pfpArray = parsePfpValided(physio.pfp_valided)
         pfpArray.forEach((stage, idx) => {
-          const pfpType = stage.pfp_type || stage.pfpLevel || pfpTypeByIndex[idx] || ''
+          const rawType = stage.pfp_type || stage.pfpLevel || pfpTypeByIndex[idx] || ''
+          const pfpType = normalizePfp(rawType)
           if (!pfpType) return
           const key = `${physio.user_id}__${pfpType}`
           if (!validatedMap.has(key)) validatedMap.set(key, stage)
@@ -698,9 +704,13 @@ const fetchAllData = async () => {
       })
     }
 
-    const pfpNoteKeys = { 'PFP1A': 'pfp1a', 'PFP1B': 'pfp1b', 'PFP2': 'pfp2', 'PFP3': 'pfp3', 'PFP4': 'pfp4' }
-    const pfpSuiviKeys = { 'PFP1A': 'pfp1', 'PFP1B': 'pfp1', 'PFP2': 'pfp2', 'PFP3': 'pfp3', 'PFP4': 'pfp4' }
-    const pfpCptKeys = { 'PFP1A': 'pfp1', 'PFP1B': 'pfp1', 'PFP2': 'pfp2', 'PFP3': 'pfp3', 'PFP4': 'pfp4' }
+    // Pour PFP1, les notes peuvent être dans pfp1a ou pfp1b — on prend celle qui a une valeur
+    const getPfp1NoteKey = (notesData) => {
+      if (notesData?.pfp1b) return 'pfp1b'
+      return 'pfp1a'
+    }
+    const pfpSuiviKeys = { 'PFP1': 'pfp1', 'PFP2': 'pfp2', 'PFP3': 'pfp3', 'PFP4': 'pfp4' }
+    const pfpCptKeys = { 'PFP1': 'pfp1', 'PFP2': 'pfp2', 'PFP3': 'pfp3', 'PFP4': 'pfp4' }
 
     const cptMap = new Map()
     if (cptEvalResult.data) cptEvalResult.data.forEach(c => {
@@ -725,7 +735,7 @@ const fetchAllData = async () => {
         const key = `${userId}__${pfpType}`
         const assignment = assignMap.get(key)
         const validatedStage = validatedMap.get(key)
-        const noteKey = pfpNoteKeys[pfpType]
+        const noteKey = pfpType === 'PFP1' ? getPfp1NoteKey(notesData) : { 'PFP2': 'pfp2', 'PFP3': 'pfp3', 'PFP4': 'pfp4' }[pfpType]
         const noteVal = notesData?.[noteKey] || null
         const noteRetake = notesData?.[noteKey + '_retake'] || null
         const absences = Number(notesData?.[noteKey + '_absences']) || 0
@@ -876,7 +886,7 @@ const exportXLSX = async () => {
   const COL_GREEN_TEXT = 'FF1B7A3D'
   const COL_RED_TEXT = 'FFC62828'
   const COL_ORANGE_TEXT = 'FFE65100'
-  const pfpColors = { 'PFP1A': 'FF1565C0', 'PFP1B': 'FF1976D2', 'PFP2': 'FFE65100', 'PFP3': 'FF2E7D32', 'PFP4': 'FF6A1B9A' }
+  const pfpColors = { 'PFP1': 'FF1565C0', 'PFP2': 'FFE65100', 'PFP3': 'FF2E7D32', 'PFP4': 'FF6A1B9A' }
 
   // ── Maps for lookups ──
   const instMap = new Map()
@@ -1030,7 +1040,7 @@ const exportXLSX = async () => {
   // SHEETS: Vérif. BAxx (one per cohort/classe)
   // ════════════════════════════════════════════
   const cohorts = [...new Set(allRows.value.map(r => r.classe).filter(c => c && c !== '-'))].sort()
-  const pfpNoteKeys = { 'PFP1A': 'pfp1a', 'PFP1B': 'pfp1b', 'PFP2': 'pfp2', 'PFP3': 'pfp3', 'PFP4': 'pfp4' }
+  const pfpNoteKeysExport = { 'PFP2': 'pfp2', 'PFP3': 'pfp3', 'PFP4': 'pfp4' }
 
   // Build a map of place criteria by PlaceId
   const placeCriteriaMap = new Map()
@@ -1113,10 +1123,11 @@ const exportXLSX = async () => {
   // SHEETS: PFP xx - BAxx (one per PFP/cohort with assignments)
   // ════════════════════════════════════════════
   // Group assignments by pfp_type + year
+  const normPfp = (t) => (t === 'PFP1A' || t === 'PFP1B') ? 'PFP1' : t
   const assignGroups = new Map()
   rawAssignments.value.forEach(a => {
     if (!a.pfp_type || !a.year) return
-    const key = `${a.pfp_type}__${a.year}`
+    const key = `${normPfp(a.pfp_type)}__${a.year}`
     if (!assignGroups.has(key)) assignGroups.set(key, [])
     assignGroups.get(key).push(a)
   })
@@ -1130,7 +1141,7 @@ const exportXLSX = async () => {
       if (!year) return
       const key = `${pfp}__${year}`
       // Check if already in assignments
-      const existing = rawAssignments.value.find(a => a.user_id === r.userId && a.pfp_type === pfp)
+      const existing = rawAssignments.value.find(a => a.user_id === r.userId && normPfp(a.pfp_type) === pfp)
       if (!existing && d.note) {
         if (!assignGroups.has(key)) assignGroups.set(key, [])
         assignGroups.get(key).push({
@@ -1156,7 +1167,7 @@ const exportXLSX = async () => {
   // Build CPT/Eval lookup
   const cptEvalMap = new Map()
   rawCptEval.value.forEach(c => cptEvalMap.set(c.user_id, c))
-  const pfpCptKeysExport = { 'PFP1A': 'pfp1', 'PFP1B': 'pfp1', 'PFP2': 'pfp2', 'PFP3': 'pfp3', 'PFP4': 'pfp4' }
+  const pfpCptKeysExport = { 'PFP1': 'pfp1', 'PFP2': 'pfp2', 'PFP3': 'pfp3', 'PFP4': 'pfp4' }
   const cptLabel = (val) => val === true ? 'Validé' : val === false ? 'Non conforme' : ''
 
   // Build praticiens lookup from assignments
@@ -1166,7 +1177,7 @@ const exportXLSX = async () => {
   })
 
   // PFP label mapping for sheet names
-  const pfpSheetLabels = { 'PFP1A': 'PFP 1A', 'PFP1B': 'PFP 1B', 'PFP2': 'PFP 2', 'PFP3': 'PFP 3', 'PFP4': 'PFP 4' }
+  const pfpSheetLabels = { 'PFP1': 'PFP 1', 'PFP1A': 'PFP 1', 'PFP1B': 'PFP 1', 'PFP2': 'PFP 2', 'PFP3': 'PFP 3', 'PFP4': 'PFP 4' }
 
   // Sort keys for consistent ordering
   const sortedKeys = [...assignGroups.keys()].sort((a, b) => {
@@ -1246,7 +1257,7 @@ const exportXLSX = async () => {
     sorted.forEach((a, idx) => {
       const student = studentMap.get(a.user_id)
       const noteData = notesMap.get(a.user_id)
-      const noteKey = pfpNoteKeys[pfpType]
+      const noteKey = pfpType === 'PFP1' ? (noteData?.pfp1b ? 'pfp1b' : 'pfp1a') : pfpNoteKeysExport[pfpType]
       const note = noteData?.[noteKey] || ''
       const absences = Number(noteData?.[noteKey + '_absences']) || ''
       const remarques = noteData?.[noteKey + '_remarques'] || ''
