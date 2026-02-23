@@ -97,70 +97,36 @@
           <Column field="etudiant" header="Étudiant" sortable></Column>
           <Column field="classe" header="Classe" sortable></Column>
           <Column field="year" header="Année" sortable></Column>
-          <Column header="PFP1A">
+          <Column header="PFP1">
             <template #body="{ data }">
-              <div :class="['note-cell', { 'is-disabled': isPfp1aLocked(data) }]">
-                <Dropdown v-model="data.pfp1a" :options="gradeOptions" optionLabel="label" optionValue="value" placeholder="Note" class="note-dropdown" :disabled="isPfp1aLocked(data)" @update:modelValue="queueSave(data)" />
-                <span class="status-badge status-compact" :class="statusClass(getPfpFinalStatus(data.pfp1a, data.pfp1a_retake))">
-                  {{ getPfpFinalStatus(data.pfp1a, data.pfp1a_retake) }}
+              <div class="note-cell">
+                <Dropdown v-model="data.pfp1" :options="gradeOptions" optionLabel="label" optionValue="value" placeholder="Note" class="note-dropdown" @update:modelValue="onPfp1Change(data)" />
+                <span class="status-badge status-compact" :class="statusClass(getPfpFinalStatus(data.pfp1, data.pfp1_retake))">
+                  {{ getPfpFinalStatus(data.pfp1, data.pfp1_retake) }}
                 </span>
               </div>
             </template>
           </Column>
-          <Column v-if="showRetakePfp1a" header="Rattrap. PFP1A">
+          <Column v-if="showRetakePfp1" header="Rattrap. PFP1">
             <template #body="{ data }">
               <div class="note-cell">
                 <Dropdown
-                  v-if="getNoteStatusByValue(data.pfp1a) === 'Échec' && !isPfp1aLocked(data)"
-                  v-model="data.pfp1a_retake"
+                  v-if="getNoteStatusByValue(data.pfp1) === 'Échec'"
+                  v-model="data.pfp1_retake"
                   :options="gradeOptions"
                   optionLabel="label"
                   optionValue="value"
                   placeholder="Rattrap."
                   class="note-dropdown"
-                  @update:modelValue="queueSave(data)"
+                  @update:modelValue="onPfp1RetakeChange(data)"
                 />
                 <span v-else class="text-600">-</span>
                 <span
-                  v-if="getNoteStatusByValue(data.pfp1a) === 'Échec' && !isPfp1aLocked(data)"
+                  v-if="getNoteStatusByValue(data.pfp1) === 'Échec'"
                   class="status-badge status-compact"
-                  :class="statusClass(getNoteStatusByValue(data.pfp1a_retake))"
+                  :class="statusClass(getNoteStatusByValue(data.pfp1_retake))"
                 >
-                  {{ getNoteStatusByValue(data.pfp1a_retake) }}
-                </span>
-              </div>
-            </template>
-          </Column>
-          <Column header="PFP1B">
-            <template #body="{ data }">
-              <div :class="['note-cell', { 'is-disabled': isPfp1bLocked(data) }]">
-                <Dropdown v-model="data.pfp1b" :options="gradeOptions" optionLabel="label" optionValue="value" placeholder="Note" class="note-dropdown" :disabled="isPfp1bLocked(data)" @update:modelValue="queueSave(data)" />
-                <span class="status-badge status-compact" :class="statusClass(getPfpFinalStatus(data.pfp1b, data.pfp1b_retake))">
-                  {{ getPfpFinalStatus(data.pfp1b, data.pfp1b_retake) }}
-                </span>
-              </div>
-            </template>
-          </Column>
-          <Column v-if="showRetakePfp1b" header="Rattrap. PFP1B">
-            <template #body="{ data }">
-              <div class="note-cell">
-                <Dropdown
-                  v-if="getNoteStatusByValue(data.pfp1b) === 'Échec' && !isPfp1bLocked(data)"
-                  v-model="data.pfp1b_retake"
-                  :options="gradeOptions"
-                  optionLabel="label"
-                  optionValue="value"
-                  placeholder="Rattrap."
-                  class="note-dropdown"
-                  @update:modelValue="queueSave(data)"
-                />
-                <span v-else class="text-600">-</span>
-                <span
-                  v-if="getNoteStatusByValue(data.pfp1b) === 'Échec' && !isPfp1bLocked(data)"
-                  class="status-badge status-compact"
-                  :class="statusClass(getNoteStatusByValue(data.pfp1b_retake))"
-                >
-                  {{ getNoteStatusByValue(data.pfp1b_retake) }}
+                  {{ getNoteStatusByValue(data.pfp1_retake) }}
                 </span>
               </div>
             </template>
@@ -358,7 +324,7 @@ const filterName = ref('')
 const filterYear = ref(null)
 const filterClass = ref(null)
 const filterStatus = ref(null)
-const filterStatusPfp = ref('pfp1a')
+const filterStatusPfp = ref('pfp1')
 const showPfpDialog = ref(false)
 const selectedStudent = ref(null)
 const isHydrating = ref(false)
@@ -376,8 +342,7 @@ const gradeOptions = ref([
 ])
 
 const pfpStatusOptions = ref([
-  { label: 'PFP1A', value: 'pfp1a' },
-  { label: 'PFP1B', value: 'pfp1b' },
+  { label: 'PFP1', value: 'pfp1' },
   { label: 'PFP2', value: 'pfp2' },
   { label: 'PFP3', value: 'pfp3' },
   { label: 'PFP4', value: 'pfp4' }
@@ -434,8 +399,7 @@ const getDisplayClass = (profile) => {
 }
 
 const pfpMeta = [
-  { key: 'pfp1a', label: 'PFP1A' },
-  { key: 'pfp1b', label: 'PFP1B' },
+  { key: 'pfp1', label: 'PFP1' },
   { key: 'pfp2', label: 'PFP2' },
   { key: 'pfp3', label: 'PFP3' },
   { key: 'pfp4', label: 'PFP4' }
@@ -467,8 +431,7 @@ const filteredNotes = computed(() => {
   return list
 })
 
-const showRetakePfp1a = computed(() => filteredNotes.value.some(note => getNoteStatusByValue(note.pfp1a) === 'Échec'))
-const showRetakePfp1b = computed(() => filteredNotes.value.some(note => getNoteStatusByValue(note.pfp1b) === 'Échec'))
+const showRetakePfp1 = computed(() => filteredNotes.value.some(note => getNoteStatusByValue(note.pfp1) === 'Échec'))
 const showRetakePfp2 = computed(() => filteredNotes.value.some(note => getNoteStatusByValue(note.pfp2) === 'Échec'))
 const showRetakePfp3 = computed(() => filteredNotes.value.some(note => getNoteStatusByValue(note.pfp3) === 'Échec'))
 const showRetakePfp4 = computed(() => filteredNotes.value.some(note => getNoteStatusByValue(note.pfp4) === 'Échec'))
@@ -481,12 +444,24 @@ const hasGrade = (value) => {
   return normalized !== '' && normalized !== '-' && normalized !== 'false' && normalized !== 'true'
 }
 
-const isPfp1aLocked = (note) => hasGrade(note?.pfp1b) && !hasGrade(note?.pfp1a)
-const isPfp1bLocked = (note) => hasGrade(note?.pfp1a) && !hasGrade(note?.pfp1b)
-const isPfpLocked = (key, note) => {
-  if (key === 'pfp1a') return isPfp1aLocked(note)
-  if (key === 'pfp1b') return isPfp1bLocked(note)
-  return false
+const isPfpLocked = (key, note) => false
+
+// Quand on change PFP1, on écrit dans la colonne DB qui avait déjà une valeur (pfp1b si rempli, sinon pfp1a)
+const onPfp1Change = (data) => {
+  if (data._pfp1Source === 'pfp1b') {
+    data.pfp1b = data.pfp1
+  } else {
+    data.pfp1a = data.pfp1
+  }
+  queueSave(data)
+}
+const onPfp1RetakeChange = (data) => {
+  if (data._pfp1Source === 'pfp1b') {
+    data.pfp1b_retake = data.pfp1_retake
+  } else {
+    data.pfp1a_retake = data.pfp1_retake
+  }
+  queueSave(data)
 }
 
 const hasAnyAbsence = (note) => {
@@ -513,33 +488,38 @@ const notifySaved = () => {
   toast.add({ severity: 'success', summary: 'Sauvegardé', detail: 'Modifications enregistrées', life: 1500 })
 }
 
-const buildPayload = (note) => ({
-  user_id: note.user_id,
-  year: note.year || activeYear.value,
-  pfp1a: note.pfp1a ?? null,
-  pfp1b: note.pfp1b ?? null,
-  pfp2: note.pfp2 ?? null,
-  pfp3: note.pfp3 ?? null,
-  pfp4: note.pfp4 ?? null,
-  pfp1a_retake: note.pfp1a_retake ?? null,
-  pfp1b_retake: note.pfp1b_retake ?? null,
-  pfp2_retake: note.pfp2_retake ?? null,
-  pfp3_retake: note.pfp3_retake ?? null,
-  pfp4_retake: note.pfp4_retake ?? null,
-  pfp1a_absences: note.pfp1a_absences ?? null,
-  pfp1b_absences: note.pfp1b_absences ?? null,
-  pfp2_absences: note.pfp2_absences ?? null,
-  pfp3_absences: note.pfp3_absences ?? null,
-  pfp4_absences: note.pfp4_absences ?? null,
-  pfp1a_remarques: (note.pfp1a_remarques || '').trim() || null,
-  pfp1b_remarques: (note.pfp1b_remarques || '').trim() || null,
-  pfp2_remarques: (note.pfp2_remarques || '').trim() || null,
-  pfp3_remarques: (note.pfp3_remarques || '').trim() || null,
-  pfp4_remarques: (note.pfp4_remarques || '').trim() || null,
-  absences: note.absences ?? 0,
-  remarques: (note.remarques || '').trim() || null,
-  updated_at: new Date().toISOString()
-})
+const buildPayload = (note) => {
+  // Synchroniser les champs virtuels pfp1 vers la bonne colonne DB (pfp1a ou pfp1b)
+  const src = note._pfp1Source || 'pfp1a'
+  const payload = {
+    user_id: note.user_id,
+    year: note.year || activeYear.value,
+    pfp1a: src === 'pfp1a' ? (note.pfp1 ?? null) : (note.pfp1a ?? null),
+    pfp1b: src === 'pfp1b' ? (note.pfp1 ?? null) : (note.pfp1b ?? null),
+    pfp2: note.pfp2 ?? null,
+    pfp3: note.pfp3 ?? null,
+    pfp4: note.pfp4 ?? null,
+    pfp1a_retake: src === 'pfp1a' ? (note.pfp1_retake ?? null) : (note.pfp1a_retake ?? null),
+    pfp1b_retake: src === 'pfp1b' ? (note.pfp1_retake ?? null) : (note.pfp1b_retake ?? null),
+    pfp2_retake: note.pfp2_retake ?? null,
+    pfp3_retake: note.pfp3_retake ?? null,
+    pfp4_retake: note.pfp4_retake ?? null,
+    pfp1a_absences: src === 'pfp1a' ? (note.pfp1_absences ?? null) : (note.pfp1a_absences ?? null),
+    pfp1b_absences: src === 'pfp1b' ? (note.pfp1_absences ?? null) : (note.pfp1b_absences ?? null),
+    pfp2_absences: note.pfp2_absences ?? null,
+    pfp3_absences: note.pfp3_absences ?? null,
+    pfp4_absences: note.pfp4_absences ?? null,
+    pfp1a_remarques: src === 'pfp1a' ? ((note.pfp1_remarques || '').trim() || null) : ((note.pfp1a_remarques || '').trim() || null),
+    pfp1b_remarques: src === 'pfp1b' ? ((note.pfp1_remarques || '').trim() || null) : ((note.pfp1b_remarques || '').trim() || null),
+    pfp2_remarques: (note.pfp2_remarques || '').trim() || null,
+    pfp3_remarques: (note.pfp3_remarques || '').trim() || null,
+    pfp4_remarques: (note.pfp4_remarques || '').trim() || null,
+    absences: note.absences ?? 0,
+    remarques: (note.remarques || '').trim() || null,
+    updated_at: new Date().toISOString()
+  }
+  return payload
+}
 
 const queueSave = (note) => {
   if (!note?.user_id || isHydrating.value) return
@@ -608,15 +588,7 @@ const getPfpFinalStatus = (noteValue, retakeValue) => {
 }
 
 const getPfp1GroupStatus = (note) => {
-  const statusA = getPfpFinalStatus(note?.pfp1a, note?.pfp1a_retake)
-  const statusB = getPfpFinalStatus(note?.pfp1b, note?.pfp1b_retake)
-  const hasA = statusA !== 'Non noté'
-  const hasB = statusB !== 'Non noté'
-  if (hasA && !hasB) return statusA
-  if (!hasA && hasB) return statusB
-  if (!hasA && !hasB) return 'Non noté'
-  if (statusA === 'Réussi' || statusB === 'Réussi') return 'Réussi'
-  return 'Échec'
+  return getPfpFinalStatus(note?.pfp1, note?.pfp1_retake)
 }
 
 const getNoteStatus = (note) => {
@@ -668,28 +640,30 @@ const fetchNotes = async () => {
 
     notes.value = filteredProfiles.map(p => {
       const entry = physioMap.get(p.user_id)
+      // Fusionner PFP1A/PFP1B en PFP1 : prendre celle qui a une valeur (pfp1b prioritaire si rempli)
+      const hasPfp1b = entry?.pfp1b && String(entry.pfp1b).trim() !== ''
+      const pfp1Source = hasPfp1b ? 'pfp1b' : 'pfp1a'
       return {
       user_id: p.user_id,
       etudiant: `${(p.family_name || '').toUpperCase()} ${p.forname || ''}`.trim(),
       classe: getDisplayClass(p),
       year,
+      _pfp1Source: pfp1Source,
       pfp1a: entry?.pfp1a ?? null,
       pfp1b: entry?.pfp1b ?? null,
+      pfp1: entry?.[pfp1Source] ?? null,
+      pfp1_retake: entry?.[pfp1Source + '_retake'] ?? null,
+      pfp1_absences: entry?.[pfp1Source + '_absences'] ?? null,
+      pfp1_remarques: entry?.[pfp1Source + '_remarques'] ?? '',
       pfp2: entry?.pfp2 ?? null,
       pfp3: entry?.pfp3 ?? null,
       pfp4: entry?.pfp4 ?? null,
-      pfp1a_retake: entry?.pfp1a_retake ?? null,
-      pfp1b_retake: entry?.pfp1b_retake ?? null,
       pfp2_retake: entry?.pfp2_retake ?? null,
       pfp3_retake: entry?.pfp3_retake ?? null,
       pfp4_retake: entry?.pfp4_retake ?? null,
-      pfp1a_absences: entry?.pfp1a_absences ?? null,
-      pfp1b_absences: entry?.pfp1b_absences ?? null,
       pfp2_absences: entry?.pfp2_absences ?? null,
       pfp3_absences: entry?.pfp3_absences ?? null,
       pfp4_absences: entry?.pfp4_absences ?? null,
-      pfp1a_remarques: entry?.pfp1a_remarques ?? '',
-      pfp1b_remarques: entry?.pfp1b_remarques ?? '',
       pfp2_remarques: entry?.pfp2_remarques ?? '',
       pfp3_remarques: entry?.pfp3_remarques ?? '',
       pfp4_remarques: entry?.pfp4_remarques ?? '',
