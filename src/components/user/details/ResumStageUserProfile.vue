@@ -40,7 +40,7 @@
       <!-- Ligne du titre + statut + bouton -->
       <div class="flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
         <div class="flex align-items-center gap-2 flex-wrap">
-          <h4 class="m-0">{{ place.pfp_type ? getPfpLabel(place.pfp_type) : `Formation Pratique ${index + 1}` }}</h4>
+          <h4 class="m-0">Formation Pratique {{ place._fpNumber || (index + 1) }}</h4>
           <Tag v-if="place.year" :value="place.year" severity="secondary" class="text-xs" />
           <Tag :value="getStatusLabel(place.status)" :severity="getStatusSeverity(place.status)" :icon="getStatusIcon(place.status)" />
         </div>
@@ -561,6 +561,8 @@ const assignedPlaces = computed(() => {
     else if (rv.pfp_echec) status = 'echec'
     else if (rv.pfp_arret) status = 'arret'
 
+    // Déduire le numéro de Formation Pratique depuis le pfp_type
+    const fpNumberMap = { 'PFP1A': 1, 'PFP1B': 1, 'PFP2': 2, 'PFP3': 3, 'PFP4': 4 }
     const item = {
       _key: `rv_${idx}`,
       IDPlace: placeId,
@@ -569,6 +571,7 @@ const assignedPlaces = computed(() => {
       seatIndex: null,
       Institutionname: rv.assigned_institution_name || getInstitutionNameById(placeId) || '',
       pfp_type: pfpType,
+      _fpNumber: fpNumberMap[pfpType] || null,
       status,
       commentaire_arret: rv.commentaire_arret || null,
       assigned_rank: rv.assigned_rank || null,
@@ -587,11 +590,9 @@ const assignedPlaces = computed(() => {
   })
 
   // 2. Source backup : pfp_valided (stages historiques/legacy)
-  // Convention legacy : index dans pfp_valided → PFP type
-  const pfpTypeByIndex = ['PFP1A', 'PFP1B', 'PFP2', 'PFP3', 'PFP4']
   ;(studentPfpList.value || []).forEach((pfp, idx) => {
     const placeId = pfp.id_pfp || pfp.ID_PFP || pfp.PlaceId || ''
-    const pfpType = pfp.pfp_type || pfp.type_pfp || pfp.PfpType || pfpTypeByIndex[idx] || ''
+    const pfpType = pfp.pfp_type || pfp.type_pfp || pfp.PfpType || ''
     const dedupKey = `${placeId}_${pfpType}`
     if (seenKeys.has(dedupKey)) return // Déjà présent depuis student_result_vote
     seenKeys.add(dedupKey)
@@ -604,6 +605,7 @@ const assignedPlaces = computed(() => {
       seatIndex: pfp.seat || null,
       Institutionname: pfp.InstitutionName || pfp.Institution || getInstitutionNameById(pfp.ID_PFP || pfp.PlaceId) || '',
       pfp_type: pfpType || null,
+      _fpNumber: idx + 1,
       status: pfp.status || 'validee',
       commentaire_arret: pfp.commentaire_arret || pfp.commentaireArret || pfp.CommentaireArret || null,
       year: pfp.year || null
@@ -614,20 +616,17 @@ const assignedPlaces = computed(() => {
     results.push(item)
   })
 
-  // Trier par pfp_type (PFP1A → PFP1B → PFP2 → PFP3 → PFP4) puis par année
-  const pfpOrder = { 'PFP1A': 1, 'PFP1B': 2, 'PFP2': 3, 'PFP3': 4, 'PFP4': 5 }
+  // Trier par _fpNumber puis par année
   results.sort((a, b) => {
-    const orderA = pfpOrder[a.pfp_type] || 99
-    const orderB = pfpOrder[b.pfp_type] || 99
-    if (orderA !== orderB) return orderA - orderB
+    const fpA = a._fpNumber || 99
+    const fpB = b._fpNumber || 99
+    if (fpA !== fpB) return fpA - fpB
     return (a.year || '').localeCompare(b.year || '')
   })
 
-  console.log('🎯 assignedPlaces calculé (fusionné + trié):', results.length, 'places', {
-    fromResultVote: studentResultVotes.value.length,
-    fromPfpValided: studentPfpList.value.length,
-    afterDedup: results.length
-  })
+  console.log('🎯 assignedPlaces (trié par _fpNumber):', results.map(r => ({
+    fp: r._fpNumber, pfp_type: r.pfp_type, nom: r.NomPlace
+  })))
   return results
 })
 
@@ -1184,16 +1183,6 @@ const getStageCardClass = (status) => {
   return 'stage-card-attente'
 }
 
-const getPfpLabel = (pfpType) => {
-  const labels = {
-    'PFP1A': 'Formation Pratique 1 (PFP 1A)',
-    'PFP1B': 'Formation Pratique 1 (PFP 1B)',
-    'PFP2': 'Formation Pratique 2',
-    'PFP3': 'Formation Pratique 3',
-    'PFP4': 'Formation Pratique 4'
-  }
-  return labels[pfpType] || `Formation Pratique (${pfpType})`
-}
 
 const getPfpTagSeverity = (pfpType) => {
   if (pfpType === 'PFP1A' || pfpType === 'PFP1B') return 'info'
