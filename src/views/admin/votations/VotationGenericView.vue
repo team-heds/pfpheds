@@ -336,10 +336,17 @@ export default {
           return null
         }
 
+        // Charger toutes les sessions ouvertes une seule fois
+        const allSessions = await votationSessionService.getAllActiveSessions()
+        console.log('🔍 Sessions ouvertes:', allSessions.length, allSessions.map(s => ({
+          pfp_type: s.pfp_type, is_priority: s.is_priority,
+          priority_user_ids: s.priority_user_ids?.length || 0
+        })))
+        console.log('🔍 currentUserId:', currentUserId)
+
         if (routePfpType) {
           // Route générique /votation/:pfpType — chercher la session pour ce PFP
-          const sessions = await votationSessionService.getAllActiveSessions()
-          const matching = sessions.filter(s => s.pfp_type === routePfpType.toUpperCase())
+          const matching = allSessions.filter(s => s.pfp_type === routePfpType.toUpperCase())
           this.activeSession = filterSessionForUser(matching)
         } else {
           // Routes legacy /votation ou /votation_pfp1b
@@ -352,16 +359,32 @@ export default {
           }
 
           if (pfpHint) {
-            const sessions = await votationSessionService.getAllActiveSessions()
-            const matching = sessions.filter(s => s.pfp_type === pfpHint)
+            const matching = allSessions.filter(s => s.pfp_type === pfpHint)
+            console.log(`🔍 Recherche session pour ${pfpHint}:`, matching.length, 'trouvée(s)')
             this.activeSession = filterSessionForUser(matching)
-          } else {
-            // Fallback : chercher n'importe quelle session ouverte pour la classe de l'étudiant
+          }
+
+          // Fallback : si aucune session trouvée, chercher si l'étudiant est dans une session prioritaire (tout PFP confondu)
+          if (!this.activeSession && currentUserId) {
+            console.log('🔍 Fallback: recherche session prioritaire pour cet étudiant...')
+            const prioritySession = allSessions.find(s =>
+              s.is_priority &&
+              Array.isArray(s.priority_user_ids) &&
+              s.priority_user_ids.includes(currentUserId)
+            )
+            if (prioritySession) {
+              console.log(`✅ Session prioritaire trouvée via fallback: ${prioritySession.pfp_type}`)
+              this.activeSession = prioritySession
+            }
+          }
+
+          // Fallback 2 : chercher par classe
+          if (!this.activeSession) {
             const profile = this.userStore.profile
             const studentClass = profile?.Classe || profile?.classe || profile?.class || profile?.Class || null
             if (studentClass) {
-              const sessions = await votationSessionService.getOpenSessionForClass(studentClass)
-              this.activeSession = filterSessionForUser(sessions)
+              const classSessions = allSessions.filter(s => s.target_class === studentClass)
+              this.activeSession = filterSessionForUser(classSessions)
             }
           }
         }

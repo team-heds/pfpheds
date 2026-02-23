@@ -138,8 +138,7 @@ const restrictedAcademicEmails = [
 const allMenuItems = [
   { icon: "pi pi-home", link: "/feed", title: "Accueil" },
   { icon: "pi pi-bookmark", link: "/institution", title: "institutions" },
-  { icon: "pi pi-check", link: "/votation", title: "Votation PFP1A", pfpCohort: "PFP1A" },
-  { icon: "pi pi-check", link: "/votation_pfp1b", title: "Votation PFP1B", pfpCohort: "PFP1B" },
+  { icon: "pi pi-check", link: "votation_dynamic", title: "Votation", isVotation: true },
   { icon: "pi pi-map-marker", link: "/map", title: "Map" },
   { icon: "pi pi-user-plus", link: "/admin", title: "Admin", adminOnly: true },
   { icon: "pi pi-chart-bar", link: "/admin/dashboard-rm", title: "Dashboard", restrictedAcademicOnly: true }
@@ -166,25 +165,9 @@ const filteredMenuItems = computed(() => {
       return false;
     }
     
-    // Si l'item a une restriction pfpCohort
-    if (item.pfpCohort) {
-      // Récupérer le pfp_cohort du profil utilisateur
-      const userProfile = userStore.profile;
-      const userPfpCohort = userProfile?.pfp_cohort;
-      
-      console.log('🔍 Filtrage votation:', {
-        itemTitle: item.title,
-        itemPfpCohort: item.pfpCohort,
-        userPfpCohort: userPfpCohort
-      });
-      
-      // Si l'utilisateur n'a pas de pfp_cohort défini, afficher les deux par défaut
-      if (!userPfpCohort) {
-        return true;
-      }
-      
-      // Sinon, afficher uniquement si ça correspond
-      return item.pfpCohort === userPfpCohort;
+    // Bouton votation unique — résoudre le lien dynamiquement
+    if (item.isVotation) {
+      return true;
     }
     
     // Afficher tous les autres items
@@ -193,7 +176,22 @@ const filteredMenuItems = computed(() => {
 });
 
 const openSettingsDialog = () => isSettingsDialogVisible.value = true;
-const navigateTo = (path) => router.push(path);
+
+// Résoudre le lien de votation selon le pfp_cohort de l'étudiant
+const getVotationLink = () => {
+  const userProfile = userStore.profile;
+  const cohort = userProfile?.pfp_cohort;
+  if (cohort === 'PFP1B') return '/votation_pfp1b';
+  return '/votation';
+};
+
+const navigateTo = (path) => {
+  if (path === 'votation_dynamic') {
+    router.push(getVotationLink());
+  } else {
+    router.push(path);
+  }
+};
 
 const navigateToProfile = () => {
   const currentUser = authStore.user;
