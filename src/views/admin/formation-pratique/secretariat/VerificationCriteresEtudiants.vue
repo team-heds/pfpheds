@@ -488,13 +488,16 @@ const fetchStudents = async () => {
           criteriaLabels.forEach(c => { if (crit[c]) scores[c]++ })
         })
         criteriaMap.set(physio.user_id, { scores, totalStages: pfpArray.length })
-        const enrichedStages = pfpArray.map(stage => {
+        const pfpTypeByIndex = ['PFP1A', 'PFP1B', 'PFP2', 'PFP3', 'PFP4']
+        const enrichedStages = pfpArray.map((stage, idx) => {
           const placeId = stage.PlaceId || stage.ID_PFP || stage.id_pfp
           const placeInfo = placeId ? placesMap.get(placeId) : null
           return {
             ...stage,
             NomPlace: stage.NomPlace || stage.nom_pfp || placeInfo?.name || null,
-            Institution: stage.Institution || stage.institution_name || placeInfo?.institution || null
+            Institution: stage.Institution || stage.institution_name || placeInfo?.institution || null,
+            pfp_type: stage.pfp_type || stage.pfpLevel || pfpTypeByIndex[idx] || null,
+            _placeId: placeId || null
           }
         })
         stagesMap.set(physio.user_id, enrichedStages)
@@ -508,24 +511,31 @@ const fetchStudents = async () => {
         if (!assignmentsMap.has(a.user_id)) assignmentsMap.set(a.user_id, [])
         assignmentsMap.get(a.user_id).push(a)
 
-        // If assignment is validated, count its place criteria
+        // If assignment is validated, count its place criteria (but avoid duplicates with pfp_valided)
         if (a.pfp_validee && a.assigned_place_id) {
           const placeInfo = placesMap.get(a.assigned_place_id)
           if (placeInfo) {
-            const existing = criteriaMap.get(a.user_id) || { scores: Object.fromEntries(criteriaLabels.map(k => [k, 0])), totalStages: 0 }
-            criteriaLabels.forEach(c => { if (placeInfo[c]) existing.scores[c]++ })
-            existing.totalStages++
-            criteriaMap.set(a.user_id, existing)
-
-            // Also add to stages for display
             const existingStages = stagesMap.get(a.user_id) || []
-            existingStages.push({
-              NomPlace: a.assigned_place_name || placeInfo.name || '',
-              Institution: a.assigned_institution_name || placeInfo.institution || '',
-              pfp_type: a.pfp_type,
-              ...extractCrit(placeInfo)
-            })
-            stagesMap.set(a.user_id, existingStages)
+            const alreadyExists = existingStages.some(s =>
+              (s._placeId && s._placeId === a.assigned_place_id) ||
+              (s.pfp_type && s.pfp_type === a.pfp_type)
+            )
+
+            if (!alreadyExists) {
+              const existing = criteriaMap.get(a.user_id) || { scores: Object.fromEntries(criteriaLabels.map(k => [k, 0])), totalStages: 0 }
+              criteriaLabels.forEach(c => { if (placeInfo[c]) existing.scores[c]++ })
+              existing.totalStages++
+              criteriaMap.set(a.user_id, existing)
+
+              existingStages.push({
+                NomPlace: a.assigned_place_name || placeInfo.name || '',
+                Institution: a.assigned_institution_name || placeInfo.institution || '',
+                pfp_type: a.pfp_type,
+                _placeId: a.assigned_place_id,
+                ...extractCrit(placeInfo)
+              })
+              stagesMap.set(a.user_id, existingStages)
+            }
           }
         }
       })

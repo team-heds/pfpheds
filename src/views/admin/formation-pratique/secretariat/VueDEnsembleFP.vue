@@ -47,8 +47,8 @@
       </div>
 
       <!-- Statistiques -->
-      <div class="grid mb-3">
-        <div class="col-12 md:col-2">
+      <div class="flex flex-wrap gap-2 mb-3">
+        <div class="flex-1" style="min-width: 140px">
           <div class="surface-card p-3 border-round shadow-2">
             <div class="flex align-items-center gap-2">
               <div class="bg-blue-100 border-circle p-2"><i class="pi pi-users text-blue-500 text-xl"></i></div>
@@ -59,18 +59,18 @@
             </div>
           </div>
         </div>
-        <div class="col-12 md:col-2">
+        <div class="flex-1" style="min-width: 140px">
           <div class="surface-card p-3 border-round shadow-2">
             <div class="flex align-items-center gap-2">
               <div class="bg-purple-100 border-circle p-2"><i class="pi pi-briefcase text-purple-500 text-xl"></i></div>
               <div>
                 <h3 class="text-xl font-bold text-900 m-0">{{ stats.totalStages }}</h3>
-                <p class="text-600 m-0 text-xs">Stages (lignes)</p>
+                <p class="text-600 m-0 text-xs">Stages</p>
               </div>
             </div>
           </div>
         </div>
-        <div class="col-12 md:col-2">
+        <div class="flex-1" style="min-width: 140px">
           <div class="surface-card p-3 border-round shadow-2">
             <div class="flex align-items-center gap-2">
               <div class="bg-green-100 border-circle p-2"><i class="pi pi-check-circle text-green-500 text-xl"></i></div>
@@ -81,7 +81,18 @@
             </div>
           </div>
         </div>
-        <div class="col-12 md:col-2">
+        <div class="flex-1" style="min-width: 140px">
+          <div class="surface-card p-3 border-round shadow-2">
+            <div class="flex align-items-center gap-2">
+              <div class="bg-cyan-100 border-circle p-2"><i class="pi pi-send text-cyan-500 text-xl"></i></div>
+              <div>
+                <h3 class="text-xl font-bold text-cyan-600 m-0">{{ stats.attributed }}</h3>
+                <p class="text-600 m-0 text-xs">Attribués</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex-1" style="min-width: 140px">
           <div class="surface-card p-3 border-round shadow-2">
             <div class="flex align-items-center gap-2">
               <div class="bg-orange-100 border-circle p-2"><i class="pi pi-clock text-orange-500 text-xl"></i></div>
@@ -92,18 +103,18 @@
             </div>
           </div>
         </div>
-        <div class="col-12 md:col-2">
+        <div class="flex-1" style="min-width: 140px">
           <div class="surface-card p-3 border-round shadow-2">
             <div class="flex align-items-center gap-2">
               <div class="bg-red-100 border-circle p-2"><i class="pi pi-times-circle text-red-500 text-xl"></i></div>
               <div>
                 <h3 class="text-xl font-bold text-red-600 m-0">{{ stats.failed }}</h3>
-                <p class="text-600 m-0 text-xs">Échecs</p>
+                <p class="text-600 m-0 text-xs">Échecs / Arrêts</p>
               </div>
             </div>
           </div>
         </div>
-        <div class="col-12 md:col-2">
+        <div class="flex-1" style="min-width: 140px">
           <div class="surface-card p-3 border-round shadow-2">
             <div class="flex align-items-center gap-2">
               <div class="bg-yellow-100 border-circle p-2"><i class="pi pi-exclamation-triangle text-yellow-600 text-xl"></i></div>
@@ -360,10 +371,10 @@ const pfpOptions = ['PFP1A', 'PFP1B', 'PFP2', 'PFP3', 'PFP4']
 
 const statutOptions = [
   { label: 'Validé / Réussi', value: 'Réussi' },
+  { label: 'Attribué', value: 'Attribué' },
   { label: 'En cours', value: 'En cours' },
   { label: 'Échec', value: 'Échec' },
   { label: 'Arrêt', value: 'Arrêt' },
-  { label: 'Publié', value: 'Publié' },
   { label: 'Brouillon', value: 'Brouillon' }
 ]
 
@@ -385,13 +396,13 @@ const getAvatarClass = (row) => {
   const statuts = pfpTypes.map(p => row[p]?.statut)
   if (statuts.some(s => s === 'Échec' || s === 'Arrêt')) return 'avatar-fail'
   if (statuts.every(s => s === 'Réussi')) return 'avatar-complete'
-  if (statuts.some(s => s === 'Réussi' || s === 'Publié' || s === 'En cours')) return 'avatar-partial'
+  if (statuts.some(s => s === 'Réussi' || s === 'En cours' || s === 'Attribué')) return 'avatar-partial'
   return 'avatar-none'
 }
 
 const getFlatAvatarClass = (row) => {
   if (row.statut === 'Réussi') return 'avatar-complete'
-  if (row.statut === 'En cours' || row.statut === 'Publié' || row.statut === 'Brouillon') return 'avatar-partial'
+  if (row.statut === 'En cours' || row.statut === 'Attribué' || row.statut === 'Brouillon') return 'avatar-partial'
   if (row.statut === 'Échec' || row.statut === 'Arrêt') return 'avatar-fail'
   return 'avatar-none'
 }
@@ -406,7 +417,8 @@ const getPfpSeverity = (pfp) => {
 
 const getStatutSeverity = (statut) => {
   if (statut === 'Réussi') return 'success'
-  if (statut === 'En cours' || statut === 'Publié') return 'warning'
+  if (statut === 'Attribué') return 'info'
+  if (statut === 'En cours') return 'warning'
   if (statut === 'Brouillon') return 'secondary'
   if (statut === 'Échec' || statut === 'Arrêt') return 'danger'
   return 'info'
@@ -432,12 +444,14 @@ const getPfpCellClass = (pfpData) => {
 const stats = computed(() => {
   const rows = filteredFlatRows.value
   const studentIds = new Set(rows.map(r => r.userId))
+  const withData = rows.filter(r => r.statut !== '—')
   return {
     totalStudents: studentIds.size,
-    totalStages: rows.length,
+    totalStages: withData.length,
     validated: rows.filter(r => r.statut === 'Réussi').length,
-    inProgress: rows.filter(r => r.statut === 'En cours' || r.statut === 'Publié' || r.statut === 'Brouillon').length,
-    failed: rows.filter(r => r.statut === 'Échec').length,
+    attributed: rows.filter(r => r.statut === 'Attribué' || r.statut === 'Brouillon').length,
+    inProgress: rows.filter(r => r.statut === 'En cours').length,
+    failed: rows.filter(r => r.statut === 'Échec' || r.statut === 'Arrêt').length,
     casParticuliers: rows.filter(r => r.casColor && r.casColor !== 'blanc').length
   }
 })
@@ -738,12 +752,12 @@ const fetchAllData = async () => {
           if (assignment.assigned_rank === 99) attributionType = 'Aléatoire'
           else if (assignment.assigned_rank >= 1 && assignment.assigned_rank <= 5) attributionType = `Choix ${assignment.assigned_rank}`
 
-          statut = 'En cours'
           if (assignment.pfp_validee) statut = 'Réussi'
           else if (assignment.pfp_echec) statut = 'Échec'
           else if (assignment.pfp_arret) statut = 'Arrêt'
-          else if (assignment.status === 'published') statut = 'Publié'
+          else if (assignment.status === 'published') statut = 'En cours'
           else if (assignment.status === 'draft') statut = 'Brouillon'
+          else statut = 'Attribué'
 
         } else if (validatedStage) {
           placeId = validatedStage.PlaceId || validatedStage.ID_PFP || validatedStage.id_pfp

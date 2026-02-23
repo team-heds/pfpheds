@@ -34,16 +34,16 @@
     <div
       v-for="(place, index) in assignedPlaces"
       :key="place._key"
-      class="surfaces-card mb-4 shadow-2 flex flex-column gap-2"
-      style="min-height: 200px;"
+      class="stage-card mb-4 shadow-2 flex flex-column gap-2"
+      :class="getStageCardClass(place.status)"
     >
-      <!-- Ligne du titre + bouton "Voir les détails" aligné à droite -->
-      <div class="flex align-items-center justify-content-between mb-2" style="height: 32px;">
-        <h4 class="m-0">
-          Formation Pratique {{ index + 1 }}
-          <span v-if="place.status === 'echec'" class="text-red-600 font-bold ml-2">- ÉCHEC PFP</span>
-          <span v-if="place.status === 'arret'" class="text-yellow-700 font-bold ml-2">- ARRÊT PFP</span>
-        </h4>
+      <!-- Ligne du titre + statut + bouton -->
+      <div class="flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
+        <div class="flex align-items-center gap-2 flex-wrap">
+          <h4 class="m-0">Formation Pratique {{ index + 1 }}</h4>
+          <Tag v-if="place.pfp_type" :value="place.pfp_type" :severity="getPfpTagSeverity(place.pfp_type)" class="text-xs" />
+          <Tag :value="getStatusLabel(place.status)" :severity="getStatusSeverity(place.status)" :icon="getStatusIcon(place.status)" />
+        </div>
         <Button
           label="Voir les détails"
           icon="pi pi-arrow-right"
@@ -54,7 +54,7 @@
       </div>
 
       <!-- Bandeau d'échec -->
-      <div v-if="place.status === 'echec'" class="p-2 mb-2" style="background-color: #fee2e2; border-left: 4px solid #ef4444; border-radius: 4px;">
+      <div v-if="place.status === 'echec'" class="status-banner status-banner-echec">
         <div class="flex align-items-center gap-2">
           <i class="pi pi-times-circle text-red-600 text-xl"></i>
           <div>
@@ -68,9 +68,9 @@
       </div>
 
       <!-- Bandeau d'arrêt -->
-      <div v-if="place.status === 'arret'" class="p-2 mb-2" style="background-color: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 4px;">
+      <div v-if="place.status === 'arret'" class="status-banner status-banner-arret">
         <div class="flex align-items-center gap-2">
-          <i class="pi pi-pause-circle text-yellow-600 text-xl"></i>
+          <i class="pi pi-ban text-yellow-600 text-xl"></i>
           <div>
             <span class="font-bold text-yellow-700">Arrêt de la formation</span>
             <div v-if="place.commentaire_arret" class="text-base text-yellow-600 mt-1">
@@ -80,25 +80,44 @@
         </div>
       </div>
 
+      <!-- Bandeau réussi -->
+      <div v-if="place.status === 'validee'" class="status-banner status-banner-validee">
+        <div class="flex align-items-center gap-2">
+          <i class="pi pi-check-circle text-green-600 text-xl"></i>
+          <span class="font-bold text-green-700">Formation validée — tous les critères acquis</span>
+        </div>
+      </div>
+
+      <!-- Bandeau en attente -->
+      <div v-if="!place.status || place.status === 'en_attente'" class="status-banner status-banner-attente">
+        <div class="flex align-items-center gap-2">
+          <i class="pi pi-clock text-blue-600 text-xl"></i>
+          <span class="font-bold text-blue-700">En attente de validation</span>
+        </div>
+      </div>
+
       <!-- Nom de l'institution + Domaine -->
       <div>
         <h6 class="m-2 font-bold">
           {{place.Institutionname}}
         </h6>
-        <p class="m-2">
-          Domaine : {{ place.NomPlace }}<br />
-          Critères : {{ getValidCriterias(place).join(', ') }}<br />
-          <span v-if="getPraticienFormateurInfos(place)">
-            Praticien formateur :
-            <b>{{ getPraticienFormateurInfos(place) }}</b><br />
-            <span v-if="getPraticienFormateurContact(place)">
-              Contact :
-              <a :href="'mailto:' + getPraticienFormateurContact(place)" class="text-primary font-bold" style="text-decoration: underline;">
+        <div class="m-2 flex flex-column gap-1">
+          <div><span class="text-600">Domaine :</span> {{ place.NomPlace }}</div>
+          <div class="flex align-items-center gap-1 flex-wrap">
+            <span class="text-600">Critères :</span>
+            <Tag v-for="crit in getValidCriterias(place)" :key="crit" :value="crit" severity="info" class="text-xs" />
+            <span v-if="getValidCriterias(place).length === 0" class="text-400 text-sm">Aucun</span>
+          </div>
+          <div v-if="getPraticienFormateurInfos(place)">
+            <span class="text-600">Praticien formateur :</span>
+            <b>{{ getPraticienFormateurInfos(place) }}</b>
+            <span v-if="getPraticienFormateurContact(place)" class="ml-2">
+              — <a :href="'mailto:' + getPraticienFormateurContact(place)" class="text-primary font-bold" style="text-decoration: underline;">
                 {{ getPraticienFormateurContact(place) }}
               </a>
             </span>
-          </span>
-        </p>
+          </div>
+        </div>
       </div>
 
       <!-- Documents -->
@@ -482,6 +501,7 @@ import { useToast } from 'primevue/usetoast';
 import Button from "primevue/button";
 import InputText from "primevue/inputtext";
 import FileUpload from "primevue/fileupload";
+import Tag from "primevue/tag";
 import { useInstitutionsStore } from '@/stores/institutionsStore';
 import Institution from "@/views/institutions/Institution.vue";
 
@@ -525,13 +545,14 @@ const assignedPlaces = computed(() => {
   ;(studentPfpList.value || []).forEach((pfp, idx) => {
     const item = {
       _key: `pfp_${idx}`,
-      IDPlace: pfp.id_pfp || pfp.ID_PFP || '',
-      InstitutionId: pfp.InstitutionId || pfp.Institution_id || pfp.institution_id || '', // Ajouter InstitutionId
-      NomPlace: pfp.NomPlace || pfp.nom_pfp || pfp.Nom_PFP || pfp.domaine || pfp.Domaine || 'raads',
+      IDPlace: pfp.id_pfp || pfp.ID_PFP || pfp.PlaceId || '',
+      InstitutionId: pfp.InstitutionId || pfp.Institution_id || pfp.institution_id || '',
+      NomPlace: pfp.NomPlace || pfp.nom_pfp || pfp.Nom_PFP || pfp.domaine || pfp.Domaine || '',
       seatIndex: pfp.seat || null,
-      Institutionname:    pfp.InstitutionName || getInstitutionNameById(pfp.ID_PFP) || 'raa',
-      status: pfp.status || 'validee', // Ajouter le status
-      commentaire_arret: pfp.commentaire_arret || pfp.commentaireArret || pfp.CommentaireArret || null // Ajouter le commentaire d'arrêt
+      Institutionname: pfp.InstitutionName || pfp.Institution || getInstitutionNameById(pfp.ID_PFP || pfp.PlaceId) || '',
+      pfp_type: pfp.pfp_type || pfp.type_pfp || pfp.PfpType || null,
+      status: pfp.status || 'validee',
+      commentaire_arret: pfp.commentaire_arret || pfp.commentaireArret || pfp.CommentaireArret || null
     }
     // Appliquer critères en UPPERCASE attendus par getValidCriterias
     Object.entries(criteriaMap).forEach(([up, low]) => {
@@ -1044,13 +1065,94 @@ const navigateToInstitution = (instId) => {
     router.push({ name: "InstitutionView", params: { id: instId } });
   }
 };
+
+// --- Fonctions d'affichage du statut ---
+const getStatusLabel = (status) => {
+  if (status === 'validee') return 'Réussi'
+  if (status === 'echec') return 'Échec'
+  if (status === 'arret') return 'Arrêt'
+  return 'En attente'
+}
+
+const getStatusSeverity = (status) => {
+  if (status === 'validee') return 'success'
+  if (status === 'echec') return 'danger'
+  if (status === 'arret') return 'warning'
+  return 'info'
+}
+
+const getStatusIcon = (status) => {
+  if (status === 'validee') return 'pi pi-check-circle'
+  if (status === 'echec') return 'pi pi-times-circle'
+  if (status === 'arret') return 'pi pi-ban'
+  return 'pi pi-clock'
+}
+
+const getStageCardClass = (status) => {
+  if (status === 'validee') return 'stage-card-validee'
+  if (status === 'echec') return 'stage-card-echec'
+  if (status === 'arret') return 'stage-card-arret'
+  return 'stage-card-attente'
+}
+
+const getPfpTagSeverity = (pfpType) => {
+  if (pfpType === 'PFP1A' || pfpType === 'PFP1B') return 'info'
+  if (pfpType === 'PFP2') return 'warning'
+  if (pfpType === 'PFP3') return 'success'
+  if (pfpType === 'PFP4') return 'secondary'
+  return null
+}
 </script>
 
 <style scoped>
-.surfaces-card {
+/* --- Stage card base --- */
+.stage-card {
   background-color: var(--surface-card);
-  padding: 2rem;
-  border-radius: 2rem;
+  padding: 1.5rem 2rem;
+  border-radius: 12px;
+  border-left: 5px solid #cbd5e1;
+  transition: box-shadow 0.2s;
+  min-height: 200px;
+}
+.stage-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* --- Status-specific card borders --- */
+.stage-card-validee {
+  border-left-color: #22c55e;
+}
+.stage-card-echec {
+  border-left-color: #ef4444;
+}
+.stage-card-arret {
+  border-left-color: #f59e0b;
+}
+.stage-card-attente {
+  border-left-color: #3b82f6;
+}
+
+/* --- Status banners --- */
+.status-banner {
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  margin-bottom: 0.25rem;
+}
+.status-banner-validee {
+  background-color: #f0fdf4;
+  border-left: 3px solid #22c55e;
+}
+.status-banner-echec {
+  background-color: #fef2f2;
+  border-left: 3px solid #ef4444;
+}
+.status-banner-arret {
+  background-color: #fffbeb;
+  border-left: 3px solid #f59e0b;
+}
+.status-banner-attente {
+  background-color: #eff6ff;
+  border-left: 3px solid #3b82f6;
 }
 
 .details-btn {
@@ -1086,19 +1188,11 @@ const navigateToInstitution = (instId) => {
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
     border-radius: 1rem;
   }
-  .surfaces-card.mb-4.shadow-2.flex.flex-column.gap-2 {
+  .stage-card {
     padding: 1.5rem 1.2rem !important;
     margin: 1.2rem 0 !important;
     min-width: 0;
-    border-radius: 1.2rem;
-    display: flex;
-    align-items: center;
-  }
-  .flex.align-items-center {
-    flex-direction: column !important;
-    align-items: center !important;
-    gap: 0.7rem;
-    width: 100%;
+    border-radius: 12px;
   }
   h4.m-0 {
     margin: 0 !important;
@@ -1115,7 +1209,7 @@ const navigateToInstitution = (instId) => {
   }
 }
 @media (max-width: 600px) {
-  .grid.m-2, .surfaces-card.mb-4.shadow-2.flex.flex-column.gap-2 {
+  .grid.m-2, .stage-card {
     padding-left: 0.4rem !important;
     padding-right: 0.4rem !important;
   }

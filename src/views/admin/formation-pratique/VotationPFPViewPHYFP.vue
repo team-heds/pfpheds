@@ -1269,6 +1269,54 @@ const startAlgorithm = async () => {
       life: 5000
     })
 
+    // Charger les profils physio pour calculer le priorityScore basé sur les critères manquants
+    const { data: physioData } = await supabase
+      .from('StudentsPhysio')
+      .select('user_id, pfp_valided, sae, cas_particulier')
+
+    // Construire un map userId → critères validés
+    const studentCriteriaMap = new Map()
+    if (physioData) {
+      physioData.forEach(physio => {
+        const validatedCriteria = { MSQ: 0, SYSINT: 0, NEUROGER: 0, AIGU: 0, REHAB: 0, AMBU: 0, FR: 0, DE: 0 }
+        let pfpArray = []
+        if (physio.pfp_valided) {
+          try {
+            pfpArray = typeof physio.pfp_valided === 'string' ? JSON.parse(physio.pfp_valided) : physio.pfp_valided
+            if (!Array.isArray(pfpArray)) pfpArray = Object.values(pfpArray)
+          } catch (e) { pfpArray = [] }
+        }
+        pfpArray.forEach(stage => {
+          CRITERIA_KEYS.forEach(c => {
+            if (stage[c] === true || stage[c] === 'true' || stage[c] === 1 || stage[c.toLowerCase()] === true) {
+              validatedCriteria[c]++
+            }
+          })
+        })
+        studentCriteriaMap.set(physio.user_id, {
+          criteria: validatedCriteria,
+          sae: !!physio.sae,
+          casParticulier: !!physio.cas_particulier
+        })
+      })
+    }
+
+    // Calculer le priorityScore pour chaque étudiant
+    // Score = (nb critères manquants / 8) * 80 + bonus SAE/cas particulier + tiebreaker aléatoire
+    // Plus un étudiant a de critères manquants, plus son score est élevé
+    const computePriorityScore = (userId) => {
+      const profile = studentCriteriaMap.get(userId)
+      if (!profile) return Math.random() * 10 // Pas de profil → score faible aléatoire
+
+      const missingCount = CRITERIA_KEYS.filter(c => profile.criteria[c] === 0).length
+      const missingScore = (missingCount / CRITERIA_KEYS.length) * 80 // 0-80 points selon critères manquants
+      const bonusSae = profile.sae ? 10 : 0 // +10 si SAE
+      const bonusCas = profile.casParticulier ? 5 : 0 // +5 si cas particulier
+      const tiebreaker = Math.random() * 5 // 0-5 points aléatoires pour départager les égalités
+
+      return Math.round((missingScore + bonusSae + bonusCas + tiebreaker) * 100) / 100
+    }
+
     // Préparer les données des étudiants pour l'algorithme
     const studentsData = filteredVotationsList.value.map(student => ({
       userId: student.userId,
@@ -1282,8 +1330,10 @@ const startAlgorithm = async () => {
         student.choice4PlaceId && { placeId: student.choice4PlaceId, rank: 4 },
         student.choice5PlaceId && { placeId: student.choice5PlaceId, rank: 5 }
       ].filter(Boolean),
-      priorityScore: Math.random() * 100 // Score de priorité aléatoire pour l'instant
+      priorityScore: computePriorityScore(student.userId)
     }))
+
+    console.log('📊 PriorityScores calculés:', studentsData.map(s => `${s.nom} ${s.prenom}: ${s.priorityScore}`).slice(0, 10))
 
     // Récupérer toutes les places disponibles
     await placesStore.fetchPlaces()
