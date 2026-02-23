@@ -117,14 +117,14 @@
               <i class="pi pi-chevron-right shortcut-arrow"></i>
             </div>
 
-            <!-- Gestion Planning -->
-            <div class="shortcut-card" @click="$router.push('/admin/planning/manage')">
+            <!-- Vue Journalière / Salles -->
+            <div class="shortcut-card" @click="$router.push('/admin/soins-infirmiers/planning-journalier')">
               <div class="shortcut-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
-                <i class="pi pi-pencil"></i>
+                <i class="pi pi-building"></i>
               </div>
               <div class="shortcut-info">
-                <h4>Gestion Planning</h4>
-                <p>Administration avancée du planning</p>
+                <h4>Vue Journalière / Salles</h4>
+                <p>Cours par jour, enseignants et salles</p>
               </div>
               <i class="pi pi-chevron-right shortcut-arrow"></i>
             </div>

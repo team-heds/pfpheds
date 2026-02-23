@@ -164,6 +164,7 @@ export default [
         items: [
           { label: 'Structure Mini Brique', icon: 'pi pi-th-large', to: '/admin/planning' },
           { label: 'Vue Hebdomadaire', icon: 'pi pi-calendar', to: '/admin/planning/weekly' },
+          { label: 'Vue Journalière / Salles', icon: 'pi pi-building', to: '/admin/soins-infirmiers/planning-journalier' },
           { label: 'Gestion Planning', icon: 'pi pi-pencil', to: '/admin/planning/manage' },
           { label: 'Années Académiques', icon: 'pi pi-calendar-plus', to: '/admin/planning/years' }
         ]
