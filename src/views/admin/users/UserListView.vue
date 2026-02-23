@@ -107,46 +107,84 @@
     </div>
 
     <!-- Dialog d'ajout d'utilisateur -->
-    <Dialog v-model:visible="showAddUserDialog" modal header="Ajouter un nouvel utilisateur" :style="{ width: '40rem' }" :breakpoints="{ '1199px': '75vw', '575px': '90vw' }">
+    <Dialog v-model:visible="showAddUserDialog" modal header="Créer un nouvel utilisateur" :style="{ width: '48rem' }" :breakpoints="{ '1199px': '75vw', '575px': '90vw' }">
       <div class="flex flex-column gap-3 pt-3">
+        <div class="p-message p-message-info mb-2" style="border-radius: 8px;">
+          <div class="p-message-wrapper" style="padding: 0.75rem 1rem;">
+            <span class="p-message-icon pi pi-info-circle"></span>
+            <span class="p-message-detail">L'utilisateur sera créé directement dans Supabase avec email confirmé. Il pourra se connecter immédiatement.</span>
+          </div>
+        </div>
+
+        <div class="grid">
+          <div class="col-6">
+            <div class="flex flex-column gap-2">
+              <label for="newUserForname" class="font-semibold">Prénom *</label>
+              <InputText id="newUserForname" v-model="newUser.forname" placeholder="Prénom" />
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="flex flex-column gap-2">
+              <label for="newUserFamilyName" class="font-semibold">Nom de famille *</label>
+              <InputText id="newUserFamilyName" v-model="newUser.familyName" placeholder="Nom de famille" />
+            </div>
+          </div>
+        </div>
+
         <div class="flex flex-column gap-2">
           <label for="newUserEmail" class="font-semibold">Email *</label>
-          <InputText id="newUserEmail" v-model="newUser.email" type="email" placeholder="exemple@hedsvs.ch" :class="{ 'p-invalid': emailError }" />
+          <InputText id="newUserEmail" v-model="newUser.email" type="email" placeholder="prenom.nom@hedsvs.ch" :class="{ 'p-invalid': emailError }" />
           <small v-if="emailError" class="p-error">Veuillez entrer un email valide</small>
         </div>
         
         <div class="flex flex-column gap-2">
           <label for="newUserPassword" class="font-semibold">Mot de passe *</label>
-          <Password id="newUserPassword" v-model="newUser.password" placeholder="Minimum 6 caractères" toggleMask :feedback="false" :class="{ 'p-invalid': passwordError }" />
+          <div class="flex gap-2 align-items-center">
+            <Password id="newUserPassword" v-model="newUser.password" placeholder="Minimum 6 caractères" toggleMask :feedback="false" :class="{ 'p-invalid': passwordError }" class="flex-1" />
+            <Button icon="pi pi-refresh" severity="secondary" size="small" v-tooltip.top="'Générer un mot de passe'" @click="generatePassword" />
+          </div>
           <small v-if="passwordError" class="p-error">Le mot de passe doit contenir au moins 6 caractères</small>
         </div>
 
-        <div class="flex flex-column gap-2">
-          <label for="newUserForname" class="font-semibold">Prénom</label>
-          <InputText id="newUserForname" v-model="newUser.forname" placeholder="Prénom" />
+        <div class="grid">
+          <div class="col-6">
+            <div class="flex flex-column gap-2">
+              <label for="newUserRole" class="font-semibold">Rôle</label>
+              <Dropdown id="newUserRole" v-model="newUser.role" :options="roleOptions" placeholder="Sélectionner un rôle" />
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="flex flex-column gap-2">
+              <label for="newUserPermissions" class="font-semibold">Permissions</label>
+              <MultiSelect id="newUserPermissions" v-model="newUser.permissions" :options="permissionOptions" placeholder="Sélectionner les permissions" display="chip" :maxSelectedLabels="3" />
+            </div>
+          </div>
         </div>
 
         <div class="flex flex-column gap-2">
-          <label for="newUserFamilyName" class="font-semibold">Nom de famille</label>
-          <InputText id="newUserFamilyName" v-model="newUser.familyName" placeholder="Nom de famille" />
+          <label for="newUserDisplayName" class="font-semibold">Nom d'affichage</label>
+          <InputText id="newUserDisplayName" v-model="newUser.displayName" :placeholder="newUser.forname && newUser.familyName ? newUser.forname + ' ' + newUser.familyName : 'Généré automatiquement'" />
+          <small class="text-500">Laissez vide pour utiliser Prénom + Nom</small>
         </div>
 
-        <div class="flex flex-column gap-2">
-          <label for="newUserRole" class="font-semibold">Rôle</label>
-          <Dropdown id="newUserRole" v-model="newUser.role" :options="roleOptions" placeholder="Sélectionner un rôle" />
-        </div>
-
-        <div v-if="createUserError" class="p-message p-message-error mt-2">
-          <div class="p-message-wrapper">
+        <div v-if="createUserError" class="p-message p-message-error mt-2" style="border-radius: 8px;">
+          <div class="p-message-wrapper" style="padding: 0.75rem 1rem;">
             <span class="p-message-icon pi pi-times-circle"></span>
             <span class="p-message-detail">{{ createUserError }}</span>
+          </div>
+        </div>
+
+        <div v-if="createdUserSummary" class="p-message p-message-success mt-2" style="border-radius: 8px;">
+          <div class="p-message-wrapper" style="padding: 0.75rem 1rem;">
+            <span class="p-message-icon pi pi-check-circle"></span>
+            <span class="p-message-detail">{{ createdUserSummary }}</span>
           </div>
         </div>
       </div>
 
       <template #footer>
         <Button label="Annuler" icon="pi pi-times" @click="closeAddUserDialog" text />
-        <Button label="Créer l'utilisateur" icon="pi pi-check" @click="createNewUser" :loading="creatingUser" />
+        <Button label="Créer l'utilisateur" icon="pi pi-check" @click="createNewUser" :loading="creatingUser" severity="success" />
       </template>
     </Dialog>
 
@@ -170,9 +208,12 @@ import Tag from 'primevue/tag';
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 import Dialog from 'primevue/dialog';
 import Password from 'primevue/password';
+import MultiSelect from 'primevue/multiselect';
+import Tooltip from 'primevue/tooltip';
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
 import { useAuthStore } from '@/stores/authStore';
+import { supabaseAdmin } from '@/supabaseAdmin';
 import { nextTick } from 'vue';
 // import Navbar from '@/components/common/utils/Navbar.vue';
 
@@ -193,7 +234,11 @@ export default {
     AdminLayout,
     Dialog,
     Password,
+    MultiSelect,
     Toast
+  },
+  directives: {
+    tooltip: Tooltip
   },
   setup() {
     const toast = useToast();
@@ -221,9 +266,13 @@ export default {
         password: '',
         forname: '',
         familyName: '',
-        role: 'student'
+        displayName: '',
+        role: 'student',
+        permissions: []
       },
-      roleOptions: ['student', 'teacher', 'admin', 'moderator', 'practitioner']
+      createdUserSummary: '',
+      roleOptions: ['student', 'teacher', 'admin', 'moderator', 'practitioner', 'EnseignantSoins', 'EnseignantPhysio', 'editor'],
+      permissionOptions: ['EnseignantSoins', 'EnseignantPhysio', 'AdminSoins', 'AdminPhysio', 'Secretariat', 'RM', 'editor']
     };
   },
   computed: {
@@ -407,79 +456,116 @@ export default {
         password: '',
         forname: '',
         familyName: '',
-        role: 'student'
+        displayName: '',
+        role: 'student',
+        permissions: []
       };
       this.emailError = false;
       this.passwordError = false;
       this.createUserError = '';
+      this.createdUserSummary = '';
+    },
+    generatePassword() {
+      const chars = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      const specials = '!@#$%&*';
+      let pwd = '';
+      for (let i = 0; i < 10; i++) pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+      pwd += specials.charAt(Math.floor(Math.random() * specials.length));
+      this.newUser.password = pwd;
     },
     async createNewUser() {
       this.emailError = false;
       this.passwordError = false;
       this.createUserError = '';
+      this.createdUserSummary = '';
 
       // Validation
-      if (!this.newUser.email || !this.newUser.email.includes('@')) {
+      const email = (this.newUser.email || '').trim().toLowerCase();
+      if (!email || !email.includes('@')) {
         this.emailError = true;
-        this.toast.add({ 
-          severity: 'warn', 
-          summary: 'Email invalide', 
-          detail: 'Veuillez entrer un email valide.', 
-          life: 3000 
-        });
+        this.toast.add({ severity: 'warn', summary: 'Email invalide', detail: 'Veuillez entrer un email valide.', life: 3000 });
         return;
       }
-
       if (!this.newUser.password || this.newUser.password.length < 6) {
         this.passwordError = true;
-        this.toast.add({ 
-          severity: 'warn', 
-          summary: 'Mot de passe trop court', 
-          detail: 'Le mot de passe doit contenir au moins 6 caractères.', 
-          life: 3000 
-        });
+        this.toast.add({ severity: 'warn', summary: 'Mot de passe trop court', detail: 'Le mot de passe doit contenir au moins 6 caractères.', life: 3000 });
+        return;
+      }
+      if (!this.newUser.forname || !this.newUser.familyName) {
+        this.toast.add({ severity: 'warn', summary: 'Nom requis', detail: 'Veuillez renseigner le prénom et le nom.', life: 3000 });
         return;
       }
 
       this.creatingUser = true;
-      
+      const forname = this.newUser.forname.trim();
+      const familyName = this.newUser.familyName.trim();
+      const displayName = this.newUser.displayName.trim() || `${forname} ${familyName}`;
+      const role = this.newUser.role || 'student';
+      const permissions = this.newUser.permissions || [];
+
       try {
-        const signUpData = await this.authStore.signUpSupabase({
-          email: this.newUser.email.trim().toLowerCase(),
-          password: this.newUser.password,
-          options: {
-            data: {
-              forname: this.newUser.forname,
-              family_name: this.newUser.familyName,
-              role: this.newUser.role
-            }
+        // ── Méthode 1 : Admin API via service role key ──
+        if (supabaseAdmin) {
+          // 1. Créer l'utilisateur via l'API admin (ne touche pas la session courante)
+          const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+            email,
+            password: this.newUser.password,
+            email_confirm: true,
+            user_metadata: { forname, family_name: familyName, display_name: displayName, role }
+          });
+          if (authError) throw authError;
+
+          const userId = authData.user.id;
+
+          // 2. Créer / mettre à jour le profil dans user_profiles
+          const { error: profileError } = await supabaseAdmin
+            .from('user_profiles')
+            .upsert({
+              user_id: userId,
+              email,
+              forname,
+              family_name: familyName,
+              display_name: displayName,
+              role,
+              permissions,
+              is_active: true
+            }, { onConflict: 'user_id' });
+
+          if (profileError) {
+            console.warn('Profil user_profiles non créé:', profileError.message);
           }
-        });
-        
-        // Attendre que Supabase propage les changements
+
+          this.createdUserSummary = `✅ ${displayName} (${email}) — ID: ${userId.slice(0, 8)}…`;
+
+        } else {
+          // ── Méthode 2 : Fallback signup classique (si pas de service role key) ──
+          console.warn('⚠️ Pas de service role key — fallback sur signUp classique');
+          const signUpData = await this.authStore.signUpSupabase({
+            email,
+            password: this.newUser.password,
+            options: {
+              data: { forname, family_name: familyName, display_name: displayName, role }
+            }
+          });
+          this.createdUserSummary = `✅ ${displayName} (${email}) créé (fallback signup)`;
+        }
+
+        // Recharger la liste
         await nextTick();
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        // Recharger la liste automatiquement (sans F5)
+        await new Promise(resolve => setTimeout(resolve, 300));
         await this.fetchUsers();
-        
+
         this.toast.add({ 
           severity: 'success', 
           summary: 'Utilisateur créé', 
-          detail: `L'utilisateur ${this.newUser.email} a été créé avec succès.`, 
-          life: 4000 
-        });
-        
-        this.closeAddUserDialog();
-      } catch (error) {
-        console.error('Erreur lors de la création de l\'utilisateur:', error);
-        this.createUserError = error.message || 'Une erreur est survenue lors de la création de l\'utilisateur.';
-        this.toast.add({ 
-          severity: 'error', 
-          summary: 'Erreur', 
-          detail: this.createUserError, 
+          detail: `${displayName} (${email}) — rôle: ${role}`, 
           life: 5000 
         });
+
+      } catch (error) {
+        console.error('Erreur création utilisateur:', error);
+        this.createUserError = error.message || 'Erreur lors de la création.';
+        this.toast.add({ severity: 'error', summary: 'Erreur', detail: this.createUserError, life: 5000 });
       } finally {
         this.creatingUser = false;
       }
