@@ -178,7 +178,7 @@
                   {{ getInitials(data) }}
                 </div>
                 <div>
-                  <div class="font-semibold text-900 text-sm">{{ data.nom }} {{ data.prenom }}</div>
+                  <router-link :to="`/profile/${data.user_id}`" class="font-semibold text-primary text-sm no-underline hover:underline cursor-pointer">{{ data.nom }} {{ data.prenom }}</router-link>
                   <div class="text-xs text-500">{{ data.classe }}</div>
                 </div>
               </div>

@@ -315,11 +315,32 @@ export default {
       try {
         // Lire le pfpType depuis le paramètre de route
         const routePfpType = this.$route.params.pfpType
+        const currentUserId = this.userStore.user?.id || null
+
+        // Helper: filtre les sessions prioritaires pour l'étudiant courant
+        const filterSessionForUser = (sessions) => {
+          if (!sessions || sessions.length === 0) return null
+          for (const session of sessions) {
+            if (session.is_priority) {
+              // Session prioritaire : seuls les étudiants dans priority_user_ids y ont accès
+              const allowedIds = session.priority_user_ids || []
+              if (currentUserId && Array.isArray(allowedIds) && allowedIds.includes(currentUserId)) {
+                return session
+              }
+              // Étudiant non-prioritaire → ignorer cette session
+              continue
+            }
+            // Session normale → accessible à tous
+            return session
+          }
+          return null
+        }
 
         if (routePfpType) {
           // Route générique /votation/:pfpType — chercher la session pour ce PFP
           const sessions = await votationSessionService.getAllActiveSessions()
-          this.activeSession = sessions.find(s => s.pfp_type === routePfpType.toUpperCase()) || null
+          const matching = sessions.filter(s => s.pfp_type === routePfpType.toUpperCase())
+          this.activeSession = filterSessionForUser(matching)
         } else {
           // Routes legacy /votation ou /votation_pfp1b
           const routeName = this.$route.name
@@ -332,14 +353,15 @@ export default {
 
           if (pfpHint) {
             const sessions = await votationSessionService.getAllActiveSessions()
-            this.activeSession = sessions.find(s => s.pfp_type === pfpHint) || null
+            const matching = sessions.filter(s => s.pfp_type === pfpHint)
+            this.activeSession = filterSessionForUser(matching)
           } else {
             // Fallback : chercher n'importe quelle session ouverte pour la classe de l'étudiant
             const profile = this.userStore.profile
             const studentClass = profile?.Classe || profile?.classe || profile?.class || profile?.Class || null
             if (studentClass) {
               const sessions = await votationSessionService.getOpenSessionForClass(studentClass)
-              this.activeSession = sessions.length > 0 ? sessions[0] : null
+              this.activeSession = filterSessionForUser(sessions)
             }
           }
         }
@@ -347,7 +369,7 @@ export default {
         if (this.activeSession) {
           this.targetPFP = this.activeSession.pfp_type
           this.selectedYear = this.activeSession.year
-          console.log(`✅ Session active trouvée: ${this.targetPFP} ${this.selectedYear}`)
+          console.log(`✅ Session active trouvée: ${this.targetPFP} ${this.selectedYear}${this.activeSession.is_priority ? ' (prioritaire)' : ''}`)
         } else {
           console.warn('⚠️ Aucune session de votation active trouvée')
         }

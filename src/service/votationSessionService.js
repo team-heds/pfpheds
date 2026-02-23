@@ -12,6 +12,8 @@
  *   closed_at (timestamptz, nullable)
  *   opened_by (uuid)       — user_id de l'admin
  *   created_at (timestamptz)
+ *   is_priority (boolean)  — true si session prioritaire
+ *   priority_user_ids (jsonb) — liste des user_id prioritaires
  */
 import { supabase } from '@/supabase'
 
@@ -127,6 +129,73 @@ const votationSessionService = {
 
     if (error) throw error
     return data || []
+  },
+
+  /**
+   * Ouvrir une session de votation PRIORITAIRE
+   * @param {string} pfpType - Type de PFP
+   * @param {string} year - Année
+   * @param {string} targetClass - Classe cible
+   * @param {string} userId - ID de l'admin
+   * @param {Array<string>} priorityUserIds - Liste des user_id prioritaires
+   */
+  async openPrioritySession(pfpType, year, targetClass, userId, priorityUserIds = []) {
+    // Fermer toute session prioritaire existante pour ce PFP/année
+    await this.closePrioritySession(pfpType, year)
+
+    const { data, error } = await supabase
+      .from(TABLE)
+      .insert({
+        pfp_type: pfpType,
+        year: year,
+        target_class: targetClass,
+        status: 'open',
+        opened_at: new Date().toISOString(),
+        opened_by: userId,
+        closed_at: null,
+        is_priority: true,
+        priority_user_ids: priorityUserIds
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  },
+
+  /**
+   * Fermer une session prioritaire
+   */
+  async closePrioritySession(pfpType, year) {
+    const { error } = await supabase
+      .from(TABLE)
+      .update({
+        status: 'closed',
+        closed_at: new Date().toISOString()
+      })
+      .eq('pfp_type', pfpType)
+      .eq('year', year)
+      .eq('status', 'open')
+      .eq('is_priority', true)
+
+    if (error) throw error
+  },
+
+  /**
+   * Récupérer la session prioritaire active pour un PFP donné
+   */
+  async getActivePrioritySession(pfpType, year) {
+    const { data, error } = await supabase
+      .from(TABLE)
+      .select('*')
+      .eq('pfp_type', pfpType)
+      .eq('year', year)
+      .eq('status', 'open')
+      .eq('is_priority', true)
+      .maybeSingle()
+
+    if (error) throw error
+    return data
   }
 }
 

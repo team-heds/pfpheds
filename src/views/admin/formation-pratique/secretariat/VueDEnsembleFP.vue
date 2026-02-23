@@ -284,6 +284,16 @@
             </template>
           </Column>
 
+          <!-- Prioritaire -->
+          <Column field="isPrioritaire" header="Prio." sortable style="min-width: 70px">
+            <template #body="{ data }">
+              <div class="flex justify-content-center">
+                <i v-if="data.isPrioritaire" class="pi pi-star-fill text-yellow-500" v-tooltip.top="'Étudiant prioritaire'"></i>
+                <span v-else class="text-400 text-xs">—</span>
+              </div>
+            </template>
+          </Column>
+
           <!-- CPT -->
           <Column field="cpt" header="CPT" sortable style="min-width: 80px">
             <template #body="{ data }">
@@ -342,6 +352,7 @@ const rawAssignments = ref([])
 const rawNotes = ref([])
 const rawSuivis = ref([])
 const rawCptEval = ref([])
+const priorityUserIdsMap = ref(new Map())
 
 const criteriaLabels = ['MSQ', 'SYSINT', 'NEUROGER', 'AIGU', 'REHAB', 'AMBU', 'FR', 'DE']
 const pfpTypes = ['PFP1A', 'PFP1B', 'PFP2', 'PFP3', 'PFP4']
@@ -440,6 +451,7 @@ const flatRows = computed(() => {
       if (d.attributionType || d.praticienName || (d.statut && ['En cours', 'Publié', 'Brouillon'].includes(d.statut))) source = 'assigned'
       else if (d.statut === 'Réussi' && d.placeName && !d.attributionType) source = 'validated'
       else if (d.note) source = 'notes'
+      const prioSet = priorityUserIdsMap.value.get(pfpType)
       flat.push({
         _rowKey: `${r.userId}-${pfpType}`,
         userId: r.userId,
@@ -460,6 +472,7 @@ const flatRows = computed(() => {
         casColor: d.casColor || null,
         casComment: d.casComment || null,
         attributionType: d.attributionType || null,
+        isPrioritaire: prioSet ? prioSet.has(r.userId) : false,
         cpt: d.cpt ?? null,
         cptComment: d.cptComment || '',
         eval: d.eval ?? null,
@@ -556,7 +569,8 @@ const fetchAllData = async () => {
       praticiensResult,
       suiviResult,
       notesResult,
-      cptEvalResult
+      cptEvalResult,
+      prioSessionsResult
     ] = await Promise.all([
       studentsService.getAllStudents(),
       supabase.from('StudentsPhysio').select('user_id, pfp_valided'),
@@ -566,8 +580,22 @@ const fetchAllData = async () => {
       supabase.from('praticiens_formateurs').select('id, nom, prenom'),
       supabase.from('suivi_cas_particuliers').select('*'),
       supabase.from('StudentsPhysio').select('*'),
-      supabase.from('recap_cpt_evaluation').select('*')
+      supabase.from('recap_cpt_evaluation').select('*'),
+      supabase.from('votation_sessions').select('pfp_type, priority_user_ids').eq('is_priority', true)
     ])
+
+    // Build priority user IDs map (pfp_type -> Set of user_ids)
+    const prioMap = new Map()
+    if (prioSessionsResult.data) {
+      prioSessionsResult.data.forEach(s => {
+        if (s.pfp_type && Array.isArray(s.priority_user_ids)) {
+          const existing = prioMap.get(s.pfp_type) || new Set()
+          s.priority_user_ids.forEach(id => existing.add(id))
+          prioMap.set(s.pfp_type, existing)
+        }
+      })
+    }
+    priorityUserIdsMap.value = prioMap
 
     const instMap = new Map()
     if (institutionsResult.data) institutionsResult.data.forEach(i => instMap.set(i.InstitutionId, i.Name))
