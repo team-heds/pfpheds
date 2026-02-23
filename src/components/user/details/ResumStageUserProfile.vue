@@ -40,8 +40,8 @@
       <!-- Ligne du titre + statut + bouton -->
       <div class="flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
         <div class="flex align-items-center gap-2 flex-wrap">
-          <h4 class="m-0">Formation Pratique {{ index + 1 }}</h4>
-          <Tag v-if="place.pfp_type" :value="place.pfp_type" :severity="getPfpTagSeverity(place.pfp_type)" class="text-xs" />
+          <h4 class="m-0">{{ place.pfp_type ? getPfpLabel(place.pfp_type) : `Formation Pratique ${index + 1}` }}</h4>
+          <Tag v-if="place.year" :value="place.year" severity="secondary" class="text-xs" />
           <Tag :value="getStatusLabel(place.status)" :severity="getStatusSeverity(place.status)" :icon="getStatusIcon(place.status)" />
         </div>
         <Button
@@ -516,6 +516,10 @@ const praticiensByInstitution = ref({});
 
 // Liste PFP validées pour l'étudiant (depuis StudentsPhysio)
 const studentPfpList = ref([]);
+// Liste des résultats de votation (depuis student_result_vote)
+const studentResultVotes = ref([]);
+// Map des places pour récupérer les critères
+const placesFullMap = ref(new Map());
 
 // Liste des critères pour l'agrégation
 const criteriaList = [
@@ -529,9 +533,10 @@ const criteriaList = [
   "DE"
 ];
 
-// Construit la liste des places attribuées depuis StudentsPhysio.pfp_valided
+// Construit la liste des places en fusionnant student_result_vote (priorité) + pfp_valided (backup/legacy)
 const assignedPlaces = computed(() => {
   const results = []
+  const seenKeys = new Set() // Pour dédupliquer par placeId + pfp_type
   const criteriaMap = {
     AMBU: 'ambu',
     DE: 'de',
@@ -542,25 +547,87 @@ const assignedPlaces = computed(() => {
     SYSINT: 'sysint',
     AIGU: 'aigu',
   }
+
+  // 1. Source prioritaire : student_result_vote (stages attribués par l'algo)
+  ;(studentResultVotes.value || []).forEach((rv, idx) => {
+    const placeId = rv.assigned_place_id || ''
+    const pfpType = rv.pfp_type || ''
+    const dedupKey = `${placeId}_${pfpType}`
+    if (seenKeys.has(dedupKey)) return
+    seenKeys.add(dedupKey)
+
+    let status = 'en_attente'
+    if (rv.pfp_validee) status = 'validee'
+    else if (rv.pfp_echec) status = 'echec'
+    else if (rv.pfp_arret) status = 'arret'
+
+    const item = {
+      _key: `rv_${idx}`,
+      IDPlace: placeId,
+      InstitutionId: '',
+      NomPlace: rv.assigned_place_name || '',
+      seatIndex: null,
+      Institutionname: rv.assigned_institution_name || getInstitutionNameById(placeId) || '',
+      pfp_type: pfpType,
+      status,
+      commentaire_arret: rv.commentaire_arret || null,
+      assigned_rank: rv.assigned_rank || null,
+      year: rv.year || null
+    }
+    // Charger les critères depuis la place si disponible
+    const placeData = placesFullMap.value.get(placeId)
+    if (placeData) {
+      Object.entries(criteriaMap).forEach(([up, low]) => {
+        item[up] = placeData[up] === true || placeData[up] === 'true' || placeData[up] === 1
+      })
+    } else {
+      Object.keys(criteriaMap).forEach(up => { item[up] = false })
+    }
+    results.push(item)
+  })
+
+  // 2. Source backup : pfp_valided (stages historiques/legacy)
+  // Convention legacy : index dans pfp_valided → PFP type
+  const pfpTypeByIndex = ['PFP1A', 'PFP1B', 'PFP2', 'PFP3', 'PFP4']
   ;(studentPfpList.value || []).forEach((pfp, idx) => {
+    const placeId = pfp.id_pfp || pfp.ID_PFP || pfp.PlaceId || ''
+    const pfpType = pfp.pfp_type || pfp.type_pfp || pfp.PfpType || pfpTypeByIndex[idx] || ''
+    const dedupKey = `${placeId}_${pfpType}`
+    if (seenKeys.has(dedupKey)) return // Déjà présent depuis student_result_vote
+    seenKeys.add(dedupKey)
+
     const item = {
       _key: `pfp_${idx}`,
-      IDPlace: pfp.id_pfp || pfp.ID_PFP || pfp.PlaceId || '',
+      IDPlace: placeId,
       InstitutionId: pfp.InstitutionId || pfp.Institution_id || pfp.institution_id || '',
       NomPlace: pfp.NomPlace || pfp.nom_pfp || pfp.Nom_PFP || pfp.domaine || pfp.Domaine || '',
       seatIndex: pfp.seat || null,
       Institutionname: pfp.InstitutionName || pfp.Institution || getInstitutionNameById(pfp.ID_PFP || pfp.PlaceId) || '',
-      pfp_type: pfp.pfp_type || pfp.type_pfp || pfp.PfpType || null,
+      pfp_type: pfpType || null,
       status: pfp.status || 'validee',
-      commentaire_arret: pfp.commentaire_arret || pfp.commentaireArret || pfp.CommentaireArret || null
+      commentaire_arret: pfp.commentaire_arret || pfp.commentaireArret || pfp.CommentaireArret || null,
+      year: pfp.year || null
     }
-    // Appliquer critères en UPPERCASE attendus par getValidCriterias
     Object.entries(criteriaMap).forEach(([up, low]) => {
       item[up] = pfp[low] === true || pfp[up] === true
     })
     results.push(item)
   })
-  console.log('🎯 assignedPlaces calculé:', results.length, 'places', results)
+
+  // Trier par pfp_type (PFP1A → PFP1B → PFP2 → PFP3 → PFP4) puis par année
+  const pfpOrder = { 'PFP1A': 1, 'PFP1B': 2, 'PFP2': 3, 'PFP3': 4, 'PFP4': 5 }
+  results.sort((a, b) => {
+    const orderA = pfpOrder[a.pfp_type] || 99
+    const orderB = pfpOrder[b.pfp_type] || 99
+    if (orderA !== orderB) return orderA - orderB
+    return (a.year || '').localeCompare(b.year || '')
+  })
+
+  console.log('🎯 assignedPlaces calculé (fusionné + trié):', results.length, 'places', {
+    fromResultVote: studentResultVotes.value.length,
+    fromPfpValided: studentPfpList.value.length,
+    afterDedup: results.length
+  })
   return results
 })
 
@@ -629,6 +696,28 @@ const fetchPraticienFormateurs = async () => {
 const fetchStudentPfpList = async () => {
   try {
     console.log('🔍 Chargement PFP pour userId:', props.userId)
+
+    // Charger student_result_vote (source prioritaire)
+    const { data: rvData, error: rvError } = await supabase
+      .from('student_result_vote')
+      .select('*')
+      .eq('user_id', props.userId)
+    if (rvError) console.warn('⚠️ Erreur chargement student_result_vote:', rvError.message)
+    studentResultVotes.value = rvData || []
+    console.log('✅ student_result_vote chargé:', studentResultVotes.value.length, 'entrées')
+
+    // Construire la map des places pour les critères
+    if (placesFullMap.value.size === 0) {
+      const { data: placesData } = await supabase.from('places').select('*')
+      if (placesData) {
+        placesData.forEach(p => {
+          const id = p.PlaceId || p.id || p.place_id
+          if (id) placesFullMap.value.set(id, p)
+        })
+      }
+    }
+
+    // Charger pfp_valided (source backup)
     const { data, error } = await supabase
       .from('StudentsPhysio')
       .select('pfp_valided, pfp2_data')
@@ -1093,6 +1182,17 @@ const getStageCardClass = (status) => {
   if (status === 'echec') return 'stage-card-echec'
   if (status === 'arret') return 'stage-card-arret'
   return 'stage-card-attente'
+}
+
+const getPfpLabel = (pfpType) => {
+  const labels = {
+    'PFP1A': 'Formation Pratique 1 (PFP 1A)',
+    'PFP1B': 'Formation Pratique 1 (PFP 1B)',
+    'PFP2': 'Formation Pratique 2',
+    'PFP3': 'Formation Pratique 3',
+    'PFP4': 'Formation Pratique 4'
+  }
+  return labels[pfpType] || `Formation Pratique (${pfpType})`
 }
 
 const getPfpTagSeverity = (pfpType) => {
