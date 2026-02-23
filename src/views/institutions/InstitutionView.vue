@@ -1,123 +1,186 @@
 <template>
   <Navbar />
-  <div class="p-4 border-round scrollable-with-padding">
-    <div class="institution-container">
-      <div class="institution-info px-2 mb-2">
-        <h1 class="text-900 font-medium text-4xl md:text-6xl mb-2">
-          {{ institutionDetails ? institutionDetails.Name : 'Chargement...' }}
+  <div class="iv">
+    <!-- ====== HERO ====== -->
+    <section class="iv-hero">
+      <img :src="primaryImage" alt="" class="iv-hero__bg" />
+      <div class="iv-hero__fade"></div>
+
+      <!-- floating glass card in hero -->
+      <div class="iv-hero__glass">
+        <h1 class="iv-hero__name">
+          {{ institutionDetails ? institutionDetails.Name : 'Chargement…' }}
         </h1>
-        <h2 class="text-900 font-bold text-2xl md:text-3xl mb-4 mt-2">
-          <strong>{{ institutionDetails ? institutionDetails.Locality : '' }}</strong> - {{ institutionDetails ? institutionDetails.Address : '' }}
-        </h2>
-        <div class="flex flex-wrap justify-content-center md:justify-content-start gap-3 mt-2">
-          <span class="inline-flex align-items-center py-2 px-3 font-medium border-1 surface-border border-round">
-            <i class="pi pi-comments text-primary mr-2"></i>
-            <span class="text-900">Langue : {{ institutionDetails ? institutionDetails.Language : '' }}</span>
+        <p v-if="institutionDetails" class="iv-hero__addr">
+          <i class="pi pi-map-marker"></i>
+          {{ institutionDetails.Address }}, {{ institutionDetails.Locality }}
+        </p>
+        <div class="iv-pills">
+          <span v-if="institutionDetails?.Language" class="iv-pill">
+            <i class="pi pi-comments"></i> {{ institutionDetails.Language }}
           </span>
-          <span class="inline-flex align-items-center py-2 px-3 font-medium border-1 surface-border border-round">
-            <i class="pi pi-compass text-primary mr-2"></i>
-            <span class="text-900">Canton : {{ institutionDetails ? institutionDetails.Canton : '' }}</span>
+          <span v-if="institutionDetails?.Canton" class="iv-pill">
+            <i class="pi pi-compass"></i> {{ institutionDetails.Canton }}
           </span>
+          <a v-if="institutionDetails?.URL" :href="institutionDetails.URL" target="_blank" class="iv-pill iv-pill--link">
+            <i class="pi pi-external-link"></i> Site web
+          </a>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div class="institution-image-wrapper institution-image text-center my-4">
-      <img :src="primaryImage" alt="Institution" class="institution-image w-100px" />
-    </div>
+    <!-- ====== CONTENT ====== -->
+    <div class="iv-content">
+      <!-- custom tab bar -->
+      <nav class="iv-nav">
+        <button
+          :class="['iv-nav__btn', { 'iv-nav__btn--active': activeIndex === 0 }]"
+          @click="activeIndex = 0"
+        >
+          <i class="pi pi-info-circle"></i> Informations
+        </button>
+        <button
+          :class="['iv-nav__btn', { 'iv-nav__btn--active': activeIndex === 1 }]"
+          @click="activeIndex = 1"
+        >
+          <i class="pi pi-users"></i> Encadrement
+        </button>
+      </nav>
 
-    <div class="content-lower grid justify-content-center">
-      <div class="col-12 md:col-8 lg:col-5">
-        <TabView v-model:activeIndex="activeIndex">
-          <TabPanel header="Informations générales de l'institution">
-            <div v-if="institutionDetails?.Description" class="text-900 font-bold text-3xl mb-4 mt-2">Description</div>
-            <p v-if="institutionDetails?.Description" class="line-height-3 text-600 p-0 mx-0 mt-0 mb-4">
-              {{ institutionDetails.Description }}
-            </p>
+      <div class="iv-layout">
+        <!-- LEFT -->
+        <main class="iv-main">
+          <!-- TAB 0 : Infos -->
+          <div v-show="activeIndex === 0" class="iv-fade">
+            <div v-if="institutionDetails?.Description" class="iv-card">
+              <div class="iv-card__head">
+                <span class="iv-card__dot iv-card__dot--blue"></span>
+                <h3 class="iv-card__title">Description</h3>
+              </div>
+              <p class="iv-card__body">{{ institutionDetails.Description }}</p>
+            </div>
 
-            <div class="grid">
-              <div class="col-12">
-                <p class="text-900 underline mb-3 font-bold">Informations générales</p>
-                <div class="py-0 p-0 m-0 text-600 mb-3">
-                  <p class="card-text"><i class="bi bi-globe"></i> <strong>Langue:</strong> {{ institutionDetails?.Language }}</p>
-                  <p class="card-text"><i class="bi bi-geo-alt-fill"></i> <strong>Canton:</strong> {{ institutionDetails?.Canton }}</p>
-                  <p class="card-text"><i class="bi bi-geo-alt-fill"></i> <strong>Adresse:</strong> {{ institutionDetails?.Address }}</p>
-                  <p class="card-text"><i class="bi bi-geo-alt-fill"></i> <strong>Lieu:</strong> {{ institutionDetails?.Locality }}</p>
-                  <p class="card-text" v-if="institutionDetails?.URL"><i class="bi bi-link-45deg"></i> <strong>Site Web:</strong>
-                    <a :href="institutionDetails.URL" target="_blank" class="text-primary">{{ institutionDetails.URL }}</a>
-                  </p>
+            <div class="iv-card">
+              <div class="iv-card__head">
+                <span class="iv-card__dot iv-card__dot--green"></span>
+                <h3 class="iv-card__title">Détails</h3>
+              </div>
+              <div class="iv-details">
+                <div class="iv-detail">
+                  <div class="iv-detail__ico iv-detail__ico--1"><i class="pi pi-globe"></i></div>
+                  <div class="iv-detail__txt">
+                    <small>Langue</small>
+                    <strong>{{ institutionDetails?.Language || '—' }}</strong>
+                  </div>
+                </div>
+                <div class="iv-detail">
+                  <div class="iv-detail__ico iv-detail__ico--2"><i class="pi pi-map-marker"></i></div>
+                  <div class="iv-detail__txt">
+                    <small>Canton</small>
+                    <strong>{{ institutionDetails?.Canton || '—' }}</strong>
+                  </div>
+                </div>
+                <div class="iv-detail">
+                  <div class="iv-detail__ico iv-detail__ico--3"><i class="pi pi-home"></i></div>
+                  <div class="iv-detail__txt">
+                    <small>Adresse</small>
+                    <strong>{{ institutionDetails?.Address || '—' }}</strong>
+                  </div>
+                </div>
+                <div class="iv-detail">
+                  <div class="iv-detail__ico iv-detail__ico--4"><i class="pi pi-map"></i></div>
+                  <div class="iv-detail__txt">
+                    <small>Localité</small>
+                    <strong>{{ institutionDetails?.Locality || '—' }}</strong>
+                  </div>
                 </div>
               </div>
             </div>
-          </TabPanel>
-          <TabPanel header="Encadrement étudiant">
-            <div class="grid">
-              <div class="col-12">
-                <div class="text-900 font-bold text-3xl mb-4 mt-2">Encadrement étudiant</div>
-                <div class="list-none p-0 m-0 text-600 mb-4">
-                  <div v-if="institutionDetails">
-                    <p class="card-text">
-                      <i class="bi bi-person-badge-fill"></i>
-                      <strong>Nom, Prénom du responsable physio:</strong> {{ institutionDetails.NomChef || '—' }}
-                    </p>
-                    <p class="card-text">
-                      <i class="bi bi-envelope-fill"></i>
-                      <strong>Email du responsable physio:</strong>
-                      <a v-if="institutionDetails.MailChef" :href="`mailto:${institutionDetails.MailChef}`" class="text-primary">
-                        {{ institutionDetails.MailChef }}
-                      </a>
-                      <span v-else>—</span>
-                    </p>
-                    <p class="card-text">
-                      <i class="bi bi-telephone-fill"></i>
-                      <strong>Téléphone du responsable physio:</strong>
-                      <a v-if="institutionDetails.PhoneChef" :href="`tel:${institutionDetails.PhoneChef}`" class="text-primary">
-                        {{ institutionDetails.PhoneChef }}
-                      </a>
-                      <span v-else>—</span>
-                    </p>
-                  </div>
-                  <div v-else>
-                    <p class="card-text">Aucun praticien formateur disponible.</p>
-                  </div>
+          </div>
 
-                  <div v-if="institutionFiles.length > 0" class="mt-4">
-                    <h3 class="text-900 font-bold text-xl mb-3">
-                      {{ institutionFiles.length === 1 ? 'Descriptif lieu de formation pratique' : 'Descriptifs lieux de formation pratique' }}
-                    </h3>
-                    <ul class="list-none pl-0">
-                      <li v-for="file in institutionFiles" :key="file.url" class="mb-2 flex align-items-center gap-2">
-                        <a 
-                          :href="file.url" 
-                          target="_blank" 
-                          class="text-primary hover:underline flex-1"
-                          @click="handleFileClick(file)"
-                        >
-                          📄 {{ file.name }}
-                        </a>
-                        <span v-if="file.isGlobal" class="text-xs text-500 bg-blue-50 px-2 py-1 border-round">
-                          Document global
-                        </span>
-                        <span v-if="file.warning" class="text-xs text-orange-600">
-                          ⚠️ {{ file.warning }}
-                        </span>
-                      </li>
-                    </ul>
+          <!-- TAB 1 : Encadrement -->
+          <div v-show="activeIndex === 1" class="iv-fade">
+            <div class="iv-card">
+              <div class="iv-card__head">
+                <span class="iv-card__dot iv-card__dot--purple"></span>
+                <h3 class="iv-card__title">Responsable physio</h3>
+              </div>
+              <div v-if="institutionDetails" class="iv-contact">
+                <div class="iv-contact__row">
+                  <div class="iv-contact__ico"><i class="pi pi-user"></i></div>
+                  <div>
+                    <small>Nom, Prénom</small>
+                    <span>{{ institutionDetails.NomChef || '—' }}</span>
                   </div>
-                  <div v-else-if="loadingFiles" class="mt-3">
-                    <i class="pi pi-spin pi-spinner mr-2"></i>
-                    <span>Chargement des documents...</span>
+                </div>
+                <div class="iv-contact__row">
+                  <div class="iv-contact__ico"><i class="pi pi-envelope"></i></div>
+                  <div>
+                    <small>Email</small>
+                    <a v-if="institutionDetails.MailChef" :href="`mailto:${institutionDetails.MailChef}`">{{ institutionDetails.MailChef }}</a>
+                    <span v-else>—</span>
                   </div>
-                  <p v-else class="mt-3">Aucun PDF disponible pour cette institution.</p>
+                </div>
+                <div class="iv-contact__row">
+                  <div class="iv-contact__ico"><i class="pi pi-phone"></i></div>
+                  <div>
+                    <small>Téléphone</small>
+                    <a v-if="institutionDetails.PhoneChef" :href="`tel:${institutionDetails.PhoneChef}`">{{ institutionDetails.PhoneChef }}</a>
+                    <span v-else>—</span>
+                  </div>
                 </div>
               </div>
+              <p v-else class="iv-card__empty">Aucun praticien formateur disponible.</p>
             </div>
-          </TabPanel>
-        </TabView>
-      </div>
 
-      <div class="col-12 md:col-4 lg:col-5 py-3 lg:pl-6">
-        <div id="map" class="shadow map-container"></div>
+            <!-- FILES -->
+            <div v-if="institutionFiles.length > 0" class="iv-card">
+              <div class="iv-card__head">
+                <span class="iv-card__dot iv-card__dot--red"></span>
+                <h3 class="iv-card__title">
+                  {{ institutionFiles.length === 1 ? 'Document' : 'Documents' }}
+                </h3>
+                <span class="iv-card__count">{{ institutionFiles.length }}</span>
+              </div>
+              <div class="iv-files">
+                <a
+                  v-for="file in institutionFiles"
+                  :key="file.url"
+                  :href="file.url"
+                  target="_blank"
+                  class="iv-file"
+                  @click="handleFileClick(file)"
+                >
+                  <div class="iv-file__icon"><i class="pi pi-file-pdf"></i></div>
+                  <div class="iv-file__info">
+                    <span class="iv-file__name">{{ file.name }}</span>
+                    <span v-if="file.isGlobal" class="iv-file__tag">Global</span>
+                    <span v-if="file.warning" class="iv-file__warn">{{ file.warning }}</span>
+                  </div>
+                  <i class="pi pi-arrow-up-right iv-file__go"></i>
+                </a>
+              </div>
+            </div>
+            <div v-else-if="loadingFiles" class="iv-card">
+              <div class="iv-card__loading">
+                <i class="pi pi-spin pi-spinner"></i> Chargement des documents…
+              </div>
+            </div>
+            <div v-else class="iv-card">
+              <p class="iv-card__empty">Aucun PDF disponible pour cette institution.</p>
+            </div>
+          </div>
+        </main>
+
+        <!-- RIGHT: MAP -->
+        <aside class="iv-aside">
+          <div class="iv-map">
+            <div class="iv-map__label">
+              <i class="pi pi-map-marker"></i> Localisation
+            </div>
+            <div id="map" class="iv-map__canvas"></div>
+          </div>
+        </aside>
       </div>
     </div>
   </div>
@@ -132,8 +195,6 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
 import Navbar from '@/components/common/utils/Navbar.vue'
-import TabView from 'primevue/tabview'
-import TabPanel from 'primevue/tabpanel'
 import { useInstitutionsStore } from '@/stores/institutionsStore'
 import { usePlacesStore } from '@/stores/placesStore'
 import { db, auth } from '../../../firebase.js'
@@ -432,83 +493,365 @@ function listenUserRole() {
 </script>
 
 <style scoped>
-.scrollable-with-padding {
+/* ============================================================
+   INSTITUTION VIEW — v3 modern design (theme-aware)
+   ============================================================ */
+
+/* --- reset / page --- */
+.iv {
+  --accent: var(--primary-color, #6366f1);
+  --accent-soft: var(--primary-color, rgba(99,102,241,.12));
+  --radius: 1rem;
   height: 100vh;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 2rem;
-  padding-bottom: 7rem;
-  scrollbar-width: none;
+  scrollbar-width: thin;
+
 }
-.scrollable-with-padding::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-}
-.institution-info {
-  flex: 1;
-  margin-left: 2rem;
-}
-.institution-image {
-  width: 100%;
+.iv::-webkit-scrollbar { width: 6px; }
+.iv::-webkit-scrollbar-thumb { background: var(--surface-border); border-radius: 3px; }
+
+/* ====== HERO ====== */
+.iv-hero {
+  position: relative;
   max-width: 1200px;
-  height: auto;
-  max-height: 400px;
+  margin: 1.5rem auto 0;
+  padding: 0 2rem;
+}
+.iv-hero__bg {
+  width: 100%; height: 380px;
   object-fit: cover;
-  margin: auto;
-  border-radius: 0.5rem;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius);
+  filter: brightness(.85) saturate(1.1);
+  display: block;
+}
+.iv-hero__fade {
+  position: absolute; inset: 0;
+  top: 0; left: 2rem; right: 2rem; bottom: 0;
+  border-radius: var(--radius);
+  background:
+    linear-gradient(180deg, transparent 30%, rgba(15,23,42,.82) 100%),
+    linear-gradient(135deg, rgba(99,102,241,.25) 0%, transparent 60%);
+  pointer-events: none;
 }
 
-.shadow {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+/* glass card floating in hero */
+.iv-hero__glass {
+  position: absolute;
+  bottom: 1.25rem; left: 3.25rem; right: 3.25rem;
+  padding: 1.75rem 2rem;
+  background: rgba(255,255,255,.12);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  border: 1px solid rgba(255,255,255,.22);
+  border-radius: var(--radius);
+  color: #fff;
+  animation: glassIn .6s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes glassIn {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.iv-hero__name {
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: -.02em;
+  line-height: 1.15;
+  margin: 0 0 .3rem;
+}
+.iv-hero__addr {
+  margin: 0 0 .85rem;
+  font-size: .95rem;
+  opacity: .88;
+  display: flex; align-items: center; gap: .4rem;
+}
+.iv-hero__addr i { font-size: .85rem; }
+
+/* pills */
+.iv-pills { display: flex; flex-wrap: wrap; gap: .45rem; }
+.iv-pill {
+  display: inline-flex; align-items: center; gap: .35rem;
+  padding: .28rem .7rem;
+  font-size: .78rem; font-weight: 600;
+  border-radius: 999px;
+  background: rgba(255,255,255,.18);
+  border: 1px solid rgba(255,255,255,.2);
+  color: #fff;
+  transition: background .2s;
+}
+.iv-pill:hover { background: rgba(255,255,255,.28); }
+.iv-pill--link {
+  text-decoration: none; cursor: pointer;
+  background: rgba(99,102,241,.45);
+  border-color: rgba(99,102,241,.5);
+}
+.iv-pill--link:hover { background: rgba(99,102,241,.6); }
+
+/* ====== CONTENT WRAPPER ====== */
+.iv-content {
+  max-width: 1200px;
+  margin: 1.5rem auto 0;
+  padding: 0 2rem 5rem;
+  position: relative;
+  z-index: 1;
 }
 
-#map {
-  height: 400px;
-  width: 100%;
+/* ====== CUSTOM NAV ====== */
+.iv-nav {
+  display: inline-flex;
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: 999px;
+  padding: .3rem;
+  box-shadow: 0 2px 12px rgba(0,0,0,.08);
+  margin-bottom: 1.5rem;
+}
+.iv-nav__btn {
+  display: inline-flex; align-items: center; gap: .4rem;
+  padding: .55rem 1.25rem;
+  border: none; outline: none;
+  border-radius: 999px;
+  font-size: .85rem; font-weight: 600;
+  color: var(--text-color-secondary);
+  background: transparent;
+  cursor: pointer;
+  transition: all .25s;
+}
+.iv-nav__btn:hover { color: var(--text-color); }
+.iv-nav__btn--active {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(99,102,241,.35);
 }
 
-.institution-container {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  margin-left: 2rem;
-  margin-right: 2rem;
+/* ====== LAYOUT ====== */
+.iv-layout {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 1.75rem;
+  align-items: start;
+}
+.iv-main { min-width: 0; }
+
+/* ====== CARDS ====== */
+.iv-card {
+  background: var(--surface-card);
+  border-radius: var(--radius);
+  padding: 1.5rem 1.75rem;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.04);
+  border: 1px solid var(--surface-border);
+  animation: cardUp .45s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes cardUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.iv-card__head {
+  display: flex; align-items: center; gap: .6rem;
+  margin-bottom: 1rem;
+}
+.iv-card__dot {
+  width: .55rem; height: .55rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.iv-card__dot--blue   { background: #3b82f6; }
+.iv-card__dot--green  { background: #22c55e; }
+.iv-card__dot--purple { background: #8b5cf6; }
+.iv-card__dot--red    { background: #ef4444; }
+.iv-card__title {
+  font-size: 1.05rem; font-weight: 700;
+  color: var(--text-color); margin: 0;
+}
+.iv-card__count {
+  margin-left: auto;
+  font-size: .72rem; font-weight: 700;
+  background: var(--accent-soft); color: var(--accent);
+  padding: .15rem .55rem; border-radius: 999px;
+}
+.iv-card__body {
+  color: var(--text-color-secondary); line-height: 1.75; margin: 0;
+  font-size: .93rem;
+}
+.iv-card__empty {
+  color: var(--text-color-secondary); font-size: .9rem; margin: 0;
+}
+.iv-card__loading {
+  display: flex; align-items: center; gap: .5rem;
+  color: var(--text-color-secondary); font-size: .9rem;
 }
 
-/* Version mobile */
-@media (max-width: 768px) {
-  .institution-container {
-    flex-direction: column;
-    align-items: center;
-    margin: 0;
-  }
+/* ====== DETAILS GRID ====== */
+.iv-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .65rem;
+}
+.iv-detail {
+  display: flex; align-items: center; gap: .75rem;
+  padding: .8rem .95rem;
+  border-radius: .75rem;
+  background: var(--surface-ground);
+  border: 1px solid var(--surface-border);
+  transition: all .2s;
+}
+.iv-detail:hover {
+  background: var(--surface-hover, var(--surface-card));
+  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+  border-color: var(--surface-border);
+}
+.iv-detail__ico {
+  width: 2.4rem; height: 2.4rem;
+  border-radius: .6rem;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .95rem; color: #fff;
+  flex-shrink: 0;
+}
+.iv-detail__ico--1 { background: linear-gradient(135deg, #6366f1, #818cf8); }
+.iv-detail__ico--2 { background: linear-gradient(135deg, #f43f5e, #fb7185); }
+.iv-detail__ico--3 { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+.iv-detail__ico--4 { background: linear-gradient(135deg, #22c55e, #4ade80); }
+.iv-detail__txt small {
+  display: block;
+  font-size: .68rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .04em;
+  color: var(--text-color-secondary); margin-bottom: .05rem;
+}
+.iv-detail__txt strong {
+  display: block;
+  font-size: .9rem; font-weight: 600;
+  color: var(--text-color);
+}
 
-  .institution-image-wrapper {
-    order: 1;
-    width: 100%;
-    padding: 0 1rem;
-  }
+/* ====== CONTACT ====== */
+.iv-contact__row {
+  display: flex; align-items: center; gap: .8rem;
+  padding: .85rem 0;
+  border-bottom: 1px solid var(--surface-border);
+}
+.iv-contact__row:last-child { border-bottom: none; }
+.iv-contact__ico {
+  width: 2.2rem; height: 2.2rem;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .9rem; flex-shrink: 0;
+}
+.iv-contact__row small {
+  display: block;
+  font-size: .68rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .04em;
+  color: var(--text-color-secondary);
+}
+.iv-contact__row span {
+  font-size: .9rem; font-weight: 500; color: var(--text-color);
+}
+.iv-contact__row a {
+  font-size: .9rem; font-weight: 500;
+  color: var(--accent); text-decoration: none;
+}
+.iv-contact__row a:hover { text-decoration: underline; }
 
-  .institution-info {
-    order: 2;
-    width: 100%;
-    margin: 1rem;
-  }
+/* ====== FILES ====== */
+.iv-files { display: flex; flex-direction: column; gap: .45rem; }
+.iv-file {
+  display: flex; align-items: center; gap: .7rem;
+  padding: .7rem .9rem;
+  border-radius: .65rem;
+  background: var(--surface-ground);
+  border: 1px solid var(--surface-border);
+  text-decoration: none; color: var(--text-color);
+  transition: all .2s;
+}
+.iv-file:hover {
+  background: var(--surface-hover, var(--surface-card));
+  border-color: var(--accent);
+  box-shadow: 0 2px 10px rgba(99,102,241,.12);
+}
+.iv-file__icon {
+  width: 2rem; height: 2rem;
+  border-radius: .45rem;
+  background: rgba(239,68,68,.08);
+  color: #ef4444;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .95rem; flex-shrink: 0;
+}
+.iv-file__info { flex: 1; min-width: 0; }
+.iv-file__name {
+  display: block;
+  font-size: .88rem; font-weight: 500;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.iv-file__tag {
+  display: inline-block;
+  font-size: .65rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .03em;
+  padding: .1rem .45rem; border-radius: 999px;
+  background: rgba(59,130,246,.08); color: #3b82f6;
+  margin-top: .15rem;
+}
+.iv-file__warn {
+  display: inline-block;
+  font-size: .72rem; color: #f97316; font-weight: 500;
+  margin-top: .1rem;
+}
+.iv-file__go {
+  font-size: .75rem; color: var(--text-color-secondary);
+  transition: color .2s; flex-shrink: 0;
+}
+.iv-file:hover .iv-file__go { color: var(--accent); }
 
-  .content-lower {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
+/* ====== MAP SIDEBAR ====== */
+.iv-aside { min-width: 0; }
+.iv-map {
+  background: var(--surface-card);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.04);
+  border: 1px solid var(--surface-border);
+  position: sticky; top: 1rem;
+  animation: cardUp .5s cubic-bezier(.22,1,.36,1) both;
+  animation-delay: .1s;
+}
+.iv-map__label {
+  display: flex; align-items: center; gap: .45rem;
+  padding: .8rem 1.1rem;
+  font-size: .88rem; font-weight: 700; color: var(--text-color);
+  border-bottom: 1px solid var(--surface-border);
+}
+.iv-map__label i { color: var(--accent); font-size: .9rem; }
+.iv-map__canvas { height: 400px; width: 100%; }
 
-  .content-lower>div {
-    width: 90% !important;
-    margin-bottom: 2rem;
-  }
+/* ====== FADE HELPER ====== */
+.iv-fade {
+  animation: fadeTab .35s ease both;
+}
+@keyframes fadeTab {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 
-  .map-container {
-    height: 300px !important;
-  }
+/* ====== RESPONSIVE ====== */
+@media (max-width: 1024px) {
+  .iv-layout { grid-template-columns: 1fr; }
+  .iv-map { position: static; }
+  .iv-hero { padding: 0 1.25rem; }
+  .iv-hero__bg { height: 300px; }
+  .iv-hero__fade { left: 1.25rem; right: 1.25rem; }
+  .iv-hero__glass { left: 2rem; right: 2rem; bottom: 1rem; }
+  .iv-content { padding: 0 1.25rem 4rem; }
+}
+@media (max-width: 640px) {
+  .iv-hero { padding: 0 .75rem; margin-top: 1rem; }
+  .iv-hero__bg { height: 240px; }
+  .iv-hero__fade { left: .75rem; right: .75rem; }
+  .iv-hero__name { font-size: 1.5rem; }
+  .iv-hero__glass { left: 1.25rem; right: 1.25rem; bottom: .75rem; padding: 1.25rem; }
+  .iv-details { grid-template-columns: 1fr; }
+  .iv-content { margin-top: 1rem; padding: 0 .75rem 3rem; }
+  .iv-nav { width: 100%; }
+  .iv-nav__btn { flex: 1; justify-content: center; font-size: .8rem; padding: .5rem .75rem; }
 }
 </style>
