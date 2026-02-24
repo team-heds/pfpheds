@@ -136,7 +136,7 @@
 
             <Column field="class_code" header="Classe" style="width: 120px" sortable>
               <template #body="{ data }">
-                <Tag :value="data.class_code" severity="info" />
+                <Tag :value="data.class_code" :style="getClassTagStyle(data.class_code)" />
               </template>
             </Column>
 
@@ -316,6 +316,29 @@ const dateRangeLabel = computed(() => {
   return `${monday} — ${friday}`
 })
 
+const classColors = {
+  'BAC25': { bg: '#2563EB', text: '#fff' },
+  'BAC24': { bg: '#7C3AED', text: '#fff' },
+  'BAC23': { bg: '#059669', text: '#fff' },
+  'BAC25-EE': { bg: '#0891B2', text: '#fff' },
+  'BAC24-EE': { bg: '#9333EA', text: '#fff' },
+  'BAC23-EE': { bg: '#10B981', text: '#fff' },
+}
+const defaultClassColors = ['#E67E22', '#E74C3C', '#1ABC9C', '#3498DB', '#9B59B6', '#F39C12', '#2ECC71']
+
+function getClassTagStyle(classCode) {
+  const code = classCode?.toUpperCase()
+  const preset = classColors[code]
+  if (preset) {
+    return { background: preset.bg, color: preset.text, border: 'none' }
+  }
+  // Couleur déterministe basée sur le hash du code
+  let hash = 0
+  for (let i = 0; i < (code || '').length; i++) hash = code.charCodeAt(i) + ((hash << 5) - hash)
+  const color = defaultClassColors[Math.abs(hash) % defaultClassColors.length]
+  return { background: color, color: '#fff', border: 'none' }
+}
+
 function getModuleColor(code) {
   const mod = courseModules.value.find(m => m.code === code)
   return mod?.color || '#94a3b8'
@@ -338,7 +361,8 @@ async function loadSlots() {
       .order('start_time', { ascending: true })
 
     if (error) throw error
-    allSlots.value = data || []
+    // Normaliser class_code en majuscules (les données peuvent avoir bac24 ou BAC24)
+    allSlots.value = (data || []).map(s => ({ ...s, class_code: s.class_code?.toUpperCase() || s.class_code }))
   } catch (err) {
     console.error('Erreur chargement créneaux:', err)
     toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les créneaux' })
