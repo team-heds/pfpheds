@@ -1,6 +1,14 @@
 <template>
-  <div class="academic-year-management">
-    <h1>Gestion des Années Académiques</h1>
+  <AdminLayout>
+    <template #header>
+      <PageHeader 
+        title="Gestion des Années Académiques" 
+        subtitle="Créer, activer et gérer les années académiques et leurs classes" 
+        icon="pi pi-calendar" 
+      />
+    </template>
+
+    <div class="academic-year-management">
     
     <!-- Année active -->
     <Panel header="Année Académique Active" class="mb-4">
@@ -189,13 +197,16 @@
         />
       </template>
     </Dialog>
-  </div>
+    </div>
+  </AdminLayout>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useAcademicYear } from '@/composables/useAcademicYear'
 import { useToast } from 'primevue/usetoast'
+import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
+import PageHeader from '@/components/admin/common/PageHeader.vue'
 import Panel from 'primevue/panel'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
