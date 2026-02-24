@@ -20,6 +20,24 @@
           
           <template #end>
             <div class="flex gap-2 align-items-center">
+              <Button 
+                icon="pi pi-file-excel" 
+                label="Export classe" 
+                severity="success" 
+                size="small"
+                :loading="exporting"
+                @click="exportClassExcel"
+                v-tooltip.bottom="'Exporter le planning de la classe sélectionnée'"
+              />
+              <Button 
+                icon="pi pi-download" 
+                label="Export général" 
+                severity="info" 
+                size="small"
+                :loading="exportingAll"
+                @click="exportAllClassesExcel"
+                v-tooltip.bottom="'Exporter toutes les classes dans un seul fichier'"
+              />
               <span class="text-sm font-semibold text-500 mr-2 uppercase hidden md:inline">Année :</span>
               <SelectButton 
                 v-model="selectedYear" 
@@ -267,6 +285,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useToast } from 'primevue/usetoast'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 // import Navbar from '@/components/common/utils/Navbar.vue'
 import Card from 'primevue/card'
@@ -282,9 +301,12 @@ import { useModules } from '@/composables/useModules'
 import { useAcademicYear } from '@/composables/useAcademicYear'
 
 const router = useRouter()
+const toast = useToast()
 
 // State
 const loading = ref(true)
+const exporting = ref(false)
+const exportingAll = ref(false)
 const selectedYear = ref('bac25')
 const courseCodes = ref({})
 const planningCells = ref([])
@@ -755,6 +777,255 @@ const isLightColor = (hexColor) => {
 // Navigation vers l'admin
 const goToAdmin = () => {
   router.push('/admin/planning/manage')
+}
+
+// === HELPER: résoudre un module_code vers ses données ===
+const resolveModule = (moduleCode) => {
+  if (!moduleCode) return null
+  const mCode = moduleCode.toString().trim().toLowerCase()
+  let cc = courseCodes.value[mCode]
+  if (!cc) {
+    cc = Object.values(courseCodes.value).find(c => c.moduleNumber?.toString().toLowerCase() === mCode)
+  }
+  if (!cc) {
+    cc = Object.values(courseCodes.value).find(c => {
+      const sc = c.supabaseData?.short_code?.toString().toLowerCase()
+      return sc && (mCode.includes(sc) || sc.includes(mCode))
+    })
+  }
+  return cc || null
+}
+
+// === HELPER: générer une feuille minibrique pour une classe ===
+const buildMinibrickSheet = (ws, classLabel, cellsArray) => {
+  const maxAutumnWeek = isoWeeksInYear(autumnStartYear.value)
+  const autumnWeeks = []
+  for (let w = 38; w <= maxAutumnWeek; w++) autumnWeeks.push(w)
+  for (let w = 1; w <= 7; w++) autumnWeeks.push(w)
+  const springWeeks = []
+  for (let w = 8; w <= 37; w++) springWeeks.push(w)
+  const allWeeks = [...autumnWeeks, ...springWeeks]
+
+  const cellBorder = {
+    top: { style: 'thin', color: { argb: 'FF000000' } },
+    left: { style: 'thin', color: { argb: 'FF000000' } },
+    bottom: { style: 'thin', color: { argb: 'FF000000' } },
+    right: { style: 'thin', color: { argb: 'FF000000' } }
+  }
+
+  // Titre
+  ws.mergeCells('A1:F1')
+  ws.getCell('A1').value = 'Bachelor of Science in Nursing'
+  ws.getCell('A1').font = { size: 14, bold: true }
+  ws.mergeCells('A2:F2')
+  ws.getCell('A2').value = `Structure de programme — ${classLabel}`
+  ws.getCell('A2').font = { size: 12, bold: true }
+  ws.mergeCells('G2:J2')
+  ws.getCell('G2').value = activeAcademicYear.value?.name || ''
+  ws.getCell('G2').font = { size: 12, bold: true }
+
+  // Largeurs
+  ws.getColumn(1).width = 12
+  for (let i = 0; i < allWeeks.length; i++) ws.getColumn(2 + i).width = 6
+
+  // Ligne 4: bandeau semestre
+  const hRow = 4
+  const autStart = 2
+  const autEnd = autStart + autumnWeeks.length - 1
+  const sprStart = autEnd + 1
+  const sprEnd = sprStart + springWeeks.length - 1
+  ws.mergeCells(hRow, autStart, hRow, autEnd)
+  const autCell = ws.getCell(hRow, autStart)
+  autCell.value = "Semestre d'automne"
+  autCell.font = { size: 13, bold: true, color: { argb: 'FF000000' } }
+  autCell.alignment = { horizontal: 'center', vertical: 'middle' }
+  autCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFDEBD0' } }
+  autCell.border = cellBorder
+  ws.mergeCells(hRow, sprStart, hRow, sprEnd)
+  const sprCell = ws.getCell(hRow, sprStart)
+  sprCell.value = 'Semestre de printemps'
+  sprCell.font = { size: 13, bold: true, color: { argb: 'FF000000' } }
+  sprCell.alignment = { horizontal: 'center', vertical: 'middle' }
+  sprCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD6EAF8' } }
+  sprCell.border = cellBorder
+  ws.getRow(hRow).height = 24
+
+  // Ligne 5: numéros de semaines
+  const wRow = 5
+  ws.getCell(wRow, 1).value = ''
+  ws.getCell(wRow, 1).border = cellBorder
+  allWeeks.forEach((w, i) => {
+    const c = ws.getCell(wRow, 2 + i)
+    c.value = w
+    c.alignment = { horizontal: 'center', vertical: 'middle' }
+    c.font = { bold: true, size: 8 }
+    c.border = cellBorder
+    if (autumnWeeks.includes(w)) {
+      c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFDEBD0' } }
+    } else {
+      c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD6EAF8' } }
+    }
+  })
+  ws.getRow(wRow).height = 20
+
+  // Indexer les cellules par day_week pour accès rapide
+  const cellMap = {}
+  cellsArray.forEach(cell => {
+    const key = `${cell.day}_${cell.week_number}`
+    cellMap[key] = cell
+  })
+
+  // Lignes jours — chaque jour séparé par une ligne vide
+  const dayOrder = ['lu', 'ma', 'me', 'je', 've']
+  const dayNames = { lu: 'Lundi', ma: 'Mardi', me: 'Mercredi', je: 'Jeudi', ve: 'Vendredi' }
+  let rowIdx = 6
+
+  for (let dIdx = 0; dIdx < dayOrder.length; dIdx++) {
+    const d = dayOrder[dIdx]
+
+    const row = ws.getRow(rowIdx)
+
+    // Label du jour (col A)
+    row.getCell(1).value = dayNames[d]
+    row.getCell(1).font = { bold: true, size: 9 }
+    row.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' }
+    row.getCell(1).border = cellBorder
+    row.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF2F3F4' } }
+
+    // Cellules semaines
+    for (let i = 0; i < allWeeks.length; i++) {
+      const w = allWeeks[i]
+      const col = 2 + i
+      const cell = row.getCell(col)
+      const key = `${d}_${w}`
+      const planCell = cellMap[key]
+
+      if (planCell && planCell.module_code) {
+        const mod = resolveModule(planCell.module_code)
+        const label = mod?.moduleNumber || planCell.module_code.toUpperCase()
+        cell.value = label
+        const color = mod?.color || '#CCCCCC'
+        const hex = color.replace('#', '')
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: `FF${hex.toUpperCase()}` } }
+        cell.font = { bold: true, size: 7, color: { argb: isLightColor(color) ? 'FF000000' : 'FFFFFFFF' } }
+      } else {
+        cell.value = ''
+      }
+      cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
+      cell.border = cellBorder
+    }
+
+    row.height = 26
+    rowIdx++
+  }
+
+  // Légende (sous la grille)
+  rowIdx += 2
+  ws.getCell(rowIdx, 1).value = 'Légende'
+  ws.getCell(rowIdx, 1).font = { bold: true, size: 11 }
+  rowIdx++
+  const legendHeaders = ws.getRow(rowIdx)
+  legendHeaders.getCell(1).value = 'Code'
+  legendHeaders.getCell(2).value = 'Module'
+  legendHeaders.getCell(1).font = { bold: true, size: 9 }
+  legendHeaders.getCell(2).font = { bold: true, size: 9 }
+  rowIdx++
+
+  // Collecter les modules uniques utilisés dans ce planning
+  const usedModules = new Set()
+  cellsArray.forEach(cell => {
+    if (cell.module_code) usedModules.add(cell.module_code.toString().trim().toLowerCase())
+  })
+  
+  usedModules.forEach(mCode => {
+    const mod = resolveModule(mCode)
+    const r = ws.getRow(rowIdx)
+    r.getCell(1).value = mod?.moduleNumber || mCode.toUpperCase()
+    r.getCell(1).font = { bold: true, size: 8 }
+    if (mod?.color) {
+      const hex = mod.color.replace('#', '')
+      r.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: `FF${hex.toUpperCase()}` } }
+      r.getCell(1).font = { bold: true, size: 8, color: { argb: isLightColor(mod.color) ? 'FF000000' : 'FFFFFFFF' } }
+    }
+    ws.mergeCells(rowIdx, 2, rowIdx, 8)
+    r.getCell(2).value = mod?.label || mCode
+    r.getCell(2).font = { size: 8 }
+    rowIdx++
+  })
+}
+
+// === EXPORT: classe actuelle ===
+const exportClassExcel = async () => {
+  exporting.value = true
+  try {
+    const ExcelJS = await import('exceljs')
+    const workbook = new ExcelJS.Workbook()
+
+    const currentOption = yearOptions.value.find(o => o.value === selectedYear.value)
+    const classLabel = currentOption?.label || selectedYear.value
+
+    const ws = workbook.addWorksheet(currentOption?.classCode || selectedYear.value)
+    buildMinibrickSheet(ws, classLabel, planningCells.value)
+
+    const buffer = await workbook.xlsx.writeBuffer()
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    const yearName = activeAcademicYear.value?.name || 'planning'
+    link.download = `Planning_${currentOption?.classCode || selectedYear.value}_${yearName}.xlsx`
+    link.click()
+    window.URL.revokeObjectURL(url)
+
+    toast.add({ severity: 'success', summary: 'Export réussi', detail: `Planning ${classLabel} exporté`, life: 3000 })
+  } catch (error) {
+    console.error('[PlanningView] Erreur export classe:', error)
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible d\'exporter le planning', life: 3000 })
+  } finally {
+    exporting.value = false
+  }
+}
+
+// === EXPORT: toutes les classes dans un seul fichier ===
+const exportAllClassesExcel = async () => {
+  exportingAll.value = true
+  try {
+    const ExcelJS = await import('exceljs')
+    const workbook = new ExcelJS.Workbook()
+
+    const classOptions = yearOptions.value
+
+    for (const opt of classOptions) {
+      // Charger les cellules de cette classe
+      const autumnCells = await planningService.getPlanningCells(opt.value, 'autumn')
+      const springCells = await planningService.getPlanningCells(opt.value, 'spring')
+
+      const allCells = []
+      if (autumnCells) Object.values(autumnCells).forEach(c => allCells.push(c))
+      if (springCells) Object.values(springCells).forEach(c => allCells.push(c))
+
+      const sheetName = opt.classCode || opt.value
+      const ws = workbook.addWorksheet(sheetName)
+      buildMinibrickSheet(ws, opt.label, allCells)
+    }
+
+    const buffer = await workbook.xlsx.writeBuffer()
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    const yearName = activeAcademicYear.value?.name || 'planning'
+    link.download = `Planning_General_${yearName}.xlsx`
+    link.click()
+    window.URL.revokeObjectURL(url)
+
+    toast.add({ severity: 'success', summary: 'Export réussi', detail: `${classOptions.length} classes exportées dans un seul fichier`, life: 3000 })
+  } catch (error) {
+    console.error('[PlanningView] Erreur export général:', error)
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible d\'exporter le planning général', life: 3000 })
+  } finally {
+    exportingAll.value = false
+  }
 }
 
 // Montage du composant
