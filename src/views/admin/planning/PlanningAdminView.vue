@@ -117,7 +117,7 @@
             <span class="font-bold text-xl">Planning Académique Complet</span>
           </div>
           <div class="flex gap-2">
-            <Tag value="Automne: S38-52 & S1-7" severity="warning"></Tag>
+            <Tag :value="`Automne: S38-${isoWeeksInYear(autumnStartYear)} & S1-7`" severity="warning"></Tag>
             <Tag value="Printemps: S8-37" severity="info"></Tag>
             <Tag 
               v-if="editMode === 'multiple' && selectedCells.length > 0"
@@ -128,7 +128,7 @@
         </div>
       </template>
       <template #icons>
-        <Button 
+        <Button
           v-if="editMode === 'multiple' && selectedCells.length > 0"
           label="Éditer la sélection"
           icon="pi pi-pencil"
@@ -466,6 +466,26 @@ const { modules: supabaseModules, loadModules } = useModules()
 // Années académiques et classes
 const { activeAcademicYear, sortedClasses, loadActiveAcademicYear, loadClassesByYear } = useAcademicYear()
 
+// Vérifie si une année ISO a 53 semaines
+const isoWeeksInYear = (year) => {
+  const jan1 = new Date(year, 0, 1)
+  const dec31 = new Date(year, 11, 31)
+  return (jan1.getDay() === 4 || dec31.getDay() === 4) ? 53 : 52
+}
+
+// Année civile de l'automne (ex: 2025 pour 2025-2026)
+const autumnStartYear = computed(() => {
+  if (activeAcademicYear.value?.name) {
+    const match = activeAcademicYear.value.name.match(/(\d{4})/)
+    if (match) return parseInt(match[1])
+  }
+  if (activeAcademicYear.value?.start_date) {
+    return new Date(activeAcademicYear.value.start_date).getFullYear()
+  }
+  const now = new Date()
+  return now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1
+})
+
 // State
 const selectedYear = ref('bac25')
 const editMode = ref('single')
@@ -569,11 +589,12 @@ const getRowLabel = (row) => {
 }
 
 const currentWeeks = computed(() => {
-  // Ordre académique : Automne (S38-S52, S1-S7) puis Printemps (S8-S37)
+  // Ordre académique : Automne (S38-S52/53, S1-S7) puis Printemps (S8-S37)
   const weeks = []
+  const maxAutumnWeek = isoWeeksInYear(autumnStartYear.value) // 52 ou 53
   
-  // Semestre d'Automne : S38 → S52
-  for (let w = 38; w <= 52; w++) {
+  // Semestre d'Automne : S38 → S52 (ou S53 si l'année en a 53)
+  for (let w = 38; w <= maxAutumnWeek; w++) {
     weeks.push(w)
   }
   
@@ -592,7 +613,7 @@ const currentWeeks = computed(() => {
 
 // Déterminer le semestre d'une semaine
 const getSemesterForWeek = (week) => {
-  // Automne : S38-S52 + S1-S7
+  // Automne : S38-S52/53 + S1-S7
   // Printemps : S8-S37
   return (week >= 38 || week <= 7) ? 'autumn' : 'spring'
 }
@@ -781,7 +802,7 @@ const saveCell = async () => {
           week_number: parseInt(week),
           day: day,
           module_code: editingCell.value.courseCode
-        })
+        }, autumnStartYear.value)
       }
       
       selectedCells.value = []
@@ -806,7 +827,7 @@ const saveCell = async () => {
         week_number: editingCell.value.week,
         day: editingCell.value.day,
         module_code: editingCell.value.courseCode
-      })
+      }, autumnStartYear.value)
       
       toast.add({
         severity: 'success',
@@ -846,7 +867,7 @@ const deleteCell = async () => {
       week_number: editingCell.value.week,
       day: editingCell.value.day,
       module_code: null
-    })
+    }, autumnStartYear.value)
 
     toast.add({
       severity: 'success',
@@ -1106,7 +1127,8 @@ const exportPlanningExcel = async () => {
     const ExcelJS = await import('exceljs')
     const workbook = new ExcelJS.Workbook()
 
-    const autumnWeeks = [...Array.from({ length: 15 }, (_, i) => i + 38), ...Array.from({ length: 7 }, (_, i) => i + 1)]
+    const maxAutumnWeek = isoWeeksInYear(autumnStartYear.value) // 52 ou 53
+    const autumnWeeks = [...Array.from({ length: maxAutumnWeek - 37 }, (_, i) => i + 38), ...Array.from({ length: 7 }, (_, i) => i + 1)]
     const springWeeks = Array.from({ length: 30 }, (_, i) => i + 8)
     const allWeeks = [...autumnWeeks, ...springWeeks]
 

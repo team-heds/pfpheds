@@ -237,7 +237,8 @@
                 </div>
                 <div class="slots-count">
                   <i class="pi pi-clock mr-2"></i>
-                  <span>{{ getGroupSlotCount(slotProps.data.dayGroup) }} créneau(x)</span>
+                  <span v-if="getGroupSlotCount(slotProps.data.dayGroup) > 0">{{ getGroupSlotCount(slotProps.data.dayGroup) }} créneau(x)</span>
+                  <Tag v-else value="À compléter" severity="warning" icon="pi pi-exclamation-triangle" />
                 </div>
               </div>
             </template>
@@ -252,7 +253,11 @@
             
             <Column field="startTime" header="Horaire" style="width: 10rem">
               <template #body="slotProps">
-                <div class="horaire-cell">
+                <div v-if="slotProps.data.isPlaceholder" class="placeholder-cell">
+                  <i class="pi pi-info-circle text-warning mr-2"></i>
+                  <span class="text-500 font-italic">À compléter</span>
+                </div>
+                <div v-else class="horaire-cell">
                   <i class="pi pi-clock text-primary mr-2"></i>
                   <span class="font-bold">{{ slotProps.data.startTime }}</span>
                   <span class="mx-1">-</span>
@@ -323,7 +328,17 @@
             
             <Column v-if="viewMode === 'week' && !isReadOnly" header="Actions" :frozen="true" alignFrozen="right" style="width: 8rem">
               <template #body="slotProps">
-                <div class="flex gap-2">
+                <div v-if="slotProps.data.isPlaceholder" class="flex gap-2">
+                  <Button 
+                    icon="pi pi-plus"
+                    label="Ajouter"
+                    @click="openSlotDialog(null, slotProps.data)"
+                    size="small"
+                    severity="success"
+                    v-tooltip="'Ajouter un cr\u00e9neau pour ce jour'"
+                  />
+                </div>
+                <div v-else class="flex gap-2">
                   <Button 
                     icon="pi pi-pencil"
                     @click="openSlotDialog(slotProps.data)"
@@ -786,12 +801,16 @@ const loadWeekPlanning = async () => {
       week: selectedWeek.value 
     })
     
-    const slots = await planningService.getWeekTimeSlots(selectedYear.value, selectedWeek.value)
+    // Charger en parallèle les créneaux ET les cellules du planning annuel
+    const [slots, planningCells] = await Promise.all([
+      planningService.getWeekTimeSlots(selectedYear.value, selectedWeek.value),
+      planningService.getWeekPlanningCells(selectedYear.value, selectedWeek.value)
+    ])
     
-    console.log('✅ Créneaux reçus:', slots.length)
+    console.log('✅ Créneaux reçus:', slots.length, '| Cellules planning:', planningCells.length)
     
     // Convertir snake_case en camelCase pour compatibilité avec le template
-    timeSlots.value = slots.map(slot => {
+    const mappedSlots = slots.map(slot => {
       const mod = courseModules.value.find(m => m.code === slot.module_code)
       // Recalculer la date dynamiquement depuis weekNumber + jour (au lieu de la date stockée en base qui peut être obsolète)
       const dayIndex = planningService.getDayIndex(slot.day)
@@ -814,10 +833,48 @@ const loadWeekPlanning = async () => {
       }
     })
     
+    // Déterminer les jours qui ont des créneaux (time_slots)
+    const daysWithSlots = new Set(mappedSlots.map(s => s.day))
+    
+    // Pour chaque cellule du planning annuel qui n'a PAS encore de time_slots,
+    // ajouter un placeholder vide pour que le jour apparaisse dans la vue
+    const placeholders = []
+    for (const cell of planningCells) {
+      const fullDay = cell.day // planning_cells stocke déjà en format long (lundi, mardi...)
+      if (!daysWithSlots.has(fullDay) && cell.module_code) {
+        const mod = courseModules.value.find(m => m.code === cell.module_code)
+        const dayIndex = planningService.getDayIndex(fullDay)
+        const computedDate = planningService.getDateForWeekAndDay(selectedWeek.value, dayIndex, academicStartYear.value)
+        placeholders.push({
+          id: `placeholder_${fullDay}`,
+          day: fullDay,
+          date: computedDate,
+          startTime: '',
+          endTime: '',
+          moduleCode: cell.module_code,
+          moduleNumber: mod?.module_number || '',
+          moduleTitle: mod?.label || '',
+          courseTitle: '',
+          activity: '',
+          teachers: [],
+          room: null,
+          notes: null,
+          weekNumber: selectedWeek.value,
+          isPlaceholder: true
+        })
+      }
+    }
+    
+    if (placeholders.length > 0) {
+      console.log('📋 Jours vides ajoutés depuis planning annuel:', placeholders.map(p => p.day).join(', '))
+    }
+    
+    timeSlots.value = [...mappedSlots, ...placeholders]
+    
     // Reset expanded groups pour le mode semaine
     expandedGroups.value = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'distance']
     
-    console.log('✅ Planning chargé avec', timeSlots.value.length, 'créneaux')
+    console.log('✅ Planning chargé avec', timeSlots.value.length, 'éléments (dont', placeholders.length, 'jours vides)')
     
     if (timeSlots.value.length === 0) {
       toast.add({
@@ -889,12 +946,16 @@ const loadSemesterPlanning = async (semester) => {
   if (!selectedYear.value) return
   
   try {
-    const slots = await planningService.getSemesterTimeSlots(selectedYear.value, semester)
+    // Charger en parallèle les créneaux ET les cellules du planning annuel
+    const [slots, planningCells] = await Promise.all([
+      planningService.getSemesterTimeSlots(selectedYear.value, semester),
+      planningService.getSemesterPlanningCells(selectedYear.value, semester)
+    ])
     
-    console.log('✅ Semestre chargé:', semester, '| slots:', slots.length)
+    console.log('✅ Semestre chargé:', semester, '| slots:', slots.length, '| cellules planning:', planningCells.length)
     
     // Convertir snake_case en camelCase
-    timeSlots.value = slots.map(slot => {
+    const mappedSlots = slots.map(slot => {
       const mod = courseModules.value.find(m => m.code === slot.module_code)
       const dayIndex = planningService.getDayIndex(slot.day)
       const computedDate = planningService.getDateForWeekAndDay(slot.week_number, dayIndex, academicStartYear.value)
@@ -916,6 +977,43 @@ const loadSemesterPlanning = async (semester) => {
       }
     })
     
+    // Déterminer les combinaisons semaine+jour qui ont des créneaux
+    const slotsKeys = new Set(mappedSlots.map(s => `${s.weekNumber}_${s.day}`))
+    
+    // Pour chaque cellule du planning annuel sans time_slots, ajouter un placeholder
+    const placeholders = []
+    for (const cell of planningCells) {
+      const key = `${cell.week_number}_${cell.day}`
+      if (!slotsKeys.has(key) && cell.module_code) {
+        const mod = courseModules.value.find(m => m.code === cell.module_code)
+        const dayIndex = planningService.getDayIndex(cell.day)
+        const computedDate = planningService.getDateForWeekAndDay(cell.week_number, dayIndex, academicStartYear.value)
+        placeholders.push({
+          id: `placeholder_${key}`,
+          day: cell.day,
+          date: computedDate,
+          startTime: '',
+          endTime: '',
+          moduleCode: cell.module_code,
+          moduleNumber: mod?.module_number || '',
+          moduleTitle: mod?.label || '',
+          courseTitle: '',
+          activity: '',
+          teachers: [],
+          room: null,
+          notes: null,
+          weekNumber: cell.week_number,
+          isPlaceholder: true
+        })
+      }
+    }
+    
+    if (placeholders.length > 0) {
+      console.log('📋 Jours vides ajoutés (semestre):', placeholders.length)
+    }
+    
+    timeSlots.value = [...mappedSlots, ...placeholders]
+    
     // Auto-expand tous les groupes en mode semestre
     const allGroups = [...new Set(timeSlots.value.map(s => `S${s.weekNumber}_${s.day}`))]
     expandedGroups.value = allGroups
@@ -925,7 +1023,7 @@ const loadSemesterPlanning = async (semester) => {
     toast.add({
       severity: 'success',
       summary: 'Succès',
-      detail: `${timeSlots.value.length} créneaux chargés pour le semestre ${semesterLabel}`,
+      detail: `${mappedSlots.length} créneaux + ${placeholders.length} jours vides chargés pour le semestre ${semesterLabel}`,
       life: 3000
     })
   } catch (error) {
@@ -940,6 +1038,9 @@ const loadSemesterPlanning = async (semester) => {
 }
 
 const getRowClass = (data) => {
+  if (data.isPlaceholder) {
+    return 'placeholder-row'
+  }
   const prevIndex = sortedTimeSlots.value.indexOf(data) - 1
   if (prevIndex >= 0) {
     const prevSlot = sortedTimeSlots.value[prevIndex]
@@ -1012,7 +1113,8 @@ const getDayMainModule = (day) => {
 
 // Versions par dayGroup (pour le mode semestre)
 const getGroupSlotCount = (dayGroup) => {
-  return sortedTimeSlots.value.filter(slot => slot.dayGroup === dayGroup).length
+  const slots = sortedTimeSlots.value.filter(slot => slot.dayGroup === dayGroup && !slot.isPlaceholder)
+  return slots.length
 }
 
 const getGroupMainModule = (dayGroup) => {
@@ -1040,7 +1142,7 @@ const getGroupMainModule = (dayGroup) => {
   }
 }
 
-const openSlotDialog = async (slot = null) => {
+const openSlotDialog = async (slot = null, placeholderData = null) => {
   // Vérifier si les enseignants sont chargés
   if (siTeachers.value.length === 0) {
     console.log('Liste enseignants vide, tentative de rechargement...')
@@ -1056,19 +1158,21 @@ const openSlotDialog = async (slot = null) => {
     }
   }
 
-  if (slot) {
+  if (slot && !slot.isPlaceholder) {
     editingSlot.value = slot.id
     slotForm.value = { ...slot }
   } else {
     editingSlot.value = null
+    // Pré-remplir depuis un placeholder (jour vide du planning annuel)
+    const prefill = placeholderData || {}
     slotForm.value = {
-      day: '',
-      date: '',
+      day: prefill.day || '',
+      date: prefill.date || '',
       startTime: '',
       endTime: '',
-      moduleCode: '',
-      moduleNumber: '',
-      moduleTitle: '',
+      moduleCode: prefill.moduleCode || '',
+      moduleNumber: prefill.moduleNumber || '',
+      moduleTitle: prefill.moduleTitle || '',
       courseTitle: '',
       activity: '',
       teachers: [],
@@ -1330,20 +1434,11 @@ const exportToExcel = async () => {
     // Sinon, export de la semaine unique
     const worksheet = workbook.addWorksheet(`Semaine ${selectedWeek.value}`)
     
-    // Couleurs améliorées
-    const dayColors = {
-      lundi: 'FFDBEAFE',      // Bleu pastel
-      mardi: 'FFE0E7FF',      // Indigo pastel
-      mercredi: 'FFEDE9FE',   // Violet pastel
-      jeudi: 'FFFCE7F3',      // Rose pastel
-      vendredi: 'FFFEF3C7',   // Jaune pastel
-      distance: 'FFF1F5F9'    // Gris pastel
-    }
     const thinBorder = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } }
     const mediumBorder = { top: { style: 'medium' }, left: { style: 'medium' }, bottom: { style: 'medium' }, right: { style: 'medium' } }
 
     // === TITRE PRINCIPAL ===
-    worksheet.mergeCells('A1:H1')
+    worksheet.mergeCells('A1:G1')
     const titleCell = worksheet.getCell('A1')
     titleCell.value = `${getSelectedYearLabel()} / ${getSemesterLabel(selectedWeek.value).toUpperCase()}`
     titleCell.font = { size: 14, bold: true, color: { argb: 'FFFFFFFF' } }
@@ -1352,7 +1447,7 @@ const exportToExcel = async () => {
     worksheet.getRow(1).height = 32
 
     // === SOUS-TITRE SEMAINE ===
-    worksheet.mergeCells('A3:H3')
+    worksheet.mergeCells('A3:G3')
     const weekCell = worksheet.getCell('A3')
     weekCell.value = `SEMAINE ${selectedWeek.value}`
     weekCell.font = { size: 13, bold: true, color: { argb: 'FF1E293B' } }
@@ -1370,118 +1465,133 @@ const exportToExcel = async () => {
       groupedByDay[slot.day].push(slot)
     })
 
+    // Helper: couleur du module en ARGB clair (version pastel lisible)
+    const getModuleLightArgb = (moduleColor) => {
+      if (!moduleColor) return 'FFE2E8F0'
+      const hex = moduleColor.replace('#', '')
+      const r = Math.min(255, parseInt(hex.substring(0, 2), 16) + 40)
+      const g = Math.min(255, parseInt(hex.substring(2, 4), 16) + 40)
+      const b = Math.min(255, parseInt(hex.substring(4, 6), 16) + 40)
+      return `FF${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
+    }
+
     dayOrder.forEach(day => {
       const daySlots = groupedByDay[day]
       if (!daySlots || daySlots.length === 0) return
 
       const dayDate = getDayDate(day)
       const dayModule = getDayMainModule(day)
-      const dayBgColor = dayColors[day] || 'FFDBEAFE'
       const dayLabel = day === 'distance' ? 'DISTANCE' : day.charAt(0).toUpperCase() + day.slice(1)
       const moduleStartRow = currentRow
+      // Couleur du jour = couleur du module principal (ou gris par défaut)
+      const moduleBgHex = dayModule?.color ? dayModule.color.replace('#', 'FF') : 'FF94A3B8'
+      const moduleBgLight = getModuleLightArgb(dayModule?.color)
 
       // Ligne du module principal
       if (dayModule) {
-        const moduleBgHex = dayModule.color ? dayModule.color.replace('#', 'FF') : 'FF94A3B8'
-        worksheet.mergeCells(currentRow, 2, currentRow, 8)
+        worksheet.mergeCells(currentRow, 2, currentRow, 7)
         const moduleHeaderCell = worksheet.getCell(currentRow, 2)
         moduleHeaderCell.value = `${dayModule.number} — ${dayModule.title}`
         moduleHeaderCell.font = { size: 10, bold: true, color: { argb: 'FFFFFFFF' } }
         moduleHeaderCell.alignment = { horizontal: 'center', vertical: 'middle' }
         moduleHeaderCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgHex } }
         moduleHeaderCell.border = thinBorder
-        worksheet.getRow(currentRow).height = 20
+        worksheet.getRow(currentRow).height = 22
         currentRow++
       }
 
-      // Créneaux du jour
-      daySlots.forEach(slot => {
-        let moduleBgColor = 'FFFFFFFF'
-        if (dayModule && dayModule.color) {
-          // Version très claire de la couleur du module
-          const hex = dayModule.color.replace('#', '')
-          const r = Math.min(255, parseInt(hex.substring(0, 2), 16) + 80)
-          const g = Math.min(255, parseInt(hex.substring(2, 4), 16) + 80)
-          const b = Math.min(255, parseInt(hex.substring(4, 6), 16) + 80)
-          moduleBgColor = `FF${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
-        }
+      // Filtrer les vrais créneaux (exclure placeholders pour le contenu)
+      const realSlots = daySlots.filter(s => !s.isPlaceholder)
+      const hasOnlyPlaceholders = realSlots.length === 0
 
-        const teacherChunks = splitTeachers(slot.teachers)
-        const teacherRowCount = teacherChunks.length
-        const endRow = currentRow + teacherRowCount
-
-        // LIGNE 1: Horaire + Nom du cours + N° module
-        const row1 = worksheet.getRow(currentRow)
-
-        // Horaire (Col B) - fusionné verticalement
-        worksheet.mergeCells(currentRow, 2, endRow, 2)
-        const timeCell = row1.getCell(2)
-        timeCell.value = `${slot.startTime} - ${slot.endTime}`
-        timeCell.font = { size: 9, bold: true }
-        timeCell.alignment = { horizontal: 'center', vertical: 'middle' }
-        timeCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgColor } }
-        timeCell.border = thinBorder
-
-        // Nom du cours (Col C-G fusionnées)
-        worksheet.mergeCells(currentRow, 3, currentRow, 7)
-        const courseTitleCell = row1.getCell(3)
-        courseTitleCell.value = slot.courseTitle || slot.activity || ''
-        courseTitleCell.font = { size: 9 }
-        courseTitleCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
-        courseTitleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgColor } }
-        courseTitleCell.border = thinBorder
-
-        // N° module (Col H) - fusionné verticalement
-        worksheet.mergeCells(currentRow, 8, endRow, 8)
-        const moduleNumCell = row1.getCell(8)
-        moduleNumCell.value = slot.moduleNumber || ''
-        const moduleColorHex = getModuleColor(slot.moduleCode)?.replace('#', 'FF') || 'FF94A3B8'
-        moduleNumCell.font = { size: 10, bold: true, color: { argb: 'FFFFFFFF' } }
-        moduleNumCell.alignment = { horizontal: 'center', vertical: 'middle' }
-        moduleNumCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleColorHex } }
-        moduleNumCell.border = mediumBorder
-
-        row1.height = getCourseRowHeight(courseTitleCell.value)
+      if (hasOnlyPlaceholders) {
+        // Jour vide : une seule ligne "À compléter"
+        worksheet.mergeCells(currentRow, 2, currentRow, 7)
+        const emptyCell = worksheet.getCell(currentRow, 2)
+        emptyCell.value = 'À compléter'
+        emptyCell.font = { size: 9, italic: true, color: { argb: 'FF94A3B8' } }
+        emptyCell.alignment = { horizontal: 'center', vertical: 'middle' }
+        emptyCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } }
+        emptyCell.border = thinBorder
+        worksheet.getRow(currentRow).height = 24
         currentRow++
+      } else {
+        // Créneaux du jour
+        realSlots.forEach(slot => {
+          // Couleur propre à CE créneau (basée sur son module)
+          const slotColor = getModuleColor(slot.moduleCode)
+          const slotBgLight = getModuleLightArgb(slotColor)
+          const slotFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: slotBgLight } }
 
-        // LIGNE 2+: Enseignants (5 colonnes C-G)
-        teacherChunks.forEach(chunk => {
-          const row2 = worksheet.getRow(currentRow)
-          for (let i = 0; i < 5; i++) {
-            const teacherCell = row2.getCell(3 + i)
-            teacherCell.value = chunk[i] || ''
-            teacherCell.font = { size: 8, italic: true }
-            teacherCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
-            teacherCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgColor } }
-            teacherCell.border = thinBorder
+          const teacherChunks = splitTeachers(slot.teachers)
+          const teacherRowCount = teacherChunks.length
+          const endRow = currentRow + teacherRowCount
+
+          // LIGNE 1 : Horaire + Cours — colorier toutes les cellules B-G
+          const row1 = worksheet.getRow(currentRow)
+          for (let col = 2; col <= 7; col++) {
+            row1.getCell(col).fill = slotFill
+            row1.getCell(col).border = thinBorder
           }
-          row2.height = getTeachersRowHeight(chunk)
-          currentRow++
-        })
-      })
 
-      // Fusionner colonne Jour/Date (Col A)
+          // Horaire (Col B) - fusionné verticalement
+          worksheet.mergeCells(currentRow, 2, endRow, 2)
+          row1.getCell(2).value = `${slot.startTime} - ${slot.endTime}`
+          row1.getCell(2).font = { size: 9, bold: true }
+          row1.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' }
+
+          // Nom du cours (Col C-G fusionnées)
+          worksheet.mergeCells(currentRow, 3, currentRow, 7)
+          row1.getCell(3).value = slot.courseTitle || slot.activity || ''
+          row1.getCell(3).font = { size: 9 }
+          row1.getCell(3).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
+
+          row1.height = Math.max(20, getCourseRowHeight(row1.getCell(3).value))
+          currentRow++
+
+          // LIGNES 2+ : Enseignants (5 colonnes C-G) — colorier toutes les cellules B-G
+          teacherChunks.forEach(chunk => {
+            const row2 = worksheet.getRow(currentRow)
+            // Col B (fait partie du merge vertical mais colorer quand même)
+            row2.getCell(2).fill = slotFill
+            row2.getCell(2).border = thinBorder
+            for (let i = 0; i < 5; i++) {
+              const teacherCell = row2.getCell(3 + i)
+              teacherCell.value = chunk[i] || ''
+              teacherCell.font = { size: 8, italic: true }
+              teacherCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
+              teacherCell.fill = slotFill
+              teacherCell.border = thinBorder
+            }
+            row2.height = Math.max(18, getTeachersRowHeight(chunk))
+            currentRow++
+          })
+        })
+      }
+
+      // Fusionner colonne Jour/Date (Col A) avec couleur du module
       if (daySlots.length > 0) {
         const endRow = currentRow - 1
-        worksheet.mergeCells(moduleStartRow, 1, endRow, 1)
+        if (moduleStartRow < endRow) {
+          worksheet.mergeCells(moduleStartRow, 1, endRow, 1)
+        }
         const dayCell = worksheet.getCell(moduleStartRow, 1)
         dayCell.value = `${dayLabel}\n\n${dayDate || ''}`
-        dayCell.font = { size: 10, bold: true }
+        dayCell.font = { size: 10, bold: true, color: { argb: 'FFFFFFFF' } }
         dayCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
-        dayCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: dayBgColor } }
+        dayCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgHex } }
         dayCell.border = mediumBorder
       }
     })
 
-    // Largeur des colonnes (A-H, pas de colonne I/J)
-    worksheet.getColumn(1).width = 13  // Jour/Date
+    // Largeur des colonnes (A-G, sans colonne H)
+    worksheet.getColumn(1).width = 15  // Jour/Date
     worksheet.getColumn(2).width = 14  // Horaire
-    worksheet.getColumn(3).width = 20  // Enseignant 1 / Cours
-    worksheet.getColumn(4).width = 20  // Enseignant 2 / Cours
-    worksheet.getColumn(5).width = 20  // Enseignant 3 / Cours
-    worksheet.getColumn(6).width = 20  // Enseignant 4 / Cours
-    worksheet.getColumn(7).width = 20  // Enseignant 5 / Cours
-    worksheet.getColumn(8).width = 9   // N° Module
+    worksheet.getColumn(3).width = 22  // Cours / Enseignant 1
+    worksheet.getColumn(4).width = 22  // Cours / Enseignant 2
+    worksheet.getColumn(5).width = 22  // Cours / Enseignant 3
+    worksheet.getColumn(6).width = 22  // Cours / Enseignant 4
+    worksheet.getColumn(7).width = 22  // Cours / Enseignant 5
 
     // Générer le fichier
     const buffer = await workbook.xlsx.writeBuffer()
@@ -1572,37 +1682,39 @@ const loadYearOptions = async () => {
 }
 
 const exportSemesterToExcel = async (workbook, ExcelJS) => {
-  let weekNumbers = [...new Set(timeSlots.value.map(slot => slot.weekNumber))]
-  
   const semesterNum = viewMode.value === 'semester1' ? 1 : 2
   const semesterLabel = semesterNum === 1 ? 'SEMESTRE DE PRINTEMPS' : 'SEMESTRE D\'AUTOMNE'
   
+  // Construire la liste COMPLÈTE des semaines du semestre (pas juste celles avec des données)
+  const aYear = academicStartYear.value || new Date().getFullYear()
+  const maxAutumnWeek = isoWeeksInYear(aYear) // 52 ou 53
+  let weekNumbers = []
   if (semesterNum === 1) {
-    weekNumbers.sort((a, b) => a - b)
+    // Printemps : S8 → S37
+    for (let w = 8; w <= 37; w++) weekNumbers.push(w)
   } else {
-    weekNumbers.sort((a, b) => {
-      if (a >= 38 && b >= 38) return a - b
-      if (a >= 38 && b < 38) return -1
-      if (a < 38 && b >= 38) return 1
-      return a - b
-    })
+    // Automne : S38 → S52/S53, puis S1 → S7
+    for (let w = 38; w <= maxAutumnWeek; w++) weekNumbers.push(w)
+    for (let w = 1; w <= 7; w++) weekNumbers.push(w)
   }
   
-  const dayColors = {
-    lundi: 'FFDBEAFE',
-    mardi: 'FFE0E7FF',
-    mercredi: 'FFEDE9FE',
-    jeudi: 'FFFCE7F3',
-    vendredi: 'FFFEF3C7',
-    distance: 'FFF1F5F9'
-  }
   const thinBorder = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } }
   const mediumBorder = { top: { style: 'medium' }, left: { style: 'medium' }, bottom: { style: 'medium' }, right: { style: 'medium' } }
   
   const worksheet = workbook.addWorksheet(`Semestre ${semesterNum}`)
   
+  // Helper: couleur du module en ARGB clair (version pastel lisible)
+  const getModuleLightArgb = (moduleColor) => {
+    if (!moduleColor) return 'FFE2E8F0'
+    const hex = moduleColor.replace('#', '')
+    const r = Math.min(255, parseInt(hex.substring(0, 2), 16) + 40)
+    const g = Math.min(255, parseInt(hex.substring(2, 4), 16) + 40)
+    const b = Math.min(255, parseInt(hex.substring(4, 6), 16) + 40)
+    return `FF${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
+  }
+  
   // === TITRE ===
-  worksheet.mergeCells('A1:H1')
+  worksheet.mergeCells('A1:G1')
   const titleCell = worksheet.getCell('A1')
   titleCell.value = `${getSelectedYearLabel()} / ${semesterLabel}`
   titleCell.font = { size: 14, bold: true, color: { argb: 'FFFFFFFF' } }
@@ -1615,10 +1727,9 @@ const exportSemesterToExcel = async (workbook, ExcelJS) => {
   
   for (const weekNum of weekNumbers) {
     const weekSlots = timeSlots.value.filter(slot => slot.weekNumber === weekNum)
-    if (weekSlots.length === 0) continue
     
-    // === BANDEAU SEMAINE ===
-    worksheet.mergeCells(currentRow, 1, currentRow, 8)
+    // === BANDEAU SEMAINE (toujours affiché, même sans données) ===
+    worksheet.mergeCells(currentRow, 1, currentRow, 7)
     const weekHeaderCell = worksheet.getCell(currentRow, 1)
     weekHeaderCell.value = `SEMAINE ${weekNum}`
     weekHeaderCell.font = { size: 13, bold: true, color: { argb: 'FF1E293B' } }
@@ -1627,6 +1738,20 @@ const exportSemesterToExcel = async (workbook, ExcelJS) => {
     worksheet.getRow(currentRow).height = 26
     currentRow++
     
+    // Si aucune donnée pour cette semaine, afficher "Aucun cours"
+    if (weekSlots.length === 0) {
+      worksheet.mergeCells(currentRow, 1, currentRow, 7)
+      const emptyWeekCell = worksheet.getCell(currentRow, 1)
+      emptyWeekCell.value = 'Aucun cours planifié'
+      emptyWeekCell.font = { size: 9, italic: true, color: { argb: 'FF94A3B8' } }
+      emptyWeekCell.alignment = { horizontal: 'center', vertical: 'middle' }
+      emptyWeekCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } }
+      emptyWeekCell.border = thinBorder
+      worksheet.getRow(currentRow).height = 22
+      currentRow += 2
+      continue
+    }
+
     // === DONNÉES PAR JOUR ===
     const groupedByDay = {}
     weekSlots.forEach(slot => {
@@ -1638,7 +1763,6 @@ const exportSemesterToExcel = async (workbook, ExcelJS) => {
       const daySlots = groupedByDay[day]
       if (!daySlots || daySlots.length === 0) return
       
-      const dayBgColor = dayColors[day] || 'FFDBEAFE'
       const dayLabel = day === 'distance' ? 'DISTANCE' : day.charAt(0).toUpperCase() + day.slice(1)
       const dayDate = daySlots[0]?.date || ''
       const moduleStartRow = currentRow
@@ -1659,75 +1783,83 @@ const exportSemesterToExcel = async (workbook, ExcelJS) => {
         }
       }
       
+      // Couleur du jour = couleur du module principal
+      const moduleBgHex = mainModule?.color ? mainModule.color.replace('#', 'FF') : 'FF94A3B8'
+      const moduleBgLight = getModuleLightArgb(mainModule?.color)
+      
       // Ligne module
       if (mainModule) {
-        const moduleBgHex = mainModule.color ? mainModule.color.replace('#', 'FF') : 'FF94A3B8'
-        worksheet.mergeCells(currentRow, 2, currentRow, 8)
+        worksheet.mergeCells(currentRow, 2, currentRow, 7)
         const moduleCell = worksheet.getCell(currentRow, 2)
         moduleCell.value = `${mainModule.number} — ${mainModule.title}`
         moduleCell.font = { size: 10, bold: true, color: { argb: 'FFFFFFFF' } }
         moduleCell.alignment = { horizontal: 'center', vertical: 'middle' }
         moduleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgHex } }
         moduleCell.border = thinBorder
-        worksheet.getRow(currentRow).height = 20
+        worksheet.getRow(currentRow).height = 22
         currentRow++
       }
       
-      // Créneaux
-      daySlots.forEach(slot => {
-        let moduleBgColor = 'FFFFFFFF'
-        if (mainModule && mainModule.color) {
-          const hex = mainModule.color.replace('#', '')
-          const r = Math.min(255, parseInt(hex.substring(0, 2), 16) + 80)
-          const g = Math.min(255, parseInt(hex.substring(2, 4), 16) + 80)
-          const b = Math.min(255, parseInt(hex.substring(4, 6), 16) + 80)
-          moduleBgColor = `FF${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
-        }
-        
-        // Horaire (Col B) fusionné sur 2 lignes
-        worksheet.mergeCells(currentRow, 2, currentRow + 1, 2)
-        const timeCell = worksheet.getRow(currentRow).getCell(2)
-        timeCell.value = `${slot.startTime} - ${slot.endTime}`
-        timeCell.font = { size: 9, bold: true }
-        timeCell.alignment = { horizontal: 'center', vertical: 'middle' }
-        timeCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgColor } }
-        timeCell.border = thinBorder
-        
-        // Cours (Col C-G fusionnées)
-        worksheet.mergeCells(currentRow, 3, currentRow, 7)
-        const courseCell = worksheet.getRow(currentRow).getCell(3)
-        courseCell.value = slot.courseTitle || slot.activity || ''
-        courseCell.font = { size: 9 }
-        courseCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
-        courseCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgColor } }
-        courseCell.border = thinBorder
-        
-        // N° module (Col H) fusionné sur 2 lignes
-        worksheet.mergeCells(currentRow, 8, currentRow + 1, 8)
-        const moduleNumCell = worksheet.getRow(currentRow).getCell(8)
-        moduleNumCell.value = slot.moduleNumber || ''
-        const moduleColorHex = getModuleColor(slot.moduleCode)?.replace('#', 'FF') || 'FF94A3B8'
-        moduleNumCell.font = { size: 10, bold: true, color: { argb: 'FFFFFFFF' } }
-        moduleNumCell.alignment = { horizontal: 'center', vertical: 'middle' }
-        moduleNumCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleColorHex } }
-        moduleNumCell.border = mediumBorder
-        
-        worksheet.getRow(currentRow).height = getCourseRowHeight(courseCell.value)
+      // Filtrer les vrais créneaux (exclure placeholders)
+      const realSlots = daySlots.filter(s => !s.isPlaceholder)
+      const hasOnlyPlaceholders = realSlots.length === 0
+
+      if (hasOnlyPlaceholders) {
+        // Jour vide : une seule ligne "À compléter"
+        worksheet.mergeCells(currentRow, 2, currentRow, 7)
+        const emptyCell = worksheet.getCell(currentRow, 2)
+        emptyCell.value = 'À compléter'
+        emptyCell.font = { size: 9, italic: true, color: { argb: 'FF94A3B8' } }
+        emptyCell.alignment = { horizontal: 'center', vertical: 'middle' }
+        emptyCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } }
+        emptyCell.border = thinBorder
+        worksheet.getRow(currentRow).height = 24
         currentRow++
-        
-        // Enseignants (Col C-G fusionnées)
-        worksheet.mergeCells(currentRow, 3, currentRow, 7)
-        const teachersCell = worksheet.getRow(currentRow).getCell(3)
-        teachersCell.value = (slot.teachers || []).join(', ')
-        teachersCell.font = { size: 8, italic: true }
-        teachersCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
-        teachersCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgColor } }
-        teachersCell.border = thinBorder
-        worksheet.getRow(currentRow).height = getCourseRowHeight(teachersCell.value)
-        currentRow++
-      })
+      } else {
+        // Créneaux
+        realSlots.forEach(slot => {
+          // Couleur propre à CE créneau (basée sur son module)
+          const slotColor = getModuleColor(slot.moduleCode)
+          const slotBgLight = getModuleLightArgb(slotColor)
+          const slotFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: slotBgLight } }
+
+          // LIGNE 1 : Horaire + Cours
+          const row1 = worksheet.getRow(currentRow)
+          // Colorier toutes les cellules B-G de la ligne
+          for (let col = 2; col <= 7; col++) {
+            row1.getCell(col).fill = slotFill
+            row1.getCell(col).border = thinBorder
+          }
+          // Horaire (Col B)
+          row1.getCell(2).value = `${slot.startTime} - ${slot.endTime}`
+          row1.getCell(2).font = { size: 9, bold: true }
+          row1.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' }
+          // Cours (Col C-G fusionnées)
+          worksheet.mergeCells(currentRow, 3, currentRow, 7)
+          row1.getCell(3).value = slot.courseTitle || slot.activity || ''
+          row1.getCell(3).font = { size: 9 }
+          row1.getCell(3).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
+          row1.height = Math.max(20, getCourseRowHeight(row1.getCell(3).value))
+          currentRow++
+          
+          // LIGNE 2 : Enseignants
+          const row2 = worksheet.getRow(currentRow)
+          // Colorier toutes les cellules B-G de la ligne
+          for (let col = 2; col <= 7; col++) {
+            row2.getCell(col).fill = slotFill
+            row2.getCell(col).border = thinBorder
+          }
+          // Enseignants (Col C-G fusionnées)
+          worksheet.mergeCells(currentRow, 3, currentRow, 7)
+          row2.getCell(3).value = (slot.teachers || []).join(', ')
+          row2.getCell(3).font = { size: 8, italic: true }
+          row2.getCell(3).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
+          row2.height = Math.max(18, getCourseRowHeight(row2.getCell(3).value))
+          currentRow++
+        })
+      }
       
-      // Fusionner colonne Jour (Col A)
+      // Fusionner colonne Jour (Col A) avec couleur du module
       if (daySlots.length > 0) {
         const endRow = currentRow - 1
         if (moduleStartRow < endRow) {
@@ -1735,9 +1867,9 @@ const exportSemesterToExcel = async (workbook, ExcelJS) => {
         }
         const dayCell = worksheet.getCell(moduleStartRow, 1)
         dayCell.value = dayDate ? `${dayLabel}\n\n${dayDate}` : dayLabel
-        dayCell.font = { size: 10, bold: true }
+        dayCell.font = { size: 10, bold: true, color: { argb: 'FFFFFFFF' } }
         dayCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
-        dayCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: dayBgColor } }
+        dayCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgHex } }
         dayCell.border = mediumBorder
       }
     })
@@ -1745,15 +1877,14 @@ const exportSemesterToExcel = async (workbook, ExcelJS) => {
     currentRow++
   }
   
-  // Largeurs (A-H)
-  worksheet.getColumn(1).width = 13
+  // Largeurs (A-G, sans colonne H)
+  worksheet.getColumn(1).width = 15
   worksheet.getColumn(2).width = 14
-  worksheet.getColumn(3).width = 20
-  worksheet.getColumn(4).width = 20
-  worksheet.getColumn(5).width = 20
-  worksheet.getColumn(6).width = 20
-  worksheet.getColumn(7).width = 20
-  worksheet.getColumn(8).width = 9
+  worksheet.getColumn(3).width = 22
+  worksheet.getColumn(4).width = 22
+  worksheet.getColumn(5).width = 22
+  worksheet.getColumn(6).width = 22
+  worksheet.getColumn(7).width = 22
   
   const buffer = await workbook.xlsx.writeBuffer()
   const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
@@ -2029,6 +2160,23 @@ const exportSemesterToExcel = async (workbook, ExcelJS) => {
   display: flex;
   align-items: center;
   gap: 0.25rem;
+}
+
+/* Lignes placeholder (jours vides du planning annuel) */
+:deep(.placeholder-row) {
+  background-color: var(--surface-ground) !important;
+  opacity: 0.75;
+  border-left: 3px solid var(--orange-400);
+}
+
+:deep(.placeholder-row:hover) {
+  opacity: 1;
+}
+
+.placeholder-cell {
+  display: flex;
+  align-items: center;
+  padding: 0.25rem 0;
 }
 
 /* Responsive */

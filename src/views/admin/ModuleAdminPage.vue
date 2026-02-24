@@ -45,6 +45,12 @@
             </div>
           </template>
 
+          <Column field="code" header="Code" sortable style="width: 100px">
+            <template #body="{ data }">
+              <Tag :value="data.code" severity="secondary" />
+            </template>
+          </Column>
+
           <Column field="number" header="N° Module" sortable style="width: 120px">
             <template #body="{ data }">
               <span class="font-bold" style="color: var(--primary-color)">{{ data.number || '—' }}</span>
@@ -52,6 +58,16 @@
           </Column>
 
           <Column field="title" header="Titre" sortable />
+
+          <Column field="color" header="Couleur" sortable style="width: 100px">
+            <template #body="{ data }">
+              <div v-if="data.color" class="flex align-items-center gap-2">
+                <span :style="{ display: 'inline-block', width: '20px', height: '20px', borderRadius: '4px', backgroundColor: data.color }" />
+                <span class="text-xs text-500">{{ data.color }}</span>
+              </div>
+              <span v-else class="text-500">—</span>
+            </template>
+          </Column>
 
           <Column field="credits" header="Crédits ECTS" sortable style="width: 130px">
             <template #body="{ data }">
@@ -97,6 +113,10 @@
       <Dialog v-model:visible="showCreateModuleDialog" modal :header="moduleForm.id ? 'Éditer le Module' : 'Nouveau Module'" :style="{ width: '40rem' }">
         <div class="p-fluid">
           <div class="field">
+            <label for="moduleCode">Code * <small class="text-500">(identifiant unique, ex: phy_m12)</small></label>
+            <InputText id="moduleCode" v-model="moduleForm.code" placeholder="ex: phy_m12" />
+          </div>
+          <div class="field">
             <label for="moduleNumber">Numéro du module</label>
             <InputText id="moduleNumber" v-model="moduleForm.number" placeholder="ex: M1234" />
           </div>
@@ -104,9 +124,22 @@
             <label for="moduleTitle">Titre *</label>
             <InputText id="moduleTitle" v-model="moduleForm.title" />
           </div>
-          <div class="field">
-            <label for="moduleCredits">Crédits ECTS</label>
-            <InputNumber id="moduleCredits" v-model="moduleForm.credits" :min="0" :max="30" />
+          <div class="grid">
+            <div class="col-6">
+              <div class="field">
+                <label for="moduleCredits">Crédits ECTS</label>
+                <InputNumber id="moduleCredits" v-model="moduleForm.credits" :min="0" :max="30" />
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="field">
+                <label for="moduleColor">Couleur</label>
+                <div class="flex align-items-center gap-2">
+                  <input type="color" id="moduleColor" v-model="moduleForm.color" style="width: 40px; height: 36px; border: none; cursor: pointer; border-radius: 6px;" />
+                  <InputText v-model="moduleForm.color" placeholder="#3B82F6" style="flex: 1" />
+                </div>
+              </div>
+            </div>
           </div>
           <div class="field">
             <label for="moduleResponsable">Chef de module</label>
@@ -154,9 +187,11 @@ const teachers = ref([])
 
 const moduleForm = ref({
   id: null,
+  code: '',
   number: '',
   title: '',
   credits: null,
+  color: '#3B82F6',
   responsable: ''
 })
 
@@ -193,14 +228,32 @@ async function saveModule() {
     return
   }
 
+  // Auto-générer le code si vide (à partir du numéro ou du titre + suffixe unique)
+  if (!moduleForm.value.code && !moduleForm.value.id) {
+    const base = moduleForm.value.number || moduleForm.value.title
+    const slug = base.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '')
+    const suffix = Date.now().toString(36).slice(-4)
+    moduleForm.value.code = `${slug}_${suffix}`
+  }
+
+  if (!moduleForm.value.code) {
+    toast.add({ severity: 'warn', summary: 'Attention', detail: 'Le code est obligatoire' })
+    return
+  }
+
   creating.value = true
   try {
     const payload = {
+      code: moduleForm.value.code,
       number: moduleForm.value.number || null,
       title: moduleForm.value.title,
+      color: moduleForm.value.color || null,
       credits: moduleForm.value.credits || null,
       responsable: moduleForm.value.responsable || null
     }
+
+    console.log('[ModuleAdmin] Payload:', JSON.stringify(payload))
+    console.log('[ModuleAdmin] moduleForm.id:', moduleForm.value.id)
 
     if (moduleForm.value.id) {
       await modulesService.updateModule(moduleForm.value.id, payload)
@@ -214,22 +267,27 @@ async function saveModule() {
     await loadModules()
   } catch (error) {
     console.error('Erreur sauvegarde module:', error)
-    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de sauvegarder le module' })
+    const detail = error?.code === '23505'
+      ? `Le code "${moduleForm.value.code}" existe déjà. Veuillez en choisir un autre.`
+      : (error?.message || 'Impossible de sauvegarder le module')
+    toast.add({ severity: 'error', summary: 'Erreur', detail, life: 5000 })
   } finally {
     creating.value = false
   }
 }
 
 function resetForm() {
-  moduleForm.value = { id: null, number: '', title: '', credits: null, responsable: '' }
+  moduleForm.value = { id: null, code: '', number: '', title: '', credits: null, color: '#3B82F6', responsable: '' }
 }
 
 function editModule(module) {
   moduleForm.value = {
     id: module.id,
+    code: module.code || '',
     number: module.number || '',
     title: module.title || '',
     credits: module.credits || null,
+    color: module.color || '#3B82F6',
     responsable: module.responsable || ''
   }
   showCreateModuleDialog.value = true
@@ -238,9 +296,11 @@ function editModule(module) {
 function duplicateModule(module) {
   moduleForm.value = {
     id: null,
+    code: '',
     number: '',
     title: (module.title || '') + ' (Copie)',
     credits: module.credits || null,
+    color: module.color || '#3B82F6',
     responsable: module.responsable || ''
   }
   showCreateModuleDialog.value = true

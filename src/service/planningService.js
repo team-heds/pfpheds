@@ -441,8 +441,9 @@ class PlanningService {
   /**
    * Génère automatiquement les créneaux hebdomadaires depuis une cellule
    * @param {Object} cell - Cellule du planning académique
+   * @param {number} [autumnYear] - Année civile de l'automne académique (ex: 2025 pour 2025-2026)
    */
-  async generateTimeSlotsFromCell(cell) {
+  async generateTimeSlotsFromCell(cell, autumnYear) {
     try {
       // Convertir le jour court en jour complet
       const fullDay = this.getDayFullName(cell.day)
@@ -471,7 +472,7 @@ class PlanningService {
           week_number: cell.week_number,
           day: fullDay,
           day_index: this.getDayIndex(fullDay),
-          date: this.getDateForWeekAndDay(cell.week_number, this.getDayIndex(fullDay)),
+          date: this.getDateForWeekAndDay(cell.week_number, this.getDayIndex(fullDay), autumnYear),
           start_time: '09:00',
           end_time: '11:00',
           module_code: cell.module_code,
@@ -485,7 +486,7 @@ class PlanningService {
           week_number: cell.week_number,
           day: fullDay,
           day_index: this.getDayIndex(fullDay),
-          date: this.getDateForWeekAndDay(cell.week_number, this.getDayIndex(fullDay)),
+          date: this.getDateForWeekAndDay(cell.week_number, this.getDayIndex(fullDay), autumnYear),
           start_time: '13:00',
           end_time: '15:00',
           module_code: cell.module_code,
@@ -508,6 +509,56 @@ class PlanningService {
     } catch (error) {
       console.error('[PlanningService] Erreur generateTimeSlotsFromCell:', error)
       throw error
+    }
+  }
+
+  /**
+   * Récupère les cellules du planning académique pour un semestre
+   * @param {string} classCode - Code de la classe
+   * @param {string} semester - 'spring' (S8-S37) ou 'autumn' (S38-S52/53 & S1-S7)
+   * @returns {Array} Liste des cellules
+   */
+  async getSemesterPlanningCells(classCode, semester) {
+    try {
+      let query = supabase
+        .from('planning_cells')
+        .select('*')
+        .eq('class_code', classCode)
+
+      if (semester === 'spring') {
+        query = query.gte('week_number', 8).lte('week_number', 37)
+      } else if (semester === 'autumn') {
+        query = query.or('week_number.gte.38,week_number.lte.7')
+      }
+
+      const { data, error } = await query
+      if (error) throw error
+      return data || []
+    } catch (error) {
+      console.error('[PlanningService] Erreur getSemesterPlanningCells:', error)
+      return []
+    }
+  }
+
+  /**
+   * Récupère les cellules du planning académique pour une semaine spécifique
+   * @param {string} classCode - Code de la classe
+   * @param {number} weekNumber - Numéro de semaine
+   * @returns {Array} Liste des cellules (avec day en format long)
+   */
+  async getWeekPlanningCells(classCode, weekNumber) {
+    try {
+      const { data, error } = await supabase
+        .from('planning_cells')
+        .select('*')
+        .eq('class_code', classCode)
+        .eq('week_number', weekNumber)
+
+      if (error) throw error
+      return data || []
+    } catch (error) {
+      console.error('[PlanningService] Erreur getWeekPlanningCells:', error)
+      return []
     }
   }
 

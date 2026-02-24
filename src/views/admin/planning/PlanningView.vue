@@ -304,6 +304,26 @@ const { modules: supabaseModules, loadModules, loading: modulesLoading } = useMo
 // Années académiques et classes
 const { activeAcademicYear, sortedClasses, loadActiveAcademicYear, loadClassesByYear } = useAcademicYear()
 
+// Vérifie si une année ISO a 53 semaines
+const isoWeeksInYear = (year) => {
+  const jan1 = new Date(year, 0, 1)
+  const dec31 = new Date(year, 11, 31)
+  return (jan1.getDay() === 4 || dec31.getDay() === 4) ? 53 : 52
+}
+
+// Année civile de l'automne (ex: 2025 pour 2025-2026)
+const autumnStartYear = computed(() => {
+  if (activeAcademicYear.value?.name) {
+    const match = activeAcademicYear.value.name.match(/(\d{4})/)
+    if (match) return parseInt(match[1])
+  }
+  if (activeAcademicYear.value?.start_date) {
+    return new Date(activeAcademicYear.value.start_date).getFullYear()
+  }
+  const now = new Date()
+  return now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1
+})
+
 // Options dynamiques basées sur les classes
 const yearOptions = computed(() => {
   if (!activeAcademicYear.value || sortedClasses.value.length === 0) {
@@ -340,11 +360,12 @@ const dayLabels = {
 
 // Semaines (même structure que PlanningAdminView)
 const currentWeeks = computed(() => {
-  // Ordre académique : Automne (S38-S52, S1-S7) puis Printemps (S8-S37)
+  // Ordre académique : Automne (S38-S52/53, S1-S7) puis Printemps (S8-S37)
   const weeks = []
+  const maxAutumnWeek = isoWeeksInYear(autumnStartYear.value) // 52 ou 53
 
-  // Semestre d'Automne : S38 → S52
-  for (let w = 38; w <= 52; w++) {
+  // Semestre d'Automne : S38 → S52 (ou S53 si l'année en a 53)
+  for (let w = 38; w <= maxAutumnWeek; w++) {
     weeks.push(w)
   }
 
@@ -377,9 +398,10 @@ const semesterLabels = computed(() => {
     const start = activeAcademicYear.value.autumn_start_week
     const end = activeAcademicYear.value.autumn_end_week
     
-    // Si end < start, il y a une coupure d'année (ex: S38-52 puis S1-7)
+    // Si end < start, il y a une coupure d'année (ex: S38-52/53 puis S1-7)
     if (end < start) {
-      autumnLabel = `Automne: S${start}-52 & S1-${end}`
+      const maxWeek = isoWeeksInYear(autumnStartYear.value)
+      autumnLabel = `Automne: S${start}-${maxWeek} & S1-${end}`
     } else {
       autumnLabel = `Automne: S${start}-${end}`
     }

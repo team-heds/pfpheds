@@ -88,14 +88,18 @@ class ModulesService {
    */
   async createModule(moduleData) {
     try {
+      // Exclure explicitement 'id' pour laisser Postgres auto-générer la PK
+      const { id, ...cleanData } = moduleData
+      console.log('[ModulesService] createModule payload:', JSON.stringify(cleanData))
+
+      // Utiliser upsert pour éviter les conflits de clé primaire
       const { data, error } = await supabase
         .from('modules')
-        .insert([moduleData])
+        .upsert([cleanData], { onConflict: 'code' })
         .select()
-        .single()
 
       if (error) throw error
-      return data
+      return Array.isArray(data) ? data[0] : data
     } catch (error) {
       console.error('[ModulesService] Erreur createModule:', error)
       throw error
