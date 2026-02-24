@@ -112,110 +112,7 @@
           </div>
         </div>
 
-        <!-- Enseignants de mes modules -->
-        <div class="section-card">
-          <div class="section-header">
-            <h3>
-              <i class="pi pi-users"></i> 
-              Enseignants de mes modules
-              <Badge :value="myTeachers.length" severity="info" class="ml-2" />
-            </h3>
-          </div>
-          <div class="teachers-list">
-            <div v-for="teacher in myTeachers" :key="teacher.id" class="teacher-item">
-              <div class="teacher-avatar">
-                <img v-if="teacher.avatar" :src="teacher.avatar" :alt="teacher.name" />
-                <i v-else class="pi pi-user"></i>
-              </div>
-              <div class="teacher-info">
-                <h4>{{ teacher.name }}</h4>
-                <p>{{ teacher.email }}</p>
-                <small class="text-500">{{ teacher.modulesCount }} module(s)</small>
-              </div>
-              <div class="teacher-hours">
-                <span class="hours-badge">{{ teacher.totalHours }}h</span>
-                <Button icon="pi pi-envelope" class="p-button-rounded p-button-text p-button-sm" @click="contactTeacher(teacher)" />
-              </div>
-            </div>
-            <div v-if="myTeachers.length === 0" class="empty-state">
-              <i class="pi pi-inbox"></i>
-              <p>Aucun enseignant assigné à vos modules</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Tous les Enseignants SI -->
-        <div class="section-card">
-          <div class="section-header">
-            <h3>
-              <i class="pi pi-id-card"></i> 
-              Liste des Enseignants SI
-              <Badge :value="filteredSITeachers.length" severity="info" class="ml-2" />
-            </h3>
-            <span class="p-input-icon-left search-box">
-              <i class="pi pi-search" />
-              <InputText v-model="searchSI" placeholder="Rechercher..." class="p-inputtext-sm" />
-            </span>
-          </div>
-          
-          <div class="teachers-list scrollable-list">
-            <div v-for="teacher in filteredSITeachers" :key="teacher.id" class="teacher-item">
-              <div class="teacher-info">
-                <h4>{{ teacher.name }}</h4>
-                <p>{{ teacher.email }}</p>
-              </div>
-              <Button icon="pi pi-envelope" class="p-button-rounded p-button-text p-button-sm" @click="contactTeacher(teacher)" />
-            </div>
-            <div v-if="filteredSITeachers.length === 0" class="empty-state">
-              <i class="pi pi-users"></i>
-              <p>Aucun enseignant trouvé</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Responsables de modules -->
-        <div class="section-card">
-          <div class="section-header">
-            <h3>
-              <i class="pi pi-users"></i> 
-              Responsables de Modules
-              <Badge :value="responsablesCount" severity="success" class="ml-2" />
-            </h3>
-          </div>
-          
-          <div class="responsables-grid">
-            <div 
-              v-for="(modules, responsable) in modulesByResponsable" 
-              :key="responsable"
-              class="responsable-card"
-            >
-              <div class="responsable-header">
-                <div class="responsable-info">
-                  <i class="pi pi-user text-primary"></i>
-                  <h4>{{ responsable }}</h4>
-                </div>
-                <Badge :value="modules.length" severity="info" />
-              </div>
-              
-              <div class="modules-list-compact">
-                <div 
-                  v-for="module in modules" 
-                  :key="module.id"
-                  class="module-item-compact"
-                >
-                  <span class="module-number">{{ module.number }}</span>
-                  <span class="module-title">{{ module.title }}</span>
-                  <div class="module-meta">
-                    <Tag :value="`Année ${module.year}`" severity="info" class="tag-small" />
-                    <Tag v-if="module.credits" :value="`${module.credits} crédits`" class="tag-small" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Mes cours cette semaine -->
+        <!-- Mes cours -->
         <div class="section-card my-courses-section">
           <div class="section-header">
             <h3>
@@ -302,6 +199,120 @@
           </div>
         </div>
 
+        <!-- Actions rapides -->
+        <div class="section-card">
+          <h3><i class="pi pi-bolt"></i> Actions Rapides</h3>
+          <div class="quick-actions">
+            <Button label="Attribution Enseignants" icon="pi pi-users" severity="primary" @click="$router.push('/admin/teachers-assignment')" />
+            <Button label="Planning Hebdomadaire" icon="pi pi-calendar" class="p-button-outlined" @click="$router.push('/admin/planning/weekly')" />
+            <Button label="Gestion Modules" icon="pi pi-book" class="p-button-outlined" @click="$router.push('/admin/modules')" />
+            <Button label="Calendrier Semestriel" icon="pi pi-calendar-plus" class="p-button-outlined" @click="$router.push('/admin/planning/semester')" />
+          </div>
+        </div>
+
+        <!-- Enseignants de mes modules -->
+        <div class="section-card">
+          <div class="section-header">
+            <h3>
+              <i class="pi pi-users"></i> 
+              Enseignants de mes modules
+              <Badge :value="myTeachers.length" severity="info" class="ml-2" />
+            </h3>
+          </div>
+          <div class="teachers-list">
+            <div v-for="teacher in myTeachers" :key="teacher.id" class="teacher-item">
+              <div class="teacher-avatar">
+                <img v-if="teacher.avatar" :src="teacher.avatar" :alt="teacher.name" />
+                <i v-else class="pi pi-user"></i>
+              </div>
+              <div class="teacher-info">
+                <h4>{{ teacher.name }}</h4>
+                <p>{{ teacher.email }}</p>
+                <small class="text-500">{{ teacher.modulesCount }} module(s)</small>
+              </div>
+              <div class="teacher-hours">
+                <span class="hours-badge">{{ teacher.totalHours }}h</span>
+                <Button icon="pi pi-envelope" class="p-button-rounded p-button-text p-button-sm" @click="contactTeacher(teacher)" />
+              </div>
+            </div>
+            <div v-if="myTeachers.length === 0" class="empty-state">
+              <i class="pi pi-inbox"></i>
+              <p>Aucun enseignant assigné à vos modules</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Responsables de modules -->
+        <div class="section-card">
+          <div class="section-header">
+            <h3>
+              <i class="pi pi-users"></i> 
+              Responsables de Modules
+              <Badge :value="responsablesCount" severity="success" class="ml-2" />
+            </h3>
+          </div>
+          
+          <div class="responsables-grid">
+            <div 
+              v-for="(modules, responsable) in modulesByResponsable" 
+              :key="responsable"
+              class="responsable-card"
+            >
+              <div class="responsable-header">
+                <div class="responsable-info">
+                  <i class="pi pi-user text-primary"></i>
+                  <h4>{{ responsable }}</h4>
+                </div>
+                <Badge :value="modules.length" severity="info" />
+              </div>
+              
+              <div class="modules-list-compact">
+                <div 
+                  v-for="module in modules" 
+                  :key="module.id"
+                  class="module-item-compact"
+                >
+                  <span class="module-number">{{ module.number }}</span>
+                  <span class="module-title">{{ module.title }}</span>
+                  <div class="module-meta">
+                    <Tag :value="`Année ${module.year}`" severity="info" class="tag-small" />
+                    <Tag v-if="module.credits" :value="`${module.credits} crédits`" class="tag-small" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tous les Enseignants SI -->
+        <div class="section-card">
+          <div class="section-header">
+            <h3>
+              <i class="pi pi-id-card"></i> 
+              Liste des Enseignants SI
+              <Badge :value="filteredSITeachers.length" severity="info" class="ml-2" />
+            </h3>
+            <span class="p-input-icon-left search-box">
+              <i class="pi pi-search" />
+              <InputText v-model="searchSI" placeholder="Rechercher..." class="p-inputtext-sm" />
+            </span>
+          </div>
+          
+          <div class="teachers-list scrollable-list">
+            <div v-for="teacher in filteredSITeachers" :key="teacher.id" class="teacher-item">
+              <div class="teacher-info">
+                <h4>{{ teacher.name }}</h4>
+                <p>{{ teacher.email }}</p>
+              </div>
+              <Button icon="pi pi-envelope" class="p-button-rounded p-button-text p-button-sm" @click="contactTeacher(teacher)" />
+            </div>
+            <div v-if="filteredSITeachers.length === 0" class="empty-state">
+              <i class="pi pi-users"></i>
+              <p>Aucun enseignant trouvé</p>
+            </div>
+          </div>
+        </div>
+
         <!-- Vue globale Planning -->
         <div class="section-card planning-overview">
           <div class="section-header">
@@ -348,17 +359,6 @@
           <div v-else class="text-center py-3 text-500">
             <i class="pi pi-check-circle text-success mr-2"></i>
             Tous les plannings sont en ordre
-          </div>
-        </div>
-
-        <!-- Actions rapides -->
-        <div class="section-card">
-          <h3><i class="pi pi-bolt"></i> Actions Rapides</h3>
-          <div class="quick-actions">
-            <Button label="Attribution Enseignants" icon="pi pi-users" severity="primary" @click="$router.push('/admin/teachers-assignment')" />
-            <Button label="Planning Hebdomadaire" icon="pi pi-calendar" class="p-button-outlined" @click="$router.push('/admin/planning/weekly')" />
-            <Button label="Gestion Modules" icon="pi pi-book" class="p-button-outlined" @click="$router.push('/admin/modules')" />
-            <Button label="Calendrier Semestriel" icon="pi pi-calendar-plus" class="p-button-outlined" @click="$router.push('/admin/planning/semester')" />
           </div>
         </div>
 
