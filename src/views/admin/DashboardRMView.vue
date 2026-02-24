@@ -206,7 +206,7 @@
             <Button label="Attribution Enseignants" icon="pi pi-users" severity="primary" @click="$router.push('/admin/teachers-assignment')" />
             <Button label="Planning Hebdomadaire" icon="pi pi-calendar" class="p-button-outlined" @click="$router.push('/admin/planning/weekly')" />
             <Button label="Gestion Modules" icon="pi pi-book" class="p-button-outlined" @click="$router.push('/admin/modules')" />
-            <Button label="Calendrier Semestriel" icon="pi pi-calendar-plus" class="p-button-outlined" @click="$router.push('/admin/planning/semester')" />
+            <Button label="Structure Minibrique" icon="pi pi-th-large" class="p-button-outlined" @click="$router.push('/admin/planning')" />
           </div>
         </div>
 
