@@ -215,6 +215,93 @@
           </div>
         </div>
 
+        <!-- Mes cours cette semaine -->
+        <div class="section-card my-courses-section">
+          <div class="section-header">
+            <h3>
+              <i class="pi pi-calendar-plus"></i> 
+              Mes cours
+              <Badge v-if="displayedSlots.length > 0" :value="displayedSlots.length" severity="success" class="ml-2" />
+            </h3>
+            <div class="flex gap-2 align-items-center">
+              <Button 
+                :label="mySlotsViewAll ? 'Par semaine' : 'Tous les cours'" 
+                :icon="mySlotsViewAll ? 'pi pi-calendar' : 'pi pi-list'" 
+                :severity="mySlotsViewAll ? 'secondary' : 'primary'" 
+                size="small"
+                @click="toggleMySlotsView"
+              />
+              <Dropdown
+                v-if="!mySlotsViewAll"
+                v-model="mySlotsWeek"
+                :options="mySlotsWeekOptions"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Semaine"
+                @change="loadMySlots"
+                style="width: 240px"
+              />
+              <Button 
+                icon="pi pi-refresh" 
+                text 
+                @click="mySlotsViewAll ? loadAllMySlots() : loadMySlots()" 
+                :loading="loadingMySlots"
+                v-tooltip.top="'Rafraîchir'"
+              />
+              <Button 
+                label="Export Outlook (.ics)" 
+                icon="pi pi-download" 
+                severity="info" 
+                size="small"
+                @click="exportMyCoursesICS"
+                :disabled="allMySlots.length === 0"
+                v-tooltip.top="'Télécharger tous vos cours au format .ics pour Outlook'"
+              />
+            </div>
+          </div>
+
+          <div v-if="loadingMySlots" class="text-center py-3">
+            <ProgressSpinner style="width: 30px; height: 30px" />
+          </div>
+
+          <div v-else-if="displayedSlots.length === 0" class="empty-state-small">
+            <i class="pi pi-calendar-times"></i>
+            <p>{{ mySlotsViewAll ? 'Aucun cours trouvé' : 'Aucun cours cette semaine' }}</p>
+          </div>
+
+          <div v-else>
+            <div v-for="group in displayedSlotsByDay" :key="group.key" class="my-day-group">
+              <div class="my-day-header">
+                <Tag v-if="mySlotsViewAll && group.weekLabel" :value="group.weekLabel" severity="info" class="mr-2" />
+                <span class="my-day-label">{{ group.label }}</span>
+                <span class="my-day-date">{{ group.date }}</span>
+                <Badge :value="group.slots.length" severity="secondary" class="ml-auto" />
+              </div>
+              <div class="my-slots-list">
+                <div v-for="slot in group.slots" :key="slot.id" class="my-slot-item">
+                  <div class="my-slot-time">
+                    <strong>{{ slot.start_time }}</strong>
+                    <span>{{ slot.end_time }}</span>
+                  </div>
+                  <div class="my-slot-info">
+                    <div class="my-slot-module">
+                      <div class="module-color-dot" :style="{ background: getSlotModuleColor(slot.module_code) }"></div>
+                      <strong>{{ getSlotModuleLabel(slot.module_code) }}</strong>
+                    </div>
+                    <div v-if="slot.course_title" class="my-slot-course">{{ slot.course_title }}</div>
+                    <div v-if="slot.activity" class="my-slot-activity">{{ slot.activity }}</div>
+                  </div>
+                  <div class="my-slot-meta">
+                    <Tag :value="slot.class_code?.toUpperCase()" :style="getClassTagStyle(slot.class_code)" />
+                    <Tag v-if="slot.room" :value="slot.room" severity="success" />
+                    <Tag v-else value="Pas de salle" severity="warning" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Vue globale Planning -->
         <div class="section-card planning-overview">
           <div class="section-header">
@@ -312,6 +399,8 @@ import ProgressSpinner from 'primevue/progressspinner';
 import InputText from 'primevue/inputtext';
 import Badge from 'primevue/badge';
 import Tag from 'primevue/tag';
+import Dropdown from 'primevue/dropdown';
+import planningService from '@/service/planningService';
 import { getMyModules, getModulesTeachers, calculateStats } from '@/services/rmDashboardService';
 import { useModules } from '@/composables/useModules';
 import { supabase } from '@/supabase';
@@ -364,6 +453,110 @@ const modules = ref([]);
 const teachers = ref([]);
 const siTeachers = ref([]);
 const searchSI = ref('');
+
+// Mes cours (section planning enseignant)
+const loadingMySlots = ref(false);
+const mySlots = ref([]);
+const allMySlots = ref([]);
+const mySlotsWeek = ref(null);
+const mySlotsViewAll = ref(false);
+const userDisplayName = ref('');
+const courseModulesMap = ref([]);
+
+const isoWeeksInYear = (year) => {
+  const jan1 = new Date(year, 0, 1)
+  const dec31 = new Date(year, 11, 31)
+  return (jan1.getDay() === 4 || dec31.getDay() === 4) ? 53 : 52
+}
+
+const mySlotsWeekOptions = computed(() => {
+  const weeks = []
+  const now = new Date()
+  const currentMonth = now.getMonth() + 1
+  const aYear = currentMonth >= 8 ? now.getFullYear() : now.getFullYear() - 1
+  const maxAutumnWeek = isoWeeksInYear(aYear)
+  for (let w = 38; w <= maxAutumnWeek; w++) weeks.push({ label: `Semaine ${w} (Automne)`, value: w })
+  for (let w = 1; w <= 7; w++) weeks.push({ label: `Semaine ${w} (Automne)`, value: w })
+  for (let w = 8; w <= 37; w++) weeks.push({ label: `Semaine ${w} (Printemps)`, value: w })
+  return weeks
+})
+
+const displayedSlots = computed(() => mySlotsViewAll.value ? allMySlots.value : mySlots.value)
+
+const mySlotsByDay = computed(() => {
+  const dayLabels = { lundi: 'Lundi', mardi: 'Mardi', mercredi: 'Mercredi', jeudi: 'Jeudi', vendredi: 'Vendredi', distance: 'Distance' }
+  const dayOrder = { lundi: 0, mardi: 1, mercredi: 2, jeudi: 3, vendredi: 4, distance: 5 }
+  const groups = {}
+  mySlots.value.forEach(slot => {
+    const day = slot.day || 'inconnu'
+    if (!groups[day]) {
+      groups[day] = { day, key: day, label: dayLabels[day] || day, date: slot.date || '', slots: [] }
+    }
+    groups[day].slots.push(slot)
+  })
+  return Object.values(groups)
+    .sort((a, b) => (dayOrder[a.day] ?? 99) - (dayOrder[b.day] ?? 99))
+    .map(g => { g.slots.sort((a, b) => (a.start_time || '').localeCompare(b.start_time || '')); return g })
+})
+
+const allMySlotsByWeekDay = computed(() => {
+  const dayLabels = { lundi: 'Lundi', mardi: 'Mardi', mercredi: 'Mercredi', jeudi: 'Jeudi', vendredi: 'Vendredi', distance: 'Distance' }
+  const dayOrder = { lundi: 0, mardi: 1, mercredi: 2, jeudi: 3, vendredi: 4, distance: 5 }
+  const groups = {}
+  allMySlots.value.forEach(slot => {
+    const wk = slot.week_number || 0
+    const day = slot.day || 'inconnu'
+    const key = `${wk}-${day}`
+    if (!groups[key]) {
+      groups[key] = { key, day, week: wk, weekLabel: `S${wk}`, label: dayLabels[day] || day, date: slot.date || '', slots: [] }
+    }
+    groups[key].slots.push(slot)
+  })
+  // Trier par semaine académique (S38+ d'abord, puis S1-S37), puis par jour
+  const weekSort = (w) => w >= 38 ? w - 38 : w + 53
+  return Object.values(groups)
+    .sort((a, b) => weekSort(a.week) - weekSort(b.week) || (dayOrder[a.day] ?? 99) - (dayOrder[b.day] ?? 99))
+    .map(g => { g.slots.sort((a, b) => (a.start_time || '').localeCompare(b.start_time || '')); return g })
+})
+
+const displayedSlotsByDay = computed(() => mySlotsViewAll.value ? allMySlotsByWeekDay.value : mySlotsByDay.value)
+
+function toggleMySlotsView() {
+  mySlotsViewAll.value = !mySlotsViewAll.value
+  if (mySlotsViewAll.value && allMySlots.value.length === 0) {
+    loadAllMySlots()
+  }
+}
+
+const classColors = {
+  'BAC25': { bg: '#2563EB', text: '#fff' },
+  'BAC24': { bg: '#7C3AED', text: '#fff' },
+  'BAC23': { bg: '#059669', text: '#fff' },
+  'BAC25-EE': { bg: '#0891B2', text: '#fff' },
+  'BAC24-EE': { bg: '#9333EA', text: '#fff' },
+  'BAC23-EE': { bg: '#10B981', text: '#fff' },
+}
+const defaultClassColors = ['#E67E22', '#E74C3C', '#1ABC9C', '#3498DB', '#9B59B6', '#F39C12', '#2ECC71']
+
+function getClassTagStyle(classCode) {
+  const code = classCode?.toUpperCase()
+  const preset = classColors[code]
+  if (preset) return { background: preset.bg, color: preset.text, border: 'none' }
+  let hash = 0
+  for (let i = 0; i < (code || '').length; i++) hash = code.charCodeAt(i) + ((hash << 5) - hash)
+  const color = defaultClassColors[Math.abs(hash) % defaultClassColors.length]
+  return { background: color, color: '#fff', border: 'none' }
+}
+
+function getSlotModuleColor(code) {
+  const mod = courseModulesMap.value.find(m => m.code === code)
+  return mod?.color || '#94a3b8'
+}
+
+function getSlotModuleLabel(code) {
+  const mod = courseModulesMap.value.find(m => m.code === code)
+  return mod?.label || mod?.title || code || '—'
+}
 
 // Modules dont l'utilisateur est responsable (chargés depuis le service)
 const myModules = ref([]);
@@ -485,6 +678,25 @@ async function loadRMData() {
     // 9. Charger la vue d'ensemble du planning
     await loadPlanningOverview();
     
+    // 10. Charger profil utilisateur + modules pour la section "Mes cours"
+    await loadUserProfile();
+    courseModulesMap.value = await planningService.getAllCourseModules();
+    
+    // Sélectionner la semaine courante
+    const nowW = new Date()
+    const jan4 = new Date(nowW.getFullYear(), 0, 4)
+    const jan4Day = jan4.getDay() || 7
+    const week1Monday = new Date(jan4)
+    week1Monday.setDate(jan4.getDate() - jan4Day + 1)
+    const diffW = Math.floor((nowW - week1Monday) / (7 * 24 * 60 * 60 * 1000))
+    const currentWeek = diffW + 1
+    if (currentWeek >= 1 && currentWeek <= 53) {
+      mySlotsWeek.value = currentWeek
+      await loadMySlots()
+    }
+    // Pré-charger tous les slots pour l'export ICS
+    await loadAllMySlots();
+    
     console.log('✅ Données RM chargées');
   } catch (error) {
     console.error('❌ Erreur chargement données RM:', error);
@@ -551,6 +763,179 @@ function dismissAlert(alert) {
 
 function goToModule(moduleId) {
   router.push(`/admin/modules/${moduleId}/manage`);
+}
+
+/**
+ * Charge le profil utilisateur pour récupérer le display_name
+ */
+async function loadUserProfile() {
+  try {
+    const userId = authStore.user?.id || authStore.user?.uid
+    if (!userId) return
+    const { data } = await supabase
+      .from('user_profiles')
+      .select('display_name, forname, family_name, email')
+      .eq('user_id', userId)
+      .single()
+    if (data) {
+      userDisplayName.value = data.display_name || `${data.forname || ''} ${data.family_name || ''}`.trim() || data.email || ''
+    }
+  } catch (err) {
+    console.warn('Profil utilisateur non trouvé:', err)
+    userDisplayName.value = authStore.user?.email || ''
+  }
+}
+
+/**
+ * Filtre les slots où l'utilisateur est dans la liste des enseignants
+ */
+function filterMySlots(slots) {
+  if (!userDisplayName.value) return []
+  const nameLC = userDisplayName.value.toLowerCase()
+  const emailLC = (authStore.user?.email || '').toLowerCase()
+  return (slots || []).filter(s => {
+    if (!s.teachers || !Array.isArray(s.teachers)) return false
+    return s.teachers.some(t => {
+      const tLC = (typeof t === 'string' ? t : t?.name || '').toLowerCase()
+      return tLC === nameLC || tLC === emailLC || tLC.includes(nameLC) || nameLC.includes(tLC)
+    })
+  })
+}
+
+/**
+ * Charge les cours de l'enseignant pour la semaine sélectionnée
+ */
+async function loadMySlots() {
+  if (!mySlotsWeek.value) return
+  loadingMySlots.value = true
+  try {
+    const { data, error } = await supabase
+      .from('planning_time_slots')
+      .select('*')
+      .eq('week_number', mySlotsWeek.value)
+      .order('day_index', { ascending: true })
+      .order('start_time', { ascending: true })
+    if (error) throw error
+    mySlots.value = filterMySlots(data)
+  } catch (err) {
+    console.error('Erreur chargement mes cours:', err)
+    mySlots.value = []
+  } finally {
+    loadingMySlots.value = false
+  }
+}
+
+/**
+ * Charge TOUS les cours de l'année pour l'export ICS
+ */
+async function loadAllMySlots() {
+  try {
+    const { data, error } = await supabase
+      .from('planning_time_slots')
+      .select('*')
+      .order('week_number', { ascending: true })
+      .order('day_index', { ascending: true })
+      .order('start_time', { ascending: true })
+    if (error) throw error
+    allMySlots.value = filterMySlots(data)
+  } catch (err) {
+    console.error('Erreur chargement tous mes cours:', err)
+    allMySlots.value = []
+  }
+}
+
+/**
+ * Parse une date au format DD.MM.YYYY en objet Date
+ */
+function parseDateDDMMYYYY(dateStr) {
+  if (!dateStr) return null
+  const parts = dateStr.split('.')
+  if (parts.length !== 3) return null
+  return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]))
+}
+
+/**
+ * Formate une date+heure en format ICS (YYYYMMDDTHHMMSS)
+ */
+function toICSDateTime(dateObj, timeStr) {
+  if (!dateObj || !timeStr) return ''
+  const y = dateObj.getFullYear()
+  const m = String(dateObj.getMonth() + 1).padStart(2, '0')
+  const d = String(dateObj.getDate()).padStart(2, '0')
+  const [hh, mm] = timeStr.split(':')
+  return `${y}${m}${d}T${(hh || '00').padStart(2, '0')}${(mm || '00').padStart(2, '0')}00`
+}
+
+/**
+ * Exporte tous les cours de l'enseignant en fichier .ics pour Outlook
+ */
+async function exportMyCoursesICS() {
+  if (allMySlots.value.length === 0) {
+    await loadAllMySlots()
+    if (allMySlots.value.length === 0) return
+  }
+
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//HEdS//Planning//FR',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    `X-WR-CALNAME:Mes cours HEdS`
+  ]
+
+  const now = new Date()
+  const stamp = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}T${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}${String(now.getSeconds()).padStart(2,'0')}`
+
+  for (const slot of allMySlots.value) {
+    // Calculer la date si pas stockée
+    let dateObj = parseDateDDMMYYYY(slot.date)
+    if (!dateObj && slot.week_number && slot.day_index != null) {
+      const dateStr = planningService.getDateForWeekAndDay(slot.week_number, slot.day_index)
+      dateObj = parseDateDDMMYYYY(dateStr)
+    }
+    if (!dateObj || !slot.start_time || !slot.end_time) continue
+
+    const dtStart = toICSDateTime(dateObj, slot.start_time)
+    const dtEnd = toICSDateTime(dateObj, slot.end_time)
+
+    const moduleLabel = getSlotModuleLabel(slot.module_code)
+    const summary = `${moduleLabel}${slot.course_title ? ' — ' + slot.course_title : ''}`
+    const classCode = slot.class_code?.toUpperCase() || ''
+    const description = [
+      `Module: ${moduleLabel}`,
+      slot.course_title ? `Cours: ${slot.course_title}` : '',
+      slot.activity ? `Activité: ${slot.activity}` : '',
+      `Classe: ${classCode}`,
+      slot.teachers?.length ? `Enseignants: ${slot.teachers.join(', ')}` : '',
+      slot.notes ? `Notes: ${slot.notes}` : ''
+    ].filter(Boolean).join('\\n')
+
+    const location = slot.room || ''
+    const uid = `${slot.id || dtStart}-${classCode}@heds-planning`
+
+    lines.push('BEGIN:VEVENT')
+    lines.push(`UID:${uid}`)
+    lines.push(`DTSTAMP:${stamp}`)
+    lines.push(`DTSTART:${dtStart}`)
+    lines.push(`DTEND:${dtEnd}`)
+    lines.push(`SUMMARY:${summary.replace(/[,;]/g, ' ')}`)
+    lines.push(`DESCRIPTION:${description}`)
+    if (location) lines.push(`LOCATION:${location.replace(/[,;]/g, ' ')}`)
+    lines.push(`CATEGORIES:HEdS,${classCode}`)
+    lines.push('END:VEVENT')
+  }
+
+  lines.push('END:VCALENDAR')
+
+  const icsContent = lines.join('\r\n')
+  const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' })
+  const url = window.URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `mes-cours-heds-${userDisplayName.value.replace(/\s+/g, '-').toLowerCase() || 'export'}.ics`
+  link.click()
+  window.URL.revokeObjectURL(url)
 }
 
 /**
@@ -1315,9 +1700,143 @@ function generateAlerts() {
   background: var(--surface-100);
 }
 
+/* Mes cours section */
+.my-courses-section {
+  border-left: 4px solid #3b82f6;
+}
+
+.my-day-group {
+  margin-bottom: 1rem;
+}
+
+.my-day-group:last-child {
+  margin-bottom: 0;
+}
+
+.my-day-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--surface-100);
+  border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.my-day-label {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text-color);
+}
+
+.my-day-date {
+  font-size: 0.85rem;
+  color: var(--text-color-secondary);
+}
+
+.my-slots-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-left: 0.5rem;
+}
+
+.my-slot-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--surface-ground);
+  border-radius: 0.5rem;
+  border-left: 3px solid var(--primary-color);
+  transition: all 0.2s;
+}
+
+.my-slot-item:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transform: translateX(2px);
+}
+
+.my-slot-time {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 60px;
+  gap: 0.15rem;
+  font-size: 0.85rem;
+  color: var(--text-color-secondary);
+}
+
+.my-slot-time strong {
+  font-size: 1rem;
+  color: var(--text-color);
+}
+
+.my-slot-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.my-slot-module {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.module-color-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.my-slot-course {
+  font-size: 0.85rem;
+  color: var(--text-color-secondary);
+  margin-top: 0.15rem;
+}
+
+.my-slot-activity {
+  font-size: 0.8rem;
+  color: var(--text-color-secondary);
+  font-style: italic;
+}
+
+.my-slot-meta {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.empty-state-small {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--text-color-secondary);
+}
+
+.empty-state-small i {
+  font-size: 2rem;
+  opacity: 0.4;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.empty-state-small p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
 @media (max-width: 768px) {
   .planning-stats-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+  .my-slot-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .my-slot-meta {
+    flex-wrap: wrap;
   }
 }
 </style>
