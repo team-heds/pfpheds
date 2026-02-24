@@ -818,15 +818,15 @@ const buildMinibrickSheet = (ws, classLabel, cellsArray) => {
   ws.getCell('A1').value = 'Bachelor of Science in Nursing'
   ws.getCell('A1').font = { size: 14, bold: true }
   ws.mergeCells('A2:F2')
-  ws.getCell('A2').value = `Structure de programme — ${classLabel}`
+  ws.getCell('A2').value = `Structure de programme: ${classLabel}`
   ws.getCell('A2').font = { size: 12, bold: true }
   ws.mergeCells('G2:J2')
   ws.getCell('G2').value = activeAcademicYear.value?.name || ''
   ws.getCell('G2').font = { size: 12, bold: true }
 
-  // Largeurs
-  ws.getColumn(1).width = 12
-  for (let i = 0; i < allWeeks.length; i++) ws.getColumn(2 + i).width = 6
+  // Largeurs (colonnes étroites pour cellules carrées)
+  ws.getColumn(1).width = 10
+  for (let i = 0; i < allWeeks.length; i++) ws.getColumn(2 + i).width = 4
 
   // Ligne 4: bandeau semestre
   const hRow = 4
@@ -858,7 +858,7 @@ const buildMinibrickSheet = (ws, classLabel, cellsArray) => {
     const c = ws.getCell(wRow, 2 + i)
     c.value = w
     c.alignment = { horizontal: 'center', vertical: 'middle' }
-    c.font = { bold: true, size: 8 }
+    c.font = { bold: true, size: 7 }
     c.border = cellBorder
     if (autumnWeeks.includes(w)) {
       c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFDEBD0' } }
@@ -866,7 +866,7 @@ const buildMinibrickSheet = (ws, classLabel, cellsArray) => {
       c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD6EAF8' } }
     }
   })
-  ws.getRow(wRow).height = 20
+  ws.getRow(wRow).height = 16
 
   // Indexer les cellules par day_week pour accès rapide
   const cellMap = {}
@@ -915,7 +915,7 @@ const buildMinibrickSheet = (ws, classLabel, cellsArray) => {
       cell.border = cellBorder
     }
 
-    row.height = 26
+    row.height = 38
     rowIdx++
   }
 
