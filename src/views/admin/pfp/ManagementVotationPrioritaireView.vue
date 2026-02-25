@@ -169,6 +169,7 @@
 
           <DataTable
             :value="priorityStudents"
+            dataKey="userId"
             :loading="loading"
             responsiveLayout="scroll"
             :paginator="priorityStudents.length > 25"
@@ -371,8 +372,8 @@ const filterPFP = ref(null)
 const filterYear = ref(null)
 
 const allClassStudents = ref([])
-const priorityStudentIds = ref(new Set())
-const priorityReasons = ref(new Map())
+const priorityStudentIds = ref([])
+const priorityReasons = ref({})
 const priorityVotes = ref(new Map())
 const previousResults = ref([])
 const physioData = ref(new Map())
@@ -442,9 +443,9 @@ const prioritySessionIsOpen = computed(() => {
 // ============================================
 const priorityStudents = computed(() => {
   return allClassStudents.value
-    .filter(s => priorityStudentIds.value.has(s.id))
+    .filter(s => priorityStudentIds.value.includes(s.id))
     .map(s => {
-      const reasons = priorityReasons.value.get(s.id) || ['Manuel']
+      const reasons = priorityReasons.value[s.id] || ['Manuel']
       const vote = priorityVotes.value.get(s.id) || null
       return {
         userId: s.id,
@@ -462,7 +463,7 @@ const priorityStudents = computed(() => {
 
 const nonPriorityStudents = computed(() => {
   return allClassStudents.value
-    .filter(s => !priorityStudentIds.value.has(s.id))
+    .filter(s => !priorityStudentIds.value.includes(s.id))
     .map(s => {
       const physio = physioData.value.get(s.id)
       const prevResult = previousResults.value.find(r => r.user_id === s.id)
@@ -497,8 +498,8 @@ const priorityVotedCount = computed(() => {
 watch(filterClasse, (newVal) => {
   filterPFP.value = null
   filterYear.value = null
-  priorityStudentIds.value = new Set()
-  priorityReasons.value = new Map()
+  priorityStudentIds.value = []
+  priorityReasons.value = {}
   priorityVotes.value = new Map()
   previousResults.value = []
   allClassStudents.value = []
@@ -600,22 +601,70 @@ const loadData = async () => {
 
 const loadPrioritySession = async () => {
   try {
-    currentPrioritySession.value = await votationSessionService.getActivePrioritySession(filterPFP.value, filterYear.value)
-    // Si une session existe, restaurer la liste des prioritaires
-    if (currentPrioritySession.value?.priority_user_ids) {
-      const ids = currentPrioritySession.value.priority_user_ids
-      if (Array.isArray(ids)) {
-        priorityStudentIds.value = new Set(ids)
-        ids.forEach(id => {
-          if (!priorityReasons.value.has(id)) {
-            priorityReasons.value.set(id, ['Session active'])
-          }
-        })
+    // Charger la session ouverte OU le brouillon
+    const sessionOrDraft = await votationSessionService.getPriorityDraftOrSession(filterPFP.value, filterYear.value)
+    
+    if (sessionOrDraft) {
+      // Si c'est une session ouverte, la stocker
+      if (sessionOrDraft.status === 'open') {
+        currentPrioritySession.value = sessionOrDraft
+      } else {
+        currentPrioritySession.value = null
       }
+      
+      // Restaurer la liste des prioritaires (draft ou open)
+      if (sessionOrDraft.priority_user_ids && Array.isArray(sessionOrDraft.priority_user_ids)) {
+        priorityStudentIds.value = [...sessionOrDraft.priority_user_ids]
+        
+        // Restaurer les raisons sauvegardées
+        const savedReasons = sessionOrDraft.priority_reasons
+        if (savedReasons && typeof savedReasons === 'object') {
+          const restoredReasons = {}
+          Object.entries(savedReasons).forEach(([userId, reasons]) => {
+            restoredReasons[userId] = Array.isArray(reasons) ? reasons : [reasons]
+          })
+          priorityReasons.value = restoredReasons
+        } else {
+          // Fallback: marquer comme "Session" si pas de raisons sauvegardées
+          const fallbackReasons = {}
+          const isDraft = sessionOrDraft.status !== 'open'
+          sessionOrDraft.priority_user_ids.forEach(id => {
+            if (!priorityReasons.value[id]) {
+              fallbackReasons[id] = [isDraft ? 'Sauvegardé' : 'Session active']
+            }
+          })
+          priorityReasons.value = { ...priorityReasons.value, ...fallbackReasons }
+        }
+      }
+      console.log(`✅ ${priorityStudentIds.value.length} prioritaires restaurés (${sessionOrDraft.status})`)
+    } else {
+      currentPrioritySession.value = null
     }
   } catch (error) {
     console.error('❌ Erreur chargement session prioritaire:', error)
     currentPrioritySession.value = null
+  }
+}
+
+const savePriorityDraft = async () => {
+  if (!filterPFP.value || !filterYear.value || !filterClasse.value) return
+  // Ne pas sauvegarder si une session est déjà ouverte
+  if (prioritySessionIsOpen.value) return
+  
+  try {
+    const ids = [...priorityStudentIds.value]
+    const reasons = { ...priorityReasons.value }
+    
+    await votationSessionService.savePriorityDraft(
+      filterPFP.value,
+      filterYear.value,
+      filterClasse.value,
+      ids,
+      reasons
+    )
+    console.log(`💾 Brouillon prioritaire sauvegardé (${ids.length} étudiants)`)
+  } catch (error) {
+    console.error('❌ Erreur sauvegarde brouillon:', error)
   }
 }
 
@@ -624,8 +673,8 @@ const loadPrioritySession = async () => {
 // ============================================
 const autoDetectPriority = async () => {
   detecting.value = true
-  const newIds = new Set(priorityStudentIds.value)
-  const newReasons = new Map(priorityReasons.value)
+  const newIds = [...priorityStudentIds.value]
+  const newReasons = { ...priorityReasons.value }
   let addedCount = 0
 
   try {
@@ -651,15 +700,18 @@ const autoDetectPriority = async () => {
         reasons.push(`Aléatoire ${prevRandom.pfp_type}`)
       }
 
-      if (reasons.length > 0 && !newIds.has(student.id)) {
-        newIds.add(student.id)
-        newReasons.set(student.id, reasons)
+      if (reasons.length > 0 && !newIds.includes(student.id)) {
+        newIds.push(student.id)
+        newReasons[student.id] = reasons
         addedCount++
       }
     })
 
     priorityStudentIds.value = newIds
     priorityReasons.value = newReasons
+
+    // Sauvegarder le brouillon après détection
+    await savePriorityDraft()
 
     toast.add({
       severity: addedCount > 0 ? 'success' : 'info',
@@ -681,14 +733,11 @@ const autoDetectPriority = async () => {
 // AJOUT / SUPPRESSION MANUELLE
 // ============================================
 const addPriorityStudent = (student) => {
-  const newIds = new Set(priorityStudentIds.value)
-  newIds.add(student.userId)
-  priorityStudentIds.value = newIds
+  if (priorityStudentIds.value.includes(student.userId)) return
+  priorityStudentIds.value = [...priorityStudentIds.value, student.userId]
 
-  const newReasons = new Map(priorityReasons.value)
   const reason = manualReason.value?.trim() || 'Manuel'
-  newReasons.set(student.userId, [reason])
-  priorityReasons.value = newReasons
+  priorityReasons.value = { ...priorityReasons.value, [student.userId]: [reason] }
 
   toast.add({
     severity: 'success',
@@ -696,16 +745,16 @@ const addPriorityStudent = (student) => {
     detail: `${student.prenom} ${student.nom} ajouté aux prioritaires`,
     life: 3000
   })
+
+  // Sauvegarder en arrière-plan (non-bloquant)
+  savePriorityDraft()
 }
 
 const removePriorityStudent = (userId) => {
-  const newIds = new Set(priorityStudentIds.value)
-  newIds.delete(userId)
-  priorityStudentIds.value = newIds
+  priorityStudentIds.value = priorityStudentIds.value.filter(id => id !== userId)
 
-  const newReasons = new Map(priorityReasons.value)
-  newReasons.delete(userId)
-  priorityReasons.value = newReasons
+  const { [userId]: _, ...rest } = priorityReasons.value
+  priorityReasons.value = rest
 
   toast.add({
     severity: 'info',
@@ -713,6 +762,9 @@ const removePriorityStudent = (userId) => {
     detail: 'Étudiant retiré de la liste prioritaire',
     life: 3000
   })
+
+  // Sauvegarder en arrière-plan (non-bloquant)
+  savePriorityDraft()
 }
 
 // ============================================
@@ -724,14 +776,16 @@ const openPriorityVotation = async () => {
 
   try {
     const userId = userStore.user?.id || null
-    const priorityIds = Array.from(priorityStudentIds.value)
+    const priorityIds = [...priorityStudentIds.value]
+    const reasons = { ...priorityReasons.value }
 
     const session = await votationSessionService.openPrioritySession(
       filterPFP.value,
       filterYear.value,
       filterClasse.value,
       userId,
-      priorityIds
+      priorityIds,
+      reasons
     )
 
     currentPrioritySession.value = session

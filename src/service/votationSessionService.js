@@ -139,28 +139,39 @@ const votationSessionService = {
    * @param {string} userId - ID de l'admin
    * @param {Array<string>} priorityUserIds - Liste des user_id prioritaires
    */
-  async openPrioritySession(pfpType, year, targetClass, userId, priorityUserIds = []) {
+  async openPrioritySession(pfpType, year, targetClass, userId, priorityUserIds = [], priorityReasons = null) {
     // Fermer toute session prioritaire existante pour ce PFP/année
     await this.closePrioritySession(pfpType, year)
 
-    const { data, error } = await supabase
+    // Supprimer les brouillons existants (status=closed + opened_at is null)
+    await supabase
       .from(TABLE)
-      .insert({
-        pfp_type: pfpType,
-        year: year,
-        target_class: targetClass,
-        status: 'open',
-        opened_at: new Date().toISOString(),
-        opened_by: userId,
-        closed_at: null,
-        is_priority: true,
-        priority_user_ids: priorityUserIds
-      })
-      .select()
-      .single()
+      .delete()
+      .eq('pfp_type', pfpType)
+      .eq('year', year)
+      .eq('is_priority', true)
+      .eq('status', 'closed')
+      .is('opened_at', null)
 
-    if (error) throw error
-    return data
+    const basePayload = {
+      pfp_type: pfpType,
+      year: year,
+      target_class: targetClass,
+      status: 'open',
+      opened_at: new Date().toISOString(),
+      opened_by: userId,
+      closed_at: null,
+      is_priority: true,
+      priority_user_ids: priorityUserIds
+    }
+
+    // Tenter avec priority_reasons, fallback sans
+    let res = await supabase.from(TABLE).insert({ ...basePayload, priority_reasons: priorityReasons }).select().single()
+    if (res.error && res.error.message?.includes('priority_reasons')) {
+      res = await supabase.from(TABLE).insert(basePayload).select().single()
+    }
+    if (res.error) throw res.error
+    return res.data
   },
 
   /**
@@ -196,6 +207,82 @@ const votationSessionService = {
 
     if (error) throw error
     return data
+  },
+
+  /**
+   * Sauvegarder un brouillon de liste prioritaire
+   * Brouillon = status 'closed' + opened_at NULL (distingue des vraies sessions fermées)
+   * Upsert : si un brouillon existe déjà pour ce PFP/année, on le met à jour
+   */
+  async savePriorityDraft(pfpType, year, targetClass, priorityUserIds = [], reasons = {}) {
+    // Chercher un brouillon existant (closed + jamais ouvert)
+    const { data: existing } = await supabase
+      .from(TABLE)
+      .select('id')
+      .eq('pfp_type', pfpType)
+      .eq('year', year)
+      .eq('is_priority', true)
+      .eq('status', 'closed')
+      .is('opened_at', null)
+      .maybeSingle()
+
+    // Tenter avec priority_reasons, fallback sans si la colonne n'existe pas
+    const tryWithReasons = (payload) => {
+      return { ...payload, priority_reasons: reasons }
+    }
+    const tryWithoutReasons = (payload) => {
+      const p = { ...payload }
+      delete p.priority_reasons
+      return p
+    }
+
+    if (existing) {
+      const basePayload = { target_class: targetClass, priority_user_ids: priorityUserIds }
+      let res = await supabase.from(TABLE).update(tryWithReasons(basePayload)).eq('id', existing.id).select().single()
+      if (res.error && res.error.message?.includes('priority_reasons')) {
+        res = await supabase.from(TABLE).update(tryWithoutReasons(basePayload)).eq('id', existing.id).select().single()
+      }
+      if (res.error) throw res.error
+      return res.data
+    } else {
+      const basePayload = { pfp_type: pfpType, year: year, target_class: targetClass, status: 'closed', is_priority: true, priority_user_ids: priorityUserIds, opened_at: null, closed_at: null }
+      let res = await supabase.from(TABLE).insert(tryWithReasons(basePayload)).select().single()
+      if (res.error && res.error.message?.includes('priority_reasons')) {
+        res = await supabase.from(TABLE).insert(tryWithoutReasons(basePayload)).select().single()
+      }
+      if (res.error) throw res.error
+      return res.data
+    }
+  },
+
+  /**
+   * Récupérer le brouillon prioritaire (draft) ou la session ouverte
+   */
+  async getPriorityDraftOrSession(pfpType, year) {
+    // Chercher d'abord une session ouverte
+    const { data: openSession } = await supabase
+      .from(TABLE)
+      .select('*')
+      .eq('pfp_type', pfpType)
+      .eq('year', year)
+      .eq('is_priority', true)
+      .eq('status', 'open')
+      .maybeSingle()
+
+    if (openSession) return openSession
+
+    // Sinon chercher un brouillon (closed + jamais ouvert)
+    const { data: draft } = await supabase
+      .from(TABLE)
+      .select('*')
+      .eq('pfp_type', pfpType)
+      .eq('year', year)
+      .eq('is_priority', true)
+      .eq('status', 'closed')
+      .is('opened_at', null)
+      .maybeSingle()
+
+    return draft || null
   }
 }
 
