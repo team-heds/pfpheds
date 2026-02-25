@@ -287,7 +287,7 @@
     authLoading.value = true
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email.value, {
-        redirectTo: 'https://hedsvs.ch/reset-password'   // <<< ta page dédiée
+        redirectTo: `${window.location.origin}/reset-password`
       })
       if (error) throw error
       toast.add({ severity: 'success', summary: 'E-mail envoyé', detail: 'Vérifie ta boîte mail', life: 4000 })

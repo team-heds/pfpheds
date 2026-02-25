@@ -83,96 +83,91 @@ const ok = ref(false)
 
 onMounted(async () => {
   console.log('ResetPassword: Montage du composant')
-  console.log('ResetPassword: URL actuelle:', window.location.href)
-  console.log('ResetPassword: Hash:', window.location.hash)
-  console.log('ResetPassword: Search:', window.location.search)
+  console.log('ResetPassword: URL:', window.location.href)
 
-  // Sécurité : timeout pour forcer l'affichage si Supabase ne répond pas
+  // Timeout de sécurité
   const safetyTimeout = setTimeout(() => {
     if (!ready.value) {
-      console.warn('ResetPassword: Timeout vérification, affichage état actuel')
+      console.warn('ResetPassword: Timeout, affichage forcé')
       ready.value = true
     }
-  }, 4000)
-
-  // Fonction de vérification de session avec retry
-  const checkSession = async (attempts = 0) => {
-    if (recoveryActive.value) return true
-
-    const { data } = await supabase.auth.getSession()
-    if (data?.session) {
-      console.log('ResetPassword: Session trouvée (tentative ' + attempts + ')')
-      recoveryActive.value = true
-      ready.value = true
-      return true
-    }
-    
-    if (attempts < 5) {
-      setTimeout(() => checkSession(attempts + 1), 500)
-      return false
-    }
-    return false
-  }
+  }, 6000)
 
   try {
-    // 1. Démarrer le polling de session
-    checkSession()
-
-    // 2. Écouteur d'événements
-    supabase.auth.onAuthStateChange((event, session) => {
+    // 1. Écouter les événements auth (enregistrer AVANT tout échange)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, sess) => {
       console.log('ResetPassword Auth Event:', event)
-      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
+      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && sess)) {
         recoveryActive.value = true
         ready.value = true
       }
     })
-    
-    // 3. Vérification via AuthStore
-    if (authStore.user) {
-        console.log('ResetPassword: User trouvé via AuthStore')
-        recoveryActive.value = true
-        ready.value = true
-    }
 
-    // 4. Fallback : tokens dans URL (Implicit Flow) ou Code (PKCE Flow)
-    const hash = window.location.hash
+    // 2. Tenter l'échange du code PKCE si présent dans l'URL
     const searchParams = new URLSearchParams(window.location.search)
     const code = searchParams.get('code')
 
+    if (code) {
+      console.log('ResetPassword: Code PKCE détecté, échange en cours...')
+      try {
+        const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+        if (exchangeError) {
+          // Si "code already used" → la session a déjà été créée par detectSessionInUrl
+          if (exchangeError.message?.includes('already') || exchangeError.message?.includes('expired')) {
+            console.warn('ResetPassword: Code déjà utilisé, vérification session existante...')
+          } else {
+            throw exchangeError
+          }
+        } else if (data?.session) {
+          console.log('ResetPassword: Code échangé avec succès')
+          recoveryActive.value = true
+          ready.value = true
+        }
+      } catch (e) {
+        console.error('ResetPassword: Erreur échange code PKCE:', e.message)
+      }
+    }
+
+    // 3. Fallback Implicit Flow (hash avec access_token)
+    const hash = window.location.hash
+    if (!recoveryActive.value && hash && hash.includes('access_token')) {
+      console.log('ResetPassword: Tokens détectés dans URL (Implicit)')
+      const params = new URLSearchParams(hash.substring(1))
+      const access_token = params.get('access_token')
+      const refresh_token = params.get('refresh_token')
+      if (access_token) {
+        const { error: sessErr } = await supabase.auth.setSession({ access_token, refresh_token: refresh_token || '' })
+        if (!sessErr) {
+          recoveryActive.value = true
+          ready.value = true
+        }
+      }
+    }
+
+    // 4. Vérifier si une session existe déjà (code échangé par detectSessionInUrl)
     if (!recoveryActive.value) {
-        // Cas 4a : PKCE Flow (code dans query params)
-        if (code) {
-            console.log('ResetPassword: Code PKCE détecté, tentative d\'échange...')
-            try {
-                const { data, error } = await supabase.auth.exchangeCodeForSession(code)
-                if (error) throw error
-                if (data?.session) {
-                    console.log('ResetPassword: Code échangé avec succès')
-                    recoveryActive.value = true
-                }
-            } catch (e) {
-                console.error('ResetPassword: Erreur échange code', e)
-                // On laisse Supabase réessayer via detectSessionInUrl si ça a échoué ici mais que c'était peut-être déjà en cours
-            }
+      // Petit délai pour laisser detectSessionInUrl finir
+      await new Promise(r => setTimeout(r, 500))
+      const { data } = await supabase.auth.getSession()
+      if (data?.session) {
+        console.log('ResetPassword: Session existante détectée')
+        recoveryActive.value = true
+        ready.value = true
+      }
+    }
+
+    // 5. Retry polling si toujours rien
+    if (!recoveryActive.value) {
+      for (let i = 0; i < 5; i++) {
+        await new Promise(r => setTimeout(r, 800))
+        const { data } = await supabase.auth.getSession()
+        if (data?.session) {
+          console.log('ResetPassword: Session trouvée (polling tentative ' + (i + 1) + ')')
+          recoveryActive.value = true
+          ready.value = true
+          break
         }
-        // Cas 4b : Implicit Flow (hash)
-        else if (hash && hash.includes('access_token') && (hash.includes('type=recovery') || hash.includes('type=magiclink'))) {
-            console.log('ResetPassword: Tokens détectés dans URL (Implicit)')
-            const params = new URLSearchParams(hash.substring(1))
-            const access_token = params.get('access_token')
-            const refresh_token = params.get('refresh_token')
-            
-            if (access_token) {
-                const { error } = await supabase.auth.setSession({
-                    access_token,
-                    refresh_token: refresh_token || ''
-                })
-                if (!error) {
-                    recoveryActive.value = true
-                    console.log('ResetPassword: Session restaurée manuellement')
-                }
-            }
-        }
+      }
     }
   } catch (e) {
     console.error('ResetPassword Error:', e)

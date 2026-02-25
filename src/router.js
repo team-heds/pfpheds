@@ -757,6 +757,11 @@ router.beforeEach(async (to, from, next) => {
     }
   }
   
+  // Ne pas vérifier l'auth pour les pages de reset password (évite de consommer le code PKCE)
+  if (to.path === '/reset-password' || to.path === '/new-password') {
+    return next();
+  }
+
   // Vérifiez si l'état d'authentification est déjà récupéré
   if (!isAuthStateChecked) {
     await authStore.checkAuthState();
