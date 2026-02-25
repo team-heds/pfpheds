@@ -1,13 +1,6 @@
-﻿<template>
+<template>
   <div class="theme-switch">
-    <input
-      type="checkbox"
-      class="checkbox"
-      id="theme-checkbox"
-      v-model="isDimTheme"
-      @change="toggleTheme"
-    />
-    <label for="theme-checkbox" class="label">
+    <label class="label" @click="toggleTheme">
       <div class="icon-wrapper">
         <i
           v-if="!isDimTheme"
@@ -25,32 +18,44 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from "vue";
+import { ref, onMounted } from "vue";
 import { useLayout } from "@/layout/composables/layout";
 
 const { layoutConfig } = useLayout();
 const isDimTheme = ref(layoutConfig.colorScheme.value === "dim");
 
-onMounted(() => {
-  toggleTheme();
-});
+const detectCurrentScheme = () => {
+  const themeLink = document.getElementById("theme-link");
+  if (!themeLink) return null;
+  const href = themeLink.getAttribute("href") || '';
+  if (href.includes('theme-dim')) return 'dim';
+  if (href.includes('theme-light')) return 'light';
+  if (href.includes('theme-dark')) return 'dark';
+  return null;
+};
 
-watch(isDimTheme, (newValue) => {
-  const newScheme = newValue ? "dim" : "light";
-  changeColorScheme(newScheme);
+onMounted(() => {
+  const actual = detectCurrentScheme();
+  if (actual) {
+    layoutConfig.colorScheme.value = actual;
+    isDimTheme.value = actual === 'dim';
+  }
 });
 
 const toggleTheme = () => {
-  const theme = isDimTheme.value ? "dim" : "light";
-  changeColorScheme(theme);
+  isDimTheme.value = !isDimTheme.value;
+  const newScheme = isDimTheme.value ? "dim" : "light";
+  changeColorScheme(newScheme);
 };
 
 const changeColorScheme = (newColorScheme) => {
   const themeLink = document.getElementById("theme-link");
   if (!themeLink) return;
 
-  const currentTheme = layoutConfig.colorScheme.value;
-  const newHref = themeLink.getAttribute("href").replace(currentTheme, newColorScheme);
+  const href = themeLink.getAttribute("href");
+  const newHref = href.replace(/theme-(dim|light|dark)/g, 'theme-' + newColorScheme);
+
+  if (newHref === href) return;
 
   replaceLink(themeLink, newHref, () => {
     layoutConfig.colorScheme.value = newColorScheme;
@@ -58,6 +63,8 @@ const changeColorScheme = (newColorScheme) => {
 };
 
 const replaceLink = (linkElement, href, onComplete) => {
+  if (!linkElement || !href) return;
+
   const id = linkElement.getAttribute("id");
   const cloneLinkElement = linkElement.cloneNode(true);
 
@@ -68,10 +75,8 @@ const replaceLink = (linkElement, href, onComplete) => {
 
   cloneLinkElement.addEventListener("load", () => {
     linkElement.remove();
-    const element = document.getElementById(id);
-    element && element.remove();
     cloneLinkElement.setAttribute("id", id);
-    onComplete && onComplete();
+    if (onComplete) onComplete();
   });
 };
 </script>
@@ -82,13 +87,6 @@ const replaceLink = (linkElement, href, onComplete) => {
   display: flex;
   justify-content: center;
   align-items: center;
-}
-
-.theme-switch .checkbox {
-  opacity: 0;
-  position: absolute;
-  width: 0;
-  height: 0;
 }
 
 .theme-switch .label {
