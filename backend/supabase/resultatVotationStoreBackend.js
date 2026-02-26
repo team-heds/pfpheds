@@ -70,19 +70,52 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
     console.log(`   Étudiants à traiter: ${students.length}`)
     console.log(`   Places disponibles: ${places.length}`)
 
+    // 🛡️ ÉTAPE 0: Charger les assignations existantes (manuelles, prioritaires, etc.)
+    // pour ne pas les écraser et respecter la capacité déjà utilisée
+    const { data: existingAssignments, error: existingError } = await supabase
+      .from('student_result_vote')
+      .select('user_id, assigned_place_id, assigned_rank, status, notes')
+      .eq('pfp_type', pfpType)
+      .eq('year', year)
+
+    if (existingError) {
+      console.warn('⚠️ Impossible de charger les assignations existantes:', existingError.message)
+    }
+
+    const preAssigned = new Set()
+    const preAssignedByPlace = new Map() // PlaceId → count
+    if (existingAssignments && existingAssignments.length > 0) {
+      existingAssignments.forEach(a => {
+        if (a.assigned_place_id && a.user_id) {
+          preAssigned.add(a.user_id)
+          preAssignedByPlace.set(
+            a.assigned_place_id,
+            (preAssignedByPlace.get(a.assigned_place_id) || 0) + 1
+          )
+        }
+      })
+      console.log(`🛡️ ${preAssigned.size} étudiants déjà assignés (manuel/prioritaire/précédent) — exclus de l'algorithme`)
+      console.log(`🛡️ ${preAssignedByPlace.size} places ont déjà des assignations`)
+    }
+
+    // Filtrer les étudiants : exclure ceux déjà assignés
+    const eligibleStudents = students.filter(s => !preAssigned.has(s.userId))
+    console.log(`   Étudiants éligibles (après exclusion): ${eligibleStudents.length}/${students.length}`)
+
     // Créer un mapping des places disponibles avec leur capacité
     const placesMap = new Map()
     places.forEach(place => {
+      const alreadyUsed = preAssignedByPlace.get(place.PlaceId) || 0
       placesMap.set(place.PlaceId, {
         ...place,
-        remainingCapacity: place.Capacity || 1,
+        remainingCapacity: Math.max(0, (place.Capacity || 1) - alreadyUsed),
         assignedStudents: [],
         voteCount: 0 // Compteur de votes pour cette place
       })
     })
 
     // 🎯 ÉTAPE 1: Calculer la popularité de chaque place (nombre de fois qu'elle apparaît dans les votes)
-    students.forEach(student => {
+    eligibleStudents.forEach(student => {
       const choices = student.choices || []
       choices.forEach(choice => {
         const placeData = placesMap.get(choice.placeId)
@@ -108,17 +141,20 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
 
     // 🚀 OPTIMISATION: Collecter tous les résultats puis faire un batch insert
     const resultsToInsert = []
-    const assignedStudents = new Set() // Suivre les étudiants déjà assignés
+    const assignedStudents = new Set() // Suivre les étudiants déjà assignés par cet algorithme
 
     // 🎯 ÉTAPE 2: Traiter les places par ordre de popularité croissante (moins demandées d'abord)
     console.log('🔄 Attribution par places (moins populaires → plus populaires)...')
     
     for (const placeData of sortedPlacesByPopularity) {
+      // Ignorer les places sans capacité restante (déjà remplies par assignations manuelles)
+      if (placeData.remainingCapacity <= 0) continue
+
       // Trouver tous les étudiants qui ont choisi cette place et qui ne sont pas encore assignés
       const candidatesForPlace = []
       
-      students.forEach(student => {
-        // Ignorer si déjà assigné
+      eligibleStudents.forEach(student => {
+        // Ignorer si déjà assigné par cet algorithme
         if (assignedStudents.has(student.userId)) return
         
         const choices = student.choices || []
@@ -145,8 +181,8 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
         return Math.random() - 0.5
       })
 
-      // Assigner jusqu'à la capacité de la place
-      const toAssign = Math.min(candidatesForPlace.length, placeData.Capacity)
+      // Assigner jusqu'à la capacité restante de la place
+      const toAssign = Math.min(candidatesForPlace.length, placeData.remainingCapacity)
       
       for (let i = 0; i < toAssign; i++) {
         const candidate = candidatesForPlace[i]
@@ -186,8 +222,8 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
       .filter(p => p.remainingCapacity > 0)
       .sort(() => Math.random() - 0.5) // Mélanger aléatoirement
     
-    // Trouver les étudiants non assignés
-    const studentsNonAssignes = students
+    // Trouver les étudiants non assignés (parmi les éligibles uniquement)
+    const studentsNonAssignes = eligibleStudents
       .filter(s => !assignedStudents.has(s.userId))
       .sort(() => Math.random() - 0.5) // Mélanger aléatoirement
     
@@ -268,6 +304,8 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
     
     const stats = {
       totalStudents: students.length,
+      preAssignedCount: preAssigned.size,
+      eligibleStudents: eligibleStudents.length,
       successfulAssignments: resultsToInsert.length,
       failedAssignments: errors.length,
       placesUsed: placesUsedCount,

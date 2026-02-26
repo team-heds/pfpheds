@@ -409,6 +409,7 @@ import Badge from 'primevue/badge';
 import Tag from 'primevue/tag';
 import Dropdown from 'primevue/dropdown';
 import planningService from '@/service/planningService';
+import academicYearService from '@/service/academicYearService';
 import { getMyModules, getModulesTeachers, calculateStats } from '@/services/rmDashboardService';
 import { useModules } from '@/composables/useModules';
 import { supabase } from '@/supabase';
@@ -470,6 +471,7 @@ const mySlotsWeek = ref(null);
 const mySlotsViewAll = ref(false);
 const userDisplayName = ref('');
 const courseModulesMap = ref([]);
+const academicStartYear = ref(null);
 
 const isoWeeksInYear = (year) => {
   const jan1 = new Date(year, 0, 1)
@@ -481,7 +483,7 @@ const mySlotsWeekOptions = computed(() => {
   const weeks = []
   const now = new Date()
   const currentMonth = now.getMonth() + 1
-  const aYear = currentMonth >= 8 ? now.getFullYear() : now.getFullYear() - 1
+  const aYear = academicStartYear.value || (currentMonth >= 8 ? now.getFullYear() : now.getFullYear() - 1)
   const maxAutumnWeek = isoWeeksInYear(aYear)
   for (let w = 38; w <= maxAutumnWeek; w++) weeks.push({ label: `Semaine ${w} (Automne)`, value: w })
   for (let w = 1; w <= 7; w++) weeks.push({ label: `Semaine ${w} (Automne)`, value: w })
@@ -544,7 +546,7 @@ const calendarColumns = computed(() => {
   const weekDates = {}
   if (mySlotsWeek.value) {
     calendarDays.forEach((d, i) => {
-      weekDates[d] = planningService.getDateForWeekAndDay(mySlotsWeek.value, i)
+      weekDates[d] = planningService.getDateForWeekAndDay(mySlotsWeek.value, i, academicStartYear.value)
     })
   }
   return calendarDays.map(d => ({
@@ -715,6 +717,22 @@ async function loadRMData() {
     // 10. Charger profil utilisateur + modules pour la section "Mes cours"
     await loadUserProfile();
     courseModulesMap.value = await planningService.getAllCourseModules();
+    
+    // 11. Charger l'année académique active pour le calcul des dates
+    try {
+      const activeYear = await academicYearService.getActiveAcademicYear();
+      if (activeYear) {
+        if (activeYear.name) {
+          const match = activeYear.name.match(/(\d{4})/);
+          if (match) academicStartYear.value = parseInt(match[1]);
+        }
+        if (!academicStartYear.value && activeYear.start_date) {
+          academicStartYear.value = new Date(activeYear.start_date).getFullYear();
+        }
+      }
+    } catch (e) {
+      console.warn('⚠️ Impossible de charger l\'année académique:', e);
+    }
     
     // Sélectionner la semaine courante
     const nowW = new Date()
@@ -922,11 +940,15 @@ async function exportMyCoursesICS() {
   const stamp = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}T${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}${String(now.getSeconds()).padStart(2,'0')}`
 
   for (const slot of allMySlots.value) {
-    // Calculer la date si pas stockée
-    let dateObj = parseDateDDMMYYYY(slot.date)
-    if (!dateObj && slot.week_number && slot.day_index != null) {
-      const dateStr = planningService.getDateForWeekAndDay(slot.week_number, slot.day_index)
+    // Toujours recalculer la date depuis week_number + day_index (la date stockée en base peut être obsolète)
+    let dateObj = null
+    if (slot.week_number && slot.day_index != null) {
+      const dateStr = planningService.getDateForWeekAndDay(slot.week_number, slot.day_index, academicStartYear.value)
       dateObj = parseDateDDMMYYYY(dateStr)
+    }
+    // Fallback sur la date stockée si le recalcul a échoué
+    if (!dateObj) {
+      dateObj = parseDateDDMMYYYY(slot.date)
     }
     if (!dateObj || !slot.start_time || !slot.end_time) continue
 
