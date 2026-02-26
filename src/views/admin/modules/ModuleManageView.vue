@@ -71,51 +71,12 @@
                 </div>
                 <div class="flex align-items-center gap-2 flex-wrap">
                   <Button 
-                    v-if="availableClasses.includes('BAC24')"
-                    label="BAC24"
-                    :severity="selectedClass === 'BAC24' ? 'primary' : 'secondary'"
-                    :outlined="selectedClass !== 'BAC24'"
-                    @click="selectedClass = selectedClass === 'BAC24' ? null : 'BAC24'"
-                    size="small"
-                  />
-                  <Button 
-                    v-if="availableClasses.includes('BAC24-TP')"
-                    label="BAC24-TP"
-                    :severity="selectedClass === 'BAC24-TP' ? 'primary' : 'secondary'"
-                    :outlined="selectedClass !== 'BAC24-TP'"
-                    @click="selectedClass = selectedClass === 'BAC24-TP' ? null : 'BAC24-TP'"
-                    size="small"
-                  />
-                  <Button 
-                    v-if="availableClasses.includes('BAC25')"
-                    label="BAC25"
-                    :severity="selectedClass === 'BAC25' ? 'primary' : 'secondary'"
-                    :outlined="selectedClass !== 'BAC25'"
-                    @click="selectedClass = selectedClass === 'BAC25' ? null : 'BAC25'"
-                    size="small"
-                  />
-                  <Button 
-                    v-if="availableClasses.includes('BAC25-TP')"
-                    label="BAC25-TP"
-                    :severity="selectedClass === 'BAC25-TP' ? 'primary' : 'secondary'"
-                    :outlined="selectedClass !== 'BAC25-TP'"
-                    @click="selectedClass = selectedClass === 'BAC25-TP' ? null : 'BAC25-TP'"
-                    size="small"
-                  />
-                  <Button 
-                    v-if="availableClasses.includes('BAC26')"
-                    label="BAC26"
-                    :severity="selectedClass === 'BAC26' ? 'primary' : 'secondary'"
-                    :outlined="selectedClass !== 'BAC26'"
-                    @click="selectedClass = selectedClass === 'BAC26' ? null : 'BAC26'"
-                    size="small"
-                  />
-                  <Button 
-                    v-if="availableClasses.includes('BAC26-TP')"
-                    label="BAC26-TP"
-                    :severity="selectedClass === 'BAC26-TP' ? 'primary' : 'secondary'"
-                    :outlined="selectedClass !== 'BAC26-TP'"
-                    @click="selectedClass = selectedClass === 'BAC26-TP' ? null : 'BAC26-TP'"
+                    v-for="cls in allClassOptions"
+                    :key="cls"
+                    :label="cls"
+                    :severity="selectedClass === cls ? 'primary' : 'secondary'"
+                    :outlined="selectedClass !== cls"
+                    @click="selectedClass = selectedClass === cls ? null : cls"
                     size="small"
                   />
                   <Button 
@@ -161,54 +122,31 @@
                 <ProgressSpinner style="width: 40px; height: 40px" />
               </div>
               
-              <div v-else-if="filteredPlanning.length === 0" class="text-center p-5">
+              <div v-else-if="filteredPlanning.length === 0 && !selectedClass" class="text-center p-5">
                 <i class="pi pi-hand-pointer text-6xl text-400 mb-3"></i>
                 <h4>Sélectionnez une classe</h4>
                 <p class="text-600 mb-4">Sélectionnez une classe pour voir le planning</p>
                 <div class="flex justify-content-center gap-2 flex-wrap">
                   <Button 
-                    v-if="availableClasses.includes('BAC24')"
-                    label="BAC24"
-                    :severity="selectedClass === 'BAC24' ? 'primary' : 'secondary'"
-                    :outlined="selectedClass !== 'BAC24'"
-                    @click="selectedClass = selectedClass === 'BAC24' ? null : 'BAC24'"
-                  />
-                  <Button 
-                    v-if="availableClasses.includes('BAC24-TP')"
-                    label="BAC24-TP"
-                    :severity="selectedClass === 'BAC24-TP' ? 'primary' : 'secondary'"
-                    :outlined="selectedClass !== 'BAC24-TP'"
-                    @click="selectedClass = selectedClass === 'BAC24-TP' ? null : 'BAC24-TP'"
-                  />
-                  <Button 
-                    v-if="availableClasses.includes('BAC25')"
-                    label="BAC25"
-                    :severity="selectedClass === 'BAC25' ? 'primary' : 'secondary'"
-                    :outlined="selectedClass !== 'BAC25'"
-                    @click="selectedClass = selectedClass === 'BAC25' ? null : 'BAC25'"
-                  />
-                  <Button 
-                    v-if="availableClasses.includes('BAC25-TP')"
-                    label="BAC25-TP"
-                    :severity="selectedClass === 'BAC25-TP' ? 'primary' : 'secondary'"
-                    :outlined="selectedClass !== 'BAC25-TP'"
-                    @click="selectedClass = selectedClass === 'BAC25-TP' ? null : 'BAC25-TP'"
-                  />
-                  <Button 
-                    v-if="availableClasses.includes('BAC26')"
-                    label="BAC26"
-                    :severity="selectedClass === 'BAC26' ? 'primary' : 'secondary'"
-                    :outlined="selectedClass !== 'BAC26'"
-                    @click="selectedClass = selectedClass === 'BAC26' ? null : 'BAC26'"
-                  />
-                  <Button 
-                    v-if="availableClasses.includes('BAC26-TP')"
-                    label="BAC26-TP"
-                    :severity="selectedClass === 'BAC26-TP' ? 'primary' : 'secondary'"
-                    :outlined="selectedClass !== 'BAC26-TP'"
-                    @click="selectedClass = selectedClass === 'BAC26-TP' ? null : 'BAC26-TP'"
+                    v-for="cls in allClassOptions"
+                    :key="cls"
+                    :label="cls"
+                    :severity="selectedClass === cls ? 'primary' : 'secondary'"
+                    :outlined="selectedClass !== cls"
+                    @click="selectedClass = cls"
                   />
                 </div>
+              </div>
+
+              <div v-else-if="filteredPlanning.length === 0 && selectedClass" class="text-center p-5">
+                <i class="pi pi-calendar-plus text-6xl text-400 mb-3"></i>
+                <h4>Aucune séance pour {{ selectedClass }}</h4>
+                <p class="text-600 mb-4">Ce module n'a pas encore de séances pour cette classe. Ajoutez la première séance.</p>
+                <Button 
+                  label="Ajouter une séance" 
+                  icon="pi pi-plus" 
+                  @click="addSessionToWeek(1)"
+                />
               </div>
 
               <!-- Vue Liste -->
@@ -514,51 +452,12 @@
                 <div class="flex align-items-center gap-2 flex-wrap">
                   <!-- Filtre par type de classe (comme le planning) -->
                   <Button 
-                    v-if="availableClasses.includes('BAC24')"
-                    label="BAC24"
-                    :severity="classFilter === 'BAC24' ? 'primary' : 'secondary'"
-                    :outlined="classFilter !== 'BAC24'"
-                    @click="classFilter = classFilter === 'BAC24' ? null : 'BAC24'"
-                    size="small"
-                  />
-                  <Button 
-                    v-if="availableClasses.includes('BAC24-TP')"
-                    label="BAC24-TP"
-                    :severity="classFilter === 'BAC24-TP' ? 'primary' : 'secondary'"
-                    :outlined="classFilter !== 'BAC24-TP'"
-                    @click="classFilter = classFilter === 'BAC24-TP' ? null : 'BAC24-TP'"
-                    size="small"
-                  />
-                  <Button 
-                    v-if="availableClasses.includes('BAC25')"
-                    label="BAC25"
-                    :severity="classFilter === 'BAC25' ? 'primary' : 'secondary'"
-                    :outlined="classFilter !== 'BAC25'"
-                    @click="classFilter = classFilter === 'BAC25' ? null : 'BAC25'"
-                    size="small"
-                  />
-                  <Button 
-                    v-if="availableClasses.includes('BAC25-TP')"
-                    label="BAC25-TP"
-                    :severity="classFilter === 'BAC25-TP' ? 'primary' : 'secondary'"
-                    :outlined="classFilter !== 'BAC25-TP'"
-                    @click="classFilter = classFilter === 'BAC25-TP' ? null : 'BAC25-TP'"
-                    size="small"
-                  />
-                  <Button 
-                    v-if="availableClasses.includes('BAC26')"
-                    label="BAC26"
-                    :severity="classFilter === 'BAC26' ? 'primary' : 'secondary'"
-                    :outlined="classFilter !== 'BAC26'"
-                    @click="classFilter = classFilter === 'BAC26' ? null : 'BAC26'"
-                    size="small"
-                  />
-                  <Button 
-                    v-if="availableClasses.includes('BAC26-TP')"
-                    label="BAC26-TP"
-                    :severity="classFilter === 'BAC26-TP' ? 'primary' : 'secondary'"
-                    :outlined="classFilter !== 'BAC26-TP'"
-                    @click="classFilter = classFilter === 'BAC26-TP' ? null : 'BAC26-TP'"
+                    v-for="cls in allClassOptions"
+                    :key="cls"
+                    :label="cls"
+                    :severity="classFilter === cls ? 'primary' : 'secondary'"
+                    :outlined="classFilter !== cls"
+                    @click="classFilter = classFilter === cls ? null : cls"
                     size="small"
                   />
                   
@@ -1276,6 +1175,9 @@ const normalizeClass = (code) => {
   if (!code) return ''
   return code.toUpperCase().trim()
 }
+
+// Toutes les classes possibles (toujours affichées pour permettre l'ajout de séances)
+const allClassOptions = ['BAC24', 'BAC24-TP', 'BAC25', 'BAC25-TP', 'BAC26', 'BAC26-TP']
 
 // Classes disponibles dans le planning (pour n'afficher que les boutons pertinents)
 const availableClasses = computed(() => {
