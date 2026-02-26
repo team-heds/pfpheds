@@ -154,6 +154,105 @@
           </div>
         </div>
 
+        <!-- Panneau Propositions PFP4 -->
+        <div v-if="filterPFP === 'PFP4'" class="surface-card p-4 border-round shadow-2 mb-3 border-1 border-yellow-300" style="background: #FFFBEB;">
+          <div class="flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
+            <div>
+              <div class="flex align-items-center gap-2">
+                <i class="pi pi-filter-fill text-xl text-yellow-600"></i>
+                <h3 class="text-lg font-bold m-0" style="color: #92400E;">Propositions PFP4 — Places par étudiant</h3>
+              </div>
+              <p class="m-0 mt-1 text-sm" style="color: #A16207;">
+                Générer les places proposées selon les critères manquants (aussi pour les prioritaires)
+              </p>
+            </div>
+            <div class="flex gap-2">
+              <Button icon="pi pi-cog" label="Générer" severity="warning" @click="generatePfp4Proposals" :loading="pfp4Loading" />
+              <Button v-if="pfp4Proposals.length > 0" icon="pi pi-save" label="Sauvegarder"
+                :severity="pfp4Saved ? 'success' : 'info'" :outlined="pfp4Saved"
+                @click="savePfp4Proposals" :loading="pfp4Loading" :disabled="pfp4Saved" />
+            </div>
+          </div>
+
+          <!-- Stats -->
+          <div v-if="pfp4Stats" class="flex flex-wrap gap-3 mb-3">
+            <div class="p-2 border-round text-center" style="background: rgba(245,158,11,0.1); min-width: 90px;">
+              <div class="text-lg font-bold" style="color: #92400E;">{{ pfp4Stats.totalStudents }}</div>
+              <div class="text-xs text-600">Étudiants</div>
+            </div>
+            <div class="p-2 border-round text-center" style="background: rgba(99,102,241,0.1); min-width: 90px;">
+              <div class="text-lg font-bold text-indigo-600">{{ pfp4Stats.totalPfp4Places }}</div>
+              <div class="text-xs text-600">Places PFP4</div>
+            </div>
+            <div class="p-2 border-round text-center" style="background: rgba(34,197,94,0.1); min-width: 90px;">
+              <div class="text-lg font-bold text-green-600">{{ pfp4Stats.averageProposedPlaces }}</div>
+              <div class="text-xs text-600">Moy./étudiant</div>
+            </div>
+            <div class="flex flex-wrap gap-1 align-items-center">
+              <Tag v-for="(count, rule) in pfp4Stats.ruleDistribution" :key="rule"
+                :value="`${pfp4RuleLabels[rule] || rule}: ${count}`"
+                :severity="pfp4RuleSeverity[rule] || 'secondary'" class="text-xs" />
+            </div>
+          </div>
+
+          <div v-if="pfp4Saved" class="flex align-items-center gap-2 p-2 border-round bg-green-50 border-1 border-green-300 mb-3">
+            <i class="pi pi-check-circle text-green-500"></i>
+            <span class="text-sm text-green-700 font-medium">Propositions sauvegardées ! Les étudiants verront uniquement leurs places proposées.</span>
+          </div>
+
+          <!-- Tableau compact -->
+          <div v-if="pfp4Proposals.length > 0">
+            <div class="flex align-items-center gap-3 mb-2">
+              <span class="p-input-icon-left">
+                <i class="pi pi-search" />
+                <InputText v-model="pfp4SearchQuery" placeholder="Rechercher..." class="w-12rem p-inputtext-sm" />
+              </span>
+              <Dropdown v-model="pfp4FilterRule"
+                :options="Object.entries(pfp4RuleLabels).map(([k, v]) => ({ label: v, value: k }))"
+                optionLabel="label" optionValue="value" placeholder="Filtrer par règle"
+                class="w-14rem" :showClear="true" />
+              <span class="text-sm text-600">{{ filteredPfp4Proposals.length }} / {{ pfp4Proposals.length }}</span>
+            </div>
+
+            <DataTable :value="filteredPfp4Proposals" responsiveLayout="scroll"
+              :paginator="true" :rows="15" :rowsPerPageOptions="[10, 15, 25, 50]"
+              paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
+              currentPageReportTemplate="{first}–{last} sur {totalRecords}"
+              sortField="nom" :sortOrder="1" stripedRows class="p-datatable-sm">
+
+              <Column field="nom" header="Nom" sortable :style="{ width: '130px' }">
+                <template #body="slotProps">
+                  <strong>{{ slotProps.data.nom.toUpperCase() }}</strong> {{ slotProps.data.prenom }}
+                </template>
+              </Column>
+
+              <Column header="Critères" :style="{ minWidth: '200px' }">
+                <template #body="slotProps">
+                  <div class="flex flex-wrap gap-1">
+                    <Tag v-for="c in ['MSQ', 'SYSINT', 'NEUROGER', 'AIGU', 'REHAB', 'AMBU', 'FR', 'DE']" :key="c"
+                      :value="c" :severity="slotProps.data.scores[c] > 0 ? 'success' : 'danger'"
+                      class="text-xs" :style="slotProps.data.scores[c] === 0 ? { opacity: 0.6 } : {}" />
+                  </div>
+                </template>
+              </Column>
+
+              <Column field="appliedRule" header="Règle" sortable :style="{ width: '170px' }">
+                <template #body="slotProps">
+                  <Tag :value="pfp4RuleLabels[slotProps.data.appliedRule] || slotProps.data.appliedRule"
+                    :severity="pfp4RuleSeverity[slotProps.data.appliedRule] || 'secondary'" class="text-xs" />
+                </template>
+              </Column>
+
+              <Column field="proposedPlacesCount" header="Places" sortable :style="{ width: '80px', textAlign: 'center' }">
+                <template #body="slotProps">
+                  <Tag :value="`${slotProps.data.proposedPlacesCount}`"
+                    :severity="slotProps.data.proposedPlacesCount >= 5 ? 'success' : 'warning'" rounded />
+                </template>
+              </Column>
+            </DataTable>
+          </div>
+        </div>
+
         <!-- Tableau des étudiants prioritaires -->
         <div class="surface-card p-4 border-round shadow-2 mb-3">
           <div class="flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
@@ -358,6 +457,7 @@ import { usePlacesStore } from '@/stores/placesStore'
 import { useInstitutionsStore } from '@/stores/institutionsStore'
 import { useUserStore } from '@/stores/userStore'
 import votationSessionService from '@/service/votationSessionService'
+import resultatVotationService from '@/stores/resultatVotationService'
 
 const toast = useToast()
 const userStore = useUserStore()
@@ -385,6 +485,93 @@ const showAddDialog = ref(false)
 const manualReason = ref('')
 
 const validatedPlacesCount = ref(0)
+
+// ============================================
+// PROPOSITIONS PFP4
+// ============================================
+const pfp4Proposals = ref([])
+const pfp4AllPlaces = ref([])
+const pfp4Stats = ref(null)
+const pfp4Loading = ref(false)
+const pfp4Saved = ref(false)
+const pfp4SearchQuery = ref('')
+const pfp4FilterRule = ref(null)
+
+const pfp4RuleLabels = {
+  DE_ONLY: 'Manque DE uniquement',
+  DE_AND_SYSINT: 'Manque DE + SYSINT',
+  SYSINT_ONLY: 'Manque SYSINT uniquement',
+  SYSINT_AND_OTHER: 'Manque SYSINT + autre',
+  OTHER_MISSING: 'Autres critères manquants',
+  ALL_COMPLETE: 'Tous critères validés'
+}
+
+const pfp4RuleSeverity = {
+  DE_ONLY: 'warning',
+  DE_AND_SYSINT: 'danger',
+  SYSINT_ONLY: 'info',
+  SYSINT_AND_OTHER: 'warning',
+  OTHER_MISSING: 'secondary',
+  ALL_COMPLETE: 'success'
+}
+
+const filteredPfp4Proposals = computed(() => {
+  let filtered = [...pfp4Proposals.value]
+  if (pfp4SearchQuery.value && pfp4SearchQuery.value.trim()) {
+    const q = pfp4SearchQuery.value.toLowerCase().trim()
+    filtered = filtered.filter(p =>
+      (p.nom || '').toLowerCase().includes(q) ||
+      (p.prenom || '').toLowerCase().includes(q)
+    )
+  }
+  if (pfp4FilterRule.value) {
+    filtered = filtered.filter(p => p.appliedRule === pfp4FilterRule.value)
+  }
+  return filtered
+})
+
+const generatePfp4Proposals = async () => {
+  if (!filterYear.value || !filterClasse.value) return
+  pfp4Loading.value = true
+  pfp4Saved.value = false
+  try {
+    const result = await resultatVotationService.generatePfp4Proposals(filterYear.value, filterClasse.value)
+    pfp4Proposals.value = result.proposals || []
+    pfp4AllPlaces.value = result.allPfp4Places || []
+    pfp4Stats.value = result.stats || null
+    toast.add({
+      severity: 'success',
+      summary: 'Propositions générées',
+      detail: `${pfp4Proposals.value.length} étudiants traités, moyenne ${pfp4Stats.value?.averageProposedPlaces || 0} places/étudiant`,
+      life: 5000
+    })
+  } catch (error) {
+    console.error('❌ Erreur génération propositions PFP4:', error)
+    toast.add({ severity: 'error', summary: 'Erreur', detail: error.message, life: 5000 })
+  } finally {
+    pfp4Loading.value = false
+  }
+}
+
+const savePfp4Proposals = async () => {
+  if (pfp4Proposals.value.length === 0) return
+  pfp4Loading.value = true
+  try {
+    await resultatVotationService.savePfp4Proposals(filterYear.value, filterClasse.value, pfp4Proposals.value)
+    pfp4Saved.value = true
+    toast.add({
+      severity: 'success',
+      summary: 'Propositions sauvegardées',
+      detail: `${pfp4Proposals.value.length} propositions sauvegardées. Les étudiants verront uniquement leurs places proposées lors du vote PFP4.`,
+      life: 8000
+    })
+  } catch (error) {
+    console.error('❌ Erreur sauvegarde propositions PFP4:', error)
+    toast.add({ severity: 'error', summary: 'Erreur', detail: error.message, life: 5000 })
+  } finally {
+    pfp4Loading.value = false
+  }
+}
 
 // ============================================
 // CONFIGURATION DYNAMIQUE

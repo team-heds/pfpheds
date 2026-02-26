@@ -362,6 +362,398 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
 })
 
 /**
+ * POST /api/resultat-votation/generate-pfp4-proposals
+ * Génère les propositions de places PFP4 pour chaque étudiant BA23
+ * basé sur leurs critères manquants (MSQ, SYSINT, NEUROGER, AIGU, REHAB, AMBU, FR, DE)
+ * 
+ * Règles de filtrage PFP4:
+ * 1. Manque DE uniquement → proposer uniquement les places DE
+ * 2. Manque DE + SYSINT → proposer toutes les places SYSINT + toutes les places DE
+ * 3. Manque SYSINT uniquement → proposer uniquement les places SYSINT
+ * 4. Manque SYSINT + autre(s) → proposer toutes les places SYSINT + toutes les places matchant les autres critères manquants
+ * 5. Manque autre(s) sans SYSINT ni DE → proposer toutes les places matchant n'importe quel critère manquant
+ */
+router.post('/generate-pfp4-proposals', requireAdmin, async (req, res) => {
+  try {
+    const { year, targetClass } = req.body
+
+    if (!year) {
+      return res.status(400).json({ ok: false, error: 'Missing required field: year' })
+    }
+
+    const classe = targetClass || 'BA23'
+    console.log(`🎯 Génération des propositions PFP4 pour ${classe} - ${year}`)
+
+    const CRITERIA_KEYS = ['MSQ', 'SYSINT', 'NEUROGER', 'AIGU', 'REHAB', 'AMBU', 'FR', 'DE']
+
+    // ── 1. Charger les étudiants de la classe cible ──
+    const { data: studentsData, error: studentsError } = await supabase
+      .from('user_profiles')
+      .select('user_id, email, forname, family_name, display_name, classe')
+      .eq('classe', classe)
+
+    if (studentsError) throw studentsError
+
+    // Filtrer pour ne garder que les étudiants (pas les admins qui seraient dans BA23)
+    const studentUsers = (studentsData || []).filter(u => {
+      const role = (u.role || '').toLowerCase()
+      const email = (u.email || '').toLowerCase()
+      return role.includes('student') || role.includes('etudiant') || role.includes('étudiant') || email.includes('@students.hevs.ch')
+    })
+
+    console.log(`   📋 ${studentsData.length} profils ${classe}, ${studentUsers.length} étudiants filtrés`)
+
+    // ── 2. Charger les critères validés depuis StudentsPhysio.pfp_valided ──
+    const { data: physioData, error: physioError } = await supabase
+      .from('StudentsPhysio')
+      .select('user_id, pfp_valided, sae, cas_particulier')
+
+    if (physioError) console.warn('⚠️ StudentsPhysio non accessible:', physioError.message)
+
+    // ── 3. Charger les assignations validées (pfp_validee=true) depuis student_result_vote ──
+    const { data: assignmentsData, error: assignmentsError } = await supabase
+      .from('student_result_vote')
+      .select('user_id, pfp_type, assigned_place_id, pfp_validee')
+
+    if (assignmentsError) console.warn('⚠️ student_result_vote non accessible:', assignmentsError.message)
+
+    // ── 4. Charger toutes les places avec leurs critères ──
+    const { data: placesData, error: placesError } = await supabase
+      .from('places')
+      .select('PlaceId, NomPlace, InstitutionId, InstitutionName, MSQ, SYSINT, NEUROGER, AIGU, REHAB, AMBU, FR, DE, PFP4, selectedOut')
+
+    if (placesError) throw placesError
+
+    // Filtrer les places PFP4 avec capacité > 0 pour l'année et non exclues
+    const pfp4Places = (placesData || []).filter(place => {
+      if (place.selectedOut) return false
+      const pfp4Data = place.PFP4
+      if (!pfp4Data) return false
+      const capacity = parseInt(pfp4Data[year] || pfp4Data['default'] || '0')
+      return !isNaN(capacity) && capacity >= 1
+    }).map(place => ({
+      PlaceId: place.PlaceId,
+      NomPlace: place.NomPlace,
+      InstitutionId: place.InstitutionId,
+      InstitutionName: place.InstitutionName || '',
+      Capacity: parseInt(place.PFP4[year] || place.PFP4['default'] || '0'),
+      MSQ: !!place.MSQ,
+      SYSINT: !!place.SYSINT,
+      NEUROGER: !!place.NEUROGER,
+      AIGU: !!place.AIGU,
+      REHAB: !!place.REHAB,
+      AMBU: !!place.AMBU,
+      FR: !!place.FR,
+      DE: !!place.DE
+    }))
+
+    console.log(`   🏥 ${pfp4Places.length} places PFP4 disponibles (capacité > 0) pour ${year}`)
+
+    // ── 5. Construire les critères validés par étudiant ──
+    // Source 1: StudentsPhysio.pfp_valided
+    const criteriaMap = new Map()
+
+    if (physioData && physioData.length > 0) {
+      physioData.forEach(physio => {
+        const scores = {}
+        CRITERIA_KEYS.forEach(k => { scores[k] = 0 })
+
+        let pfpArray = []
+        if (physio.pfp_valided) {
+          try {
+            pfpArray = typeof physio.pfp_valided === 'string' ? JSON.parse(physio.pfp_valided) : physio.pfp_valided
+            if (!Array.isArray(pfpArray)) pfpArray = Object.values(pfpArray)
+          } catch (e) { pfpArray = [] }
+        }
+
+        pfpArray.forEach(stage => {
+          CRITERIA_KEYS.forEach(c => {
+            if (stage[c] === true || stage[c] === 'true' || stage[c] === 1 || stage[c.toLowerCase()] === true) {
+              scores[c]++
+            }
+          })
+        })
+
+        criteriaMap.set(physio.user_id, {
+          scores,
+          sae: !!physio.sae,
+          casParticulier: !!physio.cas_particulier
+        })
+      })
+    }
+
+    // Source 2: enrichir avec les assignations validées dans student_result_vote
+    const placesLookup = new Map()
+    ;(placesData || []).forEach(p => placesLookup.set(p.PlaceId, p))
+
+    if (assignmentsData && assignmentsData.length > 0) {
+      assignmentsData.forEach(a => {
+        if (a.pfp_validee && a.assigned_place_id) {
+          const placeInfo = placesLookup.get(a.assigned_place_id)
+          if (placeInfo) {
+            const existing = criteriaMap.get(a.user_id) || {
+              scores: Object.fromEntries(CRITERIA_KEYS.map(k => [k, 0])),
+              sae: false,
+              casParticulier: false
+            }
+            CRITERIA_KEYS.forEach(c => {
+              if (placeInfo[c] === true) existing.scores[c]++
+            })
+            criteriaMap.set(a.user_id, existing)
+          }
+        }
+      })
+    }
+
+    console.log(`   📊 ${criteriaMap.size} étudiants avec critères connus`)
+
+    // ── 6. Générer les propositions par étudiant ──
+    const proposals = []
+
+    // Utiliser tous les profils BA23, pas uniquement les étudiants filtrés (pour être inclusif)
+    const allStudentIds = (studentsData || []).map(s => s.user_id)
+
+    for (const student of (studentsData || [])) {
+      const userId = student.user_id
+      const studentCriteria = criteriaMap.get(userId)
+      const scores = studentCriteria ? studentCriteria.scores : Object.fromEntries(CRITERIA_KEYS.map(k => [k, 0]))
+
+      // Déterminer les critères manquants (score === 0)
+      const missingCriteria = CRITERIA_KEYS.filter(c => scores[c] === 0)
+      const missingDE = missingCriteria.includes('DE')
+      const missingSYSINT = missingCriteria.includes('SYSINT')
+      // Autres critères manquants (hors DE et SYSINT)
+      const otherMissing = missingCriteria.filter(c => c !== 'DE' && c !== 'SYSINT')
+
+      let proposedPlaces = []
+
+      if (missingDE && !missingSYSINT && otherMissing.length === 0) {
+        // ── Règle 1: Manque uniquement DE → proposer uniquement les places DE ──
+        proposedPlaces = pfp4Places.filter(p => p.DE)
+      } else if (missingDE && missingSYSINT) {
+        // ── Règle 2: Manque DE + SYSINT (+ éventuellement autres) → toutes SYSINT + toutes DE ──
+        proposedPlaces = pfp4Places.filter(p => p.SYSINT || p.DE)
+      } else if (missingSYSINT && !missingDE && otherMissing.length === 0) {
+        // ── Règle 3: Manque uniquement SYSINT → proposer uniquement les places SYSINT ──
+        proposedPlaces = pfp4Places.filter(p => p.SYSINT)
+      } else if (missingSYSINT && otherMissing.length > 0) {
+        // ── Règle 4: Manque SYSINT + autre(s) → toutes SYSINT + places matchant les autres critères manquants ──
+        proposedPlaces = pfp4Places.filter(p => {
+          if (p.SYSINT) return true
+          return otherMissing.some(c => p[c])
+        })
+      } else if (missingCriteria.length > 0) {
+        // ── Règle 5: Manque autre(s) sans SYSINT ni DE → toutes les places matchant un critère manquant ──
+        proposedPlaces = pfp4Places.filter(p => {
+          return missingCriteria.some(c => p[c])
+        })
+      } else {
+        // ── Aucun critère manquant → proposer toutes les places PFP4 ──
+        proposedPlaces = [...pfp4Places]
+      }
+
+      // Dédupliquer par PlaceId
+      const uniquePlaceIds = new Set()
+      proposedPlaces = proposedPlaces.filter(p => {
+        if (uniquePlaceIds.has(p.PlaceId)) return false
+        uniquePlaceIds.add(p.PlaceId)
+        return true
+      })
+
+      // Déterminer la règle appliquée pour le debug
+      let appliedRule = ''
+      if (missingDE && !missingSYSINT && otherMissing.length === 0) appliedRule = 'DE_ONLY'
+      else if (missingDE && missingSYSINT) appliedRule = 'DE_AND_SYSINT'
+      else if (missingSYSINT && !missingDE && otherMissing.length === 0) appliedRule = 'SYSINT_ONLY'
+      else if (missingSYSINT && otherMissing.length > 0) appliedRule = 'SYSINT_AND_OTHER'
+      else if (missingCriteria.length > 0) appliedRule = 'OTHER_MISSING'
+      else appliedRule = 'ALL_COMPLETE'
+
+      proposals.push({
+        userId,
+        nom: student.family_name || '',
+        prenom: student.forname || '',
+        email: student.email || '',
+        classe,
+        scores,
+        missingCriteria,
+        appliedRule,
+        sae: studentCriteria?.sae || false,
+        casParticulier: studentCriteria?.casParticulier || false,
+        proposedPlaceIds: proposedPlaces.map(p => p.PlaceId),
+        proposedPlacesCount: proposedPlaces.length,
+        proposedPlaces: proposedPlaces.map(p => ({
+          PlaceId: p.PlaceId,
+          NomPlace: p.NomPlace,
+          InstitutionName: p.InstitutionName,
+          Capacity: p.Capacity,
+          criteria: CRITERIA_KEYS.filter(c => p[c])
+        }))
+      })
+    }
+
+    // Trier par nom
+    proposals.sort((a, b) => (a.nom || '').localeCompare(b.nom || ''))
+
+    // Statistiques
+    const ruleStats = {}
+    proposals.forEach(p => {
+      ruleStats[p.appliedRule] = (ruleStats[p.appliedRule] || 0) + 1
+    })
+
+    const stats = {
+      totalStudents: proposals.length,
+      totalPfp4Places: pfp4Places.length,
+      totalCapacity: pfp4Places.reduce((sum, p) => sum + p.Capacity, 0),
+      averageProposedPlaces: proposals.length > 0
+        ? Math.round(proposals.reduce((sum, p) => sum + p.proposedPlacesCount, 0) / proposals.length)
+        : 0,
+      ruleDistribution: ruleStats,
+      studentsWithNoCriteria: proposals.filter(p => !criteriaMap.has(p.userId)).length
+    }
+
+    console.log(`✅ Propositions PFP4 générées:`, stats)
+
+    return res.json({
+      ok: true,
+      proposals,
+      allPfp4Places: pfp4Places,
+      stats
+    })
+  } catch (error) {
+    console.error('❌ Erreur generate-pfp4-proposals:', error)
+    return res.status(500).json({ ok: false, error: error.message })
+  }
+})
+
+/**
+ * POST /api/resultat-votation/save-pfp4-proposals
+ * Sauvegarde les propositions PFP4 validées par l'admin
+ * Stocke dans la table votation_sessions avec les propositions par étudiant
+ */
+router.post('/save-pfp4-proposals', requireAdmin, async (req, res) => {
+  try {
+    const { year, targetClass, proposals } = req.body
+
+    if (!year || !proposals) {
+      return res.status(400).json({ ok: false, error: 'Missing required fields: year, proposals' })
+    }
+
+    const classe = targetClass || 'BA23'
+
+    // Construire un map userId → [placeIds]
+    const proposalsMap = {}
+    proposals.forEach(p => {
+      proposalsMap[p.userId] = p.proposedPlaceIds || []
+    })
+
+    // Sauvegarder dans votation_sessions avec les propositions
+    // On utilise une colonne metadata JSONB pour stocker les propositions
+    const { data: existingSession, error: findError } = await supabase
+      .from('votation_sessions')
+      .select('id')
+      .eq('pfp_type', 'PFP4')
+      .eq('year', year)
+      .eq('target_class', classe)
+      .eq('is_priority', false)
+      .maybeSingle()
+
+    if (findError && findError.code !== 'PGRST116') {
+      console.warn('⚠️ Erreur recherche session:', findError.message)
+    }
+
+    const sessionPayload = {
+      pfp_type: 'PFP4',
+      year,
+      target_class: classe,
+      pfp4_proposals: proposalsMap,
+      updated_at: new Date().toISOString()
+    }
+
+    let savedSession
+    if (existingSession) {
+      const { data, error } = await supabase
+        .from('votation_sessions')
+        .update(sessionPayload)
+        .eq('id', existingSession.id)
+        .select()
+        .single()
+      if (error) throw error
+      savedSession = data
+    } else {
+      const { data, error } = await supabase
+        .from('votation_sessions')
+        .insert({
+          ...sessionPayload,
+          status: 'closed',
+          is_priority: false
+        })
+        .select()
+        .single()
+      if (error) throw error
+      savedSession = data
+    }
+
+    console.log(`✅ Propositions PFP4 sauvegardées: ${Object.keys(proposalsMap).length} étudiants`)
+
+    return res.json({
+      ok: true,
+      sessionId: savedSession.id,
+      savedCount: Object.keys(proposalsMap).length
+    })
+  } catch (error) {
+    console.error('❌ Erreur save-pfp4-proposals:', error)
+    return res.status(500).json({ ok: false, error: error.message })
+  }
+})
+
+/**
+ * GET /api/resultat-votation/pfp4-proposals/:year
+ * Récupère les propositions PFP4 sauvegardées pour un étudiant (via session)
+ */
+router.get('/pfp4-proposals/:year', setUser, async (req, res) => {
+  try {
+    const { year } = req.params
+    const userId = req.user?.id
+
+    if (!userId) {
+      return res.status(401).json({ ok: false, error: 'Authentication required' })
+    }
+
+    // Chercher la session PFP4 ouverte avec des propositions
+    const { data: sessions, error } = await supabase
+      .from('votation_sessions')
+      .select('pfp4_proposals')
+      .eq('pfp_type', 'PFP4')
+      .eq('year', year)
+      .eq('status', 'open')
+      .eq('is_priority', false)
+
+    if (error) throw error
+
+    // Chercher les propositions pour cet étudiant
+    let proposedPlaceIds = null
+    if (sessions && sessions.length > 0) {
+      for (const session of sessions) {
+        const proposals = session.pfp4_proposals
+        if (proposals && proposals[userId]) {
+          proposedPlaceIds = proposals[userId]
+          break
+        }
+      }
+    }
+
+    return res.json({
+      ok: true,
+      proposedPlaceIds
+    })
+  } catch (error) {
+    console.error('❌ Erreur get pfp4-proposals:', error)
+    return res.status(500).json({ ok: false, error: error.message })
+  }
+})
+
+/**
  * GET /api/resultat-votation/results/:pfpType/:year
  * Récupère tous les résultats pour un PFP et une année
  */

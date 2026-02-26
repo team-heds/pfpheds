@@ -249,6 +249,7 @@ import { useVotesStore } from '@/stores/votesStore'
 import { mapStores } from 'pinia'
 import votesBackendService from '@/stores/votesBackendService'
 import votationSessionService from '@/service/votationSessionService'
+import resultatVotationService from '@/stores/resultatVotationService'
 
 export default {
   name: 'VotationGenericView',
@@ -274,7 +275,8 @@ export default {
       targetPFP: null,
       isSubmitting: false,
       activeSession: null,
-      sessionLoading: true
+      sessionLoading: true,
+      pfp4ProposedPlaceIds: null
     };
   },
   computed: {
@@ -438,6 +440,18 @@ export default {
         };
       });
 
+      // Pour PFP4: charger les propositions personnalisées de l'étudiant
+      if (this.targetPFP === 'PFP4' && this.selectedYear) {
+        try {
+          const proposedIds = await resultatVotationService.getPfp4Proposals(this.selectedYear)
+          this.pfp4ProposedPlaceIds = proposedIds
+          console.log('🎯 PFP4 propositions chargées:', proposedIds ? proposedIds.length + ' places' : 'aucune (toutes visibles)')
+        } catch (err) {
+          console.warn('⚠️ Impossible de charger les propositions PFP4:', err.message)
+          this.pfp4ProposedPlaceIds = null
+        }
+      }
+
       this.updateExpandedData();
 
       await this.checkExistingVote();
@@ -527,7 +541,14 @@ export default {
           }
         }
       });
-      this.expandedPFPData = rows;
+      // Pour PFP4: filtrer selon les propositions personnalisées
+      if (this.targetPFP === 'PFP4' && this.pfp4ProposedPlaceIds && Array.isArray(this.pfp4ProposedPlaceIds)) {
+        const allowedIds = new Set(this.pfp4ProposedPlaceIds)
+        this.expandedPFPData = rows.filter(r => allowedIds.has(r.PlaceId))
+        console.log(`🎯 PFP4: ${this.expandedPFPData.length}/${rows.length} places après filtrage propositions`)
+      } else {
+        this.expandedPFPData = rows;
+      }
     },
 
     getVoteCount(place) {

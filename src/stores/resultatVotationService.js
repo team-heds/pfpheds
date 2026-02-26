@@ -265,6 +265,104 @@ export const resultatVotationService = {
   },
 
   /**
+   * Génère les propositions de places PFP4 pour chaque étudiant
+   * basé sur leurs critères manquants
+   * @param {string} year - Année (ex: '2026')
+   * @param {string} targetClass - Classe cible (ex: 'BA23')
+   * @returns {Promise<Object>} { proposals, allPfp4Places, stats }
+   */
+  async generatePfp4Proposals(year, targetClass = 'BA23') {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('Authentication required')
+
+      const response = await axios.post(
+        `${API_BASE_URL}/api/resultat-votation/generate-pfp4-proposals`,
+        { year, targetClass },
+        {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      )
+
+      if (!response.data.ok) {
+        throw new Error(response.data.error || 'Failed to generate PFP4 proposals')
+      }
+
+      return response.data
+    } catch (err) {
+      console.error('❌ Erreur generatePfp4Proposals:', err)
+      throw err
+    }
+  },
+
+  /**
+   * Sauvegarde les propositions PFP4 validées par l'admin
+   * @param {string} year - Année
+   * @param {string} targetClass - Classe cible
+   * @param {Array} proposals - Liste des propositions par étudiant
+   * @returns {Promise<Object>}
+   */
+  async savePfp4Proposals(year, targetClass, proposals) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('Authentication required')
+
+      const response = await axios.post(
+        `${API_BASE_URL}/api/resultat-votation/save-pfp4-proposals`,
+        { year, targetClass, proposals },
+        {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      )
+
+      if (!response.data.ok) {
+        throw new Error(response.data.error || 'Failed to save PFP4 proposals')
+      }
+
+      return response.data
+    } catch (err) {
+      console.error('❌ Erreur savePfp4Proposals:', err)
+      throw err
+    }
+  },
+
+  /**
+   * Récupère les propositions PFP4 pour l'étudiant connecté
+   * @param {string} year - Année
+   * @returns {Promise<Array|null>} Liste des PlaceIds proposés ou null
+   */
+  async getPfp4Proposals(year) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('Authentication required')
+
+      const response = await axios.get(
+        `${API_BASE_URL}/api/resultat-votation/pfp4-proposals/${year}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`
+          }
+        }
+      )
+
+      if (!response.data.ok) {
+        throw new Error(response.data.error || 'Failed to fetch PFP4 proposals')
+      }
+
+      return response.data.proposedPlaceIds
+    } catch (err) {
+      console.error('❌ Erreur getPfp4Proposals:', err)
+      throw err
+    }
+  },
+
+  /**
    * Récupère les résultats directement depuis Supabase (sans passer par le backend)
    * Utilisé pour l'accès en lecture seule
    * @param {string} pfpType - Type de PFP
