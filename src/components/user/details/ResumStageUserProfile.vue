@@ -881,6 +881,22 @@ const processUserProfile = async () => {
 const aggregatedCriteria = computed(() => {
   const result = {};
   criteriaList.forEach((crit) => (result[crit] = false));
+
+  // Source 1: student_result_vote (stages validés avec pfp_validee=true)
+  ;(studentResultVotes.value || []).forEach((rv) => {
+    if (rv.pfp_validee && rv.assigned_place_id) {
+      const placeData = placesFullMap.value.get(rv.assigned_place_id)
+      if (placeData) {
+        criteriaList.forEach((crit) => {
+          if (placeData[crit] === true || placeData[crit] === 'true' || placeData[crit] === 1) {
+            result[crit] = true
+          }
+        })
+      }
+    }
+  })
+
+  // Source 2: pfp_valided (legacy/backup depuis StudentsPhysio ou userProfile)
   if (props.userProfile && (props.userProfile.pfp_valided || props.userProfile.pfp2_data)) {
     let pfpArray = []
 
@@ -917,6 +933,16 @@ const aggregatedCriteria = computed(() => {
       });
     });
   }
+
+  // Source 3: studentPfpList (pfp_valided chargé depuis StudentsPhysio)
+  ;(studentPfpList.value || []).forEach((pfp) => {
+    criteriaList.forEach((crit) => {
+      if (pfp[crit] === true) {
+        result[crit] = true
+      }
+    })
+  })
+
   return result;
 });
 
