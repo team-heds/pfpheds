@@ -11,7 +11,7 @@ import { PrimeVueResolver } from 'unplugin-vue-components/resolvers'
 export default defineConfig({
   server: {
     host: '0.0.0.0',
-    port: 5172,
+    port: 5180,
     hmr: false, // DÉSACTIVER COMPLÈTEMENT LE HMR (rechargement manuel uniquement)
     watch: {
       usePolling: false,

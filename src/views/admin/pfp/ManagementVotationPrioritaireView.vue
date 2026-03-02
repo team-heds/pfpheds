@@ -304,11 +304,16 @@
                 </div>
               </template>
             </Column>
-            <Column header="Vote" style="min-width: 200px">
+            <Column header="Votes (5 choix)" style="min-width: 350px">
               <template #body="{ data }">
-                <div v-if="data.vote">
-                  <div class="font-semibold text-sm text-900">{{ data.vote.placeName }}</div>
-                  <small class="text-500">{{ data.vote.institutionName }}</small>
+                <div v-if="data.vote && data.vote.choices">
+                  <div v-for="c in data.vote.choices" :key="c.rank" class="flex align-items-center gap-2 mb-1">
+                    <Tag :value="'#' + c.rank" :severity="c.rank === 1 ? 'success' : c.rank <= 3 ? 'warning' : 'secondary'" class="text-xs" style="min-width: 28px; text-align: center;" />
+                    <div class="text-sm">
+                      <span class="font-semibold text-900">{{ c.placeName }}</span>
+                      <span v-if="c.institutionName" class="text-500 ml-1">— {{ c.institutionName }}</span>
+                    </div>
+                  </div>
                 </div>
                 <span v-else class="text-400 text-sm">Pas encore voté</span>
               </template>
@@ -1118,8 +1123,11 @@ const loadData = async () => {
         }
         if (choices.length > 0) {
           voteMap.set(v.user_id, {
-            placeName: choices[0]?.placeName || 'Inconnu',
-            institutionName: choices[0]?.InstitutionName || '',
+            choices: choices.map((c, i) => ({
+              rank: i + 1,
+              placeName: c.placeName || 'Inconnu',
+              institutionName: c.InstitutionName || ''
+            })),
             nbChoix: choices.length
           })
         }

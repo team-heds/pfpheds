@@ -99,6 +99,16 @@
                 <div class="radio-wrapper"><RadioButton v-model="selectedPlaces[i-1]" :value="slotProps.data" :disabled="isPlaceDisabled(slotProps.data, i-1)" @click="onRadioClick(slotProps.data, i-1, $event)" /></div>
               </template>
             </Column>
+            <Column v-for="i in 5" :key="'hv-'+i" :header="'Top ' + i" :style="{ textAlign: 'center', width: '60px' }">
+              <template #body="slotProps">
+                <Tag :value="getVoteCount(slotProps.data)['top'+i] || 0" :severity="getVoteCount(slotProps.data)['top'+i] > 0 ? 'primary' : 'secondary'" rounded />
+              </template>
+            </Column>
+            <Column header="Total" :style="{ textAlign: 'center', width: '70px' }">
+              <template #body="slotProps">
+                <Tag :value="getVoteCount(slotProps.data).total || 0" severity="contrast" rounded class="font-semibold" />
+              </template>
+            </Column>
           </DataTable>
         </div>
 
@@ -146,6 +156,16 @@
                 <div class="radio-wrapper"><RadioButton v-model="selectedPlaces[i-1]" :value="slotProps.data" :disabled="isPlaceDisabled(slotProps.data, i-1)" @click="onRadioClick(slotProps.data, i-1, $event)" /></div>
               </template>
             </Column>
+            <Column v-for="i in 5" :key="'mv-'+i" :header="'Top ' + i" :style="{ textAlign: 'center', width: '60px' }">
+              <template #body="slotProps">
+                <Tag :value="getVoteCount(slotProps.data)['top'+i] || 0" :severity="getVoteCount(slotProps.data)['top'+i] > 0 ? 'primary' : 'secondary'" rounded />
+              </template>
+            </Column>
+            <Column header="Total" :style="{ textAlign: 'center', width: '70px' }">
+              <template #body="slotProps">
+                <Tag :value="getVoteCount(slotProps.data).total || 0" severity="contrast" rounded class="font-semibold" />
+              </template>
+            </Column>
           </DataTable>
         </div>
 
@@ -188,6 +208,16 @@
             <Column v-for="i in 5" :key="'oc-'+i" :header="'Choix ' + i" :style="{ textAlign: 'center', width: '75px' }">
               <template #body="slotProps">
                 <div class="radio-wrapper"><RadioButton v-model="selectedPlaces[i-1]" :value="slotProps.data" :disabled="isPlaceDisabled(slotProps.data, i-1)" @click="onRadioClick(slotProps.data, i-1, $event)" /></div>
+              </template>
+            </Column>
+            <Column v-for="i in 5" :key="'ov-'+i" :header="'Top ' + i" :style="{ textAlign: 'center', width: '60px' }">
+              <template #body="slotProps">
+                <Tag :value="getVoteCount(slotProps.data)['top'+i] || 0" :severity="getVoteCount(slotProps.data)['top'+i] > 0 ? 'primary' : 'secondary'" rounded />
+              </template>
+            </Column>
+            <Column header="Total" :style="{ textAlign: 'center', width: '70px' }">
+              <template #body="slotProps">
+                <Tag :value="getVoteCount(slotProps.data).total || 0" severity="contrast" rounded class="font-semibold" />
               </template>
             </Column>
           </DataTable>
