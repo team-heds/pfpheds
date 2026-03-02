@@ -305,14 +305,14 @@ export const resultatVotationService = {
    * @param {Array} proposals - Liste des propositions par étudiant
    * @returns {Promise<Object>}
    */
-  async savePfp4Proposals(year, targetClass, proposals) {
+  async savePfp4Proposals(year, targetClass, proposals, assignCounts) {
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) throw new Error('Authentication required')
 
       const response = await axios.post(
         `${API_BASE_URL}/api/resultat-votation/save-pfp4-proposals`,
-        { year, targetClass, proposals },
+        { year, targetClass, proposals, assignCounts: assignCounts || {} },
         {
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
@@ -355,7 +355,12 @@ export const resultatVotationService = {
         throw new Error(response.data.error || 'Failed to fetch PFP4 proposals')
       }
 
-      return response.data.proposedPlaceIds
+      return {
+        proposedPlaceIds: response.data.proposedPlaceIds,
+        missingCriteria: response.data.missingCriteria || [],
+        appliedRule: response.data.appliedRule || null,
+        assignCounts: response.data.assignCounts || {}
+      }
     } catch (err) {
       console.error('❌ Erreur getPfp4Proposals:', err)
       throw err

@@ -36,7 +36,7 @@ app.use(cors({
 // Express 5 uses path-to-regexp v6 which doesn't support '*' patterns.
 // Use a regex to match all paths for CORS preflight handling.
 app.options(/.*/, cors())
-app.use(express.json())
+app.use(express.json({ limit: '10mb' }))
  
 // Debug middleware (seulement en développement)
 if (process.env.NODE_ENV !== 'production') {

@@ -1,5 +1,6 @@
 const { Router } = require('express')
 const supabase = require('../supabaseClient')
+const { supabaseAdmin } = require('../supabaseClient')
 const { v4: uuidv4 } = require('uuid')
 
 const router = Router()
@@ -387,7 +388,7 @@ router.post('/generate-pfp4-proposals', requireAdmin, async (req, res) => {
     const CRITERIA_KEYS = ['MSQ', 'SYSINT', 'NEUROGER', 'AIGU', 'REHAB', 'AMBU', 'FR', 'DE']
 
     // ── 1. Charger les étudiants de la classe cible ──
-    const { data: studentsData, error: studentsError } = await supabase
+    const { data: studentsData, error: studentsError } = await supabaseAdmin
       .from('user_profiles')
       .select('user_id, email, forname, family_name, display_name, classe')
       .eq('classe', classe)
@@ -404,21 +405,21 @@ router.post('/generate-pfp4-proposals', requireAdmin, async (req, res) => {
     console.log(`   📋 ${studentsData.length} profils ${classe}, ${studentUsers.length} étudiants filtrés`)
 
     // ── 2. Charger les critères validés depuis StudentsPhysio.pfp_valided ──
-    const { data: physioData, error: physioError } = await supabase
+    const { data: physioData, error: physioError } = await supabaseAdmin
       .from('StudentsPhysio')
       .select('user_id, pfp_valided, sae, cas_particulier')
 
     if (physioError) console.warn('⚠️ StudentsPhysio non accessible:', physioError.message)
 
     // ── 3. Charger les assignations validées (pfp_validee=true) depuis student_result_vote ──
-    const { data: assignmentsData, error: assignmentsError } = await supabase
+    const { data: assignmentsData, error: assignmentsError } = await supabaseAdmin
       .from('student_result_vote')
       .select('user_id, pfp_type, assigned_place_id, pfp_validee')
 
     if (assignmentsError) console.warn('⚠️ student_result_vote non accessible:', assignmentsError.message)
 
     // ── 4. Charger toutes les places avec leurs critères ──
-    const { data: placesData, error: placesError } = await supabase
+    const { data: placesData, error: placesError } = await supabaseAdmin
       .from('places')
       .select('PlaceId, NomPlace, InstitutionId, InstitutionName, MSQ, SYSINT, NEUROGER, AIGU, REHAB, AMBU, FR, DE, PFP4, selectedOut')
 
@@ -506,6 +507,25 @@ router.post('/generate-pfp4-proposals', requireAdmin, async (req, res) => {
     }
 
     console.log(`   📊 ${criteriaMap.size} étudiants avec critères connus`)
+
+    // DEBUG: Afficher les critères de chaque étudiant de la classe
+    for (const student of (studentsData || [])) {
+      const uid = student.user_id
+      const crit = criteriaMap.get(uid)
+      if (crit) {
+        const validated = CRITERIA_KEYS.filter(c => crit.scores[c] > 0)
+        const missing = CRITERIA_KEYS.filter(c => crit.scores[c] === 0)
+        console.log(`   👤 ${student.family_name} ${student.forname}: validés=${validated.join(',')} | manquants=${missing.join(',')} | scores=${JSON.stringify(crit.scores)}`)
+      } else {
+        console.log(`   👤 ${student.family_name} ${student.forname}: ⚠️ AUCUN CRITÈRE CONNU (pas dans StudentsPhysio ni student_result_vote)`)
+      }
+    }
+
+    // DEBUG: Afficher les critères de chaque place PFP4
+    pfp4Places.forEach(p => {
+      const crit = CRITERIA_KEYS.filter(c => p[c])
+      console.log(`   🏥 ${p.NomPlace} (${p.InstitutionName}): ${crit.join(',')} | cap=${p.Capacity}`)
+    })
 
     // ── 6. Générer les propositions par étudiant ──
     const proposals = []
@@ -633,7 +653,8 @@ router.post('/generate-pfp4-proposals', requireAdmin, async (req, res) => {
  */
 router.post('/save-pfp4-proposals', requireAdmin, async (req, res) => {
   try {
-    const { year, targetClass, proposals } = req.body
+    const { year, targetClass, proposals, assignCounts } = req.body
+    const token = req.headers.authorization?.split(' ')[1]
 
     if (!year || !proposals) {
       return res.status(400).json({ ok: false, error: 'Missing required fields: year, proposals' })
@@ -641,50 +662,68 @@ router.post('/save-pfp4-proposals', requireAdmin, async (req, res) => {
 
     const classe = targetClass || 'BA23'
 
-    // Construire un map userId → [placeIds]
+    // Construire un map userId → { placeIds, missingCriteria, appliedRule } + _assignCounts
     const proposalsMap = {}
     proposals.forEach(p => {
-      proposalsMap[p.userId] = p.proposedPlaceIds || []
+      proposalsMap[p.userId] = {
+        placeIds: p.proposedPlaceIds || [],
+        missingCriteria: p.missingCriteria || [],
+        appliedRule: p.appliedRule || ''
+      }
     })
+    // Stocker les assign counts pour que les étudiants puissent soustraire les sièges pris
+    if (assignCounts && Object.keys(assignCounts).length > 0) {
+      proposalsMap._assignCounts = assignCounts
+    }
 
-    // Sauvegarder dans votation_sessions avec les propositions
-    // On utilise une colonne metadata JSONB pour stocker les propositions
-    const { data: existingSession, error: findError } = await supabase
+    console.log(`🔍 SAVE pfp4-proposals: year=${year} class=${classe} students=${Object.keys(proposalsMap).length}`)
+
+    // Utiliser supabaseAdmin (service_role) pour bypasser la RLS sur votation_sessions
+    // Sauvegarder les propositions dans TOUTES les sessions PFP4 existantes pour cette année/classe
+    const { data: existingSessions, error: findError } = await supabaseAdmin
       .from('votation_sessions')
-      .select('id')
+      .select('id, is_priority, status')
       .eq('pfp_type', 'PFP4')
       .eq('year', year)
       .eq('target_class', classe)
-      .eq('is_priority', false)
-      .maybeSingle()
 
     if (findError && findError.code !== 'PGRST116') {
-      console.warn('⚠️ Erreur recherche session:', findError.message)
+      console.warn('⚠️ Erreur recherche sessions:', findError.message)
     }
 
-    const sessionPayload = {
-      pfp_type: 'PFP4',
-      year,
-      target_class: classe,
-      pfp4_proposals: proposalsMap,
-      updated_at: new Date().toISOString()
+    console.log(`🔍 Sessions PFP4 existantes pour ${classe}/${year}: ${existingSessions?.length || 0}`)
+    if (existingSessions) {
+      existingSessions.forEach(s => console.log(`   Session ${s.id}: status=${s.status} priority=${s.is_priority}`))
+    }
+
+    const updatePayload = {
+      pfp4_proposals: proposalsMap
     }
 
     let savedSession
-    if (existingSession) {
-      const { data, error } = await supabase
-        .from('votation_sessions')
-        .update(sessionPayload)
-        .eq('id', existingSession.id)
-        .select()
-        .single()
-      if (error) throw error
-      savedSession = data
+    if (existingSessions && existingSessions.length > 0) {
+      for (const session of existingSessions) {
+        const { error } = await supabaseAdmin
+          .from('votation_sessions')
+          .update(updatePayload)
+          .eq('id', session.id)
+        if (error) {
+          console.warn(`⚠️ Erreur update session ${session.id}:`, error.message)
+        } else {
+          console.log(`✅ Session ${session.id} mise à jour avec ${Object.keys(proposalsMap).length} propositions`)
+        }
+      }
+      savedSession = existingSessions[0]
+      console.log(`✅ Propositions mises à jour dans ${existingSessions.length} session(s)`)
     } else {
-      const { data, error } = await supabase
+      console.log('📝 Aucune session existante, création d\'une nouvelle...')
+      const { data, error } = await supabaseAdmin
         .from('votation_sessions')
         .insert({
-          ...sessionPayload,
+          pfp_type: 'PFP4',
+          year,
+          target_class: classe,
+          pfp4_proposals: proposalsMap,
           status: 'closed',
           is_priority: false
         })
@@ -692,6 +731,7 @@ router.post('/save-pfp4-proposals', requireAdmin, async (req, res) => {
         .single()
       if (error) throw error
       savedSession = data
+      console.log(`✅ Nouvelle session créée: ${savedSession.id}`)
     }
 
     console.log(`✅ Propositions PFP4 sauvegardées: ${Object.keys(proposalsMap).length} étudiants`)
@@ -715,37 +755,73 @@ router.get('/pfp4-proposals/:year', setUser, async (req, res) => {
   try {
     const { year } = req.params
     const userId = req.user?.id
+    const token = req.headers.authorization?.split(' ')[1]
 
     if (!userId) {
       return res.status(401).json({ ok: false, error: 'Authentication required' })
     }
 
-    // Chercher la session PFP4 ouverte avec des propositions
-    const { data: sessions, error } = await supabase
+    console.log(`🔍 GET pfp4-proposals: userId=${userId}, year=${year}`)
+
+    // Utiliser supabaseAdmin (service_role) pour bypasser la RLS sur votation_sessions
+    const { data: sessions, error } = await supabaseAdmin
       .from('votation_sessions')
-      .select('pfp4_proposals')
+      .select('id, pfp4_proposals, status, is_priority, target_class')
       .eq('pfp_type', 'PFP4')
       .eq('year', year)
-      .eq('status', 'open')
-      .eq('is_priority', false)
+      .not('pfp4_proposals', 'is', null)
 
-    if (error) throw error
+    if (error) {
+      console.error('❌ Erreur query votation_sessions:', error)
+      throw error
+    }
+
+    console.log(`🔍 Sessions PFP4 avec propositions: ${sessions?.length || 0}`)
+    if (sessions && sessions.length > 0) {
+      sessions.forEach(s => {
+        const proposalKeys = s.pfp4_proposals ? Object.keys(s.pfp4_proposals) : []
+        console.log(`   Session ${s.id}: status=${s.status} priority=${s.is_priority} class=${s.target_class} proposals_count=${proposalKeys.length}`)
+        // Vérifier si userId est dans les propositions
+        const hasUser = s.pfp4_proposals && s.pfp4_proposals[userId]
+        console.log(`   userId ${userId.substring(0, 8)}... found: ${!!hasUser}${hasUser ? ' (' + hasUser.length + ' places)' : ''}`)
+      })
+    }
 
     // Chercher les propositions pour cet étudiant
     let proposedPlaceIds = null
+    let missingCriteria = null
+    let appliedRule = null
+    let assignCounts = null
     if (sessions && sessions.length > 0) {
       for (const session of sessions) {
         const proposals = session.pfp4_proposals
         if (proposals && proposals[userId]) {
-          proposedPlaceIds = proposals[userId]
+          const userData = proposals[userId]
+          // Rétro-compatibilité : ancien format = array, nouveau format = { placeIds, missingCriteria, appliedRule }
+          if (Array.isArray(userData)) {
+            proposedPlaceIds = userData
+          } else {
+            proposedPlaceIds = userData.placeIds || []
+            missingCriteria = userData.missingCriteria || []
+            appliedRule = userData.appliedRule || null
+          }
+          assignCounts = proposals._assignCounts || null
+          console.log(`✅ Propositions trouvées pour ${userId.substring(0, 8)}: ${proposedPlaceIds.length} places, missing=[${(missingCriteria || []).join(',')}], rule=${appliedRule}, assignCounts: ${assignCounts ? Object.keys(assignCounts).length + ' places' : 'aucun'}`)
           break
         }
       }
     }
 
+    if (!proposedPlaceIds) {
+      console.log(`⚠️ Aucune proposition trouvée pour ${userId.substring(0, 8)}`)
+    }
+
     return res.json({
       ok: true,
-      proposedPlaceIds
+      proposedPlaceIds,
+      missingCriteria,
+      appliedRule,
+      assignCounts
     })
   } catch (error) {
     console.error('❌ Erreur get pfp4-proposals:', error)

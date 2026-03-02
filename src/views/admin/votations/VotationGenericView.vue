@@ -34,8 +34,168 @@
         </div>
       </div>
 
-      <!-- Affichage des places disponibles -->
-      <div v-if="availablePlaces.length > 0" class="content-wrapper">
+      <!-- Bandeau critères manquants pour PFP4 -->
+      <div v-if="hasPfp4Sections" class="pfp4-missing-banner content-wrapper">
+        <div class="pfp4-missing-card">
+          <div class="flex align-items-center gap-3 flex-wrap">
+            <i class="pi pi-exclamation-triangle text-2xl text-orange-500"></i>
+            <div>
+              <div class="text-900 font-bold text-lg mb-1">Critères à valider pour votre diplôme</div>
+              <div class="flex align-items-center gap-2 flex-wrap">
+                <Tag v-for="c in pfp4MissingCriteria" :key="c" :value="c" severity="danger" class="text-sm px-3 py-1" style="font-size: 0.95rem" />
+              </div>
+            </div>
+          </div>
+          <div class="text-600 mt-2 text-sm"><i class="pi pi-arrow-down mr-1"></i> Les places ci-dessous sont triées par pertinence. <strong>Privilégiez en priorité les places qui couvrent le plus grand nombre de vos critères manquants</strong> afin de maximiser vos chances de valider votre diplôme.</div>
+        </div>
+      </div>
+
+      <!-- ═══ MODE SECTIONS PFP4 (avec critères manquants) ═══ -->
+      <div v-if="hasPfp4Sections && availablePlaces.length > 0" class="content-wrapper">
+
+        <!-- SECTION HAUTE PRIORITÉ -->
+        <div v-if="pfp4HighPlaces.length > 0" class="pfp4-section pfp4-section-high mb-4">
+          <div class="pfp4-section-header pfp4-section-header-high">
+            <div class="flex align-items-center gap-2">
+              <i class="pi pi-star-fill text-xl"></i>
+              <span class="font-bold text-lg">Priorité haute</span>
+              <Tag :value="pfp4HighPlaces.length + ' places'" severity="success" class="ml-2" />
+            </div>
+            <span class="text-sm opacity-80">Couvrent 2+ de vos critères manquants — à privilégier</span>
+          </div>
+          <DataTable :value="pfp4HighPlaces" class="modern-votation-table pfp4-table-high" responsiveLayout="scroll" :scrollable="true" :rowHover="true">
+            <Column header="Crit. couverts" :style="{ width: '110px', textAlign: 'center' }">
+              <template #body="slotProps">
+                <div class="pfp4-badge pfp4-badge-high">{{ slotProps.data.pfp4CoveredCount }} / {{ pfp4MissingCriteria.length }}</div>
+              </template>
+            </Column>
+            <Column header="Institution" field="InstitutionName" :style="{ minWidth: '200px' }">
+              <template #body="slotProps">
+                <a target="_blank" :href="slotProps.data.url" class="institution-link"><i class="pi pi-building mr-2"></i>{{ slotProps.data.InstitutionName || 'Non spécifié' }}</a>
+              </template>
+            </Column>
+            <Column header="Place" field="NomPlace" :style="{ minWidth: '160px' }">
+              <template #body="slotProps"><div class="place-name font-semibold">{{ slotProps.data.NomPlace }}</div></template>
+            </Column>
+            <Column header="Critères" :style="{ minWidth: '200px' }">
+              <template #body="slotProps">
+                <div class="criteria-tags">
+                  <template v-for="cr in ['MSQ','SYSINT','NEUROGER','AIGU','REHAB','AMBU']" :key="cr">
+                    <Tag v-if="slotProps.data[cr]" :value="cr" :severity="isMissingCriteria(cr) ? 'danger' : 'success'" class="mr-1 mb-1" />
+                  </template>
+                </div>
+              </template>
+            </Column>
+            <Column header="Langues" :style="{ width: '100px' }">
+              <template #body="slotProps">
+                <div class="language-tags">
+                  <Tag v-if="slotProps.data.FR" value="FR" :severity="isMissingCriteria('FR') ? 'danger' : 'warning'" class="mr-1" />
+                  <Tag v-if="slotProps.data.DE" value="DE" :severity="isMissingCriteria('DE') ? 'danger' : 'warning'" class="mr-1" />
+                </div>
+              </template>
+            </Column>
+            <Column v-for="i in 5" :key="'hc-'+i" :header="'Choix ' + i" :style="{ textAlign: 'center', width: '75px' }">
+              <template #body="slotProps">
+                <div class="radio-wrapper"><RadioButton v-model="selectedPlaces[i-1]" :value="slotProps.data" :disabled="isPlaceDisabled(slotProps.data, i-1)" @click="onRadioClick(slotProps.data, i-1, $event)" /></div>
+              </template>
+            </Column>
+          </DataTable>
+        </div>
+
+        <!-- SECTION MOYENNE PRIORITÉ -->
+        <div v-if="pfp4MediumPlaces.length > 0" class="pfp4-section pfp4-section-medium mb-4">
+          <div class="pfp4-section-header pfp4-section-header-medium">
+            <div class="flex align-items-center gap-2">
+              <i class="pi pi-bookmark text-xl"></i>
+              <span class="font-bold text-lg">Priorité moyenne</span>
+              <Tag :value="pfp4MediumPlaces.length + ' places'" severity="warning" class="ml-2" />
+            </div>
+            <span class="text-sm opacity-80">Couvrent 1 critère manquant</span>
+          </div>
+          <DataTable :value="pfp4MediumPlaces" class="modern-votation-table pfp4-table-medium" responsiveLayout="scroll" :scrollable="true" :rowHover="true">
+            <Column header="Crit. couverts" :style="{ width: '110px', textAlign: 'center' }">
+              <template #body><div class="pfp4-badge pfp4-badge-medium">1 / {{ pfp4MissingCriteria.length }}</div></template>
+            </Column>
+            <Column header="Institution" field="InstitutionName" :style="{ minWidth: '200px' }">
+              <template #body="slotProps">
+                <a target="_blank" :href="slotProps.data.url" class="institution-link"><i class="pi pi-building mr-2"></i>{{ slotProps.data.InstitutionName || 'Non spécifié' }}</a>
+              </template>
+            </Column>
+            <Column header="Place" field="NomPlace" :style="{ minWidth: '160px' }">
+              <template #body="slotProps"><div class="place-name">{{ slotProps.data.NomPlace }}</div></template>
+            </Column>
+            <Column header="Critères" :style="{ minWidth: '200px' }">
+              <template #body="slotProps">
+                <div class="criteria-tags">
+                  <template v-for="cr in ['MSQ','SYSINT','NEUROGER','AIGU','REHAB','AMBU']" :key="cr">
+                    <Tag v-if="slotProps.data[cr]" :value="cr" :severity="isMissingCriteria(cr) ? 'danger' : 'success'" class="mr-1 mb-1" />
+                  </template>
+                </div>
+              </template>
+            </Column>
+            <Column header="Langues" :style="{ width: '100px' }">
+              <template #body="slotProps">
+                <div class="language-tags">
+                  <Tag v-if="slotProps.data.FR" value="FR" :severity="isMissingCriteria('FR') ? 'danger' : 'warning'" class="mr-1" />
+                  <Tag v-if="slotProps.data.DE" value="DE" :severity="isMissingCriteria('DE') ? 'danger' : 'warning'" class="mr-1" />
+                </div>
+              </template>
+            </Column>
+            <Column v-for="i in 5" :key="'mc-'+i" :header="'Choix ' + i" :style="{ textAlign: 'center', width: '75px' }">
+              <template #body="slotProps">
+                <div class="radio-wrapper"><RadioButton v-model="selectedPlaces[i-1]" :value="slotProps.data" :disabled="isPlaceDisabled(slotProps.data, i-1)" @click="onRadioClick(slotProps.data, i-1, $event)" /></div>
+              </template>
+            </Column>
+          </DataTable>
+        </div>
+
+        <!-- SECTION AUTRES PLACES -->
+        <div v-if="pfp4OtherPlaces.length > 0" class="pfp4-section pfp4-section-other mb-4">
+          <div class="pfp4-section-header pfp4-section-header-other">
+            <div class="flex align-items-center gap-2">
+              <i class="pi pi-list text-xl"></i>
+              <span class="font-bold text-lg">Autres places disponibles</span>
+              <Tag :value="pfp4OtherPlaces.length + ' places'" severity="secondary" class="ml-2" />
+            </div>
+            <span class="text-sm opacity-80">Ne couvrent aucun critère manquant mais restent disponibles</span>
+          </div>
+          <DataTable :value="pfp4OtherPlaces" class="modern-votation-table pfp4-table-other" responsiveLayout="scroll" :scrollable="true" :rowHover="true">
+            <Column header="Institution" field="InstitutionName" :style="{ minWidth: '200px' }">
+              <template #body="slotProps">
+                <a target="_blank" :href="slotProps.data.url" class="institution-link"><i class="pi pi-building mr-2"></i>{{ slotProps.data.InstitutionName || 'Non spécifié' }}</a>
+              </template>
+            </Column>
+            <Column header="Place" field="NomPlace" :style="{ minWidth: '160px' }">
+              <template #body="slotProps"><div class="place-name">{{ slotProps.data.NomPlace }}</div></template>
+            </Column>
+            <Column header="Critères" :style="{ minWidth: '200px' }">
+              <template #body="slotProps">
+                <div class="criteria-tags">
+                  <template v-for="cr in ['MSQ','SYSINT','NEUROGER','AIGU','REHAB','AMBU']" :key="cr">
+                    <Tag v-if="slotProps.data[cr]" :value="cr" severity="success" class="mr-1 mb-1" />
+                  </template>
+                </div>
+              </template>
+            </Column>
+            <Column header="Langues" :style="{ width: '100px' }">
+              <template #body="slotProps">
+                <div class="language-tags">
+                  <Tag v-if="slotProps.data.FR" value="FR" severity="warning" class="mr-1" />
+                  <Tag v-if="slotProps.data.DE" value="DE" severity="warning" class="mr-1" />
+                </div>
+              </template>
+            </Column>
+            <Column v-for="i in 5" :key="'oc-'+i" :header="'Choix ' + i" :style="{ textAlign: 'center', width: '75px' }">
+              <template #body="slotProps">
+                <div class="radio-wrapper"><RadioButton v-model="selectedPlaces[i-1]" :value="slotProps.data" :disabled="isPlaceDisabled(slotProps.data, i-1)" @click="onRadioClick(slotProps.data, i-1, $event)" /></div>
+              </template>
+            </Column>
+          </DataTable>
+        </div>
+      </div>
+
+      <!-- ═══ MODE CLASSIQUE (pas de sections PFP4) ═══ -->
+      <div v-else-if="availablePlaces.length > 0" class="content-wrapper">
         <DataTable
           :value="availablePlaces"
           class="modern-votation-table"
@@ -45,7 +205,6 @@
           :rowHover="true"
           stripedRows
         >
-          <!-- Colonne Institution avec lien -->
           <Column header="Institution" sortable field="InstitutionName" :style="{ minWidth: '200px' }">
             <template #body="slotProps">
               <a target="_blank" :href="`${slotProps.data.url}`" class="institution-link">
@@ -54,20 +213,16 @@
               </a>
             </template>
           </Column>
-
-          <!-- Autres colonnes d'informations -->
           <Column header="Nom de la Place" sortable field="NomPlace" :style="{ minWidth: '180px' }">
             <template #body="slotProps">
               <div class="place-name">{{ slotProps.data.NomPlace }}</div>
             </template>
           </Column>
-
           <Column header="Catégorie" sortable field="InstitutionCategory">
             <template #body="slotProps">
               <Tag :value="slotProps.data.InstitutionCategory" severity="info" />
             </template>
           </Column>
-
           <Column header="Critères" :style="{ minWidth: '200px' }">
             <template #body="slotProps">
               <div class="criteria-tags">
@@ -81,7 +236,6 @@
               </div>
             </template>
           </Column>
-
           <Column header="Langues">
             <template #body="slotProps">
               <div class="language-tags">
@@ -91,8 +245,6 @@
               </div>
             </template>
           </Column>
-
-          <!-- Colonnes de vote (Choix 1 à 5) -->
           <Column v-for="i in 5" :key="'choice-'+i" :header="'Choix ' + i" :style="{ textAlign: 'center', width: '80px' }">
             <template #body="slotProps">
               <div class="radio-wrapper">
@@ -105,8 +257,6 @@
               </div>
             </template>
           </Column>
-
-          <!-- Colonnes d'agrégation des votes -->
           <Column v-for="i in 5" :key="'votes-'+i" :header="'Top ' + i" :style="{ textAlign: 'center', width: '70px' }">
             <template #body="slotProps">
               <Tag
@@ -276,7 +426,10 @@ export default {
       isSubmitting: false,
       activeSession: null,
       sessionLoading: true,
-      pfp4ProposedPlaceIds: null
+      pfp4ProposedPlaceIds: null,
+      pfp4AssignCountByPlace: {},
+      pfp4MissingCriteria: [],
+      pfp4AppliedRule: null
     };
   },
   computed: {
@@ -287,6 +440,18 @@ export default {
     },
     voteAlreadyCast() {
       return this.votedPlaces[0] !== null;
+    },
+    hasPfp4Sections() {
+      return this.targetPFP === 'PFP4' && this.pfp4MissingCriteria && this.pfp4MissingCriteria.length > 0
+    },
+    pfp4HighPlaces() {
+      return this.expandedPFPData.filter(r => r.pfp4Section === 'high')
+    },
+    pfp4MediumPlaces() {
+      return this.expandedPFPData.filter(r => r.pfp4Section === 'medium')
+    },
+    pfp4OtherPlaces() {
+      return this.expandedPFPData.filter(r => r.pfp4Section === 'other')
     },
     selectedPlacesForRecap() {
       return this.selectedPlaces
@@ -440,15 +605,22 @@ export default {
         };
       });
 
-      // Pour PFP4: charger les propositions personnalisées de l'étudiant
+      // Pour PFP4: charger les propositions personnalisées et les assignations existantes
       if (this.targetPFP === 'PFP4' && this.selectedYear) {
         try {
-          const proposedIds = await resultatVotationService.getPfp4Proposals(this.selectedYear)
-          this.pfp4ProposedPlaceIds = proposedIds
-          console.log('🎯 PFP4 propositions chargées:', proposedIds ? proposedIds.length + ' places' : 'aucune (toutes visibles)')
+          const result = await resultatVotationService.getPfp4Proposals(this.selectedYear)
+          this.pfp4ProposedPlaceIds = result.proposedPlaceIds
+          this.pfp4AssignCountByPlace = result.assignCounts || {}
+          this.pfp4MissingCriteria = result.missingCriteria || []
+          this.pfp4AppliedRule = result.appliedRule || null
+          console.log('🎯 PFP4 propositions chargées:', result.proposedPlaceIds ? result.proposedPlaceIds.length + ' places' : 'aucune (toutes visibles)')
+          console.log('🎯 PFP4 critères manquants:', this.pfp4MissingCriteria, 'règle:', this.pfp4AppliedRule)
+          const totalSeats = Object.values(this.pfp4AssignCountByPlace).reduce((s,v) => s+v, 0)
+          console.log(`🎯 PFP4 assignations existantes: ${Object.keys(this.pfp4AssignCountByPlace).length} places, ${totalSeats} sièges pris`)
         } catch (err) {
           console.warn('⚠️ Impossible de charger les propositions PFP4:', err.message)
           this.pfp4ProposedPlaceIds = null
+          this.pfp4AssignCountByPlace = {}
         }
       }
 
@@ -527,8 +699,23 @@ export default {
 
       sorted.forEach(place => {
         let count = 0;
-        if (place[this.targetPFP] && place[this.targetPFP][this.selectedYear]) {
-          count = parseInt(place[this.targetPFP][this.selectedYear]);
+        // Pour PFP4: utiliser pfp4_proposition (colonne "Proposition PFP4" de ManagementOffreView)
+        const pfpField = this.targetPFP === 'PFP4' ? 'pfp4_proposition' : this.targetPFP;
+        if (place[pfpField]) {
+          const fieldData = place[pfpField];
+          const yr = String(this.selectedYear);
+          // Si la clé year existe explicitement, l'utiliser (même si "0")
+          // Ne fallback sur default QUE si la clé year n'existe pas du tout
+          if (fieldData.hasOwnProperty(yr) && fieldData[yr] !== '' && fieldData[yr] !== null && fieldData[yr] !== undefined) {
+            count = parseInt(fieldData[yr]) || 0;
+          } else {
+            const defVal = parseInt(fieldData['default'] || '0');
+            count = !isNaN(defVal) ? defVal : 0;
+          }
+        }
+        // Pour PFP4: soustraire les sièges déjà assignés
+        if (this.targetPFP === 'PFP4' && this.pfp4AssignCountByPlace[place.PlaceId]) {
+          count -= this.pfp4AssignCountByPlace[place.PlaceId];
         }
 
         if (!isNaN(count) && count >= 1) {
@@ -544,11 +731,59 @@ export default {
       // Pour PFP4: filtrer selon les propositions personnalisées
       if (this.targetPFP === 'PFP4' && this.pfp4ProposedPlaceIds && Array.isArray(this.pfp4ProposedPlaceIds)) {
         const allowedIds = new Set(this.pfp4ProposedPlaceIds)
-        this.expandedPFPData = rows.filter(r => allowedIds.has(r.PlaceId))
+        let filtered = rows.filter(r => allowedIds.has(r.PlaceId))
+
+        // Ajouter les sections de priorité basées sur les critères manquants
+        const missing = this.pfp4MissingCriteria || []
+        if (missing.length > 0) {
+          filtered.forEach(row => {
+            const CRIT_KEYS = ['MSQ', 'SYSINT', 'NEUROGER', 'AIGU', 'REHAB', 'AMBU', 'FR', 'DE']
+            const coveredCount = missing.filter(c => CRIT_KEYS.includes(c) && row[c]).length
+            row.pfp4CoveredCount = coveredCount
+            if (coveredCount >= 2) {
+              row.pfp4Section = 'high'
+              row.pfp4SectionLabel = '⭐ Priorité haute — couvre ' + coveredCount + ' critères manquants'
+            } else if (coveredCount === 1) {
+              row.pfp4Section = 'medium'
+              row.pfp4SectionLabel = '📋 Priorité moyenne — couvre 1 critère manquant'
+            } else {
+              row.pfp4Section = 'other'
+              row.pfp4SectionLabel = '📌 Autres places disponibles'
+            }
+          })
+          // Trier : high en premier, puis medium, puis other, et dans chaque section par coveredCount desc puis nom
+          const sectionOrder = { high: 0, medium: 1, other: 2 }
+          filtered.sort((a, b) => {
+            const sDiff = (sectionOrder[a.pfp4Section] || 2) - (sectionOrder[b.pfp4Section] || 2)
+            if (sDiff !== 0) return sDiff
+            const cDiff = (b.pfp4CoveredCount || 0) - (a.pfp4CoveredCount || 0)
+            if (cDiff !== 0) return cDiff
+            return (a.NomPlace || '').localeCompare(b.NomPlace || '')
+          })
+        }
+
+        this.expandedPFPData = filtered
         console.log(`🎯 PFP4: ${this.expandedPFPData.length}/${rows.length} places après filtrage propositions`)
+        if (missing.length > 0) {
+          const high = filtered.filter(r => r.pfp4Section === 'high').length
+          const med = filtered.filter(r => r.pfp4Section === 'medium').length
+          const other = filtered.filter(r => r.pfp4Section === 'other').length
+          console.log(`🎯 PFP4 sections: ⭐${high} haute, 📋${med} moyenne, 📌${other} autres`)
+        }
       } else {
         this.expandedPFPData = rows;
       }
+    },
+
+    pfp4RowClass(data) {
+      if (this.targetPFP !== 'PFP4' || !data.pfp4Section) return ''
+      if (data.pfp4Section === 'high') return 'pfp4-row-high'
+      if (data.pfp4Section === 'medium') return 'pfp4-row-medium'
+      return ''
+    },
+
+    isMissingCriteria(criteriaName) {
+      return this.pfp4MissingCriteria && this.pfp4MissingCriteria.includes(criteriaName)
     },
 
     getVoteCount(place) {
@@ -963,6 +1198,98 @@ export default {
   color: var(--text-color-secondary);
   line-height: 1.6;
   margin: 1.5rem 0;
+}
+
+/* PFP4 - Bandeau critères manquants */
+.pfp4-missing-banner {
+  margin-top: 1rem;
+}
+
+.pfp4-missing-card {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.08), rgba(234, 179, 8, 0.08));
+  border: 2px solid rgba(249, 115, 22, 0.3);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+}
+
+/* PFP4 - Sections */
+.pfp4-section {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.pfp4-section-header {
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.pfp4-section-header-high {
+  background: linear-gradient(135deg, #059669, #10b981);
+  color: white;
+}
+
+.pfp4-section-header-medium {
+  background: linear-gradient(135deg, #d97706, #f59e0b);
+  color: white;
+}
+
+.pfp4-section-header-other {
+  background: linear-gradient(135deg, #6b7280, #9ca3af);
+  color: white;
+}
+
+/* PFP4 - Badges critères couverts */
+.pfp4-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  min-width: 60px;
+}
+
+.pfp4-badge-high {
+  background: rgba(16, 185, 129, 0.15);
+  color: #059669;
+  border: 2px solid rgba(16, 185, 129, 0.4);
+}
+
+.pfp4-badge-medium {
+  background: rgba(245, 158, 11, 0.15);
+  color: #d97706;
+  border: 2px solid rgba(245, 158, 11, 0.4);
+}
+
+/* PFP4 - Colorisation subtile des tables */
+.pfp4-table-high :deep(.p-datatable-tbody > tr) {
+  background: rgba(16, 185, 129, 0.03);
+}
+
+.pfp4-table-high :deep(.p-datatable-tbody > tr:hover) {
+  background: rgba(16, 185, 129, 0.1) !important;
+}
+
+.pfp4-table-medium :deep(.p-datatable-tbody > tr) {
+  background: rgba(245, 158, 11, 0.03);
+}
+
+.pfp4-table-medium :deep(.p-datatable-tbody > tr:hover) {
+  background: rgba(245, 158, 11, 0.1) !important;
+}
+
+.pfp4-table-other :deep(.p-datatable-tbody > tr) {
+  opacity: 0.85;
+}
+
+.pfp4-table-other :deep(.p-datatable-tbody > tr:hover) {
+  opacity: 1;
 }
 
 /* Responsive */
