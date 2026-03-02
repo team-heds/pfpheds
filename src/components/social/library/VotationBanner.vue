@@ -54,13 +54,58 @@ export default {
     async checkOpenSessions() {
       try {
         const userStore = useUserStore()
-        const profile = userStore.profile
+        let profile = userStore.profile
+
+        // Si le profil n'est pas encore chargé, attendre qu'il le soit
+        if (!profile && userStore.user) {
+          await userStore.fetchProfile()
+          profile = userStore.profile
+        }
+
         const studentClass = profile?.Classe || profile?.classe || profile?.class || profile?.Class || null
+        const currentUserId = profile?.user_id || userStore.user?.id || null
 
-        if (!studentClass) return
+        console.log('🎯 VotationBanner - profile:', profile?.user_id, 'classe:', studentClass, 'userId:', currentUserId)
 
-        const sessions = await votationSessionService.getOpenSessionForClass(studentClass)
-        this.openSessions = sessions
+        if (!studentClass) {
+          // Pas de classe — essayer de récupérer toutes les sessions ouvertes et filtrer par userId
+          if (!currentUserId) return
+          const allSessions = await votationSessionService.getAllActiveSessions()
+          this.openSessions = allSessions.filter(s => {
+            if (s.is_priority && Array.isArray(s.priority_user_ids)) {
+              return s.priority_user_ids.includes(currentUserId)
+            }
+            return false // Sans classe, on ne montre que les sessions prioritaires où l'étudiant est listé
+          })
+          console.log('🎯 VotationBanner (sans classe) - sessions:', this.openSessions.length)
+          return
+        }
+
+        // 1. Sessions normales pour la classe de l'étudiant
+        const classSessions = await votationSessionService.getOpenSessionForClass(studentClass)
+
+        // 2. Sessions prioritaires où l'étudiant est listé (peu importe la classe)
+        const allSessions = await votationSessionService.getAllActiveSessions()
+        const prioritySessions = currentUserId
+          ? allSessions.filter(s => s.is_priority && Array.isArray(s.priority_user_ids) && s.priority_user_ids.includes(currentUserId))
+          : []
+
+        // Fusionner sans doublons
+        const sessionMap = new Map()
+        classSessions.forEach(s => {
+          // Sessions normales : afficher sauf si prioritaire et l'étudiant n'y est pas
+          if (s.is_priority && Array.isArray(s.priority_user_ids)) {
+            if (currentUserId && s.priority_user_ids.includes(currentUserId)) {
+              sessionMap.set(s.id, s)
+            }
+          } else {
+            sessionMap.set(s.id, s)
+          }
+        })
+        prioritySessions.forEach(s => sessionMap.set(s.id, s))
+
+        this.openSessions = Array.from(sessionMap.values())
+        console.log('🎯 VotationBanner - sessions filtrées:', this.openSessions.length, '(classe:', classSessions.length, '+ prio:', prioritySessions.length, ')')
       } catch (error) {
         console.error('Erreur chargement sessions votation:', error)
         this.openSessions = []
