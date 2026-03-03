@@ -23,7 +23,7 @@ import '@/assets/styles/mobile-scale.css';
 import { useUserStore } from '@/stores/userStore'
 import gamificationIntegration from '@/service/gamificationIntegration'
 
-const APP_VERSION = '0.1.73';
+const APP_VERSION = '0.1.74';
 if ('serviceWorker' in navigator) {
   const lastVersion = localStorage.getItem('app_version');
   if (lastVersion !== APP_VERSION) {
