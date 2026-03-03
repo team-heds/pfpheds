@@ -1,8 +1,15 @@
 /// <reference lib="webworker" />
 /* eslint-disable no-undef */
-// VitePWA injectera le precache manifest ici
+const SW_VERSION = '0.1.73';
 self.addEventListener('install', (e) => self.skipWaiting());
-self.addEventListener('activate', (e) => self.clients.claim());
+self.addEventListener('activate', (e) => {
+  e.waitUntil(
+    caches.keys().then(names => Promise.all(names.map(n => caches.delete(n))))
+      .then(() => self.clients.claim())
+      .then(() => self.clients.matchAll({ type: 'window' }))
+      .then(clients => clients.forEach(c => c.navigate(c.url)))
+  );
+});
 
 // Réception Push
 self.addEventListener('push', (event) => {

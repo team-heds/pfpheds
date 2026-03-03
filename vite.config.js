@@ -45,6 +45,9 @@ export default defineConfig({
       disable: process.env.NODE_ENV === 'development', // Désactiver en dev
       registerType: 'autoUpdate',
       workbox: {
+        cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/[a-zA-Z0-9-]+\.supabase\.co\/.*$/,
@@ -55,12 +58,13 @@ export default defineConfig({
           },
           {
             urlPattern: ({ url }) => url.origin === self.location.origin,
-            handler: 'CacheFirst',
+            handler: 'NetworkFirst',
             options: {
               cacheName: 'static-resources',
+              networkTimeoutSeconds: 3,
               expiration: {
                 maxEntries: 50,
-                maxAgeSeconds: 30 * 24 * 60 * 60, // 30 jours
+                maxAgeSeconds: 24 * 60 * 60, // 1 jour
               },
             },
           },
