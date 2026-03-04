@@ -46,7 +46,7 @@
               </div>
             </div>
           </div>
-          <div class="text-600 mt-2 text-sm"><i class="pi pi-arrow-down mr-1"></i> Les places ci-dessous sont triées par pertinence. <strong>Privilégiez en priorité les places qui couvrent le plus grand nombre de vos critères manquants</strong> afin de maximiser vos chances de valider votre diplôme.</div>
+          <div class="text-600 mt-2 text-sm"><i class="pi pi-arrow-down mr-1"></i> Les places ci-dessous sont triées par pertinence. <strong>Privilégiez en priorité les places qui couvrent le plus grand nombre de vos critères manquants en terme d'équité !!</strong> Pour rappel il est obligatoire de <strong> valider au minimum une place dans la deuxième langue pour obtenir votre diplôme</strong>.</div>
         </div>
       </div>
 
@@ -575,13 +575,24 @@ export default {
             }
           }
 
-          // Fallback 2 : chercher par classe
+          // Fallback 2 : chercher par classe (user_profiles ou pfp_cohort)
           if (!this.activeSession) {
             const profile = this.userStore.profile
-            const studentClass = profile?.Classe || profile?.classe || profile?.class || profile?.Class || null
+            const studentClass = profile?.Classe || profile?.classe || profile?.class || profile?.Class || profile?.pfp_cohort || null
             if (studentClass) {
+              console.log(`🔍 Fallback 2: recherche session pour classe ${studentClass}`)
               const classSessions = allSessions.filter(s => s.target_class === studentClass)
               this.activeSession = filterSessionForUser(classSessions)
+            }
+          }
+
+          // Fallback 3 : prendre la première session normale ouverte (non-prioritaire)
+          if (!this.activeSession) {
+            console.log('🔍 Fallback 3: recherche première session normale ouverte...')
+            const normalSession = allSessions.find(s => !s.is_priority)
+            if (normalSession) {
+              console.log(`✅ Session normale trouvée via fallback 3: ${normalSession.pfp_type} ${normalSession.year} (classe ${normalSession.target_class})`)
+              this.activeSession = normalSession
             }
           }
         }

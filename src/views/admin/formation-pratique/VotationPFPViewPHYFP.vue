@@ -744,6 +744,52 @@
                 :loading="pfp4Loading"
                 :disabled="pfp4Saved"
               />
+              <Button
+                v-if="pfp4Proposals.length > 0"
+                icon="pi pi-file-excel"
+                label="Export CSV"
+                severity="secondary"
+                outlined
+                @click="exportPfp4BilanCSV"
+              />
+            </div>
+          </div>
+
+          <!-- Exclusion manuelle d'étudiants -->
+          <div class="mt-3 pt-3 border-top-1 surface-border">
+            <div class="flex align-items-center gap-2 mb-2">
+              <i class="pi pi-user-minus text-red-500"></i>
+              <span class="font-semibold text-sm" style="color: #92400E;">Exclure des étudiants :</span>
+              <Tag v-if="excludedStudentIds.length > 0" :value="`${excludedStudentIds.length} exclu(s)`" severity="danger" class="text-xs" />
+              <small class="text-500 ml-2">Exclus de la génération des propositions ET du tirage au sort</small>
+            </div>
+            <div class="flex gap-2 align-items-start flex-wrap">
+              <AutoComplete
+                v-model="excludeSearchValue"
+                :suggestions="excludeFilteredSuggestions"
+                optionLabel="name"
+                placeholder="Rechercher un étudiant à exclure..."
+                @complete="filterExcludeStudents"
+                @item-select="onExcludeStudent"
+                class="w-full md:w-25rem"
+                :dropdown="true"
+              />
+            </div>
+            <div v-if="excludedStudentIds.length > 0" class="flex gap-2 flex-wrap mt-2">
+              <Tag 
+                v-for="uid in excludedStudentIds" 
+                :key="uid" 
+                :value="getExcludedStudentName(uid)"
+                severity="danger"
+                class="text-xs cursor-pointer"
+                @click="removeExcludedStudent(uid)"
+                style="cursor: pointer;"
+              >
+                <template #default>
+                  <span>{{ getExcludedStudentName(uid) }}</span>
+                  <i class="pi pi-times ml-1" style="font-size: 0.7rem;"></i>
+                </template>
+              </Tag>
             </div>
           </div>
 
@@ -911,6 +957,7 @@
               <p class="m-0 mt-1 text-sm text-green-700">
                 Lancer l'algorithme pour {{ filterClasse }} — {{ filterPFP }} {{ filterYear }}
                 <span v-if="filteredVotationsList.length > 0"> • <strong>{{ filteredVotationsList.length }}</strong> étudiants à traiter</span>
+                <span v-if="excludedStudentIds.length > 0" class="text-red-600"> • <strong>{{ excludedStudentIds.length }}</strong> exclu(s)</span>
               </p>
             </div>
             <Button 
@@ -920,6 +967,42 @@
               @click="startAlgorithm"
               :disabled="filteredVotationsList.length === 0"
             />
+          </div>
+          <!-- Exclusion manuelle (hors PFP4 qui a son propre panneau) -->
+          <div v-if="filterPFP !== 'PFP4' && excludedStudentOptions.length > 0" class="mt-3 pt-3 border-top-1 border-green-300">
+            <div class="flex align-items-center gap-2 mb-2">
+              <i class="pi pi-user-minus text-red-500"></i>
+              <span class="font-semibold text-sm text-green-900">Exclure des étudiants :</span>
+              <Tag v-if="excludedStudentIds.length > 0" :value="`${excludedStudentIds.length} exclu(s)`" severity="danger" class="text-xs" />
+            </div>
+            <div class="flex gap-2 align-items-start flex-wrap">
+              <AutoComplete
+                v-model="excludeSearchValue"
+                :suggestions="excludeFilteredSuggestions"
+                optionLabel="name"
+                placeholder="Rechercher un étudiant à exclure..."
+                @complete="filterExcludeStudents"
+                @item-select="onExcludeStudent"
+                class="w-full md:w-25rem"
+                :dropdown="true"
+              />
+            </div>
+            <div v-if="excludedStudentIds.length > 0" class="flex gap-2 flex-wrap mt-2">
+              <Tag 
+                v-for="uid in excludedStudentIds" 
+                :key="uid" 
+                :value="getExcludedStudentName(uid)"
+                severity="danger"
+                class="text-xs"
+                @click="removeExcludedStudent(uid)"
+                style="cursor: pointer;"
+              >
+                <template #default>
+                  <span>{{ getExcludedStudentName(uid) }}</span>
+                  <i class="pi pi-times ml-1" style="font-size: 0.7rem;"></i>
+                </template>
+              </Tag>
+            </div>
           </div>
         </div>
       </div>
@@ -1040,7 +1123,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import Button from 'primevue/button'
@@ -1062,6 +1145,8 @@ import resultatVotationService from '@/stores/resultatVotationService'
 import votationSessionService from '@/service/votationSessionService'
 import Dialog from 'primevue/dialog'
 import ConfirmDialog from 'primevue/confirmdialog'
+import Chips from 'primevue/chips'
+import AutoComplete from 'primevue/autocomplete'
 
 const toast = useToast()
 const userStore = useUserStore()
@@ -1195,6 +1280,49 @@ const validatedPlaces = ref([])
 const activeTab = ref(0)
 const placesFullMap = ref(new Map())
 
+// ============================================
+// EXCLUSION MANUELLE D'ÉTUDIANTS
+// ============================================
+const excludedStudentIds = ref([])
+const excludeSearchValue = ref('')
+const excludeFilteredSuggestions = ref([])
+
+const excludedStudentOptions = computed(() => {
+  return allStudents.value.map(s => {
+    const nom = (s.Nom || s.nom || s.family_name || '').toUpperCase()
+    const prenom = s.Prenom || s.prenom || s.forname || ''
+    return {
+      name: `${nom} ${prenom}`.trim() || s.email || 'Inconnu',
+      code: s.id || s.user_id
+    }
+  }).filter(o => o.code).sort((a, b) => a.name.localeCompare(b.name))
+})
+
+const filterExcludeStudents = (event) => {
+  const query = (event.query || '').toLowerCase().trim()
+  const alreadyExcluded = new Set(excludedStudentIds.value)
+  excludeFilteredSuggestions.value = excludedStudentOptions.value
+    .filter(o => !alreadyExcluded.has(o.code))
+    .filter(o => !query || o.name.toLowerCase().includes(query))
+}
+
+const onExcludeStudent = (event) => {
+  const selected = event.value
+  if (selected && selected.code && !excludedStudentIds.value.includes(selected.code)) {
+    excludedStudentIds.value.push(selected.code)
+  }
+  nextTick(() => { excludeSearchValue.value = '' })
+}
+
+const removeExcludedStudent = (uid) => {
+  excludedStudentIds.value = excludedStudentIds.value.filter(id => id !== uid)
+}
+
+const getExcludedStudentName = (uid) => {
+  const opt = excludedStudentOptions.value.find(o => o.code === uid)
+  return opt ? opt.name : uid.substring(0, 8)
+}
+
 const CRITERIA_KEYS = ['MSQ', 'SYSINT', 'NEUROGER', 'AIGU', 'REHAB', 'AMBU', 'FR', 'DE']
 
 const getPlaceCriteria = (placeId) => {
@@ -1278,8 +1406,40 @@ const generatePfp4Proposals = async () => {
     console.log(`   student_result_vote: ${assignmentsResult.data?.length || 0} ${assignmentsResult.error ? '⚠️ ' + assignmentsResult.error.message : '✅'}`)
     console.log(`   places: ${placesResult.data?.length || 0} ${placesResult.error ? '⚠️ ' + placesResult.error.message : '✅'}`)
 
-    const classStudents = allStudentsData.filter(s => (s.Classe || s.classe || '') === classe)
-    console.log(`   Étudiants ${classe}: ${classStudents.length}`)
+    const allClassStudents = allStudentsData.filter(s => (s.Classe || s.classe || '') === classe)
+    console.log(`   Étudiants ${classe}: ${allClassStudents.length}`)
+
+    // ── 1b. Exclure les étudiants déjà assignés en PFP4 et ceux exclus manuellement ──
+    const pfp4AssignedUserIds = new Set()
+    if (assignmentsResult.data) {
+      assignmentsResult.data.forEach(a => {
+        if (a.pfp_type === 'PFP4' && a.assigned_place_id) {
+          pfp4AssignedUserIds.add(a.user_id)
+        }
+      })
+    }
+    const manuallyExcludedIds = new Set(excludedStudentIds.value || [])
+
+    const classStudents = allClassStudents.filter(s => {
+      const uid = s.id || s.user_id
+      if (pfp4AssignedUserIds.has(uid)) return false
+      if (manuallyExcludedIds.has(uid)) return false
+      // Exclure les profils fantômes (pas de nom = pas un vrai étudiant)
+      const nom = s.Nom || s.nom || s.family_name || ''
+      if (!nom || nom === 'Nom non disponible') {
+        console.log(`   👻 Ghost exclu: user_id=${uid} (pas de nom)`)
+        return false
+      }
+      return true
+    })
+
+    const excludedAssigned = allClassStudents.filter(s => pfp4AssignedUserIds.has(s.id || s.user_id))
+    const excludedManual = allClassStudents.filter(s => manuallyExcludedIds.has(s.id || s.user_id) && !pfp4AssignedUserIds.has(s.id || s.user_id))
+    console.log(`   ❌ Exclus (déjà assignés PFP4): ${excludedAssigned.length}`)
+    excludedAssigned.forEach(s => console.log(`      - ${s.Nom || s.nom} ${s.Prenom || s.prenom}`))
+    console.log(`   ❌ Exclus (manuellement): ${excludedManual.length}`)
+    excludedManual.forEach(s => console.log(`      - ${s.Nom || s.nom} ${s.Prenom || s.prenom}`))
+    console.log(`   → ${classStudents.length} étudiants restants pour la génération`)
 
     // ── 2. Map des places (avec critères) ──
     const placesMap = new Map()
@@ -1528,7 +1688,10 @@ const generatePfp4Proposals = async () => {
         appliedRule = 'ALL_COMPLETE'
       }
 
-      console.log(`👤 ${student.Nom} ${student.Prenom} | scores=${JSON.stringify(scores)} | manquants=[${missingCriteria.join(',')}] | règle=${appliedRule} | ${proposedPlaces.length} places${excludedCount > 0 ? ` (-${excludedCount} déjà assignées)` : ''}${!studentCrit ? ' ⚠️ PAS DE CRITÈRES TROUVÉS' : ''}`)
+      const displayNom = student.Nom || student.nom || student.family_name || 'Nom non disponible'
+      const displayPrenom = student.Prenom || student.prenom || student.forname || 'Prénom non disponible'
+      const isGhost = displayNom === 'Nom non disponible'
+      console.log(`👤 ${displayNom} ${displayPrenom}${isGhost ? ` [GHOST user_id=${userId}]` : ''} | scores=${JSON.stringify(scores)} | manquants=[${missingCriteria.join(',')}] | règle=${appliedRule} | ${proposedPlaces.length} places${excludedCount > 0 ? ` (-${excludedCount} déjà assignées)` : ''}${!studentCrit ? ' ⚠️ PAS DE CRITÈRES TROUVÉS' : ''}`)
 
       proposals.push({
         userId,
@@ -1639,6 +1802,204 @@ const savePfp4Proposals = async () => {
 }
 
 // ============================================
+// EXPORT CSV BILAN PFP4
+// ============================================
+const exportPfp4BilanCSV = () => {
+  const BOM = '\uFEFF'
+  const sep = ';'
+  
+  // --- Feuille 1: Étudiants BA23 ---
+  let csvEtudiants = BOM + ['Nom', 'Prénom', 'Email', 'Assigné PFP4', 'Place assignée', 'Institution', 'Rang', 'Nb propositions', 'Statut'].join(sep) + '\n'
+  
+  const classe = filterClasse.value
+  const allClassStudents = allStudents.value
+  const assignedIds = new Set()
+  const assignmentMap = new Map()
+  votationsList.value.forEach(v => {
+    if (v.assignedPlaceId) {
+      assignedIds.add(v.userId)
+      assignmentMap.set(v.userId, v)
+    }
+  })
+  // Also check pfp4Proposals for assigned info
+  pfp4Proposals.value.forEach(p => {
+    if (!assignmentMap.has(p.userId)) {
+      // student in proposals but maybe assigned
+    }
+  })
+  
+  const manualExcluded = new Set(excludedStudentIds.value)
+  const proposalMap = new Map()
+  pfp4Proposals.value.forEach(p => {
+    proposalMap.set(p.userId, p)
+  })
+  
+  const sortedStudents = [...allClassStudents].sort((a, b) => 
+    ((a.Nom || a.nom || '').toUpperCase()).localeCompare((b.Nom || b.nom || '').toUpperCase())
+  )
+  
+  let countAssigned = 0, countExcludedManual = 0, countEligible = 0
+  
+  sortedStudents.forEach(s => {
+    const uid = s.id || s.user_id
+    const nom = (s.Nom || s.nom || s.family_name || '').replace(/;/g, ',')
+    const prenom = (s.Prenom || s.prenom || s.forname || '').replace(/;/g, ',')
+    const email = (s.Mail || s.email || '').replace(/;/g, ',')
+    
+    const votation = votationsList.value.find(v => v.userId === uid)
+    const isAssigned = votation && votation.assignedPlaceId
+    const proposal = proposalMap.get(uid)
+    
+    let statut = 'Éligible votation'
+    let placeName = '', instName = '', rank = '', nbProposals = ''
+    
+    if (isAssigned) {
+      statut = 'Assigné PFP4'
+      placeName = (votation.assignedPlaceName || '').replace(/;/g, ',')
+      instName = (votation.assignedInstitutionName || '').replace(/;/g, ',')
+      rank = votation.assignedRank || ''
+      countAssigned++
+    } else if (manualExcluded.has(uid)) {
+      statut = 'Exclu manuellement'
+      countExcludedManual++
+    } else {
+      countEligible++
+      if (proposal) {
+        nbProposals = proposal.places?.length || proposal.placeIds?.length || ''
+      }
+    }
+    
+    csvEtudiants += [nom, prenom, email, isAssigned ? 'OUI' : 'NON', placeName, instName, rank, nbProposals, statut].join(sep) + '\n'
+  })
+  
+  csvEtudiants += '\n'
+  csvEtudiants += ['TOTAL ' + classe, sortedStudents.length].join(sep) + '\n'
+  csvEtudiants += ['Assignés PFP4', countAssigned].join(sep) + '\n'
+  csvEtudiants += ['Exclus manuellement', countExcludedManual].join(sep) + '\n'
+  csvEtudiants += ['Éligibles votation', countEligible].join(sep) + '\n'
+  
+  // --- Feuille 2: Places PFP4 ---
+  let csvPlaces = BOM + ['Place', 'Institution', 'Capacité 2026', 'Sièges pris', 'Sièges restants', 'Statut', 'MSQ', 'SYSINT', 'NEUROGER', 'AIGU', 'REHAB', 'AMBU', 'FR', 'DE'].join(sep) + '\n'
+  
+  const institutionsStore2 = useInstitutionsStore()
+  const instMap = new Map()
+  if (institutionsStore2.institutions) {
+    institutionsStore2.institutions.forEach(i => instMap.set(i.InstitutionId, i.Name))
+  }
+  
+  // Count assignments per place from votationsList
+  const placeAssignCounts = new Map()
+  votationsList.value.forEach(v => {
+    if (v.assignedPlaceId) {
+      placeAssignCounts.set(v.assignedPlaceId, (placeAssignCounts.get(v.assignedPlaceId) || 0) + 1)
+    }
+  })
+  
+  const getExportCapacity = (propData) => {
+    if (!propData || typeof propData !== 'object') return 0
+    const yr = filterYear.value
+    if (propData.hasOwnProperty(yr) && propData[yr] !== '' && propData[yr] !== null && propData[yr] !== undefined) {
+      return parseInt(propData[yr]) || 0
+    }
+    const defVal = parseInt(propData['default'] || '0')
+    return !isNaN(defVal) ? defVal : 0
+  }
+  const pfp4PlacesList = placesStore.places
+    .filter(p => p.pfp4_proposition && getExportCapacity(p.pfp4_proposition) > 0)
+    .sort((a, b) => (instMap.get(a.InstitutionId) || '').localeCompare(instMap.get(b.InstitutionId) || ''))
+  
+  let totalCap = 0, totalUsed = 0, totalLeft = 0, placesFull = 0, placesOpen = 0
+  const boolStr = (v) => v === true || v === 'true' || v === 1 || v === '1' ? 'X' : ''
+  
+  pfp4PlacesList.forEach(p => {
+    const cap = getExportCapacity(p.pfp4_proposition)
+    const used = placeAssignCounts.get(p.PlaceId) || 0
+    const remaining = Math.max(0, cap - used)
+    totalCap += cap
+    totalUsed += used
+    totalLeft += remaining
+    if (remaining > 0) placesOpen++
+    else placesFull++
+    
+    const nom = (p.NomPlace || '').replace(/;/g, ',')
+    const inst = (instMap.get(p.InstitutionId) || 'N/A').replace(/;/g, ',')
+    const statut = remaining > 0 ? 'Disponible' : 'PLEINE'
+    
+    csvPlaces += [nom, inst, cap, used, remaining, statut, boolStr(p.MSQ), boolStr(p.SYSINT), boolStr(p.NEUROGER), boolStr(p.AIGU), boolStr(p.REHAB), boolStr(p.AMBU), boolStr(p.FR), boolStr(p.DE)].join(sep) + '\n'
+  })
+  
+  csvPlaces += '\n'
+  csvPlaces += ['TOTAL', '', totalCap, totalUsed, totalLeft].join(sep) + '\n'
+  csvPlaces += ['Places pleines', '', placesFull].join(sep) + '\n'
+  csvPlaces += ['Places disponibles', '', placesOpen].join(sep) + '\n'
+  
+  // --- Feuille 3: Bilan ---
+  let csvBilan = BOM + ['Métrique', 'Valeur'].join(sep) + '\n'
+  csvBilan += ['Classe', classe].join(sep) + '\n'
+  csvBilan += ['Année', filterYear.value].join(sep) + '\n'
+  csvBilan += ['Date export', new Date().toLocaleString('fr-CH')].join(sep) + '\n'
+  csvBilan += '\n'
+  csvBilan += ['Étudiants total', sortedStudents.length].join(sep) + '\n'
+  csvBilan += ['Déjà assignés PFP4', countAssigned].join(sep) + '\n'
+  csvBilan += ['Exclus manuellement', countExcludedManual].join(sep) + '\n'
+  csvBilan += ['Éligibles votation', countEligible].join(sep) + '\n'
+  csvBilan += '\n'
+  csvBilan += ['Places PFP4 totales', pfp4PlacesList.length].join(sep) + '\n'
+  csvBilan += ['Sièges totaux', totalCap].join(sep) + '\n'
+  csvBilan += ['Sièges pris', totalUsed].join(sep) + '\n'
+  csvBilan += ['Sièges restants', totalLeft].join(sep) + '\n'
+  csvBilan += ['Places pleines', placesFull].join(sep) + '\n'
+  csvBilan += ['Places disponibles', placesOpen].join(sep) + '\n'
+  csvBilan += '\n'
+  csvBilan += ['Ratio', `${countEligible} étudiants / ${totalLeft} sièges`].join(sep) + '\n'
+  csvBilan += ['Marge', totalLeft >= countEligible ? `+${totalLeft - countEligible} sièges` : `DEFICIT ${countEligible - totalLeft} sièges!`].join(sep) + '\n'
+  
+  // --- Feuille 4: Détail propositions par étudiant ---
+  let csvPropositions = BOM + ['Nom', 'Prénom', 'Règle', 'Critères manquants', 'Place', 'Institution', 'Capacité', 'MSQ', 'SYSINT', 'NEUROGER', 'AIGU', 'REHAB', 'AMBU', 'FR', 'DE'].join(sep) + '\n'
+  
+  const sortedProposals = [...pfp4Proposals.value].sort((a, b) => 
+    (a.nom || '').toUpperCase().localeCompare((b.nom || '').toUpperCase())
+  )
+  
+  sortedProposals.forEach(p => {
+    const nom = (p.nom || '').replace(/;/g, ',')
+    const prenom = (p.prenom || '').replace(/;/g, ',')
+    const regle = p.appliedRule || ''
+    const manquants = (p.missingCriteria || []).join(', ')
+    
+    if (p.proposedPlaces && p.proposedPlaces.length > 0) {
+      p.proposedPlaces.forEach(place => {
+        const placeName = (place.NomPlace || '').replace(/;/g, ',')
+        const instName = (place.InstitutionName || '').replace(/;/g, ',')
+        const cap = place.Capacity || ''
+        const c = place.criteria || {}
+        csvPropositions += [nom, prenom, regle, manquants, placeName, instName, cap, boolStr(c.MSQ), boolStr(c.SYSINT), boolStr(c.NEUROGER), boolStr(c.AIGU), boolStr(c.REHAB), boolStr(c.AMBU), boolStr(c.FR), boolStr(c.DE)].join(sep) + '\n'
+      })
+    } else {
+      csvPropositions += [nom, prenom, regle, manquants, 'AUCUNE PLACE', '', ''].join(sep) + '\n'
+    }
+  })
+
+  // Download files
+  const date = new Date().toISOString().split('T')[0]
+  const downloadCSV = (content, filename) => {
+    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = filename
+    link.click()
+    URL.revokeObjectURL(link.href)
+  }
+  
+  downloadCSV(csvBilan, `PFP4_Bilan_${classe}_${date}.csv`)
+  setTimeout(() => downloadCSV(csvEtudiants, `PFP4_Etudiants_${classe}_${date}.csv`), 200)
+  setTimeout(() => downloadCSV(csvPlaces, `PFP4_Places_${date}.csv`), 400)
+  setTimeout(() => downloadCSV(csvPropositions, `PFP4_Propositions_${classe}_${date}.csv`), 600)
+  
+  toast.add({ severity: 'success', summary: 'Export CSV', detail: '4 fichiers téléchargés', life: 3000 })
+}
+
+// ============================================
 // CONFIGURATION DYNAMIQUE - TOUTES LES CLASSES
 // ============================================
 // 3 années d'études :
@@ -1725,6 +2086,7 @@ watch(filterClasse, (newVal) => {
   placesWithAssignments.value = []
   votationsList.value = []
   validatedPlaces.value = []
+  excludedStudentIds.value = []
 
   if (newVal && PFP_CONFIG[newVal]) {
     const config = PFP_CONFIG[newVal]
@@ -1933,8 +2295,46 @@ const startAlgorithm = async () => {
       return Math.round((missingScore + bonusSae + bonusCas + tiebreaker) * 100) / 100
     }
 
+    // ── Exclure les étudiants déjà assignés en PFP4 et ceux exclus manuellement ──
+    const { data: existingPfp4Assignments } = await supabase
+      .from('student_result_vote')
+      .select('user_id, assigned_place_id')
+      .eq('pfp_type', filterPFP.value)
+    
+    const alreadyAssignedUserIds = new Set()
+    const alreadyAssignedPlaceCounts = new Map()
+    if (existingPfp4Assignments) {
+      existingPfp4Assignments.forEach(a => {
+        if (a.assigned_place_id) {
+          alreadyAssignedUserIds.add(a.user_id)
+          alreadyAssignedPlaceCounts.set(a.assigned_place_id, (alreadyAssignedPlaceCounts.get(a.assigned_place_id) || 0) + 1)
+        }
+      })
+    }
+    const manualExclusions = new Set(excludedStudentIds.value || [])
+
+    const eligibleVotations = filteredVotationsList.value.filter(student => {
+      if (alreadyAssignedUserIds.has(student.userId)) {
+        console.log(`   ❌ Exclu (déjà assigné ${filterPFP.value}): ${student.nom} ${student.prenom}`)
+        return false
+      }
+      if (manualExclusions.has(student.userId)) {
+        console.log(`   ❌ Exclu (manuellement): ${student.nom} ${student.prenom}`)
+        return false
+      }
+      return true
+    })
+
+    console.log(`📊 ${filteredVotationsList.value.length} votants → ${eligibleVotations.length} éligibles (${filteredVotationsList.value.length - eligibleVotations.length} exclus)`)
+
+    if (eligibleVotations.length === 0) {
+      toast.add({ severity: 'warn', summary: 'Aucun étudiant éligible', detail: 'Tous les étudiants sont déjà assignés ou exclus', life: 5000 })
+      loading.value = false
+      return
+    }
+
     // Préparer les données des étudiants pour l'algorithme
-    const studentsData = filteredVotationsList.value.map(student => ({
+    const studentsData = eligibleVotations.map(student => ({
       userId: student.userId,
       nom: student.nom,
       prenom: student.prenom,
@@ -1960,7 +2360,7 @@ const startAlgorithm = async () => {
       institutionMap.set(inst.InstitutionId, inst)
     })
 
-    // 🎯 Filtrer les places selon le PFP sélectionné
+    // 🎯 Filtrer les places selon le PFP sélectionné, en réduisant la capacité par les assignations existantes
     const placesData = placesStore.places
       .map(place => {
         const institution = institutionMap.get(place.InstitutionId)
@@ -1975,13 +2375,21 @@ const startAlgorithm = async () => {
         if (!capacity || isNaN(capacity) || capacity < 1) {
           return null
         }
+
+        // Réduire la capacité par le nombre d'étudiants déjà assignés à cette place
+        const alreadyAssigned = alreadyAssignedPlaceCounts.get(place.PlaceId) || 0
+        const remainingCapacity = capacity - alreadyAssigned
+        if (remainingCapacity < 1) {
+          console.log(`   ❌ Place pleine: ${place.NomPlace} (${alreadyAssigned}/${capacity} assignés)`)
+          return null
+        }
         
         return {
           PlaceId: place.PlaceId,
           NomPlace: place.NomPlace,
           InstitutionId: place.InstitutionId,
           InstitutionName: institution?.Name || 'Inconnu',
-          Capacity: capacity // Utiliser la capacité spécifique au PFP
+          Capacity: remainingCapacity
         }
       })
       .filter(Boolean) // Retirer les null
