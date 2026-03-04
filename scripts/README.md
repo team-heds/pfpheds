@@ -59,6 +59,85 @@
 
 ---
 
+### 4. `apply-careconvers-migrations-remote.ps1` ⭐ **CARECONVERS**
+**Application des migrations CareConvers (sessions + interactions)**
+
+```powershell
+# Exécution interactive (demande confirmation)
+.\scripts\apply-careconvers-migrations-remote.ps1
+
+# Exécution forcée
+.\scripts\apply-careconvers-migrations-remote.ps1 -Force
+
+# Personnaliser la clé SSH / host
+.\scripts\apply-careconvers-migrations-remote.ps1 `
+   -SSHKey "C:\Users\you\path\private_key" `
+   -SSHHost "ubuntu@your-server"
+```
+
+**Ce qu'il fait:**
+- ✅ Vérifie la connexion SSH
+- ✅ Vérifie que le conteneur `supabase-db` est actif
+- ✅ Copie `create_careconvers_sessions.sql` et `create_careconvers_interactions.sql`
+- ✅ Applique les migrations avec `ON_ERROR_STOP=1`
+- ✅ Vérifie que les 2 tables existent
+- ✅ Nettoie les fichiers temporaires sur le serveur
+
+---
+
+### 5. `deploy-prod.ps1` ⭐ **ONE COMMAND**
+**Déploie la stack Docker production + migrations CareConvers**
+
+```powershell
+# Déploiement complet (migrations + docker compose up --build)
+.\scripts\deploy-prod.ps1
+
+# Déploiement sans migrations
+.\scripts\deploy-prod.ps1 -SkipMigrations
+
+# Déploiement sans rebuild docker
+.\scripts\deploy-prod.ps1 -SkipBuild
+
+# Arrêt de la stack production
+.\scripts\deploy-prod.ps1 -Down
+```
+
+**Ce qu'il fait:**
+- ✅ (Optionnel) lance `apply-careconvers-migrations-remote.ps1`
+- ✅ exécute `docker compose -f docker-compose.prod.yml up -d --build`
+- ✅ affiche l'état des conteneurs en fin de run
+
+---
+
+### 6. `bootstrap-supabase-test-remote.ps1` ⭐ **TEST ENV**
+**Initialise un environnement Supabase de test (migrations + tables CareConvers)**
+
+```powershell
+# Voir les migrations qui seront appliquées (sans exécution)
+.\scripts\bootstrap-supabase-test-remote.ps1 -DryRun
+
+# Bootstrap interactif
+.\scripts\bootstrap-supabase-test-remote.ps1
+
+# Bootstrap sans confirmation
+.\scripts\bootstrap-supabase-test-remote.ps1 -Force
+
+# Paramètres personnalisés
+.\scripts\bootstrap-supabase-test-remote.ps1 `
+   -SSHKey "C:\Users\you\path\private_key" `
+   -SSHHost "ubuntu@your-server" `
+   -DbContainer "supabase-db"
+```
+
+**Ce qu'il fait:**
+- ✅ applique les migrations `backend/supabase/migrations/*.sql`
+- ✅ applique `sql/create_votation_sessions.sql`
+- ✅ applique les migrations `supabase/migrations/*.sql`
+- ✅ applique `sql/create_careconvers_sessions.sql` et `sql/create_careconvers_interactions.sql`
+- ✅ vérifie les tables critiques en fin d'exécution
+
+---
+
 ## 🚀 Workflow Recommandé
 
 ### Première Utilisation

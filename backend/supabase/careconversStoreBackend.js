@@ -2,7 +2,116 @@
 // Mount with: const registerCareConversStoreRoutes = require('./supabase/careconversStoreBackend');
 // in your main backend (index.js): registerCareConversStoreRoutes(app);
 
-var temp = 0;
+const { supabaseAdmin } = require('../supabaseClient');
+
+function normalizeUserId(userId) {
+  if (typeof userId !== 'string') return '';
+  return userId.trim();
+}
+
+const CARECONVERS_SESSIONS_TABLE = 'careconvers_sessions';
+const CARECONVERS_INTERACTIONS_TABLE = 'careconvers_interactions';
+let persistenceAvailable = true;
+let interactionLoggingAvailable = true;
+
+function getDefaultSessionState() {
+  return {
+    currentStep: 1,
+    opqrstCount: 0,
+    isbarParts: [],
+    quizState: null,
+  };
+}
+
+async function loadSessionState(userId) {
+  if (!persistenceAvailable) return getDefaultSessionState();
+
+  try {
+    const { data, error } = await supabaseAdmin
+      .from(CARECONVERS_SESSIONS_TABLE)
+      .select('current_step, opqrst_count, isbar_parts, quiz_state')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (error) {
+      if (error.code === '42P01') {
+        persistenceAvailable = false;
+        console.warn(`[CareConvers] Table "${CARECONVERS_SESSIONS_TABLE}" introuvable. Retour au mode mémoire.`);
+      } else {
+        console.error('[CareConvers] Erreur chargement session Supabase:', error.message || error);
+      }
+      return getDefaultSessionState();
+    }
+
+    if (!data) return getDefaultSessionState();
+
+    return {
+      currentStep: Number.isInteger(data.current_step) ? data.current_step : 1,
+      opqrstCount: Number.isInteger(data.opqrst_count) ? data.opqrst_count : 0,
+      isbarParts: Array.isArray(data.isbar_parts) ? data.isbar_parts : [],
+      quizState: data.quiz_state || null,
+    };
+  } catch (e) {
+    console.error('[CareConvers] Exception chargement session:', e?.message || e);
+    return getDefaultSessionState();
+  }
+}
+
+async function saveSessionState(userId, state) {
+  if (!persistenceAvailable) return;
+
+  const payload = {
+    user_id: userId,
+    current_step: state.currentStep,
+    opqrst_count: state.opqrstCount,
+    isbar_parts: state.isbarParts,
+    quiz_state: state.quizState,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { error } = await supabaseAdmin
+    .from(CARECONVERS_SESSIONS_TABLE)
+    .upsert(payload, { onConflict: 'user_id' });
+
+  if (error) {
+    if (error.code === '42P01') {
+      persistenceAvailable = false;
+      console.warn(`[CareConvers] Table "${CARECONVERS_SESSIONS_TABLE}" introuvable. Retour au mode mémoire.`);
+      return;
+    }
+    console.error('[CareConvers] Erreur sauvegarde session Supabase:', error.message || error);
+  }
+}
+
+async function deleteSessionState(userId) {
+  if (!persistenceAvailable) return;
+
+  const { error } = await supabaseAdmin
+    .from(CARECONVERS_SESSIONS_TABLE)
+    .delete()
+    .eq('user_id', userId);
+
+  if (error && error.code !== '42P01') {
+    console.error('[CareConvers] Erreur suppression session Supabase:', error.message || error);
+  }
+}
+
+async function saveInteraction(interaction) {
+  if (!interactionLoggingAvailable) return;
+
+  const { error } = await supabaseAdmin
+    .from(CARECONVERS_INTERACTIONS_TABLE)
+    .insert(interaction);
+
+  if (error) {
+    if (error.code === '42P01') {
+      interactionLoggingAvailable = false;
+      console.warn(`[CareConvers] Table "${CARECONVERS_INTERACTIONS_TABLE}" introuvable. Journalisation des interactions désactivée.`);
+      return;
+    }
+    console.error('[CareConvers] Erreur sauvegarde interaction:', error.message || error);
+  }
+}
 
 // Quiz data loaded from CSV
 const quizQuestions = [
@@ -196,11 +305,22 @@ function getIntentRegex(userInput) {
   if (/mesurer.*parametres.*vitaux/.test(t)) return 'Je vais mesurer vos paramètres vitaux';
   
   // Step 8 Algoplus scale intents
-  if (/au\s+vu\s+de\s+la\s+situation.*madame.*n['']?est\s+pas\s+en\s+mesure.*evaluer.*douleur.*echele.*observation/.test(t)) return 'Au vu de la situation, Madame n\'est pas en mesure d\'évaluer sa douleur, je vais donc utiliser une échelle d\'observation comportementale de la douleur aiguë';
-  if (/je\s+vais\s+utiliser\s+une\s+echele\s+d['']?observation/.test(t)) return 'Je vais utiliser une échelle d\'observation comportementale';
-  if (/echele.*observation/.test(t)) return 'Je vais utiliser une échelle d\'observation comportementale';
-  if (/je\s+vais\s+utiliser.*l['']?echele\s+algoplus/.test(t)) return 'Je vais utiliser l\'échelle Algoplus';
-  if (/echele\s+algoplus/.test(t)) return 'Je vais utiliser l\'échelle Algoplus';
+  if (/au\s+vu\s+de\s+la\s+situation.*madame.*n['']?est\s+pas\s+en\s+mesure.*evaluer.*douleur.*echel+e.*observation/.test(t)) return 'Au vu de la situation, Madame n\'est pas en mesure d\'évaluer sa douleur, je vais donc utiliser une échelle d\'observation comportementale de la douleur aiguë';
+  if (/je\s+vais\s+utiliser\s+une\s+echel+e\s+d['']?observation/.test(t)) return 'Je vais utiliser une échelle d\'observation comportementale';
+  if (/echel+e.*observation/.test(t)) return 'Je vais utiliser une échelle d\'observation comportementale';
+  if (/je\s+vais\s+utiliser.*l['']?echel+e\s+algoplus/.test(t)) return 'Je vais utiliser l\'échelle Algoplus';
+  if (/echel+e\s+algoplus/.test(t)) return 'Je vais utiliser l\'échelle Algoplus';
+
+  // Step 9 decision intents
+  if (/je\s+constate\s+que\s+vous\s+avez\s+mal.*je\s+vais\s+informer\s+ma\s+referente/.test(t)) {
+    return 'Je constate que vous avez mal. Je vais informer ma référente et je reviens ensuite vous voir';
+  }
+  if (/je\s+vais\s+informer\s+ma\s+referente/.test(t)) {
+    return 'Je vais informer ma référente';
+  }
+  if (/je\s+constate\s+que\s+vous\s+avez\s+mal/.test(t)) {
+    return 'Je constate que vous avez mal';
+  }
   
   // Catch some typos present in cases
   if (/fafsdfim/.test(t)) return 'Vous avez fafsdfim';
@@ -215,7 +335,9 @@ async function getIntent(userInput, currentStep = 1) {
   console.log(`[CareConvers][DEBUG] User input: "${userInput}" (Step: ${currentStep})`);
   
   // If Gemini not configured, fallback to regex
-  if (!geminiAI) return getIntentRegex(userInput);
+  if (!geminiAI) {
+    return { intent: getIntentRegex(userInput), intentSource: 'regex-no-gemini' };
+  }
 
   // Map ASCII or variant labels to the canonical labels used in the switch
   const canonicalMap = new Map([
@@ -330,10 +452,13 @@ async function getIntent(userInput, currentStep = 1) {
     const mapped = canonicalMap.get(rawIntent) || (relevantIntents.includes(rawIntent) ? rawIntent : 'unknown');
     const canonical = canonicalMap.get(mapped) || mapped;
     console.log(`[CareConvers][Intent] step=${currentStep} input="${userInput}" -> intent(raw)="${rawIntent}" -> intent(canonical)="${canonical}"`);
-    return canonical === 'unknown' ? getIntentRegex(userInput) : canonical;
+    if (canonical === 'unknown') {
+      return { intent: getIntentRegex(userInput), intentSource: 'regex-fallback-unknown' };
+    }
+    return { intent: canonical, intentSource: 'gemini' };
   } catch (error) {
     console.error('[CareConvers] Gemini classification failed, using regex fallback:', error?.message || error);
-    return getIntentRegex(userInput);
+    return { intent: getIntentRegex(userInput), intentSource: 'regex-fallback-error' };
   }
 }
 
@@ -349,10 +474,17 @@ function registerCareConversStoreRoutes(app) {
   // Track quiz progress for step 11: maps user identifier -> quiz state
   const quizProgress = {};
 
+  // Track OPQRST progress for step 6: maps user identifier -> count
+  const opqrstProgress = {};
+
   // Stateful Chat Endpoint
   app.post('/api/chat', async (req, res) => {
-    let { prompt, userId } = req.body; // Assuming a userId will be sent, defaulting to 'demo_user'
-    const currentUser = userId || 'demo_user';
+    let { prompt, userId } = req.body;
+    const currentUser = normalizeUserId(userId);
+
+    if (!currentUser) {
+      return res.status(400).json({ error: 'User identifier is missing.' });
+    }
 
     if (!prompt) {
       return res.status(400).json({ error: 'Prompt is missing.' });
@@ -361,6 +493,17 @@ function registerCareConversStoreRoutes(app) {
     // Trim whitespace and newlines from prompt
     prompt = prompt.trim();
 
+    // Hydrate user state from Supabase at request start
+    const persisted = await loadSessionState(currentUser);
+    conversationStates[currentUser] = persisted.currentStep;
+    opqrstProgress[currentUser] = persisted.opqrstCount;
+    isbarProgress[currentUser] = new Set(persisted.isbarParts);
+    if (persisted.quizState) {
+      quizProgress[currentUser] = persisted.quizState;
+    } else {
+      delete quizProgress[currentUser];
+    }
+
     // Get current step for the user, default to 1
     let currentStep = conversationStates[currentUser] || 1;
     let responseText = '';
@@ -368,7 +511,9 @@ function registerCareConversStoreRoutes(app) {
     let media = null;
 
     // --- Conversation Logic ---
-    const intent = await getIntent(prompt, currentStep);
+    const intentResult = await getIntent(prompt, currentStep);
+    const intent = intentResult?.intent || 'unknown';
+    const intentSource = intentResult?.intentSource || 'unknown';
 
     console.log(`[DEBUG] Step ${currentStep}, intent: "${intent}"`);
 
@@ -461,10 +606,7 @@ function registerCareConversStoreRoutes(app) {
             break;
 
       case 6: {
-        // Reset counter when entering step 6 for the first time
-        if (currentStep !== 6) {
-          temp = 0;
-        }
+        const currentOpqrstCount = opqrstProgress[currentUser] || 0;
         
         // Liste des intents OPQRST valides pour l'étape 6
         const opqrstIntents = [
@@ -482,13 +624,14 @@ function registerCareConversStoreRoutes(app) {
         // Logique commune pour tous les intents OPQRST
         if (opqrstIntents.includes(intent)) {
           responseText = "S'il vous plaît, dites à mon mari de venir, il faut appeler la police avant qu'il fasse nuit !";
-          
-          temp++;
-          console.log(`[CareConvers][Step 6] OPQRST question ${temp}/3: "${intent}"`);
+
+          const newCount = currentOpqrstCount + 1;
+          opqrstProgress[currentUser] = newCount;
+          console.log(`[CareConvers][Step 6] OPQRST question ${newCount}/3: "${intent}"`);
           
           // Après 3 questions OPQRST, passer à l'étape 7
-          if (temp >= 3) {
-            temp = 0;
+          if (newCount >= 3) {
+            opqrstProgress[currentUser] = 0;
             nextStep = 7;
             media = {
               imageUrl: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/3.png?alt=media&token=91cc1d60-c979-465c-8e10-0fef6af3ebef',
@@ -516,6 +659,7 @@ function registerCareConversStoreRoutes(app) {
         if (vitalSignsIntents.includes(intent)) {
           responseText = "D'accord...";
           nextStep = 8; // Prochaine étape après mesure des paramètres
+          opqrstProgress[currentUser] = 0;
           media = {
             imageUrl: 'https://firebasestorage.googleapis.com/v0/b/pfpheds.appspot.com/o/4.png?alt=media&token=c5e8d919-f35e-4e3c-8e10-0fef6af3ebef',
             caption: `Résultats des paramètres vitaux :
@@ -600,16 +744,37 @@ Agitation ou agressivité, agrippement.
           isbarProgress[currentUser] = new Set();
         }
 
+        const p = String(prompt || '')
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '');
+
         // Check which ISBAR part matches the user input
         let matchedPart = null;
 
-        if (intent.includes("Madame Aubrey présente") || intent.includes("signes") || intent.includes("évoquer une douleur")) {
+        if (
+          /madame\s+aubr(e|ey)/.test(p) ||
+          /signes?/.test(p) ||
+          /douleur/.test(p)
+        ) {
           matchedPart = 'S';
-        } else if (intent.includes("habituellement calme") || intent.includes("participe aux repas")) {
+        } else if (
+          /habituellement\s+calme/.test(p) ||
+          /participe\s+aux\s+repas/.test(p)
+        ) {
           matchedPart = 'B';
-        } else if (intent.includes("changement dans son comportement") || intent.includes("échelle ALGOPLUS") || intent.includes("score de 4") || intent.includes("observé")) {
+        } else if (
+          /changement\s+dans\s+son\s+comportement/.test(p) ||
+          /algoplus/.test(p) ||
+          /score\s+de\s+4/.test(p) ||
+          /observe|observee|observees|observer/.test(p)
+        ) {
           matchedPart = 'A';
-        } else if (intent.includes("évaluation clinique") || intent.includes("prise en charge") || intent.includes("recommande")) {
+        } else if (
+          /evaluation\s+clinique/.test(p) ||
+          /prise\s+en\s+charge/.test(p) ||
+          /recommande|recommendation/.test(p)
+        ) {
           matchedPart = 'R';
         }
 
@@ -714,26 +879,73 @@ Agitation ou agressivité, agrippement.
         if (isbarProgress[currentUser]) {
           delete isbarProgress[currentUser];
         }
+        if (quizProgress[currentUser]) {
+          delete quizProgress[currentUser];
+        }
+        opqrstProgress[currentUser] = 0;
         break;
     }
 
     // Update the user's state
     conversationStates[currentUser] = nextStep;
 
+    // Persist user state to Supabase
+    await saveSessionState(currentUser, {
+      currentStep: conversationStates[currentUser] || 1,
+      opqrstCount: opqrstProgress[currentUser] || 0,
+      isbarParts: isbarProgress[currentUser] ? Array.from(isbarProgress[currentUser]) : [],
+      quizState: quizProgress[currentUser] || null,
+    });
+
     console.log(`[CareConvers] Sending response - step: ${currentStep} -> ${nextStep}, response: "${responseText.substring(0, 50)}..."`);
 
+    // Persist full interaction for research/analytics
+    await saveInteraction({
+      user_id: currentUser,
+      prompt_text: prompt,
+      detected_intent: intent,
+      step_before: currentStep,
+      step_after: nextStep,
+      response_text: responseText,
+      media_image_url: media?.imageUrl || null,
+      media_caption: media?.caption || null,
+      metadata: {
+        has_media: !!media,
+        intent_source: intentSource,
+        gemini_used: intentSource === 'gemini',
+        timestamp: new Date().toISOString(),
+      },
+    });
+
     // Send the response (include media if any)
-    res.json({ response: responseText, nextStep, media });
+    res.json({
+      response: responseText,
+      nextStep,
+      media,
+      intentSource,
+      geminiUsed: intentSource === 'gemini',
+    });
   });
 
   // Reset endpoint to clear conversation state
   app.post('/api/reset', (req, res) => {
     const { userId } = req.body;
-    const currentUser = userId || 'demo_user';
+    const currentUser = normalizeUserId(userId);
+
+    if (!currentUser) {
+      return res.status(400).json({ success: false, error: 'User identifier is missing.' });
+    }
     
     // Clear conversation state
     delete conversationStates[currentUser];
     delete isbarProgress[currentUser];
+    delete quizProgress[currentUser];
+    opqrstProgress[currentUser] = 0;
+
+    // Also clear persisted state
+    deleteSessionState(currentUser).catch((e) => {
+      console.error('[CareConvers] Erreur suppression session persistée:', e?.message || e);
+    });
     
     console.log(`[CareConvers] Reset conversation for user: ${currentUser}`);
     res.json({ success: true, message: 'Conversation reset successfully', nextStep: 1 });

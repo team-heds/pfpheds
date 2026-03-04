@@ -110,6 +110,14 @@
 
         <div class="conversation-status">
           <h4>Progression de la conversation</h4>
+          <div class="gemini-indicator">
+            <img
+              :src="geminiUsed === true ? geminiOnImage : geminiOffImage"
+              :alt="geminiUsed === true ? 'Gemini actif' : 'Gemini non utilisé'"
+              class="gemini-indicator-image"
+            />
+            <span class="gemini-indicator-text">{{ geminiStatusLabel }}</span>
+          </div>
           <p class="current-step"><b>Étape actuelle :</b> {{ conversationStep }}/11</p>
           <ul class="step-tracker">
             <li :class="{ 'active-step': conversationStep === 1, 'completed-step': conversationStep > 1 }">1. Se présenter</li>
@@ -207,6 +215,7 @@
   
   <script>
   import { ref, onMounted, onBeforeUnmount, watch, computed, nextTick } from "vue";
+  import { useAuthStore } from "@/stores/authStore";
   import ScenarioObjectivesModal from "@/components/careconvers/ScenarioObjectivesModal.vue";
   import PdfViewerModal from "@/components/careconvers/PdfViewerModal.vue";
   import ConsigneModal from "@/components/careconvers/ConsigneModal.vue";
@@ -219,6 +228,7 @@
       mood: { type: String, default: "neutral" },
     },
     setup(props, { expose }) {
+      const authStore = useAuthStore();
       const avatarContainer = ref(null);
       const textToSpeak = ref("");
       const conversationStep = ref(1);
@@ -229,6 +239,10 @@
       const errorMessage = ref("");
       const chatHistory = ref(null);
       const selectedStartStep = ref(1);
+      const geminiUsed = ref(null);
+      const intentSource = ref('unknown');
+      const geminiOnImage = '/assets/gemini-on.svg';
+      const geminiOffImage = '/assets/gemini-off.svg';
 
       // Quiz state
       const currentQuizQuestion = ref(null);
@@ -396,6 +410,17 @@
         }
       });
 
+      const currentConversationUserId = computed(() => {
+        const authUser = authStore?.user;
+        return authUser?.id || authUser?.uid || authUser?.email || null;
+      });
+
+      const geminiStatusLabel = computed(() => {
+        if (geminiUsed.value === true) return 'Gemini: utilisé pour ce message';
+        if (geminiUsed.value === false) return 'Gemini: non utilisé (fallback regex)';
+        return 'Gemini: statut en attente';
+      });
+
       const scrollToBottom = async () => {
         await nextTick();
         if (chatHistory.value) {
@@ -405,6 +430,11 @@
 
       const speak = async () => {
         if (!textToSpeak.value.trim()) return;
+
+        if (!currentConversationUserId.value) {
+          errorMessage.value = "⚠️ Utilisateur non identifié. Reconnectez-vous pour utiliser CareConvers.";
+          return;
+        }
         
         errorMessage.value = "";
         isLoading.value = true;
@@ -422,7 +452,8 @@
             },
             body: JSON.stringify({ 
               prompt: userMessage, 
-              currentStep: conversationStep.value 
+              currentStep: conversationStep.value,
+              userId: currentConversationUserId.value
             }),
           });
 
@@ -432,6 +463,13 @@
 
           const data = await response.json();
           const botResponse = data.response;
+
+          if (typeof data.geminiUsed === 'boolean') {
+            geminiUsed.value = data.geminiUsed;
+          }
+          if (typeof data.intentSource === 'string') {
+            intentSource.value = data.intentSource;
+          }
           
           if (botResponse) {
             messages.value.push({ from: 'bot', text: botResponse });
@@ -617,6 +655,11 @@
         showConsigneModal,
         consigneText,
         hasStartedConversation,
+        geminiUsed,
+        intentSource,
+        geminiOnImage,
+        geminiOffImage,
+        geminiStatusLabel,
         // quick access
         openObjectives,
         openResumeSlide,
@@ -782,6 +825,25 @@
     background-color: #f0f0f0;
     border-radius: 8px;
     text-align: center;
+  }
+
+  .gemini-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 8px 0 10px;
+  }
+
+  .gemini-indicator-image {
+    width: 28px;
+    height: 28px;
+  }
+
+  .gemini-indicator-text {
+    color: #374151;
+    font-size: 14px;
+    font-weight: 600;
   }
 
   .conversation-status h4 {

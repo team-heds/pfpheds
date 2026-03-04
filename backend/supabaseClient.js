@@ -7,9 +7,19 @@ require('dotenv').config({ path: path.resolve(__dirname, '.env') });
 const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 const supabaseKey = process.env.VITE_SUPABASE_KEY || process.env.SUPABASE_KEY;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY; // Clé de service pour bypass RLS
+const baseClientKey = supabaseKey || supabaseServiceKey;
+
+if (!supabaseUrl || !baseClientKey) {
+  console.error('❌ [SUPABASE] Variables manquantes.');
+  console.error('   Attendu dans backend/.env :');
+  console.error('   - SUPABASE_URL');
+  console.error('   - SUPABASE_KEY (ou SUPABASE_SERVICE_ROLE_KEY)');
+  console.error('   Copiez backend/.env.example vers backend/.env puis renseignez les valeurs.');
+  process.exit(1);
+}
  
 // Client normal (avec RLS)
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabase = createClient(supabaseUrl, baseClientKey);
  
 // Client admin (bypass RLS) - utilise service key si disponible
 const supabaseAdmin = supabaseServiceKey
