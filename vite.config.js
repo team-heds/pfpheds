@@ -33,7 +33,13 @@ export default defineConfig({
     },
   },
   plugins: [
-    vue(),
+    vue({
+      template: {
+        compilerOptions: {
+          isCustomElement: (tag) => tag === 'elevenlabs-convai',
+        },
+      },
+    }),
     VueDevTools({
       launchEditor: 'phpstorm',
     }),

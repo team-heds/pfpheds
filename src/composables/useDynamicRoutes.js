@@ -1,5 +1,8 @@
 import { supabase } from '@/supabase';
 
+const isDev = import.meta.env.DEV;
+const debugDynRoutes = (...args) => { if (isDev) console.debug('[DynRoutes]', ...args); };
+
 // Vite va scanner et bundler toutes les vues et composants .vue utilisés par les routes dynamiques
 // Inclure à la fois /views et /components pour supporter des chemins comme "@/components/games/Ventriglisse3D.vue"
 const viewModules = {
@@ -181,20 +184,20 @@ export async function addDynamicRoutesToRouter(router) {
     // Sécurité: n'ajouter que si le composant est résolu correctement
     const hasValidComponent = typeof route.component === 'function';
     if (!hasValidComponent) {
-      console.warn('⚠️ Route dynamique ignorée (component introuvable):', route);
+      debugDynRoutes('ignorée (component introuvable):', route.path, route.component_path || '');
       return;
     }
 
     // Ne pas ajouter si un enregistrement avec le même path existe déjà
     const pathAlreadyExists = router.getRoutes().some(r => r.path === route.path);
     if (pathAlreadyExists) {
-      console.warn(`⚠️ Route dynamique ignorée (path déjà présent): ${route.path}`);
+      debugDynRoutes('ignorée (path déjà présent):', route.path);
       return;
     }
 
     // Vérifier si la route existe déjà
     if (router.hasRoute(route.name)) {
-      console.warn(`⚠️ Route "${route.name}" existe déjà, elle sera remplacée`);
+      debugDynRoutes(`"${route.name}" existe déjà, remplacement`);
       router.removeRoute(route.name);
     }
 

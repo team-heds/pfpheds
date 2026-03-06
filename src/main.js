@@ -46,9 +46,6 @@ const app = createApp(App);
 const pinia = createPinia();
 app.use(pinia);
 
-// Ignorer l'élément personnalisé 'elevenlabs-convai'
-app.config.compilerOptions.isCustomElement = (tag) => tag === "elevenlabs-convai";
-
 app.use(router);
 app.use(PrimeVue, { ripple: true });
 app.use(ToastService);
