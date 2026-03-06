@@ -43,33 +43,13 @@ export default defineConfig({
     }),
     VitePWA({
       disable: process.env.NODE_ENV === 'development', // Désactiver en dev
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.js',
       registerType: 'autoUpdate',
-      workbox: {
-        cleanupOutdatedCaches: true,
-        skipWaiting: true,
-        clientsClaim: true,
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/[a-zA-Z0-9-]+\.supabase\.co\/.*$/,
-            handler: 'NetworkOnly',
-            options: {
-              cacheName: 'supabase-api',
-            },
-          },
-          {
-            urlPattern: ({ url }) => url.origin === self.location.origin,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'static-resources',
-              networkTimeoutSeconds: 3,
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 24 * 60 * 60, // 1 jour
-              },
-            },
-          },
-        ],
-        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // Limite augmentée à 10 MB pour fichiers volumineux
+      injectRegister: 'auto',
+      injectManifest: {
+        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10 MB
       },
       manifest: {
         name: 'HEdS',
@@ -94,7 +74,7 @@ export default defineConfig({
       },
       includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
       devOptions: {
-        enabled: false, // Désactiver PWA en développement pour éviter les conflits de cache
+        enabled: false,
         suppressLogs: true
       },
     }),

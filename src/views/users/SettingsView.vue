@@ -104,6 +104,38 @@
                 </div>
               </div>
             </div>
+
+            <!-- Catégorie Données & Cache -->
+            <div v-if="activeCategory === 'Données & Cache'" class="settings-group">
+              <h2>Données & Cache</h2>
+              <p class="cache-description">
+                Si vous rencontrez des problèmes d'affichage, des données obsolètes ou des erreurs sur la plateforme,
+                vous pouvez vider le cache de l'application. Cela supprimera les données temporaires stockées
+                dans votre navigateur et rechargera la page.
+              </p>
+              <div class="cache-info">
+                <div class="cache-info-item">
+                  <strong>Version de l'application :</strong>
+                  <span>{{ appVersion }}</span>
+                </div>
+                <div class="cache-info-item">
+                  <strong>Service Worker :</strong>
+                  <span>{{ swStatus }}</span>
+                </div>
+                <div class="cache-info-item">
+                  <strong>Caches stockés :</strong>
+                  <span>{{ cacheCount }} cache(s)</span>
+                </div>
+              </div>
+              <div class="cache-actions">
+                <button class="btn-clear-cache" @click="clearCache" :disabled="clearing">
+                  {{ clearing ? 'Nettoyage en cours...' : 'Vider le cache et recharger' }}
+                </button>
+              </div>
+              <p class="cache-note">
+                <em>Note : Après le nettoyage, vous serez peut-être invité(e) à vous reconnecter.</em>
+              </p>
+            </div>
   
             <!-- Bouton d'application -->
             <div class="setting-item apply-button">
@@ -128,6 +160,9 @@
               <li :class="{ active: activeCategory === 'Notifications' }" @click="activeCategory = 'Notifications'">
                 Notifications
               </li>
+              <li :class="{ active: activeCategory === 'Données & Cache' }" @click="activeCategory = 'Données & Cache'">
+                Données & Cache
+              </li>
             </ul>
           </div>
         </div>
@@ -146,6 +181,10 @@
     data() {
       return {
         activeCategory: 'Interface',
+        clearing: false,
+        appVersion: localStorage.getItem('app_version') || 'N/A',
+        swStatus: 'Vérification...',
+        cacheCount: 0,
         settings: {
           interface: {
             language: 'fr',
@@ -173,16 +212,66 @@
         const settings = this.settings;
         console.log("Paramètres de la plateforme appliqués :", settings);
         alert("Les paramètres de la plateforme ont été appliqués avec succès !");
-        // Sauvegarde dans le localStorage (ou une autre solution de persistance)
         localStorage.setItem('platformSettings', JSON.stringify(settings));
+      },
+      async clearCache() {
+        this.clearing = true;
+        try {
+          // 1. Unregister all service workers
+          if ('serviceWorker' in navigator) {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            for (const reg of registrations) {
+              await reg.unregister();
+            }
+            console.log(`✅ ${registrations.length} Service Worker(s) supprimé(s)`);
+          }
+          // 2. Delete all caches
+          if ('caches' in window) {
+            const cacheNames = await caches.keys();
+            for (const name of cacheNames) {
+              await caches.delete(name);
+            }
+            console.log(`✅ ${cacheNames.length} cache(s) supprimé(s)`);
+          }
+          // 3. Clear localStorage (except auth)
+          const authKeys = [];
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('sb-')) authKeys.push({ key, val: localStorage.getItem(key) });
+          }
+          localStorage.clear();
+          // Restore auth keys so user stays logged in
+          authKeys.forEach(({ key, val }) => localStorage.setItem(key, val));
+          console.log('✅ localStorage nettoyé (auth préservée)');
+          // 4. Reload
+          window.location.reload();
+        } catch (err) {
+          console.error('❌ Erreur lors du nettoyage:', err);
+          alert('Erreur lors du nettoyage du cache. Essayez de vider manuellement le cache de votre navigateur.');
+          this.clearing = false;
+        }
       }
     },
-    mounted() {
+    async mounted() {
       // Chargement des paramètres sauvegardés (si disponibles)
       const savedSettings = localStorage.getItem('platformSettings');
       if (savedSettings) {
-        // Fusionne les valeurs sauvegardées avec la configuration par défaut
         this.settings = { ...this.settings, ...JSON.parse(savedSettings) };
+      }
+      // Check SW & cache status
+      try {
+        if ('serviceWorker' in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          this.swStatus = regs.length > 0 ? `Actif (${regs.length})` : 'Aucun';
+        } else {
+          this.swStatus = 'Non supporté';
+        }
+        if ('caches' in window) {
+          const names = await caches.keys();
+          this.cacheCount = names.length;
+        }
+      } catch (e) {
+        this.swStatus = 'Erreur';
       }
     }
   };
@@ -311,6 +400,63 @@
   
   .apply-button button:hover {
     background: #0056b3;
+  }
+
+  /* Données & Cache */
+  .cache-description {
+    color: #666;
+    line-height: 1.5;
+    margin-bottom: 20px;
+  }
+
+  .cache-info {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+  }
+
+  .cache-info-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+  }
+
+  .cache-info-item:last-child {
+    border-bottom: none;
+  }
+
+  .cache-actions {
+    text-align: center;
+    margin: 20px 0;
+  }
+
+  .btn-clear-cache {
+    padding: 12px 24px;
+    background: #dc3545;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: bold;
+    transition: background 0.2s;
+  }
+
+  .btn-clear-cache:hover:not(:disabled) {
+    background: #c82333;
+  }
+
+  .btn-clear-cache:disabled {
+    background: #999;
+    cursor: not-allowed;
+  }
+
+  .cache-note {
+    color: #888;
+    font-size: 0.9em;
+    text-align: center;
   }
   </style>
   
