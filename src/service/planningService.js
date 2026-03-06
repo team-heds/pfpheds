@@ -16,10 +16,12 @@ class PlanningService {
    */
   async getWeekTimeSlots(classCode, weekNumber) {
     try {
+      // Chercher avec les deux variantes de casse (bac26 vs BAC26) + dans class_codes array
+      const variants = this._getClassCodeVariants(classCode)
       const { data, error } = await supabase
         .from('planning_time_slots')
         .select('*')
-        .eq('class_code', classCode)
+        .or(variants)
         .eq('week_number', weekNumber)
         .order('day_index', { ascending: true })
         .order('start_time', { ascending: true })
@@ -40,10 +42,12 @@ class PlanningService {
    */
   async getSemesterTimeSlots(classCode, semester) {
     try {
+      // Chercher avec les deux variantes de casse (bac26 vs BAC26) + dans class_codes array
+      const variants = this._getClassCodeVariants(classCode)
       let query = supabase
         .from('planning_time_slots')
         .select('*')
-        .eq('class_code', classCode)
+        .or(variants)
         .order('week_number', { ascending: true })
         .order('day_index', { ascending: true })
         .order('start_time', { ascending: true })
@@ -317,10 +321,11 @@ class PlanningService {
    */
   async getPlanningCells(classCode, semester) {
     try {
+      const variants = this._getClassCodeVariants(classCode, false)
       let query = supabase
         .from('planning_cells')
         .select('*')
-        .eq('class_code', classCode)
+        .or(variants)
 
       // Filtrer par semestre
       if (semester === 'spring') {
@@ -520,10 +525,11 @@ class PlanningService {
    */
   async getSemesterPlanningCells(classCode, semester) {
     try {
+      const variants = this._getClassCodeVariants(classCode, false)
       let query = supabase
         .from('planning_cells')
         .select('*')
-        .eq('class_code', classCode)
+        .or(variants)
 
       if (semester === 'spring') {
         query = query.gte('week_number', 8).lte('week_number', 37)
@@ -548,10 +554,11 @@ class PlanningService {
    */
   async getWeekPlanningCells(classCode, weekNumber) {
     try {
+      const variants = this._getClassCodeVariants(classCode, false)
       const { data, error } = await supabase
         .from('planning_cells')
         .select('*')
-        .eq('class_code', classCode)
+        .or(variants)
         .eq('week_number', weekNumber)
 
       if (error) throw error
@@ -563,6 +570,26 @@ class PlanningService {
   }
 
   // ==================== UTILITAIRES ====================
+
+  /**
+   * Génère un filtre .or() pour matcher les variantes de casse d'un class_code.
+   * Pour planning_time_slots (a class_codes array) : inclut class_codes.cs
+   * Pour planning_cells (pas de class_codes) : seulement class_code.eq
+   */
+  _getClassCodeVariants(classCode, includeClassCodes = true) {
+    if (!classCode) return 'class_code.eq.'
+    const lower = classCode.toLowerCase()
+    const upper = classCode.toUpperCase()
+    const parts = [`class_code.eq.${lower}`, `class_code.eq.${upper}`]
+    if (includeClassCodes) {
+      parts.push(`class_codes.cs.{${lower}}`, `class_codes.cs.{${upper}}`)
+    }
+    if (classCode !== lower && classCode !== upper) {
+      parts.push(`class_code.eq.${classCode}`)
+      if (includeClassCodes) parts.push(`class_codes.cs.{${classCode}}`)
+    }
+    return parts.join(',')
+  }
 
   /**
    * Convertit le nom du jour court en jour complet

@@ -192,14 +192,11 @@
         <template #content>
           <DataTable
             :value="sortedTimeSlots"
-            :rows="viewMode === 'week' ? 20 : 50"
-            :paginator="viewMode !== 'week'"
-            :paginatorTemplate="viewMode !== 'week' ? 'FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown' : ''"
-            :rowsPerPageOptions="viewMode !== 'week' ? [20, 50, 100, 200] : []"
-            currentPageReportTemplate="{first} à {last} sur {totalRecords} créneaux"
+
+            :rows="sortedTimeSlots.length || 500"
+            :paginator="false"
             :scrollable="viewMode !== 'week'"
-            scrollHeight="70vh"
-            :virtualScrollerOptions="viewMode !== 'week' ? { itemSize: 46, delay: 0 } : null"
+            :scrollHeight="viewMode !== 'week' ? '75vh' : undefined"
             responsiveLayout="scroll"
             class="p-datatable-sm weekly-planning-table"
             :rowClass="getRowClass"
@@ -712,7 +709,7 @@ const sortedTimeSlots = computed(() => {
     if (dayDiff !== 0) return dayDiff
     
     // Puis par heure
-    return a.startTime.localeCompare(b.startTime)
+    return (a.startTime || '').localeCompare(b.startTime || '')
   })
   
   // En mode semestre, ajouter un champ dayGroup pour grouper par semaine+jour
@@ -1544,7 +1541,7 @@ const exportToExcel = async () => {
           worksheet.mergeCells(currentRow, 3, currentRow, 7)
           row1.getCell(3).value = slot.courseTitle || slot.activity || ''
           row1.getCell(3).font = { size: 9 }
-          row1.getCell(3).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
+          row1.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' }
 
           row1.height = Math.max(20, getCourseRowHeight(row1.getCell(3).value))
           currentRow++
@@ -1558,7 +1555,7 @@ const exportToExcel = async () => {
             for (let i = 0; i < 5; i++) {
               const teacherCell = row2.getCell(3 + i)
               teacherCell.value = chunk[i] || ''
-              teacherCell.font = { size: 8, italic: true }
+              teacherCell.font = { size: 8, italic: true, bold: true }
               teacherCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
               teacherCell.fill = slotFill
               teacherCell.border = thinBorder
@@ -1838,7 +1835,7 @@ const exportSemesterToExcel = async (workbook, ExcelJS) => {
           worksheet.mergeCells(currentRow, 3, currentRow, 7)
           row1.getCell(3).value = slot.courseTitle || slot.activity || ''
           row1.getCell(3).font = { size: 9 }
-          row1.getCell(3).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
+          row1.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' }
           row1.height = Math.max(20, getCourseRowHeight(row1.getCell(3).value))
           currentRow++
           
@@ -1852,7 +1849,7 @@ const exportSemesterToExcel = async (workbook, ExcelJS) => {
           // Enseignants (Col C-G fusionnées)
           worksheet.mergeCells(currentRow, 3, currentRow, 7)
           row2.getCell(3).value = (slot.teachers || []).join(', ')
-          row2.getCell(3).font = { size: 8, italic: true }
+          row2.getCell(3).font = { size: 8, italic: true, bold: true }
           row2.getCell(3).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
           row2.height = Math.max(18, getCourseRowHeight(row2.getCell(3).value))
           currentRow++
