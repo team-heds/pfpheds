@@ -8,9 +8,8 @@
 
     <!-- Fil d'actualité avec Infinity Scroll -->
     <div class="main-feed" ref="mainFeedRef">
-    <!-- <MainFeedSupabase v-if="isSupabaseUser" />
-      <MainFeed v-else /> -->
-      <MainFeed />
+      <MainFeedSupabase v-if="isSupabaseUser" />
+      <MainFeed v-else />
     </div>
 
     <!-- Sidebar Droite -->
