@@ -79,7 +79,11 @@ export async function loadDynamicRoutes() {
       .order('menu_order', { ascending: true });
 
     if (error) {
-      console.error('❌ Erreur récupération routes dynamiques:', error);
+      if (error.code === 'PGRST205') {
+        console.warn('⚠️ Table dynamic_routes absente, routes dynamiques désactivées pour cet environnement.');
+      } else {
+        console.error('❌ Erreur récupération routes dynamiques:', error);
+      }
       return [];
     }
 

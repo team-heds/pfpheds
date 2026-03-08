@@ -2,8 +2,9 @@ import { createApp, reactive } from 'vue';
 import { createPinia } from 'pinia';
 import App from './App.vue';
 import router from './router';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged } from 'firebase/auth';
 import { useAuthStore } from '@/stores/authStore';
+import { auth, isFirebaseEnabled } from '@/firebase';
 
 import PrimeVue from 'primevue/config';
 import BadgeDirective from 'primevue/badgedirective';
@@ -46,9 +47,6 @@ const app = createApp(App);
 const pinia = createPinia();
 app.use(pinia);
 
-// Ignorer l'élément personnalisé 'elevenlabs-convai'
-app.config.compilerOptions.isCustomElement = (tag) => tag === "elevenlabs-convai";
-
 app.use(router);
 app.use(PrimeVue, { ripple: true });
 app.use(ToastService);
@@ -60,24 +58,27 @@ const userState = reactive({
   user: null
 });
 
-// Écouter les changements d'état d'authentification
-const auth = getAuth();
-onAuthStateChanged(auth, async (user) => {
-  userState.user = user;
-  
-  // NOUVEAU : Déclencher l'intégration gamification lors de la connexion
-  if (user) {
-    try {
-      await gamificationIntegration.onLogin(user.uid, {
-        loginTime: Date.now(),
-        loginMethod: 'firebase_auth',
-        deviceType: window.innerWidth <= 768 ? 'mobile' : 'desktop'
-      });
-    } catch (error) {
-      console.error('Erreur lors du déclenchement gamification à la connexion:', error);
+// Écouter les changements d'état d'authentification Firebase (si activé)
+if (isFirebaseEnabled && auth) {
+  onAuthStateChanged(auth, async (user) => {
+    userState.user = user;
+    
+    // NOUVEAU : Déclencher l'intégration gamification lors de la connexion
+    if (user) {
+      try {
+        await gamificationIntegration.onLogin(user.uid, {
+          loginTime: Date.now(),
+          loginMethod: 'firebase_auth',
+          deviceType: window.innerWidth <= 768 ? 'mobile' : 'desktop'
+        });
+      } catch (error) {
+        console.error('Erreur lors du déclenchement gamification à la connexion:', error);
+      }
     }
-  }
-});
+  });
+} else {
+  userState.user = null;
+}
 
 // Créer un plugin simple pour fournir l'état de l'utilisateur à toute l'application
 app.provide('userState', userState);

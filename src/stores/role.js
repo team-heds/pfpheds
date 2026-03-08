@@ -41,6 +41,12 @@ export const useRoleStore = defineStore('role', () => {
  
   async function loadPermissions() {
     try {
+      const { data: sessionData } = await supabase.auth.getSession()
+      if (!sessionData?.session) {
+        perms.value = []
+        return
+      }
+
       const permsSet = new Set()
  
       // A) RPC (source principale)
@@ -50,7 +56,11 @@ export const useRoleStore = defineStore('role', () => {
           if (r?.perm) permsSet.add(r.perm)
         }
       } else if (rpcError) {
-        console.warn('RPC api_my_permissions error:', rpcError)
+        if (rpcError.code === 'PGRST202') {
+          console.warn('⚠️ RPC api_my_permissions absente, fallback user_profiles uniquement.')
+        } else {
+          console.warn('RPC api_my_permissions error:', rpcError)
+        }
       }
  
       // B) fallback user_profiles (si Admin Panel écrit ici)

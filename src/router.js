@@ -728,6 +728,7 @@ const router = createRouter({
 // Ajouter un guard de navigation
 let isAuthStateChecked = false;
 let dynamicRoutesLoaded = false;
+const AUTH_BYPASS = import.meta.env.VITE_DISABLE_AUTH === 'true';
 
 const debugRouter = (...args) => {
   if (import.meta.env.DEV) console.log(...args);
@@ -759,6 +760,11 @@ router.beforeEach(async (to, from, next) => {
   
   // Ne pas vérifier l'auth pour les pages de reset password (évite de consommer le code PKCE)
   if (to.path === '/reset-password' || to.path === '/new-password') {
+    return next();
+  }
+
+  if (AUTH_BYPASS) {
+    if (to.path === '/') return next('/home');
     return next();
   }
 

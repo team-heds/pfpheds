@@ -24,10 +24,17 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { supabase } from '@/supabase';
-import { auth } from '@/firebase';
+import { auth, isFirebaseEnabled } from '@/firebase';
 import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 
 export const useAuthStore = defineStore('auth', () => {
+  const AUTH_BYPASS = import.meta.env.VITE_DISABLE_AUTH === 'true';
+  const GUEST_USER = {
+    id: 'guest-user',
+    email: 'guest@local',
+    user_metadata: { full_name: 'Guest User' },
+  };
+
   // State
   const user = ref(null);
   const session = ref(null);
@@ -38,12 +45,21 @@ export const useAuthStore = defineStore('auth', () => {
   const lastSessionCheck = ref(null);
 
   // Getters
-  const isLoggedIn = computed(() => !!user.value);
+  const isLoggedIn = computed(() => AUTH_BYPASS || !!user.value);
   const isFirebaseUser = computed(() => authProvider.value === 'firebase');
-  const isSupabaseUser = computed(() => authProvider.value === 'supabase');
+  const isSupabaseUser = computed(() => AUTH_BYPASS || authProvider.value === 'supabase');
 
   // Actions Firebase
   async function signUpFirebase(credentials) {
+    if (AUTH_BYPASS) {
+      user.value = GUEST_USER;
+      authProvider.value = 'supabase';
+      session.value = { user: GUEST_USER };
+      return { user: GUEST_USER, session: session.value };
+    }
+    if (!isFirebaseEnabled || !auth) {
+      throw new Error('Firebase is disabled. Configure VITE_FIREBASE_* env vars to use Firebase auth.');
+    }
     loading.value = true;
     error.value = null;
     try {
@@ -62,6 +78,15 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function signInFirebase(credentials) {
+    if (AUTH_BYPASS) {
+      user.value = GUEST_USER;
+      authProvider.value = 'supabase';
+      session.value = { user: GUEST_USER };
+      return { user: GUEST_USER, session: session.value };
+    }
+    if (!isFirebaseEnabled || !auth) {
+      throw new Error('Firebase is disabled. Configure VITE_FIREBASE_* env vars to use Firebase auth.');
+    }
     loading.value = true;
     error.value = null;
     try {
@@ -80,6 +105,10 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function resetPasswordFirebase(email) {
+    if (AUTH_BYPASS) return;
+    if (!isFirebaseEnabled || !auth) {
+      throw new Error('Firebase is disabled. Configure VITE_FIREBASE_* env vars to use Firebase auth.');
+    }
     loading.value = true;
     error.value = null;
     try {
@@ -95,6 +124,12 @@ export const useAuthStore = defineStore('auth', () => {
 
   // Actions Supabase
   async function signUpSupabase(credentials) {
+    if (AUTH_BYPASS) {
+      user.value = GUEST_USER;
+      authProvider.value = 'supabase';
+      session.value = { user: GUEST_USER };
+      return { user: GUEST_USER, session: session.value };
+    }
     loading.value = true;
     error.value = null;
     try {
@@ -114,6 +149,12 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function signInSupabase(credentials) {
+    if (AUTH_BYPASS) {
+      user.value = GUEST_USER;
+      authProvider.value = 'supabase';
+      session.value = { user: GUEST_USER };
+      return { user: GUEST_USER, session: session.value };
+    }
     loading.value = true;
     error.value = null;
     try {
@@ -133,6 +174,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function resetPasswordSupabase(email) {
+    if (AUTH_BYPASS) return;
     loading.value = true;
     error.value = null;
     try {
@@ -150,13 +192,19 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function signOut() {
+    if (AUTH_BYPASS) {
+      user.value = GUEST_USER;
+      authProvider.value = 'supabase';
+      session.value = { user: GUEST_USER };
+      return;
+    }
     loading.value = true;
     error.value = null;
     try {
       if (authProvider.value === 'supabase') {
         const { error: signOutError } = await supabase.auth.signOut();
         if (signOutError) throw signOutError;
-      } else if (authProvider.value === 'firebase') {
+      } else if (authProvider.value === 'firebase' && auth) {
         await auth.signOut();
       }
       user.value = null;
@@ -171,15 +219,25 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function checkAuthState() {
+    if (AUTH_BYPASS) {
+      user.value = GUEST_USER;
+      authProvider.value = 'supabase';
+      session.value = { user: GUEST_USER };
+      lastSessionCheck.value = Date.now();
+      return;
+    }
+
     const timestamp = new Date().toLocaleTimeString();
 
     // Vérifier Firebase avec une promesse pour attendre la restauration de session
-    const firebaseUser = await new Promise((resolve) => {
-      const unsubscribe = onAuthStateChanged(auth, (user) => {
-        unsubscribe();
-        resolve(user);
-      });
-    });
+    const firebaseUser = isFirebaseEnabled && auth
+      ? await new Promise((resolve) => {
+          const unsubscribe = onAuthStateChanged(auth, (firebaseCurrentUser) => {
+            unsubscribe();
+            resolve(firebaseCurrentUser);
+          });
+        })
+      : null;
 
     if (firebaseUser) {
       user.value = firebaseUser;
@@ -250,6 +308,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   // Vérification périodique de la session (toutes les 2 minutes)
   function startSessionMonitoring() {
+    if (AUTH_BYPASS) return;
     if (sessionCheckInterval.value) {
       clearInterval(sessionCheckInterval.value);
     }
@@ -289,6 +348,13 @@ export const useAuthStore = defineStore('auth', () => {
 
   // Initialisation du store
   async function initializeAuth() {
+    if (AUTH_BYPASS) {
+      user.value = GUEST_USER;
+      authProvider.value = 'supabase';
+      session.value = { user: GUEST_USER };
+      lastSessionCheck.value = Date.now();
+      return;
+    }
     await checkAuthState();
     startSessionMonitoring();
   }
@@ -297,6 +363,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   // Supabase auth state change
   supabase.auth.onAuthStateChange(async (event, newSession) => {
+    if (AUTH_BYPASS) return;
     // Gérer tous les événements qui indiquent une session active
     if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION' || event === 'USER_UPDATED') && newSession) {
       // Ne pas écraser si Firebase est déjà connecté
@@ -326,21 +393,23 @@ export const useAuthStore = defineStore('auth', () => {
   });
 
   // Firebase auth state change
-  onAuthStateChanged(auth, (firebaseUser) => {
-    if (firebaseUser) {
-      // Ne pas écraser si Supabase est déjà connecté
-      if (authProvider.value !== 'supabase') {
-        user.value = firebaseUser;
-        authProvider.value = 'firebase';
-        session.value = null; // Firebase n'utilise pas de session comme Supabase
+  if (isFirebaseEnabled && auth) {
+    onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser) {
+        // Ne pas écraser si Supabase est déjà connecté
+        if (authProvider.value !== 'supabase') {
+          user.value = firebaseUser;
+          authProvider.value = 'firebase';
+          session.value = null; // Firebase n'utilise pas de session comme Supabase
+        }
+      } else {
+        if (authProvider.value === 'firebase') {
+          user.value = null;
+          authProvider.value = null;
+        }
       }
-    } else {
-      if (authProvider.value === 'firebase') {
-        user.value = null;
-        authProvider.value = null;
-      }
-    }
-  });
+    });
+  }
 
   return {
     user,
