@@ -1553,12 +1553,13 @@ const exportToExcel = async () => {
       if (dayModule) {
         worksheet.mergeCells(currentRow, 2, currentRow, 7)
         const moduleHeaderCell = worksheet.getCell(currentRow, 2)
-        moduleHeaderCell.value = `${dayModule.number} — ${dayModule.title}`
+        const moduleHeaderText = `${dayModule.number} — ${dayModule.title}`
+        moduleHeaderCell.value = moduleHeaderText
         moduleHeaderCell.font = { size: 10, bold: true, color: { argb: 'FFFFFFFF' } }
-        moduleHeaderCell.alignment = { horizontal: 'center', vertical: 'middle' }
+        moduleHeaderCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: moduleHeaderText.length > 40 }
         moduleHeaderCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgHex } }
         moduleHeaderCell.border = thinBorder
-        worksheet.getRow(currentRow).height = 22
+        worksheet.getRow(currentRow).height = moduleHeaderText.length > 40 ? 30 : 22
         currentRow++
       }
 
@@ -1619,11 +1620,13 @@ const exportToExcel = async () => {
 
           // Nom du cours (Col C-G fusionnées)
           worksheet.mergeCells(currentRow, 3, currentRow, 7)
-          row1.getCell(3).value = slot.courseTitle || slot.activity || ''
+          const courseText = slot.courseTitle || slot.activity || ''
+          row1.getCell(3).value = courseText
           row1.getCell(3).font = { size: 9 }
-          row1.getCell(3).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
+          const needsWrap = courseText.length > 30
+          row1.getCell(3).alignment = { horizontal: 'center', vertical: 'middle', wrapText: needsWrap }
 
-          row1.height = Math.max(20, getCourseRowHeight(row1.getCell(3).value))
+          row1.height = needsWrap ? Math.max(20, getCourseRowHeight(courseText)) : 20
           currentRow++
 
           // LIGNES 2+ : Enseignants (5 colonnes C-G) — colorier toutes les cellules B-G
@@ -1636,7 +1639,7 @@ const exportToExcel = async () => {
               const teacherCell = row2.getCell(3 + i)
               teacherCell.value = chunk[i] || ''
               teacherCell.font = { size: 8, italic: true, bold: true }
-              teacherCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
+              teacherCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: (chunk[i] || '').length > 30 }
               teacherCell.fill = slotFill
               teacherCell.border = thinBorder
             }
@@ -1868,12 +1871,13 @@ const exportSemesterToExcel = async (workbook, ExcelJS) => {
       if (mainModule) {
         worksheet.mergeCells(currentRow, 2, currentRow, 7)
         const moduleCell = worksheet.getCell(currentRow, 2)
-        moduleCell.value = `${mainModule.number} — ${mainModule.title}`
+        const semModuleText = `${mainModule.number} — ${mainModule.title}`
+        moduleCell.value = semModuleText
         moduleCell.font = { size: 10, bold: true, color: { argb: 'FFFFFFFF' } }
-        moduleCell.alignment = { horizontal: 'center', vertical: 'middle' }
+        moduleCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: semModuleText.length > 40 }
         moduleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: moduleBgHex } }
         moduleCell.border = thinBorder
-        worksheet.getRow(currentRow).height = 22
+        worksheet.getRow(currentRow).height = semModuleText.length > 40 ? 30 : 22
         currentRow++
       }
       
@@ -1928,10 +1932,12 @@ const exportSemesterToExcel = async (workbook, ExcelJS) => {
           row1.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' }
           // Cours (Col C-G fusionnées)
           worksheet.mergeCells(currentRow, 3, currentRow, 7)
-          row1.getCell(3).value = slot.courseTitle || slot.activity || ''
+          const semCourseText = slot.courseTitle || slot.activity || ''
+          row1.getCell(3).value = semCourseText
           row1.getCell(3).font = { size: 9 }
-          row1.getCell(3).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
-          row1.height = Math.max(20, getCourseRowHeight(row1.getCell(3).value))
+          const semNeedsWrap = semCourseText.length > 30
+          row1.getCell(3).alignment = { horizontal: 'center', vertical: 'middle', wrapText: semNeedsWrap }
+          row1.height = semNeedsWrap ? Math.max(20, getCourseRowHeight(semCourseText)) : 20
           currentRow++
           
           // LIGNE 2 : Enseignants
@@ -1943,10 +1949,12 @@ const exportSemesterToExcel = async (workbook, ExcelJS) => {
           }
           // Enseignants (Col C-G fusionnées)
           worksheet.mergeCells(currentRow, 3, currentRow, 7)
-          row2.getCell(3).value = (slot.teachers || []).join(', ')
+          const teachersText = (slot.teachers || []).join(', ')
+          row2.getCell(3).value = teachersText
           row2.getCell(3).font = { size: 8, italic: true, bold: true }
-          row2.getCell(3).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
-          row2.height = Math.max(18, getCourseRowHeight(row2.getCell(3).value))
+          const teachersNeedsWrap = teachersText.length > 30
+          row2.getCell(3).alignment = { horizontal: 'center', vertical: 'middle', wrapText: teachersNeedsWrap }
+          row2.height = teachersNeedsWrap ? Math.max(18, getCourseRowHeight(teachersText)) : 18
           currentRow++
         })
       }
