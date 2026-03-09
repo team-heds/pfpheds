@@ -126,3 +126,6 @@ temp-deploy/*.7z
 *.zip
 dist/*.tar.gz
 build/*.tar.gz
+
+# Firebase hosting cache (obsolete)
+.firebase/
