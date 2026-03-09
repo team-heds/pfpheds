@@ -207,11 +207,12 @@
                 <Badge :value="dayGroup.slots.length" severity="info" />
               </div>
               <div class="day-slots">
-                <div v-for="slot in dayGroup.slots.slice(0, 3)" :key="slot.id" class="slot-chip">
-                  <span class="slot-time">{{ slot.startTime }}</span>
+                <div v-for="slot in dayGroup.slots.slice(0, 6)" :key="slot.id" class="slot-chip">
+                  <span class="slot-time">{{ slot.startTime && slot.startTime !== 'null' ? `${slot.startTime} - ${slot.endTime}` : 'Async' }}</span>
                   <span class="slot-course">{{ slot.courseTitle || slot.activity || '—' }}</span>
+                  <Tag v-if="slot.classCode" :value="slot.classCode" severity="secondary" class="tag-small" />
                 </div>
-                <span v-if="dayGroup.slots.length > 3" class="more-slots">+{{ dayGroup.slots.length - 3 }} autres</span>
+                <span v-if="dayGroup.slots.length > 6" class="more-slots">+{{ dayGroup.slots.length - 6 }} autres</span>
               </div>
             </div>
           </div>
@@ -387,7 +388,7 @@ async function loadAcademicYear() {
       activeYearName.value = activeYear.name || ''
       activeYearId.value = activeYear.id
       
-      const classes = await academicYearService.getClassesForYear(activeYear.id)
+      const classes = await academicYearService.getClassesByAcademicYear(activeYear.id)
       activeYearClasses.value = classes?.length || 0
     }
   } catch (err) {
@@ -450,31 +451,51 @@ async function loadPlanningStats() {
     
     if (!activeYearId.value) return
     
-    // Total slots
-    const { count: total } = await supabase
-      .from('planning_time_slots')
-      .select('*', { count: 'exact', head: true })
-      .eq('academic_year_id', activeYearId.value)
+    // Récupérer les classes de l'année active
+    const classes = await academicYearService.getClassesByAcademicYear(activeYearId.value)
+    if (!classes || classes.length === 0) return
     
-    totalSlots.value = total || 0
+    // Convertir codes classes (B24-TP → BAC24-TP) pour matcher planning_time_slots
+    const classCodes = classes.map(c => {
+      const code = c.code || ''
+      return code.match(/^B\d/) ? 'BAC' + code.substring(1) : code
+    })
     
-    // Current week slots
-    const weekNum = currentISOWeek.value
-    const classes = await academicYearService.getClassesForYear(activeYearId.value)
-    if (classes && classes.length > 0) {
-      const classId = classes[0].id
-      const slots = await planningService.getWeekTimeSlots(classId, weekNum)
-      currentWeekSlots.value = slots?.length || 0
-      currentWeekSlotsData.value = (slots || []).map(s => ({
-        id: s.id,
-        day: s.day,
-        startTime: s.start_time,
-        endTime: s.end_time,
-        courseTitle: s.course_title,
-        activity: s.activity,
-        moduleCode: s.module_code
-      }))
+    // Total slots pour toutes les classes de l'année
+    let totalCount = 0
+    for (const code of classCodes) {
+      const { count } = await supabase
+        .from('planning_time_slots')
+        .select('*', { count: 'exact', head: true })
+        .ilike('class_code', code)
+      totalCount += (count || 0)
     }
+    totalSlots.value = totalCount
+    
+    // Current week slots — toutes les classes
+    const weekNum = currentISOWeek.value
+    const allSlots = []
+    const seenIds = new Set()
+    for (const code of classCodes) {
+      const slots = await planningService.getWeekTimeSlots(code, weekNum)
+      for (const s of (slots || [])) {
+        if (!seenIds.has(s.id)) {
+          seenIds.add(s.id)
+          allSlots.push({
+            id: s.id,
+            day: s.day,
+            startTime: s.start_time,
+            endTime: s.end_time,
+            courseTitle: s.course_title,
+            activity: s.activity,
+            moduleCode: s.module_code,
+            classCode: s.class_code
+          })
+        }
+      }
+    }
+    currentWeekSlots.value = allSlots.length
+    currentWeekSlotsData.value = allSlots
   } catch (err) {
     console.error('Erreur chargement stats planning:', err)
   }
