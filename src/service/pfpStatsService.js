@@ -15,13 +15,29 @@ export async function getPfpCohortStats() {
     const currentYear = '2026' // Change ici selon tes données (2024, 2025, 2026...)
     
     // Récupérer toutes les places avec les colonnes PFP1A et PFP1B
-    const { data: places, error: placesError } = await supabase
-      .from('places')
-      .select('PlaceId, PFP1A, PFP1B, InstitutionId')
-    
-    if (placesError) {
-      console.error('[pfpStatsService] Erreur places:', placesError)
-      throw placesError
+    let places = []
+    try {
+      const { data, error: placesError } = await supabase
+        .from('places')
+        .select('PlaceId, PFP1A, PFP1B, InstitutionId')
+      
+      if (placesError) {
+        console.warn('[pfpStatsService] Erreur places:', placesError.message)
+        // Return empty stats gracefully
+        return {
+          PFP1A: { total: 0, assigned: 0, available: 0, byCantons: {}, topCantons: [] },
+          PFP1B: { total: 0, assigned: 0, available: 0, byCantons: {}, topCantons: [] },
+          global: { total: 0, byStatus: {} }
+        }
+      }
+      places = data || []
+    } catch (queryErr) {
+      console.warn('[pfpStatsService] Exception places:', queryErr)
+      return {
+        PFP1A: { total: 0, assigned: 0, available: 0, byCantons: {}, topCantons: [] },
+        PFP1B: { total: 0, assigned: 0, available: 0, byCantons: {}, topCantons: [] },
+        global: { total: 0, byStatus: {} }
+      }
     }
     
     // Si pas de places, retourner des stats vides
@@ -35,13 +51,15 @@ export async function getPfpCohortStats() {
     }
     
     // Récupérer toutes les institutions séparément
-    const { data: institutions, error: instError } = await supabase
-      .from('institutions')
-      .select('InstitutionId, Name, Canton, Locality')
-    
-    if (instError) {
-      console.error('[pfpStatsService] Erreur institutions:', instError)
-      throw instError
+    let institutions = []
+    try {
+      const { data, error: instError } = await supabase
+        .from('institutions')
+        .select('InstitutionId, Name, Canton, Locality')
+      if (instError) console.warn('[pfpStatsService] Erreur institutions:', instError.message)
+      institutions = data || []
+    } catch (instErr) {
+      console.warn('[pfpStatsService] Exception institutions:', instErr)
     }
     
     // Créer un map des institutions pour accès rapide

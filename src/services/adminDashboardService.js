@@ -21,37 +21,58 @@ import { validateEmail, validateId } from '@/composables/useInputValidation'
  */
 export async function getGlobalStats() {
   try {
-    // Requêtes parallélisées pour de meilleures performances
-    const [modulesResult, teacherRolesResult, rmRolesResult, coursesResult, allRolesResult] = await Promise.all([
-      supabase.from('modules').select('id, track_id, responsable_email, year, credits'),
-      supabase.from('user_track_roles').select('user_id, track_id, role').eq('role', 'TEACHER').eq('is_active', true),
-      supabase.from('user_track_roles').select('user_id, track_id, role').eq('role', 'RM').eq('is_active', true),
-      supabase.from('courses').select('*', { count: 'exact', head: true }),
-      supabase.from('user_track_roles').select('user_id').eq('is_active', true),
-    ])
+    // Modules
+    const { data: modules, error: modulesError } = await supabase
+      .from('modules')
+      .select('id, track_id, responsable_email, year, credits')
+    if (modulesError) throw modulesError
+    const modList = modules || []
 
-    const modules = modulesResult.data || []
-    if (modulesResult.error) throw modulesResult.error
+    // Cours
+    const { count: coursesCount } = await supabase
+      .from('courses')
+      .select('*', { count: 'exact', head: true })
 
-    const teacherRoles = teacherRolesResult.data || []
-    const rmRoles = rmRolesResult.data || []
-    const allRoles = allRolesResult.data || []
+    // Enseignants SI depuis user_profiles (rôle EnseignantSoins)
+    const { data: siTeachers } = await supabase
+      .from('user_profiles')
+      .select('user_id')
+      .or('role.eq.EnseignantSoins,permissions.cs.["EnseignantSoins"]')
+    const siTeacherCount = siTeachers?.length || 0
+
+    // Enseignants PHY depuis user_profiles
+    const { data: phyTeachers } = await supabase
+      .from('user_profiles')
+      .select('user_id')
+      .or('role.eq.EnseignantPhysio,permissions.cs.["EnseignantPhysio"]')
+    const phyTeacherCount = phyTeachers?.length || 0
+
+    // Utilisateurs avec un rôle non-null
+    const { data: usersWithRoles } = await supabase
+      .from('user_profiles')
+      .select('user_id')
+      .not('role', 'is', null)
+    const totalUsersWithRoles = usersWithRoles?.length || 0
+
+    // RM = modules avec responsable_email renseigné
+    const siRM = new Set(modList.filter(m => m.track_id === 'SI' && m.responsable_email).map(m => m.responsable_email)).size
+    const phyRM = new Set(modList.filter(m => m.track_id === 'PHY' && m.responsable_email).map(m => m.responsable_email)).size
 
     const stats = {
-      totalModules: modules.length,
-      totalCourses: coursesResult.count || 0,
-      totalUsersWithRoles: new Set(allRoles.map(r => r.user_id)).size,
+      totalModules: modList.length,
+      totalCourses: coursesCount || 0,
+      totalUsersWithRoles,
       si: {
-        modules: modules.filter(m => m.track_id === 'SI').length,
-        teachers: new Set(teacherRoles.filter(r => r.track_id === 'SI').map(r => r.user_id)).size,
-        rm: new Set(rmRoles.filter(r => r.track_id === 'SI').map(r => r.user_id)).size
+        modules: modList.filter(m => m.track_id === 'SI').length,
+        teachers: siTeacherCount,
+        rm: siRM
       },
       phy: {
-        modules: modules.filter(m => m.track_id === 'PHY').length,
-        teachers: new Set(teacherRoles.filter(r => r.track_id === 'PHY').map(r => r.user_id)).size,
-        rm: new Set(rmRoles.filter(r => r.track_id === 'PHY').map(r => r.user_id)).size
+        modules: modList.filter(m => m.track_id === 'PHY').length,
+        teachers: phyTeacherCount,
+        rm: phyRM
       },
-      modulesNoTrack: modules.filter(m => !m.track_id).length
+      modulesNoTrack: modList.filter(m => !m.track_id).length
     }
 
     return stats
@@ -73,46 +94,39 @@ export async function getGlobalStats() {
  */
 export async function getAllTrackRoles() {
   try {
-    if (import.meta.env.DEV) console.log('👥 [adminDashboard] Chargement rôles par filière...')
+    if (import.meta.env.DEV) console.log('👥 [adminDashboard] Chargement rôles depuis user_profiles...')
     
+    // Fallback: derive track roles from user_profiles.role
     const { data, error } = await supabase
-      .from('user_track_roles')
-      .select(`
-        id,
-        user_id,
-        track_id,
-        role,
-        is_active,
-        assigned_by,
-        assigned_at,
-        expires_at,
-        user_profiles (
-          email,
-          forname,
-          family_name,
-          display_name
-        )
-      `)
-      .order('track_id', { ascending: true })
+      .from('user_profiles')
+      .select('user_id, email, forname, family_name, display_name, role')
+      .not('role', 'is', null)
       .order('role', { ascending: true })
     
     if (error) throw error
     
-    // Formater les données
-    const roles = (data || []).map(r => ({
-      id: r.id,
-      userId: r.user_id,
-      trackId: r.track_id,
-      role: r.role,
-      isActive: r.is_active,
-      assignedAt: r.assigned_at,
-      expiresAt: r.expires_at,
-      userName: r.user_profiles?.display_name || 
-                `${r.user_profiles?.forname || ''} ${r.user_profiles?.family_name || ''}`.trim() ||
-                r.user_profiles?.email ||
-                'Inconnu',
-      userEmail: r.user_profiles?.email
-    }))
+    const roles = (data || []).map(r => {
+      // Derive trackId from role name
+      const roleLower = (r.role || '').toLowerCase()
+      let trackId = null
+      if (roleLower.includes('soins') || roleLower.includes('si')) trackId = 'SI'
+      else if (roleLower.includes('physio') || roleLower.includes('phy')) trackId = 'PHY'
+      
+      return {
+        id: r.user_id,
+        userId: r.user_id,
+        trackId,
+        role: r.role,
+        isActive: true,
+        assignedAt: null,
+        expiresAt: null,
+        userName: r.display_name || 
+                  `${r.forname || ''} ${r.family_name || ''}`.trim() ||
+                  r.email ||
+                  'Inconnu',
+        userEmail: r.email
+      }
+    })
     
     if (import.meta.env.DEV) console.log('✅ [adminDashboard] Rôles chargés:', roles.length)
     return roles
@@ -152,47 +166,16 @@ export async function getModulesWithRM() {
 export async function assignTrackRole(userId, trackId, role, assignedBy) {
   // Validation des entrées
   const userIdCheck = validateId(userId)
-  const trackIdCheck = validateId(trackId)
   if (!userIdCheck.valid) throw new Error('userId invalide')
-  if (!trackIdCheck.valid) throw new Error('trackId invalide')
-  const allowedRoles = ['ADMIN', 'RM', 'TEACHER', 'SECRETARIAT', 'STUDENT']
-  if (!allowedRoles.includes(role)) throw new Error(`Rôle invalide: ${role}`)
 
   try {
-    if (import.meta.env.DEV) console.log('➕ [adminDashboard] Assignation rôle:', { userId, trackId, role })
+    if (import.meta.env.DEV) console.log('➕ [adminDashboard] Assignation rôle via user_profiles:', { userId, role })
     
-    // Vérifier si le rôle existe déjà
-    const { data: existing } = await supabase
-      .from('user_track_roles')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('track_id', trackId)
-      .eq('role', role)
-      .single()
-    
-    if (existing) {
-      // Réactiver si inactif
-      const { error } = await supabase
-        .from('user_track_roles')
-        .update({ is_active: true, assigned_at: new Date().toISOString(), assigned_by: assignedBy })
-        .eq('id', existing.id)
-      
-      if (error) throw error
-      if (import.meta.env.DEV) console.log('✅ [adminDashboard] Rôle réactivé')
-      return { success: true, message: 'Rôle réactivé' }
-    }
-    
-    // Créer nouveau rôle
+    // Update role directly on user_profiles
     const { error } = await supabase
-      .from('user_track_roles')
-      .insert({
-        user_id: userId,
-        track_id: trackId,
-        role,
-        is_active: true,
-        assigned_by: assignedBy,
-        assigned_at: new Date().toISOString()
-      })
+      .from('user_profiles')
+      .update({ role })
+      .eq('user_id', userId)
     
     if (error) throw error
     
@@ -212,16 +195,17 @@ export async function removeTrackRole(roleId) {
   if (!idCheck.valid) throw new Error('roleId invalide')
 
   try {
-    if (import.meta.env.DEV) console.log('➖ [adminDashboard] Suppression rôle:', roleId)
+    if (import.meta.env.DEV) console.log('➖ [adminDashboard] Suppression rôle (clear):', roleId)
     
+    // Clear role on user_profiles
     const { error } = await supabase
-      .from('user_track_roles')
-      .update({ is_active: false })
-      .eq('id', roleId)
+      .from('user_profiles')
+      .update({ role: null })
+      .eq('user_id', roleId)
     
     if (error) throw error
     
-    if (import.meta.env.DEV) console.log('✅ [adminDashboard] Rôle désactivé')
+    if (import.meta.env.DEV) console.log('✅ [adminDashboard] Rôle supprimé')
     return { success: true }
   } catch (error) {
     console.error('❌ [adminDashboard] Erreur suppression:', error)

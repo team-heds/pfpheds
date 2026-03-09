@@ -224,10 +224,11 @@ export async function fetchPfpKpis() {
       placesTimeline.push({ label: monthKey, value })
     }
     
-    // PFP en cours (places assignées)
+    // PFP en cours (estimation basée sur le nombre total de places)
     let pfpEnCours = 0
     try {
-      pfpEnCours = await countTable('places', [['status', 'eq', 'assigned']])
+      // La table places n'a pas de colonne 'status', on utilise le total comme estimation
+      pfpEnCours = places
     } catch (err) {
       console.warn('⚠️ Erreur pfpEnCours:', err)
     }
@@ -274,12 +275,16 @@ export async function fetchPfpKpis() {
  */
 export async function fetchAcademiqueKpis() {
   try {
-    // Enseignants (tous rôles teacher-like)
-    const teacherRoles = ['enseignant', 'teacher', 'Enseignant', 'Teacher', 'professor', 'Professor']
+    // Enseignants (rôles réels dans user_profiles)
     let enseignants = 0
-    
-    for (const role of teacherRoles) {
-      enseignants += await countTable('user_profiles', [['role', 'eq', role]])
+    try {
+      const { data: teacherData } = await supabase
+        .from('user_profiles')
+        .select('user_id')
+        .or('role.eq.EnseignantSoins,role.eq.EnseignantPhysio,role.ilike.%enseignant%,role.ilike.%teacher%')
+      enseignants = teacherData?.length || 0
+    } catch (_e) {
+      enseignants = 0
     }
     
     // Cours programmés
@@ -434,13 +439,8 @@ export async function fetchGamificationKpis() {
     // Compter les badges disponibles
     const badges = await countTable('badges')
     
-    // Compter les défis actifs (table challenges peut ne pas exister)
+    // Défis actifs — table challenges n'existe pas encore, valeur par défaut
     let challengesActive = 0
-    try {
-      challengesActive = await countTable('challenges', [['active', 'is', true]])
-    } catch (err) {
-      console.warn('⚠️ Table challenges n\'existe pas:', err)
-    }
     
     // Compter les défis complétés (estimé à partir de gamification_data)
     const { data: gamData, error: gamError } = await supabase
@@ -534,13 +534,17 @@ export async function fetchRealtimeStats() {
       fetchGamificationKpis()
     ])
     
-    // Formateurs (praticiens + enseignants)
-    const { data: formateursData, error: formError } = await supabase
-      .from('user_profiles')
-      .select('role', { count: 'exact', head: true })
-      .in('role', ['enseignant', 'teacher', 'formateur', 'Enseignant', 'Teacher', 'Formateur'])
-    
-    const totalFormateurs = formError ? 0 : (formateursData || 0)
+    // Formateurs (enseignants avec rôles réels)
+    let totalFormateurs = 0
+    try {
+      const { data: formData } = await supabase
+        .from('user_profiles')
+        .select('user_id')
+        .or('role.eq.EnseignantSoins,role.eq.EnseignantPhysio,role.ilike.%enseignant%,role.ilike.%teacher%,role.ilike.%formateur%')
+      totalFormateurs = formData?.length || 0
+    } catch (_e) {
+      totalFormateurs = 0
+    }
     
     return {
       totalUsers,

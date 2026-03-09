@@ -42,14 +42,17 @@ export async function fetchQuickStats() {
       // Étudiants - SOURCE UNIQUE (inclut BA22, BA23, BA24, BA25)
       studentsService.countStudents(),
       
-      // Formateurs (enseignants + praticiens)
+      // Formateurs (enseignants avec rôles réels)
       (async () => {
-        const roles = ['enseignant', 'teacher', 'formateur', 'Enseignant', 'Teacher', 'Formateur']
-        let total = 0
-        for (const role of roles) {
-          total += await countTable('user_profiles', [['role', 'eq', role]])
+        try {
+          const { data } = await supabase
+            .from('user_profiles')
+            .select('user_id')
+            .or('role.eq.EnseignantSoins,role.eq.EnseignantPhysio,role.ilike.%enseignant%,role.ilike.%teacher%,role.ilike.%formateur%')
+          return data?.length || 0
+        } catch (_e) {
+          return 0
         }
-        return total
       })()
     ])
 
