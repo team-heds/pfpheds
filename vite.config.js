@@ -129,6 +129,15 @@ export default defineConfig({
             if (id.includes('jspdf')) {
               return 'jspdf'
             }
+            if (id.includes('leaflet')) {
+              return 'leaflet'
+            }
+            if (id.includes('quill')) {
+              return 'quill'
+            }
+            if (id.includes('html2canvas')) {
+              return 'html2canvas'
+            }
           }
         },
       },
