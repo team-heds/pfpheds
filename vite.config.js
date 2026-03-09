@@ -91,6 +91,9 @@ export default defineConfig({
       'root': fileURLToPath(new URL('./', import.meta.url))
     }
   },
+  esbuild: {
+    drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [],
+  },
   build: {
     rollupOptions: {
       output: {
