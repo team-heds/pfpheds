@@ -72,7 +72,7 @@ const goBack = () => {
         <div class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-5 pt-5 md:pt-0 gap-4 md:border-top-none border-top-1 surface-border">
             <div class="flex align-items-center md:justify-content-start">
                 <Button type="button" icon="pi pi-chevron-left" class="md:mr-3" text plain @click="goBack()"></Button>
-                <Avatar v-if="mail && mail.image" :image="'/demo/images/avatar/' + mail.image" size="large" shape="circle" class="border-2 surface-border"></Avatar>
+                <Avatar v-if="mail && mail.image" icon="pi pi-user" size="large" shape="circle" class="border-2 surface-border"></Avatar>
                 <div class="flex flex-column mx-3">
                     <span class="block text-900 font-bold text-lg">{{ mail?.from }}</span>
                     <span class="block text-900 font-semibold">To: {{ mail?.email || mail?.to }}</span>

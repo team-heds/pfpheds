@@ -32,10 +32,14 @@ const initMail = async (mails) => {
 };
 
 const getMails = async () => {
-    const response = await fetch('/demo/data/mail.json');
-    const { data } = await response.json();
-
-    return data;
+    try {
+        const response = await fetch('/demo/data/mail.json');
+        if (!response.ok) return [];
+        const { data } = await response.json();
+        return data || [];
+    } catch {
+        return [];
+    }
 };
 
 const setBadgeValues = (mails) => {

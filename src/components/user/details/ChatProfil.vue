@@ -1,4 +1,4 @@
-﻿<script setup>
+<script setup>
 import { ref, nextTick, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import ChatBox from '@/views/apps/chat/ChatBox.vue'
@@ -10,10 +10,14 @@ const currentUser = ref({});
 const route = useRoute();
 
 const getUserData = async () => {
-  const response = await fetch('/demo/data/chat.json');
-  const { data } = await response.json();
-
-  return data;
+  try {
+    const response = await fetch('/demo/data/chat.json');
+    if (!response.ok) return [];
+    const { data } = await response.json();
+    return data;
+  } catch {
+    return [];
+  }
 };
 
 const selectUserFromRoute = () => {

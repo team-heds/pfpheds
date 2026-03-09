@@ -128,7 +128,7 @@ const clearMaileActions = (mail) => {
         <Column style="min-width: 4rem">
             <template #body="{ data }">
                 <Avatar v-if="!data.image" icon="pi pi-user" shape="circle"></Avatar>
-                <Avatar v-else @click="onNavigateToDetailPage(data.id)" :id="data.id" :image="`/demo/images/avatar/${data.image ? data.image : '.png'}`" class="cursor-pointer"></Avatar>
+                <Avatar v-else @click="onNavigateToDetailPage(data.id)" :id="data.id" icon="pi pi-user" class="cursor-pointer"></Avatar>
             </template>
         </Column>
         <Column style="min-width: 4rem">

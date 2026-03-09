@@ -39,7 +39,7 @@ const navigateToDashboard = () => {
                 <div class="text-900 text-xl font-bold mb-2">Screen Locked</div>
                 <span class="text-600 font-medium mb-5">Please enter your password</span>
 
-                <img src="/demo/images/avatar/avatar.png" class="w-3rem h-3rem mb-2" alt="Avatar" />
+                <span class="flex align-items-center justify-content-center w-3rem h-3rem border-circle bg-primary mb-2"><i class="pi pi-lock text-white text-xl"></i></span>
 
                 <span class="font-medium text-900 font-medium">Isabella Andolini</span>
             </div>

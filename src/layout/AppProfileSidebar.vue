@@ -106,7 +106,7 @@ const { layoutState } = useLayout();
             <ul class="list-none m-0 p-0">
                 <li>
                     <a class="cursor-pointer flex surface-border mb-3 p-3 align-items-center border-1 surface-border border-round hover:surface-hover transition-colors transition-duration-150">
-                        <span> <img src="/demo/images/avatar/circle/avatar-m-8.png" alt="Avatar" class="w-2rem h-2rem" /> </span>
+                        <span class="flex align-items-center justify-content-center w-2rem h-2rem border-circle bg-primary"><i class="pi pi-user text-white text-sm"></i></span>
                         <div class="ml-3">
                             <span class="mb-2 font-semibold">James Robinson</span>
                             <p class="text-color-secondary m-0">10 min ago</p>
@@ -116,7 +116,7 @@ const { layoutState } = useLayout();
                 </li>
                 <li>
                     <a class="cursor-pointer flex surface-border mb-3 p-3 align-items-center border-1 surface-border border-round hover:surface-hover transition-colors transition-duration-150">
-                        <span> <img src="/demo/images/avatar/circle/avatar-f-8.png" alt="Avatar" class="w-2rem h-2rem" /> </span>
+                        <span class="flex align-items-center justify-content-center w-2rem h-2rem border-circle bg-primary"><i class="pi pi-user text-white text-sm"></i></span>
                         <div class="ml-3">
                             <span class="mb-2 font-semibold">Mary Watson</span>
                             <p class="text-color-secondary m-0">15min ago</p>
@@ -126,7 +126,7 @@ const { layoutState } = useLayout();
                 </li>
                 <li>
                     <a class="cursor-pointer flex surface-border mb-3 p-3 align-items-center border-1 surface-border border-round hover:surface-hover transition-colors transition-duration-150">
-                        <span> <img src="/demo/images/avatar/circle/avatar-f-4.png" alt="Avatar" class="w-2rem h-2rem" /> </span>
+                        <span class="flex align-items-center justify-content-center w-2rem h-2rem border-circle bg-primary"><i class="pi pi-user text-white text-sm"></i></span>
                         <div class="ml-3">
                             <span class="mb-2 font-semibold">Aisha Webb</span>
                             <p class="text-color-secondary m-0">3h ago</p>
