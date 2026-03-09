@@ -310,7 +310,7 @@ import planningService from '@/service/planningService'
 import academicYearService from '@/service/academicYearService'
 import modulesService from '@/service/modulesService'
 import { supabase } from '@/supabase'
-import { getDatabase, ref as dbRef, get } from 'firebase/database'
+import { getSITeachers } from '@/services/academicKpiService'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -447,32 +447,10 @@ async function loadModules() {
 
 async function loadTeachers() {
   try {
-    const db = getDatabase()
-    const snap = await get(dbRef(db, '/Users'))
-    const raw = snap.exists() ? snap.val() : {}
-    const list = Object.entries(raw)
-      .map(([id, u]) => {
-        const rolesObj = u.Roles || u.roles || {}
-        const perms = u.permissions || u.Permissions || []
-        const rolesList = new Set()
-        Object.keys(rolesObj || {}).forEach(k => { if (rolesObj[k]) rolesList.add(k) })
-        if (Array.isArray(perms)) perms.forEach(p => rolesList.add(p))
-        return {
-          id,
-          name: [u.Prenom, u.Nom].filter(Boolean).join(' ') || u.email || '—',
-          email: u.email || u.Email || '',
-          prenom: u.Prenom || '',
-          nom: u.Nom || '',
-          classe: u.classe || u.Classe || '',
-          rolesList: Array.from(rolesList)
-        }
-      })
-      .filter(u => u.rolesList.includes('EnseignantSoins'))
-      .sort((a, b) => a.name.localeCompare(b.name))
-    
-    teachers.value = list
-    teachersCount.value = list.length
-    teachersAssignedCount.value = list.filter(t => t.email).length
+    const list = await getSITeachers()
+    teachers.value = (list || []).sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+    teachersCount.value = teachers.value.length
+    teachersAssignedCount.value = teachers.value.filter(t => t.email).length
   } catch (err) {
     console.error('Erreur chargement enseignants:', err)
   }
