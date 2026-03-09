@@ -221,7 +221,7 @@
                     {{ slot.courseTitle || slot.activity || '—' }}
                   </div>
                   <div class="calendar-slot-footer">
-                    <span v-if="slot.classCode" class="calendar-slot-class">{{ slot.classCode }}</span>
+                    <span v-if="slot.classCode" class="calendar-slot-class" :style="{ background: getClassColor(slot.classCode), color: '#fff' }">{{ slot.classCode }}</span>
                   </div>
                 </div>
               </div>
@@ -380,6 +380,24 @@ const getSlotModuleColor = (moduleCode) => {
   if (!moduleCode) return '#94a3b8'
   const mod = modules.value.find(m => m.code === moduleCode || m.number === moduleCode)
   return mod?.color || '#94a3b8'
+}
+
+const CLASS_COLORS = {
+  'BAC24-TP': '#3B82F6',
+  'BAC25-TP': '#10B981',
+  'BAC26-TP': '#F59E0B',
+  'BAC24-EE': '#8B5CF6',
+  'BAC25-EE': '#EC4899',
+  'BAC26-EE': '#F97316',
+  'BAC24': '#06B6D4',
+  'BAC25': '#14B8A6',
+  'BAC26': '#EF4444'
+}
+
+const getClassColor = (classCode) => {
+  if (!classCode) return '#94a3b8'
+  const upper = classCode.toUpperCase()
+  return CLASS_COLORS[upper] || '#94a3b8'
 }
 
 // Load data
