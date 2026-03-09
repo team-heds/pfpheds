@@ -206,7 +206,32 @@
             v-model:expandedRowGroups="expandedGroups"
           >
             <template #groupheader="slotProps">
-              <div class="day-group-header">
+              <!-- Bandeau spécial vacances/examens/férié -->
+              <div v-if="isGroupAllSpecial(slotProps.data.dayGroup)" class="day-group-header special-group-header" :class="getGroupSpecialType(slotProps.data.dayGroup)?.severity">
+                <div class="day-info">
+                  <Tag 
+                    v-if="viewMode !== 'week'"
+                    :value="`S${slotProps.data.weekNumber}`" 
+                    severity="info"
+                    class="font-bold text-lg mr-2"
+                  ></Tag>
+                  <Tag 
+                    :value="slotProps.data.day.toUpperCase()" 
+                    :severity="getDaySeverity(slotProps.data.day)"
+                    class="font-bold text-lg"
+                  ></Tag>
+                  <span v-if="slotProps.data.date" class="date-text">
+                    {{ slotProps.data.date }}
+                  </span>
+                </div>
+                <div class="special-banner" :class="getGroupSpecialType(slotProps.data.dayGroup)?.severity">
+                  <i :class="'pi ' + getGroupSpecialType(slotProps.data.dayGroup)?.icon" class="text-xl mr-2"></i>
+                  <span class="text-xl font-bold">{{ getGroupSpecialType(slotProps.data.dayGroup)?.label }}</span>
+                </div>
+                <div></div>
+              </div>
+              <!-- Header normal -->
+              <div v-else class="day-group-header">
                 <div class="day-info">
                   <Tag 
                     v-if="viewMode !== 'week'"
@@ -1042,6 +1067,9 @@ const getRowClass = (data) => {
   if (data.isPlaceholder) {
     return 'placeholder-row'
   }
+  if (isSpecialSlot(data.moduleCode)) {
+    return data.moduleCode?.toLowerCase() === 'examen' ? 'special-row examen-row' : 'special-row vacances-row'
+  }
   const prevIndex = sortedTimeSlots.value.indexOf(data) - 1
   if (prevIndex >= 0) {
     const prevSlot = sortedTimeSlots.value[prevIndex]
@@ -1351,7 +1379,36 @@ const searchTeachers = (event) => {
   filteredTeachers.value = filtered
 }
 
+const SPECIAL_MODULES = {
+  vacances: { label: 'Vacances', icon: 'pi-sun', color: '#64748B', severity: 'secondary' },
+  examen: { label: 'Examens', icon: 'pi-file-edit', color: '#DC2626', severity: 'danger' },
+  ferie: { label: 'Jour férié', icon: 'pi-calendar-times', color: '#64748B', severity: 'secondary' }
+}
+
+const isSpecialSlot = (moduleCode) => {
+  return !!SPECIAL_MODULES[moduleCode?.toLowerCase?.()]
+}
+
+const getSpecialType = (moduleCode) => {
+  return SPECIAL_MODULES[moduleCode?.toLowerCase?.()]
+}
+
+const isGroupAllSpecial = (dayGroup) => {
+  const groupSlots = sortedTimeSlots.value.filter(slot => slot.dayGroup === dayGroup)
+  if (groupSlots.length === 0) return false
+  return groupSlots.every(slot => isSpecialSlot(slot.moduleCode))
+}
+
+const getGroupSpecialType = (dayGroup) => {
+  const groupSlots = sortedTimeSlots.value.filter(slot => slot.dayGroup === dayGroup)
+  if (groupSlots.length === 0) return null
+  const firstSpecial = groupSlots.find(slot => isSpecialSlot(slot.moduleCode))
+  return firstSpecial ? getSpecialType(firstSpecial.moduleCode) : null
+}
+
 const getModuleColor = (moduleCode) => {
+  const special = getSpecialType(moduleCode)
+  if (special) return special.color
   const module = courseModules.value.find(m => m.code === moduleCode)
   return module?.color || '#CCCCCC'
 }
@@ -1504,6 +1561,7 @@ const exportToExcel = async () => {
       // Filtrer les vrais créneaux (exclure placeholders pour le contenu)
       const realSlots = daySlots.filter(s => !s.isPlaceholder)
       const hasOnlyPlaceholders = realSlots.length === 0
+      const allSpecial = realSlots.length > 0 && realSlots.every(s => isSpecialSlot(s.moduleCode))
 
       if (hasOnlyPlaceholders) {
         // Jour vide : une seule ligne "À compléter"
@@ -1515,6 +1573,20 @@ const exportToExcel = async () => {
         emptyCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } }
         emptyCell.border = thinBorder
         worksheet.getRow(currentRow).height = 24
+        currentRow++
+      } else if (allSpecial) {
+        // Jour entièrement vacances/examen : une seule ligne bandeau
+        const specialType = getSpecialType(realSlots[0].moduleCode)
+        const isExam = realSlots[0].moduleCode?.toLowerCase() === 'examen'
+        const bannerBg = isExam ? 'FFDC2626' : 'FF64748B'
+        worksheet.mergeCells(currentRow, 2, currentRow, 7)
+        const specialCell = worksheet.getCell(currentRow, 2)
+        specialCell.value = specialType?.label || 'Vacances'
+        specialCell.font = { size: 12, bold: true, color: { argb: 'FFFFFFFF' } }
+        specialCell.alignment = { horizontal: 'center', vertical: 'middle' }
+        specialCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bannerBg } }
+        specialCell.border = thinBorder
+        worksheet.getRow(currentRow).height = 28
         currentRow++
       } else {
         // Créneaux du jour
@@ -1804,6 +1876,7 @@ const exportSemesterToExcel = async (workbook, ExcelJS) => {
       // Filtrer les vrais créneaux (exclure placeholders)
       const realSlots = daySlots.filter(s => !s.isPlaceholder)
       const hasOnlyPlaceholders = realSlots.length === 0
+      const allSpecial = realSlots.length > 0 && realSlots.every(s => isSpecialSlot(s.moduleCode))
 
       if (hasOnlyPlaceholders) {
         // Jour vide : une seule ligne "À compléter"
@@ -1815,6 +1888,20 @@ const exportSemesterToExcel = async (workbook, ExcelJS) => {
         emptyCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } }
         emptyCell.border = thinBorder
         worksheet.getRow(currentRow).height = 24
+        currentRow++
+      } else if (allSpecial) {
+        // Jour entièrement vacances/examen : une seule ligne bandeau
+        const specialType = getSpecialType(realSlots[0].moduleCode)
+        const isExam = realSlots[0].moduleCode?.toLowerCase() === 'examen'
+        const bannerBg = isExam ? 'FFDC2626' : 'FF64748B'
+        worksheet.mergeCells(currentRow, 2, currentRow, 7)
+        const specialCell = worksheet.getCell(currentRow, 2)
+        specialCell.value = specialType?.label || 'Vacances'
+        specialCell.font = { size: 12, bold: true, color: { argb: 'FFFFFFFF' } }
+        specialCell.alignment = { horizontal: 'center', vertical: 'middle' }
+        specialCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bannerBg } }
+        specialCell.border = thinBorder
+        worksheet.getRow(currentRow).height = 28
         currentRow++
       } else {
         // Créneaux
@@ -2167,6 +2254,41 @@ const exportSemesterToExcel = async (workbook, ExcelJS) => {
   display: flex;
   align-items: center;
   gap: 0.25rem;
+}
+
+/* Lignes spéciales : vacances / examens / férié */
+:deep(.special-row) {
+  opacity: 0.6;
+}
+
+:deep(.vacances-row) {
+  background-color: var(--surface-100) !important;
+}
+
+:deep(.examen-row) {
+  background-color: #FEE2E2 !important;
+}
+
+.special-group-header.secondary {
+  background: linear-gradient(135deg, #64748B 0%, #94A3B8 100%) !important;
+}
+
+.special-group-header.danger {
+  background: linear-gradient(135deg, #DC2626 0%, #EF4444 100%) !important;
+}
+
+.special-group-header .day-info .date-text {
+  color: white;
+}
+
+.special-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 2rem;
+  border-radius: 8px;
+  color: white;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 /* Lignes placeholder (jours vides du planning annuel) */
