@@ -1,81 +1,25 @@
 <template>
-  <div ref="loaderContainer" class="loader-container"></div>
+  <div class="loader-container">
+    <div class="cube-scene">
+      <div class="cube">
+        <div class="cube-face front"><img :src="face1" alt="" /></div>
+        <div class="cube-face back"><img :src="face2" alt="" /></div>
+        <div class="cube-face right"><img :src="face3" alt="" /></div>
+        <div class="cube-face left"><img :src="face4" alt="" /></div>
+        <div class="cube-face top"><img :src="face5" alt="" /></div>
+        <div class="cube-face bottom"><img :src="face6" alt="" /></div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue';
-import * as THREE from 'three';
-import { RoundedBoxGeometry } from 'three-stdlib';
 import face1 from '@/assets/textures/face1.png';
 import face2 from '@/assets/textures/face2.png';
 import face3 from '@/assets/textures/face3.png';
 import face4 from '@/assets/textures/face4.png';
 import face5 from '@/assets/textures/face5.png';
 import face6 from '@/assets/textures/face6.png';
-
-const loaderContainer = ref(null);
-let scene, camera, renderer, cube, animationId;
-let visible = true;
-document.addEventListener('visibilitychange', () => visible = !document.hidden);
-
-const loadTextures = () => {
-  const loader = new THREE.TextureLoader();
-  return Promise.all([
-    loader.loadAsync(face1),
-    loader.loadAsync(face2),
-    loader.loadAsync(face3),
-    loader.loadAsync(face4),
-    loader.loadAsync(face5),
-    loader.loadAsync(face6),
-  ]);
-};
-
-const onWindowResize = () => {
-  const { clientWidth: width, clientHeight: height } = loaderContainer.value;
-  camera.aspect = width / height;
-  camera.updateProjectionMatrix();
-  renderer.setSize(width, height);
-};
-
-const animate = () => {
-  if (visible) requestAnimationFrame(animate);
-  else setTimeout(animate, 100);
-  cube.rotation.x += 0.01;
-  cube.rotation.y += 0.01;
-  renderer.render(scene, camera);
-};
-
-onMounted(async () => {
-  scene = new THREE.Scene();
-  const { clientWidth: width, clientHeight: height } = loaderContainer.value;
-  camera = new THREE.PerspectiveCamera(100, width / height, 0.1, 1000);
-  camera.position.z = 5;
-
-  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.setSize(width, height);
-  loaderContainer.value.appendChild(renderer.domElement);
-
-  const textures = await loadTextures();
-  const materials = textures.map(tex => new THREE.MeshBasicMaterial({ map: tex }));
-  const geometry = new RoundedBoxGeometry(2, 2, 2, 16, 0.3);
-  cube = new THREE.Mesh(geometry, materials);
-  scene.add(cube);
-
-  window.addEventListener('resize', onWindowResize);
-  animate();
-});
-
-onBeforeUnmount(() => {
-  cancelAnimationFrame(animationId);
-  window.removeEventListener('resize', onWindowResize);
-  document.removeEventListener('visibilitychange', () => {});
-  renderer.dispose();
-  scene.remove(cube);
-  cube.geometry.dispose();
-  cube.material.forEach(mat => mat.dispose());
-  loaderContainer.value.removeChild(renderer.domElement);
-});
 </script>
 
 <style scoped>
@@ -90,5 +34,47 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   z-index: 9999;
+}
+
+.cube-scene {
+  width: 120px;
+  height: 120px;
+  perspective: 400px;
+}
+
+.cube {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  animation: cube-spin 4s infinite linear;
+}
+
+.cube-face {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  border-radius: 12px;
+  overflow: hidden;
+  backface-visibility: visible;
+}
+
+.cube-face img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.front  { transform: translateZ(60px); }
+.back   { transform: rotateY(180deg) translateZ(60px); }
+.right  { transform: rotateY(90deg) translateZ(60px); }
+.left   { transform: rotateY(-90deg) translateZ(60px); }
+.top    { transform: rotateX(90deg) translateZ(60px); }
+.bottom { transform: rotateX(-90deg) translateZ(60px); }
+
+@keyframes cube-spin {
+  0%   { transform: rotateX(0deg)   rotateY(0deg); }
+  100% { transform: rotateX(360deg) rotateY(360deg); }
 }
 </style>

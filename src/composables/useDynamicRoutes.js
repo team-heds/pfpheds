@@ -58,11 +58,8 @@ function resolveView(componentPathFromDb) {
   const key = normalizeComponentPath(componentPathFromDb);
   const loader = viewModules[key];
 
-  if (!loader && 1==2) {
-    console.error('❌ View non trouvée pour component_path =', componentPathFromDb);
-    console.error('🔑 Clé normalisée =', key);
-    console.error('📚 Clés disponibles =', Object.keys(viewModules));
-    throw new Error(`View not found for component_path: ${componentPathFromDb}`);
+  if (!loader) {
+    console.warn(`⚠️ View non trouvée: "${componentPathFromDb}" (clé: "${key}")`)
   }
 
   // loader est une fonction () => import('...') déjà gérée par Vite
