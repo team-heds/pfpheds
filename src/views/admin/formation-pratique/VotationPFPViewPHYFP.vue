@@ -2247,13 +2247,30 @@ const startAlgorithm = async () => {
       life: 5000
     })
 
-    // Charger les profils physio pour calculer le priorityScore basé sur les critères manquants
+    // ══════════════════════════════════════════════════════════════════
+    // PRIORITY SCORE v2.0 — Calcul basé sur critères métier
+    // Sources: StudentsPhysio.pfp_valided + student_result_vote (stages validés)
+    // ══════════════════════════════════════════════════════════════════
+
+    // Source 1: StudentsPhysio.pfp_valided
     const { data: physioData } = await supabase
       .from('StudentsPhysio')
       .select('user_id, pfp_valided, sae, cas_particulier')
 
-    // Construire un map userId → critères validés
+    // Source 2: student_result_vote (stages validés = pfp_validee true)
+    const { data: validatedAssignments } = await supabase
+      .from('student_result_vote')
+      .select('user_id, pfp_type, assigned_place_id, pfp_validee')
+
+    // Charger les places pour résoudre les critères des stages validés
+    await placesStore.fetchPlaces()
+    const placesLookupForScore = new Map()
+    placesStore.places.forEach(p => placesLookupForScore.set(p.PlaceId, p))
+
+    // Construire un map userId → critères validés (fusion des 2 sources)
     const studentCriteriaMap = new Map()
+
+    // Source 1: pfp_valided
     if (physioData) {
       physioData.forEach(physio => {
         const validatedCriteria = { MSQ: 0, SYSINT: 0, NEUROGER: 0, AIGU: 0, REHAB: 0, AMBU: 0, FR: 0, DE: 0 }
@@ -2274,25 +2291,85 @@ const startAlgorithm = async () => {
         studentCriteriaMap.set(physio.user_id, {
           criteria: validatedCriteria,
           sae: !!physio.sae,
-          casParticulier: !!physio.cas_particulier
+          casParticulier: !!physio.cas_particulier,
+          stagesCount: pfpArray.length
         })
       })
     }
 
-    // Calculer le priorityScore pour chaque étudiant
-    // Score = (nb critères manquants / 8) * 80 + bonus SAE/cas particulier + tiebreaker aléatoire
-    // Plus un étudiant a de critères manquants, plus son score est élevé
+    // Source 2: enrichir avec student_result_vote (stages validés)
+    if (validatedAssignments) {
+      validatedAssignments.forEach(a => {
+        if (a.pfp_validee && a.assigned_place_id) {
+          const placeInfo = placesLookupForScore.get(a.assigned_place_id)
+          if (placeInfo) {
+            const existing = studentCriteriaMap.get(a.user_id) || {
+              criteria: Object.fromEntries(CRITERIA_KEYS.map(k => [k, 0])),
+              sae: false, casParticulier: false, stagesCount: 0
+            }
+            CRITERIA_KEYS.forEach(c => {
+              if (placeInfo[c] === true || placeInfo[c] === 'true' || placeInfo[c] === 1) {
+                existing.criteria[c]++
+              }
+            })
+            studentCriteriaMap.set(a.user_id, existing)
+          }
+        }
+      })
+    }
+
+    console.log(`📊 Critères chargés pour ${studentCriteriaMap.size} étudiants (pfp_valided + student_result_vote)`)
+
+    // ══════════════════════════════════════════════════════════════════
+    // computePriorityScore v2.0
+    //
+    // Barème (max ~100 pts):
+    //   A. Critères manquants globaux   : (missingCount / 8) * 40    → 0–40 pts
+    //   B. Critères critiques manquants  : DE manquant +15, SYSINT +10 → 0–25 pts
+    //   C. Bonus SAE                     : +12 pts
+    //   D. Bonus cas particulier         : +8 pts
+    //   E. Pondération PFP               : PFP4 ×1.15, PFP3 ×1.05    → multiplicateur
+    //   F. Tiebreaker aléatoire          : 0–1 pt (départager ex-aequo)
+    //
+    // Principe: plus le score est élevé, plus l'étudiant est prioritaire.
+    // Un étudiant avec beaucoup de critères manquants et SAE sera traité en premier.
+    // ══════════════════════════════════════════════════════════════════
+    const currentPfp = filterPFP.value // PFP1, PFP2, PFP3, PFP4
+
     const computePriorityScore = (userId) => {
       const profile = studentCriteriaMap.get(userId)
-      if (!profile) return Math.random() * 10 // Pas de profil → score faible aléatoire
+      if (!profile) {
+        console.warn(`   ⚠️ Pas de profil pour ${userId} → score minimal`)
+        return Math.round(Math.random() * 100) / 100 // 0-1 pt uniquement
+      }
 
-      const missingCount = CRITERIA_KEYS.filter(c => profile.criteria[c] === 0).length
-      const missingScore = (missingCount / CRITERIA_KEYS.length) * 80 // 0-80 points selon critères manquants
-      const bonusSae = profile.sae ? 10 : 0 // +10 si SAE
-      const bonusCas = profile.casParticulier ? 5 : 0 // +5 si cas particulier
-      const tiebreaker = Math.random() * 5 // 0-5 points aléatoires pour départager les égalités
+      // A. Critères manquants globaux (0-40 pts)
+      const missingCriteria = CRITERIA_KEYS.filter(c => profile.criteria[c] === 0)
+      const missingCount = missingCriteria.length
+      const missingGlobalScore = (missingCount / CRITERIA_KEYS.length) * 40
 
-      return Math.round((missingScore + bonusSae + bonusCas + tiebreaker) * 100) / 100
+      // B. Bonus critères critiques (DE = très rare/obligatoire, SYSINT = rare)
+      const bonusDE = profile.criteria.DE === 0 ? 15 : 0
+      const bonusSYSINT = profile.criteria.SYSINT === 0 ? 10 : 0
+
+      // C. Bonus SAE (situation d'apprentissage exceptionnelle)
+      const bonusSae = profile.sae ? 12 : 0
+
+      // D. Bonus cas particulier
+      const bonusCas = profile.casParticulier ? 8 : 0
+
+      // E. Multiplicateur PFP (derniers PFP = dernière chance pour compléter les critères)
+      let pfpMultiplier = 1.0
+      if (currentPfp === 'PFP4') pfpMultiplier = 1.15
+      else if (currentPfp === 'PFP3') pfpMultiplier = 1.05
+
+      // F. Tiebreaker aléatoire (très faible, juste pour départager les vrais ex-aequo)
+      const tiebreaker = Math.random() * 1
+
+      const rawScore = missingGlobalScore + bonusDE + bonusSYSINT + bonusSae + bonusCas + tiebreaker
+      const finalScore = Math.round(rawScore * pfpMultiplier * 100) / 100
+
+      return finalScore
     }
 
     // ── Exclure les étudiants déjà assignés en PFP4 et ceux exclus manuellement ──
@@ -2334,22 +2411,45 @@ const startAlgorithm = async () => {
     }
 
     // Préparer les données des étudiants pour l'algorithme
-    const studentsData = eligibleVotations.map(student => ({
-      userId: student.userId,
-      nom: student.nom,
-      prenom: student.prenom,
-      classe: student.classe,
-      choices: [
-        student.choice1PlaceId && { placeId: student.choice1PlaceId, rank: 1 },
-        student.choice2PlaceId && { placeId: student.choice2PlaceId, rank: 2 },
-        student.choice3PlaceId && { placeId: student.choice3PlaceId, rank: 3 },
-        student.choice4PlaceId && { placeId: student.choice4PlaceId, rank: 4 },
-        student.choice5PlaceId && { placeId: student.choice5PlaceId, rank: 5 }
-      ].filter(Boolean),
-      priorityScore: computePriorityScore(student.userId)
-    }))
+    const studentsData = eligibleVotations.map(student => {
+      const profile = studentCriteriaMap.get(student.userId)
+      const score = computePriorityScore(student.userId)
+      return {
+        userId: student.userId,
+        nom: student.nom,
+        prenom: student.prenom,
+        classe: student.classe,
+        choices: [
+          student.choice1PlaceId && { placeId: student.choice1PlaceId, rank: 1 },
+          student.choice2PlaceId && { placeId: student.choice2PlaceId, rank: 2 },
+          student.choice3PlaceId && { placeId: student.choice3PlaceId, rank: 3 },
+          student.choice4PlaceId && { placeId: student.choice4PlaceId, rank: 4 },
+          student.choice5PlaceId && { placeId: student.choice5PlaceId, rank: 5 }
+        ].filter(Boolean),
+        priorityScore: score,
+        _debug: profile ? {
+          missing: CRITERIA_KEYS.filter(c => profile.criteria[c] === 0),
+          validated: CRITERIA_KEYS.filter(c => profile.criteria[c] > 0),
+          sae: profile.sae,
+          casParticulier: profile.casParticulier
+        } : null
+      }
+    })
 
-    console.log('📊 PriorityScores calculés:', studentsData.map(s => `${s.nom} ${s.prenom}: ${s.priorityScore}`).slice(0, 10))
+    // Log détaillé du breakdown des scores (trié par score descendant)
+    const sortedForLog = [...studentsData].sort((a, b) => b.priorityScore - a.priorityScore)
+    console.log('══════════════════════════════════════════════')
+    console.log(`📊 PRIORITY SCORES v2.0 — ${currentPfp} ${filterYear.value} (×${currentPfp === 'PFP4' ? '1.15' : currentPfp === 'PFP3' ? '1.05' : '1.0'})`)
+    console.log('══════════════════════════════════════════════')
+    sortedForLog.forEach((s, i) => {
+      const d = s._debug
+      if (d) {
+        console.log(`   ${i + 1}. ${s.nom} ${s.prenom}: ${s.priorityScore} pts | manquants=[${d.missing.join(',')}] validés=[${d.validated.join(',')}]${d.sae ? ' SAE' : ''}${d.casParticulier ? ' CAS_PART' : ''}`)
+      } else {
+        console.log(`   ${i + 1}. ${s.nom} ${s.prenom}: ${s.priorityScore} pts | ⚠️ PAS DE PROFIL`)
+      }
+    })
+    console.log('══════════════════════════════════════════════')
 
     // Récupérer toutes les places disponibles
     await placesStore.fetchPlaces()
