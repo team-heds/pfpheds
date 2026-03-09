@@ -197,22 +197,33 @@
         <div class="section-card">
           <div class="section-header">
             <h3><i class="pi pi-calendar"></i> Planning — Semaine {{ currentISOWeek }}</h3>
-            <Button label="Voir le planning complet" icon="pi pi-external-link" size="small" text @click="$router.push('/admin/planning/weekly')" />
+            <div class="flex align-items-center gap-2">
+              <Badge :value="currentWeekSlots + ' créneaux'" severity="info" />
+              <Button label="Voir le planning complet" icon="pi pi-external-link" size="small" text @click="$router.push('/admin/planning/weekly')" />
+            </div>
           </div>
 
-          <div v-if="currentWeekSlotsByDay.length > 0" class="week-overview">
-            <div v-for="dayGroup in currentWeekSlotsByDay" :key="dayGroup.day" class="day-overview">
-              <div class="day-label">
-                <span class="day-name">{{ dayGroup.dayLabel }}</span>
-                <Badge :value="dayGroup.slots.length" severity="info" />
+          <div v-if="currentWeekSlots > 0" class="calendar-grid">
+            <div v-for="dayGroup in currentWeekSlotsByDay" :key="dayGroup.day" class="calendar-day" :class="{ 'calendar-day--empty': dayGroup.slots.length === 0 }">
+              <div class="calendar-day-header">
+                <span class="calendar-day-name">{{ dayGroup.dayLabel }}</span>
+                <span v-if="dayGroup.slots.length > 0" class="calendar-day-count">{{ dayGroup.slots.length }}</span>
               </div>
-              <div class="day-slots">
-                <div v-for="slot in dayGroup.slots.slice(0, 6)" :key="slot.id" class="slot-chip">
-                  <span class="slot-time">{{ slot.startTime && slot.startTime !== 'null' ? `${slot.startTime} - ${slot.endTime}` : 'Async' }}</span>
-                  <span class="slot-course">{{ slot.courseTitle || slot.activity || '—' }}</span>
-                  <Tag v-if="slot.classCode" :value="slot.classCode" severity="secondary" class="tag-small" />
+              <div class="calendar-day-body">
+                <div v-if="dayGroup.slots.length === 0" class="calendar-day-empty">
+                  <i class="pi pi-minus"></i>
                 </div>
-                <span v-if="dayGroup.slots.length > 6" class="more-slots">+{{ dayGroup.slots.length - 6 }} autres</span>
+                <div v-for="slot in dayGroup.slots" :key="slot.id" class="calendar-slot" :style="{ borderLeftColor: getSlotModuleColor(slot.moduleCode) }">
+                  <div class="calendar-slot-time">
+                    {{ slot.startTime && slot.startTime !== 'null' ? `${slot.startTime} - ${slot.endTime}` : 'Async' }}
+                  </div>
+                  <div class="calendar-slot-course" :title="slot.courseTitle || slot.activity || ''">
+                    {{ slot.courseTitle || slot.activity || '—' }}
+                  </div>
+                  <div class="calendar-slot-footer">
+                    <span v-if="slot.classCode" class="calendar-slot-class">{{ slot.classCode }}</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -347,22 +358,29 @@ const currentISOWeek = computed(() => {
 
 const currentWeekSlotsByDay = computed(() => {
   const dayOrder = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'distance']
-  const dayLabels = { lundi: 'Lundi', mardi: 'Mardi', mercredi: 'Mercredi', jeudi: 'Jeudi', vendredi: 'Vendredi', distance: 'Distance' }
+  const dayLabels = { lundi: 'Lun', mardi: 'Mar', mercredi: 'Mer', jeudi: 'Jeu', vendredi: 'Ven', distance: 'Dist' }
+  const dayFull = { lundi: 'Lundi', mardi: 'Mardi', mercredi: 'Mercredi', jeudi: 'Jeudi', vendredi: 'Vendredi', distance: 'Distance' }
   const grouped = {}
   
   currentWeekSlotsData.value.forEach(slot => {
-    if (!grouped[slot.day]) grouped[slot.day] = []
-    grouped[slot.day].push(slot)
+    const d = (slot.day || '').toLowerCase()
+    if (!grouped[d]) grouped[d] = []
+    grouped[d].push(slot)
   })
   
-  return dayOrder
-    .filter(d => grouped[d] && grouped[d].length > 0)
-    .map(d => ({
-      day: d,
-      dayLabel: dayLabels[d] || d,
-      slots: grouped[d].sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''))
-    }))
+  return dayOrder.map(d => ({
+    day: d,
+    dayLabel: dayLabels[d] || d,
+    dayFull: dayFull[d] || d,
+    slots: (grouped[d] || []).sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''))
+  }))
 })
+
+const getSlotModuleColor = (moduleCode) => {
+  if (!moduleCode) return '#94a3b8'
+  const mod = modules.value.find(m => m.code === moduleCode || m.number === moduleCode)
+  return mod?.color || '#94a3b8'
+}
 
 // Load data
 onMounted(async () => {
@@ -796,71 +814,120 @@ function handleAlertAction(alert) {
   color: var(--primary-color);
 }
 
-/* ====== WEEK OVERVIEW ====== */
-.week-overview {
+/* ====== CALENDAR GRID ====== */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.5rem;
+}
+
+.calendar-day {
+  background: var(--surface-ground);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  min-height: 120px;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
 }
 
-.day-overview {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  background: var(--surface-ground);
+.calendar-day--empty {
+  opacity: 0.5;
 }
 
-.day-label {
+.calendar-day-header {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  min-width: 130px;
+  justify-content: space-between;
+  padding: 0.6rem 0.75rem;
+  background: var(--surface-border);
+  border-bottom: 1px solid var(--surface-border);
 }
 
-.day-name {
-  font-weight: 600;
-  font-size: 0.95rem;
+.calendar-day-name {
+  font-weight: 700;
+  font-size: 0.85rem;
   color: var(--text-color);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.day-slots {
+.calendar-day-count {
+  background: var(--primary-color);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.calendar-day-body {
   flex: 1;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  overflow-y: auto;
+  max-height: 400px;
 }
 
-.slot-chip {
-  display: inline-flex;
+.calendar-day-empty {
+  display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.35rem 0.85rem;
-  background: var(--surface-card);
-  border: 1px solid var(--surface-border);
-  border-radius: 2rem;
-  font-size: 0.85rem;
-}
-
-.slot-time {
-  font-weight: 600;
-  color: var(--primary-color);
-}
-
-.slot-course {
-  color: var(--text-color);
-  max-width: 220px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.more-slots {
-  font-size: 0.85rem;
+  justify-content: center;
+  flex: 1;
   color: var(--text-color-secondary);
-  font-style: italic;
-  align-self: center;
+  opacity: 0.4;
+  font-size: 1.2rem;
+}
+
+.calendar-slot {
+  background: var(--surface-card);
+  border-left: 3px solid #94a3b8;
+  border-radius: 0.35rem;
+  padding: 0.45rem 0.6rem;
+  transition: box-shadow 0.15s;
+  cursor: default;
+}
+
+.calendar-slot:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.calendar-slot-time {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin-bottom: 0.15rem;
+}
+
+.calendar-slot-course {
+  font-size: 0.78rem;
+  color: var(--text-color);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.calendar-slot-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: 0.2rem;
+}
+
+.calendar-slot-class {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-color-secondary);
+  background: var(--surface-ground);
+  padding: 0.1rem 0.4rem;
+  border-radius: 0.25rem;
 }
 
 /* ====== MODULES COMPACT ====== */
@@ -1042,13 +1109,14 @@ function handleAlertAction(alert) {
     grid-template-columns: 1fr;
   }
   
-  .day-overview {
-    flex-direction: column;
-    gap: 0.5rem;
+  .calendar-grid {
+    grid-template-columns: repeat(3, 1fr);
   }
-  
-  .day-label {
-    min-width: auto;
+}
+
+@media (max-width: 480px) {
+  .calendar-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 </style>
