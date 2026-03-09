@@ -256,9 +256,12 @@
                 </div>
                 <div v-else class="horaire-cell">
                   <i class="pi pi-clock text-primary mr-2"></i>
-                  <span class="font-bold">{{ slotProps.data.startTime }}</span>
-                  <span class="mx-1">-</span>
-                  <span class="font-bold">{{ slotProps.data.endTime }}</span>
+                  <template v-if="slotProps.data.startTime && slotProps.data.startTime !== 'null'">
+                    <span class="font-bold">{{ slotProps.data.startTime }}</span>
+                    <span class="mx-1">-</span>
+                    <span class="font-bold">{{ slotProps.data.endTime }}</span>
+                  </template>
+                  <Tag v-else value="Asynchrone" severity="contrast" class="font-bold" />
                 </div>
               </template>
             </Column>
@@ -268,6 +271,7 @@
                 <div 
                   v-if="slotProps.data.moduleCode"
                   class="module-cell"
+                  v-tooltip.top="slotProps.data.courseTitle || slotProps.data.activity || slotProps.data.moduleTitle"
                 >
                   <div class="course-title-text">{{ slotProps.data.courseTitle || slotProps.data.activity || slotProps.data.moduleTitle }}</div>
                 </div>
@@ -1214,9 +1218,9 @@ const saveSlot = async () => {
     // Validation basique
     if (!slotData.startTime || !slotData.endTime) {
       if (slotData.day === 'distance') {
-        // Valeurs par défaut pour distance si non spécifié
-        slotData.startTime = slotData.startTime || '08:00'
-        slotData.endTime = slotData.endTime || '17:00'
+        // Pour distance : horaires optionnels (cours asynchrones)
+        slotData.startTime = slotData.startTime || null
+        slotData.endTime = slotData.endTime || null
       } else {
         toast.add({
           severity: 'warn',
@@ -1533,7 +1537,7 @@ const exportToExcel = async () => {
 
           // Horaire (Col B) - fusionné verticalement
           worksheet.mergeCells(currentRow, 2, endRow, 2)
-          row1.getCell(2).value = `${slot.startTime} - ${slot.endTime}`
+          row1.getCell(2).value = (slot.startTime && slot.startTime !== 'null') ? `${slot.startTime} - ${slot.endTime}` : 'Asynchrone'
           row1.getCell(2).font = { size: 9, bold: true }
           row1.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' }
 
@@ -1541,7 +1545,7 @@ const exportToExcel = async () => {
           worksheet.mergeCells(currentRow, 3, currentRow, 7)
           row1.getCell(3).value = slot.courseTitle || slot.activity || ''
           row1.getCell(3).font = { size: 9 }
-          row1.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' }
+          row1.getCell(3).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
 
           row1.height = Math.max(20, getCourseRowHeight(row1.getCell(3).value))
           currentRow++
@@ -1828,14 +1832,14 @@ const exportSemesterToExcel = async (workbook, ExcelJS) => {
             row1.getCell(col).border = thinBorder
           }
           // Horaire (Col B)
-          row1.getCell(2).value = `${slot.startTime} - ${slot.endTime}`
+          row1.getCell(2).value = (slot.startTime && slot.startTime !== 'null') ? `${slot.startTime} - ${slot.endTime}` : 'Asynchrone'
           row1.getCell(2).font = { size: 9, bold: true }
           row1.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' }
           // Cours (Col C-G fusionnées)
           worksheet.mergeCells(currentRow, 3, currentRow, 7)
           row1.getCell(3).value = slot.courseTitle || slot.activity || ''
           row1.getCell(3).font = { size: 9 }
-          row1.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' }
+          row1.getCell(3).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
           row1.height = Math.max(20, getCourseRowHeight(row1.getCell(3).value))
           currentRow++
           
@@ -2080,6 +2084,12 @@ const exportSemesterToExcel = async (workbook, ExcelJS) => {
   font-weight: 600;
   font-size: 0.95rem;
   line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
 }
 
 .module-number {
