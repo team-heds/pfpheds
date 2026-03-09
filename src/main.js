@@ -14,14 +14,12 @@ import StyleClass from 'primevue/styleclass';
 import ToastService from 'primevue/toastservice';
 import Tooltip from 'primevue/tooltip';
 
-import BlockViewer from '@/components/ui/BlockViewer.vue';
 
 import '@/assets/styles/styles.scss';
 import "primeflex/primeflex.css";
 import '@/assets/styles/mobile-scale.css';
 
 import { useUserStore } from '@/stores/userStore'
-import gamificationIntegration from '@/service/gamificationIntegration'
 
 const APP_VERSION = '0.1.75';
 if ('serviceWorker' in navigator) {
@@ -65,7 +63,8 @@ onAuthStateChanged(auth, async (user) => {
   // NOUVEAU : Déclencher l'intégration gamification lors de la connexion
   if (user) {
     try {
-      await gamificationIntegration.onLogin(user.uid, {
+      const { default: gi } = await import('@/service/gamificationIntegration')
+      await gi.onLogin(user.uid, {
         loginTime: Date.now(),
         loginMethod: 'firebase_auth',
         deviceType: window.innerWidth <= 768 ? 'mobile' : 'desktop'
@@ -95,4 +94,3 @@ app.directive('badge', BadgeDirective);
 app.directive('ripple', Ripple);
 app.directive('styleclass', StyleClass);
 
-app.component('BlockViewer', BlockViewer);
