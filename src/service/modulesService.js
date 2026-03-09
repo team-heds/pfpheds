@@ -27,17 +27,14 @@ class ModulesService {
    */
   async getModulesByYear(year) {
     try {
-      const { data, error } = await supabase
-        .from('modules')
-        .select('*')
+      let query = supabase.from('modules').select('*')
 
-      if (error) throw error
-      
-      // Filtrer par année si la donnée existe dans les modules
-      if (year && data) {
-        return data.filter(m => m.annee === year || m.year === year)
+      if (year) {
+        query = query.or(`annee.eq.${year},year.eq.${year}`)
       }
-      
+
+      const { data, error } = await query
+      if (error) throw error
       return data || []
     } catch (error) {
       console.error('[ModulesService] Erreur getModulesByYear:', error)
@@ -149,28 +146,18 @@ class ModulesService {
    */
   async getModulesBySemester(annee, semestre) {
     try {
-      const { data, error } = await supabase
-        .from('modules')
-        .select('*')
+      let query = supabase.from('modules').select('*')
 
-      if (error) throw error
-      
-      // Filtrer côté client par semestre et année
-      if (data) {
-        let filtered = data
-        
-        if (semestre) {
-          filtered = filtered.filter(m => m.semestre === semestre)
-        }
-        
-        if (annee) {
-          filtered = filtered.filter(m => m.annee === annee || m.year === annee)
-        }
-        
-        return filtered
+      if (semestre) {
+        query = query.eq('semestre', semestre)
       }
-      
-      return []
+      if (annee) {
+        query = query.or(`annee.eq.${annee},year.eq.${annee}`)
+      }
+
+      const { data, error } = await query
+      if (error) throw error
+      return data || []
     } catch (error) {
       console.error('[ModulesService] Erreur getModulesBySemester:', error)
       throw error

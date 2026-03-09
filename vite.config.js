@@ -117,8 +117,14 @@ export default defineConfig({
             if (id.includes('@tiptap') || id.includes('prosemirror')) {
               return 'editor'
             }
-            if (id.includes('xlsx') || id.includes('jspdf') || id.includes('exceljs')) {
-              return 'export-libs'
+            if (id.includes('xlsx')) {
+              return 'xlsx'
+            }
+            if (id.includes('exceljs')) {
+              return 'exceljs'
+            }
+            if (id.includes('jspdf')) {
+              return 'jspdf'
             }
           }
         },

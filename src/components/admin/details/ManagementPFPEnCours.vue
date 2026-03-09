@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div>
     <Navbar />
     <h1>Management PFP En Cours</h1>
@@ -130,7 +130,6 @@ import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { db } from 'root/firebase';
-import { EffectComposer } from 'three-stdlib';
 
 export default {
   name: 'ManagementPFPEnCours',

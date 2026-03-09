@@ -337,7 +337,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { supabase } from '@/supabase'
-import ExcelJS from 'exceljs'
+
 import studentsService from '@/service/studentsService'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import Button from 'primevue/button'
@@ -871,6 +871,7 @@ const exportXLSX = async () => {
   const rows = filteredRows.value
   if (rows.length === 0) return
 
+  const ExcelJS = await import('exceljs')
   const wb = new ExcelJS.Workbook()
   wb.creator = 'Plateforme HEdS'
   wb.created = new Date()
