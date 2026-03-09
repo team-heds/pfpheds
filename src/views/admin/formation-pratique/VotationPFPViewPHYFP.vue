@@ -2806,6 +2806,13 @@ const loadData = async () => {
           if (choice.placeId && placesMap.has(choice.placeId)) return placesMap.get(choice.placeId)
           return null
         }
+        const getInstitutionName = (choice) => {
+          if (!choice) return null
+          if (choice.InstitutionName) return choice.InstitutionName
+          if (choice.institutionName) return choice.institutionName
+          if (choice.placeId && fullMap.has(choice.placeId)) return fullMap.get(choice.placeId).InstitutionName || null
+          return null
+        }
         
         votationsMap.set(key, {
           id: vote.id,
@@ -2820,11 +2827,11 @@ const loadData = async () => {
           choix3: getPlaceName(choices[2]),
           choix4: getPlaceName(choices[3]),
           choix5: getPlaceName(choices[4]),
-          choix1Institution: choices[0]?.InstitutionName || null,
-          choix2Institution: choices[1]?.InstitutionName || null,
-          choix3Institution: choices[2]?.InstitutionName || null,
-          choix4Institution: choices[3]?.InstitutionName || null,
-          choix5Institution: choices[4]?.InstitutionName || null,
+          choix1Institution: getInstitutionName(choices[0]),
+          choix2Institution: getInstitutionName(choices[1]),
+          choix3Institution: getInstitutionName(choices[2]),
+          choix4Institution: getInstitutionName(choices[3]),
+          choix5Institution: getInstitutionName(choices[4]),
           choice1PlaceId: choices[0]?.placeId || null,
           choice2PlaceId: choices[1]?.placeId || null,
           choice3PlaceId: choices[2]?.placeId || null,
@@ -2954,7 +2961,15 @@ const exportData = () => {
   try {
     const dataToExport = filteredVotationsList.value
 
-    const headers = ['Nom', 'Prénom', 'Classe', 'PFP', 'Année', 'Choix 1', 'Choix 2', 'Choix 3', 'Nb Choix', 'Date Vote', 'Statut']
+    const headers = [
+      'Nom', 'Prénom', 'Classe', 'PFP', 'Année',
+      'Choix 1 - Place', 'Choix 1 - Institution', 'Choix 1 - PlaceId',
+      'Choix 2 - Place', 'Choix 2 - Institution', 'Choix 2 - PlaceId',
+      'Choix 3 - Place', 'Choix 3 - Institution', 'Choix 3 - PlaceId',
+      'Choix 4 - Place', 'Choix 4 - Institution', 'Choix 4 - PlaceId',
+      'Choix 5 - Place', 'Choix 5 - Institution', 'Choix 5 - PlaceId',
+      'Nb Choix', 'Date Vote', 'Statut'
+    ]
     const csvContent = [
       headers.join(';'),
       ...dataToExport.map(row => [
@@ -2963,9 +2978,11 @@ const exportData = () => {
         row.classe,
         row.pfpType,
         row.year,
-        row.choix1 || '',
-        row.choix2 || '',
-        row.choix3 || '',
+        row.choix1 || '', row.choix1Institution || '', row.choice1PlaceId || '',
+        row.choix2 || '', row.choix2Institution || '', row.choice2PlaceId || '',
+        row.choix3 || '', row.choix3Institution || '', row.choice3PlaceId || '',
+        row.choix4 || '', row.choix4Institution || '', row.choice4PlaceId || '',
+        row.choix5 || '', row.choix5Institution || '', row.choice5PlaceId || '',
         row.nbChoix,
         row.dateVote ? formatDate(row.dateVote) : '',
         row.status
