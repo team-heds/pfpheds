@@ -1433,9 +1433,9 @@ const getSelectedYearLabel = () => {
 
 const getCourseRowHeight = (courseTitle) => {
   const text = (courseTitle || '').toString()
-  const baseHeight = 20
-  const lineHeight = 15
-  const charsPerLine = 90
+  const baseHeight = 22
+  const lineHeight = 18
+  const charsPerLine = 60
   const lines = text
     .split('\n')
     .map(line => Math.max(1, Math.ceil(line.length / charsPerLine)))
@@ -1623,10 +1623,9 @@ const exportToExcel = async () => {
           const courseText = slot.courseTitle || slot.activity || ''
           row1.getCell(3).value = courseText
           row1.getCell(3).font = { size: 9 }
-          const needsWrap = courseText.length > 30
-          row1.getCell(3).alignment = { horizontal: 'center', vertical: 'middle', wrapText: needsWrap }
+          row1.getCell(3).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
 
-          row1.height = needsWrap ? Math.max(20, getCourseRowHeight(courseText)) : 20
+          row1.height = Math.max(22, getCourseRowHeight(courseText))
           currentRow++
 
           // LIGNES 2+ : Enseignants (5 colonnes C-G) — colorier toutes les cellules B-G
@@ -1639,7 +1638,7 @@ const exportToExcel = async () => {
               const teacherCell = row2.getCell(3 + i)
               teacherCell.value = chunk[i] || ''
               teacherCell.font = { size: 8, italic: true, bold: true }
-              teacherCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: (chunk[i] || '').length > 30 }
+              teacherCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
               teacherCell.fill = slotFill
               teacherCell.border = thinBorder
             }
@@ -1919,25 +1918,21 @@ const exportSemesterToExcel = async (workbook, ExcelJS) => {
           const slotBgLight = getModuleLightArgb(slotColor)
           const slotFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: slotBgLight } }
 
-          // LIGNE 1 : Horaire + Cours
+          // LIGNE 1 : Cours + LIGNE 2 : Enseignants
+          const slotStartRow = currentRow
           const row1 = worksheet.getRow(currentRow)
           // Colorier toutes les cellules B-G de la ligne
           for (let col = 2; col <= 7; col++) {
             row1.getCell(col).fill = slotFill
             row1.getCell(col).border = thinBorder
           }
-          // Horaire (Col B)
-          row1.getCell(2).value = (slot.startTime && slot.startTime !== 'null') ? `${slot.startTime} - ${slot.endTime}` : 'Asynchrone'
-          row1.getCell(2).font = { size: 9, bold: true }
-          row1.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' }
           // Cours (Col C-G fusionnées)
           worksheet.mergeCells(currentRow, 3, currentRow, 7)
           const semCourseText = slot.courseTitle || slot.activity || ''
           row1.getCell(3).value = semCourseText
           row1.getCell(3).font = { size: 9 }
-          const semNeedsWrap = semCourseText.length > 30
-          row1.getCell(3).alignment = { horizontal: 'center', vertical: 'middle', wrapText: semNeedsWrap }
-          row1.height = semNeedsWrap ? Math.max(20, getCourseRowHeight(semCourseText)) : 20
+          row1.getCell(3).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
+          row1.height = Math.max(22, getCourseRowHeight(semCourseText))
           currentRow++
           
           // LIGNE 2 : Enseignants
@@ -1952,10 +1947,16 @@ const exportSemesterToExcel = async (workbook, ExcelJS) => {
           const teachersText = (slot.teachers || []).join(', ')
           row2.getCell(3).value = teachersText
           row2.getCell(3).font = { size: 8, italic: true, bold: true }
-          const teachersNeedsWrap = teachersText.length > 30
-          row2.getCell(3).alignment = { horizontal: 'center', vertical: 'middle', wrapText: teachersNeedsWrap }
-          row2.height = teachersNeedsWrap ? Math.max(18, getCourseRowHeight(teachersText)) : 18
+          row2.getCell(3).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
+          row2.height = Math.max(20, getCourseRowHeight(teachersText))
           currentRow++
+
+          // Fusionner Horaire (Col B) verticalement sur les 2 lignes (cours + enseignant)
+          worksheet.mergeCells(slotStartRow, 2, currentRow - 1, 2)
+          const timeCell = worksheet.getCell(slotStartRow, 2)
+          timeCell.value = (slot.startTime && slot.startTime !== 'null') ? `${slot.startTime} - ${slot.endTime}` : 'Asynchrone'
+          timeCell.font = { size: 9, bold: true }
+          timeCell.alignment = { horizontal: 'center', vertical: 'middle' }
         })
       }
       
