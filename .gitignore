@@ -129,3 +129,6 @@ build/*.tar.gz
 
 # Firebase hosting cache (obsolete)
 .firebase/
+
+# Legacy algo scripts and data exports
+algo/
