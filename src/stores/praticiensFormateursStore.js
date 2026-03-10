@@ -15,7 +15,7 @@ export const usePraticiensFormateursStore = defineStore('praticiensFormateurs', 
       try {
         let q = supabase
           .from('praticiens_formateurs')
-          .select('id, institution, institution_id, localite, mail, nom, prenom, created_at, updated_at')
+          .select('id, institution, localite, mail, nom, prenom, created_at, updated_at')
           .order('institution', { ascending: true })
           .order('localite', { ascending: true })
           .order('nom', { ascending: true });

@@ -326,28 +326,18 @@ async function fetchCurrentUser() {
 }
 
 // Watcher pour détecter les changements de userProfile
-watch(() => props.userProfile, (newVal) => {
-  if (newVal) {
-    console.log('👀 userProfile changé, retraitement...')
+watch(() => props.userProfile, (newVal, oldVal) => {
+  if (newVal && newVal !== oldVal) {
     processUserProfile()
   }
 }, { immediate: true })
 
 // Watcher pour rafraîchir les PFP quand les validations changent
-watch(() => props.userId, (newUserId) => {
-  if (newUserId) {
-    console.log('👀 userId changé, rechargement PFP...')
+watch(() => props.userId, (newUserId, oldUserId) => {
+  if (newUserId && newUserId !== oldUserId) {
     fetchStudentPfpList()
   }
 }, { immediate: true })
-
-// Watcher pour détecter les changements dans les données de l'utilisateur
-watch(() => props.userProfile, (newProfile) => {
-  if (newProfile) {
-    console.log('👀 userProfile changé, retraitement...')
-    processUserProfile()
-  }
-}, { immediate: true, deep: true })
 
 // Watcher pour recharger les données périodiquement (toutes les 15 secondes)
 let refreshInterval = null
@@ -674,13 +664,13 @@ const fetchPraticienFormateurs = async () => {
   try {
     const { data, error } = await supabase
       .from('praticiens_formateurs')
-      .select('id, institution_id, prenom, nom, mail')
+      .select('id, institution, prenom, nom, mail')
     if (error) throw error
     const map = {}
     const byInst = {}
     ;(data || []).forEach(p => {
       map[p.id] = { Prenom: p.prenom || '', Nom: p.nom || '', Mail: p.mail || '' }
-      const instId = p.institution_id
+      const instId = p.institution
       if (instId) {
         if (!byInst[instId]) byInst[instId] = []
         byInst[instId].push({ Prenom: p.prenom || '', Nom: p.nom || '', Mail: p.mail || '', id: p.id })
@@ -849,21 +839,21 @@ const processUserProfile = async () => {
         const { data: institutions, error: instError } = await supabase
           .from('institutions')
           .select('*')
-          .in('id', instIds);
+          .in('InstitutionId', instIds);
 
         if (instError) throw instError;
         console.log('✅ Institutions chargées:', institutions?.length || 0)
 
         institutionsList.value = (institutions || [])
           .map((inst) => {
-            const instId = inst.id || inst.institution_id;
+            const instId = inst.InstitutionId || inst.id || inst.institution_id;
             const domainSet = domainsByInstitution[instId];
             const criteriaSet = criteriaByInstitution[instId];
             const originalPfp = validPfpEntries.find(p => (p.id_pfp || p.ID_PFP) === instId);
             return {
               ...inst,
               InstitutionId: instId,
-              Name: inst.name || inst.nom_institution,
+              Name: inst.Name || inst.name || inst.nom_institution,
               Domaines: domainSet ? Array.from(domainSet) : [],
               CriteriaValides: criteriaSet ? Array.from(criteriaSet) : [],
               State: originalPfp ? (originalPfp.state || originalPfp.State) : undefined

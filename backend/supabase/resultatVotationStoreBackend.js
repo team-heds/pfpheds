@@ -73,7 +73,7 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
 
     // 🛡️ ÉTAPE 0: Charger les assignations existantes (manuelles, prioritaires, etc.)
     // pour ne pas les écraser et respecter la capacité déjà utilisée
-    const { data: existingAssignments, error: existingError } = await supabase
+    const { data: existingAssignments, error: existingError } = await supabaseAdmin
       .from('student_result_vote')
       .select('user_id, assigned_place_id, assigned_rank, status, notes')
       .eq('pfp_type', pfpType)
@@ -278,7 +278,7 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
     console.log(`💾 Enregistrement de ${resultsToInsert.length} résultats en batch...`)
     
     if (resultsToInsert.length > 0) {
-      const { data: batchResult, error: batchError } = await supabase.rpc('batch_upsert_student_results', {
+      const { data: batchResult, error: batchError } = await supabaseAdmin.rpc('batch_upsert_student_results', {
         p_results: resultsToInsert
       })
 

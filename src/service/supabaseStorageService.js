@@ -105,7 +105,8 @@ class SupabaseStorageService {
       const { data: buckets, error: listError } = await this.supabase.storage.listBuckets()
       
       if (listError) {
-        console.error('❌ Erreur listage buckets:', listError)
+        // Storage not configured on this instance — skip silently
+        console.warn('[Storage] Bucket listing unavailable (storage may not be configured)')
         return false
       }
 

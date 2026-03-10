@@ -254,16 +254,15 @@ const fetchStudentProfileById = async (userId) => {
       console.log('✅ Données StudentsPhysio trouvées:', physioData)
       console.log('📊 Données brutes StudentsPhysio:', {
         class: physioData.class,
-        classe: physioData.classe,
         ville: physioData.ville || physioData.city,
-        repondant: physioData.respondant_hes || physioData.repondant_hes
+        repondant: physioData.repondant_hes
       })
       
       const enrichedFields = []
       
       // 1. CLASSE - Priorité: user_profiles.class > StudentsPhysio.class
       if (!user.value.classe) {
-        const classePhysio = physioData.class || physioData.classe
+        const classePhysio = physioData.class
         if (classePhysio) {
           user.value.classe = classePhysio
           enrichedFields.push('classe')
@@ -274,7 +273,7 @@ const fetchStudentProfileById = async (userId) => {
       }
       
       // 2. RÉPONDANT HES - Priorité: user_profiles.hes_referent > StudentsPhysio
-      const repondantPhysio = physioData.respondant_hes || physioData.repondant_hes || physioData.repondanthes || physioData.RepondantHES
+      const repondantPhysio = physioData.repondant_hes
       if (!user.value.repondantHES && repondantPhysio) {
         user.value.repondantHES = repondantPhysio
         enrichedFields.push('repondantHES')
@@ -411,7 +410,7 @@ const fetchRepondantsFromStudentsPhysio = async () => {
   try {
     const { data: physioData, error } = await supabase
       .from('StudentsPhysio')
-      .select('respondant_hes, respondant_hes_id, repondant_hes, repondanthes, RepondantHES, class, classe')
+      .select('repondant_hes, class')
 
     if (error) {
       console.warn('⚠️ StudentsPhysio non accessible ou vide:', error.message)
@@ -426,8 +425,8 @@ const fetchRepondantsFromStudentsPhysio = async () => {
     // Regrouper les répondants avec leurs classes
     const repondantsMap = new Map()
     physioData.forEach(row => {
-      const repondant = row.respondant_hes || row.repondant_hes || row.repondanthes || row.RepondantHES
-      const classe = row.class || row.classe
+      const repondant = row.repondant_hes
+      const classe = row.class
       
       if (repondant && typeof repondant === 'string' && repondant.trim()) {
         const repondantName = repondant.trim()
