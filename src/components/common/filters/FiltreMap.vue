@@ -83,7 +83,7 @@
               ></Button>
               <Button
                 icon="pi pi-info-circle"
-                @click="navigateToDetails(selectedInstitution.id)"
+                @click="navigateToDetails(selectedInstitution.InstitutionId)"
                 label="Détails"
                 class="p-button-text mr-3"
               ></Button>
@@ -149,6 +149,7 @@ const { institutions, loading: institutionsLoading, error: institutionsError } =
 const selectedInstitution = ref(null);
 const dialogVisible = ref(false);
 const router = useRouter();
+const isMobile = computed(() => window.innerWidth <= 768);
 
 // Objet réactif regroupant l'ensemble des filtres sélectionnés
 const selectedFilters = ref({
