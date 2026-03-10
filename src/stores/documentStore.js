@@ -91,6 +91,7 @@ export const useDocumentStore = defineStore('documents', {
               name: s.name,
               files: filesByFolder.get(s.id) || []
             }))
+            .sort((a, b) => a.name.localeCompare(b.name, 'fr'))
 
           return {
             id: top.id,
