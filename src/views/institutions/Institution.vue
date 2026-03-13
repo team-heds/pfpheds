@@ -71,10 +71,11 @@
                           outlined
                         />
                         <a
-                          :href="institution.URL || '#'"
+                          :href="formatUrl(institution.URL)"
                           target="_blank"
-                          class="external-link"
                           rel="noopener noreferrer"
+                          class="external-link"
+                          :class="{ 'link-disabled': !institution.URL }"
                         >
                           <span class="p-button-icon pi pi-external-link"></span>
                           <span class="link-label">Site web</span>
@@ -246,6 +247,11 @@ export default {
           }
         });
       }
+    },
+    formatUrl(url) {
+      if (!url) return '#'
+      if (url.startsWith('http://') || url.startsWith('https://')) return url
+      return 'https://' + url
     },
     goToDetails(id) {
       if (id) {
@@ -447,6 +453,10 @@ export default {
 }
 .link-label {
   margin-left: 0.5rem;
+}
+.link-disabled {
+  opacity: 0.4;
+  pointer-events: none;
 }
 
 /* Pagination */

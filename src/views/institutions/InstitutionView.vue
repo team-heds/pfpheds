@@ -22,7 +22,7 @@
           <span v-if="institutionDetails?.Canton" class="iv-pill">
             <i class="pi pi-compass"></i> {{ institutionDetails.Canton }}
           </span>
-          <a v-if="institutionDetails?.URL" :href="institutionDetails.URL" target="_blank" class="iv-pill iv-pill--link">
+          <a v-if="institutionDetails?.URL" :href="formatUrl(institutionDetails.URL)" target="_blank" rel="noopener noreferrer" class="iv-pill iv-pill--link">
             <i class="pi pi-external-link"></i> Site web
           </a>
         </div>
@@ -238,6 +238,12 @@ const primaryImage = computed(() => {
   if (typeof images === 'string' && images.trim().length > 0) return images
   return 'https://eduport.webestica.com/assets/images/courses/4by3/21.jpg'
 })
+
+const formatUrl = (url) => {
+  if (!url) return '#'
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  return 'https://' + url
+}
 
 onMounted(() => {
   loadInstitution()

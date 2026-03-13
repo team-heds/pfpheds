@@ -83,6 +83,14 @@ export const useDocumentStore = defineStore('documents', {
         const topFolders = allFolders.filter(f => !f.parent_id)
         const subFoldersAll = allFolders.filter(f => f.parent_id)
 
+        const FOLDER_ORDER = [
+          'documentsGeneraux',
+          'cpt',
+          'journaldebord',
+          'evaluation',
+          'MobilitesInternationales'
+        ]
+
         const tree = topFolders.map(top => {
           const subs = subFoldersAll
             .filter(s => s.parent_id === top.id)
@@ -100,8 +108,15 @@ export const useDocumentStore = defineStore('documents', {
             files: filesByFolder.get(top.id) || [],
             subFolders: subs.length > 0 ? subs : undefined
           }
+        }).sort((a, b) => {
+          const idxA = FOLDER_ORDER.indexOf(a.id)
+          const idxB = FOLDER_ORDER.indexOf(b.id)
+          const orderA = idxA >= 0 ? idxA : FOLDER_ORDER.length
+          const orderB = idxB >= 0 ? idxB : FOLDER_ORDER.length
+          return orderA - orderB
         })
 
+        console.log('📂 [DocumentStore] Ordre des dossiers:', tree.map(f => f.id))
         this.folders = tree
         this.topFolders = tree
         this.loading = false

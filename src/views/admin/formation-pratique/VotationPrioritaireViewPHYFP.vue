@@ -386,10 +386,11 @@ const loadData = async () => {
     // 3. Places
     await placesStore.fetchPlaces()
     await institutionsStore.fetchInstitutions()
+    const propositionKey = `${filterPFP.value.toLowerCase()}_proposition`
     let count = 0
     placesStore.places.forEach(p => {
-      if (p[filterPFP.value]?.[filterYear.value]) {
-        const cap = parseInt(p[filterPFP.value][filterYear.value])
+      if (p[propositionKey]?.[filterYear.value]) {
+        const cap = parseInt(p[propositionKey][filterYear.value])
         if (cap > 0) count += cap
       }
     })
@@ -481,11 +482,12 @@ const runAlgorithm = async () => {
       }))
 
     // Prepare places data
+    const propKey = `${filterPFP.value.toLowerCase()}_proposition`
     const placesData = placesStore.places
       .map(place => {
         let capacity = 0
-        if (place[filterPFP.value]?.[filterYear.value]) {
-          capacity = parseInt(place[filterPFP.value][filterYear.value])
+        if (place[propKey]?.[filterYear.value]) {
+          capacity = parseInt(place[propKey][filterYear.value])
         }
         if (!capacity || capacity < 1) return null
         const inst = institutionMap.get(place.InstitutionId)

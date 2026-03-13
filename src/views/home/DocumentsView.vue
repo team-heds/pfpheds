@@ -434,8 +434,8 @@ const saveNewFile = async (newFile) => {
 
 /* Documents Grid */
 .documents-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 1.5rem;
 }
 

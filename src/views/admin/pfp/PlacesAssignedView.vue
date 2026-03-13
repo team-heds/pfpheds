@@ -159,10 +159,11 @@
             </template>
           </Column>
 
-          <Column field="rank_label" header="Rang" sortable :style="{ width: '130px', textAlign: 'center' }">
+          <Column field="rank_label" header="Critères" sortable :style="{ width: '150px', textAlign: 'center' }">
             <template #body="{ data }">
-              <Tag v-if="data.assigned_rank === 99" value="Aléatoire" severity="danger" />
-              <Tag v-else-if="data.assigned_rank >= 1 && data.assigned_rank <= 5" :value="`Choix ${data.assigned_rank}`" :severity="getRankSeverity(data.assigned_rank)" />
+              <Tag v-if="data.assigned_rank === 99" value="Hors choix" severity="danger" icon="pi pi-exclamation-triangle" />
+              <Tag v-else-if="data.assigned_rank >= 1" :value="`${data.assigned_rank} crit. couvert${data.assigned_rank > 1 ? 's' : ''}`" :severity="getCritSeverity(data.assigned_rank)" icon="pi pi-check-circle" />
+              <Tag v-else-if="data.assigned_rank === 0 && data.assigned_place_id" value="0 critère" severity="warning" icon="pi pi-exclamation-circle" />
               <span v-else class="text-400">—</span>
             </template>
           </Column>
@@ -413,6 +414,13 @@ const getRankSeverity = (rank) => {
   return 'secondary'
 }
 
+const getCritSeverity = (count) => {
+  if (count >= 3) return 'success'
+  if (count >= 2) return 'info'
+  if (count >= 1) return 'warning'
+  return 'danger'
+}
+
 const rowClass = (data) => {
   if (!data.assigned_place_id) return 'row-unassigned'
   return ''
@@ -489,6 +497,45 @@ const enrichedRows = computed(() => {
   const placesById = new Map()
   allPlaces.value.forEach(p => { if (p.PlaceId) placesById.set(p.PlaceId, p) })
 
+  // ── Critères : calcul des critères manquants par étudiant ──
+  const CRIT_KEYS = ['MSQ', 'SYSINT', 'NEUROGER', 'AIGU', 'REHAB', 'AMBU', 'FR', 'DE']
+  const studentCriteriaCache = new Map()
+  const getStudentMissingCriteria = (userId) => {
+    if (studentCriteriaCache.has(userId)) return studentCriteriaCache.get(userId)
+    const s = studentsById.get(userId)
+    const validated = {} 
+    CRIT_KEYS.forEach(c => { validated[c] = 0 })
+    // From pfp_valided
+    if (s) {
+      let pv = s.pfp_valided || s.pfp_validated || []
+      if (typeof pv === 'string') try { pv = JSON.parse(pv) } catch { pv = [] }
+      if (pv && !Array.isArray(pv)) pv = Object.values(pv)
+      if (Array.isArray(pv)) {
+        pv.forEach(entry => {
+          const pid = entry.PlaceId || entry.ID_PFP
+          if (pid) {
+            const pl = placesById.get(pid)
+            if (pl) CRIT_KEYS.forEach(c => { if (pl[c] === true || pl[c] === 'true' || pl[c] === 1) validated[c]++ })
+          }
+        })
+      }
+    }
+    // From other PFP assignments (not current PFP)
+    allAssignments.value.forEach(a => {
+      if (a.user_id === userId && !types.includes(a.pfp_type) && a.assigned_place_id) {
+        const pl = placesById.get(a.assigned_place_id)
+        if (pl) CRIT_KEYS.forEach(c => { if (pl[c] === true || pl[c] === 'true' || pl[c] === 1) validated[c]++ })
+      }
+    })
+    const missing = CRIT_KEYS.filter(c => validated[c] === 0)
+    studentCriteriaCache.set(userId, missing)
+    return missing
+  }
+  const getPlaceCriteria = (place) => {
+    if (!place) return []
+    return CRIT_KEYS.filter(c => place[c] === true || place[c] === 'true' || place[c] === 1)
+  }
+
   const rows = []
 
   // 1. Tous les étudiants assignés
@@ -505,6 +552,9 @@ const enrichedRows = computed(() => {
       ? praticiensList.map(pid => praticiensById.value.get(pid) || praticiensById.value.get(String(pid))).filter(Boolean).join(', ')
       : null
 
+    const missingCrit = getStudentMissingCriteria(userId)
+    const placeCrit = getPlaceCriteria(place)
+
     rows.push({
       user_id: userId,
       student_name: getStudentName(s),
@@ -514,7 +564,7 @@ const enrichedRows = computed(() => {
       assigned_place_name: a.assigned_place_name || place?.NomPlace || '',
       assigned_institution_name: a.assigned_institution_name || place?.InstitutionName || '',
       assigned_rank: a.assigned_rank,
-      rank_label: a.assigned_rank === 99 ? 'Aléatoire' : (a.assigned_rank >= 1 && a.assigned_rank <= 5 ? `Choix ${a.assigned_rank}` : ''),
+      rank_label: a.assigned_rank === 99 ? 'Hors choix' : (a.assigned_rank >= 0 && a.assigned_place_id ? `${a.assigned_rank} crit.` : ''),
       status: a.status || 'draft',
       source_label: source.label,
       source_severity: source.severity,
@@ -522,6 +572,8 @@ const enrichedRows = computed(() => {
       source_key: source.key,
       praticien_display: praticienAssigned || praticienFromPlace || null,
       is_priority: priorityUserIds.value.has(userId),
+      missing_criteria: missingCrit.join(', '),
+      place_criteria: placeCrit.join(', '),
       _assignment_id: a.id,
       _pfp_type_db: a.pfp_type
     })
@@ -534,6 +586,8 @@ const enrichedRows = computed(() => {
       if (assignMap.has(uid)) return
 
       const source = getSource(null)
+      const missingCrit = getStudentMissingCriteria(uid)
+
       rows.push({
         user_id: uid,
         student_name: getStudentName(s),
@@ -551,6 +605,8 @@ const enrichedRows = computed(() => {
         source_key: source.key,
         praticien_display: null,
         is_priority: priorityUserIds.value.has(uid),
+        missing_criteria: missingCrit.join(', '),
+        place_criteria: '',
         _assignment_id: null,
         _pfp_type_db: null
       })
@@ -802,6 +858,8 @@ const exportExcel = async () => {
     'Institution': r.assigned_institution_name || '',
     'Praticien': r.praticien_display || '',
     'Rang': r.rank_label || '',
+    'Critères manquants étudiant': r.missing_criteria || '',
+    'Critères validés par la place': r.place_criteria || '',
     'Statut': r.status || '',
     'Prioritaire': r.is_priority ? 'Oui' : 'Non'
   }))

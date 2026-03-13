@@ -66,9 +66,9 @@ const model = ref([
                   to: '/places_assigned'
                 },
                 {
-                  label: 'Places Assignement',
-                  icon: 'pi pi-fw pi-image',
-                  to: '/places_assignment'
+                  label: 'Validation Places',
+                  icon: 'pi pi-fw pi-check-circle',
+                  to: '/validation-places'
                 }
                 ,
                 {

@@ -2199,6 +2199,17 @@ const sortAlphabetically = () => {
 }
 
 const startAlgorithm = async () => {
+  // eslint-disable-next-line no-constant-condition
+  if ("a" === "a") {
+    toast.add({
+      severity: 'warning',
+      summary: 'Stop',
+      detail: 'Refais pas un algo',
+      life: 3000
+    })
+    return
+  }
+
   if (!canShowResults.value) {
     toast.add({
       severity: 'warning',
@@ -2256,13 +2267,15 @@ const startAlgorithm = async () => {
     const placesLookupForScore = new Map()
     placesStore.places.forEach(p => placesLookupForScore.set(p.PlaceId, p))
 
-    // Construire un map userId → critères validés (fusion des 2 sources)
+    // Construire un map userId → critères validés + places déjà faites (fusion des 2 sources)
     const studentCriteriaMap = new Map()
+    const studentDonePlaceIds = new Map() // userId → Set<PlaceId>
 
     // Source 1: pfp_valided
     if (physioData) {
       physioData.forEach(physio => {
         const validatedCriteria = { MSQ: 0, SYSINT: 0, NEUROGER: 0, AIGU: 0, REHAB: 0, AMBU: 0, FR: 0, DE: 0 }
+        const donePlaces = new Set()
         let pfpArray = []
         if (physio.pfp_valided) {
           try {
@@ -2276,6 +2289,8 @@ const startAlgorithm = async () => {
               validatedCriteria[c]++
             }
           })
+          const placeId = stage.PlaceId || stage.ID_PFP || stage.id_pfp
+          if (placeId) donePlaces.add(placeId)
         })
         studentCriteriaMap.set(physio.user_id, {
           criteria: validatedCriteria,
@@ -2283,12 +2298,18 @@ const startAlgorithm = async () => {
           casParticulier: !!physio.cas_particulier,
           stagesCount: pfpArray.length
         })
+        studentDonePlaceIds.set(physio.user_id, donePlaces)
       })
     }
 
     // Source 2: enrichir avec student_result_vote (stages validés)
     if (validatedAssignments) {
       validatedAssignments.forEach(a => {
+        // Track done PlaceIds (toutes les assignations, pas seulement validées)
+        if (a.assigned_place_id) {
+          if (!studentDonePlaceIds.has(a.user_id)) studentDonePlaceIds.set(a.user_id, new Set())
+          studentDonePlaceIds.get(a.user_id).add(a.assigned_place_id)
+        }
         if (a.pfp_validee && a.assigned_place_id) {
           const placeInfo = placesLookupForScore.get(a.assigned_place_id)
           if (placeInfo) {
@@ -2403,24 +2424,29 @@ const startAlgorithm = async () => {
     const studentsData = eligibleVotations.map(student => {
       const profile = studentCriteriaMap.get(student.userId)
       const score = computePriorityScore(student.userId)
+      const missing = profile ? CRITERIA_KEYS.filter(c => profile.criteria[c] === 0) : [...CRITERIA_KEYS]
+      const donePlaces = studentDonePlaceIds.get(student.userId)
       return {
         userId: student.userId,
         nom: student.nom,
         prenom: student.prenom,
         classe: student.classe,
         choices: [
-          student.choice1PlaceId && { placeId: student.choice1PlaceId, rank: 1 },
-          student.choice2PlaceId && { placeId: student.choice2PlaceId, rank: 2 },
-          student.choice3PlaceId && { placeId: student.choice3PlaceId, rank: 3 },
-          student.choice4PlaceId && { placeId: student.choice4PlaceId, rank: 4 },
-          student.choice5PlaceId && { placeId: student.choice5PlaceId, rank: 5 }
-        ].filter(Boolean),
+          student.choice1PlaceId,
+          student.choice2PlaceId,
+          student.choice3PlaceId,
+          student.choice4PlaceId,
+          student.choice5PlaceId
+        ].filter(Boolean), // Pool de placeIds, sans rang
+        missingCriteria: missing,
+        donePlaceIds: donePlaces ? [...donePlaces] : [],
         priorityScore: score,
         _debug: profile ? {
-          missing: CRITERIA_KEYS.filter(c => profile.criteria[c] === 0),
+          missing,
           validated: CRITERIA_KEYS.filter(c => profile.criteria[c] > 0),
           sae: profile.sae,
-          casParticulier: profile.casParticulier
+          casParticulier: profile.casParticulier,
+          donePlaceIds: donePlaces ? donePlaces.size : 0
         } : null
       }
     })
@@ -2454,10 +2480,11 @@ const startAlgorithm = async () => {
       .map(place => {
         const institution = institutionMap.get(place.InstitutionId)
         
-        // Récupérer la capacité pour ce PFP et cette année
+        // Récupérer la capacité depuis la colonne Proposition (ex: pfp4_proposition)
+        const propositionKey = `${filterPFP.value.toLowerCase()}_proposition`
         let capacity = 0
-        if (place[filterPFP.value] && place[filterPFP.value][filterYear.value]) {
-          capacity = parseInt(place[filterPFP.value][filterYear.value])
+        if (place[propositionKey] && place[propositionKey][filterYear.value]) {
+          capacity = parseInt(place[propositionKey][filterYear.value])
         }
         
         // Si pas de capacité définie, ignorer cette place
@@ -2473,12 +2500,19 @@ const startAlgorithm = async () => {
           return null
         }
         
+        // Extraire les critères couverts par cette place
+        const placeCriteria = {}
+        CRITERIA_KEYS.forEach(c => {
+          placeCriteria[c] = !!(place[c] === true || place[c] === 'true' || place[c] === 1)
+        })
+
         return {
           PlaceId: place.PlaceId,
           NomPlace: place.NomPlace,
           InstitutionId: place.InstitutionId,
           InstitutionName: institution?.Name || 'Inconnu',
-          Capacity: remainingCapacity
+          Capacity: remainingCapacity,
+          criteria: placeCriteria
         }
       })
       .filter(Boolean) // Retirer les null
@@ -2507,20 +2541,18 @@ const startAlgorithm = async () => {
     const stats = result.stats || {}
     toast.add({
       severity: 'success',
-      summary: 'Algorithme terminé',
-      detail: `${stats.successfulAssignments || 0} attributions réussies sur ${stats.totalStudents || 0} étudiants`,
+      summary: 'Algorithme v4.0 terminé',
+      detail: `${stats.successfulAssignments || 0} attributions (${stats.fromChoicesCount || 0} depuis choix, ${stats.randomAssignmentCount || 0} hors choix)`,
       life: 8000
     })
 
-    // Afficher les détails
-    if (stats.firstChoiceCount > 0 || stats.secondChoiceCount > 0 || stats.thirdChoiceCount > 0) {
-      toast.add({
-        severity: 'info',
-        summary: 'Répartition des choix',
-        detail: `1er choix: ${stats.firstChoiceCount || 0} | 2e choix: ${stats.secondChoiceCount || 0} | 3e choix: ${stats.thirdChoiceCount || 0}`,
-        life: 8000
-      })
-    }
+    // Afficher les détails critères
+    toast.add({
+      severity: stats.lesedCount > 0 ? 'warn' : 'info',
+      summary: 'Couverture critères',
+      detail: `Moy. critères couverts: ${stats.avgCriteriaCoveredFromChoices || 0} | Lésés (0 critères): ${stats.lesedCount || 0}`,
+      life: 8000
+    })
 
     // Afficher les erreurs éventuelles
     if (result.errors && result.errors.length > 0) {

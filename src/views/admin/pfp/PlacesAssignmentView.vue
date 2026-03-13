@@ -7,8 +7,8 @@
           <div class="flex align-items-center gap-3">
             <i class="pi pi-check-circle text-primary text-3xl"></i>
             <div>
-              <h1 class="text-2xl font-bold text-900 m-0">Résultats d'Attribution PFP</h1>
-              <p class="text-600 m-0 mt-1">Visualisation des résultats de l'algorithme d'attributions</p>
+              <h1 class="text-2xl font-bold text-900 m-0">Validation Places</h1>
+              <p class="text-600 m-0 mt-1">Suivi et validation des stages par classe, PFP et année</p>
             </div>
           </div>
         </div>
@@ -16,28 +16,39 @@
 
       <!-- Filtres -->
       <div class="surface-card p-4 border-round shadow-2 mb-4">
-        <h3 class="text-lg font-semibold mb-3">Filtres</h3>
-        <div class="grid">
-          <div class="col-12 md:col-6">
-            <label class="block mb-2 font-medium">PFP</label>
+        <div class="flex align-items-center gap-3 flex-wrap">
+          <div class="flex align-items-center gap-2">
+            <span class="text-600 font-medium">Classe</span>
+            <Dropdown 
+              v-model="selectedClass" 
+              :options="classOptions" 
+              placeholder="Classe"
+              class="w-8rem"
+              @change="loadResults"
+            />
+          </div>
+          <div class="flex align-items-center gap-2">
+            <span class="text-600 font-medium">PFP</span>
             <Dropdown 
               v-model="selectedPFP" 
               :options="pfpOptions" 
-              placeholder="Sélectionner un PFP"
-              class="w-full"
+              placeholder="PFP"
+              class="w-8rem"
               @change="loadResults"
             />
           </div>
-          <div class="col-12 md:col-6">
-            <label class="block mb-2 font-medium">Année</label>
+          <div class="flex align-items-center gap-2">
+            <span class="text-600 font-medium">Année</span>
             <Dropdown 
               v-model="selectedYear" 
               :options="yearOptions" 
-              placeholder="Sélectionner une année"
-              class="w-full"
+              placeholder="Année"
+              class="w-8rem"
               @change="loadResults"
             />
           </div>
+          <span class="flex-1"></span>
+          <Button icon="pi pi-refresh" outlined @click="loadResults" v-tooltip.top="'Rafraîchir'" />
         </div>
       </div>
 
@@ -76,7 +87,7 @@
         </div>
         <div class="col-12 md:col-3">
           <div class="surface-card p-4 border-round shadow-2">
-            <div class="text-600 mb-2">Places disponibles</div>
+            <div class="text-600 mb-2">PF Validés</div>
             <div class="text-2xl font-bold text-blue-500">{{ stats.availablePlaces }}</div>
           </div>
         </div>
@@ -243,7 +254,30 @@
               </template>
             </Column>
 
-            <Column field="status" header="Statut" sortable :style="{ minWidth: '140px' }">
+            <Column field="pfp_validee" header="PF Validé" sortable :style="{ width: '120px', textAlign: 'center' }">
+              <template #body="slotProps">
+                <InputSwitch 
+                  :modelValue="slotProps.data.pfp_validee" 
+                  @update:modelValue="(val) => togglePfpValidee(slotProps.data, val)"
+                />
+              </template>
+            </Column>
+
+            <Column field="notes" header="Notes" :style="{ minWidth: '250px' }">
+              <template #body="slotProps">
+                <Textarea 
+                  :modelValue="slotProps.data.notes || ''" 
+                  @update:modelValue="(val) => slotProps.data.notes = val"
+                  @blur="saveNotes(slotProps.data)"
+                  rows="2" 
+                  autoResize
+                  class="w-full text-sm"
+                  placeholder="Notes sur le stage..."
+                />
+              </template>
+            </Column>
+
+            <Column field="status" header="Statut" sortable :style="{ width: '120px' }">
               <template #body="slotProps">
                 <Tag 
                   :value="slotProps.data.status === 'published' ? 'Publié' : 'Brouillon'" 
@@ -396,6 +430,8 @@ import ProgressBar from 'primevue/progressbar'
 import Toast from 'primevue/toast'
 import Dialog from 'primevue/dialog'
 import Divider from 'primevue/divider'
+import InputSwitch from 'primevue/inputswitch'
+import Textarea from 'primevue/textarea'
 import { useToast } from 'primevue/usetoast'
 import { usePlacesStore } from '@/stores/placesStore'
 
@@ -405,9 +441,11 @@ const placesStore = usePlacesStore()
 const { scheduleRefresh } = useAutoRefresh(() => loadResults())
 
 // Filtres
+const selectedClass = ref('BA25')
 const selectedPFP = ref(null)
-const selectedYear = ref(null)
-const pfpOptions = ref(['PFP1A', 'PFP1B'])
+const selectedYear = ref('2026')
+const classOptions = ref(['BA23', 'BA24', 'BA25'])
+const pfpOptions = ref(['PFP1A', 'PFP1B', 'PFP2', 'PFP3', 'PFP4'])
 const yearOptions = ref(['2025', '2026', '2027'])
 
 // Données
@@ -624,17 +662,32 @@ const loadResults = async () => {
       }
     })
 
-    // 6. Mettre à jour les statistiques
-    const ba25Students = allStudents.value.filter(s => {
+    // 6. Filtrer les résultats par classe sélectionnée
+    if (selectedClass.value) {
+      const classStudentIds = new Set(
+        allStudents.value
+          .filter(s => {
+            const classe = s.Classe || s.classe || s.class
+            return classe === selectedClass.value
+          })
+          .map(s => s.user_id || s.id)
+      )
+      results.value = results.value.filter(r => classStudentIds.has(r.user_id))
+    }
+
+    // 7. Mettre à jour les statistiques
+    const classStudents = allStudents.value.filter(s => {
       const classe = s.Classe || s.classe || s.class
-      return classe === 'BA25'
+      return classe === selectedClass.value
     })
     
+    const validatedCount = results.value.filter(r => r.pfp_validee).length
+    
     stats.value = {
-      total: ba25Students.length,
+      total: classStudents.length,
       assigned: results.value.length,
-      pending: ba25Students.length - results.value.length,
-      availablePlaces: 0
+      pending: classStudents.length - results.value.length,
+      availablePlaces: validatedCount
     }
 
     // 7. Auto-assigner les praticiens si nécessaire
@@ -1262,8 +1315,70 @@ const assignPraticien = async (assignment, praticienId) => {
   }
 }
 
+// Toggle PF Validé pour un étudiant
+const togglePfpValidee = async (assignment, value) => {
+  try {
+    const { error } = await supabase
+      .from('student_result_vote')
+      .update({ 
+        pfp_validee: value,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', assignment.id)
+
+    if (error) throw error
+
+    // Mettre à jour localement
+    const index = results.value.findIndex(r => r.id === assignment.id)
+    if (index !== -1) {
+      results.value[index].pfp_validee = value
+    }
+
+    // Mettre à jour le compteur de PF validés
+    stats.value.availablePlaces = results.value.filter(r => r.pfp_validee).length
+
+    toast.add({
+      severity: value ? 'success' : 'info',
+      summary: value ? 'PF Validé' : 'PF Non validé',
+      detail: `${assignment.student_name} — ${assignment.assigned_place_name}`,
+      life: 2000
+    })
+  } catch (error) {
+    console.error('[ERROR] Erreur toggle pfp_validee:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: 'Impossible de mettre à jour la validation: ' + error.message,
+      life: 5000
+    })
+  }
+}
+
+// Sauvegarder les notes d'un étudiant (appelé sur @blur)
+const saveNotes = async (assignment) => {
+  try {
+    const { error } = await supabase
+      .from('student_result_vote')
+      .update({ 
+        notes: assignment.notes || null,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', assignment.id)
+
+    if (error) throw error
+  } catch (error) {
+    console.error('[ERROR] Erreur sauvegarde notes:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: 'Impossible de sauvegarder les notes: ' + error.message,
+      life: 5000
+    })
+  }
+}
+
 // Watcher pour recharger automatiquement quand les filtres changent
-watch([selectedPFP, selectedYear], () => {
+watch([selectedClass, selectedPFP, selectedYear], () => {
   if (selectedPFP.value && selectedYear.value) {
     loadResults()
   }
