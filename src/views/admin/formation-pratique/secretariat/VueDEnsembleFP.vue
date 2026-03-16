@@ -262,10 +262,10 @@
             </template>
           </Column>
 
-          <!-- Remarques -->
-          <Column field="remarques" header="Remarques" style="min-width: 160px">
+          <!-- Remarques (depuis Validation Places → student_result_vote.notes) -->
+          <Column field="assignmentNotes" header="Remarques" style="min-width: 160px">
             <template #body="{ data }">
-              <span v-if="data.remarques" class="text-xs text-700" :title="data.remarques">{{ truncate(data.remarques, 30) }}</span>
+              <span v-if="data.assignmentNotes" class="text-xs text-700" :title="data.assignmentNotes">{{ truncate(data.assignmentNotes, 30) }}</span>
               <span v-else class="text-400 text-xs">—</span>
             </template>
           </Column>
@@ -482,6 +482,7 @@ const flatRows = computed(() => {
         noteRetake: d.noteRetake || null,
         absences: d.absences || 0,
         remarques: d.remarques || '',
+        assignmentNotes: d.assignmentNotes || '',
         statut: d.statut || '—',
         casColor: d.casColor || null,
         casComment: d.casComment || null,
@@ -809,6 +810,7 @@ const fetchAllData = async () => {
           noteRetake: hasGrade(noteRetake) ? noteRetake : null,
           absences,
           remarques,
+          assignmentNotes: assignment?.notes || '',
           statut,
           attributionType,
           casColor: casData?.couleur || null,
@@ -1214,7 +1216,7 @@ const exportXLSX = async () => {
     const wsPFP = wb.addWorksheet(finalName)
 
     // Row 1: title
-    const pfpSheetColCount = 12
+    const pfpSheetColCount = 13
     wsPFP.columns = [
       { header: 'Institution', key: 'institution', width: 30 },
       { header: 'Critères', key: 'criteres', width: 20 },
@@ -1227,7 +1229,8 @@ const exportXLSX = async () => {
       { header: 'Évaluation', key: 'evalStatus', width: 14 },
       { header: 'Particularités', key: 'particularites', width: 18 },
       { header: 'Absences en jours', key: 'absences', width: 14 },
-      { header: 'Notes', key: 'notes', width: 8 }
+      { header: 'Notes', key: 'notes', width: 8 },
+      { header: 'Remarques', key: 'remarques', width: 24 }
     ]
 
     // Row 1: merged title
@@ -1242,7 +1245,7 @@ const exportXLSX = async () => {
 
     // Row 2: headers
     const hdrRow = wsPFP.getRow(2)
-    hdrRow.values = ['Institution', 'Critères', 'Domaine d\'expertise', 'Nom étudiant·es', 'Prénom étudiant·es', 'PF', 'Formateur·trice HES', 'CPT', 'Évaluation', 'Particularités', 'Absences en jours', 'Notes']
+    hdrRow.values = ['Institution', 'Critères', 'Domaine d\'expertise', 'Nom étudiant·es', 'Prénom étudiant·es', 'PF', 'Formateur·trice HES', 'CPT', 'Évaluation', 'Particularités', 'Absences en jours', 'Notes', 'Remarques']
     styleHeaderRow(wsPFP, 2, pfpSheetColCount)
 
     // Sort assignments by institution then student name
@@ -1295,7 +1298,8 @@ const exportXLSX = async () => {
         evalStatus: cptLabel(evalVal) + (evalCom ? ' (' + evalCom + ')' : ''),
         particularites,
         absences,
-        notes: hasGrade(note) ? note : ''
+        notes: hasGrade(note) ? note : '',
+        remarques: a.notes || ''
       })
       row.eachCell({ includeEmpty: true }, (cell) => styleDataCell(cell, idx % 2 === 0))
 

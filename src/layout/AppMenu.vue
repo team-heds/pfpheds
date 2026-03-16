@@ -69,14 +69,12 @@ const model = ref([
                   label: 'Validation Places',
                   icon: 'pi pi-fw pi-check-circle',
                   to: '/validation-places'
-                }
-                ,
+                },
                 {
                   label: 'Result Votation Preview',
                   icon: 'pi pi-cog',
                   to: '/result_preview_votation'
                 }
-
                 ]
             },
             {
