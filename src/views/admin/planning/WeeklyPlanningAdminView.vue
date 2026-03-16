@@ -475,7 +475,19 @@
             <small class="text-500">Ce texte apparaîtra dans la colonne principale du planning</small>
           </div>
           
-          <div class="col-12">
+          <div class="col-6">
+            <label class="block mb-2 font-bold">Type d'activité :</label>
+            <Dropdown 
+              v-model="slotForm.activityType"
+              :options="activityTypeOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Sélectionner le type"
+              class="w-full"
+            />
+            <small class="text-500">Utilisé pour le calcul de la feuille de charges (coefficient)</small>
+          </div>
+          <div class="col-6">
             <label class="block mb-2 font-bold">Détails / Activité complémentaire :</label>
             <Textarea 
               v-model="slotForm.activity"
@@ -590,6 +602,7 @@ import Tag from 'primevue/tag'
 import Badge from 'primevue/badge'
 import Chip from 'primevue/chip'
 import AutoComplete from 'primevue/autocomplete'
+import Dropdown from 'primevue/dropdown'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import PageHeader from '@/components/admin/common/PageHeader.vue'
 import planningService from '@/service/planningService'
@@ -640,6 +653,14 @@ const yearOptions = ref([])
 const academicStartYear = ref(null) // Ex: 2025 pour l'année académique 2025-2026
 const showSlotDialog = ref(false)
 const editingSlot = ref(null)
+const activityTypeOptions = [
+  { label: 'Cours', value: 'Cours' },
+  { label: 'Atelier / Pratique', value: 'Atelier' },
+  { label: 'Examen', value: 'Examen' },
+  { label: 'Cours Asynchrone', value: 'Cours Asynchrone' },
+  { label: 'Autre', value: 'Autre' }
+]
+
 const slotForm = ref({
   day: '',
   date: '',
@@ -649,6 +670,7 @@ const slotForm = ref({
   moduleNumber: '',
   moduleTitle: '',
   courseTitle: '',
+  activityType: 'Cours',
   activity: '',
   teachers: [],
   room: '',
@@ -851,6 +873,7 @@ const loadWeekPlanning = async () => {
         moduleNumber: mod?.module_number || '',
         moduleTitle: mod?.label || '',
         courseTitle: slot.course_title,
+        activityType: slot.activity_type || 'Cours',
         activity: slot.activity,
         teachers: slot.teachers || [],
         room: slot.room,
@@ -995,6 +1018,7 @@ const loadSemesterPlanning = async (semester) => {
         moduleNumber: mod?.module_number || '',
         moduleTitle: mod?.label || '',
         courseTitle: slot.course_title,
+        activityType: slot.activity_type || 'Cours',
         activity: slot.activity,
         teachers: slot.teachers || [],
         room: slot.room,
@@ -1203,6 +1227,7 @@ const openSlotDialog = async (slot = null, placeholderData = null) => {
       moduleNumber: prefill.moduleNumber || '',
       moduleTitle: prefill.moduleTitle || '',
       courseTitle: '',
+      activityType: 'Cours',
       activity: '',
       teachers: [],
       room: '',
@@ -1237,7 +1262,8 @@ const saveSlot = async () => {
       endTime: slotForm.value.endTime,
       moduleCode: slotForm.value.moduleCode,
       courseTitle: slotForm.value.courseTitle,
-      activity: slotForm.value.activity,
+      activity: slotForm.value.activityType + (slotForm.value.activity ? ' — ' + slotForm.value.activity : ''),
+      activityType: slotForm.value.activityType,
       teachers: normalizedTeachers,
       room: slotForm.value.room,
       notes: slotForm.value.notes

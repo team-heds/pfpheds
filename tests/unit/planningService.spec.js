@@ -119,28 +119,40 @@ describe('PlanningService – getDateForWeekAndDay', () => {
     expect(date).toMatch(/^\d{2}\.\d{2}\.\d{4}$/)
   })
 
-  it('retourne le lundi pour dayIndex=0', () => {
-    // Semaine 1 de 2025 : lundi = 30.12.2024
-    const date = planningService.getDateForWeekAndDay(1, 0)
+  it('retourne le lundi pour dayIndex=0 (année 2024-2025)', () => {
+    // Semaine 1 de 2025 (autumnYear=2024) : lundi = 30.12.2024
+    const date = planningService.getDateForWeekAndDay(1, 0, 2024)
     expect(date).toBe('30.12.2024')
   })
 
-  it('retourne le vendredi pour dayIndex=4', () => {
-    // Semaine 1 de 2025 : vendredi = 03.01.2025
-    const date = planningService.getDateForWeekAndDay(1, 4)
+  it('retourne le vendredi pour dayIndex=4 (année 2024-2025)', () => {
+    // Semaine 1 de 2025 (autumnYear=2024) : vendredi = 03.01.2025
+    const date = planningService.getDateForWeekAndDay(1, 4, 2024)
     expect(date).toBe('03.01.2025')
   })
 
   it('gère les semaines d\'automne (>= 38) en 2024', () => {
-    // Semaine 38 de 2024 : lundi = 16.09.2024
-    const date = planningService.getDateForWeekAndDay(38, 0)
+    // Semaine 38 de 2024 (autumnYear=2024) : lundi = 16.09.2024
+    const date = planningService.getDateForWeekAndDay(38, 0, 2024)
     expect(date).toBe('16.09.2024')
   })
 
   it('gère les semaines de printemps (8-37) en 2025', () => {
-    // Semaine 10 de 2025 : lundi = 03.03.2025
-    const date = planningService.getDateForWeekAndDay(10, 0)
+    // Semaine 10 de 2025 (autumnYear=2024) : lundi = 03.03.2025
+    const date = planningService.getDateForWeekAndDay(10, 0, 2024)
     expect(date).toBe('03.03.2025')
+  })
+
+  it('gère l\'année 2025-2026 (autumnYear=2025)', () => {
+    // Semaine 38 de 2025 : lundi = 15.09.2025
+    const date = planningService.getDateForWeekAndDay(38, 0, 2025)
+    expect(date).toBe('15.09.2025')
+  })
+
+  it('gère l\'année 2026 avec 53 semaines ISO', () => {
+    // Semaine 53 de 2026 (autumnYear=2026) : lundi = 28.12.2026
+    const date = planningService.getDateForWeekAndDay(53, 0, 2026)
+    expect(date).toBe('28.12.2026')
   })
 
   it('les jours consécutifs sont bien ordonnés', () => {

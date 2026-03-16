@@ -6,11 +6,13 @@ import WeeklyPlanningAdminView from '@/views/admin/planning/WeeklyPlanningAdminV
 const planningServiceMock = vi.hoisted(() => ({
   getAllCourseModules: vi.fn(),
   getWeekTimeSlots: vi.fn(),
+  getWeekPlanningCells: vi.fn(),
   getSemesterTimeSlots: vi.fn(),
   saveTimeSlot: vi.fn(),
   deleteTimeSlot: vi.fn(),
   duplicateWeek: vi.fn(),
-  getDateForWeekAndDay: vi.fn()
+  getDateForWeekAndDay: vi.fn(),
+  getDayIndex: vi.fn()
 }))
 
 const academicYearServiceMock = vi.hoisted(() => ({
@@ -135,7 +137,9 @@ describe('WeeklyPlanningAdminView', () => {
     planningServiceMock.saveTimeSlot.mockResolvedValue(undefined)
     planningServiceMock.deleteTimeSlot.mockResolvedValue(undefined)
     planningServiceMock.duplicateWeek.mockResolvedValue(undefined)
+    planningServiceMock.getWeekPlanningCells.mockResolvedValue([])
     planningServiceMock.getDateForWeekAndDay.mockReturnValue('2025-01-11')
+    planningServiceMock.getDayIndex.mockReturnValue(0)
 
     academicYearServiceMock.getActiveAcademicYear.mockResolvedValue({ id: 'year-1', name: '2024-2025' })
     academicYearServiceMock.getClassesByAcademicYear.mockResolvedValue([
@@ -201,7 +205,7 @@ describe('WeeklyPlanningAdminView', () => {
     expect(toastAddMock).toHaveBeenCalled()
   })
 
-  it('saveSlot sets default times for distance day', async () => {
+  it('saveSlot allows null times for distance day and calculates date', async () => {
     const wrapper = mount(WeeklyPlanningAdminView)
     await flushPromises()
 
@@ -226,8 +230,10 @@ describe('WeeklyPlanningAdminView', () => {
 
     expect(planningServiceMock.saveTimeSlot).toHaveBeenCalled()
     const payload = planningServiceMock.saveTimeSlot.mock.calls[0][0]
-    expect(payload.startTime).toBe('08:00')
-    expect(payload.endTime).toBe('17:00')
+    // Distance days have optional (null) times for async courses
+    expect(payload.startTime).toBeNull()
+    expect(payload.endTime).toBeNull()
+    // Date is calculated via getDateForWeekAndDay (mocked to '2025-01-11')
     expect(payload.date).toBe('2025-01-11')
   })
 

@@ -13,234 +13,233 @@ describe('PfpAlertsService', () => {
   describe('analyzeOffers', () => {
     const year = '2026'
 
-    it('détecte un déficit de propositions (< -5)', () => {
+    it('détecte aucune offre pour un PFP (totalOffres === 0)', () => {
       const places = [
-        { PFP1A: { '2026': '10' }, pfp1a_proposition: { '2026': '2' } }
-      ]
-      const alerts = service.analyzeOffers(places, year)
-      const deficit = alerts.find(a => a.type === 'offer_deficit')
-      expect(deficit).toBeDefined()
-      expect(deficit.pfpType).toBe('PFP1A')
-      expect(deficit.data.diff).toBe(-8)
-    })
-
-    it('severity error pour un gros déficit (> 15)', () => {
-      const places = [
-        { PFP2: { '2026': '20' }, pfp2_proposition: { '2026': '2' } }
-      ]
-      const alerts = service.analyzeOffers(places, year)
-      const deficit = alerts.find(a => a.type === 'offer_deficit' && a.pfpType === 'PFP2')
-      expect(deficit.severity).toBe('error')
-    })
-
-    it('severity warn pour un petit déficit (5-15)', () => {
-      const places = [
-        { PFP3: { '2026': '12' }, pfp3_proposition: { '2026': '4' } }
-      ]
-      const alerts = service.analyzeOffers(places, year)
-      const deficit = alerts.find(a => a.type === 'offer_deficit' && a.pfpType === 'PFP3')
-      expect(deficit.severity).toBe('warn')
-    })
-
-    it('détecte un surplus de propositions (> 10)', () => {
-      const places = [
-        { PFP1B: { '2026': '5' }, pfp1b_proposition: { '2026': '20' } }
-      ]
-      const alerts = service.analyzeOffers(places, year)
-      const surplus = alerts.find(a => a.type === 'offer_surplus')
-      expect(surplus).toBeDefined()
-      expect(surplus.severity).toBe('info')
-    })
-
-    it('détecte aucune offre pour un PFP', () => {
-      const places = [
-        { PFP4: { '2026': '0' }, pfp4_proposition: { '2026': '3' } }
+        { PFP4: { '2026': '0' } }
       ]
       const alerts = service.analyzeOffers(places, year)
       const noOffer = alerts.find(a => a.type === 'no_offers' && a.pfpType === 'PFP4')
       expect(noOffer).toBeDefined()
+      expect(noOffer.severity).toBe('warn')
+      expect(noOffer.category).toBe('offres')
     })
 
-    it('pas d\'alerte si offres et propositions sont équilibrées', () => {
+    it('pas d\'alerte no_offers si PFP a des offres > 0', () => {
       const places = [
-        { PFP1A: { '2026': '10' }, pfp1a_proposition: { '2026': '10' } }
+        { PFP1A: { '2026': '10' } }
       ]
       const alerts = service.analyzeOffers(places, year)
       const pfp1aAlerts = alerts.filter(a => a.pfpType === 'PFP1A')
       expect(pfp1aAlerts).toHaveLength(0)
     })
 
-    it('gère les places sans données', () => {
+    it('gère les places sans données — génère no_offers pour chaque PFP', () => {
       const places = [{ NomPlace: 'Test' }]
       const alerts = service.analyzeOffers(places, year)
-      // Devrait générer des alertes "no_offers" pour chaque PFP
       const noOffers = alerts.filter(a => a.type === 'no_offers')
-      expect(noOffers).toHaveLength(5)
+      expect(noOffers).toHaveLength(5) // PFP1A, PFP1B, PFP2, PFP3, PFP4
     })
 
     it('agrège plusieurs places', () => {
       const places = [
-        { PFP1A: { '2026': '5' }, pfp1a_proposition: { '2026': '1' } },
-        { PFP1A: { '2026': '8' }, pfp1a_proposition: { '2026': '1' } }
+        { PFP1A: { '2026': '5' } },
+        { PFP1A: { '2026': '8' } }
       ]
       const alerts = service.analyzeOffers(places, year)
-      const deficit = alerts.find(a => a.type === 'offer_deficit' && a.pfpType === 'PFP1A')
-      expect(deficit).toBeDefined()
-      expect(deficit.data.offres).toBe(13)
-      expect(deficit.data.propositions).toBe(2)
+      // 5+8 = 13 > 0, donc pas de no_offers pour PFP1A
+      const pfp1aAlerts = alerts.filter(a => a.pfpType === 'PFP1A')
+      expect(pfp1aAlerts).toHaveLength(0)
+    })
+
+    it('retourne un tableau vide si places est vide', () => {
+      const alerts = service.analyzeOffers([], year)
+      // Aucune place → totalOffres = 0 pour tous les PFP
+      const noOffers = alerts.filter(a => a.type === 'no_offers')
+      expect(noOffers).toHaveLength(5)
     })
   })
 
-  // ── analyzeStudentCriteria ─────────────────────────────────
+  // ── analyzeNotes ───────────────────────────────────────────
 
-  describe('analyzeStudentCriteria', () => {
-    it('détecte les étudiants sans aucun critère', () => {
-      const students = [
-        { scores: { MSQ: 0, SYSINT: 0, NEUROGER: 0, AIGU: 0, REHAB: 0, AMBU: 0, FR: 0, DE: 0 } },
-        { scores: { MSQ: 1, SYSINT: 0, NEUROGER: 0, AIGU: 0, REHAB: 0, AMBU: 0, FR: 0, DE: 0 } }
+  describe('analyzeNotes', () => {
+    it('détecte les échecs sans retake (note F)', () => {
+      const notes = [
+        { user_id: 'u1', pfp1a: 'F', pfp1a_retake: '', pfp2: 'P' }
       ]
-      const alerts = service.analyzeStudentCriteria(students)
-      const noCrit = alerts.find(a => a.type === 'no_criteria')
-      expect(noCrit).toBeDefined()
-      expect(noCrit.data.count).toBe(1)
-      expect(noCrit.data.percent).toBe(50)
+      const alerts = service.analyzeNotes(notes)
+      const echec = alerts.find(a => a.type === 'echec_sans_retake')
+      expect(echec).toBeDefined()
+      expect(echec.data.count).toBe(1)
     })
 
-    it('severity error si > 30% sans critère', () => {
-      const students = Array(10).fill(null).map(() => ({
-        scores: { MSQ: 0, SYSINT: 0, NEUROGER: 0, AIGU: 0, REHAB: 0, AMBU: 0, FR: 0, DE: 0 }
+    it('pas d\'alerte si F avec retake renseigné', () => {
+      const notes = [
+        { user_id: 'u1', pfp1a: 'F', pfp1a_retake: 'P' }
+      ]
+      const alerts = service.analyzeNotes(notes)
+      const echec = alerts.find(a => a.type === 'echec_sans_retake')
+      expect(echec).toBeUndefined()
+    })
+
+    it('détecte les échecs au rattrapage (retake = F)', () => {
+      const notes = [
+        { user_id: 'u1', pfp2_retake: 'F' }
+      ]
+      const alerts = service.analyzeNotes(notes)
+      const echecRetake = alerts.find(a => a.type === 'echec_retake')
+      expect(echecRetake).toBeDefined()
+      expect(echecRetake.severity).toBe('error')
+    })
+
+    it('détecte les absences élevées (> 2 jours)', () => {
+      const notes = [
+        { user_id: 'u1', pfp1a_absences: 5 }
+      ]
+      const alerts = service.analyzeNotes(notes)
+      const abs = alerts.find(a => a.type === 'high_absences')
+      expect(abs).toBeDefined()
+      expect(abs.data.count).toBe(1)
+    })
+
+    it('détecte les étudiants sans aucune note', () => {
+      const notes = [
+        { user_id: 'u1' }, // pas de note
+        { user_id: 'u2', pfp1a: 'P' } // avec note
+      ]
+      const alerts = service.analyzeNotes(notes)
+      const noNotes = alerts.find(a => a.type === 'no_notes')
+      expect(noNotes).toBeDefined()
+      expect(noNotes.data.count).toBe(1)
+    })
+
+    it('severity error si > 5 échecs sans retake', () => {
+      const notes = Array(8).fill(null).map((_, i) => ({
+        user_id: `u${i}`, pfp1a: 'F', pfp1a_retake: ''
       }))
-      // Ajouter 5 avec critères
-      for (let i = 0; i < 5; i++) {
-        students.push({ scores: { MSQ: 1, SYSINT: 1, NEUROGER: 1, AIGU: 1, REHAB: 1, AMBU: 1, FR: 1, DE: 1 } })
-      }
-      const alerts = service.analyzeStudentCriteria(students)
-      const noCrit = alerts.find(a => a.type === 'no_criteria')
-      expect(noCrit.severity).toBe('error')
+      const alerts = service.analyzeNotes(notes)
+      const echec = alerts.find(a => a.type === 'echec_sans_retake')
+      expect(echec.severity).toBe('error')
     })
 
-    it('détecte les critères faiblement validés (< 30%)', () => {
-      const students = Array(10).fill(null).map(() => ({
-        scores: { MSQ: 0, SYSINT: 1, NEUROGER: 1, AIGU: 1, REHAB: 1, AMBU: 1, FR: 1, DE: 1 }
-      }))
-      // 2 étudiants avec MSQ validé
-      students[0].scores.MSQ = 1
-      students[1].scores.MSQ = 1
-
-      const alerts = service.analyzeStudentCriteria(students)
-      const lowMSQ = alerts.find(a => a.type === 'low_criteria' && a.criteria === 'MSQ')
-      expect(lowMSQ).toBeDefined()
-      expect(lowMSQ.data.percent).toBe(20)
-    })
-
-    it('pas d\'alerte si tous les critères sont bien validés', () => {
-      const students = Array(10).fill(null).map(() => ({
-        scores: { MSQ: 2, SYSINT: 1, NEUROGER: 1, AIGU: 1, REHAB: 1, AMBU: 1, FR: 1, DE: 1 }
-      }))
-      const alerts = service.analyzeStudentCriteria(students)
-      expect(alerts).toHaveLength(0)
-    })
-
-    it('retourne vide si pas d\'étudiants', () => {
-      expect(service.analyzeStudentCriteria([])).toHaveLength(0)
+    it('retourne vide si pas de notes', () => {
+      expect(service.analyzeNotes([])).toHaveLength(0)
+      expect(service.analyzeNotes(null)).toHaveLength(0)
     })
   })
 
-  // ── analyzeCptEvaluations ──────────────────────────────────
+  // ── analyzeAssignments ─────────────────────────────────────
 
-  describe('analyzeCptEvaluations', () => {
-    it('détecte les CPT incomplets (null)', () => {
-      const evals = [
-        { pfp1_cpt: true, pfp2_cpt: null, pfp3_cpt: true, pfp4_cpt: true, pfp1_eval: true, pfp2_eval: true, pfp3_eval: true, pfp4_eval: true },
-        { pfp1_cpt: true, pfp2_cpt: true, pfp3_cpt: true, pfp4_cpt: true, pfp1_eval: true, pfp2_eval: true, pfp3_eval: true, pfp4_eval: true }
+  describe('analyzeAssignments', () => {
+    it('détecte les échecs PFP', () => {
+      const assignments = [
+        { user_id: 'u1', pfp_echec: true },
+        { user_id: 'u2', pfp_echec: false }
       ]
-      const alerts = service.analyzeCptEvaluations(evals)
-      const incomplete = alerts.find(a => a.type === 'incomplete_cpt')
-      expect(incomplete).toBeDefined()
-      expect(incomplete.data.count).toBe(1)
+      const alerts = service.analyzeAssignments(assignments)
+      const echecs = alerts.find(a => a.type === 'pfp_echecs')
+      expect(echecs).toBeDefined()
+      expect(echecs.data.count).toBe(1)
     })
 
-    it('détecte les évaluations incomplètes', () => {
-      const evals = [
-        { pfp1_cpt: true, pfp2_cpt: true, pfp3_cpt: true, pfp4_cpt: true, pfp1_eval: null, pfp2_eval: null, pfp3_eval: true, pfp4_eval: true }
+    it('détecte les arrêts PFP', () => {
+      const assignments = [
+        { user_id: 'u1', pfp_arret: true }
       ]
-      const alerts = service.analyzeCptEvaluations(evals)
-      const incomplete = alerts.find(a => a.type === 'incomplete_eval')
-      expect(incomplete).toBeDefined()
+      const alerts = service.analyzeAssignments(assignments)
+      const arrets = alerts.find(a => a.type === 'pfp_arrets')
+      expect(arrets).toBeDefined()
     })
 
-    it('détecte les CPT non conformes (false)', () => {
-      const evals = [
-        { pfp1_cpt: false, pfp2_cpt: true, pfp3_cpt: true, pfp4_cpt: true, pfp1_eval: true, pfp2_eval: true, pfp3_eval: true, pfp4_eval: true }
+    it('détecte les attributions sans place assignée', () => {
+      const assignments = [
+        { user_id: 'u1', assigned_place_id: null, assigned_place_name: null },
+        { user_id: 'u2', assigned_place_id: 'p1', assigned_place_name: 'Place 1' }
       ]
-      const alerts = service.analyzeCptEvaluations(evals)
-      const failed = alerts.find(a => a.type === 'failed_cpt')
-      expect(failed).toBeDefined()
-      expect(failed.data.count).toBe(1)
+      const alerts = service.analyzeAssignments(assignments)
+      const noPlace = alerts.find(a => a.type === 'no_place_assigned')
+      expect(noPlace).toBeDefined()
+      expect(noPlace.data.count).toBe(1)
     })
 
-    it('severity error si > 50% incomplets', () => {
-      const evals = Array(10).fill(null).map(() => ({
-        pfp1_cpt: null, pfp2_cpt: null, pfp3_cpt: null, pfp4_cpt: null,
-        pfp1_eval: null, pfp2_eval: null, pfp3_eval: null, pfp4_eval: null
+    it('severity error si > 5 échecs', () => {
+      const assignments = Array(8).fill(null).map((_, i) => ({
+        user_id: `u${i}`, pfp_echec: true
       }))
-      const alerts = service.analyzeCptEvaluations(evals)
-      const incomplete = alerts.find(a => a.type === 'incomplete_cpt')
-      expect(incomplete.severity).toBe('error')
+      const alerts = service.analyzeAssignments(assignments)
+      const echecs = alerts.find(a => a.type === 'pfp_echecs')
+      expect(echecs.severity).toBe('error')
     })
 
-    it('retourne vide si pas d\'évaluations', () => {
-      expect(service.analyzeCptEvaluations([])).toHaveLength(0)
-    })
-
-    it('pas d\'alerte si tout est complet et conforme', () => {
-      const evals = [
-        { pfp1_cpt: true, pfp2_cpt: true, pfp3_cpt: true, pfp4_cpt: true, pfp1_eval: true, pfp2_eval: true, pfp3_eval: true, pfp4_eval: true }
-      ]
-      const alerts = service.analyzeCptEvaluations(evals)
-      expect(alerts).toHaveLength(0)
+    it('retourne vide si pas d\'attributions', () => {
+      expect(service.analyzeAssignments([])).toHaveLength(0)
+      expect(service.analyzeAssignments(null)).toHaveLength(0)
     })
   })
 
   // ── analyzeCasParticuliers ─────────────────────────────────
 
   describe('analyzeCasParticuliers', () => {
-    it('détecte les cas rouges', () => {
-      const cases = [
-        { etudiant: 'DUPONT Jean', pfp1: { couleur: 'rouge', commentaire: 'Problème' }, pfp2: { couleur: 'blanc', commentaire: '' } }
+    it('détecte les cas rouges (structure plate)', () => {
+      const suivis = [
+        { user_id: 'u1', couleur: 'rouge', commentaire: 'Problème' }
       ]
-      const alerts = service.analyzeCasParticuliers(cases)
+      const alerts = service.analyzeCasParticuliers(suivis)
       const red = alerts.find(a => a.type === 'red_cases')
       expect(red).toBeDefined()
       expect(red.data.count).toBe(1)
     })
 
     it('détecte les cas noirs', () => {
-      const cases = [
-        { etudiant: 'MARTIN Paul', pfp3: { couleur: 'noir', commentaire: 'Critique' } }
+      const suivis = [
+        { user_id: 'u1', couleur: 'noir', commentaire: 'Critique' }
       ]
-      const alerts = service.analyzeCasParticuliers(cases)
+      const alerts = service.analyzeCasParticuliers(suivis)
       const black = alerts.find(a => a.type === 'black_cases')
       expect(black).toBeDefined()
       expect(black.severity).toBe('error')
     })
 
-    it('severity error si > 5 cas rouges', () => {
-      const cases = Array(8).fill(null).map((_, i) => ({
-        etudiant: `Étudiant ${i}`,
-        pfp1: { couleur: 'rouge', commentaire: 'test' }
+    it('détecte les cas orange', () => {
+      const suivis = [
+        { user_id: 'u1', couleur: 'orange', commentaire: 'Attention' }
+      ]
+      const alerts = service.analyzeCasParticuliers(suivis)
+      const orange = alerts.find(a => a.type === 'orange_cases')
+      expect(orange).toBeDefined()
+      expect(orange.severity).toBe('info')
+    })
+
+    it('severity error si > 5 cas rouges (étudiants uniques)', () => {
+      const suivis = Array(8).fill(null).map((_, i) => ({
+        user_id: `u${i}`, couleur: 'rouge', commentaire: 'test'
       }))
-      const alerts = service.analyzeCasParticuliers(cases)
+      const alerts = service.analyzeCasParticuliers(suivis)
       const red = alerts.find(a => a.type === 'red_cases')
       expect(red.severity).toBe('error')
     })
 
-    it('pas d\'alerte si aucun cas rouge/noir', () => {
-      const cases = [
-        { etudiant: 'OK', pfp1: { couleur: 'vert', commentaire: 'Bien' } }
+    it('compte les étudiants uniques, pas les entrées', () => {
+      const suivis = [
+        { user_id: 'u1', couleur: 'rouge', commentaire: 'PFP1' },
+        { user_id: 'u1', couleur: 'rouge', commentaire: 'PFP2' }, // même étudiant
+        { user_id: 'u2', couleur: 'rouge', commentaire: 'PFP3' }
       ]
-      const alerts = service.analyzeCasParticuliers(cases)
+      const alerts = service.analyzeCasParticuliers(suivis)
+      const red = alerts.find(a => a.type === 'red_cases')
+      expect(red.data.count).toBe(2) // 2 étudiants uniques
+    })
+
+    it('pas d\'alerte si aucun cas rouge/noir/orange', () => {
+      const suivis = [
+        { user_id: 'u1', couleur: 'vert', commentaire: 'Bien' }
+      ]
+      const alerts = service.analyzeCasParticuliers(suivis)
       expect(alerts).toHaveLength(0)
+    })
+
+    it('retourne vide si pas de suivis', () => {
+      expect(service.analyzeCasParticuliers([])).toHaveLength(0)
+      expect(service.analyzeCasParticuliers(null)).toHaveLength(0)
     })
   })
 
@@ -283,6 +282,11 @@ describe('PfpAlertsService', () => {
       const alerts = service.analyzeInstitutions(institutions)
       expect(alerts).toHaveLength(0)
     })
+
+    it('retourne vide si pas d\'institutions', () => {
+      expect(service.analyzeInstitutions([])).toHaveLength(0)
+      expect(service.analyzeInstitutions(null)).toHaveLength(0)
+    })
   })
 
   // ── runFullAnalysis ────────────────────────────────────────
@@ -290,11 +294,11 @@ describe('PfpAlertsService', () => {
   describe('runFullAnalysis', () => {
     it('agrège les alertes de toutes les sources', () => {
       const data = {
-        places: [{ PFP1A: { '2026': '20' }, pfp1a_proposition: { '2026': '2' } }],
+        places: [{ NomPlace: 'Test' }], // pas de PFP → 5 no_offers
         year: '2026',
-        students: [{ scores: { MSQ: 0, SYSINT: 0, NEUROGER: 0, AIGU: 0, REHAB: 0, AMBU: 0, FR: 0, DE: 0 } }],
-        evaluations: [{ pfp1_cpt: null, pfp2_cpt: null, pfp3_cpt: null, pfp4_cpt: null, pfp1_eval: null, pfp2_eval: null, pfp3_eval: null, pfp4_eval: null }],
-        cases: [{ etudiant: 'Test', pfp1: { couleur: 'rouge', commentaire: 'x' } }],
+        notes: [{ user_id: 'u1', pfp1a: 'F', pfp1a_retake: '' }],
+        assignments: [{ user_id: 'u1', pfp_echec: true }],
+        suivis: [{ user_id: 'u1', couleur: 'rouge', commentaire: 'x' }],
         institutions: [{ Name: 'X', ConventionDate: null, AccordCadreDate: null }]
       }
 
@@ -311,8 +315,8 @@ describe('PfpAlertsService', () => {
       if (lastWarnIdx >= 0 && firstInfoIdx >= 0) expect(lastWarnIdx).toBeLessThan(firstInfoIdx)
     })
 
-    it('fonctionne avec des données partielles', () => {
-      const alerts = service.runFullAnalysis({ students: [] })
+    it('fonctionne avec des données vides', () => {
+      const alerts = service.runFullAnalysis({})
       expect(alerts).toEqual([])
     })
 
@@ -329,11 +333,11 @@ describe('PfpAlertsService', () => {
     it('filtre par catégorie', () => {
       service.alerts = [
         { category: 'offres', type: 'a' },
-        { category: 'criteres', type: 'b' },
+        { category: 'cas_particuliers', type: 'b' },
         { category: 'offres', type: 'c' }
       ]
       expect(service.getAlertsByCategory('offres')).toHaveLength(2)
-      expect(service.getAlertsByCategory('criteres')).toHaveLength(1)
+      expect(service.getAlertsByCategory('cas_particuliers')).toHaveLength(1)
       expect(service.getAlertsByCategory('unknown')).toHaveLength(0)
     })
   })
@@ -345,7 +349,7 @@ describe('PfpAlertsService', () => {
       service.alerts = [
         { severity: 'error', category: 'offres' },
         { severity: 'warn', category: 'offres' },
-        { severity: 'warn', category: 'criteres' },
+        { severity: 'warn', category: 'cas_particuliers' },
         { severity: 'info', category: 'institutions' }
       ]
 
@@ -355,9 +359,9 @@ describe('PfpAlertsService', () => {
       expect(stats.warning).toBe(2)
       expect(stats.info).toBe(1)
       expect(stats.byCategory.offres).toBe(2)
-      expect(stats.byCategory.criteres).toBe(1)
+      expect(stats.byCategory.cas_particuliers).toBe(1)
       expect(stats.byCategory.institutions).toBe(1)
-      expect(stats.byCategory.evaluations).toBe(0)
+      expect(stats.byCategory.notes).toBe(0)
     })
 
     it('retourne des zéros si aucune alerte', () => {

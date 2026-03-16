@@ -494,6 +494,7 @@ const routes = [
   { path: '/admin/planning/semester', component: () => import('@/views/admin/planning/SemesterPlanningAdminView.vue'), name: 'SemesterPlanningAdminView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
   { path: '/admin/planning/annual', component: () => import('@/views/admin/planning/AnnualPlanningView.vue'), name: 'AnnualPlanningView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
   { path: '/admin/soins-infirmiers/planning-journalier', component: () => import('@/views/admin/soins-infirmiers/DailyPlanningView.vue'), name: 'DailyPlanningView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
+  { path: '/admin/soins-infirmiers/feuille-de-charges', component: () => import('@/views/admin/soins-infirmiers/WorkloadView.vue'), name: 'WorkloadView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
   // Gestion académique (Kanban & Contenu)
   { path: '/admin/academic/tickets', component: () => import('@/views/admin/academic/TicketListView.vue'), name: 'TicketListView' },
   { path: '/admin/academic/kanban', component: AcademicKanbanView, name: 'AcademicKanbanView' },

@@ -87,6 +87,7 @@ class PlanningService {
         module_code: slotData.moduleCode || slotData.module_code,
         course_title: slotData.courseTitle || slotData.course_title,
         activity: slotData.activity,
+        activity_type: slotData.activityType || slotData.activity_type || 'Cours',
         teachers: slotData.teachers || [],
         room: slotData.room,
         notes: slotData.notes,

@@ -132,3 +132,6 @@ build/*.tar.gz
 
 # Legacy algo scripts and data exports
 algo/
+
+# Excel test/export files
+*.xlsx

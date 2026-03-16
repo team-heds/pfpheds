@@ -1,23 +1,35 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 
-// Mock Firebase
-const { mockDbRef, mockOnValue, mockSet, mockOff } = vi.hoisted(() => ({
-  mockDbRef: vi.fn(),
-  mockOnValue: vi.fn(),
-  mockSet: vi.fn(),
-  mockOff: vi.fn(),
-}))
+// Mock Supabase
+const mockUpdate = vi.fn()
+const mockDelete = vi.fn()
+const mockInsert = vi.fn()
+const mockSelect = vi.fn()
 
-vi.mock('root/firebase.js', () => ({
-  db: {},
-}))
+const mockEq = vi.fn()
 
-vi.mock('firebase/database', () => ({
-  ref: (...args) => mockDbRef(...args),
-  onValue: (...args) => mockOnValue(...args),
-  set: (...args) => mockSet(...args),
-  off: (...args) => mockOff(...args),
+vi.mock('@/supabase', () => ({
+  supabase: {
+    from: vi.fn((table) => ({
+      select: (...args) => {
+        mockSelect(table, ...args)
+        return { data: [], error: null }
+      },
+      update: (data) => {
+        mockUpdate(table, data)
+        return { eq: (col, val) => { mockEq(col, val); return { error: null } } }
+      },
+      delete: () => {
+        mockDelete(table)
+        return { eq: (col, val) => { mockEq(col, val); return { error: null } } }
+      },
+      insert: (data) => {
+        mockInsert(table, data)
+        return { error: null }
+      }
+    }))
+  }
 }))
 
 import { useDocumentStore } from '@/stores/documentStore'
@@ -136,88 +148,92 @@ describe('documentStore', () => {
 
   // ==================== UPDATE FILE ====================
   describe('updateFile', () => {
-    beforeEach(() => {
-      store.folders = JSON.parse(JSON.stringify(sampleFolders))
-      store.topFolders = JSON.parse(JSON.stringify(sampleFolders))
-      mockSet.mockResolvedValue()
-    })
+    it('calls supabase update with correct params', async () => {
+      await store.updateFile('file1', { name: 'Anatomie_v2.pdf', url: 'http://new.url' })
 
-    it('updates a file in a root folder', async () => {
-      await store.updateFile('file1', { name: 'Anatomie_v2.pdf' })
-
-      expect(mockSet).toHaveBeenCalled()
-      expect(store.folders[0].files[0].name).toBe('Anatomie_v2.pdf')
+      expect(mockUpdate).toHaveBeenCalledWith('file_physio_files', { name: 'Anatomie_v2.pdf', url: 'http://new.url' })
+      expect(mockEq).toHaveBeenCalledWith('id', 'file1')
       expect(store.loading).toBe(false)
     })
 
-    it('updates a file in a sub-folder', async () => {
-      await store.updateFile('file3', { name: 'Examen2025.pdf' })
+    it('sets error on supabase failure', async () => {
+      const { supabase } = await import('@/supabase')
+      supabase.from.mockReturnValueOnce({
+        select: () => ({ data: [], error: null }),
+        update: () => ({
+          eq: () => ({ error: { message: 'Update failed' } })
+        })
+      })
 
-      expect(mockSet).toHaveBeenCalled()
-      expect(store.folders[0].subFolders[0].files[0].name).toBe('Examen2025.pdf')
-    })
-
-    it('throws when file not found', async () => {
-      await expect(store.updateFile('unknown', { name: 'test' })).rejects.toThrow('Fichier non trouvé')
-      expect(store.error).toBe('Fichier non trouvé')
+      await expect(store.updateFile('file1', { name: 'test' })).rejects.toThrow('Update failed')
+      expect(store.error).toBe('Update failed')
     })
   })
 
   // ==================== DELETE FILE ====================
   describe('deleteFile', () => {
-    beforeEach(() => {
-      store.folders = JSON.parse(JSON.stringify(sampleFolders))
-      store.topFolders = JSON.parse(JSON.stringify(sampleFolders))
-      mockSet.mockResolvedValue()
-    })
-
-    it('deletes a file from root folder', async () => {
+    it('calls supabase delete with correct id', async () => {
       await store.deleteFile('file1')
 
-      expect(mockSet).toHaveBeenCalled()
-      expect(store.folders[0].files).toHaveLength(1)
-      expect(store.folders[0].files[0].id).toBe('file2')
+      expect(mockDelete).toHaveBeenCalledWith('file_physio_files')
+      expect(mockEq).toHaveBeenCalledWith('id', 'file1')
+      expect(store.loading).toBe(false)
     })
 
-    it('deletes a file from sub-folder', async () => {
-      await store.deleteFile('file3')
+    it('sets error on supabase failure', async () => {
+      const { supabase } = await import('@/supabase')
+      supabase.from.mockReturnValueOnce({
+        select: () => ({ data: [], error: null }),
+        delete: () => ({
+          eq: () => ({ error: { message: 'Delete failed' } })
+        })
+      })
 
-      expect(store.folders[0].subFolders[0].files).toHaveLength(0)
-    })
-
-    it('throws when file not found', async () => {
-      await expect(store.deleteFile('unknown')).rejects.toThrow('Fichier non trouvé')
+      await expect(store.deleteFile('file1')).rejects.toThrow('Delete failed')
+      expect(store.error).toBe('Delete failed')
     })
   })
 
   // ==================== ADD FILE ====================
   describe('addFile', () => {
-    beforeEach(() => {
-      store.folders = JSON.parse(JSON.stringify(sampleFolders))
-      store.topFolders = JSON.parse(JSON.stringify(sampleFolders))
-      mockSet.mockResolvedValue()
-    })
-
-    it('adds a file to a root folder', async () => {
-      const newFile = { id: 'file5', name: 'NewFile.pdf' }
+    it('inserts a file to the correct folder', async () => {
+      const newFile = { id: 'file5', name: 'NewFile.pdf', url: 'http://example.com/new.pdf' }
       await store.addFile(newFile, 'f1')
 
-      expect(mockSet).toHaveBeenCalled()
-      expect(store.folders[0].files).toHaveLength(3)
-      expect(store.folders[0].files[2].id).toBe('file5')
+      expect(mockInsert).toHaveBeenCalled()
+      const [table, data] = mockInsert.mock.calls[0]
+      expect(table).toBe('file_physio_files')
+      expect(data).toEqual({
+        id: 'file5',
+        name: 'NewFile.pdf',
+        url: 'http://example.com/new.pdf',
+        folder_id: 'f1'
+      })
     })
 
-    it('adds a file to a sub-folder', async () => {
-      const newFile = { id: 'file6', name: 'SubFile.pdf' }
+    it('inserts a file to a sub-folder when specified', async () => {
+      const newFile = { id: 'file6', name: 'SubFile.pdf', url: 'http://example.com/sub.pdf' }
       await store.addFile(newFile, 'f1', 'sf1')
 
-      expect(store.folders[0].subFolders[0].files).toHaveLength(2)
+      expect(mockInsert).toHaveBeenCalled()
+      const [table, data] = mockInsert.mock.calls[0]
+      expect(table).toBe('file_physio_files')
+      expect(data).toEqual({
+        id: 'file6',
+        name: 'SubFile.pdf',
+        url: 'http://example.com/sub.pdf',
+        folder_id: 'sf1'
+      })
     })
 
-    it('handles Firebase error', async () => {
-      mockSet.mockRejectedValue(new Error('Permission denied'))
+    it('handles Supabase error', async () => {
+      const { supabase } = await import('@/supabase')
+      supabase.from.mockReturnValueOnce({
+        select: () => ({ data: [], error: null }),
+        insert: () => ({ error: { message: 'Permission denied' } })
+      })
 
-      await expect(store.addFile({ id: 'x' }, 'f1')).rejects.toThrow('Permission denied')
+      await expect(store.addFile({ id: 'x', name: 'test' }, 'f1')).rejects.toThrow('Permission denied')
       expect(store.error).toBe('Permission denied')
     })
   })
@@ -256,14 +272,9 @@ describe('documentStore', () => {
     })
   })
 
-  // ==================== CLEANUP & RESET ====================
-  describe('cleanup and reset', () => {
-    it('cleanup calls Firebase off', () => {
-      store.cleanup()
-      expect(mockOff).toHaveBeenCalled()
-    })
-
-    it('reset clears all state and calls cleanup', () => {
+  // ==================== RESET ====================
+  describe('reset', () => {
+    it('reset clears all state', () => {
       store.folders = [{ id: 'f1' }]
       store.topFolders = [{ id: 'f1' }]
       store.currentFolder = { id: 'f1' }
@@ -277,7 +288,6 @@ describe('documentStore', () => {
       expect(store.currentFolder).toBeNull()
       expect(store.loading).toBe(false)
       expect(store.error).toBeNull()
-      expect(mockOff).toHaveBeenCalled()
     })
   })
 })

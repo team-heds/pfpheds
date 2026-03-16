@@ -517,12 +517,7 @@ const courseCodeForm = ref({
 // Options dynamiques basées sur les classes
 const yearOptions = computed(() => {
   if (!activeAcademicYear.value || sortedClasses.value.length === 0) {
-    // Fallback vers les valeurs statiques
-    return [
-      { label: '1ère année 2025-2026 / Bac 25', value: 'bac25' },
-      { label: '2ème année 2025-2026 / Bac 24', value: 'bac24' },
-      { label: '3ème année 2025-2026 / Bac 23', value: 'bac23' }
-    ]
+    return []
   }
   
   return sortedClasses.value.map(classItem => {
