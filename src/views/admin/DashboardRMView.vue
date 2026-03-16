@@ -571,6 +571,8 @@ const classColors = {
   'BAC25-EE': { bg: '#0891B2', text: '#fff' },
   'BAC24-EE': { bg: '#9333EA', text: '#fff' },
   'BAC23-EE': { bg: '#10B981', text: '#fff' },
+  'BAC25-PA': { bg: '#D97706', text: '#fff' },
+  'BAC24-PA': { bg: '#BE185D', text: '#fff' },
 }
 const defaultClassColors = ['#E67E22', '#E74C3C', '#1ABC9C', '#3498DB', '#9B59B6', '#F39C12', '#2ECC71']
 

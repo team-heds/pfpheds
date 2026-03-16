@@ -1101,6 +1101,7 @@ import ColorPicker from 'primevue/colorpicker'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import { supabase } from '@/supabase'
+import academicYearService from '@/service/academicYearService'
 
 const route = useRoute()
 const router = useRouter()
@@ -1176,8 +1177,16 @@ const normalizeClass = (code) => {
   return code.toUpperCase().trim()
 }
 
-// Toutes les classes possibles (toujours affichées pour permettre l'ajout de séances)
-const allClassOptions = ['BAC24', 'BAC24-TP', 'BAC25', 'BAC25-TP', 'BAC26', 'BAC26-TP']
+// Classes chargées dynamiquement depuis la DB
+const dbClassCodes = ref([])
+
+// Toutes les classes possibles (dynamiques depuis la DB + ce qui existe dans le planning)
+const allClassOptions = computed(() => {
+  const allCodes = new Set(dbClassCodes.value)
+  // Ajouter aussi les classes trouvées dans le planning actuel
+  availableClasses.value.forEach(c => allCodes.add(c))
+  return Array.from(allCodes).sort()
+})
 
 // Classes disponibles dans le planning (pour n'afficher que les boutons pertinents)
 const availableClasses = computed(() => {
@@ -1189,12 +1198,12 @@ const availableClasses = computed(() => {
       classesSet.add(normalized)
       
       // Si c'est un sous-groupe (ex: BA25-TP1), ajouter aussi la classe parent
-      const match = normalized.match(/^(BAC\d{2})(-TP)?/)
+      const match = normalized.match(/^(BAC\d{2})(-TP|-PA)?/)
       if (match) {
         const base = match[1] // BAC24, BAC25, BAC26
-        const tp = match[2] // -TP ou undefined
-        if (tp) {
-          classesSet.add(`${base}${tp}`) // Ajouter BAC25-TP si c'est BA25-TP1
+        const suffix = match[2] // -TP, -PA ou undefined
+        if (suffix) {
+          classesSet.add(`${base}${suffix}`) // Ajouter BAC25-TP ou BAC25-PA
         } else {
           classesSet.add(base) // Ajouter BAC25 si c'est BAC25
         }
@@ -1680,15 +1689,15 @@ const editingSession = ref(null)
 const teachers = ref([])
 const filteredTeachers = ref([])
 
-// Options pour les formulaires (même format que ModulePlanningView)
-const classOptions = ref([
-  { label: 'BAC24', value: 'BAC24' },
-  { label: 'BAC24-TP', value: 'BAC24-TP' },
-  { label: 'BAC25', value: 'BAC25' },
-  { label: 'BAC25-TP', value: 'BAC25-TP' },
-  { label: 'BAC26', value: 'BAC26' },
-  { label: 'BAC26-TP', value: 'BAC26-TP' }
-])
+// Options pour les formulaires (dynamiques depuis allClassOptions)
+const classOptions = computed(() => {
+  return allClassOptions.value.map(code => {
+    const suffix = code.endsWith('-PA') ? ' (Passerelle)' :
+                   code.endsWith('-TP') ? ' (Temps partiel)' :
+                   code.endsWith('-EE') ? ' (En emploi)' : ''
+    return { label: `${code}${suffix}`, value: code }
+  })
+})
 
 const dayOptions = [
   { label: 'Lundi', value: 'lundi' },
@@ -2225,13 +2234,14 @@ onMounted(async () => {
       coordinateur: module.value.coordinateur || ''
     }
     
-    // Charger les données du module
+    // Charger les données du module + les classes dynamiques
     await Promise.all([
       loadModuleTeachers(),
       loadModulePlanning(),
       loadHoursBudget(),
       loadCurrentValidation(),
-      loadPlanningHistory()
+      loadPlanningHistory(),
+      loadDbClassCodes()
     ])
     
     loading.value = false
@@ -2246,6 +2256,24 @@ onMounted(async () => {
     loading.value = false
   }
 })
+
+// Charger les codes de classes depuis l'année académique active
+const loadDbClassCodes = async () => {
+  try {
+    const activeYear = await academicYearService.getActiveAcademicYear()
+    if (!activeYear) return
+    const classes = await academicYearService.getClassesByAcademicYear(activeYear.id)
+    if (classes && classes.length > 0) {
+      // Convertir B25 -> BAC25, B25-PA -> BAC25-PA, etc.
+      dbClassCodes.value = classes.map(c => {
+        const code = c.code
+        return code.match(/^B\d/) ? 'BAC' + code.substring(1) : code.toUpperCase()
+      })
+    }
+  } catch (error) {
+    console.warn('Impossible de charger les classes depuis la DB:', error)
+  }
+}
 
 // Charger les enseignants (adapté de ModulePlanningView)
 const loadTeachers = async () => {
@@ -2678,6 +2706,8 @@ const classDisplayColors = {
   'BA24-TP4': '00897B', // Teal
   'BA24-TP5': '5E35B1', // Indigo
   'BA24-TP6': '00695C', // Vert foncé
+  'BAC25-PA': 'D97706', // Ambre (Passerelle 2ème)
+  'BAC24-PA': 'BE185D', // Rose (Passerelle 3ème)
 }
 
 // Couleurs pour l'export Excel (plus claires)
@@ -2693,6 +2723,8 @@ const classColors = {
   'BA24-TP3': 'D0E0E3', // Cyan clair
   'BA24-TP4': 'E0F2FE', // Cyan clair
   'BA24-TP5': 'E0F2FE', // Cyan clair
+  'BAC25-PA': 'FDE68A', // Jaune (Passerelle 2ème)
+  'BAC24-PA': 'FBCFE8', // Rose clair (Passerelle 3ème)
 }
 
 // Obtenir couleur pour l'export Excel

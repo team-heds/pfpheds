@@ -283,7 +283,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
@@ -307,7 +307,7 @@ const toast = useToast()
 const loading = ref(true)
 const exporting = ref(false)
 const exportingAll = ref(false)
-const selectedYear = ref('bac25')
+const selectedYear = ref(null)
 const courseCodes = ref({})
 const planningCells = ref([])
 
@@ -472,6 +472,7 @@ const coursesByYear = computed(() => {
 
 // Charger le planning
 const loadPlanning = async () => {
+  if (!selectedYear.value) return
   loading.value = true
   try {
     // Charger les modules Supabase
@@ -1031,6 +1032,18 @@ const exportAllClassesExcel = async () => {
 }
 
 // Montage du composant
+// Auto-sélectionner la première option quand les classes se chargent
+watch(yearOptions, (opts) => {
+  if (opts.length > 0 && !selectedYear.value) {
+    selectedYear.value = opts[0].value
+  }
+}, { immediate: true })
+
+// Recharger le planning quand on change de classe
+watch(selectedYear, async (val) => {
+  if (val) await loadPlanning()
+})
+
 onMounted(async () => {
   // Charger l'année académique active et ses classes
   await loadActiveAcademicYear()
@@ -1039,8 +1052,8 @@ onMounted(async () => {
     console.log('[PlanningView] 📅 Année active:', activeAcademicYear.value.name)
     console.log('[PlanningView] 👥 Classes:', sortedClasses.value.length)
   }
-  
-  await loadPlanning()
+  // Le watcher sur yearOptions auto-sélectionne la 1ère classe,
+  // puis le watcher sur selectedYear déclenche loadPlanning()
 })
 </script>
 
