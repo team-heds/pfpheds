@@ -175,10 +175,37 @@
             </template>
           </Column>
 
-          <!-- Expanded row: détail par module -->
+          <!-- Expanded row: détail par module, classe et coefficient -->
           <template #expansion="{ data }">
             <div class="p-3">
-              <h5 class="mt-0 mb-3">Détail par module — {{ data.teacher.name }}</h5>
+              <!-- Détail par coefficient -->
+              <h5 class="mt-0 mb-3">Répartition par coefficient — {{ data.teacher.name }}</h5>
+              <DataTable :value="data.byCoefficient" size="small" stripedRows class="mb-4">
+                <Column field="label" header="Type de coefficient">
+                  <template #body="{ data: c }">
+                    <Tag :value="c.label" :severity="c.coeff === 1.6 ? 'warning' : c.coeff === 4.0 ? 'success' : 'info'" />
+                  </template>
+                </Column>
+                <Column field="slots" header="Nb créneaux" sortable style="width: 120px">
+                  <template #body="{ data: c }">{{ c.slots }}</template>
+                </Column>
+                <Column field="hours" header="Heures présence" sortable style="width: 140px">
+                  <template #body="{ data: c }">{{ c.hours }}h</template>
+                </Column>
+                <Column field="coeff" header="Coefficient" style="width: 100px">
+                  <template #body="{ data: c }">
+                    <strong>× {{ c.coeff }}</strong>
+                  </template>
+                </Column>
+                <Column field="weighted" header="Heures pondérées" sortable style="width: 160px">
+                  <template #body="{ data: c }">
+                    <strong class="text-primary">{{ c.weighted }}h</strong>
+                  </template>
+                </Column>
+              </DataTable>
+
+              <!-- Détail par module -->
+              <h5 class="mt-4 mb-3">Détail par module</h5>
               <DataTable :value="data.byModule" size="small" stripedRows>
                 <Column field="code" header="Module" sortable />
                 <Column field="title" header="Titre" />
@@ -192,6 +219,7 @@
                 </Column>
               </DataTable>
 
+              <!-- Détail par classe -->
               <h5 class="mt-4 mb-3">Détail par classe</h5>
               <DataTable :value="data.byClass" size="small" stripedRows>
                 <Column field="code" header="Classe" sortable>
@@ -439,58 +467,150 @@ async function exportWorkload() {
       })
     }
 
-    // Feuille détail pour chaque prof
-    for (const w of workloadData.value.teachers) {
-      const sheetName = (w.teacher.name || 'Inconnu').substring(0, 31)
-      const ws = workbook.addWorksheet(sheetName)
-      ws.columns = [
-        { header: 'Semaine', key: 'week', width: 10 },
-        { header: 'Jour', key: 'day', width: 12 },
-        { header: 'Horaire', key: 'time', width: 14 },
-        { header: 'Classe', key: 'class', width: 12 },
-        { header: 'Module', key: 'module', width: 25 },
-        { header: 'Type', key: 'type', width: 10 },
-        { header: 'Heures', key: 'hours', width: 10 },
-        { header: 'Coefficient', key: 'coeff', width: 12 },
-        { header: 'Détail coeff.', key: 'coeffLabel', width: 22 },
-        { header: 'Heures pondérées', key: 'weighted', width: 16 }
-      ]
+    // Ligne TOTAL sur la feuille Résumé
+    const allTeachers = workloadData.value.teachers
+    const summaryTotal = wsSummary.addRow({
+      name: 'TOTAL',
+      email: '',
+      slots: allTeachers.reduce((s, w) => s + w.slots.length, 0),
+      presence: Math.round(allTeachers.reduce((s, w) => s + w.totalPresenceHours, 0) * 100) / 100,
+      weighted: Math.round(allTeachers.reduce((s, w) => s + w.totalWeightedHours, 0) * 100) / 100,
+      coursHours: Math.round(allTeachers.reduce((s, w) => s + w.byActivity.cours.hours, 0) * 100) / 100,
+      coursWeighted: Math.round(allTeachers.reduce((s, w) => s + w.byActivity.cours.weighted, 0) * 100) / 100,
+      atelierHours: Math.round(allTeachers.reduce((s, w) => s + w.byActivity.atelier.hours, 0) * 100) / 100,
+      atelierWeighted: Math.round(allTeachers.reduce((s, w) => s + w.byActivity.atelier.weighted, 0) * 100) / 100,
+      ratio: ''
+    })
+    summaryTotal.eachCell(cell => {
+      cell.font = { bold: true, size: 13, color: { argb: 'FFFFFFFF' } }
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1B5E20' } }
+      cell.alignment = { horizontal: 'center' }
+    })
+    summaryTotal.getCell('name').alignment = { horizontal: 'left' }
 
-      ws.getRow(1).eachCell(cell => {
+    const headerStyle = (row) => {
+      row.eachCell(cell => {
         cell.font = { bold: true, color: { argb: 'FFFFFFFF' } }
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2196F3' } }
         cell.alignment = { horizontal: 'center' }
       })
+    }
+    const subHeaderStyle = (row) => {
+      row.eachCell(cell => {
+        cell.font = { bold: true, color: { argb: 'FFFFFFFF' } }
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF607D8B' } }
+      })
+    }
+
+    // Feuille détail pour chaque prof
+    for (const w of workloadData.value.teachers) {
+      const sheetName = (w.teacher.name || 'Inconnu').substring(0, 31)
+      const ws = workbook.addWorksheet(sheetName)
+
+      // ── Encadré TOTAL en haut ──
+      const titleRow = ws.addRow([`${w.teacher.name}`])
+      titleRow.getCell(1).font = { bold: true, size: 14 }
+      ws.mergeCells(titleRow.number, 1, titleRow.number, 5)
+
+      const totalRow1 = ws.addRow(['TOTAL HEURES PRÉSENCE', w.totalPresenceHours + 'h', '', 'TOTAL HEURES PONDÉRÉES', w.totalWeightedHours + 'h'])
+      totalRow1.getCell(1).font = { bold: true, size: 12 }
+      totalRow1.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8F5E9' } }
+      totalRow1.getCell(2).font = { bold: true, size: 14, color: { argb: 'FF1B5E20' } }
+      totalRow1.getCell(2).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8F5E9' } }
+      totalRow1.getCell(3).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8F5E9' } }
+      totalRow1.getCell(4).font = { bold: true, size: 12 }
+      totalRow1.getCell(4).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC8E6C9' } }
+      totalRow1.getCell(5).font = { bold: true, size: 16, color: { argb: 'FF1B5E20' } }
+      totalRow1.getCell(5).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC8E6C9' } }
+
+      const ratioVal = w.totalPresenceHours > 0 ? (w.totalWeightedHours / w.totalPresenceHours).toFixed(2) : '—'
+      const totalRow2 = ws.addRow([
+        `Cours: ${Math.round(w.byActivity.cours.hours * 100) / 100}h (pondéré: ${Math.round(w.byActivity.cours.weighted * 100) / 100}h)`,
+        '',
+        '',
+        `Atelier: ${Math.round(w.byActivity.atelier.hours * 100) / 100}h (pondéré: ${Math.round(w.byActivity.atelier.weighted * 100) / 100}h)`,
+        `Ratio moyen: × ${ratioVal}`
+      ])
+      totalRow2.getCell(1).font = { italic: true, color: { argb: 'FF1565C0' } }
+      totalRow2.getCell(4).font = { italic: true, color: { argb: 'FFE65100' } }
+      totalRow2.getCell(5).font = { bold: true }
+      ws.addRow([])
+
+      // ── Section 1 : Résumé par coefficient ──
+      ws.addRow(['RÉPARTITION PAR COEFFICIENT'])
+      subHeaderStyle(ws.lastRow)
+      ws.mergeCells(ws.lastRow.number, 1, ws.lastRow.number, 5)
+
+      const coeffHeaders = ws.addRow(['Type', 'Nb créneaux', 'Heures présence', 'Coefficient', 'Heures pondérées'])
+      headerStyle(coeffHeaders)
+      for (const c of w.byCoefficient) {
+        ws.addRow([c.label, c.slots, c.hours, `× ${c.coeff}`, c.weighted])
+      }
+      ws.addRow([])
+
+      // ── Section 2 : Résumé par module ──
+      ws.addRow(['DÉTAIL PAR MODULE'])
+      subHeaderStyle(ws.lastRow)
+      ws.mergeCells(ws.lastRow.number, 1, ws.lastRow.number, 5)
+
+      const modHeaders = ws.addRow(['Code module', 'Titre', 'Heures présence', 'Heures pondérées'])
+      headerStyle(modHeaders)
+      for (const mod of w.byModule) {
+        ws.addRow([mod.code, mod.title, mod.hours, mod.weighted])
+      }
+      ws.addRow([])
+
+      // ── Section 3 : Résumé par classe ──
+      ws.addRow(['DÉTAIL PAR CLASSE'])
+      subHeaderStyle(ws.lastRow)
+      ws.mergeCells(ws.lastRow.number, 1, ws.lastRow.number, 5)
+
+      const clsHeaders = ws.addRow(['Classe', 'Heures présence', 'Heures pondérées'])
+      headerStyle(clsHeaders)
+      for (const cls of w.byClass) {
+        ws.addRow([cls.code, cls.hours, cls.weighted])
+      }
+      ws.addRow([])
+
+      // ── Section 4 : Détail créneau par créneau ──
+      ws.addRow(['DÉTAIL CRÉNEAU PAR CRÉNEAU'])
+      subHeaderStyle(ws.lastRow)
+      ws.mergeCells(ws.lastRow.number, 1, ws.lastRow.number, 10)
+
+      const slotHeaders = ws.addRow([
+        'Semaine', 'Jour', 'Horaire', 'Classe', 'Module', 'Cours', 'Type', 'Heures', 'Coefficient', 'Détail coeff.', 'Heures pondérées'
+      ])
+      headerStyle(slotHeaders)
 
       for (const slot of w.slots) {
-        ws.addRow({
-          week: `S${slot.weekNumber}`,
-          day: slot.day,
-          time: `${slot.startTime} – ${slot.endTime}`,
-          class: slot.classCode,
-          module: slot.moduleCode,
-          type: slot.activity,
-          hours: slot.hours,
-          coeff: slot.coefficient,
-          coeffLabel: slot.coeffLabel,
-          weighted: slot.weightedHours
-        })
+        ws.addRow([
+          `S${slot.weekNumber}`,
+          slot.day,
+          `${slot.startTime} – ${slot.endTime}`,
+          slot.classCode,
+          slot.moduleCode,
+          slot.courseTitle || '',
+          slot.activity,
+          slot.hours,
+          slot.coefficient,
+          slot.coeffLabel,
+          slot.weightedHours
+        ])
       }
 
       // Ligne total
-      const totalRow = ws.addRow({
-        week: '',
-        day: '',
-        time: '',
-        class: '',
-        module: '',
-        type: 'TOTAL',
-        hours: w.totalPresenceHours,
-        coeff: '',
-        coeffLabel: '',
-        weighted: w.totalWeightedHours
-      })
+      const totalRow = ws.addRow([
+        '', '', '', '', '', '', 'TOTAL',
+        w.totalPresenceHours, '', '', w.totalWeightedHours
+      ])
       totalRow.eachCell(cell => { cell.font = { bold: true } })
+
+      // Largeur des colonnes
+      ws.columns = [
+        { width: 10 }, { width: 12 }, { width: 16 }, { width: 14 },
+        { width: 22 }, { width: 35 }, { width: 12 }, { width: 10 },
+        { width: 12 }, { width: 22 }, { width: 16 }
+      ]
     }
 
     // Feuille coefficients de référence

@@ -146,6 +146,15 @@ export function isAtelierActivity(activity) {
 }
 
 /**
+ * Normalise un code classe : tout en majuscules, trim
+ * "bac26" → "BAC26", "BAC25-pa" → "BAC25-PA", "Bac25-TP" → "BAC25-TP"
+ */
+function normalizeClassCode(code) {
+  if (!code) return 'non-assigné'
+  return code.trim().toUpperCase()
+}
+
+/**
  * Parse un horaire en { h, m } en gérant tous les formats :
  *  "08:30", "08.30", "8.30", "0830", "1530", "8:30"
  */
@@ -301,7 +310,8 @@ class WorkloadService {
           totalWeightedHours: 0,
           byModule: {},
           byClass: {},
-          byActivity: { cours: { hours: 0, weighted: 0 }, atelier: { hours: 0, weighted: 0 } }
+          byActivity: { cours: { hours: 0, weighted: 0 }, atelier: { hours: 0, weighted: 0 } },
+          _seenSlots: new Set()
         }
       }
     }
@@ -346,13 +356,32 @@ class WorkloadService {
             totalWeightedHours: 0,
             byModule: {},
             byClass: {},
-            byActivity: { cours: { hours: 0, weighted: 0 }, atelier: { hours: 0, weighted: 0 } }
+            byActivity: { cours: { hours: 0, weighted: 0 }, atelier: { hours: 0, weighted: 0 } },
+            _seenSlots: new Set()  // pour dédoublonner TP/PA
           }
         }
 
         const workload = teacherWorkloads[key]
         // Mettre à jour le nom d'affichage avec le meilleur trouvé
         workload.teacher.name = keyDisplayName[key] || workload.teacher.name
+
+        // Dédoublonner : même semaine + jour + horaire + module = même cours
+        // (BAC25 et BAC25-PA/TP au même moment = un seul créneau réel)
+        const slotFingerprint = `${slot.week_number}|${slot.day}|${slot.start_time}|${slot.end_time}|${slot.module_code || ''}`
+        if (workload._seenSlots.has(slotFingerprint)) {
+          // Créneau déjà compté pour ce prof, on ajoute juste la classe
+          const existingSlot = workload.slots.find(s => 
+            s.weekNumber === slot.week_number && s.day === slot.day &&
+            s.startTime === slot.start_time && s.endTime === slot.end_time &&
+            s.moduleCode === (slot.module_code || '')
+          )
+          const normClass = normalizeClassCode(slot.class_code)
+          if (existingSlot && !existingSlot.classCode.includes(normClass)) {
+            existingSlot.classCode += ', ' + normClass
+          }
+          continue
+        }
+        workload._seenSlots.add(slotFingerprint)
 
         // Détail du créneau
         workload.slots.push({
@@ -362,7 +391,7 @@ class WorkloadService {
           date: slot.date,
           startTime: slot.start_time,
           endTime: slot.end_time,
-          classCode: slot.class_code,
+          classCode: normalizeClassCode(slot.class_code),
           moduleCode: slot.module_code,
           courseTitle: slot.course_title,
           activity: slot.activity || 'Cours',
@@ -388,7 +417,7 @@ class WorkloadService {
         workload.byModule[moduleKey].weighted += weightedHours
 
         // Par classe
-        const classKey = slot.class_code || 'non-assigné'
+        const classKey = normalizeClassCode(slot.class_code)
         if (!workload.byClass[classKey]) {
           workload.byClass[classKey] = { hours: 0, weighted: 0 }
         }
@@ -402,25 +431,49 @@ class WorkloadService {
       }
     }
 
-    // 5. Arrondir les totaux et trier
+    // 5. Arrondir les totaux, calculer détail coefficients, et trier
     const result = Object.values(teacherWorkloads)
       .filter(w => w.slots.length > 0)
-      .map(w => ({
-        ...w,
-        totalPresenceHours: Math.round(w.totalPresenceHours * 100) / 100,
-        totalWeightedHours: Math.round(w.totalWeightedHours * 100) / 100,
-        byModule: Object.entries(w.byModule).map(([code, data]) => ({
-          code,
-          title: data.title,
-          hours: Math.round(data.hours * 100) / 100,
-          weighted: Math.round(data.weighted * 100) / 100
-        })),
-        byClass: Object.entries(w.byClass).map(([code, data]) => ({
-          code,
-          hours: Math.round(data.hours * 100) / 100,
-          weighted: Math.round(data.weighted * 100) / 100
-        }))
-      }))
+      .map(w => {
+        // Calculer la répartition par coefficient
+        const coeffBreakdown = {}
+        for (const s of w.slots) {
+          const label = s.coeffLabel
+          if (!coeffBreakdown[label]) {
+            coeffBreakdown[label] = { label, coeff: s.coefficient, slots: 0, hours: 0, weighted: 0 }
+          }
+          coeffBreakdown[label].slots++
+          coeffBreakdown[label].hours += s.hours
+          coeffBreakdown[label].weighted += s.weightedHours
+        }
+        const byCoefficient = Object.values(coeffBreakdown)
+          .map(c => ({
+            ...c,
+            hours: Math.round(c.hours * 100) / 100,
+            weighted: Math.round(c.weighted * 100) / 100
+          }))
+          .sort((a, b) => b.weighted - a.weighted)
+
+        return {
+          teacher: w.teacher,
+          slots: w.slots,
+          totalPresenceHours: Math.round(w.totalPresenceHours * 100) / 100,
+          totalWeightedHours: Math.round(w.totalWeightedHours * 100) / 100,
+          byModule: Object.entries(w.byModule).map(([code, data]) => ({
+            code,
+            title: data.title,
+            hours: Math.round(data.hours * 100) / 100,
+            weighted: Math.round(data.weighted * 100) / 100
+          })),
+          byClass: Object.entries(w.byClass).map(([code, data]) => ({
+            code,
+            hours: Math.round(data.hours * 100) / 100,
+            weighted: Math.round(data.weighted * 100) / 100
+          })),
+          byActivity: w.byActivity,
+          byCoefficient
+        }
+      })
       .sort((a, b) => b.totalWeightedHours - a.totalWeightedHours)
 
     // 6. Résumé global
