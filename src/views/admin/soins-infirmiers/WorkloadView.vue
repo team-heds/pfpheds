@@ -31,14 +31,53 @@
                 :options="teacherFilterOptions" 
                 optionLabel="label" 
                 optionValue="value" 
-                placeholder="Tous les enseignants"
+                placeholder="Tous"
                 showClear
                 filter
-                style="width: 260px"
+                style="width: 240px"
+              />
+            </div>
+            <div class="field-inline">
+              <label>Classe</label>
+              <Dropdown 
+                v-model="selectedClass" 
+                :options="classFilterOptions" 
+                optionLabel="label" 
+                optionValue="value" 
+                placeholder="Toutes"
+                showClear
+                filter
+                style="width: 150px"
+              />
+            </div>
+            <div class="field-inline">
+              <label>Module</label>
+              <Dropdown 
+                v-model="selectedModule" 
+                :options="moduleFilterOptions" 
+                optionLabel="label" 
+                optionValue="value" 
+                placeholder="Tous"
+                showClear
+                filter
+                style="width: 220px"
+              />
+            </div>
+            <div class="field-inline">
+              <label>Type</label>
+              <Dropdown 
+                v-model="selectedType" 
+                :options="typeOptions" 
+                optionLabel="label" 
+                optionValue="value" 
+                placeholder="Tous"
+                showClear
+                style="width: 130px"
               />
             </div>
           </div>
           <div class="flex gap-2 align-items-center">
+            <Button v-if="hasActiveFilters" label="Effacer filtres" icon="pi pi-filter-slash" severity="secondary" size="small" text @click="clearFilters" />
             <Button label="Exporter Excel" icon="pi pi-file-excel" severity="success" size="small" @click="exportWorkload" />
           </div>
         </div>
@@ -118,11 +157,9 @@
         <p>Calcul de la feuille de charges...</p>
       </div>
 
-      <!-- Tableau principal -->
-      <div v-else-if="filteredTeachers.length > 0">
-        <!-- Vue résumé par enseignant -->
+      <!-- Tableau principal : vue liste -->
+      <div v-else-if="filteredTeachers.length > 0 && !selectedTeacher">
         <DataTable 
-          v-if="!selectedTeacher"
           :value="filteredTeachers" 
           :paginator="filteredTeachers.length > 20"
           :rows="20"
@@ -137,7 +174,7 @@
           <Column :expander="true" style="width: 3rem" />
           <Column field="teacher.name" header="Enseignant" sortable>
             <template #body="{ data }">
-              <div class="flex align-items-center gap-2">
+              <div class="teacher-name-cell" @click="selectedTeacher = data.teacher.name" style="cursor: pointer">
                 <i class="pi pi-user text-primary"></i>
                 <div>
                   <strong>{{ data.teacher.name }}</strong>
@@ -164,8 +201,8 @@
           <Column header="Répartition" style="width: 200px">
             <template #body="{ data }">
               <div class="flex gap-2">
-                <Tag v-if="data.byActivity.cours.hours > 0" :value="`Cours: ${data.byActivity.cours.hours}h`" severity="info" />
-                <Tag v-if="data.byActivity.atelier.hours > 0" :value="`Atelier: ${data.byActivity.atelier.hours}h`" severity="warning" />
+                <Tag v-if="data.byActivity.cours.hours > 0" :value="`Cours: ${Math.round(data.byActivity.cours.hours * 100) / 100}h`" severity="info" />
+                <Tag v-if="data.byActivity.atelier.hours > 0" :value="`Atelier: ${Math.round(data.byActivity.atelier.hours * 100) / 100}h`" severity="warning" />
               </div>
             </template>
           </Column>
@@ -175,158 +212,182 @@
             </template>
           </Column>
 
-          <!-- Expanded row: détail par module, classe et coefficient -->
+          <!-- Expanded row rapide -->
           <template #expansion="{ data }">
             <div class="p-3">
-              <!-- Détail par coefficient -->
-              <h5 class="mt-0 mb-3">Répartition par coefficient — {{ data.teacher.name }}</h5>
-              <DataTable :value="data.byCoefficient" size="small" stripedRows class="mb-4">
-                <Column field="label" header="Type de coefficient">
-                  <template #body="{ data: c }">
-                    <Tag :value="c.label" :severity="c.coeff === 1.6 ? 'warning' : c.coeff === 4.0 ? 'success' : 'info'" />
-                  </template>
-                </Column>
-                <Column field="slots" header="Nb créneaux" sortable style="width: 120px">
-                  <template #body="{ data: c }">{{ c.slots }}</template>
-                </Column>
-                <Column field="hours" header="Heures présence" sortable style="width: 140px">
-                  <template #body="{ data: c }">{{ c.hours }}h</template>
-                </Column>
-                <Column field="coeff" header="Coefficient" style="width: 100px">
-                  <template #body="{ data: c }">
-                    <strong>× {{ c.coeff }}</strong>
-                  </template>
-                </Column>
-                <Column field="weighted" header="Heures pondérées" sortable style="width: 160px">
-                  <template #body="{ data: c }">
-                    <strong class="text-primary">{{ c.weighted }}h</strong>
-                  </template>
-                </Column>
-              </DataTable>
-
-              <!-- Détail par module -->
-              <h5 class="mt-4 mb-3">Détail par module</h5>
-              <DataTable :value="data.byModule" size="small" stripedRows>
-                <Column field="code" header="Module" sortable />
-                <Column field="title" header="Titre" />
-                <Column field="hours" header="Heures présence" sortable>
-                  <template #body="{ data: mod }">{{ mod.hours }}h</template>
-                </Column>
-                <Column field="weighted" header="Heures pondérées" sortable>
-                  <template #body="{ data: mod }">
-                    <strong class="text-primary">{{ mod.weighted }}h</strong>
-                  </template>
-                </Column>
-              </DataTable>
-
-              <!-- Détail par classe -->
-              <h5 class="mt-4 mb-3">Détail par classe</h5>
-              <DataTable :value="data.byClass" size="small" stripedRows>
-                <Column field="code" header="Classe" sortable>
-                  <template #body="{ data: cls }">
-                    <Tag :value="cls.code" />
-                  </template>
-                </Column>
-                <Column field="hours" header="Heures présence" sortable>
-                  <template #body="{ data: cls }">{{ cls.hours }}h</template>
-                </Column>
-                <Column field="weighted" header="Heures pondérées" sortable>
-                  <template #body="{ data: cls }">
-                    <strong class="text-primary">{{ cls.weighted }}h</strong>
-                  </template>
-                </Column>
-              </DataTable>
+              <div class="grid">
+                <div class="col-12 md:col-4">
+                  <h6 class="mt-0 mb-2">Par coefficient</h6>
+                  <div v-for="c in data.byCoefficient" :key="c.label" class="flex justify-content-between align-items-center mb-1">
+                    <Tag :value="c.label" :severity="c.coeff === 1.6 ? 'warning' : c.coeff === 4.0 ? 'success' : 'info'" size="small" />
+                    <strong class="text-primary text-sm">{{ c.weighted }}h</strong>
+                  </div>
+                </div>
+                <div class="col-12 md:col-4">
+                  <h6 class="mt-0 mb-2">Par module</h6>
+                  <div v-for="mod in data.byModule" :key="mod.code" class="flex justify-content-between mb-1">
+                    <span class="text-sm text-700 overflow-hidden white-space-nowrap text-overflow-ellipsis" style="max-width: 200px">{{ mod.title || mod.code }}</span>
+                    <strong class="text-primary text-sm">{{ mod.weighted }}h</strong>
+                  </div>
+                </div>
+                <div class="col-12 md:col-4">
+                  <h6 class="mt-0 mb-2">Par classe</h6>
+                  <div v-for="cls in data.byClass" :key="cls.code" class="flex justify-content-between mb-1">
+                    <Tag :value="cls.code" size="small" />
+                    <strong class="text-primary text-sm">{{ cls.weighted }}h</strong>
+                  </div>
+                </div>
+              </div>
+              <div class="mt-3 text-center">
+                <Button label="Voir le détail complet" icon="pi pi-external-link" size="small" text @click="selectedTeacher = data.teacher.name" />
+              </div>
             </div>
           </template>
         </DataTable>
+      </div>
 
-        <!-- Vue détaillée pour un enseignant sélectionné -->
-        <div v-else-if="selectedTeacherData">
-          <Card class="mb-3">
-            <template #title>
+      <!-- Vue détaillée pour un enseignant sélectionné (avec tabs) -->
+      <div v-else-if="selectedTeacherData">
+        <Card class="mb-3 teacher-header-card">
+          <template #content>
+            <div class="flex align-items-center justify-content-between flex-wrap gap-3">
               <div class="flex align-items-center gap-3">
+                <Button icon="pi pi-arrow-left" severity="secondary" text rounded @click="selectedTeacher = null" v-tooltip="'Retour à la liste'" />
                 <i class="pi pi-user text-3xl text-primary"></i>
                 <div>
                   <h3 class="m-0">{{ selectedTeacherData.teacher.name }}</h3>
                   <span class="text-500">{{ selectedTeacherData.teacher.email }}</span>
                 </div>
               </div>
-            </template>
-            <template #content>
-              <div class="grid">
-                <div class="col-6 md:col-3 text-center">
+              <div class="flex gap-4 align-items-center">
+                <div class="text-center">
                   <div class="text-3xl font-bold text-primary">{{ selectedTeacherData.totalWeightedHours }}h</div>
-                  <div class="text-500">Heures pondérées</div>
+                  <div class="text-xs text-500">Heures pondérées</div>
                 </div>
-                <div class="col-6 md:col-3 text-center">
-                  <div class="text-3xl font-bold">{{ selectedTeacherData.totalPresenceHours }}h</div>
-                  <div class="text-500">Heures présence</div>
+                <div class="text-center">
+                  <div class="text-2xl font-bold">{{ selectedTeacherData.totalPresenceHours }}h</div>
+                  <div class="text-xs text-500">Heures présence</div>
                 </div>
-                <div class="col-6 md:col-3 text-center">
-                  <div class="text-3xl font-bold">{{ selectedTeacherData.slots.length }}</div>
-                  <div class="text-500">Créneaux</div>
+                <div class="text-center">
+                  <div class="text-2xl font-bold">{{ selectedTeacherData.slots.length }}</div>
+                  <div class="text-xs text-500">Créneaux</div>
                 </div>
-                <div class="col-6 md:col-3 text-center">
-                  <div class="text-3xl font-bold">
-                    × {{ selectedTeacherData.totalPresenceHours > 0 ? (selectedTeacherData.totalWeightedHours / selectedTeacherData.totalPresenceHours).toFixed(2) : '—' }}
-                  </div>
-                  <div class="text-500">Ratio moyen</div>
+                <div class="text-center">
+                  <Tag :value="'× ' + (selectedTeacherData.totalPresenceHours > 0 ? (selectedTeacherData.totalWeightedHours / selectedTeacherData.totalPresenceHours).toFixed(2) : '—')" severity="info" class="text-lg" />
+                  <div class="text-xs text-500 mt-1">Ratio</div>
                 </div>
               </div>
-            </template>
-          </Card>
+            </div>
+          </template>
+        </Card>
 
-          <!-- Créneaux détaillés -->
-          <DataTable 
-            :value="selectedTeacherData.slots" 
-            :paginator="selectedTeacherData.slots.length > 25"
-            :rows="25"
-            stripedRows 
-            responsiveLayout="scroll"
-            sortField="weekNumber"
-            :sortOrder="1"
-            size="small"
-          >
-            <Column field="weekNumber" header="Sem." sortable style="width: 70px">
-              <template #body="{ data }">
-                <Tag :value="'S' + data.weekNumber" :severity="data.weekNumber >= 38 || data.weekNumber <= 7 ? 'warning' : 'info'" />
-              </template>
-            </Column>
-            <Column field="day" header="Jour" sortable style="width: 100px" />
-            <Column header="Horaire" style="width: 120px">
-              <template #body="{ data }">
-                {{ data.startTime }} – {{ data.endTime }}
-              </template>
-            </Column>
-            <Column field="classCode" header="Classe" sortable style="width: 110px">
-              <template #body="{ data }">
-                <Tag :value="data.classCode" />
-              </template>
-            </Column>
-            <Column field="moduleCode" header="Module" sortable />
-            <Column field="activity" header="Type" style="width: 100px">
-              <template #body="{ data }">
-                <Tag :value="data.activity" :severity="data.isAtelier ? 'warning' : 'info'" />
-              </template>
-            </Column>
-            <Column field="hours" header="Heures" sortable style="width: 80px">
-              <template #body="{ data }">{{ data.hours }}h</template>
-            </Column>
-            <Column field="coefficient" header="Coefficient" sortable style="width: 180px">
-              <template #body="{ data }">
-                <div class="flex align-items-center gap-2">
-                  <Tag :value="'× ' + data.coefficient" :severity="data.isAtelier ? 'warning' : data.teacherCount === 1 ? 'success' : 'info'" />
-                  <span class="text-xs text-500">{{ data.coeffLabel }}</span>
-                </div>
-              </template>
-            </Column>
-            <Column field="weightedHours" header="Pondéré" sortable style="width: 100px">
-              <template #body="{ data }">
-                <strong class="text-primary">{{ data.weightedHours }}h</strong>
-              </template>
-            </Column>
-          </DataTable>
-        </div>
+        <TabView>
+          <!-- Onglet Coefficients -->
+          <TabPanel header="Coefficients">
+            <DataTable :value="selectedTeacherData.byCoefficient" size="small" stripedRows>
+              <Column field="label" header="Type de coefficient">
+                <template #body="{ data: c }">
+                  <Tag :value="c.label" :severity="c.coeff === 1.6 ? 'warning' : c.coeff === 4.0 ? 'success' : 'info'" />
+                </template>
+              </Column>
+              <Column field="slots" header="Nb créneaux" sortable style="width: 120px" />
+              <Column field="hours" header="Heures présence" sortable style="width: 140px">
+                <template #body="{ data: c }">{{ c.hours }}h</template>
+              </Column>
+              <Column field="coeff" header="Coefficient" style="width: 100px">
+                <template #body="{ data: c }"><strong>× {{ c.coeff }}</strong></template>
+              </Column>
+              <Column field="weighted" header="Heures pondérées" sortable style="width: 160px">
+                <template #body="{ data: c }"><strong class="text-primary">{{ c.weighted }}h</strong></template>
+              </Column>
+            </DataTable>
+          </TabPanel>
+
+          <!-- Onglet Modules -->
+          <TabPanel header="Modules">
+            <DataTable :value="selectedTeacherData.byModule" size="small" stripedRows sortField="weighted" :sortOrder="-1">
+              <Column field="title" header="Module" sortable>
+                <template #body="{ data: mod }">{{ mod.title || mod.code }}</template>
+              </Column>
+              <Column field="code" header="Code" sortable style="width: 200px">
+                <template #body="{ data: mod }"><span class="text-xs text-500">{{ mod.code }}</span></template>
+              </Column>
+              <Column field="hours" header="Heures présence" sortable style="width: 140px">
+                <template #body="{ data: mod }">{{ mod.hours }}h</template>
+              </Column>
+              <Column field="weighted" header="Heures pondérées" sortable style="width: 160px">
+                <template #body="{ data: mod }"><strong class="text-primary">{{ mod.weighted }}h</strong></template>
+              </Column>
+            </DataTable>
+          </TabPanel>
+
+          <!-- Onglet Classes -->
+          <TabPanel header="Classes">
+            <DataTable :value="selectedTeacherData.byClass" size="small" stripedRows sortField="weighted" :sortOrder="-1">
+              <Column field="code" header="Classe" sortable>
+                <template #body="{ data: cls }"><Tag :value="cls.code" /></template>
+              </Column>
+              <Column field="hours" header="Heures présence" sortable style="width: 140px">
+                <template #body="{ data: cls }">{{ cls.hours }}h</template>
+              </Column>
+              <Column field="weighted" header="Heures pondérées" sortable style="width: 160px">
+                <template #body="{ data: cls }"><strong class="text-primary">{{ cls.weighted }}h</strong></template>
+              </Column>
+            </DataTable>
+          </TabPanel>
+
+          <!-- Onglet Créneaux -->
+          <TabPanel header="Tous les créneaux">
+            <DataTable 
+              :value="selectedTeacherData.slots" 
+              :paginator="selectedTeacherData.slots.length > 25"
+              :rows="25"
+              stripedRows 
+              responsiveLayout="scroll"
+              sortField="weekNumber"
+              :sortOrder="1"
+              size="small"
+            >
+              <Column field="weekNumber" header="Sem." sortable style="width: 70px">
+                <template #body="{ data }">
+                  <Tag :value="'S' + data.weekNumber" :severity="data.weekNumber >= 38 || data.weekNumber <= 7 ? 'warning' : 'info'" />
+                </template>
+              </Column>
+              <Column field="day" header="Jour" sortable style="width: 100px" />
+              <Column header="Horaire" style="width: 120px">
+                <template #body="{ data }">{{ data.startTime }} – {{ data.endTime }}</template>
+              </Column>
+              <Column field="classCode" header="Classe" sortable style="width: 110px">
+                <template #body="{ data }"><Tag :value="data.classCode" /></template>
+              </Column>
+              <Column field="moduleName" header="Module" sortable style="width: 200px">
+                <template #body="{ data }">
+                  <span>{{ data.moduleName || data.moduleCode }}</span>
+                </template>
+              </Column>
+              <Column field="courseTitle" header="Cours" sortable />
+              <Column field="activity" header="Type" style="width: 100px">
+                <template #body="{ data }">
+                  <Tag :value="data.activity" :severity="data.isAtelier ? 'warning' : 'info'" />
+                </template>
+              </Column>
+              <Column field="hours" header="Heures" sortable style="width: 80px">
+                <template #body="{ data }">{{ data.hours }}h</template>
+              </Column>
+              <Column field="coefficient" header="Coefficient" sortable style="width: 180px">
+                <template #body="{ data }">
+                  <div class="flex align-items-center gap-2">
+                    <Tag :value="'× ' + data.coefficient" :severity="data.isAtelier ? 'warning' : data.teacherCount === 1 ? 'success' : 'info'" />
+                    <span class="text-xs text-500">{{ data.coeffLabel }}</span>
+                  </div>
+                </template>
+              </Column>
+              <Column field="weightedHours" header="Pondéré" sortable style="width: 100px">
+                <template #body="{ data }"><strong class="text-primary">{{ data.weightedHours }}h</strong></template>
+              </Column>
+            </DataTable>
+          </TabPanel>
+        </TabView>
       </div>
 
       <!-- Empty state -->
@@ -353,6 +414,8 @@ import DataTable from 'primevue/datatable'
 import Dropdown from 'primevue/dropdown'
 import Panel from 'primevue/panel'
 import ProgressSpinner from 'primevue/progressspinner'
+import TabPanel from 'primevue/tabpanel'
+import TabView from 'primevue/tabview'
 import Tag from 'primevue/tag'
 import Toast from 'primevue/toast'
 import workloadService, { PILIER_1_1_COEFFICIENTS } from '@/service/workloadService'
@@ -365,6 +428,9 @@ const { activeAcademicYear, loadActiveAcademicYear } = useAcademicYear()
 const loading = ref(false)
 const selectedSemester = ref('all')
 const selectedTeacher = ref(null)
+const selectedClass = ref(null)
+const selectedModule = ref(null)
+const selectedType = ref(null)
 const workloadData = ref(null)
 const expandedRows = ref([])
 
@@ -375,13 +441,42 @@ const semesterOptions = [
   { label: 'Semestre de Printemps (S8–S37)', value: 'spring' }
 ]
 
+const typeOptions = [
+  { label: 'Cours', value: 'cours' },
+  { label: 'Atelier', value: 'atelier' }
+]
+
 // Coefficients reference table
 const coefficientRows = PILIER_1_1_COEFFICIENTS.map(c => ({
   label: c.label,
   coeff: c.coeff
 }))
 
-// Computed
+// Computed — dynamic filter options
+const classFilterOptions = computed(() => {
+  if (!workloadData.value) return []
+  const classSet = new Set()
+  for (const w of workloadData.value.teachers) {
+    for (const cls of w.byClass) classSet.add(cls.code)
+  }
+  return [...classSet].sort().map(c => ({ label: c, value: c }))
+})
+
+const moduleFilterOptions = computed(() => {
+  if (!workloadData.value) return []
+  const modMap = new Map()
+  for (const w of workloadData.value.teachers) {
+    for (const mod of w.byModule) {
+      if (!modMap.has(mod.code)) {
+        modMap.set(mod.code, mod.title || mod.code)
+      }
+    }
+  }
+  return [...modMap.entries()]
+    .sort((a, b) => a[1].localeCompare(b[1]))
+    .map(([code, title]) => ({ label: title !== code ? `${title}` : code, value: code }))
+})
+
 const teacherFilterOptions = computed(() => {
   if (!workloadData.value) return []
   return workloadData.value.teachers.map(w => ({
@@ -392,13 +487,50 @@ const teacherFilterOptions = computed(() => {
 
 const filteredTeachers = computed(() => {
   if (!workloadData.value) return []
-  if (!selectedTeacher.value) return workloadData.value.teachers
-  return workloadData.value.teachers.filter(w => w.teacher.name === selectedTeacher.value)
+  let list = workloadData.value.teachers
+
+  if (selectedTeacher.value) {
+    list = list.filter(w => w.teacher.name === selectedTeacher.value)
+  }
+
+  // Filtres avancés : on filtre les profs qui ont au moins un créneau correspondant
+  if (selectedClass.value) {
+    list = list.filter(w => w.slots.some(s => s.classCode === selectedClass.value))
+  }
+  if (selectedModule.value) {
+    list = list.filter(w => w.slots.some(s => s.moduleCode === selectedModule.value))
+  }
+  if (selectedType.value) {
+    if (selectedType.value === 'atelier') {
+      list = list.filter(w => w.byActivity.atelier.hours > 0)
+    } else {
+      list = list.filter(w => w.byActivity.cours.hours > 0)
+    }
+  }
+
+  return list
 })
 
 const selectedTeacherData = computed(() => {
   if (!selectedTeacher.value || !workloadData.value) return null
   return workloadData.value.teachers.find(w => w.teacher.name === selectedTeacher.value) || null
+})
+
+// Stats visuelles
+const maxWeightedHours = computed(() => {
+  if (!workloadData.value) return 1
+  return Math.max(...workloadData.value.teachers.map(w => w.totalWeightedHours), 1)
+})
+
+function clearFilters() {
+  selectedTeacher.value = null
+  selectedClass.value = null
+  selectedModule.value = null
+  selectedType.value = null
+}
+
+const hasActiveFilters = computed(() => {
+  return selectedTeacher.value || selectedClass.value || selectedModule.value || selectedType.value
 })
 
 // Methods
@@ -553,10 +685,10 @@ async function exportWorkload() {
       subHeaderStyle(ws.lastRow)
       ws.mergeCells(ws.lastRow.number, 1, ws.lastRow.number, 5)
 
-      const modHeaders = ws.addRow(['Code module', 'Titre', 'Heures présence', 'Heures pondérées'])
+      const modHeaders = ws.addRow(['Module', 'Code', 'Heures présence', 'Heures pondérées'])
       headerStyle(modHeaders)
       for (const mod of w.byModule) {
-        ws.addRow([mod.code, mod.title, mod.hours, mod.weighted])
+        ws.addRow([mod.title, mod.code, mod.hours, mod.weighted])
       }
       ws.addRow([])
 
@@ -588,7 +720,7 @@ async function exportWorkload() {
           slot.day,
           `${slot.startTime} – ${slot.endTime}`,
           slot.classCode,
-          slot.moduleCode,
+          slot.moduleName || slot.moduleCode,
           slot.courseTitle || '',
           slot.activity,
           slot.hours,
@@ -707,7 +839,7 @@ onMounted(async () => {
 
 .stat-card.highlight {
   border-color: var(--primary-color);
-  background: var(--primary-50, #e3f2fd);
+  background: color-mix(in srgb, var(--primary-color) 15%, var(--surface-card));
 }
 
 .stat-card i {
@@ -754,6 +886,22 @@ onMounted(async () => {
 .empty-state i {
   font-size: 3rem;
   margin-bottom: 1rem;
+}
+
+.teacher-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.teacher-name-cell:hover strong {
+  color: var(--primary-color);
+  text-decoration: underline;
+}
+
+
+.teacher-header-card {
+  border-left: 4px solid var(--primary-color);
 }
 
 :deep(.workload-table .p-datatable-thead > tr > th) {

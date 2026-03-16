@@ -24,7 +24,7 @@ export const PILIER_1_1_COEFFICIENTS = [
 export const ATELIER_COEFFICIENT = 1.6
 
 // Types d'activité reconnus comme "atelier"
-export const ATELIER_ACTIVITIES = ['Atelier', 'atelier', 'TP', 'tp', 'Pratique', 'pratique', 'Labo', 'labo']
+export const ATELIER_ACTIVITIES = ['Atelier', 'atelier', 'Pratique', 'pratique', 'Labo', 'labo']
 
 // Entrées à ignorer (pas des vrais enseignants)
 const EXCLUDED_TEACHERS = [
@@ -273,14 +273,28 @@ class WorkloadService {
    * @param {string} academicYearId - ID de l'année académique
    * @returns {Object} { teachers: [...], summary: {...} }
    */
+  async getModuleNames() {
+    const { data, error } = await supabase
+      .from('modules')
+      .select('code, title')
+
+    if (error) throw error
+    const map = {}
+    for (const m of (data || [])) {
+      if (m.code && m.title) map[m.code.trim()] = m.title
+    }
+    return map
+  }
+
   async computeWorkload(semester, academicYearId) {
     // 1. Charger les données
-    const [teachers, classes, allSlots] = await Promise.all([
+    const [teachers, classes, allSlots, moduleNames] = await Promise.all([
       this.getTeachers(),
       this.getClassesWithStudentCount(academicYearId),
       semester === 'all'
         ? this._getAllSlots()
-        : this.getAllTimeSlots(semester)
+        : this.getAllTimeSlots(semester),
+      this.getModuleNames()
     ])
 
     // 2. Construire la feuille de charges par enseignant (groupé par teacherKey)
@@ -323,10 +337,10 @@ class WorkloadService {
       const hours = computeHours(slot.start_time, slot.end_time)
       if (hours <= 0) continue
 
-      // Utiliser activity_type (nouveau champ structuré) en priorité, sinon parser activity
-      const isAtelier = slot.activity_type 
-        ? isAtelierActivity(slot.activity_type) 
-        : isAtelierActivity(slot.activity)
+      // Détecter atelier : activity_type, activity, OU course_title
+      const isAtelier = isAtelierActivity(slot.activity_type)
+        || isAtelierActivity(slot.activity)
+        || isAtelierActivity(slot.course_title)
       // Normaliser et dédupliquer par teacherKey
       const seen = new Set()
       const slotTeacherKeys = []
@@ -393,8 +407,9 @@ class WorkloadService {
           endTime: slot.end_time,
           classCode: normalizeClassCode(slot.class_code),
           moduleCode: slot.module_code,
+          moduleName: moduleNames[slot.module_code] || slot.module_code || '',
           courseTitle: slot.course_title,
-          activity: slot.activity || 'Cours',
+          activity: isAtelier ? 'Atelier' : (slot.activity || 'Cours'),
           room: slot.room,
           hours,
           teacherCount,
@@ -411,7 +426,7 @@ class WorkloadService {
         // Par module
         const moduleKey = slot.module_code || 'non-assigné'
         if (!workload.byModule[moduleKey]) {
-          workload.byModule[moduleKey] = { hours: 0, weighted: 0, title: slot.course_title || moduleKey }
+          workload.byModule[moduleKey] = { hours: 0, weighted: 0, title: moduleNames[moduleKey] || moduleKey }
         }
         workload.byModule[moduleKey].hours += hours
         workload.byModule[moduleKey].weighted += weightedHours
