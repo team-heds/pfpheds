@@ -21,7 +21,7 @@ import '@/assets/styles/mobile-scale.css';
 
 import { useUserStore } from '@/stores/userStore'
 
-const APP_VERSION = '0.1.76';
+const APP_VERSION = '0.1.77';
 if ('serviceWorker' in navigator) {
   const lastVersion = localStorage.getItem('app_version');
   if (lastVersion !== APP_VERSION) {
