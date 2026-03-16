@@ -361,9 +361,11 @@ const yearOptions = computed(() => {
     .filter(classItem => !classItem.code.endsWith('-EE'))
     .map(classItem => {
       const yearLevel = classItem.year_level === 1 ? '1ère' : classItem.year_level === 2 ? '2ème' : '3ème'
+      const modalitySuffix = classItem.code.endsWith('-PA') ? ' (PA)' :
+                             classItem.code.endsWith('-TP') ? ' (TP)' : ''
       return {
-        label: `${yearLevel} année ${activeAcademicYear.value.name} / ${classItem.code}`,
-        labelShort: `${yearLevel} année`,
+        label: `${yearLevel} année${modalitySuffix} ${activeAcademicYear.value.name} / ${classItem.code}`,
+        labelShort: `${yearLevel} année${modalitySuffix}`,
         classCode: classItem.code,
         value: 'bac' + classItem.code.substring(1) // B25 -> bac25
       }

@@ -1731,7 +1731,8 @@ const loadYearOptions = async () => {
       .map(classItem => {
         const yearLabel = classItem.year_level === 1 ? '1ère' : 
                          classItem.year_level === 2 ? '2ème' : '3ème'
-        const modalitySuffix = classItem.modality === 'temps_partiel' ? ' (PT)' :
+        const modalitySuffix = classItem.code.endsWith('-PA') ? ' (PA)' :
+                               classItem.modality === 'temps_partiel' ? ' (PT)' :
                                classItem.modality === 'en_emploi' ? ' (EE)' : ''
         
         // Convertir B26 -> bac26, B26-PT -> bac26-PT, etc. (même format que PlanningAdminView)
