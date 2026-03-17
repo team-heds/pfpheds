@@ -293,3 +293,12 @@ export async function getVideosByVimeoIds(vimeoIds) {
   
   return videos;
 }
+
+export async function testFirebaseConnection() {
+  try {
+    await get(dbRef(db(), `${MEDIA_ROOT}/test`))
+    return { success: true, message: 'Connexion Firebase réussie' }
+  } catch (error) {
+    return { success: false, error: error.message }
+  }
+}

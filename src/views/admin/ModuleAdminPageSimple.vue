@@ -547,7 +547,7 @@ async function diagnoseFirebase() {
   try {
     // Import dynamique des fonctions de diagnostic
     const { diagnoseFirebaseConfig, testFirebaseConnection, showEnvironmentInfo } = await import('@/utils/firebaseDiagnostic')
-    const { testFirebaseConnection: testMediaService } = await import('@/service/mediaServiceSafe')
+    const { testFirebaseConnection: testMediaService } = await import('@/service/mediaService')
     
     // Afficher les informations d'environnement
     showEnvironmentInfo()

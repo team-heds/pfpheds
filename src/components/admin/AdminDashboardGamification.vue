@@ -144,7 +144,7 @@ import Button from 'primevue/button'
 import ButtonGroup from 'primevue/buttongroup'
 import ProgressSpinner from 'primevue/progressspinner'
 import { useKpiManager } from '@/composables/useKpiManager'
-import gamificationAdminService from '@/service/gamificationAdminService'
+import gamificationService from '@/service/gamificationService'
 
 const router = useRouter()
 
@@ -162,7 +162,7 @@ const activities = ref([])
 
 const loadActivities = async () => {
   try {
-    const logs = await gamificationAdminService.getRecentLogs(10)
+    const logs = await gamificationService.getRecentLogs()
     activities.value = (logs || []).map(l => ({
       type: l.action || 'activity',
       title: l.title || l.description || 'Action gamification',
