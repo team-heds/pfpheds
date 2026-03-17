@@ -149,7 +149,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
-import { getSITeachers } from '@/services/academicKpiService'
+import { getSITeachers } from '@/service/academicKpiService'
 import modulesService from '@/service/modulesService'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import PageHeader from '@/components/admin/common/PageHeader.vue'

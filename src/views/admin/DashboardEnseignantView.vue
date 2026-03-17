@@ -344,7 +344,7 @@ import Tag from 'primevue/tag';
 import Checkbox from 'primevue/checkbox';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import { loadEnseignantDashboard } from '@/services/enseignantDashboardService';
+import { loadEnseignantDashboard } from '@/service/enseignantDashboardService';
 import { useToast } from 'primevue/usetoast';
 
 const router = useRouter();

@@ -167,7 +167,7 @@ import Dropdown from 'primevue/dropdown'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 import Tag from 'primevue/tag'
-import { assignTrackRole, removeTrackRole } from '@/services/adminDashboardService'
+import { assignTrackRole, removeTrackRole } from '@/service/adminDashboardService'
 import { useAuthStore } from '@/stores/authStore'
 
 const authStore = useAuthStore()

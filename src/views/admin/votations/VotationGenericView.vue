@@ -427,9 +427,9 @@ import { usePlacesStore } from '@/stores/placesStore'
 import { useUserStore } from '@/stores/userStore'
 import { useVotesStore } from '@/stores/votesStore'
 import { mapStores } from 'pinia'
-import votesBackendService from '@/stores/votesBackendService'
+import votesBackendService from '@/service/votesBackendService'
 import votationSessionService from '@/service/votationSessionService'
-import resultatVotationService from '@/stores/resultatVotationService'
+import resultatVotationService from '@/service/resultatVotationService'
 
 export default {
   name: 'VotationGenericView',

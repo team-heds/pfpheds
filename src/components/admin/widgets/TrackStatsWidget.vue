@@ -88,7 +88,7 @@ import { ref, computed, onMounted } from 'vue'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import ProgressSpinner from 'primevue/progressspinner'
-import { getGlobalStats, getModulesWithRM } from '@/services/adminDashboardService'
+import { getGlobalStats, getModulesWithRM } from '@/service/adminDashboardService'
 
 const loading = ref(true)
 const stats = ref({})

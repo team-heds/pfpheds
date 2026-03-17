@@ -16,7 +16,7 @@
  */
 import { defineStore } from 'pinia'
 import { supabase } from '@/supabase'
-import votesBackendService from './votesBackendService'
+import votesBackendService from '@/service/votesBackendService'
 
 export const useVotesStore = defineStore('votes', {
   state: () => ({

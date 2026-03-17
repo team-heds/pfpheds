@@ -462,7 +462,7 @@ import { supabase } from '@/supabase'
 import { getAllStudents } from '@/service/studentsService'
 import { usePlacesStore } from '@/stores/placesStore'
 import { useInstitutionsStore } from '@/stores/institutionsStore'
-import votesBackendService from '@/stores/votesBackendService'
+import votesBackendService from '@/service/votesBackendService'
 
 const toast = useToast()
 const loading = ref(false)

@@ -410,7 +410,7 @@ import Tag from 'primevue/tag';
 import Dropdown from 'primevue/dropdown';
 import planningService from '@/service/planningService';
 import academicYearService from '@/service/academicYearService';
-import { getMyModules, getModulesTeachers, calculateStats } from '@/services/rmDashboardService';
+import { getMyModules, getModulesTeachers, calculateStats } from '@/service/rmDashboardService';
 import { useModules } from '@/composables/useModules';
 import { supabase } from '@/supabase';
 

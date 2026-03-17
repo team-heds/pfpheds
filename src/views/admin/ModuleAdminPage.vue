@@ -174,7 +174,7 @@ import { useToast } from 'primevue/usetoast'
 import modulesService from '@/service/modulesService'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import PageHeader from '@/components/admin/common/PageHeader.vue'
-import { getSITeachers } from '@/services/academicKpiService'
+import { getSITeachers } from '@/service/academicKpiService'
 
 const toast = useToast()
 

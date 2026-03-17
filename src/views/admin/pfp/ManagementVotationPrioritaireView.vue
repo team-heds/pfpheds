@@ -462,7 +462,7 @@ import { usePlacesStore } from '@/stores/placesStore'
 import { useInstitutionsStore } from '@/stores/institutionsStore'
 import { useUserStore } from '@/stores/userStore'
 import votationSessionService from '@/service/votationSessionService'
-import resultatVotationService from '@/stores/resultatVotationService'
+import resultatVotationService from '@/service/resultatVotationService'
 
 const toast = useToast()
 const userStore = useUserStore()

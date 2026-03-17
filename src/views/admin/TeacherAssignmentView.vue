@@ -318,7 +318,7 @@ import Tag from 'primevue/tag'
 import Avatar from 'primevue/avatar'
 import { supabase } from '@/supabase'
 import { useModules } from '@/composables/useModules'
-import { getSITeachers } from '@/services/academicKpiService'
+import { getSITeachers } from '@/service/academicKpiService'
 
 const router = useRouter()
 const authStore = useAuthStore()

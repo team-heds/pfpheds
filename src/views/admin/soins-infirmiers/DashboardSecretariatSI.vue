@@ -310,7 +310,7 @@ import planningService from '@/service/planningService'
 import academicYearService from '@/service/academicYearService'
 import modulesService from '@/service/modulesService'
 import { supabase } from '@/supabase'
-import { getSITeachers } from '@/services/academicKpiService'
+import { getSITeachers } from '@/service/academicKpiService'
 
 const router = useRouter()
 const authStore = useAuthStore()

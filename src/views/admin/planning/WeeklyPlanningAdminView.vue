@@ -607,7 +607,7 @@ import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import PageHeader from '@/components/admin/common/PageHeader.vue'
 import planningService from '@/service/planningService'
 import academicYearService from '@/service/academicYearService'
-import { getSITeachers } from '@/services/academicKpiService'
+import { getSITeachers } from '@/service/academicKpiService'
 import { supabase } from '@/supabase'
 import { useAuthStore } from '@/stores/authStore'
 

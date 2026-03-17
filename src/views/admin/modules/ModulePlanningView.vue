@@ -296,7 +296,7 @@ import {
   saveModuleTimeSlot,
   deleteModuleTimeSlot,
   getAvailableClasses
-} from '@/services/modulePlanningService'
+} from '@/service/modulePlanningService'
 
 const route = useRoute()
 const confirm = useConfirm()

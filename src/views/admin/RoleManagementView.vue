@@ -336,7 +336,7 @@ import {
   assignTrackRole, 
   removeTrackRole, 
   updateModuleRM 
-} from '@/services/adminDashboardService'
+} from '@/service/adminDashboardService'
 
 const confirm = useConfirm()
 const toast = useToast()

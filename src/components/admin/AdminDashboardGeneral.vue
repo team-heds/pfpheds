@@ -259,7 +259,7 @@ import Card from 'primevue/card'
 import Button from 'primevue/button'
 import ButtonGroup from 'primevue/buttongroup'
 import ProgressSpinner from 'primevue/progressspinner'
-import { getAllAdminKpis } from '@/services/adminKpiService'
+import { getAllAdminKpis } from '@/service/adminKpiService'
 
 const router = useRouter()
 

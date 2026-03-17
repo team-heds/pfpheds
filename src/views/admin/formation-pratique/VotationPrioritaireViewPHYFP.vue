@@ -292,7 +292,7 @@ import { getAllStudents } from '@/service/studentsService'
 import { usePlacesStore } from '@/stores/placesStore'
 import { useInstitutionsStore } from '@/stores/institutionsStore'
 import votationSessionService from '@/service/votationSessionService'
-import { resultatVotationService } from '@/stores/resultatVotationService'
+import { resultatVotationService } from '@/service/resultatVotationService'
 
 const toast = useToast()
 const placesStore = usePlacesStore()
