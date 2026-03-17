@@ -232,7 +232,7 @@ export default {
       globalFilterDebounceTimer: null,
       sortOrder: 'asc', // 'asc' pour A-Z, 'desc' pour Z-A
       showCohortColumns: false,
-      classeOptions: ['BA22', 'BA23', 'BA24', 'BA25', 'Non défini'],
+      classeOptions: [],
       pfpCohortOptions: [
         { label: 'Aucun', value: null },
         { label: 'PFP1A', value: 'PFP1A' },
@@ -371,6 +371,13 @@ export default {
         }
         
         this.etudiants = students;
+
+        // Générer dynamiquement les options de classe depuis les données
+        const classSet = new Set();
+        for (const s of students) {
+          classSet.add(s.Classe || 'Non défini');
+        }
+        this.classeOptions = [...classSet].sort();
         
         const loadTime = Math.round(performance.now() - startTime);
         this.debug(`✅ ${this.etudiants.length} étudiants chargés en ${loadTime}ms`);
