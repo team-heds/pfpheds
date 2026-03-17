@@ -275,11 +275,6 @@ export default {
       const filtered = this.etudiants.filter(etudiant => {
         const matchesClass = this.filters['Classe'].value ? this.filters['Classe'].value === etudiant.Classe : true;
 
-        // Filtrage par répondant si l'utilisateur n'est pas admin
-        if (!this.isAdmin && this.currentRepondantName) {
-          if (etudiant.repondant_hes !== this.currentRepondantName) return false;
-        }
-
         const haystack = etudiant.__searchKey || '';
         const matchesSearch = !searchLower ? true : haystack.includes(searchLower);
 
