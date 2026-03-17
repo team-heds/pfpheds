@@ -1123,7 +1123,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import Button from 'primevue/button'
@@ -1140,136 +1140,36 @@ import { getAllStudents } from '@/service/studentsService'
 import { usePlacesStore } from '@/stores/placesStore'
 import { useInstitutionsStore } from '@/stores/institutionsStore'
 import { useUserStore } from '@/stores/userStore'
-import votesBackendService from '@/stores/votesBackendService'
-import resultatVotationService from '@/stores/resultatVotationService'
-import votationSessionService from '@/service/votationSessionService'
+import votesBackendService from '@/service/votesBackendService'
 import Dialog from 'primevue/dialog'
 import ConfirmDialog from 'primevue/confirmdialog'
 import Chips from 'primevue/chips'
 import AutoComplete from 'primevue/autocomplete'
+import { useVotationSession } from '@/composables/useVotationSession'
+import { useVotationConfig } from '@/composables/useVotationConfig'
+import { useVotationExclusions } from '@/composables/useVotationExclusions'
+import { usePfp4Proposals } from '@/composables/usePfp4Proposals'
+import { useVotationAlgorithm } from '@/composables/useVotationAlgorithm'
 
 const toast = useToast()
 const userStore = useUserStore()
 const loading = ref(false)
-const searchQuery = ref('')
-const filterPFP = ref(null)
-const filterYear = ref(null)
-const filterClasse = ref(null)
 
 // ============================================
-// SESSION DE VOTATION
+// COMPOSABLES
 // ============================================
-const currentSession = ref(null)
-const showSessionDialog = ref(false)
-const sessionLoading = ref(false)
+const {
+  filterPFP, filterYear, filterClasse, searchQuery, activeTab,
+  PFP_CONFIG, pfpColorMap, classeOptions, activeConfig, pfpTypes, years,
+  canShowResults, setupClassWatcher, setupFilterWatcher
+} = useVotationConfig()
 
-const sessionIsOpen = computed(() => {
-  return currentSession.value && currentSession.value.status === 'open'
-})
-
-const loadCurrentSession = async () => {
-  if (!filterPFP.value || !filterYear.value) {
-    currentSession.value = null
-    return
-  }
-  try {
-    currentSession.value = await votationSessionService.getActiveSession(filterPFP.value, filterYear.value)
-  } catch (error) {
-    console.error('❌ Erreur chargement session:', error)
-    currentSession.value = null
-  }
-}
-
-const openVotation = async () => {
-  if (!filterClasse.value || !filterPFP.value || !filterYear.value) {
-    toast.add({ severity: 'warn', summary: 'Sélection incomplète', detail: 'Veuillez sélectionner une classe, un PFP et une année', life: 3000 })
-    return
-  }
-  sessionLoading.value = true
-  try {
-    const userId = userStore.user?.id || null
-    const session = await votationSessionService.openSession(
-      filterPFP.value,
-      filterYear.value,
-      filterClasse.value,
-      userId
-    )
-    currentSession.value = session
-    showSessionDialog.value = false
-    if (showHistoryPanel.value) await loadSessionHistory()
-    toast.add({
-      severity: 'success',
-      summary: 'Votation ouverte',
-      detail: `La votation ${filterPFP.value} ${filterYear.value} est maintenant ouverte pour les étudiants ${filterClasse.value}`,
-      life: 5000
-    })
-  } catch (error) {
-    console.error('❌ Erreur ouverture session:', error)
-    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible d\'ouvrir la votation: ' + error.message, life: 5000 })
-  } finally {
-    sessionLoading.value = false
-  }
-}
-
-const closeVotation = async () => {
-  if (!filterPFP.value || !filterYear.value) return
-  sessionLoading.value = true
-  try {
-    await votationSessionService.closeSession(filterPFP.value, filterYear.value)
-    currentSession.value = null
-    if (showHistoryPanel.value) await loadSessionHistory()
-    toast.add({
-      severity: 'info',
-      summary: 'Votation fermée',
-      detail: `La votation ${filterPFP.value} ${filterYear.value} est maintenant fermée`,
-      life: 5000
-    })
-  } catch (error) {
-    console.error('❌ Erreur fermeture session:', error)
-    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de fermer la votation: ' + error.message, life: 5000 })
-  } finally {
-    sessionLoading.value = false
-  }
-}
-// ============================================
-// HISTORIQUE DES SESSIONS
-// ============================================
-const sessionHistory = ref([])
-const showHistoryPanel = ref(false)
-
-const loadSessionHistory = async () => {
-  try {
-    const allSessions = await votationSessionService.fetchAll()
-    // Enrichir avec le nombre de votes pour chaque session
-    const enriched = await Promise.all(allSessions.map(async (session) => {
-      try {
-        const { count } = await supabase
-          .from('student_votes')
-          .select('*', { count: 'exact', head: true })
-          .eq('pfp_type', session.pfp_type)
-          .eq('year', session.year)
-        return { ...session, voteCount: count || 0 }
-      } catch {
-        return { ...session, voteCount: '?' }
-      }
-    }))
-    sessionHistory.value = enriched
-  } catch (error) {
-    console.error('❌ Erreur chargement historique sessions:', error)
-    sessionHistory.value = []
-  }
-}
-
-const formatDuration = (openedAt, closedAt) => {
-  if (!openedAt) return '-'
-  const start = new Date(openedAt)
-  const end = closedAt ? new Date(closedAt) : new Date()
-  const diffMs = end - start
-  const hours = Math.floor(diffMs / 3600000)
-  const minutes = Math.floor((diffMs % 3600000) / 60000)
-  if (hours > 0) return `${hours}h ${minutes}min`
-  return `${minutes}min`
-}
+const {
+  currentSession, showSessionDialog, sessionLoading, sessionIsOpen,
+  sessionHistory, showHistoryPanel,
+  loadCurrentSession, openVotation: _openVotation, closeVotation: _closeVotation,
+  loadSessionHistory, formatDuration
+} = useVotationSession(toast, userStore)
 
 const votationsList = ref([])
 const allStudents = ref([])
@@ -1277,787 +1177,26 @@ const allVotes = ref([])
 const votesAggregation = ref({})
 const placesWithStats = ref([])
 const validatedPlaces = ref([])
-const activeTab = ref(0)
 const placesFullMap = ref(new Map())
 
-// ============================================
-// EXCLUSION MANUELLE D'ÉTUDIANTS
-// ============================================
-const excludedStudentIds = ref([])
-const excludeSearchValue = ref('')
-const excludeFilteredSuggestions = ref([])
-
-const excludedStudentOptions = computed(() => {
-  return allStudents.value.map(s => {
-    const nom = (s.Nom || s.nom || s.family_name || '').toUpperCase()
-    const prenom = s.Prenom || s.prenom || s.forname || ''
-    return {
-      name: `${nom} ${prenom}`.trim() || s.email || 'Inconnu',
-      code: s.id || s.user_id
-    }
-  }).filter(o => o.code).sort((a, b) => a.name.localeCompare(b.name))
-})
-
-const filterExcludeStudents = (event) => {
-  const query = (event.query || '').toLowerCase().trim()
-  const alreadyExcluded = new Set(excludedStudentIds.value)
-  excludeFilteredSuggestions.value = excludedStudentOptions.value
-    .filter(o => !alreadyExcluded.has(o.code))
-    .filter(o => !query || o.name.toLowerCase().includes(query))
-}
-
-const onExcludeStudent = (event) => {
-  const selected = event.value
-  if (selected && selected.code && !excludedStudentIds.value.includes(selected.code)) {
-    excludedStudentIds.value.push(selected.code)
-  }
-  nextTick(() => { excludeSearchValue.value = '' })
-}
-
-const removeExcludedStudent = (uid) => {
-  excludedStudentIds.value = excludedStudentIds.value.filter(id => id !== uid)
-}
-
-const getExcludedStudentName = (uid) => {
-  const opt = excludedStudentOptions.value.find(o => o.code === uid)
-  return opt ? opt.name : uid.substring(0, 8)
-}
-
-const CRITERIA_KEYS = ['MSQ', 'SYSINT', 'NEUROGER', 'AIGU', 'REHAB', 'AMBU', 'FR', 'DE']
-
-const getPlaceCriteria = (placeId) => {
-  if (!placeId || !placesFullMap.value.has(placeId)) return []
-  const place = placesFullMap.value.get(placeId)
-  return CRITERIA_KEYS.filter(key => place[key] === true || place[key] === 'true' || place[key] === 1 || place[key] === '1')
-}
-const placesStore = usePlacesStore()
-const institutionsStore = useInstitutionsStore()
-const algorithmResults = ref([])
-const algorithmStats = ref(null)
-const placesWithAssignments = ref([])
-
-// ============================================
-// PROPOSITIONS PFP4
-// ============================================
-const pfp4Proposals = ref([])
-const pfp4AllPlaces = ref([])
-const pfp4Stats = ref(null)
-const pfp4Loading = ref(false)
-const pfp4Saved = ref(false)
-const pfp4SearchQuery = ref('')
-const pfp4FilterRule = ref(null)
-
-const pfp4RuleLabels = {
-  DE_ONLY: 'Manque DE uniquement',
-  DE_AND_SYSINT: 'Manque DE + SYSINT',
-  SYSINT_ONLY: 'Manque SYSINT uniquement',
-  SYSINT_AND_OTHER: 'Manque SYSINT + autre',
-  OTHER_MISSING: 'Autres critères manquants',
-  ALL_COMPLETE: 'Tous critères validés'
-}
-
-const pfp4RuleSeverity = {
-  DE_ONLY: 'warning',
-  DE_AND_SYSINT: 'danger',
-  SYSINT_ONLY: 'info',
-  SYSINT_AND_OTHER: 'warning',
-  OTHER_MISSING: 'secondary',
-  ALL_COMPLETE: 'success'
-}
-
-const filteredPfp4Proposals = computed(() => {
-  let filtered = [...pfp4Proposals.value]
-  if (pfp4SearchQuery.value && pfp4SearchQuery.value.trim()) {
-    const q = pfp4SearchQuery.value.toLowerCase().trim()
-    filtered = filtered.filter(p => 
-      (p.nom || '').toLowerCase().includes(q) || 
-      (p.prenom || '').toLowerCase().includes(q)
-    )
-  }
-  if (pfp4FilterRule.value) {
-    filtered = filtered.filter(p => p.appliedRule === pfp4FilterRule.value)
-  }
-  return filtered
-})
-
-const generatePfp4Proposals = async () => {
-  if (!filterYear.value || !filterClasse.value) {
-    toast.add({ severity: 'warn', summary: 'Sélection incomplète', detail: 'Veuillez sélectionner une classe et une année', life: 3000 })
-    return
-  }
-  pfp4Loading.value = true
-  pfp4Saved.value = false
-  try {
-    const year = filterYear.value
-    const classe = filterClasse.value
-
-    // ── 1. Charger toutes les données (même approche que VerificationCriteresEtudiants) ──
-    const [allStudentsData, physioResult, assignmentsResult, placesResult] = await Promise.all([
-      getAllStudents(),
-      supabase.from('StudentsPhysio').select('user_id, pfp_valided, sae, cas_particulier'),
-      supabase.from('student_result_vote').select('*').order('year', { ascending: false }),
-      supabase.from('places').select('*')
-    ])
-
-    console.log('══════════════════════════════════════════════')
-    console.log('📦 PFP4 PROPOSALS — Données chargées:')
-    console.log(`   Étudiants (getAllStudents): ${allStudentsData.length}`)
-    console.log(`   StudentsPhysio: ${physioResult.data?.length || 0} ${physioResult.error ? '⚠️ ' + physioResult.error.message : '✅'}`)
-    console.log(`   student_result_vote: ${assignmentsResult.data?.length || 0} ${assignmentsResult.error ? '⚠️ ' + assignmentsResult.error.message : '✅'}`)
-    console.log(`   places: ${placesResult.data?.length || 0} ${placesResult.error ? '⚠️ ' + placesResult.error.message : '✅'}`)
-
-    const allClassStudents = allStudentsData.filter(s => (s.Classe || s.classe || '') === classe)
-    console.log(`   Étudiants ${classe}: ${allClassStudents.length}`)
-
-    // ── 1b. Exclure les étudiants déjà assignés en PFP4 et ceux exclus manuellement ──
-    const pfp4AssignedUserIds = new Set()
-    if (assignmentsResult.data) {
-      assignmentsResult.data.forEach(a => {
-        if (a.pfp_type === 'PFP4' && a.assigned_place_id) {
-          pfp4AssignedUserIds.add(a.user_id)
-        }
-      })
-    }
-    const manuallyExcludedIds = new Set(excludedStudentIds.value || [])
-
-    const classStudents = allClassStudents.filter(s => {
-      const uid = s.id || s.user_id
-      if (pfp4AssignedUserIds.has(uid)) return false
-      if (manuallyExcludedIds.has(uid)) return false
-      // Exclure les profils fantômes (pas de nom = pas un vrai étudiant)
-      const nom = s.Nom || s.nom || s.family_name || ''
-      if (!nom || nom === 'Nom non disponible') {
-        console.log(`   👻 Ghost exclu: user_id=${uid} (pas de nom)`)
-        return false
-      }
-      return true
-    })
-
-    const excludedAssigned = allClassStudents.filter(s => pfp4AssignedUserIds.has(s.id || s.user_id))
-    const excludedManual = allClassStudents.filter(s => manuallyExcludedIds.has(s.id || s.user_id) && !pfp4AssignedUserIds.has(s.id || s.user_id))
-    console.log(`   ❌ Exclus (déjà assignés PFP4): ${excludedAssigned.length}`)
-    excludedAssigned.forEach(s => console.log(`      - ${s.Nom || s.nom} ${s.Prenom || s.prenom}`))
-    console.log(`   ❌ Exclus (manuellement): ${excludedManual.length}`)
-    excludedManual.forEach(s => console.log(`      - ${s.Nom || s.nom} ${s.Prenom || s.prenom}`))
-    console.log(`   → ${classStudents.length} étudiants restants pour la génération`)
-
-    // ── 2. Map des places (avec critères) ──
-    const placesMap = new Map()
-    ;(placesResult.data || []).forEach(p => {
-      placesMap.set(p.PlaceId, {
-        name: p.NomPlace,
-        institution: p.InstitutionName || '',
-        MSQ: !!p.MSQ, SYSINT: !!p.SYSINT, NEUROGER: !!p.NEUROGER,
-        AIGU: !!p.AIGU, REHAB: !!p.REHAB, AMBU: !!p.AMBU, FR: !!p.FR, DE: !!p.DE,
-        _raw: p
-      })
-    })
-
-    // ── 3. Helper extractCrit (même logique que VerificationCriteresEtudiants) ──
-    const extractCrit = (obj) => {
-      if (!obj) return {}
-      const r = {}
-      CRITERIA_KEYS.forEach(c => { r[c] = !!(obj[c] || obj[c.toLowerCase()]) })
-      return r
-    }
-
-    const parsePfpValided = (pfpVal) => {
-      if (!pfpVal) return []
-      if (Array.isArray(pfpVal)) return pfpVal
-      if (typeof pfpVal === 'string') {
-        try { const p = JSON.parse(pfpVal); return Array.isArray(p) ? p : [] } catch (e) { return [] }
-      }
-      if (typeof pfpVal === 'object') return Object.values(pfpVal)
-      return []
-    }
-
-    // ── 4. Construire criteriaMap depuis pfp_valided ──
-    const criteriaMap = new Map()
-    const stagesMap = new Map()
-    if (physioResult.data) {
-      physioResult.data.forEach(physio => {
-        if (!physio.pfp_valided) return
-        const scores = {}
-        CRITERIA_KEYS.forEach(k => { scores[k] = 0 })
-        const pfpArray = parsePfpValided(physio.pfp_valided)
-        pfpArray.forEach(place => {
-          const crit = extractCrit(place)
-          CRITERIA_KEYS.forEach(c => { if (crit[c]) scores[c]++ })
-        })
-        criteriaMap.set(physio.user_id, { scores, totalStages: pfpArray.length, sae: !!physio.sae, casParticulier: !!physio.cas_particulier })
-        const enrichedStages = pfpArray.map((stage, idx) => ({
-          _placeId: stage.PlaceId || stage.ID_PFP || stage.id_pfp || null,
-          pfp_type: stage.pfp_type || stage.pfpLevel || ['PFP1', 'PFP2', 'PFP3', 'PFP4'][idx] || null
-        }))
-        stagesMap.set(physio.user_id, enrichedStages)
-      })
-    }
-    console.log(`   Critères depuis pfp_valided: ${criteriaMap.size} étudiants`)
-
-    // DEBUG BONVIN: afficher les données brutes
-    if (physioResult.data) {
-      const bonvinPhysio = physioResult.data.filter(p => {
-        const student = classStudents.find(s => s.id === p.user_id && (s.Nom || '').toLowerCase().includes('bonvin'))
-        return !!student
-      })
-      console.log(`🔍 DEBUG BONVIN — StudentsPhysio entries: ${bonvinPhysio.length}`)
-      bonvinPhysio.forEach(p => {
-        const pfpArray = parsePfpValided(p.pfp_valided)
-        console.log(`   pfp_valided raw type: ${typeof p.pfp_valided}, isArray: ${Array.isArray(p.pfp_valided)}`)
-        console.log(`   pfp_valided parsed: ${pfpArray.length} stages`)
-        pfpArray.forEach((stage, i) => {
-          const crit = extractCrit(stage)
-          const activeCrit = CRITERIA_KEYS.filter(c => crit[c])
-          console.log(`   Stage ${i}: PlaceId=${stage.PlaceId || stage.ID_PFP || 'N/A'} pfp_type=${stage.pfp_type || stage.pfpLevel || 'N/A'} critères=[${activeCrit.join(',')}]`)
-        })
-      })
-    }
-
-    // ── 5. Enrichir avec student_result_vote (anti-doublon comme VerificationCriteresEtudiants) ──
-    const assignedPlacesMap = new Map()
-    if (assignmentsResult.data) {
-      assignmentsResult.data.forEach(a => {
-        if (a.assigned_place_id) {
-          if (!assignedPlacesMap.has(a.user_id)) assignedPlacesMap.set(a.user_id, new Set())
-          assignedPlacesMap.get(a.user_id).add(a.assigned_place_id)
-        }
-
-        if (a.pfp_validee && a.assigned_place_id) {
-          const placeInfo = placesMap.get(a.assigned_place_id)
-          if (placeInfo) {
-            const existingStages = stagesMap.get(a.user_id) || []
-            const alreadyExists = existingStages.some(s =>
-              (s._placeId && s._placeId === a.assigned_place_id) ||
-              (s.pfp_type && s.pfp_type === a.pfp_type)
-            )
-            if (!alreadyExists) {
-              const existing = criteriaMap.get(a.user_id) || { scores: Object.fromEntries(CRITERIA_KEYS.map(k => [k, 0])), totalStages: 0, sae: false, casParticulier: false }
-              CRITERIA_KEYS.forEach(c => { if (placeInfo[c]) existing.scores[c]++ })
-              existing.totalStages++
-              criteriaMap.set(a.user_id, existing)
-            }
-          }
-        }
-      })
-    }
-    console.log(`   Critères enrichis (+ student_result_vote): ${criteriaMap.size} étudiants`)
-    console.log(`   Places assignées trackées: ${assignedPlacesMap.size} étudiants`)
-
-    if (assignmentsResult.data?.length > 0) {
-      const sample = assignmentsResult.data.slice(0, 5)
-      sample.forEach(a => console.log(`   [srv] user=${a.user_id?.substring(0,8)} pfp=${a.pfp_type} place=${a.assigned_place_id?.substring(0,15)} validee=${a.pfp_validee}(${typeof a.pfp_validee})`))
-    }
-
-    // DEBUG BONVIN: afficher les assignations
-    if (assignmentsResult.data) {
-      const bonvinStudentIds = new Set(classStudents.filter(s => (s.Nom || '').toLowerCase().includes('bonvin')).map(s => s.id))
-      const bonvinAssignments = assignmentsResult.data.filter(a => bonvinStudentIds.has(a.user_id))
-      console.log(`🔍 DEBUG BONVIN — student_result_vote entries: ${bonvinAssignments.length}`)
-      bonvinAssignments.forEach(a => {
-        const placeInfo = placesMap.get(a.assigned_place_id)
-        const placeCrit = placeInfo ? CRITERIA_KEYS.filter(c => placeInfo[c]) : []
-        console.log(`   pfp=${a.pfp_type} place=${a.assigned_place_name || a.assigned_place_id?.substring(0,15)} validee=${a.pfp_validee}(${typeof a.pfp_validee}) critères_place=[${placeCrit.join(',')}]`)
-      })
-      bonvinStudentIds.forEach(uid => {
-        const crit = criteriaMap.get(uid)
-        const assigned = assignedPlacesMap.get(uid)
-        console.log(`🔍 DEBUG BONVIN — criteriaMap pour ${uid.substring(0,8)}: ${crit ? JSON.stringify(crit.scores) : 'NON TROUVÉ'}`)
-        console.log(`🔍 DEBUG BONVIN — assignedPlaces: ${assigned ? [...assigned].join(', ') : 'aucune'}`)
-      })
-    }
-
-    // ── 6a. Compter les assignations PFP4 existantes par place ──
-    const pfp4AssignCountByPlace = new Map() // placeId → nombre d'étudiants assignés en PFP4
-    if (assignmentsResult.data) {
-      assignmentsResult.data.forEach(a => {
-        if (a.pfp_type === 'PFP4' && a.assigned_place_id) {
-          pfp4AssignCountByPlace.set(a.assigned_place_id, (pfp4AssignCountByPlace.get(a.assigned_place_id) || 0) + 1)
-        }
-      })
-    }
-    console.log(`   Places PFP4 déjà assignées: ${pfp4AssignCountByPlace.size} places distinctes`)
-
-    // ── 6b. Places PFP4 depuis pfp4_proposition, en excluant les places pleines ──
-    const allPlaces = placesResult.data || []
-    // Helper: lire la capacité — si la clé year existe, l'utiliser (même si "0").
-    // Ne fallback sur default QUE si la clé year n'existe pas du tout.
-    const getCapacity = (propData) => {
-      if (propData.hasOwnProperty(year) && propData[year] !== '' && propData[year] !== null && propData[year] !== undefined) {
-        return parseInt(propData[year]) || 0
-      }
-      const defVal = parseInt(propData['default'] || '0')
-      return !isNaN(defVal) ? defVal : 0
-    }
-    const allPfp4Places = allPlaces.filter(place => {
-      const propData = place.pfp4_proposition
-      if (!propData) return false
-      const capacity = getCapacity(propData)
-      if (isNaN(capacity) || capacity < 1) return false
-      const assignedCount = pfp4AssignCountByPlace.get(place.PlaceId) || 0
-      if (assignedCount >= capacity) return false
-      return true
-    }).map(place => {
-      const capacity = getCapacity(place.pfp4_proposition)
-      const assignedCount = pfp4AssignCountByPlace.get(place.PlaceId) || 0
-      return {
-        PlaceId: place.PlaceId,
-        NomPlace: place.NomPlace,
-        InstitutionId: place.InstitutionId,
-        InstitutionName: place.InstitutionName || '',
-        Capacity: capacity,
-        RemainingSeats: capacity - assignedCount,
-        MSQ: !!place.MSQ, SYSINT: !!place.SYSINT, NEUROGER: !!place.NEUROGER,
-        AIGU: !!place.AIGU, REHAB: !!place.REHAB, AMBU: !!place.AMBU,
-        FR: !!place.FR, DE: !!place.DE,
-        criteria: CRITERIA_KEYS.filter(c => !!place[c])
-      }
-    })
-    const excludedFullPlaces = allPlaces.filter(p => {
-      const propData = p.pfp4_proposition
-      if (!propData) return false
-      const cap = getCapacity(propData)
-      const assigned = pfp4AssignCountByPlace.get(p.PlaceId) || 0
-      return cap >= 1 && assigned >= cap
-    })
-    console.log(`   Places PFP4 (pfp4_proposition): ${allPfp4Places.length} disponibles (${excludedFullPlaces.length} pleines exclues)`)
-    excludedFullPlaces.forEach(p => console.log(`   ❌ Pleine: ${p.NomPlace} (${p.InstitutionName}) — ${pfp4AssignCountByPlace.get(p.PlaceId)}/${getCapacity(p.pfp4_proposition)} assignées`))
-    console.log(`   Places DE: ${allPfp4Places.filter(p => p.DE).length}, Places SYSINT: ${allPfp4Places.filter(p => p.SYSINT).length}`)
-    console.log('══════════════════════════════════════════════')
-
-    // ── 7. Appliquer les règles de filtrage PFP4 ──
-    const proposals = []
-    for (const student of classStudents) {
-      const userId = student.id
-      const studentCrit = criteriaMap.get(userId)
-      const scores = studentCrit ? { ...studentCrit.scores } : Object.fromEntries(CRITERIA_KEYS.map(k => [k, 0]))
-      const missingCriteria = CRITERIA_KEYS.filter(c => scores[c] === 0)
-      const missingDE = missingCriteria.includes('DE')
-      const missingSYSINT = missingCriteria.includes('SYSINT')
-      const otherMissing = missingCriteria.filter(c => c !== 'DE' && c !== 'SYSINT')
-
-      const studentAssignedPlaces = assignedPlacesMap.get(userId) || new Set()
-
-      // Helper : compte combien de critères manquants une place couvre
-      const countMissingCovered = (place, missing) => missing.filter(c => place[c]).length
-
-      let proposedPlaces = []
-      let appliedRule = ''
-      const MIN_PLACES = 5
-
-      // Toutes les places disponibles (non assignées à cet étudiant)
-      const availablePlaces = allPfp4Places.filter(p => !studentAssignedPlaces.has(p.PlaceId))
-      const excludedCount = allPfp4Places.length - availablePlaces.length
-
-      if (missingDE) {
-        // ═══ DE MANQUANT : UNIQUEMENT PLACES DE (obligatoire pour diplôme) ═══
-        // Toutes les places DE disponibles, triées par nb de critères manquants couverts
-        proposedPlaces = availablePlaces
-          .filter(p => p.DE)
-          .sort((a, b) => countMissingCovered(b, missingCriteria) - countMissingCovered(a, missingCriteria))
-        appliedRule = 'DE_MISSING'
-        // Pas de minimum 5 pour DE : on ne propose JAMAIS de places FR
-
-      } else if (missingCriteria.length > 0) {
-        // ═══ DE OK, CRITÈRES MANQUANTS : maximiser la couverture ═══
-        // Prendre toutes les places qui couvrent au moins 1 critère manquant
-        proposedPlaces = availablePlaces
-          .filter(p => missingCriteria.some(c => p[c]))
-          .sort((a, b) => countMissingCovered(b, missingCriteria) - countMissingCovered(a, missingCriteria))
-        appliedRule = missingSYSINT ? (otherMissing.length > 0 ? 'SYSINT_AND_OTHER' : 'SYSINT_ONLY') : 'OTHER_MISSING'
-
-        // Minimum 5 places : élargir si nécessaire
-        if (proposedPlaces.length < MIN_PLACES) {
-          const currentIds = new Set(proposedPlaces.map(p => p.PlaceId))
-          const rest = availablePlaces.filter(p => !currentIds.has(p.PlaceId))
-          // D'abord ajouter des places SYSINT (critère le moins important)
-          const sysintPlaces = rest.filter(p => p.SYSINT)
-          proposedPlaces.push(...sysintPlaces)
-          appliedRule += '_WIDENED'
-        }
-
-        if (proposedPlaces.length < MIN_PLACES) {
-          const currentIds = new Set(proposedPlaces.map(p => p.PlaceId))
-          const rest = availablePlaces.filter(p => !currentIds.has(p.PlaceId))
-          const needed = MIN_PLACES - proposedPlaces.length
-          proposedPlaces.push(...rest.slice(0, needed))
-        }
-
-      } else {
-        // ═══ TOUT VALIDÉ : toutes les places ═══
-        proposedPlaces = [...availablePlaces]
-        appliedRule = 'ALL_COMPLETE'
-      }
-
-      const displayNom = student.Nom || student.nom || student.family_name || 'Nom non disponible'
-      const displayPrenom = student.Prenom || student.prenom || student.forname || 'Prénom non disponible'
-      const isGhost = displayNom === 'Nom non disponible'
-      console.log(`👤 ${displayNom} ${displayPrenom}${isGhost ? ` [GHOST user_id=${userId}]` : ''} | scores=${JSON.stringify(scores)} | manquants=[${missingCriteria.join(',')}] | règle=${appliedRule} | ${proposedPlaces.length} places${excludedCount > 0 ? ` (-${excludedCount} déjà assignées)` : ''}${!studentCrit ? ' ⚠️ PAS DE CRITÈRES TROUVÉS' : ''}`)
-
-      proposals.push({
-        userId,
-        nom: student.Nom || student.family_name || '',
-        prenom: student.Prenom || student.forname || '',
-        email: student.Email || student.email || '',
-        classe,
-        scores,
-        missingCriteria,
-        appliedRule,
-        sae: studentCrit?.sae || false,
-        casParticulier: studentCrit?.casParticulier || false,
-        proposedPlaceIds: proposedPlaces.map(p => p.PlaceId),
-        proposedPlacesCount: proposedPlaces.length,
-        proposedPlaces: proposedPlaces.map(p => ({
-          PlaceId: p.PlaceId, NomPlace: p.NomPlace, InstitutionName: p.InstitutionName,
-          Capacity: p.Capacity, criteria: p.criteria
-        }))
-      })
-    }
-
-    // ── 8. Places orphelines : jamais proposées à aucun étudiant ──
-    // Ces places ont été sélectionnées dans l'offre (pfp4_proposition) mais ne matchent
-    // les critères manquants de personne. On les ajoute aux étudiants ALL_COMPLETE,
-    // ou à TOUS les étudiants s'il n'y a aucun ALL_COMPLETE.
-    const allProposedPlaceIds = new Set()
-    proposals.forEach(p => (p.proposedPlaceIds || []).forEach(id => allProposedPlaceIds.add(id)))
-    const orphanPlaces = allPfp4Places.filter(p => !allProposedPlaceIds.has(p.PlaceId))
-
-    if (orphanPlaces.length > 0) {
-      console.log(`🔄 ${orphanPlaces.length} places orphelines (jamais proposées):`)
-      orphanPlaces.forEach(p => console.log(`   ${p.NomPlace} (${p.InstitutionName}) critères=[${p.criteria.join(',')}]`))
-
-      const allCompleteStudents = proposals.filter(p => p.appliedRule === 'ALL_COMPLETE')
-      const targets = allCompleteStudents.length > 0 ? allCompleteStudents : proposals
-
-      console.log(`   → Ajout aux ${targets.length} étudiants ${allCompleteStudents.length > 0 ? 'ALL_COMPLETE' : '(tous, aucun ALL_COMPLETE)'}`)
-
-      for (const student of targets) {
-        const studentAssigned = assignedPlacesMap.get(student.userId) || new Set()
-        const currentIds = new Set(student.proposedPlaceIds)
-        let added = 0
-        for (const op of orphanPlaces) {
-          if (!currentIds.has(op.PlaceId) && !studentAssigned.has(op.PlaceId)) {
-            student.proposedPlaceIds.push(op.PlaceId)
-            student.proposedPlaces.push({
-              PlaceId: op.PlaceId, NomPlace: op.NomPlace, InstitutionName: op.InstitutionName,
-              Capacity: op.Capacity, criteria: op.criteria
-            })
-            student.proposedPlacesCount++
-            added++
-          }
-        }
-        if (added > 0) console.log(`   +${added} places pour ${student.nom} ${student.prenom}`)
-      }
-    }
-
-    proposals.sort((a, b) => (a.nom || '').localeCompare(b.nom || ''))
-
-    const ruleStats = {}
-    proposals.forEach(p => { ruleStats[p.appliedRule] = (ruleStats[p.appliedRule] || 0) + 1 })
-
-    pfp4Proposals.value = proposals
-    pfp4AllPlaces.value = allPfp4Places
-    pfp4Stats.value = {
-      totalStudents: proposals.length,
-      totalPfp4Places: allPfp4Places.length,
-      totalCapacity: allPfp4Places.reduce((sum, p) => sum + p.Capacity, 0),
-      averageProposedPlaces: proposals.length > 0 ? Math.round(proposals.reduce((sum, p) => sum + p.proposedPlacesCount, 0) / proposals.length) : 0,
-      ruleDistribution: ruleStats,
-      assignCounts: Object.fromEntries(pfp4AssignCountByPlace)
-    }
-
-    console.log('📊 Distribution des règles:', ruleStats)
-
-    toast.add({
-      severity: 'success',
-      summary: 'Propositions générées',
-      detail: `${proposals.length} étudiants traités, moyenne ${pfp4Stats.value.averageProposedPlaces} places/étudiant`,
-      life: 5000
-    })
-  } catch (error) {
-    console.error('❌ Erreur génération propositions PFP4:', error)
-    toast.add({ severity: 'error', summary: 'Erreur', detail: error.message, life: 5000 })
-  } finally {
-    pfp4Loading.value = false
-  }
-}
-
-const savePfp4Proposals = async () => {
-  if (pfp4Proposals.value.length === 0) return
-  pfp4Loading.value = true
-  try {
-    await resultatVotationService.savePfp4Proposals(filterYear.value, filterClasse.value, pfp4Proposals.value, pfp4Stats.value.assignCounts)
-    pfp4Saved.value = true
-    toast.add({
-      severity: 'success',
-      summary: 'Propositions sauvegardées',
-      detail: `${pfp4Proposals.value.length} propositions sauvegardées. Les étudiants verront uniquement leurs places proposées lors du vote.`,
-      life: 8000
-    })
-  } catch (error) {
-    console.error('❌ Erreur sauvegarde propositions PFP4:', error)
-    toast.add({ severity: 'error', summary: 'Erreur', detail: error.message, life: 5000 })
-  } finally {
-    pfp4Loading.value = false
-  }
-}
-
-// ============================================
-// EXPORT CSV BILAN PFP4
-// ============================================
-const exportPfp4BilanCSV = () => {
-  const BOM = '\uFEFF'
-  const sep = ';'
-  
-  // --- Feuille 1: Étudiants BA23 ---
-  let csvEtudiants = BOM + ['Nom', 'Prénom', 'Email', 'Assigné PFP4', 'Place assignée', 'Institution', 'Rang', 'Nb propositions', 'Statut'].join(sep) + '\n'
-  
-  const classe = filterClasse.value
-  const allClassStudents = allStudents.value
-  const assignedIds = new Set()
-  const assignmentMap = new Map()
-  votationsList.value.forEach(v => {
-    if (v.assignedPlaceId) {
-      assignedIds.add(v.userId)
-      assignmentMap.set(v.userId, v)
-    }
-  })
-  // Also check pfp4Proposals for assigned info
-  pfp4Proposals.value.forEach(p => {
-    if (!assignmentMap.has(p.userId)) {
-      // student in proposals but maybe assigned
-    }
-  })
-  
-  const manualExcluded = new Set(excludedStudentIds.value)
-  const proposalMap = new Map()
-  pfp4Proposals.value.forEach(p => {
-    proposalMap.set(p.userId, p)
-  })
-  
-  const sortedStudents = [...allClassStudents].sort((a, b) => 
-    ((a.Nom || a.nom || '').toUpperCase()).localeCompare((b.Nom || b.nom || '').toUpperCase())
-  )
-  
-  let countAssigned = 0, countExcludedManual = 0, countEligible = 0
-  
-  sortedStudents.forEach(s => {
-    const uid = s.id || s.user_id
-    const nom = (s.Nom || s.nom || s.family_name || '').replace(/;/g, ',')
-    const prenom = (s.Prenom || s.prenom || s.forname || '').replace(/;/g, ',')
-    const email = (s.Mail || s.email || '').replace(/;/g, ',')
-    
-    const votation = votationsList.value.find(v => v.userId === uid)
-    const isAssigned = votation && votation.assignedPlaceId
-    const proposal = proposalMap.get(uid)
-    
-    let statut = 'Éligible votation'
-    let placeName = '', instName = '', rank = '', nbProposals = ''
-    
-    if (isAssigned) {
-      statut = 'Assigné PFP4'
-      placeName = (votation.assignedPlaceName || '').replace(/;/g, ',')
-      instName = (votation.assignedInstitutionName || '').replace(/;/g, ',')
-      rank = votation.assignedRank || ''
-      countAssigned++
-    } else if (manualExcluded.has(uid)) {
-      statut = 'Exclu manuellement'
-      countExcludedManual++
-    } else {
-      countEligible++
-      if (proposal) {
-        nbProposals = proposal.places?.length || proposal.placeIds?.length || ''
-      }
-    }
-    
-    csvEtudiants += [nom, prenom, email, isAssigned ? 'OUI' : 'NON', placeName, instName, rank, nbProposals, statut].join(sep) + '\n'
-  })
-  
-  csvEtudiants += '\n'
-  csvEtudiants += ['TOTAL ' + classe, sortedStudents.length].join(sep) + '\n'
-  csvEtudiants += ['Assignés PFP4', countAssigned].join(sep) + '\n'
-  csvEtudiants += ['Exclus manuellement', countExcludedManual].join(sep) + '\n'
-  csvEtudiants += ['Éligibles votation', countEligible].join(sep) + '\n'
-  
-  // --- Feuille 2: Places PFP4 ---
-  let csvPlaces = BOM + ['Place', 'Institution', 'Capacité 2026', 'Sièges pris', 'Sièges restants', 'Statut', 'MSQ', 'SYSINT', 'NEUROGER', 'AIGU', 'REHAB', 'AMBU', 'FR', 'DE'].join(sep) + '\n'
-  
-  const institutionsStore2 = useInstitutionsStore()
-  const instMap = new Map()
-  if (institutionsStore2.institutions) {
-    institutionsStore2.institutions.forEach(i => instMap.set(i.InstitutionId, i.Name))
-  }
-  
-  // Count assignments per place from votationsList
-  const placeAssignCounts = new Map()
-  votationsList.value.forEach(v => {
-    if (v.assignedPlaceId) {
-      placeAssignCounts.set(v.assignedPlaceId, (placeAssignCounts.get(v.assignedPlaceId) || 0) + 1)
-    }
-  })
-  
-  const getExportCapacity = (propData) => {
-    if (!propData || typeof propData !== 'object') return 0
-    const yr = filterYear.value
-    if (propData.hasOwnProperty(yr) && propData[yr] !== '' && propData[yr] !== null && propData[yr] !== undefined) {
-      return parseInt(propData[yr]) || 0
-    }
-    const defVal = parseInt(propData['default'] || '0')
-    return !isNaN(defVal) ? defVal : 0
-  }
-  const pfp4PlacesList = placesStore.places
-    .filter(p => p.pfp4_proposition && getExportCapacity(p.pfp4_proposition) > 0)
-    .sort((a, b) => (instMap.get(a.InstitutionId) || '').localeCompare(instMap.get(b.InstitutionId) || ''))
-  
-  let totalCap = 0, totalUsed = 0, totalLeft = 0, placesFull = 0, placesOpen = 0
-  const boolStr = (v) => v === true || v === 'true' || v === 1 || v === '1' ? 'X' : ''
-  
-  pfp4PlacesList.forEach(p => {
-    const cap = getExportCapacity(p.pfp4_proposition)
-    const used = placeAssignCounts.get(p.PlaceId) || 0
-    const remaining = Math.max(0, cap - used)
-    totalCap += cap
-    totalUsed += used
-    totalLeft += remaining
-    if (remaining > 0) placesOpen++
-    else placesFull++
-    
-    const nom = (p.NomPlace || '').replace(/;/g, ',')
-    const inst = (instMap.get(p.InstitutionId) || 'N/A').replace(/;/g, ',')
-    const statut = remaining > 0 ? 'Disponible' : 'PLEINE'
-    
-    csvPlaces += [nom, inst, cap, used, remaining, statut, boolStr(p.MSQ), boolStr(p.SYSINT), boolStr(p.NEUROGER), boolStr(p.AIGU), boolStr(p.REHAB), boolStr(p.AMBU), boolStr(p.FR), boolStr(p.DE)].join(sep) + '\n'
-  })
-  
-  csvPlaces += '\n'
-  csvPlaces += ['TOTAL', '', totalCap, totalUsed, totalLeft].join(sep) + '\n'
-  csvPlaces += ['Places pleines', '', placesFull].join(sep) + '\n'
-  csvPlaces += ['Places disponibles', '', placesOpen].join(sep) + '\n'
-  
-  // --- Feuille 3: Bilan ---
-  let csvBilan = BOM + ['Métrique', 'Valeur'].join(sep) + '\n'
-  csvBilan += ['Classe', classe].join(sep) + '\n'
-  csvBilan += ['Année', filterYear.value].join(sep) + '\n'
-  csvBilan += ['Date export', new Date().toLocaleString('fr-CH')].join(sep) + '\n'
-  csvBilan += '\n'
-  csvBilan += ['Étudiants total', sortedStudents.length].join(sep) + '\n'
-  csvBilan += ['Déjà assignés PFP4', countAssigned].join(sep) + '\n'
-  csvBilan += ['Exclus manuellement', countExcludedManual].join(sep) + '\n'
-  csvBilan += ['Éligibles votation', countEligible].join(sep) + '\n'
-  csvBilan += '\n'
-  csvBilan += ['Places PFP4 totales', pfp4PlacesList.length].join(sep) + '\n'
-  csvBilan += ['Sièges totaux', totalCap].join(sep) + '\n'
-  csvBilan += ['Sièges pris', totalUsed].join(sep) + '\n'
-  csvBilan += ['Sièges restants', totalLeft].join(sep) + '\n'
-  csvBilan += ['Places pleines', placesFull].join(sep) + '\n'
-  csvBilan += ['Places disponibles', placesOpen].join(sep) + '\n'
-  csvBilan += '\n'
-  csvBilan += ['Ratio', `${countEligible} étudiants / ${totalLeft} sièges`].join(sep) + '\n'
-  csvBilan += ['Marge', totalLeft >= countEligible ? `+${totalLeft - countEligible} sièges` : `DEFICIT ${countEligible - totalLeft} sièges!`].join(sep) + '\n'
-  
-  // --- Feuille 4: Détail propositions par étudiant ---
-  let csvPropositions = BOM + ['Nom', 'Prénom', 'Règle', 'Critères manquants', 'Place', 'Institution', 'Capacité', 'MSQ', 'SYSINT', 'NEUROGER', 'AIGU', 'REHAB', 'AMBU', 'FR', 'DE'].join(sep) + '\n'
-  
-  const sortedProposals = [...pfp4Proposals.value].sort((a, b) => 
-    (a.nom || '').toUpperCase().localeCompare((b.nom || '').toUpperCase())
-  )
-  
-  sortedProposals.forEach(p => {
-    const nom = (p.nom || '').replace(/;/g, ',')
-    const prenom = (p.prenom || '').replace(/;/g, ',')
-    const regle = p.appliedRule || ''
-    const manquants = (p.missingCriteria || []).join(', ')
-    
-    if (p.proposedPlaces && p.proposedPlaces.length > 0) {
-      p.proposedPlaces.forEach(place => {
-        const placeName = (place.NomPlace || '').replace(/;/g, ',')
-        const instName = (place.InstitutionName || '').replace(/;/g, ',')
-        const cap = place.Capacity || ''
-        const c = place.criteria || {}
-        csvPropositions += [nom, prenom, regle, manquants, placeName, instName, cap, boolStr(c.MSQ), boolStr(c.SYSINT), boolStr(c.NEUROGER), boolStr(c.AIGU), boolStr(c.REHAB), boolStr(c.AMBU), boolStr(c.FR), boolStr(c.DE)].join(sep) + '\n'
-      })
-    } else {
-      csvPropositions += [nom, prenom, regle, manquants, 'AUCUNE PLACE', '', ''].join(sep) + '\n'
-    }
-  })
-
-  // Download files
-  const date = new Date().toISOString().split('T')[0]
-  const downloadCSV = (content, filename) => {
-    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    link.href = URL.createObjectURL(blob)
-    link.download = filename
-    link.click()
-    URL.revokeObjectURL(link.href)
-  }
-  
-  downloadCSV(csvBilan, `PFP4_Bilan_${classe}_${date}.csv`)
-  setTimeout(() => downloadCSV(csvEtudiants, `PFP4_Etudiants_${classe}_${date}.csv`), 200)
-  setTimeout(() => downloadCSV(csvPlaces, `PFP4_Places_${date}.csv`), 400)
-  setTimeout(() => downloadCSV(csvPropositions, `PFP4_Propositions_${classe}_${date}.csv`), 600)
-  
-  toast.add({ severity: 'success', summary: 'Export CSV', detail: '4 fichiers téléchargés', life: 3000 })
-}
-
-// ============================================
-// CONFIGURATION DYNAMIQUE - TOUTES LES CLASSES
-// ============================================
-// 3 années d'études :
-//   1ère année → PFP1A, PFP1B
-//   2ème année → PFP2
-//   3ème année → PFP3, PFP4
-// Les classes BA changent chaque année : BA{année d'entrée}
-// Ex: en 2025-2026 → 1ère=BA25, 2ème=BA24, 3ème=BA23
-//     en 2026-2027 → 1ère=BA26, 2ème=BA25, 3ème=BA24
-
-const currentAcademicYear = new Date().getMonth() >= 8
-  ? new Date().getFullYear()   // Sept-Déc → année en cours
-  : new Date().getFullYear() - 1 // Jan-Août → année précédente
-
-const academicYearShort = currentAcademicYear % 100 // ex: 25
-
-const buildPfpConfig = () => {
-  const ba1 = `BA${academicYearShort}`      // 1ère année
-  const ba2 = `BA${academicYearShort - 1}`  // 2ème année
-  const ba3 = `BA${academicYearShort - 2}`  // 3ème année
-  const pfpYear = `${currentAcademicYear + 1}` // ex: '2026' pour 2025-2026
-
-  return {
-    [ba1]: { label: `${ba1} (1ère année)`, pfps: ['PFP1A', 'PFP1B'], years: [pfpYear] },
-    [ba2]: { label: `${ba2} (2ème année)`, pfps: ['PFP2'], years: [pfpYear] },
-    [ba3]: { label: `${ba3} (3ème année)`, pfps: ['PFP3', 'PFP4'], years: [pfpYear] }
-  }
-}
-
-const PFP_CONFIG = buildPfpConfig()
-
-const pfpColorMap = {
-  PFP1A: '#8B5CF6',
-  PFP1B: '#06B6D4',
-  PFP2: '#6366F1',
-  PFP3: '#EC4899',
-  PFP4: '#F59E0B'
-}
-
-const classeOptions = Object.keys(PFP_CONFIG).map(key => ({
-  label: PFP_CONFIG[key].label,
-  value: key
-}))
-
-const activeConfig = computed(() => {
-  if (!filterClasse.value) return null
-  return PFP_CONFIG[filterClasse.value] || null
-})
-
-const pfpTypes = computed(() => {
-  if (!activeConfig.value) return []
-  return activeConfig.value.pfps.map(p => ({ label: p, value: p }))
-})
-
-const years = computed(() => {
-  if (!activeConfig.value) return []
-  return activeConfig.value.years
-})
+const {
+  excludedStudentIds, excludeSearchValue, excludeFilteredSuggestions,
+  excludedStudentOptions, filterExcludeStudents, onExcludeStudent,
+  removeExcludedStudent, getExcludedStudentName, resetExclusions
+} = useVotationExclusions(allStudents)
+
+const {
+  pfp4Proposals, pfp4AllPlaces, pfp4Stats, pfp4Loading, pfp4Saved,
+  pfp4SearchQuery, pfp4FilterRule, pfp4RuleLabels, pfp4RuleSeverity,
+  filteredPfp4Proposals, generatePfp4Proposals: _generatePfp4Proposals,
+  savePfp4Proposals: _savePfp4Proposals, exportPfp4BilanCSV: _exportPfp4BilanCSV,
+  resetPfp4, CRITERIA_KEYS
+} = usePfp4Proposals(toast, excludedStudentIds, votationsList)
+
+const {
+  algorithmResults, algorithmStats, placesWithAssignments, algorithmLoading,
+  startAlgorithm: _startAlgorithm, resetAlgorithm
+} = useVotationAlgorithm(toast)
 
 const stats = ref({
   total: 0,
@@ -2066,69 +1205,19 @@ const stats = ref({
   incomplete: 0
 })
 
-// Computed property pour vérifier si on peut afficher les résultats
-const canShowResults = computed(() => {
-  return filterClasse.value && filterYear.value && filterPFP.value
-})
-
 // Computed: places validées pour le PFP/année sélectionnés
 const computedValidatedPlaces = computed(() => {
   if (!filterPFP.value || !filterYear.value) return []
   return validatedPlaces.value
 })
 
-// Watcher: quand la classe change, reset PFP et année, auto-sélectionner si un seul choix
-watch(filterClasse, (newVal) => {
-  filterPFP.value = null
-  filterYear.value = null
-  algorithmResults.value = []
-  algorithmStats.value = null
-  placesWithAssignments.value = []
-  votationsList.value = []
-  validatedPlaces.value = []
-  excludedStudentIds.value = []
-
-  if (newVal && PFP_CONFIG[newVal]) {
-    const config = PFP_CONFIG[newVal]
-    // Auto-sélectionner l'année si une seule
-    if (config.years.length === 1) {
-      filterYear.value = config.years[0]
-    }
-    // Auto-sélectionner le PFP si un seul
-    if (config.pfps.length === 1) {
-      filterPFP.value = config.pfps[0]
-    }
-  }
-})
-
-// Watcher: quand PFP ou année change, charger les places validées, la session et les données
-watch([filterPFP, filterYear], async ([pfp, year]) => {
-  if (pfp && year && filterClasse.value) {
-    await loadCurrentSession()
-    await loadValidatedPlaces()
-    await loadData()
-  }
-})
-
 // Computed property pour filtrer les votations
 const filteredVotationsList = computed(() => {
-  // Si année et PFP ne sont pas sélectionnés, ne rien afficher
-  if (!canShowResults.value) {
-    return []
-  }
-
+  if (!canShowResults.value) return []
   let filtered = votationsList.value
-
-  // Filtre OBLIGATOIRE: uniquement les votations avec des choix (nbChoix > 0)
   filtered = filtered.filter(v => v.nbChoix > 0)
-
-  // Filtre par PFP (obligatoire)
   filtered = filtered.filter(v => v.pfpType === filterPFP.value)
-
-  // Filtre par année (obligatoire)
   filtered = filtered.filter(v => v.year === filterYear.value)
-
-  // Filtre par recherche
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
     filtered = filtered.filter(v => 
@@ -2137,57 +1226,79 @@ const filteredVotationsList = computed(() => {
       v.classe.toLowerCase().includes(query)
     )
   }
-
   return filtered
 })
 
-// Computed property pour filtrer les places par PFP sélectionné en haut
+// Computed property pour filtrer les places par PFP sélectionné
 const filteredPlacesByPFP = computed(() => {
-  if (!filterPFP.value) {
-    return placesWithStats.value
-  }
-  
+  if (!filterPFP.value) return placesWithStats.value
   return placesWithStats.value.filter(place => {
     const hasVotesForPFP = allVotes.value.some(vote => {
       if (vote.pfp_type !== filterPFP.value) return false
-      
       let choices = []
       if (typeof vote.choices === 'string') {
-        try {
-          choices = JSON.parse(vote.choices)
-        } catch (e) {
-          return false
-        }
+        try { choices = JSON.parse(vote.choices) } catch (e) { return false }
       } else if (Array.isArray(vote.choices)) {
         choices = vote.choices
       }
-      
       return choices.some(choice => choice.placeId === place.PlaceId)
     })
-    
     return hasVotesForPFP
   })
 })
 
+// Wrapper functions to pass current reactive values
+const openVotation = () => _openVotation(
+  filterClasse.value, filterPFP.value, filterYear.value,
+  computedValidatedPlaces.value.length,
+  computedValidatedPlaces.value.reduce((s, p) => s + p.Capacity, 0)
+)
+const closeVotation = () => _closeVotation(filterPFP.value, filterYear.value)
+const generatePfp4Proposals = () => _generatePfp4Proposals(filterYear.value, filterClasse.value)
+const savePfp4Proposals = () => _savePfp4Proposals(filterYear.value, filterClasse.value)
+const exportPfp4BilanCSV = () => _exportPfp4BilanCSV(filterYear.value, filterClasse.value, allStudents.value)
+const startAlgorithm = () => _startAlgorithm(
+  filterPFP.value, filterYear.value, filterClasse.value,
+  canShowResults.value, filteredVotationsList.value,
+  excludedStudentIds.value, loadData
+)
+
+const getPlaceCriteria = (placeId) => {
+  if (!placeId || !placesFullMap.value.has(placeId)) return []
+  const place = placesFullMap.value.get(placeId)
+  return CRITERIA_KEYS.filter(key => place[key] === true || place[key] === 'true' || place[key] === 1 || place[key] === '1')
+}
+const placesStore = usePlacesStore()
+const institutionsStore = useInstitutionsStore()
+
+// ============================================
+// WATCHERS
+// ============================================
+setupClassWatcher((newVal) => {
+  resetAlgorithm()
+  votationsList.value = []
+  validatedPlaces.value = []
+  resetExclusions()
+})
+
+setupFilterWatcher(async (pfp, year) => {
+  await loadCurrentSession(pfp, year)
+  await loadValidatedPlaces()
+  await loadData()
+})
+
+// ============================================
+// HELPERS
+// ============================================
 const getStatusSeverity = (status) => {
-  const severities = {
-    'Complet': 'success',
-    'Incomplet': 'warning',
-    'Non voté': 'danger'
-  }
+  const severities = { 'Complet': 'success', 'Incomplet': 'warning', 'Non voté': 'danger' }
   return severities[status] || 'secondary'
 }
 
 const formatDate = (dateString) => {
   if (!dateString) return '-'
   const date = new Date(dateString)
-  return date.toLocaleDateString('fr-CH', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
+  return date.toLocaleDateString('fr-CH', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
 const sortAlphabetically = () => {
@@ -2198,404 +1309,13 @@ const sortAlphabetically = () => {
   })
 }
 
-const startAlgorithm = async () => {
-  // eslint-disable-next-line no-constant-condition
-  if ("a" === "a") {
-    toast.add({
-      severity: 'warning',
-      summary: 'Stop',
-      detail: 'Refais pas un algo',
-      life: 3000
-    })
-    return
-  }
-
-  if (!canShowResults.value) {
-    toast.add({
-      severity: 'warning',
-      summary: 'Sélection incomplète',
-      detail: 'Veuillez sélectionner une année et un PFP',
-      life: 3000
-    })
-    return
-  }
-
-  if (filteredVotationsList.value.length === 0) {
-    toast.add({
-      severity: 'warning',
-      summary: 'Aucun étudiant',
-      detail: 'Aucun étudiant avec des choix à traiter',
-      life: 3000
-    })
-    return
-  }
-
-  loading.value = true
-
-  try {
-    console.log('🚀 Démarrage de l\'algorithme d\'attribution')
-    console.log('Configuration:', {
-      year: filterYear.value,
-      pfp: filterPFP.value,
-      studentsCount: filteredVotationsList.value.length
-    })
-
-    toast.add({
-      severity: 'info',
-      summary: 'Algorithme en cours',
-      detail: `Traitement de ${filteredVotationsList.value.length} étudiants ${filterClasse.value}...`,
-      life: 5000
-    })
-
-    // ══════════════════════════════════════════════════════════════════
-    // PRIORITY SCORE v2.0 — Calcul basé sur critères métier
-    // Sources: StudentsPhysio.pfp_valided + student_result_vote (stages validés)
-    // ══════════════════════════════════════════════════════════════════
-
-    // Source 1: StudentsPhysio.pfp_valided
-    const { data: physioData } = await supabase
-      .from('StudentsPhysio')
-      .select('user_id, pfp_valided, sae, cas_particulier')
-
-    // Source 2: student_result_vote (stages validés = pfp_validee true)
-    const { data: validatedAssignments } = await supabase
-      .from('student_result_vote')
-      .select('user_id, pfp_type, assigned_place_id, pfp_validee')
-
-    // Charger les places pour résoudre les critères des stages validés
-    await placesStore.fetchPlaces()
-    const placesLookupForScore = new Map()
-    placesStore.places.forEach(p => placesLookupForScore.set(p.PlaceId, p))
-
-    // Construire un map userId → critères validés + places déjà faites (fusion des 2 sources)
-    const studentCriteriaMap = new Map()
-    const studentDonePlaceIds = new Map() // userId → Set<PlaceId>
-
-    // Source 1: pfp_valided
-    if (physioData) {
-      physioData.forEach(physio => {
-        const validatedCriteria = { MSQ: 0, SYSINT: 0, NEUROGER: 0, AIGU: 0, REHAB: 0, AMBU: 0, FR: 0, DE: 0 }
-        const donePlaces = new Set()
-        let pfpArray = []
-        if (physio.pfp_valided) {
-          try {
-            pfpArray = typeof physio.pfp_valided === 'string' ? JSON.parse(physio.pfp_valided) : physio.pfp_valided
-            if (!Array.isArray(pfpArray)) pfpArray = Object.values(pfpArray)
-          } catch (e) { pfpArray = [] }
-        }
-        pfpArray.forEach(stage => {
-          CRITERIA_KEYS.forEach(c => {
-            if (stage[c] === true || stage[c] === 'true' || stage[c] === 1 || stage[c.toLowerCase()] === true) {
-              validatedCriteria[c]++
-            }
-          })
-          const placeId = stage.PlaceId || stage.ID_PFP || stage.id_pfp
-          if (placeId) donePlaces.add(placeId)
-        })
-        studentCriteriaMap.set(physio.user_id, {
-          criteria: validatedCriteria,
-          sae: !!physio.sae,
-          casParticulier: !!physio.cas_particulier,
-          stagesCount: pfpArray.length
-        })
-        studentDonePlaceIds.set(physio.user_id, donePlaces)
-      })
-    }
-
-    // Source 2: enrichir avec student_result_vote (stages validés)
-    if (validatedAssignments) {
-      validatedAssignments.forEach(a => {
-        // Track done PlaceIds (toutes les assignations, pas seulement validées)
-        if (a.assigned_place_id) {
-          if (!studentDonePlaceIds.has(a.user_id)) studentDonePlaceIds.set(a.user_id, new Set())
-          studentDonePlaceIds.get(a.user_id).add(a.assigned_place_id)
-        }
-        if (a.pfp_validee && a.assigned_place_id) {
-          const placeInfo = placesLookupForScore.get(a.assigned_place_id)
-          if (placeInfo) {
-            const existing = studentCriteriaMap.get(a.user_id) || {
-              criteria: Object.fromEntries(CRITERIA_KEYS.map(k => [k, 0])),
-              sae: false, casParticulier: false, stagesCount: 0
-            }
-            CRITERIA_KEYS.forEach(c => {
-              if (placeInfo[c] === true || placeInfo[c] === 'true' || placeInfo[c] === 1) {
-                existing.criteria[c]++
-              }
-            })
-            studentCriteriaMap.set(a.user_id, existing)
-          }
-        }
-      })
-    }
-
-    console.log(`📊 Critères chargés pour ${studentCriteriaMap.size} étudiants (pfp_valided + student_result_vote)`)
-
-    // ══════════════════════════════════════════════════════════════════
-    // computePriorityScore v2.0
-    //
-    // Barème (max ~100 pts):
-    //   A. Critères manquants globaux   : (missingCount / 8) * 40    → 0–40 pts
-    //   B. Critères critiques manquants  : DE manquant +15, SYSINT +10 → 0–25 pts
-    //   C. Bonus SAE                     : +12 pts
-    //   D. Bonus cas particulier         : +8 pts
-    //   E. Pondération PFP               : PFP4 ×1.15, PFP3 ×1.05    → multiplicateur
-    //   F. Tiebreaker aléatoire          : 0–1 pt (départager ex-aequo)
-    //
-    // Principe: plus le score est élevé, plus l'étudiant est prioritaire.
-    // Un étudiant avec beaucoup de critères manquants et SAE sera traité en premier.
-    // ══════════════════════════════════════════════════════════════════
-    const currentPfp = filterPFP.value // PFP1, PFP2, PFP3, PFP4
-
-    const computePriorityScore = (userId) => {
-      const profile = studentCriteriaMap.get(userId)
-      if (!profile) {
-        console.warn(`   ⚠️ Pas de profil pour ${userId} → score minimal`)
-        return Math.round(Math.random() * 100) / 100 // 0-1 pt uniquement
-      }
-
-      // A. Critères manquants globaux (0-40 pts)
-      const missingCriteria = CRITERIA_KEYS.filter(c => profile.criteria[c] === 0)
-      const missingCount = missingCriteria.length
-      const missingGlobalScore = (missingCount / CRITERIA_KEYS.length) * 40
-
-      // B. Bonus critères critiques (DE = très rare/obligatoire, SYSINT = rare)
-      const bonusDE = profile.criteria.DE === 0 ? 15 : 0
-      const bonusSYSINT = profile.criteria.SYSINT === 0 ? 10 : 0
-
-      // C. Bonus SAE (situation d'apprentissage exceptionnelle)
-      const bonusSae = profile.sae ? 12 : 0
-
-      // D. Bonus cas particulier
-      const bonusCas = profile.casParticulier ? 8 : 0
-
-      // E. Multiplicateur PFP (derniers PFP = dernière chance pour compléter les critères)
-      let pfpMultiplier = 1.0
-      if (currentPfp === 'PFP4') pfpMultiplier = 1.15
-      else if (currentPfp === 'PFP3') pfpMultiplier = 1.05
-
-      // F. Tiebreaker aléatoire (très faible, juste pour départager les vrais ex-aequo)
-      const tiebreaker = Math.random() * 1
-
-      const rawScore = missingGlobalScore + bonusDE + bonusSYSINT + bonusSae + bonusCas + tiebreaker
-      const finalScore = Math.round(rawScore * pfpMultiplier * 100) / 100
-
-      return finalScore
-    }
-
-    // ── Exclure les étudiants déjà assignés en PFP4 et ceux exclus manuellement ──
-    const { data: existingPfp4Assignments } = await supabase
-      .from('student_result_vote')
-      .select('user_id, assigned_place_id')
-      .eq('pfp_type', filterPFP.value)
-    
-    const alreadyAssignedUserIds = new Set()
-    const alreadyAssignedPlaceCounts = new Map()
-    if (existingPfp4Assignments) {
-      existingPfp4Assignments.forEach(a => {
-        if (a.assigned_place_id) {
-          alreadyAssignedUserIds.add(a.user_id)
-          alreadyAssignedPlaceCounts.set(a.assigned_place_id, (alreadyAssignedPlaceCounts.get(a.assigned_place_id) || 0) + 1)
-        }
-      })
-    }
-    const manualExclusions = new Set(excludedStudentIds.value || [])
-
-    const eligibleVotations = filteredVotationsList.value.filter(student => {
-      if (alreadyAssignedUserIds.has(student.userId)) {
-        console.log(`   ❌ Exclu (déjà assigné ${filterPFP.value}): ${student.nom} ${student.prenom}`)
-        return false
-      }
-      if (manualExclusions.has(student.userId)) {
-        console.log(`   ❌ Exclu (manuellement): ${student.nom} ${student.prenom}`)
-        return false
-      }
-      return true
-    })
-
-    console.log(`📊 ${filteredVotationsList.value.length} votants → ${eligibleVotations.length} éligibles (${filteredVotationsList.value.length - eligibleVotations.length} exclus)`)
-
-    if (eligibleVotations.length === 0) {
-      toast.add({ severity: 'warn', summary: 'Aucun étudiant éligible', detail: 'Tous les étudiants sont déjà assignés ou exclus', life: 5000 })
-      loading.value = false
-      return
-    }
-
-    // Préparer les données des étudiants pour l'algorithme
-    const studentsData = eligibleVotations.map(student => {
-      const profile = studentCriteriaMap.get(student.userId)
-      const score = computePriorityScore(student.userId)
-      const missing = profile ? CRITERIA_KEYS.filter(c => profile.criteria[c] === 0) : [...CRITERIA_KEYS]
-      const donePlaces = studentDonePlaceIds.get(student.userId)
-      return {
-        userId: student.userId,
-        nom: student.nom,
-        prenom: student.prenom,
-        classe: student.classe,
-        choices: [
-          student.choice1PlaceId,
-          student.choice2PlaceId,
-          student.choice3PlaceId,
-          student.choice4PlaceId,
-          student.choice5PlaceId
-        ].filter(Boolean), // Pool de placeIds, sans rang
-        missingCriteria: missing,
-        donePlaceIds: donePlaces ? [...donePlaces] : [],
-        priorityScore: score,
-        _debug: profile ? {
-          missing,
-          validated: CRITERIA_KEYS.filter(c => profile.criteria[c] > 0),
-          sae: profile.sae,
-          casParticulier: profile.casParticulier,
-          donePlaceIds: donePlaces ? donePlaces.size : 0
-        } : null
-      }
-    })
-
-    // Log détaillé du breakdown des scores (trié par score descendant)
-    const sortedForLog = [...studentsData].sort((a, b) => b.priorityScore - a.priorityScore)
-    console.log('══════════════════════════════════════════════')
-    console.log(`📊 PRIORITY SCORES v2.0 — ${currentPfp} ${filterYear.value} (×${currentPfp === 'PFP4' ? '1.15' : currentPfp === 'PFP3' ? '1.05' : '1.0'})`)
-    console.log('══════════════════════════════════════════════')
-    sortedForLog.forEach((s, i) => {
-      const d = s._debug
-      if (d) {
-        console.log(`   ${i + 1}. ${s.nom} ${s.prenom}: ${s.priorityScore} pts | manquants=[${d.missing.join(',')}] validés=[${d.validated.join(',')}]${d.sae ? ' SAE' : ''}${d.casParticulier ? ' CAS_PART' : ''}`)
-      } else {
-        console.log(`   ${i + 1}. ${s.nom} ${s.prenom}: ${s.priorityScore} pts | ⚠️ PAS DE PROFIL`)
-      }
-    })
-    console.log('══════════════════════════════════════════════')
-
-    // Récupérer toutes les places disponibles
-    await placesStore.fetchPlaces()
-    await institutionsStore.fetchInstitutions()
-
-    const institutionMap = new Map()
-    institutionsStore.institutions.forEach(inst => {
-      institutionMap.set(inst.InstitutionId, inst)
-    })
-
-    // 🎯 Filtrer les places selon le PFP sélectionné, en réduisant la capacité par les assignations existantes
-    const placesData = placesStore.places
-      .map(place => {
-        const institution = institutionMap.get(place.InstitutionId)
-        
-        // Récupérer la capacité depuis la colonne Proposition (ex: pfp4_proposition)
-        const propositionKey = `${filterPFP.value.toLowerCase()}_proposition`
-        let capacity = 0
-        if (place[propositionKey] && place[propositionKey][filterYear.value]) {
-          capacity = parseInt(place[propositionKey][filterYear.value])
-        }
-        
-        // Si pas de capacité définie, ignorer cette place
-        if (!capacity || isNaN(capacity) || capacity < 1) {
-          return null
-        }
-
-        // Réduire la capacité par le nombre d'étudiants déjà assignés à cette place
-        const alreadyAssigned = alreadyAssignedPlaceCounts.get(place.PlaceId) || 0
-        const remainingCapacity = capacity - alreadyAssigned
-        if (remainingCapacity < 1) {
-          console.log(`   ❌ Place pleine: ${place.NomPlace} (${alreadyAssigned}/${capacity} assignés)`)
-          return null
-        }
-        
-        // Extraire les critères couverts par cette place
-        const placeCriteria = {}
-        CRITERIA_KEYS.forEach(c => {
-          placeCriteria[c] = !!(place[c] === true || place[c] === 'true' || place[c] === 1)
-        })
-
-        return {
-          PlaceId: place.PlaceId,
-          NomPlace: place.NomPlace,
-          InstitutionId: place.InstitutionId,
-          InstitutionName: institution?.Name || 'Inconnu',
-          Capacity: remainingCapacity,
-          criteria: placeCriteria
-        }
-      })
-      .filter(Boolean) // Retirer les null
-
-    console.log('📊 Données préparées:', {
-      students: studentsData.length,
-      places: placesData.length
-    })
-
-    // Lancer l'algorithme via le backend
-    const result = await resultatVotationService.runAlgorithm(
-      filterPFP.value,
-      filterYear.value,
-      studentsData,
-      placesData
-    )
-
-    console.log('✅ Résultat de l\'algorithme:', result)
-
-    // Stocker les résultats et statistiques
-    algorithmResults.value = result.results || []
-    algorithmStats.value = result.stats || {}
-    placesWithAssignments.value = result.placesWithAssignments || []
-
-    // Afficher les statistiques
-    const stats = result.stats || {}
-    toast.add({
-      severity: 'success',
-      summary: 'Algorithme v4.0 terminé',
-      detail: `${stats.successfulAssignments || 0} attributions (${stats.fromChoicesCount || 0} depuis choix, ${stats.randomAssignmentCount || 0} hors choix)`,
-      life: 8000
-    })
-
-    // Afficher les détails critères
-    toast.add({
-      severity: stats.lesedCount > 0 ? 'warn' : 'info',
-      summary: 'Couverture critères',
-      detail: `Moy. critères couverts: ${stats.avgCriteriaCoveredFromChoices || 0} | Lésés (0 critères): ${stats.lesedCount || 0}`,
-      life: 8000
-    })
-
-    // Afficher les erreurs éventuelles
-    if (result.errors && result.errors.length > 0) {
-      toast.add({
-        severity: 'warn',
-        summary: 'Avertissements',
-        detail: `${result.errors.length} étudiants n'ont pas pu être attribués`,
-        life: 5000
-      })
-    }
-
-    // Recharger les données pour afficher les résultats
-    await loadData()
-
-  } catch (error) {
-    console.error('❌ Erreur lors de l\'exécution de l\'algorithme:', error)
-    toast.add({
-      severity: 'error',
-      summary: 'Erreur',
-      detail: 'Impossible d\'exécuter l\'algorithme: ' + error.message,
-      life: 8000
-    })
-  } finally {
-    loading.value = false
-  }
-}
-
 const getStudentName = (userId) => {
   const student = allStudents.value.find(s => s.user_id === userId || s.id === userId)
   if (student) {
-    // 1. Essayer display_name
     if (student.display_name) return student.display_name
-    
-    // 2. Essayer Nom + Prenom (format: NOM Prénom)
     const nom = student.Nom || student.nom || student.family_name || ''
     const prenom = student.Prenom || student.prenom || student.forname || ''
-    
-    if (nom || prenom) {
-      // Format: NOM Prénom (nom en majuscules)
-      return `${nom.toUpperCase()} ${prenom}`.trim()
-    }
-    
-    // 3. Fallback sur email
+    if (nom || prenom) return `${nom.toUpperCase()} ${prenom}`.trim()
     if (student.email || student.Mail) {
       const email = student.email || student.Mail
       return email.split('@')[0]
@@ -2604,90 +1324,33 @@ const getStudentName = (userId) => {
   return 'Inconnu'
 }
 
-const exportResults = () => {
-  if (algorithmResults.value.length === 0) {
-    toast.add({
-      severity: 'warn',
-      summary: 'Aucune donnée',
-      detail: 'Pas de résultats à exporter',
-      life: 3000
-    })
-    return
-  }
-
-  // Préparer les données CSV
-  const headers = ['Étudiant', 'Place Attribuée', 'Institution', 'Rang du Choix', 'Score de Priorité']
-  const rows = algorithmResults.value.map(result => [
-    getStudentName(result.user_id),
-    result.assigned_place_name,
-    result.assigned_institution_name,
-    result.assigned_rank === 99 ? 'Aléatoire' : `${result.assigned_rank}er choix`,
-    result.priority_score ? result.priority_score.toFixed(1) : 'N/A'
-  ])
-
-  // Créer le CSV
-  const csvContent = [
-    headers.join(';'),
-    ...rows.map(row => row.join(';'))
-  ].join('\n')
-
-  // Télécharger le fichier
-  const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' })
-  const link = document.createElement('a')
-  const url = URL.createObjectURL(blob)
-  link.setAttribute('href', url)
-  link.setAttribute('download', `attributions_${filterPFP.value}_${filterYear.value}_${new Date().toISOString().split('T')[0]}.csv`)
-  link.style.visibility = 'hidden'
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-
-  toast.add({
-    severity: 'success',
-    summary: 'Export réussi',
-    detail: `${algorithmResults.value.length} attributions exportées`,
-    life: 3000
-  })
-}
-
 const getVoteCountForPlace = (placeId) => {
   if (!placeId) return { top1: 0, top2: 0, top3: 0, top4: 0, top5: 0, total: 0 }
-  
-  if (votesAggregation.value[placeId]) {
-    return votesAggregation.value[placeId]
-  }
-  
+  if (votesAggregation.value[placeId]) return votesAggregation.value[placeId]
   return { top1: 0, top2: 0, top3: 0, top4: 0, top5: 0, total: 0 }
 }
 
+// ============================================
+// DATA LOADING
+// ============================================
 const loadVoteStatistics = async () => {
   try {
     console.log('📊 Chargement des statistiques de votes...')
-    
-    // Méthode 1: Essayer d'utiliser la vue d'agrégation
     try {
       const allStats = await votesBackendService.getVotePlaceAggregation()
-      
       if (allStats && allStats.length > 0) {
         console.log('✅ Statistiques depuis vue:', allStats.length, 'entrées')
-        
         const aggregation = {}
-        
         allStats.forEach(agg => {
           const placeId = agg.place_id
           const rank = agg.rank
           const count = agg.vote_count
-          
           if (!aggregation[placeId]) {
-            aggregation[placeId] = {
-              top1: 0, top2: 0, top3: 0, top4: 0, top5: 0, total: 0
-            }
+            aggregation[placeId] = { top1: 0, top2: 0, top3: 0, top4: 0, top5: 0, total: 0 }
           }
-          
           aggregation[placeId][`top${rank}`] = count
           aggregation[placeId].total += count
         })
-        
         votesAggregation.value = aggregation
         console.log('✅ Votes agrégés:', Object.keys(aggregation).length, 'places')
         return
@@ -2696,41 +1359,27 @@ const loadVoteStatistics = async () => {
       console.warn('⚠️ Vue d\'agrégation non disponible:', viewError.message)
     }
     
-    // Méthode 2: Calculer manuellement depuis tous les votes
     console.log('📊 Calcul manuel des statistiques depuis les votes...')
     const { data: allVotesData, error: votesError } = await supabase
       .from('student_votes')
       .select('choices')
-    
     if (votesError) throw votesError
-    
     const aggregation = {}
-    
     allVotesData.forEach(vote => {
       let choices = []
       if (typeof vote.choices === 'string') {
-        try {
-          choices = JSON.parse(vote.choices)
-        } catch (e) {
-          console.error('Erreur parsing choices pour stats:', e)
-          return
-        }
+        try { choices = JSON.parse(vote.choices) } catch (e) { console.error('Erreur parsing choices pour stats:', e); return }
       } else if (Array.isArray(vote.choices)) {
         choices = vote.choices
       }
-      
       if (choices && choices.length > 0) {
         choices.forEach((choice, index) => {
           const placeId = choice.placeId
           const rank = choice.rank || (index + 1)
-          
           if (placeId) {
             if (!aggregation[placeId]) {
-              aggregation[placeId] = {
-                top1: 0, top2: 0, top3: 0, top4: 0, top5: 0, total: 0
-              }
+              aggregation[placeId] = { top1: 0, top2: 0, top3: 0, top4: 0, top5: 0, total: 0 }
             }
-            
             if (rank >= 1 && rank <= 5) {
               aggregation[placeId][`top${rank}`] = (aggregation[placeId][`top${rank}`] || 0) + 1
               aggregation[placeId].total += 1
@@ -2739,7 +1388,6 @@ const loadVoteStatistics = async () => {
         })
       }
     })
-    
     votesAggregation.value = aggregation
     console.log('✅ Votes agrégés manuellement:', Object.keys(aggregation).length, 'places')
   } catch (error) {
@@ -2751,27 +1399,16 @@ const loadVoteStatistics = async () => {
 const buildPlacesWithStats = async () => {
   try {
     console.log('🏥 Construction des statistiques par place...')
-    
     await placesStore.fetchPlaces()
     await institutionsStore.fetchInstitutions()
-    
     const places = placesStore.places
     const institutions = institutionsStore.institutions
-    
     const institutionMap = new Map()
-    institutions.forEach(inst => {
-      institutionMap.set(inst.InstitutionId, inst)
-    })
-    
+    institutions.forEach(inst => { institutionMap.set(inst.InstitutionId, inst) })
     const placesStats = []
-    
     places.forEach(place => {
       const institution = institutionMap.get(place.InstitutionId)
-      
-      const voteStats = votesAggregation.value[place.PlaceId] || {
-        top1: 0, top2: 0, top3: 0, top4: 0, top5: 0, total: 0
-      }
-      
+      const voteStats = votesAggregation.value[place.PlaceId] || { top1: 0, top2: 0, top3: 0, top4: 0, top5: 0, total: 0 }
       placesStats.push({
         PlaceId: place.PlaceId,
         NomPlace: place.NomPlace,
@@ -2784,7 +1421,6 @@ const buildPlacesWithStats = async () => {
         rawPlace: place
       })
     })
-    
     placesWithStats.value = placesStats
     console.log(`✅ ${placesStats.length} places avec statistiques`)
   } catch (error) {
@@ -2794,7 +1430,6 @@ const buildPlacesWithStats = async () => {
 
 const showStudentsForPlace = (place, rank) => {
   console.log('Afficher les étudiants pour:', place, 'rang:', rank)
-  
   const studentsForPlace = votationsList.value.filter(v => {
     if (rank === 0) {
       return v.choice1PlaceId === place.PlaceId ||
@@ -2806,17 +1441,14 @@ const showStudentsForPlace = (place, rank) => {
       return v[`choice${rank}PlaceId`] === place.PlaceId
     }
   })
-  
   const rankText = rank === 0 ? 'tous rangs confondus' : `en top ${rank}`
   const studentNames = studentsForPlace.map(s => `${s.prenom} ${s.nom}`).join(', ')
-  
   toast.add({
     severity: 'info',
     summary: `Étudiants pour ${place.NomPlace}`,
     detail: `${studentsForPlace.length} étudiants ont voté (${rankText}): ${studentNames || 'Aucun'}`,
     life: 8000
   })
-  
   activeTab.value = 0
   searchQuery.value = ''
 }
@@ -2826,24 +1458,16 @@ const loadValidatedPlaces = async () => {
   try {
     await placesStore.fetchPlaces()
     await institutionsStore.fetchInstitutions()
-
     const institutionMap = new Map()
-    institutionsStore.institutions.forEach(inst => {
-      institutionMap.set(inst.InstitutionId, inst)
-    })
-
+    institutionsStore.institutions.forEach(inst => { institutionMap.set(inst.InstitutionId, inst) })
     const pfp = filterPFP.value
     const year = filterYear.value
-
     validatedPlaces.value = placesStore.places
       .map(place => {
         const institution = institutionMap.get(place.InstitutionId)
         let capacity = 0
-        if (place[pfp] && place[pfp][year]) {
-          capacity = parseInt(place[pfp][year])
-        }
+        if (place[pfp] && place[pfp][year]) { capacity = parseInt(place[pfp][year]) }
         if (!capacity || isNaN(capacity) || capacity < 1) return null
-
         return {
           PlaceId: place.PlaceId,
           NomPlace: place.NomPlace,
@@ -2854,7 +1478,6 @@ const loadValidatedPlaces = async () => {
       })
       .filter(Boolean)
       .sort((a, b) => a.InstitutionName.localeCompare(b.InstitutionName))
-
     console.log(`✅ ${validatedPlaces.value.length} places validées pour ${pfp} ${year}`)
   } catch (error) {
     console.error('❌ Erreur chargement places validées:', error)
@@ -2870,7 +1493,6 @@ const loadData = async () => {
   if (!config) { loading.value = false; return }
 
   try {
-    // 1. Charger les étudiants de la classe sélectionnée
     const allStudentsData = await getAllStudents()
     allStudents.value = allStudentsData.filter(student => {
       const classe = student.Classe || student.classe || student.class || student.Class || ''
@@ -2878,7 +1500,6 @@ const loadData = async () => {
     })
     console.log(`✅ ${allStudents.value.length} étudiants ${targetClass} chargés`)
     
-    // 2. Charger les places
     await placesStore.fetchPlaces()
     const placesMap = new Map()
     const fullMap = new Map()
@@ -2888,29 +1509,19 @@ const loadData = async () => {
     })
     placesFullMap.value = fullMap
 
-    // 3. Charger les statistiques de votes
     await loadVoteStatistics()
 
-    // 4. Charger tous les votes
     let { data: votes, error: votesError } = await supabase
       .from('student_votes')
       .select('*')
       .order('updated_at', { ascending: false })
-
     if (votesError) throw votesError
-    
     allVotes.value = votes || []
 
-    // 5. Construire la liste des votations
     const votationsMap = new Map()
-
     allVotes.value.forEach((vote) => {
-      const student = allStudents.value.find(s => 
-        s.id === vote.user_id || s.user_id === vote.user_id
-      )
-      
+      const student = allStudents.value.find(s => s.id === vote.user_id || s.user_id === vote.user_id)
       const studentClasse = student ? (student.Classe || student.classe || student.class || student.Class) : null
-      
       if (student && studentClasse === targetClass) {
         let choices = []
         if (typeof vote.choices === 'string') {
@@ -2918,9 +1529,7 @@ const loadData = async () => {
         } else if (Array.isArray(vote.choices)) {
           choices = vote.choices
         }
-        
         const key = `${vote.user_id}-${vote.pfp_type}-${vote.year}`
-        
         const getPlaceName = (choice) => {
           if (!choice) return null
           if (choice.placeName) return choice.placeName
@@ -2934,7 +1543,6 @@ const loadData = async () => {
           if (choice.placeId && fullMap.has(choice.placeId)) return fullMap.get(choice.placeId).InstitutionName || null
           return null
         }
-        
         votationsMap.set(key, {
           id: vote.id,
           userId: vote.user_id,
@@ -2943,20 +1551,14 @@ const loadData = async () => {
           classe: student.Classe || student.classe || student.class || 'N/A',
           pfpType: vote.pfp_type,
           year: vote.year,
-          choix1: getPlaceName(choices[0]),
-          choix2: getPlaceName(choices[1]),
-          choix3: getPlaceName(choices[2]),
-          choix4: getPlaceName(choices[3]),
+          choix1: getPlaceName(choices[0]), choix2: getPlaceName(choices[1]),
+          choix3: getPlaceName(choices[2]), choix4: getPlaceName(choices[3]),
           choix5: getPlaceName(choices[4]),
-          choix1Institution: getInstitutionName(choices[0]),
-          choix2Institution: getInstitutionName(choices[1]),
-          choix3Institution: getInstitutionName(choices[2]),
-          choix4Institution: getInstitutionName(choices[3]),
+          choix1Institution: getInstitutionName(choices[0]), choix2Institution: getInstitutionName(choices[1]),
+          choix3Institution: getInstitutionName(choices[2]), choix4Institution: getInstitutionName(choices[3]),
           choix5Institution: getInstitutionName(choices[4]),
-          choice1PlaceId: choices[0]?.placeId || null,
-          choice2PlaceId: choices[1]?.placeId || null,
-          choice3PlaceId: choices[2]?.placeId || null,
-          choice4PlaceId: choices[3]?.placeId || null,
+          choice1PlaceId: choices[0]?.placeId || null, choice2PlaceId: choices[1]?.placeId || null,
+          choice3PlaceId: choices[2]?.placeId || null, choice4PlaceId: choices[3]?.placeId || null,
           choice5PlaceId: choices[4]?.placeId || null,
           nbChoix: choices.length,
           dateVote: vote.updated_at,
@@ -2967,15 +1569,12 @@ const loadData = async () => {
       }
     })
 
-    // Ajouter les étudiants qui n'ont pas encore voté
     const relevantPFPs = config.pfps
     const relevantYears = config.years
-
     allStudents.value.forEach(student => {
       relevantPFPs.forEach(pfpType => {
         relevantYears.forEach(year => {
           const key = `${student.id}-${pfpType}-${year}`
-          
           if (!votationsMap.has(key)) {
             votationsMap.set(key, {
               id: null,
@@ -2998,20 +1597,13 @@ const loadData = async () => {
     })
 
     votationsList.value = Array.from(votationsMap.values())
-    
     sortAlphabetically()
     updateStats()
     await buildPlacesWithStats()
-
     console.log(`✅ ${votationsList.value.length} votations ${targetClass} créées`)
   } catch (error) {
     console.error('❌ Erreur lors du chargement des données:', error)
-    toast.add({
-      severity: 'error',
-      summary: 'Erreur',
-      detail: 'Impossible de charger les données: ' + error.message,
-      life: 5000
-    })
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les données: ' + error.message, life: 5000 })
   } finally {
     loading.value = false
   }
@@ -3025,63 +1617,59 @@ const updateStats = () => {
   const completed = filtered.filter(v => v.status === 'Complet').length
   const incomplete = filtered.filter(v => v.status === 'Incomplet').length
   const notVoted = filtered.filter(v => v.status === 'Non voté').length
-
-  stats.value = {
-    total,
-    completed,
-    pending: notVoted,
-    incomplete
-  }
+  stats.value = { total, completed, pending: notVoted, incomplete }
 }
 
 const viewDetails = (data) => {
   if (!data.rawVote) return
-  
   console.log('Détails du vote:', data)
-  toast.add({
-    severity: 'info',
-    summary: 'Détails du vote',
-    detail: `${data.prenom} ${data.nom} - ${data.nbChoix} choix`,
-    life: 3000
-  })
+  toast.add({ severity: 'info', summary: 'Détails du vote', detail: `${data.prenom} ${data.nom} - ${data.nbChoix} choix`, life: 3000 })
 }
 
 const remindStudent = (data) => {
   console.log('Relancer étudiant:', data)
-  toast.add({
-    severity: 'info',
-    summary: 'Relance',
-    detail: `Relance envoyée à ${data.prenom} ${data.nom}`,
-    life: 3000
-  })
+  toast.add({ severity: 'info', summary: 'Relance', detail: `Relance envoyée à ${data.prenom} ${data.nom}`, life: 3000 })
 }
 
 const remindAllNonVoters = () => {
   const nonVoters = filteredVotationsList.value.filter(v => v.status === 'Non voté')
-  
   if (nonVoters.length === 0) {
-    toast.add({
-      severity: 'info',
-      summary: 'Information',
-      detail: 'Aucun étudiant à relancer',
-      life: 3000
-    })
+    toast.add({ severity: 'info', summary: 'Information', detail: 'Aucun étudiant à relancer', life: 3000 })
     return
   }
-
   console.log(`Relancer ${nonVoters.length} étudiants qui n'ont pas voté`)
-  toast.add({
-    severity: 'success',
-    summary: 'Relances envoyées',
-    detail: `${nonVoters.length} relances envoyées aux étudiants n'ayant pas voté`,
-    life: 5000
-  })
+  toast.add({ severity: 'success', summary: 'Relances envoyées', detail: `${nonVoters.length} relances envoyées aux étudiants n'ayant pas voté`, life: 5000 })
+}
+
+const exportResults = () => {
+  if (algorithmResults.value.length === 0) {
+    toast.add({ severity: 'warn', summary: 'Aucune donnée', detail: 'Pas de résultats à exporter', life: 3000 })
+    return
+  }
+  const headers = ['Étudiant', 'Place Attribuée', 'Institution', 'Rang du Choix', 'Score de Priorité']
+  const rows = algorithmResults.value.map(result => [
+    getStudentName(result.user_id),
+    result.assigned_place_name,
+    result.assigned_institution_name,
+    result.assigned_rank === 99 ? 'Aléatoire' : `${result.assigned_rank}er choix`,
+    result.priority_score ? result.priority_score.toFixed(1) : 'N/A'
+  ])
+  const csvContent = [headers.join(';'), ...rows.map(row => row.join(';'))].join('\n')
+  const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' })
+  const link = document.createElement('a')
+  const url = URL.createObjectURL(blob)
+  link.setAttribute('href', url)
+  link.setAttribute('download', `attributions_${filterPFP.value}_${filterYear.value}_${new Date().toISOString().split('T')[0]}.csv`)
+  link.style.visibility = 'hidden'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  toast.add({ severity: 'success', summary: 'Export réussi', detail: `${algorithmResults.value.length} attributions exportées`, life: 3000 })
 }
 
 const exportData = () => {
   try {
     const dataToExport = filteredVotationsList.value
-
     const headers = [
       'Nom', 'Prénom', 'Classe', 'PFP', 'Année',
       'Choix 1 - Place', 'Choix 1 - Institution', 'Choix 1 - PlaceId',
@@ -3094,48 +1682,28 @@ const exportData = () => {
     const csvContent = [
       headers.join(';'),
       ...dataToExport.map(row => [
-        row.nom,
-        row.prenom,
-        row.classe,
-        row.pfpType,
-        row.year,
+        row.nom, row.prenom, row.classe, row.pfpType, row.year,
         row.choix1 || '', row.choix1Institution || '', row.choice1PlaceId || '',
         row.choix2 || '', row.choix2Institution || '', row.choice2PlaceId || '',
         row.choix3 || '', row.choix3Institution || '', row.choice3PlaceId || '',
         row.choix4 || '', row.choix4Institution || '', row.choice4PlaceId || '',
         row.choix5 || '', row.choix5Institution || '', row.choice5PlaceId || '',
-        row.nbChoix,
-        row.dateVote ? formatDate(row.dateVote) : '',
-        row.status
+        row.nbChoix, row.dateVote ? formatDate(row.dateVote) : '', row.status
       ].join(';'))
     ].join('\n')
-
     const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' })
     const link = document.createElement('a')
     const url = URL.createObjectURL(blob)
-    
     link.setAttribute('href', url)
     link.setAttribute('download', `votations_${filterClasse.value || 'pfp'}_${filterPFP.value || ''}_${new Date().toISOString().split('T')[0]}.csv`)
     link.style.visibility = 'hidden'
-    
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
-
-    toast.add({
-      severity: 'success',
-      summary: 'Export réussi',
-      detail: `${dataToExport.length} lignes exportées`,
-      life: 3000
-    })
+    toast.add({ severity: 'success', summary: 'Export réussi', detail: `${dataToExport.length} lignes exportées`, life: 3000 })
   } catch (error) {
     console.error('Erreur lors de l\'export:', error)
-    toast.add({
-      severity: 'error',
-      summary: 'Erreur',
-      detail: 'Impossible d\'exporter les données',
-      life: 5000
-    })
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible d\'exporter les données', life: 5000 })
   }
 }
 
