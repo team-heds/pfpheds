@@ -263,16 +263,16 @@
               </template>
             </Column>
 
-            <Column field="notes" header="Notes" :style="{ minWidth: '250px' }">
+            <Column field="remarques" header="Remarques" :style="{ minWidth: '250px' }">
               <template #body="slotProps">
                 <Textarea 
-                  :modelValue="slotProps.data.notes || ''" 
-                  @update:modelValue="(val) => slotProps.data.notes = val"
-                  @blur="saveNotes(slotProps.data)"
+                  :modelValue="slotProps.data.remarques || ''" 
+                  @update:modelValue="(val) => slotProps.data.remarques = val"
+                  @blur="saveRemarques(slotProps.data)"
                   rows="2" 
                   autoResize
                   class="w-full text-sm"
-                  placeholder="Notes sur le stage..."
+                  placeholder="Remarques sur le stage..."
                 />
               </template>
             </Column>
@@ -1354,24 +1354,24 @@ const togglePfpValidee = async (assignment, value) => {
   }
 }
 
-// Sauvegarder les notes d'un étudiant (appelé sur @blur)
-const saveNotes = async (assignment) => {
+// Sauvegarder les remarques d'un étudiant (appelé sur @blur)
+const saveRemarques = async (assignment) => {
   try {
     const { error } = await supabase
       .from('student_result_vote')
       .update({ 
-        notes: assignment.notes || null,
+        remarques: assignment.remarques || null,
         updated_at: new Date().toISOString()
       })
       .eq('id', assignment.id)
 
     if (error) throw error
   } catch (error) {
-    console.error('[ERROR] Erreur sauvegarde notes:', error)
+    console.error('[ERROR] Erreur sauvegarde remarques:', error)
     toast.add({
       severity: 'error',
       summary: 'Erreur',
-      detail: 'Impossible de sauvegarder les notes: ' + error.message,
+      detail: 'Impossible de sauvegarder les remarques: ' + error.message,
       life: 5000
     })
   }

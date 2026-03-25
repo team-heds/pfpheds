@@ -262,7 +262,7 @@
             </template>
           </Column>
 
-          <!-- Remarques (depuis Validation Places → student_result_vote.notes) -->
+          <!-- Remarques (depuis Validation Places → student_result_vote.remarques) -->
           <Column field="assignmentNotes" header="Remarques" style="min-width: 160px">
             <template #body="{ data }">
               <span v-if="data.assignmentNotes" class="text-xs text-700" :title="data.assignmentNotes">{{ truncate(data.assignmentNotes, 30) }}</span>
@@ -810,7 +810,7 @@ const fetchAllData = async () => {
           noteRetake: hasGrade(noteRetake) ? noteRetake : null,
           absences,
           remarques,
-          assignmentNotes: assignment?.notes || '',
+          assignmentNotes: assignment?.remarques || '',
           statut,
           attributionType,
           casColor: casData?.couleur || null,
