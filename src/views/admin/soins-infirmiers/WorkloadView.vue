@@ -3,7 +3,7 @@
     <template #header>
       <PageHeader 
         title="Feuille de charges — Enseignants SI" 
-        subtitle="Calcul automatique des heures pondérées selon les coefficients Pilier 1.1" 
+        subtitle="Calcul automatique des périodes pondérées selon les coefficients Pilier 1.1 (1 période = 45 min)" 
         icon="pi pi-chart-bar" 
       />
     </template>
@@ -102,9 +102,9 @@
                   <Tag :value="'× ' + data.coeff" severity="info" />
                 </template>
               </Column>
-              <Column header="Exemple (2h de cours)">
+              <Column header="Exemple (3 périodes)">
                 <template #body="{ data }">
-                  <span class="text-500">2h × {{ data.coeff }} = <strong>{{ (2 * data.coeff).toFixed(1) }}h</strong></span>
+                  <span class="text-500">3p × {{ data.coeff }} = <strong>{{ (3 * data.coeff).toFixed(1) }}p</strong></span>
                 </template>
               </Column>
             </DataTable>
@@ -131,15 +131,15 @@
         <div class="stat-card">
           <i class="pi pi-clock"></i>
           <div>
-            <span class="stat-value">{{ workloadData.summary.totalPresenceHours }}h</span>
-            <span class="stat-label">Heures présence</span>
+            <span class="stat-value">{{ workloadData.summary.totalPresencePeriods }}p</span>
+            <span class="stat-label">Périodes présence</span>
           </div>
         </div>
         <div class="stat-card highlight">
           <i class="pi pi-chart-bar"></i>
           <div>
-            <span class="stat-value">{{ workloadData.summary.totalWeightedHours }}h</span>
-            <span class="stat-label">Heures pondérées</span>
+            <span class="stat-value">{{ workloadData.summary.totalWeightedPeriods }}p</span>
+            <span class="stat-label">Périodes pondérées</span>
           </div>
         </div>
         <div class="stat-card">
@@ -165,7 +165,7 @@
           :rows="20"
           stripedRows 
           responsiveLayout="scroll"
-          sortField="totalWeightedHours"
+          sortField="totalWeightedPeriods"
           :sortOrder="-1"
           class="workload-table"
           v-model:expandedRows="expandedRows"
@@ -188,27 +188,27 @@
               <Tag :value="data.slots.length" severity="secondary" />
             </template>
           </Column>
-          <Column field="totalPresenceHours" header="Heures présence" sortable style="width: 140px">
+          <Column field="totalPresencePeriods" header="Périodes présence" sortable style="width: 140px">
             <template #body="{ data }">
-              <span>{{ data.totalPresenceHours }}h</span>
+              <span>{{ data.totalPresencePeriods }}p</span>
             </template>
           </Column>
-          <Column field="totalWeightedHours" header="Heures pondérées" sortable style="width: 160px">
+          <Column field="totalWeightedPeriods" header="Périodes pondérées" sortable style="width: 160px">
             <template #body="{ data }">
-              <strong class="text-primary text-lg">{{ data.totalWeightedHours }}h</strong>
+              <strong class="text-primary text-lg">{{ data.totalWeightedPeriods }}p</strong>
             </template>
           </Column>
           <Column header="Répartition" style="width: 200px">
             <template #body="{ data }">
               <div class="flex gap-2">
-                <Tag v-if="data.byActivity.cours.hours > 0" :value="`Cours: ${Math.round(data.byActivity.cours.hours * 100) / 100}h`" severity="info" />
-                <Tag v-if="data.byActivity.atelier.hours > 0" :value="`Atelier: ${Math.round(data.byActivity.atelier.hours * 100) / 100}h`" severity="warning" />
+                <Tag v-if="data.byActivity.cours.periods > 0" :value="`Cours: ${roundHalf(data.byActivity.cours.periods)}p`" severity="info" />
+                <Tag v-if="data.byActivity.atelier.periods > 0" :value="`Atelier: ${roundHalf(data.byActivity.atelier.periods)}p`" severity="warning" />
               </div>
             </template>
           </Column>
           <Column header="Ratio" style="width: 100px">
             <template #body="{ data }">
-              <span class="text-500">× {{ data.totalPresenceHours > 0 ? (data.totalWeightedHours / data.totalPresenceHours).toFixed(2) : '—' }}</span>
+              <span class="text-500">× {{ data.totalPresencePeriods > 0 ? (data.totalWeightedPeriods / data.totalPresencePeriods).toFixed(2) : '—' }}</span>
             </template>
           </Column>
 
@@ -220,21 +220,21 @@
                   <h6 class="mt-0 mb-2">Par coefficient</h6>
                   <div v-for="c in data.byCoefficient" :key="c.label" class="flex justify-content-between align-items-center mb-1">
                     <Tag :value="c.label" :severity="c.coeff === 1.6 ? 'warning' : c.coeff === 4.0 ? 'success' : 'info'" size="small" />
-                    <strong class="text-primary text-sm">{{ c.weighted }}h</strong>
+                    <strong class="text-primary text-sm">{{ c.weighted }}p</strong>
                   </div>
                 </div>
                 <div class="col-12 md:col-4">
                   <h6 class="mt-0 mb-2">Par module</h6>
                   <div v-for="mod in data.byModule" :key="mod.code" class="flex justify-content-between mb-1">
                     <span class="text-sm text-700 overflow-hidden white-space-nowrap text-overflow-ellipsis" style="max-width: 200px">{{ mod.title || mod.code }}</span>
-                    <strong class="text-primary text-sm">{{ mod.weighted }}h</strong>
+                    <strong class="text-primary text-sm">{{ mod.weighted }}p</strong>
                   </div>
                 </div>
                 <div class="col-12 md:col-4">
                   <h6 class="mt-0 mb-2">Par classe</h6>
                   <div v-for="cls in data.byClass" :key="cls.code" class="flex justify-content-between mb-1">
                     <Tag :value="cls.code" size="small" />
-                    <strong class="text-primary text-sm">{{ cls.weighted }}h</strong>
+                    <strong class="text-primary text-sm">{{ cls.weighted }}p</strong>
                   </div>
                 </div>
               </div>
@@ -261,19 +261,19 @@
               </div>
               <div class="flex gap-4 align-items-center">
                 <div class="text-center">
-                  <div class="text-3xl font-bold text-primary">{{ selectedTeacherData.totalWeightedHours }}h</div>
-                  <div class="text-xs text-500">Heures pondérées</div>
+                  <div class="text-3xl font-bold text-primary">{{ selectedTeacherData.totalWeightedPeriods }}p</div>
+                  <div class="text-xs text-500">Périodes pondérées</div>
                 </div>
                 <div class="text-center">
-                  <div class="text-2xl font-bold">{{ selectedTeacherData.totalPresenceHours }}h</div>
-                  <div class="text-xs text-500">Heures présence</div>
+                  <div class="text-2xl font-bold">{{ selectedTeacherData.totalPresencePeriods }}p</div>
+                  <div class="text-xs text-500">Périodes présence</div>
                 </div>
                 <div class="text-center">
                   <div class="text-2xl font-bold">{{ selectedTeacherData.slots.length }}</div>
                   <div class="text-xs text-500">Créneaux</div>
                 </div>
                 <div class="text-center">
-                  <Tag :value="'× ' + (selectedTeacherData.totalPresenceHours > 0 ? (selectedTeacherData.totalWeightedHours / selectedTeacherData.totalPresenceHours).toFixed(2) : '—')" severity="info" class="text-lg" />
+                  <Tag :value="'× ' + (selectedTeacherData.totalPresencePeriods > 0 ? (selectedTeacherData.totalWeightedPeriods / selectedTeacherData.totalPresencePeriods).toFixed(2) : '—')" severity="info" class="text-lg" />
                   <div class="text-xs text-500 mt-1">Ratio</div>
                 </div>
               </div>
@@ -291,14 +291,14 @@
                 </template>
               </Column>
               <Column field="slots" header="Nb créneaux" sortable style="width: 120px" />
-              <Column field="hours" header="Heures présence" sortable style="width: 140px">
-                <template #body="{ data: c }">{{ c.hours }}h</template>
+              <Column field="periods" header="Périodes présence" sortable style="width: 140px">
+                <template #body="{ data: c }">{{ c.periods }}p</template>
               </Column>
               <Column field="coeff" header="Coefficient" style="width: 100px">
                 <template #body="{ data: c }"><strong>× {{ c.coeff }}</strong></template>
               </Column>
-              <Column field="weighted" header="Heures pondérées" sortable style="width: 160px">
-                <template #body="{ data: c }"><strong class="text-primary">{{ c.weighted }}h</strong></template>
+              <Column field="weighted" header="Périodes pondérées" sortable style="width: 160px">
+                <template #body="{ data: c }"><strong class="text-primary">{{ c.weighted }}p</strong></template>
               </Column>
             </DataTable>
           </TabPanel>
@@ -312,11 +312,11 @@
               <Column field="code" header="Code" sortable style="width: 200px">
                 <template #body="{ data: mod }"><span class="text-xs text-500">{{ mod.code }}</span></template>
               </Column>
-              <Column field="hours" header="Heures présence" sortable style="width: 140px">
-                <template #body="{ data: mod }">{{ mod.hours }}h</template>
+              <Column field="periods" header="Périodes présence" sortable style="width: 140px">
+                <template #body="{ data: mod }">{{ mod.periods }}p</template>
               </Column>
-              <Column field="weighted" header="Heures pondérées" sortable style="width: 160px">
-                <template #body="{ data: mod }"><strong class="text-primary">{{ mod.weighted }}h</strong></template>
+              <Column field="weighted" header="Périodes pondérées" sortable style="width: 160px">
+                <template #body="{ data: mod }"><strong class="text-primary">{{ mod.weighted }}p</strong></template>
               </Column>
             </DataTable>
           </TabPanel>
@@ -327,11 +327,11 @@
               <Column field="code" header="Classe" sortable>
                 <template #body="{ data: cls }"><Tag :value="cls.code" /></template>
               </Column>
-              <Column field="hours" header="Heures présence" sortable style="width: 140px">
-                <template #body="{ data: cls }">{{ cls.hours }}h</template>
+              <Column field="periods" header="Périodes présence" sortable style="width: 140px">
+                <template #body="{ data: cls }">{{ cls.periods }}p</template>
               </Column>
-              <Column field="weighted" header="Heures pondérées" sortable style="width: 160px">
-                <template #body="{ data: cls }"><strong class="text-primary">{{ cls.weighted }}h</strong></template>
+              <Column field="weighted" header="Périodes pondérées" sortable style="width: 160px">
+                <template #body="{ data: cls }"><strong class="text-primary">{{ cls.weighted }}p</strong></template>
               </Column>
             </DataTable>
           </TabPanel>
@@ -371,8 +371,8 @@
                   <Tag :value="data.activity" :severity="data.isAtelier ? 'warning' : 'info'" />
                 </template>
               </Column>
-              <Column field="hours" header="Heures" sortable style="width: 80px">
-                <template #body="{ data }">{{ data.hours }}h</template>
+              <Column field="periods" header="Périodes" sortable style="width: 80px">
+                <template #body="{ data }">{{ data.periods }}p</template>
               </Column>
               <Column field="coefficient" header="Coefficient" sortable style="width: 180px">
                 <template #body="{ data }">
@@ -382,8 +382,8 @@
                   </div>
                 </template>
               </Column>
-              <Column field="weightedHours" header="Pondéré" sortable style="width: 100px">
-                <template #body="{ data }"><strong class="text-primary">{{ data.weightedHours }}h</strong></template>
+              <Column field="weightedPeriods" header="Pondéré" sortable style="width: 100px">
+                <template #body="{ data }"><strong class="text-primary">{{ data.weightedPeriods }}p</strong></template>
               </Column>
             </DataTable>
           </TabPanel>
@@ -420,6 +420,8 @@ import Tag from 'primevue/tag'
 import Toast from 'primevue/toast'
 import workloadService, { PILIER_1_1_COEFFICIENTS } from '@/service/workloadService'
 import { useAcademicYear } from '@/composables/useAcademicYear'
+
+const roundHalf = (val) => Math.round(val * 2) / 2
 
 const toast = useToast()
 const { activeAcademicYear, loadActiveAcademicYear } = useAcademicYear()
@@ -480,7 +482,7 @@ const moduleFilterOptions = computed(() => {
 const teacherFilterOptions = computed(() => {
   if (!workloadData.value) return []
   return workloadData.value.teachers.map(w => ({
-    label: `${w.teacher.name} (${w.totalWeightedHours}h)`,
+    label: `${w.teacher.name} (${w.totalWeightedPeriods}p)`,
     value: w.teacher.name
   }))
 })
@@ -502,9 +504,9 @@ const filteredTeachers = computed(() => {
   }
   if (selectedType.value) {
     if (selectedType.value === 'atelier') {
-      list = list.filter(w => w.byActivity.atelier.hours > 0)
+      list = list.filter(w => w.byActivity.atelier.periods > 0)
     } else {
-      list = list.filter(w => w.byActivity.cours.hours > 0)
+      list = list.filter(w => w.byActivity.cours.periods > 0)
     }
   }
 
@@ -517,9 +519,9 @@ const selectedTeacherData = computed(() => {
 })
 
 // Stats visuelles
-const maxWeightedHours = computed(() => {
+const maxWeightedPeriods = computed(() => {
   if (!workloadData.value) return 1
-  return Math.max(...workloadData.value.teachers.map(w => w.totalWeightedHours), 1)
+  return Math.max(...workloadData.value.teachers.map(w => w.totalWeightedPeriods), 1)
 })
 
 function clearFilters() {
@@ -568,12 +570,12 @@ async function exportWorkload() {
       { header: 'Enseignant', key: 'name', width: 30 },
       { header: 'Email', key: 'email', width: 30 },
       { header: 'Créneaux', key: 'slots', width: 12 },
-      { header: 'Heures présence', key: 'presence', width: 16 },
-      { header: 'Heures pondérées', key: 'weighted', width: 18 },
-      { header: 'Cours (h)', key: 'coursHours', width: 12 },
-      { header: 'Cours pondéré (h)', key: 'coursWeighted', width: 18 },
-      { header: 'Atelier (h)', key: 'atelierHours', width: 12 },
-      { header: 'Atelier pondéré (h)', key: 'atelierWeighted', width: 18 },
+      { header: 'Périodes présence', key: 'presence', width: 16 },
+      { header: 'Périodes pondérées', key: 'weighted', width: 18 },
+      { header: 'Cours (p)', key: 'coursPeriods', width: 12 },
+      { header: 'Cours pondéré (p)', key: 'coursWeighted', width: 18 },
+      { header: 'Atelier (p)', key: 'atelierPeriods', width: 12 },
+      { header: 'Atelier pondéré (p)', key: 'atelierWeighted', width: 18 },
       { header: 'Ratio moyen', key: 'ratio', width: 12 }
     ]
 
@@ -589,13 +591,13 @@ async function exportWorkload() {
         name: w.teacher.name,
         email: w.teacher.email || '',
         slots: w.slots.length,
-        presence: w.totalPresenceHours,
-        weighted: w.totalWeightedHours,
-        coursHours: w.byActivity.cours.hours,
-        coursWeighted: Math.round(w.byActivity.cours.weighted * 100) / 100,
-        atelierHours: w.byActivity.atelier.hours,
-        atelierWeighted: Math.round(w.byActivity.atelier.weighted * 100) / 100,
-        ratio: w.totalPresenceHours > 0 ? Math.round((w.totalWeightedHours / w.totalPresenceHours) * 100) / 100 : 0
+        presence: w.totalPresencePeriods,
+        weighted: w.totalWeightedPeriods,
+        coursPeriods: w.byActivity.cours.periods,
+        coursWeighted: Math.round(w.byActivity.cours.weighted * 10) / 10,
+        atelierPeriods: w.byActivity.atelier.periods,
+        atelierWeighted: Math.round(w.byActivity.atelier.weighted * 10) / 10,
+        ratio: w.totalPresencePeriods > 0 ? Math.round((w.totalWeightedPeriods / w.totalPresencePeriods) * 10) / 10 : 0
       })
     }
 
@@ -605,12 +607,12 @@ async function exportWorkload() {
       name: 'TOTAL',
       email: '',
       slots: allTeachers.reduce((s, w) => s + w.slots.length, 0),
-      presence: Math.round(allTeachers.reduce((s, w) => s + w.totalPresenceHours, 0) * 100) / 100,
-      weighted: Math.round(allTeachers.reduce((s, w) => s + w.totalWeightedHours, 0) * 100) / 100,
-      coursHours: Math.round(allTeachers.reduce((s, w) => s + w.byActivity.cours.hours, 0) * 100) / 100,
-      coursWeighted: Math.round(allTeachers.reduce((s, w) => s + w.byActivity.cours.weighted, 0) * 100) / 100,
-      atelierHours: Math.round(allTeachers.reduce((s, w) => s + w.byActivity.atelier.hours, 0) * 100) / 100,
-      atelierWeighted: Math.round(allTeachers.reduce((s, w) => s + w.byActivity.atelier.weighted, 0) * 100) / 100,
+      presence: roundHalf(allTeachers.reduce((s, w) => s + w.totalPresencePeriods, 0)),
+      weighted: Math.round(allTeachers.reduce((s, w) => s + w.totalWeightedPeriods, 0) * 10) / 10,
+      coursPeriods: roundHalf(allTeachers.reduce((s, w) => s + w.byActivity.cours.periods, 0)),
+      coursWeighted: Math.round(allTeachers.reduce((s, w) => s + w.byActivity.cours.weighted, 0) * 10) / 10,
+      atelierPeriods: roundHalf(allTeachers.reduce((s, w) => s + w.byActivity.atelier.periods, 0)),
+      atelierWeighted: Math.round(allTeachers.reduce((s, w) => s + w.byActivity.atelier.weighted, 0) * 10) / 10,
       ratio: ''
     })
     summaryTotal.eachCell(cell => {
@@ -644,7 +646,7 @@ async function exportWorkload() {
       titleRow.getCell(1).font = { bold: true, size: 14 }
       ws.mergeCells(titleRow.number, 1, titleRow.number, 5)
 
-      const totalRow1 = ws.addRow(['TOTAL HEURES PRÉSENCE', w.totalPresenceHours + 'h', '', 'TOTAL HEURES PONDÉRÉES', w.totalWeightedHours + 'h'])
+      const totalRow1 = ws.addRow(['TOTAL PÉRIODES PRÉSENCE', w.totalPresencePeriods + 'p', '', 'TOTAL PÉRIODES PONDÉRÉES', w.totalWeightedPeriods + 'p'])
       totalRow1.getCell(1).font = { bold: true, size: 12 }
       totalRow1.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8F5E9' } }
       totalRow1.getCell(2).font = { bold: true, size: 14, color: { argb: 'FF1B5E20' } }
@@ -655,12 +657,12 @@ async function exportWorkload() {
       totalRow1.getCell(5).font = { bold: true, size: 16, color: { argb: 'FF1B5E20' } }
       totalRow1.getCell(5).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC8E6C9' } }
 
-      const ratioVal = w.totalPresenceHours > 0 ? (w.totalWeightedHours / w.totalPresenceHours).toFixed(2) : '—'
+      const ratioVal = w.totalPresencePeriods > 0 ? (w.totalWeightedPeriods / w.totalPresencePeriods).toFixed(2) : '—'
       const totalRow2 = ws.addRow([
-        `Cours: ${Math.round(w.byActivity.cours.hours * 100) / 100}h (pondéré: ${Math.round(w.byActivity.cours.weighted * 100) / 100}h)`,
+        `Cours: ${roundHalf(w.byActivity.cours.periods)}p (pondéré: ${Math.round(w.byActivity.cours.weighted * 10) / 10}p)`,
         '',
         '',
-        `Atelier: ${Math.round(w.byActivity.atelier.hours * 100) / 100}h (pondéré: ${Math.round(w.byActivity.atelier.weighted * 100) / 100}h)`,
+        `Atelier: ${roundHalf(w.byActivity.atelier.periods)}p (pondéré: ${Math.round(w.byActivity.atelier.weighted * 10) / 10}p)`,
         `Ratio moyen: × ${ratioVal}`
       ])
       totalRow2.getCell(1).font = { italic: true, color: { argb: 'FF1565C0' } }
@@ -673,10 +675,10 @@ async function exportWorkload() {
       subHeaderStyle(ws.lastRow)
       ws.mergeCells(ws.lastRow.number, 1, ws.lastRow.number, 5)
 
-      const coeffHeaders = ws.addRow(['Type', 'Nb créneaux', 'Heures présence', 'Coefficient', 'Heures pondérées'])
+      const coeffHeaders = ws.addRow(['Type', 'Nb créneaux', 'Périodes présence', 'Coefficient', 'Périodes pondérées'])
       headerStyle(coeffHeaders)
       for (const c of w.byCoefficient) {
-        ws.addRow([c.label, c.slots, c.hours, `× ${c.coeff}`, c.weighted])
+        ws.addRow([c.label, c.slots, c.periods, `× ${c.coeff}`, c.weighted])
       }
       ws.addRow([])
 
@@ -685,10 +687,10 @@ async function exportWorkload() {
       subHeaderStyle(ws.lastRow)
       ws.mergeCells(ws.lastRow.number, 1, ws.lastRow.number, 5)
 
-      const modHeaders = ws.addRow(['Module', 'Code', 'Heures présence', 'Heures pondérées'])
+      const modHeaders = ws.addRow(['Module', 'Code', 'Périodes présence', 'Périodes pondérées'])
       headerStyle(modHeaders)
       for (const mod of w.byModule) {
-        ws.addRow([mod.title, mod.code, mod.hours, mod.weighted])
+        ws.addRow([mod.title, mod.code, mod.periods, mod.weighted])
       }
       ws.addRow([])
 
@@ -697,10 +699,10 @@ async function exportWorkload() {
       subHeaderStyle(ws.lastRow)
       ws.mergeCells(ws.lastRow.number, 1, ws.lastRow.number, 5)
 
-      const clsHeaders = ws.addRow(['Classe', 'Heures présence', 'Heures pondérées'])
+      const clsHeaders = ws.addRow(['Classe', 'Périodes présence', 'Périodes pondérées'])
       headerStyle(clsHeaders)
       for (const cls of w.byClass) {
-        ws.addRow([cls.code, cls.hours, cls.weighted])
+        ws.addRow([cls.code, cls.periods, cls.weighted])
       }
       ws.addRow([])
 
@@ -710,7 +712,7 @@ async function exportWorkload() {
       ws.mergeCells(ws.lastRow.number, 1, ws.lastRow.number, 10)
 
       const slotHeaders = ws.addRow([
-        'Semaine', 'Jour', 'Horaire', 'Classe', 'Module', 'Cours', 'Type', 'Heures', 'Coefficient', 'Détail coeff.', 'Heures pondérées'
+        'Semaine', 'Jour', 'Horaire', 'Classe', 'Module', 'Cours', 'Type', 'Périodes', 'Coefficient', 'Détail coeff.', 'Périodes pondérées'
       ])
       headerStyle(slotHeaders)
 
@@ -723,17 +725,17 @@ async function exportWorkload() {
           slot.moduleName || slot.moduleCode,
           slot.courseTitle || '',
           slot.activity,
-          slot.hours,
+          slot.periods,
           slot.coefficient,
           slot.coeffLabel,
-          slot.weightedHours
+          slot.weightedPeriods
         ])
       }
 
       // Ligne total
       const totalRow = ws.addRow([
         '', '', '', '', '', '', 'TOTAL',
-        w.totalPresenceHours, '', '', w.totalWeightedHours
+        w.totalPresencePeriods, '', '', w.totalWeightedPeriods
       ])
       totalRow.eachCell(cell => { cell.font = { bold: true } })
 

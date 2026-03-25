@@ -3,8 +3,7 @@ import { supabase } from '@/supabase'
 import { usePlacesStore } from '@/stores/placesStore'
 import { useInstitutionsStore } from '@/stores/institutionsStore'
 import resultatVotationService from '@/service/resultatVotationService'
-
-const CRITERIA_KEYS = ['MSQ', 'SYSINT', 'NEUROGER', 'AIGU', 'REHAB', 'AMBU', 'FR', 'DE']
+import { computePriorityScore, CRITERIA_KEYS } from '@/composables/helpers/computePriorityScore'
 
 export function useVotationAlgorithm(toast) {
   const algorithmResults = ref([])
@@ -146,34 +145,16 @@ export function useVotationAlgorithm(toast) {
       console.log(`📊 Critères chargés pour ${studentCriteriaMap.size} étudiants (pfp_valided + student_result_vote)`)
 
       // ══════════════════════════════════════════════════════════════════
-      // computePriorityScore v2.0
+      // computePriorityScore v2.0 (extracted to helpers/computePriorityScore.js)
       // ══════════════════════════════════════════════════════════════════
       const currentPfp = filterPFP
 
-      const computePriorityScore = (userId) => {
+      const computeScore = (userId) => {
         const profile = studentCriteriaMap.get(userId)
         if (!profile) {
           console.warn(`   ⚠️ Pas de profil pour ${userId} → score minimal`)
-          return Math.round(Math.random() * 100) / 100
         }
-
-        const missingCriteria = CRITERIA_KEYS.filter(c => profile.criteria[c] === 0)
-        const missingCount = missingCriteria.length
-        const missingGlobalScore = (missingCount / CRITERIA_KEYS.length) * 40
-        const bonusDE = profile.criteria.DE === 0 ? 15 : 0
-        const bonusSYSINT = profile.criteria.SYSINT === 0 ? 10 : 0
-        const bonusSae = profile.sae ? 12 : 0
-        const bonusCas = profile.casParticulier ? 8 : 0
-
-        let pfpMultiplier = 1.0
-        if (currentPfp === 'PFP4') pfpMultiplier = 1.15
-        else if (currentPfp === 'PFP3') pfpMultiplier = 1.05
-
-        const tiebreaker = Math.random() * 1
-        const rawScore = missingGlobalScore + bonusDE + bonusSYSINT + bonusSae + bonusCas + tiebreaker
-        const finalScore = Math.round(rawScore * pfpMultiplier * 100) / 100
-
-        return finalScore
+        return computePriorityScore(profile, currentPfp)
       }
 
       // ── Exclure les étudiants déjà assignés et ceux exclus manuellement ──
@@ -216,7 +197,7 @@ export function useVotationAlgorithm(toast) {
       // Préparer les données des étudiants pour l'algorithme
       const studentsData = eligibleVotations.map(student => {
         const profile = studentCriteriaMap.get(student.userId)
-        const score = computePriorityScore(student.userId)
+        const score = computeScore(student.userId)
         const missing = profile ? CRITERIA_KEYS.filter(c => profile.criteria[c] === 0) : [...CRITERIA_KEYS]
         const donePlaces = studentDonePlaceIds.get(student.userId)
         return {

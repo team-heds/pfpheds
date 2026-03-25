@@ -189,6 +189,34 @@ export function computeHours(startTime, endTime) {
   return hours > 0 ? hours : 0
 }
 
+/**
+ * Arrondit une valeur au 0.5 le plus proche
+ */
+function roundHalf(val) {
+  return Math.round(val * 2) / 2
+}
+
+/**
+ * Calcule le nombre de périodes entre start_time et end_time
+ * - Journée complète (start < 12h et end > 12h) = 6 périodes
+ * - Demi-journée = durée/45min arrondi au 0.5, plafonné à 3
+ */
+export function computePeriods(startTime, endTime) {
+  const s = parseTime(startTime)
+  const e = parseTime(endTime)
+  if (!s || !e) return 0
+  const startMin = s.h * 60 + s.m
+  const endMin = e.h * 60 + e.m
+  if (endMin <= startMin) return 0
+
+  // Journée complète : commence le matin, finit l'après-midi
+  if (s.h < 12 && e.h >= 13) return 6
+
+  // Demi-journée : nombre entier de blocs de 45min, min 1, max 3
+  const periods = Math.floor((endMin - startMin) / 45)
+  return Math.min(Math.max(periods, 1), 3)
+}
+
 // ── Service principal ───────────────────────────────────
 
 class WorkloadService {
@@ -320,11 +348,11 @@ class WorkloadService {
         teacherWorkloads[key] = {
           teacher,
           slots: [],
-          totalPresenceHours: 0,
-          totalWeightedHours: 0,
+          totalPresencePeriods: 0,
+          totalWeightedPeriods: 0,
           byModule: {},
           byClass: {},
-          byActivity: { cours: { hours: 0, weighted: 0 }, atelier: { hours: 0, weighted: 0 } },
+          byActivity: { cours: { periods: 0, weighted: 0 }, atelier: { periods: 0, weighted: 0 } },
           _seenSlots: new Set()
         }
       }
@@ -334,8 +362,8 @@ class WorkloadService {
     for (const slot of allSlots) {
       if (!slot.teachers || slot.teachers.length === 0) continue
 
-      const hours = computeHours(slot.start_time, slot.end_time)
-      if (hours <= 0) continue
+      const periods = computePeriods(slot.start_time, slot.end_time)
+      if (periods <= 0) continue
 
       // Détecter atelier : activity_type, activity, OU course_title
       const isAtelier = isAtelierActivity(slot.activity_type)
@@ -357,7 +385,7 @@ class WorkloadService {
       if (teacherCount === 0) continue
       const coeff = getCoefficient(teacherCount, isAtelier)
       const coeffLabel = getCoefficientLabel(teacherCount, isAtelier)
-      const weightedHours = Math.round(hours * coeff * 100) / 100
+      const weightedPeriods = Math.round(periods * coeff * 10) / 10
 
       for (const key of slotTeacherKeys) {
 
@@ -366,11 +394,11 @@ class WorkloadService {
           teacherWorkloads[key] = {
             teacher: { id: null, name: keyDisplayName[key] || key, email: null },
             slots: [],
-            totalPresenceHours: 0,
-            totalWeightedHours: 0,
+            totalPresencePeriods: 0,
+            totalWeightedPeriods: 0,
             byModule: {},
             byClass: {},
-            byActivity: { cours: { hours: 0, weighted: 0 }, atelier: { hours: 0, weighted: 0 } },
+            byActivity: { cours: { periods: 0, weighted: 0 }, atelier: { periods: 0, weighted: 0 } },
             _seenSlots: new Set()  // pour dédoublonner TP/PA
           }
         }
@@ -379,19 +407,20 @@ class WorkloadService {
         // Mettre à jour le nom d'affichage avec le meilleur trouvé
         workload.teacher.name = keyDisplayName[key] || workload.teacher.name
 
-        // Dédoublonner : même semaine + jour + horaire + module = même cours
+        // Dédoublonner : même semaine + jour + horaire = même créneau physique
         // (BAC25 et BAC25-PA/TP au même moment = un seul créneau réel)
-        const slotFingerprint = `${slot.week_number}|${slot.day}|${slot.start_time}|${slot.end_time}|${slot.module_code || ''}`
+        const slotFingerprint = `${slot.week_number}|${slot.day}|${slot.start_time}|${slot.end_time}`
         if (workload._seenSlots.has(slotFingerprint)) {
           // Créneau déjà compté pour ce prof, on ajoute juste la classe
           const existingSlot = workload.slots.find(s => 
             s.weekNumber === slot.week_number && s.day === slot.day &&
-            s.startTime === slot.start_time && s.endTime === slot.end_time &&
-            s.moduleCode === (slot.module_code || '')
+            s.startTime === slot.start_time && s.endTime === slot.end_time
           )
-          const normClass = normalizeClassCode(slot.class_code)
-          if (existingSlot && !existingSlot.classCode.includes(normClass)) {
-            existingSlot.classCode += ', ' + normClass
+          if (existingSlot) {
+            const normClass = normalizeClassCode(slot.class_code)
+            if (normClass && !existingSlot.classCode.includes(normClass)) {
+              existingSlot.classCode += ', ' + normClass
+            }
           }
           continue
         }
@@ -411,38 +440,38 @@ class WorkloadService {
           courseTitle: slot.course_title,
           activity: isAtelier ? 'Atelier' : (slot.activity || 'Cours'),
           room: slot.room,
-          hours,
+          periods,
           teacherCount,
           isAtelier,
           coefficient: coeff,
           coeffLabel,
-          weightedHours
+          weightedPeriods
         })
 
         // Totaux
-        workload.totalPresenceHours += hours
-        workload.totalWeightedHours += weightedHours
+        workload.totalPresencePeriods += periods
+        workload.totalWeightedPeriods += weightedPeriods
 
         // Par module
         const moduleKey = slot.module_code || 'non-assigné'
         if (!workload.byModule[moduleKey]) {
-          workload.byModule[moduleKey] = { hours: 0, weighted: 0, title: moduleNames[moduleKey] || moduleKey }
+          workload.byModule[moduleKey] = { periods: 0, weighted: 0, title: moduleNames[moduleKey] || moduleKey }
         }
-        workload.byModule[moduleKey].hours += hours
-        workload.byModule[moduleKey].weighted += weightedHours
+        workload.byModule[moduleKey].periods += periods
+        workload.byModule[moduleKey].weighted += weightedPeriods
 
         // Par classe
         const classKey = normalizeClassCode(slot.class_code)
         if (!workload.byClass[classKey]) {
-          workload.byClass[classKey] = { hours: 0, weighted: 0 }
+          workload.byClass[classKey] = { periods: 0, weighted: 0 }
         }
-        workload.byClass[classKey].hours += hours
-        workload.byClass[classKey].weighted += weightedHours
+        workload.byClass[classKey].periods += periods
+        workload.byClass[classKey].weighted += weightedPeriods
 
         // Par type (cours vs atelier)
         const typeKey = isAtelier ? 'atelier' : 'cours'
-        workload.byActivity[typeKey].hours += hours
-        workload.byActivity[typeKey].weighted += weightedHours
+        workload.byActivity[typeKey].periods += periods
+        workload.byActivity[typeKey].weighted += weightedPeriods
       }
     }
 
@@ -455,47 +484,47 @@ class WorkloadService {
         for (const s of w.slots) {
           const label = s.coeffLabel
           if (!coeffBreakdown[label]) {
-            coeffBreakdown[label] = { label, coeff: s.coefficient, slots: 0, hours: 0, weighted: 0 }
+            coeffBreakdown[label] = { label, coeff: s.coefficient, slots: 0, periods: 0, weighted: 0 }
           }
           coeffBreakdown[label].slots++
-          coeffBreakdown[label].hours += s.hours
-          coeffBreakdown[label].weighted += s.weightedHours
+          coeffBreakdown[label].periods += s.periods
+          coeffBreakdown[label].weighted += s.weightedPeriods
         }
         const byCoefficient = Object.values(coeffBreakdown)
           .map(c => ({
             ...c,
-            hours: Math.round(c.hours * 100) / 100,
-            weighted: Math.round(c.weighted * 100) / 100
+            periods: roundHalf(c.periods),
+            weighted: Math.round(c.weighted * 10) / 10
           }))
           .sort((a, b) => b.weighted - a.weighted)
 
         return {
           teacher: w.teacher,
           slots: w.slots,
-          totalPresenceHours: Math.round(w.totalPresenceHours * 100) / 100,
-          totalWeightedHours: Math.round(w.totalWeightedHours * 100) / 100,
+          totalPresencePeriods: roundHalf(w.totalPresencePeriods),
+          totalWeightedPeriods: Math.round(w.totalWeightedPeriods * 10) / 10,
           byModule: Object.entries(w.byModule).map(([code, data]) => ({
             code,
             title: data.title,
-            hours: Math.round(data.hours * 100) / 100,
-            weighted: Math.round(data.weighted * 100) / 100
+            periods: roundHalf(data.periods),
+            weighted: Math.round(data.weighted * 10) / 10
           })),
           byClass: Object.entries(w.byClass).map(([code, data]) => ({
             code,
-            hours: Math.round(data.hours * 100) / 100,
-            weighted: Math.round(data.weighted * 100) / 100
+            periods: roundHalf(data.periods),
+            weighted: Math.round(data.weighted * 10) / 10
           })),
           byActivity: w.byActivity,
           byCoefficient
         }
       })
-      .sort((a, b) => b.totalWeightedHours - a.totalWeightedHours)
+      .sort((a, b) => b.totalWeightedPeriods - a.totalWeightedPeriods)
 
     // 6. Résumé global
     const summary = {
       totalTeachers: result.length,
-      totalPresenceHours: Math.round(result.reduce((s, w) => s + w.totalPresenceHours, 0) * 100) / 100,
-      totalWeightedHours: Math.round(result.reduce((s, w) => s + w.totalWeightedHours, 0) * 100) / 100,
+      totalPresencePeriods: roundHalf(result.reduce((s, w) => s + w.totalPresencePeriods, 0)),
+      totalWeightedPeriods: Math.round(result.reduce((s, w) => s + w.totalWeightedPeriods, 0) * 10) / 10,
       totalSlots: result.reduce((s, w) => s + w.slots.length, 0),
       classesUsed: [...new Set(allSlots.map(s => s.class_code).filter(Boolean))].length
     }

@@ -135,9 +135,7 @@ export default defineConfig({
             if (id.includes('quill')) {
               return 'quill'
             }
-            if (id.includes('html2canvas')) {
-              return 'html2canvas'
-            }
+            
           }
         },
       },
@@ -154,7 +152,7 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'text-summary', 'html'],
       reportsDirectory: './coverage',
-      include: ['src/stores/**', 'src/service/**', 'src/services/**', 'src/composables/**'],
+      include: ['src/stores/**', 'src/service/**', 'src/composables/**'],
       exclude: ['node_modules/', 'tests/', 'src/**/*.vue'],
     },
   }
