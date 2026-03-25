@@ -13,12 +13,15 @@ const {
 if (!VAPID_PUBLIC || !VAPID_PRIVATE) {
   console.warn('[PUSH] VAPID_PUBLIC / VAPID_PRIVATE manquants – l’envoi échouera.');
 }
+const pushConfigured = !!(VAPID_PUBLIC && VAPID_PRIVATE);
 
-webpush.setVapidDetails(
-  'mailto:admin@example.com',
-  VAPID_PUBLIC,
-  VAPID_PRIVATE
-);
+if (pushConfigured) {
+  webpush.setVapidDetails(
+    'mailto:admin@example.com',
+    VAPID_PUBLIC,
+    VAPID_PRIVATE
+  );
+}
 
 const router = express.Router();
 
@@ -55,6 +58,13 @@ function requireAdminKey(req, res, next) {
  */
 router.post('/send', requireAdminKey, async (req, res) => {
   try {
+    if (!pushConfigured) {
+      return res.status(503).json({
+        ok: false,
+        error: 'Push notifications are not configured (missing VAPID_PUBLIC / VAPID_PRIVATE).'
+      });
+    }
+
     const { user_id = null, title = 'Notification', body = '', url = '/', filter = null } = req.body || {};
     if (typeof title !== 'string' || typeof body !== 'string') {
       return res.status(400).json({ ok:false, error:'Invalid payload' });

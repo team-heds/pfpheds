@@ -51,6 +51,7 @@
       <button class="qa-btn" @click="openResumeSlide">Résumé de la situation</button>
       <button class="qa-btn" @click="openDossierSlide">Dossier médical</button>
       <button class="qa-btn" @click="openPdf">Voir PDF</button>
+      <button class="qa-btn qa-btn-danger" @click="resetConversation">Réinitialiser</button>
     </div>
 
     <!-- Slides Panel: Intro then Dossier médical -->
@@ -98,9 +99,9 @@
     <div class="main-layout">
       <!-- LEFT COLUMN: media (image + caption) -->
       <div class="media-column">
-        <div v-if="mediaImageUrl" class="media-panel">
-          <img :src="mediaImageUrl" alt="Media contextuelle" class="media-image" />
-          <p class="media-caption">{{ mediaCaption }}</p>
+        <div v-if="mediaImageUrl || mediaCaption" class="media-panel">
+          <img v-if="mediaImageUrl" :src="mediaImageUrl" alt="Media contextuelle" class="media-image" />
+          <p v-if="mediaCaption" class="media-caption">{{ mediaCaption }}</p>
         </div>
       </div>
 
@@ -110,6 +111,14 @@
 
         <div class="conversation-status">
           <h4>Progression de la conversation</h4>
+          <div class="gemini-indicator">
+            <img
+              :src="geminiUsed === true ? geminiOnImage : geminiOffImage"
+              :alt="geminiUsed === true ? 'Gemini actif' : 'Gemini non utilisé'"
+              class="gemini-indicator-image"
+            />
+            <span class="gemini-indicator-text">{{ geminiStatusLabel }}</span>
+          </div>
           <p class="current-step"><b>Étape actuelle :</b> {{ conversationStep }}/11</p>
           <ul class="step-tracker">
             <li :class="{ 'active-step': conversationStep === 1, 'completed-step': conversationStep > 1 }">1. Se présenter</li>
@@ -132,7 +141,7 @@
             <p>👋 La conversation commencera lorsque vous enverrez votre premier message.</p>
           </div>
           <div v-for="(message, index) in messages" :key="index" :class="['message-bubble', `message-${message.from}`]">
-            <p><strong>{{ message.from === 'user' ? 'Vous' : 'Madame Aubrey' }}:</strong> {{ message.text }}</p>
+            <p><strong>{{ message.displayName || (message.from === 'user' ? 'Vous' : 'Madame Aubrey') }}:</strong> {{ message.text }}</p>
           </div>
           <div v-if="isLoading" class="message-bubble message-loading">
             <div class="typing-indicator">
@@ -207,6 +216,7 @@
   
   <script>
   import { ref, onMounted, onBeforeUnmount, watch, computed, nextTick } from "vue";
+  import { useAuthStore } from "@/stores/authStore";
   import ScenarioObjectivesModal from "@/components/careconvers/ScenarioObjectivesModal.vue";
   import PdfViewerModal from "@/components/careconvers/PdfViewerModal.vue";
   import ConsigneModal from "@/components/careconvers/ConsigneModal.vue";
@@ -219,6 +229,7 @@
       mood: { type: String, default: "neutral" },
     },
     setup(props, { expose }) {
+      const authStore = useAuthStore();
       const avatarContainer = ref(null);
       const textToSpeak = ref("");
       const conversationStep = ref(1);
@@ -229,6 +240,10 @@
       const errorMessage = ref("");
       const chatHistory = ref(null);
       const selectedStartStep = ref(1);
+      const geminiUsed = ref(null);
+      const intentSource = ref('unknown');
+      const geminiOnImage = '/assets/gemini-on.svg';
+      const geminiOffImage = '/assets/gemini-off.svg';
 
       // Quiz state
       const currentQuizQuestion = ref(null);
@@ -256,8 +271,9 @@
       const consigneText = ref(
         "Il est 08h30. Vous devez apporter le plateau du petit déjeuner et le déposer sur la table à manger de Madame Aubry à la chambre 101 "
       );
+      const isAuthBypassed = import.meta.env.VITE_DISABLE_AUTH === 'true';
       let head = null;
-      const hasStartedConversation = ref(false);
+      const hasStartedConversation = ref(isAuthBypassed);
   
       const getLanguageConfig = (lang) =>
         lang === "fr"
@@ -396,6 +412,22 @@
         }
       });
 
+      const currentConversationUserId = computed(() => {
+        const authUser = authStore?.user;
+        return authUser?.id || authUser?.uid || authUser?.email || 'guest-user';
+      });
+
+      const geminiStatusLabel = computed(() => {
+        if (geminiUsed.value === true) return 'Gemini: utilisé pour ce message';
+        if (geminiUsed.value === false) {
+          if (intentSource.value === 'regex-no-gemini') return 'Gemini: non configuré (clé API absente)';
+          if (intentSource.value === 'regex-fallback-error') return 'Gemini: erreur API (fallback regex)';
+          if (intentSource.value === 'regex-fallback-unknown') return 'Gemini: réponse non classée (fallback regex)';
+          return `Gemini: non utilisé (${intentSource.value || 'fallback regex'})`;
+        }
+        return 'Gemini: statut en attente';
+      });
+
       const scrollToBottom = async () => {
         await nextTick();
         if (chatHistory.value) {
@@ -405,12 +437,13 @@
 
       const speak = async () => {
         if (!textToSpeak.value.trim()) return;
-        
+
         errorMessage.value = "";
         isLoading.value = true;
         const userMessage = textToSpeak.value;
+        const stepBeforeSend = conversationStep.value;
         
-        messages.value.push({ from: 'user', text: userMessage });
+        messages.value.push({ from: 'user', text: userMessage, displayName: 'Vous' });
         textToSpeak.value = '';
         scrollToBottom();
 
@@ -422,7 +455,8 @@
             },
             body: JSON.stringify({ 
               prompt: userMessage, 
-              currentStep: conversationStep.value 
+              currentStep: conversationStep.value,
+              userId: currentConversationUserId.value
             }),
           });
 
@@ -432,9 +466,17 @@
 
           const data = await response.json();
           const botResponse = data.response;
+
+          if (typeof data.geminiUsed === 'boolean') {
+            geminiUsed.value = data.geminiUsed;
+          }
+          if (typeof data.intentSource === 'string') {
+            intentSource.value = data.intentSource;
+          }
           
           if (botResponse) {
-            messages.value.push({ from: 'bot', text: botResponse });
+            const botDisplayName = stepBeforeSend === 10 || stepBeforeSend === 11 ? 'Votre référent' : 'Madame Aubrey';
+            messages.value.push({ from: 'bot', text: botResponse, displayName: botDisplayName });
             scrollToBottom();
           }
 
@@ -448,9 +490,9 @@
             updateQuizFromResponse(botResponse);
           }
 
-          // Display media if provided by backend
-          if (data.media && data.media.imageUrl) {
-            mediaImageUrl.value = data.media.imageUrl;
+          // Display media if provided by backend (including caption-only payloads)
+          if (data.media) {
+            mediaImageUrl.value = data.media.imageUrl || '';
             mediaCaption.value = data.media.caption || '';
           }
 
@@ -542,6 +584,40 @@
         }
       };
 
+      const resetConversation = async () => {
+        try {
+          errorMessage.value = '';
+          isLoading.value = true;
+
+          await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/reset`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userId: currentConversationUserId.value,
+            }),
+          });
+        } catch (error) {
+          console.warn('Reset backend non disponible, reset local uniquement:', error);
+        } finally {
+          conversationStep.value = 1;
+          messages.value = [];
+          mediaImageUrl.value = '';
+          mediaCaption.value = '';
+          currentQuizQuestion.value = null;
+          currentQuizQuestionNumber.value = 0;
+          totalQuizQuestions.value = 0;
+          selectedAnswer.value = null;
+          quizResults.value = null;
+          geminiUsed.value = null;
+          intentSource.value = 'unknown';
+          textToSpeak.value = '';
+          isLoading.value = false;
+          scrollToBottom();
+        }
+      };
+
       // Quiz helper functions
       const parseQuizQuestion = (responseText) => {
         const lines = responseText.split('\n');
@@ -617,11 +693,17 @@
         showConsigneModal,
         consigneText,
         hasStartedConversation,
+        geminiUsed,
+        intentSource,
+        geminiOnImage,
+        geminiOffImage,
+        geminiStatusLabel,
         // quick access
         openObjectives,
         openResumeSlide,
         openDossierSlide,
         openPdf,
+        resetConversation,
         onConsigneAck,
         startConversation,
         selectedStartStep,
@@ -748,6 +830,8 @@
   .quick-access { display: flex; gap: 8px; flex-wrap: wrap; margin: 6px 0 8px 0; }
   .qa-btn { cursor: pointer; border-radius: 999px; padding: 6px 12px; border: 1px solid #e5e7eb; background: #f3f4f6; color: #111827; font-weight: 600; font-size: 13px; }
   .qa-btn:hover { background: #e5e7eb; }
+  .qa-btn-danger { border-color: #fecaca; background: #fef2f2; color: #991b1b; }
+  .qa-btn-danger:hover { background: #fee2e2; }
 
   /* Slides Panel Styles */
   .slides-panel {
@@ -782,6 +866,25 @@
     background-color: #f0f0f0;
     border-radius: 8px;
     text-align: center;
+  }
+
+  .gemini-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 8px 0 10px;
+  }
+
+  .gemini-indicator-image {
+    width: 28px;
+    height: 28px;
+  }
+
+  .gemini-indicator-text {
+    color: #374151;
+    font-size: 14px;
+    font-weight: 600;
   }
 
   .conversation-status h4 {

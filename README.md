@@ -387,6 +387,33 @@ npm run deploy:staging
 npm run deploy:prod
 ```
 
+### Déploiement Docker (Production)
+
+Le projet inclut une stack Docker production prête à l'emploi :
+
+- [docker-compose.prod.yml](docker-compose.prod.yml)
+- [Dockerfile.frontend.prod](Dockerfile.frontend.prod)
+- [deploy/nginx.frontend.prod.conf](deploy/nginx.frontend.prod.conf)
+
+Commandes:
+
+```bash
+# depuis la racine du projet
+docker compose -f docker-compose.prod.yml up -d --build
+
+# voir les logs
+docker compose -f docker-compose.prod.yml logs -f
+
+# arrêter
+docker compose -f docker-compose.prod.yml down
+```
+
+Prérequis backend:
+- fichier `backend/.env` configuré (notamment `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `GEMINI_API_KEY` si utilisé)
+- migrations SQL CareConvers appliquées côté Supabase:
+  - [sql/create_careconvers_sessions.sql](sql/create_careconvers_sessions.sql)
+  - [sql/create_careconvers_interactions.sql](sql/create_careconvers_interactions.sql)
+
 ### Configuration Vite
 
 ```javascript

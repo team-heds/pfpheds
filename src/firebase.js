@@ -19,22 +19,23 @@ export const firebaseConfig = {
 // Vérifier que toutes les variables sont présentes avant d'initialiser
 const requiredKeys = ['apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId', 'databaseURL']
 const missingKeys = requiredKeys.filter(key => !firebaseConfig[key])
+const isFirebaseEnabled = missingKeys.length === 0
 
-if (missingKeys.length > 0) {
+if (!isFirebaseEnabled) {
   console.error('❌ ERREUR Firebase - Variables manquantes:', missingKeys)
-  console.error('💡 SOLUTION: Vérifiez votre fichier .env et redémarrez l\'application')
-  throw new Error(`Variables Firebase manquantes: ${missingKeys.join(', ')}`)
+  console.warn('⚠️ Firebase désactivé: mode Supabase-only actif.')
 }
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
+const app = isFirebaseEnabled ? initializeApp(firebaseConfig) : null;
 // Get a reference to the database service
-const db = getDatabase(app);
+const db = app ? getDatabase(app) : null;
 // Get a reference to the auth service
-const auth = getAuth(app);
+const auth = app ? getAuth(app) : null;
 // Get a reference to the storage service
-const storage = getStorage(app);
+const storage = app ? getStorage(app) : null;
 async function getUserNameById(userId) {
+  if (!db) return "";
   const userRef = ref(db, `Users/${userId}`);
   const snapshot = await get(userRef);
   if (snapshot.exists()) {
@@ -48,5 +49,5 @@ async function getUserNameById(userId) {
 }
 
 
-export { db, auth, storage,getUserNameById };
+export { db, auth, storage, isFirebaseEnabled, getUserNameById };
  
