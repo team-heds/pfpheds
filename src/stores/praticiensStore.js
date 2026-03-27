@@ -11,7 +11,7 @@ export const usePraticiensStore = defineStore('praticiens', {
   }),
 
   actions: {
-    async fetchPraticiens(searchQuery = '', { limit = 150, offset = 0 } = {}) {
+    async fetchPraticiens(searchQuery = '', { limit = 1000, offset = 0 } = {}) {
       this.loading = true
       this.error = null
       

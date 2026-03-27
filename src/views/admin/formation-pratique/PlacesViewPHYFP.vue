@@ -371,6 +371,7 @@
     >
       <div class="mb-3">
         <label class="block text-sm font-semibold mb-2">Rechercher et sélectionner</label>
+        <small class="text-500 block mb-2">{{ praticiensOptions.length }} praticiens disponibles</small>
         <MultiSelect
           v-model="selectedPraticiens"
           :options="praticiensOptions"
@@ -379,10 +380,23 @@
           display="chip"
           class="w-full"
           filter
+          :filterFields="['label']"
           filterPlaceholder="🔍 Rechercher un praticien..."
-          :filterMatchMode="'contains'"
           placeholder="Sélectionner des praticiens..."
-        />
+          :virtualScrollerOptions="{ itemSize: 38 }"
+          :maxSelectedLabels="5"
+          scrollHeight="300px"
+        >
+          <template #option="slotProps">
+            <div class="flex align-items-center gap-2">
+              <i class="pi pi-user" style="font-size: 0.85rem"></i>
+              <span>{{ slotProps.option.label }}</span>
+            </div>
+          </template>
+          <template #empty>
+            <div class="p-3 text-center text-500">Aucun praticien trouvé</div>
+          </template>
+        </MultiSelect>
       </div>
 
       <template #footer>
@@ -748,7 +762,7 @@ const praticiensOptions = computed(() => {
     const label = fullName || p.mail || p.Mail || `PF-${p.id}`
 
     return {
-      id: p.id,
+      id: String(p.id),
       label: label
     }
   })
@@ -967,11 +981,19 @@ function toggleAllLangues() {
 }
 
 function getPraticienDisplayName(praticienId) {
-  // Chercher dans les options
+  // Debug: afficher le type et la valeur de l'ID recherché
+  if (import.meta.env.DEV) {
+    const storeIds = (praticiensStore.items || []).slice(0, 3).map(p => ({ id: p.id, type: typeof p.id }))
+    console.log('🔍 getPraticienDisplayName:', { praticienId, type: typeof praticienId, storeItemsCount: praticiensStore.items?.length, sampleStoreIds: storeIds })
+  }
+
+  // Chercher dans les options — comparaison souple (number vs string)
   const praticien = praticiensOptions.value.find(p =>
     p.id === praticienId ||
     p.id === String(praticienId) ||
-    String(p.id) === String(praticienId)
+    String(p.id) === String(praticienId) ||
+    p.id === Number(praticienId) ||
+    Number(p.id) === Number(praticienId)
   )
 
   if (praticien?.label) {
@@ -982,7 +1004,9 @@ function getPraticienDisplayName(praticienId) {
   const pf = (praticiensStore.items || []).find(p =>
     p.id === praticienId ||
     p.id === String(praticienId) ||
-    String(p.id) === String(praticienId)
+    String(p.id) === String(praticienId) ||
+    p.id === Number(praticienId) ||
+    Number(p.id) === Number(praticienId)
   )
 
   if (pf) {
@@ -1324,5 +1348,15 @@ watch(() => praticiensStore.items, (newItems) => {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.15);
   color: #f3f4f6;
+}
+</style>
+
+<style>
+/* Global styles for MultiSelect overlay panel (renders as portal) */
+.p-multiselect-panel .p-multiselect-items .p-multiselect-item {
+  color: var(--text-color) !important;
+}
+.p-multiselect-panel .p-multiselect-items .p-multiselect-item span {
+  color: var(--text-color) !important;
 }
 </style>

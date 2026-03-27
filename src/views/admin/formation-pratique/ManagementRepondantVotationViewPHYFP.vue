@@ -299,7 +299,13 @@ const repondantsHESList = ref([])
 const showAllStudents = ref(false)
 
 const years = ref(['2025', '2026'])
-const classes = ref(['BA23', 'BA24', 'BA25'])
+const classes = computed(() => {
+  const classSet = new Set()
+  ;(placesList.value || []).forEach(r => {
+    if (r.student_class) classSet.add(r.student_class)
+  })
+  return [...classSet].sort()
+})
 const typesPFP = ref([
   { label: 'PFP1A', value: 'PFP1A' },
   { label: 'PFP1B', value: 'PFP1B' },
@@ -369,7 +375,7 @@ watch(showAllStudents, async (val) => {
     try {
       const [students, { data: physio }] = await Promise.all([
         getAllStudents(),
-        supabase.from('StudentsPhysio').select('user_id, repondant_hes')
+        supabase.from('StudentsPhysio').select('user_id, repondant_hes, class')
       ])
       allStudents.value = students || []
       studentsPhysioData.value = physio || []
@@ -416,7 +422,7 @@ const baseRows = computed(() => {
     out.push({
       user_id: userId,
       student_name: getStudentName(s),
-      student_class: getStudentClass(s),
+      student_class: studentPhysio?.class || getStudentClass(s),
       year: assignment?.year || filterYear.value || null,
       pfp_type: assignment?.pfp_type || filterType.value || null,
       votation_type: assignment ? getVotationTypeLabel(assignment) : '-',
@@ -482,7 +488,7 @@ const loadPublishedAssignments = async () => {
       { data: praticiens }
     ] = await Promise.all([
       supabase.from('user_profiles').select('user_id,family_name,forname,classe').in('user_id', userIds),
-      supabase.from('StudentsPhysio').select('user_id,repondant_hes').in('user_id', userIds),
+      supabase.from('StudentsPhysio').select('user_id,repondant_hes,class').in('user_id', userIds),
       supabase.from('praticiens_formateurs').select('id,prenom,nom')
     ])
 
@@ -503,7 +509,8 @@ const loadPublishedAssignments = async () => {
     placesList.value = assignments.map(a => {
       const s = studentsById.get(a.user_id)
       const studentName = s ? `${(s.family_name || '').toUpperCase()} ${s.forname || ''}`.trim() : 'N/A'
-      const studentClass = s?.classe || null
+      const studentPhysioClass = physioByUserId.get(a.user_id)?.class || null
+      const studentClass = studentPhysioClass || s?.classe || null
 
       const praticienFormateur = a.assigned_praticien_id 
         ? praticiensById.get(a.assigned_praticien_id) || praticiensById.get(String(a.assigned_praticien_id)) 

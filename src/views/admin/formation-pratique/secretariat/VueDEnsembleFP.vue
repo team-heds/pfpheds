@@ -263,9 +263,14 @@
           </Column>
 
           <!-- Remarques (depuis Validation Places → student_result_vote.remarques) -->
-          <Column field="assignmentNotes" header="Remarques" style="min-width: 160px">
+          <Column field="assignmentNotes" header="Remarques" style="min-width: 280px">
             <template #body="{ data }">
-              <span v-if="data.assignmentNotes" class="text-xs text-700" :title="data.assignmentNotes">{{ truncate(data.assignmentNotes, 30) }}</span>
+              <div v-if="data.assignmentNotes || data.remarques" class="remarques-cell">
+                <div v-if="data.assignmentNotes" class="text-sm text-700 mb-1" style="white-space: pre-wrap; word-break: break-word; line-height: 1.35;">{{ data.assignmentNotes }}</div>
+                <div v-if="data.remarques && data.remarques !== data.assignmentNotes" class="text-xs text-500" style="white-space: pre-wrap; word-break: break-word; line-height: 1.3; border-top: 1px solid var(--surface-200); padding-top: 0.25rem; margin-top: 0.25rem;">
+                  <i class="pi pi-file text-xs mr-1"></i>{{ data.remarques }}
+                </div>
+              </div>
               <span v-else class="text-400 text-xs">—</span>
             </template>
           </Column>
@@ -284,6 +289,7 @@
                 <span v-if="data.casColor && data.casColor !== 'blanc'" class="cas-dot" :class="'cas-' + data.casColor" :title="data.casComment || ''"></span>
                 <span v-else class="text-400 text-xs">—</span>
               </div>
+
             </template>
           </Column>
 
@@ -1123,67 +1129,33 @@ const exportXLSX = async () => {
   })
 
   // ════════════════════════════════════════════
-  // SHEETS: PFP xx - BAxx (one per PFP/cohort with assignments)
+  // SHEETS: PFP xx - BAxx (one per PFP/cohort — from allRows, same data as screen table)
   // ════════════════════════════════════════════
-  // Group assignments by pfp_type + year
-  const normPfp = (t) => (t === 'PFP1A' || t === 'PFP1B') ? 'PFP1' : t
-  const assignGroups = new Map()
-  rawAssignments.value.forEach(a => {
-    if (!a.pfp_type || !a.year) return
-    const key = `${normPfp(a.pfp_type)}__${a.year}`
-    if (!assignGroups.has(key)) assignGroups.set(key, [])
-    assignGroups.get(key).push(a)
-  })
+  const pfpSheetLabels = { 'PFP1': 'PFP 1', 'PFP1A': 'PFP 1', 'PFP1B': 'PFP 1', 'PFP2': 'PFP 2', 'PFP3': 'PFP 3', 'PFP4': 'PFP 4' }
+  const cptLabel = (val) => val === true ? 'Validé' : val === false ? 'Non conforme' : ''
 
-  // Also add entries from allRows that have notes but no assignment
+  // Build flat entries from allRows (same source as DataTable)
+  const pfpEntries = []
   allRows.value.forEach(r => {
     pfpTypes.forEach(pfp => {
       const d = r[pfp]
       if (!d || d.statut === '—') return
-      const year = d.year || ''
-      if (!year) return
-      const key = `${pfp}__${year}`
-      // Check if already in assignments
-      const existing = rawAssignments.value.find(a => a.user_id === r.userId && normPfp(a.pfp_type) === pfp)
-      if (!existing && d.note) {
-        if (!assignGroups.has(key)) assignGroups.set(key, [])
-        assignGroups.get(key).push({
-          user_id: r.userId,
-          pfp_type: pfp,
-          year,
-          assigned_place_name: d.placeName,
-          assigned_institution_name: d.institutionName,
-          _fromNotes: true
-        })
-      }
+      pfpEntries.push({ student: r, pfpType: pfp, data: d })
     })
   })
 
-  // Build student lookup
-  const studentMap = new Map()
-  allRows.value.forEach(r => studentMap.set(r.userId, r))
-
-  // Build notes lookup
-  const notesMap = new Map()
-  rawNotes.value.forEach(n => notesMap.set(n.user_id, n))
-
-  // Build CPT/Eval lookup
-  const cptEvalMap = new Map()
-  rawCptEval.value.forEach(c => cptEvalMap.set(c.user_id, c))
-  const pfpCptKeysExport = { 'PFP1': 'pfp1', 'PFP2': 'pfp2', 'PFP3': 'pfp3', 'PFP4': 'pfp4' }
-  const cptLabel = (val) => val === true ? 'Validé' : val === false ? 'Non conforme' : ''
-
-  // Build praticiens lookup from assignments
-  const pratMap = new Map()
-  rawAssignments.value.forEach(a => {
-    if (a.assigned_praticien_name) pratMap.set(a.assigned_praticien_id, a.assigned_praticien_name)
+  // Group by pfpType + year
+  const pfpGroups = new Map()
+  pfpEntries.forEach(e => {
+    const year = e.data.year || ''
+    if (!year) return
+    const key = `${e.pfpType}__${year}`
+    if (!pfpGroups.has(key)) pfpGroups.set(key, [])
+    pfpGroups.get(key).push(e)
   })
 
-  // PFP label mapping for sheet names
-  const pfpSheetLabels = { 'PFP1': 'PFP 1', 'PFP1A': 'PFP 1', 'PFP1B': 'PFP 1', 'PFP2': 'PFP 2', 'PFP3': 'PFP 3', 'PFP4': 'PFP 4' }
-
   // Sort keys for consistent ordering
-  const sortedKeys = [...assignGroups.keys()].sort((a, b) => {
+  const sortedKeys = [...pfpGroups.keys()].sort((a, b) => {
     const [pfpA, yearA] = a.split('__')
     const [pfpB, yearB] = b.split('__')
     if (yearA !== yearB) return yearA.localeCompare(yearB)
@@ -1192,19 +1164,14 @@ const exportXLSX = async () => {
 
   sortedKeys.forEach(groupKey => {
     const [pfpType, year] = groupKey.split('__')
-    const assignments = assignGroups.get(groupKey)
-    if (!assignments || assignments.length === 0) return
+    const entries = pfpGroups.get(groupKey)
+    if (!entries || entries.length === 0) return
 
-    // Determine cohort from the students in this group
-    const cohortSet = new Set()
-    assignments.forEach(a => {
-      const s = studentMap.get(a.user_id)
-      if (s?.classe) cohortSet.add(s.classe)
-    })
+    // Determine cohort
+    const cohortSet = new Set(entries.map(e => e.student.classe).filter(c => c && c !== '-'))
     const cohortLabel = cohortSet.size === 1 ? [...cohortSet][0] : year
 
     const sheetName = `${pfpSheetLabels[pfpType] || pfpType} - ${cohortLabel}`.substring(0, 31)
-    // Avoid duplicate sheet names
     const existingNames = wb.worksheets.map(w => w.name)
     let finalName = sheetName
     let counter = 2
@@ -1215,22 +1182,24 @@ const exportXLSX = async () => {
 
     const wsPFP = wb.addWorksheet(finalName)
 
-    // Row 1: title
-    const pfpSheetColCount = 13
+    const pfpSheetColCount = 16
     wsPFP.columns = [
       { header: 'Institution', key: 'institution', width: 30 },
+      { header: 'Place de stage', key: 'placeName', width: 24 },
       { header: 'Critères', key: 'criteres', width: 20 },
       { header: 'Domaine d\'expertise', key: 'domaine', width: 22 },
+      { header: 'Classe', key: 'classe', width: 10 },
       { header: 'Nom étudiant·es', key: 'nom', width: 16 },
       { header: 'Prénom étudiant·es', key: 'prenom', width: 14 },
       { header: 'PF', key: 'pf', width: 22 },
       { header: 'Formateur·trice HES', key: 'formateurHES', width: 22 },
+      { header: 'Année', key: 'annee', width: 8 },
       { header: 'CPT', key: 'cptStatus', width: 14 },
       { header: 'Évaluation', key: 'evalStatus', width: 14 },
       { header: 'Particularités', key: 'particularites', width: 18 },
       { header: 'Absences en jours', key: 'absences', width: 14 },
       { header: 'Notes', key: 'notes', width: 8 },
-      { header: 'Remarques', key: 'remarques', width: 24 }
+      { header: 'Remarques', key: 'remarques', width: 35 }
     ]
 
     // Row 1: merged title
@@ -1245,84 +1214,64 @@ const exportXLSX = async () => {
 
     // Row 2: headers
     const hdrRow = wsPFP.getRow(2)
-    hdrRow.values = ['Institution', 'Critères', 'Domaine d\'expertise', 'Nom étudiant·es', 'Prénom étudiant·es', 'PF', 'Formateur·trice HES', 'CPT', 'Évaluation', 'Particularités', 'Absences en jours', 'Notes', 'Remarques']
+    hdrRow.values = ['Institution', 'Place de stage', 'Critères', 'Domaine d\'expertise', 'Classe', 'Nom étudiant·es', 'Prénom étudiant·es', 'PF', 'Formateur·trice HES', 'Année', 'CPT', 'Évaluation', 'Particularités', 'Absences en jours', 'Notes', 'Remarques']
     styleHeaderRow(wsPFP, 2, pfpSheetColCount)
 
-    // Sort assignments by institution then student name
-    const sorted = [...assignments].sort((a, b) => {
-      const instA = a.assigned_institution_name || a.assigned_place_name || ''
-      const instB = b.assigned_institution_name || b.assigned_place_name || ''
+    // Sort by institution then student name
+    const sorted = [...entries].sort((a, b) => {
+      const instA = a.data.institutionName || ''
+      const instB = b.data.institutionName || ''
       if (instA !== instB) return instA.localeCompare(instB)
-      const sA = studentMap.get(a.user_id)
-      const sB = studentMap.get(b.user_id)
-      return (sA?.nom || '').localeCompare(sB?.nom || '')
+      return (a.student.nom || '').localeCompare(b.student.nom || '')
     })
 
-    sorted.forEach((a, idx) => {
-      const student = studentMap.get(a.user_id)
-      const noteData = notesMap.get(a.user_id)
-      const noteKey = pfpType === 'PFP1' ? (noteData?.pfp1b ? 'pfp1b' : 'pfp1a') : pfpNoteKeysExport[pfpType]
-      const note = noteData?.[noteKey] || ''
-      const absences = Number(noteData?.[noteKey + '_absences']) || ''
-      const remarques = noteData?.[noteKey + '_remarques'] || ''
-
-      // Get suivi cas particulier
-      const suivi = rawSuivis.value.find(s => s.user_id === a.user_id && s.pfp_field === noteKey)
-      const particularites = suivi ? `${suivi.couleur || ''}${suivi.commentaire ? ': ' + suivi.commentaire : ''}` : remarques
-
-      // Get CPT/Eval data
-      const cptEvalData = cptEvalMap.get(a.user_id)
-      const cptKey = pfpCptKeysExport[pfpType]
-      const cptVal = cptEvalData?.[cptKey + '_cpt']
-      const evalVal = cptEvalData?.[cptKey + '_eval']
-      const cptCom = cptEvalData?.[cptKey + '_cpt_comment'] || ''
-      const evalCom = cptEvalData?.[cptKey + '_eval_comment'] || ''
-
-      // Resolve place criteria (from places table, fallback to row data)
-      const assignPlaceId = a.assigned_place_id || null
-      const assignPlaceInfo = assignPlaceId ? placeCriteriaMap.get(assignPlaceId) : null
-      const studentRow = studentMap.get(a.user_id)
-      const rowCriteria = studentRow?.[pfpType]?.criteria
-      const critSource = assignPlaceInfo || rowCriteria || {}
-      const assignCriteria = criteriaLabels.filter(c => critSource[c]).join(', ')
+    sorted.forEach((entry, idx) => {
+      const { student: s, data: d } = entry
+      const crit = d.criteria || {}
+      const assignCriteria = criteriaLabels.filter(c => crit[c]).join(', ')
+      const casText = (d.casColor && d.casColor !== 'blanc') ? `${d.casColor}${d.casComment ? ': ' + d.casComment : ''}` : ''
+      const allRemarks = [d.assignmentNotes, d.remarques].filter(r => r && r.trim()).join(' | ')
 
       const row = wsPFP.addRow({
-        institution: a.assigned_institution_name || a.assigned_place_name || '',
+        institution: d.institutionName || '',
+        placeName: d.placeName || '',
         criteres: assignCriteria,
-        domaine: a.assigned_domaine || '',
-        nom: student?.nom || '',
-        prenom: student?.prenom || '',
-        pf: a.assigned_praticien_name || '',
-        formateurHES: a.repondant_hes_name || '',
-        cptStatus: cptLabel(cptVal) + (cptCom ? ' (' + cptCom + ')' : ''),
-        evalStatus: cptLabel(evalVal) + (evalCom ? ' (' + evalCom + ')' : ''),
-        particularites,
-        absences,
-        notes: hasGrade(note) ? note : '',
-        remarques: a.notes || ''
+        domaine: '',
+        classe: s.classe || '',
+        nom: s.nom || '',
+        prenom: s.prenom || '',
+        pf: d.praticienName || '',
+        formateurHES: '',
+        annee: d.year || '',
+        cptStatus: cptLabel(d.cpt) + (d.cptComment ? ' (' + d.cptComment + ')' : ''),
+        evalStatus: cptLabel(d.eval) + (d.evalComment ? ' (' + d.evalComment + ')' : ''),
+        particularites: casText,
+        absences: d.absences || '',
+        notes: d.note || '',
+        remarques: allRemarks
       })
       row.eachCell({ includeEmpty: true }, (cell) => styleDataCell(cell, idx % 2 === 0))
 
-      // Col indices: 1=Institution, 2=Critères, 3=Domaine, 4=Nom, 5=Prénom, 6=PF, 7=FormateurHES, 8=CPT, 9=Eval, 10=Particularités, 11=Absences, 12=Notes
-      // Color CPT (col 8)
-      const cptCell = row.getCell(8)
-      if (cptVal === true) cptCell.font = { bold: true, size: 9, color: { argb: COL_GREEN_TEXT } }
-      else if (cptVal === false) cptCell.font = { bold: true, size: 9, color: { argb: COL_RED_TEXT } }
+      // Col indices: 1=Institution, 2=Place, 3=Critères, 4=Domaine, 5=Classe, 6=Nom, 7=Prénom, 8=PF, 9=FormateurHES, 10=Année, 11=CPT, 12=Eval, 13=Particularités, 14=Absences, 15=Notes, 16=Remarques
+      // Color CPT (col 11)
+      const cptCell = row.getCell(11)
+      if (d.cpt === true) cptCell.font = { bold: true, size: 9, color: { argb: COL_GREEN_TEXT } }
+      else if (d.cpt === false) cptCell.font = { bold: true, size: 9, color: { argb: COL_RED_TEXT } }
 
-      // Color Eval (col 9)
-      const evalCell = row.getCell(9)
-      if (evalVal === true) evalCell.font = { bold: true, size: 9, color: { argb: COL_GREEN_TEXT } }
-      else if (evalVal === false) evalCell.font = { bold: true, size: 9, color: { argb: COL_RED_TEXT } }
+      // Color Eval (col 12)
+      const evalCell = row.getCell(12)
+      if (d.eval === true) evalCell.font = { bold: true, size: 9, color: { argb: COL_GREEN_TEXT } }
+      else if (d.eval === false) evalCell.font = { bold: true, size: 9, color: { argb: COL_RED_TEXT } }
 
-      // Color the note (col 12)
-      const noteCell = row.getCell(12)
-      const n = String(note).trim().toUpperCase()
+      // Color the note (col 15)
+      const noteCell = row.getCell(15)
+      const n = String(d.note || '').trim().toUpperCase()
       if (n === 'F') noteCell.font = { bold: true, size: 9, color: { argb: COL_RED_TEXT } }
       else if (['A', 'B', 'C', 'D', 'E'].includes(n)) noteCell.font = { bold: true, size: 9, color: { argb: COL_GREEN_TEXT } }
 
-      // Color absences (col 11)
-      const absCell = row.getCell(11)
-      if (Number(absences) > 0) absCell.font = { bold: true, size: 9, color: { argb: COL_ORANGE_TEXT } }
+      // Color absences (col 14)
+      const absCell = row.getCell(14)
+      if (Number(d.absences) > 0) absCell.font = { bold: true, size: 9, color: { argb: COL_ORANGE_TEXT } }
     })
 
     wsPFP.views = [{ state: 'frozen', xSplit: 1, ySplit: 2 }]
@@ -1399,7 +1348,7 @@ const exportXLSX = async () => {
       rowData[`${pfp}_Statut`] = (d.statut && d.statut !== '—') ? d.statut : ''
       rowData[`${pfp}_Attribution`] = d.attributionType || ''
       rowData[`${pfp}_Abs.`] = d.absences || ''
-      rowData[`${pfp}_Remarques`] = d.remarques || ''
+      rowData[`${pfp}_Remarques`] = [d.assignmentNotes, d.remarques].filter(r => r && r.trim()).join(' | ')
       rowData[`${pfp}_Cas part.`] = (d.casColor && d.casColor !== 'blanc') ? `${d.casColor}${d.casComment ? ': ' + d.casComment : ''}` : ''
       const cptText = d.cpt === true ? 'Validé' : d.cpt === false ? 'Non conforme' : ''
       rowData[`${pfp}_CPT`] = cptText + (d.cptComment ? ' (' + d.cptComment + ')' : '')
@@ -1600,5 +1549,13 @@ onMounted(() => {
 
 .ensemble-table :deep(.p-datatable-tbody > tr:hover) {
   background: var(--surface-50);
+}
+
+.remarques-cell {
+  padding: 0.35rem 0.5rem;
+  background: var(--surface-50);
+  border-radius: 6px;
+  border-left: 3px solid var(--primary-color);
+  max-width: 350px;
 }
 </style>
