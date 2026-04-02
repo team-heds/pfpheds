@@ -1,8 +1,15 @@
 <template>
   <AdminLayout>
+    <ConfirmDialog />
     <div class="p-4">
-      <div class="surface-card p-4 border-round shadow-2 mb-3">
-        <div class="flex align-items-center justify-content-between gap-3">
+      <div class="breadcrumb-section mb-3">
+        <router-link to="/admin/formation-pratique/dashboard" class="text-600 no-underline hover:text-primary"><i class="pi pi-home mr-1"></i>Formation Pratique</router-link>
+        <i class="pi pi-angle-right text-400 mx-2"></i>
+        <span class="text-900 font-medium">Étudiants</span>
+      </div>
+
+      <div class="surface-card fp-dark p-4 border-round shadow-2 mb-3">
+        <div class="flex align-items-center justify-content-between gap-3 flex-wrap">
           <div class="flex align-items-center gap-3">
             <i class="pi pi-users text-primary text-4xl"></i>
             <div>
@@ -10,187 +17,406 @@
               <p class="text-600 m-0 mt-2">Liste des étudiants avec permission EtudiantPhysio</p>
             </div>
           </div>
-          <div class="flex align-items-center gap-2">
-            <input v-model="query" type="text" class="search-input" placeholder="Rechercher (nom, email)" />
+          <div class="flex align-items-center gap-2 flex-wrap">
+            <Dropdown
+              v-model="filterCohort"
+              :options="cohortOptions"
+              placeholder="Toutes les cohortes"
+              showClear
+              class="w-12rem"
+            />
+            <InputText v-model="globalSearch" placeholder="Rechercher (nom, email)" class="w-16rem" />
+            <Button icon="pi pi-file-excel" label="Excel" outlined severity="success" @click="exportExcel" />
+            <Button icon="pi pi-refresh" outlined @click="loadStudents" />
           </div>
         </div>
       </div>
 
-      <div class="surface-card p-0 border-round shadow-2">
-        <div ref="scrollEl" class="list-scroll">
-          <template v-for="grp in groupOrder" :key="grp">
-            <div v-if="groupedRows[grp] && groupedRows[grp].length" class="group-header">{{ grp }}</div>
-            <div v-for="u in groupedRows[grp]" :key="grp + '-' + u.user_id" class="row-item">
-              <div class="row-left">
-                <img v-if="u.avatar_url" :src="u.avatar_url" alt="avatar" class="avatar" />
-                <div v-else class="avatar placeholder">{{ initials(u) }}</div>
-              </div>
-              <div class="row-center">
-                <div class="name">{{ u.display_name || fullName(u) }}</div>
-                <div class="meta">{{ u.email }}</div>
-              </div>
-              <div class="row-right">
-                <span class="status" :class="u.is_active ? 'active' : 'inactive'">{{ u.is_active ? 'Actif' : 'Inactif' }}</span>
-              </div>
-            </div>
-          </template>
-          <div v-if="loadingMore" class="loading">Chargement...</div>
-          <div v-if="!loading && rows.length === 0" class="empty">Aucun étudiant trouvé</div>
+      <div class="grid mb-3" v-if="rows.length">
+        <div class="col-6 md:col-3">
+          <div class="surface-card fp-dark p-3 border-round shadow-2 text-center">
+            <div class="text-3xl font-bold text-green-400">{{ stats.actifs }}</div>
+            <div class="text-600 text-sm mt-1">Actifs</div>
+          </div>
+        </div>
+        <div class="col-6 md:col-3">
+          <div class="surface-card fp-dark p-3 border-round shadow-2 text-center">
+            <div class="text-3xl font-bold text-red-400">{{ stats.inactifs }}</div>
+            <div class="text-600 text-sm mt-1">Inactifs</div>
+          </div>
+        </div>
+        <div class="col-6 md:col-3">
+          <div class="surface-card fp-dark p-3 border-round shadow-2 text-center">
+            <div class="text-3xl font-bold text-yellow-400">{{ stats.sae }}</div>
+            <div class="text-600 text-sm mt-1">SAE / Cas particulier</div>
+          </div>
+        </div>
+        <div class="col-6 md:col-3">
+          <div class="surface-card fp-dark p-3 border-round shadow-2 text-center">
+            <div class="text-3xl font-bold text-blue-400">{{ stats.cohortes }}</div>
+            <div class="text-600 text-sm mt-1">Cohortes</div>
+          </div>
         </div>
       </div>
+
+      <div class="surface-card fp-dark p-3 border-round shadow-2">
+        <div class="text-600 mb-2">{{ filteredRows.length }} étudiant(s)</div>
+        <DataTable
+          :value="filteredRows"
+          :loading="loading"
+          dataKey="user_id"
+          :paginator="true"
+          :rows="20"
+          :rowsPerPageOptions="[10, 20, 50, 100]"
+          :rowHover="true"
+          sortMode="multiple"
+          :multiSortMeta="multiSortMeta"
+          :scrollable="true"
+          scrollHeight="65vh"
+        >
+          <template #empty>Aucun étudiant trouvé.</template>
+          <template #loading>Chargement des données...</template>
+
+          <Column header="Étudiant" sortField="family_name" :sortable="true" style="min-width: 14rem">
+            <template #body="{ data }">
+              <div class="flex align-items-center gap-2">
+                <Avatar
+                  v-if="data.avatar_url"
+                  :image="data.avatar_url"
+                  shape="circle"
+                  size="normal"
+                />
+                <Avatar
+                  v-else
+                  :label="initials(data)"
+                  shape="circle"
+                  size="normal"
+                  style="background: var(--primary-100); color: var(--primary-700)"
+                />
+                <div>
+                  <div class="font-semibold">{{ (data.family_name || '').toUpperCase() }} {{ data.forname || '' }}</div>
+                  <div class="text-sm text-color-secondary">{{ data.email }}</div>
+                </div>
+              </div>
+            </template>
+          </Column>
+
+          <Column field="cohort" header="Cohorte" :sortable="true" style="min-width: 8rem">
+            <template #body="{ data }">
+              <Tag v-if="data.cohort" :value="data.cohort" severity="info" />
+              <span v-else class="text-400">—</span>
+            </template>
+          </Column>
+
+          <Column field="classe" header="Classe" :sortable="true" style="min-width: 8rem">
+            <template #body="{ data }">
+              <Tag v-if="data.classe" :value="data.classe" severity="secondary" />
+              <span v-else class="text-400">—</span>
+            </template>
+          </Column>
+
+          <Column field="is_active" header="Statut" :sortable="true" style="min-width: 6rem">
+            <template #body="{ data }">
+              <Tag :value="data.is_active ? 'Actif' : 'Inactif'" :severity="data.is_active ? 'success' : 'danger'" />
+            </template>
+          </Column>
+
+          <Column header="Actions" style="min-width: 10rem">
+            <template #body="{ data }">
+              <Button icon="pi pi-eye" class="p-button-rounded p-button-info mr-2" size="small" v-tooltip.top="'Voir profil'" @click="goToProfile(data)" />
+              <Button icon="pi pi-pencil" class="p-button-rounded p-button-success mr-2" size="small" v-tooltip.top="'Modifier'" @click="goToEdit(data)" />
+              <Button icon="pi pi-trash" class="p-button-rounded p-button-danger" size="small" v-tooltip.top="'Supprimer'" @click="handleDelete(data)" />
+            </template>
+          </Column>
+        </DataTable>
+      </div>
+
+      <!-- Dialog de modification -->
+      <Dialog
+        v-model:visible="editVisible"
+        modal
+        header="Modifier l'étudiant"
+        :style="{ width: '30rem' }"
+      >
+        <div class="p-fluid">
+          <div class="field mb-3">
+            <label class="font-semibold">Nom *</label>
+            <InputText v-model="editForm.family_name" />
+          </div>
+          <div class="field mb-3">
+            <label class="font-semibold">Prénom *</label>
+            <InputText v-model="editForm.forname" />
+          </div>
+          <div class="field mb-3">
+            <label class="font-semibold">Email *</label>
+            <InputText v-model="editForm.email" type="email" />
+          </div>
+          <div class="field mb-3">
+            <label class="font-semibold">Classe</label>
+            <InputText v-model="editForm.classe" />
+          </div>
+          <div class="field mb-3">
+            <label class="font-semibold">Statut</label>
+            <Dropdown v-model="editForm.is_active" :options="[{ label: 'Actif', value: true }, { label: 'Inactif', value: false }]" optionLabel="label" optionValue="value" class="w-full" />
+          </div>
+        </div>
+        <template #footer>
+          <Button label="Annuler" icon="pi pi-times" text @click="editVisible = false" />
+          <Button label="Mettre à jour" icon="pi pi-check" :loading="editSaving" @click="submitEdit" />
+        </template>
+      </Dialog>
     </div>
   </AdminLayout>
-  
 </template>
 
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { supabase } from '@/supabase'
+import { useToast } from 'primevue/usetoast'
+import { useConfirm } from 'primevue/useconfirm'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
+import DataTable from 'primevue/datatable'
+import Column from 'primevue/column'
+import InputText from 'primevue/inputtext'
+import Dropdown from 'primevue/dropdown'
+import Button from 'primevue/button'
+import Tag from 'primevue/tag'
+import Avatar from 'primevue/avatar'
+import ConfirmDialog from 'primevue/confirmdialog'
+import Dialog from 'primevue/dialog'
 
-const PAGE_SIZE = 30
+const router = useRouter()
+const toast = useToast()
+const confirm = useConfirm()
+
 const rows = ref([])
 const loading = ref(false)
-const loadingMore = ref(false)
-const hasMore = ref(true)
-const query = ref('')
-const scrollEl = ref(null)
-let from = 0
-let to = PAGE_SIZE - 1
-let lastSearch = ''
-let debounceId = null
+const globalSearch = ref('')
+const filterCohort = ref(null)
+const multiSortMeta = ref([{ field: 'family_name', order: 1 }])
+const FILTERS_KEY = 'fp_phy_etudiants_filters'
 
-const cohortKeys = ['BA25-PHY','BA24-PHY','BA23-PHY']
-const groupOrder = ['BA25-PHY','BA24-PHY','BA23-PHY','Autres']
-
-function hasPerm(u, key) {
-  const arr = Array.isArray(u?.permissions) ? u.permissions : []
-  return arr.includes(key)
+try {
+  const saved = JSON.parse(localStorage.getItem(FILTERS_KEY) || '{}')
+  if (typeof saved.globalSearch === 'string') globalSearch.value = saved.globalSearch
+  if (typeof saved.filterCohort === 'string' || saved.filterCohort === null) filterCohort.value = saved.filterCohort
+} catch {
+  localStorage.removeItem(FILTERS_KEY)
 }
 
-const groupedRows = computed(() => {
-  const map = { 'BA25-PHY': [], 'BA24-PHY': [], 'BA23-PHY': [], 'Autres': [] }
-  for (const u of rows.value) {
-    const found = cohortKeys.find(k => hasPerm(u, k))
-    if (found) map[found].push(u)
-    else map['Autres'].push(u)
-  }
-  return map
+watch([globalSearch, filterCohort], () => {
+  localStorage.setItem(FILTERS_KEY, JSON.stringify({
+    globalSearch: globalSearch.value,
+    filterCohort: filterCohort.value
+  }))
 })
 
-function resetPager() {
-  rows.value = []
-  hasMore.value = true
-  from = 0
-  to = PAGE_SIZE - 1
-}
-
-function fullName(u) {
-  return [u.family_name, u.forname].filter(Boolean).join(' ')
-}
-
 function initials(u) {
-  const s = (u.display_name || fullName(u) || ' ? ').trim()
+  const s = `${u.family_name || ''} ${u.forname || ''}`.trim() || '?'
   const parts = s.split(/\s+/).slice(0, 2)
   return parts.map(p => p[0]?.toUpperCase()).join('') || 'U'
 }
 
-async function fetchPage(search, append) {
-  if (!append) loading.value = true
-  if (append) loadingMore.value = true
+function getCohort(u) {
+  const perms = Array.isArray(u?.permissions) ? u.permissions : []
+  const found = perms.find(p => /^BA\d+-PHY$/.test(p))
+  return found || null
+}
+
+const cohortOptions = computed(() => {
+  const keys = new Set()
+  for (const u of rows.value) {
+    const c = u.cohort
+    if (c) keys.add(c)
+  }
+  return [...keys].sort().reverse()
+})
+
+const stats = computed(() => {
+  const all = rows.value
+  const actifs = all.filter(u => u.is_active !== false).length
+  const sae = all.filter(u => u.sae || u.cas_particulier).length
+  const cohortes = new Set(all.map(u => u.cohort).filter(Boolean)).size
+  return { actifs, inactifs: all.length - actifs, sae, cohortes }
+})
+
+const filteredRows = computed(() => {
+  let list = rows.value
+
+  if (filterCohort.value) {
+    list = list.filter(u => u.cohort === filterCohort.value)
+  }
+
+  if (globalSearch.value.trim()) {
+    const q = globalSearch.value.trim().toLowerCase()
+    list = list.filter(u =>
+      (u.family_name || '').toLowerCase().includes(q) ||
+      (u.forname || '').toLowerCase().includes(q) ||
+      (u.email || '').toLowerCase().includes(q) ||
+      (u.display_name || '').toLowerCase().includes(q) ||
+      (u.classe || '').toLowerCase().includes(q)
+    )
+  }
+
+  return list
+})
+
+async function loadStudents() {
+  loading.value = true
   try {
-    let q = supabase
+    const { data: profiles, error } = await supabase
       .from('user_profiles')
-      .select('user_id, email, forname, family_name, display_name, avatar_url, is_active, created_at, permissions', { count: 'exact' })
+      .select('user_id, email, forname, family_name, display_name, avatar_url, is_active, permissions, classe')
       .filter('permissions', 'cs', '["EtudiantPhysio"]')
       .order('family_name', { ascending: true })
       .order('forname', { ascending: true })
-      .range(from, to)
 
-    if (search && search.trim().length > 0) {
-      const s = search.trim()
-      q = q.or(`email.ilike.%${s}%,forname.ilike.%${s}%,family_name.ilike.%${s}%,display_name.ilike.%${s}%`)
-    }
-
-    const { data, error } = await q
     if (error) throw error
 
-    if (!append) rows.value = []
-    rows.value = append ? rows.value.concat(data || []) : (data || [])
-    hasMore.value = (data || []).length === PAGE_SIZE
-    if (hasMore.value) {
-      from = to + 1
-      to = from + PAGE_SIZE - 1
+    const userIds = (profiles || []).map(p => p.user_id)
+    let physioMap = new Map()
+    if (userIds.length > 0) {
+      const { data: physioData } = await supabase
+        .from('StudentsPhysio')
+        .select('user_id, class, msq, sysint, neuroger, aigu, rehab, ambu, fr, de, sae, cas_particulier, canton')
+        .in('user_id', userIds)
+      ;(physioData || []).forEach(p => physioMap.set(p.user_id, p))
     }
+
+    rows.value = (profiles || []).map(u => {
+      const sp = physioMap.get(u.user_id) || {}
+      return {
+        ...u,
+        cohort: getCohort(u),
+        classe: sp.class || u.classe || null,
+        msq: sp.msq ?? false,
+        sysint: sp.sysint ?? false,
+        neuroger: sp.neuroger ?? false,
+        aigu: sp.aigu ?? false,
+        rehab: sp.rehab ?? false,
+        ambu: sp.ambu ?? false,
+        fr: sp.fr ?? false,
+        de: sp.de ?? false,
+        sae: sp.sae ?? false,
+        cas_particulier: sp.cas_particulier ?? false,
+        canton: sp.canton || ''
+      }
+    })
   } catch (e) {
-    console.error(e)
+    console.error('Erreur chargement étudiants:', e)
   } finally {
     loading.value = false
-    loadingMore.value = false
   }
 }
 
-function onScroll() {
-  if (!hasMore.value || loadingMore.value) return
-  const el = scrollEl.value
-  if (!el) return
-  const nearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 48
-  if (nearBottom) fetchPage(lastSearch, true)
+const exportExcel = async () => {
+  const XLSX = await import('xlsx')
+  const boolLabel = (v) => v ? 'Oui' : 'Non'
+  const data = filteredRows.value.map(u => ({
+    Nom: u.family_name || '',
+    Prénom: u.forname || '',
+    Email: u.email || '',
+    Cohorte: u.cohort || '',
+    Classe: u.classe || '',
+    Canton: u.canton || '',
+    Statut: u.is_active ? 'Actif' : 'Inactif',
+    MSQ: boolLabel(u.msq),
+    SYSINT: boolLabel(u.sysint),
+    NEUROGER: boolLabel(u.neuroger),
+    AIGU: boolLabel(u.aigu),
+    REHAB: boolLabel(u.rehab),
+    AMBU: boolLabel(u.ambu),
+    FR: boolLabel(u.fr),
+    DE: boolLabel(u.de),
+    SAE: boolLabel(u.sae),
+    'Cas particulier': boolLabel(u.cas_particulier)
+  }))
+  const ws = XLSX.utils.json_to_sheet(data)
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, 'Étudiants')
+  const parts = ['etudiants']
+  if (filterCohort.value) parts.push(filterCohort.value)
+  XLSX.writeFile(wb, `${parts.join('_')}.xlsx`)
 }
 
-onMounted(async () => {
-  await fetchPage('', false)
-  if (scrollEl.value) scrollEl.value.addEventListener('scroll', onScroll)
-})
+const goToProfile = (data) => {
+  router.push({ name: 'ProfileAdmin', params: { id: data.user_id } })
+}
 
-watch(query, (v) => {
-  if (debounceId) clearTimeout(debounceId)
-  debounceId = setTimeout(async () => {
-    lastSearch = v || ''
-    resetPager()
-    await fetchPage(lastSearch, false)
-  }, 300)
-})
+const editVisible = ref(false)
+const editSaving = ref(false)
+const editForm = ref({ user_id: '', family_name: '', forname: '', email: '', classe: '', is_active: true })
 
+const goToEdit = (data) => {
+  editForm.value = {
+    user_id: data.user_id,
+    family_name: data.family_name || '',
+    forname: data.forname || '',
+    email: data.email || '',
+    classe: data.classe || '',
+    is_active: data.is_active !== false
+  }
+  editVisible.value = true
+}
+
+const submitEdit = async () => {
+  if (!editForm.value.family_name || !editForm.value.forname || !editForm.value.email) {
+    toast.add({ severity: 'warn', summary: 'Champs requis', detail: 'Nom, prénom et email sont obligatoires.', life: 3000 })
+    return
+  }
+  editSaving.value = true
+  try {
+    const { error: err } = await supabase
+      .from('user_profiles')
+      .update({
+        family_name: editForm.value.family_name.trim(),
+        forname: editForm.value.forname.trim(),
+        email: editForm.value.email.trim(),
+        classe: editForm.value.classe.trim() || null,
+        is_active: editForm.value.is_active
+      })
+      .eq('user_id', editForm.value.user_id)
+    if (err) throw err
+    toast.add({ severity: 'success', summary: 'Succès', detail: 'Étudiant mis à jour.', life: 3000 })
+    editVisible.value = false
+    await loadStudents()
+  } catch (e) {
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'La mise à jour a échoué.', life: 3000 })
+  } finally {
+    editSaving.value = false
+  }
+}
+
+const handleDelete = (data) => {
+  confirm.require({
+    message: `Supprimer l'étudiant ${(data.family_name || '').toUpperCase()} ${data.forname || ''} ?`,
+    header: 'Confirmation de suppression',
+    icon: 'pi pi-exclamation-triangle',
+    acceptClass: 'p-button-danger',
+    acceptLabel: 'Supprimer',
+    rejectLabel: 'Annuler',
+    accept: async () => {
+      try {
+        const { error } = await supabase
+          .from('user_profiles')
+          .update({ is_active: false })
+          .eq('user_id', data.user_id)
+        if (error) throw error
+        toast.add({ severity: 'success', summary: 'Succès', detail: 'Étudiant désactivé.', life: 3000 })
+        await loadStudents()
+      } catch (e) {
+        toast.add({ severity: 'error', summary: 'Erreur', detail: 'La suppression a échoué.', life: 3000 })
+      }
+    }
+  })
+}
+
+onMounted(() => {
+  loadStudents()
+})
 </script>
 
-<style scoped>
-.search-input { 
-  padding: 0.5rem 0.75rem; 
-  border: 1px solid var(--surface-border,#e0e0e0); 
-  border-radius: 8px; 
-  min-width: 260px;
-}
-.list-scroll {
-  max-height: 70vh;
-  overflow-y: auto;
-}
-.group-header {
-  position: sticky;
-  top: 0;
-  background: var(--surface-card);
-  z-index: 1;
-  padding: 0.5rem 1rem;
-  font-weight: 700;
-  border-top: 1px solid var(--surface-border,#eee);
-  border-bottom: 1px solid var(--surface-border,#eee);
-}
-.row-item {
-  display: flex;
-  align-items: center;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--surface-border,#eee);
-}
-.row-left { width: 48px; display: flex; justify-content: center; }
-.row-center { flex: 1; min-width: 0; }
-.row-right { margin-left: 0.5rem; }
-.name { font-weight: 600; color: var(--text-color); }
-.meta { font-size: 0.85rem; color: var(--text-color-secondary); }
-.avatar { width: 36px; height: 36px; border-radius: 999px; object-fit: cover; }
-.avatar.placeholder { width: 36px; height: 36px; border-radius: 999px; background: #e5e7eb; color: #374151; display: flex; align-items: center; justify-content: center; font-weight: 700; }
-.status { font-size: 0.75rem; padding: 0.15rem 0.5rem; border-radius: 999px; border: 1px solid #e5e7eb; }
-.status.active { background: #ecfdf5; color: #059669; border-color: #a7f3d0; }
-.status.inactive { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
-.loading { text-align: center; padding: 1rem; color: var(--text-color-secondary); }
-.empty { text-align: center; padding: 2rem; color: var(--text-color-secondary); }
+<style>
+@import '@/assets/styles/fp-dark.css';
 </style>

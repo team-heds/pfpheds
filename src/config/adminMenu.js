@@ -39,78 +39,52 @@ export default [
       // Dashboard principal Physiothérapie
       { label: 'Dashboard Physiothérapie', icon: 'pi pi-chart-bar', to: '/admin/dashboard-pfp' },
       
-      // Formation Pratique & PFP (fusionné)
+      // Formation Pratique & PFP
       {
         label: 'Formation Pratique & PFP',
         icon: 'pi pi-briefcase',
         items: [
           { label: 'Dashboard Formation Pratique', icon: 'pi pi-chart-bar', to: '/admin/formation-pratique/dashboard' },
-          
+
           // Données de base
           {
             label: 'Données',
             icon: 'pi pi-database',
             items: [
-              { label: 'Étudiants', icon: 'pi pi-users', to: '/etudiant_list' },
-              { label: 'Institutions', icon: 'pi pi-building', to: '/institution_list' },
-              { label: 'Enseignants Physio', icon: 'pi pi-book', to: '/enseignent_list' },
-              { label: 'Praticiens Formateurs', icon: 'pi pi-user-plus', to: '/praticien_formateur_list' },
+              { label: 'Étudiants', icon: 'pi pi-users', to: '/admin/formation-pratique/etudiants' },
+              { label: 'Institutions', icon: 'pi pi-building', to: '/admin/formation-pratique/institutions' },
+              { label: 'Enseignants Physio', icon: 'pi pi-book', to: '/admin/formation-pratique/enseignants' },
+              { label: 'Praticiens Formateurs', icon: 'pi pi-user-plus', to: '/admin/formation-pratique/praticiens-formateur' },
               { label: 'Places', icon: 'pi pi-map-marker', to: '/admin/formation-pratique/places' }
             ]
           },
-          
+
           // Gestion administrative
           {
-            label: 'Administration',
+            label: 'Gestion',
             icon: 'pi pi-cog',
             items: [
-              { label: 'Profil Étudiants', icon: 'pi pi-id-card', to: '/admin/formation-pratique/profil-etudiants', hidden: true },
-              { label: 'Répondant HES', icon: 'pi pi-user', to: '/management_repondant', hidden: true },
               { label: 'Mon Profil Répondant', icon: 'pi pi-user', to: '/admin/formation-pratique/profil-repondant' },
-              { label: 'Management Signature', icon: 'pi pi-user', to: '/admin/formation-pratique/management-repondant-signature' },
-              { label: 'Management Places', icon: 'pi pi-map-marker', to: '/management_place' },
-              { label: 'Affectation PFP2 BA24', icon: 'pi pi-user-plus', to: '/affectation_stage_etudiant_ba24', hidden: true },
-              { label: 'Management Répondant CPT', icon: 'pi pi-users', to: '/admin/formation-pratique/management-repondant-cpt', hidden: true },
-              { label: 'Feuille Charge CPT', icon: 'pi pi-file', to: '/admin/formation-pratique/management-feuille-charge-cpt', hidden: true },
-              { label: 'Admin Secrétariat', icon: 'pi pi-briefcase', to: '/admin/formation-pratique/admin-secretariat', hidden: true }
+              { label: 'Management Signature', icon: 'pi pi-pencil', to: '/admin/formation-pratique/management-repondant-signature' },
+              { label: 'Management Places', icon: 'pi pi-map-marker', to: '/admin/formation-pratique/management-places' }
             ]
           },
-          
+
           // Votations
           {
             label: 'Votations',
             icon: 'pi pi-check-square',
             items: [
-              { label: 'Gestion Offres', icon: 'pi pi-cog', to: '/management_offre' },
-              { label: 'Votation Prioritaire', icon: 'pi pi-star', to: '/admin/formation-pratique/votation-prioritaire', hidden: true },
-              { label: 'Votation lésé', icon: 'pi pi-sliders-h', to: '/management_votation_prioritaire' },
-              { label: 'Votation Étudiants', icon: 'pi pi-users', to: '/management_votation_etudiants', hidden: true },
+              { label: 'Gestion Offres', icon: 'pi pi-cog', to: '/admin/formation-pratique/gestion-offres' },
+              { label: 'Votation lésé', icon: 'pi pi-sliders-h', to: '/admin/formation-pratique/votation-lese' },
               { label: 'Votation PFP', icon: 'pi pi-check-square', to: '/admin/formation-pratique/votation-pfp' },
-              { label: 'Places Assignées', icon: 'pi pi-map-marker', to: '/places_asssigned' },
-              { label: 'Validation Places', icon: 'pi pi-check-circle', to: '/validation-places' },
-              { label: 'Validation PFP', icon: 'pi pi-check-circle', to: '/validation-pfp' },
-              { label: 'Résultat Votation Prioritaire', icon: 'pi pi-chart-pie', to: '/admin/formation-pratique/resultat-votation-prioritaire', hidden: true },
-              { label: 'Résultat Votation PFP', icon: 'pi pi-chart-bar', to: '/result_preview_votation' },
+              { label: 'Places Assignées', icon: 'pi pi-map-marker', to: '/admin/formation-pratique/places-assignees' },
+              { label: 'Validation Places', icon: 'pi pi-check-circle', to: '/admin/formation-pratique/validation-places' },
+              { label: 'Validation PFP', icon: 'pi pi-check-circle', to: '/admin/formation-pratique/validation-pfp' },
               { label: 'Management Répondant Votation', icon: 'pi pi-user-edit', to: '/admin/formation-pratique/management-repondant-votation' }
             ]
           },
-          
-          // Gestion PFP
-          {
-            label: 'Gestion PFP',
-            icon: 'pi pi-folder-open',
-            hidden: true,
-            items: [
-              { label: 'PFP en Cours', icon: 'pi pi-clock', to: '/management_pfpencours' },
-              { label: 'Preview PFP', icon: 'pi pi-eye', to: '/admin/formation-pratique/preview-pfp' },
-              { label: 'Gantt PFP', icon: 'pi pi-chart-line', to: '/gantt' },
-              { label: 'Gestion Places Safe', icon: 'pi pi-shield', to: '/management_places_safe' },
-              { label: 'Répartition Stages', icon: 'pi pi-percentage', to: '/stage_repartition' },
-              { label: 'Validation PFP1A', icon: 'pi pi-check-circle', to: '/validate-pfp1a' },
-              { label: 'Valider Échec PFP', icon: 'pi pi-check-circle', to: '/admin/formation-pratique/valider-echec-pfp' }
-            ]
-          },
-          
+
           // Secrétariat FP
           {
             label: 'Secrétariat FP',

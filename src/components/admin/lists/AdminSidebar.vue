@@ -70,6 +70,7 @@ import { useRouter, useRoute } from 'vue-router';
 import SidebarMenuItems from './SidebarMenuItems.vue';
 import { useRoleStore } from '@/stores/role';
 import { useAuthStore } from '@/stores/authStore';
+import { supabase } from '@/supabase';
 import adminMenu from '@/config/adminMenu.js';
 
 const router = useRouter();
@@ -335,6 +336,36 @@ const menuCounts = ref({
   '/admin/users': 12,
 });
 
+async function loadMenuCounts() {
+  try {
+    const [studentsRes, institutionsRes, praticiensRes, placesRes] = await Promise.all([
+      supabase
+        .from('user_profiles')
+        .select('user_id', { count: 'exact', head: true })
+        .filter('permissions', 'cs', '["EtudiantPhysio"]'),
+      supabase
+        .from('institutions')
+        .select('InstitutionId', { count: 'exact', head: true }),
+      supabase
+        .from('praticiens_formateurs')
+        .select('id', { count: 'exact', head: true }),
+      supabase
+        .from('places')
+        .select('PlaceId', { count: 'exact', head: true }),
+    ]);
+
+    menuCounts.value = {
+      ...menuCounts.value,
+      '/admin/formation-pratique/etudiants': studentsRes?.count || 0,
+      '/admin/formation-pratique/institutions': institutionsRes?.count || 0,
+      '/admin/formation-pratique/praticiens-formateur': praticiensRes?.count || 0,
+      '/admin/formation-pratique/places': placesRes?.count || 0,
+    };
+  } catch (error) {
+    console.warn('Erreur chargement badges menu:', error);
+  }
+}
+
 // Gestion du flyout en mode icon-only
 const hoveredSection = ref(null);
 const flyoutTop = ref(0);
@@ -451,6 +482,8 @@ onMounted(async () => {
     canPage2: roleStore.can('page2.access'),
     perms: roleStore.perms
   });
+
+  await loadMenuCounts();
 
   await restoreSidebarScroll();
 });

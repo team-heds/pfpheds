@@ -1,0 +1,63 @@
+/*
+ * fp-dark.css — Thème sombre partagé pour les pages Formation Pratique
+ * Utilisé par: EtudiantsView, InstitutionsView, PraticiensFormateur,
+ *   TeacherList, PlacesView, Dashboard, ManagementRepondant, CreatePlaceDialog, etc.
+ *
+ * Usage dans un composant Vue:
+ *   <style> @import '@/assets/styles/fp-dark.css'; </style>
+ *   ou
+ *   <style src="@/assets/styles/fp-dark.css"></style>
+ */
+
+/* ─── Conteneur fp-dark ─── */
+.fp-dark {
+  background: #0f1f33;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+/* ─── DataTable ─── */
+.fp-dark .p-datatable {
+  background: transparent;
+  color: #e5e7eb;
+}
+.fp-dark .p-datatable-thead > tr > th {
+  background: rgba(255,255,255,0.03);
+  color: #cbd5e1;
+  border-color: rgba(255,255,255,0.06);
+}
+.fp-dark .p-datatable-tbody > tr > td {
+  background: transparent;
+  color: #e5e7eb;
+  border-color: rgba(255,255,255,0.06);
+}
+
+/* ─── Paginator ─── */
+.fp-dark .p-paginator {
+  background: rgba(255,255,255,0.03);
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+/* ─── Inputs & Textarea ─── */
+.fp-dark .p-inputtext,
+.fp-dark textarea {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #f8fafc;
+}
+.fp-dark .p-inputtext::placeholder,
+.fp-dark textarea::placeholder {
+  color: #cbd5e1;
+}
+
+/* ─── Dropdown & MultiSelect ─── */
+.fp-dark .p-dropdown,
+.fp-dark .p-multiselect {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #f8fafc;
+}
+
+/* ─── Labels ─── */
+.fp-dark label {
+  color: #e5e7eb;
+}

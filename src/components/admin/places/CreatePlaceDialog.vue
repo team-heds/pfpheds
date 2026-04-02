@@ -896,30 +896,11 @@ watch(() => props.visible, async (newVal) => {
 })
 </script>
 
+<style>
+@import '@/assets/styles/fp-dark.css';
+</style>
+
 <style scoped>
-.fp-dark {
-  background: #0f1f33;
-  border: 1px solid rgba(255,255,255,0.06);
-}
-
-.fp-dark :deep(.p-inputtext),
-.fp-dark :deep(.p-dropdown),
-.fp-dark :deep(.p-multiselect),
-.fp-dark :deep(textarea) {
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.12);
-  color: #f8fafc;
-}
-
-.fp-dark :deep(.p-inputtext::placeholder),
-.fp-dark :deep(textarea::placeholder) {
-  color: #cbd5e1;
-}
-
-.fp-dark label {
-  color: #e5e7eb;
-}
-
 .field-checkbox {
   display: flex;
   align-items: center;

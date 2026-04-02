@@ -1,6 +1,12 @@
 <template>
   <AdminLayout>
     <div class="p-4">
+      <div class="breadcrumb-section mb-3">
+        <router-link to="/admin/formation-pratique/dashboard" class="text-600 no-underline hover:text-primary"><i class="pi pi-home mr-1"></i>Formation Pratique</router-link>
+        <i class="pi pi-angle-right text-400 mx-2"></i>
+        <span class="text-900 font-medium">Profil Répondant</span>
+      </div>
+
       <div class="surface-card p-4 border-round shadow-2 mb-4">
         <div class="flex align-items-center justify-content-between">
           <div class="flex align-items-center gap-3">

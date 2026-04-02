@@ -1,7 +1,13 @@
 <template>
   <AdminLayout>
     <div class="repondant-page p-4">
-      <div class="surface-card p-4 border-round shadow-2 mb-4">
+      <div class="breadcrumb-section mb-3">
+        <router-link to="/admin/formation-pratique/dashboard" class="text-600 no-underline hover:text-primary"><i class="pi pi-home mr-1"></i>Formation Pratique</router-link>
+        <i class="pi pi-angle-right text-400 mx-2"></i>
+        <span class="text-900 font-medium">Gestion Répondants HES</span>
+      </div>
+
+      <div class="surface-card fp-dark p-4 border-round shadow-2 mb-4">
         <div class="flex align-items-center justify-content-between">
           <div class="flex align-items-center gap-3">
             <i class="pi pi-user-edit text-primary text-3xl"></i>
@@ -81,7 +87,7 @@
       </div>
 
       <!-- Filtres -->
-      <div class="surface-card p-3 border-round shadow-2 mb-4">
+      <div class="surface-card fp-dark p-3 border-round shadow-2 mb-4">
         <div class="grid">
           <div class="col-12 md:col-1 flex align-items-center gap-2">
             <InputSwitch v-model="showAllStudents" />
@@ -112,7 +118,7 @@
       </div>
 
       <!-- Table Répondants -->
-      <div class="surface-card p-4 border-round shadow-2">
+      <div class="surface-card fp-dark p-4 border-round shadow-2">
         <DataTable :value="filteredList" :loading="loading" responsiveLayout="scroll" :paginator="true" :rows="25">
           <template #header>
             <div class="flex justify-content-between align-items-center">
@@ -298,7 +304,13 @@ const studentsPhysioData = ref([])
 const repondantsHESList = ref([])
 const showAllStudents = ref(false)
 
-const years = ref(['2025', '2026'])
+const years = computed(() => {
+  const yearSet = new Set()
+  ;(placesList.value || []).forEach(r => {
+    if (r.year) yearSet.add(r.year)
+  })
+  return [...yearSet].sort()
+})
 const classes = computed(() => {
   const classSet = new Set()
   ;(placesList.value || []).forEach(r => {
@@ -760,6 +772,10 @@ onMounted(async () => {
   ])
 })
 </script>
+
+<style>
+@import '@/assets/styles/fp-dark.css';
+</style>
 
 <style scoped>
 .repondant-page {

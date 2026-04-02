@@ -1,7 +1,13 @@
 <template>
   <AdminLayout>
     <div class="p-4">
-      <div class="surface-card p-4 border-round shadow-2">
+      <div class="breadcrumb-section mb-3">
+        <router-link to="/admin/dashboard-pfp" class="text-600 no-underline hover:text-primary"><i class="pi pi-home mr-1"></i>Physiothérapie</router-link>
+        <i class="pi pi-angle-right text-400 mx-2"></i>
+        <span class="text-900 font-medium">Dashboard Formation Pratique</span>
+      </div>
+
+      <div class="surface-card fp-dark p-4 border-round shadow-2">
         <div class="flex align-items-center gap-3 mb-4">
           <i class="pi pi-chart-bar text-primary text-4xl"></i>
           <div>
@@ -28,13 +34,13 @@
             <div class="col-12 md:col-6 lg:col-4">
               <div 
                 class="surface-card p-4 border-round shadow-2 cursor-pointer hover:shadow-4 transition-all transition-duration-300 border-2 border-transparent hover:border-primary h-full"
-                @click="navigateTo('/affectation_stage_etudiant_ba24')"
+                @click="navigateTo('/admin/formation-pratique/votation-pfp')"
               >
                 <div class="flex align-items-center justify-content-center w-3rem h-3rem bg-purple-100 border-circle mb-3">
-                  <i class="pi pi-user-plus text-purple-500 text-xl"></i>
+                  <i class="pi pi-check-square text-purple-500 text-xl"></i>
                 </div>
-                <h3 class="text-lg font-semibold text-900 m-0 mb-2">Affectation PFP2 BA24</h3>
-                <p class="text-600 text-sm m-0 mb-3 line-height-3">Gérer les affectations PFP2 pour la volée BA24</p>
+                <h3 class="text-lg font-semibold text-900 m-0 mb-2">Votation PFP</h3>
+                <p class="text-600 text-sm m-0 mb-3 line-height-3">Gérer les votations et tirages au sort</p>
               </div>
             </div>
              <div class="col-12 md:col-6 lg:col-4">
@@ -105,5 +111,6 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
+<style>
+@import '@/assets/styles/fp-dark.css';
 </style>

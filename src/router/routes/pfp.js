@@ -16,6 +16,15 @@ export default [
   { path: '/result_preview_votation', component: () => import('@/views/admin/pfp/ResultPreviewVotationView.vue'), name: 'ResultPreviewVotation', meta: { requiresAuth: true, need: 'page1.access' } },
   { path: '/admin/pfp/cohort-stats', component: () => import('@/views/admin/pfp/PfpCohortStatsView.vue'), name: 'PfpCohortStats', meta: { requiresAuth: true, need: ['admin', 'page1.access'] } },
 
+  // Aliases propres pour les anciennes routes (redirigent vers les mêmes composants)
+  { path: '/admin/formation-pratique/enseignants', component: () => import('@/views/admin/users/TeacherListView.vue'), name: 'FPEnseignants', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/admin/formation-pratique/gestion-offres', component: () => import('@/views/admin/pfp/ManagementOffreView.vue'), name: 'FPGestionOffres', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/admin/formation-pratique/votation-lese', component: () => import('@/views/admin/pfp/ManagementVotationPrioritaireView.vue'), name: 'FPVotationLese', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/admin/formation-pratique/places-assignees', component: () => import('@/views/admin/pfp/PlacesAssignedView.vue'), name: 'FPPlacesAssignees', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/admin/formation-pratique/management-places', component: () => import('@/views/admin/pfp/ManagementPlacesView.vue'), name: 'FPManagementPlaces', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/admin/formation-pratique/validation-places', component: () => import('@/views/admin/pfp/PlacesAssignmentView.vue'), name: 'FPValidationPlaces', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/admin/formation-pratique/validation-pfp', component: () => import('@/views/admin/pfp/ValidationPFP.vue'), name: 'FPValidationPFP', meta: { requiresAuth: true, need: 'page1.access' } },
+
   // Formation Pratique Physio
   { path: '/admin/formation-pratique/dashboard', component: () => import('@/views/admin/formation-pratique/DashboardFormationPratiqueViewPHYFP.vue'), name: 'DashboardFormationPratique', meta: { requiresAuth: true, need: 'page1.access' } },
   { path: '/admin/formation-pratique/etudiants', component: () => import('@/views/admin/formation-pratique/EtudiantsViewPHYFP.vue'), name: 'FPEtudiants', meta: { requiresAuth: true, need: 'page1.access' } },

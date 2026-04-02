@@ -1,6 +1,12 @@
 <template>
   <AdminLayout>
     <div class="p-4">
+      <div class="breadcrumb-section mb-3">
+        <router-link to="/admin/formation-pratique/dashboard" class="text-600 no-underline hover:text-primary"><i class="pi pi-home mr-1"></i>Formation Pratique</router-link>
+        <i class="pi pi-angle-right text-400 mx-2"></i>
+        <span class="text-900 font-medium">Places</span>
+      </div>
+
       <div class="surface-card fp-dark p-4 border-round shadow-2 mb-3">
         <div class="flex align-items-center justify-content-between">
           <div class="flex align-items-center gap-3">
@@ -110,8 +116,8 @@
           :value="displayedRows"
           :loading="loading"
           dataKey="PlaceId"
-          sortField="InstitutionNameSort"
-          :sortOrder="1"
+          sortMode="multiple"
+          :multiSortMeta="multiSortMeta"
           :paginator="!showAll"
           :rows="rowsPerPage"
           :rowsPerPageOptions="rawRowsPerPageOptions"
@@ -513,6 +519,7 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
+import { useToast } from 'primevue/usetoast'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
@@ -537,11 +544,14 @@ import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage
 const store = usePlacesStore()
 const institutionsStore = useInstitutionsStore()
 const praticiensStore = usePraticiensStore()
+const toast = useToast()
 const loading = computed(() => store.loading)
+const multiSortMeta = ref([{ field: 'InstitutionNameSort', order: 1 }])
 const searchInput = ref('')
 const search = ref('')
 const years = ref(['2026','2027','2025'])
 const selectedYear = ref('2026')
+const FILTERS_KEY = 'fp_phy_places_filters'
 
 const debug = (...args) => {
   if (import.meta.env.DEV) console.log(...args)
@@ -794,6 +804,28 @@ const showAll = ref(false)
 const showHalf = ref(false)
 const withPdfOnly = ref(false)
 const compact = ref(false)
+
+try {
+  const saved = JSON.parse(localStorage.getItem(FILTERS_KEY) || '{}')
+  if (typeof saved.searchInput === 'string') searchInput.value = saved.searchInput
+  if (typeof saved.selectedYear === 'string') selectedYear.value = saved.selectedYear
+  if (typeof saved.rowsPerPage === 'number') rowsPerPage.value = saved.rowsPerPage
+  if (typeof saved.showAll === 'boolean') showAll.value = saved.showAll
+  if (typeof saved.compact === 'boolean') compact.value = saved.compact
+} catch {
+  localStorage.removeItem(FILTERS_KEY)
+}
+
+watch([searchInput, selectedYear, rowsPerPage, showAll, compact], () => {
+  localStorage.setItem(FILTERS_KEY, JSON.stringify({
+    searchInput: searchInput.value,
+    selectedYear: selectedYear.value,
+    rowsPerPage: rowsPerPage.value,
+    showAll: showAll.value,
+    compact: compact.value,
+  }))
+})
+
 const showCreateDialog = ref(false)
 const showDeleteDialog = ref(false)
 const showPraticienDialog = ref(false)
@@ -844,9 +876,11 @@ const showLanguesColumns = computed({
 
 async function onChangeSimple(row, field, value) {
   if (!row?.PlaceId) return
-  const ok = window.confirm(`Modifier ${field} ?`)
-  if (!ok) return
-  await store.updatePlace(row.PlaceId, { [field]: value })
+  try {
+    await store.updatePlace(row.PlaceId, { [field]: value })
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur lors de la sauvegarde: ' + error.message, life: 5000 })
+  }
 }
 
 async function onChangeInstitution(row, institutionId) {
@@ -855,9 +889,6 @@ async function onChangeInstitution(row, institutionId) {
   const institutionName = institutionId
     ? institutionsOptions.value.find(inst => inst.value === institutionId)?.label || ''
     : 'Aucune'
-
-  const ok = window.confirm(`Assigner l'institution "${institutionName}" à cette place ?`)
-  if (!ok) return
 
   console.log('🏥 Assignation institution:', {
     placeId: row.PlaceId,
@@ -878,7 +909,7 @@ async function onChangeInstitution(row, institutionId) {
     console.log('✅ Institution assignée avec succès')
   } catch (error) {
     console.error('❌ Erreur lors de l\'assignation de l\'institution:', error)
-    alert('Erreur lors de la sauvegarde: ' + error.message)
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur lors de la sauvegarde: ' + error.message, life: 5000 })
   }
 }
 
@@ -890,7 +921,7 @@ async function onChangeBool(row, field, value) {
     await store.fetchPlaceById(row.PlaceId)
   } catch (error) {
     console.error('❌ Erreur lors de la modification Bool:', error)
-    alert('Erreur lors de la sauvegarde')
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur lors de la sauvegarde.', life: 5000 })
   }
 }
 
@@ -906,7 +937,7 @@ async function onChangePFP(row, field, vYear) {
     await store.fetchPlaceById(row.PlaceId)
   } catch (error) {
     console.error('❌ Erreur lors de la modification PFP:', error)
-    alert('Erreur lors de la sauvegarde')
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur lors de la sauvegarde.', life: 5000 })
   }
 }
 
@@ -922,7 +953,7 @@ async function onChangeRemarques(row, text) {
     await store.fetchPlaceById(row.PlaceId)
   } catch (error) {
     console.error('❌ Erreur lors de la modification Remarques:', error)
-    alert('Erreur lors de la sauvegarde')
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur lors de la sauvegarde.', life: 5000 })
   }
 }
 
@@ -935,7 +966,7 @@ async function onChangeArray(row, field, arr) {
     await store.fetchPlaceById(row.PlaceId)
   } catch (error) {
     console.error('❌ Erreur lors de la modification Array:', error)
-    alert('Erreur lors de la sauvegarde')
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur lors de la sauvegarde.', life: 5000 })
   }
 }
 
@@ -1036,7 +1067,7 @@ async function savePraticiens() {
     selectedPraticiens.value = []
   } catch (error) {
     console.error('❌ Erreur lors de la sauvegarde des praticiens:', error)
-    alert('Erreur lors de la sauvegarde')
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur lors de la sauvegarde.', life: 5000 })
   }
 }
 
@@ -1051,7 +1082,7 @@ function onFileSelected(event) {
   if (file && file.type === 'application/pdf') {
     selectedFile.value = file
   } else if (file) {
-    alert('Veuillez sélectionner un fichier PDF')
+    toast.add({ severity: 'warn', summary: 'Format invalide', detail: 'Veuillez sélectionner un fichier PDF.', life: 3000 })
     event.target.value = ''
   }
 }
@@ -1128,7 +1159,7 @@ async function uploadFile() {
     // Recharger toutes les places pour être sûr
     await store.fetchPlaces()
 
-    alert('✅ Document uploadé avec succès !')
+    toast.add({ severity: 'success', summary: 'Succès', detail: 'Document uploadé avec succès !', life: 3000 })
 
     showFileDialog.value = false
     selectedFile.value = null
@@ -1136,7 +1167,7 @@ async function uploadFile() {
 
   } catch (error) {
     console.error('❌ Erreur lors de l\'upload:', error)
-    alert('Erreur lors de l\'upload du fichier: ' + error.message)
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur lors de l\'upload: ' + error.message, life: 5000 })
   } finally {
     uploading.value = false
   }
@@ -1173,7 +1204,7 @@ async function deletePlace() {
     console.log('✅ Suppression terminée et liste mise à jour')
   } catch (error) {
     console.error('❌ Erreur lors de la suppression:', error)
-    alert('Erreur lors de la suppression de la place: ' + error.message)
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur lors de la suppression: ' + error.message, life: 5000 })
   } finally {
     deleting.value = false
   }
@@ -1219,44 +1250,13 @@ watch(() => praticiensStore.items, (newItems) => {
 }, { immediate: true, deep: true })
 </script>
 
+<style>
+@import '@/assets/styles/fp-dark.css';
+</style>
+
 <style scoped>
 .search-input {
   min-width: 320px;
-}
-.fp-dark {
-  background: #0f1f33; /* navy */
-  border: 1px solid rgba(255,255,255,0.06);
-}
-.fp-dark :deep(.p-datatable) {
-  background: transparent;
-  color: #e5e7eb;
-}
-.fp-dark :deep(.p-datatable-thead > tr > th) {
-  background: rgba(255,255,255,0.03);
-  color: #cbd5e1;
-  border-color: rgba(255,255,255,0.06);
-}
-.fp-dark :deep(.p-datatable-tbody > tr > td) {
-  background: transparent;
-  color: #e5e7eb;
-  border-color: rgba(255,255,255,0.06);
-}
-.fp-dark :deep(.p-paginator) {
-  background: rgba(255,255,255,0.03);
-  border-top: 1px solid rgba(255,255,255,0.06);
-}
-.fp-dark :deep(.p-inputtext),
-.fp-dark :deep(textarea) {
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.12);
-  color: #f8fafc;
-}
-.fp-dark :deep(.p-inputtext::placeholder),
-.fp-dark :deep(textarea::placeholder) { color: #cbd5e1; }
-.fp-dark :deep(.p-multiselect) {
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.12);
-  color: #f8fafc;
 }
 .table-compact :deep(.p-datatable-thead > tr > th),
 .table-compact :deep(.p-datatable-tbody > tr > td) {

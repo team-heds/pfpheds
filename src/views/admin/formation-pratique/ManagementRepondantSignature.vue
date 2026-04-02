@@ -1,7 +1,13 @@
 <template>
   <AdminLayout>
     <div class="p-4">
-      <div class="surface-card p-4 border-round shadow-2 mb-4">
+      <div class="breadcrumb-section mb-3">
+        <router-link to="/admin/formation-pratique/dashboard" class="text-600 no-underline hover:text-primary"><i class="pi pi-home mr-1"></i>Formation Pratique</router-link>
+        <i class="pi pi-angle-right text-400 mx-2"></i>
+        <span class="text-900 font-medium">Management Signature</span>
+      </div>
+
+      <div class="surface-card fp-dark p-4 border-round shadow-2 mb-4">
         <div class="flex align-items-center justify-content-between">
           <div class="flex align-items-center gap-3">
             <i class="pi pi-user text-primary text-4xl"></i>
@@ -102,7 +108,7 @@
       </div>
 
       <!-- Liste des étudiants assignés -->
-      <div v-if="selectedRepondant" class="surface-card p-4 border-round shadow-2">
+      <div v-if="selectedRepondant" class="surface-card fp-dark p-4 border-round shadow-2">
         <DataTable :value="filteredAssignedStudents" :loading="loading" responsiveLayout="scroll" :paginator="true" :rows="20">
           <template #header>
             <div class="flex justify-content-between align-items-center">
@@ -179,10 +185,17 @@ const filterRole = ref('all')
 const filterYear = ref(null)
 const filterType = ref(null)
 
-const years = ref(['2025', '2026'])
+const normalizePfp = (t) => (t === 'PFP1A' || t === 'PFP1B') ? 'PFP1' : t
+
+const years = computed(() => {
+  const yearSet = new Set()
+  ;(assignedStudents.value || []).forEach(r => {
+    if (r.year) yearSet.add(r.year)
+  })
+  return [...yearSet].sort()
+})
 const typesPFP = ref([
-  { label: 'PFP1A', value: 'PFP1A' },
-  { label: 'PFP1B', value: 'PFP1B' },
+  { label: 'PFP1', value: 'PFP1' },
   { label: 'PFP2', value: 'PFP2' },
   { label: 'PFP3', value: 'PFP3' },
   { label: 'PFP4', value: 'PFP4' }
@@ -297,6 +310,7 @@ const fetchAssignedStudents = async (repondantName) => {
       const praticien = praticiensMap.get(a.assigned_praticien_id)
       return {
         ...a,
+        pfp_type: normalizePfp(a.pfp_type),
         student_name: p ? `${(p.family_name || '').toUpperCase()} ${p.forname || ''}`.trim() : 'Inconnu',
         student_class: p?.classe || '-',
         role: a.repondant_hes === repondantName ? 'Répondant' : 'Signataire',
@@ -365,5 +379,6 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
+<style>
+@import '@/assets/styles/fp-dark.css';
 </style>

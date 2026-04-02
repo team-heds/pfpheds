@@ -1,6 +1,14 @@
 <template>
   <AdminLayout>
     <div class="alertes-page p-4">
+      <div class="breadcrumb-section mb-3">
+        <router-link to="/admin/formation-pratique/dashboard" class="text-600 no-underline hover:text-primary"><i class="pi pi-home mr-1"></i>Formation Pratique</router-link>
+        <i class="pi pi-angle-right text-400 mx-2"></i>
+        <router-link to="/admin/formation-pratique/dashboard" class="text-600 no-underline hover:text-primary">Secrétariat</router-link>
+        <i class="pi pi-angle-right text-400 mx-2"></i>
+        <span class="text-900 font-medium">Centre d'Alertes</span>
+      </div>
+
       <!-- Header -->
       <div class="surface-card p-4 border-round shadow-2 mb-4" style="background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%); color: white;">
         <div class="flex align-items-center justify-content-between flex-wrap gap-3">
