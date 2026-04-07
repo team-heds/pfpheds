@@ -35,8 +35,9 @@
             />
             <InputText v-model="searchTerm" placeholder="Rechercher (nom, adresse, localité)" class="w-16rem" />
             <Button icon="pi pi-file-excel" label="Excel" outlined severity="success" @click="exportExcel" />
+            <Button icon="pi pi-filter-slash" label="Reset filtres" outlined severity="secondary" @click="resetFilters" />
             <Button icon="pi pi-plus" label="Ajouter" outlined @click="goToInstitutionForm" />
-            <Button icon="pi pi-refresh" outlined @click="loadInstitutions" />
+            <Button icon="pi pi-refresh" outlined :disabled="loading" @click="loadInstitutions" />
           </div>
         </div>
       </div>
@@ -190,12 +191,27 @@ const filteredInstitutions = computed(() => {
 const loadInstitutions = () => institutionsStore.fetchInstitutions();
 
 watch([searchTerm, filterCanton, filterLocality], () => {
-  localStorage.setItem(FILTERS_KEY, JSON.stringify({
-    searchTerm: searchTerm.value,
-    filterCanton: filterCanton.value,
-    filterLocality: filterLocality.value,
-  }))
+  try {
+    localStorage.setItem(FILTERS_KEY, JSON.stringify({
+      searchTerm: searchTerm.value,
+      filterCanton: filterCanton.value,
+      filterLocality: filterLocality.value,
+    }))
+  } catch (e) {
+    console.warn('Erreur sauvegarde filtres institutions:', e)
+  }
 })
+
+function resetFilters() {
+  searchTerm.value = ''
+  filterCanton.value = null
+  filterLocality.value = null
+  try {
+    localStorage.removeItem(FILTERS_KEY)
+  } catch (e) {
+    console.warn('Erreur reset filtres institutions:', e)
+  }
+}
 
 onMounted(() => {
   loadInstitutions();

@@ -19,8 +19,9 @@
           <div class="flex align-items-center gap-2 flex-wrap">
             <InputText v-model="search" placeholder="Rechercher (nom, email, institution)" class="w-16rem" />
             <Button icon="pi pi-file-excel" label="Excel" outlined severity="success" @click="exportExcel" />
+            <Button icon="pi pi-filter-slash" label="Reset filtres" outlined severity="secondary" @click="resetFilters" />
             <Button icon="pi pi-plus" label="Ajouter" outlined @click="openCreate" />
-            <Button icon="pi pi-refresh" outlined @click="refresh" />
+            <Button icon="pi pi-refresh" outlined :disabled="loading" @click="refresh" />
           </div>
         </div>
       </div>
@@ -196,8 +197,21 @@ try {
 }
 
 watch(search, () => {
-  localStorage.setItem(FILTERS_KEY, JSON.stringify({ search: search.value }))
+  try {
+    localStorage.setItem(FILTERS_KEY, JSON.stringify({ search: search.value }))
+  } catch (e) {
+    console.warn('Erreur sauvegarde filtres praticiens:', e)
+  }
 })
+
+function resetFilters() {
+  search.value = ''
+  try {
+    localStorage.removeItem(FILTERS_KEY)
+  } catch (e) {
+    console.warn('Erreur reset filtres praticiens:', e)
+  }
+}
 
 const loading = computed(() => store.loading)
 const error = computed(() => store.error)

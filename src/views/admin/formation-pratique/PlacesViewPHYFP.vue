@@ -45,8 +45,9 @@
             <div class="flex align-items-center gap-2">
               <Button icon="pi pi-eye" outlined @click="toggleColumnsPanel" v-tooltip.top="'Afficher/Masquer colonnes'" />
               <Button icon="pi pi-plus" label="Nouvelle place" @click="showCreateDialog = true" severity="success" />
+              <Button icon="pi pi-filter-slash" label="Reset filtres" outlined severity="secondary" @click="resetFilters" />
               <InputText v-model="searchInput" placeholder="Rechercher (nom, institution, canton)" class="search-input" />
-              <Button icon="pi pi-refresh" outlined @click="reload" />
+              <Button icon="pi pi-refresh" outlined :disabled="loading" @click="reload" />
             </div>
           </div>
         </div>
@@ -817,14 +818,44 @@ try {
 }
 
 watch([searchInput, selectedYear, rowsPerPage, showAll, compact], () => {
-  localStorage.setItem(FILTERS_KEY, JSON.stringify({
-    searchInput: searchInput.value,
-    selectedYear: selectedYear.value,
-    rowsPerPage: rowsPerPage.value,
-    showAll: showAll.value,
-    compact: compact.value,
-  }))
+  try {
+    localStorage.setItem(FILTERS_KEY, JSON.stringify({
+      searchInput: searchInput.value,
+      selectedYear: selectedYear.value,
+      rowsPerPage: rowsPerPage.value,
+      showAll: showAll.value,
+      compact: compact.value,
+    }))
+  } catch (e) {
+    console.warn('Erreur sauvegarde filtres places:', e)
+  }
 })
+
+function resetFilters() {
+  searchInput.value = ''
+  search.value = ''
+  selectedYear.value = years.value[0] || '2026'
+  rowsPerPage.value = 15
+  showAll.value = false
+  showHalf.value = false
+  withPdfOnly.value = false
+  compact.value = false
+  visibleColumns.value = {
+    MSQ: false,
+    SYSINT: false,
+    NEUROGER: false,
+    AIGU: false,
+    REHAB: false,
+    AMBU: false,
+    FR: false,
+    DE: false
+  }
+  try {
+    localStorage.removeItem(FILTERS_KEY)
+  } catch (e) {
+    console.warn('Erreur reset filtres places:', e)
+  }
+}
 
 const showCreateDialog = ref(false)
 const showDeleteDialog = ref(false)
