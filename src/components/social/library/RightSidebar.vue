@@ -10,23 +10,43 @@
         <h4 @click="goToCommunities" class="clickable">Communautés</h4>
       </div>
       <ul class="communities-list">
+        <li v-if="isLoadingCommunities" v-for="n in 2" :key="`community-skeleton-${n}`" class="community-item community-item--placeholder">
+          <div class="community-link community-link--placeholder">
+            <Avatar
+              label="?"
+              class="mr-2 fixed-avatar"
+              size="large"
+              shape="circle"
+            />
+            <span class="community-name community-name--placeholder">Chargement...</span>
+          </div>
+        </li>
         <li
+          v-else-if="userCommunities.length > 0"
           v-for="community in userCommunities"
           :key="community.id"
           class="community-item"
         >
           <router-link :to="`/communities/info/${community.id}`" class="community-link">
             <Avatar
-              :label="getInitial(community.name)"
+              :label="getInitial(community.name || 'Communauté')"
               class="mr-2 fixed-avatar"
               size="large"
               shape="circle"
             />
-            <span class="community-name">{{ community.name }}</span>
+            <span class="community-name">{{ community.name || 'Communauté sans nom' }}</span>
           </router-link>
         </li>
-        <li v-if="userCommunities.length === 0" class="text-center">
-          Aucune communauté jointe
+        <li v-else class="community-item community-item--placeholder">
+          <div class="community-link community-link--placeholder">
+            <Avatar
+              label="+"
+              class="mr-2 fixed-avatar"
+              size="large"
+              shape="circle"
+            />
+            <span class="community-name community-name--placeholder">Aucune communauté jointe</span>
+          </div>
         </li>
       </ul>
     </div>
@@ -68,6 +88,7 @@ export default {
       unsubscribeUserCommunities: null, // Fonction de désabonnement
       authStore: null, // Store d'authentification
       supabaseChannel: null,
+      isLoadingCommunities: true,
     };
   },
   created() {
@@ -188,6 +209,7 @@ export default {
       // Pour les utilisateurs Firebase, on utilise les communautés Firebase
       if (this.authStore.isFirebaseUser) {
         await this.loadFirebaseCommunities(user);
+        this.isLoadingCommunities = false;
       } 
       // Pour les utilisateurs Supabase, on utilise la logique Supabase
       else if (this.authStore.isSupabaseUser) {
@@ -198,9 +220,11 @@ export default {
           .on('postgres_changes', { event: '*', schema: 'public', table: 'communities' }, () => this.loadSupabaseCommunities(user))
           .subscribe();
         this.supabaseChannel = channel;
+        this.isLoadingCommunities = false;
       }
     } else {
       this.userCommunities = [];
+      this.isLoadingCommunities = false;
     }
   },
   beforeUnmount() {
@@ -308,6 +332,19 @@ export default {
   text-decoration: none;
   color: inherit;
   border-radius: 1.2rem; /* Coins arrondis taille que je dois uttilser */
+}
+
+.community-item--placeholder {
+  opacity: 0.85;
+}
+
+.community-link--placeholder {
+  pointer-events: none;
+}
+
+.community-name--placeholder {
+  color: var(--text-color-secondary);
+  font-weight: 500;
 }
 .profile-section {
   display: flex;

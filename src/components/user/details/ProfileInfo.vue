@@ -477,6 +477,7 @@ const onAvatarChange = (event) => {
   margin-left: auto;
   margin-right: auto;
 }
+
 .surfaces-card {
   background-color: var(--surface-card);
   padding: 1.5rem;

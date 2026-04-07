@@ -7,14 +7,7 @@
         <span class="text-900 font-medium">Dashboard Formation Pratique</span>
       </div>
 
-      <div class="surface-card fp-dark p-4 border-round shadow-2">
-        <div class="flex align-items-center gap-3 mb-4">
-          <i class="pi pi-chart-bar text-primary text-4xl"></i>
-          <div>
-            <h1 class="text-3xl font-bold text-900 m-0">Dashboard Formation Pratique Physio</h1>
-            <p class="text-600 m-0 mt-2">Vue d'ensemble de la formation pratique en physiothérapie</p>
-          </div>
-        </div>
+      <div class="  p-4 ">
 
         <!-- KPI Grid -->
         <DashboardKpiGrid

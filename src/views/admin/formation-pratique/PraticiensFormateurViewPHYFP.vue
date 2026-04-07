@@ -24,6 +24,16 @@
             <Button icon="pi pi-refresh" outlined :disabled="loading" @click="refresh" />
           </div>
         </div>
+        <ProgressBar v-if="loading" mode="indeterminate" style="height: 4px" class="mt-3" />
+      </div>
+
+      <div class="grid mb-3" v-if="globalKpisReady">
+        <div class="col-6 md:col-3" v-for="kpi in globalKpis" :key="kpi.label">
+          <div class="surface-card fp-dark p-3 border-round shadow-2 text-center">
+            <div class="text-3xl font-bold" :class="kpi.colorClass">{{ kpi.value }}</div>
+            <div class="text-600 text-sm mt-1">{{ kpi.label }}</div>
+          </div>
+        </div>
       </div>
 
       <div class="grid mb-3" v-if="items.length">
@@ -55,7 +65,7 @@
           dataKey="id"
           :paginator="true"
           :rows="20"
-          :rowsPerPageOptions="[10, 20, 50, 100]"
+          :rowsPerPageOptions="[20, 30, 50, 100]"
           :rowHover="true"
           sortMode="multiple"
           :multiSortMeta="multiSortMeta"
@@ -178,34 +188,78 @@ import Dropdown from 'primevue/dropdown'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 import Tag from 'primevue/tag'
+import ProgressBar from 'primevue/progressbar'
 import ConfirmDialog from 'primevue/confirmdialog'
 import { usePraticiensFormateursStore } from '@/stores/praticiensFormateursStore'
 import { useInstitutionsStore } from '@/stores/institutionsStore'
+import { supabase } from '@/supabase'
 
 const store = usePraticiensFormateursStore()
 const instStore = useInstitutionsStore()
 const toast = useToast()
 const confirmSvc = useConfirm()
 const search = ref('')
+const multiSortMeta = ref([{ field: 'nom', order: 1 }])
 const FILTERS_KEY = 'fp_phy_praticiens_filters'
+const globalKpisReady = ref(false)
+const globalKpisData = ref({ activeStudents: 0, openPlaces: 0, publishedAssignments: 0, incompleteFiles: 0 })
 
 try {
   const saved = JSON.parse(localStorage.getItem(FILTERS_KEY) || '{}')
   if (typeof saved.search === 'string') search.value = saved.search
+  if (Array.isArray(saved.multiSortMeta) && saved.multiSortMeta.length) multiSortMeta.value = saved.multiSortMeta
 } catch {
   localStorage.removeItem(FILTERS_KEY)
 }
 
-watch(search, () => {
+watch([search, multiSortMeta], () => {
   try {
-    localStorage.setItem(FILTERS_KEY, JSON.stringify({ search: search.value }))
+    localStorage.setItem(FILTERS_KEY, JSON.stringify({ search: search.value, multiSortMeta: multiSortMeta.value }))
   } catch (e) {
     console.warn('Erreur sauvegarde filtres praticiens:', e)
   }
 })
 
+const globalKpis = computed(() => ([
+  { label: 'Étudiants actifs', value: globalKpisData.value.activeStudents, colorClass: 'text-green-400' },
+  { label: 'Places ouvertes', value: globalKpisData.value.openPlaces, colorClass: 'text-blue-400' },
+  { label: 'Attributions publiées', value: globalKpisData.value.publishedAssignments, colorClass: 'text-yellow-400' },
+  { label: 'Dossiers incomplets', value: globalKpisData.value.incompleteFiles, colorClass: 'text-red-400' },
+]))
+
+async function loadGlobalKpis() {
+  try {
+    const [profilesRes, placesRes, assignmentsRes] = await Promise.all([
+      supabase
+        .from('user_profiles')
+        .select('user_id, is_active, permissions, family_name, forname, email, classe')
+        .filter('permissions', 'cs', '["EtudiantPhysio"]'),
+      supabase.from('places').select('PlaceId, InstitutionId, NomPlace'),
+      supabase.from('student_result_vote').select('id').eq('status', 'published'),
+    ])
+
+    const profiles = profilesRes.data || []
+    const activeStudents = profiles.filter((p) => p.is_active !== false).length
+    const incompleteFiles = profiles.filter((p) => !p.family_name || !p.forname || !p.email || !p.classe).length
+    const places = placesRes.data || []
+    const openPlaces = places.filter((p) => p.InstitutionId && p.NomPlace).length
+
+    globalKpisData.value = {
+      activeStudents,
+      openPlaces,
+      publishedAssignments: (assignmentsRes.data || []).length,
+      incompleteFiles,
+    }
+  } catch (error) {
+    console.warn('Erreur chargement KPI globaux praticiens:', error)
+  } finally {
+    globalKpisReady.value = true
+  }
+}
+
 function resetFilters() {
   search.value = ''
+  multiSortMeta.value = [{ field: 'nom', order: 1 }]
   try {
     localStorage.removeItem(FILTERS_KEY)
   } catch (e) {
@@ -216,7 +270,6 @@ function resetFilters() {
 const loading = computed(() => store.loading)
 const error = computed(() => store.error)
 const items = computed(() => store.praticiensFormateurs)
-const multiSortMeta = ref([{ field: 'nom', order: 1 }])
 const total = computed(() => items.value.length)
 const stats = computed(() => {
   const totalCount = items.value.length
@@ -263,6 +316,7 @@ let debounceId = null
 onMounted(() => {
   store.fetchPraticiensFormateurs('')
   instStore.fetchInstitutions()
+  loadGlobalKpis()
 })
 
 watch(search, (v) => {
@@ -294,6 +348,20 @@ async function save() {
   
   // Validation
   if (!form.value.prenom || !form.value.nom || !form.value.mail) {
+    toast.add({ severity: 'warn', summary: 'Champs requis', detail: 'Prénom, nom et email sont obligatoires.', life: 3500 })
+    return
+  }
+
+  const email = (form.value.mail || '').trim().toLowerCase()
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(email)) {
+    toast.add({ severity: 'warn', summary: 'Email invalide', detail: 'Veuillez saisir un email valide (ex: prenom.nom@hopital.ch).', life: 3500 })
+    return
+  }
+
+  const duplicate = items.value.find((p) => (p.mail || '').trim().toLowerCase() === email && p.id !== form.value.id)
+  if (duplicate) {
+    toast.add({ severity: 'warn', summary: 'Doublon détecté', detail: 'Cet email existe déjà pour un autre praticien formateur.', life: 3500 })
     return
   }
   
@@ -302,7 +370,7 @@ async function save() {
     const payload = { 
       prenom: form.value.prenom.trim(), 
       nom: form.value.nom.trim(), 
-      mail: form.value.mail.trim(), 
+      mail: email,
       institution_id: form.value.institution_id 
     }
     
@@ -328,17 +396,17 @@ async function save() {
     
     if (!form.value.id) {
       await store.createPraticienFormateur(payload)
-      console.log('✅ Praticien formateur créé avec succès')
+      toast.add({ severity: 'success', summary: 'Création réussie', detail: 'Le praticien formateur a été ajouté.', life: 3000 })
     } else {
       await store.updatePraticienFormateur(form.value.id, payload)
-      console.log('✅ Praticien formateur mis à jour avec succès')
+      toast.add({ severity: 'success', summary: 'Mise à jour réussie', detail: 'Le praticien formateur a été mis à jour.', life: 3000 })
     }
     
     editorVisible.value = false
     submitted.value = false
   } catch (e) {
     console.error('❌ Erreur lors de la sauvegarde:', e)
-    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur lors de la sauvegarde: ' + e.message, life: 5000 })
+    toast.add({ severity: 'error', summary: 'Sauvegarde impossible', detail: e?.message || 'Vérifiez les données saisies puis réessayez.', life: 5000 })
   } finally {
     saving.value = false
   }
@@ -377,7 +445,7 @@ function onDelete(row) {
         await store.deletePraticienFormateur(row.id)
         toast.add({ severity: 'success', summary: 'Succès', detail: 'Praticien supprimé.', life: 3000 })
       } catch (e) {
-        toast.add({ severity: 'error', summary: 'Erreur', detail: 'La suppression a échoué.', life: 3000 })
+        toast.add({ severity: 'error', summary: 'Suppression impossible', detail: e?.message || 'Le praticien formateur n\'a pas pu être supprimé.', life: 4000 })
       }
     }
   })

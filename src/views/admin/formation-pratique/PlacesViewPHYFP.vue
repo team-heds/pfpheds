@@ -51,6 +51,16 @@
             </div>
           </div>
         </div>
+        <ProgressBar v-if="loading" mode="indeterminate" style="height: 4px" class="mt-3" />
+      </div>
+
+      <div class="grid mb-3" v-if="placeKpis.length">
+        <div class="col-6 md:col-3" v-for="kpi in placeKpis" :key="kpi.label">
+          <div class="surface-card fp-dark p-3 border-round shadow-2 text-center">
+            <div class="text-3xl font-bold" :class="kpi.colorClass">{{ kpi.value }}</div>
+            <div class="text-600 text-sm mt-1">{{ kpi.label }}</div>
+          </div>
+        </div>
       </div>
 
       <!-- Panel de sélection des colonnes -->
@@ -539,6 +549,7 @@ import CreatePlaceDialog from '@/components/admin/places/CreatePlaceDialog.vue'
 import Dialog from 'primevue/dialog'
 import OverlayPanel from 'primevue/overlaypanel'
 import Checkbox from 'primevue/checkbox'
+import ProgressBar from 'primevue/progressbar'
 import { storage } from '@/firebase'
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 
@@ -553,6 +564,34 @@ const search = ref('')
 const years = ref(['2026','2027','2025'])
 const selectedYear = ref('2026')
 const FILTERS_KEY = 'fp_phy_places_filters'
+
+const hasPdf = (p) => Boolean(p?.fileURL || p?.FileURL || p?.pdfUrl || p?.PdfUrl || p?.fileUrl || p?.fileurl)
+
+const hasYearActivity = (p, year) => {
+  const fields = ['PFP1A', 'PFP1B', 'PFP2', 'PFP3', 'PFP4']
+  return fields.some((field) => {
+    const v = p?.[field]
+    if (!v) return false
+    if (typeof v === 'string') return v.trim().length > 0
+    if (typeof v === 'object') return Boolean(v?.[year])
+    return false
+  })
+}
+
+const placeKpis = computed(() => {
+  const all = store.places || []
+  const total = all.length
+  const withInstitution = all.filter((p) => p?.InstitutionId).length
+  const withPdf = all.filter((p) => hasPdf(p)).length
+  const yearActive = all.filter((p) => hasYearActivity(p, selectedYear.value)).length
+
+  return [
+    { label: 'Places totales', value: total, colorClass: 'text-blue-400' },
+    { label: 'Avec institution', value: withInstitution, colorClass: 'text-green-400' },
+    { label: 'Avec PDF', value: withPdf, colorClass: 'text-yellow-400' },
+    { label: `Actives ${selectedYear.value}`, value: yearActive, colorClass: 'text-purple-400' },
+  ]
+})
 
 const debug = (...args) => {
   if (import.meta.env.DEV) console.log(...args)
@@ -658,6 +697,24 @@ const cancelEditRow = () => {
 const saveEditRow = async (row) => {
   if (!row?.PlaceId) return
   if (savingRowId.value) return
+
+  const nomPlace = (editBuffer.value.NomPlace || '').trim()
+  if (!nomPlace) {
+    toast.add({ severity: 'warn', summary: 'Nom requis', detail: 'Le nom de la place est obligatoire.', life: 3500 })
+    return
+  }
+
+  const duplicate = (store.places || []).find((p) => {
+    if (!p?.PlaceId || p.PlaceId === row.PlaceId) return false
+    return (p.InstitutionId || null) === (editBuffer.value.InstitutionId || null)
+      && (p.NomPlace || '').trim().toLowerCase() === nomPlace.toLowerCase()
+  })
+
+  if (duplicate) {
+    toast.add({ severity: 'warn', summary: 'Doublon détecté', detail: 'Une place avec le même nom existe déjà pour cette institution.', life: 4000 })
+    return
+  }
+
   savingRowId.value = row.PlaceId
   try {
     const yearKey = selectedYear.value
@@ -678,7 +735,7 @@ const saveEditRow = async (row) => {
     await store.updatePlace(row.PlaceId, {
       InstitutionId: institutionId,
       InstitutionName: institutionName,
-      NomPlace: editBuffer.value.NomPlace || '',
+      NomPlace: nomPlace,
       MSQ: !!editBuffer.value.MSQ,
       SYSINT: !!editBuffer.value.SYSINT,
       NEUROGER: !!editBuffer.value.NEUROGER,
@@ -695,6 +752,8 @@ const saveEditRow = async (row) => {
     })
 
     cancelEditRow()
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Mise à jour impossible', detail: error?.message || 'Vérifiez les données de la place puis réessayez.', life: 4500 })
   } finally {
     savingRowId.value = null
   }
@@ -794,13 +853,13 @@ const institutionsOptions = computed(() => {
 
 // UI/UX controls
 const rowsOptions = ref([
-  { label: '15 par page', value: 15 },
+  { label: '20 par page', value: 20 },
   { label: '30 par page', value: 30 },
   { label: '50 par page', value: 50 },
   { label: '100 par page', value: 100 },
 ])
 const rawRowsPerPageOptions = computed(() => rowsOptions.value.map(o => o.value))
-const rowsPerPage = ref(15)
+const rowsPerPage = ref(20)
 const showAll = ref(false)
 const showHalf = ref(false)
 const withPdfOnly = ref(false)
@@ -813,11 +872,12 @@ try {
   if (typeof saved.rowsPerPage === 'number') rowsPerPage.value = saved.rowsPerPage
   if (typeof saved.showAll === 'boolean') showAll.value = saved.showAll
   if (typeof saved.compact === 'boolean') compact.value = saved.compact
+  if (Array.isArray(saved.multiSortMeta) && saved.multiSortMeta.length) multiSortMeta.value = saved.multiSortMeta
 } catch {
   localStorage.removeItem(FILTERS_KEY)
 }
 
-watch([searchInput, selectedYear, rowsPerPage, showAll, compact], () => {
+watch([searchInput, selectedYear, rowsPerPage, showAll, compact, multiSortMeta], () => {
   try {
     localStorage.setItem(FILTERS_KEY, JSON.stringify({
       searchInput: searchInput.value,
@@ -825,6 +885,7 @@ watch([searchInput, selectedYear, rowsPerPage, showAll, compact], () => {
       rowsPerPage: rowsPerPage.value,
       showAll: showAll.value,
       compact: compact.value,
+      multiSortMeta: multiSortMeta.value,
     }))
   } catch (e) {
     console.warn('Erreur sauvegarde filtres places:', e)
@@ -835,7 +896,8 @@ function resetFilters() {
   searchInput.value = ''
   search.value = ''
   selectedYear.value = years.value[0] || '2026'
-  rowsPerPage.value = 15
+  multiSortMeta.value = [{ field: 'InstitutionNameSort', order: 1 }]
+  rowsPerPage.value = 20
   showAll.value = false
   showHalf.value = false
   withPdfOnly.value = false
@@ -1195,10 +1257,9 @@ async function uploadFile() {
     showFileDialog.value = false
     selectedFile.value = null
     currentPlace.value = null
-
   } catch (error) {
-    console.error('❌ Erreur lors de l\'upload:', error)
-    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur lors de l\'upload: ' + error.message, life: 5000 })
+    console.error('❌ Erreur lors de l\'upload du fichier:', error)
+    toast.add({ severity: 'error', summary: 'Upload impossible', detail: error?.message || 'Le document n\'a pas pu être uploadé.', life: 5000 })
   } finally {
     uploading.value = false
   }

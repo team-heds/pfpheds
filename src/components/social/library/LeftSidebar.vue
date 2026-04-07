@@ -4,14 +4,14 @@
     <!-- Partie supérieure fixe -->
     <div class="fixed-content">
       <!-- Profil utilisateur -->
-      <div class="user-profile flex">
+      <div class="user-profile flex" :class="{ 'is-placeholder': !user.id }">
         <!-- Avatar -->
         <label style="cursor:pointer; margin:0;">
           <img
             :src="userPhotoURL"
             alt="Avatar"
             class="m-2 col-6"
-            style="width: 50px; height: 50px; border-radius: 1.2rem; object-fit: cover; border:2px solid #ccc;"
+            style="width: 50px; height: 50px; border-radius: 1.2rem; object-fit: cover; border:2px solid var(--surface-border, #d1d5db);"
             @click.prevent="triggerFileInput"
           />
           <input
@@ -22,9 +22,10 @@
             @change="onAvatarSelected"
           />
         </label>
-        <h4 class="m-2 mt-5">
+        <h4 class="m-2 mt-5 mb-1">
           <a @click="goToProfile" class="profile-link">{{ userFullName }}</a>
         </h4>
+        <p class="user-meta m-0">{{ user.email || 'Email non renseigné' }}</p>
       </div>
 
       <!-- Liens supplémentaires -->
@@ -201,7 +202,8 @@ export default {
       }
       const prenom = capitalize(this.user.prenom)
       const nom = capitalize(this.user.nom)
-      return `${nom}.${prenom}`.trim() || "Utilisateur";
+      const display = `${nom} ${prenom}`.trim()
+      return display || 'Profil utilisateur'
     },
     userPhotoURL() {
       return this.user.PhotoURL || defaultAvatar;
@@ -697,6 +699,25 @@ export default {
 
 .profile-link:hover {
   color: var(--primary-color);
+}
+
+.user-profile {
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.user-profile.is-placeholder {
+  opacity: 0.9;
+}
+
+.user-meta {
+  width: 100%;
+  margin-left: 0.8rem;
+  font-size: 0.82rem;
+  color: var(--text-color-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Liens supplémentaires */

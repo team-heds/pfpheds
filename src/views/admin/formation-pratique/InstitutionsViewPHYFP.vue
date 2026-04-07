@@ -40,6 +40,16 @@
             <Button icon="pi pi-refresh" outlined :disabled="loading" @click="loadInstitutions" />
           </div>
         </div>
+        <ProgressBar v-if="loading" mode="indeterminate" style="height: 4px" class="mt-3" />
+      </div>
+
+      <div class="grid mb-3" v-if="globalKpisReady">
+        <div class="col-6 md:col-3" v-for="kpi in globalKpis" :key="kpi.label">
+          <div class="surface-card fp-dark p-3 border-round shadow-2 text-center">
+            <div class="text-3xl font-bold" :class="kpi.colorClass">{{ kpi.value }}</div>
+            <div class="text-600 text-sm mt-1">{{ kpi.label }}</div>
+          </div>
+        </div>
       </div>
       <div class="grid mb-3" v-if="institutions.length">
         <div class="col-6 md:col-4">
@@ -68,7 +78,7 @@
           :value="filteredInstitutions"
           :paginator="true"
           :rows="20"
-          :rowsPerPageOptions="[10, 20, 50]"
+          :rowsPerPageOptions="[20, 30, 50]"
           dataKey="InstitutionId"
           :rowHover="true"
           :loading="loading"
@@ -116,8 +126,10 @@ import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import Tag from 'primevue/tag';
+import ProgressBar from 'primevue/progressbar';
 import ConfirmDialog from 'primevue/confirmdialog';
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
+import { supabase } from '@/supabase';
 
 const router = useRouter();
 const institutionsStore = useInstitutionsStore();
@@ -125,17 +137,29 @@ const toast = useToast();
 const confirm = useConfirm();
 
 const searchTerm = ref('');
+const debouncedSearchTerm = ref('');
 const filterCanton = ref(null);
 const filterLocality = ref(null);
 const loading = computed(() => institutionsStore.loading);
 const multiSortMeta = ref([{ field: 'Name', order: 1 }]);
 const FILTERS_KEY = 'fp_phy_institutions_filters';
+const globalKpisReady = ref(false)
+const globalKpisData = ref({ activeStudents: 0, openPlaces: 0, publishedAssignments: 0, incompleteFiles: 0 })
+
+let searchDebounceTimer = null
+watch(searchTerm, (val) => {
+  if (searchDebounceTimer) clearTimeout(searchDebounceTimer)
+  searchDebounceTimer = setTimeout(() => {
+    debouncedSearchTerm.value = val
+  }, 250)
+}, { immediate: true })
 
 try {
   const saved = JSON.parse(localStorage.getItem(FILTERS_KEY) || '{}');
   if (typeof saved.searchTerm === 'string') searchTerm.value = saved.searchTerm;
   if (typeof saved.filterCanton === 'string' || saved.filterCanton === null) filterCanton.value = saved.filterCanton;
   if (typeof saved.filterLocality === 'string' || saved.filterLocality === null) filterLocality.value = saved.filterLocality;
+  if (Array.isArray(saved.multiSortMeta) && saved.multiSortMeta.length) multiSortMeta.value = saved.multiSortMeta;
 } catch {
   localStorage.removeItem(FILTERS_KEY);
 }
@@ -164,6 +188,43 @@ const allLocalityCount = computed(() => {
   return set.size
 });
 
+const globalKpis = computed(() => ([
+  { label: 'Étudiants actifs', value: globalKpisData.value.activeStudents, colorClass: 'text-green-400' },
+  { label: 'Places ouvertes', value: globalKpisData.value.openPlaces, colorClass: 'text-blue-400' },
+  { label: 'Attributions publiées', value: globalKpisData.value.publishedAssignments, colorClass: 'text-yellow-400' },
+  { label: 'Dossiers incomplets', value: globalKpisData.value.incompleteFiles, colorClass: 'text-red-400' },
+]))
+
+async function loadGlobalKpis() {
+  try {
+    const [profilesRes, placesRes, assignmentsRes] = await Promise.all([
+      supabase
+        .from('user_profiles')
+        .select('user_id, is_active, permissions, family_name, forname, email, classe')
+        .filter('permissions', 'cs', '["EtudiantPhysio"]'),
+      supabase.from('places').select('PlaceId, InstitutionId, NomPlace'),
+      supabase.from('student_result_vote').select('id').eq('status', 'published'),
+    ])
+
+    const profiles = profilesRes.data || []
+    const activeStudents = profiles.filter((p) => p.is_active !== false).length
+    const incompleteFiles = profiles.filter((p) => !p.family_name || !p.forname || !p.email || !p.classe).length
+    const places = placesRes.data || []
+    const openPlaces = places.filter((p) => p.InstitutionId && p.NomPlace).length
+
+    globalKpisData.value = {
+      activeStudents,
+      openPlaces,
+      publishedAssignments: (assignmentsRes.data || []).length,
+      incompleteFiles,
+    }
+  } catch (error) {
+    console.warn('Erreur chargement KPI globaux institutions:', error)
+  } finally {
+    globalKpisReady.value = true
+  }
+}
+
 const filteredInstitutions = computed(() => {
   let list = institutions.value || [];
 
@@ -173,8 +234,8 @@ const filteredInstitutions = computed(() => {
   if (filterLocality.value) {
     list = list.filter(i => i.Locality === filterLocality.value);
   }
-  if (searchTerm.value.trim()) {
-    const q = searchTerm.value.trim().toLowerCase();
+  if (debouncedSearchTerm.value.trim()) {
+    const q = debouncedSearchTerm.value.trim().toLowerCase();
     list = list.filter(i =>
       (i.Name || '').toLowerCase().includes(q) ||
       (i.Address || '').toLowerCase().includes(q) ||
@@ -190,12 +251,13 @@ const filteredInstitutions = computed(() => {
 
 const loadInstitutions = () => institutionsStore.fetchInstitutions();
 
-watch([searchTerm, filterCanton, filterLocality], () => {
+watch([searchTerm, filterCanton, filterLocality, multiSortMeta], () => {
   try {
     localStorage.setItem(FILTERS_KEY, JSON.stringify({
       searchTerm: searchTerm.value,
       filterCanton: filterCanton.value,
       filterLocality: filterLocality.value,
+      multiSortMeta: multiSortMeta.value,
     }))
   } catch (e) {
     console.warn('Erreur sauvegarde filtres institutions:', e)
@@ -206,6 +268,7 @@ function resetFilters() {
   searchTerm.value = ''
   filterCanton.value = null
   filterLocality.value = null
+  multiSortMeta.value = [{ field: 'Name', order: 1 }]
   try {
     localStorage.removeItem(FILTERS_KEY)
   } catch (e) {
@@ -215,6 +278,7 @@ function resetFilters() {
 
 onMounted(() => {
   loadInstitutions();
+  loadGlobalKpis();
 });
 
 const handleDelete = (inst) => {
@@ -230,7 +294,7 @@ const handleDelete = (inst) => {
         await institutionsStore.deleteInstitution(inst.InstitutionId);
         toast.add({ severity: 'success', summary: 'Succès', detail: 'Institution supprimée.', life: 3000 });
       } catch (error) {
-        toast.add({ severity: 'error', summary: 'Erreur', detail: 'La suppression a échoué.', life: 3000 });
+        toast.add({ severity: 'error', summary: 'Suppression impossible', detail: error?.message || 'Cette institution est peut-être liée à des places existantes.', life: 4000 });
       }
     }
   });

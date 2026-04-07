@@ -31,31 +31,14 @@
             <Button icon="pi pi-refresh" outlined :disabled="loading" @click="loadStudents" />
           </div>
         </div>
+        <ProgressBar v-if="loading" mode="indeterminate" style="height: 4px" class="mt-3" />
       </div>
 
-      <div class="grid mb-3" v-if="rows.length">
-        <div class="col-6 md:col-3">
+      <div class="grid mb-3" v-if="globalKpisReady">
+        <div class="col-6 md:col-3" v-for="kpi in globalKpis" :key="kpi.label">
           <div class="surface-card fp-dark p-3 border-round shadow-2 text-center">
-            <div class="text-3xl font-bold text-green-400">{{ stats.actifs }}</div>
-            <div class="text-600 text-sm mt-1">Actifs</div>
-          </div>
-        </div>
-        <div class="col-6 md:col-3">
-          <div class="surface-card fp-dark p-3 border-round shadow-2 text-center">
-            <div class="text-3xl font-bold text-red-400">{{ stats.inactifs }}</div>
-            <div class="text-600 text-sm mt-1">Inactifs</div>
-          </div>
-        </div>
-        <div class="col-6 md:col-3">
-          <div class="surface-card fp-dark p-3 border-round shadow-2 text-center">
-            <div class="text-3xl font-bold text-yellow-400">{{ stats.sae }}</div>
-            <div class="text-600 text-sm mt-1">SAE / Cas particulier</div>
-          </div>
-        </div>
-        <div class="col-6 md:col-3">
-          <div class="surface-card fp-dark p-3 border-round shadow-2 text-center">
-            <div class="text-3xl font-bold text-blue-400">{{ stats.cohortes }}</div>
-            <div class="text-600 text-sm mt-1">Cohortes</div>
+            <div class="text-3xl font-bold" :class="kpi.colorClass">{{ kpi.value }}</div>
+            <div class="text-600 text-sm mt-1">{{ kpi.label }}</div>
           </div>
         </div>
       </div>
@@ -68,7 +51,7 @@
           dataKey="user_id"
           :paginator="true"
           :rows="20"
-          :rowsPerPageOptions="[10, 20, 50, 100]"
+          :rowsPerPageOptions="[20, 30, 50, 100]"
           :rowHover="true"
           sortMode="multiple"
           :multiSortMeta="multiSortMeta"
@@ -184,6 +167,7 @@ import Dropdown from 'primevue/dropdown'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import Avatar from 'primevue/avatar'
+import ProgressBar from 'primevue/progressbar'
 import ConfirmDialog from 'primevue/confirmdialog'
 import Dialog from 'primevue/dialog'
 
@@ -194,23 +178,36 @@ const confirm = useConfirm()
 const rows = ref([])
 const loading = ref(false)
 const globalSearch = ref('')
+const debouncedGlobalSearch = ref('')
 const filterCohort = ref(null)
 const multiSortMeta = ref([{ field: 'family_name', order: 1 }])
 const FILTERS_KEY = 'fp_phy_etudiants_filters'
+const globalKpisReady = ref(false)
+const globalKpisData = ref({ activeStudents: 0, openPlaces: 0, publishedAssignments: 0, incompleteFiles: 0 })
+
+let searchDebounceTimer = null
+watch(globalSearch, (val) => {
+  if (searchDebounceTimer) clearTimeout(searchDebounceTimer)
+  searchDebounceTimer = setTimeout(() => {
+    debouncedGlobalSearch.value = val
+  }, 250)
+}, { immediate: true })
 
 try {
   const saved = JSON.parse(localStorage.getItem(FILTERS_KEY) || '{}')
   if (typeof saved.globalSearch === 'string') globalSearch.value = saved.globalSearch
   if (typeof saved.filterCohort === 'string' || saved.filterCohort === null) filterCohort.value = saved.filterCohort
+  if (Array.isArray(saved.multiSortMeta) && saved.multiSortMeta.length) multiSortMeta.value = saved.multiSortMeta
 } catch {
   localStorage.removeItem(FILTERS_KEY)
 }
 
-watch([globalSearch, filterCohort], () => {
+watch([globalSearch, filterCohort, multiSortMeta], () => {
   try {
     localStorage.setItem(FILTERS_KEY, JSON.stringify({
       globalSearch: globalSearch.value,
-      filterCohort: filterCohort.value
+      filterCohort: filterCohort.value,
+      multiSortMeta: multiSortMeta.value,
     }))
   } catch (e) {
     console.warn('Erreur sauvegarde filtres étudiants:', e)
@@ -220,6 +217,7 @@ watch([globalSearch, filterCohort], () => {
 function resetFilters() {
   globalSearch.value = ''
   filterCohort.value = null
+  multiSortMeta.value = [{ field: 'family_name', order: 1 }]
   try {
     localStorage.removeItem(FILTERS_KEY)
   } catch (e) {
@@ -248,14 +246,6 @@ const cohortOptions = computed(() => {
   return [...keys].sort().reverse()
 })
 
-const stats = computed(() => {
-  const all = rows.value
-  const actifs = all.filter(u => u.is_active !== false).length
-  const sae = all.filter(u => u.sae || u.cas_particulier).length
-  const cohortes = new Set(all.map(u => u.cohort).filter(Boolean)).size
-  return { actifs, inactifs: all.length - actifs, sae, cohortes }
-})
-
 const filteredRows = computed(() => {
   let list = rows.value
 
@@ -263,8 +253,8 @@ const filteredRows = computed(() => {
     list = list.filter(u => u.cohort === filterCohort.value)
   }
 
-  if (globalSearch.value.trim()) {
-    const q = globalSearch.value.trim().toLowerCase()
+  if (debouncedGlobalSearch.value.trim()) {
+    const q = debouncedGlobalSearch.value.trim().toLowerCase()
     list = list.filter(u =>
       (u.family_name || '').toLowerCase().includes(q) ||
       (u.forname || '').toLowerCase().includes(q) ||
@@ -276,6 +266,46 @@ const filteredRows = computed(() => {
 
   return list
 })
+
+const globalKpis = computed(() => ([
+  { label: 'Étudiants actifs', value: globalKpisData.value.activeStudents, colorClass: 'text-green-400' },
+  { label: 'Places ouvertes', value: globalKpisData.value.openPlaces, colorClass: 'text-blue-400' },
+  { label: 'Attributions publiées', value: globalKpisData.value.publishedAssignments, colorClass: 'text-yellow-400' },
+  { label: 'Dossiers incomplets', value: globalKpisData.value.incompleteFiles, colorClass: 'text-red-400' },
+]))
+
+async function loadGlobalKpis() {
+  try {
+    const [profilesRes, placesRes, assignmentsRes] = await Promise.all([
+      supabase
+        .from('user_profiles')
+        .select('user_id, is_active, permissions, family_name, forname, email, classe')
+        .filter('permissions', 'cs', '["EtudiantPhysio"]'),
+      supabase.from('places').select('PlaceId, InstitutionId, NomPlace'),
+      supabase.from('student_result_vote').select('id').eq('status', 'published'),
+    ])
+
+    const profiles = profilesRes.data || []
+    const activeStudents = profiles.filter((p) => p.is_active !== false).length
+    const incompleteFiles = profiles.filter((p) => {
+      return !p.family_name || !p.forname || !p.email || !p.classe
+    }).length
+
+    const places = placesRes.data || []
+    const openPlaces = places.filter((p) => p.InstitutionId && p.NomPlace).length
+
+    globalKpisData.value = {
+      activeStudents,
+      openPlaces,
+      publishedAssignments: (assignmentsRes.data || []).length,
+      incompleteFiles,
+    }
+  } catch (error) {
+    console.warn('Erreur chargement KPI globaux étudiants:', error)
+  } finally {
+    globalKpisReady.value = true
+  }
+}
 
 async function loadStudents() {
   loading.value = true
@@ -380,6 +410,22 @@ const submitEdit = async () => {
     toast.add({ severity: 'warn', summary: 'Champs requis', detail: 'Nom, prénom et email sont obligatoires.', life: 3000 })
     return
   }
+
+  const email = (editForm.value.email || '').trim().toLowerCase()
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(email)) {
+    toast.add({ severity: 'warn', summary: 'Email invalide', detail: 'Veuillez saisir un email valide (ex: prenom.nom@ecole.ch).', life: 3500 })
+    return
+  }
+
+  const duplicate = rows.value.find(
+    (u) => (u.email || '').trim().toLowerCase() === email && u.user_id !== editForm.value.user_id
+  )
+  if (duplicate) {
+    toast.add({ severity: 'warn', summary: 'Doublon détecté', detail: 'Cet email est déjà utilisé par un autre étudiant.', life: 3500 })
+    return
+  }
+
   editSaving.value = true
   try {
     const { error: err } = await supabase
@@ -387,7 +433,7 @@ const submitEdit = async () => {
       .update({
         family_name: editForm.value.family_name.trim(),
         forname: editForm.value.forname.trim(),
-        email: editForm.value.email.trim(),
+        email,
         classe: editForm.value.classe.trim() || null,
         is_active: editForm.value.is_active
       })
@@ -396,8 +442,9 @@ const submitEdit = async () => {
     toast.add({ severity: 'success', summary: 'Succès', detail: 'Étudiant mis à jour.', life: 3000 })
     editVisible.value = false
     await loadStudents()
+    await loadGlobalKpis()
   } catch (e) {
-    toast.add({ severity: 'error', summary: 'Erreur', detail: 'La mise à jour a échoué.', life: 3000 })
+    toast.add({ severity: 'error', summary: 'Mise à jour impossible', detail: e?.message || 'Vérifiez les champs saisis puis réessayez.', life: 4000 })
   } finally {
     editSaving.value = false
   }
@@ -420,8 +467,9 @@ const handleDelete = (data) => {
         if (error) throw error
         toast.add({ severity: 'success', summary: 'Succès', detail: 'Étudiant désactivé.', life: 3000 })
         await loadStudents()
+        await loadGlobalKpis()
       } catch (e) {
-        toast.add({ severity: 'error', summary: 'Erreur', detail: 'La suppression a échoué.', life: 3000 })
+        toast.add({ severity: 'error', summary: 'Désactivation impossible', detail: e?.message || 'L\'étudiant n\'a pas pu être désactivé.', life: 4000 })
       }
     }
   })
@@ -429,6 +477,7 @@ const handleDelete = (data) => {
 
 onMounted(() => {
   loadStudents()
+  loadGlobalKpis()
 })
 </script>
 
