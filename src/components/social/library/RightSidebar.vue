@@ -75,7 +75,6 @@ export default {
   },
   methods: {
     goToCommunities() {
-      console.log("Naviguer vers la page des communautés");
       this.$router.push("/communities");
     },
     getInitial(name) {
@@ -87,10 +86,11 @@ export default {
         const snapshot = await get(communityRef);
         if (snapshot.exists()) {
           const communityData = snapshot.val();
+          const name = communityData?.name || 'Communauté sans nom'
           return {
             id: communityId,
-            name: communityData.name || "Communauté sans nom",
-            initial: communityData.name.charAt(0).toUpperCase(),
+            name,
+            initial: name.charAt(0).toUpperCase(),
           };
         } else {
           console.warn(`Communauté avec l'ID ${communityId} non trouvée.`);
@@ -178,21 +178,19 @@ export default {
   },
   async mounted() {
     // Attendre que l'état d'authentification soit initialisé
-    await this.authStore.checkAuthState();
+    if (!this.authStore.user) {
+      await this.authStore.checkAuthState();
+    }
     
     const user = this.authStore.user;
-    console.log('RightSidebar - User:', user);
-    console.log('RightSidebar - Auth Provider:', this.authStore.authProvider);
     
     if (user) {
       // Pour les utilisateurs Firebase, on utilise les communautés Firebase
       if (this.authStore.isFirebaseUser) {
-        console.log('RightSidebar - Chargement des communautés Firebase pour:', user.uid);
         await this.loadFirebaseCommunities(user);
       } 
       // Pour les utilisateurs Supabase, on utilise la logique Supabase
       else if (this.authStore.isSupabaseUser) {
-        console.log('RightSidebar - Utilisateur Supabase détecté:', user.email);
         await this.loadSupabaseCommunities(user);
         const channel = supabase
           .channel(`user-communities-${user.id}`)
@@ -202,7 +200,7 @@ export default {
         this.supabaseChannel = channel;
       }
     } else {
-      console.log("RightSidebar - Aucun utilisateur authentifié détecté.");
+      this.userCommunities = [];
     }
   },
   beforeUnmount() {

@@ -103,6 +103,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { supabase } from '@/supabase.js';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
+import { useToast } from 'primevue/usetoast';
 import BandeauMaison from '@/components/gamification/BandeauMaison.vue';
 import XPBar from '@/components/gamification/XPBar.vue';
 import gamificationServiceSupabase from '@/service/gamificationServiceSupabase'
@@ -110,6 +111,7 @@ import gamificationIntegration from '@/service/gamificationIntegration'
 import supabaseStorageService from '@/service/supabaseStorageService'
 
 const defaultAvatar = '@/assets/images/avatar/01.jpg';
+const toast = useToast();
 
 // Profil consulté (celui affiché)
 const user = ref({
@@ -554,7 +556,7 @@ const saveProfile = async () => {
         console.log('✅ Avatar uploadé sur Supabase:', uploadResult.url);
       } catch (error) {
         console.error("❌ Erreur lors de l'upload de l'avatar sur Supabase:", error);
-        alert("Erreur lors de l'upload de l'avatar");
+        toast.add({ severity: 'error', summary: 'Avatar', detail: "Erreur lors de l'upload de l'avatar", life: 3500 })
         return;
       }
     }
@@ -600,7 +602,7 @@ const saveProfile = async () => {
 
     if (updateError) {
       console.error('❌ Erreur mise à jour profil:', updateError)
-      alert('Erreur lors de la sauvegarde du profil')
+      toast.add({ severity: 'error', summary: 'Profil', detail: 'Erreur lors de la sauvegarde du profil', life: 3500 })
       return
     }
 
@@ -616,14 +618,14 @@ const saveProfile = async () => {
       timestamp: Date.now()
     });
 
-    alert("Profil mis à jour avec succès");
+    toast.add({ severity: 'success', summary: 'Profil', detail: 'Profil mis à jour avec succès', life: 2500 })
 
     // Recharger les données de gamification pour afficher les nouveaux badges/XP
     await fetchGamificationData(user.value.uid);
 
   } catch (error) {
     console.error("Erreur lors de la sauvegarde du profil :", error);
-    alert("Erreur lors de la sauvegarde du profil");
+    toast.add({ severity: 'error', summary: 'Profil', detail: 'Erreur lors de la sauvegarde du profil', life: 3500 })
   }
 };
 
@@ -846,10 +848,12 @@ const saveProfileWithXP = async () => {
 
 .surfaces-card {
   margin: 1.5rem 0;
-  background-color: var(--surface-card);
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border, rgba(148, 163, 184, 0.28));
   padding: 1.5rem;
   border-radius: 2rem;
   overflow: hidden;
+  box-shadow: 0 2px 14px rgba(60, 60, 60, 0.08);
 }
 .info-grid {
   display: grid;
@@ -865,7 +869,7 @@ const saveProfileWithXP = async () => {
 .info-item {
   display: flex;
   align-items: center;
-  background: var(--surface-overlay, #232946);
+  background: var(--surface-overlay, rgba(15, 23, 42, 0.05));
   border-radius: 1rem;
   padding: 0.7rem 1rem;
   gap: 0.7rem;
@@ -903,6 +907,7 @@ const saveProfileWithXP = async () => {
 }
 .save-btn {
   font-weight: 600;
+  border-radius: 0.85rem;
 }
 .info-item-full {
   grid-column: 1 / -1;
@@ -1005,6 +1010,8 @@ const saveProfileWithXP = async () => {
   height: 150px;
   border-radius: 50%;
   object-fit: cover;
+  border: 3px solid rgba(255,255,255,0.75);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.22);
   margin: 0 auto;
   display: block;
 }

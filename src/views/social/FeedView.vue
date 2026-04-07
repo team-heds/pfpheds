@@ -42,8 +42,10 @@ export default {
   setup() {
     const mainFeedRef = ref(null);
     const authStore = useAuthStore();
-    onMounted(() => {
-      authStore.checkAuthState();
+    onMounted(async () => {
+      if (!authStore.user) {
+        await authStore.checkAuthState();
+      }
     });
     const isSupabaseUser = computed(() => authStore.isSupabaseUser);
     return { mainFeedRef, isSupabaseUser };

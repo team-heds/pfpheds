@@ -28,8 +28,6 @@
   <h5 class="mb-4 m-2">Anciennes places</h5>
 
 
-
-
   <div v-if="assignedPlaces && assignedPlaces.length">
     <div
       v-for="(place, index) in assignedPlaces"
@@ -685,7 +683,7 @@ const fetchPraticienFormateurs = async () => {
   }
 }
 
-const fetchStudentPfpList = async () => {
+async function fetchStudentPfpList() {
   try {
     console.log('🔍 Chargement PFP pour userId:', props.userId)
 

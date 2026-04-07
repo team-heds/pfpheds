@@ -1,5 +1,6 @@
 <template>
   <div class="main-feed" ref="mainFeedRef">
+    <Toast />
     <div v-if="isMobile" class="mainfeed-mobile">
       <transition name="fade">
         <div v-show="showHeaderIcons">
@@ -64,9 +65,11 @@ import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/supabase.js'
 import { useAuthStore } from '@/stores/authStore'
+import { useToast } from 'primevue/usetoast'
 import InfinityScroll from '@/components/social/library/InfinityScroll.vue'
 import PostItem from '@/components/social/library/PostItem.vue'
 import Tag from 'primevue/tag'
+import Toast from 'primevue/toast'
 import Button from 'primevue/button'
 import FileUpload from 'primevue/fileupload'
 import FilterComponent from '@/components/social/library/FilterComponent.vue'
@@ -84,6 +87,7 @@ export default {
     InfinityScroll,
     PostItem,
     Tag,
+    Toast,
     Button,
     FileUpload,
     FilterComponent,
@@ -93,6 +97,7 @@ export default {
   setup() {
     const router = useRouter()
     const authStore = useAuthStore()
+    const toast = useToast()
 
     const posts = ref([])
     const filteredPosts = ref([])
@@ -109,8 +114,10 @@ export default {
     const showHeaderIcons = ref(true)
     const showEditAndStories = ref(true)
     const mainFeedRef = ref(null)
+    const viewportWidth = ref(window.innerWidth)
     let postsChannel = null
     let pollInterval = null
+    let removeRouterAfterEach = null
 
     const filterTypes = ref([
       { label: 'Tous', value: null },
@@ -124,7 +131,19 @@ export default {
     const availableCommunities = ref([])
     const appliedFilter = ref({ type: null, value: null })
 
-    const isMobile = computed(() => window.innerWidth <= 600)
+    const isMobile = computed(() => viewportWidth.value <= 600)
+
+    const handleResize = () => {
+      viewportWidth.value = window.innerWidth
+    }
+
+    const cleanupMediaPreviews = (items) => {
+      ;(items || []).forEach((m) => {
+        if (m?.preview && String(m.preview).startsWith('blob:')) {
+          URL.revokeObjectURL(m.preview)
+        }
+      })
+    }
 
     watch(newPost, (value) => {
       const textWithoutHtml = value.replace(/<[^>]+>/g, '')
@@ -138,7 +157,25 @@ export default {
 
     const postMessage = async () => {
       const textWithoutHtml = newPost.value.replace(/<[^>]+>/g, '').trim()
-      if (textWithoutHtml === '' && selectedMedia.value.length === 0) return
+      if (textWithoutHtml === '' && selectedMedia.value.length === 0) {
+        toast.add({
+          severity: 'warn',
+          summary: 'Contenu vide',
+          detail: 'Ajoutez un texte ou un média avant de publier.',
+          life: 2500,
+        })
+        return
+      }
+
+      if (!localCurrentUser.value?.id) {
+        toast.add({
+          severity: 'error',
+          summary: 'Utilisateur non connecté',
+          detail: 'Reconnectez-vous pour publier un post.',
+          life: 3000,
+        })
+        return
+      }
 
       try {
         const authorName =
@@ -210,6 +247,7 @@ export default {
         })
 
         newPost.value = ''
+        cleanupMediaPreviews(selectedMedia.value)
         selectedMedia.value = []
         detectedTags.value = []
         showCreatePost.value = false
@@ -217,6 +255,12 @@ export default {
         reloadPosts()
       } catch (e) {
         console.error('Erreur publication Supabase:', e)
+        toast.add({
+          severity: 'error',
+          summary: 'Publication échouée',
+          detail: e?.message || 'Une erreur est survenue lors de la publication.',
+          life: 4000,
+        })
       }
     }
 
@@ -249,6 +293,10 @@ export default {
     }
 
     const removeMedia = (index) => {
+      const media = selectedMedia.value[index]
+      if (media?.preview && String(media.preview).startsWith('blob:')) {
+        URL.revokeObjectURL(media.preview)
+      }
       selectedMedia.value.splice(index, 1)
     }
 
@@ -289,6 +337,12 @@ export default {
         }
       } catch (e) {
         console.error('Erreur filtres Supabase:', e)
+        toast.add({
+          severity: 'warn',
+          summary: 'Filtres indisponibles',
+          detail: 'Impossible de charger les filtres pour le moment.',
+          life: 3000,
+        })
       }
     }
 
@@ -368,6 +422,12 @@ export default {
         }
       } catch (e) {
         console.error('Erreur récupération posts Supabase:', e)
+        toast.add({
+          severity: 'error',
+          summary: 'Chargement impossible',
+          detail: 'Impossible de charger les posts.',
+          life: 4000,
+        })
       }
       loading.value = false
     }
@@ -413,7 +473,9 @@ export default {
     }
 
     onMounted(async () => {
-      await authStore.checkAuthState()
+      if (!authStore.user) {
+        await authStore.checkAuthState()
+      }
       const currentUser = authStore.user
       if (currentUser) {
         localCurrentUser.value = currentUser
@@ -423,6 +485,7 @@ export default {
       if (isMobile.value) {
         window.addEventListener('scroll', handleWindowScroll)
       }
+      window.addEventListener('resize', handleResize)
       if (mainFeedRef.value) {
         mainFeedRef.value.addEventListener('scroll', handleScroll)
       }
@@ -478,22 +541,23 @@ export default {
           reloadPosts()
         }, 30000)
       }
-    })
 
-    // Recharger après retour de la page mobile de création
-    onMounted(() => {
-      router.afterEach((to, from) => {
-        if (from?.name === 'CreateContentMobile') {
-          reloadPosts()
-        }
-      })
+      if (!removeRouterAfterEach) {
+        removeRouterAfterEach = router.afterEach((to, from) => {
+          if (from?.name === 'CreateContentMobile') {
+            reloadPosts()
+          }
+        })
+      }
     })
 
     onUnmounted(() => {
       window.removeEventListener('scroll', handleWindowScroll)
+      window.removeEventListener('resize', handleResize)
       if (mainFeedRef.value) {
         mainFeedRef.value.removeEventListener('scroll', handleScroll)
       }
+      cleanupMediaPreviews(selectedMedia.value)
       if (postsChannel) {
         supabase.removeChannel(postsChannel)
         postsChannel = null
@@ -501,6 +565,10 @@ export default {
       if (pollInterval) {
         clearInterval(pollInterval)
         pollInterval = null
+      }
+      if (removeRouterAfterEach) {
+        removeRouterAfterEach()
+        removeRouterAfterEach = null
       }
     })
 

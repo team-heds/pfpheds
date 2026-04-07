@@ -10,14 +10,14 @@
     <div class="main-content profileinfo-scrollable ">
       <div class="filter-menu p-fluid p-pt-4 p-pb-4">
         <div>
-
           <!-- Affichage du composant CardNameProfile -->
           <CardNameProfile />
-          <VotationResultProfil :userId="user.uid" class="w-full" />
+          <VotationResultProfil :userId="effectiveUserId" class="w-full" />
           <!-- Radar profil stage + critères validés -->
           <RadarProfil :scores="radarScores" :totalStages="totalStages" />
+
           <!-- Résumé du stage utilisateur -->
-          <ResumStageUserProfile :userProfile="userProfile" :userId="user.uid" class="w-full" />
+          <ResumStageUserProfile :userProfile="userProfile" :userId="effectiveUserId" class="w-full" />
           <!-- On passe l'ID de l'utilisateur au composant -->
 
 
@@ -62,6 +62,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { supabase } from '@/supabase';
+import { useAuthStore } from '@/stores/authStore';
 
 // Importation des composants utilisés
 import CardNameProfile from '@/components/user/library/CardNameProfile.vue';
@@ -131,6 +132,8 @@ const fetchUserHouseColor = async (userId) => {
 
 // --- Ajout récupération profil étudiant et scores radar ---
 const userProfile = ref(null);
+const studentResultVotes = ref([])
+const placesById = ref(new Map())
 const criteriaLabels = [
   "MSQ",
   "SYSINT",
@@ -143,7 +146,9 @@ const criteriaLabels = [
 ];
 
 const route = useRoute();
-const userId = route?.params?.id || null;
+const authStore = useAuthStore();
+const routeUserId = computed(() => route?.params?.id || null);
+const effectiveUserId = computed(() => routeUserId.value || authStore.user?.id || authStore.user?.uid || null);
 
 const fetchUserProfileById = async (userId) => {
   try {
@@ -172,11 +177,78 @@ const fetchUserProfileById = async (userId) => {
   }
 };
 
+const normalizePfpType = (type, idx = 0) => {
+  const fallback = ['PFP1', 'PFP2', 'PFP3', 'PFP4'][idx] || ''
+  const raw = type || fallback
+  return raw === 'PFP1A' || raw === 'PFP1B' ? 'PFP1' : raw
+}
+
+const fetchRadarSources = async (userId) => {
+  try {
+    const { data: rvData, error: rvError } = await supabase
+      .from('student_result_vote')
+      .select('*')
+      .eq('user_id', userId)
+
+    if (rvError) {
+      console.warn('Erreur chargement student_result_vote pour radar:', rvError.message)
+      studentResultVotes.value = []
+    } else {
+      studentResultVotes.value = rvData || []
+    }
+
+    const legacyEntries = parseLegacyStageEntries(userProfile.value)
+    const ids = new Set()
+
+    studentResultVotes.value.forEach((rv) => {
+      if (rv?.assigned_place_id) ids.add(String(rv.assigned_place_id))
+    })
+
+    legacyEntries.forEach((entry) => {
+      const legacyId = entry?.id_pfp || entry?.ID_PFP || entry?.PlaceId
+      if (legacyId) ids.add(String(legacyId))
+    })
+
+    if (!ids.size) {
+      placesById.value = new Map()
+      return
+    }
+
+    const { data: placesData, error: placesError } = await supabase
+      .from('places')
+      .select('IDPlace, PlaceId, id, place_id, MSQ, SYSINT, NEUROGER, AIGU, REHAB, AMBU, FR, DE')
+
+    if (placesError) {
+      console.warn('Erreur chargement places pour radar:', placesError.message)
+      placesById.value = new Map()
+      return
+    }
+
+    const map = new Map()
+    ;(placesData || []).forEach((p) => {
+      const keys = [p.IDPlace, p.PlaceId, p.id, p.place_id].filter(Boolean).map(String)
+      if (!keys.some((k) => ids.has(k))) return
+      keys.forEach((k) => map.set(k, p))
+    })
+    placesById.value = map
+  } catch (error) {
+    console.warn('Erreur chargement sources radar:', error?.message || error)
+    studentResultVotes.value = []
+    placesById.value = new Map()
+  }
+}
+
 onMounted(async () => {
-  if (userId) {
-    user.value.uid = userId;
-    await fetchUserProfileById(userId);
-    await fetchUserHouseColor(userId);
+  if (!authStore.user) {
+    await authStore.checkAuthState();
+  }
+
+  if (effectiveUserId.value) {
+    user.value.uid = effectiveUserId.value;
+    await fetchUserProfile(effectiveUserId.value);
+    await fetchUserProfileById(effectiveUserId.value);
+    await fetchRadarSources(effectiveUserId.value);
+    await fetchUserHouseColor(effectiveUserId.value);
   }
 });
 
@@ -196,28 +268,101 @@ const parsePfpValided = (pfpVal) => {
   return []
 }
 
+const parseLegacyStageEntries = (profile) => {
+  if (!profile) return []
+  const pfpArray = parsePfpValided(profile.pfp_valided)
+  const pfp2Val = profile.pfp2_data
+
+  if (pfp2Val) {
+    if (Array.isArray(pfp2Val)) {
+      return [...pfpArray, ...pfp2Val]
+    }
+    if (typeof pfp2Val === 'object') {
+      return [...pfpArray, pfp2Val]
+    }
+  }
+
+  return pfpArray
+}
+
+const isValidatedFlag = (value) => value === true || value === 'true' || value === 1 || value === '1'
+
+const isStageEntry = (entry) => {
+  if (!entry || typeof entry !== 'object') return false
+  if (criteriaLabels.some((crit) => Object.prototype.hasOwnProperty.call(entry, crit))) return true
+  return Boolean(entry.id_pfp || entry.selected_stage_id || entry.nom_pfp)
+}
+
+const parsedStageEntries = computed(() => {
+  const parsed = parseLegacyStageEntries(userProfile.value)
+  return parsed.filter(isStageEntry)
+})
+
+const mergedAllStageEntries = computed(() => {
+  const results = []
+  const seen = new Set()
+
+  ;(studentResultVotes.value || []).forEach((rv) => {
+    const placeId = rv?.assigned_place_id ? String(rv.assigned_place_id) : ''
+    const pfpType = normalizePfpType(rv?.pfp_type)
+    const key = `${placeId}_${pfpType}`
+    if (!placeId || seen.has(key)) return
+    seen.add(key)
+
+    const placeData = placesById.value.get(placeId)
+    const stageEntry = {}
+    criteriaLabels.forEach((crit) => {
+      stageEntry[crit] = isValidatedFlag(placeData?.[crit])
+    })
+    stageEntry._validated = isValidatedFlag(rv?.pfp_validee)
+    results.push(stageEntry)
+  })
+
+  ;(parsedStageEntries.value || []).forEach((entry, idx) => {
+    const placeId = String(entry?.id_pfp || entry?.ID_PFP || entry?.PlaceId || '')
+    const pfpType = normalizePfpType(entry?.pfp_type || entry?.type_pfp || entry?.PfpType, idx)
+    const key = `${placeId}_${pfpType}`
+    if (placeId && seen.has(key)) return
+    if (placeId) seen.add(key)
+    results.push({ ...entry, _validated: true })
+  })
+
+  return results
+})
+
+const mergedValidatedStageEntries = computed(() => {
+  return mergedAllStageEntries.value.filter((entry) => entry?._validated)
+})
+
 // Agrégation des scores radar par critère (nombre de validations)
 const radarScores = computed(() => {
   const scores = Object.fromEntries(criteriaLabels.map(k => [k, 0]));
-  if (userProfile.value?.pfp_valided) {
-    const pfpArray = parsePfpValided(userProfile.value.pfp_valided)
-    
-    pfpArray.forEach(place => {
-      criteriaLabels.forEach(crit => {
-        if (place[crit] === true) scores[crit]++;
-      });
+  mergedValidatedStageEntries.value.forEach(place => {
+    criteriaLabels.forEach(crit => {
+      if (isValidatedFlag(place?.[crit])) scores[crit]++;
     });
-  }
+  });
   return scores;
 });
 
 const totalStages = computed(() => {
-  if (userProfile.value?.pfp_valided) {
-    const pfpArray = parsePfpValided(userProfile.value.pfp_valided)
-    return pfpArray.length
-  }
-  return 0;
+  return mergedAllStageEntries.value.length;
 });
+
+const displayName = computed(() => {
+  const full = `${user.value.prenom || ''} ${user.value.nom || ''}`.trim()
+  return full || 'Profil utilisateur'
+})
+
+const validatedCriteriaCount = computed(() => {
+  return criteriaLabels.filter((k) => Number(radarScores.value[k] || 0) > 0).length
+})
+
+const completionPercent = computed(() => {
+  const totalPossible = Math.max(1, totalStages.value * criteriaLabels.length)
+  const totalValidated = criteriaLabels.reduce((acc, k) => acc + Number(radarScores.value[k] || 0), 0)
+  return Math.min(100, Math.round((totalValidated / totalPossible) * 100))
+})
 
 // Fonction pour charger un profil utilisateur via son ID depuis Supabase
 const fetchUserProfile = async (userId) => {
@@ -363,9 +508,97 @@ const onAvatarChange = (event) => {
   padding: 20px;
 }
 
-/* Exemple de style pour les images et boutons */
-img {
-  border: 2px solid #ccc;
+.profile-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.2rem;
+  margin-bottom: 1.1rem;
+  border-radius: 1.25rem;
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.14), rgba(16, 185, 129, 0.1));
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.profile-hero--inline {
+  margin-top: 0.5rem;
+}
+
+.profile-hero__left {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.profile-avatar-wrap {
+  width: 72px;
+  height: 72px;
+  border-radius: 1rem;
+  overflow: hidden;
+  border: 2px solid rgba(255,255,255,0.75);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.18);
+}
+
+.profile-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-name {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-color, #0f172a);
+}
+
+.profile-email {
+  margin: 0.2rem 0 0.5rem;
+  color: var(--text-color-secondary, #475569);
+}
+
+.profile-badges {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.profile-badge {
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0.3rem 0.65rem;
+  background: rgba(15, 23, 42, 0.08);
+  color: var(--text-color, #0f172a);
+}
+
+.profile-badge--accent {
+  background: rgba(14, 165, 233, 0.2);
+}
+
+.profile-kpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(130px, 1fr));
+  gap: 0.6rem;
+}
+
+.kpi-card {
+  background: var(--surface-card, #fff);
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 0.85rem;
+  padding: 0.55rem 0.75rem;
+  min-width: 140px;
+}
+
+.kpi-label {
+  display: block;
+  font-size: 0.76rem;
+  color: var(--text-color-secondary, #64748b);
+}
+
+.kpi-value {
+  color: var(--text-color, #0f172a);
+  font-size: 1rem;
 }
 
 /* Quelques utilitaires */
@@ -408,6 +641,15 @@ img {
 @media (max-width: 600px) {
   .main-content {
     padding: 0 0.2rem;
+  }
+
+  .profile-hero {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .profile-kpis {
+    grid-template-columns: 1fr;
   }
 }
 

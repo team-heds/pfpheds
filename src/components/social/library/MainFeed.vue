@@ -1,6 +1,7 @@
 <!-- src/components/social/library/MainFeed.vue -->
 <template>
   <div class="main-feed" ref="mainFeedRef">
+    <Toast />
     <div v-if="isMobile" class="mainfeed-mobile">
       <transition name="fade">
         <div v-show="showHeaderIcons">
@@ -75,9 +76,11 @@
 import { ref, onMounted, onUnmounted, computed, watch } from "vue";
 import { db } from "../../../../firebase.js";
 import { useAuthStore } from '@/stores/authStore';
+import { useToast } from 'primevue/usetoast';
 import InfinityScroll from '@/components/social/library/InfinityScroll.vue'
 import PostItem from '@/components/social/library/PostItem.vue'
 import Tag from "primevue/tag";
+import Toast from 'primevue/toast';
 import Button from "primevue/button";
 import FileUpload from "primevue/fileupload";
 import FilterComponent from '@/components/social/library/FilterComponent.vue'
@@ -116,6 +119,7 @@ export default {
     InfinityScroll,
     PostItem,
     Tag,
+    Toast,
     Button,
     FileUpload,
     FilterComponent,
@@ -128,6 +132,7 @@ export default {
   setup(props) {
     const router = useRouter();
     const authStore = useAuthStore();
+    const toast = useToast();
     // Références réactives
     const posts = ref([]);
     const filteredPosts = ref([]);
@@ -147,6 +152,8 @@ export default {
     let lastScrollY = 0;
     const showEditAndStories = ref(true);
     const mainFeedRef = ref(null);
+    const viewportWidth = ref(window.innerWidth);
+    let removeRouterAfterEach = null;
 
     // Fonction pour gérer le scroll (pour afficher/masquer la zone de texte et StoriesBar)
     const handleScroll = (event) => {
@@ -172,8 +179,20 @@ export default {
       value: null,
     });
 
-    // Ajout d'un détecteur mobile simple
-    const isMobile = computed(() => window.innerWidth <= 600);
+    // Ajout d'un détecteur mobile réactif
+    const isMobile = computed(() => viewportWidth.value <= 600);
+
+    const handleResize = () => {
+      viewportWidth.value = window.innerWidth;
+    };
+
+    const cleanupMediaPreviews = (items) => {
+      (items || []).forEach((m) => {
+        if (m?.preview && String(m.preview).startsWith('blob:')) {
+          URL.revokeObjectURL(m.preview);
+        }
+      });
+    };
 
     // Watcher pour détecter les tags dans le nouveau post
     watch(newPost, (value) => {
@@ -196,7 +215,22 @@ export default {
       // Notez que "newPost.value" est du HTML, on peut retirer les balises pour vérifier le contenu
       const textWithoutHtml = newPost.value.replace(/<[^>]+>/g, "").trim();
       if (textWithoutHtml === "" && selectedMedia.value.length === 0) {
-        console.error("Aucun contenu à publier.");
+        toast.add({
+          severity: 'warn',
+          summary: 'Contenu vide',
+          detail: 'Ajoutez un texte ou un média avant de publier.',
+          life: 2500,
+        });
+        return;
+      }
+
+      if (!localCurrentUser.value?.uid) {
+        toast.add({
+          severity: 'error',
+          summary: 'Utilisateur non connecté',
+          detail: 'Reconnectez-vous pour publier un post.',
+          life: 3000,
+        });
         return;
       }
 
@@ -240,8 +274,6 @@ export default {
         const newPostRef = push(dbRef(db, "Posts"));
         await set(newPostRef, postData);
 
-        console.log("Publication réussie :", postData);
-
         // NOUVEAU : Déclencher l'intégration gamification pour création de post
         await gamificationIntegration.onSocialInteraction(localCurrentUser.value.uid, {
           action: 'post',
@@ -256,6 +288,7 @@ export default {
 
         // Réinitialiser les champs après publication
         newPost.value = "";
+        cleanupMediaPreviews(selectedMedia.value);
         selectedMedia.value = [];
         detectedTags.value = [];
 
@@ -263,6 +296,12 @@ export default {
         reloadPosts();
       } catch (error) {
         console.error("Erreur lors de la publication :", error);
+        toast.add({
+          severity: 'error',
+          summary: 'Publication échouée',
+          detail: error?.message || 'Impossible de publier pour le moment.',
+          life: 4000,
+        });
       }
     };
 
@@ -307,6 +346,10 @@ export default {
 
     // Fonction pour supprimer un média sélectionné
     const removeMedia = (index) => {
+      const media = selectedMedia.value[index];
+      if (media?.preview && String(media.preview).startsWith('blob:')) {
+        URL.revokeObjectURL(media.preview);
+      }
       selectedMedia.value.splice(index, 1);
     };
 
@@ -344,12 +387,16 @@ export default {
                 value: comm,
               })
             );
-          } else {
-            console.warn("Aucune communauté trouvée pour l'utilisateur.");
           }
         }
       } catch (error) {
         console.error("Erreur lors de la récupération des filtres disponibles :", error);
+        toast.add({
+          severity: 'warn',
+          summary: 'Filtres indisponibles',
+          detail: 'Impossible de charger les filtres.',
+          life: 3000,
+        });
       }
     };
 
@@ -493,12 +540,16 @@ export default {
           if (posts.value.length > 0) {
             oldestTimestamp.value = null;
             await fetchPosts();
-          } else {
-            console.log("Aucun post trouvé pour les critères actuels.");
           }
         }
       } catch (error) {
         console.error("Erreur lors de la récupération des posts :", error);
+        toast.add({
+          severity: 'error',
+          summary: 'Chargement impossible',
+          detail: 'Impossible de charger les posts.',
+          life: 4000,
+        });
       }
 
       loading.value = false;
@@ -569,13 +620,12 @@ export default {
         fetchPosts();
       } else {
         // Utiliser le store d'authentification unifié
-        await authStore.checkAuthState();
+        if (!authStore.user) {
+          await authStore.checkAuthState();
+        }
         const currentUser = authStore.user;
         
         if (currentUser) {
-          console.log('MainFeed - Utilisateur connecté:', currentUser.email || currentUser.uid);
-          console.log('MainFeed - Provider:', authStore.authProvider);
-          
           localCurrentUser.value = currentUser;
           fetchAvailableFilters();
           fetchPosts();
@@ -587,6 +637,7 @@ export default {
         lastScrollY = window.scrollY;
         window.addEventListener('scroll', handleWindowScroll);
       }
+      window.addEventListener('resize', handleResize);
       if (mainFeedRef.value) {
         mainFeedRef.value.addEventListener('scroll', handleScroll);
       }
@@ -595,18 +646,26 @@ export default {
     // Hook de cycle de vie onUnmounted
     onUnmounted(() => {
       window.removeEventListener('scroll', handleWindowScroll);
+      window.removeEventListener('resize', handleResize);
       if (mainFeedRef.value) {
         mainFeedRef.value.removeEventListener('scroll', handleScroll);
+      }
+      cleanupMediaPreviews(selectedMedia.value);
+      if (removeRouterAfterEach) {
+        removeRouterAfterEach();
+        removeRouterAfterEach = null;
       }
     });
 
     // --- Ajout : recharger les posts après retour de publication ---
     onMounted(() => {
-      router.afterEach((to, from) => {
-        if (from.name === 'CreateContentMobile' && to.name === 'MainFeed') {
-          reloadPosts();
-        }
-      });
+      if (!removeRouterAfterEach) {
+        removeRouterAfterEach = router.afterEach((to, from) => {
+          if (from?.name === 'CreateContentMobile' && to?.name === 'MainFeed') {
+            reloadPosts();
+          }
+        });
+      }
       // Recharge si event global (publication depuis PostTextarea)
       if (typeof window !== 'undefined' && window && window.$vueRoot) {
         window.$vueRoot.$on('refresh-mobile-feed', reloadPosts);

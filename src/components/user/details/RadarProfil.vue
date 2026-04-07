@@ -75,8 +75,8 @@ const chartData = computed(() => ({
 
 const NB_GRID_LINES = 5; // Nombre de lignes voulues
 const chartOptions = computed(() => {
-  // On force le max à NB_GRID_LINES - 1 pour avoir toujours 5 lignes (0 à 4)
-  const maxVal = NB_GRID_LINES - 1;
+  // On force le max à 5 pour que la ligne extérieure affiche 5 (0 au centre)
+  const maxVal = NB_GRID_LINES;
   return {
     responsive: true,
     plugins: {
@@ -102,9 +102,9 @@ const chartOptions = computed(() => {
     },
     scales: {
       r: {
-        min: -1,
+        min: 0,
         max: maxVal,
-        beginAtZero: false,
+        beginAtZero: true,
         grid: {
           color: ctx => ctx.index === 0 ? '#fff' : '#fff8',
           lineWidth: ctx => ctx.index === 0 ? 3 : 1.5,
@@ -120,11 +120,11 @@ const chartOptions = computed(() => {
           font: { size: 16, weight: 'bold', family: 'inherit' },
           z: 10,
           callback: function(value) {
-            // Cache le tick -1 (centre) ET le tick 0 (ligne du milieu)
-            if (value === -1 || value === 0) return '';
+            // Cache seulement le tick 0 au centre
+            if (value === 0) return '';
             return value;
           },
-          count: NB_GRID_LINES // force le nombre de ticks
+          count: NB_GRID_LINES + 1 // 0..5
         },
         pointLabels: {
           font: { size: 18, weight: 'bold', family: 'inherit' },
