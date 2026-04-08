@@ -108,7 +108,7 @@ export async function fetchGeneralKpis() {
       { nom: 'Dashboard Admin', path: '/admin', catégorie: 'Admin' },
       { nom: 'Utilisateurs', path: '/admin/users', catégorie: 'Admin' },
       { nom: 'Rôles & Permissions', path: '/admin/security/rbac', catégorie: 'Sécurité' },
-      { nom: 'Dashboard PFP', path: '/admin/formation-pratique/dashboard', catégorie: 'PFP' },
+      { nom: 'Dashboard PFP', path: '/admin/dashboard-pfp', catégorie: 'PFP' },
       { nom: 'Étudiants', path: '/admin/formation-pratique/etudiants', catégorie: 'PFP' },
       { nom: 'Institutions', path: '/admin/formation-pratique/institutions', catégorie: 'PFP' },
       { nom: 'Places de stage', path: '/admin/formation-pratique/places', catégorie: 'PFP' },

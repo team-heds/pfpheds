@@ -3,7 +3,7 @@
     <ConfirmDialog />
     <div class="p-4">
       <div class="breadcrumb-section mb-3">
-        <router-link to="/admin/formation-pratique/dashboard" class="text-600 no-underline hover:text-primary"><i class="pi pi-home mr-1"></i>Formation Pratique</router-link>
+        <router-link to="/admin/dashboard-pfp" class="text-600 no-underline hover:text-primary"><i class="pi pi-home mr-1"></i>Formation Pratique</router-link>
         <i class="pi pi-angle-right text-400 mx-2"></i>
         <span class="text-900 font-medium">Étudiants</span>
       </div>
@@ -32,6 +32,16 @@
           </div>
         </div>
         <ProgressBar v-if="loading" mode="indeterminate" style="height: 4px" class="mt-3" />
+      </div>
+
+      <div v-if="dashboardFocusPreset" class="surface-card fp-dark p-3 border-round shadow-2 mb-3">
+        <div class="flex align-items-center justify-content-between gap-3 flex-wrap">
+          <div class="text-900 font-medium">
+            Filtre dashboard actif :
+            <span class="text-primary">{{ dashboardFocusPresetLabel }}</span>
+          </div>
+          <Button icon="pi pi-times" label="Retirer le preset" outlined size="small" @click="clearDashboardPreset" />
+        </div>
       </div>
 
       <div class="grid mb-3" v-if="globalKpisReady">
@@ -182,8 +192,15 @@ const debouncedGlobalSearch = ref('')
 const filterCohort = ref(null)
 const multiSortMeta = ref([{ field: 'family_name', order: 1 }])
 const FILTERS_KEY = 'fp_phy_etudiants_filters'
+const DASHBOARD_FOCUS_KEY = 'fp_phy_etudiants_dashboard_focus'
 const globalKpisReady = ref(false)
 const globalKpisData = ref({ activeStudents: 0, openPlaces: 0, publishedAssignments: 0, incompleteFiles: 0 })
+const dashboardFocusPreset = ref(null)
+
+const dashboardFocusPresetLabel = computed(() => {
+  if (dashboardFocusPreset.value === 'incomplete') return 'Dossiers incomplets'
+  return dashboardFocusPreset.value
+})
 
 let searchDebounceTimer = null
 watch(globalSearch, (val) => {
@@ -200,6 +217,16 @@ try {
   if (Array.isArray(saved.multiSortMeta) && saved.multiSortMeta.length) multiSortMeta.value = saved.multiSortMeta
 } catch {
   localStorage.removeItem(FILTERS_KEY)
+}
+
+try {
+  const focus = JSON.parse(localStorage.getItem(DASHBOARD_FOCUS_KEY) || '{}')
+  if (focus?.preset) {
+    dashboardFocusPreset.value = focus.preset
+    localStorage.removeItem(DASHBOARD_FOCUS_KEY)
+  }
+} catch {
+  localStorage.removeItem(DASHBOARD_FOCUS_KEY)
 }
 
 watch([globalSearch, filterCohort, multiSortMeta], () => {
@@ -264,8 +291,16 @@ const filteredRows = computed(() => {
     )
   }
 
+  if (dashboardFocusPreset.value === 'incomplete') {
+    list = list.filter((u) => !u.family_name || !u.forname || !u.email || !u.classe)
+  }
+
   return list
 })
+
+function clearDashboardPreset() {
+  dashboardFocusPreset.value = null
+}
 
 const globalKpis = computed(() => ([
   { label: 'Étudiants actifs', value: globalKpisData.value.activeStudents, colorClass: 'text-green-400' },

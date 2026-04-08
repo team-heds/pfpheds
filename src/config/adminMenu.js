@@ -44,8 +44,6 @@ export default [
         label: 'Formation Pratique & PFP',
         icon: 'pi pi-briefcase',
         items: [
-          { label: 'Dashboard Formation Pratique', icon: 'pi pi-chart-bar', to: '/admin/formation-pratique/dashboard' },
-
           // Données de base
           {
             label: 'Données',

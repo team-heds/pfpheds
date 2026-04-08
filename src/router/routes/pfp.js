@@ -26,7 +26,7 @@ export default [
   { path: '/admin/formation-pratique/validation-pfp', component: () => import('@/views/admin/pfp/ValidationPFP.vue'), name: 'FPValidationPFP', meta: { requiresAuth: true, need: 'page1.access' } },
 
   // Formation Pratique Physio
-  { path: '/admin/formation-pratique/dashboard', component: () => import('@/views/admin/formation-pratique/DashboardFormationPratiqueViewPHYFP.vue'), name: 'DashboardFormationPratique', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/admin/formation-pratique/dashboard', redirect: '/admin/dashboard-pfp' },
   { path: '/admin/formation-pratique/etudiants', component: () => import('@/views/admin/formation-pratique/EtudiantsViewPHYFP.vue'), name: 'FPEtudiants', meta: { requiresAuth: true, need: 'page1.access' } },
   { path: '/admin/formation-pratique/institutions', component: () => import('@/views/admin/formation-pratique/InstitutionsViewPHYFP.vue'), name: 'FPInstitutions', meta: { requiresAuth: true, need: 'page1.access' } },
   { path: '/admin/formation-pratique/praticiens-formateur', component: () => import('@/views/admin/formation-pratique/PraticiensFormateurViewPHYFP.vue'), name: 'FPPraticiensFormateur', meta: { requiresAuth: true, need: 'page1.access' } },
