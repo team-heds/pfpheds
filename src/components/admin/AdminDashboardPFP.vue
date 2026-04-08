@@ -69,7 +69,17 @@
                 <Button icon="pi pi-chevron-right" text rounded size="small" @click="shiftPeriod(1)" :disabled="isCurrentPeriod" v-tooltip.top="'Période suivante'" />
               </div>
             </div>
-            <div class="grid">
+            <!-- Skeleton pendant chargement -->
+            <div v-if="statsLoading" class="grid">
+              <div class="col-6 sm:col-6 lg:col-3" v-for="n in 8" :key="n">
+                <div class="stat-card">
+                  <Skeleton width="36px" height="36px" borderRadius="10px" class="mx-auto mb-2" />
+                  <Skeleton width="60%" height="1.75rem" class="mx-auto mb-1" />
+                  <Skeleton width="80%" height="0.7rem" class="mx-auto" />
+                </div>
+              </div>
+            </div>
+            <div v-else class="grid">
               <div class="col-6 sm:col-6 lg:col-3" v-for="s in extraStats" :key="s.key">
                 <div class="stat-card" :style="{ '--stat-color': s.color }">
                   <div class="stat-icon-wrapper" :style="{ background: s.color + '18' }">
@@ -78,6 +88,21 @@
                   <div class="stat-value" :style="{ color: s.color }">{{ s.value }}</div>
                   <div class="stat-label">{{ s.label }}</div>
                 </div>
+              </div>
+            </div>
+
+            <!-- Taux de remplissage -->
+            <div v-if="!statsLoading" class="mt-3 p-3 surface-ground border-round">
+              <div class="flex align-items-center justify-content-between mb-2">
+                <span class="text-sm font-semibold text-700">Taux de remplissage des places</span>
+                <span class="text-sm font-bold" :style="{ color: fillRateColor }">{{ fillRate }}%</span>
+              </div>
+              <div class="fill-rate-track">
+                <div class="fill-rate-bar" :style="{ width: fillRate + '%', background: fillRateColor }"></div>
+              </div>
+              <div class="flex justify-content-between mt-1">
+                <small class="text-500">{{ assignedPlaces }} attribuées</small>
+                <small class="text-500">{{ totalPlaces }} disponibles</small>
               </div>
             </div>
           </div>
@@ -105,6 +130,31 @@
               </div>
             </div>
 
+            <!-- Breakdown par PFP type -->
+            <Divider class="my-3" />
+            <div class="flex align-items-center gap-2 mb-2">
+              <i class="pi pi-list text-primary"></i>
+              <span class="font-semibold text-900 text-sm">Par type de PFP</span>
+            </div>
+            <div v-if="statsLoading" class="flex flex-column gap-2">
+              <Skeleton v-for="n in 4" :key="n" width="100%" height="2rem" />
+            </div>
+            <div v-else class="flex flex-column gap-2">
+              <div v-for="item in pfpTypeBreakdown" :key="item.type" class="pfp-type-row">
+                <div class="flex align-items-center gap-2 flex-1">
+                  <Tag :value="item.type" :severity="item.severity" rounded />
+                  <span class="text-700 text-sm">{{ item.total }} attribution{{ item.total > 1 ? 's' : '' }}</span>
+                </div>
+                <div class="flex align-items-center gap-1">
+                  <span class="text-xs" style="color: #16a34a" v-tooltip.top="'Validées'">{{ item.validated }}</span>
+                  <span class="text-400">/</span>
+                  <span class="text-xs" style="color: #dc2626" v-tooltip.top="'Échecs'">{{ item.failed }}</span>
+                  <span class="text-400">/</span>
+                  <span class="text-xs" style="color: #f97316" v-tooltip.top="'Arrêtées'">{{ item.stopped }}</span>
+                </div>
+              </div>
+            </div>
+
             <!-- Sessions de votation ouvertes -->
             <Divider class="my-3" />
             <div class="flex align-items-center gap-2 mb-2">
@@ -119,6 +169,40 @@
                 <span v-if="sess.is_priority" class="text-xs text-orange-500 font-bold">PRIO</span>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Graphiques -->
+      <div class="grid mb-4" v-if="!statsLoading && pfpTypeBreakdownData.length">
+        <div class="col-12 md:col-6">
+          <div class="surface-card p-4 border-round-xl shadow-2 h-full">
+            <div class="flex align-items-center gap-2 mb-3">
+              <i class="pi pi-chart-pie text-primary text-xl"></i>
+              <h2 class="text-lg font-semibold text-900 m-0">Répartition par type de PFP</h2>
+            </div>
+            <DoughnutChart
+              :data="doughnutChartData"
+              :height="260"
+              :showLegend="true"
+              showCenterText
+              :centerValue="String(totalVotes)"
+              centerLabel="attributions"
+              cutout="65%"
+            />
+          </div>
+        </div>
+        <div class="col-12 md:col-6">
+          <div class="surface-card p-4 border-round-xl shadow-2 h-full">
+            <div class="flex align-items-center gap-2 mb-3">
+              <i class="pi pi-chart-bar text-primary text-xl"></i>
+              <h2 class="text-lg font-semibold text-900 m-0">Statut par type de PFP</h2>
+            </div>
+            <BarChart
+              :data="barChartData"
+              :height="260"
+              title=""
+            />
           </div>
         </div>
       </div>
@@ -156,7 +240,16 @@
           <h2 class="text-xl font-semibold text-900 m-0">Activités récentes</h2>
         </div>
         <div class="surface-card border-round-xl shadow-2 overflow-hidden">
-          <div v-if="!activities.length" class="p-4 text-600 text-center">Aucune activité récente</div>
+          <div v-if="activitiesLoading" class="p-4 flex flex-column gap-3">
+            <div v-for="n in 4" :key="n" class="flex align-items-center gap-3">
+              <Skeleton shape="circle" width="32px" height="32px" />
+              <div class="flex-1">
+                <Skeleton width="60%" height="0.9rem" class="mb-1" />
+                <Skeleton width="30%" height="0.7rem" />
+              </div>
+            </div>
+          </div>
+          <div v-else-if="!activities.length" class="p-4 text-600 text-center">Aucune activité récente</div>
           <div v-else>
             <div
               v-for="(a, i) in activities"
@@ -194,9 +287,12 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import AdminLayout from './layouts/AdminLayout.vue'
 import KpiCard from './widgets/KpiCard.vue'
+import DoughnutChart from './widgets/charts/DoughnutChart.vue'
+import BarChart from './widgets/charts/BarChart.vue'
 import Button from 'primevue/button'
 import SelectButton from 'primevue/selectbutton'
 import ProgressSpinner from 'primevue/progressspinner'
+import Skeleton from 'primevue/skeleton'
 import Tag from 'primevue/tag'
 import Divider from 'primevue/divider'
 import { useKpiManager } from '@/composables/useKpiManager'
@@ -220,9 +316,13 @@ const periodOptions = [
 ]
 
 const activities = ref([])
+const activitiesLoading = ref(true)
 const openSessions = ref([])
 const periodMode = ref('month')
 const selectedDate = ref(new Date())
+const statsLoading = ref(false)
+const assignedPlaces = ref(0)
+const totalPlaces = ref(0)
 
 const extraStats = ref([
   { key: 'active_students', label: 'Étudiants actifs', value: 0, color: '#22c55e', icon: 'pi pi-users' },
@@ -250,6 +350,8 @@ const quickActions = [
   { title: 'Validation PFP', desc: 'Valider les PFP terminées', icon: 'pi pi-verified', color: '#22c55e', route: '/admin/formation-pratique/valider-echec-pfp' },
 ]
 
+const pfpTypeBreakdownData = ref([])
+
 const pfpStatusItems = computed(() => {
   const validated = extraStats.value.find(s => s.key === 'validated')?.value || 0
   const failed = extraStats.value.find(s => s.key === 'failed')?.value || 0
@@ -260,6 +362,48 @@ const pfpStatusItems = computed(() => {
     { label: 'En échec', value: failed, color: '#dc2626', pct: Math.round((failed / total) * 100) },
     { label: 'Arrêtées', value: stopped, color: '#f97316', pct: Math.round((stopped / total) * 100) },
   ]
+})
+
+const pfpTypeBreakdown = computed(() => {
+  const severityMap = { PFP1: 'info', PFP2: 'success', PFP3: 'warning', PFP4: 'danger' }
+  return pfpTypeBreakdownData.value.map(item => ({
+    ...item,
+    severity: severityMap[item.type] || 'info'
+  }))
+})
+
+const fillRate = computed(() => {
+  if (!totalPlaces.value) return 0
+  return Math.round((assignedPlaces.value / totalPlaces.value) * 100)
+})
+
+const fillRateColor = computed(() => {
+  const r = fillRate.value
+  if (r >= 80) return '#16a34a'
+  if (r >= 50) return '#eab308'
+  return '#ef4444'
+})
+
+const pfpTypeColors = { PFP1: '#3b82f6', PFP2: '#10b981', PFP3: '#f59e0b', PFP4: '#ef4444' }
+
+const totalVotes = computed(() => pfpTypeBreakdownData.value.reduce((sum, d) => sum + d.total, 0))
+
+const doughnutChartData = computed(() => {
+  return pfpTypeBreakdownData.value.map(d => ({
+    label: d.type,
+    value: d.total,
+    color: pfpTypeColors[d.type] || '#6366f1'
+  }))
+})
+
+const barChartData = computed(() => {
+  const items = []
+  for (const d of pfpTypeBreakdownData.value) {
+    if (d.validated) items.push({ label: `${d.type} ✓`, value: d.validated, color: '#16a34a' })
+    if (d.failed) items.push({ label: `${d.type} ✗`, value: d.failed, color: '#dc2626' })
+    if (d.stopped) items.push({ label: `${d.type} ⏹`, value: d.stopped, color: '#f97316' })
+  }
+  return items
 })
 
 const periodLabel = computed(() => {
@@ -289,12 +433,16 @@ const shiftPeriod = async (delta) => {
   else if (periodMode.value === 'month') d.setMonth(d.getMonth() + delta)
   else d.setFullYear(d.getFullYear() + delta)
   selectedDate.value = d
+  statsLoading.value = true
   await loadExtraStats()
+  statsLoading.value = false
 }
 
 const resetToToday = async () => {
   selectedDate.value = new Date()
+  statsLoading.value = true
   await loadExtraStats()
+  statsLoading.value = false
 }
 
 const navigateTo = (path) => router.push(path)
@@ -304,7 +452,9 @@ const onPeriodChange = async () => {
   else if (periodMode.value === 'year') period.value = '90d'
   else period.value = '30d'
   selectedDate.value = new Date()
+  statsLoading.value = true
   await loadExtraStats()
+  statsLoading.value = false
 }
 
 const refreshAll = async () => {
@@ -346,21 +496,45 @@ const loadExtraStats = async () => {
         .select('PlaceId,InstitutionId,NomPlace,fileURL,fileurl,pdfUrl,created_at,updated_at'),
       supabase
         .from('student_result_vote')
-        .select('id,status,pfp_validee,pfp_echec,pfp_arret,created_at,updated_at')
+        .select('id,status,pfp_type,pfp_validee,pfp_echec,pfp_arret,assigned_place_id,created_at,updated_at')
     ])
 
     const profiles = (profilesRes.data || []).filter((p) => isInSelectedPeriod(p.updated_at || p.created_at))
     const places = (placesRes.data || []).filter((p) => isInSelectedPeriod(p.updated_at || p.created_at))
-    const votes = (votesRes.data || []).filter((v) => isInSelectedPeriod(v.updated_at || v.created_at))
+    const votesInPeriod = (votesRes.data || []).filter((v) => isInSelectedPeriod(v.updated_at || v.created_at))
+    const allVotes = votesRes.data || []
 
     const activeStudents = profiles.filter((p) => p.is_active !== false).length
     const incompleteProfiles = profiles.filter((p) => !p.family_name || !p.forname || !p.email || !p.classe).length
     const openPlaces = places.filter((p) => p.InstitutionId && p.NomPlace).length
     const withPdf = places.filter((p) => p.fileURL || p.fileurl || p.pdfUrl).length
-    const publishedAssignments = votes.filter((v) => v.status === 'published').length
-    const validated = votes.filter((v) => v.pfp_validee === true).length
-    const failed = votes.filter((v) => v.pfp_echec === true).length
-    const stopped = votes.filter((v) => v.pfp_arret === true).length
+    const publishedAssignments = votesInPeriod.filter((v) => v.status === 'published').length
+
+    // Statuts PFP = données globales (pas filtrées par période)
+    const validated = allVotes.filter((v) => v.pfp_validee === true).length
+    const failed = allVotes.filter((v) => v.pfp_echec === true).length
+    const stopped = allVotes.filter((v) => v.pfp_arret === true).length
+
+    // Taux de remplissage (global)
+    const allPlaces = (placesRes.data || []).filter((p) => p.InstitutionId && p.NomPlace)
+    totalPlaces.value = allPlaces.length
+    assignedPlaces.value = allVotes.filter((v) => v.assigned_place_id).length
+
+    // Breakdown par PFP type (global, normalise PFP1A/PFP1B → PFP1)
+    const normalizePfp = (t) => (t === 'PFP1A' || t === 'PFP1B') ? 'PFP1' : t
+    const byType = {}
+    for (const v of allVotes) {
+      const t = normalizePfp(v.pfp_type)
+      if (!t) continue
+      if (!byType[t]) byType[t] = { total: 0, validated: 0, failed: 0, stopped: 0 }
+      byType[t].total++
+      if (v.pfp_validee) byType[t].validated++
+      if (v.pfp_echec) byType[t].failed++
+      if (v.pfp_arret) byType[t].stopped++
+    }
+    pfpTypeBreakdownData.value = ['PFP1', 'PFP2', 'PFP3', 'PFP4']
+      .filter(t => byType[t])
+      .map(t => ({ type: t, ...byType[t] }))
 
     extraStats.value = [
       { key: 'active_students', label: 'Étudiants actifs', value: activeStudents, color: '#22c55e', icon: 'pi pi-users' },
@@ -402,14 +576,94 @@ const handleKpiAction = (kpi) => {
   if (routes[kpi.id]) router.push(routes[kpi.id])
 }
 
+const formatTimeAgo = (isoDate) => {
+  if (!isoDate) return ''
+  const diff = Date.now() - new Date(isoDate).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return 'à l\'instant'
+  if (mins < 60) return `il y a ${mins} min`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `il y a ${hours} h`
+  const days = Math.floor(hours / 24)
+  if (days === 1) return 'hier'
+  if (days < 7) return `il y a ${days} jours`
+  return new Date(isoDate).toLocaleDateString('fr-CH')
+}
+
+const loadRecentActivities = async () => {
+  activitiesLoading.value = true
+  try {
+    const [sessionsRes, placesRes, profilesRes] = await Promise.all([
+      supabase
+        .from('votation_sessions')
+        .select('id,pfp_type,target_class,status,is_priority,opened_at,closed_at')
+        .order('opened_at', { ascending: false })
+        .limit(5),
+      supabase
+        .from('places')
+        .select('PlaceId,NomPlace,created_at')
+        .order('created_at', { ascending: false })
+        .limit(5),
+      supabase
+        .from('user_profiles')
+        .select('user_id,forname,family_name,created_at')
+        .filter('permissions', 'cs', '["EtudiantPhysio"]')
+        .order('created_at', { ascending: false })
+        .limit(5)
+    ])
+
+    const items = []
+
+    for (const s of (sessionsRes.data || [])) {
+      const label = s.is_priority ? 'Session prioritaire' : 'Session votation'
+      const verb = s.status === 'open' ? 'ouverte' : 'fermée'
+      items.push({
+        icon: s.is_priority ? 'pi pi-star' : 'pi pi-check-square',
+        title: `${label} ${s.pfp_type} (${s.target_class}) ${verb}`,
+        time: formatTimeAgo(s.status === 'open' ? s.opened_at : s.closed_at),
+        date: new Date(s.status === 'open' ? s.opened_at : (s.closed_at || s.opened_at)),
+        to: '/admin/formation-pratique/votation-pfp',
+        bgColor: s.is_priority ? '#fef3c7' : '#ede9fe',
+        iconColor: s.is_priority ? '#f59e0b' : '#8b5cf6'
+      })
+    }
+
+    for (const p of (placesRes.data || [])) {
+      items.push({
+        icon: 'pi pi-map-marker',
+        title: `Place créée : ${p.NomPlace || 'Sans nom'}`,
+        time: formatTimeAgo(p.created_at),
+        date: new Date(p.created_at),
+        to: '/admin/formation-pratique/places',
+        bgColor: '#d1fae5',
+        iconColor: '#10b981'
+      })
+    }
+
+    for (const u of (profilesRes.data || [])) {
+      const name = [u.forname, u.family_name].filter(Boolean).join(' ') || 'Étudiant'
+      items.push({
+        icon: 'pi pi-user-plus',
+        title: `Nouveau profil : ${name}`,
+        time: formatTimeAgo(u.created_at),
+        date: new Date(u.created_at),
+        to: '/admin/formation-pratique/etudiants',
+        bgColor: '#dbeafe',
+        iconColor: '#3b82f6'
+      })
+    }
+
+    items.sort((a, b) => b.date - a.date)
+    activities.value = items.slice(0, 8)
+  } catch (e) {
+    console.warn('Erreur chargement activités récentes:', e)
+  } finally {
+    activitiesLoading.value = false
+  }
+}
+
 onMounted(async () => {
-  await Promise.all([loadKpis(), loadExtraStats(), loadOpenSessions()])
-  activities.value = [
-    { icon: 'pi pi-check-square', title: 'Votation prioritaire lancée', time: 'il y a 20 min', to: '/admin/formation-pratique/votation-prioritaire', bgColor: '#fef3c7', iconColor: '#f59e0b' },
-    { icon: 'pi pi-map-marker', title: 'Nouvelle place ajoutée', time: 'il y a 1 h', to: '/admin/formation-pratique/places', bgColor: '#d1fae5', iconColor: '#10b981' },
-    { icon: 'pi pi-calendar', title: 'PFP en cours mis à jour', time: 'hier', to: '/management_pfpencours', bgColor: '#fee2e2', iconColor: '#ef4444' },
-    { icon: 'pi pi-users', title: 'Profils étudiants synchronisés', time: 'hier', to: '/admin/formation-pratique/profil-etudiants', bgColor: '#dbeafe', iconColor: '#3b82f6' },
-  ]
+  await Promise.all([loadKpis(), loadExtraStats(), loadOpenSessions(), loadRecentActivities()])
 })
 </script>
 
@@ -488,6 +742,33 @@ onMounted(async () => {
   align-items: center;
   gap: 0.5rem;
   padding: 0.35rem 0;
+}
+
+/* Fill Rate */
+.fill-rate-track {
+  width: 100%;
+  height: 8px;
+  background: var(--surface-200);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.fill-rate-bar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+
+/* PFP Type Breakdown */
+.pfp-type-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0.5rem;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+.pfp-type-row:hover {
+  background: var(--surface-ground);
 }
 
 /* Quick Actions */

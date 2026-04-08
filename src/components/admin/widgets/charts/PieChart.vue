@@ -5,7 +5,7 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted, markRaw, shallowRef } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { Pie } from 'vue-chartjs'
 import {
   Chart as ChartJS,
@@ -15,16 +15,6 @@ import {
 } from 'chart.js'
 
 ChartJS.register(ArcElement, Tooltip, Legend)
-const ForceLegendColorPlugin = {
-  id: 'forceLegendColor',
-  beforeUpdate(chart, args, opts) {
-    if (chart && chart.options && chart.options.plugins && chart.options.plugins.legend) {
-      chart.options.plugins.legend.labels = chart.options.plugins.legend.labels || {}
-      chart.options.plugins.legend.labels.color = opts && opts.color ? opts.color : chart.options.plugins.legend.labels.color
-    }
-  }
-}
-ChartJS.register(ForceLegendColorPlugin)
 
 const props = defineProps({
   data: {
@@ -48,6 +38,31 @@ const props = defineProps({
   textColor: String
 })
 
+// Détection réactive du thème
+const resolvedTextColor = ref('rgba(255, 255, 255, 0.87)')
+const wrapperRef = ref(null)
+
+function detectTextColor() {
+  const themeLink = document.getElementById('theme-link')
+  if (themeLink) {
+    const href = themeLink.getAttribute('href') || ''
+    if (href.includes('theme-light')) return '#4b5563'
+    if (href.includes('theme-dim') || href.includes('theme-dark')) return 'rgba(255, 255, 255, 0.87)'
+  }
+  const cs = getComputedStyle(document.documentElement).colorScheme
+  if (cs && cs.includes('dark')) return 'rgba(255, 255, 255, 0.87)'
+  return '#4b5563'
+}
+
+onMounted(() => {
+  resolvedTextColor.value = detectTextColor()
+  const themeLink = document.getElementById('theme-link')
+  if (themeLink) {
+    const obs = new MutationObserver(() => { resolvedTextColor.value = detectTextColor() })
+    obs.observe(themeLink, { attributes: true, attributeFilter: ['href'] })
+  }
+})
+
 const chartData = computed(() => {
   if (!props.data || props.data.length === 0) return null
 
@@ -63,112 +78,26 @@ const chartData = computed(() => {
   }
 })
 
-function pickTextColor() {
-  const css = getComputedStyle(document.documentElement)
-  const varText = css.getPropertyValue('--text-color')?.trim()
-  const surface = css.getPropertyValue('--surface-card')?.trim() || css.getPropertyValue('--surface-ground')?.trim()
-  // If surface is rgb/hex, compute luminance to pick contrast color
-  function parse(c) {
-    if (!c) return null
-    if (c.startsWith('#')) {
-      const n = c.replace('#','')
-      const bigint = parseInt(n.length === 3 ? n.split('').map(x=>x+x).join('') : n, 16)
-      const r = (bigint >> 16) & 255, g = (bigint >> 8) & 255, b = bigint & 255
-      return {r,g,b}
-    }
-    const m = c.match(/rgb\((\d+)\s*,\s*(\d+)\s*,\s*(\d+)\)/i)
-    if (m) return { r: +m[1], g: +m[2], b: +m[3] }
-    return null
-  }
-  function luminance({r,g,b}) {
-    const a = [r,g,b].map(v => { v/=255; return v<=0.03928? v/12.92 : Math.pow(((v+0.055)/1.055),2.4) })
-    return 0.2126*a[0] + 0.7152*a[1] + 0.0722*a[2]
-  }
-  const p = parse(surface)
-  if (p) return luminance(p) < 0.5 ? '#e5e7eb' : '#111827'
-  const bodyBg = getComputedStyle(document.body).backgroundColor
-  const pb = parse(bodyBg)
-  if (pb) return luminance(pb) < 0.5 ? '#e5e7eb' : '#111827'
-  return varText || '#e5e7eb'
-}
-
-const legendColor = ref('#e5e7eb')
-const wrapperRef = ref(null)
-
-function parseColorToRGB(c) {
-  if (!c) return null
-  if (c.startsWith('#')) {
-    const n = c.replace('#','')
-    const bigint = parseInt(n.length === 3 ? n.split('').map(x=>x+x).join('') : n, 16)
-    return { r: (bigint >> 16) & 255, g: (bigint >> 8) & 255, b: bigint & 255, a: 1 }
-  }
-  const m = c.match(/rgba?\((\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*([0-9\.]+))?\)/i)
-  if (m) return { r: +m[1], g: +m[2], b: +m[3], a: m[4] !== undefined ? +m[4] : 1 }
-  return null
-}
-
-function luminance({r,g,b}) {
-  const a = [r,g,b].map(v => { v/=255; return v<=0.03928? v/12.92 : Math.pow(((v+0.055)/1.055),2.4) })
-  return 0.2126*a[0] + 0.7152*a[1] + 0.0722*a[2]
-}
-
-function effectiveBackground(el) {
-  let node = el
-  for (let i=0; i<10 && node; i++) {
-    const bg = getComputedStyle(node).backgroundColor
-    const rgba = parseColorToRGB(bg)
-    if (rgba && rgba.a > 0 && bg !== 'transparent') return rgba
-    node = node.parentElement
-  }
-  const bodyBg = getComputedStyle(document.body).backgroundColor
-  return parseColorToRGB(bodyBg) || { r: 255, g: 255, b: 255, a: 1 }
-}
-
-onMounted(() => {
-  const rgb = effectiveBackground(wrapperRef.value || document.body)
-  const color = luminance(rgb) < 0.5 ? '#e5e7eb' : '#111827'
-  legendColor.value = props.textColor || color
-})
-
 const chartOptions = computed(() => {
-  // Utiliser props.textColor s'il est fourni, sinon détecter automatiquement
-  const textColorToUse = props.textColor || pickTextColor()
+  const textColorToUse = props.textColor || resolvedTextColor.value
   
-  const options = {
+  return {
     responsive: true,
     maintainAspectRatio: false,
+    color: textColorToUse,
     plugins: {
-      forceLegendColor: { color: textColorToUse },
       legend: {
         display: props.showLegend,
         position: 'right',
         labels: {
           padding: 15,
+          usePointStyle: true,
+          pointStyle: 'rectRounded',
           font: {
             size: 12,
             family: 'Inter, system-ui, sans-serif'
           },
-          color: textColorToUse,
-          generateLabels: (chart) => {
-            const data = chart.data
-            if (data.labels.length && data.datasets.length) {
-              const total = data.datasets[0].data.reduce((a, b) => a + b, 0)
-              return data.labels.map((label, i) => {
-                const value = data.datasets[0].data[i]
-                const percentage = ((value / total) * 100).toFixed(1)
-                return {
-                  text: props.showPercentage 
-                    ? `${label} (${percentage}%)`
-                    : `${label} - ${value} (${percentage}%)`,
-                  fillStyle: data.datasets[0].backgroundColor[i],
-                  hidden: false,
-                  index: i,
-                  fontColor: textColorToUse
-                }
-              })
-            }
-            return []
-          }
+          color: textColorToUse
         }
       },
       tooltip: {
@@ -190,21 +119,13 @@ const chartOptions = computed(() => {
             const value = context.parsed
             const total = context.dataset.data.reduce((a, b) => a + b, 0)
             const percentage = ((value / total) * 100).toFixed(1)
-            return `${label}: ${value} (${percentage}%)`
+            return ` ${label}: ${value} (${percentage}%)`
           }
         }
       }
     }
   }
-  
-  // NE PAS GELER chartOptions - Chart.js a besoin de les modifier
-  // On gèle SEULEMENT chartData
-  return options
 })
-
-// Note: Avoid setting global Chart.js defaults with reactive refs to prevent
-// potential reactive loops when switching chart types. Legend colors are
-// enforced via options and the ForceLegendColor plugin.
 
 function generateColor() {
   const colors = [

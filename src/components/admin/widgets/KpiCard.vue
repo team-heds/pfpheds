@@ -189,6 +189,14 @@ const isDarkMode = ref(false)
 // Détecter le thème au montage
 onMounted(() => {
   const updateTheme = () => {
+    // Vérifier via le theme-link href (méthode HEdS)
+    const themeLink = document.getElementById('theme-link')
+    if (themeLink) {
+      const href = themeLink.getAttribute('href') || ''
+      if (href.includes('theme-dim') || href.includes('theme-dark')) { isDarkMode.value = true; return }
+      if (href.includes('theme-light')) { isDarkMode.value = false; return }
+    }
+    // Fallback: vérifier les classes
     const root = document.documentElement
     const body = document.body
     isDarkMode.value = root.classList.contains('dark') || 
@@ -200,10 +208,12 @@ onMounted(() => {
   // Détecter le thème initial
   updateTheme()
   
-  // Observer les changements de classes
+  // Observer les changements de classes ET du theme-link
   const observer = new MutationObserver(updateTheme)
   observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
   observer.observe(document.body, { attributes: true, attributeFilter: ['class'] })
+  const themeLink = document.getElementById('theme-link')
+  if (themeLink) observer.observe(themeLink, { attributes: true, attributeFilter: ['href'] })
   
   // Nettoyer l'observer
   onUnmounted(() => observer.disconnect())
