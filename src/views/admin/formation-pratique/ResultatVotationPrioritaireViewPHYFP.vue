@@ -1,7 +1,12 @@
 <template>
   <AdminLayout>
     <div class="p-4">
-      <div class="surface-card p-4 border-round shadow-2">
+      <div class="breadcrumb-section mb-3">
+        <router-link to="/admin/dashboard-pfp" class="text-600 no-underline hover:text-primary"><i class="pi pi-home mr-1"></i>Formation Pratique</router-link>
+        <i class="pi pi-angle-right text-400 mx-2"></i>
+        <span class="text-900 font-medium">Résultat Votation Prioritaire</span>
+      </div>
+      <div class="surface-card fp-dark p-4 border-round shadow-2">
         <div class="flex align-items-center gap-3 mb-4">
           <i class="pi pi-chart-pie text-primary text-4xl"></i>
           <div>

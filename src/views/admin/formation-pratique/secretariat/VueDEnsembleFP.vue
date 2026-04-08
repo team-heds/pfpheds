@@ -10,7 +10,7 @@
       </div>
 
       <!-- Header -->
-      <div class="surface-card p-4 border-round shadow-2 mb-4">
+      <div class="surface-card fp-dark p-4 border-round shadow-2 mb-4">
         <div class="flex align-items-center justify-content-between flex-wrap gap-3">
           <div class="flex align-items-center gap-3">
             <i class="pi pi-th-large text-primary text-3xl"></i>
@@ -1469,10 +1469,10 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-.avatar-complete { background: #DCFCE7; color: #166534; }
-.avatar-partial { background: #FEF3C7; color: #92400E; }
-.avatar-fail { background: #FEE2E2; color: #991B1B; }
-.avatar-none { background: #F1F5F9; color: #64748B; }
+.avatar-complete { background: rgba(34, 197, 94, 0.15); color: var(--green-500); }
+.avatar-partial { background: rgba(245, 158, 11, 0.2); color: var(--yellow-500); }
+.avatar-fail { background: rgba(239, 68, 68, 0.15); color: var(--red-500); }
+.avatar-none { background: var(--surface-ground); color: var(--text-color-secondary); }
 
 .pfp-cell {
   padding: 0.35rem 0.4rem;
@@ -1513,9 +1513,9 @@ onMounted(() => {
   font-weight: 700;
 }
 
-.note-pass { background: #DCFCE7; color: #166534; }
-.note-fail { background: #FEE2E2; color: #991B1B; }
-.note-none { background: #F1F5F9; color: #64748B; }
+.note-pass { background: rgba(34, 197, 94, 0.15); color: var(--green-500); }
+.note-fail { background: rgba(239, 68, 68, 0.15); color: var(--red-500); }
+.note-none { background: var(--surface-ground); color: var(--text-color-secondary); }
 
 .cas-dot {
   display: inline-block;

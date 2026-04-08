@@ -9,7 +9,7 @@
       </div>
 
       <!-- Header -->
-      <div class="surface-card p-4 border-round shadow-2 mb-4">
+      <div class="surface-card fp-dark p-4 border-round shadow-2 mb-4">
         <div class="flex align-items-center justify-content-between flex-wrap gap-3">
           <div class="flex align-items-center gap-3">
             <i class="pi pi-users text-primary text-3xl"></i>
@@ -721,14 +721,14 @@
         </TabView>
 
         <!-- Panneau Propositions PFP4 -->
-        <div v-if="filterPFP === 'PFP4' && canShowResults" class="surface-card p-4 border-round shadow-2 mt-4 border-1 border-yellow-300" style="background: #FFFBEB;">
+        <div v-if="filterPFP === 'PFP4' && canShowResults" class="surface-card p-4 border-round shadow-2 mt-4 border-1 border-yellow-300" style="background: var(--surface-card); border-color: var(--yellow-500);">
           <div class="flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
             <div>
               <div class="flex align-items-center gap-2">
                 <i class="pi pi-filter-fill text-xl text-yellow-600"></i>
-                <h3 class="text-lg font-bold m-0" style="color: #92400E;">Propositions PFP4 — Places par étudiant</h3>
+                <h3 class="text-lg font-bold m-0 text-yellow-600">Propositions PFP4 — Places par étudiant</h3>
               </div>
-              <p class="m-0 mt-1 text-sm" style="color: #A16207;">
+              <p class="m-0 mt-1 text-sm text-yellow-500">
                 Générer les places proposées pour chaque étudiant {{ filterClasse }} selon leurs critères manquants
               </p>
             </div>

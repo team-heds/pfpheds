@@ -10,7 +10,7 @@
       </div>
 
       <!-- Header -->
-      <div class="surface-card p-4 border-round shadow-2 mb-4">
+      <div class="surface-card fp-dark p-4 border-round shadow-2 mb-4">
         <div class="flex align-items-center justify-content-between flex-wrap gap-3">
           <div class="flex align-items-center gap-3">
             <i class="pi pi-check-circle text-primary text-3xl"></i>
@@ -598,18 +598,18 @@ onMounted(() => { fetchStudents() })
 }
 
 .avatar-complete {
-  background: #DCFCE7;
-  color: #166534;
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--green-500);
 }
 
 .avatar-partial {
-  background: #FEF3C7;
-  color: #92400E;
+  background: rgba(245, 158, 11, 0.2);
+  color: var(--yellow-500);
 }
 
 .avatar-none {
-  background: #FEE2E2;
-  color: #991B1B;
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--red-500);
 }
 
 /* Score cells */
@@ -628,11 +628,11 @@ onMounted(() => { fetchStudents() })
 }
 
 .score-cell-valid {
-  background: #DCFCE7;
+  background: rgba(34, 197, 94, 0.15);
 }
 
 .score-cell-zero {
-  background: #FEF2F2;
+  background: rgba(239, 68, 68, 0.1);
 }
 
 .score-cell-icon {
@@ -640,7 +640,7 @@ onMounted(() => { fetchStudents() })
 }
 
 .score-cell-valid .score-cell-icon {
-  color: #22C55E;
+  color: var(--green-500);
 }
 
 .score-cell-zero .score-cell-icon {
@@ -674,19 +674,19 @@ onMounted(() => { fetchStudents() })
 }
 
 .stages-has {
-  background: #DBEAFE;
-  color: #1E40AF;
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--blue-500);
 }
 
 .stages-none {
-  background: #F1F5F9;
-  color: #94A3B8;
+  background: var(--surface-ground);
+  color: var(--text-color-secondary);
 }
 
 /* Progress bars */
 .progress-bar-bg {
   height: 6px;
-  background: #E2E8F0;
+  background: var(--surface-200);
   border-radius: 3px;
   overflow: hidden;
 }
@@ -731,13 +731,13 @@ onMounted(() => { fetchStudents() })
 }
 
 .score-valid {
-  background: #DCFCE7;
-  color: #166534;
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--green-500);
 }
 
 .score-zero {
-  background: #FEF2F2;
-  color: #DC2626;
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--red-500);
 }
 
 /* Legend progress example */
@@ -745,7 +745,7 @@ onMounted(() => { fetchStudents() })
   display: inline-block;
   width: 40px;
   height: 5px;
-  background: #E2E8F0;
+  background: var(--surface-200);
   border-radius: 3px;
   overflow: hidden;
 }

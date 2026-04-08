@@ -36,72 +36,65 @@ export default [
     label: 'Physiothérapie',
     icon: 'pi pi-heart',
     items: [
-      // Dashboard principal Physiothérapie
-      { label: 'Dashboard Physiothérapie', icon: 'pi pi-chart-bar', to: '/admin/dashboard-pfp' },
-      
-      // Formation Pratique & PFP
+      // Dashboard
+      { label: 'Dashboard PFP', icon: 'pi pi-chart-bar', to: '/admin/dashboard-pfp' },
+
+      // Données de base
       {
-        label: 'Formation Pratique & PFP',
-        icon: 'pi pi-briefcase',
+        label: 'Données FP',
+        icon: 'pi pi-database',
         items: [
-          // Données de base
-          {
-            label: 'Données',
-            icon: 'pi pi-database',
-            items: [
-              { label: 'Étudiants', icon: 'pi pi-users', to: '/admin/formation-pratique/etudiants' },
-              { label: 'Institutions', icon: 'pi pi-building', to: '/admin/formation-pratique/institutions' },
-              { label: 'Enseignants Physio', icon: 'pi pi-book', to: '/admin/formation-pratique/enseignants' },
-              { label: 'Praticiens Formateurs', icon: 'pi pi-user-plus', to: '/admin/formation-pratique/praticiens-formateur' },
-              { label: 'Places', icon: 'pi pi-map-marker', to: '/admin/formation-pratique/places' }
-            ]
-          },
+          { label: 'Étudiants', icon: 'pi pi-users', to: '/admin/formation-pratique/etudiants' },
+          { label: 'Institutions', icon: 'pi pi-building', to: '/admin/formation-pratique/institutions' },
+          { label: 'Enseignants Physio', icon: 'pi pi-book', to: '/admin/formation-pratique/enseignants' },
+          { label: 'Praticiens Formateurs', icon: 'pi pi-user-plus', to: '/admin/formation-pratique/praticiens-formateur' },
+          { label: 'Places', icon: 'pi pi-map-marker', to: '/admin/formation-pratique/places' }
+        ]
+      },
 
-          // Gestion administrative
-          {
-            label: 'Gestion',
-            icon: 'pi pi-cog',
-            items: [
-              { label: 'Mon Profil Répondant', icon: 'pi pi-user', to: '/admin/formation-pratique/profil-repondant' },
-              { label: 'Management Signature', icon: 'pi pi-pencil', to: '/admin/formation-pratique/management-repondant-signature' },
-              { label: 'Management Places', icon: 'pi pi-map-marker', to: '/admin/formation-pratique/management-places' }
-            ]
-          },
+      // Gestion administrative
+      {
+        label: 'Gestion FP',
+        icon: 'pi pi-cog',
+        items: [
+          { label: 'Mon Profil Répondant', icon: 'pi pi-user', to: '/admin/formation-pratique/profil-repondant' },
+          { label: 'Management Signature', icon: 'pi pi-pencil', to: '/admin/formation-pratique/management-repondant-signature' },
+          { label: 'Management Places', icon: 'pi pi-map-marker', to: '/admin/formation-pratique/management-places' }
+        ]
+      },
 
-          // Votations
-          {
-            label: 'Votations',
-            icon: 'pi pi-check-square',
-            items: [
-              { label: 'Gestion Offres', icon: 'pi pi-cog', to: '/admin/formation-pratique/gestion-offres' },
-              { label: 'Votation lésé', icon: 'pi pi-sliders-h', to: '/admin/formation-pratique/votation-lese' },
-              { label: 'Votation PFP', icon: 'pi pi-check-square', to: '/admin/formation-pratique/votation-pfp' },
-              { label: 'Places Assignées', icon: 'pi pi-map-marker', to: '/admin/formation-pratique/places-assignees' },
-              { label: 'Validation Places', icon: 'pi pi-check-circle', to: '/admin/formation-pratique/validation-places' },
-              { label: 'Validation PFP', icon: 'pi pi-check-circle', to: '/admin/formation-pratique/validation-pfp' },
-              { label: 'Management Répondant Votation', icon: 'pi pi-user-edit', to: '/admin/formation-pratique/management-repondant-votation' }
-            ]
-          },
+      // Votations
+      {
+        label: 'Votations',
+        icon: 'pi pi-check-square',
+        items: [
+          { label: 'Gestion Offres', icon: 'pi pi-cog', to: '/admin/formation-pratique/gestion-offres' },
+          { label: 'Votation lésé', icon: 'pi pi-sliders-h', to: '/admin/formation-pratique/votation-lese' },
+          { label: 'Votation PFP', icon: 'pi pi-check-square', to: '/admin/formation-pratique/votation-pfp' },
+          { label: 'Places Assignées', icon: 'pi pi-map-marker', to: '/admin/formation-pratique/places-assignees' },
+          { label: 'Validation Places', icon: 'pi pi-check-circle', to: '/admin/formation-pratique/validation-places' },
+          { label: 'Validation PFP', icon: 'pi pi-check-circle', to: '/admin/formation-pratique/validation-pfp' },
+          { label: 'Management Répondant Votation', icon: 'pi pi-user-edit', to: '/admin/formation-pratique/management-repondant-votation' }
+        ]
+      },
 
-          // Secrétariat FP
-          {
-            label: 'Secrétariat FP',
-            icon: 'pi pi-folder',
-            items: [
-              { label: 'Vérification Critères Étudiants', icon: 'pi pi-check-circle', to: '/admin/formation-pratique/secretariat/verification-criteres' },
-              { label: 'Suivi Institutions', icon: 'pi pi-building', to: '/admin/formation-pratique/secretariat/suivi-institutions' },
-              { label: 'Tableau Récapitulatif Offres', icon: 'pi pi-table', to: '/admin/formation-pratique/secretariat/tableau-offres' },
-              { label: 'Récap PFP Notes', icon: 'pi pi-file', to: '/admin/formation-pratique/secretariat/recap-pfp-notes' },
-              { label: 'Récap CPT Évaluation', icon: 'pi pi-star', to: '/admin/formation-pratique/secretariat/recap-cpt-evaluation' },
-              { label: 'Suivi Cas Particuliers', icon: 'pi pi-exclamation-triangle', to: '/admin/formation-pratique/secretariat/suivi-cas-particuliers' },
-              { label: 'Centre d\'Alertes', icon: 'pi pi-bell', to: '/admin/formation-pratique/secretariat/alertes' },
-              { label: 'Vue d\'ensemble FP', icon: 'pi pi-th-large', to: '/admin/formation-pratique/secretariat/vue-ensemble' }
-            ]
-          }
+      // Secrétariat FP
+      {
+        label: 'Secrétariat FP',
+        icon: 'pi pi-folder',
+        items: [
+          { label: 'Vue d\'ensemble FP', icon: 'pi pi-th-large', to: '/admin/formation-pratique/secretariat/vue-ensemble' },
+          { label: 'Vérification Critères', icon: 'pi pi-check-circle', to: '/admin/formation-pratique/secretariat/verification-criteres' },
+          { label: 'Suivi Institutions', icon: 'pi pi-building', to: '/admin/formation-pratique/secretariat/suivi-institutions' },
+          { label: 'Tableau Offres', icon: 'pi pi-table', to: '/admin/formation-pratique/secretariat/tableau-offres' },
+          { label: 'Récap PFP Notes', icon: 'pi pi-file', to: '/admin/formation-pratique/secretariat/recap-pfp-notes' },
+          { label: 'Récap CPT Évaluation', icon: 'pi pi-star', to: '/admin/formation-pratique/secretariat/recap-cpt-evaluation' },
+          { label: 'Suivi Cas Particuliers', icon: 'pi pi-exclamation-triangle', to: '/admin/formation-pratique/secretariat/suivi-cas-particuliers' },
+          { label: 'Centre d\'Alertes', icon: 'pi pi-bell', to: '/admin/formation-pratique/secretariat/alertes' }
         ]
       },
       
-      // Gamification (spécifique Physiothérapie)
+      // Gamification
       {
         label: 'Gamification',
         icon: 'pi pi-star-fill',

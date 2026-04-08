@@ -10,7 +10,7 @@
       </div>
 
       <!-- Header -->
-      <div class="surface-card p-4 border-round shadow-2 mb-4" style="background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%); color: white;">
+      <div class="surface-card fp-dark p-4 border-round shadow-2 mb-4" style="background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%); color: white;">
         <div class="flex align-items-center justify-content-between flex-wrap gap-3">
           <div class="flex align-items-center gap-3">
             <i class="pi pi-bell text-4xl" style="color: white;"></i>

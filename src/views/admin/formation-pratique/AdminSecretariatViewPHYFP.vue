@@ -9,7 +9,7 @@
         <span class="text-900 font-medium">Secrétariat</span>
       </div>
 
-      <div class="surface-card p-4 border-round shadow-2 mb-4">
+      <div class="surface-card fp-dark p-4 border-round shadow-2 mb-4">
         <div class="flex align-items-center gap-3">
           <i class="pi pi-briefcase text-primary text-3xl"></i>
           <div>

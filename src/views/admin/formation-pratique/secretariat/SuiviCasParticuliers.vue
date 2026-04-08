@@ -10,7 +10,7 @@
       </div>
 
       <!-- Header -->
-      <div class="surface-card p-4 border-round shadow-2 mb-4">
+      <div class="surface-card fp-dark p-4 border-round shadow-2 mb-4">
         <div class="flex align-items-center justify-content-between flex-wrap gap-3">
           <div class="flex align-items-center gap-3">
             <i class="pi pi-exclamation-triangle text-primary text-3xl"></i>
@@ -413,7 +413,7 @@ const hasComments = (student) => {
 
 const getCellStyle = (cellData) => {
   if (!cellData || !cellData.couleur || cellData.couleur === 'blanc') {
-    return { backgroundColor: '#ffffff', border: '1px solid #dee2e6' }
+    return { backgroundColor: 'var(--surface-card)', border: '1px solid var(--surface-border)' }
   }
 
   const colors = {
@@ -670,8 +670,8 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #dee2e6;
-  background: #ffffff;
+  border: 1px solid var(--surface-border);
+  background: var(--surface-card);
   transition: all 0.2s ease;
 }
 
@@ -682,8 +682,8 @@ onMounted(() => {
 }
 
 .cell-disabled {
-  background: #f1f3f5;
-  border: 1px dashed #dee2e6;
+  background: var(--surface-ground);
+  border: 1px dashed var(--surface-border);
   cursor: default;
   opacity: 0.5;
 }
@@ -695,13 +695,13 @@ onMounted(() => {
 }
 
 .cell-info {
-  background: #f8f9fa;
+  background: var(--surface-ground);
 }
 
 .cell-info.cell-has-content {
-  background: #e3f2fd;
-  border-color: #90caf9;
-  color: #1565c0;
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: var(--primary-color);
 }
 
 .cell-text {
@@ -722,5 +722,5 @@ onMounted(() => {
 .legend-orange { background: #fd7e14; }
 .legend-rouge { background: #dc3545; }
 .legend-noir { background: #343a40; }
-.legend-blanc { background: #ffffff; border: 1px solid #dee2e6; }
+.legend-blanc { background: var(--surface-card); border: 1px solid var(--surface-border); }
 </style>

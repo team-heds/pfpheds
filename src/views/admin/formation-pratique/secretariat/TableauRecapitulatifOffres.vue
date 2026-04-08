@@ -10,7 +10,7 @@
       </div>
 
       <!-- Header -->
-      <div class="surface-card p-4 border-round shadow-2 mb-4">
+      <div class="surface-card fp-dark p-4 border-round shadow-2 mb-4">
         <div class="flex align-items-center justify-content-between flex-wrap gap-3">
           <div class="flex align-items-center gap-3">
             <i class="pi pi-briefcase text-primary text-3xl"></i>
@@ -586,18 +586,18 @@ onMounted(async () => {
 }
 
 .analysis-balanced {
-  background: #DCFCE7;
-  color: #166534;
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--green-500);
 }
 
 .analysis-over {
-  background: #FFF7ED;
-  color: #C2410C;
+  background: rgba(249, 115, 22, 0.15);
+  color: var(--orange-500);
 }
 
 .analysis-under {
-  background: #FEF2F2;
-  color: #DC2626;
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--red-500);
 }
 
 /* Total badge */
