@@ -501,7 +501,7 @@ onMounted(async () => {
 
 <style scoped>
 .offre-page {
-  min-height: calc(100vh - 100px);
+  min-height: 100%;
 }
 
 /* PFP stat cards */

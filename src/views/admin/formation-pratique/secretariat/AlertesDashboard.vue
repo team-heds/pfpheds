@@ -291,7 +291,6 @@ onMounted(() => {
 
 <style scoped>
 .alertes-page {
-  max-width: 1400px;
-  margin: 0 auto;
+  min-height: 100%;
 }
 </style>

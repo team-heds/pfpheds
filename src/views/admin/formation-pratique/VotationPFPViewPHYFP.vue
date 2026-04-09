@@ -1720,8 +1720,7 @@ onMounted(() => {
 
 <style scoped>
 .votation-page {
-  max-width: 1600px;
-  margin: 0 auto;
+  min-height: 100%;
 }
 
 /* Choice badges */

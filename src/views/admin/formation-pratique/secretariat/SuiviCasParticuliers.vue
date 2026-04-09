@@ -636,7 +636,7 @@ onMounted(() => {
 
 <style scoped>
 .cas-page {
-  min-height: calc(100vh - 100px);
+  min-height: 100%;
 }
 
 .cas-table :deep(.p-datatable-thead > tr > th) {

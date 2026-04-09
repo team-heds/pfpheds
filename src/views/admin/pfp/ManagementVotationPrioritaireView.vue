@@ -1403,9 +1403,17 @@ onMounted(() => {
 
 <style scoped>
 .votation-page {
-  max-width: 1600px;
-  margin: 0 auto;
-  min-height: calc(100vh - 100px);
+  min-height: 100%;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  display: block;
+  box-sizing: border-box;
+}
+
+.votation-page > .surface-card,
+.votation-page > .grid {
+  width: 100%;
 }
 
 :deep(.p-datatable .p-datatable-thead > tr > th) {

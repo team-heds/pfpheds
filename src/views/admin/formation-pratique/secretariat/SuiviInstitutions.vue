@@ -496,7 +496,7 @@ onMounted(() => {
 
 <style scoped>
 .suivi-page {
-  min-height: calc(100vh - 100px);
+  min-height: 100%;
 }
 
 .suivi-table :deep(.p-datatable-thead > tr > th) {
