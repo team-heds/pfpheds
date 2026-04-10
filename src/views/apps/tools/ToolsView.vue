@@ -51,10 +51,10 @@ const allOutils = [
   { to: '/event-management', icon: 'pi pi-calendar', label: 'Event' },
   { to: '/qr', icon: 'pi pi-qrcode', label: 'QR code' },
   { to: '/votation_lese', icon: 'pi pi-check-square', label: 'Votation' },
-  { to: '/game', icon: 'pi pi-star', label: 'Game' },
+  // { to: '/game', icon: 'pi pi-star', label: 'Game' },
   { to: '/lang-apps', icon: 'pi pi-globe', label: 'Apps langues' },
   { to: '/notes', icon: 'pi pi-book', label: 'Notes' },
-  { to: '/chatbotsi', icon: 'pi pi-comments', label: 'ChatBotSI' },
+  // { to: '/chatbotsi', icon: 'pi pi-comments', label: 'ChatBotSI' },
   { to: '/tournois', icon: 'pi pi-trophy', label: 'Tournois' },
 ];
 
@@ -67,10 +67,10 @@ onMounted(() => {
 });
 
 const outils = computed(() => {
-  // Desktop: QR code, Game, Apps Langues, Notes, ChatBotSI, Tournois
-  if (!isMobile.value) return allOutils.filter(o => ['QR code', 'Game', 'Apps langues', 'Notes', 'ChatBotSI', 'Tournois'].includes(o.label));
-  // Mobile: QR code, Game, Apps Langues, ChatBotSI, Tournois (pas Notes)
-  return allOutils.filter(o => ['QR code', 'Game', 'Apps langues', 'ChatBotSI', 'Tournois'].includes(o.label));
+  // Desktop: QR code, Apps Langues, Notes, Tournois
+  if (!isMobile.value) return allOutils.filter(o => ['QR code', 'Apps langues', 'Notes', 'Tournois'].includes(o.label));
+  // Mobile: QR code, Apps Langues, Tournois (pas Notes)
+  return allOutils.filter(o => ['QR code', 'Apps langues', 'Tournois'].includes(o.label));
 });
 
 const showVoirPlus = computed(() => outils.value.length >= 12);

@@ -149,8 +149,9 @@
     />
   </Dialog>
 
-  <!-- 🆕 Section Nouvelles Quêtes -->
+  <!-- 🆕 Section Nouvelles Quêtes (masquée pour la présentation)
   <QuestsSidebarCard />
+  -->
 
 </template>
 
@@ -163,7 +164,7 @@ import UserCard from '@/views/apps/chat/UserCard.vue';
 import { useEventStore } from '@/stores/eventStore';
 import { useAuthStore } from '@/stores/authStore';
 import EventDetail from '@/components/events/EventDetail.vue';
-import QuestsSidebarCard from '@/components/gamification/QuestsSidebarCard.vue';
+// import QuestsSidebarCard from '@/components/gamification/QuestsSidebarCard.vue';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 
@@ -171,7 +172,7 @@ const defaultAvatar = '@/assets/images/avatar/01.jpg';
 
 export default {
   name: "LeftSidebar",
-  components: { UserCard, Toast, EventDetail, QuestsSidebarCard, Dialog, Button }, 
+  components: { UserCard, Toast, EventDetail, Dialog, Button }, 
   setup() {
     const eventStore = useEventStore();
     const authStore = useAuthStore();
