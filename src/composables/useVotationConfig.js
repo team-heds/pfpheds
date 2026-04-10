@@ -33,7 +33,8 @@ export function useVotationConfig() {
     return {
       [ba1]: { label: `${ba1} (1ère année)`, pfps: ['PFP1A', 'PFP1B'], years: [pfpYear] },
       [ba2]: { label: `${ba2} (2ème année)`, pfps: ['PFP2'], years: [pfpYear] },
-      [ba3]: { label: `${ba3} (3ème année)`, pfps: ['PFP3', 'PFP4'], years: [pfpYear] }
+      [ba3]: { label: `${ba3} (3ème année)`, pfps: ['PFP3', 'PFP4'], years: [pfpYear] },
+      'BA00': { label: 'BA00 (🧪 Démo)', pfps: ['PFP1A', 'PFP1B'], years: [pfpYear] }
     }
   }
 
