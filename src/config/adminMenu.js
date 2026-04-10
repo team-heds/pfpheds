@@ -59,7 +59,7 @@ export default [
         items: [
           { label: 'Mon Profil Répondant', icon: 'pi pi-user', to: '/admin/formation-pratique/profil-repondant' },
           { label: 'Management Signature', icon: 'pi pi-pencil', to: '/admin/formation-pratique/management-repondant-signature' },
-          { label: 'Management Places', icon: 'pi pi-map-marker', to: '/admin/formation-pratique/management-places' }
+          // { label: 'Management Places', icon: 'pi pi-map-marker', to: '/admin/formation-pratique/management-places' }
         ]
       },
 
@@ -73,8 +73,7 @@ export default [
           { label: 'Votation PFP', icon: 'pi pi-check-square', to: '/admin/formation-pratique/votation-pfp' },
           { label: 'Places Assignées', icon: 'pi pi-map-marker', to: '/admin/formation-pratique/places-assignees' },
           { label: 'Validation Places', icon: 'pi pi-check-circle', to: '/admin/formation-pratique/validation-places' },
-          { label: 'Validation PFP', icon: 'pi pi-check-circle', to: '/admin/formation-pratique/validation-pfp' },
-          { label: 'Management Répondant Votation', icon: 'pi pi-user-edit', to: '/admin/formation-pratique/management-repondant-votation' }
+          { label: 'Validation PFP', icon: 'pi pi-check-circle', to: '/admin/formation-pratique/validation-pfp' }
         ]
       },
 
