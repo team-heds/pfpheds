@@ -381,8 +381,6 @@ export default {
       }
     },
     async fetchUserProfileSupabase(userId) {
-      console.log('📥 Chargement profil Supabase depuis user_profiles pour:', userId);
-      
       const { data: profileData, error } = await supabase
         .from('user_profiles')
         .select('forname, family_name, avatar_url, email')
@@ -406,11 +404,7 @@ export default {
       }
       
       if (profileData) {
-        console.log('✅ Profil Supabase chargé:', profileData);
-        
         const photoURL = profileData.avatar_url || defaultAvatar;
-        console.log('📷 Avatar URL récupéré:', photoURL && photoURL !== defaultAvatar ? photoURL.substring(0, 50) + '...' : 'avatar par défaut');
-        
         this.user = {
           prenom: profileData.forname || '',
           nom: profileData.family_name || '',
@@ -422,7 +416,6 @@ export default {
         // Forcer la mise à jour de l'UI
         this.$forceUpdate();
       } else {
-        console.warn('⚠️ Aucun profil trouvé dans user_profiles');
         // Fallback sur l'email
         const currentUser = this.authStore.user;
         const email = currentUser?.email || '';
@@ -442,7 +435,6 @@ export default {
       
       // Pour Firebase uniquement (Supabase n'a pas cette fonctionnalité pour l'instant)
       if (!this.authStore.isFirebaseUser) {
-        console.log('Messagerie disponible uniquement pour Firebase');
         return;
       }
       
@@ -610,9 +602,6 @@ export default {
     
     const currentUser = this.authStore.user;
     if (currentUser) {
-      console.log('LeftSidebar - Utilisateur connecté:', currentUser.email || currentUser.uid);
-      console.log('LeftSidebar - Provider:', this.authStore.authProvider);
-      
       if (this.authStore.isFirebaseUser) {
         // Logique Firebase complète
         this.user.id = currentUser.uid;
@@ -622,10 +611,7 @@ export default {
         // Logique Supabase - charger depuis user_profiles
         this.user.id = currentUser.id;
         await this.fetchUserProfileSupabase(currentUser.id);
-        console.log('LeftSidebar - Utilisateur Supabase configuré:', this.user);
       }
-    } else {
-      console.log('LeftSidebar - Aucun utilisateur connecté');
     }
     
     // Initialiser le store des événements

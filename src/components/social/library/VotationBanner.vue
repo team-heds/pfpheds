@@ -65,8 +65,6 @@ export default {
         const studentClass = profile?.Classe || profile?.classe || profile?.class || profile?.Class || null
         const currentUserId = profile?.user_id || userStore.user?.id || null
 
-        console.log('🎯 VotationBanner - profile:', profile?.user_id, 'classe:', studentClass, 'userId:', currentUserId)
-
         if (!studentClass) {
           // Pas de classe — essayer de récupérer toutes les sessions ouvertes et filtrer par userId
           if (!currentUserId) return
@@ -77,7 +75,6 @@ export default {
             }
             return false // Sans classe, on ne montre que les sessions prioritaires où l'étudiant est listé
           })
-          console.log('🎯 VotationBanner (sans classe) - sessions:', this.openSessions.length)
           return
         }
 
@@ -105,7 +102,6 @@ export default {
         prioritySessions.forEach(s => sessionMap.set(s.id, s))
 
         this.openSessions = Array.from(sessionMap.values())
-        console.log('🎯 VotationBanner - sessions filtrées:', this.openSessions.length, '(classe:', classSessions.length, '+ prio:', prioritySessions.length, ')')
       } catch (error) {
         console.error('Erreur chargement sessions votation:', error)
         this.openSessions = []

@@ -223,9 +223,6 @@ const updateUserState = async () => {
   user.value = currentUser;
   
   if (currentUser) {
-    console.log('Navbar - Utilisateur connecté:', currentUser.email || currentUser.uid);
-    console.log('Navbar - Provider:', authStore.authProvider);
-    
     // Pour les utilisateurs Firebase, charger les rôles depuis Firebase
     if (authStore.isFirebaseUser) {
       const userId = currentUser.uid;
@@ -237,8 +234,6 @@ const updateUserState = async () => {
           userRoles.value = userData.Roles || {};
           const isRestrictedAcademic = restrictedAcademicEmails.includes(currentUser.email);
           hasAdminAccess.value = userData.Roles?.admin || userData.Roles?.editor || isRestrictedAcademic;
-        } else {
-          console.warn('Aucune donnée utilisateur trouvée dans Firebase.');
         }
       } catch (error) {
         console.error('Erreur lors de la récupération des données utilisateur:', error);
@@ -246,21 +241,16 @@ const updateUserState = async () => {
     }
     // Pour les utilisateurs Supabase, charger le profil
     else if (authStore.isSupabaseUser) {
-      console.log('Navbar - Utilisateur Supabase, chargement du profil');
-      
       // Charger le profil utilisateur depuis Supabase
       await userStore.fetchProfile();
       
       const userProfile = userStore.profile;
-      console.log('Navbar - Profil Supabase chargé:', userProfile);
-      console.log('Navbar - PFP Cohort:', userProfile?.pfp_cohort);
       
       userRoles.value = { user: true }; // Rôle par défaut
       const isRestrictedAcademic = restrictedAcademicEmails.includes(currentUser.email);
       hasAdminAccess.value = userProfile?.role === 'admin' || isRestrictedAcademic;
     }
   } else {
-    console.log('Navbar - Aucun utilisateur connecté');
     userRoles.value = null;
     hasAdminAccess.value = false;
   }
@@ -269,7 +259,6 @@ const updateUserState = async () => {
 // Watcher pour recharger le profil quand la route change
 watch(() => route.path, async () => {
   if (authStore.isSupabaseUser && authStore.user) {
-    console.log('🔄 Route changée, rechargement du profil...');
     await userStore.fetchProfile();
   }
 });

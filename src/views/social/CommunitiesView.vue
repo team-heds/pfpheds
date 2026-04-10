@@ -2,73 +2,83 @@
   <div class="community-management">
     <Navbar />
 
-    <div class="community-management__content">
-      <div class="community-management__header">
-        <h1>Communautés</h1>
-        <Button label="Créer une communauté" icon="pi pi-plus" @click="showCreateDialog = true" />
+    <div class="newsfeed-layout">
+      <div class="sidebar-left">
+        <LeftSidebar />
       </div>
 
-      <Card class="mb-4">
-        <template #title>Mes communautés</template>
-        <template #content>
-          <DataTable :value="myCommunities" :loading="loading" responsiveLayout="scroll" dataKey="id"
-            emptyMessage="Aucune communauté rejointe.">
-            <Column field="name" header="Nom" sortable />
-            <Column field="description" header="Description" />
-            <Column header="Type">
-              <template #body="slotProps">
-                <div class="type-cell">
-                  <Tag :value="displayType(slotProps.data.type)" :severity="typeSeverity(slotProps.data.type)" />
-                  <Dropdown
-                    v-if="isOwner(slotProps.data)"
-                    v-model="slotProps.data.type"
-                    :options="communityTypeOptions"
-                    optionLabel="label"
-                    optionValue="value"
-                    class="type-select"
-                    @change="updateCommunityType(slotProps.data)"
-                  />
-                </div>
-              </template>
-            </Column>
-            <Column field="member_count" header="Membres" sortable />
-            <Column header="Actions" :style="{ minWidth: '280px' }">
-              <template #body="slotProps">
-                <Button label="Forum" icon="pi pi-comments" class="p-button-sm mr-2" @click="openCommunityForum(slotProps.data.id)" />
-                <Button label="Quitter" icon="pi pi-sign-out" class="p-button-sm p-button-secondary mr-2"
-                  @click="leaveCommunity(slotProps.data.id)" :disabled="isOwner(slotProps.data)" />
-                <Button v-if="isOwner(slotProps.data)" label="Supprimer" icon="pi pi-trash"
-                  class="p-button-sm p-button-danger" @click="confirmDeleteCommunity(slotProps.data)" />
-              </template>
-            </Column>
-          </DataTable>
-        </template>
-      </Card>
+      <div class="community-management__content" ref="mainFeedRef">
+        <div class="community-management__header">
+          <h1>Communautés</h1>
+          <Button label="Créer une communauté" icon="pi pi-plus" @click="showCreateDialog = true" />
+        </div>
 
-      <Card>
-        <template #title>Découvrir des communautés</template>
-        <template #content>
-          <DataTable :value="discoverCommunities" :loading="loading" responsiveLayout="scroll" dataKey="id"
-            emptyMessage="Aucune communauté disponible.">
-            <Column field="name" header="Nom" sortable />
-            <Column field="description" header="Description" />
-            <Column header="Type">
-              <template #body="slotProps">
-                <Tag :value="displayType(slotProps.data.type)" :severity="typeSeverity(slotProps.data.type)" />
-              </template>
-            </Column>
-            <Column field="member_count" header="Membres" sortable />
-            <Column header="Actions" :style="{ minWidth: '220px' }">
-              <template #body="slotProps">
-                <Button label="Rejoindre" icon="pi pi-user-plus" class="p-button-sm mr-2"
-                  @click="joinCommunity(slotProps.data.id)" />
-                <Button label="Forum" icon="pi pi-comments" class="p-button-sm p-button-secondary"
-                  @click="openCommunityForum(slotProps.data.id)" />
-              </template>
-            </Column>
-          </DataTable>
-        </template>
-      </Card>
+        <Card class="mb-4">
+          <template #title>Mes communautés</template>
+          <template #content>
+            <DataTable :value="myCommunities" :loading="loading" responsiveLayout="scroll" dataKey="id"
+              emptyMessage="Aucune communauté rejointe.">
+              <Column field="name" header="Nom" sortable />
+              <Column field="description" header="Description" />
+              <Column header="Type">
+                <template #body="slotProps">
+                  <div class="type-cell">
+                    <Tag :value="displayType(slotProps.data.type)" :severity="typeSeverity(slotProps.data.type)" />
+                    <Dropdown
+                      v-if="isOwner(slotProps.data) && canEditType(slotProps.data)"
+                      v-model="slotProps.data.type"
+                      :options="communityTypeOptions"
+                      optionLabel="label"
+                      optionValue="value"
+                      class="type-select"
+                      @change="updateCommunityType(slotProps.data)"
+                    />
+                  </div>
+                </template>
+              </Column>
+              <Column field="member_count" header="Membres" sortable />
+              <Column header="Actions" :style="{ minWidth: '280px' }">
+                <template #body="slotProps">
+                  <Button label="Forum" icon="pi pi-comments" class="p-button-sm mr-2" @click="openCommunityForum(slotProps.data.id)" />
+                  <Button label="Quitter" icon="pi pi-sign-out" class="p-button-sm p-button-secondary mr-2"
+                    @click="leaveCommunity(slotProps.data.id)" :disabled="isOwner(slotProps.data)" />
+                  <Button v-if="isOwner(slotProps.data)" label="Supprimer" icon="pi pi-trash"
+                    class="p-button-sm p-button-danger" @click="confirmDeleteCommunity(slotProps.data)" />
+                </template>
+              </Column>
+            </DataTable>
+          </template>
+        </Card>
+
+        <Card>
+          <template #title>Découvrir des communautés</template>
+          <template #content>
+            <DataTable :value="discoverCommunities" :loading="loading" responsiveLayout="scroll" dataKey="id"
+              emptyMessage="Aucune communauté disponible.">
+              <Column field="name" header="Nom" sortable />
+              <Column field="description" header="Description" />
+              <Column header="Type">
+                <template #body="slotProps">
+                  <Tag :value="displayType(slotProps.data.type)" :severity="typeSeverity(slotProps.data.type)" />
+                </template>
+              </Column>
+              <Column field="member_count" header="Membres" sortable />
+              <Column header="Actions" :style="{ minWidth: '220px' }">
+                <template #body="slotProps">
+                  <Button label="Rejoindre" icon="pi pi-user-plus" class="p-button-sm mr-2"
+                    @click="joinCommunity(slotProps.data.id)" />
+                  <Button label="Forum" icon="pi pi-comments" class="p-button-sm p-button-secondary"
+                    @click="openCommunityForum(slotProps.data.id)" />
+                </template>
+              </Column>
+            </DataTable>
+          </template>
+        </Card>
+      </div>
+
+      <div class="sidebar-right">
+        <RightSidebar />
+      </div>
     </div>
 
     <Dialog v-model:visible="showCreateDialog" header="Créer une communauté" modal class="create-dialog">
@@ -95,6 +105,7 @@
 
     <ConfirmDialog />
     <Toast />
+    <MobileBottomNav :scrollTarget="mainFeedRef" />
   </div>
 </template>
 
@@ -104,6 +115,9 @@ import { useRouter } from 'vue-router'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import Navbar from '@/components/common/utils/Navbar.vue'
+import LeftSidebar from '@/components/social/library/LeftSidebar.vue'
+import RightSidebar from '@/components/social/library/RightSidebar.vue'
+import MobileBottomNav from '@/components/common/utils/MobileBottomNav.vue'
 import { useAuthStore } from '@/stores/authStore'
 import { supabase } from '@/supabase.js'
 import Card from 'primevue/card'
@@ -124,10 +138,22 @@ const normalizeType = (value) => {
   return value || 'public'
 }
 
+const getCommunityDescription = (community) =>
+  community?.description ?? community?.desc ?? community?.details ?? community?.about ?? ''
+
+const getCommunityCreatedBy = (community) =>
+  community?.created_by ?? community?.createdBy ?? community?.owner_id ?? community?.ownerId ?? null
+
+const getCommunityCreatedAt = (community) =>
+  community?.created_at ?? community?.createdAt ?? community?.date_creation ?? community?.dateCreation ?? null
+
 export default {
   name: 'CommunityManagement',
   components: {
     Navbar,
+    LeftSidebar,
+    RightSidebar,
+    MobileBottomNav,
     Card,
     DataTable,
     Column,
@@ -147,7 +173,9 @@ export default {
     const toast = useToast()
 
     const loading = ref(false)
+    const mainFeedRef = ref(null)
     const communities = ref([])
+    const communityColumns = ref(new Set())
     const myCommunityIds = ref(new Set())
     const currentUserId = ref(null)
     const showCreateDialog = ref(false)
@@ -164,7 +192,8 @@ export default {
       type: 'public',
     })
 
-    const isOwner = (community) => community.created_by === currentUserId.value
+    const isOwner = (community) => getCommunityCreatedBy(community) === currentUserId.value
+    const canEditType = (community) => Object.prototype.hasOwnProperty.call(community || {}, 'type')
 
     const displayType = (type) => {
       if (normalizeType(type) === 'closed') return 'Fermé'
@@ -207,7 +236,7 @@ export default {
       loading.value = true
       try {
         const [{ data: comms, error: commsError }, { data: memberships, error: membershipsError }, { data: allMembers, error: allMembersError }] = await Promise.all([
-          supabase.from('communities').select('id, name, description, type, created_at, created_by').order('created_at', { ascending: false }),
+          supabase.from('communities').select('*'),
           supabase.from('user_communities').select('community_id').eq('user_id', currentUserId.value),
           supabase.from('user_communities').select('community_id'),
         ])
@@ -215,6 +244,8 @@ export default {
         if (commsError) throw commsError
         if (membershipsError) throw membershipsError
         if (allMembersError) throw allMembersError
+
+        communityColumns.value = new Set((comms || []).flatMap((row) => Object.keys(row || {})))
 
         const ids = new Set((memberships || []).map((row) => row.community_id))
         myCommunityIds.value = ids
@@ -227,11 +258,17 @@ export default {
 
         communities.value = (comms || []).map((c) => ({
           ...c,
+          description: getCommunityDescription(c),
           type: normalizeType(c.type),
+          created_by: getCommunityCreatedBy(c),
+          created_at: getCommunityCreatedAt(c),
           member_count: countMap[c.id] || 0,
-        }))
+        })).sort((a, b) => {
+          const aTime = a.created_at ? new Date(a.created_at).getTime() : 0
+          const bTime = b.created_at ? new Date(b.created_at).getTime() : 0
+          return bTime - aTime
+        })
       } catch (error) {
-        console.error('Erreur chargement communautés Supabase:', error)
         toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les communautés.', life: 3500 })
       } finally {
         loading.value = false
@@ -246,19 +283,69 @@ export default {
       }
 
       try {
-        const payload = {
-          name: newCommunity.value.name.trim(),
-          description: newCommunity.value.description.trim(),
-          type: normalizeType(newCommunity.value.type),
-          created_by: currentUserId.value,
+        const nameValue = newCommunity.value.name.trim()
+        const typeValue = normalizeType(newCommunity.value.type)
+
+        const descriptionValue = newCommunity.value.description.trim()
+        const creatorName =
+          authStore.user?.user_metadata?.full_name ||
+          authStore.user?.email?.split('@')[0] ||
+          currentUserId.value
+
+        const hasCol = (name) => communityColumns.value.has(name)
+        const inferredPayload = { name: nameValue }
+        if (hasCol('type')) inferredPayload.type = typeValue
+        if (hasCol('description')) inferredPayload.description = descriptionValue
+        else if (hasCol('desc')) inferredPayload.desc = descriptionValue
+
+        if (hasCol('created_by')) inferredPayload.created_by = currentUserId.value
+        else if (hasCol('createdBy')) inferredPayload.createdBy = currentUserId.value
+        else if (hasCol('creator_name')) inferredPayload.creator_name = creatorName
+
+        const attemptPayloads = [
+          inferredPayload,
+          { name: nameValue, description: descriptionValue },
+          { name: nameValue },
+        ]
+
+        let data = null
+        let lastError = null
+        for (const payload of attemptPayloads) {
+          const { data: inserted, error } = await supabase
+            .from('communities')
+            .insert([payload])
+            .select('id')
+            .single()
+
+          if (!error) {
+            data = inserted
+            break
+          }
+
+          lastError = error
+          const message = String(error.message || '').toLowerCase()
+          const isRlsError =
+            error.code === '42501' ||
+            message.includes('row-level security') ||
+            message.includes('violates row-level security')
+          if (isRlsError) {
+            throw error
+          }
+
+          const isRecoverableMissingColumn =
+            error.code === '42703' ||
+            error.code === 'PGRST204' ||
+            message.includes('column') ||
+            message.includes('schema cache')
+
+          if (!isRecoverableMissingColumn) {
+            throw error
+          }
         }
 
-        const { data, error } = await supabase
-          .from('communities')
-          .insert([payload])
-          .select('id')
-          .single()
-        if (error) throw error
+        if (!data) {
+          throw lastError || new Error('Impossible de créer la communauté avec le schéma courant.')
+        }
 
         const { error: memberError } = await supabase
           .from('user_communities')
@@ -270,7 +357,22 @@ export default {
         newCommunity.value = { name: '', description: '', type: 'public' }
         await loadCommunities()
       } catch (error) {
-        console.error('Erreur création communauté:', error)
+        const message = String(error?.message || '').toLowerCase()
+        const isRlsError =
+          error?.code === '42501' ||
+          message.includes('row-level security') ||
+          message.includes('violates row-level security')
+
+        if (isRlsError) {
+          toast.add({
+            severity: 'error',
+            summary: 'Accès refusé (RLS)',
+            detail: 'Supabase bloque la création via les policies RLS de la table communities.',
+            life: 5000,
+          })
+          return
+        }
+
         toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de créer la communauté.', life: 3000 })
       }
     }
@@ -285,7 +387,6 @@ export default {
         toast.add({ severity: 'success', summary: 'Rejoint', detail: 'Vous avez rejoint la communauté.', life: 2200 })
         await loadCommunities()
       } catch (error) {
-        console.error('Erreur rejoindre communauté:', error)
         toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de rejoindre cette communauté.', life: 3000 })
       }
     }
@@ -308,7 +409,6 @@ export default {
             toast.add({ severity: 'success', summary: 'Fait', detail: 'Vous avez quitté la communauté.', life: 2200 })
             await loadCommunities()
           } catch (error) {
-            console.error('Erreur quitter communauté:', error)
             toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de quitter cette communauté.', life: 3000 })
           }
         },
@@ -317,17 +417,19 @@ export default {
 
     const updateCommunityType = async (community) => {
       if (!isOwner(community)) return
+      if (!canEditType(community)) {
+        toast.add({ severity: 'warn', summary: 'Type indisponible', detail: 'La colonne type n’existe pas dans cette table.', life: 2500 })
+        return
+      }
       try {
         const { error } = await supabase
           .from('communities')
           .update({ type: normalizeType(community.type) })
           .eq('id', community.id)
-          .eq('created_by', currentUserId.value)
         if (error) throw error
         toast.add({ severity: 'success', summary: 'Type mis à jour', detail: 'Le type de communauté a été modifié.', life: 2200 })
         await loadCommunities()
       } catch (error) {
-        console.error('Erreur update type communauté:', error)
         toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de modifier le type.', life: 3000 })
       }
     }
@@ -352,13 +454,11 @@ export default {
               .from('communities')
               .delete()
               .eq('id', community.id)
-              .eq('created_by', currentUserId.value)
             if (commErr) throw commErr
 
             toast.add({ severity: 'success', summary: 'Supprimée', detail: 'Communauté supprimée.', life: 2200 })
             await loadCommunities()
           } catch (error) {
-            console.error('Erreur suppression communauté:', error)
             toast.add({ severity: 'error', summary: 'Erreur', detail: 'Suppression impossible.', life: 3000 })
           }
         },
@@ -380,6 +480,7 @@ export default {
 
     return {
       loading,
+      mainFeedRef,
       showCreateDialog,
       communityTypeOptions,
       newCommunity,
@@ -388,6 +489,7 @@ export default {
       displayType,
       typeSeverity,
       isOwner,
+      canEditType,
       createCommunity,
       joinCommunity,
       leaveCommunity,
@@ -404,8 +506,34 @@ export default {
   min-height: 100vh;
 }
 
+.newsfeed-layout {
+  display: grid;
+  grid-template-columns: 1fr 3fr 1fr;
+  gap: 1.5rem;
+  height: calc(100vh - var(--navbar-h) - (2 * var(--content-pad)));
+  max-height: calc(100vh - var(--navbar-h) - (2 * var(--content-pad)));
+  overflow: hidden;
+}
+
+.sidebar-left,
+.sidebar-right {
+  height: 100%;
+  overflow-y: hidden;
+}
+
 .community-management__content {
+  height: 100%;
+  overflow-y: auto;
   padding: 1.5rem;
+}
+
+.community-management__content::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.community-management__content {
+  scrollbar-width: none;
 }
 
 .community-management__header {
@@ -438,5 +566,36 @@ export default {
 
 .mr-2 {
   margin-right: 0.5rem;
+}
+
+@media (max-width: 1024px) {
+  .newsfeed-layout {
+    grid-template-columns: 1fr 2fr;
+  }
+
+  .sidebar-right {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .newsfeed-layout {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 0 0.5rem;
+    width: 100%;
+    max-width: 100vw;
+    margin: 0 auto;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+
+  .sidebar-left {
+    display: none;
+  }
+
+  .community-management__content {
+    padding: 0.5rem 0;
+  }
 }
 </style>

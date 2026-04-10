@@ -8,24 +8,18 @@
     </div>
 
     <!-- Zone centrale (Main-feed) : Infos de la communauté et flux -->
-    <div class="main-feed">
-      <div class="community-info">
-        <div class="card">
+    <div class="main-feed" ref="mainFeedRef">
+      <div class="community-shell">
+        <div class="card community-header-card">
           <h1>{{ community.name }}</h1>
           <p><strong>Description:</strong> {{ community.description }}</p>
-
-          <!-- <h5><strong>Créée le :</strong> {{ formattedDate }}</h5>   <Button @click="goBack">Retour</Button> -->
+          <p><strong>Type:</strong> {{ displayType(community.type) }}</p>
           <h6><strong>Membres :</strong> {{ memberCount }}</h6>
-         
+          <Button class="p-button-text" icon="pi pi-arrow-left" label="Retour" @click="goBack" />
         </div>
-      </div>
 
-      <!-- Intégration du flux de la communauté -->
-      <CommunityFeed
-        v-if="communityId"
-        :community-id="communityId"
-        :current-user="currentUser"
-      />
+        <MainFeedSupabase :key="communityId" :community-id="communityId" />
+      </div>
     </div>
 
     <!-- Sidebar Droite -->
@@ -33,89 +27,158 @@
       <RightSidebar />
     </div>
   </div>
+
+  <MobileBottomNav :scrollTarget="mainFeedRef" />
+  <Toast />
 </template>
 
 <script>
-import { ref, onMounted } from "vue";
+import { computed, ref, onMounted } from "vue";
 import { onBeforeRouteUpdate, useRoute, useRouter } from "vue-router";
 import Navbar from "@/components/common/utils/Navbar.vue";
-import CommunityFeed from '@/components/social/library/CommunityFeed.vue'
 import LeftSidebar from '@/components/social/library/LeftSidebar.vue';
 import RightSidebar from '@/components/social/library/RightSidebar.vue';
-import { db, auth } from "root/firebase.js";
-import { ref as dbRef, get } from "firebase/database";
-import { onAuthStateChanged } from "firebase/auth";
+import MobileBottomNav from '@/components/common/utils/MobileBottomNav.vue';
+import MainFeedSupabase from '@/components/social/library/MainFeedSupabase.vue';
+import { useAuthStore } from '@/stores/authStore';
+import { supabase } from '@/supabase.js';
+import Button from 'primevue/button';
+import Toast from 'primevue/toast';
+import { useToast } from 'primevue/usetoast';
 
 export default {
   name: "CommunityInfo",
   components: {
     Navbar,
-    CommunityFeed,
     LeftSidebar,
     RightSidebar,
+    MobileBottomNav,
+    MainFeedSupabase,
+    Button,
+    Toast,
   },
   setup() {
+    const authStore = useAuthStore();
+    const toast = useToast();
     const route = useRoute();
     const router = useRouter();
-    // Stocke l'ID de la communauté en fonction du paramètre d'URL
+
     const communityId = ref(route.params.id);
+    const mainFeedRef = ref(null);
     const community = ref({});
-    const formattedDate = ref("");
     const memberCount = ref(0);
-    const currentUser = ref(null);
+    const loadingCommunity = ref(false);
+    const myCommunityIds = ref(new Set());
 
-    // Fonction pour récupérer les infos de la communauté depuis la BDD
+    const currentUser = computed(() => authStore.user);
+
+    const getCommunityDescription = (communityRow) =>
+      communityRow?.description ?? communityRow?.desc ?? communityRow?.details ?? communityRow?.about ?? '';
+
+    const getCommunityCreatedBy = (communityRow) =>
+      communityRow?.created_by ?? communityRow?.createdBy ?? communityRow?.owner_id ?? communityRow?.ownerId ?? null;
+
+    const getCommunityType = (communityRow) => normalizeType(communityRow?.type);
+
+    const normalizeType = (value) => {
+      if (value === 'ferme') return 'closed';
+      if (value === 'cache') return 'hidden';
+      return value || 'public';
+    };
+
+    const displayType = (type) => {
+      const normalized = normalizeType(type);
+      if (normalized === 'closed') return 'Fermé';
+      if (normalized === 'hidden') return 'Caché';
+      return 'Public';
+    };
+
+    const loadCurrentUserMemberships = async () => {
+      if (!authStore.user) {
+        await authStore.checkAuthState();
+      }
+
+      if (!authStore.user?.id) {
+        myCommunityIds.value = new Set();
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('user_communities')
+        .select('community_id')
+        .eq('user_id', authStore.user.id);
+
+      if (error) {
+        console.error('Erreur chargement membership communauté:', error);
+        myCommunityIds.value = new Set();
+        return;
+      }
+
+      myCommunityIds.value = new Set((data || []).map((row) => row.community_id));
+    };
+
     const fetchCommunityInfo = async () => {
+      loadingCommunity.value = true;
       try {
-        const snapshot = await get(dbRef(db, `Communities/${communityId.value}`));
-        if (!snapshot.exists()) {
-          // Redirection si la communauté n'existe pas
-          return router.push({ name: "CommunityManagement" });
-        }
-        const data = snapshot.val();
-        community.value = data;
+        const [{ data: comm, error: commError }, { data: members, error: membersError }] = await Promise.all([
+          supabase.from('communities').select('*').eq('id', communityId.value).single(),
+          supabase.from('user_communities').select('user_id').eq('community_id', communityId.value),
+        ]);
 
-        // Formatage de la date (si disponible)
-        if (data.createdAt) {
-          formattedDate.value = new Date(data.createdAt).toLocaleDateString();
+        if (commError) throw commError;
+        if (membersError) throw membersError;
+
+        if (!comm) {
+          return router.push({ name: 'CommunitiesView' });
         }
-        // Calcul du nombre de membres
-        memberCount.value = data.members ? Object.keys(data.members).length : 0;
+
+        const isHidden = getCommunityType(comm) === 'hidden';
+        const isOwner = currentUser.value?.id && currentUser.value.id === getCommunityCreatedBy(comm);
+        const isMember = myCommunityIds.value.has(communityId.value);
+        if (isHidden && !isOwner && !isMember) {
+          toast.add({ severity: 'warn', summary: 'Accès restreint', detail: 'Cette communauté est cachée.', life: 3000 });
+          return router.push({ name: 'CommunitiesView' });
+        }
+
+        community.value = {
+          ...comm,
+          description: getCommunityDescription(comm),
+          type: getCommunityType(comm),
+          created_by: getCommunityCreatedBy(comm),
+        };
+        memberCount.value = (members || []).length;
       } catch (error) {
         console.error("Erreur lors de la récupération des infos de la communauté :", error);
-        router.push({ name: "CommunityManagement" });
+        router.push({ name: 'CommunitiesView' });
+      } finally {
+        loadingCommunity.value = false;
       }
     };
 
-    // Action pour le bouton "Retour"
     const goBack = () => {
       router.back();
     };
 
-    // Au montage du composant, on récupère les infos de la communauté et on écoute l'état de l'authentification
-    onMounted(() => {
-      fetchCommunityInfo();
-      onAuthStateChanged(auth, (user) => {
-        if (user) {
-          currentUser.value = user;
-        }
-      });
+    onMounted(async () => {
+      await loadCurrentUserMemberships();
+      await fetchCommunityInfo();
     });
 
-    // Lorsqu'on navigue vers une autre communauté (même composant affiché),
-    // on met à jour l'ID et on recharge les infos correspondantes.
-    onBeforeRouteUpdate((to, from, next) => {
+    onBeforeRouteUpdate(async (to, from, next) => {
       communityId.value = to.params.id;
-      fetchCommunityInfo();
+      await loadCurrentUserMemberships();
+      await fetchCommunityInfo();
       next();
     });
 
     return {
       communityId,
+      mainFeedRef,
       community,
-      formattedDate,
       memberCount,
       currentUser,
+      loadingCommunity,
+      displayType,
       goBack,
     };
   },
@@ -123,10 +186,10 @@ export default {
 </script>
 
 <style scoped>
-/* Layout global inspiré de NewsFeed.vue */
+/* Layout global aligné sur FeedView */
 .newsfeed-layout {
   display: grid;
-  grid-template-columns: 1fr 3fr 1fr; /* Sidebar gauche, contenu central, Sidebar droite */
+  grid-template-columns: 1fr 3fr 1fr;
   gap: 1.5rem;
   height: calc(100vh - var(--navbar-h) - (2 * var(--content-pad)));
   max-height: calc(100vh - var(--navbar-h) - (2 * var(--content-pad)));
@@ -140,10 +203,29 @@ export default {
 
 .main-feed {
   height: 100%;
-  overflow-y: auto; /* Scroll uniquement au centre */
+  overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  box-sizing: border-box;
+}
+
+.community-shell {
+  width: 100%;
+  max-width: 880px;
+  margin: 0 auto;
+  padding-bottom: 1rem;
+}
+
+@media (max-width: 900px) {
+  .community-shell {
+    max-width: 98vw;
+  }
+}
+
+.community-header-card {
+  margin-bottom: 1rem;
 }
 
 /* Masquer la barre de défilement dans le main-feed */
@@ -162,6 +244,20 @@ export default {
 }
 
 /* Responsiveness */
+@media (max-width: 1366px) {
+  .newsfeed-layout {
+    grid-template-columns: 0.8fr 2.5fr 0.8fr;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 1200px) {
+  .newsfeed-layout {
+    grid-template-columns: 0.7fr 2.8fr 0.7fr;
+    gap: 0.8rem;
+  }
+}
+
 @media (max-width: 1024px) {
   .newsfeed-layout {
     grid-template-columns: 1fr 2fr;
@@ -175,21 +271,37 @@ export default {
   .newsfeed-layout {
     grid-template-columns: 1fr;
     gap: 1rem;
+    padding: 0 0.5rem;
+    width: 100%;
+    max-width: 100vw;
+    margin: 0 auto;
+    box-sizing: border-box;
+    overflow-x: hidden;
   }
   .sidebar-left {
     display: none;
   }
   .main-feed {
     overflow-y: auto;
+    gap: 0.5rem;
+    width: 100%;
+    max-width: 100vw;
+    margin: 0 auto;
+    box-sizing: border-box;
+    overflow-x: hidden;
   }
 }
 
 @media (max-width: 480px) {
   .newsfeed-layout {
-    padding: 0 1rem;
+    padding: 0 0.25rem;
+    width: 100%;
+    max-width: 100vw;
   }
   .main-feed {
-    gap: 0.5rem;
+    gap: 0.25rem;
+    width: 100%;
+    max-width: 100vw;
   }
 }
 </style>

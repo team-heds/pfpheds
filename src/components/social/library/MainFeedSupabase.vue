@@ -1,5 +1,5 @@
 <template>
-  <div class="main-feed" ref="mainFeedRef">
+  <div class="main-feed" :class="{ 'community-mode': !!communityId }" ref="mainFeedRef">
     <Toast />
     <div v-if="isMobile" class="mainfeed-mobile">
       <transition name="fade">
@@ -81,6 +81,12 @@ import StoriesBar from './StoriesBar.vue'
 
 export default {
   name: 'MainFeedSupabase',
+  props: {
+    communityId: {
+      type: String,
+      default: null,
+    },
+  },
   components: {
     HeaderIcons,
     StoriesBar,
@@ -94,7 +100,7 @@ export default {
     TextAreaComponent,
     CreatePostDialog,
   },
-  setup() {
+  setup(props) {
     const router = useRouter()
     const authStore = useAuthStore()
     const toast = useToast()
@@ -119,11 +125,18 @@ export default {
     let pollInterval = null
     let removeRouterAfterEach = null
 
-    const filterTypes = ref([
-      { label: 'Tous', value: null },
-      { label: 'Hashtag', value: 'hashtag' },
-      { label: 'Communauté', value: 'community' },
-    ])
+    const filterTypes = ref(
+      props.communityId
+        ? [
+            { label: 'Tous', value: null },
+            { label: 'Hashtag', value: 'hashtag' },
+          ]
+        : [
+            { label: 'Tous', value: null },
+            { label: 'Hashtag', value: 'hashtag' },
+            { label: 'Communauté', value: 'community' },
+          ]
+    )
     const selectedFilterType = ref(null)
     const filterOptions = ref([])
     const selectedFilterValue = ref(null)
@@ -149,6 +162,21 @@ export default {
       const textWithoutHtml = value.replace(/<[^>]+>/g, '')
       detectedTags.value = extractTags(textWithoutHtml)
     })
+
+    watch(
+      () => props.communityId,
+      async () => {
+        selectedFilterType.value = null
+        selectedFilterValue.value = null
+        filterOptions.value = []
+        appliedFilter.value = { type: null, value: null }
+        posts.value = []
+        filteredPosts.value = []
+        oldestCreatedAt.value = null
+        await fetchAvailableFilters()
+        await fetchPosts()
+      }
+    )
 
     const extractTags = (text) => {
       const regex = /[#@][\w-]+/g
@@ -208,6 +236,7 @@ export default {
               content: newPost.value,
               hashtags: hashtagsObject,
               mentions: mentionsObject,
+              community_id: props.communityId || null,
             },
           ])
           .select('id, created_at')
@@ -317,7 +346,7 @@ export default {
 
     const fetchAvailableFilters = async () => {
       try {
-        if (localCurrentUser.value) {
+        if (localCurrentUser.value && !props.communityId) {
           const { data: ucRows, error: ucErr } = await supabase
             .from('user_communities')
             .select('community_id')
@@ -371,13 +400,18 @@ export default {
         let q = supabase
           .from('posts')
           .select('id, user_id, author_name, content, created_at, hashtags, mentions')
-          .is('community_id', null)
           .order('created_at', { ascending: false })
           .limit(postsPerPage.value)
 
+        if (props.communityId) {
+          q = q.eq('community_id', props.communityId)
+        } else {
+          q = q.is('community_id', null)
+        }
+
         if (appliedFilter.value.type === 'hashtag' && appliedFilter.value.value) {
           q = q.contains('hashtags', { [appliedFilter.value.value]: true })
-        } else if (appliedFilter.value.type === 'community' && appliedFilter.value.value) {
+        } else if (!props.communityId && appliedFilter.value.type === 'community' && appliedFilter.value.value) {
           q = q.eq('community_id', appliedFilter.value.value)
         }
         if (oldestCreatedAt.value) {
@@ -497,10 +531,12 @@ export default {
           .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'posts' }, async (payload) => {
           const row = payload.new
           // Appliquer le même scope que le feed courant
-          const matchCommunity = (
-            (appliedFilter.value.type === 'community' && row.community_id === appliedFilter.value.value) ||
-            (appliedFilter.value.type !== 'community' && row.community_id === null)
-          )
+          const matchCommunity = props.communityId
+            ? row.community_id === props.communityId
+            : (
+                (appliedFilter.value.type === 'community' && row.community_id === appliedFilter.value.value) ||
+                (appliedFilter.value.type !== 'community' && row.community_id === null)
+              )
           const matchHashtag = (
             appliedFilter.value.type !== 'hashtag' || (row.hashtags && row.hashtags[appliedFilter.value.value])
           )
@@ -653,6 +689,26 @@ export default {
 .main-feed { height: 85vh; max-height: 90vh; overflow-y: auto; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 880px; margin-left: auto; margin-right: auto; }
 @media (max-width: 900px) {
   .main-feed { max-width: 98vw; }
+}
+.main-feed.community-mode {
+  max-width: 880px;
+  width: 100%;
+  align-items: stretch;
+  height: 85vh;
+  max-height: 90vh;
+}
+.main-feed.community-mode .quick-post-bar {
+  max-width: 100%;
+}
+.main-feed.community-mode .posts-container {
+  width: 100%;
+}
+.main-feed.community-mode .posts-container > * {
+  width: 100%;
+}
+.main-feed.community-mode :deep(.post-item) {
+  width: 100%;
+  max-width: 100%;
 }
 .posts-container { height: 100vh; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; -ms-overflow-style: none; }
 .posts-container::-webkit-scrollbar { display: none; }

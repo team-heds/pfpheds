@@ -31,8 +31,9 @@ let isAuthStateChecked = false;
 let dynamicRoutesLoaded = false;
 const AUTH_BYPASS = import.meta.env.VITE_DISABLE_AUTH === 'true';
 
+const ROUTER_DEBUG = import.meta.env.VITE_DEBUG_ROUTER === 'true';
 const debugRouter = (...args) => {
-  if (import.meta.env.DEV) console.log(...args);
+  if (ROUTER_DEBUG) console.log(...args);
 };
 
 router.beforeEach(async (to, from, next) => {
