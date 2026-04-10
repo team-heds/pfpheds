@@ -385,7 +385,6 @@
           </DataTable>
         </div>
       </template>
-    </div>
 
     <!-- Dialog de lancement -->
     <Dialog
@@ -441,6 +440,7 @@
         <Button label="Fermer" severity="secondary" outlined @click="showAddDialog = false" />
       </template>
     </Dialog>
+    </div>
   </AdminLayout>
 </template>
 

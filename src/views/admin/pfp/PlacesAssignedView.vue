@@ -367,6 +367,7 @@ const pfpTabs = [
 const sourceOptions = [
   { label: 'Prioritaire', value: 'priority' },
   { label: 'Votation', value: 'votation' },
+  { label: 'Algorithme', value: 'algorithm' },
   { label: 'Aléatoire', value: 'random' },
   { label: 'Manuel', value: 'manual' },
   { label: 'Non assigné', value: 'none' }
@@ -431,21 +432,25 @@ const getSource = (assignment) => {
   if (!assignment) return { label: 'Non assigné', severity: 'secondary', icon: 'pi pi-minus', key: 'none' }
   
   const notes = (assignment.notes || '').toLowerCase()
-  const isPriority = assignment.priority_score != null && assignment.priority_score > 0
+  const isPriorityFromNotes = notes.includes('priorit')
+  const isAlgorithmFromNotes = notes.includes('algorith')
 
   if (notes.includes('manuel') || notes.includes('manual assignment')) {
     return { label: 'Manuel', severity: 'info', icon: 'pi pi-pencil', key: 'manual' }
   }
-  if (isPriority || notes.includes('priorit')) {
-    return { label: 'Prioritaire', severity: 'warning', icon: 'pi pi-star', key: 'priority' }
-  }
   if (assignment.assigned_rank === 99) {
     return { label: 'Aléatoire', severity: 'danger', icon: 'pi pi-question-circle', key: 'random' }
+  }
+  if (isPriorityFromNotes) {
+    return { label: 'Prioritaire', severity: 'warning', icon: 'pi pi-star', key: 'priority' }
   }
   if (assignment.assigned_rank >= 1 && assignment.assigned_rank <= 5) {
     return { label: 'Votation', severity: 'success', icon: 'pi pi-check', key: 'votation' }
   }
-  return { label: 'Algorithme', severity: 'info', icon: 'pi pi-cog', key: 'votation' }
+  if (isAlgorithmFromNotes || assignment.assigned_place_id) {
+    return { label: 'Algorithme', severity: 'info', icon: 'pi pi-cog', key: 'algorithm' }
+  }
+  return { label: 'Non assigné', severity: 'secondary', icon: 'pi pi-minus', key: 'none' }
 }
 
 // ── Priority user IDs pour le PFP courant ──
@@ -543,6 +548,10 @@ const enrichedRows = computed(() => {
     const s = studentsById.get(userId)
     const place = a.assigned_place_id ? placesById.get(a.assigned_place_id) : null
     const source = getSource(a)
+    const isPriorityUser = priorityUserIds.value.has(userId)
+    const displaySource = isPriorityUser && source.key === 'algorithm'
+      ? { label: 'Prioritaire', severity: 'warning', icon: 'pi pi-star', key: 'priority' }
+      : source
 
     const praticiensList = Array.isArray(place?.praticiensFormateurs) ? place.praticiensFormateurs : []
     const praticienAssigned = a.assigned_praticien_id
@@ -566,12 +575,12 @@ const enrichedRows = computed(() => {
       assigned_rank: a.assigned_rank,
       rank_label: a.assigned_rank === 99 ? 'Hors choix' : (a.assigned_rank >= 0 && a.assigned_place_id ? `${a.assigned_rank} crit.` : ''),
       status: a.status || 'draft',
-      source_label: source.label,
-      source_severity: source.severity,
-      source_icon: source.icon,
-      source_key: source.key,
+      source_label: displaySource.label,
+      source_severity: displaySource.severity,
+      source_icon: displaySource.icon,
+      source_key: displaySource.key,
       praticien_display: praticienAssigned || praticienFromPlace || null,
-      is_priority: priorityUserIds.value.has(userId),
+      is_priority: isPriorityUser,
       missing_criteria: missingCrit.join(', '),
       place_criteria: placeCrit.join(', '),
       _assignment_id: a.id,
