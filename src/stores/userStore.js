@@ -52,11 +52,9 @@ export const useUserStore = defineStore('user', {
         // Recharger/vider profil selon connexion
         if (this.user) {
           this.fetchProfile()
-          // ❌ Realtime désactivé
-          // this.subscribeProfile()
+          this.subscribeProfile()
         } else {
-          // ❌ Realtime désactivé
-          // this.unsubscribeProfile()
+          this.unsubscribeProfile()
           this.profile = null
         }
       })
@@ -64,16 +62,14 @@ export const useUserStore = defineStore('user', {
       // Charger si déjà connecté (sans Realtime)
       if (this.user) {
         await this.fetchProfile()
-        // ❌ Realtime désactivé
-        // this.subscribeProfile()
+        this.subscribeProfile()
       }
     },
 
     // Nettoyage (ex: avant app destroy)
     dispose() {
       if (this.authSub) this.authSub.unsubscribe()
-      // ❌ Realtime désactivé
-      // this.unsubscribeProfile()
+      this.unsubscribeProfile()
     },
 
     async fetchProfile() {
@@ -173,8 +169,7 @@ export const useUserStore = defineStore('user', {
         this.session = data.session
         this.user = data.user
         await this.fetchProfile()
-        // ❌ Realtime désactivé
-        // this.subscribeProfile()
+        this.subscribeProfile()
       } finally {
         this.authLoading = false
       }
@@ -188,8 +183,7 @@ export const useUserStore = defineStore('user', {
         this.session = null
         this.user = null
         this.profile = null
-        // ❌ Realtime désactivé
-        // this.unsubscribeProfile()
+        this.unsubscribeProfile()
       } finally {
         this.authLoading = false
       }

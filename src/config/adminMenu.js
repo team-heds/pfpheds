@@ -117,83 +117,82 @@ export default [
         ]
       },
       
-      // Gamification masquée pour la présentation FP Physio
-      // {
-      //   label: 'Gamification',
-      //   icon: 'pi pi-star-fill',
-      //   items: [
-      //     { label: 'Dashboard Gamification', icon: 'pi pi-chart-bar', to: '/admin/dashboard-gamification' },
-      //     { label: 'Gestion Défis', icon: 'pi pi-flag-fill', to: '/admin/gamification/challenges' },
-      //     { label: 'Gestion Quêtes', icon: 'pi pi-compass', to: '/admin/gamification/quests' },
-      //     { label: 'Gestion Badges', icon: 'pi pi-shield', to: '/admin/gamification/badges' },
-      //     { label: 'Gestion Utilisateurs', icon: 'pi pi-users', to: '/admin/gamification/users' },
-      //     { label: 'Gestion Maisons', icon: 'pi pi-home', to: '/admin/gamification/houses' },
-      //     { label: 'Analytics & Statistiques', icon: 'pi pi-chart-line', to: '/admin/gamification/analytics' }
-      //   ]
-      // }
+      {
+        label: 'Gamification',
+        icon: 'pi pi-star-fill',
+        items: [
+          { label: 'Dashboard Gamification', icon: 'pi pi-chart-bar', to: '/admin/dashboard-gamification' },
+          { label: 'Gestion Défis', icon: 'pi pi-flag-fill', to: '/admin/gamification/challenges' },
+          { label: 'Gestion Quêtes', icon: 'pi pi-compass', to: '/admin/gamification/quests' },
+          { label: 'Gestion Badges', icon: 'pi pi-shield', to: '/admin/gamification/badges' },
+          { label: 'Gestion Utilisateurs', icon: 'pi pi-users', to: '/admin/gamification/users' },
+          { label: 'Gestion Maisons', icon: 'pi pi-home', to: '/admin/gamification/houses' },
+          { label: 'Analytics & Statistiques', icon: 'pi pi-chart-line', to: '/admin/gamification/analytics' }
+        ]
+      }
     ]
   },
 
   // ========================================
   // 🏥 SOINS INFIRMIERS - Académique (masqué pour la présentation FP Physio)
   // ========================================
-  // {
-  //   label: 'Soins Infirmiers',
-  //   icon: 'pi pi-heart-fill',
-  //   items: [
-  //     { label: 'Dashboard Secrétariat', icon: 'pi pi-th-large', to: '/admin/soins-infirmiers/dashboard' },
-  //     { label: 'Dashboard RM', icon: 'pi pi-chart-line', to: '/admin/dashboard-rm' },
-  //     {
-  //       label: 'Planning',
-  //       icon: 'pi pi-calendar',
-  //       items: [
-  //         { label: 'Structure Mini Brique', icon: 'pi pi-th-large', to: '/admin/planning' },
-  //         { label: 'Vue Hebdomadaire', icon: 'pi pi-calendar', to: '/admin/planning/weekly' },
-  //         { label: 'Vue Journalière / Salles', icon: 'pi pi-building', to: '/admin/soins-infirmiers/planning-journalier' },
-  //         { label: 'Feuille de charges', icon: 'pi pi-chart-bar', to: '/admin/soins-infirmiers/feuille-de-charges' },
-  //         { label: 'Gestion Planning', icon: 'pi pi-pencil', to: '/admin/planning/manage' },
-  //         { label: 'Années Académiques', icon: 'pi pi-calendar-plus', to: '/admin/planning/years' }
-  //       ]
-  //     },
-  //     {
-  //       label: 'Ressources',
-  //       icon: 'pi pi-database',
-  //       items: [
-  //         { label: 'Enseignants SI', icon: 'pi pi-users', to: '/admin/teachers-si' },
-  //         { label: 'Modules', icon: 'pi pi-book', to: '/admin/modules' },
-  //         { label: 'Contenu Multimédia', icon: 'pi pi-video', to: '/admin/academic/video-library' }
-  //       ]
-  //     },
-  //     { label: 'Ticket Tâches', icon: 'pi pi-check-square', to: '/admin/academic/kanban' }
-  //   ]
-  // },
+  {
+    label: 'Soins Infirmiers',
+    icon: 'pi pi-heart-fill',
+    items: [
+      { label: 'Dashboard Secrétariat', icon: 'pi pi-th-large', to: '/admin/soins-infirmiers/dashboard' },
+      { label: 'Dashboard RM', icon: 'pi pi-chart-line', to: '/admin/dashboard-rm' },
+      {
+        label: 'Planning',
+        icon: 'pi pi-calendar',
+        items: [
+          { label: 'Structure Mini Brique', icon: 'pi pi-th-large', to: '/admin/planning' },
+          { label: 'Vue Hebdomadaire', icon: 'pi pi-calendar', to: '/admin/planning/weekly' },
+          { label: 'Vue Journalière / Salles', icon: 'pi pi-building', to: '/admin/soins-infirmiers/planning-journalier' },
+          { label: 'Feuille de charges', icon: 'pi pi-chart-bar', to: '/admin/soins-infirmiers/feuille-de-charges' },
+          { label: 'Gestion Planning', icon: 'pi pi-pencil', to: '/admin/planning/manage' },
+          { label: 'Années Académiques', icon: 'pi pi-calendar-plus', to: '/admin/planning/years' }
+        ]
+      },
+      {
+        label: 'Ressources',
+        icon: 'pi pi-database',
+        items: [
+          { label: 'Enseignants SI', icon: 'pi pi-users', to: '/admin/teachers-si' },
+          { label: 'Modules', icon: 'pi pi-book', to: '/admin/modules' },
+          { label: 'Contenu Multimédia', icon: 'pi pi-video', to: '/admin/academic/video-library' }
+        ]
+      },
+      { label: 'Ticket Tâches', icon: 'pi pi-check-square', to: '/admin/academic/kanban' }
+    ]
+  },
 
   // ========================================
   // 🔧 GÉNÉRAL - Outils transversaux (masqué pour la présentation FP Physio)
   // ========================================
-  // {
-  //   label: 'Général',
-  //   icon: 'pi pi-box',
-  //   items: [
-  //     {
-  //       label: 'Outils',
-  //       icon: 'pi pi-wrench',
-  //       items: [
-  //         {
-  //           label: 'Médias',
-  //           icon: 'pi pi-video',
-  //           items: [
-  //             { label: 'Administration Modules', icon: 'pi pi-folder', to: '/admin/modules' },
-  //             { label: 'Hub Multimédia', icon: 'pi pi-play-circle', to: '/media' },
-  //             { label: 'Modules Vidéo', icon: 'pi pi-list', to: '/modules' },
-  //             { label: 'Test Vimeo', icon: 'pi pi-external-link', to: '/vimeo-test' }
-  //           ]
-  //         },
-  //         { label: 'Feedbacka', icon: 'pi pi-comments', to: '/admin/tools/feedbacka' },
-  //         { label: 'Care-Convers', icon: 'pi pi-heart', to: '/care-convers' },
-  //         { label: 'Capsules Insuffisance Rhénale', icon: 'pi pi-book', to: '/capsules-insuffisance-renale' }
-  //       ]
-  //     }
-  //   ]
-  // }
+  {
+    label: 'Général',
+    icon: 'pi pi-box',
+    items: [
+      {
+        label: 'Outils',
+        icon: 'pi pi-wrench',
+        items: [
+          {
+            label: 'Médias',
+            icon: 'pi pi-video',
+            items: [
+              { label: 'Administration Modules', icon: 'pi pi-folder', to: '/admin/modules' },
+              { label: 'Hub Multimédia', icon: 'pi pi-play-circle', to: '/media' },
+              { label: 'Modules Vidéo', icon: 'pi pi-list', to: '/modules' },
+              { label: 'Test Vimeo', icon: 'pi pi-external-link', to: '/vimeo-test' }
+            ]
+          },
+          { label: 'Feedbacka', icon: 'pi pi-comments', to: '/admin/tools/feedbacka' },
+          { label: 'Care-Convers', icon: 'pi pi-heart', to: '/care-convers' },
+          { label: 'Capsules Insuffisance Rhénale', icon: 'pi pi-book', to: '/capsules-insuffisance-renale' }
+        ]
+      }
+    ]
+  }
 ];

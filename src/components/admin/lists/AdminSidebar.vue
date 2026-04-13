@@ -388,12 +388,10 @@ function handleSectionLeave() {
 // Obtenir la classe CSS pour une section selon son index
 function getSectionClass(index) {
   const classes = {
-    0: 'admin-general-section',          // Admin Général
-    1: 'pfp-section',                    // PFP
-    2: 'formation-pratique-section',     // Formation Pratique Physio
-    3: 'academic-section',               // Académique
-    4: 'gamification-section',           // Gamification
-    5: 'tools-section'                   // Outils
+    0: 'admin-general-section',     // Admin Général
+    1: 'physio-section',            // Physiothérapie (incl. Gamification)
+    2: 'academic-section',          // Soins Infirmiers
+    3: 'tools-section'              // Outils généraux
   };
   return classes[index] || '';
 }
@@ -429,22 +427,17 @@ function shouldShowSection(section, index) {
   switch (index) {
     case 0: // Admin Général - super.all OU admin
       return roleStore.isSuper || roleStore.can('super.all') || roleStore.can('admin')|| roleStore.can('page1.access');
-    case 1: // PFP - page1.access OU rôles Physio
-      return (
-       // roleStore.can('page1.access') ||
-        roleStore.can('admin') // ||
-       // roleStore.can('EnseignantPhysio') ||
-      //  roleStore.isSuper
-      );
-    case 2: // Formation Pratique Physio - page1.access OU rôles Physio
+    case 1: // Physiothérapie & Gamification
       return (
         roleStore.can('page1.access') ||
-        roleStore.can('super.all') ||
+        roleStore.can('AdminPhysio') ||
         roleStore.can('EnseignantPhysio') ||
         roleStore.can('FormationPratique') ||
+        roleStore.can('admin') ||
+        roleStore.can('super.all') ||
         roleStore.isSuper
       );
-    case 3: // Académique - page2.access OU rôles Soins
+    case 2: // Soins Infirmiers / Académique
       return (
         roleStore.can('page2.access') ||
         roleStore.can('AdminSoins') ||
@@ -452,14 +445,7 @@ function shouldShowSection(section, index) {
         roleStore.can('RMSoins') ||
         roleStore.isSuper
       );
-    case 4: // Gamification - accessible aux rôles Physio (et super)
-      return (
-        roleStore.can('AdminPhysio') ||
-        roleStore.can('EnseignantPhysio') ||
-        roleStore.can('admin') ||
-        roleStore.isSuper
-      );
-    case 5: // Outils - accessible à tous les utilisateurs authentifiés
+    case 3: // Outils transversaux
       return true;
     default:
       return true;

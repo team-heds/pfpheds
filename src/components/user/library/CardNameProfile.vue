@@ -1,7 +1,7 @@
 
 <template>
 
-  <!-- Bandeau Maison (masqué pour la présentation)
+  <!-- Bandeau Maison -->
   <BandeauMaison
     v-if="hasValidHouse"
     :maison="userGamification.maison"
@@ -9,9 +9,8 @@
     :loginStreak="userGamification.loginStreak"
     class="mb-4"
   />
-  -->
 
-  <!-- PROMPT QUIZ MAISON (masqué pour la présentation)
+  <!-- PROMPT QUIZ MAISON -->
   <div v-if="!hasValidHouse && !isGameMaster" class="house-quiz-prompt mb-4">
     <div class="quiz-prompt-card">
       <div class="quiz-prompt-content">
@@ -25,10 +24,9 @@
       </div>
     </div>
   </div>
-  -->
 
 
-  <!-- XP Bar (masquée pour la présentation)
+  <!-- XP Bar -->
   <XPBar
     v-if="hasValidHouse && !isGameMaster"
     :xp="userGamification.xp"
@@ -37,7 +35,6 @@
     :maison="userGamification.maison"
     class="mb-4"
   />
-  -->
 
   <!-- FIN BANDEAU MAISON + XP -->
   <div class="mb-4 card-profile-responsive">

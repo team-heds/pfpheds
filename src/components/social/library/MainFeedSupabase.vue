@@ -112,6 +112,7 @@ export default {
     const loading = ref(false)
     const postsPerPage = ref(10)
     const localCurrentUser = ref(null)
+    const avatarCache = ref({})
     const lastScrollTop = ref(0)
     const selectedMedia = ref([])
     const oldestCreatedAt = ref(null)
@@ -181,6 +182,20 @@ export default {
     const extractTags = (text) => {
       const regex = /[#@][\w-]+/g
       return text.match(regex) || []
+    }
+
+    const fetchAvatars = async (userIds) => {
+      const missing = userIds.filter((id) => id && !avatarCache.value[id])
+      if (!missing.length) return
+      try {
+        const { data: profiles } = await supabase
+          .from('user_profiles')
+          .select('user_id, avatar_url')
+          .in('user_id', missing)
+        ;(profiles || []).forEach((p) => {
+          avatarCache.value[p.user_id] = p.avatar_url || null
+        })
+      } catch {}
     }
 
     const postMessage = async () => {
@@ -255,6 +270,7 @@ export default {
           id: ins.id,
           Author: authorName,
           IdUser: localCurrentUser.value.id,
+          avatar_url: avatarCache.value[localCurrentUser.value.id] || null,
           Content: newPost.value,
           Timestamp: Date.now(),
           Hashtags: hashtagsObject,
@@ -423,6 +439,7 @@ export default {
 
         if (rows && rows.length > 0) {
           const ids = rows.map((r) => r.id)
+          const userIds = [...new Set(rows.map((r) => r.user_id).filter(Boolean))]
           let mediaMap = {}
           if (ids.length > 0) {
             const { data: mediaRows, error: mErr } = await supabase
@@ -437,10 +454,13 @@ export default {
             }
           }
 
+          await fetchAvatars(userIds)
+
           const mapped = rows.map((r) => ({
             id: r.id,
             Author: r.author_name,
             IdUser: r.user_id,
+            avatar_url: avatarCache.value[r.user_id] || null,
             Content: r.content,
             Timestamp: Date.parse(r.created_at),
             Hashtags: r.hashtags || {},
@@ -513,6 +533,7 @@ export default {
       const currentUser = authStore.user
       if (currentUser) {
         localCurrentUser.value = currentUser
+        await fetchAvatars([currentUser.id])
         await fetchAvailableFilters()
         await fetchPosts()
       }
@@ -552,10 +573,12 @@ export default {
             mediaUrls = (mediaRows || []).map((m) => m.url)
           } catch {}
 
+          await fetchAvatars([row.user_id])
           const mapped = {
             id: row.id,
             Author: row.author_name,
             IdUser: row.user_id,
+            avatar_url: avatarCache.value[row.user_id] || null,
             Content: row.content,
             Timestamp: Date.parse(row.created_at),
             Hashtags: row.hashtags || {},

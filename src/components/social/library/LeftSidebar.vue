@@ -51,12 +51,12 @@
     </div>
   </div>
 
-  <!-- Nouvelle card Messagerie détachée
-  <div class="messaging-card">
+  <!-- Nouvelle card Messagerie détachée -->
+  <div class="messaging-card" v-if="authStore.isFirebaseUser">
     <div class="flex justify-content-between align-items-center mb-3">
       <h4 class="m-0">Messagerie</h4>
-      <Button 
-        icon="pi pi-arrow-right" 
+      <Button
+        icon="pi pi-arrow-right"
         class="p-button-text p-button-sm"
         @click="goToChat"
         v-tooltip.top="'Voir tous les chats'"
@@ -76,30 +76,27 @@
     </div>
   </div>
 
-  -->
-
   <!-- Section Événements à venir -->
   <div class="upcoming-events-section">
     <div class="flex justify-content-between align-items-center mb-3">
       <h4 class="section-title m-0">
         Événements à venir
       </h4>
-      <Button 
-        icon="pi pi-arrow-right" 
+      <Button
+        icon="pi pi-arrow-right"
         class="p-button-text p-button-sm"
         @click="goToEventManagement"
         v-tooltip.top="'Voir tous les événements'"
       />
     </div>
 
-    
     <div v-if="upcomingEvents.length === 0" class="no-events">
       <i class="pi pi-calendar-times text-400"></i>
       <p class="text-500 text-sm mt-2">Aucun événement à venir</p>
     </div>
-    
+
     <div v-else class="events-list">
-      <div 
+      <div
         v-for="event in upcomingEvents.slice(0, 4)"
         :key="event.id"
         class="flex flex-nowrap justify-content-between align-items-center border-1 surface-border border-circles p-3 cursor-pointer select-none hover:surface-hover transition-colors transition-duration-150 mb-2"
@@ -107,21 +104,17 @@
         tabindex="0"
       >
         <div class="flex align-items-center flex-1">
-          
-          <!-- Contenu principal -->
           <div class="flex-column flex-1">
             <span class="text-900 font-semibold block">{{ event.title }}</span>
             <span class="block text-400 text-sm">
               {{ formatEventDate(event.startDate) }}<span v-if="event.endDate"> – {{ formatEventDate(event.endDate) }}</span>
             </span>
           </div>
-          <!-- Badge du type d'événement -->
           <div class="event-type-badge mr-3">
             <span class="event-type-text">{{ getEventTypeLabel(event.type) }}</span>
           </div>
         </div>
-        
-        <!-- Indicateur de clic -->
+
         <div class="event-arrow">
           <i class="pi pi-chevron-right text-400"></i>
         </div>
@@ -130,15 +123,15 @@
   </div>
 
   <!-- Dialog pour les détails de l'événement -->
-  <Dialog 
-    v-model:visible="showEventDetail" 
+  <Dialog
+    v-model:visible="showEventDetail"
     :header="selectedEvent?.title || 'Détails de l\'événement'"
     :style="{ width: '600px', maxWidth: '96vw' }"
     :modal="true"
     :closable="true"
     :draggable="false"
   >
-    <EventDetail 
+    <EventDetail
       v-if="selectedEvent"
       :event="selectedEvent"
       :user-id="user.id"
@@ -149,10 +142,7 @@
     />
   </Dialog>
 
-  <!-- 🆕 Section Nouvelles Quêtes (masquée pour la présentation)
   <QuestsSidebarCard />
-  -->
-
 </template>
 
 <script>
@@ -164,7 +154,7 @@ import UserCard from '@/views/apps/chat/UserCard.vue';
 import { useEventStore } from '@/stores/eventStore';
 import { useAuthStore } from '@/stores/authStore';
 import EventDetail from '@/components/events/EventDetail.vue';
-// import QuestsSidebarCard from '@/components/gamification/QuestsSidebarCard.vue';
+import QuestsSidebarCard from '@/components/gamification/QuestsSidebarCard.vue';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 
@@ -172,7 +162,7 @@ const defaultAvatar = '@/assets/images/avatar/01.jpg';
 
 export default {
   name: "LeftSidebar",
-  components: { UserCard, Toast, EventDetail, Dialog, Button }, 
+  components: { UserCard, Toast, EventDetail, Dialog, Button, QuestsSidebarCard },
   setup() {
     const eventStore = useEventStore();
     const authStore = useAuthStore();

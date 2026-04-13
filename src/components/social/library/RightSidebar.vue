@@ -68,11 +68,17 @@
 <script>
 import Avatar from "primevue/avatar";
 import Chip from "primevue/chip";
+import Tag from 'primevue/tag'
+import Button from 'primevue/button'
+import Skeleton from 'primevue/skeleton'
 import VotationBanner from '@/components/social/library/VotationBanner.vue';
 import { onValue, ref as dbRef, get } from "firebase/database";
 import { db } from "../../../../firebase.js";
 import { useAuthStore } from '@/stores/authStore';
+import { useEventStore } from '@/stores/eventStore'
 import { supabase } from '@/supabase.js';
+import gamificationService from '@/service/gamificationServiceSupabase'
+import userQuestsService from '@/service/userQuestsService'
 
 export default {
   name: "RightSidebar",
