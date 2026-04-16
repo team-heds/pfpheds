@@ -62,7 +62,7 @@
 
       <!-- Table Modules -->
       <div class="surface-card p-4 border-round shadow-2">
-        <DataTable :value="moduleList" :loading="loading" responsiveLayout="scroll" :paginator="true" :rows="15">
+        <DataTable :value="filteredModules" :loading="loading" responsiveLayout="scroll" :paginator="true" :rows="15" dataKey="id">
           <template #header>
             <span class="text-xl text-900 font-bold">Liste des Modules</span>
           </template>
@@ -148,8 +148,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useToast } from 'primevue/usetoast'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
+import modulesService from '@/service/modulesService'
+import { getSITeachers } from '@/service/academicKpiService'
 import Button from 'primevue/button'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
@@ -159,6 +162,8 @@ import Dropdown from 'primevue/dropdown'
 import Dialog from 'primevue/dialog'
 import InputNumber from 'primevue/inputnumber'
 import Textarea from 'primevue/textarea'
+
+const toast = useToast()
 
 const loading = ref(false)
 const showDialog = ref(false)
@@ -191,6 +196,52 @@ const newModule = ref({
   description: ''
 })
 
+const normalizedModules = computed(() => {
+  return (moduleList.value || []).map((m) => {
+    const year = Number(m.year || m.annee || 0)
+    const semestreNum = Number(m.semestre || 0)
+    const semestre = semestreNum ? `S${semestreNum}` : null
+    const responsable = m.responsable || m.responsable_email || '—'
+    const status = m.status || (year >= 3 ? 'Terminé' : year >= 2 ? 'Planifié' : 'En cours')
+
+    return {
+      id: m.id,
+      code: m.code || m.number || '—',
+      titre: m.title || m.titre || 'Sans titre',
+      program: m.track_id || m.program || 'Soins Infirmiers',
+      semestre,
+      credits: m.credits || 0,
+      heures: m.heures_contact || m.hours || 0,
+      enseignant: responsable,
+      status,
+      raw: m
+    }
+  })
+})
+
+const filteredModules = computed(() => {
+  const term = searchQuery.value.trim().toLowerCase()
+  return normalizedModules.value.filter((m) => {
+    const matchesProgram = !filterProgram.value || m.program === filterProgram.value?.nom
+    const matchesSemestre = !filterSemestre.value || m.semestre === filterSemestre.value
+    const matchesStatus = !filterStatus.value || m.status === filterStatus.value
+    const matchesSearch = !term ||
+      String(m.code).toLowerCase().includes(term) ||
+      String(m.titre).toLowerCase().includes(term) ||
+      String(m.enseignant).toLowerCase().includes(term)
+    return matchesProgram && matchesSemestre && matchesStatus && matchesSearch
+  })
+})
+
+function computeStats(modules) {
+  return {
+    total: modules.length,
+    enCours: modules.filter(m => m.status === 'En cours').length,
+    planifies: modules.filter(m => m.status === 'Planifié').length,
+    termines: modules.filter(m => m.status === 'Terminé').length
+  }
+}
+
 const getStatusSeverity = (status) => {
   const severities = {
     'En cours': 'info',
@@ -206,11 +257,48 @@ const viewDetails = (module) => {
 }
 
 const createModule = () => {
+  toast.add({
+    severity: 'info',
+    summary: 'Création non implémentée',
+    detail: 'Le formulaire est prêt mais la sauvegarde Supabase n\'est pas encore branchée.',
+    life: 4000
+  })
   showDialog.value = false
 }
 
-onMounted(() => {
-  loading.value = false
+onMounted(async () => {
+  loading.value = true
+  try {
+    const [mods, teachers] = await Promise.all([
+      modulesService.getAllModules(),
+      getSITeachers()
+    ])
+
+    moduleList.value = mods || []
+
+    const programSet = new Set()
+    for (const m of moduleList.value) {
+      const p = m.track_id || m.program || 'Soins Infirmiers'
+      if (p) programSet.add(p)
+    }
+    programs.value = [...programSet].sort().map(p => ({ nom: p }))
+
+    enseignants.value = (teachers || [])
+      .map(t => ({ nom: t.name, id: t.id, email: t.email }))
+      .sort((a, b) => a.nom.localeCompare(b.nom))
+
+    stats.value = computeStats(normalizedModules.value)
+  } catch (error) {
+    console.error('[ModuleListView] Erreur chargement modules:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: 'Impossible de charger les modules depuis Supabase.',
+      life: 5000
+    })
+  } finally {
+    loading.value = false
+  }
 })
 </script>
 

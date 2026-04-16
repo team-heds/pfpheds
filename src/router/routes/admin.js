@@ -20,6 +20,7 @@ export default [
     name: 'ModulePlanning', 
     meta: { requiresAuth: true, need: ['admin', 'RMSoins'] }
   },
+  { path: '/admin/soins-infirmiers/dashboard-enseignant', component: () => import('@/views/admin/DashboardEnseignantView.vue'), name: 'DashboardEnseignantSI', meta: { requiresAuth: true, need: ['admin', 'EnseignantSoins', 'RMSoins'] } },
   { path: '/admin/dashboard-enseignant', component: () => import('@/views/admin/DashboardEnseignantView.vue'), name: 'DashboardEnseignant', meta: { requiresAuth: true, need: ['admin', 'EnseignantSoins', 'EnseignantPhysio'] } },
   { path: '/admin/teachers-assignment', component: () => import('@/views/admin/TeacherAssignmentView.vue'), name: 'TeacherAssignment', meta: { requiresAuth: true, need: ['admin', 'RMSoins', 'PlanificateurHoraires'] } },
   { path: '/admin/dashboard-pfp', component: () => import('@/components/admin/AdminDashboardPFP.vue'), name: 'AdminDashboardPFP', meta: { requiresAuth: true } },

@@ -2,8 +2,8 @@
   <AdminLayout>
     <template #header>
       <PageHeader 
-        title="Dashboard Enseignant" 
-        subtitle="Votre emploi du temps et vos cours" 
+        :title="pageTitle" 
+        :subtitle="pageSubtitle" 
         icon="pi pi-graduation-cap" 
       />
     </template>
@@ -16,6 +16,16 @@
       </div>
 
       <div v-else class="dashboard-grid">
+
+        <div v-if="isPreviewMode" class="section-card preview-context">
+          <div class="preview-context-head">
+            <div>
+              <strong>Profil affiché:</strong> {{ previewTeacherName || previewTeacherEmail || 'Enseignant SI' }}
+              <p class="text-500 mt-1 mb-0">Vue personnalisée de l'enseignant (cours, modules, planning, exports).</p>
+            </div>
+            <Button label="Retour secrétariat" icon="pi pi-arrow-left" size="small" text @click="router.push('/admin/soins-infirmiers/dashboard')" />
+          </div>
+        </div>
         
         <!-- Statistiques rapides -->
         <div class="stats-cards">
@@ -56,6 +66,16 @@
             <div class="stat-info">
               <span class="stat-label">Étudiants</span>
               <span class="stat-value">{{ studentsCount }}</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon" style="background: #0f766e;">
+              <i class="pi pi-calendar-clock"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">Heures annuelles (planning)</span>
+              <span class="stat-value">{{ annualPlanningHours }}h</span>
             </div>
           </div>
         </div>
@@ -198,31 +218,71 @@
             <h3>
               <i class="pi pi-book"></i> 
               Mes Cours
-              <Badge :value="myCourses.length" severity="info" class="ml-2" />
+              <Badge :value="filteredAndSortedCourses.length" severity="info" class="ml-2" />
             </h3>
+            <div class="courses-toolbar">
+              <span class="p-input-icon-left">
+                <i class="pi pi-search" />
+                <InputText v-model="courseSearch" placeholder="Rechercher un cours..." class="p-inputtext-sm" style="width: 220px" />
+              </span>
+              <Dropdown v-model="courseModuleFilter" :options="courseModuleOptions" optionLabel="label" optionValue="value" class="p-inputtext-sm" style="min-width: 180px" />
+              <Dropdown v-model="courseSort" :options="courseSortOptions" optionLabel="label" optionValue="value" class="p-inputtext-sm" style="min-width: 170px" />
+              <Button icon="pi pi-file-excel" label="Excel cours" severity="success" size="small" outlined @click="exportMyCoursesExcel" />
+            </div>
           </div>
 
-          <div class="courses-grid">
-            <div v-for="course in myCourses" :key="course.id" class="course-card">
-              <div class="course-header">
-                <h4>{{ course.name }}</h4>
-                <span class="course-badge" :style="{ backgroundColor: course.color || '#3b82f6' }">{{ course.code }}</span>
+          <DataTable
+            :value="filteredAndSortedCourses"
+            responsiveLayout="scroll"
+            stripedRows
+            class="p-datatable-sm"
+            :rows="12"
+            :paginator="filteredAndSortedCourses.length > 12"
+          >
+            <Column field="moduleName" header="Module" sortable>
+              <template #body="{ data }">
+                <div class="module-cell">
+                  <span class="module-color-dot" :style="{ backgroundColor: data.moduleColor || data.color || '#3b82f6' }" />
+                  <div>
+                    <div class="font-semibold">{{ data.moduleName }}</div>
+                    <small class="text-500">{{ data.moduleCode || '—' }}</small>
+                  </div>
+                </div>
+              </template>
+            </Column>
+            <Column field="name" header="Cours" sortable>
+              <template #body="{ data }">
+                <div>
+                  <div class="font-semibold">{{ data.name }}</div>
+                  <small class="text-500">{{ data.code || '—' }}</small>
+                </div>
+              </template>
+            </Column>
+            <Column field="type" header="Type" style="width: 100px">
+              <template #body="{ data }">
+                <Tag :value="data.type || 'CM'" severity="secondary" />
+              </template>
+            </Column>
+            <Column field="hours" header="Heures" sortable style="width: 90px">
+              <template #body="{ data }">{{ data.hours }}h</template>
+            </Column>
+            <Column field="nextSessionLabel" header="Prochaine séance" sortable>
+              <template #body="{ data }">
+                <span>{{ data.nextSessionLabel || 'Non planifiée' }}</span>
+              </template>
+            </Column>
+            <Column header="Action" style="width: 100px">
+              <template #body="{ data }">
+                <Button label="Détails" icon="pi pi-eye" class="p-button-sm p-button-text" @click="viewCourse(data)" :disabled="!data.canOpenDetails || !data.id" />
+              </template>
+            </Column>
+            <template #empty>
+              <div class="text-center py-4">
+                <i class="pi pi-inbox text-3xl text-400"></i>
+                <p class="mt-2">{{ normalizedMyCourses.length === 0 ? 'Aucun cours assigné' : 'Aucun cours avec ces filtres' }}</p>
               </div>
-              <div class="course-meta">
-                <span><i class="pi pi-clock"></i> {{ course.hours }}h</span>
-                <span><i class="pi pi-folder"></i> {{ course.moduleName }}</span>
-              </div>
-              <div class="course-footer">
-                <Tag :value="course.type || 'CM'" severity="secondary" />
-                <Button label="Détails" icon="pi pi-eye" class="p-button-sm p-button-text" @click="viewCourse(course)" />
-              </div>
-            </div>
-            <div v-if="myCourses.length === 0" class="empty-state">
-              <i class="pi pi-inbox"></i>
-              <p>Aucun cours assigné</p>
-              <small>Contactez le responsable de module pour être assigné</small>
-            </div>
-          </div>
+            </template>
+          </DataTable>
         </div>
 
         <!-- Mes Modules -->
@@ -241,11 +301,11 @@
               </div>
               <div class="module-info">
                 <h4>{{ module.title }}</h4>
-                <p>{{ module.code }} - {{ module.credits }} ECTS</p>
+                <p>{{ module.credits }} ECTS</p>
                 <small class="text-500">RM: {{ module.responsable || module.responsable_email }}</small>
               </div>
               <div class="module-year">
-                <Tag :value="'BA' + module.year" severity="info" />
+                <Tag :value="module.code || ('BA' + module.year)" severity="info" />
               </div>
             </div>
             <div v-if="myModules.length === 0" class="empty-state">
@@ -332,8 +392,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, computed, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/authStore';
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 import PageHeader from '@/components/admin/common/PageHeader.vue';
@@ -341,13 +401,15 @@ import Button from 'primevue/button';
 import ProgressSpinner from 'primevue/progressspinner';
 import Badge from 'primevue/badge';
 import Tag from 'primevue/tag';
-import Checkbox from 'primevue/checkbox';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import Dropdown from 'primevue/dropdown';
+import InputText from 'primevue/inputtext';
 import { loadEnseignantDashboard } from '@/service/enseignantDashboardService';
 import { useToast } from 'primevue/usetoast';
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 const toast = useToast();
 
@@ -371,6 +433,47 @@ const weekSchedule = ref([]);
 const upcomingSessions = ref([]);
 const allMySlots = ref([]);
 const calendarView = ref('week');
+const courseSearch = ref('');
+const courseModuleFilter = ref('all');
+const courseSort = ref('date-asc');
+
+const courseSortOptions = [
+  { label: 'Date (prochaine)', value: 'date-asc' },
+  { label: 'Module (A-Z)', value: 'module-asc' },
+  { label: 'Module (Z-A)', value: 'module-desc' },
+  { label: 'Cours (A-Z)', value: 'name-asc' },
+  { label: 'Heures (desc)', value: 'hours-desc' }
+];
+
+const previewTeacherName = computed(() => String(route.query.teacher || '').trim())
+const previewTeacherEmail = computed(() => String(route.query.email || '').trim())
+const previewTeacherId = computed(() => String(route.query.teacherId || '').trim())
+const isPreviewMode = computed(() => !!previewTeacherId.value || !!previewTeacherName.value || !!previewTeacherEmail.value)
+
+const pageTitle = computed(() => isPreviewMode.value ? 'Dashboard Enseignant SI (profil ciblé)' : 'Dashboard Enseignant')
+const pageSubtitle = computed(() => {
+  if (!isPreviewMode.value) return 'Votre emploi du temps et vos cours'
+  const label = previewTeacherName.value || previewTeacherEmail.value
+  return `Vue de l'enseignant: ${label}`
+})
+
+const annualPlanningHours = computed(() => {
+  const total = (allMySlots.value || []).reduce((sum, slot) => {
+    const [sh, sm] = String(slot.start_time || '').split(':').map(Number)
+    const [eh, em] = String(slot.end_time || '').split(':').map(Number)
+    if ([sh, sm, eh, em].some(Number.isNaN)) return sum
+    const diff = (eh + em / 60) - (sh + sm / 60)
+    return sum + (diff > 0 ? diff : 0)
+  }, 0)
+  return Math.round(total * 10) / 10
+})
+
+const exportTeacherLabel = computed(() => {
+  if (isPreviewMode.value) {
+    return previewTeacherName.value || previewTeacherEmail.value || 'enseignant'
+  }
+  return authStore.user?.displayName || authStore.user?.email?.split('@')[0] || 'enseignant'
+})
 
 // Computed: prochains cours (aujourd'hui + demain + cette semaine)
 const nextWeekCourses = computed(() => {
@@ -392,6 +495,129 @@ const weeklyHours = computed(() => stats.value.weeklyHours);
 const nextCourse = computed(() => stats.value.nextCourse);
 const studentsCount = computed(() => stats.value.studentsCount);
 
+function normalizeModuleCode(value) {
+  return String(value || '').trim().toUpperCase().replace(/\s+/g, '');
+}
+
+function normalizeText(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+function getSessionSortKey(session) {
+  if (!session) return Number.MAX_SAFE_INTEGER;
+  const dayOrder = { Lundi: 1, Mardi: 2, Mercredi: 3, Jeudi: 4, Vendredi: 5, Samedi: 6, Dimanche: 7 };
+  const start = String(session.time || '').split(' - ')[0] || '';
+  const [h, m] = start.split(':').map(Number);
+  const hh = Number.isNaN(h) ? 99 : h;
+  const mm = Number.isNaN(m) ? 99 : m;
+  return (Number(session.weekNumber) || 999) * 100000 + (dayOrder[session.day] || 99) * 1000 + hh * 10 + Math.floor(mm / 10);
+}
+
+function getNextSessionForCourse(course) {
+  const targetModule = normalizeModuleCode(course.moduleCode);
+  const targetName = normalizeText(course.name);
+  const targetCode = normalizeText(course.code);
+  const sessions = upcomingSessions.value || [];
+
+  const strictCandidates = sessions.filter(session => {
+    const sessionCourse = normalizeText(session.course);
+    if (targetName && sessionCourse && sessionCourse.includes(targetName)) return true;
+    if (targetCode && sessionCourse && sessionCourse.includes(targetCode)) return true;
+    return false;
+  });
+
+  const candidates = strictCandidates.length
+    ? strictCandidates
+    : sessions.filter(session => {
+      const sessionModule = normalizeModuleCode(session.module);
+      return targetModule && sessionModule && targetModule === sessionModule;
+    });
+
+  if (!candidates.length) return null;
+  const sorted = [...candidates].sort((a, b) => getSessionSortKey(a) - getSessionSortKey(b));
+  return sorted[0];
+}
+
+const moduleById = computed(() => {
+  const map = new Map();
+  (myModules.value || []).forEach(m => {
+    if (m?.id) map.set(m.id, m);
+  });
+  return map;
+});
+
+const moduleByCode = computed(() => {
+  const map = new Map();
+  (myModules.value || []).forEach(m => {
+    if (m?.code) map.set(normalizeModuleCode(m.code), m);
+  });
+  return map;
+});
+
+const normalizedMyCourses = computed(() => {
+  return (myCourses.value || []).map(course => {
+    const byId = course?.moduleId ? moduleById.value.get(course.moduleId) : null;
+    const byCode = course?.moduleCode ? moduleByCode.value.get(normalizeModuleCode(course.moduleCode)) : null;
+    const module = byId || byCode || null;
+    const moduleName = module?.title || course?.moduleName || (course?.moduleCode ? `Module ${course.moduleCode}` : 'Module inconnu');
+    const moduleCode = module?.code || course?.moduleCode || '';
+    const moduleColor = module?.color || course?.moduleColor || null;
+    const nextSession = getNextSessionForCourse({ ...course, moduleCode, moduleName });
+    const nextSessionLabel = nextSession ? `${nextSession.day} ${nextSession.time} (S${nextSession.weekNumber})` : '';
+    const nextSortKey = getSessionSortKey(nextSession);
+
+    return {
+      ...course,
+      moduleName,
+      moduleCode,
+      moduleColor,
+      nextSessionLabel,
+      nextSortKey,
+      hours: Math.round((Number(course?.hours) || 0) * 10) / 10
+    };
+  });
+});
+
+const courseModuleOptions = computed(() => {
+  const options = [{ label: 'Tous les modules', value: 'all' }];
+  const moduleNames = [...new Set(normalizedMyCourses.value.map(c => c.moduleName).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
+  moduleNames.forEach(name => options.push({ label: name, value: name }));
+  return options;
+});
+
+const filteredAndSortedCourses = computed(() => {
+  const term = String(courseSearch.value || '').trim().toLowerCase();
+
+  let courses = normalizedMyCourses.value.filter(course => {
+    if (courseModuleFilter.value !== 'all' && course.moduleName !== courseModuleFilter.value) return false;
+    if (!term) return true;
+    return [course.name, course.code, course.moduleName, course.moduleCode, course.type]
+      .some(v => String(v || '').toLowerCase().includes(term));
+  });
+
+  courses = [...courses].sort((a, b) => {
+    switch (courseSort.value) {
+      case 'date-asc':
+        return (Number(a.nextSortKey) || Number.MAX_SAFE_INTEGER) - (Number(b.nextSortKey) || Number.MAX_SAFE_INTEGER);
+      case 'module-desc':
+        return String(b.moduleName || '').localeCompare(String(a.moduleName || ''), 'fr');
+      case 'name-asc':
+        return String(a.name || '').localeCompare(String(b.name || ''), 'fr');
+      case 'hours-desc':
+        return (Number(b.hours) || 0) - (Number(a.hours) || 0);
+      case 'module-asc':
+      default:
+        return String(a.moduleName || '').localeCompare(String(b.moduleName || ''), 'fr') || String(a.name || '').localeCompare(String(b.name || ''), 'fr');
+    }
+  });
+
+  return courses;
+});
+
 
 /**
  * Charge les données enseignant depuis Supabase
@@ -400,18 +626,22 @@ async function loadTeacherData() {
   loading.value = true;
   
   try {
-    const userId = authStore.user?.id || authStore.user?.uid;
-    const userEmail = authStore.user?.email;
+    const currentUserId = authStore.user?.id || authStore.user?.uid;
+    const currentUserEmail = authStore.user?.email;
+    const currentDisplayName = authStore.user?.displayName || authStore.user?.name || null;
+    const targetUserId = isPreviewMode.value ? (previewTeacherId.value || null) : currentUserId;
+    const targetUserEmail = isPreviewMode.value ? (previewTeacherEmail.value || null) : currentUserEmail;
+    const teacherNameForPlanning = isPreviewMode.value ? previewTeacherName.value : currentDisplayName;
     
-    if (!userId && !userEmail) {
+    if (!targetUserId && !targetUserEmail && !teacherNameForPlanning) {
       console.warn('⚠️ Aucun utilisateur connecté');
       loading.value = false;
       return;
     }
     
-    console.log('🔄 Chargement données enseignant pour:', userEmail);
+    console.log('🔄 Chargement données enseignant pour:', targetUserEmail || teacherNameForPlanning);
     
-    const data = await loadEnseignantDashboard(userId, userEmail);
+    const data = await loadEnseignantDashboard(targetUserId, targetUserEmail, teacherNameForPlanning);
     
     // Mettre à jour les stats
     stats.value = data.stats;
@@ -434,11 +664,16 @@ async function loadTeacherData() {
   }
 }
 
-onMounted(() => {
-  loadTeacherData();
-});
+watch(
+  [previewTeacherId, previewTeacherEmail, previewTeacherName],
+  () => {
+    loadTeacherData();
+  },
+  { immediate: true }
+)
 
 function viewCourse(course) {
+  if (!course?.id || course?.canOpenDetails === false) return
   console.log('View course:', course);
   router.push(`/admin/courses/${course.id}`);
 }
@@ -471,7 +706,7 @@ async function exportMyPlanning() {
     import('jspdf-autotable')
   ]);
   
-  const userName = authStore.user?.displayName || authStore.user?.email?.split('@')[0] || 'enseignant';
+  const userName = exportTeacherLabel.value;
   
   // Créer le PDF
   const doc = new jsPDF('landscape');
@@ -525,7 +760,7 @@ async function exportMyPlanningExcel() {
   
   const XLSX = await import('xlsx');
   
-  const userName = authStore.user?.displayName || authStore.user?.email?.split('@')[0] || 'enseignant';
+  const userName = exportTeacherLabel.value;
   
   const data = upcomingSessions.value.map(session => ({
     'Semaine': session.weekNumber,
@@ -548,6 +783,78 @@ async function exportMyPlanningExcel() {
     severity: 'success',
     summary: 'Export Excel réussi',
     detail: `${upcomingSessions.value.length} séances exportées`,
+    life: 3000
+  });
+}
+
+function sanitizeSheetName(name, fallback = 'Feuille') {
+  const cleaned = String(name || fallback)
+    .replace(/[\\/*?:\[\]]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return (cleaned || fallback).slice(0, 31);
+}
+
+async function exportMyCoursesExcel() {
+  if (normalizedMyCourses.value.length === 0) {
+    toast.add({ severity: 'warn', summary: 'Aucune donnée', detail: 'Aucun cours à exporter', life: 3000 });
+    return;
+  }
+
+  const XLSX = await import('xlsx');
+  const wb = XLSX.utils.book_new();
+  const today = new Date().toISOString().split('T')[0];
+  const userName = exportTeacherLabel.value;
+
+  const overviewRows = normalizedMyCourses.value.map(course => ({
+    'Module': course.moduleName,
+    'Code module': course.moduleCode || '',
+    'Cours': course.name || '',
+    'Code cours': course.code || '',
+    'Type': course.type || '',
+    'Heures': course.hours || 0,
+    'Source': course.role || 'Enseignant'
+  }));
+
+  const wsOverview = XLSX.utils.json_to_sheet(overviewRows);
+  XLSX.utils.book_append_sheet(wb, wsOverview, 'Vue ensemble');
+
+  const byModule = new Map();
+  normalizedMyCourses.value.forEach(course => {
+    const key = course.moduleName || 'Module inconnu';
+    if (!byModule.has(key)) byModule.set(key, []);
+    byModule.get(key).push(course);
+  });
+
+  const usedSheetNames = new Set(['Vue ensemble']);
+  byModule.forEach((courses, moduleName) => {
+    const rows = courses.map(course => ({
+      'Cours': course.name || '',
+      'Code cours': course.code || '',
+      'Type': course.type || '',
+      'Heures': course.hours || 0,
+      'Code module': course.moduleCode || '',
+      'Source': course.role || 'Enseignant'
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    let sheetName = sanitizeSheetName(moduleName, 'Module');
+    let suffix = 2;
+    while (usedSheetNames.has(sheetName)) {
+      const base = sanitizeSheetName(moduleName, 'Module').slice(0, 28);
+      sheetName = `${base}-${suffix}`;
+      suffix += 1;
+    }
+    usedSheetNames.add(sheetName);
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  });
+
+  XLSX.writeFile(wb, `Cours_${userName}_${today}.xlsx`);
+
+  toast.add({
+    severity: 'success',
+    summary: 'Export Excel réussi',
+    detail: `${normalizedMyCourses.value.length} cours exportés (${byModule.size + 1} onglets)`,
     life: 3000
   });
 }
@@ -616,6 +923,17 @@ async function exportMyPlanningExcel() {
 
 .section-card.full-width {
   grid-column: 1 / -1;
+}
+
+.preview-context {
+  border-left: 4px solid #0ea5e9;
+}
+
+.preview-context-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
 }
 
 .section-card h3 {
@@ -697,6 +1015,13 @@ async function exportMyPlanningExcel() {
   padding: 1rem;
   background: var(--surface-ground);
   border-radius: 0.5rem;
+}
+
+.courses-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .course-header {
@@ -834,6 +1159,26 @@ async function exportMyPlanningExcel() {
   display: flex;
   align-items: center;
   gap: 0.25rem;
+}
+
+.module-chip {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.module-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.module-color-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: 0 0 10px;
 }
 
 .course-footer {

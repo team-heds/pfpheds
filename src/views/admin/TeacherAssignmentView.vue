@@ -107,12 +107,28 @@
         <div class="modules-section">
           <div class="section-header">
             <h3><i class="pi pi-book"></i> Modules et Enseignants</h3>
-            <Button 
-              label="Nouvelle assignation" 
-              icon="pi pi-plus" 
-              @click="showAssignDialog = true"
-              severity="success"
-            />
+            <div class="flex gap-2 align-items-center">
+              <Button
+                label="Export par personne"
+                icon="pi pi-file-excel"
+                severity="secondary"
+                outlined
+                @click="exportByPerson"
+              />
+              <Button
+                label="Export par module"
+                icon="pi pi-file-excel"
+                severity="info"
+                outlined
+                @click="exportByModule"
+              />
+              <Button 
+                label="Nouvelle assignation" 
+                icon="pi pi-plus" 
+                @click="showAssignDialog = true"
+                severity="success"
+              />
+            </div>
           </div>
 
           <div class="modules-list">
@@ -166,6 +182,11 @@
                       <span class="teacher-name">{{ teacher.name }}</span>
                       <span class="teacher-hours">{{ teacher.hours || 0 }}h</span>
                     </div>
+                    <Tag
+                      v-if="teacher.role === 'postulation_interne'"
+                      value="Postulation interne"
+                      severity="warning"
+                    />
                     <Button 
                       icon="pi pi-times" 
                       @click="removeTeacher(module, teacher)"
@@ -423,6 +444,11 @@ const totalHours = computed(() => {
   }, 0)
 })
 
+function isInternalPostulationName(name) {
+  const v = String(name || '').toLowerCase()
+  return v.includes('postulation') || v.includes('repourvoir') || v.includes('a réattribuer') || v.includes('à réattribuer')
+}
+
 // Methods
 async function loadData() {
   loading.value = true
@@ -495,6 +521,45 @@ async function loadAssignments() {
       })
     })
     
+    // Ajouter les postulations internes visibles depuis le planning (teachers[] sur planning_time_slots)
+    const { data: planningSlots, error: planningError } = await supabase
+      .from('planning_time_slots')
+      .select('module_code, teachers')
+      .not('teachers', 'is', null)
+
+    if (!planningError && planningSlots?.length) {
+      for (const slot of planningSlots) {
+        const moduleCode = slot.module_code
+        if (!moduleCode || !Array.isArray(slot.teachers)) continue
+
+        const matchedModule = modules.value.find(m => String(m.code || '').toLowerCase() === String(moduleCode).toLowerCase())
+        if (!matchedModule) continue
+
+        if (!assignmentsByModule[matchedModule.id]) {
+          assignmentsByModule[matchedModule.id] = []
+        }
+
+        for (const raw of slot.teachers) {
+          const label = typeof raw === 'object' ? raw?.name : raw
+          if (!isInternalPostulationName(label)) continue
+
+          const normalized = String(label || '').trim() || 'Postulation interne'
+          const exists = assignmentsByModule[matchedModule.id].some(t =>
+            t.role === 'postulation_interne' && String(t.name || '').toLowerCase() === normalized.toLowerCase()
+          )
+          if (exists) continue
+
+          assignmentsByModule[matchedModule.id].push({
+            id: `postulation_${matchedModule.id}_${normalized.toLowerCase().replace(/\s+/g, '_')}`,
+            name: normalized,
+            email: '',
+            hours: 0,
+            role: 'postulation_interne'
+          })
+        }
+      }
+    }
+
     // Attach teachers to modules
     modules.value.forEach(module => {
       module.teachers = assignmentsByModule[module.id] || []
@@ -591,6 +656,16 @@ async function submitAssignment() {
 
 async function removeTeacher(module, teacher) {
   try {
+    if (teacher.role === 'postulation_interne') {
+      toast.add({
+        severity: 'info',
+        summary: 'Information',
+        detail: 'Les postulations internes proviennent du planning. Modifiez le créneau pour les retirer.',
+        life: 4500
+      })
+      return
+    }
+
     // Find and delete the assignment
     const { error } = await supabase
       .from('course_teachers')
@@ -642,6 +717,118 @@ function getAvatarColor(id) {
 
 function onDragStart(event, teacher) {
   event.dataTransfer.setData('teacher', JSON.stringify(teacher))
+}
+
+async function exportByPerson() {
+  try {
+    const ExcelJS = await import('exceljs')
+    const workbook = new ExcelJS.Workbook()
+
+    const personMap = new Map()
+    for (const module of modules.value) {
+      for (const teacher of (module.teachers || [])) {
+        if (!personMap.has(teacher.name)) {
+          personMap.set(teacher.name, [])
+        }
+        personMap.get(teacher.name).push({
+          moduleNumber: module.number || '',
+          moduleTitle: module.title || '',
+          role: teacher.role || 'enseignant',
+          hours: teacher.hours || 0
+        })
+      }
+    }
+
+    const ws = workbook.addWorksheet('Par personne')
+    ws.columns = [
+      { header: 'Enseignant', key: 'teacher', width: 30 },
+      { header: 'Module', key: 'module', width: 16 },
+      { header: 'Titre module', key: 'title', width: 40 },
+      { header: 'Rôle', key: 'role', width: 20 },
+      { header: 'Heures', key: 'hours', width: 12 }
+    ]
+
+    ws.getRow(1).font = { bold: true }
+    for (const [teacherName, items] of personMap.entries()) {
+      for (const item of items) {
+        ws.addRow({
+          teacher: teacherName,
+          module: item.moduleNumber,
+          title: item.moduleTitle,
+          role: item.role,
+          hours: item.hours
+        })
+      }
+    }
+
+    const blob = new Blob([await workbook.xlsx.writeBuffer()], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `assignations-si-par-personne-${new Date().toISOString().split('T')[0]}.xlsx`
+    link.click()
+    URL.revokeObjectURL(url)
+    toast.add({ severity: 'success', summary: 'Export réussi', detail: 'Fichier par personne généré', life: 3000 })
+  } catch (error) {
+    console.error('Erreur export par personne:', error)
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible d\'exporter par personne', life: 4000 })
+  }
+}
+
+async function exportByModule() {
+  try {
+    const ExcelJS = await import('exceljs')
+    const workbook = new ExcelJS.Workbook()
+
+    const ws = workbook.addWorksheet('Par module')
+    ws.columns = [
+      { header: 'Module', key: 'module', width: 16 },
+      { header: 'Titre module', key: 'title', width: 40 },
+      { header: 'Enseignant', key: 'teacher', width: 30 },
+      { header: 'Rôle', key: 'role', width: 20 },
+      { header: 'Heures', key: 'hours', width: 12 }
+    ]
+    ws.getRow(1).font = { bold: true }
+
+    for (const module of modules.value) {
+      if (!module.teachers || module.teachers.length === 0) {
+        ws.addRow({
+          module: module.number || '',
+          title: module.title || '',
+          teacher: '—',
+          role: 'non attribué',
+          hours: 0
+        })
+        continue
+      }
+
+      for (const teacher of module.teachers) {
+        ws.addRow({
+          module: module.number || '',
+          title: module.title || '',
+          teacher: teacher.name || '—',
+          role: teacher.role || 'enseignant',
+          hours: teacher.hours || 0
+        })
+      }
+    }
+
+    const blob = new Blob([await workbook.xlsx.writeBuffer()], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `assignations-si-par-module-${new Date().toISOString().split('T')[0]}.xlsx`
+    link.click()
+    URL.revokeObjectURL(url)
+    toast.add({ severity: 'success', summary: 'Export réussi', detail: 'Fichier par module généré', life: 3000 })
+  } catch (error) {
+    console.error('Erreur export par module:', error)
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible d\'exporter par module', life: 4000 })
+  }
 }
 
 onMounted(() => {

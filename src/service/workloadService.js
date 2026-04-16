@@ -34,6 +34,16 @@ const EXCLUDED_TEACHERS = [
   'sipe', 'arfec', 'queer valais', 'sofia'
 ]
 
+const EXCLUDED_TEACHER_KEYWORDS = [
+  'postulation',
+  'repourvoir',
+  'reattribuer',
+  'réattribuer',
+  'pas d\'enseignant',
+  'a reattribuer',
+  'a réattribuer'
+]
+
 // Alias manuels : variantes de noms impossibles à résoudre automatiquement
 // Clé = teacherKey de la variante, Valeur = teacherKey canonique
 const TEACHER_ALIASES = {
@@ -86,8 +96,12 @@ export function normalizeTeacherName(raw) {
   let name = raw.replace(/"/g, '').trim()
   if (!name) return null
 
+  const lowered = name.toLowerCase()
+  const loweredNoAccent = stripAccents(lowered)
+
   // Ignorer les entrées non-personnes
-  if (EXCLUDED_TEACHERS.some(e => name.toLowerCase() === e)) return null
+  if (EXCLUDED_TEACHERS.some(e => lowered === e)) return null
+  if (EXCLUDED_TEACHER_KEYWORDS.some(k => lowered.includes(k) || loweredNoAccent.includes(stripAccents(k)))) return null
   // Ignorer les entrées descriptives (contient "enseignant", "intervenants", "physios", etc.)
   if (/^\d+ (enseignant|intervenant|physio)/i.test(name)) return null
   // Ignorer les entrées qui commencent par des descriptions longues
@@ -142,7 +156,37 @@ export function getCoefficientLabel(teacherCount, isAtelier = false) {
  */
 export function isAtelierActivity(activity) {
   if (!activity) return false
-  return ATELIER_ACTIVITIES.some(a => activity.toLowerCase().includes(a.toLowerCase()))
+  const normalized = String(activity).toLowerCase().trim()
+  return normalized === 'atelier' || normalized === 'atelier / pratique' || normalized === 'pratique' || normalized === 'labo'
+}
+
+function isAtelierTextFallback(text) {
+  if (!text) return false
+  const normalized = stripAccents(String(text).toLowerCase())
+  return /\batelier\b/.test(normalized) || /\blabo\b/.test(normalized)
+}
+
+function classifyAtelierSlot(slot) {
+  if (slot?.activity_type) {
+    return {
+      isAtelier: isAtelierActivity(slot.activity_type),
+      source: 'activity_type'
+    }
+  }
+
+  // Legacy fallback: l'activité libre peut contenir un préfixe de type "Atelier — ..."
+  if (slot?.activity) {
+    const activityHead = String(slot.activity).split('—')[0].trim()
+    if (isAtelierActivity(activityHead)) return { isAtelier: true, source: 'activity' }
+    if (isAtelierTextFallback(slot.activity)) return { isAtelier: true, source: 'activity' }
+  }
+
+  // Dernier recours pour anciens slots non structurés
+  if (isAtelierTextFallback(slot?.course_title)) {
+    return { isAtelier: true, source: 'course_title' }
+  }
+
+  return { isAtelier: false, source: 'none' }
 }
 
 /**
@@ -152,6 +196,27 @@ export function isAtelierActivity(activity) {
 function normalizeClassCode(code) {
   if (!code) return 'non-assigné'
   return code.trim().toUpperCase()
+}
+
+function toPlanningClassCode(code) {
+  if (!code) return null
+  const raw = String(code).trim().toUpperCase()
+  if (!raw) return null
+  return /^B\d/.test(raw) ? `BAC${raw.slice(1)}` : raw
+}
+
+function buildAcademicYearClassCodeSet(classes) {
+  const set = new Set()
+  for (const cls of (classes || [])) {
+    const raw = cls?.code
+    if (!raw) continue
+    const normalizedRaw = normalizeClassCode(raw)
+    const planningCode = toPlanningClassCode(raw)
+
+    if (normalizedRaw) set.add(normalizedRaw)
+    if (planningCode) set.add(planningCode)
+  }
+  return set
 }
 
 /**
@@ -316,7 +381,7 @@ class WorkloadService {
 
   async computeWorkload(semester, academicYearId) {
     // 1. Charger les données
-    const [teachers, classes, allSlots, moduleNames] = await Promise.all([
+    const [teachers, classes, allSlotsRaw, moduleNames] = await Promise.all([
       this.getTeachers(),
       this.getClassesWithStudentCount(academicYearId),
       semester === 'all'
@@ -325,11 +390,34 @@ class WorkloadService {
       this.getModuleNames()
     ])
 
-    // 2. Construire la feuille de charges par enseignant (groupé par teacherKey)
+    // 2. Filtrer les créneaux sur les classes de l'année académique active
+    // (sinon on mélange plusieurs cohortes/années et les heures deviennent fausses)
+    const classCodeSet = buildAcademicYearClassCodeSet(classes)
+    const allSlots = classCodeSet.size > 0
+      ? (allSlotsRaw || []).filter(slot => classCodeSet.has(normalizeClassCode(slot.class_code)))
+      : (allSlotsRaw || [])
+
+    // 3. Construire la feuille de charges par enseignant (groupé par teacherKey)
     // keyMap: teacherKey → { teacher, workload }
     // On garde le "meilleur" nom d'affichage (le plus long / avec accents)
     const teacherWorkloads = {}  // teacherKey → workload
     const keyDisplayName = {}    // teacherKey → meilleur nom d'affichage
+    const diagnostics = {
+      scannedSlots: allSlots.length,
+      slotsWithoutTeachers: 0,
+      slotsWithNoValidTeacher: 0,
+      slotsWithInvalidTime: 0,
+      slotsWithExcludedTeacherEntries: 0,
+      atelierDetectedByActivityType: 0,
+      atelierDetectedByFallback: 0,
+      coefficientDistribution: {
+        '1.6': 0,
+        '2.2': 0,
+        '2.5': 0,
+        '4.0': 0
+      },
+      rows: []
+    }
 
     function pickBestName(key, candidate) {
       const current = keyDisplayName[key]
@@ -358,34 +446,146 @@ class WorkloadService {
       }
     }
 
-    // 3. Parcourir chaque créneau et attribuer aux profs
+    // 4. Parcourir chaque créneau et attribuer aux profs
     for (const slot of allSlots) {
-      if (!slot.teachers || slot.teachers.length === 0) continue
+      const rawTeachers = Array.isArray(slot.teachers) ? slot.teachers : []
+      if (rawTeachers.length === 0) {
+        diagnostics.slotsWithoutTeachers++
+        diagnostics.rows.push({
+          slotId: slot.id,
+          weekNumber: slot.week_number,
+          day: slot.day,
+          classCode: normalizeClassCode(slot.class_code),
+          moduleCode: slot.module_code || '',
+          courseTitle: slot.course_title || '',
+          activityType: slot.activity_type || '',
+          activity: slot.activity || '',
+          rawTeacherCount: 0,
+          normalizedTeacherCount: 0,
+          rawTeachers: '',
+          normalizedTeachers: '',
+          periods: 0,
+          isAtelier: false,
+          atelierSource: 'none',
+          coefficient: '',
+          coeffLabel: '',
+          weightedPeriods: 0,
+          issue: 'no_teachers'
+        })
+        continue
+      }
 
       const periods = computePeriods(slot.start_time, slot.end_time)
-      if (periods <= 0) continue
+      if (periods <= 0) {
+        diagnostics.slotsWithInvalidTime++
+        diagnostics.rows.push({
+          slotId: slot.id,
+          weekNumber: slot.week_number,
+          day: slot.day,
+          classCode: normalizeClassCode(slot.class_code),
+          moduleCode: slot.module_code || '',
+          courseTitle: slot.course_title || '',
+          activityType: slot.activity_type || '',
+          activity: slot.activity || '',
+          rawTeacherCount: rawTeachers.length,
+          normalizedTeacherCount: 0,
+          rawTeachers: rawTeachers.map(t => (typeof t === 'object' ? t?.name : t)).filter(Boolean).join(' | '),
+          normalizedTeachers: '',
+          periods: 0,
+          isAtelier: false,
+          atelierSource: 'none',
+          coefficient: '',
+          coeffLabel: '',
+          weightedPeriods: 0,
+          issue: 'invalid_time'
+        })
+        continue
+      }
 
-      // Détecter atelier : activity_type, activity, OU course_title
-      const isAtelier = isAtelierActivity(slot.activity_type)
-        || isAtelierActivity(slot.activity)
-        || isAtelierActivity(slot.course_title)
+      // Détecter atelier avec priorité au champ structuré activity_type
+      const atelierDetection = classifyAtelierSlot(slot)
+      const isAtelier = atelierDetection.isAtelier
+      if (isAtelier) {
+        if (atelierDetection.source === 'activity_type') {
+          diagnostics.atelierDetectedByActivityType++
+        } else {
+          diagnostics.atelierDetectedByFallback++
+        }
+      }
       // Normaliser et dédupliquer par teacherKey
       const seen = new Set()
       const slotTeacherKeys = []
-      for (const raw of slot.teachers) {
+      const normalizedTeacherNames = []
+      for (const raw of rawTeachers) {
         const norm = normalizeTeacherName(raw)
         if (!norm) continue
         const key = teacherKey(norm)
         if (!key || seen.has(key)) continue
         seen.add(key)
         slotTeacherKeys.push(key)
+        normalizedTeacherNames.push(norm)
         pickBestName(key, norm)
       }
       const teacherCount = slotTeacherKeys.length
-      if (teacherCount === 0) continue
+      if (teacherCount === 0) {
+        diagnostics.slotsWithNoValidTeacher++
+        diagnostics.rows.push({
+          slotId: slot.id,
+          weekNumber: slot.week_number,
+          day: slot.day,
+          classCode: normalizeClassCode(slot.class_code),
+          moduleCode: slot.module_code || '',
+          courseTitle: slot.course_title || '',
+          activityType: slot.activity_type || '',
+          activity: slot.activity || '',
+          rawTeacherCount: rawTeachers.length,
+          normalizedTeacherCount: 0,
+          rawTeachers: rawTeachers.map(t => (typeof t === 'object' ? t?.name : t)).filter(Boolean).join(' | '),
+          normalizedTeachers: '',
+          periods,
+          isAtelier,
+          atelierSource: atelierDetection.source,
+          coefficient: '',
+          coeffLabel: '',
+          weightedPeriods: 0,
+          issue: 'no_valid_teacher'
+        })
+        continue
+      }
+
+      if (teacherCount < rawTeachers.length) {
+        diagnostics.slotsWithExcludedTeacherEntries++
+      }
+
       const coeff = getCoefficient(teacherCount, isAtelier)
       const coeffLabel = getCoefficientLabel(teacherCount, isAtelier)
       const weightedPeriods = Math.round(periods * coeff * 10) / 10
+      const coeffKey = coeff.toFixed(1)
+      if (diagnostics.coefficientDistribution[coeffKey] !== undefined) {
+        diagnostics.coefficientDistribution[coeffKey]++
+      }
+
+      diagnostics.rows.push({
+        slotId: slot.id,
+        weekNumber: slot.week_number,
+        day: slot.day,
+        classCode: normalizeClassCode(slot.class_code),
+        moduleCode: slot.module_code || '',
+        courseTitle: slot.course_title || '',
+        activityType: slot.activity_type || '',
+        activity: slot.activity || '',
+        rawTeacherCount: rawTeachers.length,
+        normalizedTeacherCount: teacherCount,
+        rawTeachers: rawTeachers.map(t => (typeof t === 'object' ? t?.name : t)).filter(Boolean).join(' | '),
+        normalizedTeachers: normalizedTeacherNames.join(' | '),
+        periods,
+        isAtelier,
+        atelierSource: atelierDetection.source,
+        coefficient: coeff,
+        coeffLabel,
+        weightedPeriods,
+        issue: teacherCount < rawTeachers.length ? 'excluded_teacher_entries' : ''
+      })
 
       for (const key of slotTeacherKeys) {
 
@@ -529,7 +729,7 @@ class WorkloadService {
       classesUsed: [...new Set(allSlots.map(s => s.class_code).filter(Boolean))].length
     }
 
-    return { teachers: result, summary, classes }
+    return { teachers: result, summary, classes, diagnostics }
   }
 
   /**

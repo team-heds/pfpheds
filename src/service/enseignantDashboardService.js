@@ -4,17 +4,153 @@
  */
 import { supabase } from '@/supabase'
 
+function normalizeTeacherValue(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function normalizeModuleCode(value) {
+  return String(value || '')
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, '')
+}
+
+function getTeacherSearchTokens(userId, userEmail, teacherName = null) {
+  const tokens = new Set()
+  const normalizedUserId = normalizeTeacherValue(userId)
+  const normalizedEmail = normalizeTeacherValue(userEmail)
+  const normalizedName = normalizeTeacherValue(teacherName)
+
+  if (normalizedUserId) {
+    tokens.add(normalizedUserId)
+  }
+
+  if (normalizedEmail) {
+    tokens.add(normalizedEmail)
+    const emailPrefix = normalizedEmail.split('@')[0]
+    if (emailPrefix) {
+      tokens.add(emailPrefix)
+      emailPrefix.split(/[^a-z0-9]+/).filter(Boolean).forEach(part => tokens.add(part))
+    }
+  }
+
+  if (normalizedName) {
+    tokens.add(normalizedName)
+    normalizedName.split(/[^a-z0-9]+/).filter(Boolean).forEach(part => tokens.add(part))
+  }
+
+  return Array.from(tokens).filter(token => token.length >= 1)
+}
+
+function parseTeachersField(teachersField) {
+  if (!teachersField) return []
+
+  if (Array.isArray(teachersField)) {
+    return teachersField
+  }
+
+  if (typeof teachersField === 'object') {
+    return [teachersField]
+  }
+
+  if (typeof teachersField === 'string') {
+    const raw = teachersField.trim()
+    if (!raw) return []
+
+    // cas JSON sérialisé
+    if (raw.startsWith('[') || raw.startsWith('{')) {
+      try {
+        const parsed = JSON.parse(raw)
+        return Array.isArray(parsed) ? parsed : [parsed]
+      } catch (_) {
+        // fallback CSV en dessous
+      }
+    }
+
+    // cas "Nom 1, Nom 2"
+    return raw
+      .split(/[;,|\n\/]+/)
+      .map(v => v.trim())
+      .filter(Boolean)
+  }
+
+  return []
+}
+
+function getTeacherValuesFromSlot(slot) {
+  const values = []
+  const teachers = parseTeachersField(slot?.teachers || slot?.teachers_list)
+
+  teachers.forEach(t => {
+    if (!t) return
+    if (typeof t === 'object') {
+      Object.values(t).forEach(v => {
+        if (typeof v === 'string' && v.trim()) values.push(v)
+        if (typeof v === 'number') values.push(String(v))
+      })
+      return
+    }
+    values.push(t)
+  })
+
+  // fallback éventuel (si les colonnes n'existent pas, reste undefined)
+  if (slot?.teacher_name) values.push(slot.teacher_name)
+  if (slot?.teacher_email) values.push(slot.teacher_email)
+
+  return values.filter(Boolean)
+}
+
+function isTeacherInSlot(slot, userEmail, teacherName = null) {
+  const tokens = getTeacherSearchTokens(slot?.__targetUserId, userEmail, teacherName)
+  if (!tokens.length) return false
+
+  const teacherValues = getTeacherValuesFromSlot(slot)
+  return teacherValues.some(value => {
+    const normalizedValue = normalizeTeacherValue(value)
+    if (!normalizedValue) return false
+    return tokens.some(token => normalizedValue.includes(token))
+  })
+}
+
+function getSlotDurationHours(slot) {
+  const start = String(slot?.start_time || '').trim()
+  const end = String(slot?.end_time || '').trim()
+  if (!start || !end) return 0
+
+  const [sh, sm] = start.split(':').map(Number)
+  const [eh, em] = end.split(':').map(Number)
+  if ([sh, sm, eh, em].some(Number.isNaN)) return 0
+
+  const diff = (eh + em / 60) - (sh + sm / 60)
+  return diff > 0 ? diff : 0
+}
+
 /**
  * Récupère les cours assignés à l'enseignant via course_teachers
  * @param {string} userId - ID de l'enseignant
  * @param {string} userEmail - Email de l'enseignant (fallback)
  */
-export async function getMyCourses(userId, userEmail) {
+export async function getMyCourses(userId, userEmail, teacherName = null) {
   try {
     if (import.meta.env.DEV) console.log('📚 [getMyCourses] Chargement cours pour enseignant:', userId)
+
+    const filters = []
+    if (userId) filters.push(`teacher_id.eq.${userId}`)
+    if (userEmail) filters.push(`teacher_email.eq.${userEmail}`)
+
+    if (!filters.length && !teacherName) {
+      if (import.meta.env.DEV) console.log('ℹ️ [getMyCourses] Aucun identifiant enseignant fourni')
+      return []
+    }
     
     // Récupérer les assignations via course_teachers
-    const { data: assignments, error: assignError } = await supabase
+    let assignmentQuery = supabase
       .from('course_teachers')
       .select(`
         id,
@@ -33,41 +169,194 @@ export async function getMyCourses(userId, userEmail) {
             id,
             title,
             code,
+            color,
             track_id,
             responsable,
             responsable_email
           )
         )
       `)
-      .or(`teacher_id.eq.${userId},teacher_email.eq.${userEmail}`)
-    
-    if (assignError) {
-      console.error('❌ [getMyCourses] Erreur:', assignError)
-      // Fallback: essayer sans la relation modules
-      return await getMyCoursesSimple(userId, userEmail)
+
+    if (filters.length) {
+      assignmentQuery = assignmentQuery.or(filters.join(','))
     }
+
+    const { data: assignments, error: assignError } = await assignmentQuery
+
+    let courses = []
+    if (assignError) {
+      console.error('❌ [getMyCourses] Erreur relation assignments, fallback simple:', assignError)
+      courses = await getMyCoursesSimple(userId, userEmail)
+    } else {
+      courses = (assignments || [])
+        .filter(a => a.courses)
+        .map(a => ({
+          id: a.courses.id,
+          name: a.courses.name,
+          code: a.courses.code,
+          moduleId: a.courses.module_id,
+          moduleName: a.courses.modules?.title || 'Module inconnu',
+          moduleCode: a.courses.modules?.code || '',
+          moduleColor: a.courses.modules?.color || null,
+          type: a.courses.type || 'CM',
+          hours: a.hours || a.courses.hours || 0,
+          color: a.courses.color || '#3b82f6',
+          role: a.role || 'Enseignant',
+          trackId: a.courses.modules?.track_id || null,
+          canOpenDetails: true
+        }))
+    }
+
+    const planningCourses = await getMyCoursesFromPlanning(userId, userEmail, teacherName)
+    const merged = new Map()
+
+    ;[...courses, ...planningCourses].forEach(course => {
+      const key = course.id || `${course.code || ''}::${course.name || ''}`
+      if (!merged.has(key)) {
+        merged.set(key, course)
+      }
+    })
     
-    // Formater les cours
-    const courses = (assignments || [])
-      .filter(a => a.courses)
-      .map(a => ({
-        id: a.courses.id,
-        name: a.courses.name,
-        code: a.courses.code,
-        moduleId: a.courses.module_id,
-        moduleName: a.courses.modules?.title || 'Module inconnu',
-        moduleCode: a.courses.modules?.code || '',
-        type: a.courses.type || 'CM',
-        hours: a.hours || a.courses.hours || 0,
-        color: a.courses.color || '#3b82f6',
-        role: a.role || 'Enseignant',
-        trackId: a.courses.modules?.track_id || null
-      }))
-    
-    if (import.meta.env.DEV) console.log('✅ [getMyCourses] Cours trouvés:', courses.length)
-    return courses
+    const mergedCourses = Array.from(merged.values())
+
+    if (import.meta.env.DEV) console.log('✅ [getMyCourses] Cours trouvés:', mergedCourses.length)
+    return mergedCourses
   } catch (error) {
     console.error('❌ [getMyCourses] Erreur:', error)
+    return []
+  }
+}
+
+async function getMyCoursesFromPlanning(userId, userEmail, teacherName = null) {
+  try {
+    if (!userId && !userEmail && !teacherName) return []
+
+    const slots = []
+    const pageSize = 1000
+    let from = 0
+
+    while (true) {
+      const to = from + pageSize - 1
+      const { data, error } = await supabase
+        .from('planning_time_slots')
+        .select('*')
+        .range(from, to)
+
+      if (error) {
+        console.error('❌ [getMyCoursesFromPlanning] Erreur chargement slots:', error)
+        return []
+      }
+
+      const page = data || []
+      slots.push(...page)
+
+      if (page.length < pageSize) break
+      from += pageSize
+    }
+
+    if (!slots.length) return []
+
+    const teacherSlots = slots.filter(slot => isTeacherInSlot({ ...slot, __targetUserId: userId }, userEmail, teacherName))
+    if (!teacherSlots.length) return []
+
+    const hoursByCourseKey = new Map()
+    teacherSlots.forEach(slot => {
+      const linkedKey = slot.course_id || `${slot.module_code || ''}::${slot.course_title || ''}`
+      if (!linkedKey) return
+      const duration = getSlotDurationHours(slot)
+      hoursByCourseKey.set(linkedKey, (hoursByCourseKey.get(linkedKey) || 0) + duration)
+    })
+
+    const courseIds = [...new Set(teacherSlots.map(s => s.course_id).filter(Boolean))]
+    const moduleCodesRaw = teacherSlots
+      .map(s => s.module_code)
+      .filter(Boolean)
+    const moduleCodes = [...new Set(moduleCodesRaw.map(normalizeModuleCode).filter(Boolean))]
+    let coursesById = new Map()
+    let modulesByCode = new Map()
+
+    if (courseIds.length) {
+      const { data: coursesData } = await supabase
+        .from('courses')
+        .select(`
+          id,
+          name,
+          code,
+          module_id,
+          type,
+          hours,
+          color,
+          modules (
+            id,
+            title,
+            code,
+            color,
+            track_id
+          )
+        `)
+        .in('id', courseIds)
+
+      coursesById = new Map((coursesData || []).map(c => [c.id, c]))
+    }
+
+    if (moduleCodes.length) {
+      const { data: modulesData } = await supabase
+        .from('modules')
+        .select('id, title, code, color, track_id')
+        .in('code', moduleCodes)
+
+      modulesByCode = new Map((modulesData || []).map(m => [normalizeModuleCode(m.code), m]))
+    }
+
+    const planningCoursesMap = new Map()
+
+    teacherSlots.forEach(slot => {
+      const linkedCourse = slot.course_id ? coursesById.get(slot.course_id) : null
+      const moduleFromCode = slot.module_code ? modulesByCode.get(normalizeModuleCode(slot.module_code)) : null
+      if (linkedCourse?.id) {
+        const plannedHours = Math.round((hoursByCourseKey.get(linkedCourse.id) || 0) * 10) / 10
+        planningCoursesMap.set(linkedCourse.id, {
+          id: linkedCourse.id,
+          name: linkedCourse.name,
+          code: linkedCourse.code,
+          moduleId: linkedCourse.module_id,
+          moduleName: linkedCourse.modules?.title || moduleFromCode?.title || (slot.module_code ? `Module ${slot.module_code}` : 'Module planning'),
+          moduleCode: linkedCourse.modules?.code || moduleFromCode?.code || slot.module_code || '',
+          moduleColor: linkedCourse.modules?.color || moduleFromCode?.color || null,
+          type: linkedCourse.type || slot.activity || 'CM',
+          hours: plannedHours || linkedCourse.hours || 0,
+          color: linkedCourse.color || '#3b82f6',
+          role: 'Enseignant',
+          trackId: linkedCourse.modules?.track_id || moduleFromCode?.track_id || null,
+          canOpenDetails: true
+        })
+        return
+      }
+
+      const fallbackKey = `${slot.module_code || ''}::${slot.course_title || ''}`
+      if (!planningCoursesMap.has(fallbackKey)) {
+        const plannedHours = Math.round((hoursByCourseKey.get(fallbackKey) || 0) * 10) / 10
+        planningCoursesMap.set(fallbackKey, {
+          id: null,
+          name: slot.course_title || slot.module_code || 'Cours',
+          code: slot.module_code || '',
+          moduleId: moduleFromCode?.id || null,
+          moduleName: moduleFromCode?.title || (slot.module_code ? `Module ${slot.module_code}` : 'Module planning'),
+          moduleCode: moduleFromCode?.code || slot.module_code || '',
+          moduleColor: moduleFromCode?.color || null,
+          type: slot.activity || 'Cours',
+          hours: plannedHours,
+          color: '#3b82f6',
+          role: 'Planning',
+          trackId: moduleFromCode?.track_id || null,
+          canOpenDetails: false
+        })
+      }
+    })
+
+    return Array.from(planningCoursesMap.values())
+  } catch (error) {
+    console.error('❌ [getMyCoursesFromPlanning] Erreur:', error)
     return []
   }
 }
@@ -77,10 +366,15 @@ export async function getMyCourses(userId, userEmail) {
  */
 async function getMyCoursesSimple(userId, userEmail) {
   try {
+    const filters = []
+    if (userId) filters.push(`teacher_id.eq.${userId}`)
+    if (userEmail) filters.push(`teacher_email.eq.${userEmail}`)
+    if (!filters.length) return []
+
     const { data, error } = await supabase
       .from('course_teachers')
       .select('course_id, hours, role')
-      .or(`teacher_id.eq.${userId},teacher_email.eq.${userEmail}`)
+      .or(filters.join(','))
     
     if (error || !data) return []
     
@@ -102,7 +396,8 @@ async function getMyCoursesSimple(userId, userEmail) {
       type: c.type || 'CM',
       hours: c.hours || 0,
       color: c.color || '#3b82f6',
-      role: 'Enseignant'
+      role: 'Enseignant',
+      canOpenDetails: true
     }))
   } catch (error) {
     console.error('❌ [getMyCoursesSimple] Erreur:', error)
@@ -146,18 +441,7 @@ export async function getMyWeekPlanning(userId, userEmail, teacherName = null) {
     }
     
     // Filtrer les créneaux où l'enseignant est présent
-    const mySlots = slots.filter(slot => {
-      const teachers = slot.teachers || []
-      return teachers.some(t => {
-        const name = typeof t === 'object' ? t.name : t
-        if (!name) return false
-        const nameLower = name.toLowerCase().trim()
-        // Comparer avec email ou nom
-        if (userEmail && nameLower.includes(userEmail.split('@')[0].toLowerCase())) return true
-        if (teacherName && nameLower.includes(teacherName.toLowerCase())) return true
-        return false
-      })
-    })
+    const mySlots = slots.filter(slot => isTeacherInSlot(slot, userEmail, teacherName))
     
     if (import.meta.env.DEV) console.log('📅 [getMyWeekPlanning] Créneaux trouvés:', mySlots.length, '/', slots.length)
     
@@ -195,17 +479,7 @@ export async function getUpcomingSessions(userEmail, teacherName = null, limit =
     }
     
     // Filtrer les créneaux de l'enseignant
-    const mySlots = slots.filter(slot => {
-      const teachers = slot.teachers || []
-      return teachers.some(t => {
-        const name = typeof t === 'object' ? t.name : t
-        if (!name) return false
-        const nameLower = name.toLowerCase().trim()
-        if (userEmail && nameLower.includes(userEmail.split('@')[0].toLowerCase())) return true
-        if (teacherName && nameLower.includes(teacherName.toLowerCase())) return true
-        return false
-      })
-    })
+    const mySlots = slots.filter(slot => isTeacherInSlot(slot, userEmail, teacherName))
     
     // Formater les séances
     const sessions = mySlots.slice(0, limit).map(slot => ({
@@ -353,19 +627,34 @@ function generateEmptyWeek() {
 export async function getMyModules(courses) {
   try {
     const moduleIds = [...new Set(courses.map(c => c.moduleId).filter(Boolean))]
-    if (moduleIds.length === 0) return []
-    
-    const { data: modules, error } = await supabase
-      .from('modules')
-      .select('id, title, code, responsable, responsable_email, track_id, year, credits')
-      .in('id', moduleIds)
-    
-    if (error) {
-      console.error('❌ [getMyModules] Erreur:', error)
-      return []
+    const moduleCodes = [...new Set(courses.map(c => normalizeModuleCode(c.moduleCode)).filter(Boolean))]
+    if (moduleIds.length === 0 && moduleCodes.length === 0) return []
+
+    const [byIdRes, byCodeRes] = await Promise.all([
+      moduleIds.length
+        ? supabase
+          .from('modules')
+          .select('id, title, code, color, responsable, responsable_email, track_id, year, credits')
+          .in('id', moduleIds)
+        : Promise.resolve({ data: [], error: null }),
+      moduleCodes.length
+        ? supabase
+          .from('modules')
+          .select('id, title, code, color, responsable, responsable_email, track_id, year, credits')
+          .in('code', moduleCodes)
+        : Promise.resolve({ data: [], error: null })
+    ])
+
+    if (byIdRes.error) {
+      console.error('❌ [getMyModules] Erreur query id:', byIdRes.error)
     }
-    
-    return modules || []
+    if (byCodeRes.error) {
+      console.error('❌ [getMyModules] Erreur query code:', byCodeRes.error)
+    }
+
+    const merged = [...(byIdRes.data || []), ...(byCodeRes.data || [])]
+    const uniqueById = new Map(merged.map(m => [m.id, m]))
+    return Array.from(uniqueById.values())
   } catch (error) {
     console.error('❌ [getMyModules] Erreur:', error)
     return []
@@ -436,7 +725,7 @@ export async function loadEnseignantDashboard(userId, userEmail, teacherName = n
     
     // Charger cours, planning et séances à venir en parallèle
     const [courses, planningData, upcomingSessions] = await Promise.all([
-      getMyCourses(userId, userEmail),
+      getMyCourses(userId, userEmail, teacherName),
       getMyWeekPlanning(userId, userEmail, teacherName),
       getUpcomingSessions(userEmail, teacherName, 15)
     ])

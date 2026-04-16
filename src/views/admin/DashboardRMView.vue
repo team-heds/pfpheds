@@ -32,14 +32,6 @@
             </div>
           </div>
 
-          <div class="stat-card stat-card--emerald">
-            <div class="stat-card__icon"><i class="pi pi-users"></i></div>
-            <div class="stat-card__body">
-              <span class="stat-card__value">{{ siTeachersCount }}</span>
-              <span class="stat-card__label">Enseignants SI</span>
-            </div>
-          </div>
-
           <div class="stat-card stat-card--amber">
             <div class="stat-card__icon"><i class="pi pi-clock"></i></div>
             <div class="stat-card__body">
@@ -131,6 +123,11 @@
               <Button icon="pi pi-refresh" text rounded @click="mySlotsViewAll ? loadAllMySlots() : loadMySlots()" :loading="loadingMySlots" v-tooltip.top="'Rafraîchir'" />
               <Button label="Export .ics" icon="pi pi-download" severity="info" size="small" rounded @click="exportMyCoursesICS" :disabled="allMySlots.length === 0" v-tooltip.top="'Télécharger pour Outlook'" />
             </div>
+          </div>
+
+          <div class="mb-3 flex gap-2 flex-wrap" v-if="allMySlots.length > 0">
+            <Tag :value="`Créneaux annuels: ${allMySlots.length}`" severity="secondary" />
+            <Tag :value="`Heures annuelles: ${myAnnualHours}h`" severity="info" />
           </div>
 
           <div v-if="loadingMySlots" class="text-center py-4">
@@ -225,42 +222,8 @@
           </div>
         </section>
 
-        <!-- ═══ DEUX COLONNES : Enseignants + Responsables ═══ -->
-        <div class="two-col">
-          <!-- Enseignants de mes modules -->
-          <section class="card-section">
-            <div class="card-section__header">
-              <div class="card-section__title">
-                <i class="pi pi-users"></i>
-                <h3>Enseignants de mes modules</h3>
-                <Badge :value="myTeachers.length" severity="info" />
-              </div>
-            </div>
-            <div class="people-list">
-              <div v-for="teacher in myTeachers" :key="teacher.id" class="people-row">
-                <div class="people-row__avatar">
-                  <img v-if="teacher.avatar" :src="teacher.avatar" :alt="teacher.name" />
-                  <i v-else class="pi pi-user"></i>
-                </div>
-                <div class="people-row__info">
-                  <strong>{{ teacher.name }}</strong>
-                  <span>{{ teacher.email }}</span>
-                  <small>{{ teacher.modulesCount }} module(s)</small>
-                </div>
-                <div class="people-row__end">
-                  <span class="hours-pill">{{ teacher.totalHours }}h</span>
-                  <Button icon="pi pi-envelope" text rounded size="small" @click="contactTeacher(teacher)" />
-                </div>
-              </div>
-              <div v-if="myTeachers.length === 0" class="empty-state-small">
-                <i class="pi pi-inbox"></i>
-                <p>Aucun enseignant assigné</p>
-              </div>
-            </div>
-          </section>
-
-          <!-- Responsables de modules -->
-          <section class="card-section">
+        <!-- ═══ RESPONSABLES DE MODULES ═══ -->
+        <section class="card-section">
             <div class="card-section__header">
               <div class="card-section__title">
                 <i class="pi pi-star"></i>
@@ -283,38 +246,6 @@
                 </div>
               </div>
             </div>
-          </section>
-        </div>
-
-        <!-- ═══ LISTE ENSEIGNANTS SI ═══ -->
-        <section class="card-section">
-          <div class="card-section__header">
-            <div class="card-section__title">
-              <i class="pi pi-id-card"></i>
-              <h3>Liste des Enseignants SI</h3>
-              <Badge :value="filteredSITeachers.length" severity="info" />
-            </div>
-            <span class="p-input-icon-left">
-              <i class="pi pi-search" />
-              <InputText v-model="searchSI" placeholder="Rechercher..." class="p-inputtext-sm" style="width: 220px" />
-            </span>
-          </div>
-          <div class="people-list people-list--scroll">
-            <div v-for="teacher in filteredSITeachers" :key="teacher.id" class="people-row people-row--compact">
-              <div class="people-row__avatar people-row__avatar--sm">
-                <i class="pi pi-user"></i>
-              </div>
-              <div class="people-row__info">
-                <strong>{{ teacher.name }}</strong>
-                <span>{{ teacher.email }}</span>
-              </div>
-              <Button icon="pi pi-envelope" text rounded size="small" @click="contactTeacher(teacher)" />
-            </div>
-            <div v-if="filteredSITeachers.length === 0" class="empty-state-small">
-              <i class="pi pi-users"></i>
-              <p>Aucun enseignant trouvé</p>
-            </div>
-          </div>
         </section>
 
         <!-- ═══ DEUX COLONNES : Planning + Alertes ═══ -->
@@ -404,7 +335,6 @@ import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 import PageHeader from '@/components/admin/common/PageHeader.vue';
 import Button from 'primevue/button';
 import ProgressSpinner from 'primevue/progressspinner';
-import InputText from 'primevue/inputtext';
 import Badge from 'primevue/badge';
 import Tag from 'primevue/tag';
 import Dropdown from 'primevue/dropdown';
@@ -426,17 +356,12 @@ const refreshInProgress = ref(false);
 
 // Stats
 const modulesCount = ref(0);
-const teachersCount = ref(0);
 const totalHours = ref(0);
-const studentsCount = ref(0);
 
 // Stats modules détaillées
 const activeModulesCount = ref(0);
 const draftModulesCount = ref(0);
 const archivedModulesCount = ref(0);
-
-// Stats enseignants détaillées
-const siTeachersCount = ref(0);
 
 // Alertes dynamiques (calculées à partir des données)
 const alerts = ref([]);
@@ -459,9 +384,6 @@ const completionPercent = ref(0);
 
 // Données
 const modules = ref([]);
-const teachers = ref([]);
-const siTeachers = ref([]);
-const searchSI = ref('');
 
 // Mes cours (section planning enseignant)
 const loadingMySlots = ref(false);
@@ -470,6 +392,7 @@ const allMySlots = ref([]);
 const mySlotsWeek = ref(null);
 const mySlotsViewAll = ref(false);
 const userDisplayName = ref('');
+const userNameVariants = ref([]);
 const courseModulesMap = ref([]);
 const academicStartYear = ref(null);
 
@@ -530,6 +453,11 @@ const allMySlotsByWeekDay = computed(() => {
 })
 
 const displayedSlotsByDay = computed(() => mySlotsViewAll.value ? allMySlotsByWeekDay.value : mySlotsByDay.value)
+
+const myAnnualHours = computed(() => {
+  const total = allMySlots.value.reduce((sum, slot) => sum + computeSlotHours(slot.start_time, slot.end_time), 0)
+  return Math.round(total * 10) / 10
+})
 
 const calendarDays = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi']
 const calendarDayLabels = { lundi: 'Lundi', mardi: 'Mardi', mercredi: 'Mercredi', jeudi: 'Jeudi', vendredi: 'Vendredi' }
@@ -642,15 +570,6 @@ const responsablesCount = computed(() => {
   return Object.keys(modulesByResponsable.value).filter(r => r !== 'Non assigné').length;
 });
 
-const filteredSITeachers = computed(() => {
-  if (!searchSI.value) return siTeachers.value;
-  const term = searchSI.value.toLowerCase();
-  return siTeachers.value.filter(t => 
-    t.name.toLowerCase().includes(term) || 
-    t.email.toLowerCase().includes(term)
-  );
-});
-
 /**
  * Charge les données RM depuis Supabase
  */
@@ -690,19 +609,14 @@ async function loadRMData() {
     draftModulesCount.value = stats.modulesByYear[2] || 0;
     archivedModulesCount.value = stats.modulesByYear[3] || 0;
     
-    // 5. Stats enseignants
-    siTeachersCount.value = myTeachers.value.length;
-    teachers.value = myTeachers.value;
-    siTeachers.value = myTeachers.value;
-    
-    // 6. Calculer heures assignées
+    // 5. Calculer heures assignées
     hoursAssigned.value = myTeachers.value.reduce((sum, t) => sum + (t.totalHours || 0), 0);
     hoursPlanned.value = totalHours.value;
     completionPercent.value = hoursPlanned.value > 0 
       ? Math.round((hoursAssigned.value / hoursPlanned.value) * 100) 
       : 0;
     
-    // 7. Identifier modules sans enseignants
+    // 6. Identifier modules sans enseignants
     modulesWithoutTeachers.value = myModules.value.filter(m => {
       const moduleTeachers = myTeachers.value.filter(t => 
         t.courses?.some(c => c.moduleId === m.id)
@@ -710,17 +624,17 @@ async function loadRMData() {
       return moduleTeachers.length === 0;
     });
     
-    // 8. Générer alertes dynamiques
+    // 7. Générer alertes dynamiques
     generateAlerts();
     
-    // 9. Charger la vue d'ensemble du planning
+    // 8. Charger la vue d'ensemble du planning
     await loadPlanningOverview();
     
-    // 10. Charger profil utilisateur + modules pour la section "Mes cours"
+    // 9. Charger profil utilisateur + modules pour la section "Mes cours"
     await loadUserProfile();
     courseModulesMap.value = await planningService.getAllCourseModules();
     
-    // 11. Charger l'année académique active pour le calcul des dates
+    // 10. Charger l'année académique active pour le calcul des dates
     try {
       const activeYear = await academicYearService.getActiveAcademicYear();
       if (activeYear) {
@@ -807,10 +721,6 @@ function viewPlanning(module) {
   router.push(`/admin/planning?module=${module.id}`);
 }
 
-function contactTeacher(teacher) {
-  window.location.href = `mailto:${teacher.email}`;
-}
-
 function dismissAlert(alert) {
   alerts.value = alerts.value.filter(a => a.id !== alert.id);
 }
@@ -833,26 +743,109 @@ async function loadUserProfile() {
       .single()
     if (data) {
       userDisplayName.value = data.display_name || `${data.forname || ''} ${data.family_name || ''}`.trim() || data.email || ''
+      userNameVariants.value = buildUserNameVariants({
+        displayName: data.display_name,
+        forname: data.forname,
+        familyName: data.family_name,
+        email: data.email || authStore.user?.email
+      })
     }
   } catch (err) {
     console.warn('Profil utilisateur non trouvé:', err)
     userDisplayName.value = authStore.user?.email || ''
+    userNameVariants.value = buildUserNameVariants({
+      displayName: authStore.user?.displayName,
+      forname: authStore.user?.forname,
+      familyName: authStore.user?.family_name,
+      email: authStore.user?.email
+    })
   }
+}
+
+function normalizeLoose(str) {
+  if (!str) return ''
+  return String(str)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[._-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase()
+}
+
+function buildUserNameVariants({ displayName, forname, familyName, email }) {
+  const variants = new Set()
+  const add = (value) => {
+    const normalized = normalizeLoose(value)
+    if (normalized) variants.add(normalized)
+  }
+
+  add(displayName)
+  add(`${forname || ''} ${familyName || ''}`.trim())
+  add(`${familyName || ''} ${forname || ''}`.trim())
+  add(email)
+
+  if (email) {
+    const emailParts = String(email).split('@')
+    add(emailParts[0])
+  }
+
+  return Array.from(variants)
+}
+
+function extractTeacherEntries(rawTeachers) {
+  if (!rawTeachers) return []
+
+  if (Array.isArray(rawTeachers)) {
+    return rawTeachers
+      .map(t => (typeof t === 'string' ? t : t?.name || t?.display_name || ''))
+      .filter(Boolean)
+  }
+
+  if (typeof rawTeachers === 'string') {
+    return rawTeachers
+      .split(/[;,|]/)
+      .map(s => s.trim())
+      .filter(Boolean)
+  }
+
+  return []
+}
+
+function isMyTeacherEntry(entry) {
+  const entryNorm = normalizeLoose(entry)
+  if (!entryNorm) return false
+
+  const variants = userNameVariants.value.length > 0
+    ? userNameVariants.value
+    : buildUserNameVariants({
+        displayName: userDisplayName.value,
+        forname: authStore.user?.forname,
+        familyName: authStore.user?.family_name,
+        email: authStore.user?.email
+      })
+
+  return variants.some(v => entryNorm === v || entryNorm.includes(v) || v.includes(entryNorm))
+}
+
+function computeSlotHours(startTime, endTime) {
+  if (!startTime || !endTime) return 0
+  const [sh, sm] = String(startTime).split(':').map(Number)
+  const [eh, em] = String(endTime).split(':').map(Number)
+  if ([sh, sm, eh, em].some(Number.isNaN)) return 0
+  const diff = (eh + (em / 60)) - (sh + (sm / 60))
+  return diff > 0 ? diff : 0
 }
 
 /**
  * Filtre les slots où l'utilisateur est dans la liste des enseignants
  */
 function filterMySlots(slots) {
-  if (!userDisplayName.value) return []
-  const nameLC = userDisplayName.value.toLowerCase()
-  const emailLC = (authStore.user?.email || '').toLowerCase()
+  if (!userDisplayName.value && !authStore.user?.email) return []
   return (slots || []).filter(s => {
-    if (!s.teachers || !Array.isArray(s.teachers)) return false
-    return s.teachers.some(t => {
-      const tLC = (typeof t === 'string' ? t : t?.name || '').toLowerCase()
-      return tLC === nameLC || tLC === emailLC || tLC.includes(nameLC) || nameLC.includes(tLC)
-    })
+    const teacherEntries = extractTeacherEntries(s.teachers)
+    if (teacherEntries.length === 0) return false
+    return teacherEntries.some(isMyTeacherEntry)
   })
 }
 

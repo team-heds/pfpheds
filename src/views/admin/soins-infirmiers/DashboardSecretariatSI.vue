@@ -287,11 +287,81 @@
                 <span class="teacher-name">{{ teacher.name }}</span>
                 <span class="teacher-email">{{ teacher.email || '—' }}</span>
               </div>
+              <div class="teacher-actions">
+                <Button label="Focus" icon="pi pi-eye" size="small" :severity="selectedTeacherId === teacher.id ? 'primary' : 'secondary'" text @click="setTeacherFocus(teacher)" />
+                <Button label="Profil" icon="pi pi-external-link" size="small" text @click="openTeacherProfile(teacher)" />
+              </div>
             </div>
           </div>
           <div v-else class="empty-state">
             <i class="pi pi-users"></i>
             <p>{{ searchTeacher ? 'Aucun enseignant trouvé' : 'Aucun enseignant SI' }}</p>
+          </div>
+        </div>
+
+        <div class="section-card focus-teacher-section">
+          <div class="section-header">
+            <h3><i class="pi pi-id-card"></i> Focus Enseignant SI</h3>
+            <div class="flex align-items-center gap-2" v-if="focusTeacher">
+              <Button label="Ouvrir dashboard" icon="pi pi-external-link" size="small" text @click="openTeacherProfile(focusTeacher)" />
+              <Button label="Réinitialiser" icon="pi pi-times" size="small" severity="secondary" text @click="clearTeacherFocus" />
+            </div>
+          </div>
+
+          <div v-if="!focusTeacher" class="empty-state">
+            <i class="pi pi-arrow-up"></i>
+            <p>Sélectionnez un enseignant avec le bouton Focus</p>
+          </div>
+
+          <div v-else>
+            <div class="focus-teacher-head">
+              <div>
+                <h4>{{ focusTeacher.name || 'Enseignant' }}</h4>
+                <small>{{ focusTeacher.email || 'Aucun email' }}</small>
+              </div>
+            </div>
+
+            <div v-if="focusLoading" class="loading-inline">
+              <ProgressSpinner style="width: 28px; height: 28px" strokeWidth="6" />
+              <span>Chargement du profil enseignant...</span>
+            </div>
+
+            <div v-else-if="focusError" class="empty-state">
+              <i class="pi pi-exclamation-triangle"></i>
+              <p>{{ focusError }}</p>
+            </div>
+
+            <div v-else class="focus-content-grid">
+              <div class="focus-stat-card">
+                <span class="label">Cours assignés</span>
+                <strong>{{ focusTeacherData.stats?.coursesCount || 0 }}</strong>
+              </div>
+              <div class="focus-stat-card">
+                <span class="label">Heures/semaine</span>
+                <strong>{{ focusTeacherData.stats?.weeklyHours || 0 }}h</strong>
+              </div>
+              <div class="focus-stat-card">
+                <span class="label">Séances planifiées</span>
+                <strong>{{ focusTeacherData.stats?.upcomingCount || 0 }}</strong>
+              </div>
+              <div class="focus-stat-card">
+                <span class="label">Étudiants</span>
+                <strong>{{ focusTeacherData.stats?.studentsCount || 0 }}</strong>
+              </div>
+            </div>
+
+            <div class="focus-subsection">
+              <h5>Prochaines séances</h5>
+              <div v-if="(focusTeacherData.upcomingSessions || []).length === 0" class="empty-state small-empty">
+                <p>Aucune séance à venir</p>
+              </div>
+              <div v-else class="focus-sessions-list">
+                <div v-for="session in focusTeacherData.upcomingSessions.slice(0, 5)" :key="session.id" class="focus-session-item">
+                  <span class="session-when">S{{ session.weekNumber }} • {{ session.day }} {{ session.time }}</span>
+                  <span class="session-course">{{ session.course || 'Cours' }}</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -303,7 +373,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/authStore'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import PageHeader from '@/components/admin/common/PageHeader.vue'
 import planningService from '@/service/planningService'
@@ -311,9 +380,9 @@ import academicYearService from '@/service/academicYearService'
 import modulesService from '@/service/modulesService'
 import { supabase } from '@/supabase'
 import { getSITeachers } from '@/service/academicKpiService'
+import { loadEnseignantDashboard } from '@/service/enseignantDashboardService'
 
 const router = useRouter()
-const authStore = useAuthStore()
 
 // State
 const loading = ref(true)
@@ -325,6 +394,11 @@ const teachers = ref([])
 const searchTeacher = ref('')
 const teachersCount = ref(0)
 const teachersAssignedCount = ref(0)
+const selectedTeacherId = ref('')
+const focusTeacher = ref(null)
+const focusTeacherData = ref({ stats: {}, upcomingSessions: [] })
+const focusLoading = ref(false)
+const focusError = ref('')
 const totalSlots = ref(0)
 const currentWeekSlots = ref(0)
 const currentWeekSlotsData = ref([])
@@ -430,6 +504,50 @@ async function loadAcademicYear() {
   } catch (err) {
     console.error('Erreur chargement année:', err)
   }
+}
+
+function openTeacherProfile(teacher) {
+  if (!teacher) return
+  router.push({
+    path: '/admin/soins-infirmiers/dashboard-enseignant',
+    query: {
+      teacherId: teacher.id || '',
+      teacher: teacher.name || '',
+      email: teacher.email || ''
+    }
+  })
+}
+
+async function setTeacherFocus(teacher) {
+  if (!teacher?.id) return
+  selectedTeacherId.value = teacher.id
+  focusTeacher.value = teacher
+  focusError.value = ''
+  focusLoading.value = true
+
+  try {
+    const data = await loadEnseignantDashboard(
+      teacher.id || null,
+      teacher.email || null,
+      teacher.name || null
+    )
+    focusTeacherData.value = {
+      stats: data?.stats || {},
+      upcomingSessions: data?.upcomingSessions || []
+    }
+  } catch (err) {
+    console.error('Erreur chargement focus enseignant:', err)
+    focusError.value = 'Impossible de charger les données de cet enseignant.'
+  } finally {
+    focusLoading.value = false
+  }
+}
+
+function clearTeacherFocus() {
+  selectedTeacherId.value = ''
+  focusTeacher.value = null
+  focusTeacherData.value = { stats: {}, upcomingSessions: [] }
+  focusError.value = ''
 }
 
 async function loadModules() {
@@ -1053,6 +1171,93 @@ function handleAlertAction(alert) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.teacher-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.focus-teacher-section {
+  border-left: 4px solid #8b5cf6;
+}
+
+.focus-teacher-head {
+  margin-bottom: 0.75rem;
+}
+
+.focus-teacher-head h4 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.focus-teacher-head small {
+  color: var(--text-color-secondary);
+}
+
+.loading-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+}
+
+.focus-content-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 0.75rem;
+  margin: 0.75rem 0 1rem;
+}
+
+.focus-stat-card {
+  background: var(--surface-ground);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.focus-stat-card .label {
+  font-size: 0.8rem;
+  color: var(--text-color-secondary);
+}
+
+.focus-stat-card strong {
+  font-size: 1.1rem;
+}
+
+.focus-subsection h5 {
+  margin: 0 0 0.5rem;
+}
+
+.focus-sessions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.focus-session-item {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-ground);
+  border-radius: 0.5rem;
+  padding: 0.6rem 0.75rem;
+}
+
+.session-when {
+  font-size: 0.78rem;
+  color: var(--text-color-secondary);
+}
+
+.session-course {
+  font-size: 0.88rem;
+}
+
+.small-empty {
+  padding: 1rem;
 }
 
 /* ====== EMPTY STATE ====== */

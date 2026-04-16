@@ -142,6 +142,7 @@ export default [
     items: [
       { label: 'Dashboard Secrétariat', icon: 'pi pi-th-large', to: '/admin/soins-infirmiers/dashboard' },
       { label: 'Dashboard RM', icon: 'pi pi-chart-line', to: '/admin/dashboard-rm' },
+      { label: 'Dashboard Enseignant SI', icon: 'pi pi-graduation-cap', to: '/admin/soins-infirmiers/dashboard-enseignant' },
       {
         label: 'Planning',
         icon: 'pi pi-calendar',

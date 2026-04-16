@@ -78,6 +78,7 @@
           </div>
           <div class="flex gap-2 align-items-center">
             <Button v-if="hasActiveFilters" label="Effacer filtres" icon="pi pi-filter-slash" severity="secondary" size="small" text @click="clearFilters" />
+            <Button label="Export Diagnostic" icon="pi pi-table" severity="secondary" outlined size="small" @click="exportDiagnostics" />
             <Button label="Exporter Excel" icon="pi pi-file-excel" severity="success" size="small" @click="exportWorkload" />
           </div>
         </div>
@@ -150,6 +151,31 @@
           </div>
         </div>
       </div>
+
+      <!-- Diagnostic qualité données -->
+      <Panel v-if="!loading && diagnostics" :toggleable="true" :collapsed="true" class="coeff-panel">
+        <template #header>
+          <div class="flex align-items-center gap-2">
+            <i class="pi pi-shield text-orange-500"></i>
+            <span class="font-bold">Diagnostic Calcul (audit qualité)</span>
+          </div>
+        </template>
+        <div class="flex flex-wrap gap-2">
+          <Tag :value="`Slots scannés: ${diagnostics.scannedSlots || 0}`" severity="info" />
+          <Tag :value="`Sans enseignants: ${diagnostics.slotsWithoutTeachers || 0}`" severity="warning" />
+          <Tag :value="`Aucun enseignant valide: ${diagnostics.slotsWithNoValidTeacher || 0}`" severity="warning" />
+          <Tag :value="`Horaires invalides: ${diagnostics.slotsWithInvalidTime || 0}`" severity="danger" />
+          <Tag :value="`Entrées exclues: ${diagnostics.slotsWithExcludedTeacherEntries || 0}`" severity="secondary" />
+          <Tag :value="`Ateliers via type: ${diagnostics.atelierDetectedByActivityType || 0}`" severity="success" />
+          <Tag :value="`Ateliers via fallback: ${diagnostics.atelierDetectedByFallback || 0}`" severity="warning" />
+        </div>
+        <div class="flex flex-wrap gap-2 mt-3">
+          <Tag :value="`Coeff ×4.0: ${diagnostics.coefficientDistribution?.['4.0'] || 0}`" severity="success" />
+          <Tag :value="`Coeff ×2.5: ${diagnostics.coefficientDistribution?.['2.5'] || 0}`" severity="info" />
+          <Tag :value="`Coeff ×2.2: ${diagnostics.coefficientDistribution?.['2.2'] || 0}`" severity="info" />
+          <Tag :value="`Coeff ×1.6: ${diagnostics.coefficientDistribution?.['1.6'] || 0}`" severity="warning" />
+        </div>
+      </Panel>
 
       <!-- Loading -->
       <div v-if="loading" class="loading-state">
@@ -535,6 +561,8 @@ const hasActiveFilters = computed(() => {
   return selectedTeacher.value || selectedClass.value || selectedModule.value || selectedType.value
 })
 
+const diagnostics = computed(() => workloadData.value?.diagnostics || null)
+
 // Methods
 async function loadWorkload() {
   loading.value = true
@@ -551,6 +579,64 @@ async function loadWorkload() {
     })
   } finally {
     loading.value = false
+  }
+}
+
+async function exportDiagnostics() {
+  if (!diagnostics.value?.rows || diagnostics.value.rows.length === 0) {
+    toast.add({ severity: 'warn', summary: 'Diagnostic vide', detail: 'Aucune ligne diagnostique disponible', life: 3000 })
+    return
+  }
+
+  try {
+    const ExcelJS = await import('exceljs')
+    const workbook = new ExcelJS.Workbook()
+    const ws = workbook.addWorksheet('Diagnostic Slots')
+    ws.columns = [
+      { header: 'slot_id', key: 'slotId', width: 16 },
+      { header: 'semaine', key: 'weekNumber', width: 10 },
+      { header: 'jour', key: 'day', width: 14 },
+      { header: 'classe', key: 'classCode', width: 14 },
+      { header: 'module', key: 'moduleCode', width: 16 },
+      { header: 'cours', key: 'courseTitle', width: 30 },
+      { header: 'activity_type', key: 'activityType', width: 18 },
+      { header: 'activity', key: 'activity', width: 28 },
+      { header: 'raw_teacher_count', key: 'rawTeacherCount', width: 16 },
+      { header: 'normalized_teacher_count', key: 'normalizedTeacherCount', width: 22 },
+      { header: 'raw_teachers', key: 'rawTeachers', width: 40 },
+      { header: 'normalized_teachers', key: 'normalizedTeachers', width: 40 },
+      { header: 'periods', key: 'periods', width: 10 },
+      { header: 'is_atelier', key: 'isAtelier', width: 10 },
+      { header: 'atelier_source', key: 'atelierSource', width: 16 },
+      { header: 'coefficient', key: 'coefficient', width: 12 },
+      { header: 'coefficient_label', key: 'coeffLabel', width: 22 },
+      { header: 'weighted_periods', key: 'weightedPeriods', width: 16 },
+      { header: 'issue', key: 'issue', width: 24 }
+    ]
+
+    ws.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } }
+    ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF455A64' } }
+
+    for (const row of diagnostics.value.rows) {
+      ws.addRow({
+        ...row,
+        isAtelier: row.isAtelier ? 'oui' : 'non'
+      })
+    }
+
+    const blob = new Blob([await workbook.xlsx.writeBuffer()], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `Diagnostic_Feuille_de_charges_SI_${new Date().toISOString().split('T')[0]}.xlsx`
+    link.click()
+    URL.revokeObjectURL(url)
+    toast.add({ severity: 'success', summary: 'Export diagnostic', detail: 'Diagnostic des slots exporté', life: 3000 })
+  } catch (error) {
+    console.error('[Workload] Erreur export diagnostic:', error)
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible d\'exporter le diagnostic', life: 5000 })
   }
 }
 

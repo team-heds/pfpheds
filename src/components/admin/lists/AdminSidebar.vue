@@ -27,13 +27,13 @@
 
     <!-- Sections dynamiques basées sur le menu filtré (permissions + recherche) -->
     <div 
-      v-for="(section, index) in displayMenu" 
+      v-for="section in displayMenu" 
       :key="section.label"
       :class="[
         'sidebar-section-card',
-        getSectionClass(index)
+        getSectionClass(section)
       ]"
-      v-show="shouldShowSection(section, index)"
+      v-show="shouldShowSection(section)"
       @mouseenter="handleSectionEnter(section, $event)"
       @mouseleave="handleSectionLeave"
     >
@@ -180,13 +180,17 @@ const restrictedAcademicEmails = [
   'elodie.perruchoud@hevs.ch'
 ];
 
+const restrictedAcademicEmailSet = new Set(
+  restrictedAcademicEmails.map(e => String(e).toLowerCase())
+)
+
 // Vérifier si l'utilisateur est connecté avec Supabase
 const isSupabaseUser = computed(() => authStore.isSupabaseUser && authStore.session);
 
 // Vérifier si l'utilisateur est restreint pour la section Académique
 const isRestrictedUser = computed(() => {
   const userEmail = authStore.user?.email?.toLowerCase();
-  return userEmail && restrictedAcademicEmails.includes(userEmail);
+  return !!(userEmail && restrictedAcademicEmailSet.has(userEmail));
 });
 
 // Plus de fallback ici: on n'affiche que roleStore.perms pour une source unique et cohérente
@@ -259,7 +263,7 @@ function filterMenuItems(items) {
   const result = [];
   for (const item of items) {
     if (item.hidden) continue;
-    // Exclure la section "Académique" pour les utilisateurs restreints
+    // Exclure uniquement un éventuel legacy label "Académique"
     if (isRestrictedUser.value && item.label === 'Académique') {
       continue;
     }
@@ -386,48 +390,30 @@ function handleSectionLeave() {
 }
 
 // Obtenir la classe CSS pour une section selon son index
-function getSectionClass(index) {
-  const classes = {
-    0: 'admin-general-section',     // Admin Général
-    1: 'physio-section',            // Physiothérapie (incl. Gamification)
-    2: 'academic-section',          // Soins Infirmiers
-    3: 'tools-section'              // Outils généraux
-  };
-  return classes[index] || '';
+function getSectionClass(section) {
+  const label = String(section?.label || '').toLowerCase();
+  if (label === 'admin général') return 'admin-general-section';
+  if (label === 'physiothérapie') return 'physio-section';
+  if (label === 'soins infirmiers' || label === 'académique') return 'academic-section';
+  if (label === 'général') return 'tools-section';
+  return '';
 }
 
 // Déterminer si une section doit être affichée
-function shouldShowSection(section, index) {
+function shouldShowSection(section) {
   if (!isSupabaseUser.value) return false;
   
-  // Restriction spécifique pour certains utilisateurs qui ne peuvent accéder qu'à la section d'index 2
-  const userEmail = authStore.user?.email;
-  const restrictedUsers = [
-    'lucienne.darbellay-fumeaux@hevs.ch',
-    'filipa.pereira@hevs.ch',
-    'aline.chappuis@hevs.ch',
-    'maude.epiney-perruchoud@hevs.ch',
-    'isabelle.salamin-plaschy@hevs.ch',
-    'rafael.weissbrodt@hevs.ch',
-    'valerie.caloz-albrecht@hevs.ch',
-    'tiffany.rapillard@hevs.ch',
-    'omar.porteladossantos@hevs.ch',
-    'jesse.curchod@hevs.ch',
-    'line.martin@hevs.ch',
-    'isabelle.rey@hevs.ch',
-    'carla.gomesdarocha@hevs.ch',
-  'elodie.perruchoud@hevs.ch'
-  ];
+  const label = String(section?.label || '').toLowerCase();
   
-  if (restrictedUsers.includes(userEmail)) {
-    // Ces utilisateurs ne peuvent accéder qu'à la section d'index 2
-    return index === 2;
+  if (isRestrictedUser.value) {
+    // Ces utilisateurs ne peuvent accéder qu'à la section Soins Infirmiers
+    return label === 'soins infirmiers' || label === 'académique';
   }
   
-  switch (index) {
-    case 0: // Admin Général - super.all OU admin
+  switch (label) {
+    case 'admin général': // Admin Général - super.all OU admin
       return roleStore.isSuper || roleStore.can('super.all') || roleStore.can('admin')|| roleStore.can('page1.access');
-    case 1: // Physiothérapie & Gamification
+    case 'physiothérapie': // Physiothérapie & Gamification
       return (
         roleStore.can('page1.access') ||
         roleStore.can('AdminPhysio') ||
@@ -437,7 +423,8 @@ function shouldShowSection(section, index) {
         roleStore.can('super.all') ||
         roleStore.isSuper
       );
-    case 2: // Soins Infirmiers / Académique
+    case 'soins infirmiers': // Soins Infirmiers / Académique
+    case 'académique':
       return (
         roleStore.can('page2.access') ||
         roleStore.can('AdminSoins') ||
@@ -445,7 +432,7 @@ function shouldShowSection(section, index) {
         roleStore.can('RMSoins') ||
         roleStore.isSuper
       );
-    case 3: // Outils transversaux
+    case 'général': // Outils transversaux
       return true;
     default:
       return true;

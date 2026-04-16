@@ -17,6 +17,7 @@ export async function getMyModules(userId, userEmail) {
       .from('modules')
       .select(`
         id,
+        code,
         number,
         title,
         year,
@@ -114,12 +115,26 @@ export async function getModulesTeachers(modules) {
     
     if (import.meta.env.DEV) console.log('👥 [rmDashboardService] Chargement enseignants pour modules:', modules.length)
     
-    // Récupérer les cours via course_teachers directement avec les codes de modules
-    // La table courses utilise des UUID, on va chercher via course_teachers
-    const moduleCodes = modules.map(m => m.code).filter(Boolean)
-    
-    if (moduleCodes.length === 0) {
-      if (import.meta.env.DEV) console.log('ℹ️ [rmDashboardService] Aucun code de module disponible')
+    const moduleIds = modules.map(m => m.id).filter(Boolean)
+
+    if (moduleIds.length === 0) {
+      if (import.meta.env.DEV) console.log('ℹ️ [rmDashboardService] Aucun module id disponible')
+      return []
+    }
+
+    const { data: courses, error: coursesError } = await supabase
+      .from('courses')
+      .select('id, module_id')
+      .in('module_id', moduleIds)
+
+    if (coursesError) {
+      console.warn('⚠️ [rmDashboardService] Erreur chargement courses:', coursesError.message)
+      return []
+    }
+
+    const courseIds = (courses || []).map(c => c.id).filter(Boolean)
+    if (courseIds.length === 0) {
+      if (import.meta.env.DEV) console.log('ℹ️ [rmDashboardService] Aucun cours trouvé pour les modules RM')
       return []
     }
     
@@ -144,6 +159,7 @@ export async function getModulesTeachers(modules) {
           avatar_url
         )
       `)
+      .in('course_id', courseIds)
     
     if (error) {
       console.warn('⚠️ [rmDashboardService] Erreur course_teachers:', error.message)
