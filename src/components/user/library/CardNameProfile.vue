@@ -25,7 +25,6 @@
     </div>
   </div>
 
-
   <!-- XP Bar -->
   <XPBar
     v-if="hasValidHouse && !isGameMaster"
