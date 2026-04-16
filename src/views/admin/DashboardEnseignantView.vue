@@ -273,7 +273,7 @@
             </Column>
             <Column header="Action" style="width: 100px">
               <template #body="{ data }">
-                <Button label="Détails" icon="pi pi-eye" class="p-button-sm p-button-text" @click="viewCourse(data)" :disabled="!data.canOpenDetails || !data.id" />
+                <Button label="Détails" icon="pi pi-eye" class="p-button-sm p-button-text" @click="viewCourse(data)" :disabled="!canNavigateToCourse(data)" />
               </template>
             </Column>
             <template #empty>
@@ -507,6 +507,16 @@ function normalizeText(value) {
     .trim();
 }
 
+function formatClassCodeForPlanning(classCode) {
+  const raw = String(classCode || '').trim();
+  if (!raw) return null;
+  if (raw.toLowerCase().startsWith('bac')) return raw.toLowerCase();
+  if (/^[a-zA-Z]\d{1,2}/.test(raw)) {
+    return `bac${raw.substring(1).toLowerCase()}`;
+  }
+  return raw.toLowerCase();
+}
+
 function getSessionSortKey(session) {
   if (!session) return Number.MAX_SAFE_INTEGER;
   const dayOrder = { Lundi: 1, Mardi: 2, Mercredi: 3, Jeudi: 4, Vendredi: 5, Samedi: 6, Dimanche: 7 };
@@ -567,14 +577,26 @@ const normalizedMyCourses = computed(() => {
     const moduleCode = module?.code || course?.moduleCode || '';
     const moduleColor = module?.color || course?.moduleColor || null;
     const nextSession = getNextSessionForCourse({ ...course, moduleCode, moduleName });
-    const nextSessionLabel = nextSession ? `${nextSession.day} ${nextSession.time} (S${nextSession.weekNumber})` : '';
-    const nextSortKey = getSessionSortKey(nextSession);
+    const nextSessionInfo = nextSession
+      ? {
+          id: nextSession.id || null,
+          weekNumber: nextSession.weekNumber || null,
+          day: nextSession.day || null,
+          time: nextSession.time || null,
+          module: nextSession.module || null,
+          class: nextSession.class || null,
+          room: nextSession.room || null
+        }
+      : null;
+    const nextSessionLabel = nextSessionInfo ? `${nextSessionInfo.day} ${nextSessionInfo.time} (S${nextSessionInfo.weekNumber})` : '';
+    const nextSortKey = getSessionSortKey(nextSessionInfo);
 
     return {
       ...course,
       moduleName,
       moduleCode,
       moduleColor,
+      nextSession: nextSessionInfo,
       nextSessionLabel,
       nextSortKey,
       hours: Math.round((Number(course?.hours) || 0) * 10) / 10
@@ -673,9 +695,33 @@ watch(
 )
 
 function viewCourse(course) {
-  if (!course?.id || course?.canOpenDetails === false) return
-  console.log('View course:', course);
+  if (course?.nextSession) {
+    const query = {
+      week: course.nextSession.weekNumber || undefined,
+      classCode: formatClassCodeForPlanning(course.nextSession.class) || undefined,
+      day: course.nextSession.day ? String(course.nextSession.day).toLowerCase() : undefined,
+      start: course.nextSession.time ? String(course.nextSession.time).split(' - ')[0] : undefined,
+      moduleCode: course.moduleCode || undefined,
+      courseCode: course.code || undefined,
+      slotId: course.nextSession.id ? String(course.nextSession.id) : undefined
+    };
+
+    Object.keys(query).forEach(key => {
+      if (query[key] == null || query[key] === '') delete query[key];
+    });
+
+    router.push({ path: '/admin/planning/weekly', query });
+    return;
+  }
+
+  if (!course?.id || course?.canOpenDetails === false) return;
   router.push(`/admin/courses/${course.id}`);
+}
+
+function canNavigateToCourse(course) {
+  if (!course) return false;
+  if (course.nextSession) return true;
+  return !!(course.id && course.canOpenDetails !== false);
 }
 
 function getTypeSeverity(type) {

@@ -595,8 +595,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import Tag from 'primevue/tag'
 import Badge from 'primevue/badge'
@@ -612,6 +612,7 @@ import { supabase } from '@/supabase'
 import { useAuthStore } from '@/stores/authStore'
 
 const router = useRouter()
+const route = useRoute()
 const toast = useToast()
 const authStore = useAuthStore()
 
@@ -660,6 +661,20 @@ const activityTypeOptions = [
   { label: 'Cours Asynchrone', value: 'Cours Asynchrone' },
   { label: 'Autre', value: 'Autre' }
 ]
+
+const deepLinkClassCode = ref(null)
+const deepLinkWeek = ref(null)
+const deepLinkTarget = ref({
+  slotId: null,
+  day: null,
+  start: null,
+  moduleCode: null,
+  courseCode: null
+})
+const deepLinkApplied = ref(false)
+const highlightedSlotId = ref(null)
+
+syncDeepLinkFromRoute(route.query)
 
 const slotForm = ref({
   day: '',
@@ -780,6 +795,173 @@ const groupField = computed(() => 'dayGroup')
 // Fonctions
 const onViewModeChange = async () => {
   await loadPlanningForCurrentView()
+}
+
+function normalizeClassCodeForSelection(value) {
+  const raw = String(value || '').trim()
+  if (!raw) return null
+  if (raw.toLowerCase().startsWith('bac')) return raw.toLowerCase()
+  if (/^[a-zA-Z]\d{1,2}/.test(raw)) {
+    return `bac${raw.substring(1).toLowerCase()}`
+  }
+  return raw.toLowerCase()
+}
+
+function normalizeTimeForComparison(value) {
+  const raw = String(value || '').trim().toLowerCase()
+  if (!raw) return null
+  let digits = raw.replace(/[^0-9]/g, '')
+  if (digits.length === 3) {
+    digits = `0${digits}`
+  }
+  if (digits.length >= 4) {
+    return digits.slice(0, 4)
+  }
+  return digits || null
+}
+
+function findSlotMatchingDeepLink() {
+  const target = deepLinkTarget.value
+  if (!target) return null
+  const slots = sortedTimeSlots.value.filter(slot => !slot.isPlaceholder)
+  if (slots.length === 0) {
+    return null
+  }
+
+  if (target.slotId) {
+    const slotById = slots.find(slot => String(slot.id) === String(target.slotId))
+    if (slotById) {
+      return slotById
+    }
+  }
+
+  const normalizedDay = target.day
+  const normalizedStart = normalizeTimeForComparison(target.start)
+  if (normalizedDay && normalizedStart) {
+    const slotByTiming = slots.find(slot => {
+      return slot.day === normalizedDay && normalizeTimeForComparison(slot.startTime) === normalizedStart
+    })
+    if (slotByTiming) {
+      return slotByTiming
+    }
+  }
+
+  if (normalizedDay && target.moduleCode) {
+    const slotByModule = slots.find(slot => slot.day === normalizedDay && String(slot.moduleCode || '').toUpperCase() === target.moduleCode)
+    if (slotByModule) {
+      return slotByModule
+    }
+  }
+
+  if (target.moduleCode) {
+    const slotByModuleOnly = slots.find(slot => String(slot.moduleCode || '').toUpperCase() === target.moduleCode)
+    if (slotByModuleOnly) {
+      return slotByModuleOnly
+    }
+  }
+
+  return null
+}
+
+async function scrollHighlightedIntoView() {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  await nextTick()
+
+  window.requestAnimationFrame(() => {
+    const table = document.querySelector('.weekly-planning-table')
+    if (!table) return
+    const row = table.querySelector('.p-datatable-tbody tr.highlighted-row')
+    if (row && typeof row.scrollIntoView === 'function') {
+      row.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  })
+}
+
+async function applyDeepLinkFocus() {
+  if (deepLinkApplied.value) {
+    return
+  }
+
+  if (viewMode.value !== 'week') {
+    return
+  }
+
+  const target = deepLinkTarget.value
+  const hasIntent = Boolean(target.slotId || target.day || target.start || target.moduleCode || target.courseCode)
+  if (!hasIntent) {
+    return
+  }
+
+  await nextTick()
+
+  const slot = findSlotMatchingDeepLink()
+  if (!slot) {
+    console.warn('⚠️ Aucun créneau correspondant au deep-link trouvé.', target)
+    return
+  }
+
+  const groupKey = slot.dayGroup || slot.day
+  if (groupKey && !expandedGroups.value.includes(groupKey)) {
+    expandedGroups.value = [...expandedGroups.value, groupKey]
+  }
+
+  highlightedSlotId.value = slot.id
+  deepLinkApplied.value = true
+
+  await scrollHighlightedIntoView()
+}
+
+function syncDeepLinkFromRoute(query = {}) {
+  const normalizedClass = query.classCode ? normalizeClassCodeForSelection(query.classCode) : null
+  deepLinkClassCode.value = normalizedClass
+
+  if (normalizedClass) {
+    const availableYears = yearOptions.value.map(option => option.value)
+    if (availableYears.includes(normalizedClass) && selectedYear.value !== normalizedClass) {
+      selectedYear.value = normalizedClass
+    }
+  }
+
+  if (query.week) {
+    const parsedWeek = Number(query.week)
+    if (!Number.isNaN(parsedWeek)) {
+      deepLinkWeek.value = parsedWeek
+      if (selectedWeek.value !== parsedWeek) {
+        selectedWeek.value = parsedWeek
+      }
+    }
+  } else {
+    deepLinkWeek.value = null
+  }
+
+  const normalizedTarget = {
+    slotId: query.slotId ? String(query.slotId) : null,
+    day: query.day ? String(query.day).toLowerCase() : null,
+    start: query.start ? String(query.start) : null,
+    moduleCode: query.moduleCode ? String(query.moduleCode).toUpperCase() : null,
+    courseCode: query.courseCode ? String(query.courseCode).toUpperCase() : null
+  }
+
+  deepLinkTarget.value = normalizedTarget
+
+  const hasIntent = Boolean(normalizedClass || query.week || normalizedTarget.slotId || normalizedTarget.day || normalizedTarget.start || normalizedTarget.moduleCode || normalizedTarget.courseCode)
+  if (!hasIntent) {
+    return
+  }
+
+  if (viewMode.value !== 'week') {
+    viewMode.value = 'week'
+  }
+
+  deepLinkApplied.value = false
+  highlightedSlotId.value = null
+
+  if (timeSlots.value.length > 0) {
+    nextTick(() => applyDeepLinkFocus())
+  }
 }
 
 onMounted(async () => {
@@ -933,6 +1115,8 @@ const loadWeekPlanning = async () => {
         life: 3000
       })
     }
+
+    await applyDeepLinkFocus()
   } catch (error) {
     console.error('❌ Erreur chargement planning:', error)
     toast.add({
@@ -972,6 +1156,10 @@ watch([selectedYear, viewMode, selectedWeek], async ([newYear, newMode, newWeek]
   }
 
   await loadPlanningForCurrentView()
+})
+
+watch(() => route.fullPath, () => {
+  syncDeepLinkFromRoute(route.query)
 })
 
 // Navigation entre semaines
@@ -1088,20 +1276,25 @@ const loadSemesterPlanning = async (semester) => {
 }
 
 const getRowClass = (data) => {
+  const classes = []
   if (data.isPlaceholder) {
-    return 'placeholder-row'
+    classes.push('placeholder-row')
+  }
+  if (highlightedSlotId.value && String(data.id) === String(highlightedSlotId.value)) {
+    classes.push('highlighted-row')
   }
   if (isSpecialSlot(data.moduleCode)) {
-    return data.moduleCode?.toLowerCase() === 'examen' ? 'special-row examen-row' : 'special-row vacances-row'
+    classes.push('special-row')
+    classes.push(data.moduleCode?.toLowerCase() === 'examen' ? 'examen-row' : 'vacances-row')
   }
   const prevIndex = sortedTimeSlots.value.indexOf(data) - 1
   if (prevIndex >= 0) {
     const prevSlot = sortedTimeSlots.value[prevIndex]
     if (prevSlot.day !== data.day) {
-      return 'day-separator'
+      classes.push('day-separator')
     }
   }
-  return ''
+  return classes.join(' ')
 }
 
 const getDaySeverity = (day) => {
@@ -1772,8 +1965,13 @@ const loadYearOptions = async () => {
 
     const availableYears = yearOptions.value.map(option => option.value)
 
-    // Sélectionner la première option par défaut ou corriger une valeur invalide
-    if (yearOptions.value.length > 0 && (!selectedYear.value || !availableYears.includes(selectedYear.value))) {
+    const preferredYear = deepLinkClassCode.value && availableYears.includes(deepLinkClassCode.value)
+      ? deepLinkClassCode.value
+      : null
+
+    if (preferredYear) {
+      selectedYear.value = preferredYear
+    } else if (yearOptions.value.length > 0 && (!selectedYear.value || !availableYears.includes(selectedYear.value))) {
       selectedYear.value = yearOptions.value[0].value
     }
   } catch (error) {
@@ -2316,6 +2514,29 @@ const exportSemesterToExcel = async (workbook, ExcelJS) => {
   background-color: var(--surface-ground) !important;
   opacity: 0.75;
   border-left: 3px solid var(--orange-400);
+}
+
+:deep(.highlighted-row) {
+  position: relative;
+  box-shadow: inset 0 0 0 3px var(--primary-color); 
+  background-color: var(--primary-100, rgba(59, 130, 246, 0.15)) !important;
+  transition: background-color 0.4s ease, box-shadow 0.4s ease;
+}
+
+:deep(.highlighted-row::after) {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 2px dashed var(--primary-500);
+  border-radius: 6px;
+  pointer-events: none;
+  animation: highlightPulse 1.2s ease-in-out 2;
+}
+
+@keyframes highlightPulse {
+  0% { opacity: 0.3; }
+  50% { opacity: 0.8; }
+  100% { opacity: 0.3; }
 }
 
 :deep(.placeholder-row:hover) {
