@@ -86,6 +86,56 @@
         </div>
 
         <!-- ============================================ -->
+        <!-- QUALITÉ DES DONNÉES                          -->
+        <!-- ============================================ -->
+        <div class="section-card" v-if="dataQualityLoading">
+          <div class="section-header">
+            <h3><i class="pi pi-shield"></i> Qualité des données planning</h3>
+          </div>
+          <div class="loading-inline">
+            <ProgressSpinner style="width: 32px; height: 32px" strokeWidth="6" />
+            <span>Analyse des créneaux...</span>
+          </div>
+        </div>
+
+        <div class="section-card data-quality-section" v-else-if="dataQualitySummary">
+          <div class="section-header">
+            <h3><i class="pi pi-shield"></i> Qualité des données planning</h3>
+            <div class="flex align-items-center gap-2">
+              <Tag :value="`Créneaux scannés: ${dataQuality?.fetchedSlots || 0}`" severity="info" />
+              <small class="timestamp">Maj {{ formattedDataQualityTimestamp }}</small>
+            </div>
+          </div>
+
+          <div v-if="dataQualityIssues.length > 0" class="dq-issues">
+            <div
+              v-for="issue in dataQualityIssues"
+              :key="issue.id"
+              class="dq-issue"
+              :class="`dq-issue--${issue.severity}`"
+            >
+              <div class="dq-issue__icon">
+                <i :class="issue.icon"></i>
+              </div>
+              <div class="dq-issue__body">
+                <strong>{{ issue.title }}</strong>
+                <small>{{ issue.message }}</small>
+              </div>
+              <Tag :value="issue.count" :severity="issue.tagSeverity" />
+            </div>
+          </div>
+
+          <div v-else class="empty-state small-empty">
+            <i class="pi pi-check-circle text-green-500"></i>
+            <p>Les créneaux du planning sont complets. Aucun blocage détecté.</p>
+          </div>
+
+          <div class="dq-actions">
+            <Button label="Voir la feuille de charges" icon="pi pi-external-link" size="small" text @click="openWorkloadDiagnostics" />
+          </div>
+        </div>
+
+        <!-- ============================================ -->
         <!-- RACCOURCIS RAPIDES                           -->
         <!-- ============================================ -->
         <div class="section-card">
@@ -381,6 +431,7 @@ import modulesService from '@/service/modulesService'
 import { supabase } from '@/supabase'
 import { getSITeachers } from '@/service/academicKpiService'
 import { loadEnseignantDashboard } from '@/service/enseignantDashboardService'
+import { scanPlanningDataQuality } from '@/service/dataQualityService'
 
 const router = useRouter()
 
@@ -403,6 +454,8 @@ const totalSlots = ref(0)
 const currentWeekSlots = ref(0)
 const currentWeekSlotsData = ref([])
 const alerts = ref([])
+const dataQuality = ref(null)
+const dataQualityLoading = ref(false)
 
 // Computed
 const modulesCount = computed(() => modules.value.length)
@@ -418,6 +471,86 @@ const filteredTeachers = computed(() => {
     (t.name || '').toLowerCase().includes(term) ||
     (t.email || '').toLowerCase().includes(term)
   )
+})
+
+const dataQualitySummary = computed(() => dataQuality.value?.summary || null)
+
+const dataQualityIssues = computed(() => {
+  const summary = dataQualitySummary.value
+  if (!summary) return []
+
+  const items = []
+
+  if (summary.missingCourseLink > 0) {
+    items.push({
+      id: 'missingCourseLink',
+      title: 'Créneaux sans course_id',
+      message: 'Reliez les créneaux au cours officiel pour fiabiliser les charges et exports.',
+      count: summary.missingCourseLink,
+      severity: 'danger',
+      tagSeverity: 'danger',
+      icon: 'pi pi-link-slash'
+    })
+  }
+
+  const teacherIssues = summary.noTeachersDeclared + summary.noValidTeacher
+  if (teacherIssues > 0) {
+    items.push({
+      id: 'missingTeachers',
+      title: 'Enseignants manquants',
+      message: 'Complétez la liste des enseignants pour chaque créneau.',
+      count: teacherIssues,
+      severity: teacherIssues > 10 ? 'danger' : 'warning',
+      tagSeverity: teacherIssues > 10 ? 'danger' : 'warning',
+      icon: 'pi pi-user-minus'
+    })
+  }
+
+  if (summary.missingActivity > 0) {
+    items.push({
+      id: 'missingActivity',
+      title: 'Activité non renseignée',
+      message: 'Ajoutez un type d’activité pour clarifier le planning.',
+      count: summary.missingActivity,
+      severity: 'warning',
+      tagSeverity: 'warning',
+      icon: 'pi pi-briefcase'
+    })
+  }
+
+  if (summary.missingRoom > 0) {
+    items.push({
+      id: 'missingRoom',
+      title: 'Salles manquantes',
+      message: 'Affectez une salle pour assurer la logistique.',
+      count: summary.missingRoom,
+      severity: 'info',
+      tagSeverity: 'info',
+      icon: 'pi pi-building'
+    })
+  }
+
+  const timeIssues = summary.missingTime + summary.invalidTime
+  if (timeIssues > 0) {
+    items.push({
+      id: 'invalidTime',
+      title: 'Horaires invalides',
+      message: 'Corrigez start/end pour garantir des exports cohérents.',
+      count: timeIssues,
+      severity: 'danger',
+      tagSeverity: 'danger',
+      icon: 'pi pi-clock'
+    })
+  }
+
+  return items
+})
+
+const formattedDataQualityTimestamp = computed(() => {
+  if (!dataQuality.value?.generatedAt) return '—'
+  const date = new Date(dataQuality.value.generatedAt)
+  if (Number.isNaN(date.getTime())) return '—'
+  return date.toLocaleString('fr-CH', { hour12: false })
 })
 
 const currentISOWeek = computed(() => {
@@ -483,6 +616,7 @@ onMounted(async () => {
       loadTeachers(),
       loadPlanningStats()
     ])
+    await loadDataQuality()
     generateAlerts()
   } catch (err) {
     console.error('Erreur chargement dashboard SI:', err)
@@ -633,6 +767,31 @@ async function loadPlanningStats() {
   }
 }
 
+async function loadDataQuality() {
+  try {
+    dataQualityLoading.value = true
+
+    if (!activeYearId.value) {
+      const activeYear = await academicYearService.getActiveAcademicYear()
+      if (activeYear) activeYearId.value = activeYear.id
+    }
+
+    if (!activeYearId.value) {
+      dataQuality.value = null
+      return
+    }
+
+    dataQuality.value = await scanPlanningDataQuality({
+      academicYearId: activeYearId.value,
+      includeRows: false
+    })
+  } catch (err) {
+    console.error('Erreur diagnostic qualité planning:', err)
+  } finally {
+    dataQualityLoading.value = false
+  }
+}
+
 function generateAlerts() {
   const newAlerts = []
   
@@ -701,6 +860,10 @@ function generateAlerts() {
 
 function handleAlertAction(alert) {
   if (alert.action) router.push(alert.action)
+}
+
+function openWorkloadDiagnostics() {
+  router.push('/admin/soins-infirmiers/feuille-de-charges')
 }
 </script>
 
@@ -1265,6 +1428,101 @@ function handleAlertAction(alert) {
   text-align: center;
   padding: 2rem;
   color: var(--text-color-secondary);
+}
+
+.empty-state.small-empty {
+  padding: 1.5rem;
+}
+
+.timestamp {
+  color: var(--text-color-secondary);
+  font-size: 0.85rem;
+}
+
+.data-quality-section {
+  padding-bottom: 1.25rem;
+}
+
+.dq-issues {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.dq-issue {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  background: var(--surface-100);
+  border: 1px solid var(--surface-border);
+}
+
+.dq-issue__icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
+  flex-shrink: 0;
+}
+
+.dq-issue__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.dq-issue__body strong {
+  font-size: 0.95rem;
+  color: var(--text-color);
+}
+
+.dq-issue__body small {
+  color: var(--text-color-secondary);
+  font-size: 0.85rem;
+}
+
+.dq-issue--danger {
+  border-color: rgba(220, 38, 38, 0.15);
+  background: rgba(254, 226, 226, 0.35);
+}
+
+.dq-issue--danger .dq-issue__icon {
+  background: rgba(220, 38, 38, 0.15);
+  color: #b91c1c;
+}
+
+.dq-issue--warning {
+  border-color: rgba(234, 179, 8, 0.2);
+  background: rgba(254, 249, 195, 0.4);
+}
+
+.dq-issue--warning .dq-issue__icon {
+  background: rgba(234, 179, 8, 0.2);
+  color: #ca8a04;
+}
+
+.dq-issue--info {
+  border-color: rgba(14, 165, 233, 0.15);
+  background: rgba(219, 234, 254, 0.35);
+}
+
+.dq-issue--info .dq-issue__icon {
+  background: rgba(14, 165, 233, 0.2);
+  color: #0284c7;
+}
+
+.dq-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
 }
 
 .empty-state i {

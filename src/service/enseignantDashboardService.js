@@ -3,6 +3,7 @@
  * Récupère les données spécifiques à l'enseignant connecté depuis Supabase
  */
 import { supabase } from '@/supabase'
+import academicYearService from '@/service/academicYearService'
 
 function normalizeTeacherValue(value) {
   return String(value || '')
@@ -19,6 +20,68 @@ function normalizeModuleCode(value) {
     .trim()
     .toUpperCase()
     .replace(/\s+/g, '')
+}
+
+function normalizeClassCode(value) {
+  return String(value || '')
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, '')
+}
+
+function getClassCodeAliases(value) {
+  const raw = normalizeClassCode(value)
+  if (!raw) return []
+
+  const aliases = new Set([raw])
+  const normalized = raw.replace(/_/g, '-')
+  aliases.add(normalized)
+
+  const bacMatch = normalized.match(/^BAC(\d{2})(-.+)?$/)
+  if (bacMatch) {
+    aliases.add(`B${bacMatch[1]}${bacMatch[2] || ''}`)
+  }
+
+  const bMatch = normalized.match(/^B(\d{2})(-.+)?$/)
+  if (bMatch) {
+    aliases.add(`BAC${bMatch[1]}${bMatch[2] || ''}`)
+  }
+
+  return Array.from(aliases)
+}
+
+async function resolveActiveAcademicYearClassCodes() {
+  try {
+    const activeYear = await academicYearService.getActiveAcademicYear()
+    if (!activeYear?.id) return null
+
+    const classes = await academicYearService.getClassesByAcademicYear(activeYear.id)
+    const classCodes = new Set(
+      (classes || [])
+        .flatMap(c => getClassCodeAliases(c?.code))
+        .filter(Boolean)
+    )
+
+    return classCodes.size > 0 ? classCodes : null
+  } catch (error) {
+    console.warn('⚠️ [enseignantDashboardService] Impossible de charger les classes de l\'année active:', error)
+    return null
+  }
+}
+
+function slotInActiveYear(slot, activeYearClassCodes) {
+  if (!(activeYearClassCodes instanceof Set) || activeYearClassCodes.size === 0) return true
+
+  const slotClassCodes = []
+  if (Array.isArray(slot?.class_codes)) slotClassCodes.push(...slot.class_codes)
+  if (slot?.class_code) slotClassCodes.push(slot.class_code)
+
+  if (slotClassCodes.length === 0) return false
+
+  return slotClassCodes.some(code => {
+    const aliases = getClassCodeAliases(code)
+    return aliases.some(alias => activeYearClassCodes.has(alias))
+  })
 }
 
 function getTeacherSearchTokens(userId, userEmail, teacherName = null) {
@@ -75,7 +138,7 @@ function parseTeachersField(teachersField) {
 
     // cas "Nom 1, Nom 2"
     return raw
-      .split(/[;,|\n\/]+/)
+      .split(/[;,|\n/]+/)
       .map(v => v.trim())
       .filter(Boolean)
   }
@@ -136,7 +199,7 @@ function getSlotDurationHours(slot) {
  * @param {string} userId - ID de l'enseignant
  * @param {string} userEmail - Email de l'enseignant (fallback)
  */
-export async function getMyCourses(userId, userEmail, teacherName = null) {
+export async function getMyCourses(userId, userEmail, teacherName = null, activeYearClassCodes = null) {
   try {
     if (import.meta.env.DEV) console.log('📚 [getMyCourses] Chargement cours pour enseignant:', userId)
 
@@ -207,7 +270,7 @@ export async function getMyCourses(userId, userEmail, teacherName = null) {
         }))
     }
 
-    const planningCourses = await getMyCoursesFromPlanning(userId, userEmail, teacherName)
+    const planningCourses = await getMyCoursesFromPlanning(userId, userEmail, teacherName, activeYearClassCodes)
     const merged = new Map()
 
     ;[...courses, ...planningCourses].forEach(course => {
@@ -227,15 +290,16 @@ export async function getMyCourses(userId, userEmail, teacherName = null) {
   }
 }
 
-async function getMyCoursesFromPlanning(userId, userEmail, teacherName = null) {
+async function getMyCoursesFromPlanning(userId, userEmail, teacherName = null, activeYearClassCodes = null) {
   try {
     if (!userId && !userEmail && !teacherName) return []
 
     const slots = []
     const pageSize = 1000
     let from = 0
+    let hasMore = true
 
-    while (true) {
+    while (hasMore) {
       const to = from + pageSize - 1
       const { data, error } = await supabase
         .from('planning_time_slots')
@@ -250,13 +314,19 @@ async function getMyCoursesFromPlanning(userId, userEmail, teacherName = null) {
       const page = data || []
       slots.push(...page)
 
-      if (page.length < pageSize) break
-      from += pageSize
+      if (page.length < pageSize) {
+        hasMore = false
+      } else {
+        from += pageSize
+      }
     }
 
     if (!slots.length) return []
 
-    const teacherSlots = slots.filter(slot => isTeacherInSlot({ ...slot, __targetUserId: userId }, userEmail, teacherName))
+    const teacherSlots = slots.filter(slot => {
+      if (!slotInActiveYear(slot, activeYearClassCodes)) return false
+      return isTeacherInSlot({ ...slot, __targetUserId: userId }, userEmail, teacherName)
+    })
     if (!teacherSlots.length) return []
 
     const hoursByCourseKey = new Map()
@@ -411,7 +481,7 @@ async function getMyCoursesSimple(userId, userEmail) {
  * @param {string} userEmail - Email de l'enseignant
  * @param {string} teacherName - Nom de l'enseignant (pour recherche dans teachers array)
  */
-export async function getMyWeekPlanning(userId, userEmail, teacherName = null) {
+export async function getMyWeekPlanning(userId, userEmail, teacherName = null, activeYearClassCodes = null) {
   try {
     if (import.meta.env.DEV) console.log('📅 [getMyWeekPlanning] Chargement planning pour:', userEmail || userId)
     
@@ -441,7 +511,10 @@ export async function getMyWeekPlanning(userId, userEmail, teacherName = null) {
     }
     
     // Filtrer les créneaux où l'enseignant est présent
-    const mySlots = slots.filter(slot => isTeacherInSlot(slot, userEmail, teacherName))
+    const mySlots = slots.filter(slot => {
+      if (!slotInActiveYear(slot, activeYearClassCodes)) return false
+      return isTeacherInSlot(slot, userEmail, teacherName)
+    })
     
     if (import.meta.env.DEV) console.log('📅 [getMyWeekPlanning] Créneaux trouvés:', mySlots.length, '/', slots.length)
     
@@ -456,11 +529,10 @@ export async function getMyWeekPlanning(userId, userEmail, teacherName = null) {
 /**
  * Récupère toutes les séances à venir de l'enseignant
  */
-export async function getUpcomingSessions(userEmail, teacherName = null, limit = 10) {
+export async function getUpcomingSessions(userEmail, teacherName = null, limit = 10, activeYearClassCodes = null) {
   try {
     if (import.meta.env.DEV) console.log('📆 [getUpcomingSessions] Chargement séances à venir pour:', userEmail)
-    
-    const today = new Date().toISOString().split('T')[0]
+
     const currentWeek = getWeekNumber(new Date())
     
     // Récupérer les créneaux à venir
@@ -479,7 +551,10 @@ export async function getUpcomingSessions(userEmail, teacherName = null, limit =
     }
     
     // Filtrer les créneaux de l'enseignant
-    const mySlots = slots.filter(slot => isTeacherInSlot(slot, userEmail, teacherName))
+    const mySlots = slots.filter(slot => {
+      if (!slotInActiveYear(slot, activeYearClassCodes)) return false
+      return isTeacherInSlot(slot, userEmail, teacherName)
+    })
     
     // Formater les séances
     const sessions = mySlots.slice(0, limit).map(slot => ({
@@ -567,47 +642,6 @@ function getActivityColor(activity) {
 }
 
 /**
- * Convertit les cellules en format semaine
- */
-function formatCellsToWeek(cells) {
-  const daysMap = { 1: 0, 2: 1, 3: 2, 4: 3, 5: 4 } // Lundi=1 -> index 0
-  
-  const week = [
-    { name: 'Lundi', courses: [] },
-    { name: 'Mardi', courses: [] },
-    { name: 'Mercredi', courses: [] },
-    { name: 'Jeudi', courses: [] },
-    { name: 'Vendredi', courses: [] }
-  ]
-  
-  cells.forEach(cell => {
-    const dayIndex = daysMap[cell.day]
-    if (dayIndex !== undefined && dayIndex < 5) {
-      const timeSlot = cell.planning_time_slots
-      const course = cell.courses
-      
-      week[dayIndex].courses.push({
-        id: cell.id,
-        time: timeSlot 
-          ? `${timeSlot.start_time?.substring(0, 5)}-${timeSlot.end_time?.substring(0, 5)}`
-          : '08:00-10:00',
-        name: course?.name || 'Cours',
-        code: course?.code || '',
-        room: cell.room || 'Salle N/A',
-        color: cell.color || '#e0e7ff'
-      })
-    }
-  })
-  
-  // Trier les cours par heure
-  week.forEach(day => {
-    day.courses.sort((a, b) => a.time.localeCompare(b.time))
-  })
-  
-  return week
-}
-
-/**
  * Génère une semaine vide
  */
 function generateEmptyWeek() {
@@ -671,7 +705,7 @@ export function calculateStats(courses, weekPlanning) {
   // Compter les heures de la semaine
   let weeklyHours = 0
   weekPlanning.forEach(day => {
-    day.courses.forEach(course => {
+    day.courses.forEach(() => {
       // Estimer 2h par cours si pas de durée précise
       weeklyHours += 2
     })
@@ -722,12 +756,14 @@ export function calculateStats(courses, weekPlanning) {
 export async function loadEnseignantDashboard(userId, userEmail, teacherName = null) {
   try {
     if (import.meta.env.DEV) console.log('🚀 [loadEnseignantDashboard] Chargement complet pour:', userEmail)
+
+    const activeYearClassCodes = await resolveActiveAcademicYearClassCodes()
     
     // Charger cours, planning et séances à venir en parallèle
     const [courses, planningData, upcomingSessions] = await Promise.all([
-      getMyCourses(userId, userEmail, teacherName),
-      getMyWeekPlanning(userId, userEmail, teacherName),
-      getUpcomingSessions(userEmail, teacherName, 15)
+      getMyCourses(userId, userEmail, teacherName, activeYearClassCodes),
+      getMyWeekPlanning(userId, userEmail, teacherName, activeYearClassCodes),
+      getUpcomingSessions(userEmail, teacherName, 15, activeYearClassCodes)
     ])
     
     const weekPlanning = planningData.week || planningData

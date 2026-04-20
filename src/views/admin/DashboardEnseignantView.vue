@@ -27,365 +27,368 @@
           </div>
         </div>
         
-        <!-- Statistiques rapides -->
-        <div class="stats-cards">
-          <div class="stat-card">
-            <div class="stat-icon" style="background: #3b82f6;">
-              <i class="pi pi-book"></i>
+        <section class="hero-card">
+          <div class="hero-card__content">
+            <span class="hero-card__eyebrow">{{ heroEyebrow }}</span>
+            <h2 class="hero-card__title">{{ teacherDisplayName }}</h2>
+            <p class="hero-card__subtitle">{{ heroSubtitle }}</p>
+            <div class="hero-card__meta">
+              <span v-if="teacherEmail" class="hero-card__meta-item">
+                <i class="pi pi-at"></i>
+                {{ teacherEmail }}
+              </span>
+              <span class="hero-card__meta-item">
+                <i class="pi pi-users"></i>
+                {{ studentsCount }} étudiant<span v-if="studentsCount !== 1">s</span>
+              </span>
+              <span class="hero-card__meta-item">
+                <i class="pi pi-th-large"></i>
+                {{ teacherModulesCount }} module<span v-if="teacherModulesCount !== 1">s</span>
+              </span>
             </div>
-            <div class="stat-info">
-              <span class="stat-label">Cours assignés</span>
-              <span class="stat-value">{{ coursesCount }}</span>
-            </div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-icon" style="background: #10b981;">
-              <i class="pi pi-clock"></i>
-            </div>
-            <div class="stat-info">
-              <span class="stat-label">Heures/semaine</span>
-              <span class="stat-value">{{ weeklyHours }}h</span>
-            </div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-icon" style="background: #f59e0b;">
-              <i class="pi pi-calendar"></i>
-            </div>
-            <div class="stat-info">
-              <span class="stat-label">Prochain cours</span>
-              <span class="stat-value">{{ nextCourse }}</span>
+            <div class="hero-card__actions">
+              <Button label="Voir mon planning" icon="pi pi-calendar" severity="primary" size="small" @click="$router.push('/admin/planning/weekly')" />
+              <Button label="Exporter mon planning" icon="pi pi-file-pdf" size="small" text severity="secondary" @click="exportMyPlanning" />
             </div>
           </div>
-
-          <div class="stat-card">
-            <div class="stat-icon" style="background: #8b5cf6;">
-              <i class="pi pi-users"></i>
+          <div class="hero-card__metrics">
+            <div class="hero-metric">
+              <span class="hero-metric__label">Cours assignés</span>
+              <span class="hero-metric__value">{{ coursesCount }}</span>
             </div>
-            <div class="stat-info">
-              <span class="stat-label">Étudiants</span>
-              <span class="stat-value">{{ studentsCount }}</span>
+            <div class="hero-metric">
+              <span class="hero-metric__label">Heures / semaine</span>
+              <span class="hero-metric__value">{{ weeklyHours }}h</span>
+              <small class="hero-metric__hint">{{ stats.upcomingHours || 0 }}h à venir</small>
             </div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-icon" style="background: #0f766e;">
-              <i class="pi pi-calendar-clock"></i>
+            <div class="hero-metric">
+              <span class="hero-metric__label">Séances programmées</span>
+              <span class="hero-metric__value">{{ upcomingSessions.length }}</span>
+              <small class="hero-metric__hint">Prochaines semaines</small>
             </div>
-            <div class="stat-info">
-              <span class="stat-label">Heures annuelles (planning)</span>
-              <span class="stat-value">{{ annualPlanningHours }}h</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Toggle vue calendrier / liste -->
-        <div class="section-card full-width">
-          <div class="section-header-row">
-            <h3><i class="pi pi-calendar"></i> Mon Calendrier</h3>
-            <div class="view-toggle">
-              <Button 
-                :icon="calendarView === 'week' ? 'pi pi-check' : 'pi pi-calendar'" 
-                label="Semaine" 
-                :severity="calendarView === 'week' ? 'primary' : 'secondary'" 
-                size="small"
-                @click="calendarView = 'week'" 
-              />
-              <Button 
-                :icon="calendarView === 'list' ? 'pi pi-check' : 'pi pi-list'" 
-                label="Liste" 
-                :severity="calendarView === 'list' ? 'primary' : 'secondary'" 
-                size="small"
-                @click="calendarView = 'list'" 
-              />
+            <div class="hero-metric">
+              <span class="hero-metric__label">Heures annuelles</span>
+              <span class="hero-metric__value">{{ annualPlanningHours }}h</span>
             </div>
           </div>
+        </section>
 
-          <!-- Vue Semaine -->
-          <div v-if="calendarView === 'week'" class="week-schedule">
-            <div v-for="day in weekSchedule" :key="day.name" class="day-column">
-              <h4>{{ day.name }}</h4>
-              <div class="courses-list">
-                <div v-for="course in day.courses" :key="course.id" class="course-block-detailed" :style="{ borderLeftColor: course.color }">
-                  <div class="course-time-badge">{{ course.time }}</div>
-                  <div class="course-content">
-                    <span class="course-name">{{ course.name }}</span>
-                    <span class="course-code">{{ course.code }}</span>
-                    <div class="course-details-row">
-                      <Tag :value="course.type || 'Cours'" :severity="getTypeSeverity(course.type)" class="text-xs" />
-                      <span v-if="course.class" class="class-badge">{{ course.class }}</span>
-                      <span class="room-info"><i class="pi pi-map-marker"></i> {{ course.room }}</span>
+        <div class="dashboard-sections">
+
+          <section class="section-card quick-actions-section full-width">
+            <div class="section-header">
+              <h3><i class="pi pi-bolt"></i> Actions rapides</h3>
+            </div>
+            <div class="quick-actions">
+              <Button label="Planning hebdomadaire" icon="pi pi-calendar" severity="primary" @click="$router.push('/admin/planning/weekly')" />
+              <Button label="Calendrier semestriel" icon="pi pi-calendar-plus" outlined @click="$router.push('/admin/planning/semester')" />
+              <Button label="Liste des modules" icon="pi pi-book" outlined @click="$router.push('/admin/modules')" />
+              <Button label="Ressources pédagogiques" icon="pi pi-folder" outlined @click="$router.push('/media')" />
+            </div>
+          </section>
+
+          <section class="section-card schedule-section span-2">
+            <div class="section-header-row">
+              <h3><i class="pi pi-calendar"></i> Mon Calendrier</h3>
+              <div class="view-toggle">
+                <Button 
+                  :icon="calendarView === 'week' ? 'pi pi-check' : 'pi pi-calendar'" 
+                  label="Semaine" 
+                  :severity="calendarView === 'week' ? 'primary' : 'secondary'" 
+                  size="small"
+                  @click="calendarView = 'week'" 
+                />
+                <Button 
+                  :icon="calendarView === 'list' ? 'pi pi-check' : 'pi pi-list'" 
+                  label="Liste" 
+                  :severity="calendarView === 'list' ? 'primary' : 'secondary'" 
+                  size="small"
+                  @click="calendarView = 'list'" 
+                />
+              </div>
+            </div>
+
+            <div v-if="calendarView === 'week'" class="week-schedule">
+              <div v-for="day in weekSchedule" :key="day.name" class="day-column">
+                <h4>{{ day.name }}</h4>
+                <div class="courses-list">
+                  <div v-for="course in day.courses" :key="course.id" class="course-block-detailed" :style="{ borderLeftColor: course.color }">
+                    <div class="course-time-badge">{{ course.time }}</div>
+                    <div class="course-content">
+                      <span class="course-name">{{ course.name }}</span>
+                      <span class="course-code">{{ course.code }}</span>
+                      <div class="course-details-row">
+                        <Tag :value="course.type || 'Cours'" :severity="getTypeSeverity(course.type)" class="text-xs" />
+                        <span v-if="course.class" class="class-badge">{{ course.class }}</span>
+                        <span class="room-info"><i class="pi pi-map-marker"></i> {{ course.room }}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div v-if="day.courses.length === 0" class="no-course">
-                  <i class="pi pi-sun"></i>
-                  <span>Libre</span>
+                  <div v-if="day.courses.length === 0" class="no-course">
+                    <i class="pi pi-sun"></i>
+                    <span>Libre</span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Vue Liste détaillée -->
-          <div v-else class="calendar-list-view">
-            <DataTable 
-              :value="allMySlots" 
-              :rows="10" 
-              :paginator="allMySlots.length > 10"
+            <div v-else class="calendar-list-view">
+              <DataTable 
+                :value="allMySlots" 
+                :rows="10" 
+                :paginator="allMySlots.length > 10"
+                responsiveLayout="scroll"
+                stripedRows
+                class="p-datatable-sm"
+                sortField="sortKey"
+                :sortOrder="1"
+              >
+                <Column field="weekNumber" header="Sem." style="width: 60px" sortable>
+                  <template #body="{ data }">
+                    <Tag :value="'S' + data.week_number" severity="info" />
+                  </template>
+                </Column>
+                <Column field="day" header="Jour" style="width: 90px" />
+                <Column field="time" header="Horaire" style="width: 110px">
+                  <template #body="{ data }">
+                    {{ data.start_time?.substring(0,5) }} - {{ data.end_time?.substring(0,5) }}
+                  </template>
+                </Column>
+                <Column field="course_title" header="Cours">
+                  <template #body="{ data }">
+                    <div>
+                      <strong>{{ data.course_title || data.module_code }}</strong>
+                      <div class="text-sm text-500">{{ data.module_code }}</div>
+                    </div>
+                  </template>
+                </Column>
+                <Column field="activity" header="Type" style="width: 80px">
+                  <template #body="{ data }">
+                    <Tag :value="data.activity || 'Cours'" :severity="getTypeSeverity(data.activity)" />
+                  </template>
+                </Column>
+                <Column field="class_code" header="Classe" style="width: 80px">
+                  <template #body="{ data }">
+                    <span class="class-badge">{{ data.class_code }}</span>
+                  </template>
+                </Column>
+                <Column field="room" header="Salle" style="width: 100px" />
+                <template #empty>
+                  <div class="text-center py-4">
+                    <i class="pi pi-calendar text-4xl text-400"></i>
+                    <p class="mt-2 text-600">Aucun cours planifié</p>
+                  </div>
+                </template>
+              </DataTable>
+            </div>
+          </section>
+
+          <section class="section-card reminder-section">
+            <div class="section-header">
+              <h3>
+                <i class="pi pi-bell"></i> 
+                À ne pas oublier
+                <Badge :value="nextWeekCourses.length" severity="warning" class="ml-2" />
+              </h3>
+            </div>
+            <div class="reminder-list">
+              <div v-for="(course, idx) in nextWeekCourses" :key="idx" class="reminder-item" :class="{ 'today': course.isToday, 'tomorrow': course.isTomorrow }">
+                <div class="reminder-when">
+                  <span v-if="course.isToday" class="today-badge">Aujourd'hui</span>
+                  <span v-else-if="course.isTomorrow" class="tomorrow-badge">Demain</span>
+                  <span v-else class="date-badge">{{ course.day }}</span>
+                  <span class="time">{{ course.time }}</span>
+                </div>
+                <div class="reminder-content">
+                  <strong>{{ course.course }}</strong>
+                  <span class="text-500">{{ course.module }} - {{ course.class }}</span>
+                </div>
+                <div class="reminder-room">
+                  <i class="pi pi-map-marker"></i>
+                  {{ course.room }}
+                </div>
+              </div>
+              <div v-if="nextWeekCourses.length === 0" class="empty-state small">
+                <i class="pi pi-check-circle text-success"></i>
+                <p>Aucun cours dans les prochains jours</p>
+              </div>
+            </div>
+          </section>
+
+          <section class="section-card upcoming-section span-2">
+            <div class="section-header upcoming-header">
+              <div class="section-header__left">
+                <h3>
+                  <i class="pi pi-calendar-plus"></i> 
+                  Prochaines séances
+                </h3>
+                <Badge :value="upcomingSessions.length" severity="info" />
+              </div>
+              <div class="section-header__actions">
+                <Button icon="pi pi-file-pdf" label="PDF" severity="secondary" size="small" @click="exportMyPlanning" />
+                <Button icon="pi pi-file-excel" label="Excel" severity="success" size="small" outlined @click="exportMyPlanningExcel" />
+              </div>
+            </div>
+            <div class="upcoming-list">
+              <div v-for="session in upcomingSessions.slice(0, 8)" :key="session.id" class="upcoming-item">
+                <div class="upcoming-date">
+                  <span class="day">{{ session.day }}</span>
+                  <span class="week">S{{ session.weekNumber }}</span>
+                </div>
+                <div class="upcoming-info">
+                  <span class="course-name">{{ session.course }}</span>
+                  <span class="course-details">
+                    <i class="pi pi-clock"></i> {{ session.time }}
+                    <i class="pi pi-map-marker ml-2"></i> {{ session.room }}
+                    <Tag :value="session.class" severity="secondary" class="ml-2" />
+                  </span>
+                </div>
+                <Tag :value="session.type" :severity="getTypeSeverity(session.type)" />
+              </div>
+              <div v-if="upcomingSessions.length === 0" class="empty-state">
+                <i class="pi pi-calendar"></i>
+                <p>Aucune séance à venir</p>
+              </div>
+              <div v-if="upcomingSessions.length > 8" class="text-center mt-2">
+                <Button label="Voir tout" icon="pi pi-arrow-right" text @click="$router.push('/admin/planning/weekly')" />
+              </div>
+            </div>
+          </section>
+
+          <section class="section-card courses-section span-2">
+            <div class="section-header courses-header">
+              <div class="section-header__left">
+                <h3>
+                  <i class="pi pi-book"></i> 
+                  Mes cours
+                </h3>
+                <Badge :value="filteredAndSortedCourses.length" severity="info" />
+              </div>
+              <div class="courses-toolbar">
+                <span class="p-input-icon-left">
+                  <i class="pi pi-search" />
+                  <InputText v-model="courseSearch" placeholder="Rechercher un cours..." class="p-inputtext-sm" style="width: 220px" />
+                </span>
+                <Dropdown v-model="courseModuleFilter" :options="courseModuleOptions" optionLabel="label" optionValue="value" class="p-inputtext-sm" style="min-width: 180px" />
+                <Dropdown v-model="courseSort" :options="courseSortOptions" optionLabel="label" optionValue="value" class="p-inputtext-sm" style="min-width: 170px" />
+                <Button icon="pi pi-file-excel" label="Excel cours" severity="success" size="small" outlined @click="exportMyCoursesExcel" />
+              </div>
+            </div>
+            <DataTable
+              :value="filteredAndSortedCourses"
               responsiveLayout="scroll"
               stripedRows
               class="p-datatable-sm"
-              sortField="sortKey"
-              :sortOrder="1"
+              :rows="12"
+              :paginator="filteredAndSortedCourses.length > 12"
             >
-              <Column field="weekNumber" header="Sem." style="width: 60px" sortable>
+              <Column field="moduleName" header="Module" sortable>
                 <template #body="{ data }">
-                  <Tag :value="'S' + data.week_number" severity="info" />
-                </template>
-              </Column>
-              <Column field="day" header="Jour" style="width: 90px" />
-              <Column field="time" header="Horaire" style="width: 110px">
-                <template #body="{ data }">
-                  {{ data.start_time?.substring(0,5) }} - {{ data.end_time?.substring(0,5) }}
-                </template>
-              </Column>
-              <Column field="course_title" header="Cours">
-                <template #body="{ data }">
-                  <div>
-                    <strong>{{ data.course_title || data.module_code }}</strong>
-                    <div class="text-sm text-500">{{ data.module_code }}</div>
+                  <div class="module-cell">
+                    <span class="module-color-dot" :style="{ backgroundColor: data.moduleColor || data.color || '#3b82f6' }" />
+                    <div>
+                      <div class="font-semibold">{{ data.moduleName }}</div>
+                      <small class="text-500">{{ data.moduleCode || '—' }}</small>
+                    </div>
                   </div>
                 </template>
               </Column>
-              <Column field="activity" header="Type" style="width: 80px">
+              <Column field="name" header="Cours" sortable>
                 <template #body="{ data }">
-                  <Tag :value="data.activity || 'Cours'" :severity="getTypeSeverity(data.activity)" />
+                  <div>
+                    <div class="font-semibold">{{ data.name }}</div>
+                    <small class="text-500">{{ data.code || '—' }}</small>
+                  </div>
                 </template>
               </Column>
-              <Column field="class_code" header="Classe" style="width: 80px">
+              <Column field="type" header="Type" style="width: 110px">
                 <template #body="{ data }">
-                  <span class="class-badge">{{ data.class_code }}</span>
+                  <Tag :value="data.type || 'CM'" :severity="getTypeSeverity(data.type || 'CM')" />
                 </template>
               </Column>
-              <Column field="room" header="Salle" style="width: 100px" />
+              <Column field="hours" header="Heures" sortable style="width: 90px">
+                <template #body="{ data }">{{ data.hours }}h</template>
+              </Column>
+              <Column field="nextSessionLabel" header="Prochaine séance" sortable>
+                <template #body="{ data }">
+                  <span>{{ data.nextSessionLabel || 'Non planifiée' }}</span>
+                </template>
+              </Column>
+              <Column header="Action" style="width: 120px">
+                <template #body="{ data }">
+                  <Button
+                    label="Détails"
+                    icon="pi pi-eye"
+                    class="p-button-sm p-button-text"
+                    @click="viewCourse(data)"
+                    :disabled="!canNavigateToCourse(data)"
+                  />
+                </template>
+              </Column>
               <template #empty>
                 <div class="text-center py-4">
-                  <i class="pi pi-calendar text-4xl text-400"></i>
-                  <p class="mt-2 text-600">Aucun cours planifié</p>
+                  <i class="pi pi-inbox text-3xl text-400"></i>
+                  <p class="mt-2">{{ normalizedMyCourses.length === 0 ? 'Aucun cours assigné' : 'Aucun cours avec ces filtres' }}</p>
                 </div>
               </template>
             </DataTable>
-          </div>
-        </div>
+          </section>
 
-        <!-- À ne pas oublier (prochains cours) -->
-        <div class="section-card reminder-section">
-          <div class="section-header">
-            <h3>
-              <i class="pi pi-bell"></i> 
-              À ne pas oublier
-              <Badge :value="nextWeekCourses.length" severity="warning" class="ml-2" />
-            </h3>
-          </div>
-          <div class="reminder-list">
-            <div v-for="(course, idx) in nextWeekCourses" :key="idx" class="reminder-item" :class="{ 'today': course.isToday, 'tomorrow': course.isTomorrow }">
-              <div class="reminder-when">
-                <span v-if="course.isToday" class="today-badge">Aujourd'hui</span>
-                <span v-else-if="course.isTomorrow" class="tomorrow-badge">Demain</span>
-                <span v-else class="date-badge">{{ course.day }}</span>
-                <span class="time">{{ course.time }}</span>
-              </div>
-              <div class="reminder-content">
-                <strong>{{ course.course }}</strong>
-                <span class="text-500">{{ course.module }} - {{ course.class }}</span>
-              </div>
-              <div class="reminder-room">
-                <i class="pi pi-map-marker"></i>
-                {{ course.room }}
-              </div>
+          <section class="section-card modules-section">
+            <div class="section-header">
+              <h3>
+                <i class="pi pi-th-large"></i>
+                Modules où j'interviens
+              </h3>
+              <Badge :value="myModules.length" severity="success" />
             </div>
-            <div v-if="nextWeekCourses.length === 0" class="empty-state small">
-              <i class="pi pi-check-circle text-success"></i>
-              <p>Aucun cours dans les prochains jours</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Mes cours -->
-        <div class="section-card">
-          <div class="section-header">
-            <h3>
-              <i class="pi pi-book"></i> 
-              Mes Cours
-              <Badge :value="filteredAndSortedCourses.length" severity="info" class="ml-2" />
-            </h3>
-            <div class="courses-toolbar">
-              <span class="p-input-icon-left">
-                <i class="pi pi-search" />
-                <InputText v-model="courseSearch" placeholder="Rechercher un cours..." class="p-inputtext-sm" style="width: 220px" />
-              </span>
-              <Dropdown v-model="courseModuleFilter" :options="courseModuleOptions" optionLabel="label" optionValue="value" class="p-inputtext-sm" style="min-width: 180px" />
-              <Dropdown v-model="courseSort" :options="courseSortOptions" optionLabel="label" optionValue="value" class="p-inputtext-sm" style="min-width: 170px" />
-              <Button icon="pi pi-file-excel" label="Excel cours" severity="success" size="small" outlined @click="exportMyCoursesExcel" />
-            </div>
-          </div>
-
-          <DataTable
-            :value="filteredAndSortedCourses"
-            responsiveLayout="scroll"
-            stripedRows
-            class="p-datatable-sm"
-            :rows="12"
-            :paginator="filteredAndSortedCourses.length > 12"
-          >
-            <Column field="moduleName" header="Module" sortable>
-              <template #body="{ data }">
-                <div class="module-cell">
-                  <span class="module-color-dot" :style="{ backgroundColor: data.moduleColor || data.color || '#3b82f6' }" />
-                  <div>
-                    <div class="font-semibold">{{ data.moduleName }}</div>
-                    <small class="text-500">{{ data.moduleCode || '—' }}</small>
-                  </div>
+            <div class="modules-list">
+              <div v-for="module in myModules" :key="module.id" class="module-item">
+                <div class="module-icon" :style="{ background: module.color || 'var(--primary-100)' }">
+                  <i class="pi pi-folder"></i>
                 </div>
-              </template>
-            </Column>
-            <Column field="name" header="Cours" sortable>
-              <template #body="{ data }">
-                <div>
-                  <div class="font-semibold">{{ data.name }}</div>
-                  <small class="text-500">{{ data.code || '—' }}</small>
+                <div class="module-info">
+                  <h4>{{ module.title }}</h4>
+                  <p>{{ module.credits }} ECTS • Année {{ module.year }}</p>
+                  <small class="text-500">Responsable : {{ module.responsable || module.responsable_email || '—' }}</small>
                 </div>
-              </template>
-            </Column>
-            <Column field="type" header="Type" style="width: 100px">
-              <template #body="{ data }">
-                <Tag :value="data.type || 'CM'" severity="secondary" />
-              </template>
-            </Column>
-            <Column field="hours" header="Heures" sortable style="width: 90px">
-              <template #body="{ data }">{{ data.hours }}h</template>
-            </Column>
-            <Column field="nextSessionLabel" header="Prochaine séance" sortable>
-              <template #body="{ data }">
-                <span>{{ data.nextSessionLabel || 'Non planifiée' }}</span>
-              </template>
-            </Column>
-            <Column header="Action" style="width: 100px">
-              <template #body="{ data }">
-                <Button label="Détails" icon="pi pi-eye" class="p-button-sm p-button-text" @click="viewCourse(data)" :disabled="!canNavigateToCourse(data)" />
-              </template>
-            </Column>
-            <template #empty>
-              <div class="text-center py-4">
-                <i class="pi pi-inbox text-3xl text-400"></i>
-                <p class="mt-2">{{ normalizedMyCourses.length === 0 ? 'Aucun cours assigné' : 'Aucun cours avec ces filtres' }}</p>
+                <div class="module-year">
+                  <Tag :value="module.code || ('BA' + module.year)" severity="info" />
+                </div>
               </div>
-            </template>
-          </DataTable>
-        </div>
+              <div v-if="myModules.length === 0" class="empty-state">
+                <i class="pi pi-inbox"></i>
+                <p>Aucun module associé</p>
+                <small>Contactez le secrétariat pour vérifier vos attributions.</small>
+              </div>
+            </div>
+          </section>
 
-        <!-- Mes Modules -->
-        <div class="section-card">
-          <div class="section-header">
-            <h3>
-              <i class="pi pi-th-large"></i> 
-              Modules où j'interviens
-              <Badge :value="myModules.length" severity="success" class="ml-2" />
-            </h3>
-          </div>
-          <div class="modules-list">
-            <div v-for="module in myModules" :key="module.id" class="module-item">
-              <div class="module-icon">
-                <i class="pi pi-folder"></i>
+          <section class="section-card hours-section">
+            <div class="section-header">
+              <h3><i class="pi pi-chart-bar"></i> Récapitulatif heures</h3>
+            </div>
+            <div class="hours-grid">
+              <div class="hour-stat">
+                <span class="hour-value">{{ stats.weeklyHours }}h</span>
+                <span class="hour-label">Cette semaine</span>
               </div>
-              <div class="module-info">
-                <h4>{{ module.title }}</h4>
-                <p>{{ module.credits }} ECTS</p>
-                <small class="text-500">RM: {{ module.responsable || module.responsable_email }}</small>
+              <div class="hour-stat">
+                <span class="hour-value">{{ stats.upcomingHours || 0 }}h</span>
+                <span class="hour-label">À venir</span>
               </div>
-              <div class="module-year">
-                <Tag :value="module.code || ('BA' + module.year)" severity="info" />
+              <div class="hour-stat">
+                <span class="hour-value">{{ stats.totalHours }}h</span>
+                <span class="hour-label">Total assigné</span>
+              </div>
+              <div class="hour-stat">
+                <span class="hour-value">{{ stats.upcomingCount || 0 }}</span>
+                <span class="hour-label">Séances planifiées</span>
               </div>
             </div>
-            <div v-if="myModules.length === 0" class="empty-state">
-              <i class="pi pi-inbox"></i>
-              <p>Aucun module</p>
-            </div>
-          </div>
-        </div>
+          </section>
 
-        <!-- Actions rapides -->
-        <div class="section-card">
-          <h3><i class="pi pi-bolt"></i> Actions Rapides</h3>
-          <div class="quick-actions">
-            <Button label="Mon Planning" icon="pi pi-calendar" severity="primary" @click="$router.push('/admin/planning/weekly')" />
-            <Button label="Calendrier Semestriel" icon="pi pi-calendar-plus" class="p-button-outlined" @click="$router.push('/admin/planning/semester')" />
-            <Button label="Liste des Modules" icon="pi pi-book" class="p-button-outlined" @click="$router.push('/admin/modules')" />
-            <Button label="Ressources Pédagogiques" icon="pi pi-folder" class="p-button-outlined" @click="$router.push('/media')" />
-          </div>
         </div>
-
-        <!-- Prochaines séances -->
-        <div class="section-card upcoming-section">
-          <div class="section-header">
-            <h3>
-              <i class="pi pi-calendar-plus"></i> 
-              Prochaines Séances
-              <Badge :value="upcomingSessions.length" severity="info" class="ml-2" />
-            </h3>
-            <Button icon="pi pi-file-pdf" label="PDF" severity="secondary" size="small" @click="exportMyPlanning" class="mr-2" />
-            <Button icon="pi pi-file-excel" label="Excel" severity="success" size="small" outlined @click="exportMyPlanningExcel" />
-          </div>
-          <div class="upcoming-list">
-            <div v-for="session in upcomingSessions.slice(0, 8)" :key="session.id" class="upcoming-item">
-              <div class="upcoming-date">
-                <span class="day">{{ session.day }}</span>
-                <span class="week">S{{ session.weekNumber }}</span>
-              </div>
-              <div class="upcoming-info">
-                <span class="course-name">{{ session.course }}</span>
-                <span class="course-details">
-                  <i class="pi pi-clock"></i> {{ session.time }}
-                  <i class="pi pi-map-marker ml-2"></i> {{ session.room }}
-                  <Tag :value="session.class" severity="secondary" class="ml-2" />
-                </span>
-              </div>
-              <Tag :value="session.type" :severity="getTypeSeverity(session.type)" />
-            </div>
-            <div v-if="upcomingSessions.length === 0" class="empty-state">
-              <i class="pi pi-calendar"></i>
-              <p>Aucune séance à venir</p>
-            </div>
-            <div v-if="upcomingSessions.length > 8" class="text-center mt-2">
-              <Button label="Voir tout" icon="pi pi-arrow-right" text @click="$router.push('/admin/planning/weekly')" />
-            </div>
-          </div>
-        </div>
-
-        <!-- Statistiques heures -->
-        <div class="section-card hours-stats">
-          <h3><i class="pi pi-chart-bar"></i> Récapitulatif Heures</h3>
-          <div class="hours-grid">
-            <div class="hour-stat">
-              <span class="hour-value">{{ stats.weeklyHours }}h</span>
-              <span class="hour-label">Cette semaine</span>
-            </div>
-            <div class="hour-stat">
-              <span class="hour-value">{{ stats.upcomingHours || 0 }}h</span>
-              <span class="hour-label">À venir</span>
-            </div>
-            <div class="hour-stat">
-              <span class="hour-value">{{ stats.totalHours }}h</span>
-              <span class="hour-label">Total assigné</span>
-            </div>
-            <div class="hour-stat">
-              <span class="hour-value">{{ stats.upcomingCount || 0 }}</span>
-              <span class="hour-label">Séances planifiées</span>
-            </div>
-          </div>
-        </div>
-
       </div>
     </div>
   </AdminLayout>
@@ -494,6 +497,33 @@ const coursesCount = computed(() => stats.value.coursesCount);
 const weeklyHours = computed(() => stats.value.weeklyHours);
 const nextCourse = computed(() => stats.value.nextCourse);
 const studentsCount = computed(() => stats.value.studentsCount);
+
+const teacherDisplayName = computed(() => {
+  if (isPreviewMode.value) {
+    return previewTeacherName.value || previewTeacherEmail.value || 'Enseignant SI';
+  }
+  return authStore.user?.displayName || authStore.user?.name || authStore.user?.email || 'Mon profil enseignant';
+});
+
+const teacherEmail = computed(() => {
+  if (isPreviewMode.value) return previewTeacherEmail.value || '';
+  return authStore.user?.email || '';
+});
+
+const teacherModulesCount = computed(() => myModules.value.length);
+
+const heroEyebrow = computed(() => (isPreviewMode.value ? 'Profil enseignant ciblé' : 'Mon tableau de bord pédagogique'));
+
+const heroSubtitle = computed(() => {
+  const next = nextCourse.value;
+  if (next && next !== 'N/A') {
+    return `Prochaine séance : ${next}`;
+  }
+  if (upcomingSessions.value.length > 0) {
+    return `Prochaines séances prévues : ${upcomingSessions.value.length}`;
+  }
+  return 'Suivez vos cours, horaires et ressources en un coup d’œil';
+});
 
 function normalizeModuleCode(value) {
   return String(value || '').trim().toUpperCase().replace(/\s+/g, '');
@@ -835,7 +865,7 @@ async function exportMyPlanningExcel() {
 
 function sanitizeSheetName(name, fallback = 'Feuille') {
   const cleaned = String(name || fallback)
-    .replace(/[\\/*?:\[\]]/g, ' ')
+    .replace(/[\\/*?:[\]]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
   return (cleaned || fallback).slice(0, 31);
@@ -914,6 +944,118 @@ async function exportMyCoursesExcel() {
 .dashboard-grid {
   display: grid;
   gap: 1.5rem;
+}
+
+.hero-card {
+  background: linear-gradient(130deg, #0f766e 0%, #1d4ed8 100%);
+  border-radius: 1rem;
+  padding: 1.75rem;
+  color: #fff;
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 1.5rem;
+  box-shadow: 0 10px 24px rgba(15, 118, 110, 0.22);
+}
+
+.hero-card__content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.hero-card__eyebrow {
+  display: inline-flex;
+  width: fit-content;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.hero-card__title {
+  margin: 0;
+  font-size: clamp(1.5rem, 2.2vw, 2rem);
+  line-height: 1.1;
+}
+
+.hero-card__subtitle {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.hero-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.hero-card__meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.14);
+  font-size: 0.85rem;
+}
+
+.hero-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.hero-card__metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.hero-metric {
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 0.9rem;
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.hero-metric__label {
+  font-size: 0.78rem;
+  opacity: 0.9;
+}
+
+.hero-metric__value {
+  font-size: 1.45rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.hero-metric__hint {
+  font-size: 0.75rem;
+  opacity: 0.82;
+}
+
+.dashboard-sections {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.2rem;
+}
+
+.span-2 {
+  grid-column: span 2;
+}
+
+.courses-section {
+  min-height: 420px;
+}
+
+.hours-section {
+  border-left: 4px solid #f59e0b;
 }
 
 .stats-cards {
@@ -1466,6 +1608,23 @@ async function exportMyCoursesExcel() {
 }
 
 @media (max-width: 768px) {
+  .hero-card {
+    grid-template-columns: 1fr;
+    padding: 1.25rem;
+  }
+
+  .hero-card__metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-sections {
+    grid-template-columns: 1fr;
+  }
+
+  .span-2 {
+    grid-column: span 1;
+  }
+
   .hours-grid {
     grid-template-columns: repeat(2, 1fr);
   }

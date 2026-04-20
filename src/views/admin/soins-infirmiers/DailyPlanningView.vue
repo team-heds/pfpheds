@@ -199,10 +199,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { supabase } from '@/supabase'
 import planningService from '@/service/planningService'
+import academicYearService from '@/service/academicYearService'
+import { useAcademicYear } from '@/composables/useAcademicYear'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import PageHeader from '@/components/admin/common/PageHeader.vue'
 
@@ -213,6 +215,54 @@ const selectedDay = ref(null)
 const selectedClass = ref(null)
 const allSlots = ref([])
 const courseModules = ref([])
+const activeYearClassCodes = ref(null)
+const { activeAcademicYear, loadActiveAcademicYear } = useAcademicYear()
+
+function normalizeClassCode(value) {
+  return String(value || '')
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, '')
+}
+
+function getClassCodeAliases(value) {
+  const raw = normalizeClassCode(value)
+  if (!raw) return []
+
+  const aliases = new Set([raw])
+  const normalized = raw.replace(/_/g, '-')
+  aliases.add(normalized)
+
+  const bacMatch = normalized.match(/^BAC(\d{2})(-.+)?$/)
+  if (bacMatch) aliases.add(`B${bacMatch[1]}${bacMatch[2] || ''}`)
+
+  const bMatch = normalized.match(/^B(\d{2})(-.+)?$/)
+  if (bMatch) aliases.add(`BAC${bMatch[1]}${bMatch[2] || ''}`)
+
+  return Array.from(aliases)
+}
+
+async function loadActiveYearClassCodes() {
+  try {
+    const yearId = activeAcademicYear.value?.id
+    if (!yearId) {
+      activeYearClassCodes.value = null
+      return
+    }
+
+    const classes = await academicYearService.getClassesByAcademicYear(yearId)
+    const classCodes = new Set(
+      (classes || [])
+        .flatMap(c => getClassCodeAliases(c?.code))
+        .filter(Boolean)
+    )
+
+    activeYearClassCodes.value = classCodes.size > 0 ? classCodes : null
+  } catch (err) {
+    console.warn('[DailyPlanning] Impossible de charger les classes de l\'année active:', err)
+    activeYearClassCodes.value = null
+  }
+}
 
 const dayOptions = [
   { label: 'Lundi', value: 'lundi' },
@@ -362,7 +412,23 @@ async function loadSlots() {
 
     if (error) throw error
     // Normaliser class_code en majuscules (les données peuvent avoir bac24 ou BAC24)
-    allSlots.value = (data || []).map(s => ({ ...s, class_code: s.class_code?.toUpperCase() || s.class_code }))
+    const normalizedSlots = (data || []).map(s => ({ ...s, class_code: s.class_code?.toUpperCase() || s.class_code }))
+
+    if (activeYearClassCodes.value instanceof Set && activeYearClassCodes.value.size > 0) {
+      allSlots.value = normalizedSlots.filter(slot => {
+        const slotCodes = []
+        if (Array.isArray(slot.class_codes)) slotCodes.push(...slot.class_codes)
+        if (slot.class_code) slotCodes.push(slot.class_code)
+        if (slotCodes.length === 0) return false
+
+        return slotCodes.some(code => {
+          const aliases = getClassCodeAliases(code)
+          return aliases.some(alias => activeYearClassCodes.value.has(alias))
+        })
+      })
+    } else {
+      allSlots.value = normalizedSlots
+    }
   } catch (err) {
     console.error('Erreur chargement créneaux:', err)
     toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les créneaux' })
@@ -458,6 +524,8 @@ async function exportDay() {
 
 onMounted(async () => {
   try {
+    await loadActiveAcademicYear()
+    await loadActiveYearClassCodes()
     courseModules.value = await planningService.getAllCourseModules()
   } catch (err) {
     console.error('Erreur chargement modules:', err)
@@ -476,6 +544,15 @@ onMounted(async () => {
     await loadSlots()
   }
 })
+
+watch(
+  () => activeAcademicYear.value?.id,
+  async (newYear, oldYear) => {
+    if (newYear === oldYear) return
+    await loadActiveYearClassCodes()
+    await loadSlots()
+  }
+)
 </script>
 
 <style scoped>

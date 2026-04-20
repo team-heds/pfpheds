@@ -194,6 +194,56 @@
           </div>
         </section>
 
+        <!-- ═══ QUALITÉ DES DONNÉES ═══ -->
+        <section v-if="dataQualityLoading || dataQualitySummary" class="card-section card-section--data-quality">
+          <div class="card-section__header">
+            <div class="card-section__title">
+              <i class="pi pi-shield"></i>
+              <h3>Qualité des données planning</h3>
+            </div>
+            <div class="card-section__toolbar">
+              <Tag v-if="dataQuality?.fetchedSlots != null" :value="`Créneaux scannés: ${dataQuality?.fetchedSlots}`" severity="info" />
+              <small v-if="dataQualitySummary" class="dq-timestamp">Maj {{ formattedDataQualityTimestamp }}</small>
+              <Button icon="pi pi-refresh" text rounded size="small" @click="loadDataQuality" :loading="dataQualityLoading" v-tooltip.top="'Relancer l\'analyse'" />
+            </div>
+          </div>
+
+          <div v-if="dataQualityLoading" class="dq-loading">
+            <ProgressSpinner style="width: 32px; height: 32px" strokeWidth="6" />
+            <span>Analyse des créneaux en cours…</span>
+          </div>
+
+          <template v-else>
+            <div v-if="dataQualityIssueCards.length > 0" class="dq-issues">
+              <div
+                v-for="issue in dataQualityIssueCards"
+                :key="issue.id"
+                class="dq-issue"
+                :class="`dq-issue--${issue.severity}`"
+              >
+                <div class="dq-issue__icon">
+                  <i :class="issue.icon"></i>
+                </div>
+                <div class="dq-issue__body">
+                  <strong>{{ issue.title }}</strong>
+                  <small>{{ issue.message }}</small>
+                </div>
+                <Tag :value="issue.count" :severity="issue.tagSeverity" />
+              </div>
+            </div>
+
+            <div v-else class="empty-state-small">
+              <i class="pi pi-check-circle"></i>
+              <p>Les créneaux de vos modules sont complets. Aucun blocage détecté.</p>
+            </div>
+
+            <div class="dq-actions">
+              <Button label="Voir diagnostics Workload" icon="pi pi-external-link" size="small" text @click="openWorkloadDiagnostics" />
+              <Button label="Ouvrir le planning hebdo" icon="pi pi-calendar" size="small" outlined text severity="secondary" @click="$router.push('/admin/planning/weekly')" />
+            </div>
+          </template>
+        </section>
+
         <!-- ═══ ACTIONS RAPIDES ═══ -->
         <section class="card-section">
           <div class="card-section__header">
@@ -341,6 +391,7 @@ import Dropdown from 'primevue/dropdown';
 import planningService from '@/service/planningService';
 import academicYearService from '@/service/academicYearService';
 import { getMyModules, getModulesTeachers, calculateStats } from '@/service/rmDashboardService';
+import { scanPlanningDataQuality, buildDataQualityAlerts } from '@/service/dataQualityService';
 import { useModules } from '@/composables/useModules';
 import { supabase } from '@/supabase';
 
@@ -365,6 +416,8 @@ const archivedModulesCount = ref(0);
 
 // Alertes dynamiques (calculées à partir des données)
 const alerts = ref([]);
+const dataQuality = ref(null);
+const dataQualityLoading = ref(false);
 
 // Planning overview
 const loadingPlanning = ref(false);
@@ -382,9 +435,6 @@ const hoursAssigned = ref(0);
 const hoursPlanned = ref(0);
 const completionPercent = ref(0);
 
-// Données
-const modules = ref([]);
-
 // Mes cours (section planning enseignant)
 const loadingMySlots = ref(false);
 const mySlots = ref([]);
@@ -395,6 +445,45 @@ const userDisplayName = ref('');
 const userNameVariants = ref([]);
 const courseModulesMap = ref([]);
 const academicStartYear = ref(null);
+const activeAcademicYearId = ref(null);
+const activeYearClassCodes = ref(null);
+
+function normalizeClassCode(value) {
+  return String(value || '')
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, '');
+}
+
+function getClassCodeAliases(value) {
+  const raw = normalizeClassCode(value);
+  if (!raw) return [];
+
+  const aliases = new Set([raw]);
+  const normalized = raw.replace(/_/g, '-');
+  aliases.add(normalized);
+
+  const bacMatch = normalized.match(/^BAC(\d{2})(-.+)?$/);
+  if (bacMatch) aliases.add(`B${bacMatch[1]}${bacMatch[2] || ''}`);
+
+  const bMatch = normalized.match(/^B(\d{2})(-.+)?$/);
+  if (bMatch) aliases.add(`BAC${bMatch[1]}${bMatch[2] || ''}`);
+
+  return Array.from(aliases);
+}
+
+function slotInActiveYear(slot) {
+  if (!(activeYearClassCodes.value instanceof Set) || activeYearClassCodes.value.size === 0) return true;
+  const slotClassCodes = [];
+  if (Array.isArray(slot?.class_codes)) slotClassCodes.push(...slot.class_codes);
+  if (slot?.class_code) slotClassCodes.push(slot.class_code);
+  if (slotClassCodes.length === 0) return false;
+
+  return slotClassCodes.some(code => {
+    const aliases = getClassCodeAliases(code);
+    return aliases.some(alias => activeYearClassCodes.value.has(alias));
+  });
+}
 
 const isoWeeksInYear = (year) => {
   const jan1 = new Date(year, 0, 1)
@@ -570,6 +659,88 @@ const responsablesCount = computed(() => {
   return Object.keys(modulesByResponsable.value).filter(r => r !== 'Non assigné').length;
 });
 
+const dataQualitySummary = computed(() => dataQuality.value?.summary || null);
+
+const dataQualityIssueCards = computed(() => {
+  const summary = dataQualitySummary.value;
+  if (!summary) return [];
+
+  const items = [];
+
+  if ((summary.missingCourseLink || 0) > 0) {
+    items.push({
+      id: 'missingCourseLink',
+      title: 'Créneaux sans course_id',
+      message: 'Reliez chaque créneau au cours officiel pour fiabiliser les charges.',
+      count: summary.missingCourseLink,
+      severity: 'danger',
+      tagSeverity: 'danger',
+      icon: 'pi pi-link-slash'
+    });
+  }
+
+  const teacherIssues = (summary.noTeachersDeclared || 0) + (summary.noValidTeacher || 0);
+  if (teacherIssues > 0) {
+    items.push({
+      id: 'missingTeachers',
+      title: 'Enseignants manquants',
+      message: 'Ajoutez les enseignants aux créneaux concernés.',
+      count: teacherIssues,
+      severity: teacherIssues > 10 ? 'danger' : 'warning',
+      tagSeverity: teacherIssues > 10 ? 'danger' : 'warning',
+      icon: 'pi pi-user-minus'
+    });
+  }
+
+  if ((summary.missingActivity || 0) > 0) {
+    items.push({
+      id: 'missingActivity',
+      title: 'Activités non définies',
+      message: 'Renseignez le type d’activité pour clarifier le planning.',
+      count: summary.missingActivity,
+      severity: 'warning',
+      tagSeverity: 'warning',
+      icon: 'pi pi-briefcase'
+    });
+  }
+
+  if ((summary.missingRoom || 0) > 0) {
+    items.push({
+      id: 'missingRoom',
+      title: 'Salles manquantes',
+      message: 'Assignez une salle pour sécuriser la logistique.',
+      count: summary.missingRoom,
+      severity: 'info',
+      tagSeverity: 'info',
+      icon: 'pi pi-building'
+    });
+  }
+
+  const timeIssues = (summary.missingTime || 0) + (summary.invalidTime || 0);
+  if (timeIssues > 0) {
+    items.push({
+      id: 'invalidTime',
+      title: 'Horaires invalides',
+      message: 'Corrigez les heures de début et fin pour éviter les incohérences.',
+      count: timeIssues,
+      severity: 'danger',
+      tagSeverity: 'danger',
+      icon: 'pi pi-clock'
+    });
+  }
+
+  return items;
+});
+
+const dataQualityAlertItems = computed(() => buildDataQualityAlerts(dataQualitySummary.value || {}));
+
+const formattedDataQualityTimestamp = computed(() => {
+  if (!dataQuality.value?.generatedAt) return '—';
+  const date = new Date(dataQuality.value.generatedAt);
+  if (Number.isNaN(date.getTime())) return '—';
+  return date.toLocaleString('fr-CH', { hour12: false });
+});
+
 /**
  * Charge les données RM depuis Supabase
  */
@@ -624,20 +795,18 @@ async function loadRMData() {
       return moduleTeachers.length === 0;
     });
     
-    // 7. Générer alertes dynamiques
-    generateAlerts();
-    
-    // 8. Charger la vue d'ensemble du planning
+    // 7. Charger la vue d'ensemble du planning
     await loadPlanningOverview();
     
-    // 9. Charger profil utilisateur + modules pour la section "Mes cours"
+    // 8. Charger profil utilisateur + modules pour la section "Mes cours"
     await loadUserProfile();
     courseModulesMap.value = await planningService.getAllCourseModules();
     
-    // 10. Charger l'année académique active pour le calcul des dates
+    // 9. Charger l'année académique active pour le calcul des dates
     try {
       const activeYear = await academicYearService.getActiveAcademicYear();
       if (activeYear) {
+        activeAcademicYearId.value = activeYear.id || null;
         if (activeYear.name) {
           const match = activeYear.name.match(/(\d{4})/);
           if (match) academicStartYear.value = parseInt(match[1]);
@@ -645,9 +814,26 @@ async function loadRMData() {
         if (!academicStartYear.value && activeYear.start_date) {
           academicStartYear.value = new Date(activeYear.start_date).getFullYear();
         }
+
+        if (activeAcademicYearId.value) {
+          const classes = await academicYearService.getClassesByAcademicYear(activeAcademicYearId.value);
+          const classCodes = new Set(
+            (classes || [])
+              .flatMap(c => getClassCodeAliases(c?.code))
+              .filter(Boolean)
+          );
+          activeYearClassCodes.value = classCodes.size > 0 ? classCodes : null;
+        } else {
+          activeYearClassCodes.value = null;
+        }
+      } else {
+        activeAcademicYearId.value = null;
+        activeYearClassCodes.value = null;
       }
     } catch (e) {
       console.warn('⚠️ Impossible de charger l\'année académique:', e);
+      activeAcademicYearId.value = null;
+      activeYearClassCodes.value = null;
     }
     
     // Sélectionner la semaine courante
@@ -664,6 +850,8 @@ async function loadRMData() {
     }
     // Pré-charger tous les slots pour l'export ICS
     await loadAllMySlots();
+    await loadDataQuality();
+    generateAlerts();
     
     console.log('✅ Données RM chargées');
   } catch (error) {
@@ -727,6 +915,10 @@ function dismissAlert(alert) {
 
 function goToModule(moduleId) {
   router.push(`/admin/modules/${moduleId}/manage`);
+}
+
+function openWorkloadDiagnostics() {
+  router.push('/admin/soins-infirmiers/feuille-de-charges');
 }
 
 /**
@@ -863,7 +1055,7 @@ async function loadMySlots() {
       .order('day_index', { ascending: true })
       .order('start_time', { ascending: true })
     if (error) throw error
-    mySlots.value = filterMySlots(data)
+    mySlots.value = filterMySlots(data).filter(slotInActiveYear)
   } catch (err) {
     console.error('Erreur chargement mes cours:', err)
     mySlots.value = []
@@ -884,10 +1076,82 @@ async function loadAllMySlots() {
       .order('day_index', { ascending: true })
       .order('start_time', { ascending: true })
     if (error) throw error
-    allMySlots.value = filterMySlots(data)
+    allMySlots.value = filterMySlots(data).filter(slotInActiveYear)
   } catch (err) {
     console.error('Erreur chargement tous mes cours:', err)
     allMySlots.value = []
+  }
+}
+
+function summarizeDataQualityIssues(rows = []) {
+  const summary = {
+    totalSlots: rows.length,
+    missingCourseLink: 0,
+    noTeachersDeclared: 0,
+    noValidTeacher: 0,
+    missingActivity: 0,
+    missingRoom: 0,
+    missingTime: 0,
+    invalidTime: 0
+  };
+
+  rows.forEach(row => {
+    const issues = row?.issues || [];
+    if (issues.includes('missing_course_link')) summary.missingCourseLink++;
+    if (issues.includes('no_teachers_declared')) summary.noTeachersDeclared++;
+    if (issues.includes('no_valid_teacher')) summary.noValidTeacher++;
+    if (issues.includes('missing_activity')) summary.missingActivity++;
+    if (issues.includes('missing_room')) summary.missingRoom++;
+    if (issues.includes('missing_time')) summary.missingTime++;
+    if (issues.includes('invalid_time')) summary.invalidTime++;
+  });
+
+  return summary;
+}
+
+async function loadDataQuality() {
+  dataQualityLoading.value = true;
+  try {
+    const moduleCodes = Array.from(new Set(myModules.value.map(m => m.code).filter(Boolean)));
+    if (moduleCodes.length === 0) {
+      dataQuality.value = null;
+      return;
+    }
+
+    const result = await scanPlanningDataQuality({
+      academicYearId: activeAcademicYearId.value || undefined,
+      includeRows: true,
+      limit: 5000
+    });
+    if (!result) {
+      dataQuality.value = null;
+      return;
+    }
+
+    const filteredRows = (result.rows || []).filter(row => moduleCodes.includes(row.moduleCode));
+    const summary = summarizeDataQualityIssues(filteredRows);
+
+    dataQuality.value = {
+      fetchedSlots: filteredRows.length,
+      summary,
+      rows: filteredRows,
+      generatedAt: result.generatedAt
+    };
+
+    console.info('[DashboardRM] DataQuality scan', {
+      fetchedSlots: filteredRows.length,
+      missingCourseLink: summary.missingCourseLink,
+      missingTeachers: (summary.noTeachersDeclared || 0) + (summary.noValidTeacher || 0),
+      missingActivity: summary.missingActivity,
+      missingRoom: summary.missingRoom,
+      invalidTime: summary.invalidTime,
+      missingTime: summary.missingTime
+    });
+  } catch (error) {
+    console.error('Erreur diagnostic qualité planning (RM):', error);
+    dataQuality.value = null;
+  } finally {
+    dataQualityLoading.value = false;
   }
 }
 
@@ -1174,6 +1438,18 @@ function generateAlerts() {
     });
   }
   
+  if (dataQualityAlertItems.value.length > 0) {
+    dataQualityAlertItems.value.forEach(dq => {
+      newAlerts.push({
+        id: alertId++,
+        type: dq.severity || 'info',
+        icon: dq.icon || 'pi pi-shield',
+        title: dq.title,
+        message: dq.message
+      });
+    });
+  }
+
   alerts.value = newAlerts;
 }
 </script>
