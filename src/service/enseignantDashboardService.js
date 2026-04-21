@@ -15,6 +15,18 @@ function normalizeTeacherValue(value) {
     .trim()
 }
 
+function getSupabaseErrorText(error) {
+  return [error?.message, error?.details, error?.hint]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
+}
+
+function isMissingTeacherEmailColumn(error) {
+  const text = getSupabaseErrorText(error)
+  return text.includes('teacher_email') && (text.includes('does not exist') || text.includes('column'))
+}
+
 function normalizeModuleCode(value) {
   return String(value || '')
     .trim()
@@ -203,48 +215,63 @@ export async function getMyCourses(userId, userEmail, teacherName = null, active
   try {
     if (import.meta.env.DEV) console.log('📚 [getMyCourses] Chargement cours pour enseignant:', userId)
 
-    const filters = []
-    if (userId) filters.push(`teacher_id.eq.${userId}`)
-    if (userEmail) filters.push(`teacher_email.eq.${userEmail}`)
-
-    if (!filters.length && !teacherName) {
+    if (!userId && !userEmail && !teacherName) {
       if (import.meta.env.DEV) console.log('ℹ️ [getMyCourses] Aucun identifiant enseignant fourni')
       return []
     }
+
+    const buildAssignmentFilters = (includeTeacherEmail = true) => {
+      const filters = []
+      if (userId) filters.push(`teacher_id.eq.${userId}`)
+      if (includeTeacherEmail && userEmail) filters.push(`teacher_email.eq.${userEmail}`)
+      return filters
+    }
     
     // Récupérer les assignations via course_teachers
-    let assignmentQuery = supabase
-      .from('course_teachers')
-      .select(`
-        id,
-        course_id,
-        hours,
-        role,
-        courses (
+    const runAssignmentQuery = async (includeTeacherEmail = true) => {
+      const filters = buildAssignmentFilters(includeTeacherEmail)
+      let assignmentQuery = supabase
+        .from('course_teachers')
+        .select(`
           id,
-          name,
-          code,
-          module_id,
-          type,
+          course_id,
           hours,
-          color,
-          modules (
+          role,
+          courses (
             id,
-            title,
+            name,
             code,
+            module_id,
+            type,
+            hours,
             color,
-            track_id,
-            responsable,
-            responsable_email
+            modules (
+              id,
+              title,
+              code,
+              color,
+              track_id,
+              responsable,
+              responsable_email
+            )
           )
-        )
-      `)
+        `)
 
-    if (filters.length) {
-      assignmentQuery = assignmentQuery.or(filters.join(','))
+      if (filters.length) {
+        assignmentQuery = assignmentQuery.or(filters.join(','))
+      }
+
+      return assignmentQuery
     }
 
-    const { data: assignments, error: assignError } = await assignmentQuery
+    let { data: assignments, error: assignError } = await runAssignmentQuery(true)
+
+    if (assignError && userEmail && isMissingTeacherEmailColumn(assignError)) {
+      console.warn('⚠️ [getMyCourses] Colonne teacher_email absente, retry via teacher_id uniquement')
+      const retry = await runAssignmentQuery(false)
+      assignments = retry.data
+      assignError = retry.error
+    }
 
     let courses = []
     if (assignError) {
@@ -436,15 +463,26 @@ async function getMyCoursesFromPlanning(userId, userEmail, teacherName = null, a
  */
 async function getMyCoursesSimple(userId, userEmail) {
   try {
-    const filters = []
-    if (userId) filters.push(`teacher_id.eq.${userId}`)
-    if (userEmail) filters.push(`teacher_email.eq.${userEmail}`)
-    if (!filters.length) return []
+    const runSimpleQuery = async (includeTeacherEmail = true) => {
+      const filters = []
+      if (userId) filters.push(`teacher_id.eq.${userId}`)
+      if (includeTeacherEmail && userEmail) filters.push(`teacher_email.eq.${userEmail}`)
+      if (!filters.length) return { data: [], error: null }
 
-    const { data, error } = await supabase
-      .from('course_teachers')
-      .select('course_id, hours, role')
-      .or(filters.join(','))
+      return supabase
+        .from('course_teachers')
+        .select('course_id, hours, role')
+        .or(filters.join(','))
+    }
+
+    let { data, error } = await runSimpleQuery(true)
+
+    if (error && userEmail && isMissingTeacherEmailColumn(error)) {
+      console.warn('⚠️ [getMyCoursesSimple] Colonne teacher_email absente, retry via teacher_id uniquement')
+      const retry = await runSimpleQuery(false)
+      data = retry.data
+      error = retry.error
+    }
     
     if (error || !data) return []
     

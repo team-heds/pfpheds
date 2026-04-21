@@ -191,6 +191,18 @@
               <i class="pi pi-chevron-right shortcut-arrow"></i>
             </div>
 
+            <!-- Cours en postulation -->
+            <div class="shortcut-card" @click="$router.push('/admin/soins-infirmiers/cours-postulation')">
+              <div class="shortcut-icon" style="background: linear-gradient(135deg, #f97316, #ea580c);">
+                <i class="pi pi-exclamation-triangle"></i>
+              </div>
+              <div class="shortcut-info">
+                <h4>Cours en postulation</h4>
+                <p>Repérer les créneaux avec attribution à pourvoir</p>
+              </div>
+              <i class="pi pi-chevron-right shortcut-arrow"></i>
+            </div>
+
             <!-- Modules -->
             <div class="shortcut-card" @click="$router.push('/admin/modules')">
               <div class="shortcut-icon" style="background: linear-gradient(135deg, #ec4899, #db2777);">

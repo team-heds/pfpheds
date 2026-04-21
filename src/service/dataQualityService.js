@@ -118,6 +118,23 @@ function summarizeIssues(rows) {
   return summary
 }
 
+function getErrorText(error) {
+  return [error?.message, error?.details, error?.hint]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
+}
+
+function isAcademicYearFilterError(error) {
+  const text = getErrorText(error)
+  return text.includes('academic_year_id') && (text.includes('does not exist') || text.includes('column') || text.includes('schema cache'))
+}
+
+function isDayIndexOrderError(error) {
+  const text = getErrorText(error)
+  return text.includes('day_index') && (text.includes('does not exist') || text.includes('column') || text.includes('schema cache'))
+}
+
 export async function scanPlanningDataQuality({
   academicYearId = null,
   weekNumber = null,
@@ -125,35 +142,61 @@ export async function scanPlanningDataQuality({
   limit = 5000,
   includeRows = true
 } = {}) {
-  let query = supabase
-    .from('planning_time_slots')
-    .select('*')
-    .order('week_number')
-    .order('day_index')
-    .order('start_time')
+  const buildQuery = (includeAcademicYear = true, includeDayIndexOrder = true) => {
+    let query = supabase
+      .from('planning_time_slots')
+      .select('*')
+      .order('week_number')
+      .order('start_time')
 
-  if (academicYearId) {
-    query = query.eq('academic_year_id', academicYearId)
-  }
-
-  if (weekNumber != null) {
-    query = query.eq('week_number', weekNumber)
-  }
-
-  if (Array.isArray(classCodes) && classCodes.length > 0) {
-    const uniqueCodes = Array.from(new Set(classCodes.filter(Boolean).map(normalizeClassCode)))
-    if (uniqueCodes.length === 1) {
-      query = query.eq('class_code', uniqueCodes[0])
-    } else if (uniqueCodes.length > 1) {
-      query = query.in('class_code', uniqueCodes)
+    if (includeDayIndexOrder) {
+      query = query.order('day_index')
     }
+
+    if (includeAcademicYear && academicYearId) {
+      query = query.eq('academic_year_id', academicYearId)
+    }
+
+    if (weekNumber != null) {
+      query = query.eq('week_number', weekNumber)
+    }
+
+    if (Array.isArray(classCodes) && classCodes.length > 0) {
+      const uniqueCodes = Array.from(new Set(classCodes.filter(Boolean).map(normalizeClassCode)))
+      if (uniqueCodes.length === 1) {
+        query = query.eq('class_code', uniqueCodes[0])
+      } else if (uniqueCodes.length > 1) {
+        query = query.in('class_code', uniqueCodes)
+      }
+    }
+
+    if (limit) {
+      query = query.limit(limit)
+    }
+
+    return query
   }
 
-  if (limit) {
-    query = query.limit(limit)
+  let useAcademicYearFilter = true
+  let useDayIndexOrder = true
+  let { data, error } = await buildQuery(useAcademicYearFilter, useDayIndexOrder)
+
+  if (error && academicYearId && isAcademicYearFilterError(error)) {
+    console.warn('[DataQuality] Colonne academic_year_id absente/inaccessible, fallback sans filtre année')
+    useAcademicYearFilter = false
+    const retry = await buildQuery(useAcademicYearFilter, useDayIndexOrder)
+    data = retry.data
+    error = retry.error
   }
 
-  const { data, error } = await query
+  if (error && isDayIndexOrderError(error)) {
+    console.warn('[DataQuality] Colonne day_index absente/inaccessible, fallback sans tri day_index')
+    useDayIndexOrder = false
+    const retry = await buildQuery(useAcademicYearFilter, useDayIndexOrder)
+    data = retry.data
+    error = retry.error
+  }
+
   if (error) {
     console.error('[DataQuality] Erreur lecture planning_time_slots:', error)
     throw error

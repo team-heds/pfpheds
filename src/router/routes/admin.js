@@ -38,6 +38,7 @@ export default [
   { path: '/admin/modules', component: () => import('@/views/admin/lists/ModuleListView.vue'), name: 'ModuleList', meta: { requiresAuth: true, need: 'admin' } },
   { path: '/admin/user-roles', component: () => import('@/views/admin/lists/UserRoleListView.vue'), name: 'UserRoleList', meta: { requiresAuth: true, need: 'admin' } },
   { path: '/admin/teachers-si', component: () => import('@/views/admin/users/TeachersSIView.vue'), name: 'TeachersSIView', meta: { requiresAuth: true, need: 'admin' } },
+  { path: '/admin/teachers-si/:teacherId', component: () => import('@/views/admin/users/TeacherSIProfileView.vue'), name: 'TeacherSIProfileView', meta: { requiresAuth: true, need: ['admin', 'RMSoins'] } },
   { path: '/admin/manage-user-roles', component: () => import('@/views/admin/users/ManageUserRoles.vue'), name: 'ManageUserRoles', meta: { requiresAuth: true, need: 'admin' } },
 
   // Planning académique
@@ -49,6 +50,7 @@ export default [
   { path: '/admin/planning/annual', component: () => import('@/views/admin/planning/AnnualPlanningView.vue'), name: 'AnnualPlanningView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
   { path: '/admin/soins-infirmiers/planning-journalier', component: () => import('@/views/admin/soins-infirmiers/DailyPlanningView.vue'), name: 'DailyPlanningView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
   { path: '/admin/soins-infirmiers/feuille-de-charges', component: () => import('@/views/admin/soins-infirmiers/WorkloadView.vue'), name: 'WorkloadView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
+  { path: '/admin/soins-infirmiers/cours-postulation', component: () => import('@/views/admin/soins-infirmiers/SIPostulationCoursesView.vue'), name: 'SIPostulationCoursesView', meta: { requiresAuth: true, need: ['authenticated', 'admin', 'RMSoins', 'EnseignantSoins'] } },
 
   // Gestion académique (Kanban & Contenu)
   { path: '/admin/academic/tickets', component: () => import('@/views/admin/academic/TicketListView.vue'), name: 'TicketListView' },

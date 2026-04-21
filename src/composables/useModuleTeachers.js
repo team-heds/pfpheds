@@ -5,6 +5,43 @@ import { useModuleHelpers } from './useModuleHelpers'
 export function useModuleTeachers(toast, moduleRef, modulePlanningRef) {
   const { normalizeClass, getSlotHours } = useModuleHelpers()
 
+  const normalizeTeacherName = (name) => String(name || '').trim().toLowerCase()
+
+  const getSlotTeacherNames = (slot) => {
+    const slotTeachers = slot?.teachers_list || slot?.teachers || []
+    const names = Array.isArray(slotTeachers)
+      ? slotTeachers
+          .map(t => (typeof t === 'object' ? t?.name : t))
+          .map(name => String(name || '').trim())
+          .filter(Boolean)
+      : []
+
+    const unique = []
+    const seen = new Set()
+    names.forEach(name => {
+      const normalized = normalizeTeacherName(name)
+      if (!normalized || seen.has(normalized)) return
+      seen.add(normalized)
+      unique.push(name)
+    })
+
+    return unique
+  }
+
+  const getTeacherHoursShareForSlot = (slot, teacherName) => {
+    const slotHours = getSlotHours(slot)
+    if (slotHours <= 0) return 0
+
+    const teacherNames = getSlotTeacherNames(slot)
+    if (teacherNames.length === 0) return 0
+
+    const target = normalizeTeacherName(teacherName)
+    const includesTeacher = teacherNames.some(name => normalizeTeacherName(name) === target)
+    if (!includesTeacher) return 0
+
+    return slotHours / teacherNames.length
+  }
+
   // Enseignants du module
   const moduleTeachers = ref([])
   const showAddTeacherDialog = ref(false)
@@ -40,7 +77,7 @@ export function useModuleTeachers(toast, moduleRef, modulePlanningRef) {
 
     // Ensuite ajouter les enseignants du planning qui ne sont pas déjà dans moduleTeachers
     modulePlanningRef.value.forEach(slot => {
-      const slotTeachers = slot.teachers_list || slot.teachers || []
+      const slotTeachers = getSlotTeacherNames(slot)
       slotTeachers.forEach(t => {
         const name = typeof t === 'object' ? t.name : t
         if (name) {
@@ -67,12 +104,11 @@ export function useModuleTeachers(toast, moduleRef, modulePlanningRef) {
       let hasValidHours = false
 
       modulePlanningRef.value.forEach(slot => {
-        const slotTeachers = slot.teachers_list || slot.teachers || []
-        const teacherNames = slotTeachers.map(t => typeof t === 'object' ? t.name : t)
+        const teacherNames = getSlotTeacherNames(slot)
 
         if (teacherNames.some(name => name?.toLowerCase() === teacher.name.toLowerCase())) {
           sessionsCount++
-          const slotHours = getSlotHours(slot)
+          const slotHours = getTeacherHoursShareForSlot(slot, teacher.name)
 
           if (teacher.source === 'manual' && slotHours > 0) {
             planningHours += slotHours
@@ -320,7 +356,8 @@ export function useModuleTeachers(toast, moduleRef, modulePlanningRef) {
       const tMap = new Map()
 
       allPlanning?.forEach(slot => {
-        const slotTeachers = slot.teachers || []
+        const slotTeachers = getSlotTeacherNames(slot)
+        const share = slotTeachers.length > 0 ? (getSlotHours(slot) / slotTeachers.length) : 0
         slotTeachers.forEach(teacher => {
           const teacherName = typeof teacher === 'object' ? teacher.name : teacher
           if (!teacherName) return
@@ -336,7 +373,7 @@ export function useModuleTeachers(toast, moduleRef, modulePlanningRef) {
           }
 
           const teacherData = tMap.get(teacherName)
-          teacherData.planningHours += getSlotHours(slot)
+          teacherData.planningHours += share
           teacherData.sessionsCount += 1
           teacherData.modules.add({ module_code: slot.module_code, class_code: slot.class_code })
         })

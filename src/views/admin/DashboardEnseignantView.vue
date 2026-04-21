@@ -83,6 +83,7 @@
               <Button label="Planning hebdomadaire" icon="pi pi-calendar" severity="primary" @click="$router.push('/admin/planning/weekly')" />
               <Button label="Calendrier semestriel" icon="pi pi-calendar-plus" outlined @click="$router.push('/admin/planning/semester')" />
               <Button label="Liste des modules" icon="pi pi-book" outlined @click="$router.push('/admin/modules')" />
+              <Button label="Cours en postulation" icon="pi pi-thumbs-up" outlined severity="warning" @click="$router.push('/admin/soins-infirmiers/cours-postulation')" />
               <Button label="Ressources pédagogiques" icon="pi pi-folder" outlined @click="$router.push('/media')" />
             </div>
           </section>

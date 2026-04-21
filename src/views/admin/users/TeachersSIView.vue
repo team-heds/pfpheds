@@ -23,6 +23,7 @@
             </div>
             <div class="flex gap-2 align-items-center">
               <Tag :value="`${filteredTeachers.length} / ${teachers.length} enseignants`" severity="info" />
+              <Button label="Cours postulation" icon="pi pi-exclamation-triangle" severity="warning" size="small" outlined @click="goToPostulationCourses" />
               <Button label="Exporter" icon="pi pi-download" severity="secondary" size="small" @click="exportTeachers" />
             </div>
           </div>
@@ -67,14 +68,14 @@
               </template>
             </Column>
 
-            <Column header="Actions" style="width: 100px">
+            <Column header="Actions" style="width: 140px">
               <template #body="{ data }">
                 <Button 
                   icon="pi pi-eye" 
                   severity="info" 
                   size="small" 
                   @click="viewTeacher(data)" 
-                  v-tooltip.top="'Voir le profil'"
+                  v-tooltip.top="'Ouvrir la page profil'"
                 />
               </template>
             </Column>
@@ -148,12 +149,14 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import { getSITeachers } from '@/service/academicKpiService'
 import modulesService from '@/service/modulesService'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import PageHeader from '@/components/admin/common/PageHeader.vue'
 
+const router = useRouter()
 const toast = useToast()
 const loading = ref(false)
 const search = ref('')
@@ -177,7 +180,11 @@ const teacherModules = computed(() => {
 })
 
 function viewTeacher(teacher) {
-  selectedTeacher.value = teacher
+  router.push({ name: 'TeacherSIProfileView', params: { teacherId: teacher.id } })
+}
+
+function goToPostulationCourses() {
+  router.push({ name: 'SIPostulationCoursesView' })
 }
 
 async function exportTeachers() {

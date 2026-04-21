@@ -187,6 +187,18 @@
                       value="Postulation interne"
                       severity="warning"
                     />
+                    <Tag
+                      v-else-if="teacher.role === 'postulation_vote'"
+                      value="Vote enseignant"
+                      severity="info"
+                    />
+                    <Button
+                      v-if="teacher.role === 'postulation_vote'"
+                      icon="pi pi-check"
+                      @click="validatePostulationVote(module, teacher)"
+                      class="p-button-rounded p-button-text p-button-success p-button-sm"
+                      v-tooltip="'Valider cette postulation'"
+                    />
                     <Button 
                       icon="pi pi-times" 
                       @click="removeTeacher(module, teacher)"
@@ -324,8 +336,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/authStore'
-import { useRoleStore } from '@/stores/role'
 import { useToast } from 'primevue/usetoast'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import PageHeader from '@/components/admin/common/PageHeader.vue'
@@ -342,8 +352,6 @@ import { useModules } from '@/composables/useModules'
 import { getSITeachers } from '@/service/academicKpiService'
 
 const router = useRouter()
-const authStore = useAuthStore()
-const roleStore = useRoleStore()
 const toast = useToast()
 
 // State
@@ -357,11 +365,11 @@ const selectedYear = ref(null)
 const selectedModule = ref(null)
 const searchTerm = ref('')
 const teacherSearch = ref('')
+const LEGACY_VOTE_ROLE = 'intervenant'
 
 // Data
 const { modules, loadModules } = useModules()
 const availableTeachers = ref([])
-const assignments = ref([])
 
 // Form
 const assignForm = ref({
@@ -449,6 +457,10 @@ function isInternalPostulationName(name) {
   return v.includes('postulation') || v.includes('repourvoir') || v.includes('a réattribuer') || v.includes('à réattribuer')
 }
 
+function isLegacyVoteAssignment(assign) {
+  return String(assign?.role || '').toLowerCase() === LEGACY_VOTE_ROLE && Number(assign?.hours) < 0
+}
+
 // Methods
 async function loadData() {
   loading.value = true
@@ -513,11 +525,13 @@ async function loadAssignments() {
       
       assignmentsByModule[moduleId].push({
         id: assign.teacher_id,
+        courseId: assign.course_id,
         name: assign.user_profiles?.display_name || 
               `${assign.user_profiles?.forname || ''} ${assign.user_profiles?.family_name || ''}`.trim(),
         email: assign.user_profiles?.email,
         hours: assign.hours || 0,
-        role: assign.role
+        role: isLegacyVoteAssignment(assign) ? 'postulation_vote' : assign.role,
+        sourceRole: assign.role
       })
     })
     
@@ -576,6 +590,125 @@ function openAssignToModule(module) {
   assignForm.value.hours = 0
   assignForm.value.role = 'enseignant'
   showAssignDialog.value = true
+}
+
+async function assignTeacherToPlanningSlots(module, teacherName) {
+  try {
+    const moduleCode = String(module?.code || '').trim()
+    if (!moduleCode) return 0
+
+    const { data: allSlots, error } = await supabase
+      .from('planning_time_slots')
+      .select('id, module_code, teachers')
+
+    if (error) throw error
+
+    const targetCode = moduleCode.toLowerCase()
+    const matchingSlots = (allSlots || []).filter(slot => String(slot?.module_code || '').toLowerCase() === targetCode)
+
+    if (!matchingSlots.length) return 0
+
+    const teacherLabel = String(teacherName || '').trim()
+    const teacherLower = teacherLabel.toLowerCase()
+    let updatedCount = 0
+
+    for (const slot of matchingSlots) {
+      const raw = Array.isArray(slot.teachers) ? slot.teachers : []
+      const names = raw
+        .map(entry => (typeof entry === 'object' ? entry?.name : entry))
+        .map(v => String(v || '').trim())
+        .filter(Boolean)
+
+      const withoutPostulation = names.filter(name => !isInternalPostulationName(name))
+      const hasTeacher = withoutPostulation.some(name => name.toLowerCase() === teacherLower)
+      const finalTeachers = hasTeacher ? withoutPostulation : [teacherLabel, ...withoutPostulation]
+
+      const { error: updateError } = await supabase
+        .from('planning_time_slots')
+        .update({ teachers: finalTeachers })
+        .eq('id', slot.id)
+
+      if (updateError) {
+        console.warn('⚠️ Impossible de mettre à jour teachers sur slot:', slot.id, updateError)
+        continue
+      }
+
+      updatedCount += 1
+    }
+
+    return updatedCount
+  } catch (error) {
+    console.error('❌ Erreur assignTeacherToPlanningSlots:', error)
+    return 0
+  }
+}
+
+async function validatePostulationVote(module, teacher) {
+  try {
+    if (teacher.role !== 'postulation_vote') return
+    if (!teacher.courseId || !teacher.id) {
+      toast.add({ severity: 'warn', summary: 'Données incomplètes', detail: 'Impossible de valider cette postulation.', life: 3000 })
+      return
+    }
+
+    const { error: promoteError } = await supabase
+      .from('course_teachers')
+      .update({ role: 'enseignant' })
+      .eq('course_id', teacher.courseId)
+      .eq('teacher_id', teacher.id)
+      .eq('role', 'postulation_vote')
+
+    if (promoteError) throw promoteError
+
+    const { error: promoteLegacyError } = await supabase
+      .from('course_teachers')
+      .update({ role: 'enseignant', hours: 0 })
+      .eq('course_id', teacher.courseId)
+      .eq('teacher_id', teacher.id)
+      .eq('role', LEGACY_VOTE_ROLE)
+      .lt('hours', 0)
+
+    if (promoteLegacyError) {
+      console.warn('⚠️ Promotion legacy vote impossible:', promoteLegacyError)
+    }
+
+    const { error: cleanupError } = await supabase
+      .from('course_teachers')
+      .delete()
+      .eq('course_id', teacher.courseId)
+      .eq('role', 'postulation_vote')
+      .neq('teacher_id', teacher.id)
+
+    if (cleanupError) {
+      console.warn('⚠️ Nettoyage des votes concurrents impossible:', cleanupError)
+    }
+
+    const { error: cleanupLegacyError } = await supabase
+      .from('course_teachers')
+      .delete()
+      .eq('course_id', teacher.courseId)
+      .eq('role', LEGACY_VOTE_ROLE)
+      .lt('hours', 0)
+      .neq('teacher_id', teacher.id)
+
+    if (cleanupLegacyError) {
+      console.warn('⚠️ Nettoyage des votes concurrents legacy impossible:', cleanupLegacyError)
+    }
+
+    const updatedSlots = await assignTeacherToPlanningSlots(module, teacher.name)
+
+    toast.add({
+      severity: 'success',
+      summary: 'Postulation validée',
+      detail: `${teacher.name} est assigné${updatedSlots ? ` • ${updatedSlots} créneaux planning mis à jour` : ''}`,
+      life: 3500
+    })
+
+    await loadAssignments()
+  } catch (error) {
+    console.error('❌ Erreur validation postulation:', error)
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de valider cette postulation.', life: 3500 })
+  }
 }
 
 async function submitAssignment() {
