@@ -205,49 +205,49 @@
           <Column header="MSQ" v-if="visibleColumns.MSQ">
             <template #body="{ data }">
               <InputSwitch v-if="isEditingRow(data)" v-model="editBuffer.MSQ" />
-              <Tag v-else :value="data.MSQ ? 'Oui' : 'Non'" :severity="data.MSQ ? 'success' : 'secondary'" />
+              <Tag v-else :value="isTrueFlag(data.MSQ) ? 'Oui' : 'Non'" :severity="isTrueFlag(data.MSQ) ? 'success' : 'secondary'" />
             </template>
           </Column>
           <Column header="SYSINT" v-if="visibleColumns.SYSINT">
             <template #body="{ data }">
               <InputSwitch v-if="isEditingRow(data)" v-model="editBuffer.SYSINT" />
-              <Tag v-else :value="data.SYSINT ? 'Oui' : 'Non'" :severity="data.SYSINT ? 'success' : 'secondary'" />
+              <Tag v-else :value="isTrueFlag(data.SYSINT) ? 'Oui' : 'Non'" :severity="isTrueFlag(data.SYSINT) ? 'success' : 'secondary'" />
             </template>
           </Column>
           <Column header="NEUROGER" v-if="visibleColumns.NEUROGER">
             <template #body="{ data }">
               <InputSwitch v-if="isEditingRow(data)" v-model="editBuffer.NEUROGER" />
-              <Tag v-else :value="data.NEUROGER ? 'Oui' : 'Non'" :severity="data.NEUROGER ? 'success' : 'secondary'" />
+              <Tag v-else :value="isTrueFlag(data.NEUROGER) ? 'Oui' : 'Non'" :severity="isTrueFlag(data.NEUROGER) ? 'success' : 'secondary'" />
             </template>
           </Column>
           <Column header="AIGU" v-if="visibleColumns.AIGU">
             <template #body="{ data }">
               <InputSwitch v-if="isEditingRow(data)" v-model="editBuffer.AIGU" />
-              <Tag v-else :value="data.AIGU ? 'Oui' : 'Non'" :severity="data.AIGU ? 'success' : 'secondary'" />
+              <Tag v-else :value="isTrueFlag(data.AIGU) ? 'Oui' : 'Non'" :severity="isTrueFlag(data.AIGU) ? 'success' : 'secondary'" />
             </template>
           </Column>
           <Column header="REHAB" v-if="visibleColumns.REHAB">
             <template #body="{ data }">
               <InputSwitch v-if="isEditingRow(data)" v-model="editBuffer.REHAB" />
-              <Tag v-else :value="data.REHAB ? 'Oui' : 'Non'" :severity="data.REHAB ? 'success' : 'secondary'" />
+              <Tag v-else :value="isTrueFlag(data.REHAB) ? 'Oui' : 'Non'" :severity="isTrueFlag(data.REHAB) ? 'success' : 'secondary'" />
             </template>
           </Column>
           <Column header="AMBU" v-if="visibleColumns.AMBU">
             <template #body="{ data }">
               <InputSwitch v-if="isEditingRow(data)" v-model="editBuffer.AMBU" />
-              <Tag v-else :value="data.AMBU ? 'Oui' : 'Non'" :severity="data.AMBU ? 'success' : 'secondary'" />
+              <Tag v-else :value="isTrueFlag(data.AMBU) ? 'Oui' : 'Non'" :severity="isTrueFlag(data.AMBU) ? 'success' : 'secondary'" />
             </template>
           </Column>
           <Column header="FR" v-if="visibleColumns.FR">
             <template #body="{ data }">
               <InputSwitch v-if="isEditingRow(data)" v-model="editBuffer.FR" />
-              <Tag v-else :value="data.FR ? 'Oui' : 'Non'" :severity="data.FR ? 'success' : 'secondary'" />
+              <Tag v-else :value="isTrueFlag(data.FR) ? 'Oui' : 'Non'" :severity="isTrueFlag(data.FR) ? 'success' : 'secondary'" />
             </template>
           </Column>
           <Column header="DE" v-if="visibleColumns.DE">
             <template #body="{ data }">
               <InputSwitch v-if="isEditingRow(data)" v-model="editBuffer.DE" />
-              <Tag v-else :value="data.DE ? 'Oui' : 'Non'" :severity="data.DE ? 'success' : 'secondary'" />
+              <Tag v-else :value="isTrueFlag(data.DE) ? 'Oui' : 'Non'" :severity="isTrueFlag(data.DE) ? 'success' : 'secondary'" />
             </template>
           </Column>
           <Column header="PFP2">
@@ -288,12 +288,12 @@
           <Column header="Critères">
             <template #body="{ data }">
               <div class="flex gap-2 flex-wrap">
-                <Tag v-if="data.MSQ" value="MSQ" />
-                <Tag v-if="data.SYSINT" value="SYSINT" />
-                <Tag v-if="data.AIGU" value="AIGU" />
-                <Tag v-if="data.REHAB" value="REHAB" />
-                <Tag v-if="data.AMBU" value="AMBU" />
-                <Tag v-if="data.NEUROGER" value="NEUROGER" />
+                <Tag v-if="isTrueFlag(data.MSQ)" value="MSQ" />
+                <Tag v-if="isTrueFlag(data.SYSINT)" value="SYSINT" />
+                <Tag v-if="isTrueFlag(data.AIGU)" value="AIGU" />
+                <Tag v-if="isTrueFlag(data.REHAB)" value="REHAB" />
+                <Tag v-if="isTrueFlag(data.AMBU)" value="AMBU" />
+                <Tag v-if="isTrueFlag(data.NEUROGER)" value="NEUROGER" />
               </div>
             </template>
           </Column>
@@ -648,22 +648,38 @@ const isEditingRow = (row) => {
   return !!row?.PlaceId && editingRowId.value === row.PlaceId
 }
 
+const isTrueFlag = (value) => {
+  return value === true || value === 'true' || value === 1 || value === '1'
+}
+
+const ensureCriteriaColumnsVisible = () => {
+  visibleColumns.value.MSQ = true
+  visibleColumns.value.SYSINT = true
+  visibleColumns.value.NEUROGER = true
+  visibleColumns.value.AIGU = true
+  visibleColumns.value.REHAB = true
+  visibleColumns.value.AMBU = true
+  visibleColumns.value.FR = true
+  visibleColumns.value.DE = true
+}
+
 const startEditRow = (row) => {
   if (!row?.PlaceId) return
   const yearKey = selectedYear.value
+  ensureCriteriaColumnsVisible()
   editingRowId.value = row.PlaceId
   editBuffer.value = {
     PlaceId: row.PlaceId,
     InstitutionId: row.InstitutionId || null,
     NomPlace: row.NomPlace || '',
-    MSQ: !!row.MSQ,
-    SYSINT: !!row.SYSINT,
-    NEUROGER: !!row.NEUROGER,
-    AIGU: !!row.AIGU,
-    REHAB: !!row.REHAB,
-    AMBU: !!row.AMBU,
-    FR: !!row.FR,
-    DE: !!row.DE,
+    MSQ: isTrueFlag(row.MSQ),
+    SYSINT: isTrueFlag(row.SYSINT),
+    NEUROGER: isTrueFlag(row.NEUROGER),
+    AIGU: isTrueFlag(row.AIGU),
+    REHAB: isTrueFlag(row.REHAB),
+    AMBU: isTrueFlag(row.AMBU),
+    FR: isTrueFlag(row.FR),
+    DE: isTrueFlag(row.DE),
     PFP2: (row.PFP2 && row.PFP2[yearKey]) || '',
     PFP1A: (row.PFP1A && row.PFP1A[yearKey]) || '',
     PFP1B: (row.PFP1B && row.PFP1B[yearKey]) || '',
@@ -750,6 +766,9 @@ const saveEditRow = async (row) => {
       PFP3: pfp3,
       PFP4: pfp4
     })
+
+    await store.fetchPlaceById(row.PlaceId)
+    await store.fetchPlaces()
 
     cancelEditRow()
   } catch (error) {

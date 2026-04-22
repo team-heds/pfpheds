@@ -66,7 +66,7 @@
               </div>
               <div class="flex-1">
                 <h4 class="text-xl font-bold text-900 m-0">{{ stats.pfpStats.PFP1A.propositions }} / {{ stats.pfpStats.PFP1A.offres }}</h4>
-                <p class="text-600 m-0 text-sm">PFP1A </p>
+                <p class="text-600 m-0 text-sm">PFP1A · dispo: {{ stats.pfpStats.PFP1A.disponibles }}</p>
               </div>
             </div>
           </div>
@@ -79,7 +79,7 @@
               </div>
               <div class="flex-1">
                 <h4 class="text-xl font-bold text-900 m-0">{{ stats.pfpStats.PFP1B.propositions }} / {{ stats.pfpStats.PFP1B.offres }}</h4>
-                <p class="text-600 m-0 text-sm">PFP1B </p>
+                <p class="text-600 m-0 text-sm">PFP1B · dispo: {{ stats.pfpStats.PFP1B.disponibles }}</p>
               </div>
             </div>
           </div>
@@ -92,7 +92,7 @@
               </div>
               <div class="flex-1">
                 <h4 class="text-xl font-bold text-900 m-0">{{ stats.pfpStats.PFP2.propositions }} / {{ stats.pfpStats.PFP2.offres }}</h4>
-                <p class="text-600 m-0 text-sm">PFP2 </p>
+                <p class="text-600 m-0 text-sm">PFP2 · dispo: {{ stats.pfpStats.PFP2.disponibles }}</p>
               </div>
             </div>
           </div>
@@ -105,7 +105,7 @@
               </div>
               <div class="flex-1">
                 <h4 class="text-xl font-bold text-900 m-0">{{ stats.pfpStats.PFP3.propositions }} / {{ stats.pfpStats.PFP3.offres }}</h4>
-                <p class="text-600 m-0 text-sm">PFP3 </p>
+                <p class="text-600 m-0 text-sm">PFP3 · dispo: {{ stats.pfpStats.PFP3.disponibles }}</p>
               </div>
             </div>
           </div>
@@ -118,7 +118,7 @@
               </div>
               <div class="flex-1">
                 <h4 class="text-xl font-bold text-900 m-0">{{ stats.pfpStats.PFP4.propositions }} / {{ stats.pfpStats.PFP4.offres }}</h4>
-                <p class="text-600 m-0 text-sm">PFP4 </p>
+                <p class="text-600 m-0 text-sm">PFP4 · dispo: {{ stats.pfpStats.PFP4.disponibles }}</p>
               </div>
             </div>
           </div>
@@ -173,6 +173,26 @@
           </template>
           <Column field="Institution_name" header="Institution" sortable class="w-20rem"></Column>
           <Column field="NomPlace" header="Nom de la place" sortable class="w-25rem"></Column>
+          <Column header="Critères place" class="w-18rem">
+            <template #body="slotProps">
+              <div v-if="isEditingRow(slotProps.data)" class="criteria-edit-grid">
+                <div v-for="criterion in criteriaDefinitions" :key="criterion.key" class="criteria-edit-item">
+                  <span class="text-600 text-sm">{{ criterion.key }}</span>
+                  <InputSwitch v-model="editBuffer[criterion.bufferField]" />
+                </div>
+              </div>
+              <div v-else class="criteria-tags">
+                <Tag
+                  v-for="criterion in activeCriteriaForPlace(slotProps.data)"
+                  :key="criterion"
+                  :value="criterion"
+                  severity="success"
+                  class="text-xs"
+                />
+                <span v-if="activeCriteriaForPlace(slotProps.data).length === 0" class="text-500 text-sm">Aucun</span>
+              </div>
+            </template>
+          </Column>
           <!-- Colonnes Offre (données de PlacesViewPHYFP.vue) -->
                <Column v-if="shouldShowPFPColumn('PFP2')" header="Offre PFP2" class="w-8rem">
             <template #body="slotProps">
@@ -321,6 +341,28 @@
             </template>
           </Column>
         </DataTable>
+
+        <div class="summary-panel mt-3">
+          <div class="summary-panel__title">Récapitulatif (places proposées / offertes / disponibles)</div>
+          <div class="summary-grid">
+            <div class="summary-grid__head">PFP</div>
+            <div class="summary-grid__head text-center">Proposées</div>
+            <div class="summary-grid__head text-center">Offertes</div>
+            <div class="summary-grid__head text-center">Disponibles</div>
+
+            <template v-for="row in pfpSummaryRows" :key="row.code">
+              <div class="summary-grid__cell">{{ row.code }}</div>
+              <div class="summary-grid__cell text-center">{{ row.propositions }}</div>
+              <div class="summary-grid__cell text-center">{{ row.offres }}</div>
+              <div class="summary-grid__cell text-center" :class="row.disponibles > 0 ? 'text-green-600 font-semibold' : 'text-700'">{{ row.disponibles }}</div>
+            </template>
+
+            <div class="summary-grid__total">Total</div>
+            <div class="summary-grid__total text-center">{{ summaryTotals.propositions }}</div>
+            <div class="summary-grid__total text-center">{{ summaryTotals.offres }}</div>
+            <div class="summary-grid__total text-center" :class="summaryTotals.disponibles > 0 ? 'text-green-700' : 'text-900'">{{ summaryTotals.disponibles }}</div>
+          </div>
+        </div>
       </div>
 
    
@@ -377,67 +419,111 @@ const editBuffer = ref({
   pfp1b_proposition: '',
   pfp2_proposition: '',
   pfp3_proposition: '',
-  pfp4_proposition: ''
+  pfp4_proposition: '',
+  msq: false,
+  sysint: false,
+  neuroger: false,
+  aigu: false,
+  rehab: false,
+  ambu: false,
+  fr: false,
+  de: false
 })
 
 // Published assignments data
 const publishedAssignments = ref([])
 const loadingAssignments = ref(false)
 
+const criteriaDefinitions = [
+  { key: 'MSQ', dbField: 'MSQ', bufferField: 'msq' },
+  { key: 'SYSINT', dbField: 'SYSINT', bufferField: 'sysint' },
+  { key: 'NEUROGER', dbField: 'NEUROGER', bufferField: 'neuroger' },
+  { key: 'AIGU', dbField: 'AIGU', bufferField: 'aigu' },
+  { key: 'REHAB', dbField: 'REHAB', bufferField: 'rehab' },
+  { key: 'AMBU', dbField: 'AMBU', bufferField: 'ambu' },
+  { key: 'FR', dbField: 'FR', bufferField: 'fr' },
+  { key: 'DE', dbField: 'DE', bufferField: 'de' }
+]
+
+const pfpTypes = ['PFP1A', 'PFP1B', 'PFP2', 'PFP3', 'PFP4']
+
+const parseIntSafe = (value) => {
+  const parsed = parseInt(value, 10)
+  return Number.isNaN(parsed) ? 0 : parsed
+}
+
+const getOfferForPfp = (place, pfpType, year) => parseIntSafe(place?.[pfpType]?.[year])
+const getPropositionForPfp = (place, pfpType, year) => parseIntSafe(place?.[`${pfpType.toLowerCase()}_proposition`]?.[year])
+
 const stats = computed(() => {
   const places = placesData.value
   const totalPlaces = places.length
   const year = selectedYear.value
   
-  // Calculate places with offers (non-empty OffrePFP fields)
+  // Calculate places with offers (same source fields as PlacesView: PFP1A/PFP1B/PFP2/PFP3/PFP4)
   const placesWithOffers = places.filter(place => {
-    return (
-      (place.OffrePFP1A && place.OffrePFP1A[year] && place.OffrePFP1A[year] !== '') ||
-      (place.OffrePFP1B && place.OffrePFP1B[year] && place.OffrePFP1B[year] !== '') ||
-      (place.OffrePFP2 && place.OffrePFP2[year] && place.OffrePFP2[year] !== '') ||
-      (place.OffrePFP3 && place.OffrePFP3[year] && place.OffrePFP3[year] !== '') ||
-      (place.OffrePFP4 && place.OffrePFP4[year] && place.OffrePFP4[year] !== '')
-    )
+    return pfpTypes.some((pfpType) => getOfferForPfp(place, pfpType, year) > 0)
   }).length
   
   // Calculate PFP-specific statistics (Proposition vs Offre vs Assigned)
   const pfpStats = {
     PFP1A: {
-      propositions: places.reduce((total, place) => total + (parseInt(place.PFP1A?.[year]) || 0), 0),
-      offres: places.reduce((total, place) => total + (parseInt(place.OffrePFP1A?.[year]) || 0), 0),
+      propositions: places.reduce((total, place) => total + getPropositionForPfp(place, 'PFP1A', year), 0),
+      offres: places.reduce((total, place) => total + getOfferForPfp(place, 'PFP1A', year), 0),
       assignes: getAssignedCount('PFP1A')
     },
     PFP1B: {
-      propositions: places.reduce((total, place) => total + (parseInt(place.PFP1B?.[year]) || 0), 0),
-      offres: places.reduce((total, place) => total + (parseInt(place.OffrePFP1B?.[year]) || 0), 0),
+      propositions: places.reduce((total, place) => total + getPropositionForPfp(place, 'PFP1B', year), 0),
+      offres: places.reduce((total, place) => total + getOfferForPfp(place, 'PFP1B', year), 0),
       assignes: getAssignedCount('PFP1B')
     },
     PFP2: {
-      propositions: places.reduce((total, place) => total + (parseInt(place.PFP2?.[year]) || 0), 0),
-      offres: places.reduce((total, place) => total + (parseInt(place.OffrePFP2?.[year]) || 0), 0),
+      propositions: places.reduce((total, place) => total + getPropositionForPfp(place, 'PFP2', year), 0),
+      offres: places.reduce((total, place) => total + getOfferForPfp(place, 'PFP2', year), 0),
       assignes: getAssignedCount('PFP2')
     },
     PFP3: {
-      propositions: places.reduce((total, place) => total + (parseInt(place.PFP3?.[year]) || 0), 0),
-      offres: places.reduce((total, place) => total + (parseInt(place.OffrePFP3?.[year]) || 0), 0),
+      propositions: places.reduce((total, place) => total + getPropositionForPfp(place, 'PFP3', year), 0),
+      offres: places.reduce((total, place) => total + getOfferForPfp(place, 'PFP3', year), 0),
       assignes: getAssignedCount('PFP3')
     },
     PFP4: {
-      propositions: places.reduce((total, place) => total + (parseInt(place.PFP4?.[year]) || 0), 0),
-      offres: places.reduce((total, place) => total + (parseInt(place.OffrePFP4?.[year]) || 0), 0),
+      propositions: places.reduce((total, place) => total + getPropositionForPfp(place, 'PFP4', year), 0),
+      offres: places.reduce((total, place) => total + getOfferForPfp(place, 'PFP4', year), 0),
       assignes: getAssignedCount('PFP4')
     }
   }
+
+  Object.values(pfpStats).forEach((pfp) => {
+    pfp.disponibles = Math.max(0, (pfp.offres || 0) - (pfp.propositions || 0))
+  })
   
-  // Calculate total available offers
-  const totalOffers = Object.values(pfpStats).reduce((sum, pfp) => sum + pfp.offres, 0)
+  const totalAvailable = Object.values(pfpStats).reduce((sum, pfp) => sum + (pfp.disponibles || 0), 0)
   
   return {
     total: totalPlaces,
     actives: placesWithOffers,
-    places: totalOffers,
+    places: totalAvailable,
     pfpStats
   }
+})
+
+const pfpSummaryRows = computed(() => {
+  return pfpTypes.map(code => ({
+    code,
+    propositions: stats.value.pfpStats?.[code]?.propositions || 0,
+    offres: stats.value.pfpStats?.[code]?.offres || 0,
+    disponibles: stats.value.pfpStats?.[code]?.disponibles || 0
+  }))
+})
+
+const summaryTotals = computed(() => {
+  return pfpSummaryRows.value.reduce((acc, row) => {
+    acc.propositions += row.propositions
+    acc.offres += row.offres
+    acc.disponibles += row.disponibles
+    return acc
+  }, { propositions: 0, offres: 0, disponibles: 0 })
 })
 
 // Function to get assigned count for a PFP type
@@ -490,6 +576,13 @@ const getTotalAnalysisClass = (value) => {
   return 'text-red-600 font-semibold'
 }
 
+const activeCriteriaForPlace = (place) => {
+  if (!place) return []
+  return criteriaDefinitions
+    .filter(({ dbField }) => place[dbField] === true || place[dbField] === 'true' || place[dbField] === 1)
+    .map(({ key }) => key)
+}
+
 // Editing functions
 const isEditingRow = (row) => {
   return !!row?.PlaceId && editingRowId.value === row.PlaceId
@@ -506,7 +599,15 @@ const startEditRow = (row) => {
     pfp1b_proposition: (row.pfp1b_proposition && row.pfp1b_proposition[yearKey]) || '',
     pfp2_proposition: (row.pfp2_proposition && row.pfp2_proposition[yearKey]) || '',
     pfp3_proposition: (row.pfp3_proposition && row.pfp3_proposition[yearKey]) || '',
-    pfp4_proposition: (row.pfp4_proposition && row.pfp4_proposition[yearKey]) || ''
+    pfp4_proposition: (row.pfp4_proposition && row.pfp4_proposition[yearKey]) || '',
+    msq: row.MSQ === true || row.MSQ === 'true' || row.MSQ === 1,
+    sysint: row.SYSINT === true || row.SYSINT === 'true' || row.SYSINT === 1,
+    neuroger: row.NEUROGER === true || row.NEUROGER === 'true' || row.NEUROGER === 1,
+    aigu: row.AIGU === true || row.AIGU === 'true' || row.AIGU === 1,
+    rehab: row.REHAB === true || row.REHAB === 'true' || row.REHAB === 1,
+    ambu: row.AMBU === true || row.AMBU === 'true' || row.AMBU === 1,
+    fr: row.FR === true || row.FR === 'true' || row.FR === 1,
+    de: row.DE === true || row.DE === 'true' || row.DE === 1
   }
 }
 
@@ -517,7 +618,15 @@ const cancelEditRow = () => {
     pfp1b_proposition: '',
     pfp2_proposition: '',
     pfp3_proposition: '',
-    pfp4_proposition: ''
+    pfp4_proposition: '',
+    msq: false,
+    sysint: false,
+    neuroger: false,
+    aigu: false,
+    rehab: false,
+    ambu: false,
+    fr: false,
+    de: false
   }
 }
 
@@ -549,7 +658,15 @@ const saveEditRow = async (row) => {
       pfp1b_proposition: pfp1bProp,
       pfp2_proposition: pfp2Prop,
       pfp3_proposition: pfp3Prop,
-      pfp4_proposition: pfp4Prop
+      pfp4_proposition: pfp4Prop,
+      MSQ: !!editBuffer.value.msq,
+      SYSINT: !!editBuffer.value.sysint,
+      NEUROGER: !!editBuffer.value.neuroger,
+      AIGU: !!editBuffer.value.aigu,
+      REHAB: !!editBuffer.value.rehab,
+      AMBU: !!editBuffer.value.ambu,
+      FR: !!editBuffer.value.fr,
+      DE: !!editBuffer.value.de
     })
     
     cancelEditRow()
@@ -684,6 +801,63 @@ onMounted(async () => {
 /* Center alignment for numeric columns */
 .text-center {
   text-align: center;
+}
+
+.criteria-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.criteria-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem 0.75rem;
+}
+
+.criteria-edit-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+}
+
+.summary-panel {
+  border-top: 1px solid var(--surface-border);
+  padding-top: 1rem;
+}
+
+.summary-panel__title {
+  font-weight: 600;
+  margin-bottom: 0.65rem;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr 1fr;
+  gap: 0;
+  border: 1px solid var(--surface-border);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.summary-grid__head,
+.summary-grid__cell,
+.summary-grid__total {
+  padding: 0.55rem 0.65rem;
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.summary-grid__head {
+  font-weight: 600;
+  background: var(--surface-100);
+}
+
+.summary-grid__total {
+  font-weight: 700;
+  background: var(--surface-100);
+  border-bottom: none;
 }
 
 /* Responsive adjustments */
