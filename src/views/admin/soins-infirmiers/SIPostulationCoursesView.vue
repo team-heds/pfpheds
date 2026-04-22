@@ -57,13 +57,14 @@
                 />
                 <Button
                   v-if="canVote"
-                  :label="data.hasMyVote ? 'Vote enregistré' : 'Voter ce cours'"
-                  :icon="data.hasMyVote ? 'pi pi-check' : 'pi pi-thumbs-up'"
+                  :label="data.hasMyVote ? 'Retirer vote' : 'Voter ce cours'"
+                  :icon="data.hasMyVote ? 'pi pi-times' : 'pi pi-thumbs-up'"
                   size="small"
-                  :severity="data.hasMyVote ? 'success' : 'warning'"
-                  :disabled="data.hasMyVote || votingRowId === data.id"
+                  :severity="data.hasMyVote ? 'danger' : 'warning'"
+                  :outlined="data.hasMyVote"
+                  :disabled="votingRowId === data.id"
                   :loading="votingRowId === data.id"
-                  @click="submitVote(data)"
+                  @click="data.hasMyVote ? removeVote(data) : submitVote(data)"
                 />
                 <span v-else class="text-500">—</span>
               </div>
@@ -96,11 +97,13 @@ const search = ref('')
 const allModules = ref([])
 const rows = ref([])
 const votingRowId = ref(null)
+const canUseSlotVotesTable = ref(true)
+const hasShownSlotVoteTableUnavailableToast = ref(false)
 
 const currentUserId = computed(() => authStore.user?.id || authStore.user?.uid || null)
 const canVote = computed(() => Boolean(currentUserId.value))
-const LEGACY_VOTE_ROLE = 'intervenant'
-const LEGACY_VOTE_HOURS = -1
+const SLOT_COURSE_MAP_STORAGE_KEY = 'si_postulation_slot_course_map_v1'
+const SLOT_VOTES_TABLE = 'planning_slot_votes'
 
 const DAY_MAP = {
   monday: 'Lundi',
@@ -127,6 +130,17 @@ function isPostulationLabel(value) {
     text.includes('reattribuer') ||
     text.includes('reattrib')
   )
+}
+
+function notifySlotVoteTableUnavailable() {
+  if (hasShownSlotVoteTableUnavailableToast.value) return
+  hasShownSlotVoteTableUnavailableToast.value = true
+  toast.add({
+    severity: 'warn',
+    summary: 'Vote par créneau indisponible',
+    detail: 'La table planning_slot_votes n\'est pas accessible. Contactez un administrateur.',
+    life: 4500
+  })
 }
 
 function extractTeacherLabels(slot) {
@@ -206,6 +220,29 @@ function getFirstCourseIdByModule(moduleId, courses) {
   return found?.id || null
 }
 
+function buildSlotCourseMapKey(data) {
+  return [
+    String(data?.slotId || data?.id || '').trim(),
+    String(data?.moduleCode || data?.module_code || '').trim().toLowerCase(),
+    String(data?.classCode || data?.class_code || '').trim().toLowerCase(),
+    String(data?.weekNumber || data?.week_number || '').trim(),
+    String(data?.dayKey || data?.day_of_week || '').trim().toLowerCase(),
+    String(data?.startTime || data?.start_time || '').trim(),
+    String(data?.endTime || data?.end_time || '').trim()
+  ].join('|')
+}
+
+function readStoredSlotCourseMap() {
+  try {
+    const raw = window?.localStorage?.getItem(SLOT_COURSE_MAP_STORAGE_KEY)
+    if (!raw) return {}
+    const parsed = JSON.parse(raw)
+    return parsed && typeof parsed === 'object' ? parsed : {}
+  } catch {
+    return {}
+  }
+}
+
 function getErrorText(error) {
   return [error?.message, error?.details, error?.hint]
     .filter(Boolean)
@@ -213,35 +250,22 @@ function getErrorText(error) {
     .toLowerCase()
 }
 
-function isRoleEnumError(error) {
-  const text = getErrorText(error)
-  return text.includes('role') && (text.includes('invalid input value') || text.includes('enum'))
-}
-
-function isMissingColumnError(error, columnName) {
-  const text = getErrorText(error)
-  return text.includes(`'${String(columnName || '').toLowerCase()}'`) && text.includes('column')
-}
-
-function isInvalidUuidError(error) {
-  const text = getErrorText(error)
-  return error?.code === '22P02' || text.includes('invalid input syntax for type uuid')
-}
-
 function isDuplicateVoteError(error) {
   return error?.code === '23505' || Number(error?.status || 0) === 409
 }
 
-function isVoteRecord(assign) {
-  if (!assign) return false
-  const role = String(assign.role || '').toLowerCase()
-  const hoursNum = assign.hours == null ? null : Number(assign.hours)
+function isMissingTableError(error, tableName) {
+  const text = getErrorText(error)
+  const table = String(tableName || '').toLowerCase()
+  if (!table) return false
 
-  if (role === 'postulation_vote') return true
-  if (role === LEGACY_VOTE_ROLE && hoursNum === LEGACY_VOTE_HOURS) return true
-  if (!role && (hoursNum === null || hoursNum === 0)) return true
+  if (Number(error?.status || 0) === 404) return true
 
-  return false
+  return (
+    (text.includes('could not find the table') && text.includes(table)) ||
+    text.includes('not found') ||
+    (String(error?.code || '').toUpperCase() === 'PGRST205')
+  )
 }
 
 async function resolveTeacherIdForVote() {
@@ -272,75 +296,6 @@ async function resolveTeacherIdForVote() {
   return null
 }
 
-async function resolveCourseIdForVote(row) {
-  if (row?.courseId) return row.courseId
-
-  const moduleId = row?.moduleId
-  const moduleIdAsString = String(moduleId || '').trim()
-  const isUuidLike = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(moduleIdAsString)
-
-  if (moduleId && isUuidLike) {
-    const byModule = await supabase
-      .from('courses')
-      .select('id')
-      .eq('module_id', moduleId)
-      .limit(1)
-
-    if (!byModule.error && byModule.data?.length) {
-      return byModule.data[0].id
-    }
-
-    if (byModule.error && !isMissingColumnError(byModule.error, 'module_id') && !isInvalidUuidError(byModule.error)) {
-      console.warn('⚠️ [SIPostulationCoursesView] Recherche cours par module impossible:', byModule.error)
-    }
-  }
-
-  const anyCourse = await supabase
-    .from('courses')
-    .select('id')
-    .limit(1)
-
-  if (!anyCourse.error && anyCourse.data?.length) {
-    return anyCourse.data[0].id
-  }
-
-  const defaultName = row?.moduleTitle ? `Cours principal - ${row.moduleTitle}` : 'Cours principal'
-  const defaultCode = `COURS-${String(moduleId || 'x').substring(0, 8)}`
-
-  const candidatePayloads = [
-    { module_id: moduleId, name: defaultName, code: defaultCode },
-    { module_id: moduleId, name: defaultName },
-    { name: defaultName }
-  ]
-
-  for (const payload of candidatePayloads) {
-    const cleanPayload = Object.fromEntries(
-      Object.entries(payload).filter(([, value]) => value !== undefined && value !== null)
-    )
-
-    const attempt = await supabase
-      .from('courses')
-      .insert(cleanPayload)
-      .select('id')
-      .single()
-
-    if (!attempt.error && attempt.data?.id) {
-      return attempt.data.id
-    }
-
-    const missingModuleColumn = isMissingColumnError(attempt.error, 'module_id')
-    const missingCodeColumn = isMissingColumnError(attempt.error, 'code')
-    const missingNameColumn = isMissingColumnError(attempt.error, 'name')
-
-    if (missingModuleColumn || missingCodeColumn || missingNameColumn) {
-      continue
-    }
-  }
-
-  console.warn('⚠️ [SIPostulationCoursesView] Création cours impossible: schéma courses incompatible ou permissions insuffisantes')
-  return null
-}
-
 async function submitVote(row) {
   if (!canVote.value) {
     toast.add({ severity: 'warn', summary: 'Connexion requise', detail: 'Veuillez vous reconnecter pour voter.', life: 3000 })
@@ -352,67 +307,76 @@ async function submitVote(row) {
     let voteWasInserted = false
     let voteWasAlreadyPresent = false
 
-    const resolvedCourseId = await resolveCourseIdForVote(row)
-    if (!resolvedCourseId) {
-      toast.add({ severity: 'warn', summary: 'Cours non lié', detail: 'Impossible de voter: aucun cours relié à ce module.', life: 3000 })
-      return
-    }
-
     const resolvedTeacherId = await resolveTeacherIdForVote()
     if (!resolvedTeacherId) {
       toast.add({ severity: 'warn', summary: 'Profil introuvable', detail: 'Impossible de voter: profil enseignant introuvable.', life: 3000 })
       return
     }
 
-    row.courseId = resolvedCourseId
+    if (!row?.slotId) {
+      toast.add({ severity: 'warn', summary: 'Créneau introuvable', detail: 'Impossible de voter: identifiant de créneau manquant.', life: 3000 })
+      return
+    }
 
-    let { error } = await supabase
-      .from('course_teachers')
+    if (!canUseSlotVotesTable.value) {
+      notifySlotVoteTableUnavailable()
+      return
+    }
+
+    const existingSlotVote = await supabase
+      .from(SLOT_VOTES_TABLE)
+      .select('slot_id, teacher_id')
+      .eq('slot_id', row.slotId)
+      .eq('teacher_id', resolvedTeacherId)
+      .limit(1)
+
+    if (existingSlotVote.error) {
+      if (existingSlotVote.status === 404 || isMissingTableError(existingSlotVote.error, SLOT_VOTES_TABLE)) {
+        canUseSlotVotesTable.value = false
+        notifySlotVoteTableUnavailable()
+        return
+      }
+      console.warn('⚠️ [SIPostulationCoursesView] Vérification vote créneau impossible:', existingSlotVote.error)
+      throw existingSlotVote.error
+    }
+
+    if (existingSlotVote.data?.length) {
+      voteWasAlreadyPresent = true
+      row.hasMyVote = true
+      toast.add({
+        severity: 'success',
+        summary: 'Vote déjà enregistré',
+        detail: `Votre vote existait déjà pour ce créneau (${row.moduleNumber}).`,
+        life: 3000
+      })
+      return
+    }
+
+    const slotVoteInsert = await supabase
+      .from(SLOT_VOTES_TABLE)
       .insert({
-        course_id: resolvedCourseId,
-        teacher_id: resolvedTeacherId,
-        hours: 0,
-        role: 'postulation_vote'
+        slot_id: row.slotId,
+        teacher_id: resolvedTeacherId
       })
 
-    if (error && isRoleEnumError(error)) {
-      const legacyInsert = await supabase
-        .from('course_teachers')
-        .insert({
-          course_id: resolvedCourseId,
-          teacher_id: resolvedTeacherId,
-          hours: LEGACY_VOTE_HOURS,
-          role: LEGACY_VOTE_ROLE
-        })
-      error = legacyInsert.error
-    }
-
-    if (error) {
-      const minimalInsert = await supabase
-        .from('course_teachers')
-        .insert({
-          course_id: resolvedCourseId,
-          teacher_id: resolvedTeacherId
-        })
-      error = minimalInsert.error
-      if (!error) voteWasInserted = true
-    } else {
+    if (!slotVoteInsert.error) {
       voteWasInserted = true
-    }
-
-    if (error && isDuplicateVoteError(error)) {
+    } else if (isDuplicateVoteError(slotVoteInsert.error)) {
       voteWasAlreadyPresent = true
-      error = null
+    } else if (slotVoteInsert.status === 404 || isMissingTableError(slotVoteInsert.error, SLOT_VOTES_TABLE)) {
+      canUseSlotVotesTable.value = false
+      notifySlotVoteTableUnavailable()
+      return
+    } else {
+      throw slotVoteInsert.error
     }
-
-    if (error) throw error
 
     toast.add({
       severity: 'success',
       summary: voteWasAlreadyPresent ? 'Vote déjà enregistré' : 'Vote enregistré',
       detail: voteWasAlreadyPresent
-        ? `Votre vote existait déjà pour ${row.moduleNumber}.`
-        : `Votre postulation est envoyée pour ${row.moduleNumber}.`,
+        ? `Votre vote existait déjà pour ce créneau (${row.moduleNumber}).`
+        : `Votre postulation est envoyée pour ce créneau (${row.moduleNumber}).`,
       life: 3000
     })
     row.hasMyVote = true
@@ -420,12 +384,97 @@ async function submitVote(row) {
       row.voteCount = Number(row.voteCount || 0) + 1
     }
   } catch (error) {
-    console.error('Erreur vote postulation:', error)
+    const message = String(error?.message || '').trim()
+    const code = String(error?.code || '').trim()
+    const details = String(error?.details || '').trim()
+    const hint = String(error?.hint || '').trim()
+
+    if (message || code || details || hint) {
+      console.error('Erreur vote postulation:', {
+        code: code || undefined,
+        message: message || undefined,
+        details: details || undefined,
+        hint: hint || undefined
+      })
+    }
+
     if (error?.code === '23503' && getErrorText(error).includes('profiles')) {
       toast.add({ severity: 'error', summary: 'Profil enseignant manquant', detail: 'Votre compte n\'est pas synchronisé dans la table profiles. Contactez un admin.', life: 5000 })
     } else {
       toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible d\'enregistrer votre vote.', life: 3500 })
     }
+  } finally {
+    votingRowId.value = null
+  }
+}
+
+async function removeVote(row) {
+  if (!canVote.value) {
+    toast.add({ severity: 'warn', summary: 'Connexion requise', detail: 'Veuillez vous reconnecter pour retirer votre vote.', life: 3000 })
+    return
+  }
+
+  try {
+    votingRowId.value = row?.id || null
+
+    const resolvedTeacherId = await resolveTeacherIdForVote()
+    if (!resolvedTeacherId) {
+      toast.add({ severity: 'warn', summary: 'Profil introuvable', detail: 'Impossible de retirer le vote: profil enseignant introuvable.', life: 3000 })
+      return
+    }
+
+    if (!row?.slotId) {
+      toast.add({ severity: 'warn', summary: 'Créneau introuvable', detail: 'Impossible de retirer le vote: identifiant de créneau manquant.', life: 3000 })
+      return
+    }
+
+    if (!canUseSlotVotesTable.value) {
+      notifySlotVoteTableUnavailable()
+      return
+    }
+
+    const slotVoteDelete = await supabase
+      .from(SLOT_VOTES_TABLE)
+      .delete()
+      .eq('slot_id', row.slotId)
+      .eq('teacher_id', resolvedTeacherId)
+      .select('slot_id, teacher_id')
+
+    if (slotVoteDelete.error) {
+      if (slotVoteDelete.status === 404 || isMissingTableError(slotVoteDelete.error, SLOT_VOTES_TABLE)) {
+        canUseSlotVotesTable.value = false
+        notifySlotVoteTableUnavailable()
+        return
+      }
+      throw slotVoteDelete.error
+    }
+
+    const deletedRows = Array.isArray(slotVoteDelete.data) ? slotVoteDelete.data.length : 0
+    if (!deletedRows) {
+      await loadData()
+      toast.add({ severity: 'warn', summary: 'Aucun vote supprimé', detail: 'Le vote n\'a pas été trouvé pour ce créneau.', life: 3500 })
+      return
+    }
+
+    row.hasMyVote = false
+    row.voteCount = Math.max(0, Number(row.voteCount || 0) - 1)
+    toast.add({ severity: 'success', summary: 'Vote retiré', detail: `Votre vote a été retiré pour ce créneau (${row.moduleNumber}).`, life: 3000 })
+  } catch (error) {
+    const message = String(error?.message || '').trim()
+    const code = String(error?.code || '').trim()
+    const details = String(error?.details || '').trim()
+    const hint = String(error?.hint || '').trim()
+
+    if (message || code || details || hint) {
+      console.error('Erreur retrait vote postulation:', {
+        code: code || undefined,
+        message: message || undefined,
+        details: details || undefined,
+        hint: hint || undefined
+      })
+    }
+
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de retirer votre vote.', life: 3500 })
   } finally {
     votingRowId.value = null
   }
@@ -458,6 +507,32 @@ async function loadData() {
     if (slotsResponse.error) throw slotsResponse.error
 
     const slots = slotsResponse.data || []
+    const storedSlotCourseMap = readStoredSlotCourseMap()
+    let moduleCourses = []
+    const knownCourseByModuleCode = new Map()
+    const knownCourseByModuleNumber = new Map()
+
+    const coursesByModule = await supabase
+      .from('courses')
+      .select('id,module_id')
+
+    if (!coursesByModule.error && Array.isArray(coursesByModule.data)) {
+      moduleCourses = coursesByModule.data
+    }
+
+    for (const slot of slots) {
+      if (!slot?.course_id) continue
+      const module = allModules.value.find(m => String(m.code || '').toLowerCase() === String(slot.module_code || '').toLowerCase())
+      const codeKey = String(slot?.module_code || module?.code || '').trim().toLowerCase()
+      const numberKey = String(module?.number || '').trim().toLowerCase()
+
+      if (codeKey && !knownCourseByModuleCode.has(codeKey)) {
+        knownCourseByModuleCode.set(codeKey, slot.course_id)
+      }
+      if (numberKey && !knownCourseByModuleNumber.has(numberKey)) {
+        knownCourseByModuleNumber.set(numberKey, slot.course_id)
+      }
+    }
 
     const mapped = []
     const seenPostulationSlotKeys = new Set()
@@ -488,7 +563,15 @@ async function loadData() {
       if (!matchedText) return
 
       const module = allModules.value.find(m => String(m.code || '').toLowerCase() === String(slot.module_code || '').toLowerCase())
-      const courseId = slot?.course_id || getFirstCourseIdByModule(module?.id, [])
+      const moduleCodeKey = String(slot?.module_code || module?.code || '').trim().toLowerCase()
+      const moduleNumberKey = String(module?.number || '').trim().toLowerCase()
+      const slotMapKey = buildSlotCourseMapKey(slot)
+      const courseId = slot?.course_id ||
+        getFirstCourseIdByModule(module?.id, moduleCourses) ||
+        knownCourseByModuleCode.get(moduleCodeKey) ||
+        knownCourseByModuleNumber.get(moduleNumberKey) ||
+        storedSlotCourseMap[slotMapKey] ||
+        null
       const dedupeKey = [
         courseId || '',
         slot?.module_code || module?.code || '',
@@ -530,36 +613,43 @@ async function loadData() {
     })
 
     const teacherProfileId = await resolveTeacherIdForVote()
-    const uniqueCourseIds = [...new Set(mapped.map(r => r.courseId).filter(Boolean).map(String))]
+    const uniqueSlotIds = [...new Set(mapped.map(r => r.slotId).filter(Boolean).map(String))]
 
-    if (uniqueCourseIds.length) {
-      const votesQuery = await supabase
-        .from('course_teachers')
-        .select('course_id, teacher_id, role, hours')
-        .in('course_id', uniqueCourseIds)
+    if (uniqueSlotIds.length && canUseSlotVotesTable.value) {
+      const slotVotesQuery = await supabase
+        .from(SLOT_VOTES_TABLE)
+        .select('slot_id, teacher_id')
+        .in('slot_id', uniqueSlotIds)
 
-      if (!votesQuery.error && Array.isArray(votesQuery.data)) {
-        const voteRows = votesQuery.data.filter(isVoteRecord)
-        const countsByCourseId = {}
-        const myVotedCourseIds = new Set()
+      if (!slotVotesQuery.error && Array.isArray(slotVotesQuery.data)) {
+        const countsBySlotId = {}
+        const myVotedSlotIds = new Set()
 
-        for (const vote of voteRows) {
-          const cid = String(vote.course_id || '')
-          if (!cid) continue
-          countsByCourseId[cid] = Number(countsByCourseId[cid] || 0) + 1
+        for (const vote of slotVotesQuery.data) {
+          const sid = String(vote.slot_id || '')
+          if (!sid) continue
+          countsBySlotId[sid] = Number(countsBySlotId[sid] || 0) + 1
 
           if (teacherProfileId && String(vote.teacher_id || '') === String(teacherProfileId)) {
-            myVotedCourseIds.add(cid)
+            myVotedSlotIds.add(sid)
           }
         }
 
         for (const row of mapped) {
-          const cid = String(row.courseId || '')
-          if (!cid) continue
-          row.voteCount = Number(countsByCourseId[cid] || 0)
-          row.hasMyVote = myVotedCourseIds.has(cid)
+          const sid = String(row.slotId || '')
+          if (!sid) continue
+          row.voteCount = Number(countsBySlotId[sid] || 0)
+          row.hasMyVote = myVotedSlotIds.has(sid)
         }
+      } else if (slotVotesQuery.error && (slotVotesQuery.status === 404 || isMissingTableError(slotVotesQuery.error, SLOT_VOTES_TABLE))) {
+        canUseSlotVotesTable.value = false
+      } else if (slotVotesQuery.error) {
+        console.warn('⚠️ [SIPostulationCoursesView] Chargement votes créneau impossible:', slotVotesQuery.error)
       }
+    }
+
+    if (!canUseSlotVotesTable.value) {
+      notifySlotVoteTableUnavailable()
     }
 
     rows.value = mapped.sort((a, b) => {
