@@ -318,7 +318,7 @@
                 <div v-if="slotProps.data.teachers && slotProps.data.teachers.length > 0" class="teachers-cell">
                   <div v-for="(teacher, index) in slotProps.data.teachers.slice(0, 6)" :key="index" class="teacher-group">
                     <Chip 
-                      :label="teacher" 
+                      :label="formatTeacherDisplayName(teacher)" 
                       icon="pi pi-user"
                       class="teacher-chip"
                     />
@@ -1057,7 +1057,7 @@ const loadWeekPlanning = async () => {
         courseTitle: slot.course_title,
         activityType: slot.activity_type || 'Cours',
         activity: slot.activity,
-        teachers: slot.teachers || [],
+        teachers: normalizeTeachersForDisplay(slot.teachers),
         room: slot.room,
         notes: slot.notes,
         weekNumber: slot.week_number
@@ -1208,7 +1208,7 @@ const loadSemesterPlanning = async (semester) => {
         courseTitle: slot.course_title,
         activityType: slot.activity_type || 'Cours',
         activity: slot.activity,
-        teachers: slot.teachers || [],
+        teachers: normalizeTeachersForDisplay(slot.teachers),
         room: slot.room,
         notes: slot.notes,
         weekNumber: slot.week_number
@@ -1442,8 +1442,8 @@ const saveSlot = async () => {
   try {
     // Normaliser la liste des enseignants (garder uniquement les noms)
     const normalizedTeachers = (slotForm.value.teachers || []).map(t => {
-      return typeof t === 'object' && t !== null ? t.name : t
-    })
+      return formatTeacherDisplayName(t)
+    }).filter(Boolean)
 
     const slotData = {
       id: editingSlot.value || null,
@@ -1596,6 +1596,49 @@ const searchTeachers = (event) => {
   }
   
   filteredTeachers.value = filtered
+}
+
+const formatTeacherDisplayName = (entry) => {
+  if (!entry) return ''
+
+  if (typeof entry === 'string') {
+    const trimmed = entry.trim()
+    if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+      try {
+        const parsed = JSON.parse(trimmed)
+        if (parsed && typeof parsed === 'object') {
+          const parsedName = parsed.display_name || parsed.name || `${parsed.forname || ''} ${parsed.family_name || ''}`.trim() || parsed.email
+          if (parsedName) return String(parsedName).trim()
+        }
+      } catch {
+        // keep raw string fallback below
+      }
+    }
+    return trimmed
+  }
+
+  if (typeof entry === 'object') {
+    const profileId = String(entry.id || entry.user_id || entry.profile_id || '').trim()
+    if (profileId) {
+      const matched = siTeachers.value.find(t => String(t.id || '').trim() === profileId)
+      if (matched?.name) return matched.name
+    }
+
+    const objectName = entry.display_name || entry.name || `${entry.forname || ''} ${entry.family_name || ''}`.trim()
+    if (objectName) return objectName
+
+    if (entry.email) return String(entry.email).trim()
+  }
+
+  return String(entry).trim()
+}
+
+const normalizeTeachersForDisplay = (teachers) => {
+  if (!Array.isArray(teachers)) return []
+  return teachers
+    .map(formatTeacherDisplayName)
+    .map(name => String(name || '').trim())
+    .filter(Boolean)
 }
 
 const SPECIAL_MODULES = {

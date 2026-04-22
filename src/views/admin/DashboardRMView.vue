@@ -94,6 +94,97 @@
           </div>
         </section>
 
+        <section class="card-section card-section--accent">
+          <div class="card-section__header">
+            <div class="card-section__title">
+              <i class="pi pi-thumbs-up"></i>
+              <h3>Postulations de mes modules</h3>
+              <Badge :value="postulationRows.length" severity="warning" />
+            </div>
+            <div class="card-section__toolbar">
+              <Button
+                icon="pi pi-refresh"
+                text
+                rounded
+                @click="loadRmPostulationVotes"
+                :loading="loadingPostulations"
+                v-tooltip.top="'Rafraîchir les votes'"
+              />
+            </div>
+          </div>
+
+          <div v-if="loadingPostulations" class="text-center py-4">
+            <ProgressSpinner style="width: 30px; height: 30px" />
+          </div>
+
+          <div v-else-if="postulationRows.length === 0" class="empty-state-small">
+            <i class="pi pi-check-circle"></i>
+            <p>Aucune postulation en attente sur vos modules.</p>
+          </div>
+
+          <div v-else class="rm-postulation-table-wrap">
+            <table class="rm-postulation-table">
+              <thead>
+                <tr>
+                  <th>Module</th>
+                  <th>Créneau</th>
+                  <th>Classe</th>
+                  <th>Votants</th>
+                  <th>Choix RM</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="row in postulationRows" :key="row.slotId">
+                  <td>
+                    <strong>{{ row.moduleNumber }}</strong>
+                    <div class="text-500">{{ row.moduleTitle }}</div>
+                  </td>
+                  <td>
+                    <div>S{{ row.weekNumber }} • {{ row.dayLabel }}</div>
+                    <div class="text-500">{{ row.timeRange }}</div>
+                  </td>
+                  <td>{{ row.classCode || '—' }}</td>
+                  <td>
+                    <div v-if="row.voters.length" class="rm-voters-list">
+                      <Tag
+                        v-for="voter in row.voters"
+                        :key="`${row.slotId}_${voter.id}`"
+                        :value="voter.name"
+                        severity="info"
+                      />
+                    </div>
+                    <span v-else class="text-500">Aucun vote</span>
+                  </td>
+                  <td>
+                    <MultiSelect
+                      v-model="row.selectedTeacherIds"
+                      :options="row.voterOptions"
+                      optionLabel="label"
+                      optionValue="value"
+                      display="chip"
+                      placeholder="Choisir enseignant(s)"
+                      :disabled="!row.voterOptions.length"
+                      class="rm-postulation-select"
+                    />
+                  </td>
+                  <td>
+                    <Button
+                      label="Assigner"
+                      icon="pi pi-check"
+                      size="small"
+                      severity="success"
+                      :loading="assigningSlotIds.includes(String(row.slotId))"
+                      :disabled="!row.selectedTeacherIds.length"
+                      @click="assignPostulationTeachers(row)"
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
         <!-- ═══ MES COURS ═══ -->
         <section class="card-section card-section--accent">
           <div class="card-section__header">
@@ -374,12 +465,16 @@
 
       </div>
     </div>
+
+    <Toast />
   </AdminLayout>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { useToast } from 'primevue/usetoast';
+import Toast from 'primevue/toast';
 import { useAuthStore } from '@/stores/authStore';
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 import PageHeader from '@/components/admin/common/PageHeader.vue';
@@ -388,6 +483,7 @@ import ProgressSpinner from 'primevue/progressspinner';
 import Badge from 'primevue/badge';
 import Tag from 'primevue/tag';
 import Dropdown from 'primevue/dropdown';
+import MultiSelect from 'primevue/multiselect';
 import planningService from '@/service/planningService';
 import academicYearService from '@/service/academicYearService';
 import { getMyModules, getModulesTeachers, calculateStats } from '@/service/rmDashboardService';
@@ -397,9 +493,11 @@ import { supabase } from '@/supabase';
 
 const router = useRouter();
 const authStore = useAuthStore();
+const toast = useToast();
 
 const AUTO_REFRESH_MS = 120000;
 let refreshIntervalId = null;
+const SLOT_VOTES_TABLE = 'planning_slot_votes';
 
 // Loading
 const loading = ref(true);
@@ -434,6 +532,10 @@ const modulesWithoutTeachers = ref([]);
 const hoursAssigned = ref(0);
 const hoursPlanned = ref(0);
 const completionPercent = ref(0);
+
+const loadingPostulations = ref(false);
+const postulationRows = ref([]);
+const assigningSlotIds = ref([]);
 
 // Mes cours (section planning enseignant)
 const loadingMySlots = ref(false);
@@ -613,6 +715,278 @@ function getSlotModuleLabel(code) {
   return mod?.label || mod?.title || code || '—'
 }
 
+function isPostulationLabel(value) {
+  const text = String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+
+  return (
+    text.includes('postulation') ||
+    text.includes('postulat') ||
+    text.includes('repourvoir') ||
+    text.includes('repourv') ||
+    text.includes('reattribuer') ||
+    text.includes('reattrib')
+  );
+}
+
+function getPostulationDayLabel(slot) {
+  const raw = String(slot?.day || '').toLowerCase();
+  const map = {
+    monday: 'Lundi',
+    tuesday: 'Mardi',
+    wednesday: 'Mercredi',
+    thursday: 'Jeudi',
+    friday: 'Vendredi',
+    lundi: 'Lundi',
+    mardi: 'Mardi',
+    mercredi: 'Mercredi',
+    jeudi: 'Jeudi',
+    vendredi: 'Vendredi'
+  };
+
+  if (map[raw]) return map[raw];
+
+  const dayIndex = Number(slot?.day_index);
+  const dayByIndex = {
+    0: 'Lundi',
+    1: 'Mardi',
+    2: 'Mercredi',
+    3: 'Jeudi',
+    4: 'Vendredi',
+    5: 'Distance'
+  };
+
+  return dayByIndex[dayIndex] || slot?.day || '—';
+}
+
+function buildTeacherDisplayName(profileRow, userProfileRow) {
+  const fromProfiles = profileRow?.display_name || `${profileRow?.forname || ''} ${profileRow?.family_name || ''}`.trim();
+  if (fromProfiles) return fromProfiles;
+
+  const fromUserProfiles = userProfileRow?.display_name || `${userProfileRow?.forname || ''} ${userProfileRow?.family_name || ''}`.trim();
+  if (fromUserProfiles) return fromUserProfiles;
+
+  return profileRow?.email || userProfileRow?.email || 'Enseignant';
+}
+
+function isMissingTableError(error) {
+  const text = String([error?.message, error?.details, error?.hint].filter(Boolean).join(' ')).toLowerCase();
+  return Number(error?.status || 0) === 404 || text.includes('not found') || text.includes('could not find the table');
+}
+
+async function loadRmPostulationVotes() {
+  if (!myModules.value.length) {
+    postulationRows.value = [];
+    return;
+  }
+
+  loadingPostulations.value = true;
+
+  try {
+    const moduleCodes = Array.from(new Set(myModules.value.map(m => String(m.code || '').trim()).filter(Boolean)));
+    if (!moduleCodes.length) {
+      postulationRows.value = [];
+      return;
+    }
+
+    const { data: slotsData, error: slotsError } = await supabase
+      .from('planning_time_slots')
+      .select('*')
+      .in('module_code', moduleCodes);
+
+    if (slotsError) throw slotsError;
+
+    const postulationSlots = (slotsData || []).filter(slot => {
+      const teachers = extractTeacherEntries(slot?.teachers);
+      const texts = [
+        ...teachers,
+        slot?.teacher,
+        slot?.teacher_name,
+        slot?.teacher_label,
+        slot?.notes,
+        slot?.comment,
+        slot?.commentaire,
+        slot?.status,
+        slot?.assignment_status,
+        slot?.teacher_status,
+        slot?.slot_type,
+        slot?.type
+      ].filter(Boolean);
+
+      return texts.some(isPostulationLabel);
+    });
+
+    if (!postulationSlots.length) {
+      postulationRows.value = [];
+      return;
+    }
+
+    const slotIds = postulationSlots.map(s => String(s.id));
+
+    const { data: votesData, error: votesError } = await supabase
+      .from(SLOT_VOTES_TABLE)
+      .select('slot_id, teacher_id')
+      .in('slot_id', slotIds);
+
+    if (votesError) {
+      if (isMissingTableError(votesError)) {
+        toast.add({ severity: 'warn', summary: 'Votes indisponibles', detail: 'Table planning_slot_votes inaccessible.', life: 3500 });
+        postulationRows.value = [];
+        return;
+      }
+      throw votesError;
+    }
+
+    const votes = votesData || [];
+    const teacherIds = Array.from(new Set(votes.map(v => String(v.teacher_id || '')).filter(Boolean)));
+
+    const [profilesResult, userProfilesByProfileIdResult, userProfilesByUserIdResult] = await Promise.all([
+      teacherIds.length
+        ? supabase.from('profiles').select('id,display_name,forname,family_name,email').in('id', teacherIds)
+        : Promise.resolve({ data: [], error: null }),
+      teacherIds.length
+        ? supabase.from('user_profiles').select('profile_id,display_name,forname,family_name,email').in('profile_id', teacherIds)
+        : Promise.resolve({ data: [], error: null }),
+      teacherIds.length
+        ? supabase.from('user_profiles').select('user_id,display_name,forname,family_name,email').in('user_id', teacherIds)
+        : Promise.resolve({ data: [], error: null })
+    ]);
+
+    if (profilesResult.error) {
+      console.warn('⚠️ [DashboardRM] Chargement profiles votants impossible:', profilesResult.error);
+    }
+    if (userProfilesByProfileIdResult.error) {
+      console.warn('⚠️ [DashboardRM] Chargement user_profiles (profile_id) votants impossible:', userProfilesByProfileIdResult.error);
+    }
+    if (userProfilesByUserIdResult.error) {
+      console.warn('⚠️ [DashboardRM] Chargement user_profiles (user_id) votants impossible:', userProfilesByUserIdResult.error);
+    }
+
+    const profileById = new Map((profilesResult.data || []).map(p => [String(p.id), p]));
+    const userProfileById = new Map();
+    (userProfilesByProfileIdResult.data || []).forEach(p => {
+      const key = String(p.profile_id || '');
+      if (!key) return;
+      userProfileById.set(key, p);
+    });
+    (userProfilesByUserIdResult.data || []).forEach(p => {
+      const key = String(p.user_id || '');
+      if (!key || userProfileById.has(key)) return;
+      userProfileById.set(key, p);
+    });
+    const votesBySlot = new Map();
+
+    for (const vote of votes) {
+      const slotId = String(vote.slot_id || '');
+      const teacherId = String(vote.teacher_id || '');
+      if (!slotId || !teacherId) continue;
+
+      if (!votesBySlot.has(slotId)) votesBySlot.set(slotId, []);
+
+      const profileRow = profileById.get(teacherId);
+      const userProfileRow = userProfileById.get(teacherId);
+
+      votesBySlot.get(slotId).push({
+        id: teacherId,
+        name: buildTeacherDisplayName(profileRow, userProfileRow),
+        email: profileRow?.email || userProfileRow?.email || ''
+      });
+    }
+
+    const moduleByCode = new Map(myModules.value.map(m => [String(m.code || '').toLowerCase(), m]));
+
+    postulationRows.value = postulationSlots.map(slot => {
+      const module = moduleByCode.get(String(slot.module_code || '').toLowerCase());
+      const slotVoters = votesBySlot.get(String(slot.id)) || [];
+
+      return {
+        slotId: slot.id,
+        moduleCode: slot.module_code || null,
+        moduleNumber: module?.number || slot.module_code || '—',
+        moduleTitle: module?.title || 'Module non trouvé',
+        weekNumber: slot.week_number || '—',
+        dayLabel: getPostulationDayLabel(slot),
+        classCode: slot.class_code || '—',
+        timeRange: `${slot.start_time || '--:--'} - ${slot.end_time || '--:--'}`,
+        voters: slotVoters,
+        voterOptions: slotVoters.map(v => ({ label: `${v.name}${v.email ? ` (${v.email})` : ''}`, value: v.id })),
+        selectedTeacherIds: []
+      };
+    }).sort((a, b) => {
+      const byModule = String(a.moduleNumber).localeCompare(String(b.moduleNumber));
+      if (byModule !== 0) return byModule;
+      return Number(a.weekNumber || 0) - Number(b.weekNumber || 0);
+    });
+  } catch (error) {
+    console.error('❌ [DashboardRM] Erreur chargement postulations RM:', error);
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les votes de postulation.', life: 3500 });
+    postulationRows.value = [];
+  } finally {
+    loadingPostulations.value = false;
+  }
+}
+
+async function assignPostulationTeachers(row) {
+  const selectedIds = Array.isArray(row?.selectedTeacherIds) ? row.selectedTeacherIds.map(String) : [];
+  if (!selectedIds.length) {
+    toast.add({ severity: 'warn', summary: 'Sélection requise', detail: 'Choisissez au moins un enseignant votant.', life: 3000 });
+    return;
+  }
+
+  const selectedTeachers = (row?.voters || []).filter(v => selectedIds.includes(String(v.id)));
+  const teacherNames = selectedTeachers.map(v => v.name).filter(Boolean);
+  if (!teacherNames.length) {
+    toast.add({ severity: 'warn', summary: 'Sélection invalide', detail: 'Aucun enseignant sélectionné.', life: 3000 });
+    return;
+  }
+
+  const slotKey = String(row.slotId);
+  assigningSlotIds.value = [...assigningSlotIds.value, slotKey];
+
+  try {
+    const teacherPayload = selectedTeachers.map(teacher => ({
+      id: teacher.id,
+      name: teacher.name,
+      email: teacher.email || null
+    }));
+
+    const { error: updateError } = await supabase
+      .from('planning_time_slots')
+      .update({ teachers: teacherPayload })
+      .eq('id', row.slotId);
+
+    if (updateError) throw updateError;
+
+    const { error: clearVotesError } = await supabase
+      .from(SLOT_VOTES_TABLE)
+      .delete()
+      .eq('slot_id', row.slotId);
+
+    if (clearVotesError) {
+      console.warn('⚠️ [DashboardRM] Nettoyage votes slot impossible:', clearVotesError);
+    }
+
+    toast.add({
+      severity: 'success',
+      summary: 'Assignation enregistrée',
+      detail: `${teacherNames.join(', ')} assigné(s) au créneau du module ${row.moduleNumber}.`,
+      life: 3500
+    });
+
+    postulationRows.value = postulationRows.value.filter(item => String(item.slotId) !== slotKey);
+    await loadMySlots();
+    await loadAllMySlots();
+  } catch (error) {
+    console.error('❌ [DashboardRM] Erreur assignation postulation:', error);
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible d\'assigner ce créneau.', life: 3500 });
+  } finally {
+    assigningSlotIds.value = assigningSlotIds.value.filter(id => id !== slotKey);
+  }
+}
+
 // Modules dont l'utilisateur est responsable (chargés depuis le service)
 const myModules = ref([]);
 
@@ -770,6 +1144,9 @@ async function loadRMData() {
     if (myModules.value.length > 0) {
       myTeachers.value = await getModulesTeachers(myModules.value);
       console.log('👨‍🏫 Mes enseignants:', myTeachers.value.length);
+      await loadRmPostulationVotes();
+    } else {
+      postulationRows.value = [];
     }
     
     // 4. Calculer les stats de mes modules
@@ -1597,6 +1974,41 @@ function generateAlerts() {
 .day-block__date { font-size: 0.8rem; color: var(--text-color-secondary); }
 
 .day-block__slots { display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.5rem; padding-left: 0.5rem; }
+
+.rm-postulation-table-wrap {
+  overflow-x: auto;
+}
+
+.rm-postulation-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 880px;
+}
+
+.rm-postulation-table th,
+.rm-postulation-table td {
+  padding: 0.65rem 0.5rem;
+  border-bottom: 1px solid var(--surface-border);
+  vertical-align: top;
+}
+
+.rm-postulation-table th {
+  font-size: 0.8rem;
+  color: var(--text-color-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-weight: 700;
+}
+
+.rm-voters-list {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.rm-postulation-select {
+  min-width: 240px;
+}
 
 .slot-row {
   display: flex; align-items: center; gap: 0.75rem;

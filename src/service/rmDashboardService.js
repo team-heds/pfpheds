@@ -115,24 +115,45 @@ export async function getModulesTeachers(modules) {
     
     if (import.meta.env.DEV) console.log('👥 [rmDashboardService] Chargement enseignants pour modules:', modules.length)
     
-    const moduleIds = modules.map(m => m.id).filter(Boolean)
+    const moduleIds = modules.map(m => String(m.id || '')).filter(Boolean)
+    const moduleCodes = modules.map(m => String(m.code || '').trim()).filter(Boolean)
 
-    if (moduleIds.length === 0) {
-      if (import.meta.env.DEV) console.log('ℹ️ [rmDashboardService] Aucun module id disponible')
-      return []
+    const isUuid = (value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ''))
+
+    let courseIds = []
+
+    if (moduleCodes.length > 0) {
+      const { data: slotsData, error: slotsError } = await supabase
+        .from('planning_time_slots')
+        .select('course_id')
+        .in('module_code', moduleCodes)
+        .not('course_id', 'is', null)
+
+      if (!slotsError) {
+        courseIds = Array.from(new Set((slotsData || []).map(s => s.course_id).filter(Boolean)))
+      } else {
+        console.warn('⚠️ [rmDashboardService] Erreur chargement planning_time_slots:', slotsError.message)
+      }
     }
 
-    const { data: courses, error: coursesError } = await supabase
-      .from('courses')
-      .select('id, module_id')
-      .in('module_id', moduleIds)
+    if (courseIds.length === 0) {
+      const uuidModuleIds = moduleIds.filter(isUuid)
+      if (uuidModuleIds.length > 0) {
+        const { data: courses, error: coursesError } = await supabase
+          .from('courses')
+          .select('id')
+          .in('module_id', uuidModuleIds)
 
-    if (coursesError) {
-      console.warn('⚠️ [rmDashboardService] Erreur chargement courses:', coursesError.message)
-      return []
+        if (coursesError) {
+          console.warn('⚠️ [rmDashboardService] Erreur chargement courses:', coursesError.message)
+        } else {
+          courseIds = Array.from(new Set((courses || []).map(c => c.id).filter(Boolean)))
+        }
+      } else if (import.meta.env.DEV) {
+        console.log('ℹ️ [rmDashboardService] Module IDs non-UUID, fallback via planning_time_slots uniquement')
+      }
     }
 
-    const courseIds = (courses || []).map(c => c.id).filter(Boolean)
     if (courseIds.length === 0) {
       if (import.meta.env.DEV) console.log('ℹ️ [rmDashboardService] Aucun cours trouvé pour les modules RM')
       return []

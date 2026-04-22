@@ -85,7 +85,7 @@ export function teacherKey(raw) {
   let k = raw.replace(/"/g, '').trim()
   if (!k) return null
   k = stripAccents(k)
-  k = k.replace(/[.\-]/g, ' ')   // points et tirets → espaces
+  k = k.replace(/[.-]/g, ' ')   // points et tirets → espaces
   k = k.replace(/\s+/g, ' ').trim().toLowerCase()
   // Appliquer les alias manuels
   return TEACHER_ALIASES[k] || k
@@ -93,7 +93,29 @@ export function teacherKey(raw) {
 
 export function normalizeTeacherName(raw) {
   if (!raw) return null
-  let name = raw.replace(/"/g, '').trim()
+
+  let source = raw
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim()
+    if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+      try {
+        const parsed = JSON.parse(trimmed)
+        if (parsed && typeof parsed === 'object') {
+          source = parsed.display_name || parsed.name || `${parsed.forname || ''} ${parsed.family_name || ''}`.trim() || parsed.email || ''
+        }
+      } catch {
+        source = raw
+      }
+    }
+  }
+
+  if (typeof raw === 'object') {
+    source = raw.display_name || raw.name || `${raw.forname || ''} ${raw.family_name || ''}`.trim() || raw.email || ''
+  }
+
+  if (typeof source !== 'string') return null
+
+  let name = source.replace(/"/g, '').trim()
   if (!name) return null
 
   const lowered = name.toLowerCase()
@@ -390,6 +412,40 @@ class WorkloadService {
       this.getModuleNames()
     ])
 
+    const teachersById = new Map((teachers || []).map(t => [String(t.id || ''), t]))
+    const resolveTeacherLabel = (rawEntry) => {
+      if (!rawEntry) return null
+      if (typeof rawEntry === 'string') {
+        const trimmed = rawEntry.trim()
+        if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+          try {
+            const parsed = JSON.parse(trimmed)
+            if (parsed && typeof parsed === 'object') {
+              const parsedId = String(parsed.id || parsed.user_id || parsed.profile_id || '').trim()
+              if (parsedId && teachersById.has(parsedId)) {
+                return teachersById.get(parsedId)?.name || null
+              }
+              return parsed.display_name || parsed.name || `${parsed.forname || ''} ${parsed.family_name || ''}`.trim() || parsed.email || null
+            }
+          } catch {
+            return rawEntry
+          }
+        }
+        return rawEntry
+      }
+
+      if (typeof rawEntry === 'object') {
+        const rawId = String(rawEntry.id || rawEntry.user_id || rawEntry.profile_id || '').trim()
+        if (rawId && teachersById.has(rawId)) {
+          return teachersById.get(rawId)?.name || null
+        }
+
+        return rawEntry.display_name || rawEntry.name || `${rawEntry.forname || ''} ${rawEntry.family_name || ''}`.trim() || rawEntry.email || null
+      }
+
+      return null
+    }
+
     // 2. Filtrer les créneaux sur les classes de l'année académique active
     // (sinon on mélange plusieurs cohortes/années et les heures deviennent fausses)
     const classCodeSet = buildAcademicYearClassCodeSet(classes)
@@ -517,7 +573,8 @@ class WorkloadService {
       const slotTeacherKeys = []
       const normalizedTeacherNames = []
       for (const raw of rawTeachers) {
-        const norm = normalizeTeacherName(raw)
+        const resolvedLabel = resolveTeacherLabel(raw)
+        const norm = normalizeTeacherName(resolvedLabel)
         if (!norm) continue
         const key = teacherKey(norm)
         if (!key || seen.has(key)) continue
