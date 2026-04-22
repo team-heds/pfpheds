@@ -84,14 +84,19 @@
               <Button label="Calendrier semestriel" icon="pi pi-calendar-plus" outlined @click="$router.push('/admin/planning/semester')" />
               <Button label="Liste des modules" icon="pi pi-book" outlined @click="$router.push('/admin/modules')" />
               <Button label="Cours en postulation" icon="pi pi-thumbs-up" outlined severity="warning" @click="$router.push('/admin/soins-infirmiers/cours-postulation')" />
-              <Button label="Ressources pédagogiques" icon="pi pi-folder" outlined @click="$router.push('/media')" />
+              <Button label="Ressources pédagogiques" icon="pi pi-folder" outlined @click="$router.push('/admin/academic/video-library')" />
             </div>
           </section>
 
-          <section class="section-card schedule-section span-2">
+          <section class="section-card schedule-section">
             <div class="section-header-row">
-              <h3><i class="pi pi-calendar"></i> Mon Calendrier</h3>
-              <div class="view-toggle">
+              <div class="section-heading">
+                <h3><i class="pi pi-calendar"></i> Mon Calendrier</h3>
+                <p class="section-subtitle">{{ scheduleSlotsCount }} créneaux planifiés au total</p>
+              </div>
+              <div class="section-header-controls">
+                <Tag :value="`${upcomingSessions.length} à venir`" severity="info" rounded />
+                <div class="view-toggle">
                 <Button 
                   :icon="calendarView === 'week' ? 'pi pi-check' : 'pi pi-calendar'" 
                   label="Semaine" 
@@ -106,6 +111,7 @@
                   size="small"
                   @click="calendarView = 'list'" 
                 />
+                </div>
               </div>
             </div>
 
@@ -216,7 +222,7 @@
             </div>
           </section>
 
-          <section class="section-card upcoming-section span-2">
+          <section class="section-card upcoming-section">
             <div class="section-header upcoming-header">
               <div class="section-header__left">
                 <h3>
@@ -256,13 +262,14 @@
             </div>
           </section>
 
-          <section class="section-card courses-section span-2">
+          <section class="section-card courses-section">
             <div class="section-header courses-header">
               <div class="section-header__left">
                 <h3>
                   <i class="pi pi-book"></i> 
                   Mes cours
                 </h3>
+                <p class="section-subtitle">{{ filteredAndSortedCourses.length }} cours • {{ totalCoursesHours }}h attribuées</p>
                 <Badge :value="filteredAndSortedCourses.length" severity="info" />
               </div>
               <div class="courses-toolbar">
@@ -272,6 +279,14 @@
                 </span>
                 <Dropdown v-model="courseModuleFilter" :options="courseModuleOptions" optionLabel="label" optionValue="value" class="p-inputtext-sm" style="min-width: 180px" />
                 <Dropdown v-model="courseSort" :options="courseSortOptions" optionLabel="label" optionValue="value" class="p-inputtext-sm" style="min-width: 170px" />
+                <Button
+                  icon="pi pi-thumbs-up"
+                  label="Cours en postulation"
+                  severity="warning"
+                  size="small"
+                  outlined
+                  @click="$router.push('/admin/soins-infirmiers/cours-postulation')"
+                />
                 <Button icon="pi pi-file-excel" label="Excel cours" severity="success" size="small" outlined @click="exportMyCoursesExcel" />
               </div>
             </div>
@@ -635,6 +650,13 @@ const normalizedMyCourses = computed(() => {
   });
 });
 
+const scheduleSlotsCount = computed(() => (allMySlots.value || []).length)
+
+const totalCoursesHours = computed(() => {
+  const total = (normalizedMyCourses.value || []).reduce((sum, course) => sum + (Number(course?.hours) || 0), 0)
+  return Math.round(total * 10) / 10
+})
+
 const courseModuleOptions = computed(() => {
   const options = [{ label: 'Tous les modules', value: 'all' }];
   const moduleNames = [...new Set(normalizedMyCourses.value.map(c => c.moduleName).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
@@ -940,6 +962,8 @@ async function exportMyCoursesExcel() {
 <style scoped>
 .dashboard-enseignant {
   padding: 2rem;
+  max-width: 1680px;
+  margin: 0 auto;
 }
 
 .dashboard-grid {
@@ -1043,16 +1067,55 @@ async function exportMyCoursesExcel() {
 
 .dashboard-sections {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1.7fr) minmax(280px, 1fr);
+  grid-template-areas:
+    'quick quick'
+    'schedule schedule'
+    'courses courses'
+    'upcoming reminder'
+    'modules hours';
   gap: 1.2rem;
+  align-items: start;
 }
 
 .span-2 {
   grid-column: span 2;
 }
 
+.quick-actions-section {
+  grid-area: quick;
+}
+
+.schedule-section {
+  grid-area: schedule;
+}
+
+.reminder-section {
+  grid-area: reminder;
+}
+
+.hours-section {
+  grid-area: hours;
+}
+
+.upcoming-section {
+  grid-area: upcoming;
+}
+
+.courses-section {
+  grid-area: courses;
+}
+
+.modules-section {
+  grid-area: modules;
+}
+
 .courses-section {
   min-height: 420px;
+}
+
+.schedule-section {
+  min-height: 520px;
 }
 
 .hours-section {
@@ -1107,7 +1170,14 @@ async function exportMyCoursesExcel() {
   background: var(--surface-card);
   border-radius: 1rem;
   padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  border: 1px solid var(--surface-border);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.section-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
 }
 
 .section-card.full-width {
@@ -1211,6 +1281,9 @@ async function exportMyCoursesExcel() {
   align-items: center;
   gap: 0.5rem;
   flex-wrap: wrap;
+  padding: 0.5rem;
+  background: var(--surface-ground);
+  border-radius: 0.75rem;
 }
 
 .course-header {
@@ -1242,8 +1315,13 @@ async function exportMyCoursesExcel() {
 
 .quick-actions {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 0.75rem;
+}
+
+.quick-actions :deep(.p-button) {
+  width: 100%;
+  justify-content: center;
 }
 
 .loading-container {
@@ -1268,8 +1346,27 @@ async function exportMyCoursesExcel() {
 .section-header-row {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 1rem;
+}
+
+.section-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.section-subtitle {
+  margin: 0;
+  color: var(--text-color-secondary);
+  font-size: 0.82rem;
+}
+
+.section-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
 }
 
 .section-header-row h3 {
@@ -1382,6 +1479,9 @@ async function exportMyCoursesExcel() {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  max-height: 740px;
+  overflow: auto;
+  padding-right: 0.25rem;
 }
 
 .module-item {
@@ -1608,6 +1708,57 @@ async function exportMyCoursesExcel() {
   margin-top: 0.25rem;
 }
 
+@media (max-width: 1280px) {
+  .dashboard-sections {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      'quick quick'
+      'schedule schedule'
+      'courses courses'
+      'upcoming reminder'
+      'modules hours';
+  }
+
+  .modules-list {
+    max-height: none;
+  }
+
+  .week-schedule {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 992px) {
+  .dashboard-enseignant {
+    padding: 1.25rem;
+  }
+
+  .dashboard-sections {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'quick'
+      'schedule'
+      'reminder'
+      'hours'
+      'upcoming'
+      'courses'
+      'modules';
+  }
+
+  .week-schedule {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hours-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .section-header-row {
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+}
+
 @media (max-width: 768px) {
   .hero-card {
     grid-template-columns: 1fr;
@@ -1618,16 +1769,16 @@ async function exportMyCoursesExcel() {
     grid-template-columns: 1fr;
   }
 
-  .dashboard-sections {
+  .dashboard-enseignant {
+    padding: 1rem;
+  }
+
+  .week-schedule {
     grid-template-columns: 1fr;
   }
 
-  .span-2 {
-    grid-column: span 1;
-  }
-
   .hours-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
   }
 }
 
