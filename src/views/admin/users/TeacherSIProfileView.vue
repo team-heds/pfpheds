@@ -37,7 +37,9 @@
           <div class="profile-stats">
             <Tag :value="`${responsibleModules.length} modules responsables`" severity="info" />
             <Tag :value="`${teacherCourses.length} cours assignés`" severity="success" />
-            <Tag :value="`${teacherHours}h totales`" severity="warning" />
+            <Tag :value="`${workloadMetrics.totalPresencePeriods}p présence`" severity="warning" />
+            <Tag :value="`${workloadMetrics.totalWeightedPeriods}p pondérées`" severity="danger" />
+            <Tag :value="`${teacherDeclaredHours}h déclarées`" severity="secondary" />
           </div>
         </div>
 
@@ -74,7 +76,7 @@
                   />
                 </template>
               </Column>
-              <Column field="hours" header="Heures">
+              <Column field="hours" header="Heures déclarées">
                 <template #body="{ data }">
                   {{ data.hours }}h
                 </template>
@@ -96,17 +98,24 @@ import { useToast } from 'primevue/usetoast'
 import { supabase } from '@/supabase'
 import { getSITeachers } from '@/service/academicKpiService'
 import modulesService from '@/service/modulesService'
+import workloadService, { teacherKey, normalizeTeacherName } from '@/service/workloadService'
+import { useAcademicYear } from '@/composables/useAcademicYear'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import PageHeader from '@/components/admin/common/PageHeader.vue'
 
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
+const { activeAcademicYear, loadActiveAcademicYear } = useAcademicYear()
 
 const loading = ref(false)
 const teachers = ref([])
 const allModules = ref([])
 const teacherAssignments = ref([])
+const workloadMetrics = ref({
+  totalPresencePeriods: 0,
+  totalWeightedPeriods: 0
+})
 
 const teacherId = computed(() => String(route.params.teacherId || ''))
 
@@ -138,7 +147,7 @@ const teacherCourses = computed(() => {
     .sort((a, b) => String(a.moduleNumber).localeCompare(String(b.moduleNumber)))
 })
 
-const teacherHours = computed(() => {
+const teacherDeclaredHours = computed(() => {
   return Math.round(teacherCourses.value.reduce((sum, c) => sum + (Number(c.hours) || 0), 0) * 10) / 10
 })
 
@@ -152,9 +161,7 @@ async function loadTeacherAssignments() {
   const { data, error } = await supabase
     .from('course_teachers')
     .select(`
-      id,
       teacher_id,
-      role,
       hours,
       courses(id, module_id, name, code)
     `)
@@ -163,13 +170,43 @@ async function loadTeacherAssignments() {
   if (error) throw error
 
   teacherAssignments.value = (data || []).map(row => ({
-    id: row.id,
-    role: row.role,
+    id: `${row.teacher_id || ''}-${row.courses?.id || ''}`,
+    role: 'enseignant',
     hours: row.hours,
     module_id: row.courses?.module_id,
     course_name: row.courses?.name,
     course_code: row.courses?.code
   }))
+}
+
+async function loadTeacherWorkloadMetrics() {
+  if (!teacher.value) {
+    workloadMetrics.value = { totalPresencePeriods: 0, totalWeightedPeriods: 0 }
+    return
+  }
+
+  const data = await workloadService.computeWorkload('all', activeAcademicYear.value?.id || null)
+  const allTeachers = data?.teachers || []
+
+  const currentTeacherId = String(teacher.value.id || '').trim()
+  const currentTeacherEmail = String(teacher.value.email || '').trim().toLowerCase()
+  const currentTeacherKey = teacherKey(normalizeTeacherName(teacher.value.name) || teacher.value.name || '')
+
+  const matched = allTeachers.find((w) => {
+    const wId = String(w?.teacher?.id || '').trim()
+    if (currentTeacherId && wId && wId === currentTeacherId) return true
+
+    const wEmail = String(w?.teacher?.email || '').trim().toLowerCase()
+    if (currentTeacherEmail && wEmail && wEmail === currentTeacherEmail) return true
+
+    const wKey = teacherKey(normalizeTeacherName(w?.teacher?.name) || w?.teacher?.name || '')
+    return !!(currentTeacherKey && wKey && currentTeacherKey === wKey)
+  })
+
+  workloadMetrics.value = {
+    totalPresencePeriods: matched?.totalPresencePeriods || 0,
+    totalWeightedPeriods: matched?.totalWeightedPeriods || 0
+  }
 }
 
 onMounted(async () => {
@@ -183,7 +220,9 @@ onMounted(async () => {
     teachers.value = siTeachers || []
     allModules.value = modules || []
 
+    await loadActiveAcademicYear()
     await loadTeacherAssignments()
+    await loadTeacherWorkloadMetrics()
   } catch (error) {
     console.error('Erreur chargement profil enseignant SI:', error)
     toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger le profil enseignant', life: 3500 })

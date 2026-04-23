@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 /* eslint-disable no-undef */
-const SW_VERSION = '0.1.87';
+const SW_VERSION = '0.1.88';
 self.addEventListener('install', (e) => self.skipWaiting());
 self.addEventListener('activate', (e) => {
   e.waitUntil(

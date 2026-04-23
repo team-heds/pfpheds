@@ -57,9 +57,9 @@
               <span class="hero-metric__value">{{ coursesCount }}</span>
             </div>
             <div class="hero-metric">
-              <span class="hero-metric__label">Heures / semaine</span>
-              <span class="hero-metric__value">{{ weeklyHours }}h</span>
-              <small class="hero-metric__hint">{{ stats.upcomingHours || 0 }}h à venir</small>
+              <span class="hero-metric__label">Périodes présence</span>
+              <span class="hero-metric__value">{{ workloadMetrics.totalPresencePeriods }}p</span>
+              <small class="hero-metric__hint">{{ annualPlanningHours }}h planifiées</small>
             </div>
             <div class="hero-metric">
               <span class="hero-metric__label">Séances programmées</span>
@@ -67,8 +67,8 @@
               <small class="hero-metric__hint">Prochaines semaines</small>
             </div>
             <div class="hero-metric">
-              <span class="hero-metric__label">Heures annuelles</span>
-              <span class="hero-metric__value">{{ annualPlanningHours }}h</span>
+              <span class="hero-metric__label">Périodes pondérées</span>
+              <span class="hero-metric__value">{{ workloadMetrics.totalWeightedPeriods }}p</span>
             </div>
           </div>
         </section>
@@ -269,7 +269,7 @@
                   <i class="pi pi-book"></i> 
                   Mes cours
                 </h3>
-                <p class="section-subtitle">{{ filteredAndSortedCourses.length }} cours • {{ totalCoursesHours }}h attribuées</p>
+                <p class="section-subtitle">{{ filteredAndSortedCourses.length }} cours • {{ totalCoursesHours }}h déclarées</p>
                 <Badge :value="filteredAndSortedCourses.length" severity="info" />
               </div>
               <div class="courses-toolbar">
@@ -322,7 +322,7 @@
                   <Tag :value="data.type || 'CM'" :severity="getTypeSeverity(data.type || 'CM')" />
                 </template>
               </Column>
-              <Column field="hours" header="Heures" sortable style="width: 90px">
+              <Column field="hours" header="Heures déclarées" sortable style="width: 90px">
                 <template #body="{ data }">{{ data.hours }}h</template>
               </Column>
               <Column field="nextSessionLabel" header="Prochaine séance" sortable>
@@ -382,24 +382,24 @@
 
           <section class="section-card hours-section">
             <div class="section-header">
-              <h3><i class="pi pi-chart-bar"></i> Récapitulatif heures</h3>
+              <h3><i class="pi pi-chart-bar"></i> Récapitulatif charge</h3>
             </div>
             <div class="hours-grid">
               <div class="hour-stat">
-                <span class="hour-value">{{ stats.weeklyHours }}h</span>
-                <span class="hour-label">Cette semaine</span>
+                <span class="hour-value">{{ workloadMetrics.totalPresencePeriods }}p</span>
+                <span class="hour-label">Périodes présence</span>
               </div>
               <div class="hour-stat">
                 <span class="hour-value">{{ stats.upcomingHours || 0 }}h</span>
                 <span class="hour-label">À venir</span>
               </div>
               <div class="hour-stat">
-                <span class="hour-value">{{ stats.totalHours }}h</span>
-                <span class="hour-label">Total assigné</span>
+                <span class="hour-value">{{ workloadMetrics.totalWeightedPeriods }}p</span>
+                <span class="hour-label">Périodes pondérées</span>
               </div>
               <div class="hour-stat">
-                <span class="hour-value">{{ stats.upcomingCount || 0 }}</span>
-                <span class="hour-label">Séances planifiées</span>
+                <span class="hour-value">{{ totalCoursesHours }}h</span>
+                <span class="hour-label">Heures déclarées</span>
               </div>
             </div>
           </section>
@@ -425,12 +425,15 @@ import Column from 'primevue/column';
 import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
 import { loadEnseignantDashboard } from '@/service/enseignantDashboardService';
+import workloadService, { teacherKey, normalizeTeacherName } from '@/service/workloadService';
+import { useAcademicYear } from '@/composables/useAcademicYear';
 import { useToast } from 'primevue/usetoast';
 
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
 const toast = useToast();
+const { activeAcademicYear, loadActiveAcademicYear } = useAcademicYear();
 
 // Loading
 const loading = ref(true);
@@ -455,6 +458,10 @@ const calendarView = ref('week');
 const courseSearch = ref('');
 const courseModuleFilter = ref('all');
 const courseSort = ref('date-asc');
+const workloadMetrics = ref({
+  totalPresencePeriods: 0,
+  totalWeightedPeriods: 0
+});
 
 const courseSortOptions = [
   { label: 'Date (prochaine)', value: 'date-asc' },
@@ -657,6 +664,31 @@ const totalCoursesHours = computed(() => {
   return Math.round(total * 10) / 10
 })
 
+async function loadTeacherWorkloadMetrics(targetUserId, targetUserEmail, teacherNameForPlanning) {
+  const data = await workloadService.computeWorkload('all', activeAcademicYear.value?.id || null);
+  const allTeachers = data?.teachers || [];
+
+  const currentTeacherId = String(targetUserId || '').trim();
+  const currentTeacherEmail = String(targetUserEmail || '').trim().toLowerCase();
+  const currentTeacherKey = teacherKey(normalizeTeacherName(teacherNameForPlanning) || teacherNameForPlanning || '');
+
+  const matched = allTeachers.find((w) => {
+    const wId = String(w?.teacher?.id || '').trim();
+    if (currentTeacherId && wId && wId === currentTeacherId) return true;
+
+    const wEmail = String(w?.teacher?.email || '').trim().toLowerCase();
+    if (currentTeacherEmail && wEmail && wEmail === currentTeacherEmail) return true;
+
+    const wKey = teacherKey(normalizeTeacherName(w?.teacher?.name) || w?.teacher?.name || '');
+    return !!(currentTeacherKey && wKey && currentTeacherKey === wKey);
+  });
+
+  workloadMetrics.value = {
+    totalPresencePeriods: matched?.totalPresencePeriods || 0,
+    totalWeightedPeriods: matched?.totalWeightedPeriods || 0
+  };
+}
+
 const courseModuleOptions = computed(() => {
   const options = [{ label: 'Tous les modules', value: 'all' }];
   const moduleNames = [...new Set(normalizedMyCourses.value.map(c => c.moduleName).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
@@ -701,6 +733,7 @@ async function loadTeacherData() {
   loading.value = true;
   
   try {
+    await loadActiveAcademicYear();
     const currentUserId = authStore.user?.id || authStore.user?.uid;
     const currentUserEmail = authStore.user?.email;
     const currentDisplayName = authStore.user?.displayName || authStore.user?.name || null;
@@ -727,6 +760,7 @@ async function loadTeacherData() {
     weekSchedule.value = data.weekPlanning;
     upcomingSessions.value = data.upcomingSessions || [];
     allMySlots.value = data.allSlots || [];
+    await loadTeacherWorkloadMetrics(targetUserId, targetUserEmail, teacherNameForPlanning);
     
     console.log('✅ Données enseignant chargées:', {
       courses: myCourses.value.length,
