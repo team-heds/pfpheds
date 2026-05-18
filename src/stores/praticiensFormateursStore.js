@@ -49,23 +49,12 @@ export const usePraticiensFormateursStore = defineStore('praticiensFormateurs', 
       this.error = null;
       try {
         const payload = { 
-          ...praticienData,
-          created_at: new Date().toISOString(),
+          nom: praticienData?.nom || '',
+          prenom: praticienData?.prenom || '',
+          mail: praticienData?.mail || null,
+          institution: praticienData?.institution || null,
+          localite: praticienData?.localite || null,
           updated_at: new Date().toISOString()
-        }
-        
-        // Générer un UUID pour l'id si non fourni
-        if (!payload.id) {
-          if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-            payload.id = crypto.randomUUID()
-          } else {
-            // Fallback: générer un UUID v4 simple
-            payload.id = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-              const r = Math.random() * 16 | 0
-              const v = c === 'x' ? r : (r & 0x3 | 0x8)
-              return v.toString(16)
-            })
-          }
         }
         
         const { data, error } = await supabase
@@ -76,6 +65,12 @@ export const usePraticiensFormateursStore = defineStore('praticiensFormateurs', 
           
         if (error) {
           console.error('❌ Erreur Supabase:', error)
+          if (error.code === '42P01') {
+            throw new Error('La table praticiens_formateurs est introuvable dans la base Supabase configurée.')
+          }
+          if (error.code === '42501') {
+            throw new Error('Permissions insuffisantes pour créer un praticien formateur.')
+          }
           throw error
         }
         
@@ -95,7 +90,14 @@ export const usePraticiensFormateursStore = defineStore('praticiensFormateurs', 
       this.loading = true;
       this.error = null;
       try {
-        const payload = { ...updateData, updated_at: new Date().toISOString() }
+        const payload = {
+          nom: updateData?.nom || '',
+          prenom: updateData?.prenom || '',
+          mail: updateData?.mail || null,
+          institution: updateData?.institution || null,
+          localite: updateData?.localite || null,
+          updated_at: new Date().toISOString(),
+        }
         
         const { data, error } = await supabase
           .from('praticiens_formateurs')

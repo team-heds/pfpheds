@@ -146,7 +146,7 @@
             <label for="institution" class="font-semibold">Institution</label>
             <Dropdown 
               id="institution"
-              v-model="form.institution_id" 
+              v-model="form.selectedInstitutionId" 
               :options="institutionOptions" 
               optionLabel="label" 
               optionValue="value" 
@@ -273,7 +273,7 @@ const items = computed(() => store.praticiensFormateurs)
 const total = computed(() => items.value.length)
 const stats = computed(() => {
   const totalCount = items.value.length
-  const withInstitution = items.value.filter(i => i.institution_id || i.institution).length
+  const withInstitution = items.value.filter(i => i.institution).length
   return {
     total: totalCount,
     withInstitution,
@@ -283,15 +283,13 @@ const stats = computed(() => {
 const saving = ref(false)
 const editorVisible = ref(false)
 const submitted = ref(false)
-const form = ref({ id: null, prenom: '', nom: '', mail: '', institution_id: null })
+const form = ref({ id: null, prenom: '', nom: '', mail: '', institution: '', localite: '', selectedInstitutionId: null })
 
 function fullName(u) {
   return [u.prenom, u.nom].filter(Boolean).join(' ')
 }
 
 function getInstitutionName(u) {
-  const id = u?.institution_id
-  if (id != null) return instStore.getInstitutionNameById?.(id) || u.institution || ''
   return u.institution || ''
 }
 
@@ -306,11 +304,25 @@ const institutionOptions = computed(() => {
       const label = locality ? `${name} (${locality})` : name
       return { 
         label, 
-        value: id 
+        value: id,
+        institution: name,
+        localite: locality,
       }
     })
     .sort((a, b) => a.label.localeCompare(b.label))
 })
+
+function findSelectedInstitutionId(row) {
+  if (!row?.institution) return null
+  const institution = String(row.institution || '').trim().toLowerCase()
+  const locality = String(row.localite || '').trim().toLowerCase()
+  const match = institutionOptions.value.find((opt) => {
+    const optInstitution = String(opt.institution || '').trim().toLowerCase()
+    const optLocality = String(opt.localite || '').trim().toLowerCase()
+    return optInstitution === institution && (!locality || optLocality === locality)
+  })
+  return match?.value ?? null
+}
 
 let debounceId = null
 onMounted(() => {
@@ -326,14 +338,27 @@ watch(search, (v) => {
   }, 300)
 })
 
+watch(institutionOptions, () => {
+  if (!editorVisible.value || !form.value.id || form.value.selectedInstitutionId != null) return
+  form.value.selectedInstitutionId = findSelectedInstitutionId(form.value)
+})
+
 function openCreate() {
-  form.value = { id: null, prenom: '', nom: '', mail: '', institution_id: null }
+  form.value = { id: null, prenom: '', nom: '', mail: '', institution: '', localite: '', selectedInstitutionId: null }
   submitted.value = false
   editorVisible.value = true
 }
 
 function openEdit(row) {
-  form.value = { id: row.id, prenom: row.prenom || '', nom: row.nom || '', mail: row.mail || '', institution_id: row.institution_id ?? null }
+  form.value = {
+    id: row.id,
+    prenom: row.prenom || '',
+    nom: row.nom || '',
+    mail: row.mail || '',
+    institution: row.institution || '',
+    localite: row.localite || '',
+    selectedInstitutionId: findSelectedInstitutionId(row),
+  }
   submitted.value = false
   editorVisible.value = true
 }
@@ -371,27 +396,17 @@ async function save() {
       prenom: form.value.prenom.trim(), 
       nom: form.value.nom.trim(), 
       mail: email,
-      institution_id: form.value.institution_id 
+      institution: null,
+      localite: null,
     }
-    
-    // Récupérer le nom et la localité de l'institution si disponible
-    if (payload.institution_id) {
-      // Note: institution_id dans praticiens_formateurs est UUID
-      // mais InstitutionId dans institutions est TEXT
-      // On compare en string
-      const instId = String(payload.institution_id)
-      const inst = instStore.institutions?.find(i => {
-        const iId = String(i.InstitutionId || i.id || '')
-        return iId === instId
-      })
-      
-      if (inst) {
-        payload.institution = inst.Name || inst.name || ''
-        payload.localite = inst.Locality || inst.localite || ''
-        console.log('🏥 Institution trouvée:', payload.institution, '-', payload.localite)
-      } else {
-        console.warn('⚠️ Institution non trouvée pour ID:', instId)
-      }
+
+    if (form.value.selectedInstitutionId != null) {
+      const selected = institutionOptions.value.find((opt) => String(opt.value) === String(form.value.selectedInstitutionId))
+      payload.institution = selected?.institution || null
+      payload.localite = selected?.localite || null
+    } else if (form.value.institution) {
+      payload.institution = form.value.institution.trim() || null
+      payload.localite = (form.value.localite || '').trim() || null
     }
     
     if (!form.value.id) {

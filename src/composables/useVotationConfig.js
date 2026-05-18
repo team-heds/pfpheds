@@ -2,7 +2,15 @@ import { ref, computed, watch } from 'vue'
 
 export function useVotationConfig() {
   const filterPFP = ref(null)
-  const filterYear = ref(null)
+  const currentVotationYear = new Date().getMonth() >= 8
+    ? new Date().getFullYear() + 1
+    : new Date().getFullYear()
+
+  const MIN_VOTATION_YEAR = 2025
+  const MAX_VOTATION_YEAR = 2030
+  const defaultYear = Math.min(Math.max(currentVotationYear, MIN_VOTATION_YEAR), MAX_VOTATION_YEAR)
+
+  const filterYear = ref(String(defaultYear))
   const filterClasse = ref(null)
   const searchQuery = ref('')
   const activeTab = ref(0)
@@ -18,27 +26,28 @@ export function useVotationConfig() {
   // Ex: en 2025-2026 → 1ère=BA25, 2ème=BA24, 3ème=BA23
   //     en 2026-2027 → 1ère=BA26, 2ème=BA25, 3ème=BA24
 
-  const currentAcademicYear = new Date().getMonth() >= 8
-    ? new Date().getFullYear()   // Sept-Déc → année en cours
-    : new Date().getFullYear() - 1 // Jan-Août → année précédente
+  const buildBaCode = (year) => {
+    const yy = ((year % 100) + 100) % 100
+    return `BA${String(yy).padStart(2, '0')}`
+  }
 
-  const academicYearShort = currentAcademicYear % 100 // ex: 25
+  const buildPfpConfigForYear = (votationYear) => {
+    const year = Number(votationYear)
+    if (!Number.isFinite(year)) return {}
 
-  const buildPfpConfig = () => {
-    const ba1 = `BA${academicYearShort}`      // 1ère année
-    const ba2 = `BA${academicYearShort - 1}`  // 2ème année
-    const ba3 = `BA${academicYearShort - 2}`  // 3ème année
-    const pfpYear = `${currentAcademicYear + 1}` // ex: '2026' pour 2025-2026
+    const academicStartYear = year - 1
+    const ba1 = buildBaCode(academicStartYear)
+    const ba2 = buildBaCode(academicStartYear - 1)
+    const ba3 = buildBaCode(academicStartYear - 2)
 
     return {
-      [ba1]: { label: `${ba1} (1ère année)`, pfps: ['PFP1A', 'PFP1B'], years: [pfpYear] },
-      [ba2]: { label: `${ba2} (2ème année)`, pfps: ['PFP2'], years: [pfpYear] },
-      [ba3]: { label: `${ba3} (3ème année)`, pfps: ['PFP3', 'PFP4'], years: [pfpYear] },
-      'BA00': { label: 'BA00 (🧪 Démo)', pfps: ['PFP1A', 'PFP1B'], years: [pfpYear] }
+      [ba1]: { label: `${ba1} (1ère année)`, pfps: ['PFP1A', 'PFP1B'] },
+      [ba2]: { label: `${ba2} (2ème année)`, pfps: ['PFP2'] },
+      [ba3]: { label: `${ba3} (3ème année)`, pfps: ['PFP3', 'PFP4'] }
     }
   }
 
-  const PFP_CONFIG = buildPfpConfig()
+  const PFP_CONFIG = computed(() => buildPfpConfigForYear(filterYear.value))
 
   const pfpColorMap = {
     PFP1A: '#8B5CF6',
@@ -48,14 +57,26 @@ export function useVotationConfig() {
     PFP4: '#F59E0B'
   }
 
-  const classeOptions = Object.keys(PFP_CONFIG).map(key => ({
-    label: PFP_CONFIG[key].label,
+  const years = computed(() => {
+    const size = MAX_VOTATION_YEAR - MIN_VOTATION_YEAR + 1
+    return Array.from({ length: size }, (_, i) => {
+      const year = String(MIN_VOTATION_YEAR + i)
+      const start = String(Number(year) - 1)
+      return {
+        label: `${start}-${year}`,
+        value: year
+      }
+    })
+  })
+
+  const classeOptions = computed(() => Object.keys(PFP_CONFIG.value).map(key => ({
+    label: PFP_CONFIG.value[key].label,
     value: key
-  }))
+  })))
 
   const activeConfig = computed(() => {
     if (!filterClasse.value) return null
-    return PFP_CONFIG[filterClasse.value] || null
+    return PFP_CONFIG.value[filterClasse.value] || null
   })
 
   const pfpTypes = computed(() => {
@@ -63,26 +84,32 @@ export function useVotationConfig() {
     return activeConfig.value.pfps.map(p => ({ label: p, value: p }))
   })
 
-  const years = computed(() => {
-    if (!activeConfig.value) return []
-    return activeConfig.value.years
-  })
-
   const canShowResults = computed(() => {
     return filterClasse.value && filterYear.value && filterPFP.value
   })
 
   const setupClassWatcher = (onClassChange) => {
+    watch(filterYear, (newYear) => {
+      if (!newYear) {
+        filterClasse.value = null
+        filterPFP.value = null
+        return
+      }
+
+      const cfg = PFP_CONFIG.value
+      if (!filterClasse.value || !cfg[filterClasse.value]) {
+        filterClasse.value = null
+        filterPFP.value = null
+      } else if (filterPFP.value && !cfg[filterClasse.value].pfps.includes(filterPFP.value)) {
+        filterPFP.value = null
+      }
+    }, { immediate: true })
+
     watch(filterClasse, (newVal) => {
       filterPFP.value = null
-      filterYear.value = null
 
-      if (newVal && PFP_CONFIG[newVal]) {
-        const config = PFP_CONFIG[newVal]
-        // Auto-sélectionner l'année si une seule
-        if (config.years.length === 1) {
-          filterYear.value = config.years[0]
-        }
+      if (newVal && PFP_CONFIG.value[newVal]) {
+        const config = PFP_CONFIG.value[newVal]
         // Auto-sélectionner le PFP si un seul
         if (config.pfps.length === 1) {
           filterPFP.value = config.pfps[0]

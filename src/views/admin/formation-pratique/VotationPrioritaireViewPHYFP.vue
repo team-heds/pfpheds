@@ -24,15 +24,15 @@
           <div class="flex align-items-center gap-3 flex-wrap">
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Classe</label>
-              <Dropdown v-model="filterClasse" :options="classeOptions" optionLabel="label" optionValue="value" placeholder="Classe" class="w-full md:w-12rem" />
+              <Dropdown v-model="filterClasse" :options="classeOptions" optionLabel="label" optionValue="value" placeholder="Classe" class="w-full md:w-12rem" :disabled="!filterYear" />
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">PFP</label>
-              <Dropdown v-model="filterPFP" :options="pfpTypes" optionLabel="label" optionValue="value" placeholder="PFP" class="w-full md:w-8rem" :disabled="!filterClasse" />
+              <Dropdown v-model="filterPFP" :options="pfpTypes" optionLabel="label" optionValue="value" placeholder="PFP" class="w-full md:w-8rem" :disabled="!filterClasse || !filterYear" />
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Année</label>
-              <Dropdown v-model="filterYear" :options="years" placeholder="Année" class="w-full md:w-7rem" :disabled="!filterClasse" />
+              <Dropdown v-model="filterYear" :options="years" optionLabel="label" optionValue="value" placeholder="Année" class="w-full md:w-9rem" />
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">&nbsp;</label>
@@ -310,7 +310,13 @@ const algorithmLoading = ref(false)
 const searchQuery = ref('')
 const filterClasse = ref(null)
 const filterPFP = ref(null)
-const filterYear = ref(null)
+const currentVotationYear = new Date().getMonth() >= 8
+  ? new Date().getFullYear() + 1
+  : new Date().getFullYear()
+const MIN_VOTATION_YEAR = 2025
+const MAX_VOTATION_YEAR = 2030
+const defaultYear = Math.min(Math.max(currentVotationYear, MIN_VOTATION_YEAR), MAX_VOTATION_YEAR)
+const filterYear = ref(String(defaultYear))
 
 const currentSession = ref(null)
 const priorityUserIds = ref([])
@@ -320,19 +326,47 @@ const validatedPlacesCount = ref(0)
 const algorithmResults = ref(null)
 
 // Dynamic config
-const currentAcademicYear = new Date().getMonth() >= 8 ? new Date().getFullYear() : new Date().getFullYear() - 1
-const academicYearShort = currentAcademicYear % 100
-
-const PFP_CONFIG = {
-  [`BA${academicYearShort}`]: { label: `BA${academicYearShort} (1ère année)`, pfps: ['PFP1A', 'PFP1B'], years: [`${currentAcademicYear + 1}`] },
-  [`BA${academicYearShort - 1}`]: { label: `BA${academicYearShort - 1} (2ème année)`, pfps: ['PFP2'], years: [`${currentAcademicYear + 1}`] },
-  [`BA${academicYearShort - 2}`]: { label: `BA${academicYearShort - 2} (3ème année)`, pfps: ['PFP3', 'PFP4'], years: [`${currentAcademicYear + 1}`] }
+const buildBaCode = (year) => {
+  const yy = ((year % 100) + 100) % 100
+  return `BA${String(yy).padStart(2, '0')}`
 }
 
-const classeOptions = Object.keys(PFP_CONFIG).map(k => ({ label: PFP_CONFIG[k].label, value: k }))
-const activeConfig = computed(() => filterClasse.value ? PFP_CONFIG[filterClasse.value] : null)
+const buildPfpConfigForYear = (votationYear) => {
+  const year = Number(votationYear)
+  if (!Number.isFinite(year)) return {}
+
+  const academicStartYear = year - 1
+  const ba1 = buildBaCode(academicStartYear)
+  const ba2 = buildBaCode(academicStartYear - 1)
+  const ba3 = buildBaCode(academicStartYear - 2)
+
+  return {
+    [ba1]: { label: `${ba1} (1ère année)`, pfps: ['PFP1A', 'PFP1B'] },
+    [ba2]: { label: `${ba2} (2ème année)`, pfps: ['PFP2'] },
+    [ba3]: { label: `${ba3} (3ème année)`, pfps: ['PFP3', 'PFP4'] }
+  }
+}
+
+const years = computed(() => {
+  const size = MAX_VOTATION_YEAR - MIN_VOTATION_YEAR + 1
+  return Array.from({ length: size }, (_, i) => {
+    const year = String(MIN_VOTATION_YEAR + i)
+    const start = String(Number(year) - 1)
+    return {
+      label: `${start}-${year}`,
+      value: year
+    }
+  })
+})
+
+const pfpConfigForYear = computed(() => buildPfpConfigForYear(filterYear.value))
+
+const classeOptions = computed(() => Object.keys(pfpConfigForYear.value).map(k => ({
+  label: pfpConfigForYear.value[k].label,
+  value: k
+})))
+const activeConfig = computed(() => filterClasse.value ? pfpConfigForYear.value[filterClasse.value] : null)
 const pfpTypes = computed(() => activeConfig.value ? activeConfig.value.pfps.map(p => ({ label: p, value: p })) : [])
-const years = computed(() => activeConfig.value ? activeConfig.value.years : [])
 const canLoad = computed(() => filterClasse.value && filterPFP.value && filterYear.value)
 const sessionIsOpen = computed(() => currentSession.value?.status === 'open')
 const votedCount = computed(() => votesList.value.filter(v => v.status !== 'Non voté').length)
@@ -343,15 +377,36 @@ const filteredVotesList = computed(() => {
   return votesList.value.filter(v => v.nom.toLowerCase().includes(q) || v.prenom.toLowerCase().includes(q))
 })
 
-watch(filterClasse, (val) => {
-  filterPFP.value = null
-  filterYear.value = null
+watch(filterYear, (newYear) => {
+  if (!newYear) {
+    filterClasse.value = null
+    filterPFP.value = null
+    currentSession.value = null
+    votesList.value = []
+    algorithmResults.value = null
+    return
+  }
+
+  const cfg = pfpConfigForYear.value
+  if (!filterClasse.value || !cfg[filterClasse.value]) {
+    filterClasse.value = null
+    filterPFP.value = null
+  } else if (filterPFP.value && !cfg[filterClasse.value].pfps.includes(filterPFP.value)) {
+    filterPFP.value = null
+  }
+
   currentSession.value = null
   votesList.value = []
   algorithmResults.value = null
-  if (val && PFP_CONFIG[val]) {
-    const c = PFP_CONFIG[val]
-    if (c.years.length === 1) filterYear.value = c.years[0]
+}, { immediate: true })
+
+watch(filterClasse, (val) => {
+  filterPFP.value = null
+  currentSession.value = null
+  votesList.value = []
+  algorithmResults.value = null
+  if (val && pfpConfigForYear.value[val]) {
+    const c = pfpConfigForYear.value[val]
     if (c.pfps.length === 1) filterPFP.value = c.pfps[0]
   }
 })
@@ -529,7 +584,11 @@ const getStudentName = (userId) => {
   return s ? `${s.Prenom || ''} ${s.Nom || ''}`.trim() : userId
 }
 
-onMounted(() => {})
+onMounted(() => {
+  if (!filterYear.value) {
+    filterYear.value = String(defaultYear)
+  }
+})
 </script>
 
 <style scoped>

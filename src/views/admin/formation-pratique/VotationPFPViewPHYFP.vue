@@ -24,15 +24,15 @@
           <div class="flex align-items-center gap-3 flex-wrap">
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Classe <span class="text-red-500">*</span></label>
-              <Dropdown v-model="filterClasse" :options="classeOptions" optionLabel="label" optionValue="value" placeholder="Classe" class="w-full md:w-12rem" />
+              <Dropdown v-model="filterClasse" :options="classeOptions" optionLabel="label" optionValue="value" placeholder="Classe" class="w-full md:w-12rem" :disabled="!filterYear" />
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">PFP <span class="text-red-500">*</span></label>
-              <Dropdown v-model="filterPFP" :options="pfpTypes" optionLabel="label" optionValue="value" placeholder="PFP" class="w-full md:w-8rem" :disabled="!filterClasse" />
+              <Dropdown v-model="filterPFP" :options="pfpTypes" optionLabel="label" optionValue="value" placeholder="PFP" class="w-full md:w-8rem" :disabled="!filterClasse || !filterYear" />
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Année <span class="text-red-500">*</span></label>
-              <Dropdown v-model="filterYear" :options="years" placeholder="Année" class="w-full md:w-7rem" :disabled="!filterClasse" />
+              <Dropdown v-model="filterYear" :options="years" optionLabel="label" optionValue="value" placeholder="Année" class="w-full md:w-9rem" />
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Recherche :</label>
@@ -1166,7 +1166,7 @@ const loading = ref(false)
 // ============================================
 const {
   filterPFP, filterYear, filterClasse, searchQuery, activeTab,
-  PFP_CONFIG, pfpColorMap, classeOptions, activeConfig, pfpTypes, years,
+  pfpColorMap, classeOptions, activeConfig, pfpTypes, years,
   canShowResults, setupClassWatcher, setupFilterWatcher
 } = useVotationConfig()
 
@@ -1495,7 +1495,7 @@ const loadData = async () => {
   if (!filterClasse.value || !filterPFP.value || !filterYear.value) return
   loading.value = true
   const targetClass = filterClasse.value
-  const config = PFP_CONFIG[targetClass]
+  const config = activeConfig.value
   if (!config) { loading.value = false; return }
 
   try {
@@ -1576,7 +1576,7 @@ const loadData = async () => {
     })
 
     const relevantPFPs = config.pfps
-    const relevantYears = config.years
+    const relevantYears = [filterYear.value]
     allStudents.value.forEach(student => {
       relevantPFPs.forEach(pfpType => {
         relevantYears.forEach(year => {

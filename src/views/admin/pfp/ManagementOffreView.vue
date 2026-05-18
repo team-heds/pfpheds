@@ -65,8 +65,8 @@
                 <i class="pi pi-book text-purple-500 text-xl"></i>
               </div>
               <div class="flex-1">
-                <h4 class="text-xl font-bold text-900 m-0">{{ stats.pfpStats.PFP1A.propositions }} / {{ stats.pfpStats.PFP1A.offres }}</h4>
-                <p class="text-600 m-0 text-sm">PFP1A · dispo: {{ stats.pfpStats.PFP1A.disponibles }}</p>
+                <h4 class="text-xl font-bold text-900 m-0">{{ stats.pfpStats.PFP1A.classe }} · {{ stats.pfpStats.PFP1A.etudiantsAnnee }} étudiant(s)</h4>
+                <p class="text-600 m-0 text-sm">PFP1A · places dispo brutes: {{ stats.pfpStats.PFP1A.placesBrutes }}</p>
               </div>
             </div>
           </div>
@@ -78,8 +78,8 @@
                 <i class="pi pi-book text-cyan-500 text-xl"></i>
               </div>
               <div class="flex-1">
-                <h4 class="text-xl font-bold text-900 m-0">{{ stats.pfpStats.PFP1B.propositions }} / {{ stats.pfpStats.PFP1B.offres }}</h4>
-                <p class="text-600 m-0 text-sm">PFP1B · dispo: {{ stats.pfpStats.PFP1B.disponibles }}</p>
+                <h4 class="text-xl font-bold text-900 m-0">{{ stats.pfpStats.PFP1B.classe }} · {{ stats.pfpStats.PFP1B.etudiantsAnnee }} étudiant(s)</h4>
+                <p class="text-600 m-0 text-sm">PFP1B · places dispo brutes: {{ stats.pfpStats.PFP1B.placesBrutes }}</p>
               </div>
             </div>
           </div>
@@ -91,8 +91,8 @@
                 <i class="pi pi-book text-indigo-500 text-xl"></i>
               </div>
               <div class="flex-1">
-                <h4 class="text-xl font-bold text-900 m-0">{{ stats.pfpStats.PFP2.propositions }} / {{ stats.pfpStats.PFP2.offres }}</h4>
-                <p class="text-600 m-0 text-sm">PFP2 · dispo: {{ stats.pfpStats.PFP2.disponibles }}</p>
+                <h4 class="text-xl font-bold text-900 m-0">{{ stats.pfpStats.PFP2.classe }} · {{ stats.pfpStats.PFP2.etudiantsAnnee }} étudiant(s)</h4>
+                <p class="text-600 m-0 text-sm">PFP2 · places dispo brutes: {{ stats.pfpStats.PFP2.placesBrutes }}</p>
               </div>
             </div>
           </div>
@@ -104,8 +104,8 @@
                 <i class="pi pi-book text-pink-500 text-xl"></i>
               </div>
               <div class="flex-1">
-                <h4 class="text-xl font-bold text-900 m-0">{{ stats.pfpStats.PFP3.propositions }} / {{ stats.pfpStats.PFP3.offres }}</h4>
-                <p class="text-600 m-0 text-sm">PFP3 · dispo: {{ stats.pfpStats.PFP3.disponibles }}</p>
+                <h4 class="text-xl font-bold text-900 m-0">{{ stats.pfpStats.PFP3.classe }} · {{ stats.pfpStats.PFP3.etudiantsAnnee }} étudiant(s)</h4>
+                <p class="text-600 m-0 text-sm">PFP3 · places dispo brutes: {{ stats.pfpStats.PFP3.placesBrutes }}</p>
               </div>
             </div>
           </div>
@@ -117,8 +117,8 @@
                 <i class="pi pi-book text-amber-500 text-xl"></i>
               </div>
               <div class="flex-1">
-                <h4 class="text-xl font-bold text-900 m-0">{{ stats.pfpStats.PFP4.propositions }} / {{ stats.pfpStats.PFP4.offres }}</h4>
-                <p class="text-600 m-0 text-sm">PFP4 · dispo: {{ stats.pfpStats.PFP4.disponibles }}</p>
+                <h4 class="text-xl font-bold text-900 m-0">{{ stats.pfpStats.PFP4.classe }} · {{ stats.pfpStats.PFP4.etudiantsAnnee }} étudiant(s)</h4>
+                <p class="text-600 m-0 text-sm">PFP4 · places dispo brutes: {{ stats.pfpStats.PFP4.placesBrutes }}</p>
               </div>
             </div>
           </div>
@@ -146,7 +146,7 @@
               <div class="flex gap-2 align-items-center">
                 <div class="flex align-items-center gap-2">
                   <span class="text-600">Année</span>
-                  <Dropdown :options="years" v-model="selectedYear" class="w-6rem" @change="refreshPlaces" />
+                  <Dropdown :options="years" optionLabel="label" optionValue="value" v-model="selectedYear" class="w-9rem" @change="refreshPlaces" />
                 </div>
                 <div class="flex align-items-center gap-2">
                   <span class="text-600">PFP</span>
@@ -282,6 +282,9 @@
                   <Button icon="pi pi-times" class="p-button-danger p-button-sm" @click="cancelEditRow" v-tooltip.top="'Annuler'" />
                 </template>
               </div>
+              <div v-if="noChangeFeedbackRowId === slotProps.data.PlaceId" class="text-xs text-600 text-center mt-1">
+                Aucun changement
+              </div>
             </template>
           </Column>
           <!-- Colonnes Analyse -->
@@ -388,8 +391,25 @@ const placesStore = usePlacesStore()
 const institutionsStore = useInstitutionsStore()
 
 const { scheduleRefresh } = useAutoRefresh(() => refreshPlaces())
-const selectedYear = ref('2026')
-const years = ref(['2025', '2026'])
+const currentVotationYear = new Date().getMonth() >= 8
+  ? new Date().getFullYear() + 1
+  : new Date().getFullYear()
+const MIN_VOTATION_YEAR = 2025
+const MAX_VOTATION_YEAR = 2030
+const defaultYear = Math.min(Math.max(currentVotationYear, MIN_VOTATION_YEAR), MAX_VOTATION_YEAR)
+
+const selectedYear = ref(String(defaultYear))
+const years = computed(() => {
+  const size = MAX_VOTATION_YEAR - MIN_VOTATION_YEAR + 1
+  return Array.from({ length: size }, (_, i) => {
+    const year = String(MIN_VOTATION_YEAR + i)
+    const start = String(Number(year) - 1)
+    return {
+      label: `${start}-${year}`,
+      value: year
+    }
+  })
+})
 const selectedPFP = ref('all')
 const pfpOptions = ref([
   { label: 'Tous', value: 'all' },
@@ -414,6 +434,8 @@ const showAll = ref(true)
 // Editing state
 const editingRowId = ref(null)
 const savingRowId = ref(null)
+const noChangeFeedbackRowId = ref(null)
+let noChangeFeedbackTimer = null
 const editBuffer = ref({
   pfp1a_proposition: '',
   pfp1b_proposition: '',
@@ -433,6 +455,13 @@ const editBuffer = ref({
 // Published assignments data
 const publishedAssignments = ref([])
 const loadingAssignments = ref(false)
+const studentsToDoByPfp = ref({
+  PFP1A: 0,
+  PFP1B: 0,
+  PFP2: 0,
+  PFP3: 0,
+  PFP4: 0
+})
 
 const criteriaDefinitions = [
   { key: 'MSQ', dbField: 'MSQ', bufferField: 'msq' },
@@ -447,10 +476,24 @@ const criteriaDefinitions = [
 
 const pfpTypes = ['PFP1A', 'PFP1B', 'PFP2', 'PFP3', 'PFP4']
 
+const buildBaCode = (year) => {
+  const yy = ((year % 100) + 100) % 100
+  return `BA${String(yy).padStart(2, '0')}`
+}
+
 const parseIntSafe = (value) => {
   const parsed = parseInt(value, 10)
   return Number.isNaN(parsed) ? 0 : parsed
 }
+
+const normalizeClassCode = (value) => {
+  if (!value) return ''
+  const normalized = String(value).trim().toUpperCase()
+  const match = normalized.match(/BA\s*(\d{2})/)
+  return match ? `BA${match[1]}` : normalized
+}
+
+const isTrueFlag = (value) => value === true || value === 'true' || value === 1 || value === '1'
 
 const getOfferForPfp = (place, pfpType, year) => parseIntSafe(place?.[pfpType]?.[year])
 const getPropositionForPfp = (place, pfpType, year) => parseIntSafe(place?.[`${pfpType.toLowerCase()}_proposition`]?.[year])
@@ -459,6 +502,10 @@ const stats = computed(() => {
   const places = placesData.value
   const totalPlaces = places.length
   const year = selectedYear.value
+  const selected = Number(year)
+  const ba1 = Number.isFinite(selected) ? buildBaCode(selected - 1) : '-'
+  const ba2 = Number.isFinite(selected) ? buildBaCode(selected - 2) : '-'
+  const ba3 = Number.isFinite(selected) ? buildBaCode(selected - 3) : '-'
   
   // Calculate places with offers (same source fields as PlacesView: PFP1A/PFP1B/PFP2/PFP3/PFP4)
   const placesWithOffers = places.filter(place => {
@@ -468,37 +515,44 @@ const stats = computed(() => {
   // Calculate PFP-specific statistics (Proposition vs Offre vs Assigned)
   const pfpStats = {
     PFP1A: {
+      classe: ba1,
       propositions: places.reduce((total, place) => total + getPropositionForPfp(place, 'PFP1A', year), 0),
       offres: places.reduce((total, place) => total + getOfferForPfp(place, 'PFP1A', year), 0),
-      assignes: getAssignedCount('PFP1A')
+      etudiantsAnnee: studentsToDoByPfp.value.PFP1A || 0
     },
     PFP1B: {
+      classe: ba1,
       propositions: places.reduce((total, place) => total + getPropositionForPfp(place, 'PFP1B', year), 0),
       offres: places.reduce((total, place) => total + getOfferForPfp(place, 'PFP1B', year), 0),
-      assignes: getAssignedCount('PFP1B')
+      etudiantsAnnee: studentsToDoByPfp.value.PFP1B || 0
     },
     PFP2: {
+      classe: ba2,
       propositions: places.reduce((total, place) => total + getPropositionForPfp(place, 'PFP2', year), 0),
       offres: places.reduce((total, place) => total + getOfferForPfp(place, 'PFP2', year), 0),
-      assignes: getAssignedCount('PFP2')
+      etudiantsAnnee: studentsToDoByPfp.value.PFP2 || 0
     },
     PFP3: {
+      classe: ba3,
       propositions: places.reduce((total, place) => total + getPropositionForPfp(place, 'PFP3', year), 0),
       offres: places.reduce((total, place) => total + getOfferForPfp(place, 'PFP3', year), 0),
-      assignes: getAssignedCount('PFP3')
+      etudiantsAnnee: studentsToDoByPfp.value.PFP3 || 0
     },
     PFP4: {
+      classe: ba3,
       propositions: places.reduce((total, place) => total + getPropositionForPfp(place, 'PFP4', year), 0),
       offres: places.reduce((total, place) => total + getOfferForPfp(place, 'PFP4', year), 0),
-      assignes: getAssignedCount('PFP4')
+      etudiantsAnnee: studentsToDoByPfp.value.PFP4 || 0
     }
   }
 
   Object.values(pfpStats).forEach((pfp) => {
+    pfp.placesBrutes = pfp.propositions || 0
+    pfp.placesDispo = pfp.placesBrutes
     pfp.disponibles = Math.max(0, (pfp.offres || 0) - (pfp.propositions || 0))
   })
   
-  const totalAvailable = Object.values(pfpStats).reduce((sum, pfp) => sum + (pfp.disponibles || 0), 0)
+  const totalAvailable = Object.values(pfpStats).reduce((sum, pfp) => sum + (pfp.placesBrutes || 0), 0)
   
   return {
     total: totalPlaces,
@@ -590,6 +644,12 @@ const isEditingRow = (row) => {
 
 const startEditRow = (row) => {
   if (!row?.PlaceId) return
+
+  noChangeFeedbackRowId.value = null
+  if (noChangeFeedbackTimer) {
+    clearTimeout(noChangeFeedbackTimer)
+    noChangeFeedbackTimer = null
+  }
   
   const yearKey = selectedYear.value
   editingRowId.value = row.PlaceId
@@ -637,21 +697,78 @@ const saveEditRow = async (row) => {
   
   try {
     const yearKey = selectedYear.value
+
+    const currentPfp1a = (row.pfp1a_proposition && row.pfp1a_proposition[yearKey]) || ''
+    const currentPfp1b = (row.pfp1b_proposition && row.pfp1b_proposition[yearKey]) || ''
+    const currentPfp2 = (row.pfp2_proposition && row.pfp2_proposition[yearKey]) || ''
+    const currentPfp3 = (row.pfp3_proposition && row.pfp3_proposition[yearKey]) || ''
+    const currentPfp4 = (row.pfp4_proposition && row.pfp4_proposition[yearKey]) || ''
+
+    const nextPfp1a = editBuffer.value.pfp1a_proposition || ''
+    const nextPfp1b = editBuffer.value.pfp1b_proposition || ''
+    const nextPfp2 = editBuffer.value.pfp2_proposition || ''
+    const nextPfp3 = editBuffer.value.pfp3_proposition || ''
+    const nextPfp4 = editBuffer.value.pfp4_proposition || ''
+
+    const currentMsq = row.MSQ === true || row.MSQ === 'true' || row.MSQ === 1
+    const currentSysint = row.SYSINT === true || row.SYSINT === 'true' || row.SYSINT === 1
+    const currentNeuroger = row.NEUROGER === true || row.NEUROGER === 'true' || row.NEUROGER === 1
+    const currentAigu = row.AIGU === true || row.AIGU === 'true' || row.AIGU === 1
+    const currentRehab = row.REHAB === true || row.REHAB === 'true' || row.REHAB === 1
+    const currentAmbu = row.AMBU === true || row.AMBU === 'true' || row.AMBU === 1
+    const currentFr = row.FR === true || row.FR === 'true' || row.FR === 1
+    const currentDe = row.DE === true || row.DE === 'true' || row.DE === 1
+
+    const nextMsq = !!editBuffer.value.msq
+    const nextSysint = !!editBuffer.value.sysint
+    const nextNeuroger = !!editBuffer.value.neuroger
+    const nextAigu = !!editBuffer.value.aigu
+    const nextRehab = !!editBuffer.value.rehab
+    const nextAmbu = !!editBuffer.value.ambu
+    const nextFr = !!editBuffer.value.fr
+    const nextDe = !!editBuffer.value.de
+
+    const hasChanges =
+      currentPfp1a !== nextPfp1a ||
+      currentPfp1b !== nextPfp1b ||
+      currentPfp2 !== nextPfp2 ||
+      currentPfp3 !== nextPfp3 ||
+      currentPfp4 !== nextPfp4 ||
+      currentMsq !== nextMsq ||
+      currentSysint !== nextSysint ||
+      currentNeuroger !== nextNeuroger ||
+      currentAigu !== nextAigu ||
+      currentRehab !== nextRehab ||
+      currentAmbu !== nextAmbu ||
+      currentFr !== nextFr ||
+      currentDe !== nextDe
+
+    if (!hasChanges) {
+      noChangeFeedbackRowId.value = row.PlaceId
+      if (noChangeFeedbackTimer) clearTimeout(noChangeFeedbackTimer)
+      noChangeFeedbackTimer = setTimeout(() => {
+        if (noChangeFeedbackRowId.value === row.PlaceId) {
+          noChangeFeedbackRowId.value = null
+        }
+      }, 2500)
+      cancelEditRow()
+      return
+    }
     
     const pfp1aProp = { ...(row.pfp1a_proposition || {}) }
-    pfp1aProp[yearKey] = editBuffer.value.pfp1a_proposition || ''
+    pfp1aProp[yearKey] = nextPfp1a
     
     const pfp1bProp = { ...(row.pfp1b_proposition || {}) }
-    pfp1bProp[yearKey] = editBuffer.value.pfp1b_proposition || ''
+    pfp1bProp[yearKey] = nextPfp1b
     
     const pfp2Prop = { ...(row.pfp2_proposition || {}) }
-    pfp2Prop[yearKey] = editBuffer.value.pfp2_proposition || ''
+    pfp2Prop[yearKey] = nextPfp2
     
     const pfp3Prop = { ...(row.pfp3_proposition || {}) }
-    pfp3Prop[yearKey] = editBuffer.value.pfp3_proposition || ''
+    pfp3Prop[yearKey] = nextPfp3
     
     const pfp4Prop = { ...(row.pfp4_proposition || {}) }
-    pfp4Prop[yearKey] = editBuffer.value.pfp4_proposition || ''
+    pfp4Prop[yearKey] = nextPfp4
     
     await placesStore.updatePlace(row.PlaceId, {
       pfp1a_proposition: pfp1aProp,
@@ -659,14 +776,14 @@ const saveEditRow = async (row) => {
       pfp2_proposition: pfp2Prop,
       pfp3_proposition: pfp3Prop,
       pfp4_proposition: pfp4Prop,
-      MSQ: !!editBuffer.value.msq,
-      SYSINT: !!editBuffer.value.sysint,
-      NEUROGER: !!editBuffer.value.neuroger,
-      AIGU: !!editBuffer.value.aigu,
-      REHAB: !!editBuffer.value.rehab,
-      AMBU: !!editBuffer.value.ambu,
-      FR: !!editBuffer.value.fr,
-      DE: !!editBuffer.value.de
+      MSQ: nextMsq,
+      SYSINT: nextSysint,
+      NEUROGER: nextNeuroger,
+      AIGU: nextAigu,
+      REHAB: nextRehab,
+      AMBU: nextAmbu,
+      FR: nextFr,
+      DE: nextDe
     })
     
     cancelEditRow()
@@ -697,6 +814,165 @@ const loadPublishedAssignments = async () => {
     publishedAssignments.value = []
   } finally {
     loadingAssignments.value = false
+  }
+}
+
+const loadStudentsToDoByPfp = async () => {
+  const emptyStats = {
+    PFP1A: 0,
+    PFP1B: 0,
+    PFP2: 0,
+    PFP3: 0,
+    PFP4: 0
+  }
+
+  try {
+    const selected = Number(selectedYear.value)
+    if (!Number.isFinite(selected)) {
+      studentsToDoByPfp.value = emptyStats
+      return
+    }
+
+    const classMap = {
+      PFP1A: normalizeClassCode(buildBaCode(selected - 1)),
+      PFP1B: normalizeClassCode(buildBaCode(selected - 1)),
+      PFP2: normalizeClassCode(buildBaCode(selected - 2)),
+      PFP3: normalizeClassCode(buildBaCode(selected - 3)),
+      PFP4: normalizeClassCode(buildBaCode(selected - 3))
+    }
+
+    const targetClasses = Array.from(new Set(Object.values(classMap)))
+
+    const [{ data: profiles, error: profilesError }, { data: physioRows, error: physioError }, { data: validatedRows, error: validatedError }] = await Promise.all([
+      supabase
+        .from('user_profiles')
+        .select('user_id, firebase_id, classe, role, email'),
+      supabase
+        .from('StudentsPhysio')
+        .select('user_id, firebase_id, Mail, email, mail, class, Class, classe, Classe, promotion, year, annee'),
+      supabase
+        .from('student_result_vote')
+        .select('user_id, pfp_type, pfp_validee')
+    ])
+
+    if (profilesError) throw profilesError
+    if (physioError) throw physioError
+    if (validatedError) throw validatedError
+
+    const classByIdentity = new Map()
+    const userIdByEmail = new Map()
+
+    ;(profiles || []).forEach((profile) => {
+      const email = (profile.email || '').trim().toLowerCase()
+      if (!email || !profile.user_id) return
+      userIdByEmail.set(email, profile.user_id)
+    })
+
+    ;(physioRows || []).forEach((row) => {
+      const rawClasse = row.class || row.Class || row.classe || row.Classe || row.promotion || row.year || row.annee
+      const normalizedClasse = normalizeClassCode(rawClasse)
+      if (!normalizedClasse) return
+      const email = (row.Mail || row.email || row.mail || '').trim().toLowerCase()
+
+      if (row.user_id) classByIdentity.set(row.user_id, normalizedClasse)
+      if (row.firebase_id) classByIdentity.set(row.firebase_id, normalizedClasse)
+      if (email) classByIdentity.set(email, normalizedClasse)
+    })
+
+    const profilesStudents = (profiles || []).filter((u) => {
+      const role = (u.role || '').toLowerCase()
+      const email = (u.email || '').toLowerCase()
+      const normalizedClass = normalizeClassCode(u.classe)
+      return (
+        role.includes('student') ||
+        role.includes('etudiant') ||
+        role.includes('étudiant') ||
+        email.includes('@students.hevs.ch') ||
+        targetClasses.includes(normalizedClass)
+      )
+    })
+
+    const studentMap = new Map()
+
+    profilesStudents.forEach((student) => {
+      const classFromProfile = normalizeClassCode(student.classe)
+      const normalizedEmail = (student.email || '').trim().toLowerCase()
+      const classFromPhysio = classByIdentity.get(student.user_id) || classByIdentity.get(student.firebase_id) || classByIdentity.get(normalizedEmail)
+      const resolvedClasse = classFromPhysio || classFromProfile
+      if (!resolvedClasse || !targetClasses.includes(resolvedClasse)) return
+
+      const key = student.user_id || student.firebase_id || normalizedEmail
+      if (!key) return
+
+      studentMap.set(key, {
+        userId: student.user_id || null,
+        firebaseId: student.firebase_id || null,
+        classe: resolvedClasse
+      })
+    })
+
+    ;(physioRows || []).forEach((row) => {
+      const resolvedClasse = normalizeClassCode(row.class || row.Class || row.classe || row.Classe || row.promotion || row.year || row.annee)
+      if (!resolvedClasse || !targetClasses.includes(resolvedClasse)) return
+      const normalizedEmail = (row.Mail || row.email || row.mail || '').trim().toLowerCase()
+      const resolvedUserId = row.user_id || (normalizedEmail ? userIdByEmail.get(normalizedEmail) : null) || null
+
+      const key = resolvedUserId || row.firebase_id || normalizedEmail
+      if (!key) return
+
+      if (!studentMap.has(key)) {
+        studentMap.set(key, {
+          userId: resolvedUserId,
+          firebaseId: row.firebase_id || null,
+          classe: resolvedClasse
+        })
+      }
+    })
+
+    const validatedByPfp = {
+      PFP1A: new Set(),
+      PFP1B: new Set(),
+      PFP2: new Set(),
+      PFP3: new Set(),
+      PFP4: new Set()
+    }
+
+    ;(validatedRows || []).forEach((row) => {
+      const pfp = String(row.pfp_type || '').trim().toUpperCase()
+      if (!validatedByPfp[pfp]) return
+      if (!isTrueFlag(row.pfp_validee)) return
+      if (row.user_id) validatedByPfp[pfp].add(row.user_id)
+    })
+
+    const studentSetByPfp = {
+      PFP1A: new Set(),
+      PFP1B: new Set(),
+      PFP2: new Set(),
+      PFP3: new Set(),
+      PFP4: new Set()
+    }
+
+    studentMap.forEach((student) => {
+      pfpTypes.forEach((pfp) => {
+        if (student.classe !== classMap[pfp]) return
+        const isValidated =
+          (student.userId && validatedByPfp[pfp].has(student.userId)) ||
+          (student.firebaseId && validatedByPfp[pfp].has(student.firebaseId))
+        if (!isValidated) {
+          studentSetByPfp[pfp].add(student.userId || student.firebaseId)
+        }
+      })
+    })
+
+    const nextStats = { ...emptyStats }
+    pfpTypes.forEach((pfp) => {
+      nextStats[pfp] = studentSetByPfp[pfp].size
+    })
+
+    studentsToDoByPfp.value = nextStats
+  } catch (error) {
+    console.error('Error loading students-to-do by PFP:', error)
+    studentsToDoByPfp.value = emptyStats
   }
 }
 
@@ -747,7 +1023,8 @@ const getAssignmentAnalysisClass = (status) => {
 const refreshPlaces = async () => {
   await Promise.all([
     placesStore.fetchPlaces(),
-    loadPublishedAssignments()
+    loadPublishedAssignments(),
+    loadStudentsToDoByPfp()
   ])
 }
 
@@ -761,7 +1038,8 @@ onMounted(async () => {
   await Promise.all([
     placesStore.fetchPlaces(),
     institutionsStore.fetchInstitutions(),
-    loadPublishedAssignments()
+    loadPublishedAssignments(),
+    loadStudentsToDoByPfp()
   ])
 })
 </script>
