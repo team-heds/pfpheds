@@ -36,9 +36,25 @@
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">&nbsp;</label>
-              <Button icon="pi pi-refresh" outlined class="p-button-sm" @click="loadData" :loading="loading" :disabled="!canLoad" v-tooltip="'Rafraîchir'" />
+              <div class="flex gap-2">
+                <Button icon="pi pi-refresh" outlined class="p-button-sm" @click="loadData" :loading="loading" :disabled="!canLoad" v-tooltip="'Rafraîchir'" />
+                <Button icon="pi pi-briefcase" label="Export opérationnel" outlined class="p-button-sm" severity="help" @click="exportOperationalSummary" :disabled="!canLoad || !canExportOperational" v-tooltip="'Disponible après attribution'" />
+              </div>
             </div>
           </div>
+        </div>
+
+        <div class="surface-card p-3 border-round shadow-2 mb-3">
+          <div class="flex align-items-center gap-2 flex-wrap">
+            <i :class="['pi', hasInsufficientCapacity ? 'pi-exclamation-triangle text-red-500' : 'pi-check-circle text-green-500']"></i>
+            <span class="font-semibold text-900">Contrôle de capacité pré-algorithme</span>
+            <Tag :value="`À placer: ${studentsToPlaceCount}`" severity="warning" class="text-xs" />
+            <Tag :value="`Capacité: ${validatedPlacesCount}`" :severity="hasInsufficientCapacity ? 'danger' : 'success'" class="text-xs" />
+            <Tag v-if="hasInsufficientCapacity" :value="`Manque: ${missingCapacityCount}`" severity="danger" class="text-xs" />
+          </div>
+          <p :class="['m-0 mt-2 text-xs', hasInsufficientCapacity ? 'text-red-600' : 'text-green-600']">
+            {{ hasInsufficientCapacity ? 'Capacité insuffisante : ajoutez des places proposition avant lancement.' : 'Capacité suffisante pour lancer l\'algorithme.' }}
+          </p>
         </div>
       </div>
 
@@ -51,6 +67,12 @@
       </div>
 
       <template v-if="canLoad">
+        <div :class="['session-sticky-banner mb-3', sessionIsOpen ? 'session-sticky-banner--open' : 'session-sticky-banner--closed']">
+          <i :class="['pi', sessionIsOpen ? 'pi-lock-open' : 'pi-lock', 'mr-2']"></i>
+          <strong>{{ sessionIsOpen ? 'Session OUVERTE' : 'Session FERMÉE' }}</strong>
+          <span class="ml-2">{{ filterClasse }} · {{ filterPFP }} · {{ filterYear }}</span>
+        </div>
+
         <!-- Session status -->
         <div class="surface-card p-4 border-round shadow-2 mb-3">
           <div class="flex justify-content-between align-items-center flex-wrap gap-3">
@@ -81,6 +103,32 @@
               <router-link to="/management_votation_prioritaire" class="no-underline">
                 <Button icon="pi pi-cog" label="Gérer les prioritaires" severity="info" outlined />
               </router-link>
+            </div>
+          </div>
+        </div>
+
+        <!-- Checklist votation prioritaire (lésés) -->
+        <div class="surface-card p-4 border-round shadow-2 mb-3">
+          <div class="flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <div class="flex align-items-center gap-2">
+              <i class="pi pi-list-check text-primary"></i>
+              <h3 class="text-lg font-bold text-900 m-0">Checklist prioritaire (lésés)</h3>
+              <Tag :value="`${checklistCompletedCount}/${checklistTotalCount}`" severity="info" class="text-xs" />
+            </div>
+            <Button icon="pi pi-refresh" label="Réinitialiser" size="small" outlined @click="resetChecklist" />
+          </div>
+
+          <div class="checklist-sections">
+            <div v-for="section in checklistSections" :key="section.title" class="checklist-card">
+              <div class="font-semibold text-900 mb-2">{{ section.title }}</div>
+              <label v-for="item in section.items" :key="item.key" class="checklist-item">
+                <input
+                  type="checkbox"
+                  :checked="checklistState[item.key]"
+                  @change="toggleChecklistItem(item.key)"
+                />
+                <span class="text-sm text-700">{{ item.label }}</span>
+              </label>
             </div>
           </div>
         </div>
@@ -146,16 +194,26 @@
           </div>
 
           <DataTable
-            :value="filteredVotesList"
+            :value="filteredVotesDisplayList"
             :loading="loading"
             responsiveLayout="scroll"
-            :paginator="filteredVotesList.length > 25"
+            :paginator="filteredVotesDisplayList.length > 25"
             :rows="25"
             stripedRows
             class="p-datatable-sm"
             sortField="nom"
             :sortOrder="1"
           >
+            <template #header>
+              <div class="flex justify-content-between align-items-center flex-wrap gap-2">
+                <span class="text-lg text-900 font-bold">Votes prioritaires ({{ filteredVotesDisplayList.length }})</span>
+                <div class="flex align-items-center gap-2 flex-wrap">
+                  <Button :outlined="voteQuickFilter !== 'all'" size="small" :label="`Tous (${quickFilterCounts.all})`" @click="setVoteQuickFilter('all')" />
+                  <Button :outlined="voteQuickFilter !== 'non_voted'" size="small" severity="danger" :label="`Non-votants (${quickFilterCounts.nonVoted})`" @click="setVoteQuickFilter('non_voted')" />
+                  <Button :outlined="voteQuickFilter !== 'incomplete'" size="small" severity="warning" :label="`Incomplets (${quickFilterCounts.incomplete})`" @click="setVoteQuickFilter('incomplete')" />
+                </div>
+              </div>
+            </template>
             <template #empty>
               <div class="text-center p-4">
                 <i class="pi pi-inbox text-4xl text-400 mb-3"></i>
@@ -214,6 +272,24 @@
           </DataTable>
         </div>
 
+        <div class="surface-card p-3 border-round shadow-2 mb-3 bg-green-50 border-1 border-green-300">
+          <div class="flex align-items-center gap-2 mb-2">
+            <i class="pi pi-chart-bar text-green-600"></i>
+            <span class="font-semibold text-900">Prévisualisation impact avant lancement</span>
+          </div>
+          <div class="flex gap-2 flex-wrap mb-2">
+            <Tag :value="`Étudiants à placer: ${studentsToPlaceCount}`" severity="info" class="text-xs" />
+            <Tag :value="`Capacité: ${validatedPlacesCount}`" :severity="hasInsufficientCapacity ? 'danger' : 'success'" class="text-xs" />
+            <Tag :value="`Risque aléatoire estimé: ${estimatedRandomRiskPercent}%`" :severity="estimatedRandomRiskPercent > 0 ? 'warning' : 'success'" class="text-xs" />
+            <Tag :value="`Cas sensibles: ${quickFilterCounts.nonVoted + quickFilterCounts.incomplete}`" :severity="(quickFilterCounts.nonVoted + quickFilterCounts.incomplete) > 0 ? 'warning' : 'success'" class="text-xs" />
+          </div>
+          <div v-if="sensitiveCasesPreview.length > 0" class="text-sm text-700">
+            <strong>À surveiller:</strong>
+            <span>{{ sensitiveCasesPreview.map(s => `${s.prenom} ${s.nom} (${s.status})`).join(', ') }}</span>
+            <span v-if="sensitiveCasesMoreCount > 0"> (+{{ sensitiveCasesMoreCount }} autres)</span>
+          </div>
+        </div>
+
         <!-- Algorithm section -->
         <div v-if="votedCount > 0 && !sessionIsOpen" class="surface-card p-4 border-round shadow-2">
           <div class="flex justify-content-between align-items-center flex-wrap gap-3">
@@ -232,6 +308,13 @@
               severity="success"
               @click="runAlgorithm"
               :loading="algorithmLoading"
+            />
+            <Button
+              icon="pi pi-file-export"
+              label="Export opérationnel"
+              outlined
+              severity="help"
+              @click="exportOperationalSummary"
             />
           </div>
 
@@ -275,6 +358,29 @@
                 </template>
               </Column>
             </DataTable>
+          </div>
+        </div>
+
+        <div class="surface-card p-4 border-round shadow-2 mb-3 mt-3">
+          <div class="flex justify-content-between align-items-center mb-3">
+            <div class="flex align-items-center gap-2">
+              <i class="pi pi-list text-primary"></i>
+              <h3 class="text-lg font-bold text-900 m-0">Historique des actions admin</h3>
+              <Tag :value="adminActionHistory.length" severity="secondary" rounded />
+            </div>
+            <Button icon="pi pi-trash" label="Vider" text size="small" @click="clearAdminActionHistory" :disabled="adminActionHistory.length === 0" />
+          </div>
+          <div v-if="adminActionHistory.length === 0" class="text-600 text-sm">
+            Aucune action enregistrée pour ce contexte.
+          </div>
+          <div v-else class="flex flex-column gap-2">
+            <div v-for="entry in adminActionHistory.slice(0, 12)" :key="entry.id" class="p-2 border-round border-1 surface-border">
+              <div class="flex justify-content-between align-items-center gap-2">
+                <span class="font-semibold text-900">{{ entry.action }}</span>
+                <span class="text-xs text-500">{{ formatDateTime(entry.at) }}</span>
+              </div>
+              <div class="text-sm text-700 mt-1">{{ entry.detail }}</div>
+            </div>
           </div>
         </div>
       </template>
@@ -324,6 +430,7 @@ const allStudents = ref([])
 const votesList = ref([])
 const validatedPlacesCount = ref(0)
 const algorithmResults = ref(null)
+const adminActionHistory = ref([])
 
 // Dynamic config
 const buildBaCode = (year) => {
@@ -370,12 +477,200 @@ const pfpTypes = computed(() => activeConfig.value ? activeConfig.value.pfps.map
 const canLoad = computed(() => filterClasse.value && filterPFP.value && filterYear.value)
 const sessionIsOpen = computed(() => currentSession.value?.status === 'open')
 const votedCount = computed(() => votesList.value.filter(v => v.status !== 'Non voté').length)
+const studentsToPlaceCount = computed(() => votedCount.value)
+const hasInsufficientCapacity = computed(() => studentsToPlaceCount.value > validatedPlacesCount.value)
+const missingCapacityCount = computed(() => Math.max(0, studentsToPlaceCount.value - validatedPlacesCount.value))
+const canExportOperational = computed(() => Array.isArray(algorithmResults.value?.results) && algorithmResults.value.results.length > 0)
+const estimatedRandomRiskPercent = computed(() => {
+  if (studentsToPlaceCount.value === 0) return 0
+  return Math.round((missingCapacityCount.value / studentsToPlaceCount.value) * 100)
+})
+
+const voteQuickFilter = ref('all')
+
+const adminActionStorageKey = computed(() => {
+  const classe = filterClasse.value || 'none'
+  const pfp = filterPFP.value || 'none'
+  const year = filterYear.value || 'none'
+  return `pfp-admin-actions:priority:${classe}:${pfp}:${year}`
+})
+
+const checklistSections = [
+  {
+    title: 'Avant ouverture',
+    items: [
+      { key: 'targetListChecked', label: 'Liste des étudiants lésés/prioritaires validée' },
+      { key: 'capacityChecked', label: 'Capacités proposition vérifiées pour le PFP' },
+      { key: 'sessionScopeChecked', label: 'Classe, PFP et année confirmés' }
+    ]
+  },
+  {
+    title: 'Avant algorithme',
+    items: [
+      { key: 'sessionClosed', label: 'Session prioritaire fermée' },
+      { key: 'votesChecked', label: 'Votes des prioritaires contrôlés' },
+      { key: 'missingCasesChecked', label: 'Cas sans choix identifiés' }
+    ]
+  },
+  {
+    title: 'Après algorithme',
+    items: [
+      { key: 'resultsChecked', label: 'Attributions relues (choix/aléatoire)' },
+      { key: 'manualAdjustmentsChecked', label: 'Ajustements manuels éventuels validés' },
+      { key: 'handoverChecked', label: 'OK pour ouvrir la votation normale' }
+    ]
+  }
+]
+
+const createDefaultChecklistState = () => ({
+  targetListChecked: false,
+  capacityChecked: false,
+  sessionScopeChecked: false,
+  sessionClosed: false,
+  votesChecked: false,
+  missingCasesChecked: false,
+  resultsChecked: false,
+  manualAdjustmentsChecked: false,
+  handoverChecked: false
+})
+
+const checklistState = ref(createDefaultChecklistState())
+
+const checklistStorageKey = computed(() => {
+  const classe = filterClasse.value || 'none'
+  const pfp = filterPFP.value || 'none'
+  const year = filterYear.value || 'none'
+  return `pfp-votation-priority-checklist:${classe}:${pfp}:${year}`
+})
+
+const checklistTotalCount = computed(() => Object.keys(checklistState.value).length)
+const checklistCompletedCount = computed(() => Object.values(checklistState.value).filter(Boolean).length)
+
+const toggleChecklistItem = (key) => {
+  checklistState.value[key] = !checklistState.value[key]
+}
+
+const resetChecklist = () => {
+  Object.keys(checklistState.value).forEach((key) => {
+    checklistState.value[key] = false
+  })
+}
+
+const loadChecklistState = () => {
+  if (typeof window === 'undefined') return
+  const defaults = createDefaultChecklistState()
+  try {
+    const raw = window.localStorage.getItem(checklistStorageKey.value)
+    if (!raw) {
+      checklistState.value = defaults
+      return
+    }
+    const parsed = JSON.parse(raw)
+    checklistState.value = {
+      ...defaults,
+      ...(parsed && typeof parsed === 'object' ? parsed : {})
+    }
+  } catch (error) {
+    checklistState.value = defaults
+  }
+}
+
+const saveChecklistState = () => {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(checklistStorageKey.value, JSON.stringify(checklistState.value))
+  } catch (error) {
+    // ignore localStorage write errors
+  }
+}
+
+watch(checklistStorageKey, () => {
+  loadChecklistState()
+}, { immediate: true })
+
+watch(checklistState, () => {
+  saveChecklistState()
+}, { deep: true })
 
 const filteredVotesList = computed(() => {
   if (!searchQuery.value?.trim()) return votesList.value
   const q = searchQuery.value.toLowerCase().trim()
   return votesList.value.filter(v => v.nom.toLowerCase().includes(q) || v.prenom.toLowerCase().includes(q))
 })
+
+const quickFilterCounts = computed(() => {
+  const rows = filteredVotesList.value
+  return {
+    all: rows.length,
+    nonVoted: rows.filter(v => v.status === 'Non voté').length,
+    incomplete: rows.filter(v => v.status === 'Incomplet').length
+  }
+})
+
+const sensitiveCasesAll = computed(() => filteredVotesList.value.filter(v => v.status === 'Non voté' || v.status === 'Incomplet'))
+const sensitiveCasesPreview = computed(() => sensitiveCasesAll.value.slice(0, 6))
+const sensitiveCasesMoreCount = computed(() => Math.max(0, sensitiveCasesAll.value.length - sensitiveCasesPreview.value.length))
+
+const filteredVotesDisplayList = computed(() => {
+  let filtered = filteredVotesList.value
+
+  if (voteQuickFilter.value === 'non_voted') {
+    filtered = filtered.filter(v => v.status === 'Non voté')
+  } else if (voteQuickFilter.value === 'incomplete') {
+    filtered = filtered.filter(v => v.status === 'Incomplet')
+  }
+
+  return filtered
+})
+
+const setVoteQuickFilter = (mode) => {
+  voteQuickFilter.value = mode
+}
+
+const loadAdminActionHistory = () => {
+  if (typeof window === 'undefined') return
+  try {
+    const raw = window.localStorage.getItem(adminActionStorageKey.value)
+    if (!raw) {
+      adminActionHistory.value = []
+      return
+    }
+    const parsed = JSON.parse(raw)
+    adminActionHistory.value = Array.isArray(parsed) ? parsed : []
+  } catch (error) {
+    adminActionHistory.value = []
+  }
+}
+
+const saveAdminActionHistory = () => {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(adminActionStorageKey.value, JSON.stringify(adminActionHistory.value))
+  } catch (error) {
+    // ignore localStorage write errors
+  }
+}
+
+const addAdminAction = (action, detail) => {
+  adminActionHistory.value = [
+    {
+      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      at: new Date().toISOString(),
+      action,
+      detail
+    },
+    ...adminActionHistory.value
+  ].slice(0, 80)
+}
+
+const clearAdminActionHistory = () => {
+  adminActionHistory.value = []
+}
+
+const formatDateTime = (iso) => {
+  if (!iso) return '-'
+  return new Date(iso).toLocaleString('fr-CH', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+}
 
 watch(filterYear, (newYear) => {
   if (!newYear) {
@@ -414,6 +709,14 @@ watch(filterClasse, (val) => {
 watch([filterPFP, filterYear], ([pfp, year]) => {
   if (pfp && year && filterClasse.value) loadData()
 })
+
+watch(adminActionStorageKey, () => {
+  loadAdminActionHistory()
+}, { immediate: true })
+
+watch(adminActionHistory, () => {
+  saveAdminActionHistory()
+}, { deep: true })
 
 const loadData = async () => {
   if (!canLoad.value) return
@@ -515,10 +818,14 @@ const loadData = async () => {
 }
 
 const closeSession = async () => {
+  const confirmed = window.confirm(`Confirmer la fermeture de la votation ${filterClasse.value} · ${filterPFP.value} ${filterYear.value} ?`)
+  if (!confirmed) return
+
   sessionLoading.value = true
   try {
     await votationSessionService.closePrioritySession(filterPFP.value, filterYear.value)
     currentSession.value = null
+    addAdminAction('Fermeture session prioritaire', `${filterClasse.value} · ${filterPFP.value} ${filterYear.value}`)
     toast.add({ severity: 'info', summary: 'Session fermée', detail: 'Votation prioritaire fermée', life: 4000 })
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Erreur', detail: error.message, life: 5000 })
@@ -528,6 +835,9 @@ const closeSession = async () => {
 }
 
 const runAlgorithm = async () => {
+  const confirmed = window.confirm(`Confirmer le lancement de l'algorithme pour ${filterClasse.value} · ${filterPFP.value} ${filterYear.value} ?`)
+  if (!confirmed) return
+
   algorithmLoading.value = true
   try {
     const institutionMap = new Map()
@@ -564,6 +874,7 @@ const runAlgorithm = async () => {
 
     const result = await resultatVotationService.runAlgorithm(filterPFP.value, filterYear.value, studentsData, placesData)
     algorithmResults.value = result
+    addAdminAction('Lancement algorithme prioritaire', `${result.stats?.successfulAssignments || 0} attributions générées`)
 
     toast.add({
       severity: 'success',
@@ -576,6 +887,70 @@ const runAlgorithm = async () => {
     toast.add({ severity: 'error', summary: 'Erreur algorithme', detail: error.message, life: 5000 })
   } finally {
     algorithmLoading.value = false
+  }
+}
+
+const exportOperationalSummary = async () => {
+  if (!canLoad.value) return
+  try {
+    if (!algorithmResults.value?.results || algorithmResults.value.results.length === 0) {
+      toast.add({ severity: 'warn', summary: 'Attribution requise', detail: 'Lancez d\'abord l\'algorithme pour générer un export opérationnel.', life: 4000 })
+      return
+    }
+
+    const assignments = algorithmResults.value?.results || []
+    const toPlaceRows = votesList.value.filter(v => v.status !== 'Non voté')
+    const assignedIds = new Set(assignments.map(a => String(a.user_id)))
+    const nonAssignedRows = toPlaceRows.filter(v => !assignedIds.has(String(v.userId)))
+    const randomAssignments = assignments.filter(a => Number(a.assigned_rank) === 99)
+    const remainingPlaces = Math.max(0, validatedPlacesCount.value - assignments.length)
+
+    const XLSX = await import('xlsx')
+    const wb = XLSX.utils.book_new()
+
+    const summaryRows = [
+      { indicateur: 'Classe', valeur: filterClasse.value || '-' },
+      { indicateur: 'PFP', valeur: filterPFP.value || '-' },
+      { indicateur: 'Année', valeur: filterYear.value || '-' },
+      { indicateur: 'Étudiants à placer', valeur: toPlaceRows.length },
+      { indicateur: 'Assignés', valeur: assignments.length },
+      { indicateur: 'Non assignés', valeur: nonAssignedRows.length },
+      { indicateur: 'Assignations aléatoires', valeur: randomAssignments.length },
+      { indicateur: 'Places restantes', valeur: remainingPlaces }
+    ]
+
+    const assignedRows = assignments.map((row) => ({
+      etudiant: getStudentName(row.user_id),
+      place: row.assigned_place_name || '-',
+      institution: row.assigned_institution_name || '-',
+      rang: row.assigned_rank === 99 ? 'Aléatoire' : `Choix ${row.assigned_rank}`
+    }))
+
+    const nonAssignedExportRows = nonAssignedRows.map((row) => ({
+      etudiant: `${row.prenom} ${row.nom}`,
+      statut: row.status,
+      nb_choix: row.nbChoix
+    }))
+
+    const randomRows = randomAssignments.map((row) => ({
+      etudiant: getStudentName(row.user_id),
+      place: row.assigned_place_name || '-',
+      institution: row.assigned_institution_name || '-'
+    }))
+
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summaryRows), 'Résumé')
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(assignedRows.length ? assignedRows : [{ etudiant: '-', place: '-', institution: '-', rang: '-' }]), 'Assignés')
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(nonAssignedExportRows.length ? nonAssignedExportRows : [{ etudiant: '-', statut: '-', nb_choix: '-' }]), 'Non assignés')
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(randomRows.length ? randomRows : [{ etudiant: '-', place: '-', institution: '-' }]), 'Aléatoires')
+
+    XLSX.writeFile(wb, `export_operationnel_prioritaire_${filterClasse.value || 'classe'}_${filterPFP.value || 'pfp'}_${filterYear.value || 'annee'}.xlsx`)
+
+    addAdminAction('Export opérationnel prioritaire', `Export XLSX généré (${assignments.length} assignés, ${nonAssignedRows.length} non assignés)`)
+
+    toast.add({ severity: 'success', summary: 'Export opérationnel', detail: 'Export prêt équipe généré', life: 3000 })
+  } catch (error) {
+    console.error('Erreur export opérationnel prioritaire:', error)
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de générer l’export opérationnel', life: 5000 })
   }
 }
 
@@ -605,6 +980,51 @@ onMounted(() => {
 .votation-page > .surface-card,
 .votation-page > .grid {
   width: 100%;
+}
+
+.session-sticky-banner {
+  position: sticky;
+  top: 0.5rem;
+  z-index: 6;
+  border-radius: 10px;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--surface-border);
+  font-size: 0.9rem;
+}
+
+.session-sticky-banner--open {
+  background: #ecfdf3;
+  color: #166534;
+}
+
+.session-sticky-banner--closed {
+  background: #fff7ed;
+  color: #9a3412;
+}
+
+.checklist-sections {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+
+.checklist-card {
+  background: var(--surface-ground);
+  border: 1px solid var(--surface-border);
+  border-radius: 10px;
+  padding: 0.75rem;
+}
+
+.checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.45rem;
+  cursor: pointer;
+}
+
+.checklist-item:last-child {
+  margin-bottom: 0;
 }
 
 :deep(.p-datatable .p-datatable-thead > tr > th) {

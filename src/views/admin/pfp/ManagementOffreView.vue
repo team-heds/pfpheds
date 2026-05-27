@@ -153,6 +153,10 @@
                   <Dropdown :options="pfpOptions" optionLabel="label" optionValue="value" v-model="selectedPFP" class="w-8rem" />
                 </div>
                 <div class="flex align-items-center gap-2">
+                  <InputSwitch v-model="hideZeroOffers" />
+                  <span class="text-600">Masquer offres à 0</span>
+                </div>
+                <div class="flex align-items-center gap-2">
                   <span class="text-600">Afficher</span>
                   <Dropdown :options="rowsOptions" optionLabel="label" optionValue="value" v-model="rowsPerPage" class="w-8rem" />
                   <div class="flex align-items-center gap-2">
@@ -430,6 +434,7 @@ const rowsOptions = ref([
   { label: 'Toutes', value: 1000 }
 ])
 const showAll = ref(true)
+const hideZeroOffers = ref(false)
 
 // Editing state
 const editingRowId = ref(null)
@@ -594,7 +599,16 @@ const getAssignedCount = (pfpType) => {
 
 // Computed pour les données des places
 const placesData = computed(() => {
-  return placesStore.places || []
+  const places = placesStore.places || []
+  const year = selectedYear.value
+
+  if (!hideZeroOffers.value || !year) return places
+
+  if (selectedPFP.value === 'all') {
+    return places.filter(place => pfpTypes.some((pfpType) => getOfferForPfp(place, pfpType, year) > 0))
+  }
+
+  return places.filter(place => getOfferForPfp(place, selectedPFP.value, year) > 0)
 })
 
 // Fonction pour récupérer la valeur Proposition selon l'année

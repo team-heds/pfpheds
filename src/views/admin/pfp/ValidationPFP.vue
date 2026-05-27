@@ -117,10 +117,33 @@
             label="Valider tout ce PFP"
             severity="success"
             @click="bulkValidateSelectedPfp"
-            :disabled="!bulkValidatePfpType"
+            :disabled="!canBulkValidate"
             :loading="bulkValidating"
           />
-          <span class="text-xs text-500">Applique la validation aux lignes actuellement filtrées</span>
+          <span class="text-xs" :class="canBulkValidate ? 'text-500' : 'text-orange-600'">
+            {{ canBulkValidate ? 'Applique la validation aux lignes actuellement filtrées' : bulkValidationLockMessage }}
+          </span>
+        </div>
+
+        <div class="surface-ground border-round border-1 surface-border p-3 mb-3">
+          <div class="flex justify-content-between align-items-center mb-2">
+            <div class="flex align-items-center gap-2">
+              <i class="pi pi-list text-primary"></i>
+              <span class="font-semibold text-900">Historique des actions admin</span>
+              <Tag :value="adminActionHistory.length" severity="secondary" rounded />
+            </div>
+            <Button icon="pi pi-trash" text size="small" label="Vider" @click="clearAdminActionHistory" :disabled="adminActionHistory.length === 0" />
+          </div>
+          <div v-if="adminActionHistory.length === 0" class="text-600 text-sm">Aucune action enregistrée pour ce contexte.</div>
+          <div v-else class="flex flex-column gap-2">
+            <div v-for="entry in adminActionHistory.slice(0, 10)" :key="entry.id" class="p-2 border-round border-1 surface-border bg-white">
+              <div class="flex justify-content-between align-items-center gap-2">
+                <span class="font-semibold text-900">{{ entry.action }}</span>
+                <span class="text-xs text-500">{{ formatActionDate(entry.at) }}</span>
+              </div>
+              <div class="text-sm text-700 mt-1">{{ entry.detail }}</div>
+            </div>
+          </div>
         </div>
 
         <DataTable :value="filteredPlacesList" :loading="loading" responsiveLayout="scroll" :paginator="true" :rows="25">
@@ -253,6 +276,69 @@ const allStudents = ref([])
 const showAllStudents = ref(false)
 const bulkValidatePfpType = ref(null)
 const bulkValidating = ref(false)
+const adminActionHistory = ref([])
+
+const canBulkValidate = computed(() => {
+  return !!filterYear.value && !!bulkValidatePfpType.value
+})
+
+const bulkValidationLockMessage = computed(() => {
+  const missing = []
+  if (!filterYear.value) missing.push('Année')
+  if (!bulkValidatePfpType.value) missing.push('PFP')
+  return `Sélection requise: ${missing.join(' + ')}`
+})
+
+const adminActionStorageKey = computed(() => {
+  const year = filterYear.value || 'none'
+  const pfp = bulkValidatePfpType.value || filterType.value || 'none'
+  return `pfp-admin-actions:validation:${year}:${pfp}`
+})
+
+const loadAdminActionHistory = () => {
+  if (typeof window === 'undefined') return
+  try {
+    const raw = window.localStorage.getItem(adminActionStorageKey.value)
+    if (!raw) {
+      adminActionHistory.value = []
+      return
+    }
+    const parsed = JSON.parse(raw)
+    adminActionHistory.value = Array.isArray(parsed) ? parsed : []
+  } catch (error) {
+    adminActionHistory.value = []
+  }
+}
+
+const saveAdminActionHistory = () => {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(adminActionStorageKey.value, JSON.stringify(adminActionHistory.value))
+  } catch (error) {
+    // ignore localStorage write errors
+  }
+}
+
+const addAdminAction = (action, detail) => {
+  adminActionHistory.value = [
+    {
+      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      at: new Date().toISOString(),
+      action,
+      detail
+    },
+    ...adminActionHistory.value
+  ].slice(0, 80)
+}
+
+const clearAdminActionHistory = () => {
+  adminActionHistory.value = []
+}
+
+const formatActionDate = (iso) => {
+  if (!iso) return '-'
+  return new Date(iso).toLocaleString('fr-CH', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+}
 
 // Dialog pour l'arrêt
 const showArretDialog = ref(false)
@@ -305,6 +391,14 @@ watch(showAllStudents, (val) => {
     filterStatus.value = 'published'
   }
 })
+
+watch(adminActionStorageKey, () => {
+  loadAdminActionHistory()
+}, { immediate: true })
+
+watch(adminActionHistory, () => {
+  saveAdminActionHistory()
+}, { deep: true })
 
 const statusList = ref([
   { label: 'Publié', value: 'published' },
@@ -400,19 +494,29 @@ const saveValidation = async (row) => {
 const bulkValidateSelectedPfp = async () => {
   if (!bulkValidatePfpType.value || bulkValidating.value) return
 
-  const targetRows = filteredPlacesList.value.filter(row =>
+  const eligibleRows = filteredPlacesList.value.filter(row =>
     row?.id &&
     row?.assigned_place_id &&
     row?.pfp_type === bulkValidatePfpType.value
   )
 
+  const targetRows = eligibleRows.filter(row =>
+    !row.pfp_validee || row.pfp_echec || row.pfp_arret || !!row.commentaire_arret
+  )
+
+  if (eligibleRows.length === 0) {
+    window.alert(`Aucune ligne attribuée à valider pour ${bulkValidatePfpType.value} avec les filtres actuels.`)
+    return
+  }
+
   if (targetRows.length === 0) {
-    window.alert(`Aucune ligne à valider pour ${bulkValidatePfpType.value} avec les filtres actuels.`)
+    window.alert(`Toutes les lignes ${bulkValidatePfpType.value} sont déjà validées.`)
     return
   }
 
   const confirmed = window.confirm(
-    `Valider ${targetRows.length} ligne(s) pour ${bulkValidatePfpType.value} ?`
+    `Valider ${targetRows.length} ligne(s) pour ${bulkValidatePfpType.value} ?\n` +
+    `${eligibleRows.length - targetRows.length} ligne(s) déjà conformes ne seront pas modifiées.`
   )
   if (!confirmed) return
 
@@ -428,6 +532,7 @@ const bulkValidateSelectedPfp = async () => {
 
     updateStats()
     scheduleRefresh()
+    addAdminAction('Validation en masse', `${targetRows.length} ligne(s) validée(s) pour ${bulkValidatePfpType.value} (${filterYear.value || 'année non précisée'})`)
   } catch (error) {
     console.error('Erreur validation en masse:', error)
   } finally {
