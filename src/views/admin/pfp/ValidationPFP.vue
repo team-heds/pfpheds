@@ -100,6 +100,29 @@
 
       <!-- Table Validation PFP -->
       <div class="surface-card p-4 border-round shadow-2">
+        <div class="flex align-items-end gap-2 mb-3 flex-wrap">
+          <div class="flex flex-column gap-1">
+            <label class="text-sm font-semibold text-700">Validation en masse</label>
+            <Dropdown
+              v-model="bulkValidatePfpType"
+              :options="typesPFP"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Choisir un PFP"
+              class="w-12rem"
+            />
+          </div>
+          <Button
+            icon="pi pi-check"
+            label="Valider tout ce PFP"
+            severity="success"
+            @click="bulkValidateSelectedPfp"
+            :disabled="!bulkValidatePfpType"
+            :loading="bulkValidating"
+          />
+          <span class="text-xs text-500">Applique la validation aux lignes actuellement filtrées</span>
+        </div>
+
         <DataTable :value="filteredPlacesList" :loading="loading" responsiveLayout="scroll" :paginator="true" :rows="25">
           <template #header>
             <span class="text-xl text-900 font-bold">Liste des Validations</span>
@@ -228,6 +251,8 @@ const filterStatus = ref(null)
 const placesList = ref([])
 const allStudents = ref([])
 const showAllStudents = ref(false)
+const bulkValidatePfpType = ref(null)
+const bulkValidating = ref(false)
 
 // Dialog pour l'arrêt
 const showArretDialog = ref(false)
@@ -369,6 +394,44 @@ const saveValidation = async (row) => {
     }
   } catch (error) {
     console.error('Erreur sauvegarde validation:', error)
+  }
+}
+
+const bulkValidateSelectedPfp = async () => {
+  if (!bulkValidatePfpType.value || bulkValidating.value) return
+
+  const targetRows = filteredPlacesList.value.filter(row =>
+    row?.id &&
+    row?.assigned_place_id &&
+    row?.pfp_type === bulkValidatePfpType.value
+  )
+
+  if (targetRows.length === 0) {
+    window.alert(`Aucune ligne à valider pour ${bulkValidatePfpType.value} avec les filtres actuels.`)
+    return
+  }
+
+  const confirmed = window.confirm(
+    `Valider ${targetRows.length} ligne(s) pour ${bulkValidatePfpType.value} ?`
+  )
+  if (!confirmed) return
+
+  bulkValidating.value = true
+  try {
+    for (const row of targetRows) {
+      row.pfp_validee = true
+      row.pfp_echec = false
+      row.pfp_arret = false
+      row.commentaire_arret = ''
+      await saveValidation(row)
+    }
+
+    updateStats()
+    scheduleRefresh()
+  } catch (error) {
+    console.error('Erreur validation en masse:', error)
+  } finally {
+    bulkValidating.value = false
   }
 }
 

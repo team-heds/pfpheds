@@ -119,7 +119,11 @@
             <div class="criteria-bar-bg">
               <div class="criteria-bar-fill" :style="{ width: (criteriaStats[crit]?.percent || 0) + '%', background: getCriteriaColor(criteriaStats[crit]?.percent) }"></div>
             </div>
-            <div class="text-xs text-500 mt-1">{{ criteriaStats[crit]?.count || 0 }} / {{ stats.total }}</div>
+            <div class="text-xs text-500 mt-1">{{ criteriaStats[crit]?.validatedStudents || 0 }} validés / {{ stats.total }}</div>
+            <div class="text-xs text-600 mt-1 flex justify-content-between">
+              <span>Non validé: {{ criteriaStats[crit]?.notValidatedStudents || 0 }}</span>
+              <span>Places: {{ criteriaStats[crit]?.validatedPlaces || 0 }}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -146,6 +150,52 @@
         </span>
       </div>
 
+      <!-- Comparaison de profils sélectionnés -->
+      <div v-if="selectedStudents.length > 0" class="surface-card p-3 border-round shadow-2 mb-3">
+        <div class="flex align-items-center justify-content-between gap-2 mb-3 flex-wrap">
+          <div class="flex align-items-center gap-2">
+            <i class="pi pi-users text-primary"></i>
+            <span class="font-bold text-900">Comparaison de profils ({{ selectedStudents.length }} sélectionné(s))</span>
+          </div>
+          <Button
+            icon="pi pi-times"
+            label="Vider la sélection"
+            class="p-button-sm p-button-outlined"
+            @click="clearStudentSelection"
+          />
+        </div>
+
+        <div v-if="comparisonTruncatedCount > 0" class="text-xs text-orange-700 mb-2">
+          Affichage limité aux {{ maxComparisonStudents }} premiers profils ({{ comparisonTruncatedCount }} masqué(s)).
+        </div>
+
+        <div class="comparison-grid-wrapper">
+          <div class="comparison-grid" :style="{ gridTemplateColumns: `minmax(120px, 140px) repeat(${comparisonStudents.length}, minmax(160px, 1fr))` }">
+            <div class="comparison-grid__head">Critère</div>
+            <template v-for="student in comparisonStudents" :key="'cmp-head-' + student.user_id">
+              <div class="comparison-grid__head text-center">
+                <div class="font-semibold text-900 text-sm">{{ student.nom }} {{ student.prenom }}</div>
+                <div class="text-xs text-500">{{ student.classe }} · {{ getValidCount(student) }}/{{ criteriaLabels.length }}</div>
+                <div class="text-xs text-500">{{ student.totalStages }} stage(s)</div>
+              </div>
+            </template>
+
+            <template v-for="crit in criteriaLabels" :key="'cmp-row-' + crit">
+              <div class="comparison-grid__cell comparison-grid__cell--criterion">{{ crit }}</div>
+              <template v-for="student in comparisonStudents" :key="'cmp-row-' + crit + '-' + student.user_id">
+                <div class="comparison-grid__cell text-center">
+                  <Tag
+                    :value="String(student.scores[crit] || 0)"
+                    :severity="student.scores[crit] > 0 ? 'success' : 'danger'"
+                    class="text-xs"
+                  />
+                </div>
+              </template>
+            </template>
+          </div>
+        </div>
+      </div>
+
       <!-- Table -->
       <div class="surface-card p-4 border-round shadow-2">
         <DataTable
@@ -163,6 +213,8 @@
           :sortField="'nom'"
           :sortOrder="1"
           v-model:expandedRows="expandedRows"
+          v-model:selection="selectedStudents"
+          selectionMode="multiple"
         >
           <template #header>
             <div class="flex justify-content-between align-items-center">
@@ -177,6 +229,7 @@
           </template>
 
           <Column :expander="true" style="width: 3rem" />
+          <Column selectionMode="multiple" style="width: 3rem" />
 
           <!-- Étudiant (nom + prénom fusionnés avec avatar) -->
           <Column field="nom" header="Étudiant" sortable :frozen="true" style="min-width: 200px">
@@ -322,12 +375,14 @@ import InputText from 'primevue/inputtext'
 const loading = ref(false)
 const students = ref([])
 const expandedRows = ref({})
+const selectedStudents = ref([])
 const filterClasse = ref(null)
 const filterStatus = ref(null)
 const classes = ref(['BA23', 'BA24', 'BA25'])
 const searchQuery = ref('')
 
 const criteriaLabels = ['MSQ', 'SYSINT', 'NEUROGER', 'AIGU', 'REHAB', 'AMBU', 'FR', 'DE']
+const maxComparisonStudents = 6
 
 const statusOptions = [
   { label: 'Tous validés', value: 'all_valid' },
@@ -372,7 +427,7 @@ const getCriteriaColor = (percent) => {
 }
 
 const stats = computed(() => {
-  const all = students.value
+  const all = filteredStudents.value
   const allValid = all.filter(s => criteriaLabels.every(c => s.scores[c] > 0)).length
   const none = all.filter(s => criteriaLabels.every(c => s.scores[c] === 0)).length
   return {
@@ -385,12 +440,27 @@ const stats = computed(() => {
 
 const criteriaStats = computed(() => {
   const result = {}
-  const total = students.value.length
+  const baseStudents = filteredStudents.value
+  const total = baseStudents.length
   criteriaLabels.forEach(crit => {
-    const count = students.value.filter(s => s.scores[crit] > 0).length
-    result[crit] = { count, percent: total > 0 ? Math.round((count / total) * 100) : 0 }
+    const validatedStudents = baseStudents.filter(s => s.scores[crit] > 0).length
+    const validatedPlaces = baseStudents.reduce((sum, s) => sum + (s.scores[crit] || 0), 0)
+    result[crit] = {
+      validatedStudents,
+      notValidatedStudents: total - validatedStudents,
+      validatedPlaces,
+      percent: total > 0 ? Math.round((validatedStudents / total) * 100) : 0
+    }
   })
   return result
+})
+
+const comparisonStudents = computed(() => {
+  return selectedStudents.value.slice(0, maxComparisonStudents)
+})
+
+const comparisonTruncatedCount = computed(() => {
+  return Math.max(0, selectedStudents.value.length - comparisonStudents.value.length)
 })
 
 const filteredStudents = computed(() => {
@@ -437,6 +507,10 @@ const exportCSV = () => {
   link.download = `verification-criteres-${new Date().toISOString().slice(0, 10)}.csv`
   link.click()
   URL.revokeObjectURL(url)
+}
+
+const clearStudentSelection = () => {
+  selectedStudents.value = []
 }
 
 const parsePfpValided = (pfpVal) => {
@@ -715,6 +789,38 @@ onMounted(() => { fetchStudents() })
   height: 100%;
   border-radius: 3px;
   transition: width 0.6s ease;
+}
+
+/* Profiles comparison */
+.comparison-grid-wrapper {
+  overflow-x: auto;
+}
+
+.comparison-grid {
+  display: grid;
+  width: max-content;
+  min-width: 100%;
+  border: 1px solid var(--surface-border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.comparison-grid__head,
+.comparison-grid__cell {
+  padding: 0.55rem 0.65rem;
+  border-bottom: 1px solid var(--surface-border);
+  border-right: 1px solid var(--surface-border);
+  background: var(--surface-card);
+}
+
+.comparison-grid__head {
+  background: var(--surface-100);
+  font-weight: 700;
+}
+
+.comparison-grid__cell--criterion {
+  background: var(--surface-50);
+  font-weight: 700;
 }
 
 /* Score pills (for legend) */

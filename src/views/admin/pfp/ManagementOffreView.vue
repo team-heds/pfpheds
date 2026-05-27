@@ -475,6 +475,7 @@ const criteriaDefinitions = [
 ]
 
 const pfpTypes = ['PFP1A', 'PFP1B', 'PFP2', 'PFP3', 'PFP4']
+const pfpDisplayOrder = ['PFP2', 'PFP1A', 'PFP1B', 'PFP4', 'PFP3']
 
 const buildBaCode = (year) => {
   const yy = ((year % 100) + 100) % 100
@@ -563,7 +564,8 @@ const stats = computed(() => {
 })
 
 const pfpSummaryRows = computed(() => {
-  return pfpTypes.map(code => ({
+  const orderedVisiblePfp = pfpDisplayOrder.filter(code => shouldShowPFPColumn(code))
+  return orderedVisiblePfp.map(code => ({
     code,
     propositions: stats.value.pfpStats?.[code]?.propositions || 0,
     offres: stats.value.pfpStats?.[code]?.offres || 0,
