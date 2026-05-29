@@ -151,7 +151,7 @@
           class="ensemble-table p-datatable-sm"
           :sortField="'nom'"
           :sortOrder="1"
-          :globalFilterFields="['nom', 'prenom', 'classe', 'pfpType', 'year', 'placeName', 'institutionName']"
+          :globalFilterFields="['nom', 'prenom', 'classe', 'pfpType', 'year', 'placeName', 'institutionName', 'praticienName', 'praticienMail']"
         >
           <template #header>
             <div class="flex justify-content-between align-items-center">
@@ -237,6 +237,12 @@
           <Column field="praticienName" header="Praticien" sortable style="min-width: 140px">
             <template #body="{ data }">
               <span class="text-sm">{{ data.praticienName || '—' }}</span>
+            </template>
+          </Column>
+
+          <Column field="praticienMail" header="Email PF" sortable style="min-width: 220px">
+            <template #body="{ data }">
+              <span class="text-sm">{{ data.praticienMail || '—' }}</span>
             </template>
           </Column>
 
@@ -492,6 +498,7 @@ const flatRows = computed(() => {
         placeName: d.placeName || '',
         institutionName: d.institutionName || '',
         praticienName: d.praticienName || '',
+        praticienMail: d.praticienMail || '',
         note: d.note || null,
         noteRetake: d.noteRetake || null,
         absences: d.absences || 0,
@@ -522,7 +529,9 @@ const filteredFlatRows = computed(() => {
       (r.nom || '').toLowerCase().includes(q) ||
       (r.prenom || '').toLowerCase().includes(q) ||
       (r.placeName || '').toLowerCase().includes(q) ||
-      (r.institutionName || '').toLowerCase().includes(q)
+      (r.institutionName || '').toLowerCase().includes(q) ||
+      (r.praticienName || '').toLowerCase().includes(q) ||
+      (r.praticienMail || '').toLowerCase().includes(q)
     )
   }
 
@@ -606,7 +615,7 @@ const fetchAllData = async () => {
       supabase.from('student_result_vote').select('*').order('year', { ascending: false }),
       supabase.from('places').select('*'),
       supabase.from('institutions').select('*'),
-      supabase.from('praticiens_formateurs').select('id, nom, prenom'),
+      supabase.from('praticiens_formateurs').select('id, nom, prenom, mail'),
       supabase.from('suivi_cas_particuliers').select('*'),
       supabase.from('StudentsPhysio').select('*'),
       supabase.from('recap_cpt_evaluation').select('*'),
@@ -643,7 +652,10 @@ const fetchAllData = async () => {
 
     const pratMap = new Map()
     if (praticiensResult.data) praticiensResult.data.forEach(p => {
-      pratMap.set(String(p.id), `${p.prenom || ''} ${p.nom || ''}`.trim())
+      pratMap.set(String(p.id), {
+        name: `${p.prenom || ''} ${p.nom || ''}`.trim(),
+        mail: p.mail || ''
+      })
     })
 
     const suiviMap = new Map()
@@ -788,6 +800,7 @@ const fetchAllData = async () => {
         let placeName = ''
         let institutionName = ''
         let praticienName = ''
+        let praticienMail = ''
         let year = ''
         let statut = '—'
         let attributionType = null
@@ -799,7 +812,11 @@ const fetchAllData = async () => {
           placeName = assignment.assigned_place_name || placeInfo?.name || ''
           institutionName = assignment.assigned_institution_name || placeInfo?.institution || ''
           year = assignment.year || ''
-          if (assignment.assigned_praticien_id) praticienName = pratMap.get(String(assignment.assigned_praticien_id)) || ''
+          if (assignment.assigned_praticien_id) {
+            const praticienInfo = pratMap.get(String(assignment.assigned_praticien_id))
+            praticienName = praticienInfo?.name || ''
+            praticienMail = praticienInfo?.mail || ''
+          }
           if (assignment.assigned_rank === 99) attributionType = 'Aléatoire'
           else if (assignment.assigned_rank >= 1 && assignment.assigned_rank <= 5) attributionType = `Choix ${assignment.assigned_rank}`
 
@@ -845,6 +862,7 @@ const fetchAllData = async () => {
           placeName,
           institutionName,
           praticienName,
+          praticienMail,
           year,
           note: hasGrade(noteVal) ? noteVal : null,
           noteRetake: hasGrade(noteRetake) ? noteRetake : null,
@@ -1216,7 +1234,7 @@ const exportXLSX = async () => {
 
     const wsPFP = wb.addWorksheet(finalName)
 
-    const pfpSheetColCount = 16
+    const pfpSheetColCount = 17
     wsPFP.columns = [
       { header: 'Institution', key: 'institution', width: 30 },
       { header: 'Place de stage', key: 'placeName', width: 24 },
@@ -1226,6 +1244,7 @@ const exportXLSX = async () => {
       { header: 'Nom étudiant·es', key: 'nom', width: 16 },
       { header: 'Prénom étudiant·es', key: 'prenom', width: 14 },
       { header: 'PF', key: 'pf', width: 22 },
+      { header: 'Email PF', key: 'pfEmail', width: 28 },
       { header: 'Formateur·trice HES', key: 'formateurHES', width: 22 },
       { header: 'Année', key: 'annee', width: 8 },
       { header: 'CPT', key: 'cptStatus', width: 14 },
@@ -1248,7 +1267,7 @@ const exportXLSX = async () => {
 
     // Row 2: headers
     const hdrRow = wsPFP.getRow(2)
-    hdrRow.values = ['Institution', 'Place de stage', 'Critères', 'Domaine d\'expertise', 'Classe', 'Nom étudiant·es', 'Prénom étudiant·es', 'PF', 'Formateur·trice HES', 'Année', 'CPT', 'Évaluation', 'Particularités', 'Absences en jours', 'Notes', 'Remarques']
+    hdrRow.values = ['Institution', 'Place de stage', 'Critères', 'Domaine d\'expertise', 'Classe', 'Nom étudiant·es', 'Prénom étudiant·es', 'PF', 'Email PF', 'Formateur·trice HES', 'Année', 'CPT', 'Évaluation', 'Particularités', 'Absences en jours', 'Notes', 'Remarques']
     styleHeaderRow(wsPFP, 2, pfpSheetColCount)
 
     // Sort by institution then student name
@@ -1275,6 +1294,7 @@ const exportXLSX = async () => {
         nom: s.nom || '',
         prenom: s.prenom || '',
         pf: d.praticienName || '',
+        pfEmail: d.praticienMail || '',
         formateurHES: '',
         annee: d.year || '',
         cptStatus: cptLabel(d.cpt) + (d.cptComment ? ' (' + d.cptComment + ')' : ''),
@@ -1286,25 +1306,25 @@ const exportXLSX = async () => {
       })
       row.eachCell({ includeEmpty: true }, (cell) => styleDataCell(cell, idx % 2 === 0))
 
-      // Col indices: 1=Institution, 2=Place, 3=Critères, 4=Domaine, 5=Classe, 6=Nom, 7=Prénom, 8=PF, 9=FormateurHES, 10=Année, 11=CPT, 12=Eval, 13=Particularités, 14=Absences, 15=Notes, 16=Remarques
-      // Color CPT (col 11)
-      const cptCell = row.getCell(11)
+      // Col indices: 1=Institution, 2=Place, 3=Critères, 4=Domaine, 5=Classe, 6=Nom, 7=Prénom, 8=PF, 9=EmailPF, 10=FormateurHES, 11=Année, 12=CPT, 13=Eval, 14=Particularités, 15=Absences, 16=Notes, 17=Remarques
+      // Color CPT (col 12)
+      const cptCell = row.getCell(12)
       if (d.cpt === true) cptCell.font = { bold: true, size: 9, color: { argb: COL_GREEN_TEXT } }
       else if (d.cpt === false) cptCell.font = { bold: true, size: 9, color: { argb: COL_RED_TEXT } }
 
-      // Color Eval (col 12)
-      const evalCell = row.getCell(12)
+      // Color Eval (col 13)
+      const evalCell = row.getCell(13)
       if (d.eval === true) evalCell.font = { bold: true, size: 9, color: { argb: COL_GREEN_TEXT } }
       else if (d.eval === false) evalCell.font = { bold: true, size: 9, color: { argb: COL_RED_TEXT } }
 
-      // Color the note (col 15)
-      const noteCell = row.getCell(15)
+      // Color the note (col 16)
+      const noteCell = row.getCell(16)
       const n = String(d.note || '').trim().toUpperCase()
       if (n === 'F') noteCell.font = { bold: true, size: 9, color: { argb: COL_RED_TEXT } }
       else if (['A', 'B', 'C', 'D', 'E'].includes(n)) noteCell.font = { bold: true, size: 9, color: { argb: COL_GREEN_TEXT } }
 
-      // Color absences (col 14)
-      const absCell = row.getCell(14)
+      // Color absences (col 15)
+      const absCell = row.getCell(15)
       if (Number(d.absences) > 0) absCell.font = { bold: true, size: 9, color: { argb: COL_ORANGE_TEXT } }
     })
 
