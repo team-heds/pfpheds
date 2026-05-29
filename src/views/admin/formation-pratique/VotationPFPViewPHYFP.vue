@@ -172,9 +172,9 @@
                 <i class="pi pi-building text-2xl text-blue-500"></i>
               </div>
               <div>
-                <h3 class="text-2xl font-bold text-900 m-0">{{ offeredPlacesCount }}</h3>
-                <p class="text-600 m-0 text-sm">Somme offre brute ({{ filterPFP || '—' }})</p>
-                <p class="text-500 m-0 text-xs">Source: champ offre {{ filterPFP || 'PFP' }}[{{ filterYear || 'année' }}] • {{ filterClasse || '—' }}</p>
+                <h3 class="text-2xl font-bold text-900 m-0">{{ proposedPlacesCount }}</h3>
+                <p class="text-600 m-0 text-sm">Somme proposition brute ({{ filterPFP || '—' }})</p>
+                <p class="text-500 m-0 text-xs">Source: champ proposition {{ filterPFP ? `${filterPFP.toLowerCase()}_proposition` : 'PFP_proposition' }}[{{ filterYear || 'année' }}] • {{ filterClasse || '—' }}</p>
               </div>
             </div>
           </div>
@@ -1616,10 +1616,10 @@ const quickFilterCounts = computed(() => {
 const sensitiveCasesAll = computed(() => votationsTableBaseList.value.filter(v => v.status === 'Non voté' || v.status === 'Incomplet'))
 const sensitiveCasesPreview = computed(() => sensitiveCasesAll.value.slice(0, 6))
 const sensitiveCasesMoreCount = computed(() => Math.max(0, sensitiveCasesAll.value.length - sensitiveCasesPreview.value.length))
-const offeredPlacesCount = computed(() => {
+const proposedPlacesCount = computed(() => {
   if (!filterPFP.value || !filterYear.value) return 0
   return (placesStore.places || []).reduce((sum, place) => {
-    return sum + getOfferForPfp(place, filterPFP.value, filterYear.value)
+    return sum + getPropositionForPfp(place, filterPFP.value, filterYear.value)
   }, 0)
 })
 
@@ -1762,10 +1762,6 @@ const getPropositionForPfp = (place, pfpType, year) => {
   return parseIntSafe(place?.[`${pfpType.toLowerCase()}_proposition`]?.[year])
 }
 
-const getOfferForPfp = (place, pfpType, year) => {
-  return parseIntSafe(place?.[pfpType]?.[year])
-}
-
 // ============================================
 // DATA LOADING
 // ============================================
@@ -1902,7 +1898,7 @@ const loadValidatedPlaces = async () => {
     validatedPlaces.value = placesStore.places
       .map(place => {
         const institution = institutionMap.get(place.InstitutionId)
-        const capacity = getOfferForPfp(place, pfp, year)
+        const capacity = getPropositionForPfp(place, pfp, year)
         if (!capacity || capacity < 1) return null
         return {
           PlaceId: place.PlaceId,

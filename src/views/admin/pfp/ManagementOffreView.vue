@@ -148,6 +148,13 @@
                   <span class="text-600">Année</span>
                   <Dropdown :options="years" optionLabel="label" optionValue="value" v-model="selectedYear" class="w-9rem" @change="refreshPlaces" />
                 </div>
+                <Button
+                  icon="pi pi-copy"
+                  label="Reprendre N-1 (propositions)"
+                  outlined
+                  :loading="isCopyingPreviousYear"
+                  @click="copyPreviousYearPropositions"
+                />
                 <div class="flex align-items-center gap-2">
                   <span class="text-600">PFP</span>
                   <Dropdown :options="pfpOptions" optionLabel="label" optionValue="value" v-model="selectedPFP" class="w-8rem" />
@@ -435,6 +442,7 @@ const rowsOptions = ref([
 ])
 const showAll = ref(true)
 const hideZeroOffers = ref(false)
+const isCopyingPreviousYear = ref(false)
 
 // Editing state
 const editingRowId = ref(null)
@@ -490,6 +498,11 @@ const buildBaCode = (year) => {
 const parseIntSafe = (value) => {
   const parsed = parseInt(value, 10)
   return Number.isNaN(parsed) ? 0 : parsed
+}
+
+const normalizePropositionValue = (value) => {
+  if (value === null || value === undefined) return ''
+  return String(value)
 }
 
 const normalizeClassCode = (value) => {
@@ -1042,6 +1055,106 @@ const refreshPlaces = async () => {
     loadPublishedAssignments(),
     loadStudentsToDoByPfp()
   ])
+}
+
+const copyPreviousYearPropositions = async () => {
+  const targetYear = selectedYear.value
+  const targetYearNumber = Number(targetYear)
+
+  if (!Number.isFinite(targetYearNumber)) return
+
+  const previousYear = String(targetYearNumber - 1)
+  const pfpScope = selectedPFP.value === 'all' ? pfpTypes : [selectedPFP.value]
+
+  const confirmed = window.confirm(
+    `Reprendre les propositions ${previousYear} vers ${targetYear} pour ${pfpScope.join(', ')} ?\n\n` +
+    'Les valeurs de l’année sélectionnée seront remplacées uniquement si différentes.'
+  )
+  if (!confirmed) return
+
+  isCopyingPreviousYear.value = true
+
+  try {
+    const { data, error } = await supabase.rpc('copy_previous_year_place_propositions', {
+      p_target_year: targetYear,
+      p_pfp_type: selectedPFP.value === 'all' ? null : selectedPFP.value
+    })
+
+    if (error) {
+      if (error.code === 'PGRST202') {
+        const fallbackResult = await copyPreviousYearPropositionsFallback(targetYear, previousYear, pfpScope)
+        await refreshPlaces()
+
+        if (fallbackResult.updatedFields === 0) {
+          window.alert(`Aucune proposition à reprendre depuis ${previousYear}.`)
+          return
+        }
+
+        window.alert(
+          `Reprise terminée (fallback local): ${fallbackResult.updatedFields} champ(s) mis à jour sur ${fallbackResult.updatedPlaces} place(s).`
+        )
+        return
+      }
+
+      throw error
+    }
+
+    const updatedPlaces = Number(data?.updated_places || 0)
+    const updatedFields = Number(data?.updated_fields || 0)
+
+    await refreshPlaces()
+
+    if (updatedFields === 0) {
+      window.alert(`Aucune proposition à reprendre depuis ${previousYear}.`)
+      return
+    }
+
+    window.alert(
+      `Reprise terminée: ${updatedFields} champ(s) mis à jour sur ${updatedPlaces} place(s).`
+    )
+  } catch (error) {
+    console.error('Error while copying previous year propositions:', error)
+    window.alert('Erreur pendant la reprise des propositions de l’année précédente.')
+  } finally {
+    isCopyingPreviousYear.value = false
+  }
+}
+
+const copyPreviousYearPropositionsFallback = async (targetYear, previousYear, pfpScope) => {
+  const propositionFields = pfpScope.map((pfp) => `${pfp.toLowerCase()}_proposition`)
+  const places = placesStore.places || []
+  let updatedPlaces = 0
+  let updatedFields = 0
+
+  for (const place of places) {
+    const patch = {}
+
+    propositionFields.forEach((field) => {
+      const propositionByYear = place?.[field]
+      if (!propositionByYear || typeof propositionByYear !== 'object') return
+      if (!Object.prototype.hasOwnProperty.call(propositionByYear, previousYear)) return
+
+      const previousValue = propositionByYear[previousYear]
+      const currentValue = propositionByYear[targetYear]
+
+      if (normalizePropositionValue(previousValue) === normalizePropositionValue(currentValue)) {
+        return
+      }
+
+      patch[field] = {
+        ...propositionByYear,
+        [targetYear]: previousValue
+      }
+    })
+
+    if (Object.keys(patch).length === 0) continue
+
+    await placesStore.updatePlace(place.PlaceId, patch)
+    updatedPlaces += 1
+    updatedFields += Object.keys(patch).length
+  }
+
+  return { updatedPlaces, updatedFields }
 }
 
 // Filtres
