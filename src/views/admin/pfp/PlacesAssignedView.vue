@@ -55,7 +55,7 @@
             </div>
             <div class="flex align-items-center gap-2 px-3 py-2 border-round surface-100">
               <i class="pi pi-building text-purple-500"></i>
-              <span class="text-600 text-sm">Places offertes:</span>
+              <span class="text-600 text-sm">Places proposées:</span>
               <span class="font-bold text-purple-600">{{ currentStats.offeredPlaces }}</span>
             </div>
             <div class="flex align-items-center gap-2 px-3 py-2 border-round surface-100">
@@ -382,6 +382,37 @@ const statusOptions = [
 // ── Helpers ──
 const normalizePfp = (t) => (t === 'PFP1A' || t === 'PFP1B') ? 'PFP1' : t
 const dbPfpTypes = (pfp) => pfp === 'PFP1' ? ['PFP1A', 'PFP1B'] : [pfp]
+const getAcademicYearKeys = (year) => {
+  const y = Number(year)
+  if (!Number.isFinite(y)) return [String(year)]
+  return [String(y), `${y - 1}-${y}`]
+}
+
+const getPropositionFieldsForPfp = (pfp) => {
+  if (pfp === 'PFP1') return ['pfp1a_proposition', 'pfp1b_proposition']
+  return [`${pfp.toLowerCase()}_proposition`]
+}
+
+const getPropositionCapacityForPlace = (place, pfp, year) => {
+  const yearKeys = getAcademicYearKeys(year)
+  const propositionFields = getPropositionFieldsForPfp(pfp)
+  let total = 0
+
+  propositionFields.forEach((field) => {
+    const proposition = place?.[field]
+    if (!proposition) return
+
+    yearKeys.some((yearKey) => {
+      const raw = proposition?.[yearKey]
+      const parsed = parseInt(raw, 10)
+      if (!Number.isFinite(parsed) || parsed <= 0) return false
+      total += parsed
+      return true
+    })
+  })
+
+  return total
+}
 
 const selectedPFPLabel = computed(() => pfpTabs.find(t => t.value === selectedPFP.value)?.label || selectedPFP.value)
 
@@ -652,14 +683,10 @@ const currentStats = computed(() => {
   const assigned = assignmentsForPfp.filter(a => a.assigned_place_id).length
   const published = assignmentsForPfp.filter(a => a.status === 'published').length
 
-  // Places offertes pour ce PFP/année
+  // Places proposées pour ce PFP/année
   let offeredPlaces = 0
-  const pfpFields = selectedPFP.value === 'PFP1' ? ['PFP1A', 'PFP1B'] : [selectedPFP.value]
   allPlaces.value.forEach(place => {
-    pfpFields.forEach(field => {
-      const cap = place[field]?.[year]
-      if (cap) offeredPlaces += parseInt(cap) || 0
-    })
+    offeredPlaces += getPropositionCapacityForPlace(place, selectedPFP.value, year)
   })
 
   return {
@@ -694,13 +721,8 @@ const filteredPlacesForAssign = computed(() => {
 
   return allPlaces.value
     .map(place => {
-      // Calculer la capacité pour ce PFP
-      let capacity = 0
-      const pfpFields = selectedPFP.value === 'PFP1' ? ['PFP1A', 'PFP1B'] : [selectedPFP.value]
-      pfpFields.forEach(field => {
-        const cap = place[field]?.[year]
-        if (cap) capacity += parseInt(cap) || 0
-      })
+      // Calculer la capacité de proposition pour ce PFP (année simple + année académique)
+      const capacity = getPropositionCapacityForPlace(place, selectedPFP.value, year)
       
       const assigned = assignCountByPlace.get(place.PlaceId) || 0
       return { ...place, _capacity: capacity, _assigned: assigned }

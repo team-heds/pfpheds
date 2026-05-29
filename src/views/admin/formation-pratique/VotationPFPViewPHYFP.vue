@@ -1554,7 +1554,7 @@ const filteredVotationsList = computed(() => {
   let filtered = votationsList.value
   filtered = filtered.filter(v => v.nbChoix > 0)
   filtered = filtered.filter(v => v.pfpType === filterPFP.value)
-  filtered = filtered.filter(v => v.year === filterYear.value)
+  filtered = filtered.filter(v => isYearMatch(v.year, filterYear.value))
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
     filtered = filtered.filter(v => 
@@ -1572,7 +1572,7 @@ const votationsTableBaseList = computed(() => {
   if (!canShowResults.value) return []
   let filtered = votationsList.value
   filtered = filtered.filter(v => v.pfpType === filterPFP.value)
-  filtered = filtered.filter(v => v.year === filterYear.value)
+  filtered = filtered.filter(v => isYearMatch(v.year, filterYear.value))
 
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
@@ -1760,8 +1760,26 @@ const parseIntSafe = (value) => {
   return Number.isNaN(parsed) ? 0 : parsed
 }
 
+const getAcademicYearKeys = (year) => {
+  const y = Number(year)
+  if (!Number.isFinite(y)) return [String(year)]
+  return [String(y), `${y - 1}-${y}`]
+}
+
+const isYearMatch = (candidateYear, selectedYear) => {
+  if (!candidateYear || !selectedYear) return false
+  return getAcademicYearKeys(selectedYear).includes(String(candidateYear))
+}
+
 const getPropositionForPfp = (place, pfpType, year) => {
-  return parseIntSafe(place?.[`${pfpType.toLowerCase()}_proposition`]?.[year])
+  const proposition = place?.[`${pfpType.toLowerCase()}_proposition`]
+  if (!proposition) return 0
+  const yearKeys = getAcademicYearKeys(year)
+  for (const yearKey of yearKeys) {
+    const parsed = parseIntSafe(proposition?.[yearKey])
+    if (parsed > 0) return parsed
+  }
+  return 0
 }
 
 const getStudentIdentityCandidates = (student) => {
@@ -1778,12 +1796,13 @@ const isStudentAlreadyAssigned = (student, assignedUserIds) => {
 const loadAssignedSnapshot = async (pfpType, year) => {
   const empty = { userIds: new Set(), placeCounts: new Map() }
   if (!pfpType || !year) return empty
+  const yearKeys = getAcademicYearKeys(year)
 
   const { data, error } = await supabase
     .from('student_result_vote')
     .select('user_id, assigned_place_id')
     .eq('pfp_type', pfpType)
-    .eq('year', year)
+    .in('year', yearKeys)
     .not('assigned_place_id', 'is', null)
 
   if (error) throw error
@@ -1831,9 +1850,12 @@ const loadVoteStatistics = async () => {
     }
     
     console.log('📊 Calcul manuel des statistiques depuis les votes...')
+    const yearKeys = getAcademicYearKeys(filterYear.value)
     const { data: allVotesData, error: votesError } = await supabase
       .from('student_votes')
       .select('choices')
+      .eq('pfp_type', filterPFP.value)
+      .in('year', yearKeys)
     if (votesError) throw votesError
     const aggregation = {}
     allVotesData.forEach(vote => {
@@ -1990,9 +2012,12 @@ const loadData = async () => {
 
     await loadVoteStatistics()
 
+    const yearKeys = getAcademicYearKeys(filterYear.value)
     let { data: votes, error: votesError } = await supabase
       .from('student_votes')
       .select('*')
+      .eq('pfp_type', filterPFP.value)
+      .in('year', yearKeys)
       .order('updated_at', { ascending: false })
     if (votesError) throw votesError
     allVotes.value = votes || []
@@ -2015,7 +2040,8 @@ const loadData = async () => {
         } else if (Array.isArray(vote.choices)) {
           choices = vote.choices
         }
-        const key = `${vote.user_id}-${vote.pfp_type}-${vote.year}`
+        const normalizedYear = isYearMatch(vote.year, filterYear.value) ? filterYear.value : vote.year
+        const key = `${vote.user_id}-${vote.pfp_type}-${normalizedYear}`
         const getPlaceName = (choice) => {
           if (!choice) return null
           if (choice.placeName) return choice.placeName
@@ -2036,7 +2062,7 @@ const loadData = async () => {
           prenom: student.Prenom || student.prenom || student.forname || 'N/A',
           classe: student.Classe || student.classe || student.class || 'N/A',
           pfpType: vote.pfp_type,
-          year: vote.year,
+          year: normalizedYear,
           choix1: getPlaceName(choices[0]), choix2: getPlaceName(choices[1]),
           choix3: getPlaceName(choices[2]), choix4: getPlaceName(choices[3]),
           choix5: getPlaceName(choices[4]),
@@ -2100,7 +2126,7 @@ const loadData = async () => {
 
 const updateStats = () => {
   const filtered = votationsList.value.filter(v =>
-    v.pfpType === filterPFP.value && v.year === filterYear.value
+    v.pfpType === filterPFP.value && isYearMatch(v.year, filterYear.value)
   )
   const total = filtered.length
   const completed = filtered.filter(v => v.status === 'Complet').length

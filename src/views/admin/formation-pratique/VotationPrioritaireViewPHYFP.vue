@@ -488,6 +488,28 @@ const estimatedRandomRiskPercent = computed(() => {
   return Math.round((missingCapacityCount.value / studentsToPlaceCount.value) * 100)
 })
 
+const parseIntSafe = (value) => {
+  const parsed = parseInt(value, 10)
+  return Number.isNaN(parsed) ? 0 : parsed
+}
+
+const getAcademicYearKeys = (year) => {
+  const y = Number(year)
+  if (!Number.isFinite(y)) return [String(year)]
+  return [String(y), `${y - 1}-${y}`]
+}
+
+const getPropositionForPfp = (place, pfpType, year) => {
+  const proposition = place?.[`${pfpType.toLowerCase()}_proposition`]
+  if (!proposition) return 0
+  const yearKeys = getAcademicYearKeys(year)
+  for (const yearKey of yearKeys) {
+    const parsed = parseIntSafe(proposition?.[yearKey])
+    if (parsed > 0) return parsed
+  }
+  return 0
+}
+
 const voteQuickFilter = ref('all')
 
 const adminActionStorageKey = computed(() => {
@@ -632,12 +654,13 @@ const setVoteQuickFilter = (mode) => {
 const loadAssignedSnapshot = async (pfpType, year) => {
   const empty = { userIds: new Set(), placeCounts: new Map() }
   if (!pfpType || !year) return empty
+  const yearKeys = getAcademicYearKeys(year)
 
   const { data, error } = await supabase
     .from('student_result_vote')
     .select('user_id, assigned_place_id')
     .eq('pfp_type', pfpType)
-    .eq('year', year)
+    .in('year', yearKeys)
     .not('assigned_place_id', 'is', null)
 
   if (error) throw error
@@ -758,11 +781,12 @@ const loadData = async () => {
 
     // If no active session, check closed ones for the priority list
     if (!currentSession.value) {
+      const yearKeys = getAcademicYearKeys(filterYear.value)
       const { data: closedSessions } = await supabase
         .from('votation_sessions')
         .select('priority_user_ids')
         .eq('pfp_type', filterPFP.value)
-        .eq('year', filterYear.value)
+        .in('year', yearKeys)
         .eq('is_priority', true)
         .order('closed_at', { ascending: false })
         .limit(1)
@@ -780,26 +804,24 @@ const loadData = async () => {
     // 3. Places
     await placesStore.fetchPlaces()
     await institutionsStore.fetchInstitutions()
-    const propositionKey = `${filterPFP.value.toLowerCase()}_proposition`
     let count = 0
     placesStore.places.forEach(p => {
-      if (p[propositionKey]?.[filterYear.value]) {
-        const cap = parseInt(p[propositionKey][filterYear.value])
-        if (cap > 0) {
-          const alreadyAssigned = assignedSnapshot.placeCounts.get(String(p.PlaceId)) || 0
-          const remaining = Math.max(0, cap - alreadyAssigned)
-          if (remaining > 0) count += remaining
-        }
+      const cap = getPropositionForPfp(p, filterPFP.value, filterYear.value)
+      if (cap > 0) {
+        const alreadyAssigned = assignedSnapshot.placeCounts.get(String(p.PlaceId)) || 0
+        const remaining = Math.max(0, cap - alreadyAssigned)
+        if (remaining > 0) count += remaining
       }
     })
     validatedPlacesCount.value = count
 
     // 4. Votes
+    const yearKeys = getAcademicYearKeys(filterYear.value)
     const { data: votes } = await supabase
       .from('student_votes')
       .select('*')
       .eq('pfp_type', filterPFP.value)
-      .eq('year', filterYear.value)
+      .in('year', yearKeys)
 
     const votesMap = new Map()
     if (votes) {
@@ -807,7 +829,7 @@ const loadData = async () => {
         let choices = []
         if (typeof v.choices === 'string') { try { choices = JSON.parse(v.choices) } catch (e) { choices = [] } }
         else if (Array.isArray(v.choices)) choices = v.choices
-        votesMap.set(v.user_id, { choices, updatedAt: v.updated_at })
+        votesMap.set(String(v.user_id), { choices, updatedAt: v.updated_at, year: v.year })
       })
     }
 
@@ -817,18 +839,19 @@ const loadData = async () => {
 
     const list = []
     priorityUserIds.value.forEach(userId => {
-      if (assignedSnapshot.userIds.has(String(userId))) return
+      const normalizedUserId = String(userId)
+      if (assignedSnapshot.userIds.has(normalizedUserId)) return
 
-      const student = allStudents.value.find(s => s.id === userId)
+      const student = allStudents.value.find(s => String(s.id) === normalizedUserId || String(s.user_id) === normalizedUserId)
       if (!student) return
 
-      const voteData = votesMap.get(userId)
+      const voteData = votesMap.get(normalizedUserId)
       const choices = voteData?.choices || []
 
       const getPlaceName = (c) => c?.placeName || (c?.placeId ? placesMap.get(c.placeId) : null) || null
 
       list.push({
-        userId,
+        userId: normalizedUserId,
         nom: student.Nom || '',
         prenom: student.Prenom || '',
         classe: student.Classe || '',
@@ -890,13 +913,9 @@ const runAlgorithm = async () => {
       }))
 
     // Prepare places data
-    const propKey = `${filterPFP.value.toLowerCase()}_proposition`
     const placesData = placesStore.places
       .map(place => {
-        let capacity = 0
-        if (place[propKey]?.[filterYear.value]) {
-          capacity = parseInt(place[propKey][filterYear.value])
-        }
+        const capacity = getPropositionForPfp(place, filterPFP.value, filterYear.value)
         if (!capacity || capacity < 1) return null
         const inst = institutionMap.get(place.InstitutionId)
         return {

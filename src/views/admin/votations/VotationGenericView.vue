@@ -507,6 +507,23 @@ export default {
       }
     },
 
+    getAcademicYearKeys(year) {
+      const y = Number(year)
+      if (!Number.isFinite(y)) return [String(year)]
+      return [String(y), `${y - 1}-${y}`]
+    },
+
+    getValueForYearKey(source, year) {
+      if (!source || typeof source !== 'object') return undefined
+      const yearKeys = this.getAcademicYearKeys(year)
+      for (const yearKey of yearKeys) {
+        if (Object.prototype.hasOwnProperty.call(source, yearKey)) {
+          return source[yearKey]
+        }
+      }
+      return undefined
+    },
+
     async loadSession() {
       this.sessionLoading = true
       try {
@@ -750,8 +767,13 @@ export default {
           if (fieldData.hasOwnProperty(yr) && fieldData[yr] !== '' && fieldData[yr] !== null && fieldData[yr] !== undefined) {
             count = parseInt(fieldData[yr]) || 0;
           } else {
-            const defVal = parseInt(fieldData['default'] || '0');
-            count = !isNaN(defVal) ? defVal : 0;
+            const academicVal = this.getValueForYearKey(fieldData, this.selectedYear)
+            if (academicVal !== undefined && academicVal !== null && academicVal !== '') {
+              count = parseInt(academicVal) || 0
+            } else {
+              const defVal = parseInt(fieldData['default'] || '0');
+              count = !isNaN(defVal) ? defVal : 0;
+            }
           }
         }
         // Pour PFP4: soustraire les sièges déjà assignés

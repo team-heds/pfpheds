@@ -242,7 +242,14 @@
 
           <Column field="praticienMail" header="Email PF" sortable style="min-width: 220px">
             <template #body="{ data }">
-              <span class="text-sm">{{ data.praticienMail || '—' }}</span>
+              <a
+                v-if="data.praticienMail"
+                :href="`mailto:${data.praticienMail}`"
+                class="text-sm"
+              >
+                {{ data.praticienMail }}
+              </a>
+              <span v-else class="text-sm">—</span>
             </template>
           </Column>
 

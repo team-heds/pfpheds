@@ -11,6 +11,28 @@ export function useVotationAlgorithm(toast) {
   const placesWithAssignments = ref([])
   const algorithmLoading = ref(false)
 
+  const parseIntSafe = (value) => {
+    const parsed = parseInt(value, 10)
+    return Number.isNaN(parsed) ? 0 : parsed
+  }
+
+  const getAcademicYearKeys = (year) => {
+    const y = Number(year)
+    if (!Number.isFinite(y)) return [String(year)]
+    return [String(y), `${y - 1}-${y}`]
+  }
+
+  const getPropositionCapacityForYear = (place, pfpType, year) => {
+    const proposition = place?.[`${pfpType.toLowerCase()}_proposition`]
+    if (!proposition) return 0
+    const yearKeys = getAcademicYearKeys(year)
+    for (const yearKey of yearKeys) {
+      const parsed = parseIntSafe(proposition?.[yearKey])
+      if (parsed > 0) return parsed
+    }
+    return 0
+  }
+
   const placesStore = usePlacesStore()
   const institutionsStore = useInstitutionsStore()
 
@@ -253,12 +275,7 @@ export function useVotationAlgorithm(toast) {
       const placesData = placesStore.places
         .map(place => {
           const institution = institutionMap.get(place.InstitutionId)
-          
-          const propositionKey = `${filterPFP.toLowerCase()}_proposition`
-          let capacity = 0
-          if (place[propositionKey] && place[propositionKey][filterYear]) {
-            capacity = parseInt(place[propositionKey][filterYear])
-          }
+          const capacity = getPropositionCapacityForYear(place, filterPFP, filterYear)
           
           if (!capacity || isNaN(capacity) || capacity < 1) {
             return null

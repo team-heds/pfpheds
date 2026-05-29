@@ -491,6 +491,35 @@ const manualReason = ref('')
 
 const validatedPlacesCount = ref(0)
 
+const normalizeId = (value) => (value === null || value === undefined ? '' : String(value))
+
+const parseIntSafe = (value) => {
+  const parsed = parseInt(value, 10)
+  return Number.isNaN(parsed) ? 0 : parsed
+}
+
+const getAcademicYearKeys = (year) => {
+  const y = Number(year)
+  if (!Number.isFinite(y)) return [String(year)]
+  return [String(y), `${y - 1}-${y}`]
+}
+
+const getValueForYearKey = (source, year) => {
+  if (!source || typeof source !== 'object') return undefined
+  const yearKeys = getAcademicYearKeys(year)
+  for (const yearKey of yearKeys) {
+    if (Object.prototype.hasOwnProperty.call(source, yearKey)) {
+      return source[yearKey]
+    }
+  }
+  return undefined
+}
+
+const getPropositionForPfp = (place, pfpType, year) => {
+  const propositionKey = `${pfpType.toLowerCase()}_proposition`
+  return parseIntSafe(getValueForYearKey(place?.[propositionKey], year))
+}
+
 // ============================================
 // PROPOSITIONS PFP4
 // ============================================
@@ -714,6 +743,10 @@ const generatePfp4Proposals = async () => {
     const getCapacity = (propData) => {
       if (propData.hasOwnProperty(year) && propData[year] !== '' && propData[year] !== null && propData[year] !== undefined) {
         return parseInt(propData[year]) || 0
+      }
+      const academicVal = getValueForYearKey(propData, year)
+      if (academicVal !== undefined && academicVal !== null && academicVal !== '') {
+        return parseIntSafe(academicVal)
       }
       const defVal = parseInt(propData['default'] || '0')
       return !isNaN(defVal) ? defVal : 0
@@ -1020,11 +1053,13 @@ const prioritySessionIsOpen = computed(() => {
 // COMPUTED: LISTES D'ÉTUDIANTS
 // ============================================
 const priorityStudents = computed(() => {
+  const priorityIdSet = new Set(priorityStudentIds.value.map(id => normalizeId(id)))
   return allClassStudents.value
-    .filter(s => priorityStudentIds.value.includes(s.id))
+    .filter(s => priorityIdSet.has(normalizeId(s.id)))
     .map(s => {
-      const reasons = priorityReasons.value[s.id] || ['Manuel']
-      const vote = priorityVotes.value.get(s.id) || null
+      const studentId = normalizeId(s.id)
+      const reasons = priorityReasons.value[studentId] || priorityReasons.value[s.id] || ['Manuel']
+      const vote = priorityVotes.value.get(studentId) || priorityVotes.value.get(s.id) || null
       return {
         userId: s.id,
         nom: s.Nom || '',
@@ -1040,8 +1075,9 @@ const priorityStudents = computed(() => {
 })
 
 const nonPriorityStudents = computed(() => {
+  const priorityIdSet = new Set(priorityStudentIds.value.map(id => normalizeId(id)))
   return allClassStudents.value
-    .filter(s => !priorityStudentIds.value.includes(s.id))
+    .filter(s => !priorityIdSet.has(normalizeId(s.id)))
     .map(s => {
       const physio = physioData.value.get(s.id)
       const prevResult = previousResults.value.find(r => r.user_id === s.id)
@@ -1149,11 +1185,12 @@ const loadData = async () => {
     previousResults.value = prevResults || []
 
     // 4. Charger les votes prioritaires existants
+    const yearKeys = getAcademicYearKeys(filterYear.value)
     const { data: votes } = await supabase
       .from('student_votes')
       .select('*')
       .eq('pfp_type', filterPFP.value)
-      .eq('year', filterYear.value)
+      .in('year', yearKeys)
     if (votes) {
       const voteMap = new Map()
       votes.forEach(v => {
@@ -1164,7 +1201,7 @@ const loadData = async () => {
           choices = v.choices
         }
         if (choices.length > 0) {
-          voteMap.set(v.user_id, {
+          voteMap.set(normalizeId(v.user_id), {
             choices: choices.map((c, i) => ({
               rank: i + 1,
               placeName: c.placeName || 'Inconnu',
@@ -1182,10 +1219,8 @@ const loadData = async () => {
     await institutionsStore.fetchInstitutions()
     let count = 0
     placesStore.places.forEach(place => {
-      if (place[filterPFP.value] && place[filterPFP.value][filterYear.value]) {
-        const cap = parseInt(place[filterPFP.value][filterYear.value])
-        if (cap > 0) count += cap
-      }
+      const cap = getPropositionForPfp(place, filterPFP.value, filterYear.value)
+      if (cap > 0) count += cap
     })
     validatedPlacesCount.value = count
 
@@ -1204,7 +1239,34 @@ const loadData = async () => {
 const loadPrioritySession = async () => {
   try {
     // Charger la session ouverte OU le brouillon
-    const sessionOrDraft = await votationSessionService.getPriorityDraftOrSession(filterPFP.value, filterYear.value)
+    let sessionOrDraft = await votationSessionService.getPriorityDraftOrSession(filterPFP.value, filterYear.value)
+    if (!sessionOrDraft) {
+      const yearKeys = getAcademicYearKeys(filterYear.value)
+      const { data: openSession } = await supabase
+        .from('votation_sessions')
+        .select('*')
+        .eq('pfp_type', filterPFP.value)
+        .in('year', yearKeys)
+        .eq('is_priority', true)
+        .eq('status', 'open')
+        .order('opened_at', { ascending: false })
+        .limit(1)
+      sessionOrDraft = openSession?.[0] || null
+
+      if (!sessionOrDraft) {
+        const { data: draftSession } = await supabase
+          .from('votation_sessions')
+          .select('*')
+          .eq('pfp_type', filterPFP.value)
+          .in('year', yearKeys)
+          .eq('is_priority', true)
+          .eq('status', 'closed')
+          .is('opened_at', null)
+          .order('created_at', { ascending: false })
+          .limit(1)
+        sessionOrDraft = draftSession?.[0] || null
+      }
+    }
     
     if (sessionOrDraft) {
       // Si c'est une session ouverte, la stocker
@@ -1216,14 +1278,14 @@ const loadPrioritySession = async () => {
       
       // Restaurer la liste des prioritaires (draft ou open)
       if (sessionOrDraft.priority_user_ids && Array.isArray(sessionOrDraft.priority_user_ids)) {
-        priorityStudentIds.value = [...sessionOrDraft.priority_user_ids]
+        priorityStudentIds.value = sessionOrDraft.priority_user_ids.map(id => normalizeId(id))
         
         // Restaurer les raisons sauvegardées
         const savedReasons = sessionOrDraft.priority_reasons
         if (savedReasons && typeof savedReasons === 'object') {
           const restoredReasons = {}
           Object.entries(savedReasons).forEach(([userId, reasons]) => {
-            restoredReasons[userId] = Array.isArray(reasons) ? reasons : [reasons]
+            restoredReasons[normalizeId(userId)] = Array.isArray(reasons) ? reasons : [reasons]
           })
           priorityReasons.value = restoredReasons
         } else {
@@ -1231,8 +1293,9 @@ const loadPrioritySession = async () => {
           const fallbackReasons = {}
           const isDraft = sessionOrDraft.status !== 'open'
           sessionOrDraft.priority_user_ids.forEach(id => {
-            if (!priorityReasons.value[id]) {
-              fallbackReasons[id] = [isDraft ? 'Sauvegardé' : 'Session active']
+            const normalizedId = normalizeId(id)
+            if (!priorityReasons.value[normalizedId]) {
+              fallbackReasons[normalizedId] = [isDraft ? 'Sauvegardé' : 'Session active']
             }
           })
           priorityReasons.value = { ...priorityReasons.value, ...fallbackReasons }
@@ -1335,11 +1398,12 @@ const autoDetectPriority = async () => {
 // AJOUT / SUPPRESSION MANUELLE
 // ============================================
 const addPriorityStudent = (student) => {
-  if (priorityStudentIds.value.includes(student.userId)) return
-  priorityStudentIds.value = [...priorityStudentIds.value, student.userId]
+  const studentId = normalizeId(student.userId)
+  if (priorityStudentIds.value.some(id => normalizeId(id) === studentId)) return
+  priorityStudentIds.value = [...priorityStudentIds.value.map(id => normalizeId(id)), studentId]
 
   const reason = manualReason.value?.trim() || 'Manuel'
-  priorityReasons.value = { ...priorityReasons.value, [student.userId]: [reason] }
+  priorityReasons.value = { ...priorityReasons.value, [studentId]: [reason] }
 
   toast.add({
     severity: 'success',
@@ -1353,9 +1417,12 @@ const addPriorityStudent = (student) => {
 }
 
 const removePriorityStudent = (userId) => {
-  priorityStudentIds.value = priorityStudentIds.value.filter(id => id !== userId)
+  const normalizedUserId = normalizeId(userId)
+  priorityStudentIds.value = priorityStudentIds.value
+    .map(id => normalizeId(id))
+    .filter(id => id !== normalizedUserId)
 
-  const { [userId]: _, ...rest } = priorityReasons.value
+  const { [normalizedUserId]: _, ...rest } = priorityReasons.value
   priorityReasons.value = rest
 
   toast.add({
@@ -1378,7 +1445,7 @@ const openPriorityVotation = async () => {
 
   try {
     const userId = userStore.user?.id || null
-    const priorityIds = [...priorityStudentIds.value]
+    const priorityIds = priorityStudentIds.value.map(id => normalizeId(id))
     const reasons = { ...priorityReasons.value }
 
     const session = await votationSessionService.openPrioritySession(

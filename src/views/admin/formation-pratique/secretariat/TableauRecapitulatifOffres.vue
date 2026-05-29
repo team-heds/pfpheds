@@ -322,11 +322,36 @@ const visiblePfpTypes = computed(() => {
 
 const placesData = computed(() => placesStore.places || [])
 
+const parseIntSafe = (value) => {
+  const parsed = parseInt(value, 10)
+  return Number.isNaN(parsed) ? 0 : parsed
+}
+
+const getAcademicYearKeys = (year) => {
+  const y = Number(year)
+  if (!Number.isFinite(y)) return [String(year)]
+  return [String(y), `${y - 1}-${y}`]
+}
+
+const getValueForYearKey = (source, year) => {
+  if (!source || typeof source !== 'object') return undefined
+  const yearKeys = getAcademicYearKeys(year)
+  for (const yearKey of yearKeys) {
+    if (Object.prototype.hasOwnProperty.call(source, yearKey)) {
+      return source[yearKey]
+    }
+  }
+  return undefined
+}
+
+const getOfferForPfp = (place, pfpType, year) => parseIntSafe(getValueForYearKey(place?.[pfpType], year))
+const getPropositionForPfp = (place, pfpType, year) => parseIntSafe(getValueForYearKey(place?.[`${pfpType.toLowerCase()}_proposition`], year))
+
 const hasOffers = (place) => {
   const year = selectedYear.value
   return allPfpTypes.some(pfp => {
-    const val = place[pfp]?.[year]
-    return val && val !== '' && val !== '0'
+    const val = getOfferForPfp(place, pfp, year)
+    return val > 0
   })
 }
 
@@ -339,8 +364,8 @@ const stats = computed(() => {
   const pfpStats = {}
   allPfpTypes.forEach(pfp => {
     pfpStats[pfp] = {
-      propositions: places.reduce((t, p) => t + (parseInt(p[pfp]?.[year]) || 0), 0),
-      offres: places.reduce((t, p) => t + (parseInt(p[`Offre${pfp}`]?.[year]) || 0), 0)
+      propositions: places.reduce((t, p) => t + getPropositionForPfp(p, pfp, year), 0),
+      offres: places.reduce((t, p) => t + getOfferForPfp(p, pfp, year), 0)
     }
   })
 
@@ -405,13 +430,14 @@ const filteredPlaces = computed(() => {
 })
 
 const getOffreValue = (place, pfpType) => {
-  const val = place[pfpType]?.[selectedYear.value]
-  return (val && val !== '') ? val : '-'
+  const val = getValueForYearKey(place?.[pfpType], selectedYear.value)
+  return (val !== undefined && val !== null && val !== '') ? val : '-'
 }
 
 const getPropositionValue = (place, pfpType) => {
   if (!place || !place[`${pfpType.toLowerCase()}_proposition`]) return '-'
-  return place[`${pfpType.toLowerCase()}_proposition`][selectedYear.value] || '-'
+  const val = getValueForYearKey(place[`${pfpType.toLowerCase()}_proposition`], selectedYear.value)
+  return (val !== undefined && val !== null && val !== '') ? val : '-'
 }
 
 const getTotalAnalysisValue = (place) => {
@@ -419,8 +445,8 @@ const getTotalAnalysisValue = (place) => {
   let totalProposition = 0
 
   allPfpTypes.forEach(pfp => {
-    totalOffre += parseInt(place[pfp]?.[selectedYear.value]) || 0
-    totalProposition += parseInt(place[`${pfp.toLowerCase()}_proposition`]?.[selectedYear.value]) || 0
+    totalOffre += getOfferForPfp(place, pfp, selectedYear.value)
+    totalProposition += getPropositionForPfp(place, pfp, selectedYear.value)
   })
 
   const result = totalProposition - totalOffre
@@ -429,8 +455,8 @@ const getTotalAnalysisValue = (place) => {
 
 const getAssignmentAnalysis = (place, pfpType) => {
   const year = selectedYear.value
-  const offre = parseInt(place[pfpType]?.[year]) || 0
-  const proposition = parseInt(place[`${pfpType.toLowerCase()}_proposition`]?.[year]) || 0
+  const offre = getOfferForPfp(place, pfpType, year)
+  const proposition = getPropositionForPfp(place, pfpType, year)
 
   const difference = proposition - offre
   const status = difference === 0 ? 'balanced' : difference > 0 ? 'over' : 'under'
