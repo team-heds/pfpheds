@@ -49,6 +49,7 @@
             <i :class="['pi', hasInsufficientCapacity ? 'pi-exclamation-triangle text-red-500' : 'pi-check-circle text-green-500']"></i>
             <span class="font-semibold text-900">Contrôle de capacité pré-algorithme</span>
             <Tag :value="`À placer: ${studentsToPlaceCount}`" severity="warning" class="text-xs" />
+            <Tag v-if="excludedAssignedStudentsCount > 0" :value="`Déjà assignés (exclus): ${excludedAssignedStudentsCount}`" severity="secondary" class="text-xs" />
             <Tag :value="`Capacité: ${validatedPlacesCount}`" :severity="hasInsufficientCapacity ? 'danger' : 'success'" class="text-xs" />
             <Tag v-if="hasInsufficientCapacity" :value="`Manque: ${missingCapacityCount}`" severity="danger" class="text-xs" />
           </div>
@@ -477,6 +478,7 @@ const pfpTypes = computed(() => activeConfig.value ? activeConfig.value.pfps.map
 const canLoad = computed(() => filterClasse.value && filterPFP.value && filterYear.value)
 const sessionIsOpen = computed(() => currentSession.value?.status === 'open')
 const votedCount = computed(() => votesList.value.filter(v => v.status !== 'Non voté').length)
+const excludedAssignedStudentsCount = computed(() => Math.max(0, priorityUserIds.value.length - votesList.value.length))
 const studentsToPlaceCount = computed(() => votedCount.value)
 const hasInsufficientCapacity = computed(() => studentsToPlaceCount.value > validatedPlacesCount.value)
 const missingCapacityCount = computed(() => Math.max(0, studentsToPlaceCount.value - validatedPlacesCount.value))
@@ -627,6 +629,32 @@ const setVoteQuickFilter = (mode) => {
   voteQuickFilter.value = mode
 }
 
+const loadAssignedSnapshot = async (pfpType, year) => {
+  const empty = { userIds: new Set(), placeCounts: new Map() }
+  if (!pfpType || !year) return empty
+
+  const { data, error } = await supabase
+    .from('student_result_vote')
+    .select('user_id, assigned_place_id')
+    .eq('pfp_type', pfpType)
+    .eq('year', year)
+    .not('assigned_place_id', 'is', null)
+
+  if (error) throw error
+
+  const userIds = new Set()
+  const placeCounts = new Map()
+  ;(data || []).forEach((row) => {
+    if (row.user_id) userIds.add(String(row.user_id))
+    if (row.assigned_place_id) {
+      const placeId = String(row.assigned_place_id)
+      placeCounts.set(placeId, (placeCounts.get(placeId) || 0) + 1)
+    }
+  })
+
+  return { userIds, placeCounts }
+}
+
 const loadAdminActionHistory = () => {
   if (typeof window === 'undefined') return
   try {
@@ -747,6 +775,8 @@ const loadData = async () => {
     const studentsData = await getAllStudents()
     allStudents.value = studentsData
 
+    const assignedSnapshot = await loadAssignedSnapshot(filterPFP.value, filterYear.value)
+
     // 3. Places
     await placesStore.fetchPlaces()
     await institutionsStore.fetchInstitutions()
@@ -755,7 +785,11 @@ const loadData = async () => {
     placesStore.places.forEach(p => {
       if (p[propositionKey]?.[filterYear.value]) {
         const cap = parseInt(p[propositionKey][filterYear.value])
-        if (cap > 0) count += cap
+        if (cap > 0) {
+          const alreadyAssigned = assignedSnapshot.placeCounts.get(String(p.PlaceId)) || 0
+          const remaining = Math.max(0, cap - alreadyAssigned)
+          if (remaining > 0) count += remaining
+        }
       }
     })
     validatedPlacesCount.value = count
@@ -783,6 +817,8 @@ const loadData = async () => {
 
     const list = []
     priorityUserIds.value.forEach(userId => {
+      if (assignedSnapshot.userIds.has(String(userId))) return
+
       const student = allStudents.value.find(s => s.id === userId)
       if (!student) return
 
@@ -809,6 +845,7 @@ const loadData = async () => {
     })
 
     votesList.value = list.sort((a, b) => a.nom.localeCompare(b.nom))
+    console.log(`✅ Prioritaires actifs: ${priorityUserIds.value.length} (éligibles: ${votesList.value.length}, déjà assignés exclus: ${priorityUserIds.value.length - votesList.value.length})`)
   } catch (error) {
     console.error('❌ Erreur chargement:', error)
     toast.add({ severity: 'error', summary: 'Erreur', detail: error.message, life: 5000 })

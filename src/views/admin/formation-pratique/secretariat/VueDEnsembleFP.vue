@@ -653,9 +653,35 @@ const fetchAllData = async () => {
     })
 
     const notesMap = new Map()
-    if (notesResult.data) notesResult.data.forEach(n => {
-      notesMap.set(n.user_id, n)
-    })
+    const parseYearSafe = (value) => {
+      const parsed = Number.parseInt(value, 10)
+      return Number.isFinite(parsed) ? parsed : -1
+    }
+    const parseDateSafe = (value) => {
+      if (!value) return 0
+      const ms = new Date(value).getTime()
+      return Number.isFinite(ms) ? ms : 0
+    }
+    const shouldReplaceNotesRow = (currentRow, candidateRow) => {
+      if (!currentRow) return true
+      const currentYear = parseYearSafe(currentRow.year)
+      const candidateYear = parseYearSafe(candidateRow.year)
+      if (candidateYear !== currentYear) return candidateYear > currentYear
+
+      const currentUpdatedAt = Math.max(parseDateSafe(currentRow.updated_at), parseDateSafe(currentRow.created_at))
+      const candidateUpdatedAt = Math.max(parseDateSafe(candidateRow.updated_at), parseDateSafe(candidateRow.created_at))
+      return candidateUpdatedAt > currentUpdatedAt
+    }
+
+    if (notesResult.data) {
+      notesResult.data.forEach((row) => {
+        if (!row?.user_id) return
+        const current = notesMap.get(row.user_id)
+        if (shouldReplaceNotesRow(current, row)) {
+          notesMap.set(row.user_id, row)
+        }
+      })
+    }
 
     // Normaliser PFP1A/PFP1B → PFP1
     const normalizePfp = (t) => (t === 'PFP1A' || t === 'PFP1B') ? 'PFP1' : t

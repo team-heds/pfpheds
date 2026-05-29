@@ -125,6 +125,7 @@
           <i :class="['pi', hasInsufficientCapacity ? 'pi-exclamation-triangle text-red-500' : 'pi-check-circle text-green-500']"></i>
           <span class="font-semibold text-900">Contrôle de capacité pré-algorithme</span>
           <Tag :value="`À placer: ${studentsToPlaceCount}`" severity="warning" class="text-xs" />
+          <Tag v-if="excludedAssignedStudentsCount > 0" :value="`Déjà assignés (exclus): ${excludedAssignedStudentsCount}`" severity="secondary" class="text-xs" />
           <Tag :value="`Capacité: ${totalValidatedCapacity}`" :severity="hasInsufficientCapacity ? 'danger' : 'success'" class="text-xs" />
           <Tag v-if="hasInsufficientCapacity" :value="`Manque: ${missingCapacityCount}`" severity="danger" class="text-xs" />
         </div>
@@ -1295,6 +1296,7 @@ const votesAggregation = ref({})
 const placesWithStats = ref([])
 const validatedPlaces = ref([])
 const placesFullMap = ref(new Map())
+const excludedAssignedStudentsCount = ref(0)
 
 const {
   excludedStudentIds, excludeSearchValue, excludeFilteredSuggestions,
@@ -1762,6 +1764,43 @@ const getPropositionForPfp = (place, pfpType, year) => {
   return parseIntSafe(place?.[`${pfpType.toLowerCase()}_proposition`]?.[year])
 }
 
+const getStudentIdentityCandidates = (student) => {
+  return [student?.id, student?.user_id, student?.firebase_id]
+    .filter(Boolean)
+    .map(value => String(value))
+}
+
+const isStudentAlreadyAssigned = (student, assignedUserIds) => {
+  const ids = getStudentIdentityCandidates(student)
+  return ids.some(id => assignedUserIds.has(id))
+}
+
+const loadAssignedSnapshot = async (pfpType, year) => {
+  const empty = { userIds: new Set(), placeCounts: new Map() }
+  if (!pfpType || !year) return empty
+
+  const { data, error } = await supabase
+    .from('student_result_vote')
+    .select('user_id, assigned_place_id')
+    .eq('pfp_type', pfpType)
+    .eq('year', year)
+    .not('assigned_place_id', 'is', null)
+
+  if (error) throw error
+
+  const userIds = new Set()
+  const placeCounts = new Map()
+  ;(data || []).forEach((row) => {
+    if (row.user_id) userIds.add(String(row.user_id))
+    if (row.assigned_place_id) {
+      const placeId = String(row.assigned_place_id)
+      placeCounts.set(placeId, (placeCounts.get(placeId) || 0) + 1)
+    }
+  })
+
+  return { userIds, placeCounts }
+}
+
 // ============================================
 // DATA LOADING
 // ============================================
@@ -1890,6 +1929,8 @@ const loadValidatedPlaces = async () => {
   try {
     await placesStore.fetchPlaces()
     await institutionsStore.fetchInstitutions()
+    const assignedSnapshot = await loadAssignedSnapshot(filterPFP.value, filterYear.value)
+
     const institutionMap = new Map()
     institutionsStore.institutions.forEach(inst => { institutionMap.set(inst.InstitutionId, inst) })
     const pfp = filterPFP.value
@@ -1898,14 +1939,16 @@ const loadValidatedPlaces = async () => {
     validatedPlaces.value = placesStore.places
       .map(place => {
         const institution = institutionMap.get(place.InstitutionId)
-        const capacity = getPropositionForPfp(place, pfp, year)
-        if (!capacity || capacity < 1) return null
+        const rawCapacity = getPropositionForPfp(place, pfp, year)
+        const alreadyAssigned = assignedSnapshot.placeCounts.get(String(place.PlaceId)) || 0
+        const remainingCapacity = Math.max(0, rawCapacity - alreadyAssigned)
+        if (!remainingCapacity || remainingCapacity < 1) return null
         return {
           PlaceId: place.PlaceId,
           NomPlace: place.NomPlace,
           InstitutionName: institution?.Name || 'Inconnu',
           InstitutionCategory: institution?.Category || '-',
-          Capacity: capacity
+          Capacity: remainingCapacity
         }
       })
       .filter(Boolean)
@@ -1930,7 +1973,11 @@ const loadData = async () => {
       const classe = student.Classe || student.classe || student.class || student.Class || ''
       return classe === targetClass
     })
-    console.log(`✅ ${allStudents.value.length} étudiants ${targetClass} chargés`)
+
+    const assignedSnapshot = await loadAssignedSnapshot(filterPFP.value, filterYear.value)
+    const eligibleStudents = allStudents.value.filter(student => !isStudentAlreadyAssigned(student, assignedSnapshot.userIds))
+    excludedAssignedStudentsCount.value = Math.max(0, allStudents.value.length - eligibleStudents.length)
+    console.log(`✅ ${allStudents.value.length} étudiants ${targetClass} chargés (${eligibleStudents.length} éligibles, ${allStudents.value.length - eligibleStudents.length} déjà assignés)`)
     
     await placesStore.fetchPlaces()
     const placesMap = new Map()
@@ -1951,8 +1998,15 @@ const loadData = async () => {
     allVotes.value = votes || []
 
     const votationsMap = new Map()
+    const studentsById = new Map()
+    eligibleStudents.forEach((student) => {
+      getStudentIdentityCandidates(student).forEach((id) => {
+        studentsById.set(id, student)
+      })
+    })
+
     allVotes.value.forEach((vote) => {
-      const student = allStudents.value.find(s => s.id === vote.user_id || s.user_id === vote.user_id)
+      const student = studentsById.get(String(vote.user_id))
       const studentClasse = student ? (student.Classe || student.classe || student.class || student.Class) : null
       if (student && studentClasse === targetClass) {
         let choices = []
@@ -2003,14 +2057,16 @@ const loadData = async () => {
 
     const relevantPFPs = config.pfps
     const relevantYears = [filterYear.value]
-    allStudents.value.forEach(student => {
+    eligibleStudents.forEach(student => {
       relevantPFPs.forEach(pfpType => {
         relevantYears.forEach(year => {
-          const key = `${student.id}-${pfpType}-${year}`
+          const studentId = student.id || student.user_id || student.firebase_id
+          if (!studentId) return
+          const key = `${studentId}-${pfpType}-${year}`
           if (!votationsMap.has(key)) {
             votationsMap.set(key, {
               id: null,
-              userId: student.id || student.user_id,
+              userId: studentId,
               nom: student.Nom || student.nom || student.family_name || 'N/A',
               prenom: student.Prenom || student.prenom || student.forname || 'N/A',
               classe: student.Classe || student.classe || student.class || 'N/A',
@@ -2035,6 +2091,7 @@ const loadData = async () => {
     console.log(`✅ ${votationsList.value.length} votations ${targetClass} créées`)
   } catch (error) {
     console.error('❌ Erreur lors du chargement des données:', error)
+    excludedAssignedStudentsCount.value = 0
     toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les données: ' + error.message, life: 5000 })
   } finally {
     loading.value = false
