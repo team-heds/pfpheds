@@ -287,10 +287,7 @@ const editPraticienFormateurData = ref({
 const currentEditingPlace = ref(null)
 
 // Variables pour gérer toutes les PFP
-const showManageAllPfpsDialog = ref(false)
-const managePfpsSearchQuery = ref('')
 const allStudentPfps = ref([])
-const selectedPfpToManage = ref(null)
 
 /* ---------------------------
    Chargement des affectations PFP depuis Supabase uniquement
@@ -447,39 +444,6 @@ const assignedPlacesFromPublished = computed(() => {
   return enrichedAssignments
 })
 
-// Ajout : computed pour trouver toutes les places où l'utilisateur courant est affecté depuis Supabase (ANCIEN SYSTÈME - FALLBACK)
-const assignedPlacesFromSupabase = computed(() => {
-  const userId = props.userId
-  const results = []
-
-  supabasePlaces.value.forEach(place => {
-    // Chercher dans les assignations JSONB des différentes PFP
-    const pfpFields = ['PFP1A', 'PFP1B', 'PFP2', 'PFP3', 'PFP4']
-
-    pfpFields.forEach(pfpField => {
-      const pfpData = place[pfpField]
-
-      if (pfpData && pfpData.assignations) {
-        // Parcourir les assignations (ex: BA24-1, BA23-1, etc.)
-        Object.entries(pfpData.assignations).forEach(([key, assignment]) => {
-          if (assignment.active && assignment.etudiant === userId) {
-            results.push({
-              ...place,
-              seatIndex: key.split('-').pop(),
-              assignmentKey: key,
-              pfpLevel: pfpField,
-              praticienId: assignment.praticien || null
-            })
-          }
-        })
-      }
-    })
-  })
-
-  console.log(`🎯 ${results.length} places trouvées pour l'étudiant ${userId} (ancien système)`)
-  return results
-})
-
 // Computed pour afficher les assignations - NOUVEAU SYSTÈME EN PRIORITÉ
 const assignedPlaces = computed(() => {
   // Si le dialogue d'ajout est ouvert, montrer toutes les places disponibles
@@ -495,12 +459,10 @@ const assignedPlaces = computed(() => {
     }))
   }
 
-  // Filtrer pour exclure les PFP validées
-  const publishedWithoutValidated = assignedPlacesFromPublished.value.filter(
-    place => !place.pfp_validee
-  )
+  // Conserver toutes les assignations publiées (validées, en cours, échec, arrêt)
+  const publishedAssignmentsForDisplay = assignedPlacesFromPublished.value
 
-  console.log('🔍 DEBUG - publishedWithoutValidated:', publishedWithoutValidated.length)
+  console.log('🔍 DEBUG - publishedAssignmentsForDisplay:', publishedAssignmentsForDisplay.length)
   console.log('🔍 DEBUG - studentPfpList:', studentPfpList.value.length)
   
   // Log détaillé de studentPfpList
@@ -513,25 +475,8 @@ const assignedPlaces = computed(() => {
     })))
   }
 
-  // Filtrer pour exclure les places déjà dans ResumStageUserProfile (basé sur IDPlace)
-  const filteredWithoutDuplicates = publishedWithoutValidated.filter(
-    place => {
-      // Vérifier si cette place existe déjà dans StudentsPhysio.pfp_valided
-      const placeId = place.IDPlace || place.assigned_place_id || place._key
-      const hasInStudentsPhysio = studentPfpList.value.some(pfp => {
-        const pfpId = pfp.PlaceId || pfp.ID_PFP || pfp.id_pfp
-        const match = pfpId === placeId
-        if (match) {
-          console.log('🔍 DEBUG - Match trouvé:', { pfpId, placeId })
-        }
-        return match
-      })
-      if (hasInStudentsPhysio) {
-        console.log('🚫 Place exclue (déjà dans StudentsPhysio):', placeId)
-      }
-      return !hasInStudentsPhysio
-    }
-  )
+  // Ne pas exclure via StudentsPhysio: on veut garder l'historique visible dans ce bloc
+  const filteredWithoutDuplicates = publishedAssignmentsForDisplay
 
   console.log('🔍 DEBUG - filteredWithoutDuplicates:', filteredWithoutDuplicates.length)
 
@@ -707,43 +652,42 @@ const fetchStudentPfpList = async () => {
       .from('StudentsPhysio')
       .select('pfp_valided, pfp2_data')
       .eq('user_id', props.userId)
-      .maybeSingle()
+      .order('updated_at', { ascending: false })
     if (error) throw error
-    console.log('✅ Données StudentsPhysio:', data)
+    console.log('✅ Données StudentsPhysio:', data?.length || 0, 'lignes')
     
-    if (!data) {
+    if (!data || data.length === 0) {
       console.warn('⚠️ Aucune entrée StudentsPhysio pour cet utilisateur')
       studentPfpList.value = []
       return
     }
 
     let arr = []
-    
-    // Traiter pfp_valided (PFP1)
-    const pfpVal = data.pfp_valided
-    if (Array.isArray(pfpVal)) {
-      arr = pfpVal
-    } else if (typeof pfpVal === 'string') {
-      try {
-        const parsed = JSON.parse(pfpVal)
-        arr = Array.isArray(parsed) ? parsed : []
-      } catch (parseError) {
-        console.warn('⚠️ Impossible de parser pfp_valided:', pfpVal)
-        arr = []
+
+    data.forEach((row) => {
+      const pfpVal = row?.pfp_valided
+      if (Array.isArray(pfpVal)) {
+        arr = [...arr, ...pfpVal]
+      } else if (typeof pfpVal === 'string') {
+        try {
+          const parsed = JSON.parse(pfpVal)
+          if (Array.isArray(parsed)) arr = [...arr, ...parsed]
+        } catch (parseError) {
+          console.warn('⚠️ Impossible de parser pfp_valided:', pfpVal)
+        }
+      } else if (pfpVal && typeof pfpVal === 'object') {
+        arr = [...arr, ...Object.values(pfpVal)]
       }
-    } else if (pfpVal && typeof pfpVal === 'object') {
-      arr = Object.values(pfpVal)
-    }
-    
-    // Traiter pfp2_data (PFP2 BA24)
-    const pfp2Val = data.pfp2_data
-    if (pfp2Val) {
-      if (Array.isArray(pfp2Val)) {
-        arr = [...arr, ...pfp2Val]
-      } else if (typeof pfp2Val === 'object') {
-        arr.push(pfp2Val)
+
+      const pfp2Val = row?.pfp2_data
+      if (pfp2Val) {
+        if (Array.isArray(pfp2Val)) {
+          arr = [...arr, ...pfp2Val]
+        } else if (typeof pfp2Val === 'object') {
+          arr.push(pfp2Val)
+        }
       }
-    }
+    })
     
     studentPfpList.value = arr
     console.log('✅ PFP list chargée:', arr.length, 'entrées (pfp_valided + pfp2_data)', arr)
@@ -795,7 +739,8 @@ onUnmounted(() => {
 const openAddAssignmentDialog = async () => {
   await Promise.all([
     fetchAvailablePlaces(),
-    fetchAvailablePraticiens()
+    fetchAvailablePraticiens(),
+    fetchAllStudentPfps()
   ])
   showAddAssignmentDialog.value = true
 }
@@ -1015,18 +960,6 @@ const cancelEditPraticien = () => {
   }
 }
 
-// Fonctions pour gérer toutes les PFP
-const openManageAllPfpsDialog = async () => {
-  await fetchAllStudentPfps()
-  showManageAllPfpsDialog.value = true
-}
-
-const closeManageAllPfpsDialog = () => {
-  showManageAllPfpsDialog.value = false
-  managePfpsSearchQuery.value = ''
-  selectedPfpToManage.value = null
-}
-
 const fetchAllStudentPfps = async () => {
   try {
     // Récupérer toutes les PFP depuis StudentsPhysio
@@ -1034,11 +967,11 @@ const fetchAllStudentPfps = async () => {
       .from('StudentsPhysio')
       .select('pfp_valided, pfp2_data')
       .eq('user_id', props.userId)
-      .maybeSingle()
+      .order('updated_at', { ascending: false })
 
     if (error) throw error
 
-    if (!data) {
+    if (!data || data.length === 0) {
       console.warn('Aucune PFP trouvée pour cet étudiant')
       allStudentPfps.value = []
       return
@@ -1046,30 +979,30 @@ const fetchAllStudentPfps = async () => {
 
     let allPfps = []
 
-    // Traiter pfp_valided
-    const pfpVal = data.pfp_valided
-    if (Array.isArray(pfpVal)) {
-      allPfps = pfpVal
-    } else if (typeof pfpVal === 'string') {
-      try {
-        allPfps = JSON.parse(pfpVal)
-      } catch (e) {
-        console.warn('Erreur parsing pfp_valided:', e)
-        allPfps = []
+    data.forEach((row) => {
+      const pfpVal = row?.pfp_valided
+      if (Array.isArray(pfpVal)) {
+        allPfps = [...allPfps, ...pfpVal]
+      } else if (typeof pfpVal === 'string') {
+        try {
+          const parsed = JSON.parse(pfpVal)
+          if (Array.isArray(parsed)) allPfps = [...allPfps, ...parsed]
+        } catch (e) {
+          console.warn('Erreur parsing pfp_valided:', e)
+        }
+      } else if (pfpVal && typeof pfpVal === 'object') {
+        allPfps = [...allPfps, ...Object.values(pfpVal)]
       }
-    } else if (pfpVal && typeof pfpVal === 'object') {
-      allPfps = Object.values(pfpVal)
-    }
 
-    // Traiter pfp2_data
-    const pfp2Val = data.pfp2_data
-    if (pfp2Val) {
-      if (Array.isArray(pfp2Val)) {
-        allPfps = [...allPfps, ...pfp2Val]
-      } else if (typeof pfp2Val === 'object') {
-        allPfps.push(pfp2Val)
+      const pfp2Val = row?.pfp2_data
+      if (pfp2Val) {
+        if (Array.isArray(pfp2Val)) {
+          allPfps = [...allPfps, ...pfp2Val]
+        } else if (typeof pfp2Val === 'object') {
+          allPfps.push(pfp2Val)
+        }
       }
-    }
+    })
 
     allStudentPfps.value = allPfps
     console.log('✅ Toutes les PFP chargées:', allPfps.length)
@@ -1077,25 +1010,6 @@ const fetchAllStudentPfps = async () => {
     console.error('Erreur lors du chargement des PFP:', error)
     allStudentPfps.value = []
   }
-}
-
-const filteredAllStudentPfps = computed(() => {
-  if (!managePfpsSearchQuery.value) {
-    return allStudentPfps.value
-  }
-
-  return allStudentPfps.value.filter(pfp => {
-    const searchText = managePfpsSearchQuery.value.toLowerCase()
-    return (
-      (pfp.NomPlace || pfp.nom_pfp || '').toLowerCase().includes(searchText) ||
-      (pfp.InstitutionName || pfp.institution_name || '').toLowerCase().includes(searchText) ||
-      (pfp.pfp_type || '').toLowerCase().includes(searchText)
-    )
-  })
-})
-
-const selectPfpToManage = (pfp) => {
-  selectedPfpToManage.value = pfp
 }
 
 const selectExistingPfp = (pfp) => {
@@ -1107,70 +1021,6 @@ const selectExistingPfp = (pfp) => {
   newAssignment.value.praticien_formateur = pfp.assigned_praticien_id || ''
   
   console.log('PFP existante sélectionnée:', pfp.NomPlace || pfp.nom_pfp)
-}
-
-const getPfpStatusClass = (pfp) => {
-  if (pfp.pfp_validee) return 'text-green-600 font-semibold'
-  if (pfp.pfp_echec) return 'text-red-600 font-semibold'
-  if (pfp.pfp_arret) return 'text-yellow-600 font-semibold'
-  return 'text-gray-600'
-}
-
-const getPfpStatusText = (pfp) => {
-  if (pfp.pfp_validee) return 'Validée'
-  if (pfp.pfp_echec) return 'Échec'
-  if (pfp.pfp_arret) return 'Arrêt'
-  return 'En cours'
-}
-
-const editPfp = async (pfp) => {
-  await fetchAvailablePraticiens()
-  selectedPfpToManage.value = pfp
-  
-  // Ouvrir la boîte de dialogue d'édition avec les données actuelles
-  editPraticienFormateurData.value = {
-    placeId: pfp.id_pfp || pfp.ID_PFP || pfp._key,
-    praticien_formateur: pfp.assigned_praticien_id || ''
-  }
-  showEditPraticienDialog.value = true
-}
-
-const deletePfp = async (pfp) => {
-  const pfpName = pfp.NomPlace || pfp.nom_pfp || 'cette PFP'
-  const institutionName = pfp.InstitutionName || pfp.institution_name || 'cette institution'
-  
-  const confirmation = window.confirm(
-    `Êtes-vous sûr de vouloir supprimer la PFP "${pfpName}" à "${institutionName}" ?\n\nCette action est irréversible et affectera les données de l\'étudiant.`
-  )
-  
-  if (!confirmation) return
-
-  try {
-    // Supprimer de StudentsPhysio
-    const { error } = await supabase
-      .from('StudentsPhysio')
-      .update({
-        pfp_valided: null, // Mettre à null pour supprimer toutes les PFP
-        pfp2_data: null
-      })
-      .eq('user_id', props.userId)
-
-    if (error) {
-      console.error('Erreur lors de la suppression des PFP:', error)
-      alert('Erreur lors de la suppression des PFP')
-      return
-    }
-
-    console.log('✅ Toutes les PFP supprimées avec succès')
-    
-    // Recharger les données
-    await fetchAllStudentPfps()
-    await fetchPublishedAssignments()
-    
-  } catch (error) {
-    console.error('Erreur inattendue lors de la suppression:', error)
-    alert('Erreur lors de la suppression des PFP')
-  }
 }
 
 const confirmDeleteAssignment = async (place) => {

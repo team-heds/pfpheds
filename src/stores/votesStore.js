@@ -18,6 +18,17 @@ import { defineStore } from 'pinia'
 import { supabase } from '@/supabase'
 import votesBackendService from '@/service/votesBackendService'
 
+const getAcademicYearKeys = (year) => {
+  const y = Number(year)
+  if (!Number.isFinite(y)) return [String(year)]
+  return [String(y), `${y - 1}-${y}`]
+}
+
+const isYearMatch = (candidateYear, selectedYear) => {
+  if (candidateYear === null || candidateYear === undefined || selectedYear === null || selectedYear === undefined) return false
+  return getAcademicYearKeys(selectedYear).includes(String(candidateYear))
+}
+
 export const useVotesStore = defineStore('votes', {
   state: () => ({
     votes: [],
@@ -32,14 +43,14 @@ export const useVotesStore = defineStore('votes', {
      * Récupère le vote pour un PFP type et une année donnés
      */
     getVoteByTypeAndYear: (state) => (pfpType, year) => {
-      return state.votes.find(v => v.pfp_type === pfpType && v.year === year)
+      return state.votes.find(v => v.pfp_type === pfpType && isYearMatch(v.year, year))
     },
 
     /**
      * Vérifie si un vote existe déjà
      */
     hasVoted: (state) => (pfpType, year) => {
-      return !!state.votes.find(v => v.pfp_type === pfpType && v.year === year)
+      return !!state.votes.find(v => v.pfp_type === pfpType && isYearMatch(v.year, year))
     }
   },
 
@@ -92,19 +103,21 @@ export const useVotesStore = defineStore('votes', {
           throw new Error('Utilisateur non connecté')
         }
 
+        const yearKeys = getAcademicYearKeys(year)
         const { data, error } = await supabase
           .from('student_votes')
           .select('*')
           .eq('user_id', user.id)
           .eq('pfp_type', pfpType)
-          .eq('year', year)
-          .maybeSingle()
+          .in('year', yearKeys)
+          .order('updated_at', { ascending: false })
+          .limit(1)
 
         if (error) throw error
 
-        this.currentVote = data
+        this.currentVote = data?.[0] || null
         
-        return data
+        return data?.[0] || null
       } catch (err) {
         console.error('❌ Erreur fetchVote:', err)
         this.error = err.message
@@ -162,9 +175,7 @@ export const useVotesStore = defineStore('votes', {
                 choices: payload.choices,
                 updated_at: payload.updated_at
               })
-              .eq('user_id', payload.user_id)
-              .eq('pfp_type', payload.pfp_type)
-              .eq('year', payload.year)
+              .eq('id', existingVote.id)
               .select()
               .single()
           } else {
@@ -195,7 +206,7 @@ export const useVotesStore = defineStore('votes', {
         
         // Mettre à jour la liste des votes
         const index = this.votes.findIndex(v => 
-          v.pfp_type === pfpType && v.year === year
+          v.pfp_type === pfpType && isYearMatch(v.year, year)
         )
         if (index >= 0) {
           this.votes[index] = data
@@ -227,21 +238,22 @@ export const useVotesStore = defineStore('votes', {
           throw new Error('Utilisateur non connecté')
         }
 
+        const yearKeys = getAcademicYearKeys(year)
         const { error } = await supabase
           .from('student_votes')
           .delete()
           .eq('user_id', user.id)
           .eq('pfp_type', pfpType)
-          .eq('year', year)
+          .in('year', yearKeys)
 
         if (error) throw error
 
         // Mettre à jour le state
         this.votes = this.votes.filter(v => 
-          !(v.pfp_type === pfpType && v.year === year)
+          !(v.pfp_type === pfpType && isYearMatch(v.year, year))
         )
         
-        if (this.currentVote?.pfp_type === pfpType && this.currentVote?.year === year) {
+        if (this.currentVote?.pfp_type === pfpType && isYearMatch(this.currentVote?.year, year)) {
           this.currentVote = null
         }
 

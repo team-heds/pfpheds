@@ -7,6 +7,11 @@ import { supabase } from '@/supabase'
 import axios from 'axios'
 
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || ''
+const getAcademicYearKeys = (year) => {
+  const y = Number(year)
+  if (!Number.isFinite(y)) return [String(year)]
+  return [String(y), `${y - 1}-${y}`]
+}
 
 export const resultatVotationService = {
   /**
@@ -376,11 +381,12 @@ export const resultatVotationService = {
    */
   async getResultsDirect(pfpType, year) {
     try {
+      const yearKeys = getAcademicYearKeys(year)
       const { data, error } = await supabase
         .from('student_result_vote')
         .select('*')
         .eq('pfp_type', pfpType)
-        .eq('year', year)
+        .in('year', yearKeys)
         .order('assigned_at', { ascending: false })
 
       if (error) throw error

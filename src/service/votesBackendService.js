@@ -5,6 +5,12 @@
 
 import { supabase } from '@/supabase'
 
+const getAcademicYearKeys = (year) => {
+  const y = Number(year)
+  if (!Number.isFinite(y)) return [String(year)]
+  return [String(y), `${y - 1}-${y}`]
+}
+
 export const votesBackendService = {
   /**
    * Récupère le vote d'un étudiant via une fonction RPC backend
@@ -199,7 +205,7 @@ export const votesBackendService = {
         query = query.eq('pfp_type', pfpType)
       }
       if (year) {
-        query = query.eq('year', year)
+        query = query.in('year', getAcademicYearKeys(year))
       }
 
       const { data, error } = await query

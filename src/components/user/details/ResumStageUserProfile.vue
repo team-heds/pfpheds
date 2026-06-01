@@ -130,7 +130,7 @@
         >
           <ul class="list-none p-0">
             <li
-              v-for="(doc, docIndex) in uploads[institutionsKey(place.IDPlace)].docs"
+              v-for="doc in uploads[institutionsKey(place.IDPlace)].docs"
               :key="doc.docId"
               class="flex align-items-center mb-2 gap-2"
             >
@@ -233,12 +233,14 @@ const selectedPFP1 = ref("");
 const currentUserId = ref("");
 const institutionsMap = ref({});
 const searchQuery = ref("");
+// eslint-disable-next-line no-unused-vars
 const filteredPlaces = computed(() =>
   placesList.value.filter(place =>
     getPlaceLabel(place).toLowerCase().includes(searchQuery.value.toLowerCase())
   )
 );
 
+// eslint-disable-next-line no-unused-vars
 function selectPlace(place) {
   selectedPFP1.value = place.IDPlace;
   searchQuery.value = getPlaceLabel(place);
@@ -402,6 +404,7 @@ async function fetchAllInstitutions() {
 
 
 // Fonction de mise à jour de la PFP1
+// eslint-disable-next-line no-unused-vars
 async function updatePFP1() {
   if (!currentUserId.value || !selectedPFP1.value) {
     console.warn('updatePFP1: currentUserId ou selectedPFP1 manquant', { currentUserId: currentUserId.value, selectedPFP1: selectedPFP1.value });
@@ -491,7 +494,6 @@ import InputText from "primevue/inputtext";
 import FileUpload from "primevue/fileupload";
 import Tag from "primevue/tag";
 import { useInstitutionsStore } from '@/stores/institutionsStore';
-import Institution from "@/views/institutions/Institution.vue";
 
 const toast = useToast();
 const router = useRouter();
@@ -569,7 +571,7 @@ const assignedPlaces = computed(() => {
     // Charger les critères depuis la place si disponible
     const placeData = placesFullMap.value.get(placeId)
     if (placeData) {
-      Object.entries(criteriaMap).forEach(([up, low]) => {
+      Object.entries(criteriaMap).forEach(([up]) => {
         item[up] = placeData[up] === true || placeData[up] === 'true' || placeData[up] === 1
       })
     } else {
@@ -712,47 +714,42 @@ async function fetchStudentPfpList() {
       .from('StudentsPhysio')
       .select('pfp_valided, pfp2_data')
       .eq('user_id', props.userId)
-      .maybeSingle()
+      .order('updated_at', { ascending: false })
     if (error) throw error
-    console.log('✅ Données StudentsPhysio:', data)
+    console.log('✅ Données StudentsPhysio:', data?.length || 0, 'lignes')
     
-    if (!data) {
+    if (!data || data.length === 0) {
       console.warn('⚠️ Aucune entrée StudentsPhysio pour cet utilisateur')
       studentPfpList.value = []
       return
     }
 
     let arr = []
-    
-    // Traiter pfp_valided (PFP1)
-    const pfpVal = data.pfp_valided
-    if (Array.isArray(pfpVal)) {
-      arr = pfpVal
-    }
-    // Cas 2: pfp_valided est une string JSON (ex: "[]" ou "[{...}]")
-    else if (typeof pfpVal === 'string') {
-      try {
-        const parsed = JSON.parse(pfpVal)
-        arr = Array.isArray(parsed) ? parsed : []
-      } catch (parseError) {
-        console.warn('⚠️ Impossible de parser pfp_valided:', pfpVal)
-        arr = []
+
+    data.forEach((row) => {
+      const pfpVal = row?.pfp_valided
+      if (Array.isArray(pfpVal)) {
+        arr = [...arr, ...pfpVal]
+      } else if (typeof pfpVal === 'string') {
+        try {
+          const parsed = JSON.parse(pfpVal)
+          if (Array.isArray(parsed)) arr = [...arr, ...parsed]
+        } catch (parseError) {
+          console.warn('⚠️ Impossible de parser pfp_valided:', pfpVal)
+        }
+      } else if (pfpVal && typeof pfpVal === 'object') {
+        arr = [...arr, ...Object.values(pfpVal)]
       }
-    }
-    // Cas 3: pfp_valided est un objet (legacy Firebase)
-    else if (pfpVal && typeof pfpVal === 'object') {
-      arr = Object.values(pfpVal)
-    }
-    
-    // Traiter pfp2_data (PFP2 BA24)
-    const pfp2Val = data.pfp2_data
-    if (pfp2Val) {
-      if (Array.isArray(pfp2Val)) {
-        arr = [...arr, ...pfp2Val]
-      } else if (typeof pfp2Val === 'object') {
-        arr.push(pfp2Val)
+
+      const pfp2Val = row?.pfp2_data
+      if (pfp2Val) {
+        if (Array.isArray(pfp2Val)) {
+          arr = [...arr, ...pfp2Val]
+        } else if (typeof pfp2Val === 'object') {
+          arr.push(pfp2Val)
+        }
       }
-    }
+    })
     
     studentPfpList.value = arr
     console.log('✅ PFP list chargée:', arr.length, 'entrées (pfp_valided + pfp2_data)', arr)
@@ -935,6 +932,7 @@ const aggregatedCriteria = computed(() => {
 });
 
 // Vérifie si l'étudiant a une PFP1 validée
+// eslint-disable-next-line no-unused-vars
 const hasPFP1 = computed(() => {
   return (studentPfpList.value || []).some(pfp => {
     const pfpType = pfp.pfp_type || pfp.type_pfp || ''
@@ -1063,11 +1061,6 @@ const uploadDocuments = async (institutionId, formationNumber) => {
   
   uploads.value[key].docs = existingDocs;
   uploads.value[key].newFiles = [];
-};
-
-const initRename = (doc) => {
-  doc.isRenaming = true;
-  doc.tempName = doc.fileName;
 };
 
 const cancelRename = (doc) => {
@@ -1201,13 +1194,6 @@ const getStageCardClass = (status) => {
 }
 
 
-const getPfpTagSeverity = (pfpType) => {
-  if (pfpType === 'PFP1' || pfpType === 'PFP1A' || pfpType === 'PFP1B') return 'info'
-  if (pfpType === 'PFP2') return 'warning'
-  if (pfpType === 'PFP3') return 'success'
-  if (pfpType === 'PFP4') return 'secondary'
-  return null
-}
 </script>
 
 <style scoped>

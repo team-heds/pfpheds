@@ -531,7 +531,7 @@ const fetchStudents = async () => {
   try {
     const [studentsData, physioResult, assignmentsResult, placesResult, institutionsResult] = await Promise.all([
       studentsService.getAllStudents(),
-      supabase.from('StudentsPhysio').select('user_id, pfp_valided'),
+      supabase.from('StudentsPhysio').select('user_id, pfp_valided, pfp2_data'),
       supabase.from('student_result_vote').select('*').order('year', { ascending: false }),
       supabase.from('places').select('*'),
       supabase.from('institutions').select('InstitutionId, Name')
@@ -565,15 +565,23 @@ const fetchStudents = async () => {
     const stagesMap = new Map()
     if (physioResult.data) {
       physioResult.data.forEach(physio => {
-        if (!physio.pfp_valided) return
-        const scores = {}
-        criteriaLabels.forEach(k => { scores[k] = 0 })
-        const pfpArray = parsePfpValided(physio.pfp_valided)
+        if (!physio.pfp_valided && !physio.pfp2_data) return
+        const existingCriteria = criteriaMap.get(physio.user_id) || {
+          scores: Object.fromEntries(criteriaLabels.map(k => [k, 0])),
+          totalStages: 0
+        }
+        const pfpArray = [
+          ...parsePfpValided(physio.pfp_valided),
+          ...parsePfpValided(physio.pfp2_data)
+        ]
         pfpArray.forEach(place => {
           const crit = extractCrit(place)
-          criteriaLabels.forEach(c => { if (crit[c]) scores[c]++ })
+          criteriaLabels.forEach(c => { if (crit[c]) existingCriteria.scores[c]++ })
         })
-        criteriaMap.set(physio.user_id, { scores, totalStages: pfpArray.length })
+        existingCriteria.totalStages += pfpArray.length
+        criteriaMap.set(physio.user_id, existingCriteria)
+
+        const previousStages = stagesMap.get(physio.user_id) || []
         const enrichedStages = pfpArray.map((stage, idx) => {
           const placeId = stage.PlaceId || stage.ID_PFP || stage.id_pfp
           const placeInfo = placeId ? placesMap.get(placeId) : null
@@ -586,7 +594,7 @@ const fetchStudents = async () => {
             _placeId: placeId || null
           }
         })
-        stagesMap.set(physio.user_id, enrichedStages)
+        stagesMap.set(physio.user_id, [...previousStages, ...enrichedStages])
       })
     }
 

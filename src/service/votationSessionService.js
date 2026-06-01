@@ -18,6 +18,11 @@
 import { supabase } from '@/supabase'
 
 const TABLE = 'votation_sessions'
+const getAcademicYearKeys = (year) => {
+  const y = Number(year)
+  if (!Number.isFinite(y)) return [String(year)]
+  return [String(y), `${y - 1}-${y}`]
+}
 
 const votationSessionService = {
 
@@ -38,16 +43,18 @@ const votationSessionService = {
    * Récupérer la session active pour un PFP donné
    */
   async getActiveSession(pfpType, year) {
+    const yearKeys = getAcademicYearKeys(year)
     const { data, error } = await supabase
       .from(TABLE)
       .select('*')
       .eq('pfp_type', pfpType)
-      .eq('year', year)
+      .in('year', yearKeys)
       .eq('status', 'open')
-      .maybeSingle()
+      .order('opened_at', { ascending: false })
+      .limit(1)
 
     if (error) throw error
-    return data
+    return data?.[0] || null
   },
 
   /**
@@ -93,6 +100,7 @@ const votationSessionService = {
    * Fermer une session de votation
    */
   async closeSession(pfpType, year) {
+    const yearKeys = getAcademicYearKeys(year)
     const { error } = await supabase
       .from(TABLE)
       .update({
@@ -100,7 +108,7 @@ const votationSessionService = {
         closed_at: new Date().toISOString()
       })
       .eq('pfp_type', pfpType)
-      .eq('year', year)
+      .in('year', yearKeys)
       .eq('status', 'open')
 
     if (error) throw error
@@ -148,7 +156,7 @@ const votationSessionService = {
       .from(TABLE)
       .delete()
       .eq('pfp_type', pfpType)
-      .eq('year', year)
+      .in('year', getAcademicYearKeys(year))
       .eq('is_priority', true)
       .eq('status', 'closed')
       .is('opened_at', null)
@@ -178,6 +186,7 @@ const votationSessionService = {
    * Fermer une session prioritaire
    */
   async closePrioritySession(pfpType, year) {
+    const yearKeys = getAcademicYearKeys(year)
     const { error } = await supabase
       .from(TABLE)
       .update({
@@ -185,7 +194,7 @@ const votationSessionService = {
         closed_at: new Date().toISOString()
       })
       .eq('pfp_type', pfpType)
-      .eq('year', year)
+      .in('year', yearKeys)
       .eq('status', 'open')
       .eq('is_priority', true)
 
@@ -196,17 +205,19 @@ const votationSessionService = {
    * Récupérer la session prioritaire active pour un PFP donné
    */
   async getActivePrioritySession(pfpType, year) {
+    const yearKeys = getAcademicYearKeys(year)
     const { data, error } = await supabase
       .from(TABLE)
       .select('*')
       .eq('pfp_type', pfpType)
-      .eq('year', year)
+      .in('year', yearKeys)
       .eq('status', 'open')
       .eq('is_priority', true)
-      .maybeSingle()
+      .order('opened_at', { ascending: false })
+      .limit(1)
 
     if (error) throw error
-    return data
+    return data?.[0] || null
   },
 
   /**
@@ -215,16 +226,18 @@ const votationSessionService = {
    * Upsert : si un brouillon existe déjà pour ce PFP/année, on le met à jour
    */
   async savePriorityDraft(pfpType, year, targetClass, priorityUserIds = [], reasons = {}) {
+    const yearKeys = getAcademicYearKeys(year)
     // Chercher un brouillon existant (closed + jamais ouvert)
     const { data: existing } = await supabase
       .from(TABLE)
       .select('id')
       .eq('pfp_type', pfpType)
-      .eq('year', year)
+      .in('year', yearKeys)
       .eq('is_priority', true)
       .eq('status', 'closed')
       .is('opened_at', null)
-      .maybeSingle()
+      .order('created_at', { ascending: false })
+      .limit(1)
 
     // Tenter avec priority_reasons, fallback sans si la colonne n'existe pas
     const tryWithReasons = (payload) => {
@@ -236,11 +249,11 @@ const votationSessionService = {
       return p
     }
 
-    if (existing) {
+    if (existing?.[0]) {
       const basePayload = { target_class: targetClass, priority_user_ids: priorityUserIds }
-      let res = await supabase.from(TABLE).update(tryWithReasons(basePayload)).eq('id', existing.id).select().single()
+      let res = await supabase.from(TABLE).update(tryWithReasons(basePayload)).eq('id', existing[0].id).select().single()
       if (res.error && res.error.message?.includes('priority_reasons')) {
-        res = await supabase.from(TABLE).update(tryWithoutReasons(basePayload)).eq('id', existing.id).select().single()
+        res = await supabase.from(TABLE).update(tryWithoutReasons(basePayload)).eq('id', existing[0].id).select().single()
       }
       if (res.error) throw res.error
       return res.data
@@ -259,30 +272,33 @@ const votationSessionService = {
    * Récupérer le brouillon prioritaire (draft) ou la session ouverte
    */
   async getPriorityDraftOrSession(pfpType, year) {
+    const yearKeys = getAcademicYearKeys(year)
     // Chercher d'abord une session ouverte
     const { data: openSession } = await supabase
       .from(TABLE)
       .select('*')
       .eq('pfp_type', pfpType)
-      .eq('year', year)
+      .in('year', yearKeys)
       .eq('is_priority', true)
       .eq('status', 'open')
-      .maybeSingle()
+      .order('opened_at', { ascending: false })
+      .limit(1)
 
-    if (openSession) return openSession
+    if (openSession?.[0]) return openSession[0]
 
     // Sinon chercher un brouillon (closed + jamais ouvert)
     const { data: draft } = await supabase
       .from(TABLE)
       .select('*')
       .eq('pfp_type', pfpType)
-      .eq('year', year)
+      .in('year', yearKeys)
       .eq('is_priority', true)
       .eq('status', 'closed')
       .is('opened_at', null)
-      .maybeSingle()
+      .order('created_at', { ascending: false })
+      .limit(1)
 
-    return draft || null
+    return draft?.[0] || null
   }
 }
 

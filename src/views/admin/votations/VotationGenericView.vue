@@ -14,7 +14,7 @@
         <i class="pi pi-lock text-4xl text-orange-500 mb-3"></i>
         <h2 class="text-900 m-0 mb-2">Votation fermée</h2>
         <p class="text-600 m-0 mb-3">Aucune votation n'est ouverte pour le moment. Veuillez réessayer plus tard.</p>
-        <Button label="Retour" icon="pi pi-arrow-left" outlined @click="goBackToProfile" />
+        <PrimeButton label="Retour" icon="pi pi-arrow-left" outlined @click="goBackToProfile" />
       </div>
     </div>
 
@@ -30,7 +30,7 @@
               <p class="header-subtitle">Année {{ selectedYear }} • {{ availablePlaces.length }} places disponibles</p>
             </div>
           </div>
-          <Button label="Retour" icon="pi pi-arrow-left" outlined @click="goBackToProfile" class="back-button" />
+          <PrimeButton label="Retour" icon="pi pi-arrow-left" outlined @click="goBackToProfile" class="back-button" />
         </div>
       </div>
 
@@ -358,7 +358,7 @@
           </Column>
           <Column header="Action" :style="{ width: '100px', textAlign: 'center' }">
             <template #body="slotProps">
-              <Button
+              <PrimeButton
                 icon="pi pi-times"
                 severity="danger"
                 text
@@ -379,7 +379,7 @@
             <span v-if="!voteAlreadyCast">Sélectionnez jusqu'à 5 places par ordre de préférence</span>
             <span v-else>Modifiez vos choix et cliquez sur "Mettre à jour" pour enregistrer les changements</span>
           </div>
-          <Button
+          <PrimeButton
             :label="voteAlreadyCast ? 'Mettre à jour mon vote' : 'Envoyer mon vote'"
             :icon="voteAlreadyCast ? 'pi pi-refresh' : 'pi pi-send'"
             @click="sendVote"
@@ -393,7 +393,7 @@
     </div>
 
     <!-- Dialogue de confirmation moderne -->
-    <Dialog
+    <PrimeDialog
       v-model:visible="dialogVisible"
       :modal="true"
       :closable="false"
@@ -408,9 +408,9 @@
       </template>
       <p class="dialog-message">{{ dialogMessage }}</p>
       <template #footer>
-        <Button label="OK" icon="pi pi-check" @click="closeDialog" autofocus />
+        <PrimeButton label="OK" icon="pi pi-check" @click="closeDialog" autofocus />
       </template>
-    </Dialog>
+    </PrimeDialog>
   </AdminLayout>
 </template>
 
@@ -418,8 +418,8 @@
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import RadioButton from 'primevue/radiobutton';
-import Dialog from 'primevue/dialog';
-import Button from 'primevue/button';
+import PrimeDialog from 'primevue/dialog';
+import PrimeButton from 'primevue/button';
 import Tag from 'primevue/tag';
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 import { useInstitutionsStore } from '@/stores/institutionsStore'
@@ -437,8 +437,8 @@ export default {
     DataTable,
     Column,
     RadioButton,
-    Dialog,
-    Button,
+    PrimeDialog,
+    PrimeButton,
     Tag,
     AdminLayout
   },
@@ -524,12 +524,17 @@ export default {
       return undefined
     },
 
+    normalizeId(value) {
+      return value === null || value === undefined ? '' : String(value)
+    },
+
     async loadSession() {
       this.sessionLoading = true
       try {
         // Lire le pfpType depuis le paramètre de route
         const routePfpType = this.$route.params.pfpType
         const currentUserId = this.userStore.user?.id || null
+        const currentUserIdNormalized = this.normalizeId(currentUserId)
 
         // Helper: filtre les sessions prioritaires pour l'étudiant courant
         const filterSessionForUser = (sessions) => {
@@ -537,8 +542,10 @@ export default {
           for (const session of sessions) {
             if (session.is_priority) {
               // Session prioritaire : seuls les étudiants dans priority_user_ids y ont accès
-              const allowedIds = session.priority_user_ids || []
-              if (currentUserId && Array.isArray(allowedIds) && allowedIds.includes(currentUserId)) {
+              const allowedIds = Array.isArray(session.priority_user_ids)
+                ? session.priority_user_ids.map(id => this.normalizeId(id))
+                : []
+              if (currentUserIdNormalized && allowedIds.includes(currentUserIdNormalized)) {
                 return session
               }
               // Étudiant non-prioritaire → ignorer cette session
@@ -584,7 +591,7 @@ export default {
             const prioritySession = allSessions.find(s =>
               s.is_priority &&
               Array.isArray(s.priority_user_ids) &&
-              s.priority_user_ids.includes(currentUserId)
+              s.priority_user_ids.map(id => this.normalizeId(id)).includes(currentUserIdNormalized)
             )
             if (prioritySession) {
               console.log(`✅ Session prioritaire trouvée via fallback: ${prioritySession.pfp_type}`)
@@ -764,7 +771,7 @@ export default {
           const yr = String(this.selectedYear);
           // Si la clé year existe explicitement, l'utiliser (même si "0")
           // Ne fallback sur default QUE si la clé year n'existe pas du tout
-          if (fieldData.hasOwnProperty(yr) && fieldData[yr] !== '' && fieldData[yr] !== null && fieldData[yr] !== undefined) {
+          if (Object.prototype.hasOwnProperty.call(fieldData, yr) && fieldData[yr] !== '' && fieldData[yr] !== null && fieldData[yr] !== undefined) {
             count = parseInt(fieldData[yr]) || 0;
           } else {
             const academicVal = this.getValueForYearKey(fieldData, this.selectedYear)

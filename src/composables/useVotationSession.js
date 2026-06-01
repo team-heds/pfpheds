@@ -2,6 +2,12 @@ import { ref, computed } from 'vue'
 import { supabase } from '@/supabase'
 import votationSessionService from '@/service/votationSessionService'
 
+const getAcademicYearKeys = (year) => {
+  const y = Number(year)
+  if (!Number.isFinite(y)) return [String(year)]
+  return [String(y), `${y - 1}-${y}`]
+}
+
 export function useVotationSession(toast, userStore) {
   const currentSession = ref(null)
   const showSessionDialog = ref(false)
@@ -26,7 +32,7 @@ export function useVotationSession(toast, userStore) {
     }
   }
 
-  const openVotation = async (classe, pfpType, year, validatedPlacesCount, validatedPlacesCapacity) => {
+  const openVotation = async (classe, pfpType, year) => {
     if (!classe || !pfpType || !year) {
       toast.add({ severity: 'warn', summary: 'Sélection incomplète', detail: 'Veuillez sélectionner une classe, un PFP et une année', life: 3000 })
       return
@@ -78,11 +84,12 @@ export function useVotationSession(toast, userStore) {
       const allSessions = await votationSessionService.fetchAll()
       const enriched = await Promise.all(allSessions.map(async (session) => {
         try {
+          const yearKeys = getAcademicYearKeys(session.year)
           const { count } = await supabase
             .from('student_votes')
             .select('*', { count: 'exact', head: true })
             .eq('pfp_type', session.pfp_type)
-            .eq('year', session.year)
+            .in('year', yearKeys)
           return { ...session, voteCount: count || 0 }
         } catch {
           return { ...session, voteCount: '?' }
