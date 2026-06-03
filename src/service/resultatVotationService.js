@@ -55,6 +55,37 @@ export const resultatVotationService = {
   },
 
   /**
+   * Récupère le nombre d'assignations par place pour un PFP et une année
+   * @param {string} pfpType - Type de PFP
+   * @param {string} year - Année
+   * @returns {Promise<Object>} { placeId: count }
+   */
+  async getAssignmentCounts(pfpType, year) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('Authentication required')
+
+      const response = await axios.get(
+        `${API_BASE_URL}/api/resultat-votation/assignment-counts/${pfpType}/${year}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`
+          }
+        }
+      )
+
+      if (!response.data.ok) {
+        throw new Error(response.data.error || 'Failed to fetch assignment counts')
+      }
+
+      return response.data.counts || {}
+    } catch (err) {
+      console.error('❌ Erreur getAssignmentCounts:', err)
+      throw err
+    }
+  },
+
+  /**
    * Récupère les propositions PFP3 pour l'étudiant connecté
    * @param {string} year - Année
    * @returns {Promise<Array|null>} Liste des PlaceIds proposés ou null

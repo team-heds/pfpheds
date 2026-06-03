@@ -565,16 +565,12 @@ export default {
       }
 
       const scores = Object.fromEntries(CRITERIA_KEYS.map(key => [key, 0]))
-      const yearKeys = this.getAcademicYearKeys(this.selectedYear)
-
       const [physioResult, assignmentsResult] = await Promise.all([
         supabase
           .from('StudentsPhysio')
           .select('pfp_valided, year')
           .eq('user_id', userId)
-          .in('year', yearKeys)
-          .order('year', { ascending: false })
-          .limit(1),
+          .order('year', { ascending: false }),
         supabase
           .from('student_result_vote')
           .select('pfp_type, assigned_place_id, pfp_validee')
@@ -588,12 +584,20 @@ export default {
         throw assignmentsResult.error
       }
 
-      const physioRow = Array.isArray(physioResult.data) ? physioResult.data[0] : null
-      const validatedStages = this.parsePfpValided(physioRow?.pfp_valided)
-      const knownStages = validatedStages.map((stage, index) => ({
-        _placeId: stage.PlaceId || stage.ID_PFP || stage.id_pfp || null,
-        pfp_type: stage.pfp_type || stage.pfpLevel || ['PFP1', 'PFP2', 'PFP3', 'PFP4'][index] || null
-      }))
+      let validatedStages = []
+      const physioRows = Array.isArray(physioResult.data) ? physioResult.data : []
+      for (const row of physioRows) {
+        const parsed = this.parsePfpValided(row?.pfp_valided)
+        if (parsed.length > 0) {
+          validatedStages = parsed
+          break
+        }
+      }
+      const knownPlaceIds = new Set(
+        validatedStages
+          .map(stage => stage.PlaceId || stage.ID_PFP || stage.id_pfp || null)
+          .filter(Boolean)
+      )
 
       validatedStages.forEach(stage => {
         const criteria = this.extractCriteriaFromObject(stage)
@@ -605,12 +609,7 @@ export default {
       const placeCriteriaById = new Map(this.places.map(place => [place.PlaceId, place]))
       ;(assignmentsResult.data || []).forEach(assignment => {
         if (!assignment.pfp_validee || !assignment.assigned_place_id) return
-
-        const alreadyExists = knownStages.some(stage =>
-          (stage._placeId && stage._placeId === assignment.assigned_place_id) ||
-          (stage.pfp_type && stage.pfp_type === assignment.pfp_type)
-        )
-        if (alreadyExists) return
+        if (knownPlaceIds.has(assignment.assigned_place_id)) return
 
         const place = placeCriteriaById.get(assignment.assigned_place_id)
         if (!place) return
@@ -618,12 +617,60 @@ export default {
         CRITERIA_KEYS.forEach(key => {
           if (place[key]) scores[key]++
         })
+        knownPlaceIds.add(assignment.assigned_place_id)
       })
 
       const missingCriteria = CRITERIA_KEYS.filter(key => scores[key] === 0)
       this.pfp4MissingCriteria = missingCriteria
       this.pfp4AppliedRule = this.targetPFP === 'PFP3' ? 'PFP3_CRITERIA_SORT' : this.pfp4AppliedRule
       console.log(`🎯 ${this.targetPFP} critères manquants calculés:`, missingCriteria)
+    },
+
+    async loadProposalsFromSessionDirect() {
+      const userId = this.userStore.profile?.user_id || this.userStore.user?.id || null
+      if (!userId || !this.targetPFP || !this.selectedYear) {
+        return null
+      }
+
+      const activeMap = this.activeSession?.pfp4_proposals
+      if (activeMap && typeof activeMap === 'object') {
+        const directStudentProposal = activeMap[userId] || null
+        return {
+          proposedPlaceIds: directStudentProposal?.placeIds || null,
+          missingCriteria: directStudentProposal?.missingCriteria || [],
+          appliedRule: directStudentProposal?.appliedRule || null,
+          assignCounts: activeMap._assignCounts || {}
+        }
+      }
+
+      let query = supabase
+        .from('votation_sessions')
+        .select('id, pfp4_proposals, created_at')
+        .eq('pfp_type', this.targetPFP)
+        .eq('year', this.selectedYear)
+
+      if (this.activeSession?.target_class) {
+        query = query.eq('target_class', this.activeSession.target_class)
+      }
+
+      const { data: sessions, error } = await query
+        .order('created_at', { ascending: false })
+        .limit(1)
+
+      if (error) {
+        throw error
+      }
+
+      const session = Array.isArray(sessions) ? sessions[0] : null
+      const map = session?.pfp4_proposals || {}
+      const studentProposal = map[userId] || null
+
+      return {
+        proposedPlaceIds: studentProposal?.placeIds || null,
+        missingCriteria: studentProposal?.missingCriteria || [],
+        appliedRule: studentProposal?.appliedRule || null,
+        assignCounts: map._assignCounts || {}
+      }
     },
 
     async refreshSessionAndData() {
@@ -792,12 +839,68 @@ export default {
       this.pfp4MissingCriteria = []
       this.pfp4AppliedRule = null
 
+      try {
+        this.pfp4AssignCountByPlace = await resultatVotationService.getAssignmentCounts(this.targetPFP, this.selectedYear)
+      } catch (assignmentReadError) {
+        console.warn(`⚠️ Lecture assignations ${this.targetPFP} via backend échouée:`, assignmentReadError.message)
+        try {
+          const { data: assignedRows, error: assignedError } = await supabase
+            .from('student_result_vote')
+            .select('assigned_place_id')
+            .eq('pfp_type', this.targetPFP)
+            .eq('year', this.selectedYear)
+            .not('assigned_place_id', 'is', null)
+
+          if (assignedError) {
+            throw assignedError
+          }
+
+          const assignCountByPlace = {}
+          ;(assignedRows || []).forEach(row => {
+            const placeId = row.assigned_place_id
+            if (!placeId) return
+            assignCountByPlace[placeId] = (assignCountByPlace[placeId] || 0) + 1
+          })
+          this.pfp4AssignCountByPlace = assignCountByPlace
+        } catch (directReadError) {
+          console.warn(`⚠️ Lecture assignations ${this.targetPFP} via Supabase échouée:`, directReadError.message)
+          try {
+            const fromSession = await this.loadProposalsFromSessionDirect()
+            if (fromSession?.assignCounts && Object.keys(fromSession.assignCounts).length > 0) {
+              this.pfp4AssignCountByPlace = fromSession.assignCounts
+            }
+          } catch (sessionFallbackError) {
+            console.warn(`⚠️ Lecture assignations ${this.targetPFP} via session échouée:`, sessionFallbackError.message)
+          }
+        }
+      }
+
+      try {
+        const fromSession = await this.loadProposalsFromSessionDirect()
+        if (fromSession?.assignCounts && Object.keys(fromSession.assignCounts).length > 0) {
+          Object.entries(fromSession.assignCounts).forEach(([placeId, value]) => {
+            const n = Number(value) || 0
+            if (!this.pfp4AssignCountByPlace[placeId] || this.pfp4AssignCountByPlace[placeId] < n) {
+              this.pfp4AssignCountByPlace[placeId] = n
+            }
+          })
+        }
+      } catch (sessionCountsError) {
+        console.warn(`⚠️ Fusion assignations session ${this.targetPFP} échouée:`, sessionCountsError.message)
+      }
+
       // Pour PFP4: charger les propositions personnalisées et les assignations existantes
       if (this.targetPFP === 'PFP4' && this.selectedYear) {
         try {
           const result = await resultatVotationService.getPfp4Proposals(this.selectedYear)
           this.pfp4ProposedPlaceIds = result.proposedPlaceIds
-          this.pfp4AssignCountByPlace = result.assignCounts || {}
+          const proposalAssignCounts = result.assignCounts || {}
+          Object.entries(proposalAssignCounts).forEach(([placeId, value]) => {
+            const nextValue = Number(value) || 0
+            if (!this.pfp4AssignCountByPlace[placeId] || this.pfp4AssignCountByPlace[placeId] < nextValue) {
+              this.pfp4AssignCountByPlace[placeId] = nextValue
+            }
+          })
           this.pfp4MissingCriteria = result.missingCriteria || []
           this.pfp4AppliedRule = result.appliedRule || null
           console.log('🎯 PFP4 propositions chargées:', result.proposedPlaceIds ? result.proposedPlaceIds.length + ' places' : 'aucune (toutes visibles)')
@@ -815,7 +918,13 @@ export default {
         try {
           const result = await resultatVotationService.getPfp3Proposals(this.selectedYear)
           this.pfp4ProposedPlaceIds = result.proposedPlaceIds
-          this.pfp4AssignCountByPlace = result.assignCounts || {}
+          const proposalAssignCounts = result.assignCounts || {}
+          Object.entries(proposalAssignCounts).forEach(([placeId, value]) => {
+            const nextValue = Number(value) || 0
+            if (!this.pfp4AssignCountByPlace[placeId] || this.pfp4AssignCountByPlace[placeId] < nextValue) {
+              this.pfp4AssignCountByPlace[placeId] = nextValue
+            }
+          })
           this.pfp4MissingCriteria = result.missingCriteria || []
           this.pfp4AppliedRule = result.appliedRule || null
 
@@ -827,7 +936,24 @@ export default {
         } catch (err) {
           console.warn('⚠️ Impossible de charger les propositions PFP3:', err.message)
           try {
-            await this.loadMissingCriteriaFromStudentData()
+            const direct = await this.loadProposalsFromSessionDirect()
+            if (direct?.proposedPlaceIds && Array.isArray(direct.proposedPlaceIds)) {
+              this.pfp4ProposedPlaceIds = direct.proposedPlaceIds
+              if (direct.assignCounts && Object.keys(direct.assignCounts).length > 0) {
+                this.pfp4AssignCountByPlace = {
+                  ...this.pfp4AssignCountByPlace,
+                  ...direct.assignCounts
+                }
+              }
+              this.pfp4MissingCriteria = direct.missingCriteria || []
+              this.pfp4AppliedRule = direct.appliedRule || null
+              if (!this.pfp4MissingCriteria.length) {
+                await this.loadMissingCriteriaFromStudentData()
+              }
+              console.log('🎯 PFP3 propositions chargées via session:', this.pfp4ProposedPlaceIds.length)
+            } else {
+              await this.loadMissingCriteriaFromStudentData()
+            }
           } catch (fallbackErr) {
             console.warn('⚠️ Impossible de charger les critères manquants PFP3:', fallbackErr.message)
             this.pfp4MissingCriteria = []
@@ -911,10 +1037,15 @@ export default {
 
       sorted.forEach(place => {
         let count = 0;
-        // Pour PFP4: utiliser pfp4_proposition (colonne "Proposition PFP4" de ManagementOffreView)
-        const pfpField = this.targetPFP === 'PFP4' ? 'pfp4_proposition' : this.targetPFP;
-        if (place[pfpField]) {
-          const fieldData = place[pfpField];
+        const pfpFieldCandidates = [
+          `${String(this.targetPFP || '').toLowerCase()}_proposition`,
+          this.targetPFP
+        ]
+        const fieldData = pfpFieldCandidates
+          .map(field => place[field])
+          .find(val => val && typeof val === 'object')
+
+        if (fieldData) {
           const yr = String(this.selectedYear);
           // Si la clé year existe explicitement, l'utiliser (même si "0")
           // Ne fallback sur default QUE si la clé year n'existe pas du tout
@@ -930,9 +1061,23 @@ export default {
             }
           }
         }
-        // Pour PFP4: soustraire les sièges déjà assignés
-        if (this.targetPFP === 'PFP4' && this.pfp4AssignCountByPlace[place.PlaceId]) {
+        const baseCapacity = count
+        // Soustraire les sièges déjà assignés pour le PFP courant
+        const assignedCount = this.pfp4AssignCountByPlace[place.PlaceId] || 0
+        if (this.pfp4AssignCountByPlace[place.PlaceId]) {
           count -= this.pfp4AssignCountByPlace[place.PlaceId];
+        }
+
+        if ((place.NomPlace || '').toLowerCase().includes('leukerbad')) {
+          console.log('🎯 DEBUG Leukerbad', {
+            pfp: this.targetPFP,
+            year: this.selectedYear,
+            placeId: place.PlaceId,
+            placeName: place.NomPlace,
+            baseCapacity,
+            assignedCount,
+            remaining: count
+          })
         }
 
         if (!isNaN(count) && count >= 1) {

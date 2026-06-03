@@ -768,12 +768,67 @@ const loadAllData = async () => {
     allPraticiens.value = praticiensResult.data || []
     allPrioritySessions.value = prioResult.data || []
 
+    await syncSessionAssignCounts()
+
     console.log(`✅ Données chargées: ${allStudents.value.length} étudiants, ${allAssignments.value.length} assignations, ${allPlaces.value.length} places`)
   } catch (e) {
     console.error('❌ Erreur chargement:', e)
     toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les données: ' + e.message, life: 5000 })
   } finally {
     loading.value = false
+  }
+}
+
+const syncSessionAssignCounts = async () => {
+  try {
+    const year = selectedYear.value
+    const types = ['PFP1A', 'PFP1B', 'PFP2', 'PFP3', 'PFP4']
+
+    for (const pfpType of types) {
+      const { data: assignments, error: assignmentsError } = await supabase
+        .from('student_result_vote')
+        .select('assigned_place_id')
+        .eq('pfp_type', pfpType)
+        .eq('year', year)
+        .not('assigned_place_id', 'is', null)
+
+      if (assignmentsError) throw assignmentsError
+
+      const assignCounts = {}
+      ;(assignments || []).forEach(a => {
+        const placeId = a.assigned_place_id
+        if (!placeId) return
+        assignCounts[placeId] = (assignCounts[placeId] || 0) + 1
+      })
+
+      const { data: sessions, error: sessionsError } = await supabase
+        .from('votation_sessions')
+        .select('id, pfp4_proposals')
+        .eq('pfp_type', pfpType)
+        .eq('year', year)
+
+      if (sessionsError) throw sessionsError
+
+      for (const session of (sessions || [])) {
+        const existingMap = session.pfp4_proposals && typeof session.pfp4_proposals === 'object'
+          ? session.pfp4_proposals
+          : {}
+
+        const nextMap = {
+          ...existingMap,
+          _assignCounts: assignCounts
+        }
+
+        const { error: updateError } = await supabase
+          .from('votation_sessions')
+          .update({ pfp4_proposals: nextMap })
+          .eq('id', session.id)
+
+        if (updateError) throw updateError
+      }
+    }
+  } catch (e) {
+    console.warn('⚠️ Sync _assignCounts votation_sessions échouée:', e.message)
   }
 }
 
@@ -829,6 +884,8 @@ const saveAssignment = async () => {
 
       if (error) throw error
     }
+
+    await syncSessionAssignCounts()
 
     toast.add({ severity: 'success', summary: 'Succès', detail: `Place assignée pour ${editingRow.value.student_name}`, life: 3000 })
     assignDialogVisible.value = false

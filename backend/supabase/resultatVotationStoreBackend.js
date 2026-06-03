@@ -452,6 +452,43 @@ router.get('/pfp3-proposals/:year', setUser, async (req, res) => {
 })
 
 /**
+ * GET /api/resultat-votation/assignment-counts/:pfpType/:year
+ * Renvoie le nombre de places déjà assignées par place pour un PFP/année
+ */
+router.get('/assignment-counts/:pfpType/:year', setUser, async (req, res) => {
+  try {
+    const { pfpType, year } = req.params
+
+    if (!req.user) {
+      return res.status(401).json({ ok: false, error: 'Authentication required' })
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('student_result_vote')
+      .select('assigned_place_id')
+      .eq('pfp_type', pfpType)
+      .eq('year', year)
+      .not('assigned_place_id', 'is', null)
+
+    if (error) {
+      throw error
+    }
+
+    const counts = {}
+    ;(data || []).forEach(row => {
+      const placeId = row.assigned_place_id
+      if (!placeId) return
+      counts[placeId] = (counts[placeId] || 0) + 1
+    })
+
+    return res.json({ ok: true, counts })
+  } catch (error) {
+    console.error('❌ Erreur assignment-counts:', error)
+    return res.status(500).json({ ok: false, error: error.message })
+  }
+})
+
+/**
  * POST /api/resultat-votation/save-pfp3-proposals
  * Sauvegarde les propositions PFP3 validées par l'admin
  * Stocke dans la table votation_sessions avec les propositions par étudiant
