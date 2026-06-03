@@ -646,6 +646,44 @@ const assignedPlaces = computed(() => {
     results.push(item)
   })
 
+  // Pour les stages en attente sur la même place, garder uniquement l'entrée la plus récente
+  const latestPendingByPlace = new Map()
+  results.forEach((item) => {
+    const isPending = !item.status || item.status === 'en_attente'
+    const placeId = item.IDPlace || null
+    if (!isPending || !placeId) return
+
+    const current = latestPendingByPlace.get(placeId)
+    if (!current) {
+      latestPendingByPlace.set(placeId, item)
+      return
+    }
+
+    const currentYear = getYearSortValue(current.year)
+    const itemYear = getYearSortValue(item.year)
+    if (itemYear > currentYear) {
+      latestPendingByPlace.set(placeId, item)
+      return
+    }
+    if (itemYear === currentYear) {
+      const currentFp = current._fpNumber || 0
+      const itemFp = item._fpNumber || 0
+      if (itemFp > currentFp) {
+        latestPendingByPlace.set(placeId, item)
+      }
+    }
+  })
+
+  const filteredResults = results.filter((item) => {
+    const isPending = !item.status || item.status === 'en_attente'
+    const placeId = item.IDPlace || null
+    if (!isPending || !placeId) return true
+    return latestPendingByPlace.get(placeId) === item
+  })
+
+  results.length = 0
+  results.push(...filteredResults)
+
   // Trier d'abord par année (chronologique), puis par type de FP
   results.sort((a, b) => {
     const yearA = getYearSortValue(a.year)
