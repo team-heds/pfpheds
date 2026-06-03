@@ -5,9 +5,15 @@
       <div class="filter-menu p-fluid p-pt-4 p-pb-4">
         <div>
           <CardNameProfile />
-          <VotationResultProfil :userId="user.uid" class="w-full" />
-          <!-- Radar profil stage + critères validés -->
-          <RadarProfil :scores="radarScores" :totalStages="totalStages" />
+          <VotationResultProfil v-if="user.uid" :userId="user.uid" class="w-full" />
+          <div v-if="isProfileLoading" class="profile-loading-card">
+            <i class="pi pi-spin pi-spinner mr-2"></i>
+            Chargement du profil et des stages...
+          </div>
+          <div v-else-if="profileLoadError" class="profile-loading-card error">
+            <i class="pi pi-exclamation-triangle mr-2"></i>
+            {{ profileLoadError }}
+          </div>
           <!-- Résumé du stage utilisateur -->
           <ResumStageUserProfile :userProfile="userProfile" :userId="user.uid" class="w-full" />
           <!-- On passe l'ID de l'utilisateur au composant -->
@@ -51,15 +57,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { supabase } from '@/supabase';
+import { extractStudentsPhysioFieldEntries } from '@/utils/profileStages';
 
 import CardNameProfile from '@/components/user/library/CardNameProfile.vue'
 import ResumStageUserProfile from '@/components/user/details/ResumStageUserProfile.vue'
 import VotationResultProfil from '@/components/user/details/VotationResultProfil.vue'
 import ProfileAdminRightSidebar from '@/components/user/library/ProfileAdminRightSidebar.vue'
-import RadarProfil from '@/components/user/details/RadarProfil.vue'
 
 const defaultAvatar = '../../../public/assets/images/avatar/01.jpg';
 
@@ -90,13 +96,8 @@ const fetchUserProfileById = async (userId) => {
 
     if (data && data.length > 0) {
       const latestRow = data[0]
-      let mergedPfpValided = []
-      let mergedPfp2Data = []
-
-      data.forEach((row) => {
-        mergedPfpValided = [...mergedPfpValided, ...parsePfpValided(row?.pfp_valided)]
-        mergedPfp2Data = [...mergedPfp2Data, ...parsePfpValided(row?.pfp2_data)]
-      })
+      const mergedPfpValided = extractStudentsPhysioFieldEntries(data, ['pfp_valided'])
+      const mergedPfp2Data = extractStudentsPhysioFieldEntries(data, ['pfp2_data'])
 
       userProfile.value = {
         ...latestRow,
@@ -116,159 +117,38 @@ const fetchUserProfileById = async (userId) => {
 const route = useRoute();
 
 const userProfile = ref(null);
-const validatedAssignments = ref([])
-const placesCriteriaMap = ref(new Map())
-const criteriaLabels = [
-  "MSQ",
-  "SYSINT",
-  "NEUROGER",
-  "AIGU",
-  "REHAB",
-  "AMBU",
-  "FR",
-  "DE"
-];
+const isProfileLoading = ref(false)
+const profileLoadError = ref('')
 
-// Parser pfp_valided (peut être string JSON, array ou objet)
-const parsePfpValided = (pfpVal) => {
-  if (!pfpVal) return []
-  if (Array.isArray(pfpVal)) return pfpVal
-  if (typeof pfpVal === 'string') {
-    try {
-      const parsed = JSON.parse(pfpVal)
-      return Array.isArray(parsed) ? parsed : []
-    } catch (e) {
-      return []
-    }
+const loadProfileData = async (userId) => {
+  if (!userId) {
+    user.value.uid = ''
+    userProfile.value = null
+    profileLoadError.value = "Aucun ID d'utilisateur fourni dans l'URL"
+    return
   }
-  if (typeof pfpVal === 'object') return Object.values(pfpVal)
-  return []
-}
 
-const parseBoolean = (value) => {
-  if (value === true || value === 1) return true
-  if (typeof value === 'string') {
-    const normalized = value.trim().toLowerCase()
-    return normalized === 'true' || normalized === '1'
-  }
-  return false
-}
+  isProfileLoading.value = true
+  profileLoadError.value = ''
+  user.value.uid = userId
 
-const normalizePfp = (pfpType) => (pfpType === 'PFP1A' || pfpType === 'PFP1B' ? 'PFP1' : pfpType)
-
-const getUnifiedPhysioStages = (profile) => {
-  if (!profile) return []
-  const pfpStages = parsePfpValided(profile.pfp_valided)
-  const pfp2Stages = parsePfpValided(profile.pfp2_data)
-  return [...pfpStages, ...pfp2Stages]
-}
-
-const buildStageKey = (placeId, pfpType, fallback) => {
-  if (!placeId && !pfpType) return fallback
-  return `${placeId || 'unknown'}__${normalizePfp(pfpType || '') || 'unknown'}`
-}
-
-const loadValidatedHistory = async (userId) => {
-  if (!userId) return
   try {
-    const [{ data: assignmentRows, error: assignmentError }, { data: placesRows, error: placesError }] = await Promise.all([
-      supabase
-        .from('student_result_vote')
-        .select('assigned_place_id, pfp_type, pfp_validee')
-        .eq('user_id', userId),
-      supabase
-        .from('places')
-        .select('PlaceId, MSQ, SYSINT, NEUROGER, AIGU, REHAB, AMBU, FR, DE')
-    ])
-
-    if (assignmentError) {
-      console.warn('Erreur chargement student_result_vote (profil):', assignmentError.message)
-      validatedAssignments.value = []
-    } else {
-      validatedAssignments.value = (assignmentRows || []).filter(row => parseBoolean(row?.pfp_validee))
-    }
-
-    if (placesError) {
-      console.warn('Erreur chargement places (profil):', placesError.message)
-      placesCriteriaMap.value = new Map()
-    } else {
-      const map = new Map()
-      ;(placesRows || []).forEach(place => {
-        map.set(place.PlaceId, place)
-      })
-      placesCriteriaMap.value = map
-    }
+    await fetchUserProfileById(userId)
   } catch (error) {
-    console.warn('Erreur chargement historique validé (profil):', error.message)
-    validatedAssignments.value = []
-    placesCriteriaMap.value = new Map()
+    profileLoadError.value = 'Erreur pendant le chargement du profil.'
+    console.warn('Erreur loadProfileData:', error?.message || error)
+  } finally {
+    isProfileLoading.value = false
   }
 }
 
-// Agrégation des scores radar par critère (nombre de validations)
-const radarScores = computed(() => {
-  const scores = Object.fromEntries(criteriaLabels.map(k => [k, 0]));
-  const seenStages = new Set()
-
-  getUnifiedPhysioStages(userProfile.value).forEach((place, idx) => {
-    const placeId = place?.PlaceId || place?.ID_PFP || place?.id_pfp || null
-    const pfpType = place?.pfp_type || place?.pfpLevel || null
-    const stageKey = buildStageKey(placeId, pfpType, `physio_${idx}`)
-    if (seenStages.has(stageKey)) return
-    seenStages.add(stageKey)
-
-    criteriaLabels.forEach(crit => {
-      if (parseBoolean(place?.[crit]) || parseBoolean(place?.[crit.toLowerCase()])) scores[crit]++
-    })
-  })
-
-  validatedAssignments.value.forEach((assignment, idx) => {
-    const placeId = assignment?.assigned_place_id || null
-    const pfpType = assignment?.pfp_type || null
-    const stageKey = buildStageKey(placeId, pfpType, `assignment_${idx}`)
-    if (seenStages.has(stageKey)) return
-    seenStages.add(stageKey)
-
-    const placeData = placesCriteriaMap.value.get(placeId)
-    if (!placeData) return
-    criteriaLabels.forEach(crit => {
-      if (parseBoolean(placeData?.[crit])) scores[crit]++
-    })
-  })
-
-  return scores;
-});
-
-const totalStages = computed(() => {
-  const seenStages = new Set()
-
-  getUnifiedPhysioStages(userProfile.value).forEach((place, idx) => {
-    const placeId = place?.PlaceId || place?.ID_PFP || place?.id_pfp || null
-    const pfpType = place?.pfp_type || place?.pfpLevel || null
-    seenStages.add(buildStageKey(placeId, pfpType, `physio_${idx}`))
-  })
-
-  validatedAssignments.value.forEach((assignment, idx) => {
-    const placeId = assignment?.assigned_place_id || null
-    const pfpType = assignment?.pfp_type || null
-    seenStages.add(buildStageKey(placeId, pfpType, `assignment_${idx}`))
-  })
-
-  return seenStages.size;
-});
-
-onMounted(async () => {
-  const userId = route.params.id; // Récupère l'ID depuis l'URL
-  if (userId) {
-    user.value.uid = userId;
-    await Promise.all([
-      fetchUserProfileById(userId),
-      loadValidatedHistory(userId)
-    ])
-  } else {
-    console.error("Aucun ID d'utilisateur fourni dans l'URL");
-  }
-});
+watch(
+  () => route.params.id,
+  async (newId) => {
+    await loadProfileData(newId)
+  },
+  { immediate: true }
+)
 </script>
 
 
@@ -371,6 +251,23 @@ img {
   justify-content: flex-end;
   margin-top: 0.5rem;
   margin-bottom: 1.5rem;
+}
+
+.profile-loading-card {
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border, #e5e7eb);
+  border-radius: 0.8rem;
+  padding: 0.9rem 1rem;
+  margin: 0.8rem 0;
+  font-weight: 500;
+  color: var(--text-color, #1f2937);
+  display: flex;
+  align-items: center;
+}
+
+.profile-loading-card.error {
+  border-color: #f87171;
+  color: #b91c1c;
 }
 
 .save-btn {

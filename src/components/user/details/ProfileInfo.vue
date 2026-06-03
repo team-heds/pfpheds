@@ -13,9 +13,6 @@
           <!-- Affichage du composant CardNameProfile -->
           <CardNameProfile />
           <VotationResultProfil :userId="effectiveUserId" class="w-full" />
-          <!-- Radar profil stage + critères validés -->
-          <RadarProfil :scores="radarScores" :totalStages="totalStages" />
-
           <!-- Résumé du stage utilisateur -->
           <ResumStageUserProfile :userProfile="userProfile" :userId="effectiveUserId" class="w-full" />
           <!-- On passe l'ID de l'utilisateur au composant -->
@@ -70,7 +67,6 @@ import ResumStageUserProfile from '@/components/user/details/ResumStageUserProfi
 import LeftSidebar from '@/components/social/library/LeftSidebar.vue';
 import RightSidebar from '@/components/social/library/RightSidebar.vue';
 import VotationResultProfil from '@/components/user/details/VotationResultProfil.vue'
-import RadarProfil from '@/components/user/details/RadarProfil.vue'
 
 const props = defineProps({
   embed: { type: Boolean, default: false }
@@ -106,6 +102,7 @@ const houseColors = {
 // Fonction pour récupérer la couleur de la maison de l'utilisateur
 const fetchUserHouseColor = async (userId) => {
   try {
+    // eslint-disable-next-line no-unused-vars
     const { data, error } = await supabase
       .from('gamification_data')
       .select('house_id')
@@ -130,20 +127,8 @@ const fetchUserHouseColor = async (userId) => {
   }
 };
 
-// --- Ajout récupération profil étudiant et scores radar ---
+// --- Ajout récupération profil étudiant ---
 const userProfile = ref(null);
-const studentResultVotes = ref([])
-const placesById = ref(new Map())
-const criteriaLabels = [
-  "MSQ",
-  "SYSINT",
-  "NEUROGER",
-  "AIGU",
-  "REHAB",
-  "AMBU",
-  "FR",
-  "DE"
-];
 
 const route = useRoute();
 const authStore = useAuthStore();
@@ -177,67 +162,6 @@ const fetchUserProfileById = async (userId) => {
   }
 };
 
-const normalizePfpType = (type, idx = 0) => {
-  const fallback = ['PFP1', 'PFP2', 'PFP3', 'PFP4'][idx] || ''
-  const raw = type || fallback
-  return raw === 'PFP1A' || raw === 'PFP1B' ? 'PFP1' : raw
-}
-
-const fetchRadarSources = async (userId) => {
-  try {
-    const { data: rvData, error: rvError } = await supabase
-      .from('student_result_vote')
-      .select('*')
-      .eq('user_id', userId)
-
-    if (rvError) {
-      console.warn('Erreur chargement student_result_vote pour radar:', rvError.message)
-      studentResultVotes.value = []
-    } else {
-      studentResultVotes.value = rvData || []
-    }
-
-    const legacyEntries = parseLegacyStageEntries(userProfile.value)
-    const ids = new Set()
-
-    studentResultVotes.value.forEach((rv) => {
-      if (rv?.assigned_place_id) ids.add(String(rv.assigned_place_id))
-    })
-
-    legacyEntries.forEach((entry) => {
-      const legacyId = entry?.id_pfp || entry?.ID_PFP || entry?.PlaceId
-      if (legacyId) ids.add(String(legacyId))
-    })
-
-    if (!ids.size) {
-      placesById.value = new Map()
-      return
-    }
-
-    const { data: placesData, error: placesError } = await supabase
-      .from('places')
-      .select('IDPlace, PlaceId, id, place_id, MSQ, SYSINT, NEUROGER, AIGU, REHAB, AMBU, FR, DE')
-
-    if (placesError) {
-      console.warn('Erreur chargement places pour radar:', placesError.message)
-      placesById.value = new Map()
-      return
-    }
-
-    const map = new Map()
-    ;(placesData || []).forEach((p) => {
-      const keys = [p.IDPlace, p.PlaceId, p.id, p.place_id].filter(Boolean).map(String)
-      if (!keys.some((k) => ids.has(k))) return
-      keys.forEach((k) => map.set(k, p))
-    })
-    placesById.value = map
-  } catch (error) {
-    console.warn('Erreur chargement sources radar:', error?.message || error)
-    studentResultVotes.value = []
-    placesById.value = new Map()
-  }
-}
-
 onMounted(async () => {
   if (!authStore.user) {
     await authStore.checkAuthState();
@@ -247,122 +171,9 @@ onMounted(async () => {
     user.value.uid = effectiveUserId.value;
     await fetchUserProfile(effectiveUserId.value);
     await fetchUserProfileById(effectiveUserId.value);
-    await fetchRadarSources(effectiveUserId.value);
     await fetchUserHouseColor(effectiveUserId.value);
   }
 });
-
-// Parser pfp_valided (peut être string JSON, array ou objet)
-const parsePfpValided = (pfpVal) => {
-  if (!pfpVal) return []
-  if (Array.isArray(pfpVal)) return pfpVal
-  if (typeof pfpVal === 'string') {
-    try {
-      const parsed = JSON.parse(pfpVal)
-      return Array.isArray(parsed) ? parsed : []
-    } catch (e) {
-      return []
-    }
-  }
-  if (typeof pfpVal === 'object') return Object.values(pfpVal)
-  return []
-}
-
-const parseLegacyStageEntries = (profile) => {
-  if (!profile) return []
-  const pfpArray = parsePfpValided(profile.pfp_valided)
-  const pfp2Val = profile.pfp2_data
-
-  if (pfp2Val) {
-    if (Array.isArray(pfp2Val)) {
-      return [...pfpArray, ...pfp2Val]
-    }
-    if (typeof pfp2Val === 'object') {
-      return [...pfpArray, pfp2Val]
-    }
-  }
-
-  return pfpArray
-}
-
-const isValidatedFlag = (value) => value === true || value === 'true' || value === 1 || value === '1'
-
-const isStageEntry = (entry) => {
-  if (!entry || typeof entry !== 'object') return false
-  if (criteriaLabels.some((crit) => Object.prototype.hasOwnProperty.call(entry, crit))) return true
-  return Boolean(entry.id_pfp || entry.selected_stage_id || entry.nom_pfp)
-}
-
-const parsedStageEntries = computed(() => {
-  const parsed = parseLegacyStageEntries(userProfile.value)
-  return parsed.filter(isStageEntry)
-})
-
-const mergedAllStageEntries = computed(() => {
-  const results = []
-  const seen = new Set()
-
-  ;(studentResultVotes.value || []).forEach((rv) => {
-    const placeId = rv?.assigned_place_id ? String(rv.assigned_place_id) : ''
-    const pfpType = normalizePfpType(rv?.pfp_type)
-    const key = `${placeId}_${pfpType}`
-    if (!placeId || seen.has(key)) return
-    seen.add(key)
-
-    const placeData = placesById.value.get(placeId)
-    const stageEntry = {}
-    criteriaLabels.forEach((crit) => {
-      stageEntry[crit] = isValidatedFlag(placeData?.[crit])
-    })
-    stageEntry._validated = isValidatedFlag(rv?.pfp_validee)
-    results.push(stageEntry)
-  })
-
-  ;(parsedStageEntries.value || []).forEach((entry, idx) => {
-    const placeId = String(entry?.id_pfp || entry?.ID_PFP || entry?.PlaceId || '')
-    const pfpType = normalizePfpType(entry?.pfp_type || entry?.type_pfp || entry?.PfpType, idx)
-    const key = `${placeId}_${pfpType}`
-    if (placeId && seen.has(key)) return
-    if (placeId) seen.add(key)
-    results.push({ ...entry, _validated: true })
-  })
-
-  return results
-})
-
-const mergedValidatedStageEntries = computed(() => {
-  return mergedAllStageEntries.value.filter((entry) => entry?._validated)
-})
-
-// Agrégation des scores radar par critère (nombre de validations)
-const radarScores = computed(() => {
-  const scores = Object.fromEntries(criteriaLabels.map(k => [k, 0]));
-  mergedValidatedStageEntries.value.forEach(place => {
-    criteriaLabels.forEach(crit => {
-      if (isValidatedFlag(place?.[crit])) scores[crit]++;
-    });
-  });
-  return scores;
-});
-
-const totalStages = computed(() => {
-  return mergedAllStageEntries.value.length;
-});
-
-const displayName = computed(() => {
-  const full = `${user.value.prenom || ''} ${user.value.nom || ''}`.trim()
-  return full || 'Profil utilisateur'
-})
-
-const validatedCriteriaCount = computed(() => {
-  return criteriaLabels.filter((k) => Number(radarScores.value[k] || 0) > 0).length
-})
-
-const completionPercent = computed(() => {
-  const totalPossible = Math.max(1, totalStages.value * criteriaLabels.length)
-  const totalValidated = criteriaLabels.reduce((acc, k) => acc + Number(radarScores.value[k] || 0), 0)
-  return Math.min(100, Math.round((totalValidated / totalPossible) * 100))
-})
 
 // Fonction pour charger un profil utilisateur via son ID depuis Supabase
 const fetchUserProfile = async (userId) => {
@@ -397,6 +208,7 @@ const fetchUserProfile = async (userId) => {
 };
 
 // Fonction pour sauvegarder la nouvelle photo de profil avec Supabase Storage
+// eslint-disable-next-line no-unused-vars
 const saveProfile = async () => {
   if (selectedAvatarFile.value) {
     const userId = user.value.uid;
@@ -447,6 +259,7 @@ const saveProfile = async () => {
 };
 
 // Gestion du changement d'avatar
+// eslint-disable-next-line no-unused-vars
 const onAvatarChange = (event) => {
   const file = event.target.files[0];
   if (file) {

@@ -219,6 +219,11 @@ import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 import { useInstitutionsStore } from '@/stores/institutionsStore';
 import { supabase } from '@/supabase';
+import {
+  buildStageDedupKey,
+  extractStudentsPhysioFieldEntries,
+  normalizePfpType
+} from '@/utils/profileStages';
 
 const institutionsStore = useInstitutionsStore();
 
@@ -483,7 +488,10 @@ const assignedPlaces = computed(() => {
   // Dédupliquer basé sur IDPlace pour éviter les doublons
   const uniquePlaces = new Map()
   filteredWithoutDuplicates.forEach(place => {
-    const key = place.IDPlace || place.assigned_place_id || place._key
+    const placeId = place.IDPlace || place.assigned_place_id || null
+    const pfpType = normalizePfpType(place.pfpLevel || place.pfp_type || null)
+    const year = place.year || null
+    const key = buildStageDedupKey(placeId, pfpType, year, place._key || 'assignment')
     if (!uniquePlaces.has(key)) {
       uniquePlaces.set(key, place)
     }
@@ -662,32 +670,7 @@ const fetchStudentPfpList = async () => {
       return
     }
 
-    let arr = []
-
-    data.forEach((row) => {
-      const pfpVal = row?.pfp_valided
-      if (Array.isArray(pfpVal)) {
-        arr = [...arr, ...pfpVal]
-      } else if (typeof pfpVal === 'string') {
-        try {
-          const parsed = JSON.parse(pfpVal)
-          if (Array.isArray(parsed)) arr = [...arr, ...parsed]
-        } catch (parseError) {
-          console.warn('⚠️ Impossible de parser pfp_valided:', pfpVal)
-        }
-      } else if (pfpVal && typeof pfpVal === 'object') {
-        arr = [...arr, ...Object.values(pfpVal)]
-      }
-
-      const pfp2Val = row?.pfp2_data
-      if (pfp2Val) {
-        if (Array.isArray(pfp2Val)) {
-          arr = [...arr, ...pfp2Val]
-        } else if (typeof pfp2Val === 'object') {
-          arr.push(pfp2Val)
-        }
-      }
-    })
+    const arr = extractStudentsPhysioFieldEntries(data, ['pfp_valided', 'pfp2_data'])
     
     studentPfpList.value = arr
     console.log('✅ PFP list chargée:', arr.length, 'entrées (pfp_valided + pfp2_data)', arr)
@@ -977,32 +960,7 @@ const fetchAllStudentPfps = async () => {
       return
     }
 
-    let allPfps = []
-
-    data.forEach((row) => {
-      const pfpVal = row?.pfp_valided
-      if (Array.isArray(pfpVal)) {
-        allPfps = [...allPfps, ...pfpVal]
-      } else if (typeof pfpVal === 'string') {
-        try {
-          const parsed = JSON.parse(pfpVal)
-          if (Array.isArray(parsed)) allPfps = [...allPfps, ...parsed]
-        } catch (e) {
-          console.warn('Erreur parsing pfp_valided:', e)
-        }
-      } else if (pfpVal && typeof pfpVal === 'object') {
-        allPfps = [...allPfps, ...Object.values(pfpVal)]
-      }
-
-      const pfp2Val = row?.pfp2_data
-      if (pfp2Val) {
-        if (Array.isArray(pfp2Val)) {
-          allPfps = [...allPfps, ...pfp2Val]
-        } else if (typeof pfp2Val === 'object') {
-          allPfps.push(pfp2Val)
-        }
-      }
-    })
+    const allPfps = extractStudentsPhysioFieldEntries(data, ['pfp_valided', 'pfp2_data'])
 
     allStudentPfps.value = allPfps
     console.log('✅ Toutes les PFP chargées:', allPfps.length)

@@ -185,7 +185,6 @@ declare module 'vue' {
     QuestsPage: typeof import('./components/gamification/QuestsPage.vue')['default']
     QuestsProfileCard: typeof import('./components/gamification/QuestsProfileCard.vue')['default']
     QuestsSidebarCard: typeof import('./components/gamification/QuestsSidebarCard.vue')['default']
-    RadarProfil: typeof import('./components/user/details/RadarProfil.vue')['default']
     RadioButton: typeof import('primevue/radiobutton')['default']
     Rating: typeof import('primevue/rating')['default']
     ResizableWidgetGrid: typeof import('./components/admin/widgets/ResizableWidgetGrid.vue')['default']

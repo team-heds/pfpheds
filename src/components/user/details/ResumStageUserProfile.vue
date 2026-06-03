@@ -2,6 +2,15 @@
   <div>
   <!-- Critères Validés (Agrégation) -->
   <h5 class="mb-4 m-2">Critères Validéss</h5>
+  <div v-if="isStagesLoading" class="profile-section-state">
+    <i class="pi pi-spin pi-spinner mr-2"></i>
+    Chargement des stages et critères...
+  </div>
+  <div v-else-if="stagesLoadError" class="profile-section-state error">
+    <i class="pi pi-exclamation-triangle mr-2"></i>
+    {{ stagesLoadError }}
+  </div>
+  <template v-else>
   <div class="grid m-2" v-if="aggregatedCriteria && Object.keys(aggregatedCriteria).length">
     <div
       v-for="(value, key) in aggregatedCriteria"
@@ -21,7 +30,7 @@
     </div>
   </div>
   <div v-else>
-    <p class="text-secondary">Aucun critère validé.</p>
+    <p class="text-secondary empty-state-text">Aucun critère validé.</p>
   </div>
 
   <!-- institutions pour lesquelles l'étudiant a validé des critères -->
@@ -124,13 +133,13 @@
         <div
           class="mt-2"
           v-if="
-            uploads[institutionsKey(place.IDPlace)] &&
-            uploads[institutionsKey(place.IDPlace)].docs.length > 0
+            uploads[stageUploadsKey(place._fpNumber || (index + 1))] &&
+            uploads[stageUploadsKey(place._fpNumber || (index + 1))].docs.length > 0
           "
         >
           <ul class="list-none p-0">
             <li
-              v-for="doc in uploads[institutionsKey(place.IDPlace)].docs"
+              v-for="doc in uploads[stageUploadsKey(place._fpNumber || (index + 1))].docs"
               :key="doc.docId"
               class="flex align-items-center mb-2 gap-2"
             >
@@ -143,7 +152,7 @@
                 <Button
                   label="Enregistrer"
                   class="text-sm p-button-success"
-                  @click="saveDocName(place.IDPlace, index + 1, doc)"
+                  @click="saveDocName(doc)"
                 />
                 <Button
                   label="Annuler"
@@ -165,8 +174,7 @@
                   icon="pi pi-trash"
                   class="text-sm p-button-danger"
                   @click="confirmDelete(
-                    place.IDPlace,
-                    index + 1,
+                    place._fpNumber || (index + 1),
                     doc.docId,
                     doc.fileName
                   )"
@@ -189,28 +197,32 @@
           customUpload
           multiple
           chooseLabel="Sélectionner"
-          @select="($event) => handleFileSelection($event, place.IDPlace)"
+          @select="($event) => handleFileSelection($event, place._fpNumber || (index + 1))"
         />
         <Button
           label="Envoyer documents"
           class="text-sm p-button-outlined p-button-primary"
-          @click="uploadDocuments(place.IDPlace, index + 1)"
+          @click="uploadDocuments(place, place._fpNumber || (index + 1))"
         />
       </div>
     </div>
   </div>
   <div v-else>
-    <p class="text-secondary">
+    <p class="text-secondary empty-state-text">
       Aucune affectation PFP disponible pour cet utilisateur.
     </p>
   </div>
+  </template>
   </div>
 </template>
 
 
 <script setup>
-import { ref, onMounted, computed, watch, onUnmounted } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import { supabase } from '@/supabase';
+import {
+  extractStudentsPhysioFieldEntries
+} from '@/utils/profileStages';
 
 // Props reçues du parent
 const props = defineProps({
@@ -333,14 +345,11 @@ watch(() => props.userProfile, (newVal, oldVal) => {
 }, { immediate: true })
 
 // Watcher pour rafraîchir les PFP quand les validations changent
-watch(() => props.userId, (newUserId, oldUserId) => {
-  if (newUserId && newUserId !== oldUserId) {
-    fetchStudentPfpList()
+watch(() => props.userId, async (newUserId, oldUserId) => {
+  if (newUserId && (!oldUserId || newUserId !== oldUserId)) {
+    await fetchStudentPfpList()
   }
 }, { immediate: true })
-
-// Watcher pour recharger les données périodiquement (toutes les 15 secondes)
-let refreshInterval = null
 
 onMounted(async () => {
   console.log('🚀 ResumStageUserProfile monté')
@@ -352,28 +361,10 @@ onMounted(async () => {
   await institutionsStore.fetchInstitutions();
   // Charger les praticiens formateurs
   await fetchPraticienFormateurs();
-  // Charger la liste PFP de l'étudiant
+  // Charger explicitement les stages au montage (fiabilité affichage)
   await fetchStudentPfpList();
-  // Charger les documents pour toutes les places
-  await loadUploadedDocsForAll();
-  // Traiter le profil utilisateur
   if (props.userProfile) {
     await processUserProfile();
-  }
-
-  // Rafraîchissement automatique toutes les 15 secondes
-  refreshInterval = setInterval(async () => {
-    console.log('🔄 Rafraîchissement automatique des PFP...')
-    await fetchStudentPfpList()
-    if (props.userProfile) {
-      await processUserProfile()
-    }
-  }, 15000)
-})
-
-onUnmounted(() => {
-  if (refreshInterval) {
-    clearInterval(refreshInterval)
   }
 })
 
@@ -510,6 +501,8 @@ const studentPfpList = ref([]);
 const studentResultVotes = ref([]);
 // Map des places pour récupérer les critères
 const placesFullMap = ref(new Map());
+const isStagesLoading = ref(false)
+const stagesLoadError = ref('')
 
 // Liste des critères pour l'agrégation
 const criteriaList = [
@@ -523,10 +516,39 @@ const criteriaList = [
   "DE"
 ];
 
+const getYearSortValue = (value) => {
+  if (!value) return -1
+  const str = String(value)
+  const rangeMatch = str.match(/(\d{4})\s*-\s*(\d{4})/)
+  if (rangeMatch) {
+    const endYear = Number(rangeMatch[2])
+    return Number.isFinite(endYear) ? endYear : -1
+  }
+  const singleMatch = str.match(/\d{4}/)
+  if (singleMatch) {
+    const year = Number(singleMatch[0])
+    return Number.isFinite(year) ? year : -1
+  }
+  return -1
+}
+
+const normalizeLegacyPfpType = (entry) => {
+  const explicitType = entry?.pfp_type || entry?.type_pfp || entry?.PfpType || ''
+  if (explicitType) return explicitType
+
+  const numericStage = Number(entry?.pfp_number || entry?.fp_number || entry?.formation_number)
+  if (Number.isFinite(numericStage) && numericStage >= 1 && numericStage <= 4) {
+    return `PFP${numericStage}`
+  }
+
+  return ''
+}
+
 // Construit la liste des places en fusionnant student_result_vote (priorité) + pfp_valided (backup/legacy)
 const assignedPlaces = computed(() => {
   const results = []
-  const seenKeys = new Set() // Pour dédupliquer par placeId + pfp_type
+  const seenPublishedKeys = new Set() // Déduplication des assignations publiées uniquement
+  const seenLegacyKeys = new Set() // Déduplication des anciennes places uniquement
   const criteriaMap = {
     AMBU: 'ambu',
     DE: 'de',
@@ -545,31 +567,40 @@ const assignedPlaces = computed(() => {
   // 1. Source prioritaire : student_result_vote (stages attribués par l'algo)
   ;(studentResultVotes.value || []).forEach((rv, idx) => {
     const placeId = rv.assigned_place_id || ''
+    if (!placeId) return
+
+    const placeName = rv.assigned_place_name || ''
+
     const pfpType = rv.pfp_type || ''
-    const dedupKey = `${placeId}_${normalizePfp(pfpType)}`
-    if (seenKeys.has(dedupKey)) return
-    seenKeys.add(dedupKey)
+    const yearKey = rv.year ? String(rv.year) : 'no-year'
+    const normalizedType = normalizePfp(pfpType)
+    const dedupKey = (placeId || normalizedType)
+      ? `${placeId}_${normalizedType}_${yearKey}`
+      : `published_${idx}`
+    if (seenPublishedKeys.has(dedupKey)) return
+    seenPublishedKeys.add(dedupKey)
 
     let status = 'en_attente'
     if (rv.pfp_validee) status = 'validee'
     else if (rv.pfp_echec) status = 'echec'
     else if (rv.pfp_arret) status = 'arret'
+    const placeData = getPlaceFromMap(placeId)
+
     const item = {
       _key: `rv_${idx}`,
       IDPlace: placeId,
       InstitutionId: '',
-      NomPlace: rv.assigned_place_name || '',
+      NomPlace: placeName || placeData?.NomPlace || placeData?.name || '',
       seatIndex: null,
       Institutionname: rv.assigned_institution_name || getInstitutionNameById(placeId) || '',
-      pfp_type: normalizePfp(pfpType),
-      _fpNumber: fpNumberMap[normalizePfp(pfpType)] || null,
+      pfp_type: normalizedType,
+      _fpNumber: fpNumberMap[normalizedType] || null,
       status,
       commentaire_arret: rv.commentaire_arret || null,
       assigned_rank: rv.assigned_rank || null,
       year: rv.year || null
     }
     // Charger les critères depuis la place si disponible
-    const placeData = placesFullMap.value.get(placeId)
     if (placeData) {
       Object.entries(criteriaMap).forEach(([up]) => {
         item[up] = placeData[up] === true || placeData[up] === 'true' || placeData[up] === 1
@@ -581,24 +612,31 @@ const assignedPlaces = computed(() => {
   })
 
   // 2. Source backup : pfp_valided (stages historiques/legacy)
-  const pfpTypeByIndex = ['PFP1', 'PFP2', 'PFP3', 'PFP4']
   ;(studentPfpList.value || []).forEach((pfp, idx) => {
     const placeId = pfp.id_pfp || pfp.ID_PFP || pfp.PlaceId || ''
-    const rawType = pfp.pfp_type || pfp.type_pfp || pfp.PfpType || pfpTypeByIndex[idx] || ''
+    if (!placeId) return
+
+    const placeData = getPlaceFromMap(placeId)
+    const placeName = pfp.NomPlace || pfp.nom_pfp || pfp.Nom_PFP || placeData?.NomPlace || placeData?.name || ''
+
+    const rawType = normalizeLegacyPfpType(pfp)
     const pfpType = normalizePfp(rawType)
-    const dedupKey = `${placeId}_${pfpType}`
-    if (seenKeys.has(dedupKey)) return // Déjà présent depuis student_result_vote
-    seenKeys.add(dedupKey)
+    const yearKey = pfp.year ? String(pfp.year) : 'no-year'
+    const dedupKey = (placeId || pfpType)
+      ? `${placeId}_${pfpType}_${yearKey}`
+      : `legacy_${idx}`
+    if (seenLegacyKeys.has(dedupKey)) return
+    seenLegacyKeys.add(dedupKey)
 
     const item = {
       _key: `pfp_${idx}`,
       IDPlace: placeId,
       InstitutionId: pfp.InstitutionId || pfp.Institution_id || pfp.institution_id || '',
-      NomPlace: pfp.NomPlace || pfp.nom_pfp || pfp.Nom_PFP || pfp.domaine || pfp.Domaine || '',
+      NomPlace: placeName,
       seatIndex: pfp.seat || null,
       Institutionname: pfp.InstitutionName || pfp.Institution || getInstitutionNameById(pfp.ID_PFP || pfp.PlaceId) || '',
       pfp_type: pfpType || null,
-      _fpNumber: idx + 1,
+      _fpNumber: fpNumberMap[pfpType] || Number(pfp.pfp_number || pfp.fp_number || pfp.formation_number) || null,
       status: pfp.status || 'validee',
       commentaire_arret: pfp.commentaire_arret || pfp.commentaireArret || pfp.CommentaireArret || null,
       year: pfp.year || null
@@ -614,7 +652,10 @@ const assignedPlaces = computed(() => {
     const fpA = a._fpNumber || 99
     const fpB = b._fpNumber || 99
     if (fpA !== fpB) return fpA - fpB
-    return (a.year || '').localeCompare(b.year || '')
+    const yearA = getYearSortValue(a.year)
+    const yearB = getYearSortValue(b.year)
+    if (yearA !== yearB) return yearA - yearB
+    return String(a._key || '').localeCompare(String(b._key || ''))
   })
 
   console.log('🎯 assignedPlaces (trié par _fpNumber):', results.map(r => ({
@@ -627,6 +668,19 @@ const getInstitutionNameById = (idInstitution) => {
   console.log("ID inst" + idInstitution + " - " + institutionsStore.getInstitutionNameById(idInstitution));
   return institutionsStore.getInstitutionNameById(idInstitution);
 };
+
+const getPlaceFromMap = (placeId) => {
+  if (!placeId) return null
+  const direct = placesFullMap.value.get(placeId)
+  if (direct) return direct
+  const asString = placesFullMap.value.get(String(placeId))
+  if (asString) return asString
+  const asNumber = Number(placeId)
+  if (Number.isFinite(asNumber)) {
+    return placesFullMap.value.get(asNumber) || null
+  }
+  return null
+}
 
 // Retourne la liste des critères à true pour une place donnée
 function getValidCriterias(place) {
@@ -686,6 +740,8 @@ const fetchPraticienFormateurs = async () => {
 }
 
 async function fetchStudentPfpList() {
+  isStagesLoading.value = true
+  stagesLoadError.value = ''
   try {
     console.log('🔍 Chargement PFP pour userId:', props.userId)
 
@@ -724,38 +780,17 @@ async function fetchStudentPfpList() {
       return
     }
 
-    let arr = []
-
-    data.forEach((row) => {
-      const pfpVal = row?.pfp_valided
-      if (Array.isArray(pfpVal)) {
-        arr = [...arr, ...pfpVal]
-      } else if (typeof pfpVal === 'string') {
-        try {
-          const parsed = JSON.parse(pfpVal)
-          if (Array.isArray(parsed)) arr = [...arr, ...parsed]
-        } catch (parseError) {
-          console.warn('⚠️ Impossible de parser pfp_valided:', pfpVal)
-        }
-      } else if (pfpVal && typeof pfpVal === 'object') {
-        arr = [...arr, ...Object.values(pfpVal)]
-      }
-
-      const pfp2Val = row?.pfp2_data
-      if (pfp2Val) {
-        if (Array.isArray(pfp2Val)) {
-          arr = [...arr, ...pfp2Val]
-        } else if (typeof pfp2Val === 'object') {
-          arr.push(pfp2Val)
-        }
-      }
-    })
+    const arr = extractStudentsPhysioFieldEntries(data, ['pfp_valided', 'pfp2_data'])
     
     studentPfpList.value = arr
     console.log('✅ PFP list chargée:', arr.length, 'entrées (pfp_valided + pfp2_data)', arr)
+    await loadUploadedDocsForAll()
   } catch (e) {
     console.warn('⚠️ Erreur chargement PFP étudiant (Supabase):', e.message)
     studentPfpList.value = []
+    stagesLoadError.value = 'Impossible de charger les stages pour le moment.'
+  } finally {
+    isStagesLoading.value = false
   }
 }
 
@@ -942,54 +977,51 @@ const hasPFP1 = computed(() => {
 
 // Gestion des documents par institution
 const uploads = ref({});
-const institutionsKey = (instId) => `inst_${instId}`;
+const stageUploadsKey = (formationNumber) => `pfp_${String(formationNumber || 'unknown')}`;
 
 const loadUploadedDocsForAll = async () => {
-  const places = assignedPlaces.value;
-  for (let index = 0; index < places.length; index++) {
-    const place = places[index];
-    const formationNumber = index + 1;
-    const key = institutionsKey(place.IDPlace);
-    if (!uploads.value[key]) {
-      uploads.value[key] = { docs: [], newFiles: [] };
-    }
-    
-    try {
-      // Récupérer les documents depuis Supabase
-      const { data, error } = await supabase
-        .from('student_documents')
-        .select('*')
-        .eq('user_id', props.userId)
-        .eq('pfp_number', formationNumber)
-        .order('created_at', { ascending: true });
+  try {
+    const { data, error } = await supabase
+      .from('student_documents')
+      .select('*')
+      .eq('user_id', props.userId)
+      .order('created_at', { ascending: true });
 
-      if (error) throw error;
+    if (error) throw error;
 
-      if (data && data.length > 0) {
-        const docsArray = data.map(doc => ({
-          docId: doc.id,
-          fileName: doc.file_name,
-          documentURL: doc.document_url,
-          timestamp: new Date(doc.created_at).getTime(),
-          isRenaming: false,
-          tempName: doc.file_name
-        }));
-        uploads.value[key].docs = docsArray;
-      } else {
-        uploads.value[key].docs = [];
+    const docsByFormation = new Map()
+    ;(data || []).forEach((doc) => {
+      const formationNumber = Number(doc.pfp_number)
+      if (!Number.isFinite(formationNumber)) return
+      if (!docsByFormation.has(formationNumber)) docsByFormation.set(formationNumber, [])
+      docsByFormation.get(formationNumber).push({
+        docId: doc.id,
+        fileName: doc.file_name,
+        documentURL: doc.document_url,
+        timestamp: new Date(doc.created_at).getTime(),
+        isRenaming: false,
+        tempName: doc.file_name
+      })
+    })
+
+    const nextUploads = {}
+    assignedPlaces.value.forEach((place, index) => {
+      const formationNumber = Number(place._fpNumber || (index + 1))
+      const key = stageUploadsKey(formationNumber)
+      nextUploads[key] = {
+        docs: docsByFormation.get(formationNumber) || [],
+        newFiles: uploads.value[key]?.newFiles || []
       }
-    } catch (error) {
-      console.error(
-        "Erreur lors du chargement des documents pour PFP",
-        formationNumber,
-        error
-      );
-    }
+    })
+
+    uploads.value = nextUploads
+  } catch (error) {
+    console.error('Erreur lors du chargement des documents profil:', error)
   }
 };
 
-const handleFileSelection = (event, institutionId) => {
-  const key = institutionsKey(institutionId);
+const handleFileSelection = (event, formationNumber) => {
+  const key = stageUploadsKey(formationNumber);
   if (!uploads.value[key]) {
     uploads.value[key] = { docs: [], newFiles: [] };
   }
@@ -998,8 +1030,8 @@ const handleFileSelection = (event, institutionId) => {
   uploads.value[key].newFiles = selectedFiles;
 };
 
-const uploadDocuments = async (institutionId, formationNumber) => {
-  const key = institutionsKey(institutionId);
+const uploadDocuments = async (place, formationNumber) => {
+  const key = stageUploadsKey(formationNumber);
   if (!uploads.value[key]) return;
   const newFiles = uploads.value[key].newFiles;
   if (!newFiles || newFiles.length === 0) {
@@ -1011,7 +1043,8 @@ const uploadDocuments = async (institutionId, formationNumber) => {
   for (const file of newFiles) {
     try {
       const timestamp = Date.now();
-      const fileName = `${props.userId}/${institutionId}/${timestamp}_${file.name}`;
+      const placeId = place?.IDPlace || place?.InstitutionId || 'unknown-place'
+      const fileName = `${props.userId}/pfp-${formationNumber}/${placeId}/${timestamp}_${file.name}`;
       
       // Upload vers Supabase Storage
       const { error: uploadError } = await supabase.storage
@@ -1032,7 +1065,7 @@ const uploadDocuments = async (institutionId, formationNumber) => {
         .from('student_documents')
         .insert({
           user_id: props.userId,
-          institution_id: institutionId,
+          institution_id: place?.IDPlace || place?.InstitutionId || null,
           pfp_number: formationNumber,
           file_name: file.name,
           document_url: downloadURL,
@@ -1068,7 +1101,7 @@ const cancelRename = (doc) => {
   doc.tempName = doc.fileName;
 };
 
-const saveDocName = async (institutionId, formationNumber, doc) => {
+const saveDocName = async (doc) => {
   if (!doc.tempName) {
     toast.add({ severity: 'error', summary: 'Erreur', detail: 'Le nom du fichier ne peut être vide.', life: 4000 });
     return;
@@ -1093,15 +1126,15 @@ const saveDocName = async (institutionId, formationNumber, doc) => {
   }
 };
 
-const confirmDelete = (institutionId, formationNumber, docId, fileName) => {
+const confirmDelete = (formationNumber, docId, fileName) => {
   const confirmation = window.confirm(`Supprimer le document « ${fileName} » ?`);
   if (confirmation) {
-    deleteDocument(institutionId, formationNumber, docId);
+    deleteDocument(formationNumber, docId);
   }
 };
 
-const deleteDocument = async (institutionId, formationNumber, docId) => {
-  const key = institutionsKey(institutionId);
+const deleteDocument = async (formationNumber, docId) => {
+  const key = stageUploadsKey(formationNumber);
   if (!uploads.value[key] || !uploads.value[key].docs) return;
   const existingDocs = uploads.value[key].docs;
   const docToRemove = existingDocs.find((doc) => doc.docId === docId);
@@ -1257,6 +1290,31 @@ const getStageCardClass = (status) => {
   display: inline-flex;
   justify-content: center;
   align-items: center;
+}
+
+.profile-section-state {
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border, #e5e7eb);
+  border-radius: 0.8rem;
+  padding: 0.85rem 1rem;
+  margin: 0.75rem 0.5rem 1rem;
+  font-weight: 500;
+  color: var(--text-color, #1f2937);
+  display: flex;
+  align-items: center;
+}
+
+.profile-section-state.error {
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+
+.empty-state-text {
+  background: var(--surface-card);
+  border: 1px dashed var(--surface-border, #cbd5e1);
+  border-radius: 0.7rem;
+  padding: 0.7rem 0.9rem;
+  margin: 0.2rem 0.5rem 1rem;
 }
 
 /* --- Responsive Mobile Styles --- */
