@@ -382,12 +382,14 @@ export default {
         }
       } catch (e) {
         console.error('Erreur filtres Supabase:', e)
-        toast.add({
-          severity: 'warn',
-          summary: 'Filtres indisponibles',
-          detail: 'Impossible de charger les filtres pour le moment.',
-          life: 3000,
-        })
+        if (selectedFilterType.value || selectedFilterValue.value) {
+          toast.add({
+            severity: 'warn',
+            summary: 'Filtres indisponibles',
+            detail: 'Impossible de charger les filtres pour le moment.',
+            life: 3000,
+          })
+        }
       }
     }
 

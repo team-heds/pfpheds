@@ -492,6 +492,7 @@ const manualReason = ref('')
 const validatedPlacesCount = ref(0)
 
 const normalizeId = (value) => (value === null || value === undefined ? '' : String(value))
+const normalizeClasse = (value) => (value === null || value === undefined ? '' : String(value).trim().toUpperCase())
 
 const parseIntSafe = (value) => {
   const parsed = parseInt(value, 10)
@@ -590,7 +591,8 @@ const generatePfp4Proposals = async () => {
     console.log(`   places: ${placesResult.data?.length || 0} ${placesResult.error ? '⚠️ ' + placesResult.error.message : '✅'}`)
 
     // Filtrer les étudiants par classe
-    const classStudents = allStudentsData.filter(s => (s.Classe || s.classe || '') === classe)
+    const targetClasse = normalizeClasse(classe)
+    const classStudents = allStudentsData.filter(s => normalizeClasse(s.Classe || s.classe || s.class) === targetClasse)
     console.log(`   Étudiants ${classe}: ${classStudents.length}`)
 
     // ── 2. Map des places (avec critères) ──
@@ -1163,10 +1165,38 @@ const loadData = async () => {
   try {
     // 1. Charger les étudiants de la classe
     const allStudentsData = await getAllStudents()
-    allClassStudents.value = allStudentsData.filter(s => {
-      const classe = s.Classe || s.classe || ''
-      return classe === filterClasse.value
+    const targetClasse = normalizeClasse(filterClasse.value)
+    const studentsFromService = allStudentsData.filter(s => normalizeClasse(s.Classe || s.classe || s.class) === targetClasse)
+
+    // Fallback: inclure explicitement les profils user_profiles de la classe sélectionnée
+    // (utile si la fusion getAllStudents est décalée ou enrichie par d'autres sources)
+    const { data: profileStudents } = await supabase
+      .from('user_profiles')
+      .select('user_id, family_name, forname, email, classe, pfp_cohort')
+      .eq('classe', filterClasse.value)
+
+    const mergedById = new Map()
+    studentsFromService.forEach(student => {
+      if (student?.id) mergedById.set(normalizeId(student.id), student)
     })
+
+    ;(profileStudents || []).forEach(profile => {
+      const id = normalizeId(profile.user_id)
+      if (!id || mergedById.has(id)) return
+      mergedById.set(id, {
+        id,
+        Nom: profile.family_name || 'Nom non disponible',
+        Prenom: profile.forname || 'Prénom non disponible',
+        Mail: profile.email || 'Email non disponible',
+        Classe: profile.classe || filterClasse.value,
+        classe: profile.classe || filterClasse.value,
+        SAE: false,
+        pfp_cohort: profile.pfp_cohort || null,
+        source: 'user_profiles_fallback'
+      })
+    })
+
+    allClassStudents.value = Array.from(mergedById.values())
 
     // 2. Charger les données StudentsPhysio (SAE, cas_particulier)
     const { data: physioResult } = await supabase

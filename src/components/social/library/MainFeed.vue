@@ -391,12 +391,14 @@ export default {
         }
       } catch (error) {
         console.error("Erreur lors de la récupération des filtres disponibles :", error);
-        toast.add({
-          severity: 'warn',
-          summary: 'Filtres indisponibles',
-          detail: 'Impossible de charger les filtres.',
-          life: 3000,
-        });
+        if (selectedFilterType.value || selectedFilterValue.value) {
+          toast.add({
+            severity: 'warn',
+            summary: 'Filtres indisponibles',
+            detail: 'Impossible de charger les filtres.',
+            life: 3000,
+          });
+        }
       }
     };
 

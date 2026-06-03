@@ -456,6 +456,7 @@ export default {
       isSubmitting: false,
       activeSession: null,
       sessionLoading: true,
+      sessionRefreshInFlight: false,
       pfp4ProposedPlaceIds: null,
       pfp4AssignCountByPlace: {},
       pfp4MissingCriteria: [],
@@ -528,12 +529,30 @@ export default {
       return value === null || value === undefined ? '' : String(value)
     },
 
+    async refreshSessionAndData() {
+      if (this.sessionRefreshInFlight) return
+      this.sessionRefreshInFlight = true
+      try {
+        await this.loadSession()
+        if (this.activeSession) {
+          await this.fetchData()
+        } else {
+          this.targetPFP = null
+          this.selectedYear = null
+          this.places = []
+          this.expandedPFPData = []
+        }
+      } finally {
+        this.sessionRefreshInFlight = false
+      }
+    },
+
     async loadSession() {
       this.sessionLoading = true
       try {
         // Lire le pfpType depuis le paramètre de route
         const routePfpType = this.$route.params.pfpType
-        const currentUserId = this.userStore.user?.id || null
+        const currentUserId = this.userStore.profile?.user_id || this.userStore.user?.id || null
         const currentUserIdNormalized = this.normalizeId(currentUserId)
 
         // Helper: filtre les sessions prioritaires pour l'étudiant courant
@@ -567,7 +586,8 @@ export default {
 
         if (routePfpType) {
           // Route générique /votation/:pfpType — chercher la session pour ce PFP
-          const matching = allSessions.filter(s => s.pfp_type === routePfpType.toUpperCase())
+          const routePfpTypeNormalized = String(routePfpType || '').toUpperCase()
+          const matching = allSessions.filter(s => String(s.pfp_type || '').toUpperCase() === routePfpTypeNormalized)
           this.activeSession = filterSessionForUser(matching)
         } else {
           // Routes legacy /votation ou /votation_pfp1b
@@ -961,11 +981,25 @@ export default {
       }
     }
   },
-  async mounted() {
-    await this.loadSession()
-    if (this.activeSession) {
-      await this.fetchData()
+  watch: {
+    '$route.fullPath'() {
+      this.refreshSessionAndData()
+    },
+    'userStore.user.id'() {
+      this.refreshSessionAndData()
+    },
+    'userStore.profile.user_id'() {
+      this.refreshSessionAndData()
+    },
+    'userStore.profile.classe'() {
+      this.refreshSessionAndData()
+    },
+    'userStore.profile.Classe'() {
+      this.refreshSessionAndData()
     }
+  },
+  async mounted() {
+    await this.refreshSessionAndData()
   }
 }
 </script>
