@@ -430,6 +430,9 @@ import { mapStores } from 'pinia'
 import votesBackendService from '@/service/votesBackendService'
 import votationSessionService from '@/service/votationSessionService'
 import resultatVotationService from '@/service/resultatVotationService'
+import { supabase } from '@/supabase'
+
+const CRITERIA_KEYS = ['MSQ', 'SYSINT', 'NEUROGER', 'AIGU', 'REHAB', 'AMBU', 'FR', 'DE']
 
 export default {
   name: 'VotationGenericView',
@@ -473,7 +476,7 @@ export default {
       return this.votedPlaces[0] !== null;
     },
     hasPfp4Sections() {
-      return this.targetPFP === 'PFP4' && this.pfp4MissingCriteria && this.pfp4MissingCriteria.length > 0
+      return (this.targetPFP === 'PFP4' || this.targetPFP === 'PFP3') && this.pfp4MissingCriteria && this.pfp4MissingCriteria.length > 0
     },
     pfp4HighPlaces() {
       return this.expandedPFPData.filter(r => r.pfp4Section === 'high')
@@ -527,6 +530,100 @@ export default {
 
     normalizeId(value) {
       return value === null || value === undefined ? '' : String(value)
+    },
+
+    parsePfpValided(pfpVal) {
+      if (!pfpVal) return []
+      if (Array.isArray(pfpVal)) return pfpVal
+      if (typeof pfpVal === 'string') {
+        try {
+          const parsed = JSON.parse(pfpVal)
+          return Array.isArray(parsed) ? parsed : []
+        } catch (error) {
+          return []
+        }
+      }
+      if (typeof pfpVal === 'object') return Object.values(pfpVal)
+      return []
+    },
+
+    extractCriteriaFromObject(obj) {
+      if (!obj) return {}
+      const criteria = {}
+      CRITERIA_KEYS.forEach(key => {
+        criteria[key] = !!(obj[key] || obj[key.toLowerCase()])
+      })
+      return criteria
+    },
+
+    async loadMissingCriteriaFromStudentData() {
+      const userId = this.userStore.profile?.user_id || this.userStore.user?.id || null
+      if (!userId) {
+        this.pfp4MissingCriteria = []
+        this.pfp4AppliedRule = null
+        return
+      }
+
+      const scores = Object.fromEntries(CRITERIA_KEYS.map(key => [key, 0]))
+      const yearKeys = this.getAcademicYearKeys(this.selectedYear)
+
+      const [physioResult, assignmentsResult] = await Promise.all([
+        supabase
+          .from('StudentsPhysio')
+          .select('pfp_valided, year')
+          .eq('user_id', userId)
+          .in('year', yearKeys)
+          .order('year', { ascending: false })
+          .limit(1),
+        supabase
+          .from('student_result_vote')
+          .select('pfp_type, assigned_place_id, pfp_validee')
+          .eq('user_id', userId)
+      ])
+
+      if (physioResult.error) {
+        throw physioResult.error
+      }
+      if (assignmentsResult.error) {
+        throw assignmentsResult.error
+      }
+
+      const physioRow = Array.isArray(physioResult.data) ? physioResult.data[0] : null
+      const validatedStages = this.parsePfpValided(physioRow?.pfp_valided)
+      const knownStages = validatedStages.map((stage, index) => ({
+        _placeId: stage.PlaceId || stage.ID_PFP || stage.id_pfp || null,
+        pfp_type: stage.pfp_type || stage.pfpLevel || ['PFP1', 'PFP2', 'PFP3', 'PFP4'][index] || null
+      }))
+
+      validatedStages.forEach(stage => {
+        const criteria = this.extractCriteriaFromObject(stage)
+        CRITERIA_KEYS.forEach(key => {
+          if (criteria[key]) scores[key]++
+        })
+      })
+
+      const placeCriteriaById = new Map(this.places.map(place => [place.PlaceId, place]))
+      ;(assignmentsResult.data || []).forEach(assignment => {
+        if (!assignment.pfp_validee || !assignment.assigned_place_id) return
+
+        const alreadyExists = knownStages.some(stage =>
+          (stage._placeId && stage._placeId === assignment.assigned_place_id) ||
+          (stage.pfp_type && stage.pfp_type === assignment.pfp_type)
+        )
+        if (alreadyExists) return
+
+        const place = placeCriteriaById.get(assignment.assigned_place_id)
+        if (!place) return
+
+        CRITERIA_KEYS.forEach(key => {
+          if (place[key]) scores[key]++
+        })
+      })
+
+      const missingCriteria = CRITERIA_KEYS.filter(key => scores[key] === 0)
+      this.pfp4MissingCriteria = missingCriteria
+      this.pfp4AppliedRule = this.targetPFP === 'PFP3' ? 'PFP3_CRITERIA_SORT' : this.pfp4AppliedRule
+      console.log(`🎯 ${this.targetPFP} critères manquants calculés:`, missingCriteria)
     },
 
     async refreshSessionAndData() {
@@ -690,6 +787,11 @@ export default {
         };
       });
 
+      this.pfp4ProposedPlaceIds = null
+      this.pfp4AssignCountByPlace = {}
+      this.pfp4MissingCriteria = []
+      this.pfp4AppliedRule = null
+
       // Pour PFP4: charger les propositions personnalisées et les assignations existantes
       if (this.targetPFP === 'PFP4' && this.selectedYear) {
         try {
@@ -706,6 +808,31 @@ export default {
           console.warn('⚠️ Impossible de charger les propositions PFP4:', err.message)
           this.pfp4ProposedPlaceIds = null
           this.pfp4AssignCountByPlace = {}
+        }
+      }
+
+      if (this.targetPFP === 'PFP3') {
+        try {
+          const result = await resultatVotationService.getPfp3Proposals(this.selectedYear)
+          this.pfp4ProposedPlaceIds = result.proposedPlaceIds
+          this.pfp4AssignCountByPlace = result.assignCounts || {}
+          this.pfp4MissingCriteria = result.missingCriteria || []
+          this.pfp4AppliedRule = result.appliedRule || null
+
+          if (!this.pfp4MissingCriteria.length) {
+            await this.loadMissingCriteriaFromStudentData()
+          }
+
+          console.log('🎯 PFP3 propositions chargées:', result.proposedPlaceIds ? result.proposedPlaceIds.length + ' places' : 'aucune (fallback tri)')
+        } catch (err) {
+          console.warn('⚠️ Impossible de charger les propositions PFP3:', err.message)
+          try {
+            await this.loadMissingCriteriaFromStudentData()
+          } catch (fallbackErr) {
+            console.warn('⚠️ Impossible de charger les critères manquants PFP3:', fallbackErr.message)
+            this.pfp4MissingCriteria = []
+            this.pfp4AppliedRule = null
+          }
         }
       }
 
@@ -818,50 +945,83 @@ export default {
           }
         }
       });
+      const applyMissingCriteriaSections = (inputRows) => {
+        const missing = this.pfp4MissingCriteria || []
+        if (missing.length === 0) return inputRows
+
+        inputRows.forEach(row => {
+          const coveredCount = missing.filter(c => CRITERIA_KEYS.includes(c) && row[c]).length
+          row.pfp4CoveredCount = coveredCount
+          if (coveredCount >= 2) {
+            row.pfp4Section = 'high'
+            row.pfp4SectionLabel = '⭐ Priorité haute — couvre ' + coveredCount + ' critères manquants'
+          } else if (coveredCount === 1) {
+            row.pfp4Section = 'medium'
+            row.pfp4SectionLabel = '📋 Priorité moyenne — couvre 1 critère manquant'
+          } else {
+            row.pfp4Section = 'other'
+            row.pfp4SectionLabel = '📌 Autres places disponibles'
+          }
+        })
+
+        const sectionOrder = { high: 0, medium: 1, other: 2 }
+        return inputRows.sort((a, b) => {
+          const sectionDiff = (sectionOrder[a.pfp4Section] || 2) - (sectionOrder[b.pfp4Section] || 2)
+          if (sectionDiff !== 0) return sectionDiff
+          const coverageDiff = (b.pfp4CoveredCount || 0) - (a.pfp4CoveredCount || 0)
+          if (coverageDiff !== 0) return coverageDiff
+          return (a.NomPlace || '').localeCompare(b.NomPlace || '')
+        })
+      }
+
       // Pour PFP4: filtrer selon les propositions personnalisées
       if (this.targetPFP === 'PFP4' && this.pfp4ProposedPlaceIds && Array.isArray(this.pfp4ProposedPlaceIds)) {
         const allowedIds = new Set(this.pfp4ProposedPlaceIds)
-        let filtered = rows.filter(r => allowedIds.has(r.PlaceId))
-
-        // Ajouter les sections de priorité basées sur les critères manquants
-        const missing = this.pfp4MissingCriteria || []
-        if (missing.length > 0) {
-          filtered.forEach(row => {
-            const CRIT_KEYS = ['MSQ', 'SYSINT', 'NEUROGER', 'AIGU', 'REHAB', 'AMBU', 'FR', 'DE']
-            const coveredCount = missing.filter(c => CRIT_KEYS.includes(c) && row[c]).length
-            row.pfp4CoveredCount = coveredCount
-            if (coveredCount >= 2) {
-              row.pfp4Section = 'high'
-              row.pfp4SectionLabel = '⭐ Priorité haute — couvre ' + coveredCount + ' critères manquants'
-            } else if (coveredCount === 1) {
-              row.pfp4Section = 'medium'
-              row.pfp4SectionLabel = '📋 Priorité moyenne — couvre 1 critère manquant'
-            } else {
-              row.pfp4Section = 'other'
-              row.pfp4SectionLabel = '📌 Autres places disponibles'
-            }
-          })
-          // Trier : high en premier, puis medium, puis other, et dans chaque section par coveredCount desc puis nom
-          const sectionOrder = { high: 0, medium: 1, other: 2 }
-          filtered.sort((a, b) => {
-            const sDiff = (sectionOrder[a.pfp4Section] || 2) - (sectionOrder[b.pfp4Section] || 2)
-            if (sDiff !== 0) return sDiff
-            const cDiff = (b.pfp4CoveredCount || 0) - (a.pfp4CoveredCount || 0)
-            if (cDiff !== 0) return cDiff
-            return (a.NomPlace || '').localeCompare(b.NomPlace || '')
-          })
-        }
-
-        this.expandedPFPData = filtered
+        const filtered = rows.filter(r => allowedIds.has(r.PlaceId))
+        this.expandedPFPData = applyMissingCriteriaSections(filtered)
         console.log(`🎯 PFP4: ${this.expandedPFPData.length}/${rows.length} places après filtrage propositions`)
-        if (missing.length > 0) {
-          const high = filtered.filter(r => r.pfp4Section === 'high').length
-          const med = filtered.filter(r => r.pfp4Section === 'medium').length
-          const other = filtered.filter(r => r.pfp4Section === 'other').length
-          console.log(`🎯 PFP4 sections: ⭐${high} haute, 📋${med} moyenne, 📌${other} autres`)
+      } else if (this.targetPFP === 'PFP3' && this.pfp4ProposedPlaceIds && Array.isArray(this.pfp4ProposedPlaceIds)) {
+        const allowedIds = new Set(this.pfp4ProposedPlaceIds)
+        const filtered = rows.filter(r => allowedIds.has(r.PlaceId))
+        this.expandedPFPData = applyMissingCriteriaSections(filtered)
+        console.log(`🎯 PFP3: ${this.expandedPFPData.length}/${rows.length} places après filtrage propositions`)
+      } else if (this.targetPFP === 'PFP3' && this.pfp4MissingCriteria.length > 0) {
+        const missing = this.pfp4MissingCriteria || []
+        const missingDE = missing.includes('DE')
+        const MIN_PLACES = 5
+        const countCovered = row => missing.filter(c => CRITERIA_KEYS.includes(c) && row[c]).length
+
+        let proposedRows = []
+        if (missingDE) {
+          proposedRows = rows.filter(r => r.DE)
+        } else {
+          proposedRows = rows.filter(r => countCovered(r) > 0)
+
+          if (proposedRows.length < MIN_PLACES) {
+            const currentKeys = new Set(proposedRows.map(r => r.uniqueKey))
+            const sysintRows = rows.filter(r => !currentKeys.has(r.uniqueKey) && r.SYSINT)
+            proposedRows.push(...sysintRows)
+          }
+
+          if (proposedRows.length < MIN_PLACES) {
+            const currentKeys = new Set(proposedRows.map(r => r.uniqueKey))
+            const rest = rows.filter(r => !currentKeys.has(r.uniqueKey))
+            const needed = MIN_PLACES - proposedRows.length
+            proposedRows.push(...rest.slice(0, needed))
+          }
         }
+
+        this.expandedPFPData = applyMissingCriteriaSections(proposedRows)
+        console.log(`🎯 PFP3: ${this.expandedPFPData.length}/${rows.length} places proposées (fallback critères)`)
       } else {
         this.expandedPFPData = rows;
+      }
+
+      if ((this.targetPFP === 'PFP4' || this.targetPFP === 'PFP3') && this.pfp4MissingCriteria.length > 0) {
+        const high = this.expandedPFPData.filter(r => r.pfp4Section === 'high').length
+        const med = this.expandedPFPData.filter(r => r.pfp4Section === 'medium').length
+        const other = this.expandedPFPData.filter(r => r.pfp4Section === 'other').length
+        console.log(`🎯 ${this.targetPFP} sections: ⭐${high} haute, 📋${med} moyenne, 📌${other} autres`)
       }
     },
 

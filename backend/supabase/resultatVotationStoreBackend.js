@@ -390,6 +390,158 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
 })
 
 /**
+ * GET /api/resultat-votation/pfp3-proposals/:year
+ * Récupère les propositions PFP3 sauvegardées pour un étudiant (via session)
+ */
+router.get('/pfp3-proposals/:year', setUser, async (req, res) => {
+  try {
+    const { year } = req.params
+    const userId = req.user?.id
+
+    if (!userId) {
+      return res.status(401).json({ ok: false, error: 'Authentication required' })
+    }
+
+    console.log(`🔍 GET pfp3-proposals: userId=${userId}, year=${year}`)
+
+    const { data: sessions, error } = await supabaseAdmin
+      .from('votation_sessions')
+      .select('id, pfp4_proposals, status, is_priority, target_class')
+      .eq('pfp_type', 'PFP3')
+      .eq('year', year)
+      .not('pfp4_proposals', 'is', null)
+
+    if (error) {
+      console.error('❌ Erreur query votation_sessions PFP3:', error)
+      throw error
+    }
+
+    let proposedPlaceIds = null
+    let missingCriteria = null
+    let appliedRule = null
+    let assignCounts = null
+    if (sessions && sessions.length > 0) {
+      for (const session of sessions) {
+        const proposals = session.pfp4_proposals
+        if (proposals && proposals[userId]) {
+          const userData = proposals[userId]
+          if (Array.isArray(userData)) {
+            proposedPlaceIds = userData
+          } else {
+            proposedPlaceIds = userData.placeIds || []
+            missingCriteria = userData.missingCriteria || []
+            appliedRule = userData.appliedRule || null
+          }
+          assignCounts = proposals._assignCounts || null
+          break
+        }
+      }
+    }
+
+    return res.json({
+      ok: true,
+      proposedPlaceIds,
+      missingCriteria,
+      appliedRule,
+      assignCounts
+    })
+  } catch (error) {
+    console.error('❌ Erreur get pfp3-proposals:', error)
+    return res.status(500).json({ ok: false, error: error.message })
+  }
+})
+
+/**
+ * POST /api/resultat-votation/save-pfp3-proposals
+ * Sauvegarde les propositions PFP3 validées par l'admin
+ * Stocke dans la table votation_sessions avec les propositions par étudiant
+ */
+router.post('/save-pfp3-proposals', requireAdmin, async (req, res) => {
+  try {
+    const { year, targetClass, proposals, assignCounts } = req.body
+
+    if (!year || !proposals) {
+      return res.status(400).json({ ok: false, error: 'Missing required fields: year, proposals' })
+    }
+
+    const classe = targetClass || 'BA23'
+
+    const proposalsMap = {}
+    proposals.forEach(p => {
+      proposalsMap[p.userId] = {
+        placeIds: p.proposedPlaceIds || [],
+        missingCriteria: p.missingCriteria || [],
+        appliedRule: p.appliedRule || ''
+      }
+    })
+
+    if (assignCounts && Object.keys(assignCounts).length > 0) {
+      proposalsMap._assignCounts = assignCounts
+    }
+
+    console.log(`🔍 SAVE pfp3-proposals: year=${year} class=${classe} students=${Object.keys(proposalsMap).length}`)
+
+    const { data: existingSessions, error: findError } = await supabaseAdmin
+      .from('votation_sessions')
+      .select('id, is_priority, status')
+      .eq('pfp_type', 'PFP3')
+      .eq('year', year)
+      .eq('target_class', classe)
+
+    if (findError && findError.code !== 'PGRST116') {
+      console.warn('⚠️ Erreur recherche sessions PFP3:', findError.message)
+    }
+
+    const updatePayload = {
+      pfp4_proposals: proposalsMap
+    }
+
+    let savedSession
+    if (existingSessions && existingSessions.length > 0) {
+      for (const session of existingSessions) {
+        const { error } = await supabaseAdmin
+          .from('votation_sessions')
+          .update(updatePayload)
+          .eq('id', session.id)
+        if (error) {
+          console.warn(`⚠️ Erreur update session PFP3 ${session.id}:`, error.message)
+        } else {
+          console.log(`✅ Session PFP3 ${session.id} mise à jour avec ${Object.keys(proposalsMap).length} propositions`)
+        }
+      }
+      savedSession = existingSessions[0]
+      console.log(`✅ Propositions PFP3 mises à jour dans ${existingSessions.length} session(s)`) 
+    } else {
+      console.log('📝 Aucune session PFP3 existante, création d\'une nouvelle...')
+      const { data, error } = await supabaseAdmin
+        .from('votation_sessions')
+        .insert({
+          pfp_type: 'PFP3',
+          year,
+          target_class: classe,
+          pfp4_proposals: proposalsMap,
+          status: 'closed',
+          is_priority: false
+        })
+        .select()
+        .single()
+      if (error) throw error
+      savedSession = data
+      console.log(`✅ Nouvelle session PFP3 créée: ${savedSession.id}`)
+    }
+
+    return res.json({
+      ok: true,
+      sessionId: savedSession.id,
+      savedCount: Object.keys(proposalsMap).length
+    })
+  } catch (error) {
+    console.error('❌ Erreur save-pfp3-proposals:', error)
+    return res.status(500).json({ ok: false, error: error.message })
+  }
+})
+
+/**
  * POST /api/resultat-votation/generate-pfp4-proposals
  * Génère les propositions de places PFP4 pour chaque étudiant BA23
  * basé sur leurs critères manquants (MSQ, SYSINT, NEUROGER, AIGU, REHAB, AMBU, FR, DE)

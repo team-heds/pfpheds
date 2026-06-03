@@ -415,6 +415,12 @@ const pfpMeta = [
 
 const pfpAbsenceKey = (key) => `${key}_absences`
 const pfpRemarkKey = (key) => `${key}_remarques`
+const toPfpType = (key, note) => {
+  if (key === 'pfp1') {
+    return note?._pfp1Source === 'pfp1b' ? 'PFP1B' : 'PFP1A'
+  }
+  return String(key || '').toUpperCase()
+}
 
 const filteredNotes = computed(() => {
   let list = notes.value
@@ -551,6 +557,7 @@ const saveNote = async (note) => {
       .upsert(payload, { onConflict: 'user_id,year' })
 
     if (error) throw error
+    await syncValidationFromNotes(note)
     notifySaved()
   } catch (e) {
     console.error('Erreur sauvegarde note:', e)
@@ -569,6 +576,13 @@ const saveAllNotes = async () => {
       .from('StudentsPhysio')
       .upsert(payloads, { onConflict: 'user_id,year' })
     if (error) throw error
+
+    for (const note of notes.value) {
+      if (note?.user_id) {
+        await syncValidationFromNotes(note)
+      }
+    }
+
     toast.add({ severity: 'success', summary: 'Sauvegardé', detail: 'Toutes les lignes sont enregistrées', life: 2000 })
   } catch (e) {
     console.error('Erreur sauvegarde globale:', e)
@@ -597,6 +611,62 @@ const getPfpFinalStatus = (noteValue, retakeValue) => {
 
 const getPfp1GroupStatus = (note) => {
   return getPfpFinalStatus(note?.pfp1, note?.pfp1_retake)
+}
+
+const getStatusByPfpKey = (note, key) => {
+  if (key === 'pfp1') return getPfp1GroupStatus(note)
+  return getPfpFinalStatus(note?.[key], note?.[`${key}_retake`])
+}
+
+const syncValidationFromNotes = async (note) => {
+  const year = note?.year || activeYear.value
+  if (!note?.user_id || !year) return
+
+  const pfpUpdates = [
+    { key: 'pfp1', status: getStatusByPfpKey(note, 'pfp1'), pfpType: toPfpType('pfp1', note) },
+    { key: 'pfp2', status: getStatusByPfpKey(note, 'pfp2'), pfpType: 'PFP2' },
+    { key: 'pfp3', status: getStatusByPfpKey(note, 'pfp3'), pfpType: 'PFP3' },
+    { key: 'pfp4', status: getStatusByPfpKey(note, 'pfp4'), pfpType: 'PFP4' }
+  ]
+
+  try {
+    const { data: assignments, error: fetchError } = await supabase
+      .from('student_result_vote')
+      .select('id, pfp_type, pfp_arret, pfp_validee, pfp_echec')
+      .eq('user_id', note.user_id)
+      .eq('year', year)
+      .in('pfp_type', pfpUpdates.map(p => p.pfpType))
+
+    if (fetchError) throw fetchError
+    if (!assignments?.length) return
+
+    const assignmentByType = new Map(assignments.map(a => [String(a.pfp_type || '').toUpperCase(), a]))
+
+    for (const item of pfpUpdates) {
+      const assignment = assignmentByType.get(item.pfpType)
+      if (!assignment || assignment.pfp_arret) continue
+
+      const nextValidee = item.status === 'Réussi'
+      const nextEchec = item.status === 'Échec'
+
+      if (assignment.pfp_validee === nextValidee && assignment.pfp_echec === nextEchec) {
+        continue
+      }
+
+      const { error: updateError } = await supabase
+        .from('student_result_vote')
+        .update({
+          pfp_validee: nextValidee,
+          pfp_echec: nextEchec,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', assignment.id)
+
+      if (updateError) throw updateError
+    }
+  } catch (e) {
+    console.error('Erreur sync validation depuis notes:', e)
+  }
 }
 
 const getNoteStatus = (note) => {

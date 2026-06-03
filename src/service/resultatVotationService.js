@@ -55,6 +55,75 @@ export const resultatVotationService = {
   },
 
   /**
+   * Récupère les propositions PFP3 pour l'étudiant connecté
+   * @param {string} year - Année
+   * @returns {Promise<Array|null>} Liste des PlaceIds proposés ou null
+   */
+  async getPfp3Proposals(year) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('Authentication required')
+
+      const response = await axios.get(
+        `${API_BASE_URL}/api/resultat-votation/pfp3-proposals/${year}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`
+          }
+        }
+      )
+
+      if (!response.data.ok) {
+        throw new Error(response.data.error || 'Failed to fetch PFP3 proposals')
+      }
+
+      return {
+        proposedPlaceIds: response.data.proposedPlaceIds,
+        missingCriteria: response.data.missingCriteria || [],
+        appliedRule: response.data.appliedRule || null,
+        assignCounts: response.data.assignCounts || {}
+      }
+    } catch (err) {
+      console.error('❌ Erreur getPfp3Proposals:', err)
+      throw err
+    }
+  },
+
+  /**
+   * Sauvegarde les propositions PFP3 validées par l'admin
+   * @param {string} year - Année
+   * @param {string} targetClass - Classe cible
+   * @param {Array} proposals - Liste des propositions par étudiant
+   * @returns {Promise<Object>}
+   */
+  async savePfp3Proposals(year, targetClass, proposals, assignCounts) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('Authentication required')
+
+      const response = await axios.post(
+        `${API_BASE_URL}/api/resultat-votation/save-pfp3-proposals`,
+        { year, targetClass, proposals, assignCounts: assignCounts || {} },
+        {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      )
+
+      if (!response.data.ok) {
+        throw new Error(response.data.error || 'Failed to save PFP3 proposals')
+      }
+
+      return response.data
+    } catch (err) {
+      console.error('❌ Erreur savePfp3Proposals:', err)
+      throw err
+    }
+  },
+
+  /**
    * Récupère tous les résultats pour un PFP et une année
    * @param {string} pfpType - Type de PFP
    * @param {string} year - Année
