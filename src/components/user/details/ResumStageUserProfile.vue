@@ -47,7 +47,7 @@
       <!-- Ligne du titre + statut + bouton -->
       <div class="flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
         <div class="flex align-items-center gap-2 flex-wrap">
-          <h4 class="m-0">Formation Pratique {{ place._fpNumber || (index + 1) }}</h4>
+          <h4 class="m-0">Formation Pratique {{ place._displayFpNumber || (index + 1) }}</h4>
           <Tag v-if="place.year" :value="place.year" severity="secondary" class="text-xs" />
           <Tag :value="getStatusLabel(place.status)" :severity="getStatusSeverity(place.status)" :icon="getStatusIcon(place.status)" />
         </div>
@@ -133,13 +133,13 @@
         <div
           class="mt-2"
           v-if="
-            uploads[stageUploadsKey(place._fpNumber || (index + 1))] &&
-            uploads[stageUploadsKey(place._fpNumber || (index + 1))].docs.length > 0
+            uploads[stageUploadsKey(place._displayFpNumber || (index + 1))] &&
+            uploads[stageUploadsKey(place._displayFpNumber || (index + 1))].docs.length > 0
           "
         >
           <ul class="list-none p-0">
             <li
-              v-for="doc in uploads[stageUploadsKey(place._fpNumber || (index + 1))].docs"
+              v-for="doc in uploads[stageUploadsKey(place._displayFpNumber || (index + 1))].docs"
               :key="doc.docId"
               class="flex align-items-center mb-2 gap-2"
             >
@@ -174,7 +174,7 @@
                   icon="pi pi-trash"
                   class="text-sm p-button-danger"
                   @click="confirmDelete(
-                    place._fpNumber || (index + 1),
+                    place._displayFpNumber || (index + 1),
                     doc.docId,
                     doc.fileName
                   )"
@@ -197,12 +197,12 @@
           customUpload
           multiple
           chooseLabel="Sélectionner"
-          @select="($event) => handleFileSelection($event, place._fpNumber || (index + 1))"
+          @select="($event) => handleFileSelection($event, place._displayFpNumber || (index + 1))"
         />
         <Button
           label="Envoyer documents"
           class="text-sm p-button-outlined p-button-primary"
-          @click="uploadDocuments(place, place._fpNumber || (index + 1))"
+          @click="uploadDocuments(place, place._displayFpNumber || (index + 1))"
         />
       </div>
     </div>
@@ -547,8 +547,7 @@ const normalizeLegacyPfpType = (entry) => {
 // Construit la liste des places en fusionnant student_result_vote (priorité) + pfp_valided (backup/legacy)
 const assignedPlaces = computed(() => {
   const results = []
-  const seenPublishedKeys = new Set() // Déduplication des assignations publiées uniquement
-  const seenLegacyKeys = new Set() // Déduplication des anciennes places uniquement
+  const seenStageKeys = new Set() // Déduplication globale entre les 2 sources
   const criteriaMap = {
     AMBU: 'ambu',
     DE: 'de',
@@ -575,10 +574,10 @@ const assignedPlaces = computed(() => {
     const yearKey = rv.year ? String(rv.year) : 'no-year'
     const normalizedType = normalizePfp(pfpType)
     const dedupKey = (placeId || normalizedType)
-      ? `${placeId}_${normalizedType}_${yearKey}`
+      ? `${placeId || 'no-place'}_${normalizedType || 'no-type'}_${yearKey}`
       : `published_${idx}`
-    if (seenPublishedKeys.has(dedupKey)) return
-    seenPublishedKeys.add(dedupKey)
+    if (seenStageKeys.has(dedupKey)) return
+    seenStageKeys.add(dedupKey)
 
     let status = 'en_attente'
     if (rv.pfp_validee) status = 'validee'
@@ -623,10 +622,10 @@ const assignedPlaces = computed(() => {
     const pfpType = normalizePfp(rawType)
     const yearKey = pfp.year ? String(pfp.year) : 'no-year'
     const dedupKey = (placeId || pfpType)
-      ? `${placeId}_${pfpType}_${yearKey}`
+      ? `${placeId || 'no-place'}_${pfpType || 'no-type'}_${yearKey}`
       : `legacy_${idx}`
-    if (seenLegacyKeys.has(dedupKey)) return
-    seenLegacyKeys.add(dedupKey)
+    if (seenStageKeys.has(dedupKey)) return
+    seenStageKeys.add(dedupKey)
 
     const item = {
       _key: `pfp_${idx}`,
@@ -656,6 +655,10 @@ const assignedPlaces = computed(() => {
     const yearB = getYearSortValue(b.year)
     if (yearA !== yearB) return yearA - yearB
     return String(a._key || '').localeCompare(String(b._key || ''))
+  })
+
+  results.forEach((item, idx) => {
+    item._displayFpNumber = idx + 1
   })
 
   console.log('🎯 assignedPlaces (trié par _fpNumber):', results.map(r => ({
@@ -1006,7 +1009,7 @@ const loadUploadedDocsForAll = async () => {
 
     const nextUploads = {}
     assignedPlaces.value.forEach((place, index) => {
-      const formationNumber = Number(place._fpNumber || (index + 1))
+      const formationNumber = Number(place._displayFpNumber || (index + 1))
       const key = stageUploadsKey(formationNumber)
       nextUploads[key] = {
         docs: docsByFormation.get(formationNumber) || [],

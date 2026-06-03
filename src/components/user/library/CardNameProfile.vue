@@ -139,6 +139,22 @@ const selectedAvatarFile = ref(null);
 // Référence pour la sélection d'un enseignant dans le dropdown (pour modifier Répondant HES)
 const selectedTeacher = ref("");
 
+const normalizeClassCode = (value) => {
+  if (!value) return ''
+  const raw = String(value).trim().toUpperCase()
+  if (!raw) return ''
+  const baMatch = raw.match(/^BA\s*(\d{2})$/)
+  if (baMatch) return `BA${baMatch[1]}`
+  const bMatch = raw.match(/^B\s*(\d{2})$/)
+  if (bMatch) return `BA${bMatch[1]}`
+  return raw
+}
+
+const resolveClassValue = (source) => {
+  if (!source || typeof source !== 'object') return ''
+  return normalizeClassCode(source.class || source.classe || source.Classe || source.pfp_cohort || source.cohort || '')
+}
+
 // Computed pour déterminer si l'utilisateur connecté est admin
 const isAdmin = computed(() => {
   return currentUserProfile.value.Roles && currentUserProfile.value.Roles.admin === true;
@@ -222,7 +238,7 @@ const fetchUserProfileById = async (userId) => {
       ville: profileData.city || '',
       bio: profileData.bio || '',
       photoURL: profileData.avatar_url || profileData.profile_picture_url || defaultAvatar,
-      classe: profileData.class || profileData.classe || '',
+      classe: resolveClassValue(profileData),
       repondantHES: profileData.hes_referent || profileData.respondant_hes || ''
     };
     
@@ -244,37 +260,44 @@ const fetchStudentProfileById = async (userId) => {
       .from('StudentsPhysio')
       .select('*')
       .eq('user_id', userId)
-      .maybeSingle()
+      .order('updated_at', { ascending: false })
     
     if (error) {
       console.warn('⚠️ StudentsPhysio non accessible:', error.message)
       return
     }
     
-    if (physioData) {
-      console.log('✅ Données StudentsPhysio trouvées:', physioData)
+    if (Array.isArray(physioData) && physioData.length > 0) {
+      const physioRowWithClass = physioData.find(row => !!resolveClassValue(row)) || physioData[0]
+      const physioDataRow = physioRowWithClass
+      console.log('✅ Données StudentsPhysio trouvées:', physioDataRow)
       console.log('📊 Données brutes StudentsPhysio:', {
-        class: physioData.class,
-        ville: physioData.ville || physioData.city,
-        repondant: physioData.repondant_hes
+        class: resolveClassValue(physioDataRow),
+        ville: physioDataRow.ville || physioDataRow.city,
+        repondant: physioDataRow.repondant_hes
       })
       
       const enrichedFields = []
       
-      // 1. CLASSE - Priorité: user_profiles.class > StudentsPhysio.class
-      if (!user.value.classe) {
-        const classePhysio = physioData.class
-        if (classePhysio) {
+      // 1. CLASSE - Priorité: StudentsPhysio (plus à jour) > user_profiles
+      const classePhysio = resolveClassValue(physioDataRow)
+      const classeProfil = normalizeClassCode(user.value.classe)
+      if (classePhysio) {
+        if (!classeProfil || classeProfil !== classePhysio) {
+          if (classeProfil && classeProfil !== classePhysio) {
+            console.warn(`⚠️ Classe incohérente profil (${classeProfil}) vs StudentsPhysio (${classePhysio}) → StudentsPhysio prioritaire`)
+          }
           user.value.classe = classePhysio
           enrichedFields.push('classe')
-          console.log('📝 Classe enrichie depuis StudentsPhysio:', classePhysio)
+          console.log('📝 Classe appliquée depuis StudentsPhysio:', classePhysio)
         }
-      } else {
-        console.log('✅ Classe déjà présente depuis user_profiles:', user.value.classe)
+      } else if (classeProfil) {
+        user.value.classe = classeProfil
+        console.log('✅ Classe conservée depuis user_profiles:', classeProfil)
       }
       
       // 2. RÉPONDANT HES - Priorité: user_profiles.hes_referent > StudentsPhysio
-      const repondantPhysio = physioData.repondant_hes
+      const repondantPhysio = physioDataRow.repondant_hes
       if (!user.value.repondantHES && repondantPhysio) {
         user.value.repondantHES = repondantPhysio
         enrichedFields.push('repondantHES')
@@ -284,7 +307,7 @@ const fetchStudentProfileById = async (userId) => {
       }
       
       // 3. VILLE - Priorité: user_profiles.city > StudentsPhysio
-      const villePhysio = physioData.ville || physioData.city
+      const villePhysio = physioDataRow.ville || physioDataRow.city
       if (!user.value.ville && villePhysio) {
         user.value.ville = villePhysio
         enrichedFields.push('ville')
@@ -294,24 +317,24 @@ const fetchStudentProfileById = async (userId) => {
       }
       
       // 4. EMAIL - Priorité: user_profiles.email > StudentsPhysio
-      if (!user.value.email && physioData.email) {
-        user.value.email = physioData.email
+      if (!user.value.email && physioDataRow.email) {
+        user.value.email = physioDataRow.email
         enrichedFields.push('email')
-        console.log('📝 Email enrichi depuis StudentsPhysio:', physioData.email)
+        console.log('📝 Email enrichi depuis StudentsPhysio:', physioDataRow.email)
       } else if (user.value.email) {
         console.log('✅ Email déjà présent depuis user_profiles:', user.value.email)
       }
       
       // 5. NOM/PRÉNOM - Priorité: user_profiles > StudentsPhysio
-      if (!user.value.nom && physioData.family_name) {
-        user.value.nom = physioData.family_name
+      if (!user.value.nom && physioDataRow.family_name) {
+        user.value.nom = physioDataRow.family_name
         enrichedFields.push('nom')
-        console.log('📝 Nom enrichi depuis StudentsPhysio:', physioData.family_name)
+        console.log('📝 Nom enrichi depuis StudentsPhysio:', physioDataRow.family_name)
       }
-      if (!user.value.prenom && physioData.forname) {
-        user.value.prenom = physioData.forname
+      if (!user.value.prenom && physioDataRow.forname) {
+        user.value.prenom = physioDataRow.forname
         enrichedFields.push('prenom')
-        console.log('📝 Prénom enrichi depuis StudentsPhysio:', physioData.forname)
+        console.log('📝 Prénom enrichi depuis StudentsPhysio:', physioDataRow.forname)
       }
       
       // Résumé de l'enrichissement

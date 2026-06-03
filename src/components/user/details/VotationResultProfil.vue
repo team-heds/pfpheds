@@ -464,8 +464,13 @@ const assignedPlaces = computed(() => {
     }))
   }
 
-  // Conserver toutes les assignations publiées (validées, en cours, échec, arrêt)
-  const publishedAssignmentsForDisplay = assignedPlacesFromPublished.value
+  // Formation pratique en cours: exclure validées/échecs/arrêts
+  const publishedAssignmentsForDisplay = assignedPlacesFromPublished.value.filter(place => {
+    const isValidee = place.pfp_validee === true || place.pfp_validee === 'true' || place.pfp_validee === 1
+    const isEchec = place.pfp_echec === true || place.pfp_echec === 'true' || place.pfp_echec === 1
+    const isArret = place.pfp_arret === true || place.pfp_arret === 'true' || place.pfp_arret === 1
+    return !isValidee && !isEchec && !isArret
+  })
 
   console.log('🔍 DEBUG - publishedAssignmentsForDisplay:', publishedAssignmentsForDisplay.length)
   console.log('🔍 DEBUG - studentPfpList:', studentPfpList.value.length)
