@@ -121,7 +121,7 @@
                   <div class="flex flex-column">
                     <span class="font-bold">{{ data.student_name }}</span>
                     <span class="text-sm text-600">{{ data.Mail }}</span>
-                    <span class="text-xs text-500">{{ data.stageDetails?.length || 0 }} stage(s)</span>
+                    <span class="stage-count-badge">{{ data.stageDetails?.length || 0 }} stage(s)</span>
                   </div>
                 </div>
               </template>
@@ -136,18 +136,78 @@
             </Column>
 
             <template #expansion="{ data }">
-              <div class="p-3 surface-ground border-round">
-                <div class="text-900 font-semibold mb-2">Stages de {{ data.student_name }}</div>
-                <DataTable :value="data.stageDetails || []" responsiveLayout="scroll" size="small">
+              <div class="p-3 stage-expansion border-round">
+                <div class="stage-expansion-header mb-3">
+                  <div class="text-900 font-semibold">Stages de {{ data.student_name }}</div>
+                  <div class="text-xs text-500">Détail par PFP, PF, institution, place et critères</div>
+                </div>
+                <DataTable
+                  :value="data.stageDetails || []"
+                  responsiveLayout="scroll"
+                  size="small"
+                  showGridlines
+                  stripedRows
+                >
                   <template #empty>Aucun stage assigné trouvé pour cet étudiant.</template>
 
-                  <Column field="pfp_type" header="PFP" style="width: 7rem" />
-                  <Column field="praticien_name" header="PF" />
-                  <Column field="praticien_contact" header="Contact PF" />
-                  <Column field="institution_name" header="Institution" />
-                  <Column field="place_name" header="Place de stage" />
-                  <Column field="criteria_text" header="Critères" />
-                  <Column field="year" header="Année" style="width: 8rem" />
+                  <Column field="pfp_type" header="PFP" style="width: 7rem">
+                    <template #body="{ data: stage }">
+                      <span class="pfp-pill">{{ stage.pfp_type || '-' }}</span>
+                    </template>
+                  </Column>
+
+                  <Column field="praticien_name" header="PF">
+                    <template #body="{ data: stage }">
+                      <span :class="['stage-text', { 'stage-text-muted': !stage.praticien_name || stage.praticien_name === '-' }]">
+                        {{ stage.praticien_name || '-' }}
+                      </span>
+                    </template>
+                  </Column>
+
+                  <Column field="institution_contact" header="Mail institution">
+                    <template #body="{ data: stage }">
+                      <span :class="['stage-text', { 'stage-text-muted': !stage.institution_contact || stage.institution_contact === '-' }]">
+                        {{ stage.institution_contact || '-' }}
+                      </span>
+                    </template>
+                  </Column>
+
+                  <Column field="institution_name" header="Institution">
+                    <template #body="{ data: stage }">
+                      <span :class="['stage-text', { 'stage-text-muted': !stage.institution_name || stage.institution_name === '-' }]">
+                        {{ stage.institution_name || '-' }}
+                      </span>
+                    </template>
+                  </Column>
+
+                  <Column field="place_name" header="Place de stage">
+                    <template #body="{ data: stage }">
+                      <span :class="['stage-text', { 'stage-text-muted': !stage.place_name || stage.place_name === '-' }]">
+                        {{ stage.place_name || '-' }}
+                      </span>
+                    </template>
+                  </Column>
+
+                  <Column field="criteria_text" header="Critères">
+                    <template #body="{ data: stage }">
+                      <div v-if="splitCriteria(stage.criteria_text).length" class="criteria-chips">
+                        <span
+                          v-for="crit in splitCriteria(stage.criteria_text)"
+                          :key="`${stage._id}_${crit}`"
+                          class="criteria-chip"
+                        >
+                          {{ crit }}
+                        </span>
+                      </div>
+                      <span v-else class="stage-text-muted">-</span>
+                    </template>
+                  </Column>
+
+                  <Column field="year" header="Année" style="width: 8rem">
+                    <template #body="{ data: stage }">
+                      <span class="year-pill">{{ stage.year || '-' }}</span>
+                    </template>
+                  </Column>
                 </DataTable>
               </div>
             </template>
@@ -194,11 +254,6 @@ const getPraticienName = (praticien) => {
   return fullName || praticien.name || '-'
 }
 
-const getPraticienContact = (praticien) => {
-  if (!praticien) return '-'
-  return praticien.mail || praticien.Mail || praticien.email || praticien.Email || praticien.telephone || praticien.phone || '-'
-}
-
 const getCriteriaText = (source) => {
   if (!source) return '-'
   const activeCriteria = PROFILE_CRITERIA_KEYS.filter((key) => {
@@ -238,6 +293,7 @@ const shouldReplacePhysioRow = (currentRow, candidateRow) => {
 const normalizeRepondantName = (value) => String(value || '').trim().toLowerCase()
 const normalizePfp = (value) => normalizePfpType(value)
 const normalizePlaceName = (value) => String(value || '').trim().toLowerCase()
+const normalizeInstitutionName = (value) => String(value || '').trim().toLowerCase()
 
 const getLegacyPraticienName = (stage) => (
   stage?.praticien_formateur ||
@@ -248,15 +304,11 @@ const getLegacyPraticienName = (stage) => (
   '-'
 )
 
-const getLegacyPraticienContact = (stage) => (
-  stage?.mail_praticien ||
-  stage?.email_praticien ||
-  stage?.contact_praticien ||
-  stage?.praticien_mail ||
-  stage?.praticien_email ||
-  stage?.mailPF ||
-  '-'
-)
+const splitCriteria = (criteriaText) => {
+  const raw = String(criteriaText || '').trim()
+  if (!raw || raw === '-') return []
+  return raw.split(',').map(item => item.trim()).filter(Boolean)
+}
 
 // Options pour le filtre par classe
 const classFilterOptions = computed(() => {
@@ -374,7 +426,7 @@ const fetchAllStudentsData = async () => {
       supabase
         .from('places')
         .select('PlaceId, InstitutionId, NomPlace, Institutionname, MSQ, SYSINT, NEUROGER, AIGU, REHAB, AMBU, FR, DE'),
-      supabase.from('institutions').select('InstitutionId, Name')
+      supabase.from('institutions').select('*')
     ])
 
     const physioByUserId = new Map()
@@ -396,10 +448,23 @@ const fetchAllStudentsData = async () => {
     })
 
     const institutionById = new Map()
+    const institutionByName = new Map()
     ;(institutionsData || []).forEach((inst) => {
       if (!inst?.InstitutionId) return
-      institutionById.set(inst.InstitutionId, inst.Name || '')
-      institutionById.set(String(inst.InstitutionId), inst.Name || '')
+      const institutionName = inst.Name || inst.name || ''
+      const institutionMail = inst.MailChef || inst.mailChef || inst.Mail || inst.mail || inst.Email || inst.email || '-'
+      const institutionInfo = {
+        name: institutionName,
+        mail: institutionMail
+      }
+
+      institutionById.set(inst.InstitutionId, institutionInfo)
+      institutionById.set(String(inst.InstitutionId), institutionInfo)
+
+      const normalizedName = normalizeInstitutionName(institutionName)
+      if (normalizedName && !institutionByName.has(normalizedName)) {
+        institutionByName.set(normalizedName, institutionInfo)
+      }
     })
 
     const praticienById = new Map()
@@ -415,11 +480,19 @@ const fetchAllStudentsData = async () => {
       if (!place) return
       const placeId = place.PlaceId || place.IdPlace || place.id_pfp || place.ID_PFP || null
       const placeName = place.NomPlace || place.Name || place.name || ''
+      const placeInstitutionId = place.InstitutionId || place.institution_id || place.InstitutionID || null
+      const placeInstitutionName = place.Institutionname || place.institution_name || ''
+      const institutionInfo =
+        institutionById.get(placeInstitutionId) ||
+        institutionById.get(String(placeInstitutionId)) ||
+        institutionByName.get(normalizeInstitutionName(placeInstitutionName)) ||
+        null
       const enrichedPlace = {
         ...place,
         PlaceId: placeId,
         NomPlace: placeName,
-        Institutionname: place.Institutionname || institutionById.get(place.InstitutionId) || ''
+        Institutionname: placeInstitutionName || institutionInfo?.name || '',
+        InstitutionMail: institutionInfo?.mail || '-'
       }
 
       if (placeId) {
@@ -494,13 +567,17 @@ const fetchAllStudentsData = async () => {
         const criteriaFromPlace = getCriteriaText(place)
         const criteriaFromValidated = validatedStage ? getCriteriaText(validatedStage) : '-'
         const criteriaText = criteriaFromPlace !== '-' ? criteriaFromPlace : criteriaFromValidated
+        const assignmentInstitutionInfo = institutionByName.get(normalizeInstitutionName(assignment?.assigned_institution_name))
+        const validatedInstitutionName = validatedStage?.Institution || validatedStage?.institution_name || null
+        const validatedInstitutionInfo = institutionByName.get(normalizeInstitutionName(validatedInstitutionName))
+        const institutionContact = place?.InstitutionMail || assignmentInstitutionInfo?.mail || validatedInstitutionInfo?.mail || '-'
 
         if (assignment) {
           return {
             _id: assignment.id || `${assignment.user_id}_${assignment.pfp_type}_${assignment.year || 'na'}`,
             pfp_type: pfpType,
             praticien_name: getPraticienName(praticien) !== '-' ? getPraticienName(praticien) : getLegacyPraticienName(validatedStage),
-            praticien_contact: getPraticienContact(praticien) !== '-' ? getPraticienContact(praticien) : getLegacyPraticienContact(validatedStage),
+            institution_contact: institutionContact,
             institution_name: assignment.assigned_institution_name || place?.Institutionname || validatedStage?.Institution || validatedStage?.institution_name || '-',
             place_name: assignment.assigned_place_name || place?.NomPlace || validatedStage?.NomPlace || validatedStage?.nom_pfp || validatedStage?.Nom_PFP || '-',
             criteria_text: criteriaText,
@@ -513,7 +590,7 @@ const fetchAllStudentsData = async () => {
             _id: `${s.id}_${pfpType}_validated`,
             pfp_type: pfpType,
             praticien_name: getLegacyPraticienName(validatedStage),
-            praticien_contact: getLegacyPraticienContact(validatedStage),
+            institution_contact: institutionContact,
             institution_name: validatedStage?.Institution || validatedStage?.institution_name || place?.Institutionname || '-',
             place_name: validatedStage?.NomPlace || validatedStage?.nom_pfp || validatedStage?.Nom_PFP || place?.NomPlace || '-',
             criteria_text: criteriaText,
@@ -552,3 +629,81 @@ onMounted(async () => {
   ])
 })
 </script>
+
+<style scoped>
+.stage-count-badge {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 0.3rem;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #7dd3fc;
+  background: rgba(56, 189, 248, 0.18);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+}
+
+.stage-expansion {
+  background: rgba(15, 23, 42, 0.32);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.stage-expansion-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.pfp-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.52rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #fde68a;
+  background: rgba(234, 179, 8, 0.15);
+  border: 1px solid rgba(234, 179, 8, 0.35);
+}
+
+.year-pill {
+  display: inline-flex;
+  justify-content: center;
+  min-width: 3rem;
+  padding: 0.12rem 0.45rem;
+  border-radius: 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #bfdbfe;
+  background: rgba(59, 130, 246, 0.18);
+}
+
+.stage-text {
+  color: #e2e8f0;
+}
+
+.stage-text-muted {
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.criteria-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.28rem;
+}
+
+.criteria-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.42rem;
+  border-radius: 0.38rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #bbf7d0;
+  background: rgba(34, 197, 94, 0.16);
+  border: 1px solid rgba(34, 197, 94, 0.32);
+}
+</style>
