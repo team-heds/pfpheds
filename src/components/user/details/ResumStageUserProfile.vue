@@ -646,14 +646,14 @@ const assignedPlaces = computed(() => {
     results.push(item)
   })
 
-  // Trier par _fpNumber puis par année
+  // Trier d'abord par année (chronologique), puis par type de FP
   results.sort((a, b) => {
-    const fpA = a._fpNumber || 99
-    const fpB = b._fpNumber || 99
-    if (fpA !== fpB) return fpA - fpB
     const yearA = getYearSortValue(a.year)
     const yearB = getYearSortValue(b.year)
     if (yearA !== yearB) return yearA - yearB
+    const fpA = a._fpNumber || 99
+    const fpB = b._fpNumber || 99
+    if (fpA !== fpB) return fpA - fpB
     return String(a._key || '').localeCompare(String(b._key || ''))
   })
 
