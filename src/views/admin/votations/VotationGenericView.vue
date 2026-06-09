@@ -433,6 +433,10 @@ import resultatVotationService from '@/service/resultatVotationService'
 import { supabase } from '@/supabase'
 
 const CRITERIA_KEYS = ['MSQ', 'SYSINT', 'NEUROGER', 'AIGU', 'REHAB', 'AMBU', 'FR', 'DE']
+const DEBUG_VOTATION = import.meta.env.VITE_DEBUG_VOTATION === 'true'
+const debugVotation = (...args) => {
+  if (DEBUG_VOTATION) console.debug(...args)
+}
 
 export default {
   name: 'VotationGenericView',
@@ -462,6 +466,10 @@ export default {
       sessionRefreshInFlight: false,
       pfp4ProposedPlaceIds: null,
       pfp4AssignCountByPlace: {},
+      offerSeatCountByPlace: {},
+      offerOccupiedSeatCountByPlace: {},
+      useOfferSeatActivation: false,
+      completedPlaceIds: [],
       pfp4MissingCriteria: [],
       pfp4AppliedRule: null
     };
@@ -532,6 +540,106 @@ export default {
       return value === null || value === undefined ? '' : String(value)
     },
 
+    getPlaceCapacityFieldData(place) {
+      const pfpFieldCandidates = [
+        `${String(this.targetPFP || '').toLowerCase()}_proposition`,
+        this.targetPFP
+      ]
+
+      return pfpFieldCandidates
+        .map(field => place?.[field])
+        .find(val => val && typeof val === 'object') || null
+    },
+
+    getOfferSeatPrefix() {
+      const targetClass = String(this.activeSession?.target_class || this.userStore?.profile?.classe || '').trim()
+      const normalizedPfp = (this.targetPFP === 'PFP1A' || this.targetPFP === 'PFP1B') ? 'PFP1' : this.targetPFP
+      if (!targetClass || !normalizedPfp) return null
+      return {
+        active: `selectedActive${targetClass}${normalizedPfp}-`,
+        student: `selectedEtudiant${targetClass}${normalizedPfp}-`
+      }
+    },
+
+    computeOfferSeatAvailability() {
+      const prefixes = this.getOfferSeatPrefix()
+      const activeCountByPlace = {}
+      const occupiedCountByPlace = {}
+      let foundOfferFields = false
+
+      if (!prefixes) {
+        return { activeCountByPlace, occupiedCountByPlace, foundOfferFields }
+      }
+
+      this.places.forEach(place => {
+        const placeId = place?.PlaceId
+        if (!placeId) return
+
+        let activeCount = 0
+        let occupiedCount = 0
+        const keys = Object.keys(place || {})
+        const activeSeatKeys = keys.filter(key => key.startsWith(prefixes.active))
+
+        activeSeatKeys.forEach(activeKey => {
+          const seatSuffix = activeKey.slice(prefixes.active.length)
+          const isActive = place[activeKey] === true || place[activeKey] === 'true'
+          if (!isActive) return
+
+          activeCount += 1
+          const studentKey = `${prefixes.student}${seatSuffix}`
+          const studentValue = place[studentKey]
+          if (studentValue !== undefined && studentValue !== null && String(studentValue).trim() !== '') {
+            occupiedCount += 1
+          }
+        })
+
+        const fieldData = this.getPlaceCapacityFieldData(place)
+        const nestedAssignations = fieldData?.assignations && typeof fieldData.assignations === 'object'
+          ? fieldData.assignations
+          : null
+
+        if (nestedAssignations) {
+          const targetClass = String(this.activeSession?.target_class || this.userStore?.profile?.classe || '').trim()
+          const nestedEntries = Object.entries(nestedAssignations).filter(([seatKey]) => {
+            if (!targetClass) return true
+            return String(seatKey || '').startsWith(`${targetClass}-`)
+          })
+
+          if (nestedEntries.length > 0) {
+            foundOfferFields = true
+          }
+
+          let nestedActiveCount = 0
+          let nestedOccupiedCount = 0
+
+          nestedEntries.forEach(([, seatData]) => {
+            const isActive = seatData?.active === true || seatData?.active === 'true'
+            if (!isActive) return
+
+            nestedActiveCount += 1
+            const studentValue = seatData?.etudiant
+            if (studentValue !== undefined && studentValue !== null && String(studentValue).trim() !== '') {
+              nestedOccupiedCount += 1
+            }
+          })
+
+          activeCount = Math.max(activeCount, nestedActiveCount)
+          occupiedCount = Math.max(occupiedCount, nestedOccupiedCount)
+        }
+
+        if (activeSeatKeys.length > 0) {
+          foundOfferFields = true
+        }
+
+        if (activeCount > 0 || occupiedCount > 0) {
+          activeCountByPlace[placeId] = activeCount
+          occupiedCountByPlace[placeId] = occupiedCount
+        }
+      })
+
+      return { activeCountByPlace, occupiedCountByPlace, foundOfferFields }
+    },
+
     parsePfpValided(pfpVal) {
       if (!pfpVal) return []
       if (Array.isArray(pfpVal)) return pfpVal
@@ -554,6 +662,53 @@ export default {
         criteria[key] = !!(obj[key] || obj[key.toLowerCase()])
       })
       return criteria
+    },
+
+    getPriorityMissingCriteria() {
+      const missing = this.pfp4MissingCriteria || []
+      if ((this.completedPlaceIds || []).length < 2) {
+        return missing.filter(criteria => criteria !== 'DE')
+      }
+      return missing
+    },
+
+    async loadCompletedPlaceIds() {
+      const userId = this.userStore.profile?.user_id || this.userStore.user?.id || null
+      if (!userId) {
+        this.completedPlaceIds = []
+        return
+      }
+
+      const [physioResult, assignmentsResult] = await Promise.all([
+        supabase
+          .from('StudentsPhysio')
+          .select('pfp_valided')
+          .eq('user_id', userId),
+        supabase
+          .from('student_result_vote')
+          .select('assigned_place_id, pfp_validee')
+          .eq('user_id', userId)
+          .eq('pfp_validee', true)
+          .not('assigned_place_id', 'is', null)
+      ])
+
+      if (physioResult.error) throw physioResult.error
+      if (assignmentsResult.error) throw assignmentsResult.error
+
+      const completed = new Set()
+
+      ;(physioResult.data || []).forEach(row => {
+        this.parsePfpValided(row?.pfp_valided).forEach(stage => {
+          const placeId = stage?.PlaceId || stage?.IDPlace || stage?.ID_PFP || stage?.id_pfp || null
+          if (placeId) completed.add(String(placeId))
+        })
+      })
+
+      ;(assignmentsResult.data || []).forEach(row => {
+        if (row?.assigned_place_id) completed.add(String(row.assigned_place_id))
+      })
+
+      this.completedPlaceIds = Array.from(completed)
     },
 
     async loadMissingCriteriaFromStudentData() {
@@ -623,7 +778,7 @@ export default {
       const missingCriteria = CRITERIA_KEYS.filter(key => scores[key] === 0)
       this.pfp4MissingCriteria = missingCriteria
       this.pfp4AppliedRule = this.targetPFP === 'PFP3' ? 'PFP3_CRITERIA_SORT' : this.pfp4AppliedRule
-      console.log(`🎯 ${this.targetPFP} critères manquants calculés:`, missingCriteria)
+      debugVotation(`🎯 ${this.targetPFP} critères manquants calculés:`, missingCriteria)
     },
 
     async loadProposalsFromSessionDirect() {
@@ -722,11 +877,11 @@ export default {
 
         // Charger toutes les sessions ouvertes une seule fois
         const allSessions = await votationSessionService.getAllActiveSessions()
-        console.log('🔍 Sessions ouvertes:', allSessions.length, allSessions.map(s => ({
+        debugVotation('🔍 Sessions ouvertes:', allSessions.length, allSessions.map(s => ({
           pfp_type: s.pfp_type, is_priority: s.is_priority,
           priority_user_ids: s.priority_user_ids?.length || 0
         })))
-        console.log('🔍 currentUserId:', currentUserId)
+        debugVotation('🔍 currentUserId:', currentUserId)
 
         if (routePfpType) {
           // Route générique /votation/:pfpType — chercher la session pour ce PFP
@@ -745,20 +900,20 @@ export default {
 
           if (pfpHint) {
             const matching = allSessions.filter(s => s.pfp_type === pfpHint)
-            console.log(`🔍 Recherche session pour ${pfpHint}:`, matching.length, 'trouvée(s)')
+            debugVotation(`🔍 Recherche session pour ${pfpHint}:`, matching.length, 'trouvée(s)')
             this.activeSession = filterSessionForUser(matching)
           }
 
           // Fallback : si aucune session trouvée, chercher si l'étudiant est dans une session prioritaire (tout PFP confondu)
           if (!this.activeSession && currentUserId) {
-            console.log('🔍 Fallback: recherche session prioritaire pour cet étudiant...')
+            debugVotation('🔍 Fallback: recherche session prioritaire pour cet étudiant...')
             const prioritySession = allSessions.find(s =>
               s.is_priority &&
               Array.isArray(s.priority_user_ids) &&
               s.priority_user_ids.map(id => this.normalizeId(id)).includes(currentUserIdNormalized)
             )
             if (prioritySession) {
-              console.log(`✅ Session prioritaire trouvée via fallback: ${prioritySession.pfp_type}`)
+              debugVotation(`✅ Session prioritaire trouvée via fallback: ${prioritySession.pfp_type}`)
               this.activeSession = prioritySession
             }
           }
@@ -768,7 +923,7 @@ export default {
             const profile = this.userStore.profile
             const studentClass = profile?.Classe || profile?.classe || profile?.class || profile?.Class || profile?.pfp_cohort || null
             if (studentClass) {
-              console.log(`🔍 Fallback 2: recherche session pour classe ${studentClass}`)
+              debugVotation(`🔍 Fallback 2: recherche session pour classe ${studentClass}`)
               const classSessions = allSessions.filter(s => s.target_class === studentClass)
               this.activeSession = filterSessionForUser(classSessions)
             }
@@ -776,10 +931,10 @@ export default {
 
           // Fallback 3 : prendre la première session normale ouverte (non-prioritaire)
           if (!this.activeSession) {
-            console.log('🔍 Fallback 3: recherche première session normale ouverte...')
+            debugVotation('🔍 Fallback 3: recherche première session normale ouverte...')
             const normalSession = allSessions.find(s => !s.is_priority)
             if (normalSession) {
-              console.log(`✅ Session normale trouvée via fallback 3: ${normalSession.pfp_type} ${normalSession.year} (classe ${normalSession.target_class})`)
+              debugVotation(`✅ Session normale trouvée via fallback 3: ${normalSession.pfp_type} ${normalSession.year} (classe ${normalSession.target_class})`)
               this.activeSession = normalSession
             }
           }
@@ -788,9 +943,9 @@ export default {
         if (this.activeSession) {
           this.targetPFP = this.activeSession.pfp_type
           this.selectedYear = this.activeSession.year
-          console.log(`✅ Session active trouvée: ${this.targetPFP} ${this.selectedYear}${this.activeSession.is_priority ? ' (prioritaire)' : ''}`)
+          debugVotation(`✅ Session active trouvée: ${this.targetPFP} ${this.selectedYear}${this.activeSession.is_priority ? ' (prioritaire)' : ''}`)
         } else {
-          console.warn('⚠️ Aucune session de votation active trouvée')
+          debugVotation('⚠️ Aucune session de votation active trouvée')
         }
       } catch (error) {
         console.error('❌ Erreur chargement session:', error)
@@ -805,6 +960,7 @@ export default {
 
       await this.institutionsStore.fetchInstitutions();
       await this.placesStore.fetchPlaces();
+      await this.loadCompletedPlaceIds();
 
       await this.loadVoteStatistics();
 
@@ -836,19 +992,27 @@ export default {
 
       this.pfp4ProposedPlaceIds = null
       this.pfp4AssignCountByPlace = {}
+      this.offerSeatCountByPlace = {}
+      this.offerOccupiedSeatCountByPlace = {}
+      this.useOfferSeatActivation = false
       this.pfp4MissingCriteria = []
       this.pfp4AppliedRule = null
+
+      const offerAvailability = this.computeOfferSeatAvailability()
+      this.offerSeatCountByPlace = offerAvailability.activeCountByPlace
+      this.offerOccupiedSeatCountByPlace = offerAvailability.occupiedCountByPlace
+      this.useOfferSeatActivation = offerAvailability.foundOfferFields
 
       try {
         this.pfp4AssignCountByPlace = await resultatVotationService.getAssignmentCounts(this.targetPFP, this.selectedYear)
       } catch (assignmentReadError) {
-        console.warn(`⚠️ Lecture assignations ${this.targetPFP} via backend échouée:`, assignmentReadError.message)
+        debugVotation(`⚠️ Lecture assignations ${this.targetPFP} via backend échouée:`, assignmentReadError.message)
         try {
           const { data: assignedRows, error: assignedError } = await supabase
             .from('student_result_vote')
             .select('assigned_place_id')
             .eq('pfp_type', this.targetPFP)
-            .eq('year', this.selectedYear)
+            .in('year', this.getAcademicYearKeys(this.selectedYear))
             .not('assigned_place_id', 'is', null)
 
           if (assignedError) {
@@ -863,14 +1027,14 @@ export default {
           })
           this.pfp4AssignCountByPlace = assignCountByPlace
         } catch (directReadError) {
-          console.warn(`⚠️ Lecture assignations ${this.targetPFP} via Supabase échouée:`, directReadError.message)
+          debugVotation(`⚠️ Lecture assignations ${this.targetPFP} via Supabase échouée:`, directReadError.message)
           try {
             const fromSession = await this.loadProposalsFromSessionDirect()
             if (fromSession?.assignCounts && Object.keys(fromSession.assignCounts).length > 0) {
               this.pfp4AssignCountByPlace = fromSession.assignCounts
             }
           } catch (sessionFallbackError) {
-            console.warn(`⚠️ Lecture assignations ${this.targetPFP} via session échouée:`, sessionFallbackError.message)
+            debugVotation(`⚠️ Lecture assignations ${this.targetPFP} via session échouée:`, sessionFallbackError.message)
           }
         }
       }
@@ -886,7 +1050,7 @@ export default {
           })
         }
       } catch (sessionCountsError) {
-        console.warn(`⚠️ Fusion assignations session ${this.targetPFP} échouée:`, sessionCountsError.message)
+        debugVotation(`⚠️ Fusion assignations session ${this.targetPFP} échouée:`, sessionCountsError.message)
       }
 
       // Pour PFP4: charger les propositions personnalisées et les assignations existantes
@@ -903,12 +1067,12 @@ export default {
           })
           this.pfp4MissingCriteria = result.missingCriteria || []
           this.pfp4AppliedRule = result.appliedRule || null
-          console.log('🎯 PFP4 propositions chargées:', result.proposedPlaceIds ? result.proposedPlaceIds.length + ' places' : 'aucune (toutes visibles)')
-          console.log('🎯 PFP4 critères manquants:', this.pfp4MissingCriteria, 'règle:', this.pfp4AppliedRule)
+          debugVotation('🎯 PFP4 propositions chargées:', result.proposedPlaceIds ? result.proposedPlaceIds.length + ' places' : 'aucune (toutes visibles)')
+          debugVotation('🎯 PFP4 critères manquants:', this.pfp4MissingCriteria, 'règle:', this.pfp4AppliedRule)
           const totalSeats = Object.values(this.pfp4AssignCountByPlace).reduce((s,v) => s+v, 0)
-          console.log(`🎯 PFP4 assignations existantes: ${Object.keys(this.pfp4AssignCountByPlace).length} places, ${totalSeats} sièges pris`)
+          debugVotation(`🎯 PFP4 assignations existantes: ${Object.keys(this.pfp4AssignCountByPlace).length} places, ${totalSeats} sièges pris`)
         } catch (err) {
-          console.warn('⚠️ Impossible de charger les propositions PFP4:', err.message)
+          debugVotation('⚠️ Impossible de charger les propositions PFP4:', err.message)
           this.pfp4ProposedPlaceIds = null
           this.pfp4AssignCountByPlace = {}
         }
@@ -932,9 +1096,9 @@ export default {
             await this.loadMissingCriteriaFromStudentData()
           }
 
-          console.log('🎯 PFP3 propositions chargées:', result.proposedPlaceIds ? result.proposedPlaceIds.length + ' places' : 'aucune (fallback tri)')
+          debugVotation('🎯 PFP3 propositions chargées:', result.proposedPlaceIds ? result.proposedPlaceIds.length + ' places' : 'aucune (fallback tri)')
         } catch (err) {
-          console.warn('⚠️ Impossible de charger les propositions PFP3:', err.message)
+          debugVotation('⚠️ Impossible de charger les propositions PFP3:', err.message)
           try {
             const direct = await this.loadProposalsFromSessionDirect()
             if (direct?.proposedPlaceIds && Array.isArray(direct.proposedPlaceIds)) {
@@ -950,12 +1114,12 @@ export default {
               if (!this.pfp4MissingCriteria.length) {
                 await this.loadMissingCriteriaFromStudentData()
               }
-              console.log('🎯 PFP3 propositions chargées via session:', this.pfp4ProposedPlaceIds.length)
+              debugVotation('🎯 PFP3 propositions chargées via session:', this.pfp4ProposedPlaceIds.length)
             } else {
               await this.loadMissingCriteriaFromStudentData()
             }
           } catch (fallbackErr) {
-            console.warn('⚠️ Impossible de charger les critères manquants PFP3:', fallbackErr.message)
+            debugVotation('⚠️ Impossible de charger les critères manquants PFP3:', fallbackErr.message)
             this.pfp4MissingCriteria = []
             this.pfp4AppliedRule = null
           }
@@ -1037,13 +1201,7 @@ export default {
 
       sorted.forEach(place => {
         let count = 0;
-        const pfpFieldCandidates = [
-          `${String(this.targetPFP || '').toLowerCase()}_proposition`,
-          this.targetPFP
-        ]
-        const fieldData = pfpFieldCandidates
-          .map(field => place[field])
-          .find(val => val && typeof val === 'object')
+        const fieldData = this.getPlaceCapacityFieldData(place)
 
         if (fieldData) {
           const yr = String(this.selectedYear);
@@ -1061,20 +1219,28 @@ export default {
             }
           }
         }
+        const offerCapacity = this.offerSeatCountByPlace[place.PlaceId]
+        if (this.useOfferSeatActivation && Number.isFinite(offerCapacity)) {
+          count = Number(offerCapacity) || 0
+        }
+
         const baseCapacity = count
-        // Soustraire les sièges déjà assignés pour le PFP courant
-        const assignedCount = this.pfp4AssignCountByPlace[place.PlaceId] || 0
-        if (this.pfp4AssignCountByPlace[place.PlaceId]) {
-          count -= this.pfp4AssignCountByPlace[place.PlaceId];
+        const assignedCountFromVotes = Number(this.pfp4AssignCountByPlace[place.PlaceId] || 0)
+        const assignedCountFromOffer = Number(this.offerOccupiedSeatCountByPlace[place.PlaceId] || 0)
+        const assignedCount = Math.max(assignedCountFromVotes, assignedCountFromOffer)
+        if (assignedCount > 0) {
+          count -= assignedCount
         }
 
         if ((place.NomPlace || '').toLowerCase().includes('leukerbad')) {
-          console.log('🎯 DEBUG Leukerbad', {
+          debugVotation('🎯 DEBUG Leukerbad', {
             pfp: this.targetPFP,
             year: this.selectedYear,
             placeId: place.PlaceId,
             placeName: place.NomPlace,
             baseCapacity,
+            assignedCountFromVotes,
+            assignedCountFromOffer,
             assignedCount,
             remaining: count
           })
@@ -1091,7 +1257,7 @@ export default {
         }
       });
       const applyMissingCriteriaSections = (inputRows) => {
-        const missing = this.pfp4MissingCriteria || []
+        const missing = this.getPriorityMissingCriteria()
         if (missing.length === 0) return inputRows
 
         inputRows.forEach(row => {
@@ -1120,53 +1286,54 @@ export default {
       }
 
       // Pour PFP4: filtrer selon les propositions personnalisées
-      if (this.targetPFP === 'PFP4' && this.pfp4ProposedPlaceIds && Array.isArray(this.pfp4ProposedPlaceIds)) {
+      const bypassSavedProposals = (this.completedPlaceIds || []).length < 2 && (this.pfp4MissingCriteria || []).includes('DE')
+      if (!bypassSavedProposals && this.targetPFP === 'PFP4' && this.pfp4ProposedPlaceIds && Array.isArray(this.pfp4ProposedPlaceIds)) {
         const allowedIds = new Set(this.pfp4ProposedPlaceIds)
-        const filtered = rows.filter(r => allowedIds.has(r.PlaceId))
+        const filtered = rows.filter(r => allowedIds.has(r.PlaceId) && !(this.completedPlaceIds || []).includes(String(r.PlaceId)))
         this.expandedPFPData = applyMissingCriteriaSections(filtered)
-        console.log(`🎯 PFP4: ${this.expandedPFPData.length}/${rows.length} places après filtrage propositions`)
-      } else if (this.targetPFP === 'PFP3' && this.pfp4ProposedPlaceIds && Array.isArray(this.pfp4ProposedPlaceIds)) {
+        debugVotation(`🎯 PFP4: ${this.expandedPFPData.length}/${rows.length} places après filtrage propositions`)
+      } else if (!bypassSavedProposals && this.targetPFP === 'PFP3' && this.pfp4ProposedPlaceIds && Array.isArray(this.pfp4ProposedPlaceIds)) {
         const allowedIds = new Set(this.pfp4ProposedPlaceIds)
-        const filtered = rows.filter(r => allowedIds.has(r.PlaceId))
+        const filtered = rows.filter(r => allowedIds.has(r.PlaceId) && !(this.completedPlaceIds || []).includes(String(r.PlaceId)))
         this.expandedPFPData = applyMissingCriteriaSections(filtered)
-        console.log(`🎯 PFP3: ${this.expandedPFPData.length}/${rows.length} places après filtrage propositions`)
+        debugVotation(`🎯 PFP3: ${this.expandedPFPData.length}/${rows.length} places après filtrage propositions`)
       } else if (this.targetPFP === 'PFP3' && this.pfp4MissingCriteria.length > 0) {
-        const missing = this.pfp4MissingCriteria || []
-        const missingDE = missing.includes('DE')
+        const missing = this.getPriorityMissingCriteria()
+        const missingDE = (this.completedPlaceIds || []).length >= 2 && missing.includes('DE')
         const MIN_PLACES = 5
         const countCovered = row => missing.filter(c => CRITERIA_KEYS.includes(c) && row[c]).length
 
         let proposedRows = []
         if (missingDE) {
-          proposedRows = rows.filter(r => r.DE)
+          proposedRows = rows.filter(r => r.DE && !(this.completedPlaceIds || []).includes(String(r.PlaceId)))
         } else {
-          proposedRows = rows.filter(r => countCovered(r) > 0)
+          proposedRows = rows.filter(r => countCovered(r) > 0 && !(this.completedPlaceIds || []).includes(String(r.PlaceId)))
 
           if (proposedRows.length < MIN_PLACES) {
             const currentKeys = new Set(proposedRows.map(r => r.uniqueKey))
-            const sysintRows = rows.filter(r => !currentKeys.has(r.uniqueKey) && r.SYSINT)
+            const sysintRows = rows.filter(r => !currentKeys.has(r.uniqueKey) && r.SYSINT && !(this.completedPlaceIds || []).includes(String(r.PlaceId)))
             proposedRows.push(...sysintRows)
           }
 
           if (proposedRows.length < MIN_PLACES) {
             const currentKeys = new Set(proposedRows.map(r => r.uniqueKey))
-            const rest = rows.filter(r => !currentKeys.has(r.uniqueKey))
+            const rest = rows.filter(r => !currentKeys.has(r.uniqueKey) && !(this.completedPlaceIds || []).includes(String(r.PlaceId)))
             const needed = MIN_PLACES - proposedRows.length
             proposedRows.push(...rest.slice(0, needed))
           }
         }
 
         this.expandedPFPData = applyMissingCriteriaSections(proposedRows)
-        console.log(`🎯 PFP3: ${this.expandedPFPData.length}/${rows.length} places proposées (fallback critères)`)
+        debugVotation(`🎯 PFP3: ${this.expandedPFPData.length}/${rows.length} places proposées (fallback critères)`)
       } else {
-        this.expandedPFPData = rows;
+        this.expandedPFPData = rows.filter(r => !(this.completedPlaceIds || []).includes(String(r.PlaceId)));
       }
 
       if ((this.targetPFP === 'PFP4' || this.targetPFP === 'PFP3') && this.pfp4MissingCriteria.length > 0) {
         const high = this.expandedPFPData.filter(r => r.pfp4Section === 'high').length
         const med = this.expandedPFPData.filter(r => r.pfp4Section === 'medium').length
         const other = this.expandedPFPData.filter(r => r.pfp4Section === 'other').length
-        console.log(`🎯 ${this.targetPFP} sections: ⭐${high} haute, 📋${med} moyenne, 📌${other} autres`)
+        debugVotation(`🎯 ${this.targetPFP} sections: ⭐${high} haute, 📋${med} moyenne, 📌${other} autres`)
       }
     },
 
@@ -1722,3 +1889,4 @@ export default {
   }
 }
 </style>
+

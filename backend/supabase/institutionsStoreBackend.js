@@ -1,8 +1,120 @@
 // supabase/institutionsStoreBackend.js
 const { Router } = require('express')
 const supabase = require('../supabaseClient')
+const { supabaseAdmin } = require('../supabaseClient')
+const multer = require('multer')
+const { randomUUID } = require('crypto')
  
 const router = Router()
+const upload = multer({ storage: multer.memoryStorage() })
+const INSTITUTIONS_BUCKET = 'institutions'
+
+async function ensureInstitutionsBucket() {
+  const { data: buckets, error: listError } = await supabaseAdmin.storage.listBuckets()
+  if (listError) throw listError
+
+  const exists = (buckets || []).some((bucket) => bucket.name === INSTITUTIONS_BUCKET)
+  if (exists) return
+
+  const { error: createError } = await supabaseAdmin.storage.createBucket(INSTITUTIONS_BUCKET, {
+    public: true,
+    fileSizeLimit: 5242880,
+    allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+  })
+
+  if (createError) throw createError
+}
+
+function getPublicUrl(path) {
+  const { data } = supabaseAdmin.storage.from(INSTITUTIONS_BUCKET).getPublicUrl(path)
+  return data.publicUrl
+}
+
+function extractSupabaseStoragePath(url) {
+  if (!url || typeof url !== 'string') return null
+
+  try {
+    const parsed = new URL(url)
+    const marker = `/storage/v1/object/public/${INSTITUTIONS_BUCKET}/`
+    const index = parsed.pathname.indexOf(marker)
+    if (index === -1) return null
+    return decodeURIComponent(parsed.pathname.slice(index + marker.length))
+  } catch {
+    return null
+  }
+}
+
+router.post('/:id/images', upload.array('images'), async (req, res) => {
+  try {
+    await ensureInstitutionsBucket()
+
+    const institutionId = String(req.params.id || '').trim()
+    const files = req.files || []
+
+    if (!institutionId) {
+      return res.status(400).json({ error: 'InstitutionId manquant' })
+    }
+    if (!files.length) {
+      return res.status(400).json({ error: 'Aucune image reçue' })
+    }
+
+    const uploaded = []
+
+    for (const file of files) {
+      const ext = file.originalname?.includes('.') ? file.originalname.split('.').pop() : 'jpg'
+      const path = `${institutionId}/${Date.now()}-${randomUUID()}.${ext}`
+
+      const { error: uploadError } = await supabaseAdmin.storage
+        .from(INSTITUTIONS_BUCKET)
+        .upload(path, file.buffer, {
+          contentType: file.mimetype,
+          cacheControl: '3600',
+          upsert: false
+        })
+
+      if (uploadError) {
+        console.error('[Supabase] institutions image upload error:', uploadError)
+        return res.status(400).json({ error: uploadError.message })
+      }
+
+      uploaded.push({
+        path,
+        url: getPublicUrl(path),
+        name: file.originalname
+      })
+    }
+
+    return res.status(201).json({ files: uploaded })
+  } catch (e) {
+    console.error('POST /api/institutions/:id/images failed:', e)
+    return res.status(500).json({ error: 'Internal Server Error' })
+  }
+})
+
+router.delete('/:id/images', async (req, res) => {
+  try {
+    const rawUrl = req.body?.url
+    const storagePath = extractSupabaseStoragePath(rawUrl)
+
+    if (!storagePath) {
+      return res.status(400).json({ error: 'URL image invalide' })
+    }
+
+    const { error } = await supabaseAdmin.storage
+      .from(INSTITUTIONS_BUCKET)
+      .remove([storagePath])
+
+    if (error) {
+      console.error('[Supabase] institutions image delete error:', error)
+      return res.status(400).json({ error: error.message })
+    }
+
+    return res.status(204).send()
+  } catch (e) {
+    console.error('DELETE /api/institutions/:id/images failed:', e)
+    return res.status(500).json({ error: 'Internal Server Error' })
+  }
+})
  
 // GET all
 router.get('/', async (req, res) => {

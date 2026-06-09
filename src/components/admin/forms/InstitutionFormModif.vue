@@ -75,6 +75,28 @@
                   <InputText id="address" v-model="institution.Address" />
                 </div>
               </div>
+              <div class="col-6 md:col-3">
+                <div class="p-field">
+                  <label for="latitude">Latitude</label>
+                  <InputText
+                    id="latitude"
+                    v-model="institution.Latitude"
+                    class="w-full"
+                    placeholder="Ex: 46.2331"
+                  />
+                </div>
+              </div>
+              <div class="col-6 md:col-3">
+                <div class="p-field">
+                  <label for="longitude">Longitude</label>
+                  <InputText
+                    id="longitude"
+                    v-model="institution.Longitude"
+                    class="w-full"
+                    placeholder="Ex: 7.3606"
+                  />
+                </div>
+              </div>
               <div class="col-12 md:col-6">
                 <div class="p-field">
                   <label for="url">URL</label>
@@ -218,6 +240,11 @@ const router = useRouter()
 const institutionsStore = useInstitutionsStore()
 const toast = useToast()
 const institutionId = route.params.id
+const INSTITUTIONS_BUCKET = 'institutions'
+const API_URL = import.meta.env.VITE_API_URL ||
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://127.0.0.1:3000/api'
+    : '/api')
 
 // --- Reactive State ---
 const institution = ref(null)
@@ -235,23 +262,88 @@ const parseDateLocal = (dateStr) => {
   return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]))
 }
 
+const parseCoordinate = (value) => {
+  if (value === '' || value === null || value === undefined) return null
+  const parsed = Number.parseFloat(value)
+  return Number.isNaN(parsed) ? null : parsed
+}
+
+const cloneInstitution = (data) => {
+  const cloned = JSON.parse(JSON.stringify(data))
+  cloned.ImageURL = Array.isArray(cloned.ImageURL) ? [...cloned.ImageURL] : []
+  cloned.ConventionDate = parseDateLocal(cloned.ConventionDate)
+  cloned.AccordCadreDate = parseDateLocal(cloned.AccordCadreDate)
+  cloned.Latitude = cloned.Latitude ?? ''
+  cloned.Longitude = cloned.Longitude ?? ''
+  return cloned
+}
+
+const getSupabaseStoragePath = (url, bucket) => {
+  if (!url || typeof url !== 'string') return null
+
+  try {
+    const parsedUrl = new URL(url)
+    const marker = `/storage/v1/object/public/${bucket}/`
+    const index = parsedUrl.pathname.indexOf(marker)
+
+    if (index === -1) return null
+    return decodeURIComponent(parsedUrl.pathname.slice(index + marker.length))
+  } catch {
+    return null
+  }
+}
+
+const uploadImagesToBackend = async (files) => {
+  const formData = new FormData()
+  files.forEach((file) => formData.append('images', file))
+
+  const response = await fetch(`${API_URL}/institutions/${institutionId}/images`, {
+    method: 'POST',
+    body: formData
+  })
+
+  const payload = await response.json().catch(() => ({}))
+  if (!response.ok) {
+    throw new Error(payload.error || "Erreur lors de l'upload des images.")
+  }
+
+  return payload.files || []
+}
+
+const deleteSupabaseImageFromBackend = async (imageUrl) => {
+  const response = await fetch(`${API_URL}/institutions/${institutionId}/images`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ url: imageUrl })
+  })
+
+  if (response.status === 204) return
+
+  const payload = await response.json().catch(() => ({}))
+  if (!response.ok) {
+    throw new Error(payload.error || "Erreur lors de la suppression de l'image.")
+  }
+}
+
 // --- Lifecycle Hooks ---
 onMounted(async () => {
   if (institutionsStore.institutions.length === 0) {
     await institutionsStore.fetchInstitutions()
   }
-  const data = institutionsStore.institutions.find((i) => i.InstitutionId === institutionId)
+  const data = institutionsStore.getInstitutionById(institutionId)
   if (data) {
-    institution.value = JSON.parse(JSON.stringify(data)) // Deep copy
-    // Convert date strings to Date objects for Calendar component
-    institution.value.ConventionDate = parseDateLocal(institution.value.ConventionDate)
-    institution.value.AccordCadreDate = parseDateLocal(institution.value.AccordCadreDate)
-    // Set initial image previews
-    if (institution.value.ImageURL && Array.isArray(institution.value.ImageURL)) {
-      localPreviews.value = [...institution.value.ImageURL]
-    }
+    institution.value = cloneInstitution(data)
+    localPreviews.value = [...institution.value.ImageURL]
   } else {
     console.error('Institution not found in store')
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: "Impossible de charger l'institution.",
+      life: 4000
+    })
   }
 })
 
@@ -265,50 +357,70 @@ const onPdfChange = (event) => {
 
 const onImageChange = (event) => {
   const files = Array.from(event.target.files)
+  if (!files.length) return
+
   files.forEach((file) => {
     imageFiles.value.push(file)
     localPreviews.value.push(URL.createObjectURL(file))
   })
+
+  event.target.value = ''
 }
 
 const removeImage = async (index) => {
   const urlToRemove = localPreviews.value[index]
+  const isLocalPreview = typeof urlToRemove === 'string' && urlToRemove.startsWith('blob:')
+  const supabasePath = getSupabaseStoragePath(urlToRemove, INSTITUTIONS_BUCKET)
 
-  // If it's a firebase URL, delete from storage
-  if (urlToRemove.includes('firebasestorage.googleapis.com')) {
+  if (!isLocalPreview && supabasePath) {
     try {
-      const imageHttpRef = storageRef(storage, urlToRemove)
-      await deleteObject(imageHttpRef)
+      await deleteSupabaseImageFromBackend(urlToRemove)
     } catch (error) {
-      // Ignore object-not-found error, as it might have been deleted already or never existed
+      console.error("Erreur lors de la suppression de l'image Supabase Storage:", error)
+      toast.add({
+        severity: 'error',
+        summary: 'Erreur',
+        detail: "La suppression de l'image a échoué.",
+        life: 4000
+      })
+      return
+    }
+  }
+
+  if (!isLocalPreview && typeof urlToRemove === 'string' && urlToRemove.includes('firebasestorage.googleapis.com')) {
+    try {
+      await deleteObject(storageRef(storage, urlToRemove))
+    } catch (error) {
       if (error.code !== 'storage/object-not-found') {
-        console.error("Erreur lors de la suppression de l'image de Firebase Storage:", error)
-        // Optionally, alert the user that the deletion failed
-        alert("La suppression de l'image du serveur a échoué.")
-        return // Stop execution if deletion fails for other reasons
+        console.error("Erreur lors de la suppression de l'image Firebase Storage:", error)
+        toast.add({
+          severity: 'error',
+          summary: 'Erreur',
+          detail: "La suppression de l'image a échoué.",
+          life: 4000
+        })
+        return
       }
     }
-  } else {
-    // If it's a local blob URL, revoke it and remove the corresponding file from the upload queue
+  }
+
+  if (isLocalPreview) {
     URL.revokeObjectURL(urlToRemove)
-    const fileIndex = localPreviews.value.indexOf(urlToRemove)
-    if (fileIndex > -1) {
-      // This logic assumes a 1-to-1 mapping between new files and blob previews
-      // A more robust implementation might be needed if the order can change
-      const newFileIndex = fileIndex - (institution.value.ImageURL?.length || 0)
-      if (newFileIndex >= 0 && newFileIndex < imageFiles.value.length) {
-        imageFiles.value.splice(newFileIndex, 1)
-      }
+    const localPreviewUrls = localPreviews.value.filter(
+      (url) => typeof url === 'string' && url.startsWith('blob:')
+    )
+    const newFileIndex = localPreviewUrls.indexOf(urlToRemove)
+    if (newFileIndex > -1) {
+      imageFiles.value.splice(newFileIndex, 1)
     }
   }
 
-  // Remove from the institution's data model
-  const imageUrlIndex = institution.value.ImageURL.indexOf(urlToRemove)
-  if (imageUrlIndex > -1) {
-    institution.value.ImageURL.splice(imageUrlIndex, 1)
+  if (!isLocalPreview) {
+    institution.value.ImageURL = (institution.value.ImageURL || []).filter(
+      (url) => url !== urlToRemove
+    )
   }
 
-  // Remove from the preview list
   localPreviews.value.splice(index, 1)
 }
 
@@ -325,16 +437,13 @@ const handleUpdateInstitution = async () => {
 
     // 2. Handle Image Uploads to Firebase Storage
     if (imageFiles.value.length > 0) {
-      const uploadPromises = imageFiles.value.map((file) => {
-        const imgStorageRef = storageRef(storage, `Institutions/${institutionId}/${file.name}`)
-        return uploadBytes(imgStorageRef, file).then((snapshot) => getDownloadURL(snapshot.ref))
-      })
-      const newImageUrls = await Promise.all(uploadPromises)
-      // Combine old and new URLs
-      institution.value.ImageURL = [...(institution.value.ImageURL || []), ...newImageUrls]
+      const uploadedFiles = await uploadImagesToBackend(imageFiles.value)
+      institution.value.ImageURL = [
+        ...(institution.value.ImageURL || []),
+        ...uploadedFiles.map((file) => file.url)
+      ]
     }
 
-    // 3. Prepare data for the store (format dates back to string YYYY-MM-DD)
     const dataToUpdate = {
       ...institution.value,
       ConventionDate: institution.value.ConventionDate
@@ -342,14 +451,13 @@ const handleUpdateInstitution = async () => {
         : null,
       AccordCadreDate: institution.value.AccordCadreDate
         ? new Date(institution.value.AccordCadreDate).toLocaleDateString('fr-CA')
-        : null
+        : null,
+      Latitude: parseCoordinate(institution.value.Latitude),
+      Longitude: parseCoordinate(institution.value.Longitude),
+      ImageURL: institution.value.ImageURL || []
     }
 
-    // 4. Update data via Pinia Store
     await institutionsStore.updateInstitution(institutionId, dataToUpdate)
-
-    // Petit délai pour propagation Supabase
-    console.log('⏱️ [InstitutionFormModif] Attente propagation Supabase...')
     await new Promise((resolve) => setTimeout(resolve, 300))
 
     toast.add({
@@ -358,11 +466,17 @@ const handleUpdateInstitution = async () => {
       detail: 'Institution mise à jour avec succès!',
       life: 3000
     })
-    console.log('✅ [InstitutionFormModif] Redirection vers liste...')
     router.push({ name: 'InstitutionListView' })
   } catch (error) {
     console.error('Erreur lors de la mise à jour:', error)
-    alert('Erreur lors de la mise à jour de l’institution.')
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: error.message || "Erreur lors de la mise à jour de l'institution.",
+      life: 5000
+    })
+  } finally {
+    imageFiles.value = []
   }
 }
 

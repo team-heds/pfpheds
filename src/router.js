@@ -4,7 +4,6 @@ import { useAuthStore } from '@/stores/authStore';
 import rolesService from '@/service/rolesService';
 import { useRoleStore } from '@/stores/role';
 import { addDynamicRoutesToRouter } from '@/composables/useDynamicRoutes';
-import { useUserStore } from '@/stores/userStore';
 import routes from '@/router/routes/index';
 
 const DEFAULT_NEED = 'authenticated';

@@ -6,7 +6,22 @@
 import { supabase } from '@/supabase'
 import axios from 'axios'
 
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || ''
+const resolveApiBaseUrl = () => {
+  if (import.meta.env.VITE_BACKEND_URL) {
+    return import.meta.env.VITE_BACKEND_URL
+  }
+
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://127.0.0.1:3000'
+    }
+  }
+
+  return ''
+}
+
+const API_BASE_URL = resolveApiBaseUrl()
 const getAcademicYearKeys = (year) => {
   const y = Number(year)
   if (!Number.isFinite(y)) return [String(year)]

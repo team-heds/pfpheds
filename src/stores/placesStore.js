@@ -62,8 +62,9 @@ export const usePlacesStore = defineStore('places', {
       this.loading = true;
       this.error = null;
 
+      const DEBUG_PLACES_STORE = import.meta.env.VITE_DEBUG_PLACES_STORE === 'true';
       const debug = (...args) => {
-        if (import.meta.env.DEV) console.log(...args);
+        if (DEBUG_PLACES_STORE) console.debug(...args);
       };
 
       try {

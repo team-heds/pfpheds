@@ -1,6 +1,6 @@
 /**
  * Service de gestion des sessions de votation PFP.
- * 
+ *
  * Stocke les sessions dans la table Supabase `votation_sessions`.
  * Structure attendue de la table :
  *   id (uuid, PK)
@@ -25,7 +25,6 @@ const getAcademicYearKeys = (year) => {
 }
 
 const votationSessionService = {
-
   /**
    * Récupérer toutes les sessions (triées par date)
    */
@@ -147,7 +146,14 @@ const votationSessionService = {
    * @param {string} userId - ID de l'admin
    * @param {Array<string>} priorityUserIds - Liste des user_id prioritaires
    */
-  async openPrioritySession(pfpType, year, targetClass, userId, priorityUserIds = [], priorityReasons = null) {
+  async openPrioritySession(
+    pfpType,
+    year,
+    targetClass,
+    userId,
+    priorityUserIds = [],
+    priorityReasons = null
+  ) {
     // Fermer toute session prioritaire existante pour ce PFP/année
     await this.closePrioritySession(pfpType, year)
 
@@ -174,7 +180,11 @@ const votationSessionService = {
     }
 
     // Tenter avec priority_reasons, fallback sans
-    let res = await supabase.from(TABLE).insert({ ...basePayload, priority_reasons: priorityReasons }).select().single()
+    let res = await supabase
+      .from(TABLE)
+      .insert({ ...basePayload, priority_reasons: priorityReasons })
+      .select()
+      .single()
     if (res.error && res.error.message?.includes('priority_reasons')) {
       res = await supabase.from(TABLE).insert(basePayload).select().single()
     }
@@ -251,14 +261,33 @@ const votationSessionService = {
 
     if (existing?.[0]) {
       const basePayload = { target_class: targetClass, priority_user_ids: priorityUserIds }
-      let res = await supabase.from(TABLE).update(tryWithReasons(basePayload)).eq('id', existing[0].id).select().single()
+      let res = await supabase
+        .from(TABLE)
+        .update(tryWithReasons(basePayload))
+        .eq('id', existing[0].id)
+        .select()
+        .single()
       if (res.error && res.error.message?.includes('priority_reasons')) {
-        res = await supabase.from(TABLE).update(tryWithoutReasons(basePayload)).eq('id', existing[0].id).select().single()
+        res = await supabase
+          .from(TABLE)
+          .update(tryWithoutReasons(basePayload))
+          .eq('id', existing[0].id)
+          .select()
+          .single()
       }
       if (res.error) throw res.error
       return res.data
     } else {
-      const basePayload = { pfp_type: pfpType, year: year, target_class: targetClass, status: 'closed', is_priority: true, priority_user_ids: priorityUserIds, opened_at: null, closed_at: null }
+      const basePayload = {
+        pfp_type: pfpType,
+        year: year,
+        target_class: targetClass,
+        status: 'closed',
+        is_priority: true,
+        priority_user_ids: priorityUserIds,
+        opened_at: null,
+        closed_at: null
+      }
       let res = await supabase.from(TABLE).insert(tryWithReasons(basePayload)).select().single()
       if (res.error && res.error.message?.includes('priority_reasons')) {
         res = await supabase.from(TABLE).insert(tryWithoutReasons(basePayload)).select().single()

@@ -5,6 +5,69 @@ const { v4: uuidv4 } = require('uuid')
 
 const router = Router()
 
+const getAcademicYearKeys = (year) => {
+  const y = Number(year)
+  if (!Number.isFinite(y)) return [String(year)]
+  return [String(y), `${y - 1}-${y}`]
+}
+
+const parsePfpValided = (value) => {
+  if (!value) return []
+  if (Array.isArray(value)) return value
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value)
+      return Array.isArray(parsed) ? parsed : Object.values(parsed || {})
+    } catch (error) {
+      return []
+    }
+  }
+  if (typeof value === 'object') return Object.values(value)
+  return []
+}
+
+const getPlaceIdFromStage = (stage) => {
+  return stage?.PlaceId || stage?.IDPlace || stage?.ID_PFP || stage?.id_pfp || null
+}
+
+const getCompletedPlaceIdsForUser = async (userId) => {
+  const completed = new Set()
+  if (!userId) return completed
+
+  const [{ data: physioRows, error: physioError }, { data: resultRows, error: resultError }] = await Promise.all([
+    supabaseAdmin
+      .from('StudentsPhysio')
+      .select('pfp_valided')
+      .eq('user_id', userId),
+    supabaseAdmin
+      .from('student_result_vote')
+      .select('assigned_place_id, pfp_validee')
+      .eq('user_id', userId)
+      .eq('pfp_validee', true)
+      .not('assigned_place_id', 'is', null)
+  ])
+
+  if (physioError) {
+    console.warn(`⚠️ StudentsPhysio inaccessible pour ${userId}:`, physioError.message)
+  }
+  if (resultError) {
+    console.warn(`⚠️ student_result_vote inaccessible pour ${userId}:`, resultError.message)
+  }
+
+  ;(physioRows || []).forEach(row => {
+    parsePfpValided(row?.pfp_valided).forEach(stage => {
+      const placeId = getPlaceIdFromStage(stage)
+      if (placeId) completed.add(String(placeId))
+    })
+  })
+
+  ;(resultRows || []).forEach(row => {
+    if (row?.assigned_place_id) completed.add(String(row.assigned_place_id))
+  })
+
+  return completed
+}
+
 // Middleware pour extraire le user depuis le token JWT
 const setUser = async (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1]
@@ -77,7 +140,7 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
       .from('student_result_vote')
       .select('user_id, assigned_place_id, assigned_rank, status, notes')
       .eq('pfp_type', pfpType)
-      .eq('year', year)
+      .in('year', getAcademicYearKeys(year))
 
     if (existingError) {
       console.warn('⚠️ Impossible de charger les assignations existantes:', existingError.message)
@@ -438,6 +501,12 @@ router.get('/pfp3-proposals/:year', setUser, async (req, res) => {
       }
     }
 
+    if (Array.isArray(proposedPlaceIds) && proposedPlaceIds.length > 0) {
+      const completedPlaceIds = await getCompletedPlaceIdsForUser(userId)
+      const validatedStageCount = studentCriteria?.totalStages || completedPlaceIds.size || 0
+      proposedPlaceIds = proposedPlaceIds.filter(placeId => !completedPlaceIds.has(String(placeId)))
+    }
+
     return res.json({
       ok: true,
       proposedPlaceIds,
@@ -467,7 +536,7 @@ router.get('/assignment-counts/:pfpType/:year', setUser, async (req, res) => {
       .from('student_result_vote')
       .select('assigned_place_id')
       .eq('pfp_type', pfpType)
-      .eq('year', year)
+      .in('year', getAcademicYearKeys(year))
       .not('assigned_place_id', 'is', null)
 
     if (error) {
@@ -753,13 +822,18 @@ router.post('/generate-pfp4-proposals', requireAdmin, async (req, res) => {
       const userId = student.user_id
       const studentCriteria = criteriaMap.get(userId)
       const scores = studentCriteria ? studentCriteria.scores : Object.fromEntries(CRITERIA_KEYS.map(k => [k, 0]))
+      const completedPlaceIds = await getCompletedPlaceIdsForUser(userId)
 
       // Déterminer les critères manquants (score === 0)
       const missingCriteria = CRITERIA_KEYS.filter(c => scores[c] === 0)
-      const missingDE = missingCriteria.includes('DE')
+      const deprioritizeDE = validatedStageCount < 2
+      const priorityMissingCriteria = deprioritizeDE
+        ? missingCriteria.filter(c => c !== 'DE')
+        : missingCriteria
+      const missingDE = !deprioritizeDE && priorityMissingCriteria.includes('DE')
       const missingSYSINT = missingCriteria.includes('SYSINT')
       // Autres critères manquants (hors DE et SYSINT)
-      const otherMissing = missingCriteria.filter(c => c !== 'DE' && c !== 'SYSINT')
+      const otherMissing = priorityMissingCriteria.filter(c => c !== 'SYSINT')
 
       let proposedPlaces = []
 
@@ -778,10 +852,10 @@ router.post('/generate-pfp4-proposals', requireAdmin, async (req, res) => {
           if (p.SYSINT) return true
           return otherMissing.some(c => p[c])
         })
-      } else if (missingCriteria.length > 0) {
+      } else if (priorityMissingCriteria.length > 0) {
         // ── Règle 5: Manque autre(s) sans SYSINT ni DE → toutes les places matchant un critère manquant ──
         proposedPlaces = pfp4Places.filter(p => {
-          return missingCriteria.some(c => p[c])
+          return priorityMissingCriteria.some(c => p[c])
         })
       } else {
         // ── Aucun critère manquant → proposer toutes les places PFP4 ──
@@ -791,6 +865,7 @@ router.post('/generate-pfp4-proposals', requireAdmin, async (req, res) => {
       // Dédupliquer par PlaceId
       const uniquePlaceIds = new Set()
       proposedPlaces = proposedPlaces.filter(p => {
+        if (completedPlaceIds.has(String(p.PlaceId))) return false
         if (uniquePlaceIds.has(p.PlaceId)) return false
         uniquePlaceIds.add(p.PlaceId)
         return true
@@ -802,7 +877,7 @@ router.post('/generate-pfp4-proposals', requireAdmin, async (req, res) => {
       else if (missingDE && missingSYSINT) appliedRule = 'DE_AND_SYSINT'
       else if (missingSYSINT && !missingDE && otherMissing.length === 0) appliedRule = 'SYSINT_ONLY'
       else if (missingSYSINT && otherMissing.length > 0) appliedRule = 'SYSINT_AND_OTHER'
-      else if (missingCriteria.length > 0) appliedRule = 'OTHER_MISSING'
+      else if (priorityMissingCriteria.length > 0) appliedRule = deprioritizeDE ? 'UNDER2_NO_DE_PRIORITY' : 'OTHER_MISSING'
       else appliedRule = 'ALL_COMPLETE'
 
       proposals.push({
@@ -1026,6 +1101,11 @@ router.get('/pfp4-proposals/:year', setUser, async (req, res) => {
           break
         }
       }
+    }
+
+    if (Array.isArray(proposedPlaceIds) && proposedPlaceIds.length > 0) {
+      const completedPlaceIds = await getCompletedPlaceIdsForUser(userId)
+      proposedPlaceIds = proposedPlaceIds.filter(placeId => !completedPlaceIds.has(String(placeId)))
     }
 
     if (!proposedPlaceIds) {

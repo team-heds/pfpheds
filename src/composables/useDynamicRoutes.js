@@ -1,27 +1,25 @@
 import { supabase } from '@/supabase';
 
-const isDev = import.meta.env.DEV;
-const debugDynRoutes = (...args) => { if (isDev) console.debug('[DynRoutes]', ...args); };
+const DEBUG_DYNAMIC_ROUTES = import.meta.env.VITE_DEBUG_DYNAMIC_ROUTES === 'true';
+const debugDynRoutes = (...args) => {
+  if (DEBUG_DYNAMIC_ROUTES) console.debug('[DynRoutes]', ...args);
+};
 
-// Vite va scanner et bundler toutes les vues et composants .vue utilisés par les routes dynamiques
-// Inclure à la fois /views et /components pour supporter des chemins comme "@/components/games/Ventriglisse3D.vue"
 const viewModules = {
   ...import.meta.glob('@/views/**/*.vue'),
   ...import.meta.glob('@/components/**/*.vue')
 };
 
+const LEGACY_COMPONENT_ALIASES = new Map([
+  ['/src/views/home/Pushview.vue', '/src/views/home/PushView.vue'],
+  ['/src/views/home/Pushview2.vue', '/src/views/home/PushView2.vue'],
+  ['/src/views/auth/LoginHome2.vue', '/src/views/auth/LoginHome.vue'],
+  ['/src/views/admin/votations/VotationView.vue', '/src/views/admin/votations/VotationGenericView.vue'],
+  ['/src/views/admin/formation-pratique/ProfilRepondantEnseignantViewPHYFP.vue', '/src/views/admin/formation-pratique/ProfileRepondantView.vue']
+]);
+
 const DEFAULT_NEED = 'public';
 
-/**
- * Normalise le component_path venant de la DB
- * pour matcher les clés de import.meta.glob.
- *
- * Ex DB possibles :
- *  "@/views/auth/LoginHome.vue"
- *  "/views/auth/LoginHome.vue"
- *  "views/auth/LoginHome.vue"
- *  "/src/views/auth/LoginHome.vue"
- */
 function normalizeComponentPath(pathFromDb) {
   if (!pathFromDb) {
     throw new Error('component_path manquant pour une route dynamique');
@@ -30,46 +28,54 @@ function normalizeComponentPath(pathFromDb) {
   let p = String(pathFromDb).trim();
 
   if (p.startsWith('@/')) {
-    // "@/views/..." -> "/src/views/..."
     p = p.replace(/^@/, '/src');
   } else if (p.startsWith('/views/')) {
-    // "/views/..." -> "/src/views/..."
     p = p.replace(/^\/views/, '/src/views');
   } else if (p.startsWith('views/')) {
-    // "views/..." -> "/src/views/..."
     p = '/src/' + p;
   } else if (p.startsWith('/components/')) {
-    // "/components/..." -> "/src/components/..."
     p = p.replace(/^\/components/, '/src/components');
   } else if (p.startsWith('components/')) {
-    // "components/..." -> "/src/components/..."
     p = '/src/' + p;
   }
-  // Si tu stockes déjà "/src/views/..." en DB, ça passe tel quel
 
   return p;
 }
 
-/**
- * Retourne la fonction de chargement de vue correspondant à component_path.
- * Vue Router accepte directement cette fonction (lazy load).
- */
-function resolveView(componentPathFromDb) {
-  const key = normalizeComponentPath(componentPathFromDb);
-  const loader = viewModules[key];
+function findCaseInsensitiveModuleKey(targetKey) {
+  const normalizedTarget = String(targetKey || '').toLowerCase();
+  return Object.keys(viewModules).find(key => key.toLowerCase() === normalizedTarget) || null;
+}
 
-  if (!loader) {
-    console.warn(`⚠️ View non trouvée: "${componentPathFromDb}" (clé: "${key}")`)
+function resolveAliasedComponentKey(key) {
+  if (viewModules[key]) return key;
+
+  const aliasKey = LEGACY_COMPONENT_ALIASES.get(key);
+  if (aliasKey && viewModules[aliasKey]) return aliasKey;
+
+  const caseInsensitiveKey = findCaseInsensitiveModuleKey(key);
+  if (caseInsensitiveKey) return caseInsensitiveKey;
+
+  if (aliasKey) {
+    const aliasCaseInsensitiveKey = findCaseInsensitiveModuleKey(aliasKey);
+    if (aliasCaseInsensitiveKey) return aliasCaseInsensitiveKey;
   }
 
-  // loader est une fonction () => import('...') déjà gérée par Vite
+  return null;
+}
+
+function resolveView(componentPathFromDb) {
+  const key = normalizeComponentPath(componentPathFromDb);
+  const resolvedKey = resolveAliasedComponentKey(key);
+  const loader = resolvedKey ? viewModules[resolvedKey] : null;
+
+  if (!loader) {
+    debugDynRoutes(`view introuvable: "${componentPathFromDb}" (cle: "${key}")`);
+  }
+
   return loader;
 }
 
-/**
- * Charge toutes les routes dynamiques depuis Supabase
- * @returns {Promise<Array>} Tableau de définitions de routes Vue Router
- */
 export async function loadDynamicRoutes() {
   try {
     const { data, error } = await supabase
@@ -80,22 +86,22 @@ export async function loadDynamicRoutes() {
 
     if (error) {
       if (error.code === 'PGRST205') {
-        console.warn('⚠️ Table dynamic_routes absente, routes dynamiques désactivées pour cet environnement.');
+        debugDynRoutes('table dynamic_routes absente, routes dynamiques desactivees pour cet environnement');
       } else {
-        console.error('❌ Erreur récupération routes dynamiques:', error);
+        console.error('Erreur recuperation routes dynamiques:', error);
       }
       return [];
     }
 
     if (!data || data.length === 0) {
-      console.warn('⚠️ Aucune route dynamique trouvée dans Supabase');
+      debugDynRoutes('aucune route dynamique trouvee dans Supabase');
       return [];
     }
 
-    const routes = data
+    return data
       .map((route) => {
         if (!route.path || !route.name || !route.component_path) {
-          console.warn('⚠️ Route dynamique ignorée (incomplète):', route);
+          debugDynRoutes('route dynamique ignoree (incomplete):', route);
           return null;
         }
 
@@ -103,24 +109,21 @@ export async function loadDynamicRoutes() {
         try {
           component = resolveView(route.component_path);
         } catch (e) {
-          console.error('❌ Impossible de résoudre le composant pour route dynamique:', route, e);
-          // On laisse tomber cette route individuelle
+          console.error('Impossible de resoudre le composant pour route dynamique:', route, e);
           return null;
         }
 
         const meta = {
           requiresAuth: route.requires_auth ?? false,
-          dynamic: true,
+          dynamic: true
         };
 
-        // need explicite ou défaut aligné avec ton router
         if (route.need !== null && route.need !== undefined) {
           meta.need = route.need;
         } else {
           meta.need = meta.requiresAuth ? DEFAULT_NEED : 'public';
         }
 
-        // Infos de menu
         if (route.menu_section) {
           meta.menuSection = route.menu_section;
           meta.menuLabel = route.menu_label;
@@ -131,29 +134,21 @@ export async function loadDynamicRoutes() {
         return {
           path: route.path,
           name: route.name,
-          component, // lazy loader glob
+          component,
           meta,
-          props: route.props || false,
+          props: route.props || false
         };
       })
-      .filter(Boolean); // supprime les null
-
-
-    return routes;
+      .filter(Boolean);
   } catch (error) {
-    console.error('❌ Erreur fatale lors du chargement des routes dynamiques:', error);
+    console.error('Erreur fatale lors du chargement des routes dynamiques:', error);
     return [];
   }
 }
 
-/**
- * Ajoute les routes dynamiques au router
- * @param {Router} router - Instance du router Vue
- */
 export async function addDynamicRoutesToRouter(router) {
   const dynamicRoutes = await loadDynamicRoutes();
 
-  // Liste des routes admin à ignorer (définies statiquement dans router.js)
   const protectedRoutes = [
     'AdminDashboardGeneral',
     'DashboardRM',
@@ -167,49 +162,36 @@ export async function addDynamicRoutesToRouter(router) {
     'AdminDefisView',
     'RBACAdmin',
     'DynamicRoutesEditor',
-    // Routes de votation avec guards PFP
     'VotationView',
     'VotationViewPFP1B',
-    // Empêcher l'écrasement des routes publiques importantes
     'Ventriglisse3D'
   ];
 
   dynamicRoutes.forEach((route) => {
     if (!route) return;
+    if (protectedRoutes.includes(route.name)) return;
 
-    // Ignorer les routes admin protégées
-    if (protectedRoutes.includes(route.name)) {
-      return;
-    }
-
-    // Sécurité: n'ajouter que si le composant est résolu correctement
     const hasValidComponent = typeof route.component === 'function';
     if (!hasValidComponent) {
-      debugDynRoutes('ignorée (component introuvable):', route.path, route.component_path || '');
+      debugDynRoutes('ignoree (component introuvable):', route.path);
       return;
     }
 
-    // Ne pas ajouter si un enregistrement avec le même path existe déjà
     const pathAlreadyExists = router.getRoutes().some(r => r.path === route.path);
     if (pathAlreadyExists) {
-      debugDynRoutes('ignorée (path déjà présent):', route.path);
+      debugDynRoutes('ignoree (path deja present):', route.path);
       return;
     }
 
-    // Vérifier si la route existe déjà
     if (router.hasRoute(route.name)) {
-      debugDynRoutes(`"${route.name}" existe déjà, remplacement`);
+      debugDynRoutes(`"${route.name}" existe deja, remplacement`);
       router.removeRoute(route.name);
     }
 
     router.addRoute(route);
   });
-
 }
 
-/**
- * Reloader toutes les routes dynamiques (après modif dans l’admin)
- */
 export async function reloadDynamicRoutes(router) {
   const allRoutes = router.getRoutes();
   allRoutes.forEach((route) => {
@@ -219,12 +201,8 @@ export async function reloadDynamicRoutes(router) {
   });
 
   await addDynamicRoutesToRouter(router);
-
 }
 
-/**
- * Récupère les routes dynamiques pour l'affichage dans le menu
- */
 export async function getDynamicRoutesForMenu() {
   try {
     const { data, error } = await supabase
@@ -246,14 +224,13 @@ export async function getDynamicRoutesForMenu() {
         label: route.menu_label || route.name,
         icon: route.menu_icon || 'pi pi-circle',
         to: route.path,
-        need: route.need,
+        need: route.need
       });
     });
 
     return sections;
   } catch (error) {
-    console.error('Erreur récupération routes pour menu:', error);
+    console.error('Erreur recuperation routes pour menu:', error);
     return {};
   }
 }
-

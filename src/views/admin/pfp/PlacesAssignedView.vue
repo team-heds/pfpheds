@@ -702,7 +702,8 @@ const currentStats = computed(() => {
 // ── Comptage par onglet ──
 const getTabCount = (pfpValue) => {
   const types = pfpValue === 'PFP1' ? ['PFP1A', 'PFP1B'] : [pfpValue]
-  return allAssignments.value.filter(a => types.includes(a.pfp_type) && a.year === selectedYear.value && a.assigned_place_id).length
+  const yearKeys = getAcademicYearKeys(selectedYear.value)
+  return allAssignments.value.filter(a => types.includes(a.pfp_type) && yearKeys.includes(String(a.year)) && a.assigned_place_id).length
 }
 
 // ── Places disponibles pour l'assignation manuelle ──
@@ -713,8 +714,9 @@ const filteredPlacesForAssign = computed(() => {
 
   // Compter les assignations par place
   const assignCountByPlace = new Map()
+  const yearKeys = getAcademicYearKeys(year)
   allAssignments.value.forEach(a => {
-    if (types.includes(a.pfp_type) && a.year === year && a.assigned_place_id) {
+    if (types.includes(a.pfp_type) && yearKeys.includes(String(a.year)) && a.assigned_place_id) {
       assignCountByPlace.set(a.assigned_place_id, (assignCountByPlace.get(a.assigned_place_id) || 0) + 1)
     }
   })
@@ -789,7 +791,7 @@ const syncSessionAssignCounts = async () => {
         .from('student_result_vote')
         .select('assigned_place_id')
         .eq('pfp_type', pfpType)
-        .eq('year', year)
+        .in('year', getAcademicYearKeys(year))
         .not('assigned_place_id', 'is', null)
 
       if (assignmentsError) throw assignmentsError

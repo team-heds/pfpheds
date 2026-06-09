@@ -21,6 +21,7 @@ export function usePfp4Proposals(toast, excludedStudentIds, votationsList) {
     DE_AND_SYSINT: 'Manque DE + SYSINT',
     SYSINT_ONLY: 'Manque SYSINT uniquement',
     SYSINT_AND_OTHER: 'Manque SYSINT + autre',
+    UNDER2_NO_DE_PRIORITY: 'Moins de 2 PFP validees',
     OTHER_MISSING: 'Autres critères manquants',
     ALL_COMPLETE: 'Tous critères validés'
   }
@@ -30,6 +31,7 @@ export function usePfp4Proposals(toast, excludedStudentIds, votationsList) {
     DE_AND_SYSINT: 'danger',
     SYSINT_ONLY: 'info',
     SYSINT_AND_OTHER: 'warning',
+    UNDER2_NO_DE_PRIORITY: 'info',
     OTHER_MISSING: 'secondary',
     ALL_COMPLETE: 'success'
   }
@@ -249,7 +251,7 @@ export function usePfp4Proposals(toast, excludedStudentIds, votationsList) {
       // ── 6b. Places PFP4 depuis pfp4_proposition, en excluant les places pleines ──
       const allPlaces = placesResult.data || []
       const getCapacity = (propData) => {
-        if (propData.hasOwnProperty(year) && propData[year] !== '' && propData[year] !== null && propData[year] !== undefined) {
+        if (Object.prototype.hasOwnProperty.call(propData, year) && propData[year] !== '' && propData[year] !== null && propData[year] !== undefined) {
           return parseInt(propData[year]) || 0
         }
         const defVal = parseInt(propData['default'] || '0')
@@ -298,9 +300,12 @@ export function usePfp4Proposals(toast, excludedStudentIds, votationsList) {
         const studentCrit = criteriaMap.get(userId)
         const scores = studentCrit ? { ...studentCrit.scores } : Object.fromEntries(CRITERIA_KEYS.map(k => [k, 0]))
         const missingCriteria = CRITERIA_KEYS.filter(c => scores[c] === 0)
-        const missingDE = missingCriteria.includes('DE')
+        const validatedStageCount = studentCrit?.totalStages || 0
+        const deprioritizeDE = validatedStageCount < 2
+        const priorityMissingCriteria = deprioritizeDE ? missingCriteria.filter(c => c !== 'DE') : missingCriteria
+        const missingDE = !deprioritizeDE && priorityMissingCriteria.includes('DE')
         const missingSYSINT = missingCriteria.includes('SYSINT')
-        const otherMissing = missingCriteria.filter(c => c !== 'DE' && c !== 'SYSINT')
+        const otherMissing = priorityMissingCriteria.filter(c => c !== 'SYSINT')
 
         const studentAssignedPlaces = assignedPlacesMap.get(userId) || new Set()
 
@@ -319,15 +324,15 @@ export function usePfp4Proposals(toast, excludedStudentIds, votationsList) {
           // ═══ DE MANQUANT : UNIQUEMENT PLACES DE (obligatoire pour diplôme) ═══
           proposedPlaces = availablePlaces
             .filter(p => p.DE)
-            .sort((a, b) => countMissingCovered(b, missingCriteria) - countMissingCovered(a, missingCriteria))
+            .sort((a, b) => countMissingCovered(b, priorityMissingCriteria) - countMissingCovered(a, priorityMissingCriteria))
           appliedRule = 'DE_MISSING'
 
-        } else if (missingCriteria.length > 0) {
+        } else if (priorityMissingCriteria.length > 0) {
           // ═══ DE OK, CRITÈRES MANQUANTS : maximiser la couverture ═══
           proposedPlaces = availablePlaces
-            .filter(p => missingCriteria.some(c => p[c]))
-            .sort((a, b) => countMissingCovered(b, missingCriteria) - countMissingCovered(a, missingCriteria))
-          appliedRule = missingSYSINT ? (otherMissing.length > 0 ? 'SYSINT_AND_OTHER' : 'SYSINT_ONLY') : 'OTHER_MISSING'
+            .filter(p => priorityMissingCriteria.some(c => p[c]))
+            .sort((a, b) => countMissingCovered(b, priorityMissingCriteria) - countMissingCovered(a, priorityMissingCriteria))
+          appliedRule = missingSYSINT ? (otherMissing.length > 0 ? 'SYSINT_AND_OTHER' : 'SYSINT_ONLY') : (deprioritizeDE ? 'UNDER2_NO_DE_PRIORITY' : 'OTHER_MISSING')
 
           // Minimum 5 places : élargir si nécessaire
           if (proposedPlaces.length < MIN_PLACES) {
@@ -557,7 +562,7 @@ export function usePfp4Proposals(toast, excludedStudentIds, votationsList) {
     const getExportCapacity = (propData) => {
       if (!propData || typeof propData !== 'object') return 0
       const yr = filterYear
-      if (propData.hasOwnProperty(yr) && propData[yr] !== '' && propData[yr] !== null && propData[yr] !== undefined) {
+      if (Object.prototype.hasOwnProperty.call(propData, yr) && propData[yr] !== '' && propData[yr] !== null && propData[yr] !== undefined) {
         return parseInt(propData[yr]) || 0
       }
       const defVal = parseInt(propData['default'] || '0')
