@@ -18,7 +18,7 @@ export default [
 
   // Gestion des places & stages
   { path: '/management_places_safe', component: () => import('@/components/admin/details/ManagementPlacesSafe.vue'), name: 'ManagementPlacesSafe', meta: { requiresAuth: true, need: 'admin' } },
-  { path: '/management_offre', component: () => import('@/components/admin/details/OffreDePlaceBA24PFP2.vue'), name: 'Management_offre', meta: { requiresAuth: true, need: 'admin' } },
+  { path: '/management_offre', component: () => import('@/views/admin/pfp/ManagementOffreView.vue'), name: 'Management_offre', meta: { requiresAuth: true, need: 'admin' } },
   { path: '/places_assignment', component: () => import('@/views/admin/places/PlaceAssignmentView.vue'), name: 'PlaceAssignmentView', meta: { requiresAuth: true, need: 'admin' } },
   { path: '/places_assigned', component: () => import('@/views/admin/pfp/PlacesAssignedView.vue'), name: 'PlacesAssigned', meta: { requiresAuth: true, need: 'admin' } },
   { path: '/stage_repartition', component: () => import('@/components/admin/details/StageRepartitionBA2.vue'), name: 'StageRepartitionBA2', meta: { requiresAuth: true, need: 'admin' } },

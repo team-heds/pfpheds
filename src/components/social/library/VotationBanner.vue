@@ -13,7 +13,7 @@
         La votation <strong>{{ session.pfp_type }}</strong> est ouverte !
       </p>
       <router-link :to="`/votation/${session.pfp_type}`" class="vote-link">
-        <Button
+        <PrimeButton
           label="Aller voter"
           icon="pi pi-arrow-right"
           iconPos="right"
@@ -26,7 +26,8 @@
 </template>
 
 <script>
-import Button from 'primevue/button'
+import { watch } from 'vue'
+import PrimeButton from 'primevue/button'
 import Tag from 'primevue/tag'
 import votationSessionService from '@/service/votationSessionService'
 import { useUserStore } from '@/stores/userStore'
@@ -34,18 +35,37 @@ import { supabase } from '@/supabase'
 
 export default {
   name: 'VotationBanner',
-  components: { Button, Tag },
+  components: { PrimeButton, Tag },
   data() {
     return {
       openSessions: [],
-      realtimeChannel: null
+      realtimeChannel: null,
+      stopUserWatch: null
     }
   },
   async mounted() {
     await this.checkOpenSessions()
     this.subscribeRealtime()
+
+    const userStore = useUserStore()
+    this.stopUserWatch = watch(
+      () => [
+        userStore.user?.id || null,
+        userStore.profile?.user_id || null,
+        userStore.profile?.classe || null,
+        userStore.profile?.Classe || null,
+        userStore.profileLoading
+      ],
+      async () => {
+        await this.checkOpenSessions()
+      }
+    )
   },
   beforeUnmount() {
+    if (this.stopUserWatch) {
+      this.stopUserWatch()
+      this.stopUserWatch = null
+    }
     if (this.realtimeChannel) {
       supabase.removeChannel(this.realtimeChannel)
     }

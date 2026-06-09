@@ -380,7 +380,6 @@ const statusOptions = [
 ]
 
 // ── Helpers ──
-const normalizePfp = (t) => (t === 'PFP1A' || t === 'PFP1B') ? 'PFP1' : t
 const dbPfpTypes = (pfp) => pfp === 'PFP1' ? ['PFP1A', 'PFP1B'] : [pfp]
 const getAcademicYearKeys = (year) => {
   const y = Number(year)
@@ -437,13 +436,6 @@ const getPraticienFullName = (p) => {
   const prenom = p.prenom || p.Prenom || ''
   const nom = p.nom || p.Nom || ''
   return `${prenom} ${nom}`.trim()
-}
-
-const getRankSeverity = (rank) => {
-  if (rank === 1) return 'success'
-  if (rank === 2) return 'info'
-  if (rank === 3) return 'warning'
-  return 'secondary'
 }
 
 const getCritSeverity = (count) => {
@@ -1024,3 +1016,5 @@ onMounted(async () => {
   opacity: 0.65;
 }
 </style>
+
+

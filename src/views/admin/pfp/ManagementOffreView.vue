@@ -617,16 +617,6 @@ const summaryTotals = computed(() => {
   }, { propositions: 0, offres: 0, disponibles: 0 })
 })
 
-// Function to get assigned count for a PFP type
-const getAssignedCount = (pfpType) => {
-  if (!publishedAssignments.value || publishedAssignments.value.length === 0) return 0
-  return publishedAssignments.value.filter(assignment => 
-    assignment.pfp_type === pfpType && 
-    assignment.year === selectedYear.value &&
-    assignment.status === 'published'
-  ).length
-}
-
 // Computed pour les données des places
 const placesData = computed(() => {
   const places = placesStore.places || []
@@ -1313,3 +1303,4 @@ onMounted(async () => {
   }
 }
 </style>
+
