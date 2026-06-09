@@ -56,7 +56,8 @@
           icon="pi pi-arrow-right"
           class="text-sm p-button-outlined p-button-primary details-btn"
           style="height: 32px; width: 200px; min-width: 200px;"
-          @click="navigateToInstitution(place.IDPlace)"
+          :disabled="!place.InstitutionId"
+          @click="navigateToInstitution(place.InstitutionId)"
         />
       </div>
 
@@ -289,10 +290,10 @@ async function fetchPlaces() {
     if (data) {
       placesList.value = data.map((place) => ({
         ...place,
-        IDPlace: place.id || place.place_id,
-        NomPlace: place.name || place.nom_place,
-        InstitutionId: place.institution_id,
-        key: place.id
+        IDPlace: place.PlaceId || place.id || place.place_id,
+        NomPlace: place.NomPlace || place.name || place.nom_place,
+        InstitutionId: place.InstitutionId || place.institution_id,
+        key: place.PlaceId || place.id || place.place_id
       }));
     }
   } catch (error) {
@@ -342,17 +343,16 @@ watch(() => props.userProfile, (newVal, oldVal) => {
   if (newVal && newVal !== oldVal) {
     processUserProfile()
   }
-}, { immediate: true })
+})
 
 // Watcher pour rafraîchir les PFP quand les validations changent
 watch(() => props.userId, async (newUserId, oldUserId) => {
   if (newUserId && (!oldUserId || newUserId !== oldUserId)) {
     await fetchStudentPfpList()
   }
-}, { immediate: true })
+})
 
 onMounted(async () => {
-  console.log('🚀 ResumStageUserProfile monté')
   // Charger les places disponibles et l'utilisateur courant (pour l'édition)
   await fetchPlaces();
   await fetchCurrentUser();
@@ -398,11 +398,8 @@ async function fetchAllInstitutions() {
 // eslint-disable-next-line no-unused-vars
 async function updatePFP1() {
   if (!currentUserId.value || !selectedPFP1.value) {
-    console.warn('updatePFP1: currentUserId ou selectedPFP1 manquant', { currentUserId: currentUserId.value, selectedPFP1: selectedPFP1.value });
     return;
   }
-
-  console.log("id " + currentUserId.value);
 
   try {
     // Récupérer l'étudiant depuis Supabase
@@ -415,13 +412,10 @@ async function updatePFP1() {
     if (fetchError) throw fetchError;
 
     if (studentData) {
-      console.log('updatePFP1: studentData avant modification', studentData);
 
       // On récupère la place sélectionnée pour en extraire le nom
       const selectedPlace = placesList.value.find(p => p.IDPlace === selectedPFP1.value);
       const selectedPlaceName = getPlaceName(selectedPlace);
-      console.log('updatePFP1: selectedPlace', selectedPlace);
-      console.log('updatePFP1: selectedPlaceName', selectedPlaceName);
 
       // --- Modification des données en local ---
       const fieldsToCopy = ['DE', 'FR', 'MSQ', 'REHAB', 'SYSINT', 'NEUROGER', 'AMBU', 'AIGU'];
@@ -468,10 +462,6 @@ async function updatePFP1() {
         .eq('user_id', currentUserId.value);
 
       if (updateError) throw updateError;
-
-      console.log('updatePFP1: Mise à jour terminée avec succès.');
-    } else {
-      console.warn('updatePFP1: Aucun étudiant trouvé pour cet utilisateur !');
     }
   } catch (error) {
     console.error('updatePFP1: Erreur lors de la mise à jour:', error);
@@ -588,15 +578,16 @@ const assignedPlaces = computed(() => {
     const item = {
       _key: `rv_${idx}`,
       IDPlace: placeId,
-      InstitutionId: '',
+      InstitutionId: placeData?.InstitutionId || '',
       NomPlace: placeName || placeData?.NomPlace || placeData?.name || '',
       seatIndex: null,
-      Institutionname: rv.assigned_institution_name || getInstitutionNameById(placeId) || '',
+      Institutionname: rv.assigned_institution_name || placeData?.InstitutionName || placeData?.Institution || getInstitutionNameById(placeData?.InstitutionId) || '',
       pfp_type: normalizedType,
       _fpNumber: fpNumberMap[normalizedType] || null,
       status,
       commentaire_arret: rv.commentaire_arret || null,
       assigned_rank: rv.assigned_rank || null,
+      assigned_praticien_id: rv.assigned_praticien_id || null,
       year: rv.year || null
     }
     // Charger les critères depuis la place si disponible
@@ -630,14 +621,15 @@ const assignedPlaces = computed(() => {
     const item = {
       _key: `pfp_${idx}`,
       IDPlace: placeId,
-      InstitutionId: pfp.InstitutionId || pfp.Institution_id || pfp.institution_id || '',
+      InstitutionId: pfp.InstitutionId || pfp.Institution_id || pfp.institution_id || placeData?.InstitutionId || '',
       NomPlace: placeName,
       seatIndex: pfp.seat || null,
-      Institutionname: pfp.InstitutionName || pfp.Institution || getInstitutionNameById(pfp.ID_PFP || pfp.PlaceId) || '',
+      Institutionname: pfp.InstitutionName || pfp.institution_name || pfp.Institution || placeData?.InstitutionName || placeData?.Institution || getInstitutionNameById(pfp.InstitutionId || pfp.Institution_id || pfp.institution_id || placeData?.InstitutionId) || '',
       pfp_type: pfpType || null,
       _fpNumber: fpNumberMap[pfpType] || Number(pfp.pfp_number || pfp.fp_number || pfp.formation_number) || null,
       status: pfp.status || 'validee',
       commentaire_arret: pfp.commentaire_arret || pfp.commentaireArret || pfp.CommentaireArret || null,
+      assigned_praticien_id: pfp.assigned_praticien_id || null,
       year: pfp.year || null
     }
     Object.entries(criteriaMap).forEach(([up, low]) => {
@@ -699,14 +691,10 @@ const assignedPlaces = computed(() => {
     item._displayFpNumber = idx + 1
   })
 
-  console.log('🎯 assignedPlaces (trié par _fpNumber):', results.map(r => ({
-    fp: r._fpNumber, pfp_type: r.pfp_type, nom: r.NomPlace
-  })))
   return results
 })
 
 const getInstitutionNameById = (idInstitution) => {
-  console.log("ID inst" + idInstitution + " - " + institutionsStore.getInstitutionNameById(idInstitution));
   return institutionsStore.getInstitutionNameById(idInstitution);
 };
 
@@ -734,8 +722,15 @@ function getValidCriterias(place) {
 
 // Retourne "Prénom Nom" du praticien formateur lié à l'institution
 function getPraticienFormateurInfos(place) {
-  const instId = place.IDPlace || place.InstitutionId
-  const list = praticiensByInstitution.value[instId] || []
+  if (place.assigned_praticien_id && praticienFormateurs.value[place.assigned_praticien_id]) {
+    const p = praticienFormateurs.value[place.assigned_praticien_id]
+    const prenom = p.Prenom ? p.Prenom.trim() : ''
+    const nom = p.Nom ? p.Nom.trim() : ''
+    return `${prenom} ${nom}`.trim()
+  }
+
+  const instId = place.InstitutionId || place.IDPlace
+  const list = praticiensByInstitution.value[instId] || praticiensByInstitution.value[String(instId)] || []
   if (list.length > 0) {
     const p = list[0]
     const prenom = p.Prenom ? p.Prenom.trim() : ''
@@ -747,8 +742,12 @@ function getPraticienFormateurInfos(place) {
 
 // Retourne le contact (email) du praticien formateur
 function getPraticienFormateurContact(place) {
-  const instId = place.IDPlace || place.InstitutionId
-  const list = praticiensByInstitution.value[instId] || []
+  if (place.assigned_praticien_id && praticienFormateurs.value[place.assigned_praticien_id]) {
+    return praticienFormateurs.value[place.assigned_praticien_id].Mail || ''
+  }
+
+  const instId = place.InstitutionId || place.IDPlace
+  const list = praticiensByInstitution.value[instId] || praticiensByInstitution.value[String(instId)] || []
   if (list.length > 0) {
     return list[0].Mail || ''
   }
@@ -765,16 +764,17 @@ const fetchPraticienFormateurs = async () => {
     const byInst = {}
     ;(data || []).forEach(p => {
       map[p.id] = { Prenom: p.prenom || '', Nom: p.nom || '', Mail: p.mail || '' }
+      map[String(p.id)] = { Prenom: p.prenom || '', Nom: p.nom || '', Mail: p.mail || '' }
       const instId = p.institution
       if (instId) {
         if (!byInst[instId]) byInst[instId] = []
+        if (!byInst[String(instId)]) byInst[String(instId)] = byInst[instId]
         byInst[instId].push({ Prenom: p.prenom || '', Nom: p.nom || '', Mail: p.mail || '', id: p.id })
       }
     })
     praticienFormateurs.value = map
     praticiensByInstitution.value = byInst
   } catch (e) {
-    console.warn('Erreur chargement praticiens formateurs (Supabase):', e.message)
     praticienFormateurs.value = {}
     praticiensByInstitution.value = {}
   }
@@ -784,24 +784,26 @@ async function fetchStudentPfpList() {
   isStagesLoading.value = true
   stagesLoadError.value = ''
   try {
-    console.log('🔍 Chargement PFP pour userId:', props.userId)
-
     // Charger student_result_vote (source prioritaire)
-    const { data: rvData, error: rvError } = await supabase
+    const { data: rvData } = await supabase
       .from('student_result_vote')
       .select('*')
       .eq('user_id', props.userId)
-    if (rvError) console.warn('⚠️ Erreur chargement student_result_vote:', rvError.message)
     studentResultVotes.value = rvData || []
-    console.log('✅ student_result_vote chargé:', studentResultVotes.value.length, 'entrées')
-
     // Construire la map des places pour les critères
     if (placesFullMap.value.size === 0) {
       const { data: placesData } = await supabase.from('places').select('*')
       if (placesData) {
         placesData.forEach(p => {
           const id = p.PlaceId || p.id || p.place_id
-          if (id) placesFullMap.value.set(id, p)
+          if (id) {
+            placesFullMap.value.set(id, p)
+            placesFullMap.value.set(String(id), p)
+            const numericId = Number(id)
+            if (Number.isFinite(numericId)) {
+              placesFullMap.value.set(numericId, p)
+            }
+          }
         })
       }
     }
@@ -813,10 +815,7 @@ async function fetchStudentPfpList() {
       .eq('user_id', props.userId)
       .order('updated_at', { ascending: false })
     if (error) throw error
-    console.log('✅ Données StudentsPhysio:', data?.length || 0, 'lignes')
-    
     if (!data || data.length === 0) {
-      console.warn('⚠️ Aucune entrée StudentsPhysio pour cet utilisateur')
       studentPfpList.value = []
       return
     }
@@ -824,10 +823,8 @@ async function fetchStudentPfpList() {
     const arr = extractStudentsPhysioFieldEntries(data, ['pfp_valided', 'pfp2_data'])
     
     studentPfpList.value = arr
-    console.log('✅ PFP list chargée:', arr.length, 'entrées (pfp_valided + pfp2_data)', arr)
     await loadUploadedDocsForAll()
   } catch (e) {
-    console.warn('⚠️ Erreur chargement PFP étudiant (Supabase):', e.message)
     studentPfpList.value = []
     stagesLoadError.value = 'Impossible de charger les stages pour le moment.'
   } finally {
@@ -838,15 +835,11 @@ async function fetchStudentPfpList() {
 // Fonction pour traiter les données du profil utilisateur
 const processUserProfile = async () => {
   if (!props.userProfile) {
-    console.warn('⚠️ Aucun userProfile fourni en prop');
     institutionsList.value = [];
     return;
   }
 
   try {
-    console.log('🔍 ResumStage: Traitement profil pour userId:', props.userId)
-    console.log('✅ Données userProfile reçues:', props.userProfile)
-    
     const studentData = props.userProfile;
     
     if (studentData.pfp_valided || studentData.pfp2_data) {
@@ -861,7 +854,6 @@ const processUserProfile = async () => {
           const parsed = JSON.parse(pfpVal)
           pfpArray = Array.isArray(parsed) ? parsed : []
         } catch (e) {
-          console.warn('⚠️ Impossible de parser pfp_valided:', pfpVal)
           pfpArray = []
         }
       } else if (pfpVal && typeof pfpVal === 'object') {
@@ -877,11 +869,7 @@ const processUserProfile = async () => {
           pfpArray.push(pfp2Val)
         }
       }
-      
-      console.log('✅ PFP array parsé:', pfpArray.length, 'entrées (pfp_valided + pfp2_data)', pfpArray)
       const validPfpEntries = pfpArray.filter((place) => place.id_pfp || place.ID_PFP || place.PlaceId);
-      console.log('✅ Entrées PFP valides:', validPfpEntries.length)
-        
       // Agrégation des domaines et critères
       const domainsByInstitution = {};
       const criteriaByInstitution = {};
@@ -902,10 +890,9 @@ const processUserProfile = async () => {
           }
         });
       });
-      
-      console.log('✅ Agrégation terminée:', Object.keys(domainsByInstitution).length, 'institutions');
-      const instIds = validPfpEntries.map((place) => place.id_pfp || place.ID_PFP || place.PlaceId).filter(Boolean);
-      console.log('🔍 Chargement institutions pour IDs:', instIds)
+      const instIds = validPfpEntries
+        .map((place) => place.InstitutionId || place.Institution_id || place.institution_id)
+        .filter(Boolean);
       if (instIds.length > 0) {
         const { data: institutions, error: instError } = await supabase
           .from('institutions')
@@ -913,14 +900,12 @@ const processUserProfile = async () => {
           .in('InstitutionId', instIds);
 
         if (instError) throw instError;
-        console.log('✅ Institutions chargées:', institutions?.length || 0)
-
         institutionsList.value = (institutions || [])
           .map((inst) => {
             const instId = inst.InstitutionId || inst.id || inst.institution_id;
             const domainSet = domainsByInstitution[instId];
             const criteriaSet = criteriaByInstitution[instId];
-            const originalPfp = validPfpEntries.find(p => (p.id_pfp || p.ID_PFP) === instId);
+            const originalPfp = validPfpEntries.find(p => (p.InstitutionId || p.Institution_id || p.institution_id) === instId);
             return {
               ...inst,
               InstitutionId: instId,
@@ -930,11 +915,9 @@ const processUserProfile = async () => {
               State: originalPfp ? (originalPfp.state || originalPfp.State) : undefined
             };
           });
-        console.log('✅ Liste institutions finale:', institutionsList.value.length, 'entrées')
       }
     }
   } catch (error) {
-    console.warn('Erreur traitement profil étudiant:', error.message);
     institutionsList.value = [];
   }
 };
@@ -1085,6 +1068,7 @@ const uploadDocuments = async (place, formationNumber) => {
     try {
       const timestamp = Date.now();
       const placeId = place?.IDPlace || place?.InstitutionId || 'unknown-place'
+      const institutionId = place?.InstitutionId || place?.IDPlace || null
       const fileName = `${props.userId}/pfp-${formationNumber}/${placeId}/${timestamp}_${file.name}`;
       
       // Upload vers Supabase Storage
@@ -1106,7 +1090,7 @@ const uploadDocuments = async (place, formationNumber) => {
         .from('student_documents')
         .insert({
           user_id: props.userId,
-          institution_id: place?.IDPlace || place?.InstitutionId || null,
+          institution_id: institutionId,
           pfp_number: formationNumber,
           file_name: file.name,
           document_url: downloadURL,
@@ -1202,9 +1186,7 @@ const deleteDocument = async (formationNumber, docId) => {
           .from('student-documents')
           .remove([filePath]);
 
-        if (storageError) {
-          console.warn("Erreur lors de la suppression Storage:", storageError);
-        }
+        void storageError
       }
     }
 
@@ -1410,3 +1392,4 @@ const getStageCardClass = (status) => {
   }
 }
 </style>
+
