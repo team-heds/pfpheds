@@ -1,140 +1,116 @@
-// Service pour gérer les uploads sur Supabase Storage
 import { supabase } from '../supabase.js'
 
 class SupabaseStorageService {
   constructor() {
     this.supabase = supabase
+    this.allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+    this.maxFileSize = 5 * 1024 * 1024
   }
 
-  /**
-   * Upload un fichier avatar pour un utilisateur
-   * @param {string} userId - ID de l'utilisateur
-   * @param {File} file - Fichier à uploader
-   * @returns {Promise<{url: string, path: string}>} URL publique et chemin du fichier
-   */
+  validateAvatarFile(file) {
+    if (!file) {
+      throw new Error('Aucun fichier selectionne')
+    }
+
+    if (!this.allowedMimeTypes.includes(file.type)) {
+      throw new Error('Format non supporte. Utilisez JPG, PNG, GIF ou WEBP')
+    }
+
+    if (file.size > this.maxFileSize) {
+      throw new Error('Le fichier depasse la limite de 5 MB')
+    }
+  }
+
   async uploadAvatar(userId, file) {
     try {
-      // Générer un nom de fichier unique avec timestamp
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${userId}/avatar-${Date.now()}.${fileExt}`
-      const filePath = `avatars/${fileName}`
+      this.validateAvatarFile(file)
 
-      // Upload du fichier dans le bucket 'avatars'
+      const fileExt = (file.name.split('.').pop() || 'jpg').toLowerCase()
+      const filePath = `${userId}/avatar-${Date.now()}.${fileExt}`
+
+      try {
+        const oldFiles = await this.listUserAvatars(userId)
+        const oldPaths = oldFiles
+          .map((entry) => `${userId}/${entry.name}`)
+          .filter(Boolean)
+
+        if (oldPaths.length > 0) {
+          await this.deleteAvatar(oldPaths)
+        }
+      } catch (cleanupError) {
+        console.warn('[Storage] Cleanup avatars ignored:', cleanupError)
+      }
+
       const { data, error } = await this.supabase.storage
         .from('avatars')
         .upload(filePath, file, {
           cacheControl: '3600',
-          upsert: true // Remplace le fichier s'il existe déjà
+          upsert: true
         })
 
       if (error) {
-        console.error('❌ Erreur upload Supabase Storage:', error)
+        console.error('Avatar upload failed:', error)
         throw error
       }
 
-      // Récupérer l'URL publique
       const { data: urlData } = this.supabase.storage
         .from('avatars')
         .getPublicUrl(filePath)
 
-      const publicUrl = urlData.publicUrl
-
       return {
-        url: publicUrl,
+        url: urlData.publicUrl,
         path: filePath,
-        data: data
+        data
       }
-
     } catch (error) {
-      console.error('❌ Erreur lors de l\'upload avatar:', error)
+      console.error('Avatar upload error:', error)
       throw new Error(`Erreur upload avatar: ${error.message}`)
     }
   }
 
-  /**
-   * Supprime un ancien avatar
-   * @param {string} filePath - Chemin du fichier à supprimer
-   */
   async deleteAvatar(filePath) {
     try {
+      const paths = Array.isArray(filePath) ? filePath : [filePath]
+      if (paths.length === 0) return
+
       const { error } = await this.supabase.storage
         .from('avatars')
-        .remove([filePath])
+        .remove(paths)
 
       if (error) {
-        console.warn('⚠️ Erreur suppression ancien avatar:', error)
-        // Ne pas faire échouer l'opération si la suppression échoue
+        console.warn('[Storage] Avatar delete warning:', error)
       }
     } catch (error) {
-      console.warn('⚠️ Erreur lors de la suppression:', error)
-      // Ne pas faire échouer l'opération
+      console.warn('[Storage] Avatar delete error:', error)
     }
   }
 
-  /**
-   * Liste les avatars d'un utilisateur
-   * @param {string} userId - ID de l'utilisateur
-   */
   async listUserAvatars(userId) {
     try {
       const { data, error } = await this.supabase.storage
         .from('avatars')
-        .list(`avatars/${userId}`, {
-          limit: 10,
-          offset: 0
+        .list(userId, {
+          limit: 20,
+          offset: 0,
+          sortBy: { column: 'created_at', order: 'desc' }
         })
 
       if (error) {
-        console.error('❌ Erreur listage avatars:', error)
+        console.error('Avatar listing failed:', error)
         return []
       }
 
       return data || []
     } catch (error) {
-      console.error('❌ Erreur lors du listage:', error)
+      console.error('Avatar listing error:', error)
       return []
     }
   }
 
-  /**
-   * Vérifie si le bucket avatars existe et le crée si nécessaire
-   */
   async ensureAvatarsBucket() {
-    try {
-      // Vérifier si le bucket existe
-      const { data: buckets, error: listError } = await this.supabase.storage.listBuckets()
-      
-      if (listError) {
-        // Storage not configured on this instance — skip silently
-        console.warn('[Storage] Bucket listing unavailable (storage may not be configured)')
-        return false
-      }
-
-      const avatarsBucket = buckets.find(bucket => bucket.name === 'avatars')
-      
-      if (!avatarsBucket) {
-        // Créer le bucket
-        const { data, error: createError } = await this.supabase.storage.createBucket('avatars', {
-          public: true,
-          allowedMimeTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
-          fileSizeLimit: 5242880 // 5MB
-        })
-
-        if (createError) {
-          console.error('❌ Erreur création bucket:', createError)
-          return false
-        }
-
-      }
-
-      return true
-    } catch (error) {
-      console.error('❌ Erreur vérification bucket:', error)
-      return false
-    }
+    return true
   }
 }
 
-// Export d'une instance unique
 const supabaseStorageService = new SupabaseStorageService()
 export default supabaseStorageService

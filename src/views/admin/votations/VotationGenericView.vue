@@ -1060,33 +1060,35 @@ export default {
       } catch (assignmentReadError) {
         debugVotation(`⚠️ Lecture assignations ${this.targetPFP} via backend échouée:`, assignmentReadError.message)
         try {
-          const { data: assignedRows, error: assignedError } = await supabase
-            .from('student_result_vote')
-            .select('assigned_place_id')
-            .eq('pfp_type', this.targetPFP)
-            .in('year', this.getAcademicYearKeys(this.selectedYear))
-            .not('assigned_place_id', 'is', null)
-
-          if (assignedError) {
-            throw assignedError
+          const fromSession = await this.loadProposalsFromSessionDirect()
+          if (fromSession?.assignCounts && Object.keys(fromSession.assignCounts).length > 0) {
+            this.pfp4AssignCountByPlace = fromSession.assignCounts
+          } else {
+            throw new Error('No session assignCounts available')
           }
-
-          const assignCountByPlace = {}
-          ;(assignedRows || []).forEach(row => {
-            const placeId = row.assigned_place_id
-            if (!placeId) return
-            assignCountByPlace[placeId] = (assignCountByPlace[placeId] || 0) + 1
-          })
-          this.pfp4AssignCountByPlace = assignCountByPlace
-        } catch (directReadError) {
-          debugVotation(`⚠️ Lecture assignations ${this.targetPFP} via Supabase échouée:`, directReadError.message)
+        } catch (sessionFallbackError) {
+          debugVotation(`⚠️ Lecture assignations ${this.targetPFP} via session échouée:`, sessionFallbackError.message)
           try {
-            const fromSession = await this.loadProposalsFromSessionDirect()
-            if (fromSession?.assignCounts && Object.keys(fromSession.assignCounts).length > 0) {
-              this.pfp4AssignCountByPlace = fromSession.assignCounts
+            const { data: assignedRows, error: assignedError } = await supabase
+              .from('student_result_vote')
+              .select('assigned_place_id')
+              .eq('pfp_type', this.targetPFP)
+              .in('year', this.getAcademicYearKeys(this.selectedYear))
+              .not('assigned_place_id', 'is', null)
+
+            if (assignedError) {
+              throw assignedError
             }
-          } catch (sessionFallbackError) {
-            debugVotation(`⚠️ Lecture assignations ${this.targetPFP} via session échouée:`, sessionFallbackError.message)
+
+            const assignCountByPlace = {}
+            ;(assignedRows || []).forEach(row => {
+              const placeId = row.assigned_place_id
+              if (!placeId) return
+              assignCountByPlace[placeId] = (assignCountByPlace[placeId] || 0) + 1
+            })
+            this.pfp4AssignCountByPlace = assignCountByPlace
+          } catch (directReadError) {
+            debugVotation(`⚠️ Lecture assignations ${this.targetPFP} via Supabase échouée:`, directReadError.message)
           }
         }
       }

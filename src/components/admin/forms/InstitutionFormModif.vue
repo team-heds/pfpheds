@@ -221,6 +221,7 @@ import { useInstitutionsStore } from '@/stores/institutionsStore'
 import { useToast } from 'primevue/usetoast'
 import { storage } from '../../../../firebase.js'
 import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
+import institutionMediaService from '@/service/institutionMediaService'
 
 // Import PrimeVue components
 import InputText from 'primevue/inputtext'
@@ -240,11 +241,6 @@ const router = useRouter()
 const institutionsStore = useInstitutionsStore()
 const toast = useToast()
 const institutionId = route.params.id
-const INSTITUTIONS_BUCKET = 'institutions'
-const API_URL = import.meta.env.VITE_API_URL ||
-  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://127.0.0.1:3000/api'
-    : '/api')
 
 // --- Reactive State ---
 const institution = ref(null)
@@ -276,55 +272,6 @@ const cloneInstitution = (data) => {
   cloned.Latitude = cloned.Latitude ?? ''
   cloned.Longitude = cloned.Longitude ?? ''
   return cloned
-}
-
-const getSupabaseStoragePath = (url, bucket) => {
-  if (!url || typeof url !== 'string') return null
-
-  try {
-    const parsedUrl = new URL(url)
-    const marker = `/storage/v1/object/public/${bucket}/`
-    const index = parsedUrl.pathname.indexOf(marker)
-
-    if (index === -1) return null
-    return decodeURIComponent(parsedUrl.pathname.slice(index + marker.length))
-  } catch {
-    return null
-  }
-}
-
-const uploadImagesToBackend = async (files) => {
-  const formData = new FormData()
-  files.forEach((file) => formData.append('images', file))
-
-  const response = await fetch(`${API_URL}/institutions/${institutionId}/images`, {
-    method: 'POST',
-    body: formData
-  })
-
-  const payload = await response.json().catch(() => ({}))
-  if (!response.ok) {
-    throw new Error(payload.error || "Erreur lors de l'upload des images.")
-  }
-
-  return payload.files || []
-}
-
-const deleteSupabaseImageFromBackend = async (imageUrl) => {
-  const response = await fetch(`${API_URL}/institutions/${institutionId}/images`, {
-    method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ url: imageUrl })
-  })
-
-  if (response.status === 204) return
-
-  const payload = await response.json().catch(() => ({}))
-  if (!response.ok) {
-    throw new Error(payload.error || "Erreur lors de la suppression de l'image.")
-  }
 }
 
 // --- Lifecycle Hooks ---
@@ -370,11 +317,11 @@ const onImageChange = (event) => {
 const removeImage = async (index) => {
   const urlToRemove = localPreviews.value[index]
   const isLocalPreview = typeof urlToRemove === 'string' && urlToRemove.startsWith('blob:')
-  const supabasePath = getSupabaseStoragePath(urlToRemove, INSTITUTIONS_BUCKET)
+  const supabasePath = institutionMediaService.getSupabaseStoragePath(urlToRemove)
 
   if (!isLocalPreview && supabasePath) {
     try {
-      await deleteSupabaseImageFromBackend(urlToRemove)
+      await institutionMediaService.deleteInstitutionImage(institutionId, urlToRemove)
     } catch (error) {
       console.error("Erreur lors de la suppression de l'image Supabase Storage:", error)
       toast.add({
@@ -437,7 +384,10 @@ const handleUpdateInstitution = async () => {
 
     // 2. Handle Image Uploads to Firebase Storage
     if (imageFiles.value.length > 0) {
-      const uploadedFiles = await uploadImagesToBackend(imageFiles.value)
+      const uploadedFiles = await institutionMediaService.uploadInstitutionImages(
+        institutionId,
+        imageFiles.value
+      )
       institution.value.ImageURL = [
         ...(institution.value.ImageURL || []),
         ...uploadedFiles.map((file) => file.url)

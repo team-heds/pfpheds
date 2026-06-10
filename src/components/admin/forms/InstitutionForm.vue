@@ -245,9 +245,8 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useInstitutionsStore } from '@/stores/institutionsStore'
-import { storage } from '../../../../firebase.js'
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { useToast } from 'primevue/usetoast'
+import institutionMediaService from '@/service/institutionMediaService'
 
 // PrimeVue Components
 import Steps from 'primevue/steps'
@@ -349,19 +348,17 @@ const handleCreateInstitution = async () => {
     // If creation is successful, proceed with image upload if any
     if (newInstitution && newInstitution.InstitutionId) {
       if (imageFile.value) {
-        console.log('🖼️ [InstitutionForm] Upload image Firebase...')
-        const imageRef = storageRef(
-          storage,
-          `Institutions/${newInstitution.InstitutionId}/${imageFile.value.name}`
+        console.log('🖼️ [InstitutionForm] Upload image Supabase...')
+        const uploadedFiles = await institutionMediaService.uploadInstitutionImages(
+          newInstitution.InstitutionId,
+          [imageFile.value]
         )
-        const snapshot = await uploadBytes(imageRef, imageFile.value)
-        const downloadURL = await getDownloadURL(snapshot.ref)
 
         // 3. Update the institution with the image URL
         console.log('🔄 [InstitutionForm] Mise à jour avec URL image...')
         await institutionsStore.updateInstitution(newInstitution.InstitutionId, {
           ...newInstitution,
-          ImageURL: [downloadURL]
+          ImageURL: uploadedFiles.map((file) => file.url)
         })
         console.log('✅ [InstitutionForm] Image enregistrée')
       }

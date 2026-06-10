@@ -39,18 +39,16 @@ const getCompletedPlaceIdsForUser = async (userId) => {
   const completed = new Set()
   if (!userId) return completed
 
-  const [{ data: physioRows, error: physioError }, { data: resultRows, error: resultError }] = await Promise.all([
-    supabaseAdmin
-      .from('StudentsPhysio')
-      .select('pfp_valided, pfp2_data')
-      .eq('user_id', userId),
-    supabaseAdmin
-      .from('student_result_vote')
-      .select('assigned_place_id, pfp_validee')
-      .eq('user_id', userId)
-      .eq('pfp_validee', true)
-      .not('assigned_place_id', 'is', null)
-  ])
+  const [{ data: physioRows, error: physioError }, { data: resultRows, error: resultError }] =
+    await Promise.all([
+      supabaseAdmin.from('StudentsPhysio').select('pfp_valided, pfp2_data').eq('user_id', userId),
+      supabaseAdmin
+        .from('student_result_vote')
+        .select('assigned_place_id, pfp_validee')
+        .eq('user_id', userId)
+        .eq('pfp_validee', true)
+        .not('assigned_place_id', 'is', null)
+    ])
 
   if (physioError) {
     console.warn(`⚠️ StudentsPhysio inaccessible pour ${userId}:`, physioError.message)
@@ -59,14 +57,13 @@ const getCompletedPlaceIdsForUser = async (userId) => {
     console.warn(`⚠️ student_result_vote inaccessible pour ${userId}:`, resultError.message)
   }
 
-  ;(physioRows || []).forEach(row => {
-    ;[...parsePfpValided(row?.pfp_valided), ...parsePfpValided(row?.pfp2_data)].forEach(stage => {
+  ;(physioRows || []).forEach((row) => {
+    ;[...parsePfpValided(row?.pfp_valided), ...parsePfpValided(row?.pfp2_data)].forEach((stage) => {
       const placeId = getPlaceIdFromStage(stage)
       if (placeId) completed.add(String(placeId))
     })
   })
-
-  ;(resultRows || []).forEach(row => {
+  ;(resultRows || []).forEach((row) => {
     if (row?.assigned_place_id) completed.add(String(row.assigned_place_id))
   })
 
@@ -125,9 +122,9 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
     const { pfpType, year, students, places } = req.body
 
     if (!pfpType || !year || !students || !places) {
-      return res.status(400).json({ 
-        ok: false, 
-        error: 'Missing required fields: pfpType, year, students, places' 
+      return res.status(400).json({
+        ok: false,
+        error: 'Missing required fields: pfpType, year, students, places'
       })
     }
 
@@ -154,7 +151,7 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
     const preAssigned = new Set()
     const preAssignedByPlace = new Map() // PlaceId → count
     if (existingAssignments && existingAssignments.length > 0) {
-      existingAssignments.forEach(a => {
+      existingAssignments.forEach((a) => {
         if (a.assigned_place_id && a.user_id) {
           preAssigned.add(a.user_id)
           preAssignedByPlace.set(
@@ -163,19 +160,23 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
           )
         }
       })
-      console.log(`🛡️ ${preAssigned.size} étudiants déjà assignés (manuel/prioritaire/précédent) — exclus de l'algorithme`)
+      console.log(
+        `🛡️ ${preAssigned.size} étudiants déjà assignés (manuel/prioritaire/précédent) — exclus de l'algorithme`
+      )
       console.log(`🛡️ ${preAssignedByPlace.size} places ont déjà des assignations`)
     }
 
     // Filtrer les étudiants : exclure ceux déjà assignés
-    const eligibleStudents = students.filter(s => !preAssigned.has(s.userId))
-    console.log(`   Étudiants éligibles (après exclusion): ${eligibleStudents.length}/${students.length}`)
+    const eligibleStudents = students.filter((s) => !preAssigned.has(s.userId))
+    console.log(
+      `   Étudiants éligibles (après exclusion): ${eligibleStudents.length}/${students.length}`
+    )
 
     // Créer un mapping des places disponibles avec leur capacité et critères
     const placesMap = new Map()
     const CRITERIA_KEYS = ['MSQ', 'SYSINT', 'NEUROGER', 'AIGU', 'REHAB', 'AMBU', 'FR', 'DE']
 
-    places.forEach(place => {
+    places.forEach((place) => {
       const alreadyUsed = preAssignedByPlace.get(place.PlaceId) || 0
       placesMap.set(place.PlaceId, {
         ...place,
@@ -183,7 +184,7 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
         assignedStudents: [],
         voteCount: 0,
         // Critères couverts par cette place (envoyés par le frontend)
-        criteriaCovered: CRITERIA_KEYS.filter(c => place.criteria && place.criteria[c])
+        criteriaCovered: CRITERIA_KEYS.filter((c) => place.criteria && place.criteria[c])
       })
     })
 
@@ -203,14 +204,14 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
     // Helper: calculer combien de critères manquants d'un étudiant sont couverts par une place
     const computeCriteriaCovered = (studentMissingCriteria, placeCriteriaCovered) => {
       if (!studentMissingCriteria || !placeCriteriaCovered) return 0
-      return placeCriteriaCovered.filter(c => studentMissingCriteria.includes(c)).length
+      return placeCriteriaCovered.filter((c) => studentMissingCriteria.includes(c)).length
     }
 
     // 🎯 ÉTAPE 1: Calculer la popularité (nombre de votes) — pool de placeIds sans rang
-    eligibleStudents.forEach(student => {
+    eligibleStudents.forEach((student) => {
       const choices = student.choices || []
       const donePlaces = new Set(student.donePlaceIds || [])
-      choices.forEach(placeId => {
+      choices.forEach((placeId) => {
         if (donePlaces.has(placeId)) return // Exclure place déjà faite
         const placeData = placesMap.get(placeId)
         if (placeData) placeData.voteCount++
@@ -218,17 +219,25 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
     })
 
     console.log('📊 Popularité des places calculée:')
-    const sortedPlacesByPopularity = Array.from(placesMap.values())
-      .sort((a, b) => a.voteCount - b.voteCount)
+    const sortedPlacesByPopularity = Array.from(placesMap.values()).sort(
+      (a, b) => a.voteCount - b.voteCount
+    )
 
     console.log('   🟢 Top 5 places MOINS populaires:')
-    sortedPlacesByPopularity.slice(0, 5).forEach(p => {
-      console.log(`      - ${p.NomPlace}: ${p.voteCount} votes, capacité: ${p.Capacity}, critères: [${p.criteriaCovered.join(',')}]`)
+    sortedPlacesByPopularity.slice(0, 5).forEach((p) => {
+      console.log(
+        `      - ${p.NomPlace}: ${p.voteCount} votes, capacité: ${p.Capacity}, critères: [${p.criteriaCovered.join(',')}]`
+      )
     })
     console.log('   🔴 Top 5 places PLUS populaires:')
-    sortedPlacesByPopularity.slice(-5).reverse().forEach(p => {
-      console.log(`      - ${p.NomPlace}: ${p.voteCount} votes, capacité: ${p.Capacity}, critères: [${p.criteriaCovered.join(',')}]`)
-    })
+    sortedPlacesByPopularity
+      .slice(-5)
+      .reverse()
+      .forEach((p) => {
+        console.log(
+          `      - ${p.NomPlace}: ${p.voteCount} votes, capacité: ${p.Capacity}, critères: [${p.criteriaCovered.join(',')}]`
+        )
+      })
 
     const resultsToInsert = []
     const assignedStudents = new Set()
@@ -242,7 +251,7 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
       // Trouver les candidats: étudiant a cette place dans son pool ET n'a PAS déjà fait cette place
       const candidatesForPlace = []
 
-      eligibleStudents.forEach(student => {
+      eligibleStudents.forEach((student) => {
         if (assignedStudents.has(student.userId)) return
 
         const choices = student.choices || []
@@ -250,7 +259,10 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
 
         // La place est dans le pool ET pas déjà faite
         if (choices.includes(placeData.PlaceId) && !donePlaces.has(placeData.PlaceId)) {
-          const critCovered = computeCriteriaCovered(student.missingCriteria, placeData.criteriaCovered)
+          const critCovered = computeCriteriaCovered(
+            student.missingCriteria,
+            placeData.criteriaCovered
+          )
           candidatesForPlace.push({
             student,
             criteriaCovered: critCovered,
@@ -289,18 +301,22 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
           algorithm_run_id: algorithmRunId,
           original_choices: student.choices || [],
           priority_score: student.priorityScore || null,
-          notes: `Algo v4.0 — ${candidate.criteriaCovered} critères couverts [${placeData.criteriaCovered.filter(c => (student.missingCriteria || []).includes(c)).join(',')}] | manquants=[${(student.missingCriteria || []).join(',')}] | score=${candidate.priorityScore}`
+          notes: `Algo v4.0 — ${candidate.criteriaCovered} critères couverts [${placeData.criteriaCovered.filter((c) => (student.missingCriteria || []).includes(c)).join(',')}] | manquants=[${(student.missingCriteria || []).join(',')}] | score=${candidate.priorityScore}`
         })
       }
 
       if (toAssign > 0) {
-        const avgCrit = candidatesForPlace.slice(0, toAssign).reduce((s, c) => s + c.criteriaCovered, 0) / toAssign
-        console.log(`   ✅ ${placeData.NomPlace} [${placeData.criteriaCovered.join(',')}]: ${toAssign}/${candidatesForPlace.length} candidats (moy. ${avgCrit.toFixed(1)} crit. couverts)`)
+        const avgCrit =
+          candidatesForPlace.slice(0, toAssign).reduce((s, c) => s + c.criteriaCovered, 0) /
+          toAssign
+        console.log(
+          `   ✅ ${placeData.NomPlace} [${placeData.criteriaCovered.join(',')}]: ${toAssign}/${candidatesForPlace.length} candidats (moy. ${avgCrit.toFixed(1)} crit. couverts)`
+        )
       }
     }
 
     // 🎯 ÉTAPE 3: Attribution des étudiants restants — optimiser par critères manquants
-    const studentsNonAssignes = eligibleStudents.filter(s => !assignedStudents.has(s.userId))
+    const studentsNonAssignes = eligibleStudents.filter((s) => !assignedStudents.has(s.userId))
     console.log(`🎲 Attribution optimisée des ${studentsNonAssignes.length} étudiants restants...`)
 
     let randomAssignmentCount = 0
@@ -311,8 +327,8 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
 
       // Trouver la meilleure place disponible: max critères couverts, pas déjà faite
       const availablePlaces = Array.from(placesMap.values())
-        .filter(p => p.remainingCapacity > 0 && !donePlaces.has(p.PlaceId))
-        .map(p => ({
+        .filter((p) => p.remainingCapacity > 0 && !donePlaces.has(p.PlaceId))
+        .map((p) => ({
           place: p,
           critCovered: computeCriteriaCovered(missingCrit, p.criteriaCovered)
         }))
@@ -340,10 +356,12 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
           algorithm_run_id: algorithmRunId,
           original_choices: student.choices || [],
           priority_score: student.priorityScore || null,
-          notes: `⚠️ HORS CHOIX — Algo v4.0 — ${best.critCovered} critères couverts [${best.place.criteriaCovered.filter(c => missingCrit.includes(c)).join(',')}] | manquants=[${missingCrit.join(',')}]`
+          notes: `⚠️ HORS CHOIX — Algo v4.0 — ${best.critCovered} critères couverts [${best.place.criteriaCovered.filter((c) => missingCrit.includes(c)).join(',')}] | manquants=[${missingCrit.join(',')}]`
         })
 
-        console.log(`   🎲 ${student.nom} ${student.prenom} → ${best.place.NomPlace} (${best.critCovered} crit. couverts)`)
+        console.log(
+          `   🎲 ${student.nom} ${student.prenom} → ${best.place.NomPlace} (${best.critCovered} crit. couverts)`
+        )
       } else {
         console.warn(`⚠️ Aucune place disponible pour ${student.nom} ${student.prenom}`)
         errors.push({ userId: student.userId, error: 'No available place' })
@@ -351,14 +369,16 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
     }
 
     if (randomAssignmentCount > 0) {
-      console.log(`   ✅ ${randomAssignmentCount} étudiants assignés (hors choix, optimisé critères)`)
+      console.log(
+        `   ✅ ${randomAssignmentCount} étudiants assignés (hors choix, optimisé critères)`
+      )
     }
 
     // 🚀 BATCH INSERT via upsert direct
     console.log(`💾 Enregistrement de ${resultsToInsert.length} résultats...`)
 
     if (resultsToInsert.length > 0) {
-      const rows = resultsToInsert.map(r => ({
+      const rows = resultsToInsert.map((r) => ({
         user_id: r.user_id,
         pfp_type: r.pfp_type,
         year: r.year,
@@ -391,13 +411,16 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
     }
 
     // Statistiques finales
-    const placesUsedCount = Array.from(placesMap.values()).filter(p => p.assignedStudents.length > 0).length
-    const fromChoices = resultsToInsert.filter(r => r.assigned_rank !== 99)
-    const fromRandom = resultsToInsert.filter(r => r.assigned_rank === 99)
-    const avgCritCoveredChoices = fromChoices.length > 0
-      ? (fromChoices.reduce((s, r) => s + r.assigned_rank, 0) / fromChoices.length).toFixed(2)
-      : 0
-    const studentsWithZeroCrit = resultsToInsert.filter(r => {
+    const placesUsedCount = Array.from(placesMap.values()).filter(
+      (p) => p.assignedStudents.length > 0
+    ).length
+    const fromChoices = resultsToInsert.filter((r) => r.assigned_rank !== 99)
+    const fromRandom = resultsToInsert.filter((r) => r.assigned_rank === 99)
+    const avgCritCoveredChoices =
+      fromChoices.length > 0
+        ? (fromChoices.reduce((s, r) => s + r.assigned_rank, 0) / fromChoices.length).toFixed(2)
+        : 0
+    const studentsWithZeroCrit = resultsToInsert.filter((r) => {
       const crit = r.assigned_rank === 99 ? 0 : r.assigned_rank
       return crit === 0
     }).length
@@ -417,30 +440,34 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
     }
 
     // 📋 Places avec assignations
-    const placesWithAssignments = Array.from(placesMap.values()).map(place => {
-      const assignments = resultsToInsert.filter(r => r.assigned_place_id === place.PlaceId)
-      return {
-        placeId: place.PlaceId,
-        placeName: place.NomPlace,
-        institutionId: place.InstitutionId,
-        institutionName: place.InstitutionName,
-        totalCapacity: place.Capacity,
-        remainingCapacity: place.remainingCapacity,
-        criteriaCovered: place.criteriaCovered,
-        assignedCount: assignments.length,
-        assignedStudents: assignments.map(a => ({
-          userId: a.user_id,
-          criteriaCovered: a.assigned_rank === 99 ? 'random' : a.assigned_rank,
-          priorityScore: a.priority_score
-        }))
-      }
-    }).sort((a, b) => {
-      if (b.assignedCount !== a.assignedCount) return b.assignedCount - a.assignedCount
-      return (a.placeName || '').localeCompare(b.placeName || '')
-    })
+    const placesWithAssignments = Array.from(placesMap.values())
+      .map((place) => {
+        const assignments = resultsToInsert.filter((r) => r.assigned_place_id === place.PlaceId)
+        return {
+          placeId: place.PlaceId,
+          placeName: place.NomPlace,
+          institutionId: place.InstitutionId,
+          institutionName: place.InstitutionName,
+          totalCapacity: place.Capacity,
+          remainingCapacity: place.remainingCapacity,
+          criteriaCovered: place.criteriaCovered,
+          assignedCount: assignments.length,
+          assignedStudents: assignments.map((a) => ({
+            userId: a.user_id,
+            criteriaCovered: a.assigned_rank === 99 ? 'random' : a.assigned_rank,
+            priorityScore: a.priority_score
+          }))
+        }
+      })
+      .sort((a, b) => {
+        if (b.assignedCount !== a.assignedCount) return b.assignedCount - a.assignedCount
+        return (a.placeName || '').localeCompare(b.placeName || '')
+      })
 
     console.log(`✅ Algorithme v4.0 terminé:`, stats)
-    console.log(`📋 Places avec assignations: ${placesWithAssignments.filter(p => p.assignedCount > 0).length}/${placesWithAssignments.length}`)
+    console.log(
+      `📋 Places avec assignations: ${placesWithAssignments.filter((p) => p.assignedCount > 0).length}/${placesWithAssignments.length}`
+    )
     console.log(`🎯 Lésés (0 critères couverts): ${studentsWithZeroCrit}/${resultsToInsert.length}`)
 
     return res.json({
@@ -515,8 +542,9 @@ router.get('/pfp3-proposals/:year', setUser, async (req, res) => {
 
     if (Array.isArray(proposedPlaceIds) && proposedPlaceIds.length > 0) {
       const completedPlaceIds = await getCompletedPlaceIdsForUser(userId)
-      const validatedStageCount = studentCriteria?.totalStages || completedPlaceIds.size || 0
-      proposedPlaceIds = proposedPlaceIds.filter(placeId => !completedPlaceIds.has(String(placeId)))
+      proposedPlaceIds = proposedPlaceIds.filter(
+        (placeId) => !completedPlaceIds.has(String(placeId))
+      )
     }
 
     return res.json({
@@ -556,7 +584,7 @@ router.get('/assignment-counts/:pfpType/:year', setUser, async (req, res) => {
     }
 
     const counts = {}
-    ;(data || []).forEach(row => {
+    ;(data || []).forEach((row) => {
       const placeId = row.assigned_place_id
       if (!placeId) return
       counts[placeId] = (counts[placeId] || 0) + 1
@@ -585,7 +613,7 @@ router.post('/save-pfp3-proposals', requireAdmin, async (req, res) => {
     const classe = targetClass || 'BA23'
 
     const proposalsMap = {}
-    proposals.forEach(p => {
+    proposals.forEach((p) => {
       proposalsMap[p.userId] = {
         placeIds: p.proposedPlaceIds || [],
         missingCriteria: p.missingCriteria || [],
@@ -597,7 +625,9 @@ router.post('/save-pfp3-proposals', requireAdmin, async (req, res) => {
       proposalsMap._assignCounts = assignCounts
     }
 
-    console.log(`🔍 SAVE pfp3-proposals: year=${year} class=${classe} students=${Object.keys(proposalsMap).length}`)
+    console.log(
+      `🔍 SAVE pfp3-proposals: year=${year} class=${classe} students=${Object.keys(proposalsMap).length}`
+    )
 
     const { data: existingSessions, error: findError } = await supabaseAdmin
       .from('votation_sessions')
@@ -624,13 +654,15 @@ router.post('/save-pfp3-proposals', requireAdmin, async (req, res) => {
         if (error) {
           console.warn(`⚠️ Erreur update session PFP3 ${session.id}:`, error.message)
         } else {
-          console.log(`✅ Session PFP3 ${session.id} mise à jour avec ${Object.keys(proposalsMap).length} propositions`)
+          console.log(
+            `✅ Session PFP3 ${session.id} mise à jour avec ${Object.keys(proposalsMap).length} propositions`
+          )
         }
       }
       savedSession = existingSessions[0]
-      console.log(`✅ Propositions PFP3 mises à jour dans ${existingSessions.length} session(s)`) 
+      console.log(`✅ Propositions PFP3 mises à jour dans ${existingSessions.length} session(s)`)
     } else {
-      console.log('📝 Aucune session PFP3 existante, création d\'une nouvelle...')
+      console.log("📝 Aucune session PFP3 existante, création d'une nouvelle...")
       const { data, error } = await supabaseAdmin
         .from('votation_sessions')
         .insert({
@@ -663,7 +695,7 @@ router.post('/save-pfp3-proposals', requireAdmin, async (req, res) => {
  * POST /api/resultat-votation/generate-pfp4-proposals
  * Génère les propositions de places PFP4 pour chaque étudiant BA23
  * basé sur leurs critères manquants (MSQ, SYSINT, NEUROGER, AIGU, REHAB, AMBU, FR, DE)
- * 
+ *
  * Règles de filtrage PFP4:
  * 1. Manque DE uniquement → proposer uniquement les places DE
  * 2. Manque DE + SYSINT → proposer toutes les places SYSINT + toutes les places DE
@@ -693,13 +725,20 @@ router.post('/generate-pfp4-proposals', requireAdmin, async (req, res) => {
     if (studentsError) throw studentsError
 
     // Filtrer pour ne garder que les étudiants (pas les admins qui seraient dans BA23)
-    const studentUsers = (studentsData || []).filter(u => {
+    const studentUsers = (studentsData || []).filter((u) => {
       const role = (u.role || '').toLowerCase()
       const email = (u.email || '').toLowerCase()
-      return role.includes('student') || role.includes('etudiant') || role.includes('étudiant') || email.includes('@students.hevs.ch')
+      return (
+        role.includes('student') ||
+        role.includes('etudiant') ||
+        role.includes('étudiant') ||
+        email.includes('@students.hevs.ch')
+      )
     })
 
-    console.log(`   📋 ${studentsData.length} profils ${classe}, ${studentUsers.length} étudiants filtrés`)
+    console.log(
+      `   📋 ${studentsData.length} profils ${classe}, ${studentUsers.length} étudiants filtrés`
+    )
 
     // ── 2. Charger les critères validés depuis StudentsPhysio.pfp_valided ──
     const { data: physioData, error: physioError } = await supabaseAdmin
@@ -713,37 +752,42 @@ router.post('/generate-pfp4-proposals', requireAdmin, async (req, res) => {
       .from('student_result_vote')
       .select('user_id, pfp_type, assigned_place_id, pfp_validee')
 
-    if (assignmentsError) console.warn('⚠️ student_result_vote non accessible:', assignmentsError.message)
+    if (assignmentsError)
+      console.warn('⚠️ student_result_vote non accessible:', assignmentsError.message)
 
     // ── 4. Charger toutes les places avec leurs critères ──
     const { data: placesData, error: placesError } = await supabaseAdmin
       .from('places')
-      .select('PlaceId, NomPlace, InstitutionId, InstitutionName, MSQ, SYSINT, NEUROGER, AIGU, REHAB, AMBU, FR, DE, PFP4, selectedOut')
+      .select(
+        'PlaceId, NomPlace, InstitutionId, InstitutionName, MSQ, SYSINT, NEUROGER, AIGU, REHAB, AMBU, FR, DE, PFP4, selectedOut'
+      )
 
     if (placesError) throw placesError
 
     // Filtrer les places PFP4 avec capacité > 0 pour l'année et non exclues
-    const pfp4Places = (placesData || []).filter(place => {
-      if (place.selectedOut) return false
-      const pfp4Data = place.PFP4
-      if (!pfp4Data) return false
-      const capacity = parseInt(pfp4Data[year] || pfp4Data['default'] || '0')
-      return !isNaN(capacity) && capacity >= 1
-    }).map(place => ({
-      PlaceId: place.PlaceId,
-      NomPlace: place.NomPlace,
-      InstitutionId: place.InstitutionId,
-      InstitutionName: place.InstitutionName || '',
-      Capacity: parseInt(place.PFP4[year] || place.PFP4['default'] || '0'),
-      MSQ: !!place.MSQ,
-      SYSINT: !!place.SYSINT,
-      NEUROGER: !!place.NEUROGER,
-      AIGU: !!place.AIGU,
-      REHAB: !!place.REHAB,
-      AMBU: !!place.AMBU,
-      FR: !!place.FR,
-      DE: !!place.DE
-    }))
+    const pfp4Places = (placesData || [])
+      .filter((place) => {
+        if (place.selectedOut) return false
+        const pfp4Data = place.PFP4
+        if (!pfp4Data) return false
+        const capacity = parseInt(pfp4Data[year] || pfp4Data['default'] || '0')
+        return !isNaN(capacity) && capacity >= 1
+      })
+      .map((place) => ({
+        PlaceId: place.PlaceId,
+        NomPlace: place.NomPlace,
+        InstitutionId: place.InstitutionId,
+        InstitutionName: place.InstitutionName || '',
+        Capacity: parseInt(place.PFP4[year] || place.PFP4['default'] || '0'),
+        MSQ: !!place.MSQ,
+        SYSINT: !!place.SYSINT,
+        NEUROGER: !!place.NEUROGER,
+        AIGU: !!place.AIGU,
+        REHAB: !!place.REHAB,
+        AMBU: !!place.AMBU,
+        FR: !!place.FR,
+        DE: !!place.DE
+      }))
 
     console.log(`   🏥 ${pfp4Places.length} places PFP4 disponibles (capacité > 0) pour ${year}`)
 
@@ -752,21 +796,33 @@ router.post('/generate-pfp4-proposals', requireAdmin, async (req, res) => {
     const criteriaMap = new Map()
 
     if (physioData && physioData.length > 0) {
-      physioData.forEach(physio => {
+      physioData.forEach((physio) => {
         const scores = {}
-        CRITERIA_KEYS.forEach(k => { scores[k] = 0 })
+        CRITERIA_KEYS.forEach((k) => {
+          scores[k] = 0
+        })
 
         let pfpArray = []
         if (physio.pfp_valided) {
           try {
-            pfpArray = typeof physio.pfp_valided === 'string' ? JSON.parse(physio.pfp_valided) : physio.pfp_valided
+            pfpArray =
+              typeof physio.pfp_valided === 'string'
+                ? JSON.parse(physio.pfp_valided)
+                : physio.pfp_valided
             if (!Array.isArray(pfpArray)) pfpArray = Object.values(pfpArray)
-          } catch (e) { pfpArray = [] }
+          } catch (e) {
+            pfpArray = []
+          }
         }
 
-        pfpArray.forEach(stage => {
-          CRITERIA_KEYS.forEach(c => {
-            if (stage[c] === true || stage[c] === 'true' || stage[c] === 1 || stage[c.toLowerCase()] === true) {
+        pfpArray.forEach((stage) => {
+          CRITERIA_KEYS.forEach((c) => {
+            if (
+              stage[c] === true ||
+              stage[c] === 'true' ||
+              stage[c] === 1 ||
+              stage[c.toLowerCase()] === true
+            ) {
               scores[c]++
             }
           })
@@ -782,19 +838,19 @@ router.post('/generate-pfp4-proposals', requireAdmin, async (req, res) => {
 
     // Source 2: enrichir avec les assignations validées dans student_result_vote
     const placesLookup = new Map()
-    ;(placesData || []).forEach(p => placesLookup.set(p.PlaceId, p))
+    ;(placesData || []).forEach((p) => placesLookup.set(p.PlaceId, p))
 
     if (assignmentsData && assignmentsData.length > 0) {
-      assignmentsData.forEach(a => {
+      assignmentsData.forEach((a) => {
         if (a.pfp_validee && a.assigned_place_id) {
           const placeInfo = placesLookup.get(a.assigned_place_id)
           if (placeInfo) {
             const existing = criteriaMap.get(a.user_id) || {
-              scores: Object.fromEntries(CRITERIA_KEYS.map(k => [k, 0])),
+              scores: Object.fromEntries(CRITERIA_KEYS.map((k) => [k, 0])),
               sae: false,
               casParticulier: false
             }
-            CRITERIA_KEYS.forEach(c => {
+            CRITERIA_KEYS.forEach((c) => {
               if (placeInfo[c] === true) existing.scores[c]++
             })
             criteriaMap.set(a.user_id, existing)
@@ -806,68 +862,76 @@ router.post('/generate-pfp4-proposals', requireAdmin, async (req, res) => {
     console.log(`   📊 ${criteriaMap.size} étudiants avec critères connus`)
 
     // DEBUG: Afficher les critères de chaque étudiant de la classe
-    for (const student of (studentsData || [])) {
+    for (const student of studentsData || []) {
       const uid = student.user_id
       const crit = criteriaMap.get(uid)
       if (crit) {
-        const validated = CRITERIA_KEYS.filter(c => crit.scores[c] > 0)
-        const missing = CRITERIA_KEYS.filter(c => crit.scores[c] === 0)
-        console.log(`   👤 ${student.family_name} ${student.forname}: validés=${validated.join(',')} | manquants=${missing.join(',')} | scores=${JSON.stringify(crit.scores)}`)
+        const validated = CRITERIA_KEYS.filter((c) => crit.scores[c] > 0)
+        const missing = CRITERIA_KEYS.filter((c) => crit.scores[c] === 0)
+        console.log(
+          `   👤 ${student.family_name} ${student.forname}: validés=${validated.join(',')} | manquants=${missing.join(',')} | scores=${JSON.stringify(crit.scores)}`
+        )
       } else {
-        console.log(`   👤 ${student.family_name} ${student.forname}: ⚠️ AUCUN CRITÈRE CONNU (pas dans StudentsPhysio ni student_result_vote)`)
+        console.log(
+          `   👤 ${student.family_name} ${student.forname}: ⚠️ AUCUN CRITÈRE CONNU (pas dans StudentsPhysio ni student_result_vote)`
+        )
       }
     }
 
     // DEBUG: Afficher les critères de chaque place PFP4
-    pfp4Places.forEach(p => {
-      const crit = CRITERIA_KEYS.filter(c => p[c])
-      console.log(`   🏥 ${p.NomPlace} (${p.InstitutionName}): ${crit.join(',')} | cap=${p.Capacity}`)
+    pfp4Places.forEach((p) => {
+      const crit = CRITERIA_KEYS.filter((c) => p[c])
+      console.log(
+        `   🏥 ${p.NomPlace} (${p.InstitutionName}): ${crit.join(',')} | cap=${p.Capacity}`
+      )
     })
 
     // ── 6. Générer les propositions par étudiant ──
     const proposals = []
 
     // Utiliser tous les profils BA23, pas uniquement les étudiants filtrés (pour être inclusif)
-    const allStudentIds = (studentsData || []).map(s => s.user_id)
+    const allStudentIds = (studentsData || []).map((s) => s.user_id)
 
-    for (const student of (studentsData || [])) {
+    for (const student of studentsData || []) {
       const userId = student.user_id
       const studentCriteria = criteriaMap.get(userId)
-      const scores = studentCriteria ? studentCriteria.scores : Object.fromEntries(CRITERIA_KEYS.map(k => [k, 0]))
+      const scores = studentCriteria
+        ? studentCriteria.scores
+        : Object.fromEntries(CRITERIA_KEYS.map((k) => [k, 0]))
       const completedPlaceIds = await getCompletedPlaceIdsForUser(userId)
 
       // Déterminer les critères manquants (score === 0)
-      const missingCriteria = CRITERIA_KEYS.filter(c => scores[c] === 0)
+      const missingCriteria = CRITERIA_KEYS.filter((c) => scores[c] === 0)
       const deprioritizeDE = validatedStageCount < 2
       const priorityMissingCriteria = deprioritizeDE
-        ? missingCriteria.filter(c => c !== 'DE')
+        ? missingCriteria.filter((c) => c !== 'DE')
         : missingCriteria
       const missingDE = !deprioritizeDE && priorityMissingCriteria.includes('DE')
       const missingSYSINT = missingCriteria.includes('SYSINT')
       // Autres critères manquants (hors DE et SYSINT)
-      const otherMissing = priorityMissingCriteria.filter(c => c !== 'SYSINT')
+      const otherMissing = priorityMissingCriteria.filter((c) => c !== 'SYSINT')
 
       let proposedPlaces = []
 
       if (missingDE && !missingSYSINT && otherMissing.length === 0) {
         // ── Règle 1: Manque uniquement DE → proposer uniquement les places DE ──
-        proposedPlaces = pfp4Places.filter(p => p.DE)
+        proposedPlaces = pfp4Places.filter((p) => p.DE)
       } else if (missingDE && missingSYSINT) {
         // ── Règle 2: Manque DE + SYSINT (+ éventuellement autres) → toutes SYSINT + toutes DE ──
-        proposedPlaces = pfp4Places.filter(p => p.SYSINT || p.DE)
+        proposedPlaces = pfp4Places.filter((p) => p.SYSINT || p.DE)
       } else if (missingSYSINT && !missingDE && otherMissing.length === 0) {
         // ── Règle 3: Manque uniquement SYSINT → proposer uniquement les places SYSINT ──
-        proposedPlaces = pfp4Places.filter(p => p.SYSINT)
+        proposedPlaces = pfp4Places.filter((p) => p.SYSINT)
       } else if (missingSYSINT && otherMissing.length > 0) {
         // ── Règle 4: Manque SYSINT + autre(s) → toutes SYSINT + places matchant les autres critères manquants ──
-        proposedPlaces = pfp4Places.filter(p => {
+        proposedPlaces = pfp4Places.filter((p) => {
           if (p.SYSINT) return true
-          return otherMissing.some(c => p[c])
+          return otherMissing.some((c) => p[c])
         })
       } else if (priorityMissingCriteria.length > 0) {
         // ── Règle 5: Manque autre(s) sans SYSINT ni DE → toutes les places matchant un critère manquant ──
-        proposedPlaces = pfp4Places.filter(p => {
-          return priorityMissingCriteria.some(c => p[c])
+        proposedPlaces = pfp4Places.filter((p) => {
+          return priorityMissingCriteria.some((c) => p[c])
         })
       } else {
         // ── Aucun critère manquant → proposer toutes les places PFP4 ──
@@ -876,7 +940,7 @@ router.post('/generate-pfp4-proposals', requireAdmin, async (req, res) => {
 
       // Dédupliquer par PlaceId
       const uniquePlaceIds = new Set()
-      proposedPlaces = proposedPlaces.filter(p => {
+      proposedPlaces = proposedPlaces.filter((p) => {
         if (completedPlaceIds.has(String(p.PlaceId))) return false
         if (uniquePlaceIds.has(p.PlaceId)) return false
         uniquePlaceIds.add(p.PlaceId)
@@ -889,7 +953,8 @@ router.post('/generate-pfp4-proposals', requireAdmin, async (req, res) => {
       else if (missingDE && missingSYSINT) appliedRule = 'DE_AND_SYSINT'
       else if (missingSYSINT && !missingDE && otherMissing.length === 0) appliedRule = 'SYSINT_ONLY'
       else if (missingSYSINT && otherMissing.length > 0) appliedRule = 'SYSINT_AND_OTHER'
-      else if (priorityMissingCriteria.length > 0) appliedRule = deprioritizeDE ? 'UNDER2_NO_DE_PRIORITY' : 'OTHER_MISSING'
+      else if (priorityMissingCriteria.length > 0)
+        appliedRule = deprioritizeDE ? 'UNDER2_NO_DE_PRIORITY' : 'OTHER_MISSING'
       else appliedRule = 'ALL_COMPLETE'
 
       proposals.push({
@@ -903,14 +968,14 @@ router.post('/generate-pfp4-proposals', requireAdmin, async (req, res) => {
         appliedRule,
         sae: studentCriteria?.sae || false,
         casParticulier: studentCriteria?.casParticulier || false,
-        proposedPlaceIds: proposedPlaces.map(p => p.PlaceId),
+        proposedPlaceIds: proposedPlaces.map((p) => p.PlaceId),
         proposedPlacesCount: proposedPlaces.length,
-        proposedPlaces: proposedPlaces.map(p => ({
+        proposedPlaces: proposedPlaces.map((p) => ({
           PlaceId: p.PlaceId,
           NomPlace: p.NomPlace,
           InstitutionName: p.InstitutionName,
           Capacity: p.Capacity,
-          criteria: CRITERIA_KEYS.filter(c => p[c])
+          criteria: CRITERIA_KEYS.filter((c) => p[c])
         }))
       })
     }
@@ -920,7 +985,7 @@ router.post('/generate-pfp4-proposals', requireAdmin, async (req, res) => {
 
     // Statistiques
     const ruleStats = {}
-    proposals.forEach(p => {
+    proposals.forEach((p) => {
       ruleStats[p.appliedRule] = (ruleStats[p.appliedRule] || 0) + 1
     })
 
@@ -928,11 +993,14 @@ router.post('/generate-pfp4-proposals', requireAdmin, async (req, res) => {
       totalStudents: proposals.length,
       totalPfp4Places: pfp4Places.length,
       totalCapacity: pfp4Places.reduce((sum, p) => sum + p.Capacity, 0),
-      averageProposedPlaces: proposals.length > 0
-        ? Math.round(proposals.reduce((sum, p) => sum + p.proposedPlacesCount, 0) / proposals.length)
-        : 0,
+      averageProposedPlaces:
+        proposals.length > 0
+          ? Math.round(
+              proposals.reduce((sum, p) => sum + p.proposedPlacesCount, 0) / proposals.length
+            )
+          : 0,
       ruleDistribution: ruleStats,
-      studentsWithNoCriteria: proposals.filter(p => !criteriaMap.has(p.userId)).length
+      studentsWithNoCriteria: proposals.filter((p) => !criteriaMap.has(p.userId)).length
     }
 
     console.log(`✅ Propositions PFP4 générées:`, stats)
@@ -967,7 +1035,7 @@ router.post('/save-pfp4-proposals', requireAdmin, async (req, res) => {
 
     // Construire un map userId → { placeIds, missingCriteria, appliedRule } + _assignCounts
     const proposalsMap = {}
-    proposals.forEach(p => {
+    proposals.forEach((p) => {
       proposalsMap[p.userId] = {
         placeIds: p.proposedPlaceIds || [],
         missingCriteria: p.missingCriteria || [],
@@ -979,7 +1047,9 @@ router.post('/save-pfp4-proposals', requireAdmin, async (req, res) => {
       proposalsMap._assignCounts = assignCounts
     }
 
-    console.log(`🔍 SAVE pfp4-proposals: year=${year} class=${classe} students=${Object.keys(proposalsMap).length}`)
+    console.log(
+      `🔍 SAVE pfp4-proposals: year=${year} class=${classe} students=${Object.keys(proposalsMap).length}`
+    )
 
     // Utiliser supabaseAdmin (service_role) pour bypasser la RLS sur votation_sessions
     // Sauvegarder les propositions dans TOUTES les sessions PFP4 existantes pour cette année/classe
@@ -994,9 +1064,13 @@ router.post('/save-pfp4-proposals', requireAdmin, async (req, res) => {
       console.warn('⚠️ Erreur recherche sessions:', findError.message)
     }
 
-    console.log(`🔍 Sessions PFP4 existantes pour ${classe}/${year}: ${existingSessions?.length || 0}`)
+    console.log(
+      `🔍 Sessions PFP4 existantes pour ${classe}/${year}: ${existingSessions?.length || 0}`
+    )
     if (existingSessions) {
-      existingSessions.forEach(s => console.log(`   Session ${s.id}: status=${s.status} priority=${s.is_priority}`))
+      existingSessions.forEach((s) =>
+        console.log(`   Session ${s.id}: status=${s.status} priority=${s.is_priority}`)
+      )
     }
 
     const updatePayload = {
@@ -1013,13 +1087,15 @@ router.post('/save-pfp4-proposals', requireAdmin, async (req, res) => {
         if (error) {
           console.warn(`⚠️ Erreur update session ${session.id}:`, error.message)
         } else {
-          console.log(`✅ Session ${session.id} mise à jour avec ${Object.keys(proposalsMap).length} propositions`)
+          console.log(
+            `✅ Session ${session.id} mise à jour avec ${Object.keys(proposalsMap).length} propositions`
+          )
         }
       }
       savedSession = existingSessions[0]
       console.log(`✅ Propositions mises à jour dans ${existingSessions.length} session(s)`)
     } else {
-      console.log('📝 Aucune session existante, création d\'une nouvelle...')
+      console.log("📝 Aucune session existante, création d'une nouvelle...")
       const { data, error } = await supabaseAdmin
         .from('votation_sessions')
         .insert({
@@ -1088,12 +1164,16 @@ router.get('/pfp4-proposals/:year', setUser, async (req, res) => {
 
     console.log(`🔍 Sessions PFP4 avec propositions: ${sessions?.length || 0}`)
     if (sessions && sessions.length > 0) {
-      sessions.forEach(s => {
+      sessions.forEach((s) => {
         const proposalKeys = s.pfp4_proposals ? Object.keys(s.pfp4_proposals) : []
-        console.log(`   Session ${s.id}: status=${s.status} priority=${s.is_priority} class=${s.target_class} proposals_count=${proposalKeys.length}`)
+        console.log(
+          `   Session ${s.id}: status=${s.status} priority=${s.is_priority} class=${s.target_class} proposals_count=${proposalKeys.length}`
+        )
         // Vérifier si userId est dans les propositions
         const hasUser = s.pfp4_proposals && s.pfp4_proposals[userId]
-        console.log(`   userId ${userId.substring(0, 8)}... found: ${!!hasUser}${hasUser ? ' (' + hasUser.length + ' places)' : ''}`)
+        console.log(
+          `   userId ${userId.substring(0, 8)}... found: ${!!hasUser}${hasUser ? ' (' + hasUser.length + ' places)' : ''}`
+        )
       })
     }
 
@@ -1116,7 +1196,9 @@ router.get('/pfp4-proposals/:year', setUser, async (req, res) => {
             appliedRule = userData.appliedRule || null
           }
           assignCounts = proposals._assignCounts || null
-          console.log(`✅ Propositions trouvées pour ${userId.substring(0, 8)}: ${proposedPlaceIds.length} places, missing=[${(missingCriteria || []).join(',')}], rule=${appliedRule}, assignCounts: ${assignCounts ? Object.keys(assignCounts).length + ' places' : 'aucun'}`)
+          console.log(
+            `✅ Propositions trouvées pour ${userId.substring(0, 8)}: ${proposedPlaceIds.length} places, missing=[${(missingCriteria || []).join(',')}], rule=${appliedRule}, assignCounts: ${assignCounts ? Object.keys(assignCounts).length + ' places' : 'aucun'}`
+          )
           break
         }
       }
@@ -1124,7 +1206,9 @@ router.get('/pfp4-proposals/:year', setUser, async (req, res) => {
 
     if (Array.isArray(proposedPlaceIds) && proposedPlaceIds.length > 0) {
       const completedPlaceIds = await getCompletedPlaceIdsForUser(userId)
-      proposedPlaceIds = proposedPlaceIds.filter(placeId => !completedPlaceIds.has(String(placeId)))
+      proposedPlaceIds = proposedPlaceIds.filter(
+        (placeId) => !completedPlaceIds.has(String(placeId))
+      )
     }
 
     if (!proposedPlaceIds) {
@@ -1243,9 +1327,9 @@ router.put('/status/:resultId', requireAdmin, async (req, res) => {
     const { status, notes } = req.body
 
     if (!status || !['assigned', 'pending', 'rejected', 'confirmed'].includes(status)) {
-      return res.status(400).json({ 
-        ok: false, 
-        error: 'Invalid status. Must be: assigned, pending, rejected, or confirmed' 
+      return res.status(400).json({
+        ok: false,
+        error: 'Invalid status. Must be: assigned, pending, rejected, or confirmed'
       })
     }
 
@@ -1276,10 +1360,7 @@ router.delete('/:resultId', requireAdmin, async (req, res) => {
   try {
     const { resultId } = req.params
 
-    const { error } = await supabase
-      .from('student_result_vote')
-      .delete()
-      .eq('id', resultId)
+    const { error } = await supabase.from('student_result_vote').delete().eq('id', resultId)
 
     if (error) throw error
 
@@ -1306,8 +1387,8 @@ router.delete('/algorithm-run/:algorithmRunId', requireAdmin, async (req, res) =
 
     if (error) throw error
 
-    return res.json({ 
-      ok: true, 
+    return res.json({
+      ok: true,
       message: 'Algorithm run results deleted successfully',
       deletedCount: data?.length || 0
     })

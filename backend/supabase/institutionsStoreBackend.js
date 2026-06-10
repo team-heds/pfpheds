@@ -9,22 +9,6 @@ const router = Router()
 const upload = multer({ storage: multer.memoryStorage() })
 const INSTITUTIONS_BUCKET = 'institutions'
 
-async function ensureInstitutionsBucket() {
-  const { data: buckets, error: listError } = await supabaseAdmin.storage.listBuckets()
-  if (listError) throw listError
-
-  const exists = (buckets || []).some((bucket) => bucket.name === INSTITUTIONS_BUCKET)
-  if (exists) return
-
-  const { error: createError } = await supabaseAdmin.storage.createBucket(INSTITUTIONS_BUCKET, {
-    public: true,
-    fileSizeLimit: 5242880,
-    allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
-  })
-
-  if (createError) throw createError
-}
-
 function getPublicUrl(path) {
   const { data } = supabaseAdmin.storage.from(INSTITUTIONS_BUCKET).getPublicUrl(path)
   return data.publicUrl
@@ -46,8 +30,6 @@ function extractSupabaseStoragePath(url) {
 
 router.post('/:id/images', upload.array('images'), async (req, res) => {
   try {
-    await ensureInstitutionsBucket()
-
     const institutionId = String(req.params.id || '').trim()
     const files = req.files || []
 
@@ -87,7 +69,7 @@ router.post('/:id/images', upload.array('images'), async (req, res) => {
     return res.status(201).json({ files: uploaded })
   } catch (e) {
     console.error('POST /api/institutions/:id/images failed:', e)
-    return res.status(500).json({ error: 'Internal Server Error' })
+    return res.status(500).json({ error: e?.message || 'Internal Server Error' })
   }
 })
 
@@ -112,7 +94,7 @@ router.delete('/:id/images', async (req, res) => {
     return res.status(204).send()
   } catch (e) {
     console.error('DELETE /api/institutions/:id/images failed:', e)
-    return res.status(500).json({ error: 'Internal Server Error' })
+    return res.status(500).json({ error: e?.message || 'Internal Server Error' })
   }
 })
  

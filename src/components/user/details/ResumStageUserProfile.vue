@@ -1002,6 +1002,8 @@ const hasPFP1 = computed(() => {
 // Gestion des documents par institution
 const uploads = ref({});
 const stageUploadsKey = (formationNumber) => `pfp_${String(formationNumber || 'unknown')}`;
+const STUDENT_DOCUMENT_ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/gif'];
+const STUDENT_DOCUMENT_MAX_SIZE = 10 * 1024 * 1024;
 
 const loadUploadedDocsForAll = async () => {
   try {
@@ -1051,6 +1053,18 @@ const handleFileSelection = (event, formationNumber) => {
   }
   // Pour FileUpload, l'événement contient un tableau de fichiers dans event.files
   const selectedFiles = Array.from(event.files || event.target.files);
+  const invalidFile = selectedFiles.find((file) =>
+    !STUDENT_DOCUMENT_ALLOWED_TYPES.includes(file.type) || file.size > STUDENT_DOCUMENT_MAX_SIZE
+  );
+
+  if (invalidFile) {
+    const reason = !STUDENT_DOCUMENT_ALLOWED_TYPES.includes(invalidFile.type)
+      ? `Type non supporte pour ${invalidFile.name}`
+      : `${invalidFile.name} depasse la limite de 10 MB`;
+    toast.add({ severity: 'warn', summary: 'Document', detail: reason, life: 4000 });
+    return;
+  }
+
   uploads.value[key].newFiles = selectedFiles;
 };
 

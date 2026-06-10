@@ -38,7 +38,33 @@
   <!-- FIN BANDEAU MAISON + XP -->
   <div class="mb-4 card-profile-responsive">
     <div class="avatar-wrapper">
-      <img :src="user.photoURL || defaultAvatar" alt="Avatar" style="border-radius: 3rem;" />
+      <img :src="avatarPreviewUrl || user.photoURL || defaultAvatar" alt="Avatar" style="border-radius: 3rem;" />
+      <div v-if="canEditAvatar" class="avatar-actions">
+        <input
+          ref="avatarInput"
+          type="file"
+          accept="image/jpeg,image/png,image/gif,image/webp"
+          class="avatar-input"
+          @change="onAvatarChange"
+        />
+        <div class="flex gap-2 flex-wrap justify-content-center">
+          <Button label="Changer l'avatar" icon="pi pi-image" outlined @click="triggerAvatarSelect" />
+          <Button
+            v-if="selectedAvatarFile"
+            label="Retirer"
+            icon="pi pi-times"
+            severity="secondary"
+            text
+            @click="clearAvatarSelection"
+          />
+        </div>
+        <small v-if="selectedAvatarFile" class="avatar-help">
+          Nouveau fichier: {{ selectedAvatarFile.name }}
+        </small>
+        <small v-else class="avatar-help">
+          JPG, PNG, GIF ou WEBP, max 5 MB
+        </small>
+      </div>
       <h1 class="pl-4">{{ displayFullName }}</h1>
     </div>
     <h5 class="mb-4">Informations personnelles</h5>
@@ -136,6 +162,8 @@ const currentUserProfile = ref({
 });
 
 const selectedAvatarFile = ref(null);
+const avatarInput = ref(null);
+const avatarPreviewUrl = ref('');
 // Référence pour la sélection d'un enseignant dans le dropdown (pour modifier Répondant HES)
 const selectedTeacher = ref("");
 
@@ -158,6 +186,12 @@ const resolveClassValue = (source) => {
 // Computed pour déterminer si l'utilisateur connecté est admin
 const isAdmin = computed(() => {
   return currentUserProfile.value.Roles && currentUserProfile.value.Roles.admin === true;
+});
+
+const canEditAvatar = computed(() => {
+  const routeUserId = String(route.params.id || '')
+  const currentUserId = String(authStore.user?.id || currentUserProfile.value.uid || '')
+  return Boolean(routeUserId && currentUserId && routeUserId === currentUserId)
 });
 
 // Fonction helper pour capitaliser (première lettre en majuscule)
@@ -575,6 +609,7 @@ const saveProfile = async () => {
           selectedAvatarFile.value
         );
         user.value.photoURL = uploadResult.url;
+        clearAvatarSelection();
         console.log('✅ Avatar uploadé sur Supabase:', uploadResult.url);
       } catch (error) {
         console.error("❌ Erreur lors de l'upload de l'avatar sur Supabase:", error);
@@ -654,9 +689,46 @@ const saveProfile = async () => {
 const onAvatarChange = (event) => {
   const file = event.target.files[0];
   if (file) {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+    const maxFileSize = 5 * 1024 * 1024
+
+    if (!allowedTypes.includes(file.type)) {
+      toast.add({ severity: 'warn', summary: 'Avatar', detail: 'Format non supporte. Utilisez JPG, PNG, GIF ou WEBP.', life: 3500 })
+      event.target.value = ''
+      return
+    }
+
+    if (file.size > maxFileSize) {
+      toast.add({ severity: 'warn', summary: 'Avatar', detail: 'Le fichier depasse la limite de 5 MB.', life: 3500 })
+      event.target.value = ''
+      return
+    }
+
+    if (avatarPreviewUrl.value) {
+      URL.revokeObjectURL(avatarPreviewUrl.value)
+    }
+
     selectedAvatarFile.value = file;
+    avatarPreviewUrl.value = URL.createObjectURL(file)
   }
 };
+
+const triggerAvatarSelect = () => {
+  avatarInput.value?.click()
+}
+
+const clearAvatarSelection = () => {
+  if (avatarPreviewUrl.value) {
+    URL.revokeObjectURL(avatarPreviewUrl.value)
+  }
+
+  avatarPreviewUrl.value = ''
+  selectedAvatarFile.value = null
+
+  if (avatarInput.value) {
+    avatarInput.value.value = ''
+  }
+}
 
 const route = useRoute();
 const router = useRouter();
@@ -1026,6 +1098,19 @@ const saveProfileWithXP = async () => {
   align-items: center;
   gap: 0.5rem;
   padding-bottom: 1rem;
+}
+.avatar-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+.avatar-input {
+  display: none;
+}
+.avatar-help {
+  color: var(--text-color-secondary, #94a3b8);
+  text-align: center;
 }
 .avatar-wrapper img[alt="Avatar"] {
   width: 150px;
