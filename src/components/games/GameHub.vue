@@ -2,10 +2,18 @@
   <div class="game-hub">
     <!-- Game Selection Menu -->
     <div v-if="!selectedGame" class="game-menu">
-      <h1 class="game-title">🎮 Centre de Jeux</h1>
+      <h1 class="game-title">Centre de Jeux</h1>
       <div class="games-grid">
         <div class="game-card" @click="selectGame('ventriglisse3d')">
-          <div class="game-icon">🛷</div>
+          <div class="game-avatars">
+            <img
+              v-for="avatar in ventriglisseAvatars"
+              :key="avatar"
+              :src="avatar"
+              alt="Personnage Ventriglisse"
+              class="game-avatar"
+            />
+          </div>
           <h3>Ventriglisse 3D</h3>
           <p>Course de luge en 3D avec vos amis</p>
         </div>
@@ -29,8 +37,12 @@
 </template>
 
 <script>
-import { ref } from 'vue';
-import Ventriglisse3D from './Ventriglisse3D.vue';
+import { ref } from 'vue'
+import Ventriglisse3D from './Ventriglisse3D.vue'
+import avatar01 from '@/assets/images/avatar/01.jpg'
+import avatar02 from '@/assets/images/avatar/02.jpg'
+import avatar03 from '@/assets/images/avatar/03.jpg'
+import avatar04 from '@/assets/images/avatar/04.jpg'
 
 export default {
   name: 'GameHub',
@@ -38,23 +50,25 @@ export default {
     Ventriglisse3D
   },
   setup() {
-    const selectedGame = ref(null);
-    
+    const selectedGame = ref(null)
+    const ventriglisseAvatars = [avatar01, avatar02, avatar03, avatar04]
+
     const selectGame = (game) => {
-      selectedGame.value = game;
-    };
-    
+      selectedGame.value = game
+    }
+
     const backToMenu = () => {
-      selectedGame.value = null;
-    };
-    
+      selectedGame.value = null
+    }
+
     return {
       selectedGame,
+      ventriglisseAvatars,
       selectGame,
       backToMenu
-    };
+    }
   }
-};
+}
 </script>
 
 <style scoped>
@@ -73,7 +87,7 @@ export default {
   color: white;
   font-size: 3rem;
   margin-bottom: 2rem;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .games-grid {
@@ -97,7 +111,7 @@ export default {
 .game-card:hover {
   transform: translateY(-10px);
   background: rgba(255, 255, 255, 0.2);
-  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
 }
 
 .game-card.coming-soon {
@@ -112,6 +126,24 @@ export default {
 .game-icon {
   font-size: 4rem;
   margin-bottom: 1rem;
+}
+
+.game-avatars {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.game-avatar {
+  width: 4.5rem;
+  height: 4.5rem;
+  object-fit: cover;
+  border-radius: 999px;
+  border: 3px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
 }
 
 .game-card h3 {
@@ -154,12 +186,12 @@ export default {
   .game-title {
     font-size: 2rem;
   }
-  
+
   .games-grid {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
-  
+
   .game-menu {
     padding: 1rem;
   }

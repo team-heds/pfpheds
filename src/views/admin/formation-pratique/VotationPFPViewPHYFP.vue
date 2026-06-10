@@ -1237,6 +1237,22 @@
         <Button label="Lancer la votation" icon="pi pi-play" severity="success" @click="openVotation" :loading="sessionLoading" />
       </template>
     </Dialog>
+    <Dialog
+      v-model:visible="showPiratedAlgorithmDialog"
+      modal
+      header="Information"
+      :style="{ width: '900px', maxWidth: '95vw' }"
+    >
+      <div class="flex align-items-center justify-content-center" style="min-height: 220px">
+        <div class="text-center">
+          <i class="pi pi-ban text-red-500 mb-4" style="font-size: 4rem"></i>
+          <div class="text-4xl font-bold text-900">Algorithme piraté</div>
+        </div>
+      </div>
+      <template #footer>
+        <Button label="Fermer" severity="secondary" outlined @click="showPiratedAlgorithmDialog = false" />
+      </template>
+    </Dialog>
   </AdminLayout>
 </template>
 
@@ -1260,8 +1276,6 @@ import { useInstitutionsStore } from '@/stores/institutionsStore'
 import { useUserStore } from '@/stores/userStore'
 import votesBackendService from '@/service/votesBackendService'
 import Dialog from 'primevue/dialog'
-import ConfirmDialog from 'primevue/confirmdialog'
-import Chips from 'primevue/chips'
 import AutoComplete from 'primevue/autocomplete'
 import { useVotationSession } from '@/composables/useVotationSession'
 import { useVotationConfig } from '@/composables/useVotationConfig'
@@ -1272,6 +1286,7 @@ import { useVotationAlgorithm } from '@/composables/useVotationAlgorithm'
 const toast = useToast()
 const userStore = useUserStore()
 const loading = ref(false)
+const showPiratedAlgorithmDialog = ref(false)
 
 // ============================================
 // COMPOSABLES
@@ -1309,11 +1324,11 @@ const {
   pfp4SearchQuery, pfp4FilterRule, pfp4RuleLabels, pfp4RuleSeverity,
   filteredPfp4Proposals, generatePfp4Proposals: _generatePfp4Proposals,
   savePfp4Proposals: _savePfp4Proposals, exportPfp4BilanCSV: _exportPfp4BilanCSV,
-  resetPfp4, CRITERIA_KEYS
+  CRITERIA_KEYS
 } = usePfp4Proposals(toast, excludedStudentIds, votationsList)
 
 const {
-  algorithmResults, algorithmStats, placesWithAssignments, algorithmLoading,
+  algorithmResults, algorithmStats, placesWithAssignments,
   startAlgorithm: _startAlgorithm, resetAlgorithm
 } = useVotationAlgorithm(toast)
 
@@ -1699,7 +1714,7 @@ const institutionsStore = useInstitutionsStore()
 // ============================================
 // WATCHERS
 // ============================================
-setupClassWatcher((newVal) => {
+setupClassWatcher(() => {
   resetAlgorithm()
   votationsList.value = []
   validatedPlaces.value = []

@@ -573,7 +573,7 @@ const assignedPlaces = computed(() => {
     if (rv.pfp_validee) status = 'validee'
     else if (rv.pfp_echec) status = 'echec'
     else if (rv.pfp_arret) status = 'arret'
-    const placeData = getPlaceFromMap(placeId)
+    const placeData = getPlaceFromStage(rv)
 
     const item = {
       _key: `rv_${idx}`,
@@ -606,7 +606,7 @@ const assignedPlaces = computed(() => {
     const placeId = pfp.id_pfp || pfp.ID_PFP || pfp.PlaceId || ''
     if (!placeId) return
 
-    const placeData = getPlaceFromMap(placeId)
+    const placeData = getPlaceFromStage(pfp)
     const placeName = pfp.NomPlace || pfp.nom_pfp || pfp.Nom_PFP || placeData?.NomPlace || placeData?.name || ''
 
     const rawType = normalizeLegacyPfpType(pfp)
@@ -719,14 +719,101 @@ const normalizeCriterionValue = (value) =>
   value === '1' ||
   (typeof value === 'string' && value.toLowerCase() === 'true')
 
+const normalizeLookupValue = (value) =>
+  String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim()
+
 const getStageResolvedPlaceId = (stage) =>
   stage?.assigned_place_id ||
   stage?.id_pfp ||
   stage?.ID_PFP ||
   stage?.PlaceId ||
   stage?.IDPlace ||
+  stage?.selected_places ||
+  stage?.selected_stage_id ||
   stage?.place_id ||
   null
+
+const getPlaceInstitutionName = (place) =>
+  place?.InstitutionName ||
+  place?.Institution ||
+  getInstitutionNameById(place?.InstitutionId) ||
+  ''
+
+const getStagePlaceName = (stage) =>
+  normalizeLookupValue(
+    stage?.NomPlace ||
+      stage?.nom_pfp ||
+      stage?.Nom_PFP ||
+      stage?.selected_stage_name ||
+      stage?.nom_complet_pfp ||
+      stage?.domaine ||
+      stage?.Domaine
+  )
+
+const getUniquePlacesFromMap = () => {
+  const seen = new Set()
+  const places = []
+  placesFullMap.value.forEach((place) => {
+    if (!place) return
+    const placeId = place.PlaceId || place.IDPlace || place.id || place.place_id || ''
+    const dedupKey =
+      String(placeId) ||
+      `${normalizeLookupValue(place.NomPlace || place.name || place.nom_place)}__${normalizeLookupValue(getPlaceInstitutionName(place))}`
+    if (!dedupKey || seen.has(dedupKey)) return
+    seen.add(dedupKey)
+    places.push(place)
+  })
+  return places
+}
+
+const getPlaceFromStage = (stage) => {
+  const targetPlaceName = getStagePlaceName(stage)
+  const targetInstitutionId =
+    stage?.InstitutionId || stage?.Institution_id || stage?.institution_id || null
+  const targetInstitutionName = normalizeLookupValue(
+    stage?.InstitutionName || stage?.institution_name || stage?.Institution
+  )
+
+  const idCandidates = [
+    getStageResolvedPlaceId(stage),
+    stage?.selected_places,
+    stage?.selected_stage_id,
+    stage?.id
+  ]
+
+  for (const candidate of idCandidates) {
+    const place = getPlaceFromMap(candidate)
+    if (!place) continue
+
+    if (!targetPlaceName) return place
+
+    const resolvedPlaceName = normalizeLookupValue(place?.NomPlace || place?.name || place?.nom_place)
+    if (resolvedPlaceName === targetPlaceName) return place
+  }
+  if (!targetPlaceName) return null
+
+  return (
+    getUniquePlacesFromMap().find((place) => {
+      const placeName = normalizeLookupValue(place?.NomPlace || place?.name || place?.nom_place)
+      if (placeName !== targetPlaceName) return false
+
+      if (targetInstitutionId) {
+        return String(place?.InstitutionId || place?.institution_id || '') === String(targetInstitutionId)
+      }
+
+      if (targetInstitutionName) {
+        return normalizeLookupValue(getPlaceInstitutionName(place)) === targetInstitutionName
+      }
+
+      return true
+    }) || null
+  )
+}
 
 const applyCriteriaFromSource = (target, source) => {
   if (!source) return
@@ -909,7 +996,7 @@ const processUserProfile = async () => {
           criteriaByInstitution[instId] = new Set();
         }
         criteriaList.forEach((crit) => {
-          if (place[crit] === true) {
+          if (normalizeCriterionValue(place[crit]) || normalizeCriterionValue(place[crit.toLowerCase()])) {
             criteriaByInstitution[instId].add(crit);
           }
         });
@@ -953,7 +1040,7 @@ const aggregatedCriteria = computed(() => {
   // Source 1: student_result_vote (stages validés avec pfp_validee=true)
   ;(studentResultVotes.value || []).forEach((rv) => {
     if (rv.pfp_validee && rv.assigned_place_id) {
-      const placeData = getPlaceFromMap(rv.assigned_place_id)
+      const placeData = getPlaceFromStage(rv)
       if (placeData) {
         applyCriteriaFromSource(result, placeData)
       }
@@ -990,14 +1077,14 @@ const aggregatedCriteria = computed(() => {
     }
 
       pfpArray.forEach((pfp) => {
-        const placeData = getPlaceFromMap(getStageResolvedPlaceId(pfp))
+        const placeData = getPlaceFromStage(pfp)
         applyCriteriaFromSource(result, placeData || pfp)
       });
   }
 
   // Source 3: studentPfpList (pfp_valided chargé depuis StudentsPhysio)
     ;(studentPfpList.value || []).forEach((pfp) => {
-      const placeData = getPlaceFromMap(getStageResolvedPlaceId(pfp))
+      const placeData = getPlaceFromStage(pfp)
       applyCriteriaFromSource(result, placeData || pfp)
     })
 
