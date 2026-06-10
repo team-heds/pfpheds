@@ -633,7 +633,9 @@ const assignedPlaces = computed(() => {
       year: pfp.year || null
     }
     Object.entries(criteriaMap).forEach(([up, low]) => {
-      item[up] = pfp[low] === true || pfp[up] === true
+      item[up] = placeData
+        ? normalizeCriterionValue(placeData[up])
+        : normalizeCriterionValue(pfp[low]) || normalizeCriterionValue(pfp[up])
     })
     results.push(item)
   })
@@ -711,13 +713,35 @@ const getPlaceFromMap = (placeId) => {
   return null
 }
 
+const normalizeCriterionValue = (value) =>
+  value === true ||
+  value === 1 ||
+  value === '1' ||
+  (typeof value === 'string' && value.toLowerCase() === 'true')
+
+const getStageResolvedPlaceId = (stage) =>
+  stage?.assigned_place_id ||
+  stage?.id_pfp ||
+  stage?.ID_PFP ||
+  stage?.PlaceId ||
+  stage?.IDPlace ||
+  stage?.place_id ||
+  null
+
+const applyCriteriaFromSource = (target, source) => {
+  if (!source) return
+  criteriaList.forEach((crit) => {
+    const rawValue =
+      source[crit] !== undefined && source[crit] !== null ? source[crit] : source[crit.toLowerCase()]
+    if (normalizeCriterionValue(rawValue)) {
+      target[crit] = true
+    }
+  })
+}
+
 // Retourne la liste des critères à true pour une place donnée
 function getValidCriterias(place) {
-  const criteriaKeys = ['AMBU', 'DE', 'FR', 'MSQ', 'NEUROGER', 'REHAB', 'SYSINT', 'AIGU'];
-  return criteriaKeys.filter(key => {
-    const val = place[key];
-    return val === true || (typeof val === 'string' && val.toLowerCase() === 'true');
-  });
+  return criteriaList.filter((key) => normalizeCriterionValue(place?.[key]))
 }
 
 // Retourne "Prénom Nom" du praticien formateur lié à l'institution
@@ -929,13 +953,9 @@ const aggregatedCriteria = computed(() => {
   // Source 1: student_result_vote (stages validés avec pfp_validee=true)
   ;(studentResultVotes.value || []).forEach((rv) => {
     if (rv.pfp_validee && rv.assigned_place_id) {
-      const placeData = placesFullMap.value.get(rv.assigned_place_id)
+      const placeData = getPlaceFromMap(rv.assigned_place_id)
       if (placeData) {
-        criteriaList.forEach((crit) => {
-          if (placeData[crit] === true || placeData[crit] === 'true' || placeData[crit] === 1) {
-            result[crit] = true
-          }
-        })
+        applyCriteriaFromSource(result, placeData)
       }
     }
   })
@@ -969,23 +989,17 @@ const aggregatedCriteria = computed(() => {
       }
     }
 
-    pfpArray.forEach((pfp) => {
-      criteriaList.forEach((crit) => {
-        if (pfp[crit] === true) {
-          result[crit] = true;
-        }
+      pfpArray.forEach((pfp) => {
+        const placeData = getPlaceFromMap(getStageResolvedPlaceId(pfp))
+        applyCriteriaFromSource(result, placeData || pfp)
       });
-    });
   }
 
   // Source 3: studentPfpList (pfp_valided chargé depuis StudentsPhysio)
-  ;(studentPfpList.value || []).forEach((pfp) => {
-    criteriaList.forEach((crit) => {
-      if (pfp[crit] === true) {
-        result[crit] = true
-      }
+    ;(studentPfpList.value || []).forEach((pfp) => {
+      const placeData = getPlaceFromMap(getStageResolvedPlaceId(pfp))
+      applyCriteriaFromSource(result, placeData || pfp)
     })
-  })
 
   return result;
 });

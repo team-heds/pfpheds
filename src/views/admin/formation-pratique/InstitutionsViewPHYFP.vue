@@ -99,11 +99,26 @@
               <span v-else class="text-400">—</span>
             </template>
           </Column>
+          <Column header="Visibilité" style="min-width: 8rem">
+            <template #body="{ data }">
+              <Tag
+                :value="data.is_hidden ? 'Masquée' : 'Visible'"
+                :severity="data.is_hidden ? 'warning' : 'success'"
+              />
+            </template>
+          </Column>
 
           <Column header="Actions" style="min-width: 10rem">
             <template #body="{ data }">
               <Button icon="pi pi-eye" class="p-button-rounded p-button-info mr-2" size="small" v-tooltip.top="'Voir détails'" @click="goToDetails(data.InstitutionId)" />
               <Button icon="pi pi-pencil" class="p-button-rounded p-button-success mr-2" size="small" v-tooltip.top="'Modifier'" @click="goToInstitutionFormModif(data.InstitutionId)" />
+              <Button
+                :icon="data.is_hidden ? 'pi pi-eye' : 'pi pi-eye-slash'"
+                :class="data.is_hidden ? 'p-button-rounded p-button-warning mr-2' : 'p-button-rounded p-button-secondary mr-2'"
+                size="small"
+                :title="data.is_hidden ? 'Réafficher' : 'Masquer sans supprimer'"
+                @click="toggleHidden(data)"
+              />
               <Button icon="pi pi-trash" class="p-button-rounded p-button-danger" size="small" v-tooltip.top="'Supprimer'" @click="handleDelete(data)" />
             </template>
           </Column>
@@ -280,6 +295,30 @@ onMounted(() => {
   loadInstitutions();
   loadGlobalKpis();
 });
+
+const toggleHidden = async (inst) => {
+  const nextHidden = !inst.is_hidden
+  try {
+    await institutionsStore.updateInstitution(inst.InstitutionId, {
+      is_hidden: nextHidden
+    })
+    toast.add({
+      severity: 'success',
+      summary: 'Visibilité mise à jour',
+      detail: nextHidden
+        ? `L'institution "${inst.Name}" est maintenant masquée des vues publiques.`
+        : `L'institution "${inst.Name}" est de nouveau visible publiquement.`,
+      life: 3000
+    })
+  } catch (error) {
+    toast.add({
+      severity: 'error',
+      summary: 'Mise à jour impossible',
+      detail: error?.message || 'Impossible de modifier la visibilité.',
+      life: 4000
+    })
+  }
+}
 
 const handleDelete = (inst) => {
   confirm.require({

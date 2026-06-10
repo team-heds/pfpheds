@@ -1,7 +1,11 @@
 <template>
   <AdminLayout :noSidebar="true">
     <!-- Chargement de la session -->
-    <div v-if="sessionLoading" class="flex align-items-center justify-content-center" style="min-height: 60vh;">
+    <div
+      v-if="sessionLoading"
+      class="flex align-items-center justify-content-center"
+      style="min-height: 60vh"
+    >
       <div class="text-center">
         <i class="pi pi-spin pi-spinner text-4xl text-primary mb-3"></i>
         <p class="text-600">Chargement de la votation...</p>
@@ -9,11 +13,17 @@
     </div>
 
     <!-- Pas de session active -->
-    <div v-else-if="!activeSession" class="flex align-items-center justify-content-center" style="min-height: 60vh;">
-      <div class="text-center surface-card p-5 border-round shadow-2" style="max-width: 500px;">
+    <div
+      v-else-if="!activeSession"
+      class="flex align-items-center justify-content-center"
+      style="min-height: 60vh"
+    >
+      <div class="text-center surface-card p-5 border-round shadow-2" style="max-width: 500px">
         <i class="pi pi-lock text-4xl text-orange-500 mb-3"></i>
         <h2 class="text-900 m-0 mb-2">Votation fermée</h2>
-        <p class="text-600 m-0 mb-3">Aucune votation n'est ouverte pour le moment. Veuillez réessayer plus tard.</p>
+        <p class="text-600 m-0 mb-3">
+          Aucune votation n'est ouverte pour le moment. Veuillez réessayer plus tard.
+        </p>
         <PrimeButton label="Retour" icon="pi pi-arrow-left" outlined @click="goBackToProfile" />
       </div>
     </div>
@@ -27,10 +37,18 @@
             <i class="pi pi-check-square header-icon"></i>
             <div>
               <h1 class="header-title">Votation {{ targetPFP }}</h1>
-              <p class="header-subtitle">Année {{ selectedYear }} • {{ availablePlaces.length }} places disponibles</p>
+              <p class="header-subtitle">
+                Année {{ selectedYear }} • {{ availablePlaces.length }} places disponibles
+              </p>
             </div>
           </div>
-          <PrimeButton label="Retour" icon="pi pi-arrow-left" outlined @click="goBackToProfile" class="back-button" />
+          <PrimeButton
+            label="Retour"
+            icon="pi pi-arrow-left"
+            outlined
+            @click="goBackToProfile"
+            class="back-button"
+          />
         </div>
       </div>
 
@@ -40,19 +58,38 @@
           <div class="flex align-items-center gap-3 flex-wrap">
             <i class="pi pi-exclamation-triangle text-2xl text-orange-500"></i>
             <div>
-              <div class="text-900 font-bold text-lg mb-1">Critères à valider pour votre diplôme</div>
+              <div class="text-900 font-bold text-lg mb-1">
+                Critères à valider pour votre diplôme
+              </div>
               <div class="flex align-items-center gap-2 flex-wrap">
-                <Tag v-for="c in pfp4MissingCriteria" :key="c" :value="c" severity="danger" class="text-sm px-3 py-1" style="font-size: 0.95rem" />
+                <Tag
+                  v-for="c in pfp4MissingCriteria"
+                  :key="c"
+                  :value="c"
+                  severity="danger"
+                  class="text-sm px-3 py-1"
+                  style="font-size: 0.95rem"
+                />
               </div>
             </div>
           </div>
-          <div class="text-600 mt-2 text-sm"><i class="pi pi-arrow-down mr-1"></i> Les places ci-dessous sont triées par pertinence. <strong>Privilégiez en priorité les places qui couvrent le plus grand nombre de vos critères manquants en terme d'équité !!</strong> Pour rappel il est obligatoire de <strong> valider au minimum une place dans la deuxième langue pour obtenir votre diplôme</strong>.</div>
+          <div class="text-600 mt-2 text-sm">
+            <i class="pi pi-arrow-down mr-1"></i> Les places ci-dessous sont triées par pertinence.
+            <strong
+              >Privilégiez en priorité les places qui couvrent le plus grand nombre de vos critères
+              manquants en terme d'équité !!</strong
+            >
+            Pour rappel il est obligatoire de
+            <strong>
+              valider au minimum une place dans la deuxième langue pour obtenir votre
+              diplôme</strong
+            >.
+          </div>
         </div>
       </div>
 
       <!-- ═══ MODE SECTIONS PFP4 (avec critères manquants) ═══ -->
       <div v-if="hasPfp4Sections && availablePlaces.length > 0" class="content-wrapper">
-
         <!-- SECTION HAUTE PRIORITÉ -->
         <div v-if="pfp4HighPlaces.length > 0" class="pfp4-section pfp4-section-high mb-4">
           <div class="pfp4-section-header pfp4-section-header-high">
@@ -61,27 +98,50 @@
               <span class="font-bold text-lg">Priorité haute</span>
               <Tag :value="pfp4HighPlaces.length + ' places'" severity="success" class="ml-2" />
             </div>
-            <span class="text-sm opacity-80">Couvrent 2+ de vos critères manquants — à privilégier</span>
+            <span class="text-sm opacity-80"
+              >Couvrent 2+ de vos critères manquants — à privilégier</span
+            >
           </div>
-          <DataTable :value="pfp4HighPlaces" class="modern-votation-table pfp4-table-high" responsiveLayout="scroll" :scrollable="true" :rowHover="true">
+          <DataTable
+            :value="pfp4HighPlaces"
+            class="modern-votation-table pfp4-table-high"
+            responsiveLayout="scroll"
+            :scrollable="true"
+            :rowHover="true"
+          >
             <Column header="Crit. couverts" :style="{ width: '110px', textAlign: 'center' }">
               <template #body="slotProps">
-                <div class="pfp4-badge pfp4-badge-high">{{ slotProps.data.pfp4CoveredCount }} / {{ pfp4MissingCriteria.length }}</div>
+                <div class="pfp4-badge pfp4-badge-high">
+                  {{ slotProps.data.pfp4CoveredCount }} / {{ pfp4MissingCriteria.length }}
+                </div>
               </template>
             </Column>
             <Column header="Institution" field="InstitutionName" :style="{ minWidth: '200px' }">
               <template #body="slotProps">
-                <a target="_blank" :href="slotProps.data.url" class="institution-link"><i class="pi pi-building mr-2"></i>{{ slotProps.data.InstitutionName || 'Non spécifié' }}</a>
+                <a target="_blank" :href="slotProps.data.url" class="institution-link"
+                  ><i class="pi pi-building mr-2"></i
+                  >{{ slotProps.data.InstitutionName || 'Non spécifié' }}</a
+                >
               </template>
             </Column>
             <Column header="Place" field="NomPlace" :style="{ minWidth: '160px' }">
-              <template #body="slotProps"><div class="place-name font-semibold">{{ slotProps.data.NomPlace }}</div></template>
+              <template #body="slotProps"
+                ><div class="place-name font-semibold">{{ slotProps.data.NomPlace }}</div></template
+              >
             </Column>
             <Column header="Critères" :style="{ minWidth: '200px' }">
               <template #body="slotProps">
                 <div class="criteria-tags">
-                  <template v-for="cr in ['MSQ','SYSINT','NEUROGER','AIGU','REHAB','AMBU']" :key="cr">
-                    <Tag v-if="slotProps.data[cr]" :value="cr" :severity="isMissingCriteria(cr) ? 'danger' : 'success'" class="mr-1 mb-1" />
+                  <template
+                    v-for="cr in ['MSQ', 'SYSINT', 'NEUROGER', 'AIGU', 'REHAB', 'AMBU']"
+                    :key="cr"
+                  >
+                    <Tag
+                      v-if="slotProps.data[cr]"
+                      :value="cr"
+                      :severity="isMissingCriteria(cr) ? 'danger' : 'success'"
+                      class="mr-1 mb-1"
+                    />
                   </template>
                 </div>
               </template>
@@ -89,24 +149,60 @@
             <Column header="Langues" :style="{ width: '100px' }">
               <template #body="slotProps">
                 <div class="language-tags">
-                  <Tag v-if="slotProps.data.FR" value="FR" :severity="isMissingCriteria('FR') ? 'danger' : 'warning'" class="mr-1" />
-                  <Tag v-if="slotProps.data.DE" value="DE" :severity="isMissingCriteria('DE') ? 'danger' : 'warning'" class="mr-1" />
+                  <Tag
+                    v-if="slotProps.data.FR"
+                    value="FR"
+                    :severity="isMissingCriteria('FR') ? 'danger' : 'warning'"
+                    class="mr-1"
+                  />
+                  <Tag
+                    v-if="slotProps.data.DE"
+                    value="DE"
+                    :severity="isMissingCriteria('DE') ? 'danger' : 'warning'"
+                    class="mr-1"
+                  />
                 </div>
               </template>
             </Column>
-            <Column v-for="i in 5" :key="'hc-'+i" :header="'Choix ' + i" :style="{ textAlign: 'center', width: '75px' }">
+            <Column
+              v-for="i in 5"
+              :key="'hc-' + i"
+              :header="'Choix ' + i"
+              :style="{ textAlign: 'center', width: '75px' }"
+            >
               <template #body="slotProps">
-                <div class="radio-wrapper"><RadioButton v-model="selectedPlaces[i-1]" :value="slotProps.data" :disabled="isPlaceDisabled(slotProps.data, i-1)" @click="onRadioClick(slotProps.data, i-1, $event)" /></div>
+                <div class="radio-wrapper">
+                  <RadioButton
+                    v-model="selectedPlaces[i - 1]"
+                    :value="slotProps.data"
+                    :disabled="isPlaceDisabled(slotProps.data, i - 1)"
+                    @click="onRadioClick(slotProps.data, i - 1, $event)"
+                  />
+                </div>
               </template>
             </Column>
-            <Column v-for="i in 5" :key="'hv-'+i" :header="'Top ' + i" :style="{ textAlign: 'center', width: '60px' }">
+            <Column
+              v-for="i in 5"
+              :key="'hv-' + i"
+              :header="'Top ' + i"
+              :style="{ textAlign: 'center', width: '60px' }"
+            >
               <template #body="slotProps">
-                <Tag :value="getVoteCount(slotProps.data)['top'+i] || 0" :severity="getVoteCount(slotProps.data)['top'+i] > 0 ? 'primary' : 'secondary'" rounded />
+                <Tag
+                  :value="getVoteCount(slotProps.data)['top' + i] || 0"
+                  :severity="getVoteCount(slotProps.data)['top' + i] > 0 ? 'primary' : 'secondary'"
+                  rounded
+                />
               </template>
             </Column>
             <Column header="Total" :style="{ textAlign: 'center', width: '70px' }">
               <template #body="slotProps">
-                <Tag :value="getVoteCount(slotProps.data).total || 0" severity="contrast" rounded class="font-semibold" />
+                <Tag
+                  :value="getVoteCount(slotProps.data).total || 0"
+                  severity="contrast"
+                  rounded
+                  class="font-semibold"
+                />
               </template>
             </Column>
           </DataTable>
@@ -122,23 +218,46 @@
             </div>
             <span class="text-sm opacity-80">Couvrent 1 critère manquant</span>
           </div>
-          <DataTable :value="pfp4MediumPlaces" class="modern-votation-table pfp4-table-medium" responsiveLayout="scroll" :scrollable="true" :rowHover="true">
+          <DataTable
+            :value="pfp4MediumPlaces"
+            class="modern-votation-table pfp4-table-medium"
+            responsiveLayout="scroll"
+            :scrollable="true"
+            :rowHover="true"
+          >
             <Column header="Crit. couverts" :style="{ width: '110px', textAlign: 'center' }">
-              <template #body><div class="pfp4-badge pfp4-badge-medium">1 / {{ pfp4MissingCriteria.length }}</div></template>
+              <template #body
+                ><div class="pfp4-badge pfp4-badge-medium">
+                  1 / {{ pfp4MissingCriteria.length }}
+                </div></template
+              >
             </Column>
             <Column header="Institution" field="InstitutionName" :style="{ minWidth: '200px' }">
               <template #body="slotProps">
-                <a target="_blank" :href="slotProps.data.url" class="institution-link"><i class="pi pi-building mr-2"></i>{{ slotProps.data.InstitutionName || 'Non spécifié' }}</a>
+                <a target="_blank" :href="slotProps.data.url" class="institution-link"
+                  ><i class="pi pi-building mr-2"></i
+                  >{{ slotProps.data.InstitutionName || 'Non spécifié' }}</a
+                >
               </template>
             </Column>
             <Column header="Place" field="NomPlace" :style="{ minWidth: '160px' }">
-              <template #body="slotProps"><div class="place-name">{{ slotProps.data.NomPlace }}</div></template>
+              <template #body="slotProps"
+                ><div class="place-name">{{ slotProps.data.NomPlace }}</div></template
+              >
             </Column>
             <Column header="Critères" :style="{ minWidth: '200px' }">
               <template #body="slotProps">
                 <div class="criteria-tags">
-                  <template v-for="cr in ['MSQ','SYSINT','NEUROGER','AIGU','REHAB','AMBU']" :key="cr">
-                    <Tag v-if="slotProps.data[cr]" :value="cr" :severity="isMissingCriteria(cr) ? 'danger' : 'success'" class="mr-1 mb-1" />
+                  <template
+                    v-for="cr in ['MSQ', 'SYSINT', 'NEUROGER', 'AIGU', 'REHAB', 'AMBU']"
+                    :key="cr"
+                  >
+                    <Tag
+                      v-if="slotProps.data[cr]"
+                      :value="cr"
+                      :severity="isMissingCriteria(cr) ? 'danger' : 'success'"
+                      class="mr-1 mb-1"
+                    />
                   </template>
                 </div>
               </template>
@@ -146,24 +265,60 @@
             <Column header="Langues" :style="{ width: '100px' }">
               <template #body="slotProps">
                 <div class="language-tags">
-                  <Tag v-if="slotProps.data.FR" value="FR" :severity="isMissingCriteria('FR') ? 'danger' : 'warning'" class="mr-1" />
-                  <Tag v-if="slotProps.data.DE" value="DE" :severity="isMissingCriteria('DE') ? 'danger' : 'warning'" class="mr-1" />
+                  <Tag
+                    v-if="slotProps.data.FR"
+                    value="FR"
+                    :severity="isMissingCriteria('FR') ? 'danger' : 'warning'"
+                    class="mr-1"
+                  />
+                  <Tag
+                    v-if="slotProps.data.DE"
+                    value="DE"
+                    :severity="isMissingCriteria('DE') ? 'danger' : 'warning'"
+                    class="mr-1"
+                  />
                 </div>
               </template>
             </Column>
-            <Column v-for="i in 5" :key="'mc-'+i" :header="'Choix ' + i" :style="{ textAlign: 'center', width: '75px' }">
+            <Column
+              v-for="i in 5"
+              :key="'mc-' + i"
+              :header="'Choix ' + i"
+              :style="{ textAlign: 'center', width: '75px' }"
+            >
               <template #body="slotProps">
-                <div class="radio-wrapper"><RadioButton v-model="selectedPlaces[i-1]" :value="slotProps.data" :disabled="isPlaceDisabled(slotProps.data, i-1)" @click="onRadioClick(slotProps.data, i-1, $event)" /></div>
+                <div class="radio-wrapper">
+                  <RadioButton
+                    v-model="selectedPlaces[i - 1]"
+                    :value="slotProps.data"
+                    :disabled="isPlaceDisabled(slotProps.data, i - 1)"
+                    @click="onRadioClick(slotProps.data, i - 1, $event)"
+                  />
+                </div>
               </template>
             </Column>
-            <Column v-for="i in 5" :key="'mv-'+i" :header="'Top ' + i" :style="{ textAlign: 'center', width: '60px' }">
+            <Column
+              v-for="i in 5"
+              :key="'mv-' + i"
+              :header="'Top ' + i"
+              :style="{ textAlign: 'center', width: '60px' }"
+            >
               <template #body="slotProps">
-                <Tag :value="getVoteCount(slotProps.data)['top'+i] || 0" :severity="getVoteCount(slotProps.data)['top'+i] > 0 ? 'primary' : 'secondary'" rounded />
+                <Tag
+                  :value="getVoteCount(slotProps.data)['top' + i] || 0"
+                  :severity="getVoteCount(slotProps.data)['top' + i] > 0 ? 'primary' : 'secondary'"
+                  rounded
+                />
               </template>
             </Column>
             <Column header="Total" :style="{ textAlign: 'center', width: '70px' }">
               <template #body="slotProps">
-                <Tag :value="getVoteCount(slotProps.data).total || 0" severity="contrast" rounded class="font-semibold" />
+                <Tag
+                  :value="getVoteCount(slotProps.data).total || 0"
+                  severity="contrast"
+                  rounded
+                  class="font-semibold"
+                />
               </template>
             </Column>
           </DataTable>
@@ -177,22 +332,43 @@
               <span class="font-bold text-lg">Autres places disponibles</span>
               <Tag :value="pfp4OtherPlaces.length + ' places'" severity="secondary" class="ml-2" />
             </div>
-            <span class="text-sm opacity-80">Ne couvrent aucun critère manquant mais restent disponibles</span>
+            <span class="text-sm opacity-80"
+              >Ne couvrent aucun critère manquant mais restent disponibles</span
+            >
           </div>
-          <DataTable :value="pfp4OtherPlaces" class="modern-votation-table pfp4-table-other" responsiveLayout="scroll" :scrollable="true" :rowHover="true">
+          <DataTable
+            :value="pfp4OtherPlaces"
+            class="modern-votation-table pfp4-table-other"
+            responsiveLayout="scroll"
+            :scrollable="true"
+            :rowHover="true"
+          >
             <Column header="Institution" field="InstitutionName" :style="{ minWidth: '200px' }">
               <template #body="slotProps">
-                <a target="_blank" :href="slotProps.data.url" class="institution-link"><i class="pi pi-building mr-2"></i>{{ slotProps.data.InstitutionName || 'Non spécifié' }}</a>
+                <a target="_blank" :href="slotProps.data.url" class="institution-link"
+                  ><i class="pi pi-building mr-2"></i
+                  >{{ slotProps.data.InstitutionName || 'Non spécifié' }}</a
+                >
               </template>
             </Column>
             <Column header="Place" field="NomPlace" :style="{ minWidth: '160px' }">
-              <template #body="slotProps"><div class="place-name">{{ slotProps.data.NomPlace }}</div></template>
+              <template #body="slotProps"
+                ><div class="place-name">{{ slotProps.data.NomPlace }}</div></template
+              >
             </Column>
             <Column header="Critères" :style="{ minWidth: '200px' }">
               <template #body="slotProps">
                 <div class="criteria-tags">
-                  <template v-for="cr in ['MSQ','SYSINT','NEUROGER','AIGU','REHAB','AMBU']" :key="cr">
-                    <Tag v-if="slotProps.data[cr]" :value="cr" severity="success" class="mr-1 mb-1" />
+                  <template
+                    v-for="cr in ['MSQ', 'SYSINT', 'NEUROGER', 'AIGU', 'REHAB', 'AMBU']"
+                    :key="cr"
+                  >
+                    <Tag
+                      v-if="slotProps.data[cr]"
+                      :value="cr"
+                      severity="success"
+                      class="mr-1 mb-1"
+                    />
                   </template>
                 </div>
               </template>
@@ -205,19 +381,45 @@
                 </div>
               </template>
             </Column>
-            <Column v-for="i in 5" :key="'oc-'+i" :header="'Choix ' + i" :style="{ textAlign: 'center', width: '75px' }">
+            <Column
+              v-for="i in 5"
+              :key="'oc-' + i"
+              :header="'Choix ' + i"
+              :style="{ textAlign: 'center', width: '75px' }"
+            >
               <template #body="slotProps">
-                <div class="radio-wrapper"><RadioButton v-model="selectedPlaces[i-1]" :value="slotProps.data" :disabled="isPlaceDisabled(slotProps.data, i-1)" @click="onRadioClick(slotProps.data, i-1, $event)" /></div>
+                <div class="radio-wrapper">
+                  <RadioButton
+                    v-model="selectedPlaces[i - 1]"
+                    :value="slotProps.data"
+                    :disabled="isPlaceDisabled(slotProps.data, i - 1)"
+                    @click="onRadioClick(slotProps.data, i - 1, $event)"
+                  />
+                </div>
               </template>
             </Column>
-            <Column v-for="i in 5" :key="'ov-'+i" :header="'Top ' + i" :style="{ textAlign: 'center', width: '60px' }">
+            <Column
+              v-for="i in 5"
+              :key="'ov-' + i"
+              :header="'Top ' + i"
+              :style="{ textAlign: 'center', width: '60px' }"
+            >
               <template #body="slotProps">
-                <Tag :value="getVoteCount(slotProps.data)['top'+i] || 0" :severity="getVoteCount(slotProps.data)['top'+i] > 0 ? 'primary' : 'secondary'" rounded />
+                <Tag
+                  :value="getVoteCount(slotProps.data)['top' + i] || 0"
+                  :severity="getVoteCount(slotProps.data)['top' + i] > 0 ? 'primary' : 'secondary'"
+                  rounded
+                />
               </template>
             </Column>
             <Column header="Total" :style="{ textAlign: 'center', width: '70px' }">
               <template #body="slotProps">
-                <Tag :value="getVoteCount(slotProps.data).total || 0" severity="contrast" rounded class="font-semibold" />
+                <Tag
+                  :value="getVoteCount(slotProps.data).total || 0"
+                  severity="contrast"
+                  rounded
+                  class="font-semibold"
+                />
               </template>
             </Column>
           </DataTable>
@@ -235,7 +437,12 @@
           :rowHover="true"
           stripedRows
         >
-          <Column header="Institution" sortable field="InstitutionName" :style="{ minWidth: '200px' }">
+          <Column
+            header="Institution"
+            sortable
+            field="InstitutionName"
+            :style="{ minWidth: '200px' }"
+          >
             <template #body="slotProps">
               <a target="_blank" :href="`${slotProps.data.url}`" class="institution-link">
                 <i class="pi pi-building mr-2"></i>
@@ -257,12 +464,38 @@
             <template #body="slotProps">
               <div class="criteria-tags">
                 <Tag v-if="slotProps.data.MSQ" value="MSQ" severity="success" class="mr-1 mb-1" />
-                <Tag v-if="slotProps.data.SYSINT" value="SYSINT" severity="success" class="mr-1 mb-1" />
-                <Tag v-if="slotProps.data.NEUROGER" value="NEUROGER" severity="success" class="mr-1 mb-1" />
+                <Tag
+                  v-if="slotProps.data.SYSINT"
+                  value="SYSINT"
+                  severity="success"
+                  class="mr-1 mb-1"
+                />
+                <Tag
+                  v-if="slotProps.data.NEUROGER"
+                  value="NEUROGER"
+                  severity="success"
+                  class="mr-1 mb-1"
+                />
                 <Tag v-if="slotProps.data.AIGU" value="AIGU" severity="success" class="mr-1 mb-1" />
-                <Tag v-if="slotProps.data.REHAB" value="REHAB" severity="success" class="mr-1 mb-1" />
+                <Tag
+                  v-if="slotProps.data.REHAB"
+                  value="REHAB"
+                  severity="success"
+                  class="mr-1 mb-1"
+                />
                 <Tag v-if="slotProps.data.AMBU" value="AMBU" severity="success" class="mr-1 mb-1" />
-                <span v-if="!slotProps.data.MSQ && !slotProps.data.SYSINT && !slotProps.data.NEUROGER && !slotProps.data.AIGU && !slotProps.data.REHAB && !slotProps.data.AMBU" class="text-500">-</span>
+                <span
+                  v-if="
+                    !slotProps.data.MSQ &&
+                    !slotProps.data.SYSINT &&
+                    !slotProps.data.NEUROGER &&
+                    !slotProps.data.AIGU &&
+                    !slotProps.data.REHAB &&
+                    !slotProps.data.AMBU
+                  "
+                  class="text-500"
+                  >-</span
+                >
               </div>
             </template>
           </Column>
@@ -275,23 +508,33 @@
               </div>
             </template>
           </Column>
-          <Column v-for="i in 5" :key="'choice-'+i" :header="'Choix ' + i" :style="{ textAlign: 'center', width: '80px' }">
+          <Column
+            v-for="i in 5"
+            :key="'choice-' + i"
+            :header="'Choix ' + i"
+            :style="{ textAlign: 'center', width: '80px' }"
+          >
             <template #body="slotProps">
               <div class="radio-wrapper">
                 <RadioButton
-                  v-model="selectedPlaces[i-1]"
+                  v-model="selectedPlaces[i - 1]"
                   :value="slotProps.data"
-                  :disabled="isPlaceDisabled(slotProps.data, i-1)"
-                  @click="onRadioClick(slotProps.data, i-1, $event)"
+                  :disabled="isPlaceDisabled(slotProps.data, i - 1)"
+                  @click="onRadioClick(slotProps.data, i - 1, $event)"
                 />
               </div>
             </template>
           </Column>
-          <Column v-for="i in 5" :key="'votes-'+i" :header="'Top ' + i" :style="{ textAlign: 'center', width: '70px' }">
+          <Column
+            v-for="i in 5"
+            :key="'votes-' + i"
+            :header="'Top ' + i"
+            :style="{ textAlign: 'center', width: '70px' }"
+          >
             <template #body="slotProps">
               <Tag
-                :value="getVoteCount(slotProps.data)['top'+i] || 0"
-                :severity="getVoteCount(slotProps.data)['top'+i] > 0 ? 'primary' : 'secondary'"
+                :value="getVoteCount(slotProps.data)['top' + i] || 0"
+                :severity="getVoteCount(slotProps.data)['top' + i] > 0 ? 'primary' : 'secondary'"
                 rounded
               />
             </template>
@@ -311,11 +554,16 @@
       <div v-else class="empty-state">
         <i class="pi pi-inbox empty-icon"></i>
         <h3>Aucune place disponible</h3>
-        <p class="text-600">Aucune place n'est disponible pour {{ targetPFP }} - {{ selectedYear }}</p>
+        <p class="text-600">
+          Aucune place n'est disponible pour {{ targetPFP }} - {{ selectedYear }}
+        </p>
       </div>
 
       <!-- Tableau récapitulatif des choix -->
-      <div class="recap-section" v-if="availablePlaces.length > 0 && selectedPlaces.some(p => p !== null)">
+      <div
+        class="recap-section"
+        v-if="availablePlaces.length > 0 && selectedPlaces.some((p) => p !== null)"
+      >
         <div class="recap-header">
           <i class="pi pi-list-check"></i>
           <h3>Récapitulatif de vos choix</h3>
@@ -349,7 +597,12 @@
               <div class="criteria-tags">
                 <Tag v-if="slotProps.data.MSQ" value="MSQ" severity="success" class="mr-1" />
                 <Tag v-if="slotProps.data.SYSINT" value="SYSINT" severity="success" class="mr-1" />
-                <Tag v-if="slotProps.data.NEUROGER" value="NEUROGER" severity="success" class="mr-1" />
+                <Tag
+                  v-if="slotProps.data.NEUROGER"
+                  value="NEUROGER"
+                  severity="success"
+                  class="mr-1"
+                />
                 <Tag v-if="slotProps.data.AIGU" value="AIGU" severity="success" class="mr-1" />
                 <Tag v-if="slotProps.data.REHAB" value="REHAB" severity="success" class="mr-1" />
                 <Tag v-if="slotProps.data.AMBU" value="AMBU" severity="success" class="mr-1" />
@@ -376,20 +629,24 @@
         <div class="vote-submit">
           <div class="vote-info" :class="{ 'vote-info-updated': voteAlreadyCast }">
             <i :class="voteAlreadyCast ? 'pi pi-check-circle' : 'pi pi-info-circle'"></i>
-            <span v-if="!voteAlreadyCast">Sélectionnez jusqu'à 5 places par ordre de préférence</span>
-            <span v-else>Modifiez vos choix et cliquez sur "Mettre à jour" pour enregistrer les changements</span>
+            <span v-if="!voteAlreadyCast"
+              >Sélectionnez jusqu'à 5 places par ordre de préférence</span
+            >
+            <span v-else
+              >Modifiez vos choix et cliquez sur "Mettre à jour" pour enregistrer les
+              changements</span
+            >
           </div>
           <PrimeButton
             :label="voteAlreadyCast ? 'Mettre à jour mon vote' : 'Envoyer mon vote'"
             :icon="voteAlreadyCast ? 'pi pi-refresh' : 'pi pi-send'"
             @click="sendVote"
             size="large"
-            :disabled="selectedPlaces.filter(p => p !== null).length !== 5"
+            :disabled="selectedPlaces.filter((p) => p !== null).length !== 5"
             :severity="voteAlreadyCast ? 'warning' : 'primary'"
           />
         </div>
       </div>
-
     </div>
 
     <!-- Dialogue de confirmation moderne -->
@@ -402,7 +659,7 @@
     >
       <template #header>
         <div class="dialog-header">
-          <i class="pi pi-check-circle" style="color: var(--green-500); font-size: 1.5rem;"></i>
+          <i class="pi pi-check-circle" style="color: var(--green-500); font-size: 1.5rem"></i>
           <span class="font-semibold">Confirmation</span>
         </div>
       </template>
@@ -415,13 +672,13 @@
 </template>
 
 <script>
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-import RadioButton from 'primevue/radiobutton';
-import PrimeDialog from 'primevue/dialog';
-import PrimeButton from 'primevue/button';
-import Tag from 'primevue/tag';
-import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
+import DataTable from 'primevue/datatable'
+import Column from 'primevue/column'
+import RadioButton from 'primevue/radiobutton'
+import PrimeDialog from 'primevue/dialog'
+import PrimeButton from 'primevue/button'
+import Tag from 'primevue/tag'
+import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import { useInstitutionsStore } from '@/stores/institutionsStore'
 import { usePlacesStore } from '@/stores/placesStore'
 import { useUserStore } from '@/stores/userStore'
@@ -456,7 +713,7 @@ export default {
       selectedPlaces: [null, null, null, null, null],
       votedPlaces: [null, null, null, null, null],
       dialogVisible: false,
-      dialogMessage: "",
+      dialogMessage: '',
       votesAggregation: {},
       selectedYear: null,
       targetPFP: null,
@@ -472,35 +729,37 @@ export default {
       completedPlaceIds: [],
       pfp4MissingCriteria: [],
       pfp4AppliedRule: null
-    };
+    }
   },
   computed: {
     ...mapStores(usePlacesStore, useInstitutionsStore, useUserStore, useVotesStore),
 
     availablePlaces() {
-      return this.expandedPFPData;
+      return this.expandedPFPData
     },
     voteAlreadyCast() {
-      return this.votedPlaces[0] !== null;
+      return this.votedPlaces[0] !== null
     },
     completedPlaceIdSet() {
       return new Set(
-        (this.completedPlaceIds || [])
-          .map(id => this.normalizePlaceId(id))
-          .filter(Boolean)
+        (this.completedPlaceIds || []).map((id) => this.normalizePlaceId(id)).filter(Boolean)
       )
     },
     hasPfp4Sections() {
-      return (this.targetPFP === 'PFP4' || this.targetPFP === 'PFP3') && this.pfp4MissingCriteria && this.pfp4MissingCriteria.length > 0
+      return (
+        (this.targetPFP === 'PFP4' || this.targetPFP === 'PFP3') &&
+        this.pfp4MissingCriteria &&
+        this.pfp4MissingCriteria.length > 0
+      )
     },
     pfp4HighPlaces() {
-      return this.expandedPFPData.filter(r => r.pfp4Section === 'high')
+      return this.expandedPFPData.filter((r) => r.pfp4Section === 'high')
     },
     pfp4MediumPlaces() {
-      return this.expandedPFPData.filter(r => r.pfp4Section === 'medium')
+      return this.expandedPFPData.filter((r) => r.pfp4Section === 'medium')
     },
     pfp4OtherPlaces() {
-      return this.expandedPFPData.filter(r => r.pfp4Section === 'other')
+      return this.expandedPFPData.filter((r) => r.pfp4Section === 'other')
     },
     selectedPlacesForRecap() {
       return this.selectedPlaces
@@ -514,15 +773,15 @@ export default {
           }
           return null
         })
-        .filter(p => p !== null)
+        .filter((p) => p !== null)
     }
   },
   methods: {
     goBackToProfile() {
       try {
-        this.$router.back();
+        this.$router.back()
       } catch (e) {
-        this.$router.push('/feed');
+        this.$router.push('/feed')
       }
     },
 
@@ -556,7 +815,12 @@ export default {
     resolvePlaceId(value) {
       if (value && typeof value === 'object') {
         return this.normalizePlaceId(
-          value.PlaceId ?? value.IDPlace ?? value.ID_PFP ?? value.id_pfp ?? value.assigned_place_id ?? null
+          value.PlaceId ??
+            value.IDPlace ??
+            value.ID_PFP ??
+            value.id_pfp ??
+            value.assigned_place_id ??
+            null
         )
       }
       return this.normalizePlaceId(value)
@@ -565,7 +829,7 @@ export default {
     getPlaceByResolvedId(placeId) {
       const resolvedId = this.resolvePlaceId(placeId)
       if (!resolvedId) return null
-      return this.places.find(place => this.resolvePlaceId(place) === resolvedId) || null
+      return this.places.find((place) => this.resolvePlaceId(place) === resolvedId) || null
     },
 
     getPlaceCapacityFieldData(place) {
@@ -574,14 +838,22 @@ export default {
         this.targetPFP
       ]
 
-      return pfpFieldCandidates
-        .map(field => place?.[field])
-        .find(val => val && typeof val === 'object') || null
+      for (const field of pfpFieldCandidates) {
+        const value = place?.[field]
+        if (value && typeof value === 'object') {
+          return { field, data: value }
+        }
+      }
+
+      return null
     },
 
     getOfferSeatPrefix() {
-      const targetClass = String(this.activeSession?.target_class || this.userStore?.profile?.classe || '').trim()
-      const normalizedPfp = (this.targetPFP === 'PFP1A' || this.targetPFP === 'PFP1B') ? 'PFP1' : this.targetPFP
+      const targetClass = String(
+        this.activeSession?.target_class || this.userStore?.profile?.classe || ''
+      ).trim()
+      const normalizedPfp =
+        this.targetPFP === 'PFP1A' || this.targetPFP === 'PFP1B' ? 'PFP1' : this.targetPFP
       if (!targetClass || !normalizedPfp) return null
       return {
         active: `selectedActive${targetClass}${normalizedPfp}-`,
@@ -599,16 +871,16 @@ export default {
         return { activeCountByPlace, occupiedCountByPlace, foundOfferFields }
       }
 
-      this.places.forEach(place => {
+      this.places.forEach((place) => {
         const placeId = place?.PlaceId
         if (!placeId) return
 
         let activeCount = 0
         let occupiedCount = 0
         const keys = Object.keys(place || {})
-        const activeSeatKeys = keys.filter(key => key.startsWith(prefixes.active))
+        const activeSeatKeys = keys.filter((key) => key.startsWith(prefixes.active))
 
-        activeSeatKeys.forEach(activeKey => {
+        activeSeatKeys.forEach((activeKey) => {
           const seatSuffix = activeKey.slice(prefixes.active.length)
           const isActive = place[activeKey] === true || place[activeKey] === 'true'
           if (!isActive) return
@@ -616,18 +888,26 @@ export default {
           activeCount += 1
           const studentKey = `${prefixes.student}${seatSuffix}`
           const studentValue = place[studentKey]
-          if (studentValue !== undefined && studentValue !== null && String(studentValue).trim() !== '') {
+          if (
+            studentValue !== undefined &&
+            studentValue !== null &&
+            String(studentValue).trim() !== ''
+          ) {
             occupiedCount += 1
           }
         })
 
-        const fieldData = this.getPlaceCapacityFieldData(place)
-        const nestedAssignations = fieldData?.assignations && typeof fieldData.assignations === 'object'
-          ? fieldData.assignations
-          : null
+        const fieldEntry = this.getPlaceCapacityFieldData(place)
+        const fieldData = fieldEntry?.data || null
+        const nestedAssignations =
+          fieldData?.assignations && typeof fieldData.assignations === 'object'
+            ? fieldData.assignations
+            : null
 
         if (nestedAssignations) {
-          const targetClass = String(this.activeSession?.target_class || this.userStore?.profile?.classe || '').trim()
+          const targetClass = String(
+            this.activeSession?.target_class || this.userStore?.profile?.classe || ''
+          ).trim()
           const nestedEntries = Object.entries(nestedAssignations).filter(([seatKey]) => {
             if (!targetClass) return true
             return String(seatKey || '').startsWith(`${targetClass}-`)
@@ -646,7 +926,11 @@ export default {
 
             nestedActiveCount += 1
             const studentValue = seatData?.etudiant
-            if (studentValue !== undefined && studentValue !== null && String(studentValue).trim() !== '') {
+            if (
+              studentValue !== undefined &&
+              studentValue !== null &&
+              String(studentValue).trim() !== ''
+            ) {
               nestedOccupiedCount += 1
             }
           })
@@ -687,7 +971,7 @@ export default {
       if (!Array.isArray(rows) || rows.length === 0) return []
 
       const entries = []
-      rows.forEach(row => {
+      rows.forEach((row) => {
         entries.push(...this.parsePfpValided(row?.pfp_valided))
 
         const pfp2Val = row?.pfp2_data
@@ -698,22 +982,56 @@ export default {
         }
       })
 
-      return entries.filter(entry => entry && typeof entry === 'object')
+      return entries.filter((entry) => entry && typeof entry === 'object')
     },
 
     extractCriteriaFromObject(obj) {
       if (!obj) return {}
       const criteria = {}
-      CRITERIA_KEYS.forEach(key => {
-        criteria[key] = !!(obj[key] || obj[key.toLowerCase()])
+      CRITERIA_KEYS.forEach((key) => {
+        const rawValue =
+          obj[key] !== undefined && obj[key] !== null ? obj[key] : obj[key.toLowerCase()]
+        criteria[key] =
+          rawValue === true ||
+          rawValue === 1 ||
+          rawValue === '1' ||
+          (typeof rawValue === 'string' && rawValue.toLowerCase() === 'true')
       })
       return criteria
+    },
+
+    markValidatedCriteria(target, source) {
+      if (!source) return
+      const criteria = this.extractCriteriaFromObject(source)
+      CRITERIA_KEYS.forEach((key) => {
+        if (criteria[key]) {
+          target[key] = true
+        }
+      })
+    },
+
+    computeValidatedCriteriaMap(physioRows = [], assignments = []) {
+      const validatedMap = Object.fromEntries(CRITERIA_KEYS.map((key) => [key, false]))
+      const validatedStages = this.extractProfileStageEntries(physioRows)
+
+      validatedStages.forEach((stage) => {
+        const place = this.getPlaceByResolvedId(stage)
+        this.markValidatedCriteria(validatedMap, place || stage)
+      })
+      ;(assignments || []).forEach((assignment) => {
+        if (!assignment?.pfp_validee) return
+
+        const place = this.getPlaceByResolvedId(assignment)
+        this.markValidatedCriteria(validatedMap, place)
+      })
+
+      return validatedMap
     },
 
     getPriorityMissingCriteria() {
       const missing = this.pfp4MissingCriteria || []
       if ((this.completedPlaceIds || []).length < 2) {
-        return missing.filter(criteria => criteria !== 'DE')
+        return missing.filter((criteria) => criteria !== 'DE')
       }
       return missing
     },
@@ -726,10 +1044,7 @@ export default {
       }
 
       const [physioResult, assignmentsResult] = await Promise.all([
-        supabase
-          .from('StudentsPhysio')
-          .select('pfp_valided, pfp2_data')
-          .eq('user_id', userId),
+        supabase.from('StudentsPhysio').select('pfp_valided, pfp2_data').eq('user_id', userId),
         supabase
           .from('student_result_vote')
           .select('assigned_place_id, pfp_validee')
@@ -744,12 +1059,11 @@ export default {
       const completed = new Set()
       const physioStages = this.extractProfileStageEntries(physioResult.data || [])
 
-      physioStages.forEach(stage => {
+      physioStages.forEach((stage) => {
         const placeId = this.resolvePlaceId(stage)
         if (placeId) completed.add(String(placeId))
       })
-
-      ;(assignmentsResult.data || []).forEach(row => {
+      ;(assignmentsResult.data || []).forEach((row) => {
         const placeId = this.resolvePlaceId(row)
         if (placeId) completed.add(placeId)
       })
@@ -768,7 +1082,6 @@ export default {
         return []
       }
 
-      const scores = Object.fromEntries(CRITERIA_KEYS.map(key => [key, 0]))
       const [physioResult, assignmentsResult] = await Promise.all([
         supabase
           .from('StudentsPhysio')
@@ -789,46 +1102,15 @@ export default {
       }
 
       const physioRows = Array.isArray(physioResult.data) ? physioResult.data : []
-      const validatedStages = this.extractProfileStageEntries(physioRows)
-      const knownPlaceIds = new Set(
-        validatedStages
-          .map(stage => this.resolvePlaceId(stage))
-          .filter(Boolean)
+      const validatedMap = this.computeValidatedCriteriaMap(
+        physioRows,
+        assignmentsResult.data || []
       )
-
-      physioRows.forEach(row => {
-        const profileCriteria = this.extractCriteriaFromObject(row)
-        CRITERIA_KEYS.forEach(key => {
-          if (profileCriteria[key]) scores[key]++
-        })
-      })
-
-      validatedStages.forEach(stage => {
-        const criteria = this.extractCriteriaFromObject(stage)
-        const stagePlace = this.getPlaceByResolvedId(stage)
-        CRITERIA_KEYS.forEach(key => {
-          if (criteria[key] || stagePlace?.[key]) scores[key]++
-        })
-      })
-
-      ;(assignmentsResult.data || []).forEach(assignment => {
-        const assignedPlaceId = this.resolvePlaceId(assignment)
-        if (!assignment.pfp_validee || !assignedPlaceId) return
-        if (knownPlaceIds.has(assignedPlaceId)) return
-
-        const place = this.getPlaceByResolvedId(assignedPlaceId)
-        if (!place) return
-
-        CRITERIA_KEYS.forEach(key => {
-          if (place[key]) scores[key]++
-        })
-        knownPlaceIds.add(assignedPlaceId)
-      })
-
-      const missingCriteria = CRITERIA_KEYS.filter(key => scores[key] === 0)
+      const missingCriteria = CRITERIA_KEYS.filter((key) => !validatedMap[key])
       this.pfp4MissingCriteria = missingCriteria
       if (!preserveAppliedRule) {
-        this.pfp4AppliedRule = this.targetPFP === 'PFP3' ? 'PFP3_CRITERIA_SORT_LOCAL' : this.pfp4AppliedRule
+        this.pfp4AppliedRule =
+          this.targetPFP === 'PFP3' ? 'PFP3_CRITERIA_SORT_LOCAL' : this.pfp4AppliedRule
       }
       debugVotation(`🎯 ${this.targetPFP} critères manquants calculés:`, missingCriteria)
       return missingCriteria
@@ -914,7 +1196,7 @@ export default {
             if (session.is_priority) {
               // Session prioritaire : seuls les étudiants dans priority_user_ids y ont accès
               const allowedIds = Array.isArray(session.priority_user_ids)
-                ? session.priority_user_ids.map(id => this.normalizeId(id))
+                ? session.priority_user_ids.map((id) => this.normalizeId(id))
                 : []
               if (currentUserIdNormalized && allowedIds.includes(currentUserIdNormalized)) {
                 return session
@@ -930,16 +1212,23 @@ export default {
 
         // Charger toutes les sessions ouvertes une seule fois
         const allSessions = await votationSessionService.getAllActiveSessions()
-        debugVotation('🔍 Sessions ouvertes:', allSessions.length, allSessions.map(s => ({
-          pfp_type: s.pfp_type, is_priority: s.is_priority,
-          priority_user_ids: s.priority_user_ids?.length || 0
-        })))
+        debugVotation(
+          '🔍 Sessions ouvertes:',
+          allSessions.length,
+          allSessions.map((s) => ({
+            pfp_type: s.pfp_type,
+            is_priority: s.is_priority,
+            priority_user_ids: s.priority_user_ids?.length || 0
+          }))
+        )
         debugVotation('🔍 currentUserId:', currentUserId)
 
         if (routePfpType) {
           // Route générique /votation/:pfpType — chercher la session pour ce PFP
           const routePfpTypeNormalized = String(routePfpType || '').toUpperCase()
-          const matching = allSessions.filter(s => String(s.pfp_type || '').toUpperCase() === routePfpTypeNormalized)
+          const matching = allSessions.filter(
+            (s) => String(s.pfp_type || '').toUpperCase() === routePfpTypeNormalized
+          )
           this.activeSession = filterSessionForUser(matching)
         } else {
           // Routes legacy /votation ou /votation_pfp1b
@@ -952,7 +1241,7 @@ export default {
           }
 
           if (pfpHint) {
-            const matching = allSessions.filter(s => s.pfp_type === pfpHint)
+            const matching = allSessions.filter((s) => s.pfp_type === pfpHint)
             debugVotation(`🔍 Recherche session pour ${pfpHint}:`, matching.length, 'trouvée(s)')
             this.activeSession = filterSessionForUser(matching)
           }
@@ -960,13 +1249,18 @@ export default {
           // Fallback : si aucune session trouvée, chercher si l'étudiant est dans une session prioritaire (tout PFP confondu)
           if (!this.activeSession && currentUserId) {
             debugVotation('🔍 Fallback: recherche session prioritaire pour cet étudiant...')
-            const prioritySession = allSessions.find(s =>
-              s.is_priority &&
-              Array.isArray(s.priority_user_ids) &&
-              s.priority_user_ids.map(id => this.normalizeId(id)).includes(currentUserIdNormalized)
+            const prioritySession = allSessions.find(
+              (s) =>
+                s.is_priority &&
+                Array.isArray(s.priority_user_ids) &&
+                s.priority_user_ids
+                  .map((id) => this.normalizeId(id))
+                  .includes(currentUserIdNormalized)
             )
             if (prioritySession) {
-              debugVotation(`✅ Session prioritaire trouvée via fallback: ${prioritySession.pfp_type}`)
+              debugVotation(
+                `✅ Session prioritaire trouvée via fallback: ${prioritySession.pfp_type}`
+              )
               this.activeSession = prioritySession
             }
           }
@@ -974,10 +1268,16 @@ export default {
           // Fallback 2 : chercher par classe (user_profiles ou pfp_cohort)
           if (!this.activeSession) {
             const profile = this.userStore.profile
-            const studentClass = profile?.Classe || profile?.classe || profile?.class || profile?.Class || profile?.pfp_cohort || null
+            const studentClass =
+              profile?.Classe ||
+              profile?.classe ||
+              profile?.class ||
+              profile?.Class ||
+              profile?.pfp_cohort ||
+              null
             if (studentClass) {
               debugVotation(`🔍 Fallback 2: recherche session pour classe ${studentClass}`)
-              const classSessions = allSessions.filter(s => s.target_class === studentClass)
+              const classSessions = allSessions.filter((s) => s.target_class === studentClass)
               this.activeSession = filterSessionForUser(classSessions)
             }
           }
@@ -985,9 +1285,11 @@ export default {
           // Fallback 3 : prendre la première session normale ouverte (non-prioritaire)
           if (!this.activeSession) {
             debugVotation('🔍 Fallback 3: recherche première session normale ouverte...')
-            const normalSession = allSessions.find(s => !s.is_priority)
+            const normalSession = allSessions.find((s) => !s.is_priority)
             if (normalSession) {
-              debugVotation(`✅ Session normale trouvée via fallback 3: ${normalSession.pfp_type} ${normalSession.year} (classe ${normalSession.target_class})`)
+              debugVotation(
+                `✅ Session normale trouvée via fallback 3: ${normalSession.pfp_type} ${normalSession.year} (classe ${normalSession.target_class})`
+              )
               this.activeSession = normalSession
             }
           }
@@ -996,7 +1298,9 @@ export default {
         if (this.activeSession) {
           this.targetPFP = this.activeSession.pfp_type
           this.selectedYear = this.activeSession.year
-          debugVotation(`✅ Session active trouvée: ${this.targetPFP} ${this.selectedYear}${this.activeSession.is_priority ? ' (prioritaire)' : ''}`)
+          debugVotation(
+            `✅ Session active trouvée: ${this.targetPFP} ${this.selectedYear}${this.activeSession.is_priority ? ' (prioritaire)' : ''}`
+          )
         } else {
           debugVotation('⚠️ Aucune session de votation active trouvée')
         }
@@ -1010,22 +1314,22 @@ export default {
 
     async fetchData() {
       if (!this.targetPFP || !this.selectedYear) return
-      await this.institutionsStore.fetchInstitutions();
-      await this.placesStore.fetchPlaces();
-      await this.loadCompletedPlaceIds();
+      await this.institutionsStore.fetchInstitutions()
+      await this.placesStore.fetchPlaces()
+      await this.loadCompletedPlaceIds()
 
-      await this.loadVoteStatistics();
+      await this.loadVoteStatistics()
 
-      const rawPlaces = this.placesStore.places;
-      const institutionNameById = {};
-      const institutionCategoryById = {};
+      const rawPlaces = this.placesStore.places
+      const institutionNameById = {}
+      const institutionCategoryById = {}
 
-      this.institutionsStore.institutions.forEach(inst => {
-        institutionNameById[inst.InstitutionId] = inst.Name;
-        institutionCategoryById[inst.InstitutionId] = inst.Category || 'Non spécifié';
-      });
+      this.institutionsStore.institutions.forEach((inst) => {
+        institutionNameById[inst.InstitutionId] = inst.Name
+        institutionCategoryById[inst.InstitutionId] = inst.Category || 'Non spécifié'
+      })
 
-      this.places = rawPlaces.map(p => {
+      this.places = rawPlaces.map((p) => {
         return {
           ...p,
           InstitutionName: institutionNameById[p.InstitutionId] || p.InstitutionName || 'Inconnu',
@@ -1039,8 +1343,8 @@ export default {
           AMBU: !!p.AMBU,
           FR: !!p.FR,
           DE: !!p.DE
-        };
-      });
+        }
+      })
 
       this.pfp4ProposedPlaceIds = null
       this.pfp4AssignCountByPlace = {}
@@ -1056,9 +1360,15 @@ export default {
       this.useOfferSeatActivation = offerAvailability.foundOfferFields
 
       try {
-        this.pfp4AssignCountByPlace = await resultatVotationService.getAssignmentCounts(this.targetPFP, this.selectedYear)
+        this.pfp4AssignCountByPlace = await resultatVotationService.getAssignmentCounts(
+          this.targetPFP,
+          this.selectedYear
+        )
       } catch (assignmentReadError) {
-        debugVotation(`⚠️ Lecture assignations ${this.targetPFP} via backend échouée:`, assignmentReadError.message)
+        debugVotation(
+          `⚠️ Lecture assignations ${this.targetPFP} via backend échouée:`,
+          assignmentReadError.message
+        )
         try {
           const fromSession = await this.loadProposalsFromSessionDirect()
           if (fromSession?.assignCounts && Object.keys(fromSession.assignCounts).length > 0) {
@@ -1067,7 +1377,10 @@ export default {
             throw new Error('No session assignCounts available')
           }
         } catch (sessionFallbackError) {
-          debugVotation(`⚠️ Lecture assignations ${this.targetPFP} via session échouée:`, sessionFallbackError.message)
+          debugVotation(
+            `⚠️ Lecture assignations ${this.targetPFP} via session échouée:`,
+            sessionFallbackError.message
+          )
           try {
             const { data: assignedRows, error: assignedError } = await supabase
               .from('student_result_vote')
@@ -1081,14 +1394,17 @@ export default {
             }
 
             const assignCountByPlace = {}
-            ;(assignedRows || []).forEach(row => {
+            ;(assignedRows || []).forEach((row) => {
               const placeId = row.assigned_place_id
               if (!placeId) return
               assignCountByPlace[placeId] = (assignCountByPlace[placeId] || 0) + 1
             })
             this.pfp4AssignCountByPlace = assignCountByPlace
           } catch (directReadError) {
-            debugVotation(`⚠️ Lecture assignations ${this.targetPFP} via Supabase échouée:`, directReadError.message)
+            debugVotation(
+              `⚠️ Lecture assignations ${this.targetPFP} via Supabase échouée:`,
+              directReadError.message
+            )
           }
         }
       }
@@ -1104,27 +1420,48 @@ export default {
           })
         }
       } catch (sessionCountsError) {
-        debugVotation(`⚠️ Fusion assignations session ${this.targetPFP} échouée:`, sessionCountsError.message)
+        debugVotation(
+          `⚠️ Fusion assignations session ${this.targetPFP} échouée:`,
+          sessionCountsError.message
+        )
       }
 
       // Pour PFP4: charger les propositions personnalisées et les assignations existantes
       if (this.targetPFP === 'PFP4' && this.selectedYear) {
         try {
-          const result = await resultatVotationService.getPfp4Proposals(this.selectedYear, this.activeSession?.target_class || null)
+          const result = await resultatVotationService.getPfp4Proposals(
+            this.selectedYear,
+            this.activeSession?.target_class || null
+          )
           this.pfp4ProposedPlaceIds = result.proposedPlaceIds
           const proposalAssignCounts = result.assignCounts || {}
           Object.entries(proposalAssignCounts).forEach(([placeId, value]) => {
             const nextValue = Number(value) || 0
-            if (!this.pfp4AssignCountByPlace[placeId] || this.pfp4AssignCountByPlace[placeId] < nextValue) {
+            if (
+              !this.pfp4AssignCountByPlace[placeId] ||
+              this.pfp4AssignCountByPlace[placeId] < nextValue
+            ) {
               this.pfp4AssignCountByPlace[placeId] = nextValue
             }
           })
           this.pfp4MissingCriteria = result.missingCriteria || []
           this.pfp4AppliedRule = result.appliedRule || null
-          debugVotation('🎯 PFP4 propositions chargées:', result.proposedPlaceIds ? result.proposedPlaceIds.length + ' places' : 'aucune (toutes visibles)')
-          debugVotation('🎯 PFP4 critères manquants:', this.pfp4MissingCriteria, 'règle:', this.pfp4AppliedRule)
-          const totalSeats = Object.values(this.pfp4AssignCountByPlace).reduce((s,v) => s+v, 0)
-          debugVotation(`🎯 PFP4 assignations existantes: ${Object.keys(this.pfp4AssignCountByPlace).length} places, ${totalSeats} sièges pris`)
+          debugVotation(
+            '🎯 PFP4 propositions chargées:',
+            result.proposedPlaceIds
+              ? result.proposedPlaceIds.length + ' places'
+              : 'aucune (toutes visibles)'
+          )
+          debugVotation(
+            '🎯 PFP4 critères manquants:',
+            this.pfp4MissingCriteria,
+            'règle:',
+            this.pfp4AppliedRule
+          )
+          const totalSeats = Object.values(this.pfp4AssignCountByPlace).reduce((s, v) => s + v, 0)
+          debugVotation(
+            `🎯 PFP4 assignations existantes: ${Object.keys(this.pfp4AssignCountByPlace).length} places, ${totalSeats} sièges pris`
+          )
         } catch (err) {
           debugVotation('⚠️ Impossible de charger les propositions PFP4:', err.message)
           this.pfp4ProposedPlaceIds = null
@@ -1133,12 +1470,18 @@ export default {
 
       if (this.targetPFP === 'PFP3') {
         try {
-          const result = await resultatVotationService.getPfp3Proposals(this.selectedYear, this.activeSession?.target_class || null)
+          const result = await resultatVotationService.getPfp3Proposals(
+            this.selectedYear,
+            this.activeSession?.target_class || null
+          )
           this.pfp4ProposedPlaceIds = result.proposedPlaceIds
           const proposalAssignCounts = result.assignCounts || {}
           Object.entries(proposalAssignCounts).forEach(([placeId, value]) => {
             const nextValue = Number(value) || 0
-            if (!this.pfp4AssignCountByPlace[placeId] || this.pfp4AssignCountByPlace[placeId] < nextValue) {
+            if (
+              !this.pfp4AssignCountByPlace[placeId] ||
+              this.pfp4AssignCountByPlace[placeId] < nextValue
+            ) {
               this.pfp4AssignCountByPlace[placeId] = nextValue
             }
           })
@@ -1149,7 +1492,12 @@ export default {
             await this.loadMissingCriteriaFromStudentData()
           }
 
-          debugVotation('🎯 PFP3 propositions chargées:', result.proposedPlaceIds ? result.proposedPlaceIds.length + ' places' : 'aucune (fallback tri)')
+          debugVotation(
+            '🎯 PFP3 propositions chargées:',
+            result.proposedPlaceIds
+              ? result.proposedPlaceIds.length + ' places'
+              : 'aucune (fallback tri)'
+          )
         } catch (err) {
           debugVotation('⚠️ Impossible de charger les propositions PFP3:', err.message)
           try {
@@ -1167,12 +1515,18 @@ export default {
               if (!this.pfp4MissingCriteria.length) {
                 await this.loadMissingCriteriaFromStudentData()
               }
-              debugVotation('🎯 PFP3 propositions chargées via session:', this.pfp4ProposedPlaceIds.length)
+              debugVotation(
+                '🎯 PFP3 propositions chargées via session:',
+                this.pfp4ProposedPlaceIds.length
+              )
             } else {
               await this.loadMissingCriteriaFromStudentData()
             }
           } catch (fallbackErr) {
-            debugVotation('⚠️ Impossible de charger les critères manquants PFP3:', fallbackErr.message)
+            debugVotation(
+              '⚠️ Impossible de charger les critères manquants PFP3:',
+              fallbackErr.message
+            )
             this.pfp4MissingCriteria = []
             this.pfp4AppliedRule = null
           }
@@ -1183,96 +1537,113 @@ export default {
         await this.loadMissingCriteriaFromStudentData({ preserveAppliedRule: true })
       }
 
-      this.updateExpandedData();
+      this.updateExpandedData()
 
-      await this.checkExistingVote();
+      await this.checkExistingVote()
     },
 
     async loadVoteStatistics() {
       try {
-        const aggregation = await votesBackendService.getVotePlaceAggregation(this.targetPFP, this.selectedYear);
+        const aggregation = await votesBackendService.getVotePlaceAggregation(
+          this.targetPFP,
+          this.selectedYear
+        )
 
-        this.votesAggregation = {};
+        this.votesAggregation = {}
 
-        aggregation.forEach(agg => {
-          const placeId = agg.place_id;
-          const rank = agg.rank;
-          const count = agg.vote_count;
+        aggregation.forEach((agg) => {
+          const placeId = agg.place_id
+          const rank = agg.rank
+          const count = agg.vote_count
 
           if (!this.votesAggregation[placeId]) {
             this.votesAggregation[placeId] = {
-              top1: 0, top2: 0, top3: 0, top4: 0, top5: 0, total: 0
-            };
+              top1: 0,
+              top2: 0,
+              top3: 0,
+              top4: 0,
+              top5: 0,
+              total: 0
+            }
           }
 
-          this.votesAggregation[placeId][`top${rank}`] = count;
-          this.votesAggregation[placeId].total += count;
-        });
+          this.votesAggregation[placeId][`top${rank}`] = count
+          this.votesAggregation[placeId].total += count
+        })
       } catch (error) {
-        console.error('❌ Erreur lors du chargement des statistiques:', error);
-        this.votesAggregation = {};
+        console.error('❌ Erreur lors du chargement des statistiques:', error)
+        this.votesAggregation = {}
       }
     },
 
     async checkExistingVote() {
-      if (!this.userStore.user) return;
+      if (!this.userStore.user) return
 
       try {
-        const existingVote = await this.votesStore.fetchVote(this.targetPFP, this.selectedYear);
+        const existingVote = await this.votesStore.fetchVote(this.targetPFP, this.selectedYear)
 
         if (existingVote && existingVote.choices) {
-          this.votedPlaces = [null, null, null, null, null];
-          this.selectedPlaces = [null, null, null, null, null];
+          this.votedPlaces = [null, null, null, null, null]
+          this.selectedPlaces = [null, null, null, null, null]
 
           if (Array.isArray(existingVote.choices)) {
-            this.votedPlaces = existingVote.choices.map(c => ({
+            this.votedPlaces = existingVote.choices.map((c) => ({
               placeName: c.placeName || 'Inconnu',
               InstitutionName: c.InstitutionName || 'Inconnu'
-            }));
+            }))
 
             existingVote.choices.forEach((choice, index) => {
-              const matchingPlace = this.expandedPFPData.find(p =>
-                p.PlaceId === choice.placeId && p.seatIndex === choice.seatIndex
-              );
+              const matchingPlace = this.expandedPFPData.find(
+                (p) => p.PlaceId === choice.placeId && p.seatIndex === choice.seatIndex
+              )
 
               if (matchingPlace) {
-                this.selectedPlaces[index] = matchingPlace;
+                this.selectedPlaces[index] = matchingPlace
               }
-            });
+            })
 
-            while(this.votedPlaces.length < 5) {
-              this.votedPlaces.push(null);
+            while (this.votedPlaces.length < 5) {
+              this.votedPlaces.push(null)
             }
           }
         }
       } catch (error) {
-        console.error('Erreur lors de la vérification du vote:', error);
+        console.error('Erreur lors de la vérification du vote:', error)
       }
     },
 
     updateExpandedData() {
-      const rows = [];
-      const sorted = this.places.slice().sort((a, b) =>
-        (a.NomPlace || '').localeCompare(b.NomPlace || '')
-      );
+      const rows = []
+      const sorted = this.places
+        .slice()
+        .sort((a, b) => (a.NomPlace || '').localeCompare(b.NomPlace || ''))
 
-      sorted.forEach(place => {
-        let count = 0;
-        const fieldData = this.getPlaceCapacityFieldData(place)
+      sorted.forEach((place) => {
+        let count = 0
+        const fieldEntry = this.getPlaceCapacityFieldData(place)
+        const fieldData = fieldEntry?.data || null
+        const usesPropositionField = String(fieldEntry?.field || '').endsWith('_proposition')
 
         if (fieldData) {
-          const yr = String(this.selectedYear);
+          const yr = String(this.selectedYear)
           // Si la clé year existe explicitement, l'utiliser (même si "0")
           // Ne fallback sur default QUE si la clé year n'existe pas du tout
-          if (Object.prototype.hasOwnProperty.call(fieldData, yr) && fieldData[yr] !== '' && fieldData[yr] !== null && fieldData[yr] !== undefined) {
-            count = parseInt(fieldData[yr]) || 0;
+          if (
+            Object.prototype.hasOwnProperty.call(fieldData, yr) &&
+            fieldData[yr] !== '' &&
+            fieldData[yr] !== null &&
+            fieldData[yr] !== undefined
+          ) {
+            count = parseInt(fieldData[yr]) || 0
           } else {
             const academicVal = this.getValueForYearKey(fieldData, this.selectedYear)
             if (academicVal !== undefined && academicVal !== null && academicVal !== '') {
               count = parseInt(academicVal) || 0
+            } else if (usesPropositionField) {
+              count = 0
             } else {
-              const defVal = parseInt(fieldData['default'] || '0');
-              count = !isNaN(defVal) ? defVal : 0;
+              const defVal = parseInt(fieldData['default'] || '0')
+              count = !isNaN(defVal) ? defVal : 0
             }
           }
         }
@@ -1283,7 +1654,9 @@ export default {
 
         const baseCapacity = count
         const assignedCountFromVotes = Number(this.pfp4AssignCountByPlace[place.PlaceId] || 0)
-        const assignedCountFromOffer = Number(this.offerOccupiedSeatCountByPlace[place.PlaceId] || 0)
+        const assignedCountFromOffer = Number(
+          this.offerOccupiedSeatCountByPlace[place.PlaceId] || 0
+        )
         const assignedCount = Math.max(assignedCountFromVotes, assignedCountFromOffer)
         if (assignedCount > 0) {
           count -= assignedCount
@@ -1309,20 +1682,21 @@ export default {
               ...place,
               seatIndex: i,
               uniqueKey: `${place.PlaceId}-${i}`
-            });
+            })
           }
         }
-      });
+      })
       const applyMissingCriteriaSections = (inputRows) => {
         const missing = this.getPriorityMissingCriteria()
         if (missing.length === 0) return inputRows
 
-        inputRows.forEach(row => {
-          const coveredCount = missing.filter(c => CRITERIA_KEYS.includes(c) && row[c]).length
+        inputRows.forEach((row) => {
+          const coveredCount = missing.filter((c) => CRITERIA_KEYS.includes(c) && row[c]).length
           row.pfp4CoveredCount = coveredCount
           if (coveredCount >= 2) {
             row.pfp4Section = 'high'
-            row.pfp4SectionLabel = '⭐ Priorité haute — couvre ' + coveredCount + ' critères manquants'
+            row.pfp4SectionLabel =
+              '⭐ Priorité haute — couvre ' + coveredCount + ' critères manquants'
           } else if (coveredCount === 1) {
             row.pfp4Section = 'medium'
             row.pfp4SectionLabel = '📋 Priorité moyenne — couvre 1 critère manquant'
@@ -1334,7 +1708,8 @@ export default {
 
         const sectionOrder = { high: 0, medium: 1, other: 2 }
         return inputRows.sort((a, b) => {
-          const sectionDiff = (sectionOrder[a.pfp4Section] || 2) - (sectionOrder[b.pfp4Section] || 2)
+          const sectionDiff =
+            (sectionOrder[a.pfp4Section] || 2) - (sectionOrder[b.pfp4Section] || 2)
           if (sectionDiff !== 0) return sectionDiff
           const coverageDiff = (b.pfp4CoveredCount || 0) - (a.pfp4CoveredCount || 0)
           if (coverageDiff !== 0) return coverageDiff
@@ -1343,54 +1718,104 @@ export default {
       }
 
       // Pour PFP4: filtrer selon les propositions personnalisées
-      const bypassSavedProposals = (this.completedPlaceIds || []).length < 2 && (this.pfp4MissingCriteria || []).includes('DE')
-      if (!bypassSavedProposals && this.targetPFP === 'PFP4' && this.pfp4ProposedPlaceIds && Array.isArray(this.pfp4ProposedPlaceIds)) {
-        const allowedIds = new Set(this.pfp4ProposedPlaceIds.map(id => this.normalizePlaceId(id)).filter(Boolean))
-        const filtered = rows.filter(r => allowedIds.has(this.resolvePlaceId(r)) && !this.completedPlaceIdSet.has(this.resolvePlaceId(r)))
+      const bypassSavedProposals =
+        (this.completedPlaceIds || []).length < 2 && (this.pfp4MissingCriteria || []).includes('DE')
+      if (
+        !bypassSavedProposals &&
+        this.targetPFP === 'PFP4' &&
+        this.pfp4ProposedPlaceIds &&
+        Array.isArray(this.pfp4ProposedPlaceIds)
+      ) {
+        const allowedIds = new Set(
+          this.pfp4ProposedPlaceIds.map((id) => this.normalizePlaceId(id)).filter(Boolean)
+        )
+        const filtered = rows.filter(
+          (r) =>
+            allowedIds.has(this.resolvePlaceId(r)) &&
+            !this.completedPlaceIdSet.has(this.resolvePlaceId(r))
+        )
         this.expandedPFPData = applyMissingCriteriaSections(filtered)
-        debugVotation(`🎯 PFP4: ${this.expandedPFPData.length}/${rows.length} places après filtrage propositions`)
-      } else if (!bypassSavedProposals && this.targetPFP === 'PFP3' && this.pfp4ProposedPlaceIds && Array.isArray(this.pfp4ProposedPlaceIds)) {
-        const allowedIds = new Set(this.pfp4ProposedPlaceIds.map(id => this.normalizePlaceId(id)).filter(Boolean))
-        const filtered = rows.filter(r => allowedIds.has(this.resolvePlaceId(r)) && !this.completedPlaceIdSet.has(this.resolvePlaceId(r)))
+        debugVotation(
+          `🎯 PFP4: ${this.expandedPFPData.length}/${rows.length} places après filtrage propositions`
+        )
+      } else if (
+        !bypassSavedProposals &&
+        this.targetPFP === 'PFP3' &&
+        this.pfp4ProposedPlaceIds &&
+        Array.isArray(this.pfp4ProposedPlaceIds)
+      ) {
+        const allowedIds = new Set(
+          this.pfp4ProposedPlaceIds.map((id) => this.normalizePlaceId(id)).filter(Boolean)
+        )
+        const filtered = rows.filter(
+          (r) =>
+            allowedIds.has(this.resolvePlaceId(r)) &&
+            !this.completedPlaceIdSet.has(this.resolvePlaceId(r))
+        )
         this.expandedPFPData = applyMissingCriteriaSections(filtered)
-        debugVotation(`🎯 PFP3: ${this.expandedPFPData.length}/${rows.length} places après filtrage propositions`)
+        debugVotation(
+          `🎯 PFP3: ${this.expandedPFPData.length}/${rows.length} places après filtrage propositions`
+        )
       } else if (this.targetPFP === 'PFP3' && this.pfp4MissingCriteria.length > 0) {
         const missing = this.getPriorityMissingCriteria()
         const missingDE = (this.completedPlaceIds || []).length >= 2 && missing.includes('DE')
         const MIN_PLACES = 5
-        const countCovered = row => missing.filter(c => CRITERIA_KEYS.includes(c) && row[c]).length
+        const countCovered = (row) =>
+          missing.filter((c) => CRITERIA_KEYS.includes(c) && row[c]).length
 
         let proposedRows = []
         if (missingDE) {
-          proposedRows = rows.filter(r => r.DE && !this.completedPlaceIdSet.has(this.resolvePlaceId(r)))
+          proposedRows = rows.filter(
+            (r) => r.DE && !this.completedPlaceIdSet.has(this.resolvePlaceId(r))
+          )
         } else {
-          proposedRows = rows.filter(r => countCovered(r) > 0 && !this.completedPlaceIdSet.has(this.resolvePlaceId(r)))
+          proposedRows = rows.filter(
+            (r) => countCovered(r) > 0 && !this.completedPlaceIdSet.has(this.resolvePlaceId(r))
+          )
 
           if (proposedRows.length < MIN_PLACES) {
-            const currentKeys = new Set(proposedRows.map(r => r.uniqueKey))
-            const sysintRows = rows.filter(r => !currentKeys.has(r.uniqueKey) && r.SYSINT && !this.completedPlaceIdSet.has(this.resolvePlaceId(r)))
+            const currentKeys = new Set(proposedRows.map((r) => r.uniqueKey))
+            const sysintRows = rows.filter(
+              (r) =>
+                !currentKeys.has(r.uniqueKey) &&
+                r.SYSINT &&
+                !this.completedPlaceIdSet.has(this.resolvePlaceId(r))
+            )
             proposedRows.push(...sysintRows)
           }
 
           if (proposedRows.length < MIN_PLACES) {
-            const currentKeys = new Set(proposedRows.map(r => r.uniqueKey))
-            const rest = rows.filter(r => !currentKeys.has(r.uniqueKey) && !this.completedPlaceIdSet.has(this.resolvePlaceId(r)))
+            const currentKeys = new Set(proposedRows.map((r) => r.uniqueKey))
+            const rest = rows.filter(
+              (r) =>
+                !currentKeys.has(r.uniqueKey) &&
+                !this.completedPlaceIdSet.has(this.resolvePlaceId(r))
+            )
             const needed = MIN_PLACES - proposedRows.length
             proposedRows.push(...rest.slice(0, needed))
           }
         }
 
         this.expandedPFPData = applyMissingCriteriaSections(proposedRows)
-        debugVotation(`🎯 PFP3: ${this.expandedPFPData.length}/${rows.length} places proposées (fallback critères)`)
+        debugVotation(
+          `🎯 PFP3: ${this.expandedPFPData.length}/${rows.length} places proposées (fallback critères)`
+        )
       } else {
-        this.expandedPFPData = rows.filter(r => !this.completedPlaceIdSet.has(this.resolvePlaceId(r)));
+        this.expandedPFPData = rows.filter(
+          (r) => !this.completedPlaceIdSet.has(this.resolvePlaceId(r))
+        )
       }
 
-      if ((this.targetPFP === 'PFP4' || this.targetPFP === 'PFP3') && this.pfp4MissingCriteria.length > 0) {
-        const high = this.expandedPFPData.filter(r => r.pfp4Section === 'high').length
-        const med = this.expandedPFPData.filter(r => r.pfp4Section === 'medium').length
-        const other = this.expandedPFPData.filter(r => r.pfp4Section === 'other').length
-        debugVotation(`🎯 ${this.targetPFP} sections: ⭐${high} haute, 📋${med} moyenne, 📌${other} autres`)
+      if (
+        (this.targetPFP === 'PFP4' || this.targetPFP === 'PFP3') &&
+        this.pfp4MissingCriteria.length > 0
+      ) {
+        const high = this.expandedPFPData.filter((r) => r.pfp4Section === 'high').length
+        const med = this.expandedPFPData.filter((r) => r.pfp4Section === 'medium').length
+        const other = this.expandedPFPData.filter((r) => r.pfp4Section === 'other').length
+        debugVotation(
+          `🎯 ${this.targetPFP} sections: ⭐${high} haute, 📋${med} moyenne, 📌${other} autres`
+        )
       }
     },
 
@@ -1406,84 +1831,94 @@ export default {
     },
 
     getVoteCount(place) {
-      const placeId = place.PlaceId;
+      const placeId = place.PlaceId
 
       if (this.votesAggregation[placeId]) {
-        return this.votesAggregation[placeId];
+        return this.votesAggregation[placeId]
       }
 
-      return { top1: 0, top2: 0, top3: 0, top4: 0, top5: 0, total: 0 };
+      return { top1: 0, top2: 0, top3: 0, top4: 0, top5: 0, total: 0 }
     },
 
     isPlaceDisabled(place, choiceIndex) {
-      const normalize = v => (v || '').toString().trim().toLowerCase();
+      const normalize = (v) => (v || '').toString().trim().toLowerCase()
       for (let i = 0; i < this.selectedPlaces.length; i++) {
         if (i !== choiceIndex && this.selectedPlaces[i]) {
-          const s = this.selectedPlaces[i];
-          const samePlaceId = s.PlaceId && place.PlaceId && s.PlaceId === place.PlaceId;
-          const sameInstAndName = s.InstitutionId === place.InstitutionId && normalize(s.NomPlace) === normalize(place.NomPlace);
+          const s = this.selectedPlaces[i]
+          const samePlaceId = s.PlaceId && place.PlaceId && s.PlaceId === place.PlaceId
+          const sameInstAndName =
+            s.InstitutionId === place.InstitutionId &&
+            normalize(s.NomPlace) === normalize(place.NomPlace)
           if (samePlaceId || sameInstAndName) {
-            return true;
+            return true
           }
         }
       }
-      return false;
+      return false
     },
 
     async sendVote() {
-      if (this.isSubmitting) return;
+      if (this.isSubmitting) return
 
       if (!this.userStore.user) {
-        this.dialogMessage = "Vous devez être connecté pour voter.";
-        this.dialogVisible = true;
-        return;
+        this.dialogMessage = 'Vous devez être connecté pour voter.'
+        this.dialogVisible = true
+        return
       }
 
-      this.isSubmitting = true;
+      this.isSubmitting = true
 
-      const choices = this.selectedPlaces.map((p, index) => {
-        if (!p) return null;
-        return {
-          rank: index + 1,
-          placeId: p.PlaceId,
-          seatIndex: p.seatIndex,
-          placeName: p.NomPlace,
-          InstitutionName: p.InstitutionName
-        };
-      }).filter(c => c !== null);
+      const choices = this.selectedPlaces
+        .map((p, index) => {
+          if (!p) return null
+          return {
+            rank: index + 1,
+            placeId: p.PlaceId,
+            seatIndex: p.seatIndex,
+            placeName: p.NomPlace,
+            InstitutionName: p.InstitutionName
+          }
+        })
+        .filter((c) => c !== null)
 
       if (choices.length !== 5) {
-        this.dialogMessage = "Veuillez sélectionner exactement 5 places par ordre de préférence avant de voter.";
-        this.dialogVisible = true;
-        this.isSubmitting = false;
-        return;
+        this.dialogMessage =
+          'Veuillez sélectionner exactement 5 places par ordre de préférence avant de voter.'
+        this.dialogVisible = true
+        this.isSubmitting = false
+        return
       }
 
       try {
-        await this.votesStore.saveVote(this.targetPFP, this.selectedYear, choices);
+        await this.votesStore.saveVote(this.targetPFP, this.selectedYear, choices)
 
-        this.votedPlaces = this.selectedPlaces.map(p => p ? ({
-          placeName: p.NomPlace,
-          InstitutionName: p.InstitutionName
-        }) : null);
+        this.votedPlaces = this.selectedPlaces.map((p) =>
+          p
+            ? {
+                placeName: p.NomPlace,
+                InstitutionName: p.InstitutionName
+              }
+            : null
+        )
 
-        await this.loadVoteStatistics();
+        await this.loadVoteStatistics()
 
-        this.dialogMessage = this.voteAlreadyCast 
-          ? "Votre vote a été mis à jour avec succès !" 
-          : "Votre vote a été enregistré avec succès !";
-        this.dialogVisible = true;
+        this.dialogMessage = this.voteAlreadyCast
+          ? 'Votre vote a été mis à jour avec succès !'
+          : 'Votre vote a été enregistré avec succès !'
+        this.dialogVisible = true
       } catch (error) {
-        console.error('❌ Erreur lors de l\'enregistrement du vote:', error);
-        this.dialogMessage = "Erreur lors de l'enregistrement du vote: " + (error.message || 'Erreur inconnue');
-        this.dialogVisible = true;
+        console.error("❌ Erreur lors de l'enregistrement du vote:", error)
+        this.dialogMessage =
+          "Erreur lors de l'enregistrement du vote: " + (error.message || 'Erreur inconnue')
+        this.dialogVisible = true
       } finally {
-        this.isSubmitting = false;
+        this.isSubmitting = false
       }
     },
 
     closeDialog() {
-      this.dialogVisible = false;
+      this.dialogVisible = false
     },
 
     removeChoice(index) {
@@ -1496,9 +1931,13 @@ export default {
         const current = this.selectedPlaces[choiceIndex]
         if (
           current &&
-          ((current.PlaceId && place.PlaceId && current.PlaceId === place.PlaceId && current.seatIndex === place.seatIndex) ||
+          ((current.PlaceId &&
+            place.PlaceId &&
+            current.PlaceId === place.PlaceId &&
+            current.seatIndex === place.seatIndex) ||
             (current.InstitutionId === place.InstitutionId &&
-              (current.NomPlace || '').toString().trim().toLowerCase() === (place.NomPlace || '').toString().trim().toLowerCase()))
+              (current.NomPlace || '').toString().trim().toLowerCase() ===
+                (place.NomPlace || '').toString().trim().toLowerCase()))
         ) {
           this.selectedPlaces[choiceIndex] = null
           if (event && typeof event.preventDefault === 'function') event.preventDefault()
@@ -1605,7 +2044,7 @@ export default {
   border: 1px solid var(--surface-border);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
 .modern-votation-table :deep(.p-datatable-thead > tr > th) {
@@ -1946,4 +2385,3 @@ export default {
   }
 }
 </style>
-

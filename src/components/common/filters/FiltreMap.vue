@@ -192,6 +192,9 @@ const criteriaByInstitution = computed(() => {
 
 const filteredInstitutions = computed(() => {
   return institutions.value.filter(inst => {
+    if (inst?.is_hidden === true) {
+      return false;
+    }
     // Filtre par canton
     if (
       selectedFilters.value.cantons.length > 0 &&

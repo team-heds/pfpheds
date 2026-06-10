@@ -63,7 +63,7 @@
                     </template>
                     <template #content>
                       <div class="button-container">
-                        <Button
+                        <PrimeButton
                           class="action-button"
                           @click="goToDetails(institution.InstitutionId)"
                           label="Détails"
@@ -104,7 +104,7 @@ import { useInstitutionsStore } from '@/stores/institutionsStore'
 import { usePlacesStore } from '@/stores/placesStore'
 import Navbar from '@/components/common/utils/Navbar.vue'
 import InputText from 'primevue/inputtext';
-import Button from 'primevue/button';
+import PrimeButton from 'primevue/button';
 import Card from 'primevue/card';
 import Tag from 'primevue/tag';
 import LeftSidebar from '@/components/social/library/LeftSidebar.vue'
@@ -113,12 +113,12 @@ import HeaderIcons from '@/components/common/utils/HeaderIcons.vue'
 import filterData from '@/components/common/filters/filter.json'
 
 export default {
-  name: 'Institution',
+  name: 'InstitutionPage',
   components: {
     FilterSidebar,
     Navbar,
     InputText,
-    Button,
+    PrimeButton,
     Card,
     Tag,
     LeftSidebar,
@@ -167,6 +167,9 @@ export default {
     },
     filteredInstitutions() {
       return this.allInstitutions.filter(inst => {
+        if (inst?.is_hidden === true) {
+          return false;
+        }
         // Recherche textuelle
         if (this.searchTerm) {
           const search = this.searchTerm.toLowerCase();

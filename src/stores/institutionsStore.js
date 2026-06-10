@@ -59,6 +59,13 @@ async function sbFetch(path, options = {}) {
  * Utils
  */
 function normalizeInstitution(inst) {
+  if (inst && typeof inst.is_hidden !== 'boolean') {
+    inst.is_hidden =
+      inst.is_hidden === true ||
+      inst.is_hidden === 1 ||
+      inst.is_hidden === '1' ||
+      (typeof inst.is_hidden === 'string' && inst.is_hidden.toLowerCase() === 'true')
+  }
   // ImageURL renvoyé parfois stringifiable → on homogénéise en array
   if (inst?.ImageURL && typeof inst.ImageURL === 'string') {
     try {
