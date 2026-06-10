@@ -75,13 +75,14 @@ export const resultatVotationService = {
    * @param {string} year - Année
    * @returns {Promise<Object>} { placeId: count }
    */
-  async getAssignmentCounts(pfpType, year) {
+  async getAssignmentCounts(pfpType, year, targetClass = null) {
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) throw new Error('Authentication required')
 
+      const params = targetClass ? `?targetClass=${encodeURIComponent(targetClass)}` : ''
       const response = await axios.get(
-        `${API_BASE_URL}/api/resultat-votation/assignment-counts/${pfpType}/${year}`,
+        `${API_BASE_URL}/api/resultat-votation/assignment-counts/${pfpType}/${year}${params}`,
         {
           headers: {
             'Authorization': `Bearer ${session.access_token}`
@@ -105,13 +106,14 @@ export const resultatVotationService = {
    * @param {string} year - Année
    * @returns {Promise<Array|null>} Liste des PlaceIds proposés ou null
    */
-  async getPfp3Proposals(year) {
+  async getPfp3Proposals(year, targetClass = null) {
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) throw new Error('Authentication required')
 
+      const params = targetClass ? `?targetClass=${encodeURIComponent(targetClass)}` : ''
       const response = await axios.get(
-        `${API_BASE_URL}/api/resultat-votation/pfp3-proposals/${year}`,
+        `${API_BASE_URL}/api/resultat-votation/pfp3-proposals/${year}${params}`,
         {
           headers: {
             'Authorization': `Bearer ${session.access_token}`
@@ -457,13 +459,14 @@ export const resultatVotationService = {
    * @param {string} year - Année
    * @returns {Promise<Array|null>} Liste des PlaceIds proposés ou null
    */
-  async getPfp4Proposals(year) {
+  async getPfp4Proposals(year, targetClass = null) {
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) throw new Error('Authentication required')
 
+      const params = targetClass ? `?targetClass=${encodeURIComponent(targetClass)}` : ''
       const response = await axios.get(
-        `${API_BASE_URL}/api/resultat-votation/pfp4-proposals/${year}`,
+        `${API_BASE_URL}/api/resultat-votation/pfp4-proposals/${year}${params}`,
         {
           headers: {
             'Authorization': `Bearer ${session.access_token}`

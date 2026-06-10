@@ -30,6 +30,11 @@ const getPlaceIdFromStage = (stage) => {
   return stage?.PlaceId || stage?.IDPlace || stage?.ID_PFP || stage?.id_pfp || null
 }
 
+const normalizeClass = (value) => {
+  if (value === null || value === undefined) return ''
+  return String(value).trim().toUpperCase()
+}
+
 const getCompletedPlaceIdsForUser = async (userId) => {
   const completed = new Set()
   if (!userId) return completed
@@ -37,7 +42,7 @@ const getCompletedPlaceIdsForUser = async (userId) => {
   const [{ data: physioRows, error: physioError }, { data: resultRows, error: resultError }] = await Promise.all([
     supabaseAdmin
       .from('StudentsPhysio')
-      .select('pfp_valided')
+      .select('pfp_valided, pfp2_data')
       .eq('user_id', userId),
     supabaseAdmin
       .from('student_result_vote')
@@ -55,7 +60,7 @@ const getCompletedPlaceIdsForUser = async (userId) => {
   }
 
   ;(physioRows || []).forEach(row => {
-    parsePfpValided(row?.pfp_valided).forEach(stage => {
+    ;[...parsePfpValided(row?.pfp_valided), ...parsePfpValided(row?.pfp2_data)].forEach(stage => {
       const placeId = getPlaceIdFromStage(stage)
       if (placeId) completed.add(String(placeId))
     })
@@ -459,6 +464,7 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
 router.get('/pfp3-proposals/:year', setUser, async (req, res) => {
   try {
     const { year } = req.params
+    const targetClass = normalizeClass(req.query?.targetClass)
     const userId = req.user?.id
 
     if (!userId) {
@@ -467,12 +473,18 @@ router.get('/pfp3-proposals/:year', setUser, async (req, res) => {
 
     console.log(`🔍 GET pfp3-proposals: userId=${userId}, year=${year}`)
 
-    const { data: sessions, error } = await supabaseAdmin
+    let sessionsQuery = supabaseAdmin
       .from('votation_sessions')
       .select('id, pfp4_proposals, status, is_priority, target_class')
       .eq('pfp_type', 'PFP3')
       .eq('year', year)
       .not('pfp4_proposals', 'is', null)
+
+    if (targetClass) {
+      sessionsQuery = sessionsQuery.eq('target_class', targetClass)
+    }
+
+    const { data: sessions, error } = await sessionsQuery
 
     if (error) {
       console.error('❌ Erreur query votation_sessions PFP3:', error)
@@ -534,7 +546,7 @@ router.get('/assignment-counts/:pfpType/:year', setUser, async (req, res) => {
 
     const { data, error } = await supabaseAdmin
       .from('student_result_vote')
-      .select('assigned_place_id')
+      .select('assigned_place_id, user_id')
       .eq('pfp_type', pfpType)
       .in('year', getAcademicYearKeys(year))
       .not('assigned_place_id', 'is', null)
@@ -1045,6 +1057,7 @@ router.post('/save-pfp4-proposals', requireAdmin, async (req, res) => {
 router.get('/pfp4-proposals/:year', setUser, async (req, res) => {
   try {
     const { year } = req.params
+    const targetClass = normalizeClass(req.query?.targetClass)
     const userId = req.user?.id
     const token = req.headers.authorization?.split(' ')[1]
 
@@ -1055,12 +1068,18 @@ router.get('/pfp4-proposals/:year', setUser, async (req, res) => {
     console.log(`🔍 GET pfp4-proposals: userId=${userId}, year=${year}`)
 
     // Utiliser supabaseAdmin (service_role) pour bypasser la RLS sur votation_sessions
-    const { data: sessions, error } = await supabaseAdmin
+    let sessionsQuery = supabaseAdmin
       .from('votation_sessions')
       .select('id, pfp4_proposals, status, is_priority, target_class')
       .eq('pfp_type', 'PFP4')
       .eq('year', year)
       .not('pfp4_proposals', 'is', null)
+
+    if (targetClass) {
+      sessionsQuery = sessionsQuery.eq('target_class', targetClass)
+    }
+
+    const { data: sessions, error } = await sessionsQuery
 
     if (error) {
       console.error('❌ Erreur query votation_sessions:', error)

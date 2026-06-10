@@ -3,7 +3,6 @@ export default [
   // Applications & outils
   { path: '/tasklist', component: () => import('@/views/apps/tasklist/Index.vue'), name: 'Index', meta: { requiresAuth: true, need: ['editor', 'admin'] } },
   { path: '/chat', component: () => import('@/views/apps/chat/IndexChat.vue'), name: 'IndexChat', meta: { requiresAuth: true } },
-  { path: '/calendar', component: () => import('@/views/apps/calendar/CalendarView.vue'), name: 'CalendarView', meta: { requiresAuth: true } },
   { path: '/files', component: () => import('@/views/apps/files/FilesView.vue'), name: 'FilesView', meta: { requiresAuth: true } },
   { path: '/mail', component: () => import('@/views/apps/mail/Index.vue'), name: 'MailIndex', meta: { requiresAuth: true } },
   { path: '/notes', component: () => import('@/views/apps/notes/NotesWorkspaceView.vue'), name: 'NotesWorkspaceView', meta: { requiresAuth: true } },
@@ -40,7 +39,6 @@ export default [
   { path: '/list', component: () => import('@/components/media/audio/ListComponent.vue'), name: 'ListComponent', meta: { requiresAuth: true, requiredRole: ['editor', 'admin'] } },
 
   // Routes spéciales
-  { path: '/validate-pfp1a', component: () => import('@/components/admin/details/ValidatePFP1A.vue'), name: 'ValidatePFP1A', meta: { requiresAuth: true, requiredRole: ['admin', 'editor'] } },
   { path: '/ventriglisse3d', component: () => import('@/components/games/Ventriglisse3D.vue'), name: 'Ventriglisse3D', meta: { requiresAuth: false } },
   { path: '/qr', component: () => import('@/components/ui/QrCodeGenerator.vue'), name: 'QRCodePage', meta: { requiresAuth: false } },
   { path: '/outils', component: () => import('@/views/apps/tools/ToolsView.vue'), name: 'ToolsView', meta: { requiresAuth: true } },

@@ -13,12 +13,9 @@ export default [
   { path: '/votation_preview', component: () => import('@/components/admin/details/Votation_preview.vue'), name: 'VotationPreview', meta: { requiresAuth: true, need: 'admin' } },
   { path: '/votation_prioritaire', component: () => import('@/components/admin/details/VotationPrioritaire.vue'), name: 'VotationPrioritaire', meta: { requiresAuth: true, need: 'prioritaire' } },
   { path: '/votation_management', component: () => import('@/views/admin/votations/VotationManagementView.vue'), name: 'VotationManagementView', meta: { requiresAuth: true, need: 'admin' } },
-  { path: '/management_votation_prioritaire', component: () => import('@/components/admin/details/Management_votation_prioritaire.vue'), name: 'Management_votation_prioritaire', meta: { requiresAuth: true, need: 'prioritaire' } },
-  { path: '/management_votation_etudiants', component: () => import('@/components/admin/details/Management_votation_etudiants.vue'), name: 'Management_votation_etudiants', meta: { requiresAuth: true, need: 'admin' } },
 
   // Gestion des places & stages
   { path: '/management_places_safe', component: () => import('@/components/admin/details/ManagementPlacesSafe.vue'), name: 'ManagementPlacesSafe', meta: { requiresAuth: true, need: 'admin' } },
-  { path: '/management_offre', component: () => import('@/views/admin/pfp/ManagementOffreView.vue'), name: 'Management_offre', meta: { requiresAuth: true, need: 'admin' } },
   { path: '/places_assignment', component: () => import('@/views/admin/places/PlaceAssignmentView.vue'), name: 'PlaceAssignmentView', meta: { requiresAuth: true, need: 'admin' } },
   { path: '/places_assigned', component: () => import('@/views/admin/pfp/PlacesAssignedView.vue'), name: 'PlacesAssigned', meta: { requiresAuth: true, need: 'admin' } },
   { path: '/stage_repartition', component: () => import('@/components/admin/details/StageRepartitionBA2.vue'), name: 'StageRepartitionBA2', meta: { requiresAuth: true, need: 'admin' } },
@@ -29,10 +26,7 @@ export default [
   // Validation & réception
   { path: '/validation', component: () => import('@/views/admin/validation/ValidationView.vue'), name: 'ValidationView', meta: { requiresAuth: true, need: 'admin' } },
   { path: '/reception', component: () => import('@/views/admin/validation/ReceptionView.vue'), name: 'ReceptionView', meta: { requiresAuth: true, need: 'admin' } },
-  { path: '/info_repondant', component: () => import('@/components/admin/details/Info_repondant.vue'), name: 'InfoRepondant', meta: { requiresAuth: true, need: ['admin', 'enseignant'] } },
-  { path: '/management_repondant', component: () => import('@/components/admin/details/Management_repondant.vue'), name: 'Management_repondant', meta: { requiresAuth: true, need: 'admin' } },
 
   // Statistiques & résultats
-  { path: '/result_preview_votation', component: () => import('@/views/admin/votations/VotationResultsView.vue'), name: 'VotationResultsView', meta: { requiresAuth: true, need: 'admin' } },
   { path: '/stats_place_pfp', component: () => import('@/views/admin/places/PlaceStatsView.vue'), name: 'PlaceStatsView', meta: { requiresAuth: true, need: 'admin' } },
 ]
