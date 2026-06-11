@@ -33,13 +33,22 @@ registerRoute(
 )
 
 // ── Skip Waiting & Claim ──
-self.skipWaiting()
-self.clients.claim()
+self.addEventListener('install', () => {
+  self.skipWaiting()
+})
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil((async () => {
+    if (self.registration.active === self) {
+      await self.clients.claim()
+    }
+  })())
+})
 
 // ── Push Notifications ──
 self.addEventListener('push', (event) => {
   let payload = {}
-  try { payload = event.data ? event.data.json() : {} } catch (_) {}
+  try { payload = event.data ? event.data.json() : {} } catch (_) { payload = {} }
 
   const title = payload.title || 'Notification'
   const options = {

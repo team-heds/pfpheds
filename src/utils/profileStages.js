@@ -18,7 +18,7 @@ export const parseBooleanFlag = (value) => {
   if (value === true || value === 1) return true
   if (typeof value === 'string') {
     const normalized = value.trim().toLowerCase()
-    return normalized === 'true' || normalized === '1'
+    return normalized === 'true' || normalized === '1' || normalized === 'yes' || normalized === 'oui' || normalized === 'vrai'
   }
   return false
 }
@@ -49,7 +49,9 @@ export const parsePfpEntries = (value) => {
   if (typeof value === 'string') {
     try {
       const parsed = JSON.parse(value)
-      return Array.isArray(parsed) ? parsed : []
+      if (Array.isArray(parsed)) return parsed
+      if (parsed && typeof parsed === 'object') return Object.values(parsed)
+      return []
     } catch (error) {
       return []
     }
@@ -58,12 +60,35 @@ export const parsePfpEntries = (value) => {
   return []
 }
 
+export const normalizeProfileStageEntries = (entries = []) => {
+  if (!Array.isArray(entries) || entries.length === 0) return []
+
+  const firstNonPfp1Index = entries.findIndex((entry, idx) => {
+    const type = normalizePfpType(resolveLegacyPfpType(entry, idx))
+    return type && type !== 'PFP1'
+  })
+
+  if (firstNonPfp1Index === 0) {
+    return [...entries]
+  }
+
+  const leadingEntries =
+    firstNonPfp1Index >= 0 ? entries.slice(0, firstNonPfp1Index) : [...entries]
+  const canonicalPfp1 = leadingEntries[0] || null
+  const trailingEntries = firstNonPfp1Index >= 0 ? entries.slice(firstNonPfp1Index) : []
+
+  return canonicalPfp1 ? [canonicalPfp1, ...trailingEntries] : trailingEntries
+}
+
 export const extractStudentsPhysioFieldEntries = (rows, fieldNames = ['pfp_valided', 'pfp2_data']) => {
   if (!Array.isArray(rows) || rows.length === 0) return []
 
   return rows.flatMap((row) => {
     if (!row || typeof row !== 'object') return []
-    return fieldNames.flatMap((fieldName) => parsePfpEntries(row[fieldName]))
+    return fieldNames.flatMap((fieldName) => {
+      const entries = parsePfpEntries(row[fieldName])
+      return fieldName === 'pfp_valided' ? normalizeProfileStageEntries(entries) : entries
+    })
   })
 }
 
@@ -214,4 +239,69 @@ export const mergeProfileStages = ({
   })
 
   return merged
+}
+
+export const computeAggregatedCriteriaFromSources = ({
+  studentResultVotes = [],
+  userProfile = null,
+  studentPfpList = [],
+  resolvePlaceFromStage = () => null,
+  criteriaKeys = PROFILE_CRITERIA_KEYS
+}) => {
+  const result = Object.fromEntries((criteriaKeys || PROFILE_CRITERIA_KEYS).map((key) => [key, false]))
+
+  const isValidatedStage = (stage) => {
+    if (!stage || typeof stage !== 'object') return false
+    const rawStatus = String(stage.status || stage.Status || '').trim().toLowerCase()
+    if (rawStatus) return rawStatus === 'validee' || rawStatus === 'validée'
+    return true
+  }
+
+  const applyCriteriaFromSource = (source) => {
+    if (!source) return
+    ;(criteriaKeys || PROFILE_CRITERIA_KEYS).forEach((key) => {
+      const rawValue =
+        source[key] !== undefined && source[key] !== null ? source[key] : source[key.toLowerCase()]
+      if (parseBooleanFlag(rawValue)) {
+        result[key] = true
+      }
+    })
+  }
+
+  ;(studentResultVotes || []).forEach((vote) => {
+    if (!parseBooleanFlag(vote?.pfp_validee) || !vote?.assigned_place_id) return
+    const placeData = resolvePlaceFromStage(vote)
+    applyCriteriaFromSource(vote)
+    if (placeData) {
+      applyCriteriaFromSource(placeData)
+    }
+  })
+
+  if (userProfile && (userProfile.pfp_valided || userProfile.pfp2_data)) {
+    let pfpArray = normalizeProfileStageEntries(parsePfpEntries(userProfile.pfp_valided))
+    const pfp2Val = userProfile.pfp2_data
+    if (pfp2Val) {
+      if (Array.isArray(pfp2Val)) {
+        pfpArray = [...pfpArray, ...pfp2Val]
+      } else if (typeof pfp2Val === 'object') {
+        pfpArray.push(pfp2Val)
+      }
+    }
+
+    pfpArray.forEach((stage) => {
+      if (!isValidatedStage(stage)) return
+      const placeData = resolvePlaceFromStage(stage)
+      applyCriteriaFromSource(stage)
+      applyCriteriaFromSource(placeData)
+    })
+  }
+
+  ;(studentPfpList || []).forEach((stage) => {
+    if (!isValidatedStage(stage)) return
+    const placeData = resolvePlaceFromStage(stage)
+    applyCriteriaFromSource(stage)
+    applyCriteriaFromSource(placeData)
+  })
+
+  return result
 }

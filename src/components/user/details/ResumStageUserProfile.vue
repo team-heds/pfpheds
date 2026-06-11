@@ -222,7 +222,10 @@
 import { ref, onMounted, computed, watch } from "vue";
 import { supabase } from '@/supabase';
 import {
-  extractStudentsPhysioFieldEntries
+  computeAggregatedCriteriaFromSources,
+  extractStudentsPhysioFieldEntries,
+  normalizeProfileStageEntries,
+  parsePfpEntries
 } from '@/utils/profileStages';
 
 // Props reçues du parent
@@ -633,9 +636,10 @@ const assignedPlaces = computed(() => {
       year: pfp.year || null
     }
     Object.entries(criteriaMap).forEach(([up, low]) => {
-      item[up] = placeData
-        ? normalizeCriterionValue(placeData[up])
-        : normalizeCriterionValue(pfp[low]) || normalizeCriterionValue(pfp[up])
+      item[up] =
+        normalizeCriterionValue(pfp[low]) ||
+        normalizeCriterionValue(pfp[up]) ||
+        normalizeCriterionValue(placeData?.[up])
     })
     results.push(item)
   })
@@ -755,6 +759,27 @@ const getStagePlaceName = (stage) =>
       stage?.Domaine
   )
 
+const getStageInstitutionName = (stage) => {
+  const explicitInstitutionName =
+    stage?.InstitutionName || stage?.institution_name || stage?.Institution || ''
+
+  if (explicitInstitutionName) {
+    return normalizeLookupValue(explicitInstitutionName)
+  }
+
+  const fullLabel = String(stage?.nom_complet_pfp || stage?.Nom_Complet_PFP || '').trim()
+  const rawPlaceName =
+    stage?.NomPlace || stage?.nom_pfp || stage?.Nom_PFP || stage?.selected_stage_name || ''
+
+  if (!fullLabel || !rawPlaceName) return ''
+
+  const normalizedFullLabel = normalizeLookupValue(fullLabel)
+  const normalizedPlaceName = normalizeLookupValue(rawPlaceName)
+  if (!normalizedFullLabel.startsWith(normalizedPlaceName)) return ''
+
+  return normalizeLookupValue(fullLabel.slice(rawPlaceName.length))
+}
+
 const getUniquePlacesFromMap = () => {
   const seen = new Set()
   const places = []
@@ -773,11 +798,8 @@ const getUniquePlacesFromMap = () => {
 
 const getPlaceFromStage = (stage) => {
   const targetPlaceName = getStagePlaceName(stage)
-  const targetInstitutionId =
-    stage?.InstitutionId || stage?.Institution_id || stage?.institution_id || null
-  const targetInstitutionName = normalizeLookupValue(
-    stage?.InstitutionName || stage?.institution_name || stage?.Institution
-  )
+  const explicitInstitutionId = stage?.InstitutionId || stage?.Institution_id || stage?.institution_id || null
+  const targetInstitutionName = getStageInstitutionName(stage)
 
   const idCandidates = [
     getStageResolvedPlaceId(stage),
@@ -797,6 +819,12 @@ const getPlaceFromStage = (stage) => {
   }
   if (!targetPlaceName) return null
 
+  const targetInstitutionId =
+    explicitInstitutionId ||
+    stage?.id_pfp ||
+    stage?.ID_PFP ||
+    null
+
   return (
     getUniquePlacesFromMap().find((place) => {
       const placeName = normalizeLookupValue(place?.NomPlace || place?.name || place?.nom_place)
@@ -815,6 +843,7 @@ const getPlaceFromStage = (stage) => {
   )
 }
 
+// eslint-disable-next-line no-unused-vars
 const applyCriteriaFromSource = (target, source) => {
   if (!source) return
   criteriaList.forEach((crit) => {
@@ -955,21 +984,7 @@ const processUserProfile = async () => {
     
     if (studentData.pfp_valided || studentData.pfp2_data) {
       // Parser pfp_valided (peut être string JSON, array ou objet)
-      let pfpArray = []
-      const pfpVal = studentData.pfp_valided
-      
-      if (Array.isArray(pfpVal)) {
-        pfpArray = pfpVal
-      } else if (typeof pfpVal === 'string') {
-        try {
-          const parsed = JSON.parse(pfpVal)
-          pfpArray = Array.isArray(parsed) ? parsed : []
-        } catch (e) {
-          pfpArray = []
-        }
-      } else if (pfpVal && typeof pfpVal === 'object') {
-        pfpArray = Object.values(pfpVal)
-      }
+      let pfpArray = normalizeProfileStageEntries(parsePfpEntries(studentData.pfp_valided))
       
       // Traiter pfp2_data (PFP2 BA24)
       const pfp2Val = studentData.pfp2_data
@@ -980,7 +995,12 @@ const processUserProfile = async () => {
           pfpArray.push(pfp2Val)
         }
       }
-      const validPfpEntries = pfpArray.filter((place) => place.id_pfp || place.ID_PFP || place.PlaceId);
+      const validPfpEntries = pfpArray.filter((place) => {
+        if (!(place.id_pfp || place.ID_PFP || place.PlaceId)) return false
+        const rawStatus = String(place.status || place.Status || '').trim().toLowerCase()
+        if (!rawStatus) return true
+        return rawStatus === 'validee' || rawStatus === 'validée'
+      });
       // Agrégation des domaines et critères
       const domainsByInstitution = {};
       const criteriaByInstitution = {};
@@ -1034,61 +1054,13 @@ const processUserProfile = async () => {
 };
 
 const aggregatedCriteria = computed(() => {
-  const result = {};
-  criteriaList.forEach((crit) => (result[crit] = false));
-
-  // Source 1: student_result_vote (stages validés avec pfp_validee=true)
-  ;(studentResultVotes.value || []).forEach((rv) => {
-    if (rv.pfp_validee && rv.assigned_place_id) {
-      const placeData = getPlaceFromStage(rv)
-      if (placeData) {
-        applyCriteriaFromSource(result, placeData)
-      }
-    }
-  })
-
-  // Source 2: pfp_valided (legacy/backup depuis StudentsPhysio ou userProfile)
-  if (props.userProfile && (props.userProfile.pfp_valided || props.userProfile.pfp2_data)) {
-    let pfpArray = []
-
-    // Traiter pfp_valided
-    const pfpVal = props.userProfile.pfp_valided
-    if (Array.isArray(pfpVal)) {
-      pfpArray = pfpVal
-    } else if (typeof pfpVal === 'string') {
-      try {
-        const parsed = JSON.parse(pfpVal)
-        pfpArray = Array.isArray(parsed) ? parsed : []
-      } catch (e) {
-        pfpArray = []
-      }
-    } else if (pfpVal && typeof pfpVal === 'object') {
-      pfpArray = Object.values(pfpVal)
-    }
-
-    // Traiter pfp2_data
-    const pfp2Val = props.userProfile.pfp2_data
-    if (pfp2Val) {
-      if (Array.isArray(pfp2Val)) {
-        pfpArray = [...pfpArray, ...pfp2Val]
-      } else if (typeof pfp2Val === 'object') {
-        pfpArray.push(pfp2Val)
-      }
-    }
-
-      pfpArray.forEach((pfp) => {
-        const placeData = getPlaceFromStage(pfp)
-        applyCriteriaFromSource(result, placeData || pfp)
-      });
-  }
-
-  // Source 3: studentPfpList (pfp_valided chargé depuis StudentsPhysio)
-    ;(studentPfpList.value || []).forEach((pfp) => {
-      const placeData = getPlaceFromStage(pfp)
-      applyCriteriaFromSource(result, placeData || pfp)
-    })
-
-  return result;
+  return computeAggregatedCriteriaFromSources({
+    studentResultVotes: studentResultVotes.value || [],
+    userProfile: props.userProfile,
+    studentPfpList: studentPfpList.value || [],
+    resolvePlaceFromStage: getPlaceFromStage,
+    criteriaKeys: criteriaList
+  });
 });
 
 // Vérifie si l'étudiant a une PFP1 validée

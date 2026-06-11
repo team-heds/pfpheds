@@ -1,20 +1,24 @@
 /// <reference lib="webworker" />
 /* eslint-disable no-undef */
 const SW_VERSION = '0.1.100';
-self.addEventListener('install', (e) => self.skipWaiting());
+void SW_VERSION;
+self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => {
-  e.waitUntil(
-    caches.keys().then(names => Promise.all(names.map(n => caches.delete(n))))
-      .then(() => self.clients.claim())
-      .then(() => self.clients.matchAll({ type: 'window' }))
-      .then(clients => clients.forEach(c => c.navigate(c.url)))
-  );
+  e.waitUntil((async () => {
+    const names = await caches.keys();
+    await Promise.all(names.map((n) => caches.delete(n)));
+    if (self.registration.active === self) {
+      await self.clients.claim();
+    }
+    const clients = await self.clients.matchAll({ type: 'window' });
+    clients.forEach((c) => c.navigate(c.url));
+  })());
 });
 
 // Réception Push
 self.addEventListener('push', (event) => {
   let payload = {};
-  try { payload = event.data ? event.data.json() : {}; } catch(_) {}
+  try { payload = event.data ? event.data.json() : {}; } catch(_) { payload = {}; }
 
   const title = payload.title || 'Notification';
   const options = {

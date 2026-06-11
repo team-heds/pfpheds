@@ -688,6 +688,13 @@ import votesBackendService from '@/service/votesBackendService'
 import votationSessionService from '@/service/votationSessionService'
 import resultatVotationService from '@/service/resultatVotationService'
 import { supabase } from '@/supabase'
+import {
+  computeAggregatedCriteriaFromSources,
+  extractStudentsPhysioFieldEntries,
+  normalizeProfileStageEntries,
+  parseBooleanFlag,
+  parsePfpEntries
+} from '@/utils/profileStages'
 
 const CRITERIA_KEYS = ['MSQ', 'SYSINT', 'NEUROGER', 'AIGU', 'REHAB', 'AMBU', 'FR', 'DE']
 const DEBUG_VOTATION = import.meta.env.VITE_DEBUG_VOTATION === 'true'
@@ -812,6 +819,15 @@ export default {
       return normalized.length > 0 ? normalized : null
     },
 
+    normalizeLookupValue(value) {
+      return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/\s+/g, ' ')
+        .trim()
+    },
+
     resolvePlaceId(value) {
       if (value && typeof value === 'object') {
         return this.normalizePlaceId(
@@ -826,10 +842,119 @@ export default {
       return this.normalizePlaceId(value)
     },
 
+    getPlaceInstitutionName(place) {
+      return (
+        place?.InstitutionName ||
+        place?.Institution ||
+        this.institutionsStore.getInstitutionNameById(place?.InstitutionId) ||
+        ''
+      )
+    },
+
+    getStagePlaceName(stage) {
+      return this.normalizeLookupValue(
+        stage?.NomPlace ||
+          stage?.nom_pfp ||
+          stage?.Nom_PFP ||
+          stage?.selected_stage_name ||
+          stage?.nom_complet_pfp ||
+          stage?.domaine ||
+          stage?.Domaine
+      )
+    },
+
+    getStageInstitutionName(stage) {
+      const explicitInstitutionName =
+        stage?.InstitutionName || stage?.institution_name || stage?.Institution || ''
+
+      if (explicitInstitutionName) {
+        return this.normalizeLookupValue(explicitInstitutionName)
+      }
+
+      const fullLabel = String(stage?.nom_complet_pfp || stage?.Nom_Complet_PFP || '').trim()
+      const rawPlaceName =
+        stage?.NomPlace || stage?.nom_pfp || stage?.Nom_PFP || stage?.selected_stage_name || ''
+
+      if (!fullLabel || !rawPlaceName) return ''
+
+      const normalizedFullLabel = this.normalizeLookupValue(fullLabel)
+      const normalizedPlaceName = this.normalizeLookupValue(rawPlaceName)
+      if (!normalizedFullLabel.startsWith(normalizedPlaceName)) return ''
+
+      return this.normalizeLookupValue(fullLabel.slice(rawPlaceName.length))
+    },
+
+    getUniquePlaces() {
+      const seen = new Set()
+      const uniquePlaces = []
+      ;(this.places || []).forEach((place) => {
+        if (!place) return
+        const placeId = this.resolvePlaceId(place)
+        const dedupKey =
+          placeId ||
+          `${this.getStagePlaceName(place)}__${this.normalizeLookupValue(this.getPlaceInstitutionName(place))}`
+        if (!dedupKey || seen.has(dedupKey)) return
+        seen.add(dedupKey)
+        uniquePlaces.push(place)
+      })
+      return uniquePlaces
+    },
+
     getPlaceByResolvedId(placeId) {
       const resolvedId = this.resolvePlaceId(placeId)
       if (!resolvedId) return null
       return this.places.find((place) => this.resolvePlaceId(place) === resolvedId) || null
+    },
+
+    getPlaceFromStage(stage) {
+      const targetPlaceName = this.getStagePlaceName(stage)
+      const explicitInstitutionId =
+        stage?.InstitutionId || stage?.Institution_id || stage?.institution_id || null
+      const targetInstitutionName = this.getStageInstitutionName(stage)
+
+      const idCandidates = [
+        this.resolvePlaceId(stage),
+        stage?.selected_places,
+        stage?.selected_stage_id,
+        stage?.id
+      ]
+
+      for (const candidate of idCandidates) {
+        const place = this.getPlaceByResolvedId(candidate)
+        if (!place) continue
+        if (!targetPlaceName) return place
+
+        const resolvedPlaceName = this.getStagePlaceName(place)
+        if (resolvedPlaceName === targetPlaceName) return place
+      }
+
+      if (!targetPlaceName) return null
+
+      const targetInstitutionId =
+        explicitInstitutionId ||
+        stage?.id_pfp ||
+        stage?.ID_PFP ||
+        null
+
+      return (
+        this.getUniquePlaces().find((place) => {
+          const placeName = this.getStagePlaceName(place)
+          if (placeName !== targetPlaceName) return false
+
+          if (targetInstitutionId) {
+            return String(place?.InstitutionId || place?.institution_id || '') === String(targetInstitutionId)
+          }
+
+          if (targetInstitutionName) {
+            return (
+              this.normalizeLookupValue(this.getPlaceInstitutionName(place)) ===
+              targetInstitutionName
+            )
+          }
+
+          return true
+        }) || null
+      )
     },
 
     getPlaceCapacityFieldData(place) {
@@ -953,18 +1078,7 @@ export default {
     },
 
     parsePfpValided(pfpVal) {
-      if (!pfpVal) return []
-      if (Array.isArray(pfpVal)) return pfpVal
-      if (typeof pfpVal === 'string') {
-        try {
-          const parsed = JSON.parse(pfpVal)
-          return Array.isArray(parsed) ? parsed : []
-        } catch (error) {
-          return []
-        }
-      }
-      if (typeof pfpVal === 'object') return Object.values(pfpVal)
-      return []
+      return normalizeProfileStageEntries(parsePfpEntries(pfpVal))
     },
 
     extractProfileStageEntries(rows) {
@@ -983,6 +1097,31 @@ export default {
       })
 
       return entries.filter((entry) => entry && typeof entry === 'object')
+    },
+
+    extractStudentsPhysioPfpValidedEntries(rows) {
+      if (!Array.isArray(rows) || rows.length === 0) return []
+      const entries = []
+      rows.forEach((row) => {
+        entries.push(...this.parsePfpValided(row?.pfp_valided))
+      })
+      return entries.filter((entry) => entry && typeof entry === 'object')
+    },
+
+    buildMergedStudentsPhysioProfile(rows) {
+      if (!Array.isArray(rows) || rows.length === 0) return null
+
+      const sortedRows = [...rows].sort((a, b) =>
+        String(b?.updated_at || b?.year || '').localeCompare(String(a?.updated_at || a?.year || ''))
+      )
+      const latestRow = sortedRows[0] || null
+      if (!latestRow) return null
+
+      return {
+        ...latestRow,
+        pfp_valided: extractStudentsPhysioFieldEntries(sortedRows, ['pfp_valided']),
+        pfp2_data: extractStudentsPhysioFieldEntries(sortedRows, ['pfp2_data'])
+      }
     },
 
     extractCriteriaFromObject(obj) {
@@ -1011,21 +1150,28 @@ export default {
     },
 
     computeValidatedCriteriaMap(physioRows = [], assignments = []) {
-      const validatedMap = Object.fromEntries(CRITERIA_KEYS.map((key) => [key, false]))
-      const validatedStages = this.extractProfileStageEntries(physioRows)
-
-      validatedStages.forEach((stage) => {
-        const place = this.getPlaceByResolvedId(stage)
-        this.markValidatedCriteria(validatedMap, place || stage)
+      const mergedUserProfile = this.buildMergedStudentsPhysioProfile(physioRows)
+      return computeAggregatedCriteriaFromSources({
+        studentResultVotes: assignments || [],
+        userProfile: mergedUserProfile,
+        studentPfpList: extractStudentsPhysioFieldEntries(physioRows, ['pfp_valided', 'pfp2_data']),
+        resolvePlaceFromStage: (stage) => this.getPlaceFromStage(stage),
+        criteriaKeys: CRITERIA_KEYS
       })
-      ;(assignments || []).forEach((assignment) => {
-        if (!assignment?.pfp_validee) return
+    },
 
-        const place = this.getPlaceByResolvedId(assignment)
-        this.markValidatedCriteria(validatedMap, place)
+    extractStudentsPhysioPfp2Entries(rows) {
+      if (!Array.isArray(rows) || rows.length === 0) return []
+      const entries = []
+      rows.forEach((row) => {
+        const pfp2Val = row?.pfp2_data
+        if (Array.isArray(pfp2Val)) {
+          entries.push(...pfp2Val)
+        } else if (pfp2Val && typeof pfp2Val === 'object') {
+          entries.push(pfp2Val)
+        }
       })
-
-      return validatedMap
+      return entries
     },
 
     getPriorityMissingCriteria() {
@@ -1060,7 +1206,7 @@ export default {
       const physioStages = this.extractProfileStageEntries(physioResult.data || [])
 
       physioStages.forEach((stage) => {
-        const placeId = this.resolvePlaceId(stage)
+        const placeId = this.resolvePlaceId(this.getPlaceFromStage(stage) || stage)
         if (placeId) completed.add(String(placeId))
       })
       ;(assignmentsResult.data || []).forEach((row) => {
@@ -1335,14 +1481,14 @@ export default {
           InstitutionName: institutionNameById[p.InstitutionId] || p.InstitutionName || 'Inconnu',
           InstitutionCategory: institutionCategoryById[p.InstitutionId] || 'Non spécifié',
           url: `/institution/${p.InstitutionId}`,
-          MSQ: !!p.MSQ,
-          SYSINT: !!p.SYSINT,
-          NEUROGER: !!p.NEUROGER,
-          AIGU: !!p.AIGU,
-          REHAB: !!p.REHAB,
-          AMBU: !!p.AMBU,
-          FR: !!p.FR,
-          DE: !!p.DE
+          MSQ: parseBooleanFlag(p.MSQ),
+          SYSINT: parseBooleanFlag(p.SYSINT),
+          NEUROGER: parseBooleanFlag(p.NEUROGER),
+          AIGU: parseBooleanFlag(p.AIGU),
+          REHAB: parseBooleanFlag(p.REHAB),
+          AMBU: parseBooleanFlag(p.AMBU),
+          FR: parseBooleanFlag(p.FR),
+          DE: parseBooleanFlag(p.DE)
         }
       })
 
@@ -1533,8 +1679,28 @@ export default {
         }
       }
 
+      const savedMissingCriteriaSnapshot = [...(this.pfp4MissingCriteria || [])]
+
       if (this.targetPFP === 'PFP3' || this.targetPFP === 'PFP4') {
         await this.loadMissingCriteriaFromStudentData({ preserveAppliedRule: true })
+
+        const liveMissingCriteria = [...(this.pfp4MissingCriteria || [])].sort()
+        const savedMissingCriteria = [...savedMissingCriteriaSnapshot].sort()
+        if (
+          this.pfp4ProposedPlaceIds &&
+          JSON.stringify(liveMissingCriteria) !== JSON.stringify(savedMissingCriteria)
+        ) {
+          debugVotation(
+            '♻️ Propositions sauvegardées ignorées: critères live différents des critères session',
+            {
+              targetPFP: this.targetPFP,
+              savedMissingCriteria,
+              liveMissingCriteria
+            }
+          )
+          this.pfp4ProposedPlaceIds = null
+          this.pfp4AppliedRule = this.targetPFP === 'PFP3' ? 'PFP3_CRITERIA_SORT_LOCAL' : null
+        }
       }
 
       this.updateExpandedData()

@@ -344,6 +344,7 @@ const quickActions = [
   { title: 'Gestion des offres', desc: 'Offres et propositions par PFP', icon: 'pi pi-list', color: '#06b6d4', route: '/admin/formation-pratique/offre-place' },
   { title: 'Vue d\'ensemble', desc: 'Tableau récapitulatif complet', icon: 'pi pi-th-large', color: '#6366f1', route: '/admin/formation-pratique/secretariat/vue-ensemble' },
   { title: 'Stats par Cohorte', desc: 'PFP1A & PFP1B par canton', icon: 'pi pi-chart-pie', color: '#a855f7', route: '/admin/pfp/cohort-stats' },
+  { title: 'Correction PFP1 BA24', desc: 'Réécrire les bonnes places legacy BA24', icon: 'pi pi-pencil', color: '#0ea5e9', route: '/admin/formation-pratique/correction-pfp1-ba24' },
   { title: 'PFP en cours', desc: 'Suivre les stages actifs', icon: 'pi pi-clock', color: '#f97316', route: '/management_pfpencours' },
   { title: 'Gantt PFP', desc: 'Planning temporel des stages', icon: 'pi pi-calendar', color: '#14b8a6', route: '/admin/formation-pratique/gantt-pfp' },
   { title: 'Profils étudiants', desc: 'Critères et besoins par étudiant', icon: 'pi pi-id-card', color: '#ec4899', route: '/admin/formation-pratique/profil-etudiants' },
@@ -404,12 +405,6 @@ const barChartData = computed(() => {
     if (d.stopped) items.push({ label: `${d.type} ⏹`, value: d.stopped, color: '#f97316' })
   }
   return items
-})
-
-const periodLabel = computed(() => {
-  if (periodMode.value === 'day') return 'Jour'
-  if (periodMode.value === 'year') return 'Année'
-  return 'Mois'
 })
 
 const periodRangeLabel = computed(() => {
