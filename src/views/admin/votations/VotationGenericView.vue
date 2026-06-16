@@ -734,6 +734,7 @@ export default {
       offerOccupiedSeatCountByPlace: {},
       useOfferSeatActivation: false,
       completedPlaceIds: [],
+      completedStageCount: 0,
       pfp4MissingCriteria: [],
       pfp4AppliedRule: null
     }
@@ -1176,16 +1177,27 @@ export default {
 
     getPriorityMissingCriteria() {
       const missing = this.pfp4MissingCriteria || []
-      if ((this.completedPlaceIds || []).length < 2) {
+      if (this.completedStageCount === 1) {
+        return missing
+      }
+      if (this.completedStageCount < 2) {
         return missing.filter((criteria) => criteria !== 'DE')
       }
       return missing
+    },
+
+    isValidatedLegacyStage(stage) {
+      if (!stage || typeof stage !== 'object') return false
+      const rawStatus = String(stage.status || stage.Status || '').trim().toLowerCase()
+      if (rawStatus) return rawStatus === 'validee' || rawStatus === 'validée'
+      return true
     },
 
     async loadCompletedPlaceIds() {
       const userId = this.userStore.profile?.user_id || this.userStore.user?.id || null
       if (!userId) {
         this.completedPlaceIds = []
+        this.completedStageCount = 0
         return
       }
 
@@ -1206,6 +1218,7 @@ export default {
       const physioStages = this.extractProfileStageEntries(physioResult.data || [])
 
       physioStages.forEach((stage) => {
+        if (!this.isValidatedLegacyStage(stage)) return
         const placeId = this.resolvePlaceId(this.getPlaceFromStage(stage) || stage)
         if (placeId) completed.add(String(placeId))
       })
@@ -1215,6 +1228,7 @@ export default {
       })
 
       this.completedPlaceIds = Array.from(completed)
+      this.completedStageCount = this.completedPlaceIds.length
     },
 
     async loadMissingCriteriaFromStudentData(options = {}) {
@@ -1855,6 +1869,7 @@ export default {
       const applyMissingCriteriaSections = (inputRows) => {
         const missing = this.getPriorityMissingCriteria()
         if (missing.length === 0) return inputRows
+        const prioritizeGerman = this.completedStageCount === 1 && missing.includes('DE')
 
         inputRows.forEach((row) => {
           const coveredCount = missing.filter((c) => CRITERIA_KEYS.includes(c) && row[c]).length
@@ -1877,6 +1892,10 @@ export default {
           const sectionDiff =
             (sectionOrder[a.pfp4Section] || 2) - (sectionOrder[b.pfp4Section] || 2)
           if (sectionDiff !== 0) return sectionDiff
+          if (prioritizeGerman) {
+            const germanDiff = Number(Boolean(b.DE)) - Number(Boolean(a.DE))
+            if (germanDiff !== 0) return germanDiff
+          }
           const coverageDiff = (b.pfp4CoveredCount || 0) - (a.pfp4CoveredCount || 0)
           if (coverageDiff !== 0) return coverageDiff
           return (a.NomPlace || '').localeCompare(b.NomPlace || '')
