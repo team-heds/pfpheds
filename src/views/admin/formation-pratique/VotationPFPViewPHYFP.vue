@@ -125,7 +125,7 @@
           <i :class="['pi', hasInsufficientCapacity ? 'pi-exclamation-triangle text-red-500' : 'pi-check-circle text-green-500']"></i>
           <span class="font-semibold text-900">Contrôle de capacité pré-algorithme</span>
           <Tag :value="`À placer: ${studentsToPlaceCount}`" severity="warning" class="text-xs" />
-          <Tag v-if="excludedAssignedStudentsCount > 0" :value="`Déjà assignés (exclus): ${excludedAssignedStudentsCount}`" severity="secondary" class="text-xs" />
+          <Tag v-if="excludedAssignedStudentsCount > 0" :value="`Déjà assignés existants: ${excludedAssignedStudentsCount}`" severity="secondary" class="text-xs" />
           <Tag :value="`Capacité: ${totalValidatedCapacity}`" :severity="hasInsufficientCapacity ? 'danger' : 'success'" class="text-xs" />
           <Tag v-if="hasInsufficientCapacity" :value="`Manque: ${missingCapacityCount}`" severity="danger" class="text-xs" />
         </div>
@@ -243,6 +243,10 @@
               <i class="pi pi-check-circle text-green-500 text-xl"></i>
               <h3 class="text-lg font-bold text-900 m-0">Résultats de l'Attribution</h3>
               <Tag :value="`${algorithmResults.length} attributions`" severity="success" class="ml-2" />
+              <Tag v-if="algorithmPreviewReady" value="Aperçu non validé" severity="warning" class="ml-1" />
+            </div>
+            <div v-if="algorithmPreviewReady" class="text-sm text-orange-600 mb-2">
+              Ces attributions sont calculées mais pas encore enregistrées.
             </div>
             <div v-if="algorithmStats" class="flex gap-4 flex-wrap">
               <span class="text-sm text-600"><i class="pi pi-users mr-1 text-green-500"></i> <strong>{{ algorithmStats.totalStudents || 0 }}</strong> étudiants</span>
@@ -252,7 +256,18 @@
               <span class="text-sm text-600"><i class="pi pi-chart-line mr-1 text-orange-500"></i> Rang moyen: <strong>{{ algorithmStats.averageRank || '0' }}</strong></span>
             </div>
           </div>
-          <Button icon="pi pi-file-excel" label="Exporter" size="small" severity="success" outlined @click="exportResults" />
+          <div class="flex gap-2">
+            <Button
+              v-if="algorithmPreviewReady"
+              icon="pi pi-check"
+              label="Valider"
+              size="small"
+              severity="warning"
+              @click="confirmAlgorithmResults"
+              :loading="algorithmPersisting"
+            />
+            <Button icon="pi pi-file-excel" label="Exporter" size="small" severity="success" outlined @click="exportResults" />
+          </div>
         </div>
 
         <DataTable 
@@ -289,6 +304,11 @@
                 severity="danger"
                 v-tooltip.top="'Place attribuée aléatoirement'"
               />
+              <Tag
+                v-else-if="!slotProps.data.assigned_rank || Number(slotProps.data.assigned_rank) <= 0"
+                value="Déjà assigné"
+                severity="secondary"
+              />
               <Tag 
                 v-else
                 :value="`${slotProps.data.assigned_rank}er choix`" 
@@ -299,6 +319,63 @@
           <Column field="priority_score" header="Score" sortable :style="{ width: '100px', textAlign: 'center' }">
             <template #body="slotProps">
               <span class="font-medium">{{ slotProps.data.priority_score ? slotProps.data.priority_score.toFixed(1) : 'N/A' }}</span>
+            </template>
+          </Column>
+        </DataTable>
+      </div>
+
+      <div v-if="canShowResults && randomAlgorithmResults.length > 0" class="surface-card p-4 border-round shadow-2 mb-3 border-1 border-red-300">
+        <div class="flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+          <div>
+            <div class="flex align-items-center gap-2 mb-2">
+              <i class="pi pi-question-circle text-red-500 text-xl"></i>
+              <h3 class="text-lg font-bold text-900 m-0">Places tirées au sort</h3>
+              <Tag :value="`${randomAlgorithmResults.length} cas`" severity="danger" class="ml-2" />
+            </div>
+            <div class="text-sm text-600">
+              Étudiants placés hors choix. Vérifie ces cas avant validation.
+            </div>
+          </div>
+          <Button
+            v-if="algorithmPreviewReady"
+            icon="pi pi-check"
+            label="Valider depuis ici"
+            size="small"
+            severity="warning"
+            @click="confirmAlgorithmResults"
+            :loading="algorithmPersisting"
+          />
+        </div>
+
+        <DataTable
+          :value="randomAlgorithmResults"
+          responsiveLayout="scroll"
+          :paginator="randomAlgorithmResults.length > 10"
+          :rows="10"
+          stripedRows
+          class="p-datatable-sm"
+        >
+          <Column field="user_id" header="Étudiant" :style="{ minWidth: '220px' }">
+            <template #body="slotProps">
+              <strong>{{ getStudentName(slotProps.data.user_id) }}</strong>
+            </template>
+          </Column>
+          <Column field="assigned_place_name" header="Place attribuée" :style="{ minWidth: '240px' }">
+            <template #body="slotProps">
+              <div>
+                <div class="font-semibold text-900">{{ slotProps.data.assigned_place_name }}</div>
+                <small class="text-500">{{ slotProps.data.assigned_institution_name }}</small>
+              </div>
+            </template>
+          </Column>
+          <Column field="priority_score" header="Score" :style="{ width: '100px', textAlign: 'center' }">
+            <template #body="slotProps">
+              <span class="font-medium">{{ slotProps.data.priority_score ? slotProps.data.priority_score.toFixed(1) : 'N/A' }}</span>
+            </template>
+          </Column>
+          <Column field="notes" header="Détail" :style="{ minWidth: '320px' }">
+            <template #body="slotProps">
+              <span class="text-sm text-700">{{ slotProps.data.notes || '-' }}</span>
             </template>
           </Column>
         </DataTable>
@@ -1329,7 +1406,8 @@ const {
 
 const {
   algorithmResults, algorithmStats, placesWithAssignments,
-  startAlgorithm: _startAlgorithm, resetAlgorithm
+  algorithmPersisting, algorithmPreviewReady,
+  startAlgorithm: _startAlgorithm, confirmAlgorithm: _confirmAlgorithm, resetAlgorithm
 } = useVotationAlgorithm(toast)
 
 const stats = ref({
@@ -1622,6 +1700,10 @@ const estimatedRandomRiskPercent = computed(() => {
   return Math.round((missingCapacityCount.value / studentsToPlaceCount.value) * 100)
 })
 const canExportOperational = computed(() => Array.isArray(algorithmResults.value) && algorithmResults.value.length > 0)
+const randomAlgorithmResults = computed(() => {
+  if (!Array.isArray(algorithmResults.value)) return []
+  return algorithmResults.value.filter(result => Number(result.assigned_rank) === 99)
+})
 const quickFilterCounts = computed(() => {
   const rows = votationsTableBaseList.value
   return {
@@ -1695,11 +1777,21 @@ const startAlgorithm = async () => {
   await _startAlgorithm(
     filterPFP.value, filterYear.value, filterClasse.value,
     canShowResults.value, filteredVotationsList.value,
-    excludedStudentIds.value, loadData
+    excludedStudentIds.value, true
   )
 
   if (Array.isArray(algorithmResults.value) && algorithmResults.value.length > 0) {
     addAdminAction('Lancement algorithme', `${algorithmResults.value.length} attributions générées`)
+  }
+}
+
+const confirmAlgorithmResults = async () => {
+  const confirmed = window.confirm(`Valider les attributions calculées pour ${filterClasse.value} · ${filterPFP.value} ${filterYear.value} ?`)
+  if (!confirmed) return
+
+  const ok = await _confirmAlgorithm(loadData)
+  if (ok) {
+    addAdminAction('Validation algorithme', `${algorithmResults.value.length} attributions enregistrées`)
   }
 }
 
@@ -1801,11 +1893,6 @@ const getStudentIdentityCandidates = (student) => {
   return [student?.id, student?.user_id, student?.firebase_id]
     .filter(Boolean)
     .map(value => String(value))
-}
-
-const isStudentAlreadyAssigned = (student, assignedUserIds) => {
-  const ids = getStudentIdentityCandidates(student)
-  return ids.some(id => assignedUserIds.has(id))
 }
 
 const loadAssignedSnapshot = async (pfpType, year) => {
@@ -2011,10 +2098,10 @@ const loadData = async () => {
       return classe === targetClass
     })
 
+    const eligibleStudents = allStudents.value
     const assignedSnapshot = await loadAssignedSnapshot(filterPFP.value, filterYear.value)
-    const eligibleStudents = allStudents.value.filter(student => !isStudentAlreadyAssigned(student, assignedSnapshot.userIds))
-    excludedAssignedStudentsCount.value = Math.max(0, allStudents.value.length - eligibleStudents.length)
-    console.log(`✅ ${allStudents.value.length} étudiants ${targetClass} chargés (${eligibleStudents.length} éligibles, ${allStudents.value.length - eligibleStudents.length} déjà assignés)`)
+    excludedAssignedStudentsCount.value = assignedSnapshot.userIds.size
+    console.log(`✅ ${allStudents.value.length} étudiants ${targetClass} chargés (${eligibleStudents.length} inclus, ${assignedSnapshot.userIds.size} déjà assignés existants ignorés pour le recalcul)`)
     
     await placesStore.fetchPlaces()
     const placesMap = new Map()

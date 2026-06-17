@@ -24,18 +24,32 @@ const feedbackaRoutes = require('./supabase/feedbackaBackend.js');
 const pushRoutes = require('./supabase/pushBackend');
 
 
-// CORS and JSON parsing MUST be before routes
-app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://hedsvs.ch', 'https://www.hedsvs.ch', 'https://api2.hedsvs.ch']
-    : '*',
+const allowedOrigins = process.env.NODE_ENV === 'production'
+  ? ['https://hedsvs.ch', 'https://www.hedsvs.ch', 'https://api2.hedsvs.ch']
+  : [
+      'http://localhost:5173',
+      'http://localhost:5180',
+      'http://127.0.0.1:5173',
+      'http://127.0.0.1:5180'
+    ]
+
+const corsOptions = {
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true)
+    }
+    return callback(new Error(`CORS blocked for origin: ${origin}`))
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
-}))
+}
+
+// CORS and JSON parsing MUST be before routes
+app.use(cors(corsOptions))
 // Express 5 uses path-to-regexp v6 which doesn't support '*' patterns.
 // Use a regex to match all paths for CORS preflight handling.
-app.options(/.*/, cors())
+app.options(/.*/, cors(corsOptions))
 app.use(express.json({ limit: '10mb' }))
  
 // Debug middleware (seulement en développement)

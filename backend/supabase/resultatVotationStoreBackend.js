@@ -119,7 +119,7 @@ const requireAdmin = async (req, res, next) => {
  */
 router.post('/run-algorithm', requireAdmin, async (req, res) => {
   try {
-    const { pfpType, year, students, places } = req.body
+    const { pfpType, year, students, places, persist = true } = req.body
 
     if (!pfpType || !year || !students || !places) {
       return res.status(400).json({
@@ -140,7 +140,7 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
     // pour ne pas les écraser et respecter la capacité déjà utilisée
     const { data: existingAssignments, error: existingError } = await supabaseAdmin
       .from('student_result_vote')
-      .select('user_id, assigned_place_id, assigned_rank, status, notes')
+      .select('user_id, assigned_place_id, assigned_place_name, assigned_institution_name, assigned_rank, status, notes, priority_score, original_choices, algorithm_run_id')
       .eq('pfp_type', pfpType)
       .in('year', getAcademicYearKeys(year))
 
@@ -150,6 +150,7 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
 
     const preAssigned = new Set()
     const preAssignedByPlace = new Map() // PlaceId → count
+    const preAssignedResults = []
     if (existingAssignments && existingAssignments.length > 0) {
       existingAssignments.forEach((a) => {
         if (a.assigned_place_id && a.user_id) {
@@ -158,18 +159,31 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
             a.assigned_place_id,
             (preAssignedByPlace.get(a.assigned_place_id) || 0) + 1
           )
+          preAssignedResults.push({
+            user_id: a.user_id,
+            pfp_type: pfpType,
+            year: year,
+            assigned_place_id: a.assigned_place_id,
+            assigned_place_name: a.assigned_place_name || '',
+            assigned_institution_name: a.assigned_institution_name || '',
+            assigned_rank: Number.isFinite(Number(a.assigned_rank)) ? Number(a.assigned_rank) : 0,
+            algorithm_run_id: a.algorithm_run_id || algorithmRunId,
+            original_choices: Array.isArray(a.original_choices) ? a.original_choices : [],
+            priority_score: a.priority_score ?? null,
+            notes: a.notes || 'Assignation existante conservée'
+          })
         }
       })
       console.log(
-        `🛡️ ${preAssigned.size} étudiants déjà assignés (manuel/prioritaire/précédent) — exclus de l'algorithme`
+        `🛡️ ${preAssigned.size} étudiants déjà assignés conservés`
       )
       console.log(`🛡️ ${preAssignedByPlace.size} places ont déjà des assignations`)
     }
 
-    // Filtrer les étudiants : exclure ceux déjà assignés
+    // Filtrer les étudiants : ne recalculer que ceux non déjà assignés
     const eligibleStudents = students.filter((s) => !preAssigned.has(s.userId))
     console.log(
-      `   Étudiants éligibles (après exclusion): ${eligibleStudents.length}/${students.length}`
+      `   Étudiants à recalculer: ${eligibleStudents.length}/${students.length}`
     )
 
     // Créer un mapping des places disponibles avec leur capacité et critères
@@ -186,6 +200,13 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
         // Critères couverts par cette place (envoyés par le frontend)
         criteriaCovered: CRITERIA_KEYS.filter((c) => place.criteria && place.criteria[c])
       })
+    })
+
+    preAssignedResults.forEach((assignment) => {
+      const placeData = placesMap.get(assignment.assigned_place_id)
+      if (placeData) {
+        placeData.assignedStudents.push(assignment.user_id)
+      }
     })
 
     // ══════════════════════════════════════════════════════════════════
@@ -207,7 +228,109 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
       return placeCriteriaCovered.filter((c) => studentMissingCriteria.includes(c)).length
     }
 
-    // 🎯 ÉTAPE 1: Calculer la popularité (nombre de votes) — pool de placeIds sans rang
+    const getPriorityMissingCriteria = (student) => {
+      const missing = Array.isArray(student.missingCriteria) ? [...student.missingCriteria] : []
+      const completedStageCount = Number(student.completedStageCount || 0)
+      if (completedStageCount === 1) return missing
+      if (completedStageCount < 2) return missing.filter((criteria) => criteria !== 'DE')
+      return missing
+    }
+
+    const buildGenericCandidatePlaces = (student) => {
+      const donePlaces = new Set(student.donePlaceIds || [])
+      const allAvailablePlaces = Array.from(placesMap.values()).filter(
+        (place) => place.remainingCapacity > 0 && !donePlaces.has(place.PlaceId)
+      )
+
+      const completedStageCount = Number(student.completedStageCount || 0)
+      const priorityMissingCriteria = getPriorityMissingCriteria(student)
+      const prioritizeGerman = completedStageCount === 1 && priorityMissingCriteria.includes('DE')
+      const countCovered = (place) =>
+        place.criteriaCovered.filter((c) => priorityMissingCriteria.includes(c)).length
+
+      if (pfpType !== 'PFP3' || priorityMissingCriteria.length === 0) {
+        return allAvailablePlaces.map((place) => ({
+          ...place,
+          _coveredCount: countCovered(place),
+          _fallbackType: 'all',
+          _prioritizeGerman: prioritizeGerman
+        }))
+      }
+
+      const missingDE = completedStageCount >= 2 && priorityMissingCriteria.includes('DE')
+      const MIN_PLACES = 5
+      let proposedPlaces = []
+
+      if (missingDE) {
+        proposedPlaces = allAvailablePlaces
+          .filter((place) => place.criteriaCovered.includes('DE'))
+          .map((place) => ({
+            ...place,
+            _coveredCount: countCovered(place),
+            _fallbackType: 'de_only',
+            _prioritizeGerman: prioritizeGerman
+          }))
+      } else {
+        proposedPlaces = allAvailablePlaces
+          .filter((place) => countCovered(place) > 0)
+          .map((place) => ({
+            ...place,
+            _coveredCount: countCovered(place),
+            _fallbackType: 'criteria',
+            _prioritizeGerman: prioritizeGerman
+          }))
+
+        if (proposedPlaces.length < MIN_PLACES) {
+          const currentIds = new Set(proposedPlaces.map((place) => place.PlaceId))
+          const sysintPlaces = allAvailablePlaces
+            .filter(
+              (place) =>
+                !currentIds.has(place.PlaceId) && place.criteriaCovered.includes('SYSINT')
+            )
+            .map((place) => ({
+              ...place,
+              _coveredCount: countCovered(place),
+              _fallbackType: 'sysint',
+              _prioritizeGerman: prioritizeGerman
+            }))
+          proposedPlaces.push(...sysintPlaces)
+        }
+
+        if (proposedPlaces.length < MIN_PLACES) {
+          const currentIds = new Set(proposedPlaces.map((place) => place.PlaceId))
+          const remainingPlaces = allAvailablePlaces
+            .filter((place) => !currentIds.has(place.PlaceId))
+            .slice(0, MIN_PLACES - proposedPlaces.length)
+            .map((place) => ({
+              ...place,
+              _coveredCount: countCovered(place),
+              _fallbackType: 'rest',
+              _prioritizeGerman: prioritizeGerman
+            }))
+          proposedPlaces.push(...remainingPlaces)
+        }
+      }
+
+      return proposedPlaces
+    }
+
+    const sortCandidatePlaces = (a, b) => {
+      const aSection = a._coveredCount >= 2 ? 0 : a._coveredCount === 1 ? 1 : 2
+      const bSection = b._coveredCount >= 2 ? 0 : b._coveredCount === 1 ? 1 : 2
+      if (aSection !== bSection) return aSection - bSection
+
+      if (a._prioritizeGerman || b._prioritizeGerman) {
+        const germanDiff = Number(Boolean(b.criteriaCovered.includes('DE'))) - Number(Boolean(a.criteriaCovered.includes('DE')))
+        if (germanDiff !== 0) return germanDiff
+      }
+
+      if (a._coveredCount !== b._coveredCount) return b._coveredCount - a._coveredCount
+      if (a.voteCount !== b.voteCount) return a.voteCount - b.voteCount
+      if (a.remainingCapacity !== b.remainingCapacity) return b.remainingCapacity - a.remainingCapacity
+      return (a.NomPlace || '').localeCompare(b.NomPlace || '')
+    }
+
+    // 🎯 ÉTAPE 1: Calculer la popularité (nombre de votes) — utilisé uniquement comme tie-break
     eligibleStudents.forEach((student) => {
       const choices = student.choices || []
       const donePlaces = new Set(student.donePlaceIds || [])
@@ -241,143 +364,75 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
 
     const resultsToInsert = []
     const assignedStudents = new Set()
-
-    // 🎯 ÉTAPE 2: Attribuer par places (moins populaires d'abord)
-    console.log('🔄 Attribution par places (critères couverts > priority score > random)...')
-
-    for (const placeData of sortedPlacesByPopularity) {
-      if (placeData.remainingCapacity <= 0) continue
-
-      // Trouver les candidats: étudiant a cette place dans son pool ET n'a PAS déjà fait cette place
-      const candidatesForPlace = []
-
-      eligibleStudents.forEach((student) => {
-        if (assignedStudents.has(student.userId)) return
-
-        const choices = student.choices || []
-        const donePlaces = new Set(student.donePlaceIds || [])
-
-        // La place est dans le pool ET pas déjà faite
-        if (choices.includes(placeData.PlaceId) && !donePlaces.has(placeData.PlaceId)) {
-          const critCovered = computeCriteriaCovered(
-            student.missingCriteria,
-            placeData.criteriaCovered
-          )
-          candidatesForPlace.push({
-            student,
-            criteriaCovered: critCovered,
-            priorityScore: student.priorityScore || 0
-          })
-        }
-      })
-
-      if (candidatesForPlace.length === 0) continue
-
-      // Trier: critères couverts DESC > priority score DESC > random
-      candidatesForPlace.sort((a, b) => {
-        if (a.criteriaCovered !== b.criteriaCovered) return b.criteriaCovered - a.criteriaCovered
-        if (a.priorityScore !== b.priorityScore) return b.priorityScore - a.priorityScore
-        return Math.random() - 0.5
-      })
-
-      const toAssign = Math.min(candidatesForPlace.length, placeData.remainingCapacity)
-
-      for (let i = 0; i < toAssign; i++) {
-        const candidate = candidatesForPlace[i]
-        const student = candidate.student
-
-        assignedStudents.add(student.userId)
-        placeData.remainingCapacity--
-        placeData.assignedStudents.push(student.userId)
-
-        resultsToInsert.push({
-          user_id: student.userId,
-          pfp_type: pfpType,
-          year: year,
-          assigned_place_id: placeData.PlaceId,
-          assigned_place_name: placeData.NomPlace,
-          assigned_institution_name: placeData.InstitutionName || '',
-          assigned_rank: candidate.criteriaCovered, // Stocker nb critères couverts au lieu du rang
-          algorithm_run_id: algorithmRunId,
-          original_choices: student.choices || [],
-          priority_score: student.priorityScore || null,
-          notes: `Algo v4.0 — ${candidate.criteriaCovered} critères couverts [${placeData.criteriaCovered.filter((c) => (student.missingCriteria || []).includes(c)).join(',')}] | manquants=[${(student.missingCriteria || []).join(',')}] | score=${candidate.priorityScore}`
-        })
+    const sortedStudents = [...eligibleStudents].sort((a, b) => {
+      if ((a.priorityScore || 0) !== (b.priorityScore || 0)) {
+        return (b.priorityScore || 0) - (a.priorityScore || 0)
       }
+      return `${a.nom || ''} ${a.prenom || ''}`.localeCompare(`${b.nom || ''} ${b.prenom || ''}`)
+    })
 
-      if (toAssign > 0) {
-        const avgCrit =
-          candidatesForPlace.slice(0, toAssign).reduce((s, c) => s + c.criteriaCovered, 0) /
-          toAssign
-        console.log(
-          `   ✅ ${placeData.NomPlace} [${placeData.criteriaCovered.join(',')}]: ${toAssign}/${candidatesForPlace.length} candidats (moy. ${avgCrit.toFixed(1)} crit. couverts)`
-        )
-      }
-    }
-
-    // 🎯 ÉTAPE 3: Attribution des étudiants restants — optimiser par critères manquants
-    const studentsNonAssignes = eligibleStudents.filter((s) => !assignedStudents.has(s.userId))
-    console.log(`🎲 Attribution optimisée des ${studentsNonAssignes.length} étudiants restants...`)
+    console.log('🔄 Attribution par étudiant (logique votation générique → meilleure place disponible)...')
 
     let randomAssignmentCount = 0
 
-    for (const student of studentsNonAssignes) {
-      const donePlaces = new Set(student.donePlaceIds || [])
-      const missingCrit = student.missingCriteria || []
+    for (const student of sortedStudents) {
+      if (assignedStudents.has(student.userId)) continue
 
-      // Trouver la meilleure place disponible: max critères couverts, pas déjà faite
-      const availablePlaces = Array.from(placesMap.values())
-        .filter((p) => p.remainingCapacity > 0 && !donePlaces.has(p.PlaceId))
-        .map((p) => ({
-          place: p,
-          critCovered: computeCriteriaCovered(missingCrit, p.criteriaCovered)
-        }))
-        .sort((a, b) => {
-          if (a.critCovered !== b.critCovered) return b.critCovered - a.critCovered
-          return Math.random() - 0.5
-        })
+      const candidatePlaces = buildGenericCandidatePlaces(student).sort(sortCandidatePlaces)
+      const best = candidatePlaces[0]
 
-      const best = availablePlaces[0]
-
-      if (best) {
-        assignedStudents.add(student.userId)
-        best.place.remainingCapacity--
-        best.place.assignedStudents.push(student.userId)
-        randomAssignmentCount++
-
-        resultsToInsert.push({
-          user_id: student.userId,
-          pfp_type: pfpType,
-          year: year,
-          assigned_place_id: best.place.PlaceId,
-          assigned_place_name: best.place.NomPlace,
-          assigned_institution_name: best.place.InstitutionName || '',
-          assigned_rank: 99,
-          algorithm_run_id: algorithmRunId,
-          original_choices: student.choices || [],
-          priority_score: student.priorityScore || null,
-          notes: `⚠️ HORS CHOIX — Algo v4.0 — ${best.critCovered} critères couverts [${best.place.criteriaCovered.filter((c) => missingCrit.includes(c)).join(',')}] | manquants=[${missingCrit.join(',')}]`
-        })
-
-        console.log(
-          `   🎲 ${student.nom} ${student.prenom} → ${best.place.NomPlace} (${best.critCovered} crit. couverts)`
-        )
-      } else {
+      if (!best) {
         console.warn(`⚠️ Aucune place disponible pour ${student.nom} ${student.prenom}`)
         errors.push({ userId: student.userId, error: 'No available place' })
+        continue
       }
+
+      assignedStudents.add(student.userId)
+      const livePlace = placesMap.get(best.PlaceId)
+      if (!livePlace || livePlace.remainingCapacity <= 0) {
+        console.warn(`⚠️ Capacité expirée pour ${best.NomPlace} lors de l'attribution de ${student.nom} ${student.prenom}`)
+        errors.push({ userId: student.userId, error: 'Place capacity exhausted' })
+        continue
+      }
+
+      livePlace.remainingCapacity--
+      livePlace.assignedStudents.push(student.userId)
+
+      const criteriaCovered = computeCriteriaCovered(
+        student.missingCriteria,
+        livePlace.criteriaCovered
+      )
+      const fallbackAssignment = criteriaCovered === 0
+      if (fallbackAssignment) randomAssignmentCount++
+
+      resultsToInsert.push({
+        user_id: student.userId,
+        pfp_type: pfpType,
+        year: year,
+        assigned_place_id: livePlace.PlaceId,
+        assigned_place_name: livePlace.NomPlace,
+        assigned_institution_name: livePlace.InstitutionName || '',
+        assigned_rank: fallbackAssignment ? 99 : criteriaCovered,
+        algorithm_run_id: algorithmRunId,
+        original_choices: student.choices || [],
+        priority_score: student.priorityScore || null,
+        notes: `${fallbackAssignment ? '⚠️ HORS CIBLAGE' : 'Algo v5.0'} — logique votation générique — ${criteriaCovered} critères couverts [${livePlace.criteriaCovered.filter((c) => (student.missingCriteria || []).includes(c)).join(',')}] | manquants=[${(student.missingCriteria || []).join(',')}] | fallback=${best._fallbackType} | score=${student.priorityScore}`
+      })
+
+      console.log(
+        `   ✅ ${student.nom} ${student.prenom} → ${livePlace.NomPlace} (${criteriaCovered} crit. couverts, fallback=${best._fallbackType})`
+      )
     }
 
     if (randomAssignmentCount > 0) {
       console.log(
-        `   ✅ ${randomAssignmentCount} étudiants assignés (hors choix, optimisé critères)`
+        `   ✅ ${randomAssignmentCount} étudiants assignés en fallback (0 critère couvert)`
       )
     }
 
-    // 🚀 BATCH INSERT via upsert direct
-    console.log(`💾 Enregistrement de ${resultsToInsert.length} résultats...`)
+    if (persist) {
+      console.log(`💾 Enregistrement de ${resultsToInsert.length} résultats...`)
 
-    if (resultsToInsert.length > 0) {
       const rows = resultsToInsert.map((r) => ({
         user_id: r.user_id,
         pfp_type: r.pfp_type,
@@ -394,20 +449,24 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
         assigned_at: new Date().toISOString()
       }))
 
-      const { data: upsertData, error: upsertError } = await supabaseAdmin
-        .from('student_result_vote')
-        .upsert(rows, { onConflict: 'user_id,pfp_type,year' })
-        .select()
+      if (rows.length > 0) {
+        const { data: upsertData, error: upsertError } = await supabaseAdmin
+          .from('student_result_vote')
+          .upsert(rows, { onConflict: 'user_id,pfp_type,year' })
+          .select()
 
-      if (upsertError) {
-        console.error('❌ Erreur upsert:', upsertError)
-        return res.status(500).json({
-          ok: false,
-          error: 'Failed to save results: ' + upsertError.message
-        })
+        if (upsertError) {
+          console.error('❌ Erreur upsert:', upsertError)
+          return res.status(500).json({
+            ok: false,
+            error: 'Failed to save results: ' + upsertError.message
+          })
+        }
+
+        console.log(`✅ Upsert réussi: ${upsertData.length} résultats enregistrés`)
       }
-
-      console.log(`✅ Upsert réussi: ${upsertData.length} résultats enregistrés`)
+    } else {
+      console.log(`👁️ Aperçu généré: ${resultsToInsert.length} résultats non enregistrés`)
     }
 
     // Statistiques finales
@@ -425,11 +484,15 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
       return crit === 0
     }).length
 
+    const combinedResults = [...preAssignedResults, ...resultsToInsert]
+
     const stats = {
-      totalStudents: students.length,
+      totalStudents: students.length + preAssignedResults.length,
       preAssignedCount: preAssigned.size,
       eligibleStudents: eligibleStudents.length,
-      successfulAssignments: resultsToInsert.length,
+      successfulAssignments: combinedResults.length,
+      generatedAssignments: resultsToInsert.length,
+      preservedAssignments: preAssignedResults.length,
       failedAssignments: errors.length,
       placesUsed: placesUsedCount,
       fromChoicesCount: fromChoices.length,
@@ -442,7 +505,7 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
     // 📋 Places avec assignations
     const placesWithAssignments = Array.from(placesMap.values())
       .map((place) => {
-        const assignments = resultsToInsert.filter((r) => r.assigned_place_id === place.PlaceId)
+        const assignments = combinedResults.filter((r) => r.assigned_place_id === place.PlaceId)
         return {
           placeId: place.PlaceId,
           placeName: place.NomPlace,
@@ -464,7 +527,7 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
         return (a.placeName || '').localeCompare(b.placeName || '')
       })
 
-    console.log(`✅ Algorithme v4.0 terminé:`, stats)
+    console.log(`✅ Algorithme v5.0 terminé:`, stats)
     console.log(
       `📋 Places avec assignations: ${placesWithAssignments.filter((p) => p.assignedCount > 0).length}/${placesWithAssignments.length}`
     )
@@ -473,13 +536,70 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
     return res.json({
       ok: true,
       algorithmRunId,
-      results: resultsToInsert,
+      persisted: !!persist,
+      results: combinedResults,
       placesWithAssignments,
       errors,
       stats
     })
   } catch (error) {
     console.error('❌ Erreur run-algorithm:', error)
+    return res.status(500).json({ ok: false, error: error.message })
+  }
+})
+
+/**
+ * POST /api/resultat-votation/confirm-algorithm
+ * Persiste un aperçu d'attribution déjà calculé
+ */
+router.post('/confirm-algorithm', requireAdmin, async (req, res) => {
+  try {
+    const { results } = req.body
+
+    if (!Array.isArray(results) || results.length === 0) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Missing required field: results'
+      })
+    }
+
+    const rows = results.map((r) => ({
+      user_id: r.user_id,
+      pfp_type: r.pfp_type,
+      year: r.year,
+      assigned_place_id: r.assigned_place_id,
+      assigned_place_name: r.assigned_place_name,
+      assigned_institution_name: r.assigned_institution_name,
+      assigned_rank: r.assigned_rank,
+      algorithm_run_id: r.algorithm_run_id || null,
+      original_choices: Array.isArray(r.original_choices) ? r.original_choices : [],
+      priority_score: r.priority_score ?? null,
+      notes: r.notes || null,
+      status: 'assigned',
+      assigned_at: new Date().toISOString()
+    }))
+
+    const { data, error } = await supabaseAdmin
+      .from('student_result_vote')
+      .upsert(rows, { onConflict: 'user_id,pfp_type,year' })
+      .select()
+
+    if (error) {
+      console.error('❌ Erreur confirm-algorithm:', error)
+      return res.status(500).json({
+        ok: false,
+        error: 'Failed to confirm results: ' + error.message
+      })
+    }
+
+    console.log(`✅ confirm-algorithm: ${data.length} résultats enregistrés`)
+    return res.json({
+      ok: true,
+      persisted: true,
+      count: data.length
+    })
+  } catch (error) {
+    console.error('❌ Erreur confirm-algorithm:', error)
     return res.status(500).json({ ok: false, error: error.message })
   }
 })
@@ -889,9 +1009,6 @@ router.post('/generate-pfp4-proposals', requireAdmin, async (req, res) => {
     // ── 6. Générer les propositions par étudiant ──
     const proposals = []
 
-    // Utiliser tous les profils BA23, pas uniquement les étudiants filtrés (pour être inclusif)
-    const allStudentIds = (studentsData || []).map((s) => s.user_id)
-
     for (const student of studentsData || []) {
       const userId = student.user_id
       const studentCriteria = criteriaMap.get(userId)
@@ -902,6 +1019,7 @@ router.post('/generate-pfp4-proposals', requireAdmin, async (req, res) => {
 
       // Déterminer les critères manquants (score === 0)
       const missingCriteria = CRITERIA_KEYS.filter((c) => scores[c] === 0)
+      const validatedStageCount = completedPlaceIds.size
       const deprioritizeDE = validatedStageCount < 2
       const priorityMissingCriteria = deprioritizeDE
         ? missingCriteria.filter((c) => c !== 'DE')
@@ -1025,8 +1143,6 @@ router.post('/generate-pfp4-proposals', requireAdmin, async (req, res) => {
 router.post('/save-pfp4-proposals', requireAdmin, async (req, res) => {
   try {
     const { year, targetClass, proposals, assignCounts } = req.body
-    const token = req.headers.authorization?.split(' ')[1]
-
     if (!year || !proposals) {
       return res.status(400).json({ ok: false, error: 'Missing required fields: year, proposals' })
     }
@@ -1135,8 +1251,6 @@ router.get('/pfp4-proposals/:year', setUser, async (req, res) => {
     const { year } = req.params
     const targetClass = normalizeClass(req.query?.targetClass)
     const userId = req.user?.id
-    const token = req.headers.authorization?.split(' ')[1]
-
     if (!userId) {
       return res.status(401).json({ ok: false, error: 'Authentication required' })
     }

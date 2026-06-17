@@ -37,7 +37,7 @@ export const resultatVotationService = {
    * @param {Array} places - Liste des places disponibles
    * @returns {Promise<Object>}
    */
-  async runAlgorithm(pfpType, year, students, places) {
+  async runAlgorithm(pfpType, year, students, places, options = {}) {
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) throw new Error('Authentication required')
@@ -48,7 +48,9 @@ export const resultatVotationService = {
           pfpType,
           year,
           students,
-          places
+          places,
+          persist: options.persist ?? true,
+          ignoreExistingAssignments: options.ignoreExistingAssignments ?? false
         },
         {
           headers: {
@@ -65,6 +67,33 @@ export const resultatVotationService = {
       return response.data
     } catch (err) {
       console.error('❌ Erreur runAlgorithm:', err)
+      throw err
+    }
+  },
+
+  async confirmAlgorithm(results) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('Authentication required')
+
+      const response = await axios.post(
+        `${API_BASE_URL}/api/resultat-votation/confirm-algorithm`,
+        { results },
+        {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      )
+
+      if (!response.data.ok) {
+        throw new Error(response.data.error || 'Algorithm confirmation failed')
+      }
+
+      return response.data
+    } catch (err) {
+      console.error('❌ Erreur confirmAlgorithm:', err)
       throw err
     }
   },

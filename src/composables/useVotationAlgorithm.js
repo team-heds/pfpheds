@@ -10,6 +10,8 @@ export function useVotationAlgorithm(toast) {
   const algorithmStats = ref(null)
   const placesWithAssignments = ref([])
   const algorithmLoading = ref(false)
+  const algorithmPersisting = ref(false)
+  const algorithmPreviewReady = ref(false)
 
   const parseIntSafe = (value) => {
     const parsed = parseInt(value, 10)
@@ -36,18 +38,7 @@ export function useVotationAlgorithm(toast) {
   const placesStore = usePlacesStore()
   const institutionsStore = useInstitutionsStore()
 
-  const startAlgorithm = async (filterPFP, filterYear, filterClasse, canShowResults, filteredVotationsList, excludedStudentIds, loadData) => {
-    // eslint-disable-next-line no-constant-condition
-    if ("a" === "a") {
-      toast.add({
-        severity: 'warning',
-        summary: 'Stop',
-        detail: 'Refais pas un algo',
-        life: 3000
-      })
-      return
-    }
-
+  const startAlgorithm = async (filterPFP, filterYear, filterClasse, canShowResults, filteredVotationsList, excludedStudentIds, ignoreExistingAssignments = false) => {
     if (!canShowResults) {
       toast.add({
         severity: 'warning',
@@ -180,10 +171,12 @@ export function useVotationAlgorithm(toast) {
       }
 
       // ── Exclure les étudiants déjà assignés et ceux exclus manuellement ──
+      const assignmentYearKeys = getAcademicYearKeys(filterYear)
       const { data: existingAssignments } = await supabase
         .from('student_result_vote')
         .select('user_id, assigned_place_id')
         .eq('pfp_type', filterPFP)
+        .in('year', assignmentYearKeys)
       
       const alreadyAssignedUserIds = new Set()
       const alreadyAssignedPlaceCounts = new Map()
@@ -199,7 +192,7 @@ export function useVotationAlgorithm(toast) {
 
       const eligibleVotations = filteredVotationsList.filter(student => {
         if (alreadyAssignedUserIds.has(student.userId)) {
-          console.log(`   ❌ Exclu (déjà assigné ${filterPFP}): ${student.nom} ${student.prenom}`)
+          console.log(`   🔒 Conservé (déjà assigné ${filterPFP}): ${student.nom} ${student.prenom}`)
           return false
         }
         if (manualExclusions.has(student.userId)) {
@@ -236,6 +229,7 @@ export function useVotationAlgorithm(toast) {
           ].filter(Boolean),
           missingCriteria: missing,
           donePlaceIds: donePlaces ? [...donePlaces] : [],
+          completedStageCount: donePlaces ? donePlaces.size : 0,
           priorityScore: score,
           _debug: profile ? {
             missing,
@@ -314,7 +308,8 @@ export function useVotationAlgorithm(toast) {
         filterPFP,
         filterYear,
         studentsData,
-        placesData
+        placesData,
+        { persist: false, ignoreExistingAssignments }
       )
 
       console.log('✅ Résultat de l\'algorithme:', result)
@@ -322,12 +317,13 @@ export function useVotationAlgorithm(toast) {
       algorithmResults.value = result.results || []
       algorithmStats.value = result.stats || {}
       placesWithAssignments.value = result.placesWithAssignments || []
+      algorithmPreviewReady.value = Array.isArray(result.results) && result.results.length > 0
 
       const stats = result.stats || {}
       toast.add({
         severity: 'success',
-        summary: 'Algorithme v4.0 terminé',
-        detail: `${stats.successfulAssignments || 0} attributions (${stats.fromChoicesCount || 0} depuis choix, ${stats.randomAssignmentCount || 0} hors choix)`,
+        summary: 'Aperçu généré',
+        detail: `${stats.generatedAssignments || 0} nouvelles attributions calculées, ${stats.preservedAssignments || 0} déjà placées conservées.`,
         life: 8000
       })
 
@@ -347,9 +343,6 @@ export function useVotationAlgorithm(toast) {
         })
       }
 
-      // Recharger les données pour afficher les résultats
-      if (loadData) await loadData()
-
     } catch (error) {
       console.error('❌ Erreur lors de l\'exécution de l\'algorithme:', error)
       toast.add({
@@ -367,6 +360,48 @@ export function useVotationAlgorithm(toast) {
     algorithmResults.value = []
     algorithmStats.value = null
     placesWithAssignments.value = []
+    algorithmPreviewReady.value = false
+  }
+
+  const confirmAlgorithm = async (loadData) => {
+    if (!Array.isArray(algorithmResults.value) || algorithmResults.value.length === 0) {
+      toast.add({
+        severity: 'warn',
+        summary: 'Aucun aperçu',
+        detail: 'Lancez d’abord l’algorithme pour générer les attributions.',
+        life: 4000
+      })
+      return false
+    }
+
+    algorithmPersisting.value = true
+
+    try {
+      const result = await resultatVotationService.confirmAlgorithm(algorithmResults.value)
+
+      toast.add({
+        severity: 'success',
+        summary: 'Attributions validées',
+        detail: `${result.count || algorithmResults.value.length} attributions enregistrées.`,
+        life: 6000
+      })
+
+      algorithmPreviewReady.value = false
+
+      if (loadData) await loadData()
+      return true
+    } catch (error) {
+      console.error('❌ Erreur lors de la validation de l\'algorithme:', error)
+      toast.add({
+        severity: 'error',
+        summary: 'Erreur',
+        detail: 'Impossible de valider les attributions: ' + error.message,
+        life: 8000
+      })
+      return false
+    } finally {
+      algorithmPersisting.value = false
+    }
   }
 
   return {
@@ -374,7 +409,10 @@ export function useVotationAlgorithm(toast) {
     algorithmStats,
     placesWithAssignments,
     algorithmLoading,
+    algorithmPersisting,
+    algorithmPreviewReady,
     startAlgorithm,
+    confirmAlgorithm,
     resetAlgorithm
   }
 }
