@@ -85,6 +85,14 @@ const sections = [
     route: '/admin/formation-pratique/secretariat/suivi-institutions'
   },
   {
+    title: 'Suivi Envoi Offres',
+    description: "Suivre quelles institutions ont envoyé leurs offres de places par année",
+    icon: 'pi pi-send',
+    iconClass: 'text-orange-500',
+    bgClass: 'bg-orange-100',
+    route: '/admin/formation-pratique/secretariat/suivi-offres-institutions'
+  },
+  {
     title: 'Tableau Récap Offres',
     description: "Vue d'ensemble des offres de places par institution et PFP",
     icon: 'pi pi-table',
