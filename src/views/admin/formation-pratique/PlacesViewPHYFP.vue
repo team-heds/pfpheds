@@ -19,7 +19,7 @@
           <div class="flex align-items-center gap-3 flex-wrap">
             <div class="flex align-items-center gap-2">
               <span class="text-600">Année</span>
-              <Dropdown :options="years" v-model="selectedYear" class="w-8rem" />
+              <Dropdown :options="years" optionLabel="label" optionValue="value" v-model="selectedYear" class="w-10rem" />
             </div>
             <div class="flex align-items-center gap-2">
               <span class="text-600">Afficher</span>
@@ -202,6 +202,36 @@
               <span v-else>{{ data.NomPlace || '-' }}</span>
             </template>
           </Column>
+          <Column header="PFP3">
+            <template #body="{ data }">
+              <InputText v-if="isEditingRow(data)" v-model="editBuffer.PFP3" class="p-inputtext-sm" />
+              <span v-else>{{ (data.PFP3 && (data.PFP3[selectedYear] || (selectedYear === '2028' ? data.PFP3['2027'] : null))) || '-' }}</span>
+            </template>
+          </Column>
+          <Column header="PFP2">
+            <template #body="{ data }">
+              <InputText v-if="isEditingRow(data)" v-model="editBuffer.PFP2" class="p-inputtext-sm" />
+              <span v-else>{{ (data.PFP2 && data.PFP2[selectedYear]) || '-' }}</span>
+            </template>
+          </Column>
+          <Column header="PFP1A">
+            <template #body="{ data }">
+              <InputText v-if="isEditingRow(data)" v-model="editBuffer.PFP1A" class="p-inputtext-sm" />
+              <span v-else>{{ (data.PFP1A && data.PFP1A[selectedYear]) || '-' }}</span>
+            </template>
+          </Column>
+          <Column header="PFP1B">
+            <template #body="{ data }">
+              <InputText v-if="isEditingRow(data)" v-model="editBuffer.PFP1B" class="p-inputtext-sm" />
+              <span v-else>{{ (data.PFP1B && data.PFP1B[selectedYear]) || '-' }}</span>
+            </template>
+          </Column>
+          <Column header="PFP4">
+            <template #body="{ data }">
+              <InputText v-if="isEditingRow(data)" v-model="editBuffer.PFP4" class="p-inputtext-sm" />
+              <span v-else>{{ (data.PFP4 && data.PFP4[selectedYear]) || '-' }}</span>
+            </template>
+          </Column>
           <Column header="MSQ" v-if="visibleColumns.MSQ">
             <template #body="{ data }">
               <InputSwitch v-if="isEditingRow(data)" v-model="editBuffer.MSQ" />
@@ -248,36 +278,6 @@
             <template #body="{ data }">
               <InputSwitch v-if="isEditingRow(data)" v-model="editBuffer.DE" />
               <Tag v-else :value="isTrueFlag(data.DE) ? 'Oui' : 'Non'" :severity="isTrueFlag(data.DE) ? 'success' : 'secondary'" />
-            </template>
-          </Column>
-          <Column header="PFP2">
-            <template #body="{ data }">
-              <InputText v-if="isEditingRow(data)" v-model="editBuffer.PFP2" class="p-inputtext-sm" />
-              <span v-else>{{ (data.PFP2 && data.PFP2[selectedYear]) || '-' }}</span>
-            </template>
-          </Column>
-          <Column header="PFP1A">
-            <template #body="{ data }">
-              <InputText v-if="isEditingRow(data)" v-model="editBuffer.PFP1A" class="p-inputtext-sm" />
-              <span v-else>{{ (data.PFP1A && data.PFP1A[selectedYear]) || '-' }}</span>
-            </template>
-          </Column>
-          <Column header="PFP1B">
-            <template #body="{ data }">
-              <InputText v-if="isEditingRow(data)" v-model="editBuffer.PFP1B" class="p-inputtext-sm" />
-              <span v-else>{{ (data.PFP1B && data.PFP1B[selectedYear]) || '-' }}</span>
-            </template>
-          </Column>
-          <Column header="PFP4">
-            <template #body="{ data }">
-              <InputText v-if="isEditingRow(data)" v-model="editBuffer.PFP4" class="p-inputtext-sm" />
-              <span v-else>{{ (data.PFP4 && data.PFP4[selectedYear]) || '-' }}</span>
-            </template>
-          </Column>
-          <Column header="PFP3">
-            <template #body="{ data }">
-              <InputText v-if="isEditingRow(data)" v-model="editBuffer.PFP3" class="p-inputtext-sm" />
-              <span v-else>{{ (data.PFP3 && data.PFP3[selectedYear]) || '-' }}</span>
             </template>
           </Column>
           <Column header="Canton" sortable>
@@ -561,7 +561,12 @@ const loading = computed(() => store.loading)
 const multiSortMeta = ref([{ field: 'InstitutionNameSort', order: 1 }])
 const searchInput = ref('')
 const search = ref('')
-const years = ref(['2026','2027','2025'])
+const years = ref([
+  { label: '2024-2025', value: '2025' },
+  { label: '2025-2026', value: '2026' },
+  { label: '2026-2027', value: '2027' },
+  { label: '2027-2028', value: '2028' }
+])
 const selectedYear = ref('2026')
 const FILTERS_KEY = 'fp_phy_places_filters'
 

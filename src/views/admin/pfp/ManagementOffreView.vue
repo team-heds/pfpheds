@@ -155,6 +155,14 @@
                   :loading="isCopyingPreviousYear"
                   @click="copyPreviousYearPropositions"
                 />
+                <Button
+                  icon="pi pi-copy"
+                  label="Reprendre N-1 (offres)"
+                  outlined
+                  severity="success"
+                  :loading="isCopyingPreviousYearOffers"
+                  @click="copyPreviousYearOffers"
+                />
                 <div class="flex align-items-center gap-2">
                   <span class="text-600">PFP</span>
                   <Dropdown :options="pfpOptions" optionLabel="label" optionValue="value" v-model="selectedPFP" class="w-8rem" />
@@ -205,7 +213,14 @@
             </template>
           </Column>
           <!-- Colonnes Offre (données de PlacesViewPHYFP.vue) -->
-               <Column v-if="shouldShowPFPColumn('PFP2')" header="Offre PFP2" class="w-8rem">
+          <Column v-if="shouldShowPFPColumn('PFP3')" header="Offre PFP3" class="w-8rem">
+            <template #body="slotProps">
+              <div class="flex justify-content-center">
+                <span class="font-semibold text-green-600">{{ (slotProps.data.PFP3 && (slotProps.data.PFP3[selectedYear] || (selectedYear === '2028' ? slotProps.data.PFP3['2027'] : null))) || '-' }}</span>
+              </div>
+            </template>
+          </Column>
+          <Column v-if="shouldShowPFPColumn('PFP2')" header="Offre PFP2" class="w-8rem">
             <template #body="slotProps">
               <div class="flex justify-content-center">
                 <span class="font-semibold text-green-600">{{ (slotProps.data.PFP2 && slotProps.data.PFP2[selectedYear]) || '-' }}</span>
@@ -226,23 +241,24 @@
               </div>
             </template>
           </Column>
-         <Column v-if="shouldShowPFPColumn('PFP4')" header="Offre PFP4" class="w-8rem">
+          <Column v-if="shouldShowPFPColumn('PFP4')" header="Offre PFP4" class="w-8rem">
             <template #body="slotProps">
               <div class="flex justify-content-center">
                 <span class="font-semibold text-green-600">{{ (slotProps.data.PFP4 && slotProps.data.PFP4[selectedYear]) || '-' }}</span>
               </div>
             </template>
           </Column>
-          <Column v-if="shouldShowPFPColumn('PFP3')" header="Offre PFP3" class="w-8rem">
+       
+          <!-- Colonnes Proposition (champs séparés) -->
+          <Column v-if="shouldShowPFPColumn('PFP3')" header="Proposition PFP3" class="w-6rem text-center">
             <template #body="slotProps">
               <div class="flex justify-content-center">
-                <span class="font-semibold text-green-600">{{ (slotProps.data.PFP3 && slotProps.data.PFP3[selectedYear]) || '-' }}</span>
+                <InputText v-if="isEditingRow(slotProps.data)" v-model="editBuffer.pfp3_proposition" class="p-inputtext-sm w-6rem text-center" placeholder="0" />
+                <span v-else class="font-semibold text-blue-600">{{ getPropositionValue(slotProps.data, 'PFP3') }}</span>
               </div>
             </template>
           </Column>
-       
-          <!-- Colonnes Proposition (champs séparés) -->
-                 <Column v-if="shouldShowPFPColumn('PFP2')" header="Proposition PFP2" class="w-6rem text-center">
+          <Column v-if="shouldShowPFPColumn('PFP2')" header="Proposition PFP2" class="w-6rem text-center">
             <template #body="slotProps">
               <div class="flex justify-content-center">
                 <InputText v-if="isEditingRow(slotProps.data)" v-model="editBuffer.pfp2_proposition" class="p-inputtext-sm w-6rem text-center" placeholder="0" />
@@ -266,21 +282,11 @@
               </div>
             </template>
           </Column>
-    
-
           <Column v-if="shouldShowPFPColumn('PFP4')" header="Proposition PFP4" class="w-6rem text-center">
             <template #body="slotProps">
               <div class="flex justify-content-center">
                 <InputText v-if="isEditingRow(slotProps.data)" v-model="editBuffer.pfp4_proposition" class="p-inputtext-sm w-6rem text-center" placeholder="0" />
                 <span v-else class="font-semibold text-blue-600">{{ getPropositionValue(slotProps.data, 'PFP4') }}</span>
-              </div>
-            </template>
-          </Column>
-          <Column v-if="shouldShowPFPColumn('PFP3')" header="Proposition PFP3" class="w-6rem text-center">
-            <template #body="slotProps">
-              <div class="flex justify-content-center">
-                <InputText v-if="isEditingRow(slotProps.data)" v-model="editBuffer.pfp3_proposition" class="p-inputtext-sm w-6rem text-center" placeholder="0" />
-                <span v-else class="font-semibold text-blue-600">{{ getPropositionValue(slotProps.data, 'PFP3') }}</span>
               </div>
             </template>
           </Column>
@@ -443,6 +449,7 @@ const rowsOptions = ref([
 const showAll = ref(true)
 const hideZeroOffers = ref(false)
 const isCopyingPreviousYear = ref(false)
+const isCopyingPreviousYearOffers = ref(false)
 
 // Editing state
 const editingRowId = ref(null)
@@ -1161,6 +1168,76 @@ const copyPreviousYearPropositionsFallback = async (targetYear, previousYear, pf
   }
 
   return { updatedPlaces, updatedFields }
+}
+
+const copyPreviousYearOffers = async () => {
+  const targetYear = selectedYear.value
+  const targetYearNumber = Number(targetYear)
+  if (!Number.isFinite(targetYearNumber)) return
+
+  const previousYear = String(targetYearNumber - 1)
+  const pfpScope = selectedPFP.value === 'all' ? pfpTypes : [selectedPFP.value]
+
+  const confirmed = window.confirm(
+    `Reprendre les offres ${previousYear} vers ${targetYear} pour ${pfpScope.join(', ')} ?\n\n` +
+    "Seules les places sans offre pour l'année cible seront mises à jour."
+  )
+  if (!confirmed) return
+
+  isCopyingPreviousYearOffers.value = true
+
+  try {
+    const places = placesStore.places || []
+    let updatedPlaces = 0
+    let updatedFields = 0
+
+    for (const place of places) {
+      const patch = {}
+
+      for (const pfpType of pfpScope) {
+        const offerField = pfpType
+        const offerByYear = place?.[offerField]
+        if (!offerByYear || typeof offerByYear !== 'object') continue
+
+        const hasPreviousYear = Object.prototype.hasOwnProperty.call(offerByYear, previousYear)
+        if (!hasPreviousYear) continue
+
+        const previousValue = offerByYear[previousYear]
+        const currentValue = offerByYear[targetYear]
+
+        if (currentValue !== undefined && currentValue !== '' && currentValue !== null) continue
+
+        if (normalizePropositionValue(previousValue) === normalizePropositionValue(currentValue)) continue
+
+        patch[offerField] = {
+          ...offerByYear,
+          [targetYear]: previousValue
+        }
+      }
+
+      if (Object.keys(patch).length === 0) continue
+
+      await placesStore.updatePlace(place.PlaceId, patch)
+      updatedPlaces += 1
+      updatedFields += Object.keys(patch).length
+    }
+
+    await refreshPlaces()
+
+    if (updatedFields === 0) {
+      window.alert(`Aucune offre à reprendre depuis ${previousYear}. Toutes les places ont déjà des offres pour ${targetYear}.`)
+      return
+    }
+
+    window.alert(
+      `Reprise terminée: ${updatedFields} champ(s) mis à jour sur ${updatedPlaces} place(s).`
+    )
+  } catch (error) {
+    console.error('Error while copying previous year offers:', error)
+    window.alert("Erreur pendant la reprise des offres de l'année précédente.")
+  } finally {
+    isCopyingPreviousYearOffers.value = false
+  }
 }
 
 // Filtres

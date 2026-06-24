@@ -314,14 +314,14 @@ async function loadUsers() {
   try {
     const { supabase } = await import('@/supabase')
     const { data, error } = await supabase
-      .from('profiles')
-      .select('id, email, full_name')
-      .order('full_name')
-    
+      .from('user_profiles')
+      .select('user_id, email, display_name, forname, family_name')
+      .order('family_name')
+
     if (error) throw error
     users.value = data.map(u => ({
-      label: u.full_name || u.email,
-      value: u.id
+      label: u.display_name || `${u.forname || ''} ${u.family_name || ''}`.trim() || u.email,
+      value: u.user_id
     }))
   } catch (error) {
     console.error('[Calendar] Erreur chargement utilisateurs:', error)
