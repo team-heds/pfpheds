@@ -1,7 +1,7 @@
 {
   "id": "troubleshooting/docusaurus-prism",
   "title": "Docusaurus/Prism",
-  "description": "Brouillon de documentation pour troubleshooting/docusaurus-prism.",
+  "description": "Résoudre les soucis de coloration Prism (blocs de code) et Mermaid dans la doc.",
   "source": "@site/docs/troubleshooting/docusaurus-prism.md",
   "sourceDirName": "troubleshooting",
   "slug": "/troubleshooting/docusaurus-prism",
@@ -12,14 +12,5 @@
   "version": "current",
   "frontMatter": {
     "title": "Docusaurus/Prism"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "Encodage .env",
-    "permalink": "/docs/troubleshooting/env-encoding"
-  },
-  "next": {
-    "title": "ESLint & Prettier",
-    "permalink": "/docs/contrib/eslint-prettier"
   }
 }

@@ -1,7 +1,7 @@
 {
   "id": "data/multi-system-router",
   "title": "Routeur Multi-Systèmes",
-  "description": "Brouillon de documentation pour data/multi-system-router.",
+  "description": "Cette page explique l’architecture \"multi‑systèmes\" de l’app: Auth/RTDB Firebase et données/permissions Supabase.",
   "source": "@site/docs/data/multi-system-router.md",
   "sourceDirName": "data",
   "slug": "/data/multi-system-router",
@@ -15,11 +15,11 @@
   },
   "sidebar": "docs",
   "previous": {
-    "title": "Schéma Supabase",
-    "permalink": "/docs/data/schema-supabase"
+    "title": "Migration Firebase → Supabase",
+    "permalink": "/docs/data/migration-firebase-supabase"
   },
   "next": {
-    "title": "Fonctionnalités - Vue d'ensemble",
-    "permalink": "/docs/features/overview"
+    "title": "Backend Node et API serveur",
+    "permalink": "/docs/backend/overview"
   }
 }

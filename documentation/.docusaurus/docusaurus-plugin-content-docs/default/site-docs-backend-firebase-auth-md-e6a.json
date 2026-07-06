@@ -1,7 +1,7 @@
 {
   "id": "backend/firebase/auth",
   "title": "Firebase Auth",
-  "description": "Brouillon de documentation pour backend/firebase/auth.",
+  "description": "Rôle",
   "source": "@site/docs/backend/firebase/auth.md",
   "sourceDirName": "backend/firebase",
   "slug": "/backend/firebase/auth",
@@ -19,7 +19,7 @@
     "permalink": "/docs/backend/firebase/storage"
   },
   "next": {
-    "title": "Supabase - Vue d'ensemble",
+    "title": "Supabase - vue d'ensemble",
     "permalink": "/docs/backend/supabase/overview"
   }
 }

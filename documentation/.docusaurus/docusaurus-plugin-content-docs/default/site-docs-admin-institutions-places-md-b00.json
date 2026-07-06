@@ -12,14 +12,5 @@
   "version": "current",
   "frontMatter": {
     "title": "Institutions & Places"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "Gestion Utilisateurs",
-    "permalink": "/docs/admin/users"
-  },
-  "next": {
-    "title": "Votations",
-    "permalink": "/docs/admin/votations"
   }
 }

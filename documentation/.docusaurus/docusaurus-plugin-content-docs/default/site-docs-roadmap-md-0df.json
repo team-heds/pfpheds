@@ -1,7 +1,7 @@
 {
   "id": "roadmap",
-  "title": "Roadmap",
-  "description": "Brouillon de documentation pour roadmap.",
+  "title": "Roadmap de la documentation",
+  "description": "Objectif",
   "source": "@site/docs/roadmap.md",
   "sourceDirName": ".",
   "slug": "/roadmap",
@@ -11,15 +11,15 @@
   "tags": [],
   "version": "current",
   "frontMatter": {
-    "title": "Roadmap"
+    "title": "Roadmap de la documentation"
   },
   "sidebar": "docs",
   "previous": {
-    "title": "Workflow de Contribution",
-    "permalink": "/docs/contrib/workflow"
+    "title": "GitHub",
+    "permalink": "/docs/contrib/github"
   },
   "next": {
-    "title": "Changelog",
+    "title": "Changelog documentaire",
     "permalink": "/docs/changelog"
   }
 }

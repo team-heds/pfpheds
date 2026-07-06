@@ -1,7 +1,7 @@
 {
   "id": "security/roles",
   "title": "Rôles & Permissions",
-  "description": "Brouillon de documentation pour security/roles.",
+  "description": "Ce document décrit le modèle de permissions consommé par le front et son usage dans le routeur.",
   "source": "@site/docs/security/roles.md",
   "sourceDirName": "security",
   "slug": "/security/roles",
@@ -15,11 +15,11 @@
   },
   "sidebar": "docs",
   "previous": {
-    "title": "Service Médias",
-    "permalink": "/docs/media/media-service"
+    "title": "Sécurité, rôles et compatibilité legacy",
+    "permalink": "/docs/auth/security-services-legacy"
   },
   "next": {
-    "title": "Route Guards",
+    "title": "Route guards",
     "permalink": "/docs/security/route-guards"
   }
 }

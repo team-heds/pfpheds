@@ -13,14 +13,5 @@
   "frontMatter": {
     "title": "Physiothérapie — Overview",
     "sidebar_label": "Overview"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "Physiothérapie",
-    "permalink": "/docs/physiotherapie"
-  },
-  "next": {
-    "title": "Processus FP",
-    "permalink": "/docs/physiotherapie/processus"
   }
 }

@@ -1,7 +1,7 @@
 {
   "id": "media/media-service",
-  "title": "Service Médias",
-  "description": "Brouillon de documentation pour media/media-service.",
+  "title": "Services media",
+  "description": "Services a connaitre",
   "source": "@site/docs/media/media-service.md",
   "sourceDirName": "media",
   "slug": "/media/media-service",
@@ -11,7 +11,7 @@
   "tags": [],
   "version": "current",
   "frontMatter": {
-    "title": "Service Médias"
+    "title": "Services media"
   },
   "sidebar": "docs",
   "previous": {
@@ -19,7 +19,7 @@
     "permalink": "/docs/media/vimeo-config"
   },
   "next": {
-    "title": "Rôles & Permissions",
-    "permalink": "/docs/security/roles"
+    "title": "Exploitation locale et développement",
+    "permalink": "/docs/ops/development"
   }
 }

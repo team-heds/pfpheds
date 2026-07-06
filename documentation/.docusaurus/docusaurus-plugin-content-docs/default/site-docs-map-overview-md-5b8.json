@@ -12,14 +12,5 @@
   "version": "current",
   "frontMatter": {
     "title": "Carte & Institutions - Vue d'ensemble"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "Messagerie",
-    "permalink": "/docs/social/messaging"
-  },
-  "next": {
-    "title": "Institutions",
-    "permalink": "/docs/map/institutions"
   }
 }

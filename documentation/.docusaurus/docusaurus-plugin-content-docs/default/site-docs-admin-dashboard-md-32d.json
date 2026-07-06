@@ -12,14 +12,5 @@
   "version": "current",
   "frontMatter": {
     "title": "Dashboard Administration"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "Notifications",
-    "permalink": "/docs/features/notifications"
-  },
-  "next": {
-    "title": "Gestion Utilisateurs",
-    "permalink": "/docs/admin/users"
   }
 }

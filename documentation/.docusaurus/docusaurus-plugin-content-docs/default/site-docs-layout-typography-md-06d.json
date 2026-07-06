@@ -13,14 +13,5 @@
   "frontMatter": {
     "title": "Typographie",
     "sidebar_label": "Typographie"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "Thèmes",
-    "permalink": "/docs/layout/themes"
-  },
-  "next": {
-    "title": "UI & Design System",
-    "permalink": "/docs/frontend/ui"
   }
 }

@@ -2,37 +2,14 @@
 title: Firebase Storage
 ---
 
-Stockage de fichiers (images, PDF, etc.) via Firebase Storage.
+## Rôle
 
-## Initialisation
+Firebase Storage reste utilisé pour une partie des fichiers.
 
-- L’instance `storage` est exportée depuis `firebase.js`:
+## Point d'attention
 
-```js
-import { storage } from '@/firebase.js'
-```
+Le stockage n'est pas uniformisé sur tout le projet. Certains flux sont pensés pour migrer vers Supabase Storage.
 
-## Upload / Download (exemple)
+## Conséquence
 
-```js
-import { ref as sRef, uploadBytes, getDownloadURL } from 'firebase/storage'
-
-// Upload
-const file = /* File */
-const path = `uploads/${Date.now()}_${file.name}`
-const fileRef = sRef(storage, path)
-await uploadBytes(fileRef, file)
-const url = await getDownloadURL(fileRef)
-
-// url: lien public à stocker en DB
-```
-
-## Règles de sécurité
-
-- Les règles sont définies dans `storage.rules` (référencées par `firebase.json`).
-- Éviter l’accès public en écriture. Autoriser la lecture publique seulement si nécessaire.
-
-## Bonnes pratiques
-
-- Sauvegarder l’URL du fichier (Storage) côté base (Supabase/Firebase) au lieu d’imbriquer le binaire.
-- Organiser les dossiers par feature (ex: `institutions/`, `places/`, `users/`).
+Quand un problème de document ou média apparaît, il faut d'abord identifier quel bucket ou quel service est réellement utilisé.

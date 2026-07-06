@@ -13,14 +13,5 @@
   "frontMatter": {
     "title": "Schémas d’architecture (Mermaid)",
     "sidebar_label": "Architecture (schémas)"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "Stack technique",
-    "permalink": "/docs/stack"
-  },
-  "next": {
-    "title": "Structure du frontend",
-    "permalink": "/docs/frontend/structure"
   }
 }

@@ -1,7 +1,7 @@
 {
   "id": "testing/firebase-test",
   "title": "Test Firebase",
-  "description": "Brouillon de documentation pour testing/firebase-test.",
+  "description": "Vérifier la configuration et la connectivité Firebase (Auth, RTDB, Storage).",
   "source": "@site/docs/testing/firebase-test.md",
   "sourceDirName": "testing",
   "slug": "/testing/firebase-test",
@@ -12,14 +12,5 @@
   "version": "current",
   "frontMatter": {
     "title": "Test Firebase"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "Test Supabase",
-    "permalink": "/docs/testing/supabase-test"
-  },
-  "next": {
-    "title": "Outils de Diagnostic",
-    "permalink": "/docs/testing/diagnostic-tools"
   }
 }

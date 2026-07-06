@@ -1,7 +1,7 @@
 {
   "id": "devops/firebase-hosting",
   "title": "Firebase Hosting",
-  "description": "Brouillon de documentation pour devops/firebase-hosting.",
+  "description": "Ce guide explique comment déployer l’app (SPA) et la documentation sur Firebase Hosting.",
   "source": "@site/docs/devops/firebase-hosting.md",
   "sourceDirName": "devops",
   "slug": "/devops/firebase-hosting",
@@ -12,14 +12,5 @@
   "version": "current",
   "frontMatter": {
     "title": "Firebase Hosting"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "Supabase RLS",
-    "permalink": "/docs/security/supabase-rls"
-  },
-  "next": {
-    "title": "VPS: Caddy vs Nginx",
-    "permalink": "/docs/devops/vps-caddy-nginx"
   }
 }

@@ -11,78 +11,43 @@
           "mainDocId": "intro",
           "docs": [
             {
-              "id": "admin/dashboard",
-              "path": "/docs/admin/dashboard",
-              "sidebar": "docs"
-            },
-            {
-              "id": "admin/institutions-places",
-              "path": "/docs/admin/institutions-places",
-              "sidebar": "docs"
-            },
-            {
-              "id": "admin/scroll-policy",
-              "path": "/docs/admin/scroll-policy",
-              "sidebar": "docs"
-            },
-            {
-              "id": "admin/users",
-              "path": "/docs/admin/users",
-              "sidebar": "docs"
-            },
-            {
-              "id": "admin/validation-reception",
-              "path": "/docs/admin/validation-reception",
-              "sidebar": "docs"
-            },
-            {
-              "id": "admin/votations",
-              "path": "/docs/admin/votations",
-              "sidebar": "docs"
-            },
-            {
-              "id": "apps/calendar",
-              "path": "/docs/apps/calendar",
-              "sidebar": "docs"
-            },
-            {
-              "id": "apps/chat",
-              "path": "/docs/apps/chat",
-              "sidebar": "docs"
-            },
-            {
-              "id": "apps/events",
-              "path": "/docs/apps/events",
-              "sidebar": "docs"
-            },
-            {
-              "id": "apps/files",
-              "path": "/docs/apps/files",
-              "sidebar": "docs"
-            },
-            {
-              "id": "apps/mail",
-              "path": "/docs/apps/mail",
-              "sidebar": "docs"
-            },
-            {
-              "id": "apps/notes",
-              "path": "/docs/apps/notes",
-              "sidebar": "docs"
-            },
-            {
-              "id": "apps/tasklist",
-              "path": "/docs/apps/tasklist",
-              "sidebar": "docs"
-            },
-            {
-              "id": "apps/tools",
-              "path": "/docs/apps/tools",
+              "id": "apps/overview",
+              "path": "/docs/apps/overview",
               "sidebar": "docs"
             },
             {
               "id": "architecture",
               "path": "/docs/architecture",
+              "sidebar": "docs"
+            },
+            {
+              "id": "auth/auth-routing-lifecycle",
+              "path": "/docs/auth/auth-routing-lifecycle",
+              "sidebar": "docs"
+            },
+            {
+              "id": "auth/overview",
+              "path": "/docs/auth/overview",
+              "sidebar": "docs"
+            },
+            {
+              "id": "auth/permission-model",
+              "path": "/docs/auth/permission-model",
+              "sidebar": "docs"
+            },
+            {
+              "id": "auth/security-services-legacy",
+              "path": "/docs/auth/security-services-legacy",
+              "sidebar": "docs"
+            },
+            {
+              "id": "backend/active-vs-legacy",
+              "path": "/docs/backend/active-vs-legacy",
+              "sidebar": "docs"
+            },
+            {
+              "id": "backend/endpoints-catalog",
+              "path": "/docs/backend/endpoints-catalog",
               "sidebar": "docs"
             },
             {
@@ -103,6 +68,21 @@
             {
               "id": "backend/firebase/storage",
               "path": "/docs/backend/firebase/storage",
+              "sidebar": "docs"
+            },
+            {
+              "id": "backend/frontend-backend-traceability",
+              "path": "/docs/backend/frontend-backend-traceability",
+              "sidebar": "docs"
+            },
+            {
+              "id": "backend/overview",
+              "path": "/docs/backend/overview",
+              "sidebar": "docs"
+            },
+            {
+              "id": "backend/routes-map",
+              "path": "/docs/backend/routes-map",
               "sidebar": "docs"
             },
             {
@@ -136,8 +116,18 @@
               "sidebar": "docs"
             },
             {
+              "id": "contrib/docs-style-guide",
+              "path": "/docs/contrib/docs-style-guide",
+              "sidebar": "docs"
+            },
+            {
               "id": "contrib/eslint-prettier",
               "path": "/docs/contrib/eslint-prettier",
+              "sidebar": "docs"
+            },
+            {
+              "id": "contrib/github",
+              "path": "/docs/contrib/github",
               "sidebar": "docs"
             },
             {
@@ -146,8 +136,18 @@
               "sidebar": "docs"
             },
             {
+              "id": "data/critical-tables",
+              "path": "/docs/data/critical-tables",
+              "sidebar": "docs"
+            },
+            {
               "id": "data/migration-firebase-supabase",
               "path": "/docs/data/migration-firebase-supabase",
+              "sidebar": "docs"
+            },
+            {
+              "id": "data/migrations-catalog",
+              "path": "/docs/data/migrations-catalog",
               "sidebar": "docs"
             },
             {
@@ -156,48 +156,103 @@
               "sidebar": "docs"
             },
             {
+              "id": "data/overview",
+              "path": "/docs/data/overview",
+              "sidebar": "docs"
+            },
+            {
+              "id": "data/rpc-and-sql-surface",
+              "path": "/docs/data/rpc-and-sql-surface",
+              "sidebar": "docs"
+            },
+            {
               "id": "data/schema-supabase",
               "path": "/docs/data/schema-supabase",
               "sidebar": "docs"
             },
             {
-              "id": "devops/ci-cd",
-              "path": "/docs/devops/ci-cd",
+              "id": "domains/formation-pratique",
+              "path": "/docs/domains/formation-pratique",
               "sidebar": "docs"
             },
             {
-              "id": "devops/docker-dev",
-              "path": "/docs/devops/docker-dev",
+              "id": "domains/formation-pratique-flows",
+              "path": "/docs/domains/formation-pratique-flows",
               "sidebar": "docs"
             },
             {
-              "id": "devops/firebase-hosting",
-              "path": "/docs/devops/firebase-hosting",
+              "id": "domains/formation-pratique-traceability",
+              "path": "/docs/domains/formation-pratique-traceability",
               "sidebar": "docs"
             },
             {
-              "id": "devops/large-files",
-              "path": "/docs/devops/large-files",
+              "id": "domains/gamification-service-deep-dive",
+              "path": "/docs/domains/gamification-service-deep-dive",
               "sidebar": "docs"
             },
             {
-              "id": "devops/vps-caddy-nginx",
-              "path": "/docs/devops/vps-caddy-nginx",
+              "id": "domains/pfp-services-deep-dive",
+              "path": "/docs/domains/pfp-services-deep-dive",
               "sidebar": "docs"
             },
             {
-              "id": "features/navigation",
-              "path": "/docs/features/navigation",
+              "id": "domains/planning-soins",
+              "path": "/docs/domains/planning-soins",
               "sidebar": "docs"
             },
             {
-              "id": "features/notifications",
-              "path": "/docs/features/notifications",
+              "id": "domains/social-gamification",
+              "path": "/docs/domains/social-gamification",
               "sidebar": "docs"
             },
             {
-              "id": "features/overview",
-              "path": "/docs/features/overview",
+              "id": "domains/ui-ownership-map",
+              "path": "/docs/domains/ui-ownership-map",
+              "sidebar": "docs"
+            },
+            {
+              "id": "domains/votation-algorithm",
+              "path": "/docs/domains/votation-algorithm",
+              "sidebar": "docs"
+            },
+            {
+              "id": "frontend/bootstrap",
+              "path": "/docs/frontend/bootstrap",
+              "sidebar": "docs"
+            },
+            {
+              "id": "frontend/component-library-admin",
+              "path": "/docs/frontend/component-library-admin",
+              "sidebar": "docs"
+            },
+            {
+              "id": "frontend/component-library-common-ui",
+              "path": "/docs/frontend/component-library-common-ui",
+              "sidebar": "docs"
+            },
+            {
+              "id": "frontend/component-library-critical-components",
+              "path": "/docs/frontend/component-library-critical-components",
+              "sidebar": "docs"
+            },
+            {
+              "id": "frontend/component-library-layout",
+              "path": "/docs/frontend/component-library-layout",
+              "sidebar": "docs"
+            },
+            {
+              "id": "frontend/component-library-overview",
+              "path": "/docs/frontend/component-library-overview",
+              "sidebar": "docs"
+            },
+            {
+              "id": "frontend/component-library-social-media",
+              "path": "/docs/frontend/component-library-social-media",
+              "sidebar": "docs"
+            },
+            {
+              "id": "frontend/critical-stores",
+              "path": "/docs/frontend/critical-stores",
               "sidebar": "docs"
             },
             {
@@ -206,8 +261,28 @@
               "sidebar": "docs"
             },
             {
+              "id": "frontend/route-catalog",
+              "path": "/docs/frontend/route-catalog",
+              "sidebar": "docs"
+            },
+            {
+              "id": "frontend/route-to-data-matrix",
+              "path": "/docs/frontend/route-to-data-matrix",
+              "sidebar": "docs"
+            },
+            {
+              "id": "frontend/router-modules",
+              "path": "/docs/frontend/router-modules",
+              "sidebar": "docs"
+            },
+            {
               "id": "frontend/routing",
               "path": "/docs/frontend/routing",
+              "sidebar": "docs"
+            },
+            {
+              "id": "frontend/services-catalog",
+              "path": "/docs/frontend/services-catalog",
               "sidebar": "docs"
             },
             {
@@ -216,8 +291,8 @@
               "sidebar": "docs"
             },
             {
-              "id": "frontend/structure",
-              "path": "/docs/frontend/structure",
+              "id": "frontend/stores-services-map",
+              "path": "/docs/frontend/stores-services-map",
               "sidebar": "docs"
             },
             {
@@ -226,28 +301,8 @@
               "sidebar": "docs"
             },
             {
-              "id": "gamification/admin",
-              "path": "/docs/gamification/admin",
-              "sidebar": "docs"
-            },
-            {
-              "id": "gamification/challenges",
-              "path": "/docs/gamification/challenges",
-              "sidebar": "docs"
-            },
-            {
-              "id": "gamification/houses",
-              "path": "/docs/gamification/houses",
-              "sidebar": "docs"
-            },
-            {
-              "id": "gamification/profile",
-              "path": "/docs/gamification/profile",
-              "sidebar": "docs"
-            },
-            {
-              "id": "gamification/quests",
-              "path": "/docs/gamification/quests",
+              "id": "frontend/view-store-service-matrix",
+              "path": "/docs/frontend/view-store-service-matrix",
               "sidebar": "docs"
             },
             {
@@ -256,23 +311,16 @@
               "sidebar": "docs"
             },
             {
+              "id": "getting-started/cli-extensions/overview",
+              "path": "/docs/getting-started/cli-extensions/overview"
+            },
+            {
+              "id": "getting-started/environment/setup",
+              "path": "/docs/getting-started/environment/setup"
+            },
+            {
               "id": "intro",
               "path": "/docs/",
-              "sidebar": "docs"
-            },
-            {
-              "id": "map/institutions",
-              "path": "/docs/map/institutions",
-              "sidebar": "docs"
-            },
-            {
-              "id": "map/overview",
-              "path": "/docs/map/overview",
-              "sidebar": "docs"
-            },
-            {
-              "id": "map/places",
-              "path": "/docs/map/places",
               "sidebar": "docs"
             },
             {
@@ -291,33 +339,28 @@
               "sidebar": "docs"
             },
             {
-              "id": "project/migrations",
-              "path": "/docs/project/migrations",
+              "id": "ops/deployment",
+              "path": "/docs/ops/deployment",
               "sidebar": "docs"
             },
             {
-              "id": "project/overview",
-              "path": "/docs/project/overview",
+              "id": "ops/development",
+              "path": "/docs/ops/development",
               "sidebar": "docs"
             },
             {
-              "id": "project/releases",
-              "path": "/docs/project/releases",
+              "id": "ops/runbook",
+              "path": "/docs/ops/runbook",
               "sidebar": "docs"
             },
             {
-              "id": "project/roadmap",
-              "path": "/docs/project/roadmap",
+              "id": "ops/vps-operations",
+              "path": "/docs/ops/vps-operations",
               "sidebar": "docs"
             },
             {
-              "id": "project/sprints",
-              "path": "/docs/project/sprints",
-              "sidebar": "docs"
-            },
-            {
-              "id": "project/template-gantt",
-              "path": "/docs/project/template-gantt",
+              "id": "ops/vps-topology",
+              "path": "/docs/ops/vps-topology",
               "sidebar": "docs"
             },
             {
@@ -341,23 +384,18 @@
               "sidebar": "docs"
             },
             {
-              "id": "social/communities",
-              "path": "/docs/social/communities",
+              "id": "system/overview",
+              "path": "/docs/system/overview",
               "sidebar": "docs"
             },
             {
-              "id": "social/messaging",
-              "path": "/docs/social/messaging",
+              "id": "system/project-structure",
+              "path": "/docs/system/project-structure",
               "sidebar": "docs"
             },
             {
-              "id": "social/overview",
-              "path": "/docs/social/overview",
-              "sidebar": "docs"
-            },
-            {
-              "id": "stack",
-              "path": "/docs/stack",
+              "id": "system/recovery-checklist",
+              "path": "/docs/system/recovery-checklist",
               "sidebar": "docs"
             },
             {
@@ -367,7 +405,11 @@
             },
             {
               "id": "testing/firebase-test",
-              "path": "/docs/testing/firebase-test",
+              "path": "/docs/testing/firebase-test"
+            },
+            {
+              "id": "testing/overview",
+              "path": "/docs/testing/overview",
               "sidebar": "docs"
             },
             {
@@ -377,28 +419,23 @@
             },
             {
               "id": "testing/supabase-test",
-              "path": "/docs/testing/supabase-test",
-              "sidebar": "docs"
+              "path": "/docs/testing/supabase-test"
             },
             {
-              "id": "troubleshooting/docusaurus-prism",
-              "path": "/docs/troubleshooting/docusaurus-prism",
-              "sidebar": "docs"
+              "id": "testing/unit-tests",
+              "path": "/docs/testing/unit-tests"
             },
             {
               "id": "troubleshooting/env-encoding",
-              "path": "/docs/troubleshooting/env-encoding",
-              "sidebar": "docs"
+              "path": "/docs/troubleshooting/env-encoding"
             },
             {
               "id": "troubleshooting/firebase-auth",
-              "path": "/docs/troubleshooting/firebase-auth",
-              "sidebar": "docs"
+              "path": "/docs/troubleshooting/firebase-auth"
             },
             {
               "id": "troubleshooting/firebase-env",
-              "path": "/docs/troubleshooting/firebase-env",
-              "sidebar": "docs"
+              "path": "/docs/troubleshooting/firebase-env"
             }
           ],
           "draftIds": [],

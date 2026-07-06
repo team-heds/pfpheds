@@ -12,14 +12,5 @@
   "version": "current",
   "frontMatter": {
     "title": "App Chat"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "Politique de scroll Admin",
-    "permalink": "/docs/admin/scroll-policy"
-  },
-  "next": {
-    "title": "App Mail",
-    "permalink": "/docs/apps/mail"
   }
 }

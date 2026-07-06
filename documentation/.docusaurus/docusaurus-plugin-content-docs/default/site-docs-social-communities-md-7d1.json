@@ -12,14 +12,5 @@
   "version": "current",
   "frontMatter": {
     "title": "Communautés"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "Social - Vue d'ensemble",
-    "permalink": "/docs/social/overview"
-  },
-  "next": {
-    "title": "Messagerie",
-    "permalink": "/docs/social/messaging"
   }
 }

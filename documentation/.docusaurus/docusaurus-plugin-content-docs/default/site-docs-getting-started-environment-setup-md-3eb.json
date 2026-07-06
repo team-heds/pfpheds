@@ -14,14 +14,5 @@
     "id": "setup",
     "title": "Environment Setup",
     "sidebar_label": "Setup de l'environnement"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "Environment Setup",
-    "permalink": "/docs/getting-started/environment"
-  },
-  "next": {
-    "title": "CLI & Extensions",
-    "permalink": "/docs/getting-started/cli-extensions"
   }
 }

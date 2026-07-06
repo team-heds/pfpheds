@@ -1,7 +1,7 @@
 {
   "id": "security/supabase-rls",
   "title": "Supabase RLS",
-  "description": "Brouillon de documentation pour security/supabase-rls.",
+  "description": "Principe",
   "source": "@site/docs/security/supabase-rls.md",
   "sourceDirName": "security",
   "slug": "/security/supabase-rls",
@@ -15,11 +15,11 @@
   },
   "sidebar": "docs",
   "previous": {
-    "title": "Route Guards",
+    "title": "Route guards",
     "permalink": "/docs/security/route-guards"
   },
   "next": {
-    "title": "Firebase Hosting",
-    "permalink": "/docs/devops/firebase-hosting"
+    "title": "Données, coexistence Firebase et Supabase",
+    "permalink": "/docs/data/overview"
   }
 }

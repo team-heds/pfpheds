@@ -1,7 +1,7 @@
 {
   "id": "testing/scripts",
   "title": "Scripts",
-  "description": "Brouillon de documentation pour testing/scripts.",
+  "description": "Scripts utiles",
   "source": "@site/docs/testing/scripts.md",
   "sourceDirName": "testing",
   "slug": "/testing/scripts",
@@ -15,11 +15,11 @@
   },
   "sidebar": "docs",
   "previous": {
-    "title": "Outils de Diagnostic",
-    "permalink": "/docs/testing/diagnostic-tools"
+    "title": "Tests et assurance qualité",
+    "permalink": "/docs/testing/overview"
   },
   "next": {
-    "title": "Problèmes Variables Firebase",
-    "permalink": "/docs/troubleshooting/firebase-env"
+    "title": "Outils de diagnostic",
+    "permalink": "/docs/testing/diagnostic-tools"
   }
 }

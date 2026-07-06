@@ -1,7 +1,7 @@
 {
   "id": "backend/supabase/services",
-  "title": "Supabase Services",
-  "description": "Brouillon de documentation pour backend/supabase/services.",
+  "title": "Services Supabase",
+  "description": "Principe",
   "source": "@site/docs/backend/supabase/services.md",
   "sourceDirName": "backend/supabase",
   "slug": "/backend/supabase/services",
@@ -11,15 +11,15 @@
   "tags": [],
   "version": "current",
   "frontMatter": {
-    "title": "Supabase Services"
+    "title": "Services Supabase"
   },
   "sidebar": "docs",
   "previous": {
-    "title": "Supabase - Vue d'ensemble",
+    "title": "Supabase - vue d'ensemble",
     "permalink": "/docs/backend/supabase/overview"
   },
   "next": {
-    "title": "Supabase RLS & Sécurité",
+    "title": "Supabase RLS et sécurité",
     "permalink": "/docs/backend/supabase/rls"
   }
 }

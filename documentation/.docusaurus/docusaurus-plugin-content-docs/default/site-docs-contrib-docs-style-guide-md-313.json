@@ -1,7 +1,7 @@
 {
   "id": "contrib/docs-style-guide",
   "title": "Guide de style de la documentation",
-  "description": "Ce guide donne des règles simples pour écrire la documentation.",
+  "description": "Objectif",
   "source": "@site/docs/contrib/docs-style-guide.md",
   "sourceDirName": "contrib",
   "slug": "/contrib/docs-style-guide",
@@ -12,15 +12,15 @@
   "version": "current",
   "frontMatter": {
     "title": "Guide de style de la documentation",
-    "sidebar_label": "Guide de style (Docs)"
+    "sidebar_label": "Guide de style"
   },
   "sidebar": "docs",
   "previous": {
-    "title": "Docusaurus/Prism",
-    "permalink": "/docs/troubleshooting/docusaurus-prism"
+    "title": "ESLint et Prettier",
+    "permalink": "/docs/contrib/eslint-prettier"
   },
   "next": {
-    "title": "GitHub (projet)",
+    "title": "GitHub",
     "permalink": "/docs/contrib/github"
   }
 }

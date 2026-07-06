@@ -1,7 +1,7 @@
 {
   "id": "intro",
-  "title": "Bienvenue",
-  "description": "Plateforme HEdS — Documentation",
+  "title": "Documentation technique de référence",
+  "description": "Documentation technique",
   "source": "@site/docs/intro.md",
   "sourceDirName": ".",
   "slug": "/",
@@ -12,12 +12,12 @@
   "version": "current",
   "frontMatter": {
     "id": "intro",
-    "title": "Bienvenue",
+    "title": "Documentation technique de référence",
     "slug": "/"
   },
   "sidebar": "docs",
   "next": {
-    "title": "Prise en main",
+    "title": "Démarrage rapide et reprise du projet",
     "permalink": "/docs/getting-started"
   }
 }

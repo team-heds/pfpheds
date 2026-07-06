@@ -13,14 +13,5 @@
   "frontMatter": {
     "title": "Processus — Soins-infirmiers",
     "sidebar_label": "Processus SI"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "Overview",
-    "permalink": "/docs/soins-infirmiers/overview"
-  },
-  "next": {
-    "title": "Dashboard Administration",
-    "permalink": "/docs/admin/dashboard"
   }
 }

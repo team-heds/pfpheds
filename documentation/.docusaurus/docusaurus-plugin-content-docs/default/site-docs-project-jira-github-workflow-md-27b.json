@@ -13,14 +13,5 @@
   "frontMatter": {
     "title": "Workflow Jira ↔ GitHub",
     "sidebar_label": "Jira ↔ GitHub"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "Sprints 2025",
-    "permalink": "/docs/project/sprints"
-  },
-  "next": {
-    "title": "Releases & Versions",
-    "permalink": "/docs/project/releases"
   }
 }

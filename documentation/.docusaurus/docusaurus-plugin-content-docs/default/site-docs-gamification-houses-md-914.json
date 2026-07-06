@@ -12,14 +12,5 @@
   "version": "current",
   "frontMatter": {
     "title": "Maisons HES"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "Défis",
-    "permalink": "/docs/gamification/challenges"
-  },
-  "next": {
-    "title": "Administration Gamification",
-    "permalink": "/docs/gamification/admin"
   }
 }

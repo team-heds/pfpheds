@@ -9,13 +9,34 @@
             <i class="pi pi-map-marker text-primary text-3xl"></i>
             <div>
               <h1 class="text-2xl font-bold text-900 m-0">Places Assignées</h1>
-              <p class="text-600 m-0 mt-1">Vue d'ensemble et gestion des assignations de stages par PFP</p>
+              <p class="text-600 m-0 mt-1">
+                Vue d'ensemble et gestion des assignations de stages par PFP
+              </p>
             </div>
           </div>
           <div class="flex align-items-center gap-2 flex-wrap">
-            <Dropdown v-model="selectedYear" :options="yearOptions" placeholder="Année" class="w-8rem" />
-            <Button icon="pi pi-refresh" outlined class="p-button-sm" @click="loadAllData" :loading="loading" v-tooltip="'Rafraîchir'" />
-            <Button icon="pi pi-file-excel" label="Export Excel" severity="success" outlined class="p-button-sm" @click="exportExcel" />
+            <Dropdown
+              v-model="selectedYear"
+              :options="yearOptions"
+              placeholder="Année"
+              class="w-8rem"
+            />
+            <Button
+              icon="pi pi-refresh"
+              outlined
+              class="p-button-sm"
+              @click="loadAllData"
+              :loading="loading"
+              v-tooltip="'Rafraîchir'"
+            />
+            <Button
+              icon="pi pi-file-excel"
+              label="Export Excel"
+              severity="success"
+              outlined
+              class="p-button-sm"
+              @click="exportExcel"
+            />
           </div>
         </div>
       </div>
@@ -31,7 +52,12 @@
             @click="selectedPFP = tab.value"
           >
             {{ tab.label }}
-            <Badge v-if="getTabCount(tab.value) > 0" :value="getTabCount(tab.value)" severity="info" class="ml-2" />
+            <Badge
+              v-if="getTabCount(tab.value) > 0"
+              :value="getTabCount(tab.value)"
+              severity="info"
+              class="ml-2"
+            />
           </button>
         </div>
 
@@ -77,11 +103,37 @@
         <div class="flex flex-wrap gap-3 align-items-center">
           <span class="p-input-icon-left flex-1" style="min-width: 200px">
             <i class="pi pi-search" />
-            <InputText v-model="searchQuery" placeholder="Rechercher un étudiant, une place..." class="w-full" />
+            <InputText
+              v-model="searchQuery"
+              placeholder="Rechercher un étudiant, une place..."
+              class="w-full"
+            />
           </span>
-          <Dropdown v-model="filterClasse" :options="classesList" placeholder="Classe" class="w-8rem" showClear />
-          <Dropdown v-model="filterSource" :options="sourceOptions" optionLabel="label" optionValue="value" placeholder="Source" class="w-10rem" showClear />
-          <Dropdown v-model="filterStatus" :options="statusOptions" optionLabel="label" optionValue="value" placeholder="Statut" class="w-10rem" showClear />
+          <Dropdown
+            v-model="filterClasse"
+            :options="classesList"
+            placeholder="Classe"
+            class="w-8rem"
+            showClear
+          />
+          <Dropdown
+            v-model="filterSource"
+            :options="sourceOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Source"
+            class="w-10rem"
+            showClear
+          />
+          <Dropdown
+            v-model="filterStatus"
+            :options="statusOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Statut"
+            class="w-10rem"
+            showClear
+          />
           <div class="flex align-items-center gap-2">
             <InputSwitch v-model="showAllStudents" />
             <span class="text-600 text-sm white-space-nowrap">Tous les étudiants</span>
@@ -111,7 +163,7 @@
           <template #header>
             <div class="flex align-items-center justify-content-between">
               <span class="text-lg font-bold text-900">
-                {{ selectedPFPLabel }} — {{ selectedYear }} 
+                {{ selectedPFPLabel }} — {{ selectedYear }}
                 <span class="text-sm font-normal text-500">({{ filteredRows.length }} lignes)</span>
               </span>
             </div>
@@ -120,17 +172,26 @@
           <template #empty>
             <div class="text-center p-5">
               <i class="pi pi-inbox text-5xl text-400 mb-3"></i>
-              <p class="text-600">Aucun résultat pour {{ selectedPFPLabel }} — {{ selectedYear }}</p>
+              <p class="text-600">
+                Aucun résultat pour {{ selectedPFPLabel }} — {{ selectedYear }}
+              </p>
             </div>
           </template>
 
-          <Column field="student_sort_name" header="Étudiant" sortable :style="{ minWidth: '200px' }">
+          <Column
+            field="student_sort_name"
+            header="Étudiant"
+            sortable
+            :style="{ minWidth: '200px' }"
+          >
             <template #body="{ data }">
               <div class="flex align-items-center gap-2">
                 <Avatar :label="(data.student_name || '?').charAt(0)" shape="circle" size="small" />
                 <div>
                   <div class="font-semibold">{{ data.student_name }}</div>
-                  <div v-if="data.student_class" class="text-xs text-500">{{ data.student_class }}</div>
+                  <div v-if="data.student_class" class="text-xs text-500">
+                    {{ data.student_class }}
+                  </div>
                 </div>
               </div>
             </template>
@@ -138,11 +199,20 @@
 
           <Column field="source_label" header="Source" sortable :style="{ width: '160px' }">
             <template #body="{ data }">
-              <Tag :value="data.source_label" :severity="data.source_severity" :icon="data.source_icon" />
+              <Tag
+                :value="data.source_label"
+                :severity="data.source_severity"
+                :icon="data.source_icon"
+              />
             </template>
           </Column>
 
-          <Column field="assigned_place_name" header="Place attribuée" sortable :style="{ minWidth: '200px' }">
+          <Column
+            field="assigned_place_name"
+            header="Place attribuée"
+            sortable
+            :style="{ minWidth: '200px' }"
+          >
             <template #body="{ data }">
               <div v-if="data.assigned_place_id">
                 <div class="font-semibold">{{ data.assigned_place_name }}</div>
@@ -152,27 +222,67 @@
             </template>
           </Column>
 
-          <Column field="praticien_display" header="Praticien formateur" sortable :style="{ minWidth: '180px' }">
+          <Column
+            field="praticien_display"
+            header="Praticien formateur"
+            sortable
+            :style="{ minWidth: '180px' }"
+          >
             <template #body="{ data }">
               <span v-if="data.praticien_display">{{ data.praticien_display }}</span>
               <span v-else class="text-400">—</span>
             </template>
           </Column>
 
-          <Column field="rank_label" header="Critères" sortable :style="{ width: '150px', textAlign: 'center' }">
+          <Column
+            field="rank_label"
+            header="Critères"
+            sortable
+            :style="{ width: '150px', textAlign: 'center' }"
+          >
             <template #body="{ data }">
-              <Tag v-if="data.assigned_rank === 99" value="Hors choix" severity="danger" icon="pi pi-exclamation-triangle" />
-              <Tag v-else-if="data.assigned_rank >= 1" :value="`${data.assigned_rank} crit. couvert${data.assigned_rank > 1 ? 's' : ''}`" :severity="getCritSeverity(data.assigned_rank)" icon="pi pi-check-circle" />
-              <Tag v-else-if="data.assigned_rank === 0 && data.assigned_place_id" value="0 critère" severity="warning" icon="pi pi-exclamation-circle" />
+              <Tag
+                v-if="data.assigned_rank === 99"
+                value="Hors choix"
+                severity="danger"
+                icon="pi pi-exclamation-triangle"
+              />
+              <Tag
+                v-else-if="data.assigned_rank >= 1"
+                :value="`${data.assigned_rank} crit. couvert${data.assigned_rank > 1 ? 's' : ''}`"
+                :severity="getCritSeverity(data.assigned_rank)"
+                icon="pi pi-check-circle"
+              />
+              <Tag
+                v-else-if="data.assigned_rank === 0 && data.assigned_place_id"
+                value="0 critère"
+                severity="warning"
+                icon="pi pi-exclamation-circle"
+              />
               <span v-else class="text-400">—</span>
             </template>
           </Column>
 
           <Column field="status" header="Statut" sortable :style="{ width: '130px' }">
             <template #body="{ data }">
-              <Tag v-if="data.status === 'published'" value="Publié" severity="success" icon="pi pi-check" />
-              <Tag v-else-if="data.status === 'draft'" value="Brouillon" severity="warning" icon="pi pi-clock" />
-              <Tag v-else-if="data.status === 'manual'" value="Manuel" severity="info" icon="pi pi-pencil" />
+              <Tag
+                v-if="data.status === 'published'"
+                value="Publié"
+                severity="success"
+                icon="pi pi-check"
+              />
+              <Tag
+                v-else-if="data.status === 'draft'"
+                value="Brouillon"
+                severity="warning"
+                icon="pi pi-clock"
+              />
+              <Tag
+                v-else-if="data.status === 'manual'"
+                value="Manuel"
+                severity="info"
+                icon="pi pi-pencil"
+              />
               <Tag v-else value="Non assigné" severity="secondary" />
             </template>
           </Column>
@@ -244,7 +354,9 @@
               <Avatar :label="(editingRow.student_name || '?').charAt(0)" shape="circle" />
               <div>
                 <div class="text-lg font-bold">{{ editingRow.student_name }}</div>
-                <div class="text-sm text-500">{{ editingRow.student_class }} — {{ selectedPFPLabel }} {{ selectedYear }}</div>
+                <div class="text-sm text-500">
+                  {{ editingRow.student_class }} — {{ selectedPFPLabel }} {{ selectedYear }}
+                </div>
               </div>
             </div>
           </div>
@@ -261,10 +373,14 @@
 
           <div class="mb-3">
             <label class="block mb-2 font-semibold">Rechercher une place</label>
-            <InputText v-model="placeSearch" placeholder="Nom de la place ou institution..." class="w-full" />
+            <InputText
+              v-model="placeSearch"
+              placeholder="Nom de la place ou institution..."
+              class="w-full"
+            />
           </div>
 
-          <div class="places-selection-list" style="max-height: 400px; overflow-y: auto;">
+          <div class="places-selection-list" style="max-height: 400px; overflow-y: auto">
             <div v-if="filteredPlacesForAssign.length === 0" class="text-center p-4 text-500">
               Aucune place trouvée pour {{ selectedPFPLabel }}
             </div>
@@ -278,13 +394,28 @@
               <div class="flex align-items-center justify-content-between">
                 <div class="flex-1">
                   <div class="font-semibold">{{ place.NomPlace || 'Place sans nom' }}</div>
-                  <div class="text-sm text-500 mt-1">{{ place.InstitutionName || place.Institution_name || 'Institution inconnue' }}</div>
+                  <div class="text-sm text-500 mt-1">
+                    {{ place.InstitutionName || place.Institution_name || 'Institution inconnue' }}
+                  </div>
                   <div class="flex gap-2 mt-1">
-                    <Tag v-if="place._capacity" :value="`Capacité: ${place._capacity}`" severity="info" class="text-xs" />
-                    <Tag v-if="place._assigned" :value="`Assignés: ${place._assigned}`" :severity="place._assigned >= place._capacity ? 'danger' : 'success'" class="text-xs" />
+                    <Tag
+                      v-if="place._capacity"
+                      :value="`Capacité: ${place._capacity}`"
+                      severity="info"
+                      class="text-xs"
+                    />
+                    <Tag
+                      v-if="place._assigned"
+                      :value="`Assignés: ${place._assigned}`"
+                      :severity="place._assigned >= place._capacity ? 'danger' : 'success'"
+                      class="text-xs"
+                    />
                   </div>
                 </div>
-                <i v-if="selectedPlace?.PlaceId === place.PlaceId" class="pi pi-check-circle text-3xl text-primary"></i>
+                <i
+                  v-if="selectedPlace?.PlaceId === place.PlaceId"
+                  class="pi pi-check-circle text-3xl text-primary"
+                ></i>
               </div>
             </div>
           </div>
@@ -380,7 +511,7 @@ const statusOptions = [
 ]
 
 // ── Helpers ──
-const dbPfpTypes = (pfp) => pfp === 'PFP1' ? ['PFP1A', 'PFP1B'] : [pfp]
+const dbPfpTypes = (pfp) => (pfp === 'PFP1' ? ['PFP1A', 'PFP1B'] : [pfp])
 const getAcademicYearKeys = (year) => {
   const y = Number(year)
   if (!Number.isFinite(y)) return [String(year)]
@@ -413,7 +544,9 @@ const getPropositionCapacityForPlace = (place, pfp, year) => {
   return total
 }
 
-const selectedPFPLabel = computed(() => pfpTabs.find(t => t.value === selectedPFP.value)?.label || selectedPFP.value)
+const selectedPFPLabel = computed(
+  () => pfpTabs.find((t) => t.value === selectedPFP.value)?.label || selectedPFP.value
+)
 
 const getStudentName = (s) => {
   if (!s) return 'N/A'
@@ -452,8 +585,9 @@ const rowClass = (data) => {
 
 // ── Déterminer la source d'une assignation ──
 const getSource = (assignment) => {
-  if (!assignment) return { label: 'Non assigné', severity: 'secondary', icon: 'pi pi-minus', key: 'none' }
-  
+  if (!assignment)
+    return { label: 'Non assigné', severity: 'secondary', icon: 'pi pi-minus', key: 'none' }
+
   const notes = (assignment.notes || '').toLowerCase()
   const isPriorityFromNotes = notes.includes('priorit')
   const isAlgorithmFromNotes = notes.includes('algorith')
@@ -480,9 +614,9 @@ const getSource = (assignment) => {
 const priorityUserIds = computed(() => {
   const types = dbPfpTypes(selectedPFP.value)
   const ids = new Set()
-  allPrioritySessions.value.forEach(s => {
+  allPrioritySessions.value.forEach((s) => {
     if (types.includes(s.pfp_type) && Array.isArray(s.priority_user_ids)) {
-      s.priority_user_ids.forEach(id => ids.add(id))
+      s.priority_user_ids.forEach((id) => ids.add(id))
     }
   })
   return ids
@@ -491,7 +625,7 @@ const priorityUserIds = computed(() => {
 // ── Praticiens par ID (lookup) ──
 const praticiensById = computed(() => {
   const map = new Map()
-  allPraticiens.value.forEach(p => {
+  allPraticiens.value.forEach((p) => {
     const id = p.id ?? p.PraticienId
     if (id != null) {
       map.set(String(id), getPraticienFullName(p))
@@ -508,7 +642,7 @@ const enrichedRows = computed(() => {
 
   // Assignments filtrées par PFP + année
   const assignMap = new Map()
-  allAssignments.value.forEach(a => {
+  allAssignments.value.forEach((a) => {
     if (types.includes(a.pfp_type) && a.year === year) {
       assignMap.set(a.user_id, a)
     }
@@ -516,14 +650,16 @@ const enrichedRows = computed(() => {
 
   // Lookup étudiants
   const studentsById = new Map()
-  allStudents.value.forEach(s => {
+  allStudents.value.forEach((s) => {
     const uid = s.user_id || s.id
     if (uid) studentsById.set(uid, s)
   })
 
   // Lookup places
   const placesById = new Map()
-  allPlaces.value.forEach(p => { if (p.PlaceId) placesById.set(p.PlaceId, p) })
+  allPlaces.value.forEach((p) => {
+    if (p.PlaceId) placesById.set(p.PlaceId, p)
+  })
 
   // ── Critères : calcul des critères manquants par étudiant ──
   const CRIT_KEYS = ['MSQ', 'SYSINT', 'NEUROGER', 'AIGU', 'REHAB', 'AMBU', 'FR', 'DE']
@@ -531,37 +667,50 @@ const enrichedRows = computed(() => {
   const getStudentMissingCriteria = (userId) => {
     if (studentCriteriaCache.has(userId)) return studentCriteriaCache.get(userId)
     const s = studentsById.get(userId)
-    const validated = {} 
-    CRIT_KEYS.forEach(c => { validated[c] = 0 })
+    const validated = {}
+    CRIT_KEYS.forEach((c) => {
+      validated[c] = 0
+    })
     // From pfp_valided
     if (s) {
       let pv = s.pfp_valided || s.pfp_validated || []
-      if (typeof pv === 'string') try { pv = JSON.parse(pv) } catch { pv = [] }
+      if (typeof pv === 'string')
+        try {
+          pv = JSON.parse(pv)
+        } catch {
+          pv = []
+        }
       if (pv && !Array.isArray(pv)) pv = Object.values(pv)
       if (Array.isArray(pv)) {
-        pv.forEach(entry => {
+        pv.forEach((entry) => {
           const pid = entry.PlaceId || entry.ID_PFP
           if (pid) {
             const pl = placesById.get(pid)
-            if (pl) CRIT_KEYS.forEach(c => { if (pl[c] === true || pl[c] === 'true' || pl[c] === 1) validated[c]++ })
+            if (pl)
+              CRIT_KEYS.forEach((c) => {
+                if (pl[c] === true || pl[c] === 'true' || pl[c] === 1) validated[c]++
+              })
           }
         })
       }
     }
     // From other PFP assignments (not current PFP)
-    allAssignments.value.forEach(a => {
+    allAssignments.value.forEach((a) => {
       if (a.user_id === userId && !types.includes(a.pfp_type) && a.assigned_place_id) {
         const pl = placesById.get(a.assigned_place_id)
-        if (pl) CRIT_KEYS.forEach(c => { if (pl[c] === true || pl[c] === 'true' || pl[c] === 1) validated[c]++ })
+        if (pl)
+          CRIT_KEYS.forEach((c) => {
+            if (pl[c] === true || pl[c] === 'true' || pl[c] === 1) validated[c]++
+          })
       }
     })
-    const missing = CRIT_KEYS.filter(c => validated[c] === 0)
+    const missing = CRIT_KEYS.filter((c) => validated[c] === 0)
     studentCriteriaCache.set(userId, missing)
     return missing
   }
   const getPlaceCriteria = (place) => {
     if (!place) return []
-    return CRIT_KEYS.filter(c => place[c] === true || place[c] === 'true' || place[c] === 1)
+    return CRIT_KEYS.filter((c) => place[c] === true || place[c] === 'true' || place[c] === 1)
   }
 
   const rows = []
@@ -572,16 +721,24 @@ const enrichedRows = computed(() => {
     const place = a.assigned_place_id ? placesById.get(a.assigned_place_id) : null
     const source = getSource(a)
     const isPriorityUser = priorityUserIds.value.has(userId)
-    const displaySource = isPriorityUser && source.key === 'algorithm'
-      ? { label: 'Prioritaire', severity: 'warning', icon: 'pi pi-star', key: 'priority' }
-      : source
+    const displaySource =
+      isPriorityUser && source.key === 'algorithm'
+        ? { label: 'Prioritaire', severity: 'warning', icon: 'pi pi-star', key: 'priority' }
+        : source
 
-    const praticiensList = Array.isArray(place?.praticiensFormateurs) ? place.praticiensFormateurs : []
+    const praticiensList = Array.isArray(place?.praticiensFormateurs)
+      ? place.praticiensFormateurs
+      : []
     const praticienAssigned = a.assigned_praticien_id
-      ? (praticiensById.value.get(a.assigned_praticien_id) || praticiensById.value.get(String(a.assigned_praticien_id)) || null)
+      ? praticiensById.value.get(a.assigned_praticien_id) ||
+        praticiensById.value.get(String(a.assigned_praticien_id)) ||
+        null
       : null
     const praticienFromPlace = praticiensList.length
-      ? praticiensList.map(pid => praticiensById.value.get(pid) || praticiensById.value.get(String(pid))).filter(Boolean).join(', ')
+      ? praticiensList
+          .map((pid) => praticiensById.value.get(pid) || praticiensById.value.get(String(pid)))
+          .filter(Boolean)
+          .join(', ')
       : null
 
     const missingCrit = getStudentMissingCriteria(userId)
@@ -596,7 +753,12 @@ const enrichedRows = computed(() => {
       assigned_place_name: a.assigned_place_name || place?.NomPlace || '',
       assigned_institution_name: a.assigned_institution_name || place?.InstitutionName || '',
       assigned_rank: a.assigned_rank,
-      rank_label: a.assigned_rank === 99 ? 'Hors choix' : (a.assigned_rank >= 0 && a.assigned_place_id ? `${a.assigned_rank} crit.` : ''),
+      rank_label:
+        a.assigned_rank === 99
+          ? 'Hors choix'
+          : a.assigned_rank >= 0 && a.assigned_place_id
+            ? `${a.assigned_rank} crit.`
+            : '',
       status: a.status || 'draft',
       source_label: displaySource.label,
       source_severity: displaySource.severity,
@@ -613,7 +775,7 @@ const enrichedRows = computed(() => {
 
   // 2. Étudiants non assignés (si showAllStudents)
   if (showAllStudents.value) {
-    allStudents.value.forEach(s => {
+    allStudents.value.forEach((s) => {
       const uid = s.user_id || s.id
       if (assignMap.has(uid)) return
 
@@ -651,7 +813,7 @@ const enrichedRows = computed(() => {
 // ── Filtrage ──
 const filteredRows = computed(() => {
   const q = (searchQuery.value || '').trim().toLowerCase()
-  return enrichedRows.value.filter(row => {
+  return enrichedRows.value.filter((row) => {
     if (filterClasse.value && row.student_class !== filterClasse.value) return false
     if (filterSource.value && row.source_key !== filterSource.value) return false
     if (filterStatus.value && row.status !== filterStatus.value) return false
@@ -671,13 +833,15 @@ const currentStats = computed(() => {
   const types = dbPfpTypes(selectedPFP.value)
   const year = selectedYear.value
 
-  const assignmentsForPfp = allAssignments.value.filter(a => types.includes(a.pfp_type) && a.year === year)
-  const assigned = assignmentsForPfp.filter(a => a.assigned_place_id).length
-  const published = assignmentsForPfp.filter(a => a.status === 'published').length
+  const assignmentsForPfp = allAssignments.value.filter(
+    (a) => types.includes(a.pfp_type) && a.year === year
+  )
+  const assigned = assignmentsForPfp.filter((a) => a.assigned_place_id).length
+  const published = assignmentsForPfp.filter((a) => a.status === 'published').length
 
   // Places proposées pour ce PFP/année
   let offeredPlaces = 0
-  allPlaces.value.forEach(place => {
+  allPlaces.value.forEach((place) => {
     offeredPlaces += getPropositionCapacityForPlace(place, selectedPFP.value, year)
   })
 
@@ -686,7 +850,7 @@ const currentStats = computed(() => {
     assigned,
     unassigned: enrichedRows.value.length - assigned,
     offeredPlaces,
-    priorityCount: enrichedRows.value.filter(r => r.is_priority).length,
+    priorityCount: enrichedRows.value.filter((r) => r.is_priority).length,
     published
   }
 })
@@ -695,7 +859,9 @@ const currentStats = computed(() => {
 const getTabCount = (pfpValue) => {
   const types = pfpValue === 'PFP1' ? ['PFP1A', 'PFP1B'] : [pfpValue]
   const yearKeys = getAcademicYearKeys(selectedYear.value)
-  return allAssignments.value.filter(a => types.includes(a.pfp_type) && yearKeys.includes(String(a.year)) && a.assigned_place_id).length
+  return allAssignments.value.filter(
+    (a) => types.includes(a.pfp_type) && yearKeys.includes(String(a.year)) && a.assigned_place_id
+  ).length
 }
 
 // ── Places disponibles pour l'assignation manuelle ──
@@ -707,25 +873,30 @@ const filteredPlacesForAssign = computed(() => {
   // Compter les assignations par place
   const assignCountByPlace = new Map()
   const yearKeys = getAcademicYearKeys(year)
-  allAssignments.value.forEach(a => {
+  allAssignments.value.forEach((a) => {
     if (types.includes(a.pfp_type) && yearKeys.includes(String(a.year)) && a.assigned_place_id) {
-      assignCountByPlace.set(a.assigned_place_id, (assignCountByPlace.get(a.assigned_place_id) || 0) + 1)
+      assignCountByPlace.set(
+        a.assigned_place_id,
+        (assignCountByPlace.get(a.assigned_place_id) || 0) + 1
+      )
     }
   })
 
   return allPlaces.value
-    .map(place => {
+    .map((place) => {
       // Calculer la capacité de proposition pour ce PFP (année simple + année académique)
       const capacity = getPropositionCapacityForPlace(place, selectedPFP.value, year)
-      
+
       const assigned = assignCountByPlace.get(place.PlaceId) || 0
       return { ...place, _capacity: capacity, _assigned: assigned }
     })
-    .filter(place => {
+    .filter((place) => {
       if (place._capacity <= 0) return false
       if (q) {
         const nameMatch = (place.NomPlace || '').toLowerCase().includes(q)
-        const instMatch = (place.InstitutionName || place.Institution_name || '').toLowerCase().includes(q)
+        const instMatch = (place.InstitutionName || place.Institution_name || '')
+          .toLowerCase()
+          .includes(q)
         if (!nameMatch && !instMatch) return false
       }
       return true
@@ -735,26 +906,29 @@ const filteredPlacesForAssign = computed(() => {
 
 const assignDialogTitle = computed(() => {
   if (!editingRow.value) return ''
-  return editingRow.value.assigned_place_id ? 'Modifier la place assignée' : 'Assigner une place manuellement'
+  return editingRow.value.assigned_place_id
+    ? 'Modifier la place assignée'
+    : 'Assigner une place manuellement'
 })
 
 // ── Chargement des données ──
 const loadAllData = async () => {
   loading.value = true
   try {
-    const [
-      studentsResult,
-      assignmentsResult,
-      placesResult,
-      praticiensResult,
-      prioResult
-    ] = await Promise.all([
-      getAllStudents(),
-      supabase.from('student_result_vote').select('*').order('assigned_rank', { ascending: true }),
-      supabase.from('places').select('*'),
-      supabase.from('praticiens_formateurs').select('*'),
-      supabase.from('votation_sessions').select('pfp_type, priority_user_ids').eq('is_priority', true)
-    ])
+    const [studentsResult, assignmentsResult, placesResult, praticiensResult, prioResult] =
+      await Promise.all([
+        getAllStudents(),
+        supabase
+          .from('student_result_vote')
+          .select('*')
+          .order('assigned_rank', { ascending: true }),
+        supabase.from('places').select('*'),
+        supabase.from('praticiens_formateurs').select('*'),
+        supabase
+          .from('votation_sessions')
+          .select('pfp_type, priority_user_ids')
+          .eq('is_priority', true)
+      ])
 
     allStudents.value = studentsResult || []
     allAssignments.value = assignmentsResult.data || []
@@ -764,10 +938,17 @@ const loadAllData = async () => {
 
     await syncSessionAssignCounts()
 
-    console.log(`✅ Données chargées: ${allStudents.value.length} étudiants, ${allAssignments.value.length} assignations, ${allPlaces.value.length} places`)
+    console.log(
+      `✅ Données chargées: ${allStudents.value.length} étudiants, ${allAssignments.value.length} assignations, ${allPlaces.value.length} places`
+    )
   } catch (e) {
     console.error('❌ Erreur chargement:', e)
-    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les données: ' + e.message, life: 5000 })
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: 'Impossible de charger les données: ' + e.message,
+      life: 5000
+    })
   } finally {
     loading.value = false
   }
@@ -789,7 +970,7 @@ const syncSessionAssignCounts = async () => {
       if (assignmentsError) throw assignmentsError
 
       const assignCounts = {}
-      ;(assignments || []).forEach(a => {
+      ;(assignments || []).forEach((a) => {
         const placeId = a.assigned_place_id
         if (!placeId) return
         assignCounts[placeId] = (assignCounts[placeId] || 0) + 1
@@ -803,10 +984,11 @@ const syncSessionAssignCounts = async () => {
 
       if (sessionsError) throw sessionsError
 
-      for (const session of (sessions || [])) {
-        const existingMap = session.pfp4_proposals && typeof session.pfp4_proposals === 'object'
-          ? session.pfp4_proposals
-          : {}
+      for (const session of sessions || []) {
+        const existingMap =
+          session.pfp4_proposals && typeof session.pfp4_proposals === 'object'
+            ? session.pfp4_proposals
+            : {}
 
         const nextMap = {
           ...existingMap,
@@ -841,7 +1023,10 @@ const saveAssignment = async () => {
 
   try {
     const placeName = selectedPlace.value.NomPlace || 'Place sans nom'
-    const institutionName = selectedPlace.value.InstitutionName || selectedPlace.value.Institution_name || 'Institution inconnue'
+    const institutionName =
+      selectedPlace.value.InstitutionName ||
+      selectedPlace.value.Institution_name ||
+      'Institution inconnue'
     const userId = editingRow.value.user_id
     const pfpType = editingRow.value._pfp_type_db || dbPfpTypes(selectedPFP.value)[0]
     const year = selectedYear.value
@@ -862,31 +1047,39 @@ const saveAssignment = async () => {
       if (error) throw error
     } else {
       // Nouvelle assignation manuelle
-      const { error } = await supabase
-        .from('student_result_vote')
-        .insert({
-          user_id: userId,
-          pfp_type: pfpType,
-          year: year,
-          assigned_place_id: selectedPlace.value.PlaceId,
-          assigned_place_name: placeName,
-          assigned_institution_name: institutionName,
-          assigned_rank: 0,
-          status: 'draft',
-          notes: 'Manuel — manual assignment le ' + new Date().toISOString()
-        })
+      const { error } = await supabase.from('student_result_vote').insert({
+        user_id: userId,
+        pfp_type: pfpType,
+        year: year,
+        assigned_place_id: selectedPlace.value.PlaceId,
+        assigned_place_name: placeName,
+        assigned_institution_name: institutionName,
+        assigned_rank: 0,
+        status: 'draft',
+        notes: 'Manuel — manual assignment le ' + new Date().toISOString()
+      })
 
       if (error) throw error
     }
 
     await syncSessionAssignCounts()
 
-    toast.add({ severity: 'success', summary: 'Succès', detail: `Place assignée pour ${editingRow.value.student_name}`, life: 3000 })
+    toast.add({
+      severity: 'success',
+      summary: 'Succès',
+      detail: `Place assignée pour ${editingRow.value.student_name}`,
+      life: 3000
+    })
     assignDialogVisible.value = false
     await loadAllData()
   } catch (e) {
     console.error('❌ Erreur assignation:', e)
-    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible d\'enregistrer: ' + e.message, life: 5000 })
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: "Impossible d'enregistrer: " + e.message,
+      life: 5000
+    })
   } finally {
     saving.value = false
   }
@@ -901,7 +1094,12 @@ const publishOne = async (row) => {
       .update({ status: 'published', updated_at: new Date().toISOString() })
       .eq('id', row._assignment_id)
     if (error) throw error
-    toast.add({ severity: 'success', summary: 'Publié', detail: `Assignation de ${row.student_name} publiée`, life: 3000 })
+    toast.add({
+      severity: 'success',
+      summary: 'Publié',
+      detail: `Assignation de ${row.student_name} publiée`,
+      life: 3000
+    })
     await loadAllData()
   } catch (e) {
     toast.add({ severity: 'error', summary: 'Erreur', detail: e.message, life: 5000 })
@@ -916,7 +1114,12 @@ const unpublishOne = async (row) => {
       .update({ status: 'draft', updated_at: new Date().toISOString() })
       .eq('id', row._assignment_id)
     if (error) throw error
-    toast.add({ severity: 'info', summary: 'Dépublié', detail: `Assignation de ${row.student_name} en brouillon`, life: 3000 })
+    toast.add({
+      severity: 'info',
+      summary: 'Dépublié',
+      detail: `Assignation de ${row.student_name} en brouillon`,
+      life: 3000
+    })
     await loadAllData()
   } catch (e) {
     toast.add({ severity: 'error', summary: 'Erreur', detail: e.message, life: 5000 })
@@ -932,18 +1135,18 @@ const viewProfile = (row) => {
 // ── Export Excel ──
 const exportExcel = async () => {
   const XLSX = await import('xlsx')
-  const rows = filteredRows.value.map(r => ({
-    'Étudiant': r.student_name || '',
-    'Classe': r.student_class || '',
-    'Source': r.source_label || '',
-    'Place': r.assigned_place_name || '',
-    'Institution': r.assigned_institution_name || '',
-    'Praticien': r.praticien_display || '',
-    'Rang': r.rank_label || '',
+  const rows = filteredRows.value.map((r) => ({
+    Étudiant: r.student_name || '',
+    Classe: r.student_class || '',
+    Source: r.source_label || '',
+    Place: r.assigned_place_name || '',
+    Institution: r.assigned_institution_name || '',
+    Praticien: r.praticien_display || '',
+    Rang: r.rank_label || '',
     'Critères manquants étudiant': r.missing_criteria || '',
     'Critères validés par la place': r.place_criteria || '',
-    'Statut': r.status || '',
-    'Prioritaire': r.is_priority ? 'Oui' : 'Non'
+    Statut: r.status || '',
+    Prioritaire: r.is_priority ? 'Oui' : 'Non'
   }))
 
   const ws = XLSX.utils.json_to_sheet(rows)
@@ -951,7 +1154,12 @@ const exportExcel = async () => {
   XLSX.utils.book_append_sheet(wb, ws, `${selectedPFP.value} ${selectedYear.value}`)
   XLSX.writeFile(wb, `places_${selectedPFP.value}_${selectedYear.value}.xlsx`)
 
-  toast.add({ severity: 'success', summary: 'Export', detail: `${rows.length} lignes exportées`, life: 3000 })
+  toast.add({
+    severity: 'success',
+    summary: 'Export',
+    detail: `${rows.length} lignes exportées`,
+    life: 3000
+  })
 }
 
 // ── Watchers ──
@@ -1016,5 +1224,3 @@ onMounted(async () => {
   opacity: 0.65;
 }
 </style>
-
-

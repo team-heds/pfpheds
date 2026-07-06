@@ -1,7 +1,7 @@
 {
   "id": "data/migration-firebase-supabase",
   "title": "Migration Firebase → Supabase",
-  "description": "Brouillon de documentation pour data/migration-firebase-supabase.",
+  "description": "Guide pour migrer certaines données de Firebase RTDB vers Supabase Postgres.",
   "source": "@site/docs/data/migration-firebase-supabase.md",
   "sourceDirName": "data",
   "slug": "/data/migration-firebase-supabase",
@@ -15,11 +15,11 @@
   },
   "sidebar": "docs",
   "previous": {
-    "title": "Migrations Supabase",
-    "permalink": "/docs/backend/supabase/migrations"
+    "title": "Catalogue des migrations Supabase",
+    "permalink": "/docs/data/migrations-catalog"
   },
   "next": {
-    "title": "Schéma Supabase",
-    "permalink": "/docs/data/schema-supabase"
+    "title": "Routeur Multi-Systèmes",
+    "permalink": "/docs/data/multi-system-router"
   }
 }

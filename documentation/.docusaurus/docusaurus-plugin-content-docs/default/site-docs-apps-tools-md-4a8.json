@@ -12,14 +12,5 @@
   "version": "current",
   "frontMatter": {
     "title": "Outils"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "App Events",
-    "permalink": "/docs/apps/events"
-  },
-  "next": {
-    "title": "Profil Gamification",
-    "permalink": "/docs/gamification/profile"
   }
 }

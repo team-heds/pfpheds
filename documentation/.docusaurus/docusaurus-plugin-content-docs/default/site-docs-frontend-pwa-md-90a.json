@@ -1,7 +1,7 @@
 {
   "id": "frontend/pwa",
-  "title": "PWA et Performance",
-  "description": "Brouillon de documentation pour frontend/pwa.",
+  "title": "PWA, service worker et cache",
+  "description": "Ce qui existe",
   "source": "@site/docs/frontend/pwa.md",
   "sourceDirName": "frontend",
   "slug": "/frontend/pwa",
@@ -11,15 +11,15 @@
   "tags": [],
   "version": "current",
   "frontMatter": {
-    "title": "PWA et Performance"
+    "title": "PWA, service worker et cache"
   },
   "sidebar": "docs",
   "previous": {
-    "title": "UI & Design System",
+    "title": "UI, layout et style applicatif",
     "permalink": "/docs/frontend/ui"
   },
   "next": {
-    "title": "Firebase - Vue d'ensemble",
-    "permalink": "/docs/backend/firebase/overview"
+    "title": "Authentification, rôles et permissions",
+    "permalink": "/docs/auth/overview"
   }
 }

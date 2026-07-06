@@ -12,14 +12,5 @@
   "version": "current",
   "frontMatter": {
     "title": "App Files"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "App Calendar",
-    "permalink": "/docs/apps/calendar"
-  },
-  "next": {
-    "title": "App Notes",
-    "permalink": "/docs/apps/notes"
   }
 }

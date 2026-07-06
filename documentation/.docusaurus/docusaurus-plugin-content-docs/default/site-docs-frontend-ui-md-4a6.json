@@ -1,7 +1,7 @@
 {
   "id": "frontend/ui",
-  "title": "UI & Design System",
-  "description": "Brouillon de documentation pour frontend/ui.",
+  "title": "UI, layout et style applicatif",
+  "description": "Stack UI",
   "source": "@site/docs/frontend/ui.md",
   "sourceDirName": "frontend",
   "slug": "/frontend/ui",
@@ -11,15 +11,15 @@
   "tags": [],
   "version": "current",
   "frontMatter": {
-    "title": "UI & Design System"
+    "title": "UI, layout et style applicatif"
   },
   "sidebar": "docs",
   "previous": {
-    "title": "Gestion d'état (Pinia)",
-    "permalink": "/docs/frontend/state"
+    "title": "Matrice route → vue → données",
+    "permalink": "/docs/frontend/route-to-data-matrix"
   },
   "next": {
-    "title": "PWA et Performance",
+    "title": "PWA, service worker et cache",
     "permalink": "/docs/frontend/pwa"
   }
 }

@@ -1,39 +1,51 @@
 ---
 id: architecture
-title: Architecture
+title: Architecture globale
 ---
 
-## Frontend
+<div class="docs-section-head">
+  <div>
+    <div class="docs-section-head__eyebrow">Vue d'ensemble</div>
+    <h2 class="docs-section-head__title">Les trois couches à garder en tête</h2>
+  </div>
+  <p class="docs-section-head__text">
+    Toute reprise du projet doit relier l'interface, la logique métier et la vraie source de données.
+  </p>
+</div>
 
-- Framework: Vue 3 + Vite
-- UI: PrimeVue, PrimeFlex, PrimeIcons
-- State: Pinia
-- Routing: Vue Router
-- PWA: vite-plugin-pwa
+<div class="feature-strip">
+  <div class="feature-strip__item"><span class="feature-strip__icon">◆</span><span>Frontend Vue 3</span></div>
+  <div class="feature-strip__item"><span class="feature-strip__icon">◆</span><span>Services métier & stores</span></div>
+  <div class="feature-strip__item"><span class="feature-strip__icon">◆</span><span>Firebase, Supabase, backend</span></div>
+</div>
 
-## Backends
+## Résumé
 
-- Firebase: Auth, Realtime Database, Storage, Hosting
-- Supabase: Auth, Postgres, Storage, RLS, Realtime
+Le projet est une application Vue 3 qui agrège plusieurs domaines métier et utilise :
 
-## Organisation du code
+- Firebase pour une partie legacy
+- Supabase comme cible principale
+- un backend Node/Express pour certaines API et intégrations
 
-- `src/components/` composants réutilisables (Dashboard, Social, Institutions, etc.)
-- `src/views/` pages structurées par domaines (auth, admin, apps, social, institutions, etc.)
-- `src/service/` services (Firebase, Supabase, médias, gamification)
-- `supabase_migrations/` schéma SQL et migrations
-
-## Flux de build
-
-1. Build app Vite → `dist/`
-2. Build docs Docusaurus → `documentation/build/`
-3. Copie des docs → `dist/docs/`
-
-## Schéma simplifié
+## Schéma
 
 ```mermaid
-graph LR;
-  Dev[Dev] -->|vite build| Dist[dist/]
-  Docs[Docs] -->|docusaurus build| Build[documentation/build/]
-  Build -->|copy| DistDocs[dist/docs/]
+flowchart LR
+  U[Utilisateurs] --> F[Frontend Vue 3]
+  F --> R[Vue Router]
+  F --> S[Stores Pinia]
+  S --> M[Services métier]
+  M --> FB[Firebase]
+  M --> SB[Supabase]
+  F --> API[Backend Express]
+  API --> SB
 ```
+
+## Fichiers structurants
+
+- `src/main.js`
+- `src/router.js`
+- `src/firebase.js`
+- `src/supabase.js`
+- `backend/index.js`
+- `supabase/migrations/`

@@ -3,7 +3,7 @@
   "permalink": "/docs/landing",
   "source": "@site/src/pages/index.md",
   "title": "Documentation HEdS",
-  "description": "Plateforme HEdS — Documentation",
+  "description": "Documentation technique",
   "frontMatter": {
     "title": "Documentation HEdS",
     "slug": "/landing",

@@ -2,32 +2,20 @@
 title: Firebase Realtime Database
 ---
 
-Guide d’utilisation de Realtime Database (RTDB).
+## Rôle
 
-## Accès & chemins
+La Realtime Database porte encore une partie des données historiques du projet.
 
-- Référence de base: `ref(db, path)` (voir `firebase.js` pour `db`)
-- Exemples de chemins utilisés:
-  - `Users/{uid}/Roles` — rôles d’accès dans le routeur
-  - `Places/` — données historiques (migration en cours vers Supabase)
+## Fichier principal
 
-## Lecture simple
+- `src/firebase.js`
 
-```js
-import { ref, get } from 'firebase/database'
-const snapshot = await get(ref(db, `Users/${uid}/Roles`))
-if (snapshot.exists()) {
-  const roles = snapshot.val()
-}
-```
+## Usage typique
 
-## Règles de sécurité
+- données legacy utilisateurs
+- rôles historiques
+- structures encore non migrées
 
-- Définies dans `database.rules.json` (référencé par `firebase.json`)
-- Vérifier que les chemins sensibles ne sont pas publics
+## Réalité de maintenance
 
-## Bonnes pratiques
-
-- Normaliser les chemins et les clés
-- Migrer vers Supabase Postgres quand relationnel/filtrage avancé est requis
-- Centraliser les accès dans des services/stores (éviter la logique dans les vues)
+Avant de modifier un flux supposé legacy, vérifier s'il lit encore vraiment la RTDB ou s'il a déjà été déplacé vers Supabase.

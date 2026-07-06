@@ -5,7 +5,7 @@
  */
 export default {
   "title": "Plateforme HEdS - Documentation",
-  "tagline": "Documentation complète et technique de la plateforme HEdS",
+  "tagline": "Documentation technique de reference pour reprendre, maintenir et faire evoluer la plateforme HEdS",
   "url": "https://localhost",
   "baseUrl": "/docs/",
   "favicon": "img/favicon.ico",
@@ -46,11 +46,11 @@ export default {
       {
         "docs": {
           "routeBasePath": "/",
-          "sidebarPath": "/Users/berthod/Desktop/PFPHeDSFinOCT/pfpheds/documentation/sidebars.js"
+          "sidebarPath": "C:\\Users\\antoine.quarroz\\Desktop\\HEdSLabDev\\PlateformeHEdS\\pfpheds\\documentation\\sidebars.js"
         },
         "blog": false,
         "theme": {
-          "customCss": "/Users/berthod/Desktop/PFPHeDSFinOCT/pfpheds/documentation/src/css/custom.css"
+          "customCss": "C:\\Users\\antoine.quarroz\\Desktop\\HEdSLabDev\\PlateformeHEdS\\pfpheds\\documentation\\src\\css\\custom.css"
         }
       }
     ]
@@ -62,10 +62,11 @@ export default {
       "disableSwitch": false
     },
     "navbar": {
+      "hideOnScroll": true,
       "title": "HEdS Docs",
       "logo": {
         "alt": "HEdS",
-        "src": "img/logo.svg"
+        "src": "img/hespicto.png"
       },
       "items": [
         {
@@ -85,13 +86,12 @@ export default {
           "label": "GitHub",
           "position": "right"
         }
-      ],
-      "hideOnScroll": false
+      ]
     },
     "footer": {
       "style": "dark",
       "links": [],
-      "copyright": "Copyright © 2025 HEdS."
+      "copyright": "Copyright © 2026 HEdS."
     },
     "prism": {
       "theme": {

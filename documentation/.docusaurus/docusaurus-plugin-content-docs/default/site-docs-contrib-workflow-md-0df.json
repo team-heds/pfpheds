@@ -1,7 +1,7 @@
 {
   "id": "contrib/workflow",
-  "title": "Workflow de Contribution",
-  "description": "Brouillon de documentation pour contrib/workflow.",
+  "title": "Workflow de contribution",
+  "description": "Sequence recommandee",
   "source": "@site/docs/contrib/workflow.md",
   "sourceDirName": "contrib",
   "slug": "/contrib/workflow",
@@ -11,15 +11,15 @@
   "tags": [],
   "version": "current",
   "frontMatter": {
-    "title": "Workflow de Contribution"
+    "title": "Workflow de contribution"
   },
   "sidebar": "docs",
   "previous": {
-    "title": "Conventions",
-    "permalink": "/docs/contrib/conventions"
+    "title": "Outils de diagnostic",
+    "permalink": "/docs/testing/diagnostic-tools"
   },
   "next": {
-    "title": "Roadmap",
-    "permalink": "/docs/roadmap"
+    "title": "Conventions projet",
+    "permalink": "/docs/contrib/conventions"
   }
 }

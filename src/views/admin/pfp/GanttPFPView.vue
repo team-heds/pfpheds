@@ -18,7 +18,6 @@
         </div>
       </div>
 
-      <!-- Filtres et contrôles -->
       <div class="surface-card p-3 border-round shadow-2 mb-4">
         <div class="grid align-items-end">
           <div class="col-12 md:col-3">
@@ -40,7 +39,6 @@
         </div>
       </div>
 
-      <!-- Statistiques rapides -->
       <div class="grid mb-4">
         <div class="col-12 md:col-3">
           <div class="surface-card p-3 border-round">
@@ -68,7 +66,6 @@
         </div>
       </div>
 
-      <!-- Gantt Chart Area -->
       <div class="surface-card p-4 border-round shadow-2">
         <div class="gantt-header flex align-items-center justify-content-between mb-3">
           <h3 class="text-lg font-bold text-900 m-0">Planning {{ selectedYear }}</h3>
@@ -79,7 +76,6 @@
           </div>
         </div>
 
-        <!-- Timeline Header -->
         <div class="gantt-timeline mb-3">
           <div class="flex border-bottom-1 surface-border pb-2">
             <div class="timeline-header" style="width: 200px; min-width: 200px;">
@@ -95,7 +91,6 @@
           </div>
         </div>
 
-        <!-- Gantt Rows -->
         <div class="gantt-body" v-if="!loading">
           <div v-for="item in ganttData" :key="item.id" class="gantt-row flex align-items-center mb-2 p-2 border-round hover:surface-hover">
             <div class="gantt-label" style="width: 200px; min-width: 200px;">
@@ -103,8 +98,8 @@
               <div class="text-xs text-600">{{ item.institution }}</div>
             </div>
             <div class="gantt-bars flex-1 position-relative" style="height: 40px;">
-              <div 
-                v-for="(bar, idx) in item.bars" 
+              <div
+                v-for="(bar, idx) in item.bars"
                 :key="idx"
                 class="gantt-bar position-absolute border-round"
                 :style="getBarStyle(bar)"
@@ -118,43 +113,14 @@
           </div>
         </div>
 
-        <!-- Loading State -->
         <div v-else class="text-center p-6">
           <ProgressSpinner />
           <p class="text-600 mt-3">Chargement du planning...</p>
         </div>
 
-        <!-- Empty State -->
         <div v-if="!loading && ganttData.length === 0" class="text-center p-6">
           <i class="pi pi-calendar text-4xl text-400 mb-3"></i>
           <p class="text-600">Aucun PFP pour cette période</p>
-        </div>
-      </div>
-
-      <!-- Légende -->
-      <div class="surface-card p-3 border-round shadow-2 mt-4">
-        <div class="flex align-items-center gap-4 flex-wrap">
-          <span class="font-semibold">Légende:</span>
-          <div class="flex align-items-center gap-2">
-            <div class="legend-box" style="background: #3B82F6;"></div>
-            <span class="text-sm">PFP1A</span>
-          </div>
-          <div class="flex align-items-center gap-2">
-            <div class="legend-box" style="background: #10B981;"></div>
-            <span class="text-sm">PFP1B</span>
-          </div>
-          <div class="flex align-items-center gap-2">
-            <div class="legend-box" style="background: #F59E0B;"></div>
-            <span class="text-sm">PFP2</span>
-          </div>
-          <div class="flex align-items-center gap-2">
-            <div class="legend-box" style="background: #8B5CF6;"></div>
-            <span class="text-sm">PFP3</span>
-          </div>
-          <div class="flex align-items-center gap-2">
-            <div class="legend-box" style="background: #EF4444;"></div>
-            <span class="text-sm">Conflit</span>
-          </div>
         </div>
       </div>
     </div>
@@ -193,31 +159,18 @@ const stats = ref({
   conflits: 0
 })
 
-const getBarStyle = (bar) => {
-  return {
-    left: `${bar.startPercent}%`,
-    width: `${bar.widthPercent}%`,
-    background: bar.color,
-    top: '5px',
-    height: '30px'
-  }
-}
+const getBarStyle = (bar) => ({
+  left: `${bar.startPercent}%`,
+  width: `${bar.widthPercent}%`,
+  background: bar.color,
+  top: '5px',
+  height: '30px'
+})
 
-const showBarDetails = (bar) => {
-  console.log('Show details:', bar)
-}
-
-const previousPeriod = () => {
-  console.log('Previous period')
-}
-
-const nextPeriod = () => {
-  console.log('Next period')
-}
-
-const goToToday = () => {
-  console.log('Go to today')
-}
+const showBarDetails = () => {}
+const previousPeriod = () => {}
+const nextPeriod = () => {}
+const goToToday = () => {}
 
 const loadData = () => {
   loading.value = true
@@ -243,7 +196,7 @@ onMounted(() => {
 
 .gantt-bar:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
 }
 
 .bar-content {
@@ -257,10 +210,5 @@ onMounted(() => {
   width: 20px;
   height: 20px;
   border-radius: 4px;
-}
-
-.gantt-body {
-  max-height: 600px;
-  overflow-y: auto;
 }
 </style>

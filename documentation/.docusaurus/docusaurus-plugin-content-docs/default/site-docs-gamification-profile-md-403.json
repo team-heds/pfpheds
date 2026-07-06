@@ -12,14 +12,5 @@
   "version": "current",
   "frontMatter": {
     "title": "Profil Gamification"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "Outils",
-    "permalink": "/docs/apps/tools"
-  },
-  "next": {
-    "title": "Quêtes",
-    "permalink": "/docs/gamification/quests"
   }
 }

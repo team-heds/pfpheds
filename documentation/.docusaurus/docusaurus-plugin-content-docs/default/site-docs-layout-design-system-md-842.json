@@ -14,14 +14,5 @@
     "id": "design-system",
     "title": "Design System",
     "sidebar_label": "Design System"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "Layout & Design",
-    "permalink": "/docs/layout"
-  },
-  "next": {
-    "title": "Thèmes",
-    "permalink": "/docs/layout/themes"
   }
 }

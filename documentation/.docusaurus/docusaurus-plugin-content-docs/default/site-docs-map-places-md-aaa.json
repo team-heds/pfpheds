@@ -12,14 +12,5 @@
   "version": "current",
   "frontMatter": {
     "title": "Places"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "Institutions",
-    "permalink": "/docs/map/institutions"
-  },
-  "next": {
-    "title": "Modules & Médias",
-    "permalink": "/docs/media/modules"
   }
 }

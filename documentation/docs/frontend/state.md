@@ -1,7 +1,31 @@
 ---
-title: Gestion d'état (Pinia)
+title: Stores, services et logique métier
 ---
 
-Brouillon de documentation pour `frontend/state`.
+## Separation de responsabilites
 
-À compléter.
+- vue: orchestration
+- composant: rendu local
+- store: etat partage
+- service : logique métier
+- composable: logique transverse
+
+## Stores principaux
+
+- `authStore.js`
+- `userStore.js`
+- `role.js`
+- `institutionsStore.js`
+- `placesStore.js`
+- `postsStore.js`
+- `votesStore.js`
+- `eventStore.js`
+
+## Services a connaitre
+
+- `studentsService.js`
+- `planningService.js`
+- `rolesService.js`
+- `resultatVotationService.js`
+- `gamificationServiceSupabase.js`
+- `notificationService.js`

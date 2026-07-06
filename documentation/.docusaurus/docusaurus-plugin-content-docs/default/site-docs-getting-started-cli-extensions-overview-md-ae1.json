@@ -14,14 +14,5 @@
     "id": "overview",
     "title": "CLI & Extensions",
     "sidebar_label": "CLI & Extensions"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "CLI & Extensions",
-    "permalink": "/docs/getting-started/cli-extensions"
-  },
-  "next": {
-    "title": "Developing",
-    "permalink": "/docs/developing"
   }
 }

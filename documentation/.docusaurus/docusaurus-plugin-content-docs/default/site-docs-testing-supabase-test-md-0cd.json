@@ -1,7 +1,7 @@
 {
   "id": "testing/supabase-test",
   "title": "Test Supabase",
-  "description": "Brouillon de documentation pour testing/supabase-test.",
+  "description": "Vérifier la configuration et la connectivité Supabase.",
   "source": "@site/docs/testing/supabase-test.md",
   "sourceDirName": "testing",
   "slug": "/testing/supabase-test",
@@ -12,14 +12,5 @@
   "version": "current",
   "frontMatter": {
     "title": "Test Supabase"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "Template Gantt (Mermaid)",
-    "permalink": "/docs/project/template-gantt"
-  },
-  "next": {
-    "title": "Test Firebase",
-    "permalink": "/docs/testing/firebase-test"
   }
 }

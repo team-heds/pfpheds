@@ -1,15 +1,27 @@
 ---
-title: "Supabase RLS & Sécurité"
+title: Supabase RLS et sécurité
 ---
 
-Aperçu des règles RLS (Row‑Level Security) utilisées côté Supabase/Postgres.
+## Rôle
 
-- RLS activée sur les tables clés: `user_profiles`, `gamification_data`, `institutions`, `places`.
-- Policies d’exemple créées dans les migrations SQL (lecture authenticated/anon, écriture `service_role`, etc.).
-- Les permissions applicatives sont exposées via des fonctions RPC (ex: `get_user_permissions`) et consommées par le front (`useRoleStore`).
+RLS sert de dernier niveau d'enforcement côté base.
 
-Pour le détail des patterns, exemples de policies et bonnes pratiques, voir `security/supabase-rls`.
+## Ce qu'il faut garder en tête
 
-Références:
-- Répertoire migrations: `supabase_migrations/`
-- Schéma: `data/schema-supabase`
+- un accès autorisé par le front peut rester refusé par la base
+- un compte admin front ne doit pas faire oublier la sécurité base
+- le backend peut parfois utiliser une service key et contourner RLS
+
+## À vérifier pour chaque table sensible
+
+- `select`
+- `insert`
+- `update`
+- `delete`
+
+## Zones critiques
+
+- `user_profiles`
+- tables PFP
+- tables de votation
+- tables de stockage et documents

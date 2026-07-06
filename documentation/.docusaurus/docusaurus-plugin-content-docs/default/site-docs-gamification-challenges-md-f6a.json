@@ -12,14 +12,5 @@
   "version": "current",
   "frontMatter": {
     "title": "Défis"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "Quêtes",
-    "permalink": "/docs/gamification/quests"
-  },
-  "next": {
-    "title": "Maisons HES",
-    "permalink": "/docs/gamification/houses"
   }
 }

@@ -12,14 +12,5 @@
   "version": "current",
   "frontMatter": {
     "title": "Gestion de projet - Vue d'ensemble"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "Gros Fichiers (Archives)",
-    "permalink": "/docs/devops/large-files"
-  },
-  "next": {
-    "title": "Roadmap HEdS 2025",
-    "permalink": "/docs/project/roadmap"
   }
 }

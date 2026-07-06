@@ -12,14 +12,5 @@
   "version": "current",
   "frontMatter": {
     "title": "Structure du frontend"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "Stack technique",
-    "permalink": "/docs/stack"
-  },
-  "next": {
-    "title": "Routing",
-    "permalink": "/docs/frontend/routing"
   }
 }

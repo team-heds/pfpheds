@@ -1,42 +1,31 @@
 ---
 title: Guide de style de la documentation
-sidebar_label: Guide de style (Docs)
+sidebar_label: Guide de style
 ---
 
-Ce guide donne des règles simples pour écrire la documentation.
+## Objectif
 
-## Titres et structure
+Garder une documentation lisible, technique et maintenable.
 
-- Un `title` clair dans le frontmatter
-- Introduction courte puis sections H2/H3
-- Utiliser des listes courtes et des exemples concis
+## Règles simples
+
+- un titre clair
+- une introduction courte
+- des sections courtes
+- des listes quand elles apportent de la clarté
+- des exemples réels plutôt que des phrases vagues
 
 ## Code et commandes
 
-- Utiliser des *fences* avec la langue (ex: `bash`, `js`, `vue`)
-- Préférer les **Tabs** pour npm/pnpm/yarn quand c’est pertinent
-- Pour les commandes, utiliser `bash` afin de bénéficier du style doré
+- utiliser des blocs de code typés
+- utiliser `bash` pour les commandes
+- éviter les gros extraits si un résumé suffit
 
-## Admonitions
+## Liens
 
-- Utiliser des notes pour attirer l’attention: 
+- ne lier que vers des pages existantes
+- privilégier les chemins documentaires stables
 
-```md
-:::note
-Info utile ou prérequis
-:::
-```
+## Niveau attendu
 
-## Liens internes
-
-- Référencer les pages via leurs chemins (ex: `devops/overview`)
-- Vérifier qu’une page existe avant d’ajouter un lien dans la sidebar
-
-## Style graphique
-
-- La sidebar est compacte (largeur ~180px), gardez des titres courts
-- Éviter les pavés de texte, privilégier les sections
-
-## Mermaid
-
-- Pour des schémas d’architecture simples, utiliser Mermaid (voir `developing/architecture-diagrams`)
+Une page doit permettre à quelqu'un de reprendre le sujet sans explication orale.

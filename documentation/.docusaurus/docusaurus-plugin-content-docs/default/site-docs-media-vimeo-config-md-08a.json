@@ -1,7 +1,7 @@
 {
   "id": "media/vimeo-config",
   "title": "Configuration Vimeo",
-  "description": "Brouillon de documentation pour media/vimeo-config.",
+  "description": "Variable attendue",
   "source": "@site/docs/media/vimeo-config.md",
   "sourceDirName": "media",
   "slug": "/media/vimeo-config",
@@ -15,11 +15,11 @@
   },
   "sidebar": "docs",
   "previous": {
-    "title": "Modules & Médias",
+    "title": "Modules et medias",
     "permalink": "/docs/media/modules"
   },
   "next": {
-    "title": "Service Médias",
+    "title": "Services media",
     "permalink": "/docs/media/media-service"
   }
 }

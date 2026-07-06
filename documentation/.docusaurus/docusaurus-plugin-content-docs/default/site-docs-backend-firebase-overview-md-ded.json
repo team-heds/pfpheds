@@ -1,7 +1,7 @@
 {
   "id": "backend/firebase/overview",
-  "title": "Firebase - Vue d'ensemble",
-  "description": "Brouillon de documentation pour backend/firebase/overview.",
+  "title": "Firebase - vue d'ensemble",
+  "description": "Rôle dans le projet",
   "source": "@site/docs/backend/firebase/overview.md",
   "sourceDirName": "backend/firebase",
   "slug": "/backend/firebase/overview",
@@ -11,12 +11,12 @@
   "tags": [],
   "version": "current",
   "frontMatter": {
-    "title": "Firebase - Vue d'ensemble"
+    "title": "Firebase - vue d'ensemble"
   },
   "sidebar": "docs",
   "previous": {
-    "title": "PWA et Performance",
-    "permalink": "/docs/frontend/pwa"
+    "title": "Backend actif versus fichiers legacy",
+    "permalink": "/docs/backend/active-vs-legacy"
   },
   "next": {
     "title": "Firebase Realtime Database",

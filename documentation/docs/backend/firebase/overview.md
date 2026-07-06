@@ -1,23 +1,23 @@
 ---
-title: Firebase - Vue d'ensemble
+title: Firebase - vue d'ensemble
 ---
 
-Vue d’ensemble de l’intégration Firebase (App Web) dans la plateforme.
+## Rôle dans le projet
 
-## Modules utilisés
+Firebase reste présent comme socle legacy sur plusieurs flux:
 
-- `firebase/app` — initialisation
-- `firebase/auth` — authentification
-- `firebase/database` — Realtime Database
-- `firebase/storage` — stockage de fichiers
+- authentification
+- Realtime Database
+- Storage
+- Hosting
 
-Fichier d’init: `firebase.js` (racine du projet)
+## Fichier principal
 
-## Variables d’environnement (Vite)
+- `src/firebase.js`
 
-Définies dans `.env` et lues via `import.meta.env`:
+## Variables attendues
 
-```bash
+```env
 VITE_FIREBASE_API_KEY=
 VITE_FIREBASE_AUTH_DOMAIN=
 VITE_FIREBASE_PROJECT_ID=
@@ -27,12 +27,10 @@ VITE_FIREBASE_APP_ID=
 VITE_FIREBASE_DATABASE_URL=
 ```
 
-L’app vérifie la présence de ces variables au démarrage (voir logs dans `firebase.js`).
+## Comportement important
 
-## Ressources liées
+Si ces variables ne sont pas présentes, le frontend désactive Firebase et loggue les clés manquantes.
 
-- `backend/firebase/database` — structure et accès RTDB
-- `backend/firebase/auth` — authentification et pièges courants
-- `backend/firebase/storage` — gestion de fichiers
-- `troubleshooting/firebase-env` — variables manquantes
-- `troubleshooting/firebase-auth` — erreur “Component auth …”
+## À retenir
+
+Même si Supabase devient la cible principale, Firebase ne doit pas être traité comme mort tant que les flux legacy existent encore.

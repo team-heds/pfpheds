@@ -12,14 +12,5 @@
   "version": "current",
   "frontMatter": {
     "title": "Sprints 2025"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "Roadmap HEdS 2025",
-    "permalink": "/docs/project/roadmap"
-  },
-  "next": {
-    "title": "Releases & Versions",
-    "permalink": "/docs/project/releases"
   }
 }

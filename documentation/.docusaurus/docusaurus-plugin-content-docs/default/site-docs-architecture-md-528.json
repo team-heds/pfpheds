@@ -1,7 +1,7 @@
 {
   "id": "architecture",
-  "title": "Architecture",
-  "description": "Frontend",
+  "title": "Architecture globale",
+  "description": "Vue d'ensemble",
   "source": "@site/docs/architecture.md",
   "sourceDirName": ".",
   "slug": "/architecture",
@@ -12,15 +12,15 @@
   "version": "current",
   "frontMatter": {
     "id": "architecture",
-    "title": "Architecture"
+    "title": "Architecture globale"
   },
   "sidebar": "docs",
   "previous": {
-    "title": "Prise en main",
+    "title": "Démarrage rapide et reprise du projet",
     "permalink": "/docs/getting-started"
   },
   "next": {
-    "title": "Stack technique",
-    "permalink": "/docs/stack"
+    "title": "Vue système et domaines fonctionnels",
+    "permalink": "/docs/system/overview"
   }
 }

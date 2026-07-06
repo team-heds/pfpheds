@@ -14,14 +14,5 @@
     "id": "starting",
     "title": "Démarrer le développement",
     "sidebar_label": "Starting"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "Developing",
-    "permalink": "/docs/developing"
-  },
-  "next": {
-    "title": "Architecture",
-    "permalink": "/docs/architecture"
   }
 }

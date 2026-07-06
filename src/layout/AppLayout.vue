@@ -64,13 +64,17 @@ const bindOutsideClickListener = () => {
 };
 const unbindOutsideClickListener = () => {
     if (outsideClickListener.value) {
-        document.removeEventListener('click', outsideClickListener);
+        document.removeEventListener('click', outsideClickListener.value);
         outsideClickListener.value = null;
     }
 };
 const isOutsideClicked = (event) => {
-    const sidebarEl = sidebarRef?.value.$el;
-    const topbarEl = topbarRef?.value.$el.querySelector('.topbar-menubutton');
+    const sidebarEl = sidebarRef?.value?.$el;
+    const topbarEl = topbarRef?.value?.$el?.querySelector('.topbar-menubutton');
+
+    if (!sidebarEl || !topbarEl) {
+        return true;
+    }
 
     return !(sidebarEl.isSameNode(event.target) || sidebarEl.contains(event.target) || topbarEl.isSameNode(event.target) || topbarEl.contains(event.target));
 };

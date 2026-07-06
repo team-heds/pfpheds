@@ -1,7 +1,20 @@
 ---
-title: "Modules & Médias"
+title: Modules et medias
 ---
 
-Brouillon de documentation pour `media/modules`.
+## Perimetre
 
-À compléter.
+Le bloc media couvre:
+
+- bibliotheque video
+- modules video
+- validation de contenus media
+- pages de test Vimeo
+
+## Emplacements principaux
+
+- `src/views/media/`
+- `src/views/admin/academic/VideoLibraryView.vue`
+- `src/service/videoLibraryService.js`
+- `src/service/vimeoService.js`
+- `src/service/mediaService.js`

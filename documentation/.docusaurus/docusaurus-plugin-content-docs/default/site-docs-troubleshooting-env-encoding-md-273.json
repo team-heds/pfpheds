@@ -1,7 +1,7 @@
 {
   "id": "troubleshooting/env-encoding",
   "title": "Encodage .env",
-  "description": "Brouillon de documentation pour troubleshooting/env-encoding.",
+  "description": "Corriger les problèmes d’encodage du fichier .env (variables non lues, caractères espacés, erreurs Vite/Firebase).",
   "source": "@site/docs/troubleshooting/env-encoding.md",
   "sourceDirName": "troubleshooting",
   "slug": "/troubleshooting/env-encoding",
@@ -12,14 +12,5 @@
   "version": "current",
   "frontMatter": {
     "title": "Encodage .env"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "Erreur Firebase Auth",
-    "permalink": "/docs/troubleshooting/firebase-auth"
-  },
-  "next": {
-    "title": "Docusaurus/Prism",
-    "permalink": "/docs/troubleshooting/docusaurus-prism"
   }
 }

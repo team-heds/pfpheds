@@ -12,14 +12,5 @@
   "version": "current",
   "frontMatter": {
     "title": "Gestion Utilisateurs"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "Dashboard Administration",
-    "permalink": "/docs/admin/dashboard"
-  },
-  "next": {
-    "title": "Institutions & Places",
-    "permalink": "/docs/admin/institutions-places"
   }
 }

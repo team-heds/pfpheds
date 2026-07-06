@@ -6,6 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "docs:dev": "npm --prefix documentation run start",
+    "docs:build": "npm --prefix documentation run build",
+    "docs:serve": "npm --prefix documentation run serve",
+    "build:all": "npm run build && npm run docs:build && node scripts/copy-docs-to-dist.js",
     "preview": "vite preview",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore",
     "format": "prettier --write src/",

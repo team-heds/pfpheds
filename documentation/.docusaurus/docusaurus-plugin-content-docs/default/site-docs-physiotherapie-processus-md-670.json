@@ -13,14 +13,5 @@
   "frontMatter": {
     "title": "Processus — Formation pratique",
     "sidebar_label": "Processus FP"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "Overview",
-    "permalink": "/docs/physiotherapie/overview"
-  },
-  "next": {
-    "title": "Formation pratique",
-    "permalink": "/docs/physiotherapie/formation-pratique"
   }
 }

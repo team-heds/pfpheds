@@ -1,38 +1,19 @@
-# Ventriglisse3D (Vue + Three.js)
+# Games
 
-Composant d'animation 3D pour un tirage au sort fun façon ventriglisse !
+Ce dossier contient des composants ludiques ou expérimentaux.
 
-## Installation
+Point identifié :
 
-1. Installe Three.js :
+- `Ventriglisse3D.vue`
 
-```sh
-npm install three
-```
+Dépendance notable :
 
-2. Ajoute le composant `Ventriglisse3D.vue` dans tes pages Vue.js :
+- `three`
 
-```vue
-<script setup>
-import Ventriglisse3D from '@/components/games/Ventriglisse3D.vue';
-</script>
-<template>
-  <Ventriglisse3D />
-</template>
-```
+Le composant semble autonome et orienté animation / tirage visuel, sans rôle structurant dans l’architecture globale.
 
-3. Modifie `participants.json` pour personnaliser les joueurs !
+Si ce module doit évoluer :
 
-## Fonctionnement
-- Clique sur "Lancer la glissade" pour démarrer l'animation
-- Chaque capsule est projetée avec une force aléatoire et freinée par la friction
-- Le plus loin remporte la partie !
-- Tu peux "Rejouer" à l'infini
-
-## Bonus possible
-- Ajoute des effets 3D, sons, podium, import CSV...
-- Remplace les capsules par des modèles 3D plus fun
-
----
-
-Pour toute question ou évolution, demande à Cascade !
+1. vérifier son branchement depuis les vues outils ;
+2. vérifier l’impact bundle et performance ;
+3. documenter son usage dans Docusaurus si le module devient réellement métier.

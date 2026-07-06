@@ -12,14 +12,5 @@
   "version": "current",
   "frontMatter": {
     "title": "Migrations - Firebase → Supabase"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "Releases & Versions",
-    "permalink": "/docs/project/releases"
-  },
-  "next": {
-    "title": "Template Gantt (Mermaid)",
-    "permalink": "/docs/project/template-gantt"
   }
 }

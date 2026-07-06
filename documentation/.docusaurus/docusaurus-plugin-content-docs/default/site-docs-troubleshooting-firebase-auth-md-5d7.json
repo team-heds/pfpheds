@@ -1,7 +1,7 @@
 {
   "id": "troubleshooting/firebase-auth",
   "title": "Erreur Firebase Auth",
-  "description": "Brouillon de documentation pour troubleshooting/firebase-auth.",
+  "description": "Résoudre l’erreur:",
   "source": "@site/docs/troubleshooting/firebase-auth.md",
   "sourceDirName": "troubleshooting",
   "slug": "/troubleshooting/firebase-auth",
@@ -12,14 +12,5 @@
   "version": "current",
   "frontMatter": {
     "title": "Erreur Firebase Auth"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "Problèmes Variables Firebase",
-    "permalink": "/docs/troubleshooting/firebase-env"
-  },
-  "next": {
-    "title": "Encodage .env",
-    "permalink": "/docs/troubleshooting/env-encoding"
   }
 }

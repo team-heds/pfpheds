@@ -1,7 +1,7 @@
 {
   "id": "getting-started",
-  "title": "Prise en main",
-  "description": "Prérequis",
+  "title": "Démarrage rapide et reprise du projet",
+  "description": "Point d'entrée",
   "source": "@site/docs/getting-started.md",
   "sourceDirName": ".",
   "slug": "/getting-started",
@@ -11,16 +11,15 @@
   "tags": [],
   "version": "current",
   "frontMatter": {
-    "id": "getting-started",
-    "title": "Prise en main"
+    "title": "Démarrage rapide et reprise du projet"
   },
   "sidebar": "docs",
   "previous": {
-    "title": "Bienvenue",
+    "title": "Documentation technique de référence",
     "permalink": "/docs/"
   },
   "next": {
-    "title": "Architecture",
+    "title": "Architecture globale",
     "permalink": "/docs/architecture"
   }
 }

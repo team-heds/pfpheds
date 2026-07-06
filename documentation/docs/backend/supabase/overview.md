@@ -1,33 +1,33 @@
 ---
-title: Supabase - Vue d'ensemble
+title: Supabase - vue d'ensemble
 ---
 
-Vue d’ensemble de l’intégration Supabase (Postgres + Auth + Storage) dans la plateforme.
+## Rôle dans le projet
 
-## Client Supabase
+Supabase est la cible principale pour:
 
-Fichier: `src/supabase.js`
+- l'auth moderne
+- la base relationnelle
+- les politiques RLS
+- le stockage moderne
 
-- Lit `VITE_SUPABASE_URL` et `VITE_SUPABASE_KEY`
-- Normalise l’URL si elle contient `/rest/v1`
-- Crée le client via `createClient(url, key, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } })`
+## Fichier principal côté frontend
 
-## Données principales
+- `src/supabase.js`
 
-- Institutions & Places: tables gérées via migrations (voir `supabase_migrations/`)
-- Gamification: profils, maisons, points (migrations dédiées)
+## Comportements importants
 
-## Sécurité
+- lecture de `VITE_SUPABASE_URL`
+- lecture de `VITE_SUPABASE_KEY`
+- normalisation de l'URL si `/rest/v1` est fourni par erreur
+- configuration de session persistante avec PKCE
 
-- RLS activée sur les tables sensibles (voir `backend/supabase/rls` et `security/supabase-rls`)
-- Les policies sont définies dans les fichiers SQL des migrations
+## Conséquence de maintenance
 
-## Migration des données
+Une évolution Supabase peut impacter:
 
-- Le répertoire `supabase_migrations/` contient les scripts (schema, import, policies)
-- Voir `backend/supabase/migrations` pour la procédure d’application
-
-## Services & Stores
-
-- Les Stores (Pinia) encapsulent les requêtes Supabase pour l’UI
-- Voir `backend/supabase/services` pour l’organisation par domaines
+- auth
+- rôles et permissions
+- stores Pinia
+- services métier
+- backend Express

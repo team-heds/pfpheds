@@ -1,7 +1,7 @@
 {
   "id": "troubleshooting/firebase-env",
   "title": "Problèmes Variables Firebase",
-  "description": "Brouillon de documentation pour troubleshooting/firebase-env.",
+  "description": "Résoudre les problèmes liés aux variables d’environnement Firebase (.env).",
   "source": "@site/docs/troubleshooting/firebase-env.md",
   "sourceDirName": "troubleshooting",
   "slug": "/troubleshooting/firebase-env",
@@ -12,14 +12,5 @@
   "version": "current",
   "frontMatter": {
     "title": "Problèmes Variables Firebase"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "Scripts",
-    "permalink": "/docs/testing/scripts"
-  },
-  "next": {
-    "title": "Erreur Firebase Auth",
-    "permalink": "/docs/troubleshooting/firebase-auth"
   }
 }

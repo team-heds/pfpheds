@@ -1,7 +1,7 @@
 {
   "id": "backend/firebase/storage",
   "title": "Firebase Storage",
-  "description": "Brouillon de documentation pour backend/firebase/storage.",
+  "description": "Rôle",
   "source": "@site/docs/backend/firebase/storage.md",
   "sourceDirName": "backend/firebase",
   "slug": "/backend/firebase/storage",

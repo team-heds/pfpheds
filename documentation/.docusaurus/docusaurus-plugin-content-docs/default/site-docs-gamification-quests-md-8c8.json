@@ -12,14 +12,5 @@
   "version": "current",
   "frontMatter": {
     "title": "Quêtes"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "Profil Gamification",
-    "permalink": "/docs/gamification/profile"
-  },
-  "next": {
-    "title": "Défis",
-    "permalink": "/docs/gamification/challenges"
   }
 }

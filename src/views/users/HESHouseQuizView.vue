@@ -1,10 +1,7 @@
 <template>
   <div class="quiz-view-container">
-    <!-- Header simple -->
-    
-    <!-- Composant Quiz -->
     <div class="quiz-content">
-      <HESHouseQuiz 
+      <HESHouseQuiz
         v-if="currentUserId"
         :userId="currentUserId"
         @houseSelected="onHouseSelected"
@@ -29,9 +26,7 @@ const authStore = useAuthStore()
 
 const currentUserId = ref(null)
 
-// Méthodes
 const onHouseSelected = (house) => {
-  console.log('Maison sélectionnée:', house)
   toast.add({
     severity: 'success',
     summary: 'Maison assignée !',
@@ -40,15 +35,12 @@ const onHouseSelected = (house) => {
   })
 }
 
-// Vérifier l'authentification Supabase
 onMounted(async () => {
   await authStore.checkAuthState()
-  
+
   if (authStore.isLoggedIn && authStore.user) {
     currentUserId.value = authStore.user.id
-    console.log('✅ HESHouseQuizView - Utilisateur connecté:', authStore.user.email, `(${authStore.authProvider})`)
   } else {
-    console.log('❌ HESHouseQuizView - Utilisateur non connecté, redirection vers /')
     router.push('/')
   }
 })
@@ -92,11 +84,11 @@ onMounted(async () => {
   .quiz-view-container {
     padding: 1rem;
   }
-  
+
   .quiz-header h1 {
     font-size: 2rem;
   }
-  
+
   .quiz-header p {
     font-size: 1rem;
   }

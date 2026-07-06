@@ -1,17 +1,21 @@
 ---
 id: intro
-title: Bienvenue
+title: Documentation technique de référence
 slug: /
 ---
 
 <div class="docs-hero docs-hero--split">
   <div class="docs-hero__content">
-    <h2 class="docs-hero__title">Plateforme HEdS — Documentation</h2>
-    <p class="docs-hero__subtitle">Tout ce qu’il faut pour développer, configurer et déployer l’écosystème HEdS.</p>
+    <div class="docs-kicker">Documentation technique</div>
+    <h2 class="docs-hero__title">Plateforme HEdS</h2>
+    <p class="docs-hero__subtitle">
+      Documentation technique de reprise pour comprendre l'architecture, remettre
+      l'environnement en route, maintenir le code et faire évoluer la plateforme.
+    </p>
     <div class="docs-hero__cta">
-      <a class="button button--primary button--lg" href="/docs/getting-started">Commencer</a>
+      <a class="button button--primary button--lg" href="/docs/getting-started">Démarrage</a>
       <a class="button button--secondary button--lg" href="/docs/architecture">Architecture</a>
-      <a class="button button--secondary button--lg" href="/docs/stack">Stack technique</a>
+      <a class="button button--secondary button--lg" href="/docs/system/project-structure">Carte du repo</a>
     </div>
     <div class="docs-hero__meta">
       <span class="badge">Vue 3</span>
@@ -19,75 +23,76 @@ slug: /
       <span class="badge">PrimeVue</span>
       <span class="badge">Firebase</span>
       <span class="badge">Supabase</span>
+      <span class="badge">Express</span>
     </div>
-    <div class="docs-hero__hint">Astuce: utilisez la navigation de gauche pour explorer les sections.</div>
   </div>
   <div class="docs-hero__visual">
-    <img class="docs-hero__img" src="/img/hero-heds.svg" alt="HEdS Platform Overview" />
+    <div class="docs-preview-panel">
+      <div class="docs-preview-panel__header">
+        <span class="docs-dot docs-dot--gold"></span>
+        <span class="docs-dot"></span>
+        <span class="docs-dot"></span>
+      </div>
+      <div class="docs-preview-panel__body">
+        <div class="docs-preview-line docs-preview-line--strong"></div>
+        <div class="docs-preview-line"></div>
+        <div class="docs-preview-line docs-preview-line--short"></div>
+        <div class="docs-preview-grid">
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
-## À propos
+<div class="feature-strip">
+  <div class="feature-strip__item"><span class="feature-strip__icon">◆</span><span>Architecture réelle</span></div>
+  <div class="feature-strip__item"><span class="feature-strip__icon">◆</span><span>Flux métier</span></div>
+  <div class="feature-strip__item"><span class="feature-strip__icon">◆</span><span>Sources de données</span></div>
+  <div class="feature-strip__item"><span class="feature-strip__icon">◆</span><span>Exploitation & runbook</span></div>
+</div>
 
-La plateforme HEdS rassemble des modules pédagogiques, des outils collaboratifs et un espace d’administration unifié, avec une expérience moderne et accessible.
+## Finalité
 
-## Objectifs
+Cette documentation doit permettre à une nouvelle personne technique de :
 
-- Simplifier la vie des équipes (enseignants, admin, IT)
-- Offrir un portail unique pour les étudiantes/étudiants
-- Assurer la qualité (perf, sécurité, DX) et la pérennité
+- relancer le projet
+- comprendre l'architecture
+- retrouver rapidement où modifier une fonctionnalité
+- déployer et diagnostiquer la plateforme
 
-## Valeurs
+## Réalité du projet
 
-- Clarté et accessibilité
-- Modularité et ouverture
-- Qualité et fiabilité
+La plateforme regroupe plusieurs sous-systèmes dans une seule base de code :
 
-## Points clés
+- frontend Vue 3
+- administration académique
+- formation pratique
+- workflows soins infirmiers
+- social et gamification
+- applications intégrées
+- backend Node
+- coexistence Firebase et Supabase
+
+## Chiffres utiles
 
 <div class="stats-grid">
-  <div class="stat-card"><div class="stat-value">Vue 3</div><div class="stat-label">Stack Frontend</div></div>
-  <div class="stat-card"><div class="stat-value">Firebase · Supabase</div><div class="stat-label">Backends</div></div>
-  <div class="stat-card"><div class="stat-value">10+ Apps</div><div class="stat-label">Chat, Notes, Calendar...</div></div>
-  <div class="stat-card"><div class="stat-value">Admin complet</div><div class="stat-label">Utilisateurs, Institutions, Votations</div></div>
+  <div class="stat-card"><div class="stat-value">223</div><div class="stat-label">vues</div></div>
+  <div class="stat-card"><div class="stat-value">280</div><div class="stat-label">composants</div></div>
+  <div class="stat-card"><div class="stat-value">48</div><div class="stat-label">services métier</div></div>
+  <div class="stat-card"><div class="stat-value">20</div><div class="stat-label">stores Pinia</div></div>
 </div>
 
-## Fonctionnalités principales
+## Lecture recommandée
 
-<div class="features-grid">
-  <div class="feature-item"><div class="feature-icon">🧭</div><div><h4>Navigation & Sidebar</h4><p>Accès rapide aux modules, policies de scroll, UX claire.</p></div></div>
-  <div class="feature-item"><div class="feature-icon">🗂️</div><div><h4>Administration</h4><p>Gestion des utilisateurs, institutions, places, votations.</p></div></div>
-  <div class="feature-item"><div class="feature-icon">💬</div><div><h4>Réseau & Apps</h4><p>Chat, Mail, Notes (TipTap), Calendar, Files, Events.</p></div></div>
-  <div class="feature-item"><div class="feature-icon">🎯</div><div><h4>Gamification</h4><p>Maisons HES, quêtes, défis, analytics, profils.</p></div></div>
-  <div class="feature-item"><div class="feature-icon">🗺️</div><div><h4>Carte & Institutions</h4><p>Leaflet, filtres, fiches détaillées, navigation.</p></div></div>
-  <div class="feature-item"><div class="feature-icon">🚀</div><div><h4>DevOps</h4><p>Firebase Hosting, VPS (Caddy/Nginx), Docker, CI/CD.</p></div></div>
-</div>
-
-## Accès rapide
-
-<div class="docs-grid">
-  <a class="docs-card" href="/docs/frontend/structure">
-    <h3>Frontend (Vue 3)</h3>
-    <p>Structure, routing, state (Pinia), UI</p>
-  </a>
-  <a class="docs-card" href="/docs/backend/supabase/overview">
-    <h3>Backends</h3>
-    <p>Services Firebase & Supabase: Auth, RLS, migrations</p>
-  </a>
-  <a class="docs-card" href="/docs/admin/dashboard">
-    <h3>Administration</h3>
-    <p>Dashboard, utilisateurs, institutions, votations</p>
-  </a>
-  <a class="docs-card" href="/docs/apps/notes">
-    <h3>Applications</h3>
-    <p>Notes (TipTap), Chat, Calendar, Files, Events</p>
-  </a>
-  <a class="docs-card" href="/docs/gamification/quests">
-    <h3>Gamification</h3>
-    <p>Quêtes, défis, maisons HES, admin</p>
-  </a>
-  <a class="docs-card" href="/docs/devops/firebase-hosting">
-    <h3>Déploiement & DevOps</h3>
-    <p>Firebase Hosting, VPS Caddy/Nginx, Docker, CI/CD</p>
-  </a>
+<div class="docs-grid docs-grid--featured">
+  <a class="docs-card docs-card--featured" href="/docs/getting-started"><span class="docs-card__tag">01</span><span class="docs-card__icon">↗</span><h3>Démarrage</h3><p>Installer et lancer.</p></a>
+  <a class="docs-card docs-card--featured" href="/docs/architecture"><span class="docs-card__tag">02</span><span class="docs-card__icon">⌘</span><h3>Architecture</h3><p>Comprendre les couches.</p></a>
+  <a class="docs-card docs-card--featured" href="/docs/system/project-structure"><span class="docs-card__tag">03</span><span class="docs-card__icon">#</span><h3>Carte du repo</h3><p>Retrouver le bon code.</p></a>
+  <a class="docs-card" href="/docs/auth/overview"><span class="docs-card__icon">●</span><h3>Auth</h3><p>Session, rôles, permissions.</p></a>
+  <a class="docs-card" href="/docs/data/overview"><span class="docs-card__icon">◫</span><h3>Données</h3><p>Firebase, Supabase, migration.</p></a>
+  <a class="docs-card" href="/docs/ops/deployment"><span class="docs-card__icon">▣</span><h3>Déploiement</h3><p>Build app et docs.</p></a>
 </div>

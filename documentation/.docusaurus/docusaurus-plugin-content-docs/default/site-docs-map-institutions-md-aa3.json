@@ -12,14 +12,5 @@
   "version": "current",
   "frontMatter": {
     "title": "Institutions"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "Carte & Institutions - Vue d'ensemble",
-    "permalink": "/docs/map/overview"
-  },
-  "next": {
-    "title": "Places",
-    "permalink": "/docs/map/places"
   }
 }

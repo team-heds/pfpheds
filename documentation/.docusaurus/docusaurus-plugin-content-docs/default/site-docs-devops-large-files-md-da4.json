@@ -1,7 +1,7 @@
 {
   "id": "devops/large-files",
   "title": "Gros Fichiers (Archives)",
-  "description": "Brouillon de documentation pour devops/large-files.",
+  "description": "Recommandations pour gérer les fichiers volumineux (vidéos, PDF, archives).",
   "source": "@site/docs/devops/large-files.md",
   "sourceDirName": "devops",
   "slug": "/devops/large-files",
@@ -12,14 +12,5 @@
   "version": "current",
   "frontMatter": {
     "title": "Gros Fichiers (Archives)"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "CI/CD",
-    "permalink": "/docs/devops/ci-cd"
-  },
-  "next": {
-    "title": "Gestion de projet - Vue d'ensemble",
-    "permalink": "/docs/project/overview"
   }
 }

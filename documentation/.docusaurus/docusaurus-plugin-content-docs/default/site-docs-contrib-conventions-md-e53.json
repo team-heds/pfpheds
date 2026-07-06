@@ -1,7 +1,7 @@
 {
   "id": "contrib/conventions",
-  "title": "Conventions",
-  "description": "Brouillon de documentation pour contrib/conventions.",
+  "title": "Conventions projet",
+  "description": "Objectif",
   "source": "@site/docs/contrib/conventions.md",
   "sourceDirName": "contrib",
   "slug": "/contrib/conventions",
@@ -11,15 +11,15 @@
   "tags": [],
   "version": "current",
   "frontMatter": {
-    "title": "Conventions"
+    "title": "Conventions projet"
   },
   "sidebar": "docs",
   "previous": {
-    "title": "ESLint & Prettier",
-    "permalink": "/docs/contrib/eslint-prettier"
+    "title": "Workflow de contribution",
+    "permalink": "/docs/contrib/workflow"
   },
   "next": {
-    "title": "Workflow de Contribution",
-    "permalink": "/docs/contrib/workflow"
+    "title": "ESLint et Prettier",
+    "permalink": "/docs/contrib/eslint-prettier"
   }
 }

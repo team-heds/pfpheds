@@ -1,7 +1,7 @@
 {
   "id": "frontend/routing",
-  "title": "Routing",
-  "description": "Brouillon de documentation pour frontend/routing.",
+  "title": "Routing, navigation et contrôle d'accès",
+  "description": "Organisation",
   "source": "@site/docs/frontend/routing.md",
   "sourceDirName": "frontend",
   "slug": "/frontend/routing",
@@ -11,15 +11,15 @@
   "tags": [],
   "version": "current",
   "frontMatter": {
-    "title": "Routing"
+    "title": "Routing, navigation et contrôle d'accès"
   },
   "sidebar": "docs",
   "previous": {
-    "title": "Structure du frontend",
-    "permalink": "/docs/frontend/structure"
+    "title": "Bibliothèque de composants - composants critiques",
+    "permalink": "/docs/frontend/component-library-critical-components"
   },
   "next": {
-    "title": "Gestion d'état (Pinia)",
-    "permalink": "/docs/frontend/state"
+    "title": "Modules de routes et organisation du router",
+    "permalink": "/docs/frontend/router-modules"
   }
 }

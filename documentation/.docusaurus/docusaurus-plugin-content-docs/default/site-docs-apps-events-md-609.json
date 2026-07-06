@@ -12,14 +12,5 @@
   "version": "current",
   "frontMatter": {
     "title": "App Events"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "App Notes",
-    "permalink": "/docs/apps/notes"
-  },
-  "next": {
-    "title": "Outils",
-    "permalink": "/docs/apps/tools"
   }
 }

@@ -1,7 +1,7 @@
 {
   "id": "devops/vps-caddy-nginx",
   "title": "VPS: Caddy vs Nginx",
-  "description": "Brouillon de documentation pour devops/vps-caddy-nginx.",
+  "description": "Ce guide décrit une configuration minimale pour servir l'app (SPA Vite) et la documentation (Docusaurus) depuis un VPS avec Caddy ou Nginx.",
   "source": "@site/docs/devops/vps-caddy-nginx.md",
   "sourceDirName": "devops",
   "slug": "/devops/vps-caddy-nginx",
@@ -12,14 +12,5 @@
   "version": "current",
   "frontMatter": {
     "title": "VPS: Caddy vs Nginx"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "Firebase Hosting",
-    "permalink": "/docs/devops/firebase-hosting"
-  },
-  "next": {
-    "title": "Docker Dev",
-    "permalink": "/docs/devops/docker-dev"
   }
 }

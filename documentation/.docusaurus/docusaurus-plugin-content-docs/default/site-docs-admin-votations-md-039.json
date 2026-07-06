@@ -12,14 +12,5 @@
   "version": "current",
   "frontMatter": {
     "title": "Votations"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "Institutions & Places",
-    "permalink": "/docs/admin/institutions-places"
-  },
-  "next": {
-    "title": "Validation & Réception",
-    "permalink": "/docs/admin/validation-reception"
   }
 }

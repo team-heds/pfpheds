@@ -1,40 +1,41 @@
 ---
-id: getting-started
-title: Prise en main
+title: Démarrage rapide et reprise du projet
 ---
 
-## Prérequis
+<div class="docs-section-head">
+  <div>
+    <div class="docs-section-head__eyebrow">Point d'entrée</div>
+    <h2 class="docs-section-head__title">Remettre la plateforme en route rapidement</h2>
+  </div>
+  <p class="docs-section-head__text">
+    Cette page sert de base de reprise pour relancer le projet avant d'entrer dans les détails techniques.
+  </p>
+</div>
 
-- Node.js 18+
-- npm 9+
-- Accès Firebase & Supabase (variables d'environnement)
+<div class="docs-grid docs-grid--featured">
+  <div class="docs-card docs-card--featured"><span class="docs-card__tag">01</span><span class="docs-card__icon">↓</span><h3>Installer</h3><p>Récupérer les dépendances du projet et de la documentation.</p></div>
+  <div class="docs-card docs-card--featured"><span class="docs-card__tag">02</span><span class="docs-card__icon">◫</span><h3>Configurer</h3><p>Préparer les variables d'environnement et les accès externes.</p></div>
+  <div class="docs-card docs-card--featured"><span class="docs-card__tag">03</span><span class="docs-card__icon">▶</span><h3>Lancer</h3><p>Démarrer l'application, puis la documentation locale.</p></div>
+</div>
 
-## Installation (App)
+## Étapes minimales
+
+1. installer les dépendances
+2. configurer l'environnement
+3. lancer l'application
+4. lancer la documentation
+
+## Commandes utiles
 
 ```bash
 npm install
 npm run dev
-```
-
-## Installation (Docs)
-
-```bash
-npm install --prefix documentation
 npm run docs:dev
 ```
 
-## Variables d'environnement clés
+## Lire ensuite
 
-- Firebase: `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_DATABASE_URL`, etc.
-- Supabase: `VITE_SUPABASE_URL`, `VITE_SUPABASE_KEY`
-- Vimeo: `VITE_VIMEO_ACCESS_TOKEN`
-
-## Build & Déploiement
-
-- Build global (app + docs):
-
-```bash
-npm run build:all
-```
-
-Le site de documentation est copié dans `dist/docs/` et servi par Firebase sous `/docs`.
+- `architecture`
+- `system/project-structure`
+- `ops/development`
+- `auth/overview`

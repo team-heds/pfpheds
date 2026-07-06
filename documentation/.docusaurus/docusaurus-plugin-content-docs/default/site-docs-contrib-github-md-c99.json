@@ -1,7 +1,7 @@
 {
   "id": "contrib/github",
   "title": "Utiliser GitHub avec le projet",
-  "description": "Ce guide explique comment cloner, développer, contribuer et publier avec GitHub pour ce dépôt.",
+  "description": "Ce guide décrit le flux GitHub du projet : cloner le dépôt, travailler sur une branche propre, ouvrir une Pull Request, puis livrer un code traçable et relisible.",
   "source": "@site/docs/contrib/github.md",
   "sourceDirName": "contrib",
   "slug": "/contrib/github",
@@ -12,15 +12,15 @@
   "version": "current",
   "frontMatter": {
     "title": "Utiliser GitHub avec le projet",
-    "sidebar_label": "GitHub (projet)"
+    "sidebar_label": "GitHub"
   },
   "sidebar": "docs",
   "previous": {
-    "title": "Guide de style (Docs)",
+    "title": "Guide de style",
     "permalink": "/docs/contrib/docs-style-guide"
   },
   "next": {
-    "title": "ESLint & Prettier",
-    "permalink": "/docs/contrib/eslint-prettier"
+    "title": "Roadmap de la documentation",
+    "permalink": "/docs/roadmap"
   }
 }

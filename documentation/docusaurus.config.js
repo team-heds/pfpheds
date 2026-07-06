@@ -7,7 +7,7 @@ const darkCodeTheme = themes.dracula;
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'Plateforme HEdS - Documentation',
-  tagline: 'Documentation complète et technique de la plateforme HEdS',
+  tagline: 'Documentation technique de reference pour reprendre, maintenir et faire evoluer la plateforme HEdS',
   url: 'https://localhost',
   baseUrl: '/docs/',
   favicon: 'img/favicon.ico',
@@ -55,13 +55,13 @@ const config = {
           type: 'doc',
           docId: 'intro',
           position: 'left',
-          label: 'Guide'
+          label: 'Accueil'
         },
         {
           type: 'docSidebar',
           sidebarId: 'docs',
           position: 'left',
-          label: 'Components'
+          label: 'Documentation'
         },
         {
           href: 'https://github.com/antoinequarroz/pfpheds',

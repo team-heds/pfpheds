@@ -1,7 +1,7 @@
 {
   "id": "devops/ci-cd",
   "title": "CI/CD",
-  "description": "Brouillon de documentation pour devops/ci-cd.",
+  "description": "Cette page décrit le pipeline CI/CD utilisé pour construire et déployer la plateforme.",
   "source": "@site/docs/devops/ci-cd.md",
   "sourceDirName": "devops",
   "slug": "/devops/ci-cd",
@@ -12,14 +12,5 @@
   "version": "current",
   "frontMatter": {
     "title": "CI/CD"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "Docker Dev",
-    "permalink": "/docs/devops/docker-dev"
-  },
-  "next": {
-    "title": "Gros Fichiers (Archives)",
-    "permalink": "/docs/devops/large-files"
   }
 }

@@ -1,50 +1,23 @@
 ---
-title: Workflow de Contribution
+title: Workflow de contribution
 ---
 
-Ce guide décrit le workflow de contribution (branches, commits, PR, revue, CI/CD).
+## Sequence recommandee
 
-## Branching
+1. identifier le domaine métier
+2. retrouver la route et la vue
+3. confirmer la source de donnees
+4. modifier store, service, vue ou backend au bon endroit
+5. verifier tests et documentation
 
-- Branche stable: `main`
-- Déploiement: `prod` (CI → FTP)
-- Travail par ticket:
-  - `feature/JIRA-123-intitule`
-  - `fix/JIRA-456-correction-bug`
+## Avant merge
 
-## Commits
+- verifier le comportement reel
+- lancer les tests cibles
+- mettre a jour la doc si le fonctionnement change
+- verifier les permissions si un ecran sensible est impacte
 
-- Inclure la clef Jira si applicable: `JIRA-123: message clair`
-- Style: verbe à l’impératif, concis, décrit l’intention
+## Build utile
 
-## Pull Requests
-
-- Base: `main` (ou `prod` pour hotfix)
-- Titre: `JIRA-123: court descriptif`
-- Description:
-  - Contexte / Pourquoi
-  - Changements principaux
-  - Comment tester (commandes, pages)
-  - Impacts (perf, sécurité, doc)
-- Checklist: `npm run lint`, `npm run build`, docs mises à jour
-
-## Revue de code
-
-- Au moins 1 reviewer
-- Points à regarder: lisibilité, sécurité (RLS/permissions), accessibilité, perfs
-
-## CI/CD
-
-- Workflow: `.github/workflows/deploy-prod.yml`
-- Build app (`npm run build`) ou app + docs (`npm run build:all`)
-- Déploiement FTP depuis `dist/`
-
-## Releases & notes
-
-- Tag des versions au merge des features majeures
-- Page `project/releases` pour le changelog
-
-## Documentation
-
-- Docs dans `documentation/docs/` (voir `contrib/github`)
-- Images dans `documentation/static/img/` et référencer `/img/...`
+- `npm run build`
+- `npm run build:all`

@@ -1,7 +1,7 @@
 {
   "id": "media/modules",
-  "title": "Modules & Médias",
-  "description": "Brouillon de documentation pour media/modules.",
+  "title": "Modules et medias",
+  "description": "Perimetre",
   "source": "@site/docs/media/modules.md",
   "sourceDirName": "media",
   "slug": "/media/modules",
@@ -11,12 +11,12 @@
   "tags": [],
   "version": "current",
   "frontMatter": {
-    "title": "Modules & Médias"
+    "title": "Modules et medias"
   },
   "sidebar": "docs",
   "previous": {
-    "title": "Places",
-    "permalink": "/docs/map/places"
+    "title": "Applications intégrées",
+    "permalink": "/docs/apps/overview"
   },
   "next": {
     "title": "Configuration Vimeo",

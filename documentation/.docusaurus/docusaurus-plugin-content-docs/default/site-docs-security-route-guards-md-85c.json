@@ -1,7 +1,7 @@
 {
   "id": "security/route-guards",
-  "title": "Route Guards",
-  "description": "Brouillon de documentation pour security/route-guards.",
+  "title": "Route guards",
+  "description": "Point d'entrée",
   "source": "@site/docs/security/route-guards.md",
   "sourceDirName": "security",
   "slug": "/security/route-guards",
@@ -11,7 +11,7 @@
   "tags": [],
   "version": "current",
   "frontMatter": {
-    "title": "Route Guards"
+    "title": "Route guards"
   },
   "sidebar": "docs",
   "previous": {

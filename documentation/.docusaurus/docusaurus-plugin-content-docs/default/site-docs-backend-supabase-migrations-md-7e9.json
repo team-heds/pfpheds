@@ -1,7 +1,7 @@
 {
   "id": "backend/supabase/migrations",
   "title": "Migrations Supabase",
-  "description": "Brouillon de documentation pour backend/supabase/migrations.",
+  "description": "Source de vérité",
   "source": "@site/docs/backend/supabase/migrations.md",
   "sourceDirName": "backend/supabase",
   "slug": "/backend/supabase/migrations",
@@ -15,11 +15,11 @@
   },
   "sidebar": "docs",
   "previous": {
-    "title": "Supabase RLS & Sécurité",
+    "title": "Supabase RLS et sécurité",
     "permalink": "/docs/backend/supabase/rls"
   },
   "next": {
-    "title": "Migration Firebase → Supabase",
-    "permalink": "/docs/data/migration-firebase-supabase"
+    "title": "Domaine métier - formation pratique",
+    "permalink": "/docs/domains/formation-pratique"
   }
 }

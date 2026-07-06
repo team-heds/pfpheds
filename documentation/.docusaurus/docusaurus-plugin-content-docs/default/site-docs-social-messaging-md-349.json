@@ -12,14 +12,5 @@
   "version": "current",
   "frontMatter": {
     "title": "Messagerie"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "Communautés",
-    "permalink": "/docs/social/communities"
-  },
-  "next": {
-    "title": "Carte & Institutions - Vue d'ensemble",
-    "permalink": "/docs/map/overview"
   }
 }

@@ -1,7 +1,7 @@
 {
   "id": "frontend/state",
-  "title": "Gestion d'état (Pinia)",
-  "description": "Brouillon de documentation pour frontend/state.",
+  "title": "Stores, services et logique métier",
+  "description": "Separation de responsabilites",
   "source": "@site/docs/frontend/state.md",
   "sourceDirName": "frontend",
   "slug": "/frontend/state",
@@ -11,15 +11,15 @@
   "tags": [],
   "version": "current",
   "frontMatter": {
-    "title": "Gestion d'état (Pinia)"
+    "title": "Stores, services et logique métier"
   },
   "sidebar": "docs",
   "previous": {
-    "title": "Routing",
-    "permalink": "/docs/frontend/routing"
+    "title": "Catalogue des routes frontend",
+    "permalink": "/docs/frontend/route-catalog"
   },
   "next": {
-    "title": "UI & Design System",
-    "permalink": "/docs/frontend/ui"
+    "title": "Stores critiques et responsabilités",
+    "permalink": "/docs/frontend/critical-stores"
   }
 }

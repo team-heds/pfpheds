@@ -1,7 +1,7 @@
 {
   "id": "contrib/eslint-prettier",
-  "title": "ESLint & Prettier",
-  "description": "Brouillon de documentation pour contrib/eslint-prettier.",
+  "title": "ESLint et Prettier",
+  "description": "Commandes",
   "source": "@site/docs/contrib/eslint-prettier.md",
   "sourceDirName": "contrib",
   "slug": "/contrib/eslint-prettier",
@@ -11,15 +11,15 @@
   "tags": [],
   "version": "current",
   "frontMatter": {
-    "title": "ESLint & Prettier"
+    "title": "ESLint et Prettier"
   },
   "sidebar": "docs",
   "previous": {
-    "title": "Docusaurus/Prism",
-    "permalink": "/docs/troubleshooting/docusaurus-prism"
+    "title": "Conventions projet",
+    "permalink": "/docs/contrib/conventions"
   },
   "next": {
-    "title": "Conventions",
-    "permalink": "/docs/contrib/conventions"
+    "title": "Guide de style",
+    "permalink": "/docs/contrib/docs-style-guide"
   }
 }

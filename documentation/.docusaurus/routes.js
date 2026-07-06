@@ -3,144 +3,67 @@ import ComponentCreator from '@docusaurus/ComponentCreator';
 
 export default [
   {
-    path: '/docs/__docusaurus/debug',
-    component: ComponentCreator('/docs/__docusaurus/debug', 'e58'),
-    exact: true
-  },
-  {
-    path: '/docs/__docusaurus/debug/config',
-    component: ComponentCreator('/docs/__docusaurus/debug/config', '2ce'),
-    exact: true
-  },
-  {
-    path: '/docs/__docusaurus/debug/content',
-    component: ComponentCreator('/docs/__docusaurus/debug/content', '11b'),
-    exact: true
-  },
-  {
-    path: '/docs/__docusaurus/debug/globalData',
-    component: ComponentCreator('/docs/__docusaurus/debug/globalData', 'f13'),
-    exact: true
-  },
-  {
-    path: '/docs/__docusaurus/debug/metadata',
-    component: ComponentCreator('/docs/__docusaurus/debug/metadata', 'bff'),
-    exact: true
-  },
-  {
-    path: '/docs/__docusaurus/debug/registry',
-    component: ComponentCreator('/docs/__docusaurus/debug/registry', '830'),
-    exact: true
-  },
-  {
-    path: '/docs/__docusaurus/debug/routes',
-    component: ComponentCreator('/docs/__docusaurus/debug/routes', '13e'),
-    exact: true
-  },
-  {
     path: '/docs/landing',
     component: ComponentCreator('/docs/landing', '80b'),
     exact: true
   },
   {
     path: '/docs/',
-    component: ComponentCreator('/docs/', '36e'),
+    component: ComponentCreator('/docs/', '2cf'),
     routes: [
       {
         path: '/docs/',
-        component: ComponentCreator('/docs/', '97f'),
+        component: ComponentCreator('/docs/', '07b'),
         routes: [
           {
             path: '/docs/',
-            component: ComponentCreator('/docs/', 'b50'),
+            component: ComponentCreator('/docs/', '291'),
             routes: [
               {
-                path: '/docs/admin/dashboard',
-                component: ComponentCreator('/docs/admin/dashboard', 'c23'),
-                exact: true,
-                sidebar: "docs"
-              },
-              {
-                path: '/docs/admin/institutions-places',
-                component: ComponentCreator('/docs/admin/institutions-places', '17b'),
-                exact: true,
-                sidebar: "docs"
-              },
-              {
-                path: '/docs/admin/scroll-policy',
-                component: ComponentCreator('/docs/admin/scroll-policy', '587'),
-                exact: true,
-                sidebar: "docs"
-              },
-              {
-                path: '/docs/admin/users',
-                component: ComponentCreator('/docs/admin/users', 'f16'),
-                exact: true,
-                sidebar: "docs"
-              },
-              {
-                path: '/docs/admin/validation-reception',
-                component: ComponentCreator('/docs/admin/validation-reception', 'a23'),
-                exact: true,
-                sidebar: "docs"
-              },
-              {
-                path: '/docs/admin/votations',
-                component: ComponentCreator('/docs/admin/votations', '793'),
-                exact: true,
-                sidebar: "docs"
-              },
-              {
-                path: '/docs/apps/calendar',
-                component: ComponentCreator('/docs/apps/calendar', '8b1'),
-                exact: true,
-                sidebar: "docs"
-              },
-              {
-                path: '/docs/apps/chat',
-                component: ComponentCreator('/docs/apps/chat', '996'),
-                exact: true,
-                sidebar: "docs"
-              },
-              {
-                path: '/docs/apps/events',
-                component: ComponentCreator('/docs/apps/events', '026'),
-                exact: true,
-                sidebar: "docs"
-              },
-              {
-                path: '/docs/apps/files',
-                component: ComponentCreator('/docs/apps/files', 'b1d'),
-                exact: true,
-                sidebar: "docs"
-              },
-              {
-                path: '/docs/apps/mail',
-                component: ComponentCreator('/docs/apps/mail', '972'),
-                exact: true,
-                sidebar: "docs"
-              },
-              {
-                path: '/docs/apps/notes',
-                component: ComponentCreator('/docs/apps/notes', '149'),
-                exact: true,
-                sidebar: "docs"
-              },
-              {
-                path: '/docs/apps/tasklist',
-                component: ComponentCreator('/docs/apps/tasklist', '60d'),
-                exact: true,
-                sidebar: "docs"
-              },
-              {
-                path: '/docs/apps/tools',
-                component: ComponentCreator('/docs/apps/tools', '146'),
+                path: '/docs/apps/overview',
+                component: ComponentCreator('/docs/apps/overview', '781'),
                 exact: true,
                 sidebar: "docs"
               },
               {
                 path: '/docs/architecture',
                 component: ComponentCreator('/docs/architecture', '38d'),
+                exact: true,
+                sidebar: "docs"
+              },
+              {
+                path: '/docs/auth/auth-routing-lifecycle',
+                component: ComponentCreator('/docs/auth/auth-routing-lifecycle', '6f9'),
+                exact: true,
+                sidebar: "docs"
+              },
+              {
+                path: '/docs/auth/overview',
+                component: ComponentCreator('/docs/auth/overview', 'd57'),
+                exact: true,
+                sidebar: "docs"
+              },
+              {
+                path: '/docs/auth/permission-model',
+                component: ComponentCreator('/docs/auth/permission-model', 'eeb'),
+                exact: true,
+                sidebar: "docs"
+              },
+              {
+                path: '/docs/auth/security-services-legacy',
+                component: ComponentCreator('/docs/auth/security-services-legacy', '58a'),
+                exact: true,
+                sidebar: "docs"
+              },
+              {
+                path: '/docs/backend/active-vs-legacy',
+                component: ComponentCreator('/docs/backend/active-vs-legacy', '495'),
+                exact: true,
+                sidebar: "docs"
+              },
+              {
+                path: '/docs/backend/endpoints-catalog',
+                component: ComponentCreator('/docs/backend/endpoints-catalog', '9c8'),
                 exact: true,
                 sidebar: "docs"
               },
@@ -165,6 +88,24 @@ export default [
               {
                 path: '/docs/backend/firebase/storage',
                 component: ComponentCreator('/docs/backend/firebase/storage', '95d'),
+                exact: true,
+                sidebar: "docs"
+              },
+              {
+                path: '/docs/backend/frontend-backend-traceability',
+                component: ComponentCreator('/docs/backend/frontend-backend-traceability', '34c'),
+                exact: true,
+                sidebar: "docs"
+              },
+              {
+                path: '/docs/backend/overview',
+                component: ComponentCreator('/docs/backend/overview', '94d'),
+                exact: true,
+                sidebar: "docs"
+              },
+              {
+                path: '/docs/backend/routes-map',
+                component: ComponentCreator('/docs/backend/routes-map', 'c91'),
                 exact: true,
                 sidebar: "docs"
               },
@@ -205,8 +146,20 @@ export default [
                 sidebar: "docs"
               },
               {
+                path: '/docs/contrib/docs-style-guide',
+                component: ComponentCreator('/docs/contrib/docs-style-guide', '2cd'),
+                exact: true,
+                sidebar: "docs"
+              },
+              {
                 path: '/docs/contrib/eslint-prettier',
                 component: ComponentCreator('/docs/contrib/eslint-prettier', '5c1'),
+                exact: true,
+                sidebar: "docs"
+              },
+              {
+                path: '/docs/contrib/github',
+                component: ComponentCreator('/docs/contrib/github', '0d4'),
                 exact: true,
                 sidebar: "docs"
               },
@@ -217,8 +170,20 @@ export default [
                 sidebar: "docs"
               },
               {
+                path: '/docs/data/critical-tables',
+                component: ComponentCreator('/docs/data/critical-tables', '506'),
+                exact: true,
+                sidebar: "docs"
+              },
+              {
                 path: '/docs/data/migration-firebase-supabase',
                 component: ComponentCreator('/docs/data/migration-firebase-supabase', 'dab'),
+                exact: true,
+                sidebar: "docs"
+              },
+              {
+                path: '/docs/data/migrations-catalog',
+                component: ComponentCreator('/docs/data/migrations-catalog', 'ecf'),
                 exact: true,
                 sidebar: "docs"
               },
@@ -229,56 +194,122 @@ export default [
                 sidebar: "docs"
               },
               {
+                path: '/docs/data/overview',
+                component: ComponentCreator('/docs/data/overview', '7db'),
+                exact: true,
+                sidebar: "docs"
+              },
+              {
+                path: '/docs/data/rpc-and-sql-surface',
+                component: ComponentCreator('/docs/data/rpc-and-sql-surface', '6e1'),
+                exact: true,
+                sidebar: "docs"
+              },
+              {
                 path: '/docs/data/schema-supabase',
                 component: ComponentCreator('/docs/data/schema-supabase', 'ba7'),
                 exact: true,
                 sidebar: "docs"
               },
               {
-                path: '/docs/devops/ci-cd',
-                component: ComponentCreator('/docs/devops/ci-cd', '61a'),
+                path: '/docs/domains/formation-pratique',
+                component: ComponentCreator('/docs/domains/formation-pratique', 'c0c'),
                 exact: true,
                 sidebar: "docs"
               },
               {
-                path: '/docs/devops/docker-dev',
-                component: ComponentCreator('/docs/devops/docker-dev', '3f5'),
+                path: '/docs/domains/formation-pratique-flows',
+                component: ComponentCreator('/docs/domains/formation-pratique-flows', '0c7'),
                 exact: true,
                 sidebar: "docs"
               },
               {
-                path: '/docs/devops/firebase-hosting',
-                component: ComponentCreator('/docs/devops/firebase-hosting', '79b'),
+                path: '/docs/domains/formation-pratique-traceability',
+                component: ComponentCreator('/docs/domains/formation-pratique-traceability', '1a0'),
                 exact: true,
                 sidebar: "docs"
               },
               {
-                path: '/docs/devops/large-files',
-                component: ComponentCreator('/docs/devops/large-files', 'bf3'),
+                path: '/docs/domains/gamification-service-deep-dive',
+                component: ComponentCreator('/docs/domains/gamification-service-deep-dive', '9ea'),
                 exact: true,
                 sidebar: "docs"
               },
               {
-                path: '/docs/devops/vps-caddy-nginx',
-                component: ComponentCreator('/docs/devops/vps-caddy-nginx', '02d'),
+                path: '/docs/domains/pfp-services-deep-dive',
+                component: ComponentCreator('/docs/domains/pfp-services-deep-dive', '6d6'),
                 exact: true,
                 sidebar: "docs"
               },
               {
-                path: '/docs/features/navigation',
-                component: ComponentCreator('/docs/features/navigation', 'afa'),
+                path: '/docs/domains/planning-soins',
+                component: ComponentCreator('/docs/domains/planning-soins', '2e9'),
                 exact: true,
                 sidebar: "docs"
               },
               {
-                path: '/docs/features/notifications',
-                component: ComponentCreator('/docs/features/notifications', '810'),
+                path: '/docs/domains/social-gamification',
+                component: ComponentCreator('/docs/domains/social-gamification', 'd8e'),
                 exact: true,
                 sidebar: "docs"
               },
               {
-                path: '/docs/features/overview',
-                component: ComponentCreator('/docs/features/overview', '2f1'),
+                path: '/docs/domains/ui-ownership-map',
+                component: ComponentCreator('/docs/domains/ui-ownership-map', '1a8'),
+                exact: true,
+                sidebar: "docs"
+              },
+              {
+                path: '/docs/domains/votation-algorithm',
+                component: ComponentCreator('/docs/domains/votation-algorithm', '393'),
+                exact: true,
+                sidebar: "docs"
+              },
+              {
+                path: '/docs/frontend/bootstrap',
+                component: ComponentCreator('/docs/frontend/bootstrap', 'e81'),
+                exact: true,
+                sidebar: "docs"
+              },
+              {
+                path: '/docs/frontend/component-library-admin',
+                component: ComponentCreator('/docs/frontend/component-library-admin', '2ff'),
+                exact: true,
+                sidebar: "docs"
+              },
+              {
+                path: '/docs/frontend/component-library-common-ui',
+                component: ComponentCreator('/docs/frontend/component-library-common-ui', '6b6'),
+                exact: true,
+                sidebar: "docs"
+              },
+              {
+                path: '/docs/frontend/component-library-critical-components',
+                component: ComponentCreator('/docs/frontend/component-library-critical-components', '21c'),
+                exact: true,
+                sidebar: "docs"
+              },
+              {
+                path: '/docs/frontend/component-library-layout',
+                component: ComponentCreator('/docs/frontend/component-library-layout', 'ef7'),
+                exact: true,
+                sidebar: "docs"
+              },
+              {
+                path: '/docs/frontend/component-library-overview',
+                component: ComponentCreator('/docs/frontend/component-library-overview', '6f5'),
+                exact: true,
+                sidebar: "docs"
+              },
+              {
+                path: '/docs/frontend/component-library-social-media',
+                component: ComponentCreator('/docs/frontend/component-library-social-media', '9c4'),
+                exact: true,
+                sidebar: "docs"
+              },
+              {
+                path: '/docs/frontend/critical-stores',
+                component: ComponentCreator('/docs/frontend/critical-stores', 'ef8'),
                 exact: true,
                 sidebar: "docs"
               },
@@ -289,8 +320,32 @@ export default [
                 sidebar: "docs"
               },
               {
+                path: '/docs/frontend/route-catalog',
+                component: ComponentCreator('/docs/frontend/route-catalog', '7b9'),
+                exact: true,
+                sidebar: "docs"
+              },
+              {
+                path: '/docs/frontend/route-to-data-matrix',
+                component: ComponentCreator('/docs/frontend/route-to-data-matrix', 'cf7'),
+                exact: true,
+                sidebar: "docs"
+              },
+              {
+                path: '/docs/frontend/router-modules',
+                component: ComponentCreator('/docs/frontend/router-modules', '17e'),
+                exact: true,
+                sidebar: "docs"
+              },
+              {
                 path: '/docs/frontend/routing',
                 component: ComponentCreator('/docs/frontend/routing', '30f'),
+                exact: true,
+                sidebar: "docs"
+              },
+              {
+                path: '/docs/frontend/services-catalog',
+                component: ComponentCreator('/docs/frontend/services-catalog', '5dd'),
                 exact: true,
                 sidebar: "docs"
               },
@@ -301,8 +356,8 @@ export default [
                 sidebar: "docs"
               },
               {
-                path: '/docs/frontend/structure',
-                component: ComponentCreator('/docs/frontend/structure', '58a'),
+                path: '/docs/frontend/stores-services-map',
+                component: ComponentCreator('/docs/frontend/stores-services-map', '7b7'),
                 exact: true,
                 sidebar: "docs"
               },
@@ -313,32 +368,8 @@ export default [
                 sidebar: "docs"
               },
               {
-                path: '/docs/gamification/admin',
-                component: ComponentCreator('/docs/gamification/admin', 'bae'),
-                exact: true,
-                sidebar: "docs"
-              },
-              {
-                path: '/docs/gamification/challenges',
-                component: ComponentCreator('/docs/gamification/challenges', '57e'),
-                exact: true,
-                sidebar: "docs"
-              },
-              {
-                path: '/docs/gamification/houses',
-                component: ComponentCreator('/docs/gamification/houses', '0aa'),
-                exact: true,
-                sidebar: "docs"
-              },
-              {
-                path: '/docs/gamification/profile',
-                component: ComponentCreator('/docs/gamification/profile', '623'),
-                exact: true,
-                sidebar: "docs"
-              },
-              {
-                path: '/docs/gamification/quests',
-                component: ComponentCreator('/docs/gamification/quests', '2c5'),
+                path: '/docs/frontend/view-store-service-matrix',
+                component: ComponentCreator('/docs/frontend/view-store-service-matrix', '9f7'),
                 exact: true,
                 sidebar: "docs"
               },
@@ -349,22 +380,14 @@ export default [
                 sidebar: "docs"
               },
               {
-                path: '/docs/map/institutions',
-                component: ComponentCreator('/docs/map/institutions', '6ab'),
-                exact: true,
-                sidebar: "docs"
+                path: '/docs/getting-started/cli-extensions/overview',
+                component: ComponentCreator('/docs/getting-started/cli-extensions/overview', '020'),
+                exact: true
               },
               {
-                path: '/docs/map/overview',
-                component: ComponentCreator('/docs/map/overview', '529'),
-                exact: true,
-                sidebar: "docs"
-              },
-              {
-                path: '/docs/map/places',
-                component: ComponentCreator('/docs/map/places', 'fc6'),
-                exact: true,
-                sidebar: "docs"
+                path: '/docs/getting-started/environment/setup',
+                component: ComponentCreator('/docs/getting-started/environment/setup', '75a'),
+                exact: true
               },
               {
                 path: '/docs/media/media-service',
@@ -385,38 +408,32 @@ export default [
                 sidebar: "docs"
               },
               {
-                path: '/docs/project/migrations',
-                component: ComponentCreator('/docs/project/migrations', 'b08'),
+                path: '/docs/ops/deployment',
+                component: ComponentCreator('/docs/ops/deployment', '007'),
                 exact: true,
                 sidebar: "docs"
               },
               {
-                path: '/docs/project/overview',
-                component: ComponentCreator('/docs/project/overview', '1e1'),
+                path: '/docs/ops/development',
+                component: ComponentCreator('/docs/ops/development', 'b23'),
                 exact: true,
                 sidebar: "docs"
               },
               {
-                path: '/docs/project/releases',
-                component: ComponentCreator('/docs/project/releases', '3a0'),
+                path: '/docs/ops/runbook',
+                component: ComponentCreator('/docs/ops/runbook', '7d7'),
                 exact: true,
                 sidebar: "docs"
               },
               {
-                path: '/docs/project/roadmap',
-                component: ComponentCreator('/docs/project/roadmap', '1f2'),
+                path: '/docs/ops/vps-operations',
+                component: ComponentCreator('/docs/ops/vps-operations', 'aa4'),
                 exact: true,
                 sidebar: "docs"
               },
               {
-                path: '/docs/project/sprints',
-                component: ComponentCreator('/docs/project/sprints', '28d'),
-                exact: true,
-                sidebar: "docs"
-              },
-              {
-                path: '/docs/project/template-gantt',
-                component: ComponentCreator('/docs/project/template-gantt', '55d'),
+                path: '/docs/ops/vps-topology',
+                component: ComponentCreator('/docs/ops/vps-topology', 'c30'),
                 exact: true,
                 sidebar: "docs"
               },
@@ -445,26 +462,20 @@ export default [
                 sidebar: "docs"
               },
               {
-                path: '/docs/social/communities',
-                component: ComponentCreator('/docs/social/communities', '96f'),
+                path: '/docs/system/overview',
+                component: ComponentCreator('/docs/system/overview', '26e'),
                 exact: true,
                 sidebar: "docs"
               },
               {
-                path: '/docs/social/messaging',
-                component: ComponentCreator('/docs/social/messaging', 'a5f'),
+                path: '/docs/system/project-structure',
+                component: ComponentCreator('/docs/system/project-structure', 'fc1'),
                 exact: true,
                 sidebar: "docs"
               },
               {
-                path: '/docs/social/overview',
-                component: ComponentCreator('/docs/social/overview', 'cbb'),
-                exact: true,
-                sidebar: "docs"
-              },
-              {
-                path: '/docs/stack',
-                component: ComponentCreator('/docs/stack', '1fa'),
+                path: '/docs/system/recovery-checklist',
+                component: ComponentCreator('/docs/system/recovery-checklist', '6aa'),
                 exact: true,
                 sidebar: "docs"
               },
@@ -476,7 +487,12 @@ export default [
               },
               {
                 path: '/docs/testing/firebase-test',
-                component: ComponentCreator('/docs/testing/firebase-test', 'f96'),
+                component: ComponentCreator('/docs/testing/firebase-test', '4e8'),
+                exact: true
+              },
+              {
+                path: '/docs/testing/overview',
+                component: ComponentCreator('/docs/testing/overview', '9d1'),
                 exact: true,
                 sidebar: "docs"
               },
@@ -488,33 +504,28 @@ export default [
               },
               {
                 path: '/docs/testing/supabase-test',
-                component: ComponentCreator('/docs/testing/supabase-test', '987'),
-                exact: true,
-                sidebar: "docs"
+                component: ComponentCreator('/docs/testing/supabase-test', '661'),
+                exact: true
               },
               {
-                path: '/docs/troubleshooting/docusaurus-prism',
-                component: ComponentCreator('/docs/troubleshooting/docusaurus-prism', '918'),
-                exact: true,
-                sidebar: "docs"
+                path: '/docs/testing/unit-tests',
+                component: ComponentCreator('/docs/testing/unit-tests', '3ff'),
+                exact: true
               },
               {
                 path: '/docs/troubleshooting/env-encoding',
-                component: ComponentCreator('/docs/troubleshooting/env-encoding', '3b5'),
-                exact: true,
-                sidebar: "docs"
+                component: ComponentCreator('/docs/troubleshooting/env-encoding', '81f'),
+                exact: true
               },
               {
                 path: '/docs/troubleshooting/firebase-auth',
-                component: ComponentCreator('/docs/troubleshooting/firebase-auth', '299'),
-                exact: true,
-                sidebar: "docs"
+                component: ComponentCreator('/docs/troubleshooting/firebase-auth', 'a47'),
+                exact: true
               },
               {
                 path: '/docs/troubleshooting/firebase-env',
-                component: ComponentCreator('/docs/troubleshooting/firebase-env', 'f0a'),
-                exact: true,
-                sidebar: "docs"
+                component: ComponentCreator('/docs/troubleshooting/firebase-env', '30f'),
+                exact: true
               },
               {
                 path: '/docs/',

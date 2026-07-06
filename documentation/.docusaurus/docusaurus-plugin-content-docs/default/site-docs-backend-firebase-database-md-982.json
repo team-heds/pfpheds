@@ -1,7 +1,7 @@
 {
   "id": "backend/firebase/database",
   "title": "Firebase Realtime Database",
-  "description": "Brouillon de documentation pour backend/firebase/database.",
+  "description": "Rôle",
   "source": "@site/docs/backend/firebase/database.md",
   "sourceDirName": "backend/firebase",
   "slug": "/backend/firebase/database",
@@ -15,7 +15,7 @@
   },
   "sidebar": "docs",
   "previous": {
-    "title": "Firebase - Vue d'ensemble",
+    "title": "Firebase - vue d'ensemble",
     "permalink": "/docs/backend/firebase/overview"
   },
   "next": {

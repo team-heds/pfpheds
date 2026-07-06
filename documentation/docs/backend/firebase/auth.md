@@ -2,27 +2,25 @@
 title: Firebase Auth
 ---
 
-Authentification Firebase utilisée par l’app (voir `firebase.js`).
+## Rôle
 
-## Initialisation
+Firebase Auth reste utilisé pour une partie des sessions legacy.
 
-L’app initialise `Auth` via `getAuth(app)` après vérification des variables d’environnement dans `firebase.js`.
+## Points de référence
 
-Variables requises: `VITE_FIREBASE_*` (voir `backend/firebase/overview`).
+- `src/firebase.js`
+- `src/stores/authStore.js`
 
-## Cas d’usage
+## Intégration
 
-- Vérification d’état dans le routeur (guards)
-- Lecture des rôles utilisateur dans RTDB: `Users/{uid}/Roles`
+`authStore` expose:
 
-## Problèmes fréquents
+- `signUpFirebase`
+- `signInFirebase`
+- `resetPasswordFirebase`
 
-- Erreur « Component auth has not been registered yet »
-  - Voir `troubleshooting/firebase-auth`
-  - La cause est généralement des variables manquantes → voir `troubleshooting/firebase-env`
+et écoute aussi `onAuthStateChanged`.
 
-## Bonnes pratiques
+## Point de vigilance
 
-- Ne pas commiter de clés. Utiliser `.env` et secrets CI.
-- Redémarrer Vite après modification de `.env`.
-- Logger en dev (déjà présent dans `firebase.js`).
+Le projet étant hybride, une correction auth doit toujours être vérifiée aussi côté Supabase.

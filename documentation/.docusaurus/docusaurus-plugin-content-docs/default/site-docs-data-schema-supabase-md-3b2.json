@@ -1,7 +1,7 @@
 {
   "id": "data/schema-supabase",
   "title": "Schéma Supabase",
-  "description": "Brouillon de documentation pour data/schema-supabase.",
+  "description": "Vue d’ensemble du schéma de données côté Supabase/Postgres.",
   "source": "@site/docs/data/schema-supabase.md",
   "sourceDirName": "data",
   "slug": "/data/schema-supabase",
@@ -15,11 +15,11 @@
   },
   "sidebar": "docs",
   "previous": {
-    "title": "Migration Firebase → Supabase",
-    "permalink": "/docs/data/migration-firebase-supabase"
+    "title": "RPC Supabase et surface SQL exposée",
+    "permalink": "/docs/data/rpc-and-sql-surface"
   },
   "next": {
-    "title": "Routeur Multi-Systèmes",
-    "permalink": "/docs/data/multi-system-router"
+    "title": "Catalogue des migrations Supabase",
+    "permalink": "/docs/data/migrations-catalog"
   }
 }

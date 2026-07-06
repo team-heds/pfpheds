@@ -12,14 +12,5 @@
   "version": "current",
   "frontMatter": {
     "title": "Releases & Versions"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "Sprints 2025",
-    "permalink": "/docs/project/sprints"
-  },
-  "next": {
-    "title": "Migrations - Firebase → Supabase",
-    "permalink": "/docs/project/migrations"
   }
 }

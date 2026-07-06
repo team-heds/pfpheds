@@ -25,16 +25,16 @@ const APP_VERSION = '0.2.3';
 if ('serviceWorker' in navigator) {
   const lastVersion = localStorage.getItem('app_version');
   if (lastVersion !== APP_VERSION) {
-    navigator.serviceWorker.getRegistrations().then(regs => {
-      regs.forEach(r => r.unregister());
+    navigator.serviceWorker.getRegistrations().then((regs) => {
+      regs.forEach((r) => r.unregister());
     });
-    caches.keys().then(names => {
-      names.forEach(name => caches.delete(name));
+    caches.keys().then((names) => {
+      names.forEach((name) => caches.delete(name));
     });
     localStorage.setItem('app_version', APP_VERSION);
     if (lastVersion) window.location.reload();
   } else {
-    navigator.serviceWorker.register('/sw.js').then(reg => {
+    navigator.serviceWorker.register('/sw.js').then((reg) => {
       reg.update();
     });
   }
@@ -90,7 +90,6 @@ async function bootstrap() {
     await authStore.initializeAuth();
     await userStore.init();
     await router.isReady();
-    console.log('Application et authentification initialisees');
   } catch (error) {
     console.error('Erreur lors du bootstrap applicatif:', error);
   } finally {

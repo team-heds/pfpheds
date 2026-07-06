@@ -12,14 +12,5 @@
   "version": "current",
   "frontMatter": {
     "title": "App Mail"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "App Chat",
-    "permalink": "/docs/apps/chat"
-  },
-  "next": {
-    "title": "App Tasklist",
-    "permalink": "/docs/apps/tasklist"
   }
 }

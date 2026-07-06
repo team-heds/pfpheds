@@ -1,71 +1,145 @@
 ---
 title: Utiliser GitHub avec le projet
-sidebar_label: GitHub (projet)
+sidebar_label: GitHub
 ---
 
-Ce guide explique comment cloner, développer, contribuer et publier avec GitHub pour ce dépôt.
+Ce guide décrit le flux GitHub du projet : cloner le dépôt, travailler sur une branche propre, ouvrir une Pull Request, puis livrer un code traçable et relisible.
 
 ## Cloner et démarrer
 
 ```bash
-# Cloner
 git clone https://github.com/antoinequarroz/pfpheds.git
 cd pfpheds
-
-# Installer
 npm install
-
-# Démarrer l'app
 npm run dev
+```
 
-# Démarrer la documentation
+Pour lancer la documentation locale :
+
+```bash
 npm run docs:dev
 ```
 
-Voir aussi: `getting-started` et `getting-started/environment/setup`.
+Voir aussi :
 
-## Branches et versionnage
+- `getting-started`
+- `ops/development`
+- `contrib/workflow`
 
-- Branches typiques:
-  - `main`: intégration stable
-  - `prod`: branche de déploiement (workflow CI `deploy-prod.yml`)
-  - `feature/<clef>-<slug>` (ex: `feature/JIRA-123-filtre-carte`)
-  - `fix/<clef>-<slug>`
-- Releases: tags et changelog (voir `project/releases`)
+## Stratégie de branches
+
+Branches utilisées dans le dépôt :
+
+- `main` : branche d'intégration principale
+- `prod` : branche de déploiement de production
+- `feature/<ticket>-<slug>` : nouvelle fonctionnalité
+- `fix/<ticket>-<slug>` : correction ciblée
+- `hotfix/<ticket>-<slug>` : correction urgente pour production
+
+Exemple :
+
+```bash
+git checkout -b feature/JIRA-123-filtre-carte
+```
 
 ## Conventions de commit
 
-- Préfixer avec la clef Jira si applicable: `JIRA-123: message`  
-- Messages courts, à l'impératif, décrivant l'intention
+Règles recommandées :
 
-## Pull Requests (PR)
+- préfixer avec la clé Jira quand elle existe ;
+- garder un message court, précis et orienté intention ;
+- éviter les commits fourre-tout.
 
-- Cible: `main` (ou `prod` pour hotfix)
-- Titre: `JIRA-123: description courte`
-- Description: ce que ça change, comment tester, impacts
-- Checklist: lint OK (`npm run lint`), build OK (`npm run build`), doc mise à jour si nécessaire
-- Reviewer: au moins 1 relecture
+Exemples :
+
+```bash
+git commit -m "JIRA-123: ajoute le filtre par site"
+git commit -m "fix(auth): corrige la redirection après login"
+```
+
+## Pull Requests
+
+Une PR propre doit contenir :
+
+- un titre explicite ;
+- une description du changement ;
+- la méthode de test ;
+- les impacts éventuels sur les données, droits, routes ou déploiements ;
+- une mise à jour documentaire si le comportement change.
+
+Cible habituelle :
+
+- `main` pour le développement courant ;
+- `prod` uniquement pour un hotfix ou une release contrôlée.
+
+## Vérifications avant PR
+
+Commandes minimales :
+
+```bash
+npm run lint
+npm run build
+npm run docs:build
+```
+
+Si la PR touche les flux métier, vérifier aussi :
+
+- navigation selon les rôles ;
+- appels Supabase/Firebase concernés ;
+- régressions visuelles sur desktop et mobile ;
+- documentation impactée.
 
 ## CI/CD
 
-- Pipeline GitHub Actions (`.github/workflows/deploy-prod.yml`)
-- Build app (`npm run build`) ou app + docs (`npm run build:all`)
-- Déploiement FTP de `dist/`
+Le dépôt contient une pipeline GitHub Actions de déploiement. Le point d'entrée principal est :
 
-## Documentation
+```text
+.github/workflows/deploy-prod.yml
+```
 
-- Pages dans `documentation/docs/`
-- Sidebar: `documentation/sidebars.js`
-- Assets: `documentation/static/img/` puis référencer via `/img/...`
+Le flux standard est :
 
-## Issues & Projets
+1. build de l'application ;
+2. éventuellement build de la documentation ;
+3. publication des artefacts ;
+4. déploiement de `dist/`.
 
-- Issues GitHub pour tâches rapides/techniques
-- Kanban Sprint dans Jira (voir `project/jira-github-workflow`)
-- Lier commits/PR à Jira via la clef (ex: `JIRA-123` dans le titre/commit)
+Quand la documentation doit être livrée avec l'application, utiliser :
+
+```bash
+npm run build:all
+```
+
+## Documentation liée à GitHub
+
+La documentation Docusaurus est structurée ici :
+
+- contenu : `documentation/docs/`
+- navigation : `documentation/sidebars.js`
+- configuration : `documentation/docusaurus.config.js`
+- assets statiques : `documentation/static/`
+
+Toute modification fonctionnelle importante doit être accompagnée d'une mise à jour documentaire.
+
+## Jira et traçabilité
+
+Le projet s'appuie sur une traçabilité simple entre code et pilotage :
+
+- la clé Jira apparaît dans le nom de branche ;
+- la même clé peut apparaître dans les commits ;
+- la PR reprend cette clé dans son titre si applicable.
+
+Exemple :
+
+- branche : `feature/JIRA-245-export-stage`
+- commit : `JIRA-245: ajoute l'export CSV`
+- PR : `JIRA-245: export des données de stage`
 
 ## Bonnes pratiques
 
-- Petites PR ciblées et faciles à relire
-- Tests manuels et capture avant/après si impact UI
-- Mettre à jour la documentation quand c'est utile
+- faire des PR petites et ciblées ;
+- éviter les mélanges refactor + feature + fix dans la même PR ;
+- documenter les décisions non évidentes ;
+- ajouter des captures si l'UI change ;
+- supprimer le code mort dans le même périmètre quand c'est sûr ;
+- garder l'historique lisible pour qu'un autre développeur puisse reprendre sans contexte oral.

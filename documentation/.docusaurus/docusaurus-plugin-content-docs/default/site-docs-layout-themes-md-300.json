@@ -13,14 +13,5 @@
   "frontMatter": {
     "title": "Thèmes & Dark Mode",
     "sidebar_label": "Thèmes"
-  },
-  "sidebar": "docs",
-  "previous": {
-    "title": "Design System",
-    "permalink": "/docs/layout/design-system"
-  },
-  "next": {
-    "title": "Typographie",
-    "permalink": "/docs/layout/typography"
   }
 }
