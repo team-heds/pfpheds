@@ -2,7 +2,7 @@
 title: Route guards
 ---
 
-Le guard statique (`router.beforeEach`) est détaillé ligne par ligne dans `auth/auth-routing-lifecycle.md`. Cette page couvre la partie non traitée ailleurs : **les routes dynamiques chargées depuis Supabase**, qui ont leur propre logique de normalisation de permission — différente de celle des routes statiques, et actuellement porteuse d'un bug latent.
+Le guard statique (`router.beforeEach`) est détaillé ligne par ligne dans `auth/auth-routing-lifecycle.md`. Cette page couvre la partie non traitée ailleurs : **les routes dynamiques chargées depuis Supabase** (`src/composables/useDynamicRoutes.js`), qui ont leur propre logique de normalisation de permission, distincte de celle des routes statiques.
 
 ## `src/composables/useDynamicRoutes.js` — routes chargées depuis la table `dynamic_routes`
 
@@ -18,36 +18,21 @@ const { data, error } = await supabase
 
 Si la table n'existe pas (`error.code === 'PGRST205'`), la fonction retourne silencieusement un tableau vide — dégradation propre, pas de crash sur un environnement sans cette table.
 
-## Bug vérifié : `need` par défaut devient toujours `'public'`, même pour une route protégée
+## Normalisation de `need` pour une route dynamique sans valeur explicite
 
 ```js
-const DEFAULT_NEED = 'public';   // ← unique valeur, utilisée dans les deux branches ci-dessous
-
 const meta = { requiresAuth: route.requires_auth ?? false, dynamic: true };
 
 if (route.need !== null && route.need !== undefined) {
   meta.need = route.need;
 } else {
-  meta.need = meta.requiresAuth ? DEFAULT_NEED : 'public';   // ⚠️ les deux branches valent 'public'
+  meta.need = meta.requiresAuth ? DEFAULT_NEED_AUTHENTICATED : DEFAULT_NEED_PUBLIC;
 }
 ```
 
-Comme `DEFAULT_NEED` vaut littéralement `'public'`, le `? DEFAULT_NEED : 'public'` est un branchement sans effet : **qu'une route dynamique ait `requires_auth: true` ou `false`, si sa colonne `need` est vide, elle reçoit `meta.need = 'public'`** — et `need === 'public'` déclenche un `return next()` immédiat dans le guard (`router.js`), avant même la vérification de session. C'est l'inverse de la normalisation des routes statiques (`DEFAULT_NEED = 'authenticated'` dans `router.js`, voir `auth/auth-routing-lifecycle.md`) — les deux fichiers utilisent le même nom de constante (`DEFAULT_NEED`) pour des valeurs opposées.
+Comportement corrigé le 2026-07-14 pour refléter la même logique que la normalisation des routes statiques (`auth/auth-routing-lifecycle.md`) : une route dynamique avec `requires_auth = true` mais sans `need` explicite reçoit désormais `need: 'authenticated'`, pas `'public'`. Avant ce correctif, les deux branches du ternaire renvoyaient la même valeur par erreur de nommage de constante — toute route ajoutée uniquement via `dynamic_routes` sans `need` renseigné aurait hérité d'un accès public quel que soit `requires_auth`. Le correctif ne change rien pour les routes qui définissent déjà `need` explicitement en base, ni pour les chemins qui existent aussi comme route statique (le mécanisme de dédoublonnage ci-dessous les protégeait déjà).
 
-### Vérifié en base le 2026-07-14 : 6 lignes actives concernées
-
-```
-FeedView           /feed                  requires_auth: true, need: null
-VotationView       /votation              requires_auth: true, need: null
-InstitutionView    /institution/:id       requires_auth: true, need: null
-InstitutionDetails /institution_details/:id  requires_auth: true, need: null
-DocumentsPFP       /documents_pfp         requires_auth: true, need: null
-+ 1 autre route
-```
-
-### Pourquoi ça ne casse rien aujourd'hui
-
-`addDynamicRoutesToRouter` vérifie avant d'ajouter chaque route dynamique :
+## Dédoublonnage : une route dynamique n'écrase jamais un chemin statique existant
 
 ```js
 const pathAlreadyExists = router.getRoutes().some(r => r.path === route.path);
@@ -57,11 +42,7 @@ if (pathAlreadyExists) {
 }
 ```
 
-Les 6 chemins concernés (`/feed`, `/votation`, `/institution/:id`, `/institution_details/:id`, `/documents_pfp`, ...) **existent déjà comme routes statiques** dans `src/router/routes/social.js`, `votations.js`, `users.js` — avec `requiresAuth: true` et sans `need`, donc normalisées côté statique à `need: 'authenticated'` (comportement correct). Comme la route statique est enregistrée en premier, la version dynamique buggée est ignorée pour ces 6 chemins précis. **Le bug est actuellement neutralisé par coïncidence de configuration, pas corrigé.**
-
-### Condition d'exploitation réelle
-
-Toute nouvelle route ajoutée **exclusivement** via la table `dynamic_routes` (typiquement depuis l'écran admin `DynamicRoutesEditorView`, route `/admin/routes-editor`), avec `requires_auth = true` mais sans valeur dans la colonne `need`, sera **immédiatement accessible sans authentification**, sans qu'aucune erreur ne soit levée nulle part — le comportement est silencieux. C'est le risque concret à corriger (fixer `DEFAULT_NEED` selon `meta.requiresAuth` réellement, ex. `meta.requiresAuth ? 'authenticated' : 'public'`) avant que quelqu'un n'ajoute une route sensible depuis cet éditeur sans renseigner `need` manuellement.
+Toute route déjà déclarée dans `src/router/routes/*.js` (routes statiques) prime sur son équivalent dynamique — utile à savoir en administration : modifier `need` sur une ligne `dynamic_routes` dont le chemin existe déjà statiquement n'a **aucun effet observable**, c'est la version statique qui reste active.
 
 ## Garde-fou existant : `protectedRoutes` (noms de route jamais surchargés dynamiquement)
 
@@ -79,7 +60,7 @@ dynamicRoutes.forEach((route) => {
 });
 ```
 
-Cette liste empêche qu'une ligne de `dynamic_routes` portant l'un de ces **noms** (pas chemins) écrase ou redéfinisse ces routes sensibles — indépendamment du bug `need` ci-dessus, ces noms précis sont protégés par exclusion explicite. Noter que `VotationView` apparaît ici en plus d'exister déjà comme route statique — double protection pour cette route spécifique.
+Cette liste empêche qu'une ligne de `dynamic_routes` portant l'un de ces **noms** (pas chemins) écrase ou redéfinisse ces routes sensibles, indépendamment de la valeur de `need` posée en base.
 
 ## Résolution de composant : n'importe quel fichier de `views/` ou `components/` peut devenir une route
 
@@ -97,13 +78,13 @@ const viewModules = {
 | Meta | Portée | Défaut si absent |
 | --- | --- | --- |
 | `requiresAuth` | statique + dynamique | `false` |
-| `need` | statique + dynamique | `'authenticated'` (statique) / `'public'` (dynamique — bug ci-dessus) |
+| `need` | statique + dynamique | `'authenticated'` si `requiresAuth`, sinon `'public'` (les deux mécanismes sont désormais alignés) |
 | `requiredRole` | statique legacy uniquement (2 routes) | absent |
 | `requiresModuleOwnership` | ponctuel, non détaillé ici | absent |
 | `dynamic` | posé automatiquement à `true` sur toute route chargée depuis `dynamic_routes` | absent sur les routes statiques |
 
 ## Réflexe avant d'ajouter une route via `DynamicRoutesEditorView`
 
-1. Toujours renseigner `need` explicitement en base — ne jamais compter sur le défaut.
-2. Si la route est sensible, vérifier qu'elle n'entre pas en collision de chemin avec une route statique existante (sinon la version statique gagne silencieusement, ce qui peut aussi surprendre en sens inverse : modifier `need` en base sur une ligne `dynamic_routes` dont le chemin existe déjà statiquement n'aura **aucun effet**).
-3. Pour une route véritablement critique, préférer l'ajouter en dur dans `src/router/routes/*.js` plutôt que via `dynamic_routes`, tant que le bug de normalisation n'est pas corrigé.
+1. Renseigner `need` explicitement en base plutôt que de compter sur le défaut, par lisibilité.
+2. Vérifier qu'elle n'entre pas en collision de chemin avec une route statique existante (sinon la version statique gagne silencieusement).
+3. Pour une route véritablement critique, continuer de préférer une déclaration statique dans `src/router/routes/*.js`, plus visible en revue de code qu'une ligne de configuration en base.

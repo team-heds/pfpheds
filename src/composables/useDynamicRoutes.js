@@ -18,7 +18,8 @@ const LEGACY_COMPONENT_ALIASES = new Map([
   ['/src/views/admin/formation-pratique/ProfilRepondantEnseignantViewPHYFP.vue', '/src/views/admin/formation-pratique/ProfileRepondantView.vue']
 ]);
 
-const DEFAULT_NEED = 'public';
+const DEFAULT_NEED_AUTHENTICATED = 'authenticated';
+const DEFAULT_NEED_PUBLIC = 'public';
 
 function normalizeComponentPath(pathFromDb) {
   if (!pathFromDb) {
@@ -121,7 +122,7 @@ export async function loadDynamicRoutes() {
         if (route.need !== null && route.need !== undefined) {
           meta.need = route.need;
         } else {
-          meta.need = meta.requiresAuth ? DEFAULT_NEED : 'public';
+          meta.need = meta.requiresAuth ? DEFAULT_NEED_AUTHENTICATED : DEFAULT_NEED_PUBLIC;
         }
 
         if (route.menu_section) {
