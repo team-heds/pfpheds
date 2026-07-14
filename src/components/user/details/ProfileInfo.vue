@@ -3,7 +3,7 @@
   <div class="filter-layout">
     <!-- Sidebar Gauche -->
     <div class="sidebar-left">
-      <LeftSidebar />
+      <LeftSidebar :hide-gamification="true" />
     </div>
 
     <!-- Contenu Principal -->

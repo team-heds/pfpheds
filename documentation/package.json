@@ -5,9 +5,10 @@
   "scripts": {
     "start": "docusaurus start",
     "build": "docusaurus build",
-    "serve": "docusaurus serve build --port 3010 --host 0.0.0.0",
+    "serve": "docusaurus serve --port 3010 --host 0.0.0.0",
     "clear": "docusaurus clear",
-    "swizzle": "docusaurus swizzle"
+    "swizzle": "docusaurus swizzle",
+    "docs:pdf": "docusaurus-to-pdf"
   },
   "dependencies": {
     "@docusaurus/core": "^3.4.0",
@@ -17,5 +18,8 @@
     "prism-react-renderer": "^2.3.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "docusaurus-to-pdf": "^1.2.3"
   }
 }

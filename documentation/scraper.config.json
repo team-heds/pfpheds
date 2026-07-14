@@ -1,0 +1,5 @@
+{
+  "baseUrl": "http://localhost:3010",
+  "entryPoint": "http://localhost:3010/docs",
+  "outputDir": "./output/docs.pdf"
+}

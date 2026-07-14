@@ -1,17 +1,17 @@
 
 <template>
 
-  <!-- Bandeau Maison -->
+  <!-- Bandeau Maison (masqué temporairement pour la présentation, ne pas supprimer) -->
   <BandeauMaison
-    v-if="hasValidHouse"
+    v-if="SHOW_GAMIFICATION_UI && hasValidHouse"
     :maison="userGamification.maison"
     :niveau="userGamification.niveau"
     :loginStreak="userGamification.loginStreak"
     class="mb-4"
   />
 
-  <!-- PROMPT QUIZ MAISON -->
-  <div v-if="!hasValidHouse && !isGameMaster" class="house-quiz-prompt mb-4">
+  <!-- PROMPT QUIZ MAISON (masqué temporairement pour la présentation, ne pas supprimer) -->
+  <div v-if="SHOW_GAMIFICATION_UI && !hasValidHouse && !isGameMaster" class="house-quiz-prompt mb-4">
     <div class="quiz-prompt-card">
       <div class="quiz-prompt-content">
         <i class="pi pi-graduation-cap quiz-prompt-icon"></i>
@@ -25,9 +25,9 @@
     </div>
   </div>
 
-  <!-- XP Bar -->
+  <!-- XP Bar (masqué temporairement pour la présentation, ne pas supprimer) -->
   <XPBar
-    v-if="hasValidHouse && !isGameMaster"
+    v-if="SHOW_GAMIFICATION_UI && hasValidHouse && !isGameMaster"
     :xp="userGamification.xp"
     :xp-to-next="userGamification.xpToNext"
     :niveau="userGamification.niveau"
@@ -137,6 +137,9 @@ import supabaseStorageService from '@/service/supabaseStorageService'
 
 const defaultAvatar = '@/assets/images/avatar/01.jpg';
 const toast = useToast();
+
+// Masque temporairement l'UI de gamification sur le profil (présentation) - repasser à true pour réactiver
+const SHOW_GAMIFICATION_UI = false;
 
 // Profil consulté (celui affiché)
 const user = ref({

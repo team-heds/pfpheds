@@ -142,7 +142,7 @@
     />
   </Dialog>
 
-  <QuestsSidebarCard />
+  <QuestsSidebarCard v-if="!hideGamification" />
 </template>
 
 <script>
@@ -163,6 +163,10 @@ const defaultAvatar = '@/assets/images/avatar/01.jpg';
 export default {
   name: "LeftSidebar",
   components: { UserCard, Toast, EventDetail, Dialog, Button, QuestsSidebarCard },
+  props: {
+    // Masque la carte gamification du sidebar (utilisé sur le profil pour la présentation)
+    hideGamification: { type: Boolean, default: false }
+  },
   setup() {
     const eventStore = useEventStore();
     const authStore = useAuthStore();
