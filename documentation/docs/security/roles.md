@@ -2,69 +2,54 @@
 title: "Rôles & Permissions"
 ---
 
-Ce document décrit le modèle de permissions consommé par le front et son usage dans le routeur.
+Cette page a été fusionnée conceptuellement avec `auth/overview.md` et `auth/permission-model.md`, qui contiennent désormais le détail technique complet (4 systèmes RBAC coexistants, code exact de `roleStore.can()`, matrice des `need` réellement utilisés, RPC `api_my_permissions()` en entier). Cette page reste comme point d'entrée rapide + un ajout non couvert ailleurs : la liste exhaustive des RPC RBAC exposées.
 
-## Source des permissions (front)
+## Résumé ultra-condensé (détail dans `auth/overview.md`)
 
-- Store: `src/stores/role.js` (`useRoleStore`)
-  - `perms: string[]` — liste des permissions
-  - `isSuper` — vrai si `perms` contient `super.all`
-  - `can(perm | perm[])` — vérifie une ou plusieurs permissions
-  - Initialisation: `init()` charge la session Supabase et les permissions via une RPC (par ex. `get_user_permissions` ou `api_my_permissions` selon votre configuration)
+- Store : `src/stores/role.js` (`useRoleStore`) — `perms`, `isSuper`, `can()`.
+- Source principale : RPC `api_my_permissions()`, qui lit `user_profiles.role` + `user_profiles.permissions`.
+- `isSuper` = `perms.includes('super.all')`, court-circuite tout `can()`.
+- Ce système front ne remplace pas un audit RLS côté base — voir `backend/supabase/rls.md`.
 
-> L’implémentation de la fonction RPC côté base doit renvoyer une liste de permissions pour l’utilisateur courant. Voir les migrations SQL pour la création de cette RPC.
+## RPC RBAC exposées via PostgREST mais non câblées dans `roleStore` (inventaire complet)
 
-## RPC attendue côté DB
+Voir `data/rpc-and-sql-surface.md` pour la liste complète et commentée (93 RPC au total). Rappel des plus pertinentes pour la gestion de rôles :
 
-- Le store appelle par défaut `supabase.rpc('api_my_permissions')`.
-- Si votre schéma expose déjà `get_user_permissions(uid text)`, créez un alias compatible:
-
-```sql
--- Alias simple qui transforme le tableau en table (colonne perm)
-create or replace function public.api_my_permissions()
-returns table(perm text)
-language sql
-security definer
-as $$
-  select unnest(public.get_user_permissions(auth.uid()::text)) as perm;
-$$;
+```
+set_user_profile_rbac(_email, _role, _permissions, _is_active)   -- provisioning complet en un appel, sous-utilisée
+promote_user_to_admin(user_email)
+is_admin(email_param) / is_superadmin() / is_super_admin()        -- 3 variantes redondantes
+user_has_permission(user_uid, required_permission)
+has_perm(p)
+whoami()
 ```
 
-- Mise à jour des permissions (administration): `update_user_permissions(target_user_id text, new_permissions text[])`.
-  - Définie dans `supabase_migrations/add_permissions_to_user_profiles.sql`.
-  - En cas de cache PostgREST, voir `supabase_migrations/reload_permissions_functions.sql` (NOTIFY pgrst, 'reload schema').
-
 ## Dans le routeur
-  - `need: 'page1.access'`
-  - `need: ['admin', 'editor']`
-  - Spéciaux: `public`, `anonymous`, `authenticated`
-- `meta.requiredRole`: support historique basé sur des rôles nommés
-- Bypass: `isSuper` accorde l’accès quelle que soit la permission
 
-## Convention de nommage (conseillée)
+- `need: 'page1.access'`, `need: ['admin', 'editor']` — voir la matrice réelle et les pièges de config dans `auth/permission-model.md`.
+- `meta.requiredRole` : mécanisme historique, seulement 2 occurrences restantes dans tout le dépôt.
+- `isSuper` accorde l'accès quelle que soit la permission demandée.
 
-- Préfixer par domaine:
-  - `admin.*` (ex: `admin.settings`, `admin.users`)
-  - `page*.access` (ex: `page1.access`, `page2.access`)
-  - `media.*`, `fp.*` (formation pratique), `si.*` (soins-infirmiers)
+## Convention de nommage observée (pas universellement respectée)
 
-## Exemples
+- `page*.access` (`page1.access`, `page2.access`) — historique formation pratique.
+- Rôles filière directs (`AdminSoins`, `AdminPhysio`, `EnseignantSoins`, ...) utilisés à la fois comme `role` unique et comme entrées de `permissions[]` — voir `auth/permission-model.md` pour la liste exhaustive extraite du code.
+- Cohortes (`BA23-PHY`, `B24-SI`, ...) mélangées dans le même tableau `permissions[]` que les vraies permissions fonctionnelles, sans préfixe distinctif.
+
+## Exemple d'usage (`roleStore.can()`)
 
 ```js
 import { useRoleStore } from '@/stores/role'
 const roleStore = useRoleStore()
 
-if (roleStore.can('page1.access')) {
-  // afficher bouton ou lien
-}
-
-if (roleStore.can(['admin', 'editor'])) {
-  // au moins une des permissions
-}
+if (roleStore.can('page1.access')) { /* ... */ }
+if (roleStore.can(['admin', 'editor'])) { /* au moins une des deux */ }
 ```
+
+⚠️ Ne jamais inclure `'authenticated'` dans le même tableau qu'une permission spécifique dans `meta.need` — voir le bug documenté dans `auth/permission-model.md` (le guard court-circuite sur `'authenticated'` avant d'évaluer le reste).
 
 ## Bonnes pratiques
 
-- Centraliser la logique d’autorisation avec `roleStore.can()`
-- Préférer les permissions granulaires aux rôles macro
-- Documenter les permissions métiers dans les specs (qui peut faire quoi)
+- Centraliser la logique d'autorisation front avec `roleStore.can()`.
+- Utiliser `set_user_profile_rbac()` (RPC déjà existante) plutôt qu'un upsert manuel sur `user_profiles` pour tout provisioning de compte.
+- Ne jamais considérer la sécurité comme acquise côté front — vérifier systématiquement RLS (`security/supabase-rls.md`).

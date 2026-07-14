@@ -60,8 +60,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build project
-        run: npm run build
+      - name: Install documentation dependencies
+        run: npm ci --prefix documentation
+
+      - name: Build project and documentation
+        run: npm run build:all
 
       # Déploiement FTP (Infomaniak/FileZilla ou autre)
       - name: Deploy via FTP
