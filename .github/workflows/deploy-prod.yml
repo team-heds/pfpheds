@@ -54,7 +54,9 @@ jobs:
             }
           }
 
-          export { db, auth, storage, getUserNameById };
+          const isFirebaseEnabled = true;
+
+          export { db, auth, storage, isFirebaseEnabled, getUserNameById };
           " > firebase.js
 
       - name: Install dependencies
