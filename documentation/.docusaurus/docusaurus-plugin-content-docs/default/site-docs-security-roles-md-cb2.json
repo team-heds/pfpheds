@@ -1,7 +1,7 @@
 {
   "id": "security/roles",
   "title": "Rôles & Permissions",
-  "description": "Ce document décrit le modèle de permissions consommé par le front et son usage dans le routeur.",
+  "description": "Cette page a été fusionnée conceptuellement avec auth/overview.md et auth/permission-model.md, qui contiennent désormais le détail technique complet (4 systèmes RBAC coexistants, code exact de roleStore.can(), matrice des need réellement utilisés, RPC apimypermissions() en entier). Cette page reste comme point d'entrée rapide + un ajout non couvert ailleurs : la liste exhaustive des RPC RBAC exposées.",
   "source": "@site/docs/security/roles.md",
   "sourceDirName": "security",
   "slug": "/security/roles",

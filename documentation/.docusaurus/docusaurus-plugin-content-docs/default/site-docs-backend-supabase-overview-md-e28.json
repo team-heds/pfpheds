@@ -1,7 +1,7 @@
 {
   "id": "backend/supabase/overview",
   "title": "Supabase - vue d'ensemble",
-  "description": "Rôle dans le projet",
+  "description": "Ce n'est pas Supabase Cloud",
   "source": "@site/docs/backend/supabase/overview.md",
   "sourceDirName": "backend/supabase",
   "slug": "/backend/supabase/overview",

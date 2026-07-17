@@ -1,7 +1,7 @@
 {
   "id": "data/schema-supabase",
   "title": "Schéma Supabase",
-  "description": "Vue d’ensemble du schéma de données côté Supabase/Postgres.",
+  "description": "Méthode",
   "source": "@site/docs/data/schema-supabase.md",
   "sourceDirName": "data",
   "slug": "/data/schema-supabase",

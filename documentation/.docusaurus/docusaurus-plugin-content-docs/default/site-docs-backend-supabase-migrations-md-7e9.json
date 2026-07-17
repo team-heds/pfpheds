@@ -1,7 +1,7 @@
 {
   "id": "backend/supabase/migrations",
   "title": "Migrations Supabase",
-  "description": "Source de vérité",
+  "description": "Trois historiques de migration séparés, non coordonnés",
   "source": "@site/docs/backend/supabase/migrations.md",
   "sourceDirName": "backend/supabase",
   "slug": "/backend/supabase/migrations",

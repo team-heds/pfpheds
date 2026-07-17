@@ -1,7 +1,7 @@
 {
   "id": "backend/supabase/services",
   "title": "Services Supabase",
-  "description": "Principe",
+  "description": "Principe affiché vs réalité mesurée",
   "source": "@site/docs/backend/supabase/services.md",
   "sourceDirName": "backend/supabase",
   "slug": "/backend/supabase/services",

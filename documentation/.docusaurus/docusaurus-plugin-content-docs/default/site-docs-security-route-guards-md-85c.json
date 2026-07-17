@@ -1,7 +1,7 @@
 {
   "id": "security/route-guards",
   "title": "Route guards",
-  "description": "Point d'entrée",
+  "description": "Le guard statique (router.beforeEach) est détaillé ligne par ligne dans auth/auth-routing-lifecycle.md. Cette page couvre la partie non traitée ailleurs : les routes dynamiques chargées depuis Supabase (src/composables/useDynamicRoutes.js), qui ont leur propre logique de normalisation de permission, distincte de celle des routes statiques.",
   "source": "@site/docs/security/route-guards.md",
   "sourceDirName": "security",
   "slug": "/security/route-guards",

@@ -1,7 +1,7 @@
 {
   "id": "backend/supabase/rls",
   "title": "Supabase RLS et sécurité",
-  "description": "Rôle",
+  "description": "Principe",
   "source": "@site/docs/backend/supabase/rls.md",
   "sourceDirName": "backend/supabase",
   "slug": "/backend/supabase/rls",

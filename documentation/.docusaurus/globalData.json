@@ -181,6 +181,11 @@
               "sidebar": "docs"
             },
             {
+              "id": "domains/formation-pratique-fonctionnel",
+              "path": "/docs/domains/formation-pratique-fonctionnel",
+              "sidebar": "docs"
+            },
+            {
               "id": "domains/formation-pratique-traceability",
               "path": "/docs/domains/formation-pratique-traceability",
               "sidebar": "docs"
@@ -198,6 +203,11 @@
             {
               "id": "domains/planning-soins",
               "path": "/docs/domains/planning-soins",
+              "sidebar": "docs"
+            },
+            {
+              "id": "domains/priorite-extension-soins-infirmiers-et-profil-etudiant",
+              "path": "/docs/domains/priorite-extension-soins-infirmiers-et-profil-etudiant",
               "sidebar": "docs"
             },
             {
@@ -361,6 +371,11 @@
             {
               "id": "ops/vps-topology",
               "path": "/docs/ops/vps-topology",
+              "sidebar": "docs"
+            },
+            {
+              "id": "priorites-developpement",
+              "path": "/docs/priorites-developpement",
               "sidebar": "docs"
             },
             {

@@ -6,7 +6,7 @@
 export default {
   "title": "Plateforme HEdS - Documentation",
   "tagline": "Documentation technique de reference pour reprendre, maintenir et faire evoluer la plateforme HEdS",
-  "url": "https://localhost",
+  "url": "https://hedsvs.ch",
   "baseUrl": "/docs/",
   "favicon": "img/favicon.ico",
   "organizationName": "pfpheds",
