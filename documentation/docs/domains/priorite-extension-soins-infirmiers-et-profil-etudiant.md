@@ -12,6 +12,72 @@ title: "PRIORITÉ — Extension Soins Infirmiers + nouveaux champs profil étudi
   </p>
 </div>
 
+## Inventaire complet de l'existant Physio à conserver et reprendre comme socle
+
+**Ce périmètre est le socle fonctionnel de toute la nouvelle application web** : que ce soit pour continuer à faire évoluer la filière Physiothérapie ou pour construire l'équivalent Soins Infirmiers, tout ce qui suit doit être repris, pas réinventé. Liste établie à partir du menu admin réel (`src/config/adminMenu.js`) et des routes réellement déclarées (`src/router/routes/`), pas d'une supposition.
+
+### Écrans admin déjà construits et fonctionnels (Physiothérapie)
+
+**Dashboard**
+- Dashboard PFP (vue de synthèse globale de la filière)
+
+**Données de référence (Données FP)**
+- Gestion des étudiants
+- Gestion des institutions partenaires
+- Gestion des enseignants Physio
+- Gestion des praticiens formateurs
+- Gestion des places de stage
+
+**Gestion administrative (Gestion FP)**
+- Profil répondant (l'enseignant référent gère son propre profil)
+- Management des signatures de convention
+
+**Votations et attribution**
+- Gestion des offres (saisie des places offertes par institution/année)
+- Votation lésé (votation prioritaire pour cas particuliers)
+- Votation PFP (votation standard par cohorte/stage)
+- Places assignées (résultat de l'attribution)
+- Validation des places
+- Validation PFP (validation finale du stage)
+
+**Secrétariat FP (supervision et suivi)**
+- Vue d'ensemble FP (tableau de bord consolidé)
+- Vérification des critères étudiants
+- Suivi des institutions
+- Suivi de l'envoi des offres
+- Tableau récapitulatif des offres
+- Récap notes PFP
+- Récap évaluation CPT
+- Suivi des cas particuliers
+- Centre d'alertes
+
+### Écrans et flux complémentaires (hors menu admin principal, mais actifs dans les routes)
+
+- Historique des stages PFP de l'étudiant (`/historique_pfp`)
+- Documents PFP (`/documents_pfp`)
+- Consultation d'une institution en détail, y compris vue publique (`/institution/:id`, `/institution_details/:id`)
+- Formulaires de création/modification d'institution (`/institution_form`, `/institution_form_modif/:id`)
+- Affectation de stage étudiant (deux variantes trouvées : générale et "BA24" — probablement une version par cohorte/promotion, à clarifier lequel est le flux actif)
+- Circuit de validation/réception de documents (`/validation`, `/reception`)
+- Statistiques de places PFP (`/stats_place_pfp`)
+- Répartition de stage BA2 (`/stage_repartition`)
+
+**Point de vigilance pour la reprise** : plusieurs routes semblent être des variantes historiques d'un même besoin (ex. `ManagementPFPEnCours`, `ManagementPlacesSafe`, `VotationPreview`, `VotationManagementView` à côté des écrans listés dans le menu admin actuel). Avant de porter quoi que ce soit vers Soins Infirmiers ou de refactoriser, **déterminer lesquelles de ces routes sont réellement utilisées en production aujourd'hui versus lesquelles sont des versions abandonnées non nettoyées** — voir la méthode de vérification dans `backend/supabase/services.md` et `frontend/route-catalog.md`.
+
+### Ce que fait déjà l'algorithme (à ne pas refaire, à adapter)
+
+Le moteur d'attribution complet (tri par priorité, couverture des critères manquants, conservation de l'existant, gestion des cas fallback, statistiques) est entièrement fonctionnel pour Physio — voir `domains/votation-algorithm.md`. C'est la pièce la plus complexe et la plus mature du système : **la reprendre comme moteur générique paramétrable est très largement préférable à une réécriture From scratch**, y compris pour Soins Infirmiers.
+
+### Ce qui est fonctionnel côté profil étudiant aujourd'hui
+
+- Informations personnelles de base, avatar, ville, classe.
+- Rattachement à un répondant HES.
+- Historique et statut des stages (validé, échoué, arrêté avec commentaire).
+- Suivi des absences par stage.
+- Gamification (maison, XP, niveau, quêtes) — fonctionnalité transversale, indépendante de la Formation Pratique elle-même.
+
+C'est sur cette base existante que doivent venir se greffer les deux nouveaux champs demandés (permis de conduire, lieu de travail) — voir Besoin 2 plus bas — plutôt qu'un nouvel écran de profil séparé.
+
 ## Besoin 1 — Répliquer le système de stage (Formation Pratique) pour Soins Infirmiers
 
 ### Contexte
