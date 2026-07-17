@@ -5,7 +5,8 @@
 param(
     [string]$Version = "auto",
     [switch]$SkipBuild,
-    [switch]$Force
+    [switch]$Force,
+    [switch]$SkipBackend
 )
 
 function Write-Info($message) { Write-Host "[INFO] $message" -ForegroundColor Cyan }
@@ -33,6 +34,8 @@ $remoteHost = "83.228.204.5"
 $remoteDir = "/tmp"  # Utilisation de /tmp pour le transfert
 $localKeyPath = "C:\Users\antoine.quarroz\Desktop\LabDev\PrivateKey\HEdSLinux.txt"
 $remoteAppPath = "/var/www/pfpheds-frontend"
+$remoteBackendPath = "/opt/pfpheds-backend"
+$remoteSupabasePath = "/opt/supabase"
 
 # ÉTAPE 1: Build du frontend Vue.js + documentation Docusaurus (si nécessaire)
 if (-not $SkipBuild) {
@@ -204,17 +207,80 @@ HEREDOC
 ssh -i $localKeyPath "${remoteUser}@${remoteHost}" $sshCommand
 
 if ($LASTEXITCODE -eq 0) {
-    Write-Success "Déploiement réussi !"
-    Write-Info "Votre application est maintenant disponible sur: https://hedsvs.ch"
-    Write-Info "Version déployée: $Version"
+    Write-Success "Déploiement frontend + documentation réussi !"
 
     # Nettoyage local
     Remove-Item $archiveName -Force -ErrorAction SilentlyContinue
     Write-Info "Archive locale supprimée"
 } else {
-    Write-Error "Échec du déploiement. Consultez les logs ci-dessus pour plus de détails."
+    Write-Error "Échec du déploiement frontend/doc. Consultez les logs ci-dessus pour plus de détails."
     exit 1
 }
 
-Write-Host "`n=== DÉPLOIEMENT TERMINÉ ===" -ForegroundColor Green
-Write-Host "Testez votre application sur https://hedsvs.ch" -ForegroundColor Yellow
+# ÉTAPE 5: Backend (Express + push-worker) + stack Supabase complète
+if (-not $SkipBackend) {
+    Write-Info "ÉTAPE 5: Synchronisation et déploiement du backend..."
+
+    $backendArchiveName = "pfp-backend-$timestamp.tar.gz"
+    Push-Location "backend"
+    & tar --exclude='node_modules' --exclude='.env' --exclude='.env.*' --exclude='uploads' -czf "../$backendArchiveName" .
+    $tarBackendResult = $LASTEXITCODE
+    Pop-Location
+
+    if ($tarBackendResult -ne 0) {
+        Write-Error "Échec de la création de l'archive backend"
+    }
+    Write-Success "Archive backend créée: $backendArchiveName"
+
+    $remoteBackendArchivePath = "$remoteDir/$backendArchiveName"
+    $scpBackendCommand = "scp -i `"$localKeyPath`" -o StrictHostKeyChecking=no `"$backendArchiveName`" `"${remoteUser}@${remoteHost}:$remoteBackendArchivePath`""
+    Invoke-Expression $scpBackendCommand
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "Échec du transfert SCP de l'archive backend."
+    }
+    Write-Success "Archive backend transférée"
+
+    # Extraction (sans écraser .env existant sur le VPS) + full stack up --build
+    # (rebuild backend + push-worker si le code a changé, et démarre/garantit TOUS
+    #  les services de la stack Supabase - c'est ce qui manquait le jour où "rest" était down)
+    $backendDeployScript = @"
+#!/bin/bash
+set -e
+echo '[DEPLOY-BACKEND] Extraction du code backend...'
+sudo tar -xzf '$remoteBackendArchivePath' -C $remoteBackendPath
+sudo chown -R ubuntu:ubuntu $remoteBackendPath
+
+echo '[DEPLOY-BACKEND] Rebuild + up -d de toute la stack Supabase (db, rest, auth, realtime, storage, meta, studio, caddy, backend, push-worker)...'
+cd $remoteSupabasePath
+sudo docker-compose up -d --build
+
+echo '[DEPLOY-BACKEND] Etat des conteneurs:'
+sudo docker ps --format 'table {{.Names}}\t{{.Status}}'
+
+echo '[DEPLOY-BACKEND] Nettoyage...'
+rm -f '$remoteBackendArchivePath'
+
+echo '[SUCCESS] Backend + stack Supabase a jour'
+"@
+
+    $sshBackendCommand = @"
+bash -s << 'HEREDOC'
+$backendDeployScript
+HEREDOC
+"@
+
+    ssh -i $localKeyPath "${remoteUser}@${remoteHost}" $sshBackendCommand
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "Échec du déploiement backend. Consultez les logs ci-dessus."
+    }
+    Write-Success "Backend + stack Supabase déployés !"
+
+    Remove-Item $backendArchiveName -Force -ErrorAction SilentlyContinue
+} else {
+    Write-Info "ÉTAPE 5: Backend ignoré (--SkipBackend)"
+}
+
+Write-Info "Version déployée: $Version"
+Write-Host "`n=== DÉPLOIEMENT COMPLET TERMINÉ ===" -ForegroundColor Green
+Write-Host "Frontend + doc: https://hedsvs.ch (et https://hedsvs.ch/docs/)" -ForegroundColor Yellow
+Write-Host "API: https://api2.hedsvs.ch" -ForegroundColor Yellow
