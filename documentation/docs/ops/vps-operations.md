@@ -4,140 +4,109 @@ title: Exploitation VPS et opérations
 
 <div class="docs-section-head">
   <div>
-    <div class="docs-section-head__eyebrow">Opérations</div>
-    <h2 class="docs-section-head__title">Ce qu'il faut faire sur un VPS pour exploiter la plateforme</h2>
+    <div class="docs-section-head__eyebrow">Opérations — vérifié en direct</div>
+    <h2 class="docs-section-head__title">Commandes réelles pour opérer le VPS de production</h2>
   </div>
   <p class="docs-section-head__text">
-    Cette page vise l'exploitation concrète : build, lancement, vérification, incident et points de contrôle côté VPS.
+    Toutes les commandes de cette page ont été exécutées et vérifiées sur le VPS de production le 2026-07-17. Voir `ops/vps-topology.md` pour l'architecture, `ops/deployment.md` pour la procédure de déploiement.
   </p>
 </div>
 
-## Hypothèse de topologie
-
-Le repo supporte une topologie Docker simple :
-
-- un conteneur backend Node ;
-- un conteneur frontend Nginx ;
-- un réseau Docker interne ;
-- proxy `/api` et `/health` par Nginx.
-
-## Fichiers à connaître
-
-- `docker-compose.prod.yml`
-- `Dockerfile.frontend.prod`
-- `deploy/nginx.frontend.prod.conf`
-- `backend/.env`
-- `firebase.json` si mode Hosting
-
-## Commandes de base
-
-### Build complet
+## Connexion
 
 ```bash
-npm run build:all
+ssh -i "<chemin-vers-votre-clé-privée>" ubuntu@<ip-du-vps>
 ```
 
-### Lancement Docker prod
+IP et clé transmises séparément par l'équipe actuelle, hors dépôt.
+
+## Vérifier l'état de la stack
 
 ```bash
-docker compose -f docker-compose.prod.yml up -d --build
+sudo docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
 ```
 
-### Vérifier les conteneurs
+10 conteneurs attendus (voir liste complète dans `ops/vps-topology.md`) : `supabase-caddy-1`, `pfpheds-backend`, `supabase-db-1`, `supabase-rest-1`, `supabase-auth-1`, `supabase-storage-1`, `supabase-realtime-1`, `supabase-meta-1`, `supabase-studio-1`, `push-worker`.
+
+**`supabase-realtime-1` et `supabase-studio-1` tournent en état `(unhealthy)` en fonctionnement normal** — vérifié le 2026-07-17, ce n'est pas nécessairement un incident (leur healthcheck interne semble mal calibré), mais à surveiller si les fonctionnalités temps réel ou l'accès Studio posent problème.
+
+## Démarrer un service manquant (sans rebuild)
 
 ```bash
-docker ps
+cd /opt/supabase
+sudo docker-compose up -d <nom-du-service>   # ex: rest, auth, storage...
 ```
 
-### Vérifier les logs
+**Utiliser `docker-compose` (avec tiret, binaire standalone), pas `docker compose` (plugin v2) sous `sudo`** — vérifié le 2026-07-17 : le plugin `docker compose` n'est installé que dans le profil CLI de l'utilisateur `ubuntu`, pas dans celui de `root`, donc `sudo docker compose ...` échoue avec `docker: 'compose' is not a docker command` alors que `sudo docker-compose ...` fonctionne.
+
+## Rebuild complet (backend + push-worker) et vérification de toute la stack
 
 ```bash
-docker logs pfpheds-backend
-docker logs pfpheds-frontend
+cd /opt/supabase
+sudo docker-compose up -d --build
 ```
 
-## Contrôles post-déploiement
+C'est ce que fait automatiquement `deploy-hedsvs.ps1` à chaque déploiement (voir `ops/deployment.md`) — safe à relancer manuellement à tout moment, ne redémarre que ce qui a changé ou ce qui manque.
 
-À tester systématiquement :
+## Logs
 
-- `/`
-- `/docs`
-- `/health`
-- `/api/ping`
-- `/api/ftp/diagnostic`
+```bash
+sudo docker logs supabase-caddy-1       # reverse proxy / erreurs de routage
+sudo docker logs pfpheds-backend        # API Express custom
+sudo docker logs supabase-rest-1        # PostgREST
+sudo docker logs supabase-auth-1        # GoTrue (authentification)
+sudo docker logs supabase-db-1          # PostgreSQL
+```
 
-## Vérifications backend
+## Config Caddy active
 
-Contrôler :
+```bash
+sudo docker exec supabase-caddy-1 cat /etc/caddy/Caddyfile
+```
 
-- présence de `backend/.env` ;
-- variables Supabase correctes ;
-- éventuelles variables FTP présentes ;
-- santé du backend via `/health`.
+## Recharger Caddy après une modification de config
 
-## Vérifications frontend
+```bash
+sudo docker exec supabase-caddy-1 caddy reload --config /etc/caddy/Caddyfile
+```
 
-Contrôler :
+## Contrôles post-déploiement (commandes réelles, pas des endpoints supposés)
 
-- présence du build dans `dist/` ;
-- présence de la doc dans `dist/docs` si build global ;
-- bon routage SPA via Nginx ;
-- disponibilité des assets statiques.
+```bash
+curl -I https://hedsvs.ch/
+curl -I https://hedsvs.ch/docs/
+curl -H "Origin: https://hedsvs.ch" -I "https://api2.hedsvs.ch/rest/v1/institutions?select=InstitutionId&limit=1"
+```
 
-## Vérifications Nginx
+Il n'existe **pas** d'endpoint `/health` ou `/api/ping` standardisé exposé publiquement — ne pas s'y fier pour un healthcheck externe. Le seul vrai signal de bonne santé est une réponse 200 sur une requête REST réelle avec le bon header CORS.
 
-La conf du repo attend :
+## Symptômes courants et vraies causes (vécues, pas supposées)
 
-- un root sur `/usr/share/nginx/html`
-- `try_files $uri $uri/ /index.html`
-- proxy `/api/` vers `backend:3000`
-- proxy `/health` vers le backend
+### "Erreur CORS" dans la console navigateur sur `api2.hedsvs.ch`
 
-Si l'app charge mais que l'API ne répond pas, vérifier d'abord ce point.
+**Ne pas modifier la configuration CORS en premier réflexe.** Vérifier d'abord `docker ps` — un service backend absent (comme `rest` le 2026-07-17) produit exactement ce symptôme, car la requête échoue avant que Caddy n'ait l'occasion d'appliquer les en-têtes CORS. Le vrai fix dans ce cas : redémarrer le service manquant, pas toucher au Caddyfile.
 
-## Symptômes courants sur VPS
+### `/docs/` accessible mais un lien direct vers une page précise ne fonctionne pas
 
-### Le frontend charge mais l'app est cassée
+Comportement connu du fallback SPA de Caddy (`try_files` ne tente pas `{path}.html`) — voir `ops/vps-topology.md`. Pas un incident, une limitation de config connue.
 
-Causes probables :
+### Le build local échoue avec une erreur de fichier verrouillé sur `.docusaurus/*.mjs`
 
-- proxy `/api` cassé ;
-- backend down ;
-- variables frontend mal injectées ;
-- CORS si déploiement hybride.
+Spécifique à Windows — un process précédent garde un handle sur le cache Docusaurus. `deploy-hedsvs.ps1` nettoie ce cache automatiquement avant chaque build depuis le 2026-07-17 ; si l'erreur persiste, supprimer manuellement `documentation/.docusaurus` et `documentation/build` avant de relancer.
 
-### `/health` KO
+## Espace disque
 
-Causes probables :
+Le script de déploiement fait un nettoyage agressif automatique (suppression des anciennes archives, des anciens backups de `dist/`, `docker system prune`) si l'espace libre descend sous 2 Go. À surveiller manuellement :
 
-- backend non démarré ;
-- env backend invalide ;
-- container unhealthy ;
-- port interne incorrect.
+```bash
+df -h /
+sudo docker system df
+```
 
-### `/docs` manquant
+## Checklist de redéploiement complet
 
-Causes probables :
-
-- `npm run build:all` non exécuté ;
-- `dist/docs` absent ;
-- déploiement frontend fait sans copie de la documentation.
-
-## Procédure d'incident minimale
-
-1. vérifier `docker ps`
-2. vérifier `/health`
-3. vérifier `/api/ping`
-4. lire les logs backend
-5. lire les logs frontend
-6. vérifier ensuite Supabase / FTP / service tiers
-
-## Checklist de redéploiement
-
-- code à jour ;
-- variables présentes ;
-- build app OK ;
-- build docs OK ;
-- conteneurs rebuildés ;
-- endpoints de santé OK ;
-- page `/docs` accessible.
+1. `.\deploy-hedsvs.ps1` depuis un poste avec accès SSH configuré.
+2. Vérifier la sortie du script — chaque étape doit se terminer par `[SUCCESS]`.
+3. `curl -I https://hedsvs.ch/` et `curl -I https://hedsvs.ch/docs/` → `200 OK`.
+4. Tester une vraie route API avec l'en-tête `Origin` (voir plus haut) → `200 OK` + header CORS présent.
+5. `sudo docker ps` sur le VPS → 10 conteneurs `Up`, aucun manquant.
