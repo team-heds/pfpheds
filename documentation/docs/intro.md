@@ -92,6 +92,7 @@ La plateforme regroupe plusieurs sous-systèmes dans une seule base de code :
   <a class="docs-card docs-card--featured" href="/docs/getting-started"><span class="docs-card__tag">01</span><span class="docs-card__icon">↗</span><h3>Démarrage</h3><p>Installer et lancer.</p></a>
   <a class="docs-card docs-card--featured" href="/docs/architecture"><span class="docs-card__tag">02</span><span class="docs-card__icon">⌘</span><h3>Architecture</h3><p>Comprendre les couches.</p></a>
   <a class="docs-card docs-card--featured" href="/docs/system/project-structure"><span class="docs-card__tag">03</span><span class="docs-card__icon">#</span><h3>Carte du repo</h3><p>Retrouver le bon code.</p></a>
+  <a class="docs-card docs-card--featured" href="/docs/domains/priorite-extension-soins-infirmiers-et-profil-etudiant"><span class="docs-card__tag">!</span><span class="docs-card__icon">★</span><h3>Chantier prioritaire</h3><p>Extension Soins Infirmiers + profil étudiant.</p></a>
   <a class="docs-card" href="/docs/auth/overview"><span class="docs-card__icon">●</span><h3>Auth</h3><p>Session, rôles, permissions.</p></a>
   <a class="docs-card" href="/docs/data/overview"><span class="docs-card__icon">◫</span><h3>Données</h3><p>Firebase, Supabase, migration.</p></a>
   <a class="docs-card" href="/docs/ops/deployment"><span class="docs-card__icon">▣</span><h3>Déploiement</h3><p>Build app et docs.</p></a>

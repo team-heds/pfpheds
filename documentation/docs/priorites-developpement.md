@@ -12,7 +12,11 @@ title: Priorités pour le futur développement
   </p>
 </div>
 
-## P0 — À traiter avant toute autre chose
+## P0 — Chantier fonctionnel prioritaire déjà spécifié
+
+**Extension Soins Infirmiers + nouveaux champs profil étudiant** (permis de conduire, exclusion des stages chez l'employeur de l'étudiant) — spécification complète avec besoins, portée technique et questions ouvertes dans `domains/priorite-extension-soins-infirmiers-et-profil-etudiant.md`.
+
+## P0 — Sécurité et infrastructure à traiter avant toute autre chose
 
 ### Sécurité : audit RLS complet requis sur les tables publiques
 

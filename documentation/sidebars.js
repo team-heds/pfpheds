@@ -3,6 +3,7 @@ const sidebars = {
   docs: [
     'intro',
     'getting-started',
+    'domains/priorite-extension-soins-infirmiers-et-profil-etudiant',
     {
       type: 'category',
       label: 'Vision système',
