@@ -86,6 +86,7 @@ const sidebars = {
       collapsed: false,
       items: [
         'domains/formation-pratique',
+        'domains/formation-pratique-fonctionnel',
         'domains/formation-pratique-traceability',
         'domains/pfp-services-deep-dive',
         'domains/formation-pratique-flows',
@@ -127,6 +128,7 @@ const sidebars = {
         'contrib/github',
       ],
     },
+    'priorites-developpement',
     'roadmap',
     'changelog',
   ],
