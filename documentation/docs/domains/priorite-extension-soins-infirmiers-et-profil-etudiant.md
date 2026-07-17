@@ -8,9 +8,22 @@ title: "PRIORITÉ — Extension Soins Infirmiers + nouveaux champs profil étudi
     <h2 class="docs-section-head__title">Cahier des charges pour la nouvelle application — le module Formation Pratique (Physio + Soins Infirmiers) + profil étudiant</h2>
   </div>
   <p class="docs-section-head__text">
-    <strong>Cette page s'adresse à l'entreprise externe qui va redévelopper cette application entièrement à neuf.</strong> Elle ne décrit pas un patch à appliquer sur le code actuel : elle décrit ce que la <strong>nouvelle application</strong> doit couvrir en priorité n°1, en s'appuyant sur ce que fait déjà la version actuelle (à étudier comme référence fonctionnelle, pas comme code à réutiliser tel quel). Trois volets : (1) l'inventaire de ce qui existe déjà pour la Physiothérapie et qui doit être repris dans la nouvelle application, (2) l'extension de ce module à la filière Soins Infirmiers, qui n'existe pas du tout aujourd'hui, (3) deux nouvelles informations de profil étudiant qui doivent influencer l'attribution des stages dès la conception de la nouvelle application.
+    <strong>Cette page s'adresse à l'entreprise externe qui va redévelopper cette application entièrement à neuf.</strong> Elle ne décrit pas un patch à appliquer sur le code actuel : elle décrit ce que la <strong>nouvelle application</strong> doit couvrir en priorité n°1, en s'appuyant sur ce que fait déjà la version actuelle (à étudier comme référence fonctionnelle, pas comme code à réutiliser tel quel).
   </p>
 </div>
+
+## Périmètre exact de la priorité n°1
+
+Tout ce qui a été construit pour la Physiothérapie autour du **stage clinique** doit être repris intégralement dans la nouvelle application, comme socle fonctionnel commun aux deux filières (Physio et Soins Infirmiers) :
+
+1. **Le système de votation** — campagnes, ouverture/fermeture de session, votation standard et votation prioritaire.
+2. **La gestion des places de stage et des institutions** — référentiel institutions, référentiel places, critères/spécialités couverts par chaque place, praticiens formateurs rattachés.
+3. **L'algorithme d'attribution** — tri par priorité, couverture des critères manquants, conservation de l'existant, gestion des cas fallback.
+4. **Le profil étudiant avec ses critères** — historique des stages effectués, critères déjà couverts vs critères manquants par étudiant (ce qui alimente directement l'algorithme), statut de validation par stage.
+5. **Toute la préparation de la votation** — campagnes d'offres par institution, suivi de l'envoi des offres, tableaux récapitulatifs, avant même l'ouverture du vote aux étudiants.
+6. **Toute l'administration et la gestion PFP** — l'ensemble des écrans admin (Données FP, Gestion FP, Votations, Secrétariat FP) listés en détail ci-dessous.
+
+Le détail complet de chacun de ces 6 points suit dans les sections ci-dessous. Rien de tout cela n'est optionnel ou secondaire — c'est le cœur métier de l'application actuelle, et donc de la nouvelle.
 
 ## Inventaire complet de l'existant Physio — la spécification fonctionnelle de référence pour la nouvelle application
 
@@ -68,10 +81,11 @@ title: "PRIORITÉ — Extension Soins Infirmiers + nouveaux champs profil étudi
 
 Le moteur d'attribution complet (tri par priorité, couverture des critères manquants, conservation de l'existant, gestion des cas fallback, statistiques) est entièrement fonctionnel pour Physio — voir `domains/votation-algorithm.md`, qui documente précisément **la logique métier** à implémenter dans la nouvelle application. C'est la pièce la plus complexe et la plus mature du système actuel : **la nouvelle application doit reproduire ce comportement métier (pas nécessairement le code), en le concevant dès le départ comme un moteur générique paramétrable par filière**, pour éviter d'avoir à le réécrire une seconde fois quand Soins Infirmiers sera ajouté.
 
-### Ce qui est fonctionnel côté profil étudiant aujourd'hui
+### Ce qui est fonctionnel côté profil étudiant aujourd'hui (dont le suivi de critères, essentiel à l'algorithme)
 
 - Informations personnelles de base, avatar, ville, classe.
 - Rattachement à un répondant HES.
+- **Compteurs de critères couverts par l'étudiant** : un compteur par spécialité (musculo-squelettique, système intégré, neuro-gériatrie, soins aigus, réhabilitation, ambulatoire) et par langue (français, allemand, italien, anglais), incrémentés au fil des stages effectués. **C'est cette information, par étudiant, que l'algorithme compare aux critères couverts par chaque place pour déterminer les critères manquants et prioriser l'attribution** (voir `domains/votation-algorithm.md`) — sans ce suivi par étudiant, l'algorithme ne peut pas fonctionner. À reproduire à l'identique dans le principe pour Soins Infirmiers, avec les critères de spécialité propres à cette filière (voir Besoin 1 plus bas).
 - Historique et statut des stages (validé, échoué, arrêté avec commentaire).
 - Suivi des absences par stage.
 - Gamification (maison, XP, niveau, quêtes) — fonctionnalité transversale, indépendante de la Formation Pratique elle-même.
