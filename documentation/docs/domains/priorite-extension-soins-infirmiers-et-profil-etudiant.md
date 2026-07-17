@@ -4,17 +4,17 @@ title: "PRIORITÉ — Extension Soins Infirmiers + nouveaux champs profil étudi
 
 <div class="docs-section-head">
   <div>
-    <div class="docs-section-head__eyebrow">Spécification de développement prioritaire</div>
-    <h2 class="docs-section-head__title">Dupliquer le système Formation Pratique pour les Soins Infirmiers + enrichir le profil étudiant</h2>
+    <div class="docs-section-head__eyebrow">⚠️ Priorité n°1 pour la redéfinition complète de l'application</div>
+    <h2 class="docs-section-head__title">Cahier des charges pour la nouvelle application — le module Formation Pratique (Physio + Soins Infirmiers) + profil étudiant</h2>
   </div>
   <p class="docs-section-head__text">
-    Page dédiée à un chantier de développement demandé explicitement pour la reprise du projet. Deux besoins distincts mais liés : (1) répliquer tout le dispositif de stage de la Physiothérapie pour la filière Soins Infirmiers, (2) ajouter deux informations au profil étudiant qui doivent influencer l'attribution des stages.
+    <strong>Cette page s'adresse à l'entreprise externe qui va redévelopper cette application entièrement à neuf.</strong> Elle ne décrit pas un patch à appliquer sur le code actuel : elle décrit ce que la <strong>nouvelle application</strong> doit couvrir en priorité n°1, en s'appuyant sur ce que fait déjà la version actuelle (à étudier comme référence fonctionnelle, pas comme code à réutiliser tel quel). Trois volets : (1) l'inventaire de ce qui existe déjà pour la Physiothérapie et qui doit être repris dans la nouvelle application, (2) l'extension de ce module à la filière Soins Infirmiers, qui n'existe pas du tout aujourd'hui, (3) deux nouvelles informations de profil étudiant qui doivent influencer l'attribution des stages dès la conception de la nouvelle application.
   </p>
 </div>
 
-## Inventaire complet de l'existant Physio à conserver et reprendre comme socle
+## Inventaire complet de l'existant Physio — la spécification fonctionnelle de référence pour la nouvelle application
 
-**Ce périmètre est le socle fonctionnel de toute la nouvelle application web** : que ce soit pour continuer à faire évoluer la filière Physiothérapie ou pour construire l'équivalent Soins Infirmiers, tout ce qui suit doit être repris, pas réinventé. Liste établie à partir du menu admin réel (`src/config/adminMenu.js`) et des routes réellement déclarées (`src/router/routes/`), pas d'une supposition.
+**Ce périmètre est le cahier des charges fonctionnel minimal de la nouvelle application web.** Il ne s'agit pas de code à migrer : l'application actuelle sert ici de **spécification vivante** — chaque écran listé ci-dessous décrit un besoin fonctionnel réel, validé par l'usage, que la nouvelle application doit couvrir dès sa conception (y compris pour Soins Infirmiers, qui doit être pensé et développé nativement dans la nouvelle application, pas comme un module ajouté après coup). Liste établie à partir du menu admin réel (`src/config/adminMenu.js`) et des routes réellement déclarées (`src/router/routes/`) de l'application actuelle, pas d'une supposition.
 
 ### Écrans admin déjà construits et fonctionnels (Physiothérapie)
 
@@ -62,11 +62,11 @@ title: "PRIORITÉ — Extension Soins Infirmiers + nouveaux champs profil étudi
 - Statistiques de places PFP (`/stats_place_pfp`)
 - Répartition de stage BA2 (`/stage_repartition`)
 
-**Point de vigilance pour la reprise** : plusieurs routes semblent être des variantes historiques d'un même besoin (ex. `ManagementPFPEnCours`, `ManagementPlacesSafe`, `VotationPreview`, `VotationManagementView` à côté des écrans listés dans le menu admin actuel). Avant de porter quoi que ce soit vers Soins Infirmiers ou de refactoriser, **déterminer lesquelles de ces routes sont réellement utilisées en production aujourd'hui versus lesquelles sont des versions abandonnées non nettoyées** — voir la méthode de vérification dans `backend/supabase/services.md` et `frontend/route-catalog.md`.
+**Point de vigilance pour l'analyse fonctionnelle** : plusieurs routes de l'application actuelle semblent être des variantes historiques d'un même besoin (ex. `ManagementPFPEnCours`, `ManagementPlacesSafe`, `VotationPreview`, `VotationManagementView` à côté des écrans listés dans le menu admin actuel). Avant de spécifier ces écrans pour la nouvelle application, **déterminer avec l'équipe métier lesquelles de ces routes correspondent à un vrai besoin actif aujourd'hui versus lesquelles sont des versions abandonnées non nettoyées** — ne pas redévelopper une fonctionnalité morte par simple copie du menu. Méthode de vérification dans `backend/supabase/services.md` et `frontend/route-catalog.md`.
 
-### Ce que fait déjà l'algorithme (à ne pas refaire, à adapter)
+### Ce que fait déjà l'algorithme d'attribution (la logique métier à reproduire, pas le code)
 
-Le moteur d'attribution complet (tri par priorité, couverture des critères manquants, conservation de l'existant, gestion des cas fallback, statistiques) est entièrement fonctionnel pour Physio — voir `domains/votation-algorithm.md`. C'est la pièce la plus complexe et la plus mature du système : **la reprendre comme moteur générique paramétrable est très largement préférable à une réécriture From scratch**, y compris pour Soins Infirmiers.
+Le moteur d'attribution complet (tri par priorité, couverture des critères manquants, conservation de l'existant, gestion des cas fallback, statistiques) est entièrement fonctionnel pour Physio — voir `domains/votation-algorithm.md`, qui documente précisément **la logique métier** à implémenter dans la nouvelle application. C'est la pièce la plus complexe et la plus mature du système actuel : **la nouvelle application doit reproduire ce comportement métier (pas nécessairement le code), en le concevant dès le départ comme un moteur générique paramétrable par filière**, pour éviter d'avoir à le réécrire une seconde fois quand Soins Infirmiers sera ajouté.
 
 ### Ce qui est fonctionnel côté profil étudiant aujourd'hui
 
@@ -76,25 +76,25 @@ Le moteur d'attribution complet (tri par priorité, couverture des critères man
 - Suivi des absences par stage.
 - Gamification (maison, XP, niveau, quêtes) — fonctionnalité transversale, indépendante de la Formation Pratique elle-même.
 
-C'est sur cette base existante que doivent venir se greffer les deux nouveaux champs demandés (permis de conduire, lieu de travail) — voir Besoin 2 plus bas — plutôt qu'un nouvel écran de profil séparé.
+C'est sur cette base fonctionnelle que doivent venir se greffer les deux nouveaux champs demandés (permis de conduire, lieu de travail) dès la conception du profil étudiant dans la nouvelle application — voir Besoin 2 plus bas.
 
-## Besoin 1 — Répliquer le système de stage (Formation Pratique) pour Soins Infirmiers
+## Besoin 1 — Concevoir le module Formation Pratique de la nouvelle application pour les deux filières dès le départ (Physio + Soins Infirmiers)
 
 ### Contexte
 
-Le dispositif complet décrit dans `domains/formation-pratique-fonctionnel.md` (référentiel institutions/places, campagnes d'offres, votation étudiante, attribution algorithmique, validation, suivi) **n'existe aujourd'hui que pour la filière Physiothérapie**. La filière Soins Infirmiers dispose d'un système de **planning de cours** (`domains/planning-soins.md` — années académiques, modules, cours, semestriers) mais **aucun équivalent du système de stage PFP** : pas de référentiel de places de stage, pas de campagne de votation, pas d'algorithme d'attribution, pas de suivi de validation.
+Le dispositif complet décrit dans `domains/formation-pratique-fonctionnel.md` (référentiel institutions/places, campagnes d'offres, votation étudiante, attribution algorithmique, validation, suivi) **n'existe aujourd'hui que pour la filière Physiothérapie**, dans l'application actuelle. La filière Soins Infirmiers dispose d'un système de **planning de cours** (`domains/planning-soins.md` — années académiques, modules, cours, semestriers) mais **aucun équivalent du système de stage PFP** : pas de référentiel de places de stage, pas de campagne de votation, pas d'algorithme d'attribution, pas de suivi de validation.
 
-**Vérifié dans le code (2026-07-17)** : aucune table `StudentsSI`/équivalent de `StudentsPhysio`, aucun mécanisme de votation ou d'attribution pour Soins Infirmiers n'a été trouvé dans le dépôt. C'est un vrai vide fonctionnel, pas une variante existante à ajuster.
+**Vérifié dans le code actuel (2026-07-17)** : aucune table `StudentsSI`/équivalent de `StudentsPhysio`, aucun mécanisme de votation ou d'attribution pour Soins Infirmiers n'a été trouvé. C'est un vrai vide fonctionnel — **la nouvelle application doit donc concevoir ce module comme nativement multi-filière dès le premier jour**, plutôt que de recopier l'erreur de conception actuelle (un module pensé uniquement pour Physio, auquel il faudrait "ajouter" Soins Infirmiers après coup).
 
-### Ce qu'il faut reprendre du modèle Physio (référence complète)
+### Ce que la logique métier Physio actuelle doit inspirer dans la nouvelle application
 
-| Brique Physio existante | Rôle | Doc technique de référence |
+| Élément fonctionnel existant (Physio, application actuelle) | Rôle | Doc de référence pour la spécification |
 | --- | --- | --- |
-| `institutions` + `places` | Référentiel des lieux de stage et de leurs places | `data/schema-supabase.md` |
-| `StudentsPhysio` | Profil étudiant + suivi des stages validés | `data/schema-supabase.md` |
-| `votation_sessions` | Campagnes de votation, y compris votation prioritaire | `data/schema-supabase.md` |
-| `student_result_vote` | Résultats d'attribution | `data/schema-supabase.md` |
-| Algorithme d'attribution (`resultatVotationStoreBackend.js`) | Logique de tri par priorité + couverture des critères manquants | `domains/votation-algorithm.md` |
+| Référentiel institutions + places de stage | Lieux de stage et leurs places | `data/schema-supabase.md` |
+| Profil étudiant + suivi des stages validés | Suivi individuel du parcours de stage | `data/schema-supabase.md` |
+| Campagnes de votation, y compris votation prioritaire | Collecte des vœux étudiants | `data/schema-supabase.md` |
+| Résultats d'attribution | Traçabilité de qui a été assigné où | `data/schema-supabase.md` |
+| Algorithme d'attribution | Logique de tri par priorité + couverture des critères manquants | `domains/votation-algorithm.md` |
 | Écrans admin (Votations, Secrétariat FP, Formation Pratique) | Gestion des offres, votation, validation, suivi | `domains/formation-pratique-fonctionnel.md` |
 
 ### Ce qui ne doit PAS être une simple copie
@@ -141,20 +141,22 @@ Ces deux champs concernent **les deux filières** (Physio et Soins Infirmiers), 
 - **Impact algorithme** : lors de la construction des places candidates pour un étudiant (`domains/votation-algorithm.md`, étape 3), **exclure systématiquement toute place appartenant à une institution où l'étudiant a déclaré travailler** — cette règle doit être une exclusion dure (comme les places déjà réalisées), pas juste une dépriorisation.
 - **Impact UI** : ajouter un sélecteur d'institution(s) dans l'écran de profil étudiant, avec la possibilité d'en ajouter plusieurs si l'étudiant a plusieurs employeurs.
 
-### Où toucher concrètement (pour cadrer un devis/estimation)
+### Où c'est implémenté dans l'application actuelle (référence pour dimensionner l'équivalent dans la nouvelle application)
 
-| Zone | Fichiers/tables concernés (Physio, à dupliquer pour SI) |
+Ces pointeurs servent à **estimer la complexité et comprendre le comportement attendu** en étudiant l'existant — pas à éditer ces fichiers, qui appartiennent à l'application actuelle et ne seront pas repris tels quels.
+
+| Zone fonctionnelle | Référence dans l'application actuelle (Physio) |
 | --- | --- |
-| Schéma | `user_profiles` ou `StudentsPhysio` (nouveaux champs), `places` (champ `necessite_permis`) |
+| Schéma de données | `user_profiles` / `StudentsPhysio` (profil étudiant), `places` (places de stage) |
 | UI profil étudiant | `src/components/user/library/CardNameProfile.vue`, `src/components/user/details/ProfileInfo.vue` |
 | UI gestion des places (admin) | Écrans `admin/formation-pratique/places` (voir `domains/formation-pratique-traceability.md`) |
 | Algorithme d'attribution | `backend/supabase/resultatVotationStoreBackend.js` (voir `domains/votation-algorithm.md`, étapes 1 et 3) |
 
-## Priorité et séquencement recommandé
+## Priorité et séquencement recommandé pour la nouvelle application
 
-1. **D'abord** : les deux champs de profil (permis + lieu de travail) sur la filière Physio existante — impact limité, algorithme déjà en place à adapter, valeur immédiate pour les campagnes de votation en cours.
-2. **Ensuite** : trancher la question de conception (schéma partagé multi-filière vs duplication) avec l'équipe technique, **avant** de commencer le développement Soins Infirmiers — ce choix conditionne tout le reste du chantier et est coûteux à changer après coup.
-3. **Enfin** : construire le dispositif Soins Infirmiers complet (référentiel, campagnes, votation, algorithme adapté aux critères SI, écrans admin), en réutilisant au maximum les permissions déjà prévues (`AdminSoins`, `EnseignantSoins`, `RMSoins`, `EtudiantSoins`) et l'infrastructure `tracks`/`user_track_roles` déjà posée.
+1. **D'abord** : concevoir le profil étudiant de la nouvelle application avec les deux nouveaux champs (permis + lieu de travail) et le module Formation Pratique nativement multi-filière (Physio + Soins Infirmiers) dès le schéma de données initial — ne pas construire "Physio d'abord, Soins Infirmiers ensuite" comme l'application actuelle l'a fait.
+2. **Ensuite** : spécifier avec l'équipe métier les critères de spécialité et la structure des stages Soins Infirmiers (voir questions ouvertes ci-dessous) — ce choix conditionne le schéma et l'algorithme, à trancher avant le développement, pas pendant.
+3. **Enfin** : développer le moteur d'attribution comme un moteur générique paramétrable par filière dès la première version, en s'appuyant sur la logique métier Physio déjà éprouvée (`domains/votation-algorithm.md`) comme spécification de comportement.
 
 ## Questions à clarifier avec l'équipe métier avant de chiffrer ce chantier
 
