@@ -52,6 +52,10 @@ if (-not $SkipBuild) {
         if ($LASTEXITCODE -ne 0) { Write-Error "Échec de l'installation des dépendances documentation" }
     }
 
+    # Nettoyage du cache Docusaurus (évite les erreurs de verrou de fichier Windows sur .docusaurus/*.mjs)
+    if (Test-Path "documentation/.docusaurus") { Remove-Item -Recurse -Force "documentation/.docusaurus" -ErrorAction SilentlyContinue }
+    if (Test-Path "documentation/build") { Remove-Item -Recurse -Force "documentation/build" -ErrorAction SilentlyContinue }
+
     # Build frontend + documentation, puis copie doc dans dist/docs (scripts/copy-docs-to-dist.js)
     npm run build:all
     if ($LASTEXITCODE -ne 0) { Write-Error "Échec du build" }
