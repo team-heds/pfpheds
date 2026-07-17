@@ -34,9 +34,9 @@ $remoteDir = "/tmp"  # Utilisation de /tmp pour le transfert
 $localKeyPath = "C:\Users\antoine.quarroz\Desktop\LabDev\PrivateKey\HEdSLinux.txt"
 $remoteAppPath = "/var/www/pfpheds-frontend"
 
-# ÉTAPE 1: Build du frontend (si nécessaire)
+# ÉTAPE 1: Build du frontend Vue.js + documentation Docusaurus (si nécessaire)
 if (-not $SkipBuild) {
-    Write-Info "ÉTAPE 1: Build du frontend Vue.js..."
+    Write-Info "ÉTAPE 1: Build du frontend Vue.js + documentation..."
 
     # Nettoyage si Force
     if ($Force) {
@@ -46,10 +46,16 @@ if (-not $SkipBuild) {
         npm install --force --legacy-peer-deps
     }
 
-    # Build
-    npm run build
+    if (-not (Test-Path "documentation/node_modules")) {
+        Write-Info "Installation des dépendances documentation..."
+        npm ci --prefix documentation
+        if ($LASTEXITCODE -ne 0) { Write-Error "Échec de l'installation des dépendances documentation" }
+    }
+
+    # Build frontend + documentation, puis copie doc dans dist/docs (scripts/copy-docs-to-dist.js)
+    npm run build:all
     if ($LASTEXITCODE -ne 0) { Write-Error "Échec du build" }
-    Write-Success "Build terminé"
+    Write-Success "Build terminé (frontend + documentation)"
 } else {
     Write-Info "ÉTAPE 1: Build ignoré (--SkipBuild)"
 }
