@@ -136,39 +136,39 @@ export default [
   },
 
   // ========================================
-  // 🏥 SOINS INFIRMIERS - Académique (masqué temporairement pour la présentation, ne pas supprimer)
+  // 🏥 SOINS INFIRMIERS - Académique
   // ========================================
-  // {
-  //   label: 'Soins Infirmiers',
-  //   icon: 'pi pi-heart-fill',
-  //   items: [
-  //     { label: 'Dashboard Secrétariat', icon: 'pi pi-th-large', to: '/admin/soins-infirmiers/dashboard' },
-  //     { label: 'Dashboard RM', icon: 'pi pi-chart-line', to: '/admin/dashboard-rm' },
-  //     { label: 'Dashboard Enseignant SI', icon: 'pi pi-graduation-cap', to: '/admin/soins-infirmiers/dashboard-enseignant' },
-  //     {
-  //       label: 'Planning',
-  //       icon: 'pi pi-calendar',
-  //       items: [
-  //         { label: 'Structure Mini Brique', icon: 'pi pi-th-large', to: '/admin/planning' },
-  //         { label: 'Vue Hebdomadaire', icon: 'pi pi-calendar', to: '/admin/planning/weekly' },
-  //         { label: 'Vue Journalière / Salles', icon: 'pi pi-building', to: '/admin/soins-infirmiers/planning-journalier' },
-  //         { label: 'Feuille de charges', icon: 'pi pi-chart-bar', to: '/admin/soins-infirmiers/feuille-de-charges' },
-  //         { label: 'Gestion Planning', icon: 'pi pi-pencil', to: '/admin/planning/manage' },
-  //         { label: 'Années Académiques', icon: 'pi pi-calendar-plus', to: '/admin/planning/years' }
-  //       ]
-  //     },
-  //     {
-  //       label: 'Ressources',
-  //       icon: 'pi pi-database',
-  //       items: [
-  //         { label: 'Enseignants SI', icon: 'pi pi-users', to: '/admin/teachers-si' },
-  //         { label: 'Modules', icon: 'pi pi-book', to: '/admin/modules' },
-  //         { label: 'Contenu Multimédia', icon: 'pi pi-video', to: '/admin/academic/video-library' }
-  //       ]
-  //     },
-  //     { label: 'Ticket Tâches', icon: 'pi pi-check-square', to: '/admin/academic/kanban' }
-  //   ]
-  // },
+  {
+    label: 'Soins Infirmiers',
+    icon: 'pi pi-heart-fill',
+    items: [
+      { label: 'Dashboard Secrétariat', icon: 'pi pi-th-large', to: '/admin/soins-infirmiers/dashboard' },
+      { label: 'Dashboard RM', icon: 'pi pi-chart-line', to: '/admin/dashboard-rm' },
+      { label: 'Dashboard Enseignant SI', icon: 'pi pi-graduation-cap', to: '/admin/soins-infirmiers/dashboard-enseignant' },
+      {
+        label: 'Planning',
+        icon: 'pi pi-calendar',
+        items: [
+          { label: 'Structure Mini Brique', icon: 'pi pi-th-large', to: '/admin/planning' },
+          { label: 'Vue Hebdomadaire', icon: 'pi pi-calendar', to: '/admin/planning/weekly' },
+          { label: 'Vue Journalière / Salles', icon: 'pi pi-building', to: '/admin/soins-infirmiers/planning-journalier' },
+          { label: 'Feuille de charges', icon: 'pi pi-chart-bar', to: '/admin/soins-infirmiers/feuille-de-charges' },
+          { label: 'Gestion Planning', icon: 'pi pi-pencil', to: '/admin/planning/manage' },
+          { label: 'Années Académiques', icon: 'pi pi-calendar-plus', to: '/admin/planning/years' }
+        ]
+      },
+      {
+        label: 'Ressources',
+        icon: 'pi pi-database',
+        items: [
+          { label: 'Enseignants SI', icon: 'pi pi-users', to: '/admin/teachers-si' },
+          { label: 'Modules', icon: 'pi pi-book', to: '/admin/modules' },
+          { label: 'Contenu Multimédia', icon: 'pi pi-video', to: '/admin/academic/video-library' }
+        ]
+      },
+      { label: 'Ticket Tâches', icon: 'pi pi-check-square', to: '/admin/academic/kanban' }
+    ]
+  },
 
   // ========================================
   // 🔧 GÉNÉRAL - Outils transversaux (masqué pour la présentation FP Physio)
