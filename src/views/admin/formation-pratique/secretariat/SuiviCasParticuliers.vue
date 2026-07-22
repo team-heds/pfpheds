@@ -355,6 +355,66 @@
           </div>
           <p v-if="!loadingEchecs && groupedEchecs.length === 0" class="text-600 text-center p-4">Aucun échec de stage pour ces filtres.</p>
         </TabPanel>
+
+        <!-- Onglet 4 : liste des étudiants SAE, avec ajout rapide -->
+        <TabPanel>
+          <template #header>
+            <span>Étudiants SAE</span>
+            <Tag v-if="saeStudentsList.length" :value="saeStudentsList.length" severity="warning" class="ml-2 text-xs" />
+          </template>
+
+          <div class="surface-card p-3 border-round shadow-2 mb-3">
+            <label class="font-semibold block mb-2">Marquer un étudiant SAE</label>
+            <div class="flex gap-2 align-items-center flex-wrap">
+              <AutoComplete
+                v-model="saeSearchSelection"
+                :suggestions="saeSearchSuggestions"
+                optionLabel="etudiant"
+                placeholder="Rechercher un étudiant par nom..."
+                class="w-full md:w-20rem"
+                @complete="searchSaeStudent"
+                @item-select="markStudentSae"
+              >
+                <template #item="{ item }">
+                  <div class="flex align-items-center gap-2">
+                    <span>{{ item.etudiant }}</span>
+                    <Tag :value="item.classe" severity="info" class="text-xs" />
+                  </div>
+                </template>
+              </AutoComplete>
+              <span class="text-xs text-600">Sélectionner un résultat l'ajoute directement à la liste ci-dessous.</span>
+            </div>
+          </div>
+
+          <div class="surface-card p-4 border-round shadow-2">
+            <DataTable :value="saeStudentsList" class="p-datatable-sm" responsiveLayout="scroll" :paginator="true" :rows="50">
+              <template #header>
+                <span class="text-xl text-900 font-bold">Étudiants SAE ({{ saeStudentsList.length }})</span>
+              </template>
+              <template #empty>
+                <div class="text-center p-4">
+                  <i class="pi pi-star text-4xl text-400 mb-3"></i>
+                  <p class="text-600">Aucun étudiant marqué SAE pour l'instant.</p>
+                </div>
+              </template>
+              <Column field="etudiant" header="Étudiant" sortable style="min-width: 180px" />
+              <Column field="classe" header="Classe" sortable style="min-width: 80px">
+                <template #body="{ data }"><Tag :value="data.classe" severity="info" class="text-xs" /></template>
+              </Column>
+              <Column header="Commentaire" style="min-width: 220px">
+                <template #body="{ data }">{{ data.sae?.commentaire || '—' }}</template>
+              </Column>
+              <Column header="Actions" style="min-width: 180px">
+                <template #body="{ data }">
+                  <div class="flex gap-2">
+                    <Button icon="pi pi-folder-open" label="Suivi" size="small" outlined @click="openCellDialog(data, 'sae')" />
+                    <Button icon="pi pi-times" label="Retirer" size="small" severity="danger" outlined @click="unmarkStudentSae(data)" />
+                  </div>
+                </template>
+              </Column>
+            </DataTable>
+          </div>
+        </TabPanel>
       </TabView>
     </div>
 
@@ -504,6 +564,7 @@ import Calendar from 'primevue/calendar'
 import Timeline from 'primevue/timeline'
 import TabView from 'primevue/tabview'
 import TabPanel from 'primevue/tabpanel'
+import AutoComplete from 'primevue/autocomplete'
 import Toast from 'primevue/toast'
 import { useToast } from 'primevue/usetoast'
 
@@ -896,6 +957,71 @@ const fetchEchecsStudents = async () => {
     toast.add({ severity: 'error', summary: 'Erreur', detail: "Impossible de charger les échecs de stage", life: 3000 })
   } finally {
     loadingEchecs.value = false
+  }
+}
+
+// --- Onglet "Étudiants SAE" : liste + ajout rapide par recherche ---
+const saeSearchSelection = ref(null)
+const saeSearchSuggestions = ref([])
+
+const saeStudentsList = computed(() => {
+  return cases.value
+    .filter(c => c.sae?.couleur && c.sae.couleur !== 'blanc')
+    .sort((a, b) => a.etudiant.localeCompare(b.etudiant))
+})
+
+const searchSaeStudent = (event) => {
+  const q = event.query.toLowerCase().trim()
+  saeSearchSuggestions.value = cases.value
+    .filter(c => c.etudiant.toLowerCase().includes(q))
+    .slice(0, 15)
+}
+
+const markStudentSae = async (event) => {
+  const student = event.value
+  if (!student) return
+  try {
+    const { error } = await supabase
+      .from('suivi_cas_particuliers')
+      .upsert({
+        user_id: student.user_id,
+        pfp_field: 'sae',
+        couleur: 'orange',
+        commentaire: student.sae?.commentaire || null,
+        visible: true
+      }, { onConflict: 'user_id,pfp_field' })
+
+    if (error) throw error
+
+    student.sae = { couleur: 'orange', commentaire: student.sae?.commentaire || '' }
+    toast.add({ severity: 'success', summary: 'SAE', detail: `${student.etudiant} marqué SAE`, life: 2000 })
+  } catch (e) {
+    console.error('Erreur markStudentSae:', e)
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de marquer cet étudiant', life: 3000 })
+  } finally {
+    saeSearchSelection.value = null
+  }
+}
+
+const unmarkStudentSae = async (student) => {
+  try {
+    const { error } = await supabase
+      .from('suivi_cas_particuliers')
+      .upsert({
+        user_id: student.user_id,
+        pfp_field: 'sae',
+        couleur: 'blanc',
+        commentaire: student.sae?.commentaire || null,
+        visible: true
+      }, { onConflict: 'user_id,pfp_field' })
+
+    if (error) throw error
+
+    student.sae = { couleur: 'blanc', commentaire: student.sae?.commentaire || '' }
+    toast.add({ severity: 'success', summary: 'SAE', detail: `${student.etudiant} retiré de la liste SAE`, life: 2000 })
+  } catch (e) {
+    console.error('Erreur unmarkStudentSae:', e)
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de retirer cet étudiant', life: 3000 })
   }
 }
 
