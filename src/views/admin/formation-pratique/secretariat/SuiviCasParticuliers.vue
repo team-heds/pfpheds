@@ -192,6 +192,22 @@
                   </div>
                 </template>
               </Column>
+              <Column header="SAE" style="min-width: 110px">
+                <template #body="{ data }">
+                  <div
+                    @click="openCellDialog(data, 'sae')"
+                    :style="getCellStyle(data.sae)"
+                    :class="['cell-box', 'cell-sae', { 'cell-has-content': data.sae?.couleur && data.sae.couleur !== 'blanc' }]"
+                    :title="data.sae?.commentaire || 'Marquer / suivre un cas SAE'"
+                  >
+                    <i class="pi pi-star-fill text-xs mr-1" v-if="data.sae?.couleur && data.sae.couleur !== 'blanc'"></i>
+                    <div v-if="data.sae?.commentaire" class="cell-text">
+                      {{ truncate(data.sae.commentaire, 10) }}
+                    </div>
+                    <i v-else class="pi pi-plus text-400 text-xs"></i>
+                  </div>
+                </template>
+              </Column>
               <template v-for="group in pfpGroups" :key="group.base">
                 <Column :header="group.label" style="min-width: 90px">
                   <template #body="{ data }">
@@ -283,6 +299,61 @@
             </DataTable>
           </div>
           <p v-if="!loadingLesed && groupedLesed.length === 0" class="text-600 text-center p-4">Aucun étudiant lésé pour ces filtres.</p>
+        </TabPanel>
+
+        <!-- Onglet 3 : étudiants en échec de stage, par année et par PFP -->
+        <TabPanel>
+          <template #header>
+            <span>Échecs de stage</span>
+            <Tag v-if="echecsList.length" :value="echecsList.length" severity="warning" class="ml-2 text-xs" />
+          </template>
+
+          <div class="flex gap-3 flex-wrap mb-3 align-items-end">
+            <div class="flex flex-column gap-1">
+              <label class="font-semibold text-sm">Année :</label>
+              <Dropdown v-model="echecFilterYear" :options="echecYears" placeholder="Toutes" class="w-full md:w-10rem" showClear />
+            </div>
+            <div class="flex flex-column gap-1">
+              <label class="font-semibold text-sm">PFP :</label>
+              <Dropdown v-model="echecFilterPfp" :options="echecPfpTypes" placeholder="Tous" class="w-full md:w-10rem" showClear />
+            </div>
+            <Button icon="pi pi-refresh" outlined class="p-button-sm" @click="fetchEchecsStudents" v-tooltip="'Rafraîchir'" :loading="loadingEchecs" />
+          </div>
+
+          <div v-for="group in groupedEchecs" :key="group.year + '-' + group.pfpType" class="surface-card p-3 border-round shadow-2 mb-3">
+            <div class="flex align-items-center gap-2 mb-2">
+              <i class="pi pi-times-circle text-orange-500"></i>
+              <span class="font-bold text-900">{{ group.year }} — {{ group.pfpType }}</span>
+              <Tag :value="`${group.items.length} étudiant(s)`" severity="warning" class="text-xs" />
+            </div>
+            <DataTable :value="group.items" class="p-datatable-sm" responsiveLayout="scroll">
+              <Column field="etudiant" header="Étudiant" style="min-width: 180px" />
+              <Column field="classe" header="Classe" style="min-width: 80px">
+                <template #body="{ data }"><Tag :value="data.classe" severity="info" class="text-xs" /></template>
+              </Column>
+              <Column field="assigned_place_name" header="Place" style="min-width: 160px">
+                <template #body="{ data }">{{ data.assigned_place_name || '—' }}</template>
+              </Column>
+              <Column field="assigned_institution_name" header="Institution" style="min-width: 180px">
+                <template #body="{ data }">{{ data.assigned_institution_name || '—' }}</template>
+              </Column>
+              <Column header="Statut" style="min-width: 140px">
+                <template #body="{ data }">
+                  <Tag v-if="data.pfp_arret" value="Arrêté" severity="danger" class="text-xs" />
+                  <Tag v-else value="Échoué" severity="warning" class="text-xs" />
+                </template>
+              </Column>
+              <Column field="commentaire_arret" header="Motif d'arrêt" style="min-width: 200px">
+                <template #body="{ data }">{{ data.commentaire_arret || '—' }}</template>
+              </Column>
+              <Column header="Suivi" style="min-width: 100px">
+                <template #body="{ data }">
+                  <Button icon="pi pi-folder-open" label="Ouvrir" size="small" outlined @click="openLesedFollowUp(data)" />
+                </template>
+              </Column>
+            </DataTable>
+          </div>
+          <p v-if="!loadingEchecs && groupedEchecs.length === 0" class="text-600 text-center p-4">Aucun échec de stage pour ces filtres.</p>
         </TabPanel>
       </TabView>
     </div>
@@ -456,7 +527,7 @@ const editingField = ref(null)
 const dialogTitle = ref('')
 const infoDialogTitle = ref('')
 
-const pfpFields = ['pfp1', 'pfp1_prime', 'pfp2', 'pfp2_prime', 'pfp3', 'pfp3_prime', 'pfp4', 'pfp4_prime']
+const pfpFields = ['pfp1', 'pfp1_prime', 'pfp2', 'pfp2_prime', 'pfp3', 'pfp3_prime', 'pfp4', 'pfp4_prime', 'sae']
 
 const pfpGroups = [
   { base: 'pfp1', prime: 'pfp1_prime', label: 'PFP1', echecTypes: ['PFP1A', 'PFP1B'] },
@@ -473,7 +544,8 @@ const fieldLabels = {
   'pfp3': 'PFP3',
   'pfp3_prime': "PFP3'",
   'pfp4': 'PFP4',
-  'pfp4_prime': "PFP4'"
+  'pfp4_prime': "PFP4'",
+  'sae': 'SAE'
 }
 
 const echecMap = ref(new Map())
@@ -740,6 +812,85 @@ const fetchLesedStudents = async () => {
     toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les étudiants lésés', life: 3000 })
   } finally {
     loadingLesed.value = false
+  }
+}
+
+// --- Onglet "Échecs de stage" : étudiants qui ont loupé un stage (pfp_echec = true) ---
+const echecsList = ref([])
+const loadingEchecs = ref(false)
+const echecFilterYear = ref(null)
+const echecFilterPfp = ref(null)
+
+const echecYears = computed(() => {
+  const years = new Set(echecsList.value.map(l => l.year).filter(Boolean))
+  return [...years].sort().reverse()
+})
+const echecPfpTypes = computed(() => {
+  const types = new Set(echecsList.value.map(l => l.pfp_type).filter(Boolean))
+  return [...types].sort()
+})
+
+const groupedEchecs = computed(() => {
+  let list = [...echecsList.value]
+  if (echecFilterYear.value) list = list.filter(l => l.year === echecFilterYear.value)
+  if (echecFilterPfp.value) list = list.filter(l => l.pfp_type === echecFilterPfp.value)
+
+  const groups = new Map()
+  list.forEach(l => {
+    const key = `${l.year}_${l.pfp_type}`
+    if (!groups.has(key)) groups.set(key, { year: l.year, pfpType: l.pfp_type, items: [] })
+    groups.get(key).items.push(l)
+  })
+
+  return [...groups.values()].sort((a, b) => {
+    if (b.year !== a.year) return b.year.localeCompare(a.year)
+    return a.pfpType.localeCompare(b.pfpType)
+  })
+})
+
+const fetchEchecsStudents = async () => {
+  loadingEchecs.value = true
+  try {
+    const { data: echecs, error: echecsError } = await supabase
+      .from('student_result_vote')
+      .select('user_id, pfp_type, year, assigned_place_name, assigned_institution_name, pfp_arret, commentaire_arret')
+      .eq('pfp_echec', true)
+
+    if (echecsError) throw echecsError
+
+    const userIds = [...new Set((echecs || []).map(e => e.user_id))]
+    if (userIds.length === 0) {
+      echecsList.value = []
+      return
+    }
+
+    const { data: profiles, error: profilesError } = await supabase
+      .from('user_profiles')
+      .select('user_id, family_name, forname, classe')
+      .in('user_id', userIds)
+    if (profilesError) throw profilesError
+
+    const profileMap = new Map((profiles || []).map(p => [p.user_id, p]))
+
+    echecsList.value = (echecs || []).map(e => {
+      const profile = profileMap.get(e.user_id)
+      return {
+        user_id: e.user_id,
+        etudiant: profile ? `${(profile.family_name || '').toUpperCase()} ${profile.forname || ''}`.trim() : e.user_id,
+        classe: profile?.classe || '-',
+        year: e.year,
+        pfp_type: e.pfp_type,
+        assigned_place_name: e.assigned_place_name,
+        assigned_institution_name: e.assigned_institution_name,
+        pfp_arret: e.pfp_arret,
+        commentaire_arret: e.commentaire_arret
+      }
+    })
+  } catch (e) {
+    console.error('Erreur fetchEchecsStudents:', e)
+    toast.add({ severity: 'error', summary: 'Erreur', detail: "Impossible de charger les échecs de stage", life: 3000 })
+  } finally {
+    loadingEchecs.value = false
   }
 }
 
@@ -1031,6 +1182,7 @@ const fetchCases = async () => {
 onMounted(() => {
   fetchCases()
   fetchLesedStudents()
+  fetchEchecsStudents()
 })
 </script>
 
@@ -1102,6 +1254,14 @@ onMounted(() => {
   background: rgba(59, 130, 246, 0.15);
   border-color: rgba(59, 130, 246, 0.4);
   color: var(--primary-color);
+}
+
+.cell-sae {
+  background: var(--surface-ground);
+}
+
+.cell-sae.cell-has-content {
+  border-color: rgba(253, 126, 20, 0.5);
 }
 
 .cell-text {
