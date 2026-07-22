@@ -114,6 +114,14 @@
           </template>
         </span>
       </div>
+      <div class="info-item info-item-sae" v-if="isAdmin">
+        <i class="pi pi-star-fill info-icon"></i>
+        <span class="info-label">SAE (cas particulier) :</span>
+        <span class="info-value flex align-items-center gap-2">
+          <InputSwitch v-model="isSae" @change="toggleSae" :disabled="saeSaving" />
+          <span class="text-xs text-600">{{ isSae ? 'Marqué' : 'Non marqué' }}</span>
+        </span>
+      </div>
       <div class="info-item info-item-full actions-row">
         <Button label="Sauvegarder le profil" @click="saveProfileWithXP" class="save-btn" />
       </div>
@@ -128,6 +136,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { supabase } from '@/supabase.js';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
+import InputSwitch from 'primevue/inputswitch';
 import { useToast } from 'primevue/usetoast';
 import BandeauMaison from '@/components/gamification/BandeauMaison.vue';
 import XPBar from '@/components/gamification/XPBar.vue';
@@ -169,6 +178,59 @@ const avatarInput = ref(null);
 const avatarPreviewUrl = ref('');
 // Référence pour la sélection d'un enseignant dans le dropdown (pour modifier Répondant HES)
 const selectedTeacher = ref("");
+
+// SAE (cas particulier) - même source de vérité que la page Suivi Cas Particuliers
+// (table suivi_cas_particuliers, pfp_field = 'sae')
+const isSae = ref(false);
+const saeSaving = ref(false);
+
+const fetchSaeStatus = async (userId) => {
+  try {
+    const { data, error } = await supabase
+      .from('suivi_cas_particuliers')
+      .select('couleur')
+      .eq('user_id', userId)
+      .eq('pfp_field', 'sae')
+      .maybeSingle();
+    if (error) throw error;
+    isSae.value = !!(data && data.couleur && data.couleur !== 'blanc');
+  } catch (error) {
+    console.error('Erreur récupération statut SAE:', error);
+  }
+};
+
+const toggleSae = async () => {
+  const userId = route.params.id;
+  if (!userId) return;
+  saeSaving.value = true;
+  try {
+    const { data: existing } = await supabase
+      .from('suivi_cas_particuliers')
+      .select('commentaire')
+      .eq('user_id', userId)
+      .eq('pfp_field', 'sae')
+      .maybeSingle();
+
+    const { error } = await supabase
+      .from('suivi_cas_particuliers')
+      .upsert({
+        user_id: userId,
+        pfp_field: 'sae',
+        couleur: isSae.value ? 'orange' : 'blanc',
+        commentaire: existing?.commentaire || null,
+        visible: true
+      }, { onConflict: 'user_id,pfp_field' });
+
+    if (error) throw error;
+    toast.add({ severity: 'success', summary: 'SAE', detail: isSae.value ? 'Étudiant marqué SAE' : 'Marquage SAE retiré', life: 2500 });
+  } catch (error) {
+    console.error('Erreur mise à jour SAE:', error);
+    isSae.value = !isSae.value; // rollback visuel en cas d'échec
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de mettre à jour le statut SAE', life: 3000 });
+  } finally {
+    saeSaving.value = false;
+  }
+};
 
 const normalizeClassCode = (value) => {
   if (!value) return ''
@@ -747,6 +809,7 @@ onMounted(async () => {
     await fetchUserProfileById(userId);
     await fetchStudentProfileById(userId);
     await fetchGamificationData(userId);
+    await fetchSaeStatus(userId);
   } else {
     console.error("Aucun ID d'utilisateur fourni dans l'URL");
   }
