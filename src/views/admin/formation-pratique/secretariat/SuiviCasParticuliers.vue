@@ -516,7 +516,12 @@ const filterDisplay = ref('with_comments')
 const filterClasse = ref(null)
 const filterColor = ref(null)
 const searchTerm = ref('')
-const classesList = ref(['BA24', 'BA25', 'BA26', 'MA27'])
+// Liste dynamique construite depuis les vraies données (ne jamais figer en dur :
+// une classe/année réelle absente de cette liste devient invisible dans le filtre)
+const classesList = computed(() => {
+  const classes = new Set(cases.value.map(c => c.classe).filter(c => c && c !== '-'))
+  return [...classes].sort()
+})
 
 const showCellDialog = ref(false)
 const showInfoDialog = ref(false)
