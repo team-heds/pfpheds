@@ -126,108 +126,165 @@
         </div>
       </div>
 
-      <!-- Légende couleurs -->
-      <div class="flex gap-2 align-items-center mb-3 px-1">
-        <span class="text-sm text-600 font-semibold">Légende :</span>
-        <span class="legend-dot legend-vert"></span><span class="text-xs text-600">Vert</span>
-        <span class="legend-dot legend-orange"></span><span class="text-xs text-600">Orange</span>
-        <span class="legend-dot legend-rouge"></span><span class="text-xs text-600">Rouge</span>
-        <span class="legend-dot legend-noir"></span><span class="text-xs text-600">Noir</span>
-        <span class="legend-dot legend-blanc"></span><span class="text-xs text-600">Blanc</span>
-      </div>
+      <TabView v-model:activeIndex="activeTab">
+        <!-- Onglet 1 : suivi par étudiant (existant) -->
+        <TabPanel header="Suivi par étudiant">
+          <!-- Légende couleurs -->
+          <div class="flex gap-2 align-items-center mb-3 px-1">
+            <span class="text-sm text-600 font-semibold">Légende :</span>
+            <span class="legend-dot legend-vert"></span><span class="text-xs text-600">Vert</span>
+            <span class="legend-dot legend-orange"></span><span class="text-xs text-600">Orange</span>
+            <span class="legend-dot legend-rouge"></span><span class="text-xs text-600">Rouge</span>
+            <span class="legend-dot legend-noir"></span><span class="text-xs text-600">Noir</span>
+            <span class="legend-dot legend-blanc"></span><span class="text-xs text-600">Blanc</span>
+          </div>
 
-      <!-- Table -->
-      <div class="surface-card p-4 border-round shadow-2">
-        <DataTable
-          :value="filteredCases"
-          :loading="loading"
-          responsiveLayout="scroll"
-          :paginator="true"
-          :rows="50"
-          :rowsPerPageOptions="[20, 50, 100]"
-          :rowHover="true"
-          dataKey="user_id"
-          scrollable
-          scrollHeight="flex"
-          class="cas-table p-datatable-sm"
-          :sortField="'etudiant'"
-          :sortOrder="1"
-        >
+          <!-- Table -->
+          <div class="surface-card p-4 border-round shadow-2">
+            <DataTable
+              :value="filteredCases"
+              :loading="loading"
+              responsiveLayout="scroll"
+              :paginator="true"
+              :rows="50"
+              :rowsPerPageOptions="[20, 50, 100]"
+              :rowHover="true"
+              dataKey="user_id"
+              scrollable
+              scrollHeight="flex"
+              class="cas-table p-datatable-sm"
+              :sortField="'etudiant'"
+              :sortOrder="1"
+            >
+              <template #header>
+                <div class="flex justify-content-between align-items-center">
+                  <span class="text-xl text-900 font-bold">Cas Particuliers ({{ filteredCases.length }})</span>
+                </div>
+              </template>
+              <template #empty>
+                <div class="text-center p-4">
+                  <i class="pi pi-inbox text-4xl text-400 mb-3"></i>
+                  <p class="text-600">Aucun cas trouvé</p>
+                </div>
+              </template>
+
+              <Column field="etudiant" header="Étudiant" :frozen="true" sortable style="min-width: 180px">
+                <template #body="{ data }">
+                  <span class="font-semibold text-900">{{ data.etudiant }}</span>
+                </template>
+              </Column>
+              <Column field="classe" header="Classe" sortable style="min-width: 80px">
+                <template #body="{ data }">
+                  <Tag :value="data.classe" severity="info" class="text-xs" />
+                </template>
+              </Column>
+              <Column header="Info" style="min-width: 130px">
+                <template #body="{ data }">
+                  <div
+                    @click="openInfoDialog(data)"
+                    :class="['cell-box', 'cell-info', { 'cell-has-content': data.info_etudiant?.commentaire }]"
+                    :title="data.info_etudiant?.commentaire || 'Cliquez pour éditer'"
+                  >
+                    <div v-if="data.info_etudiant?.commentaire" class="cell-text">
+                      {{ truncate(data.info_etudiant.commentaire, 14) }}
+                    </div>
+                    <i v-else class="pi pi-plus text-400 text-xs"></i>
+                  </div>
+                </template>
+              </Column>
+              <template v-for="group in pfpGroups" :key="group.base">
+                <Column :header="group.label" style="min-width: 90px">
+                  <template #body="{ data }">
+                    <div
+                      @click="openCellDialog(data, group.base)"
+                      :style="getCellStyle(data[group.base])"
+                      class="cell-box"
+                      :title="data[group.base]?.commentaire || 'Cliquez pour éditer'"
+                    >
+                      <i v-if="hasDateChange(data.user_id, group.base)" class="pi pi-calendar cell-badge" title="Changement de date enregistré"></i>
+                      <div v-if="data[group.base]?.commentaire" class="cell-text">
+                        {{ truncate(data[group.base].commentaire, 10) }}
+                      </div>
+                      <i v-else class="pi pi-minus text-400 text-xs"></i>
+                    </div>
+                  </template>
+                </Column>
+                <Column :header="group.label + '\''" style="min-width: 90px">
+                  <template #body="{ data }">
+                    <div v-if="hasEchec(data.user_id, group.echecTypes)"
+                      @click="openCellDialog(data, group.prime)"
+                      :style="getCellStyle(data[group.prime])"
+                      class="cell-box"
+                      :title="data[group.prime]?.commentaire || 'Cliquez pour éditer'"
+                    >
+                      <i v-if="hasDateChange(data.user_id, group.prime)" class="pi pi-calendar cell-badge" title="Changement de date enregistré"></i>
+                      <div v-if="data[group.prime]?.commentaire" class="cell-text">
+                        {{ truncate(data[group.prime].commentaire, 10) }}
+                      </div>
+                      <i v-else class="pi pi-minus text-400 text-xs"></i>
+                    </div>
+                    <div v-else class="cell-box cell-disabled" title="PFP non échouée">
+                      <i class="pi pi-lock text-300 text-xs"></i>
+                    </div>
+                  </template>
+                </Column>
+              </template>
+            </DataTable>
+          </div>
+        </TabPanel>
+
+        <!-- Onglet 2 : étudiants lésés, par année et par PFP -->
+        <TabPanel>
           <template #header>
-            <div class="flex justify-content-between align-items-center">
-              <span class="text-xl text-900 font-bold">Cas Particuliers ({{ filteredCases.length }})</span>
-            </div>
-          </template>
-          <template #empty>
-            <div class="text-center p-4">
-              <i class="pi pi-inbox text-4xl text-400 mb-3"></i>
-              <p class="text-600">Aucun cas trouvé</p>
-            </div>
+            <span>Étudiants lésés</span>
+            <Tag v-if="lesedList.length" :value="lesedList.length" severity="danger" class="ml-2 text-xs" />
           </template>
 
-          <Column field="etudiant" header="Étudiant" :frozen="true" sortable style="min-width: 180px">
-            <template #body="{ data }">
-              <span class="font-semibold text-900">{{ data.etudiant }}</span>
-            </template>
-          </Column>
-          <Column field="classe" header="Classe" sortable style="min-width: 80px">
-            <template #body="{ data }">
-              <Tag :value="data.classe" severity="info" class="text-xs" />
-            </template>
-          </Column>
-          <Column header="Info" style="min-width: 130px">
-            <template #body="{ data }">
-              <div
-                @click="openInfoDialog(data)"
-                :class="['cell-box', 'cell-info', { 'cell-has-content': data.info_etudiant?.commentaire }]"
-                :title="data.info_etudiant?.commentaire || 'Cliquez pour éditer'"
-              >
-                <div v-if="data.info_etudiant?.commentaire" class="cell-text">
-                  {{ truncate(data.info_etudiant.commentaire, 14) }}
-                </div>
-                <i v-else class="pi pi-plus text-400 text-xs"></i>
-              </div>
-            </template>
-          </Column>
-          <template v-for="group in pfpGroups" :key="group.base">
-            <Column :header="group.label" style="min-width: 90px">
-              <template #body="{ data }">
-                <div
-                  @click="openCellDialog(data, group.base)"
-                  :style="getCellStyle(data[group.base])"
-                  class="cell-box"
-                  :title="data[group.base]?.commentaire || 'Cliquez pour éditer'"
-                >
-                  <i v-if="hasDateChange(data.user_id, group.base)" class="pi pi-calendar cell-badge" title="Changement de date enregistré"></i>
-                  <div v-if="data[group.base]?.commentaire" class="cell-text">
-                    {{ truncate(data[group.base].commentaire, 10) }}
-                  </div>
-                  <i v-else class="pi pi-minus text-400 text-xs"></i>
-                </div>
-              </template>
-            </Column>
-            <Column :header="group.label + '\''" style="min-width: 90px">
-              <template #body="{ data }">
-                <div v-if="hasEchec(data.user_id, group.echecTypes)"
-                  @click="openCellDialog(data, group.prime)"
-                  :style="getCellStyle(data[group.prime])"
-                  class="cell-box"
-                  :title="data[group.prime]?.commentaire || 'Cliquez pour éditer'"
-                >
-                  <i v-if="hasDateChange(data.user_id, group.prime)" class="pi pi-calendar cell-badge" title="Changement de date enregistré"></i>
-                  <div v-if="data[group.prime]?.commentaire" class="cell-text">
-                    {{ truncate(data[group.prime].commentaire, 10) }}
-                  </div>
-                  <i v-else class="pi pi-minus text-400 text-xs"></i>
-                </div>
-                <div v-else class="cell-box cell-disabled" title="PFP non échouée">
-                  <i class="pi pi-lock text-300 text-xs"></i>
-                </div>
-              </template>
-            </Column>
-          </template>
-        </DataTable>
-      </div>
+          <div class="flex gap-3 flex-wrap mb-3 align-items-end">
+            <div class="flex flex-column gap-1">
+              <label class="font-semibold text-sm">Année :</label>
+              <Dropdown v-model="lesedFilterYear" :options="lesedYears" placeholder="Toutes" class="w-full md:w-10rem" showClear />
+            </div>
+            <div class="flex flex-column gap-1">
+              <label class="font-semibold text-sm">PFP :</label>
+              <Dropdown v-model="lesedFilterPfp" :options="lesedPfpTypes" placeholder="Tous" class="w-full md:w-10rem" showClear />
+            </div>
+            <Button icon="pi pi-refresh" outlined class="p-button-sm" @click="fetchLesedStudents" v-tooltip="'Rafraîchir'" :loading="loadingLesed" />
+          </div>
+
+          <div v-for="group in groupedLesed" :key="group.year + '-' + group.pfpType" class="surface-card p-3 border-round shadow-2 mb-3">
+            <div class="flex align-items-center gap-2 mb-2">
+              <i class="pi pi-exclamation-circle text-red-500"></i>
+              <span class="font-bold text-900">{{ group.year }} — {{ group.pfpType }}</span>
+              <Tag :value="`${group.items.length} étudiant(s)`" severity="danger" class="text-xs" />
+            </div>
+            <DataTable :value="group.items" class="p-datatable-sm" responsiveLayout="scroll">
+              <Column field="etudiant" header="Étudiant" style="min-width: 180px" />
+              <Column field="classe" header="Classe" style="min-width: 80px">
+                <template #body="{ data }"><Tag :value="data.classe" severity="info" class="text-xs" /></template>
+              </Column>
+              <Column header="Motif" style="min-width: 160px">
+                <template #body="{ data }">
+                  <Tag v-if="data.marqueLese" value="Marqué lésé (profil)" severity="warning" class="text-xs mr-1" />
+                  <Tag v-if="data.isFallback" value="Fallback algorithme" severity="danger" class="text-xs" />
+                </template>
+              </Column>
+              <Column field="assigned_place_name" header="Place assignée" style="min-width: 160px">
+                <template #body="{ data }">{{ data.assigned_place_name || '—' }}</template>
+              </Column>
+              <Column field="assigned_institution_name" header="Institution" style="min-width: 180px">
+                <template #body="{ data }">{{ data.assigned_institution_name || '—' }}</template>
+              </Column>
+              <Column header="Suivi" style="min-width: 100px">
+                <template #body="{ data }">
+                  <Button icon="pi pi-folder-open" label="Ouvrir" size="small" outlined @click="openLesedFollowUp(data)" />
+                </template>
+              </Column>
+            </DataTable>
+          </div>
+          <p v-if="!loadingLesed && groupedLesed.length === 0" class="text-600 text-center p-4">Aucun étudiant lésé pour ces filtres.</p>
+        </TabPanel>
+      </TabView>
     </div>
 
     <!-- Dialog pour éditer une cellule PFP : état courant + historique daté -->
@@ -374,6 +431,8 @@ import Textarea from 'primevue/textarea'
 import InputText from 'primevue/inputtext'
 import Calendar from 'primevue/calendar'
 import Timeline from 'primevue/timeline'
+import TabView from 'primevue/tabview'
+import TabPanel from 'primevue/tabpanel'
 import Toast from 'primevue/toast'
 import { useToast } from 'primevue/usetoast'
 
@@ -558,6 +617,145 @@ const toIsoDate = (d) => {
   if (typeof d === 'string') return d
   const dt = new Date(d)
   return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`
+}
+
+// --- Onglet "Étudiants lésés" : par année et par PFP ---
+// Deux signaux combinés : StudentsPhysio.lese (marqué manuellement) et assigned_rank = 99
+// (fallback algorithmique = 0 critère manquant couvert, voir domains/votation-algorithm.md)
+const activeTab = ref(0)
+const lesedList = ref([])
+const loadingLesed = ref(false)
+const lesedFilterYear = ref(null)
+const lesedFilterPfp = ref(null)
+
+const lesedYears = computed(() => {
+  const years = new Set(lesedList.value.map(l => l.year).filter(Boolean))
+  return [...years].sort().reverse()
+})
+const lesedPfpTypes = computed(() => {
+  const types = new Set(lesedList.value.map(l => l.pfp_type).filter(Boolean))
+  return [...types].sort()
+})
+
+// Correspondance pfp_type (student_result_vote) -> pfp_field (suivi_cas_particuliers)
+const pfpTypeToField = (pfpType) => {
+  const group = pfpGroups.find(g => g.echecTypes.includes(pfpType))
+  return group ? group.base : null
+}
+
+const groupedLesed = computed(() => {
+  let list = [...lesedList.value]
+  if (lesedFilterYear.value) list = list.filter(l => l.year === lesedFilterYear.value)
+  if (lesedFilterPfp.value) list = list.filter(l => l.pfp_type === lesedFilterPfp.value)
+
+  const groups = new Map()
+  list.forEach(l => {
+    const key = `${l.year}_${l.pfp_type}`
+    if (!groups.has(key)) groups.set(key, { year: l.year, pfpType: l.pfp_type, items: [] })
+    groups.get(key).items.push(l)
+  })
+
+  return [...groups.values()].sort((a, b) => {
+    if (b.year !== a.year) return b.year.localeCompare(a.year)
+    return a.pfpType.localeCompare(b.pfpType)
+  })
+})
+
+const fetchLesedStudents = async () => {
+  loadingLesed.value = true
+  try {
+    const [{ data: fallbacks, error: fallbackError }, { data: studentsLese, error: leseError }] = await Promise.all([
+      supabase
+        .from('student_result_vote')
+        .select('user_id, pfp_type, year, assigned_place_name, assigned_institution_name, assigned_rank')
+        .eq('assigned_rank', 99),
+      supabase
+        .from('StudentsPhysio')
+        .select('user_id, lese, class, year')
+        .eq('lese', true)
+    ])
+
+    if (fallbackError) throw fallbackError
+    if (leseError) throw leseError
+
+    const userIds = new Set([
+      ...(fallbacks || []).map(f => f.user_id),
+      ...(studentsLese || []).map(s => s.user_id)
+    ])
+
+    if (userIds.size === 0) {
+      lesedList.value = []
+      return
+    }
+
+    const { data: profiles, error: profilesError } = await supabase
+      .from('user_profiles')
+      .select('user_id, family_name, forname, classe')
+      .in('user_id', [...userIds])
+    if (profilesError) throw profilesError
+
+    const profileMap = new Map((profiles || []).map(p => [p.user_id, p]))
+    const leseSet = new Set((studentsLese || []).map(s => s.user_id))
+
+    // Une ligne par (étudiant, pfp_type, année) issue du fallback algorithmique
+    const rows = (fallbacks || []).map(f => {
+      const profile = profileMap.get(f.user_id)
+      return {
+        user_id: f.user_id,
+        etudiant: profile ? `${(profile.family_name || '').toUpperCase()} ${profile.forname || ''}`.trim() : f.user_id,
+        classe: profile?.classe || '-',
+        year: f.year,
+        pfp_type: f.pfp_type,
+        assigned_place_name: f.assigned_place_name,
+        assigned_institution_name: f.assigned_institution_name,
+        isFallback: true,
+        marqueLese: leseSet.has(f.user_id)
+      }
+    })
+
+    // Étudiants marqués "lese" manuellement mais sans ligne de fallback pour l'année en cours :
+    // on les ajoute quand même, sans PFP/année précis si l'info manque côté StudentsPhysio.
+    const coveredKeys = new Set(rows.map(r => `${r.user_id}_${r.year}_${r.pfp_type}`))
+    ;(studentsLese || []).forEach(s => {
+      const profile = profileMap.get(s.user_id)
+      const key = `${s.user_id}_${s.year}_manuel`
+      if (![...coveredKeys].some(k => k.startsWith(`${s.user_id}_${s.year}`))) {
+        rows.push({
+          user_id: s.user_id,
+          etudiant: profile ? `${(profile.family_name || '').toUpperCase()} ${profile.forname || ''}`.trim() : s.user_id,
+          classe: s.class || profile?.classe || '-',
+          year: s.year || 'N/A',
+          pfp_type: 'Non spécifié',
+          assigned_place_name: null,
+          assigned_institution_name: null,
+          isFallback: false,
+          marqueLese: true
+        })
+      }
+    })
+
+    lesedList.value = rows
+  } catch (e) {
+    console.error('Erreur fetchLesedStudents:', e)
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les étudiants lésés', life: 3000 })
+  } finally {
+    loadingLesed.value = false
+  }
+}
+
+const openLesedFollowUp = (lesedRow) => {
+  const field = pfpTypeToField(lesedRow.pfp_type)
+  if (!field) {
+    toast.add({ severity: 'warn', summary: 'Non disponible', detail: "Type de PFP non reconnu pour le suivi détaillé", life: 3000 })
+    return
+  }
+  const student = cases.value.find(c => c.user_id === lesedRow.user_id)
+  if (!student) {
+    toast.add({ severity: 'warn', summary: 'Non trouvé', detail: "Profil étudiant introuvable dans le suivi", life: 3000 })
+    return
+  }
+  activeTab.value = 0
+  openCellDialog(student, field)
 }
 
 const truncate = (text, max) => {
@@ -832,6 +1030,7 @@ const fetchCases = async () => {
 
 onMounted(() => {
   fetchCases()
+  fetchLesedStudents()
 })
 </script>
 
