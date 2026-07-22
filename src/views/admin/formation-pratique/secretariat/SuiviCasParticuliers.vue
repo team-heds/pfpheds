@@ -198,6 +198,7 @@
                   class="cell-box"
                   :title="data[group.base]?.commentaire || 'Cliquez pour éditer'"
                 >
+                  <i v-if="hasDateChange(data.user_id, group.base)" class="pi pi-calendar cell-badge" title="Changement de date enregistré"></i>
                   <div v-if="data[group.base]?.commentaire" class="cell-text">
                     {{ truncate(data[group.base].commentaire, 10) }}
                   </div>
@@ -213,6 +214,7 @@
                   class="cell-box"
                   :title="data[group.prime]?.commentaire || 'Cliquez pour éditer'"
                 >
+                  <i v-if="hasDateChange(data.user_id, group.prime)" class="pi pi-calendar cell-badge" title="Changement de date enregistré"></i>
                   <div v-if="data[group.prime]?.commentaire" class="cell-text">
                     {{ truncate(data[group.prime].commentaire, 10) }}
                   </div>
@@ -228,12 +230,14 @@
       </div>
     </div>
 
-    <!-- Dialog pour éditer une cellule PFP -->
-    <Dialog v-model:visible="showCellDialog" :header="dialogTitle" :modal="true" :style="{ width: '500px' }">
-      <div class="flex flex-column gap-3 p-3">
-        <div class="flex flex-column gap-2">
-          <label class="font-semibold">Couleur :</label>
-          <div class="flex gap-2 flex-wrap">
+    <!-- Dialog pour éditer une cellule PFP : état courant + historique daté -->
+    <Dialog v-model:visible="showCellDialog" :header="dialogTitle" :modal="true" :style="{ width: '640px' }" class="cas-cell-dialog">
+      <div class="flex flex-column gap-4 p-1">
+
+        <!-- État courant -->
+        <div class="surface-ground p-3 border-round">
+          <label class="font-semibold block mb-2">État actuel</label>
+          <div class="flex gap-2 flex-wrap mb-3">
             <Button
               v-for="color in colorOptions"
               :key="color.value"
@@ -244,19 +248,91 @@
               size="small"
             />
           </div>
-        </div>
-        <div class="flex flex-column gap-2">
-          <label class="font-semibold">Commentaire :</label>
           <Textarea
             v-model="editingCell.commentaire"
-            rows="5"
+            rows="2"
             class="w-full"
-            placeholder="Ajoutez un commentaire..."
+            placeholder="Résumé rapide (optionnel)..."
           />
+          <div class="flex justify-content-end mt-2">
+            <Button label="Enregistrer l'état" icon="pi pi-check" size="small" @click="saveCellData" />
+          </div>
         </div>
-        <div class="flex justify-content-end gap-2 mt-3">
-          <Button label="Annuler" severity="secondary" @click="closeCellDialog" />
-          <Button label="Enregistrer" @click="saveCellData" />
+
+        <!-- Ajouter un événement à l'historique -->
+        <div class="surface-card p-3 border-round border-1 surface-border">
+          <label class="font-semibold block mb-2">Ajouter un événement</label>
+          <div class="flex flex-column gap-2">
+            <Dropdown
+              v-model="newEvent.type_evenement"
+              :options="eventTypeOptions"
+              optionLabel="label"
+              optionValue="value"
+              class="w-full"
+            />
+            <div v-if="newEvent.type_evenement === 'changement_date'" class="flex gap-2">
+              <div class="flex-1 flex flex-column gap-1">
+                <label class="text-xs text-600">Ancienne date</label>
+                <Calendar v-model="newEvent.ancienne_date" dateFormat="dd/mm/yy" showIcon class="w-full" />
+              </div>
+              <div class="flex-1 flex flex-column gap-1">
+                <label class="text-xs text-600">Nouvelle date</label>
+                <Calendar v-model="newEvent.nouvelle_date" dateFormat="dd/mm/yy" showIcon class="w-full" />
+              </div>
+            </div>
+            <Textarea
+              v-model="newEvent.description"
+              rows="2"
+              class="w-full"
+              placeholder="Détails, raison du changement..."
+            />
+            <div class="flex justify-content-end">
+              <Button
+                label="Ajouter à l'historique"
+                icon="pi pi-plus"
+                size="small"
+                :loading="addingEvent"
+                :disabled="!canAddEvent"
+                @click="addHistoriqueEvent"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Historique -->
+        <div>
+          <label class="font-semibold block mb-2">Historique ({{ currentCellHistorique.length }})</label>
+          <Timeline
+            v-if="currentCellHistorique.length"
+            :value="currentCellHistorique"
+            align="left"
+            class="cas-timeline"
+          >
+            <template #marker="{ item }">
+              <div class="timeline-marker" :class="`marker-${eventTypeMeta(item.type_evenement).severity}`">
+                <i :class="eventTypeMeta(item.type_evenement).icon"></i>
+              </div>
+            </template>
+            <template #content="{ item }">
+              <div class="timeline-event">
+                <div class="flex align-items-center justify-content-between gap-2">
+                  <Tag :value="eventTypeMeta(item.type_evenement).label" :severity="eventTypeMeta(item.type_evenement).severity" class="text-xs" />
+                  <span class="text-xs text-600" :title="formatFullDate(item.created_at)">{{ formatRelativeDate(item.created_at) }}</span>
+                </div>
+                <div v-if="item.type_evenement === 'changement_date' && (item.ancienne_date || item.nouvelle_date)" class="date-change-line">
+                  <span class="text-600">{{ item.ancienne_date ? formatDateOnly(item.ancienne_date) : '?' }}</span>
+                  <i class="pi pi-arrow-right mx-2 text-xs"></i>
+                  <span class="font-semibold">{{ item.nouvelle_date ? formatDateOnly(item.nouvelle_date) : '?' }}</span>
+                </div>
+                <p v-if="item.description" class="m-0 mt-1 text-sm">{{ item.description }}</p>
+              </div>
+            </template>
+          </Timeline>
+          <p v-else class="text-600 text-sm">Aucun événement enregistré pour l'instant.</p>
+        </div>
+
+        <div class="flex justify-content-end mt-1">
+          <Button label="Fermer" severity="secondary" @click="closeCellDialog" />
         </div>
       </div>
     </Dialog>
@@ -286,6 +362,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { supabase } from '@/supabase'
+import { useAuthStore } from '@/stores/authStore'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
@@ -295,8 +372,12 @@ import Dialog from 'primevue/dialog'
 import Button from 'primevue/button'
 import Textarea from 'primevue/textarea'
 import InputText from 'primevue/inputtext'
+import Calendar from 'primevue/calendar'
+import Timeline from 'primevue/timeline'
 import Toast from 'primevue/toast'
 import { useToast } from 'primevue/usetoast'
+
+const authStore = useAuthStore()
 
 const toast = useToast()
 const loading = ref(false)
@@ -364,6 +445,120 @@ const colorOptions = [
   { label: 'Rouge', value: 'rouge', severity: 'danger' },
   { label: 'Noir', value: 'noir', severity: 'secondary' }
 ]
+
+// --- Historique des événements (changement de date, institution, absence, note) ---
+const historiqueList = ref([])
+const addingEvent = ref(false)
+const newEvent = ref({ type_evenement: 'note', ancienne_date: null, nouvelle_date: null, description: '' })
+
+const eventTypeOptions = [
+  { label: 'Changement de date', value: 'changement_date' },
+  { label: "Changement d'institution", value: 'changement_institution' },
+  { label: 'Absence', value: 'absence' },
+  { label: 'Note', value: 'note' }
+]
+
+const eventTypeMetaMap = {
+  changement_date: { icon: 'pi pi-calendar', label: 'Changement de date', severity: 'info' },
+  changement_institution: { icon: 'pi pi-building', label: "Changement d'institution", severity: 'warning' },
+  absence: { icon: 'pi pi-user-minus', label: 'Absence', severity: 'danger' },
+  note: { icon: 'pi pi-comment', label: 'Note', severity: 'secondary' }
+}
+const eventTypeMeta = (type) => eventTypeMetaMap[type] || eventTypeMetaMap.note
+
+const currentCellHistorique = computed(() => {
+  if (!editingStudent.value || !editingField.value) return []
+  return historiqueList.value
+    .filter(h => h.user_id === editingStudent.value.user_id && h.pfp_field === editingField.value)
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+})
+
+const canAddEvent = computed(() => {
+  if (newEvent.value.type_evenement === 'changement_date') {
+    return !!(newEvent.value.ancienne_date || newEvent.value.nouvelle_date)
+  }
+  return !!newEvent.value.description?.trim()
+})
+
+const dateChangeSet = computed(() => {
+  const set = new Set()
+  historiqueList.value.forEach(h => {
+    if (h.type_evenement === 'changement_date') set.add(`${h.user_id}_${h.pfp_field}`)
+  })
+  return set
+})
+
+const hasDateChange = (userId, field) => dateChangeSet.value.has(`${userId}_${field}`)
+
+const formatDateOnly = (date) => {
+  if (!date) return ''
+  const d = new Date(date)
+  return d.toLocaleDateString('fr-CH', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
+const formatFullDate = (date) => {
+  if (!date) return ''
+  return new Date(date).toLocaleString('fr-CH')
+}
+
+const formatRelativeDate = (date) => {
+  if (!date) return ''
+  const diffMs = Date.now() - new Date(date).getTime()
+  const diffMin = Math.round(diffMs / 60000)
+  if (diffMin < 1) return "à l'instant"
+  if (diffMin < 60) return `il y a ${diffMin} min`
+  const diffH = Math.round(diffMin / 60)
+  if (diffH < 24) return `il y a ${diffH} h`
+  const diffJ = Math.round(diffH / 24)
+  if (diffJ < 30) return `il y a ${diffJ} j`
+  return formatDateOnly(date)
+}
+
+const resetNewEvent = () => {
+  newEvent.value = { type_evenement: 'note', ancienne_date: null, nouvelle_date: null, description: '' }
+}
+
+const addHistoriqueEvent = async () => {
+  if (!editingStudent.value || !editingField.value || !canAddEvent.value) return
+  addingEvent.value = true
+  try {
+    const currentUser = authStore.user
+    const payload = {
+      user_id: editingStudent.value.user_id,
+      pfp_field: editingField.value,
+      type_evenement: newEvent.value.type_evenement,
+      ancienne_date: newEvent.value.ancienne_date ? toIsoDate(newEvent.value.ancienne_date) : null,
+      nouvelle_date: newEvent.value.nouvelle_date ? toIsoDate(newEvent.value.nouvelle_date) : null,
+      description: newEvent.value.description?.trim() || null,
+      couleur: editingCell.value?.couleur || null,
+      created_by: currentUser?.id || currentUser?.uid || null,
+      created_by_name: currentUser?.email || currentUser?.user_metadata?.full_name || null
+    }
+
+    const { data, error } = await supabase
+      .from('cas_particuliers_historique')
+      .insert(payload)
+      .select()
+      .single()
+
+    if (error) throw error
+
+    historiqueList.value.unshift(data)
+    resetNewEvent()
+    toast.add({ severity: 'success', summary: 'Ajouté', detail: "Événement ajouté à l'historique", life: 2000 })
+  } catch (e) {
+    console.error('Erreur addHistoriqueEvent:', e)
+    toast.add({ severity: 'error', summary: 'Erreur', detail: "Impossible d'ajouter l'événement: " + e.message, life: 3000 })
+  } finally {
+    addingEvent.value = false
+  }
+}
+
+const toIsoDate = (d) => {
+  if (typeof d === 'string') return d
+  const dt = new Date(d)
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`
+}
 
 const truncate = (text, max) => {
   if (!text) return ''
@@ -442,6 +637,7 @@ const openCellDialog = (student, field) => {
 
   editingCell.value = { ...student[field] }
   dialogTitle.value = `${student.etudiant} - ${fieldLabels[field]}`
+  resetNewEvent()
   showCellDialog.value = true
 }
 
@@ -450,6 +646,7 @@ const closeCellDialog = () => {
   editingCell.value = null
   editingStudent.value = null
   editingField.value = null
+  resetNewEvent()
 }
 
 const openInfoDialog = (student) => {
@@ -572,15 +769,19 @@ const exportCSV = () => {
 const fetchCases = async () => {
   loading.value = true
   try {
-    const [{ data: profiles, error: profilesError }, { data: suivis, error: suivisError }, { data: echecs, error: echecsError }] = await Promise.all([
+    const [{ data: profiles, error: profilesError }, { data: suivis, error: suivisError }, { data: echecs, error: echecsError }, { data: historique, error: historiqueError }] = await Promise.all([
       supabase.from('user_profiles').select('user_id, family_name, forname, classe').order('family_name'),
       supabase.from('suivi_cas_particuliers').select('*'),
-      supabase.from('student_result_vote').select('user_id, pfp_type').eq('pfp_echec', true)
+      supabase.from('student_result_vote').select('user_id, pfp_type').eq('pfp_echec', true),
+      supabase.from('cas_particuliers_historique').select('*').order('created_at', { ascending: false })
     ])
 
     if (profilesError) throw profilesError
     if (suivisError) throw suivisError
     if (echecsError) throw echecsError
+    if (historiqueError) console.warn('Historique cas particuliers non chargé:', historiqueError.message)
+
+    historiqueList.value = historique || []
 
     const newEchecMap = new Map()
     ;(echecs || []).forEach(e => {
@@ -723,4 +924,53 @@ onMounted(() => {
 .legend-rouge { background: #dc3545; }
 .legend-noir { background: #343a40; }
 .legend-blanc { background: var(--surface-card); border: 1px solid var(--surface-border); }
+
+/* Badge "changement de date" sur les cellules du tableau */
+.cell-box {
+  position: relative;
+}
+.cell-badge {
+  position: absolute;
+  top: 2px;
+  right: 3px;
+  font-size: 0.6rem;
+  color: var(--primary-color);
+  background: var(--surface-card);
+  border-radius: 50%;
+  padding: 1px;
+}
+
+/* Timeline historique dans le dialog de cellule */
+.cas-timeline :deep(.p-timeline-event-opposite) {
+  display: none;
+  flex: 0;
+}
+.timeline-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.8rem;
+  height: 1.8rem;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 0.85rem;
+}
+.marker-info { background: #3b82f6; }
+.marker-warning { background: #fd7e14; }
+.marker-danger { background: #dc3545; }
+.marker-secondary { background: #6c757d; }
+
+.timeline-event {
+  background: var(--surface-ground);
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.date-change-line {
+  display: flex;
+  align-items: center;
+  font-size: 0.85rem;
+  margin-top: 0.3rem;
+}
 </style>
