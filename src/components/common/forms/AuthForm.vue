@@ -40,8 +40,13 @@
         <Checkbox v-model="modelRemember" :inputId="ids.remember" binary class="mr-2" />
         <label :for="ids.remember" class="text-sm">Se souvenir de moi</label>
       </div>
-      <button type="button" class="link-forgot" @click="$emit('reset-password')">
-        Mot de passe oublié ?
+      <button
+        type="button"
+        class="link-forgot"
+        :disabled="resetLoading"
+        @click="$emit('reset-password')"
+      >
+        {{ resetLoading ? 'Envoi en cours...' : 'Mot de passe oublié ?' }}
       </button>
     </div>
 
@@ -69,6 +74,7 @@ const props = defineProps({
   password: { type: String, default: '' },
   remember: { type: Boolean, default: false },
   loading: { type: Boolean, default: false },
+  resetLoading: { type: Boolean, default: false },
   emailError: { type: Boolean, default: false },
   passwordError: { type: Boolean, default: false },
   emailErrorText: { type: String, default: "L'email est requis." },
@@ -110,6 +116,7 @@ const ids = {
   padding: 0;
 }
 .link-forgot:hover { opacity: 0.85; }
+.link-forgot:disabled { opacity: 0.5; cursor: not-allowed; }
 .link-forgot:focus-visible { outline: 2px solid #111; outline-offset: 2px; }
 
 :deep(.p-inputtext),

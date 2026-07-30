@@ -11,10 +11,34 @@
         <span class="text-700">Verification du lien...</span>
       </div>
 
-      <div v-else-if="!recoveryActive" class="text-center p-4">
-        <i class="pi pi-exclamation-circle text-4xl text-orange-500 mb-3"></i>
-        <div class="text-700 mb-4">Lien invalide ou expire.</div>
-        <Button label="Retour a la connexion" icon="pi pi-arrow-left" @click="router.push('/')" class="p-button-text" />
+      <div v-else-if="!recoveryActive" class="p-4">
+        <div class="text-center mb-4">
+          <i class="pi pi-exclamation-circle text-4xl text-orange-500 mb-3"></i>
+          <div class="text-700">Lien invalide ou expire.</div>
+          <div class="text-600 text-sm mt-2">
+            Cela arrive souvent quand un filtre anti-spam de votre messagerie visite le lien avant vous.
+            Utilisez plutot le code recu dans le meme email ci-dessous.
+          </div>
+        </div>
+
+        <form class="flex flex-column gap-3" @submit.prevent="verifyWithCode">
+          <div>
+            <label for="codeEmail" class="block text-900 font-medium mb-2">Email</label>
+            <InputText id="codeEmail" v-model="codeEmail" type="email" class="w-full" autocomplete="username" />
+          </div>
+          <div>
+            <label for="codeToken" class="block text-900 font-medium mb-2">Code recu par email</label>
+            <InputText id="codeToken" v-model="codeToken" class="w-full" placeholder="Ex: 123456" autocomplete="one-time-code" />
+          </div>
+          <Button label="Verifier le code" icon="pi pi-check" class="w-full mt-2" type="submit" :loading="codeLoading" />
+          <div v-if="codeMsg" class="mt-2 p-3 border-round text-center bg-red-100 text-red-700">
+            <i class="pi pi-times-circle mr-2"></i>{{ codeMsg }}
+          </div>
+        </form>
+
+        <div class="text-center mt-4">
+          <Button label="Retour a la connexion" icon="pi pi-arrow-left" @click="router.push('/')" class="p-button-text" />
+        </div>
       </div>
 
       <div v-else>
@@ -70,6 +94,7 @@ import { supabase } from '@/supabase.js'
 import { useRouter } from 'vue-router'
 import Button from 'primevue/button'
 import Password from 'primevue/password'
+import InputText from 'primevue/inputtext'
 
 const router = useRouter()
 
@@ -81,92 +106,84 @@ const pwd2 = ref('')
 const msg = ref('')
 const ok = ref(false)
 
-onMounted(async () => {
-  console.log('ResetPassword: mount', window.location.href)
+const codeEmail = ref('')
+const codeToken = ref('')
+const codeLoading = ref(false)
+const codeMsg = ref('')
 
-  const safetyTimeout = setTimeout(() => {
-    if (!ready.value) {
-      console.warn('ResetPassword: timeout fallback')
+onMounted(async () => {
+  // Le lien de récupération GoTrue redirige avec les jetons dans le fragment
+  // d'URL (#access_token=...&type=recovery), pas au format PKCE (?code=).
+  // On traite ça de façon déterministe au montage, sans sondage/attente.
+
+  // Écouteur posé en premier pour ne rater aucun événement émis pendant
+  // le traitement (setSession ci-dessous, ou traitement auto du client).
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
+      recoveryActive.value = true
       ready.value = true
     }
-  }, 6000)
+  })
+
+  const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''))
+  const searchParams = new URLSearchParams(window.location.search)
+
+  const hashAccessToken = hashParams.get('access_token')
+  const hashRefreshToken = hashParams.get('refresh_token')
+  const queryCode = searchParams.get('code')
 
   try {
-    supabase.auth.onAuthStateChange((event, session) => {
-      console.log('ResetPassword auth event:', event)
-      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
+    if (hashAccessToken) {
+      const { error } = await supabase.auth.setSession({
+        access_token: hashAccessToken,
+        refresh_token: hashRefreshToken || ''
+      })
+      if (!error) {
         recoveryActive.value = true
-        ready.value = true
       }
-    })
-
-    const searchParams = new URLSearchParams(window.location.search)
-
-    // Legacy fallback: old links carrying tokens in query params.
-    if (!recoveryActive.value) {
-      const accessToken = searchParams.get('access_token')
-      const refreshToken = searchParams.get('refresh_token')
-      if (accessToken) {
-        const { error } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken || ''
-        })
-        if (!error) {
-          recoveryActive.value = true
-          ready.value = true
-        }
+    } else if (queryCode) {
+      const { error } = await supabase.auth.exchangeCodeForSession(queryCode)
+      if (!error) {
+        recoveryActive.value = true
       }
-    }
-
-    // Legacy fallback: implicit flow in hash.
-    if (!recoveryActive.value) {
-      const hash = window.location.hash
-      if (hash && hash.includes('access_token')) {
-        const params = new URLSearchParams(hash.substring(1))
-        const accessToken = params.get('access_token')
-        const refreshToken = params.get('refresh_token')
-        if (accessToken) {
-          const { error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken || ''
-          })
-          if (!error) {
-            recoveryActive.value = true
-            ready.value = true
-          }
-        }
-      }
-    }
-
-    // Main path: with detectSessionInUrl=true in the shared Supabase client,
-    // PKCE code exchange already happens automatically.
-    if (!recoveryActive.value) {
-      await new Promise((resolve) => setTimeout(resolve, 700))
+    } else {
+      // Pas de jeton dans l'URL : peut-être déjà traité automatiquement par
+      // le client (detectSessionInUrl) juste avant le montage du composant.
       const { data } = await supabase.auth.getSession()
       if (data?.session) {
         recoveryActive.value = true
-        ready.value = true
-      }
-    }
-
-    if (!recoveryActive.value) {
-      for (let i = 0; i < 5; i += 1) {
-        await new Promise((resolve) => setTimeout(resolve, 800))
-        const { data } = await supabase.auth.getSession()
-        if (data?.session) {
-          recoveryActive.value = true
-          ready.value = true
-          break
-        }
       }
     }
   } catch (error) {
     console.error('ResetPassword error:', error)
   } finally {
-    clearTimeout(safetyTimeout)
     ready.value = true
   }
 })
+
+const verifyWithCode = async () => {
+  codeMsg.value = ''
+
+  if (!codeEmail.value || !codeToken.value) {
+    codeMsg.value = 'Email et code requis.'
+    return
+  }
+
+  codeLoading.value = true
+  try {
+    const { error } = await supabase.auth.verifyOtp({
+      email: codeEmail.value,
+      token: codeToken.value.trim(),
+      type: 'recovery'
+    })
+    if (error) throw error
+    recoveryActive.value = true
+  } catch (error) {
+    codeMsg.value = error.message || 'Code invalide ou expire.'
+  } finally {
+    codeLoading.value = false
+  }
+}
 
 const save = async () => {
   msg.value = ''

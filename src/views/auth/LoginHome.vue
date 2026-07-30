@@ -26,6 +26,7 @@
                 :loading="loading"
                 :emailError="emailError"
                 :passwordError="passwordError"
+                :resetLoading="resetLoading"
                 @update:email="val => (email = val)"
                 @update:password="val => (password = val)"
                 @update:remember="val => (rememberMe = val)"
@@ -80,6 +81,7 @@ const emailError = ref(false)
 const passwordError = ref(false)
 const loading = ref(false)
 const loadingFirebase = ref(false)
+const resetLoading = ref(false)
 const router = useRouter()
 const toast = useToast()
 const authStore = useAuthStore()
@@ -148,15 +150,20 @@ const submitFormSupabase = async () => {
 
 // Méthode de réinitialisation du mot de passe
 const resetPassword = async () => {
+  // Garde anti-double-soumission : un deuxième clic pendant l'envoi générerait
+  // un second lien de récupération qui invaliderait immédiatement le premier
+  // (jeton à usage unique côté GoTrue), rendant le premier email inutilisable.
+  if (resetLoading.value) return
+
   const emailCheck = validateEmail(email.value)
   emailError.value = !emailCheck.valid
-  
+
   if (emailError.value) {
-    toast.add({ 
-      severity: 'warn', 
-      summary: 'Email requis', 
-      detail: emailCheck.message, 
-      life: 3000 
+    toast.add({
+      severity: 'warn',
+      summary: 'Email requis',
+      detail: emailCheck.message,
+      life: 3000
     })
     return
   }
@@ -168,22 +175,25 @@ const resetPassword = async () => {
   }
   resetLimiter.recordAttempt()
 
+  resetLoading.value = true
   try {
     await authStore.resetPasswordSupabase(email.value)
-    toast.add({ 
-      severity: 'success', 
-      summary: 'Email envoyé', 
-      detail: 'Un lien de réinitialisation a été envoyé à votre adresse email.', 
-      life: 4000 
+    toast.add({
+      severity: 'success',
+      summary: 'Email envoyé',
+      detail: 'Un lien de réinitialisation a été envoyé à votre adresse email. N\'utilisez que le dernier email reçu et cliquez une seule fois sur le lien.',
+      life: 6000
     })
   } catch (error) {
     console.error('Supabase reset password error:', error)
-    toast.add({ 
-      severity: 'error', 
-      summary: 'Erreur', 
-      detail: error.message || 'Erreur lors de l\'envoi de l\'email.', 
-      life: 4000 
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: error.message || 'Erreur lors de l\'envoi de l\'email.',
+      life: 4000
     })
+  } finally {
+    resetLoading.value = false
   }
 }
 
