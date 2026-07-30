@@ -1,3 +1,7 @@
+---
+title: Pattern de refresh automatique apres CRUD
+---
+
 # Pattern Standardisé : Refresh Automatique après CRUD
 
 ## 🎯 Problème résolu

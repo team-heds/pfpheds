@@ -196,6 +196,11 @@
               "sidebar": "docs"
             },
             {
+              "id": "domains/multi-filiere-si-phy",
+              "path": "/docs/domains/multi-filiere-si-phy",
+              "sidebar": "docs"
+            },
+            {
               "id": "domains/pfp-services-deep-dive",
               "path": "/docs/domains/pfp-services-deep-dive",
               "sidebar": "docs"
@@ -223,6 +228,16 @@
             {
               "id": "domains/votation-algorithm",
               "path": "/docs/domains/votation-algorithm",
+              "sidebar": "docs"
+            },
+            {
+              "id": "domains/votation-priority-score",
+              "path": "/docs/domains/votation-priority-score",
+              "sidebar": "docs"
+            },
+            {
+              "id": "domains/votation-systeme-complet",
+              "path": "/docs/domains/votation-systeme-complet",
               "sidebar": "docs"
             },
             {
@@ -263,6 +278,11 @@
             {
               "id": "frontend/critical-stores",
               "path": "/docs/frontend/critical-stores",
+              "sidebar": "docs"
+            },
+            {
+              "id": "frontend/data-refresh-pattern",
+              "path": "/docs/frontend/data-refresh-pattern",
               "sidebar": "docs"
             },
             {

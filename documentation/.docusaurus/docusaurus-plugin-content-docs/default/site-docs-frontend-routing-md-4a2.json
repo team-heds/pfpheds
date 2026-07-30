@@ -19,7 +19,7 @@
     "permalink": "/docs/frontend/component-library-critical-components"
   },
   "next": {
-    "title": "Modules de routes et organisation du router",
-    "permalink": "/docs/frontend/router-modules"
+    "title": "Pattern de refresh automatique apres CRUD",
+    "permalink": "/docs/frontend/data-refresh-pattern"
   }
 }

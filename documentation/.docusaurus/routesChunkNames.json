@@ -6,17 +6,17 @@
     },
     "content": "f3976560"
   },
-  "/docs/-0ad": {
+  "/docs/-bd4": {
     "__comp": "5e95c892",
     "__context": {
       "plugin": "aba21aa0"
     }
   },
-  "/docs/-96d": {
+  "/docs/-993": {
     "__comp": "a7bd4aaa",
     "__props": "11b43341"
   },
-  "/docs/-fa7": {
+  "/docs/-434": {
     "__comp": "a94703ab"
   },
   "/docs/apps/overview-781": {
@@ -167,6 +167,10 @@
     "__comp": "17896441",
     "content": "74b1340f"
   },
+  "/docs/domains/multi-filiere-si-phy-065": {
+    "__comp": "17896441",
+    "content": "8f89f2d9"
+  },
   "/docs/domains/pfp-services-deep-dive-6d6": {
     "__comp": "17896441",
     "content": "a5c11989"
@@ -190,6 +194,14 @@
   "/docs/domains/votation-algorithm-393": {
     "__comp": "17896441",
     "content": "0b2904ed"
+  },
+  "/docs/domains/votation-priority-score-23e": {
+    "__comp": "17896441",
+    "content": "a3ea53ef"
+  },
+  "/docs/domains/votation-systeme-complet-34f": {
+    "__comp": "17896441",
+    "content": "505a8d46"
   },
   "/docs/frontend/bootstrap-e81": {
     "__comp": "17896441",
@@ -222,6 +234,10 @@
   "/docs/frontend/critical-stores-ef8": {
     "__comp": "17896441",
     "content": "84d51f70"
+  },
+  "/docs/frontend/data-refresh-pattern-714": {
+    "__comp": "17896441",
+    "content": "d82fc6cc"
   },
   "/docs/frontend/pwa-b8d": {
     "__comp": "17896441",

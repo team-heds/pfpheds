@@ -9,15 +9,15 @@ export default [
   },
   {
     path: '/docs/',
-    component: ComponentCreator('/docs/', '0ad'),
+    component: ComponentCreator('/docs/', 'bd4'),
     routes: [
       {
         path: '/docs/',
-        component: ComponentCreator('/docs/', '96d'),
+        component: ComponentCreator('/docs/', '993'),
         routes: [
           {
             path: '/docs/',
-            component: ComponentCreator('/docs/', 'fa7'),
+            component: ComponentCreator('/docs/', '434'),
             routes: [
               {
                 path: '/docs/apps/overview',
@@ -242,6 +242,12 @@ export default [
                 sidebar: "docs"
               },
               {
+                path: '/docs/domains/multi-filiere-si-phy',
+                component: ComponentCreator('/docs/domains/multi-filiere-si-phy', '065'),
+                exact: true,
+                sidebar: "docs"
+              },
+              {
                 path: '/docs/domains/pfp-services-deep-dive',
                 component: ComponentCreator('/docs/domains/pfp-services-deep-dive', '6d6'),
                 exact: true,
@@ -274,6 +280,18 @@ export default [
               {
                 path: '/docs/domains/votation-algorithm',
                 component: ComponentCreator('/docs/domains/votation-algorithm', '393'),
+                exact: true,
+                sidebar: "docs"
+              },
+              {
+                path: '/docs/domains/votation-priority-score',
+                component: ComponentCreator('/docs/domains/votation-priority-score', '23e'),
+                exact: true,
+                sidebar: "docs"
+              },
+              {
+                path: '/docs/domains/votation-systeme-complet',
+                component: ComponentCreator('/docs/domains/votation-systeme-complet', '34f'),
                 exact: true,
                 sidebar: "docs"
               },
@@ -322,6 +340,12 @@ export default [
               {
                 path: '/docs/frontend/critical-stores',
                 component: ComponentCreator('/docs/frontend/critical-stores', 'ef8'),
+                exact: true,
+                sidebar: "docs"
+              },
+              {
+                path: '/docs/frontend/data-refresh-pattern',
+                component: ComponentCreator('/docs/frontend/data-refresh-pattern', '714'),
                 exact: true,
                 sidebar: "docs"
               },

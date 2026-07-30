@@ -1,3 +1,7 @@
+---
+title: Systeme de votation PFP — documentation fonctionnelle
+---
+
 # Système de Votation PFP — Documentation complète
 
 > **Dernière mise à jour** : 23 février 2026

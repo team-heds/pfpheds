@@ -1,3 +1,7 @@
+---
+title: Systeme multi-filieres SI / PHY
+---
+
 # 🏥 Système Multi-Filières SI/PHY - Rapport d'Inspection & Plan
 
 ## 📋 Ce que j'ai compris

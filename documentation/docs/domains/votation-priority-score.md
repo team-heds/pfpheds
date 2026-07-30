@@ -1,3 +1,7 @@
+---
+title: Algorithme de tirage au sort — Priority Score v2.0
+---
+
 # Algorithme de Tirage au Sort — Priority Score v2.0
 
 > Dernière mise à jour : 9 mars 2026
