@@ -403,6 +403,7 @@ body {
   margin-left: 0 !important;
   margin-right: auto !important;
   text-align: left;
+  font-size: clamp(3.25rem, 5.55vw, 5.65rem);
 }
 
 .chapter-cover p:not(.chapter-label):not(.back-to-summary) {
@@ -415,6 +416,24 @@ body {
   justify-content: flex-start;
   margin-left: 0 !important;
   margin-right: auto !important;
+}
+
+.chapter-cover .stack-grid:has(article:nth-child(3):last-child) {
+  gap: clamp(0.85rem, 1.45vw, 1.25rem);
+}
+
+.chapter-cover .stack-grid:has(article:nth-child(3):last-child) .stack-card {
+  min-height: clamp(9.4rem, 21vh, 12.2rem);
+  padding: clamp(1rem, 1.45vw, 1.32rem);
+}
+
+.chapter-cover .stack-grid:has(article:nth-child(3):last-child) .stack-logo {
+  width: 4.4rem;
+  height: 4.4rem;
+}
+
+.chapter-cover .stack-card li {
+  font-size: clamp(0.78rem, 0.92vw, 0.92rem);
 }
 
 .heds-deck section[data-chapter]::after {
@@ -1027,8 +1046,8 @@ body {
 }
 
 .course-svg.inline img {
-  height: min(52vh, 33rem);
-  transform: scale(1.22);
+  height: min(42vh, 26rem);
+  transform: scale(1);
   transform-origin: center center;
 }
 
@@ -1039,14 +1058,14 @@ body {
 .workflow-slide:has(.course-svg.inline) h3,
 .heds-deck section:has(.course-svg.inline) h3 {
   max-width: none;
-  margin-top: 1.6rem;
+  margin-top: 1.15rem;
   margin-bottom: 0.25rem;
-  font-size: clamp(2.75rem, 5vw, 5.15rem);
+  font-size: clamp(2.18rem, 4vw, 4.25rem);
 }
 
 .heds-deck section:has(.course-svg.inline) > p {
-  margin-bottom: clamp(0.65rem, 1.35vh, 1rem);
-  font-size: clamp(0.98rem, 1.35vw, 1.28rem);
+  margin-bottom: clamp(0.45rem, 1vh, 0.8rem);
+  font-size: clamp(0.92rem, 1.22vw, 1.18rem);
 }
 
 .course-svg figcaption {

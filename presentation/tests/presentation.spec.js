@@ -124,6 +124,61 @@ test('captures visuelles de contrôle des slides clés', async ({ page }) => {
   for (const [id, heading] of slides) {
     await page.goto(`/presentation/#/${id}`)
     await expect(page.getByRole('heading', { name: heading })).toBeVisible()
-    await page.screenshot({ path: `test-results/visual-smoke/${id}.png`, fullPage: true })
+    await page.waitForTimeout(1100)
+    await page.screenshot({ path: `test-results/visual-smoke/${id}.png`, fullPage: false })
   }
+})
+
+test('contrôle qualité viewport de toutes les slides', async ({ page }) => {
+  test.setTimeout(180000)
+  await page.setViewportSize({ width: 1600, height: 820 })
+  await page.goto('/presentation/')
+  await page.waitForFunction(() => window.Reveal?.isReady?.())
+
+  const slideIds = await page.evaluate(() => window.Reveal.getSlides().map((slide) => slide.id).filter(Boolean))
+  const issues = []
+
+  for (const id of slideIds) {
+    await page.goto(`/presentation/#/${id}`)
+    await page.waitForFunction(() => window.Reveal?.isReady?.())
+    await page.waitForTimeout(650)
+
+    const result = await page.evaluate(() => {
+      const current = window.Reveal.getCurrentSlide()
+      const children = [...current.children].filter((child) => !child.matches('aside.notes'))
+      const boxes = children.map((child) => child.getBoundingClientRect()).filter((box) => box.width > 1 && box.height > 1)
+
+      if (!boxes.length) {
+        return { id: current.id, issue: 'slide sans contenu mesurable' }
+      }
+
+      const bounds = {
+        left: Math.min(...boxes.map((box) => box.left)),
+        right: Math.max(...boxes.map((box) => box.right)),
+        top: Math.min(...boxes.map((box) => box.top)),
+        bottom: Math.max(...boxes.map((box) => box.bottom)),
+      }
+
+      const guard = { left: 88, right: 1512, top: 54, bottom: 792 }
+      const overflow = {
+        left: Math.round(Math.max(0, guard.left - bounds.left)),
+        right: Math.round(Math.max(0, bounds.right - guard.right)),
+        top: Math.round(Math.max(0, guard.top - bounds.top)),
+        bottom: Math.round(Math.max(0, bounds.bottom - guard.bottom)),
+      }
+
+      return {
+        id: current.id,
+        title: current.querySelector('h1,h2,h3')?.textContent?.trim() || current.id,
+        bounds: Object.fromEntries(Object.entries(bounds).map(([key, value]) => [key, Math.round(value)])),
+        overflow,
+      }
+    })
+
+    if (result.issue || Object.values(result.overflow).some(Boolean)) {
+      issues.push(result)
+    }
+  }
+
+  expect(issues).toEqual([])
 })
