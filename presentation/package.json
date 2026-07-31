@@ -1,0 +1,20 @@
+{
+  "name": "pfpheds-presentation",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 5182",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0 --port 5183",
+    "test": "playwright test"
+  },
+  "dependencies": {
+    "reveal.js": "^6.0.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "sass": "^1.62.1",
+    "vite": "^5.1.6"
+  }
+}

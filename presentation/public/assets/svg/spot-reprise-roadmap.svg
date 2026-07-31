@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 220" role="img" aria-labelledby="title desc">
+  <title id="title">Roadmap de reprise</title>
+  <desc id="desc">Un parcours audit, cadrage, migration et transmission.</desc>
+  <defs>
+    <filter id="s" x="-20%" y="-30%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#111827" flood-opacity=".12"/>
+    </filter>
+  </defs>
+  <path d="M44 113c0-50 41-91 91-91h90c50 0 91 41 91 91s-41 91-91 91h-90c-50 0-91-41-91-91Z" fill="#dcfce7"/>
+  <path d="M76 151c39-66 78-89 117-67 37 21 61 11 90-27" fill="none" stroke="#6229ff" stroke-width="12" stroke-linecap="round"/>
+  <g filter="url(#s)">
+    <circle cx="76" cy="151" r="20" fill="#fff"/>
+    <circle cx="148" cy="88" r="20" fill="#fff"/>
+    <circle cx="223" cy="93" r="20" fill="#fff"/>
+    <circle cx="283" cy="57" r="20" fill="#fff"/>
+  </g>
+  <path d="M68 151h16M140 88h16M215 93h16M275 57h16" stroke="#00e66d" stroke-width="7" stroke-linecap="round"/>
+  <path d="M76 143v16M148 80v16M223 85v16M283 49v16" stroke="#00e66d" stroke-width="7" stroke-linecap="round"/>
+  <path d="M61 179h62M133 124h62M208 128h62M252 90h62" stroke="#2c2d30" stroke-width="7" stroke-linecap="round" opacity=".24"/>
+</svg>

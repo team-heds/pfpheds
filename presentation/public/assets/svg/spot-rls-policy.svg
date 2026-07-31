@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 220" role="img" aria-labelledby="title desc">
+  <title id="title">Politique RLS</title>
+  <desc id="desc">Utilisateur, jeton JWT, policy et lignes autorisées.</desc>
+  <defs>
+    <filter id="s" x="-20%" y="-30%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#111827" flood-opacity=".12"/>
+    </filter>
+  </defs>
+  <path d="M48 112c0-50 41-91 91-91h82c50 0 91 41 91 91s-41 91-91 91h-82c-50 0-91-41-91-91Z" fill="#dcfce7"/>
+  <g filter="url(#s)">
+    <rect x="62" y="78" width="64" height="64" rx="18" fill="#fff"/>
+    <rect x="151" y="64" width="58" height="92" rx="18" fill="#fff"/>
+    <rect x="236" y="54" width="70" height="112" rx="18" fill="#fff"/>
+  </g>
+  <circle cx="94" cy="99" r="13" fill="#6229ff"/>
+  <path d="M76 128c8-14 28-14 36 0" fill="none" stroke="#6229ff" stroke-width="7" stroke-linecap="round"/>
+  <path d="M130 110h21M209 110h27" stroke="#00e66d" stroke-width="8" stroke-linecap="round"/>
+  <path d="m142 98 13 12-13 12M226 98l13 12-13 12" fill="none" stroke="#00e66d" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M171 86h18M171 109h18M171 132h18" stroke="#6229ff" stroke-width="7" stroke-linecap="round"/>
+  <rect x="254" y="76" width="34" height="9" rx="4.5" fill="#00e66d"/>
+  <rect x="254" y="101" width="34" height="9" rx="4.5" fill="#00e66d"/>
+  <rect x="254" y="126" width="34" height="9" rx="4.5" fill="#ff3d1f" opacity=".65"/>
+  <path d="m292 125 12 12M304 125l-12 12" stroke="#ff3d1f" stroke-width="5" stroke-linecap="round"/>
+</svg>

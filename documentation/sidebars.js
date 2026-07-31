@@ -131,6 +131,7 @@ const sidebars = {
         'contrib/eslint-prettier',
         'contrib/docs-style-guide',
         'contrib/github',
+        'contrib/presentation-revealjs',
       ],
     },
     'priorites-developpement',

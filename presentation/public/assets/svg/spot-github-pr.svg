@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 220" role="img" aria-labelledby="title desc">
+  <title id="title">Pull request GitHub</title>
+  <desc id="desc">Une branche Git reliée à une pull request validée.</desc>
+  <defs>
+    <filter id="s" x="-20%" y="-30%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#111827" flood-opacity=".12"/>
+    </filter>
+  </defs>
+  <path d="M46 111c0-50 41-91 91-91h86c50 0 91 41 91 91s-41 91-91 91h-86c-50 0-91-41-91-91Z" fill="#f3e8ff"/>
+  <g filter="url(#s)">
+    <rect x="81" y="48" width="198" height="124" rx="22" fill="#fff"/>
+  </g>
+  <circle cx="118" cy="82" r="14" fill="#6229ff"/>
+  <circle cx="118" cy="138" r="14" fill="#00e66d"/>
+  <path d="M118 96v28" stroke="#6229ff" stroke-width="8" stroke-linecap="round"/>
+  <path d="M132 82c46 0 40 56 80 56h16" fill="none" stroke="#6229ff" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="244" cy="138" r="14" fill="#e07c39"/>
+  <path d="M162 72h72M162 99h94" stroke="#2c2d30" stroke-width="8" stroke-linecap="round" opacity=".25"/>
+  <rect x="158" y="126" width="48" height="24" rx="12" fill="#efeeff"/>
+  <path d="m168 138 9 9 17-23" fill="none" stroke="#00e66d" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M256 138h36" stroke="#00e66d" stroke-width="8" stroke-linecap="round"/>
+  <path d="m281 124 16 14-16 14" fill="none" stroke="#00e66d" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

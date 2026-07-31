@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 220" role="img" aria-labelledby="title desc">
+  <title id="title">Pipeline CI/CD</title>
+  <desc id="desc">Une chaîne build, tests, validation et déploiement.</desc>
+  <defs>
+    <filter id="s" x="-20%" y="-30%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#111827" flood-opacity=".12"/>
+    </filter>
+  </defs>
+  <path d="M44 114c0-49 40-89 89-89h94c49 0 89 40 89 89s-40 89-89 89h-94c-49 0-89-40-89-89Z" fill="#f3e8ff"/>
+  <g filter="url(#s)">
+    <rect x="50" y="78" width="64" height="64" rx="18" fill="#fff"/>
+    <rect x="148" y="78" width="64" height="64" rx="18" fill="#fff"/>
+    <rect x="246" y="78" width="64" height="64" rx="18" fill="#fff"/>
+  </g>
+  <path d="M114 110h34M212 110h34" stroke="#6229ff" stroke-width="8" stroke-linecap="round"/>
+  <path d="m136 96 14 14-14 14M234 96l14 14-14 14" fill="none" stroke="#6229ff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M75 111h15M82 103v16" stroke="#00e66d" stroke-width="8" stroke-linecap="round"/>
+  <path d="M168 112l11 11 19-28" fill="none" stroke="#00e66d" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M267 124V96l24 14-24 14Z" fill="#e07c39"/>
+  <path d="M65 161h52M154 161h52M249 161h52" stroke="#2c2d30" stroke-width="7" stroke-linecap="round" opacity=".28"/>
+</svg>

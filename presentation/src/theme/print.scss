@@ -1,0 +1,53 @@
+@media print {
+  @page {
+    size: landscape;
+    margin: 10mm;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+  }
+
+  .deck-brand,
+  .skip-link,
+  .copy-code-button,
+  .chapter-progress,
+  .reveal .controls,
+  .reveal .progress,
+  .reveal::after {
+    display: none !important;
+  }
+
+  .reveal,
+  .reveal .slides,
+  .reveal .slides section {
+    background: #fff !important;
+    color: #111827 !important;
+    box-shadow: none !important;
+  }
+
+  .heds-deck .slides > section::before,
+  .heds-deck .slides > section > section::before {
+    display: none !important;
+  }
+
+  .heds-deck .slides > section > :not(aside.notes),
+  .heds-deck .slides > section > section > :not(aside.notes) {
+    transform: none !important;
+  }
+
+  .reveal a {
+    color: #111827 !important;
+    text-decoration: underline;
+  }
+
+  .reveal pre code {
+    white-space: pre-wrap;
+  }
+
+  .reveal .slide-number {
+    display: block !important;
+    color: #111827 !important;
+  }
+}

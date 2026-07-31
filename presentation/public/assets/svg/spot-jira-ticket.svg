@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 220" role="img" aria-labelledby="title desc">
+  <title id="title">Ticket Jira structuré</title>
+  <desc id="desc">Une carte de ticket avec priorité, checklist et passage vers Done.</desc>
+  <defs>
+    <filter id="s" x="-20%" y="-30%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#111827" flood-opacity=".12"/>
+    </filter>
+  </defs>
+  <path d="M44 112c0-50 41-91 91-91h90c50 0 91 41 91 91s-41 91-91 91h-90c-50 0-91-41-91-91Z" fill="#efeeff"/>
+  <rect x="74" y="47" width="172" height="126" rx="22" fill="#fff" filter="url(#s)"/>
+  <rect x="96" y="72" width="72" height="13" rx="6.5" fill="#6229ff"/>
+  <rect x="96" y="98" width="122" height="9" rx="4.5" fill="#2c2d30" opacity=".3"/>
+  <rect x="96" y="120" width="96" height="9" rx="4.5" fill="#2c2d30" opacity=".22"/>
+  <path d="m101 146 9 9 17-24" fill="none" stroke="#00e66d" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M141 146h60" stroke="#2c2d30" stroke-width="8" stroke-linecap="round" opacity=".28"/>
+  <rect x="202" y="58" width="58" height="28" rx="14" fill="#ffe4e6"/>
+  <path d="M216 72h30" stroke="#ff3d1f" stroke-width="7" stroke-linecap="round"/>
+  <path d="M249 116h38" stroke="#6229ff" stroke-width="8" stroke-linecap="round"/>
+  <path d="m276 102 16 14-16 14" fill="none" stroke="#6229ff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="291" y="93" width="46" height="46" rx="16" fill="#00e66d"/>
+  <path d="m303 116 9 9 16-22" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

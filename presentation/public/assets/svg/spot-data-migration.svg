@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 220" role="img" aria-labelledby="title desc">
+  <title id="title">Migration de données</title>
+  <desc id="desc">Ancienne source, validation et nouvelle source de vérité.</desc>
+  <defs>
+    <filter id="s" x="-20%" y="-30%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#111827" flood-opacity=".12"/>
+    </filter>
+  </defs>
+  <path d="M45 112c0-50 41-91 91-91h88c50 0 91 41 91 91s-41 91-91 91h-88c-50 0-91-41-91-91Z" fill="#fef9c3"/>
+  <g filter="url(#s)">
+    <rect x="62" y="68" width="74" height="94" rx="18" fill="#fff"/>
+    <rect x="224" y="68" width="74" height="94" rx="18" fill="#fff"/>
+    <circle cx="180" cy="115" r="32" fill="#fff"/>
+  </g>
+  <path d="M82 93h34M82 116h34M82 139h24" stroke="#2c2d30" stroke-width="7" stroke-linecap="round" opacity=".28"/>
+  <path d="M244 93h34M244 116h34M244 139h24" stroke="#00e66d" stroke-width="7" stroke-linecap="round"/>
+  <path d="M136 115h23M201 115h23" stroke="#6229ff" stroke-width="8" stroke-linecap="round"/>
+  <path d="m150 101 13 14-13 14M215 101l13 14-13 14" fill="none" stroke="#6229ff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="m166 116 10 10 20-29" fill="none" stroke="#00e66d" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M78 174h58M224 174h58" stroke="#2c2d30" stroke-width="7" stroke-linecap="round" opacity=".22"/>
+</svg>

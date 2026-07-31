@@ -1,0 +1,129 @@
+import { expect, test } from '@playwright/test'
+
+test('charge la présentation et le sommaire', async ({ page }) => {
+  const errors = []
+  page.on('pageerror', (error) => errors.push(error.message))
+  await page.goto('/presentation/')
+  await expect(page.getByRole('heading', { name: 'PFPHEdS' })).toBeVisible()
+  await page.keyboard.press('ArrowRight')
+  await page.keyboard.press('ArrowRight')
+  await expect(page.getByRole('heading', { name: 'Sommaire principal' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Jira et la gestion du travail' })).toBeVisible()
+  expect(errors).toEqual([])
+})
+
+test('navigue vers un chapitre depuis le sommaire', async ({ page }) => {
+  await page.goto('/presentation/#/sommaire')
+  await page.getByRole('link', { name: 'Jira et la gestion du travail' }).click()
+  await expect(page.getByRole('heading', { name: 'Jira et la gestion du travail' })).toBeVisible()
+  await expect(page).toHaveURL(/jira/)
+})
+
+test('rend les liens principaux externes cliquables et sécurisés', async ({ page }) => {
+  await page.goto('/presentation/#/git-vs-github')
+  const link = page.getByRole('link', { name: 'Ouvrir le dépôt GitHub PFPHEdS' })
+  await expect(link).toHaveAttribute('href', 'https://github.com/team-heds/pfpheds')
+  await expect(link).toHaveAttribute('target', '_blank')
+  await expect(link).toHaveAttribute('rel', /noopener/)
+})
+
+test('copie une commande', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write'])
+  await page.goto('/presentation/#/recuperer-le-projet')
+  await page.getByRole('button', { name: 'Copier la commande' }).first().click()
+  await expect(page.getByRole('button', { name: 'Copier la commande' }).first()).toHaveText('Copié')
+  await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toContain('git clone')
+})
+
+test('supporte un hash de slide précis', async ({ page }) => {
+  await page.goto('/presentation/#/rls-row-level-security')
+  await expect(page.getByRole('heading', { name: 'RLS : Row Level Security' })).toBeVisible()
+})
+
+test('affichage mobile sans débordement horizontal évident', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/presentation/#/sommaire')
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 4)
+  expect(overflow).toBe(false)
+})
+
+test('les slides principales ne débordent pas horizontalement', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 })
+  await page.goto('/presentation/')
+  const overflows = await page.evaluate(async () => {
+    const deck = window.Reveal
+    const slides = deck.getSlides()
+    const results = []
+
+    for (const slide of slides) {
+      const indices = deck.getIndices(slide)
+      deck.slide(indices.h, indices.v || 0)
+      await new Promise((resolve) => window.requestAnimationFrame(resolve))
+      const current = deck.getCurrentSlide()
+      const overflowX = current.scrollWidth - current.clientWidth
+      if (overflowX > 6) {
+        results.push({ id: current.id || current.querySelector('h2,h3')?.textContent || 'sans-id', overflowX })
+      }
+    }
+
+    return results
+  })
+
+  expect(overflows).toEqual([])
+})
+
+test('les slides principales restent dans la hauteur utile', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 })
+  await page.goto('/presentation/')
+  const overflows = await page.evaluate(async () => {
+    const deck = window.Reveal
+    const slides = deck.getSlides()
+    const results = []
+
+    for (const slide of slides) {
+      const indices = deck.getIndices(slide)
+      deck.slide(indices.h, indices.v || 0)
+      await new Promise((resolve) => window.requestAnimationFrame(resolve))
+      const current = deck.getCurrentSlide()
+      const slideBox = current.getBoundingClientRect()
+      const children = [...current.children].filter((child) => !child.matches('aside.notes'))
+      const maxBottom = Math.max(...children.map((child) => child.getBoundingClientRect().bottom), slideBox.top)
+      const overflowY = maxBottom - slideBox.bottom
+
+      if (overflowY > 18) {
+        results.push({ id: current.id || current.querySelector('h2,h3')?.textContent || 'sans-id', overflowY: Math.round(overflowY) })
+      }
+    }
+
+    return results
+  })
+
+  expect(overflows).toEqual([])
+})
+
+test('les ressources principales sont chargées', async ({ page }) => {
+  const failed = []
+  page.on('requestfailed', (request) => failed.push(request.url()))
+  await page.goto('/presentation/')
+  await page.waitForLoadState('networkidle')
+  expect(failed).toEqual([])
+})
+
+test('captures visuelles de contrôle des slides clés', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 820 })
+  const slides = [
+    ['accueil', 'PFPHEdS'],
+    ['sommaire', 'Sommaire principal'],
+    ['frontend', 'La stack frontend'],
+    ['jira-decrit-le-besoin-github-montre-le-changement', 'Jira décrit le besoin ; GitHub montre le changement'],
+    ['rls-row-level-security', 'RLS : Row Level Security'],
+    ['reprise-externe', 'Reprise par l’entreprise externe'],
+    ['conclusion', 'Conclusion'],
+  ]
+
+  for (const [id, heading] of slides) {
+    await page.goto(`/presentation/#/${id}`)
+    await expect(page.getByRole('heading', { name: heading })).toBeVisible()
+    await page.screenshot({ path: `test-results/visual-smoke/${id}.png`, fullPage: true })
+  }
+})

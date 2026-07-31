@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 220" role="img" aria-labelledby="title desc">
+  <title id="title">Sécurité et revue</title>
+  <desc id="desc">Un bouclier entouré par des contrôles, tests et revue humaine.</desc>
+  <defs>
+    <filter id="s" x="-20%" y="-30%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#111827" flood-opacity=".12"/>
+    </filter>
+  </defs>
+  <path d="M47 112c0-50 41-91 91-91h84c50 0 91 41 91 91s-41 91-91 91h-84c-50 0-91-41-91-91Z" fill="#ffe4e6"/>
+  <path d="M180 45 251 75v46c0 45-28 76-71 94-43-18-71-49-71-94V75l71-30Z" fill="#fff" filter="url(#s)"/>
+  <path d="M180 68 229 89v34c0 29-18 52-49 66-31-14-49-37-49-66V89l49-21Z" fill="#6229ff"/>
+  <path d="m157 124 17 17 32-46" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="92" cy="82" r="13" fill="#00e66d"/>
+  <circle cx="268" cy="153" r="13" fill="#e07c39"/>
+  <path d="M89 117h47M225 62h47M75 151h48M235 185h48" stroke="#2c2d30" stroke-width="7" stroke-linecap="round" opacity=".24"/>
+</svg>

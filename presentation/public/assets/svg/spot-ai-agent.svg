@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 220" role="img" aria-labelledby="title desc">
+  <title id="title">Assistant IA et revue humaine</title>
+  <desc id="desc">Un assistant connecté à un dépôt, des tests et une validation humaine.</desc>
+  <defs>
+    <linearGradient id="g" x1="60" y1="25" x2="300" y2="190" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6229ff"/>
+      <stop offset="1" stop-color="#7a52ff"/>
+    </linearGradient>
+    <filter id="s" x="-20%" y="-30%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#111827" flood-opacity=".12"/>
+    </filter>
+  </defs>
+  <path d="M64 108c0-47 38-85 85-85h62c47 0 85 38 85 85s-38 85-85 85h-62c-47 0-85-38-85-85Z" fill="#efeeff"/>
+  <rect x="97" y="58" width="166" height="112" rx="26" fill="#fff" filter="url(#s)"/>
+  <rect x="126" y="84" width="108" height="62" rx="20" fill="url(#g)"/>
+  <circle cx="157" cy="115" r="7" fill="#fff"/>
+  <circle cx="203" cy="115" r="7" fill="#fff"/>
+  <path d="M163 135c11 8 23 8 34 0" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
+  <path d="M180 58V36" stroke="#6229ff" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="180" cy="28" r="10" fill="#00e66d"/>
+  <path d="M69 80h42M249 80h42M69 138h42M249 138h42" stroke="#6229ff" stroke-width="8" stroke-linecap="round" opacity=".55"/>
+  <path d="M76 176h74M210 176h74" stroke="#00e66d" stroke-width="8" stroke-linecap="round"/>
+</svg>

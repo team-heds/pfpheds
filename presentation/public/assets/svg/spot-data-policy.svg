@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 220" role="img" aria-labelledby="title desc">
+  <title id="title">Données et politiques</title>
+  <desc id="desc">Un utilisateur, un jeton et des lignes de données autorisées.</desc>
+  <defs>
+    <filter id="s" x="-20%" y="-30%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#111827" flood-opacity=".12"/>
+    </filter>
+  </defs>
+  <path d="M48 112c0-50 41-91 91-91h82c50 0 91 41 91 91s-41 91-91 91h-82c-50 0-91-41-91-91Z" fill="#efeeff"/>
+  <g filter="url(#s)">
+    <rect x="65" y="75" width="74" height="74" rx="20" fill="#fff"/>
+    <rect x="214" y="62" width="86" height="104" rx="18" fill="#fff"/>
+  </g>
+  <circle cx="102" cy="99" r="15" fill="#6229ff"/>
+  <path d="M78 132c8-17 40-17 48 0" fill="none" stroke="#6229ff" stroke-width="8" stroke-linecap="round"/>
+  <path d="M145 112h56" stroke="#00e66d" stroke-width="9" stroke-linecap="round"/>
+  <path d="m190 97 17 15-17 15" fill="none" stroke="#00e66d" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="234" y="84" width="46" height="10" rx="5" fill="#6229ff"/>
+  <rect x="234" y="109" width="34" height="10" rx="5" fill="#00e66d"/>
+  <rect x="234" y="134" width="52" height="10" rx="5" fill="#2c2d30" opacity=".3"/>
+  <circle cx="191" cy="70" r="17" fill="#fff" filter="url(#s)"/>
+  <path d="m183 70 6 6 12-17" fill="none" stroke="#00e66d" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

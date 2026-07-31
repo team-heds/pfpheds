@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 220" role="img" aria-labelledby="title desc">
+  <title id="title">Documentation structurée</title>
+  <desc id="desc">Des pages de documentation organisées en sections reliées.</desc>
+  <defs>
+    <filter id="s" x="-20%" y="-30%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#111827" flood-opacity=".12"/>
+    </filter>
+  </defs>
+  <path d="M49 113c0-50 41-91 91-91h80c50 0 91 41 91 91s-41 91-91 91h-80c-50 0-91-41-91-91Z" fill="#e0f2fe"/>
+  <g filter="url(#s)">
+    <rect x="82" y="46" width="82" height="116" rx="16" fill="#fff"/>
+    <rect x="170" y="58" width="108" height="132" rx="18" fill="#fff"/>
+  </g>
+  <path d="M103 73h40M103 94h30M103 115h44M103 136h26" stroke="#6229ff" stroke-width="7" stroke-linecap="round"/>
+  <path d="M194 88h58M194 111h42M194 134h62M194 157h35" stroke="#2c2d30" stroke-width="7" stroke-linecap="round" opacity=".38"/>
+  <path d="M144 172c17 0 29 11 29 25M193 190c0-16 15-30 34-30" fill="none" stroke="#00e66d" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="232" cy="160" r="12" fill="#00e66d"/>
+  <circle cx="173" cy="197" r="10" fill="#6229ff"/>
+</svg>
