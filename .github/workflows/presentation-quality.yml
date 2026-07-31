@@ -1,0 +1,70 @@
+name: Presentation quality
+
+on:
+  push:
+    branches:
+      - prod
+    paths:
+      - 'presentation/**'
+      - 'src/assets/layout/fonts/**'
+      - 'src/styles/_variables.scss'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/presentation-quality.yml'
+  pull_request:
+    paths:
+      - 'presentation/**'
+      - 'src/assets/layout/fonts/**'
+      - 'src/styles/_variables.scss'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/presentation-quality.yml'
+
+jobs:
+  presentation:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            presentation/package-lock.json
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install presentation dependencies
+        run: npm ci --prefix presentation
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Test presentation
+        run: npm run presentation:test
+
+      - name: Build presentation
+        run: npm run presentation:build
+
+      - name: Export presentation PDF
+        run: npm run presentation:pdf
+
+      - name: Upload PDF artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pfpheds-presentation-pdf
+          path: presentation/dist/PFPHEdS-presentation.pdf
+
+      - name: Upload visual smoke captures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: presentation-visual-smoke
+          path: presentation/test-results/visual-smoke/
+          if-no-files-found: ignore

@@ -7,6 +7,7 @@
     "dev": "vite --host 0.0.0.0 --port 5182",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0 --port 5183",
+    "pdf": "npm run build && node scripts/export-pdf.mjs",
     "test": "playwright test"
   },
   "dependencies": {
