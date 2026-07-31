@@ -24,6 +24,7 @@ export const introductionSlides = [
     </div>
     <div class="hero-actions">
       <a href="#/sommaire">Commencer</a>
+      <a href="PFPHEdS-presentation.pdf">Télécharger le PDF</a>
       <a href="https://hedsvs.ch/docs/">Documentation</a>
     </div>
     <aside class="notes">Positionner la présentation comme un support pédagogique, pas comme une documentation exhaustive.</aside>
@@ -34,6 +35,7 @@ export const introductionSlides = [
       'Flèche droite / gauche : avancer dans les chapitres.',
       'Flèche bas / haut : entrer dans le détail d’un chapitre.',
       'Touche f : passer en plein écran.',
+      'Le PDF imprimable est disponible depuis la première slide.',
       'Les liens externes ouvrent la documentation, Jira, GitHub ou Supabase.',
       'Les commandes peuvent être copiées avec le bouton Copier.',
     ])}`,

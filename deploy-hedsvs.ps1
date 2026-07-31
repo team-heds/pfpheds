@@ -173,6 +173,7 @@ if [ "`$FREE_MB" -lt 2000 ]; then
 fi
 
 echo '[DEPLOY] Extraction de la nouvelle version...'
+sudo rm -rf `$APP_PATH
 sudo mkdir -p `$APP_PATH
 sudo tar -xzf "`$ARCHIVE_PATH" -C `$APP_PATH
 

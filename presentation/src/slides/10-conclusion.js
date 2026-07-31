@@ -1,4 +1,4 @@
-import { chapter, checklist, codeBlock, slide, timeline } from './helpers.js'
+import { chapter, checklist, codeBlock, slide, techGrid, timeline } from './helpers.js'
 
 export const conclusionSlides = [
   chapter(
@@ -22,7 +22,20 @@ export const conclusionSlides = [
       slide('Commandes de vérification', `${codeBlock(`npm run build
 npm run docs:build
 npm run presentation:build
-npm run presentation:test`)}`),
+npm run presentation:test
+npm run presentation:pdf`)}`),
+      slide(
+        'Références utiles',
+        `${techGrid([
+          ['Projet', '<a href="https://github.com/team-heds/pfpheds">Repository GitHub PFPHEdS</a>'],
+          ['Documentation', '<a href="https://hedsvs.ch/docs/">Documentation interne Docusaurus</a>'],
+          ['Frontend', '<a href="https://vuejs.org/">Vue</a> · <a href="https://vite.dev/">Vite</a> · <a href="https://primevue.org/">PrimeVue</a>'],
+          ['Backend', '<a href="https://supabase.com/docs">Supabase</a> · <a href="https://www.postgresql.org/docs/">PostgreSQL</a>'],
+          ['Production', '<a href="https://docs.docker.com/">Docker</a> · <a href="https://caddyserver.com/docs/">Caddy</a>'],
+          ['Méthode', '<a href="https://www.atlassian.com/software/jira/guides">Jira</a> · <a href="https://docs.github.com/">GitHub Docs</a>'],
+        ])}
+        <p class="callout">Ces liens servent de point de départ. La source de vérité pour PFPHEdS reste la documentation interne et le dépôt GitHub.</p>`,
+      ),
       slide(
         'Définition de terminé',
         `${checklist([

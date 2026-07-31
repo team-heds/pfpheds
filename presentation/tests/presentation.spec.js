@@ -141,7 +141,8 @@ test('contrôle qualité viewport de toutes les slides', async ({ page }) => {
   for (const id of slideIds) {
     await page.goto(`/presentation/#/${id}`)
     await page.waitForFunction(() => window.Reveal?.isReady?.())
-    await page.waitForTimeout(650)
+    await page.waitForFunction((expectedId) => window.Reveal?.getCurrentSlide?.()?.id === expectedId, id)
+    await page.waitForTimeout(900)
 
     const result = await page.evaluate(() => {
       const current = window.Reveal.getCurrentSlide()
