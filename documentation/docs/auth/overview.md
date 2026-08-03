@@ -60,6 +60,19 @@ Points techniques précis :
 - `storageKey: 'supabase.auth.token'` : la session persiste dans `localStorage` sous cette clé exacte. Un bug de session fantôme après changement de compte se diagnostique en inspectant `localStorage.getItem('supabase.auth.token')` dans les devtools.
 - Le fichier normalise `VITE_SUPABASE_URL` si elle contient par erreur `/rest/v1` — garde-fou pour une erreur de config fréquente sur les instances self-hosted (l'URL doit être la racine, ex. `https://api2.hedsvs.ch`, pas `https://api2.hedsvs.ch/rest/v1`).
 
+### Écran de définition du nouveau mot de passe
+
+L'écran `/reset-password` est le point d'entrée unique du parcours Supabase de réinitialisation. `/new-password` redirige vers cette page en conservant la query string et le hash.
+
+Comportement attendu :
+- le guard router laisse passer `/reset-password` et `/new-password` sans vérifier l'authentification pour ne pas consommer le code PKCE avant le composant ;
+- le composant accepte les deux formats Supabase rencontrés : `?code=...` avec `exchangeCodeForSession()` et `#access_token=...&refresh_token=...` avec `setSession()` ;
+- si le lien est absent, invalide ou expiré, l'écran affiche un état dédié et permet une validation par code email via `verifyOtp({ type: 'recovery' })` ;
+- les règles de complexité sont visibles avant validation et validées côté frontend dans `src/utils/passwordResetValidation.js` ;
+- le mot de passe et sa confirmation doivent correspondre avant l'appel `supabase.auth.updateUser({ password })` ;
+- les champs utilisent le masque PrimeVue (`toggleMask`) pour afficher ou masquer le contenu ;
+- après succès, l'utilisateur revient explicitement à la connexion.
+
 ### Cette instance est self-hosted, pas Supabase Cloud
 
 `VITE_SUPABASE_URL=https://api2.hedsvs.ch` — ce n'est **pas** un projet `*.supabase.co`. Conséquence directe : les outils MCP Supabase standards (`list_projects`, `execute_sql`, etc.) ne voient pas ce projet. Toute inspection de schéma ou toute opération admin (créer un utilisateur, lister les comptes) doit passer par :
