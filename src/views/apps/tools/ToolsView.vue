@@ -40,9 +40,12 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted } from 'vue';
-import Navbar from '@/components/common/utils/Navbar.vue';
-import Button from 'primevue/button';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import Navbar from '@/components/common/utils/Navbar.vue'
+import Button from 'primevue/button'
+import { useRoleStore } from '@/stores/role'
+
+const roleStore = useRoleStore()
 
 const allOutils = [
   { to: '/institution', icon: 'pi pi-building', label: 'institutions' },
@@ -51,29 +54,45 @@ const allOutils = [
   { to: '/event-management', icon: 'pi pi-calendar', label: 'Event' },
   { to: '/qr', icon: 'pi pi-qrcode', label: 'QR code' },
   { to: '/votation_lese', icon: 'pi pi-check-square', label: 'Votation' },
-  // { to: '/game', icon: 'pi pi-star', label: 'Game' },
   { to: '/lang-apps', icon: 'pi pi-globe', label: 'Apps langues' },
   { to: '/notes', icon: 'pi pi-book', label: 'Notes' },
-  // { to: '/chatbotsi', icon: 'pi pi-comments', label: 'ChatBotSI' },
   { to: '/tournois', icon: 'pi pi-trophy', label: 'Tournois' },
-];
+]
 
-const isMobile = ref(false);
+const adminOutils = [
+  { to: '/outils/formations', icon: 'pi pi-book', label: 'Formations' },
+]
+
+const isMobile = ref(false)
+
+function syncIsMobile() {
+  isMobile.value = window.innerWidth < 900
+}
+
 onMounted(() => {
-  isMobile.value = window.innerWidth < 900;
-  window.addEventListener('resize', () => {
-    isMobile.value = window.innerWidth < 900;
-  });
-});
+  syncIsMobile()
+  window.addEventListener('resize', syncIsMobile)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', syncIsMobile)
+})
+
+const canAccessTrainingHub = computed(() => roleStore.isSuper || roleStore.can('admin'))
 
 const outils = computed(() => {
-  // Desktop: QR code, Apps Langues, Notes, Tournois
-  if (!isMobile.value) return allOutils.filter(o => ['QR code', 'Apps langues', 'Notes', 'Tournois'].includes(o.label));
-  // Mobile: QR code, Apps Langues, Tournois (pas Notes)
-  return allOutils.filter(o => ['QR code', 'Apps langues', 'Tournois'].includes(o.label));
-});
+  const baseOutils = canAccessTrainingHub.value
+    ? [...allOutils, ...adminOutils]
+    : allOutils
 
-const showVoirPlus = computed(() => outils.value.length >= 12);
+  if (!isMobile.value) {
+    return baseOutils.filter(o => ['QR code', 'Apps langues', 'Notes', 'Tournois', 'Formations'].includes(o.label))
+  }
+
+  return baseOutils.filter(o => ['QR code', 'Apps langues', 'Tournois', 'Formations'].includes(o.label))
+})
+
+const showVoirPlus = computed(() => outils.value.length >= 12)
 </script>
 
 <style scoped>
@@ -86,18 +105,22 @@ const showVoirPlus = computed(() => outils.value.length >= 12);
   scrollbar-width: none;
   -ms-overflow-style: none;
   padding-bottom: 3.5rem;
+  font-family: var(--font-family, 'Poppins', sans-serif);
 }
+
 .outils-root::-webkit-scrollbar {
   display: none;
 }
+
 .no-bg {
   background: none !important;
 }
-.outils-header {
-  border-bottom: 1px solid var(--surface-border, #e5e7eb);
-  padding-bottom: 1.2rem;
-  background: none;
+
+.outil-tile-inner.prime-card,
+.fb-card {
+  font-family: var(--font-family, 'Poppins', sans-serif);
 }
+
 .outils-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
@@ -105,6 +128,7 @@ const showVoirPlus = computed(() => outils.value.length >= 12);
   padding: 10rem 0.7rem 0 0.7rem;
   background: none;
 }
+
 .outil-tile {
   text-decoration: none;
   transition: transform 0.13s, box-shadow 0.13s;
@@ -114,6 +138,7 @@ const showVoirPlus = computed(() => outils.value.length >= 12);
   align-items: stretch;
   min-height: 120px;
 }
+
 .outil-tile-inner.prime-card {
   flex: 1;
   display: flex;
@@ -128,13 +153,15 @@ const showVoirPlus = computed(() => outils.value.length >= 12);
   position: relative;
   border: 1.2px solid #f3c30018;
 }
+
 .outil-tile:hover .prime-card {
   box-shadow: 0 6px 18px rgba(60,60,60,0.13);
   transform: translateY(-2px) scale(1.02);
 }
+
 .outil-tile-icon {
   font-size: 1.6em;
-  background: linear-gradient(135deg, #f3c300 0%, #D49F3F 100%);
+  background: linear-gradient(135deg, #f3c300 0%, #d49f3f 100%);
   color: #fff;
   width: 38px;
   height: 38px;
@@ -142,30 +169,33 @@ const showVoirPlus = computed(() => outils.value.length >= 12);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 0.7rem;
-  box-shadow: 0 2px 8px rgba(212,159,63,0.09);
+  margin-bottom: 0.75rem;
+  box-shadow: 0 2px 8px rgba(212, 159, 63, 0.09);
 }
+
 .outil-tile-label {
-  font-size: 1em;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--text-color, #222);
   text-align: center;
   letter-spacing: 0.01em;
   margin-bottom: 0.3rem;
 }
+
 .outil-tile-footer {
   width: 100%;
   display: flex;
   justify-content: center;
   margin-top: 0.3rem;
 }
-/* Mobile styles (identique à avant) */
+
 .fb-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 18px;
-  padding: 1.1rem 0.7rem 0.7rem 0.7rem;
+  padding: 1.1rem 0 0.7rem;
 }
+
 .fb-card {
   display: flex;
   align-items: center;
@@ -181,10 +211,12 @@ const showVoirPlus = computed(() => outils.value.length >= 12);
   transition: box-shadow 0.15s, transform 0.12s;
   border: none;
 }
-.fb-card:active, .fb-card:hover {
-  box-shadow: 0 8px 28px rgba(60,60,60,0.13);
+
+.fb-card:active,
+.fb-card:hover {
   transform: translateY(-2px) scale(1.03);
 }
+
 .fb-icon {
   display: flex;
   align-items: center;
@@ -194,14 +226,16 @@ const showVoirPlus = computed(() => outils.value.length >= 12);
   height: 40px;
   border-radius: 32%;
   margin-right: 4px;
-  background: linear-gradient(135deg, #f3c300 0%, #D49F3F 100%);
+  background: linear-gradient(135deg, #f3c300 0%, #d49f3f 100%);
 }
+
 .fb-icon i {
   color: #fff !important;
   font-size: 1.3em;
   filter: none;
   opacity: 1;
 }
+
 .fb-label {
   flex: 1;
   font-size: 1.08em;
@@ -209,11 +243,12 @@ const showVoirPlus = computed(() => outils.value.length >= 12);
   color: var(--text-color, #222);
   text-align: left;
 }
+
 .fb-more-btn {
   display: block;
   width: 92%;
-  margin: 28px auto 0 auto;
-  padding: 13px 0 12px 0;
+  margin: 28px auto 0;
+  padding: 13px 0 12px;
   border: none;
   border-radius: 22px;
   background: var(--surface-border, #e5e7eb);
@@ -223,61 +258,47 @@ const showVoirPlus = computed(() => outils.value.length >= 12);
   box-shadow: none;
   transition: background 0.16s;
 }
-.fb-more-btn:active, .fb-more-btn:hover {
+
+.fb-more-btn:active,
+.fb-more-btn:hover {
   background: var(--surface-hover, #ececec);
 }
+
 @media (max-width: 900px) {
-  .outil-tile-inner.prime-card {
-    padding: 0.7rem 0.3rem 0.4rem 0.3rem;
+  .outils-root {
+    padding: 0.2rem;
   }
+
+  .outil-tile-inner.prime-card {
+    padding: 0.7rem 0.3rem 0.4rem;
+  }
+
   .outil-tile-icon {
     font-size: 1.1em;
     width: 28px;
     height: 28px;
   }
+
   .outils-grid {
     gap: 0.7rem;
     padding: 0.7rem 0.2rem 0 0.2rem;
   }
 }
+
 @media (max-width: 600px) {
-  .outils-root {
-    padding: 0.2rem;
-  }
-  .outils-header {
-    padding-bottom: 0.7rem;
-  }
   .outil-tile-inner.prime-card {
-    padding: 0.5rem 0.15rem 0.2rem 0.15rem;
+    padding: 0.5rem 0.15rem 0.2rem;
   }
+
   .outil-tile {
     min-height: 70px;
     border-radius: 0.7rem;
     padding: 0.4rem 0.1rem;
   }
+
   .outils-grid {
     gap: 0.4rem;
     padding: 0.4rem 0.1rem 0 0.1rem;
-  }
-  .fb-grid {
-    gap: 12px;
-    padding: 0.7rem 0.3rem 0.5rem 0.3rem;
-  }
-  .fb-card {
-    font-size: 0.98em;
-    padding: 13px 9px;
-    border-radius: 22px;
-  }
-  .fb-icon {
-    width: 34px;
-    height: 34px;
-    font-size: 1.18em;
-    border-radius: 32%;
-  }
-  .fb-more-btn {
-    font-size: 1em;
-    border-radius: 15px;
-    margin-top: 18px;
   }
 }
 </style>

@@ -9,6 +9,8 @@ export default [
   { path: '/events', component: () => import('@/views/apps/events/EventManagementView.vue'), name: 'EventManagementView', meta: { requiresAuth: true } },
   { path: '/event-management', component: () => import('@/views/apps/events/EventManagementView.vue'), name: 'EventManagement', meta: { requiresAuth: true } },
   { path: '/tools', component: () => import('@/views/apps/tools/ToolsView.vue'), name: 'ToolsView', meta: { requiresAuth: true } },
+  { path: '/tools/formations', component: () => import('@/views/apps/tools/AdminTrainingHubView.vue'), name: 'AdminTrainingHub', meta: { requiresAuth: true, need: ['admin'] } },
+  { path: '/tools/formations/:slug', component: () => import('@/views/apps/tools/AdminTrainingDetailView.vue'), name: 'AdminTrainingDetail', meta: { requiresAuth: true, need: ['admin'] } },
   { path: '/tools/ftp-upload', component: () => import('@/views/apps/tools/FTPUploadTestView.vue'), name: 'FTPUploadTest', meta: { requiresAuth: true } },
   { path: '/game', component: () => import('@/views/apps/tools/GameView.vue'), name: 'GameView', meta: { requiresAuth: true } },
   { path: '/rom-runner', component: () => import('@/views/apps/rom-runner/RomRunnerView.vue'), name: 'RomRunnerView', meta: { requiresAuth: true } },
@@ -42,6 +44,8 @@ export default [
   { path: '/ventriglisse3d', component: () => import('@/components/games/Ventriglisse3D.vue'), name: 'Ventriglisse3D', meta: { requiresAuth: false } },
   { path: '/qr', component: () => import('@/components/ui/QrCodeGenerator.vue'), name: 'QRCodePage', meta: { requiresAuth: false } },
   { path: '/outils', component: () => import('@/views/apps/tools/ToolsView.vue'), name: 'ToolsView', meta: { requiresAuth: true } },
+  { path: '/outils/formations', component: () => import('@/views/apps/tools/AdminTrainingHubView.vue'), name: 'AdminTrainingHubFr', meta: { requiresAuth: true, need: ['admin'] } },
+  { path: '/outils/formations/:slug', component: () => import('@/views/apps/tools/AdminTrainingDetailView.vue'), name: 'AdminTrainingDetailFr', meta: { requiresAuth: true, need: ['admin'] } },
   { path: '/chatbotsi', component: () => import('@/views/apps/tools/ChatBotView.vue'), name: 'ChatBotSI', meta: { requiresAuth: true, requiredRole: ['admin', 'chatbotSi'] } },
 
   // Catch-all
