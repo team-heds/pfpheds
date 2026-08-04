@@ -64,7 +64,7 @@
         <div class="flex justify-content-between align-items-center mb-4">
           <div>
             <h2>Configuration de l'intégration Vimeo</h2>
-            <p class="text-600">Configurez votre token Vimeo pour pouvoir importer des vidéos</p>
+            <p class="text-600">Vérifiez la connexion Vimeo gérée par le serveur</p>
           </div>
         </div>
 
@@ -83,9 +83,9 @@
               <div v-if="!hasVimeoToken" class="bg-yellow-50 p-3 border-round">
                 <h4 class="mt-0 mb-2">Pour configurer votre token Vimeo :</h4>
                 <ol class="m-0 pl-4">
-                  <li>Créez un fichier <code>.env.production</code> à la racine du projet</li>
-                  <li>Ajoutez la ligne : <code>VITE_VIMEO_ACCESS_TOKEN=votre_token_vimeo</code></li>
-                  <li>Redémarrez l'application</li>
+                  <li>Ajoutez <code>VIMEO_ACCESS_TOKEN</code> dans l'environnement du backend</li>
+                  <li>Ne placez jamais ce secret dans une variable préfixée <code>VITE_</code></li>
+                  <li>Redémarrez le backend puis vérifiez la connexion</li>
                 </ol>
               </div>
 
@@ -96,13 +96,7 @@
                   @click="openVimeoDevSite" 
                 />
                 <Button 
-                  label="Test rapide" 
-                  icon="pi pi-cog" 
-                  severity="secondary"
-                  @click="showTokenInput = !showTokenInput" 
-                />
-                <Button 
-                  label="Vérifier token" 
+                  label="Vérifier la connexion"
                   icon="pi pi-check" 
                   severity="info"
                   @click="testToken"
@@ -110,23 +104,6 @@
                 />
               </div>
 
-              <!-- Input pour token de test -->
-              <div v-if="showTokenInput" class="mt-3">
-                <div class="flex gap-2">
-                  <InputText 
-                    v-model="tempToken" 
-                    placeholder="Collez votre token Vimeo ici pour un test rapide"
-                    class="flex-1"
-                  />
-                  <Button 
-                    label="Sauvegarder" 
-                    icon="pi pi-save" 
-                    @click="saveTestToken"
-                    :disabled="!tempToken"
-                  />
-                </div>
-                <small class="text-500">Ce token sera sauvegardé temporairement dans localStorage</small>
-              </div>
             </div>
           </template>
         </Card>
@@ -257,8 +234,6 @@ const initializing = ref(false)
 
 // État Vimeo
 const hasVimeoToken = ref(false)
-const showTokenInput = ref(false)
-const tempToken = ref('')
 const testing = ref(false)
 const vimeoLoading = ref(false)
 
@@ -352,44 +327,22 @@ function openVimeoDevSite() {
   window.open('https://developer.vimeo.com/apps', '_blank')
 }
 
-function saveTestToken() {
-  if (tempToken.value.trim()) {
-    localStorage.setItem('VIMEO_TOKEN_OVERRIDE', tempToken.value.trim())
-    hasVimeoToken.value = true
-    showTokenInput.value = false
-    tempToken.value = ''
-    toast.add({ 
-      severity: 'success', 
-      summary: 'Token configuré', 
-      detail: 'Token de test sauvegardé dans localStorage' 
-    })
-  }
-}
-
 async function testToken() {
-  const token = import.meta?.env?.VITE_VIMEO_ACCESS_TOKEN || localStorage.getItem('VIMEO_TOKEN_OVERRIDE')
-  if (!token) {
-    toast.add({ severity: 'warn', summary: 'Token manquant', detail: 'Aucun token configuré' })
-    return
-  }
-
   testing.value = true
   try {
-    const response = await fetch('https://api.vimeo.com/me', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    })
+    const { testVimeoAuth } = await import('@/service/vimeoService')
+    const response = await testVimeoAuth()
     
     if (response.ok) {
-      const data = await response.json()
+      hasVimeoToken.value = true
+      const data = response.user || {}
       toast.add({ 
         severity: 'success', 
         summary: 'Token valide', 
         detail: `Connecté en tant que ${data.name}` 
       })
     } else {
+      hasVimeoToken.value = false
       toast.add({ severity: 'error', summary: 'Token invalide', detail: 'Vérifiez votre token' })
     }
   } catch (error) {
@@ -403,15 +356,9 @@ async function testToken() {
 async function loadVimeoVideos() {
   vimeoLoading.value = true
   try {
-    const token = import.meta?.env?.VITE_VIMEO_ACCESS_TOKEN || localStorage.getItem('VIMEO_TOKEN_OVERRIDE')
-    if (!token) {
-      toast.add({ severity: 'warn', summary: 'Token manquant', detail: 'Configurez d\'abord votre token' })
-      return
-    }
-
     // Import dynamique pour éviter les erreurs
     const { listAllVideos } = await import('@/service/vimeoService')
-    const videos = await listAllVideos({ perPage: 50, maxPages: 2, token })
+    const videos = await listAllVideos({ perPage: 50, maxPages: 2 })
     
     toast.add({ 
       severity: 'success', 
@@ -532,10 +479,8 @@ async function initializeDemoData() {
 // Initialisation
 onMounted(async () => {
   try {
-    // Vérifier le token Vimeo
-    const token = import.meta?.env?.VITE_VIMEO_ACCESS_TOKEN || localStorage.getItem('VIMEO_TOKEN_OVERRIDE')
-    hasVimeoToken.value = !!token
-    
+    const { testVimeoAuth } = await import('@/service/vimeoService')
+    hasVimeoToken.value = (await testVimeoAuth()).ok
     await loadModules()
   } catch (error) {
     console.error('Erreur lors de l\'initialisation:', error)

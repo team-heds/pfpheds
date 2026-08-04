@@ -15,6 +15,15 @@
         <p>Chargement des données...</p>
       </div>
 
+      <EmptyState
+        v-else-if="audienceError"
+        icon="pi pi-user-minus"
+        title="Profil enseignant SI introuvable"
+        :description="audienceError"
+        action-label="Retour au dashboard SI"
+        @action="router.push('/admin/soins-infirmiers/dashboard')"
+      />
+
       <div v-else class="dashboard-grid">
 
         <div v-if="isPreviewMode" class="section-card preview-context">
@@ -416,6 +425,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/authStore';
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 import PageHeader from '@/components/admin/common/PageHeader.vue';
+import EmptyState from '@/components/common/states/EmptyState.vue';
 import Button from 'primevue/button';
 import ProgressSpinner from 'primevue/progressspinner';
 import Badge from 'primevue/badge';
@@ -425,6 +435,7 @@ import Column from 'primevue/column';
 import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
 import { loadEnseignantDashboard } from '@/service/enseignantDashboardService';
+import { getSITeachers } from '@/service/academicKpiService';
 import workloadService, { teacherKey, normalizeTeacherName } from '@/service/workloadService';
 import { useAcademicYear } from '@/composables/useAcademicYear';
 import { useToast } from 'primevue/usetoast';
@@ -437,6 +448,7 @@ const { activeAcademicYear, loadActiveAcademicYear } = useAcademicYear();
 
 // Loading
 const loading = ref(true);
+const audienceError = ref('');
 
 // Stats
 const stats = ref({
@@ -517,7 +529,6 @@ const nextWeekCourses = computed(() => {
 
 // Computed pour stats
 const coursesCount = computed(() => stats.value.coursesCount);
-const weeklyHours = computed(() => stats.value.weeklyHours);
 const nextCourse = computed(() => stats.value.nextCourse);
 const studentsCount = computed(() => stats.value.studentsCount);
 
@@ -731,21 +742,41 @@ const filteredAndSortedCourses = computed(() => {
  */
 async function loadTeacherData() {
   loading.value = true;
+  audienceError.value = '';
   
   try {
     await loadActiveAcademicYear();
     const currentUserId = authStore.user?.id || authStore.user?.uid;
     const currentUserEmail = authStore.user?.email;
     const currentDisplayName = authStore.user?.displayName || authStore.user?.name || null;
-    const targetUserId = isPreviewMode.value ? (previewTeacherId.value || null) : currentUserId;
-    const targetUserEmail = isPreviewMode.value ? (previewTeacherEmail.value || null) : currentUserEmail;
-    const teacherNameForPlanning = isPreviewMode.value ? previewTeacherName.value : currentDisplayName;
+    let targetUserId = isPreviewMode.value ? (previewTeacherId.value || null) : currentUserId;
+    let targetUserEmail = isPreviewMode.value ? (previewTeacherEmail.value || null) : currentUserEmail;
+    let teacherNameForPlanning = isPreviewMode.value ? previewTeacherName.value : currentDisplayName;
     
     if (!targetUserId && !targetUserEmail && !teacherNameForPlanning) {
       console.warn('⚠️ Aucun utilisateur connecté');
       loading.value = false;
       return;
     }
+
+    const siTeachers = await getSITeachers();
+    const requestedId = String(targetUserId || '').trim();
+    const requestedEmail = String(targetUserEmail || '').trim().toLowerCase();
+    const requestedName = normalizeText(teacherNameForPlanning);
+    const matchedTeacher = siTeachers.find(teacher => {
+      if (requestedId && String(teacher.id || '').trim() === requestedId) return true;
+      if (requestedEmail && String(teacher.email || '').trim().toLowerCase() === requestedEmail) return true;
+      return requestedName && normalizeText(teacher.name) === requestedName;
+    });
+
+    if (!matchedTeacher) {
+      audienceError.value = 'Ce compte ne possède pas un rôle EnseignantSoins actif. Aucune donnée enseignant n’a été chargée.';
+      return;
+    }
+
+    targetUserId = matchedTeacher.id;
+    targetUserEmail = matchedTeacher.email;
+    teacherNameForPlanning = matchedTeacher.name;
     
     console.log('🔄 Chargement données enseignant pour:', targetUserEmail || teacherNameForPlanning);
     

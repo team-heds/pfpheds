@@ -1,5 +1,7 @@
 const express = require('express');
-const supabase = require('../supabaseClient.js');
+const supabaseClient = require('../supabaseClient.js');
+const supabase = supabaseClient.supabaseAdmin || supabaseClient;
+const { isAdmin } = require('../middleware/auth');
 const router = express.Router();
 
 /**
@@ -18,10 +20,11 @@ const extractHashtags = (text) => {
 // This route uses a PostgreSQL function `create_post_with_hashtags` which you must add to your database.
 // This function handles the creation of the post and the linking of hashtags in a single transaction.
 router.post('/', async (req, res) => {
-    const { author_id, content, community_id = null, parent_id = null, media = null } = req.body;
+    const { content, community_id = null, parent_id = null, media = null } = req.body;
+    const author_id = req.auth.userId;
 
-    if (!author_id || !content) {
-        return res.status(400).json({ error: 'Author ID and content are required.' });
+    if (!content || typeof content !== 'string' || content.length > 10_000) {
+        return res.status(400).json({ error: 'Content is required and must not exceed 10,000 characters.' });
     }
 
     try {
@@ -39,7 +42,8 @@ router.post('/', async (req, res) => {
         // The function should return the newly created post, so we can send it back.
         res.status(201).json(data);
     } catch (error) {
-        res.status(500).json({ error: `Failed to create post: ${error.message}` });
+        console.error('[POSTS] Create failed:', error.message);
+        res.status(500).json({ error: 'Failed to create post.' });
     }
 });
 
@@ -62,7 +66,8 @@ router.get('/', async (req, res) => {
 
         res.json(data);
     } catch (error) {
-        res.status(500).json({ error: `Failed to fetch posts: ${error.message}` });
+        console.error('[POSTS] Fetch failed:', error.message);
+        res.status(500).json({ error: 'Failed to fetch posts.' });
     }
 });
 
@@ -71,11 +76,22 @@ router.put('/:id', async (req, res) => {
     const { id } = req.params;
     const { content, media } = req.body;
 
-    if (!content && !media) {
+    if ((!content && !media) || (content && (typeof content !== 'string' || content.length > 10_000))) {
         return res.status(400).json({ error: 'Content or media must be provided for an update.' });
     }
 
     try {
+        const { data: existing, error: existingError } = await supabase
+            .from('posts')
+            .select('id, author_id')
+            .eq('id', id)
+            .maybeSingle();
+        if (existingError) throw existingError;
+        if (!existing) return res.status(404).json({ error: 'Post not found' });
+        if (existing.author_id !== req.auth.userId && !isAdmin(req.auth)) {
+            return res.status(403).json({ error: 'Forbidden.' });
+        }
+
         const { data, error } = await supabase
             .from('posts')
             .update({ content, media, updated_at: new Date().toISOString() })
@@ -88,7 +104,8 @@ router.put('/:id', async (req, res) => {
 
         res.json(data);
     } catch (error) {
-        res.status(500).json({ error: `Failed to update post: ${error.message}` });
+        console.error('[POSTS] Update failed:', error.message);
+        res.status(500).json({ error: 'Failed to update post.' });
     }
 });
 
@@ -97,7 +114,17 @@ router.delete('/:id', async (req, res) => {
     const { id } = req.params;
 
     try {
-        // Note: RLS policies should ensure only the author or an admin can delete.
+        const { data: existing, error: existingError } = await supabase
+            .from('posts')
+            .select('id, author_id')
+            .eq('id', id)
+            .maybeSingle();
+        if (existingError) throw existingError;
+        if (!existing) return res.status(404).json({ error: 'Post not found' });
+        if (existing.author_id !== req.auth.userId && !isAdmin(req.auth)) {
+            return res.status(403).json({ error: 'Forbidden.' });
+        }
+
         const { data, error } = await supabase
             .from('posts')
             .delete()
@@ -110,7 +137,8 @@ router.delete('/:id', async (req, res) => {
 
         res.status(200).json({ message: 'Post deleted successfully', deletedPost: data });
     } catch (error) {
-        res.status(500).json({ error: `Failed to delete post: ${error.message}` });
+        console.error('[POSTS] Delete failed:', error.message);
+        res.status(500).json({ error: 'Failed to delete post.' });
     }
 });
 

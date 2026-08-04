@@ -12,56 +12,59 @@
       <Toast />
       
       <!-- Form -->
-      <form @submit.prevent="createStudent" class="grid">
+      <form id="student-create-form" class="app-form" @submit.prevent="createStudent">
+        <FormSection title="Identité et inscription" description="Renseignez les informations principales de l’étudiant." icon="pi pi-user">
+        <div class="grid">
         <!-- Prénom -->
-        <div class="field col-12 md:col-6">
-          <label for="forname" class="font-semibold">Prénom</label>
+        <FormField for-id="forname" label="Prénom" required :error="errors.forname" v-slot="field">
           <InputText 
             id="forname" 
             v-model="formData.forname" 
             required 
             :class="{ 'p-invalid': errors.forname }"
+            :aria-invalid="field.invalid"
+            :aria-describedby="field.describedby"
           />
-          <small v-if="errors.forname" class="p-error">{{ errors.forname }}</small>
-        </div>
+        </FormField>
 
         <!-- Nom -->
-        <div class="field col-12 md:col-6">
-          <label for="family_name" class="font-semibold">Nom</label>
+        <FormField for-id="family_name" label="Nom" required :error="errors.family_name" v-slot="field">
           <InputText 
             id="family_name" 
             v-model="formData.family_name" 
             required
             :class="{ 'p-invalid': errors.family_name }"
+            :aria-invalid="field.invalid"
+            :aria-describedby="field.describedby"
           />
-          <small v-if="errors.family_name" class="p-error">{{ errors.family_name }}</small>
-        </div>
+        </FormField>
 
         <!-- Email -->
-        <div class="field col-12 md:col-6">
-          <label for="email" class="font-semibold">Email</label>
+        <FormField for-id="email" label="Email" required :error="errors.email" v-slot="field">
           <InputText 
             id="email" 
             v-model="formData.email" 
             type="email"
             required
             :class="{ 'p-invalid': errors.email }"
+            autocomplete="email"
+            :aria-invalid="field.invalid"
+            :aria-describedby="field.describedby"
           />
-          <small v-if="errors.email" class="p-error">{{ errors.email }}</small>
-        </div>
+        </FormField>
 
         <!-- Classe -->
-        <div class="field col-12 md:col-6">
-          <label for="class" class="font-semibold">Classe</label>
+        <FormField for-id="class" label="Classe" required :error="errors.class" v-slot="field">
           <Dropdown
             id="class"
             v-model="formData.class"
             :options="classOptions"
             placeholder="Sélectionner une classe"
             :class="{ 'p-invalid': errors.class }"
+            :aria-invalid="field.invalid"
+            :aria-describedby="field.describedby"
           />
-          <small v-if="errors.class" class="p-error">{{ errors.class }}</small>
-        </div>
+        </FormField>
 
         <!-- SAE (Cas Particulier) -->
         <div class="field col-12 md:col-6">
@@ -84,6 +87,8 @@
             placeholder="Optionnel"
           />
         </div>
+        </div>
+        </FormSection>
       </form>
     </div>
 
@@ -109,8 +114,10 @@ import Checkbox from 'primevue/checkbox'
 import Button from 'primevue/button'
 import Toast from 'primevue/toast'
 import { supabase } from '@/supabase'
+import FormSection from '@/components/common/forms/FormSection.vue'
+import FormField from '@/components/common/forms/FormField.vue'
 
-const props = defineProps({
+defineProps({
   visible: {
     type: Boolean,
     default: false

@@ -346,7 +346,8 @@ async function loadMenuCounts() {
       supabase
         .from('user_profiles')
         .select('user_id', { count: 'exact', head: true })
-        .filter('permissions', 'cs', '["EtudiantPhysio"]'),
+        .filter('permissions', 'cs', '["EtudiantPhysio"]')
+        .eq('is_active', true),
       supabase
         .from('institutions')
         .select('InstitutionId', { count: 'exact', head: true }),

@@ -129,14 +129,14 @@ const config = ref({
 
 // Configuration
 const tokenPresent = computed(() => {
-  const envToken = import.meta?.env?.VITE_VIMEO_ACCESS_TOKEN
-  const localToken = typeof window !== 'undefined' ? localStorage.getItem('VIMEO_TOKEN_OVERRIDE') : null
+  const envToken = null
+  const localToken = null
   return !!(envToken || localToken)
 })
 
 const tokenPreview = computed(() => {
-  const envToken = import.meta?.env?.VITE_VIMEO_ACCESS_TOKEN
-  const localToken = typeof window !== 'undefined' ? localStorage.getItem('VIMEO_TOKEN_OVERRIDE') : null
+  const envToken = null
+  const localToken = null
   const token = localToken || envToken
   return token ? token.substring(0, 10) + '...' : 'AUCUN'
 })
@@ -160,7 +160,7 @@ const loadConfig = () => {
   
   // Récupérer toutes les variables d'environnement
   config.value.allEnvVars = {
-    VITE_VIMEO_ACCESS_TOKEN: import.meta?.env?.VITE_VIMEO_ACCESS_TOKEN,
+    VIMEO_SERVER_PROXY: true,
     NODE_ENV: import.meta?.env?.NODE_ENV,
     MODE: import.meta?.env?.MODE,
     DEV: import.meta?.env?.DEV,
@@ -168,8 +168,8 @@ const loadConfig = () => {
     BASE_URL: import.meta?.env?.BASE_URL
   }
   
-  config.value.envToken = import.meta?.env?.VITE_VIMEO_ACCESS_TOKEN
-  config.value.localToken = typeof window !== 'undefined' ? localStorage.getItem('VIMEO_TOKEN_OVERRIDE') : null
+  config.value.envToken = null
+  config.value.localToken = null
   config.value.finalToken = config.value.localToken || config.value.envToken
   config.value.nodeEnv = import.meta?.env?.NODE_ENV
   config.value.mode = import.meta?.env?.MODE
@@ -181,101 +181,12 @@ const testConnection = async () => {
   testing.value = true
   
   try {
-    console.log('[VimeoTest] Début du test de connexion...')
-    
-    // Test 1: Vérifier le token depuis .env.production
-    const envToken = import.meta?.env?.VITE_VIMEO_ACCESS_TOKEN
-    const localToken = typeof window !== 'undefined' ? localStorage.getItem('VIMEO_TOKEN_OVERRIDE') : null
-    const token = localToken || envToken
-    
-    console.log('[VimeoTest] Token depuis .env:', envToken)
-    console.log('[VimeoTest] Token depuis localStorage:', localToken)
-    console.log('[VimeoTest] Token final utilisé:', token)
-    
-    if (!token) {
-      addTestResult('Vérification du token', false, 'Aucun token Vimeo configuré dans VITE_VIMEO_ACCESS_TOKEN')
-      return
-    }
-    
-    addTestResult('Vérification du token', true, `Token présent: ${token.substring(0, 10)}... (longueur: ${token.length} caractères)`)
-    
-    // Test 2: Test direct de l'endpoint /me avec ton token
-    try {
-      console.log('[VimeoTest] Test direct de l\'endpoint /me...')
-      const response = await fetch('https://api.vimeo.com/me', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/vnd.vimeo.*+json;version=3.4'
-        }
-      })
-      
-      console.log('[VimeoTest] Réponse /me:', response.status, response.statusText)
-      
-      if (response.ok) {
-        const userData = await response.json()
-        console.log('[VimeoTest] Données utilisateur:', userData)
-        addTestResult('Test endpoint /me', true, `Utilisateur: ${userData.name}`, {
-          name: userData.name,
-          link: userData.link,
-          account: userData.account,
-          location: userData.location
-        })
-      } else {
-        const errorText = await response.text()
-        console.error('[VimeoTest] Erreur /me:', errorText)
-        addTestResult('Test endpoint /me', false, `Erreur HTTP ${response.status}: ${errorText}`)
-      }
-    } catch (endpointError) {
-      console.error('[VimeoTest] Erreur réseau /me:', endpointError)
-      addTestResult('Test endpoint /me', false, `Erreur réseau: ${endpointError.message}`)
-    }
-    
-    // Test 3: Test de l'endpoint /me/videos
-    try {
-      console.log('[VimeoTest] Test de l\'endpoint /me/videos...')
-      const videosResponse = await fetch('https://api.vimeo.com/me/videos?per_page=5', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/vnd.vimeo.*+json;version=3.4'
-        }
-      })
-      
-      console.log('[VimeoTest] Réponse /me/videos:', videosResponse.status, videosResponse.statusText)
-      
-      if (videosResponse.ok) {
-        const videosData = await videosResponse.json()
-        console.log('[VimeoTest] Données vidéos:', videosData)
-        addTestResult('Test endpoint /me/videos', true, `${videosData.total} vidéos trouvées, ${videosData.data?.length || 0} récupérées`, {
-          total: videosData.total,
-          page: videosData.page,
-          per_page: videosData.per_page,
-          paging: videosData.paging,
-          firstVideo: videosData.data?.[0]
-        })
-      } else {
-        const errorText = await videosResponse.text()
-        console.error('[VimeoTest] Erreur /me/videos:', errorText)
-        addTestResult('Test endpoint /me/videos', false, `Erreur HTTP ${videosResponse.status}: ${errorText}`)
-      }
-    } catch (videosError) {
-      console.error('[VimeoTest] Erreur réseau /me/videos:', videosError)
-      addTestResult('Test endpoint /me/videos', false, `Erreur réseau: ${videosError.message}`)
-    }
-    
-    // Test 4: Test avec testVimeoAuth si disponible
-    try {
-      console.log('[VimeoTest] Test avec testVimeoAuth...')
-      const authResult = await testVimeoAuth()
-      if (authResult.success) {
-        addTestResult('Test testVimeoAuth()', true, `Service auth OK: ${authResult.user?.name || 'Utilisateur'}`)
-      } else {
-        addTestResult('Test testVimeoAuth()', false, `Service auth KO: ${authResult.error}`)
-      }
-    } catch (authError) {
-      console.error('[VimeoTest] Erreur testVimeoAuth:', authError)
-      addTestResult('Test testVimeoAuth()', false, `Erreur service: ${authError.message}`)
-    }
-    
+    const proxyResult = await testVimeoAuth()
+    addTestResult(
+      'Connexion Vimeo côté serveur',
+      proxyResult.ok,
+      proxyResult.ok ? `Utilisateur: ${proxyResult.user?.name || 'Vimeo'}` : proxyResult.error
+    )
   } catch (error) {
     console.error('[VimeoTest] Erreur lors du test:', error)
     addTestResult('Test général', false, `Erreur inattendue: ${error.message}`)
@@ -288,121 +199,9 @@ const fetchVideos = async () => {
   fetchingVideos.value = true
   
   try {
-    console.log('[VimeoTest] Début de la récupération des vidéos...')
-    
-    // Test avec ton token depuis .env.production
-    const envToken = import.meta?.env?.VITE_VIMEO_ACCESS_TOKEN
-    const localToken = typeof window !== 'undefined' ? localStorage.getItem('VIMEO_TOKEN_OVERRIDE') : null
-    const token = localToken || envToken
-    
-    console.log('[VimeoTest] Token utilisé pour les vidéos:', token)
-    
-    if (!token) {
-      addTestResult('Récupération vidéos', false, 'Aucun token disponible')
-      return
-    }
-    
-    // Test 1: Endpoint /me/videos direct
-    try {
-      console.log('[VimeoTest] Test /me/videos direct...')
-      const response = await fetch('https://api.vimeo.com/me/videos?per_page=10', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/vnd.vimeo.*+json;version=3.4'
-        }
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        console.log('[VimeoTest] Vidéos /me/videos:', data)
-        addTestResult('Endpoint /me/videos', true, `${data.total} vidéos personnelles trouvées`)
-        
-        if (data.data && data.data.length > 0) {
-          videos.value = data.data.slice(0, 5) // Afficher les 5 premières
-        }
-      } else {
-        const errorText = await response.text()
-        console.error('[VimeoTest] Erreur /me/videos:', errorText)
-        addTestResult('Endpoint /me/videos', false, `Erreur ${response.status}: ${errorText}`)
-      }
-    } catch (error) {
-      console.error('[VimeoTest] Erreur /me/videos:', error)
-      addTestResult('Endpoint /me/videos', false, `Erreur: ${error.message}`)
-    }
-    
-    // Test 2: Endpoint /me/folders pour voir les dossiers
-    try {
-      console.log('[VimeoTest] Test /me/folders...')
-      const foldersResponse = await fetch('https://api.vimeo.com/me/folders?per_page=10', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/vnd.vimeo.*+json;version=3.4'
-        }
-      })
-      
-      if (foldersResponse.ok) {
-        const foldersData = await foldersResponse.json()
-        console.log('[VimeoTest] Dossiers trouvés:', foldersData)
-        addTestResult('Endpoint /me/folders', true, `${foldersData.total} dossiers trouvés`, {
-          folders: foldersData.data?.map(f => ({ name: f.name, uri: f.uri, video_count: f.metadata?.connections?.videos?.total }))
-        })
-        
-        // Test des vidéos dans le premier dossier
-        if (foldersData.data && foldersData.data.length > 0) {
-          const firstFolder = foldersData.data[0]
-          console.log('[VimeoTest] Test vidéos du premier dossier:', firstFolder.uri)
-          
-          try {
-            const folderVideosResponse = await fetch(`https://api.vimeo.com${firstFolder.uri}/videos?per_page=5`, {
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/vnd.vimeo.*+json;version=3.4'
-              }
-            })
-            
-            if (folderVideosResponse.ok) {
-              const folderVideosData = await folderVideosResponse.json()
-              console.log('[VimeoTest] Vidéos du dossier:', folderVideosData)
-              addTestResult(`Vidéos dossier "${firstFolder.name}"`, true, `${folderVideosData.total} vidéos dans le dossier`)
-            } else {
-              const errorText = await folderVideosResponse.text()
-              addTestResult(`Vidéos dossier "${firstFolder.name}"`, false, `Erreur ${folderVideosResponse.status}: ${errorText}`)
-            }
-          } catch (folderError) {
-            addTestResult(`Vidéos dossier "${firstFolder.name}"`, false, `Erreur: ${folderError.message}`)
-          }
-        }
-      } else {
-        const errorText = await foldersResponse.text()
-        console.error('[VimeoTest] Erreur /me/folders:', errorText)
-        addTestResult('Endpoint /me/folders', false, `Erreur ${foldersResponse.status}: ${errorText}`)
-      }
-    } catch (error) {
-      console.error('[VimeoTest] Erreur /me/folders:', error)
-      addTestResult('Endpoint /me/folders', false, `Erreur: ${error.message}`)
-    }
-    
-    // Test 3: Utilisation du service listAllVideos
-    try {
-      console.log('[VimeoTest] Test avec listAllVideos du service...')
-      const allVideos = await listAllVideos()
-      console.log('[VimeoTest] Résultat listAllVideos:', allVideos)
-      
-      if (allVideos && allVideos.length > 0) {
-        addTestResult('Service listAllVideos()', true, `${allVideos.length} vidéos récupérées via le service`)
-        
-        // Afficher quelques vidéos si on n'en a pas déjà
-        if (videos.value.length === 0) {
-          videos.value = allVideos.slice(0, 5)
-        }
-      } else {
-        addTestResult('Service listAllVideos()', false, 'Aucune vidéo récupérée via le service')
-      }
-    } catch (serviceError) {
-      console.error('[VimeoTest] Erreur listAllVideos:', serviceError)
-      addTestResult('Service listAllVideos()', false, `Erreur service: ${serviceError.message}`)
-    }
-    
+    const proxiedVideos = await listAllVideos({ perPage: 10, maxPages: 1 })
+    videos.value = proxiedVideos.slice(0, 5)
+    addTestResult('Récupération via proxy', true, `${proxiedVideos.length} vidéo(s) récupérée(s)`)
   } catch (error) {
     console.error('[VimeoTest] Erreur lors de la récupération:', error)
     addTestResult('Récupération vidéos', false, `Erreur inattendue: ${error.message}`)

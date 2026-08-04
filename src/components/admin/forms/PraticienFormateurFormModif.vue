@@ -5,7 +5,7 @@
     </section>
 
     <div v-if="praticien" class="card p-4 shadow-lg">
-      <form @submit.prevent="submitUpdate" class="p-fluid">
+      <form @submit.prevent="submitUpdate" class="app-form p-fluid">
         <div class="field">
           <label for="prenom">Prénom</label>
           <InputText id="prenom" v-model="praticien.prenom" required @input="validateNameField('prenom')" />

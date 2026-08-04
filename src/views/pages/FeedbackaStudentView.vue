@@ -129,7 +129,7 @@ onMounted(async () => {
 async function submit() {
   submission.value = null;
   const userId = getUserId();
-  const result = await store.submitAnswer(feedbacka.value.id, { student_id: userId, answer_text: answer.value });
+  const result = await store.submitAnswer(feedbacka.value.id, { answer_text: answer.value });
   if (result) submission.value = result;
 }
 </script>

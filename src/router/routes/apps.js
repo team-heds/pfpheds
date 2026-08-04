@@ -11,7 +11,7 @@ export default [
   { path: '/tools', component: () => import('@/views/apps/tools/ToolsView.vue'), name: 'ToolsView', meta: { requiresAuth: true } },
   { path: '/tools/formations', component: () => import('@/views/apps/tools/AdminTrainingHubView.vue'), name: 'AdminTrainingHub', meta: { requiresAuth: true, need: ['admin'] } },
   { path: '/tools/formations/:slug', component: () => import('@/views/apps/tools/AdminTrainingDetailView.vue'), name: 'AdminTrainingDetail', meta: { requiresAuth: true, need: ['admin'] } },
-  { path: '/tools/ftp-upload', component: () => import('@/views/apps/tools/FTPUploadTestView.vue'), name: 'FTPUploadTest', meta: { requiresAuth: true } },
+  { path: '/tools/ftp-upload', component: () => import('@/views/apps/tools/FTPUploadTestView.vue'), name: 'FTPUploadTest', meta: { requiresAuth: true, need: ['super.all', 'admin'] } },
   { path: '/game', component: () => import('@/views/apps/tools/GameView.vue'), name: 'GameView', meta: { requiresAuth: true } },
   { path: '/rom-runner', component: () => import('@/views/apps/rom-runner/RomRunnerView.vue'), name: 'RomRunnerView', meta: { requiresAuth: true } },
   { path: '/chatbot', component: () => import('@/views/apps/tools/ChatBotView.vue'), name: 'ChatBotView', meta: { requiresAuth: true } },
@@ -19,7 +19,7 @@ export default [
   { path: '/tournois/:id', component: () => import('@/views/apps/tools/TournoiDetailsView.vue'), name: 'TournoiDetailsView', meta: { requiresAuth: true } },
   { path: '/mobile-tools', component: () => import('@/views/apps/tools/MobileToolsView.vue'), name: 'MobileToolsView', meta: { requiresAuth: true } },
   { path: '/mobile-lang-apps', component: () => import('@/views/apps/tools/MobileLangAppsView.vue'), name: 'MobileLangApps', meta: { mobileOnly: true } },
-  { path: '/supabase-demo', component: () => import('@/views/pages/Supabase.vue'), name: 'SupabaseDemo', meta: { requiresAuth: true } },
+  { path: '/supabase-demo', component: () => import('@/views/pages/Supabase.vue'), name: 'SupabaseDemo', meta: { requiresAuth: true, need: ['super.all', 'admin'] } },
   { path: '/care-convers', component: () => import('@/views/pages/CareConvers.vue'), name: 'CareConvers', meta: { requiresAuth: true } },
 
   // Capsules insuffisance rénale

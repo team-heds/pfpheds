@@ -3,7 +3,7 @@
     <div class="text-center">
       <h1 class="text-5xl font-bold mb-4">Modifier l'étudiant</h1>
     </div>
-    <form @submit.prevent="updateEtudiant" class="p-fluid grid">
+    <form @submit.prevent="updateEtudiant" class="app-form p-fluid grid">
       <div class="field mb-4 col-6">
         <label for="prenom" class="block text-xl mb-2">Prénom</label>
         <InputText id="prenom" v-model="etudiant.Prenom" required class="w-full" />

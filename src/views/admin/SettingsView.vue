@@ -118,28 +118,31 @@
             
             <div class="vimeo-config">
               <div class="config-item">
-                <label>Token d'accès Vimeo</label>
+                <label>Identifiants Vimeo</label>
                 <div class="input-group">
                   <InputText 
                     v-model="vimeoToken" 
-                    :type="showToken ? 'text' : 'password'"
-                    placeholder="Entrez votre token Vimeo"
+                    type="password"
+                    placeholder="Configuré sur le serveur"
+                    disabled
                     class="flex-1"
                   />
                   <Button 
                     :icon="showToken ? 'pi pi-eye-slash' : 'pi pi-eye'"
                     @click="showToken = !showToken"
                     text
+                    disabled
                   />
                 </div>
-                <small class="text-secondary">Token requis pour charger les vidéos depuis Vimeo</small>
+                <small class="text-secondary">Le token est protégé dans l'environnement du backend.</small>
               </div>
 
               <div class="mt-4">
                 <Button 
-                  label="Sauvegarder le token" 
+                  label="Géré côté serveur"
                   icon="pi pi-save"
                   @click="saveVimeoToken"
+                  disabled
                 />
                 <Button 
                   label="Tester la connexion" 
@@ -502,13 +505,6 @@
                         outlined
                         severity="warning"
                       />
-                      <Button 
-                        label="Supprimer les tokens" 
-                        icon="pi pi-key"
-                        @click="clearTokens"
-                        outlined
-                        severity="danger"
-                      />
                     </div>
                   </div>
                 </div>
@@ -536,6 +532,7 @@ import InputText from 'primevue/inputtext'
 import Dropdown from 'primevue/dropdown'
 import Toast from 'primevue/toast'
 import { supabase } from '@/supabase'
+import { testVimeoAuth } from '@/service/vimeoService'
 
 const router = useRouter()
 const toast = useToast()
@@ -623,7 +620,7 @@ onMounted(async () => {
 // Charger les paramètres
 function loadSettings() {
   // Vimeo
-  const savedToken = import.meta.env.VITE_VIMEO_ACCESS_TOKEN || localStorage.getItem('vimeo_token')
+  const savedToken = null
   if (savedToken) {
     vimeoToken.value = savedToken
   }
@@ -677,7 +674,7 @@ async function loadDataStats() {
 
 // === VIMEO ===
 function saveVimeoToken() {
-  localStorage.setItem('vimeo_token', vimeoToken.value)
+  // Vimeo credentials are configured server-side only.
   
   toast.add({
     severity: 'success',
@@ -689,15 +686,10 @@ function saveVimeoToken() {
 
 async function testVimeoConnection() {
   try {
-    const response = await fetch('https://api.vimeo.com/me', {
-      headers: {
-        'Authorization': `Bearer ${vimeoToken.value}`,
-        'Accept': 'application/vnd.vimeo.*+json;version=3.4'
-      }
-    })
+    const result = await testVimeoAuth()
 
-    if (response.ok) {
-      const data = await response.json()
+    if (result.ok) {
+      const data = { name: result.user?.name || 'Vimeo' }
       toast.add({
         severity: 'success',
         summary: 'Connexion réussie',
@@ -864,8 +856,7 @@ function saveNotificationSettings() {
 
 // Vider le cache
 function clearCache() {
-  // Vider certaines clés du localStorage (pas le token GitHub)
-  const keysToKeep = ['github_token', 'notification_settings', 'advanced_settings']
+  const keysToKeep = ['notification_settings', 'advanced_settings']
   const allKeys = Object.keys(localStorage)
   
   allKeys.forEach(key => {
@@ -880,23 +871,6 @@ function clearCache() {
     detail: 'Le cache local a été supprimé',
     life: 3000
   })
-}
-
-// Supprimer tous les tokens
-function clearTokens() {
-  localStorage.removeItem('github_token')
-  
-  toast.add({
-    severity: 'warn',
-    summary: 'Tokens supprimés',
-    detail: 'Tous les tokens d\'intégration ont été supprimés',
-    life: 3000
-  })
-  
-  // Recharger la page
-  setTimeout(() => {
-    window.location.reload()
-  }, 1000)
 }
 
 // Obtenir les initiales

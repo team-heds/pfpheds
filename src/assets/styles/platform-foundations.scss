@@ -15,6 +15,25 @@ body {
   color: var(--text-color, #1f2937);
   background: var(--surface-ground, #f8fafc);
   line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+img,
+video,
+canvas,
+svg {
+  max-inline-size: 100%;
+}
+
+main,
+section,
+article,
+.grid > *,
+.p-tabview,
+.p-tabview-panels,
+.p-tabview-panel {
+  min-inline-size: 0;
 }
 
 button,
@@ -79,6 +98,169 @@ textarea {
   border-radius: var(--tt-radius-xl, 1rem);
 }
 
+.p-dialog {
+  max-inline-size: calc(100vw - 2rem);
+  max-block-size: calc(100dvh - 2rem);
+}
+
+.p-dialog .p-dialog-content {
+  overscroll-behavior: contain;
+}
+
+.p-datatable-wrapper,
+.p-datatable-table-container {
+  max-inline-size: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+}
+
+.p-dialog-footer,
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: .75rem;
+  flex-wrap: wrap;
+}
+
+/* Responsive defaults shared by every page. Local layouts can still opt out. */
+.p-toolbar,
+.p-toolbar-group-start,
+.p-toolbar-group-left,
+.p-toolbar-group-end,
+.p-toolbar-group-right,
+.page-actions,
+.table-actions,
+.filter-actions {
+  min-inline-size: 0;
+  gap: .75rem;
+  flex-wrap: wrap;
+}
+
+.p-tabview .p-tabview-nav,
+.p-steps .p-steps-list {
+  max-inline-size: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+}
+
+.p-tabview .p-tabview-nav li,
+.p-steps .p-steps-item {
+  flex: 0 0 auto;
+}
+
+.p-fileupload,
+.p-fileupload-content,
+.p-editor-container,
+.p-calendar,
+.p-dropdown,
+.p-multiselect,
+.p-inputnumber,
+.p-password,
+.p-password-input {
+  max-inline-size: 100%;
+}
+
+form .field,
+form .p-field,
+.app-form .field,
+.app-form .p-field {
+  min-inline-size: 0;
+}
+
+form .field > label,
+form .p-field > label {
+  display: inline-block;
+  margin-block-end: .45rem;
+  color: var(--text-color);
+  font-weight: 600;
+}
+
+/* Shared form language for legacy views and the new form primitives. */
+.app-form,
+form.p-fluid {
+  --form-control-height: 2.875rem;
+  display: grid;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.app-form .grid,
+form.p-fluid.grid {
+  margin: 0;
+  row-gap: .25rem;
+}
+
+.app-form .field,
+.app-form .p-field,
+form.p-fluid .field,
+form.p-fluid .p-field {
+  display: grid;
+  align-content: start;
+  gap: .45rem;
+  margin: 0;
+  padding: .5rem;
+}
+
+.app-form label,
+form.p-fluid label {
+  color: var(--text-color);
+  font-size: .875rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.app-form :is(.p-inputtext, .p-dropdown, .p-multiselect, .p-calendar, .p-inputnumber, .p-password, textarea),
+form.p-fluid :is(.p-inputtext, .p-dropdown, .p-multiselect, .p-calendar, .p-inputnumber, .p-password, textarea) {
+  width: 100%;
+  min-width: 0;
+  min-height: var(--form-control-height);
+}
+
+.app-form textarea,
+form.p-fluid textarea {
+  min-height: 7rem;
+  resize: vertical;
+}
+
+.app-form :is(.p-error, [role="alert"]),
+form.p-fluid :is(.p-error, [role="alert"]) {
+  margin: 0;
+  color: var(--red-500, #dc2626);
+  font-size: .8125rem;
+  line-height: 1.4;
+}
+
+.app-form :is(.p-inputtext, textarea):focus,
+form.p-fluid :is(.p-inputtext, textarea):focus {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 22%, transparent);
+}
+
+.app-form :is(.p-checkbox, .p-radiobutton) + label,
+form.p-fluid :is(.p-checkbox, .p-radiobutton) + label {
+  cursor: pointer;
+}
+
+.app-form__section {
+  padding: clamp(1rem, 2vw, 1.5rem);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--tt-radius-lg, .875rem);
+  background: color-mix(in srgb, var(--surface-card) 96%, var(--surface-ground));
+}
+
+.app-form__actions {
+  position: sticky;
+  inset-block-end: 0;
+  z-index: 3;
+  display: flex;
+  justify-content: flex-end;
+  gap: .75rem;
+  padding: 1rem;
+  border-block-start: 1px solid var(--surface-border);
+  background: color-mix(in srgb, var(--surface-card) 94%, transparent);
+  backdrop-filter: blur(12px);
+}
+
 .p-datatable-scrollable .p-datatable-thead > tr > th,
 .p-datatable .p-datatable-thead > tr > th {
   position: sticky;
@@ -88,6 +270,81 @@ textarea {
 }
 
 @media (max-width: 40rem) {
+  .app-form > [class*="col-"],
+  form.p-fluid > [class*="col-"],
+  .app-form .grid > [class*="col-"],
+  form.p-fluid .grid > [class*="col-"] {
+    flex: 0 0 100%;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .p-dialog {
+    inline-size: calc(100vw - 1rem) !important;
+    max-inline-size: calc(100vw - 1rem) !important;
+    margin: .5rem;
+  }
+
+  .p-dialog .p-dialog-header,
+  .p-dialog .p-dialog-content,
+  .p-dialog .p-dialog-footer {
+    padding-inline: 1rem;
+  }
+
+  .p-dialog-footer,
+  .form-actions,
+  .app-form__actions {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .p-dialog-footer .p-button,
+  .form-actions .p-button {
+    width: 100%;
+  }
+
+  .app-form__actions .p-button {
+    width: 100%;
+  }
+
+  .p-datatable .p-paginator {
+    justify-content: flex-start;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+
+  .p-toolbar,
+  .p-toolbar-group-start,
+  .p-toolbar-group-left,
+  .p-toolbar-group-end,
+  .p-toolbar-group-right {
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .p-toolbar .p-button,
+  .p-toolbar .p-inputtext,
+  .p-toolbar .p-dropdown,
+  .page-actions .p-button,
+  .table-actions .p-button,
+  .filter-actions .p-button {
+    width: 100%;
+    min-width: 0 !important;
+  }
+
+  .p-card .p-card-body,
+  .p-panel .p-panel-content {
+    padding-inline: 1rem;
+  }
+
+  .p-tabview .p-tabview-panels {
+    padding-inline: 0;
+  }
+
+  .p-steps .p-steps-item {
+    min-width: 8rem;
+  }
+
   input,
   select,
   textarea,

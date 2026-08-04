@@ -8,14 +8,14 @@
 
       <div class="grid">
         <div class="col-12 lg:col-12">
-          <div class="card p-4 shadow-lg">
+          <FormShell>
             <h1 class="mb-4">{{ institution.Name }}</h1>
             <div class="flex align-items-center mb-4">
               <h2 class="me-3 mb-0">{{ institution.Locality }}</h2>
               <Badge :value="institution.Canton" class="p-mr-2 p-ml-auto" />
             </div>
 
-            <form @submit.prevent="handleUpdateInstitution" class="p-fluid grid">
+            <form @submit.prevent="handleUpdateInstitution" class="app-form p-fluid grid">
               <!-- All form fields here -->
               <div class="col-12 md:col-6">
                 <div class="p-field">
@@ -204,7 +204,7 @@
                 <Button label="Retour" class="p-button-secondary mt-3 btn-small" @click="goBack" />
               </div>
             </form>
-          </div>
+          </FormShell>
         </div>
       </div>
     </div>
@@ -234,6 +234,7 @@ import InputGroup from 'primevue/inputgroup'
 import InputGroupAddon from 'primevue/inputgroupaddon'
 import Navbar from '@/components/common/utils/Navbar.vue'
 import Divider from 'primevue/divider'
+import FormShell from '@/components/common/forms/FormShell.vue'
 
 // --- Setup ---
 const route = useRoute()

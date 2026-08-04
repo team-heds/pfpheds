@@ -1,3 +1,5 @@
+import { authFetch } from '@/service/apiClient'
+
 const INSTITUTIONS_BUCKET = 'institutions'
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024
@@ -58,7 +60,7 @@ async function uploadInstitutionImages(institutionId, files) {
     formData.append('images', file)
   }
 
-  const response = await fetch(`${getBackendBaseUrl()}/api/institutions/${institutionId}/images`, {
+  const response = await authFetch(`${getBackendBaseUrl()}/api/institutions/${institutionId}/images`, {
     method: 'POST',
     body: formData
   })
@@ -86,7 +88,7 @@ async function deleteInstitutionImage(institutionId, imageUrl) {
     throw new Error("URL image invalide pour Supabase Storage.")
   }
 
-  const response = await fetch(`${getBackendBaseUrl()}/api/institutions/${institutionId}/images`, {
+  const response = await authFetch(`${getBackendBaseUrl()}/api/institutions/${institutionId}/images`, {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json'

@@ -728,7 +728,7 @@ Le fichier `supabase/migrations/20260223_add_priority_to_votation_sessions.sql` 
 
 ### ⚠️ Variable d'environnement
 
-Ajouter `VITE_SUPABASE_SERVICE_ROLE_KEY` dans le fichier `.env` pour les opérations admin.
+Configurer `SUPABASE_SERVICE_ROLE_KEY` uniquement dans l'environnement du backend. Les opérations admin doivent passer par une route serveur protégée par authentification et RBAC ; une clé `service_role` ne doit jamais utiliser le préfixe `VITE_` ni être incluse dans le navigateur.
 
 ### 🔧 TODO
 

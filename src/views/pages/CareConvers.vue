@@ -210,13 +210,14 @@
     </div>
 
       
-  
+
   </div>
 </template>
   
   <script>
   import { ref, onMounted, onBeforeUnmount, watch, computed, nextTick } from "vue";
   import { useAuthStore } from "@/stores/authStore";
+  import { authFetch } from "@/service/apiClient";
   import ScenarioObjectivesModal from "@/components/careconvers/ScenarioObjectivesModal.vue";
   import PdfViewerModal from "@/components/careconvers/PdfViewerModal.vue";
   import ConsigneModal from "@/components/careconvers/ConsigneModal.vue";
@@ -317,7 +318,6 @@
               "https://eu-texttospeech.googleapis.com/v1beta1/text:synthesize",
             // WARNING: It is not secure to expose your API key on the client side.
             // Please consider moving this to a backend service or using environment variables.
-            ttsApikey: "AIzaSyCM7K85njEJr12agV4FgexQp12uRPhNGLI",
             ...langConfig,
             cameraView: "head",
           });
@@ -448,15 +448,14 @@
         scrollToBottom();
 
         try {
-          const response = await fetch(`${import.meta.env.VITE_API_URL || '/api'}/chat`, {
+          const response = await authFetch(`${import.meta.env.VITE_API_URL || '/api'}/chat`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({ 
               prompt: userMessage, 
-              currentStep: conversationStep.value,
-              userId: currentConversationUserId.value
+              currentStep: conversationStep.value
             }),
           });
 
@@ -589,14 +588,12 @@
           errorMessage.value = '';
           isLoading.value = true;
 
-          await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/reset`, {
+          await authFetch(`${import.meta.env.VITE_API_URL || '/api'}/reset`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-              userId: currentConversationUserId.value,
-            }),
+            body: JSON.stringify({}),
           });
         } catch (error) {
           console.warn('Reset backend non disponible, reset local uniquement:', error);
@@ -1192,4 +1189,3 @@
   }
 
   </style>
-  

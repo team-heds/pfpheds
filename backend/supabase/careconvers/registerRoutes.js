@@ -3,10 +3,12 @@ const { normalizeUserId } = require('./utils');
 const { createPersistenceService } = require('./persistenceService');
 const { getIntent } = require('./intentService');
 const { processConversationStep } = require('./conversationStepEngine');
+const rateLimit = require('express-rate-limit');
 
 const persistence = createPersistenceService(supabaseAdmin);
+const chatLimiter = rateLimit({ windowMs: 60_000, limit: 20, standardHeaders: true, legacyHeaders: false });
 
-function registerCareConversStoreRoutes(app) {
+function registerCareConversStoreRoutes(app, authenticate) {
   console.log('[ROUTES] careconversStoreBackend mounted');
 
   const conversationStates = {};
@@ -14,16 +16,16 @@ function registerCareConversStoreRoutes(app) {
   const quizProgress = {};
   const opqrstProgress = {};
 
-  app.post('/api/chat', async (req, res) => {
-    let { prompt, userId } = req.body;
-    const currentUser = normalizeUserId(userId);
+  app.post('/api/chat', authenticate, chatLimiter, async (req, res) => {
+    let { prompt } = req.body;
+    const currentUser = normalizeUserId(req.auth.userId);
 
     if (!currentUser) {
       return res.status(400).json({ error: 'User identifier is missing.' });
     }
 
-    if (!prompt) {
-      return res.status(400).json({ error: 'Prompt is missing.' });
+    if (!prompt || typeof prompt !== 'string' || prompt.length > 4000) {
+      return res.status(400).json({ error: 'Prompt is required and must not exceed 4,000 characters.' });
     }
 
     prompt = prompt.trim();
@@ -105,9 +107,8 @@ function registerCareConversStoreRoutes(app) {
     });
   });
 
-  app.post('/api/reset', (req, res) => {
-    const { userId } = req.body;
-    const currentUser = normalizeUserId(userId);
+  app.post('/api/reset', authenticate, (req, res) => {
+    const currentUser = normalizeUserId(req.auth.userId);
 
     if (!currentUser) {
       return res.status(400).json({ success: false, error: 'User identifier is missing.' });

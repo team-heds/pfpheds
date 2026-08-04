@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
+import { filterStudentProfiles } from '@/utils/userAudience'
 
 // ── Logique pure extraite de studentsService.js ────────────────
 
@@ -6,23 +7,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
  * Filtre les étudiants depuis user_profiles (même logique que le service)
  */
 const filterStudentUsers = (users) => {
-  return (users || []).filter(user => {
-    const role = (user.role || '').toLowerCase()
-    const email = (user.email || '').toLowerCase()
-    return (
-      role.includes('student') ||
-      role.includes('etudiant') ||
-      role.includes('étudiant') ||
-      email.includes('@students.hevs.ch')
-    )
-  })
+  return filterStudentProfiles(users)
 }
 
 /**
  * Mappe un user_profile vers le format étudiant (même logique que le service)
  */
 const mapUserToStudent = (user, classeOverride) => {
-  const classe = classeOverride || user.classe || user.class || user.promotion || 'BA25'
+  const classe = classeOverride || user.classe || user.class || user.promotion || 'Non défini'
   return {
     id: user.user_id,
     Nom: user.family_name || 'Nom non disponible',
@@ -131,12 +123,12 @@ describe('studentsService – filterStudentUsers', () => {
     expect(filterStudentUsers(users)).toHaveLength(2)
   })
 
-  it('filtre par email @students.hevs.ch', () => {
+  it('ne considère jamais le domaine email comme une preuve de statut étudiant', () => {
     const users = [
       { role: 'unknown', email: 'jean@students.hevs.ch' },
       { role: 'unknown', email: 'admin@hevs.ch' }
     ]
-    expect(filterStudentUsers(users)).toHaveLength(1)
+    expect(filterStudentUsers(users)).toHaveLength(0)
   })
 
   it('combine rôle et email', () => {
@@ -145,6 +137,24 @@ describe('studentsService – filterStudentUsers', () => {
       { role: 'admin', email: 'b@students.hevs.ch' },
       { role: 'student', email: 'c@other.ch' },
       { role: 'admin', email: 'd@other.ch' }
+    ]
+    expect(filterStudentUsers(users)).toHaveLength(2)
+  })
+
+  it('exclut les étudiants archivés ou inactifs', () => {
+    const users = [
+      { role: 'archived_student', is_active: true },
+      { role: 'student', is_active: false },
+      { role: 'EtudiantPhysio', is_active: true }
+    ]
+    expect(filterStudentUsers(users)).toEqual([users[2]])
+  })
+
+  it('accepte la permission EtudiantPhysio quel que soit son format', () => {
+    const users = [
+      { role: 'user', permissions: ['EtudiantPhysio'] },
+      { role: 'user', permissions: '["EtudiantPhysio"]' },
+      { role: 'user', permissions: { EtudiantPhysio: true } }
     ]
     expect(filterStudentUsers(users)).toHaveLength(3)
   })
@@ -190,7 +200,7 @@ describe('studentsService – mapUserToStudent', () => {
     expect(result.Nom).toBe('Nom non disponible')
     expect(result.Prenom).toBe('Prénom non disponible')
     expect(result.Mail).toBe('Email non disponible')
-    expect(result.Classe).toBe('BA25') // défaut
+    expect(result.Classe).toBe('Non défini')
     expect(result.pfp_cohort).toBeNull()
   })
 

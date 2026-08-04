@@ -119,7 +119,7 @@ const syncVimeoVideos = async () => {
     console.log('[ModuleAdmin] Début de la synchronisation Vimeo...')
     
     // Vérifier le token
-    const token = import.meta?.env?.VITE_VIMEO_ACCESS_TOKEN || localStorage.getItem('VIMEO_TOKEN_OVERRIDE')
+    const token = 'server-managed'
     console.log('[ModuleAdmin] Token Vimeo présent:', !!token)
     console.log('[ModuleAdmin] Token (premiers caractères):', token ? token.substring(0, 10) + '...' : 'AUCUN')
     

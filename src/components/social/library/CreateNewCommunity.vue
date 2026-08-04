@@ -5,7 +5,7 @@
       <h2>Créer une Nouvelle Communauté</h2>
     </div>
     <div class="">
-      <form @submit.prevent="createCommunity">
+      <form class="app-form" @submit.prevent="createCommunity">
         <div class="container">
           <label for="communityName" class="text-white">Nom de la Communauté</label>
           <InputText type="text" id="communityName" v-model="newCommunity.name" required

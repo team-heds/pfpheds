@@ -1172,8 +1172,10 @@ const loadData = async () => {
     // (utile si la fusion getAllStudents est décalée ou enrichie par d'autres sources)
     const { data: profileStudents } = await supabase
       .from('user_profiles')
-      .select('user_id, family_name, forname, email, classe, pfp_cohort')
+      .select('user_id, family_name, forname, email, classe, pfp_cohort, role, permissions, is_active')
       .eq('classe', filterClasse.value)
+      .or('role.eq.EtudiantPhysio,permissions.cs.["EtudiantPhysio"]')
+      .eq('is_active', true)
 
     const mergedById = new Map()
     studentsFromService.forEach(student => {

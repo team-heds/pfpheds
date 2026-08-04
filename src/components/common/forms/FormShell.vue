@@ -1,5 +1,5 @@
 <template>
-  <section class="form-shell" :aria-labelledby="titleId">
+  <section class="form-shell" :aria-labelledby="title ? titleId : undefined">
     <header v-if="title || description || $slots.header" class="form-shell__header">
       <slot name="header"><div><h1 :id="titleId">{{ title }}</h1><p v-if="description">{{ description }}</p></div></slot>
     </header>

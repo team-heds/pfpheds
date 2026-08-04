@@ -213,7 +213,7 @@ import Tooltip from 'primevue/tooltip';
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
 import { useAuthStore } from '@/stores/authStore';
-import { supabaseAdmin } from '@/supabaseAdmin';
+import apiClient from '@/service/apiClient';
 import { nextTick } from 'vue';
 // import Navbar from '@/components/common/utils/Navbar.vue';
 
@@ -504,51 +504,16 @@ export default {
       const permissions = this.newUser.permissions || [];
 
       try {
-        // ── Méthode 1 : Admin API via service role key ──
-        if (supabaseAdmin) {
-          // 1. Créer l'utilisateur via l'API admin (ne touche pas la session courante)
-          const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-            email,
-            password: this.newUser.password,
-            email_confirm: true,
-            user_metadata: { forname, family_name: familyName, display_name: displayName, role }
-          });
-          if (authError) throw authError;
-
-          const userId = authData.user.id;
-
-          // 2. Créer / mettre à jour le profil dans user_profiles
-          const { error: profileError } = await supabaseAdmin
-            .from('user_profiles')
-            .upsert({
-              user_id: userId,
-              email,
-              forname,
-              family_name: familyName,
-              display_name: displayName,
-              role,
-              permissions,
-              is_active: true
-            }, { onConflict: 'user_id' });
-
-          if (profileError) {
-            console.warn('Profil user_profiles non créé:', profileError.message);
-          }
-
-          this.createdUserSummary = `✅ ${displayName} (${email}) — ID: ${userId.slice(0, 8)}…`;
-
-        } else {
-          // ── Méthode 2 : Fallback signup classique (si pas de service role key) ──
-          console.warn('⚠️ Pas de service role key — fallback sur signUp classique');
-          const signUpData = await this.authStore.signUpSupabase({
-            email,
-            password: this.newUser.password,
-            options: {
-              data: { forname, family_name: familyName, display_name: displayName, role }
-            }
-          });
-          this.createdUserSummary = `✅ ${displayName} (${email}) créé (fallback signup)`;
-        }
+        const { data: createdUser } = await apiClient.post('/admin/users', {
+          email,
+          password: this.newUser.password,
+          forname,
+          familyName,
+          displayName,
+          role,
+          permissions
+        });
+        this.createdUserSummary = `✅ ${displayName} (${email}) — ID: ${createdUser.id.slice(0, 8)}…`;
 
         // Recharger la liste
         await nextTick();

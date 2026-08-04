@@ -1,4 +1,6 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
+const { isAdmin, requireAnyPermission } = require('../middleware/auth');
 
 const supabaseClient = require('../supabaseClient.js');
 const supabaseAdmin = supabaseClient.supabaseAdmin || supabaseClient;
@@ -98,13 +100,31 @@ async function evaluateAnswer(feedbacka, studentAnswer) {
 }
 
 const router = express.Router();
+const aiLimiter = rateLimit({ windowMs: 60_000, limit: 10, standardHeaders: true, legacyHeaders: false });
+const editFeedbacka = requireAnyPermission('editor', 'teacher', 'enseignantsoins', 'enseignantphysio');
+const editableFields = [
+  'title', 'question', 'context', 'instructions', 'correction_prompt', 'expected_answer',
+  'criteria', 'status', 'language', 'level', 'expected_length', 'scoring_enabled',
+  'max_score', 'tone', 'course_id', 'class_id',
+];
+
+function sanitizeFeedbackaPayload(body) {
+  return Object.fromEntries(editableFields.filter((field) => body[field] !== undefined).map((field) => [field, body[field]]));
+}
+
+function isValidAnswer(answer) {
+  return typeof answer === 'string' && answer.trim().length > 0 && answer.length <= 20_000;
+}
+
+async function getOwnedFeedbacka(id, req) {
+  const { data, error } = await supabaseAdmin.from('feedbackas').select('*').eq('id', id).single();
+  if (error) throw error;
+  if (data.author_id !== req.auth.userId && !isAdmin(req.auth)) return null;
+  return data;
+}
 
 router.get('/', async (req, res) => {
-  const { status, author_id } = req.query;
-
-  if (!author_id && status !== 'published') {
-    return res.status(400).json({ error: 'author_id is required unless status=published.' });
-  }
+  const { status } = req.query;
 
   try {
     let query = supabaseAdmin
@@ -113,21 +133,20 @@ router.get('/', async (req, res) => {
       .order('created_at', { ascending: false });
 
     if (status) query = query.eq('status', status);
-    if (author_id) query = query.eq('author_id', author_id);
+    if (status !== 'published' && !isAdmin(req.auth)) query = query.eq('author_id', req.auth.userId);
 
     const { data, error } = await query;
     if (error) throw error;
 
     res.json(data);
   } catch (error) {
-    res.status(500).json({ error: `Failed to fetch feedbackas: ${error.message}` });
+    console.error('[FEEDBACKA] List failed:', error.message);
+    res.status(500).json({ error: 'Failed to fetch feedbackas.' });
   }
 });
 
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
-  const { author_id } = req.query;
-
   try {
     const { data, error } = await supabaseAdmin
       .from('feedbackas')
@@ -137,19 +156,20 @@ router.get('/:id', async (req, res) => {
 
     if (error) throw error;
 
-    if (data?.status !== 'published' && author_id !== data?.author_id) {
+    if (data?.status !== 'published' && req.auth.userId !== data?.author_id && !isAdmin(req.auth)) {
       return res.status(404).json({ error: 'Feedbacka not found.' });
     }
     res.json(data);
   } catch (error) {
-    res.status(500).json({ error: `Failed to fetch feedbacka: ${error.message}` });
+    console.error('[FEEDBACKA] Fetch failed:', error.message);
+    res.status(500).json({ error: 'Failed to fetch feedbacka.' });
   }
 });
 
-router.post('/', async (req, res) => {
-  const payload = req.body;
-  if (!payload?.title || !payload?.question || !payload?.author_id) {
-    return res.status(400).json({ error: 'title, question and author_id are required.' });
+router.post('/', editFeedbacka, async (req, res) => {
+  const payload = { ...sanitizeFeedbackaPayload(req.body), author_id: req.auth.userId };
+  if (!payload?.title || !payload?.question) {
+    return res.status(400).json({ error: 'title and question are required.' });
   }
 
   try {
@@ -162,15 +182,19 @@ router.post('/', async (req, res) => {
     if (error) throw error;
     res.status(201).json(data);
   } catch (error) {
-    res.status(500).json({ error: `Failed to create feedbacka: ${error.message}` });
+    console.error('[FEEDBACKA] Create failed:', error.message);
+    res.status(500).json({ error: 'Failed to create feedbacka.' });
   }
 });
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', editFeedbacka, async (req, res) => {
   const { id } = req.params;
-  const payload = req.body;
+  const payload = sanitizeFeedbackaPayload(req.body);
 
   try {
+    const owned = await getOwnedFeedbacka(id, req);
+    if (!owned) return res.status(403).json({ error: 'Forbidden.' });
+
     const { data, error } = await supabaseAdmin
       .from('feedbackas')
       .update({ ...payload, updated_at: new Date().toISOString() })
@@ -181,43 +205,34 @@ router.put('/:id', async (req, res) => {
     if (error) throw error;
     res.json(data);
   } catch (error) {
-    res.status(500).json({ error: `Failed to update feedbacka: ${error.message}` });
+    console.error('[FEEDBACKA] Update failed:', error.message);
+    res.status(500).json({ error: 'Failed to update feedbacka.' });
   }
 });
 
-router.post('/:id/test', async (req, res) => {
+router.post('/:id/test', editFeedbacka, aiLimiter, async (req, res) => {
   const { id } = req.params;
   const { answer_text } = req.body;
-  const { author_id } = req.query;
-
-  if (!answer_text) return res.status(400).json({ error: 'answer_text is required.' });
+  if (!isValidAnswer(answer_text)) return res.status(400).json({ error: 'answer_text is required and must not exceed 20,000 characters.' });
 
   try {
-    const { data: feedbacka, error } = await supabaseAdmin
-      .from('feedbackas')
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (error) throw error;
-
-    if (author_id !== feedbacka.author_id) {
-      return res.status(403).json({ error: 'Forbidden.' });
-    }
+    const feedbacka = await getOwnedFeedbacka(id, req);
+    if (!feedbacka) return res.status(403).json({ error: 'Forbidden.' });
 
     const aiResult = await evaluateAnswer(feedbacka, answer_text);
     res.json({ ai_result: aiResult });
   } catch (error) {
-    res.status(500).json({ error: `Failed to test evaluation: ${error.message}` });
+    console.error('[FEEDBACKA] Test failed:', error.message);
+    res.status(500).json({ error: 'Failed to test evaluation.' });
   }
 });
 
-router.post('/:id/submit', async (req, res) => {
+router.post('/:id/submit', aiLimiter, async (req, res) => {
   const { id } = req.params;
-  const { student_id, answer_text } = req.body;
+  const { answer_text } = req.body;
 
-  if (!student_id || !answer_text) {
-    return res.status(400).json({ error: 'student_id and answer_text are required.' });
+  if (!isValidAnswer(answer_text)) {
+    return res.status(400).json({ error: 'answer_text is required and must not exceed 20,000 characters.' });
   }
 
   try {
@@ -235,7 +250,7 @@ router.post('/:id/submit', async (req, res) => {
 
     const { data: submission, error: submissionError } = await supabaseAdmin
       .from('feedbacka_submissions')
-      .insert({ feedbacka_id: id, student_id, answer_text, status: 'pending' })
+      .insert({ feedbacka_id: id, student_id: req.auth.userId, answer_text, status: 'pending' })
       .select()
       .single();
 
@@ -262,7 +277,7 @@ router.post('/:id/submit', async (req, res) => {
     } catch (e) {
       const { data: errored } = await supabaseAdmin
         .from('feedbacka_submissions')
-        .update({ status: 'error', error_message: e.message, evaluated_at: new Date().toISOString() })
+        .update({ status: 'error', error_message: 'Evaluation service unavailable.', evaluated_at: new Date().toISOString() })
         .eq('id', submission.id)
         .select()
         .single();
@@ -270,19 +285,16 @@ router.post('/:id/submit', async (req, res) => {
       return res.status(200).json(errored);
     }
   } catch (error) {
-    res.status(500).json({ error: `Failed to submit answer: ${error.message}` });
+    console.error('[FEEDBACKA] Submission failed:', error.message);
+    res.status(500).json({ error: 'Failed to submit answer.' });
   }
 });
 
-router.get('/:id/submissions', async (req, res) => {
+router.get('/:id/submissions', editFeedbacka, async (req, res) => {
   const { id } = req.params;
-  const { author_id } = req.query;
-
-  if (!author_id) {
-    return res.status(400).json({ error: 'author_id is required.' });
-  }
-
   try {
+    const feedbacka = await getOwnedFeedbacka(id, req);
+    if (!feedbacka) return res.status(403).json({ error: 'Forbidden.' });
     const { data, error } = await supabaseAdmin
       .from('feedbacka_submissions')
       .select('*')
@@ -292,7 +304,8 @@ router.get('/:id/submissions', async (req, res) => {
     if (error) throw error;
     res.json(data);
   } catch (error) {
-    res.status(500).json({ error: `Failed to fetch submissions: ${error.message}` });
+    console.error('[FEEDBACKA] Submissions fetch failed:', error.message);
+    res.status(500).json({ error: 'Failed to fetch submissions.' });
   }
 });
 

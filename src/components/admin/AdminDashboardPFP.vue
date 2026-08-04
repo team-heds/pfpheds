@@ -485,7 +485,8 @@ const loadExtraStats = async () => {
       supabase
         .from('user_profiles')
         .select('user_id,is_active,permissions,family_name,forname,email,classe,updated_at,created_at')
-        .filter('permissions', 'cs', '["EtudiantPhysio"]'),
+        .filter('permissions', 'cs', '["EtudiantPhysio"]')
+        .eq('is_active', true),
       supabase
         .from('places')
         .select('PlaceId,InstitutionId,NomPlace,fileURL,fileurl,pdfUrl,created_at,updated_at'),
@@ -603,6 +604,7 @@ const loadRecentActivities = async () => {
         .from('user_profiles')
         .select('user_id,forname,family_name,created_at')
         .filter('permissions', 'cs', '["EtudiantPhysio"]')
+        .eq('is_active', true)
         .order('created_at', { ascending: false })
         .limit(5)
     ])
