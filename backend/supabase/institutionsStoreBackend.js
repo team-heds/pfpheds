@@ -6,7 +6,14 @@ const multer = require('multer')
 const { randomUUID } = require('crypto')
  
 const router = Router()
-const upload = multer({ storage: multer.memoryStorage() })
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 8 * 1024 * 1024, files: 8 },
+  fileFilter: (_req, file, callback) => {
+    const allowed = /^image\/(jpeg|png|webp)$/i.test(file.mimetype)
+    callback(allowed ? null : new Error('Type d’image non autorisé.'), allowed)
+  }
+})
 const INSTITUTIONS_BUCKET = 'institutions'
 
 function getPublicUrl(path) {

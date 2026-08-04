@@ -2,6 +2,7 @@ const { Router } = require('express')
 const supabase = require('../supabaseClient')
 const { supabaseAdmin } = require('../supabaseClient')
 const { v4: uuidv4 } = require('uuid')
+const { authenticate, requireAdmin: requireCentralAdmin } = require('../middleware/auth')
 
 const router = Router()
 
@@ -72,19 +73,10 @@ const getCompletedPlaceIdsForUser = async (userId) => {
 
 // Middleware pour extraire le user depuis le token JWT
 const setUser = async (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1]
-  if (!token) {
-    req.user = null
-    return next()
-  }
-  try {
-    const { data, error } = await supabase.auth.getUser(token)
-    if (error) throw error
-    req.user = data.user
-  } catch (e) {
-    req.user = null
-  }
-  next()
+  return authenticate(req, res, () => {
+    req.user = req.auth.user
+    next()
+  })
 }
 
 // Appliquer le middleware
@@ -92,25 +84,7 @@ router.use(setUser)
 
 // Middleware pour vérifier si l'utilisateur est admin
 const requireAdmin = async (req, res, next) => {
-  if (!req.user) {
-    return res.status(401).json({ ok: false, error: 'Authentication required' })
-  }
-
-  try {
-    const { data: profile, error } = await supabase
-      .from('user_profiles')
-      .select('role')
-      .eq('user_id', req.user.id)
-      .single()
-
-    if (error || !profile || !['admin', 'superadmin'].includes(profile.role)) {
-      return res.status(403).json({ ok: false, error: 'Admin access required' })
-    }
-
-    next()
-  } catch (e) {
-    return res.status(500).json({ ok: false, error: e.message })
-  }
+  return requireCentralAdmin(req, res, next)
 }
 
 /**
@@ -608,7 +582,7 @@ router.post('/confirm-algorithm', requireAdmin, async (req, res) => {
  * GET /api/resultat-votation/pfp3-proposals/:year
  * Récupère les propositions PFP3 sauvegardées pour un étudiant (via session)
  */
-router.get('/pfp3-proposals/:year', setUser, async (req, res) => {
+router.get('/pfp3-proposals/:year', async (req, res) => {
   try {
     const { year } = req.params
     const targetClass = normalizeClass(req.query?.targetClass)
@@ -684,7 +658,7 @@ router.get('/pfp3-proposals/:year', setUser, async (req, res) => {
  * GET /api/resultat-votation/assignment-counts/:pfpType/:year
  * Renvoie le nombre de places déjà assignées par place pour un PFP/année
  */
-router.get('/assignment-counts/:pfpType/:year', setUser, async (req, res) => {
+router.get('/assignment-counts/:pfpType/:year', async (req, res) => {
   try {
     const { pfpType, year } = req.params
 
@@ -1246,7 +1220,7 @@ router.post('/save-pfp4-proposals', requireAdmin, async (req, res) => {
  * GET /api/resultat-votation/pfp4-proposals/:year
  * Récupère les propositions PFP4 sauvegardées pour un étudiant (via session)
  */
-router.get('/pfp4-proposals/:year', setUser, async (req, res) => {
+router.get('/pfp4-proposals/:year', async (req, res) => {
   try {
     const { year } = req.params
     const targetClass = normalizeClass(req.query?.targetClass)
@@ -1370,7 +1344,7 @@ router.get('/results/:pfpType/:year', requireAdmin, async (req, res) => {
  * GET /api/resultat-votation/student/:userId/:pfpType/:year
  * Récupère le résultat d'un étudiant spécifique
  */
-router.get('/student/:userId/:pfpType/:year', setUser, async (req, res) => {
+router.get('/student/:userId/:pfpType/:year', async (req, res) => {
   try {
     const { userId, pfpType, year } = req.params
 

@@ -323,12 +323,19 @@ export default {
     }
   },
   "baseUrlIssueBanner": true,
+  "storage": {
+    "type": "localStorage",
+    "namespace": false
+  },
   "future": {
     "v4": {
       "removeLegacyPostBuildHeadAttribute": false,
-      "useCssCascadeLayers": false
+      "useCssCascadeLayers": false,
+      "siteStorageNamespacing": false,
+      "fasterByDefault": false,
+      "mdx1CompatDisabledByDefault": false
     },
-    "experimental_faster": {
+    "faster": {
       "swcJsLoader": false,
       "swcJsMinimizer": false,
       "swcHtmlMinimizer": false,
@@ -336,12 +343,10 @@ export default {
       "mdxCrossCompilerCache": false,
       "rspackBundler": false,
       "rspackPersistentCache": false,
-      "ssgWorkerThreads": false
+      "ssgWorkerThreads": false,
+      "gitEagerVcs": false
     },
-    "experimental_storage": {
-      "type": "localStorage",
-      "namespace": false
-    },
+    "experimental_vcs": {},
     "experimental_router": "browser"
   },
   "onBrokenLinks": "throw",

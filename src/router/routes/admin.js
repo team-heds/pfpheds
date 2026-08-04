@@ -23,9 +23,9 @@ export default [
   { path: '/admin/soins-infirmiers/dashboard-enseignant', component: () => import('@/views/admin/DashboardEnseignantView.vue'), name: 'DashboardEnseignantSI', meta: { requiresAuth: true, need: ['admin', 'EnseignantSoins', 'RMSoins'] } },
   { path: '/admin/dashboard-enseignant', component: () => import('@/views/admin/DashboardEnseignantView.vue'), name: 'DashboardEnseignant', meta: { requiresAuth: true, need: ['admin', 'EnseignantSoins', 'EnseignantPhysio'] } },
   { path: '/admin/teachers-assignment', component: () => import('@/views/admin/TeacherAssignmentView.vue'), name: 'TeacherAssignment', meta: { requiresAuth: true, need: ['admin', 'RMSoins', 'PlanificateurHoraires'] } },
-  { path: '/admin/dashboard-pfp', component: () => import('@/components/admin/AdminDashboardPFP.vue'), name: 'AdminDashboardPFP', meta: { requiresAuth: true } },
-  { path: '/admin/dashboard-academique', component: () => import('@/components/admin/AdminDashboardAcademique.vue'), name: 'AdminDashboardAcademique', meta: { requiresAuth: true } },
-  { path: '/admin/dashboard-gamification', component: () => import('@/components/admin/AdminDashboardGamification.vue'), name: 'AdminDashboardGamification', meta: { requiresAuth: true } },
+  { path: '/admin/dashboard-pfp', component: () => import('@/components/admin/AdminDashboardPFP.vue'), name: 'AdminDashboardPFP', meta: { requiresAuth: true, need: ['super.all', 'admin', 'AdminPhysio'] } },
+  { path: '/admin/dashboard-academique', component: () => import('@/components/admin/AdminDashboardAcademique.vue'), name: 'AdminDashboardAcademique', meta: { requiresAuth: true, need: ['super.all', 'admin', 'editor'] } },
+  { path: '/admin/dashboard-gamification', component: () => import('@/components/admin/AdminDashboardGamification.vue'), name: 'AdminDashboardGamification', meta: { requiresAuth: true, need: ['super.all', 'admin', 'house_coach'] } },
   { path: '/admin/alerts', component: () => import('@/views/admin/AlertsDashboard.vue'), name: 'AlertsDashboard', meta: { requiresAuth: true, need: ['super.all', 'admin', 'AdminPhysio', 'EnseignantPhysio'] } },
   { path: '/admin/settings', component: () => import('@/views/admin/SettingsView.vue'), name: 'AdminSettingsView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
   { path: '/admin/supabase-diagnostic', component: () => import('@/views/admin/SupabaseDiagnosticView.vue'), name: 'SupabaseDiagnosticView', meta: { requiresAuth: true, need: 'admin' } },
@@ -53,10 +53,10 @@ export default [
   { path: '/admin/soins-infirmiers/cours-postulation', component: () => import('@/views/admin/soins-infirmiers/SIPostulationCoursesView.vue'), name: 'SIPostulationCoursesView', meta: { requiresAuth: true, need: ['authenticated', 'admin', 'RMSoins', 'EnseignantSoins'] } },
 
   // Gestion académique (Kanban & Contenu)
-  { path: '/admin/academic/tickets', component: () => import('@/views/admin/academic/TicketListView.vue'), name: 'TicketListView' },
-  { path: '/admin/academic/kanban', component: () => import('@/views/admin/academic/AcademicKanbanView.vue'), name: 'AcademicKanbanView' },
-  { path: '/admin/academic/calendar', component: () => import('@/views/admin/academic/AcademicCalendarView.vue'), name: 'AcademicCalendarView' },
-  { path: '/admin/academic/video-library', component: () => import('@/views/admin/academic/VideoLibraryView.vue'), name: 'VideoLibraryView' },
+  { path: '/admin/academic/tickets', component: () => import('@/views/admin/academic/TicketListView.vue'), name: 'TicketListView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
+  { path: '/admin/academic/kanban', component: () => import('@/views/admin/academic/AcademicKanbanView.vue'), name: 'AcademicKanbanView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
+  { path: '/admin/academic/calendar', component: () => import('@/views/admin/academic/AcademicCalendarView.vue'), name: 'AcademicCalendarView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
+  { path: '/admin/academic/video-library', component: () => import('@/views/admin/academic/VideoLibraryView.vue'), name: 'VideoLibraryView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
   { path: '/admin/academic/media-content', redirect: '/admin/academic/video-library' },
 
   // Gestion des cours
@@ -80,6 +80,6 @@ export default [
   { path: '/admin/gamification/analytics', component: () => import('@/views/admin/gamification/AnalyticsDashboardView.vue'), name: 'AnalyticsDashboardView', meta: { requiresAuth: true, need: ['super.all', 'admin', 'AdminPhysio', 'EnseignantPhysio'] } },
 
   // Gamification création (public)
-  { path: '/create-challenge', component: () => import('@/views/admin/gamification/ChallengeManagementView.vue'), name: 'CreateChallenge', meta: { requiresAuth: true } },
-  { path: '/create-quest', component: () => import('@/views/admin/gamification/QuestManagementView.vue'), name: 'CreateQuest', meta: { requiresAuth: true } },
+  { path: '/create-challenge', component: () => import('@/views/admin/gamification/ChallengeManagementView.vue'), name: 'CreateChallenge', meta: { requiresAuth: true, need: ['super.all', 'admin', 'house_coach'] } },
+  { path: '/create-quest', component: () => import('@/views/admin/gamification/QuestManagementView.vue'), name: 'CreateQuest', meta: { requiresAuth: true, need: ['super.all', 'admin', 'house_coach'] } },
 ]

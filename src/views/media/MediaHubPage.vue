@@ -87,8 +87,6 @@
             <InputText v-model="vimeoSearch" placeholder="Rechercher sur Vimeo" class="w-full" @keyup="onVimeoKeyup" />
           </span>
           <Button label="Actualiser" icon="pi pi-refresh" class="p-button-text" @click="loadVimeoVideos" />
-          <!-- <Button label="Tester Auth" icon="pi pi-shield" class="p-button-text" @click="runVimeoAuthTest" /> -->
-          <!-- <Button label="Debug Env" icon="pi pi-cog" class="p-button-text" @click="debugEnvironment" /> -->
          </div>
          <div v-if="vimeoDebug" class="mt-2 text-600" style="white-space:pre-wrap; word-break:break-word;">
            {{ vimeoDebug }}
@@ -198,8 +196,7 @@ import { getAuth, onAuthStateChanged } from 'firebase/auth'
 import { getDatabase, ref as dbRef, get } from 'firebase/database'
 import { listYears, listModules, listVideos, publishVideo, createTicket, listTickets, updateTicketStatus } from '@/service/mediaService'
 import VideoPlayerVimeo from '@/components/media/VideoPlayerVimeo.vue'
-import { listAllVideos, testVimeoAuth } from '@/service/vimeoService'
-import { envTest } from '@/utils/envTest'
+import { listAllVideos } from '@/service/vimeoService'
 
 // Auth & roles (local)
 const userUid = ref(null)
@@ -236,7 +233,6 @@ const vimeoSearch = ref('')
 const vimeoViewerVisible = ref(false)
 const selectedVimeo = ref(null)
 const vimeoDebug = ref('')
-const vimeoTokenInput = ref('')
 const pageEnd = ref(null)
 
 const vimeoVideosFiltered = computed(() => {
@@ -263,49 +259,11 @@ async function loadVimeoVideos() {
   vimeoCurrentPage.value = 1 // Reset to first page when loading new videos
   
   try {
-    console.log('[MediaHub] Chargement des vidéos Vimeo...')
-    console.log('[MediaHub] import.meta:', import.meta)
-    console.log('[MediaHub] import.meta.env:', import.meta.env)
-    console.log('[MediaHub] Toutes les variables d\'environnement Vimeo:', {
-      VITE_VIMEO_ACCESS_TOKEN: import.meta?.env?.VITE_VIMEO_ACCESS_TOKEN,
-      NODE_ENV: import.meta?.env?.NODE_ENV,
-      MODE: import.meta?.env?.MODE,
-      DEV: import.meta?.env?.DEV,
-      PROD: import.meta?.env?.PROD,
-      BASE_URL: import.meta?.env?.BASE_URL
-    })
-    
-    // Utiliser le token depuis .env (maintenant synchronisé avec .env.production)
-    const envToken = import.meta?.env?.VITE_VIMEO_ACCESS_TOKEN
-    const localToken = typeof window !== 'undefined' ? localStorage.getItem('VIMEO_TOKEN_OVERRIDE') : null
-    const token = localToken || envToken
-    
-    console.log('[MediaHub] Token depuis .env:', envToken)
-    console.log('[MediaHub] Type du token:', typeof envToken)
-    console.log('[MediaHub] Token override localStorage:', localToken)
-    console.log('[MediaHub] Token final utilisé:', token)
-    console.log('[MediaHub] Type du token final:', typeof token)
-    
-    if (!token) {
-      vimeoDebug.value = '❌ Aucun token Vimeo configuré.\n\nDEBUG INFO:\n' + 
-        `• Token depuis env: ${envToken} (${typeof envToken})\n` +
-        `• Token depuis localStorage: ${localToken} (${typeof localToken})\n` +
-        `• import.meta.env: ${JSON.stringify(import.meta.env, null, 2)}\n\n` +
-        'Vérifiez que VITE_VIMEO_ACCESS_TOKEN est dans votre fichier .env\n\n' +
-        'Redémarrez le serveur de développement après modification.'
-      return
-    }
-
-    // Récupération via le service avec logs détaillés
-    console.log('[MediaHub] Appel à listAllVideos...')
     const fetchedVideos = await listAllVideos({ 
       query: vimeoSearch.value, 
       perPage: 100, 
-      maxPages: 999,
-      token: token // Passer le token explicitement
+      maxPages: 999
     })
-    
-    console.log('[MediaHub] Vidéos récupérées:', fetchedVideos)
     
     if (!fetchedVideos || fetchedVideos.length === 0) {
       vimeoDebug.value = '⚠️ Aucune vidéo trouvée. Vérifiez:\n• Le token Vimeo est valide\n• Les permissions du token\n• Que vous avez des vidéos sur votre compte'
@@ -324,7 +282,6 @@ async function loadVimeoVideos() {
         modified_time: video.modified_time || ''
       }))
       
-      console.log('[MediaHub] Vidéos formatées:', formattedVideos)
       vimeoVideos.value = formattedVideos
       vimeoDebug.value = `✅ ${fetchedVideos.length} vidéos récupérées avec succès depuis l'API Vimeo`
     }
@@ -354,23 +311,6 @@ function onVimeoKeyup(e) {
   if (e && e.key === 'Enter') {
     loadVimeoVideos()
   }
-}
-
-async function runVimeoAuthTest() {
-  const res = await testVimeoAuth()
-  vimeoDebug.value = `Auth test -> ok: ${res.ok}, status: ${res.status}\n${res.body}`
-}
-
-function applyVimeoTokenOverride() {
-  if (vimeoTokenInput.value) {
-    localStorage.setItem('VIMEO_TOKEN_OVERRIDE', vimeoTokenInput.value)
-    vimeoDebug.value = 'Token override enregistré en localStorage. Relance le test.'
-  }
-}
-
-function clearVimeoTokenOverride() {
-  localStorage.removeItem('VIMEO_TOKEN_OVERRIDE')
-  vimeoDebug.value = 'Token override supprimé.'
 }
 
 function hasRole(role) {
@@ -477,45 +417,7 @@ function vimeoNextPage() {
   }
 }
 
-function debugEnvironment() {
-  console.log('=== DEBUG ENVIRONNEMENT ===')
-  console.log('import.meta:', import.meta)
-  console.log('import.meta.env:', import.meta.env)
-  
-  // Test direct des variables
-  const allVars = import.meta.env
-  console.log('Toutes les variables:', allVars)
-  
-  // Variables spécifiques
-  const vimeoToken = import.meta.env.VITE_VIMEO_ACCESS_TOKEN
-  const firebaseProjectId = import.meta.env.VITE_FIREBASE_PROJECT_ID
-  const firebaseDatabaseUrl = import.meta.env.VITE_FIREBASE_DATABASE_URL
-  
-  console.log('Variables critiques:')
-  console.log('- VITE_VIMEO_ACCESS_TOKEN:', vimeoToken, typeof vimeoToken)
-  console.log('- VITE_FIREBASE_PROJECT_ID:', firebaseProjectId, typeof firebaseProjectId)
-  console.log('- VITE_FIREBASE_DATABASE_URL:', firebaseDatabaseUrl, typeof firebaseDatabaseUrl)
-  
-  // Affichage dans l'interface
-  vimeoDebug.value = `=== DEBUG ENVIRONNEMENT ===\n\n` +
-    `🔍 Variables détectées:\n` +
-    `• VITE_VIMEO_ACCESS_TOKEN: ${vimeoToken ? '✅ Présent' : '❌ Manquant'} (${typeof vimeoToken})\n` +
-    `• VITE_FIREBASE_PROJECT_ID: ${firebaseProjectId ? '✅ Présent' : '❌ Manquant'} (${typeof firebaseProjectId})\n` +
-    `• VITE_FIREBASE_DATABASE_URL: ${firebaseDatabaseUrl ? '✅ Présent' : '❌ Manquant'} (${typeof firebaseDatabaseUrl})\n\n` +
-    `📊 Nombre total de variables: ${Object.keys(allVars).length}\n\n` +
-    `🔧 Variables commençant par VITE_:\n` +
-    Object.keys(allVars)
-      .filter(key => key.startsWith('VITE_'))
-      .map(key => `• ${key}: ${allVars[key] ? '✅' : '❌'}`)
-      .join('\n')
-}
-
 onMounted(async () => {
-  // Test des variables d'environnement au démarrage
-  console.log('[MediaHub] Test des variables d\'environnement au montage du composant:')
-  const envTestResult = envTest()
-  console.log('[MediaHub] Résultat du test env:', envTestResult)
-  
   // auth state
   const auth = getAuth()
   const db = getDatabase()

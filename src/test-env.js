@@ -31,19 +31,9 @@ export function testViteEnv() {
     }
   })
   
-  // Variable Vimeo
-  console.log('\n📹 Variable Vimeo:')
-  const vimeoToken = import.meta.env.VITE_VIMEO_ACCESS_TOKEN
-  if (vimeoToken) {
-    console.log(`✅ VITE_VIMEO_ACCESS_TOKEN: ${vimeoToken.substring(0, 15)}...`)
-  } else {
-    console.log('❌ VITE_VIMEO_ACCESS_TOKEN: MANQUANT')
-  }
-  
   // Résumé
   console.log('\n📊 Résumé:')
   console.log(`Variables Firebase: ${7 - missingCount}/7`)
-  console.log(`Variable Vimeo: ${vimeoToken ? 'Présente' : 'Manquante'}`)
   
   if (missingCount > 0) {
     console.warn('\n⚠️ PROBLÈMES DÉTECTÉS:')
@@ -58,7 +48,6 @@ export function testViteEnv() {
   
   return {
     firebaseVars,
-    vimeoToken,
     missingCount,
     isValid: missingCount === 0
   }

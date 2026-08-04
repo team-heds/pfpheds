@@ -1075,8 +1075,16 @@ const hasPFP1 = computed(() => {
 // Gestion des documents par institution
 const uploads = ref({});
 const stageUploadsKey = (formationNumber) => `pfp_${String(formationNumber || 'unknown')}`;
-const STUDENT_DOCUMENT_ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/gif'];
+const STUDENT_DOCUMENT_ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
 const STUDENT_DOCUMENT_MAX_SIZE = 10 * 1024 * 1024;
+const getStudentDocumentPath = (value) => {
+  if (!value) return null;
+  const marker = '/student-documents/';
+  const markerIndex = value.indexOf(marker);
+  return markerIndex >= 0
+    ? decodeURIComponent(value.slice(markerIndex + marker.length).split('?')[0])
+    : value;
+};
 
 const loadUploadedDocsForAll = async () => {
   try {
@@ -1165,12 +1173,8 @@ const uploadDocuments = async (place, formationNumber) => {
 
       if (uploadError) throw uploadError;
 
-      // Obtenir l'URL publique
-      const { data: urlData } = supabase.storage
-        .from('student-documents')
-        .getPublicUrl(fileName);
-
-      const downloadURL = urlData.publicUrl;
+      // Store the private object path. A short-lived signed URL is created only when opening it.
+      const downloadURL = fileName;
 
       // Créer une entrée dans la table student_documents
       const { data: docData, error: docError } = await supabase
@@ -1264,10 +1268,8 @@ const deleteDocument = async (formationNumber, docId) => {
 
     // Extraire le chemin du fichier depuis l'URL
     if (docData && docData.document_url) {
-      const urlParts = docData.document_url.split('/student-documents/');
-      if (urlParts.length > 1) {
-        const filePath = urlParts[1].split('?')[0]; // Enlever les query params
-        
+      const filePath = getStudentDocumentPath(docData.document_url);
+      if (filePath) {
         // Supprimer du Storage
         const { error: storageError } = await supabase.storage
           .from('student-documents')
@@ -1295,10 +1297,17 @@ const deleteDocument = async (formationNumber, docId) => {
   }
 };
 
-const openDocument = (url) => {
-  if (url) {
-    window.open(url, "_blank");
+const openDocument = async (storedPath) => {
+  const filePath = getStudentDocumentPath(storedPath);
+  if (!filePath) return;
+  const { data, error } = await supabase.storage
+    .from('student-documents')
+    .createSignedUrl(filePath, 60);
+  if (error) {
+    toast.add({ severity: 'error', summary: 'Document', detail: 'Impossible d’ouvrir ce document.', life: 4000 });
+    return;
   }
+  window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
 };
 
 const navigateToInstitution = (instId) => {

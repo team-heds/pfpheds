@@ -11,10 +11,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 22
 
@@ -62,6 +62,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install backend dependencies
+        run: npm --prefix backend ci
+
+      - name: Run P0 security tests
+        run: npm run test:security
+
+      - name: Audit production dependencies
+        run: |
+          npm audit --omit=dev --audit-level=critical
+          npm --prefix backend audit --omit=dev --audit-level=high
+          npm --prefix documentation audit --omit=dev --audit-level=critical
+          npm --prefix presentation audit --omit=dev --audit-level=critical
+
       - name: Install documentation dependencies
         run: npm ci --prefix documentation
 
@@ -72,13 +85,13 @@ jobs:
         run: npm run build:all
 
       # Déploiement FTP (Infomaniak/FileZilla ou autre)
-      - name: Deploy via FTP
+      - name: Deploy via encrypted FTPS
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftp
+          protocol: ftps
           port: 21
           local-dir: ./dist/
           server-dir: /

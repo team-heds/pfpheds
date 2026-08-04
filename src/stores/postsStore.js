@@ -13,9 +13,7 @@
  * @action deletePost(id) - Supprime un post
  */
 import { defineStore } from 'pinia';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+import apiClient from '@/service/apiClient';
 
 export const usePostsStore = defineStore('posts', {
   state: () => ({
@@ -32,7 +30,7 @@ export const usePostsStore = defineStore('posts', {
       this.loading = true;
       this.error = null;
       try {
-        const response = await axios.get(`${API_URL}/posts`);
+        const response = await apiClient.get('/posts');
         this.posts = response.data;
       } catch (error) {
         this.error = 'Failed to fetch posts.';
@@ -54,7 +52,7 @@ export const usePostsStore = defineStore('posts', {
       this.loading = true;
       this.error = null;
       try {
-        const response = await axios.post(`${API_URL}/posts`, postData);
+        const response = await apiClient.post('/posts', postData);
         // If it's a top-level post, add it to the start of the list
         if (!postData.parent_id) {
             this.posts.unshift(response.data[0]);
@@ -83,7 +81,7 @@ export const usePostsStore = defineStore('posts', {
       this.loading = true;
       this.error = null;
       try {
-        const response = await axios.put(`${API_URL}/posts/${postId}`, updateData);
+        const response = await apiClient.put(`/posts/${postId}`, updateData);
         const index = this.posts.findIndex(p => p.id === postId);
         if (index !== -1) {
           this.posts[index] = { ...this.posts[index], ...response.data };
@@ -106,7 +104,7 @@ export const usePostsStore = defineStore('posts', {
       this.loading = true;
       this.error = null;
       try {
-        await axios.delete(`${API_URL}/posts/${postId}`);
+        await apiClient.delete(`/posts/${postId}`);
         this.posts = this.posts.filter(p => p.id !== postId);
       } catch (error) {
         this.error = 'Failed to delete post.';
