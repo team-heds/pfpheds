@@ -516,12 +516,12 @@ const menu = ref(adminMenu);
   max-height: none;
   min-height: 0;
   background: var(--surface-card);
-  padding: 1rem;
+  padding: 1.5rem;
   border: 1px solid var(--surface-border, rgba(148, 163, 184, 0.2));
-  border-radius: 1rem;
-  width: 288px;
-  min-width: 288px;
-  max-width: 288px;
+  border-radius: 1.2rem;
+  width: 300px;
+  min-width: 260px;
+  max-width: 320px;
   box-sizing: border-box;
   position: relative;
   top: auto;
@@ -539,9 +539,9 @@ const menu = ref(adminMenu);
 }
 
 .admin-sidebar {
-  width: 288px;
-  min-width: 288px;
-  max-width: 288px;
+  width: 300px;
+  min-width: 260px;
+  max-width: 320px;
 }
 
 /* Pour garantir que le parent ne décale pas la sidebar */

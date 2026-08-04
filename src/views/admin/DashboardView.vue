@@ -911,9 +911,8 @@ onUnmounted(() => {
 
 <style scoped>
 .personalized-dashboard {
-  width: min(100%, 96rem);
+  width: 100%;
   min-height: 100%;
-  margin-inline: auto;
   box-sizing: border-box;
 }
 

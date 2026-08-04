@@ -4,45 +4,42 @@
     <!-- Partie supérieure fixe -->
     <div class="fixed-content">
       <!-- Profil utilisateur -->
-      <div class="user-profile flex" :class="{ 'is-placeholder': !user.id }">
-        <!-- Avatar -->
-        <label style="cursor:pointer; margin:0;">
+      <div class="profile-overline">Mon espace</div>
+      <div class="user-profile" :class="{ 'is-placeholder': !user.id }">
+        <button type="button" class="avatar-button" aria-label="Modifier la photo de profil" @click="triggerFileInput">
           <img
             :src="userPhotoURL"
             alt="Avatar"
-            class="m-2 col-6"
-            style="width: 50px; height: 50px; border-radius: 1.2rem; object-fit: cover; border:2px solid var(--surface-border, #d1d5db);"
-            @click.prevent="triggerFileInput"
+            class="user-avatar"
           />
-          <input
-            ref="fileInput"
-            type="file"
-            accept="image/*"
-            style="display:none"
-            @change="onAvatarSelected"
-          />
-        </label>
-        <h4 class="m-2 mt-5 mb-1">
-          <a @click="goToProfile" class="profile-link">{{ userFullName }}</a>
-        </h4>
-        <p class="user-meta m-0">{{ user.email || 'Email non renseigné' }}</p>
+          <span class="avatar-edit" aria-hidden="true"><i class="pi pi-camera"></i></span>
+        </button>
+        <div class="user-identity">
+          <button type="button" @click="goToProfile" class="profile-link">{{ userFullName }}</button>
+          <p class="user-meta">{{ user.email || 'Email non renseigné' }}</p>
+        </div>
+        <input
+          ref="fileInput"
+          type="file"
+          accept="image/*"
+          class="avatar-input"
+          @change="onAvatarSelected"
+        />
       </div>
 
       <!-- Liens supplémentaires -->
-      <div class="profile-links">
-        <ul>
-          <li @click="goToDocumentPFP">
-            <i class="pi pi-file link-icon"></i>
+      <nav class="profile-links" aria-label="Raccourcis personnels">
+        <button type="button" class="profile-action" @click="goToDocumentPFP">
+            <span class="profile-action__icon"><i class="pi pi-file"></i></span>
             <span>Documents pour les PFPs</span>
-          </li>
-        </ul>
-        <ul>
-          <li @click="goToTools">
-            <i class="pi pi-globe link-icon"></i>
+            <i class="pi pi-chevron-right profile-action__arrow" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="profile-action" @click="goToTools">
+            <span class="profile-action__icon"><i class="pi pi-wrench"></i></span>
             <span>Outils</span>
-          </li>
-        </ul>
-      </div>
+            <i class="pi pi-chevron-right profile-action__arrow" aria-hidden="true"></i>
+        </button>
+      </nav>
     </div>
 
     <!-- Partie inférieure scrollable -->
@@ -625,6 +622,8 @@ export default {
   background: var(--surface-card);
   padding: 1.5rem;
   border-radius: 1.2rem;
+  border: 1px solid var(--surface-border, rgba(148, 163, 184, 0.2));
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.05);
 }
 
 .test-card {
@@ -670,12 +669,30 @@ export default {
   background: var(--surface-card);
 }
 
+.profile-overline {
+  margin-bottom: 0.875rem;
+  color: var(--text-color-secondary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 /* Liens du profil */
 .profile-link {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
   text-decoration: none;
   color: var(--text-color);
   cursor: pointer;
-  transition: color 0.3s ease;
+  font-family: inherit;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: start;
+  transition: color 0.15s ease;
 }
 
 .profile-link:hover {
@@ -683,8 +700,11 @@ export default {
 }
 
 .user-profile {
+  display: grid;
+  grid-template-columns: 3.5rem minmax(0, 1fr);
   align-items: center;
-  flex-wrap: wrap;
+  gap: 0.875rem;
+  padding-bottom: 1.25rem;
 }
 
 .user-profile.is-placeholder {
@@ -693,7 +713,7 @@ export default {
 
 .user-meta {
   width: 100%;
-  margin-left: 0.8rem;
+  margin: 0.25rem 0 0;
   font-size: 0.82rem;
   color: var(--text-color-secondary);
   overflow: hidden;
@@ -701,33 +721,95 @@ export default {
   white-space: nowrap;
 }
 
-/* Liens supplémentaires */
-.profile-links ul {
-  list-style: none;
+.user-identity { min-width: 0; }
+
+.avatar-button {
+  position: relative;
+  width: 3.5rem;
+  height: 3.5rem;
   padding: 0;
-  margin: 0;
+  border: 0;
+  border-radius: 1rem;
+  background: transparent;
+  cursor: pointer;
 }
 
-.profile-links li {
+.user-avatar {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 1rem;
+  object-fit: cover;
+  outline: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.avatar-edit {
+  position: absolute;
+  inset-inline-end: -0.25rem;
+  bottom: -0.25rem;
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 2px solid var(--surface-card);
+  border-radius: 50%;
+  background: var(--primary-color);
+  color: #fff;
+  font-size: 0.65rem;
+}
+
+.avatar-input { display: none; }
+
+/* Liens supplémentaires */
+.profile-links {
+  display: grid;
+  gap: 0.375rem;
+}
+
+.profile-action {
   display: flex;
   align-items: center;
-  padding: 0.5rem 0;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.625rem;
+  border: 0;
+  border-radius: 0.75rem;
+  background: transparent;
+  color: var(--text-color);
   cursor: pointer;
-  transition: color 0.3s ease, background-color 0.3s ease;
+  font-family: inherit;
+  font-size: 0.9rem;
+  text-align: start;
+  transition: color 0.15s ease, background-color 0.15s ease;
 }
 
-.profile-links li:hover {
+.profile-action:hover {
   color: var(--primary-color);
   background-color: var(--surface-hover);
-  border-radius: 0.5rem;
-  padding: 0.5rem;
 }
 
-.link-icon {
-  font-size: 1.25rem;
-  margin-right: 0.5rem;
-  padding: 0.5rem;
+.profile-action__icon {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.625rem;
+  background: color-mix(in srgb, var(--primary-color) 12%, transparent);
   color: var(--primary-color);
+}
+
+.profile-action__arrow {
+  margin-inline-start: auto;
+  color: var(--text-color-secondary);
+  font-size: 0.75rem;
+}
+
+.profile-link:focus-visible,
+.avatar-button:focus-visible,
+.profile-action:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
 }
 
 .event-list {
@@ -810,7 +892,7 @@ export default {
 .event-arrow {
   font-size: 0.9rem;
   color: var(--text-color-secondary);
-  transition: all 0.3s ease;
+  transition: color 0.2s ease, transform 0.2s ease;
 }
 
 /* Bordures rondes comme UserCard */

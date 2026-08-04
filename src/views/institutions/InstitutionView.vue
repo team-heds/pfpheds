@@ -1,6 +1,11 @@
 <template>
   <Navbar />
-  <div class="iv">
+  <div class="institution-shell">
+    <aside class="institution-shell__side institution-shell__side--left" aria-label="Espace personnel">
+      <LeftSidebar :hide-gamification="true" />
+    </aside>
+
+    <div class="iv">
     <!-- ====== HERO ====== -->
     <section class="iv-hero">
       <img :src="primaryImage" alt="" class="iv-hero__bg" />
@@ -32,14 +37,18 @@
     <!-- ====== CONTENT ====== -->
     <div class="iv-content">
       <!-- custom tab bar -->
-      <nav class="iv-nav">
+      <nav class="iv-nav" aria-label="Sections de l'institution">
         <button
+          type="button"
+          :aria-pressed="activeIndex === 0"
           :class="['iv-nav__btn', { 'iv-nav__btn--active': activeIndex === 0 }]"
           @click="activeIndex = 0"
         >
           <i class="pi pi-info-circle"></i> Informations
         </button>
         <button
+          type="button"
+          :aria-pressed="activeIndex === 1"
           :class="['iv-nav__btn', { 'iv-nav__btn--active': activeIndex === 1 }]"
           @click="activeIndex = 1"
         >
@@ -183,6 +192,11 @@
         </aside>
       </div>
     </div>
+    </div>
+
+    <aside class="institution-shell__side institution-shell__side--right" aria-label="Communautés et hashtags">
+      <RightSidebar />
+    </aside>
   </div>
 </template>
 
@@ -195,6 +209,8 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
 import Navbar from '@/components/common/utils/Navbar.vue'
+import LeftSidebar from '@/components/social/library/LeftSidebar.vue'
+import RightSidebar from '@/components/social/library/RightSidebar.vue'
 import { useInstitutionsStore } from '@/stores/institutionsStore'
 import { usePlacesStore } from '@/stores/placesStore'
 import { db, auth } from '../../../firebase.js'
@@ -504,11 +520,29 @@ function listenUserRole() {
    ============================================================ */
 
 /* --- reset / page --- */
+.institution-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 3fr) minmax(0, 1fr);
+  align-items: start;
+  gap: clamp(1rem, 1.5vw, 1.75rem);
+  width: 100%;
+  max-width: 120rem;
+  min-height: calc(100dvh - var(--navbar-h, 64px));
+  margin-inline: auto;
+  padding-inline: clamp(1rem, 2vw, 2rem);
+  box-sizing: border-box;
+}
+
+.institution-shell__side {
+  min-width: 0;
+  overflow-y: auto;
+}
+
 .iv {
   --accent: var(--primary-color, #6366f1);
   --accent-soft: var(--primary-color, rgba(99,102,241,.12));
   --radius: 1rem;
-  height: 100vh;
+  height: calc(100dvh - var(--navbar-h, 64px));
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
@@ -614,6 +648,7 @@ function listenUserRole() {
 }
 .iv-nav__btn {
   display: inline-flex; align-items: center; gap: .4rem;
+  min-height: 2.75rem;
   padding: .55rem 1.25rem;
   border: none; outline: none;
   border-radius: 999px;
@@ -621,9 +656,13 @@ function listenUserRole() {
   color: var(--text-color-secondary);
   background: transparent;
   cursor: pointer;
-  transition: all .25s;
+  transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
 }
 .iv-nav__btn:hover { color: var(--text-color); }
+.iv-nav__btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 .iv-nav__btn--active {
   background: var(--accent);
   color: #fff;
@@ -700,7 +739,7 @@ function listenUserRole() {
   border-radius: .75rem;
   background: var(--surface-ground);
   border: 1px solid var(--surface-border);
-  transition: all .2s;
+  transition: background-color .2s ease, border-color .2s ease, box-shadow .2s ease;
 }
 .iv-detail:hover {
   background: var(--surface-hover, var(--surface-card));
@@ -769,7 +808,7 @@ function listenUserRole() {
   background: var(--surface-ground);
   border: 1px solid var(--surface-border);
   text-decoration: none; color: var(--text-color);
-  transition: all .2s;
+  transition: background-color .2s ease, border-color .2s ease, box-shadow .2s ease;
 }
 .iv-file:hover {
   background: var(--surface-hover, var(--surface-card));
@@ -840,6 +879,16 @@ function listenUserRole() {
 }
 
 /* ====== RESPONSIVE ====== */
+@media (max-width: 1280px) {
+  .institution-shell {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  }
+  .institution-shell__side--right { display: none; }
+}
+@media (max-width: 991px) {
+  .institution-shell { display: block; padding-inline: 0; }
+  .institution-shell__side { display: none; }
+}
 @media (max-width: 1024px) {
   .iv-layout { grid-template-columns: 1fr; }
   .iv-map { position: static; }
