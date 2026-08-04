@@ -1,62 +1,69 @@
-const { supabaseAdmin } = require('../../supabaseClient');
-const { normalizeUserId } = require('./utils');
-const { createPersistenceService } = require('./persistenceService');
-const { getIntent } = require('./intentService');
-const { processConversationStep } = require('./conversationStepEngine');
-const rateLimit = require('express-rate-limit');
+const { supabaseAdmin } = require('../../supabaseClient')
+const { normalizeUserId } = require('./utils')
+const { createPersistenceService } = require('./persistenceService')
+const { getIntent } = require('./intentService')
+const { processConversationStep } = require('./conversationStepEngine')
+const rateLimit = require('express-rate-limit')
 
-const persistence = createPersistenceService(supabaseAdmin);
-const chatLimiter = rateLimit({ windowMs: 60_000, limit: 20, standardHeaders: true, legacyHeaders: false });
+const persistence = createPersistenceService(supabaseAdmin)
+const chatLimiter = rateLimit({
+  windowMs: 60_000,
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false
+})
 
-function registerCareConversStoreRoutes(app, authenticate) {
-  console.log('[ROUTES] careconversStoreBackend mounted');
+function registerCareConversStoreRoutes(app) {
+  console.log('[ROUTES] careconversStoreBackend mounted')
 
-  const conversationStates = {};
-  const isbarProgress = {};
-  const quizProgress = {};
-  const opqrstProgress = {};
+  const conversationStates = {}
+  const isbarProgress = {}
+  const quizProgress = {}
+  const opqrstProgress = {}
 
-  app.post('/api/chat', authenticate, chatLimiter, async (req, res) => {
-    let { prompt } = req.body;
-    const currentUser = normalizeUserId(req.auth.userId);
+  app.post('/api/chat', chatLimiter, async (req, res) => {
+    let { prompt } = req.body
+    const currentUser = normalizeUserId(req.auth.userId)
 
     if (!currentUser) {
-      return res.status(400).json({ error: 'User identifier is missing.' });
+      return res.status(400).json({ error: 'User identifier is missing.' })
     }
 
     if (!prompt || typeof prompt !== 'string' || prompt.length > 4000) {
-      return res.status(400).json({ error: 'Prompt is required and must not exceed 4,000 characters.' });
+      return res
+        .status(400)
+        .json({ error: 'Prompt is required and must not exceed 4,000 characters.' })
     }
 
-    prompt = prompt.trim();
+    prompt = prompt.trim()
 
     if (persistence.isPersistenceAvailable()) {
-      const persisted = await persistence.loadSessionState(currentUser);
-      conversationStates[currentUser] = persisted.currentStep;
-      opqrstProgress[currentUser] = persisted.opqrstCount;
-      isbarProgress[currentUser] = new Set(persisted.isbarParts);
+      const persisted = await persistence.loadSessionState(currentUser)
+      conversationStates[currentUser] = persisted.currentStep
+      opqrstProgress[currentUser] = persisted.opqrstCount
+      isbarProgress[currentUser] = new Set(persisted.isbarParts)
       if (persisted.quizState) {
-        quizProgress[currentUser] = persisted.quizState;
+        quizProgress[currentUser] = persisted.quizState
       } else {
-        delete quizProgress[currentUser];
+        delete quizProgress[currentUser]
       }
     } else {
       if (!Number.isInteger(conversationStates[currentUser])) {
-        conversationStates[currentUser] = 1;
+        conversationStates[currentUser] = 1
       }
       if (!Number.isInteger(opqrstProgress[currentUser])) {
-        opqrstProgress[currentUser] = 0;
+        opqrstProgress[currentUser] = 0
       }
       if (!isbarProgress[currentUser]) {
-        isbarProgress[currentUser] = new Set();
+        isbarProgress[currentUser] = new Set()
       }
     }
 
-    const currentStep = conversationStates[currentUser] || 1;
-    const intentResult = await getIntent(prompt, currentStep);
-    const intent = intentResult?.intent || 'unknown';
-    const intentSource = intentResult?.intentSource || 'unknown';
-    const intentDebug = intentResult?.debug || null;
+    const currentStep = conversationStates[currentUser] || 1
+    const intentResult = await getIntent(prompt, currentStep)
+    const intent = intentResult?.intent || 'unknown'
+    const intentSource = intentResult?.intentSource || 'unknown'
+    const intentDebug = intentResult?.debug || null
 
     const { responseText, nextStep, media } = processConversationStep({
       currentStep,
@@ -65,19 +72,21 @@ function registerCareConversStoreRoutes(app, authenticate) {
       currentUser,
       isbarProgress,
       quizProgress,
-      opqrstProgress,
-    });
+      opqrstProgress
+    })
 
-    conversationStates[currentUser] = nextStep;
+    conversationStates[currentUser] = nextStep
 
     await persistence.saveSessionState(currentUser, {
       currentStep: conversationStates[currentUser] || 1,
       opqrstCount: opqrstProgress[currentUser] || 0,
       isbarParts: isbarProgress[currentUser] ? Array.from(isbarProgress[currentUser]) : [],
-      quizState: quizProgress[currentUser] || null,
-    });
+      quizState: quizProgress[currentUser] || null
+    })
 
-    console.log(`[CareConvers] Sending response - step: ${currentStep} -> ${nextStep}, response: "${responseText.substring(0, 50)}..."`);
+    console.log(
+      `[CareConvers] Sending response - step: ${currentStep} -> ${nextStep}, response: "${responseText.substring(0, 50)}..."`
+    )
 
     await persistence.saveInteraction({
       user_id: currentUser,
@@ -93,9 +102,9 @@ function registerCareConversStoreRoutes(app, authenticate) {
         intent_source: intentSource,
         gemini_used: intentSource === 'gemini',
         intent_debug: process.env.CARECONVERS_INTENT_DEBUG === 'true' ? intentDebug : null,
-        timestamp: new Date().toISOString(),
-      },
-    });
+        timestamp: new Date().toISOString()
+      }
+    })
 
     res.json({
       response: responseText,
@@ -103,29 +112,29 @@ function registerCareConversStoreRoutes(app, authenticate) {
       media,
       intentSource,
       geminiUsed: intentSource === 'gemini',
-      debugIntent: process.env.CARECONVERS_INTENT_DEBUG === 'true' ? intentDebug : null,
-    });
-  });
+      debugIntent: process.env.CARECONVERS_INTENT_DEBUG === 'true' ? intentDebug : null
+    })
+  })
 
-  app.post('/api/reset', authenticate, (req, res) => {
-    const currentUser = normalizeUserId(req.auth.userId);
+  app.post('/api/reset', (req, res) => {
+    const currentUser = normalizeUserId(req.auth.userId)
 
     if (!currentUser) {
-      return res.status(400).json({ success: false, error: 'User identifier is missing.' });
+      return res.status(400).json({ success: false, error: 'User identifier is missing.' })
     }
 
-    delete conversationStates[currentUser];
-    delete isbarProgress[currentUser];
-    delete quizProgress[currentUser];
-    opqrstProgress[currentUser] = 0;
+    delete conversationStates[currentUser]
+    delete isbarProgress[currentUser]
+    delete quizProgress[currentUser]
+    opqrstProgress[currentUser] = 0
 
     persistence.deleteSessionState(currentUser).catch((e) => {
-      console.error('[CareConvers] Erreur suppression session persistée:', e?.message || e);
-    });
+      console.error('[CareConvers] Erreur suppression session persistée:', e?.message || e)
+    })
 
-    console.log(`[CareConvers] Reset conversation for user: ${currentUser}`);
-    res.json({ success: true, message: 'Conversation reset successfully', nextStep: 1 });
-  });
+    console.log(`[CareConvers] Reset conversation for user: ${currentUser}`)
+    res.json({ success: true, message: 'Conversation reset successfully', nextStep: 1 })
+  })
 }
 
-module.exports = registerCareConversStoreRoutes;
+module.exports = registerCareConversStoreRoutes
