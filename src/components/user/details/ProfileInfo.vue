@@ -272,7 +272,7 @@ const onAvatarChange = (event) => {
 /* Layout global avec sidebars et contenu central */
 .filter-layout {
   display: grid;
-  grid-template-columns: minmax(16rem, 19rem) minmax(0, 75rem) minmax(17rem, 20rem);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 3fr) minmax(0, 1fr);
   justify-content: center;
   align-items: start;
   gap: clamp(1rem, 1.5vw, 1.75rem);
@@ -311,7 +311,7 @@ const onAvatarChange = (event) => {
 /* Responsive pour le layout global */
 @media (max-width: 1280px) {
   .filter-layout {
-    grid-template-columns: minmax(15rem, 18rem) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
   }
   .sidebar-right {
     display: none;
