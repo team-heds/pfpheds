@@ -529,7 +529,6 @@ const selectedKpi = ref(null)
 const kpiGridRef = ref(null)
 const importConfigText = ref('')
 const exportedConfig = ref('')
-const notificationCount = ref('3')
 const selectedPeriod = ref('month')
 
 // Date actuelle
@@ -619,7 +618,7 @@ function handleKpiAction(kpi) {
   }
 }
 
-function onConfigChanged(config) {
+function onConfigChanged() {
   toast.add({
     severity: 'success',
     summary: 'Configuration sauvegardée',
@@ -628,7 +627,7 @@ function onConfigChanged(config) {
   })
 }
 
-function onWidgetConfigChanged(config) {
+function onWidgetConfigChanged() {
   toast.add({
     severity: 'success',
     summary: 'Widgets personnalisés',

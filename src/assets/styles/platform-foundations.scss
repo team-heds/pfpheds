@@ -122,6 +122,58 @@ textarea {
   flex-wrap: wrap;
 }
 
+/* Responsive defaults shared by every page. Local layouts can still opt out. */
+.p-toolbar,
+.p-toolbar-group-start,
+.p-toolbar-group-left,
+.p-toolbar-group-end,
+.p-toolbar-group-right,
+.page-actions,
+.table-actions,
+.filter-actions {
+  min-inline-size: 0;
+  gap: .75rem;
+  flex-wrap: wrap;
+}
+
+.p-tabview .p-tabview-nav,
+.p-steps .p-steps-list {
+  max-inline-size: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+}
+
+.p-tabview .p-tabview-nav li,
+.p-steps .p-steps-item {
+  flex: 0 0 auto;
+}
+
+.p-fileupload,
+.p-fileupload-content,
+.p-editor-container,
+.p-calendar,
+.p-dropdown,
+.p-multiselect,
+.p-inputnumber,
+.p-password,
+.p-password-input {
+  max-inline-size: 100%;
+}
+
+form .field,
+form .p-field {
+  min-inline-size: 0;
+}
+
+form .field > label,
+form .p-field > label {
+  display: inline-block;
+  margin-block-end: .45rem;
+  color: var(--text-color);
+  font-weight: 600;
+}
+
 .p-datatable-scrollable .p-datatable-thead > tr > th,
 .p-datatable .p-datatable-thead > tr > th {
   position: sticky;
@@ -158,6 +210,38 @@ textarea {
     justify-content: flex-start;
     overflow-x: auto;
     flex-wrap: nowrap;
+  }
+
+  .p-toolbar,
+  .p-toolbar-group-start,
+  .p-toolbar-group-left,
+  .p-toolbar-group-end,
+  .p-toolbar-group-right {
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .p-toolbar .p-button,
+  .p-toolbar .p-inputtext,
+  .p-toolbar .p-dropdown,
+  .page-actions .p-button,
+  .table-actions .p-button,
+  .filter-actions .p-button {
+    width: 100%;
+    min-width: 0 !important;
+  }
+
+  .p-card .p-card-body,
+  .p-panel .p-panel-content {
+    padding-inline: 1rem;
+  }
+
+  .p-tabview .p-tabview-panels {
+    padding-inline: 0;
+  }
+
+  .p-steps .p-steps-item {
+    min-width: 8rem;
   }
 
   input,

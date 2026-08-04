@@ -57,8 +57,8 @@
 
       </form>
       <template #actions>
-        <Button label="Annuler" icon="pi pi-times" @click="goBack" type="button" outlined severity="secondary" />
-        <Button form="new-user-form" type="submit" label="Créer l'utilisateur" icon="pi pi-check" :loading="creatingUser" />
+        <PrimeButton label="Annuler" icon="pi pi-times" @click="goBack" type="button" outlined severity="secondary" />
+        <PrimeButton form="new-user-form" type="submit" label="Créer l'utilisateur" icon="pi pi-check" :loading="creatingUser" />
       </template>
     </FormShell>
 
@@ -69,20 +69,22 @@
 <script>
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
-import Button from 'primevue/button';
+import PrimeButton from 'primevue/button';
 import Password from 'primevue/password';
 import Message from 'primevue/message';
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
 import { useAuthStore } from '@/stores/authStore';
 import FormShell from '@/components/common/forms/FormShell.vue';
+import { db } from '../../../../firebase.js';
+import { get, ref, set } from 'firebase/database';
 
 export default {
   name: 'NewUserForm',
   components: {
     InputText,
     Dropdown,
-    Button,
+    PrimeButton,
     Password,
     Message,
     Toast,

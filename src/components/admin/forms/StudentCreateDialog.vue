@@ -117,7 +117,7 @@ import { supabase } from '@/supabase'
 import FormSection from '@/components/common/forms/FormSection.vue'
 import FormField from '@/components/common/forms/FormField.vue'
 
-const props = defineProps({
+defineProps({
   visible: {
     type: Boolean,
     default: false

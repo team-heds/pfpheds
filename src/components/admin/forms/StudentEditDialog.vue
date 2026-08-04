@@ -117,7 +117,6 @@ import InputText from 'primevue/inputtext'
 import Dropdown from 'primevue/dropdown'
 import Checkbox from 'primevue/checkbox'
 import Button from 'primevue/button'
-import Divider from 'primevue/divider'
 import ProgressSpinner from 'primevue/progressspinner'
 import Toast from 'primevue/toast'
 import { supabase } from '@/supabase'
@@ -186,6 +185,8 @@ const loadStudentData = async () => {
       .select('*')
       .eq('user_id', props.studentId)
       .single()
+
+    if (physioError && physioError.code !== 'PGRST116') throw physioError
 
     // Fusionner les données
     formData.value = {
