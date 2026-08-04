@@ -2,7 +2,7 @@
   <div>
     <a href="#admin-content" class="skip-link">Aller au contenu</a>
     <Navbar />
-    <div class="admin-layout" :class="{ 'has-feed': hasFeed }">
+    <div class="admin-layout" :class="{ 'has-feed': hasFeed, 'no-sidebar': noSidebar }">
       <template v-if="hasFeed">
         <div class="feed-left">
           <slot name="left" />
@@ -73,7 +73,8 @@ const hasFeed = computed(() => !!slots.left || !!slots.right)
 }
 
 .admin-layout {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   gap: var(--space-6, 1.5rem);
   padding: var(--space-6, 1.5rem);
   height: calc(100dvh - var(--navbar-h, 64px) - (2 * var(--space-6, 1.5rem)));
@@ -84,6 +85,10 @@ const hasFeed = computed(() => !!slots.left || !!slots.right)
   display: grid;
   grid-template-columns: 280px 1fr 320px;
   gap: var(--space-6, 1.5rem);
+}
+
+.admin-layout.no-sidebar {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 @media (max-width: 1279px) {
@@ -100,13 +105,20 @@ const hasFeed = computed(() => !!slots.left || !!slots.right)
 }
 
 .admin-content {
-  flex: 1;
   min-width: 0;
   /* Centralise le scroll pour toutes les pages admin */
   height: 100%;
   overflow-y: auto;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE et Edge */
+}
+
+@media (max-width: 1100px) {
+  .admin-layout {
+    gap: var(--space-4, 1rem);
+    padding: var(--space-4, 1rem);
+    height: calc(100dvh - var(--navbar-h, 64px) - (2 * var(--space-4, 1rem)));
+  }
 }
 
 .admin-content::-webkit-scrollbar {

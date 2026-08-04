@@ -40,11 +40,11 @@
       <nav class="sidebar-nav">
         <ul class="sidebar-menu">
           <li class="sidebar-section">
-            <div class="sidebar-section-label" @click="isExpandedContent && toggleSection(section.label)" :title="!isExpandedContent ? section.label : ''" style="cursor: pointer;">
+            <button type="button" class="sidebar-section-label" @click="isExpandedContent && toggleSection(section.label)" :aria-expanded="isExpandedContent ? isSectionOpen(section.label) : undefined" :title="!isExpandedContent ? section.label : ''">
               <i :class="section.icon" />
               <span v-if="isExpandedContent" v-html="highlightText(section.label)"></span>
               <i v-if="isExpandedContent" class="pi" :class="isSectionOpen(section.label) ? 'pi-chevron-down' : 'pi-chevron-right'" style="margin-left: auto; font-size: 0.875rem;"></i>
-            </div>  
+            </button>
             <ul v-if="section.items && section.items.length > 0 && isSectionOpen(section.label) && isExpandedContent" class="sidebar-submenu">
               <SidebarMenuItems :items="section.items" :highlight="searchQuery" :counts="menuCounts" />
             </ul>
@@ -478,7 +478,8 @@ const menu = ref(adminMenu);
 
 .search-input {
   width: 100%;
-  padding: 0.5rem 0.75rem;
+  min-height: 2.75rem;
+  padding: 0.625rem 0.75rem;
   border: 1px solid var(--surface-border, #e0e0e0);
   border-radius: 0.6rem;
   background: var(--surface-ground);
@@ -515,11 +516,12 @@ const menu = ref(adminMenu);
   max-height: none;
   min-height: 0;
   background: var(--surface-card);
-  padding: 1.5rem;
-  border-radius: 1.2rem;
-  width: 300px;
-  min-width: 260px;
-  max-width: 320px;
+  padding: 1rem;
+  border: 1px solid var(--surface-border, rgba(148, 163, 184, 0.2));
+  border-radius: 1rem;
+  width: 288px;
+  min-width: 288px;
+  max-width: 288px;
   box-sizing: border-box;
   position: relative;
   top: auto;
@@ -537,9 +539,9 @@ const menu = ref(adminMenu);
 }
 
 .admin-sidebar {
-  width: 300px;
-  min-width: 260px;
-  max-width: 320px;
+  width: 288px;
+  min-width: 288px;
+  max-width: 288px;
 }
 
 /* Pour garantir que le parent ne décale pas la sidebar */
@@ -562,10 +564,32 @@ const menu = ref(adminMenu);
 .sidebar-section-label {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.625rem;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.625rem;
+  border: 0;
+  border-radius: 0.625rem;
+  background: transparent;
+  color: var(--text-color);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
   font-weight: 700;
-  font-size: 1.2rem;
-  margin-bottom: 0.5rem;
+  font-size: 0.975rem;
+  line-height: 1.2;
+  margin-bottom: 0.25rem;
+}
+
+.sidebar-section-label:hover {
+  background: var(--surface-hover);
+}
+
+.sidebar-section-label:focus-visible,
+.collapse-toggle:focus-visible,
+.search-input:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
 }
 
 .sidebar-divider {
@@ -576,28 +600,30 @@ const menu = ref(adminMenu);
 }
 
 .sidebar-submenu {
-  margin-left: 1.5rem;
+  margin: 0 0 0.25rem 0.5rem;
+  padding-left: 0.375rem;
+  border-left: 1px solid var(--surface-border, rgba(148, 163, 184, 0.24));
 }
 
 .sidebar-section-card {
-  background: var(--surface-card);
-  border-radius: 1.2rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  padding: 1.2rem 1rem 1.2rem 1rem;
+  background: transparent;
+  border-radius: 0.75rem;
+  box-shadow: none;
+  padding: 0.25rem 0;
   width: 100%;
 }
 
 .admin-general-section,
 .pfp-section,
 .academic-section {
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.75rem;
 }
 
 
 /* Bouton de collapse dans la topbar */
 .collapse-toggle {
-  width: 30px;
-  height: 30px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: var(--primary-color);
   color: white;
@@ -606,7 +632,7 @@ const menu = ref(adminMenu);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
+  transition: background-color 0.2s ease, transform 0.2s ease;
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 

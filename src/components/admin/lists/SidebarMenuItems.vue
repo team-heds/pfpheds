@@ -2,15 +2,17 @@
   <ul class="sidebar-items-list">
     <li v-for="item in items" :key="item.label" class="sidebar-item">
       <template v-if="item.items">
-        <div
+        <button
+          type="button"
           class="sidebar-subsection-label submenu-toggle sidebar-btn"
           @click="toggle(item)"
+          :aria-expanded="isOpen(item)"
           :style="{ paddingLeft: (12 + level * 12) + 'px' }"
         >
           <i :class="item.icon" />
           <span v-html="renderLabel(item.label)"></span>
           <i class="pi" :class="isOpen(item) ? 'pi-chevron-down' : 'pi-chevron-right'" style="margin-left:auto;" />
-        </div>
+        </button>
         <SidebarMenuItems v-if="isOpen(item)" :items="item.items" :level="level + 1" :highlight="highlight" :counts="counts" />
       </template>
       <template v-else>
@@ -128,13 +130,14 @@ function renderLabel(text) {
   background: transparent;
   color: var(--text-color, #e0e6ed);
   border-radius: 8px;
-  padding: 0.5rem 1rem;
-  margin-bottom: 0.3rem;
+  min-height: 2.75rem;
+  padding: 0.55rem 0.625rem;
+  margin-bottom: 0.125rem;
   font-weight: 500;
-  font-size: 1rem;
+  font-size: 0.9rem;
   display: flex;
   align-items: center;
-  gap: 0.7rem;
+  gap: 0.625rem;
   border: 1px solid transparent;
   box-shadow: none;
   cursor: pointer;
@@ -147,6 +150,8 @@ function renderLabel(text) {
 }
 .sidebar-item-label {
   flex: 1;
+  min-width: 0;
+  line-height: 1.25;
 }
 .menu-badge {
   background: var(--primary-color, #3b82f6);
@@ -165,11 +170,17 @@ function renderLabel(text) {
 }
 .sidebar-subsection-label {
   font-weight: 600;
-  font-size: 1.10rem;
-  margin: 0.2rem 0 0.1rem 0;
+  font-size: 0.925rem;
+  margin: 0.125rem 0;
   user-select: none;
   border-radius: 8px;
   width: 100%;
+  text-align: left;
+  font-family: inherit;
+}
+.sidebar-btn:focus-visible {
+  outline: 2px solid var(--primary-color, #3b82f6);
+  outline-offset: 2px;
 }
 .sidebar-link {
   text-decoration: none;

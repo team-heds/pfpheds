@@ -911,14 +911,18 @@ onUnmounted(() => {
 
 <style scoped>
 .personalized-dashboard {
-  min-height: 100vh;
+  width: min(100%, 96rem);
+  min-height: 100%;
+  margin-inline: auto;
+  box-sizing: border-box;
 }
 
 .dashboard-welcome {
   background: var(--surface-card);
-  padding: 2rem;
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  padding: clamp(1.25rem, 2vw, 1.75rem);
+  border: 1px solid var(--surface-border, rgba(148, 163, 184, 0.2));
+  border-radius: 1rem;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
 }
 
 .dashboard-welcome h1 {
@@ -944,10 +948,11 @@ onUnmounted(() => {
   border: none !important;
   border-radius: 12px;
   padding: 0.5rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  border: 1px solid var(--surface-border, rgba(148, 163, 184, 0.2)) !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
   gap: 0.5rem;
   display: flex;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 /* Chaque onglet */
@@ -955,8 +960,9 @@ onUnmounted(() => {
   background: transparent !important;
   border: none !important;
   border-radius: 8px !important;
-  padding: 1rem 1.5rem !important;
-  transition: all 0.3s ease !important;
+  min-height: 2.75rem;
+  padding: 0.75rem 1rem !important;
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease !important;
   font-weight: 500 !important;
   color: var(--text-color-secondary) !important;
   display: flex;
@@ -1017,7 +1023,8 @@ onUnmounted(() => {
 }
 
 .stat-card {
-  transition: all 0.3s ease;
+  border: 1px solid var(--surface-border, rgba(148, 163, 184, 0.18));
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   cursor: default;
 }
 
@@ -1028,7 +1035,7 @@ onUnmounted(() => {
 
 .dashboard-link-card {
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   height: 100%;
 }
 
@@ -1044,6 +1051,9 @@ onUnmounted(() => {
 
 /* Responsive */
 @media (max-width: 768px) {
+  .personalized-dashboard {
+    padding: 0.75rem !important;
+  }
   .dashboard-welcome {
     text-align: center;
   }

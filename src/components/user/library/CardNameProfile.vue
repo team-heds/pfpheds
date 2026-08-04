@@ -97,7 +97,6 @@
       <div class="info-item info-item-respondant">
         <i class="pi pi-users info-icon"></i>
         <span class="info-label">Répondant HES :</span>
-        <br class="show-on-overflow"/>
         <span class="info-value">
           <template v-if="isAdmin">
             <Dropdown
@@ -1024,20 +1023,21 @@ const saveProfileWithXP = async () => {
 }
 .info-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(18rem, 1fr));
+  gap: 1rem;
   margin-bottom: 1rem;
 }
-@media (max-width: 700px) {
+@media (max-width: 820px) {
   .info-grid {
     grid-template-columns: 1fr;
   }
 }
 .info-item {
   display: grid;
-  grid-template-columns: 1.5rem minmax(6.5rem, auto) minmax(0, 1fr);
-  align-items: center;
-  min-height: 4.5rem;
+  grid-template-columns: 1.5rem minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-content: center;
+  min-height: 5rem;
   background: var(--surface-ground, rgba(15, 23, 42, 0.04));
   border: 1px solid var(--surface-border, rgba(148, 163, 184, 0.22));
   border-radius: 0.75rem;
@@ -1045,17 +1045,21 @@ const saveProfileWithXP = async () => {
   gap: 0.625rem;
 }
 .info-icon {
+  grid-row: 1 / span 2;
+  align-self: center;
   font-size: 1.25rem;
   color: var(--primary-color);
   flex-shrink: 0;
 }
 .info-label {
+  grid-column: 2;
   font-size: 0.875rem;
   line-height: 1.35;
   color: var(--text-color-secondary, #64748b);
   font-weight: 600;
 }
 .info-value {
+  grid-column: 2;
   min-width: 0;
   font-size: 0.95rem;
   line-height: 1.45;
@@ -1064,9 +1068,9 @@ const saveProfileWithXP = async () => {
   overflow-wrap: anywhere;
 }
 .info-value.id {
-  word-break: normal;
-  overflow-x: auto;
-  white-space: nowrap;
+  word-break: break-all;
+  overflow-x: visible;
+  white-space: normal;
   max-width: 100%;
   display: block;
 }
@@ -1102,8 +1106,9 @@ const saveProfileWithXP = async () => {
   min-width: 0;
 }
 .info-item-respondant .info-value {
-  width: auto;
-  word-break: break-word;
+  width: 100%;
+  word-break: normal;
+  overflow-wrap: anywhere;
 }
 
 /* --- Responsive Mobile Styles --- */

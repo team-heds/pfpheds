@@ -1,6 +1,6 @@
 
 <template>
-  <div class="filter-layout">
+  <div class="filter-layout" :class="{ 'filter-layout--embedded': props.embed }">
     <!-- Sidebar Gauche -->
     <div class="sidebar-left">
       <LeftSidebar :hide-gamification="true" />
@@ -272,9 +272,20 @@ const onAvatarChange = (event) => {
 /* Layout global avec sidebars et contenu central */
 .filter-layout {
   display: grid;
-  grid-template-columns: 1fr 3fr 1fr; /* Sidebar gauche, contenu central, sidebar droite */
-  gap: 1.5rem;
-  min-height: 100vh;
+  grid-template-columns: minmax(16rem, 19rem) minmax(0, 75rem) minmax(17rem, 20rem);
+  justify-content: center;
+  align-items: start;
+  gap: clamp(1rem, 1.5vw, 1.75rem);
+  width: 100%;
+  max-width: 120rem;
+  min-height: calc(100dvh - var(--navbar-h, 64px));
+  margin-inline: auto;
+  padding-inline: clamp(1rem, 2vw, 2rem);
+  box-sizing: border-box;
+}
+
+.filter-layout--embedded {
+  grid-template-columns: minmax(0, 75rem);
 }
 
 /* Sidebar Gauche et Droite */
@@ -285,10 +296,10 @@ const onAvatarChange = (event) => {
 
 /* Contenu Principal */
 .main-content {
-  max-width: 880px;
+  max-width: 75rem;
+  min-width: 0;
   width: 100%;
-  margin-left: auto;
-  margin-right: auto;
+  margin-inline: auto;
 }
 
 .surfaces-card {
@@ -298,9 +309,9 @@ const onAvatarChange = (event) => {
 }
 
 /* Responsive pour le layout global */
-@media (max-width: 1024px) {
+@media (max-width: 1280px) {
   .filter-layout {
-    grid-template-columns: 1fr 2fr;
+    grid-template-columns: minmax(15rem, 18rem) minmax(0, 1fr);
   }
   .sidebar-right {
     display: none;
@@ -319,7 +330,7 @@ const onAvatarChange = (event) => {
 
 /* Styles spécifiques au composant FilterMenu */
 .filter-menu {
-  padding: 20px;
+  padding: 1.25rem 0;
 }
 
 .profile-hero {
@@ -468,11 +479,12 @@ const onAvatarChange = (event) => {
 }
 
 .profileinfo-scrollable {
-  height: 100vh;
+  height: calc(100dvh - var(--navbar-h, 64px));
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 2rem;
-  padding-bottom: 9rem;
+  padding: clamp(1rem, 2vw, 2rem);
+  padding-bottom: 7rem;
+  box-sizing: border-box;
   scrollbar-width: none; /* Firefox */
 }
 .profileinfo-scrollable::-webkit-scrollbar {
@@ -480,4 +492,3 @@ const onAvatarChange = (event) => {
   height: 0;
 }
 </style>
-
