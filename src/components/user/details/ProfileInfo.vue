@@ -273,15 +273,10 @@ const onAvatarChange = (event) => {
 .filter-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 3fr) minmax(0, 1fr);
-  justify-content: center;
-  align-items: start;
-  gap: clamp(1rem, 1.5vw, 1.75rem);
-  width: 100%;
-  max-width: 120rem;
-  min-height: calc(100dvh - var(--navbar-h, 64px));
-  margin-inline: auto;
-  padding-inline: clamp(1rem, 2vw, 2rem);
-  box-sizing: border-box;
+  gap: 1.5rem;
+  height: calc(100vh - var(--navbar-h) - (2 * var(--content-pad)));
+  max-height: calc(100vh - var(--navbar-h) - (2 * var(--content-pad)));
+  overflow: hidden;
 }
 
 .filter-layout--embedded {
@@ -291,7 +286,8 @@ const onAvatarChange = (event) => {
 /* Sidebar Gauche et Droite */
 .sidebar-left,
 .sidebar-right {
-  overflow-y: auto;
+  height: 100%;
+  overflow-y: hidden;
 }
 
 /* Contenu Principal */
@@ -299,6 +295,7 @@ const onAvatarChange = (event) => {
   max-width: 75rem;
   min-width: 0;
   width: 100%;
+  height: 100%;
   margin-inline: auto;
 }
 
@@ -309,7 +306,21 @@ const onAvatarChange = (event) => {
 }
 
 /* Responsive pour le layout global */
-@media (max-width: 1280px) {
+@media (max-width: 1366px) {
+  .filter-layout {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 2.5fr) minmax(0, 0.8fr);
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 1200px) {
+  .filter-layout {
+    grid-template-columns: minmax(0, 0.7fr) minmax(0, 2.8fr) minmax(0, 0.7fr);
+    gap: 0.8rem;
+  }
+}
+
+@media (max-width: 1024px) {
   .filter-layout {
     grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
   }
@@ -444,7 +455,7 @@ const onAvatarChange = (event) => {
 }
 
 /* Responsive */
-@media (max-width: 991px) {
+@media (max-width: 768px) {
   .filter-layout {
     flex-direction: column !important;
     display: flex;

@@ -523,26 +523,23 @@ function listenUserRole() {
 .institution-shell {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 3fr) minmax(0, 1fr);
-  align-items: start;
-  gap: clamp(1rem, 1.5vw, 1.75rem);
-  width: 100%;
-  max-width: 120rem;
-  min-height: calc(100dvh - var(--navbar-h, 64px));
-  margin-inline: auto;
-  padding-inline: clamp(1rem, 2vw, 2rem);
-  box-sizing: border-box;
+  gap: 1.5rem;
+  height: calc(100vh - var(--navbar-h) - (2 * var(--content-pad)));
+  max-height: calc(100vh - var(--navbar-h) - (2 * var(--content-pad)));
+  overflow: hidden;
 }
 
 .institution-shell__side {
+  height: 100%;
   min-width: 0;
-  overflow-y: auto;
+  overflow-y: hidden;
 }
 
 .iv {
   --accent: var(--primary-color, #6366f1);
   --accent-soft: var(--primary-color, rgba(99,102,241,.12));
   --radius: 1rem;
-  height: calc(100dvh - var(--navbar-h, 64px));
+  height: 100%;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
@@ -879,14 +876,26 @@ function listenUserRole() {
 }
 
 /* ====== RESPONSIVE ====== */
-@media (max-width: 1280px) {
+@media (max-width: 1366px) {
+  .institution-shell {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 2.5fr) minmax(0, 0.8fr);
+    gap: 1rem;
+  }
+}
+@media (max-width: 1200px) {
+  .institution-shell {
+    grid-template-columns: minmax(0, 0.7fr) minmax(0, 2.8fr) minmax(0, 0.7fr);
+    gap: 0.8rem;
+  }
+}
+@media (max-width: 1024px) {
   .institution-shell {
     grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
   }
   .institution-shell__side--right { display: none; }
 }
-@media (max-width: 991px) {
-  .institution-shell { display: block; padding-inline: 0; }
+@media (max-width: 768px) {
+  .institution-shell { display: block; }
   .institution-shell__side { display: none; }
 }
 @media (max-width: 1024px) {
