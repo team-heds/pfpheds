@@ -68,6 +68,15 @@ using (
 do $migration$
 begin
   if to_regclass('public.suivi_cas_particuliers') is not null then
+    execute 'alter table public.suivi_cas_particuliers enable row level security';
+    execute 'drop policy if exists "Allow delete for authenticated users" on public.suivi_cas_particuliers';
+    execute 'drop policy if exists "Allow insert for authenticated users" on public.suivi_cas_particuliers';
+    execute 'drop policy if exists "Allow read for authenticated users" on public.suivi_cas_particuliers';
+    execute 'drop policy if exists "Allow update for authenticated users" on public.suivi_cas_particuliers';
+    execute 'drop policy if exists "suivi_cas_delete_own" on public.suivi_cas_particuliers';
+    execute 'drop policy if exists "suivi_cas_insert_own" on public.suivi_cas_particuliers';
+    execute 'drop policy if exists "suivi_cas_select_own" on public.suivi_cas_particuliers';
+    execute 'drop policy if exists "suivi_cas_update_own" on public.suivi_cas_particuliers';
     execute 'drop policy if exists "suivi_cas_particuliers_authenticated_all" on public.suivi_cas_particuliers';
     execute 'drop policy if exists "suivi_cas_particuliers_privileged_select" on public.suivi_cas_particuliers';
     execute 'drop policy if exists "suivi_cas_particuliers_privileged_write" on public.suivi_cas_particuliers';
@@ -76,18 +85,21 @@ begin
   end if;
 
   if to_regclass('public.cas_particuliers_historique') is not null then
+    execute 'alter table public.cas_particuliers_historique enable row level security';
     execute 'drop policy if exists "cas_particuliers_historique_authenticated_all" on public.cas_particuliers_historique';
     execute 'drop policy if exists "cas_particuliers_historique_privileged" on public.cas_particuliers_historique';
     execute 'create policy "cas_particuliers_historique_privileged" on public.cas_particuliers_historique for all to authenticated using ((select public.app_can_manage_cases())) with check ((select public.app_can_manage_cases()))';
   end if;
 
   if to_regclass('public.planning_history') is not null then
+    execute 'alter table public.planning_history enable row level security';
     execute 'drop policy if exists "planning_history_insert_authenticated" on public.planning_history';
     execute 'drop policy if exists "planning_history_privileged_insert" on public.planning_history';
     execute 'create policy "planning_history_privileged_insert" on public.planning_history for insert to authenticated with check ((select public.app_is_privileged()) and (changed_by is null or changed_by = (select auth.uid())))';
   end if;
 
   if to_regclass('public.planning_validations') is not null then
+    execute 'alter table public.planning_validations enable row level security';
     execute 'drop policy if exists "planning_validations_insert_authenticated" on public.planning_validations';
     execute 'drop policy if exists "planning_validations_update_authenticated" on public.planning_validations';
     execute 'drop policy if exists "planning_validations_privileged_insert" on public.planning_validations';
@@ -97,6 +109,7 @@ begin
   end if;
 
   if to_regclass('public.module_hours_budget') is not null then
+    execute 'alter table public.module_hours_budget enable row level security';
     execute 'drop policy if exists "module_hours_budget_all_authenticated" on public.module_hours_budget';
     execute 'drop policy if exists "module_hours_budget_privileged_write" on public.module_hours_budget';
     execute 'create policy "module_hours_budget_privileged_write" on public.module_hours_budget for all to authenticated using ((select public.app_is_privileged())) with check ((select public.app_is_privileged()))';
