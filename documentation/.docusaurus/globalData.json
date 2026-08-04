@@ -131,6 +131,11 @@
               "sidebar": "docs"
             },
             {
+              "id": "contrib/presentation-revealjs",
+              "path": "/docs/contrib/presentation-revealjs",
+              "sidebar": "docs"
+            },
+            {
               "id": "contrib/workflow",
               "path": "/docs/contrib/workflow",
               "sidebar": "docs"

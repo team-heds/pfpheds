@@ -1,11 +1,11 @@
 <template>
   <AdminLayout>
     <Toast />
-    <div class="personalized-dashboard p-4">
+    <main class="personalized-dashboard">
       <!-- Header personnalisé -->
-      <div class="dashboard-welcome mb-4">
-        <div class="flex align-items-center justify-content-between flex-wrap gap-3">
-          <div class="flex align-items-center gap-3">
+      <header class="dashboard-welcome">
+        <div class="dashboard-welcome__inner">
+          <div class="dashboard-welcome__identity">
             <Avatar
               :label="userInitials"
               size="xlarge"
@@ -13,7 +13,7 @@
               style="background-color: var(--primary-color); color: white"
             />
             <div>
-              <h1 class="text-4xl font-bold text-900 m-0">
+              <h1>
                 Bonjour{{ userName ? ', ' + userName : '' }} 👋
               </h1>
               <p class="text-600 m-0 mt-1">
@@ -22,7 +22,7 @@
             </div>
           </div>
           
-          <div class="flex gap-2 flex-wrap">
+          <div class="dashboard-welcome__actions">
             <!-- Sélecteur de période -->
             <PeriodSelector 
               v-model="selectedPeriod" 
@@ -49,7 +49,7 @@
             />
           </div>
         </div>
-      </div>
+      </header>
 
       <!-- Tabs Dashboard -->
       <TabView v-model:activeIndex="activeTab">
@@ -62,8 +62,8 @@
 
           <!-- Quick Stats - Widgets Redimensionnables -->
           <div class="mb-4">
-            <div class="flex align-items-center justify-content-between mb-3">
-              <h3 class="text-xl font-semibold m-0">Statistiques rapides</h3>
+            <div class="dashboard-section-heading">
+              <div><h2>Vue d’ensemble</h2><p>Les chiffres essentiels de la plateforme.</p></div>
               <Button
                 :icon="widgetEditMode ? 'pi pi-check' : 'pi pi-cog'"
                 :label="widgetEditMode ? 'Terminer' : 'Personnaliser taille'"
@@ -82,87 +82,19 @@
             >
               <!-- Template pour chaque widget -->
               <template #widget_places="{ widget, size }">
-                <Card class="stat-card h-full">
-                  <template #content>
-                    <div class="flex align-items-center justify-content-between">
-                      <div :class="size === 'large' ? 'flex-1' : ''">
-                        <div class="text-600 font-semibold mb-2">{{ widget.label }}</div>
-                        <div :class="size === 'large' ? 'text-5xl' : 'text-3xl'" class="font-bold text-900">
-                          {{ widget.value }}
-                        </div>
-                        <div class="text-sm text-500 mt-1">Disponibles</div>
-                      </div>
-                      <Avatar
-                        :icon="widget.icon"
-                        :size="size === 'large' ? 'xlarge' : 'large'"
-                        :style="{ backgroundColor: widget.color + '20', color: widget.color }"
-                      />
-                    </div>
-                  </template>
-                </Card>
+                <DashboardStatCard :label="widget.label" :value="widget.value" caption="Disponibles" :icon="widget.icon" :color="widget.color" :data-size="size" />
               </template>
 
               <template #widget_institutions="{ widget, size }">
-                <Card class="stat-card h-full">
-                  <template #content>
-                    <div class="flex align-items-center justify-content-between">
-                      <div>
-                        <div class="text-600 font-semibold mb-2">{{ widget.label }}</div>
-                        <div :class="size === 'large' ? 'text-5xl' : 'text-3xl'" class="font-bold text-900">
-                          {{ widget.value }}
-                        </div>
-                        <div class="text-sm text-500 mt-1">Partenaires</div>
-                      </div>
-                      <Avatar
-                        :icon="widget.icon"
-                        :size="size === 'large' ? 'xlarge' : 'large'"
-                        :style="{ backgroundColor: widget.color + '20', color: widget.color }"
-                      />
-                    </div>
-                  </template>
-                </Card>
+                <DashboardStatCard :label="widget.label" :value="widget.value" caption="Partenaires" :icon="widget.icon" :color="widget.color" :data-size="size" />
               </template>
 
               <template #widget_students="{ widget, size }">
-                <Card class="stat-card h-full">
-                  <template #content>
-                    <div class="flex align-items-center justify-content-between">
-                      <div>
-                        <div class="text-600 font-semibold mb-2">{{ widget.label }}</div>
-                        <div :class="size === 'large' ? 'text-5xl' : 'text-3xl'" class="font-bold text-900">
-                          {{ widget.value }}
-                        </div>
-                        <div class="text-sm text-500 mt-1">Inscrits</div>
-                      </div>
-                      <Avatar
-                        :icon="widget.icon"
-                        :size="size === 'large' ? 'xlarge' : 'large'"
-                        :style="{ backgroundColor: widget.color + '20', color: widget.color }"
-                      />
-                    </div>
-                  </template>
-                </Card>
+                <DashboardStatCard :label="widget.label" :value="widget.value" caption="Inscrits" :icon="widget.icon" :color="widget.color" :data-size="size" />
               </template>
 
               <template #widget_formateurs="{ widget, size }">
-                <Card class="stat-card h-full">
-                  <template #content>
-                    <div class="flex align-items-center justify-content-between">
-                      <div>
-                        <div class="text-600 font-semibold mb-2">{{ widget.label }}</div>
-                        <div :class="size === 'large' ? 'text-5xl' : 'text-3xl'" class="font-bold text-900">
-                          {{ widget.value }}
-                        </div>
-                        <div class="text-sm text-500 mt-1">Praticiens</div>
-                      </div>
-                      <Avatar
-                        :icon="widget.icon"
-                        :size="size === 'large' ? 'xlarge' : 'large'"
-                        :style="{ backgroundColor: widget.color + '20', color: widget.color }"
-                      />
-                    </div>
-                  </template>
-                </Card>
+                <DashboardStatCard :label="widget.label" :value="widget.value" caption="Praticiens" :icon="widget.icon" :color="widget.color" :data-size="size" />
               </template>
             </ResizableWidgetGrid>
           </div>
@@ -474,7 +406,7 @@
           </div>
         </TabPanel>
       </TabView>
-    </div>
+    </main>
 
     <!-- Dialogs -->
     <KpiAlertManager
@@ -545,6 +477,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import { auth } from '@/firebase'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import DashboardKpiGrid from '@/components/admin/widgets/DashboardKpiGrid.vue'
+import DashboardStatCard from '@/components/admin/widgets/DashboardStatCard.vue'
 import ResizableWidgetGrid from '@/components/admin/widgets/ResizableWidgetGrid.vue'
 import PeriodComparisonPanel from '@/components/admin/widgets/PeriodComparisonPanel.vue'
 import KpiAlertManager from '@/components/admin/widgets/KpiAlertManager.vue'
@@ -912,7 +845,10 @@ onUnmounted(() => {
 <style scoped>
 .personalized-dashboard {
   width: 100%;
+  max-width: 112rem;
+  margin-inline: auto;
   min-height: 100%;
+  padding: clamp(1rem, 2vw, 2rem);
   box-sizing: border-box;
 }
 
@@ -922,10 +858,16 @@ onUnmounted(() => {
   border: 1px solid var(--surface-border, rgba(148, 163, 184, 0.2));
   border-radius: 1rem;
   box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  margin-block-end: 1.25rem;
 }
+.dashboard-welcome__inner{display:flex;align-items:center;justify-content:space-between;gap:1.5rem}.dashboard-welcome__identity{display:flex;align-items:center;gap:1rem;min-width:0}.dashboard-welcome__actions{display:flex;align-items:center;justify-content:flex-end;gap:.625rem;flex-wrap:wrap}.dashboard-section-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;margin-block-end:1rem}.dashboard-section-heading h2{margin:0;color:var(--text-color);font-size:1.25rem;line-height:1.2}.dashboard-section-heading p{margin:.25rem 0 0;color:var(--text-color-secondary);font-size:.875rem}
 
 .dashboard-welcome h1 {
   color: var(--text-color) !important;
+  margin: 0;
+  font-size: clamp(1.5rem, 3vw, 2.25rem);
+  line-height: 1.1;
+  text-wrap: balance;
 }
 
 .dashboard-welcome p {
@@ -952,6 +894,8 @@ onUnmounted(() => {
   gap: 0.5rem;
   display: flex;
   margin-bottom: 1.5rem;
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 
 /* Chaque onglet */
@@ -1006,21 +950,6 @@ onUnmounted(() => {
 }
 
 /* Animation d'entrée du contenu */
-:deep(.p-tabview-panel) {
-  animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 .stat-card {
   border: 1px solid var(--surface-border, rgba(148, 163, 184, 0.18));
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -1054,11 +983,13 @@ onUnmounted(() => {
     padding: 0.75rem !important;
   }
   .dashboard-welcome {
-    text-align: center;
+    text-align: start;
   }
+  .dashboard-welcome__inner,.dashboard-welcome__identity{align-items:flex-start}.dashboard-welcome__inner{flex-direction:column}.dashboard-welcome__actions{width:100%;justify-content:flex-start}.dashboard-welcome__actions :deep(.p-button){flex:1 1 auto}.dashboard-section-heading{align-items:stretch;flex-direction:column}.dashboard-section-heading :deep(.p-button){width:100%}:deep(.p-tabview-panel){padding-block:1rem!important}.alerts-section,.settings-section{padding:0}
   
   .dashboard-welcome h1 {
     font-size: 2rem;
   }
 }
+@media(max-width:480px){.dashboard-welcome__identity :deep(.p-avatar){display:none}.dashboard-welcome__actions{display:grid;grid-template-columns:1fr}.dashboard-welcome__actions :deep(.p-button){width:100%}:deep(.p-tabview-nav-link){padding:.625rem .75rem!important}.personalized-dashboard{padding:.75rem}}
 </style>

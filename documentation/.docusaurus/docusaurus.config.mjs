@@ -11,7 +11,7 @@ export default {
   "favicon": "img/favicon.ico",
   "organizationName": "pfpheds",
   "projectName": "docs",
-  "trailingSlash": false,
+  "trailingSlash": true,
   "i18n": {
     "defaultLocale": "fr",
     "locales": [
