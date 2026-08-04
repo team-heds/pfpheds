@@ -613,7 +613,7 @@ onMounted(() => {
   min-height: 150px;
   display: flex;
   flex-direction: column;
-  animation: fadeInUp 0.5s ease-out backwards;
+  animation: none;
 }
 
 @keyframes fadeInUp {

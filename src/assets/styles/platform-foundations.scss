@@ -15,6 +15,25 @@ body {
   color: var(--text-color, #1f2937);
   background: var(--surface-ground, #f8fafc);
   line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+img,
+video,
+canvas,
+svg {
+  max-inline-size: 100%;
+}
+
+main,
+section,
+article,
+.grid > *,
+.p-tabview,
+.p-tabview-panels,
+.p-tabview-panel {
+  min-inline-size: 0;
 }
 
 button,
@@ -79,6 +98,30 @@ textarea {
   border-radius: var(--tt-radius-xl, 1rem);
 }
 
+.p-dialog {
+  max-inline-size: calc(100vw - 2rem);
+  max-block-size: calc(100dvh - 2rem);
+}
+
+.p-dialog .p-dialog-content {
+  overscroll-behavior: contain;
+}
+
+.p-datatable-wrapper,
+.p-datatable-table-container {
+  max-inline-size: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+}
+
+.p-dialog-footer,
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: .75rem;
+  flex-wrap: wrap;
+}
+
 .p-datatable-scrollable .p-datatable-thead > tr > th,
 .p-datatable .p-datatable-thead > tr > th {
   position: sticky;
@@ -88,6 +131,35 @@ textarea {
 }
 
 @media (max-width: 40rem) {
+  .p-dialog {
+    inline-size: calc(100vw - 1rem) !important;
+    max-inline-size: calc(100vw - 1rem) !important;
+    margin: .5rem;
+  }
+
+  .p-dialog .p-dialog-header,
+  .p-dialog .p-dialog-content,
+  .p-dialog .p-dialog-footer {
+    padding-inline: 1rem;
+  }
+
+  .p-dialog-footer,
+  .form-actions {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .p-dialog-footer .p-button,
+  .form-actions .p-button {
+    width: 100%;
+  }
+
+  .p-datatable .p-paginator {
+    justify-content: flex-start;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+
   input,
   select,
   textarea,

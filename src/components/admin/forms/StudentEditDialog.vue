@@ -17,7 +17,9 @@
       </div>
 
       <!-- Form -->
-      <form v-else @submit.prevent="saveStudent" class="grid">
+      <form v-else id="student-edit-form" @submit.prevent="saveStudent">
+        <FormSection title="Identité et inscription" description="Modifiez les informations principales de l’étudiant." icon="pi pi-user-edit">
+        <div class="grid">
         <!-- Prénom -->
         <div class="field col-12 md:col-6">
           <label for="forname" class="font-semibold">Prénom</label>
@@ -89,6 +91,8 @@
             placeholder="Optionnel"
           />
         </div>
+        </div>
+        </FormSection>
       </form>
     </div>
 
@@ -117,6 +121,7 @@ import Divider from 'primevue/divider'
 import ProgressSpinner from 'primevue/progressspinner'
 import Toast from 'primevue/toast'
 import { supabase } from '@/supabase'
+import FormSection from '@/components/common/forms/FormSection.vue'
 
 const props = defineProps({
   visible: {
