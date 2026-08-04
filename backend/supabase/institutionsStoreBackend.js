@@ -1,14 +1,21 @@
 // supabase/institutionsStoreBackend.js
 const { Router } = require('express')
-const supabase = require('../supabaseClient')
 const { supabaseAdmin } = require('../supabaseClient')
 const multer = require('multer')
 const { randomUUID } = require('crypto')
- 
+const fs = require('fs')
+const {
+  cleanupUploadedFiles,
+  createDiskStorage,
+  validateUploadedFile
+} = require('../uploads/fileValidation')
+
 const router = Router()
+const supabase = supabaseAdmin
+const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
 const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 8 * 1024 * 1024, files: 8 },
+  storage: createDiskStorage(multer),
+  limits: { fileSize: 8 * 1024 * 1024, files: 4 },
   fileFilter: (_req, file, callback) => {
     const allowed = /^image\/(jpeg|png|webp)$/i.test(file.mimetype)
     callback(allowed ? null : new Error('Type d’image non autorisé.'), allowed)
@@ -50,13 +57,17 @@ router.post('/:id/images', upload.array('images'), async (req, res) => {
     const uploaded = []
 
     for (const file of files) {
-      const ext = file.originalname?.includes('.') ? file.originalname.split('.').pop() : 'jpg'
+      await validateUploadedFile(file, ALLOWED_IMAGE_TYPES)
+      const ext = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }[
+        file.detectedMimeType
+      ]
       const path = `${institutionId}/${Date.now()}-${randomUUID()}.${ext}`
+      const fileBuffer = await fs.promises.readFile(file.path)
 
       const { error: uploadError } = await supabaseAdmin.storage
         .from(INSTITUTIONS_BUCKET)
-        .upload(path, file.buffer, {
-          contentType: file.mimetype,
+        .upload(path, fileBuffer, {
+          contentType: file.detectedMimeType,
           cacheControl: '3600',
           upsert: false
         })
@@ -76,7 +87,9 @@ router.post('/:id/images', upload.array('images'), async (req, res) => {
     return res.status(201).json({ files: uploaded })
   } catch (e) {
     console.error('POST /api/institutions/:id/images failed:', e)
-    return res.status(500).json({ error: e?.message || 'Internal Server Error' })
+    return res.status(e.status || 500).json({ error: e?.message || 'Internal Server Error' })
+  } finally {
+    await cleanupUploadedFiles(req.files)
   }
 })
 
@@ -89,9 +102,7 @@ router.delete('/:id/images', async (req, res) => {
       return res.status(400).json({ error: 'URL image invalide' })
     }
 
-    const { error } = await supabaseAdmin.storage
-      .from(INSTITUTIONS_BUCKET)
-      .remove([storagePath])
+    const { error } = await supabaseAdmin.storage.from(INSTITUTIONS_BUCKET).remove([storagePath])
 
     if (error) {
       console.error('[Supabase] institutions image delete error:', error)
@@ -104,7 +115,7 @@ router.delete('/:id/images', async (req, res) => {
     return res.status(500).json({ error: e?.message || 'Internal Server Error' })
   }
 })
- 
+
 // GET all
 router.get('/', async (req, res) => {
   try {
@@ -119,7 +130,7 @@ router.get('/', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' })
   }
 })
- 
+
 // GET by ID (InstitutionId logique)
 router.get('/:id', async (req, res) => {
   try {
@@ -138,15 +149,11 @@ router.get('/:id', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' })
   }
 })
- 
+
 // CREATE
 router.post('/', async (req, res) => {
   try {
-    const { data, error } = await supabase
-      .from('institutions')
-      .insert([req.body])
-      .select()
-      .single()
+    const { data, error } = await supabase.from('institutions').insert([req.body]).select().single()
     if (error) {
       console.error('[Supabase] institutions create error:', error)
       return res.status(400).json({ error: error.message })
@@ -157,28 +164,28 @@ router.post('/', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' })
   }
 })
- 
+
 // UPDATE (PUT) institutions
 router.put('/:id', async (req, res) => {
   try {
     const id = String(req.params.id || '').trim()
     console.log('🔧 PUT institutions for InstitutionId:', id)
- 
+
     // Build payload from body, but never allow changing the primary key
     const payload = { ...req.body }
     delete payload.InstitutionId
- 
+
     if (Object.keys(payload).length === 0) {
       return res.status(400).json({ error: 'No updatable fields provided' })
     }
- 
+
     const { data, error } = await supabase
       .from('institutions')
       .update(payload)
       .eq('InstitutionId', id)
       .select('*')
       .maybeSingle()
- 
+
     // Handle real errors returned by Supabase
     const hasRealError = !!(error && (error.message || error.code))
     if (hasRealError) {
@@ -188,7 +195,7 @@ router.put('/:id', async (req, res) => {
         code: error.code || null
       })
     }
- 
+
     // Not found
     if (!data) {
       // Double-check existence
@@ -201,15 +208,14 @@ router.put('/:id', async (req, res) => {
       // If exists but nothing returned, send current state
       return res.json(chk.data)
     }
- 
+
     return res.json(data)
   } catch (e) {
     console.error('PUT /api/institutions/:id failed:', e)
     return res.status(500).json({ error: 'Internal Server Error' })
   }
 })
- 
- 
+
 // DELETE
 router.delete('/:id', async (req, res) => {
   try {
@@ -227,7 +233,5 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' })
   }
 })
- 
+
 module.exports = router
- 
- 

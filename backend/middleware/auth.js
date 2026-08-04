@@ -1,6 +1,12 @@
 const { supabaseAdmin } = require('../supabaseClient')
 
-const ADMIN_PERMISSIONS = new Set(['admin', 'super.all', 'super_admin', 'adminphysio', 'adminsoins'])
+const ADMIN_PERMISSIONS = new Set([
+  'admin',
+  'super.all',
+  'super_admin',
+  'adminphysio',
+  'adminsoins'
+])
 
 function parseBearerToken(headerValue) {
   if (typeof headerValue !== 'string') return null
@@ -23,7 +29,10 @@ function normalizePermissions(value) {
     } catch (_) {
       // Plain role/permission string.
     }
-    return value.split(',').map((permission) => permission.trim()).filter(Boolean)
+    return value
+      .split(',')
+      .map((permission) => permission.trim())
+      .filter(Boolean)
   }
   return []
 }
@@ -69,7 +78,7 @@ async function authenticate(req, res, next) {
     req.auth = {
       user: data.user,
       userId: data.user.id,
-      permissions: await loadAuthorization(data.user.id),
+      permissions: await loadAuthorization(data.user.id)
     }
     return next()
   } catch (error) {
@@ -85,11 +94,16 @@ function requireAdmin(req, res, next) {
 }
 
 function requireAnyPermission(...allowedPermissions) {
-  const allowed = new Set(allowedPermissions.flat().map((permission) => String(permission).toLowerCase()))
+  const allowed = new Set(
+    allowedPermissions.flat().map((permission) => String(permission).toLowerCase())
+  )
   return (req, res, next) => {
     if (!req.auth) return res.status(401).json({ error: 'Authentification requise.' })
-    const authorized = req.auth.permissions.some((permission) => allowed.has(String(permission).toLowerCase()))
-    if (!authorized && !isAdmin(req.auth)) return res.status(403).json({ error: 'Permission insuffisante.' })
+    const authorized = req.auth.permissions.some((permission) =>
+      allowed.has(String(permission).toLowerCase())
+    )
+    if (!authorized && !isAdmin(req.auth))
+      return res.status(403).json({ error: 'Permission insuffisante.' })
     return next()
   }
 }
@@ -97,6 +111,15 @@ function requireAnyPermission(...allowedPermissions) {
 function requireAdminForMutations(req, res, next) {
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next()
   return requireAdmin(req, res, next)
+}
+
+function requireSelfParam(paramName = 'userId') {
+  return (req, res, next) => {
+    if (!req.auth) return res.status(401).json({ error: 'Authentification requise.' })
+    if (String(req.params?.[paramName] || '') === req.auth.userId || isAdmin(req.auth))
+      return next()
+    return res.status(403).json({ error: 'Accès au profil demandé interdit.' })
+  }
 }
 
 function protectAdminMutations(req, res, next) {
@@ -113,4 +136,5 @@ module.exports = {
   requireAdmin,
   requireAdminForMutations,
   requireAnyPermission,
+  requireSelfParam
 }
