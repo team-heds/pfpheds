@@ -4,7 +4,9 @@
 
 param(
     [string]$Version = "auto",
+    [string]$EnvFile = ".env",
     [switch]$SkipBuild,
+    [switch]$ValidateOnly,
     [switch]$Force,
     [switch]$SkipBackend
 )
@@ -13,6 +15,52 @@ function Write-Info($message) { Write-Host "[INFO] $message" -ForegroundColor Cy
 function Write-Success($message) { Write-Host "[SUCCESS] $message" -ForegroundColor Green }
 function Write-Warning($message) { Write-Host "[WARNING] $message" -ForegroundColor Yellow }
 function Write-Error($message) { Write-Host "[ERROR] $message" -ForegroundColor Red; exit 1 }
+
+function Import-ViteEnvironment($Path) {
+    if (-not (Test-Path -LiteralPath $Path)) {
+        Write-Warning "Fichier d'environnement introuvable: $Path"
+        return
+    }
+
+    Get-Content -LiteralPath $Path | ForEach-Object {
+        if ($_ -match '^\s*(VITE_[A-Za-z0-9_]+)\s*=\s*(.*)\s*$') {
+            $name = $matches[1]
+            $value = $matches[2].Trim()
+            if (($value.StartsWith('"') -and $value.EndsWith('"')) -or ($value.StartsWith("'") -and $value.EndsWith("'"))) {
+                $value = $value.Substring(1, $value.Length - 2)
+            }
+            if ([string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($name, 'Process'))) {
+                [Environment]::SetEnvironmentVariable($name, $value, 'Process')
+            }
+        }
+    }
+    Write-Success "Variables frontend chargées depuis $Path"
+}
+
+function Assert-FrontendEnvironment {
+    $requiredVariables = @('VITE_SUPABASE_URL', 'VITE_SUPABASE_KEY', 'VITE_API_BASE_URL')
+    $missingVariables = @($requiredVariables | Where-Object {
+        [string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($_, 'Process'))
+    })
+
+    if ($missingVariables.Count -gt 0) {
+        Write-Error "Variables frontend manquantes: $($missingVariables -join ', '). Le déploiement est interrompu avant le build."
+    }
+}
+
+function Assert-BuiltSupabaseConfiguration {
+    if (-not (Test-Path -LiteralPath 'dist/assets')) {
+        Write-Error "Répertoire dist/assets introuvable."
+    }
+
+    $supabaseUrl = [Environment]::GetEnvironmentVariable('VITE_SUPABASE_URL', 'Process')
+    $compiledAssets = Get-ChildItem -LiteralPath 'dist/assets' -Filter '*.js' -File -Recurse
+    $urlFound = $compiledAssets | Select-String -SimpleMatch $supabaseUrl -Quiet
+    if (-not $urlFound) {
+        Write-Error "La configuration Supabase n'est pas présente dans le bundle compilé. Le déploiement est interrompu."
+    }
+    Write-Success "Configuration Supabase vérifiée dans le bundle compilé"
+}
 
 Write-Host "=== DÉPLOIEMENT HEDSVS.CH - SCRIPT AMÉLIORÉ ===" -ForegroundColor Yellow
 
@@ -36,6 +84,10 @@ $localKeyPath = "C:\Users\antoine.quarroz\Desktop\LabDev\PrivateKey\HEdSLinux.tx
 $remoteAppPath = "/var/www/pfpheds-frontend"
 $remoteBackendPath = "/opt/pfpheds-backend"
 $remoteSupabasePath = "/opt/supabase"
+
+# Charge les variables publiques Vite sans jamais afficher leurs valeurs, puis bloque tout build incomplet.
+Import-ViteEnvironment $EnvFile
+Assert-FrontendEnvironment
 
 # ÉTAPE 1: Build du frontend Vue.js + documentation Docusaurus (si nécessaire)
 if (-not $SkipBuild) {
@@ -62,9 +114,16 @@ if (-not $SkipBuild) {
     # Build frontend + documentation, puis copie doc dans dist/docs (scripts/copy-docs-to-dist.js)
     npm run build:all
     if ($LASTEXITCODE -ne 0) { Write-Error "Échec du build" }
+    Assert-BuiltSupabaseConfiguration
     Write-Success "Build terminé (frontend + documentation)"
 } else {
     Write-Info "ÉTAPE 1: Build ignoré (--SkipBuild)"
+    Assert-BuiltSupabaseConfiguration
+}
+
+if ($ValidateOnly) {
+    Write-Success "Validation du frontend terminée; aucun déploiement effectué."
+    exit 0
 }
 
 # ÉTAPE 2: Création de l'archive
