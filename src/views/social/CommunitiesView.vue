@@ -2,12 +2,12 @@
   <div class="community-management">
     <Navbar />
 
-    <div class="newsfeed-layout">
-      <div class="sidebar-left">
+    <SocialThreeColumnLayout center-max-width="78rem">
+      <template #left>
         <LeftSidebar />
-      </div>
+      </template>
 
-      <div class="community-management__content" ref="mainFeedRef">
+      <main class="community-management__content" ref="mainFeedRef">
         <div class="community-management__header">
           <h1>Communautés</h1>
           <Button label="Créer une communauté" icon="pi pi-plus" @click="showCreateDialog = true" />
@@ -74,12 +74,12 @@
             </DataTable>
           </template>
         </Card>
-      </div>
+      </main>
 
-      <div class="sidebar-right">
+      <template #right>
         <RightSidebar />
-      </div>
-    </div>
+      </template>
+    </SocialThreeColumnLayout>
 
     <Dialog v-model:visible="showCreateDialog" header="Créer une communauté" modal class="create-dialog">
       <div class="p-fluid">
@@ -117,6 +117,7 @@ import { useToast } from 'primevue/usetoast'
 import Navbar from '@/components/common/utils/Navbar.vue'
 import LeftSidebar from '@/components/social/library/LeftSidebar.vue'
 import RightSidebar from '@/components/social/library/RightSidebar.vue'
+import SocialThreeColumnLayout from '@/components/common/layouts/SocialThreeColumnLayout.vue'
 import MobileBottomNav from '@/components/common/utils/MobileBottomNav.vue'
 import { useAuthStore } from '@/stores/authStore'
 import { supabase } from '@/supabase.js'
@@ -153,6 +154,7 @@ export default {
     Navbar,
     LeftSidebar,
     RightSidebar,
+    SocialThreeColumnLayout,
     MobileBottomNav,
     Card,
     DataTable,

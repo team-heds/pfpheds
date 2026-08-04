@@ -30,10 +30,19 @@
               </span>
             </div>
 
+            <div class="results-summary" role="status">
+              <span>{{ filteredInstitutions.length }} institution{{ filteredInstitutions.length === 1 ? '' : 's' }}</span>
+              <div v-if="selectedFilterLabels.length" class="filter-chips" aria-label="Filtres actifs">
+                <span v-for="filter in selectedFilterLabels" :key="filter" class="filter-chip">{{ filter }}</span>
+                <button type="button" @click="clearFilters">Effacer les filtres</button>
+              </div>
+            </div>
+
             <!-- Zone défilante pour la grille -->
             <div class="grid-scrollable-wrapper">
               <!-- Grille auto-adaptative pour les cartes -->
-              <div class="grid-container">
+              <EmptyState v-if="filteredInstitutions.length === 0" title="Aucune institution trouvée" description="Modifiez votre recherche ou effacez les filtres actifs." action-label="Effacer les filtres" @action="clearFilters" />
+              <div v-else class="grid-container">
                 <div
                   v-for="(institution, index) in filteredInstitutions"
                   :key="index"
@@ -93,7 +102,7 @@
 
       <!-- Sidebar Droite -->
       <div class="sidebar-right">
-        <FilterSidebar :cantons="cantonsList" @filters-changed="handleSidebarFilters" />
+        <FilterSidebar :key="filterResetKey" :cantons="cantonsList" @filters-changed="handleSidebarFilters" />
       </div>
     </div>
   </div>
@@ -111,6 +120,7 @@ import LeftSidebar from '@/components/social/library/LeftSidebar.vue'
 import FilterSidebar from '@/components/common/filters/FilterSidebar.vue'
 import HeaderIcons from '@/components/common/utils/HeaderIcons.vue'
 import filterData from '@/components/common/filters/filter.json'
+import EmptyState from '@/components/common/states/EmptyState.vue'
 
 export default {
   name: 'InstitutionPage',
@@ -122,7 +132,8 @@ export default {
     Card,
     Tag,
     LeftSidebar,
-    HeaderIcons
+    HeaderIcons,
+    EmptyState
   },
   data() {
     return {
@@ -136,6 +147,7 @@ export default {
       },
       cantonsList: [], // Liste dynamique des cantons
       isMobile: window.innerWidth < 768,
+      filterResetKey: 0,
       filterData: filterData
     };
   },
@@ -203,6 +215,9 @@ export default {
         return true;
       });
     },
+    selectedFilterLabels() {
+      return Object.values(this.activeFilters).flat();
+    }
   },
   methods: {
     getInstitutionImage(institution) {
@@ -263,6 +278,11 @@ export default {
     },
     handleSidebarFilters(filters) {
       this.activeFilters = filters;
+    },
+    clearFilters() {
+      this.searchTerm = '';
+      this.activeFilters = { cantons: [], criter: [], pfp: [], languages: [] };
+      this.filterResetKey += 1;
     }
   },
   mounted() {
@@ -326,6 +346,11 @@ export default {
 }
 
 /* Section de contenu */
+.results-summary { display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; margin:0 auto 1rem; color:var(--text-color-secondary); font-size:.875rem; }
+.filter-chips { display:flex; align-items:center; justify-content:flex-end; gap:.5rem; flex-wrap:wrap; }
+.filter-chip { padding:.25rem .625rem; border-radius:999px; background:var(--surface-card); color:var(--text-color); }
+.filter-chips button { min-height:2rem; padding:.25rem .625rem; border:0; background:transparent; color:var(--primary-color); font:inherit; cursor:pointer; }
+.filter-chips button:focus-visible { outline:2px solid var(--primary-color); outline-offset:2px; }
 .content-section {
   padding: 2rem;
 }

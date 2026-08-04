@@ -1,6 +1,6 @@
 <template>
   <div class="module-section">
-    <div class="module-header" @click="toggleExpanded">
+    <button type="button" class="module-header" @click="toggleExpanded" :aria-expanded="expanded">
       <div class="module-info">
         <div class="module-title-row">
           <h2>
@@ -27,7 +27,7 @@
           </span>
         </div>
       </div>
-    </div>
+    </button>
     
     <transition name="expand">
       <div v-if="expanded" class="module-content">
@@ -103,12 +103,19 @@ function toggleExpanded() {
 }
 
 .module-header {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font: inherit;
   padding: 1.5rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease;
   user-select: none;
   position: relative;
 }
+.module-header:focus-visible{outline:3px solid var(--primary-color);outline-offset:-3px}
 
 .module-header::before {
   content: '';
@@ -199,7 +206,7 @@ function toggleExpanded() {
 /* Animations */
 .expand-enter-active,
 .expand-leave-active {
-  transition: all 0.3s ease;
+  transition: opacity 0.3s ease, max-height 0.3s ease;
   overflow: hidden;
 }
 

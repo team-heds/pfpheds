@@ -6,17 +6,18 @@
         Sur mobile : redirige vers /create (page dédiée)
         Sur desktop : ouvre la dialog AddStory
       -->
-      <div class="add-story" @click="handleAddStoryClick">
+      <button type="button" class="add-story" @click="handleAddStoryClick" aria-label="Créer une story">
         <span class="add-icon">+</span>
-      </div>
+      </button>
       <p>Créer</p>
     </div>
     <!-- Liste des stories -->
-    <div
+    <button type="button"
       v-for="user in uniqueUsers"
       :key="user.userId"
       class="story-item"
       @click="openStory(user.stories)"
+      :aria-label="`Voir la story de ${getUserDisplayName(user.userName)}`"
     >
       <img
         :src="user.userAvatar || defaultAvatar"
@@ -25,7 +26,7 @@
         :class="{ 'unseen-story': user.hasUnseenStory }"
       />
       <p>{{ getUserDisplayName(user.userName) }}</p>
-    </div>
+    </button>
     <!-- Sur desktop uniquement, dialog AddStory -->
     <AddStory v-if="showAddStory && !isMobile" @close="showAddStory = false" @uploaded="fetchStories" />
     <StoryModal v-if="selectedStory" :story="selectedStory" @close="selectedStory = null" @refreshStories="fetchStories" />
@@ -183,6 +184,10 @@ export default {
 
 /* Styles pour les stories */
 .story-item {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -191,6 +196,7 @@ export default {
   position: relative;
   outline: none;
 }
+.story-item:focus-visible{outline:3px solid var(--primary-color);outline-offset:3px;border-radius:.75rem}
 
 .story-item:active::after {
   content: '';

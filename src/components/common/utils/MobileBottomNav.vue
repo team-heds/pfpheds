@@ -1,6 +1,6 @@
 <template>
-  <nav class="mobile-bottom-nav" v-if="isMobile" :class="{ hide: !isVisible }">
-    <router-link v-for="item in navItems" :key="item.to" :to="item.to" class="nav-item" :class="{ active: isActive(item.to) }">
+  <nav class="mobile-bottom-nav" v-if="isMobile" :class="{ hide: !isVisible }" aria-label="Navigation principale">
+    <router-link v-for="item in navItems" :key="item.to" :to="item.to" class="nav-item" :class="{ active: isActive(item.to) }" :aria-current="isActive(item.to) ? 'page' : undefined">
       <i :class="item.icon"></i>
       <span>{{ item.label }}</span>
     </router-link>
@@ -28,11 +28,11 @@ onMounted(() => {
 });
 
 const navItems = computed(() => [
-  {  to: '/feed', icon: 'pi pi-home' },
-  {  to: '/mobile-search', icon: 'pi pi-search' },
-  {  to: '/mobile-outils', icon: 'pi pi-th-large' },
-  {  to: '/communities', icon: 'pi pi-comments' },
-  {  to: userId.value ? `/profile/${userId.value}` : '/profile', icon: 'pi pi-user' },
+  { to: '/feed', icon: 'pi pi-home', label: 'Accueil' },
+  { to: '/mobile-search', icon: 'pi pi-search', label: 'Recherche' },
+  { to: '/mobile-outils', icon: 'pi pi-th-large', label: 'Outils' },
+  { to: '/communities', icon: 'pi pi-comments', label: 'Communautés' },
+  { to: userId.value ? `/profile/${userId.value}` : '/profile', icon: 'pi pi-user', label: 'Profil' },
 ]);
 
 const route = useRoute();
@@ -127,6 +127,8 @@ watch(() => props.scrollTarget, (newVal, oldVal) => {
 .nav-item.router-link-exact-active {
   color: var(--primary-color, #1976d2);
 }
+.nav-item:focus-visible{outline:3px solid var(--primary-color);outline-offset:-3px;border-radius:.75rem}
+@media (prefers-reduced-motion:reduce){.mobile-bottom-nav,.nav-item{transition:none}}
 .nav-item i {
   font-size: 1.6rem;
   margin-bottom: 2px;

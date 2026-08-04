@@ -7,9 +7,10 @@
           <br>
           <div class="row mb-4 align-items-center">
             <div class="col-xl-6">
-              <form class="border rounded p-2">
+              <form class="border rounded p-2" @submit.prevent>
                 <div class="input-group input-borderless">
-                  <input class="form-control me-1" type="search" placeholder="Trouver la place">
+                  <label class="sr-only" for="place-search">Rechercher une place</label>
+                  <input id="place-search" v-model="searchTerm" class="form-control me-1" type="search" placeholder="Rechercher une place…">
                   <button type="button" class="btn btn-primary mb-0 rounded z-index-1"><i class="fas fa-search"></i></button>
                 </div>
               </form>
@@ -26,19 +27,24 @@
               <button class="btn btn-primary mb-0 d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasSidebar" aria-controls="offcanvasSidebar">
                 <i class="fas fa-sliders-h me-1"></i> Voir le filtre
               </button>
-              <p class="mb-0 text-end">voir les {{ displayedRangeStart }}-{{ displayedRangeEnd }} sur {{ totalPlaces }} résultats</p>
+              <p class="mb-0 text-end" role="status">{{ filteredPlaces.length }} résultat{{ filteredPlaces.length === 1 ? '' : 's' }}</p>
             </div>
           </div>
+          <div v-if="activeFilterLabels.length" class="active-filter-row" aria-label="Filtres actifs">
+            <span v-for="filter in activeFilterLabels" :key="filter" class="active-filter-chip">{{ filter }}</span>
+            <button type="button" class="clear-filter-button" @click="resetFilters">Effacer les filtres</button>
+          </div>
+          <EmptyState v-if="filteredPlaces.length === 0" title="Aucune place trouvée" description="Modifiez votre recherche ou effacez les filtres actifs." action-label="Effacer les filtres" @action="resetFilters" />
           <div class="row g-4">
             <div class="col-sm-6 col-xl-4" v-for="place in paginatedPlaces" :key="place.id">
-              <div class="card shadow h-100" @click="goToDetails(place.id)">
+              <button type="button" class="card place-card-button shadow h-100" @click="goToDetails(place.id)">
                 <img src="https://eduport.webestica.com/assets/images/courses/4by3/21.jpg" class="card-img-top img-cards" alt="place image">
                 <div class="card-body pb-0">
                   <div class="d-flex justify-content-between mb-2">
 
                   </div>
                   <h5 class="card-title fw-normal">
-                    <a :href="'/place/' + place.id">{{ place.Sector }}</a>
+                    {{ place.Sector }}
                   </h5>
                   <p class="mb-2 text-truncate-2">{{ place.NpmPractitionerTrainer }}</p>
                   <p class="mb-2 text-truncate-2">{{ place.idInstitution }}</p>
@@ -49,7 +55,7 @@
 
                   </div>
                 </div>
-              </div>
+              </button>
             </div>
           </div>
           <div class="col-12">
@@ -108,7 +114,7 @@
                   <h4 class="mb-3">PFP</h4>
                   <ul class="list-inline mb-0">
                     <li class="list-inline-item mb-2" v-for="(value, key) in level" :key="key">
-                      <input type="checkbox" class="btn-check" :id="'btn-check-' + key">
+                      <input v-model="level[key]" type="checkbox" class="btn-check" :id="'btn-check-' + key">
                       <label class="btn btn-light btn-primary-soft-check btn-language" :for="'btn-check-' + key">{{ key }}</label>
                     </li>
                   </ul>
@@ -117,7 +123,7 @@
                   <h4 class="mb-3">Langues</h4>
                   <ul class="list-inline mb-0 g-3">
                     <li class="list-inline-item mb-2" v-for="(value, key) in language" :key="key">
-                      <input type="checkbox" class="btn-check" :id="'btn-check-' + key">
+                      <input v-model="language[key]" type="checkbox" class="btn-check" :id="'btn-check-' + key">
                       <label class="btn btn-light btn-primary-soft-check btn-language" :for="'btn-check-' + key">{{ key }}</label>
                     </li>
                   </ul>
@@ -134,9 +140,11 @@
 <script>
 import { db } from '../../../firebase';
 import { ref, onValue } from "firebase/database";
+import EmptyState from '@/components/common/states/EmptyState.vue';
 
 export default {
   name: 'Place',
+  components: { EmptyState },
   data() {
     return {
       allPlaces: [],
@@ -144,6 +152,7 @@ export default {
       currentPage: 1,
       itemsPerPage: 21,
       totalPlaces: 0,
+      searchTerm: '',
       category: {
         title: "Catégories",
         categories: {
@@ -219,6 +228,9 @@ export default {
     },
     filteredPlaces() {
       return this.allPlaces.filter(place => {
+        const query = this.searchTerm.trim().toLowerCase();
+        const matchesSearch = !query || [place.Sector, place.NpmPractitionerTrainer, place.idInstitution, place.Canton]
+          .some(value => String(value || '').toLowerCase().includes(query));
         let matchesCategory = true;
         let matchesCanton = true;
         let matchesLanguage = true;
@@ -246,8 +258,16 @@ export default {
           matchesLevel = selectedLevels.includes(place.Level);
         }
 
-        return matchesCategory && matchesCanton && matchesLanguage && matchesLevel;
+        return matchesSearch && matchesCategory && matchesCanton && matchesLanguage && matchesLevel;
       });
+    },
+    activeFilterLabels() {
+      return [
+        ...Object.keys(this.category.categories).filter(key => this.category.categories[key]),
+        ...Object.keys(this.canton.cantons).filter(key => this.canton.cantons[key]),
+        ...Object.keys(this.language).filter(key => this.language[key]),
+        ...Object.keys(this.level).filter(key => this.level[key])
+      ];
     }
   },
   mounted() {
@@ -283,6 +303,7 @@ export default {
       this.currentPage = 1;
     },
     resetFilters() {
+      this.searchTerm = '';
       Object.keys(this.category.categories).forEach(key => this.category.categories[key] = false);
       Object.keys(this.language).forEach(key => this.language[key] = false);
       Object.keys(this.level).forEach(key => this.level[key] = false);
@@ -315,6 +336,12 @@ export default {
 .card {
   cursor: pointer;
 }
+.place-card-button { width:100%; padding:0; border:0; background:var(--surface-card); color:var(--text-color); text-align:start; font:inherit; border-radius:1rem; overflow:hidden; }
+.place-card-button:focus-visible { outline:3px solid var(--primary-color); outline-offset:3px; }
+.active-filter-row { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; margin-bottom:1rem; }
+.active-filter-chip { padding:.25rem .625rem; border-radius:999px; background:var(--surface-card); color:var(--text-color); font-size:.85rem; }
+.clear-filter-button { min-height:2rem; border:0; background:transparent; color:var(--primary-color); font:inherit; cursor:pointer; }
+.sr-only { position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0; }
 .img-cards{
   width: 100%;
   height: 220px;

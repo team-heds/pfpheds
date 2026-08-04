@@ -2,7 +2,7 @@
     <div class="settings-page">
       <Navbar />
       <div class="settings-container">
-        <h1>Paramètres de la plateforme (demo fonctionelle)</h1>
+        <PageHeader title="Paramètres de la plateforme" description="Personnalisez l’interface, les notifications et les préférences de votre session." />
         <div class="settings-layout">
           <!-- Zone principale : affichage des options selon la catégorie active -->
           <div class="main-content">
@@ -137,33 +137,26 @@
               </p>
             </div>
   
-            <!-- Bouton d'application -->
-            <div class="setting-item apply-button">
-                <!--  <button @click="applySettings">Appliquer les paramètres</button>-->
-                <button >Appliquer les paramètres</button>
-            </div>
           </div>
   
           <!-- Sidebar des catégories (positionnée à droite) -->
           <div class="sidebar">
             <h3>Catégories</h3>
-            <ul>
-              <li :class="{ active: activeCategory === 'Interface' }" @click="activeCategory = 'Interface'">
-                Interface
-              </li>
-              <li :class="{ active: activeCategory === 'Date & Heure' }" @click="activeCategory = 'Date & Heure'">
-                Date & Heure
-              </li>
-              <li :class="{ active: activeCategory === 'Maintenance & Sécurité' }" @click="activeCategory = 'Maintenance & Sécurité'">
-                Maintenance & Sécurité
-              </li>
-              <li :class="{ active: activeCategory === 'Notifications' }" @click="activeCategory = 'Notifications'">
-                Notifications
-              </li>
-              <li :class="{ active: activeCategory === 'Données & Cache' }" @click="activeCategory = 'Données & Cache'">
-                Données & Cache
+            <ul aria-label="Catégories de paramètres">
+              <li v-for="category in categories" :key="category.label">
+                <button type="button" :class="{ active: activeCategory === category.label }" :aria-current="activeCategory === category.label ? 'page' : undefined" @click="activeCategory = category.label">
+                  <i :class="category.icon" aria-hidden="true"></i>
+                  <span>{{ category.label }}</span>
+                </button>
               </li>
             </ul>
+          </div>
+        </div>
+        <div v-if="isDirty" class="settings-savebar" role="status">
+          <span><i class="pi pi-circle-fill" aria-hidden="true"></i> Modifications non enregistrées</span>
+          <div>
+            <button type="button" class="savebar-button savebar-button--secondary" @click="discardSettings">Annuler les modifications</button>
+            <button type="button" class="savebar-button" :disabled="isSaving" @click="applySettings">{{ isSaving ? 'Enregistrement…' : 'Enregistrer les paramètres' }}</button>
           </div>
         </div>
       </div>
@@ -172,15 +165,28 @@
   
   <script>
   import Navbar from '@/components/common/utils/Navbar.vue';
+  import PageHeader from '@/components/common/layout/PageHeader.vue';
   
   export default {
     name: "SettingView",
     components: {
-      Navbar
+      Navbar,
+      PageHeader
     },
     data() {
       return {
         activeCategory: 'Interface',
+        categories: [
+          { label: 'Interface', icon: 'pi pi-desktop' },
+          { label: 'Date & Heure', icon: 'pi pi-calendar' },
+          { label: 'Maintenance & Sécurité', icon: 'pi pi-shield' },
+          { label: 'Notifications', icon: 'pi pi-bell' },
+          { label: 'Données & Cache', icon: 'pi pi-database' }
+        ],
+        isDirty: false,
+        isSaving: false,
+        settingsReady: false,
+        initialSettings: null,
         clearing: false,
         appVersion: localStorage.getItem('app_version') || 'N/A',
         swStatus: 'Vérification...',
@@ -209,10 +215,17 @@
     },
     methods: {
       applySettings() {
+        this.isSaving = true;
         const settings = this.settings;
         console.log("Paramètres de la plateforme appliqués :", settings);
-        alert("Les paramètres de la plateforme ont été appliqués avec succès !");
         localStorage.setItem('platformSettings', JSON.stringify(settings));
+        this.initialSettings = JSON.stringify(settings);
+        this.isDirty = false;
+        this.isSaving = false;
+      },
+      discardSettings() {
+        if (this.initialSettings) this.settings = JSON.parse(this.initialSettings);
+        this.isDirty = false;
       },
       async clearCache() {
         this.clearing = true;
@@ -252,12 +265,22 @@
         }
       }
     },
+    watch: {
+      settings: {
+        deep: true,
+        handler() {
+          if (this.settingsReady) this.isDirty = true;
+        }
+      }
+    },
     async mounted() {
       // Chargement des paramètres sauvegardés (si disponibles)
       const savedSettings = localStorage.getItem('platformSettings');
       if (savedSettings) {
         this.settings = { ...this.settings, ...JSON.parse(savedSettings) };
       }
+      this.initialSettings = JSON.stringify(this.settings);
+      this.$nextTick(() => { this.settingsReady = true; });
       // Check SW & cache status
       try {
         if ('serviceWorker' in navigator) {
@@ -286,11 +309,6 @@
     max-width: 1000px;
     margin: 20px auto;
     padding: 20px;
-  }
-  
-  h1 {
-    text-align: center;
-    margin-bottom: 20px;
   }
   
   .settings-layout {
@@ -326,22 +344,32 @@
     margin: 0;
   }
   
-  .sidebar ul li {
-    padding: 10px;
-    text-align: center;
+  .sidebar ul button {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    width: 100%;
+    min-height: 44px;
+    padding: .75rem;
+    border: 0;
+    border-radius: .75rem;
+    background: transparent;
+    color: var(--text-color);
+    font: inherit;
+    text-align: start;
     cursor: pointer;
-    border-bottom: 1px solid #eee;
   }
   
   .sidebar ul li:last-child {
     border-bottom: none;
   }
   
-  .sidebar ul li.active,
-  .sidebar ul li:hover {
-    background: #007bff;
+  .sidebar ul button.active,
+  .sidebar ul button:hover {
+    background: var(--primary-color);
     color: #fff;
   }
+  .sidebar ul button:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
   
   /* Groupes de paramètres */
   .settings-group {
@@ -458,5 +486,28 @@
     font-size: 0.9em;
     text-align: center;
   }
+
+  .settings-savebar {
+    position: sticky;
+    bottom: 1rem;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding: .875rem 1rem;
+    border: 1px solid var(--surface-border);
+    border-radius: 1rem;
+    background: var(--surface-card);
+    box-shadow: 0 10px 30px rgba(0,0,0,.18);
+  }
+  .settings-savebar > span { display:flex; align-items:center; gap:.5rem; color:var(--text-color); font-weight:600; }
+  .settings-savebar > span i { color:var(--primary-color); font-size:.55rem; }
+  .settings-savebar > div { display:flex; gap:.75rem; flex-wrap:wrap; }
+  .savebar-button { min-height:44px; padding:.625rem 1rem; border:0; border-radius:.75rem; background:var(--primary-color); color:#fff; font:inherit; font-weight:600; cursor:pointer; }
+  .savebar-button--secondary { border:1px solid var(--surface-border); background:transparent; color:var(--text-color); }
+  .savebar-button:focus-visible { outline:2px solid var(--primary-color); outline-offset:2px; }
+  @media(max-width:768px){.settings-layout{flex-direction:column-reverse}.sidebar{width:auto}.settings-savebar{align-items:stretch;flex-direction:column}.settings-savebar>div{display:grid}.savebar-button{width:100%}}
   </style>
   

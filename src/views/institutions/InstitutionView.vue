@@ -1,9 +1,9 @@
 <template>
   <Navbar />
-  <div class="institution-shell">
-    <aside class="institution-shell__side institution-shell__side--left" aria-label="Espace personnel">
+  <SocialThreeColumnLayout>
+    <template #left>
       <LeftSidebar :hide-gamification="true" />
-    </aside>
+    </template>
 
     <div class="iv">
     <!-- ====== HERO ====== -->
@@ -194,10 +194,10 @@
     </div>
     </div>
 
-    <aside class="institution-shell__side institution-shell__side--right" aria-label="Communautés et hashtags">
+    <template #right>
       <RightSidebar />
-    </aside>
-  </div>
+    </template>
+  </SocialThreeColumnLayout>
 </template>
 
 <script setup>
@@ -211,6 +211,7 @@ import 'leaflet/dist/leaflet.css'
 import Navbar from '@/components/common/utils/Navbar.vue'
 import LeftSidebar from '@/components/social/library/LeftSidebar.vue'
 import RightSidebar from '@/components/social/library/RightSidebar.vue'
+import SocialThreeColumnLayout from '@/components/common/layouts/SocialThreeColumnLayout.vue'
 import { useInstitutionsStore } from '@/stores/institutionsStore'
 import { usePlacesStore } from '@/stores/placesStore'
 import { db, auth } from '../../../firebase.js'
@@ -520,21 +521,6 @@ function listenUserRole() {
    ============================================================ */
 
 /* --- reset / page --- */
-.institution-shell {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 3fr) minmax(0, 1fr);
-  gap: 1.5rem;
-  height: calc(100vh - var(--navbar-h) - (2 * var(--content-pad)));
-  max-height: calc(100vh - var(--navbar-h) - (2 * var(--content-pad)));
-  overflow: hidden;
-}
-
-.institution-shell__side {
-  height: 100%;
-  min-width: 0;
-  overflow-y: hidden;
-}
-
 .iv {
   --accent: var(--primary-color, #6366f1);
   --accent-soft: var(--primary-color, rgba(99,102,241,.12));
@@ -876,28 +862,6 @@ function listenUserRole() {
 }
 
 /* ====== RESPONSIVE ====== */
-@media (max-width: 1366px) {
-  .institution-shell {
-    grid-template-columns: minmax(0, 0.8fr) minmax(0, 2.5fr) minmax(0, 0.8fr);
-    gap: 1rem;
-  }
-}
-@media (max-width: 1200px) {
-  .institution-shell {
-    grid-template-columns: minmax(0, 0.7fr) minmax(0, 2.8fr) minmax(0, 0.7fr);
-    gap: 0.8rem;
-  }
-}
-@media (max-width: 1024px) {
-  .institution-shell {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
-  }
-  .institution-shell__side--right { display: none; }
-}
-@media (max-width: 768px) {
-  .institution-shell { display: block; }
-  .institution-shell__side { display: none; }
-}
 @media (max-width: 1024px) {
   .iv-layout { grid-template-columns: 1fr; }
   .iv-map { position: static; }

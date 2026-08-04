@@ -33,10 +33,6 @@
               filter
               class="w-12rem"
             />
-            <InputText v-model="searchTerm" placeholder="Rechercher (nom, adresse, localité)" class="w-16rem" />
-            <Button icon="pi pi-file-excel" label="Excel" outlined severity="success" @click="exportExcel" />
-            <Button icon="pi pi-filter-slash" label="Reset filtres" outlined severity="secondary" @click="resetFilters" />
-            <Button icon="pi pi-plus" label="Ajouter" outlined @click="goToInstitutionForm" />
             <Button icon="pi pi-refresh" outlined :disabled="loading" @click="loadInstitutions" />
           </div>
         </div>
@@ -73,7 +69,10 @@
       </div>
 
       <div class="surface-card fp-dark p-3 border-round shadow-2">
-        <div class="text-600 mb-2">{{ filteredInstitutions.length }} institution(s)</div>
+        <DataTableToolbar v-model:query="searchTerm" :result-count="filteredInstitutions.length" placeholder="Rechercher une institution…">
+          <template #primary><Button icon="pi pi-plus" label="Ajouter" outlined @click="goToInstitutionForm" /></template>
+          <template #tools><Button icon="pi pi-file-excel" label="Excel" outlined severity="success" @click="exportExcel" /><Button icon="pi pi-filter-slash" label="Réinitialiser" outlined severity="secondary" @click="resetFilters" /></template>
+        </DataTableToolbar>
         <DataTable
           :value="filteredInstitutions"
           :paginator="true"
@@ -137,13 +136,13 @@ import { useConfirm } from 'primevue/useconfirm';
 
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import Tag from 'primevue/tag';
 import ProgressBar from 'primevue/progressbar';
 import ConfirmDialog from 'primevue/confirmdialog';
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
+import DataTableToolbar from '@/components/common/tables/DataTableToolbar.vue';
 import { supabase } from '@/supabase';
 
 const router = useRouter();

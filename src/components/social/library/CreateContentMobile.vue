@@ -16,9 +16,9 @@
 
 
     <div class="tab-bar-slider">
-      <div class="slider-bg">
-        <div :class="['slider-btn', currentTab === 'post' ? 'slider-active' : '']" @click="currentTab = 'post'">POST</div>
-        <div :class="['slider-btn', currentTab === 'story' ? 'slider-active' : '']" @click="currentTab = 'story'">STORY</div>
+      <div class="slider-bg" role="tablist" aria-label="Type de contenu">
+        <button type="button" role="tab" :aria-selected="currentTab === 'post'" :class="['slider-btn', currentTab === 'post' ? 'slider-active' : '']" @click="currentTab = 'post'">Publication</button>
+        <button type="button" role="tab" :aria-selected="currentTab === 'story'" :class="['slider-btn', currentTab === 'story' ? 'slider-active' : '']" @click="currentTab = 'story'">Story</button>
         <div class="slider-indicator" :style="{ left: currentTab === 'post' ? '0%' : '50%' }"></div>
       </div>
     </div>
@@ -306,6 +306,9 @@ export default {
   box-shadow: 0 2px 8px 0 rgba(0,0,0,0.08);
 }
 .slider-btn {
+  border: 0;
+  background: transparent;
+  font: inherit;
   flex: 1;
   text-align: center;
   line-height: 38px;
@@ -319,6 +322,7 @@ export default {
   position: relative;
   user-select: none;
 }
+.slider-btn:focus-visible{outline:3px solid #fff;outline-offset:-3px}
 .slider-active {
   color: #222;
 }

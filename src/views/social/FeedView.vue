@@ -1,10 +1,10 @@
 <template>
   <Navbar />
-  <div class="newsfeed-layout">
+  <SocialThreeColumnLayout>
     <!-- Sidebar Gauche -->
-    <div class="sidebar-left">
+    <template #left>
       <LeftSidebar />
-    </div>
+    </template>
 
     <!-- Fil d'actualité avec Infinity Scroll -->
     <div class="main-feed" ref="mainFeedRef">
@@ -13,10 +13,10 @@
     </div>
 
     <!-- Sidebar Droite -->
-    <div class="sidebar-right">
+    <template #right>
       <RightSidebar />
-    </div>
-  </div>
+    </template>
+  </SocialThreeColumnLayout>
   <MobileBottomNav :scrollTarget="mainFeedRef" />
 </template>
 
@@ -28,6 +28,7 @@ import MainFeedSupabase from '@/components/social/library/MainFeedSupabase.vue'
 import RightSidebar from '@/components/social/library/RightSidebar.vue'
 import Navbar from '@/components/common/utils/Navbar.vue'
 import MobileBottomNav from '@/components/common/utils/MobileBottomNav.vue'
+import SocialThreeColumnLayout from '@/components/common/layouts/SocialThreeColumnLayout.vue'
 import { useAuthStore } from '@/stores/authStore'
 
 export default {
@@ -37,7 +38,8 @@ export default {
     MainFeed,
     MainFeedSupabase,
     RightSidebar,
-    MobileBottomNav
+    MobileBottomNav,
+    SocialThreeColumnLayout
   },
   setup() {
     const mainFeedRef = ref(null);

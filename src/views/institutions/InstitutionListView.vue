@@ -1,8 +1,8 @@
 <template>
   <div class="admin-scrollable">
     <Navbar />
-    <h1 style="margin: 2rem 0 1rem 0; text-align: center;" class="m-8">Liste des institutions</h1>
-    <div style="margin: 0 2rem;">
+    <div class="institution-list-page">
+      <PageHeader title="Liste des institutions" description="Recherchez, consultez et gérez les institutions partenaires." />
       <DataTable
         :value="filteredInstitutions"
         :paginator="true"
@@ -15,17 +15,12 @@
         :globalFilterFields="['Name', 'Address', 'Locality', 'Canton', 'InstitutionId']"
       >
         <template #header>
-          <div style="display: flex; justify-content: space-between; align-items: center;" class="mr-5" >
-            <Button label="Ajouter une institution" icon="pi pi-plus" outlined @click="goToInstitutionForm" class="ml-5"  />
-            <span style="flex: 1"></span>
-            <span>
-              <InputText v-model="searchTerm" placeholder="Rechercher" />
-              <i class="pi pi-search" style="margin-left: -2rem; color: #aaa;"></i>
-            </span>
-          </div>
+          <DataTableToolbar v-model:query="searchTerm" :result-count="filteredInstitutions.length" placeholder="Rechercher une institution…">
+            <template #primary><Button label="Ajouter une institution" icon="pi pi-plus" @click="goToInstitutionForm" /></template>
+          </DataTableToolbar>
         </template>
-        <template #empty> Aucune institution trouvée. </template>
-        <template #loading> Chargement des données des institutions. Veuillez patienter. </template>
+        <template #empty><EmptyState title="Aucune institution trouvée" description="Modifiez votre recherche ou ajoutez une nouvelle institution." action-label="Ajouter une institution" @action="goToInstitutionForm" /></template>
+        <template #loading><LoadingState label="Chargement des institutions…" /></template>
         <Column field="InstitutionId" header="ID">
           <template #body="{ data }">{{ data.InstitutionId }}</template>
         </Column>
@@ -69,9 +64,12 @@ import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
-import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
 import Navbar from '@/components/common/utils/Navbar.vue'
+import PageHeader from '@/components/common/layout/PageHeader.vue'
+import DataTableToolbar from '@/components/common/tables/DataTableToolbar.vue'
+import EmptyState from '@/components/common/states/EmptyState.vue'
+import LoadingState from '@/components/common/states/LoadingState.vue'
 import { useInstitutionsStore } from '@/stores/institutionsStore'
 
 const router = useRouter()
@@ -162,4 +160,8 @@ function formatDateFr(dateStr) {
 .admin-scrollable::-webkit-scrollbar {
   display: none;
 }
+.institution-list-page { margin: 2rem; }
+:deep(.p-datatable-wrapper) { max-height: calc(100dvh - 20rem); }
+:deep(.p-datatable-thead > tr > th) { position: sticky; top: 0; z-index: 2; background: var(--surface-card); }
+@media(max-width:768px){.institution-list-page{margin:1rem}}
 </style>

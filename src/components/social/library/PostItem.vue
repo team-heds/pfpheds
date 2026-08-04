@@ -96,18 +96,18 @@
 
     <!-- Boutons d'action -->
     <div class="post-actions post-actions-mobile-row">
-      <div class="action-button" @click="toggleLike">
+      <button type="button" class="action-button" @click="toggleLike" :aria-pressed="isLiked" :aria-label="`${isLiked ? 'Retirer' : 'Ajouter'} la mention J’aime`">
         <i :class="isLiked ? 'pi pi-heart-fill' : 'pi pi-heart'" class="action-icon"></i>
         <span>{{ likeCount }}</span>
-      </div>
-      <div class="action-button" @click="toggleComments">
+      </button>
+      <button type="button" class="action-button" @click="toggleComments" :aria-expanded="showComments" aria-label="Afficher les commentaires">
         <i class="pi pi-comment action-icon"></i>
         <span>{{ commentCount }}</span>
-      </div>
-      <div class="action-button" @click="sharePost">
+      </button>
+      <button type="button" class="action-button" @click="sharePost" aria-label="Partager cette publication">
         <i class="pi pi-share-alt action-icon"></i>
         <span>Partager</span>
-      </div>
+      </button>
     </div>
 
 
@@ -411,7 +411,7 @@ const getInstagramEmbedUrl = (url) => {
   background-color: var(--surface-card);
   border-radius: 1.2rem; /* Coins arrondis taille que je dois uttilser */
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
   -ms-overflow-style: none;  /* IE et Edge */
   scrollbar-width: none;     /* Firefox */
   margin-bottom: 15px; /* Espace entre les posts */
@@ -486,6 +486,9 @@ const getInstagramEmbedUrl = (url) => {
 
 
 .action-button {
+  border: 0;
+  background: transparent;
+  font: inherit;
   display: flex;
   align-items: center;
   gap: 5px;
@@ -493,6 +496,7 @@ const getInstagramEmbedUrl = (url) => {
   color: var(--text-color);
   transition: color 0.3s;
 }
+.action-button:focus-visible{outline:3px solid var(--primary-color);outline-offset:2px;border-radius:.5rem}
 
 .action-button:hover {
   color: var(--primary-color);

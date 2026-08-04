@@ -9,9 +9,9 @@
               <div class="grid mb-3">
                 <!-- Dynamically create category filters -->
                 <div class="col-4 flex flex-column align-items-center" v-for="category in categories" :key="category.name">
-                  <div :class="['w-3rem h-3rem border-circle', category.class, 'cursor-pointer border-none flex justify-content-center align-items-center']" @click="toggleSelection(category.name)">
+                  <button type="button" :aria-pressed="selectedColors.includes(category.name)" :aria-label="`Filtrer par ${category.name}`" :class="['w-3rem h-3rem border-circle', category.class, 'cursor-pointer border-none flex justify-content-center align-items-center filter-category']" @click="toggleSelection(category.name)">
                     <i class="pi pi-check text-2xl text-white" v-if="selectedColors.includes(category.name)"></i>
-                  </div>
+                  </button>
                   <p class="text-900 text-sm text-center mt-1">{{ category.name }}</p>
                 </div>
               </div>
@@ -33,7 +33,7 @@
                 </div>
                 <Badge :value="canton.count" class="mr-2 bg-gray-200 text-gray-900 p-0 border-circle"></Badge>
               </div>
-              <a tabindex="0" class="block cursor-pointer my-3 text-primary font-medium" @click="showMoreCantons">Voir plus...</a>
+              <button type="button" class="filter-more block cursor-pointer my-3 text-primary font-medium" @click="showMoreCantons">{{ showAllCantons ? 'Voir moins' : 'Voir plus de cantons' }}</button>
             </div>
           </AccordionTab>
         </Accordion>
@@ -166,8 +166,8 @@ export default {
       this.addLocationsToMap();
     },
     showMoreCantons() {
-      this.showAllCantons = true;
-      this.cantons.forEach(canton => canton.visible = true);
+      this.showAllCantons = !this.showAllCantons;
+      this.cantons.forEach((canton, index) => { canton.visible = this.showAllCantons || index < 4; });
     }
   },
   computed: {
@@ -186,4 +186,10 @@ export default {
 </script>
 
 <style scoped>
+.filter-category { transition: transform .15s ease, box-shadow .15s ease; }
+.filter-category:active { transform: scale(.96); }
+.filter-category:focus-visible { outline:2px solid var(--primary-color); outline-offset:3px; }
+.filter-more { min-height:2.5rem; padding:.5rem 0; border:0; background:transparent; font:inherit; }
+.filter-more:focus-visible { outline:2px solid var(--primary-color); outline-offset:2px; }
+@media (prefers-reduced-motion: reduce) { .filter-category { transition:none; } }
 </style>

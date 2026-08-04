@@ -1,13 +1,12 @@
 
 <template>
-  <div class="filter-layout" :class="{ 'filter-layout--embedded': props.embed }">
-    <!-- Sidebar Gauche -->
-    <div class="sidebar-left">
+  <SocialThreeColumnLayout :single-column="props.embed" center-max-width="75rem">
+    <template #left>
       <LeftSidebar :hide-gamification="true" />
-    </div>
+    </template>
 
     <!-- Contenu Principal -->
-    <div class="main-content profileinfo-scrollable ">
+    <div class="profileinfo-content">
       <div class="filter-menu p-fluid p-pt-4 p-pb-4">
         <div>
           <!-- Affichage du composant CardNameProfile -->
@@ -49,10 +48,10 @@
     </div>
 
     <!-- Sidebar Droite -->
-    <div class="sidebar-right" v-if="!props.embed">
+    <template #right>
       <RightSidebar />
-    </div>
-  </div>
+    </template>
+  </SocialThreeColumnLayout>
 </template>
 
 <script setup>
@@ -67,6 +66,7 @@ import ResumStageUserProfile from '@/components/user/details/ResumStageUserProfi
 import LeftSidebar from '@/components/social/library/LeftSidebar.vue';
 import RightSidebar from '@/components/social/library/RightSidebar.vue';
 import VotationResultProfil from '@/components/user/details/VotationResultProfil.vue'
+import SocialThreeColumnLayout from '@/components/common/layouts/SocialThreeColumnLayout.vue'
 
 const props = defineProps({
   embed: { type: Boolean, default: false }
@@ -489,17 +489,10 @@ const onAvatarChange = (event) => {
   }
 }
 
-.profileinfo-scrollable {
-  height: calc(100dvh - var(--navbar-h, 64px));
-  overflow-y: auto;
+.profileinfo-content {
   -webkit-overflow-scrolling: touch;
   padding: clamp(1rem, 2vw, 2rem);
   padding-bottom: 7rem;
   box-sizing: border-box;
-  scrollbar-width: none; /* Firefox */
-}
-.profileinfo-scrollable::-webkit-scrollbar {
-  width: 0;
-  height: 0;
 }
 </style>

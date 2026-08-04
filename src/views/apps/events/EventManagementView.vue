@@ -1,10 +1,10 @@
 <template>
   <Navbar />
-  <div class="event-layout event-layout-padded">
+  <SocialThreeColumnLayout center-max-width="78rem">
     <!-- Sidebar gauche -->
-    <div class="sidebar-left sidebar-padded">
+    <template #left>
       <LeftSidebar />
-    </div>
+    </template>
     <!-- Zone centrale -->
     <main class="main-content main-content-padded">
       <div class="event-header-bar event-header-bar-centered">
@@ -72,9 +72,9 @@
       </div>
     </main>
     <!-- Sidebar droite -->
-    <div class="sidebar-right sidebar-padded">
+    <template #right>
       <RightSidebar />
-    </div>
+    </template>
     <!-- Modale création événement -->
     <Dialog v-model:visible="showCreateDialog" modal header="Créer un événement" :style="{ minWidth: '340px', maxWidth: '98vw' }">
       <EventForm @submit="addEventFromForm" @close="showCreateDialog = false" />
@@ -100,7 +100,7 @@
         @fixAdmin="fixEventAdmin"
         @close="showDetailDialog = false" />
     </Dialog>
-  </div>
+  </SocialThreeColumnLayout>
 </template>
 
 <script setup>
@@ -111,6 +111,7 @@ import { supabase } from '@/supabase';
 import Navbar from '@/components/common/utils/Navbar.vue';
 import LeftSidebar from '@/components/social/library/LeftSidebar.vue';
 import RightSidebar from '@/components/social/library/RightSidebar.vue';
+import SocialThreeColumnLayout from '@/components/common/layouts/SocialThreeColumnLayout.vue';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';

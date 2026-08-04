@@ -69,6 +69,8 @@
         </template>
       </Card>
 
+      <PlanningLegend />
+
       <!-- Statistiques Annuelles -->
       <div v-if="annualStats" class="grid">
         <div class="col-12 md:col-2">
@@ -275,6 +277,7 @@ import { useRouter } from 'vue-router'
 import Navbar from '@/components/common/utils/Navbar.vue'
 import planningService from '@/service/planningService'
 import academicPlanningService from '@/service/academicPlanningService'
+import PlanningLegend from '@/components/common/planning/PlanningLegend.vue'
 
 const router = useRouter()
 

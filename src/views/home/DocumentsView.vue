@@ -4,6 +4,7 @@
 
   <div class="documents-container scrollable-container">
     <div class="documents-wrapper">
+      <nav class="documents-breadcrumb" aria-label="Fil d'Ariane"><RouterLink to="/home">Accueil</RouterLink><i class="pi pi-angle-right" aria-hidden="true"></i><span aria-current="page">Documents PFP</span></nav>
       <!-- Header Section -->
       <div class="page-header-section">
         <div class="header-content-wrapper">
@@ -28,10 +29,11 @@
         <div v-for="folder in folders" :key="folder.id" class="folder-container">
           <div class="folder-content-card">
             <!-- Folder Header (cliquable) -->
-            <div 
+            <button type="button"
               class="folder-header-row clickable" 
               @click="toggleFolder(folder.id)"
               :class="{ 'folder-open': isFolderOpen(folder.id) }"
+              :aria-expanded="isFolderOpen(folder.id)"
             >
               <div class="folder-icon-title">
                 <div class="folder-icon-container">
@@ -43,7 +45,7 @@
                 class="pi toggle-icon" 
                 :class="isFolderOpen(folder.id) ? 'pi-chevron-up' : 'pi-chevron-down'"
               ></i>
-            </div>
+            </button>
 
             <!-- CAS 1 : Dossier avec sous-sections -->
             <div v-show="isFolderOpen(folder.id)" class="folder-content-wrapper">
@@ -389,6 +391,7 @@ const saveNewFile = async (newFile) => {
   margin: 0 auto;
   padding: 2rem 1.5rem 8rem;
 }
+.documents-breadcrumb{display:flex;align-items:center;gap:.5rem;margin-bottom:1rem;color:var(--text-color-secondary)}.documents-breadcrumb a{color:var(--primary-color);text-decoration:none}.folder-header-row{width:100%;border:0;background:transparent;color:inherit;font:inherit;text-align:left}.folder-header-row:focus-visible{outline:3px solid var(--primary-color);outline-offset:-3px}
 
 /* Header Section */
 .page-header-section {
@@ -468,7 +471,7 @@ const saveNewFile = async (newFile) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, margin-bottom 0.2s ease;
 }
 
 .folder-header-row.clickable {
@@ -588,7 +591,7 @@ const saveNewFile = async (newFile) => {
   background: var(--surface-ground);
   border-radius: 6px;
   border: 1px solid var(--surface-border);
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
 }
 
 .file-item-row:hover {
@@ -641,7 +644,7 @@ const saveNewFile = async (newFile) => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: color 0.15s ease, background-color 0.15s ease;
   font-size: 0.875rem;
 }
 
@@ -676,7 +679,7 @@ const saveNewFile = async (newFile) => {
   font-weight: 500;
   font-size: 0.875rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, transform 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;

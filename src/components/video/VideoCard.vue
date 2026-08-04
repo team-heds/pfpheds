@@ -1,5 +1,5 @@
 <template>
-  <div class="video-card" @click="$emit('play', video)">
+  <article class="video-card" tabindex="0" role="button" :aria-label="playLabel" @click="$emit('play', video)" @keydown.enter="$emit('play', video)" @keydown.space.prevent="$emit('play', video)">
     <!-- Thumbnail -->
     <div class="video-thumbnail">
       <img 
@@ -14,6 +14,7 @@
       <div v-if="video.duration" class="duration-badge">
         {{ formatDuration(video.duration) }}
       </div>
+      <div v-if="progress > 0" class="video-progress" aria-hidden="true"><span :style="{ width: `${progress}%` }"></span></div>
     </div>
 
     <!-- Infos -->
@@ -55,7 +56,7 @@
       <!-- Actions -->
       <div class="video-actions" @click.stop>
         <Button 
-          label="Visionner" 
+          :label="progress > 0 ? 'Reprendre' : 'Visionner'"
           icon="pi pi-play" 
           @click="$emit('play', video)"
           class="action-btn"
@@ -78,7 +79,7 @@
         />
       </div>
     </div>
-  </div>
+  </article>
 </template>
 
 <script setup>
@@ -94,7 +95,8 @@ const props = defineProps({
   getVimeoThumbnail: {
     type: Function,
     required: true
-  }
+  },
+  progress: { type: Number, default: 0 }
 })
 
 defineEmits(['play', 'copy-link', 'show-menu'])
@@ -102,6 +104,8 @@ defineEmits(['play', 'copy-link', 'show-menu'])
 const thumbnailUrl = computed(() => {
   return props.video.thumbnail_url || props.getVimeoThumbnail(props.video.vimeo_id)
 })
+const progress = computed(() => Math.min(100, Math.max(0, props.video.progress ?? props.progress)))
+const playLabel = computed(() => `${progress.value > 0 ? 'Reprendre' : 'Visionner'} ${props.video.title}`)
 
 function handleThumbnailError(event) {
   event.target.src = '/placeholder-video.jpg'
@@ -127,7 +131,7 @@ function truncateText(text, length) {
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid var(--surface-border);
-  transition: all 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
   display: flex;
   flex-direction: column;
   cursor: pointer;
@@ -137,6 +141,7 @@ function truncateText(text, length) {
   transform: translateY(-4px);
   box-shadow: 0 8px 24px rgba(0,0,0,0.12);
 }
+.video-card:focus-visible{outline:3px solid var(--primary-color);outline-offset:3px}.video-progress{position:absolute;inset-inline:0;bottom:0;height:4px;background:rgba(255,255,255,.3)}.video-progress span{display:block;height:100%;background:var(--primary-color)}
 
 .video-thumbnail {
   position: relative;

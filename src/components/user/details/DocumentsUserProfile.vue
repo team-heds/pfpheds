@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { supabase } from '@/supabase';
 import { useToast } from 'primevue/usetoast';
 
@@ -18,6 +18,20 @@ const currentUser = ref(null);  // Utilisateur courant
 const userFolderPath = ref('');  // Chemin de stockage spécifique à l'utilisateur
 const fileUploaderRef = ref(null);  // Référence au composant FileUpload
 const toast = useToast();
+const isUploading = ref(false);
+const uploadProgress = ref(0);
+const selectedFiles = ref(new Set());
+const selectedCount = computed(() => selectedFiles.value.size);
+
+const toggleFileSelection = (fileName) => {
+  const next = new Set(selectedFiles.value);
+  next.has(fileName) ? next.delete(fileName) : next.add(fileName);
+  selectedFiles.value = next;
+};
+
+const clearSelection = () => {
+  selectedFiles.value = new Set();
+};
 
 // Fonction pour charger les fichiers et sous-dossiers à partir du Storage Supabase
 const loadFilesAndSubFoldersFromFolder = async (folderPath) => {
@@ -69,6 +83,7 @@ const loadFilesAndSubFoldersFromFolder = async (folderPath) => {
 // Gérer le clic sur un dossier
 const onFolderClick = (folder) => {
   selectedFolder.value = folder;
+  clearSelection();
   loadFilesAndSubFoldersFromFolder(folder.path);  // Charger les fichiers et sous-dossiers
 };
 
@@ -78,6 +93,10 @@ const onSelectedFiles = async (event) => {
     toast.add({ severity: 'warn', summary: 'Avertissement', detail: 'Sélectionnez un dossier avant de télécharger.', life: 4000 });
     return;
   }
+
+  isUploading.value = true;
+  uploadProgress.value = 0;
+  let completedFiles = 0;
 
   for (const file of event.files) {
     const acceptedFormats = ['image/jpeg', 'image/png', 'audio/mpeg', 'video/mp4', 'application/pdf'];
@@ -110,8 +129,13 @@ const onSelectedFiles = async (event) => {
     } catch (error) {
       console.error('Erreur d\'upload pour le fichier', file.name, error);
       toast.add({ severity: 'error', summary: 'Erreur', detail: `Erreur lors de l'upload de "${file.name}"`, life: 4000 });
+    } finally {
+      completedFiles += 1;
+      uploadProgress.value = Math.round((completedFiles / event.files.length) * 100);
     }
   }
+
+  isUploading.value = false;
 };
 
 // Gérer le choix de fichier pour uploader
@@ -176,15 +200,19 @@ onMounted(async () => {
           }"
           >
           <template #empty>
-            <div v-if="uploadFiles.length < 1" @click="onChooseUploadFiles" class="w-full py-3" :style="{ cursor: 'copy' }">
+            <button v-if="uploadFiles.length < 1" type="button" @click="onChooseUploadFiles" class="document-upload-trigger w-full py-3">
               <div class="h-full flex flex-column justify-content-center align-items-center">
                 <i class="pi pi-upload text-900 text-2xl mb-3"></i>
                 <span class="font-bold text-900 text-xl mb-3">Télécharger des fichiers</span>
                 <span class="font-medium text-600 text-md text-center">Déposez ou sélectionnez des fichiers</span>
               </div>
-            </div>
+            </button>
           </template>
           </FileUpload>
+          <div v-if="isUploading" class="upload-progress" role="status" aria-live="polite">
+            <div class="upload-progress__label"><span>Envoi en cours</span><strong>{{ uploadProgress }} %</strong></div>
+            <progress :value="uploadProgress" max="100">{{ uploadProgress }} %</progress>
+          </div>
         </div>
       </div>
     </div>
@@ -192,16 +220,21 @@ onMounted(async () => {
     <!-- Section pour afficher les dossiers, sous-dossiers et fichiers -->
     <div class="col-12 md:col-7 xl:col-9">
       <div class="card">
+        <nav class="documents-breadcrumb" aria-label="Fil d'Ariane">
+          <button v-if="selectedFolder" type="button" @click="selectedFolder = null; files = []; subFolders = []; clearSelection()">Documents</button>
+          <span v-else aria-current="page">Documents</span>
+          <template v-if="selectedFolder"><i class="pi pi-angle-right" aria-hidden="true"></i><span aria-current="page">{{ selectedFolder.name }}</span></template>
+        </nav>
         <div class="text-900 text-xl font-semibold mb-3">Dossiers</div>
         <div class="grid">
           <!-- Afficher les dossiers principaux -->
-          <div v-for="(folder, i) in folders" :key="i" class="col-12 md:col-6 xl:col-4" @click="onFolderClick(folder)">
-            <div class="p-3 border-1 surface-border flex align-items-center justify-content-between hover:surface-100 cursor-pointer border-round">
+          <div v-for="(folder, i) in folders" :key="i" class="col-12 md:col-6 xl:col-4">
+            <button type="button" class="document-folder p-3 border-1 surface-border flex align-items-center justify-content-between border-round" @click="onFolderClick(folder)" :aria-pressed="selectedFolder?.path === folder.path">
               <div class="flex align-items-center">
                 <i class="text-2xl mr-3" :class="folder.icon"></i>
                 <span class="text-900 text-lg font-medium">{{ folder.name }}</span>
               </div>
-            </div>
+            </button>
           </div>
         </div>
 
@@ -209,13 +242,13 @@ onMounted(async () => {
         <div v-if="subFolders.length > 0" class="mt-4">
           <h3 class="text-lg font-semibold">Sous-dossiers</h3>
           <div class="grid">
-            <div v-for="(subFolder, i) in subFolders" :key="i" class="col-12 md:col-6 xl:col-4" @click="onFolderClick(subFolder)">
-              <div class="p-3 border-1 surface-border flex align-items-center justify-content-between hover:surface-100 cursor-pointer border-round">
+            <div v-for="(subFolder, i) in subFolders" :key="i" class="col-12 md:col-6 xl:col-4">
+              <button type="button" class="document-folder p-3 border-1 surface-border flex align-items-center justify-content-between border-round" @click="onFolderClick(subFolder)">
                 <div class="flex align-items-center">
                   <i class="pi pi-folder text-2xl mr-3"></i>
                   <span class="text-900 text-lg font-medium">{{ subFolder.name }}</span>
                 </div>
-              </div>
+              </button>
             </div>
           </div>
         </div>
@@ -223,8 +256,13 @@ onMounted(async () => {
         <!-- Afficher les fichiers dans le dossier sélectionné -->
         <div v-if="files.length > 0" class="mt-4">
           <h3 class="text-lg font-semibold">Fichiers dans {{ selectedFolder.name }}</h3>
-          <ul>
+          <div v-if="selectedCount" class="documents-actionbar" role="status">
+            <strong>{{ selectedCount }} sélectionné{{ selectedCount > 1 ? 's' : '' }}</strong>
+            <button type="button" @click="clearSelection">Désélectionner</button>
+          </div>
+          <ul class="document-file-list">
             <li v-for="file in files" :key="file.name">
+              <input :id="`document-${file.name}`" type="checkbox" :checked="selectedFiles.has(file.name)" @change="toggleFileSelection(file.name)" />
               <a :href="file.url" target="_blank">{{ file.name }}</a>
             </li>
           </ul>
@@ -233,3 +271,8 @@ onMounted(async () => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.document-upload-trigger,.document-folder{border:0;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer}.document-folder{width:100%;transition:background-color .2s ease,border-color .2s ease}.document-folder:hover,.document-folder[aria-pressed=true]{background:var(--surface-hover)}.document-upload-trigger:focus-visible,.document-folder:focus-visible,.documents-breadcrumb button:focus-visible,.documents-actionbar button:focus-visible{outline:3px solid var(--primary-color);outline-offset:3px}.upload-progress{padding:0 1rem 1rem}.upload-progress__label{display:flex;justify-content:space-between;margin-bottom:.5rem}.upload-progress progress{width:100%;accent-color:var(--primary-color)}.documents-breadcrumb{display:flex;align-items:center;gap:.5rem;margin-bottom:1rem;color:var(--text-color-secondary)}.documents-breadcrumb button,.documents-actionbar button{border:0;background:none;color:var(--primary-color);font:inherit;cursor:pointer}.documents-actionbar{display:flex;justify-content:space-between;align-items:center;padding:.75rem 1rem;margin-bottom:.75rem;border-radius:.75rem;background:var(--surface-ground)}.document-file-list{list-style:none;padding:0}.document-file-list li{display:flex;align-items:center;gap:.75rem;padding:.65rem 0}
+@media (prefers-reduced-motion:reduce){.document-folder{transition:none}}
+</style>

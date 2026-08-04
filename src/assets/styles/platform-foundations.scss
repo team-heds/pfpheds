@@ -79,6 +79,14 @@ textarea {
   border-radius: var(--tt-radius-xl, 1rem);
 }
 
+.p-datatable-scrollable .p-datatable-thead > tr > th,
+.p-datatable .p-datatable-thead > tr > th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--surface-card);
+}
+
 @media (max-width: 40rem) {
   input,
   select,

@@ -1,14 +1,14 @@
 <template>
   <Navbar />
 
-  <div class="newsfeed-layout">
+  <SocialThreeColumnLayout center-max-width="72rem">
     <!-- Sidebar Gauche -->
-    <div class="sidebar-left">
+    <template #left>
       <LeftSidebar />
-    </div>
+    </template>
 
     <!-- Zone centrale (Main-feed) : Infos de la communauté et flux -->
-    <div class="main-feed" ref="mainFeedRef">
+    <main class="main-feed" ref="mainFeedRef">
       <div class="community-shell">
         <div class="card community-header-card">
           <h1>{{ community.name }}</h1>
@@ -20,13 +20,13 @@
 
         <MainFeedSupabase :key="communityId" :community-id="communityId" />
       </div>
-    </div>
+    </main>
 
     <!-- Sidebar Droite -->
-    <div class="sidebar-right">
+    <template #right>
       <RightSidebar />
-    </div>
-  </div>
+    </template>
+  </SocialThreeColumnLayout>
 
   <MobileBottomNav :scrollTarget="mainFeedRef" />
   <Toast />
@@ -45,6 +45,7 @@ import { supabase } from '@/supabase.js';
 import Button from 'primevue/button';
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
+import SocialThreeColumnLayout from '@/components/common/layouts/SocialThreeColumnLayout.vue';
 
 export default {
   name: "CommunityInfo",
@@ -56,6 +57,7 @@ export default {
     MainFeedSupabase,
     Button,
     Toast,
+    SocialThreeColumnLayout,
   },
   setup() {
     const authStore = useAuthStore();

@@ -120,6 +120,8 @@
         </Card>
       </div>
 
+      <PlanningLegend class="mb-3" />
+
       <!-- Actions -->
       <Card>
         <template #content>
@@ -595,6 +597,7 @@
 </template>
 
 <script setup>
+import PlanningLegend from '@/components/common/planning/PlanningLegend.vue'
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useToast } from 'primevue/usetoast'

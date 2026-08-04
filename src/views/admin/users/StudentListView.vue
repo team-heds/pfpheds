@@ -15,9 +15,11 @@
         showGridlines
       >
         <template #header>
-          <div class="flex justify-content-between flex-column sm:flex-row">
-            <div class="flex gap-2">
+          <DataTableToolbar v-model:query="globalFilterInput" :result-count="filteredEtudiants.length">
+            <template #primary>
               <Button label="Ajouter un étudiant" icon="pi pi-plus" class="mb-2" outlined @click="showCreateDialog = true" />
+            </template>
+            <template #tools>
               <Button
                 :label="showCohortColumns ? 'Masquer Cohortes' : 'Afficher Cohortes'"
                 :icon="showCohortColumns ? 'pi pi-eye-slash' : 'pi pi-eye'"
@@ -34,11 +36,8 @@
                 severity="secondary"
                 @click="toggleSortOrder" 
               />
-            </div>
-            <span class="p-input-icon-left">
-              <InputText v-model="globalFilterInput" placeholder="Recherche" style="width: 100%" />
-            </span>
-          </div>
+            </template>
+          </DataTableToolbar>
         </template>
         <template #empty> Aucun étudiant trouvé. </template>
         <template #loading> Chargement des données des étudiants. Veuillez patienter. </template>
@@ -196,7 +195,6 @@
 import studentsService from '@/service/studentsService';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
@@ -206,13 +204,14 @@ import { supabase } from '@/supabase';
 import StudentEditDialog from '@/components/admin/forms/StudentEditDialog.vue';
 import StudentCreateDialog from '@/components/admin/forms/StudentCreateDialog.vue';
 import { useUserStore } from '@/stores/userStore';
+import DataTableToolbar from '@/components/common/tables/DataTableToolbar.vue';
 
 export default {
   name: "EtudiantList",
   components: {
     DataTable,
     Column,
-    InputText,
+    DataTableToolbar,
     Button,
     AdminLayout,
     Toast,
@@ -788,4 +787,3 @@ export default {
   color: #9ca3af;
 }
 </style>
- 

@@ -130,6 +130,8 @@
         </div>
       </div>
 
+      <LoadingState v-if="loadingVimeo && vimeoVideos.length === 0" label="Chargement de la bibliothèque vidéo…" />
+
       <!-- Vue par modules -->
       <div v-if="libraryView === 'modules'" class="modules-view">
         <!-- Header modules -->
@@ -190,7 +192,7 @@
       </transition-group>
 
       <!-- Empty state -->
-      <div v-if="filteredVimeoVideos.length === 0" class="empty-state">
+      <div v-if="!loadingVimeo && filteredVimeoVideos.length === 0" class="empty-state">
         <i class="pi pi-video"></i>
         <h3>Aucune vidéo trouvée</h3>
         <p v-if="loadingVimeo">Chargement des vidéos Vimeo en cours...</p>
@@ -354,6 +356,7 @@ import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import VideoCard from '@/components/video/VideoCard.vue'
 import ModuleSection from '@/components/video/ModuleSection.vue'
+import LoadingState from '@/components/common/states/LoadingState.vue'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import Dropdown from 'primevue/dropdown'

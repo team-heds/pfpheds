@@ -44,9 +44,6 @@
             <span class="flex-1"></span>
             <div class="flex align-items-center gap-2">
               <Button icon="pi pi-eye" outlined @click="toggleColumnsPanel" v-tooltip.top="'Afficher/Masquer colonnes'" />
-              <Button icon="pi pi-plus" label="Nouvelle place" @click="showCreateDialog = true" severity="success" />
-              <Button icon="pi pi-filter-slash" label="Reset filtres" outlined severity="secondary" @click="resetFilters" />
-              <InputText v-model="searchInput" placeholder="Rechercher (nom, institution, canton)" class="search-input" />
               <Button icon="pi pi-refresh" outlined :disabled="loading" @click="reload" />
             </div>
           </div>
@@ -119,10 +116,10 @@
       </OverlayPanel>
 
       <div class="surface-card fp-dark p-3 border-round shadow-2">
-        <div class="text-600 mb-2">
-          {{ displayedRows.length }} résultat(s)
-          <span v-if="isTruncated" class="text-orange-500">(affichage limité: {{ displayedRows.length }} / {{ totalMatchingRows }})</span>
-        </div>
+        <DataTableToolbar v-model:query="searchInput" :result-count="totalMatchingRows" placeholder="Rechercher une place…">
+          <template #primary><Button icon="pi pi-plus" label="Nouvelle place" @click="showCreateDialog = true" severity="success" /></template>
+          <template #tools><Button icon="pi pi-filter-slash" label="Réinitialiser" outlined severity="secondary" @click="resetFilters" /><span v-if="isTruncated" class="text-orange-500">{{ displayedRows.length }} affichés</span></template>
+        </DataTableToolbar>
         <DataTable
           :value="displayedRows"
           :loading="loading"
@@ -545,7 +542,7 @@ import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Tag from 'primevue/tag'
-import InputText from 'primevue/inputtext'
+import DataTableToolbar from '@/components/common/tables/DataTableToolbar.vue'
 import Button from 'primevue/button'
 import { usePlacesStore } from '@/stores/placesStore'
 import { useInstitutionsStore } from '@/stores/institutionsStore'
