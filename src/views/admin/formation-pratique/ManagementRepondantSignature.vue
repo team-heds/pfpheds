@@ -284,8 +284,10 @@ const fetchAssignedStudents = async (repondantName) => {
     const userIds = [...new Set(assignments.map(a => a.user_id))]
     const { data: profiles } = await supabase
       .from('user_profiles')
-      .select('user_id, family_name, forname, classe')
+      .select('user_id, family_name, forname, classe, role, permissions, is_active')
       .in('user_id', userIds)
+      .or('role.eq.EtudiantPhysio,permissions.cs.["EtudiantPhysio"]')
+      .eq('is_active', true)
 
     // 3. Récupérer les détails des praticiens formateurs
     const praticienIds = [...new Set(assignments.map(a => a.assigned_praticien_id).filter(id => id))]
@@ -305,7 +307,7 @@ const fetchAssignedStudents = async (repondantName) => {
     const praticiensMap = new Map((praticiens || []).map(p => [p.id, p]))
     const repondantsMap = new Map((repondantsDetails || []).map(r => [`${r.first_name} ${r.last_name}`, r]))
 
-    assignedStudents.value = assignments.map(a => {
+    assignedStudents.value = assignments.filter(a => profilesMap.has(a.user_id)).map(a => {
       const p = profilesMap.get(a.user_id)
       const praticien = praticiensMap.get(a.assigned_praticien_id)
       return {

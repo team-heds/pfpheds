@@ -1,11 +1,7 @@
 <template>
   <div class="surface-section px-4 py-8 md:px-6 lg:px-8">
-    <section class="text-white text-center py-5 rounded-lg mb-5">
-      <h1 class="text-5xl font-bold">Nouvel utilisateur</h1>
-    </section>
-
-    <div class="card p-4 shadow-lg">
-      <form @submit.prevent="addNewUser" class="p-fluid grid">
+    <FormShell title="Nouvel utilisateur" description="Créez un compte et attribuez-lui son rôle initial.">
+      <form id="new-user-form" @submit.prevent="addNewUser" class="app-form p-fluid grid">
         <div class="p-field col-12 md:col-6">
           <label for="email" class="font-semibold">Email *</label>
           <InputText 
@@ -59,24 +55,12 @@
           <Message severity="error" :closable="false">{{ createUserError }}</Message>
         </div>
 
-        <div class="col-12 flex gap-3 justify-content-end">
-          <Button 
-            label="Annuler" 
-            icon="pi pi-times" 
-            @click="goBack" 
-            type="button"
-            outlined 
-            severity="secondary" 
-          />
-          <Button 
-            type="submit" 
-            label="Créer l'utilisateur" 
-            icon="pi pi-check" 
-            :loading="creatingUser" 
-          />
-        </div>
       </form>
-    </div>
+      <template #actions>
+        <PrimeButton label="Annuler" icon="pi pi-times" @click="goBack" type="button" outlined severity="secondary" />
+        <PrimeButton form="new-user-form" type="submit" label="Créer l'utilisateur" icon="pi pi-check" :loading="creatingUser" />
+      </template>
+    </FormShell>
 
     <Toast />
   </div>
@@ -85,22 +69,26 @@
 <script>
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
-import Button from 'primevue/button';
+import PrimeButton from 'primevue/button';
 import Password from 'primevue/password';
 import Message from 'primevue/message';
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
 import { useAuthStore } from '@/stores/authStore';
+import FormShell from '@/components/common/forms/FormShell.vue';
+import { db } from '../../../../firebase.js';
+import { get, ref, set } from 'firebase/database';
 
 export default {
   name: 'NewUserForm',
   components: {
     InputText,
     Dropdown,
-    Button,
+    PrimeButton,
     Password,
     Message,
-    Toast
+    Toast,
+    FormShell
   },
   setup() {
     const toast = useToast();

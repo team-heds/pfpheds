@@ -702,6 +702,7 @@ const fetchNotes = async () => {
         .from('user_profiles')
         .select('user_id, family_name, forname, classe, permissions, pfp_cohort')
         .or('role.eq.EtudiantPhysio,permissions.cs.["EtudiantPhysio"]')
+        .eq('is_active', true)
         .order('family_name'),
       supabase
         .from('StudentsPhysio')

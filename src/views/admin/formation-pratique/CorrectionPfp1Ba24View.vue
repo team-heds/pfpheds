@@ -382,8 +382,10 @@ async function loadData() {
     ] = await Promise.all([
       supabase
         .from('user_profiles')
-        .select('user_id, family_name, forname, email, classe, permissions, is_active')
+        .select('user_id, family_name, forname, email, classe, role, permissions, is_active')
         .ilike('classe', 'BA24%')
+        .or('role.eq.EtudiantPhysio,permissions.cs.["EtudiantPhysio"]')
+        .eq('is_active', true)
         .order('family_name')
         .order('forname'),
       supabase

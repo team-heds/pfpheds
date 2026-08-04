@@ -315,7 +315,8 @@ async function loadGlobalKpis() {
       supabase
         .from('user_profiles')
         .select('user_id, is_active, permissions, family_name, forname, email, classe')
-        .filter('permissions', 'cs', '["EtudiantPhysio"]'),
+        .filter('permissions', 'cs', '["EtudiantPhysio"]')
+        .eq('is_active', true),
       supabase.from('places').select('PlaceId, InstitutionId, NomPlace'),
       supabase.from('student_result_vote').select('id').eq('status', 'published'),
     ])
@@ -349,6 +350,7 @@ async function loadStudents() {
       .from('user_profiles')
       .select('user_id, email, forname, family_name, display_name, avatar_url, is_active, permissions, classe')
       .filter('permissions', 'cs', '["EtudiantPhysio"]')
+      .eq('is_active', true)
       .order('family_name', { ascending: true })
       .order('forname', { ascending: true })
 

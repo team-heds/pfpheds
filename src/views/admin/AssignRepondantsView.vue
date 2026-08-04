@@ -312,6 +312,8 @@ const loadStudents = async () => {
     const { data: profiles, error: profilesError } = await supabase
       .from('user_profiles')
       .select('*')
+      .or('role.eq.EtudiantPhysio,permissions.cs.["EtudiantPhysio"]')
+      .eq('is_active', true)
       .order('family_name');
 
     if (profilesError) throw profilesError;

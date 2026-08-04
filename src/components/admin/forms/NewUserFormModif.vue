@@ -5,7 +5,7 @@
     </section>
 
     <div class="card p-4 shadow-lg">
-      <form @submit.prevent="updateUser" class="p-fluid grid">
+      <form @submit.prevent="updateUser" class="app-form p-fluid grid">
         <div class="p-field col-6">
           <label for="prenom">Prénom</label>
           <InputText id="prenom" v-model="prenom" required />

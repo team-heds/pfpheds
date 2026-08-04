@@ -5,7 +5,7 @@
     </section>
  
     <div class="card p-4 shadow-lg">
-      <form @submit.prevent="submitForm" class="p-fluid">
+      <form @submit.prevent="submitForm" class="app-form p-fluid">
         <div class="field">
           <label for="prenom">Prénom</label>
           <InputText id="prenom" v-model="newPraticien.prenom" required />
@@ -70,4 +70,3 @@ const submitForm = async () => {
   margin-bottom: 1.5rem;
 }
 </style>
- 

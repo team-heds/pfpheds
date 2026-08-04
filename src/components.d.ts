@@ -100,6 +100,7 @@ declare module 'vue' {
     FilterSidebar: typeof import('./components/common/filters/FilterSidebar.vue')['default']
     FiltreMap: typeof import('./components/common/filters/FiltreMap.vue')['default']
     Footer: typeof import('./components/common/utils/Footer.vue')['default']
+    FormActions: typeof import('./components/common/forms/FormActions.vue')['default']
     FormField: typeof import('./components/common/forms/FormField.vue')['default']
     FormSection: typeof import('./components/common/forms/FormSection.vue')['default']
     FormShell: typeof import('./components/common/forms/FormShell.vue')['default']
