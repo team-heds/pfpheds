@@ -81,7 +81,23 @@ jobs:
       - name: Install presentation dependencies
         run: npm ci --prefix presentation
 
+      - name: Validate frontend environment
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_KEY: ${{ secrets.VITE_SUPABASE_KEY }}
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+        run: |
+          test -n "$VITE_SUPABASE_URL"
+          test -n "$VITE_SUPABASE_KEY"
+          test -n "$VITE_API_BASE_URL"
+
       - name: Build project and documentation
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_KEY: ${{ secrets.VITE_SUPABASE_KEY }}
+          VITE_SUPABASE_REST_URL: ${{ secrets.VITE_SUPABASE_REST_URL }}
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_VAPID_PUBLIC: ${{ secrets.VITE_VAPID_PUBLIC }}
         run: npm run build:all
 
       # Déploiement FTP (Infomaniak/FileZilla ou autre)
