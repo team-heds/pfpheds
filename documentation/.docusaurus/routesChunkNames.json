@@ -1,393 +1,397 @@
 {
-  "/docs/landing-80b": {
+  "/docs/landing/-94c": {
     "__comp": "1f391b9e",
     "__context": {
       "plugin": "a7456010"
     },
     "content": "f3976560"
   },
-  "/docs/-bd4": {
+  "/docs/-182": {
     "__comp": "5e95c892",
     "__context": {
       "plugin": "aba21aa0"
     }
   },
-  "/docs/-993": {
+  "/docs/-35f": {
     "__comp": "a7bd4aaa",
     "__props": "11b43341"
   },
-  "/docs/-434": {
+  "/docs/-1fd": {
     "__comp": "a94703ab"
   },
-  "/docs/apps/overview-781": {
+  "/docs/apps/overview/-f67": {
     "__comp": "17896441",
     "content": "b3921f18"
   },
-  "/docs/architecture-38d": {
+  "/docs/architecture/-7ac": {
     "__comp": "17896441",
     "content": "5281b7a2"
   },
-  "/docs/auth/auth-routing-lifecycle-6f9": {
+  "/docs/auth/auth-routing-lifecycle/-2ee": {
     "__comp": "17896441",
     "content": "c1d5743e"
   },
-  "/docs/auth/overview-d57": {
+  "/docs/auth/overview/-5e5": {
     "__comp": "17896441",
     "content": "19665518"
   },
-  "/docs/auth/permission-model-eeb": {
+  "/docs/auth/permission-model/-685": {
     "__comp": "17896441",
     "content": "2a45ffda"
   },
-  "/docs/auth/security-services-legacy-58a": {
+  "/docs/auth/security-services-legacy/-1df": {
     "__comp": "17896441",
     "content": "52826eb4"
   },
-  "/docs/backend/active-vs-legacy-495": {
+  "/docs/backend/active-vs-legacy/-ad1": {
     "__comp": "17896441",
     "content": "1a1903b5"
   },
-  "/docs/backend/endpoints-catalog-9c8": {
+  "/docs/backend/endpoints-catalog/-08e": {
     "__comp": "17896441",
     "content": "803388f7"
   },
-  "/docs/backend/firebase/auth-470": {
+  "/docs/backend/firebase/auth/-a11": {
     "__comp": "17896441",
     "content": "e6a30710"
   },
-  "/docs/backend/firebase/database-595": {
+  "/docs/backend/firebase/database/-0b2": {
     "__comp": "17896441",
     "content": "982052b2"
   },
-  "/docs/backend/firebase/overview-bf7": {
+  "/docs/backend/firebase/overview/-eea": {
     "__comp": "17896441",
     "content": "dedba16b"
   },
-  "/docs/backend/firebase/storage-95d": {
+  "/docs/backend/firebase/storage/-b2c": {
     "__comp": "17896441",
     "content": "37199b03"
   },
-  "/docs/backend/frontend-backend-traceability-34c": {
+  "/docs/backend/frontend-backend-traceability/-3cf": {
     "__comp": "17896441",
     "content": "b4f82270"
   },
-  "/docs/backend/overview-94d": {
+  "/docs/backend/overview/-072": {
     "__comp": "17896441",
     "content": "62904858"
   },
-  "/docs/backend/routes-map-c91": {
+  "/docs/backend/routes-map/-058": {
     "__comp": "17896441",
     "content": "312ecf75"
   },
-  "/docs/backend/supabase/migrations-abe": {
+  "/docs/backend/supabase/migrations/-b50": {
     "__comp": "17896441",
     "content": "7e9e1a3b"
   },
-  "/docs/backend/supabase/overview-546": {
+  "/docs/backend/supabase/overview/-63c": {
     "__comp": "17896441",
     "content": "e28c14c0"
   },
-  "/docs/backend/supabase/rls-2e7": {
+  "/docs/backend/supabase/rls/-845": {
     "__comp": "17896441",
     "content": "c2f664bf"
   },
-  "/docs/backend/supabase/services-fef": {
+  "/docs/backend/supabase/services/-93b": {
     "__comp": "17896441",
     "content": "f9705d1d"
   },
-  "/docs/changelog-c45": {
+  "/docs/changelog/-604": {
     "__comp": "17896441",
     "content": "9beb87c2"
   },
-  "/docs/contrib/conventions-5da": {
+  "/docs/contrib/conventions/-063": {
     "__comp": "17896441",
     "content": "e532faae"
   },
-  "/docs/contrib/docs-style-guide-2cd": {
+  "/docs/contrib/docs-style-guide/-43e": {
     "__comp": "17896441",
     "content": "3132d01d"
   },
-  "/docs/contrib/eslint-prettier-5c1": {
+  "/docs/contrib/eslint-prettier/-b45": {
     "__comp": "17896441",
     "content": "145c391b"
   },
-  "/docs/contrib/github-0d4": {
+  "/docs/contrib/github/-6ad": {
     "__comp": "17896441",
     "content": "c993bda9"
   },
-  "/docs/contrib/workflow-ca8": {
+  "/docs/contrib/presentation-revealjs/-836": {
+    "__comp": "17896441",
+    "content": "3a1c0af0"
+  },
+  "/docs/contrib/workflow/-5f2": {
     "__comp": "17896441",
     "content": "0dffc204"
   },
-  "/docs/data/critical-tables-506": {
+  "/docs/data/critical-tables/-a41": {
     "__comp": "17896441",
     "content": "32646fcb"
   },
-  "/docs/data/migration-firebase-supabase-dab": {
+  "/docs/data/migration-firebase-supabase/-ef2": {
     "__comp": "17896441",
     "content": "a62e3fa1"
   },
-  "/docs/data/migrations-catalog-ecf": {
+  "/docs/data/migrations-catalog/-d2b": {
     "__comp": "17896441",
     "content": "dbb91a93"
   },
-  "/docs/data/multi-system-router-2e6": {
+  "/docs/data/multi-system-router/-c08": {
     "__comp": "17896441",
     "content": "07b5b8de"
   },
-  "/docs/data/overview-7db": {
+  "/docs/data/overview/-1cc": {
     "__comp": "17896441",
     "content": "19a0c6fe"
   },
-  "/docs/data/rpc-and-sql-surface-6e1": {
+  "/docs/data/rpc-and-sql-surface/-0f4": {
     "__comp": "17896441",
     "content": "8282f319"
   },
-  "/docs/data/schema-supabase-ba7": {
+  "/docs/data/schema-supabase/-dd9": {
     "__comp": "17896441",
     "content": "3b23f042"
   },
-  "/docs/domains/formation-pratique-c0c": {
-    "__comp": "17896441",
-    "content": "b28a6229"
-  },
-  "/docs/domains/formation-pratique-flows-0c7": {
+  "/docs/domains/formation-pratique-flows/-b0e": {
     "__comp": "17896441",
     "content": "8615d967"
   },
-  "/docs/domains/formation-pratique-fonctionnel-157": {
+  "/docs/domains/formation-pratique-fonctionnel/-bf9": {
     "__comp": "17896441",
     "content": "433a55ac"
   },
-  "/docs/domains/formation-pratique-traceability-1a0": {
+  "/docs/domains/formation-pratique-traceability/-745": {
     "__comp": "17896441",
     "content": "a0144bbd"
   },
-  "/docs/domains/gamification-service-deep-dive-9ea": {
+  "/docs/domains/formation-pratique/-968": {
+    "__comp": "17896441",
+    "content": "b28a6229"
+  },
+  "/docs/domains/gamification-service-deep-dive/-703": {
     "__comp": "17896441",
     "content": "74b1340f"
   },
-  "/docs/domains/multi-filiere-si-phy-065": {
+  "/docs/domains/multi-filiere-si-phy/-d24": {
     "__comp": "17896441",
     "content": "8f89f2d9"
   },
-  "/docs/domains/pfp-services-deep-dive-6d6": {
+  "/docs/domains/pfp-services-deep-dive/-0c4": {
     "__comp": "17896441",
     "content": "a5c11989"
   },
-  "/docs/domains/planning-soins-2e9": {
+  "/docs/domains/planning-soins/-a70": {
     "__comp": "17896441",
     "content": "51a6316e"
   },
-  "/docs/domains/priorite-extension-soins-infirmiers-et-profil-etudiant-39f": {
+  "/docs/domains/priorite-extension-soins-infirmiers-et-profil-etudiant/-a41": {
     "__comp": "17896441",
     "content": "62db063b"
   },
-  "/docs/domains/social-gamification-d8e": {
+  "/docs/domains/social-gamification/-bb4": {
     "__comp": "17896441",
     "content": "cfd4b5ae"
   },
-  "/docs/domains/ui-ownership-map-1a8": {
+  "/docs/domains/ui-ownership-map/-6ba": {
     "__comp": "17896441",
     "content": "7fae4a13"
   },
-  "/docs/domains/votation-algorithm-393": {
+  "/docs/domains/votation-algorithm/-a40": {
     "__comp": "17896441",
     "content": "0b2904ed"
   },
-  "/docs/domains/votation-priority-score-23e": {
+  "/docs/domains/votation-priority-score/-4f2": {
     "__comp": "17896441",
     "content": "a3ea53ef"
   },
-  "/docs/domains/votation-systeme-complet-34f": {
+  "/docs/domains/votation-systeme-complet/-be6": {
     "__comp": "17896441",
     "content": "505a8d46"
   },
-  "/docs/frontend/bootstrap-e81": {
+  "/docs/frontend/bootstrap/-873": {
     "__comp": "17896441",
     "content": "2d7f4049"
   },
-  "/docs/frontend/component-library-admin-2ff": {
+  "/docs/frontend/component-library-admin/-85a": {
     "__comp": "17896441",
     "content": "49452287"
   },
-  "/docs/frontend/component-library-common-ui-6b6": {
+  "/docs/frontend/component-library-common-ui/-f59": {
     "__comp": "17896441",
     "content": "7a64e0b5"
   },
-  "/docs/frontend/component-library-critical-components-21c": {
+  "/docs/frontend/component-library-critical-components/-820": {
     "__comp": "17896441",
     "content": "95190b40"
   },
-  "/docs/frontend/component-library-layout-ef7": {
+  "/docs/frontend/component-library-layout/-2fd": {
     "__comp": "17896441",
     "content": "518913a7"
   },
-  "/docs/frontend/component-library-overview-6f5": {
+  "/docs/frontend/component-library-overview/-719": {
     "__comp": "17896441",
     "content": "377fa3e6"
   },
-  "/docs/frontend/component-library-social-media-9c4": {
+  "/docs/frontend/component-library-social-media/-a9b": {
     "__comp": "17896441",
     "content": "9060733f"
   },
-  "/docs/frontend/critical-stores-ef8": {
+  "/docs/frontend/critical-stores/-881": {
     "__comp": "17896441",
     "content": "84d51f70"
   },
-  "/docs/frontend/data-refresh-pattern-714": {
+  "/docs/frontend/data-refresh-pattern/-fbd": {
     "__comp": "17896441",
     "content": "d82fc6cc"
   },
-  "/docs/frontend/pwa-b8d": {
+  "/docs/frontend/pwa/-576": {
     "__comp": "17896441",
     "content": "90a4d65d"
   },
-  "/docs/frontend/route-catalog-7b9": {
+  "/docs/frontend/route-catalog/-840": {
     "__comp": "17896441",
     "content": "e610d875"
   },
-  "/docs/frontend/route-to-data-matrix-cf7": {
+  "/docs/frontend/route-to-data-matrix/-0ea": {
     "__comp": "17896441",
     "content": "80cb5435"
   },
-  "/docs/frontend/router-modules-17e": {
+  "/docs/frontend/router-modules/-791": {
     "__comp": "17896441",
     "content": "398341fa"
   },
-  "/docs/frontend/routing-30f": {
+  "/docs/frontend/routing/-c43": {
     "__comp": "17896441",
     "content": "4a2cf9ac"
   },
-  "/docs/frontend/services-catalog-5dd": {
+  "/docs/frontend/services-catalog/-1c3": {
     "__comp": "17896441",
     "content": "33403232"
   },
-  "/docs/frontend/state-035": {
+  "/docs/frontend/state/-02f": {
     "__comp": "17896441",
     "content": "61f4039b"
   },
-  "/docs/frontend/stores-services-map-7b7": {
+  "/docs/frontend/stores-services-map/-4ef": {
     "__comp": "17896441",
     "content": "a3c09e06"
   },
-  "/docs/frontend/ui-56b": {
+  "/docs/frontend/ui/-0f0": {
     "__comp": "17896441",
     "content": "4a6d0163"
   },
-  "/docs/frontend/view-store-service-matrix-9f7": {
+  "/docs/frontend/view-store-service-matrix/-039": {
     "__comp": "17896441",
     "content": "7c0bd56e"
   },
-  "/docs/getting-started-565": {
+  "/docs/getting-started/-826": {
     "__comp": "17896441",
     "content": "d589d3a7"
   },
-  "/docs/getting-started/cli-extensions/overview-020": {
+  "/docs/getting-started/cli-extensions/overview/-da6": {
     "__comp": "17896441",
     "content": "ae171ffe"
   },
-  "/docs/getting-started/environment/setup-75a": {
+  "/docs/getting-started/environment/setup/-954": {
     "__comp": "17896441",
     "content": "3ebb9251"
   },
-  "/docs/media/media-service-d8c": {
+  "/docs/media/media-service/-4cc": {
     "__comp": "17896441",
     "content": "6f7dd46e"
   },
-  "/docs/media/modules-166": {
+  "/docs/media/modules/-c75": {
     "__comp": "17896441",
     "content": "85245f32"
   },
-  "/docs/media/vimeo-config-e88": {
+  "/docs/media/vimeo-config/-dfb": {
     "__comp": "17896441",
     "content": "08aaa755"
   },
-  "/docs/ops/deployment-007": {
+  "/docs/ops/deployment/-fbb": {
     "__comp": "17896441",
     "content": "efad1bc7"
   },
-  "/docs/ops/development-b23": {
+  "/docs/ops/development/-57d": {
     "__comp": "17896441",
     "content": "ebfc18cf"
   },
-  "/docs/ops/runbook-7d7": {
+  "/docs/ops/runbook/-1c5": {
     "__comp": "17896441",
     "content": "57bdd554"
   },
-  "/docs/ops/vps-operations-aa4": {
+  "/docs/ops/vps-operations/-d63": {
     "__comp": "17896441",
     "content": "118e195f"
   },
-  "/docs/ops/vps-topology-c30": {
+  "/docs/ops/vps-topology/-e83": {
     "__comp": "17896441",
     "content": "eacfd516"
   },
-  "/docs/priorites-developpement-a29": {
+  "/docs/priorites-developpement/-917": {
     "__comp": "17896441",
     "content": "84ba1e04"
   },
-  "/docs/roadmap-8c5": {
+  "/docs/roadmap/-1c4": {
     "__comp": "17896441",
     "content": "0dffb83e"
   },
-  "/docs/security/roles-7bc": {
+  "/docs/security/roles/-486": {
     "__comp": "17896441",
     "content": "cb2d8aae"
   },
-  "/docs/security/route-guards-91c": {
+  "/docs/security/route-guards/-6b8": {
     "__comp": "17896441",
     "content": "85c1f6bd"
   },
-  "/docs/security/supabase-rls-6b0": {
+  "/docs/security/supabase-rls/-a33": {
     "__comp": "17896441",
     "content": "79a76d7f"
   },
-  "/docs/system/overview-26e": {
+  "/docs/system/overview/-4a7": {
     "__comp": "17896441",
     "content": "7099b208"
   },
-  "/docs/system/project-structure-fc1": {
+  "/docs/system/project-structure/-4d5": {
     "__comp": "17896441",
     "content": "6976c8b7"
   },
-  "/docs/system/recovery-checklist-6aa": {
+  "/docs/system/recovery-checklist/-807": {
     "__comp": "17896441",
     "content": "e7486243"
   },
-  "/docs/testing/diagnostic-tools-e4c": {
+  "/docs/testing/diagnostic-tools/-1ac": {
     "__comp": "17896441",
     "content": "f3657415"
   },
-  "/docs/testing/firebase-test-4e8": {
+  "/docs/testing/firebase-test/-6b2": {
     "__comp": "17896441",
     "content": "1d685331"
   },
-  "/docs/testing/overview-9d1": {
+  "/docs/testing/overview/-46f": {
     "__comp": "17896441",
     "content": "f8796542"
   },
-  "/docs/testing/scripts-63b": {
+  "/docs/testing/scripts/-07b": {
     "__comp": "17896441",
     "content": "56749626"
   },
-  "/docs/testing/supabase-test-661": {
+  "/docs/testing/supabase-test/-84c": {
     "__comp": "17896441",
     "content": "0cdb6508"
   },
-  "/docs/testing/unit-tests-3ff": {
+  "/docs/testing/unit-tests/-dfe": {
     "__comp": "17896441",
     "content": "29c8854e"
   },
-  "/docs/troubleshooting/env-encoding-81f": {
+  "/docs/troubleshooting/env-encoding/-863": {
     "__comp": "17896441",
     "content": "273c675f"
   },
-  "/docs/troubleshooting/firebase-auth-a47": {
+  "/docs/troubleshooting/firebase-auth/-0bc": {
     "__comp": "17896441",
     "content": "5d7eafa7"
   },
-  "/docs/troubleshooting/firebase-env-30f": {
+  "/docs/troubleshooting/firebase-env/-e43": {
     "__comp": "17896441",
     "content": "8c2d87d8"
   },

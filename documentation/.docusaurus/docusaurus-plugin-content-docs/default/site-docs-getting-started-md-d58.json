@@ -1,7 +1,7 @@
 {
   "id": "getting-started",
-  "title": "Démarrage rapide et reprise du projet",
-  "description": "Point d'entrée",
+  "title": "Démarrage rapide et reprise sur un nouveau poste",
+  "description": "Cette page décrit ce qu'il faut faire quand on récupère le projet sur un nouveau PC, puis les commandes à utiliser au quotidien pour lancer le frontend, le backend, la documentation, la présentation, Docker et le déploiement VPS.",
   "source": "@site/docs/getting-started.md",
   "sourceDirName": ".",
   "slug": "/getting-started",
@@ -11,7 +11,7 @@
   "tags": [],
   "version": "current",
   "frontMatter": {
-    "title": "Démarrage rapide et reprise du projet"
+    "title": "Démarrage rapide et reprise sur un nouveau poste"
   },
   "sidebar": "docs",
   "previous": {

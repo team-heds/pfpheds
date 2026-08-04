@@ -213,12 +213,13 @@
         <p class="text-600">Choisissez la taille du KPI:</p>
         
         <div class="size-options">
-          <div
+          <button type="button"
             v-for="size in kpiSizeOptions"
             :key="size.value"
             class="size-option"
             :class="{ 'active': selectedKpi?.size === size.value }"
             @click="changeKpiSize(size.value)"
+            :aria-pressed="selectedKpi?.size === size.value"
           >
             <div class="size-preview" :class="`preview-${size.value}`">
               <i :class="selectedKpi?.icon" class="preview-icon"></i>
@@ -228,7 +229,7 @@
               <div class="text-sm text-600">{{ size.description }}</div>
             </div>
             <i v-if="selectedKpi?.size === size.value" class="pi pi-check text-primary"></i>
-          </div>
+          </button>
         </div>
       </div>
       
@@ -596,18 +597,19 @@ onMounted(() => {
   flex-wrap: wrap;
   gap: 1rem;
 }
+.kpi-grid-header>div:last-child{display:flex;gap:.5rem;flex-wrap:wrap}
 
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.5rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
   align-items: stretch; /* Étirer tous les items sur la même hauteur */
   grid-auto-rows: 1fr; /* Toutes les lignes ont la même hauteur */
 }
 
 .kpi-grid-item {
   position: relative;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.2s ease, opacity 0.2s ease;
   min-height: 150px;
   display: flex;
   flex-direction: column;
@@ -701,7 +703,7 @@ onMounted(() => {
 
 .size-tag {
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .size-tag:hover {
@@ -756,7 +758,12 @@ onMounted(() => {
   border: 2px solid var(--surface-border);
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  width:100%;
+  background:transparent;
+  color:inherit;
+  font:inherit;
+  text-align:start;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .size-option:hover {
@@ -778,7 +785,7 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   background: var(--surface-100);
-  transition: all 0.3s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .size-option.active .size-preview {
@@ -836,6 +843,7 @@ onMounted(() => {
   .kpi-grid-header {
     flex-direction: column;
   }
+  .kpi-grid-header>div,.kpi-grid-header>div:last-child{width:100%}.kpi-grid-header>div:last-child :deep(.p-button){flex:1 1 calc(50% - .5rem)}
   
   .kpi-grid {
     grid-template-columns: 1fr;
