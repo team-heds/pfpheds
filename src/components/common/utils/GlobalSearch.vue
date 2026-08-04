@@ -3,15 +3,11 @@
     <!-- Bouton PrimeVue avec logo loupe SVG -->
     <Button
       class="search-navbar-btn"
-      :style="buttonStyle"
       @click="toggleSearchBar"
       title="Rechercher (Ctrl+K)"
       aria-label="Rechercher"
     >
-      <svg class="search-icon-svg" width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="22" cy="22" r="18" stroke="var(--primary-color)" stroke-width="6"/>
-        <line x1="34" y1="42" x2="40" y2="50" stroke="var(--primary-color)" stroke-width="6" stroke-linecap="round"/>
-      </svg>
+      <i class="pi pi-search search-navbar-icon" aria-hidden="true"></i>
     </Button>
 
     <!-- Barre de recherche globale amelioree -->
@@ -255,19 +251,6 @@ let debounceTimer = null;
 
 // User role (pour filtrer les pages)
 const currentUserRole = ref('user');
-
-const buttonStyle = computed(() => ({
-  backgroundColor: 'var(--surface-overlay)',
-  border: 'none',
-  borderRadius: '32%',
-  width: '44px',
-  height: '44px',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  transition: 'background-color 0.3s ease',
-  cursor: 'pointer',
-}));
 
 const dialogHeader = computed(() => {
   return isLoading.value ? 'Recherche en cours...' : 'Recherche globale';
@@ -682,10 +665,26 @@ onUnmounted(() => {
 
 <style scoped>
 /* === BOUTON DE RECHERCHE === */
-.search-navbar-btn .search-icon-svg {
+.search-navbar-btn {
   width: 44px;
+  min-width: 44px;
   height: 44px;
-  display: block;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 32%;
+  color: var(--primary-color);
+  background: var(--surface-overlay);
+  box-shadow: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition-property: color, background-color, box-shadow, transform;
+}
+
+.search-navbar-icon {
+  font-size: 20px;
+  line-height: 1;
 }
 
 .search-navbar-btn:hover {

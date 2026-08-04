@@ -67,7 +67,7 @@
       </div>
       <h1 class="pl-4">{{ displayFullName }}</h1>
     </div>
-    <h5 class="mb-4">Informations personnelles</h5>
+    <h2 class="profile-section-title">Informations personnelles</h2>
     <div class="surfaces-card info-grid">
       <div class="info-item">
         <i class="pi pi-envelope info-icon"></i>
@@ -1007,18 +1007,25 @@ const saveProfileWithXP = async () => {
 }
 
 .surfaces-card {
-  margin: 1.5rem 0;
+  margin: 1rem 0 1.5rem;
   background: var(--surface-card);
   border: 1px solid var(--surface-border, rgba(148, 163, 184, 0.28));
   padding: 1.5rem;
-  border-radius: 2rem;
+  border-radius: 1.25rem;
   overflow: hidden;
-  box-shadow: 0 2px 14px rgba(60, 60, 60, 0.08);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+.profile-section-title {
+  margin: 1.5rem 0 0;
+  color: var(--text-color);
+  font-size: 1.25rem;
+  line-height: 1.2;
+  font-weight: 700;
 }
 .info-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.2rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
   margin-bottom: 1rem;
 }
 @media (max-width: 700px) {
@@ -1027,13 +1034,15 @@ const saveProfileWithXP = async () => {
   }
 }
 .info-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1.5rem minmax(6.5rem, auto) minmax(0, 1fr);
   align-items: center;
-  background: var(--surface-overlay, rgba(15, 23, 42, 0.05));
-  border-radius: 1rem;
-  padding: 0.7rem 1rem;
-  gap: 0.7rem;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  min-height: 4.5rem;
+  background: var(--surface-ground, rgba(15, 23, 42, 0.04));
+  border: 1px solid var(--surface-border, rgba(148, 163, 184, 0.22));
+  border-radius: 0.75rem;
+  padding: 0.875rem 1rem;
+  gap: 0.625rem;
 }
 .info-icon {
   font-size: 1.25rem;
@@ -1041,16 +1050,18 @@ const saveProfileWithXP = async () => {
   flex-shrink: 0;
 }
 .info-label {
-  font-size: 0.96rem;
-  color: #aaa;
-  margin-right: 0.5rem;
-  min-width: 90px;
+  font-size: 0.875rem;
+  line-height: 1.35;
+  color: var(--text-color-secondary, #64748b);
+  font-weight: 600;
 }
 .info-value {
-  font-size: 1.05rem;
+  min-width: 0;
+  font-size: 0.95rem;
+  line-height: 1.45;
   font-weight: 500;
-  color: #fff;
-  word-break: break-all;
+  color: var(--text-color, #0f172a);
+  overflow-wrap: anywhere;
 }
 .info-value.id {
   word-break: normal;
@@ -1062,8 +1073,12 @@ const saveProfileWithXP = async () => {
 .actions-row {
   display: flex;
   justify-content: flex-end;
-  margin-top: 0.5rem;
-  margin-bottom: 1.5rem;
+  min-height: auto;
+  margin-top: 0.25rem;
+  margin-bottom: 0;
+  padding: 0.25rem 0 0;
+  border: 0;
+  background: transparent;
 }
 .save-btn {
   font-weight: 600;
@@ -1081,16 +1096,13 @@ const saveProfileWithXP = async () => {
 }
 
 .info-item-respondant {
-  flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: center;
 }
 .info-item-respondant .info-label {
-  min-width: unset;
-  margin-bottom: 0.2rem;
+  min-width: 0;
 }
 .info-item-respondant .info-value {
-  display: block;
-  width: 100%;
+  width: auto;
   word-break: break-word;
 }
 
@@ -1132,10 +1144,17 @@ const saveProfileWithXP = async () => {
     gap: 0.5rem;
   }
   .info-item {
-    flex-direction: column !important;
-    align-items: flex-start !important;
+    grid-template-columns: 1.5rem minmax(0, 1fr);
+    align-items: center !important;
     font-size: 0.98rem;
-    padding: 0.2rem 0.1rem;
+    padding: 0.875rem;
+  }
+  .info-label,
+  .info-value {
+    grid-column: 2;
+  }
+  .info-icon {
+    grid-row: 1 / span 2;
   }
   .actions-row {
     justify-content: center !important;
@@ -1148,7 +1167,7 @@ const saveProfileWithXP = async () => {
 }
 @media (max-width: 600px) {
   .surfaces-card {
-    padding: 0.3rem !important;
+    padding: 0.75rem !important;
   }
   h1.pl-4 {
     font-size: 1rem;

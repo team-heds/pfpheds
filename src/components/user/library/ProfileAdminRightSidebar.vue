@@ -1,81 +1,101 @@
 <template>
-  <div class="profile-admin-right-sidebar">
-    <h4>Rechercher un étudiant</h4>
-    <div class="field">
-      <label for="search-user">Rechercher un étudiant :</label>
-      <InputText
-        id="search-user"
-        v-model="searchTerm"
-        placeholder="Entrez le nom ou le prénom"
-        class="w-full"
-      />
-    </div>
-    <div class="field">
-      <label for="user-select">Sélectionner un étudiant :</label>
-      <Dropdown
-        id="user-select"
-        v-model="selectedUserId"
-        :options="filteredUsers"
-        optionLabel="prenomNom"
-        optionValue="uid"
-        placeholder="Sélectionner un étudiant"
-        class="w-full"
-      />
-    </div>
-    <div class="field">
-      <Button @click="handleUserChange" class="w-full">
-        Accéder à l'étudiant
-      </Button>
-    </div>
+  <aside class="profile-admin-right-sidebar" aria-labelledby="student-navigation-title">
+    <header class="sidebar-header">
+      <span class="sidebar-eyebrow">Administration</span>
+      <h2 id="student-navigation-title">Navigation étudiants</h2>
+      <p>Retrouvez un profil directement ou parcourez une cohorte.</p>
+    </header>
 
-    <h4>Rechercher un étudiant par rôle BA</h4>
-    <div class="field">
-      <label for="ba-role-select">Sélectionner un rôle BA :</label>
-      <Dropdown
-        id="ba-role-select"
-        v-model="selectedRoleBA"
-        :options="rolesBA"
-        optionLabel="label"
-        optionValue="value"
-        placeholder="Sélectionner un rôle"
-        class="w-full"
-      />
-    </div>
-
-    <div class="field">
-      <label for="role-search">Rechercher dans le rôle :</label>
-      <InputText
-        id="role-search"
-        v-model="roleSearchTerm"
-        placeholder="Entrez le nom ou le prénom"
-        class="w-full"
-      />
-    </div>
-
-    <div class="user-list">
-      <div v-for="user in paginatedUsersByRole" :key="user.uid" class="user-item">
-        <Button @click="handleBAUserChange(user.uid)" class="w-full">
-          {{ user.prenom }} {{ user.nom }}
-        </Button>
+    <section class="sidebar-section" aria-labelledby="direct-search-title">
+      <h3 id="direct-search-title">Accès direct</h3>
+      <div class="field">
+        <label for="search-user">Nom ou prénom</label>
+        <InputText
+          id="search-user"
+          v-model="searchTerm"
+          placeholder="Rechercher un étudiant"
+          autocomplete="off"
+          class="w-full"
+        />
       </div>
-    </div>
+      <div class="field">
+        <label for="user-select">Étudiant</label>
+        <Dropdown
+          id="user-select"
+          v-model="selectedUserId"
+          :options="filteredUsers"
+          optionLabel="prenomNom"
+          optionValue="uid"
+          placeholder="Sélectionner un étudiant"
+          class="w-full"
+        />
+      </div>
+      <Button
+        label="Ouvrir le profil"
+        icon="pi pi-arrow-right"
+        iconPos="right"
+        class="w-full"
+        :disabled="!selectedUserId"
+        @click="handleUserChange"
+      />
+    </section>
 
-    <div class="pagination flex justify-between justify-content-center items-center mt-4">
-      <Button class="m-2" @click="prevPage" :disabled="currentPage <= 0">Précédent</Button>
-      <Button class="m-2" @click="nextPage" :disabled="currentPage >= totalPages - 1">Suivant</Button>
-    </div>
+    <section class="sidebar-section" aria-labelledby="cohort-search-title">
+      <div class="section-heading-row">
+        <h3 id="cohort-search-title">Par cohorte</h3>
+        <span v-if="selectedRoleBA" class="result-count">{{ filteredUsersByRole.length }}</span>
+      </div>
+      <div class="field">
+        <label for="ba-role-select">Cohorte</label>
+        <Dropdown
+          id="ba-role-select"
+          v-model="selectedRoleBA"
+          :options="rolesBA"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Sélectionner une cohorte"
+          class="w-full"
+        />
+      </div>
 
-    <!-- Boutons de navigation pour les étudiants BA22 -->
-    <div class="ba-navigation-modern flex justify-between justify-content-center items-center mt-4">
-      <Button class="ba-btn" @click="prevBA22" icon="pi pi-arrow-left" severity="secondary">
-        <span class="ba-btn-label">Précédent BA22</span>
-      </Button>
-      <span class="ba-nav-separator"></span>
-      <Button class="ba-btn" @click="nextBA22" icon="pi pi-arrow-right" iconPos="right" severity="primary">
-        <span class="ba-btn-label">Suivant BA22</span>
-      </Button>
-    </div>
-  </div>
+      <div class="field">
+        <label for="role-search">Filtrer les résultats</label>
+        <InputText
+          id="role-search"
+          v-model="roleSearchTerm"
+          placeholder="Nom ou prénom"
+          autocomplete="off"
+          class="w-full"
+        />
+      </div>
+
+      <div v-if="selectedRoleBA" class="user-list" aria-live="polite">
+        <Button
+          v-for="user in paginatedUsersByRole"
+          :key="user.uid"
+          :label="`${user.prenom} ${user.nom}`"
+          severity="secondary"
+          text
+          class="user-item w-full"
+          @click="handleBAUserChange(user.uid)"
+        />
+        <p v-if="filteredUsersByRole.length === 0" class="empty-message">
+          Aucun étudiant ne correspond à cette recherche.
+        </p>
+      </div>
+
+      <div v-if="totalPages > 1" class="pagination" aria-label="Pagination des étudiants">
+        <Button icon="pi pi-arrow-left" aria-label="Page précédente" text @click="prevPage" :disabled="currentPage <= 0" />
+        <span>Page {{ currentPage + 1 }} sur {{ totalPages }}</span>
+        <Button icon="pi pi-arrow-right" aria-label="Page suivante" text @click="nextPage" :disabled="currentPage >= totalPages - 1" />
+      </div>
+    </section>
+
+    <footer class="ba-navigation-modern" aria-label="Navigation rapide BA22">
+      <Button class="ba-btn" @click="prevBA22" icon="pi pi-arrow-left" label="Précédent" severity="secondary" outlined />
+      <Button class="ba-btn" @click="nextBA22" icon="pi pi-arrow-right" iconPos="right" label="Suivant" />
+    </footer>
+  </aside>
 </template>
 
 <script setup>
@@ -175,6 +195,10 @@ const paginatedUsersByRole = computed(() => {
   return filteredUsersByRole.value.slice(start, start + itemsPerPage);
 });
 
+watch([selectedRoleBA, roleSearchTerm], () => {
+  currentPage.value = 0;
+});
+
 const nextPage = () => {
   if (currentPage.value < totalPages.value - 1) currentPage.value++;
 };
@@ -239,45 +263,116 @@ const prevBA22 = () => {
 
 <style scoped>
 .field {
-  margin-bottom: 1rem;
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
 }
-.user-item {
-  margin-bottom: 0.5rem;
+.field label {
+  color: var(--text-color-secondary);
+  font-size: 0.8125rem;
+  font-weight: 600;
 }
 .profile-admin-right-sidebar {
-  padding: 2rem;
-  background-color: var(--surface-card);
-  border-radius: 1.2rem;
+  padding: 1.25rem;
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: 1.25rem;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  margin-right: 4rem;
+  gap: 1rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 32px rgba(15, 23, 42, 0.07);
+}
+.sidebar-header h2,
+.sidebar-section h3,
+.sidebar-header p {
+  margin: 0;
+}
+.sidebar-header {
+  display: grid;
+  gap: 0.35rem;
+}
+.sidebar-header h2 {
+  color: var(--text-color);
+  font-size: 1.2rem;
+  line-height: 1.2;
+}
+.sidebar-header p {
+  color: var(--text-color-secondary);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.sidebar-eyebrow {
+  color: var(--primary-color);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.sidebar-section {
+  display: grid;
+  gap: 0.875rem;
+  padding: 1rem;
+  border-radius: 0.875rem;
+  background: var(--surface-ground);
+}
+.sidebar-section h3 {
+  color: var(--text-color);
+  font-size: 0.95rem;
+}
+.section-heading-row,
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.result-count {
+  min-width: 1.75rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  color: var(--primary-color-text);
+  background: var(--primary-color);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.user-list {
+  display: grid;
+  gap: 0.25rem;
+  max-height: 16rem;
+  overflow-y: auto;
+}
+.user-item {
+  justify-content: flex-start;
+  min-height: 2.5rem;
+  padding-inline: 0.75rem;
+  text-align: start;
+}
+.user-item :deep(.p-button-label) {
+  flex: initial;
+  text-align: start;
+}
+.empty-message {
+  margin: 0;
+  color: var(--text-color-secondary);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.pagination {
+  color: var(--text-color-secondary);
+  font-size: 0.8125rem;
 }
 .ba-navigation-modern {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 1.5rem;
-  margin-top: 2rem;
-  margin-bottom: 0.5rem;
+  gap: 0.75rem;
+  padding-top: 0.25rem;
 }
 .ba-btn {
-  min-width: 90px;
+  flex: 1;
+  min-width: 0;
   font-weight: 600;
-  border-radius: 1.2rem;
-  font-size: 1.05rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  transition: background 0.2s, color 0.2s;
-}
-.ba-btn-label {
-  margin-left: 0.5rem;
-  margin-right: 0.5rem;
-}
-.ba-nav-separator {
-  width: 2.5rem;
-  height: 2px;
-  background: var(--primary-color, #ffb703);
-  border-radius: 2px;
-  opacity: 0.7;
+  border-radius: 0.75rem;
+  transition-property: color, background-color, border-color, transform;
 }
 </style>

@@ -156,31 +156,32 @@ watch(
 /* Layout global avec sidebars et contenu central */
 .filter-layout {
   display: grid;
-  grid-template-columns: 3fr 1fr;
-  /* Contenu principal, sidebar droite */
-  gap: 1.5rem;
-  min-height: 100vh;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 22rem);
+  align-items: start;
+  gap: clamp(1rem, 2vw, 2rem);
+  width: min(100%, 90rem);
+  min-height: 0;
+  margin-inline: auto;
+  padding-inline: clamp(1rem, 2vw, 2rem);
 }
 
 /* Sidebar Droite */
 .sidebar-right {
+  position: sticky;
+  top: 1rem;
+  max-height: calc(100vh - 2rem);
+  min-width: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 /* Contenu Principal */
 .main-content {
-  max-width: 880px;
+  max-width: 64rem;
+  min-width: 0;
   width: 100%;
-  margin-left: auto;
-  margin-right: auto;
-  overflow-y: auto;
-  height: 100vh;
+  margin-inline: auto;
   padding-bottom: 7rem;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.main-content::-webkit-scrollbar {
-  display: none;
 }
 
 /* Responsive pour le layout global */
