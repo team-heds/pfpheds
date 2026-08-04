@@ -13,6 +13,8 @@
         <!-- Déplacement de StoriesBar -->
         <!-- <StoriesBar v-if="showEditAndStories" /> -->
       </div>
+      <LoadingState v-if="loading && filteredPosts.length === 0" label="Chargement des publications…" />
+      <EmptyState v-else-if="!loading && filteredPosts.length === 0" icon="pi pi-comments" title="Aucune publication" description="Soyez la première personne à partager quelque chose." />
       <InfinityScroll :loading="loading" @load-more="loadMorePosts">
         <PostItem
           v-for="post in filteredPosts"
@@ -36,12 +38,12 @@
         @reset-filter="resetFilter"
       />
       <div class="posts-container">
-        <div class="quick-post-bar" @click="handleCreateClick">
+        <button type="button" class="quick-post-bar" @click="handleCreateClick" aria-label="Créer une publication">
           <span class="quick-post-icon-circle">
             <i class="pi pi-file-edit quick-post-icon"></i>
           </span>
           <div class="quick-post-placeholder">Exprime-toi...</div>
-        </div>
+        </button>
         <CreatePostDialog
           v-if="showEditAndStories"
           v-model="showCreatePost"
@@ -54,6 +56,8 @@
           @remove-media="removeMedia"
         />
         <StoriesBar v-if="showEditAndStories" />
+        <LoadingState v-if="loading && filteredPosts.length === 0" label="Chargement des publications…" />
+        <EmptyState v-else-if="!loading && filteredPosts.length === 0" icon="pi pi-comments" title="Aucune publication" description="Soyez la première personne à partager quelque chose." />
         <InfinityScroll :loading="loading" @load-more="loadMorePosts">
           <PostItem
             v-for="post in filteredPosts"
@@ -89,6 +93,8 @@ import CreatePostDialog from '@/components/social/library/CreatePostDialog.vue'
 import { useRouter } from 'vue-router';
 import HeaderIcons from '@/components/common/utils/HeaderIcons.vue'
 import gamificationIntegration from '@/service/gamificationIntegration'
+import EmptyState from '@/components/common/states/EmptyState.vue'
+import LoadingState from '@/components/common/states/LoadingState.vue'
 
 import {
   ref as dbRef,
@@ -125,6 +131,8 @@ export default {
     FilterComponent,
     TextAreaComponent,
     CreatePostDialog,
+    EmptyState,
+    LoadingState,
   },
   props: {
     currentUser: Object,
@@ -729,6 +737,10 @@ export default {
 
 <style scoped>
 .quick-post-bar {
+  border: 1px solid transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
   display: flex;
   align-items: center;
   background: var(--surface-card, #f8f8fa);
@@ -743,6 +755,7 @@ export default {
   margin-left: auto;
   margin-right: auto;
 }
+.quick-post-bar:focus-visible{outline:3px solid var(--primary-color);outline-offset:3px}
 @media (max-width: 900px) {
   .quick-post-bar {
     max-width: 98vw;

@@ -32,6 +32,9 @@ const toggleFileSelection = (fileName) => {
 const clearSelection = () => {
   selectedFiles.value = new Set();
 };
+const openSelectedFiles = () => {
+  files.value.filter((file) => selectedFiles.value.has(file.name)).forEach((file) => window.open(file.url, '_blank', 'noopener,noreferrer'));
+};
 
 // Fonction pour charger les fichiers et sous-dossiers à partir du Storage Supabase
 const loadFilesAndSubFoldersFromFolder = async (folderPath) => {
@@ -258,7 +261,7 @@ onMounted(async () => {
           <h3 class="text-lg font-semibold">Fichiers dans {{ selectedFolder.name }}</h3>
           <div v-if="selectedCount" class="documents-actionbar" role="status">
             <strong>{{ selectedCount }} sélectionné{{ selectedCount > 1 ? 's' : '' }}</strong>
-            <button type="button" @click="clearSelection">Désélectionner</button>
+            <div><button type="button" @click="openSelectedFiles">Ouvrir</button><button type="button" @click="clearSelection">Désélectionner</button></div>
           </div>
           <ul class="document-file-list">
             <li v-for="file in files" :key="file.name">

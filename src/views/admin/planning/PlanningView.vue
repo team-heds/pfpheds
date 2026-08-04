@@ -61,6 +61,8 @@
       </template>
     </Card>
 
+    <PlanningLegend class="mb-4" />
+
     <!-- Loading -->
     <div v-if="loading" class="flex flex-column align-items-center justify-content-center p-8">
       <ProgressSpinner />
@@ -287,6 +289,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
+import PlanningLegend from '@/components/common/planning/PlanningLegend.vue'
 // import Navbar from '@/components/common/utils/Navbar.vue'
 import Card from 'primevue/card'
 import Panel from 'primevue/panel'

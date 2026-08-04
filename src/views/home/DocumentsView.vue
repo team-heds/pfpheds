@@ -24,6 +24,11 @@
         </div>
       </div>
 
+      <div v-if="selectedDocumentIds.size" class="documents-selection-bar" role="status">
+        <strong>{{ selectedDocumentIds.size }} fichier{{ selectedDocumentIds.size > 1 ? 's' : '' }} sélectionné{{ selectedDocumentIds.size > 1 ? 's' : '' }}</strong>
+        <div><button type="button" @click="openSelectedDocuments">Ouvrir la sélection</button><button type="button" @click="clearDocumentSelection">Désélectionner</button></div>
+      </div>
+
       <!-- Documents Grid -->
       <div class="documents-grid">
         <div v-for="folder in folders" :key="folder.id" class="folder-container">
@@ -64,6 +69,7 @@
                   
                   <div v-if="sub.files && sub.files.length > 0" class="files-list-container">
                     <div v-for="file in sub.files" :key="file.id" class="file-item-row">
+                      <input type="checkbox" :aria-label="`Sélectionner ${file.name}`" :checked="selectedDocumentIds.has(file.id)" @change="toggleDocumentSelection(file.id)" />
                       <a
                         :href="file.url"
                         target="_blank"
@@ -113,6 +119,7 @@
             <template v-else>
               <div v-if="folder.files && folder.files.length > 0" class="files-list-container">
                 <div v-for="file in folder.files" :key="file.id" class="file-item-row">
+                  <input type="checkbox" :aria-label="`Sélectionner ${file.name}`" :checked="selectedDocumentIds.has(file.id)" @change="toggleDocumentSelection(file.id)" />
                   <a
                     :href="file.url"
                     target="_blank"
@@ -223,6 +230,20 @@ const targetSubFolderId = ref(null)
 
 // Computed pour utiliser les folders du store
 const folders = computed(() => documentStore.folders)
+const selectedDocumentIds = ref(new Set())
+const allDocumentFiles = computed(() => folders.value.flatMap(folder => [
+  ...(folder.files || []),
+  ...(folder.subFolders || []).flatMap(subFolder => subFolder.files || []),
+]))
+const toggleDocumentSelection = (id) => {
+  const next = new Set(selectedDocumentIds.value)
+  next.has(id) ? next.delete(id) : next.add(id)
+  selectedDocumentIds.value = next
+}
+const clearDocumentSelection = () => { selectedDocumentIds.value = new Set() }
+const openSelectedDocuments = () => {
+  allDocumentFiles.value.filter(file => selectedDocumentIds.value.has(file.id)).forEach(file => window.open(file.url, '_blank', 'noopener,noreferrer'))
+}
 
 // Vérification des droits admin depuis Supabase
 const checkAdminRights = async () => {
@@ -392,6 +413,7 @@ const saveNewFile = async (newFile) => {
   padding: 2rem 1.5rem 8rem;
 }
 .documents-breadcrumb{display:flex;align-items:center;gap:.5rem;margin-bottom:1rem;color:var(--text-color-secondary)}.documents-breadcrumb a{color:var(--primary-color);text-decoration:none}.folder-header-row{width:100%;border:0;background:transparent;color:inherit;font:inherit;text-align:left}.folder-header-row:focus-visible{outline:3px solid var(--primary-color);outline-offset:-3px}
+.documents-selection-bar{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:1rem;padding:.75rem 1rem;border:1px solid var(--surface-border);border-radius:.75rem;background:var(--surface-card)}.documents-selection-bar div{display:flex;gap:.5rem}.documents-selection-bar button{min-height:2.5rem;padding:.5rem .75rem;border:1px solid var(--surface-border);border-radius:.5rem;background:var(--surface-ground);color:var(--text-color);font:inherit;cursor:pointer}@media(max-width:640px){.documents-selection-bar{align-items:stretch;flex-direction:column}.documents-selection-bar div{flex-direction:column}}
 
 /* Header Section */
 .page-header-section {

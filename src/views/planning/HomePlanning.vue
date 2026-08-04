@@ -6,6 +6,8 @@
       <h1 class="text-3xl mb-4">HomeCalendar — Accueil Planning</h1>
 
       <!-- Rôles -->
+      <PlanningLegend class="mb-4" style="max-width:860px" />
+
       <div class="mb-4 border-1 surface-border border-round p-3" style="max-width: 860px;">
         <div class="mb-2 text-800 font-medium">Rôles</div>
         <ul class="m-0 pl-3">
@@ -189,6 +191,7 @@
   import { onAuthStateChanged } from 'firebase/auth'
   
   import TheNavbar from '@/components/TheNavbar.vue'
+  import PlanningLegend from '@/components/common/planning/PlanningLegend.vue'
   import DataTable from 'primevue/datatable'
   import Column from 'primevue/column'
   import Button from 'primevue/button'
@@ -409,4 +412,3 @@
   })
   watch(user, () => todo.fetchTodos())
   </script>
-  
