@@ -844,10 +844,9 @@ onUnmounted(() => {
 <style scoped>
 .personalized-dashboard {
   width: 100%;
-  max-width: 112rem;
-  margin-inline: auto;
+  max-width: none;
   min-height: 100%;
-  padding: clamp(1rem, 2vw, 2rem);
+  padding: clamp(.75rem, 1.25vw, 1.5rem);
   box-sizing: border-box;
 }
 

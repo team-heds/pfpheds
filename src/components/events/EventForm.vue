@@ -1,5 +1,5 @@
 <template>
-  <form class="event-form" @submit.prevent="submitForm">
+  <form class="app-form event-form" @submit.prevent="submitForm">
     <div class="form-group">
       <label>Titre</label>
       <InputText v-model="form.title" required placeholder="Titre de l'événement" class="w-full surface-card" />

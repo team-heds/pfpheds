@@ -3,6 +3,7 @@
  * TABLES RÉELLES: modules, courses, course_teachers, planning_cells
  */
 import { supabase } from '@/supabase'
+import { filterSITeacherProfiles } from '@/utils/userAudience'
 
 /**
  * Récupère les modules d'un responsable module
@@ -194,13 +195,11 @@ export async function getTeacherStats(userId) {
     const courses = await getTeacherCourses(userId)
     
     // Calculer les statistiques
-    let totalHours = 0
     let weeklyHours = 0
     let studentsCount = 0
     let nextCourse = 'N/A'
     
     courses.forEach(course => {
-      totalHours += course.hours || 0
       weeklyHours += course.weeklyHours || 0
       studentsCount += course.studentsCount || 0
     })
@@ -334,16 +333,18 @@ export async function getSITeachers() {
     // .or() permet de combiner des conditions
     const { data: teachers, error } = await supabase
       .from('user_profiles')
-      .select('user_id, email, forname, family_name, display_name, role, permissions')
+      .select('user_id, email, forname, family_name, display_name, role, permissions, is_active')
       .or('role.eq.EnseignantSoins,permissions.cs.["EnseignantSoins"]')
+      .eq('is_active', true)
     
     if (error) {
       // Si erreur avec permissions (ex: type mismatch), on fallback sur role uniquement
       console.warn('⚠️ [getSITeachers] Erreur requête complexe, tentative repli sur role uniquement:', error.message)
       const { data: teachersRole, error: errorRole } = await supabase
         .from('user_profiles')
-        .select('user_id, email, forname, family_name, display_name, role')
+        .select('user_id, email, forname, family_name, display_name, role, is_active')
         .eq('role', 'EnseignantSoins')
+        .eq('is_active', true)
         
       if (errorRole) {
          console.error('❌ [getSITeachers] Erreur Supabase:', errorRole)
@@ -360,7 +361,7 @@ export async function getSITeachers() {
 }
 
 function formatTeachers(teachersList) {
-  const formatted = (teachersList || []).map(t => ({
+  const formatted = filterSITeacherProfiles(teachersList).map(t => ({
     id: t.user_id,
     name: t.display_name || `${t.forname || ''} ${t.family_name || ''}`.trim() || t.email,
     email: t.email,

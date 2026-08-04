@@ -1,7 +1,7 @@
 <template>
   <div class="surface-section px-4 py-8 md:px-6 lg:px-8">
     <FormShell title="Nouvel utilisateur" description="Créez un compte et attribuez-lui son rôle initial.">
-      <form id="new-user-form" @submit.prevent="addNewUser" class="p-fluid grid">
+      <form id="new-user-form" @submit.prevent="addNewUser" class="app-form p-fluid grid">
         <div class="p-field col-12 md:col-6">
           <label for="email" class="font-semibold">Email *</label>
           <InputText 

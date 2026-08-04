@@ -162,7 +162,9 @@ textarea {
 }
 
 form .field,
-form .p-field {
+form .p-field,
+.app-form .field,
+.app-form .p-field {
   min-inline-size: 0;
 }
 
@@ -174,6 +176,91 @@ form .p-field > label {
   font-weight: 600;
 }
 
+/* Shared form language for legacy views and the new form primitives. */
+.app-form,
+form.p-fluid {
+  --form-control-height: 2.875rem;
+  display: grid;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.app-form .grid,
+form.p-fluid.grid {
+  margin: 0;
+  row-gap: .25rem;
+}
+
+.app-form .field,
+.app-form .p-field,
+form.p-fluid .field,
+form.p-fluid .p-field {
+  display: grid;
+  align-content: start;
+  gap: .45rem;
+  margin: 0;
+  padding: .5rem;
+}
+
+.app-form label,
+form.p-fluid label {
+  color: var(--text-color);
+  font-size: .875rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.app-form :is(.p-inputtext, .p-dropdown, .p-multiselect, .p-calendar, .p-inputnumber, .p-password, textarea),
+form.p-fluid :is(.p-inputtext, .p-dropdown, .p-multiselect, .p-calendar, .p-inputnumber, .p-password, textarea) {
+  width: 100%;
+  min-width: 0;
+  min-height: var(--form-control-height);
+}
+
+.app-form textarea,
+form.p-fluid textarea {
+  min-height: 7rem;
+  resize: vertical;
+}
+
+.app-form :is(.p-error, [role="alert"]),
+form.p-fluid :is(.p-error, [role="alert"]) {
+  margin: 0;
+  color: var(--red-500, #dc2626);
+  font-size: .8125rem;
+  line-height: 1.4;
+}
+
+.app-form :is(.p-inputtext, textarea):focus,
+form.p-fluid :is(.p-inputtext, textarea):focus {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 22%, transparent);
+}
+
+.app-form :is(.p-checkbox, .p-radiobutton) + label,
+form.p-fluid :is(.p-checkbox, .p-radiobutton) + label {
+  cursor: pointer;
+}
+
+.app-form__section {
+  padding: clamp(1rem, 2vw, 1.5rem);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--tt-radius-lg, .875rem);
+  background: color-mix(in srgb, var(--surface-card) 96%, var(--surface-ground));
+}
+
+.app-form__actions {
+  position: sticky;
+  inset-block-end: 0;
+  z-index: 3;
+  display: flex;
+  justify-content: flex-end;
+  gap: .75rem;
+  padding: 1rem;
+  border-block-start: 1px solid var(--surface-border);
+  background: color-mix(in srgb, var(--surface-card) 94%, transparent);
+  backdrop-filter: blur(12px);
+}
+
 .p-datatable-scrollable .p-datatable-thead > tr > th,
 .p-datatable .p-datatable-thead > tr > th {
   position: sticky;
@@ -183,6 +270,15 @@ form .p-field > label {
 }
 
 @media (max-width: 40rem) {
+  .app-form > [class*="col-"],
+  form.p-fluid > [class*="col-"],
+  .app-form .grid > [class*="col-"],
+  form.p-fluid .grid > [class*="col-"] {
+    flex: 0 0 100%;
+    width: 100%;
+    max-width: 100%;
+  }
+
   .p-dialog {
     inline-size: calc(100vw - 1rem) !important;
     max-inline-size: calc(100vw - 1rem) !important;
@@ -196,13 +292,18 @@ form .p-field > label {
   }
 
   .p-dialog-footer,
-  .form-actions {
+  .form-actions,
+  .app-form__actions {
     align-items: stretch;
     flex-direction: column-reverse;
   }
 
   .p-dialog-footer .p-button,
   .form-actions .p-button {
+    width: 100%;
+  }
+
+  .app-form__actions .p-button {
     width: 100%;
   }
 

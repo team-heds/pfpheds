@@ -15,7 +15,7 @@
               <Badge :value="institution.Canton" class="p-mr-2 p-ml-auto" />
             </div>
 
-            <form @submit.prevent="handleUpdateInstitution" class="p-fluid grid">
+            <form @submit.prevent="handleUpdateInstitution" class="app-form p-fluid grid">
               <!-- All form fields here -->
               <div class="col-12 md:col-6">
                 <div class="p-field">

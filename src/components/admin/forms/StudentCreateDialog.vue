@@ -12,7 +12,7 @@
       <Toast />
       
       <!-- Form -->
-      <form id="student-create-form" @submit.prevent="createStudent">
+      <form id="student-create-form" class="app-form" @submit.prevent="createStudent">
         <FormSection title="Identité et inscription" description="Renseignez les informations principales de l’étudiant." icon="pi pi-user">
         <div class="grid">
         <!-- Prénom -->

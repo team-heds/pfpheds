@@ -15,6 +15,7 @@
  */
 import { supabase } from '@/supabase'
 import { validateEmail, validateId } from '@/composables/useInputValidation'
+import { filterSITeacherProfiles } from '@/utils/userAudience'
 
 /**
  * Récupère les stats globales par filière
@@ -36,9 +37,10 @@ export async function getGlobalStats() {
     // Enseignants SI depuis user_profiles (rôle EnseignantSoins)
     const { data: siTeachers } = await supabase
       .from('user_profiles')
-      .select('user_id')
+      .select('user_id, role, permissions, is_active')
       .or('role.eq.EnseignantSoins,permissions.cs.["EnseignantSoins"]')
-    const siTeacherCount = siTeachers?.length || 0
+      .eq('is_active', true)
+    const siTeacherCount = filterSITeacherProfiles(siTeachers).length
 
     // Enseignants PHY depuis user_profiles
     const { data: phyTeachers } = await supabase
@@ -164,6 +166,7 @@ export async function getModulesWithRM() {
  * Assigne un rôle à un utilisateur pour une filière
  */
 export async function assignTrackRole(userId, trackId, role, assignedBy) {
+  void assignedBy
   // Validation des entrées
   const userIdCheck = validateId(userId)
   if (!userIdCheck.valid) throw new Error('userId invalide')

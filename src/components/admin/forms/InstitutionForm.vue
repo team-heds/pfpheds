@@ -14,7 +14,7 @@
         <Steps :model="steps" :activeIndex="activeIndex" class="mb-5" />
 
         <div class="p-fluid">
-          <form @submit.prevent="handleCreateInstitution">
+          <form class="app-form" @submit.prevent="handleCreateInstitution">
             <transition name="fade-slide" mode="out-in">
               <!-- Step 1: Institution Details -->
               <div v-if="activeIndex === 0" key="etape1">

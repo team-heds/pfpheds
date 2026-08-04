@@ -828,15 +828,17 @@ const fetchLesedStudents = async () => {
 
     const { data: profiles, error: profilesError } = await supabase
       .from('user_profiles')
-      .select('user_id, family_name, forname, classe')
+      .select('user_id, family_name, forname, classe, role, permissions, is_active')
       .in('user_id', [...userIds])
+      .or('role.eq.EtudiantPhysio,permissions.cs.["EtudiantPhysio"]')
+      .eq('is_active', true)
     if (profilesError) throw profilesError
 
     const profileMap = new Map((profiles || []).map(p => [p.user_id, p]))
     const leseSet = new Set((studentsLese || []).map(s => s.user_id))
 
     // Une ligne par (étudiant, pfp_type, année) issue du fallback algorithmique
-    const rows = (fallbacks || []).map(f => {
+    const rows = (fallbacks || []).filter(f => profileMap.has(f.user_id)).map(f => {
       const profile = profileMap.get(f.user_id)
       return {
         user_id: f.user_id,
@@ -857,7 +859,7 @@ const fetchLesedStudents = async () => {
     ;(studentsLese || []).forEach(s => {
       const profile = profileMap.get(s.user_id)
       const key = `${s.user_id}_${s.year}_manuel`
-      if (![...coveredKeys].some(k => k.startsWith(`${s.user_id}_${s.year}`))) {
+      if (profile && ![...coveredKeys].some(k => k.startsWith(`${s.user_id}_${s.year}`))) {
         rows.push({
           user_id: s.user_id,
           etudiant: profile ? `${(profile.family_name || '').toUpperCase()} ${profile.forname || ''}`.trim() : s.user_id,
@@ -932,13 +934,15 @@ const fetchEchecsStudents = async () => {
 
     const { data: profiles, error: profilesError } = await supabase
       .from('user_profiles')
-      .select('user_id, family_name, forname, classe')
+      .select('user_id, family_name, forname, classe, role, permissions, is_active')
       .in('user_id', userIds)
+      .or('role.eq.EtudiantPhysio,permissions.cs.["EtudiantPhysio"]')
+      .eq('is_active', true)
     if (profilesError) throw profilesError
 
     const profileMap = new Map((profiles || []).map(p => [p.user_id, p]))
 
-    echecsList.value = (echecs || []).map(e => {
+    echecsList.value = (echecs || []).filter(e => profileMap.has(e.user_id)).map(e => {
       const profile = profileMap.get(e.user_id)
       return {
         user_id: e.user_id,
@@ -1250,7 +1254,12 @@ const fetchCases = async () => {
   loading.value = true
   try {
     const [{ data: profiles, error: profilesError }, { data: suivis, error: suivisError }, { data: echecs, error: echecsError }, { data: historique, error: historiqueError }] = await Promise.all([
-      supabase.from('user_profiles').select('user_id, family_name, forname, classe').order('family_name'),
+      supabase
+        .from('user_profiles')
+        .select('user_id, family_name, forname, classe, role, permissions, is_active')
+        .or('role.eq.EtudiantPhysio,permissions.cs.["EtudiantPhysio"]')
+        .eq('is_active', true)
+        .order('family_name'),
       supabase.from('suivi_cas_particuliers').select('*'),
       supabase.from('student_result_vote').select('user_id, pfp_type').eq('pfp_echec', true),
       supabase.from('cas_particuliers_historique').select('*').order('created_at', { ascending: false })

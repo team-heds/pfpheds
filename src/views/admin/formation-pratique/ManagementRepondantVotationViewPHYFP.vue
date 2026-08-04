@@ -499,7 +499,12 @@ const loadPublishedAssignments = async () => {
       { data: studentsPhysio },
       { data: praticiens }
     ] = await Promise.all([
-      supabase.from('user_profiles').select('user_id,family_name,forname,classe').in('user_id', userIds),
+      supabase
+        .from('user_profiles')
+        .select('user_id,family_name,forname,classe,role,permissions,is_active')
+        .in('user_id', userIds)
+        .or('role.eq.EtudiantPhysio,permissions.cs.["EtudiantPhysio"]')
+        .eq('is_active', true),
       supabase.from('StudentsPhysio').select('user_id,repondant_hes,class').in('user_id', userIds),
       supabase.from('praticiens_formateurs').select('id,prenom,nom')
     ])
@@ -518,7 +523,7 @@ const loadPublishedAssignments = async () => {
     })
 
     // 5. Construire la liste finale (place_name et institution_name depuis student_result_vote)
-    placesList.value = assignments.map(a => {
+    placesList.value = assignments.filter(a => studentsById.has(a.user_id)).map(a => {
       const s = studentsById.get(a.user_id)
       const studentName = s ? `${(s.family_name || '').toUpperCase()} ${s.forname || ''}`.trim() : 'N/A'
       const studentPhysioClass = physioByUserId.get(a.user_id)?.class || null

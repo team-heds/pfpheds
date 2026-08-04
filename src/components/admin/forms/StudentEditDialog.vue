@@ -17,7 +17,7 @@
       </div>
 
       <!-- Form -->
-      <form v-else id="student-edit-form" @submit.prevent="saveStudent">
+      <form v-else id="student-edit-form" class="app-form" @submit.prevent="saveStudent">
         <FormSection title="Identité et inscription" description="Modifiez les informations principales de l’étudiant." icon="pi pi-user-edit">
         <div class="grid">
         <!-- Prénom -->
