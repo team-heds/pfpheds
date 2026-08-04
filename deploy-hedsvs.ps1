@@ -283,7 +283,8 @@ if (-not $SkipBackend) {
 
     $backendArchiveName = "pfp-backend-$timestamp.tar.gz"
     Push-Location "backend"
-    & tar --exclude='node_modules' --exclude='.env' --exclude='.env.*' --exclude='uploads' -czf "../$backendArchiveName" .
+    # backend/uploads contains executable route and validation code, not runtime user data.
+    & tar --exclude='node_modules' --exclude='.env' --exclude='.env.*' -czf "../$backendArchiveName" .
     $tarBackendResult = $LASTEXITCODE
     Pop-Location
 
