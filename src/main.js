@@ -18,7 +18,7 @@ import { auth, isFirebaseEnabled } from '@/firebase';
 
 import '@/assets/styles/styles.scss';
 import 'primeflex/primeflex.css';
-import '@/assets/styles/mobile-scale.css';
+import '@/assets/styles/platform-foundations.scss';
 
 const APP_VERSION = '0.2.3';
 

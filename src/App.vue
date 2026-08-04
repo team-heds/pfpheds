@@ -1,6 +1,7 @@
 <!-- src/App.vue -->
 <template>
-  <div id="app">
+  <div class="app-shell">
+    <a class="skip-link" href="#main-content">Aller au contenu principal</a>
     <!-- Cercles de fond -->
     <div class="background-container">
       <div class="bg-circle_jaune"></div>
@@ -9,7 +10,7 @@
 
 
     <!-- Layout de l'application -->
-    <div class="content">
+    <div id="main-content" class="content" tabindex="-1">
       <Toast />
       <ConfirmDialog />
       <router-view />
@@ -112,7 +113,7 @@ export default {
 
 <style scoped>
 /* Contexte général de l'application */
-#app {
+.app-shell {
   position: relative;
   width: 100vw;
   height: 100vh;
