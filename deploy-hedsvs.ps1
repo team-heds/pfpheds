@@ -313,7 +313,7 @@ sudo chown -R ubuntu:ubuntu $remoteBackendPath
 
 echo '[DEPLOY-BACKEND] Rebuild + up -d de toute la stack Supabase (db, rest, auth, realtime, storage, meta, studio, caddy, backend, push-worker)...'
 cd $remoteSupabasePath
-sudo docker-compose up -d --build
+sudo docker-compose -f docker-compose.yml -f $remoteBackendPath/deployment/supabase-healthchecks.override.yml up -d --build
 
 echo '[DEPLOY-BACKEND] Etat des conteneurs:'
 sudo docker ps --format 'table {{.Names}}\t{{.Status}}'

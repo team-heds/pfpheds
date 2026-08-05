@@ -131,7 +131,9 @@ test('only operational probes are public', async () => {
   await new Promise((resolve) => server.once('listening', resolve))
   const { port } = server.address()
   try {
-    const response = await fetch(`http://127.0.0.1:${port}/api/ping`)
+    const response = await fetch(`http://127.0.0.1:${port}/api/ping`, {
+      headers: { 'X-Forwarded-For': '203.0.113.42' }
+    })
     assert.equal(response.status, 200)
     assert.equal(await response.text(), 'pingpong')
   } finally {
@@ -139,4 +141,9 @@ test('only operational probes are public', async () => {
       server.close((error) => (error ? reject(error) : resolve()))
     )
   }
+})
+
+test('the production reverse proxy is trusted by exactly one hop', () => {
+  const app = require('../index')
+  assert.equal(app.get('trust proxy'), 1)
 })
