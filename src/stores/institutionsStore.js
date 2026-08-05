@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { supabase } from '@/supabase'
 
 /**
  * ===========================
@@ -33,10 +34,12 @@ const baseHeaders = {
  */
 async function sbFetch(path, options = {}) {
   const url = `${REST_BASE}${path}`
+  const { data: { session } } = await supabase.auth.getSession()
   const res = await fetch(url, {
     ...options,
     headers: {
       ...baseHeaders,
+      Authorization: `Bearer ${session?.access_token || ANON_KEY}`,
       ...(options.headers || {}),
     },
   })

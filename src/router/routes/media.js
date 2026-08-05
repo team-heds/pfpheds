@@ -6,5 +6,5 @@ export default [
   { path: '/videos/:videoId/validation', component: () => import('@/views/media/VideoValidationPage.vue'), name: 'VideoValidationPage', props: true, meta: { requiresAuth: true } },
   { path: '/admin/modules', component: () => import('@/views/admin/ModuleAdminPage.vue'), name: 'ModuleAdminPage', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
   { path: '/admin/modules/simple', component: () => import('@/views/admin/ModuleAdminPageSimple.vue'), name: 'ModuleAdminPageSimple', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
-  { path: '/vimeo-test', component: () => import('@/views/media/VimeoTestPage.vue'), name: 'VimeoTestPage', meta: { requiresAuth: true } },
+  { path: '/vimeo-test', component: () => import('@/views/media/VimeoTestPage.vue'), name: 'VimeoTestPage', meta: { requiresAuth: true, need: ['super.all', 'admin'] } },
 ]

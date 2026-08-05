@@ -1,0 +1,40 @@
+services:
+  backend:
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - >-
+          fetch('http://127.0.0.1:3000/health').then((response) =>
+          process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  realtime:
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          curl -fsS -o /dev/null -H "Authorization: Bearer ${ANON_KEY}"
+          http://127.0.0.1:4000/api/tenants/api2/health
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  studio:
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - >-
+          fetch('http://studio:3000/api/platform/profile').then((response) =>
+          process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s

@@ -1,7 +1,5 @@
 import { defineStore } from 'pinia';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+import apiClient from '@/service/apiClient';
 
 export const useFeedbackaStore = defineStore('feedbacka', {
   state: () => ({
@@ -17,7 +15,7 @@ export const useFeedbackaStore = defineStore('feedbacka', {
       this.loading = true;
       this.error = null;
       try {
-        const response = await axios.get(`${API_URL}/feedbacka`, { params });
+        const response = await apiClient.get('/feedbacka', { params });
         this.feedbackas = response.data || [];
         return this.feedbackas;
       } catch (e) {
@@ -32,7 +30,7 @@ export const useFeedbackaStore = defineStore('feedbacka', {
       this.loading = true;
       this.error = null;
       try {
-        const response = await axios.get(`${API_URL}/feedbacka/${id}`, { params });
+        const response = await apiClient.get(`/feedbacka/${id}`, { params });
         this.current = response.data;
         return this.current;
       } catch (e) {
@@ -47,7 +45,7 @@ export const useFeedbackaStore = defineStore('feedbacka', {
       this.loading = true;
       this.error = null;
       try {
-        const response = await axios.post(`${API_URL}/feedbacka`, payload);
+        const response = await apiClient.post('/feedbacka', payload);
         this.current = response.data;
         return this.current;
       } catch (e) {
@@ -62,7 +60,7 @@ export const useFeedbackaStore = defineStore('feedbacka', {
       this.loading = true;
       this.error = null;
       try {
-        const response = await axios.put(`${API_URL}/feedbacka/${id}`, payload);
+        const response = await apiClient.put(`/feedbacka/${id}`, payload);
         this.current = response.data;
         return this.current;
       } catch (e) {
@@ -77,7 +75,7 @@ export const useFeedbackaStore = defineStore('feedbacka', {
       this.loading = true;
       this.error = null;
       try {
-        const response = await axios.post(`${API_URL}/feedbacka/${id}/test`, { answer_text: answerText }, { params });
+        const response = await apiClient.post(`/feedbacka/${id}/test`, { answer_text: answerText }, { params });
         return response.data;
       } catch (e) {
         this.error = 'Failed to test evaluation.';
@@ -91,7 +89,7 @@ export const useFeedbackaStore = defineStore('feedbacka', {
       this.loading = true;
       this.error = null;
       try {
-        const response = await axios.post(`${API_URL}/feedbacka/${id}/submit`, payload);
+        const response = await apiClient.post(`/feedbacka/${id}/submit`, payload);
         return response.data;
       } catch (e) {
         this.error = 'Failed to submit answer.';
@@ -105,7 +103,7 @@ export const useFeedbackaStore = defineStore('feedbacka', {
       this.loading = true;
       this.error = null;
       try {
-        const response = await axios.get(`${API_URL}/feedbacka/${id}/submissions`, { params: { author_id: this.current?.author_id } });
+        const response = await apiClient.get(`/feedbacka/${id}/submissions`);
         this.submissions = response.data || [];
         return this.submissions;
       } catch (e) {

@@ -1,4 +1,5 @@
 import { supabase } from '@/supabase'
+import { listAllVideos } from '@/service/vimeoService'
 
 /**
  * Service pour gérer la bibliothèque vidéo
@@ -244,63 +245,20 @@ export function getVimeoThumbnailUrl(vimeoId) {
 // Récupérer toutes les vidéos depuis Vimeo API avec pagination
 export async function getVimeoVideos(onProgress = null) {
   try {
-    const accessToken = import.meta.env.VITE_VIMEO_ACCESS_TOKEN
-    
-    if (!accessToken) {
-      throw new Error('VITE_VIMEO_ACCESS_TOKEN non configuré')
-    }
-
-    let allVideos = []
-    let page = 1
-    let hasMore = true
-    const perPage = 100 // Maximum autorisé par Vimeo
-
-    while (hasMore) {
-      const response = await fetch(`https://api.vimeo.com/me/videos?per_page=${perPage}&page=${page}`, {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Accept': 'application/vnd.vimeo.*+json;version=3.4'
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error(`Erreur Vimeo API: ${response.status}`)
-      }
-
-      const data = await response.json()
-      
-      // Transformer les données Vimeo
-      const videos = data.data.map(video => ({
-        vimeo_id: video.uri.split('/').pop(),
-        vimeo_url: video.link,
-        title: video.name,
-        description: video.description || '',
-        thumbnail_url: video.pictures?.sizes?.[3]?.link || '',
-        duration: Math.round(video.duration / 60), // Convertir en minutes
-        created_at: video.created_time,
-        vimeo_tags: video.tags?.map(tag => tag.name) || [], // Récupérer les tags Vimeo
-        in_library: false // Par défaut pas dans la bibliothèque
-      }))
-
-      allVideos = [...allVideos, ...videos]
-      
-      // Callback de progression
-      if (onProgress) {
-        onProgress(allVideos.length, page)
-      }
-
-      // Vérifier s'il y a une page suivante
-      hasMore = data.paging && data.paging.next !== null
-      page++
-
-      // Limite de sécurité pour éviter une boucle infinie
-      if (page > 50) {
-        console.warn('[VideoLibrary] ⚠️ Limite de 50 pages atteinte (5000 vidéos)')
-        break
-      }
-    }
-
-    return allVideos
+    const remoteVideos = await listAllVideos({ perPage: 100, maxPages: 50 })
+    const proxiedVideos = remoteVideos.map((video) => ({
+      vimeo_id: video.id,
+      vimeo_url: video.link,
+      title: video.name,
+      description: video.description || '',
+      thumbnail_url: video.pictures?.[3]?.link || '',
+      duration: Math.round((video.duration || 0) / 60),
+      created_at: video.created_time,
+      vimeo_tags: video.tags?.map((tag) => tag.name) || [],
+      in_library: false,
+    }))
+    if (onProgress) onProgress(proxiedVideos.length, 1)
+    return proxiedVideos
   } catch (error) {
     console.error('[VideoLibrary] ❌ Erreur chargement Vimeo:', error)
     throw error
