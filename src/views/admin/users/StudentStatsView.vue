@@ -157,7 +157,7 @@ import Button from 'primevue/button'
 import ProgressSpinner from 'primevue/progressspinner'
 import StatsCard from '@/components/admin/widgets/StatsCard.vue'
 import SmartVisualization from '@/components/admin/widgets/SmartVisualization.vue'
-import studentsService from '@/service/studentsService'
+import studentsService from '@/service/studentDirectoryService'
 
 const router = useRouter()
 const loading = ref(true)

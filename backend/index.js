@@ -33,6 +33,7 @@ const feedbackaRoutes = require('./supabase/feedbackaBackend.js')
 const adminUsersRoutes = require('./supabase/adminUsersBackend.js')
 const vimeoRoutes = require('./supabase/vimeoBackend.js')
 const githubRoutes = require('./supabase/githubBackend.js')
+const audienceDirectoryRoutes = require('./supabase/audienceDirectoryBackend.js')
 
 // push
 const pushRoutes = require('./supabase/pushBackend')
@@ -105,6 +106,18 @@ app.use('/api/feedbacka', feedbackaRoutes)
 app.use('/api/push', requireAdmin, pushRoutes)
 app.use('/api/ftp', requireAdmin, ftpRoutes)
 app.use('/api/admin/users', requireAdmin, adminUsersRoutes)
+app.use(
+  '/api/audiences',
+  requireAnyPermission(
+    'students.read',
+    'EnseignantSoins',
+    'RMSoins',
+    'EnseignantPhysio',
+    'RMPhysio',
+    'RepondantHES'
+  ),
+  audienceDirectoryRoutes
+)
 app.use('/api/integrations/vimeo', requireAnyPermission('editor'), vimeoRoutes)
 app.use('/api/integrations/github', requireAnyPermission('editor'), githubRoutes)
 // General /api route DISABLED for debugging
