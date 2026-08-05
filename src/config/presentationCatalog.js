@@ -1,7 +1,9 @@
 const DEFAULT_PRESENTATION_BASE_URL = 'https://hedsvs.ch'
+const developmentBaseUrl = typeof window === 'undefined' ? '' : window.location.origin
 
 export const presentationBaseUrl =
-  import.meta.env.VITE_PRESENTATION_BASE_URL || DEFAULT_PRESENTATION_BASE_URL
+  import.meta.env.VITE_PRESENTATION_BASE_URL ||
+  (import.meta.env.DEV ? developmentBaseUrl : DEFAULT_PRESENTATION_BASE_URL)
 
 function withBaseUrl(pathOrUrl) {
   if (!pathOrUrl) return ''
@@ -71,6 +73,45 @@ export const presentationCatalog = [
       'PDF exporté et vérifié.',
       'Liens externes fonctionnels.',
       'Aucun secret ou accès serveur dans le support.',
+    ],
+  },
+  {
+    id: 'agents-ia-developpement',
+    slug: 'agents-ia-developpement',
+    order: 20,
+    title: 'Développer avec des agents IA',
+    eyebrow: 'Cours technique',
+    description:
+      'Méthode pratique pour cadrer, déléguer et vérifier un changement logiciel réalisé avec un agent IA.',
+    path: '/presentation/agents-ia-developpement/',
+    pdfPath: '/presentation/agents-ia-developpement/agents-ia-developpement.pdf',
+    status: 'published',
+    statusLabel: 'Publié',
+    category: 'technique',
+    categoryLabel: 'Technique',
+    duration: '45–60 min',
+    level: 'Intermédiaire',
+    audience: ['Développeurs', 'Tech leads', 'Équipes produit'],
+    tags: ['Agents IA', 'Développement', 'Git', 'Tests', 'Revue de code'],
+    accent: 'var(--primary-color)',
+    icon: 'pi pi-code',
+    updatedAt: '2026-08-05',
+    official: true,
+    objectives: [
+      'Distinguer un agent IA d’un assistant conversationnel ou d’un copilote.',
+      'Cadrer une tâche avec un objectif, un contexte, des limites et des preuves.',
+      'Intégrer le diff, les tests, la sécurité et la revue humaine dans le workflow.',
+    ],
+    prerequisites: ['Notions de base en développement logiciel', 'Connaissance de Git'],
+    resources: [
+      { label: 'Présentation Reveal.js', type: 'slides' },
+      { label: 'Export PDF', type: 'pdf' },
+    ],
+    qualityChecklist: [
+      'Slides lisibles en 16:9.',
+      'Exemples sans secret ni donnée sensible.',
+      'Responsabilité humaine explicitement rappelée.',
+      'Workflow applicable à différents agents et éditeurs.',
     ],
   },
 ]

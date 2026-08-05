@@ -1468,8 +1468,22 @@ body {
 }
 
 @media (max-width: 620px) {
+  :root {
+    --slide-pad-y: 1.5rem;
+  }
+
   .reveal {
     font-size: 16px;
+  }
+
+  .deck-brand {
+    display: none;
+  }
+
+  .heds-deck .slides > section,
+  .heds-deck .slides > section > section {
+    justify-content: flex-start;
+    overflow-y: auto;
   }
 
   .toc-grid,
