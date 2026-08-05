@@ -150,6 +150,8 @@
               <DataTable 
                 :value="semester1Weeks"
                 :rows="20"
+                responsiveLayout="scroll"
+                scrollable
                 stripedRows
                 class="p-datatable-sm"
               >
@@ -210,6 +212,8 @@
               <DataTable 
                 :value="semester2Weeks"
                 :rows="20"
+                responsiveLayout="scroll"
+                scrollable
                 stripedRows
                 class="p-datatable-sm"
               >
@@ -617,8 +621,13 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
+  .page-wrapper { height:auto; min-height:100dvh; overflow:visible; }
   .annual-planning-admin {
-    padding: 1rem;
+    padding: .75rem .75rem 6rem;
+    gap:1rem;
   }
+  :deep(.p-card .p-card-body) { padding:1rem; }
+  :deep(.p-tabview-nav) { overflow-x:auto; flex-wrap:nowrap; }
+  :deep(.p-datatable-wrapper) { max-width:calc(100vw - 2.5rem); }
 }
 </style>
