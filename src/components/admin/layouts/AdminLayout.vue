@@ -2,7 +2,7 @@
   <div>
     <a href="#admin-content" class="skip-link">Aller au contenu</a>
     <Navbar />
-    <div class="admin-layout" :class="{ 'has-feed': hasFeed, 'no-sidebar': noSidebar }">
+    <div class="admin-layout" :class="{ 'has-feed': hasFeed, 'no-sidebar': noSidebar, 'is-wide': wide }">
       <template v-if="hasFeed">
         <div class="feed-left">
           <slot name="left" />
@@ -45,7 +45,10 @@ import { computed, useSlots } from 'vue'
 import Navbar from '@/components/common/utils/Navbar.vue';
 import AdminSidebar from '../lists/AdminSidebar.vue';
 
-const { noSidebar } = defineProps({ noSidebar: { type: Boolean, default: false } })
+const { noSidebar, wide } = defineProps({
+  noSidebar: { type: Boolean, default: false },
+  wide: { type: Boolean, default: false },
+})
 const slots = useSlots()
 const hasFeed = computed(() => !!slots.left || !!slots.right)
 </script>
@@ -89,6 +92,12 @@ const hasFeed = computed(() => !!slots.left || !!slots.right)
 
 .admin-layout.no-sidebar {
   grid-template-columns: minmax(0, 1fr);
+}
+
+.admin-layout.is-wide:not(.has-feed):not(.no-sidebar) {
+  grid-template-columns: minmax(14rem, 16rem) minmax(0, 1fr);
+  gap: var(--space-4, 1rem);
+  padding-inline: var(--space-4, 1rem);
 }
 
 @media (max-width: 1279px) {

@@ -1,5 +1,5 @@
 <template>
-  <AdminLayout>
+  <AdminLayout wide>
     <Toast />
     <main class="personalized-dashboard">
       <!-- Header personnalisé -->
@@ -13,11 +13,9 @@
               style="background-color: var(--primary-color); color: white"
             />
             <div>
-              <h1>
-                Bonjour{{ userName ? ', ' + userName : '' }} 👋
-              </h1>
+              <h1>Bonjour{{ userName ? ', ' + userName : '' }}</h1>
               <p class="text-600 m-0 mt-1">
-                Votre dashboard personnalisé - {{ currentDate }}
+                Vue d'ensemble de la plateforme · {{ currentDate }}
               </p>
             </div>
           </div>
@@ -63,7 +61,7 @@
           <!-- Quick Stats - Widgets Redimensionnables -->
           <div class="mb-4">
             <div class="dashboard-section-heading">
-              <div><h2>Vue d’ensemble</h2><p>Les chiffres essentiels de la plateforme.</p></div>
+              <div><h2>Activité essentielle</h2><p>Les volumes à surveiller aujourd'hui.</p></div>
               <Button
                 :icon="widgetEditMode ? 'pi pi-check' : 'pi pi-cog'"
                 :label="widgetEditMode ? 'Terminer' : 'Personnaliser taille'"
@@ -82,19 +80,19 @@
             >
               <!-- Template pour chaque widget -->
               <template #widget_places="{ widget, size }">
-                <DashboardStatCard :label="widget.label" :value="widget.value" caption="Disponibles" :icon="widget.icon" :color="widget.color" :data-size="size" />
+                <DashboardStatCard :label="widget.label" :value="widget.value" caption="Disponibles" :icon="widget.icon" :color="widget.color" :loading="quickStatsLoading" :data-size="size" />
               </template>
 
               <template #widget_institutions="{ widget, size }">
-                <DashboardStatCard :label="widget.label" :value="widget.value" caption="Partenaires" :icon="widget.icon" :color="widget.color" :data-size="size" />
+                <DashboardStatCard :label="widget.label" :value="widget.value" caption="Partenaires" :icon="widget.icon" :color="widget.color" :loading="quickStatsLoading" :data-size="size" />
               </template>
 
               <template #widget_students="{ widget, size }">
-                <DashboardStatCard :label="widget.label" :value="widget.value" caption="Inscrits" :icon="widget.icon" :color="widget.color" :data-size="size" />
+                <DashboardStatCard :label="widget.label" :value="widget.value" caption="Inscrits" :icon="widget.icon" :color="widget.color" :loading="quickStatsLoading" :data-size="size" />
               </template>
 
               <template #widget_formateurs="{ widget, size }">
-                <DashboardStatCard :label="widget.label" :value="widget.value" caption="Praticiens" :icon="widget.icon" :color="widget.color" :data-size="size" />
+                <DashboardStatCard :label="widget.label" :value="widget.value" caption="Praticiens" :icon="widget.icon" :color="widget.color" :loading="quickStatsLoading" :data-size="size" />
               </template>
             </ResizableWidgetGrid>
           </div>
@@ -102,8 +100,8 @@
           <DashboardKpiGrid
             ref="kpiGridRef"
             :kpis="userKpis"
-            title="Mes indicateurs"
-            subtitle="Personnalisez votre vue avec drag & drop"
+            title="Indicateurs détaillés"
+            subtitle="Analysez les tendances et ouvrez les données associées."
             :storage-key="userStorageKey"
             @kpi-action="handleKpiAction"
             @config-changed="onConfigChanged"
@@ -112,9 +110,9 @@
 
           <!-- Section PFP Cohorts -->
           <div class="mb-4">
-            <div class="flex align-items-center justify-content-between mb-3">
+            <div class="dashboard-section-heading">
               <div>
-                <h3 class="text-xl font-semibold m-0">Statistiques PFP par Cohorte</h3>
+                <h2>Statistiques PFP par cohorte</h2>
                 <p class="text-600 text-sm mt-1">Places de stages PFP1A et PFP1B par canton</p>
               </div>
               <Button
