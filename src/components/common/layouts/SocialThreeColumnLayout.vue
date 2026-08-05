@@ -35,11 +35,12 @@ const centerStyle = computed(() => (
 
 <style scoped>
 .social-layout {
+  --social-sidebar-width: clamp(17.5rem, 18vw, 22rem);
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 3fr) minmax(0, 1fr);
-  gap: 1.5rem;
-  height: calc(100vh - var(--navbar-h) - (2 * var(--content-pad)));
-  max-height: calc(100vh - var(--navbar-h) - (2 * var(--content-pad)));
+  grid-template-columns: var(--social-sidebar-width) minmax(0, 1fr) var(--social-sidebar-width);
+  gap: clamp(1rem, 1.5vw, 1.5rem);
+  height: calc(100dvh - var(--navbar-h) - (2 * var(--content-pad)));
+  max-height: calc(100dvh - var(--navbar-h) - (2 * var(--content-pad)));
   overflow: hidden;
 }
 
@@ -74,23 +75,10 @@ const centerStyle = computed(() => (
   margin-inline: auto;
 }
 
-@media (max-width: 1366px) {
+@media (max-width: 80rem) {
   .social-layout:not(.social-layout--single) {
-    grid-template-columns: minmax(0, 0.8fr) minmax(0, 2.5fr) minmax(0, 0.8fr);
-    gap: 1rem;
-  }
-}
-
-@media (max-width: 1200px) {
-  .social-layout:not(.social-layout--single) {
-    grid-template-columns: minmax(0, 0.7fr) minmax(0, 2.8fr) minmax(0, 0.7fr);
-    gap: 0.8rem;
-  }
-}
-
-@media (max-width: 1024px) {
-  .social-layout:not(.social-layout--single) {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    --social-sidebar-width: clamp(15rem, 22vw, 18rem);
+    grid-template-columns: var(--social-sidebar-width) minmax(0, 1fr);
   }
 
   .social-layout__side--right {
@@ -98,20 +86,29 @@ const centerStyle = computed(() => (
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 52rem) {
   .social-layout:not(.social-layout--single) {
     display: block;
     width: 100%;
     max-width: 100vw;
   }
 
+  .social-layout {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
   .social-layout__side {
     display: none;
   }
 
-  .social-layout__main {
+  .social-layout:not(.social-layout--single) .social-layout__main {
     width: 100%;
     max-width: 100vw;
+    height: auto;
+    overflow: visible;
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom));
   }
 }
 </style>
