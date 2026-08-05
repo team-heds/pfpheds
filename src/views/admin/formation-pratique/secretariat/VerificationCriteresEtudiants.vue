@@ -363,7 +363,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { supabase } from '@/supabase'
-import studentsService from '@/service/studentsService'
+import studentsService from '@/service/studentDirectoryService'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import Button from 'primevue/button'
 import Dropdown from 'primevue/dropdown'

@@ -457,7 +457,7 @@ import Dropdown from 'primevue/dropdown'
 import Toast from 'primevue/toast'
 import Dialog from 'primevue/dialog'
 import { supabase } from '@/supabase'
-import { getAllStudents } from '@/service/studentsService'
+import { getAllStudents } from '@/service/studentDirectoryService'
 import { usePlacesStore } from '@/stores/placesStore'
 import { useInstitutionsStore } from '@/stores/institutionsStore'
 import { useUserStore } from '@/stores/userStore'
@@ -1168,34 +1168,9 @@ const loadData = async () => {
     const targetClasse = normalizeClasse(filterClasse.value)
     const studentsFromService = allStudentsData.filter(s => normalizeClasse(s.Classe || s.classe || s.class) === targetClasse)
 
-    // Fallback: inclure explicitement les profils user_profiles de la classe sélectionnée
-    // (utile si la fusion getAllStudents est décalée ou enrichie par d'autres sources)
-    const { data: profileStudents } = await supabase
-      .from('user_profiles')
-      .select('user_id, family_name, forname, email, classe, pfp_cohort, role, permissions, is_active')
-      .eq('classe', filterClasse.value)
-      .or('role.eq.EtudiantPhysio,permissions.cs.["EtudiantPhysio"]')
-      .eq('is_active', true)
-
     const mergedById = new Map()
     studentsFromService.forEach(student => {
       if (student?.id) mergedById.set(normalizeId(student.id), student)
-    })
-
-    ;(profileStudents || []).forEach(profile => {
-      const id = normalizeId(profile.user_id)
-      if (!id || mergedById.has(id)) return
-      mergedById.set(id, {
-        id,
-        Nom: profile.family_name || 'Nom non disponible',
-        Prenom: profile.forname || 'Prénom non disponible',
-        Mail: profile.email || 'Email non disponible',
-        Classe: profile.classe || filterClasse.value,
-        classe: profile.classe || filterClasse.value,
-        SAE: false,
-        pfp_cohort: profile.pfp_cohort || null,
-        source: 'user_profiles_fallback'
-      })
     })
 
     allClassStudents.value = Array.from(mergedById.values())
