@@ -67,6 +67,26 @@ http://localhost:5182/presentation/?print-pdf
 
 Utiliser ensuite l'impression du navigateur en PDF.
 
+## Présentation « Agents IA »
+
+Le second deck réutilise le même thème et reste accessible séparément :
+
+```text
+http://localhost:5182/presentation/agents-ia-developpement/
+```
+
+Générer son PDF avec :
+
+```bash
+npm run presentation:pdf:agents
+```
+
+Pour préparer les deux PDF avant publication :
+
+```bash
+npm run presentation:pdf:all
+```
+
 ## Ajouter une slide
 
 1. Ouvrir le fichier adapté dans `src/slides/`.

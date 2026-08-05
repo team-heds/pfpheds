@@ -7,11 +7,15 @@ import process from 'node:process'
 const presentationRoot = path.resolve(import.meta.dirname, '..')
 const viteBin = path.join(presentationRoot, 'node_modules', 'vite', 'bin', 'vite.js')
 const outputDir = path.join(presentationRoot, 'dist')
-const outputPath = path.join(outputDir, 'PFPHEdS-presentation.pdf')
+const slugIndex = process.argv.indexOf('--slug')
+const slug = slugIndex === -1 ? '' : process.argv[slugIndex + 1] || ''
+const deckPath = slug ? `${slug}/` : ''
+const filename = slug ? `${slug}.pdf` : 'PFPHEdS-presentation.pdf'
+const outputPath = path.join(outputDir, deckPath, filename)
 const port = process.env.PRESENTATION_PDF_PORT || '5184'
-const url = `http://127.0.0.1:${port}/presentation/?print-pdf`
+const url = `http://127.0.0.1:${port}/presentation/${deckPath}?print-pdf`
 
-await mkdir(outputDir, { recursive: true })
+await mkdir(path.dirname(outputPath), { recursive: true })
 
 const server = spawn(process.execPath, [viteBin, 'preview', '--host', '127.0.0.1', '--port', port], {
   cwd: presentationRoot,
