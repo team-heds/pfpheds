@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue';
+import TextAreaComponent from '@/components/social/library/TextAreaComponent.vue';
 
 const content = ref({});
 const newMail = ref({});
@@ -111,7 +112,14 @@ watch(
                 </div>
                 <div class="col-12 field">
                     <span class="surface-ground cursor-pointer border-round px-2" @click="toggleMessage()" v-tooltip="displayMessage ? 'Hide content' : 'Show content'"><i class="pi pi-ellipsis-h"></i></span>
-                    <Editor :editorStyle="{ height: '250px' }" class="mt-3" v-model="newMail.message"></Editor>
+                    <TextAreaComponent
+                        v-model="newMail.message"
+                        class="mt-3"
+                        min-height="250px"
+                        :max-length="10000"
+                        :show-char-counter="false"
+                        placeholder="Écrire une réponse..."
+                    />
                 </div>
             </div>
             <div class="flex column-gap-3 justify-content-end p-5 border-top-1 surface-border">

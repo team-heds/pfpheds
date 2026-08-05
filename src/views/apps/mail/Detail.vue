@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { sanitizeHtml } from '@/composables/useSanitize';
+import TextAreaComponent from '@/components/social/library/TextAreaComponent.vue';
 
 const emit = defineEmits(['send:message']);
 const props = defineProps({
@@ -88,12 +89,13 @@ const goBack = () => {
             <div class="text-900 font-semibold text-lg mb-3">{{ mail?.title }}</div>
             <div class="line-height-3 mt-0 mb-3" v-html="sanitizeHtml(mail?.message)"></div>
 
-            <Editor
+            <TextAreaComponent
                 v-model="newMail.message"
-                :pt="{
-                    content: { style: { height: '250px' } }
-                }"
-            ></Editor>
+                min-height="250px"
+                :max-length="10000"
+                :show-char-counter="false"
+                placeholder="Écrire une réponse..."
+            />
 
             <div class="flex column-gap-3 justify-content-end mt-3">
                 <Button type="button" outlined icon="pi pi-image"></Button>

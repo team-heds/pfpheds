@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue';
 import { getDatabase, ref as dbRef, onValue, push, update } from 'firebase/database';
 import { db } from '../../../../firebase'; // Importez votre configuration Firebase
+import TextAreaComponent from '@/components/social/library/TextAreaComponent.vue';
 
 const emit = defineEmits(['close', 'save']);
 const props = defineProps({
@@ -97,12 +98,14 @@ const filterMembers = async (event) => {
       </div>
       <div class="col-12 field">
         <label for="description" class="text-900 font-semibold">Description</label>
-        <Editor
+        <TextAreaComponent
           v-model="task.description"
-          :pt="{
-                        root: { style: { height: '150px' }, class: 'mb-6' }
-                    }"
-        ></Editor>
+          class="mb-6"
+          min-height="150px"
+          :max-length="5000"
+          :show-char-counter="false"
+          placeholder="Description de la tâche..."
+        />
       </div>
       <div class="col-6 field">
         <label for="start" class="text-900 font-semibold">Start Date</label>

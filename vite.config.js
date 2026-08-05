@@ -154,10 +154,6 @@ export default defineConfig({
             if (id.includes('leaflet')) {
               return 'leaflet'
             }
-            if (id.includes('quill')) {
-              return 'quill'
-            }
-            
           }
         },
       },
