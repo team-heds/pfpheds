@@ -144,6 +144,7 @@ import ConfirmDialog from 'primevue/confirmdialog';
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 import DataTableToolbar from '@/components/common/tables/DataTableToolbar.vue';
 import { supabase } from '@/supabase';
+import { getAllStudents } from '@/service/studentDirectoryService';
 
 const router = useRouter();
 const institutionsStore = useInstitutionsStore();
@@ -211,18 +212,14 @@ const globalKpis = computed(() => ([
 
 async function loadGlobalKpis() {
   try {
-    const [profilesRes, placesRes, assignmentsRes] = await Promise.all([
-      supabase
-        .from('user_profiles')
-        .select('user_id, is_active, permissions, family_name, forname, email, classe')
-        .filter('permissions', 'cs', '["EtudiantPhysio"]'),
+    const [profiles, placesRes, assignmentsRes] = await Promise.all([
+      getAllStudents(),
       supabase.from('places').select('PlaceId, InstitutionId, NomPlace'),
       supabase.from('student_result_vote').select('id').eq('status', 'published'),
     ])
 
-    const profiles = profilesRes.data || []
     const activeStudents = profiles.filter((p) => p.is_active !== false).length
-    const incompleteFiles = profiles.filter((p) => !p.family_name || !p.forname || !p.email || !p.classe).length
+    const incompleteFiles = profiles.filter((p) => !p.family_name || !p.forname || !p.email || !p.Classe).length
     const places = placesRes.data || []
     const openPlaces = places.filter((p) => p.InstitutionId && p.NomPlace).length
 

@@ -441,7 +441,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/supabase'
-import { getAllStudents } from '@/service/studentsService'
+import { getAllStudents } from '@/service/studentDirectoryService'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import Button from 'primevue/button'
 import DataTable from 'primevue/datatable'

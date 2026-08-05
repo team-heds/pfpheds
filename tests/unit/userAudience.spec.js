@@ -15,7 +15,10 @@ describe('userAudience', () => {
 
   it('sépare strictement étudiants et non-étudiants', () => {
     expect(isStudentProfile({ role: 'EtudiantPhysio', is_active: true })).toBe(true)
+    expect(isStudentProfile({ role: 'user', permissions: ['EtudiantPhysio'], is_active: true })).toBe(true)
     expect(isStudentProfile({ role: 'admin', email: 'admin@students.hevs.ch', is_active: true })).toBe(false)
+    expect(isStudentProfile({ role: 'admin', permissions: ['EtudiantPhysio'], is_active: true })).toBe(false)
+    expect(isStudentProfile({ role: 'EnseignantSoins', permissions: ['EtudiantPhysio'], is_active: true })).toBe(false)
     expect(isStudentProfile({ role: 'archived_student', is_active: true })).toBe(false)
   })
 
@@ -25,6 +28,7 @@ describe('userAudience', () => {
       { user_id: 'phy', role: 'EnseignantPhysio', is_active: true },
       { user_id: 'inactive', permissions: ['EnseignantSoins'], is_active: false },
       { user_id: 'legacy', permissions: '["EnseignantSoins"]', is_active: true },
+      { user_id: 'student', role: 'EtudiantPhysio', permissions: ['EnseignantSoins'], is_active: true },
     ]
 
     expect(isSITeacherProfile(profiles[0])).toBe(true)

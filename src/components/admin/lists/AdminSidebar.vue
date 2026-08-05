@@ -71,6 +71,7 @@ import SidebarMenuItems from './SidebarMenuItems.vue';
 import { useRoleStore } from '@/stores/role';
 import { useAuthStore } from '@/stores/authStore';
 import { supabase } from '@/supabase';
+import { countStudents } from '@/service/studentDirectoryService';
 import adminMenu from '@/config/adminMenu.js';
 
 const router = useRouter();
@@ -342,12 +343,8 @@ const menuCounts = ref({
 
 async function loadMenuCounts() {
   try {
-    const [studentsRes, institutionsRes, praticiensRes, placesRes] = await Promise.all([
-      supabase
-        .from('user_profiles')
-        .select('user_id', { count: 'exact', head: true })
-        .filter('permissions', 'cs', '["EtudiantPhysio"]')
-        .eq('is_active', true),
+    const [studentsCount, institutionsRes, praticiensRes, placesRes] = await Promise.all([
+      countStudents(),
       supabase
         .from('institutions')
         .select('InstitutionId', { count: 'exact', head: true }),
@@ -361,7 +358,7 @@ async function loadMenuCounts() {
 
     menuCounts.value = {
       ...menuCounts.value,
-      '/admin/formation-pratique/etudiants': studentsRes?.count || 0,
+      '/admin/formation-pratique/etudiants': studentsCount,
       '/admin/formation-pratique/institutions': institutionsRes?.count || 0,
       '/admin/formation-pratique/praticiens-formateur': praticiensRes?.count || 0,
       '/admin/formation-pratique/places': placesRes?.count || 0,

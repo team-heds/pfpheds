@@ -264,7 +264,7 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/supabase'
-import { getAllStudents } from '@/service/studentsService'
+import { getAllStudents } from '@/service/studentDirectoryService'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import Button from 'primevue/button'
 import DataTable from 'primevue/datatable'
@@ -495,22 +495,19 @@ const loadPublishedAssignments = async () => {
 
     // 3. Requêtes parallèles uniquement pour étudiants et praticiens
     const [
-      { data: userProfiles },
+      studentDirectory,
       { data: studentsPhysio },
       { data: praticiens }
     ] = await Promise.all([
-      supabase
-        .from('user_profiles')
-        .select('user_id,family_name,forname,classe,role,permissions,is_active')
-        .in('user_id', userIds)
-        .or('role.eq.EtudiantPhysio,permissions.cs.["EtudiantPhysio"]')
-        .eq('is_active', true),
+      getAllStudents(),
       supabase.from('StudentsPhysio').select('user_id,repondant_hes,class').in('user_id', userIds),
       supabase.from('praticiens_formateurs').select('id,prenom,nom')
     ])
 
     // 4. Créer les maps pour lookup rapide
-    const studentsById = new Map((userProfiles || []).map(s => [s.user_id, s]))
+    const studentsById = new Map(
+      studentDirectory.filter((student) => userIds.includes(student.user_id)).map(s => [s.user_id, s])
+    )
     const physioByUserId = new Map((studentsPhysio || []).map(sp => [sp.user_id, sp]))
     
     const praticiensById = new Map()
@@ -527,7 +524,7 @@ const loadPublishedAssignments = async () => {
       const s = studentsById.get(a.user_id)
       const studentName = s ? `${(s.family_name || '').toUpperCase()} ${s.forname || ''}`.trim() : 'N/A'
       const studentPhysioClass = physioByUserId.get(a.user_id)?.class || null
-      const studentClass = studentPhysioClass || s?.classe || null
+      const studentClass = studentPhysioClass || s?.Classe || s?.classe || null
 
       const praticienFormateur = a.assigned_praticien_id 
         ? praticiensById.get(a.assigned_praticien_id) || praticiensById.get(String(a.assigned_praticien_id)) 

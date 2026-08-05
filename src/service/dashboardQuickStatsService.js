@@ -4,7 +4,7 @@
  */
 
 import { supabase } from '@/supabase'
-import studentsService from './studentsService'
+import studentsService from './studentDirectoryService'
 
 /**
  * Compte les éléments d'une table avec filtre optionnel
