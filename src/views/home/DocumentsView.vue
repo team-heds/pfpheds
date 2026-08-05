@@ -786,8 +786,15 @@ const saveNewFile = async (newFile) => {
   }
 
   .header-content-wrapper {
-    flex-direction: row;
+    align-items:flex-start;
+    flex-wrap:wrap;
   }
+
+  .header-text-content { min-width:0; flex:1 1 calc(100% - 4rem); }
+  .admin-debug-badge { width:100%; margin-left:0; }
+  .page-description { text-wrap:pretty; }
+  .file-item-row { align-items:flex-start; }
+  .file-admin-actions { flex:0 0 auto; }
 
   .header-icon-box {
     width: 3rem;

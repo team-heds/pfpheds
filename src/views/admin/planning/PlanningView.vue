@@ -1067,7 +1067,7 @@ onMounted(async () => {
 
 .year-select-button :deep(.p-button) {
   padding: 0.75rem 1.25rem;
-  transition: all 0.2s;
+  transition: background-color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
 }
 
 .year-select-button :deep(.p-button.p-highlight) {
@@ -1122,7 +1122,7 @@ onMounted(async () => {
   border: 1px solid var(--surface-border);
   border-radius: 4px;
   overflow: hidden;
-  transition: all 0.2s;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
   cursor: pointer;
   height: 32px;
 }
@@ -1318,8 +1318,14 @@ onMounted(async () => {
 /* Responsive */
 @media (max-width: 768px) {
   .planning-container {
-    padding: 1rem;
+    padding: .75rem;
   }
+
+  :deep(.planning-header-card .p-toolbar) { align-items:stretch; gap:.75rem; }
+  :deep(.planning-header-card .p-toolbar-group-start),
+  :deep(.planning-header-card .p-toolbar-group-end) { width:100%; flex-wrap:wrap; }
+  :deep(.planning-header-card .p-button) { flex:1 1 auto; }
+  .planning-grid-wrapper { scroll-snap-type:x proximity; overscroll-behavior-inline:contain; }
   
   .grid-cell,
   .week-header {

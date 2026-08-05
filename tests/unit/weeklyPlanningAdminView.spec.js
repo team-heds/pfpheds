@@ -111,7 +111,8 @@ vi.mock('primevue/usetoast', () => ({
 }))
 
 vi.mock('vue-router', () => ({
-  useRouter: () => ({ push: vi.fn() })
+  useRouter: () => ({ push: vi.fn() }),
+  useRoute: () => ({ query: {} })
 }))
 
 vi.mock('@/stores/authStore', () => ({

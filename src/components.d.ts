@@ -93,6 +93,11 @@ declare module 'vue' {
     FormField: typeof import('./components/common/forms/FormField.vue')['default']
     FormSection: typeof import('./components/common/forms/FormSection.vue')['default']
     FormShell: typeof import('./components/common/forms/FormShell.vue')['default']
+<<<<<<< HEAD
+=======
+    FormStatus: typeof import('./components/common/forms/FormStatus.vue')['default']
+    Galleria: typeof import('primevue/galleria')['default']
+>>>>>>> bfea0aa7845156292f548e6b61aa4d782cf4dabe
     GameHub: typeof import('./components/games/GameHub.vue')['default']
     GamificationActivityWidget: typeof import('./components/gamification/widgets/GamificationActivityWidget.vue')['default']
     GamificationNotification: typeof import('./components/gamification/notifications/GamificationNotification.vue')['default']

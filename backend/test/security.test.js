@@ -49,6 +49,24 @@ test('frontend source contains no service-role or hardcoded Google API key', () 
   assert.doesNotMatch(source, /AIza[0-9A-Za-z_-]{30,}/)
 })
 
+test('student audiences are never inferred directly in frontend list queries', () => {
+  const root = path.resolve(__dirname, '..', '..', 'src')
+  const files = []
+  const walk = (directory) => {
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+      const target = path.join(directory, entry.name)
+      if (entry.isDirectory()) walk(target)
+      else if (/\.(js|vue|mjs)$/.test(entry.name)) files.push(target)
+    }
+  }
+  walk(root)
+  const source = files.map((file) => fs.readFileSync(file, 'utf8')).join('\n')
+
+  assert.doesNotMatch(source, /role\.eq\.EtudiantPhysio/)
+  assert.doesNotMatch(source, /filter\(['"]permissions['"][^\n]*EtudiantPhysio/)
+  assert.doesNotMatch(source, /studentsphysio_with_profiles/)
+})
+
 test('every business API is behind the global JWT middleware', () => {
   const source = fs.readFileSync(path.resolve(__dirname, '..', 'index.js'), 'utf8')
   const authIndex = source.indexOf("app.use('/api', authenticate)")
@@ -107,6 +125,8 @@ test('sensitive API routes reject anonymous requests', async () => {
       ['/api/ftp/diagnostic', 'GET'],
       ['/api/chat', 'POST'],
       ['/api/admin/users', 'POST'],
+      ['/api/audiences/students', 'GET'],
+      ['/api/audiences/si-teachers', 'GET'],
       ['/api/integrations/vimeo/videos', 'GET'],
       ['/api/integrations/github/status', 'GET'],
       ['/api/resultat-votation/student/test-user/PFP1A/2026', 'GET']
