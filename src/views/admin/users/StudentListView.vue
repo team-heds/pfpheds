@@ -11,6 +11,9 @@
         v-model:filters="filters"
         filterDisplay="menu"
         :loading="loading"
+        responsiveLayout="scroll"
+        scrollable
+        scrollHeight="calc(100dvh - 20rem)"
         :globalFilterFields="['Nom', 'Prenom', 'Classe', 'Mail']"
         showGridlines
       >
@@ -746,7 +749,7 @@ export default {
   letter-spacing: 0.5px;
   white-space: nowrap;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  transition: all 0.3s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .pfp-badge {
@@ -777,5 +780,12 @@ export default {
 
 .text-gray-400 {
   color: #9ca3af;
+}
+
+@media (max-width: 48rem) {
+  .filter-menu { padding:.75rem; }
+  :deep(.p-datatable-wrapper) { max-width:calc(100vw - 1.5rem); }
+  :deep(.p-paginator) { justify-content:flex-start; overflow-x:auto; flex-wrap:nowrap; }
+  .pfp-badge-large { min-width:0; padding:.4rem .7rem; }
 }
 </style>

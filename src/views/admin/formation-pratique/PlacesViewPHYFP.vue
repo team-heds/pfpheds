@@ -115,7 +115,7 @@
         </div>
       </OverlayPanel>
 
-      <div class="surface-card fp-dark p-3 border-round shadow-2">
+      <div class="places-table-shell surface-card fp-dark p-3 border-round shadow-2">
         <DataTableToolbar v-model:query="searchInput" :result-count="totalMatchingRows" placeholder="Rechercher une place…">
           <template #primary><Button icon="pi pi-plus" label="Nouvelle place" @click="showCreateDialog = true" severity="success" /></template>
           <template #tools><Button icon="pi pi-filter-slash" label="Réinitialiser" outlined severity="secondary" @click="resetFilters" /><span v-if="isTruncated" class="text-orange-500">{{ displayedRows.length }} affichés</span></template>
@@ -1407,6 +1407,9 @@ watch(() => praticiensStore.items, (newItems) => {
 }
 @media (max-width: 768px) {
   .search-input { min-width: 180px; width: 100%; }
+  .places-table-shell { padding:.75rem !important; }
+  .places-table-shell :deep(.p-datatable-wrapper) { max-width:calc(100vw - 2.5rem); }
+  .places-table-shell :deep(.p-paginator) { justify-content:flex-start; overflow-x:auto; flex-wrap:nowrap; }
 }
 
 /* Styles pour le panel de sélection de colonnes */
