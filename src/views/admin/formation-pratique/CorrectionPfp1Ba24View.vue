@@ -176,6 +176,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { supabase } from '@/supabase'
+import { getAllStudents } from '@/service/studentDirectoryService'
 import { db, isFirebaseEnabled } from '../../../../firebase'
 import { get, ref as dbRef } from 'firebase/database'
 import { useToast } from 'primevue/usetoast'
@@ -380,14 +381,7 @@ async function loadData() {
       institutionsResult,
       legacyBa24Students,
     ] = await Promise.all([
-      supabase
-        .from('user_profiles')
-        .select('user_id, family_name, forname, email, classe, role, permissions, is_active')
-        .ilike('classe', 'BA24%')
-        .or('role.eq.EtudiantPhysio,permissions.cs.["EtudiantPhysio"]')
-        .eq('is_active', true)
-        .order('family_name')
-        .order('forname'),
+      getAllStudents(),
       supabase
         .from('StudentsPhysio')
         .select('id, user_id, firebase_id, pfp_valided, pfpinfo, updated_at, pfp1a'),
@@ -400,7 +394,6 @@ async function loadData() {
       loadLegacyBa24Students(),
     ])
 
-    if (profilesResult.error) throw profilesResult.error
     if (studentsPhysioResult.error) throw studentsPhysioResult.error
     if (placesResult.error) throw placesResult.error
     if (institutionsResult.error) throw institutionsResult.error
@@ -417,7 +410,13 @@ async function loadData() {
     const profilesByUserId = new Map()
     const mergedProfiles = []
 
-    ;(profilesResult.data || []).forEach((profile) => {
+    profilesResult
+      .filter((profile) => String(profile.Classe || profile.classe || '').toUpperCase().startsWith('BA24'))
+      .sort((a, b) =>
+        String(a.family_name || '').localeCompare(String(b.family_name || '')) ||
+        String(a.forname || '').localeCompare(String(b.forname || ''))
+      )
+      .forEach((profile) => {
       profilesByUserId.set(profile.user_id, profile)
       mergedProfiles.push(profile)
     })

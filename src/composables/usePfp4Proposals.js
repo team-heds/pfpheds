@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue'
 import { supabase } from '@/supabase'
-import { getAllStudents } from '@/service/studentsService'
+import { getAllStudents } from '@/service/studentDirectoryService'
 import { usePlacesStore } from '@/stores/placesStore'
 import { useInstitutionsStore } from '@/stores/institutionsStore'
 import resultatVotationService from '@/service/resultatVotationService'

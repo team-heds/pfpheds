@@ -550,6 +550,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { supabase } from '@/supabase'
+import { getAllStudents } from '@/service/studentDirectoryService'
 import { useAuthStore } from '@/stores/authStore'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import DataTable from 'primevue/datatable'
@@ -826,13 +827,7 @@ const fetchLesedStudents = async () => {
       return
     }
 
-    const { data: profiles, error: profilesError } = await supabase
-      .from('user_profiles')
-      .select('user_id, family_name, forname, classe, role, permissions, is_active')
-      .in('user_id', [...userIds])
-      .or('role.eq.EtudiantPhysio,permissions.cs.["EtudiantPhysio"]')
-      .eq('is_active', true)
-    if (profilesError) throw profilesError
+    const profiles = (await getAllStudents()).filter((profile) => userIds.has(profile.user_id))
 
     const profileMap = new Map((profiles || []).map(p => [p.user_id, p]))
     const leseSet = new Set((studentsLese || []).map(s => s.user_id))
@@ -932,13 +927,7 @@ const fetchEchecsStudents = async () => {
       return
     }
 
-    const { data: profiles, error: profilesError } = await supabase
-      .from('user_profiles')
-      .select('user_id, family_name, forname, classe, role, permissions, is_active')
-      .in('user_id', userIds)
-      .or('role.eq.EtudiantPhysio,permissions.cs.["EtudiantPhysio"]')
-      .eq('is_active', true)
-    if (profilesError) throw profilesError
+    const profiles = (await getAllStudents()).filter((profile) => userIds.includes(profile.user_id))
 
     const profileMap = new Map((profiles || []).map(p => [p.user_id, p]))
 
@@ -1253,19 +1242,13 @@ const exportCSV = () => {
 const fetchCases = async () => {
   loading.value = true
   try {
-    const [{ data: profiles, error: profilesError }, { data: suivis, error: suivisError }, { data: echecs, error: echecsError }, { data: historique, error: historiqueError }] = await Promise.all([
-      supabase
-        .from('user_profiles')
-        .select('user_id, family_name, forname, classe, role, permissions, is_active')
-        .or('role.eq.EtudiantPhysio,permissions.cs.["EtudiantPhysio"]')
-        .eq('is_active', true)
-        .order('family_name'),
+    const [profiles, { data: suivis, error: suivisError }, { data: echecs, error: echecsError }, { data: historique, error: historiqueError }] = await Promise.all([
+      getAllStudents(),
       supabase.from('suivi_cas_particuliers').select('*'),
       supabase.from('student_result_vote').select('user_id, pfp_type').eq('pfp_echec', true),
       supabase.from('cas_particuliers_historique').select('*').order('created_at', { ascending: false })
     ])
 
-    if (profilesError) throw profilesError
     if (suivisError) throw suivisError
     if (echecsError) throw echecsError
     if (historiqueError) console.warn('Historique cas particuliers non chargé:', historiqueError.message)

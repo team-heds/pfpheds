@@ -193,6 +193,7 @@
 
 <script>
 import studentsService from '@/service/studentsService';
+import { getAllStudents } from '@/service/studentDirectoryService';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
@@ -342,14 +343,7 @@ export default {
       const startTime = performance.now();
       
       try {
-        // ⚡ OPTIMISATION: Requêtes parallèles pour accélérer le chargement
-        const [students, { data: physioData }] = await Promise.all([
-          studentsService.getAllStudents(),
-          supabase.from('StudentsPhysio').select('user_id, repondant_hes')
-        ]);
-
-        // ⚡ OPTIMISATION: Map pour lookup rapide O(1)
-        const physioByUserId = new Map((physioData || []).map(sp => [sp.user_id, sp]));
+        const students = await getAllStudents();
 
         // ⚡ OPTIMISATION: Pré-calcul en une seule passe avec mutation directe
         const len = students.length;
@@ -364,9 +358,7 @@ export default {
           s.__searchKey = parts.join(' ').toLowerCase();
           // Flag pour loading
           s.updating = false;
-          // Répondant HES
-          const physio = physioByUserId.get(s.id);
-          s.repondant_hes = physio?.repondant_hes || null;
+          s.repondant_hes = s.repondant_hes || null;
         }
         
         this.etudiants = students;

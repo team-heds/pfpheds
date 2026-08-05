@@ -168,6 +168,7 @@
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue'
 import { supabase } from '@/supabase'
+import { getAllStudents } from '@/service/studentDirectoryService'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import Dropdown from 'primevue/dropdown'
 import SelectButton from 'primevue/selectbutton'
@@ -282,12 +283,7 @@ const fetchAssignedStudents = async (repondantName) => {
 
     // 2. Enrichir avec les infos étudiants
     const userIds = [...new Set(assignments.map(a => a.user_id))]
-    const { data: profiles } = await supabase
-      .from('user_profiles')
-      .select('user_id, family_name, forname, classe, role, permissions, is_active')
-      .in('user_id', userIds)
-      .or('role.eq.EtudiantPhysio,permissions.cs.["EtudiantPhysio"]')
-      .eq('is_active', true)
+    const profiles = (await getAllStudents()).filter((profile) => userIds.includes(profile.user_id))
 
     // 3. Récupérer les détails des praticiens formateurs
     const praticienIds = [...new Set(assignments.map(a => a.assigned_praticien_id).filter(id => id))]
@@ -303,7 +299,7 @@ const fetchAssignedStudents = async (repondantName) => {
       .select('first_name, last_name')
       .in('CONCAT(first_name, \' \', last_name)', repondantNames)
 
-    const profilesMap = new Map((profiles || []).map(p => [p.user_id, p]))
+    const profilesMap = new Map(profiles.map(p => [p.user_id, p]))
     const praticiensMap = new Map((praticiens || []).map(p => [p.id, p]))
     const repondantsMap = new Map((repondantsDetails || []).map(r => [`${r.first_name} ${r.last_name}`, r]))
 
@@ -314,7 +310,7 @@ const fetchAssignedStudents = async (repondantName) => {
         ...a,
         pfp_type: normalizePfp(a.pfp_type),
         student_name: p ? `${(p.family_name || '').toUpperCase()} ${p.forname || ''}`.trim() : 'Inconnu',
-        student_class: p?.classe || '-',
+        student_class: p?.Classe || p?.classe || '-',
         role: a.repondant_hes === repondantName ? 'Répondant' : 'Signataire',
         praticien_details: praticien ? `${praticien.prenom} ${praticien.nom}` : 'Non assigné',
         praticien_mail: praticien?.mail || '-',
