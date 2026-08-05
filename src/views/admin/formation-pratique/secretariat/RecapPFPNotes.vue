@@ -315,6 +315,7 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
 import { supabase } from '@/supabase'
+import { getAllStudents } from '@/service/studentDirectoryService'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import Dropdown from 'primevue/dropdown'
 import DataTable from 'primevue/datatable'
@@ -697,20 +698,14 @@ const fetchNotes = async () => {
   isHydrating.value = true
   try {
     const year = activeYear.value
-    const [{ data: profiles, error: profileError }, { data: physio, error: physioError }] = await Promise.all([
-      supabase
-        .from('user_profiles')
-        .select('user_id, family_name, forname, classe, permissions, pfp_cohort')
-        .or('role.eq.EtudiantPhysio,permissions.cs.["EtudiantPhysio"]')
-        .eq('is_active', true)
-        .order('family_name'),
+    const [profiles, { data: physio, error: physioError }] = await Promise.all([
+      getAllStudents(),
       supabase
         .from('StudentsPhysio')
         .select('*')
         .eq('year', year)
     ])
 
-    if (profileError) throw profileError
     if (physioError) throw physioError
 
     const physioMap = new Map((physio || []).map(row => [row.user_id, row]))

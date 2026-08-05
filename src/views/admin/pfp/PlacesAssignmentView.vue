@@ -418,7 +418,7 @@
 import { ref, computed, watch } from 'vue'
 import { supabase } from '@/supabase'
 import { useAutoRefresh } from '@/composables/useAutoRefresh'
-import { getAllStudents } from '@/service/studentsService'
+import { getAllStudents } from '@/service/studentDirectoryService'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import Button from 'primevue/button'
 import DataTable from 'primevue/datatable'
