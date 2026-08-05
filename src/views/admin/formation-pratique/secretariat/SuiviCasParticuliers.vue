@@ -659,6 +659,7 @@ import TabPanel from 'primevue/tabpanel'
 import AutoComplete from 'primevue/autocomplete'
 import Toast from 'primevue/toast'
 import { useToast } from 'primevue/usetoast'
+import { getAllStudents } from '@/service/studentDirectoryService'
 
 const authStore = useAuthStore()
 
@@ -895,7 +896,7 @@ const groupedLesed = computed(() => {
 const fetchLesedStudents = async () => {
   loadingLesed.value = true
   try {
-    const [{ data: fallbacks, error: fallbackError }, { data: studentsLese, error: leseError }] = await Promise.all([
+    const [{ data: fallbacks, error: fallbackError }, { data: studentsLese, error: leseError }, students] = await Promise.all([
       supabase
         .from('student_result_vote')
         .select('user_id, pfp_type, year, assigned_place_name, assigned_institution_name, assigned_rank')
@@ -903,7 +904,8 @@ const fetchLesedStudents = async () => {
       supabase
         .from('StudentsPhysio')
         .select('user_id, lese, class, year')
-        .eq('lese', true)
+        .eq('lese', true),
+      getAllStudents()
     ])
 
     if (fallbackError) throw fallbackError
@@ -919,15 +921,9 @@ const fetchLesedStudents = async () => {
       return
     }
 
-    const { data: profiles, error: profilesError } = await supabase
-      .from('user_profiles')
-      .select('user_id, family_name, forname, classe, role, permissions, is_active')
-      .in('user_id', [...userIds])
-      .or('role.eq.EtudiantPhysio,permissions.cs.["EtudiantPhysio"]')
-      .eq('is_active', true)
-    if (profilesError) throw profilesError
-
-    const profileMap = new Map((profiles || []).map(p => [p.user_id, p]))
+    const profileMap = new Map(
+      students.filter(profile => userIds.has(profile.user_id)).map(profile => [profile.user_id, profile])
+    )
     const leseSet = new Set((studentsLese || []).map(s => s.user_id))
 
     // Une ligne par (étudiant, pfp_type, année) issue du fallback algorithmique
@@ -1012,10 +1008,13 @@ const groupedEchecs = computed(() => {
 const fetchEchecsStudents = async () => {
   loadingEchecs.value = true
   try {
-    const { data: echecs, error: echecsError } = await supabase
-      .from('student_result_vote')
-      .select('user_id, pfp_type, year, assigned_place_name, assigned_institution_name, pfp_arret, commentaire_arret')
-      .eq('pfp_echec', true)
+    const [{ data: echecs, error: echecsError }, students] = await Promise.all([
+      supabase
+        .from('student_result_vote')
+        .select('user_id, pfp_type, year, assigned_place_name, assigned_institution_name, pfp_arret, commentaire_arret')
+        .eq('pfp_echec', true),
+      getAllStudents()
+    ])
 
     if (echecsError) throw echecsError
 
@@ -1025,15 +1024,10 @@ const fetchEchecsStudents = async () => {
       return
     }
 
-    const { data: profiles, error: profilesError } = await supabase
-      .from('user_profiles')
-      .select('user_id, family_name, forname, classe, role, permissions, is_active')
-      .in('user_id', userIds)
-      .or('role.eq.EtudiantPhysio,permissions.cs.["EtudiantPhysio"]')
-      .eq('is_active', true)
-    if (profilesError) throw profilesError
-
-    const profileMap = new Map((profiles || []).map(p => [p.user_id, p]))
+    const userIdSet = new Set(userIds)
+    const profileMap = new Map(
+      students.filter(profile => userIdSet.has(profile.user_id)).map(profile => [profile.user_id, profile])
+    )
 
     echecsList.value = (echecs || []).filter(e => profileMap.has(e.user_id)).map(e => {
       const profile = profileMap.get(e.user_id)
@@ -1403,19 +1397,13 @@ const exportCSV = () => {
 const fetchCases = async () => {
   loading.value = true
   try {
-    const [{ data: profiles, error: profilesError }, { data: suivis, error: suivisError }, { data: echecs, error: echecsError }, { data: historique, error: historiqueError }] = await Promise.all([
-      supabase
-        .from('user_profiles')
-        .select('user_id, family_name, forname, classe, role, permissions, is_active')
-        .or('role.eq.EtudiantPhysio,permissions.cs.["EtudiantPhysio"]')
-        .eq('is_active', true)
-        .order('family_name'),
+    const [profiles, { data: suivis, error: suivisError }, { data: echecs, error: echecsError }, { data: historique, error: historiqueError }] = await Promise.all([
+      getAllStudents(),
       supabase.from('suivi_cas_particuliers').select('*'),
       supabase.from('student_result_vote').select('user_id, pfp_type').eq('pfp_echec', true),
       supabase.from('cas_particuliers_historique').select('*').order('created_at', { ascending: false })
     ])
 
-    if (profilesError) throw profilesError
     if (suivisError) throw suivisError
     if (echecsError) throw echecsError
     if (historiqueError) console.warn('Historique cas particuliers non chargé:', historiqueError.message)

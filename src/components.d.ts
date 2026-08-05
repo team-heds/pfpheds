@@ -81,7 +81,6 @@ declare module 'vue' {
     DoughnutChart: typeof import('./components/admin/widgets/charts/DoughnutChart.vue')['default']
     Dropdown: typeof import('primevue/dropdown')['default']
     EditFileDocPFP: typeof import('./components/home/EditFileDocPFP.vue')['default']
-    Editor: typeof import('primevue/editor')['default']
     EmptyState: typeof import('./components/common/feedback/EmptyState.vue')['default']
     EnseignentForm: typeof import('./components/admin/forms/EnseignentForm.vue')['default']
     EnseignentFormModif: typeof import('./components/admin/forms/EnseignentFormModif.vue')['default']

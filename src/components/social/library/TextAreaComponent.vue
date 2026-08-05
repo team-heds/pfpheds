@@ -1,24 +1,51 @@
-﻿<template>
-  <div class="textarea-component ">
-    <div class="editor-container">
-      <Editor
-        v-model="localValue"
-        editorStyle="height: 320px"
-        placeholder="Commencer un post..."
-        @text-change="onTextChange"
+<template>
+  <div class="textarea-component">
+    <div
+      class="editor-container"
+      :class="{ 'is-disabled': disabled }"
+      :style="{ '--editor-min-height': minHeight }"
+    >
+      <div
+        v-if="editor"
+        class="editor-toolbar"
+        role="toolbar"
+        aria-label="Mise en forme du texte"
+      >
+        <button
+          v-for="action in toolbarActions"
+          :key="action.label"
+          type="button"
+          class="toolbar-button"
+          :class="{ active: action.isActive() }"
+          :aria-label="action.label"
+          :aria-pressed="action.isActive()"
+          :disabled="disabled || !action.canRun()"
+          @click="action.run"
+        >
+          <span aria-hidden="true">{{ action.icon }}</span>
+        </button>
+      </div>
+
+      <EditorContent
+        :editor="editor"
         class="custom-editor"
+        :aria-label="placeholder"
       />
-      <!-- Compteur de caractères -->
-      <div class="char-counter" v-if="showCharCounter">
-        {{ characterCount }}/1000
+
+      <div v-if="showCharCounter" class="char-counter" aria-live="polite">
+        {{ characterCount }}/{{ maxLength }}
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, watch, defineProps, defineEmits, computed } from 'vue';
-import Editor from 'primevue/editor';
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { Editor, EditorContent } from '@tiptap/vue-3'
+import { Extension } from '@tiptap/core'
+import StarterKit from '@tiptap/starter-kit'
+import Placeholder from '@tiptap/extension-placeholder'
+import { Plugin } from '@tiptap/pm/state'
 
 const props = defineProps({
   modelValue: {
@@ -32,106 +59,256 @@ const props = defineProps({
   showCharCounter: {
     type: Boolean,
     default: true
+  },
+  placeholder: {
+    type: String,
+    default: 'Commencer un post...'
+  },
+  disabled: {
+    type: Boolean,
+    default: false
+  },
+  minHeight: {
+    type: String,
+    default: '320px'
   }
-});
+})
 
-const emits = defineEmits(['update:modelValue', 'input']);
+const emit = defineEmits(['update:modelValue', 'input'])
+const characterCount = ref(0)
+const editorRevision = ref(0)
 
-const localValue = ref(props.modelValue);
+const CharacterLimit = Extension.create({
+  name: 'characterLimit',
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        filterTransaction(transaction, state) {
+          if (!transaction.docChanged) return true
 
-/**
- * Compteur de caractères
- */
-const characterCount = computed(() => {
-  const text = localValue.value.replace(/<[^>]+>/g, '').trim(); // Supprimer les balises HTML
-  return text.length;
-});
-
-/**
- * Événement déclenché à chaque changement de texte dans l’éditeur.
- */
-function onTextChange(e) {
-  const text = e.htmlValue.replace(/<[^>]+>/g, '').trim();
-  if (text.length <= props.maxLength) {
-    localValue.value = e.htmlValue;
-    emits('update:modelValue', e.htmlValue);
-    emits('input', e.htmlValue); // Pour la détection des tags
-  } else {
-    // Limiter la saisie au maximum de caractères
-    const quill = e.editor;
-    quill.deleteText(props.maxLength, quill.getLength());
+          const currentLength = state.doc.textContent.trim().length
+          const nextLength = transaction.doc.textContent.trim().length
+          return nextLength <= props.maxLength || nextLength < currentLength
+        }
+      })
+    ]
   }
-}
+})
 
-/**
- * Synchronise la valeur locale avec la prop parent.
- */
+const editor = new Editor({
+  extensions: [
+    StarterKit,
+    Placeholder.configure({ placeholder: props.placeholder }),
+    CharacterLimit
+  ],
+  content: props.modelValue || '',
+  editable: !props.disabled,
+  editorProps: {
+    attributes: {
+      'aria-label': props.placeholder,
+      class: 'social-rich-text-input'
+    }
+  },
+  onUpdate: ({ editor: currentEditor }) => {
+    const html = currentEditor.getHTML()
+    characterCount.value = currentEditor.state.doc.textContent.trim().length
+    emit('update:modelValue', html)
+    emit('input', html)
+  },
+  onTransaction: () => {
+    editorRevision.value += 1
+  }
+})
+
+characterCount.value = editor.state.doc.textContent.trim().length
+
+const toolbarActions = computed(() => {
+  void editorRevision.value
+  return [
+  {
+    label: 'Gras',
+    icon: 'B',
+    isActive: () => editor.isActive('bold'),
+    canRun: () => editor.can().chain().focus().toggleBold().run(),
+    run: () => editor.chain().focus().toggleBold().run()
+  },
+  {
+    label: 'Italique',
+    icon: 'I',
+    isActive: () => editor.isActive('italic'),
+    canRun: () => editor.can().chain().focus().toggleItalic().run(),
+    run: () => editor.chain().focus().toggleItalic().run()
+  },
+  {
+    label: 'Liste à puces',
+    icon: '•',
+    isActive: () => editor.isActive('bulletList'),
+    canRun: () => editor.can().chain().focus().toggleBulletList().run(),
+    run: () => editor.chain().focus().toggleBulletList().run()
+  },
+  {
+    label: 'Liste numérotée',
+    icon: '1.',
+    isActive: () => editor.isActive('orderedList'),
+    canRun: () => editor.can().chain().focus().toggleOrderedList().run(),
+    run: () => editor.chain().focus().toggleOrderedList().run()
+  },
+  {
+    label: 'Citation',
+    icon: '“”',
+    isActive: () => editor.isActive('blockquote'),
+    canRun: () => editor.can().chain().focus().toggleBlockquote().run(),
+    run: () => editor.chain().focus().toggleBlockquote().run()
+  },
+  {
+    label: 'Annuler',
+    icon: '↶',
+    isActive: () => false,
+    canRun: () => editor.can().chain().focus().undo().run(),
+    run: () => editor.chain().focus().undo().run()
+  },
+  {
+    label: 'Rétablir',
+    icon: '↷',
+    isActive: () => false,
+    canRun: () => editor.can().chain().focus().redo().run(),
+    run: () => editor.chain().focus().redo().run()
+  }
+  ]
+})
+
 watch(
   () => props.modelValue,
   (newValue) => {
-    if (newValue !== localValue.value) {
-      localValue.value = newValue;
+    const nextValue = newValue || ''
+    if (nextValue !== editor.getHTML()) {
+      editor.commands.setContent(nextValue, false)
+      characterCount.value = editor.state.doc.textContent.trim().length
     }
   }
-);
+)
+
+watch(
+  () => props.disabled,
+  (disabled) => editor.setEditable(!disabled)
+)
+
+onBeforeUnmount(() => editor.destroy())
+
+defineExpose({ editor })
 </script>
 
 <style scoped>
-.textarea-component {
+.textarea-component,
+.editor-container {
   width: 100%;
   max-width: 880px;
 }
 
 .editor-container {
   position: relative;
-  border-radius: 0.5rem;
-  max-width: 880px;
-}
-
-
-.custom-editor {
-  border: none; /* Suppression des bordures rigides */
-  border-radius: 0.5rem;
-  background-color: var(--surface-card);
   overflow: hidden;
-  color: #fff; /* Texte blanc */
-  width: 880px;
-  max-width: 100%;
+  border: 1px solid var(--surface-border, #334155);
+  border-radius: 0.75rem;
+  background: var(--surface-card);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
-.custom-editor .ql-container {
-  min-height: 200px; /* Espace plus grand */
-  padding: 1rem; /* Marges internes */
-  font-family: 'Inter', sans-serif; /* Typographie moderne */
+.editor-container:focus-within {
+  border-color: var(--primary-color, #ffcc00);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color, #ffcc00) 22%, transparent);
+}
+
+.editor-container.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--surface-border, #334155);
+  background: color-mix(in srgb, var(--surface-card) 90%, white 10%);
+}
+
+.toolbar-button {
+  display: inline-flex;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--text-color, #fff);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.toolbar-button:hover:not(:disabled),
+.toolbar-button.active {
+  border-color: color-mix(in srgb, var(--primary-color, #ffcc00) 45%, transparent);
+  background: color-mix(in srgb, var(--primary-color, #ffcc00) 15%, transparent);
+  color: var(--primary-color, #ffcc00);
+}
+
+.toolbar-button:focus-visible {
+  outline: 2px solid var(--primary-color, #ffcc00);
+  outline-offset: 2px;
+}
+
+.toolbar-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.custom-editor :deep(.ProseMirror) {
+  min-height: var(--editor-min-height);
+  padding: 1rem 1rem 2.5rem;
+  color: var(--text-color, #fff);
+  font-family: 'Inter', sans-serif;
   font-size: 1rem;
-  background-color: var(--surface-card);
-  color: #fff; /* Texte blanc */
+  line-height: 1.6;
+  outline: none;
 }
 
-/* Pour forcer le style du placeholder en blanc (si nécessaire avec ::v-deep)  Ca force tout le texte en noir
-::v-deep .custom-editor .ql-container .ql-editor::before {
-  color: #fff !important;
+.custom-editor :deep(.ProseMirror p.is-editor-empty:first-child::before) {
+  float: left;
+  height: 0;
+  color: var(--text-color-secondary, #94a3b8);
+  content: attr(data-placeholder);
+  pointer-events: none;
 }
- */
 
-/* Compteur de caractères */
 .char-counter {
   position: absolute;
-  bottom: -25px;
-  right: 0;
-  font-size: 0.875rem;
-  color: #999; /* Couleur secondaire */
+  right: 0.75rem;
+  bottom: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-color-secondary, #94a3b8);
 }
 
-/* Styles responsives */
 @media (max-width: 768px) {
-  .textarea-component {
-    padding: 0.5rem;
+  .editor-toolbar {
+    gap: 0.125rem;
   }
 
-  .char-counter {
-    font-size: 0.75rem;
-    bottom: -20px;
+  .toolbar-button {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+  }
+
+  .custom-editor :deep(.ProseMirror) {
+    min-height: 160px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .editor-container {
+    transition: none;
   }
 }
 </style>
