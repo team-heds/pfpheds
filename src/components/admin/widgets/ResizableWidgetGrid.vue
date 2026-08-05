@@ -312,14 +312,14 @@ loadConfig()
 .widgets-container {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1.5rem;
-  align-items: start;
+  gap: clamp(1rem, 1.5vw, 1.5rem);
+  align-items: stretch;
 }
 
 .widget-item {
   position: relative;
   transition: opacity 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
-  min-height: 150px;
+  min-height: 8.5rem;
 }
 
 /* Tailles des widgets */

@@ -6,8 +6,13 @@
       `kpi-size-${size}`,
       { 'kpi-loading': loading, 'kpi-clickable': clickable }
     ]"
-    :style="{ borderLeftColor: color }"
+    :style="{ '--kpi-color': color }"
+    :role="clickable ? 'button' : undefined"
+    :tabindex="clickable ? 0 : undefined"
+    :aria-label="clickable ? `${label} : ${formattedValue}. Ouvrir les détails` : undefined"
     @click="clickable && $emit('action')"
+    @keydown.enter="clickable && $emit('action')"
+    @keydown.space.prevent="clickable && $emit('action')"
   >
     <Skeleton v-if="loading" height="140px" borderRadius="12px" />
     
@@ -256,21 +261,18 @@ const effectiveChartHeight = computed(() => {
   background: var(--surface-card);
   border-radius: 12px;
   padding: 1rem;
-  border-left: 4px solid;
-  transition: all 0.3s ease;
+  border: 1px solid var(--surface-border, rgba(148, 163, 184, 0.2));
+  transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
   height: 100%;
   min-height: 100%;
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
-  border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 
 .kpi-card:hover {
-  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-  transform: translateY(-2px) scale(1.01);
+  border-color: color-mix(in srgb, var(--kpi-color) 45%, var(--surface-border));
 }
 
 .kpi-clickable {
@@ -278,13 +280,16 @@ const effectiveChartHeight = computed(() => {
 }
 
 .kpi-clickable:hover {
-  transform: translateY(-4px) scale(1.02);
-  box-shadow: 0 12px 32px rgba(0,0,0,0.15);
+  transform: translateY(-2px);
 }
 
 .kpi-clickable:active {
-  transform: translateY(-2px) scale(0.99);
-  transition: transform 0.1s ease;
+  transform: translateY(0);
+}
+
+.kpi-clickable:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--kpi-color) 55%, transparent);
+  outline-offset: 3px;
 }
 
 .kpi-header {
@@ -301,11 +306,6 @@ const effectiveChartHeight = computed(() => {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: transform 0.3s ease;
-}
-
-.kpi-card:hover .kpi-icon {
-  transform: scale(1.05);
 }
 
 .kpi-info {
