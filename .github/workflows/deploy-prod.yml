@@ -92,6 +92,9 @@ jobs:
       - name: Install presentation dependencies
         run: npm ci --prefix presentation
 
+      - name: Install Playwright Chromium
+        run: npm exec --prefix presentation -- playwright install --with-deps chromium
+
       - name: Validate frontend environment
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
