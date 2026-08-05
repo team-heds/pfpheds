@@ -407,7 +407,7 @@
               <Column header="Actions" style="min-width: 180px">
                 <template #body="{ data }">
                   <div class="flex gap-2">
-                    <Button icon="pi pi-folder-open" label="Suivi" size="small" outlined @click="openCellDialog(data, 'sae')" />
+                    <Button icon="pi pi-folder-open" label="Éditer" size="small" outlined @click="openSAEFeaturesDialog(data, 'sae')" />
                     <Button icon="pi pi-times" label="Retirer" size="small" severity="danger" outlined @click="unmarkStudentSae(data)" />
                   </div>
                 </template>
@@ -525,6 +525,98 @@
       </div>
     </Dialog>
 
+
+    <!-- Dialog étudiants SAE - édition des particularités -->
+    <Dialog v-model:visible="showSAEFeaturesDialog" :header="dialogTitle" :modal="true" :style="{ width: '640px' }" class="cas-cell-dialog">
+      <div class="flex flex-column gap-4 p-1">
+
+        <!-- État courant -->
+        <!--<div class="surface-ground p-3 border-round">
+          <label class="font-semibold block mb-2">État actuel</label>
+          <div class="flex gap-2 flex-wrap mb-3">
+            <Button
+              v-for="color in colorOptions"
+              :key="color.value"
+              :label="color.label"
+              :class="{ 'p-button-outlined': editingCell?.couleur !== color.value }"
+              :severity="color.severity"
+              @click="editingCell.couleur = color.value"
+              size="small"
+            />
+          </div>
+          <Textarea
+            v-model="editingCell.commentaire"
+            rows="2"
+            class="w-full"
+            placeholder="Résumé rapide (optionnel)..."
+          />
+          <div class="flex justify-content-end mt-2">
+            <Button label="Enregistrer l'état" icon="pi pi-check" size="small" @click="saveCellData" />
+          </div>
+        </div>-->
+
+        <!-- Ajouter/éditer les particularités -->
+        <div class="surface-card p-3 border-round border-1 surface-border">
+          <label class="font-semibold block mb-2">Particularités</label>
+          <div class="flex flex-column gap-2">
+
+            <Textarea
+              v-model="editingCell.commentaire"
+              rows="2"
+              class="w-full"
+              placeholder="Entrer les particularités du statut SAE ici..."
+            />
+            <div class="flex justify-content-end">
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Historique -->
+        <!--<div>
+          <label class="font-semibold block mb-2">Historique ({{ currentCellHistorique.length }})</label>
+          <Timeline
+            v-if="currentCellHistorique.length"
+            :value="currentCellHistorique"
+            align="left"
+            class="cas-timeline"
+          >
+            <template #marker="{ item }">
+              <div class="timeline-marker" :class="`marker-${eventTypeMeta(item.type_evenement).severity}`">
+                <i :class="eventTypeMeta(item.type_evenement).icon"></i>
+              </div>
+            </template>
+            <template #content="{ item }">
+              <div class="timeline-event">
+                <div class="flex align-items-center justify-content-between gap-2">
+                  <Tag :value="eventTypeMeta(item.type_evenement).label" :severity="eventTypeMeta(item.type_evenement).severity" class="text-xs" />
+                  <span class="text-xs text-600" :title="formatFullDate(item.created_at)">{{ formatRelativeDate(item.created_at) }}</span>
+                </div>
+                <div v-if="item.type_evenement === 'changement_date' && (item.ancienne_date || item.nouvelle_date)" class="date-change-line">
+                  <span class="text-600">{{ item.ancienne_date ? formatDateOnly(item.ancienne_date) : '?' }}</span>
+                  <i class="pi pi-arrow-right mx-2 text-xs"></i>
+                  <span class="font-semibold">{{ item.nouvelle_date ? formatDateOnly(item.nouvelle_date) : '?' }}</span>
+                </div>
+                <p v-if="item.description" class="m-0 mt-1 text-sm">{{ item.description }}</p>
+              </div>
+            </template>
+          </Timeline>
+          <p v-else class="text-600 text-sm">Aucun événement enregistré pour l'instant.</p>
+        </div>-->
+
+        <div class="flex justify-content-end mt-1">
+          <Button class="mr-2" label="Fermer" severity="secondary" @click="closeSAEFeaturesDialog" />
+          <Button
+            label="Valider"
+            icon="pi pi-check"
+            size="small"
+            @click="saveSAEFeaturesData"
+          />
+        </div>
+      </div>
+    </Dialog>
+    <!-- Fin Dialog SAE -->
+
     <!-- Dialog pour éditer les infos étudiant -->
     <Dialog v-model:visible="showInfoDialog" :header="infoDialogTitle" :modal="true" :style="{ width: '500px' }">
       <div class="flex flex-column gap-3 p-3">
@@ -550,7 +642,6 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { supabase } from '@/supabase'
-import { getAllStudents } from '@/service/studentDirectoryService'
 import { useAuthStore } from '@/stores/authStore'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import DataTable from 'primevue/datatable'
@@ -568,6 +659,7 @@ import TabPanel from 'primevue/tabpanel'
 import AutoComplete from 'primevue/autocomplete'
 import Toast from 'primevue/toast'
 import { useToast } from 'primevue/usetoast'
+import { getAllStudents } from '@/service/studentDirectoryService'
 
 const authStore = useAuthStore()
 
@@ -586,6 +678,7 @@ const classesList = computed(() => {
 })
 
 const showCellDialog = ref(false)
+const showSAEFeaturesDialog = ref(false)
 const showInfoDialog = ref(false)
 const editingCell = ref(null)
 const editingInfo = ref(null)
@@ -803,7 +896,7 @@ const groupedLesed = computed(() => {
 const fetchLesedStudents = async () => {
   loadingLesed.value = true
   try {
-    const [{ data: fallbacks, error: fallbackError }, { data: studentsLese, error: leseError }] = await Promise.all([
+    const [{ data: fallbacks, error: fallbackError }, { data: studentsLese, error: leseError }, students] = await Promise.all([
       supabase
         .from('student_result_vote')
         .select('user_id, pfp_type, year, assigned_place_name, assigned_institution_name, assigned_rank')
@@ -811,7 +904,8 @@ const fetchLesedStudents = async () => {
       supabase
         .from('StudentsPhysio')
         .select('user_id, lese, class, year')
-        .eq('lese', true)
+        .eq('lese', true),
+      getAllStudents()
     ])
 
     if (fallbackError) throw fallbackError
@@ -827,9 +921,9 @@ const fetchLesedStudents = async () => {
       return
     }
 
-    const profiles = (await getAllStudents()).filter((profile) => userIds.has(profile.user_id))
-
-    const profileMap = new Map((profiles || []).map(p => [p.user_id, p]))
+    const profileMap = new Map(
+      students.filter(profile => userIds.has(profile.user_id)).map(profile => [profile.user_id, profile])
+    )
     const leseSet = new Set((studentsLese || []).map(s => s.user_id))
 
     // Une ligne par (étudiant, pfp_type, année) issue du fallback algorithmique
@@ -914,10 +1008,13 @@ const groupedEchecs = computed(() => {
 const fetchEchecsStudents = async () => {
   loadingEchecs.value = true
   try {
-    const { data: echecs, error: echecsError } = await supabase
-      .from('student_result_vote')
-      .select('user_id, pfp_type, year, assigned_place_name, assigned_institution_name, pfp_arret, commentaire_arret')
-      .eq('pfp_echec', true)
+    const [{ data: echecs, error: echecsError }, students] = await Promise.all([
+      supabase
+        .from('student_result_vote')
+        .select('user_id, pfp_type, year, assigned_place_name, assigned_institution_name, pfp_arret, commentaire_arret')
+        .eq('pfp_echec', true),
+      getAllStudents()
+    ])
 
     if (echecsError) throw echecsError
 
@@ -927,9 +1024,10 @@ const fetchEchecsStudents = async () => {
       return
     }
 
-    const profiles = (await getAllStudents()).filter((profile) => userIds.includes(profile.user_id))
-
-    const profileMap = new Map((profiles || []).map(p => [p.user_id, p]))
+    const userIdSet = new Set(userIds)
+    const profileMap = new Map(
+      students.filter(profile => userIdSet.has(profile.user_id)).map(profile => [profile.user_id, profile])
+    )
 
     echecsList.value = (echecs || []).filter(e => profileMap.has(e.user_id)).map(e => {
       const profile = profileMap.get(e.user_id)
@@ -1120,6 +1218,63 @@ const closeCellDialog = () => {
   editingStudent.value = null
   editingField.value = null
   resetNewEvent()
+}
+
+const openSAEFeaturesDialog = (student, field) => {
+  editingStudent.value = student
+  editingField.value = field
+
+  if (!student[field]) {
+    student[field] = { couleur: 'blanc', commentaire: '' }
+  }
+
+  editingCell.value = { ...student[field] }
+  dialogTitle.value = `${student.etudiant} - ${fieldLabels[field]}`
+  resetNewEvent()
+  showSAEFeaturesDialog.value = true
+}
+
+const closeSAEFeaturesDialog = () => {
+  showSAEFeaturesDialog.value = false
+  editingCell.value = null
+  editingStudent.value = null
+  editingField.value = null
+  resetNewEvent()
+}
+
+const saveSAEFeaturesData = async () => {
+  if (!editingStudent.value || !editingField.value || !editingCell.value) {
+    closeSAEFeaturesDialog()
+    return
+  }
+
+  const cellData = {
+    couleur: editingCell.value.couleur || 'blanc',
+    commentaire: editingCell.value.commentaire || ''
+  }
+
+  try {
+    const { error } = await supabase
+      .from('suivi_cas_particuliers')
+      .upsert({
+        user_id: editingStudent.value.user_id,
+        pfp_field: editingField.value,
+        couleur: cellData.couleur,
+        commentaire: cellData.commentaire || null,
+        visible: editingStudent.value.visible ?? true
+      }, {
+        onConflict: 'user_id,pfp_field'
+      })
+
+    if (error) throw error
+
+    editingStudent.value[editingField.value] = { ...cellData }
+    toast.add({ severity: 'success', summary: 'Sauvegardé', detail: 'Particularités SAE mises à jour', life: 2000 })
+    closeSAEFeaturesDialog()
+  } catch (e) {
+    console.error('Erreur saveSAEFeaturesData:', e)
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de sauvegarder: ' + e.message, life: 3000 })
+  }
 }
 
 const openInfoDialog = (student) => {
