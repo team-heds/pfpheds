@@ -1,7 +1,7 @@
 <template>
   <AdminLayout>
     <ConfirmDialog />
-    <div class="p-4">
+    <div class="admin-table-page p-4">
       <div class="breadcrumb-section mb-3">
         <router-link to="/admin/dashboard-pfp" class="text-600 no-underline hover:text-primary"><i class="pi pi-home mr-1"></i>Formation Pratique</router-link>
         <i class="pi pi-angle-right text-400 mx-2"></i>
@@ -359,4 +359,12 @@ const goToDetails = (id) => router.push({ name: 'InstitutionView', params: { id 
 
 <style>
 @import '@/assets/styles/fp-dark.css';
+.admin-table-page { min-width:0; }
+.admin-table-page .p-datatable-wrapper { max-width:100%; }
+@media (max-width: 48rem) {
+  .admin-table-page { padding:.75rem !important; }
+  .admin-table-page > .surface-card { padding:1rem !important; }
+  .admin-table-page .p-dropdown { width:100% !important; }
+  .admin-table-page .p-paginator { justify-content:flex-start; overflow-x:auto; flex-wrap:nowrap; }
+}
 </style>
