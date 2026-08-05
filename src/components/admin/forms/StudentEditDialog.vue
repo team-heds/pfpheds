@@ -13,62 +13,54 @@
       
       <!-- Loading state -->
       <div v-if="loading" class="flex justify-content-center align-items-center" style="min-height: 300px;">
-        <ProgressSpinner />
+        <FormStatus status="loading" title="Chargement du profil" message="Les informations de l’étudiant sont en cours de chargement." />
       </div>
 
       <!-- Form -->
       <form v-else id="student-edit-form" class="app-form" @submit.prevent="saveStudent">
         <FormSection title="Identité et inscription" description="Modifiez les informations principales de l’étudiant." icon="pi pi-user-edit">
         <div class="grid">
-        <!-- Prénom -->
-        <div class="field col-12 md:col-6">
-          <label for="forname" class="font-semibold">Prénom</label>
+        <FormField for-id="forname" label="Prénom" required :error="errors.forname" v-slot="field">
           <InputText 
-            id="forname" 
+            v-bind="field.controlAttrs"
             v-model="formData.forname" 
             required 
             :class="{ 'p-invalid': errors.forname }"
           />
-          <small v-if="errors.forname" class="p-error">{{ errors.forname }}</small>
-        </div>
+        </FormField>
 
         <!-- Nom -->
-        <div class="field col-12 md:col-6">
-          <label for="family_name" class="font-semibold">Nom</label>
+        <FormField for-id="family_name" label="Nom" required :error="errors.family_name" v-slot="field">
           <InputText 
-            id="family_name" 
+            v-bind="field.controlAttrs"
             v-model="formData.family_name" 
             required
             :class="{ 'p-invalid': errors.family_name }"
           />
-          <small v-if="errors.family_name" class="p-error">{{ errors.family_name }}</small>
-        </div>
+        </FormField>
 
         <!-- Email -->
-        <div class="field col-12 md:col-6">
-          <label for="email" class="font-semibold">Email</label>
+        <FormField for-id="email" label="Email" required hint="Utilisez l’adresse institutionnelle de l’étudiant." :error="errors.email" v-slot="field">
           <InputText 
-            id="email" 
+            v-bind="field.controlAttrs"
             v-model="formData.email" 
             type="email"
+            autocomplete="email"
             required
             :class="{ 'p-invalid': errors.email }"
           />
-          <small v-if="errors.email" class="p-error">{{ errors.email }}</small>
-        </div>
+        </FormField>
 
         <!-- Classe -->
-        <div class="field col-12 md:col-6">
-          <label for="class" class="font-semibold">Classe</label>
+        <FormField for-id="class" label="Classe" required :error="errors.class" v-slot="field">
           <Dropdown
-            id="class"
+            v-bind="field.controlAttrs"
             v-model="formData.class"
             :options="classOptions"
             placeholder="Sélectionner une classe"
             :class="{ 'p-invalid': errors.class }"
           />
-          <small v-if="errors.class" class="p-error">{{ errors.class }}</small>
-        </div>
+        </FormField>
 
         <!-- SAE (Cas Particulier) -->
         <div class="field col-12 md:col-6">
@@ -83,16 +75,16 @@
         </div>
 
         <!-- Cas Particulier (texte) -->
-        <div class="field col-12 md:col-6">
-          <label for="cas_particulier" class="font-semibold">Détails cas particulier</label>
+        <FormField for-id="cas_particulier" label="Détails du cas particulier" optional-label="Facultatif" v-slot="field">
           <InputText 
-            id="cas_particulier" 
+            v-bind="field.controlAttrs"
             v-model="formData.cas_particulier"
-            placeholder="Optionnel"
+            placeholder="Ajoutez uniquement les informations utiles"
           />
-        </div>
+        </FormField>
         </div>
         </FormSection>
+        <FormStatus :status="submitStatus" :message="submitMessage" />
       </form>
     </div>
 
@@ -101,7 +93,8 @@
       <Button 
         label="Enregistrer" 
         icon="pi pi-check" 
-        @click="saveStudent" 
+        type="submit"
+        form="student-edit-form"
         :loading="saving"
         :disabled="loading"
       />
@@ -117,10 +110,11 @@ import InputText from 'primevue/inputtext'
 import Dropdown from 'primevue/dropdown'
 import Checkbox from 'primevue/checkbox'
 import Button from 'primevue/button'
-import ProgressSpinner from 'primevue/progressspinner'
 import Toast from 'primevue/toast'
 import { supabase } from '@/supabase'
 import FormSection from '@/components/common/forms/FormSection.vue'
+import FormField from '@/components/common/forms/FormField.vue'
+import FormStatus from '@/components/common/forms/FormStatus.vue'
 
 const props = defineProps({
   visible: {
@@ -139,6 +133,8 @@ const toast = useToast()
 const loading = ref(false)
 const saving = ref(false)
 const errors = ref({})
+const submitStatus = ref('idle')
+const submitMessage = ref('')
 
 const classOptions = ['BA22', 'BA23', 'BA24', 'BA25']
 
@@ -234,15 +230,26 @@ const validateForm = () => {
     isValid = false
   }
 
+  if (!formData.value.class) {
+    errors.value.class = 'La classe est requise'
+    isValid = false
+  }
+
   return isValid
 }
 
 const saveStudent = async () => {
   if (!validateForm()) {
+    submitStatus.value = 'error'
+    submitMessage.value = 'Corrigez les champs signalés avant d’enregistrer.'
+    await nextTick()
+    document.querySelector('#student-edit-form [aria-invalid="true"]')?.focus()
     return
   }
 
   saving.value = true
+  submitStatus.value = 'loading'
+  submitMessage.value = 'Enregistrement des modifications…'
 
   try {
     // Mettre à jour user_profiles
@@ -297,6 +304,9 @@ const saveStudent = async () => {
       life: 3000
     })
 
+    submitStatus.value = 'success'
+    submitMessage.value = 'Le profil étudiant a bien été mis à jour.'
+
     closeDialog()
 
   } catch (error) {
@@ -307,6 +317,8 @@ const saveStudent = async () => {
       detail: 'Impossible de sauvegarder les modifications',
       life: 3000
     })
+    submitStatus.value = 'error'
+    submitMessage.value = 'La sauvegarde a échoué. Vérifiez votre connexion puis réessayez.'
   } finally {
     saving.value = false
   }
@@ -323,6 +335,8 @@ const resetForm = () => {
     cas_particulier: ''
   }
   errors.value = {}
+  submitStatus.value = 'idle'
+  submitMessage.value = ''
 }
 
 const closeDialog = () => {

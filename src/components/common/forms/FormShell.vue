@@ -1,5 +1,5 @@
 <template>
-  <section class="form-shell" :aria-labelledby="title ? titleId : undefined">
+  <section class="form-shell" :aria-labelledby="title ? titleId : undefined" :aria-busy="busy || undefined">
     <header v-if="title || description || $slots.header" class="form-shell__header">
       <slot name="header"><div><h1 :id="titleId">{{ title }}</h1><p v-if="description">{{ description }}</p></div></slot>
     </header>
@@ -9,7 +9,7 @@
 </template>
 <script setup>
 import { useId } from 'vue'
-defineProps({ title: { type: String, default: '' }, description: { type: String, default: '' } })
+defineProps({ title: { type: String, default: '' }, description: { type: String, default: '' }, busy: Boolean })
 const titleId = `form-shell-${useId()}`
 </script>
 <style scoped>
