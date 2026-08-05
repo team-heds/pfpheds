@@ -14,6 +14,10 @@ const {
 const registerCareConversStoreRoutes = require('./supabase/careconversStoreBackend')
 const app = express()
 
+// Requests reach Express through the single Caddy reverse proxy. This lets
+// express-rate-limit use the real client IP from X-Forwarded-For safely.
+app.set('trust proxy', 1)
+
 //const userStoreRoutes = require('./supabase/userStoreBackend')
 const institutionsStoreRoutes = require('./supabase/institutionsStoreBackend')
 const enseignantsStoreRoutes = require('./supabase/enseignantsStoreBackend.js')
