@@ -2,19 +2,32 @@ const express = require('express')
 const multer = require('multer')
 const ftp = require('basic-ftp')
 const path = require('path')
-const { Readable } = require('stream')
 const SftpClient = require('ssh2-sftp-client')
+const {
+  cleanupUploadedFiles,
+  createDiskStorage,
+  validateUploadedFile
+} = require('./fileValidation')
 
 const router = express.Router()
 
-// Multer in-memory storage (for test). For large videos, prefer diskStorage/streaming.
+const ALLOWED_MIME_TYPES = new Set([
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'text/plain'
+])
 const upload = multer({
-  storage: multer.memoryStorage(),
+  storage: createDiskStorage(multer),
   limits: {
-    // 100 MB per file for test purposes. Adjust as needed.
-    fileSize: 100 * 1024 * 1024,
-    files: 20,
+    fileSize: 10 * 1024 * 1024,
+    files: 5
   },
+  fileFilter: (_req, file, callback) => {
+    const allowed = /^(application\/pdf|image\/(jpeg|png|webp)|text\/plain)$/i.test(file.mimetype)
+    callback(allowed ? null : new Error('Type de fichier non autorisé.'), allowed)
+  }
 })
 
 // Diagnostic route to check server-side configuration
@@ -23,19 +36,17 @@ router.get('/diagnostic', (req, res) => {
   res.json({
     ok: true,
     configured,
-    host: process.env.FTP_HOST || null,
-    baseDir: process.env.FTP_BASE_DIR || null,
-    secure: (process.env.FTP_SECURE || 'true'),
-    rejectUnauthorized: (process.env.FTP_REJECT_UNAUTHORIZED ?? 'true'),
-    port: process.env.FTP_PORT || null,
-    timeoutMs: process.env.FTP_TIMEOUT_MS || null,
-    protocol: (process.env.FTP_PROTOCOL || 'ftp'),
+    secure: process.env.FTP_SECURE || 'true',
+    rejectUnauthorized: process.env.FTP_REJECT_UNAUTHORIZED ?? 'true',
+    protocol: process.env.FTP_PROTOCOL || 'ftps'
   })
 })
 
 function sanitize(seg) {
   if (!seg) return 'public'
-  return String(seg).replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 180)
+  return String(seg)
+    .replace(/[^a-zA-Z0-9._-]/g, '_')
+    .slice(0, 180)
 }
 
 function uniqueFileName(originalName) {
@@ -50,7 +61,7 @@ function envTrim(v) {
 }
 
 function getProtocol() {
-  return envTrim(process.env.FTP_PROTOCOL || 'ftp').toLowerCase()
+  return envTrim(process.env.FTP_PROTOCOL || 'ftps').toLowerCase()
 }
 
 function getFtpConfig() {
@@ -59,10 +70,15 @@ function getFtpConfig() {
   if (secureEnv === 'false' || secureEnv === '0') secureMode = false
   else if (secureEnv === 'implicit') secureMode = 'implicit'
 
-  const rejectUnauthorized = (process.env.FTP_REJECT_UNAUTHORIZED ?? 'true').toString().toLowerCase() !== 'false'
+  const rejectUnauthorized =
+    (process.env.FTP_REJECT_UNAUTHORIZED ?? 'true').toString().toLowerCase() !== 'false'
   const defaultPort = secureMode === 'implicit' ? 990 : 21
-  const port = Number.isFinite(parseInt(process.env.FTP_PORT)) ? parseInt(process.env.FTP_PORT) : defaultPort
-  const timeoutMs = Number.isFinite(parseInt(process.env.FTP_TIMEOUT_MS)) ? parseInt(process.env.FTP_TIMEOUT_MS) : 20000
+  const port = Number.isFinite(parseInt(process.env.FTP_PORT))
+    ? parseInt(process.env.FTP_PORT)
+    : defaultPort
+  const timeoutMs = Number.isFinite(parseInt(process.env.FTP_TIMEOUT_MS))
+    ? parseInt(process.env.FTP_TIMEOUT_MS)
+    : 20000
 
   return {
     host: envTrim(process.env.FTP_HOST),
@@ -71,7 +87,7 @@ function getFtpConfig() {
     secure: secureMode,
     secureOptions: { rejectUnauthorized },
     port,
-    timeoutMs,
+    timeoutMs
   }
 }
 
@@ -88,7 +104,7 @@ async function withFtpClient(fn) {
       password: cfg.password,
       secure: cfg.secure,
       secureOptions: cfg.secureOptions,
-      port: cfg.port,
+      port: cfg.port
     })
     return await fn(client)
   } finally {
@@ -97,14 +113,16 @@ async function withFtpClient(fn) {
 }
 
 function getSftpConfig() {
-  const timeoutMs = Number.isFinite(parseInt(process.env.FTP_TIMEOUT_MS)) ? parseInt(process.env.FTP_TIMEOUT_MS) : 30000
+  const timeoutMs = Number.isFinite(parseInt(process.env.FTP_TIMEOUT_MS))
+    ? parseInt(process.env.FTP_TIMEOUT_MS)
+    : 30000
   const port = Number.isFinite(parseInt(process.env.FTP_PORT)) ? parseInt(process.env.FTP_PORT) : 22
   return {
     host: envTrim(process.env.FTP_HOST),
     port,
     username: envTrim(process.env.FTP_USER),
     password: envTrim(process.env.FTP_PASSWORD),
-    readyTimeout: timeoutMs,
+    readyTimeout: timeoutMs
   }
 }
 
@@ -115,7 +133,11 @@ async function withSftpClient(fn) {
     await sftp.connect(cfg)
     return await fn(sftp)
   } finally {
-    try { await sftp.end() } catch (_) {}
+    try {
+      await sftp.end()
+    } catch (_) {
+      // The connection may already be closed after a failed transfer.
+    }
   }
 }
 
@@ -137,33 +159,37 @@ router.get('/test-connect', async (req, res) => {
       res.json({ ok: true, ...result })
     }
   } catch (e) {
-    console.error('[FTP TEST] Error:', e)
-    res.status(500).json({ ok: false, error: e.message || String(e) })
+    console.error('[FTP TEST] Error:', e.message || String(e))
+    res.status(502).json({ ok: false, error: 'Encrypted file-transfer connection failed.' })
   }
 })
 
 // POST /api/ftp/upload
 // multipart/form-data with fields: institution, userId, folder (optional), files[]
-router.post('/upload', upload.array('files', 20), async (req, res) => {
+router.post('/upload', upload.array('files', 5), async (req, res) => {
   try {
     if (!process.env.FTP_HOST || !process.env.FTP_USER || !process.env.FTP_PASSWORD) {
-      return res.status(500).json({ ok: false, error: 'FTP credentials not configured on the server' })
+      return res
+        .status(500)
+        .json({ ok: false, error: 'FTP credentials not configured on the server' })
     }
 
     // Normalize baseDir to be relative (no leading slash) to avoid permission issues on FTP root
     const rawBase = envTrim(process.env.FTP_BASE_DIR || 'uploads')
     const baseDir = rawBase.replace(/^\/+/, '').replace(/^\\+/, '') // remove leading / or \\
     const institution = sanitize(req.body.institution || 'general')
-    const userId = sanitize(req.body.userId || 'public')
+    const userId = sanitize(req.auth.userId)
     const extraFolder = sanitize(req.body.folder || '')
 
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ ok: false, error: 'No files received' })
     }
 
+    for (const file of req.files) await validateUploadedFile(file, ALLOWED_MIME_TYPES)
+
     const targetDir = [baseDir, institution, userId, extraFolder].filter(Boolean).join('/')
     const protocol = getProtocol()
-    console.log(`[FTP] Upload target: ${targetDir} (${req.files.length} files) -> host=${process.env.FTP_HOST}, protocol=${protocol}, secure=${process.env.FTP_SECURE || 'true'}`)
+    console.log(`[FTP] Uploading ${req.files.length} file(s) with protocol=${protocol}`)
 
     let results
     if (protocol === 'sftp') {
@@ -174,13 +200,13 @@ router.post('/upload', upload.array('files', 20), async (req, res) => {
         for (const f of req.files) {
           const remoteName = uniqueFileName(f.originalname)
           const remotePath = path.posix.join(targetDir, remoteName)
-          await sftp.put(f.buffer, remotePath)
+          await sftp.put(f.path, remotePath)
           uploaded.push({
             fieldname: f.fieldname,
             originalname: f.originalname,
-            mimetype: f.mimetype,
+            mimetype: f.detectedMimeType,
             size: f.size,
-            remotePath,
+            remotePath
           })
         }
         return uploaded
@@ -192,14 +218,13 @@ router.post('/upload', upload.array('files', 20), async (req, res) => {
         const uploaded = []
         for (const f of req.files) {
           const remoteName = uniqueFileName(f.originalname)
-          const stream = Readable.from(f.buffer)
-          await client.uploadFrom(stream, remoteName)
+          await client.uploadFrom(f.path, remoteName)
           uploaded.push({
             fieldname: f.fieldname,
             originalname: f.originalname,
-            mimetype: f.mimetype,
+            mimetype: f.detectedMimeType,
             size: f.size,
-            remotePath: path.posix.join(targetDir, remoteName),
+            remotePath: path.posix.join(targetDir, remoteName)
           })
         }
         return uploaded
@@ -208,8 +233,12 @@ router.post('/upload', upload.array('files', 20), async (req, res) => {
 
     return res.json({ ok: true, count: results.length, files: results })
   } catch (e) {
-    console.error('[FTP UPLOAD] Error:', e)
-    return res.status(500).json({ ok: false, error: e.message || String(e) })
+    console.error('[FTP UPLOAD] Error:', e.message || String(e))
+    return res
+      .status(e.status || 502)
+      .json({ ok: false, error: e.status === 400 ? e.message : 'File upload failed.' })
+  } finally {
+    await cleanupUploadedFiles(req.files)
   }
 })
 

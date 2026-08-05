@@ -206,6 +206,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { supabase } from '@/supabase.js';
+import { getAllStudents } from '@/service/studentDirectoryService';
 import { useAutoRefresh } from '@/composables/useAutoRefresh';
 import { useToast } from 'primevue/usetoast';
 import { FilterMatchMode } from 'primevue/api';
@@ -308,17 +309,11 @@ const loadStudents = async () => {
   loading.value = true;
   
   try {
-    // Charger TOUS les champs pour voir ce qui existe
-    const { data: profiles, error: profilesError } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .order('family_name');
-
-    if (profilesError) throw profilesError;
+    const profiles = await getAllStudents();
     
     // Filtrer en JavaScript pour éviter les erreurs SQL
-    const filteredProfiles = profiles?.filter(p => {
-      const classe = p.classe || '';
+    const filteredProfiles = profiles.filter(p => {
+      const classe = p.Classe || p.classe || '';
       return classe === 'BA25';
     }) || [];
 
@@ -345,7 +340,7 @@ const loadStudents = async () => {
         nom: profile.family_name || '',
         prenom: profile.forname || '',
         email: profile.email || '',
-        classe: profile.classe || '',
+        classe: profile.Classe || profile.classe || '',
         repondant_actuel: repondant_actuel,
         nouveau_repondant: null,
         modified: false,

@@ -27,6 +27,11 @@
         @dragover.prevent="onDragOver"
         @drop="onDrop($event, widget)"
         @click="editMode && showSizeSelector(widget)"
+        @keydown.enter="editMode && showSizeSelector(widget)"
+        @keydown.space.prevent="editMode && showSizeSelector(widget)"
+        :tabindex="editMode ? 0 : undefined"
+        :role="editMode ? 'button' : undefined"
+        :aria-label="editMode ? `Modifier la taille du widget ${widget.label}` : undefined"
       >
         <!-- Controls en mode édition -->
         <div v-if="editMode" class="widget-controls">
@@ -85,11 +90,13 @@
         <p class="text-600">Choisissez la taille du widget:</p>
         
         <div class="size-options">
-          <div
+          <button
             v-for="size in sizeOptions"
             :key="size.value"
+            type="button"
             class="size-option"
             :class="{ 'active': selectedWidget?.size === size.value }"
+            :aria-pressed="selectedWidget?.size === size.value"
             @click="changeWidgetSize(size.value)"
           >
             <div class="size-preview" :class="`preview-${size.value}`">
@@ -100,7 +107,7 @@
               <div class="text-sm text-600">{{ size.description }}</div>
             </div>
             <i v-if="selectedWidget?.size === size.value" class="pi pi-check text-primary"></i>
-          </div>
+          </button>
         </div>
       </div>
       
@@ -304,15 +311,15 @@ loadConfig()
 
 .widgets-container {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.5rem;
-  align-items: start;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(1rem, 1.5vw, 1.5rem);
+  align-items: stretch;
 }
 
 .widget-item {
   position: relative;
-  transition: all 0.3s ease;
-  min-height: 150px;
+  transition: opacity 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
+  min-height: 8.5rem;
 }
 
 /* Tailles des widgets */
@@ -398,7 +405,12 @@ loadConfig()
   border: 2px solid var(--surface-border);
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  width:100%;
+  color:inherit;
+  background:transparent;
+  font:inherit;
+  text-align:left;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
 }
 
 .size-option:hover {
@@ -420,7 +432,7 @@ loadConfig()
   align-items: center;
   justify-content: center;
   background: var(--surface-100);
-  transition: all 0.3s ease;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
 }
 
 .size-option.active .size-preview {
@@ -450,7 +462,7 @@ loadConfig()
 /* Responsive */
 @media (max-width: 1200px) {
   .widgets-container {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   
   .widget-item.size-large {

@@ -7,6 +7,27 @@ import { VitePWA } from 'vite-plugin-pwa';
 import Components from 'unplugin-vue-components/vite'
 import { PrimeVueResolver } from 'unplugin-vue-components/resolvers'
 
+function presentationDevAssets() {
+  return {
+    name: 'presentation-dev-assets',
+    apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use((request, _response, next) => {
+        if (request.url?.startsWith('/presentation/assets/')) {
+          request.url = request.url.replace('/presentation/assets/', '/presentation/public/assets/')
+        } else if (request.url?.startsWith('/presentation/picto-heds-wave.svg')) {
+          request.url = request.url.replace(
+            '/presentation/picto-heds-wave.svg',
+            '/presentation/public/picto-heds-wave.svg',
+          )
+        }
+
+        next()
+      })
+    },
+  }
+}
+
 // https://vitejs.dev/config/
 export default defineConfig({
   server: {
@@ -33,6 +54,7 @@ export default defineConfig({
     },
   },
   plugins: [
+    presentationDevAssets(),
     vue({
       template: {
         compilerOptions: {

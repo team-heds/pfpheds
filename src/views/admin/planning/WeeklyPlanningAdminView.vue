@@ -197,7 +197,7 @@
 
             :rows="sortedTimeSlots.length || 500"
             :paginator="false"
-            :scrollable="viewMode !== 'week'"
+            :scrollable="true"
             :scrollHeight="viewMode !== 'week' ? '75vh' : undefined"
             responsiveLayout="scroll"
             class="p-datatable-sm weekly-planning-table"
@@ -2608,11 +2608,18 @@ const exportSemesterToExcel = async (workbook, ExcelJS) => {
 
 @media (max-width: 768px) {
   .weekly-planning-admin {
-    padding: 1rem;
+    padding: .75rem;
   }
   
   .weekly-planning-table {
     font-size: 0.8rem;
   }
+
+  :deep(.p-card .p-card-body) { padding:1rem; }
+  :deep(.p-toolbar) { align-items:stretch; gap:.75rem; }
+  :deep(.p-toolbar-group-start),
+  :deep(.p-toolbar-group-end) { width:100%; flex-wrap:wrap; }
+  :deep(.p-toolbar .p-button) { flex:1 1 auto; }
+  :deep(.p-datatable-wrapper) { max-width:calc(100vw - 2.5rem); }
 }
 </style>

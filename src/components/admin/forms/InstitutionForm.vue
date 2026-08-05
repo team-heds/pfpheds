@@ -10,11 +10,11 @@
         <p>Utilisez cette interface pour ajouter une nouvelle institution au portail.</p>
       </div>
 
-      <div class="card p-4">
+      <FormShell>
         <Steps :model="steps" :activeIndex="activeIndex" class="mb-5" />
 
         <div class="p-fluid">
-          <form @submit.prevent="handleCreateInstitution">
+          <form class="app-form" @submit.prevent="handleCreateInstitution">
             <transition name="fade-slide" mode="out-in">
               <!-- Step 1: Institution Details -->
               <div v-if="activeIndex === 0" key="etape1">
@@ -211,7 +211,7 @@
               </div>
             </transition>
 
-            <div class="flex justify-content-between mt-5">
+            <FormActions class="mt-5">
               <Button
                 v-if="activeIndex > 0"
                 type="button"
@@ -233,10 +233,10 @@
                 class="p-button-primary ml-auto"
                 :disabled="loading"
               />
-            </div>
+            </FormActions>
           </form>
         </div>
-      </div>
+      </FormShell>
     </section>
   </div>
 </template>
@@ -257,6 +257,8 @@ import Button from 'primevue/button'
 import Divider from 'primevue/divider'
 import Calendar from 'primevue/calendar'
 import Navbar from '@/components/common/utils/Navbar.vue'
+import FormShell from '@/components/common/forms/FormShell.vue'
+import FormActions from '@/components/common/forms/FormActions.vue'
 
 // Setup
 const router = useRouter()

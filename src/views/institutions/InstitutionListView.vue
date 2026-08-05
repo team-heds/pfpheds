@@ -12,6 +12,8 @@
         v-model:filters="filters"
         filterDisplay="menu"
         :loading="loading"
+        responsiveLayout="scroll"
+        scrollable
         :globalFilterFields="['Name', 'Address', 'Locality', 'Canton', 'InstitutionId']"
       >
         <template #header>
@@ -47,11 +49,11 @@
           </template>
         </Column>
         <Column header="Action">
-          <template #body="{ data }">
+          <template #body="{ data }"><div class="institution-row-actions">
             <Button label="Détails" class="mb-2 mr-2" size="small" outlined @click="goToDetails(data.InstitutionId)" />
             <Button label="Modifier" class="mb-2 mr-2" size="small" outlined severity="success" @click="goToInstitutionFormModif(data.InstitutionId)" />
             <Button label="Supprimer" class="mb-2 mr-2" size="small" outlined severity="danger" @click="supprimerInstitution(data.InstitutionId)" />
-          </template>
+          </div></template>
         </Column>
       </DataTable>
     </div>
@@ -160,8 +162,15 @@ function formatDateFr(dateStr) {
 .admin-scrollable::-webkit-scrollbar {
   display: none;
 }
-.institution-list-page { margin: 2rem; }
+.institution-list-page { margin: clamp(1rem, 3vw, 2rem); }
+.institution-row-actions { display:flex; align-items:center; gap:.5rem; white-space:nowrap; }
+.institution-row-actions :deep(.p-button) { margin:0 !important; }
 :deep(.p-datatable-wrapper) { max-height: calc(100dvh - 20rem); }
 :deep(.p-datatable-thead > tr > th) { position: sticky; top: 0; z-index: 2; background: var(--surface-card); }
-@media(max-width:768px){.institution-list-page{margin:1rem}}
+@media(max-width:768px){
+  .admin-scrollable { height:auto; min-height:100dvh; overflow:visible; }
+  .institution-list-page{margin:.75rem}
+  :deep(.p-datatable-wrapper) { max-height:none; }
+  :deep(.p-paginator) { justify-content:flex-start; overflow-x:auto; flex-wrap:nowrap; }
+}
 </style>

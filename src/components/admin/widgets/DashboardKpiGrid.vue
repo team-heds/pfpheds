@@ -10,7 +10,7 @@
         </div>
       </div>
       
-      <div class="flex gap-2">
+      <div class="kpi-grid-header__actions">
         <!-- Mode comparaison -->
         <Button
           :icon="compareMode ? 'pi pi-eye' : 'pi pi-chart-line'"
@@ -213,12 +213,13 @@
         <p class="text-600">Choisissez la taille du KPI:</p>
         
         <div class="size-options">
-          <div
+          <button type="button"
             v-for="size in kpiSizeOptions"
             :key="size.value"
             class="size-option"
             :class="{ 'active': selectedKpi?.size === size.value }"
             @click="changeKpiSize(size.value)"
+            :aria-pressed="selectedKpi?.size === size.value"
           >
             <div class="size-preview" :class="`preview-${size.value}`">
               <i :class="selectedKpi?.icon" class="preview-icon"></i>
@@ -228,7 +229,7 @@
               <div class="text-sm text-600">{{ size.description }}</div>
             </div>
             <i v-if="selectedKpi?.size === size.value" class="pi pi-check text-primary"></i>
-          </div>
+          </button>
         </div>
       </div>
       
@@ -241,7 +242,7 @@
 
 <script setup>
 // CACHE BUSTED: 2024-11-26-10:30
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import KpiCard from './KpiCard.vue'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
@@ -596,22 +597,23 @@ onMounted(() => {
   flex-wrap: wrap;
   gap: 1rem;
 }
+.kpi-grid-header>div:last-child{display:flex;gap:.5rem;flex-wrap:wrap}
+.kpi-grid-header__actions{justify-content:flex-end}
 
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.5rem;
-  align-items: stretch; /* Étirer tous les items sur la même hauteur */
-  grid-auto-rows: 1fr; /* Toutes les lignes ont la même hauteur */
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: clamp(1rem, 1.5vw, 1.5rem);
+  align-items: stretch;
 }
 
 .kpi-grid-item {
   position: relative;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  min-height: 150px;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  min-height: 11rem;
   display: flex;
   flex-direction: column;
-  animation: fadeInUp 0.5s ease-out backwards;
+  animation: none;
 }
 
 @keyframes fadeInUp {
@@ -645,23 +647,23 @@ onMounted(() => {
 
 /* Tailles des KPI */
 .kpi-grid-item.size-compact {
-  grid-column: span 1;
-}
-
-.kpi-grid-item.size-small {
-  grid-column: span 1;
-}
-
-.kpi-grid-item.size-medium {
-  grid-column: span 2;
-}
-
-.kpi-grid-item.size-large {
   grid-column: span 3;
 }
 
+.kpi-grid-item.size-small {
+  grid-column: span 3;
+}
+
+.kpi-grid-item.size-medium {
+  grid-column: span 6;
+}
+
+.kpi-grid-item.size-large {
+  grid-column: span 8;
+}
+
 .kpi-grid-item.size-xlarge {
-  grid-column: span 4;
+  grid-column: span 12;
 }
 
 .kpi-grid-item.draggable {
@@ -669,7 +671,7 @@ onMounted(() => {
 }
 
 .kpi-grid-item.draggable:hover {
-  transform: scale(1.02);
+  transform: translateY(-2px);
   z-index: 10;
 }
 
@@ -701,7 +703,7 @@ onMounted(() => {
 
 .size-tag {
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .size-tag:hover {
@@ -756,7 +758,12 @@ onMounted(() => {
   border: 2px solid var(--surface-border);
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  width:100%;
+  background:transparent;
+  color:inherit;
+  font:inherit;
+  text-align:start;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .size-option:hover {
@@ -778,7 +785,7 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   background: var(--surface-100);
-  transition: all 0.3s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .size-option.active .size-preview {
@@ -821,14 +828,30 @@ onMounted(() => {
 }
 
 /* Responsive */
-@media (max-width: 1200px) {
-  .kpi-grid {
-    grid-template-columns: repeat(2, 1fr);
+@media (max-width: 1400px) {
+  .kpi-grid-item.size-compact,
+  .kpi-grid-item.size-small {
+    grid-column: span 4;
   }
-  
+
+  .kpi-grid-item.size-medium {
+    grid-column: span 6;
+  }
+
   .kpi-grid-item.size-large,
   .kpi-grid-item.size-xlarge {
-    grid-column: span 2;
+    grid-column: span 12;
+  }
+}
+
+@media (max-width: 1100px) {
+  .kpi-grid-item.size-compact,
+  .kpi-grid-item.size-small {
+    grid-column: span 6;
+  }
+
+  .kpi-grid-item.size-medium {
+    grid-column: span 12;
   }
 }
 
@@ -836,17 +859,16 @@ onMounted(() => {
   .kpi-grid-header {
     flex-direction: column;
   }
-  
-  .kpi-grid {
-    grid-template-columns: 1fr;
-  }
+  .kpi-grid-header>div,.kpi-grid-header>div:last-child{width:100%}.kpi-grid-header>div:last-child :deep(.p-button){flex:1 1 calc(50% - .5rem)}
   
   .kpi-grid-item.size-compact,
   .kpi-grid-item.size-small,
   .kpi-grid-item.size-medium,
   .kpi-grid-item.size-large,
   .kpi-grid-item.size-xlarge {
-    grid-column: span 1;
+    grid-column: span 12;
   }
+
+  .kpi-grid-header__actions { justify-content: flex-start; }
 }
 </style>

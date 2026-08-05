@@ -59,7 +59,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import axios from 'axios'
+import apiClient from '@/service/apiClient'
 import { useAuthStore } from '@/stores/authStore'
 
 const API_URL = import.meta.env.VITE_API_URL || '/api'
@@ -113,11 +113,10 @@ async function upload() {
 
     const fd = new FormData()
     fd.append('institution', institution.value || 'general')
-    fd.append('userId', effectiveUserId.value || 'public')
     if (folder.value) fd.append('folder', folder.value)
     for (const f of files.value) fd.append('files', f)
 
-    const { data } = await axios.post(`${API_URL}/ftp/upload`, fd, {
+    const { data } = await apiClient.post('/ftp/upload', fd, {
       headers: { 'Content-Type': 'multipart/form-data' },
       maxContentLength: Infinity,
       maxBodyLength: Infinity,

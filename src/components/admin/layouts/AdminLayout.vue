@@ -2,7 +2,7 @@
   <div>
     <a href="#admin-content" class="skip-link">Aller au contenu</a>
     <Navbar />
-    <div class="admin-layout" :class="{ 'has-feed': hasFeed, 'no-sidebar': noSidebar }">
+    <div class="admin-layout" :class="{ 'has-feed': hasFeed, 'no-sidebar': noSidebar, 'is-wide': wide }">
       <template v-if="hasFeed">
         <div class="feed-left">
           <slot name="left" />
@@ -45,7 +45,10 @@ import { computed, useSlots } from 'vue'
 import Navbar from '@/components/common/utils/Navbar.vue';
 import AdminSidebar from '../lists/AdminSidebar.vue';
 
-const { noSidebar } = defineProps({ noSidebar: { type: Boolean, default: false } })
+const { noSidebar, wide } = defineProps({
+  noSidebar: { type: Boolean, default: false },
+  wide: { type: Boolean, default: false },
+})
 const slots = useSlots()
 const hasFeed = computed(() => !!slots.left || !!slots.right)
 </script>
@@ -74,7 +77,7 @@ const hasFeed = computed(() => !!slots.left || !!slots.right)
 
 .admin-layout {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: minmax(16rem, 18.75rem) minmax(0, 1fr);
   gap: var(--space-6, 1.5rem);
   padding: var(--space-6, 1.5rem);
   height: calc(100dvh - var(--navbar-h, 64px) - (2 * var(--space-6, 1.5rem)));
@@ -89,6 +92,12 @@ const hasFeed = computed(() => !!slots.left || !!slots.right)
 
 .admin-layout.no-sidebar {
   grid-template-columns: minmax(0, 1fr);
+}
+
+.admin-layout.is-wide:not(.has-feed):not(.no-sidebar) {
+  grid-template-columns: minmax(14rem, 16rem) minmax(0, 1fr);
+  gap: var(--space-4, 1rem);
+  padding-inline: var(--space-4, 1rem);
 }
 
 @media (max-width: 1279px) {
@@ -119,6 +128,30 @@ const hasFeed = computed(() => !!slots.left || !!slots.right)
     padding: var(--space-4, 1rem);
     height: calc(100dvh - var(--navbar-h, 64px) - (2 * var(--space-4, 1rem)));
   }
+}
+
+@media (max-width: 56rem) {
+  .admin-layout:not(.has-feed):not(.no-sidebar) {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+    min-height: calc(100dvh - var(--navbar-h, 64px));
+    overflow: visible;
+  }
+
+  .admin-layout:not(.has-feed):not(.no-sidebar) > aside {
+    min-width: 0;
+  }
+
+  .admin-layout:not(.has-feed):not(.no-sidebar) > aside :deep(.admin-sidebar) {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    height: auto;
+    max-height: min(42dvh, 24rem);
+  }
+
+  .admin-content { height: auto; overflow: visible; }
+  .admin-header { position: static; }
 }
 
 .admin-content::-webkit-scrollbar {

@@ -44,7 +44,7 @@ jobs:
         run: npm ci --prefix presentation
 
       - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
+        run: npm exec --prefix presentation -- playwright install --with-deps chromium
 
       - name: Test presentation
         run: npm run presentation:test

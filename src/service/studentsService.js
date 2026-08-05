@@ -5,6 +5,13 @@
  */
 
 import { supabase } from '@/supabase'
+import { filterStudentProfiles, isStudentProfile } from '@/utils/userAudience'
+
+function invalidateStudentsCache() {
+  if (!getAllStudents.__cache) return
+  getAllStudents.__cache.at = 0
+  getAllStudents.__cache.data = null
+}
 
 /**
  * Récupère les étudiants UNIQUEMENT depuis user_profiles (sans fusion avec studentPhysio)
@@ -21,17 +28,7 @@ export async function getStudentsFromUserProfiles() {
     if (profilesError) throw profilesError
     
     // Filtrer les étudiants
-    const studentUsers = (userProfilesData || []).filter(user => {
-      const role = (user.role || '').toLowerCase()
-      const email = (user.email || '').toLowerCase()
-      
-      return (
-        role.includes('student') ||
-        role.includes('etudiant') ||
-        role.includes('étudiant') ||
-        email.includes('@students.hevs.ch')
-      )
-    })
+    const studentUsers = filterStudentProfiles(userProfilesData)
     
     if (import.meta.env && import.meta.env.DEV) console.log(`✅ ${studentUsers.length} étudiants chargés depuis user_profiles (source unique)`)
     
@@ -111,8 +108,8 @@ export async function getAllStudents() {
 
       // Select "optimisé" (peut casser si colonnes absentes)
       // NOTE: seules ces colonnes existent dans user_profiles. sae et cas_particulier sont dans StudentsPhysio uniquement.
-      const profilesSelectPreferred = 'user_id,firebase_id,email,role,family_name,forname,classe,pfp_cohort,display_name,avatar_url,house_id,created_at'
-      const profilesSelectFallback = 'user_id,email,role,family_name,forname,classe,pfp_cohort'
+      const profilesSelectPreferred = 'user_id,firebase_id,email,role,permissions,is_active,family_name,forname,classe,pfp_cohort,display_name,avatar_url,house_id,created_at'
+      const profilesSelectFallback = 'user_id,email,role,permissions,is_active,family_name,forname,classe,pfp_cohort'
 
       let resProfiles = await trySelectProfiles(profilesSelectPreferred)
       if (resProfiles.error) {
@@ -167,20 +164,7 @@ export async function getAllStudents() {
       const physioStudents = studentPhysioData || []
     
     // Filtrer les étudiants depuis user_profiles
-    const studentUsers = allUsers.filter(user => {
-      const role = (user.role || '').toLowerCase()
-      const email = (user.email || '').toLowerCase()
-      
-      // Considérer comme étudiant si:
-      // 1. Le rôle contient "student" ou "etudiant"
-      // 2. OU l'email est @students.hevs.ch
-      return (
-        role.includes('student') ||
-        role.includes('etudiant') ||
-        role.includes('étudiant') ||
-        email.includes('@students.hevs.ch')
-      )
-    })
+    const studentUsers = filterStudentProfiles(allUsers)
     
       debug(`🔍 ${allUsers.length} users totaux, ${studentUsers.length} étudiants user_profiles`)
       debug(`🏥 ${physioStudents.length} étudiants dans studentPhysio`)
@@ -233,7 +217,7 @@ export async function getAllStudents() {
       const classe = classeFromPhysioById 
         || classeFromPhysioByFirebaseId
         || classeFromUserProfiles
-        || 'BA25'  // Valeur par défaut si rien n'est trouvé
+        || 'Non défini'
       
       // Déterminer la source de la classe pour debug
       let classeSource = 'Non défini'
@@ -258,6 +242,9 @@ export async function getAllStudents() {
         house_id: user.house_id,
         created_at: user.created_at,
         pfp_cohort: user.pfp_cohort || null, // IMPORTANT: Cohorte PFP
+        role: user.role,
+        permissions: user.permissions,
+        is_active: user.is_active,
         // Flag pour identifier la source
         source: 'user_profiles',
         // Source de la classe pour debug
@@ -311,6 +298,11 @@ export async function getAllStudents() {
     
     // Fusionner les deux sources (éviter les doublons par user_id/firebase_id)
     const allStudents = [...studentsFromProfiles]
+    const profileById = new Map()
+    allUsers.forEach(profile => {
+      if (profile.user_id) profileById.set(profile.user_id, profile)
+      if (profile.firebase_id) profileById.set(profile.firebase_id, profile)
+    })
     
     // Créer un Set des IDs existants dans user_profiles (user_id + firebase_id)
     const existingIds = new Set()
@@ -329,7 +321,10 @@ export async function getAllStudents() {
       const alreadyExists = existingIds.has(student.id) || 
                            (student.firebase_id && existingIds.has(student.firebase_id))
       
-      if (!alreadyExists) {
+      const linkedProfile = profileById.get(student.id) || profileById.get(student.firebase_id)
+      const explicitlyNotStudent = linkedProfile && !isStudentProfile(linkedProfile)
+
+      if (!alreadyExists && !explicitlyNotStudent) {
         allStudents.push(student)
       }
     })
@@ -366,7 +361,7 @@ export async function getStudentById(userId) {
     
     if (error) throw error
     
-    if (!data) return null
+    if (!data || !isStudentProfile(data)) return null
     
     return {
       id: data.user_id,
@@ -414,6 +409,7 @@ export async function updateStudent(userId, updates) {
     
     if (error) throw error
     
+    invalidateStudentsCache()
     if (import.meta.env && import.meta.env.DEV) console.log(`✅ Étudiant ${userId} mis à jour`)
     return true
   } catch (error) {
@@ -443,6 +439,7 @@ export async function deleteStudent(userId) {
     
     if (error) throw error
     
+    invalidateStudentsCache()
     if (import.meta.env && import.meta.env.DEV) console.log(`✅ Étudiant ${userId} archivé`)
     return true
   } catch (error) {
@@ -472,6 +469,7 @@ export async function assignClass(userId, classe) {
     
     if (error) throw error
     
+    invalidateStudentsCache()
     if (import.meta.env && import.meta.env.DEV) console.log(`✅ Classe ${classe} assignée à ${userId}`)
     return true
   } catch (error) {
@@ -711,4 +709,3 @@ export default {
   countStudents,
   diagnosticTables
 }
- 

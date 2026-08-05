@@ -5,7 +5,7 @@
  */
 
 import { supabase } from '@/supabase'
-import studentsService from './studentsService'
+import studentsService from './studentDirectoryService'
 
 /**
  * Compter les lignes d'une table Supabase

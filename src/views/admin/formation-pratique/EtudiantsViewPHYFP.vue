@@ -167,6 +167,7 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/supabase'
+import { getAllStudents } from '@/service/studentDirectoryService'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
@@ -311,19 +312,15 @@ const globalKpis = computed(() => ([
 
 async function loadGlobalKpis() {
   try {
-    const [profilesRes, placesRes, assignmentsRes] = await Promise.all([
-      supabase
-        .from('user_profiles')
-        .select('user_id, is_active, permissions, family_name, forname, email, classe')
-        .filter('permissions', 'cs', '["EtudiantPhysio"]'),
+    const [profiles, placesRes, assignmentsRes] = await Promise.all([
+      getAllStudents(),
       supabase.from('places').select('PlaceId, InstitutionId, NomPlace'),
       supabase.from('student_result_vote').select('id').eq('status', 'published'),
     ])
 
-    const profiles = profilesRes.data || []
     const activeStudents = profiles.filter((p) => p.is_active !== false).length
     const incompleteFiles = profiles.filter((p) => {
-      return !p.family_name || !p.forname || !p.email || !p.classe
+      return !p.family_name || !p.forname || !p.email || !p.Classe
     }).length
 
     const places = placesRes.data || []
@@ -345,14 +342,10 @@ async function loadGlobalKpis() {
 async function loadStudents() {
   loading.value = true
   try {
-    const { data: profiles, error } = await supabase
-      .from('user_profiles')
-      .select('user_id, email, forname, family_name, display_name, avatar_url, is_active, permissions, classe')
-      .filter('permissions', 'cs', '["EtudiantPhysio"]')
-      .order('family_name', { ascending: true })
-      .order('forname', { ascending: true })
-
-    if (error) throw error
+    const profiles = (await getAllStudents()).sort((a, b) =>
+      String(a.family_name || '').localeCompare(String(b.family_name || '')) ||
+      String(a.forname || '').localeCompare(String(b.forname || ''))
+    )
 
     const userIds = (profiles || []).map(p => p.user_id)
     let physioMap = new Map()
@@ -369,7 +362,7 @@ async function loadStudents() {
       return {
         ...u,
         cohort: getCohort(u),
-        classe: sp.class || u.classe || null,
+        classe: sp.class || u.Classe || u.classe || null,
         msq: sp.msq ?? false,
         sysint: sp.sysint ?? false,
         neuroger: sp.neuroger ?? false,

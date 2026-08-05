@@ -297,6 +297,7 @@ import Tag from 'primevue/tag'
 import Divider from 'primevue/divider'
 import { useKpiManager } from '@/composables/useKpiManager'
 import { supabase } from '@/supabase'
+import { getAllStudents } from '@/service/studentDirectoryService'
 
 const router = useRouter()
 
@@ -481,11 +482,8 @@ const loadOpenSessions = async () => {
 
 const loadExtraStats = async () => {
   try {
-    const [profilesRes, placesRes, votesRes] = await Promise.all([
-      supabase
-        .from('user_profiles')
-        .select('user_id,is_active,permissions,family_name,forname,email,classe,updated_at,created_at')
-        .filter('permissions', 'cs', '["EtudiantPhysio"]'),
+    const [studentDirectory, placesRes, votesRes] = await Promise.all([
+      getAllStudents(),
       supabase
         .from('places')
         .select('PlaceId,InstitutionId,NomPlace,fileURL,fileurl,pdfUrl,created_at,updated_at'),
@@ -494,13 +492,13 @@ const loadExtraStats = async () => {
         .select('id,status,pfp_type,pfp_validee,pfp_echec,pfp_arret,assigned_place_id,created_at,updated_at')
     ])
 
-    const profiles = (profilesRes.data || []).filter((p) => isInSelectedPeriod(p.updated_at || p.created_at))
+    const profiles = studentDirectory.filter((p) => isInSelectedPeriod(p.updated_at || p.created_at))
     const places = (placesRes.data || []).filter((p) => isInSelectedPeriod(p.updated_at || p.created_at))
     const votesInPeriod = (votesRes.data || []).filter((v) => isInSelectedPeriod(v.updated_at || v.created_at))
     const allVotes = votesRes.data || []
 
     const activeStudents = profiles.filter((p) => p.is_active !== false).length
-    const incompleteProfiles = profiles.filter((p) => !p.family_name || !p.forname || !p.email || !p.classe).length
+    const incompleteProfiles = profiles.filter((p) => !p.family_name || !p.forname || !p.email || !p.Classe).length
     const openPlaces = places.filter((p) => p.InstitutionId && p.NomPlace).length
     const withPdf = places.filter((p) => p.fileURL || p.fileurl || p.pdfUrl).length
     const publishedAssignments = votesInPeriod.filter((v) => v.status === 'published').length
@@ -588,7 +586,7 @@ const formatTimeAgo = (isoDate) => {
 const loadRecentActivities = async () => {
   activitiesLoading.value = true
   try {
-    const [sessionsRes, placesRes, profilesRes] = await Promise.all([
+    const [sessionsRes, placesRes, studentDirectory] = await Promise.all([
       supabase
         .from('votation_sessions')
         .select('id,pfp_type,target_class,status,is_priority,opened_at,closed_at')
@@ -599,12 +597,7 @@ const loadRecentActivities = async () => {
         .select('PlaceId,NomPlace,created_at')
         .order('created_at', { ascending: false })
         .limit(5),
-      supabase
-        .from('user_profiles')
-        .select('user_id,forname,family_name,created_at')
-        .filter('permissions', 'cs', '["EtudiantPhysio"]')
-        .order('created_at', { ascending: false })
-        .limit(5)
+      getAllStudents()
     ])
 
     const items = []
@@ -635,7 +628,10 @@ const loadRecentActivities = async () => {
       })
     }
 
-    for (const u of (profilesRes.data || [])) {
+    const recentStudents = [...studentDirectory]
+      .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
+      .slice(0, 5)
+    for (const u of recentStudents) {
       const name = [u.forname, u.family_name].filter(Boolean).join(' ') || 'Étudiant'
       items.push({
         icon: 'pi pi-user-plus',

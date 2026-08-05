@@ -1,7 +1,7 @@
 const { Router } = require('express')
-const supabase = require('../supabaseClient')
 const { supabaseAdmin } = require('../supabaseClient')
 const { v4: uuidv4 } = require('uuid')
+const { requireAdmin: requireCentralAdmin, requireSelfParam } = require('../middleware/auth')
 
 const router = Router()
 
@@ -70,20 +70,9 @@ const getCompletedPlaceIdsForUser = async (userId) => {
   return completed
 }
 
-// Middleware pour extraire le user depuis le token JWT
-const setUser = async (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1]
-  if (!token) {
-    req.user = null
-    return next()
-  }
-  try {
-    const { data, error } = await supabase.auth.getUser(token)
-    if (error) throw error
-    req.user = data.user
-  } catch (e) {
-    req.user = null
-  }
+// Authentication is global; expose the validated user to legacy handlers.
+const setUser = (req, _res, next) => {
+  req.user = req.auth.user
   next()
 }
 
@@ -92,25 +81,7 @@ router.use(setUser)
 
 // Middleware pour vérifier si l'utilisateur est admin
 const requireAdmin = async (req, res, next) => {
-  if (!req.user) {
-    return res.status(401).json({ ok: false, error: 'Authentication required' })
-  }
-
-  try {
-    const { data: profile, error } = await supabase
-      .from('user_profiles')
-      .select('role')
-      .eq('user_id', req.user.id)
-      .single()
-
-    if (error || !profile || !['admin', 'superadmin'].includes(profile.role)) {
-      return res.status(403).json({ ok: false, error: 'Admin access required' })
-    }
-
-    next()
-  } catch (e) {
-    return res.status(500).json({ ok: false, error: e.message })
-  }
+  return requireCentralAdmin(req, res, next)
 }
 
 /**
@@ -140,7 +111,9 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
     // pour ne pas les écraser et respecter la capacité déjà utilisée
     const { data: existingAssignments, error: existingError } = await supabaseAdmin
       .from('student_result_vote')
-      .select('user_id, assigned_place_id, assigned_place_name, assigned_institution_name, assigned_rank, status, notes, priority_score, original_choices, algorithm_run_id')
+      .select(
+        'user_id, assigned_place_id, assigned_place_name, assigned_institution_name, assigned_rank, status, notes, priority_score, original_choices, algorithm_run_id'
+      )
       .eq('pfp_type', pfpType)
       .in('year', getAcademicYearKeys(year))
 
@@ -174,17 +147,13 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
           })
         }
       })
-      console.log(
-        `🛡️ ${preAssigned.size} étudiants déjà assignés conservés`
-      )
+      console.log(`🛡️ ${preAssigned.size} étudiants déjà assignés conservés`)
       console.log(`🛡️ ${preAssignedByPlace.size} places ont déjà des assignations`)
     }
 
     // Filtrer les étudiants : ne recalculer que ceux non déjà assignés
     const eligibleStudents = students.filter((s) => !preAssigned.has(s.userId))
-    console.log(
-      `   Étudiants à recalculer: ${eligibleStudents.length}/${students.length}`
-    )
+    console.log(`   Étudiants à recalculer: ${eligibleStudents.length}/${students.length}`)
 
     // Créer un mapping des places disponibles avec leur capacité et critères
     const placesMap = new Map()
@@ -284,8 +253,7 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
           const currentIds = new Set(proposedPlaces.map((place) => place.PlaceId))
           const sysintPlaces = allAvailablePlaces
             .filter(
-              (place) =>
-                !currentIds.has(place.PlaceId) && place.criteriaCovered.includes('SYSINT')
+              (place) => !currentIds.has(place.PlaceId) && place.criteriaCovered.includes('SYSINT')
             )
             .map((place) => ({
               ...place,
@@ -320,13 +288,16 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
       if (aSection !== bSection) return aSection - bSection
 
       if (a._prioritizeGerman || b._prioritizeGerman) {
-        const germanDiff = Number(Boolean(b.criteriaCovered.includes('DE'))) - Number(Boolean(a.criteriaCovered.includes('DE')))
+        const germanDiff =
+          Number(Boolean(b.criteriaCovered.includes('DE'))) -
+          Number(Boolean(a.criteriaCovered.includes('DE')))
         if (germanDiff !== 0) return germanDiff
       }
 
       if (a._coveredCount !== b._coveredCount) return b._coveredCount - a._coveredCount
       if (a.voteCount !== b.voteCount) return a.voteCount - b.voteCount
-      if (a.remainingCapacity !== b.remainingCapacity) return b.remainingCapacity - a.remainingCapacity
+      if (a.remainingCapacity !== b.remainingCapacity)
+        return b.remainingCapacity - a.remainingCapacity
       return (a.NomPlace || '').localeCompare(b.NomPlace || '')
     }
 
@@ -371,7 +342,9 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
       return `${a.nom || ''} ${a.prenom || ''}`.localeCompare(`${b.nom || ''} ${b.prenom || ''}`)
     })
 
-    console.log('🔄 Attribution par étudiant (logique votation générique → meilleure place disponible)...')
+    console.log(
+      '🔄 Attribution par étudiant (logique votation générique → meilleure place disponible)...'
+    )
 
     let randomAssignmentCount = 0
 
@@ -390,7 +363,9 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
       assignedStudents.add(student.userId)
       const livePlace = placesMap.get(best.PlaceId)
       if (!livePlace || livePlace.remainingCapacity <= 0) {
-        console.warn(`⚠️ Capacité expirée pour ${best.NomPlace} lors de l'attribution de ${student.nom} ${student.prenom}`)
+        console.warn(
+          `⚠️ Capacité expirée pour ${best.NomPlace} lors de l'attribution de ${student.nom} ${student.prenom}`
+        )
         errors.push({ userId: student.userId, error: 'Place capacity exhausted' })
         continue
       }
@@ -608,7 +583,7 @@ router.post('/confirm-algorithm', requireAdmin, async (req, res) => {
  * GET /api/resultat-votation/pfp3-proposals/:year
  * Récupère les propositions PFP3 sauvegardées pour un étudiant (via session)
  */
-router.get('/pfp3-proposals/:year', setUser, async (req, res) => {
+router.get('/pfp3-proposals/:year', requireAdmin, async (req, res) => {
   try {
     const { year } = req.params
     const targetClass = normalizeClass(req.query?.targetClass)
@@ -684,7 +659,7 @@ router.get('/pfp3-proposals/:year', setUser, async (req, res) => {
  * GET /api/resultat-votation/assignment-counts/:pfpType/:year
  * Renvoie le nombre de places déjà assignées par place pour un PFP/année
  */
-router.get('/assignment-counts/:pfpType/:year', setUser, async (req, res) => {
+router.get('/assignment-counts/:pfpType/:year', requireAdmin, async (req, res) => {
   try {
     const { pfpType, year } = req.params
 
@@ -1246,7 +1221,7 @@ router.post('/save-pfp4-proposals', requireAdmin, async (req, res) => {
  * GET /api/resultat-votation/pfp4-proposals/:year
  * Récupère les propositions PFP4 sauvegardées pour un étudiant (via session)
  */
-router.get('/pfp4-proposals/:year', setUser, async (req, res) => {
+router.get('/pfp4-proposals/:year', requireAdmin, async (req, res) => {
   try {
     const { year } = req.params
     const targetClass = normalizeClass(req.query?.targetClass)
@@ -1351,7 +1326,7 @@ router.get('/results/:pfpType/:year', requireAdmin, async (req, res) => {
     const { pfpType, year } = req.params
     const { algorithmRunId } = req.query
 
-    const { data, error } = await supabase.rpc('get_algorithm_results', {
+    const { data, error } = await supabaseAdmin.rpc('get_algorithm_results', {
       p_pfp_type: pfpType,
       p_year: year,
       p_algorithm_run_id: algorithmRunId || null
@@ -1370,30 +1345,11 @@ router.get('/results/:pfpType/:year', requireAdmin, async (req, res) => {
  * GET /api/resultat-votation/student/:userId/:pfpType/:year
  * Récupère le résultat d'un étudiant spécifique
  */
-router.get('/student/:userId/:pfpType/:year', setUser, async (req, res) => {
+router.get('/student/:userId/:pfpType/:year', requireSelfParam('userId'), async (req, res) => {
   try {
     const { userId, pfpType, year } = req.params
 
-    // Vérifier que l'utilisateur peut accéder à ce résultat
-    if (!req.user) {
-      return res.status(401).json({ ok: false, error: 'Authentication required' })
-    }
-
-    // L'utilisateur peut voir son propre résultat ou un admin peut voir tous les résultats
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('role')
-      .eq('user_id', req.user.id)
-      .single()
-
-    const isAdmin = profile && ['admin', 'superadmin'].includes(profile.role)
-    const isOwnResult = req.user.id === userId
-
-    if (!isAdmin && !isOwnResult) {
-      return res.status(403).json({ ok: false, error: 'Access denied' })
-    }
-
-    const { data, error } = await supabase.rpc('get_student_result', {
+    const { data, error } = await supabaseAdmin.rpc('get_student_result', {
       p_user_id: userId,
       p_pfp_type: pfpType,
       p_year: year
@@ -1416,7 +1372,7 @@ router.get('/statistics/:pfpType/:year', requireAdmin, async (req, res) => {
   try {
     const { pfpType, year } = req.params
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('result_statistics')
       .select('*')
       .eq('pfp_type', pfpType)
@@ -1450,7 +1406,7 @@ router.put('/status/:resultId', requireAdmin, async (req, res) => {
     const updateData = { status, updated_at: new Date().toISOString() }
     if (notes) updateData.notes = notes
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('student_result_vote')
       .update(updateData)
       .eq('id', resultId)
@@ -1474,7 +1430,7 @@ router.delete('/:resultId', requireAdmin, async (req, res) => {
   try {
     const { resultId } = req.params
 
-    const { error } = await supabase.from('student_result_vote').delete().eq('id', resultId)
+    const { error } = await supabaseAdmin.from('student_result_vote').delete().eq('id', resultId)
 
     if (error) throw error
 
@@ -1493,7 +1449,7 @@ router.delete('/algorithm-run/:algorithmRunId', requireAdmin, async (req, res) =
   try {
     const { algorithmRunId } = req.params
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('student_result_vote')
       .delete()
       .eq('algorithm_run_id', algorithmRunId)

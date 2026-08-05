@@ -209,7 +209,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import studentsService from '@/service/studentsService'
+import studentsService from '@/service/studentDirectoryService'
 import { supabase } from '@/supabase'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import DataTable from 'primevue/datatable'

@@ -12,56 +12,51 @@
       <Toast />
       
       <!-- Form -->
-      <form @submit.prevent="createStudent" class="grid">
+      <form id="student-create-form" class="app-form" @submit.prevent="createStudent">
+        <FormSection title="Identité et inscription" description="Renseignez les informations principales de l’étudiant." icon="pi pi-user">
+        <div class="grid">
         <!-- Prénom -->
-        <div class="field col-12 md:col-6">
-          <label for="forname" class="font-semibold">Prénom</label>
+        <FormField for-id="forname" label="Prénom" required :error="errors.forname" v-slot="field">
           <InputText 
-            id="forname" 
+            v-bind="field.controlAttrs"
             v-model="formData.forname" 
             required 
             :class="{ 'p-invalid': errors.forname }"
           />
-          <small v-if="errors.forname" class="p-error">{{ errors.forname }}</small>
-        </div>
+        </FormField>
 
         <!-- Nom -->
-        <div class="field col-12 md:col-6">
-          <label for="family_name" class="font-semibold">Nom</label>
+        <FormField for-id="family_name" label="Nom" required :error="errors.family_name" v-slot="field">
           <InputText 
-            id="family_name" 
+            v-bind="field.controlAttrs"
             v-model="formData.family_name" 
             required
             :class="{ 'p-invalid': errors.family_name }"
           />
-          <small v-if="errors.family_name" class="p-error">{{ errors.family_name }}</small>
-        </div>
+        </FormField>
 
         <!-- Email -->
-        <div class="field col-12 md:col-6">
-          <label for="email" class="font-semibold">Email</label>
+        <FormField for-id="email" label="Email" required hint="Utilisez l’adresse institutionnelle de l’étudiant." :error="errors.email" v-slot="field">
           <InputText 
-            id="email" 
+            v-bind="field.controlAttrs"
             v-model="formData.email" 
             type="email"
             required
             :class="{ 'p-invalid': errors.email }"
+            autocomplete="email"
           />
-          <small v-if="errors.email" class="p-error">{{ errors.email }}</small>
-        </div>
+        </FormField>
 
         <!-- Classe -->
-        <div class="field col-12 md:col-6">
-          <label for="class" class="font-semibold">Classe</label>
+        <FormField for-id="class" label="Classe" required :error="errors.class" v-slot="field">
           <Dropdown
-            id="class"
+            v-bind="field.controlAttrs"
             v-model="formData.class"
             :options="classOptions"
             placeholder="Sélectionner une classe"
             :class="{ 'p-invalid': errors.class }"
           />
-          <small v-if="errors.class" class="p-error">{{ errors.class }}</small>
-        </div>
+        </FormField>
 
         <!-- SAE (Cas Particulier) -->
         <div class="field col-12 md:col-6">
@@ -76,14 +71,16 @@
         </div>
 
         <!-- Cas Particulier (texte) -->
-        <div class="field col-12 md:col-6">
-          <label for="cas_particulier" class="font-semibold">Détails cas particulier</label>
+        <FormField for-id="cas_particulier" label="Détails du cas particulier" optional-label="Facultatif" v-slot="field">
           <InputText 
-            id="cas_particulier" 
+            v-bind="field.controlAttrs"
             v-model="formData.cas_particulier"
-            placeholder="Optionnel"
+            placeholder="Ajoutez uniquement les informations utiles"
           />
+        </FormField>
         </div>
+        </FormSection>
+        <FormStatus :status="submitStatus" :message="submitMessage" />
       </form>
     </div>
 
@@ -92,7 +89,8 @@
       <Button 
         label="Créer" 
         icon="pi pi-check" 
-        @click="createStudent" 
+        type="submit"
+        form="student-create-form"
         :loading="saving"
       />
     </template>
@@ -109,8 +107,11 @@ import Checkbox from 'primevue/checkbox'
 import Button from 'primevue/button'
 import Toast from 'primevue/toast'
 import { supabase } from '@/supabase'
+import FormSection from '@/components/common/forms/FormSection.vue'
+import FormField from '@/components/common/forms/FormField.vue'
+import FormStatus from '@/components/common/forms/FormStatus.vue'
 
-const props = defineProps({
+defineProps({
   visible: {
     type: Boolean,
     default: false
@@ -122,6 +123,8 @@ const emit = defineEmits(['update:visible', 'student-created'])
 const toast = useToast()
 const saving = ref(false)
 const errors = ref({})
+const submitStatus = ref('idle')
+const submitMessage = ref('')
 
 const classOptions = ['BA22', 'BA23', 'BA24', 'BA25']
 
@@ -166,10 +169,16 @@ const validateForm = () => {
 
 const createStudent = async () => {
   if (!validateForm()) {
+    submitStatus.value = 'error'
+    submitMessage.value = 'Corrigez les champs signalés avant de continuer.'
+    await nextTick()
+    document.querySelector('#student-create-form [aria-invalid="true"]')?.focus()
     return
   }
 
   saving.value = true
+  submitStatus.value = 'loading'
+  submitMessage.value = 'Vérification du compte étudiant…'
 
   try {
     // NOTE: La création d'un user_profile nécessite normalement une inscription complète
@@ -188,6 +197,8 @@ const createStudent = async () => {
     }
 
     if (existingProfile) {
+      submitStatus.value = 'error'
+      submitMessage.value = 'Un compte utilise déjà cette adresse. Ouvrez son profil pour le modifier.'
       toast.add({
         severity: 'warn',
         summary: 'Utilisateur existant',
@@ -213,6 +224,9 @@ const createStudent = async () => {
       life: 8000
     })
 
+    submitStatus.value = 'success'
+    submitMessage.value = 'Les informations ont été vérifiées.'
+
     closeDialog()
 
   } catch (error) {
@@ -223,6 +237,8 @@ const createStudent = async () => {
       detail: error.message || 'Impossible de créer l\'étudiant',
       life: 5000
     })
+    submitStatus.value = 'error'
+    submitMessage.value = 'La vérification a échoué. Vérifiez votre connexion puis réessayez.'
   } finally {
     saving.value = false
   }
@@ -238,6 +254,8 @@ const resetForm = () => {
     cas_particulier: ''
   }
   errors.value = {}
+  submitStatus.value = 'idle'
+  submitMessage.value = ''
 }
 
 const closeDialog = () => {

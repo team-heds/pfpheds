@@ -1,20 +1,31 @@
-name: Deploy to Production
+name: Production quality
 
 on:
+  pull_request:
+    branches:
+      - prod
   push:
     branches:
       - prod
 
+permissions:
+  contents: read
+
+concurrency:
+  group: production-quality-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  build-and-deploy:
+  quality:
+    name: Security and quality gates
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 22
 
@@ -62,26 +73,43 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install backend dependencies
+        run: npm --prefix backend ci
+
+      - name: Run P0 security tests
+        run: npm run test:security
+
+      - name: Audit production dependencies
+        run: |
+          npm audit --omit=dev --audit-level=critical
+          npm --prefix backend audit --omit=dev --audit-level=high
+          npm --prefix documentation audit --omit=dev --audit-level=critical
+          npm --prefix presentation audit --omit=dev --audit-level=critical
+
       - name: Install documentation dependencies
         run: npm ci --prefix documentation
 
       - name: Install presentation dependencies
         run: npm ci --prefix presentation
 
-      - name: Build project and documentation
-        run: npm run build:all
+      - name: Install Playwright Chromium
+        run: npm exec --prefix presentation -- playwright install --with-deps chromium
 
-      # Déploiement FTP (Infomaniak/FileZilla ou autre)
-      - name: Deploy via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftp
-          port: 21
-          local-dir: ./dist/
-          server-dir: /
-          passive: true
-          concurrency: 1
-          verbose: true
+      - name: Validate frontend environment
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_KEY: ${{ secrets.VITE_SUPABASE_KEY }}
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+        run: |
+          test -n "$VITE_SUPABASE_URL"
+          test -n "$VITE_SUPABASE_KEY"
+          test -n "$VITE_API_BASE_URL"
+
+      - name: Build project and documentation
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_KEY: ${{ secrets.VITE_SUPABASE_KEY }}
+          VITE_SUPABASE_REST_URL: ${{ secrets.VITE_SUPABASE_REST_URL }}
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_VAPID_PUBLIC: ${{ secrets.VITE_VAPID_PUBLIC }}
+        run: npm run build:all

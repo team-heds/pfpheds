@@ -3,6 +3,7 @@
  * TABLES RÉELLES: modules, courses, course_teachers, planning_cells
  */
 import { supabase } from '@/supabase'
+import apiClient from './apiClient'
 
 /**
  * Récupère les modules d'un responsable module
@@ -194,13 +195,11 @@ export async function getTeacherStats(userId) {
     const courses = await getTeacherCourses(userId)
     
     // Calculer les statistiques
-    let totalHours = 0
     let weeklyHours = 0
     let studentsCount = 0
     let nextCourse = 'N/A'
     
     courses.forEach(course => {
-      totalHours += course.hours || 0
       weeklyHours += course.weeklyHours || 0
       studentsCount += course.studentsCount || 0
     })
@@ -327,47 +326,14 @@ function generateEmptyWeek() {
  */
 export async function getSITeachers() {
   try {
-    if (import.meta.env.DEV) console.log('👨‍⚕️ [getSITeachers] Requête enseignants SI...')
-    
-    // Récupérer les utilisateurs avec le rôle ou la permission EnseignantSoins
-    // On utilise une requête brute pour être sûr de tout attraper
-    // .or() permet de combiner des conditions
-    const { data: teachers, error } = await supabase
-      .from('user_profiles')
-      .select('user_id, email, forname, family_name, display_name, role, permissions')
-      .or('role.eq.EnseignantSoins,permissions.cs.["EnseignantSoins"]')
-    
-    if (error) {
-      // Si erreur avec permissions (ex: type mismatch), on fallback sur role uniquement
-      console.warn('⚠️ [getSITeachers] Erreur requête complexe, tentative repli sur role uniquement:', error.message)
-      const { data: teachersRole, error: errorRole } = await supabase
-        .from('user_profiles')
-        .select('user_id, email, forname, family_name, display_name, role')
-        .eq('role', 'EnseignantSoins')
-        
-      if (errorRole) {
-         console.error('❌ [getSITeachers] Erreur Supabase:', errorRole)
-         return []
-      }
-      return formatTeachers(teachersRole)
-    }
-    
-    return formatTeachers(teachers)
+    const response = await apiClient.get('/audiences/si-teachers')
+    const teachers = Array.isArray(response.data?.data) ? response.data.data : []
+    if (import.meta.env.DEV) console.log('✅ [getSITeachers] Enseignants SI trouvés:', teachers.length)
+    return teachers
   } catch (error) {
     console.error('❌ [getSITeachers] Erreur:', error)
     return []
   }
-}
-
-function formatTeachers(teachersList) {
-  const formatted = (teachersList || []).map(t => ({
-    id: t.user_id,
-    name: t.display_name || `${t.forname || ''} ${t.family_name || ''}`.trim() || t.email,
-    email: t.email,
-    role: 'Enseignant SI'
-  }))
-  if (import.meta.env.DEV) console.log('✅ [getSITeachers] Enseignants SI trouvés:', formatted.length)
-  return formatted
 }
 
 /**
