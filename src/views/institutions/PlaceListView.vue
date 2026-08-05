@@ -38,7 +38,7 @@
           <div class="row g-4">
             <div class="col-sm-6 col-xl-4" v-for="place in paginatedPlaces" :key="place.id">
               <button type="button" class="card place-card-button shadow h-100" @click="goToDetails(place.id)">
-                <img src="https://eduport.webestica.com/assets/images/courses/4by3/21.jpg" class="card-img-top img-cards" alt="place image">
+                <img src="https://eduport.webestica.com/assets/images/courses/4by3/21.jpg" class="card-img-top img-cards" :alt="`Illustration de la place ${place.Sector || ''}`">
                 <div class="card-body pb-0">
                   <div class="d-flex justify-content-between mb-2">
 
@@ -352,5 +352,20 @@ export default {
 .btn-language {
   height: 40.05px;
   width: 101.05px;
+}
+
+@media (max-width: 62rem) {
+  section { padding-top: 1rem !important; }
+  .container { max-width: 100%; padding-inline: clamp(.75rem, 3vw, 1.5rem); }
+  .img-cards { height: clamp(10rem, 34vw, 13.75rem); }
+  .pagination { max-width:100%; overflow-x:auto; padding:.25rem; }
+}
+
+@media (max-width: 36rem) {
+  h1 { font-size: clamp(1.6rem, 8vw, 2rem); }
+  .row.g-4 { --bs-gutter-y: 1rem; }
+  .place-card-button { min-height:0; }
+  .active-filter-row { align-items:flex-start; }
+  .clear-filter-button { width:100%; text-align:start; }
 }
 </style>
