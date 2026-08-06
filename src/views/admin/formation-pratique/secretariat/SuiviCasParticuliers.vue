@@ -355,7 +355,7 @@
               </Column>
               <Column header="Suivi" style="min-width: 100px">
                 <template #body="{ data }">
-                  <Button icon="pi pi-folder-open" label="Ouvrir" size="small" outlined @click="openEchecFollowUp(data)" />
+                  <Button icon="pi pi-folder-open" label="Éditer" size="small" outlined @click="openEchecFollowUp(data)" />
                 </template>
               </Column>
             </DataTable>
@@ -561,91 +561,48 @@
           </div>
         </div>
 
-
-
-        <div class="flex justify-content-end mt-1">
-          <Button label="Annuler" class="mr-2" severity="secondary" @click="closeLesedFeaturesDialog" />
-          <Button label="Valider" icon="pi pi-check" size="small" @click="saveLesedFeaturesData" />
-        </div>
-      </div>
-    </Dialog>
-
-
-    <!-- Dialog échec de stage - édition des particularités -->
-    <Dialog v-model:visible="showEchecFeaturesDialog" :header="dialogTitle" :modal="true" :style="{ width: '640px' }" class="cas-cell-dialog">
-      <div class="flex flex-column gap-4 p-1">
-
-        <!-- État courant -->
-        <div class="surface-ground p-3 border-round">
-          <label class="font-semibold block mb-2">Motif</label>
-
-          <Textarea
-            v-model="editingCell.commentaire"
-            rows="2"
-            class="w-full"
-            placeholder="Indiquer le motif ici..."
-          />
-          <div class="flex justify-content-end mt-2">
-          </div>
-        </div>
-
-
-
-        <div class="flex justify-content-end mt-1">
-          <Button label="Annuler" class="mr-2" severity="secondary" @click="closeEchecFeaturesDialog" />
-          <Button label="Valider" icon="pi pi-check" size="small" @click="saveEchecFeaturesData" />
-        </div>
-      </div>
-    </Dialog>
-
-    <!-- Dialog étudiants SAE - édition des particularités -->
-    <Dialog v-model:visible="showSAEFeaturesDialog" :header="dialogTitle" :modal="true" :style="{ width: '640px' }" class="cas-cell-dialog">
-      <div class="flex flex-column gap-4 p-1">
-
-        <!-- État courant -->
-        <!--<div class="surface-ground p-3 border-round">
-          <label class="font-semibold block mb-2">État actuel</label>
-          <div class="flex gap-2 flex-wrap mb-3">
-            <Button
-              v-for="color in colorOptions"
-              :key="color.value"
-              :label="color.label"
-              :class="{ 'p-button-outlined': editingCell?.couleur !== color.value }"
-              :severity="color.severity"
-              @click="editingCell.couleur = color.value"
-              size="small"
-            />
-          </div>
-          <Textarea
-            v-model="editingCell.commentaire"
-            rows="2"
-            class="w-full"
-            placeholder="Résumé rapide (optionnel)..."
-          />
-          <div class="flex justify-content-end mt-2">
-            <Button label="Enregistrer l'état" icon="pi pi-check" size="small" @click="saveCellData" />
-          </div>
-        </div>-->
-
-        <!-- Ajouter/éditer les particularités -->
+        <!-- Ajouter un événement à l'historique -->
         <div class="surface-card p-3 border-round border-1 surface-border">
-          <label class="font-semibold block mb-2">Particularités</label>
+          <label class="font-semibold block mb-2">Ajouter un événement</label>
           <div class="flex flex-column gap-2">
-
+            <Dropdown
+              v-model="newEvent.type_evenement"
+              :options="eventTypeOptions"
+              optionLabel="label"
+              optionValue="value"
+              class="w-full"
+            />
+            <div v-if="newEvent.type_evenement === 'changement_date'" class="flex gap-2">
+              <div class="flex-1 flex flex-column gap-1">
+                <label class="text-xs text-600">Ancienne date</label>
+                <Calendar v-model="newEvent.ancienne_date" dateFormat="dd/mm/yy" showIcon class="w-full" />
+              </div>
+              <div class="flex-1 flex flex-column gap-1">
+                <label class="text-xs text-600">Nouvelle date</label>
+                <Calendar v-model="newEvent.nouvelle_date" dateFormat="dd/mm/yy" showIcon class="w-full" />
+              </div>
+            </div>
             <Textarea
-              v-model="editingCell.commentaire"
+              v-model="newEvent.description"
               rows="2"
               class="w-full"
-              placeholder="Entrer les particularités du statut SAE ici..."
+              placeholder="Détails, raison du changement..."
             />
             <div class="flex justify-content-end">
-
+              <Button
+                label="Ajouter à l'historique"
+                icon="pi pi-plus"
+                size="small"
+                :loading="addingEvent"
+                :disabled="!canAddEvent"
+                @click="addHistoriqueEvent"
+              />
             </div>
           </div>
         </div>
 
         <!-- Historique -->
-        <!--<div>
+        <div>
           <label class="font-semibold block mb-2">Historique ({{ currentCellHistorique.length }})</label>
           <Timeline
             v-if="currentCellHistorique.length"
@@ -674,7 +631,207 @@
             </template>
           </Timeline>
           <p v-else class="text-600 text-sm">Aucun événement enregistré pour l'instant.</p>
-        </div>-->
+        </div>
+
+
+        <div class="flex justify-content-end mt-1">
+          <Button label="Annuler" class="mr-2" severity="secondary" @click="closeLesedFeaturesDialog" />
+          <Button label="Valider" icon="pi pi-check" size="small" @click="saveLesedFeaturesData" />
+        </div>
+      </div>
+    </Dialog>
+
+
+    <!-- Dialog échec de stage - édition des particularités -->
+    <Dialog v-model:visible="showEchecFeaturesDialog" :header="dialogTitle" :modal="true" :style="{ width: '640px' }" class="cas-cell-dialog">
+      <div class="flex flex-column gap-4 p-1">
+
+        <!-- État courant -->
+        <div class="surface-ground p-3 border-round">
+          <label class="font-semibold block mb-2">Motif</label>
+
+          <Textarea
+            v-model="editingCell.commentaire"
+            rows="2"
+            class="w-full"
+            placeholder="Indiquer le motif ici..."
+          />
+          <div class="flex justify-content-end mt-2">
+          </div>
+        </div>
+
+        <!-- Ajout évt. historique - Echec stage -->
+        <div class="surface-card p-3 border-round border-1 surface-border">
+          <label class="font-semibold block mb-2">Ajouter un événement</label>
+          <div class="flex flex-column gap-2">
+            <Dropdown
+              v-model="newEvent.type_evenement"
+              :options="eventTypeOptions"
+              optionLabel="label"
+              optionValue="value"
+              class="w-full"
+            />
+            <div v-if="newEvent.type_evenement === 'changement_date'" class="flex gap-2">
+              <div class="flex-1 flex flex-column gap-1">
+                <label class="text-xs text-600">Ancienne date</label>
+                <Calendar v-model="newEvent.ancienne_date" dateFormat="dd/mm/yy" showIcon class="w-full" />
+              </div>
+              <div class="flex-1 flex flex-column gap-1">
+                <label class="text-xs text-600">Nouvelle date</label>
+                <Calendar v-model="newEvent.nouvelle_date" dateFormat="dd/mm/yy" showIcon class="w-full" />
+              </div>
+            </div>
+            <Textarea
+              v-model="newEvent.description"
+              rows="2"
+              class="w-full"
+              placeholder="Détails, raison du changement..."
+            />
+            <div class="flex justify-content-end">
+              <Button
+                label="Ajouter à l'historique"
+                icon="pi pi-plus"
+                size="small"
+                :loading="addingEvent"
+                :disabled="!canAddEvent"
+                @click="addHistoriqueEvent"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Historique - Echec Stage -->
+        <div>
+          <label class="font-semibold block mb-2">Historique ({{ currentCellHistorique.length }})</label>
+          <Timeline
+            v-if="currentCellHistorique.length"
+            :value="currentCellHistorique"
+            align="left"
+            class="cas-timeline"
+          >
+            <template #marker="{ item }">
+              <div class="timeline-marker" :class="`marker-${eventTypeMeta(item.type_evenement).severity}`">
+                <i :class="eventTypeMeta(item.type_evenement).icon"></i>
+              </div>
+            </template>
+            <template #content="{ item }">
+              <div class="timeline-event">
+                <div class="flex align-items-center justify-content-between gap-2">
+                  <Tag :value="eventTypeMeta(item.type_evenement).label" :severity="eventTypeMeta(item.type_evenement).severity" class="text-xs" />
+                  <span class="text-xs text-600" :title="formatFullDate(item.created_at)">{{ formatRelativeDate(item.created_at) }}</span>
+                </div>
+                <div v-if="item.type_evenement === 'changement_date' && (item.ancienne_date || item.nouvelle_date)" class="date-change-line">
+                  <span class="text-600">{{ item.ancienne_date ? formatDateOnly(item.ancienne_date) : '?' }}</span>
+                  <i class="pi pi-arrow-right mx-2 text-xs"></i>
+                  <span class="font-semibold">{{ item.nouvelle_date ? formatDateOnly(item.nouvelle_date) : '?' }}</span>
+                </div>
+                <p v-if="item.description" class="m-0 mt-1 text-sm">{{ item.description }}</p>
+              </div>
+            </template>
+          </Timeline>
+          <p v-else class="text-600 text-sm">Aucun événement enregistré pour l'instant.</p>
+        </div>
+
+        <div class="flex justify-content-end mt-1">
+          <Button label="Annuler" class="mr-2" severity="secondary" @click="closeEchecFeaturesDialog" />
+          <Button label="Valider" icon="pi pi-check" size="small" @click="saveEchecFeaturesData" />
+        </div>
+      </div>
+    </Dialog>
+
+    <!-- Dialog étudiants SAE - édition des particularités -->
+    <Dialog v-model:visible="showSAEFeaturesDialog" :header="dialogTitle" :modal="true" :style="{ width: '640px' }" class="cas-cell-dialog">
+      <div class="flex flex-column gap-4 p-1">
+
+
+        <!-- Ajouter/éditer les particularités -->
+        <div class="surface-card p-3 border-round border-1 surface-border">
+          <label class="font-semibold block mb-2">Particularités</label>
+          <div class="flex flex-column gap-2">
+
+            <Textarea
+              v-model="editingCell.commentaire"
+              rows="2"
+              class="w-full"
+              placeholder="Entrer les particularités du statut SAE ici..."
+            />
+            <!--<div class="flex justify-content-end">
+                <Button label="Enregistrer l'état" icon="pi pi-check" size="small" @click="saveCellData" />
+            </div>-->
+          </div>
+        </div>
+
+        <!-- Ajout évt. historique - SAE -->
+        <div class="surface-card p-3 border-round border-1 surface-border">
+          <label class="font-semibold block mb-2">Ajouter un événement</label>
+          <div class="flex flex-column gap-2">
+            <Dropdown
+              v-model="newEvent.type_evenement"
+              :options="eventTypeOptions"
+              optionLabel="label"
+              optionValue="value"
+              class="w-full"
+            />
+            <div v-if="newEvent.type_evenement === 'changement_date'" class="flex gap-2">
+              <div class="flex-1 flex flex-column gap-1">
+                <label class="text-xs text-600">Ancienne date</label>
+                <Calendar v-model="newEvent.ancienne_date" dateFormat="dd/mm/yy" showIcon class="w-full" />
+              </div>
+              <div class="flex-1 flex flex-column gap-1">
+                <label class="text-xs text-600">Nouvelle date</label>
+                <Calendar v-model="newEvent.nouvelle_date" dateFormat="dd/mm/yy" showIcon class="w-full" />
+              </div>
+            </div>
+            <Textarea
+              v-model="newEvent.description"
+              rows="2"
+              class="w-full"
+              placeholder="Détails, raison du changement..."
+            />
+            <div class="flex justify-content-end">
+              <Button
+                label="Ajouter à l'historique"
+                icon="pi pi-plus"
+                size="small"
+                :loading="addingEvent"
+                :disabled="!canAddEvent"
+                @click="addHistoriqueEvent"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Historique - SAE -->
+        <div>
+          <label class="font-semibold block mb-2">Historique ({{ currentCellHistorique.length }})</label>
+          <Timeline
+            v-if="currentCellHistorique.length"
+            :value="currentCellHistorique"
+            align="left"
+            class="cas-timeline"
+          >
+            <template #marker="{ item }">
+              <div class="timeline-marker" :class="`marker-${eventTypeMeta(item.type_evenement).severity}`">
+                <i :class="eventTypeMeta(item.type_evenement).icon"></i>
+              </div>
+            </template>
+            <template #content="{ item }">
+              <div class="timeline-event">
+                <div class="flex align-items-center justify-content-between gap-2">
+                  <Tag :value="eventTypeMeta(item.type_evenement).label" :severity="eventTypeMeta(item.type_evenement).severity" class="text-xs" />
+                  <span class="text-xs text-600" :title="formatFullDate(item.created_at)">{{ formatRelativeDate(item.created_at) }}</span>
+                </div>
+                <div v-if="item.type_evenement === 'changement_date' && (item.ancienne_date || item.nouvelle_date)" class="date-change-line">
+                  <span class="text-600">{{ item.ancienne_date ? formatDateOnly(item.ancienne_date) : '?' }}</span>
+                  <i class="pi pi-arrow-right mx-2 text-xs"></i>
+                  <span class="font-semibold">{{ item.nouvelle_date ? formatDateOnly(item.nouvelle_date) : '?' }}</span>
+                </div>
+                <p v-if="item.description" class="m-0 mt-1 text-sm">{{ item.description }}</p>
+              </div>
+            </template>
+          </Timeline>
+          <p v-else class="text-600 text-sm">Aucun événement enregistré pour l'instant.</p>
+        </div>
 
         <div class="flex justify-content-end mt-1">
           <Button class="mr-2" label="Fermer" severity="secondary" @click="closeSAEFeaturesDialog" />
