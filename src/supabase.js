@@ -19,12 +19,17 @@
     console.error('VITE_SUPABASE_KEY:', supabaseAnonKey)
     }
 
+    const passwordRecoveryRoutes = new Set(['/reset-password', '/new-password'])
+    const isPasswordRecoveryRoute = passwordRecoveryRoutes.has(window.location.pathname)
+
     // ✅ Crée le client avec options recommandées (Realtime désactivé)
     export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
         persistSession: true,       // garde la session même après refresh
         autoRefreshToken: true,     // refresh automatique des tokens
-        detectSessionInUrl: true,   // utile pour login OAuth et reset password
+        // Le callback de récupération est échangé explicitement par ResetPassword.
+        // Cela évite qu'une session ordinaire soit confondue avec une preuve de récupération.
+        detectSessionInUrl: !isPasswordRecoveryRoute,
         storage: window.localStorage, // Force l'utilisation de localStorage (par défaut mais explicite)
         storageKey: 'supabase.auth.token', // Clé de stockage personnalisée
         flowType: 'pkce',           // Plus sécurisé pour les SPAs

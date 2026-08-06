@@ -165,16 +165,21 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import Button from 'primevue/button'
 import InlineMessage from 'primevue/inlinemessage'
 import InputText from 'primevue/inputtext'
 import Password from 'primevue/password'
 import { supabase } from '@/supabase.js'
+import {
+  createPasswordRecoveryService,
+  PASSWORD_RECOVERY_ERROR_CODES,
+} from '@/service/passwordRecoveryService'
 import { getPasswordRuleStates, validateNewPassword } from '@/utils/passwordResetValidation'
 
 const router = useRouter()
+const recoveryService = createPasswordRecoveryService(supabase.auth)
 
 const state = ref('checking')
 const loading = ref(false)
@@ -190,8 +195,6 @@ const codeLoading = ref(false)
 const codeMsg = ref('')
 const codeErrorField = ref('')
 const invalidReason = ref('missing')
-
-let authSubscription = null
 
 const passwordRuleStates = computed(() => getPasswordRuleStates(pwd1.value))
 const passwordsMatch = computed(() => Boolean(pwd2.value) && pwd1.value === pwd2.value)
@@ -221,60 +224,18 @@ const invalidMessage = computed(() => {
 })
 
 onMounted(async () => {
-  authSubscription = supabase.auth.onAuthStateChange((event, session) => {
-    if ((event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') && session) {
-      state.value = 'form'
-    }
-  })
-
   await resolveRecoverySession()
 })
 
-onBeforeUnmount(() => {
-  authSubscription?.data?.subscription?.unsubscribe?.()
-})
-
 async function resolveRecoverySession() {
-  const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''))
-  const searchParams = new URLSearchParams(window.location.search)
-
-  const hashAccessToken = hashParams.get('access_token')
-  const hashRefreshToken = hashParams.get('refresh_token')
-  const queryCode = searchParams.get('code')
-  const linkError = hashParams.get('error') || searchParams.get('error')
-  const linkErrorCode = hashParams.get('error_code') || searchParams.get('error_code')
-
-  try {
-    if (linkError) {
-      invalidReason.value = linkErrorCode === 'otp_expired' ? 'expired' : 'error'
-      state.value = 'invalid'
-      return
-    }
-
-    if (hashAccessToken && hashRefreshToken) {
-      const { error } = await supabase.auth.setSession({
-        access_token: hashAccessToken,
-        refresh_token: hashRefreshToken,
-      })
-      if (error) throw error
-      state.value = 'form'
-      return
-    }
-
-    if (queryCode) {
-      const { error } = await supabase.auth.exchangeCodeForSession(queryCode)
-      if (error) throw error
-      state.value = 'form'
-      return
-    }
-
-    const { data } = await supabase.auth.getSession()
-    state.value = data?.session ? 'form' : 'invalid'
-  } catch (error) {
-    console.error('ResetPassword recovery error:', error)
-    invalidReason.value = error?.message?.toLowerCase().includes('expired') ? 'expired' : 'error'
-    state.value = 'invalid'
+  const result = await recoveryService.resolveFromLocation()
+  if (result.status === 'valid') {
+    state.value = 'form'
+    return
   }
+
+  invalidReason.value = result.reason
+  state.value = 'invalid'
 }
 
 async function verifyWithCode() {
@@ -295,15 +256,10 @@ async function verifyWithCode() {
 
   codeLoading.value = true
   try {
-    const { error } = await supabase.auth.verifyOtp({
-      email: codeEmail.value.trim(),
-      token: codeToken.value.trim(),
-      type: 'recovery',
-    })
-    if (error) throw error
+    await recoveryService.authorizeWithOtp(codeEmail.value.trim(), codeToken.value.trim())
+    codeToken.value = ''
     state.value = 'form'
   } catch (error) {
-    console.error('ResetPassword verifyOtp error:', error)
     codeMsg.value = mapRecoveryError(error)
   } finally {
     codeLoading.value = false
@@ -323,14 +279,14 @@ async function save() {
 
   loading.value = true
   try {
-    const { error } = await supabase.auth.updateUser({ password: pwd1.value })
-    if (error) throw error
+    await recoveryService.updatePassword(pwd1.value)
 
     ok.value = true
     msg.value = 'Mot de passe modifié avec succès.'
+    pwd1.value = ''
+    pwd2.value = ''
     state.value = 'success'
   } catch (error) {
-    console.error('ResetPassword update error:', error)
     msg.value = mapRecoveryError(error)
   } finally {
     loading.value = false
@@ -338,6 +294,18 @@ async function save() {
 }
 
 function mapRecoveryError(error) {
+  if (error?.code === PASSWORD_RECOVERY_ERROR_CODES.ALREADY_CONSUMED) {
+    return 'Ce lien de réinitialisation a déjà été utilisé. Demandez un nouvel email.'
+  }
+
+  if (error?.code === PASSWORD_RECOVERY_ERROR_CODES.INVALID_CONTEXT) {
+    return 'Le lien de réinitialisation n’est plus valide. Demandez un nouvel email.'
+  }
+
+  if (error?.code === PASSWORD_RECOVERY_ERROR_CODES.UPDATE_IN_PROGRESS) {
+    return 'La modification est déjà en cours.'
+  }
+
   const message = error?.message || ''
   const normalized = message.toLowerCase()
 
@@ -356,8 +324,12 @@ function mapRecoveryError(error) {
   return message || 'Une erreur est survenue. Réessayez avec le dernier email reçu.'
 }
 
-function goToLogin() {
-  authSubscription?.data?.subscription?.unsubscribe?.()
+async function goToLogin() {
+  try {
+    await recoveryService.abandon()
+  } catch {
+    // La navigation reste possible : abandon() tente déjà une suppression locale de secours.
+  }
   router.push('/')
 }
 </script>
