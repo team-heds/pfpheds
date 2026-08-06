@@ -1,0 +1,5 @@
+services:
+  auth:
+    environment:
+      # Recovery links and email OTPs expire server-side after one hour.
+      GOTRUE_MAILER_OTP_EXP: "3600"

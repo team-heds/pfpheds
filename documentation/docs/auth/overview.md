@@ -73,6 +73,23 @@ Comportement attendu :
 - les champs utilisent le masque PrimeVue (`toggleMask`) pour afficher ou masquer le contenu ;
 - après succès, l'utilisateur revient explicitement à la connexion.
 
+### Cycle de vie des liens de récupération
+
+La règle de production est la suivante :
+
+- le jeton est validé exclusivement par Supabase Auth/GoTrue ;
+- il expire après **3 600 secondes (1 heure)** via `backend/deployment/supabase-auth-security.override.yml` ;
+- une nouvelle demande remplace le jeton précédent : seul le dernier email est valide ;
+- GoTrue efface le jeton après sa vérification, ce qui interdit sa réutilisation ;
+- `/reset-password` refuse une session Supabase ordinaire lorsqu'aucun code, jeton implicite ou OTP de récupération n'a été validé ;
+- après un changement réussi, le contexte frontend est consommé et la session de récupération est révoquée ;
+- le mot de passe est transmis à `supabase.auth.updateUser()` et stocké uniquement sous forme de hash bcrypt par GoTrue ;
+- les actions `user_recovery_requested` et `user_updated_password` sont enregistrées nativement dans les journaux d'audit Supabase, sans enregistrer le jeton ou le mot de passe.
+
+Sur la version GoTrue auto-hébergée actuelle, `GOTRUE_MAILER_OTP_EXP` est un réglage commun aux liens et OTP email. L'expiration d'une heure s'applique donc aussi aux confirmations, invitations et magic links. Ce périmètre doit être revérifié lors de la future mise à niveau de GoTrue.
+
+Ne jamais ajouter de journal applicatif contenant l'URL complète de récupération, un paramètre `code`, un OTP, un access token, un refresh token ou un mot de passe.
+
 ### Cette instance est self-hosted, pas Supabase Cloud
 
 `VITE_SUPABASE_URL=https://api2.hedsvs.ch` — ce n'est **pas** un projet `*.supabase.co`. Conséquence directe : les outils MCP Supabase standards (`list_projects`, `execute_sql`, etc.) ne voient pas ce projet. Toute inspection de schéma ou toute opération admin (créer un utilisateur, lister les comptes) doit passer par :
