@@ -288,7 +288,8 @@
                     class="text-xs mr-1"
                   />
                   <Tag v-if="data.marqueLese" value="Marqué lésé (profil)" severity="warning" class="text-xs mr-1" />
-                  <Tag v-if="data.isFallback" value="Hors choix" severity="danger" class="text-xs" />
+                  <!--<Tag v-if="data.isFallback" value="Hors choix" severity="danger" class="text-xs" />-->
+
                 </template>
               </Column>
               <Column field="assigned_place_name" header="Place assignée" style="min-width: 160px">
@@ -354,7 +355,7 @@
               </Column>
               <Column header="Suivi" style="min-width: 100px">
                 <template #body="{ data }">
-                  <Button icon="pi pi-folder-open" label="Ouvrir" size="small" outlined @click="openLesedFollowUp(data)" />
+                  <Button icon="pi pi-folder-open" label="Ouvrir" size="small" outlined @click="openEchecFollowUp(data)" />
                 </template>
               </Column>
             </DataTable>
@@ -569,6 +570,34 @@
       </div>
     </Dialog>
 
+
+    <!-- Dialog échec de stage - édition des particularités -->
+    <Dialog v-model:visible="showEchecFeaturesDialog" :header="dialogTitle" :modal="true" :style="{ width: '640px' }" class="cas-cell-dialog">
+      <div class="flex flex-column gap-4 p-1">
+
+        <!-- État courant -->
+        <div class="surface-ground p-3 border-round">
+          <label class="font-semibold block mb-2">Motif</label>
+
+          <Textarea
+            v-model="editingCell.commentaire"
+            rows="2"
+            class="w-full"
+            placeholder="Indiquer le motif ici..."
+          />
+          <div class="flex justify-content-end mt-2">
+          </div>
+        </div>
+
+
+
+        <div class="flex justify-content-end mt-1">
+          <Button label="Annuler" class="mr-2" severity="secondary" @click="closeEchecFeaturesDialog" />
+          <Button label="Valider" icon="pi pi-check" size="small" @click="saveEchecFeaturesData" />
+        </div>
+      </div>
+    </Dialog>
+
     <!-- Dialog étudiants SAE - édition des particularités -->
     <Dialog v-model:visible="showSAEFeaturesDialog" :header="dialogTitle" :modal="true" :style="{ width: '640px' }" class="cas-cell-dialog">
       <div class="flex flex-column gap-4 p-1">
@@ -721,12 +750,14 @@ const classesList = computed(() => {
 
 const showCellDialog = ref(false)
 const showLesedFeaturesDialog = ref(false)
+const showEchecFeaturesDialog = ref(false)
 const showSAEFeaturesDialog = ref(false)
 const showInfoDialog = ref(false)
 const editingCell = ref(null)
 const editingInfo = ref(null)
 const editingStudent = ref(null)
 const editingField = ref(null)
+const editingEchecRow = ref(null)
 const dialogTitle = ref('')
 const infoDialogTitle = ref('')
 
@@ -1206,6 +1237,29 @@ const openLesedFollowUp = (lesedRow) => {
   openLesedFeaturesDialog(student, field)
 }
 
+
+const openEchecFollowUp = (lesedRow) => {
+  const field = lesedRow.pfp_field || pfpTypeToField(lesedRow.pfp_type)
+  if (!field) {
+    toast.add({ severity: 'warn', summary: 'Non disponible', detail: "Type de PFP non reconnu pour le suivi détaillé", life: 3000 })
+    return
+  }
+
+  const student = cases.value.find(c => c.user_id === lesedRow.user_id) || {
+    user_id: lesedRow.user_id,
+    etudiant: lesedRow.etudiant,
+    classe: lesedRow.classe,
+    visible: true
+  }
+
+  student[field] = {
+    couleur: student[field]?.couleur || 'blanc',
+    commentaire: lesedRow.commentaire_arret || ''
+  }
+
+  openEchecFeaturesDialog(student, field, lesedRow)
+}
+
 const truncate = (text, max) => {
   if (!text) return ''
   return text.length > max ? text.substring(0, max) + '…' : text
@@ -1319,6 +1373,76 @@ const closeLesedFeaturesDialog = () => {
   editingStudent.value = null
   editingField.value = null
   resetNewEvent()
+}
+
+
+
+const openEchecFeaturesDialog = (student, field, echecRow) => {
+  editingStudent.value = student
+  editingField.value = field
+  editingEchecRow.value = echecRow
+
+  if (!student[field]) {
+    student[field] = { couleur: 'blanc', commentaire: '' }
+  }
+
+  editingCell.value = {
+    ...student[field],
+    commentaire: echecRow?.commentaire_arret || ''
+  }
+  dialogTitle.value = `${student.etudiant} - ${fieldLabels[field]}`
+  resetNewEvent()
+  showEchecFeaturesDialog.value = true
+}
+
+const closeEchecFeaturesDialog = () => {
+  showEchecFeaturesDialog.value = false
+  editingCell.value = null
+  editingStudent.value = null
+  editingField.value = null
+  editingEchecRow.value = null
+  resetNewEvent()
+}
+
+const saveEchecFeaturesData = async () => {
+  if (!editingStudent.value || !editingCell.value || !editingEchecRow.value) {
+    closeEchecFeaturesDialog()
+    return
+  }
+
+  const commentaireArret = editingCell.value.commentaire || ''
+  const echecRow = editingEchecRow.value
+
+  try {
+    let query = supabase
+      .from('student_result_vote')
+      .update({ commentaire_arret: commentaireArret || null })
+      .eq('user_id', editingStudent.value.user_id)
+      .eq('pfp_type', echecRow.pfp_type)
+      .eq('pfp_echec', true)
+
+    query = echecRow.year === null || echecRow.year === undefined
+      ? query.is('year', null)
+      : query.eq('year', echecRow.year)
+
+    const { error } = await query
+
+    if (error) throw error
+
+    echecsList.value = echecsList.value.map(row => (
+      row.user_id === editingStudent.value.user_id &&
+      row.pfp_type === echecRow.pfp_type &&
+      row.year === echecRow.year
+        ? { ...row, commentaire_arret: commentaireArret }
+        : row
+    ))
+
+    toast.add({ severity: 'success', summary: 'Sauvegardé', detail: "Motif d'arrêt mis à jour", life: 2000 })
+    closeEchecFeaturesDialog()
+  } catch (e) {
+    console.error('Erreur saveEchecFeaturesData:', e)
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de sauvegarder: ' + e.message, life: 3000 })
+  }
 }
 
 const saveLesedFeaturesData = async () => {
