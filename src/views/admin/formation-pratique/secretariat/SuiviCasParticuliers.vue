@@ -281,8 +281,14 @@
               </Column>
               <Column header="Motif" style="min-width: 160px">
                 <template #body="{ data }">
+                  <Tag
+                    v-if="data.commentaire || (data.couleur && data.couleur !== 'blanc')"
+                    :value="data.commentaire || getColorLabel(data.couleur)"
+                    :style="getLesedMotifStyle(data)"
+                    class="text-xs mr-1"
+                  />
                   <Tag v-if="data.marqueLese" value="Marqué lésé (profil)" severity="warning" class="text-xs mr-1" />
-                  <Tag v-if="data.isFallback" value="Fallback algorithme" severity="danger" class="text-xs" />
+                  <Tag v-if="data.isFallback" value="Hors choix" severity="danger" class="text-xs" />
                 </template>
               </Column>
               <Column field="assigned_place_name" header="Place assignée" style="min-width: 160px">
@@ -291,9 +297,9 @@
               <Column field="assigned_institution_name" header="Institution" style="min-width: 180px">
                 <template #body="{ data }">{{ data.assigned_institution_name || '—' }}</template>
               </Column>
-              <Column header="Suivi" style="min-width: 100px">
+              <Column header="Actions" style="min-width: 100px">
                 <template #body="{ data }">
-                  <Button icon="pi pi-folder-open" label="Ouvrir" size="small" outlined @click="openLesedFollowUp(data)" />
+                  <Button icon="pi pi-folder-open" label="Éditer" size="small" outlined @click="openLesedFollowUp(data)" />
                 </template>
               </Column>
             </DataTable>
@@ -526,6 +532,43 @@
     </Dialog>
 
 
+    <!-- Dialog étudiants lésés - édition des particularités -->
+    <Dialog v-model:visible="showLesedFeaturesDialog" :header="dialogTitle" :modal="true" :style="{ width: '640px' }" class="cas-cell-dialog">
+      <div class="flex flex-column gap-4 p-1">
+
+        <!-- État courant -->
+        <div class="surface-ground p-3 border-round">
+          <label class="font-semibold block mb-2">Motif</label>
+          <div class="flex gap-2 flex-wrap mb-3">
+            <Button
+              v-for="color in colorOptions"
+              :key="color.value"
+              :label="color.label"
+              :class="{ 'p-button-outlined': editingCell?.couleur !== color.value }"
+              :severity="color.severity"
+              @click="editingCell.couleur = color.value"
+              size="small"
+            />
+          </div>
+          <Textarea
+            v-model="editingCell.commentaire"
+            rows="2"
+            class="w-full"
+            placeholder="Indiquer le motif ici..."
+          />
+          <div class="flex justify-content-end mt-2">
+          </div>
+        </div>
+
+
+
+        <div class="flex justify-content-end mt-1">
+          <Button label="Annuler" class="mr-2" severity="secondary" @click="closeLesedFeaturesDialog" />
+          <Button label="Valider" icon="pi pi-check" size="small" @click="saveLesedFeaturesData" />
+        </div>
+      </div>
+    </Dialog>
+
     <!-- Dialog étudiants SAE - édition des particularités -->
     <Dialog v-model:visible="showSAEFeaturesDialog" :header="dialogTitle" :modal="true" :style="{ width: '640px' }" class="cas-cell-dialog">
       <div class="flex flex-column gap-4 p-1">
@@ -677,6 +720,7 @@ const classesList = computed(() => {
 })
 
 const showCellDialog = ref(false)
+const showLesedFeaturesDialog = ref(false)
 const showSAEFeaturesDialog = ref(false)
 const showInfoDialog = ref(false)
 const editingCell = ref(null)
@@ -919,26 +963,42 @@ const fetchLesedStudents = async () => {
       return
     }
 
-    const { data: profiles, error: profilesError } = await supabase
-      .from('user_profiles')
-      .select('user_id, family_name, forname, classe, role, permissions, is_active')
-      .in('user_id', [...userIds])
-      .or('role.eq.EtudiantPhysio,permissions.cs.["EtudiantPhysio"]')
-      .eq('is_active', true)
+    const [{ data: profiles, error: profilesError }, { data: suivis, error: suivisError }] = await Promise.all([
+      supabase
+        .from('user_profiles')
+        .select('user_id, family_name, forname, classe, role, permissions, is_active')
+        .in('user_id', [...userIds])
+        .or('role.eq.EtudiantPhysio,permissions.cs.["EtudiantPhysio"]')
+        .eq('is_active', true),
+      supabase
+        .from('suivi_cas_particuliers')
+        .select('user_id, pfp_field, couleur, commentaire')
+        .in('user_id', [...userIds])
+    ])
     if (profilesError) throw profilesError
+    if (suivisError) throw suivisError
 
     const profileMap = new Map((profiles || []).map(p => [p.user_id, p]))
     const leseSet = new Set((studentsLese || []).map(s => s.user_id))
+    const suivisMap = new Map((suivis || []).map(s => [`${s.user_id}_${s.pfp_field}`, {
+      couleur: s.couleur || 'blanc',
+      commentaire: s.commentaire || ''
+    }]))
 
     // Une ligne par (étudiant, pfp_type, année) issue du fallback algorithmique
     const rows = (fallbacks || []).filter(f => profileMap.has(f.user_id)).map(f => {
       const profile = profileMap.get(f.user_id)
+      const pfpField = pfpTypeToField(f.pfp_type)
+      const suivi = suivisMap.get(`${f.user_id}_${pfpField}`) || { couleur: 'blanc', commentaire: '' }
       return {
         user_id: f.user_id,
         etudiant: profile ? `${(profile.family_name || '').toUpperCase()} ${profile.forname || ''}`.trim() : f.user_id,
         classe: profile?.classe || '-',
         year: f.year,
         pfp_type: f.pfp_type,
+        pfp_field: pfpField,
+        couleur: suivi.couleur,
+        commentaire: suivi.commentaire,
         assigned_place_name: f.assigned_place_name,
         assigned_institution_name: f.assigned_institution_name,
         isFallback: true,
@@ -951,7 +1011,6 @@ const fetchLesedStudents = async () => {
     const coveredKeys = new Set(rows.map(r => `${r.user_id}_${r.year}_${r.pfp_type}`))
     ;(studentsLese || []).forEach(s => {
       const profile = profileMap.get(s.user_id)
-      const key = `${s.user_id}_${s.year}_manuel`
       if (profile && ![...coveredKeys].some(k => k.startsWith(`${s.user_id}_${s.year}`))) {
         rows.push({
           user_id: s.user_id,
@@ -959,6 +1018,9 @@ const fetchLesedStudents = async () => {
           classe: s.class || profile?.classe || '-',
           year: s.year || 'N/A',
           pfp_type: 'Non spécifié',
+          pfp_field: null,
+          couleur: 'blanc',
+          commentaire: '',
           assigned_place_name: null,
           assigned_institution_name: null,
           isFallback: false,
@@ -1123,18 +1185,25 @@ const unmarkStudentSae = async (student) => {
 }
 
 const openLesedFollowUp = (lesedRow) => {
-  const field = pfpTypeToField(lesedRow.pfp_type)
+  const field = lesedRow.pfp_field || pfpTypeToField(lesedRow.pfp_type)
   if (!field) {
     toast.add({ severity: 'warn', summary: 'Non disponible', detail: "Type de PFP non reconnu pour le suivi détaillé", life: 3000 })
     return
   }
-  const student = cases.value.find(c => c.user_id === lesedRow.user_id)
-  if (!student) {
-    toast.add({ severity: 'warn', summary: 'Non trouvé', detail: "Profil étudiant introuvable dans le suivi", life: 3000 })
-    return
+
+  const student = cases.value.find(c => c.user_id === lesedRow.user_id) || {
+    user_id: lesedRow.user_id,
+    etudiant: lesedRow.etudiant,
+    classe: lesedRow.classe,
+    visible: true
   }
-  activeTab.value = 0
-  openCellDialog(student, field)
+
+  student[field] = {
+    couleur: lesedRow.couleur || student[field]?.couleur || 'blanc',
+    commentaire: lesedRow.commentaire || student[field]?.commentaire || ''
+  }
+
+  openLesedFeaturesDialog(student, field)
 }
 
 const truncate = (text, max) => {
@@ -1204,6 +1273,9 @@ const getCellStyle = (cellData) => {
   }
 }
 
+const getLesedMotifStyle = (lesedRow) => getCellStyle({ couleur: lesedRow?.couleur || 'blanc' })
+const getColorLabel = (value) => colorOptions.find(color => color.value === value)?.label || value
+
 const openCellDialog = (student, field) => {
   editingStudent.value = student
   editingField.value = field
@@ -1224,6 +1296,69 @@ const closeCellDialog = () => {
   editingStudent.value = null
   editingField.value = null
   resetNewEvent()
+}
+
+
+const openLesedFeaturesDialog = (student, field) => {
+  editingStudent.value = student
+  editingField.value = field
+
+  if (!student[field]) {
+    student[field] = { couleur: 'blanc', commentaire: '' }
+  }
+
+  editingCell.value = { ...student[field] }
+  dialogTitle.value = `${student.etudiant} - ${fieldLabels[field]}`
+  resetNewEvent()
+  showLesedFeaturesDialog.value = true
+}
+
+const closeLesedFeaturesDialog = () => {
+  showLesedFeaturesDialog.value = false
+  editingCell.value = null
+  editingStudent.value = null
+  editingField.value = null
+  resetNewEvent()
+}
+
+const saveLesedFeaturesData = async () => {
+  if (!editingStudent.value || !editingField.value || !editingCell.value) {
+    closeLesedFeaturesDialog()
+    return
+  }
+
+  const cellData = {
+    couleur: editingCell.value.couleur || 'blanc',
+    commentaire: editingCell.value.commentaire || ''
+  }
+
+  try {
+    const { error } = await supabase
+      .from('suivi_cas_particuliers')
+      .upsert({
+        user_id: editingStudent.value.user_id,
+        pfp_field: editingField.value,
+        couleur: cellData.couleur,
+        commentaire: cellData.commentaire || null,
+        visible: editingStudent.value.visible ?? true
+      }, {
+        onConflict: 'user_id,pfp_field'
+      })
+
+    if (error) throw error
+
+    editingStudent.value[editingField.value] = { ...cellData }
+    lesedList.value = lesedList.value.map(row => (
+      row.user_id === editingStudent.value.user_id && row.pfp_field === editingField.value
+        ? { ...row, ...cellData }
+        : row
+    ))
+    toast.add({ severity: 'success', summary: 'Sauvegardé', detail: 'Motif lésé mis à jour', life: 2000 })
+    closeLesedFeaturesDialog()
+  } catch (e) {
+    console.error('Erreur saveLesedFeaturesData:', e)
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de sauvegarder: ' + e.message, life: 3000 })
+  }
 }
 
 const openSAEFeaturesDialog = (student, field) => {
