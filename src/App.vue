@@ -54,11 +54,13 @@ export default {
   data() {
     return {
       isLoading: true, // État de chargement
-      showMobileBottomNav: true,
       expirationCheckInterval: null, // ID de l'intervalle d'expiration
     };
   },
   computed: {
+    showMobileBottomNav() {
+      return this.$route.meta?.hideMobileNav !== true;
+    },
     showHeaderIconsMobile() {
       const routeName = this.$route.name;
       // Liste des pages où on NE VEUT PAS les icônes
@@ -75,26 +77,11 @@ export default {
       return window.innerWidth <= 600 && !excluded.includes(routeName);
     }
   },
-  watch: {
-    '$route'(to) {
-      // Cacher la navbar mobile sur LoginHome
-      if (to.name === 'LoginHome') {
-        this.showMobileBottomNav = false;
-      } else {
-        this.showMobileBottomNav = true;
-      }
-    }
-  },
   mounted() {
     // Simuler un chargement de données (par exemple, lors du démarrage de l'application)
     setTimeout(() => {
       this.isLoading = false; // Masquer le loader après 3 secondes
     }, 3000); // Temps en millisecondes
-    // Initial check
-    if (this.$route.name === 'LoginHome') {
-      this.showMobileBottomNav = false;
-    }
-    
     // Le service de notifications est déjà initialisé automatiquement
     // via l'instance singleton dans notificationService.js
     
