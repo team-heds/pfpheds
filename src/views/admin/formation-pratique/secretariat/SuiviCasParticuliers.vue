@@ -281,8 +281,15 @@
               </Column>
               <Column header="Motif" style="min-width: 160px">
                 <template #body="{ data }">
+                  <Tag
+                    v-if="data.commentaire || (data.couleur && data.couleur !== 'blanc')"
+                    :value="data.commentaire || getColorLabel(data.couleur)"
+                    :style="getLesedMotifStyle(data)"
+                    class="text-xs mr-1"
+                  />
                   <Tag v-if="data.marqueLese" value="Marqué lésé (profil)" severity="warning" class="text-xs mr-1" />
-                  <Tag v-if="data.isFallback" value="Fallback algorithme" severity="danger" class="text-xs" />
+                  <!--<Tag v-if="data.isFallback" value="Hors choix" severity="danger" class="text-xs" />-->
+
                 </template>
               </Column>
               <Column field="assigned_place_name" header="Place assignée" style="min-width: 160px">
@@ -291,9 +298,9 @@
               <Column field="assigned_institution_name" header="Institution" style="min-width: 180px">
                 <template #body="{ data }">{{ data.assigned_institution_name || '—' }}</template>
               </Column>
-              <Column header="Suivi" style="min-width: 100px">
+              <Column header="Actions" style="min-width: 100px">
                 <template #body="{ data }">
-                  <Button icon="pi pi-folder-open" label="Ouvrir" size="small" outlined @click="openLesedFollowUp(data)" />
+                  <Button icon="pi pi-folder-open" label="Éditer" size="small" outlined @click="openLesedFollowUp(data)" />
                 </template>
               </Column>
             </DataTable>
@@ -348,7 +355,7 @@
               </Column>
               <Column header="Suivi" style="min-width: 100px">
                 <template #body="{ data }">
-                  <Button icon="pi pi-folder-open" label="Ouvrir" size="small" outlined @click="openLesedFollowUp(data)" />
+                  <Button icon="pi pi-folder-open" label="Éditer" size="small" outlined @click="openEchecFollowUp(data)" />
                 </template>
               </Column>
             </DataTable>
@@ -526,13 +533,13 @@
     </Dialog>
 
 
-    <!-- Dialog étudiants SAE - édition des particularités -->
-    <Dialog v-model:visible="showSAEFeaturesDialog" :header="dialogTitle" :modal="true" :style="{ width: '640px' }" class="cas-cell-dialog">
+    <!-- Dialog étudiants lésés - édition des particularités -->
+    <Dialog v-model:visible="showLesedFeaturesDialog" :header="dialogTitle" :modal="true" :style="{ width: '640px' }" class="cas-cell-dialog">
       <div class="flex flex-column gap-4 p-1">
 
         <!-- État courant -->
-        <!--<div class="surface-ground p-3 border-round">
-          <label class="font-semibold block mb-2">État actuel</label>
+        <div class="surface-ground p-3 border-round">
+          <label class="font-semibold block mb-2">Motif</label>
           <div class="flex gap-2 flex-wrap mb-3">
             <Button
               v-for="color in colorOptions"
@@ -548,32 +555,54 @@
             v-model="editingCell.commentaire"
             rows="2"
             class="w-full"
-            placeholder="Résumé rapide (optionnel)..."
+            placeholder="Indiquer le motif ici..."
           />
           <div class="flex justify-content-end mt-2">
-            <Button label="Enregistrer l'état" icon="pi pi-check" size="small" @click="saveCellData" />
           </div>
-        </div>-->
+        </div>
 
-        <!-- Ajouter/éditer les particularités -->
+        <!-- Ajouter un événement à l'historique -->
         <div class="surface-card p-3 border-round border-1 surface-border">
-          <label class="font-semibold block mb-2">Particularités</label>
+          <label class="font-semibold block mb-2">Ajouter un événement</label>
           <div class="flex flex-column gap-2">
-
+            <Dropdown
+              v-model="newEvent.type_evenement"
+              :options="eventTypeOptions"
+              optionLabel="label"
+              optionValue="value"
+              class="w-full"
+            />
+            <div v-if="newEvent.type_evenement === 'changement_date'" class="flex gap-2">
+              <div class="flex-1 flex flex-column gap-1">
+                <label class="text-xs text-600">Ancienne date</label>
+                <Calendar v-model="newEvent.ancienne_date" dateFormat="dd/mm/yy" showIcon class="w-full" />
+              </div>
+              <div class="flex-1 flex flex-column gap-1">
+                <label class="text-xs text-600">Nouvelle date</label>
+                <Calendar v-model="newEvent.nouvelle_date" dateFormat="dd/mm/yy" showIcon class="w-full" />
+              </div>
+            </div>
             <Textarea
-              v-model="editingCell.commentaire"
+              v-model="newEvent.description"
               rows="2"
               class="w-full"
-              placeholder="Entrer les particularités du statut SAE ici..."
+              placeholder="Détails, raison du changement..."
             />
             <div class="flex justify-content-end">
-
+              <Button
+                label="Ajouter à l'historique"
+                icon="pi pi-plus"
+                size="small"
+                :loading="addingEvent"
+                :disabled="!canAddEvent"
+                @click="addHistoriqueEvent"
+              />
             </div>
           </div>
         </div>
 
         <!-- Historique -->
-        <!--<div>
+        <div>
           <label class="font-semibold block mb-2">Historique ({{ currentCellHistorique.length }})</label>
           <Timeline
             v-if="currentCellHistorique.length"
@@ -602,7 +631,207 @@
             </template>
           </Timeline>
           <p v-else class="text-600 text-sm">Aucun événement enregistré pour l'instant.</p>
-        </div>-->
+        </div>
+
+
+        <div class="flex justify-content-end mt-1">
+          <Button label="Annuler" class="mr-2" severity="secondary" @click="closeLesedFeaturesDialog" />
+          <Button label="Valider" icon="pi pi-check" size="small" @click="saveLesedFeaturesData" />
+        </div>
+      </div>
+    </Dialog>
+
+
+    <!-- Dialog échec de stage - édition des particularités -->
+    <Dialog v-model:visible="showEchecFeaturesDialog" :header="dialogTitle" :modal="true" :style="{ width: '640px' }" class="cas-cell-dialog">
+      <div class="flex flex-column gap-4 p-1">
+
+        <!-- État courant -->
+        <div class="surface-ground p-3 border-round">
+          <label class="font-semibold block mb-2">Motif</label>
+
+          <Textarea
+            v-model="editingCell.commentaire"
+            rows="2"
+            class="w-full"
+            placeholder="Indiquer le motif ici..."
+          />
+          <div class="flex justify-content-end mt-2">
+          </div>
+        </div>
+
+        <!-- Ajout évt. historique - Echec stage -->
+        <div class="surface-card p-3 border-round border-1 surface-border">
+          <label class="font-semibold block mb-2">Ajouter un événement</label>
+          <div class="flex flex-column gap-2">
+            <Dropdown
+              v-model="newEvent.type_evenement"
+              :options="eventTypeOptions"
+              optionLabel="label"
+              optionValue="value"
+              class="w-full"
+            />
+            <div v-if="newEvent.type_evenement === 'changement_date'" class="flex gap-2">
+              <div class="flex-1 flex flex-column gap-1">
+                <label class="text-xs text-600">Ancienne date</label>
+                <Calendar v-model="newEvent.ancienne_date" dateFormat="dd/mm/yy" showIcon class="w-full" />
+              </div>
+              <div class="flex-1 flex flex-column gap-1">
+                <label class="text-xs text-600">Nouvelle date</label>
+                <Calendar v-model="newEvent.nouvelle_date" dateFormat="dd/mm/yy" showIcon class="w-full" />
+              </div>
+            </div>
+            <Textarea
+              v-model="newEvent.description"
+              rows="2"
+              class="w-full"
+              placeholder="Détails, raison du changement..."
+            />
+            <div class="flex justify-content-end">
+              <Button
+                label="Ajouter à l'historique"
+                icon="pi pi-plus"
+                size="small"
+                :loading="addingEvent"
+                :disabled="!canAddEvent"
+                @click="addHistoriqueEvent"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Historique - Echec Stage -->
+        <div>
+          <label class="font-semibold block mb-2">Historique ({{ currentCellHistorique.length }})</label>
+          <Timeline
+            v-if="currentCellHistorique.length"
+            :value="currentCellHistorique"
+            align="left"
+            class="cas-timeline"
+          >
+            <template #marker="{ item }">
+              <div class="timeline-marker" :class="`marker-${eventTypeMeta(item.type_evenement).severity}`">
+                <i :class="eventTypeMeta(item.type_evenement).icon"></i>
+              </div>
+            </template>
+            <template #content="{ item }">
+              <div class="timeline-event">
+                <div class="flex align-items-center justify-content-between gap-2">
+                  <Tag :value="eventTypeMeta(item.type_evenement).label" :severity="eventTypeMeta(item.type_evenement).severity" class="text-xs" />
+                  <span class="text-xs text-600" :title="formatFullDate(item.created_at)">{{ formatRelativeDate(item.created_at) }}</span>
+                </div>
+                <div v-if="item.type_evenement === 'changement_date' && (item.ancienne_date || item.nouvelle_date)" class="date-change-line">
+                  <span class="text-600">{{ item.ancienne_date ? formatDateOnly(item.ancienne_date) : '?' }}</span>
+                  <i class="pi pi-arrow-right mx-2 text-xs"></i>
+                  <span class="font-semibold">{{ item.nouvelle_date ? formatDateOnly(item.nouvelle_date) : '?' }}</span>
+                </div>
+                <p v-if="item.description" class="m-0 mt-1 text-sm">{{ item.description }}</p>
+              </div>
+            </template>
+          </Timeline>
+          <p v-else class="text-600 text-sm">Aucun événement enregistré pour l'instant.</p>
+        </div>
+
+        <div class="flex justify-content-end mt-1">
+          <Button label="Annuler" class="mr-2" severity="secondary" @click="closeEchecFeaturesDialog" />
+          <Button label="Valider" icon="pi pi-check" size="small" @click="saveEchecFeaturesData" />
+        </div>
+      </div>
+    </Dialog>
+
+    <!-- Dialog étudiants SAE - édition des particularités -->
+    <Dialog v-model:visible="showSAEFeaturesDialog" :header="dialogTitle" :modal="true" :style="{ width: '640px' }" class="cas-cell-dialog">
+      <div class="flex flex-column gap-4 p-1">
+
+
+        <!-- Ajouter/éditer les particularités -->
+        <div class="surface-card p-3 border-round border-1 surface-border">
+          <label class="font-semibold block mb-2">Particularités</label>
+          <div class="flex flex-column gap-2">
+
+            <Textarea
+              v-model="editingCell.commentaire"
+              rows="2"
+              class="w-full"
+              placeholder="Entrer les particularités du statut SAE ici..."
+            />
+            <!--<div class="flex justify-content-end">
+                <Button label="Enregistrer l'état" icon="pi pi-check" size="small" @click="saveCellData" />
+            </div>-->
+          </div>
+        </div>
+
+        <!-- Ajout évt. historique - SAE -->
+        <div class="surface-card p-3 border-round border-1 surface-border">
+          <label class="font-semibold block mb-2">Ajouter un événement</label>
+          <div class="flex flex-column gap-2">
+            <Dropdown
+              v-model="newEvent.type_evenement"
+              :options="eventTypeOptions"
+              optionLabel="label"
+              optionValue="value"
+              class="w-full"
+            />
+            <div v-if="newEvent.type_evenement === 'changement_date'" class="flex gap-2">
+              <div class="flex-1 flex flex-column gap-1">
+                <label class="text-xs text-600">Ancienne date</label>
+                <Calendar v-model="newEvent.ancienne_date" dateFormat="dd/mm/yy" showIcon class="w-full" />
+              </div>
+              <div class="flex-1 flex flex-column gap-1">
+                <label class="text-xs text-600">Nouvelle date</label>
+                <Calendar v-model="newEvent.nouvelle_date" dateFormat="dd/mm/yy" showIcon class="w-full" />
+              </div>
+            </div>
+            <Textarea
+              v-model="newEvent.description"
+              rows="2"
+              class="w-full"
+              placeholder="Détails, raison du changement..."
+            />
+            <div class="flex justify-content-end">
+              <Button
+                label="Ajouter à l'historique"
+                icon="pi pi-plus"
+                size="small"
+                :loading="addingEvent"
+                :disabled="!canAddEvent"
+                @click="addHistoriqueEvent"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Historique - SAE -->
+        <div>
+          <label class="font-semibold block mb-2">Historique ({{ currentCellHistorique.length }})</label>
+          <Timeline
+            v-if="currentCellHistorique.length"
+            :value="currentCellHistorique"
+            align="left"
+            class="cas-timeline"
+          >
+            <template #marker="{ item }">
+              <div class="timeline-marker" :class="`marker-${eventTypeMeta(item.type_evenement).severity}`">
+                <i :class="eventTypeMeta(item.type_evenement).icon"></i>
+              </div>
+            </template>
+            <template #content="{ item }">
+              <div class="timeline-event">
+                <div class="flex align-items-center justify-content-between gap-2">
+                  <Tag :value="eventTypeMeta(item.type_evenement).label" :severity="eventTypeMeta(item.type_evenement).severity" class="text-xs" />
+                  <span class="text-xs text-600" :title="formatFullDate(item.created_at)">{{ formatRelativeDate(item.created_at) }}</span>
+                </div>
+                <div v-if="item.type_evenement === 'changement_date' && (item.ancienne_date || item.nouvelle_date)" class="date-change-line">
+                  <span class="text-600">{{ item.ancienne_date ? formatDateOnly(item.ancienne_date) : '?' }}</span>
+                  <i class="pi pi-arrow-right mx-2 text-xs"></i>
+                  <span class="font-semibold">{{ item.nouvelle_date ? formatDateOnly(item.nouvelle_date) : '?' }}</span>
+                </div>
+                <p v-if="item.description" class="m-0 mt-1 text-sm">{{ item.description }}</p>
+              </div>
+            </template>
+          </Timeline>
+          <p v-else class="text-600 text-sm">Aucun événement enregistré pour l'instant.</p>
+        </div>
 
         <div class="flex justify-content-end mt-1">
           <Button class="mr-2" label="Fermer" severity="secondary" @click="closeSAEFeaturesDialog" />
@@ -678,12 +907,15 @@ const classesList = computed(() => {
 })
 
 const showCellDialog = ref(false)
+const showLesedFeaturesDialog = ref(false)
+const showEchecFeaturesDialog = ref(false)
 const showSAEFeaturesDialog = ref(false)
 const showInfoDialog = ref(false)
 const editingCell = ref(null)
 const editingInfo = ref(null)
 const editingStudent = ref(null)
 const editingField = ref(null)
+const editingEchecRow = ref(null)
 const dialogTitle = ref('')
 const infoDialogTitle = ref('')
 
@@ -896,7 +1128,7 @@ const groupedLesed = computed(() => {
 const fetchLesedStudents = async () => {
   loadingLesed.value = true
   try {
-    const [{ data: fallbacks, error: fallbackError }, { data: studentsLese, error: leseError }, students] = await Promise.all([
+    const [{ data: fallbacks, error: fallbackError }, { data: studentsLese, error: leseError }] = await Promise.all([
       supabase
         .from('student_result_vote')
         .select('user_id, pfp_type, year, assigned_place_name, assigned_institution_name, assigned_rank')
@@ -904,8 +1136,7 @@ const fetchLesedStudents = async () => {
       supabase
         .from('StudentsPhysio')
         .select('user_id, lese, class, year')
-        .eq('lese', true),
-      getAllStudents()
+        .eq('lese', true)
     ])
 
     if (fallbackError) throw fallbackError
@@ -921,20 +1152,37 @@ const fetchLesedStudents = async () => {
       return
     }
 
-    const profileMap = new Map(
-      students.filter(profile => userIds.has(profile.user_id)).map(profile => [profile.user_id, profile])
-    )
+    const [studentDirectory, { data: suivis, error: suivisError }] = await Promise.all([
+      getAllStudents(),
+      supabase
+        .from('suivi_cas_particuliers')
+        .select('user_id, pfp_field, couleur, commentaire')
+        .in('user_id', [...userIds])
+    ])
+    if (suivisError) throw suivisError
+
+    const profiles = studentDirectory.filter(profile => userIds.has(profile.user_id))
+    const profileMap = new Map((profiles || []).map(p => [p.user_id, p]))
     const leseSet = new Set((studentsLese || []).map(s => s.user_id))
+    const suivisMap = new Map((suivis || []).map(s => [`${s.user_id}_${s.pfp_field}`, {
+      couleur: s.couleur || 'blanc',
+      commentaire: s.commentaire || ''
+    }]))
 
     // Une ligne par (étudiant, pfp_type, année) issue du fallback algorithmique
     const rows = (fallbacks || []).filter(f => profileMap.has(f.user_id)).map(f => {
       const profile = profileMap.get(f.user_id)
+      const pfpField = pfpTypeToField(f.pfp_type)
+      const suivi = suivisMap.get(`${f.user_id}_${pfpField}`) || { couleur: 'blanc', commentaire: '' }
       return {
         user_id: f.user_id,
         etudiant: profile ? `${(profile.family_name || '').toUpperCase()} ${profile.forname || ''}`.trim() : f.user_id,
         classe: profile?.classe || '-',
         year: f.year,
         pfp_type: f.pfp_type,
+        pfp_field: pfpField,
+        couleur: suivi.couleur,
+        commentaire: suivi.commentaire,
         assigned_place_name: f.assigned_place_name,
         assigned_institution_name: f.assigned_institution_name,
         isFallback: true,
@@ -947,7 +1195,6 @@ const fetchLesedStudents = async () => {
     const coveredKeys = new Set(rows.map(r => `${r.user_id}_${r.year}_${r.pfp_type}`))
     ;(studentsLese || []).forEach(s => {
       const profile = profileMap.get(s.user_id)
-      const key = `${s.user_id}_${s.year}_manuel`
       if (profile && ![...coveredKeys].some(k => k.startsWith(`${s.user_id}_${s.year}`))) {
         rows.push({
           user_id: s.user_id,
@@ -955,6 +1202,9 @@ const fetchLesedStudents = async () => {
           classe: s.class || profile?.classe || '-',
           year: s.year || 'N/A',
           pfp_type: 'Non spécifié',
+          pfp_field: null,
+          couleur: 'blanc',
+          commentaire: '',
           assigned_place_name: null,
           assigned_institution_name: null,
           isFallback: false,
@@ -1008,13 +1258,10 @@ const groupedEchecs = computed(() => {
 const fetchEchecsStudents = async () => {
   loadingEchecs.value = true
   try {
-    const [{ data: echecs, error: echecsError }, students] = await Promise.all([
-      supabase
-        .from('student_result_vote')
-        .select('user_id, pfp_type, year, assigned_place_name, assigned_institution_name, pfp_arret, commentaire_arret')
-        .eq('pfp_echec', true),
-      getAllStudents()
-    ])
+    const { data: echecs, error: echecsError } = await supabase
+      .from('student_result_vote')
+      .select('user_id, pfp_type, year, assigned_place_name, assigned_institution_name, pfp_arret, commentaire_arret')
+      .eq('pfp_echec', true)
 
     if (echecsError) throw echecsError
 
@@ -1024,10 +1271,9 @@ const fetchEchecsStudents = async () => {
       return
     }
 
-    const userIdSet = new Set(userIds)
-    const profileMap = new Map(
-      students.filter(profile => userIdSet.has(profile.user_id)).map(profile => [profile.user_id, profile])
-    )
+    const profiles = (await getAllStudents()).filter(profile => userIds.includes(profile.user_id))
+
+    const profileMap = new Map((profiles || []).map(p => [p.user_id, p]))
 
     echecsList.value = (echecs || []).filter(e => profileMap.has(e.user_id)).map(e => {
       const profile = profileMap.get(e.user_id)
@@ -1117,18 +1363,48 @@ const unmarkStudentSae = async (student) => {
 }
 
 const openLesedFollowUp = (lesedRow) => {
-  const field = pfpTypeToField(lesedRow.pfp_type)
+  const field = lesedRow.pfp_field || pfpTypeToField(lesedRow.pfp_type)
   if (!field) {
     toast.add({ severity: 'warn', summary: 'Non disponible', detail: "Type de PFP non reconnu pour le suivi détaillé", life: 3000 })
     return
   }
-  const student = cases.value.find(c => c.user_id === lesedRow.user_id)
-  if (!student) {
-    toast.add({ severity: 'warn', summary: 'Non trouvé', detail: "Profil étudiant introuvable dans le suivi", life: 3000 })
+
+  const student = cases.value.find(c => c.user_id === lesedRow.user_id) || {
+    user_id: lesedRow.user_id,
+    etudiant: lesedRow.etudiant,
+    classe: lesedRow.classe,
+    visible: true
+  }
+
+  student[field] = {
+    couleur: lesedRow.couleur || student[field]?.couleur || 'blanc',
+    commentaire: lesedRow.commentaire || student[field]?.commentaire || ''
+  }
+
+  openLesedFeaturesDialog(student, field)
+}
+
+
+const openEchecFollowUp = (lesedRow) => {
+  const field = lesedRow.pfp_field || pfpTypeToField(lesedRow.pfp_type)
+  if (!field) {
+    toast.add({ severity: 'warn', summary: 'Non disponible', detail: "Type de PFP non reconnu pour le suivi détaillé", life: 3000 })
     return
   }
-  activeTab.value = 0
-  openCellDialog(student, field)
+
+  const student = cases.value.find(c => c.user_id === lesedRow.user_id) || {
+    user_id: lesedRow.user_id,
+    etudiant: lesedRow.etudiant,
+    classe: lesedRow.classe,
+    visible: true
+  }
+
+  student[field] = {
+    couleur: student[field]?.couleur || 'blanc',
+    commentaire: lesedRow.commentaire_arret || ''
+  }
+
+  openEchecFeaturesDialog(student, field, lesedRow)
 }
 
 const truncate = (text, max) => {
@@ -1198,6 +1474,9 @@ const getCellStyle = (cellData) => {
   }
 }
 
+const getLesedMotifStyle = (lesedRow) => getCellStyle({ couleur: lesedRow?.couleur || 'blanc' })
+const getColorLabel = (value) => colorOptions.find(color => color.value === value)?.label || value
+
 const openCellDialog = (student, field) => {
   editingStudent.value = student
   editingField.value = field
@@ -1218,6 +1497,139 @@ const closeCellDialog = () => {
   editingStudent.value = null
   editingField.value = null
   resetNewEvent()
+}
+
+
+const openLesedFeaturesDialog = (student, field) => {
+  editingStudent.value = student
+  editingField.value = field
+
+  if (!student[field]) {
+    student[field] = { couleur: 'blanc', commentaire: '' }
+  }
+
+  editingCell.value = { ...student[field] }
+  dialogTitle.value = `${student.etudiant} - ${fieldLabels[field]}`
+  resetNewEvent()
+  showLesedFeaturesDialog.value = true
+}
+
+const closeLesedFeaturesDialog = () => {
+  showLesedFeaturesDialog.value = false
+  editingCell.value = null
+  editingStudent.value = null
+  editingField.value = null
+  resetNewEvent()
+}
+
+
+
+const openEchecFeaturesDialog = (student, field, echecRow) => {
+  editingStudent.value = student
+  editingField.value = field
+  editingEchecRow.value = echecRow
+
+  if (!student[field]) {
+    student[field] = { couleur: 'blanc', commentaire: '' }
+  }
+
+  editingCell.value = {
+    ...student[field],
+    commentaire: echecRow?.commentaire_arret || ''
+  }
+  dialogTitle.value = `${student.etudiant} - ${fieldLabels[field]}`
+  resetNewEvent()
+  showEchecFeaturesDialog.value = true
+}
+
+const closeEchecFeaturesDialog = () => {
+  showEchecFeaturesDialog.value = false
+  editingCell.value = null
+  editingStudent.value = null
+  editingField.value = null
+  editingEchecRow.value = null
+  resetNewEvent()
+}
+
+const saveEchecFeaturesData = async () => {
+  if (!editingStudent.value || !editingCell.value || !editingEchecRow.value) {
+    closeEchecFeaturesDialog()
+    return
+  }
+
+  const commentaireArret = editingCell.value.commentaire || ''
+  const echecRow = editingEchecRow.value
+
+  try {
+    let query = supabase
+      .from('student_result_vote')
+      .update({ commentaire_arret: commentaireArret || null })
+      .eq('user_id', editingStudent.value.user_id)
+      .eq('pfp_type', echecRow.pfp_type)
+      .eq('pfp_echec', true)
+
+    query = echecRow.year === null || echecRow.year === undefined
+      ? query.is('year', null)
+      : query.eq('year', echecRow.year)
+
+    const { error } = await query
+
+    if (error) throw error
+
+    echecsList.value = echecsList.value.map(row => (
+      row.user_id === editingStudent.value.user_id &&
+      row.pfp_type === echecRow.pfp_type &&
+      row.year === echecRow.year
+        ? { ...row, commentaire_arret: commentaireArret }
+        : row
+    ))
+
+    toast.add({ severity: 'success', summary: 'Sauvegardé', detail: "Motif d'arrêt mis à jour", life: 2000 })
+    closeEchecFeaturesDialog()
+  } catch (e) {
+    console.error('Erreur saveEchecFeaturesData:', e)
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de sauvegarder: ' + e.message, life: 3000 })
+  }
+}
+
+const saveLesedFeaturesData = async () => {
+  if (!editingStudent.value || !editingField.value || !editingCell.value) {
+    closeLesedFeaturesDialog()
+    return
+  }
+
+  const cellData = {
+    couleur: editingCell.value.couleur || 'blanc',
+    commentaire: editingCell.value.commentaire || ''
+  }
+
+  try {
+    const { error } = await supabase
+      .from('suivi_cas_particuliers')
+      .upsert({
+        user_id: editingStudent.value.user_id,
+        pfp_field: editingField.value,
+        couleur: cellData.couleur,
+        commentaire: cellData.commentaire || null,
+        visible: editingStudent.value.visible ?? true
+      }, {
+        onConflict: 'user_id,pfp_field'
+      })
+
+    if (error) throw error
+
+    editingStudent.value[editingField.value] = { ...cellData }
+    lesedList.value = lesedList.value.map(row => (
+      row.user_id === editingStudent.value.user_id && row.pfp_field === editingField.value
+        ? { ...row, ...cellData }
+        : row
+    ))
+    toast.add({ severity: 'success', summary: 'Sauvegardé', detail: 'Motif lésé mis à jour', life: 2000 })
+    closeLesedFeaturesDialog()
+  } catch (e) {
+    console.error('Erreur saveLesedFeaturesData:', e)
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de sauvegarder: ' + e.message, life: 3000 })
+  }
 }
 
 const openSAEFeaturesDialog = (student, field) => {

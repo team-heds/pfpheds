@@ -20,7 +20,7 @@ import '@/assets/styles/styles.scss';
 import 'primeflex/primeflex.css';
 import '@/assets/styles/platform-foundations.scss';
 
-const APP_VERSION = '0.2.8';
+const APP_VERSION = '0.2.9';
 
 if ('serviceWorker' in navigator) {
   const lastVersion = localStorage.getItem('app_version');
