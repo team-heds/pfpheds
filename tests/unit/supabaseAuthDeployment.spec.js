@@ -26,6 +26,9 @@ describe('Supabase Auth recovery deployment', () => {
     const clientConfig = readFileSync(join(repositoryRoot, 'src/supabase.js'), 'utf8')
 
     expect(clientConfig).toContain("new Set(['/reset-password', '/new-password'])")
+    expect(clientConfig.indexOf('getPasswordRecoveryCallbackTarget(window.location)')).toBeLessThan(
+      clientConfig.indexOf('createClient(supabaseUrl, supabaseAnonKey'),
+    )
     expect(clientConfig).toContain('detectSessionInUrl: !isPasswordRecoveryRoute')
   })
 })

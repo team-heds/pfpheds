@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
+  buildPasswordRecoveryRedirectUrl,
   createPasswordRecoveryService,
+  getPasswordRecoveryCallbackTarget,
   PASSWORD_RECOVERY_ERROR_CODES,
 } from '@/service/passwordRecoveryService'
 
@@ -26,6 +28,37 @@ function createNavigation(url = 'https://hedsvs.ch/reset-password') {
 describe('passwordRecoveryService', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+  })
+
+  it('marque explicitement les nouveaux liens comme récupération', () => {
+    expect(buildPasswordRecoveryRedirectUrl('https://hedsvs.ch')).toBe(
+      'https://hedsvs.ch/reset-password?flow=recovery',
+    )
+  })
+
+  it('récupère un ancien callback implicite arrivé sur la page d’accueil', () => {
+    const location = new URL(
+      'https://hedsvs.ch/home#access_token=access&refresh_token=refresh&type=recovery',
+    )
+
+    expect(getPasswordRecoveryCallbackTarget(location)).toBe(
+      '/reset-password#access_token=access&refresh_token=refresh&type=recovery',
+    )
+  })
+
+  it('récupère un callback PKCE marqué arrivé sur la mauvaise route', () => {
+    const location = new URL('https://hedsvs.ch/home?flow=recovery&code=secret-code')
+
+    expect(getPasswordRecoveryCallbackTarget(location)).toBe(
+      '/reset-password?flow=recovery&code=secret-code',
+    )
+  })
+
+  it('ne détourne jamais une connexion ordinaire vers le changement de mot de passe', () => {
+    expect(getPasswordRecoveryCallbackTarget(new URL('https://hedsvs.ch/home'))).toBeNull()
+    expect(
+      getPasswordRecoveryCallbackTarget(new URL('https://hedsvs.ch/home#type=signup')),
+    ).toBeNull()
   })
 
   it('échange un code PKCE côté serveur et nettoie l’URL', async () => {

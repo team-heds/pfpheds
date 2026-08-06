@@ -4,6 +4,27 @@ export const PASSWORD_RECOVERY_ERROR_CODES = Object.freeze({
   UPDATE_IN_PROGRESS: 'recovery_update_in_progress',
 })
 
+const PASSWORD_RECOVERY_PATHS = new Set(['/reset-password', '/new-password'])
+
+export function buildPasswordRecoveryRedirectUrl(origin) {
+  const redirectUrl = new URL('/reset-password', origin)
+  redirectUrl.searchParams.set('flow', 'recovery')
+  return redirectUrl.toString()
+}
+
+export function getPasswordRecoveryCallbackTarget(location) {
+  if (PASSWORD_RECOVERY_PATHS.has(location.pathname)) return null
+
+  const hashParams = new URLSearchParams(location.hash.replace(/^#/, ''))
+  const searchParams = new URLSearchParams(location.search)
+  const isRecoveryCallback =
+    hashParams.get('type') === 'recovery' || searchParams.get('flow') === 'recovery'
+
+  if (!isRecoveryCallback) return null
+
+  return `/reset-password${location.search}${location.hash}`
+}
+
 export class PasswordRecoveryError extends Error {
   constructor(code, message) {
     super(message)
