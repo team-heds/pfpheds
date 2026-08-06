@@ -35,9 +35,8 @@ const centerStyle = computed(() => (
 
 <style scoped>
 .social-layout {
-  --social-sidebar-width: clamp(17.5rem, 18vw, 22rem);
   display: grid;
-  grid-template-columns: var(--social-sidebar-width) minmax(0, 1fr) var(--social-sidebar-width);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 3fr) minmax(0, 1fr);
   gap: clamp(1rem, 1.5vw, 1.5rem);
   height: calc(100dvh - var(--navbar-h) - (2 * var(--content-pad)));
   max-height: calc(100dvh - var(--navbar-h) - (2 * var(--content-pad)));
@@ -77,8 +76,7 @@ const centerStyle = computed(() => (
 
 @media (max-width: 80rem) {
   .social-layout:not(.social-layout--single) {
-    --social-sidebar-width: clamp(15rem, 22vw, 18rem);
-    grid-template-columns: var(--social-sidebar-width) minmax(0, 1fr);
+    grid-template-columns: minmax(15rem, 1fr) minmax(0, 3fr);
   }
 
   .social-layout__side--right {

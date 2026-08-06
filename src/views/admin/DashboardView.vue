@@ -1,5 +1,5 @@
 <template>
-  <AdminLayout wide>
+  <AdminLayout>
     <Toast />
     <main class="personalized-dashboard">
       <!-- Header personnalisé -->

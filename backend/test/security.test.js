@@ -167,3 +167,23 @@ test('the production reverse proxy is trusted by exactly one hop', () => {
   const app = require('../index')
   assert.equal(app.get('trust proxy'), 1)
 })
+
+test('the trusted backend can read track roles without exposing them to browser roles', () => {
+  const migration = fs.readFileSync(
+    path.resolve(
+      __dirname,
+      '..',
+      '..',
+      'supabase',
+      'migrations',
+      '20260806_restore_server_role_track_access.sql'
+    ),
+    'utf8'
+  )
+
+  assert.match(
+    migration,
+    /grant\s+select\s+on\s+table\s+public\.user_track_roles\s+to\s+service_role/i
+  )
+  assert.doesNotMatch(migration, /to\s+(anon|authenticated)\b/i)
+})
