@@ -1,6 +1,7 @@
 
 
     import { createClient } from '@supabase/supabase-js'
+    import { getPasswordRecoveryCallbackTarget } from '@/service/passwordRecoveryService'
 
     // ✅ Lis les variables d’environnement de Vite
     let supabaseUrl = import.meta.env.VITE_SUPABASE_URL
@@ -17,6 +18,14 @@
     console.error('[Supabase] ❌ Variables d’environnement manquantes.')
     console.error('VITE_SUPABASE_URL:', supabaseUrl)
     console.error('VITE_SUPABASE_KEY:', supabaseAnonKey)
+    }
+
+    // Un modèle d'email ou une ancienne configuration peut renvoyer le callback
+    // vers /home. Corriger l'URL avant de créer le client empêche Supabase de
+    // transformer silencieusement la récupération en connexion ordinaire.
+    const passwordRecoveryTarget = getPasswordRecoveryCallbackTarget(window.location)
+    if (passwordRecoveryTarget) {
+    window.history.replaceState(window.history.state, '', passwordRecoveryTarget)
     }
 
     const passwordRecoveryRoutes = new Set(['/reset-password', '/new-password'])
