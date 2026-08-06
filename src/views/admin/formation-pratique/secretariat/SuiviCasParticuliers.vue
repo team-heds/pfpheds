@@ -288,7 +288,7 @@
                     class="text-xs mr-1"
                   />
                   <Tag v-if="data.marqueLese" value="Marqué lésé (profil)" severity="warning" class="text-xs mr-1" />
-                  <!--<Tag v-if="data.isFallback" value="Hors choix" severity="danger" class="text-xs" />-->
+                  <Tag v-if="data.isFallback" value="Hors choix" severity="danger" class="text-xs" />
 
                 </template>
               </Column>
@@ -898,6 +898,19 @@ const filterDisplay = ref('with_comments')
 const filterClasse = ref(null)
 const filterColor = ref(null)
 const searchTerm = ref('')
+
+const matchesSearchTerm = (student) => {
+  const query = searchTerm.value.trim().toLowerCase()
+  return !query || (student.etudiant || '').toLowerCase().includes(query)
+}
+
+const matchesFollowUpFilter = (commentaire) => {
+  const hasFollowUp = Boolean(commentaire?.trim())
+  if (filterDisplay.value === 'with_comments') return hasFollowUp
+  if (filterDisplay.value === 'no_comments') return !hasFollowUp
+  return true
+}
+
 // Liste dynamique construite depuis les vraies données (ne jamais figer en dur :
 // une classe/année réelle absente de cette liste devient invisible dans le filtre)
 const classesList = computed(() => {
@@ -1107,7 +1120,11 @@ const pfpTypeToField = (pfpType) => {
 }
 
 const groupedLesed = computed(() => {
-  let list = [...lesedList.value]
+  let list = lesedList.value
+    .filter(matchesSearchTerm)
+    .filter(l => matchesFollowUpFilter(l.commentaire))
+  if (filterClasse.value) list = list.filter(l => l.classe === filterClasse.value)
+  if (filterColor.value) list = list.filter(l => l.couleur === filterColor.value)
   if (lesedFilterYear.value) list = list.filter(l => l.year === lesedFilterYear.value)
   if (lesedFilterPfp.value) list = list.filter(l => l.pfp_type === lesedFilterPfp.value)
 
@@ -1242,7 +1259,10 @@ const echecPfpTypes = computed(() => {
 })
 
 const groupedEchecs = computed(() => {
-  let list = [...echecsList.value]
+  let list = echecsList.value
+    .filter(matchesSearchTerm)
+    .filter(l => matchesFollowUpFilter(l.commentaire_arret))
+  if (filterClasse.value) list = list.filter(l => l.classe === filterClasse.value)
   if (echecFilterYear.value) list = list.filter(l => l.year === echecFilterYear.value)
   if (echecFilterPfp.value) list = list.filter(l => l.pfp_type === echecFilterPfp.value)
 
@@ -1313,6 +1333,9 @@ const saeSearchSuggestions = ref([])
 
 const saeStudentsList = computed(() => {
   return cases.value
+    .filter(matchesSearchTerm)
+    .filter(c => matchesFollowUpFilter(c.sae?.commentaire))
+    .filter(c => !filterClasse.value || c.classe === filterClasse.value)
     .filter(c => c.sae?.couleur && c.sae.couleur !== 'blanc')
     .sort((a, b) => a.etudiant.localeCompare(b.etudiant))
 })
@@ -1434,10 +1457,7 @@ const stats = computed(() => {
 const filteredCases = computed(() => {
   let list = [...cases.value]
 
-  if (searchTerm.value && searchTerm.value.trim()) {
-    const q = searchTerm.value.toLowerCase().trim()
-    list = list.filter(c => c.etudiant.toLowerCase().includes(q))
-  }
+  list = list.filter(matchesSearchTerm)
 
   if (filterClasse.value) {
     list = list.filter(c => c.classe === filterClasse.value)
