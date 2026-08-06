@@ -19,6 +19,7 @@ vi.mock('firebase/auth', () => ({
 }))
 
 vi.mock('@/firebase', () => ({
+  isFirebaseEnabled: true,
   auth: {
     signOut: () => mockFirebaseSignOut(),
   }
@@ -98,6 +99,29 @@ describe('authStore', () => {
 
     it('isSupabaseUser retourne false par défaut', () => {
       expect(store.isSupabaseUser).toBe(false)
+    })
+
+    it('ne considère jamais une session Firebase comme une session applicative', () => {
+      store.user = { uid: 'legacy-firebase-user' }
+      store.authProvider = 'firebase'
+
+      expect(store.isFirebaseUser).toBe(false)
+      expect(store.isSupabaseUser).toBe(false)
+    })
+  })
+
+  describe('restauration de session', () => {
+    it('restaure exclusivement la session Supabase', async () => {
+      const user = { id: 'supabase-user', email: 'admin@hevs.ch' }
+      const session = { user, access_token: 'supabase-token', expires_at: 4_102_444_800 }
+      mockSupabaseGetUser.mockResolvedValue({ data: { user }, error: null })
+      mockSupabaseGetSession.mockResolvedValue({ data: { session }, error: null })
+
+      await store.checkAuthState()
+
+      expect(store.user).toEqual(user)
+      expect(store.session).toEqual(session)
+      expect(store.authProvider).toBe('supabase')
     })
   })
 
