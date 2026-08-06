@@ -38,8 +38,8 @@ describe('studentDirectoryService', () => {
     expect(apiGet).toHaveBeenCalledWith('/audiences/students')
   })
 
-  it('never invents students when the server returns an invalid payload', async () => {
+  it('fails visibly instead of converting an invalid payload into an empty list', async () => {
     apiGet.mockResolvedValue({ data: { data: null } })
-    expect(await getAllStudents()).toEqual([])
+    await expect(getAllStudents()).rejects.toThrow('Invalid student directory response')
   })
 })

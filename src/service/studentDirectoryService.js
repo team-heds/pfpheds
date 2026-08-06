@@ -14,7 +14,10 @@ export function invalidateStudentDirectoryCache() {
 
 async function loadStudentDirectory() {
   const response = await apiClient.get('/audiences/students')
-  return Array.isArray(response.data?.data) ? response.data.data : []
+  if (!Array.isArray(response.data?.data)) {
+    throw new Error('Invalid student directory response')
+  }
+  return response.data.data
 }
 
 export async function getAllStudents() {
