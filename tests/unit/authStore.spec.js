@@ -186,12 +186,17 @@ describe('authStore', () => {
 
   // ─── Supabase resetPassword ───
   describe('resetPasswordSupabase', () => {
-    it('envoie un email de reset', async () => {
+    it.each([
+      'etudiant.connu@hevs.ch',
+      'adresse.inconnue@example.invalid'
+    ])('ne révèle pas côté client si %s existe', async (email) => {
       mockSupabaseResetPassword.mockResolvedValue({ error: null })
 
-      await store.resetPasswordSupabase('test@hevs.ch')
+      await store.resetPasswordSupabase(email)
 
-      expect(mockSupabaseResetPassword).toHaveBeenCalled()
+      expect(mockSupabaseResetPassword).toHaveBeenCalledWith(email, {
+        redirectTo: 'http://localhost:3000/reset-password?flow=recovery'
+      })
       expect(store.loading).toBe(false)
       expect(store.error).toBeNull()
     })
