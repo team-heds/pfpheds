@@ -29,7 +29,6 @@ vi.mock('@/firebase', () => ({
 const mockSupabaseSignUp = vi.fn()
 const mockSupabaseSignIn = vi.fn()
 const mockSupabaseSignOut = vi.fn()
-const mockSupabaseResetPassword = vi.fn()
 const mockSupabaseGetUser = vi.fn()
 const mockSupabaseGetSession = vi.fn()
 const mockSupabaseRefreshSession = vi.fn()
@@ -41,7 +40,6 @@ vi.mock('@/supabase', () => ({
       signUp: (...args) => mockSupabaseSignUp(...args),
       signInWithPassword: (...args) => mockSupabaseSignIn(...args),
       signOut: () => mockSupabaseSignOut(),
-      resetPasswordForEmail: (...args) => mockSupabaseResetPassword(...args),
       getUser: () => mockSupabaseGetUser(),
       getSession: () => mockSupabaseGetSession(),
       refreshSession: () => mockSupabaseRefreshSession(),
@@ -51,6 +49,11 @@ vi.mock('@/supabase', () => ({
       }),
     }
   }
+}))
+
+const mockPasswordRecoveryRequest = vi.fn()
+vi.mock('@/service/passwordRecoveryRequestService', () => ({
+  requestPasswordRecovery: (...args) => mockPasswordRecoveryRequest(...args),
 }))
 
 const { useAuthStore } = await import('@/stores/authStore')
@@ -190,24 +193,24 @@ describe('authStore', () => {
       'etudiant.connu@hevs.ch',
       'adresse.inconnue@example.invalid'
     ])('ne révèle pas côté client si %s existe', async (email) => {
-      mockSupabaseResetPassword.mockResolvedValue({ error: null })
+      mockPasswordRecoveryRequest.mockResolvedValue(undefined)
 
       await store.resetPasswordSupabase(email)
 
-      expect(mockSupabaseResetPassword).toHaveBeenCalledWith(email, {
-        redirectTo: 'http://localhost:3000/reset-password?flow=recovery'
-      })
+      expect(mockPasswordRecoveryRequest).toHaveBeenCalledWith(email)
       expect(store.loading).toBe(false)
       expect(store.error).toBeNull()
     })
 
     it('gère les erreurs', async () => {
-      mockSupabaseResetPassword.mockResolvedValue({
-        error: { message: 'User not found' }
-      })
+      mockPasswordRecoveryRequest.mockRejectedValue(
+        Object.assign(new Error('unavailable'), {
+          code: 'password_recovery_unavailable'
+        })
+      )
 
       await expect(store.resetPasswordSupabase('x@y.z')).rejects.toThrow()
-      expect(store.error).toBe('User not found')
+      expect(store.error).toBe('password_recovery_unavailable')
     })
   })
 

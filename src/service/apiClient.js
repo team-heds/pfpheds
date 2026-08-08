@@ -29,7 +29,7 @@ export function resolveApiBaseUrl(configuredUrl, runtimeLocation = globalThis.lo
   return normalizedConfiguredUrl || '/api'
 }
 
-const API_URL = resolveApiBaseUrl(
+export const API_URL = resolveApiBaseUrl(
   import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL
 )
 
