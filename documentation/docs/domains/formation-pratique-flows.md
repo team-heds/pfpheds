@@ -44,6 +44,22 @@ Risque:
 
 - toucher aux offres sans verifier les consequences sur la votation et les affectations
 
+### Rapprochement offres/propositions
+
+Les vues de suivi utilisent `InstitutionId` comme unique clé canonique. Le nom de
+l'institution est réservé à l'affichage et ne doit pas servir à rapprocher deux
+enregistrements. Plusieurs places ou sites portant le même `InstitutionId` sont
+agrégés pour l'année et le type PFP sélectionnés; deux identifiants distincts
+restent séparés même si leurs noms sont proches.
+
+Les clés d'année `YYYY` et `YYYY-1-YYYY` sont prises en charge. Une institution
+est considérée comme ayant une proposition lorsque le total agrégé de ses
+propositions est strictement positif. Les doublons de `PlaceId`, les identifiants
+absents ou inconnus, les valeurs invalides et les clés d'année contradictoires
+sont exclus des agrégats concernés et remontés comme anomalies dans l'interface
+et les exports. Ces anomalies ne doivent contenir que les identifiants techniques
+nécessaires au diagnostic, sans données personnelles supplémentaires.
+
 ## Flux 3 - votation prioritaire
 
 Ce flux concerne:

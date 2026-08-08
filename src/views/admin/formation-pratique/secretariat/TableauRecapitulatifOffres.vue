@@ -16,7 +16,7 @@
             <i class="pi pi-briefcase text-primary text-3xl"></i>
             <div>
               <h1 class="text-2xl font-bold text-900 m-0">Récapitulatif des Offres</h1>
-              <p class="text-600 m-0 mt-1">Offres et propositions par place de formation — {{ selectedYear }}</p>
+              <p class="text-600 m-0 mt-1">Offres et propositions agrégées par institution — {{ selectedYear }}</p>
             </div>
           </div>
           <div class="flex align-items-center gap-3 flex-wrap">
@@ -48,6 +48,14 @@
             </div>
           </div>
         </div>
+      </div>
+
+      <div v-if="reconciliation.anomalies.length" class="surface-card p-3 border-round shadow-2 mb-3 anomaly-banner" role="status">
+        <div class="flex align-items-center gap-2">
+          <i class="pi pi-exclamation-triangle text-orange-400"></i>
+          <span class="font-semibold">{{ reconciliation.anomalies.length }} anomalie(s) de correspondance ignorée(s) dans les totaux.</span>
+        </div>
+        <span class="text-sm text-600">L’export contient leur type et leurs identifiants techniques pour permettre leur correction.</span>
       </div>
 
       <!-- Statistiques principales -->
@@ -166,48 +174,48 @@
       <!-- Table -->
       <div class="surface-card p-4 border-round shadow-2">
         <DataTable
-          :value="filteredPlaces"
+          :value="filteredInstitutions"
           :loading="placesStore.loading"
           responsiveLayout="scroll"
           :paginator="true"
           :rows="50"
           :rowsPerPageOptions="[20, 50, 100, 500]"
           :rowHover="true"
-          dataKey="PlaceId"
+          dataKey="InstitutionId"
           scrollable
           scrollHeight="flex"
           class="offre-table p-datatable-sm"
-          :sortField="'Institution_name'"
+          :sortField="'institutionName'"
           :sortOrder="1"
         >
           <template #header>
             <div class="flex justify-content-between align-items-center">
-              <span class="text-xl text-900 font-bold">Places de Formation ({{ filteredPlaces.length }})</span>
+              <span class="text-xl text-900 font-bold">Institutions ({{ filteredInstitutions.length }})</span>
             </div>
           </template>
           <template #empty>
             <div class="text-center p-4">
               <i class="pi pi-inbox text-4xl text-400 mb-3"></i>
-              <p class="text-600">Aucune place trouvée</p>
+              <p class="text-600">Aucune institution trouvée</p>
             </div>
           </template>
 
           <!-- Institution -->
-          <Column field="Institution_name" header="Institution" sortable :frozen="true" style="min-width: 210px">
+          <Column field="institutionName" header="Institution" sortable :frozen="true" style="min-width: 240px">
             <template #body="{ data }">
               <div class="flex align-items-center gap-2">
                 <div class="institution-avatar">
                   <i class="pi pi-building text-xs"></i>
                 </div>
-                <span class="font-semibold text-900 text-sm">{{ data.Institution_name || '-' }}</span>
+                <span class="font-semibold text-900 text-sm">{{ data.institutionName || '-' }}</span>
               </div>
             </template>
           </Column>
 
-          <!-- Place -->
-          <Column field="NomPlace" header="Place de formation" sortable style="min-width: 230px">
+          <!-- Places -->
+          <Column field="placeCount" header="Sites / places" sortable style="min-width: 120px">
             <template #body="{ data }">
-              <span class="text-700 text-sm">{{ data.NomPlace || '-' }}</span>
+              <span class="text-700 text-sm">{{ data.placeCount }}</span>
             </template>
           </Column>
 
@@ -272,6 +280,7 @@ import InputText from 'primevue/inputtext'
 import Dropdown from 'primevue/dropdown'
 import { usePlacesStore } from '@/stores/placesStore'
 import { useInstitutionsStore } from '@/stores/institutionsStore'
+import { getReconciliationMetric, reconcileOfferProposals } from '@/service/offerProposalMatchingService'
 
 const placesStore = usePlacesStore()
 const institutionsStore = useInstitutionsStore()
@@ -292,20 +301,12 @@ const pfpOptions = [
 ]
 
 const displayOptions = [
-  { label: 'Toutes les places', value: 'all' },
-  { label: 'Avec offres', value: 'with_offers' },
-  { label: 'Sans offres', value: 'no_offers' }
+  { label: 'Toutes les institutions', value: 'all' },
+  { label: 'Avec proposition', value: 'with_proposals' },
+  { label: 'Sans proposition', value: 'no_proposals' }
 ]
 
 const allPfpTypes = ['PFP1A', 'PFP1B', 'PFP2', 'PFP3', 'PFP4']
-
-const pfpColorMap = {
-  PFP1A: '#8B5CF6',
-  PFP1B: '#06B6D4',
-  PFP2: '#6366F1',
-  PFP3: '#EC4899',
-  PFP4: '#F59E0B'
-}
 
 const pfpStatsList = [
   { key: 'PFP1A', color: '#8B5CF6' },
@@ -322,61 +323,39 @@ const visiblePfpTypes = computed(() => {
 
 const placesData = computed(() => placesStore.places || [])
 
-const parseIntSafe = (value) => {
-  const parsed = parseInt(value, 10)
-  return Number.isNaN(parsed) ? 0 : parsed
-}
+const reconciliation = computed(() => reconcileOfferProposals({
+  institutions: institutionsStore.institutions || [],
+  places: placesData.value,
+  years: years.value,
+  pfpTypes: allPfpTypes
+}))
 
-const getAcademicYearKeys = (year) => {
-  const y = Number(year)
-  if (!Number.isFinite(y)) return [String(year)]
-  return [String(y), `${y - 1}-${y}`]
-}
+const metricFor = (institution, pfp, year = selectedYear.value) =>
+  getReconciliationMetric(institution, year, pfp)
 
-const getValueForYearKey = (source, year) => {
-  if (!source || typeof source !== 'object') return undefined
-  const yearKeys = getAcademicYearKeys(year)
-  for (const yearKey of yearKeys) {
-    if (Object.prototype.hasOwnProperty.call(source, yearKey)) {
-      return source[yearKey]
-    }
-  }
-  return undefined
-}
-
-const getOfferForPfp = (place, pfpType, year) => parseIntSafe(getValueForYearKey(place?.[pfpType], year))
-const getPropositionForPfp = (place, pfpType, year) => parseIntSafe(getValueForYearKey(place?.[`${pfpType.toLowerCase()}_proposition`], year))
-
-const hasOffers = (place) => {
-  const year = selectedYear.value
-  return allPfpTypes.some(pfp => {
-    const val = getOfferForPfp(place, pfp, year)
-    return val > 0
-  })
-}
+const hasOffers = institution => allPfpTypes.some(pfp => metricFor(institution, pfp).hasOffer)
+const hasProposals = institution => allPfpTypes.some(pfp => metricFor(institution, pfp).hasProposal)
 
 const stats = computed(() => {
-  const places = placesData.value
+  const institutions = reconciliation.value.institutions
   const year = selectedYear.value
 
-  const placesWithOffers = places.filter(p => hasOffers(p)).length
+  const institutionsWithOffers = institutions.filter(institution => hasOffers(institution)).length
 
   const pfpStats = {}
   allPfpTypes.forEach(pfp => {
     pfpStats[pfp] = {
-      propositions: places.reduce((t, p) => t + getPropositionForPfp(p, pfp, year), 0),
-      offres: places.reduce((t, p) => t + getOfferForPfp(p, pfp, year), 0)
+      propositions: institutions.reduce((total, institution) => total + metricFor(institution, pfp, year).proposals, 0),
+      offres: institutions.reduce((total, institution) => total + metricFor(institution, pfp, year).offers, 0)
     }
   })
 
   const totalOffers = Object.values(pfpStats).reduce((s, p) => s + p.offres, 0)
-  const institutionSet = new Set(places.map(p => p.Institution_name).filter(Boolean))
-
   return {
-    total: places.length,
-    actives: placesWithOffers,
+    total: reconciliation.value.totals.places,
+    actives: institutionsWithOffers,
     totalOffers,
-    institutions: institutionSet.size,
+    institutions: institutions.length,
     pfpStats
   }
 })
@@ -385,13 +364,6 @@ const getProgressWidth = (prop, offre) => {
   if (offre === 0 && prop === 0) return 0
   const max = Math.max(prop, offre, 1)
   return Math.min((prop / max) * 100, 100)
-}
-
-const getProgressColor = (prop, offre) => {
-  if (offre === 0 && prop === 0) return '#94A3B8'
-  if (prop === offre) return '#22C55E'
-  if (prop > offre) return '#F97316'
-  return '#EF4444'
 }
 
 const getProgressLabel = (prop, offre) => {
@@ -406,59 +378,40 @@ const getProgressPercent = (prop, offre) => {
   return Math.round((prop / offre) * 100)
 }
 
-const filteredPlaces = computed(() => {
-  let list = [...placesData.value]
+const filteredInstitutions = computed(() => {
+  let list = [...reconciliation.value.institutions]
 
   if (searchText.value && searchText.value.trim()) {
     const q = searchText.value.toLowerCase().trim()
     list = list.filter(p =>
-      (p.Institution_name || '').toLowerCase().includes(q) ||
-      (p.NomPlace || '').toLowerCase().includes(q)
+      (p.institutionName || '').toLowerCase().includes(q) ||
+      (p.Locality || '').toLowerCase().includes(q)
     )
   }
 
-  if (filterDisplay.value === 'with_offers') {
-    list = list.filter(p => hasOffers(p))
-  } else if (filterDisplay.value === 'no_offers') {
-    list = list.filter(p => !hasOffers(p))
+  if (filterDisplay.value === 'with_proposals') {
+    list = list.filter(institution => hasProposals(institution))
+  } else if (filterDisplay.value === 'no_proposals') {
+    list = list.filter(institution => !hasProposals(institution))
   }
 
   const collator = new Intl.Collator('fr', { sensitivity: 'base' })
-  list.sort((a, b) => collator.compare(a.Institution_name || '', b.Institution_name || ''))
+  list.sort((a, b) => collator.compare(a.institutionName || '', b.institutionName || ''))
 
   return list
 })
 
-const getOffreValue = (place, pfpType) => {
-  const val = getValueForYearKey(place?.[pfpType], selectedYear.value)
-  return (val !== undefined && val !== null && val !== '') ? val : '-'
-}
+const getOffreValue = (institution, pfpType) => metricFor(institution, pfpType).offers || '-'
 
-const getPropositionValue = (place, pfpType) => {
-  if (!place || !place[`${pfpType.toLowerCase()}_proposition`]) return '-'
-  const val = getValueForYearKey(place[`${pfpType.toLowerCase()}_proposition`], selectedYear.value)
-  return (val !== undefined && val !== null && val !== '') ? val : '-'
-}
+const getPropositionValue = (institution, pfpType) => metricFor(institution, pfpType).proposals || '-'
 
-const getTotalAnalysisValue = (place) => {
-  let totalOffre = 0
-  let totalProposition = 0
-
-  allPfpTypes.forEach(pfp => {
-    totalOffre += getOfferForPfp(place, pfp, selectedYear.value)
-    totalProposition += getPropositionForPfp(place, pfp, selectedYear.value)
-  })
-
-  const result = totalProposition - totalOffre
+const getTotalAnalysisValue = (institution) => {
+  const result = allPfpTypes.reduce((total, pfp) => total + metricFor(institution, pfp).difference, 0)
   return result === 0 ? '0' : (result > 0 ? `+${result}` : result.toString())
 }
 
-const getAssignmentAnalysis = (place, pfpType) => {
-  const year = selectedYear.value
-  const offre = getOfferForPfp(place, pfpType, year)
-  const proposition = getPropositionForPfp(place, pfpType, year)
-
-  const difference = proposition - offre
+const getAssignmentAnalysis = (institution, pfpType) => {
+  const { offers: offre, proposals: proposition, difference } = metricFor(institution, pfpType)
   const status = difference === 0 ? 'balanced' : difference > 0 ? 'over' : 'under'
 
   return {
@@ -489,20 +442,29 @@ const getTotalBadgeClass = (value) => {
 const exportCSV = () => {
   const pfps = visiblePfpTypes.value
   const headers = [
-    'Institution', 'Place',
+    'Institution', 'Nombre de sites / places',
     ...pfps.flatMap(p => [`Offre ${p}`, `Proposition ${p}`, `Analyse ${p}`]),
     'Analyse Total'
   ]
-  const rows = filteredPlaces.value.map(place => [
-    place.Institution_name || '',
-    place.NomPlace || '',
+  const rows = filteredInstitutions.value.map(institution => [
+    institution.institutionName || '',
+    institution.placeCount,
     ...pfps.flatMap(p => [
-      getOffreValue(place, p),
-      getPropositionValue(place, p),
-      getAssignmentAnalysis(place, p).display
+      metricFor(institution, p).offers,
+      metricFor(institution, p).proposals,
+      getAssignmentAnalysis(institution, p).display
     ]),
-    getTotalAnalysisValue(place)
+    getTotalAnalysisValue(institution)
   ])
+  if (reconciliation.value.anomalies.length) {
+    rows.push([], ['ANOMALIES'])
+    reconciliation.value.anomalies.forEach(anomaly => rows.push([
+      anomaly.type,
+      anomaly.institutionId || '',
+      anomaly.placeId || '',
+      anomaly.field || ''
+    ]))
+  }
   const csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(';')).join('\n')
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
