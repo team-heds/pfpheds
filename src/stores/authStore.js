@@ -26,7 +26,7 @@ import { ref, computed } from 'vue';
 import { supabase } from '@/supabase';
 import { auth, isFirebaseEnabled } from '@/firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
-import { buildPasswordRecoveryRedirectUrl } from '@/service/passwordRecoveryService';
+import { requestPasswordRecovery } from '@/service/passwordRecoveryRequestService';
 
 export const useAuthStore = defineStore('auth', () => {
   const AUTH_BYPASS = import.meta.env.VITE_DISABLE_AUTH === 'true';
@@ -181,13 +181,9 @@ export const useAuthStore = defineStore('auth', () => {
     loading.value = true;
     error.value = null;
     try {
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: buildPasswordRecoveryRedirectUrl(window.location.origin)
-      });
-      if (resetError) throw resetError;
+      await requestPasswordRecovery(email);
     } catch (e) {
-      error.value = e.message;
-      console.error('Supabase reset password error:', e.message);
+      error.value = e.code || 'password_recovery_unavailable';
       throw e;
     } finally {
       loading.value = false;

@@ -34,6 +34,9 @@ const adminUsersRoutes = require('./supabase/adminUsersBackend.js')
 const vimeoRoutes = require('./supabase/vimeoBackend.js')
 const githubRoutes = require('./supabase/githubBackend.js')
 const audienceDirectoryRoutes = require('./supabase/audienceDirectoryBackend.js')
+const {
+  createPasswordRecoveryRequestRouter
+} = require('./supabase/passwordRecoveryRequestBackend.js')
 
 // push
 const pushRoutes = require('./supabase/pushBackend')
@@ -88,6 +91,9 @@ if (process.env.NODE_ENV !== 'production') {
 
 // Keep only operational health probes public. Every business API route below requires a valid JWT.
 app.get('/api/ping', (_req, res) => res.send('pingpong'))
+// Password recovery must remain anonymous, but is isolated behind a dedicated
+// server-side limiter and always returns the same public response.
+app.use('/api/auth/password-recovery', createPasswordRecoveryRequestRouter())
 app.use('/api', authenticate)
 
 // Routes - specific routes FIRST, then general ones

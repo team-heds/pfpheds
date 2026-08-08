@@ -166,11 +166,16 @@ const resetPassword = async () => {
       life: 6000
     })
   } catch (error) {
-    console.error('Supabase reset password error:', error)
+    const rateLimited = error?.code === 'password_recovery_rate_limited'
+    console.error('[AUTH] Password recovery request failed.', {
+      category: rateLimited ? 'rate_limited' : 'unavailable'
+    })
     toast.add({
       severity: 'error',
-      summary: 'Erreur',
-      detail: error.message || 'Erreur lors de l\'envoi de l\'email.',
+      summary: rateLimited ? 'Trop de tentatives' : 'Service indisponible',
+      detail: rateLimited
+        ? 'Veuillez patienter avant de demander un nouveau lien.'
+        : 'La demande n’a pas pu être prise en compte. Réessayez dans quelques instants.',
       life: 4000
     })
   } finally {

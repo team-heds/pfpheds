@@ -6,15 +6,24 @@ const viewports = [
 ]
 
 test.describe('Réinitialisation du mot de passe', () => {
+  test.describe.configure({ mode: 'serial' })
+
   for (const requestCase of [
     { name: 'adresse connue', email: 'etudiant.connu@hevs.ch' },
     { name: 'adresse inconnue', email: 'adresse.inconnue@example.invalid' },
   ]) {
     test(`affiche la même confirmation pour une ${requestCase.name}`, async ({ page }) => {
       let recoveryRequests = 0
-      await page.route('**/auth/v1/recover*', async route => {
+      await page.route('**/api/auth/password-recovery', async route => {
         recoveryRequests += 1
-        await route.fulfill({ status: 200, contentType: 'application/json', body: '{}' })
+        await route.fulfill({
+          status: 202,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            message:
+              'Si cette adresse est associée à un compte, un email de réinitialisation sera envoyé.',
+          }),
+        })
       })
 
       await page.goto('/')

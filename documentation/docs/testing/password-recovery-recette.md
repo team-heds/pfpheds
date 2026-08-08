@@ -35,12 +35,14 @@ Ils couvrent le routage public, le jeton valide, expiré ou déjà consommé, le
 1. Depuis la connexion, demander un nouveau mot de passe avec le compte de test.
 2. Vérifier que le message public confirme l’envoi sans afficher d’information sur le compte.
 3. Conserver uniquement le dernier email reçu.
+4. Vérifier que l’objet mentionne HEdS, que le contenu rappelle l’expiration d’une heure et l’usage unique, et que le bouton cible `https://hedsvs.ch/reset-password`.
 
 ### 2. Adresse inconnue
 
 1. Refaire la demande avec une adresse qui n’existe pas.
 2. Vérifier que le texte et le statut visibles sont identiques au scénario précédent.
 3. Ne pas attendre ni rechercher un email.
+4. Vérifier dans l’onglet Réseau que la demande passe par `/api/auth/password-recovery` et que son statut et son corps sont identiques au scénario précédent.
 
 ### 3. Jeton valide et connexion finale
 
@@ -76,3 +78,5 @@ Vérifier l’absence de défilement horizontal, la visibilité du focus clavier
 - captures où l’adresse, le code, le jeton et le mot de passe sont masqués.
 
 Ne jamais joindre de lien complet de récupération, de cookie, de JWT, de code OTP ou de mot de passe.
+
+Dans les journaux backend, conserver uniquement l’identifiant de corrélation, la catégorie et éventuellement le statut fournisseur. Toute adresse email, URL de récupération ou erreur SMTP détaillée invalide la recette de sécurité.

@@ -75,6 +75,18 @@ test('every business API is behind the global JWT middleware', () => {
   assert.ok(authIndex < firstBusinessRoute, 'global authentication must run before business routes')
 })
 
+test('password recovery is the only explicit public business route before JWT auth', () => {
+  const source = fs.readFileSync(path.resolve(__dirname, '..', 'index.js'), 'utf8')
+  const publicRecovery = source.indexOf(
+    "app.use('/api/auth/password-recovery', createPasswordRecoveryRequestRouter())"
+  )
+  const authIndex = source.indexOf("app.use('/api', authenticate)")
+
+  assert.ok(publicRecovery > 0, 'the password recovery endpoint must be mounted')
+  assert.ok(publicRecovery < authIndex, 'password recovery must be callable without a JWT')
+  assert.match(source, /createPasswordRecoveryRequestRouter/)
+})
+
 test('every admin frontend route declares authentication and a permission or redirects', () => {
   const source = fs.readFileSync(
     path.resolve(__dirname, '..', '..', 'src', 'router', 'routes', 'admin.js'),
